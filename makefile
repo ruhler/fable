@@ -1,5 +1,5 @@
 
-OBJECTS := build/zero.o build/one.o build/value.o build/circuit.o
+OBJECTS := build/zero.o build/one.o build/value.o build/circuit.o build/nand.o
 
 all: build/circuit_test.passed
 
@@ -15,5 +15,6 @@ build/%.o: circuit/%.cc circuit/%.h
 
 build/zero.o: circuit/value.h circuit/circuit.h
 build/one.o: circuit/value.h circuit/circuit.h
+build/nand.o: circuit/value.h circuit/circuit.h
 build/circuit.o: circuit/value.h
 
