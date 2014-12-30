@@ -8,7 +8,7 @@
 
 class Circuit {
   public:
-    virtual std::vector<Value> run(const std::vector<Value>& inputs) = 0;
+    virtual std::vector<Value> run(const std::vector<Value>& inputs) const = 0;
 };
 
 #endif//CIRCUIT_H_

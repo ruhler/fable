@@ -9,7 +9,7 @@
 
 class Nand : public Circuit {
   public:
-    virtual std::vector<Value> run(const std::vector<Value>& inputs);
+    virtual std::vector<Value> run(const std::vector<Value>& inputs) const;
 };
 
 #endif//NAND_H_

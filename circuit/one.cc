@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-std::vector<Value> One::run(const std::vector<Value>& inputs)
+std::vector<Value> One::run(const std::vector<Value>& inputs) const
 {
     assert(inputs.empty());
     std::vector<Value> outputs;
