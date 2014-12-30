@@ -1,0 +1,56 @@
+
+Snake: An engine for a simple snake game.
+
+You have a snake in a 2D grid of cells. The goal is to direct the snake
+towards food to make it grow bigger and bigger, and to avoid having the
+snake eat itself.
+
+Parameter WIDTH:
+  A non-negative integer describing the number of columns in the grid.
+
+Parameter HEIGHT:
+  A non-negative integer describing the number of rows in the grid.
+
+Parameter Random Number Generator:
+  A potentially unbounded sequence of random integers in a specified range.
+  Used to determine where new food items are placed in the grid.
+
+Input:
+  A sequence of input actions. An input action is one of:
+    UP - to change the snake's direction to up
+    DOWN - to change the snake's direction to down
+    LEFT - to change the snake's direction to left
+    RIGHT - to change the snake's direction to right
+    ADVANCE - to advance the snake one unit of time
+
+State:
+  The position of the snake.
+    This can be described using a sequence of coordinates within the grid. The
+    length of the sequence is the length of the snake. The coordinates
+    describe the location each body part of the snake from head to tail. A
+    subsequent body part will be adjescent on the grid to the immediately
+    preceeding body part in the sequence.
+
+  The position of the next item of food.
+    This is a coordinate in the grid.
+
+  The state of the snake. One of:
+    GOING_LEFT
+    GOING_RIGHT
+    GOING_UP
+    GOING_DOWN
+    DEAD
+    NEW_BORN
+
+  The current score. This is a non-negative integer that is a function of the
+  length of the snake.
+
+Observing State:
+  There are two ways to observe the state: Snapshot and Delta.
+
+  Snapshot: Methods are provided to access internal state described above
+  using various views. These access a snapshot of the current state.
+
+  Delta: A stream of state updates emmitted as they occur.
+  
+
