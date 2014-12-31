@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-std::vector<Value> Nand::run(const std::vector<Value>& inputs) const
+std::vector<Value> Nand::Eval(const std::vector<Value>& inputs) const
 {
     assert(inputs.size() == 2);
     Bit a = unpack(inputs[0]);

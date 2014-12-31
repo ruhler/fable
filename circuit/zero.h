@@ -9,7 +9,7 @@
 
 class Zero : public Circuit {
   public:
-    virtual std::vector<Value> run(const std::vector<Value>& inputs) const;
+    virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
 };
 
 #endif//ZERO_H_
