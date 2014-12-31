@@ -8,8 +8,8 @@
 #include "value.h"
 
 class Nand : public Circuit {
-  public:
-    virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
+ public:
+  virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
 };
 
 #endif//NAND_H_

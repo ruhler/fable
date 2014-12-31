@@ -3,11 +3,11 @@
 
 Bit unpack(const Value& v)
 {
-    return v;
+  return v;
 }
 
 Value pack(const Bit& b)
 {
-    return b;
+  return b;
 }
 

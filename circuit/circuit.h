@@ -7,8 +7,8 @@
 #include "value.h"
 
 class Circuit {
-  public:
-    virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const = 0;
+ public:
+  virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const = 0;
 };
 
 #endif//CIRCUIT_H_
