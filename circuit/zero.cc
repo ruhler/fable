@@ -3,6 +3,9 @@
 
 #include <cassert>
 
+Zero::Zero()
+  : Circuit(0, 1) {}
+
 std::vector<Value> Zero::Eval(const std::vector<Value>& inputs) const
 {
   assert(inputs.empty());

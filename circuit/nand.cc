@@ -3,6 +3,9 @@
 
 #include <cassert>
 
+Nand::Nand()
+  : Circuit(2, 1) { }
+
 std::vector<Value> Nand::Eval(const std::vector<Value>& inputs) const
 {
   assert(inputs.size() == 2);

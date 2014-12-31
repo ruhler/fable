@@ -9,6 +9,7 @@
 
 class Zero : public Circuit {
  public:
+  Zero();
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
 };
 

@@ -9,6 +9,7 @@
 
 class Nand : public Circuit {
  public:
+  Nand();
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
 };
 
