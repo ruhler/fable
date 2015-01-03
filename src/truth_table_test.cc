@@ -4,7 +4,7 @@
 
 #include "truth_table.h"
 
-TEST(TruthTableTest, Zero) {
+TEST(TruthTableTest, XOR) {
   std::vector<uint32_t> table;
   table.push_back(0);
   table.push_back(1);

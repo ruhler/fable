@@ -36,9 +36,10 @@ class TruthTable {
   // Return the value in the truth table for the given input bits.
   uint32_t Eval(uint32_t input) const;
 
+  const int kNumInputs;
+  const int kNumOutputs;
+
  private:
-  int num_inputs_;
-  int num_outputs_;
   std::vector<uint32_t> table_;
 };
 

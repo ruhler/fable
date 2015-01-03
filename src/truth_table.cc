@@ -5,13 +5,13 @@
 
 TruthTable::TruthTable(int num_inputs, int num_outputs,
     std::vector<uint32_t> table)
-  : num_inputs_(num_inputs), num_outputs_(num_outputs), table_(table)
+  : kNumInputs(num_inputs), kNumOutputs(num_outputs), table_(table)
 {
-  assert(num_inputs_ <= 32
+  assert(kNumInputs <= 32
       && "Too many input bits for this implementation.");
-  assert(num_outputs_ <= 32
+  assert(kNumOutputs <= 32
       && "Too many output bits for this implementation.");
-  assert((1 << num_inputs_) == table_.size()
+  assert((1 << kNumInputs) == table_.size()
       && "Wrong number of table elements.");
 }
 
