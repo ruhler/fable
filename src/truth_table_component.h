@@ -10,6 +10,8 @@ class TruthTableComponent : public Component {
  public:
   TruthTableComponent(TruthTable truth_table);
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
+  virtual int NumInputs() const;
+  virtual int NumOutputs() const;
 
  private:
   TruthTable truth_table_;

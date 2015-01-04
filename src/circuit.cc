@@ -3,20 +3,16 @@
 
 #include <cassert>
 
-Component::Component(int num_inputs, int num_outputs)
-  : kNumInputs(num_inputs), kNumOutputs(num_outputs) { }
-
 Circuit::Circuit(int num_inputs,
     std::vector<SubComponentEntry> sub_components,
     std::vector<PortIdentifier> outputs)
-  : Component(num_inputs, outputs.size()), sub_components_(sub_components),
-    outputs_(outputs)
+  : num_inputs_(num_inputs), sub_components_(sub_components), outputs_(outputs)
 {
   // TODO: Pull the verification of correctness out into helper functions that
   // return a boolean rather than repeating code and directly asserting here.
   for (int i = 0; i < sub_components_.size(); i++) {
     SubComponentEntry& entry = sub_components[i];
-    assert(entry.component->kNumInputs == entry.inputs.size()
+    assert(entry.component->NumInputs() == entry.inputs.size()
       && "Wrong number of inputs for component");
     for (int j = 0; j < entry.inputs.size(); j++) {
       PortIdentifier& portid = entry.inputs[j];
@@ -29,7 +25,7 @@ Circuit::Circuit(int num_inputs,
             && "Invalid port identifier component index");
         const Component* component = sub_components[portid.component_index].component;
         assert(portid.port_index >= 0
-            && portid.port_index < component->kNumOutputs
+            && portid.port_index < component->NumOutputs()
             && "Invalid port identifier port index");
       }
     }
@@ -46,7 +42,7 @@ Circuit::Circuit(int num_inputs,
           && "Invalid port identifier component index");
       const Component* component = sub_components[portid.component_index].component;
       assert(portid.port_index >= 0
-          && portid.port_index < component->kNumOutputs
+          && portid.port_index < component->NumOutputs()
           && "Invalid port identifier port index");
     }
   }
@@ -54,7 +50,7 @@ Circuit::Circuit(int num_inputs,
 
 std::vector<Value> Circuit::Eval(const std::vector<Value>& inputs) const
 {
-  assert(inputs.size() == kNumInputs
+  assert(inputs.size() == num_inputs_
     && "Wrong number of inputs given to circuit");
 
   // Edges will contain the outputs of all sub components. We compute this in
@@ -83,5 +79,15 @@ std::vector<Value> Circuit::Eval(const std::vector<Value>& inputs) const
     outputs.push_back(edges[portid.component_index+1][portid.port_index]);
   }
   return outputs;
+}
+
+int Circuit::NumInputs() const
+{
+  return num_inputs_;
+}
+
+int Circuit::NumOutputs() const
+{
+  return outputs_.size();
 }
 

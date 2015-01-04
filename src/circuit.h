@@ -8,11 +8,9 @@
 
 class Component {
  public:
-  Component(int num_inputs, int num_outputs);
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const = 0;
-
-  const int kNumInputs;
-  const int kNumOutputs;
+  virtual int NumInputs() const = 0;
+  virtual int NumOutputs() const = 0;
 };
 
 // A Circuit is an interconnection of Components.
@@ -60,8 +58,11 @@ class Circuit : public Component {
       std::vector<PortIdentifier> outputs);
 
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
+  virtual int NumInputs() const;
+  virtual int NumOutputs() const;
 
  private:
+  const int num_inputs_;
   std::vector<SubComponentEntry> sub_components_;
   std::vector<PortIdentifier> outputs_;
 };
