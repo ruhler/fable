@@ -3,10 +3,15 @@
 
 #include <cassert>
 
+Component::~Component()
+{ }
+
 Circuit::Circuit(int num_inputs,
     std::vector<SubComponentEntry> sub_components,
-    std::vector<PortIdentifier> outputs)
-  : num_inputs_(num_inputs), sub_components_(sub_components), outputs_(outputs)
+    std::vector<PortIdentifier> outputs,
+    std::vector<std::unique_ptr<Component>> owned_components)
+  : num_inputs_(num_inputs), sub_components_(sub_components), outputs_(outputs),
+    owned_components_(std::move(owned_components))
 {
   // TODO: Pull the verification of correctness out into helper functions that
   // return a boolean rather than repeating code and directly asserting here.
@@ -47,6 +52,13 @@ Circuit::Circuit(int num_inputs,
     }
   }
 }
+
+Circuit::Circuit(int num_inputs,
+    std::vector<SubComponentEntry> sub_components,
+    std::vector<PortIdentifier> outputs)
+  : Circuit(num_inputs, sub_components, outputs,
+      std::vector<std::unique_ptr<Component>>())
+{ }
 
 std::vector<Value> Circuit::Eval(const std::vector<Value>& inputs) const
 {
