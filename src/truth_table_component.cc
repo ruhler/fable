@@ -22,9 +22,10 @@ std::vector<Value> TruthTableComponent::Eval(const std::vector<Value>& inputs) c
 
   uint32_t output_bits = truth_table_.Eval(input_bits);
   std::vector<Value> outputs;
+  uint32_t mask = 1 << NumOutputs();
   for (int i = 0; i < NumOutputs(); i++) {
-    outputs.push_back((output_bits & 0x1) ? BIT_ONE : BIT_ZERO);
-    output_bits >>= 1;
+    mask >>= 1;
+    outputs.push_back((output_bits & mask) ? BIT_ONE : BIT_ZERO);
   }
   return outputs;
 }

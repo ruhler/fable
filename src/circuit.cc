@@ -43,7 +43,7 @@ Circuit::Circuit(int num_inputs,
           && "Invalid port index for input");
     } else {
       assert(portid.component_index >= 0
-          && portid.component_index < j
+          && portid.component_index < outputs.size()
           && "Invalid port identifier component index");
       const Component* component = sub_components[portid.component_index].component;
       assert(portid.port_index >= 0

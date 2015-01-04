@@ -1,0 +1,17 @@
+
+* It would be nice to have an infrastructure for checking and defining errors.
+This could be used for static assertions, dynamic checks, and test cases.
+The idea is: we have a way to report an error, including file and line number,
+the type of error, and additional dynamic information. Somehow that can be
+appropriately interpreted and reported.
+
+Use C++ exceptions? Should it be part of the interface to a function what
+errors it can encounter? Is there a difference between: Something unexpected
+happened and you used this function wrong?
+
+* Maybe it would be nice to have an infrastructure for adding debug printf
+  statements?
+
+* It would be nice if the make file could make itself right.
+As in, make it easy to automatically compute dependencies if possible.
+
