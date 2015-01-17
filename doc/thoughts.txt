@@ -15,3 +15,30 @@ happened and you used this function wrong?
 * It would be nice if the make file could make itself right.
 As in, make it easy to automatically compute dependencies if possible.
 
+* There are two different consumers of a description: Humans and computers.
+Computers read the description and do something based on it.
+Humans read the description to understand it.
+
+Humans are (much) better at understanding natural language than structured
+code. So, even if the structured code has all the information, it's much
+easier to understand if it is accompanied with a natural language description.
+
+It is vital that a natural language description can be associated with parts
+of structured code. Can you imagine how awful a programming language would be
+that didn't have a way to include comments?
+
+The question is, is there a nice, uniform, way to support comments in
+structured descriptions of code? Usually I want the comment associated with
+some specific part of the structured description.
+
+I almost want something like gerrit code review: you can select a component
+and add a comment to it which shows up orthogonal to the structured code. That
+is, you have a way to add comments outside of the sequence of characters used
+to describe the code.
+
+If we had an editor and viewer to support this, that would be awesome. That
+suggests I really want a richer interface to humans than just a static
+sequence of characters. I want something where the human can point to
+something, and see additional info. Then they can point somewhere else, and
+get other info somewhere else.
+
