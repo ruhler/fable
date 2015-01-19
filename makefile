@@ -1,19 +1,27 @@
 
+# If there is a test for a component 'foo' in src/foo_test.cc, list 'foo' here
+# to add that test case to the default build.
+TESTS := \
+	circuit \
+	char_stream \
+	token_stream \
+	truth_table \
+	truth_table_component \
+	adder
+
 OBJECTS :=  \
 	build/adder.o \
 	build/value.o \
 	build/circuit.o \
 	build/char_stream.o \
 	build/location.o \
+	build/parse_exception.o \
+	build/token_stream.o \
+	build/token_type.o \
 	build/truth_table.o \
 	build/truth_table_component.o
 
-all: \
-	build/circuit_test.passed \
-	build/char_stream_test.passed \
- 	build/truth_table_test.passed \
-	build/truth_table_component_test.passed \
-	build/adder_test.passed
+all: $(TESTS:%=build/%_test.passed)
 
 build/%_test.passed: build/%_test
 	./build/$*_test && echo "PASSED" > $@
