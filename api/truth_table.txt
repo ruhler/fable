@@ -1,0 +1,56 @@
+Truth Table
+===========
+A truth table is a total mapping of an input sequence of bits to an output
+sequence of bits. Both the number of bits in the input sequence and the number
+of bits in the output sequence are fixed statically. Typically the number of
+bits in the input sequence is small, not more than half a dozen bits, because
+the size of the truth table grows exponentially in the number of input bits.
+
+For example, consider the boolean AND operation. The AND operation takes two
+inputs, A and B, and produces a single output Z. The output Z is 1 if and only
+if both of the inputs A and B are 1. The AND operation can be described using
+a truth table:
+
+  A B | Z
+  ----|--
+  0 0 | 0
+  0 1 | 0
+  1 0 | 0
+  1 1 | 1
+
+Syntax
+------
+Here we define a syntax for interpreting a sequence of characters as a truth
+table. 
+
+As a sample of the syntax, the AND operation described above is represented
+using the following sequence of characters:
+
+  TruthTable(A, B; Z) {
+    00: 0;
+    01: 0;
+    10: 0;
+    11: 1;
+  }
+
+More precisely, the syntax for a truth table is as follows:
+1. The keyword 'TruthTable'
+2. Lists of input names and output names surrounded by parentheses.
+A semicolon is used to divide the list of input names, which comes first, from
+the list of output names. Each list is a comma separated list of names, where
+a name is a sequence of characters not containing punctuation or white space
+(TODO: Be more precise about what a name is).
+The input list may be empty. The output list should contain at least one
+element. The names of all inputs and outputs should be distinct.
+3. A sequence of table entries surrounded by braces.
+Each entry consists of a sequence of binary digits, one for each input,
+followed by a colon, followed by a sequence of binary digits, one for each
+output, then a semicolon. The sequences of binary digits may contain the
+characters '0', '1', and '_', where '_' is used to group digits to make it
+easier to read the table entries, but is otherwise ignored.
+The table entries must be complete and have distinct input bit sequences; if
+there are N inputs, there should be 2^N^ table entries. The table entries may
+be listed in any order. 
+
+TODO: Be more precise about where whitespace is allowed.
+

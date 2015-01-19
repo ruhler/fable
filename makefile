@@ -3,11 +3,14 @@ OBJECTS :=  \
 	build/adder.o \
 	build/value.o \
 	build/circuit.o \
+	build/char_stream.o \
+	build/location.o \
 	build/truth_table.o \
 	build/truth_table_component.o
 
 all: \
 	build/circuit_test.passed \
+	build/char_stream_test.passed \
  	build/truth_table_test.passed \
 	build/truth_table_component_test.passed \
 	build/adder_test.passed
