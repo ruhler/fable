@@ -104,44 +104,15 @@ build/value.o: src/value.cc $(value_CDEPS)
 	mkdir -p build
 	g++ -ggdb -std=c++11 -c -o $@ $<
 
-build/adder_test: $(adder_test_ODEPS)
+
+build/all_test: $(TESTS:build/%_test=build/%_test.o) $(adder_test_ODEPS) $(char_stream_test_ODEPS) $(circuit_test_ODEPS) $(token_stream_test_ODEPS) $(truth_table_component_test_ODEPS) $(truth_table_test_ODEPS)
 	mkdir -p build
 	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
 
-build/char_stream_test: $(char_stream_test_ODEPS)
-	mkdir -p build
-	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
+tests: build/all_test.passed
 
-build/circuit_test: $(circuit_test_ODEPS)
-	mkdir -p build
-	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
-
-build/token_stream_test: $(token_stream_test_ODEPS)
-	mkdir -p build
-	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
-
-build/truth_table_component_test: $(truth_table_component_test_ODEPS)
-	mkdir -p build
-	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
-
-build/truth_table_test: $(truth_table_test_ODEPS)
-	mkdir -p build
-	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
-
-# If there is a test for a component 'foo' in src/foo_test.cc, list 'foo' here
-# to add that test case to the default build.
-TESTS := \
-	circuit \
-	char_stream \
-	token_stream \
-	truth_table \
-	truth_table_component \
-	adder
-
-tests: $(TESTS:%=build/%_test.passed)
-
-build/%_test.passed: build/%_test
-	./build/$*_test && echo "PASSED" > $@
+build/all_test.passed: build/all_test
+	./build/all_test && echo "PASSED" > $@
 
 .PHONY: clean
 clean: 
