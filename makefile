@@ -50,24 +50,33 @@ $(eval $(call declare-impl,truth_table_component_test,truth_table_component))
 $(eval $(call declare-impl,truth_table_test,truth_table))
 $(eval $(call declare-impl,value,value))
 
-# foo_ODEPS: A list of object files an executable depends on.
-adder_test_ODEPS := build/adder_test.o build/adder.o build/circuit.o build/value.o build/truth_table.o build/truth_table_component.o
-char_stream_test_ODEPS := build/char_stream_test.o build/char_stream.o build/location.o
-circuit_test_ODEPS := build/circuit_test.o build/circuit.o build/value.o
-token_stream_test_ODEPS := build/token_stream_test.o build/char_stream.o build/parse_exception.o build/location.o build/token_stream.o build/token_type.o
-truth_table_component_test_ODEPS := build/truth_table_component_test.o build/truth_table_component.o build/truth_table.o build/circuit.o build/value.o
-truth_table_test_ODEPS := build/truth_table_test.o build/truth_table.o
+# declare-test.
+# (1) - The name of the test to declare.
+#       It's assumed to be in 'src/' directory with suffix _test.cc, so don't
+#       include the src/ directory or the _test.cc extension.
+# (2) - The name of each impl this test directly or indirectly depends on.
+define declare-test
+	TEST_DEPS += build/$(1)_test.o $(2:%=build/%.o)
+endef
+
+$(eval $(call declare-test,adder,adder circuit value truth_table truth_table_component))
+$(eval $(call declare-test,char_stream,char_stream location))
+$(eval $(call declare-test,circuit,circuit value))
+$(eval $(call declare-test,token_stream,token_stream char_stream parse_exception location token_type))
+$(eval $(call declare-test,truth_table_component,truth_table_component truth_table circuit value))
+$(eval $(call declare-test,truth_table,truth_table))
 
 
-build/all_test: $(TESTS:build/%_test=build/%_test.o) $(adder_test_ODEPS) $(char_stream_test_ODEPS) $(circuit_test_ODEPS) $(token_stream_test_ODEPS) $(truth_table_component_test_ODEPS) $(truth_table_test_ODEPS)
+build/run_tests: $(TEST_DEPS)
 	mkdir -p build
 	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
 
-tests: build/all_test.passed
+tests: build/run_tests.passed
 
-build/all_test.passed: build/all_test
-	./build/all_test && echo "PASSED" > $@
+build/run_tests.passed: build/run_tests
+	./build/run_tests && echo "PASSED" > $@
 
 .PHONY: clean
 clean: 
 	rm -rf build
+
