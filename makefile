@@ -1,18 +1,26 @@
 
+# declare-header.
+# (1) - The name of the header to declare.
+#       It's assumed to be in 'src/' directory with extension .h, so don't
+#       include the src/ directory or the .h extension.
+# (2) - The name of each header this header directly depends on.
+define declare-header
+  $(1)_HDEPS := src/$(1).h $(2:%=$$(%_HDEPS))
+endef
+
+$(eval $(call declare-header,adder,))
+$(eval $(call declare-header,location,))
+$(eval $(call declare-header,char_stream,location))
+$(eval $(call declare-header,value,))
+$(eval $(call declare-header,circuit,value))
+$(eval $(call declare-header,token_type,))
+$(eval $(call declare-header,parse_exception,location token_type))
+$(eval $(call declare-header,token_stream,char_stream token_type))
+$(eval $(call declare-header,truth_table,))
+$(eval $(call declare-header,truth_table_component,circuit truth_table value))
+
 default: tests
 
-# foo_HDEPS: A list of files that anything including foo.h depends on due to
-# it including foo.h.
-adder_HDEPS := src/adder.h
-location_HDEPS := src/location.h
-char_stream_HDEPS := src/char_stream.h $(location_HDEPS)
-value_HDEPS := src/value.h
-circuit_HDEPS := src/circuit.h $(value_HDEPS)
-token_type_HDEPS := src/token_type.h
-parse_exception_HDEPS := src/parse_exception.h $(location_HDEPS) $(token_type_HDEPS)
-token_stream_HDEPS := src/token_stream.h $(char_stream_HDEPS) $(token_type_HDEPS)
-truth_table_HDEPS := src/truth_table.h
-truth_table_component_HDEPS := src/truth_table_component.h $(circuit_HDEPS) $(truth_table_HDEPS) $(value_HDEPS)
 
 # foo_CDEPS: A list of the header files foo.cc depends on.
 adder_CDEPS := $(circuit_HDEPS) $(truth_table_HDEPS) $(truth_table_component_HDEPS)
