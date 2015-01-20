@@ -1,8 +1,9 @@
 
-#include "parse_exception.h"
 #include "token_stream.h"
 
 #include <cctype>
+
+#include "parse_exception.h"
 
 TokenStream::TokenStream(CharStream char_stream)
   : char_stream_(char_stream)
