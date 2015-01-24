@@ -11,7 +11,7 @@
 
 TEST(TokenStreamTest, Basic) {
   std::istringstream iss("foo(a,b;c) {\n 00: 12;\n}");
-  TokenStream stream(CharStream("test", iss));
+  TokenStream stream("test", iss);
 
   NO_PARSE_EXCEPTION(EXPECT_TRUE(stream.TokenIs(kWord)));
   NO_PARSE_EXCEPTION(EXPECT_EQ("foo", stream.GetWord()));

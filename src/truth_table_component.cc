@@ -7,6 +7,11 @@ TruthTableComponent::TruthTableComponent(TruthTable truth_table)
   : truth_table_(truth_table)
 { }
 
+TruthTableComponent::TruthTableComponent(std::vector<std::string> inputs,
+    std::vector<std::string> outputs, std::vector<uint32_t> table)
+  : truth_table_(TruthTable(inputs, outputs, table))
+{ }
+
 std::vector<Value> TruthTableComponent::Eval(const std::vector<Value>& inputs) const
 {
   assert(inputs.size() == NumInputs()

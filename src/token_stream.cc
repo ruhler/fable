@@ -9,6 +9,10 @@ TokenStream::TokenStream(CharStream char_stream)
   : char_stream_(char_stream)
 { }
 
+TokenStream::TokenStream(std::string source, std::istream& istream)
+  : char_stream_(CharStream(source, istream))
+{ }
+
 void TokenStream::EatToken(TokenType type) {
   TokenType found = NextTokenType();
   if (type != found) {

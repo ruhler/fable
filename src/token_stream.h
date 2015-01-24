@@ -11,6 +11,7 @@
 class TokenStream {
  public:
   TokenStream(CharStream char_stream);
+  TokenStream(std::string source, std::istream& istream);
 
   // Asserts the current token is of the given type and advances to the next
   // token in the stream.
