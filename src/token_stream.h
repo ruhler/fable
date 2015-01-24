@@ -42,5 +42,19 @@ class TokenStream {
   CharStream char_stream_;
 };
 
+// A TokenStream which automatically removes all space tokens before reading
+// or testing the next token.
+class SpaceEatingTokenStream {
+ public:
+  SpaceEatingTokenStream(CharStream char_stream);
+  SpaceEatingTokenStream(std::string source, std::istream& istream);
+
+  void EatToken(TokenType type);
+  std::string GetWord();
+  bool TokenIs(TokenType type);
+ private:
+  TokenStream token_stream_;
+};
+
 #endif//TOKEN_STREAM_H_
 

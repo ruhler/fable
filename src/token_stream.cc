@@ -7,11 +7,11 @@
 
 TokenStream::TokenStream(CharStream char_stream)
   : char_stream_(char_stream)
-{ }
+{}
 
 TokenStream::TokenStream(std::string source, std::istream& istream)
   : char_stream_(CharStream(source, istream))
-{ }
+{}
 
 void TokenStream::EatToken(TokenType type) {
   TokenType found = NextTokenType();
@@ -79,5 +79,32 @@ bool TokenStream::IsSpaceChar(char c) {
 
 bool TokenStream::IsWordChar(char c) {
   return isalnum(c) || c == '_';
+}
+
+SpaceEatingTokenStream::SpaceEatingTokenStream(CharStream char_stream)
+  : token_stream_(TokenStream(char_stream))
+{}
+
+SpaceEatingTokenStream::SpaceEatingTokenStream(std::string source,
+   std::istream& istream)
+  : token_stream_(TokenStream(source, istream))
+{}
+
+void SpaceEatingTokenStream::EatToken(TokenType type)
+{
+  token_stream_.EatSpace();
+  token_stream_.EatToken(type);
+}
+
+std::string SpaceEatingTokenStream::GetWord()
+{
+  token_stream_.EatSpace();
+  return token_stream_.GetWord();
+}
+
+bool SpaceEatingTokenStream::TokenIs(TokenType type)
+{
+  token_stream_.EatSpace();
+  return token_stream_.TokenIs(type);
 }
 
