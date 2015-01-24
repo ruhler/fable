@@ -5,21 +5,7 @@
 #include "truth_table_component.h"
 
 TEST(TruthTableComponentTest, XOR) {
-  std::vector<std::string> tt_inputs;
-  tt_inputs.push_back("A");
-  tt_inputs.push_back("B");
-
-  std::vector<std::string> tt_outputs;
-  tt_outputs.push_back("Z");
-
-  std::vector<uint32_t> table;
-  table.push_back(0);
-  table.push_back(1);
-  table.push_back(1);
-  table.push_back(0);
-
-  TruthTable truth_table(tt_inputs, tt_outputs, table);
-
+  TruthTable truth_table({"A", "B"}, {"Z"}, {0, 1, 1, 0});
   TruthTableComponent component(truth_table);
 
   std::vector<Value> inputs(2);
@@ -53,22 +39,7 @@ TEST(TruthTableComponentTest, XOR) {
 // We had a bug where we were outputting the output bits in the reverse order.
 // This test case catches that error.
 TEST(TruthTableComponentTest, MultiOut) {
-  std::vector<std::string> tt_inputs;
-  tt_inputs.push_back("A");
-  tt_inputs.push_back("B");
-
-  std::vector<std::string> tt_outputs;
-  tt_outputs.push_back("Y");
-  tt_outputs.push_back("Z");
-
-  std::vector<uint32_t> table;
-  table.push_back(0);
-  table.push_back(1);
-  table.push_back(2);
-  table.push_back(3);
-
-  TruthTable truth_table(tt_inputs, tt_outputs, table);
-
+  TruthTable truth_table({"A", "B"}, {"Y", "Z"}, {0, 1, 2, 3});
   TruthTableComponent component(truth_table);
 
   std::vector<Value> inputs(2);
