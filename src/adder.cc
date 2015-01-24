@@ -10,6 +10,8 @@
 // Create a full 1-bit adder.
 std::unique_ptr<Component> CreateFullAdder()
 {
+  std::vector<std::string> inputs{"A", "B", "Cin"};
+  std::vector<std::string> outputs{"Z", "Cout"};
   std::vector<uint32_t> table(8);
   table[0] = 0;  // 0+0+0 = 0 carry 0
   table[1] = 2;  // 0+0+1 = 1 carry 0
@@ -19,7 +21,7 @@ std::unique_ptr<Component> CreateFullAdder()
   table[5] = 1;  // 1+0+1 = 0 carry 1
   table[6] = 1;  // 1+1+0 = 0 carry 1
   table[7] = 3;  // 1+1+1 = 1 carry 1
-  TruthTable truth_table(3, 2, table);
+  TruthTable truth_table(inputs, outputs, table);
   return std::unique_ptr<Component>(new TruthTableComponent(truth_table));
 }
 
