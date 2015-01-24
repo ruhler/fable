@@ -1,5 +1,5 @@
 
-default: tests
+default: build/tests_passed
 
 # declare-header.
 # (1) - The name of the header to declare.
@@ -9,8 +9,14 @@ default: tests
 #
 # Defines foo_HDEPS, a list of all header files this header depends on,
 # including itself, direct dependencies, and all indirect dependencies.
+#
+# Also defines a rule to check the dependencies in the header, adding the
+# target file to HEADER_DEP_CHECKS
 define declare-header
-  $(1)_HDEPS := src/$(1).h $(2:%=$$(%_HDEPS))
+$(1)_HDEPS := src/$(1).h $(2:%=$$(%_HDEPS))
+build/$(1).h.deps_right: src/$(1).h
+	python util/checkdep.py src/$(1).h $(2:%=%.h) && touch $$@
+HEADER_DEP_CHECKS += build/$(1).h.deps_right
 endef
 
 $(eval $(call declare-header,adder,))
@@ -30,14 +36,20 @@ $(eval $(call declare-header,truth_table_component,circuit truth_table value))
 #       It's assumed to be in 'src/' directory with extension .cc, so don't
 #       include the src/ directory or the .cc extension.
 # (2) - The name of each header this implementation directly depends on.
+#
+# Also defines a rule to check the dependencies in the implementation file,
+# adding the target file to IMPL_DEP_CHECKS
 define declare-impl
 ALL_OBJECTS += build/$(1).o
 build/$(1).o: src/$(1).cc $(2:%=$$(%_HDEPS))
 	mkdir -p build
 	g++ -ggdb -std=c++11 -c -o $$@ $$<
+build/$(1).cc.deps_right: src/$(1).cc
+	python util/checkdep.py src/$(1).cc $(2:%=%.h) && touch $$@
+IMPL_DEP_CHECKS += build/$(1).cc.deps_right
 endef
 
-$(eval $(call declare-impl,adder,circuit truth_table truth_table_component))
+$(eval $(call declare-impl,adder,adder circuit truth_table truth_table_component))
 $(eval $(call declare-impl,adder_test,adder circuit))
 $(eval $(call declare-impl,char_stream,char_stream))
 $(eval $(call declare-impl,char_stream_test,char_stream))
@@ -58,10 +70,8 @@ build/run_tests: $(ALL_OBJECTS)
 	mkdir -p build
 	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
 
-tests: build/run_tests.passed
-
-build/run_tests.passed: build/run_tests
-	./build/run_tests && echo "PASSED" > $@
+build/tests_passed: build/run_tests $(HEADER_DEP_CHECKS) $(IMPL_DEP_CHECKS)
+	./build/run_tests && touch $@
 
 .PHONY: clean
 clean: 
