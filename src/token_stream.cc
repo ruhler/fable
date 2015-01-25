@@ -5,6 +5,38 @@
 
 #include "parse_exception.h"
 
+class UnexpectedTokenException : public ParseException {
+ public:
+  UnexpectedTokenException(TokenType expected, TokenType found,
+      Location location)
+    : ParseException(location), expected_(expected), found_(found)
+  {}
+
+  virtual std::ostream& Message(std::ostream& os) const {
+    return os << "Expected token of type " << expected_
+      << ", but found " << found_ << ".";
+  }
+
+ private:
+  TokenType expected_;
+  TokenType found_;
+};
+
+class UnknownCharException : public ParseException {
+ public:
+  UnknownCharException(char c, Location location)
+   : ParseException(location), char_(c)
+  {}
+
+  virtual std::ostream& Message(std::ostream& os) const {
+    return os << "Encountered unknown character '" << char_ << "' in input.";
+  }
+
+ private:
+  char char_;
+};
+
+
 TokenStream::TokenStream(CharStream char_stream)
   : char_stream_(char_stream)
 {}
