@@ -5,38 +5,6 @@
 
 #include "parse_exception.h"
 
-class UnexpectedTokenException : public ParseException {
- public:
-  UnexpectedTokenException(TokenType expected, TokenType found,
-      Location location)
-    : ParseException(location), expected_(expected), found_(found)
-  {}
-
-  virtual std::ostream& Message(std::ostream& os) const {
-    return os << "Expected token of type " << expected_
-      << ", but found " << found_ << ".";
-  }
-
- private:
-  TokenType expected_;
-  TokenType found_;
-};
-
-class UnknownCharException : public ParseException {
- public:
-  UnknownCharException(char c, Location location)
-   : ParseException(location), char_(c)
-  {}
-
-  virtual std::ostream& Message(std::ostream& os) const {
-    return os << "Encountered unknown character '" << char_ << "' in input.";
-  }
-
- private:
-  char char_;
-};
-
-
 TokenStream::TokenStream(CharStream char_stream)
   : char_stream_(char_stream)
 {}
@@ -48,7 +16,9 @@ TokenStream::TokenStream(std::string source, std::istream& istream)
 void TokenStream::EatToken(TokenType type) {
   TokenType found = NextTokenType();
   if (type != found) {
-    throw UnexpectedTokenException(type, found, char_stream_.GetLocation());
+    throw ParseException(char_stream_.GetLocation())
+      << "Expected token of type " << type
+      << ", but found " << found << ".";
   }
 
   if (type == kWord) {
@@ -67,7 +37,9 @@ void TokenStream::EatSpace() {
 std::string TokenStream::GetWord() {
   TokenType found = NextTokenType();
   if (found != kWord) {
-    throw UnexpectedTokenException(kWord, found, char_stream_.GetLocation());
+    throw ParseException(char_stream_.GetLocation()) 
+      << "Expected token of type " << kWord 
+      << ", but found " << found << ".";
   }
 
   std::string word;
@@ -102,7 +74,8 @@ TokenType TokenStream::NextTokenType() {
     return kWord;
   }
 
-  throw UnknownCharException(c, char_stream_.GetLocation());
+  throw ParseException(char_stream_.GetLocation())
+    << "Encountered unsupported character '" << c << "' in input.";
 }
 
 bool TokenStream::IsSpaceChar(char c) {

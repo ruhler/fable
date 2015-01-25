@@ -3,23 +3,31 @@
 #define PARSE_EXCEPTION_H_
 
 #include <iostream>
+#include <sstream>
 
 #include "location.h"
 #include "token_type.h"
 
 class ParseException {
  public:
-  ParseException(Location location);
-  virtual ~ParseException();
+  explicit ParseException(Location location);
+  ParseException(const ParseException& rhs);
 
-  // Outputs an error message, without location information.
-  virtual std::ostream& Message(std::ostream& os) const = 0;
+  // Return the location in the input source of the parse exception.
+  Location GetLocation() const;
 
-  // Outputs an error message prefixed with location information.
-  std::ostream& MessageWithLocation(std::ostream& os) const;
+  // Return the error message, without location information.
+  std::string GetMessage() const;
+
+  template <typename T>
+  ParseException& operator<<(const T& x) {
+    message_ << x;
+    return *this;
+  }
 
  private:
   Location location_;
+  std::ostringstream message_;
 };
 
 std::ostream& operator<<(std::ostream& os, const ParseException& exception);

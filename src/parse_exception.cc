@@ -5,14 +5,19 @@ ParseException::ParseException(Location location)
  : location_(location)
 {}
 
-ParseException::~ParseException()
+ParseException::ParseException(const ParseException& rhs)
+ : location_(rhs.location_), message_(rhs.message_.str())
 {}
 
-std::ostream& ParseException::MessageWithLocation(std::ostream& os) const {
-  return Message(os << location_ << ":");
+std::string ParseException::GetMessage() const {
+  return message_.str();
+}
+
+Location ParseException::GetLocation() const {
+  return location_;
 }
 
 std::ostream& operator<<(std::ostream& os, const ParseException& exception) {
-  return exception.MessageWithLocation(os);
+  return os << exception.GetLocation() << ":" << exception.GetMessage();
 }
 
