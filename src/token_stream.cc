@@ -53,6 +53,10 @@ bool TokenStream::TokenIs(TokenType type) {
   return type == NextTokenType();
 }
 
+Location TokenStream::GetLocation() const {
+  return char_stream_.GetLocation();
+}
+
 TokenType TokenStream::NextTokenType() {
   int c = char_stream_.PeekChar();
   switch (c) {
@@ -111,5 +115,10 @@ bool SpaceEatingTokenStream::TokenIs(TokenType type)
 {
   token_stream_.EatSpace();
   return token_stream_.TokenIs(type);
+}
+
+Location SpaceEatingTokenStream::GetLocation() {
+  token_stream_.EatSpace();
+  return token_stream_.GetLocation();
 }
 

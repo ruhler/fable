@@ -29,6 +29,7 @@ $(eval $(call declare-header,parse_exception,location token_type))
 $(eval $(call declare-header,token_stream,char_stream token_type))
 $(eval $(call declare-header,truth_table,))
 $(eval $(call declare-header,truth_table_component,circuit truth_table value))
+$(eval $(call declare-header,truth_table_parser,truth_table))
 
 
 # declare-impl.
@@ -63,6 +64,8 @@ $(eval $(call declare-impl,token_type,token_type))
 $(eval $(call declare-impl,truth_table,truth_table))
 $(eval $(call declare-impl,truth_table_component,truth_table_component))
 $(eval $(call declare-impl,truth_table_component_test,truth_table_component))
+$(eval $(call declare-impl,truth_table_parser,truth_table_parser token_stream parse_exception))
+$(eval $(call declare-impl,truth_table_parser_test,truth_table truth_table_parser parse_exception))
 $(eval $(call declare-impl,truth_table_test,truth_table))
 $(eval $(call declare-impl,value,value))
 

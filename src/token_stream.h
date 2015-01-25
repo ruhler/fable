@@ -31,6 +31,8 @@ class TokenStream {
   // Throws a ParseException if the next token is not of a known type.
   bool TokenIs(TokenType type);
 
+  Location GetLocation() const;
+
   static bool IsSpaceChar(char c);
   static bool IsWordChar(char c);
 
@@ -52,6 +54,8 @@ class SpaceEatingTokenStream {
   void EatToken(TokenType type);
   std::string GetWord();
   bool TokenIs(TokenType type);
+  Location GetLocation();
+
  private:
   TokenStream token_stream_;
 };
