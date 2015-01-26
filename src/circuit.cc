@@ -1,7 +1,7 @@
 
 #include "circuit.h"
 
-#include <cassert>
+#include "error.h"
 
 Component::~Component()
 { }
@@ -17,21 +17,25 @@ Circuit::Circuit(int num_inputs,
   // return a boolean rather than repeating code and directly asserting here.
   for (int i = 0; i < sub_components_.size(); i++) {
     SubComponentEntry& entry = sub_components[i];
-    assert(entry.component->NumInputs() == entry.inputs.size()
-      && "Wrong number of inputs for component");
+    CHECK_EQ(entry.component->NumInputs(), entry.inputs.size())
+      << "Wrong number of inputs for component";
     for (int j = 0; j < entry.inputs.size(); j++) {
       PortIdentifier& portid = entry.inputs[j];
       if (portid.component_index == kInputPortComponentIndex) {
-        assert(portid.port_index >= 0 && portid.port_index < num_inputs
-            && "Invalid port index for input");
+        CHECK_GE(portid.port_index, 0) << "Invalid port index for input.";
+        CHECK_LT(portid.port_index, num_inputs)
+          << "Invalid port index for input.";
       } else {
-        assert(portid.component_index >= 0
-            && portid.component_index < i
-            && "Invalid port identifier component index");
+        CHECK_GE(portid.component_index, 0)
+          << "Invalid port identifier component index.";
+        CHECK_LT(portid.component_index, i)
+          << "Invalid port identifier component index.";
+
         const Component* component = sub_components[portid.component_index].component;
-        assert(portid.port_index >= 0
-            && portid.port_index < component->NumOutputs()
-            && "Invalid port identifier port index");
+        CHECK_GE(portid.port_index, 0)
+          << "Invalid port identifier port index.";
+        CHECK_LT(portid.port_index, component->NumOutputs())
+          << "Invalid port identifier port index";
       }
     }
   }
@@ -39,16 +43,18 @@ Circuit::Circuit(int num_inputs,
   for (int j = 0; j < outputs.size(); j++) {
     PortIdentifier& portid = outputs[j];
     if (portid.component_index == kInputPortComponentIndex) {
-      assert(portid.port_index >= 0 && portid.port_index < num_inputs
-          && "Invalid port index for input");
+      CHECK_GE(portid.port_index, 0) << "Invalid port index for input.";
+      CHECK_LT(portid.port_index, num_inputs)
+        << "Invalid port index for input.";
     } else {
-      assert(portid.component_index >= 0
-          && portid.component_index < outputs.size()
-          && "Invalid port identifier component index");
+      CHECK_GE(portid.component_index, 0)
+        << "Invalid port identifier component index.";
+      CHECK_LT(portid.component_index, outputs.size())
+        << "Invalid port identifier component index.";
       const Component* component = sub_components[portid.component_index].component;
-      assert(portid.port_index >= 0
-          && portid.port_index < component->NumOutputs()
-          && "Invalid port identifier port index");
+      CHECK_GE(portid.port_index, 0) << "Invalid port identifier port index.";
+      CHECK_LT(portid.port_index, component->NumOutputs())
+        << "Invalid port identifier port index.";
     }
   }
 }
@@ -62,8 +68,8 @@ Circuit::Circuit(int num_inputs,
 
 std::vector<Value> Circuit::Eval(const std::vector<Value>& inputs) const
 {
-  assert(inputs.size() == num_inputs_
-    && "Wrong number of inputs given to circuit");
+  CHECK_EQ(inputs.size(), num_inputs_)
+    << "Wrong number of inputs given to circuit";
 
   // Edges will contain the outputs of all sub components. We compute this in
   // order of the sub components, with the guarantee from the constructor that

@@ -1,7 +1,7 @@
 
 #include "truth_table_component.h"
 
-#include <cassert>
+#include "error.h"
 
 TruthTableComponent::TruthTableComponent(TruthTable truth_table)
   : truth_table_(truth_table)
@@ -14,8 +14,8 @@ TruthTableComponent::TruthTableComponent(std::vector<std::string> inputs,
 
 std::vector<Value> TruthTableComponent::Eval(const std::vector<Value>& inputs) const
 {
-  assert(inputs.size() == NumInputs()
-      && "Wrong number of inputs passed to truth table component");
+  CHECK_EQ(inputs.size(), NumInputs())
+    << "Wrong number of inputs passed to truth table component";
 
   uint32_t input_bits = 0;
   for (int i = 0; i < NumInputs(); i++) {

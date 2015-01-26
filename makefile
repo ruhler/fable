@@ -20,16 +20,17 @@ HEADER_DEP_CHECKS += build/$(1).h.deps_right
 endef
 
 $(eval $(call declare-header,adder,))
-$(eval $(call declare-header,location,))
 $(eval $(call declare-header,char_stream,location))
-$(eval $(call declare-header,value,))
 $(eval $(call declare-header,circuit,value))
-$(eval $(call declare-header,token_type,))
+$(eval $(call declare-header,location,))
 $(eval $(call declare-header,parse_exception,location token_type))
+$(eval $(call declare-header,error,))
+$(eval $(call declare-header,token_type,))
 $(eval $(call declare-header,token_stream,char_stream token_type))
 $(eval $(call declare-header,truth_table,))
 $(eval $(call declare-header,truth_table_component,circuit truth_table value))
 $(eval $(call declare-header,truth_table_parser,truth_table))
+$(eval $(call declare-header,value,))
 
 
 # declare-impl.
@@ -50,21 +51,22 @@ build/$(1).cc.deps_right: src/$(1).cc
 IMPL_DEP_CHECKS += build/$(1).cc.deps_right
 endef
 
-$(eval $(call declare-impl,adder,adder circuit truth_table truth_table_component))
+$(eval $(call declare-impl,adder,adder circuit error truth_table truth_table_component))
 $(eval $(call declare-impl,adder_test,adder circuit))
 $(eval $(call declare-impl,char_stream,char_stream))
 $(eval $(call declare-impl,char_stream_test,char_stream))
-$(eval $(call declare-impl,circuit,circuit))
+$(eval $(call declare-impl,circuit,circuit error))
 $(eval $(call declare-impl,circuit_test,circuit value))
+$(eval $(call declare-impl,error,error))
 $(eval $(call declare-impl,location,location))
 $(eval $(call declare-impl,parse_exception,parse_exception))
 $(eval $(call declare-impl,token_stream,token_stream parse_exception))
 $(eval $(call declare-impl,token_stream_test,char_stream parse_exception token_stream))
 $(eval $(call declare-impl,token_type,token_type))
-$(eval $(call declare-impl,truth_table,truth_table))
-$(eval $(call declare-impl,truth_table_component,truth_table_component))
+$(eval $(call declare-impl,truth_table,truth_table error))
+$(eval $(call declare-impl,truth_table_component,truth_table_component error))
 $(eval $(call declare-impl,truth_table_component_test,truth_table_component))
-$(eval $(call declare-impl,truth_table_parser,truth_table_parser token_stream parse_exception))
+$(eval $(call declare-impl,truth_table_parser,truth_table_parser token_stream parse_exception error))
 $(eval $(call declare-impl,truth_table_parser_test,truth_table truth_table_parser parse_exception))
 $(eval $(call declare-impl,truth_table_test,truth_table))
 $(eval $(call declare-impl,value,value))

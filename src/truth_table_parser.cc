@@ -1,8 +1,7 @@
 
 #include "truth_table_parser.h"
 
-#include <cassert>
-
+#include "error.h"
 #include "parse_exception.h"
 #include "token_stream.h"
 
@@ -56,7 +55,7 @@ static std::vector<std::string> ParseOutputs(SpaceEatingTokenStream& tokens)
 static uint32_t ParseBitSequence(int num_bits, const std::string& word,
     const Location& location)
 {
-  assert(num_bits <= 32 && "Too many bits to ParseBitSequence");
+  CHECK_LE(num_bits, 32) << "Too many bits to ParseBitSequence.";
 
   uint32_t bits = 0;
   int bits_found = 0;

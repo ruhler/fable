@@ -1,7 +1,4 @@
 
 * Have separate namespaces for parser, truth_table, and circuit
 * Have separate directories for parser, truth_table, and circuit
-* Can I have a ParseException which is a general error message that I can use
-  streams in a nice way to generate? Rather than declaring so many different
-  kinds of ParseExceptions.
 

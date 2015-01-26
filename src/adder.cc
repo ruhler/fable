@@ -1,9 +1,8 @@
 
 #include "adder.h"
 
-#include <cassert>
-
 #include "circuit.h"
+#include "error.h"
 #include "truth_table.h"
 #include "truth_table_component.h"
 
@@ -27,7 +26,7 @@ std::unique_ptr<Component> CreateFullAdder()
 
 std::unique_ptr<Component> CreateAdder(int n)
 {
-  assert(n > 0 && "CreateAdder n must be greater than zero");
+  CHECK_GT(n, 0) << "CreateAdder n must be greater than zero.";
 
   std::unique_ptr<Component> adder1 = CreateFullAdder();
 
