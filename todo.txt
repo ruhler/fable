@@ -1,4 +1,6 @@
 
 * Have separate namespaces for parser, truth_table, and circuit
 * Have separate directories for parser, truth_table, and circuit
+* Implement a circuit parser
+* Document circuit API
 

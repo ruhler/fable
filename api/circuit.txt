@@ -1,0 +1,6 @@
+Circuit
+=======
+A circuit is an interconnection of components that performs a computation.
+Each component has a fixed number of inputs and outputs. The circuit itself is
+a component that can be used in larger circuits.
+

@@ -34,23 +34,71 @@ using the following sequence of characters:
   }
 
 More precisely, the syntax for a truth table is as follows:
-1. The keyword 'TruthTable'
-2. Lists of input names and output names surrounded by parentheses.
-A semicolon is used to divide the list of input names, which comes first, from
-the list of output names. Each list is a comma separated list of names, where
-a name is a sequence of characters not containing punctuation or white space
-(TODO: Be more precise about what a name is).
-The input list may be empty. The output list should contain at least one
-element. The names of all inputs and outputs should be distinct.
-3. A sequence of table entries surrounded by braces.
-Each entry consists of a sequence of binary digits, one for each input,
-followed by a colon, followed by a sequence of binary digits, one for each
-output, then a semicolon. The sequences of binary digits may contain the
-characters '0', '1', and '_', where '_' is used to group digits to make it
-easier to read the table entries, but is otherwise ignored.
-The table entries must be complete and have distinct input bit sequences; if
-there are N inputs, there should be 2^N^ table entries. The table entries may
-be listed in any order. 
 
-TODO: Be more precise about where whitespace is allowed.
+A sequence of characters is broken up into a sequence of tokens of the
+following forms:
+1. Punctuation: Each of the characters '(', ',', ';', ')', '{', '}', ':',
+and ';' form their own tokens.
+2. Words: A sequence of adjacent word characters group together to form a
+single word token. A word character is an alpha numeric character (a digit '0'
+through '9', a lowercase letter 'a' through 'z', or an upper case letter 'A'
+through 'Z') or underscore '_'. Words are case sensitive.
+
+Space, form-feed, newline, carriage return, horizontal tab and vertical tab
+are all whitespace. Any amount of whitespace between tokens is allowed and
+otherwise ignored for the purposes of parsing. There need not be any
+whitespace separating the tokens.
+
+The sequence of tokens after whitespace has been removed is then parsed as
+follows:
+
+A truth table consists of a list of input names, a list of output names, and
+the table entries using the syntax:
+
+  truth_table ::= 'TruthTable' '(' <inputs> ';' <outputs> ')' '{' <entries> '}'
+
+The inputs are specified either with no tokens, which means the truth table
+has no inputs, or as a sequence of words separated by commas that name the
+inputs:
+
+  inputs ::= (* empty *)
+          | word
+          | <inputs> ',' word
+
+The outputs are a sequence of words separated by commas that name the outputs.
+There must be at least one output specified:
+
+  outputs ::= word
+           |  <outputs> ',' word
+
+Each input name and each output name must be distinct from all the other input
+and output names.
+
+The entries are specified using as a sequence of key value pairs, where the
+key specifies the sequences of bits on the input, and the value species the
+sequence of output bits corresponding to that input.
+
+  entries ::= entry
+           | entries entry
+
+  entry ::= word ':' word ';'
+
+
+The first word in an entry is the key and the second word in an entry is the
+value. The words used for keys and values should consist solely of the
+characters '0', '1', and '_'.  The '_' characters are ignored. The remaining
+characters specify the values of the input or output bits. The order of the
+bits in the key and value words correspond to the order of the input and
+output names respectively. The number of input bits should match the number of
+input names given, and the number of output bits should match the number of
+output names given. If there are no input names, there must be exactly one
+entry. The key of that entry must contain at least one '_' character to
+satisfy the syntax of the key word without specifying any bits.
+In general, given 'N' inputs, there should be 2^N^ entries listed. The entries
+may be listed in any order, and each input sequence should appear exactly
+once in the list of entries.
+
+TODO: How to encode words with spaces in them? Should that be allowed?
+TODO: Why so limited a character set? Should we support Unicode characters in
+words?
 
