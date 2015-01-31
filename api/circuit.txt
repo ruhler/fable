@@ -3,4 +3,185 @@ Circuit
 A circuit is an interconnection of components that performs a computation.
 Each component has a fixed number of inputs and outputs. The circuit itself is
 a component that can be used in larger circuits.
+When presented an input, a circuit produces a output instantaneously.
+
+The input to the circuit, and outputs from components of the circuit are
+connected to inputs of components of the circuit and the output of the
+circuit. There must be no loops in the circuit.
+
+For example, consider a circuit to compute the following boolean expression:
+
+  Z = A & (B + C) + (C & D)
+
+The circuit in this example has four inputs, labeled A, B, C, and D. It has a
+single output labeled Z. Given binary AND and OR components, we can represent
+a circuit to compute the boolean expression graphically:
+
+  A------\ 
+  B--\   AND--\
+     OR--/     \
+     /          OR -- Z
+  C--          /
+     \        /
+     AND-----/
+  D--/
+
+In general, any component which accepts a finite number of inputs, and
+produces a finite number of outputs in a deterministic, instantaneous fashion
+can be used as a component of a circuit. Examples include:
+ * A circuit can always be used as a component of another circuit
+ * A truth table (see truth_table.txt)
+  
+Note: In the current description, the inputs and outputs of components are
+assumed to be bits. In general, a circuit can support inputs and outputs of
+more arbitrary types, depending on the primitive components supported.
+
+Syntax
+------
+Here we define a syntax for interpreting a sequence of characters as a
+circuit.
+
+As a sample of the syntax, the boolean circuit described above is represented
+using the following sequence of characters, where a truth table is used to
+define the AND and OR components:
+ 
+-----------------------------
+Circuit(A, B, C, D; Z) {
+  Component AND:
+    TruthTable(A, B; Z) {
+     00: 0;
+     01: 0;
+     10: 0;
+     11: 1;
+    };
+
+  Component OR:
+    TruthTable(A, B; Z) {
+     00: 0;
+     01: 1;
+     10: 1;
+     11: 1;
+    };
+
+  Instance or1: OR(B, C);
+  Instance and1: AND(C, D);
+  Instance and2: AND(A, or1.Z);
+  Instance or2: OR(and2.Z, and1.Z);
+
+  Output(or2.Z);
+}
+-----------------------------
+
+More precisely, the syntax for a truth table is as follows:
+
+A sequence of characters is broken up into a sequence of tokens of the
+following forms:
+1. Punctuation: Each of the characters '(', ',', ';', ')', '{', '}', ':', and
+';' form their own tokens.
+2. Words: A sequence of adjacent word characters group together to form a 
+single word token. A word character is an alpha numeric character (a digit '0'
+through '9', a lowercase letter 'a' through 'z', or an upper case letter 'A'
+through 'Z') or underscore '_'. Words are case sensitive.
+
+Space, form-feed, newline, carriage return, horizontal tab and vertical tab
+are all whitespace. Any amount of whitespace between tokens is allowed and
+otherwise ignored for the purposes of parsing. There need not be any
+whitespace separating the tokens.
+
+The sequence of tokens after whitespace has been removed is then parsed as
+follows:
+
+A circuit consists of a list of input names, a list of output names, a list of
+component definitions, a list of instance definitions, and a list of output
+values using the syntax:
+  
+  circuit ::= 'Circuit' '(' <inputs> ';' <outputs> ')' '{'
+                <components> <instances> <outvals> '}'
+
+The inputs are specified either with no tokens, which means the truth table
+has no inputs, or as a sequence of words separated by commas that name the
+inputs:
+
+  inputs ::= (* empty *)
+          | word
+          | <inputs> ',' word
+
+The outputs are a sequence of words separated by commas that name the outputs.
+There must be at least one output specified:
+
+  outputs ::= word
+           |  <outputs> ',' word
+
+Each input name and each output name must be distinct from all the other input
+and output names.
+
+The components are specified by providing a name for the component and a
+definition of the component:
+
+  components ::= (* empty *)
+              | components component
+  
+  component ::= 'Component' word ':' <definition> ';'
+
+The names of each component defined must be distinct. There need not be any
+components specified, in which case the circuit describes a simple re-wiring
+of inputs to outputs. In this case, there may be no instances specified, and
+each output value comes directly from an input.
+
+A component definition is a sequence of characters in the syntax for the
+component being defined. For a truth table component, refer to the truth table
+syntax described elsewhere. For a circuit component, use the syntax defined
+here.
+
+The instances are specified by providing a name for the instance followed by
+the name of the component type to instantiate, and the input values to connect
+to the instance:
+
+  'Instance' word ':' word '(' <inputvals> ')' ';'
+
+The component name must match one of the components defined in the component
+section of the circuit specification.
+
+Input values are a possibly empty, comma-separated list of input value
+specifications:
+
+  inputvals ::= (* empty *)
+             | inputval
+             | <inputvals> ',' inputval
+
+  inputval ::= word
+            | word '.' word
+
+An input value is specified by either a single word, indicating the input to
+the component comes directly from the named input to the circuit, or by a pair
+of words separated by a '.'. In this case, the first word refers to an
+instance that has already been defined, and the second word refers to an
+output of that instance. The order of the input values listed corresponds to
+the order of the input names in the definition of the instance's component.
+By requiring the inputs to an instance can only come from the input to the
+overall circuit, or outputs of already defined instances, it is not possible
+to describe a circuit with loops.
+
+The output of a circuit is a non-empty comma separated list of input values:
+
+   outvals ::= 'Output' '(' <inputvals> ')' ';'
+
+Input values are interpreted as they are when specifying the inputs of
+components. The order of input values listed corresponds to the order of
+output names in the definition of the circuit.
+
+TODO:
+* This shares a lot directly with the truth table syntax. Should we copy it,
+  or should we refer directly to the truth table syntax? Is there any way we
+  could do both somehow?
+* Syntax description is inconsistent. When do I use angle braces <...> around
+  non-terminals?
+* how do I link to the truth table syntax?
+* clarify the name spaces. Are there separate namespaces for inputs, outputs,
+  components, and instances? Or are some of them globbed into common
+  namespaces.
+* Is it clear how computation is done? That we connect input values to inputs
+  of components, which instantaneously provide us access to the outputs of
+  components according to the components' definitions?
+
 

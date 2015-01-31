@@ -98,7 +98,12 @@ In general, given 'N' inputs, there should be 2^N^ entries listed. The entries
 may be listed in any order, and each input sequence should appear exactly
 once in the list of entries.
 
-TODO: How to encode words with spaces in them? Should that be allowed?
-TODO: Why so limited a character set? Should we support Unicode characters in
-words?
+TODO:
+* How to encode words with spaces in them? Should that be allowed?
+* Why so limited a character set? Should we support Unicode characters in words?
+* It might be nice to have some examples of key and value words with
+  underscore characters in them.
+* It might be nice to have an example of a truth table with no inputs.
+* Syntax description is inconsistent. When do I use angle braces <...> around
+  non-terminals?
 
