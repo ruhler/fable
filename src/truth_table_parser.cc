@@ -1,46 +1,10 @@
 
 #include "truth_table_parser.h"
 
+#include "common_parser.h"
 #include "error.h"
 #include "parse_exception.h"
 #include "token_stream.h"
-
-// Read the list of input names from the token stream.
-// Format: " a, b, c, ..., d;"
-// Note: The list of inputs may be empty.
-// After this returns, the token stream will point to the token just after the
-// semicolon, assuming there are no parsing errors.
-static std::vector<std::string> ParseInputs(SpaceEatingTokenStream& tokens)
-{
-  std::vector<std::string> inputs;
-  if (tokens.TokenIs(kWord)) {
-    inputs.push_back(tokens.GetWord());
-  }
-
-  while (!tokens.TokenIs(kSemicolon)) {
-    tokens.EatToken(kComma);
-    inputs.push_back(tokens.GetWord());
-  }
-  tokens.EatToken(kSemicolon);
-  return inputs;
-}
-
-// Read the list of output names from the token stream.
-// Format: "a, b, c, ..., d)"
-// Note, there must be at least one output name given.
-// After this returns, the token stream will point to the token just after the
-// open paren, assuming there are no parsing errors.
-static std::vector<std::string> ParseOutputs(SpaceEatingTokenStream& tokens)
-{
-  std::vector<std::string> outputs;
-  outputs.push_back(tokens.GetWord());
-  while (!tokens.TokenIs(kCloseParen)) {
-    tokens.EatToken(kComma);
-    outputs.push_back(tokens.GetWord());
-  }
-  tokens.EatToken(kCloseParen);
-  return outputs;
-}
 
 // Parse num_bits from the given word.
 // The word may contain binary digits '0' and '1', and underscore characters
@@ -94,6 +58,7 @@ TruthTable ParseTruthTable(std::string source, std::istream& istream)
 {
   Location location;
   SpaceEatingTokenStream tokens(source, istream);
+
   location = tokens.GetLocation();
   std::string word = tokens.GetWord();
   if (word != "TruthTable") {

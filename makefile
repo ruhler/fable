@@ -19,18 +19,20 @@ build/$(1).h.deps_right: src/$(1).h
 HEADER_DEP_CHECKS += build/$(1).h.deps_right
 endef
 
+# Note: These must be in dependency order.
 $(eval $(call declare-header,adder,))
-$(eval $(call declare-header,char_stream,location))
-$(eval $(call declare-header,circuit,value))
-$(eval $(call declare-header,location,))
-$(eval $(call declare-header,parse_exception,location token_type))
 $(eval $(call declare-header,error,))
+$(eval $(call declare-header,location,))
 $(eval $(call declare-header,token_type,))
+$(eval $(call declare-header,value,))
+$(eval $(call declare-header,circuit,value))
+$(eval $(call declare-header,char_stream,location))
+$(eval $(call declare-header,parse_exception,location token_type))
 $(eval $(call declare-header,token_stream,char_stream token_type))
 $(eval $(call declare-header,truth_table,))
 $(eval $(call declare-header,truth_table_component,circuit truth_table value))
+$(eval $(call declare-header,common_parser,token_stream))
 $(eval $(call declare-header,truth_table_parser,truth_table))
-$(eval $(call declare-header,value,))
 
 
 # declare-impl.
@@ -57,6 +59,7 @@ $(eval $(call declare-impl,char_stream,char_stream))
 $(eval $(call declare-impl,char_stream_test,char_stream))
 $(eval $(call declare-impl,circuit,circuit error))
 $(eval $(call declare-impl,circuit_test,circuit value))
+$(eval $(call declare-impl,common_parser,common_parser))
 $(eval $(call declare-impl,error,error))
 $(eval $(call declare-impl,location,location))
 $(eval $(call declare-impl,parse_exception,parse_exception))
@@ -66,7 +69,7 @@ $(eval $(call declare-impl,token_type,token_type))
 $(eval $(call declare-impl,truth_table,truth_table error))
 $(eval $(call declare-impl,truth_table_component,truth_table_component error))
 $(eval $(call declare-impl,truth_table_component_test,truth_table_component))
-$(eval $(call declare-impl,truth_table_parser,truth_table_parser token_stream parse_exception error))
+$(eval $(call declare-impl,truth_table_parser,truth_table_parser common_parser token_stream parse_exception error))
 $(eval $(call declare-impl,truth_table_parser_test,truth_table truth_table_parser parse_exception))
 $(eval $(call declare-impl,truth_table_test,truth_table))
 $(eval $(call declare-impl,value,value))
@@ -75,7 +78,7 @@ build/run_tests: $(ALL_OBJECTS)
 	mkdir -p build
 	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
 
-build/tests_passed: build/run_tests $(HEADER_DEP_CHECKS) $(IMPL_DEP_CHECKS)
+build/tests_passed: $(HEADER_DEP_CHECKS) $(IMPL_DEP_CHECKS) build/run_tests
 	./build/run_tests && touch $@
 
 .PHONY: clean
