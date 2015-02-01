@@ -65,10 +65,14 @@ TruthTable ParseTruthTable(std::string source, std::istream& istream)
     throw ParseException(location)
       << "Expected the word 'TruthTable', but found '" << word << "'.";
   }
+  return ParseTruthTableAfterMagic(tokens);
+}
 
+TruthTable ParseTruthTableAfterMagic(SpaceEatingTokenStream& tokens)
+{
   tokens.EatToken(kOpenParen);
 
-  location = tokens.GetLocation();
+  Location location = tokens.GetLocation();
   std::vector<std::string> inputs = ParseInputs(tokens);
   if (inputs.size() > 32) {
     throw ParseException(location)
