@@ -4,15 +4,30 @@
 #include "error.h"
 
 Component::~Component()
-{ }
+{}
 
-Circuit::Circuit(int num_inputs,
-    std::vector<SubComponentEntry> sub_components,
-    std::vector<PortIdentifier> outputs,
-    std::vector<std::unique_ptr<Component>> owned_components)
-  : num_inputs_(num_inputs), sub_components_(sub_components), outputs_(outputs),
-    owned_components_(std::move(owned_components))
+int Component::NumInputs() const
 {
+  return Inputs().size();
+}
+
+int Component::NumOutputs() const
+{
+  return Outputs().size();
+}
+
+Circuit::Circuit(
+    std::vector<std::string> inputs,
+    std::vector<std::string> outputs,
+    std::vector<SubComponentEntry> sub_components,
+    std::vector<PortIdentifier> outvals,
+    std::vector<std::unique_ptr<Component>> owned_components)
+  : inputs_(inputs), outputs_(outputs), sub_components_(sub_components),
+    outvals_(outvals), owned_components_(std::move(owned_components))
+{
+  CHECK_EQ(outputs.size(), outvals_.size())
+    << "Number of output ports doesn't match the number of actual outputs";
+
   // TODO: Pull the verification of correctness out into helper functions that
   // return a boolean rather than repeating code and directly asserting here.
   for (int i = 0; i < sub_components_.size(); i++) {
@@ -23,7 +38,7 @@ Circuit::Circuit(int num_inputs,
       PortIdentifier& portid = entry.inputs[j];
       if (portid.component_index == kInputPortComponentIndex) {
         CHECK_GE(portid.port_index, 0) << "Invalid port index for input.";
-        CHECK_LT(portid.port_index, num_inputs)
+        CHECK_LT(portid.port_index, inputs.size())
           << "Invalid port index for input.";
       } else {
         CHECK_GE(portid.component_index, 0)
@@ -40,16 +55,16 @@ Circuit::Circuit(int num_inputs,
     }
   }
 
-  for (int j = 0; j < outputs.size(); j++) {
-    PortIdentifier& portid = outputs[j];
+  for (int j = 0; j < outvals.size(); j++) {
+    PortIdentifier& portid = outvals[j];
     if (portid.component_index == kInputPortComponentIndex) {
       CHECK_GE(portid.port_index, 0) << "Invalid port index for input.";
-      CHECK_LT(portid.port_index, num_inputs)
+      CHECK_LT(portid.port_index, inputs.size())
         << "Invalid port index for input.";
     } else {
       CHECK_GE(portid.component_index, 0)
         << "Invalid port identifier component index.";
-      CHECK_LT(portid.component_index, outputs.size())
+      CHECK_LT(portid.component_index, outvals.size())
         << "Invalid port identifier component index.";
       const Component* component = sub_components[portid.component_index].component;
       CHECK_GE(portid.port_index, 0) << "Invalid port identifier port index.";
@@ -59,16 +74,18 @@ Circuit::Circuit(int num_inputs,
   }
 }
 
-Circuit::Circuit(int num_inputs,
+Circuit::Circuit(
+    std::vector<std::string> inputs,
+    std::vector<std::string> outputs,
     std::vector<SubComponentEntry> sub_components,
-    std::vector<PortIdentifier> outputs)
-  : Circuit(num_inputs, sub_components, outputs,
+    std::vector<PortIdentifier> outvals)
+  : Circuit(inputs, outputs, sub_components, outvals,
       std::vector<std::unique_ptr<Component>>())
-{ }
+{}
 
 std::vector<Value> Circuit::Eval(const std::vector<Value>& inputs) const
 {
-  CHECK_EQ(inputs.size(), num_inputs_)
+  CHECK_EQ(inputs.size(), inputs_.size())
     << "Wrong number of inputs given to circuit";
 
   // Edges will contain the outputs of all sub components. We compute this in
@@ -92,20 +109,20 @@ std::vector<Value> Circuit::Eval(const std::vector<Value>& inputs) const
   } 
 
   std::vector<Value> outputs;
-  for (int j = 0; j < outputs_.size(); j++) {
-    const PortIdentifier& portid = outputs_[j];
+  for (int j = 0; j < outvals_.size(); j++) {
+    const PortIdentifier& portid = outvals_[j];
     outputs.push_back(edges[portid.component_index+1][portid.port_index]);
   }
   return outputs;
 }
 
-int Circuit::NumInputs() const
+std::vector<std::string> Circuit::Inputs() const
 {
-  return num_inputs_;
+  return inputs_;
 }
 
-int Circuit::NumOutputs() const
+std::vector<std::string> Circuit::Outputs() const
 {
-  return outputs_.size();
+  return outputs_;
 }
 

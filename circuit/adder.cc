@@ -1,6 +1,8 @@
 
 #include "circuit/adder.h"
 
+#include <sstream>
+
 #include "error.h"
 #include "circuit/circuit.h"
 #include "circuit/truth_table_component.h"
@@ -64,25 +66,46 @@ std::unique_ptr<Component> CreateAdder(int n)
   // Output bits come one each from each of the adders.
   // They come in reverse order of the components, because it goes most
   // significant bit to least significant bit.
-  std::vector<Circuit::PortIdentifier> outputs;
+  std::vector<Circuit::PortIdentifier> outvals;
   for (int i = 1; i <= n; i++) {
     Circuit::PortIdentifier portid;
     portid.component_index = n-i;
     portid.port_index = 0;
-    outputs.push_back(portid);
+    outvals.push_back(portid);
   }
 
   // The carry out comes from the carry out of the last adder.
   Circuit::PortIdentifier portid;
   portid.component_index = n-1;
   portid.port_index = 1;
-  outputs.push_back(portid);
+  outvals.push_back(portid);
 
   // Transfer ownership of the full adder to the circuit.
   std::vector<std::unique_ptr<Component>> owned;
   owned.push_back(std::move(adder1));
 
+  std::vector<std::string> inputs;
+  for (int i = n-1; i >= 0; i--) {
+    std::ostringstream oss;
+    oss << "A" << i;
+    inputs.push_back(oss.str());
+  }
+  for (int i = n-1; i >= 0; i--) {
+    std::ostringstream oss;
+    oss << "B" << i;
+    inputs.push_back(oss.str());
+  }
+  inputs.push_back("Cin");
+  
+  std::vector<std::string> outputs;
+  for (int i = n-1; i >= 0; i--) {
+    std::ostringstream oss;
+    oss << "Z" << i;
+    outputs.push_back(oss.str());
+  }
+  outputs.push_back("Cout");
+
   return std::unique_ptr<Component>(
-      new Circuit(2*n+1, components, outputs, std::move(owned)));
+      new Circuit(inputs, outputs, components, outvals, std::move(owned)));
 }
 

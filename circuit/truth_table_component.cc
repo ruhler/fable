@@ -5,12 +5,12 @@
 
 TruthTableComponent::TruthTableComponent(TruthTable truth_table)
   : truth_table_(truth_table)
-{ }
+{}
 
 TruthTableComponent::TruthTableComponent(std::vector<std::string> inputs,
     std::vector<std::string> outputs, std::vector<uint32_t> table)
   : truth_table_(TruthTable(inputs, outputs, table))
-{ }
+{}
 
 std::vector<Value> TruthTableComponent::Eval(const std::vector<Value>& inputs) const
 {
@@ -35,13 +35,13 @@ std::vector<Value> TruthTableComponent::Eval(const std::vector<Value>& inputs) c
   return outputs;
 }
 
-int TruthTableComponent::NumInputs() const
+std::vector<std::string> TruthTableComponent::Inputs() const
 {
-  return truth_table_.kNumInputs;
+  return truth_table_.Inputs();
 }
 
-int TruthTableComponent::NumOutputs() const
+std::vector<std::string> TruthTableComponent::Outputs() const
 {
-  return truth_table_.kNumOutputs;
+  return truth_table_.Outputs();
 }
 

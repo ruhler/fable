@@ -43,6 +43,9 @@ class TruthTable {
   const int kNumInputs;
   const int kNumOutputs;
 
+  const std::vector<std::string>& Inputs() const;
+  const std::vector<std::string>& Outputs() const;
+
   // Truth tables are the same if they have the same input names, output
   // names, and table values.
   bool operator==(const TruthTable& rhs) const;

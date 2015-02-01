@@ -1,7 +1,6 @@
 
 * Have separate namespaces for parser, truth_table, and circuit
 * Implement a circuit parser
- - Change Circuit to take list of names for inputs and outputs
  - Implement Component OutputByName function 
    It returns the index of the output of a given name, or -1 if there is no
    such output.

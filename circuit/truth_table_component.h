@@ -18,8 +18,8 @@ class TruthTableComponent : public Component {
       std::vector<uint32_t> table);
 
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
-  virtual int NumInputs() const;
-  virtual int NumOutputs() const;
+  virtual std::vector<std::string> Inputs() const;
+  virtual std::vector<std::string> Outputs() const;
 
  private:
   TruthTable truth_table_;

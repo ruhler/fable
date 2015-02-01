@@ -11,8 +11,11 @@ class Component {
  public:
   virtual ~Component();
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const = 0;
-  virtual int NumInputs() const = 0;
-  virtual int NumOutputs() const = 0;
+  virtual std::vector<std::string> Inputs() const = 0;
+  virtual std::vector<std::string> Outputs() const = 0;
+
+  int NumInputs() const;
+  int NumOutputs() const;
 };
 
 // A Circuit is an interconnection of Components.
@@ -40,6 +43,9 @@ class Circuit : public Component {
   // component. Each input port identifier describes the source of data for
   // the corresponding input port of the component. The number of elements in
   // the inputs vector must match the number of inputs in the component.
+  //
+  // TODO: Perhaps a better choice of name than 'SubComponent' would be
+  // 'Instance'.
   struct SubComponentEntry {
     const Component* component;
     std::vector<PortIdentifier> inputs;
@@ -50,7 +56,7 @@ class Circuit : public Component {
   static const int kInputPortComponentIndex = -1;
 
   // A Circuit is specified with a list of sub component entries and output
-  // port identifiers. The outputs vector describes the source of data for the
+  // port identifiers. The outvals vector describes the source of data for the
   // output of the circuit.
   //
   // The user must ensure the sub components used stay valid for the lifetime
@@ -58,25 +64,30 @@ class Circuit : public Component {
   // ownership of some or all of the sub components to this circuit in the
   // 'owned_components' vector. These will be deleted by the circuit when it
   // is deleted.
-  Circuit(int num_inputs,
+  Circuit(
+      std::vector<std::string> inputs,
+      std::vector<std::string> outputs,
       std::vector<SubComponentEntry> sub_components,
-      std::vector<PortIdentifier> outputs,
+      std::vector<PortIdentifier> outvals,
       std::vector<std::unique_ptr<Component>> owned_components);
 
   // Same as the first constructor, only without passing ownership of any
   // components to the circuit.
-  Circuit(int num_inputs,
+  Circuit(
+      std::vector<std::string> inputs,
+      std::vector<std::string> outputs,
       std::vector<SubComponentEntry> sub_components,
-      std::vector<PortIdentifier> outputs);
+      std::vector<PortIdentifier> outvals);
 
   virtual std::vector<Value> Eval(const std::vector<Value>& inputs) const;
-  virtual int NumInputs() const;
-  virtual int NumOutputs() const;
+  virtual std::vector<std::string> Inputs() const;
+  virtual std::vector<std::string> Outputs() const;
 
  private:
-  const int num_inputs_;
+  const std::vector<std::string> inputs_;
+  const std::vector<std::string> outputs_;
   std::vector<SubComponentEntry> sub_components_;
-  std::vector<PortIdentifier> outputs_;
+  std::vector<PortIdentifier> outvals_;
   std::vector<std::unique_ptr<Component>> owned_components_;
 };
 

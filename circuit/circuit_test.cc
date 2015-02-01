@@ -11,7 +11,8 @@ TEST(CircuitTest, Swap) {
   outputs[1].component_index = Circuit::kInputPortComponentIndex;
   outputs[1].port_index = 0;
 
-  Circuit swap(2, std::vector<Circuit::SubComponentEntry>(), outputs);
+  Circuit swap({"A", "B"}, {"X", "Y"},
+      std::vector<Circuit::SubComponentEntry>(), outputs);
   std::vector<Value> inputvals(2);
   inputvals[0] = BIT_ONE;
   inputvals[1] = BIT_ZERO;

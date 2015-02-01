@@ -35,3 +35,11 @@ bool TruthTable::operator!=(const TruthTable& rhs) const
   return !(this->operator==(rhs));
 }
 
+const std::vector<std::string>& TruthTable::Inputs() const {
+  return inputs_;
+}
+
+const std::vector<std::string>& TruthTable::Outputs() const {
+  return outputs_;
+}
+
