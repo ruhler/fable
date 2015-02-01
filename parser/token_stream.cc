@@ -62,6 +62,7 @@ TokenType TokenStream::NextTokenType() {
   switch (c) {
     case EOF: return kEndOfStream;
     case ',': return kComma;
+    case '.': return kPeriod;
     case ';': return kSemicolon;
     case ':': return kColon;
     case '(': return kOpenParen;

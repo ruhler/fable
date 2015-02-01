@@ -30,11 +30,13 @@ build build/circuit/adder.o: cc circuit/adder.cc
 build build/circuit/adder_test.o: cc circuit/adder_test.cc
 build build/circuit/circuit.o: cc circuit/circuit.cc
 build build/circuit/circuit_test.o: cc circuit/circuit_test.cc
+build build/circuit/circuit_parser.o: cc circuit/circuit_parser.cc
+build build/circuit/circuit_parser_test.o: cc circuit/circuit_parser_test.cc
 build build/circuit/truth_table_component.o: cc circuit/truth_table_component.cc
 build build/circuit/truth_table_component_test.o: cc circuit/truth_table_component_test.cc
 build build/circuit/value.o: cc circuit/value.cc
 
-build build/run_tests: ld build/truth_table/truth_table_parser.o build/truth_table/truth_table_test.o build/truth_table/truth_table.o build/truth_table/truth_table_parser_test.o build/circuit/adder.o build/circuit/truth_table_component_test.o build/circuit/circuit.o build/circuit/truth_table_component.o build/circuit/value.o build/circuit/adder_test.o build/circuit/circuit_test.o build/parser/char_stream_test.o build/parser/char_stream.o build/parser/location.o build/parser/parse_exception.o build/parser/token_stream.o build/parser/token_type.o build/parser/common_parser.o build/parser/token_stream_test.o build/error.o
+build build/run_tests: ld build/truth_table/truth_table_parser.o build/truth_table/truth_table_test.o build/truth_table/truth_table.o build/truth_table/truth_table_parser_test.o build/circuit/adder.o build/circuit/truth_table_component_test.o build/circuit/circuit.o build/circuit/truth_table_component.o build/circuit/value.o build/circuit/adder_test.o build/circuit/circuit_test.o build/circuit/circuit_parser.o build/circuit/circuit_parser_test.o build/parser/char_stream_test.o build/parser/char_stream.o build/parser/location.o build/parser/parse_exception.o build/parser/token_stream.o build/parser/token_type.o build/parser/common_parser.o build/parser/token_stream_test.o build/error.o
 
 build build/tests_passed: run build/run_tests 
 

@@ -6,6 +6,7 @@
 
 enum TokenType {
   kComma,
+  kPeriod,
   kSemicolon,
   kColon,
   kOpenParen,

@@ -6,6 +6,7 @@
 std::ostream& operator<<(std::ostream& os, TokenType type) {
   switch (type) {
     case kComma: return os << ",";
+    case kPeriod: return os << ".";
     case kSemicolon: return os << ";";
     case kColon: return os << ":";
     case kOpenParen: return os << "(";

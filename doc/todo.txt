@@ -3,8 +3,4 @@
 * Implement a circuit parser
  - Use a CircuitParser class to clean up the circuit parser implementation.
    It will have a single public method to parse the circuit.
- - Add a function to parse a circuit after the 'Circuit' keyword.
- - Implement a function to parse a TruthTable Component (after the
-   'TruthTable' keyword)
- - Implement a function to parse a component.
 

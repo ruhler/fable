@@ -1,19 +1,36 @@
 
 #include "circuit/circuit_parser.h"
 
+#include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "error.h"
+#include "circuit/truth_table_component.h"
+#include "parser/common_parser.h"
 #include "parser/parse_exception.h"
 #include "parser/token_stream.h"
+#include "truth_table/truth_table_parser.h"
 
-// TODO: This may be cleaner if we define an internal class to give access to
-// common variables, such as inputs, instances, and tokens. Rather than
-// passing around those variables everywhere.
+// TODO: This whole implementation may be cleaner if we define an internal
+// class to give access to common variables, such as inputs, instances, and
+// tokens. Rather than passing around those variables everywhere.
 
 static std::unique_ptr<Component> ParseComponent(SpaceEatingTokenStream& tokens)
 {
-  TODO << "Implement ParseComponent";
+  Location location = tokens.GetLocation();
+  std::string word = tokens.GetWord();
+  if (word == "Circuit") {
+    return std::unique_ptr<Component>(
+        new Circuit(ParseCircuitAfterMagic(tokens)));
+  }
+  
+  if (word == "TruthTable") {
+    return std::unique_ptr<Component>(
+        new TruthTableComponent(ParseTruthTableAfterMagic(tokens)));
+  }
+
+  throw ParseException(location) << "Unknown component type: " << word;
 }
 
 // Parse a single input value of either the form 'A' or the form 'foo.X'.
@@ -22,13 +39,13 @@ static std::unique_ptr<Component> ParseComponent(SpaceEatingTokenStream& tokens)
 // * instances_by_name maps name of instances defined so far to their entries
 // in the instances list.
 // Throws ParseException if there is a parse error.
-PortIdentifier ParseInputVal(
+Circuit::PortIdentifier ParseInputVal(
     const std::vector<std::string>& inputs, 
-    const std::vector<Circuit::SubComponentEntry>>& instances,
+    const std::vector<Circuit::SubComponentEntry>& instances,
     const std::unordered_map<std::string, int>& instances_by_name,
     SpaceEatingTokenStream& tokens)
 {
-  PortIdentifier port;
+  Circuit::PortIdentifier port;
   Location location = tokens.GetLocation();
   std::string source = tokens.GetWord();
   if (tokens.TokenIs(kPeriod)) {
@@ -42,7 +59,7 @@ PortIdentifier ParseInputVal(
     tokens.EatToken(kPeriod);
     location = tokens.GetLocation();
     std::string field = tokens.GetWord();
-    port.port_index = instances[instance->second]->OutputByName(field);
+    port.port_index = instances[instance->second].component->OutputByName(field);
     if (port.port_index < 0) {
       throw ParseException(location) << field
         << " is not a valid output of component " << source;
@@ -52,14 +69,14 @@ PortIdentifier ParseInputVal(
 
   // In this case, the source is an input to the circuit. Find out which input
   // it is.
-  port.component_index = kInputPortComponentIndex;
+  port.component_index = Circuit::kInputPortComponentIndex;
   for (int i = 0; i < inputs.size(); i++) {
     if (inputs[i] == source) {
       port.port_index = i;
       return port;
     }
   }
-  throw ParseException("Unknown circuit input: " << source);
+  throw ParseException(location) << "Unknown circuit input: " << source;
 }
 
 // Parse input vals of the form '(A, b.Z, ...)'
@@ -68,20 +85,20 @@ PortIdentifier ParseInputVal(
 // * instances_by_name maps name of instances defined so far to their entries
 // in the instances list.
 // Throws ParseException if there is a parse error.
-std::vector<PortIdentifier> ParseInputVals(
+std::vector<Circuit::PortIdentifier> ParseInputVals(
     const std::vector<std::string>& inputs, 
-    const std::vector<Circuit::SubComponentEntry>>& instances,
+    const std::vector<Circuit::SubComponentEntry>& instances,
     const std::unordered_map<std::string, int>& instances_by_name,
     SpaceEatingTokenStream& tokens)
 {
   tokens.EatToken(kOpenParen);
-  std::vector<PortIdentifier> ports;
+  std::vector<Circuit::PortIdentifier> ports;
   if (tokens.TokenIs(kWord)) {
     ports.push_back(ParseInputVal(inputs, instances, instances_by_name, tokens));
   }
 
   while (!tokens.TokenIs(kCloseParen)) {
-    tokens.EatToekn(kComma);
+    tokens.EatToken(kComma);
     ports.push_back(ParseInputVal(inputs, instances, instances_by_name, tokens));
   }
   tokens.EatToken(kCloseParen);
@@ -99,14 +116,18 @@ Circuit ParseCircuit(std::string source, std::istream& istream)
     throw ParseException(location)
       << "Expected the word 'Circuit', but found '" << word << "'.";
   }
+  return ParseCircuitAfterMagic(tokens);
+}
 
+Circuit ParseCircuitAfterMagic(SpaceEatingTokenStream& tokens)
+{
   tokens.EatToken(kOpenParen);
   std::vector<std::string> inputs = ParseInputs(tokens);
   std::vector<std::string> outputs = ParseOutputs(tokens);
   tokens.EatToken(kOpenBrace);
 
-  location = tokens.GetLocation();
-  word = tokens.GetWord();
+  Location location = tokens.GetLocation();
+  std::string word = tokens.GetWord();
 
   // Read in the component definitions.
   // * components is a list of all the compoments loaded.
@@ -132,7 +153,7 @@ Circuit ParseCircuit(std::string source, std::istream& istream)
   // Read in the instance definitions.
   // * instances_by_name maps the name of an instance to its entry in the 
   // instances list.
-  std::vector<Circuit::SubComponentEntry>> instances;
+  std::vector<Circuit::SubComponentEntry> instances;
   std::unordered_map<std::string, int> instances_by_name;
   while (word == "Instance") {
     location = tokens.GetLocation();
@@ -170,7 +191,7 @@ Circuit ParseCircuit(std::string source, std::istream& istream)
     exception << "'Output', but found '" << word << "'.";
     throw exception;
   }
-  std::vector<PortIdentifier> outvals = ParseInputVals(
+  std::vector<Circuit::PortIdentifier> outvals = ParseInputVals(
       inputs, instances, instances_by_name, tokens);
   tokens.EatToken(kSemicolon);
   tokens.EatToken(kCloseBrace);
