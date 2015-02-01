@@ -1,8 +1,8 @@
 
 #include <gtest/gtest.h>
 
-#include "circuit.h"
-#include "value.h"
+#include "circuit/circuit.h"
+#include "circuit/value.h"
 
 TEST(CircuitTest, Swap) {
   std::vector<Circuit::PortIdentifier> outputs(2);

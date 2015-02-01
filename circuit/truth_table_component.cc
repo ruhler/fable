@@ -1,5 +1,5 @@
 
-#include "truth_table_component.h"
+#include "circuit/truth_table_component.h"
 
 #include "error.h"
 

@@ -1,0 +1,40 @@
+
+rule cc
+  deps = gcc
+  depfile = $out.d
+  command = g++ -I . -MMD -MF $out.d -ggdb -std=c++11 -c -o $out $in
+
+rule ld
+  command = g++ -ggdb -std=c++11 -o $out $in -lgtest -lgtest_main -lpthread
+
+rule run
+  command = $in && touch $out
+
+build build/error.o: cc error.cc
+
+build build/parser/char_stream.o: cc parser/char_stream.cc
+build build/parser/char_stream_test.o: cc parser/char_stream_test.cc
+build build/parser/common_parser.o: cc parser/common_parser.cc
+build build/parser/location.o: cc parser/location.cc
+build build/parser/parse_exception.o: cc parser/parse_exception.cc
+build build/parser/token_stream.o: cc parser/token_stream.cc
+build build/parser/token_stream_test.o: cc parser/token_stream_test.cc
+build build/parser/token_type.o: cc parser/token_type.cc
+
+build build/truth_table/truth_table.o: cc truth_table/truth_table.cc
+build build/truth_table/truth_table_test.o: cc truth_table/truth_table_test.cc
+build build/truth_table/truth_table_parser.o: cc truth_table/truth_table_parser.cc
+build build/truth_table/truth_table_parser_test.o: cc truth_table/truth_table_parser_test.cc
+
+build build/circuit/adder.o: cc circuit/adder.cc
+build build/circuit/adder_test.o: cc circuit/adder_test.cc
+build build/circuit/circuit.o: cc circuit/circuit.cc
+build build/circuit/circuit_test.o: cc circuit/circuit_test.cc
+build build/circuit/truth_table_component.o: cc circuit/truth_table_component.cc
+build build/circuit/truth_table_component_test.o: cc circuit/truth_table_component_test.cc
+build build/circuit/value.o: cc circuit/value.cc
+
+build build/run_tests: ld build/truth_table/truth_table_parser.o build/truth_table/truth_table_test.o build/truth_table/truth_table.o build/truth_table/truth_table_parser_test.o build/circuit/adder.o build/circuit/truth_table_component_test.o build/circuit/circuit.o build/circuit/truth_table_component.o build/circuit/value.o build/circuit/adder_test.o build/circuit/circuit_test.o build/parser/char_stream_test.o build/parser/char_stream.o build/parser/location.o build/parser/parse_exception.o build/parser/token_stream.o build/parser/token_type.o build/parser/common_parser.o build/parser/token_stream_test.o build/error.o
+
+build build/tests_passed: run build/run_tests 
+

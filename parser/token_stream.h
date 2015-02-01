@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 
-#include "char_stream.h"
-#include "token_type.h"
+#include "parser/char_stream.h"
+#include "parser/token_type.h"
 
 class TokenStream {
  public:

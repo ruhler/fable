@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "token_stream.h"
+#include "parser/token_stream.h"
 
 // Common parsing utilities used by multiple parsers.
 

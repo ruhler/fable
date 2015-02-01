@@ -3,9 +3,9 @@
 #include <stdexcept>
 #include <gtest/gtest.h>
 
-#include "char_stream.h"
-#include "parse_exception.h"
-#include "token_stream.h"
+#include "parser/char_stream.h"
+#include "parser/parse_exception.h"
+#include "parser/token_stream.h"
 
 #define NO_PARSE_EXCEPTION(x) try { x; } catch (ParseException& e) { FAIL() << e; }
 

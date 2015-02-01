@@ -1,5 +1,5 @@
 
-#include "token_type.h"
+#include "parser/token_type.h"
 
 #include <stdexcept>
 

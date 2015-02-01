@@ -2,7 +2,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include "truth_table_component.h"
+#include "circuit/truth_table_component.h"
 
 TEST(TruthTableComponentTest, XOR) {
   TruthTableComponent truth_table({"A", "B"}, {"Z"}, {0, 1, 1, 0});

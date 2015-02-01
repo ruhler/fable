@@ -1,5 +1,5 @@
 
-#include "truth_table.h"
+#include "truth_table/truth_table.h"
 
 #include <iostream>
 

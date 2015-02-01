@@ -1,5 +1,5 @@
 
-#include "parse_exception.h"
+#include "parser/parse_exception.h"
 
 ParseException::ParseException(Location location)
  : location_(location)

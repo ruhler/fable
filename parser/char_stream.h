@@ -5,7 +5,7 @@
 #include <istream>
 #include <string>
 
-#include "location.h"
+#include "parser/location.h"
 
 class CharStream {
  public:

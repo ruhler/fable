@@ -1,5 +1,5 @@
 
-#include "circuit.h"
+#include "circuit/circuit.h"
 
 #include "error.h"
 

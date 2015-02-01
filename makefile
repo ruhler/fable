@@ -1,7 +1,7 @@
 
 .PHONY: all
 all:
-	ninja -v -f util/build.ninja
+	ninja -v -f build.ninja
 
 .PHONY: clean
 clean: 

@@ -5,7 +5,7 @@
 #include <istream>
 #include <string>
 
-#include "truth_table.h"
+#include "truth_table/truth_table.h"
 
 // Parse a TruthTable from the given input stream.
 // The source is the name of the input stream for error reporting purposes.

@@ -1,5 +1,5 @@
 
-#include "common_parser.h"
+#include "parser/common_parser.h"
 
 std::vector<std::string> ParseInputs(SpaceEatingTokenStream& tokens)
 {

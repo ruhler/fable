@@ -1,5 +1,5 @@
 
-#include "char_stream.h"
+#include "parser/char_stream.h"
 
 CharStream::CharStream(std::string source, std::istream& istream)
   : istream_(istream) {

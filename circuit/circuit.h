@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include "value.h"
+#include "circuit/value.h"
 
 class Component {
  public:

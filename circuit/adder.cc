@@ -1,10 +1,10 @@
 
-#include "adder.h"
+#include "circuit/adder.h"
 
-#include "circuit.h"
 #include "error.h"
-#include "truth_table.h"
-#include "truth_table_component.h"
+#include "circuit/circuit.h"
+#include "circuit/truth_table_component.h"
+#include "truth_table/truth_table.h"
 
 // Create a full 1-bit adder.
 std::unique_ptr<Component> CreateFullAdder()

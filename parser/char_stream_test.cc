@@ -2,7 +2,7 @@
 #include <sstream>
 #include <gtest/gtest.h>
 
-#include "char_stream.h"
+#include "parser/char_stream.h"
 
 TEST(CharStreamTest, Basic) {
   std::istringstream istream("he llo\nwo\nrld");

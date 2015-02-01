@@ -2,7 +2,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#include "truth_table.h"
+#include "truth_table/truth_table.h"
 
 TEST(TruthTableTest, XOR) {
   TruthTable truth_table({"A", "B"}, {"Z"}, {0, 1, 1, 0});

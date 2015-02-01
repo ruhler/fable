@@ -3,8 +3,8 @@
 #include <gtest/gtest.h>
 
 #include "parser/parse_exception.h"
-#include "truth_table.h"
-#include "truth_table_parser.h"
+#include "truth_table/truth_table.h"
+#include "truth_table/truth_table_parser.h"
 
 TEST(TruthTableParserTest, Basic) {
   try {

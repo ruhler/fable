@@ -1,5 +1,5 @@
 
-#include "truth_table_parser.h"
+#include "truth_table/truth_table_parser.h"
 
 #include "error.h"
 #include "parser/common_parser.h"

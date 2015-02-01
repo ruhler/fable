@@ -5,8 +5,8 @@
 #include <iostream>
 #include <sstream>
 
-#include "location.h"
-#include "token_type.h"
+#include "parser/location.h"
+#include "parser/token_type.h"
 
 class ParseException {
  public:

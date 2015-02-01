@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
-#include "circuit.h"
-#include "truth_table.h"
-#include "value.h"
+#include "circuit/circuit.h"
+#include "circuit/value.h"
+#include "truth_table/truth_table.h"
 
 class TruthTableComponent : public Component {
  public:
