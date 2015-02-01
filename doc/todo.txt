@@ -1,6 +1,19 @@
 
 * Have separate namespaces for parser, truth_table, and circuit
-* Have separate directories for parser, truth_table, and circuit
 * Implement a circuit parser
-* Document circuit API
+ - Change Circuit to take list of names for inputs and outputs
+ - Implement Component OutputByName function 
+   It returns the index of the output of a given name, or -1 if there is no
+   such output.
+ - Write a circuit parser test case.
+   Use the boolean circuit in the api documentation.
+ - Use a TruthTableParser class to clean up the truth table parser
+   implementation?
+ - Use a CircuitParser class to clean up the circuit parser implementation.
+   It will have a single public method to parse the circuit.
+ - Add a function to parse a truth table after the 'TruthTable' keyword.
+ - Add a function to parse a circuit after the 'Circuit' keyword.
+ - Implement a function to parse a TruthTable Component (after the
+   'TruthTable' keyword)
+ - Implement a function to parse a component.
 

@@ -68,5 +68,6 @@ class ProgramError {
 #define CHECK_GT(x, y) ProgramError::CheckGt(x, y, __FILE__, __LINE__)
 #define CHECK_LE(x, y) ProgramError::CheckLe(x, y, __FILE__, __LINE__)
 #define CHECK_LT(x, y) ProgramError::CheckLt(x, y, __FILE__, __LINE__)
+#define TODO (ProgramError(false, __FILE__, __LINE__) << "TODO: ")
 
 #endif//ERROR_H_

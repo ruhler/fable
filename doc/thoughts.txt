@@ -9,11 +9,15 @@ Use C++ exceptions? Should it be part of the interface to a function what
 errors it can encounter? Is there a difference between: Something unexpected
 happened and you used this function wrong?
 
+Solution: see error.h for my interface.
+
 * Maybe it would be nice to have an infrastructure for adding debug printf
   statements?
 
 * It would be nice if the make file could make itself right.
 As in, make it easy to automatically compute dependencies if possible.
+
+Solution: Use ninja instead of make. Hurray!
 
 * There are two different consumers of a description: Humans and computers.
 Computers read the description and do something based on it.
@@ -41,4 +45,12 @@ suggests I really want a richer interface to humans than just a static
 sequence of characters. I want something where the human can point to
 something, and see additional info. Then they can point somewhere else, and
 get other info somewhere else.
+
+* Copy versus share...
+I'm running into this question. When should I share code, and when should I
+copy it? I can't bear to copy code, just because I know things will get out of
+sync. But there is a real cost to sharing code. You introduce dependencies you
+wouldn't otherwise have. You introduce indirection you wouldn't otherwise
+have. It's much harder to change code, because you have to know all of the
+users of the code.
 
