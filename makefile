@@ -1,6 +1,10 @@
 
 default: build/tests_passed
 
+build/build_dir_created:
+	mkdir -p build
+	touch $@
+
 # declare-header.
 # (1) - The name of the header to declare.
 #       It's assumed to be in 'src/' directory with extension .h, so don't
@@ -14,7 +18,7 @@ default: build/tests_passed
 # target file to HEADER_DEP_CHECKS
 define declare-header
 $(1)_HDEPS := src/$(1).h $(2:%=$$(%_HDEPS))
-build/$(1).h.deps_right: src/$(1).h
+build/$(1).h.deps_right: src/$(1).h build/build_dir_created
 	python util/checkdep.py src/$(1).h $(2:%=%.h) && touch $$@
 HEADER_DEP_CHECKS += build/$(1).h.deps_right
 endef
@@ -45,8 +49,7 @@ $(eval $(call declare-header,truth_table_parser,truth_table))
 # adding the target file to IMPL_DEP_CHECKS
 define declare-impl
 ALL_OBJECTS += build/$(1).o
-build/$(1).o: src/$(1).cc $(2:%=$$(%_HDEPS))
-	mkdir -p build
+build/$(1).o: src/$(1).cc $(2:%=$$(%_HDEPS)) build/build_dir_created
 	g++ -ggdb -std=c++11 -c -o $$@ $$<
 build/$(1).cc.deps_right: src/$(1).cc
 	python util/checkdep.py src/$(1).cc $(2:%=%.h) && touch $$@
@@ -75,8 +78,7 @@ $(eval $(call declare-impl,truth_table_test,truth_table))
 $(eval $(call declare-impl,value,value))
 
 build/run_tests: $(ALL_OBJECTS)
-	mkdir -p build
-	g++ -ggdb -std=c++11 -o $@ $^ -lgtest -lgtest_main -lpthread
+	g++ -ggdb -std=c++11 -o $@ $(ALL_OBJECTS) -lgtest -lgtest_main -lpthread
 
 build/tests_passed: $(HEADER_DEP_CHECKS) $(IMPL_DEP_CHECKS) build/run_tests
 	./build/run_tests && touch $@
