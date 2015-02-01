@@ -2,7 +2,7 @@
 #include <sstream>
 #include <gtest/gtest.h>
 
-#include "parse_exception.h"
+#include "parser/parse_exception.h"
 #include "truth_table.h"
 #include "truth_table_parser.h"
 

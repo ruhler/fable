@@ -1,10 +1,10 @@
 
 #include "truth_table_parser.h"
 
-#include "common_parser.h"
 #include "error.h"
-#include "parse_exception.h"
-#include "token_stream.h"
+#include "parser/common_parser.h"
+#include "parser/parse_exception.h"
+#include "parser/token_stream.h"
 
 // Parse num_bits from the given word.
 // The word may contain binary digits '0' and '1', and underscore characters
