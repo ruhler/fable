@@ -2,10 +2,10 @@
 rule cc
   deps = gcc
   depfile = $out.d
-  command = g++ -I . -MMD -MF $out.d -ggdb -std=c++11 -c -o $out $in
+  command = g++ -I . -MMD -MF $out.d -O0 -gdwarf-3 -ggdb -std=c++11 -c -o $out $in
 
 rule ld
-  command = g++ -ggdb -std=c++11 -o $out $in -lgtest -lgtest_main -lpthread
+  command = g++ -O0 -gdwarf-3 -ggdb -std=c++11 -o $out $in -lgtest -lgtest_main -lpthread
 
 rule run
   command = $in && touch $out

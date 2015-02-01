@@ -6,8 +6,7 @@
 
 class ProgramError {
  public:
-  ProgramError(bool no_error, const char* file, int line);
-  ProgramError(const ProgramError& rhs);
+  ProgramError(const char* file, int line);
   ~ProgramError();
 
   template <typename T>
@@ -16,37 +15,43 @@ class ProgramError {
     return *this;
   }
 
+  ProgramError& Check(bool no_error);
+
   template <typename A, typename B>
-  static ProgramError CheckEq(A a, B b, const char* file, int line) {
-    return ProgramError(a == b, file, line) << a << " == " << b << ". ";
+  ProgramError& CheckEq(A a, B b) {
+    return Check(a == b) << a << " == " << b << ". ";
   }
 
   template <typename A, typename B>
-  static ProgramError CheckNe(A a, B b, const char* file, int line) {
-    return ProgramError(a != b, file, line) << a << " != " << b << ". ";
+  ProgramError& CheckNe(A a, B b) {
+    return Check(a != b) << a << " != " << b << ". ";
   }
 
   template <typename A, typename B>
-  static ProgramError CheckGe(A a, B b, const char* file, int line) {
-    return ProgramError(a >= b, file, line) << a << " >= " << b << ". ";
+  ProgramError& CheckGe(A a, B b) {
+    return Check(a >= b) << a << " >= " << b << ". ";
   }
 
   template <typename A, typename B>
-  static ProgramError CheckGt(A a, B b, const char* file, int line) {
-    return ProgramError(a > b, file, line) << a << " > " << b << ". ";
+  ProgramError& CheckGt(A a, B b) {
+    return Check(a > b) << a << " > " << b << ". ";
   }
 
   template <typename A, typename B>
-  static ProgramError CheckLt(A a, B b, const char* file, int line) {
-    return ProgramError(a < b, file, line) << a << " < " << b << ". ";
+  ProgramError& CheckLt(A a, B b) {
+    return Check(a < b) << a << " < " << b << ". ";
   }
 
   template <typename A, typename B>
-  static ProgramError CheckLe(A a, B b, const char* file, int line) {
-    return ProgramError(a <= b, file, line) << a << " <= " << b << ". ";
+  ProgramError& CheckLe(A a, B b) {
+    return Check(a <= b) << a << " <= " << b << ". ";
   }
 
  private:
+  // Dissallow copy and assignment.
+  ProgramError(const ProgramError& rhs);
+  ProgramError& operator=(const ProgramError& rhs);
+
   bool is_error_;
   std::ostringstream message_;
 };
@@ -61,13 +66,13 @@ class ProgramError {
 // Examples:
 //  CHECK(x < 32) << "The variable x has value " << x << " which is too big.";
 //  CHECK_LT(x, 32) << "The value of variable x is too large.";
-#define CHECK(x) ProgramError(x, __FILE__, __LINE__)
-#define CHECK_EQ(x, y) ProgramError::CheckEq(x, y, __FILE__, __LINE__)
-#define CHECK_NE(x, y) ProgramError::CheckNe(x, y, __FILE__, __LINE__)
-#define CHECK_GE(x, y) ProgramError::CheckGe(x, y, __FILE__, __LINE__)
-#define CHECK_GT(x, y) ProgramError::CheckGt(x, y, __FILE__, __LINE__)
-#define CHECK_LE(x, y) ProgramError::CheckLe(x, y, __FILE__, __LINE__)
-#define CHECK_LT(x, y) ProgramError::CheckLt(x, y, __FILE__, __LINE__)
-#define TODO (ProgramError(false, __FILE__, __LINE__) << "TODO: ")
+#define CHECK(x) ProgramError(__FILE__, __LINE__).Check(x)
+#define CHECK_EQ(x, y) ProgramError(__FILE__, __LINE__).CheckEq(x, y)
+#define CHECK_NE(x, y) ProgramError(__FILE__, __LINE__).CheckNe(x, y)
+#define CHECK_GE(x, y) ProgramError(__FILE__, __LINE__).CheckGe(x, y)
+#define CHECK_GT(x, y) ProgramError(__FILE__, __LINE__).CheckGt(x, y)
+#define CHECK_LE(x, y) ProgramError(__FILE__, __LINE__).CheckLe(x, y)
+#define CHECK_LT(x, y) ProgramError(__FILE__, __LINE__).CheckLt(x, y)
+#define TODO (ProgramError(__FILE__, __LINE__).Check(false) << "TODO: ")
 
 #endif//ERROR_H_

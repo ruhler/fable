@@ -4,17 +4,11 @@
 #include <cstdlib>
 #include <iostream>
 
-ProgramError::ProgramError(bool no_error, const char* file, int line)
-  : is_error_(!no_error)
+ProgramError::ProgramError(const char* file, int line)
+  : is_error_(false)
 {
-  if (is_error_) {
-    message_ << file << ":" << line << ": error: ";
-  }
+  message_ << file << ":" << line << ": error: ";
 }
-
-ProgramError::ProgramError(const ProgramError& rhs)
-  : is_error_(rhs.is_error_), message_(rhs.message_.str())
-{}
 
 ProgramError::~ProgramError()
 {
@@ -22,5 +16,10 @@ ProgramError::~ProgramError()
     std::cerr << message_.str() << std::endl;
     abort();
   }
+}
+
+ProgramError& ProgramError::Check(bool no_error) {
+  is_error_ = is_error_ || (!no_error);
+  return *this;
 }
 

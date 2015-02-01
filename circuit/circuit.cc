@@ -78,7 +78,7 @@ Circuit::Circuit(
     } else {
       CHECK_GE(portid.component_index, 0)
         << "Invalid port identifier component index.";
-      CHECK_LT(portid.component_index, outvals.size())
+      CHECK_LT(portid.component_index, sub_components.size())
         << "Invalid port identifier component index.";
       const Component* component = sub_components[portid.component_index].component;
       CHECK_GE(portid.port_index, 0) << "Invalid port identifier port index.";
