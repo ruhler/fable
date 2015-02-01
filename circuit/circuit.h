@@ -16,6 +16,10 @@ class Component {
 
   int NumInputs() const;
   int NumOutputs() const;
+
+  // Return the index of the output with the given name.
+  // Returns -1 if there is no such output with the given name.
+  int OutputByName(std::string name) const;
 };
 
 // A Circuit is an interconnection of Components.

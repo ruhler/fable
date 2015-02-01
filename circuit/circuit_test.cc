@@ -13,6 +13,13 @@ TEST(CircuitTest, Swap) {
 
   Circuit swap({"A", "B"}, {"X", "Y"},
       std::vector<Circuit::SubComponentEntry>(), outputs);
+
+  EXPECT_EQ(2, swap.NumInputs());
+  EXPECT_EQ(2, swap.NumOutputs());
+  EXPECT_EQ(0, swap.OutputByName("X"));
+  EXPECT_EQ(1, swap.OutputByName("Y"));
+  EXPECT_EQ(-1, swap.OutputByName("Z"));
+
   std::vector<Value> inputvals(2);
   inputvals[0] = BIT_ONE;
   inputvals[1] = BIT_ZERO;

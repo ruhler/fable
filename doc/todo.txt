@@ -1,9 +1,6 @@
 
 * Have separate namespaces for parser, truth_table, and circuit
 * Implement a circuit parser
- - Implement Component OutputByName function 
-   It returns the index of the output of a given name, or -1 if there is no
-   such output.
  - Write a circuit parser test case.
    Use the boolean circuit in the api documentation.
  - Use a TruthTableParser class to clean up the truth table parser

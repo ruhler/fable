@@ -16,6 +16,17 @@ int Component::NumOutputs() const
   return Outputs().size();
 }
 
+int Component::OutputByName(std::string name) const
+{
+  std::vector<std::string> outputs = Outputs();
+  for (int i = 0; i < outputs.size(); i++) {
+    if (name == outputs[i]) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 Circuit::Circuit(
     std::vector<std::string> inputs,
     std::vector<std::string> outputs,
@@ -25,6 +36,9 @@ Circuit::Circuit(
   : inputs_(inputs), outputs_(outputs), sub_components_(sub_components),
     outvals_(outvals), owned_components_(std::move(owned_components))
 {
+  // TODO: Verify input names are distinct
+  // TODO: Verify output names are distinct
+
   CHECK_EQ(outputs.size(), outvals_.size())
     << "Number of output ports doesn't match the number of actual outputs";
 
