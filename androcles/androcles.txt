@@ -531,3 +531,42 @@ Comments
   don't have a meaningful initial value for something. Could we have a '?'
   kind of value, and have the compiler check that we never try to use it?
 
+Comments From Writing Adder
+---------------------------
+* See adder.0 for what I wrote.
+* See adder.1 for what I wish I could write instead.
+* Definition of Bit is very verbose.
+  - requiring '()' for enum fields.
+  - using words 'Zero' and 'One' instead of digits '0' and '1'.
+* It would be nice to have anonymous structs for return types.
+  For example, to return Z and Cout.
+  Or, just allow multiple return arguments, which automatically get turned
+  into an anonymous struct? It's not for the caller, but the convinience of
+  the implementor, who doesn't have to introduce an extra name and
+  indirection.
+* I ran into initial value annoyance thing.
+* Requiring extra '()' for enum constructors is annoying.
+* Requiring extra '_' for enum case match is annoying.
+* The nested 3-way case for FullAdder is absurdly verbose and hard to
+  interpret. Could we have multi-arg case statements, where you provide a
+  branch for each combination? Just so its flat, and not nested in a funny
+  way.
+* What do you think about allowing return statements inside case branches?
+  Perhaps with the restriction that every case branch must return if any does?
+  It's worth at least thinking about why I don't want you to have arbitrary
+  return statements where-ever.
+* Once you have FullAdder defined, the definition of Adder is actually quite
+  nice. I think the pattern matching to get multiple outputs is nice. This
+  would be much more clumsy if I didn't support struct variable binding.
+* My tendency was to not want to have to include types for fields in struct
+  patterns. Any reason we need that?
+* I feel like the little things matter much more when writing things by hand.
+* It's nice to name the output variables, even if just for documentation
+  purposes.
+* I'm tempted to want to mix variable bindings and updates. Like, be able to
+  declare one variable and update another all in the same binding.
+* I forgot all my '@' promotions for Zero and One. Do we really need these?
+  Especially for enums, where I can't do anything interesting with the
+  structs?
+
+

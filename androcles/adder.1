@@ -1,0 +1,25 @@
+
+data Bit { 0; 1; }
+
+funct FullAdder(Bit a, Bit b, Bit cin; Bit z, Bit cout) {
+  case (a, b, cin) {
+    (0, 0, 0) { return (0, 0); }
+    (0, 0, 1) { return (1, 0); }
+    (0, 1, 0) { return (1, 0); }
+    (0, 1, 1) { return (0, 1); }
+    (1, 0, 0) { return (1, 0); }
+    (1, 0, 1) { return (0, 1); }
+    (1, 1, 0) { return (0, 1); }
+    (1, 1, 1) { return (1, 1); }
+  }
+}
+
+funct Adder(Bit[4] a, Bit[4] b, Bit cin; Bit[4] z, Bit cout) {
+  Bit[4] z;
+  (z[0], Bit c0) = FullAdder(a[0], b[0], cin);
+  (z[1], Bit c1) = FullAdder(a[1], b[1], c0);
+  (z[2], Bit c2) = FullAdder(a[2], b[2], c1);
+  (z[3], Bit c3) = FullAdder(a[3], b[3], c2);
+  return (z, c3);
+}
+
