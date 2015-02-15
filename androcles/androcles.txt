@@ -1,0 +1,533 @@
+Androcles 1.0
+=============
+Richard Uhler <ruhler@degralder.com>
+February 2015
+
+Introduction
+------------
+Androcles is a programming interface for describing programs for which the
+computation performed is timeless and independent of the input to the program.
+
+Roughly, this can be thought of as a programming interface for describing
+combinational hardware. With hardware, the computing elements are fixed at the
+time of fabrication, long before any inputs are supplied. Combinational
+hardware is timeless because all the computation completes within a single
+cycle, which, from a point of view where the hardware clock defines time, is
+instantaneous.
+
+Conceptually, computation is described in terms of components that perform
+computation on fixed size data. For example, a 32-bit adder is a component
+that performs computation on two 32-bit operands an 1-bit carry in, producing
+a single 32-bit sum and 1-bit carry out.
+
+Variables
+---------
+A variable is used to refer to an item of data. Each variable has a name, used
+to uniquely identify the variable, and a type, describing the representation
+and structure of the data the variable refers to. For example, the inputs to a
+32-bit adder could be described with three variables, 'a', 'b', and 'c_in'.
+The variables 'a' and 'b' both have the type of a 32-bit integer, and the
+variable 'c_in' has the type of a single bit.
+
+The type of a variable and the contents of any item of data it refers to are
+fixed. The variable 'a' in our example above will always be a 32-bit integer.
+The initial value of 'a' never changes. It is, however, possible to change
+what data item the variable refers to in the course of describing a
+computation. 
+
+Variables are either input variables, whose values are provided as inputs to
+the computation, or local variables, whose values are determined by the result
+of some computation.
+
+For example, the following code snippet shows two variables being declared and
+manipulated. Line (1) declares a variable named 'x' with the type 'Bool'. It
+initially refers to the result of the computation 'True()'. Line (2) declares
+a variable named 'y', also with the type 'Bool'. Initially the variable 'y'
+refers to the result of the computation 'False()'. In line (3), the variable
+'y' is changed to refer to the most recent value of 'x', which is the result
+of the computation 'True()'. In line (4), the variable 'x' is changed to refer
+to the result of the computation 'False()'. Note, that after line (4), the
+variable 'y' still refers to the result of the computation 'True()', set in
+line (3).
+
+-----------
+1.   Bool x = True();
+2.   Bool y = False();
+3.   y = x;
+4.   x = False();
+----------
+
+The ways variables can be referred to and updated depend on the types of the
+variables.
+
+The variable name '_' is special. It is used as a non-binding variable. For
+example:
+
+---------
+Bool _ = True();
+Fruit _ = Apple();
+...
+---------
+
+When used, it does not bind any variable. Unlike ordinary variables, it can be
+used with different types. This is more useful when put together with struct
+variable binding and case statements.
+
+Types of Values
+---------------
+Every variable and every result of computation in Androcles has a unique type.
+There are three classes of types. Struct types are used to describe a bundle
+or grouping of multiple values referred to by name or position, data types are
+used to describe a choice among named values of different type, and array
+types are used to describe a bundle of values of the same type referred to by
+index.
+
+Struct Type
+-----------
+A value whose type is a struct type represents a bundle of multiple values
+referred to by name or position.
+
+Struct Declaration
+~~~~~~~~~~~~~~~~~~
+For example, consider the struct type for a coordinate that has int components
+'x' and 'y'. The Coord struct type is declared using the sytnax:
+
+----------
+struct Coord(int x, int y);
+----------
+
+The Coord struct type has two fields, 'int x', and 'int y'. In general, a
+struct type can have any non-negative, fixed number of fields.
+
+Each field can have any type that has been declared so far. For example, the
+following shows a contrived struct type with many fields of different type:
+
+-----------
+struct Crazy(int a, bool b, bool c, char d);
+-----------
+
+A struct may not contain any fields of that struct type itself. That is,
+struct types cannot be defined recursively. For example, the following is not
+a legal struct type definition:
+
+-------------
+struct Foo(int a, Foo b);
+-------------
+
+Each field of a struct type must have a different name. For example, the
+following is not a legal struct type definition:
+
+--------------
+struct Foo(int x, bool x);
+--------------
+
+The order of fields is important, because it is the order that will be used in
+struct literals and struct variable bindings.
+
+Two struct types with different names may have the same fields.
+Never-the-less, these struct types are considered different, incompatible
+types.
+
+Struct Literal
+~~~~~~~~~~~~~~
+The struct literal computation returns a value of a struct type. For example,
+to construct a value of type Coord with x component 5 and y component 6, use
+the following expression:
+
+-------
+Coord(5, 6)
+-------
+
+The name of the type is used to indicate what type to construct. The values
+are passed as arguments in the order the fields are declared.
+
+Member Access
+~~~~~~~~~~~~~
+There are two ways to access the contents of a structure. The first is by
+field name using the dot notation:
+
+---------
+Coord coord = Coord(5, 6);
+int xval = coord.x;
+int yval = coord.y;
+---------
+
+A variable of struct type, followed by a '.', then a field name, refers to the
+component of the struct with that name. The name must refer to a field of the
+struct.
+
+Variable Binding
+~~~~~~~~~~~~~~~~
+The second way to access the contents of a structure is using variable
+binding, with the following syntax:
+
+------------
+Coord coord = Coord(5, 6);
+Coord(int xval, int yval) = coord;
+------------
+
+Variable binding creates new variables, in this case 'xval' and 'yval', which
+refer to the components of the struct. Again, which component a variable
+refers to is determined by its order.
+
+Note that variable binding is syntactic sugar, and can always be replaced with
+a combination of member access and normal variable assignment.
+
+Field Update
+~~~~~~~~~~~~
+Finally, a specific component of a field can be updated using the dot notation
+along with an assignment statement:
+
+-------------
+1. Coord coord = Coord(5, 6);
+2. coord.x = 2;
+-------------
+
+In the preceeding example, after line (2), the variable 'coord' refers to a
+value with 'x' component 2 and y component 6. Note that field update is
+syntactic sugar, and can always be replaced with a combination of field access
+and struct literals. In our example, the field update is equivalent to
+constructing a new struct value, changing only one component:
+
+-------------
+1. Coord coord = Coord(5, 6);
+2. coord = Coord(2, coord.y);
+-------------
+
+Array Type
+----------
+A value whose type is a struct type represents a bundle of multiple values of
+the same type referred to by index.
+
+Array types do not need to be declared. Instead, an array type for any other
+type, including other array types, can be formed by adding brackets and a
+count after the type. For example, for an array of 3 coordinates, the type
+'Coord[3]' can be used.
+
+Array Literal
+~~~~~~~~~~~~~
+Array values can be constructed using an array literal, which is a comma
+separated list of expressions of the same type in brackets. The number of
+expressions in the list determines the number of elements in the array. For
+example, for an array of 3 coordinate:
+
+--------------
+Coord[3] coords = [Coord(1,2), Coord(3,4), Coord(5,6)];
+--------------
+
+Array Access
+~~~~~~~~~~~~
+The components of an array are accessed using bracket notation with a
+zero-based index.
+For example, to read the second component of the coords array defined above:
+
+----------------
+Coord[3] coords = [Coord(1,2), Coord(3,4), Coord(5,6)];
+Coord second = coords[1];
+----------------
+
+The index must be within bounds of the size of the array.
+
+Array Variable Binding
+~~~~~~~~~~~~~~~~~~~~~~
+Elements of an array can also be bound using variable binding. For example:
+
+----------
+[Coord coord0, Coord coord1, Coord coord2] = coords;
+----------
+
+Array Update
+~~~~~~~~~~~~
+A single element of an array can be updated, again using the bracket notation:
+
+------------------
+coords[1] = Coord(8, 9)
+------------------
+
+This has the effect of changing just the value at that index. Note that this
+is syntactic sugar for constructing a new array with an array literal,
+changing only the index in question.
+
+Data Types
+----------
+Data types are used to describe a choice among named values of different type.
+
+Data Declaration
+~~~~~~~~~~~~~~~~
+The simplest case of a data type is an enumeration:
+
+----------
+data Fruit {
+  Apple();
+  Banana();
+  Kiwi();
+}
+----------
+
+A value of type 'Fruit' can be either 'Apple', 'Banana', or 'Kiwi'. More
+generally, the choices for a data value may have additional data associated
+with them. For example, consider the definition of a calculator instruction
+type. Perhaps the calculator has binary operations Add and Subtract, a unary
+Negate operation, and a Clear operation. The calculator instruction type could
+be defined as:
+
+-------------
+data CalcInstr {
+  Add(int operand1, int operand2);
+  Sub(int operand1, int operand2);
+  Neg(int operand);
+  Clear();
+}
+-------------
+
+When CalcInstr is 'Add', the operand1 and operand2 fields corresponding to
+'Add' can be accessed. When the instruction is 'Neg', the 'operand' field
+corresponding to 'Neg' can be accessed, and so on.
+
+Each choice, or field, of a data type implicitly defines a struct type with
+that name. Using the CalcInstr example, this data declaration also declares
+four struct types. If declared explicitly, these would be:
+
+---------------
+struct Add(int operand1, int operand2);
+struct Sub(int operand1, int operand2);
+struct Neg(int operand);
+struct Clear();
+---------------
+
+It is legal to declare a data type with zero or one choices, but probably
+those aren't useful for any reason.
+
+Constructing Data
+~~~~~~~~~~~~~~~~~
+Struct types declared through data declarations can be used as ordinary
+struct types. They also have an additional feature: values of the struct type
+can be promoted to values of the data type, using the '@' operator. This is
+the primary means of constructing a value of the data type. For example, to
+construct a calculator instruction for subtracting 2 from 6, first create a
+Sub structure, then promote it to the CalcInstr type:
+
+--------------
+Sub sub = Sub(6, 2);
+CalcInstr instr = @sub;
+--------------
+
+This can be done in a single step as well:
+
+--------------
+CalcInstr instr = @Sub(6, 2);
+--------------
+
+Case Statements
+~~~~~~~~~~~~~~~
+A case statement is used to determine the current field of a data value.
+
+-----------------
+case (instr) {
+  Add add {
+    ...
+  }
+
+  Sub(int x, int y) {
+    ...
+  }
+ 
+  Neg neg {
+    ...
+  }
+
+  Clear _ {
+    ...
+  }
+}
+-------------
+
+A case statement has a branch for each possible choice, introduced by a
+variable binding, to bind the data for that specific choice. For instance, the
+'Add' branch declares a variable 'add' of type 'Add' that can be accessed in
+the body of the branch. The 'Sub' branch uses struct variable binding to
+declare variables 'x' and 'y' that can be accessed in the body of the branch.
+And so on. The body of a branch can contain any statements permissible outside
+the body of the branch. The behavior of a case expression is as if only those
+statements for the matching branch were included in the circuit description.
+
+Variables bound within a branch are only visible within that branch. This
+means different branches could declare variables with the same name, but
+different type.
+
+Functions
+---------
+Functions describe transformations of values. This is where computation takes
+place. A function takes a finite set of typed values as inputs and produces a
+single typed value as a result, using the statements already discussed.
+
+Function Declaration
+~~~~~~~~~~~~~~~~~~~~
+For example, here is a function that returns the number of arguments a
+calculator instruction contains:
+
+-----------------
+funct NumArgs(CalcInstr instr ; int) {
+  int numargs = 0;
+  case (instr) {
+    Add _ { numargs = 2; }
+    Sub _ { numargs = 2; }
+    Neg _ { numargs = 1; }
+    Clear _ { numargs = 0; }
+  }
+  return numargs;
+}
+-----------------
+
+The inputs and output are separated by a semicolon in the argument list. The
+output is unnamed. The final statement of the function is a return statement.
+The argument to the return statement is the result of calling the function.
+
+Note that the return statement must always be the last statement of the
+function. If you wish to return in the middle of the function, instead assign
+the return value to a variable, and return that at the end of the function.
+
+Rational for having a single output value: You can return multiple outputs by
+returning a struct. In practice there is no way to use multiple output values
+in different locations when you call the function, because each function is
+called in one place. This is not the case for inputs, which all come from
+different places. So, while multiple inputs is useful, multiple outputs isn't
+really.
+
+Function Call
+~~~~~~~~~~~~~
+A function can be called by passing arguments after the name. For example:
+
+------------
+int numargs = NumArgs(instr);
+------------
+
+The number of arguments passed must match the number and type of input
+arguments declared in the function declaration.
+
+Summary of Syntax
+-----------------
+-----------------
+(* declaration *)
+decl ::= 'struct' struct              (* struct type declaration *)
+         'data' name '{' structs '}'  (* data type declaration *)
+         'funct' name '(' targs ';' type ')' '{'
+            stmts
+            'return' expr ';'
+          '}'                         (* function declaration *)
+      ;
+
+struct ::= name '(' targs ')' ';' ;
+
+structs ::=     (* empty *)
+         | struct 
+         | structs struct
+         ;
+
+(* statement *)
+stmt ::= pat '=' expr ';'     (* Variable declaration/binding *)
+      |  ref '=' expr ';'     (* Variable update *)
+      |  'case' '(' expr ')' '{' branches '}'   (* case statement *)
+      ;
+
+stmts ::= (* empty *)
+       | stmt
+       | stmts stmt
+
+branches ::=    (* empty *)
+          | branch
+          | branches branch
+
+branch ::= pat '{' stmts '}'
+
+(* expression *)
+expr ::= ref
+      | name '(' args ')'     (* struct literal / component instantiation *)
+      | '[' exprs ']'         (* array literal *)
+      | '@' expr              (* data promotion *)
+      ;
+
+exprs ::= (* empty *)
+       | expr
+       | exprs ',' expr
+
+type ::= name                   (* user defined type *)
+      | type '[' integer ']'    (* array type *)
+      ;
+
+(* reference *)
+ref ::= name                  (* normal variable reference *)
+     |  ref '.' name          (* field variable reference *)
+     |  ref '[' integer ']'   (* array element reference *)
+     ;
+
+(* pattern *)
+pat ::= type name             (* normal variable pattern *)
+     |  type '_'              (* non-binding pattern *)
+     |  name '(' targs ')'    (* struct variable pattern *)
+     | '[' pats ']'           (* array variable pattern *)
+     ;
+
+pats ::= (* empty *)
+      | pat
+      | pats ',' pat
+      ;
+
+(* argument list *)
+args ::= (* empty *)
+         | name
+         | args ',' name
+         ;
+
+(* typed argument list *)
+targs ::= (* empty *)
+         | targ
+         | targs ',' targ
+         ;
+
+(* typed argument *)
+targ ::= type name ;
+
+integer ::= (* A word consisting of digits interpreted as a decimal integer *)
+name ::= (* A word consisting of name characters. *)
+-----------------
+
+Comments
+--------
+* I do think it would be nice to have an 'enum' type. This would be the same
+  as a data type, except the compiler would check that none of the fields have
+  any arguments. This would be useful for documentation, let the compiler
+  check what we think we are doing, and is representative of the kind of
+  explicit restrictions and checking I imagine will happen when the language
+  is expanded beyond finite, timeless, deterministic computation.
+
+* In this version, arrays only support static indexes. This seems pretty
+  debilitating. I wonder if arrays with such restrictions will turn out
+  useful. Arrays make more sense if they can be indexed by dynamic values,
+  and/or when we have support for some form of loop.
+
+* I suspect we'll want some form of loop supported. The loop would be bounded,
+  probably explicitly, but possibly implicitly. Then we'll need a way to do
+  arithmetic and manipulation of static integers.
+
+* Variable binding and patterns is entirely a syntactic sugar, and it doesn't
+  save much, except give the user more control over the names they have for
+  variables. Is this worth the (small) added complexity? Let's see how much
+  I'm tempted to use it to find out.
+
+* In the description, I talk about variables having types and referring to
+  values. I think it would be more clear to focus on values, not variables.
+  Then I could describe array values, struct values, data values, and avoid
+  that level of indirection.
+
+* Any way to have a default branch in a case statement? That's probably going
+  to be annoying not to have, because it may force me to duplicate some
+  statements. Even a default branch may not be enough, if you have more than
+  one group of cases with the same behavior desired. Note, if variables are
+  being modified, they can't necessarily just define a circuit to abstract
+  what they want.
+
+* There's no way to have an uninitialized value, but sometimes we actually
+  don't have a meaningful initial value for something. Could we have a '?'
+  kind of value, and have the compiler check that we never try to use it?
+

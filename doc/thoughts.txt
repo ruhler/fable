@@ -54,3 +54,50 @@ wouldn't otherwise have. You introduce indirection you wouldn't otherwise
 have. It's much harder to change code, because you have to know all of the
 users of the code.
 
+For example, conceptually, to me:
+  truth_table should be completely independent of circuit.
+
+But, I want to be able to define a truth_table component circuit inside a
+circuit, using the same syntax as a truth table. This means the syntax for
+circuit depends on the syntax for truth table.
+
+But, the syntax for circuit is slightly more general than that for truth
+table. In particular, it supports the '.' token. So, I make the token stream
+used for parsing truth tables slightly more general and share it so I can use
+it for parsing circuits. This means you can't entirely understand the
+implementation of the truth_table parser without understanding something about
+circuit.
+
+Perhaps I have the dependencies wrong in my mind. Perhaps, instead of saying
+you have:
+  parser,
+  truth_table,
+  truth_table_parser depends on truth_table and parser,
+  circuit depends on truth_table,
+  circuit_parser depends on parser, and circuit, and truth_table_parser,
+  etc.
+
+Perhaps I should separate parser away from both truth table and circuit.
+Then, really, parser is just giving me a syntax that I can use for both truth
+tables and circuits. You don't need to know anything about the syntax to
+understand truth table and circuit. And you can imagine there are many
+different possible syntaxes that you could use, some of which work for both
+circuits and truth tables, some for just truth tables, and some for circuits
+that don't support truth tables.
+
+Another way to look at it is that I have these two separate components:
+circuit and truth table. I have a way to make a truth table into a circuit,
+using another separate component: truth_table_component. I can have
+collections of all these different things. If I want to combine them together,
+I need to have an interpreter that knows about all the different things.
+There's no way around that. Then the execution, and parsing, and
+interpretation, should all belong to that interpreter, and separate from the
+different components. With the immediate consequence that 'parser' should
+depend on circuit and truth table, not the other way around.
+
+Then I should have this be the case also for how I describe the syntax of
+truth tables and circuits? I always knew it doesn't make sense to enforce a
+single representation (aka syntax) for a truth table... But it is nice to have
+a concrete syntax in order to explain what a truth table is, more concretely,
+right?
+

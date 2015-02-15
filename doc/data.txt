@@ -1,0 +1,152 @@
+Data Types
+==========
+This document describes a system and syntax for describing simple, finite data
+structures.
+
+Enumerations
+------------
+An enumeration is a type with a finite number of choices. An instance of an
+enumeration choice takes on one of the possible values of the enumeration.
+
+For example, an enumeration of fruits may contain choices 'Apple', 'Banana',
+and 'Orange'. A variable of type fruit could take on one of those values.
+
+The following shows the syntax used to define the fruit enumeration:
+
+----------------
+enum Fruit {
+  Apple;
+  Banana;
+  Orange;
+}
+----------------
+
+This declares an enumeration type called 'Fruit', with Fruit literal values
+'Apple', 'Banana' and 'Orange'. For example, to declare a Fruit variable
+'fruit' with value 'Banana':
+
+  Fruit fruit = Banana;
+
+The case statement is used to distinguish between values of enumeration
+variables. Given an enumeration argument, it executes the statements
+corresponding to the labeled choice that the argument contains.
+
+  case (fruit) {
+    Apple {
+      // statements go here.
+    }
+
+    Banana {
+      // statements go here.
+    }
+
+    Orange {
+      // statements go here.
+    }
+  }
+
+Some familiar enumerations include booleans:
+
+  enum Bool {
+    True;
+    False;
+  }
+
+And bits:
+ 
+  enum Bit {
+    One;
+    Zero
+  }
+
+Note that enumerations are a special case of the more general data type, to be
+described later in this document.
+
+Questions:
+ * Is there a way to have a 'default' case?
+ * Is there a way to have two or more enum constructors share the same case
+   body?
+
+Structures
+----------
+A structure is a type which groups together other types using fields.
+For example, a structure for coordinates may contain fields 'x' and
+'y', both of some 'int' enumeration type:
+
+----------------
+struct Coord(int x, int y);
+----------------
+
+This declares a structure type called 'Coord', with fields 'x' and 'y', both
+of type 'int'. A constructor 'Coord' is also brought into scope for
+constructing literals of the 'Coord' type:
+
+  Coord coord = Coord(3, 5);
+
+There are two ways to access the fields of a structure. The first is to use
+the '.' notation to access a single field by name:
+  
+  int three = coord.x;
+  int five = coord.y;
+
+The second way is to use pattern matching. Pattern matching is an assignment
+to a pattern that declare multiple variables containing values of parts of the
+structure:
+
+  Coord (int three, int five) = coord;
+
+TODO:
+ * The assignment operator should always be doing pattern matching. Describe
+   pattern matching in this more general form for all the cases, which should
+   include variable names, structs, and don't cares (like '_').
+
+Question:
+ * Can you update a member of a struct? Like:
+    coord.x = 6;
+   What does that mean? How does it interact with pattern matching?
+
+Data
+----
+The most general form of of data is a choice amongst structures.
+For example, calculator instruction could be a binary operation that has a
+binary operator and two operands, or a unary operation that has a unary
+operator and a single operand:
+
+---------------------
+data CalcInstr {
+  Binary(BinOp op, Operand a, Operand b);
+  Unary(UnOp op, Operand x);
+}
+---------------------
+
+This defines a type 'CalcInstr' which could either have the tag 'Binary' and
+contain the data for the 'Binary' struct, or the tag 'Unary' and contain data
+for the 'Unary' struct. This also defines struct types 'Binary' and 'Unary'.
+
+Instances of a data type are created using the struct literal notation for the
+corresponding tag:
+
+---------
+CalcInstr example = Binary(Add, 3, 5);
+---------
+
+The only way to determine the value of a data type is to use a case statement:
+
+---------
+  case (example) {
+    Binary(BinOp op, Operand first, Operand second) {
+      result = evalbinary(op, first, second);
+    }
+    Unary(UnOp op, Operand x) {
+      result = evalunary(op, x);
+    }
+  }
+------
+
+Questions:
+ * How to distinguish between standalone structs and structs inside data
+   types? For example, is 'Binary(Add, 3, 5)' of type 'Binary' or of type
+   'CalcInstr'? Perhaps of type 'Binary', and the assignment operator for
+   data, and case args, promote it to the right type? Or perhaps of the data
+   type if the struct is declared inside a data type?
+

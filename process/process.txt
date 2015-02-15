@@ -1,0 +1,44 @@
+
+Brainstorm for process:
+
+A process has a set of inputs and outputs that it can read repeatedly for
+subsequent inputs and write for subsequent outputs. This can be used to write
+stream programming. Inputs are read blocking. 
+
+Sample programs to write:
+
+A. Increment each value on the stream:
+incr(int in; int out) {
+  loop {
+    int x <- in;
+    out(x+1);
+  }
+}
+
+B. Repeat the given input value on the output that many times:
+dup(int in; int out) {
+  loop {
+    int x <- in;
+    for (int i = 0; i < x; i++)
+      out(x);
+    }
+  }
+}
+
+C. Interpolate points:
+interp(int in; int out) {
+  int target = 0;
+  loop {
+    int location = target;
+    target <- in;
+    while (location > target) {
+      out(location);
+      location = location - 1;
+    }
+    while (location < target) {
+      out(location);
+      location = location + 1;
+    }
+  }
+}
+
