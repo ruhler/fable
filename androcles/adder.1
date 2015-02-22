@@ -1,25 +1,26 @@
 
-data Bit { 0; 1; }
+struct Unit();
+union Bit(Unit 0, Unit 1);
+struct FullAdderOut(Bit z, Bit cout);
 
-funct FullAdder(Bit a, Bit b, Bit cin; Bit z, Bit cout) {
-  case (a, b, cin) {
-    (0, 0, 0) { return (0, 0); }
-    (0, 0, 1) { return (1, 0); }
-    (0, 1, 0) { return (1, 0); }
-    (0, 1, 1) { return (0, 1); }
-    (1, 0, 0) { return (1, 0); }
-    (1, 0, 1) { return (0, 1); }
-    (1, 1, 0) { return (0, 1); }
-    (1, 1, 1) { return (1, 1); }
-  }
+funct FullAdder(Bit a, Bit b, Bit cin; FullAdderOut) {
+  Bit 0 = Bit:0(Unit());
+  Bit 1 = Bit:1(Unit());
+  Bit z = a ? (b ? (c ? (0, 1), c ? (1, 0)),
+               b ? (c ? (1, 0), c ? (0, 1)));
+  Bit cout = a ? (b ? (0, c ? (0, 1)),
+                  b ? (c ? (0, 1), 1));
+  return FullAdderOut(z, cout);
 }
 
-funct Adder(Bit[4] a, Bit[4] b, Bit cin; Bit[4] z, Bit cout) {
-  Bit[4] z;
-  (z[0], Bit c0) = FullAdder(a[0], b[0], cin);
-  (z[1], Bit c1) = FullAdder(a[1], b[1], c0);
-  (z[2], Bit c2) = FullAdder(a[2], b[2], c1);
-  (z[3], Bit c3) = FullAdder(a[3], b[3], c2);
-  return (z, c3);
+struct Bit4(Bit 0, Bit 1, Bit 2, Bit 3);
+struct AdderOut(Bit4 z, Bit cout);
+
+funct Adder(Bit4 a, Bit4 b, Bit cin; AdderOut) {
+  FullAdderOut x0 = FullAdder(a.0, b.0, cin);
+  FullAdderOut x1 = FullAdder(a.1, b.1, x0.cout);
+  FullAdderOut x2 = FullAdder(a.2, b.2, x1.cout);
+  FullAdderOut x3 = FullAdder(a.3, b.3, x2.cout);
+  return AdderOut(Bit4(x0.z, x1.z, x2.z, x3.z), x3.cout);
 }
 

@@ -1,0 +1,49 @@
+Androcles 0.1
+=============
+Richard Uhler <ruhler@degralder.com>
+February 2015
+
+Introduction
+------------
+This document describes the Androcles base format for describing finite,
+deterministic, timeless computations over finite data. The base format is
+intended to simply capture the core features of Androcles and may not be
+ideally suited for use by the end programmer without additional syntactic
+features.
+
+Data Values
+-----------
+
+Syntax Reference
+----------------
+prog ::= decl [decl [...]] ;
+
+decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+      |  'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+      |  'funct'  tname '('
+            [tname vname [',' tname vname [...]]] ';' tname ')' '{' 
+              stmt [stmt [...]]
+              'return' '(' vname [',' vname [...]] ')' ';'
+         '}'
+      ;
+
+stmt ::= tname vname '=' expr ';' ;
+
+expr ::= tname '(' [vname [',' vname [...]]] ')'      (* struct literal *)
+      |  tname ':' fname '(' expr ')'                 (* union literal *)
+      |  expr '.' fname                               (* field access *)
+      |  expr '?' '(' [vname [',' vname [...]]] ')'   (* conditional *)
+
+fname ::= name    (* A name of a field *)
+tname ::= name    (* A name referring to a type *)
+vname ::= name    (* A name referring to a value *)
+
+Notes
+-----
+* It would be nice if we could output multiple values, rather than have to
+  define a new type first. But then how do we access those values?
+* Perhaps we could have a nicer syntax for conditional that includes the names
+  of fields in the choices? Maybe:
+    foo ? (0: ..., 1: ...)
+  Just so we know what's what?
+
