@@ -207,8 +207,8 @@ Declaration
 ~~~~~~~~~~~
   decl ::= 'funct'  tname '('
               [tname vname [',' tname vname [...]]] ';' tname ')' '{' 
-                stmt [stmt [...]]
-                'return' '(' vname [',' vname [...]] ')' ';'
+                vdecl [vdecl [...]]
+                'return' '(' expr ')' ';'
            '}'
         | ...
 
@@ -227,7 +227,7 @@ The argument to the return statement is the result of calling the function.
 
 Variables
 ^^^^^^^^^
-  stmt ::= tname vname '=' expr ';' ;
+  vdecl ::= tname vname '=' expr ';' ;
         | ...
   expr ::= vname
         | ...
@@ -246,7 +246,7 @@ funct FullAdder(Bit a, Bit b, Bit cin; FullAdderOut) {
                1: b ? (0: c ? (0: 1, 1: 0), 1: c));
   Bit cout = a ? (0: b ? (0: 0, 1: c),
                   1: b ? (0: c, 1: 1));
-  return FullAdderOut(z, cout);
+  return(FullAdderOut(z, cout));
 }
 -------------
 
@@ -282,12 +282,12 @@ decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
       |  'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
       |  'funct'  tname '('
             [tname vname [',' tname vname [...]]] ';' tname ')' '{' 
-              stmt [stmt [...]]
-              'return' '(' vname [',' vname [...]] ')' ';'
+              vdecl [vdecl [...]]
+              'return' '(' expr ')' ';'
          '}'
       ;
 
-stmt ::= tname vname '=' expr ';' ;
+vdecl ::= tname vname '=' expr ';' ;
 
 expr ::= tname '(' [expr [',' expr [...]]] ')'      (* struct literal/function application *)
       |  vname                                      (* variable *)
@@ -299,6 +299,26 @@ expr ::= tname '(' [expr [',' expr [...]]] ')'      (* struct literal/function a
 fname ::= name    (* A name of a field *)
 tname ::= name    (* A name referring to a type or function *)
 vname ::= name    (* A name referring to a value *)
+
+Clarifications
+--------------
+TODO: These should be incorporated into the document at the appropriate
+places.
+
+* Namespaces:
+  1. All type and function names belong to a single global namespace.
+  No type or function can have the same name as any other type or function.
+
+  2. Field names belong to a namespace associated with a specific struct or
+  union type. No field in a given type can have the same name as any other
+  field in that same type. It is fine for two different types to have fields
+  with the same name.
+
+  3. Variable names belong to a namespace associated with a specific function.
+  They are only visible inside the function. No variable in a function may
+  have the same name as another variable in that function, including input
+  variables. It is fine for variables in different functions to have the same
+  name.
 
 Feedback
 --------

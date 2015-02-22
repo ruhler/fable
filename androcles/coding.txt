@@ -1,0 +1,6 @@
+
+* The environment will take ownership of the types.
+* The environment will take ownerhips of the functions.
+* Expressions are first constructed, then verified, then their methods may
+  be used.
+

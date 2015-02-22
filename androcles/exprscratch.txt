@@ -1,0 +1,37 @@
+
+
+class InputVariable : public Expr {
+ private:
+  Arg* declaration_;
+};
+
+class VDecl;
+
+class DeclaredVariable : public Expr {
+ private:
+  const VDecl* declaration_;
+};
+
+class FieldAccess : public Expr {
+ private:
+  const Expr* expr_;
+  const std::string field_;
+};
+
+struct Alternative {
+  const std::string field;
+  const Expr* value;
+};
+
+class Conditional : public Expr {
+ private:
+  const Expr* expr_;
+  const std::vector<Alternative> alternatives_;
+};
+
+class Application : public Expr {
+ private:
+  const Function* function_;
+  const std::vector<const Expr*> args_;
+};
+
