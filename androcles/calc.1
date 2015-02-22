@@ -6,10 +6,10 @@ struct FullAdderOut(Bit z, Bit cout);
 funct FullAdder(Bit a, Bit b, Bit cin; FullAdderOut) {
   Bit 0 = Bit:0(Unit());
   Bit 1 = Bit:1(Unit());
-  Bit z = a ? (b ? (c ? (0, 1), c ? (1, 0)),
-               b ? (c ? (1, 0), c ? (0, 1)));
-  Bit cout = a ? (b ? (0, c ? (0, 1)),
-                  b ? (c ? (0, 1), 1));
+  Bit z = a ? (0: b ? (0: c, 1: c ? (0: 1, 1: 0)),
+               1: b ? (0: c ? (0: 1, 1: 0), 1: c));
+  Bit cout = a ? (0: b ? (0: 0, 1: c),
+                  1: b ? (0: c, 1: 1));
   return FullAdderOut(z, cout);
 }
 
@@ -22,5 +22,18 @@ funct Adder(Bit4 a, Bit4 b, Bit cin; AdderOut) {
   FullAdderOut x2 = FullAdder(a.2, b.2, x1.cout);
   FullAdderOut x3 = FullAdder(a.3, b.3, x2.cout);
   return AdderOut(Bit4(x0.z, x1.z, x2.z, x3.z), x3.cout);
+}
+
+struct Unary(Bit4 a);
+struct Binary(Bit4 a, Bit4 b);
+union CalcInstr(Unary negate, Binary add, Binary sub);
+
+funct Calculate(CalcInstr instr; Bit4) {
+  Bit 0 = Bit:0(Unit());
+  return(instr ? (
+    negate: ...,
+    add: Adder(instr.add.a, instr.add.b, 0),
+    sub: ...
+  ));
 }
 

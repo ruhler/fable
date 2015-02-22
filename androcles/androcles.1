@@ -13,6 +13,266 @@ features.
 
 Data Values
 -----------
+Each data value has a unique type. The type describes the possible values,
+structure, methods for construction, and methods for accessing the contents of
+the data value. There are two classes of data type: structures and unions.
+
+Structures
+~~~~~~~~~~
+A structure is a bundle (or grouping) of data values. The items of a structure
+are organized into a finite number of fields. Each field has a name, used to
+identify the field, and a type, specifying the type of value for that field.
+
+For example, a two-dimensional Cartesian coordinate would be represented as a
+structure with two fields, an 'x' component, and a 'y' component.
+
+Declaration
+^^^^^^^^^^^
+  decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+        |  ...
+
+Assuming some 'int' type existed, the coordinate structure could be defined
+using the following syntax:
+
+-----------
+struct Coord(int x, int y);
+-----------
+
+The Coord struct type has two fields, 'int x', and 'int y'. In general, a
+struct type can have any non-negative, fixed number of fields.
+
+Each field can have any type that has been declared so far. For example, the
+following shows a contrived struct type with many fields of different type:
+
+-----------
+struct Crazy(int a, bool b, bool c, char d);
+-----------
+
+A struct may not contain any fields of that struct type itself. That is,
+struct types cannot be defined recursively. For example, the following is not
+a legal struct type definition:
+
+-------------
+struct Foo(int a, Foo b);
+-------------
+
+Each field of a struct type must have a different name. For example, the
+following is not a legal struct type definition:
+
+--------------
+struct Foo(int x, bool x);
+--------------
+
+The order of fields is important, because it is the order that will be used
+when construction values of the type.
+
+Two struct types with different names may have the same fields.
+These struct types are considered different, incompatible types.
+
+Construction
+^^^^^^^^^^^^
+  expr ::= tname '(' [expr [',' expr [...]]] ')'
+        | ...
+
+A structure value is constructed by specifying the contents of each component
+of the structure. For example, to construct a value of type Coord with x
+component 5 and y component 6, use the following expression:
+
+-------
+Coord(5, 6)
+-------
+
+Member Access
+~~~~~~~~~~~~~
+  expr ::= expr '.' fname
+        | ...
+        
+The fields of a structure are accessed using the dot notation:
+
+---------
+Coord coord = Coord(5, 6);
+int xval = coord.x;
+int yval = coord.y;
+---------
+
+A value of a structure type, followed by a '.' then a field name, refers to
+the value of the field of the structure with that name. The field name must
+refer to a field declared to be part of the structure.
+
+Unions
+~~~~~~
+The union type is used to describe a choice among named values of different
+type.
+
+Declaration
+~~~~~~~~~~~
+  decl ::= 'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+        | ...
+
+The simplest case of a union type is an enumeration:
+
+----------
+struct Unit();
+union Fruit(Unit apple, Unit banana, Unit kiwi);
+----------
+
+A value of type 'Fruit' can be either 'apple', 'banana', or 'kiwi'. More
+generally, the choices for a data value may have non-trivial data associated
+with them. For example, consider the definition of a calculator instruction
+type. Perhaps the calculator has binary operations Add and Subtract, a unary
+Negate operation, and a Clear operation. The calculator instruction type could
+be defined as:
+
+-------------
+struct Unary(int a);
+struct Binary(int a, int b);
+union CalcInstr(Binary add, Binary sub, Unary negate, Unit clear);
+-------------
+
+When CalcInstr is 'add', the Binary value corresponding to the 'add' field,
+with operands 'a' and 'b', can be accessed. When the instruction is 'negate',
+the Unary value with operand 'a' can be accessed, and so on.
+
+As with structures, the names of the union's fields must be distinct, and
+union types with different names are considered distinct and incompatable.
+It is legal to declare a union with zero or one choices, but it's not
+clear such a union would be very useful.
+
+Construction
+~~~~~~~~~~~~
+ expr ::= tname ':' fname '(' expr ')'
+       | ...
+
+A value of a union type is constructed by providing the name of the field to
+construct the union with, and the value to use for that field. For example:
+
+----------------
+Fruit fruit = Fruit:banana(Unit());
+CalcInstr 2_minus_6 = CalcInstr:subtract(Binary(2, 6));
+----------------
+
+Member Access
+~~~~~~~~~~~~~
+ expr ::= expr '.' fname
+       | ...
+
+Member access can be used for unions to access fields using the same syntax as
+member access for structures. The key difference is a member access produces
+an undefined if the union does not contain a value of that field. Consider the
+following example:
+
+-----------------------
+Binary x = 2_minus_6.subtract;
+Unary y = 2_minus_6.negate;
+-----------------------
+
+Here, the variable 'x' is well defined, because the calculator instruction is
+a subtract instrcuction. The variable 'y', however, has an undefined value.
+
+It is legal to have variables with undefined values, as long as the output of
+a function does not depend on an undefined value for any input to the
+function. This should be statically verified and enforced by the interpreter or
+compiler of the androcles program.
+
+Conditional
+~~~~~~~~~~~
+  expr ::= expr '?' '(' [fname ':' expr
+                   [',' fname ':' expr [...]]] ')'
+        | ...
+
+A conditional expression is used to select a value based on the active field
+of a union. For example:
+
+-----------------
+CalcInstr instr = ...;
+int result = instr ? (
+   add: Adder(instr.add.a, instr.add.b),
+   sub: Subtracter(instr.sub.a, instr.sub.b),
+   negate: Negate(instr.negate.a),
+   clear: 0);
+------------------
+
+The conditional expression should have a branch for each field of the union
+value, and all choices must have the same type. The fields may be listed in
+any order.
+
+Functions
+---------
+Functions describe transformations of values. This is where computation takes
+place. A function takes a finite set of typed values as inputs and produces a
+single typed value as a result, using the methods for manipulating data values
+already discussed.
+
+Declaration
+~~~~~~~~~~~
+  decl ::= 'funct'  tname '('
+              [tname vname [',' tname vname [...]]] ';' tname ')' '{' 
+                stmt [stmt [...]]
+                'return' '(' vname [',' vname [...]] ')' ';'
+           '}'
+        | ...
+
+For example, here is a function that returns the number of arguments a
+calculator instruction contains:
+
+-----------------
+funct NumArgs(CalcInstr instr; int) {
+  return(instr ? (add: 2, subract: 2, negate: 1, clear: 0));
+}
+-----------------
+
+The inputs and output are separated by a semicolon in the argument list. The
+output is unnamed. The final statement of the function is a return statement.
+The argument to the return statement is the result of calling the function.
+
+Variables
+^^^^^^^^^
+  stmt ::= tname vname '=' expr ';' ;
+        | ...
+  expr ::= vname
+        | ...
+
+The body of a function may also contain variable declarations. These declare
+variables with value equal to the expression they are declared with. For
+example:
+
+-------------
+struct FullAdderOut(Bit z, Bit cout);
+
+funct FullAdder(Bit a, Bit b, Bit cin; FullAdderOut) {
+  Bit 0 = Bit:0(Unit());
+  Bit 1 = Bit:1(Unit());
+  Bit z = a ? (0: b ? (0: c, 1: c ? (0: 1, 1: 0)),
+               1: b ? (0: c ? (0: 1, 1: 0), 1: c));
+  Bit cout = a ? (0: b ? (0: 0, 1: c),
+                  1: b ? (0: c, 1: 1));
+  return FullAdderOut(z, cout);
+}
+-------------
+
+Each variable within a function must have a unique name. The type of the
+variable must equal the type of the expression the variable is declared with.
+
+Function Call
+~~~~~~~~~~~~~
+    expr ::= tname '(' [expr [',' expr [...]]] ')'
+
+A function can be called by passing arguments after the name. For example:
+
+------------
+int numargs = NumArgs(instr);
+------------
+
+The number of arguments passed must match the number and type of input
+arguments declared in the function declaration.
+
+Program
+-------
+  prog ::= decl [decl [...]] ;
+
+A program is a collection of type and function declarations. An interpreter or
+compiler should have an implementation-specific mechanism for selecting the
+main function to interpret or compile.
 
 Syntax Reference
 ----------------
@@ -29,21 +289,21 @@ decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
 
 stmt ::= tname vname '=' expr ';' ;
 
-expr ::= tname '(' [vname [',' vname [...]]] ')'      (* struct literal *)
-      |  tname ':' fname '(' expr ')'                 (* union literal *)
-      |  expr '.' fname                               (* field access *)
-      |  expr '?' '(' [vname [',' vname [...]]] ')'   (* conditional *)
+expr ::= tname '(' [expr [',' expr [...]]] ')'      (* struct literal/function application *)
+      |  vname                                      (* variable *)
+      |  tname ':' fname '(' expr ')'               (* union literal *)
+      |  expr '.' fname                             (* field access *)
+      |  expr '?' '(' [fname ':' expr
+                   [',' fname ':' expr [...]]] ')'  (* conditional *)
 
 fname ::= name    (* A name of a field *)
-tname ::= name    (* A name referring to a type *)
+tname ::= name    (* A name referring to a type or function *)
 vname ::= name    (* A name referring to a value *)
 
-Notes
------
+Feedback
+--------
 * It would be nice if we could output multiple values, rather than have to
   define a new type first. But then how do we access those values?
-* Perhaps we could have a nicer syntax for conditional that includes the names
-  of fields in the choices? Maybe:
-    foo ? (0: ..., 1: ...)
-  Just so we know what's what?
+* It would be nice to have global variable definitions.
+  Same as a function with no args, only nicer syntax?
 

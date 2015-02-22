@@ -534,7 +534,7 @@ Comments
 Comments From Writing Adder
 ---------------------------
 * See adder.0 for what I wrote.
-* See adder.1 for what I wish I could write instead.
+* See adder.want for what I wish I could write instead.
 * Definition of Bit is very verbose.
   - requiring '()' for enum fields.
   - using words 'Zero' and 'One' instead of digits '0' and '1'.
@@ -568,5 +568,4 @@ Comments From Writing Adder
 * I forgot all my '@' promotions for Zero and One. Do we really need these?
   Especially for enums, where I can't do anything interesting with the
   structs?
-
 
