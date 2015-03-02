@@ -36,7 +36,58 @@ build build/circuit/truth_table_component.o: cc circuit/truth_table_component.cc
 build build/circuit/truth_table_component_test.o: cc circuit/truth_table_component_test.cc
 build build/circuit/value.o: cc circuit/value.cc
 
-build build/run_tests: ld build/truth_table/truth_table_parser.o build/truth_table/truth_table_test.o build/truth_table/truth_table.o build/truth_table/truth_table_parser_test.o build/circuit/adder.o build/circuit/truth_table_component_test.o build/circuit/circuit.o build/circuit/truth_table_component.o build/circuit/value.o build/circuit/adder_test.o build/circuit/circuit_test.o build/circuit/circuit_parser.o build/circuit/circuit_parser_test.o build/parser/char_stream_test.o build/parser/char_stream.o build/parser/location.o build/parser/parse_exception.o build/parser/token_stream.o build/parser/token_type.o build/parser/common_parser.o build/parser/token_stream_test.o build/error.o
+build build/androcles/androcles_test.o: cc androcles/androcles_test.cc
+build build/androcles/decl_var_expr.o: cc androcles/decl_var_expr.cc
+build build/androcles/expr.o: cc androcles/expr.cc
+build build/androcles/field_access.o: cc androcles/field_access.cc
+build build/androcles/field.o: cc androcles/field.cc
+build build/androcles/struct_expr.o: cc androcles/struct_expr.cc
+build build/androcles/struct_type.o: cc androcles/struct_type.cc
+build build/androcles/struct_value.o: cc androcles/struct_value.cc
+build build/androcles/type.o: cc androcles/type.cc
+build build/androcles/union_expr.o: cc androcles/union_expr.cc
+build build/androcles/union_type.o: cc androcles/union_type.cc
+build build/androcles/union_value.o: cc androcles/union_value.cc
+build build/androcles/value.o: cc androcles/value.cc
+build build/androcles/var_decl.o: cc androcles/var_decl.cc
+
+build build/run_tests: ld $
+    build/truth_table/truth_table_parser.o $
+    build/truth_table/truth_table_test.o $
+    build/truth_table/truth_table.o $
+    build/truth_table/truth_table_parser_test.o $
+    build/circuit/adder.o $
+    build/circuit/truth_table_component_test.o $
+    build/circuit/circuit.o $
+    build/circuit/truth_table_component.o $
+    build/circuit/value.o $
+    build/circuit/adder_test.o $
+    build/circuit/circuit_test.o $
+    build/circuit/circuit_parser.o $
+    build/circuit/circuit_parser_test.o $
+    build/parser/char_stream_test.o $
+    build/parser/char_stream.o $
+    build/parser/location.o $
+    build/parser/parse_exception.o $
+    build/parser/token_stream.o $
+    build/parser/token_type.o $
+    build/parser/common_parser.o $
+    build/parser/token_stream_test.o $
+    build/androcles/androcles_test.o $
+    build/androcles/decl_var_expr.o $
+    build/androcles/expr.o $
+    build/androcles/field_access.o $
+    build/androcles/field.o $
+    build/androcles/struct_expr.o $
+    build/androcles/struct_type.o $
+    build/androcles/struct_value.o $
+    build/androcles/type.o $
+    build/androcles/union_expr.o $
+    build/androcles/union_type.o $
+    build/androcles/union_value.o $
+    build/androcles/value.o $
+    build/androcles/var_decl.o $
+    build/error.o
 
 build build/tests_passed: run build/run_tests 
 

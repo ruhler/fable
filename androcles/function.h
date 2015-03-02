@@ -2,11 +2,6 @@
 #ifndef FUNCTION_H_
 #define FUNCTION_H_
 
-struct Arg {
-  const Type* type;
-  const std::string name;
-};
-
 struct VDecl {
   const Type* type;
   const std::string name;

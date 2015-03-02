@@ -6,21 +6,27 @@
 #include <iostream>
 #include <vector>
 
-class Verification;
+#include "androcles/field.h"
 
+// Each instance of 'Type' refers to a unique androcles type.
 class Type {
  public:
+  Type(const std::string& name, const std::vector<Field>& fields);
   virtual ~Type();
 
-  // Verifies the type is well formed.
-  // The results of verification are reported to the verification argument.
-  //
-  // This only checks the validity of this immediate type. It does not check
-  // the validity of types referenced by this type.
-  virtual void Verify(Verification& verification) const = 0;
-
   bool operator==(const Type& rhs) const;
-  virtual std::ostream& operator<<(std::ostream& os) const = 0;
+  std::ostream& operator<<(std::ostream& os) const;
+
+  const std::string& GetName() const;
+  const std::vector<Field>& GetFields() const;
+
+  // Returns the type of the given field. 
+  // It is an error if the field is not a valid field of the type.
+  const Type* TypeOfField(const std::string& field) const;
+
+ private:
+  const std::string name_;
+  const std::vector<Field> fields_;
 };
 
 #endif//TYPE_H_

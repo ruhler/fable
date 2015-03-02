@@ -1,0 +1,8 @@
+
+* Figure out how memory management of Values will work.
+* Figure out how eval will work
+  - It needs input arguments.
+  - It needs a scope to cache computed declared variable values.
+* Change Expr classes to take unique pointers to Expr as appropriate.
+* Change androcles_test to allocate exprs dynamically as appropriate.
+

@@ -2,9 +2,8 @@
 #ifndef FIELD_H_
 #define FIELD_H_
 
-#include <vector>
+#include <string>
 
-class Verification;
 class Type;
 
 // A field represents a typed name.
@@ -12,12 +11,9 @@ class Type;
 //  * struct and union fields
 //  * function parameters
 struct Field {
-  const Type& type;
+  const Type* type;
   std::string name;
 };
-
-// Verify all the field names for the given fields are distinct.
-void VerifyFieldNamesAreDistinct(const std::vector<Field> fields, Verification& verification);
 
 #endif//FIELD_H_
 

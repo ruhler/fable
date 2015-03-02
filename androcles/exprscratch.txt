@@ -12,12 +12,6 @@ class DeclaredVariable : public Expr {
   const VDecl* declaration_;
 };
 
-class FieldAccess : public Expr {
- private:
-  const Expr* expr_;
-  const std::string field_;
-};
-
 struct Alternative {
   const std::string field;
   const Expr* value;
