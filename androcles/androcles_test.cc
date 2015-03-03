@@ -15,19 +15,25 @@
 #include "androcles/var_decl.h"
 
 TEST(AndroclesTest, Basic) {
+  TypeEnv type_env;
+
   // Unit
-  StructType unit_t("Unit", {});
+  Type unit_t = type_env.DeclareStruct("Unit", {});
   StructExpr unit_e(&unit_t, {});
   StructValue unit_v(&unit_t, {});
 
   // Bit
-  UnionType bit_t("Bit", {{&unit_t, "0"}, {&unit_t, "1"}});
+  Type bit_t = type_env.DeclareUnion("Bit", {{unit_t, "0"}, {unit_t, "1"}});
   UnionExpr b0_e(&bit_t, "0", &unit_e);
   UnionExpr b1_e(&bit_t, "1", &unit_e);
   UnionValue b0_v(&bit_t, "0", &unit_v);
   UnionValue b1_v(&bit_t, "1", &unit_v);
 
-  StructType full_adder_out_t("FullAdderOut", {{&bit_t, "z"}, {&bit_t, "cout"}});
+  Type full_adder_out_t = type_env.DeclareStruct("FullAdderOut", {
+      {bit_t, "z"},
+      {bit_t, "cout"}
+  });
+
   VarDecl b0(&bit_t, "0", &b0_e);
   VarDecl b1(&bit_t, "1", &b1_e);
 
