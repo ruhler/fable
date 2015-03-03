@@ -1,8 +1,10 @@
 
-#include "var_decl.h"
+#include "androcles/var_decl.h"
 
-VarDecl::VarDecl(const Type* type, const std::string& name, const Expr* expr)
-  : type_(type), name_(name), expr_(expr)
+#include "androcles/expr.h"
+
+VarDecl::VarDecl(const Type* type, const std::string& name, std::unique_ptr<const Expr> expr)
+  : type_(type), name_(name), expr_(std::move(expr))
 {}
 
 VarDecl::~VarDecl()
