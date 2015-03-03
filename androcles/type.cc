@@ -27,6 +27,14 @@ Type Type::TypeOfField(const std::string& field_name) const {
   return Type::Null();
 }
 
+bool Type::operator==(const Type& rhs) const {
+  return decl_ == rhs.decl_;
+}
+
+bool Type::operator!=(const Type& rhs) const {
+  return decl_ != rhs.decl_;
+}
+
 Type Type::Null() {
   return Type(nullptr);
 }

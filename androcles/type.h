@@ -31,6 +31,9 @@ class Type {
   // name.
   Type TypeOfField(const std::string& field_name) const;
 
+  bool operator==(const Type& rhs) const;
+  bool operator!=(const Type& rhs) const;
+
   // Type object used to indicate when something goes wrong.
   static Type Null();
 
