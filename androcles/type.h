@@ -1,7 +1,8 @@
 
-#ifndef TYPE_H_
-#define TYPE_H_
+#ifndef ANDROCLES_TYPE_H_
+#define ANDROCLES_TYPE_H_
 
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -16,6 +17,8 @@ enum Kind {
   kUnion
 };
 
+std::ostream& operator<<(std::ostream& os, Kind kind);
+
 // Objects of class Type represent references to declared types.
 // Type objects are cheap to copy. They are only valid in the context of a
 // TypeEnv.
@@ -26,13 +29,25 @@ class Type {
   Kind GetKind() const;
   const std::string& GetName() const;
 
+  // Returns the number of fields the type has.
+  int NumFields() const;
+
   // Returns the type of the field with the given name. 
   // Returns Type::Null() if the type does not contain a field with the given
   // name.
   Type TypeOfField(const std::string& field_name) const;
 
+  // Returns the type of the field with the given index.
+  // Returns Type::Null() if the index is out of bounds.
+  Type TypeOfField(int index) const;
+
+  // Returns the index of the field with the given name.
+  // Returns -1 if the type does not contain a field with the given name.
+  int IndexOfField(const std::string& field_name) const;
+
   bool operator==(const Type& rhs) const;
   bool operator!=(const Type& rhs) const;
+  std::ostream& operator<<(std::ostream& os) const;
 
   // Type object used to indicate when something goes wrong.
   static Type Null();
@@ -49,11 +64,15 @@ struct Field {
   std::string name;
 };
 
+std::ostream& operator<<(std::ostream& os, const Field& field);
+
 struct TypeDecl {
   Kind kind;
   std::string name;
   std::vector<Field> fields;
 };
+
+std::ostream& operator<<(std::ostream& os, const TypeDecl& field);
 
 class TypeEnv {
  public:
@@ -84,5 +103,5 @@ class TypeEnv {
   std::unordered_map<std::string, TypeDecl> decls_;
 };
 
-#endif//TYPE_H_
+#endif//ANDROCLES_TYPE_H_
 

@@ -1,8 +1,15 @@
 
-* Figure out how memory management of Values will work.
+* Get value to compile
+  - Figure out copy vs. move and && and such to figure out how to implement
+    Value copy constructor in a nice way.
+* Write a test for value and get it to pass
+* Implement expr.h
+* Rewrite androcles_test according to expr.h
+* Implement expr.cc
+* Get expr.cc to compile
+* Write a test for expr.
 * Figure out how eval will work
   - It needs input arguments.
   - It needs a scope to cache computed declared variable values.
-* Change Expr classes to take unique pointers to Expr as appropriate.
-* Change androcles_test to allocate exprs dynamically as appropriate.
+* Run the androcles_test.
 

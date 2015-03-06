@@ -19,15 +19,16 @@ TEST(AndroclesTest, Basic) {
 
   // Unit
   Type unit_t = type_env.DeclareStruct("Unit", {});
+  Value unit_v = Value::Struct(unit_t, {});
   StructExpr unit_e(&unit_t, {});
-  StructValue unit_v(&unit_t, {});
 
   // Bit
   Type bit_t = type_env.DeclareUnion("Bit", {{unit_t, "0"}, {unit_t, "1"}});
+  Value b0_v = Value::Union(bit_t, "0", unit_v);
+  Value b1_v = Value::Union(bit_t, "1", unit_v);
+
   UnionExpr b0_e(&bit_t, "0", &unit_e);
   UnionExpr b1_e(&bit_t, "1", &unit_e);
-  UnionValue b0_v(&bit_t, "0", &unit_v);
-  UnionValue b1_v(&bit_t, "1", &unit_v);
 
   Type full_adder_out_t = type_env.DeclareStruct("FullAdderOut", {
       {bit_t, "z"},
@@ -55,9 +56,9 @@ TEST(AndroclesTest, Basic) {
       {&b0, &b1, &z, &cout},
       &result_e);
 
-  EXPECT_EQ(StructValue(&full_adder_out_t, {"z", &b1_v}, {"cout", &b0_v}),
-      full_adder.Eval({"a", &b0_v}, {"b", &b1_v}, {"c", &b0_v}));
-  EXPECT_EQ(StructValue(&full_adder_out_t, {"z", &b0_v}, {"cout", &b1_v}),
-      full_adder.Eval({"a", &b0_v}, {"b", &b1_v}, {"c", &b1_v}));
+  EXPECT_EQ(Value::Struct(full_adder_out_t, {b1_v, b0_v}),
+      full_adder.Eval({b0_v, b1_v, b0_v}));
+  EXPECT_EQ(Value::Struct(full_adder_out_t, {b0_v, b1_v}),
+      full_adder.Eval({b0_v, b1_v, &b1_v}));
 }
 
