@@ -39,6 +39,7 @@ build build/circuit/value.o: cc circuit/value.cc
 build build/androcles/type.o: cc androcles/type.cc
 build build/androcles/type_test.o: cc androcles/type_test.cc
 build build/androcles/value.o: cc androcles/value.cc
+build build/androcles/value_test.o: cc androcles/value_test.cc
 
 build build/run_tests: ld $
     build/truth_table/truth_table_parser.o $
@@ -65,6 +66,7 @@ build build/run_tests: ld $
     build/androcles/type.o $
     build/androcles/type_test.o $
     build/androcles/value.o $
+    build/androcles/value_test.o $
     build/error.o
 
 build build/tests_passed: run build/run_tests 

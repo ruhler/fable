@@ -10,6 +10,7 @@ class Value_ {
 
   Type GetType() const;
   virtual Value GetField(const std::string& field_name) const = 0;
+  virtual const std::string& GetTag() const = 0;
   virtual Value Select(const std::vector<Value>& choices) const = 0;
   virtual bool IsPartiallyUndefined() const = 0;
   virtual bool IsCompletelyUndefined() const = 0;
@@ -35,6 +36,7 @@ class UndefinedValue : public Value_ {
   UndefinedValue(Type type);
   virtual ~UndefinedValue();
   virtual Value GetField(const std::string& field_name) const;
+  virtual const std::string& GetTag() const;
   virtual Value Select(const std::vector<Value>& choices) const;
   virtual bool IsPartiallyUndefined() const;
   virtual bool IsCompletelyUndefined() const;
@@ -52,6 +54,10 @@ Value UndefinedValue::GetField(const std::string& field_name) const {
   Type field_type = GetType().TypeOfField(field_name);
   CHECK_NE(Type::Null(), field_type);
   return Value::Undefined(field_type);
+}
+
+const std::string& UndefinedValue::GetTag() const {
+  CHECK(false) << "GetTag called on undefined value";
 }
 
 Value UndefinedValue::Select(const std::vector<Value>& choices) const {
@@ -79,6 +85,7 @@ class StructValue : public Value_ {
   StructValue(Type type, const std::vector<Value>& fields);
   virtual ~StructValue();
   virtual Value GetField(const std::string& field_name) const;
+  virtual const std::string& GetTag() const;
   virtual Value Select(const std::vector<Value>& choices) const;
   virtual bool IsPartiallyUndefined() const;
   virtual bool IsCompletelyUndefined() const;
@@ -105,6 +112,10 @@ Value StructValue::GetField(const std::string& field_name) const {
   return fields_[index];
 }
 
+const std::string& StructValue::GetTag() const {
+  CHECK(false) << "GetTag called on struct value";
+}
+
 Value StructValue::Select(const std::vector<Value>& choices) const {
   CHECK(false) << "Select: Expected union value, but found struct value";
 }
@@ -124,7 +135,7 @@ bool StructValue::IsCompletelyUndefined() const {
       return false;
     }
   }
-  return true;
+  return !fields_.empty();
 }
 
 Value StructValue::Copy() const {
@@ -136,6 +147,7 @@ class UnionValue : public Value_ {
   UnionValue(Type type, const std::string& field_name, const Value& value);
   virtual ~UnionValue();
   virtual Value GetField(const std::string& field_name) const;
+  virtual const std::string& GetTag() const;
   virtual Value Select(const std::vector<Value>& choices) const;
   virtual bool IsPartiallyUndefined() const;
   virtual bool IsCompletelyUndefined() const;
@@ -165,6 +177,10 @@ Value UnionValue::GetField(const std::string& field_name) const {
   return Value::Undefined(field_type);
 }
 
+const std::string& UnionValue::GetTag() const {
+  return field_name_;
+}
+
 Value UnionValue::Select(const std::vector<Value>& choices) const {
   Type type = GetType();
   CHECK_EQ(type.NumFields(), choices.size());
@@ -191,9 +207,16 @@ Value::Value(std::unique_ptr<const Value_> value)
   : value_(std::move(value))
 {}
 
+Value::Value(Value&&) = default;
+
+Value::~Value()
+{}
+
 Value& Value::operator=(const Value& rhs) {
   return *this = std::move(rhs.value_->Copy());
 }
+
+Value& Value::operator=(Value&&) = default;
 
 Type Value::GetType() const {
   return value_->GetType();
@@ -201,6 +224,10 @@ Type Value::GetType() const {
 
 Value Value::GetField(const std::string& field_name) const {
   return value_->GetField(field_name);
+}
+
+const std::string& Value::GetTag() const {
+  return value_->GetTag();
 }
 
 Value Value::Select(const std::vector<Value>& choices) const {

@@ -13,10 +13,11 @@ class Value_;
 class Value {
  public:
   Value(const Value& rhs);
-  Value(Value&&) = default;
+  Value(Value&&);
+  ~Value();
 
   Value& operator=(const Value& rhs);
-  Value& operator=(Value&&) = default;
+  Value& operator=(Value&&);
 
   // Returns the type of the value.
   Type GetType() const;
@@ -27,6 +28,11 @@ class Value {
   // It is an error to call GetField with a field_name that does not
   // belong to the type of the value.
   Value GetField(const std::string& field_name) const;
+
+  // Returns the tag for a union value.
+  // It is an error to call GetTag if the value is undefined or is not of
+  // union type.
+  const std::string& GetTag() const;
 
   // Select the value from the choices based on the currently active field of
   // this valie.
