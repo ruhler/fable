@@ -1,15 +1,10 @@
 
-* Get value to compile
-  - Figure out copy vs. move and && and such to figure out how to implement
-    Value copy constructor in a nice way.
-* Write a test for value and get it to pass
-* Implement expr.h
-* Rewrite androcles_test according to expr.h
+* Implement and test Value equality operators.
 * Implement expr.cc
+* Remove old header and source files.
 * Get expr.cc to compile
-* Write a test for expr.
-* Figure out how eval will work
-  - It needs input arguments.
-  - It needs a scope to cache computed declared variable values.
-* Run the androcles_test.
+* Rename androcles_test function_test.
+* Run the function_test.
+* Write a routine to verify a function is 'valid', in that
+  it can't return something undefined if its input isn't undefined.
 
