@@ -65,11 +65,11 @@ bool Type::operator!=(const Type& rhs) const {
   return decl_ != rhs.decl_;
 }
 
-std::ostream& Type::operator<<(std::ostream& os) const {
-  if (decl_ == nullptr) {
+std::ostream& operator<<(std::ostream& os, const Type& type) {
+  if (type.decl_ == nullptr) {
     return os << "Type::Null()";
   }
-  return os << *decl_;
+  return os << *type.decl_;
 }
 
 Type Type::Null() {

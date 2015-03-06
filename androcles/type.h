@@ -47,7 +47,7 @@ class Type {
 
   bool operator==(const Type& rhs) const;
   bool operator!=(const Type& rhs) const;
-  std::ostream& operator<<(std::ostream& os) const;
+  friend std::ostream& operator<<(std::ostream& os, const Type& type);
 
   // Type object used to indicate when something goes wrong.
   static Type Null();
@@ -56,6 +56,7 @@ class Type {
   const TypeDecl* decl_;
 };
 
+std::ostream& operator<<(std::ostream& os, const Type& type);
 
 // A Field represents a typed name. It is used for struct and union fields, as
 // well as function parameters.

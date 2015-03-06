@@ -50,7 +50,7 @@ UndefinedValue::~UndefinedValue()
 
 Value UndefinedValue::GetField(const std::string& field_name) const {
   Type field_type = GetType().TypeOfField(field_name);
-  //CHECK_NE(Type::Null(), field_type);
+  CHECK_NE(Type::Null(), field_type);
   return Value::Undefined(field_type);
 }
 
@@ -92,7 +92,7 @@ StructValue::StructValue(Type type, const std::vector<Value>& fields)
  : Value_(type), fields_(fields) {
   CHECK_EQ(type.NumFields(), fields.size());
   for (int i = 0; i < type.NumFields(); i++) {
-    //CHECK_EQ(type.TypeOfField(i), fields[i].GetType());
+    CHECK_EQ(type.TypeOfField(i), fields[i].GetType());
   }
 }
 
@@ -149,8 +149,8 @@ class UnionValue : public Value_ {
 UnionValue::UnionValue(Type type, const std::string& field_name, const Value& value)
  : Value_(type), field_name_(field_name), value_(value) {
   Type field_type = type.TypeOfField(field_name);
-  //CHECK_NE(Type::Null(), field_type);
-  //CHECK_EQ(field_type, value.GetType());
+  CHECK_NE(Type::Null(), field_type);
+  CHECK_EQ(field_type, value.GetType());
 }
 
 UnionValue::~UnionValue()
@@ -158,7 +158,7 @@ UnionValue::~UnionValue()
 
 Value UnionValue::GetField(const std::string& field_name) const {
   Type field_type = GetType().TypeOfField(field_name);
-  //CHECK_NE(Type::Null(), field_type);
+  CHECK_NE(Type::Null(), field_type);
   if (field_name == field_name_) {
     return value_;
   }
