@@ -3,6 +3,7 @@
 #define ANDROCLES_FUNCTION_H_
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "androcles/type.h"
@@ -13,6 +14,7 @@ class Expr_;
 class Expr {
  public:
   Type GetType() const;
+  Value Eval(const std::unordered_map<std::string, Value>& env) const;
 
  private:
   Expr(const Expr_* expr);
@@ -43,7 +45,7 @@ class Function {
   Expr Union(Type type, const std::string& field_name, Expr value);
 
   // Returns a struct literal expression.
-  Expr Struct(Type type, const std::vector<Expr> args);
+  Expr Struct(Type type, const std::vector<Expr>& args);
 
   // Returns a select expression.
   Expr Select(Expr select, const std::vector<Alt>& alts);
@@ -51,8 +53,7 @@ class Function {
   // Returns a field access expression.
   Expr Access(Expr source, const std::string& field_name);
 
-  // Returns a function application expression.
-  Expr Application(Expr function, const std::vector<Expr>& args);
+  // TODO: Add an Application expression.
 
   // Defines the result of the function as the given expression.
   void Return(Expr expr);
@@ -61,8 +62,21 @@ class Function {
   Value Eval(const std::vector<Value>& args) const;
 
  private:
+  struct VarDecl {
+    Type type;
+    std::string name;
+    Expr value;
+  };
+
+  // Helper function for allocating new expressions.
+  // expr is a pointer to an expression allocated with new.
+  // This takes over ownership of the expression by adding it to the exprs_
+  // list, and returning an 'Expr' object for it.
+  Expr NewExpr(Expr_* expr);
+
   const std::string name_;
-  const std::vector<Field> fields_;
+  const std::vector<Field> args_;
+  std::vector<VarDecl> decls_;
   Type out_type_;
   Expr return_;
 

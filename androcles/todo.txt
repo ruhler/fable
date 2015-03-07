@@ -5,6 +5,4 @@
 * Get expr.cc to compile
 * Rename androcles_test function_test.
 * Run the function_test.
-* Write a routine to verify a function is 'valid', in that
-  it can't return something undefined if its input isn't undefined.
 

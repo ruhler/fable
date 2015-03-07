@@ -45,6 +45,9 @@ class Type {
   // Returns -1 if the type does not contain a field with the given name.
   int IndexOfField(const std::string& field_name) const;
 
+  // Returns true if the type has a field with the given name.
+  bool HasField(const std::string& field_name) const;
+
   bool operator==(const Type& rhs) const;
   bool operator!=(const Type& rhs) const;
   friend std::ostream& operator<<(std::ostream& os, const Type& type);

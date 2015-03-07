@@ -320,6 +320,28 @@ places.
   variables. It is fine for variables in different functions to have the same
   name.
 
+* Undefined:
+  Determining whether a function can return an undefined value is NP-Complete.
+  It is not reasonable to require every compiler or interpreter to determine
+  this.
+
+  In practice, I don't see any way around having undefined values. Even a
+  syntactic restriction like Haskell has doesn't help, because at some point
+  there will be high level knowledge that something must have a certain tag.
+
+  The concern with leaving undefined values as undefined is that they will
+  become defined by whatever implementation of the language dominates, and
+  likely not in a consistent or simple manner.
+
+  The concern with defining the behavior is that it will make it harder for
+  some implementations to optimize some cases, where the behavior can't ever
+  be undefined, and users may start to rely on the specific behavior of
+  undefined values as a feature.
+
+  I suggest we leave the behavior undefined, ask compilers to do their best to
+  warn of undefined behavior, and suggest a debug mode where undefined behavior
+  becomes an error at runtime.
+
 Feedback
 --------
 * It would be nice if we could output multiple values, rather than have to

@@ -57,6 +57,11 @@ int Type::IndexOfField(const std::string& field_name) const {
   return -1;
 }
 
+bool Type::HasField(const std::string& field_name) const {
+  CHECK(decl_ != nullptr) << "HasField called on Type::Null()";
+  return IndexOfField(field_name) != -1;
+}
+
 bool Type::operator==(const Type& rhs) const {
   return decl_ == rhs.decl_;
 }
