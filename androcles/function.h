@@ -10,15 +10,21 @@
 #include "androcles/value.h"
 
 class Expr_;
+class Function;
 
 class Expr {
  public:
   Type GetType() const;
   Value Eval(const std::unordered_map<std::string, Value>& env) const;
 
+  // Expr object used to indicate when something goes wrong.
+  static Expr Null();
+
  private:
   Expr(const Expr_* expr);
   const Expr_* expr_;
+
+  friend Function;
 };
 
 struct Alt {
@@ -31,7 +37,7 @@ class Function {
   Function(const std::string& name, 
       const std::vector<Field>& args,
       Type out_type);
-  Function::~Function();
+  ~Function();
 
   // Returns an expression referring to the variable with the given name.
   // The name must match either an input variable or a declared variable.

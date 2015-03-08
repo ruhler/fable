@@ -36,6 +36,8 @@ build build/circuit/truth_table_component.o: cc circuit/truth_table_component.cc
 build build/circuit/truth_table_component_test.o: cc circuit/truth_table_component_test.cc
 build build/circuit/value.o: cc circuit/value.cc
 
+build build/androcles/function.o: cc androcles/function.cc
+build build/androcles/function_test.o: cc androcles/function_test.cc
 build build/androcles/type.o: cc androcles/type.cc
 build build/androcles/type_test.o: cc androcles/type_test.cc
 build build/androcles/value.o: cc androcles/value.cc
@@ -63,6 +65,8 @@ build build/run_tests: ld $
     build/parser/token_type.o $
     build/parser/common_parser.o $
     build/parser/token_stream_test.o $
+    build/androcles/function.o $
+    build/androcles/function_test.o $
     build/androcles/type.o $
     build/androcles/type_test.o $
     build/androcles/value.o $

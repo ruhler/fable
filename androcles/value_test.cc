@@ -36,15 +36,20 @@ TEST(AndroclesValueTest, Basic) {
   EXPECT_EQ(unit_t, unit_v.GetType());
   EXPECT_FALSE(unit_v.IsPartiallyUndefined());
   EXPECT_FALSE(unit_v.IsCompletelyUndefined());
+  EXPECT_EQ(unit_v, unit_v);
+  EXPECT_EQ(unit_v, Value::Struct(unit_t, {}));
 
   Value true_v = Value::Union(bool_t, "true", unit_v);
   EXPECT_EQ(bool_t, true_v.GetType());
   EXPECT_FALSE(true_v.IsPartiallyUndefined());
   EXPECT_FALSE(true_v.IsCompletelyUndefined());
   EXPECT_EQ("true", true_v.GetTag());
+  EXPECT_EQ(true_v, true_v);
+  EXPECT_NE(unit_v, true_v);
 
   Value false_v = Value::Union(bool_t, "false", unit_v);
   EXPECT_EQ("false", false_v.GetTag());
+  EXPECT_NE(true_v, false_v);
 
   Value a_v = Value::Union(enum_t, "a", unit_v);
   Value b_v = Value::Union(enum_t, "b", unit_v);

@@ -11,6 +11,9 @@ class Expr_ {
   virtual Value Eval(const std::unordered_map<std::string, Value>& env) const = 0;
 };
 
+Expr_::~Expr_()
+{}
+
 Expr::Expr(const Expr_* expr)
   : expr_(expr)
 {}
@@ -21,6 +24,10 @@ Type Expr::GetType() const {
 
 Value Expr::Eval(const std::unordered_map<std::string, Value>& env) const {
   return expr_->Eval(env);
+}
+
+Expr Expr::Null() {
+  return Expr(nullptr);
 }
 
 class VarExpr : public Expr_ {
@@ -77,7 +84,7 @@ UnionExpr::UnionExpr(Type type, const std::string& field_name, Expr expr)
 UnionExpr::~UnionExpr()
 {}
 
-Type UnionExpr::GetType() {
+Type UnionExpr::GetType() const {
   return type_;
 }
 
@@ -112,14 +119,14 @@ StructExpr::StructExpr(Type type, const std::vector<Expr>& args)
 StructExpr::~StructExpr()
 {}
 
-Type StructExpr::GetType() {
+Type StructExpr::GetType() const {
   return type_;
 }
 
 Value StructExpr::Eval(const std::unordered_map<std::string, Value>& env) const {
   std::vector<Value> args;
-  for (auto& expr : args_) {
-    args.push_back(expr_.Eval(env));
+  for (auto& arg : args_) {
+    args.push_back(arg.Eval(env));
   }
   return Value::Struct(type_, args);
 }
@@ -164,6 +171,7 @@ Value SelectExpr::Eval(const std::unordered_map<std::string, Value>& env) const 
   int index = select.GetType().IndexOfField(select.GetTag());
   CHECK_GE(index, 0);
   CHECK_LT(index, alts_.size());
+  return alts_[index].value.Eval(env);
 }
 
 class AccessExpr : public Expr_ {
@@ -185,28 +193,16 @@ AccessExpr::AccessExpr(Expr source, const std::string& field_name)
   CHECK(source.GetType().HasField(field_name));
 }
 
+AccessExpr::~AccessExpr()
+{}
+
 Type AccessExpr::GetType() const {
-  return source.GetType().TypeOfField(field_name);
+  return source_.GetType().TypeOfField(field_name_);
 }
 
 Value AccessExpr::Eval(const std::unordered_map<std::string, Value>& env) const {
   Value source = source_.Eval(env);
-  return source.GetField(field_name);
-}
-
-AccessExpr::AccessExpr(Expr source, const std::string& field_name)
-  : source_(source), field_name_(field_name)
-{
-  CHECK(source.GetType().HasField(field_name));
-}
-
-Type AccessExpr::GetType() const {
-  return source.GetType().TypeOfField(field_name);
-}
-
-Value AccessExpr::Eval(const std::unordered_map<std::string, Value>& env) const {
-  Value source = source_.Eval(env);
-  return source.GetField(field_name);
+  return source.GetField(field_name_);
 }
 
 Function::Function(const std::string& name,
@@ -218,7 +214,7 @@ Function::Function(const std::string& name,
 Function::~Function()
 {}
 
-Expr Var(const std::string& name) {
+Expr Function::Var(const std::string& name) {
   for (auto& arg : args_) {
     if (arg.name == name) {
       return NewExpr(new VarExpr(arg.type, name));
@@ -247,7 +243,7 @@ Expr Function::Union(Type type, const std::string& field_name, Expr value) {
   return NewExpr(new UnionExpr(type, field_name, value));
 }
 
-Expr Function::Struct(Type type, const std::vector<Expr> args) {
+Expr Function::Struct(Type type, const std::vector<Expr>& args) {
   return NewExpr(new StructExpr(type, args));
 }
 
@@ -260,14 +256,15 @@ Expr Function::Access(Expr source, const std::string& field_name) {
 }
 
 void Function::Return(Expr expr) {
-  CHECK_EQ(Expr::Null(), expr);
+  // TODO: Re-enable this after implementing the operator== for Expr.
+  // CHECK_EQ(Expr::Null(), expr);
   return_ = expr;
 }
 
 Value Function::Eval(const std::vector<Value>& args) const {
   CHECK_EQ(args_.size(), args.size());
 
-  std::unordered_map env;
+  std::unordered_map<std::string, Value> env;
   for (int i = 0; i < args_.size(); i++) {
     auto result = env.emplace(args_[i].name, args[i]);
     CHECK(result.second) << "Duplicate arg named " << args_[i].name;

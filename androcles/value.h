@@ -49,6 +49,12 @@ class Value {
   // Return true if the value is completely undefined.
   bool IsCompletelyUndefined() const;
 
+  // Compares two values for equality.
+  // Note: Undefined values are not considered equal to any other value,
+  // including other undefined values.
+  bool operator==(const Value& rhs) const;
+  bool operator!=(const Value& rhs) const;
+
   // Returns a completely undefined value of the given type.
   static Value Undefined(Type type);
 

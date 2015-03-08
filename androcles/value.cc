@@ -3,6 +3,9 @@
 
 #include "error.h"
 
+class StructValue;
+class UnionValue;
+
 class Value_ {
  public:
   Value_(Type type);
@@ -15,6 +18,10 @@ class Value_ {
   virtual bool IsPartiallyUndefined() const = 0;
   virtual bool IsCompletelyUndefined() const = 0;
   virtual Value Copy() const = 0;
+
+  virtual bool Equals(const Value_* rhs) const = 0;
+  virtual bool EqualsStruct(const StructValue* rhs) const = 0;
+  virtual bool EqualsUnion(const UnionValue* rhs) const = 0;
 
  private:
   Type type_;
@@ -41,6 +48,9 @@ class UndefinedValue : public Value_ {
   virtual bool IsPartiallyUndefined() const;
   virtual bool IsCompletelyUndefined() const;
   virtual Value Copy() const;
+  virtual bool Equals(const Value_* rhs) const;
+  virtual bool EqualsStruct(const StructValue* rhs) const;
+  virtual bool EqualsUnion(const UnionValue* rhs) const;
 };
 
 UndefinedValue::UndefinedValue(Type type)
@@ -80,6 +90,18 @@ Value UndefinedValue::Copy() const {
   return Value::Undefined(GetType());
 }
 
+bool UndefinedValue::Equals(const Value_* rhs) const {
+  return false;
+}
+
+bool UndefinedValue::EqualsStruct(const StructValue* rhs) const {
+  return false;
+}
+
+bool UndefinedValue::EqualsUnion(const UnionValue* rhs) const {
+  return false;
+}
+
 class StructValue : public Value_ {
  public:
   StructValue(Type type, const std::vector<Value>& fields);
@@ -90,6 +112,9 @@ class StructValue : public Value_ {
   virtual bool IsPartiallyUndefined() const;
   virtual bool IsCompletelyUndefined() const;
   virtual Value Copy() const;
+  virtual bool Equals(const Value_* rhs) const;
+  virtual bool EqualsStruct(const StructValue* rhs) const;
+  virtual bool EqualsUnion(const UnionValue* rhs) const;
 
  private:
   std::vector<Value> fields_;
@@ -142,6 +167,31 @@ Value StructValue::Copy() const {
   return Value::Struct(GetType(), fields_);
 }
 
+bool StructValue::Equals(const Value_* rhs) const {
+  return rhs->EqualsStruct(this);
+}
+
+bool StructValue::EqualsStruct(const StructValue* rhs) const {
+  if (GetType() != rhs->GetType()) {
+    return false;
+  }
+
+  if (fields_.size() != rhs->fields_.size()) {
+    return false;
+  }
+
+  for (int i = 0; i < fields_.size(); i++) {
+    if (fields_[i] != rhs->fields_[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool StructValue::EqualsUnion(const UnionValue* rhs) const {
+  return false;
+}
+
 class UnionValue : public Value_ {
  public:
   UnionValue(Type type, const std::string& field_name, const Value& value);
@@ -152,6 +202,9 @@ class UnionValue : public Value_ {
   virtual bool IsPartiallyUndefined() const;
   virtual bool IsCompletelyUndefined() const;
   virtual Value Copy() const;
+  virtual bool Equals(const Value_* rhs) const;
+  virtual bool EqualsStruct(const StructValue* rhs) const;
+  virtual bool EqualsUnion(const UnionValue* rhs) const;
 
  private:
   std::string field_name_;
@@ -199,13 +252,38 @@ Value UnionValue::Copy() const {
   return Value::Union(GetType(), field_name_, value_);
 }
 
+bool UnionValue::Equals(const Value_* rhs) const {
+  return rhs->EqualsUnion(this);
+}
+
+bool UnionValue::EqualsStruct(const StructValue* rhs) const {
+  return false;
+}
+
+bool UnionValue::EqualsUnion(const UnionValue* rhs) const {
+  if (GetType() != rhs->GetType()) {
+    return false;
+  }
+
+  if (field_name_ != rhs->field_name_) {
+    return false;
+  }
+
+  if (value_ != rhs->value_) {
+    return false;
+  }
+  return true;
+}
+
 Value::Value(const Value& rhs)
   : Value(std::move(rhs.value_->Copy()))
 {}
 
 Value::Value(std::unique_ptr<const Value_> value)
   : value_(std::move(value))
-{}
+{
+  CHECK(value_.get() != nullptr);
+}
 
 Value::Value(Value&&) = default;
 
@@ -240,6 +318,14 @@ bool Value::IsPartiallyUndefined() const {
 
 bool Value::IsCompletelyUndefined() const {
   return value_->IsCompletelyUndefined();
+}
+
+bool Value::operator==(const Value& rhs) const {
+  return value_->Equals(rhs.value_.get());
+}
+
+bool Value::operator!=(const Value& rhs) const {
+  return !(*this == rhs);
 }
 
 Value Value::Undefined(Type type) {

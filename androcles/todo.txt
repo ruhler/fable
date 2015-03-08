@@ -1,8 +1,6 @@
 
-* Implement and test Value equality operators.
-* Implement expr.cc
-* Remove old header and source files.
-* Get expr.cc to compile
-* Rename androcles_test function_test.
-* Run the function_test.
+* Implement Value operator<< for test purposes.
+* Implement Expr operator<< for test purposes.
+* Implement and test Expr equality operators.
+* Uncomment that CHECK that's commented out in function.cc
 
