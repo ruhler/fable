@@ -125,10 +125,6 @@ class FunctionEnv {
     Expr NewExpr(Expr_* expr);
 
     FunctionDecl decl_;
-
-    // For debugging purposes only, to ensure the builder isn't used after the
-    // function has been built.
-    bool built_ = false;
   };
 
   // Declares and returns a function built by a FunctionBuilder.
