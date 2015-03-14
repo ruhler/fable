@@ -25,6 +25,7 @@ class TypeEnv {
   // TypeEnv.
   class Type {
    public:
+    Type();
     Type(const Decl* decl);
 
     Kind GetKind() const;

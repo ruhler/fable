@@ -3,6 +3,10 @@
 
 #include "error.h"
 
+Type::Type()
+  : Type(nullptr)
+{}
+
 Type::Type(const Decl* decl)
   : decl_(decl)
 {}

@@ -9,37 +9,39 @@
 #include "androcles/value.h"
 
 TEST(AndroclesFunctionTest, Basic) {
-  TypeEnv type_env;
+  TypeEnv types;
 
-  Type unit_t = type_env.DeclareStruct("Unit", {});
-  Type bit_t = type_env.DeclareUnion("Bit", {{unit_t, "0"}, {unit_t, "1"}});
-  Type full_adder_out_t = type_env.DeclareStruct("FullAdderOut", {
+  Type unit_t = types.DeclareStruct("Unit", {});
+  Type bit_t = types.DeclareUnion("Bit", {{unit_t, "0"}, {unit_t, "1"}});
+  Type full_adder_out_t = types.DeclareStruct("FullAdderOut", {
       {bit_t, "z"},
       {bit_t, "cout"}
   });
 
-  Function adder("FullAdder",
-      {{bit_t, "a"}, {bit_t, "b"}, {bit_t, "cin"}},
-      full_adder_out_t);
+  FunctionEnv functions;
 
-  Expr a = adder.Var("a");
-  Expr b = adder.Var("b");
-  Expr cin = adder.Var("cin");
-  Expr b0 = adder.Declare(bit_t, "0", adder.Union(bit_t, "0", adder.Struct(unit_t, {})));
-  Expr b1 = adder.Declare(bit_t, "1", adder.Union(bit_t, "1", adder.Struct(unit_t, {})));
-  Expr z = adder.Declare(bit_t, "z",
-      adder.Select(a, {
-        {"0", adder.Select(b, {
+  FunctionBuilder builder({{bit_t, "a"}, {bit_t, "b"}, {bit_t, "cin"}}, full_adder_out_t);
+
+  Expr a = builder.Var("a");
+  Expr b = builder.Var("b");
+  Expr cin = builder.Var("cin");
+  Expr b0 = builder.Declare(bit_t, "0", builder.Union(bit_t, "0", builder.Struct(unit_t, {})));
+  Expr b1 = builder.Declare(bit_t, "1", builder.Union(bit_t, "1", builder.Struct(unit_t, {})));
+  Expr z = builder.Declare(bit_t, "z",
+      builder.Select(a, {
+        {"0", builder.Select(b, {
                 {"0", cin},
-                {"1", adder.Select(cin, {{"0", b1}, {"1", b0}})}})},
-        {"1", adder.Select(b, {
-                {"0", adder.Select(cin, {{"0", b1}, {"1", b0}})},
+                {"1", builder.Select(cin, {{"0", b1}, {"1", b0}})}})},
+        {"1", builder.Select(b, {
+                {"0", builder.Select(cin, {{"0", b1}, {"1", b0}})},
                 {"1", cin}})}}));
-  Expr cout = adder.Declare(bit_t, "cout",
-      adder.Select(a, {
-        {"0", adder.Select(b, {{"0", b0}, {"1", cin}})},
-        {"1", adder.Select(b, {{"0", cin}, {"1", b1}})}}));
-  adder.Return(adder.Struct(full_adder_out_t, {z, cout}));
+  Expr cout = builder.Declare(bit_t, "cout",
+      builder.Select(a, {
+        {"0", builder.Select(b, {{"0", b0}, {"1", cin}})},
+        {"1", builder.Select(b, {{"0", cin}, {"1", b1}})}}));
+  builder.Return(builder.Struct(full_adder_out_t, {z, cout}));
+
+  Function adder = functions.Declare("FullAdder", builder.Build());
 
   Value unit_v = Value::Struct(unit_t, {});
   Value b0_v = Value::Union(bit_t, "0", unit_v);

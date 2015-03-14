@@ -3,8 +3,6 @@
 * Implement Expr operator<< for test purposes.
 * Implement and test Expr equality operators.
 * Uncomment that CHECK that's commented out in function.cc
-* Separate Function and FunctionBuilder
-  And implement ApplicationExpr.
 * Write adder4 test case.
 * Implement parser
 * Write main interpreter executable
