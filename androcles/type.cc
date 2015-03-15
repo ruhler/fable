@@ -3,6 +3,8 @@
 
 #include "error.h"
 
+namespace androcles {
+
 Type::Type()
   : Type(nullptr)
 {}
@@ -121,4 +123,6 @@ std::ostream& operator<<(std::ostream& os, const Type& type) {
 std::ostream& operator<<(std::ostream& os, const Field& field) {
   return os << field.type.GetName() << " " << field.name << ";";
 }
+
+}  // namespace androcles
 

@@ -8,6 +8,8 @@
 
 #include "androcles/type.h"
 
+namespace androcles {
+
 class Value_;
 
 class Value {
@@ -74,6 +76,8 @@ class Value {
 
   std::unique_ptr<const Value_> value_;
 };
+
+}  // namespace androcles
 
 #endif//ANDROCLES_VALUE_H_
 

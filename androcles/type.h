@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace androcles {
+
 // There are two kinds of types in Androcles.
 // Struct types group data values together, and union types carry a single
 // data value drawn from a set of possible constructors.
@@ -107,6 +109,8 @@ typedef TypeEnv::Field Field;
 std::ostream& operator<<(std::ostream& os, Kind kind);
 std::ostream& operator<<(std::ostream& os, const Type& type);
 std::ostream& operator<<(std::ostream& os, const Field& field);
+
+}  // namespace androcles
 
 #endif//ANDROCLES_TYPE_H_
 

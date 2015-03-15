@@ -72,7 +72,6 @@ build build/androcles/value_test.o: cc androcles/value_test.cc
 
 build build/test_androcles: ld $
     build/androcles/function.o $
-    build/androcles/function_test.o $
     build/androcles/type.o $
     build/androcles/type_test.o $
     build/androcles/value.o $

@@ -4,6 +4,8 @@
 #include "androcles/type.h"
 #include "androcles/value.h"
 
+namespace androcles {
+
 TEST(AndroclesValueTest, Undefined) {
   TypeEnv env;
   Type unit_t = env.DeclareStruct("unit_t", {});
@@ -57,4 +59,6 @@ TEST(AndroclesValueTest, Basic) {
   EXPECT_EQ("c", true_v.Select({c_v, a_v}).GetTag());
   EXPECT_EQ("a", false_v.Select({c_v, a_v}).GetTag());
 }
+
+}  // namespace androcles
 

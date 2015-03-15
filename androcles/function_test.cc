@@ -8,6 +8,8 @@
 #include "androcles/type.h"
 #include "androcles/value.h"
 
+namespace androcles {
+
 TEST(AndroclesFunctionTest, Basic) {
   TypeEnv types;
 
@@ -108,4 +110,6 @@ TEST(AndroclesFunctionTest, Basic) {
         Value::Struct(bit4_t, {b0_v, b1_v, b1_v, b0_v}),
         b0_v}));
 }
+
+}  // namespace androcles
 

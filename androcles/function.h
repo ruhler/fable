@@ -9,6 +9,7 @@
 #include "androcles/type.h"
 #include "androcles/value.h"
 
+namespace androcles {
 
 class Expr_;
 
@@ -142,6 +143,8 @@ typedef FunctionEnv::Alt Alt;
 typedef FunctionEnv::Expr Expr;
 typedef FunctionEnv::Function Function;
 typedef FunctionEnv::FunctionBuilder FunctionBuilder;
+
+}  // namespace androcles
 
 #endif//ANDROCLES_FUNCTION_H_
 

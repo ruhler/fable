@@ -3,6 +3,8 @@
 
 #include "androcles/type.h"
 
+namespace androcles {
+
 TEST(AndroclesTypeTest, Basic) {
   TypeEnv env;
 
@@ -36,4 +38,6 @@ TEST(AndroclesTypeTest, Basic) {
   EXPECT_EQ(bool_t, env.LookupType("bool_t"));
   EXPECT_EQ(Type::Null(), env.LookupType("foo"));
 }
+
+}  // namespace androcles
 

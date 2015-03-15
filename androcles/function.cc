@@ -3,6 +3,8 @@
 
 #include "error.h"
 
+namespace androcles {
+
 class Expr_ { 
  public:
   virtual ~Expr_()
@@ -353,4 +355,6 @@ Function FunctionEnv::Lookup(const std::string& name) {
   }
   return Function(&(result->second));
 }
+
+}  // namespace androcles
 

@@ -3,6 +3,8 @@
 
 #include "error.h"
 
+namespace androcles {
+
 class StructValue;
 class UnionValue;
 
@@ -339,4 +341,6 @@ Value Value::Struct(Type type, const std::vector<Value>& fields) {
 Value Value::Union(Type type, const std::string& field_name, const Value& value) {
   return Value(std::unique_ptr<const Value_>(new UnionValue(type, field_name, value)));
 }
+
+}  // namespace androcles
 
