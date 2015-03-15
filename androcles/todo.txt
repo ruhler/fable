@@ -1,5 +1,4 @@
 
-* Get tests passing.
 * Implement Expr operator<< for test purposes.
 * Implement and test Expr equality operators.
 * Uncomment that CHECK that's commented out in function.cc

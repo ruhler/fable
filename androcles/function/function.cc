@@ -1,6 +1,8 @@
 
 #include "androcles/function/function.h"
 
+#include <iostream>
+
 #include "androcles/function/expr.h"
 #include "error.h"
 

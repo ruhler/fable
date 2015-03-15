@@ -102,11 +102,12 @@ TEST(AndroclesFunctionTest, Basic) {
   Function adder4 = functions.Declare("Adder", builder.Build());
 
   // Try 2 + 6 = 8
+  // Note: Bits are listed with least significant on the left.
   EXPECT_EQ(Value::Struct(adder_out_t, {
-        Value::Struct(bit4_t, {b1_v, b0_v, b0_v, b0_v}),
+        Value::Struct(bit4_t, {b0_v, b0_v, b0_v, b1_v}),
         b0_v}),
       adder4.Eval({
-        Value::Struct(bit4_t, {b0_v, b0_v, b1_v, b0_v}),
+        Value::Struct(bit4_t, {b0_v, b1_v, b0_v, b0_v}),
         Value::Struct(bit4_t, {b0_v, b1_v, b1_v, b0_v}),
         b0_v}));
 }
