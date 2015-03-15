@@ -2,6 +2,7 @@
 #ifndef ANDROCLES_VALUE_H_
 #define ANDROCLES_VALUE_H_
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -57,6 +58,9 @@ class Value {
   bool operator==(const Value& rhs) const;
   bool operator!=(const Value& rhs) const;
 
+  // Prints the value to the given output stream.
+  std::ostream& Print(std::ostream& os) const;
+
   // Returns a completely undefined value of the given type.
   static Value Undefined(Type type);
 
@@ -76,6 +80,8 @@ class Value {
 
   std::unique_ptr<const Value_> value_;
 };
+
+std::ostream& operator<<(std::ostream& os, const Value& rhs);
 
 }  // namespace androcles
 

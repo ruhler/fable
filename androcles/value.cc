@@ -25,6 +25,8 @@ class Value_ {
   virtual bool EqualsStruct(const StructValue* rhs) const = 0;
   virtual bool EqualsUnion(const UnionValue* rhs) const = 0;
 
+  virtual std::ostream& Print(std::ostream& os) const = 0;
+
  private:
   Type type_;
 };
@@ -53,6 +55,7 @@ class UndefinedValue : public Value_ {
   virtual bool Equals(const Value_* rhs) const;
   virtual bool EqualsStruct(const StructValue* rhs) const;
   virtual bool EqualsUnion(const UnionValue* rhs) const;
+  virtual std::ostream& Print(std::ostream& os) const;
 };
 
 UndefinedValue::UndefinedValue(Type type)
@@ -104,6 +107,10 @@ bool UndefinedValue::EqualsUnion(const UnionValue* rhs) const {
   return false;
 }
 
+std::ostream& UndefinedValue::Print(std::ostream& os) const {
+  return os << "???";
+}
+
 class StructValue : public Value_ {
  public:
   StructValue(Type type, const std::vector<Value>& fields);
@@ -117,6 +124,7 @@ class StructValue : public Value_ {
   virtual bool Equals(const Value_* rhs) const;
   virtual bool EqualsStruct(const StructValue* rhs) const;
   virtual bool EqualsUnion(const UnionValue* rhs) const;
+  virtual std::ostream& Print(std::ostream& os) const;
 
  private:
   std::vector<Value> fields_;
@@ -194,6 +202,16 @@ bool StructValue::EqualsUnion(const UnionValue* rhs) const {
   return false;
 }
 
+std::ostream& StructValue::Print(std::ostream& os) const {
+  os << GetType().GetName() << "(";
+  std::string comma = "";
+  for (auto& field : fields_) {
+    os << comma << field;
+    comma = ", ";
+  }
+  return os << ")";
+}
+
 class UnionValue : public Value_ {
  public:
   UnionValue(Type type, const std::string& field_name, const Value& value);
@@ -207,6 +225,7 @@ class UnionValue : public Value_ {
   virtual bool Equals(const Value_* rhs) const;
   virtual bool EqualsStruct(const StructValue* rhs) const;
   virtual bool EqualsUnion(const UnionValue* rhs) const;
+  virtual std::ostream& Print(std::ostream& os) const;
 
  private:
   std::string field_name_;
@@ -277,6 +296,11 @@ bool UnionValue::EqualsUnion(const UnionValue* rhs) const {
   return true;
 }
 
+std::ostream& UnionValue::Print(std::ostream& os) const {
+  os << GetType().GetName() << ":" << field_name_ << "(" << value_ << ")";
+  return os;
+}
+
 Value::Value(const Value& rhs)
   : Value(std::move(rhs.value_->Copy()))
 {}
@@ -330,6 +354,10 @@ bool Value::operator!=(const Value& rhs) const {
   return !(*this == rhs);
 }
 
+std::ostream& Value::Print(std::ostream& os) const {
+  return value_->Print(os);
+}
+
 Value Value::Undefined(Type type) {
   return Value(std::unique_ptr<const Value_>(new UndefinedValue(type)));
 }
@@ -340,6 +368,10 @@ Value Value::Struct(Type type, const std::vector<Value>& fields) {
 
 Value Value::Union(Type type, const std::string& field_name, const Value& value) {
   return Value(std::unique_ptr<const Value_>(new UnionValue(type, field_name, value)));
+}
+
+std::ostream& operator<<(std::ostream& os, const Value& rhs) {
+  return rhs.Print(os);
 }
 
 }  // namespace androcles
