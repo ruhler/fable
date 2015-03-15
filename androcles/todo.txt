@@ -5,6 +5,8 @@
 
   Such that Private does not depend on Public in any way.
 
+* Use 'function' everywhere, not 'func'
+
 * Get tests passing.
 
 * Implement Value operator<< for test purposes.
