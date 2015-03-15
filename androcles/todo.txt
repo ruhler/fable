@@ -1,9 +1,16 @@
 
+* Re-organize function.h,cc into
+  Private: Expr_, VarDecl, FunctionDecl
+  Public: Expr, Alt, Function, FunctionBuilder, FunctionEnv
+
+  Such that Private does not depend on Public in any way.
+
+* Get tests passing.
+
 * Implement Value operator<< for test purposes.
 * Implement Expr operator<< for test purposes.
 * Implement and test Expr equality operators.
 * Uncomment that CHECK that's commented out in function.cc
-* Write adder4 test case.
-* Implement parser
+* Implement parser (steal from what I have and nuke circuit, truth_table)
 * Write main interpreter executable
 

@@ -36,14 +36,7 @@ build build/circuit/truth_table_component.o: cc circuit/truth_table_component.cc
 build build/circuit/truth_table_component_test.o: cc circuit/truth_table_component_test.cc
 build build/circuit/value.o: cc circuit/value.cc
 
-build build/androcles/function.o: cc androcles/function.cc
-build build/androcles/function_test.o: cc androcles/function_test.cc
-build build/androcles/type.o: cc androcles/type.cc
-build build/androcles/type_test.o: cc androcles/type_test.cc
-build build/androcles/value.o: cc androcles/value.cc
-build build/androcles/value_test.o: cc androcles/value_test.cc
-
-build build/run_tests: ld $
+build build/test_circuit: ld $
     build/truth_table/truth_table_parser.o $
     build/truth_table/truth_table_test.o $
     build/truth_table/truth_table.o $
@@ -65,6 +58,19 @@ build build/run_tests: ld $
     build/parser/token_type.o $
     build/parser/common_parser.o $
     build/parser/token_stream_test.o $
+    build/error.o
+
+build build/test_circuit_passed: run build/test_circuit
+
+
+build build/androcles/function.o: cc androcles/function.cc
+build build/androcles/function_test.o: cc androcles/function_test.cc
+build build/androcles/type.o: cc androcles/type.cc
+build build/androcles/type_test.o: cc androcles/type_test.cc
+build build/androcles/value.o: cc androcles/value.cc
+build build/androcles/value_test.o: cc androcles/value_test.cc
+
+build build/test_androcles: ld $
     build/androcles/function.o $
     build/androcles/function_test.o $
     build/androcles/type.o $
@@ -73,5 +79,5 @@ build build/run_tests: ld $
     build/androcles/value_test.o $
     build/error.o
 
-build build/tests_passed: run build/run_tests 
+build build/test_androcles_passed: run build/test_androcles
 
