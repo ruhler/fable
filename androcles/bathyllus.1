@@ -1,0 +1,93 @@
+Bathyllus 0.1
+=============
+Richard Uhler <ruhler@degralder.com>
+March 2015
+
+Introduction
+------------
+This document describes the Bathyllus base format for describing unbounded,
+deterministic, timeless computations over unbounded data.
+
+Bathyllus base format is a superset of the Androcles 0.1 base format. Bathyllus
+adds on top of Androcles case statements, recursive types and recursive
+functions.
+
+Non-terminating Computation
+---------------------------
+Unlike Androcles, Bathyllus is a Turing-complete language because it has
+support for recursive functions. This means it is possible to describe a
+computation that does not terminate.
+
+As a consequence, the semantic interpretation of expressions must be refined.
+With respect to non-terminating computations, expression evaluation and
+function application behave as if evaluation were eager. That is, all
+arguments to functions and expressions are evaluated before evaluating the
+expression itself. In other words, all functions are first fully inlined, then
+the expression is reduced.
+
+This is consistent with Androcles, because the amount of inlining that could
+occur was finite, which could be achieved in a timeless manner. In Bathyllus,
+this is not the case. Any use of a recursive function would require an
+infinite amount of inlining and would fail to terminate. To make recursive
+functions work in Bathyllus, we introduce the new case statement, which
+explicitly limits what inlining is performed before reducing an expression.
+
+Case Statements
+---------------
+
+  ret_stmt ::= 'case' '(' expr ')' '{'
+                  [fname ':' body [fname ':' body [...]]
+                '}'
+            | ...
+
+The case statement has a similar behavior as a conditional expression. The
+argument to the case statement, which must be of a union type, is evaluated.
+Depending on the tag of the evaluated argument, the corresponding branch of
+the case statement is evaluated.
+
+The key difference between a case statement and a conditional expression is
+that computation must not fail to terminate if the computation for the argument
+expression and the computation for the chosen branch of the case statement do
+not fail to terminate.
+
+Recursive Types
+---------------
+In Bathyllus a struct or union type may be defined recursively, or mutually
+recursively. This makes it possible to describe unbounded data.
+
+For example, an unbounded list of ints could be defined using:
+
+  struct Node(int head, List tail);
+  union List(Unit empty, Node contents);
+
+Notice that the definition of the Node type refers to the List type, and the
+definition of the List type refers to the Node type.
+
+Recursive Functions
+-------------------
+In Bathyllus a function may call itself recursively or mutually recursively.
+This makes it possible to describe unbounded computation on data.
+
+For example, to compute the factorial function:
+
+funct Factorial(int n; int) {
+  case (EqualsZero(n)) {
+    True: { return 1; }
+    False: { return Multiply(n, Factorial(Subtract(n, 1))); }
+  }
+}
+
+Undefined Behavior
+------------------
+Nonterminating computation is treated as undefined behavior, in the sense of
+undefined behavior in Androcles. The implementation may do what it likes in
+the case of undefined behavior. The user must not rely on undefined behavior,
+compilers should try to warn whenever possible about undefined behavior
+detected in programs, and interpreters should offer a debug mode that reports
+undefined behavior.
+
+TODO
+----
+* Revise the androcles grammer, add the bathyllus features, and present the
+  syntax reference here.
+

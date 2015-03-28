@@ -5,3 +5,10 @@
 * Implement parser (steal from what I have and nuke circuit, truth_table)
 * Write main interpreter executable
 
+
+Future Ideas:
+* It would be nice to have a source-level androcles debugger.
+* Think harder about how libraries should work, and how to access components
+  in libraries. As opposed to having a single file listing all the types and
+  functions in order.
+

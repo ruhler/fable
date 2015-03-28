@@ -1,0 +1,15 @@
+
+* You should be able to reason about your program in terms of sequential
+  execution.
+
+* Abstractions and other mechanisms to facilitate describing programs should
+  have zero runtime cost.
+
+  For example, the order you declare variables shouldn't matter. If you wrap
+  an expression with a function, that should not change the behavior (as it
+  would, for example, in a strict functional language). Any number of finite
+  inlining of functions should not change the behavior of the program.
+
+  The implementation should not be limited by how you sequentially reason
+  about your program.
+

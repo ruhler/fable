@@ -63,4 +63,5 @@ build build/test_circuit: ld $
 build build/test_circuit_passed: run build/test_circuit
 
 subninja androcles/build.ninja
+subninja bathylus/build.ninja
 

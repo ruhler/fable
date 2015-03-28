@@ -3,6 +3,11 @@ Androcles 0.0
 Richard Uhler <ruhler@degralder.com>
 February 2015
 
+*DEPRECATED*
+
+This document is deprecated. See androcles.1 for a revised version of this
+language.
+
 Introduction
 ------------
 Androcles is a programming interface for describing programs for which the
