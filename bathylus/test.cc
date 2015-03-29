@@ -10,6 +10,7 @@
 #include "bathylus/struct_expr.h"
 #include "bathylus/type.h"
 #include "bathylus/union_expr.h"
+#include "bathylus/value.h"
 #include "bathylus/var_expr.h"
 
 struct Heap {
@@ -65,5 +66,14 @@ TEST(BathylusTest, Basic) {
                 NEW(CaseExpr(b, {b0, cin})),
                 NEW(CaseExpr(b, {cin, b1}))}))}},
             NEW(StructExpr(full_adder_out_t, {z, cout}))))));
+
+  Value unit_v = Value::Struct(unit_t, {});
+  Value b0_v = Value::Union(bit_t, 0, unit_v);
+  Value b1_v = Value::Union(bit_t, 1, unit_v);
+
+  EXPECT_EQ(Value::Struct(full_adder_out_t, {b1_v, b0_v}),
+      adder1->Eval({b0_v, b1_v, b0_v}));
+  EXPECT_EQ(Value::Struct(full_adder_out_t, {b0_v, b1_v}),
+      adder1->Eval({b0_v, b1_v, b1_v}));
 }
 

@@ -12,6 +12,7 @@ class StructExpr : public Expr {
  public:
   StructExpr(const Type* type, const std::vector<const Expr*>& args);
   virtual ~StructExpr();
+  virtual Value Eval(const std::unordered_map<std::string, Value>& env) const;
 
  private:
   const Type* type_;

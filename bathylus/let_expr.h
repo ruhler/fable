@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "bathylus/expr.h"
+#include "bathylus/value.h"
 
 class Type;
 
@@ -19,6 +20,7 @@ class LetExpr : public Expr {
  public:
   LetExpr(const std::vector<VarDecl>& decls, const Expr* body);
   virtual ~LetExpr();
+  virtual Value Eval(const std::unordered_map<std::string, Value>& env) const;
 
  private:
   std::vector<VarDecl> decls_;

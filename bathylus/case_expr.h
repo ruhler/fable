@@ -10,6 +10,7 @@ class CaseExpr : public Expr {
  public:
   CaseExpr(const Expr* arg, const std::vector<const Expr*>& alts);
   virtual ~CaseExpr();
+  virtual Value Eval(const std::unordered_map<std::string, Value>& env) const;
 
  private:
   const Expr* arg_;

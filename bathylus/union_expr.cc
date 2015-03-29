@@ -8,3 +8,7 @@ UnionExpr::UnionExpr(const Type* type, int tag, const Expr* expr)
 UnionExpr::~UnionExpr()
 {}
 
+Value UnionExpr::Eval(const std::unordered_map<std::string, Value>& env) const {
+  return Value::Union(type_, tag_, expr_->Eval(env));
+}
+

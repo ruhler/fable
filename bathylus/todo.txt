@@ -1,0 +1,18 @@
+
+* Add missing Field Access expression.
+* Document the language and sequential interpretation.
+* Is it legal to have undefined values?
+  For example:
+  
+   MaybeInt x = Nothing;
+   Int v = x.value;
+   return case (x) {
+     Just: v;
+     Nothing: 3;
+   };
+
+   Is this legal, or does the x.value have to occur inside the case branch?
+   Or is it all undefined?
+      
+     
+     

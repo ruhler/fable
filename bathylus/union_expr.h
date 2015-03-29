@@ -10,6 +10,7 @@ class UnionExpr : public Expr {
  public:
   UnionExpr(const Type* type, int tag, const Expr* expr);
   virtual ~UnionExpr();
+  virtual Value Eval(const std::unordered_map<std::string, Value>& env) const;
 
  private:
   const Type* type_;

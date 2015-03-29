@@ -12,6 +12,7 @@ class VarExpr : public Expr {
  public:
   VarExpr(const Type* type, const std::string& name);
   virtual ~VarExpr();
+  virtual Value Eval(const std::unordered_map<std::string, Value>& env) const;
 
  private:
   const Type* type_;
