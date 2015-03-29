@@ -13,6 +13,7 @@ class Value {
   static Value Undefined(const Type* type);
 
   int GetTag() const;
+  Value Access(int tag) const;
 
   bool operator==(const Value& rhs) const;
   bool operator!=(const Value& rhs) const;

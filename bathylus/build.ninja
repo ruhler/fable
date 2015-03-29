@@ -1,4 +1,5 @@
 
+build build/bathylus/access_expr.o: cc bathylus/access_expr.cc
 build build/bathylus/case_expr.o: cc bathylus/case_expr.cc
 build build/bathylus/expr.o: cc bathylus/expr.cc
 build build/bathylus/function.o: cc bathylus/function.cc
@@ -14,6 +15,7 @@ build build/bathylus/lib/addition.o: cc bathylus/lib/addition.cc
 build build/bathylus/lib/stdlib.o: cc bathylus/lib/stdlib.cc
 
 build build/test_bathylus: ld $
+  build/bathylus/access_expr.o $
   build/bathylus/case_expr.o $
   build/bathylus/expr.o $
   build/bathylus/function.o $

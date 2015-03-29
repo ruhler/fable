@@ -1,0 +1,55 @@
+Bathylus 0.2
+============
+Richard Uhler <ruhler@degralder.com>
+March 2015
+
+Goals
+-----
+* Simple language. This is important so that it is easy to create
+  new implementations and tools for the language.
+
+* Simple evaluation and performance models. This is important so
+  programmers have a simple way to reason about how their program runs, and
+  what the performance of their programs will be. Note, this is not intended
+  to imply that the actual implementation must follow such an evaluation
+  strategy or performance model. An implementation must simply follow the
+  observable behavior of the evaluation strategy and match the performance
+  model closely enough that it is useful to programmers. A programmer should
+  not have to program hacks to work around performance bugs in the
+  implementation. If the proposed performance model is not achievable, a
+  different language or performance model should be defined.
+
+* Zero cost abstraction. Abstractions are primarily for the programmer, not
+  the interpreter. To ensure programmers can use abstractions where desired,
+  the abstractions must not incur a noticeable cost. For example, enums in
+  Java are a kind of abstraction, but it incurs so much cost in terms of
+  increased text size (at least on Android), that programmers are told to use
+  int instead.
+
+* Clear separation of data and computation. The implementation should be able
+  to represent computation in any form it wishes. There should not be any
+  reflection APIs to access the form of computation at runtime, or to
+  interpret data as computation at runtime. This will facilitate more
+  efficient implementations, including ready support for compilation to
+  hardware, where the structure of the computation is encoded in hardware and
+  cannot be easily read or modified.
+
+* Support for high performance evaluation. There should not be arbitrary
+  restrictions placed on how evaluation is performed. In the extreme case,
+  compilation to hardware should be supported for finite computations
+  operating on finite data.
+
+Non-Goals
+---------
+* An established concrete syntax. Concrete syntax doesn't matter. This
+  document may introduce a concrete syntax for expository purposes, but that
+  is by no means intended to imply such a concrete syntax must be used.
+
+* Advanced descriptive features. Though having features such as meta
+  programming and polymorphism are important for programmer productivity, it
+  is not the goal of this iteration of Bathylus to support such features. This
+  is primarily because such features tend to be very complicated, and it's not
+  clear at this time what they should be. Instead, for now, we suggest
+  embedding Bathylus in a host language to have access to such features.
+  Perhaps it will be sufficient to embed Bathylus in Bathylus.
+

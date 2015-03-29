@@ -25,6 +25,23 @@ int Value::GetTag() const {
   return tag_;
 }
 
+Value Value::Access(int tag) const {
+  if (tag_ == TAG_STRUCT) {
+    CHECK_LE(0, tag);
+    CHECK_LT(tag, fields_.size());
+    return fields_[tag];
+  }
+
+  if (tag_ == tag) {
+    CHECK_EQ(1, fields_.size());
+    return fields_[0];
+  }
+
+  // This value is undefined or it is a union with a different tag.
+  // Either way, the result is an undefined value.
+  return Value::Undefined(type_->TypeOfField(tag));
+}
+
 bool Value::operator==(const Value& rhs) const {
   return type_ == rhs.type_ && tag_ == rhs.tag_ && fields_ == rhs.fields_;
 }
