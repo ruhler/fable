@@ -1,5 +1,7 @@
 
 * Add missing Field Access expression.
+* Implement operator<< for Value.
+* Implement operator<< or pretty printer for Expr.
 * Document the language and sequential interpretation.
 * Is it legal to have undefined values?
   For example:

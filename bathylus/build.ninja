@@ -9,6 +9,10 @@ build build/bathylus/type.o: cc bathylus/type.cc
 build build/bathylus/union_expr.o: cc bathylus/union_expr.cc
 build build/bathylus/value.o: cc bathylus/value.cc
 build build/bathylus/var_expr.o: cc bathylus/var_expr.cc
+
+build build/bathylus/lib/addition.o: cc bathylus/lib/addition.cc
+build build/bathylus/lib/stdlib.o: cc bathylus/lib/stdlib.cc
+
 build build/test_bathylus: ld $
   build/bathylus/case_expr.o $
   build/bathylus/expr.o $
@@ -20,6 +24,8 @@ build build/test_bathylus: ld $
   build/bathylus/union_expr.o $
   build/bathylus/value.o $
   build/bathylus/var_expr.o $
+  build/bathylus/lib/addition.o $
+  build/bathylus/lib/stdlib.o $
   build/error.o
 build build/test_bathylus_passed: run build/test_bathylus
 
