@@ -50,3 +50,22 @@ bool Value::operator!=(const Value& rhs) const {
   return !this->operator==(rhs);
 }
 
+std::ostream& operator<<(std::ostream& os, const Value& rhs) {
+  if (rhs.tag_ == Value::TAG_UNDEFINED) {
+    return os << "???";
+  }
+
+  if (rhs.tag_ == Value::TAG_STRUCT) {
+    os << rhs.type_->GetName() << "(";
+    std::string comma = "";
+    for (auto& arg: rhs.fields_) {
+      os << comma << arg;
+      comma = ", ";
+    }
+    return os << ")";
+  }
+
+  return os << rhs.type_->GetName() << ':' << rhs.type_->NameOfField(rhs.tag_) 
+    << '(' << rhs.fields_[0] << ')';
+}
+

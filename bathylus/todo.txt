@@ -1,6 +1,4 @@
 
-* Add missing Field Access expression.
-* Implement operator<< for Value.
 * Implement operator<< or pretty printer for Expr.
 * Once everything is up to snuff, delete androcles.
 * Document the language and sequential interpretation.

@@ -2,6 +2,7 @@
 #ifndef BATHYLUS_VALUE_H_
 #define BATHYLUS_VALUE_H_
 
+#include <iostream>
 #include <vector>
 
 #include "bathylus/type.h"
@@ -31,6 +32,8 @@ class Value {
   const Type* type_;
   int tag_;
   std::vector<Value> fields_;
+
+  friend std::ostream& operator<<(std::ostream& os, const Value& rhs);
 };
 
 #endif//BATHYLUS_VALUE_H_

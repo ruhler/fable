@@ -53,3 +53,25 @@ Non-Goals
   embedding Bathylus in a host language to have access to such features.
   Perhaps it will be sufficient to embed Bathylus in Bathylus.
 
+Syntax Reference
+----------------
+prog ::= decl [decl [...]] ;
+
+decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+      |  'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+      |  'funct'  tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' '=' expr ';'
+      ;
+
+vdecl ::= tname vname '=' expr ';' ;
+
+expr ::= tname '(' [expr [',' expr [...]]] ')'        (* struct / application *)
+      |  tname ':' fname '(' expr ')'                 (* union *)
+      |  vname                                        (* variable *)
+      |  '{' [vdecl [vdecl [...]]] '@' expr ';' '}'   (* let *)
+      |  expr '.' fname                               (* access *)
+      |  expr '?' '(' expr [',' expr [...]] ')'       (* case *)
+
+fname ::= name    (* A name of a field *)
+tname ::= name    (* A name referring to a type or function *)
+vname ::= name    (* A name referring to a value *)
+

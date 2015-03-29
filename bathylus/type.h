@@ -21,7 +21,9 @@ class Type {
  public:
   Type(Kind kind, const std::string& name, const std::vector<Field>& fields);
 
+  const std::string& GetName() const;
   const Type* TypeOfField(int tag) const;
+  const std::string& NameOfField(int tag) const;
 
  private:
   Kind kind_;
