@@ -3,6 +3,11 @@ Bathylus 0.2
 Richard Uhler <ruhler@degralder.com>
 March 2015
 
+Introduction
+------------
+This document describes the Bathylus 0.2 format for describing functional
+computations over data.
+
 Goals
 -----
 * Simple language. This is important so that it is easy to create
@@ -53,13 +58,103 @@ Non-Goals
   embedding Bathylus in a host language to have access to such features.
   Perhaps it will be sufficient to embed Bathylus in Bathylus.
 
+Evaluation
+----------
+Evaluation is reasoned about using a sequential interpretation.
+
+Expression evaluation computes a (possibly undefined) value from an expression.
+Because Bathylus is Turing-complete, expression evaluation may fail to
+terminate. If expression evaluation fails to terminate, no value is returned.
+Otherwise a value is returned and there are no other side effects.
+
+Struct Expression
+~~~~~~~~~~~~~~~~~
+  expr ::= tname '(' [expr [',' expr [...]]] ')'
+        | ...
+
+When tname is the name of a declared struct type, this expression first
+evaluates all arguments to values, then forms a struct value by setting the
+corresponding fields of the struct to the argument values.
+
+Because expression evaluation either returns a value without side effects, or
+results in non-terminating computation, it does not matter what order
+evaluation of the arguments is performed.
+
+Application
+~~~~~~~~~~~
+  expr ::= tname '(' [expr [',' expr [...]]] ')'
+        | ...
+
+When tname is the name of a declared function, this expression first
+evaluates all arguments to values, then calls the named function, using the
+argument values in place of the named argument variables in the function.
+Functions are lexically scoped; no variables in the current scope are visible
+while executing the body of the called function.
+
+Because expression evaluation either returns a value without side effects, or
+results in non-terminating computation, it does not matter what order
+evaluation of the arguments is performed.
+
+Union Expression
+~~~~~~~~~~~~~~~~
+  expr ::= tname ':' fname '(' expr ')'                 (* union *)
+        | ...
+
+This expression computes the value for the given expr, then forms a union
+value of the given type, whose contents are set for the given field and
+computed value.
+
+Var Expression
+~~~~~~~~~~~~~~
+  expr ::= vname                                        (* variable *)
+        | ...
+
+Returns the value of the variable with given name in scope.
+
+Let Expression
+~~~~~~~~~~~~~~
+  vdecl ::= tname vname '=' expr ';' ;
+
+  expr :: = '{' [vdecl [vdecl [...]]] '@' expr ';' '}'   (* let *)
+        | ...
+
+Each variable declaration is evaluated in turn. First the variable
+declaration's expression is evaluated to a value. Then the scope is updated
+such that the variable name points to the evaluated value. Each subsequent
+variable declaration has access to the variables declared in previous
+declarations. Finally, the final expression is evaluated to a value in the
+scope of the preceding variable declarations and that value is returned.
+
+Evaluation fails to terminate if any of the expression fail to terminate.
+
+Field Access
+~~~~~~~~~~~~
+  expr ::= expr '.' fname                               (* access *)
+        | ...
+
+First the expression is evaluated to a value. Then the named field is read
+from it. If the value is a union that contains a different field, then the
+result is the undefined value of the appropriate type.
+
+Case Expression
+~~~~~~~~~~~~~~~
+  expr ::= expr '?' '(' expr [',' expr [...]] ')'       (* case *)
+        | ...
+
+Evaluate the argument to a value. Select the branch to evaluate based on the
+tag of the evaluated argument. Then evaluate the selected branch. This fails
+to terminate only if evaluation of the argument fails to terminate, or
+evaluation of the selected branch fails to terminate. It will not fail to
+terminate if only evaluation of unselected branches would fail to terminate.
+
 Syntax Reference
 ----------------
 prog ::= decl [decl [...]] ;
 
-decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-      |  'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-      |  'funct'  tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' '=' expr ';'
+decl ::= 'struct' tname ['(' [tname fname [',' tname fname [...]]] ')'] ';'
+      |  'union'  tname ['(' [tname fname [',' tname fname [...]]] ')'] ';'
+      |  'funct'  tname '(' [tname vname [',' tname vname [...]]] ';' tname ')'
+            ['=' expr] ';'
       ;
 
 vdecl ::= tname vname '=' expr ';' ;

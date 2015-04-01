@@ -1,6 +1,5 @@
 
-* Implement operator<< or pretty printer for Expr.
-* Once everything is up to snuff, delete androcles.
+* Test adder4.
 * Document the language and sequential interpretation.
 * Is it legal to have undefined values?
   For example:
@@ -14,6 +13,12 @@
 
    Is this legal, or does the x.value have to occur inside the case branch?
    Or is it all undefined?
-      
-     
-     
+
+   I think it should be legal, and it should be legal to pass undefined values
+   to functions, and it should be legal for functions to return undefined
+   values, even if they aren't passed undefined values. The thing that
+   shouldn't be allowed is relying on undefined behavior as the final result
+   of the main function.
+
+* Once everything is up to snuff, delete androcles.
+
