@@ -17,6 +17,7 @@ proc struct {name fields} {
     set listcmd "$listcmd \$[lindex $fieldname]"
   }
   proc $name $fieldnames "return \[$listcmd\]"
+  proc $name.fields {} "return [list $fields]"
 }
 
 proc union {name fields} {
@@ -51,6 +52,18 @@ proc ? {select args} {
     }
     incr i
   }
+  error "Tag out of value, or not enough args"
+}
+
+proc . {obj field} {
+  set i 1
+  foreach objfield [[typeof $obj].fields] {
+    if {[lindex $objfield 1]==$field} {
+      return [lindex $obj $i]
+    }
+    incr i
+  }
+  error "$obj with fields [[typeof $obj].fields] has no field $field. "
 }
 
 
@@ -58,14 +71,28 @@ struct Unit {}
 union Bit {{Unit 0} {Unit 1}}
 struct FullAdderOut {{Bit z} {Bit cout}}
 
+set b0 [Bit 0 [Unit]]
+set b1 [Bit 1 [Unit]]
+
 funct FullAdder {{Bit a} {Bit b} {Bit cin}} FullAdderOut {
-  let Bit b0 = [Bit 0 [Unit]]
-  let Bit b1 = [Bit 1 [Unit]]
+  global b0 b1
   let Bit z = [? $a [? $b $cin [? $cin $b1 $b0]] [? $b [? $cin $b1 $b0] $cin]]
   let Bit cout = [? $a [? $b $b0 $cin] [? $b $cin $b1]]
   return [FullAdderOut $z $cout]
 }
 
-puts [FullAdder [Bit 0 [Unit]] [Bit 1 [Unit]] [Bit 0 [Unit]]]
-puts [FullAdder [Bit 0 [Unit]] [Bit 1 [Unit]] [Bit 1 [Unit]]]
+puts [FullAdder $b0 $b1 $b0]
+puts [FullAdder $b0 $b1 $b1]
+
+struct Bit4 {{Bit 0} {Bit 1} {Bit 2} {Bit 3}}
+struct AdderOut {{Bit4 z} {Bit cout}}
+funct Adder {{Bit4 a} {Bit4 b} {Bit cin}} AdderOut {
+  let FullAdderOut x0 = [FullAdder [. $a 0] [. $b 0] $cin]
+  let FullAdderOut x1 = [FullAdder [. $a 1] [. $b 1] [. $x0 cout]]
+  let FullAdderOut x2 = [FullAdder [. $a 2] [. $b 2] [. $x1 cout]]
+  let FullAdderOut x3 = [FullAdder [. $a 3] [. $b 3] [. $x2 cout]]
+  return [AdderOut [Bit4 [. $x0 z] [. $x1 z] [. $x2 z] [. $x3 z]] [. $x3 cout]]
+}
+
+puts [Adder [Bit4 $b0 $b1 $b0 $b0] [Bit4 $b0 $b1 $b1 $b0] $b0]
 

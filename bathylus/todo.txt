@@ -1,5 +1,4 @@
 
-* Test adder4.
 * Document the language and sequential interpretation.
 * Is it legal to have undefined values?
   For example:
@@ -20,5 +19,9 @@
    shouldn't be allowed is relying on undefined behavior as the final result
    of the main function.
 
-* Once everything is up to snuff, delete androcles.
+* Separate bathylus.tcl from test cases.
+* Add assertion with expected values to test cases.
+* Once everything is up to snuff, delete androcles and old bathylus code.
+* Prefix struct, union, and funct with '@' to avoid polluting the user
+  namespace?
 
