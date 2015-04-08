@@ -10,6 +10,9 @@ rule ld
 rule run
   command = $in && touch $out
 
+rule tclsh
+  command = tclsh $in > $out
+
 build build/error.o: cc error.cc
 
 build build/parser/char_stream.o: cc parser/char_stream.cc
@@ -64,4 +67,6 @@ build build/test_circuit_passed: run build/test_circuit
 
 subninja androcles/build.ninja
 subninja bathylus/build.ninja
+
+build build/test_bathylus_tcl_passed: tclsh bathylus/bathylus.tcl
 

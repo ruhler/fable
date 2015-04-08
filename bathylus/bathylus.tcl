@@ -66,6 +66,12 @@ proc . {obj field} {
   error "$obj with fields [[typeof $obj].fields] has no field $field. "
 }
 
+proc assert_eq {a b} {
+  if {$a != $b} {
+    error "\n$a\n  !=\n$b"
+  }
+}
+
 
 struct Unit {}
 union Bit {{Unit 0} {Unit 1}}
@@ -81,8 +87,8 @@ funct FullAdder {{Bit a} {Bit b} {Bit cin}} FullAdderOut {
   return [FullAdderOut $z $cout]
 }
 
-puts [FullAdder $b0 $b1 $b0]
-puts [FullAdder $b0 $b1 $b1]
+assert_eq [FullAdderOut $b1 $b0] [FullAdder $b0 $b1 $b0]
+assert_eq [FullAdderOut $b0 $b1] [FullAdder $b0 $b1 $b1]
 
 struct Bit4 {{Bit 0} {Bit 1} {Bit 2} {Bit 3}}
 struct AdderOut {{Bit4 z} {Bit cout}}
@@ -94,5 +100,7 @@ funct Adder {{Bit4 a} {Bit4 b} {Bit cin}} AdderOut {
   return [AdderOut [Bit4 [. $x0 z] [. $x1 z] [. $x2 z] [. $x3 z]] [. $x3 cout]]
 }
 
-puts [Adder [Bit4 $b0 $b1 $b0 $b0] [Bit4 $b0 $b1 $b1 $b0] $b0]
+assert_eq \
+  [AdderOut [Bit4 $b0 $b0 $b0 $b1] $b0] \
+  [Adder [Bit4 $b0 $b1 $b0 $b0] [Bit4 $b0 $b1 $b1 $b0] $b0]
 
