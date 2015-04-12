@@ -1,7 +1,0 @@
-
-* Have separate namespaces for parser, truth_table, and circuit
-* Use a CircuitParser class to clean up the circuit parser implementation.
-  It will have a single public method to parse the circuit.
-* Move all the parsing code into a single component.
-  - And maybe update the api documentation to reflect this too?
-

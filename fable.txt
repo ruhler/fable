@@ -46,3 +46,6 @@ that could be solved in digital hardware with combinational logic.
 
 Bathylus:: A Turing-complete functional language based on Androcles suited for
 general data manipulation and compilation tasks.
+
+Calvisus:: A Turing-complete language for interactive programs and processes.
+

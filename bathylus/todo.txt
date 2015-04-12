@@ -19,6 +19,9 @@
    shouldn't be allowed is relying on undefined behavior as the final result
    of the main function.
 
+   No! We have sequential behavior. Force x.value to occur inside the case
+   branch. It's so much easier to understand.
+
 * Separate bathylus.tcl from test cases.
 * Once everything is up to snuff, delete androcles code
 * Prefix struct, union, and funct with '@' to avoid polluting the user
