@@ -1,39 +1,42 @@
 Abstract Syntax Reference
 -------------------------
-
 vname ::= A variable name.
 fname ::= A field name.
 pname ::= A name of a port.
 dname ::= A name of a declared type, function, or process.
 
-expr ::= var <vname>
-      |  app <dname> <expr> [<expr> ...]
-      |  access <expr> <fname>
-      |  union <dname> <fname> <expr>
-      |  let <dname> <vname> <expr> <expr>
-      |  cond <expr> <expr> [<expr> [...]]
-      ;
+expr ::= var <vname>                                  x
+      |  app <dname> <expr> [<expr> ...]              f(a, b, ...)
+      |  access <expr> <fname>                        x.y
+      |  union <dname> <fname> <expr>                 Maybe:Just(x)
+      |  let <dname> <vname> <expr> <expr>            Foo x = y; z(x)
+      |  cond <expr> <expr> [<expr> [...]]            x ? (a, b, ...)
+      ;                                               { x }
 
-proc ::= get <pname>
-      |  put <pname> <expr>
-      |  nop
+proc ::= get <pname>                                  x()
+      |  put <pname> <expr>                           x(y)
+      |  nop                                          
       |  return <expr>
       |  call <dname> [<pname> [...]] [<pname> [...]] [<expr> [...]] [<expr> [...]]
-      |  let <vdecl> [<vdecl> [...]] <proc>
-      |  link <dname> <pname> <pname> <proc>
-      |  pcond <expr> <proc> [<proc> [...]]
-      ;
+                                                      f[a, b, ...; c, d, ...](e, f, ...)
+      |  let <vdecl> [<vdecl> [...]] <proc>           Foo x = y, Bar z = w, ...; p
+      |  link <dname> <pname> <pname> <proc>          [Foo@ x; Foo~ y]; p
+      |  pcond <expr> <proc> [<proc> [...]]           x ? (a, b, ...)
+      ;                         
 
-vdecl ::= def <dname> <vname> <proc>
-       |  nodef <proc>
+vdecl ::= def <dname> <vname> <proc>                  Foo x = y
+       |  nodef <proc>                                y
        ;
 
-field ::= field <dname> <fname>
-vfield ::= vfield <dname> <vname>
+field ::= field <dname> <fname>                       Foo x
+vfield ::= vfield <dname> <vname>                     Foo x
 
-decl ::= struct <dname> [<field> [...]]
-      |  union <dname> [<field> [...]]
+decl ::= struct <dname> [<field> [...]]               struct Foo(Bar x, ...);
+      |  union <dname> [<field> [...]]                union Foo(Bar x, ...);
       |  funct <dname> <vfield> [<vfield> [...]] <dname> <expr>
-      |  proc <dname> [<field> [...]] [<field> [...]] [<field> [...]] <dname> <proc>
-      ;
+                                                      funct f(Bar x, Sludge y; Blah) e;
+      |  proc <dname> [<field> [...]] [<field> [...]] [<field> [...]] [<dname>] <proc>
+                                                      proc f[Foo@ a, Bar@ b; Bar~ c](Bar x, Sludge y; Blah) p;
+                                                or    proc f[Foo@ a, Bar@ b; Bar~ c](Bar x, Sludge y; ) p;
+      ;                                               { p }
 
