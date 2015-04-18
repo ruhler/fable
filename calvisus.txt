@@ -1,0 +1,39 @@
+Abstract Syntax Reference
+-------------------------
+
+vname ::= A variable name.
+fname ::= A field name.
+pname ::= A name of a port.
+dname ::= A name of a declared type, function, or process.
+
+expr ::= var <vname>
+      |  app <dname> <expr> [<expr> ...]
+      |  access <expr> <fname>
+      |  union <dname> <fname> <expr>
+      |  let <dname> <vname> <expr> <expr>
+      |  cond <expr> <expr> [<expr> [...]]
+      ;
+
+proc ::= get <pname>
+      |  put <pname> <expr>
+      |  nop
+      |  return <expr>
+      |  call <dname> [<pname> [...]] [<pname> [...]] [<expr> [...]] [<expr> [...]]
+      |  let <vdecl> [<vdecl> [...]] <proc>
+      |  link <dname> <pname> <pname> <proc>
+      |  pcond <expr> <proc> [<proc> [...]]
+      ;
+
+vdecl ::= def <dname> <vname> <proc>
+       |  nodef <proc>
+       ;
+
+field ::= field <dname> <fname>
+vfield ::= vfield <dname> <vname>
+
+decl ::= struct <dname> [<field> [...]]
+      |  union <dname> [<field> [...]]
+      |  funct <dname> <vfield> [<vfield> [...]] <dname> <expr>
+      |  proc <dname> [<field> [...]] [<field> [...]] [<field> [...]] <dname> <proc>
+      ;
+
