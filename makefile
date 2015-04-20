@@ -1,10 +1,8 @@
 
 .PHONY: all
-all: calvisus
-	tclsh bathylus/bathylus.tcl && echo PASSED
+all:
+	ninja
 
-.PHONY: calvisus
-calvisus:
-	gcc calvisus/*.h
-
-
+.PHONY: clean
+clean:
+	rm -rf build/

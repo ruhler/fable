@@ -11,7 +11,7 @@ typedef struct cmd_t {
   cmd_tag_t tag;
   union {
     struct { expr_t* expr; value_t** target; } eval;
-    struct { value_t* value; int index; value_t** target; } access;
+    struct { value_t* value; fname_t field; value_t** target; } access;
     struct { value_t* value; expr_t** choices; value_t** target; } cond;
     struct { vname_t name; value_t* value; } var;
     struct { } devar;
@@ -129,13 +129,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
 
           case EXPR_ACCESS: {
             access_expr_t* access_expr = (access_expr_t*)expr;
-            // TODO: we need to know the type of arg to figure out the
-            // proper index to do member access!
-            type_t* type = lookup_type(env, access_expr->???);
-            assert(type != NULL);
-            int index = indexof(type, access_expr->field);
-            assert(index >= 0);
-            cmd = mk_access(NULL, index, target, cmd);
+            cmd = mk_access(NULL, access_expr->field, target, cmd);
             cmd = mk_eval(access_expr->arg, &(cmd->data.access.value), cmd);
             break;
           }
@@ -169,7 +163,8 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
       }
 
       case CMD_ACCESS: {
-        int index = cmd->data.access.index;
+        type_t* type = cmd->data.access.value->type;
+        int index = indexof(type, cmd->data.access.field);
         int field = cmd->data.access.value->field;
         value_t** target = cmd->data.access.target;
         if (field == FIELD_STRUCT) {

@@ -1,0 +1,31 @@
+
+rule cc
+  deps = gcc
+  depfile = $out.d
+  command = gcc -I . -MMD -MF $out.d -O0 -gdwarf-3 -ggdb -c -o $out $in
+
+rule ld
+  command = gcc -O0 -gdwarf-3 -ggdb -o $out $in
+
+rule run
+  command = $in > $out
+
+rule diff
+  command = diff $in > $out
+
+build build/calvisus.o: cc calvisus/calvisus.c
+build build/eval.o: cc calvisus/eval.c
+build build/name.o: cc calvisus/name.c
+build build/scope.o: cc calvisus/scope.c
+build build/value.o: cc calvisus/value.c
+
+build build/calvisus: ld $
+  build/calvisus.o $
+  build/eval.o $
+  build/name.o $
+  build/scope.o $
+  build/value.o
+
+build build/test_result: run build/calvisus calvisus/test.fbl
+build build/test_passed: diff build/test_result calvisus/test.wnt
+

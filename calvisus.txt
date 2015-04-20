@@ -40,3 +40,18 @@ decl ::= struct <dname> [<field> [...]]               struct Foo(Bar x, ...);
                                                 or    proc f[Foo< a, Bar< b; Bar> c](Bar x, Sludge y; ) p;
       ;                                               { p }
 
+
+Value Output Syntax
+-------------------
+dname ::= A name of a declared type.
+fname ::= A field name.
+
+value ::= dname ':' fname '(' <value> ')'
+       |  dname '(' [<value> [<value> ..]] ')'
+       ;
+
+A value is output as a stream of characters using the above syntax, with no
+whitespace. This produces a unique output for a given data value, in a format
+that is valid syntax for an expression of the same type as the value that
+produces the value when executed.
+
