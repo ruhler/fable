@@ -20,7 +20,7 @@ proc ::= get <pname>                                  x()
       |  call <dname> [<pname> [...]] [<pname> [...]] [<expr> [...]] [<expr> [...]]
                                                       f[a, b, ...; c, d, ...](e, f, ...)
       |  let <vdecl> [<vdecl> [...]] <proc>           Foo x = y, Bar z = w, ...; p
-      |  link <dname> <pname> <pname> <proc>          [Foo@ x; Foo~ y]; p
+      |  link <dname> <pname> <pname> <proc>          [Foo< x; Foo> y]; p
       |  pcond <expr> <proc> [<proc> [...]]           x ? (a, b, ...)
       ;                         
 
@@ -36,7 +36,7 @@ decl ::= struct <dname> [<field> [...]]               struct Foo(Bar x, ...);
       |  funct <dname> <vfield> [<vfield> [...]] <dname> <expr>
                                                       funct f(Bar x, Sludge y; Blah) e;
       |  proc <dname> [<field> [...]] [<field> [...]] [<field> [...]] [<dname>] <proc>
-                                                      proc f[Foo@ a, Bar@ b; Bar~ c](Bar x, Sludge y; Blah) p;
-                                                or    proc f[Foo@ a, Bar@ b; Bar~ c](Bar x, Sludge y; ) p;
+                                                      proc f[Foo< a, Bar< b; Bar> c](Bar x, Sludge y; Blah) p;
+                                                or    proc f[Foo< a, Bar< b; Bar> c](Bar x, Sludge y; ) p;
       ;                                               { p }
 
