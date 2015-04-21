@@ -2,6 +2,8 @@
 #ifndef VALUE_H_
 #define VALUE_H_
 
+#include <stdio.h>
+
 #include "type.h"
 
 #define FIELD_STRUCT -1

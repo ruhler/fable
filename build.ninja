@@ -2,10 +2,10 @@
 rule cc
   deps = gcc
   depfile = $out.d
-  command = gcc -I . -MMD -MF $out.d -O0 -gdwarf-3 -ggdb -c -o $out $in
+  command = gcc -I . -MMD -MF $out.d -std=c99 -Werror -O0 -gdwarf-3 -ggdb -c -o $out $in
 
 rule ld
-  command = gcc -O0 -gdwarf-3 -ggdb -o $out $in
+  command = gcc -std=c99 -Werror -O0 -gdwarf-3 -ggdb -o $out $in
 
 rule run
   command = $in > $out
@@ -14,16 +14,22 @@ rule diff
   command = diff $in > $out
 
 build build/calvisus.o: cc calvisus/calvisus.c
+build build/env.o: cc calvisus/env.c
 build build/eval.o: cc calvisus/eval.c
 build build/name.o: cc calvisus/name.c
+build build/parser.o: cc calvisus/parser.c
 build build/scope.o: cc calvisus/scope.c
+build build/type.o: cc calvisus/type.c
 build build/value.o: cc calvisus/value.c
 
 build build/calvisus: ld $
   build/calvisus.o $
+  build/env.o $
   build/eval.o $
   build/name.o $
+  build/parser.o $
   build/scope.o $
+  build/type.o $
   build/value.o
 
 build build/test_result: run build/calvisus calvisus/test.fbl

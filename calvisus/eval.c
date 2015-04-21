@@ -1,7 +1,10 @@
 
 #include "eval.h"
 
+#include <assert.h>
 #include <stdlib.h>
+
+#include "scope.h"
 
 typedef enum {
   CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_VAR, CMD_DEVAR, CMD_SCOPE
@@ -10,7 +13,7 @@ typedef enum {
 typedef struct cmd_t {
   cmd_tag_t tag;
   union {
-    struct { expr_t* expr; value_t** target; } eval;
+    struct { const expr_t* expr; value_t** target; } eval;
     struct { value_t* value; fname_t field; value_t** target; } access;
     struct { value_t* value; expr_t** choices; value_t** target; } cond;
     struct { vname_t name; value_t* value; } var;
@@ -20,7 +23,7 @@ typedef struct cmd_t {
   struct cmd_t* next;
 } cmd_t;
 
-static cmd_t* mk_eval(expr_t* expr, value_t** target, cmd_t* next) {
+static cmd_t* mk_eval(const expr_t* expr, value_t** target, cmd_t* next) {
   cmd_t* cmd = malloc(sizeof(cmd_t));
   cmd->tag = CMD_EVAL;
   cmd->data.eval.expr = expr;
@@ -29,11 +32,11 @@ static cmd_t* mk_eval(expr_t* expr, value_t** target, cmd_t* next) {
   return cmd;
 }
 
-static cmd_t* mk_access(value_t* value, int index, value_t** target, cmd_t* next) {
+static cmd_t* mk_access(value_t* value, fname_t field, value_t** target, cmd_t* next) {
   cmd_t* cmd = malloc(sizeof(cmd_t));
   cmd->tag = CMD_ACCESS;
   cmd->data.access.value = value;
-  cmd->data.access.index = index;
+  cmd->data.access.field = field;
   cmd->data.access.target = target;
   cmd->next = next;
   return cmd;
@@ -79,21 +82,22 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
   while (cmd != NULL) {
     switch (cmd->tag) {
       case CMD_EVAL: {
-        expr_t* expr = cmd->data.expr;
+        const expr_t* expr = cmd->data.eval.expr;
         value_t** target = cmd->data.eval.target;
         cmd = cmd->next;
         switch (expr->tag) {
-          case EXPR_VAR:
+          case EXPR_VAR: {
             var_expr_t* var_expr = (var_expr_t*) expr;
             *target = lookup_var(scope, var_expr->name);
             break;
+          }
 
           case EXPR_APP: {
             app_expr_t* app_expr = (app_expr_t*) expr;
             type_t* type = lookup_type(env, app_expr->function);
             if (type != NULL) {
               if (type->kind == KIND_STRUCT) {
-                *target = mk_struct(type->num_fields);
+                *target = mk_value(type);
                 for (int i = 0; i < type->num_fields; i++) {
                   cmd = mk_eval(app_expr->args[i], &((*target)->fields[i]), cmd);
                 }
@@ -134,14 +138,15 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
             break;
           }
 
-          case EXPR_UNION:
+          case EXPR_UNION: {
             union_expr_t* union_expr = (union_expr_t*)expr;
             type_t* type = lookup_type(env, union_expr->type);
             assert(type != NULL);
             int index = indexof(type, union_expr->field);
-            *target = mk_union(field);
+            *target = mk_union(type, index);
             cmd = mk_eval(union_expr->value, &((*target)->fields[0]), cmd);
             break;
+          }
 
           case EXPR_LET: {
             let_expr_t* let_expr = (let_expr_t*)expr;
@@ -182,7 +187,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
         value_t* value = cmd->data.cond.value;
         value_t** target = cmd->data.cond.target;
         assert(value->field != FIELD_STRUCT);
-        *target = choices[value->field];
+        cmd = mk_eval(cmd->data.cond.choices[value->field], target, cmd);
         break;
       }
 

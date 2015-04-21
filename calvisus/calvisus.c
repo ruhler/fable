@@ -1,4 +1,12 @@
 
+#include <stdio.h>
+#include <string.h>
+
+#include "env.h"
+#include "eval.h"
+#include "parser.h"
+#include "value.h"
+
 void usage(FILE* fout) {
   fprintf(fout, "calvisus [--main func] FILE\n");
 }
@@ -22,8 +30,8 @@ int run(FILE* fin, const char* main) {
   }
 
   value_t* value = eval(env, NULL, func->body);
-  print(value);
-  fprintf("\n");
+  print(stdout, value);
+  printf("\n");
   return 0;
 }
 

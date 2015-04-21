@@ -2,6 +2,7 @@
 #ifndef ENV_H_
 #define ENV_H_
 
+#include "expr.h"
 #include "name.h"
 #include "type.h"
 
@@ -24,12 +25,12 @@ typedef struct func_env_t {
 } func_env_t;
 
 typedef struct {
-  type_env_t types;
-  func_env_t funcs;
+  type_env_t* types;
+  func_env_t* funcs;
 } env_t;
 
-type_t* lookup_type(env_t* env, dname_t name);
-func_t* lookup_func(env_t* env, dname_t name);
+type_t* lookup_type(const env_t* env, dname_t name);
+func_t* lookup_func(const env_t* env, dname_t name);
 
 #endif//ENV_H_
 
