@@ -5,14 +5,21 @@
 #include "env.h"
 #include "eval.h"
 #include "parser.h"
+#include "toker.h"
 #include "value.h"
 
 void usage(FILE* fout) {
   fprintf(fout, "calvisus [--main func] FILE\n");
 }
 
-int run(FILE* fin, const char* main) {
-  env_t* env = parse(fin);
+int run(const char* filename, const char* main) {
+  toker_t* toker = toker_open(filename);
+  if (toker == NULL) {
+    fprintf(stderr, "Failed to open input stream.\n");
+    return 1;
+  }
+
+  env_t* env = parse(toker);
   if (env == NULL) {
     fprintf(stderr, "Parse Error\n");
     return 1;
@@ -55,12 +62,6 @@ int main(int argc, char* argv[]) {
       file = argv[i];
     }
   }
-  FILE* fin = fopen(file, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "Unable to open input file %s\n", file);
-    return 1;
-  }
-
-  return run(fin, main);
+  return run(file, main);
 }
 

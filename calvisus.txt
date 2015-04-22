@@ -34,7 +34,7 @@ vfield ::= vfield <dname> <vname>                     Foo x
 decl ::= struct <dname> [<field> [...]]               struct Foo(Bar x, ...);
       |  union <dname> [<field> [...]]                union Foo(Bar x, ...);
       |  funct <dname> <vfield> [<vfield> [...]] <dname> <expr>
-                                                      funct f(Bar x, Sludge y; Blah) e;
+                                                      func f(Bar x, Sludge y; Blah) e;
       |  proc <dname> [<field> [...]] [<field> [...]] [<field> [...]] [<dname>] <proc>
                                                       proc f[Foo< a, Bar< b; Bar> c](Bar x, Sludge y; Blah) p;
                                                 or    proc f[Foo< a, Bar< b; Bar> c](Bar x, Sludge y; ) p;

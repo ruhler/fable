@@ -9,7 +9,7 @@ value_t* mk_value(type_t* type) {
   if (type->kind == KIND_UNION) {
     fields = 1;
   }
-  value_t* value = malloc(sizeof(int) + type->num_fields * sizeof(value_t*));
+  value_t* value = malloc(sizeof(value_t) + type->num_fields * sizeof(value_t*));
   value->field = FIELD_STRUCT;
   return value;
 }

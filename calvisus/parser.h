@@ -2,11 +2,10 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
-#include <stdio.h>
-
 #include "env.h"
+#include "toker.h"
 
-env_t* parse(FILE* fin);
+env_t* parse(toker_t* toker);
 
 #endif//PARSER_H_
 
