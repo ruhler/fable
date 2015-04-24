@@ -90,10 +90,9 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
         switch (expr->tag) {
           case EXPR_VAR: {
             var_expr_t* var_expr = (var_expr_t*) expr;
-            fprintf(stderr, "eval var %s\n", var_expr->name);
             *target = lookup_var(scope, var_expr->name);
             if (*target == NULL) {
-              fprintf(stderr, "FATAL: Could not find var %s in scope:\n", var_expr->name);
+              fprintf(stderr, "FATAL: var %s not in scope:\n", var_expr->name);
               dump_scope(stderr, scope);
               abort();
             }
@@ -102,11 +101,9 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
 
           case EXPR_APP: {
             app_expr_t* app_expr = (app_expr_t*) expr;
-            fprintf(stderr, "eval app %s(...)\n", app_expr->function);
             type_t* type = lookup_type(env, app_expr->function);
             if (type != NULL) {
               if (type->kind == KIND_STRUCT) {
-                fprintf(stderr, " %s is struct with %i args\n", app_expr->function, type->num_fields);
                 *target = mk_value(type);
                 for (int i = 0; i < type->num_fields; i++) {
                   cmd = mk_eval(app_expr->args[i], &((*target)->fields[i]), cmd);
@@ -119,7 +116,6 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
 
             func_t* func = lookup_func(env, app_expr->function);
             if (func != NULL) {
-                fprintf(stderr, " %s is func with %i args\n", app_expr->function, func->num_args);
               // Add to the top of the command list
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...
 
@@ -149,13 +145,11 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
             access_expr_t* access_expr = (access_expr_t*)expr;
             cmd = mk_access(NULL, access_expr->field, target, cmd);
             cmd = mk_eval(access_expr->arg, &(cmd->data.access.value), cmd);
-            fprintf(stderr, "eval access <%p>.%s\n", &(cmd->data.access.value), access_expr->field);
             break;
           }
 
           case EXPR_UNION: {
             union_expr_t* union_expr = (union_expr_t*)expr;
-            fprintf(stderr, "eval union %s:%s(...)\n", union_expr->type, union_expr->field);
             type_t* type = lookup_type(env, union_expr->type);
             assert(type != NULL);
             int index = indexof(type, union_expr->field);
@@ -166,7 +160,6 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
 
           case EXPR_LET: {
             let_expr_t* let_expr = (let_expr_t*)expr;
-            fprintf(stderr, "eval let %s = ...\n", let_expr->name);
 
             // No need to pop the variable if we are going to switch to a
             // different scope immediately after anyway.
@@ -182,7 +175,6 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
 
           case EXPR_COND: {
             cond_expr_t* cond_expr = (cond_expr_t*)expr;
-            fprintf(stderr, "eval cond\n");
             cmd = mk_cond(NULL, cond_expr->choices, target, cmd);
             cmd = mk_eval(cond_expr->select, &(cmd->data.cond.value), cmd);
             break;
@@ -192,7 +184,6 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
       }
 
       case CMD_ACCESS: {
-        fprintf(stderr, "cmd access <%p>.%s\n", cmd->data.access.value, cmd->data.access.field);
         type_t* type = cmd->data.access.value->type;
         int index = indexof(type, cmd->data.access.field);
         int field = cmd->data.access.value->field;
@@ -212,29 +203,23 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
       case CMD_COND: {
         value_t* value = cmd->data.cond.value;
         value_t** target = cmd->data.cond.target;
-        fprintf(stderr, "cmd cond field=%i\n", value->field);
         assert(value->field != FIELD_STRUCT);
         cmd = mk_eval(cmd->data.cond.choices[value->field], target, cmd->next);
         break;
       }
 
       case CMD_VAR:
-        fprintf(stderr, "cmd var %s=...\n", cmd->data.var.name);
         scope = extend(scope, cmd->data.var.name, cmd->data.var.value);
-        dump_scope(stderr, scope);
         cmd = cmd->next;
         break;
 
       case CMD_DEVAR:
-        fprintf(stderr, "cmd devar %s\n", scope->name);
         assert(scope != NULL);
         scope = scope->next;
         cmd = cmd->next;
         break;
 
       case CMD_SCOPE:
-        fprintf(stderr, "cmd scope:\n");
-        dump_scope(stderr, cmd->data.scope.scope);
         scope = cmd->data.scope.scope;
         cmd = cmd->next;
         break;
