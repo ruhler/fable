@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include <gc/gc.h>
+
 #include "scope.h"
 
 typedef enum {
@@ -24,7 +26,7 @@ typedef struct cmd_t {
 } cmd_t;
 
 static cmd_t* mk_eval(const expr_t* expr, value_t** target, cmd_t* next) {
-  cmd_t* cmd = malloc(sizeof(cmd_t));
+  cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_EVAL;
   cmd->data.eval.expr = expr;
   cmd->data.eval.target = target;
@@ -33,7 +35,7 @@ static cmd_t* mk_eval(const expr_t* expr, value_t** target, cmd_t* next) {
 }
 
 static cmd_t* mk_access(value_t* value, fname_t field, value_t** target, cmd_t* next) {
-  cmd_t* cmd = malloc(sizeof(cmd_t));
+  cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_ACCESS;
   cmd->data.access.value = value;
   cmd->data.access.field = field;
@@ -43,7 +45,7 @@ static cmd_t* mk_access(value_t* value, fname_t field, value_t** target, cmd_t* 
 }
 
 static cmd_t* mk_var(vname_t name, value_t* value, cmd_t* next) {
-  cmd_t* cmd = malloc(sizeof(cmd_t));
+  cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_VAR;
   cmd->data.var.name = name;
   cmd->data.var.value = value;
@@ -52,14 +54,14 @@ static cmd_t* mk_var(vname_t name, value_t* value, cmd_t* next) {
 }
 
 static cmd_t* mk_devar(cmd_t* next) {
-  cmd_t* cmd = malloc(sizeof(cmd_t));
+  cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_DEVAR;
   cmd->next = next;
   return cmd;
 }
 
 static cmd_t* mk_cond(value_t* value, expr_t** choices, value_t** target, cmd_t* next) {
-  cmd_t* cmd = malloc(sizeof(cmd_t));
+  cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_COND;
   cmd->data.cond.value = value;
   cmd->data.cond.choices = choices;
@@ -69,7 +71,7 @@ static cmd_t* mk_cond(value_t* value, expr_t** choices, value_t** target, cmd_t*
 }
 
 static cmd_t* mk_scope(scope_t* scope, cmd_t* next) {
-  cmd_t* cmd = malloc(sizeof(cmd_t));
+  cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_SCOPE;
   cmd->data.scope.scope = scope;
   cmd->next = next;

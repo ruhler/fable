@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <gc/gc.h>
+
 static bool isname(int c) {
   return isalnum(c) || c == '_';
 }
@@ -52,7 +54,7 @@ static void read_next(toker_t* toker) {
     }
     toker_ungetc(toker, c);
     toker->type = TOK_NAME;
-    char* name = malloc((n+1) * sizeof(char));
+    char* name = GC_MALLOC((n+1) * sizeof(char));
     for (int i = 0; i < n; i++) {
       name[i] = buf[i];
     }
@@ -66,7 +68,7 @@ static void read_next(toker_t* toker) {
 }
 
 toker_t* toker_open(const char* filename) {
-  toker_t* toker = malloc(sizeof(toker_t));
+  toker_t* toker = GC_MALLOC(sizeof(toker_t));
   toker->fin = fopen(filename, "r");
   if (toker->fin == NULL) {
     return NULL;

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include <gc/gc.h>
+
 #include "toker.h"
 
 typedef struct field_list_t {
@@ -19,7 +21,7 @@ static int parse_fields(toker_t* tin, field_list_t** plist) {
   int parsed;
   field_list_t* list = NULL;
   for (parsed = 0; toker_is(tin, TOK_NAME); parsed++) {
-    field_list_t* nlist = malloc(sizeof(field_list_t));
+    field_list_t* nlist = GC_MALLOC(sizeof(field_list_t));
     nlist->next = list;
     list = nlist;
     list->field.type = toker_get_name(tin, "type name");
@@ -66,7 +68,7 @@ int parse_args(toker_t* tin, arg_list_t** plist) {
     return -1;
   }
   for (parsed = 0; !toker_is(tin, ')'); parsed++) {
-    arg_list_t* nlist = malloc(sizeof(arg_list_t));
+    arg_list_t* nlist = GC_MALLOC(sizeof(arg_list_t));
     nlist->next = list;
     list = nlist;
     list->arg = parse_expr(tin);
@@ -109,7 +111,7 @@ expr_t* parse_expr(toker_t* tin) {
       if (num_args < 0) {
         return NULL;
       }
-      app_expr_t* app_expr = malloc(sizeof(app_expr_t) + num_args * sizeof(expr_t*));
+      app_expr_t* app_expr = GC_MALLOC(sizeof(app_expr_t) + num_args * sizeof(expr_t*));
       app_expr->tag = EXPR_APP;
       app_expr->function = name;
       fill_args(num_args, args, app_expr->args);
@@ -130,7 +132,7 @@ expr_t* parse_expr(toker_t* tin) {
       if (!toker_get(tin, ')')) {
         return NULL;
       }
-      union_expr_t* union_expr = malloc(sizeof(union_expr_t));
+      union_expr_t* union_expr = GC_MALLOC(sizeof(union_expr_t));
       union_expr->tag = EXPR_UNION;
       union_expr->type = name;
       union_expr->field = field;
@@ -138,7 +140,7 @@ expr_t* parse_expr(toker_t* tin) {
       expr = (expr_t*)union_expr;
     } else if (toker_is(tin, TOK_NAME)) {
       // Parse a let expression.
-      let_expr_t* let_expr = malloc(sizeof(let_expr_t));
+      let_expr_t* let_expr = GC_MALLOC(sizeof(let_expr_t));
       let_expr->tag = EXPR_LET;
       let_expr->type = name;
       let_expr->name = toker_get_name(tin, "variable name");
@@ -159,7 +161,7 @@ expr_t* parse_expr(toker_t* tin) {
       expr = (expr_t*)let_expr;
     } else {
       // This is a var expression.
-      var_expr_t* var_expr = malloc(sizeof(var_expr_t));
+      var_expr_t* var_expr = GC_MALLOC(sizeof(var_expr_t));
       var_expr->tag = EXPR_VAR;
       var_expr->name = name;
       expr = (expr_t*)var_expr;
@@ -177,7 +179,7 @@ expr_t* parse_expr(toker_t* tin) {
       if (num_args < 0) {
         return NULL;
       }
-      cond_expr_t* cond_expr = malloc(sizeof(cond_expr_t) + num_args * sizeof(expr_t*));
+      cond_expr_t* cond_expr = GC_MALLOC(sizeof(cond_expr_t) + num_args * sizeof(expr_t*));
       cond_expr->tag = EXPR_COND;
       cond_expr->select = expr;
       fill_args(num_args, args, cond_expr->choices);
@@ -188,7 +190,7 @@ expr_t* parse_expr(toker_t* tin) {
       if (field == NULL) {
         return NULL;
       }
-      access_expr_t* access_expr = malloc(sizeof(access_expr_t));
+      access_expr_t* access_expr = GC_MALLOC(sizeof(access_expr_t));
       access_expr->tag = EXPR_ACCESS;
       access_expr->arg = expr;
       access_expr->field = field;
@@ -228,13 +230,13 @@ env_t* parse(toker_t* tin) {
         return NULL;
       }
       kind_t kind = name_eq("struct", dkind) ? KIND_STRUCT : KIND_UNION;
-      type_t* type = malloc(sizeof(type_t) + num_fields * sizeof(field_t));
+      type_t* type = GC_MALLOC(sizeof(type_t) + num_fields * sizeof(field_t));
       type->name = name;
       type->kind = kind;
       type->num_fields = num_fields;
       fill_fields(num_fields, fields, type->fields);
 
-      type_env_t* ntenv = malloc(sizeof(type_env_t));
+      type_env_t* ntenv = GC_MALLOC(sizeof(type_env_t));
       ntenv->decl = type;
       ntenv->next = tenv;
       tenv = ntenv;
@@ -253,13 +255,17 @@ env_t* parse(toker_t* tin) {
       }
 
       expr_t* expr = parse_expr(tin);
-      func_t* func = malloc(sizeof(func_t) + num_fields * sizeof(field_t));
+      if (expr == NULL) {
+        return NULL;
+      }
+      func_t* func = GC_MALLOC(sizeof(func_t) + num_fields * sizeof(field_t));
       func->name = name;
       func->rtype = rtype;
+      func->body = expr;
       func->num_args = num_fields;
       fill_fields(num_fields, fields, func->args);
 
-      func_env_t* nfenv = malloc(sizeof(func_env_t));
+      func_env_t* nfenv = GC_MALLOC(sizeof(func_env_t));
       nfenv->decl = func;
       nfenv->next = fenv;
       fenv = nfenv;
@@ -273,7 +279,7 @@ env_t* parse(toker_t* tin) {
     }
   }
 
-  env_t* env = malloc(sizeof(env_t));
+  env_t* env = GC_MALLOC(sizeof(env_t));
   env->types = tenv;
   env->funcs = fenv;
   return env;

@@ -1,4 +1,7 @@
 
+* Note: my grammer means the last statement in a block must not have
+  a semicolon. Isn't that weird?
+  Perhaps the block statement should be '{' <expr> ';' '}'?
 * Use boehm GC, otherwise we will have tons of memory leaks.
 * Clean up and document all the functions.
   - Follow style of the Tcl code base? Use prefix FblC?
