@@ -15,7 +15,7 @@ typedef struct {
   dname_t name;
   kind_t kind;
   int num_fields;
-  field_t fields[];
+  field_t fields[0];
 } type_t;
 
 int indexof(const type_t* type, fname_t field);

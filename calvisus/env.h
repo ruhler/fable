@@ -11,7 +11,7 @@ typedef struct {
   dname_t rtype;
   expr_t* body;
   int num_args;
-  field_t args[];
+  field_t args[0];
 } func_t;
 
 typedef struct type_env_t {

@@ -12,6 +12,7 @@ value_t* mk_value(type_t* type) {
     fields = 1;
   }
   value_t* value = GC_MALLOC(sizeof(value_t) + type->num_fields * sizeof(value_t*));
+  value->type = type;
   value->field = FIELD_STRUCT;
   return value;
 }

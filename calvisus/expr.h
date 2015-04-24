@@ -20,7 +20,7 @@ typedef struct {
 typedef struct {
   expr_tag_t tag;
   dname_t function;
-  expr_t* args[];
+  expr_t* args[0];
 } app_expr_t;
 
 typedef struct {
@@ -47,7 +47,7 @@ typedef struct {
 typedef struct {
   expr_tag_t tag;
   expr_t* select;
-  expr_t* choices[];
+  expr_t* choices[0];
 } cond_expr_t;
 
 #endif//EXPR_H_
