@@ -45,7 +45,7 @@ int run(const char* filename, const char* main) {
 }
 
 int main(int argc, char* argv[]) {
-  const char* main = "main";
+  const char* entry = "main";
   const char* file = "/dev/null/stdin";
 
   if (argc < 2) {
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
       usage(stdout);
       return 0;
     } else if (i+1 < argc && strcmp("--main", argv[i]) == 0) {
-      main = argv[i+1];
+      entry = argv[i+1];
       i++;
     } else {
       file = argv[i];
@@ -66,6 +66,6 @@ int main(int argc, char* argv[]) {
   }
 
   GC_INIT();
-  return run(file, main);
+  return run(file, entry);
 }
 

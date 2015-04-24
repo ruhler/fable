@@ -11,7 +11,7 @@ value_t* mk_value(type_t* type) {
   if (type->kind == KIND_UNION) {
     fields = 1;
   }
-  value_t* value = GC_MALLOC(sizeof(value_t) + type->num_fields * sizeof(value_t*));
+  value_t* value = GC_MALLOC(sizeof(value_t) + fields * sizeof(value_t*));
   value->type = type;
   value->field = FIELD_STRUCT;
   return value;
@@ -27,7 +27,6 @@ void print(FILE* fout, value_t* value) {
   type_t* type = value->type;
   if (type->kind == KIND_STRUCT) {
     fprintf(fout, "%s(", type->name);
-    bool comma = false;
     for (int i = 0; i < type->num_fields; i++) {
       if (i > 0) {
         fprintf(fout, ",");
