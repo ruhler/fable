@@ -162,7 +162,13 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
           case EXPR_LET: {
             let_expr_t* let_expr = (let_expr_t*)expr;
             fprintf(stderr, "eval let %s = ...\n", let_expr->name);
-            cmd = mk_devar(cmd);
+
+            // No need to pop the variable if we are going to switch to a
+            // different scope immediately after anyway.
+            if (cmd != NULL && cmd->tag != CMD_SCOPE) {
+              cmd = mk_devar(cmd);
+            }
+
             cmd = mk_eval(let_expr->body, target, cmd);
             cmd = mk_var(let_expr->name, NULL, cmd);
             cmd = mk_eval(let_expr->def, &(cmd->data.var.value), cmd);
