@@ -14,5 +14,7 @@ typedef struct scope_t {
 value_t* lookup_var(scope_t* scope, vname_t name);
 scope_t* extend(scope_t* scope, vname_t name, value_t* value);
 
+void dump_scope(FILE* fout, scope_t* scope);
+
 #endif//SCOPE_H_
 

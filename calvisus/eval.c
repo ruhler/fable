@@ -92,6 +92,11 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
             var_expr_t* var_expr = (var_expr_t*) expr;
             fprintf(stderr, "eval var %s\n", var_expr->name);
             *target = lookup_var(scope, var_expr->name);
+            if (*target == NULL) {
+              fprintf(stderr, "FATAL: Could not find var %s in scope:\n", var_expr->name);
+              dump_scope(stderr, scope);
+              abort();
+            }
             break;
           }
 
@@ -122,7 +127,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
               // change it back to a different scope. This is important to
               // avoid memory leaks for tail calls.
               if (cmd != NULL && cmd->tag != CMD_SCOPE) {
-                cmd = mk_scope(scope, cmd->next);
+                cmd = mk_scope(scope, cmd);
               }
 
               cmd = mk_eval(func->body, target, cmd);
@@ -142,9 +147,9 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
 
           case EXPR_ACCESS: {
             access_expr_t* access_expr = (access_expr_t*)expr;
-            fprintf(stderr, "eval access *.%s\n", access_expr->field);
             cmd = mk_access(NULL, access_expr->field, target, cmd);
             cmd = mk_eval(access_expr->arg, &(cmd->data.access.value), cmd);
+            fprintf(stderr, "eval access <%p>.%s\n", &(cmd->data.access.value), access_expr->field);
             break;
           }
 
@@ -187,8 +192,8 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
       }
 
       case CMD_ACCESS: {
+        fprintf(stderr, "cmd access <%p>.%s\n", cmd->data.access.value, cmd->data.access.field);
         type_t* type = cmd->data.access.value->type;
-        fprintf(stderr, "cmd access <%s>.%s\n", type->name, cmd->data.access.field);
         int index = indexof(type, cmd->data.access.field);
         int field = cmd->data.access.value->field;
         value_t** target = cmd->data.access.target;
@@ -216,6 +221,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
       case CMD_VAR:
         fprintf(stderr, "cmd var %s=...\n", cmd->data.var.name);
         scope = extend(scope, cmd->data.var.name, cmd->data.var.value);
+        dump_scope(stderr, scope);
         cmd = cmd->next;
         break;
 
@@ -227,7 +233,8 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
         break;
 
       case CMD_SCOPE:
-        fprintf(stderr, "cmd scope\n");
+        fprintf(stderr, "cmd scope:\n");
+        dump_scope(stderr, cmd->data.scope.scope);
         scope = cmd->data.scope.scope;
         cmd = cmd->next;
         break;

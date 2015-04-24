@@ -23,3 +23,9 @@ scope_t* extend(scope_t* scope, vname_t name, value_t* value) {
   return newscope;
 }
 
+void dump_scope(FILE* fout, scope_t* scope) {
+  for ( ; scope != NULL; scope = scope->next) {
+    fprintf(fout, " %s = ...\n", scope->name);
+  }
+}
+
