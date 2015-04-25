@@ -18,13 +18,14 @@
 // FblcTokenizer
 #define FBLC_TOK_EOF -1
 #define FBLC_TOK_NAME -2
+#define FBLC_TOK_ERR -3
 typedef int FblcTokenType;
 typedef struct FblcTokenStream FblcTokenStream;
 FblcTokenStream* FblcOpenTokenStream(const char* filename);
 void FblcCloseTokenStream(FblcTokenStream* toks);
+bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which);
 const char* FblcGetNameToken(FblcTokenStream* toks, const char* expected);
 bool FblcGetToken(FblcTokenStream* toks, FblcTokenType which);
-bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which);
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
 #endif  // FBLC_INTERNAL_H_

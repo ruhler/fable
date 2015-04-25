@@ -93,6 +93,9 @@ expr_t* parse_expr(FblcTokenStream* toks) {
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
     expr = parse_expr(toks);
+    if (expr == NULL) {
+      return NULL;
+    }
     if (!FblcGetToken(toks, '}')) {
       return NULL;
     }
@@ -161,7 +164,7 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       expr = (expr_t*)var_expr;
     }
   } else {
-    FblcUnexpectedToken(toks, "'{' or a name");
+    FblcUnexpectedToken(toks, "an expression");
     return NULL;
   }
 

@@ -18,7 +18,6 @@ int run(const char* filename, const char* main) {
 
   env_t* env = parse(toks);
   if (env == NULL) {
-    fprintf(stderr, "Parse Error\n");
     return 1;
   }
 

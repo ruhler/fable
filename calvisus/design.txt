@@ -17,4 +17,7 @@ Calvisus Design 1
 * Handle managed stack tail call issue by not pushing 'scope' on the command
   list right on top of another 'scope' command.
 
+Question:
+ * How to deal with the arbitrary boundedness of C? Like, what if there are
+   more than 2 billion arguments in a function, or really long names?
 
