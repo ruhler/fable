@@ -1,3 +1,7 @@
+// FblcInternal.h --
+//
+//   This header file describes the internally-visible facilities of the Fblc
+//   interpreter.
 
 #ifndef FBLC_INTERNAL_H_
 #define FBLC_INTERNAL_H_
@@ -24,4 +28,3 @@ bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which);
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
 #endif  // FBLC_INTERNAL_H_
-

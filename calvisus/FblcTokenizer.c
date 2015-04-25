@@ -1,53 +1,86 @@
+// FblcTokenizer.c --
+//
+//   The file implements routines for turning a FILE stream into a stream of
+//   tokens. 
 
 #include "FblcInternal.h"
 
+// For the most part, tokens are single punctuation characters, e.g. ';', '(',
+// ')'. The two exceptions are the name token, which is a string of name
+// characters, and the token to represent the end of the token stream.
+// FblcTokenType uses an int to represent the type of a token. Its value is
+// a character literal for single punctuation characters, FBLC_TOK_NAME for a
+// name token, and FBLC_TOK_EOF for the token representing the end of the
+// token stream.
+
+// A stream of tokens is represented using the FblcTokenStream data structure.
+// The data structure includes the next token in the stream, the underlying
+// FILE stream, and, for error reporting purposes, the location in the input
+// file of the next token and the FILE stream itself.
+//
+// The conventional variable name for a FblcTokenStream* is 'toks'.
+
+struct FblcTokenStream {
+  // The next token. This token has been read from the underlying FILE stream,
+  // but has not yet been taken by the user.
+  // If the 'type' of token is FBLC_TOK_NAME, then 'name' is the value of the
+  // name token. Otherwise 'name' is NULL.
+  FblcTokenType type;
+  const char* name;
+
+  // The underlying FILE stream.
+  FILE* stream;
+
+  // Location information for the next token and the underlying stream.
+  // Because no token spans multiple lines, both the next token and the
+  // underlying stream share the same 'filename' and 'line' position.
+  const char* filename;
+  int line;
+  int token_column;
+  int stream_column;
+};
+
+static int GetChar(FblcTokenStream* toks);
+static void UnGetChar(FblcTokenStream* toks, int c);
+static bool IsNameChar(int c);
+static void ReadNextToken(FblcTokenStream* toks);
+
+
+
+
 // Notes:
-//  * 'toks' is conventional variable name for a token stream
-//  * FblcTokenType is FBLC_TOK_EOF, FBLC_TOK_NAME, or a character literal.
 //  * The results of FblcGetToken and FblcGetNameToken should always be
 //  checked, unless FblcIsToken has already been called to verify the type of
 //  the next token.
 
-// Token types: Any single character is a token of that type. For end of file
-// and name tokens, the following types are defined:
-struct FblcTokenStream {
-  FblcTokenType type;
-  const char* name;
-  FILE* fin;
-  const char* filename;
-  int line;
-  int col;    // Column of the current token.
-  int ncol;   // Column of the input stream.
-};
 
-
-static bool isname(int c) {
+static bool IsNameChar(int c) {
   return isalnum(c) || c == '_';
 }
 
-static int toker_getc(FblcTokenStream* toks) {
-  int c = fgetc(toks->fin);
+static int GetChar(FblcTokenStream* toks) {
+  int c = fgetc(toks->stream);
   if (c == '\n') {
     toks->line++;
-    toks->ncol = 0;
+    toks->stream_column = 0;
   } else if (c != EOF) {
-    toks->ncol++;
+    toks->stream_column++;
   }
   return c;
 }
 
-static void toker_ungetc(FblcTokenStream* toks, int c) {
-  toks->ncol--;
-  ungetc(c == '\n' ? ' ' : c, toks->fin);
+static void UnGetChar(FblcTokenStream* toks, int c) {
+  toks->stream_column--;
+  ungetc(c == '\n' ? ' ' : c, toks->stream);
 }
 
 
-static void read_next(FblcTokenStream* toks) {
+static void ReadNextToken(FblcTokenStream* toks) {
   int c;
   do {
-    c = toker_getc(toks);
+    c = GetChar(toks);
   } while (isspace(c));
-  toks->col = toks->ncol;
+  toks->token_column = toks->stream_column;
 
   if (c == EOF) {
     toks->type = FBLC_TOK_EOF;
@@ -55,17 +88,17 @@ static void read_next(FblcTokenStream* toks) {
     return;
   }
 
-  if (isname(c)) {
+  if (IsNameChar(c)) {
     char buf[BUFSIZ];
     size_t n;
     buf[0] = c;
-    c = toker_getc(toks);
-    for (n = 1; isname(c); n++) {
+    c = GetChar(toks);
+    for (n = 1; IsNameChar(c); n++) {
       assert(n < BUFSIZ && "TODO: Support longer names.");
       buf[n] = c;
-      c = toker_getc(toks);
+      c = GetChar(toks);
     }
-    toker_ungetc(toks, c);
+    UnGetChar(toks, c);
     toks->type = FBLC_TOK_NAME;
     char* name = GC_MALLOC((n+1) * sizeof(char));
     for (int i = 0; i < n; i++) {
@@ -82,20 +115,20 @@ static void read_next(FblcTokenStream* toks) {
 
 FblcTokenStream* FblcOpenTokenStream(const char* filename) {
   FblcTokenStream* toks = GC_MALLOC(sizeof(FblcTokenStream));
-  toks->fin = fopen(filename, "r");
-  if (toks->fin == NULL) {
+  toks->stream = fopen(filename, "r");
+  if (toks->stream == NULL) {
     return NULL;
   }
   toks->filename = filename;
   toks->line = 1;
-  toks->col = 0;
-  toks->ncol = 0;
-  read_next(toks);
+  toks->token_column = 0;
+  toks->stream_column = 0;
+  ReadNextToken(toks);
   return toks;
 }
 
 void FblcCloseTokenStream(FblcTokenStream* toks) {
-  fclose(toks->fin);
+  fclose(toks->stream);
 }
 
 // Get and pop the next token, assuming the token is a name token.
@@ -105,11 +138,11 @@ void FblcCloseTokenStream(FblcTokenStream* toks) {
 const char* FblcGetNameToken(FblcTokenStream* toks, const char* expected) {
   if (toks->type == FBLC_TOK_NAME) {
     const char* name = toks->name;
-    read_next(toks);
+    ReadNextToken(toks);
     return name;
   }
   fprintf(stderr, "%s:%d:%d: error: Expected %s, but got token of type '%c'\n",
-      toks->filename, toks->line, toks->col, expected, toks->type);
+      toks->filename, toks->line, toks->token_column, expected, toks->type);
   return NULL;
 }
 
@@ -118,11 +151,11 @@ const char* FblcGetNameToken(FblcTokenStream* toks, const char* expected) {
 // false is returned.
 bool FblcGetToken(FblcTokenStream* toks, int type) {
   if (toks->type == type) {
-    read_next(toks);
+    ReadNextToken(toks);
     return true;
   }
   fprintf(stderr, "%s:%d:%d: error: Expected %c, but got token of type '%c'\n",
-      toks->filename, toks->line, toks->col, type, toks->type);
+      toks->filename, toks->line, toks->token_column, type, toks->type);
   return false;
 }
 
@@ -136,6 +169,6 @@ bool FblcIsToken(FblcTokenStream* toks, int type) {
 // included in the error message.
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected) {
   fprintf(stderr, "%s:%d:%d: error: Expected %s, but got token of type '%c'\n",
-      toks->filename, toks->line, toks->col, expected, toks->type);
+      toks->filename, toks->line, toks->token_column, expected, toks->type);
 }
 
