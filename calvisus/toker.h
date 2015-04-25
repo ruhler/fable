@@ -10,15 +10,7 @@
 #define TOK_EOF -1
 #define TOK_NAME -2
 
-typedef struct {
-  int type;
-  const char* name;
-  FILE* fin;
-  const char* filename;
-  int line;
-  int col;    // Column of the current token.
-  int ncol;   // Column of the input stream.
-} toker_t;
+typedef struct toker_t toker_t;
 
 toker_t* toker_open(const char* filename);
 void toker_close(toker_t* toker);

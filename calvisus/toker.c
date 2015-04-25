@@ -8,6 +8,17 @@
 
 #include <gc/gc.h>
 
+struct toker_t {
+  int type;
+  const char* name;
+  FILE* fin;
+  const char* filename;
+  int line;
+  int col;    // Column of the current token.
+  int ncol;   // Column of the input stream.
+};
+
+
 static bool isname(int c) {
   return isalnum(c) || c == '_';
 }
