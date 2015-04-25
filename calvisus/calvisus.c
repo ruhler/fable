@@ -1,13 +1,8 @@
 
-#include <stdio.h>
-#include <string.h>
-
-#include <gc/gc.h>
-
+#include "FblcInternal.h"
 #include "env.h"
 #include "eval.h"
 #include "parser.h"
-#include "toker.h"
 #include "value.h"
 
 void usage(FILE* fout) {
@@ -15,13 +10,13 @@ void usage(FILE* fout) {
 }
 
 int run(const char* filename, const char* main) {
-  toker_t* toker = toker_open(filename);
-  if (toker == NULL) {
+  FblcTokenStream* toks = FblcOpenTokenStream(filename);
+  if (toks == NULL) {
     fprintf(stderr, "Failed to open input stream.\n");
     return 1;
   }
 
-  env_t* env = parse(toker);
+  env_t* env = parse(toks);
   if (env == NULL) {
     fprintf(stderr, "Parse Error\n");
     return 1;

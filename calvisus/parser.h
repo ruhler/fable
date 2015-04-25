@@ -3,9 +3,9 @@
 #define PARSER_H_
 
 #include "env.h"
-#include "toker.h"
+#include "FblcInternal.h"
 
-env_t* parse(toker_t* toker);
+env_t* parse(FblcTokenStream* toks);
 
 #endif//PARSER_H_
 

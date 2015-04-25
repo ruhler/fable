@@ -19,7 +19,7 @@ build build/eval.o: cc calvisus/eval.c
 build build/name.o: cc calvisus/name.c
 build build/parser.o: cc calvisus/parser.c
 build build/scope.o: cc calvisus/scope.c
-build build/toker.o: cc calvisus/toker.c
+build build/FblcTokenizer.o: cc calvisus/FblcTokenizer.c
 build build/type.o: cc calvisus/type.c
 build build/value.o: cc calvisus/value.c
 
@@ -30,7 +30,7 @@ build build/calvisus: ld $
   build/name.o $
   build/parser.o $
   build/scope.o $
-  build/toker.o $
+  build/FblcTokenizer.o $
   build/type.o $
   build/value.o
 
