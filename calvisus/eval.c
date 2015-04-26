@@ -17,7 +17,7 @@ typedef struct cmd_t {
   union {
     struct { const expr_t* expr; value_t** target; } eval;
     struct { value_t* value; FblcName field; value_t** target; } access;
-    struct { value_t* value; expr_t** choices; value_t** target; } cond;
+    struct { value_t* value; expr_t* const* choices; value_t** target; } cond;
     struct { FblcName name; value_t* value; } var;
     struct { scope_t* scope; } scope;
   } data;
@@ -59,7 +59,7 @@ static cmd_t* mk_devar(cmd_t* next) {
   return cmd;
 }
 
-static cmd_t* mk_cond(value_t* value, expr_t** choices, value_t** target, cmd_t* next) {
+static cmd_t* mk_cond(value_t* value, expr_t* const* choices, value_t** target, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_COND;
   cmd->data.cond.value = value;
@@ -88,10 +88,10 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
         cmd = cmd->next;
         switch (expr->tag) {
           case EXPR_VAR: {
-            var_expr_t* var_expr = (var_expr_t*) expr;
-            *target = lookup_var(scope, var_expr->name);
+            FblcName var_name = expr->ex.var.name;
+            *target = lookup_var(scope, var_name);
             if (*target == NULL) {
-              fprintf(stderr, "FATAL: var %s not in scope:\n", var_expr->name);
+              fprintf(stderr, "FATAL: var %s not in scope:\n", var_name);
               dump_scope(stderr, scope);
               abort();
             }
@@ -99,13 +99,12 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
           }
 
           case EXPR_APP: {
-            app_expr_t* app_expr = (app_expr_t*) expr;
-            type_t* type = lookup_type(env, app_expr->function);
+            type_t* type = lookup_type(env, expr->ex.app.function);
             if (type != NULL) {
               if (type->kind == KIND_STRUCT) {
                 *target = mk_value(type);
                 for (int i = 0; i < type->num_fields; i++) {
-                  cmd = mk_eval(app_expr->args[i], &((*target)->fields[i]), cmd);
+                  cmd = mk_eval(expr->args[i], &((*target)->fields[i]), cmd);
                 }
               } else {
                 assert(false && "Invalid kind of type for application");
@@ -113,7 +112,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
               break;
             }
 
-            func_t* func = lookup_func(env, app_expr->function);
+            func_t* func = lookup_func(env, expr->ex.app.function);
             if (func != NULL) {
               // Add to the top of the command list
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...
@@ -132,7 +131,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
               scope_t* nscope = NULL;
               for (int i = 0; i < func->num_args; i++) {
                 nscope = extend(nscope, func->args[i].name, NULL);
-                cmd = mk_eval(app_expr->args[i], &(nscope->value), cmd);
+                cmd = mk_eval(expr->args[i], &(nscope->value), cmd);
               }
               scmd->data.scope.scope = nscope;
               break;
@@ -141,41 +140,36 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
           }
 
           case EXPR_ACCESS: {
-            access_expr_t* access_expr = (access_expr_t*)expr;
-            cmd = mk_access(NULL, access_expr->field, target, cmd);
-            cmd = mk_eval(access_expr->arg, &(cmd->data.access.value), cmd);
+            cmd = mk_access(NULL, expr->ex.access.field, target, cmd);
+            cmd = mk_eval(expr->ex.access.arg, &(cmd->data.access.value), cmd);
             break;
           }
 
           case EXPR_UNION: {
-            union_expr_t* union_expr = (union_expr_t*)expr;
-            type_t* type = lookup_type(env, union_expr->type);
+            type_t* type = lookup_type(env, expr->ex.union_.type);
             assert(type != NULL);
-            int index = indexof(type, union_expr->field);
+            int index = indexof(type, expr->ex.union_.field);
             *target = mk_union(type, index);
-            cmd = mk_eval(union_expr->value, &((*target)->fields[0]), cmd);
+            cmd = mk_eval(expr->ex.union_.value, &((*target)->fields[0]), cmd);
             break;
           }
 
           case EXPR_LET: {
-            let_expr_t* let_expr = (let_expr_t*)expr;
-
             // No need to pop the variable if we are going to switch to a
             // different scope immediately after anyway.
             if (cmd != NULL && cmd->tag != CMD_SCOPE) {
               cmd = mk_devar(cmd);
             }
 
-            cmd = mk_eval(let_expr->body, target, cmd);
-            cmd = mk_var(let_expr->name, NULL, cmd);
-            cmd = mk_eval(let_expr->def, &(cmd->data.var.value), cmd);
+            cmd = mk_eval(expr->ex.let.body, target, cmd);
+            cmd = mk_var(expr->ex.let.name, NULL, cmd);
+            cmd = mk_eval(expr->ex.let.def, &(cmd->data.var.value), cmd);
             break;
           }
 
           case EXPR_COND: {
-            cond_expr_t* cond_expr = (cond_expr_t*)expr;
-            cmd = mk_cond(NULL, cond_expr->choices, target, cmd);
-            cmd = mk_eval(cond_expr->select, &(cmd->data.cond.value), cmd);
+            cmd = mk_cond(NULL, expr->args, target, cmd);
+            cmd = mk_eval(expr->ex.cond.select, &(cmd->data.cond.value), cmd);
             break;
           }
         }

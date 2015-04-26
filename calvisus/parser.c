@@ -88,6 +88,57 @@ void fill_args(int num_args, arg_list_t* list, expr_t** args) {
   }
 }
 
+static expr_t* NewAppExpr(FblcName function, int num_args, arg_list_t* args) {
+  expr_t* expr = GC_MALLOC(sizeof(expr_t) + num_args * sizeof(expr_t*));
+  expr->tag = EXPR_APP;
+  expr->ex.app.function = function;
+  fill_args(num_args, args, expr->args);
+  return expr;
+}
+
+static expr_t* NewUnionExpr(FblcName type, FblcName field, const expr_t* value) {
+  expr_t* expr = GC_MALLOC(sizeof(expr_t));
+  expr->tag = EXPR_UNION;
+  expr->ex.union_.type = type;
+  expr->ex.union_.field = field;
+  expr->ex.union_.value = value;
+  return expr;
+}
+
+static expr_t* NewLetExpr(FblcName type, FblcName name, const expr_t* def,
+    const expr_t* body) {
+  expr_t* expr = GC_MALLOC(sizeof(expr_t));
+  expr->tag = EXPR_LET;
+  expr->ex.let.type = type;
+  expr->ex.let.name = name;
+  expr->ex.let.def = def;
+  expr->ex.let.body = body;
+  return expr;
+}
+
+static expr_t* NewVarExpr(FblcName name) {
+  expr_t* expr = GC_MALLOC(sizeof(expr_t));
+  expr->tag = EXPR_VAR;
+  expr->ex.var.name = name;
+  return expr;
+}
+
+static expr_t* NewCondExpr(const expr_t* select, int num_args, arg_list_t* args) {
+  expr_t* expr = GC_MALLOC(sizeof(expr_t) + num_args * sizeof(expr_t*));
+  expr->tag = EXPR_COND;
+  expr->ex.cond.select = select;
+  fill_args(num_args, args, expr->args);
+  return expr;
+}
+
+static expr_t* NewAccessExpr(const expr_t* arg, FblcName field) {
+  expr_t* expr = GC_MALLOC(sizeof(expr_t));
+  expr->tag = EXPR_ACCESS;
+  expr->ex.access.arg = arg;
+  expr->ex.access.field = field;
+  return expr;
+}
+
 expr_t* parse_expr(FblcTokenStream* toks) {
   expr_t* expr = NULL;
   if (FblcIsToken(toks, '{')) {
@@ -108,11 +159,7 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       if (num_args < 0) {
         return NULL;
       }
-      app_expr_t* app_expr = GC_MALLOC(sizeof(app_expr_t) + num_args * sizeof(expr_t*));
-      app_expr->tag = EXPR_APP;
-      app_expr->function = name;
-      fill_args(num_args, args, app_expr->args);
-      expr = (expr_t*)app_expr;
+      expr = NewAppExpr(name, num_args, args);
     } else if (FblcIsToken(toks, ':')) {
       FblcGetToken(toks, ':');
       FblcName field = FblcGetNameToken(toks, "field name");
@@ -129,39 +176,28 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       if (!FblcGetToken(toks, ')')) {
         return NULL;
       }
-      union_expr_t* union_expr = GC_MALLOC(sizeof(union_expr_t));
-      union_expr->tag = EXPR_UNION;
-      union_expr->type = name;
-      union_expr->field = field;
-      union_expr->value = value;
-      expr = (expr_t*)union_expr;
+      expr = NewUnionExpr(name, field, value);
     } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
       // Parse a let expression.
-      let_expr_t* let_expr = GC_MALLOC(sizeof(let_expr_t));
-      let_expr->tag = EXPR_LET;
-      let_expr->type = name;
-      let_expr->name = FblcGetNameToken(toks, "variable name");
+      FblcName var_type = name;
+      FblcName var_name = FblcGetNameToken(toks, "variable name");
       if (!FblcGetToken(toks, '=')) {
         return NULL;
       }
-      let_expr->def = parse_expr(toks);
-      if (let_expr->def == NULL) {
+      const expr_t* def = parse_expr(toks);
+      if (def == NULL) {
         return NULL;
       }
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
-      let_expr->body = parse_expr(toks);
-      if (let_expr->body == NULL) {
+      const expr_t* body = parse_expr(toks);
+      if (body == NULL) {
         return NULL;
       }
-      expr = (expr_t*)let_expr;
+      expr = NewLetExpr(var_type, var_name, def, body);
     } else {
-      // This is a var expression.
-      var_expr_t* var_expr = GC_MALLOC(sizeof(var_expr_t));
-      var_expr->tag = EXPR_VAR;
-      var_expr->name = name;
-      expr = (expr_t*)var_expr;
+      expr = NewVarExpr(name);
     }
   } else {
     FblcUnexpectedToken(toks, "an expression");
@@ -176,22 +212,14 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       if (num_args < 0) {
         return NULL;
       }
-      cond_expr_t* cond_expr = GC_MALLOC(sizeof(cond_expr_t) + num_args * sizeof(expr_t*));
-      cond_expr->tag = EXPR_COND;
-      cond_expr->select = expr;
-      fill_args(num_args, args, cond_expr->choices);
-      expr = (expr_t*)cond_expr;
+      expr = NewCondExpr(expr, num_args, args);
     } else {
       FblcGetToken(toks, '.');
       FblcName field = FblcGetNameToken(toks, "field name");
       if (field == NULL) {
         return NULL;
       }
-      access_expr_t* access_expr = GC_MALLOC(sizeof(access_expr_t));
-      access_expr->tag = EXPR_ACCESS;
-      access_expr->arg = expr;
-      access_expr->field = field;
-      expr = (expr_t*) access_expr;
+      expr = NewAccessExpr(expr, field);
     }
   }
   return expr;
