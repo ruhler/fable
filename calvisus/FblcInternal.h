@@ -121,4 +121,12 @@ const char* FblcGetNameToken(FblcTokenStream* toks, const char* expected);
 bool FblcGetToken(FblcTokenStream* toks, FblcTokenType which);
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
+// FblcParser
+FblcEnv* FblcParseProgram(FblcTokenStream* toks);
+
+// FblcEvaluator
+typedef struct FblcValue FblcValue;
+void FblcPrintValue(FILE* fout, FblcValue* value);
+FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr);
+
 #endif  // FBLC_INTERNAL_H_

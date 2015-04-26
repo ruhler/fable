@@ -1,12 +1,51 @@
 
-#include "eval.h"
+#include "FblcInternal.h"
 
-#include <assert.h>
-#include <stdlib.h>
+// For struct value, 'tag' is unused and 'fields' contains the field data.
+// For union value, 'tag' is the index of the active field and 'fields' is a
+// single element array with the field value.
+struct FblcValue {
+  FblcType* type;
+  int tag;
+  struct FblcValue* fields[];
+};
 
-#include <gc/gc.h>
+typedef struct scope_t {
+  FblcName name;
+  FblcValue* value;
+  struct scope_t* next;
+} scope_t;
 
-#include "scope.h"
+FblcValue* lookup_var(scope_t* scope, FblcName name);
+scope_t* extend(scope_t* scope, FblcName name, FblcValue* value);
+
+void dump_scope(FILE* fout, scope_t* scope);
+
+FblcValue* lookup_var(scope_t* scope, FblcName name) {
+  if (scope == NULL) {
+    return NULL;
+  } else if (FblcNamesEqual(scope->name, name)) {
+    return scope->value;
+  } else {
+    return lookup_var(scope->next, name);
+  }
+}
+
+scope_t* extend(scope_t* scope, FblcName name, FblcValue* value) {
+  scope_t* newscope = GC_MALLOC(sizeof(scope_t));
+  newscope->name = name;
+  newscope->value = value;
+  newscope->next = scope;
+  return newscope;
+}
+
+void dump_scope(FILE* fout, scope_t* scope) {
+  for ( ; scope != NULL; scope = scope->next) {
+    fprintf(fout, " %s = ...\n", scope->name);
+  }
+}
+
+
 
 typedef enum {
   CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_VAR, CMD_DEVAR, CMD_SCOPE
@@ -15,16 +54,56 @@ typedef enum {
 typedef struct cmd_t {
   cmd_tag_t tag;
   union {
-    struct { const FblcExpr* expr; value_t** target; } eval;
-    struct { value_t* value; FblcName field; value_t** target; } access;
-    struct { value_t* value; FblcExpr* const* choices; value_t** target; } cond;
-    struct { FblcName name; value_t* value; } var;
+    struct { const FblcExpr* expr; FblcValue** target; } eval;
+    struct { FblcValue* value; FblcName field; FblcValue** target; } access;
+    struct { FblcValue* value; FblcExpr* const* choices; FblcValue** target; } cond;
+    struct { FblcName name; FblcValue* value; } var;
     struct { scope_t* scope; } scope;
   } data;
   struct cmd_t* next;
 } cmd_t;
 
-static cmd_t* mk_eval(const FblcExpr* expr, value_t** target, cmd_t* next) {
+FblcValue* NewValue(FblcType* type) {
+  int fields = type->num_fields;
+  if (type->kind == FBLC_KIND_UNION) {
+    fields = 1;
+  }
+  FblcValue* value = GC_MALLOC(sizeof(FblcValue) + fields * sizeof(FblcValue*));
+  value->type = type;
+  return value;
+}
+
+FblcValue* NewUnionValue(FblcType* type, int tag) {
+  FblcValue* value = NewValue(type);
+  value->tag = tag;
+  return value;
+}
+
+void FblcPrintValue(FILE* fout, FblcValue* value) {
+  FblcType* type = value->type;
+  if (type->kind == FBLC_KIND_STRUCT) {
+    fprintf(fout, "%s(", type->name);
+    for (int i = 0; i < type->num_fields; i++) {
+      if (i > 0) {
+        fprintf(fout, ",");
+      }
+      FblcPrintValue(fout, value->fields[i]);
+    }
+    fprintf(fout, ")");
+    return;
+  }
+  
+  if (type->kind == FBLC_KIND_UNION) {
+    fprintf(fout, "%s:%s(", type->name, type->fields[value->tag].name);
+    FblcPrintValue(fout, value->fields[0]);
+    fprintf(fout, ")");
+    return;
+  }
+
+  assert(false && "Invalid Kind");
+}
+
+static cmd_t* mk_eval(const FblcExpr* expr, FblcValue** target, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_EVAL;
   cmd->data.eval.expr = expr;
@@ -33,7 +112,7 @@ static cmd_t* mk_eval(const FblcExpr* expr, value_t** target, cmd_t* next) {
   return cmd;
 }
 
-static cmd_t* mk_access(value_t* value, FblcName field, value_t** target, cmd_t* next) {
+static cmd_t* mk_access(FblcValue* value, FblcName field, FblcValue** target, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_ACCESS;
   cmd->data.access.value = value;
@@ -43,7 +122,7 @@ static cmd_t* mk_access(value_t* value, FblcName field, value_t** target, cmd_t*
   return cmd;
 }
 
-static cmd_t* mk_var(FblcName name, value_t* value, cmd_t* next) {
+static cmd_t* mk_var(FblcName name, FblcValue* value, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_VAR;
   cmd->data.var.name = name;
@@ -59,7 +138,7 @@ static cmd_t* mk_devar(cmd_t* next) {
   return cmd;
 }
 
-static cmd_t* mk_cond(value_t* value, FblcExpr* const* choices, value_t** target, cmd_t* next) {
+static cmd_t* mk_cond(FblcValue* value, FblcExpr* const* choices, FblcValue** target, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_COND;
   cmd->data.cond.value = value;
@@ -86,14 +165,15 @@ static int indexof(const FblcType* type, FblcName field) {
   assert(false && "No such field.");
 }
 
-value_t* eval(const FblcEnv* env, scope_t* scope, const FblcExpr* expr) {
-  value_t* result = NULL;
+FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr) {
+  FblcValue* result = NULL;
+  scope_t* scope = NULL;
   cmd_t* cmd = mk_eval(expr, &result, NULL);
   while (cmd != NULL) {
     switch (cmd->tag) {
       case CMD_EVAL: {
         const FblcExpr* expr = cmd->data.eval.expr;
-        value_t** target = cmd->data.eval.target;
+        FblcValue** target = cmd->data.eval.target;
         cmd = cmd->next;
         switch (expr->tag) {
           case FBLC_VAR_EXPR: {
@@ -111,7 +191,7 @@ value_t* eval(const FblcEnv* env, scope_t* scope, const FblcExpr* expr) {
             FblcType* type = FblcLookupType(env, expr->ex.app.func);
             if (type != NULL) {
               if (type->kind == FBLC_KIND_STRUCT) {
-                *target = mk_value(type);
+                *target = NewValue(type);
                 for (int i = 0; i < type->num_fields; i++) {
                   cmd = mk_eval(expr->args[i], &((*target)->fields[i]), cmd);
                 }
@@ -157,8 +237,8 @@ value_t* eval(const FblcEnv* env, scope_t* scope, const FblcExpr* expr) {
           case FBLC_UNION_EXPR: {
             FblcType* type = FblcLookupType(env, expr->ex.union_.type);
             assert(type != NULL);
-            int index = indexof(type, expr->ex.union_.field);
-            *target = mk_union(type, index);
+            int tag = indexof(type, expr->ex.union_.field);
+            *target = NewUnionValue(type, tag);
             cmd = mk_eval(expr->ex.union_.value, &((*target)->fields[0]), cmd);
             break;
           }
@@ -187,12 +267,12 @@ value_t* eval(const FblcEnv* env, scope_t* scope, const FblcExpr* expr) {
 
       case CMD_ACCESS: {
         FblcType* type = cmd->data.access.value->type;
-        int index = indexof(type, cmd->data.access.field);
-        int field = cmd->data.access.value->field;
-        value_t** target = cmd->data.access.target;
-        if (field == FIELD_STRUCT) {
-          *target = cmd->data.access.value->fields[index];
-        } else if (field == index) {
+        int target_tag = indexof(type, cmd->data.access.field);
+        int actual_tag = cmd->data.access.value->tag;
+        FblcValue** target = cmd->data.access.target;
+        if (type->kind == FBLC_KIND_STRUCT) {
+          *target = cmd->data.access.value->fields[target_tag];
+        } else if (actual_tag == target_tag) {
           *target = cmd->data.access.value->fields[0];
         } else {
           fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
@@ -203,10 +283,10 @@ value_t* eval(const FblcEnv* env, scope_t* scope, const FblcExpr* expr) {
       }
 
       case CMD_COND: {
-        value_t* value = cmd->data.cond.value;
-        value_t** target = cmd->data.cond.target;
-        assert(value->field != FIELD_STRUCT);
-        cmd = mk_eval(cmd->data.cond.choices[value->field], target, cmd->next);
+        FblcValue* value = cmd->data.cond.value;
+        FblcValue** target = cmd->data.cond.target;
+        assert(value->type->kind == FBLC_KIND_UNION);
+        cmd = mk_eval(cmd->data.cond.choices[value->tag], target, cmd->next);
         break;
       }
 

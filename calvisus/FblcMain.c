@@ -1,8 +1,5 @@
 
 #include "FblcInternal.h"
-#include "eval.h"
-#include "parser.h"
-#include "value.h"
 
 void usage(FILE* fout) {
   fprintf(fout, "calvisus [--main func] FILE\n");
@@ -15,7 +12,7 @@ int run(const char* filename, const char* main) {
     return 1;
   }
 
-  FblcEnv* env = parse(toks);
+  FblcEnv* env = FblcParseProgram(toks);
   if (env == NULL) {
     return 1;
   }
@@ -31,8 +28,8 @@ int run(const char* filename, const char* main) {
     return 1;
   }
 
-  value_t* value = eval(env, NULL, func->body);
-  print(stdout, value);
+  FblcValue* value = FblcEvaluate(env, func->body);
+  FblcPrintValue(stdout, value);
   printf("\n");
   return 0;
 }

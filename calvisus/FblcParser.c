@@ -1,6 +1,5 @@
 
 #include "FblcInternal.h"
-#include "parser.h"
 
 typedef struct field_list_t {
   FblcField field;
@@ -47,7 +46,7 @@ typedef struct arg_list_t {
   struct arg_list_t* next;
 } arg_list_t;
 
-FblcExpr* parse_expr(FblcTokenStream* toks);
+static FblcExpr* parse_expr(FblcTokenStream* toks);
 
 // Parse a list of arguments in the form:
 // (<expr>, <expr>, ...)
@@ -139,7 +138,7 @@ static FblcExpr* NewAccessExpr(const FblcExpr* object, FblcName field) {
   return expr;
 }
 
-FblcExpr* parse_expr(FblcTokenStream* toks) {
+static FblcExpr* parse_expr(FblcTokenStream* toks) {
   FblcExpr* expr = NULL;
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
@@ -225,7 +224,7 @@ FblcExpr* parse_expr(FblcTokenStream* toks) {
   return expr;
 }
 
-FblcEnv* parse(FblcTokenStream* toks) {
+FblcEnv* FblcParseProgram(FblcTokenStream* toks) {
   FblcEnv* env = FblcNewEnv();
   while (!FblcIsToken(toks, FBLC_TOK_EOF)) {
     const char* dkind = FblcGetNameToken(toks, "'struct', 'union', or 'func'");
