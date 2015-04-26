@@ -26,6 +26,6 @@ build build/fblc: ld $
   build/FblcParser.o $
   build/FblcTokenizer.o $
 
-build build/test_result: run build/fblc calvisus/test.fbl
+build build/test_result: run build/fblc calvisus/test.fblc
 build build/test_passed: diff build/test_result calvisus/test.wnt
 

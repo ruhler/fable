@@ -4,5 +4,8 @@
   - Follow style of the Tcl code base? Use prefix FblC?
   - Write constructors for each data type along side the type?
 * Add a static pass to type check an environment.
-* Return nice error messages to the user, don't just assert false.
+* Always return nice error messages to the user, don't just fail an assertion.
+* Be able to parse from a string as well as a file.
+  - Then add a '-e' option to fblc to specify an arbitrary expression to
+    evaluate in the context of the given program.
 
