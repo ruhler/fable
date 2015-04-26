@@ -19,7 +19,6 @@ typedef struct cmd_t {
     struct { value_t* value; FblcName field; value_t** target; } access;
     struct { value_t* value; expr_t** choices; value_t** target; } cond;
     struct { FblcName name; value_t* value; } var;
-    struct { } devar;
     struct { scope_t* scope; } scope;
   } data;
   struct cmd_t* next;

@@ -12,7 +12,7 @@ typedef struct {
   FblcName rtype;     // Name of return type.
   expr_t* body;
   int num_args;
-  field_t args[0];
+  field_t args[];
 } func_t;
 
 typedef struct type_env_t {

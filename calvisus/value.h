@@ -15,7 +15,7 @@
 typedef struct value_t {
   type_t* type;
   int field;
-  struct value_t* fields[0];
+  struct value_t* fields[];
 } value_t;
 
 value_t* mk_value(type_t* type);

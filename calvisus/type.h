@@ -15,7 +15,7 @@ typedef struct {
   FblcName name;
   kind_t kind;
   int num_fields;
-  field_t fields[0];
+  field_t fields[];
 } type_t;
 
 int indexof(const type_t* type, FblcName field);

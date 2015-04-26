@@ -2,10 +2,10 @@
 rule cc
   deps = gcc
   depfile = $out.d
-  command = gcc -I . -MMD -MF $out.d -std=c99 -Wall -Werror -O0 -gdwarf-3 -ggdb -c -o $out $in
+  command = gcc -I . -MMD -MF $out.d -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -c -o $out $in
 
 rule ld
-  command = gcc -std=c99 -Wall -Werror -O0 -gdwarf-3 -ggdb -o $out $in -lgc
+  command = gcc -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -o $out $in -lgc
 
 rule run
   command = $in > $out
