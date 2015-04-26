@@ -15,6 +15,10 @@
 
 #include <gc/gc.h>
 
+// FblcProgram
+typedef const char* FblcName;
+bool FblcNamesEqual(FblcName a, FblcName b);
+
 // FblcTokenizer
 #define FBLC_TOK_EOF -1
 #define FBLC_TOK_NAME -2

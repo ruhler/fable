@@ -1,11 +1,11 @@
 
 #include "type.h"
 
-#include <assert.h>
+#include "FblcInternal.h"
 
-int indexof(const type_t* type, fname_t field) {
+int indexof(const type_t* type, FblcName field) {
   for (int i = 0; i < type->num_fields; i++) {
-    if (name_eq(field, type->fields[i].name)) {
+    if (FblcNamesEqual(field, type->fields[i].name)) {
       return i;
     }
   }

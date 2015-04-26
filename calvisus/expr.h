@@ -2,7 +2,7 @@
 #ifndef EXPR_H_
 #define EXPR_H_
 
-#include "name.h"
+#include "FblcInternal.h"
 
 typedef enum {
   EXPR_VAR, EXPR_APP, EXPR_ACCESS, EXPR_UNION, EXPR_LET, EXPR_COND
@@ -14,32 +14,32 @@ typedef struct {
 
 typedef struct {
   expr_tag_t tag;
-  vname_t name;
+  FblcName name;
 } var_expr_t;
 
 typedef struct {
   expr_tag_t tag;
-  dname_t function;
+  FblcName function;
   expr_t* args[0];
 } app_expr_t;
 
 typedef struct {
   expr_tag_t tag;
   expr_t* arg;
-  fname_t field;
+  FblcName field;
 } access_expr_t; 
 
 typedef struct {
   expr_tag_t tag;
-  dname_t type;
-  fname_t field;
+  FblcName type;
+  FblcName field;
   expr_t* value;
 } union_expr_t;
 
 typedef struct {
   expr_tag_t tag;
-  dname_t type;
-  vname_t name;
+  FblcName type;
+  FblcName name;
   expr_t* def;
   expr_t* body;
 } let_expr_t;

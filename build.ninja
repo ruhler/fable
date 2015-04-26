@@ -16,7 +16,7 @@ rule diff
 build build/calvisus.o: cc calvisus/calvisus.c
 build build/env.o: cc calvisus/env.c
 build build/eval.o: cc calvisus/eval.c
-build build/name.o: cc calvisus/name.c
+build build/FblcProgram.o: cc calvisus/FblcProgram.c
 build build/parser.o: cc calvisus/parser.c
 build build/scope.o: cc calvisus/scope.c
 build build/FblcTokenizer.o: cc calvisus/FblcTokenizer.c
@@ -27,7 +27,7 @@ build build/calvisus: ld $
   build/calvisus.o $
   build/env.o $
   build/eval.o $
-  build/name.o $
+  build/FblcProgram.o $
   build/parser.o $
   build/scope.o $
   build/FblcTokenizer.o $

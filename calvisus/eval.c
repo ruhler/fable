@@ -16,9 +16,9 @@ typedef struct cmd_t {
   cmd_tag_t tag;
   union {
     struct { const expr_t* expr; value_t** target; } eval;
-    struct { value_t* value; fname_t field; value_t** target; } access;
+    struct { value_t* value; FblcName field; value_t** target; } access;
     struct { value_t* value; expr_t** choices; value_t** target; } cond;
-    struct { vname_t name; value_t* value; } var;
+    struct { FblcName name; value_t* value; } var;
     struct { } devar;
     struct { scope_t* scope; } scope;
   } data;
@@ -34,7 +34,7 @@ static cmd_t* mk_eval(const expr_t* expr, value_t** target, cmd_t* next) {
   return cmd;
 }
 
-static cmd_t* mk_access(value_t* value, fname_t field, value_t** target, cmd_t* next) {
+static cmd_t* mk_access(value_t* value, FblcName field, value_t** target, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_ACCESS;
   cmd->data.access.value = value;
@@ -44,7 +44,7 @@ static cmd_t* mk_access(value_t* value, fname_t field, value_t** target, cmd_t* 
   return cmd;
 }
 
-static cmd_t* mk_var(vname_t name, value_t* value, cmd_t* next) {
+static cmd_t* mk_var(FblcName name, value_t* value, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_VAR;
   cmd->data.var.name = name;

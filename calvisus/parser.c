@@ -115,7 +115,7 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       expr = (expr_t*)app_expr;
     } else if (FblcIsToken(toks, ':')) {
       FblcGetToken(toks, ':');
-      fname_t field = FblcGetNameToken(toks, "field name");
+      FblcName field = FblcGetNameToken(toks, "field name");
       if (field == NULL) {
         return NULL;
       }
@@ -183,7 +183,7 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       expr = (expr_t*)cond_expr;
     } else {
       FblcGetToken(toks, '.');
-      fname_t field = FblcGetNameToken(toks, "field name");
+      FblcName field = FblcGetNameToken(toks, "field name");
       if (field == NULL) {
         return NULL;
       }
@@ -207,7 +207,7 @@ env_t* parse(FblcTokenStream* toks) {
       return NULL;
     }
 
-    dname_t name = FblcGetNameToken(toks, "declaration name");
+    FblcName name = FblcGetNameToken(toks, "declaration name");
     if (name == NULL) {
       return NULL;
     }
@@ -222,11 +222,11 @@ env_t* parse(FblcTokenStream* toks) {
       return NULL;
     }
 
-    if (name_eq("struct", dkind) || name_eq("union", dkind)) {
+    if (FblcNamesEqual("struct", dkind) || FblcNamesEqual("union", dkind)) {
       if (!FblcGetToken(toks, ')')) {
         return NULL;
       }
-      kind_t kind = name_eq("struct", dkind) ? KIND_STRUCT : KIND_UNION;
+      kind_t kind = FblcNamesEqual("struct", dkind) ? KIND_STRUCT : KIND_UNION;
       type_t* type = GC_MALLOC(sizeof(type_t) + num_fields * sizeof(field_t));
       type->name = name;
       type->kind = kind;
@@ -237,12 +237,12 @@ env_t* parse(FblcTokenStream* toks) {
       ntenv->decl = type;
       ntenv->next = tenv;
       tenv = ntenv;
-    } else if (name_eq("func", dkind)) {
+    } else if (FblcNamesEqual("func", dkind)) {
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
 
-      dname_t rtype = FblcGetNameToken(toks, "type name");
+      FblcName rtype = FblcGetNameToken(toks, "type name");
       if (rtype == NULL) {
         return NULL;
       }
