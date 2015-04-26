@@ -121,7 +121,7 @@ value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
               break;
             }
 
-            func_t* func = lookup_func(env, expr->ex.app.function);
+            FblcFunc* func = lookup_func(env, expr->ex.app.function);
             if (func != NULL) {
               // Add to the top of the command list
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...

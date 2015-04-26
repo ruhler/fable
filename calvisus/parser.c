@@ -270,8 +270,8 @@ env_t* parse(FblcTokenStream* toks) {
         return NULL;
       }
 
-      FblcName rtype = FblcGetNameToken(toks, "type name");
-      if (rtype == NULL) {
+      FblcName return_type = FblcGetNameToken(toks, "type name");
+      if (return_type == NULL) {
         return NULL;
       }
 
@@ -283,9 +283,9 @@ env_t* parse(FblcTokenStream* toks) {
       if (expr == NULL) {
         return NULL;
       }
-      func_t* func = GC_MALLOC(sizeof(func_t) + num_fields * sizeof(FblcField));
+      FblcFunc* func = GC_MALLOC(sizeof(FblcFunc) + num_fields * sizeof(FblcField));
       func->name = name;
-      func->rtype = rtype;
+      func->return_type = return_type;
       func->body = expr;
       func->num_args = num_fields;
       fill_fields(num_fields, fields, func->args);

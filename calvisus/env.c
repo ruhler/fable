@@ -12,7 +12,7 @@ FblcType* lookup_type(const env_t* env, FblcName name) {
   return NULL;
 }
 
-func_t* lookup_func(const env_t* env, FblcName name) {
+FblcFunc* lookup_func(const env_t* env, FblcName name) {
   for (func_env_t* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
     if (FblcNamesEqual(fenv->decl->name, name)) {
       return fenv->decl;

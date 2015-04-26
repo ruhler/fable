@@ -21,7 +21,7 @@ int run(const char* filename, const char* main) {
     return 1;
   }
 
-  func_t* func = lookup_func(env, main);
+  FblcFunc* func = lookup_func(env, main);
   if (func == NULL) {
     fprintf(stderr, "Failed to find main function %s\n", main);
     return 1;

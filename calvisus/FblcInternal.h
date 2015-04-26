@@ -19,20 +19,6 @@
 typedef const char* FblcName;
 bool FblcNamesEqual(FblcName a, FblcName b);
 
-typedef enum { FBLC_KIND_UNION, FBLC_KIND_STRUCT } FblcKind;
-
-typedef struct {
-  FblcName type;
-  FblcName name;
-} FblcField;
-
-typedef struct {
-  FblcName name;
-  FblcKind kind;
-  int num_fields;
-  FblcField fields[];
-} FblcType;
-
 typedef enum {
   FBLC_VAR_EXPR,
   FBLC_APP_EXPR,
@@ -92,6 +78,28 @@ typedef struct FblcExpr {
   // cond expression.
   struct FblcExpr* args[];
 } FblcExpr;
+
+typedef enum { FBLC_KIND_UNION, FBLC_KIND_STRUCT } FblcKind;
+
+typedef struct {
+  FblcName type;
+  FblcName name;
+} FblcField;
+
+typedef struct {
+  FblcName name;
+  FblcKind kind;
+  int num_fields;
+  FblcField fields[];
+} FblcType;
+
+typedef struct {
+  FblcName name;
+  FblcName return_type;
+  FblcExpr* body;
+  int num_args;
+  FblcField args[];
+} FblcFunc;
 
 // FblcTokenizer
 #define FBLC_TOK_EOF -1
