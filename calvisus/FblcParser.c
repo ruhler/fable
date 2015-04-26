@@ -46,14 +46,66 @@ typedef struct arg_list_t {
   struct arg_list_t* next;
 } arg_list_t;
 
-static FblcExpr* parse_expr_or_stmt(FblcTokenStream* toks, bool stmt);
+static FblcExpr* NewLetExpr(FblcName type, FblcName name, const FblcExpr* def,
+    const FblcExpr* body) {
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
+  expr->tag = FBLC_LET_EXPR;
+  expr->ex.let.type = type;
+  expr->ex.let.name = name;
+  expr->ex.let.def = def;
+  expr->ex.let.body = body;
+  return expr;
+}
+
+
+static FblcExpr* parse_stmt_expr(FblcTokenStream* toks);
+static FblcExpr* parse_nonstmt_expr(FblcTokenStream* toks, FblcName start);
 
 static FblcExpr* parse_expr(FblcTokenStream* toks) {
-  return parse_expr_or_stmt(toks, false);
+  if (FblcIsToken(toks, '{')) {
+    return parse_stmt_expr(toks);
+  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+    const char* start = FblcGetNameToken(toks, "start of expression");
+    return parse_nonstmt_expr(toks, start);
+  } else {
+    FblcUnexpectedToken(toks, "an expression");
+    return NULL;
+  }
 }
 
 static FblcExpr* parse_stmt(FblcTokenStream* toks) {
-  return parse_expr_or_stmt(toks, true);
+  if (FblcIsToken(toks, '{')) {
+    FblcExpr* expr = parse_stmt_expr(toks);
+    return FblcGetToken(toks, ';') ? expr : NULL;
+  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+    const char* start = FblcGetNameToken(toks, "start of expression");
+    if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+      // Parse a let expression.
+      FblcName var_type = start;
+      FblcName var_name = FblcGetNameToken(toks, "variable name");
+      if (!FblcGetToken(toks, '=')) {
+        return NULL;
+      }
+      const FblcExpr* def = parse_expr(toks);
+      if (def == NULL) {
+        return NULL;
+      }
+      if (!FblcGetToken(toks, ';')) {
+        return NULL;
+      }
+      const FblcExpr* body = parse_stmt(toks);
+      if (body == NULL) {
+        return NULL;
+      }
+      return NewLetExpr(var_type, var_name, def, body);
+    } else {
+      FblcExpr* expr = parse_nonstmt_expr(toks, start);
+      return FblcGetToken(toks, ';') ? expr : NULL;
+    }
+  } else {
+    FblcUnexpectedToken(toks, "a statement");
+    return NULL;
+  }
 }
 
 // Parse a list of arguments in the form:
@@ -112,17 +164,6 @@ static FblcExpr* NewUnionExpr(FblcName type, FblcName field, const FblcExpr* val
   return expr;
 }
 
-static FblcExpr* NewLetExpr(FblcName type, FblcName name, const FblcExpr* def,
-    const FblcExpr* body) {
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
-  expr->tag = FBLC_LET_EXPR;
-  expr->ex.let.type = type;
-  expr->ex.let.name = name;
-  expr->ex.let.def = def;
-  expr->ex.let.body = body;
-  return expr;
-}
-
 static FblcExpr* NewVarExpr(FblcName name) {
   FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
   expr->tag = FBLC_VAR_EXPR;
@@ -146,71 +187,7 @@ static FblcExpr* NewAccessExpr(const FblcExpr* object, FblcName field) {
   return expr;
 }
 
-static FblcExpr* parse_expr_or_stmt(FblcTokenStream* toks, bool stmt) {
-  FblcExpr* expr = NULL;
-  if (FblcIsToken(toks, '{')) {
-    FblcGetToken(toks, '{');
-    expr = parse_stmt(toks);
-    if (expr == NULL) {
-      return NULL;
-    }
-    if (!FblcGetToken(toks, '}')) {
-      return NULL;
-    }
-  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
-    const char* name = FblcGetNameToken(toks, "start of expression");
-    if (FblcIsToken(toks, '(')) {
-      // This is an application. Parse the args.
-      arg_list_t* args = NULL;
-      int num_args = parse_args(toks, &args);
-      if (num_args < 0) {
-        return NULL;
-      }
-      expr = NewAppExpr(name, num_args, args);
-    } else if (FblcIsToken(toks, ':')) {
-      FblcGetToken(toks, ':');
-      FblcName field = FblcGetNameToken(toks, "field name");
-      if (field == NULL) {
-        return NULL;
-      }
-      if (!FblcGetToken(toks, '(')) {
-        return NULL;
-      }
-      FblcExpr* value = parse_expr(toks);
-      if (value == NULL) {
-        return NULL;
-      }
-      if (!FblcGetToken(toks, ')')) {
-        return NULL;
-      }
-      expr = NewUnionExpr(name, field, value);
-    } else if (stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
-      // Parse a let expression.
-      FblcName var_type = name;
-      FblcName var_name = FblcGetNameToken(toks, "variable name");
-      if (!FblcGetToken(toks, '=')) {
-        return NULL;
-      }
-      const FblcExpr* def = parse_expr(toks);
-      if (def == NULL) {
-        return NULL;
-      }
-      if (!FblcGetToken(toks, ';')) {
-        return NULL;
-      }
-      const FblcExpr* body = parse_stmt(toks);
-      if (body == NULL) {
-        return NULL;
-      }
-      return NewLetExpr(var_type, var_name, def, body);
-    } else {
-      expr = NewVarExpr(name);
-    }
-  } else {
-    FblcUnexpectedToken(toks, stmt ? "a statement" : "an expression");
-    return NULL;
-  }
-
+static FblcExpr* parse_expr_tail(FblcTokenStream* toks, FblcExpr* expr) {
   while (FblcIsToken(toks, '?') || FblcIsToken(toks, '.')) {
     if (FblcIsToken(toks, '?')) {
       FblcGetToken(toks, '?');
@@ -229,11 +206,54 @@ static FblcExpr* parse_expr_or_stmt(FblcTokenStream* toks, bool stmt) {
       expr = NewAccessExpr(expr, field);
     }
   }
+  return expr;
+}
 
-  if (stmt && !FblcGetToken(toks, ';')) {
+static FblcExpr* parse_stmt_expr(FblcTokenStream* toks) {
+  if (!FblcGetToken(toks, '{')) {
     return NULL;
   }
-  return expr;
+  FblcExpr* expr = parse_stmt(toks);
+  if (expr == NULL) {
+    return NULL;
+  }
+  if (!FblcGetToken(toks, '}')) {
+    return NULL;
+  }
+  return parse_expr_tail(toks, expr);
+}
+
+static FblcExpr* parse_nonstmt_expr(FblcTokenStream* toks, FblcName start) {
+  FblcExpr* expr = NULL;
+  if (FblcIsToken(toks, '(')) {
+    // This is an application. Parse the args.
+    arg_list_t* args = NULL;
+    int num_args = parse_args(toks, &args);
+    if (num_args < 0) {
+      return NULL;
+    }
+    expr = NewAppExpr(start, num_args, args);
+  } else if (FblcIsToken(toks, ':')) {
+    FblcGetToken(toks, ':');
+    FblcName field = FblcGetNameToken(toks, "field name");
+    if (field == NULL) {
+      return NULL;
+    }
+    if (!FblcGetToken(toks, '(')) {
+      return NULL;
+    }
+    FblcExpr* value = parse_expr(toks);
+    if (value == NULL) {
+      return NULL;
+    }
+    if (!FblcGetToken(toks, ')')) {
+      return NULL;
+    }
+    expr = NewUnionExpr(start, field, value);
+  } else {
+    expr = NewVarExpr(start);
+  }
+  return parse_expr_tail(toks, expr);
 }
 
 FblcEnv* FblcParseProgram(FblcTokenStream* toks) {
