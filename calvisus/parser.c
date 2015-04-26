@@ -43,11 +43,11 @@ static void fill_fields(int num_fields, field_list_t* list, field_t* fields) {
 }
 
 typedef struct arg_list_t {
-  expr_t* arg;
+  FblcExpr* arg;
   struct arg_list_t* next;
 } arg_list_t;
 
-expr_t* parse_expr(FblcTokenStream* toks);
+FblcExpr* parse_expr(FblcTokenStream* toks);
 
 // Parse a list of arguments in the form:
 // (<expr>, <expr>, ...)
@@ -81,34 +81,34 @@ int parse_args(FblcTokenStream* toks, arg_list_t** plist) {
 
 // Fill in the given args array with values based on the list of values.
 // Fills in the array in reverse order of the list.
-void fill_args(int num_args, arg_list_t* list, expr_t** args) {
+void fill_args(int num_args, arg_list_t* list, FblcExpr** args) {
   for (int i = 0; i < num_args; i++) {
     args[num_args-1-i] = list->arg;
     list = list->next;
   }
 }
 
-static expr_t* NewAppExpr(FblcName function, int num_args, arg_list_t* args) {
-  expr_t* expr = GC_MALLOC(sizeof(expr_t) + num_args * sizeof(expr_t*));
-  expr->tag = EXPR_APP;
+static FblcExpr* NewAppExpr(FblcName function, int num_args, arg_list_t* args) {
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + num_args * sizeof(FblcExpr*));
+  expr->tag = FBLC_APP_EXPR;
   expr->ex.app.function = function;
   fill_args(num_args, args, expr->args);
   return expr;
 }
 
-static expr_t* NewUnionExpr(FblcName type, FblcName field, const expr_t* value) {
-  expr_t* expr = GC_MALLOC(sizeof(expr_t));
-  expr->tag = EXPR_UNION;
+static FblcExpr* NewUnionExpr(FblcName type, FblcName field, const FblcExpr* value) {
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
+  expr->tag = FBLC_UNION_EXPR;
   expr->ex.union_.type = type;
   expr->ex.union_.field = field;
   expr->ex.union_.value = value;
   return expr;
 }
 
-static expr_t* NewLetExpr(FblcName type, FblcName name, const expr_t* def,
-    const expr_t* body) {
-  expr_t* expr = GC_MALLOC(sizeof(expr_t));
-  expr->tag = EXPR_LET;
+static FblcExpr* NewLetExpr(FblcName type, FblcName name, const FblcExpr* def,
+    const FblcExpr* body) {
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
+  expr->tag = FBLC_LET_EXPR;
   expr->ex.let.type = type;
   expr->ex.let.name = name;
   expr->ex.let.def = def;
@@ -116,31 +116,31 @@ static expr_t* NewLetExpr(FblcName type, FblcName name, const expr_t* def,
   return expr;
 }
 
-static expr_t* NewVarExpr(FblcName name) {
-  expr_t* expr = GC_MALLOC(sizeof(expr_t));
-  expr->tag = EXPR_VAR;
+static FblcExpr* NewVarExpr(FblcName name) {
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
+  expr->tag = FBLC_VAR_EXPR;
   expr->ex.var.name = name;
   return expr;
 }
 
-static expr_t* NewCondExpr(const expr_t* select, int num_args, arg_list_t* args) {
-  expr_t* expr = GC_MALLOC(sizeof(expr_t) + num_args * sizeof(expr_t*));
-  expr->tag = EXPR_COND;
+static FblcExpr* NewCondExpr(const FblcExpr* select, int num_args, arg_list_t* args) {
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + num_args * sizeof(FblcExpr*));
+  expr->tag = FBLC_COND_EXPR;
   expr->ex.cond.select = select;
   fill_args(num_args, args, expr->args);
   return expr;
 }
 
-static expr_t* NewAccessExpr(const expr_t* arg, FblcName field) {
-  expr_t* expr = GC_MALLOC(sizeof(expr_t));
-  expr->tag = EXPR_ACCESS;
-  expr->ex.access.arg = arg;
+static FblcExpr* NewAccessExpr(const FblcExpr* object, FblcName field) {
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
+  expr->tag = FBLC_ACCESS_EXPR;
+  expr->ex.access.object = object;
   expr->ex.access.field = field;
   return expr;
 }
 
-expr_t* parse_expr(FblcTokenStream* toks) {
-  expr_t* expr = NULL;
+FblcExpr* parse_expr(FblcTokenStream* toks) {
+  FblcExpr* expr = NULL;
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
     expr = parse_expr(toks);
@@ -169,7 +169,7 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       if (!FblcGetToken(toks, '(')) {
         return NULL;
       }
-      expr_t* value = parse_expr(toks);
+      FblcExpr* value = parse_expr(toks);
       if (value == NULL) {
         return NULL;
       }
@@ -184,14 +184,14 @@ expr_t* parse_expr(FblcTokenStream* toks) {
       if (!FblcGetToken(toks, '=')) {
         return NULL;
       }
-      const expr_t* def = parse_expr(toks);
+      const FblcExpr* def = parse_expr(toks);
       if (def == NULL) {
         return NULL;
       }
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
-      const expr_t* body = parse_expr(toks);
+      const FblcExpr* body = parse_expr(toks);
       if (body == NULL) {
         return NULL;
       }
@@ -279,7 +279,7 @@ env_t* parse(FblcTokenStream* toks) {
         return NULL;
       }
 
-      expr_t* expr = parse_expr(toks);
+      FblcExpr* expr = parse_expr(toks);
       if (expr == NULL) {
         return NULL;
       }

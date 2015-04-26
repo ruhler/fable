@@ -15,16 +15,16 @@ typedef enum {
 typedef struct cmd_t {
   cmd_tag_t tag;
   union {
-    struct { const expr_t* expr; value_t** target; } eval;
+    struct { const FblcExpr* expr; value_t** target; } eval;
     struct { value_t* value; FblcName field; value_t** target; } access;
-    struct { value_t* value; expr_t* const* choices; value_t** target; } cond;
+    struct { value_t* value; FblcExpr* const* choices; value_t** target; } cond;
     struct { FblcName name; value_t* value; } var;
     struct { scope_t* scope; } scope;
   } data;
   struct cmd_t* next;
 } cmd_t;
 
-static cmd_t* mk_eval(const expr_t* expr, value_t** target, cmd_t* next) {
+static cmd_t* mk_eval(const FblcExpr* expr, value_t** target, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_EVAL;
   cmd->data.eval.expr = expr;
@@ -59,7 +59,7 @@ static cmd_t* mk_devar(cmd_t* next) {
   return cmd;
 }
 
-static cmd_t* mk_cond(value_t* value, expr_t* const* choices, value_t** target, cmd_t* next) {
+static cmd_t* mk_cond(value_t* value, FblcExpr* const* choices, value_t** target, cmd_t* next) {
   cmd_t* cmd = GC_MALLOC(sizeof(cmd_t));
   cmd->tag = CMD_COND;
   cmd->data.cond.value = value;
@@ -77,17 +77,17 @@ static cmd_t* mk_scope(scope_t* scope, cmd_t* next) {
   return cmd;
 }
 
-value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
+value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
   value_t* result = NULL;
   cmd_t* cmd = mk_eval(expr, &result, NULL);
   while (cmd != NULL) {
     switch (cmd->tag) {
       case CMD_EVAL: {
-        const expr_t* expr = cmd->data.eval.expr;
+        const FblcExpr* expr = cmd->data.eval.expr;
         value_t** target = cmd->data.eval.target;
         cmd = cmd->next;
         switch (expr->tag) {
-          case EXPR_VAR: {
+          case FBLC_VAR_EXPR: {
             FblcName var_name = expr->ex.var.name;
             *target = lookup_var(scope, var_name);
             if (*target == NULL) {
@@ -98,7 +98,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
             break;
           }
 
-          case EXPR_APP: {
+          case FBLC_APP_EXPR: {
             type_t* type = lookup_type(env, expr->ex.app.function);
             if (type != NULL) {
               if (type->kind == KIND_STRUCT) {
@@ -139,13 +139,13 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
             assert(false && "No such struct type or function found");
           }
 
-          case EXPR_ACCESS: {
+          case FBLC_ACCESS_EXPR: {
             cmd = mk_access(NULL, expr->ex.access.field, target, cmd);
-            cmd = mk_eval(expr->ex.access.arg, &(cmd->data.access.value), cmd);
+            cmd = mk_eval(expr->ex.access.object, &(cmd->data.access.value), cmd);
             break;
           }
 
-          case EXPR_UNION: {
+          case FBLC_UNION_EXPR: {
             type_t* type = lookup_type(env, expr->ex.union_.type);
             assert(type != NULL);
             int index = indexof(type, expr->ex.union_.field);
@@ -154,7 +154,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
             break;
           }
 
-          case EXPR_LET: {
+          case FBLC_LET_EXPR: {
             // No need to pop the variable if we are going to switch to a
             // different scope immediately after anyway.
             if (cmd != NULL && cmd->tag != CMD_SCOPE) {
@@ -167,7 +167,7 @@ value_t* eval(const env_t* env, scope_t* scope, const expr_t* expr) {
             break;
           }
 
-          case EXPR_COND: {
+          case FBLC_COND_EXPR: {
             cmd = mk_cond(NULL, expr->args, target, cmd);
             cmd = mk_eval(expr->ex.cond.select, &(cmd->data.cond.value), cmd);
             break;

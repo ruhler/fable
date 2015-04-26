@@ -2,7 +2,6 @@
 #ifndef ENV_H_
 #define ENV_H_
 
-#include "expr.h"
 #include "type.h"
 
 #include "FblcInternal.h"
@@ -10,7 +9,7 @@
 typedef struct {
   FblcName name;      // Name of function.
   FblcName rtype;     // Name of return type.
-  expr_t* body;
+  FblcExpr* body;
   int num_args;
   field_t args[];
 } func_t;
