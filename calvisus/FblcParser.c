@@ -46,7 +46,15 @@ typedef struct arg_list_t {
   struct arg_list_t* next;
 } arg_list_t;
 
-static FblcExpr* parse_expr(FblcTokenStream* toks);
+static FblcExpr* parse_expr_or_stmt(FblcTokenStream* toks, bool stmt);
+
+static FblcExpr* parse_expr(FblcTokenStream* toks) {
+  return parse_expr_or_stmt(toks, false);
+}
+
+static FblcExpr* parse_stmt(FblcTokenStream* toks) {
+  return parse_expr_or_stmt(toks, true);
+}
 
 // Parse a list of arguments in the form:
 // (<expr>, <expr>, ...)
@@ -138,11 +146,11 @@ static FblcExpr* NewAccessExpr(const FblcExpr* object, FblcName field) {
   return expr;
 }
 
-static FblcExpr* parse_expr(FblcTokenStream* toks) {
+static FblcExpr* parse_expr_or_stmt(FblcTokenStream* toks, bool stmt) {
   FblcExpr* expr = NULL;
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
-    expr = parse_expr(toks);
+    expr = parse_stmt(toks);
     if (expr == NULL) {
       return NULL;
     }
@@ -176,7 +184,7 @@ static FblcExpr* parse_expr(FblcTokenStream* toks) {
         return NULL;
       }
       expr = NewUnionExpr(name, field, value);
-    } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+    } else if (stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
       // Parse a let expression.
       FblcName var_type = name;
       FblcName var_name = FblcGetNameToken(toks, "variable name");
@@ -190,16 +198,16 @@ static FblcExpr* parse_expr(FblcTokenStream* toks) {
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
-      const FblcExpr* body = parse_expr(toks);
+      const FblcExpr* body = parse_stmt(toks);
       if (body == NULL) {
         return NULL;
       }
-      expr = NewLetExpr(var_type, var_name, def, body);
+      return NewLetExpr(var_type, var_name, def, body);
     } else {
       expr = NewVarExpr(name);
     }
   } else {
-    FblcUnexpectedToken(toks, "an expression");
+    FblcUnexpectedToken(toks, stmt ? "a statement" : "an expression");
     return NULL;
   }
 
@@ -220,6 +228,10 @@ static FblcExpr* parse_expr(FblcTokenStream* toks) {
       }
       expr = NewAccessExpr(expr, field);
     }
+  }
+
+  if (stmt && !FblcGetToken(toks, ';')) {
+    return NULL;
   }
   return expr;
 }

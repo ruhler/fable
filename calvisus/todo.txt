@@ -1,5 +1,5 @@
 
-* Update to support revised syntax.
+* Figure out how to test malformed inputs.
 * Clean up and document all the functions.
   - Follow style of the Tcl code base? Use prefix FblC?
   - Write constructors for each data type along side the type?
