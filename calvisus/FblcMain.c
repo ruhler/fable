@@ -19,7 +19,8 @@ static void PrintUsage(FILE* fout);
 // Side effects:
 //   Outputs usage information to the given stream.
 
-static void PrintUsage(FILE* stream) {
+static void PrintUsage(FILE* stream)
+{
   fprintf(stream,
       "Usage: fblc FILE\n"
       "Evaluate 'main()' in the environment of the fblc program FILE.\n"  
@@ -45,7 +46,8 @@ static void PrintUsage(FILE* stream) {
 //   out, or prints an error message to standard error if an error is
 //   encountered.
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   const char* filename = NULL;
   for (int i = 1; i < argc; i++) {
     if (strcmp("--help", argv[i]) == 0) {
