@@ -14,7 +14,6 @@ rule diff
   command = diff $in > $out
 
 build build/calvisus.o: cc calvisus/calvisus.c
-build build/env.o: cc calvisus/env.c
 build build/eval.o: cc calvisus/eval.c
 build build/FblcProgram.o: cc calvisus/FblcProgram.c
 build build/parser.o: cc calvisus/parser.c
@@ -24,7 +23,6 @@ build build/value.o: cc calvisus/value.c
 
 build build/calvisus: ld $
   build/calvisus.o $
-  build/env.o $
   build/eval.o $
   build/FblcProgram.o $
   build/parser.o $

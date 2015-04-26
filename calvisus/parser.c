@@ -88,10 +88,10 @@ void fill_args(int num_args, arg_list_t* list, FblcExpr** args) {
   }
 }
 
-static FblcExpr* NewAppExpr(FblcName function, int num_args, arg_list_t* args) {
+static FblcExpr* NewAppExpr(FblcName func, int num_args, arg_list_t* args) {
   FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + num_args * sizeof(FblcExpr*));
   expr->tag = FBLC_APP_EXPR;
-  expr->ex.app.function = function;
+  expr->ex.app.func= func;
   fill_args(num_args, args, expr->args);
   return expr;
 }
@@ -225,10 +225,8 @@ FblcExpr* parse_expr(FblcTokenStream* toks) {
   return expr;
 }
 
-env_t* parse(FblcTokenStream* toks) {
-  type_env_t* tenv = NULL;
-  func_env_t* fenv = NULL;
-
+FblcEnv* parse(FblcTokenStream* toks) {
+  FblcEnv* env = FblcNewEnv();
   while (!FblcIsToken(toks, FBLC_TOK_EOF)) {
     const char* dkind = FblcGetNameToken(toks, "'struct', 'union', or 'func'");
     if (dkind == NULL) {
@@ -260,11 +258,7 @@ env_t* parse(FblcTokenStream* toks) {
       type->kind = kind;
       type->num_fields = num_fields;
       fill_fields(num_fields, fields, type->fields);
-
-      type_env_t* ntenv = GC_MALLOC(sizeof(type_env_t));
-      ntenv->decl = type;
-      ntenv->next = tenv;
-      tenv = ntenv;
+      FblcAddType(env, type);
     } else if (FblcNamesEqual("func", dkind)) {
       if (!FblcGetToken(toks, ';')) {
         return NULL;
@@ -289,11 +283,7 @@ env_t* parse(FblcTokenStream* toks) {
       func->body = expr;
       func->num_args = num_fields;
       fill_fields(num_fields, fields, func->args);
-
-      func_env_t* nfenv = GC_MALLOC(sizeof(func_env_t));
-      nfenv->decl = func;
-      nfenv->next = fenv;
-      fenv = nfenv;
+      FblcAddFunc(env, func);
     } else {
       fprintf(stderr, "Expected 'struct', 'union', or 'func', but got %s\n", dkind);
       return NULL;
@@ -303,10 +293,6 @@ env_t* parse(FblcTokenStream* toks) {
       return NULL;
     }
   }
-
-  env_t* env = GC_MALLOC(sizeof(env_t));
-  env->types = tenv;
-  env->funcs = fenv;
   return env;
 }
 

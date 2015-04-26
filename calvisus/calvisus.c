@@ -1,6 +1,5 @@
 
 #include "FblcInternal.h"
-#include "env.h"
 #include "eval.h"
 #include "parser.h"
 #include "value.h"
@@ -16,12 +15,12 @@ int run(const char* filename, const char* main) {
     return 1;
   }
 
-  env_t* env = parse(toks);
+  FblcEnv* env = parse(toks);
   if (env == NULL) {
     return 1;
   }
 
-  FblcFunc* func = lookup_func(env, main);
+  FblcFunc* func = FblcLookupFunc(env, main);
   if (func == NULL) {
     fprintf(stderr, "Failed to find main function %s\n", main);
     return 1;

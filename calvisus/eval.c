@@ -86,7 +86,7 @@ static int indexof(const FblcType* type, FblcName field) {
   assert(false && "No such field.");
 }
 
-value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
+value_t* eval(const FblcEnv* env, scope_t* scope, const FblcExpr* expr) {
   value_t* result = NULL;
   cmd_t* cmd = mk_eval(expr, &result, NULL);
   while (cmd != NULL) {
@@ -108,7 +108,7 @@ value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
           }
 
           case FBLC_APP_EXPR: {
-            FblcType* type = lookup_type(env, expr->ex.app.function);
+            FblcType* type = FblcLookupType(env, expr->ex.app.func);
             if (type != NULL) {
               if (type->kind == FBLC_KIND_STRUCT) {
                 *target = mk_value(type);
@@ -121,7 +121,7 @@ value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
               break;
             }
 
-            FblcFunc* func = lookup_func(env, expr->ex.app.function);
+            FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func);
             if (func != NULL) {
               // Add to the top of the command list
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...
@@ -155,7 +155,7 @@ value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
           }
 
           case FBLC_UNION_EXPR: {
-            FblcType* type = lookup_type(env, expr->ex.union_.type);
+            FblcType* type = FblcLookupType(env, expr->ex.union_.type);
             assert(type != NULL);
             int index = indexof(type, expr->ex.union_.field);
             *target = mk_union(type, index);

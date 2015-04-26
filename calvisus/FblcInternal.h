@@ -37,10 +37,10 @@ typedef struct FblcExpr {
       FblcName name;
     } var;
 
-    // For application expressions of the form: <function>(<args>)
+    // For application expressions of the form: <func>(<args>)
     // The function args are in the 'args' field of FblcExpr.
     struct {
-      FblcName function;
+      FblcName func;
     } app;
 
     // For member access expressions of the form: <object>.<field>
@@ -73,7 +73,7 @@ typedef struct FblcExpr {
   } ex;
 
   // Additional variable-length arguments for app and cond expressions.
-  // The number of arguments is implicit, based on the function for an
+  // The number of arguments is implicit, based on the func for an
   // app expression and based on the type of the select object for a
   // cond expression.
   struct FblcExpr* args[];
@@ -100,6 +100,13 @@ typedef struct {
   int num_args;
   FblcField args[];
 } FblcFunc;
+
+typedef struct FblcEnv FblcEnv;
+FblcEnv* FblcNewEnv();
+FblcType* FblcLookupType(const FblcEnv* env, FblcName name);
+FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name);
+void FblcAddType(FblcEnv* env, FblcType* type);
+void FblcAddFunc(FblcEnv* env, FblcFunc* func);
 
 // FblcTokenizer
 #define FBLC_TOK_EOF -1
