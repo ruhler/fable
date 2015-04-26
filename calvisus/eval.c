@@ -77,6 +77,15 @@ static cmd_t* mk_scope(scope_t* scope, cmd_t* next) {
   return cmd;
 }
 
+static int indexof(const FblcType* type, FblcName field) {
+  for (int i = 0; i < type->num_fields; i++) {
+    if (FblcNamesEqual(field, type->fields[i].name)) {
+      return i;
+    }
+  }
+  assert(false && "No such field.");
+}
+
 value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
   value_t* result = NULL;
   cmd_t* cmd = mk_eval(expr, &result, NULL);
@@ -99,9 +108,9 @@ value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
           }
 
           case FBLC_APP_EXPR: {
-            type_t* type = lookup_type(env, expr->ex.app.function);
+            FblcType* type = lookup_type(env, expr->ex.app.function);
             if (type != NULL) {
-              if (type->kind == KIND_STRUCT) {
+              if (type->kind == FBLC_KIND_STRUCT) {
                 *target = mk_value(type);
                 for (int i = 0; i < type->num_fields; i++) {
                   cmd = mk_eval(expr->args[i], &((*target)->fields[i]), cmd);
@@ -146,7 +155,7 @@ value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
           }
 
           case FBLC_UNION_EXPR: {
-            type_t* type = lookup_type(env, expr->ex.union_.type);
+            FblcType* type = lookup_type(env, expr->ex.union_.type);
             assert(type != NULL);
             int index = indexof(type, expr->ex.union_.field);
             *target = mk_union(type, index);
@@ -177,7 +186,7 @@ value_t* eval(const env_t* env, scope_t* scope, const FblcExpr* expr) {
       }
 
       case CMD_ACCESS: {
-        type_t* type = cmd->data.access.value->type;
+        FblcType* type = cmd->data.access.value->type;
         int index = indexof(type, cmd->data.access.field);
         int field = cmd->data.access.value->field;
         value_t** target = cmd->data.access.target;

@@ -3,7 +3,7 @@
 
 #include "FblcInternal.h"
 
-type_t* lookup_type(const env_t* env, FblcName name) {
+FblcType* lookup_type(const env_t* env, FblcName name) {
   for (type_env_t* tenv = env->types; tenv != NULL; tenv = tenv->next) {
     if (FblcNamesEqual(tenv->decl->name, name)) {
       return tenv->decl;

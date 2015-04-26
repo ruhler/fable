@@ -19,6 +19,20 @@
 typedef const char* FblcName;
 bool FblcNamesEqual(FblcName a, FblcName b);
 
+typedef enum { FBLC_KIND_UNION, FBLC_KIND_STRUCT } FblcKind;
+
+typedef struct {
+  FblcName type;
+  FblcName name;
+} FblcField;
+
+typedef struct {
+  FblcName name;
+  FblcKind kind;
+  int num_fields;
+  FblcField fields[];
+} FblcType;
+
 typedef enum {
   FBLC_VAR_EXPR,
   FBLC_APP_EXPR,

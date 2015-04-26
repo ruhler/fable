@@ -20,7 +20,6 @@ build build/FblcProgram.o: cc calvisus/FblcProgram.c
 build build/parser.o: cc calvisus/parser.c
 build build/scope.o: cc calvisus/scope.c
 build build/FblcTokenizer.o: cc calvisus/FblcTokenizer.c
-build build/type.o: cc calvisus/type.c
 build build/value.o: cc calvisus/value.c
 
 build build/calvisus: ld $
@@ -31,7 +30,6 @@ build build/calvisus: ld $
   build/parser.o $
   build/scope.o $
   build/FblcTokenizer.o $
-  build/type.o $
   build/value.o
 
 build build/test_result: run build/calvisus calvisus/test.fbl

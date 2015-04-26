@@ -3,7 +3,7 @@
 #include "parser.h"
 
 typedef struct field_list_t {
-  field_t field;
+  FblcField field;
   struct field_list_t* next;
 } field_list_t;
   
@@ -34,7 +34,7 @@ static int parse_fields(FblcTokenStream* toks, field_list_t** plist) {
 
 // Put the fields in the given list into the given array, in reverse order of
 // the list.
-static void fill_fields(int num_fields, field_list_t* list, field_t* fields) {
+static void fill_fields(int num_fields, field_list_t* list, FblcField* fields) {
   for (int i = 0; i < num_fields; i++) {
     fields[num_fields-1-i].name = list->field.name;
     fields[num_fields-1-i].type = list->field.type;
@@ -254,8 +254,8 @@ env_t* parse(FblcTokenStream* toks) {
       if (!FblcGetToken(toks, ')')) {
         return NULL;
       }
-      kind_t kind = FblcNamesEqual("struct", dkind) ? KIND_STRUCT : KIND_UNION;
-      type_t* type = GC_MALLOC(sizeof(type_t) + num_fields * sizeof(field_t));
+      FblcKind kind = FblcNamesEqual("struct", dkind) ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
+      FblcType* type = GC_MALLOC(sizeof(FblcType) + num_fields * sizeof(FblcField));
       type->name = name;
       type->kind = kind;
       type->num_fields = num_fields;
@@ -283,7 +283,7 @@ env_t* parse(FblcTokenStream* toks) {
       if (expr == NULL) {
         return NULL;
       }
-      func_t* func = GC_MALLOC(sizeof(func_t) + num_fields * sizeof(field_t));
+      func_t* func = GC_MALLOC(sizeof(func_t) + num_fields * sizeof(FblcField));
       func->name = name;
       func->rtype = rtype;
       func->body = expr;

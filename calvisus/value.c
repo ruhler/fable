@@ -6,9 +6,9 @@
 
 #include <gc/gc.h>
 
-value_t* mk_value(type_t* type) {
+value_t* mk_value(FblcType* type) {
   int fields = type->num_fields;
-  if (type->kind == KIND_UNION) {
+  if (type->kind == FBLC_KIND_UNION) {
     fields = 1;
   }
   value_t* value = GC_MALLOC(sizeof(value_t) + fields * sizeof(value_t*));
@@ -17,15 +17,15 @@ value_t* mk_value(type_t* type) {
   return value;
 }
 
-value_t* mk_union(type_t* type, int field) {
+value_t* mk_union(FblcType* type, int field) {
   value_t* value = mk_value(type);
   value->field = field;
   return value;
 }
 
 void print(FILE* fout, value_t* value) {
-  type_t* type = value->type;
-  if (type->kind == KIND_STRUCT) {
+  FblcType* type = value->type;
+  if (type->kind == FBLC_KIND_STRUCT) {
     fprintf(fout, "%s(", type->name);
     for (int i = 0; i < type->num_fields; i++) {
       if (i > 0) {
@@ -37,7 +37,7 @@ void print(FILE* fout, value_t* value) {
     return;
   }
   
-  if (type->kind == KIND_UNION) {
+  if (type->kind == FBLC_KIND_UNION) {
     fprintf(fout, "%s:%s(", type->name, type->fields[value->field].name);
     print(fout, value->fields[0]);
     fprintf(fout, ")");
