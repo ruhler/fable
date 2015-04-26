@@ -1,6 +1,6 @@
 // FblcTokenizer.c --
 //
-//   The file implements routines for turning a FILE stream into a stream of
+//   This file implements routines for turning a FILE stream into a stream of
 //   tokens. 
 
 #include "FblcInternal.h"
