@@ -16,6 +16,13 @@ struct FblcValue {
   struct FblcValue* fields[];
 };
 
+// The following defines a Scope structure for storing the value of local
+// variables. Currently the code assumes it is possible to extend a scope
+// without modifying the original scope, and it is possible to access the
+// address of a value stored in scope.
+// TODO: Make this more explicit in the code to allow for fancier
+// implementations of scopes if needed in the future.
+
 typedef struct Scope {
   FblcName name;
   FblcValue* value;
@@ -36,7 +43,7 @@ typedef struct Scope {
 // 'scope' commands.
 
 typedef enum {
-  CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_VAR, CMD_DEVAR, CMD_SCOPE
+  CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_SCOPE
 } CmdTag;
 
 typedef struct Cmd {
@@ -66,16 +73,6 @@ typedef struct Cmd {
       FblcValue** target;
     } cond;
 
-    // The var command adds a variable with the given name and value to the
-    // current scope.
-    // There is a corresponding devar command that has no extra information.
-    // The devar command removes the variable most recently added to the
-    // current scope.
-    struct {
-      FblcName name;
-      FblcValue* value;
-    } var;
-
     // The scope command sets the current scope to the given scope.
     struct {
       Scope* scope;
@@ -92,8 +89,6 @@ static FblcValue* NewUnionValue(FblcType* type, int tag);
 static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next);
 static Cmd* MkAccess(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next);
-static Cmd* MkVar(FblcName name, FblcValue* value, Cmd* next);
-static Cmd* MkDevar(Cmd* next);
 static Cmd* MkCond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next);
 static Cmd* MkScope(Scope* scope, Cmd* next);
@@ -271,53 +266,6 @@ static Cmd* MkAccess(
   cmd->ex.access.value = value;
   cmd->ex.access.field = field;
   cmd->ex.access.target = target;
-  cmd->next = next;
-  return cmd;
-}
-
-// MkVar --
-//   
-//   Create a command to add a variable with the given name and value to the
-//   scope.
-//
-// Inputs:
-//   name - The name of the variable to add to the scope.
-//   value - The value of the variable to add to the scope.
-//   next - The command to run after this one.
-//
-// Returns:
-//   The newly created command.
-//
-// Side effects:
-//   None.
-
-static Cmd* MkVar(FblcName name, FblcValue* value, Cmd* next)
-{
-  Cmd* cmd = GC_MALLOC(sizeof(Cmd));
-  cmd->tag = CMD_VAR;
-  cmd->ex.var.name = name;
-  cmd->ex.var.value = value;
-  cmd->next = next;
-  return cmd;
-}
-
-// MkDevar --
-//   
-//   Create a command to remove from the scope the most recently added
-//   variable.
-//
-// Inputs:
-//   next - The command to run after this one.
-//
-// Returns:
-//   The newly created command.
-//
-// Side effects:
-//   None.
-
-static Cmd* MkDevar(Cmd* next) {
-  Cmd* cmd = GC_MALLOC(sizeof(Cmd));
-  cmd->tag = CMD_DEVAR;
   cmd->next = next;
   return cmd;
 }
@@ -541,16 +489,16 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 
           case FBLC_LET_EXPR: {
             // Add to the top of the command list:
-            // def -> var -> body -> (devar) -> ...
+            // def -> var -> body -> (scope) -> ...
 
             // No need to pop the variable if we are going to switch to a
             // different scope immediately after anyway.
             if (cmd != NULL && cmd->tag != CMD_SCOPE) {
-              cmd = MkDevar(cmd);
+              cmd = MkScope(scope, cmd);
             }
             cmd = MkEval(expr->ex.let.body, target, cmd);
-            cmd = MkVar(expr->ex.let.name, NULL, cmd);
-            cmd = MkEval(expr->ex.let.def, &(cmd->ex.var.value), cmd);
+            cmd = MkScope(AddVar(scope, expr->ex.let.name, NULL), cmd);
+            cmd = MkEval(expr->ex.let.def, &(cmd->ex.scope.scope->value), cmd);
             break;
           }
 
@@ -589,17 +537,6 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
         cmd = MkEval(cmd->ex.cond.choices[value->tag], target, cmd->next);
         break;
       }
-
-      case CMD_VAR:
-        scope = AddVar(scope, cmd->ex.var.name, cmd->ex.var.value);
-        cmd = cmd->next;
-        break;
-
-      case CMD_DEVAR:
-        assert(scope != NULL);
-        scope = scope->next;
-        cmd = cmd->next;
-        break;
 
       case CMD_SCOPE:
         scope = cmd->ex.scope.scope;
