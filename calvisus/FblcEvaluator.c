@@ -22,6 +22,19 @@ typedef struct Scope {
   struct Scope* next;
 } Scope;
 
+// The evaluator works by breaking down expression evaluation into a sequence
+// of commands that can be executed in turn. All of the state of evaluation,
+// including the stack, is stored explicitly in the command list. By storing
+// the stack explicitly instead of piggy-backing off of the C runtime stack,
+// we are able to implement the evaluator as a single while loop and avoid
+// problems with supporting tail recursive Fblc programs.
+
+// The following CmdTag enum identifies the types of commands used to evaluate
+// expression. The Cmd struct represents a command list. See the comments on
+// the extra data in the Cmd structure for the specification of the commands.
+// The state of the stack is captured in a command list by storing scopes in
+// 'scope' commands.
+
 typedef enum {
   CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_VAR, CMD_DEVAR, CMD_SCOPE
 } CmdTag;
@@ -159,6 +172,20 @@ static void PrintScope(FILE* stream, Scope* scope)
   }
 }
 
+// NewValue --
+//
+//   Create an uninitialized new value of the given type.
+//
+// Inputs:
+//   type - The type of the value to create.
+//
+// Result:
+//   The newly created value. The value with have the type field set, but the
+//   fields will be uninitialized.
+//
+// Side effects:
+//   None.
+
 static FblcValue* NewValue(FblcType* type)
 {
   int fields = type->num_fields;
@@ -170,13 +197,45 @@ static FblcValue* NewValue(FblcType* type)
   return value;
 }
 
+// NewUnionValue --
+//
+//   Create a new union value with the given type and tag.
+//
+// Inputs:
+//   type - The type of the union value to create. This should be a union type.
+//   tag - The tag of the union value to set.
+//
+// Result:
+//   The new union value, with type and tag set. The field value will be
+//   uninitialized.
+//
+// Side effects:
+//   None.
+
 static FblcValue* NewUnionValue(FblcType* type, int tag)
 {
+  assert(type->kind == FBLC_KIND_UNION);
   FblcValue* value = NewValue(type);
   value->tag = tag;
   return value;
 }
 
+// MkEval --
+//
+//   Creates a command to evaluate the given expression, storing the resulting
+//   value at the given target location.
+//
+// Inputs:
+//   expr - The expression for the created command to evaluate.
+//   target - The target of the result of evaluation.
+//   next - The command to run after this command.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
 static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next)
 {
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
@@ -187,6 +246,23 @@ static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next)
   return cmd;
 }
 
+// MkAccess --
+//   
+//   Create a command to access a field from a value, storing the result at
+//   the given target location.
+//
+// Inputs:
+//   value - The value that will be accessed.
+//   field - The name of the field to access.
+//   target - The target destination of the accessed field.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
 static Cmd* MkAccess(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next)
 {
@@ -199,6 +275,22 @@ static Cmd* MkAccess(
   return cmd;
 }
 
+// MkVar --
+//   
+//   Create a command to add a variable with the given name and value to the
+//   scope.
+//
+// Inputs:
+//   name - The name of the variable to add to the scope.
+//   value - The value of the variable to add to the scope.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
 static Cmd* MkVar(FblcName name, FblcValue* value, Cmd* next)
 {
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
@@ -209,6 +301,20 @@ static Cmd* MkVar(FblcName name, FblcValue* value, Cmd* next)
   return cmd;
 }
 
+// MkDevar --
+//   
+//   Create a command to remove from the scope the most recently added
+//   variable.
+//
+// Inputs:
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
 static Cmd* MkDevar(Cmd* next) {
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
   cmd->tag = CMD_DEVAR;
@@ -216,6 +322,23 @@ static Cmd* MkDevar(Cmd* next) {
   return cmd;
 }
 
+// MkCond --
+//   
+//   Create a command to select and evaluate an expression based on the tag of
+//   the given value.
+//
+// Inputs:
+//   value - The value to condition on.
+//   choices - The list of expressions to choose from based on the value.
+//   target - The target destination for the final evaluated value.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
 static Cmd* MkCond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next)
 {
@@ -228,6 +351,20 @@ static Cmd* MkCond(
   return cmd;
 }
 
+// MkScope --
+//   
+//   Create a command to set the scope to a new value.
+//
+// Inputs:
+//   scope - The new value of the scope to use.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
 static Cmd* MkScope(Scope* scope, Cmd* next)
 {
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
@@ -237,6 +374,22 @@ static Cmd* MkScope(Scope* scope, Cmd* next)
   return cmd;
 }
 
+// TagForField --
+//
+//   Return the tag corresponding to the named field for the given type.
+//   It is a program error if the named field does not exist for the given
+//   type.
+//
+// Inputs:
+//   type - The type in question.
+//   field - The field to get the tag for.
+//
+// Result:
+//   The index in the list of fields for the type containing that field name.
+//
+// Side effects:
+//   None.
+
 static int TagForField(const FblcType* type, FblcName field)
 {
   for (int i = 0; i < type->num_fields; i++) {
@@ -247,6 +400,20 @@ static int TagForField(const FblcType* type, FblcName field)
   assert(false && "No such field.");
 }
 
+// FblcPrintValue --
+//
+//   Print a value in standard format to the given FILE stream.
+//
+// Inputs:
+//   stream - The stream to print the value to.
+//   value - The value to print.
+//
+// Result:
+//   None.
+//
+// Side effects:
+//   The value is printed to the given file stream.
+
 void FblcPrintValue(FILE* stream, FblcValue* value)
 {
   FblcType* type = value->type;
@@ -268,6 +435,22 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
   }
 }
 
+// FblcEvaluate --
+//
+//   Evaluate an expression under the given program environment. The program
+//   and expression must be well formed.
+//
+// Inputs:
+//   env - The program environment.
+//   expr - The expression to evaluate.
+//
+// Returns:
+//   The result of evaluating the given expression in the program environment
+//   in a scope with no local variables.
+//
+// Side effects:
+//   None.
+
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 {
   FblcValue* result = NULL;
@@ -295,6 +478,8 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             FblcType* type = FblcLookupType(env, expr->ex.app.func);
             if (type != NULL) {
               if (type->kind == FBLC_KIND_STRUCT) {
+                // Create the struct value now, then add commands to evaluate
+                // the arguments to fill in the fields with the proper results.
                 *target = NewValue(type);
                 for (int i = 0; i < type->num_fields; i++) {
                   cmd = MkEval(expr->args[i], &((*target)->fields[i]), cmd);
@@ -309,6 +494,8 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             if (func != NULL) {
               // Add to the top of the command list:
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...
+              // The results of the arg evaluations will be stored directly in
+              // the scope for the scope command.
 
               // Don't put a scope change if we will immediately 
               // change it back to a different scope. This is important to
@@ -333,12 +520,17 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
           }
 
           case FBLC_ACCESS_EXPR: {
+            // Add to the top of the command list:
+            // object -> access -> ...
             cmd = MkAccess(NULL, expr->ex.access.field, target, cmd);
             cmd = MkEval(expr->ex.access.object, &(cmd->ex.access.value), cmd);
             break;
           }
 
           case FBLC_UNION_EXPR: {
+            // Create the union value now, then add a command to evaluate the
+            // argument of the union constructor and set the field of the
+            // union value.
             FblcType* type = FblcLookupType(env, expr->ex.union_.type);
             assert(type != NULL);
             int tag = TagForField(type, expr->ex.union_.field);
@@ -348,6 +540,9 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
           }
 
           case FBLC_LET_EXPR: {
+            // Add to the top of the command list:
+            // def -> var -> body -> (devar) -> ...
+
             // No need to pop the variable if we are going to switch to a
             // different scope immediately after anyway.
             if (cmd != NULL && cmd->tag != CMD_SCOPE) {
@@ -360,6 +555,8 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
           }
 
           case FBLC_COND_EXPR: {
+            // Add to the top of the command list:
+            // select -> cond -> ...
             cmd = MkCond(NULL, expr->args, target, cmd);
             cmd = MkEval(expr->ex.cond.select, &(cmd->ex.cond.value), cmd);
             break;

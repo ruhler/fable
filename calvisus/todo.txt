@@ -1,11 +1,11 @@
 
+* Use 'scope' command to replace 'var' and 'devar' commands?
 * Figure out how to test malformed inputs.
-* Clean up and document all the functions.
-  - Follow style of the Tcl code base? Use prefix FblC?
-  - Write constructors for each data type along side the type?
 * Add a static pass to type check an environment.
 * Always return nice error messages to the user, don't just fail an assertion.
 * Be able to parse from a string as well as a file.
   - Then add a '-e' option to fblc to specify an arbitrary expression to
     evaluate in the context of the given program.
+
+* Implement support for processes.
 
