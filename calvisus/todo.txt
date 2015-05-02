@@ -1,6 +1,7 @@
 
-* Use 'scope' command to replace 'var' and 'devar' commands?
 * Figure out how to test malformed inputs.
+  - To start, distinguish between an abort error and explicit errors.
+    Maybe check for error locations.
 * Add a static pass to type check an environment.
 * Always return nice error messages to the user, don't just fail an assertion.
 * Be able to parse from a string as well as a file.
