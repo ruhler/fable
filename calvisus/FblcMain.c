@@ -22,9 +22,14 @@ static void PrintUsage(FILE* fout);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fblc FILE\n"
+      "Usage: fblc [--expect-error] FILE\n"
       "Evaluate 'main()' in the environment of the fblc program FILE.\n"  
       "Example: fblc foo.fblc\n"
+      "\n"
+      "Options:\n"
+      "   --expect-error\n"
+      "     If present, fblc exits with code 0 for malformed input programs,\n"
+      "     and non-zero otherwise.\n"
   );
 }
 
@@ -49,10 +54,13 @@ static void PrintUsage(FILE* stream)
 int main(int argc, char* argv[])
 {
   const char* filename = NULL;
+  bool expect_error = false;
   for (int i = 1; i < argc; i++) {
     if (strcmp("--help", argv[i]) == 0) {
       PrintUsage(stdout);
       return 0;
+    } else if (strcmp("--expect-error", argv[i]) == 0) {
+      expect_error = true;
     } else {
       if (filename != NULL) {
         fprintf(stderr, "multiple FILEs are not allowed.\n");
@@ -79,7 +87,7 @@ int main(int argc, char* argv[])
   FblcEnv* env = FblcParseProgram(toks);
   if (env == NULL) {
     fprintf(stderr, "failed to parse input FILE.\n");
-    return 1;
+    return expect_error ? 0 : 1;
   }
 
   FblcFunc* func = FblcLookupFunc(env, "main");
@@ -96,5 +104,5 @@ int main(int argc, char* argv[])
   FblcValue* value = FblcEvaluate(env, func->body);
   FblcPrintValue(stdout, value);
   printf("\n");
-  return 0;
+  return expect_error ? 1 : 0;
 }

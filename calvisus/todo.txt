@@ -1,12 +1,9 @@
 
-* Figure out how to test malformed inputs.
-  - To start, distinguish between an abort error and explicit errors.
-    Maybe check for error locations.
+* Organize test cases better somehow.
 * Add a static pass to type check an environment.
 * Always return nice error messages to the user, don't just fail an assertion.
 * Be able to parse from a string as well as a file.
   - Then add a '-e' option to fblc to specify an arbitrary expression to
     evaluate in the context of the given program.
-
 * Implement support for processes.
 

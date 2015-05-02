@@ -10,6 +10,9 @@ rule ld
 rule run
   command = $in > $out
 
+rule testerr
+  command = ./build/fblc --expect-error $in 2> $out
+
 rule diff
   command = diff $in > $out
 
@@ -28,4 +31,5 @@ build build/fblc: ld $
 
 build build/test_result: run build/fblc calvisus/test.fblc
 build build/test_passed: diff build/test_result calvisus/test.wnt
+build build/test-malformed_result: testerr calvisus/test-malformed.fblc | build/fblc
 
