@@ -11,25 +11,25 @@ rule run
   command = $in > $out
 
 rule testerr
-  command = ./build/fblc --expect-error $in 2> $out
+  command = ./out/fblc --expect-error $in 2> $out
 
 rule diff
   command = diff $in > $out
 
-build build/FblcMain.o: cc calvisus/FblcMain.c
-build build/FblcEvaluator.o: cc calvisus/FblcEvaluator.c
-build build/FblcProgram.o: cc calvisus/FblcProgram.c
-build build/FblcParser.o: cc calvisus/FblcParser.c
-build build/FblcTokenizer.o: cc calvisus/FblcTokenizer.c
+build out/FblcMain.o: cc fblc/FblcMain.c
+build out/FblcEvaluator.o: cc fblc/FblcEvaluator.c
+build out/FblcProgram.o: cc fblc/FblcProgram.c
+build out/FblcParser.o: cc fblc/FblcParser.c
+build out/FblcTokenizer.o: cc fblc/FblcTokenizer.c
 
-build build/fblc: ld $
-  build/FblcMain.o $
-  build/FblcEvaluator.o $
-  build/FblcProgram.o $
-  build/FblcParser.o $
-  build/FblcTokenizer.o $
+build out/fblc: ld $
+  out/FblcMain.o $
+  out/FblcEvaluator.o $
+  out/FblcProgram.o $
+  out/FblcParser.o $
+  out/FblcTokenizer.o $
 
-build build/test_result: run build/fblc calvisus/test.fblc
-build build/test_passed: diff build/test_result calvisus/test.wnt
-build build/test-malformed_result: testerr calvisus/test-malformed.fblc | build/fblc
+build out/test/basic.got: run out/fblc test/basic.fblc
+build out/test/basic.passed: diff out/test/basic.got test/basic.wnt
+build out/test/malformed/basic.result: testerr test/malformed/basic.fblc | out/fblc
 

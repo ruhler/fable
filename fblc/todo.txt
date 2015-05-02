@@ -5,5 +5,9 @@
 * Be able to parse from a string as well as a file.
   - Then add a '-e' option to fblc to specify an arbitrary expression to
     evaluate in the context of the given program.
+* Be able to parse from a list of files instead of just one?
+  This will help for tests or other programs that share some common functions.
 * Implement support for processes.
+* Ditch the name 'calvisus' and stick with 'fblc'?
+* Write a man page for fblc?
 
