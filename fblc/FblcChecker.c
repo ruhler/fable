@@ -3,7 +3,7 @@
 //   This file implements routines for checking an Fblc program is well formed
 //   and well typed.
 
-#include "FblcChecker.h"
+#include "FblcInternal.h"
 
 // The following Scope structure describes a scope mapping variable names to
 // their types.
@@ -14,11 +14,11 @@ typedef struct Scope {
   struct Scope* next;
 } Scope;
 
-static Scope AddVar(FblcName name, FblcName type, Scope* next);
+static Scope* AddVar(FblcName name, FblcName type, Scope* next);
 static FblcName LookupVar(Scope* scope, FblcName name);
 static bool CheckArgs(
     const FblcEnv* env, Scope* scope, int fieldc, FblcField* fieldv,
-    int argc, FblcExpr** argv, FblcLoc* loc, const char* func);
+    int argc, FblcExpr* const* argv, const FblcLocName* func);
 static FblcName CheckExpr(
     const FblcEnv* env, Scope* scope, const FblcExpr* expr);
 static bool CheckFields(
@@ -41,7 +41,7 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func);
 // Side effects:
 //   None.
 
-static Scope AddVar(FblcName name, FblcName type, Scope* next)
+static Scope* AddVar(FblcName name, FblcName type, Scope* next)
 {
   Scope* scope = GC_MALLOC(sizeof(Scope));
   scope->name = name;
@@ -88,9 +88,8 @@ static FblcName LookupVar(Scope* scope, FblcName name)
 //   fieldv - The fieldc fields from the struct or function declaration.
 //   argc - The number of arguments passed to the struct or function.
 //   argv - The argc args passed to the struct or function.
-//   loc - The location of the application expression.
-//   func - A descriptive name of the function being defined, for use in error
-//          messages.
+//   func - A descriptive name and location of the function being applied, for
+//          use in error messages.
 //
 // Results:
 //   The value true if the arguments have the right type, false otherwise.
@@ -101,11 +100,11 @@ static FblcName LookupVar(Scope* scope, FblcName name)
 
 static bool CheckArgs(
     const FblcEnv* env, Scope* scope, int fieldc, FblcField* fieldv,
-    int argc, FblcExpr** argv, FblcLoc* loc, const char* func)
+    int argc, FblcExpr* const* argv, const FblcLocName* func)
 {
   if (fieldc != argc) {
-    FblcReportError("Wrong number of arguments to %s. Expected %d, but got %d.",
-        loc, func, fieldc, argc);
+    FblcReportError("Wrong number of arguments to %s. Expected %d, "
+        "but got %d.\n", func->loc, func->name, fieldc, argc);
     return false;
   }
 
@@ -114,9 +113,9 @@ static bool CheckArgs(
     if (arg_type == NULL) {
       return false;
     }
-    if (!FblcNamesEqual(fieldv[i].type, arg_type)) {
-      FblcReportError("Expected type %s, but found %s.",
-          argv[i].loc, fieldv[i].type, arg_type);
+    if (!FblcNamesEqual(fieldv[i].type.name, arg_type)) {
+      FblcReportError("Expected type %s, but found %s.\n",
+          argv[i]->loc, fieldv[i].type.name, arg_type);
       return false;
     }
   }
@@ -146,41 +145,41 @@ static FblcName CheckExpr(
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
-      FblcName type = LookupVar(scope, expr->ex.var.name);
+      FblcName type = LookupVar(scope, expr->ex.var.name.name);
       if (type == NULL) {
-        FblcReportError("Variable '%s' not in scope.", expr->loc,
-            expr->ex.var.name);
+        FblcReportError("Variable '%s' not in scope.\n",
+            expr->ex.var.name.loc, expr->ex.var.name.name);
         return NULL;
       }
       return type;
     }
 
     case FBLC_APP_EXPR: {
-      FblcType type = FblcLookupType(env, expr->ex.app.func);
+      FblcType* type = FblcLookupType(env, expr->ex.app.func.name);
       if (type != NULL) {
         if (type->kind != FBLC_KIND_STRUCT) {
-          FblcReportError("Cannot do application on non-struct type %s.",
-              expr->loc, expr->ex.app.func);
+          FblcReportError("Cannot do application on non-struct type %s.\n",
+              expr->ex.app.func.loc, expr->ex.app.func.name);
           return NULL;
         }
         if (!CheckArgs(env, scope, type->fieldc, type->fieldv,
-              expr->argc, expr->argv, expr->loc, expr->ex.app.func)) {
+              expr->argc, expr->argv, &(expr->ex.app.func))) {
           return NULL;
         }
-        return type->name;
+        return type->name.name;
       }
 
-      FblcFunc func = FblcLookupFunc(env, expr->ex.app.func);
+      FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func.name);
       if (func != NULL) {
         if (!CheckArgs(env, scope, func->argc, func->argv,
-              expr->argc, expr->argv, expr->loc, expr->ex.app.func)) {
+              expr->argc, expr->argv, &(expr->ex.app.func))) {
           return NULL;
         }
-        return func->return_type;
+        return func->return_type.name;
       }
 
-      FblcReportError("'%s' is not a type or function.",
-          expr->loc, expr->ex.app.func);
+      FblcReportError("'%s' is not a type or function.\n",
+          expr->loc, expr->ex.app.func.name);
       return NULL;
     }
 
@@ -193,57 +192,63 @@ static FblcName CheckExpr(
       FblcType* type = FblcLookupType(env, typename);
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
       for (int i = 0; i < type->fieldc; i++) {
-        if (FblcNamesEqual(type->fieldv[i].name, expr->ex.access.field)) {
-          return type->fieldv[i].type;
+        if (FblcNamesEqual(type->fieldv[i].name.name,
+              expr->ex.access.field.name)) {
+          return type->fieldv[i].type.name;
         }
       }
-      FblcReportError("The type %s has no field %s.",
-          expr->ex.access.field.loc, typename, expr->ex.access.field.name);
+      FblcReportError("'%s' is not a field of the type '%s'.\n",
+          expr->ex.access.field.loc, expr->ex.access.field.name, typename);
       return NULL;
     }
 
     case FBLC_UNION_EXPR: {
-      FblcType* type = FblcLookupType(env, expr->ex.union_.type);
+      FblcType* type = FblcLookupType(env, expr->ex.union_.type.name);
       if (type == NULL) {
-        FblcReportError("Type %s not found.", expr->loc, expr->ex.union_.type);
+        FblcReportError("Type %s not found.\n",
+            expr->ex.union_.type.loc, expr->ex.union_.type.name);
         return NULL;
       }
 
       if (type->kind != FBLC_KIND_UNION) {
-        FblcReportError("Type %s is not a union type.",
-            expr->loc, expr->ex.union_.type);
+        FblcReportError("Type %s is not a union type.\n",
+            expr->loc, expr->ex.union_.type.name);
         return NULL;
       }
 
-      FblcType arg_type = CheckExpr(env, scope, expr->ex.union_.value);
+      FblcName arg_type = CheckExpr(env, scope, expr->ex.union_.value);
       if (arg_type == NULL) {
         return NULL;
       }
 
       for (int i = 0; i < type->fieldc; i++) {
-        if (FblcNamesEqual(type->fieldv[i].name, expr->ex.union_.field)) {
-          if (type->fieldv[i].type != arg_type) {
-            FblcReportError("Expected type %s, but found type %s.",
-                expr->ex.union_.value->loc, type->fieldv[i].type, arg_type);
+        if (FblcNamesEqual(type->fieldv[i].name.name,
+              expr->ex.union_.field.name)) {
+          if (!FblcNamesEqual(type->fieldv[i].type.name, arg_type)) {
+            FblcReportError("Expected type '%s', but found type '%s'.\n",
+                expr->ex.union_.value->loc,
+                type->fieldv[i].type.name, arg_type);
             return NULL;
           }
-          return type->name;
+          return type->name.name;
         }
       }
-      FblcReportError("Type '%s' has no field '%s'.",
-          expr->ex.union_.type, expr->ex.union_.field.loc);
+      FblcReportError("Type '%s' has no field '%s'.\n",
+          expr->ex.union_.field.loc,
+          expr->ex.union_.type.name, expr->ex.union_.field.name);
       return NULL;
     }
 
     case FBLC_LET_EXPR: {
-      if (FblcLookupType(env, expr->ex.let.type) == NULL) {
-        FblcReportError("No type named '%s'.", expr->loc, expr->ex.let.type);
+      if (FblcLookupType(env, expr->ex.let.type.name) == NULL) {
+        FblcReportError("Type '%s' not declared.\n",
+            expr->ex.let.type.loc, expr->ex.let.type.name);
         return NULL;
       }
 
-      if (LookupVar(scope, expr->ex.let.name) != NULL) {
-        FblcReportError("Variable %s already defined.",
-            expr->ex.let.name.loc, expr->ex.let.name);
+      if (LookupVar(scope, expr->ex.let.name.name) != NULL) {
+        FblcReportError("Variable %s already defined.\n",
+            expr->ex.let.name.loc, expr->ex.let.name.name);
         return NULL;
       }
 
@@ -252,13 +257,13 @@ static FblcName CheckExpr(
         return NULL;
       }
 
-      if (!FblcNamesEqual(expr->ex.let.type, type)) {
-        FblcReportError("Expected type %s, but found type %s.",
-            expr->ex.let.type, type);
+      if (!FblcNamesEqual(expr->ex.let.type.name, type)) {
+        FblcReportError("Expected type %s, but found expression of type %s.\n",
+            expr->ex.let.def->loc, expr->ex.let.type.name, type);
         return NULL;
       }
 
-      Scope* nscope = AddVar(expr->ex.let.name, type, scope);
+      Scope* nscope = AddVar(expr->ex.let.name.name, type, scope);
       return CheckExpr(env, nscope, expr->ex.let.body);
     }
 
@@ -272,25 +277,27 @@ static FblcName CheckExpr(
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
 
       if (type->kind != FBLC_KIND_UNION) {
-        FblcReportError("The condition has type %s, which is not a union type.",
-            expr->loc, typename);
+        FblcReportError("The condition has type %s, "
+            "which is not a union type.\n", expr->loc, typename);
         return NULL;
       }
 
       if (type->fieldc != expr->argc) {
         FblcReportError("Wrong number of arguments to condition. Expected %d, "
             "but found %d.\n", expr->loc, type->fieldc, expr->argc);
+        return NULL;
       }
 
       FblcName result_type = NULL;
-      for (int i = 0; i < expr->fieldc; i++) {
+      for (int i = 0; i < expr->argc; i++) {
         FblcName arg_type = CheckExpr(env, scope, expr->argv[i]);
         if (arg_type == NULL) {
           return NULL;
         }
 
         if (result_type != NULL && !FblcNamesEqual(result_type, arg_type)) {
-          FblcReportError("Expected type %s, but found type %s.",
+          FblcReportError("Expected expression of type %s, "
+              "but found expression of type %s.\n",
               expr->argv[i]->loc, result_type, arg_type);
           return NULL;
         }
@@ -333,8 +340,9 @@ static bool CheckFields(
 {
   // Verify the type for each field exists.
   for (int i = 0; i < fieldc; i++) {
-    if (FblcLookupType(env, fieldv[i].type) == NULL) {
-      FblcReportError("Type '%s' not found.", fieldv[i].loc, fieldv[i].type);
+    if (FblcLookupType(env, fieldv[i].type.name) == NULL) {
+      FblcReportError("Type '%s' not found.\n",
+          fieldv[i].type.loc, fieldv[i].type.name);
       return false;
     }
   }
@@ -342,9 +350,9 @@ static bool CheckFields(
   // Verify fields have unique names.
   for (int i = 0; i < fieldc; i++) {
     for (int j = i+1; j < fieldc; j++) {
-      if (FblcNamesEqual(fieldv[i].name, fieldv[j].name)) {
-        FblcReportError("Multiple %ss named '%s'.", kind,
-            fieldv[i].loc, fieldv[i].name);
+      if (FblcNamesEqual(fieldv[i].name.name, fieldv[j].name.name)) {
+        FblcReportError("Multiple %ss named '%s'.\n",
+            fieldv[j].name.loc, kind, fieldv[j].name.name);
         return false;
       }
     }
@@ -371,7 +379,8 @@ static bool CheckFields(
 static bool CheckType(const FblcEnv* env, FblcType* type)
 {
   if (type->kind == FBLC_KIND_UNION && type->fieldc == 0) {
-    FblcReportError("A union type must have at least one field.", type->loc);
+    FblcReportError("A union type must have at least one field.\n",
+        type->name.loc);
     return false;
   }
   return CheckFields(env, type->fieldc, type->fieldv, "field");
@@ -401,24 +410,24 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
   }
 
   // Check the return type.
-  FblcXXX out_type = func->out_type;
-  if (LookupType(env, out_type.type) == NULL) {
-    FblcReportError("Type '%s' not found.", out_type.loc, out_type.type);
+  if (FblcLookupType(env, func->return_type.name) == NULL) {
+    FblcReportError("Type '%s' not found.\n",
+        func->return_type.loc, func->return_type.name);
     return false;
   }
 
   // Check the body.
   Scope* scope = NULL;
   for (int i = 0; i < func->argc; i++) {
-    scope = AddVar(func->argv[i].name, func->argv[i].type, scope);
+    scope = AddVar(func->argv[i].name.name, func->argv[i].type.name, scope);
   }
   FblcName body_type = CheckExpr(env, scope, func->body);
   if (body_type == NULL) {
     return false;
   }
-  if (!FblcNamesEqual(out_type.type, body_type)) {
-    FblcReportError("Type mismatch. Expected %s, but found %s.",
-        func->body.loc, out_type.type, body_type.type);
+  if (!FblcNamesEqual(func->return_type.name, body_type)) {
+    FblcReportError("Type mismatch. Expected %s, but found %s.\n",
+        func->body->loc, func->return_type.name, body_type);
     return false;
   }
   return true;
@@ -443,8 +452,18 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
 
 bool FblcCheckProgram(const FblcEnv* env)
 {
-  // Verify declaration names are unique.
   // Verify all type declarations are good.
+  for (FblcTypeEnv* types = env->types; types != NULL; types = types->next) {
+    if (!CheckType(env, types->decl)) {
+      return false;
+    }
+  }
+
   // Verify all function declarations are good.
-  assert(false && "TODO: implement FblcCheckProgram");
+  for (FblcFuncEnv* funcs = env->funcs; funcs != NULL; funcs = funcs->next) {
+    if (!CheckFunc(env, funcs->decl)) {
+      return false;
+    }
+  }
+  return true;
 }

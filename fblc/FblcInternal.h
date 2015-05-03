@@ -116,7 +116,21 @@ typedef struct {
 // An environment contains all the type and function declarations for a
 // program. All names used for types and functions must be unique. This is
 // enforced during the construction of the environment.
-typedef struct FblcEnv FblcEnv;
+typedef struct FblcTypeEnv {
+  FblcType* decl;
+  struct FblcTypeEnv* next;
+} FblcTypeEnv;
+
+typedef struct FblcFuncEnv {
+  FblcFunc* decl;
+  struct FblcFuncEnv* next;
+} FblcFuncEnv;
+
+typedef struct FblcEnv {
+  FblcTypeEnv* types;
+  FblcFuncEnv* funcs;
+} FblcEnv;
+
 FblcEnv* FblcNewEnv();
 FblcType* FblcLookupType(const FblcEnv* env, FblcName name);
 FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name);
@@ -139,6 +153,9 @@ void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
 // FblcParser
 FblcEnv* FblcParseProgram(FblcTokenStream* toks);
+
+// FblcChecker
+bool FblcCheckProgram(const FblcEnv* env);
 
 // FblcEvaluator
 typedef struct FblcValue FblcValue;

@@ -1,6 +1,10 @@
 
-* Add a static pass to type check an environment.
-* Always return nice error messages to the user, don't just fail an assertion.
+* It would be nice if 'Wrong number of arguments to ...' reported the opening
+  '(' as the location of the error.
+* Clean up the error messages.
+   - Put names in single quotes always.
+   - Say 'expecting expression of type X' instead of 'expecting type X' when
+     we are expecting an expression.
 * Be able to parse from a string as well as a file.
   - Then add a '-e' option to fblc to specify an arbitrary expression to
     evaluate in the context of the given program.

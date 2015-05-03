@@ -10,21 +10,6 @@ struct FblcLoc {
   int line;
   int col;
 };
-
-typedef struct TypeEnv {
-  FblcType* decl;
-  struct TypeEnv* next;
-} TypeEnv;
-
-typedef struct FuncEnv {
-  FblcFunc* decl;
-  struct FuncEnv* next;
-} FuncEnv;
-
-struct FblcEnv {
-  TypeEnv* types;
-  FuncEnv* funcs;
-};
 
 // FblcNamesEqual --
 //
@@ -135,7 +120,7 @@ FblcEnv* FblcNewEnv()
 
 FblcType* FblcLookupType(const FblcEnv* env, FblcName name)
 {
-  for (TypeEnv* tenv = env->types; tenv != NULL; tenv = tenv->next) {
+  for (FblcTypeEnv* tenv = env->types; tenv != NULL; tenv = tenv->next) {
     if (FblcNamesEqual(tenv->decl->name.name, name)) {
       return tenv->decl;
     }
@@ -160,7 +145,7 @@ FblcType* FblcLookupType(const FblcEnv* env, FblcName name)
 //   None.
 FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name)
 {
-  for (FuncEnv* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
+  for (FblcFuncEnv* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
     if (FblcNamesEqual(fenv->decl->name.name, name)) {
       return fenv->decl;
     }
@@ -193,7 +178,7 @@ bool FblcAddType(FblcEnv* env, FblcType* type)
     return false;
   }
 
-  TypeEnv* types = GC_MALLOC(sizeof(TypeEnv));
+  FblcTypeEnv* types = GC_MALLOC(sizeof(FblcTypeEnv));
   types->decl = type;
   types->next = env->types;
   env->types = types;
@@ -224,7 +209,7 @@ bool FblcAddFunc(FblcEnv* env, FblcFunc* func)
        func->name.loc, func->name.name);
     return false;
   }
-  FuncEnv* funcs = GC_MALLOC(sizeof(FuncEnv));
+  FblcFuncEnv* funcs = GC_MALLOC(sizeof(FblcFuncEnv));
   funcs->decl = func;
   funcs->next = env->funcs;
   env->funcs = funcs;

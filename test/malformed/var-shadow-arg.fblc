@@ -6,7 +6,7 @@ struct FullAdderOut(Bit z, Bit cout);
 func FullAdder(Bit a, Bit b, Bit cin; FullAdderOut) {
   Bit 0 = Bit:0(Unit());
   Bit 1 = Bit:1(Unit());
-  Bit a = a ? (1 : 0);
+  Bit a = a ? (1, 0);
   Bit z = a ? (b ? (cin, cin ? (1, 0)), b ? (cin ? (1, 0), cin));
   Bit cout = a ? (b ? (0, cin), b ? (cin, 1));
   FullAdderOut(z, cout);

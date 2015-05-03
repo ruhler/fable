@@ -90,6 +90,11 @@ int main(int argc, char* argv[])
     return expect_error ? 0 : 1;
   }
 
+  if (!FblcCheckProgram(env)) {
+    fprintf(stderr, "input FILE is not a well formed Fblc program.\n");
+    return expect_error ? 0 : 1;
+  }
+
   FblcFunc* func = FblcLookupFunc(env, "main");
   if (func == NULL) {
     fprintf(stderr, "failed to find 'main' function.\n");

@@ -164,9 +164,8 @@ static void AdvanceTokenStream(FblcTokenStream* toks)
     }
 
     if (IsNameChar(c)) {
-      FblcLoc* loc = FblcNewLoc(toks->filename, toks->line, toks->token_column);
       FblcReportError("This implementation only supports "
-          "names with up to %d characters.\n", loc, BUFSIZ);
+          "names with up to %d characters.\n", TokenLoc(toks), BUFSIZ);
       toks->type = FBLC_TOK_ERR;
       toks->name = NULL;
     } else {
