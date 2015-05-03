@@ -1,6 +1,15 @@
 
-* Organize test cases better somehow.
 * Add a static pass to type check an environment.
+  - Need to have 'num_args' field of expr to verify the right number of
+    arguments are actually there?
+  - Have FblcLocName for located names, and store all expression locations
+    that way? (But what about '{...}' expressions?
+    Don't make assumptions about the concrete syntax when adding location
+    information to the abstract syntax.
+  - Don't allow FblcAddType or FblcAddFunc to work if a type or func with that
+    name is already declared. (first figure out locations though, so I can
+    report a good error message). Thus, maintain an invariant that the
+    environment has uniquely named declarations.
 * Always return nice error messages to the user, don't just fail an assertion.
 * Be able to parse from a string as well as a file.
   - Then add a '-e' option to fblc to specify an arbitrary expression to
@@ -8,6 +17,9 @@
 * Be able to parse from a list of files instead of just one?
   This will help for tests or other programs that share some common functions.
 * Implement support for processes.
-* Ditch the name 'calvisus' and stick with 'fblc'?
 * Write a man page for fblc?
+* Write a vim syntax for fblc?
+* Figure out how to run code coverage, and use it to identify holes in my
+  tests.
+* Start work on a calculator program as a basic test for processes.
 

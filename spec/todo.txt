@@ -1,0 +1,6 @@
+
+* For each part of the syntax, have a section with explicit bulleted (And
+  labelled) points for what is required for that syntactic item to be 'well
+  formed' (where by well formed, I mean well formed and well typed and all
+  that goodness).
+

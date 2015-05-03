@@ -221,8 +221,9 @@ static FblcValue* NewUnionValue(FblcType* type, int tag)
 //   value at the given target location.
 //
 // Inputs:
-//   expr - The expression for the created command to evaluate.
-//   target - The target of the result of evaluation.
+//   expr - The expression for the created command to evaluate. This must not
+//          be NULL.
+//   target - The target of the result of evaluation. This must not be NULL.
 //   next - The command to run after this command.
 //
 // Returns:
@@ -233,6 +234,9 @@ static FblcValue* NewUnionValue(FblcType* type, int tag)
 
 static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next)
 {
+  assert(expr != NULL);
+  assert(target != NULL);
+
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
   cmd->tag = CMD_EVAL;
   cmd->ex.eval.expr = expr;
