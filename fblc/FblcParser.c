@@ -185,6 +185,7 @@ static FblcExpr* NewAppExpr(FblcName func, int argc, ArgList* args)
   FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
   expr->tag = FBLC_APP_EXPR;
   expr->ex.app.func= func;
+  expr->argc = argc;
   FillArgs(argc, args, expr->argv);
   return expr;
 }
@@ -287,6 +288,7 @@ static FblcExpr* NewCondExpr(
   FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
   expr->tag = FBLC_COND_EXPR;
   expr->ex.cond.select = select;
+  expr->argc = argc;
   FillArgs(argc, args, expr->argv);
   return expr;
 }

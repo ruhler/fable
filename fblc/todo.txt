@@ -1,7 +1,5 @@
 
 * Add a static pass to type check an environment.
-  - Need to have 'argc' field of expr to verify the right number of
-    arguments are actually there?
   - Have FblcLocName for located names, and store all expression locations
     that way? (But what about '{...}' expressions?
     Don't make assumptions about the concrete syntax when adding location

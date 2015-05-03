@@ -163,9 +163,8 @@ static FblcName CheckExpr(
               expr->loc, expr->ex.app.func);
           return NULL;
         }
-        // TODO: Don't assume there are the right number of arguments.
         if (!CheckArgs(env, scope, type->fieldc, type->fieldv,
-              type->fieldc, expr->argv, expr->loc, expr->ex.app.func)) {
+              expr->argc, expr->argv, expr->loc, expr->ex.app.func)) {
           return NULL;
         }
         return type->name;
@@ -173,9 +172,8 @@ static FblcName CheckExpr(
 
       FblcFunc func = FblcLookupFunc(env, expr->ex.app.func);
       if (func != NULL) {
-        // TODO: Don't assume there are the right number of arguments.
         if (!CheckArgs(env, scope, func->argc, func->argv,
-              func->argc, expr->argv, expr->loc, expr->ex.app.func)) {
+              expr->argc, expr->argv, expr->loc, expr->ex.app.func)) {
           return NULL;
         }
         return func->return_type;
@@ -279,10 +277,13 @@ static FblcName CheckExpr(
         return NULL;
       }
 
-      // TODO: Don't assume the right number of arguments are given.
-      assert(type->fieldc > 0 && "Did we not check this condition before?");
+      if (type->fieldc != expr->argc) {
+        FblcReportError("Wrong number of arguments to condition. Expected %d, "
+            "but found %d.\n", expr->loc, type->fieldc, expr->argc);
+      }
+
       FblcName result_type = NULL;
-      for (int i = 0; i < type->fieldc; i++) {
+      for (int i = 0; i < expr->fieldc; i++) {
         FblcName arg_type = CheckExpr(env, scope, expr->argv[i]);
         if (arg_type == NULL) {
           return NULL;
@@ -295,6 +296,7 @@ static FblcName CheckExpr(
         }
         result_type = arg_type;
       }
+      assert(result_type != NULL);
       return result_type;
     }
 

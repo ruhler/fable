@@ -78,9 +78,9 @@ typedef struct FblcExpr {
   } ex;
 
   // Additional variable-length arguments for app and cond expressions.
-  // The number of arguments is implicit, based on the func for an
-  // app expression and based on the type of the select object for a
-  // cond expression.
+  // The number of arguments is given by argc, and the arguments themselves
+  // are in argv.
+  int argc;
   struct FblcExpr* argv[];
 } FblcExpr;
 
