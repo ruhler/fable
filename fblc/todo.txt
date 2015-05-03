@@ -1,6 +1,8 @@
 
 * It would be nice if 'Wrong number of arguments to ...' reported the opening
   '(' as the location of the error.
+* Test what happens when we try to access the wrong field of a union.
+  And check if we can easily show the location in the runtime error message.
 * Clean up the error messages.
    - Put names in single quotes always.
    - Say 'expecting expression of type X' instead of 'expecting type X' when
@@ -13,7 +15,6 @@
 * Implement support for processes.
 * Write a man page for fblc?
 * Write a vim syntax for fblc?
-* Figure out how to run code coverage, and use it to identify holes in my
-  tests.
+* Add code coverage to the build?
 * Start work on a calculator program as a basic test for processes.
 

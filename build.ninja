@@ -1,4 +1,10 @@
 
+# Note: Getting code coverage:
+#  1. Re-compile with -fprofile-arcs -ftest-coverage options to gcc
+#  2. Run the test suite.
+#  3. Run 'gcov out/*.o'
+#  4. Enjoy the results.
+
 rule cc
   description = cc $in
   deps = gcc
