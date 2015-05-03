@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  if (func->num_args != 0) {
+  if (func->argc != 0) {
     fprintf(stderr, "main function does not take 0 arguments.\n");
     return 1;
   }

@@ -5,15 +5,15 @@
 #include "FblcInternal.h"
 
 // An Fblc value is represented using the following FblcValue data structure.
-// For struct values, 'tag' is unused and 'fields' contains the field data in
+// For struct values, 'tag' is unused and 'fieldv' contains the field data in
 // the order the fields are declared in the type declaration.
-// For union values, 'tag' is the index of the active field and 'fields' is a
+// For union values, 'tag' is the index of the active field and 'fieldv' is a
 // single element array with the field value.
 
 struct FblcValue {
   FblcType* type;
   int tag;
-  struct FblcValue* fields[];
+  struct FblcValue* fieldv[];
 };
 
 // The following defines a Scope structure for storing the value of local
@@ -183,11 +183,11 @@ static void PrintScope(FILE* stream, Scope* scope)
 
 static FblcValue* NewValue(FblcType* type)
 {
-  int fields = type->num_fields;
+  int fieldc = type->fieldc;
   if (type->kind == FBLC_KIND_UNION) {
-    fields = 1;
+    fieldc = 1;
   }
-  FblcValue* value = GC_MALLOC(sizeof(FblcValue) + fields * sizeof(FblcValue*));
+  FblcValue* value = GC_MALLOC(sizeof(FblcValue) + fieldc * sizeof(FblcValue*));
   value->type = type;
   return value;
 }
@@ -344,8 +344,8 @@ static Cmd* MkScope(Scope* scope, Cmd* next)
 
 static int TagForField(const FblcType* type, FblcName field)
 {
-  for (int i = 0; i < type->num_fields; i++) {
-    if (FblcNamesEqual(field, type->fields[i].name)) {
+  for (int i = 0; i < type->fieldc; i++) {
+    if (FblcNamesEqual(field, type->fieldv[i].name)) {
       return i;
     }
   }
@@ -371,16 +371,16 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
   FblcType* type = value->type;
   if (type->kind == FBLC_KIND_STRUCT) {
     fprintf(stream, "%s(", type->name);
-    for (int i = 0; i < type->num_fields; i++) {
+    for (int i = 0; i < type->fieldc; i++) {
       if (i > 0) {
         fprintf(stream, ",");
       }
-      FblcPrintValue(stream, value->fields[i]);
+      FblcPrintValue(stream, value->fieldv[i]);
     }
     fprintf(stream, ")");
   } else if (type->kind == FBLC_KIND_UNION) {
-    fprintf(stream, "%s:%s(", type->name, type->fields[value->tag].name);
-    FblcPrintValue(stream, value->fields[0]);
+    fprintf(stream, "%s:%s(", type->name, type->fieldv[value->tag].name);
+    FblcPrintValue(stream, value->fieldv[0]);
     fprintf(stream, ")");
   } else {
     assert(false && "Invalid Kind");
@@ -433,8 +433,8 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
                 // Create the struct value now, then add commands to evaluate
                 // the arguments to fill in the fields with the proper results.
                 *target = NewValue(type);
-                for (int i = 0; i < type->num_fields; i++) {
-                  cmd = MkEval(expr->args[i], &((*target)->fields[i]), cmd);
+                for (int i = 0; i < type->fieldc; i++) {
+                  cmd = MkEval(expr->argv[i], &((*target)->fieldv[i]), cmd);
                 }
               } else {
                 assert(false && "Invalid kind of type for application");
@@ -461,9 +461,9 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 
               Cmd* scmd = cmd;
               Scope* nscope = NULL;
-              for (int i = 0; i < func->num_args; i++) {
-                nscope = AddVar(nscope, func->args[i].name, NULL);
-                cmd = MkEval(expr->args[i], &(nscope->value), cmd);
+              for (int i = 0; i < func->argc; i++) {
+                nscope = AddVar(nscope, func->argv[i].name, NULL);
+                cmd = MkEval(expr->argv[i], &(nscope->value), cmd);
               }
               scmd->ex.scope.scope = nscope;
               break;
@@ -487,7 +487,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             assert(type != NULL);
             int tag = TagForField(type, expr->ex.union_.field);
             *target = NewUnionValue(type, tag);
-            cmd = MkEval(expr->ex.union_.value, &((*target)->fields[0]), cmd);
+            cmd = MkEval(expr->ex.union_.value, &((*target)->fieldv[0]), cmd);
             break;
           }
 
@@ -509,7 +509,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
           case FBLC_COND_EXPR: {
             // Add to the top of the command list:
             // select -> cond -> ...
-            cmd = MkCond(NULL, expr->args, target, cmd);
+            cmd = MkCond(NULL, expr->argv, target, cmd);
             cmd = MkEval(expr->ex.cond.select, &(cmd->ex.cond.value), cmd);
             break;
           }
@@ -523,9 +523,9 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
         int actual_tag = cmd->ex.access.value->tag;
         FblcValue** target = cmd->ex.access.target;
         if (type->kind == FBLC_KIND_STRUCT) {
-          *target = cmd->ex.access.value->fields[target_tag];
+          *target = cmd->ex.access.value->fieldv[target_tag];
         } else if (actual_tag == target_tag) {
-          *target = cmd->ex.access.value->fields[0];
+          *target = cmd->ex.access.value->fieldv[0];
         } else {
           fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
           abort();

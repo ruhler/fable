@@ -42,8 +42,8 @@ typedef struct FblcExpr {
       FblcName name;
     } var;
 
-    // For application expressions of the form: <func>(<args>)
-    // The function args are in the 'args' field of FblcExpr.
+    // For application expressions of the form: <func>(<argv>)
+    // The function args are in the 'argv' field of FblcExpr.
     struct {
       FblcName func;
     } app;
@@ -70,8 +70,8 @@ typedef struct FblcExpr {
       const struct FblcExpr* body;
     } let;
 
-    // For conditional expressions of the form: <select>?(<args>)
-    // The expressions to choose among are in the 'args' field of FblcExpr.
+    // For conditional expressions of the form: <select>?(<argv>)
+    // The expressions to choose among are in the 'argv' field of FblcExpr.
     struct {
       const struct FblcExpr* select;
     } cond;
@@ -81,7 +81,7 @@ typedef struct FblcExpr {
   // The number of arguments is implicit, based on the func for an
   // app expression and based on the type of the select object for a
   // cond expression.
-  struct FblcExpr* args[];
+  struct FblcExpr* argv[];
 } FblcExpr;
 
 typedef enum { FBLC_KIND_UNION, FBLC_KIND_STRUCT } FblcKind;
@@ -94,16 +94,16 @@ typedef struct {
 typedef struct {
   FblcName name;
   FblcKind kind;
-  int num_fields;
-  FblcField fields[];
+  int fieldc;
+  FblcField fieldv[];
 } FblcType;
 
 typedef struct {
   FblcName name;
   FblcName return_type;
   FblcExpr* body;
-  int num_args;
-  FblcField args[];
+  int argc;
+  FblcField argv[];
 } FblcFunc;
 
 typedef struct FblcEnv FblcEnv;

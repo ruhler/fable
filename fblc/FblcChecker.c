@@ -17,12 +17,12 @@ typedef struct Scope {
 static Scope AddVar(FblcName name, FblcName type, Scope* next);
 static FblcName LookupVar(Scope* scope, FblcName name);
 static bool CheckArgs(
-    const FblcEnv* env, Scope* scope, int num_fields, FblcField* fields,
-    int num_args, FblcExpr** args, FblcLoc* loc, const char* func);
+    const FblcEnv* env, Scope* scope, int fieldc, FblcField* fieldv,
+    int argc, FblcExpr** argv, FblcLoc* loc, const char* func);
 static FblcName CheckExpr(
     const FblcEnv* env, Scope* scope, const FblcExpr* expr);
 static bool CheckFields(
-    const FblcEnv* env, int num_fields, FblcField* fields, const char* kind);
+    const FblcEnv* env, int fieldc, FblcField* fieldv, const char* kind);
 static bool CheckType(const FblcEnv* env, FblcType* type);
 static bool CheckFunc(const FblcEnv* env, FblcFunc* func);
 
@@ -84,10 +84,10 @@ static FblcName LookupVar(Scope* scope, FblcName name)
 // Inputs:
 //   env - The program environment.
 //   scope - The types of local variables in scope.
-//   num_fields - The number of arguments expected by the struct or function.
-//   fields - The num_fields fields from the struct or function declaration.
-//   num_args - The number of arguments passed to the struct or function.
-//   args - The num_args args passed to the struct or function.
+//   fieldc - The number of arguments expected by the struct or function.
+//   fieldv - The fieldc fields from the struct or function declaration.
+//   argc - The number of arguments passed to the struct or function.
+//   argv - The argc args passed to the struct or function.
 //   loc - The location of the application expression.
 //   func - A descriptive name of the function being defined, for use in error
 //          messages.
@@ -100,23 +100,23 @@ static FblcName LookupVar(Scope* scope, FblcName name)
 //   error describing what's wrong.
 
 static bool CheckArgs(
-    const FblcEnv* env, Scope* scope, int num_fields, FblcField* fields,
-    int num_args, FblcExpr** args, FblcLoc* loc, const char* func)
+    const FblcEnv* env, Scope* scope, int fieldc, FblcField* fieldv,
+    int argc, FblcExpr** argv, FblcLoc* loc, const char* func)
 {
-  if (num_fields != num_args) {
+  if (fieldc != argc) {
     FblcReportError("Wrong number of arguments to %s. Expected %d, but got %d.",
-        loc, func, num_fields, num_args);
+        loc, func, fieldc, argc);
     return false;
   }
 
-  for (int i = 0; i < num_fields; i++) {
-    FblcName arg_type = CheckExpr(env, scope, args[i]);
+  for (int i = 0; i < fieldc; i++) {
+    FblcName arg_type = CheckExpr(env, scope, argv[i]);
     if (arg_type == NULL) {
       return false;
     }
-    if (!FblcNamesEqual(fields[i].type, arg_type)) {
+    if (!FblcNamesEqual(fieldv[i].type, arg_type)) {
       FblcReportError("Expected type %s, but found %s.",
-          args[i].loc, fields[i].type, arg_type);
+          argv[i].loc, fieldv[i].type, arg_type);
       return false;
     }
   }
@@ -164,8 +164,8 @@ static FblcName CheckExpr(
           return NULL;
         }
         // TODO: Don't assume there are the right number of arguments.
-        if (!CheckArgs(env, scope, type->num_fields, type->fields,
-              type->num_fields, expr->args, expr->loc, expr->ex.app.func)) {
+        if (!CheckArgs(env, scope, type->fieldc, type->fieldv,
+              type->fieldc, expr->argv, expr->loc, expr->ex.app.func)) {
           return NULL;
         }
         return type->name;
@@ -174,8 +174,8 @@ static FblcName CheckExpr(
       FblcFunc func = FblcLookupFunc(env, expr->ex.app.func);
       if (func != NULL) {
         // TODO: Don't assume there are the right number of arguments.
-        if (!CheckArgs(env, scope, func->num_args, func->args,
-              func->num_args, expr->args, expr->loc, expr->ex.app.func)) {
+        if (!CheckArgs(env, scope, func->argc, func->argv,
+              func->argc, expr->argv, expr->loc, expr->ex.app.func)) {
           return NULL;
         }
         return func->return_type;
@@ -194,9 +194,9 @@ static FblcName CheckExpr(
 
       FblcType* type = FblcLookupType(env, typename);
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
-      for (int i = 0; i < type->num_fields; i++) {
-        if (FblcNamesEqual(type->fields[i].name, expr->ex.access.field)) {
-          return type->fields[i].type;
+      for (int i = 0; i < type->fieldc; i++) {
+        if (FblcNamesEqual(type->fieldv[i].name, expr->ex.access.field)) {
+          return type->fieldv[i].type;
         }
       }
       FblcReportError("The type %s has no field %s.",
@@ -222,11 +222,11 @@ static FblcName CheckExpr(
         return NULL;
       }
 
-      for (int i = 0; i < type->num_fields; i++) {
-        if (FblcNamesEqual(type->fields[i].name, expr->ex.union_.field)) {
-          if (type->fields[i].type != arg_type) {
+      for (int i = 0; i < type->fieldc; i++) {
+        if (FblcNamesEqual(type->fieldv[i].name, expr->ex.union_.field)) {
+          if (type->fieldv[i].type != arg_type) {
             FblcReportError("Expected type %s, but found type %s.",
-                expr->ex.union_.value->loc, type->fields[i].type, arg_type);
+                expr->ex.union_.value->loc, type->fieldv[i].type, arg_type);
             return NULL;
           }
           return type->name;
@@ -280,17 +280,17 @@ static FblcName CheckExpr(
       }
 
       // TODO: Don't assume the right number of arguments are given.
-      assert(type->num_fields > 0 && "Did we not check this condition before?");
+      assert(type->fieldc > 0 && "Did we not check this condition before?");
       FblcName result_type = NULL;
-      for (int i = 0; i < type->num_fields; i++) {
-        FblcName arg_type = CheckExpr(env, scope, expr->args[i]);
+      for (int i = 0; i < type->fieldc; i++) {
+        FblcName arg_type = CheckExpr(env, scope, expr->argv[i]);
         if (arg_type == NULL) {
           return NULL;
         }
 
         if (result_type != NULL && !FblcNamesEqual(result_type, arg_type)) {
           FblcReportError("Expected type %s, but found type %s.",
-              expr->args[i]->loc, result_type, arg_type);
+              expr->argv[i]->loc, result_type, arg_type);
           return NULL;
         }
         result_type = arg_type;
@@ -313,8 +313,8 @@ static FblcName CheckExpr(
 //
 // Inputs:
 //   env - The program environment.
-//   num_fields - The number of fields to verify.
-//   fields - The fields to verify.
+//   fieldc - The number of fields to verify.
+//   fieldv - The fields to verify.
 //   kind - The type of field for error reporting purposes, e.g. "field" or
 //          "arg".
 //
@@ -327,22 +327,22 @@ static FblcName CheckExpr(
 //   message is printed to standard error describing the problem.
 
 static bool CheckFields(
-    const FblcEnv* env, int num_fields, FblcField* fields, const char* kind)
+    const FblcEnv* env, int fieldc, FblcField* fieldv, const char* kind)
 {
   // Verify the type for each field exists.
-  for (int i = 0; i < num_fields; i++) {
-    if (FblcLookupType(env, fields[i].type) == NULL) {
-      FblcReportError("Type '%s' not found.", fields[i].loc, fields[i].type);
+  for (int i = 0; i < fieldc; i++) {
+    if (FblcLookupType(env, fieldv[i].type) == NULL) {
+      FblcReportError("Type '%s' not found.", fieldv[i].loc, fieldv[i].type);
       return false;
     }
   }
 
   // Verify fields have unique names.
-  for (int i = 0; i < num_fields; i++) {
-    for (int j = i+1; j < num_fields; j++) {
-      if (FblcNamesEqual(fields[i].name, fields[j].name)) {
+  for (int i = 0; i < fieldc; i++) {
+    for (int j = i+1; j < fieldc; j++) {
+      if (FblcNamesEqual(fieldv[i].name, fieldv[j].name)) {
         FblcReportError("Multiple %ss named '%s'.", kind,
-            fields[i].loc, fields[i].name);
+            fieldv[i].loc, fieldv[i].name);
         return false;
       }
     }
@@ -368,11 +368,11 @@ static bool CheckFields(
 
 static bool CheckType(const FblcEnv* env, FblcType* type)
 {
-  if (type->kind == FBLC_KIND_UNION && type->num_fields == 0) {
+  if (type->kind == FBLC_KIND_UNION && type->fieldc == 0) {
     FblcReportError("A union type must have at least one field.", type->loc);
     return false;
   }
-  return CheckFields(env, type->num_fields, type->fields, "field");
+  return CheckFields(env, type->fieldc, type->fieldv, "field");
 }
 
 // CheckFunc --
@@ -394,7 +394,7 @@ static bool CheckType(const FblcEnv* env, FblcType* type)
 static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
 {
   // Check the arguments.
-  if (!CheckFields(env, func->num_args, func->args, "arg")) {
+  if (!CheckFields(env, func->argc, func->argv, "arg")) {
     return false;
   }
 
@@ -407,8 +407,8 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
 
   // Check the body.
   Scope* scope = NULL;
-  for (int i = 0; i < func->num_args; i++) {
-    scope = AddVar(func->args[i].name, func->args[i].type, scope);
+  for (int i = 0; i < func->argc; i++) {
+    scope = AddVar(func->argv[i].name, func->argv[i].type, scope);
   }
   FblcName body_type = CheckExpr(env, scope, func->body);
   if (body_type == NULL) {

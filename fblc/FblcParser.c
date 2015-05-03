@@ -17,23 +17,23 @@ typedef struct ArgList {
 
 static FieldList* AddField(FblcName type, FblcName name, FieldList* tail);
 static ArgList* AddArg(FblcExpr* expr, ArgList* tail);
-static void FillFields(int num_fields, FieldList* list, FblcField* fields);
-static void FillArgs(int num_args, ArgList* list, FblcExpr** args);
+static void FillFields(int fieldc, FieldList* list, FblcField* fieldv);
+static void FillArgs(int argc, ArgList* list, FblcExpr** argv);
 
 static FblcExpr* NewVarExpr(FblcName name);
-static FblcExpr* NewAppExpr(FblcName func, int num_args, ArgList* args);
+static FblcExpr* NewAppExpr(FblcName func, int argc, ArgList* args);
 static FblcExpr* NewAccessExpr(const FblcExpr* object, FblcName field);
 static FblcExpr* NewUnionExpr(
     FblcName type, FblcName field, const FblcExpr* value);
 static FblcExpr* NewLetExpr(
     FblcName type, FblcName name, const FblcExpr* def, const FblcExpr* body);
 static FblcExpr* NewCondExpr(
-    const FblcExpr* select, int num_args, ArgList* args);
+    const FblcExpr* select, int argc, ArgList* args);
 static FblcType* NewType(
-    FblcName name, FblcKind kind, int num_fields, FieldList* fields);
+    FblcName name, FblcKind kind, int fieldc, FieldList* fields);
 static FblcFunc* NewFunc(
     FblcName name, FblcName return_type,
-    int num_args, FieldList* args, FblcExpr* body);
+    int argc, FieldList* args, FblcExpr* body);
 
 static int ParseFields(FblcTokenStream* toks, FieldList** plist);
 static int ParseArgs(FblcTokenStream* toks, ArgList** plist);
@@ -96,23 +96,23 @@ static ArgList* AddArg(FblcExpr* arg, ArgList* tail)
 //   Fill an array of fields in from a reversed list of fields.
 //
 // Inputs:
-//   num_fields - The number of fields to fill in.
-//   list - A list of num_fields fields in reverse order.
-//   fields - An array of num_fields fields to fill in.
+//   fieldc - The number of fields to fill in.
+//   list - A list of fieldc fields in reverse order.
+//   fieldv - An array of fieldc fields to fill in.
 //
 // Return:
 //   None.
 //
 // Side effects:
-//   The 'fields' array is overwritten to contain the fields from 'list' in
+//   The 'fieldv' array is overwritten to contain the fields from 'list' in
 //   reverse order.
 
-static void FillFields(int num_fields, FieldList* list, FblcField* fields)
+static void FillFields(int fieldc, FieldList* list, FblcField* fieldv)
 {
-  for (int i = 0; i < num_fields; i++) {
+  for (int i = 0; i < fieldc; i++) {
     assert(list != NULL && "Not enough fields in list.");
-    fields[num_fields-1-i].name = list->field.name;
-    fields[num_fields-1-i].type = list->field.type;
+    fieldv[fieldc-1-i].name = list->field.name;
+    fieldv[fieldc-1-i].type = list->field.type;
     list = list->next;
   }
   assert(list == NULL && "Not all fields from list were used.");
@@ -123,22 +123,22 @@ static void FillFields(int num_fields, FieldList* list, FblcField* fields)
 //   Fill an array of args in from a reversed list of args.
 //
 // Inputs:
-//   num_args - The number of args to fill in.
-//   list - A list of num_args args in reverse order.
-//   args - An array of num_args args to fill in.
+//   argc - The number of args to fill in.
+//   list - A list of argc args in reverse order.
+//   argv - An array of argc args to fill in.
 //
 // Return:
 //   None.
 //
 // Side effects:
-//   The 'args' array is overwritten to contain the args from 'list' in
+//   The 'argv' array is overwritten to contain the args from 'list' in
 //   reverse order.
 
-static void FillArgs(int num_args, ArgList* list, FblcExpr** args)
+static void FillArgs(int argc, ArgList* list, FblcExpr** argv)
 {
-  for (int i = 0; i < num_args; i++) {
+  for (int i = 0; i < argc; i++) {
     assert(list != NULL && "Not enough args in list.");
-    args[num_args-1-i] = list->arg;
+    argv[argc-1-i] = list->arg;
     list = list->next;
   }
   assert(list == NULL && "Not all args from list were used");
@@ -167,12 +167,12 @@ static FblcExpr* NewVarExpr(FblcName name)
 
 // NewAppExpr --
 //
-//   Create a new app expression of the form: <func>(<args>)
+//   Create a new app expression of the form: <func>(<argv>)
 //
 // Input:
 //   func - The function to apply.
-//   num_args - The number of arguments to pass to the function.
-//   args - A list of num_arg arguments to pass to the function in reverse order.
+//   argc - The number of arguments to pass to the function.
+//   argv - A list of argc arguments to pass to the function in reverse order.
 //
 // Result:
 //   The new app expression.
@@ -180,12 +180,12 @@ static FblcExpr* NewVarExpr(FblcName name)
 // Side effects:
 //   None.
 
-static FblcExpr* NewAppExpr(FblcName func, int num_args, ArgList* args)
+static FblcExpr* NewAppExpr(FblcName func, int argc, ArgList* args)
 {
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + num_args * sizeof(FblcExpr*));
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
   expr->tag = FBLC_APP_EXPR;
   expr->ex.app.func= func;
-  FillArgs(num_args, args, expr->args);
+  FillArgs(argc, args, expr->argv);
   return expr;
 }
 
@@ -268,12 +268,12 @@ static FblcExpr* NewLetExpr(
 
 // NewCondExpr --
 //
-//   Create a new conditional expression of the form: <select>?(<args>)
+//   Create a new conditional expression of the form: <select>?(<argv>)
 //
 // Inputs:
 //   select - The expression to be conditioned on.
-//   num_args - The number of choices to select from.
-//   args - A list of num_args choices to choose from in reverse order. 
+//   argc - The number of choices to select from.
+//   args - A list of argc choices to choose from in reverse order. 
 //
 // Result:
 //   The new conditional expression.
@@ -282,12 +282,12 @@ static FblcExpr* NewLetExpr(
 //   None.
 
 static FblcExpr* NewCondExpr(
-    const FblcExpr* select, int num_args, ArgList* args)
+    const FblcExpr* select, int argc, ArgList* args)
 {
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + num_args * sizeof(FblcExpr*));
+  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
   expr->tag = FBLC_COND_EXPR;
   expr->ex.cond.select = select;
-  FillArgs(num_args, args, expr->args);
+  FillArgs(argc, args, expr->argv);
   return expr;
 }
 
@@ -298,8 +298,8 @@ static FblcExpr* NewCondExpr(
 // Inputs:
 //   name - The name of the type declaration.
 //   kind - The kind of the type declaration.
-//   num_fields - The number of fields in the type declaration.
-//   fields - A list of the num_fields fields of the type declaration in
+//   fieldc - The number of fields in the type declaration.
+//   fields - A list of the fieldc fields of the type declaration in
 //            reverse order.
 //
 // Result:
@@ -309,13 +309,13 @@ static FblcExpr* NewCondExpr(
 //   None.
 
 static FblcType* NewType(
-    FblcName name, FblcKind kind, int num_fields, FieldList* fields)
+    FblcName name, FblcKind kind, int fieldc, FieldList* fields)
 {
-  FblcType* type = GC_MALLOC(sizeof(FblcType) + num_fields * sizeof(FblcField));
+  FblcType* type = GC_MALLOC(sizeof(FblcType) + fieldc * sizeof(FblcField));
   type->name = name;
   type->kind = kind;
-  type->num_fields = num_fields;
-  FillFields(num_fields, fields, type->fields);
+  type->fieldc = fieldc;
+  FillFields(fieldc, fields, type->fieldv);
   return type;
 }
 
@@ -327,8 +327,8 @@ static FblcType* NewType(
 // Inputs:
 //   name - The name of the function being declared.
 //   return_type - The return type of the function.
-//   num_args - The number of args in the function declaration.
-//   args - A list of the num_args args of the function declaration in reverse
+//   argc - The number of args in the function declaration.
+//   args - A list of the argc args of the function declaration in reverse
 //          order.
 //   body - The body of the function.
 //
@@ -340,14 +340,14 @@ static FblcType* NewType(
 
 static FblcFunc* NewFunc(
     FblcName name, FblcName return_type,
-    int num_args, FieldList* args, FblcExpr* body)
+    int argc, FieldList* args, FblcExpr* body)
 {
-  FblcFunc* func = GC_MALLOC(sizeof(FblcFunc) + num_args * sizeof(FblcField));
+  FblcFunc* func = GC_MALLOC(sizeof(FblcFunc) + argc * sizeof(FblcField));
   func->name = name;
   func->return_type = return_type;
   func->body = body;
-  func->num_args = num_args;
-  FillFields(num_args, args, func->args);
+  func->argc = argc;
+  FillFields(argc, args, func->argv);
   return func;
 }
 
@@ -460,11 +460,11 @@ static FblcExpr* ParseExprTail(FblcTokenStream* toks, FblcExpr* expr)
     if (FblcIsToken(toks, '?')) {
       FblcGetToken(toks, '?');
       ArgList* args = NULL;
-      int num_args = ParseArgs(toks, &args);
-      if (num_args < 0) {
+      int argc = ParseArgs(toks, &args);
+      if (argc < 0) {
         return NULL;
       }
-      expr = NewCondExpr(expr, num_args, args);
+      expr = NewCondExpr(expr, argc, args);
     } else {
       FblcGetToken(toks, '.');
       FblcName field = FblcGetNameToken(toks, "field name");
@@ -532,11 +532,11 @@ static FblcExpr* ParseNonStmtExpr(FblcTokenStream* toks, FblcName start)
   if (FblcIsToken(toks, '(')) {
     // This is an application expression of the form: start(<args>)
     ArgList* args = NULL;
-    int num_args = ParseArgs(toks, &args);
-    if (num_args < 0) {
+    int argc = ParseArgs(toks, &args);
+    if (argc < 0) {
       return NULL;
     }
-    expr = NewAppExpr(start, num_args, args);
+    expr = NewAppExpr(start, argc, args);
   } else if (FblcIsToken(toks, ':')) {
     // This is a union expression of the form: start:field(<expr>)
     FblcGetToken(toks, ':');
@@ -680,8 +680,8 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
     }
 
     FieldList* fields;
-    int num_fields = ParseFields(toks, &fields);
-    if (num_fields < 0) {
+    int fieldc = ParseFields(toks, &fields);
+    if (fieldc < 0) {
       return NULL;
     }
 
@@ -695,7 +695,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
       FblcKind kind =  is_struct ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
-      FblcType* type = NewType(name, kind, num_fields, fields);
+      FblcType* type = NewType(name, kind, fieldc, fields);
       FblcAddType(env, type);
     } else if (is_func) {
       // Function declarations end with: ...; <type>) <expr>;
@@ -716,7 +716,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       if (expr == NULL) {
         return NULL;
       }
-      FblcFunc* func = NewFunc(name, return_type, num_fields, fields, expr);
+      FblcFunc* func = NewFunc(name, return_type, fieldc, fields, expr);
       FblcAddFunc(env, func);
     } else {
       fprintf(stderr, "Expected %s, but got %s.\n", keywords, keyword);
