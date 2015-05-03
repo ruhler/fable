@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +19,10 @@
 // FblcProgram
 typedef const char* FblcName;
 bool FblcNamesEqual(FblcName a, FblcName b);
+
+typedef struct FblcLoc FblcLoc;
+FblcLoc* FblcNewLoc(const char* source, int line, int col);
+void FblcReportError(const char* format, const FblcLoc* loc, ...);
 
 typedef enum {
   FBLC_VAR_EXPR,

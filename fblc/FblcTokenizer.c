@@ -163,9 +163,9 @@ static void AdvanceTokenStream(FblcTokenStream* toks)
     }
 
     if (IsNameChar(c)) {
-      fprintf(stderr, "%s:%d:%d: error: This implementation only supports "
-          "names with up to %d characters.\n",
-          toks->filename, toks->line, toks->token_column, BUFSIZ);
+      FblcLoc* loc = FblcNewLoc(toks->filename, toks->line, toks->token_column);
+      FblcReportError("This implementation only supports "
+          "names with up to %d characters.\n", loc, BUFSIZ);
       toks->type = FBLC_TOK_ERR;
       toks->name = NULL;
     } else {
@@ -360,6 +360,7 @@ bool FblcGetToken(FblcTokenStream* toks, int which)
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected)
 {
   const char* next_token = DescribeTokenType(toks->type);
-  fprintf(stderr, "%s:%d:%d: error: Expected %s, but got token of type %s.\n",
-      toks->filename, toks->line, toks->token_column, expected, next_token);
+  FblcLoc* loc = FblcNewLoc(toks->filename, toks->line, toks->token_column);
+  FblcReportError("Expected %s, but got token of type %s.\n",
+      loc, expected, next_token);
 }
