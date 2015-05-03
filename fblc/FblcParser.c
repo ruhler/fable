@@ -15,55 +15,44 @@ typedef struct ArgList {
   struct ArgList* next;
 } ArgList;
 
-static FieldList* AddField(FblcName type, FblcName name, FieldList* tail);
+static FieldList* AddField(FieldList* tail);
 static ArgList* AddArg(FblcExpr* expr, ArgList* tail);
 static void FillFields(int fieldc, FieldList* list, FblcField* fieldv);
 static void FillArgs(int argc, ArgList* list, FblcExpr** argv);
 
-static FblcExpr* NewVarExpr(FblcName name);
-static FblcExpr* NewAppExpr(FblcName func, int argc, ArgList* args);
-static FblcExpr* NewAccessExpr(const FblcExpr* object, FblcName field);
-static FblcExpr* NewUnionExpr(
-    FblcName type, FblcName field, const FblcExpr* value);
-static FblcExpr* NewLetExpr(
-    FblcName type, FblcName name, const FblcExpr* def, const FblcExpr* body);
-static FblcExpr* NewCondExpr(
-    const FblcExpr* select, int argc, ArgList* args);
 static FblcType* NewType(
-    FblcName name, FblcKind kind, int fieldc, FieldList* fields);
+    const FblcLocName* name, FblcKind kind, int fieldc, FieldList* fields);
 static FblcFunc* NewFunc(
-    FblcName name, FblcName return_type,
+    const FblcLocName* name, const FblcLocName* return_type, 
     int argc, FieldList* args, FblcExpr* body);
 
 static int ParseFields(FblcTokenStream* toks, FieldList** plist);
 static int ParseArgs(FblcTokenStream* toks, ArgList** plist);
 static FblcExpr* ParseExprTail(FblcTokenStream* toks, FblcExpr* expr);
 static FblcExpr* ParseStmtExpr(FblcTokenStream* toks);
-static FblcExpr* ParseNonStmtExpr(FblcTokenStream* toks, FblcName start);
+static FblcExpr* ParseNonStmtExpr(
+    FblcTokenStream* toks, const FblcLocName* start);
 static FblcExpr* ParseExpr(FblcTokenStream* toks);
 static FblcExpr* ParseStmt(FblcTokenStream* toks);
 
 // AddField --
 //
-//   Add a field to the given list of fields.
+//   Add a field entry to the given list of fields. The contents of the field
+//   entry are left uninitialized.
 //
 // Inputs:
-//   type - The type of the field to add.
-//   name - The name of the field to add.
-//   tail - An initial list of fields.
+//   tail - The list to add the field entry to.
 //
 // Result:
-//   A new list starting with the added field and followed by the tail list of
-//   fields.
+//   A new list starting with the added field entry and followed by the given
+//   list of fields.
 //
 // Side effects:
 //   None.
 
-static FieldList* AddField(FblcName type, FblcName name, FieldList* tail)
+static FieldList* AddField(FieldList* tail)
 {
     FieldList* list = GC_MALLOC(sizeof(FieldList));
-    list->field.type = type;
-    list->field.name = name;
     list->next = tail;
     return list;
 }
@@ -144,155 +133,6 @@ static void FillArgs(int argc, ArgList* list, FblcExpr** argv)
   assert(list == NULL && "Not all args from list were used");
 }
 
-// NewVarExpr --
-//
-//   Create a new var expression of the form: <name>
-//
-// Inputs:
-//   name - The name of the variable.
-//
-// Result:
-//   The new variable expression.
-//
-// Side effects:
-//   None.
-
-static FblcExpr* NewVarExpr(FblcName name)
-{
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
-  expr->tag = FBLC_VAR_EXPR;
-  expr->ex.var.name = name;
-  return expr;
-}
-
-// NewAppExpr --
-//
-//   Create a new app expression of the form: <func>(<argv>)
-//
-// Input:
-//   func - The function to apply.
-//   argc - The number of arguments to pass to the function.
-//   argv - A list of argc arguments to pass to the function in reverse order.
-//
-// Result:
-//   The new app expression.
-//
-// Side effects:
-//   None.
-
-static FblcExpr* NewAppExpr(FblcName func, int argc, ArgList* args)
-{
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
-  expr->tag = FBLC_APP_EXPR;
-  expr->ex.app.func= func;
-  expr->argc = argc;
-  FillArgs(argc, args, expr->argv);
-  return expr;
-}
-
-// NewAccessExpr --
-//
-//   Create a new access expression of the form: <object>.<field>
-//
-// Input:
-//   object - The object of the member access expression.
-//   field - The name of the field to access.
-//
-// Result:
-//   The new access expression.
-//
-// Side effects:
-//   None.
-
-static FblcExpr* NewAccessExpr(const FblcExpr* object, FblcName field)
-{
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
-  expr->tag = FBLC_ACCESS_EXPR;
-  expr->ex.access.object = object;
-  expr->ex.access.field = field;
-  return expr;
-}
-
-// NewUnionExpr --
-//
-//   Create a new union expression of the form: <type>:<field>(<value>)
-//
-// Inputs:
-//   type - The type of union to construct.
-//   field - The field of the union to set.
-//   value - The value to use for the given field of the union.
-//
-// Result:
-//   The new union expression.
-//
-// Side effects:
-//   None.
-
-static FblcExpr* NewUnionExpr(
-    FblcName type, FblcName field, const FblcExpr* value)
-{
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
-  expr->tag = FBLC_UNION_EXPR;
-  expr->ex.union_.type = type;
-  expr->ex.union_.field = field;
-  expr->ex.union_.value = value;
-  return expr;
-}
-
-// NewLetExpr --
-//
-//   Create new let expression of the form: <type> <name> = <def> ; <body>.
-//
-// Inputs:
-//   type - The type of the variable to define.
-//   name - The name of the variable to define.
-//   def - The value of the variable to define.
-//   body - The expression that uses the defined variable.
-//
-// Results:
-//   The new let expression.
-//
-// Side effects:
-//   None.
-
-static FblcExpr* NewLetExpr(
-    FblcName type, FblcName name, const FblcExpr* def, const FblcExpr* body)
-{
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
-  expr->tag = FBLC_LET_EXPR;
-  expr->ex.let.type = type;
-  expr->ex.let.name = name;
-  expr->ex.let.def = def;
-  expr->ex.let.body = body;
-  return expr;
-}
-
-// NewCondExpr --
-//
-//   Create a new conditional expression of the form: <select>?(<argv>)
-//
-// Inputs:
-//   select - The expression to be conditioned on.
-//   argc - The number of choices to select from.
-//   args - A list of argc choices to choose from in reverse order. 
-//
-// Result:
-//   The new conditional expression.
-//
-// Side effects:
-//   None.
-
-static FblcExpr* NewCondExpr(
-    const FblcExpr* select, int argc, ArgList* args)
-{
-  FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
-  expr->tag = FBLC_COND_EXPR;
-  expr->ex.cond.select = select;
-  expr->argc = argc;
-  FillArgs(argc, args, expr->argv);
-  return expr;
-}
-
 // NewType --
 //
 //   Create a new type declaration of the form: <kind> <name>(<fields>);
@@ -311,10 +151,11 @@ static FblcExpr* NewCondExpr(
 //   None.
 
 static FblcType* NewType(
-    FblcName name, FblcKind kind, int fieldc, FieldList* fields)
+    const FblcLocName* name, FblcKind kind, int fieldc, FieldList* fields)
 {
   FblcType* type = GC_MALLOC(sizeof(FblcType) + fieldc * sizeof(FblcField));
-  type->name = name;
+  type->name.name = name->name;
+  type->name.loc = name->loc;
   type->kind = kind;
   type->fieldc = fieldc;
   FillFields(fieldc, fields, type->fieldv);
@@ -341,12 +182,14 @@ static FblcType* NewType(
 //   None.
 
 static FblcFunc* NewFunc(
-    FblcName name, FblcName return_type,
+    const FblcLocName* name, const FblcLocName* return_type, 
     int argc, FieldList* args, FblcExpr* body)
 {
   FblcFunc* func = GC_MALLOC(sizeof(FblcFunc) + argc * sizeof(FblcField));
-  func->name = name;
-  func->return_type = return_type;
+  func->name.name = name->name;
+  func->name.loc = name->loc;
+  func->return_type.name = return_type->name;
+  func->return_type.loc = return_type->loc;
   func->body = body;
   func->argc = argc;
   FillFields(argc, args, func->argv);
@@ -376,12 +219,11 @@ static int ParseFields(FblcTokenStream* toks, FieldList** plist)
   int parsed;
   FieldList* list = NULL;
   for (parsed = 0; FblcIsToken(toks, FBLC_TOK_NAME); parsed++) {
-    FblcName type = FblcGetNameToken(toks, "type name");
-    FblcName name = FblcGetNameToken(toks, "field name");
-    if (name == NULL) {
+    list = AddField(list);
+    FblcGetNameToken(toks, "type name", &(list->field.type));
+    if (!FblcGetNameToken(toks, "field name", &(list->field.name))) {
       return -1;
     }
-    list = AddField(type, name, list);
 
     if (FblcIsToken(toks, ',')) {
       FblcGetToken(toks, ',');
@@ -459,22 +301,33 @@ static int ParseArgs(FblcTokenStream* toks, ArgList** plist)
 static FblcExpr* ParseExprTail(FblcTokenStream* toks, FblcExpr* expr)
 {
   while (FblcIsToken(toks, '?') || FblcIsToken(toks, '.')) {
+    FblcExpr* nexpr = NULL;
     if (FblcIsToken(toks, '?')) {
+      // This is a conditional expression of the form: <expr>?(<args>)
       FblcGetToken(toks, '?');
       ArgList* args = NULL;
       int argc = ParseArgs(toks, &args);
       if (argc < 0) {
         return NULL;
       }
-      expr = NewCondExpr(expr, argc, args);
+      nexpr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
+      nexpr->tag = FBLC_COND_EXPR;
+      nexpr->loc = expr->loc;
+      nexpr->ex.cond.select = expr;
+      nexpr->argc = argc;
+      FillArgs(argc, args, nexpr->argv);
     } else {
+      // This is an access expression of the form: <expr>.<field>
       FblcGetToken(toks, '.');
-      FblcName field = FblcGetNameToken(toks, "field name");
-      if (field == NULL) {
+      nexpr = GC_MALLOC(sizeof(FblcExpr));
+      nexpr->tag = FBLC_ACCESS_EXPR;
+      nexpr->loc = expr->loc;
+      nexpr->ex.access.object = expr;
+      if (!FblcGetNameToken(toks, "field name", &(nexpr->ex.access.field))) {
         return NULL;
       }
-      expr = NewAccessExpr(expr, field);
     }
+    expr = nexpr;
   }
   return expr;
 }
@@ -528,7 +381,8 @@ static FblcExpr* ParseStmtExpr(FblcTokenStream* toks)
 //   Advances the token stream past the parsed expression. In case of error,
 //   an error message is printed to standard error.
 
-static FblcExpr* ParseNonStmtExpr(FblcTokenStream* toks, FblcName start)
+static FblcExpr* ParseNonStmtExpr(
+    FblcTokenStream* toks, const FblcLocName* start)
 {
   FblcExpr* expr = NULL;
   if (FblcIsToken(toks, '(')) {
@@ -538,28 +392,41 @@ static FblcExpr* ParseNonStmtExpr(FblcTokenStream* toks, FblcName start)
     if (argc < 0) {
       return NULL;
     }
-    expr = NewAppExpr(start, argc, args);
+    expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
+    expr->tag = FBLC_APP_EXPR;
+    expr->loc = start->loc;
+    expr->ex.app.func.name = start->name;
+    expr->ex.app.func.loc = start->loc;
+    expr->argc = argc;
+    FillArgs(argc, args, expr->argv);
   } else if (FblcIsToken(toks, ':')) {
     // This is a union expression of the form: start:field(<expr>)
+    expr = GC_MALLOC(sizeof(FblcExpr));
+    expr->tag = FBLC_UNION_EXPR;
+    expr->loc = start->loc;
+    expr->ex.union_.type.name = start->name;
+    expr->ex.union_.type.loc = start->loc;
     FblcGetToken(toks, ':');
-    FblcName field = FblcGetNameToken(toks, "field name");
-    if (field == NULL) {
+    if (!FblcGetNameToken(toks, "field name", &(expr->ex.union_.field))) {
       return NULL;
     }
     if (!FblcGetToken(toks, '(')) {
       return NULL;
     }
-    FblcExpr* value = ParseExpr(toks);
-    if (value == NULL) {
+    expr->ex.union_.value = ParseExpr(toks);
+    if (expr->ex.union_.value == NULL) {
       return NULL;
     }
     if (!FblcGetToken(toks, ')')) {
       return NULL;
     }
-    expr = NewUnionExpr(start, field, value);
   } else {
     // This is the variable expression: start
-    expr = NewVarExpr(start);
+    expr = GC_MALLOC(sizeof(FblcExpr));
+    expr->tag = FBLC_VAR_EXPR;
+    expr->loc = start->loc;
+    expr->ex.var.name.name = start->name;
+    expr->ex.var.name.loc = start->loc;
   }
   return ParseExprTail(toks, expr);
 }
@@ -584,8 +451,9 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks)
   if (FblcIsToken(toks, '{')) {
     return ParseStmtExpr(toks);
   } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
-    const char* start = FblcGetNameToken(toks, "start of expression");
-    return ParseNonStmtExpr(toks, start);
+    FblcLocName start;
+    FblcGetNameToken(toks, "start of expression", &start);
+    return ParseNonStmtExpr(toks, &start);
   } else {
     FblcUnexpectedToken(toks, "an expression");
     return NULL;
@@ -616,29 +484,34 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks)
     FblcExpr* expr = ParseStmtExpr(toks);
     return FblcGetToken(toks, ';') ? expr : NULL;
   } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
-    const char* start = FblcGetNameToken(toks, "start of expression");
+    FblcLocName start;
+    FblcGetNameToken(toks, "start of expression", &start);
     if (FblcIsToken(toks, FBLC_TOK_NAME)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
-      FblcName var_type = start;
-      FblcName var_name = FblcGetNameToken(toks, "variable name");
+      FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
+      expr->tag = FBLC_LET_EXPR;
+      expr->loc = start.loc;
+      expr->ex.let.type.name = start.name;
+      expr->ex.let.type.loc = start.loc;
+      FblcGetNameToken(toks, "variable name", &(expr->ex.let.name));
       if (!FblcGetToken(toks, '=')) {
         return NULL;
       }
-      const FblcExpr* def = ParseExpr(toks);
-      if (def == NULL) {
+      expr->ex.let.def = ParseExpr(toks);
+      if (expr->ex.let.def == NULL) {
         return NULL;
       }
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
-      const FblcExpr* body = ParseStmt(toks);
-      if (body == NULL) {
+      expr->ex.let.body = ParseStmt(toks);
+      if (expr->ex.let.body == NULL) {
         return NULL;
       }
-      return NewLetExpr(var_type, var_name, def, body);
+      return expr;
     } else {
       // This is an expression starting with a name of the form: <expr>;
-      FblcExpr* expr = ParseNonStmtExpr(toks, start);
+      FblcExpr* expr = ParseNonStmtExpr(toks, &start);
       return FblcGetToken(toks, ';') ? expr : NULL;
     }
   } else {
@@ -667,13 +540,13 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
   FblcEnv* env = FblcNewEnv();
   while (!FblcIsToken(toks, FBLC_TOK_EOF)) {
     // All declarations start with the form: <keyword> <name> (<fields> ...
-    FblcName keyword = FblcGetNameToken(toks, keywords);
-    if (keyword == NULL) {
+    FblcLocName keyword;
+    if (!FblcGetNameToken(toks, keywords, &keyword)) {
       return NULL;
     }
 
-    FblcName name = FblcGetNameToken(toks, "declaration name");
-    if (name == NULL) {
+    FblcLocName name;
+    if (!FblcGetNameToken(toks, "declaration name", &name)) {
       return NULL;
     }
 
@@ -687,9 +560,9 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       return NULL;
     }
 
-    bool is_struct = FblcNamesEqual("struct", keyword);
-    bool is_union = FblcNamesEqual("union", keyword);
-    bool is_func = FblcNamesEqual("func", keyword);
+    bool is_struct = FblcNamesEqual("struct", keyword.name);
+    bool is_union = FblcNamesEqual("union", keyword.name);
+    bool is_func = FblcNamesEqual("func", keyword.name);
 
     if (is_struct || is_union) {
       // Struct and union declarations end with: ...);
@@ -697,7 +570,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
       FblcKind kind =  is_struct ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
-      FblcType* type = NewType(name, kind, fieldc, fields);
+      FblcType* type = NewType(&name, kind, fieldc, fields);
       FblcAddType(env, type);
     } else if (is_func) {
       // Function declarations end with: ...; <type>) <expr>;
@@ -705,8 +578,8 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcName return_type = FblcGetNameToken(toks, "type");
-      if (return_type == NULL) {
+      FblcLocName return_type;
+      if (!FblcGetNameToken(toks, "type", &return_type)) {
         return NULL;
       }
 
@@ -718,10 +591,11 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       if (expr == NULL) {
         return NULL;
       }
-      FblcFunc* func = NewFunc(name, return_type, fieldc, fields, expr);
+      FblcFunc* func = NewFunc(&name, &return_type, fieldc, fields, expr);
       FblcAddFunc(env, func);
     } else {
-      fprintf(stderr, "Expected %s, but got %s.\n", keywords, keyword);
+      FblcReportError("Expected %s, but got %s.\n",
+          keyword.loc, keywords, keyword.name);
       return NULL;
     }
 

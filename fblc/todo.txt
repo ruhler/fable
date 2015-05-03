@@ -1,9 +1,5 @@
 
 * Add a static pass to type check an environment.
-  - Have FblcLocName for located names, and store all expression locations
-    that way? (But what about '{...}' expressions?
-    Don't make assumptions about the concrete syntax when adding location
-    information to the abstract syntax.
   - Don't allow FblcAddType or FblcAddFunc to work if a type or func with that
     name is already declared. (first figure out locations though, so I can
     report a good error message). Thus, maintain an invariant that the

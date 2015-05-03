@@ -83,7 +83,6 @@ typedef struct Cmd {
 
 static FblcValue* LookupVar(Scope* scope, FblcName name);
 static Scope* AddVar(Scope* scope, FblcName name, FblcValue* value);
-static void PrintScope(FILE* stream, Scope* scope);
 static FblcValue* NewValue(FblcType* type);
 static FblcValue* NewUnionValue(FblcType* type, int tag);
 static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next);
@@ -141,30 +140,6 @@ static Scope* AddVar(Scope* scope, FblcName name, FblcValue* value)
   newscope->value = value;
   newscope->next = scope;
   return newscope;
-}
-
-// PrintScope --
-//
-//   Print a human readable representation of a scope. This is used for
-//   debugging and in error messages.
-//
-// Inputs:
-//   stream - The file stream to print the scope to.
-//   scope - The scope to print.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The scope is printed to the given file stream.  
-
-static void PrintScope(FILE* stream, Scope* scope)
-{
-  for ( ; scope != NULL; scope = scope->next) {
-    fprintf(stream, " %s = ...", scope->name);
-    FblcPrintValue(stream, scope->value);
-    fprintf(stream, "\n");
-  }
 }
 
 // NewValue --
@@ -345,7 +320,7 @@ static Cmd* MkScope(Scope* scope, Cmd* next)
 static int TagForField(const FblcType* type, FblcName field)
 {
   for (int i = 0; i < type->fieldc; i++) {
-    if (FblcNamesEqual(field, type->fieldv[i].name)) {
+    if (FblcNamesEqual(field, type->fieldv[i].name.name)) {
       return i;
     }
   }
@@ -370,7 +345,7 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
 {
   FblcType* type = value->type;
   if (type->kind == FBLC_KIND_STRUCT) {
-    fprintf(stream, "%s(", type->name);
+    fprintf(stream, "%s(", type->name.name);
     for (int i = 0; i < type->fieldc; i++) {
       if (i > 0) {
         fprintf(stream, ",");
@@ -379,7 +354,8 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
     }
     fprintf(stream, ")");
   } else if (type->kind == FBLC_KIND_UNION) {
-    fprintf(stream, "%s:%s(", type->name, type->fieldv[value->tag].name);
+    fprintf(stream, "%s:%s(",
+        type->name.name, type->fieldv[value->tag].name.name);
     FblcPrintValue(stream, value->fieldv[0]);
     fprintf(stream, ")");
   } else {
@@ -416,18 +392,14 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
         cmd = cmd->next;
         switch (expr->tag) {
           case FBLC_VAR_EXPR: {
-            FblcName var_name = expr->ex.var.name;
+            FblcName var_name = expr->ex.var.name.name;
             *target = LookupVar(scope, var_name);
-            if (*target == NULL) {
-              fprintf(stderr, "FATAL: var %s not in scope:\n", var_name);
-              PrintScope(stderr, scope);
-              abort();
-            }
+            assert(*target != NULL && "Var not in scope");
             break;
           }
 
           case FBLC_APP_EXPR: {
-            FblcType* type = FblcLookupType(env, expr->ex.app.func);
+            FblcType* type = FblcLookupType(env, expr->ex.app.func.name);
             if (type != NULL) {
               if (type->kind == FBLC_KIND_STRUCT) {
                 // Create the struct value now, then add commands to evaluate
@@ -442,7 +414,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
               break;
             }
 
-            FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func);
+            FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func.name);
             if (func != NULL) {
               // Add to the top of the command list:
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...
@@ -462,7 +434,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
               Cmd* scmd = cmd;
               Scope* nscope = NULL;
               for (int i = 0; i < func->argc; i++) {
-                nscope = AddVar(nscope, func->argv[i].name, NULL);
+                nscope = AddVar(nscope, func->argv[i].name.name, NULL);
                 cmd = MkEval(expr->argv[i], &(nscope->value), cmd);
               }
               scmd->ex.scope.scope = nscope;
@@ -474,7 +446,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
           case FBLC_ACCESS_EXPR: {
             // Add to the top of the command list:
             // object -> access -> ...
-            cmd = MkAccess(NULL, expr->ex.access.field, target, cmd);
+            cmd = MkAccess(NULL, expr->ex.access.field.name, target, cmd);
             cmd = MkEval(expr->ex.access.object, &(cmd->ex.access.value), cmd);
             break;
           }
@@ -483,9 +455,9 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             // Create the union value now, then add a command to evaluate the
             // argument of the union constructor and set the field of the
             // union value.
-            FblcType* type = FblcLookupType(env, expr->ex.union_.type);
+            FblcType* type = FblcLookupType(env, expr->ex.union_.type.name);
             assert(type != NULL);
-            int tag = TagForField(type, expr->ex.union_.field);
+            int tag = TagForField(type, expr->ex.union_.field.name);
             *target = NewUnionValue(type, tag);
             cmd = MkEval(expr->ex.union_.value, &((*target)->fieldv[0]), cmd);
             break;
@@ -501,7 +473,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
               cmd = MkScope(scope, cmd);
             }
             cmd = MkEval(expr->ex.let.body, target, cmd);
-            cmd = MkScope(AddVar(scope, expr->ex.let.name, NULL), cmd);
+            cmd = MkScope(AddVar(scope, expr->ex.let.name.name, NULL), cmd);
             cmd = MkEval(expr->ex.let.def, &(cmd->ex.scope.scope->value), cmd);
             break;
           }

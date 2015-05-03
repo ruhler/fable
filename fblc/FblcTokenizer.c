@@ -46,6 +46,7 @@ static int GetChar(FblcTokenStream* toks);
 static void UnGetChar(FblcTokenStream* toks, int c);
 static bool IsNameChar(int c);
 static void AdvanceTokenStream(FblcTokenStream* toks);
+static FblcLoc* TokenLoc(FblcTokenStream* toks);
 static const char* DescribeTokenType(FblcTokenType which);
 
 // GetChar --
@@ -182,6 +183,24 @@ static void AdvanceTokenStream(FblcTokenStream* toks)
   }
 }
 
+// TokenLoc --
+//
+//   Return a location for the next token in the token stream.
+//
+// Inputs:
+//   toks - The token stream.
+//
+// Result:
+//   A new location object with the location of the next token in the stream.
+//
+// Side effects:
+//   None.
+
+static FblcLoc* TokenLoc(FblcTokenStream* toks)
+{
+  return FblcNewLoc(toks->filename, toks->line, toks->token_column);
+}
+
 // DescribeTokenType --
 //   
 //   Returns a human readable string description of the given token type.
@@ -282,29 +301,33 @@ bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which)
 
 // FblcGetNameToken --
 //
-//   Get the value of the next token in the stream, which is assumed to be a
-//   name token.  The result of this function should always be checked for
-//   NULL unless FblcIsToken has already been called to verify the next token
-//   is a name token.
+//   Get the value and location of the next token in the stream, which is
+//   assumed to be a name token. The result of this function should always be
+//   checked for false unless FblcIsToken has already been called to verify
+//   the next token is a name token.
 //
 // Inputs:
 //   toks - The token stream to retrieve the name token from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a type name".
+//   name - A pointer to an FblcLocName that will be filled in with the
+//          token's value and location.
 //
 // Returns:
-//   The name value of the next token in the token stream, or NULL if the next
-//   token is not a name token.
+//   True if the next token is a name token, false otherwise.
 //
 // Side effects:
-//   If the next token in the stream is a name token, the name token is
-//   removed from the front of the token stream. Otherwise an error message is
-//   printed to standard error.
+//   If the next token in the stream is a name token, name is filled in with
+//   the value and location of the name token, and the name token is removed
+//   from the front of the token stream. Otherwise an error message is printed
+//   to standard error.
 
-const char* FblcGetNameToken(FblcTokenStream* toks, const char* expected)
+bool FblcGetNameToken(
+    FblcTokenStream* toks, const char* expected, FblcLocName* name)
 {
   if (toks->type == FBLC_TOK_NAME) {
-    const char* name = toks->name;
+    name->name = toks->name;
+    name->loc = TokenLoc(toks);
     AdvanceTokenStream(toks);
     return name;
   }
@@ -360,7 +383,6 @@ bool FblcGetToken(FblcTokenStream* toks, int which)
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected)
 {
   const char* next_token = DescribeTokenType(toks->type);
-  FblcLoc* loc = FblcNewLoc(toks->filename, toks->line, toks->token_column);
   FblcReportError("Expected %s, but got token of type %s.\n",
-      loc, expected, next_token);
+      TokenLoc(toks), expected, next_token);
 }

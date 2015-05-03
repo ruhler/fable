@@ -136,7 +136,7 @@ FblcEnv* FblcNewEnv()
 FblcType* FblcLookupType(const FblcEnv* env, FblcName name)
 {
   for (TypeEnv* tenv = env->types; tenv != NULL; tenv = tenv->next) {
-    if (FblcNamesEqual(tenv->decl->name, name)) {
+    if (FblcNamesEqual(tenv->decl->name.name, name)) {
       return tenv->decl;
     }
   }
@@ -161,7 +161,7 @@ FblcType* FblcLookupType(const FblcEnv* env, FblcName name)
 FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name)
 {
   for (FuncEnv* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
-    if (FblcNamesEqual(fenv->decl->name, name)) {
+    if (FblcNamesEqual(fenv->decl->name.name, name)) {
       return fenv->decl;
     }
   }

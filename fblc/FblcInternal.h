@@ -24,6 +24,11 @@ typedef struct FblcLoc FblcLoc;
 FblcLoc* FblcNewLoc(const char* source, int line, int col);
 void FblcReportError(const char* format, const FblcLoc* loc, ...);
 
+typedef struct FblcLocName {
+  FblcLoc* loc;
+  FblcName name;
+} FblcLocName;
+
 typedef enum {
   FBLC_VAR_EXPR,
   FBLC_APP_EXPR,
@@ -35,37 +40,38 @@ typedef enum {
 
 typedef struct FblcExpr {
   FblcExprTag tag;
+  FblcLoc* loc;
 
   union {
     // For variable expressions of the form: <name>
     struct {
-      FblcName name;
+      FblcLocName name;
     } var;
 
     // For application expressions of the form: <func>(<argv>)
     // The function args are in the 'argv' field of FblcExpr.
     struct {
-      FblcName func;
+      FblcLocName func;
     } app;
 
     // For member access expressions of the form: <object>.<field>
     struct {
       const struct FblcExpr* object;
-      FblcName field;
+      FblcLocName field;
     } access; 
 
     // For union literals of the form: <type>:<field>(<value>)
     // 'union' is a keyword in C, so we use 'union_' instead.
     struct { 
-      FblcName type;
-      FblcName field;
+      FblcLocName type;
+      FblcLocName field;
       const struct FblcExpr* value;
     } union_;
 
     // For let expressions of the form: <type> <name> = <def> ; <body>
     struct {
-      FblcName type;
-      FblcName name;
+      FblcLocName type;
+      FblcLocName name;
       const struct FblcExpr* def;
       const struct FblcExpr* body;
     } let;
@@ -79,7 +85,8 @@ typedef struct FblcExpr {
 
   // Additional variable-length arguments for app and cond expressions.
   // The number of arguments is given by argc, and the arguments themselves
-  // are in argv.
+  // are in argv. The values of argc and argv are undefined unless the
+  // expression is an application or conditional expression.
   int argc;
   struct FblcExpr* argv[];
 } FblcExpr;
@@ -87,20 +94,20 @@ typedef struct FblcExpr {
 typedef enum { FBLC_KIND_UNION, FBLC_KIND_STRUCT } FblcKind;
 
 typedef struct {
-  FblcName type;
-  FblcName name;
+  FblcLocName type;
+  FblcLocName name;
 } FblcField;
 
 typedef struct {
-  FblcName name;
+  FblcLocName name;
   FblcKind kind;
   int fieldc;
   FblcField fieldv[];
 } FblcType;
 
 typedef struct {
-  FblcName name;
-  FblcName return_type;
+  FblcLocName name;
+  FblcLocName return_type;
   FblcExpr* body;
   int argc;
   FblcField argv[];
@@ -122,7 +129,8 @@ typedef struct FblcTokenStream FblcTokenStream;
 FblcTokenStream* FblcOpenTokenStream(const char* filename);
 void FblcCloseTokenStream(FblcTokenStream* toks);
 bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which);
-const char* FblcGetNameToken(FblcTokenStream* toks, const char* expected);
+bool FblcGetNameToken(
+    FblcTokenStream* toks, const char* expected, FblcLocName* name);
 bool FblcGetToken(FblcTokenStream* toks, FblcTokenType which);
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
