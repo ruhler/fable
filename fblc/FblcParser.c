@@ -571,7 +571,9 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       }
       FblcKind kind =  is_struct ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
       FblcType* type = NewType(&name, kind, fieldc, fields);
-      FblcAddType(env, type);
+      if (!FblcAddType(env, type)) {
+        return NULL;
+      }
     } else if (is_func) {
       // Function declarations end with: ...; <type>) <expr>;
       if (!FblcGetToken(toks, ';')) {
@@ -592,7 +594,9 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
       FblcFunc* func = NewFunc(&name, &return_type, fieldc, fields, expr);
-      FblcAddFunc(env, func);
+      if (!FblcAddFunc(env, func)) {
+        return NULL;
+      }
     } else {
       FblcReportError("Expected %s, but got %s.\n",
           keyword.loc, keywords, keyword.name);

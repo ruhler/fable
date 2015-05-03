@@ -177,17 +177,27 @@ FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name)
 //   type - The type declaration to add.
 //
 // Result:
-//   None.
+//   True if the type was successfully added, false otherwise.
 //
 // Side effects:
-//   The type declaration is added to the environment.
+//   The type declaration is added to the environment. If the type declaration
+//   could not be added to the environment, an error message is printed to
+//   standard error explaining the problem.
 
-void FblcAddType(FblcEnv* env, FblcType* type)
+bool FblcAddType(FblcEnv* env, FblcType* type)
 {
+  if (FblcLookupType(env, type->name.name) != NULL
+      || FblcLookupFunc(env, type->name.name) != NULL) {
+    FblcReportError("Multiple declarations for %s.\n",
+       type->name.loc, type->name.name);
+    return false;
+  }
+
   TypeEnv* types = GC_MALLOC(sizeof(TypeEnv));
   types->decl = type;
   types->next = env->types;
   env->types = types;
+  return true;
 }
 
 // FblcAddFunc --
@@ -199,15 +209,24 @@ void FblcAddType(FblcEnv* env, FblcType* type)
 //   func - The function declaration to add.
 //
 // Result:
-//   None.
+//   True if the function was successfully added, false otherwise.
 //
 // Side effects:
-//   The function declaration is added to the environment.
+//   The function declaration is added to the environment. If the function
+//   could not be added to the environment, an error message is printed to
+//   standard error describing the problem.
 
-void FblcAddFunc(FblcEnv* env, FblcFunc* func)
+bool FblcAddFunc(FblcEnv* env, FblcFunc* func)
 {
+  if (FblcLookupType(env, func->name.name) != NULL
+      || FblcLookupFunc(env, func->name.name) != NULL) {
+    FblcReportError("Multiple declarations for %s.\n",
+       func->name.loc, func->name.name);
+    return false;
+  }
   FuncEnv* funcs = GC_MALLOC(sizeof(FuncEnv));
   funcs->decl = func;
   funcs->next = env->funcs;
   env->funcs = funcs;
+  return true;
 }

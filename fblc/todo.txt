@@ -1,9 +1,5 @@
 
 * Add a static pass to type check an environment.
-  - Don't allow FblcAddType or FblcAddFunc to work if a type or func with that
-    name is already declared. (first figure out locations though, so I can
-    report a good error message). Thus, maintain an invariant that the
-    environment has uniquely named declarations.
 * Always return nice error messages to the user, don't just fail an assertion.
 * Be able to parse from a string as well as a file.
   - Then add a '-e' option to fblc to specify an arbitrary expression to

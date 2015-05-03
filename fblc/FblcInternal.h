@@ -113,12 +113,15 @@ typedef struct {
   FblcField argv[];
 } FblcFunc;
 
+// An environment contains all the type and function declarations for a
+// program. All names used for types and functions must be unique. This is
+// enforced during the construction of the environment.
 typedef struct FblcEnv FblcEnv;
 FblcEnv* FblcNewEnv();
 FblcType* FblcLookupType(const FblcEnv* env, FblcName name);
 FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name);
-void FblcAddType(FblcEnv* env, FblcType* type);
-void FblcAddFunc(FblcEnv* env, FblcFunc* func);
+bool FblcAddType(FblcEnv* env, FblcType* type);
+bool FblcAddFunc(FblcEnv* env, FblcFunc* func);
 
 // FblcTokenizer
 #define FBLC_TOK_EOF -1
