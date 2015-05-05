@@ -1,57 +1,556 @@
-Abstract Syntax Reference
--------------------------
-vname ::= A variable name.
-fname ::= A field name.
-pname ::= A name of a port.
-dname ::= A name of a declared type, function, or process.
+The Fable of Calvisus
+=====================
+Richard Uhler <ruhler@degralder.com>
+May 2015
 
-expr ::= var <vname>                                  x
-      |  app <dname> <expr> [<expr> ...]              f(a, b, ...)
-      |  access <expr> <fname>                        x.y
-      |  union <dname> <fname> <expr>                 Maybe:Just(x)
-      |  let <dname> <vname> <expr> <expr>            Foo x = y; z(x)
-      |  cond <expr> <expr> [<expr> [...]]            x ? (a, b, ...)
-      ;                                               { x }
+Introduction
+------------
+What is Calvisus
+~~~~~~~~~~~~~~~~
+Calvisus is a computer programming language from the Fable collection. It is a
+simple, Turing-complete language for interactive programs built on top of a
+core Turing-complete functional language for general data manipulation and
+compilation tasks.
 
-proc ::= get <pname>                                  x()
-      |  put <pname> <expr>                           x(y)
-      |  nop                                          
-      |  return <expr>
-      |  call <dname> [<pname> [...]] [<pname> [...]] [<expr> [...]] [<expr> [...]]
-                                                      f[a, b, ...; c, d, ...](e, f, ...)
-      |  let <vdecl> [<vdecl> [...]] <proc>           Foo x = y, Bar z = w, ...; p
-      |  link <dname> <pname> <pname> <proc>          [Foo< x; Foo> y]; p
-      |  pcond <expr> <proc> [<proc> [...]]           x ? (a, b, ...)
-      ;                         
+For those familiar with the Bathylus language, Calvisus extends Bathylus with
+support for interactive processes.
 
-vdecl ::= def <dname> <vname> <proc>                  Foo x = y
-       |  nodef <proc>                                y
-       ;
+This document defines and explains the Calvisus programming language.
 
-field ::= field <dname> <fname>                       Foo x
-vfield ::= vfield <dname> <vname>                     Foo x
+Organization of this Document
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This document is intended to serve both as a guided explanation of the
+Calvisus language and as a complete reference specification for the language.
+It starts with a discussion of how data is represented in Calvisus, followed
+by a discussion of how computation on data is described, that in turn is
+followed by a discussion of how interactive processes are described. Bits and
+pieces of the language syntax are described throughout the document. A
+complete syntax reference is available in the appendix, with links to the
+description of the corresponding terms.
 
-decl ::= struct <dname> [<field> [...]]               struct Foo(Bar x, ...);
-      |  union <dname> [<field> [...]]                union Foo(Bar x, ...);
-      |  funct <dname> <vfield> [<vfield> [...]] <dname> <expr>
-                                                      func f(Bar x, Sludge y; Blah) e;
-      |  proc <dname> [<field> [...]] [<field> [...]] [<field> [...]] [<dname>] <proc>
-                                                      proc f[Foo< a, Bar< b; Bar> c](Bar x, Sludge y; Blah) p;
-                                                or    proc f[Foo< a, Bar< b; Bar> c](Bar x, Sludge y; ) p;
-      ;                                               { p }
+A Note about Concrete Syntax
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This document defines a concrete syntax for the Calvisus language and uses
+that syntax in code examples. This is not intended to suggest the concrete
+syntax is a fundamental part of the language. Much more important is the
+abstract syntax and the interpretation of the abstract syntax presented here.
+Never-the-less, concrete syntax is invaluable for the purposes of
+illustration, so a simple, C-like concrete syntax is presented here as the
+Calvisus language, rather than describing the language in terms solely as
+abstract syntax, or a mix of concrete and abstract syntax, which would be
+confusing.
 
+Data
+----
+The representation and manipulation of data is a central part of the Calvisus
+language. Data in Calvisus is organized using structures and unions.
+Structures represent a grouping of data items, and unions represent a choice
+among data items.
+
+A Note about Assumed Types for Illustration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unlike many programming language, Calvisus has no primitive data types. All
+types are made up solely of structures and unions. For the purposes of
+illustration, it is useful to assume some types have already been defined.
+Assume int is the type of signed 32-bit integers with constructors 1(), 2(),
+and so on, char is the type of characters, and bool is the type of boolean
+values with constructors True() and False(). We will show later how these
+types and constructors can be defined using structures and unions.
+
+Structures
+~~~~~~~~~~
+A structure is a bundle (or grouping) of data values. The items of a structure
+are organized into a finite number of fields. Each field has a name, used to
+identify the field, and a type, specifying the type of data value for that
+field.
+
+For example, a two-dimensional Cartesian coordinate would be represented as a
+structure with two fields, an 'x' component, and a 'y' component.
+
+Declaration
+^^^^^^^^^^^
+Syntax:  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+
+Assuming the 'int' type has been defined, the coordinate structure could be
+defined using the following syntax:
+
+-----------
+struct Coord(int x, int y);
+-----------
+
+The Coord struct type has two fields, 'int x', and 'int y'. In general, a
+struct type can have any non-negative, fixed number of fields.
+
+A field can have any type that is defined somewhere in the program. For
+example, the following shows a contrived struct type with fields of
+different type:
+
+-----------
+struct Crazy(int a, bool b, bool c, char d);
+-----------
+
+A struct may contain fields of that struct type itself, or other structs that
+depend on the struct type being defined in a mutually recursive way.
+Recursively defined data types are used to represent data that is unbounded in
+size. We will show examples of useful recursively defined data types after
+unions have been introduced.
+
+Each field of a struct type must have a different name. For example, the
+following is not a legal struct type definition:
+
+--------------
+struct Foo(int x, bool x);
+--------------
+
+The order of fields is important, because it is the order that will be used
+when construction values of the type.
+
+Two struct types with different names may have the same fields.
+These struct types are considered different, incompatible types.
+
+A struct declaration is valid if the following conditions hold:
+1. All field names in the struct declaration are unique.
+2. The type of each field refers to a type defined in the program.
+
+It is legal for a struct to be defined that has no fields. This is useful as
+the foundation on which all other types are built and is commonly called the
+'Unit' type:
+
+--------------
+struct Unit();
+--------------
+
+Construction
+^^^^^^^^^^^^
+Syntax:  tname '(' [value [',' value [...]]] ')'
+        | ...
+
+A structure value is constructed by specifying the contents of each component
+of the structure in the order in which the fields of the structure type are
+declared. For example, the following syntax shows how to construct a value of
+type Coord with x component 5 and y component 6:
+
+-------
+Coord(5(), 6())
+-------
+
+Construction of a structure is valid if the following conditions hold:
+1. The number of arguments to the constructor must match the number of fields
+declared for the structure.
+2. The type of each argument must match the type of the corresponding field
+declared for the structure.
+
+The resulting value is a value of the structure type.
+
+Field Access
+~~~~~~~~~~~~
+Syntax:  value '.' fname
+        
+The fields of a structure are accessed using the dot notation. For example,
+if coord is the value of type Coord constructed with 'Coord(5(), 6())', then
+'coord.x' is the value of type int representing the x coordinate (5), and
+'coord.y' is the value of type int representing the y coordinate (6).
+
+More generally, a value of a structure type followed by a '.' then a field
+name, refers to the value of the field of the structure with that name.
+
+The following is required for a field access to be valid:
+1.  The field name must refer to a field declared to be part of the structure.
+
+The resulting value is a value of the type for the field being accessed.
+
+Unions
+~~~~~~
+The union type is used to describe a choice among named values of different
+type.
+
+Declaration
+~~~~~~~~~~~
+Syntax: 'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+
+The simplest case of a union type is an enumeration:
+
+----------
+union Fruit(Unit apple, Unit banana, Unit kiwi);
+----------
+
+A value of type 'Fruit' can be one of 'apple', 'banana', or 'kiwi'. More
+generally, the choices for a data value may have non-trivial data associated
+with them. A value of a union is tagged with a particular field name. For
+example, consider the definition of a calculator instruction type. Perhaps the
+calculator has binary operations Add and Subtract, a unary Negate operation,
+and a Clear operation. The calculator instruction type could be defined as:
+
+-------------
+struct Unary(int a);
+struct Binary(int a, int b);
+union CalcInstr(Binary add, Binary sub, Unary negate, Unit clear);
+-------------
+
+When a value of type CalcInstr is tagged with the field 'add', the Binary
+value corresponding to the 'add' field, with operands 'a' and 'b', can be
+accessed. If instead the value was tagged with the field 'negate', the Unary
+value with operand 'a' can be accessed, and so on.
+
+As with structures, union types with different names are considered distinct
+and incompatible.
+
+A union declaration is valid if the following conditions hold:
+1. All field names in the union declaration are unique.
+2. The type of each field refers to a type defined in the program.
+3. The union type must have at least one field.
+
+Rationale for (3): If a union type has no fields, there is no way to construct
+a value of that type. More importantly, a union type with no fields would lead
+to an ambiguous type for conditional expressions if used as the condition,
+and we would much prefer not to have ambiguous types.
+
+Construction
+~~~~~~~~~~~~
+Syntax: tname ':' fname '(' value ')'
+
+A value of a union type is constructed by providing the name of the field to
+tag the union with and the value to use for that field. For example, a
+value of type Fruit which is a banana is described using
+'Fruit:banana(Unit())', and a calculator instruction for subtracting 2 from 6
+is described using 'CalcInstr:subtract(Binary(6(), 2()))'.
+
+The following is required for a valid union construction:
+1. The union type must have a field with the given field name.
+2. The type of the argument value must match the type of the named field in
+the declaration of the union.
+
+The resulting value is a value of the union type.
+
+Field Access
+~~~~~~~~~~~~
+Syntax: value '.' fname
+
+Field access can be used for unions to access fields using the same syntax as
+field access for structures. The key difference is a field access is
+considered illegal and produces undefined results if the union is not
+tagged with that field. For example, given a calculator instruction
+6_minus_2 formed with 'CalcInstr:subtract(Binary(6(), 2()))',
+'6_minus_2.subtract' is a well defined value of type Binary. On the other
+hand, '6_minus_2.negate' is illegal and produces undefined behavior, because
+the CalcInstr value is not tagged with the 'negate' field.
+
+As with field access for structures, the following is required for a field
+access to be valid:
+1. The field name must refer to a field declared to be part of the union.
+
+At runtime, the following addition condition is required to avoid undefined
+behavior:
+2. The field name must match the tag on the union value.
+
+The resulting value is a value of the type for the field being accessed.
+
+A Note on Undefined Behavior
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+An implementation may do what it likes in the case of undefined behavior. It
+could return an arbitrary result and continue computing, it could halt
+computation with an error message, or anything else. The user must not rely on
+undefined behavior, compilers should try to warn whenever possible about
+undefined behavior detected in programs, and interpreters should offer a debug
+mode that explicitly halts the program and reports undefined behavior when it
+occurs.
+
+There is some concern about having undefined behavior, because of the fear
+that the actual behavior of the dominant interpreter/compiler will come to be
+relied on, and hence defined. We could force the user to define the behavior
+explicitly, but that would clutter the code, they probably wouldn't have a
+good way to define the behavior anyway, and it could hurt performance.  For
+that reason, we say the behavior is undefined.
+
+Conditional
+~~~~~~~~~~~
+Syntax: value '?' '(' [value [',' value [...]]] ')'
+
+A conditional is used to select a value or other object based on the tagged
+field of a union. For example, assuming instr is a value of type CalcInstr,
+and that 'add', 'sub', and 'neg' are functions for performing addition,
+subtraction, and negation of integers respectively, the following represents a
+value of type 'int' containing the result of executing the calculator
+instruction:
+
+------------------
+  instr ? (add(instr.add.a, instr.add.b),
+           sub(instr.sub.a, instr.sub.b),
+           neg(instr.negate.a),
+           0())
+------------------
+
+In this example, 'instr' is called the condition of the conditional. What
+comes after the question mark are called the arguments of the conditional.
+
+If the tag of the union value refers to the first field in the union
+declaration, the conditional takes the value of its first argument.  If the
+tag of the union value refers to the second field in the union declaration,
+the conditional takes the value of its second argument, and so on.
+
+A conditional is considered valid if the following conditions hold:
+1. The condition of the conditional must have a union type.
+2. The number of arguments to the conditional must match the number of fields
+in the union type.
+3. Every argument must have the same type.
+
+The result is an object of the same type as the arguments.
+
+Space and Performance of Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A programmer should assume the following about the space and performance of
+data for a decent implementation of the Calvisus language:
+* The size of a struct value is big-O of the sum of the size of the fields
+  values of the struct value.
+* The size of a union value is big-O of the largest field of the union value
+  plus log the number of fields in the union.
+* A struct value takes O(N) time in the number of fields to construct.
+* A union value takes O(log(N)) time in the number of fields to construct.
+* Struct and union values are cheap to copy.
+* Field access is done in O(log(N)) the number of fields of the value. In
+  practice this is basically constant time, because we don't expect there to
+  be that many fields.
+* Conditionals are done in O(log(N)) the number of fields of the value. In
+  practice this basically constant time, because we don't expect there to be
+  that many fields.
 
 Value Output Syntax
--------------------
+~~~~~~~~~~~~~~~~~~~
+This section specifies a concrete syntax for describing struct and union
+values. It consists of solely constructors for struct and union values.
+
+--------------------
 dname ::= A name of a declared type.
 fname ::= A field name.
 
 value ::= dname ':' fname '(' <value> ')'
        |  dname '(' [<value> [<value> ..]] ')'
        ;
+--------------------
 
 A value is output as a stream of characters using the above syntax, with no
 whitespace. This produces a unique output for a given data value, in a format
 that is valid syntax for an expression of the same type as the value that
 produces the value when executed.
 
+
+XXXXXXXXXXXXXXXXXXXXXXX
+
+
+Functions
+---------
+Functions describe transformations of data. This is where computation takes
+place. A function takes a finite set of typed values as inputs and produces a
+single typed value as a result, using the methods for manipulating data values
+already discussed.
+
+Declaration
+~~~~~~~~~~~
+  decl ::= 'funct'  tname '('
+              [tname vname [',' tname vname [...]]] ';' tname ')' '{' 
+                vdecl [vdecl [...]]
+                'return' '(' expr ')' ';'
+           '}'
+        | ...
+
+For example, here is a function that returns the number of arguments a
+calculator instruction contains:
+
+-----------------
+funct NumArgs(CalcInstr instr; int) = {
+  @ (instr ? (2, 2, 1, 0));   [TODO: Numeric literals not supported]
+}
+-----------------
+
+The inputs and output are separated by a semicolon in the argument list. The
+output is unnamed.
+
+Variables [TODO: This is out of date! Use let expressions instead]
+^^^^^^^^^
+  vdecl ::= tname vname '=' expr ';' ;
+        | ...
+  expr ::= vname
+        | ...
+
+The body of a function may also contain variable declarations. These declare
+variables with value equal to the expression they are declared with. For
+example:
+
+-------------
+struct FullAdderOut(Bit z, Bit cout);
+
+funct FullAdder(Bit a, Bit b, Bit cin; FullAdderOut) {
+  Bit 0 = Bit:0(Unit());
+  Bit 1 = Bit:1(Unit());
+  Bit z = a ? (0: b ? (0: c, 1: c ? (0: 1, 1: 0)),
+               1: b ? (0: c ? (0: 1, 1: 0), 1: c));
+  Bit cout = a ? (0: b ? (0: 0, 1: c),
+                  1: b ? (0: c, 1: 1));
+  return(FullAdderOut(z, cout));
+}
+-------------
+
+Each variable within a function must have a unique name. The type of the
+variable must equal the type of the expression the variable is declared with.
+
+Function Call
+~~~~~~~~~~~~~
+    expr ::= tname '(' [expr [',' expr [...]]] ')'
+
+A function can be called by passing arguments after the name. For example:
+
+------------
+int numargs = NumArgs(instr);
+------------
+
+The number of arguments passed must match the number and type of input
+arguments declared in the function declaration.
+
+Program
+-------
+  prog ::= decl [decl [...]] ;
+
+A program is a collection of type and function declarations. An interpreter or
+compiler should have an implementation-specific mechanism for selecting the
+main function to interpret or compile.
+
+Evaluation [TODO: merge this into the Functions section]
+----------
+Evaluation is reasoned about using a sequential interpretation.
+
+Expression evaluation computes a value from an expression.
+Because Bathylus is Turing-complete, expression evaluation may fail to
+terminate. If expression evaluation fails to terminate, no value is returned.
+Otherwise a value is returned and there are no other side effects.
+
+Struct Expression
+~~~~~~~~~~~~~~~~~
+  expr ::= tname '(' [expr [',' expr [...]]] ')'
+        | ...
+
+When tname is the name of a declared struct type, this expression first
+evaluates all arguments to values, then forms a struct value by setting the
+corresponding fields of the struct to the argument values.
+
+Because expression evaluation either returns a value without side effects, or
+results in non-terminating computation, it does not matter what order
+evaluation of the arguments is performed.
+
+Application
+~~~~~~~~~~~
+  expr ::= tname '(' [expr [',' expr [...]]] ')'
+        | ...
+
+When tname is the name of a declared function, this expression first
+evaluates all arguments to values, then calls the named function, using the
+argument values in place of the named argument variables in the function.
+Functions are lexically scoped; no variables in the current scope are visible
+while executing the body of the called function.
+
+Because expression evaluation either returns a value without side effects, or
+results in non-terminating computation, it does not matter what order
+evaluation of the arguments is performed.
+
+Union Expression
+~~~~~~~~~~~~~~~~
+  expr ::= tname ':' fname '(' expr ')'                 (* union *)
+        | ...
+
+This expression computes the value for the given expr, then forms a union
+value of the given type, whose contents are set for the given field and
+computed value.
+
+Var Expression
+~~~~~~~~~~~~~~
+  expr ::= vname                                        (* variable *)
+        | ...
+
+Returns the value of the variable with given name in scope.
+
+Let Expression
+~~~~~~~~~~~~~~
+  vdecl ::= tname vname '=' expr ';' ;
+
+  expr :: = '{' [vdecl [vdecl [...]]] '@' expr ';' '}'   (* let *)
+        | ...
+
+Each variable declaration is evaluated in turn. First the variable
+declaration's expression is evaluated to a value. Then the scope is updated
+such that the variable name points to the evaluated value. Each subsequent
+variable declaration has access to the variables declared in previous
+declarations. Finally, the final expression is evaluated to a value in the
+scope of the preceding variable declarations and that value is returned.
+
+Evaluation fails to terminate if any of the expression fail to terminate.
+
+Field Access
+~~~~~~~~~~~~
+  expr ::= expr '.' fname                               (* access *)
+        | ...
+
+First the expression is evaluated to a value. Then the named field is read
+from it. If the value is a union that contains a different field, then the
+behavior is undefined.
+
+Case Expression
+~~~~~~~~~~~~~~~
+  expr ::= expr '?' '(' expr [',' expr [...]] ')'       (* case *)
+        | ...
+
+Evaluate the argument to a value. Select the branch to evaluate based on the
+tag of the evaluated argument. Then evaluate the selected branch. This has
+undefined behavior only if evaluation of the argument has undefined behavior or
+evaluation of the selected branch has undefined behavior. It will not have
+undefined behavior if only evaluation of unselected branches would have
+undefined behavior.
+
+Syntax Reference
+----------------
+prog ::= decl [decl [...]] ;
+
+decl ::= 'struct' tname ['(' [tname fname [',' tname fname [...]]] ')'] ';'
+      |  'union'  tname ['(' [tname fname [',' tname fname [...]]] ')'] ';'
+      |  'funct'  tname '(' [tname vname [',' tname vname [...]]] ';' tname ')'
+            ['=' expr] ';'
+      ;
+
+vdecl ::= tname vname '=' expr ';' ;
+
+expr ::= tname '(' [expr [',' expr [...]]] ')'        (* struct / application *)
+      |  tname ':' fname '(' expr ')'                 (* union *)
+      |  vname                                        (* variable *)
+      |  '{' [vdecl [vdecl [...]]] '@' expr ';' '}'   (* let *)
+      |  expr '.' fname                               (* access *)
+      |  expr '?' '(' expr [',' expr [...]] ')'       (* case *)
+
+fname ::= name    (* A name of a field *)
+tname ::= name    (* A name referring to a type or function *)
+vname ::= name    (* A name referring to a value *)
+
+
+TODO
+----
+* Make it clear that, though we give a concrete syntax, that's only for
+  illustration purposes. For example, you don't need to use a string of
+  characters for an identifier, you could use whatever you want.
+* Add a section on functions.
+* Mention for struct and union constructors that the arguments are all
+  evaluated first, which matters for undefined behavior and infinite
+  recursion.
+* Separate 'Undefined Behavior' into a different section, so it can easily
+  encompass both illegal union member access and non-terminating computation?
+* Note for undefined behavior that it's NP-hard to statically check for
+  illegal union member access in the finite case, and it's undecidable to
+  statically test for in the recursive case?
+* update the section on Functions and Evaluation given that we have let
+  expressions instead of function bodies now.
+
+New TODO
+--------
+* Add a section describing how we describe syntax?
+* Add a section talking about lexicography? Namely that tokens are punctuation
+  or words and that whitespace is a token delimiter.
+* Add those examples of recursive data types I promised but haven't included
+  yet.
+* Show how the types bool, char, and int can be defined in the Unions
+  section.

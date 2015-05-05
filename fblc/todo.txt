@@ -16,5 +16,6 @@
 * Write a man page for fblc?
 * Write a vim syntax for fblc?
 * Add code coverage to the build?
+* Write tests to get 100% code coverage, or reasonably close.
 * Start work on a calculator program as a basic test for processes.
 

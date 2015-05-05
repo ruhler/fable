@@ -19,7 +19,7 @@ understanding the monomorphism restriction in Haskell are just a few examples.
 
 This complexity makes it difficult for developers to understand the
 correctness and performance implications of the code they write. Implementing
-one of these languages is a daunting task, let along implementing them
+one of these languages is a daunting task, let alone implementing it
 efficiently. Even a relatively simple language like C depends on an array of
 system calls to understand the behavior of a program.
 
@@ -45,7 +45,9 @@ Androcles:: A functional language for finite computations well suited to tasks
 that could be solved in digital hardware with combinational logic.
 
 Bathylus:: A Turing-complete functional language based on Androcles suited for
-general data manipulation and compilation tasks.
+general data manipulation and compilation tasks. Bathylus extends the
+Androcles language with recursive data types and functions.
 
 Calvisus:: A Turing-complete language for interactive programs and processes.
+Calvisus extends the Bathylus language with processes.
 
