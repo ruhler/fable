@@ -1,7 +1,7 @@
 
 .PHONY: all
 all:
-	ninja
+	tclsh build.tcl
 
 .PHONY: clean
 clean:

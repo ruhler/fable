@@ -17,5 +17,22 @@
 * Write a vim syntax for fblc?
 * Add code coverage to the build?
 * Write tests to get 100% code coverage, or reasonably close.
+  - Call a function in non-tail form.
+  - Use a nested let expression
+  - Perform a (valid) field access on a union value.
+
+  - have an error in the object expression for an access expression.
+  - have an error in the value expression for a union literal.
+  - have a struct field refer to a non-existant type.
+  - have a function argument refer to a non-existant type.
+  - have a function result refer to a non-existant type.
+  - define a union type with no fields.
+  - syntax errors:
+    +  missing field name in struct declaration or function call.
+    +  Missing '(' after the '?' in a conditional
+    +  Missing ')' after an argument list.
+    +  Parse error in conditional args list.
+    +  Missing field in access expression.
+* Organize and rename malformed tests based on the specification?
 * Start work on a calculator program as a basic test for processes.
 

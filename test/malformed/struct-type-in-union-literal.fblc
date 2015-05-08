@@ -1,0 +1,9 @@
+
+struct Unit();
+union Fruit(Unit banana, Unit pear, Unit apple);
+struct Foo(Unit bar, Unit sludge);
+
+func main( ; Fruit) {
+  Foo:bar(Unit()) ? (Fruit:banana(Unit), Fruit:pear(Unit));
+};
+
