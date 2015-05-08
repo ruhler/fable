@@ -19,5 +19,5 @@ foreach {x} [glob test/malformed/*.fblc] {
 exec gcov {*}[glob out/*.o] > out/fblc.gcov
 exec mv {*}[glob *.gcov] out
 
-puts DONE
+puts [exec tail -n 1 out/fblc.gcov]
 
