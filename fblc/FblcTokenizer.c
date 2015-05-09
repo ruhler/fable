@@ -149,6 +149,16 @@ static void AdvanceTokenStream(FblcTokenStream* toks)
   int c;
   do {
     c = GetChar(toks);
+    if (c == '/') {
+      int c2 = GetChar(toks);
+      if (c2 == '/') {
+        do {
+          c = GetChar(toks);
+        } while (c != EOF && c != '\n');
+      } else {
+        UnGetChar(toks, c2);
+      }
+    }
   } while (isspace(c));
   toks->token_column = toks->stream_column;
 

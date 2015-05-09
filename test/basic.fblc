@@ -22,6 +22,7 @@ func Adder(Bit4 a, Bit4 b, Bit cin; AdderOut) {
   AdderOut(Bit4(x0.z, x1.z, x2.z, x3.z), x3.cout);
 };
 
+// Expected: AdderOut(Bit4(Bit:0(Unit()),Bit:0(Unit()),Bit:0(Unit()),Bit:1(Unit())),Bit:0(Unit()))
 func main( ; AdderOut) {
   Bit 0 = Bit:0(Unit());
   Bit 1 = Bit:1(Unit());

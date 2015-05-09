@@ -639,6 +639,7 @@ New TODO
 * Add a section describing how we describe syntax?
 * Add a section talking about lexicography? Namely that tokens are punctuation
   or words and that whitespace is a token delimiter.
+* Add a section saying we support // style comments.
 * Add those examples of recursive data types I promised but haven't included
   yet.
 * Show how the types bool, char, and int can be defined in the Unions
