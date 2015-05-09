@@ -1,0 +1,8 @@
+
+struct Unit();
+union Fruit(Unit apple, Unit banana);
+struct A(Unit x, Unit y);
+
+func main( ; Fruit) {
+  A(Unit(), Unit()) ? (Fruit:banana(Unit()), Fruit:apple(Unit()));
+};

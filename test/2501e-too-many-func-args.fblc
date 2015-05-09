@@ -1,0 +1,13 @@
+
+// Test for calling a function with too many arguments.
+
+struct Unit();
+
+func f(Unit x; Unit) {
+  x;
+};
+
+/// Expect: ERROR
+func main( ; Unit) {
+  f(Unit(), Unit());
+};

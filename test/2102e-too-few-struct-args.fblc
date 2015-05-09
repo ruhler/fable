@@ -1,0 +1,10 @@
+
+struct Unit();
+struct Donut();
+struct A(Unit x, Donut y);
+
+/// Expect: ERROR
+func main( ; A) {
+  // There should be two arguments provided, not one.
+  A(Unit());
+};

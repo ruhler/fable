@@ -1,0 +1,8 @@
+
+struct Unit();
+union Fruit(Unit apple, Unit banana);
+
+/// Expect: ERROR
+func main( ; Fruit) {
+  Fruit(Unit(), Unit());
+};

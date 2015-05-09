@@ -1,0 +1,14 @@
+
+// Test for calling a function with a malformed argument.
+
+struct Unit();
+
+func f(Unit x; Unit) {
+  x;
+};
+
+/// Expect: ERROR
+func main( ; Unit) {
+  // The variable 'x' has not been declared.
+  f(x);
+};

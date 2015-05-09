@@ -4,3 +4,5 @@
   formed' (where by well formed, I mean well formed and well typed and all
   that goodness).
 
+* Is it an error if there is an error in unreachable code?
+  Answer should probably be yes, and I should make this explicit.

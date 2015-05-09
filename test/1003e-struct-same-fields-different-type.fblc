@@ -4,8 +4,8 @@
 
 struct Unit();
 
-struct A(Unit() x, Unit() y);
-struct B(Unit() x, Unit() y);
+struct A(Unit x, Unit y);
+struct B(Unit x, Unit y);
 
 /// Expect: ERROR
 func main( ; A) {

@@ -1,0 +1,10 @@
+
+struct Unit();
+struct A(Unit x, Unit y);
+union Foo(Unit bar, A sludge);
+
+/// Expect: ERROR
+func main( ; Unit) {
+  // The variable 'x' has not  been declared.
+  Foo:bar(x).bar;
+};

@@ -57,46 +57,4 @@ Prog              4000-4099
 
 TODO
 ~~~~
-
-Here are some more tests to write or port to the new system:
-
-duplicate-struct-field.fblc   // STRUCT DECL
-no-such-type.fblc             // FUNC DECL
-
-no-such-var.fblc              // VAR
-no-such-tag.fblc                  // UNION
-struct-type-in-union-literal.fblc // UNION
-no-such-func.fblc             // APP
-no-such-field.fblc            // ACCESS
-inconsistent-cond-type.fblc   // COND
-too-few-cond-args.fblc        // COND
-bad-assign-type.fblc          // LET
-
-too-few-func-args.fblc
-too-few-struct-args.fblc
-too-few-union-args.fblc
-too-many-cond-args.fblc
-too-many-func-args.fblc
-too-many-struct-args.fblc
-too-many-union-args.fblc
-undefined-type-in-union-literal.fblc
-union-type-as-function.fblc
-var-shadow-arg.fblc
-var-shadow-var.fblc
-wrong-type-cond-select.fblc
-wrong-type-func-args.fblc
-wrong-type-func-return.fblc
-wrong-type-struct-args.fblc
-wrong-type-union-args.fblc
-  - have an error in the object expression for an access expression.
-  - have an error in the value expression for a union literal.
-  - have a struct field refer to a non-existant type.
-  - have a function argument refer to a non-existant type.
-  - have a function result refer to a non-existant type.
-  - define a union type with no fields.
-  - syntax errors:
-    +  missing field name in struct declaration or function call.
-    +  Missing '(' after the '?' in a conditional
-    +  Missing ')' after an argument list.
-    +  Parse error in conditional args list.
-    +  Missing field in access expression.
+Write more tests.

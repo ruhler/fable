@@ -1,0 +1,8 @@
+
+struct Unit();
+struct A(Unit x, Donut y);
+
+/// Expect: ERROR
+func main( ; Unit) {
+  Unit();
+};

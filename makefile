@@ -6,3 +6,8 @@ all:
 .PHONY: clean
 clean:
 	rm -rf out/
+
+.PHONY: checkerr
+checkerr: all
+	cat out/????e-*.got
+

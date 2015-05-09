@@ -17,6 +17,9 @@
 * Write a vim syntax for fblc?
 * Add code coverage to the build?
 * Write tests to get 100% code coverage, or reasonably close.
+  - Manually review reported errors for 'e' test cases to make sure the test
+    case works and the error reported is correct.
+    (any better way to automate this kind of testing?)
 * Organize and rename malformed tests based on the specification?
 * Start work on a calculator program as a basic test for processes.
 

@@ -1,0 +1,11 @@
+
+struct Unit();
+
+func f(Unit x, Donut y; Unit) {
+  x;
+};
+
+/// Expect: ERROR
+func main( ; Unit) {
+  Unit();
+};

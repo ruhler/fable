@@ -1,0 +1,8 @@
+
+struct Unit();
+struct A(Unit x, Unit y);
+
+func main( ; Unit) {
+  // The variable 'x' has not been declared.
+  x.y;
+};

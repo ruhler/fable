@@ -1,0 +1,14 @@
+
+// Test for calling a function with an argument of the wrong type.
+
+struct Unit();
+struct Donut();
+
+func f(Unit x; Unit) {
+  x;
+};
+
+/// Expect: ERROR
+func main( ; Unit) {
+  f(Donut());
+};

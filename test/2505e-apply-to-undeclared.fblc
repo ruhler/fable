@@ -1,0 +1,7 @@
+
+struct Unit();
+
+func main( ; Unit) {
+  // The function 'foo' has not been declared.
+  foo(Unit());
+};

@@ -1,0 +1,10 @@
+
+struct Unit();
+
+func foo(Unit x ; Donut) {
+  Donut();
+};
+
+func main( ; Unit) {
+  Unit();
+};
