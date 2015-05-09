@@ -88,10 +88,6 @@ wrong-type-func-args.fblc
 wrong-type-func-return.fblc
 wrong-type-struct-args.fblc
 wrong-type-union-args.fblc
-  - Call a function in non-tail form.
-  - Use a nested let expression
-  - Perform a (valid) field access on a union value.
-
   - have an error in the object expression for an access expression.
   - have an error in the value expression for a union literal.
   - have a struct field refer to a non-existant type.
