@@ -1,4 +1,7 @@
 
+// Test that two struct types that are declared with the same fields are still
+// treated as different, incompatible types.
+
 struct Unit();
 
 struct A(Unit() x, Unit() y);
