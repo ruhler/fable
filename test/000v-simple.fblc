@@ -1,0 +1,10 @@
+
+// The simplest test case possible. This is used to test the test
+// infrastructure.
+
+struct Unit();
+
+/// Expect: Unit()
+func main( ; Unit) {
+  Unit();
+};

@@ -1,0 +1,9 @@
+
+struct Unit();
+struct BadStruct(Unit() x, Unit() x);
+
+/// Expect: ERROR
+func main( ; Unit) {
+  BadStruct(Unit(), Unit());
+};
+

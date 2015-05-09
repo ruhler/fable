@@ -9,11 +9,19 @@ foreach {x} [glob fblc/*.c] {
 }
 exec gcc {*}$FLAGS -o out/fblc -lgc {*}[glob out/*.o]
 
-exec ./out/fblc test/basic.fblc > out/test/basic.got
-exec diff out/test/basic.got test/basic.wnt
+# Well formed tests:
+foreach {x} [glob test/???v-*.fblc] {
+  set fgot out/[string map {.fblc .got} [file tail $x]]
+  set fwnt out/[string map {.fblc .wnt} [file tail $x]]
+  exec ./out/fblc $x > $fgot
+  exec grep "/// Expect: " $x | sed -e "s/\\/\\/\\/ Expect: //" > $fwnt
+  exec diff $fgot $fwnt
+}
 
-foreach {x} [glob test/malformed/*.fblc] {
-  exec ./out/fblc --expect-error $x 2> out/$x.out
+# Malformed tests:
+foreach {x} [glob test/???e-*.fblc] {
+  set fgot out/[string map {.fblc .got} [file tail $x]]
+  exec ./out/fblc --expect-error $x 2> $fgot
 }
 
 exec gcov {*}[glob out/*.o] > out/fblc.gcov

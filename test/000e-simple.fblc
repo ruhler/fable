@@ -1,0 +1,4 @@
+
+// A simple malformed test case.
+/// Expect: ERROR
+blah who ha yeah. This is a really, really bad Fblc program.

@@ -1,0 +1,9 @@
+
+struct Unit();
+struct Donut();
+struct WithMultipleFields(Unit x, Donut y);
+
+/// Expect: WithMultipleFields(Unit(),Donut())
+func main( ; WithMultipleFields) {
+  WithMultipleFields(Unit(),Donut());
+};

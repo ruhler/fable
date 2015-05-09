@@ -1,0 +1,10 @@
+
+struct Unit();
+struct Donut();
+struct BadStruct(Unit() x, Donut() x);
+
+/// Expect: ERROR
+func main( ; BadStruct) {
+  BadStruct(Unit(), Donut());
+};
+
