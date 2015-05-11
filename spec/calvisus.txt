@@ -439,7 +439,7 @@ struct type.
 3. Each argument must be well formed and have a type that matches the type of
 the corresponding field in the struct declaration.
 
-Type type of the expression is the named struct type.
+The type of the expression is the named struct type.
 
 Union Expression
 ^^^^^^^^^^^^^^^^
@@ -459,10 +459,47 @@ For a union expression to be well formed, the following must hold:
 3. expr must be a well formed expression whose type matches the type of the
 named field.
 
+The type of the expression is the named union type.
+
 Field Access Expression
 ^^^^^^^^^^^^^^^^^^^^^^^
 Syntax: expr '.' fname
 
+The field access expression is used to access data from a struct or union.
+First the argument expression, sometimes referred to as the object of the
+access, is evaluated to a value. Then the named field of the value is
+accessed.
+
+A field access expression will finish evaluating only if its object expression
+finishes evaluating. If the object is of union type, the behavior is undefined
+if the field being accessed does not match the tag of the union value. This is
+another case in which a field access expression does not finish evaluating.
+
+The following must hold for the field access expression to be well formed:
+1. The object expression must be well formed and have some type T.
+2. The field name must be a field of the Type T.
+
+The type of the expression is the type for the named field in T.
+
+Note that it is infeasible in general to determine statically whether a field
+access for a union type may result in undefined behavior at runtime. Where
+possible, it is encouraged for implementations to warn about potential
+undefined behavior determined statically.
+
+Conditional Expression
+^^^^^^^^^^^^^^^^^^^^^^
+Syntax: expr ? (expr [, expr [...]])
+
+The conditional expression uses the tag of a union value to select among
+possible expressions. First the condition is evaluated to a union value.
+
+A conditional expression is well formed if the following hold:
+1. The condition expression is of union type.
+2. The number of arguments match the number of fields in the union type of the
+condition argument.
+3. Each argument must have the same type.
+
+The type of the condition expression is the same as the type of the arguments.
 
 %%%%%%%%%%%
 
@@ -540,22 +577,6 @@ Because expression evaluation either returns a value without side effects, or
 results in non-terminating computation, it does not matter what order
 evaluation of the arguments is performed.
 
-Union Expression
-~~~~~~~~~~~~~~~~
-  expr ::= tname ':' fname '(' expr ')'                 (* union *)
-        | ...
-
-This expression computes the value for the given expr, then forms a union
-value of the given type, whose contents are set for the given field and
-computed value.
-
-Var Expression
-~~~~~~~~~~~~~~
-  expr ::= vname                                        (* variable *)
-        | ...
-
-Returns the value of the variable with given name in scope.
-
 Let Expression
 ~~~~~~~~~~~~~~
   vdecl ::= tname vname '=' expr ';' ;
@@ -571,15 +592,6 @@ declarations. Finally, the final expression is evaluated to a value in the
 scope of the preceding variable declarations and that value is returned.
 
 Evaluation fails to terminate if any of the expression fail to terminate.
-
-Field Access
-~~~~~~~~~~~~
-  expr ::= expr '.' fname                               (* access *)
-        | ...
-
-First the expression is evaluated to a value. Then the named field is read
-from it. If the value is a union that contains a different field, then the
-behavior is undefined.
 
 Case Expression
 ~~~~~~~~~~~~~~~

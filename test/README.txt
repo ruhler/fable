@@ -27,7 +27,7 @@ distinguished by the name of the test file. Tests for well formed programs
 have file names starting with "####v-", while tests for malformed programs have
 file names starting with "####e-".
 
-THe tests are organized into the following ranges. Each test has a unique
+The tests are organized into the following ranges. Each test has a unique
 number.
 
 Test              0000-0099

@@ -14,7 +14,6 @@
   This will help for tests or other programs that share some common functions.
 * Implement support for processes.
 * Write a man page for fblc?
-* Write a vim syntax for fblc?
 * Add code coverage to the build?
 * Write tests to get 100% code coverage, or reasonably close.
   - Manually review reported errors for 'e' test cases to make sure the test
