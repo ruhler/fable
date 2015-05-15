@@ -30,6 +30,16 @@ foreach {x} [lsort [glob test/????e-*.fblc]] {
 
 exec gcov {*}[glob out/*.o] > out/fblc.gcov
 exec mv {*}[glob *.gcov] out
+puts [exec tail -n 1 out/fblc.gcov]
 
+# Test the calculator.
+puts ""
+puts "test calc/calc.fblc"
+exec ./out/fblc calc/calc.fblc > out/calc.got
+exec grep "/// Expect: " calc/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
+exec diff out/calc.wnt out/calc.got
+
+exec gcov {*}[glob out/*.o] > out/fblc.gcov
+exec mv {*}[glob *.gcov] out
 puts [exec tail -n 1 out/fblc.gcov]
 

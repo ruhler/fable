@@ -1,18 +1,38 @@
 
 struct Unit();
+union Bool(Unit true, Unit false);
+
+func True( ; Bool) {
+  Bool:true(Unit());
+};
+
+func False( ; Bool) {
+  Bool:false(Unit());
+};
 
 // The following type is used to represent (unbounded) integers.
 // Note that this representation allows multiple ways of representing each
 // integer, because 2*0 = 0 and 2*(-1)+1 = -1.
 // Functions that operate on integers should work for all the representations
 // of various numbers. They should not assume the smallest representation for
-// a number and need not produce the smallest representation for a number.
+// a number and in general need not produce the smallest representation for a
+// number, though they should if all the arguments are in their most compact
+// form.
 union Integer(
    Unit 0,
    Unit minus_1,
    Integer double,
    Integer double_plus_1
 );
+
+func Eq(Integer a, Integer b; Bool) {
+  // For now, just assume the args are both in canonical form.
+  a ? (
+      b ? (True(), False(), False(), False()),
+      b ? (False(), True(), False(), False()),
+      b ? (False(), False(), Eq(a.double, b.double), False()),
+      b ? (False(), False(), False(), Eq(a.double_plus_1, b.double_plus_1)));
+};
 
 // The integer 0
 func Zero( ; Integer) {
@@ -26,12 +46,14 @@ func Minus1( ; Integer) {
 
 // 2 * x
 func Double(Integer x; Integer) {
-  Integer:double(x);
+  Integer doubled = Integer:double(x);
+  x ? (Zero(), doubled, doubled, doubled);
 };
 
 // 2 * x + 1
 func DoublePlus1(Integer x; Integer) {
-  Integer:double_plus_1(x);
+  Integer doubled_plus_1 = Integer:double_plus_1(x);
+  x ? (doubled_plus_1, Minus1(), doubled_plus_1, doubled_plus_1);
 };
 
 // a + 1
@@ -110,13 +132,47 @@ func Mul(Integer a, Integer b; Integer) {
         Double(a.double_plus_1)), b)));
 };
 
-func main( ; Integer) {
+
+
+// ************ TESTS ****************
+union TestName(
+    Unit add_pos_pos,
+    Unit add_pos_neg,
+    Unit sub_gt_lt,
+    Unit sub_lt_gt,
+    Unit negate_pos,
+    Unit negate_neg,
+    Unit mul_pos_pos
+);
+union TL(Unit pass, FailedTestResult fail);
+struct FailedTestResult(
+    TestName name,
+    Integer want,
+    Integer got,
+    TL rest
+);
+
+func Test(TestName name, Integer want, Integer got, TL list; TL) {
+  Eq(want, got) ? (list, TL:fail(FailedTestResult(name, want, got, list)));
+};
+
+/// Expect: TL:pass(Unit())
+func main( ; TL) {
+  Integer minus_five = DoublePlus1(DoublePlus1(Double(Minus1())));
+  Integer minus_two = Double(Minus1());
+  Integer two = Double(DoublePlus1(Zero()));
   Integer three = DoublePlus1(DoublePlus1(Zero()));
   Integer five = DoublePlus1(Double(DoublePlus1(Zero())));
-  Integer minus_five = DoublePlus1(DoublePlus1(Double(Minus1())));
-  Integer minus_two = Add(three, minus_five);
-  Integer two = Negate(minus_two);
-  Integer fifteen = Mul(five, three);
-  three;
+  Integer fifteen = DoublePlus1(DoublePlus1(DoublePlus1(DoublePlus1(Zero()))));
+
+  TL l0 = TL:pass(Unit());
+  TL l1 = Test(TestName:add_pos_pos(Unit()), five, Add(two, three), l0);
+  TL l2 = Test(TestName:add_pos_neg(Unit()), minus_two, Add(three, minus_five), l1);
+  TL l3 = Test(TestName:sub_gt_lt(Unit()), two, Sub(five, three), l2);
+  TL l4 = Test(TestName:sub_lt_gt(Unit()), minus_two, Sub(three, five), l3);
+  TL l5 = Test(TestName:negate_pos(Unit()), minus_two, Negate(two), l4);
+  TL l6 = Test(TestName:negate_neg(Unit()), two, Negate(minus_two), l5);
+  TL l7 = Test(TestName:mul_pos_pos(Unit()), fifteen, Mul(three, five), l6);
+  l7;
 };
 
