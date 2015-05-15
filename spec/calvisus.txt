@@ -491,7 +491,7 @@ Conditional Expression
 Syntax: expr ? (expr [, expr [...]])
 
 The conditional expression uses the tag of a union value to select among
-possible expressions. First the condition is evaluated to a union value.
+possible expressions.
 
 A conditional expression is well formed if the following hold:
 1. The condition expression is of union type.
@@ -501,128 +501,119 @@ condition argument.
 
 The type of the condition expression is the same as the type of the arguments.
 
-%%%%%%%%%%%
+First the condition is evaluated to a union value. The
+tag of the evaluated condition is then used to select the expression in the
+argument list in the same position as the tagged field in the union type
+declaration. The result of the conditional expression is then the result of
+evaluating the selected expression.
 
+The unselected arguments are not evaluated. More precisely, the behavior is
+that the conditional expression finishes evaluating if both the condition and
+the selected expression finish evaluating.
 
-Variables [TODO: This is out of date! Use let expressions instead]
-^^^^^^^^^
-  vdecl ::= tname vname '=' expr ';' ;
-        | ...
-  expr ::= vname
-        | ...
+Application Expression
+^^^^^^^^^^^^^^^^^^^^^^
+Syntax: tname '(' [expr [',' expr [...]]] ')'
 
-The body of a function may also contain variable declarations. These declare
-variables with value equal to the expression they are declared with. For
-example:
+An application expression is used to apply a function to arguments. It has the
+same syntax as struct construction, only the tname is the name of a declared
+function instead of a name of a declared struct type.
 
--------------
-struct FullAdderOut(Bit z, Bit cout);
+An application expression is well formed if the following hold:
+1. The tname must refer to a declared function.
+2. The number argument expressions must match the number of arguments in the
+function declaration.
+3. Each argument must be well formed and have a type that matches the type of
+the corresponding argument in the function declaration.
 
-funct FullAdder(Bit a, Bit b, Bit cin; FullAdderOut) {
-  Bit 0 = Bit:0(Unit());
-  Bit 1 = Bit:1(Unit());
-  Bit z = a ? (0: b ? (0: c, 1: c ? (0: 1, 1: 0)),
-               1: b ? (0: c ? (0: 1, 1: 0), 1: c));
-  Bit cout = a ? (0: b ? (0: 0, 1: c),
-                  1: b ? (0: c, 1: 1));
-  return(FullAdderOut(z, cout));
-}
--------------
+The type of the expression is the return type listed in the function
+declaration.
 
-Each variable within a function must have a unique name. The type of the
-variable must equal the type of the expression the variable is declared with.
+First the arguments of the application expression are evaluated to values. The
+order in which the arguments are evaluated is left unspecified. The
+application expression will finish evaluating only if all its arguments finish
+evaluating.
 
-Function Call
-~~~~~~~~~~~~~
-    expr ::= tname '(' [expr [',' expr [...]]] ')'
+The evaluated values become the values for the parameters in the body of the
+function, which is then evaluated in its own scope. The variables visible to
+the application expression are not visible when executing the function body in
+its own scope.
 
-A function can be called by passing arguments after the name. For example:
+Statement Expression
+^^^^^^^^^^^^^^^^^^^^
+Syntax: '{' stmt '}'
 
-------------
-int numargs = NumArgs(instr);
-------------
+The statement expression is an artifact of the concrete syntax, to support the
+let statement. The statement syntax makes it clear what the scope of a
+variable is while allowing a single close brace to end the scope for multiple
+variables. Implementations need not make any distinction between expressions
+and statements in their internal representation of a program.
 
-The number of arguments passed must match the number and type of input
-arguments declared in the function declaration.
+The result of a statement expression is the result of evaluating the statement.
+
+The statement expression is well formed if the stmt is well formed and has the
+same type as the stmt.
+
+Expression Statement
+^^^^^^^^^^^^^^^^^^^^
+Syntax: expr ';'
+
+The expression statement is the other half of the artifact of the concrete
+syntax to support the let statement. The result of the expression statement is
+the result of evaluating the expression.
+
+The expression statement is well formed if the expr is well formed and has the
+same type as the expr.
+
+Let Statement
+^^^^^^^^^^^^^
+Syntax:  tname vname '=' expr ';' stmt                (* let *)
+
+The let statement introduces a local variable whose value can be shared in the
+body of another statement or expression. It is interpreted as a sequential
+operation. First the expression is evaluated to a value, then the body
+statement is executed in a scope where the variable is set to the value from
+the expression. Evaluation of the let statement does not finish if evaluation
+of the expr or body stmt do not finish.
+
+A let statement is well formed if the following conditions hold:
+1. The vname must not refer to a variable in scope.
+2. The expr must be well formed with a type equal to tname.
+3. The stmt must be well formed.
+
+The type of the let statement is the same as the type of its body statement.
 
 Program
 -------
-  prog ::= decl [decl [...]] ;
+Syntax: decl [decl [...]] ;
 
 A program is a collection of type and function declarations. An interpreter or
 compiler should have an implementation-specific mechanism for selecting the
 main function to interpret or compile.
 
-Evaluation [TODO: merge this into the Functions section]
-----------
-Evaluation is reasoned about using a sequential interpretation.
-
-Expression evaluation computes a value from an expression.
-Because Bathylus is Turing-complete, expression evaluation may fail to
-terminate. If expression evaluation fails to terminate, no value is returned.
-Otherwise a value is returned and there are no other side effects.
-
-Application
-~~~~~~~~~~~
-  expr ::= tname '(' [expr [',' expr [...]]] ')'
-        | ...
-
-When tname is the name of a declared function, this expression first
-evaluates all arguments to values, then calls the named function, using the
-argument values in place of the named argument variables in the function.
-Functions are lexically scoped; no variables in the current scope are visible
-while executing the body of the called function.
-
-Because expression evaluation either returns a value without side effects, or
-results in non-terminating computation, it does not matter what order
-evaluation of the arguments is performed.
-
-Let Expression
-~~~~~~~~~~~~~~
-  vdecl ::= tname vname '=' expr ';' ;
-
-  expr :: = '{' [vdecl [vdecl [...]]] '@' expr ';' '}'   (* let *)
-        | ...
-
-Each variable declaration is evaluated in turn. First the variable
-declaration's expression is evaluated to a value. Then the scope is updated
-such that the variable name points to the evaluated value. Each subsequent
-variable declaration has access to the variables declared in previous
-declarations. Finally, the final expression is evaluated to a value in the
-scope of the preceding variable declarations and that value is returned.
-
-Evaluation fails to terminate if any of the expression fail to terminate.
-
-Case Expression
-~~~~~~~~~~~~~~~
-  expr ::= expr '?' '(' expr [',' expr [...]] ')'       (* case *)
-        | ...
-
-Evaluate the argument to a value. Select the branch to evaluate based on the
-tag of the evaluated argument. Then evaluate the selected branch. This has
-undefined behavior only if evaluation of the argument has undefined behavior or
-evaluation of the selected branch has undefined behavior. It will not have
-undefined behavior if only evaluation of unselected branches would have
-undefined behavior.
-
 Syntax Reference
 ----------------
 prog ::= decl [decl [...]] ;
 
-decl ::= 'struct' tname ['(' [tname fname [',' tname fname [...]]] ')'] ';'
-      |  'union'  tname ['(' [tname fname [',' tname fname [...]]] ')'] ';'
-      |  'funct'  tname '(' [tname vname [',' tname vname [...]]] ';' tname ')'
-            ['=' expr] ';'
+decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+      |  'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+      |  'func'  tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
       ;
 
 vdecl ::= tname vname '=' expr ';' ;
 
-expr ::= tname '(' [expr [',' expr [...]]] ')'        (* struct / application *)
+expr ::= vname                                        (* variable *)
+      |  tname '(' [expr [',' expr [...]]] ')'        (* struct *)
       |  tname ':' fname '(' expr ')'                 (* union *)
-      |  vname                                        (* variable *)
-      |  '{' [vdecl [vdecl [...]]] '@' expr ';' '}'   (* let *)
-      |  expr '.' fname                               (* access *)
-      |  expr '?' '(' expr [',' expr [...]] ')'       (* case *)
+      |  expr '.' fname                               (* field access *)
+      |  expr '?' '(' expr [',' expr [...]] ')'       (* conditional *)
+      |  tname '(' [expr [',' expr [...]]] ')'        (* application *)
+      |  '{' stmt '}'                                 (* statement *)
+      ;
+
+stmt ::= expr ';'                                     (* expression *)
+      |  tname vname '=' expr ';' stmt                (* let *)
+      ;
 
 fname ::= name    (* A name of a field *)
 tname ::= name    (* A name referring to a type or function *)
@@ -631,23 +622,6 @@ vname ::= name    (* A name referring to a value *)
 
 TODO
 ----
-* Make it clear that, though we give a concrete syntax, that's only for
-  illustration purposes. For example, you don't need to use a string of
-  characters for an identifier, you could use whatever you want.
-* Add a section on functions.
-* Mention for struct and union constructors that the arguments are all
-  evaluated first, which matters for undefined behavior and infinite
-  recursion.
-* Separate 'Undefined Behavior' into a different section, so it can easily
-  encompass both illegal union member access and non-terminating computation?
-* Note for undefined behavior that it's NP-hard to statically check for
-  illegal union member access in the finite case, and it's undecidable to
-  statically test for in the recursive case?
-* update the section on Functions and Evaluation given that we have let
-  expressions instead of function bodies now.
-
-New TODO
---------
 * Add a section describing how we describe syntax?
 * Add a section talking about lexicography? Namely that tokens are punctuation
   or words and that whitespace is a token delimiter.
@@ -661,3 +635,4 @@ New TODO
   "variable name" for variables.
   "field name" for fields.
 * Include examples with all the expression descriptions.
+* Add 'process' specification.
