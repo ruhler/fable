@@ -384,12 +384,12 @@ In general, names in Calvisus are interpreted according to the following name
 spaces:
 1. All type and function names belong to a single global namespace.
 No type or function can have the same name as any other type or function.
-
++
 2. Field names belong to a namespace associated with a specific struct or
 union type. No field in a given type can have the same name as any other
 field in that same type. It is fine for two different types to have fields
 with the same name.
-
++
 3. Variable names belong to a namespace associated with a specific function.
 They are only visible inside the function. No variable in a function may
 have the same name as another variable in that function, including input

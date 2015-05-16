@@ -1,0 +1,9 @@
+
+Brainstorm for 'D', a language on top of Calvisus designed for humans to
+write, with a bunch of descriptive features.
+
+* Ability to split source code across files.
+* Namespace support.
+   - I should be able to import a module, bringing in all its declarations
+     under a name qualifier of my choice.
+* Support for internal/private functions.
