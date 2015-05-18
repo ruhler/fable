@@ -1,12 +1,9 @@
-The Fable of Calvisus
-=====================
+= The Fable of Calvisus =
 Richard Uhler <ruhler@degralder.com>
 May 2015
 
-Introduction
-------------
-What is Calvisus
-~~~~~~~~~~~~~~~~
+== Introduction ==
+=== What is Calvisus ===
 Calvisus is a computer programming language from the Fable collection. It is a
 simple, Turing-complete language for interactive programs built on top of a
 core Turing-complete functional language for general data manipulation and
@@ -17,8 +14,7 @@ support for interactive processes.
 
 This document defines and explains the Calvisus programming language.
 
-Organization of this Document
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Organization of this Document ===
 This document is intended to serve both as a guided explanation of the
 Calvisus language and as a complete reference specification for the language.
 It starts with a discussion of how data is represented in Calvisus, followed
@@ -28,8 +24,7 @@ pieces of the language syntax are described throughout the document. A
 complete syntax reference is available in the appendix, with links to the
 description of the corresponding terms.
 
-A Note about Concrete Syntax
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== A Note about Concrete Syntax ===
 This document defines a concrete syntax for the Calvisus language and uses
 that syntax in code examples. This is not intended to suggest the concrete
 syntax is a fundamental part of the language. Much more important is the
@@ -40,15 +35,13 @@ Calvisus language, rather than describing the language in terms solely as
 abstract syntax, or a mix of concrete and abstract syntax, which would be
 confusing.
 
-Data
-----
+== Data ==
 The representation and manipulation of data is a central part of the Calvisus
 language. Data in Calvisus is organized using structures and unions.
 Structures represent a grouping of data items, and unions represent a choice
 among data items.
 
-A Note about Assumed Types for Illustration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== A Note about Assumed Types for Illustration ===
 Unlike many programming language, Calvisus has no primitive data types. All
 types are made up solely of structures and unions. For the purposes of
 illustration, it is useful to assume some types have already been defined.
@@ -57,8 +50,7 @@ and so on, char is the type of characters, and bool is the type of boolean
 values with constructors True() and False(). We will show later how these
 types and constructors can be defined using structures and unions.
 
-Structures
-~~~~~~~~~~
+=== Structures ===
 A structure is a bundle (or grouping) of data values. The items of a structure
 are organized into a finite number of fields. Each field has a name, used to
 identify the field, and a type, specifying the type of data value for that
@@ -67,8 +59,7 @@ field.
 For example, a two-dimensional Cartesian coordinate would be represented as a
 structure with two fields, an 'x' component, and a 'y' component.
 
-Declaration
-^^^^^^^^^^^
+==== Declaration ====
 Syntax:  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
 
 Assuming the 'int' type has been defined, the coordinate structure could be
@@ -120,8 +111,7 @@ the foundation on which all other types are built and is commonly called the
 struct Unit();
 --------------
 
-Construction
-^^^^^^^^^^^^
+==== Construction ====
 Syntax:  tname '(' [value [',' value [...]]] ')'
 
 A structure value is constructed by specifying the contents of each component
@@ -141,8 +131,7 @@ declared for the structure.
 
 The resulting value is a value of the structure type.
 
-Field Access
-~~~~~~~~~~~~
+==== Field Access ====
 Syntax:  value '.' fname
         
 The fields of a structure are accessed using the dot notation. For example,
@@ -158,13 +147,11 @@ The following is required for a field access to be valid:
 
 The resulting value is a value of the type for the field being accessed.
 
-Unions
-~~~~~~
+=== Unions ===
 The union type is used to describe a choice among named values of different
 type.
 
-Declaration
-~~~~~~~~~~~
+==== Declaration ====
 Syntax: 'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
 
 The simplest case of a union type is an enumeration:
@@ -204,8 +191,7 @@ a value of that type. More importantly, a union type with no fields would lead
 to an ambiguous type for conditional expressions if used as the condition,
 and we would much prefer not to have ambiguous types.
 
-Construction
-~~~~~~~~~~~~
+==== Construction ====
 Syntax: tname ':' fname '(' value ')'
 
 A value of a union type is constructed by providing the name of the field to
@@ -221,8 +207,7 @@ the declaration of the union.
 
 The resulting value is a value of the union type.
 
-Field Access
-~~~~~~~~~~~~
+==== Field Access ====
 Syntax: value '.' fname
 
 Field access can be used for unions to access fields using the same syntax as
@@ -244,8 +229,7 @@ behavior:
 
 The resulting value is a value of the type for the field being accessed.
 
-A Note on Undefined Behavior
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== A Note on Undefined Behavior ====
 An implementation may do what it likes in the case of undefined behavior. It
 could return an arbitrary result and continue computing, it could halt
 computation with an error message, or anything else. The user must not rely on
@@ -261,8 +245,7 @@ explicitly, but that would clutter the code, they probably wouldn't have a
 good way to define the behavior anyway, and it could hurt performance.  For
 that reason, we say the behavior is undefined.
 
-Conditional
-~~~~~~~~~~~
+==== Conditional ====
 Syntax: value '?' '(' [value [',' value [...]]] ')'
 
 A conditional is used to select a value or other object based on the tagged
@@ -295,8 +278,7 @@ in the union type.
 
 The result is an object of the same type as the arguments.
 
-Space and Performance of Data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Space and Performance of Data ===
 A programmer should assume the following about the space and performance of
 data for a decent implementation of the Calvisus language:
 * The size of a struct value is big-O of the sum of the size of the fields
@@ -313,8 +295,7 @@ data for a decent implementation of the Calvisus language:
   practice this basically constant time, because we don't expect there to be
   that many fields.
 
-Value Output Syntax
-~~~~~~~~~~~~~~~~~~~
+=== Value Output Syntax ===
 This section specifies a concrete syntax for describing struct and union
 values. It consists of solely constructors for struct and union values.
 
@@ -333,16 +314,14 @@ that is valid syntax for an expression of the same type as the value that
 produces the value when executed.
 
 
-Functions
----------
+== Functions ==
 Data computation is described using functions. A function computes an output
 data value given input data arguments. Functions in Calvisus are pure; they
 are deterministic and without side effects. Functions add variables and
 (potentially recursive) function calls to the methods already discussed for
 manipulating data.
 
-Declaration
-~~~~~~~~~~~
+=== Declaration ===
 Syntax: 'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
 
 A function declaration defines the name, input arguments, return type, and
@@ -368,8 +347,7 @@ A function declaration is well formed if the following conditions hold:
 4. The body of the function is well formed in the environment of the arguments
 and has a type that matches the return type of the function.
 
-Variables, Scopes, and Name Spaces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=== Variables, Scopes, and Name Spaces ===
 A variable is a name for a data value. Each variable has a unique type
 matching the type of the variable's data value. In the previous example,
 'instr' is a variable of type 'CalcInstr' that, at the time the function is
@@ -396,8 +374,7 @@ have the same name as another variable in that function, including input
 variables. It is fine for variables in different functions to have the same
 name.
 
-Expressions
-~~~~~~~~~~~
+=== Expressions ===
 This section discusses the syntax and behavior of expressions in Calvisus.
 
 In the typical case, given a variable scope, an expression evaluates to a data
@@ -409,8 +386,7 @@ terminate. In the following description of expression behavior, we will not
 distinguish between undefined behavior and failure to terminate. Instead we
 will say the expression does not finish.
 
-Variable Expression
-^^^^^^^^^^^^^^^^^^^
+==== Variable Expression ====
 Syntax:  vname
 
 A variable expression evaluates to the value of the named variable in scope.
@@ -421,8 +397,7 @@ hold:
 
 The type of the expression is the type of the variable.
 
-Struct Expression
-^^^^^^^^^^^^^^^^^
+==== Struct Expression ====
 Syntax: tname '(' [expr [',' expr [...]]] ')'
 
 A struct expression is used to construct struct values. First the arguments of
@@ -441,8 +416,7 @@ the corresponding field in the struct declaration.
 
 The type of the expression is the named struct type.
 
-Union Expression
-^^^^^^^^^^^^^^^^
+==== Union Expression ====
 Syntax: tname ':' fname '(' expr ')
 
 A union expression is used to construct union values. First the argument of
@@ -461,8 +435,7 @@ named field.
 
 The type of the expression is the named union type.
 
-Field Access Expression
-^^^^^^^^^^^^^^^^^^^^^^^
+==== Field Access Expression ====
 Syntax: expr '.' fname
 
 The field access expression is used to access data from a struct or union.
@@ -486,8 +459,7 @@ access for a union type may result in undefined behavior at runtime. Where
 possible, it is encouraged for implementations to warn about potential
 undefined behavior determined statically.
 
-Conditional Expression
-^^^^^^^^^^^^^^^^^^^^^^
+==== Conditional Expression ====
 Syntax: expr ? (expr [, expr [...]])
 
 The conditional expression uses the tag of a union value to select among
@@ -511,8 +483,7 @@ The unselected arguments are not evaluated. More precisely, the behavior is
 that the conditional expression finishes evaluating if both the condition and
 the selected expression finish evaluating.
 
-Application Expression
-^^^^^^^^^^^^^^^^^^^^^^
+==== Application Expression ====
 Syntax: tname '(' [expr [',' expr [...]]] ')'
 
 An application expression is used to apply a function to arguments. It has the
@@ -539,8 +510,7 @@ function, which is then evaluated in its own scope. The variables visible to
 the application expression are not visible when executing the function body in
 its own scope.
 
-Statement Expression
-^^^^^^^^^^^^^^^^^^^^
+==== Statement Expression ====
 Syntax: '{' stmt '}'
 
 The statement expression is an artifact of the concrete syntax, to support the
@@ -554,8 +524,7 @@ The result of a statement expression is the result of evaluating the statement.
 The statement expression is well formed if the stmt is well formed and has the
 same type as the stmt.
 
-Expression Statement
-^^^^^^^^^^^^^^^^^^^^
+==== Expression Statement ====
 Syntax: expr ';'
 
 The expression statement is the other half of the artifact of the concrete
@@ -565,8 +534,7 @@ the result of evaluating the expression.
 The expression statement is well formed if the expr is well formed and has the
 same type as the expr.
 
-Let Statement
-^^^^^^^^^^^^^
+==== Let Statement ====
 Syntax:  tname vname '=' expr ';' stmt                (* let *)
 
 The let statement introduces a local variable whose value can be shared in the
@@ -583,36 +551,31 @@ A let statement is well formed if the following conditions hold:
 
 The type of the let statement is the same as the type of its body statement.
 
-Process
--------
+== Process ==
 A process is a computation that may have side effects before eventuall
 returning a value. Side effects are achieved by putting and getting data to
 and from ports.
 
-Get Port
-~~~~~~~~
+=== Get Port ===
 There are two kinds of ports, a 'get' port is used to read data from outside
 the process. A get port, denoted with polarity '<', as in 'Foo<', can be used
 repeatedly to get subsequent data of the given type -- in this case 'Foo' --
 from the port. When a process gets data from a get port, it will block until
 data is available on the port.
 
-Put Port
-~~~~~~~~
+=== Put Port ===
 A process can communicate data outside of itself using a 'put' port. A put
 port has polarity '>', as in 'Foo>', and can be used to repeatedly put data of
 the given type onto the port. The put operation does not block.
 
-Link
-~~~~
+=== Link ===
 A link is a FIFO channel with a put port and a get port that two running
 processes can use to communicate. The link is unbounded in size so that
 putting data into it will never block, but getting data from the link will
 block as long as the link is empty. There is the potential for deadlock if all
 the running processes are blocked waiting for data on get ports.
 
-Parallel Processes
-~~~~~~~~~~~~~~~~~~
+=== Parallel Processes ===
 Multiple processes can be executed in parallel. At any given time, a port may
 only be accessed by a single process. This is enforced statically using a
 conservative notion that a port is accessed by a process if the process has or
@@ -624,8 +587,7 @@ restriction of allowing a single process access to a port at any given time
 could be lifted if non-deterministic computation was desired, but for now, we
 desire deterministic computation.
 
-Fairness
-~~~~~~~~
+=== Fairness ===
 Evaluation of processes must be fair in the following sense. Any process that
 is not blocked on a get of an empty port and is not non-terminating must
 eventually make progress.
@@ -636,8 +598,7 @@ For example, given three processes A, B, and C...
 
 Progress is measured by observable actions: puts, gets, and completion.
 
-Declaration
-~~~~~~~~~~~
+=== Declaration ===
 Syntax:  'proc' tname '('
             [tname polarity pname [',' tname polarity pname [...]]] ';'
             [tname vname [',' tname vname [...]]] ';' [tname] ')' proc ';'
@@ -653,8 +614,7 @@ value of type 'Foo', so is a put port.
 
 The return type of a process is optional.
 
-Processes
-~~~~~~~~~
+=== Processes ===
 This section discusses the syntax and behavior or processes in Calvisus.
 
 In the typical case, given an environment of variables and ports, a process
@@ -670,8 +630,7 @@ following description of process behavior, we will not distinguish between
 undefined behavior and failure to terminate.  Instead we will say the process
 does not finish.
 
-Evaluation Process
-^^^^^^^^^^^^^^^^^^
+==== Evaluation Process ====
 Syntax:    '$' '(' expr ')'
 
 The evaluation process evaluates an expression and returns the result without
@@ -681,8 +640,7 @@ The evaluation process is well formed if the expression is well formed. The
 return type of the process is the type of the expression. The process will
 return a result if the expression finishes evaluating.
 
-Get Process
-^^^^^^^^^^^
+==== Get Process ====
 Syntax:   pname '(' ')'
 
 The get process performs a get operation on the named port.
@@ -694,8 +652,7 @@ The type of the process is the type of the port. The process will return a
 result if there is eventually data on the port to get, otherwise the process
 will block.
 
-Put Process
-^^^^^^^^^^^
+==== Put Process ====
 Syntax: pname '(' expr ')'
 
 The put process performs a put operation on the named port.
@@ -708,8 +665,7 @@ The put process is well formed if the following conditions hold:
 The process has no type. The process will finish if the expression finishes
 evaluating.
 
-Conditional Process
-^^^^^^^^^^^^^^^^^^^
+==== Conditional Process ====
 Syntax: expr '?' ( proc [',' proc [...]] ')'
 
 The conditional process uses the tag of a union value to select among possible
@@ -731,8 +687,7 @@ executing the selected process.
 
 The unselected arguments are not executed.
 
-Call Process
-^^^^^^^^^^^^
+==== Call Process ====
 Syntax:  tname '(' [pname [',' pname [...]]] ';'
                    [expr [',' expr [...]]] ')'        
 
@@ -757,8 +712,7 @@ process, and the port arguments become the values for the port parameters in
 the body of the process. The ports and variables visible to the call
 expression are not visible when executing the process body in its own scope.
 
-Statement Process
-~~~~~~~~~~~~~~~~~
+==== Statement Process ====
 Syntax:  '{ pstmt '}'
 
 As with the statement expression, the statement process is an artifact of the
@@ -774,8 +728,7 @@ result of executing the statement.
 The statement process is well formed if the pstmt is well formed and has the
 same type as the pstmt.
 
-Link Process Statement
-^^^^^^^^^^^^^^^^^^^^^^
+==== Link Process Statement ====
 Syntax: tname '<>' '(' pname ',' pname ')' ';' pstmt  (* link *)
 
 The link process statement instantiates a link with joined put and get ports
@@ -794,8 +747,7 @@ already in scope.
 
 The type of the link statement is the type of its body statement.
 
-Execution Process Statement
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==== Execution Process Statement ====
 Syntax:  [exec [',' exec [...]]] ';' [pstmt]
 
 The execution process statement is used to execute zero or more processes in
@@ -832,16 +784,14 @@ processes.
 The execution process statement completes only if all the executed processes
 complete and the body process completes.
 
-Program
--------
+== Program ==
 Syntax: decl [decl [...]] ;
 
 A program is a collection of type and function declarations. An interpreter or
 compiler should have an implementation-specific mechanism for selecting the
 main function or process to interpret or compile.
 
-Syntax Reference
-----------------
+== Syntax Reference ==
 prog ::= decl [decl [...]] ;
 
 decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
@@ -892,15 +842,13 @@ pname ::= name    (* A name of a port *)
 tname ::= name    (* A name referring to a type or function *)
 vname ::= name    (* A name referring to a value *)
 
-Guidelines for Concrete Syntax
-------------------------------
+=== Guidelines for Concrete Syntax ===
 * Don't have keywords that aren't allowed to be used as variable or field names.
   Because I find it very annoying in C and Java how you can't use names like
   'class' or 'union' for variable and field names.
 
 
-TODO
-----
+== TODO ==
 * Add a section describing how we describe syntax?
 * Add a section talking about lexicography? Namely that tokens are punctuation
   or words and that whitespace is a token delimiter.
