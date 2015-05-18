@@ -350,7 +350,7 @@ body of a function. For example, here is a function that computes the result
 of a calculator instruction:
 
 -----------------
-func NumArgs(CalcInstr instr; int) {
+func Calculate(CalcInstr instr; int) {
   instr ? (add(instr.add.a, instr.add.b),
            sub(instr.sub.a, instr.sub.b),
            neg(instr.negate.a),
@@ -499,7 +499,7 @@ A conditional expression is well formed if the following hold:
 condition argument.
 3. Each argument must have the same type.
 
-The type of the condition expression is the same as the type of the arguments.
+The type of the conditional expression is the same as the type of the arguments.
 
 First the condition is evaluated to a union value. The
 tag of the evaluated condition is then used to select the expression in the
@@ -521,7 +521,7 @@ function instead of a name of a declared struct type.
 
 An application expression is well formed if the following hold:
 1. The tname must refer to a declared function.
-2. The number argument expressions must match the number of arguments in the
+2. The number of argument expressions must match the number of arguments in the
 function declaration.
 3. Each argument must be well formed and have a type that matches the type of
 the corresponding argument in the function declaration.
@@ -583,24 +583,274 @@ A let statement is well formed if the following conditions hold:
 
 The type of the let statement is the same as the type of its body statement.
 
+Process
+-------
+A process is a computation that may have side effects before eventuall
+returning a value. Side effects are achieved by putting and getting data to
+and from ports.
+
+Get Port
+~~~~~~~~
+There are two kinds of ports, a 'get' port is used to read data from outside
+the process. A get port, denoted with polarity '<', as in 'Foo<', can be used
+repeatedly to get subsequent data of the given type -- in this case 'Foo' --
+from the port. When a process gets data from a get port, it will block until
+data is available on the port.
+
+Put Port
+~~~~~~~~
+A process can communicate data outside of itself using a 'put' port. A put
+port has polarity '>', as in 'Foo>', and can be used to repeatedly put data of
+the given type onto the port. The put operation does not block.
+
+Link
+~~~~
+A link is a FIFO channel with a put port and a get port that two running
+processes can use to communicate. The link is unbounded in size so that
+putting data into it will never block, but getting data from the link will
+block as long as the link is empty. There is the potential for deadlock if all
+the running processes are blocked waiting for data on get ports.
+
+Parallel Processes
+~~~~~~~~~~~~~~~~~~
+Multiple processes can be executed in parallel. At any given time, a port may
+only be accessed by a single process. This is enforced statically using a
+conservative notion that a port is accessed by a process if the process has or
+makes any reference to the port.
+
+Ensuring only a single process has access to a port at any given time ensures
+deterministic computation, assuming the external world is deterministic. The
+restriction of allowing a single process access to a port at any given time
+could be lifted if non-deterministic computation was desired, but for now, we
+desire deterministic computation.
+
+Fairness
+~~~~~~~~
+Evaluation of processes must be fair in the following sense. Any process that
+is not blocked on a get of an empty port and is not non-terminating must
+eventually make progress.
+
+For example, given three processes A, B, and C...
+1. If A and B are blocked on gets, but C is not, C must run.
+2. If A and B interact infinitely, and C is not blocked, C must make progress.
+
+Progress is measured by observable actions: puts, gets, and completion.
+
+Declaration
+~~~~~~~~~~~
+Syntax:  'proc' tname '('
+            [tname polarity pname [',' tname polarity pname [...]]] ';'
+            [tname vname [',' tname vname [...]]] ';' [tname] ')' proc ';'
+
+A process declaration defines the name, ports, input arguments, optional
+return type, and body of a process.
+
+Each port has a type and polarity. The polarity '<' is used for get ports, and
+'>' is used for put ports. To remember this, consider a port with type 'Foo<'.
+This is a get port because the '<' points towards the type, meaning the port
+can be used to get a value of type 'Foo'. A port with type 'Foo>' takes a
+value of type 'Foo', so is a put port. 
+
+The return type of a process is optional.
+
+Processes
+~~~~~~~~~
+This section discusses the syntax and behavior or processes in Calvisus.
+
+In the typical case, given an environment of variables and ports, a process
+performs zero or more put and get operations on the ports in the environment
+then optionally returns a data value. Processes are typed. A well-formed
+process will produce a data value whose type matches the type of the process.
+Processes with no return type do not produce data values.
+
+More generally, a process may also have undefined behavior or fail to
+terminate, either from evaluation of an expression that fails to terminate,
+deadlock, livelock, or because the process simply runs forever.  In the
+following description of process behavior, we will not distinguish between
+undefined behavior and failure to terminate.  Instead we will say the process
+does not finish.
+
+Evaluation Process
+^^^^^^^^^^^^^^^^^^
+Syntax:    '$' '(' expr ')'
+
+The evaluation process evaluates an expression and returns the result without
+performing any put or get operations.
+
+The evaluation process is well formed if the expression is well formed. The
+return type of the process is the type of the expression. The process will
+return a result if the expression finishes evaluating.
+
+Get Process
+^^^^^^^^^^^
+Syntax:   pname '(' ')'
+
+The get process performs a get operation on the named port.
+
+The get process is well formed if the following conditions hold:
+1. named port has get polarity.
+
+The type of the process is the type of the port. The process will return a
+result if there is eventually data on the port to get, otherwise the process
+will block.
+
+Put Process
+^^^^^^^^^^^
+Syntax: pname '(' expr ')'
+
+The put process performs a put operation on the named port.
+
+The put process is well formed if the following conditions hold:
+1. The named port has put polarity.
+2. The expression is well formed.
+3. The type of the named port matches the type of the expression.
+
+The process has no type. The process will finish if the expression finishes
+evaluating.
+
+Conditional Process
+^^^^^^^^^^^^^^^^^^^
+Syntax: expr '?' ( proc [',' proc [...]] ')'
+
+The conditional process uses the tag of a union value to select among possible
+processes.
+
+A conditional process is well formed if the following hold:
+1. The condition expression is of union type.
+2. The number of arguments match the number of fields in the union type of the
+condition.
+3. Each argument must have the same type.
+
+The type of the conditional process is the same as the type of the arguments.
+
+First the condition is evaluated to a union value. The tag of the evaluated
+condition is then used to select the process in the argument list in the same
+position as the tagged field in the union type declaration. The side effects
+and result of the conditional process is then the side effects and result of
+executing the selected process.
+
+The unselected arguments are not executed.
+
+Call Process
+^^^^^^^^^^^^
+Syntax:  tname '(' [pname [',' pname [...]]] ';'
+                   [expr [',' expr [...]]] ')'        
+
+A call process is used to call a process with given port and data arguments.
+A call process is well formed if the following hold:
+1. The tname must refer to a declared process.
+2. The number and polarities of port arguments must match the number and
+polarities of port arguments in the process declaration.
+3. The number of argument expressions must match the number of expression
+arguments in the process declaration.
+4. Each argument expression must be well formed and have a type that matches
+the type of the corresponding expression argument in the process declaration.
+
+The type of the process is the return type listed in the process declaration.
+
+First the expression arguments of the call process are evaluated to values.
+The order in which the arguments are evaluated is left unspecified. The call
+process will finish evaluating only if all its arguments finish evaluating.
+
+The evaluated values become the values for the parameters in the body of the
+process, and the port arguments become the values for the port parameters in
+the body of the process. The ports and variables visible to the call
+expression are not visible when executing the process body in its own scope.
+
+Statement Process
+~~~~~~~~~~~~~~~~~
+Syntax:  '{ pstmt '}'
+
+As with the statement expression, the statement process is an artifact of the
+concrete syntax to support execution and link process statements. The
+statement syntax makes it clear what the scope of a variable or port is while
+allowing a single close brace to end the scope for multiple variables and
+ports. Implementations need not make any distinction between processes and
+process statements in their internal representation of a program.
+
+The side effects and result of a statement process is the side effects and
+result of executing the statement.
+
+The statement process is well formed if the pstmt is well formed and has the
+same type as the pstmt.
+
+Link Process Statement
+^^^^^^^^^^^^^^^^^^^^^^
+Syntax: tname '<>' '(' pname ',' pname ')' ';' pstmt  (* link *)
+
+The link process statement instantiates a link with joined put and get ports
+that can be used in subsequent process statements. It adds to the port scope a
+get port with the first name in parenthesis and a put port with the second
+name in parenthesis. Gets to the get port will read data values that were put
+to the put port, in the order they were put.
+The body of the process statement is executed in a scope with the new put and
+get ports.
+
+A link process statement is well formed if the following conditions hold:
+1. The tname must refer to a type declared in the program.
+2. The pnames must be unique and not be the same as any variables or ports
+already in scope.
+3. The body must be well formed.
+
+The type of the link statement is the type of its body statement.
+
+Execution Process Statement
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Syntax:  [exec [',' exec [...]]] ';' [pstmt]
+
+The execution process statement is used to execute zero or more processes in
+parallel, optionally followed by execution of a process in the scope that
+includes results of the parallely executed processes.
+
+The syntax for exec is:  proc | tname vname = proc.
+
+In the first form, an exec is a process with no return type. In the second
+case, the exec is a process with a return type whose result will be added to
+scope under the given variable name.
+
+An execution process statement is well formed if:
+1. Each execution is well formed, meaning either it is a proc that is well
+formed and has no return type, or it is tname vname = proc, the proc is well
+formed with type matching tname, and the variable doesn't refer to a variable
+or port in scope, and the variable name is distinct from all other variable
+names declared in the execution process statement.
+2. No port in scope is referred to by more than one of the executions.
+3. The body of the process statement, if any, is well formed.
+
+The execution process statement has the same type as its body statement, or no
+type if it has no body statement.
+
+To execute an execution process statement, first all processes listed are
+executed in parallel, according to the fairness rules already stated in
+another section and interleaved in such a way as to avoid violation of
+causality.
+
+Once every executed processes has completed, the body of the execution process
+statement is executed in a scope augmented with the results of the executed
+processes.
+
+The execution process statement completes only if all the executed processes
+complete and the body process completes.
+
 Program
 -------
 Syntax: decl [decl [...]] ;
 
 A program is a collection of type and function declarations. An interpreter or
 compiler should have an implementation-specific mechanism for selecting the
-main function to interpret or compile.
+main function or process to interpret or compile.
 
 Syntax Reference
 ----------------
 prog ::= decl [decl [...]] ;
 
 decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-      |  'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-      |  'func'  tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
+      |  'union' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+      |  'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
+      |  'proc' tname '('
+            [tname polarity pname [',' tname polarity pname [...]]] ';'
+            [tname vname [',' tname vname [...]]] ';' [tname] ')' proc ';'
       ;
-
-vdecl ::= tname vname '=' expr ';' ;
 
 expr ::= vname                                        (* variable *)
       |  tname '(' [expr [',' expr [...]]] ')'        (* struct *)
@@ -615,9 +865,38 @@ stmt ::= expr ';'                                     (* expression *)
       |  tname vname '=' expr ';' stmt                (* let *)
       ;
 
+polarity ::= '<'                                      (* get *)
+          |  '>'                                      (* put *)
+          ;
+
+proc ::= '$' '(' expr ')'                             (* eval *)
+      |  pname '(' ')'                                (* get *)
+      |  pname '(' expr ')'                           (* put *)
+      |  expr '?' ( proc [',' proc [...]] ')'         (* conditional *)
+      |  tname '(' [pname [',' pname [...]]] ';'      (* call *) 
+                   [expr [',' expr [...]]] ')'        
+      |  '{ pstmt '}'                                 (* process statment *)
+      ;
+
+exec ::= proc
+      |  tname vname = proc
+      ;
+
+pstmt ::= tname '<>' '(' pname ',' pname ')' ';' pstmt  (* link *)
+       |  [exec [',' exec [...]]] ';' [pstmt]           (* execution *)
+       ;
+   
+
 fname ::= name    (* A name of a field *)
+pname ::= name    (* A name of a port *)
 tname ::= name    (* A name referring to a type or function *)
 vname ::= name    (* A name referring to a value *)
+
+Guidelines for Concrete Syntax
+------------------------------
+* Don't have keywords that aren't allowed to be used as variable or field names.
+  Because I find it very annoying in C and Java how you can't use names like
+  'class' or 'union' for variable and field names.
 
 
 TODO
@@ -635,4 +914,4 @@ TODO
   "variable name" for variables.
   "field name" for fields.
 * Include examples with all the expression descriptions.
-* Add 'process' specification.
+* Figure out and document 'process' specification.
