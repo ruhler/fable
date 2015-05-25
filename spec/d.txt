@@ -2,8 +2,59 @@
 Brainstorm for 'D', a language on top of Calvisus designed for humans to
 write, with a bunch of descriptive features.
 
+Modules
+-------
+Modules are a way of organizing code. They serve the following purposes:
+
 * Ability to split source code across files.
+Related code can be grouped into the same file, and unrelated code can be
+separated. This is primarily so the person working on the code can more easily
+focus on the code they are working on without being distracted by other code.
+It also could have benefits for incremental and modular compilation, by
+specifying a compilation unit where changes within the unit are likely to
+effect many things inside the unit, but not as many without.
+
 * Namespace support.
-   - I should be able to import a module, bringing in all its declarations
-     under a name qualifier of my choice.
-* Support for internal/private functions.
+With enough code, there are bound to be collisions in naming of types and
+functions. Namespace support makes it possible to disambiguate entities with
+the same name declared in different modules. It also often allows having a
+module context that names are resolved with respect to, so short names can be
+used and disambiguated based on the context rather than every use. Often
+namespace support allows some form of renaming entities so disambiguation can
+be defined local. Java messed this up, for example, requiring the full package
+name to be used to disambiguate names rather than allowing you to import a
+package under a different (shorter) name.
+
+* Hiding implementation details.
+Modules typically have a notion of an interface and an implementation. They
+allow code to be written solely for the implementation that is not exposed
+externally. This makes it easier to change the internal implementation code,
+because all of the uses occur inside the module. This is like 'static' vs not
+static in C, public or private in C++ or Java, or exported or not exported in
+Haskell.
+
+* Sharing code.
+In a large program, the same "module" may be useful in multiple, independent
+locations. Modules serve as units of sharing. A large program can bring in
+each module once, and reuse it in every place that it is used, rather than
+copying it. This can sort of work because the module has a notion of an
+interface separate from its implementation, so the module can be changed
+without effecting its users as long as the interface doesn't change.
+
+* Versioning?
+Modules have specifications, so maybe this is also a good place to have
+versioning support? Not sure. Typically I see versioning at the level of
+shared libraries (think .so files), but not so much at the level of modules in
+languages like C++, Java, or Haskell. This is like the difference between a
+package and a module, but I'm not sure they should be treated as different
+things.
+
+* Hierarchical Modules (more a thought than a purpose)
+Ideally modules are hierarchical and can be composed. Most importantly, you
+can have a notion of an 'internal' module, that provides a specification that
+can be reused, but only inside a module. This further restricts the users of a
+specification, and makes it easier to change the specification of the module
+in the future. In practice, I don't see this in C, C++, or Java. Things tend
+to be "private" or "public", but not "public with respect to XXX and private
+with respect to YYY".
+
