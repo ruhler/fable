@@ -1,5 +1,5 @@
-Format
-======
+Technical Document Format
+=========================
 
 A format for describing documents in a more precise manner than asciidoc.
 It is a line-based format, with the following kinds of lines. Whitespace at

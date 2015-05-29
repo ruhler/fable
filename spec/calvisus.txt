@@ -259,8 +259,8 @@
   @end
  @end
 
- @section Value Output Syntax
-  This section specifies a concrete syntax for describing struct and union values.
+ @section Value Text Output Syntax
+  This section specifies a concrete text-based syntax for describing struct and union values.
   It consists of solely constructors for struct and union values.
  
   @example
@@ -274,6 +274,22 @@
 
   A value is output as a stream of characters using the above syntax, with no whitespace.
   This produces a unique output for a given data value, in a format that is valid syntax for an expression of the same type as the value that produces the value when executed.
+ @end
+
+ @section Value Binary Representation
+  This section specifies a standard way of representing data values as sequences of bits.
+  This serves as a more compact representation for values than the text-based format, and can be used to read data values directly from files on a posix system.
+
+  A struct is encoded as a sequence of bits by concatenating the values of each field of the struct encoded as a sequence of bits.
+  The field values are concatenated in the same order in which the fields are declared in the struct type declaration.
+
+  A union is encoded as a tag identifying the tagged field, followed by the value of the tagged field.
+  The tag is encoded using as few bits as possible to distinguish between all the possible fields of the union.
+  For N fields, the tag will be the ceiling of the log based 2 of N.
+  The value 0 is used for the tag of the first field in the union declaration, 1 is used for the tag of the second field in the union declaration, and so on.
+
+  There is no explicit encoding of the type of a value in the binary representation.
+  The type must be known in the context in which that value is being read or written.
  @end
 @end
 
