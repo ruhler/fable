@@ -58,3 +58,8 @@ in the future. In practice, I don't see this in C, C++, or Java. Things tend
 to be "private" or "public", but not "public with respect to XXX and private
 with respect to YYY".
 
+* Short hand for mixed union/struct types where internal types don't need
+  names? For example, currently in fblc two types must be defined for a list:
+    List(Unit nil, ListNode cons);
+    ListNode(foo x, List tail);
+  It's annoying to have to come up with the two separate names.

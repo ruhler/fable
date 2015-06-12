@@ -1,4 +1,20 @@
+Calculator::
+1. Figure out how to interface fblc with linux files/streams.
+2. Write library code to convert a string of digits (in format that works with
+results of (5)) to an integer in calc.
+3. Write a calculator program that reads in an (integer arithmetic) expression
+as a string, performs the operation, and outputs the result as a string.
 
+Process Support::
+1. Re-organize tests based on language version a, b, c, etc...
+2. Write some basic tests for processes (they won't run yet because we don't
+support processes yet).
+3. Implement process support. Try to be modular in the sense that the process
+support is mostly added code, not major restructuring of the existing code. We
+likely will need to add an API for FblcEval to do partial evaluation.
+4. Fill out test cases for process support to get good code coverage.
+
+Miscellaneous::
 * It would be nice if 'Wrong number of arguments to ...' reported the opening
   '(' as the location of the error.
 * Test what happens when we try to access the wrong field of a union.
@@ -14,11 +30,9 @@
   This will help for tests or other programs that share some common functions.
 * Implement support for processes.
 * Write a man page for fblc?
-* Add code coverage to the build?
 * Write tests to get 100% code coverage, or reasonably close.
   - Manually review reported errors for 'e' test cases to make sure the test
     case works and the error reported is correct.
     (any better way to automate this kind of testing?)
-* Organize and rename malformed tests based on the specification?
 * Start work on a calculator program as a basic test for processes.
 

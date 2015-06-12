@@ -132,6 +132,79 @@ func Mul(Integer a, Integer b; Integer) {
         Double(a.double_plus_1)), b)));
 };
 
+// The Calculator machine has a stack of operands.
+// Initially the stack is empty. The following instructions can be used to
+// modify the stack.
+union CalcInstr(
+    // Pop the top two operands from the stack, add them together, and push
+    // the result to the stack. If there are not enough operands on the stack,
+    // 0 is used in place of the missing operands.
+    Unit add,
+
+    // Pop the top two operands from the stack. Subtract what was the top
+    // operand on the stack from what was the operand just beneath the top
+    // operand on the stack. Push the result to the stack. If there are not
+    // enough operands on the stack, 0 is used in place of the missing
+    // operands.
+    Unit sub,
+
+    // Pop the top two operands from the stack, multiply them together, and
+    // push the result to the stack. If there are not enough operands on the
+    // stack, 0 is used in place of the missing operands.
+    Unit mul,
+
+    // Clear the stack of all operands.
+    Unit clear,
+
+    // Push the given integer on top of the stack.
+    Integer push
+);
+
+union CalcStack(Unit empty, CalcOperands nonempty);
+struct CalcOperands(Integer top, CalcStack rest);
+
+func Push(CalcStack stack, Integer operand; CalcStack) {
+  CalcStack:nonempty(CalcOperands(operand, stack));
+};
+
+struct Pop1Result(Integer top, CalcStack rest);
+func Pop1(CalcStack stack; Pop1Result) {
+  stack ? (Pop1Result(Zero(), CalcStack:empty(Unit())),
+           Pop1Result(stack.nonempty.top, stack.nonempty.rest));
+};
+
+struct Pop2Result(Integer top1, Integer top2, CalcStack rest);
+func Pop2(CalcStack stack; Pop2Result) {
+  Pop1Result p1 = Pop1(stack);
+  Pop1Result p2 = Pop1(p1.rest);
+  Pop2Result(p1.top, p2.top, p2.rest);
+};
+
+// Execute the given calculator instruction.
+func ExecCalcInstr(CalcStack stack, CalcInstr instr; CalcStack) {
+  instr ? (
+      { Pop2Result p2 = Pop2(stack); Push(p2.rest, Add(p2.top2, p2.top1)); },
+      { Pop2Result p2 = Pop2(stack); Push(p2.rest, Sub(p2.top2, p2.top1)); },
+      { Pop2Result p2 = Pop2(stack); Push(p2.rest, Mul(p2.top2, p2.top1)); },
+      { CalcStack:empty(Unit()); },
+      { Push(stack, instr.push); });
+};
+
+union CalcProgram(Unit empty, CalcInstrs nonempty);
+struct CalcInstrs(CalcInstr instr, CalcProgram next);
+
+// Execute a sequence of calculator instructions.
+func ExecCalcInstrs(CalcStack stack, CalcProgram prg; CalcStack) {
+  prg ? (stack,
+         ExecCalcInstrs(ExecCalcInstr(stack, prg.nonempty.instr),
+                        prg.nonempty.next));
+};
+
+// Run the calculator program and return the result on top of the stack. If
+// the final stack is empty, the value 0 is returned.
+func RunCalc(CalcProgram prg; Integer) {
+  Pop1(ExecCalcInstrs(CalcStack:empty(Unit()), prg)).top;
+};
 
 
 // ************ TESTS ****************
@@ -142,7 +215,8 @@ union TestName(
     Unit sub_lt_gt,
     Unit negate_pos,
     Unit negate_neg,
-    Unit mul_pos_pos
+    Unit mul_pos_pos,
+    Unit calc_prg_simple
 );
 union TL(Unit pass, FailedTestResult fail);
 struct FailedTestResult(
@@ -173,6 +247,15 @@ func main( ; TL) {
   TL l5 = Test(TestName:negate_pos(Unit()), minus_two, Negate(two), l4);
   TL l6 = Test(TestName:negate_neg(Unit()), two, Negate(minus_two), l5);
   TL l7 = Test(TestName:mul_pos_pos(Unit()), fifteen, Mul(three, five), l6);
-  l7;
+
+  CalcProgram prg8 = CalcProgram:nonempty(
+     CalcInstrs(CalcInstr:push(five), CalcProgram:nonempty(
+     CalcInstrs(CalcInstr:push(five), CalcProgram:nonempty(
+     CalcInstrs(CalcInstr:add(Unit()), CalcProgram:nonempty(
+     CalcInstrs(CalcInstr:push(five), CalcProgram:nonempty(
+     CalcInstrs(CalcInstr:add(Unit()), CalcProgram:empty(Unit())))))))))));
+  TL l8 = Test(TestName:calc_prg_simple(Unit()),
+      fifteen, RunCalc(prg8), l7);
+  l8;
 };
 
