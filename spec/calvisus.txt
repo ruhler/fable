@@ -818,5 +818,9 @@
    @end
   @end
   @li Include examples with all the expression descriptions.
+  @bi
+   I worry it is easy to get the order of conditional arguments wrong.
+   Would it not make more sense to explicitly specify the tag corresponding to each conditional argument, so that the compiler can verify it for you?
+  @end
  @end
 @end

@@ -1,9 +1,8 @@
-Calculator::
-1. Figure out how to interface fblc with linux files/streams.
-2. Write library code to convert a string of digits (in format that works with
-results of (5)) to an integer in calc.
-3. Write a calculator program that reads in an (integer arithmetic) expression
-as a string, performs the operation, and outputs the result as a string.
+Calculator Logic::
+1. Define 'ASCII' type.
+2. Write parser for ASCII to CalcProgram
+3. Write a printer: Integer -> ASCII
+4. Write a calc test for "5 5 + 5 +" -> "15"
 
 Process Support::
 1. Re-organize tests based on language version a, b, c, etc...
