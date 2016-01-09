@@ -63,3 +63,66 @@ with respect to YYY".
     List(Unit nil, ListNode cons);
     ListNode(foo x, List tail);
   It's annoying to have to come up with the two separate names.
+
+Proposal
+--------
+Fbld is a meta language built on top of fblc. Its purpose is to provide
+zero-cost, statically resolved abstraction for developers. The key concepts of
+fbld are interfaces and modules.
+
+An interface is a collection of types and methods used to interact with a
+module. Interfaces are parameterized by type variables. The following kinds of
+declarations are allowed within an interface:
+
+1. Opaque type. An opaque type is the name of a type that will be declared
+within the module implementing the interface. It will refer to a different
+type for each different implementation of the interface. The only way to
+interact with an opaque type's data is using interface methods provided for
+that purpose.
+
+For example, in a list interface, there will be an opaque type representing
+the list type.
+
+2. Data type. A data type declaration. The data type declaration may refer to
+the type variable parameters of the interface and other opaque types declared
+in the interface.
+
+For example, a list interface may have a 'head' method to return the first
+element of the list. This method may return the first element of the list, or
+'nothing' to indicate the list is empty. The 'maybe' type returned by this
+method could be declared as a data type in the interface.
+
+3. Function prototype. A function declaration with no body supplied.
+
+For example, a list interface may have a 'head' method. A function prototype
+is used to declare the method.
+
+4. Sub interface. A named subinterface. This is used to allow composition of
+interfaces.
+
+For example, a list interface may have a 'collection' sub-interface, which
+allows the user to view the list as a more general collection.
+
+Here is a concrete example of a possible list interface demonstating these
+different features of an interface.
+
+interface Collection(type t) {
+  opaque C;
+  func size(C ; int);
+}
+
+interface List(type t) {
+  opaque L;
+
+  union maybe_t(Unit() nothing, t just);
+  
+  func head(L list; maybe_t);
+  func tail(L list; L);
+  func empty( ; L);
+  func cons(t x, L l; L);
+
+  Collection collection(t); // TODO: How do we indicate that L = collection.C?
+}
+
+
+ idecl ::= 'interface' tname '(' ['type' tname [',' 'type' tname [...]]] ')' ifc ';'

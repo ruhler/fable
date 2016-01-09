@@ -524,7 +524,7 @@
 @end
 
 @section Process
- A process is a computation that may have side effects before eventuall returning a value.
+ A process is a computation that may have side effects before eventually returning a value.
  Side effects are achieved by putting and getting data to and from ports.
 
  @section Get Port
