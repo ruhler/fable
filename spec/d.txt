@@ -70,22 +70,20 @@ Fbld is a meta language built on top of fblc. Its purpose is to provide
 zero-cost, statically resolved abstraction for developers. The key concepts of
 fbld are interfaces and modules.
 
-An interface is a collection of types and methods used to interact with a
-module. Interfaces are parameterized by type variables. The following kinds of
-declarations are allowed within an interface:
+An interface is a collection of abstract types and methods used to interact
+with those types. The following kinds of declarations are allowed within an
+interface:
 
-1. Opaque type. An opaque type is the name of a type that will be declared
-within the module implementing the interface. It will refer to a different
-type for each different implementation of the interface. The only way to
-interact with an opaque type's data is using interface methods provided for
+1. Abstract type. An abstract type is the name of a type whose representation
+may not be known to the user of an interface. The only way for a user to
+interact with an abstract type's data is using interface methods provided for
 that purpose.
 
-For example, in a list interface, there will be an opaque type representing
-the list type.
+For example, a list interface may have an abstract type L for the list data
+type and an abstract type T for the list element data type.
 
 2. Data type. A data type declaration. The data type declaration may refer to
-the type variable parameters of the interface and other opaque types declared
-in the interface.
+abstract types declared in the interface.
 
 For example, a list interface may have a 'head' method to return the first
 element of the list. This method may return the first element of the list, or
@@ -103,26 +101,139 @@ interfaces.
 For example, a list interface may have a 'collection' sub-interface, which
 allows the user to view the list as a more general collection.
 
+Interfaces can be refined by supplying external constraints on their abstract
+types. A constraint is of the form A = B, where A is the name of an abstract
+type of the interface, and B is the name of some type it must equal.
+
+For example, to implement a function that operates on a list of int, the
+list interface would be used with an additional constraint that the element
+type is equal to the type int.
+
 Here is a concrete example of a possible list interface demonstating these
 different features of an interface.
 
-interface Collection(type t) {
-  opaque C;
-  func size(C ; int);
-}
+interface Collection {
+  type T;   // Type of elements in the collection.
+  type C;   // Type of the collection itself.
 
-interface List(type t) {
-  opaque L;
+  // Return the number of elements on the given collection.
+  func size(C collection; int);
+};
 
-  union maybe_t(Unit() nothing, t just);
+interface List {
+  type T;   // Type of elements on the list.
+  type L;   // Type of the list itself.
+
+  union MaybeT(Unit() nothing, T just);
   
-  func head(L list; maybe_t);
+  func head(L list; MaybeT);
   func tail(L list; L);
   func empty( ; L);
-  func cons(t x, L l; L);
+  func cons(T x, L l; L);
 
-  Collection collection(t); // TODO: How do we indicate that L = collection.C?
-}
+  Collection(T=T, C=L) collection;
+};
+
+The dot notation is used to access the types and functions of an interface.
+These can be used whereever types or functions are expected. For example,
+given a List interface instance l, a function to create a singleton list could
+be defined as:
+  
+  func singleton(l.T elem ; l.L) {
+    l.cons(elem, l.empty());
+  }
+
+An interface is constructed by supplying values for each type and function
+declaration from the current context. For example:
+
+  List x = List(T=T, L=MyListType,
+    head=myHeadImpl,
+    tail=myTailImpl,
+    empty=myEmptyImpl,
+    cons=myConsImpl,
+    collection=myCollectionImpl);
+  
+
+A module is a collection of type, function, and interface definitions used to
+implement an interface. Modules can take interfaces as parameters. Modules can
+include the following kinds of declarations:
+
+1. Type declarations, including struct and union types, as in fblc.
+2. Function declarations, as in fblc.
+3. Interface declarations of the form:
+    ifcname vname = ifcexpr;
+
+For example:
+
+// TODO: Can we treat a type as a kind of primitive interface?
+
+interface Type {
+  type T;
+};
+
+module SimpleList(Type t ; List(T=t.T)) {
+  struct NonEmpty(t.T head, MyList tail);
+  union MyList(NonEmpty nonempty, Unit empty);
+
+  func head(MyList list; l.MaybeT) {
+    list?(l.just(list.nonempty.head), l.nothing);
+  };
+
+  func tail(MyList list; MyList) {
+    list?(list.nonempty.tail, list);
+  };
+
+  func empty(; MyList) {
+     empty(Unit());
+  };
+
+  func cons(t.T x, MyList l) { ... }
+  func size(MyList ; int) { ... }
+  Collection c = Collection(C=MyList, T=t.T, size=size);
+  List l = List(L=MyList, T=t.T, head=head, tail=tail, empty=empty,
+    cons=cons, collection=c);
+
+  l;
+};
 
 
- idecl ::= 'interface' tname '(' ['type' tname [',' 'type' tname [...]]] ')' ifc ';'
+Proposal 2
+----------
+Interfaces consist of:
+ 1. abstract type declarations.
+       type Foo;
+ 2. function declarations.
+       func foo( ; Foo);
+ 3. struct and union declarations. These can be (sort of) thought of as
+    syntactic sugar for declaring an abstract type and associated
+    constructor/destructor functions.
+ 4. include interfaces.
+       include Bool;
+    Includes all elements of the named interface directly into this interface,
+    as if by inlining.
+     Q: what if two includes include conflicting items?
+     A: give an error. Maybe allow named elements only to be imported.
+       include Bool(true, false, and, or);
+ 5. qualified include. Same as include, but includes the elements under a
+    given prefix/suffix or disambiguator. ??
+       qualified Maybe<Int>;
+       qualified int Maybe;
+       
+Modules are implemented by providing:
+ 1. an input interface. These are elements of the context provided from
+ outside.
+ 2. an output interface. These are elements of the context returned to the
+ outside.
+ 3. a context declaration. This should be a superset of the output interface,
+ where name matching is used to declare things.
+
+Design Notes
+------------
+Upon further reflection, I feel like the following are important:
+* fbld should be a superset of fblc, so you can reuse your fblc programs
+  in fbld programs.
+* fbld should ideally re-use the same concepts as fblc.
+* fbld should ideally re-use the same syntactic concepts as fblc.
+* complex descriptions, like function types, should not be expressed in a
+  comma separated list (syntactic design).
+
