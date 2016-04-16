@@ -51,3 +51,7 @@ Androcles language with recursive data types and functions.
 Calvisus:: A Turing-complete language for interactive programs and processes.
 Calvisus extends the Bathylus language with processes.
 
+Damocrates:: A meta-language built on top of Androcles, Bathylus, and Calvisus
+designed to be programmed by human, with features for modularity and
+development.
+

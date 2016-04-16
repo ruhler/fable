@@ -113,9 +113,40 @@ typedef struct {
   FblcField argv[];
 } FblcFunc;
 
-// An environment contains all the type and function declarations for a
-// program. All names used for types and functions must be unique. This is
-// enforced during the construction of the environment.
+typedef enum { FBLC_POLARITY_PUT, FBLC_POLARITY_GET } FblcPolarity;
+
+typedef struct {
+  FblcLocName type;
+  FblcLocName name;
+  FblcPolarity polarity;
+} FblcPort;
+
+typedef enum {
+  FBLC_EVAL_PROC,
+} FblcProcTag;
+
+typedef struct FblcProcExpr {
+  FblcProcTag tag;
+  FblcLoc* loc;
+  union {
+    // For processes of the form: $(<expr>)
+    FblcExpr* expr;
+  } eval;
+} FblcProcExpr;
+
+typedef struct {
+  FblcLocName name;
+  FblcLocName* return_type;     // NULL if no return type.
+  FblcProcExpr* body;
+  int portc;
+  FblcPort* portv;
+  int argc;
+  FblcField* argv;
+} FblcProc;
+
+// An environment contains all the type, function, and process declarations
+// for a program. All names used for types, functions, and processes must be
+// unique. This is enforced during the construction of the environment.
 typedef struct FblcTypeEnv {
   FblcType* decl;
   struct FblcTypeEnv* next;
@@ -126,16 +157,24 @@ typedef struct FblcFuncEnv {
   struct FblcFuncEnv* next;
 } FblcFuncEnv;
 
+typedef struct FblcProcEnv {
+  FblcProc* decl;
+  struct FblcProcEnv* next;
+} FblcProcEnv;
+
 typedef struct FblcEnv {
   FblcTypeEnv* types;
   FblcFuncEnv* funcs;
+  FblcProcEnv* procs;
 } FblcEnv;
 
 FblcEnv* FblcNewEnv();
 FblcType* FblcLookupType(const FblcEnv* env, FblcName name);
 FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name);
+FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name);
 bool FblcAddType(FblcEnv* env, FblcType* type);
 bool FblcAddFunc(FblcEnv* env, FblcFunc* func);
+bool FblcAddProc(FblcEnv* env, FblcProc* proc);
 
 // FblcTokenizer
 #define FBLC_TOK_EOF -1

@@ -1,0 +1,21 @@
+
+struct Unit();
+union Digit(
+    Unit 0, Unit 1, Unit 2, Unit 3, Unit 4,
+    Unit 5, Unit 6, Unit 7, Unit 8, Unit 9);
+
+func incr(Digit a ; Digit)
+  a ? (Digit:1(Unit()), Digit:2(Unit()), Digit:3(Unit()),
+       Digit:4(Unit()), Digit:5(Unit()), Digit:6(Unit()),
+       Digit:7(Unit()), Digit:8(Unit()), Digit:9(Unit()),
+       Digit:0(Unit()));
+
+proc clock(Unit/ tick, Digit\ display ; Digit time ; ) {
+  display(time);
+  Unit ticked = tick();
+  clock(tick, display; incr(time));
+};
+
+proc main(Unit/ tick, Digit\ display ; ; )
+  clock(tick, display; Digit:0(Unit()));
+

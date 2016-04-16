@@ -4,7 +4,7 @@
 " Last Change:	2015 May 10
 
 syn case match
-syn keyword	fblcStructure	struct union func
+syn keyword	fblcStructure	struct union func proc
 syn match fblcComment "//.*"
 
 hi def link fblcStructure	Structure

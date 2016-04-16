@@ -10,6 +10,30 @@ struct FblcLoc {
   int line;
   int col;
 };
+
+static bool NameIsDeclared(FblcEnv* env, FblcName name);
+
+
+// NameIsDeclared --
+//
+//   Test whether a particular name is declared in an environment.
+//
+// Inputs:
+//   env - The environment to look for the name in.
+//   name - The name to look for.
+//
+// Result:
+//   True if the name is declared in the environment, false otherwise.
+//
+// Side effects:
+//   None.
+
+static bool NameIsDeclared(FblcEnv* env, FblcName name) {
+  return FblcLookupType(env, name) != NULL
+    || FblcLookupFunc(env, name) != NULL
+    || FblcLookupProc(env, name) != NULL;
+}
+
 
 // FblcNamesEqual --
 //
@@ -153,6 +177,32 @@ FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name)
   return NULL;
 }
 
+// FblcLookupProc --
+//
+//   Look up the declaration of the process with the given name in the given
+//   environment.
+//
+// Inputs:
+//   env - The environment to look up the type in.
+//   name - The name of the process to look up.
+//
+// Result:
+//   The declaration for the process with the given name, or NULL if there is
+//   no process with the given name in the given environment.
+//
+// Side effects:
+//   None.
+
+FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name)
+{
+  for (FblcProcEnv* penv = env->procs; penv != NULL; penv = penv->next) {
+    if (FblcNamesEqual(penv->decl->name.name, name)) {
+      return penv->decl;
+    }
+  }
+  return NULL;
+}
+
 // FblcAddType --
 //  
 //   Add a type declaration to the given environment.
@@ -171,8 +221,7 @@ FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name)
 
 bool FblcAddType(FblcEnv* env, FblcType* type)
 {
-  if (FblcLookupType(env, type->name.name) != NULL
-      || FblcLookupFunc(env, type->name.name) != NULL) {
+  if (NameIsDeclared(env, type->name.name)) {
     FblcReportError("Multiple declarations for %s.\n",
        type->name.loc, type->name.name);
     return false;
@@ -203,8 +252,7 @@ bool FblcAddType(FblcEnv* env, FblcType* type)
 
 bool FblcAddFunc(FblcEnv* env, FblcFunc* func)
 {
-  if (FblcLookupType(env, func->name.name) != NULL
-      || FblcLookupFunc(env, func->name.name) != NULL) {
+  if (NameIsDeclared(env, func->name.name)) {
     FblcReportError("Multiple declarations for %s.\n",
        func->name.loc, func->name.name);
     return false;
@@ -213,5 +261,35 @@ bool FblcAddFunc(FblcEnv* env, FblcFunc* func)
   funcs->decl = func;
   funcs->next = env->funcs;
   env->funcs = funcs;
+  return true;
+}
+
+// FblcAddProc --
+//
+//   Add a process declaration to the given environment.
+//
+// Inputs:
+//   env - The environment to add the process declaration to.
+//   proc - The process declaration to add.
+//
+// Result:
+//   True if the process was successfully added, false otherwise.
+//
+// Side effects:
+//   The process declaration is added to the environment. If the process
+//   could not be added to the environment, an error message is printed to
+//   standard error describing the problem.
+
+bool FblcAddProc(FblcEnv* env, FblcProc* proc)
+{
+  if (NameIsDeclared(env, proc->name.name)) {
+    FblcReportError("Multiple declarations for %s.\n",
+       proc->name.loc, proc->name.name);
+    return false;
+  }
+  FblcProcEnv* procs = GC_MALLOC(sizeof(FblcProcEnv));
+  procs->decl = proc;
+  procs->next = env->procs;
+  env->procs = procs;
   return true;
 }

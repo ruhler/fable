@@ -259,7 +259,7 @@
   @end
  @end
 
- @section Value Text Output Syntax
+ @section Value Text Representation
   This section specifies a concrete text-based syntax for describing struct and union values.
   It consists of solely constructors for struct and union values.
  
@@ -274,6 +274,10 @@
 
   A value is output as a stream of characters using the above syntax, with no whitespace.
   This produces a unique output for a given data value, in a format that is valid syntax for an expression of the same type as the value that produces the value when executed.
+
+  A sequence of values is output using the above syntax, with each individual value terminated with a single newline character.
+
+  When reading a value or sequence of values from text, the same syntax should be used, with the exception that additional whitespace is permitted between tokens.
  @end
 
  @section Value Binary Representation
@@ -287,6 +291,10 @@
   The tag is encoded using as few bits as possible to distinguish between all the possible fields of the union.
   For N fields, the tag will be the ceiling of the log based 2 of N.
   The value 0 is used for the tag of the first field in the union declaration, 1 is used for the tag of the second field in the union declaration, and so on.
+
+  A sequence of values is described as a sequence of bits for the individual elements, with the restriction that the bits for each value in the sequence must start on a new 8-bit boundary.
+  In particular, individual values that normally are represented with 0 bits take 8 bits to represent as part of a binary stream.
+  This makes it possible to represent a stream of valus that take 0 bits, and ensures every value in the stream is described by disjoint sets of bytes.
 
   There is no explicit encoding of the type of a value in the binary representation.
   The type must be known in the context in which that value is being read or written.
@@ -562,6 +570,8 @@
   @list
    @li If A and B are blocked on gets, but C is not, C must run.
    @li If A and B interact infinitely, and C is not blocked, C must make progress.
+   @li If A and B are non-terminating, and C is not blocked, C must make
+progress.
   @end
 
   Progress is measured by observable actions: puts, gets, and completion.
@@ -582,7 +592,7 @@
  @end
 
  @section Processes
-  This section discusses the syntax and behavior or processes in Calvisus.
+  This section discusses the syntax and behavior of processes in Calvisus.
 
   In the typical case, given an environment of variables and ports, a process performs zero or more put and get operations on the ports in the environment then optionally returns a data value.
   Processes are typed.
@@ -783,7 +793,8 @@
         |  tname vname = proc
         ;
 
-  pstmt ::= tname '<>' '(' pname ',' pname ')' ';' pstmt  (* link *)
+  pstmt ::= proc ';'                                      (* process expr *)
+         |  tname '<>' '(' pname ',' pname ')' ';' pstmt  (* link *)
          |  [exec [',' exec [...]]] ';' [pstmt]           (* execution *)
          ;
      
@@ -822,5 +833,6 @@
    I worry it is easy to get the order of conditional arguments wrong.
    Would it not make more sense to explicitly specify the tag corresponding to each conditional argument, so that the compiler can verify it for you?
   @end
+  @li Maybe use + and - instead of < and > for polarity, because < and > makes it look like we have something unmatched?
  @end
 @end

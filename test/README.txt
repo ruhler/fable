@@ -45,12 +45,13 @@ Cond Expr         2400-2499
 App Expr          2500-2599
 Let Expr          2600-2699
 
-Get Proc          3000-3099
-Put Proc          3100-3199
-Call Proc         3200-3299
-Cond Proc         3300-3399
-Link Proc         3400-3499
-Let Proc          3500-3599
+Eval Proc         3000-3099 
+Get Proc          3100-3199
+Put Proc          3200-3299
+Call Proc         3300-3399
+Cond Proc         3400-3499
+Link Proc         3500-3599
+Let Proc          3600-3699
 
 Prog              4000-4099
 

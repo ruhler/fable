@@ -10,23 +10,34 @@ typedef struct FieldList {
   struct FieldList* next;
 } FieldList;
 
+typedef struct PortList {
+  FblcPort port;
+  struct PortList* next;
+} PortList;
+
 typedef struct ArgList {
   FblcExpr* arg;
   struct ArgList* next;
 } ArgList;
 
 static FieldList* AddField(FieldList* tail);
+static PortList* AddPort(PortList* tail);
 static ArgList* AddArg(FblcExpr* expr, ArgList* tail);
 static void FillFields(int fieldc, FieldList* list, FblcField* fieldv);
 static void FillArgs(int argc, ArgList* list, FblcExpr** argv);
+static void FillPorts(int portc, PortList* list, FblcPort* portv);
 
 static FblcType* NewType(
     const FblcLocName* name, FblcKind kind, int fieldc, FieldList* fields);
 static FblcFunc* NewFunc(
-    const FblcLocName* name, const FblcLocName* return_type, 
+    const FblcLocName* name, const FblcLocName* return_type,
     int argc, FieldList* args, FblcExpr* body);
+static FblcProc* NewProc(
+    const FblcLocName* name, FblcLocName* return_type,
+    int portc, PortList* ports, int argc, FieldList* args, FblcProcExpr* body);
 
 static int ParseFields(FblcTokenStream* toks, FieldList** plist);
+static int ParsePorts(FblcTokenStream* toks, PortList** plist);
 static int ParseArgs(FblcTokenStream* toks, ArgList** plist);
 static FblcExpr* ParseExprTail(FblcTokenStream* toks, FblcExpr* expr);
 static FblcExpr* ParseStmtExpr(FblcTokenStream* toks);
@@ -34,6 +45,7 @@ static FblcExpr* ParseNonStmtExpr(
     FblcTokenStream* toks, const FblcLocName* start);
 static FblcExpr* ParseExpr(FblcTokenStream* toks);
 static FblcExpr* ParseStmt(FblcTokenStream* toks);
+static FblcProcExpr* ParseProcExpr(FblcTokenStream* toks);
 
 // AddField --
 //
@@ -53,6 +65,28 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks);
 static FieldList* AddField(FieldList* tail)
 {
     FieldList* list = GC_MALLOC(sizeof(FieldList));
+    list->next = tail;
+    return list;
+}
+
+// AddPort --
+//
+//   Add a port entry to the given list of ports. The contents of the port
+//   entry are left uninitialized.
+//
+// Inputs:
+//   tail - The list to add the port entry to.
+//
+// Result:
+//   A new list starting with the added port entry and followed by the given
+//   list of ports.
+//
+// Side effects:
+//   None.
+
+static PortList* AddPort(PortList* tail)
+{
+    PortList* list = GC_MALLOC(sizeof(PortList));
     list->next = tail;
     return list;
 }
@@ -133,6 +167,34 @@ static void FillArgs(int argc, ArgList* list, FblcExpr** argv)
   assert(list == NULL && "Not all args from list were used");
 }
 
+// FillPorts --
+//
+//   Fill an array of ports in from a reversed list of ports.
+//
+// Inputs:
+//   portc - The number of ports to fill in.
+//   list - A list of portc ports in reverse order.
+//   portv - An array of portc ports to fill in.
+//
+// Return:
+//   None.
+//
+// Side effects:
+//   The 'portv' array is overwritten to contain the ports from 'list' in
+//   reverse order.
+
+static void FillPorts(int portc, PortList* list, FblcPort* portv)
+{
+  for (int i = 0; i < portc; i++) {
+    assert(list != NULL && "Not enough ports in list.");
+    portv[portc-1-i].name = list->port.name;
+    portv[portc-1-i].type = list->port.type;
+    portv[portc-1-i].polarity = list->port.polarity;
+    list = list->next;
+  }
+  assert(list == NULL && "Not all ports from list were used.");
+}
+
 // NewType --
 //
 //   Create a new type declaration of the form: <kind> <name>(<fields>);
@@ -162,7 +224,7 @@ static FblcType* NewType(
   return type;
 }
 
-// NewType --
+// NewFunc --
 //
 //   Create a new function declaration of the form:
 //     <name>(<args> ; <type>) <expr>;
@@ -182,7 +244,7 @@ static FblcType* NewType(
 //   None.
 
 static FblcFunc* NewFunc(
-    const FblcLocName* name, const FblcLocName* return_type, 
+    const FblcLocName* name, const FblcLocName* return_type,
     int argc, FieldList* args, FblcExpr* body)
 {
   FblcFunc* func = GC_MALLOC(sizeof(FblcFunc) + argc * sizeof(FblcField));
@@ -194,6 +256,46 @@ static FblcFunc* NewFunc(
   func->argc = argc;
   FillFields(argc, args, func->argv);
   return func;
+}
+
+// NewProc --
+//
+//   Create a new process declaration of the form:
+//     <name>(<ports> ; <args> ; <type>) <proc>;
+//
+// Inputs:
+//   name - The name of the process being declared.
+//   return_type - The return type of the process.
+//   portc - The number of ports in the process declaration.
+//   ports - A list of the portc ports of the process declaration in reverse
+//           order.
+//   argc - The number of args in the process declaration.
+//   args - A list of the argc args of the process declaration in reverse
+//          order.
+//   body - The body of the process.
+//
+// Result:
+//   The new process declaration.
+//
+// Side effects:
+//   None.
+
+static FblcProc* NewProc(
+    const FblcLocName* name, FblcLocName* return_type,
+    int portc, PortList* ports, int argc, FieldList* args, FblcProcExpr* body)
+{
+  FblcProc* proc = GC_MALLOC(sizeof(FblcProc));
+  proc->name.name = name->name;
+  proc->name.loc = name->loc;
+  proc->return_type = return_type;
+  proc->body = body;
+  proc->portc = portc;
+  proc->portv = GC_MALLOC(portc * sizeof(FblcPort));
+  FillPorts(portc, ports, proc->portv);
+  proc->argc = argc;
+  proc->argv = GC_MALLOC(argc * sizeof(FblcField));
+  FillFields(argc, args, proc->argv);
+  return proc;
 }
 
 // ParseFields -
@@ -222,6 +324,59 @@ static int ParseFields(FblcTokenStream* toks, FieldList** plist)
     list = AddField(list);
     FblcGetNameToken(toks, "type name", &(list->field.type));
     if (!FblcGetNameToken(toks, "field name", &(list->field.name))) {
+      return -1;
+    }
+
+    if (FblcIsToken(toks, ',')) {
+      FblcGetToken(toks, ',');
+    }
+  }
+  *plist = list;
+  return parsed;
+}
+
+// ParsePorts -
+//
+//   Parse ports in the form:
+//      <type> <polarity> <name>, <type> <polarity> <name>, ...
+//   This is used for parsing the process input port parameters.
+//
+// Inputs:
+//   toks - The token stream to parse the fields from.
+//   plist - A pointer to a list of ports to output the parsed ports to.
+//
+// Returns:
+//   The number of ports parsed or -1 on error.
+//
+// Side effects:
+//   *plist is set to point to a list of the ports parsed in reverse order.
+//   The token stream is advanced past the tokens describing the fields.
+//   In case of an error, an error message is printed to standard error.
+
+static int ParsePorts(FblcTokenStream* toks, PortList** plist)
+{
+  int parsed;
+  PortList* list = NULL;
+  for (parsed = 0; FblcIsToken(toks, FBLC_TOK_NAME); parsed++) {
+    list = AddPort(list);
+
+    // Get the type.
+    FblcGetNameToken(toks, "type name", &(list->port.type));
+
+    // Get the polarity.
+    if (FblcIsToken(toks, '/')) {
+      FblcGetToken(toks, '/');
+      list->port.polarity = FBLC_POLARITY_GET;
+    } else if (FblcIsToken(toks, '\\')) {
+      FblcGetToken(toks, '\\');
+      list->port.polarity = FBLC_POLARITY_PUT;
+    } else {
+      FblcUnexpectedToken(toks, "'/' or '\\'");
+      return -1;
+    }
+
+    // Get the name.
+    if (!FblcGetNameToken(toks, "port name", &(list->port.name))) {
       return -1;
     }
 
@@ -283,7 +438,7 @@ static int ParseArgs(FblcTokenStream* toks, ArgList** plist)
 //      expr ::= <expr>.field | <expr>?(...) | ...
 //   This function takes a first expression and extends it as much as possible
 //   with field accesses and conditional expressions until as complete an
-//   expression as there is has been parsed..
+//   expression as there is has been parsed.
 //
 // Inputs:
 //   toks - The token stream to parse the tail of the expression from.
@@ -335,7 +490,7 @@ static FblcExpr* ParseExprTail(FblcTokenStream* toks, FblcExpr* expr)
 // ParseStmtExpr --
 //
 //   Parse an expression beginning with a statement expression
-//   of the form: { <stmt> }
+//   of the form: { <stmt> } ...
 //   The statement expression may be extended with field access or conditional
 //   expressions, in which case the complete, extended expression is parsed.
 //
@@ -520,6 +675,61 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks)
   }
 }
 
+// ParseProcExpr --
+//
+//   Parse a process expression from the token stream.
+//   As complete an expression as can be will be parsed.
+//
+// Inputs:
+//   toks - The token stream to parse the expression from.
+//
+// Returns:
+//   The parsed process expression, or NULL on error.
+//
+// Side effects:
+//   Advances the token stream past the parsed expression. In case of error,
+//   an error message is printed to standard error.
+
+static FblcProcExpr* ParseProcExpr(FblcTokenStream* toks)
+{
+  if (FblcIsToken(toks, '{')) {
+    FblcGetToken(toks, '{');
+    FblcProcExpr* expr = ParseProcExpr(toks);
+    if (expr == NULL) {
+      return NULL;
+    }
+    if (!FblcGetToken(toks, ';')) {
+      return NULL;
+    }
+    if (!FblcGetToken(toks, '}')) {
+      return NULL;
+    }
+    return expr;
+  } else if (FblcIsToken(toks, '$')) {
+    // $(<expr>)
+    FblcGetToken(toks, '$');
+    if (!FblcGetToken(toks, '(')) {
+      return NULL;
+    }
+    FblcExpr* expr = ParseExpr(toks);
+    if (expr == NULL) {
+      return NULL;
+    }
+    if (!FblcGetToken(toks, ')')) {
+      return NULL;
+    }
+
+    FblcProcExpr* proc = GC_MALLOC(sizeof(FblcProcExpr));
+    proc->tag = FBLC_EVAL_PROC;
+    proc->loc = expr->loc;
+    proc->eval.expr = expr;
+    return proc;
+  } else {
+    FblcUnexpectedToken(toks, "a process expression");
+    return NULL;
+  }
+}
+
 // FblcParseProgram --
 //
 //   Parse an Fblc program from the token stream.
@@ -536,10 +746,10 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks)
 
 FblcEnv* FblcParseProgram(FblcTokenStream* toks)
 {
-  const char* keywords = "'struct', 'union', or 'func'";
+  const char* keywords = "'struct', 'union', 'func', or 'proc'";
   FblcEnv* env = FblcNewEnv();
   while (!FblcIsToken(toks, FBLC_TOK_EOF)) {
-    // All declarations start with the form: <keyword> <name> (<fields> ...
+    // All declarations start with the form: <keyword> <name> (...
     FblcLocName keyword;
     if (!FblcGetNameToken(toks, keywords, &keyword)) {
       return NULL;
@@ -554,18 +764,19 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       return NULL;
     }
 
-    FieldList* fields;
-    int fieldc = ParseFields(toks, &fields);
-    if (fieldc < 0) {
-      return NULL;
-    }
-
     bool is_struct = FblcNamesEqual("struct", keyword.name);
     bool is_union = FblcNamesEqual("union", keyword.name);
     bool is_func = FblcNamesEqual("func", keyword.name);
+    bool is_proc = FblcNamesEqual("proc", keyword.name);
 
     if (is_struct || is_union) {
-      // Struct and union declarations end with: ...);
+      // Struct and union declarations end with: ... <fields>);
+      FieldList* fields;
+      int fieldc = ParseFields(toks, &fields);
+      if (fieldc < 0) {
+        return NULL;
+      }
+
       if (!FblcGetToken(toks, ')')) {
         return NULL;
       }
@@ -575,7 +786,13 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
     } else if (is_func) {
-      // Function declarations end with: ...; <type>) <expr>;
+      // Function declarations end with: ... <fields>; <type>) <expr>;
+      FieldList* fields;
+      int fieldc = ParseFields(toks, &fields);
+      if (fieldc < 0) {
+        return NULL;
+      }
+
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
@@ -595,6 +812,46 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       }
       FblcFunc* func = NewFunc(&name, &return_type, fieldc, fields, expr);
       if (!FblcAddFunc(env, func)) {
+        return NULL;
+      }
+    } else if (is_proc) {
+      // Process declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
+      PortList* ports;
+      int portc = ParsePorts(toks, &ports);
+      if (portc < 0) {
+        return NULL;
+      }
+
+      if (!FblcGetToken(toks, ';')) {
+        return NULL;
+      }
+
+      FieldList* fields;
+      int fieldc = ParseFields(toks, &fields);
+      if (fieldc < 0) {
+        return NULL;
+      }
+
+      if (!FblcGetToken(toks, ';')) {
+        return NULL;
+      }
+
+      FblcLocName* return_type = NULL;
+      if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+        return_type = GC_MALLOC(sizeof(FblcLocName));
+        FblcGetNameToken(toks, "type", return_type);
+      }
+
+      if (!FblcGetToken(toks, ')')) {
+        return NULL;
+      }
+
+      FblcProcExpr* body = ParseProcExpr(toks);
+      if (body == NULL) {
+        return NULL;
+      }
+      FblcProc* proc = NewProc(&name, return_type, portc, ports, fieldc, fields, body);
+      if (!FblcAddProc(env, proc)) {
         return NULL;
       }
     } else {

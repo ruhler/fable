@@ -14,6 +14,12 @@ likely will need to add an API for FblcEval to do partial evaluation.
 4. Fill out test cases for process support to get good code coverage.
 
 Miscellaneous::
+* "process expression" is a little bit of a lame name. Is there anything else
+  we could use for process namewise that makes sense? Ideally something for:
+  process expression, process statement, and process function.
+* Make sure we are consistent about variable sized arguments.
+  I think we need to use foo* instead of foo[] because in some cases we need
+  multiple variable sized bits in the same struct.
 * It would be nice if 'Wrong number of arguments to ...' reported the opening
   '(' as the location of the error.
 * Test what happens when we try to access the wrong field of a union.

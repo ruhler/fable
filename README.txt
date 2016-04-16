@@ -2,6 +2,7 @@
 Directory Structure
 -------------------
 calc/ - Source code for a calculator implemented in fblc.
+clock/ - Source code for a clock implemented in fblc.
 fblc/ - Source code for an fblc interpreter implemented in C.
 out/ - Directory where build outputs are placed, created as needed.
 spec/ - Source for the specification of the fable languages.
