@@ -1,0 +1,11 @@
+
+struct Unit();
+
+proc f( ; Unit x, Donut y; Unit) {
+  $(x);
+};
+
+/// Expect: ERROR
+proc main( ; ; Unit) {
+  $(Unit());
+};

@@ -5,6 +5,7 @@ func foo(Unit x ; Donut) {
   Donut();
 };
 
+/// Expect: ERROR
 func main( ; Unit) {
   Unit();
 };
