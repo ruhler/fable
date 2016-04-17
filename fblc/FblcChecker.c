@@ -25,6 +25,7 @@ static bool CheckFields(
     const FblcEnv* env, int fieldc, FblcField* fieldv, const char* kind);
 static bool CheckType(const FblcEnv* env, FblcType* type);
 static bool CheckFunc(const FblcEnv* env, FblcFunc* func);
+static bool CheckProc(const FblcEnv* env, FblcProc* proc);
 
 // AddVar --
 //
@@ -433,6 +434,62 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
   return true;
 }
 
+// CheckProc --
+//
+//   Verify the given process declaration is well formed in the given
+//   environment.
+//
+// Inputs:
+//   env - The program environment.
+//   proc - The process declaration to check.
+//
+// Results:
+//   Returns true if the process declaration is well formed, false otherwise.
+//
+// Side effects:
+//   If the process declaration is not well formed, prints a message to
+//   standard error describing the problem.
+
+static bool CheckProc(const FblcEnv* env, FblcProc* proc)
+{
+  // TODO: Check the ports.
+
+  // Check the arguments.
+  if (!CheckFields(env, proc->argc, proc->argv, "arg")) {
+    return false;
+  }
+
+  // Check the return type.
+  if (proc->return_type != NULL
+      && FblcLookupType(env, proc->return_type->name) == NULL) {
+    FblcReportError("Type '%s' not found.\n",
+        proc->return_type->loc, proc->return_type->name);
+    return false;
+  }
+
+  // Check the body.
+  Scope* scope = NULL;
+  for (int i = 0; i < proc->argc; i++) {
+    scope = AddVar(proc->argv[i].name.name, proc->argv[i].type.name, scope);
+  }
+  assert(proc->body->tag == FBLC_EVAL_ACTN);
+  FblcName body_type = CheckExpr(env, scope, proc->body->eval.expr);
+  if (body_type == NULL) {
+    return false;
+  }
+  if (proc->return_type == NULL) {
+    FblcReportError("Type mismatch. Expected none, but found %s.\n",
+        proc->body->loc, body_type);
+    return false;
+  }
+  if (!FblcNamesEqual(proc->return_type->name, body_type)) {
+    FblcReportError("Type mismatch. Expected %s, but found %s.\n",
+        proc->body->loc, proc->return_type->name, body_type);
+    return false;
+  }
+  return true;
+}
+
 // FblcCheckProgram --
 //
 //   Check that the given program environment describes a well formed and well
@@ -462,6 +519,13 @@ bool FblcCheckProgram(const FblcEnv* env)
   // Verify all function declarations are good.
   for (FblcFuncEnv* funcs = env->funcs; funcs != NULL; funcs = funcs->next) {
     if (!CheckFunc(env, funcs->decl)) {
+      return false;
+    }
+  }
+
+  // Verify all process declarations are good.
+  for (FblcProcEnv* procs = env->procs; procs != NULL; procs = procs->next) {
+    if (!CheckProc(env, procs->decl)) {
       return false;
     }
   }

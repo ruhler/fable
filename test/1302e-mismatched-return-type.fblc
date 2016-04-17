@@ -1,0 +1,8 @@
+
+struct Unit();
+struct Donut();
+
+/// Expect: ERROR
+proc main( ; ; Unit) {
+  $(Donut());
+};
