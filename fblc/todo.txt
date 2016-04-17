@@ -4,16 +4,9 @@ Calculator Logic::
 3. Write a printer: Integer -> ASCII
 4. Write a calc test for "5 5 + 5 +" -> "15"
 
-Process Support::
-1. Re-organize tests based on language version a, b, c, etc...
-2. Write some basic tests for processes (they won't run yet because we don't
-support processes yet).
-3. Implement process support. Try to be modular in the sense that the process
-support is mostly added code, not major restructuring of the existing code. We
-likely will need to add an API for FblcEval to do partial evaluation.
-4. Fill out test cases for process support to get good code coverage.
-
 Miscellaneous::
+* Rename FblcEvaluator FblcEvalExpr to be consistant with FblcEvalProc.
+  Or come up with some better naming scheme (see next point).
 * "process expression" is a little bit of a lame name. Is there anything else
   we could use for process namewise that makes sense? Ideally something for:
   process expression, process statement, and process function.

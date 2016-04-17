@@ -96,18 +96,41 @@ int main(int argc, char* argv[])
   }
 
   FblcFunc* func = FblcLookupFunc(env, "main");
-  if (func == NULL) {
-    fprintf(stderr, "failed to find 'main' function.\n");
-    return 1;
+  if (func != NULL) {
+    if (func->argc != 0) {
+      fprintf(stderr, "main function does not take 0 arguments.\n");
+      return 1;
+    }
+
+    FblcValue* value = FblcEvaluate(env, func->body);
+    FblcPrintValue(stdout, value);
+    printf("\n");
+    return expect_error ? 1 : 0;
   }
 
-  if (func->argc != 0) {
-    fprintf(stderr, "main function does not take 0 arguments.\n");
-    return 1;
+  FblcProc* proc = FblcLookupProc(env, "main");
+  if (proc != NULL) {
+    if (proc->portc != 0) {
+      fprintf(stderr, "main process does not have 0 ports.\n");
+      return 1;
+    }
+
+    if (proc->argc != 0) {
+      fprintf(stderr, "main process does not take 0 arguments.\n");
+      return 1;
+    }
+
+    if (proc->return_type == NULL) {
+      fprintf(stderr, "main process does not return a value.\n");
+      return 1;
+    }
+    
+    FblcValue* value = FblcEvalProc(env, proc->body);
+    FblcPrintValue(stdout, value);
+    printf("\n");
+    return expect_error ? 1 : 0;
   }
 
-  FblcValue* value = FblcEvaluate(env, func->body);
-  FblcPrintValue(stdout, value);
-  printf("\n");
-  return expect_error ? 1 : 0;
+  fprintf(stderr, "failed to find 'main' function.\n");
+  return 1;
 }

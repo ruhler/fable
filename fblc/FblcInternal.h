@@ -201,4 +201,7 @@ typedef struct FblcValue FblcValue;
 void FblcPrintValue(FILE* fout, FblcValue* value);
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr);
 
+// FblcEvalProc
+FblcValue* FblcEvalProc(const FblcEnv* env, const FblcProcExpr* expr);
+
 #endif  // FBLC_INTERNAL_H_
