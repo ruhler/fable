@@ -34,7 +34,7 @@ static FblcFunc* NewFunc(
     int argc, FieldList* args, FblcExpr* body);
 static FblcProc* NewProc(
     const FblcLocName* name, FblcLocName* return_type,
-    int portc, PortList* ports, int argc, FieldList* args, FblcProcExpr* body);
+    int portc, PortList* ports, int argc, FieldList* args, FblcActn* body);
 
 static int ParseFields(FblcTokenStream* toks, FieldList** plist);
 static int ParsePorts(FblcTokenStream* toks, PortList** plist);
@@ -45,7 +45,7 @@ static FblcExpr* ParseNonStmtExpr(
     FblcTokenStream* toks, const FblcLocName* start);
 static FblcExpr* ParseExpr(FblcTokenStream* toks);
 static FblcExpr* ParseStmt(FblcTokenStream* toks);
-static FblcProcExpr* ParseProcExpr(FblcTokenStream* toks);
+static FblcActn* ParseActn(FblcTokenStream* toks);
 
 // AddField --
 //
@@ -282,7 +282,7 @@ static FblcFunc* NewFunc(
 
 static FblcProc* NewProc(
     const FblcLocName* name, FblcLocName* return_type,
-    int portc, PortList* ports, int argc, FieldList* args, FblcProcExpr* body)
+    int portc, PortList* ports, int argc, FieldList* args, FblcActn* body)
 {
   FblcProc* proc = GC_MALLOC(sizeof(FblcProc));
   proc->name.name = name->name;
@@ -675,27 +675,27 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks)
   }
 }
 
-// ParseProcExpr --
+// ParseActn --
 //
-//   Parse a process expression from the token stream.
-//   As complete an expression as can be will be parsed.
+//   Parse a process action from the token stream.
+//   As complete an action as can be will be parsed.
 //
 // Inputs:
-//   toks - The token stream to parse the expression from.
+//   toks - The token stream to parse the action from.
 //
 // Returns:
-//   The parsed process expression, or NULL on error.
+//   The parsed process action, or NULL on error.
 //
 // Side effects:
-//   Advances the token stream past the parsed expression. In case of error,
+//   Advances the token stream past the parsed action. In case of error,
 //   an error message is printed to standard error.
 
-static FblcProcExpr* ParseProcExpr(FblcTokenStream* toks)
+static FblcActn* ParseActn(FblcTokenStream* toks)
 {
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
-    FblcProcExpr* expr = ParseProcExpr(toks);
-    if (expr == NULL) {
+    FblcActn* actn = ParseActn(toks);
+    if (actn == NULL) {
       return NULL;
     }
     if (!FblcGetToken(toks, ';')) {
@@ -704,7 +704,7 @@ static FblcProcExpr* ParseProcExpr(FblcTokenStream* toks)
     if (!FblcGetToken(toks, '}')) {
       return NULL;
     }
-    return expr;
+    return actn;
   } else if (FblcIsToken(toks, '$')) {
     // $(<expr>)
     FblcGetToken(toks, '$');
@@ -719,13 +719,13 @@ static FblcProcExpr* ParseProcExpr(FblcTokenStream* toks)
       return NULL;
     }
 
-    FblcProcExpr* proc = GC_MALLOC(sizeof(FblcProcExpr));
-    proc->tag = FBLC_EVAL_PROC;
-    proc->loc = expr->loc;
-    proc->eval.expr = expr;
-    return proc;
+    FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
+    actn->tag = FBLC_EVAL_ACTN;
+    actn->loc = expr->loc;
+    actn->eval.expr = expr;
+    return actn;
   } else {
-    FblcUnexpectedToken(toks, "a process expression");
+    FblcUnexpectedToken(toks, "a process action");
     return NULL;
   }
 }
@@ -846,7 +846,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcProcExpr* body = ParseProcExpr(toks);
+      FblcActn* body = ParseActn(toks);
       if (body == NULL) {
         return NULL;
       }

@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
       return 1;
     }
     
-    FblcValue* value = FblcEvalProc(env, proc->body);
+    FblcValue* value = FblcExecute(env, proc->body);
     FblcPrintValue(stdout, value);
     printf("\n");
     return expect_error ? 1 : 0;

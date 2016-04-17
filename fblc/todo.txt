@@ -5,11 +5,6 @@ Calculator Logic::
 4. Write a calc test for "5 5 + 5 +" -> "15"
 
 Miscellaneous::
-* Rename FblcEvaluator FblcEvalExpr to be consistant with FblcEvalProc.
-  Or come up with some better naming scheme (see next point).
-* "process expression" is a little bit of a lame name. Is there anything else
-  we could use for process namewise that makes sense? Ideally something for:
-  process expression, process statement, and process function.
 * Make sure we are consistent about variable sized arguments.
   I think we need to use foo* instead of foo[] because in some cases we need
   multiple variable sized bits in the same struct.

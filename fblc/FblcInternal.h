@@ -122,26 +122,26 @@ typedef struct {
 } FblcPort;
 
 typedef enum {
-  FBLC_EVAL_PROC,
-} FblcProcTag;
+  FBLC_EVAL_ACTN,
+} FblcActnTag;
 
-typedef struct FblcProcExpr {
-  FblcProcTag tag;
+typedef struct FblcActn {
+  FblcActnTag tag;
   FblcLoc* loc;
   union {
     // For processes of the form: $(<expr>)
     FblcExpr* expr;
   } eval;
-} FblcProcExpr;
+} FblcActn;
 
 typedef struct {
   FblcLocName name;
   FblcLocName* return_type;     // NULL if no return type.
-  FblcProcExpr* body;
+  FblcActn* body;
   int portc;
-  FblcPort* portv;
+  FblcPort* portv;              // Array of portc ports.
   int argc;
-  FblcField* argv;
+  FblcField* argv;              // Array of argv fields.
 } FblcProc;
 
 // An environment contains all the type, function, and process declarations
@@ -201,7 +201,7 @@ typedef struct FblcValue FblcValue;
 void FblcPrintValue(FILE* fout, FblcValue* value);
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr);
 
-// FblcEvalProc
-FblcValue* FblcEvalProc(const FblcEnv* env, const FblcProcExpr* expr);
+// FblcExecutor
+FblcValue* FblcExecute(const FblcEnv* env, const FblcActn* actn);
 
 #endif  // FBLC_INTERNAL_H_
