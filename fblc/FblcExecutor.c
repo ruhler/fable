@@ -25,5 +25,5 @@
 FblcValue* FblcExecute(const FblcEnv* env, const FblcActn* actn)
 {
   assert(actn->tag == FBLC_EVAL_ACTN);
-  return FblcEvaluate(env, actn->eval.expr);
+  return FblcEvaluate(env, actn->ac.eval.expr);
 }

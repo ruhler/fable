@@ -123,15 +123,70 @@ typedef struct {
 
 typedef enum {
   FBLC_EVAL_ACTN,
+  FBLC_GET_ACTN,
+  FBLC_PUT_ACTN,
+  FBLC_CALL_ACTN,
+  FBLC_LINK_ACTN,
+  FBLC_EXEC_ACTN,
+  FBLC_COND_ACTN,
 } FblcActnTag;
+
+typedef struct FblcExec {
+  FblcField* var;         // NULL if there is no execution result.
+  struct FblcActn* proc;
+} FblcExec;
 
 typedef struct FblcActn {
   FblcActnTag tag;
   FblcLoc* loc;
   union {
     // For processes of the form: $(<expr>)
-    FblcExpr* expr;
-  } eval;
+    struct {
+      FblcExpr* expr;
+    } eval;
+
+    // For processes of the form: <pname>~()
+    struct {
+      FblcLocName port;
+    } get;
+
+    // For processes of the form: <pname>~(<expr>)
+    struct {
+      FblcLocName port;
+      FblcExpr* expr;
+    } put;
+
+    // For processes of the form: <tname>(<port>, ... ; <expr>, ...)
+    struct {
+      FblcLocName proc;
+      int portc;
+      FblcLocName* ports;   // Array of portc ports
+      int exprc;
+      FblcExpr* exprs;      // Array of exprc exprs
+    } call;
+
+    // For processes of the form: <tname> '<~>' <pname> ',' <pname> ';' <actn>
+    struct {
+      FblcLocName type;
+      FblcLocName getname;
+      FblcLocName putname;
+      struct FblcActn* body;
+    } link;
+
+    // For processes of the form:
+    //    <tname> <vname> = <actn>,  ... 
+    struct {
+      int execc;
+      FblcExec* execv;          // Array of execc execs.
+    } exec;
+
+    // For processes of the form: <expr>?(<proc>, ...)
+    struct {
+      FblcExpr* select;
+      int argc;
+      struct FblcActn* args;    //  Array of argc args.
+    } cond;
+  } ac;
 } FblcActn;
 
 typedef struct {

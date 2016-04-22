@@ -722,7 +722,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks)
     FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
     actn->tag = FBLC_EVAL_ACTN;
     actn->loc = expr->loc;
-    actn->eval.expr = expr;
+    actn->ac.eval.expr = expr;
     return actn;
   } else {
     FblcUnexpectedToken(toks, "a process action");

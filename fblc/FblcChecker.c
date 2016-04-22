@@ -473,7 +473,7 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
     scope = AddVar(proc->argv[i].name.name, proc->argv[i].type.name, scope);
   }
   assert(proc->body->tag == FBLC_EVAL_ACTN);
-  FblcName body_type = CheckExpr(env, scope, proc->body->eval.expr);
+  FblcName body_type = CheckExpr(env, scope, proc->body->ac.eval.expr);
   if (body_type == NULL) {
     return false;
   }

@@ -776,13 +776,13 @@ progress.
         |  tname vname '=' expr ';' stmt                (* let *)
         ;
 
-  polarity ::= '<'                                      (* get *)
-            |  '>'                                      (* put *)
+  polarity ::= '<~'                                      (* get *)
+            |  '~>'                                      (* put *)
             ;
 
   proc ::= '$' '(' expr ')'                             (* eval *)
-        |  pname '(' ')'                                (* get *)
-        |  pname '(' expr ')'                           (* put *)
+        |  pname '~' '(' ')'                            (* get *)
+        |  pname '~' '(' expr ')'                       (* put *)
         |  expr '?' ( proc [',' proc [...]] ')'         (* conditional *)
         |  tname '(' [pname [',' pname [...]]] ';'      (* call *) 
                      [expr [',' expr [...]]] ')'        
@@ -790,12 +790,12 @@ progress.
         ;
 
   exec ::= proc
-        |  tname vname = proc
+        |  [tname vname '='] proc
         ;
 
-  pstmt ::= proc ';'                                      (* process expr *)
-         |  tname '<>' '(' pname ',' pname ')' ';' pstmt  (* link *)
-         |  [exec [',' exec [...]]] ';' [pstmt]           (* execution *)
+  pstmt ::= proc ';'                                       (* process expr *)
+         |  tname '<~>' pname ',' pname ';' pstmt  (* link *)
+         |  [exec [',' exec [...]]] ';' [pstmt]            (* execution *)
          ;
      
 
