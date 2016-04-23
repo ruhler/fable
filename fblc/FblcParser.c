@@ -45,7 +45,7 @@ static FblcExpr* ParseNonStmtExpr(
     FblcTokenStream* toks, const FblcLocName* start);
 static FblcExpr* ParseExpr(FblcTokenStream* toks);
 static FblcExpr* ParseStmt(FblcTokenStream* toks);
-static FblcActn* ParseActn(FblcTokenStream* toks);
+static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt);
 
 // AddField --
 //
@@ -679,9 +679,12 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks)
 //
 //   Parse a process action from the token stream.
 //   As complete an action as can be will be parsed.
+//   If in_stmt is true, the action is parsed in a statement context,
+//   otherwise the action must be standalone.
 //
 // Inputs:
 //   toks - The token stream to parse the action from.
+//   in_stmt - True if parsing an action in the statement context.
 //
 // Returns:
 //   The parsed process action, or NULL on error.
@@ -690,21 +693,18 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks)
 //   Advances the token stream past the parsed action. In case of error,
 //   an error message is printed to standard error.
 
-static FblcActn* ParseActn(FblcTokenStream* toks)
+static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
 {
+  FblcActn* actn = NULL;
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
-    FblcActn* actn = ParseActn(toks);
+    actn = ParseActn(toks, true);
     if (actn == NULL) {
-      return NULL;
-    }
-    if (!FblcGetToken(toks, ';')) {
       return NULL;
     }
     if (!FblcGetToken(toks, '}')) {
       return NULL;
     }
-    return actn;
   } else if (FblcIsToken(toks, '$')) {
     // $(<expr>)
     FblcGetToken(toks, '$');
@@ -719,15 +719,104 @@ static FblcActn* ParseActn(FblcTokenStream* toks)
       return NULL;
     }
 
-    FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
+    actn = GC_MALLOC(sizeof(FblcActn));
     actn->tag = FBLC_EVAL_ACTN;
     actn->loc = expr->loc;
     actn->ac.eval.expr = expr;
-    return actn;
+  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+    FblcLocName name;
+    FblcGetNameToken(toks, "port or process name", &name);
+
+    if (FblcIsToken(toks, '~')) {
+      FblcGetToken(toks, '~');
+      if (!FblcGetToken(toks, '(')) {
+        return NULL;
+      }
+
+      if (FblcIsToken(toks, ')')) {
+        FblcGetToken(toks, ')');
+        actn = GC_MALLOC(sizeof(FblcActn));
+        actn->tag = FBLC_GET_ACTN;
+        actn->loc = name.loc;
+        actn->ac.get.port = name;
+      } else {
+        FblcExpr* expr = ParseExpr(toks);
+        if (expr == NULL) {
+          return NULL;
+        }
+        if (!FblcGetToken(toks, ')')) {
+          return NULL;
+        }
+
+        actn = GC_MALLOC(sizeof(FblcActn));
+        actn->tag = FBLC_PUT_ACTN;
+        actn->loc = name.loc;
+        actn->ac.put.port = name;
+        actn->ac.put.expr = expr;
+      }
+    } else if (in_stmt && FblcIsToken(toks, '<')) {
+      FblcGetToken(toks, '<');
+      if (!FblcGetToken(toks, '~')) {
+        return NULL;
+      }
+      if (!FblcGetToken(toks, '>')) {
+        return NULL;
+      }
+      FblcLocName getname;
+      if (!FblcGetNameToken(toks, "port name", &getname)) {
+        return NULL;
+      }
+      if (!FblcGetToken(toks, ',')) {
+        return NULL;
+      }
+      FblcLocName putname;
+      if (!FblcGetNameToken(toks, "port name", &putname)) {
+        return NULL;
+      }
+      if (!FblcGetToken(toks, ';')) {
+        return NULL;
+      }
+      FblcActn* body = ParseActn(toks, true);
+      if (body == NULL) {
+        return NULL;
+      }
+      actn = GC_MALLOC(sizeof(FblcActn));
+      actn->tag = FBLC_LINK_ACTN;
+      actn->loc = name.loc;
+      actn->ac.link.type = name;
+      actn->ac.link.getname = getname;
+      actn->ac.link.putname = putname;
+      actn->ac.link.body = body;
+      return actn;
+    } else if (FblcIsToken(toks, '(')) {
+      assert(false && "TODO: Parse a call process.");
+      return NULL;
+    } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
+      assert(false && "TODO: Parse an exec process.");
+      return NULL;
+    }
   } else {
     FblcUnexpectedToken(toks, "a process action");
     return NULL;
   }
+
+  if (in_stmt) {
+    FblcGetToken(toks, ';');
+    if (!FblcIsToken(toks, '}')) {
+      FblcActn* second = ParseActn(toks, true);
+      if (second == NULL) {
+        return NULL;
+      }
+
+      FblcActn* seq = GC_MALLOC(sizeof(FblcActn));
+      seq->tag = FBLC_SEQ_ACTN;
+      seq->loc = actn->loc;
+      seq->ac.seq.first = actn;
+      seq->ac.seq.second = second;
+      return seq;
+    }
+  }
+  return actn;
 }
 
 // FblcParseProgram --
@@ -846,7 +935,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcActn* body = ParseActn(toks);
+      FblcActn* body = ParseActn(toks, false);
       if (body == NULL) {
         return NULL;
       }

@@ -7,6 +7,6 @@ union Bool(Unit true, Unit false);
 proc main( ; ; Bool) {
   Bool <~> get, put;
   put~(Bool:true(Unit()));
-  Foo b = get~();
+  get~();
 };
 

@@ -794,7 +794,7 @@ progress.
         ;
 
   pstmt ::= proc ';'                                       (* process expr *)
-         |  tname '<~>' pname ',' pname ';' pstmt  (* link *)
+         |  tname '<~>' pname ',' pname ';' pstmt          (* link *)
          |  [exec [',' exec [...]]] ';' [pstmt]            (* execution *)
          ;
      
@@ -833,6 +833,7 @@ progress.
    I worry it is easy to get the order of conditional arguments wrong.
    Would it not make more sense to explicitly specify the tag corresponding to each conditional argument, so that the compiler can verify it for you?
   @end
-  @li Maybe use + and - instead of < and > for polarity, because < and > makes it look like we have something unmatched?
+  @li Figure out how to distinguish between expr and proc for conditional procs in the concrete syntax.
+  @li Do we allow whitespace in tokens <~, ~>, and <~>?
  @end
 @end
