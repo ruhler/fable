@@ -699,6 +699,9 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       assert(false && "TODO: Parse an exec process.");
       return NULL;
     }
+  } else if (FblcIsToken(toks, '?')) {
+    // ?(<expr> ; <proc>, ...)
+    assert(false && "TODO: Parse a conditional process.");
   } else {
     FblcUnexpectedToken(toks, "a process action");
     return NULL;
