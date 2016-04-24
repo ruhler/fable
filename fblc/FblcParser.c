@@ -39,12 +39,7 @@ static FblcProc* NewProc(
 static int ParseFields(FblcTokenStream* toks, FieldList** plist);
 static int ParsePorts(FblcTokenStream* toks, PortList** plist);
 static int ParseArgs(FblcTokenStream* toks, ArgList** plist);
-static FblcExpr* ParseExprTail(FblcTokenStream* toks, FblcExpr* expr);
-static FblcExpr* ParseStmtExpr(FblcTokenStream* toks);
-static FblcExpr* ParseNonStmtExpr(
-    FblcTokenStream* toks, const FblcLocName* start);
-static FblcExpr* ParseExpr(FblcTokenStream* toks);
-static FblcExpr* ParseStmt(FblcTokenStream* toks);
+static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt);
 static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt);
 
 // AddField --
@@ -390,7 +385,7 @@ static int ParsePorts(FblcTokenStream* toks, PortList** plist)
 
 // ParseArgs --
 //
-//   Parse a list of arguments in the form: (<expr>, <expr>, ...)
+//   Parse a list of arguments in the form: <expr>, <expr>, ...)
 //   This is used for parsing arguments to function calls and conditional
 //   expressions.
 //
@@ -411,12 +406,8 @@ static int ParseArgs(FblcTokenStream* toks, ArgList** plist)
 {
   int parsed;
   ArgList* list = NULL;
-  if (!FblcGetToken(toks, '(')) {
-    return -1;
-  }
-
   for (parsed = 0; !FblcIsToken(toks, ')'); parsed++) {
-    FblcExpr* arg = ParseExpr(toks);
+    FblcExpr* arg = ParseExpr(toks, false);
     if (arg == NULL) {
       return -1;
     }
@@ -431,217 +422,78 @@ static int ParseArgs(FblcTokenStream* toks, ArgList** plist)
   return parsed;
 }
 
-// ParseExprTail --
+// ParseExpr --
 //
-//   An expression can be extended to another expression if the first
-//   expression is the object of a field access or a conditional expression:
-//      expr ::= <expr>.field | <expr>?(...) | ...
-//   This function takes a first expression and extends it as much as possible
-//   with field accesses and conditional expressions until as complete an
-//   expression as there is has been parsed.
+//   Parse an expression from the token stream.
+//   As complete an expression as can be will be parsed.
+//   If in_stmt is true, the expression is parsed in a statement context,
+//   otherwise the expression must be standalone.
 //
 // Inputs:
-//   toks - The token stream to parse the tail of the expression from.
-//   expr - The initial expression to extend.
+//   toks - The token stream to parse the expression from.
+//   in_stmt - True if parsing an expression in the statement context.
 //
-// Result:
-//   The complete parsed expression, or NULL if there is an error. This may be
-//   the same as the given expression if the given expression is not the
-//   object of any field access or conditional expressions.
+// Returns:
+//   The parsed expression, or NULL on error.
 //
 // Side effects:
-//   Advances the token stream past the parsed expression. If there is an
-//   error, an error message will be printed to standard error.
+//   Advances the token stream past the parsed expression. In case of error,
+//   an error message is printed to standard error.
 
-static FblcExpr* ParseExprTail(FblcTokenStream* toks, FblcExpr* expr)
+static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
 {
-  while (FblcIsToken(toks, '?') || FblcIsToken(toks, '.')) {
-    FblcExpr* nexpr = NULL;
-    if (FblcIsToken(toks, '?')) {
-      // This is a conditional expression of the form: <expr>?(<args>)
-      FblcGetToken(toks, '?');
+  FblcExpr* expr;
+  if (FblcIsToken(toks, '{')) {
+    FblcGetToken(toks, '{');
+    expr = ParseExpr(toks, true);
+    if (expr == NULL) {
+      return NULL;
+    }
+    if (!FblcGetToken(toks, '}')) {
+      return NULL;
+    }
+  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+    FblcLocName start;
+    FblcGetNameToken(toks, "start of expression", &start);
+
+    if (FblcIsToken(toks, '(')) {
+      // This is an application expression of the form: start(<args>)
+      FblcGetToken(toks, '(');
+
       ArgList* args = NULL;
       int argc = ParseArgs(toks, &args);
       if (argc < 0) {
         return NULL;
       }
-      nexpr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
-      nexpr->tag = FBLC_COND_EXPR;
-      nexpr->loc = expr->loc;
-      nexpr->ex.cond.select = expr;
-      nexpr->argc = argc;
-      FillArgs(argc, args, nexpr->argv);
-    } else {
-      // This is an access expression of the form: <expr>.<field>
-      FblcGetToken(toks, '.');
-      nexpr = GC_MALLOC(sizeof(FblcExpr));
-      nexpr->tag = FBLC_ACCESS_EXPR;
-      nexpr->loc = expr->loc;
-      nexpr->ex.access.object = expr;
-      if (!FblcGetNameToken(toks, "field name", &(nexpr->ex.access.field))) {
+      expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
+      expr->tag = FBLC_APP_EXPR;
+      expr->loc = start.loc;
+      expr->ex.app.func.name = start.name;
+      expr->ex.app.func.loc = start.loc;
+      expr->argc = argc;
+      FillArgs(argc, args, expr->argv);
+    } else if (FblcIsToken(toks, ':')) {
+      // This is a union expression of the form: start:field(<expr>)
+      FblcGetToken(toks, ':');
+      expr = GC_MALLOC(sizeof(FblcExpr));
+      expr->tag = FBLC_UNION_EXPR;
+      expr->loc = start.loc;
+      expr->ex.union_.type.name = start.name;
+      expr->ex.union_.type.loc = start.loc;
+      if (!FblcGetNameToken(toks, "field name", &(expr->ex.union_.field))) {
         return NULL;
       }
-    }
-    expr = nexpr;
-  }
-  return expr;
-}
-
-// ParseStmtExpr --
-//
-//   Parse an expression beginning with a statement expression
-//   of the form: { <stmt> } ...
-//   The statement expression may be extended with field access or conditional
-//   expressions, in which case the complete, extended expression is parsed.
-//
-// Inputs:
-//   toks - The token stream to parse the expression from.
-//
-// Result:
-//   The parsed expression, or NULL if there is an error.
-//
-// Side effects:
-//   Advances the token stream past the parsed expression. In case of error,
-//   an error message is printed to standard error.
-
-static FblcExpr* ParseStmtExpr(FblcTokenStream* toks)
-{
-  if (!FblcGetToken(toks, '{')) {
-    return NULL;
-  }
-  FblcExpr* expr = ParseStmt(toks);
-  if (expr == NULL) {
-    return NULL;
-  }
-  if (!FblcGetToken(toks, '}')) {
-    return NULL;
-  }
-  return ParseExprTail(toks, expr);
-}
-
-// ParseNonStmtExpr --
-//
-//   Parse an expression beginning with the form: <name>
-//   As complete an expression as can be will be parsed.
-//
-// Inputs:
-//   toks - The token stream to parse the expression from, positioned after
-//          the starting name token of the expression.
-//   start - The value of the starting name token of the expression.
-//
-// Returns:
-//   The parsed expression, or NULL on error.
-//
-// Side effects:
-//   Advances the token stream past the parsed expression. In case of error,
-//   an error message is printed to standard error.
-
-static FblcExpr* ParseNonStmtExpr(
-    FblcTokenStream* toks, const FblcLocName* start)
-{
-  FblcExpr* expr = NULL;
-  if (FblcIsToken(toks, '(')) {
-    // This is an application expression of the form: start(<args>)
-    ArgList* args = NULL;
-    int argc = ParseArgs(toks, &args);
-    if (argc < 0) {
-      return NULL;
-    }
-    expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
-    expr->tag = FBLC_APP_EXPR;
-    expr->loc = start->loc;
-    expr->ex.app.func.name = start->name;
-    expr->ex.app.func.loc = start->loc;
-    expr->argc = argc;
-    FillArgs(argc, args, expr->argv);
-  } else if (FblcIsToken(toks, ':')) {
-    // This is a union expression of the form: start:field(<expr>)
-    expr = GC_MALLOC(sizeof(FblcExpr));
-    expr->tag = FBLC_UNION_EXPR;
-    expr->loc = start->loc;
-    expr->ex.union_.type.name = start->name;
-    expr->ex.union_.type.loc = start->loc;
-    FblcGetToken(toks, ':');
-    if (!FblcGetNameToken(toks, "field name", &(expr->ex.union_.field))) {
-      return NULL;
-    }
-    if (!FblcGetToken(toks, '(')) {
-      return NULL;
-    }
-    expr->ex.union_.value = ParseExpr(toks);
-    if (expr->ex.union_.value == NULL) {
-      return NULL;
-    }
-    if (!FblcGetToken(toks, ')')) {
-      return NULL;
-    }
-  } else {
-    // This is the variable expression: start
-    expr = GC_MALLOC(sizeof(FblcExpr));
-    expr->tag = FBLC_VAR_EXPR;
-    expr->loc = start->loc;
-    expr->ex.var.name.name = start->name;
-    expr->ex.var.name.loc = start->loc;
-  }
-  return ParseExprTail(toks, expr);
-}
-
-// ParseExpr --
-//
-//   Parse an expression from the token stream.
-//   As complete an expression as can be will be parsed.
-//
-// Inputs:
-//   toks - The token stream to parse the expression from.
-//
-// Returns:
-//   The parsed expression, or NULL on error.
-//
-// Side effects:
-//   Advances the token stream past the parsed expression. In case of error,
-//   an error message is printed to standard error.
-
-static FblcExpr* ParseExpr(FblcTokenStream* toks)
-{
-  if (FblcIsToken(toks, '{')) {
-    return ParseStmtExpr(toks);
-  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
-    FblcLocName start;
-    FblcGetNameToken(toks, "start of expression", &start);
-    return ParseNonStmtExpr(toks, &start);
-  } else {
-    FblcUnexpectedToken(toks, "an expression");
-    return NULL;
-  }
-}
-
-// ParseStmt --
-//
-//   Parse a statement from the token stream. As complete a statement as can
-//   be will be parsed. Note that there is no FblcStmt type, because the
-//   notion of a statement is an artifact of the concrete syntax. In the
-//   abstract syntax expressions and statements are the same thing.
-//
-// Inputs:
-//   toks - The token stream to parse the statement from.
-//
-// Returns:
-//   The parsed statement, or NULL on error.
-//
-// Side effects:
-//   Advances the token stream past the parsed statement. In case of error,
-//   an error message is printed to standard error.
-
-static FblcExpr* ParseStmt(FblcTokenStream* toks)
-{
-  if (FblcIsToken(toks, '{')) {
-    // This is a statement expression of the form: { <expr> };
-    FblcExpr* expr = ParseStmtExpr(toks);
-    return FblcGetToken(toks, ';') ? expr : NULL;
-  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
-    FblcLocName start;
-    FblcGetNameToken(toks, "start of expression", &start);
-    if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+      if (!FblcGetToken(toks, '(')) {
+        return NULL;
+      }
+      expr->ex.union_.value = ParseExpr(toks, false);
+      if (expr->ex.union_.value == NULL) {
+        return NULL;
+      }
+      if (!FblcGetToken(toks, ')')) {
+        return NULL;
+      }
+    } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
       expr->tag = FBLC_LET_EXPR;
@@ -652,27 +504,79 @@ static FblcExpr* ParseStmt(FblcTokenStream* toks)
       if (!FblcGetToken(toks, '=')) {
         return NULL;
       }
-      expr->ex.let.def = ParseExpr(toks);
+      expr->ex.let.def = ParseExpr(toks, false);
       if (expr->ex.let.def == NULL) {
         return NULL;
       }
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
-      expr->ex.let.body = ParseStmt(toks);
+      expr->ex.let.body = ParseExpr(toks, true);
       if (expr->ex.let.body == NULL) {
         return NULL;
       }
+
+      // Return the expression immediately, because it is already complete.
       return expr;
     } else {
-      // This is an expression starting with a name of the form: <expr>;
-      FblcExpr* expr = ParseNonStmtExpr(toks, &start);
-      return FblcGetToken(toks, ';') ? expr : NULL;
+      // This is the variable expression: start
+      expr = GC_MALLOC(sizeof(FblcExpr));
+      expr->tag = FBLC_VAR_EXPR;
+      expr->loc = start.loc;
+      expr->ex.var.name.name = start.name;
+      expr->ex.var.name.loc = start.loc;
     }
+  } else if (FblcIsToken(toks, '?')) {
+    // This is a conditional expression of the form: ?(<expr> ; <args>)
+    FblcGetToken(toks, '?');
+    if (!FblcGetToken(toks, '(')) {
+      return NULL;
+    }
+    FblcExpr* condition = ParseExpr(toks, false);
+    if (condition == NULL) {
+      return NULL;
+    }
+
+    if (!FblcGetToken(toks, ';')) {
+      return NULL;
+    }
+    
+    ArgList* args = NULL;
+    int argc = ParseArgs(toks, &args);
+    if (argc < 0) {
+      return NULL;
+    }
+    expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
+    expr->tag = FBLC_COND_EXPR;
+    expr->loc = condition->loc;
+    expr->ex.cond.select = condition;
+    expr->argc = argc;
+    FillArgs(argc, args, expr->argv);
   } else {
-    FblcUnexpectedToken(toks, "a statement");
+    FblcUnexpectedToken(toks, "an expression");
     return NULL;
   }
+
+  while (FblcIsToken(toks, '.')) {
+    FblcGetToken(toks, '.');
+
+    // This is an access expression of the form: <expr>.<field>
+    FblcExpr* object = expr;
+    expr = GC_MALLOC(sizeof(FblcExpr));
+    expr->tag = FBLC_ACCESS_EXPR;
+    expr->loc = expr->loc;
+    expr->ex.access.object = object;
+    if (!FblcGetNameToken(toks, "field name", &(expr->ex.access.field))) {
+      return NULL;
+    }
+  }
+
+  if (in_stmt) {
+    if (!FblcGetToken(toks, ';')) {
+      return NULL;
+    }
+  }
+  return expr;
 }
 
 // ParseActn --
@@ -711,7 +615,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
     if (!FblcGetToken(toks, '(')) {
       return NULL;
     }
-    FblcExpr* expr = ParseExpr(toks);
+    FblcExpr* expr = ParseExpr(toks, false);
     if (expr == NULL) {
       return NULL;
     }
@@ -740,7 +644,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
         actn->loc = name.loc;
         actn->ac.get.port = name;
       } else {
-        FblcExpr* expr = ParseExpr(toks);
+        FblcExpr* expr = ParseExpr(toks, false);
         if (expr == NULL) {
           return NULL;
         }
@@ -895,7 +799,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcExpr* expr = ParseExpr(toks);
+      FblcExpr* expr = ParseExpr(toks, false);
       if (expr == NULL) {
         return NULL;
       }

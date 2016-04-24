@@ -8,7 +8,7 @@ func f(Fruit x ; Fruit) {
 };
 
 func f(Fruit x ; Fruit) {
-  x ? (Fruit:banana(Unit()), Fruit:apple(Unit()));
+  ?(x ; Fruit:banana(Unit()), Fruit:apple(Unit()));
 };
 
 /// Expect: ERROR

@@ -212,19 +212,20 @@
   @end
 
   @section Conditional
-   Syntax: value '?' '(' [value [',' value [...]]] ')'
+   Syntax: '?' '(' value ';' [value [',' value [...]]] ')'
 
    A conditional is used to select a value or other object based on the tagged field of a union.
    For example, assuming instr is a value of type CalcInstr, and that 'add', 'sub', and 'neg' are functions for performing addition, subtraction, and negation of integers respectively, the following represents a value of type 'int' containing the result of executing the calculator instruction:
    @example
-    instr ? (add(instr.add.a, instr.add.b),
-             sub(instr.sub.a, instr.sub.b),
-             neg(instr.negate.a),
-             0())
+    ?(instr ;
+        add(instr.add.a, instr.add.b),
+        sub(instr.sub.a, instr.sub.b),
+        neg(instr.negate.a),
+        0())
    @end
 
    In this example, 'instr' is called the condition of the conditional.
-   What comes after the question mark are called the arguments of the conditional.
+   What comes after the condition and semicolon are called the arguments of the conditional.
 
    If the tag of the union value refers to the first field in the union declaration, the conditional takes the value of its first argument.
    If the tag of the union value refers to the second field in the union declaration, the conditional takes the value of its second argument, and so on.
@@ -314,10 +315,11 @@
   For example, here is a function that computes the result of a calculator instruction:
   @example
    func Calculate(CalcInstr instr; int) {
-     instr ? (add(instr.add.a, instr.add.b),
-              sub(instr.sub.a, instr.sub.b),
-              neg(instr.negate.a),
-              0());
+     ?(instr ;
+         add(instr.add.a, instr.add.b),
+         sub(instr.sub.a, instr.sub.b),
+         neg(instr.negate.a),
+         0());
    };
   @end
 
@@ -446,7 +448,7 @@
   @end
 
   @section Conditional Expression
-   Syntax: expr ? (expr [, expr [...]])
+   Syntax: ?(expr ; expr [, expr [...]])
 
    The conditional expression uses the tag of a union value to select among possible expressions.
 
@@ -644,7 +646,7 @@ progress.
   @end
 
   @section Conditional Process
-   Syntax: expr '?' ( proc [',' proc [...]] ')'
+   Syntax: '?' '(' expr ; proc [',' proc [...]] ')'
 
    The conditional process uses the tag of a union value to select among possible processes.
 
@@ -767,7 +769,7 @@ progress.
         |  tname '(' [expr [',' expr [...]]] ')'        (* struct *)
         |  tname ':' fname '(' expr ')'                 (* union *)
         |  expr '.' fname                               (* field access *)
-        |  expr '?' '(' expr [',' expr [...]] ')'       (* conditional *)
+        |  '?' '(' expr ';' expr [',' expr [...]] ')'   (* conditional *)
         |  tname '(' [expr [',' expr [...]]] ')'        (* application *)
         |  '{' stmt '}'                                 (* statement *)
         ;
@@ -783,7 +785,7 @@ progress.
   proc ::= '$' '(' expr ')'                             (* eval *)
         |  pname '~' '(' ')'                            (* get *)
         |  pname '~' '(' expr ')'                       (* put *)
-        |  expr '?' ( proc [',' proc [...]] ')'         (* conditional *)
+        |  '?'(expr ';' proc [',' proc [...]] ')'       (* conditional *)
         |  tname '(' [pname [',' pname [...]]] ';'      (* call *) 
                      [expr [',' expr [...]]] ')'        
         |  '{ pstmt '}'                                 (* process statment *)
@@ -813,6 +815,7 @@ progress.
 
 @section TODO
  @list[bulleted]
+  @li Update the doc for the new process syntax.
   @li Add a section describing how we describe syntax?
   @bi
    Add a section talking about lexicography?

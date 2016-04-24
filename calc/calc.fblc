@@ -27,11 +27,11 @@ union Integer(
 
 func Eq(Integer a, Integer b; Bool) {
   // For now, just assume the args are both in canonical form.
-  a ? (
-      b ? (True(), False(), False(), False()),
-      b ? (False(), True(), False(), False()),
-      b ? (False(), False(), Eq(a.double, b.double), False()),
-      b ? (False(), False(), False(), Eq(a.double_plus_1, b.double_plus_1)));
+  ?(a ;
+      ?(b ; True(), False(), False(), False()),
+      ?(b ; False(), True(), False(), False()),
+      ?(b ; False(), False(), Eq(a.double, b.double), False()),
+      ?(b ; False(), False(), False(), Eq(a.double_plus_1, b.double_plus_1)));
 };
 
 // The integer 0
@@ -47,18 +47,18 @@ func Minus1( ; Integer) {
 // 2 * x
 func Double(Integer x; Integer) {
   Integer doubled = Integer:double(x);
-  x ? (Zero(), doubled, doubled, doubled);
+  ?(x ; Zero(), doubled, doubled, doubled);
 };
 
 // 2 * x + 1
 func DoublePlus1(Integer x; Integer) {
   Integer doubled_plus_1 = Integer:double_plus_1(x);
-  x ? (doubled_plus_1, Minus1(), doubled_plus_1, doubled_plus_1);
+  ?(x ; doubled_plus_1, Minus1(), doubled_plus_1, doubled_plus_1);
 };
 
 // a + 1
 func Add1(Integer a; Integer) {
-  a ? (
+  ?(a ; 
     DoublePlus1(Zero()),            // 0 + 1 = 2*0+1
     Zero(),                         // -1 + 1 = 0
     DoublePlus1(a.double),          // 2*d + 1 = 2d*+1
@@ -67,7 +67,7 @@ func Add1(Integer a; Integer) {
 
 // a - 1
 func Sub1(Integer a; Integer) {
-  a ? (
+  ?(a ;
     Minus1(),                     // 0-1 = -1
     Double(Minus1()),             // -1-1 = 2*(-1)
     DoublePlus1(Sub1(a.double)),  // 2*d-1 = 2*(d-1)+1
@@ -76,19 +76,19 @@ func Sub1(Integer a; Integer) {
 
 // a + b
 func Add(Integer a, Integer b; Integer) {
-  a ? (
+  ?(a ;
      b,                                        // 0 + b = b
-     b ? (
+     ?(b;
        a,                                      // a + 0 = a
        Double(Minus1()),                       // -1 + -1 = 2*(-1)
        DoublePlus1(Add(b.double, Minus1())),   // -1 + 2*d = 2*(d-1)+1
        Double(b.double_plus_1)),               // -1 + (2*d+1) = 2*d
-     b ? (
+     ?(b;
        a,                                      // a + 0 = a
        DoublePlus1(Add(a.double, Minus1())),   // 2*d + -1 = 2*(d-1)+1
        Double(Add(a.double, b.double)),        // 2*d + 2*e = 2*(d+e)
        DoublePlus1(Add(a.double, b.double_plus_1))),// 2*d + 2*e+1 = 2*(d+e)+1
-     b ? (
+     ?(b;
        a,                                      // a + 0 = a
        Double(a.double_plus_1),                // 2*d+1 + -1 = 2*d
        DoublePlus1(Add(a.double_plus_1, b.double)), // 2*d+1 +2*e = 2*(d+e)+1
@@ -97,7 +97,7 @@ func Add(Integer a, Integer b; Integer) {
 
 // -a 
 func Negate(Integer a; Integer) {
-  a ? (
+  ?(a ;
     Zero(),                                   // -0 = 0
     DoublePlus1(Zero()),                      // -(-1) = 2*0+1
     Double(Negate(a.double)),                 // -(2*d) = 2*(-d)
@@ -112,16 +112,16 @@ func Sub(Integer a, Integer b; Integer) {
 
 // a * b
 func Mul(Integer a, Integer b; Integer) {
-  a ? (
+  ?(a ; 
     Zero(),       // 0 * b = 0
     Negate(b),    // -1 * b = -b
-    b ? (
+    ?(b ; 
       Zero(),                             // 2*x * 0 = 0
       Double(Negate(a.double)),           // 2*x * -1 = 2*(-x)
       Double(Double(Mul(a.double, b.double))), // 2*x * 2*y = 2*(2*(x*y))
       Add(Double(Double(Mul(a.double, b.double_plus_1))),
           Double(a.double))),             // 2*x * (2*y+1) = 2*2*x*y + 2*x
-    b ? (
+    ?(b ;
       Zero(),         // (2*x+1) * 0 = 0
       Sub1(Double(Negate(a.double_plus_1))),  // (2*x+1) * -1 = 2*(-x) - 1
       Add(Double(Double(Mul(a.double_plus_1, b.double))),
@@ -169,8 +169,8 @@ func Push(CalcStack stack, Integer operand; CalcStack) {
 
 struct Pop1Result(Integer top, CalcStack rest);
 func Pop1(CalcStack stack; Pop1Result) {
-  stack ? (Pop1Result(Zero(), CalcStack:empty(Unit())),
-           Pop1Result(stack.nonempty.top, stack.nonempty.rest));
+  ?(stack ; Pop1Result(Zero(), CalcStack:empty(Unit())),
+            Pop1Result(stack.nonempty.top, stack.nonempty.rest));
 };
 
 struct Pop2Result(Integer top1, Integer top2, CalcStack rest);
@@ -182,7 +182,7 @@ func Pop2(CalcStack stack; Pop2Result) {
 
 // Execute the given calculator instruction.
 func ExecCalcInstr(CalcStack stack, CalcInstr instr; CalcStack) {
-  instr ? (
+  ?(instr ;
       { Pop2Result p2 = Pop2(stack); Push(p2.rest, Add(p2.top2, p2.top1)); },
       { Pop2Result p2 = Pop2(stack); Push(p2.rest, Sub(p2.top2, p2.top1)); },
       { Pop2Result p2 = Pop2(stack); Push(p2.rest, Mul(p2.top2, p2.top1)); },
@@ -195,9 +195,9 @@ struct CalcInstrs(CalcInstr instr, CalcProgram next);
 
 // Execute a sequence of calculator instructions.
 func ExecCalcInstrs(CalcStack stack, CalcProgram prg; CalcStack) {
-  prg ? (stack,
-         ExecCalcInstrs(ExecCalcInstr(stack, prg.nonempty.instr),
-                        prg.nonempty.next));
+  ?(prg ; stack,
+          ExecCalcInstrs(ExecCalcInstr(stack, prg.nonempty.instr),
+                         prg.nonempty.next));
 };
 
 // Run the calculator program and return the result on top of the stack. If
@@ -227,7 +227,7 @@ struct FailedTestResult(
 );
 
 func Test(TestName name, Integer want, Integer got, TL list; TL) {
-  Eq(want, got) ? (list, TL:fail(FailedTestResult(name, want, got, list)));
+  ?(Eq(want, got) ; list, TL:fail(FailedTestResult(name, want, got, list)));
 };
 
 /// Expect: TL:pass(Unit())

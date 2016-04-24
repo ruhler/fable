@@ -4,5 +4,5 @@ union Fruit(Unit apple, Unit banana);
 
 func main( ; Fruit) {
   // The variable 'x' has not been declared.
-  x ? (Fruit:banana(Unit()), Fruit:apple(Unit()));
+  ?(x ; Fruit:banana(Unit()), Fruit:apple(Unit()));
 };
