@@ -3,6 +3,8 @@ struct Unit();
 union Fruit(Unit apple, Unit banana);
 struct A(Unit x, Unit y);
 
+// Expect: ERROR
 func main( ; Fruit) {
-  A(Unit(), ?(Unit() ; Fruit:banana(Unit()), Fruit:apple(Unit()));
+  // The argument to the condition is a struct type.
+  ?(Unit() ; Fruit:banana(Unit()), Fruit:apple(Unit()));
 };

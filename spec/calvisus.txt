@@ -791,12 +791,9 @@ progress.
         |  '{ pstmt '}'                                 (* process statment *)
         ;
 
-  exec ::= proc
-        |  [tname vname '='] proc
-        ;
+  exec ::= [tname vname '='] proc ;
 
-  pstmt ::= proc ';'                                       (* process expr *)
-         |  tname '<~>' pname ',' pname ';' pstmt          (* link *)
+  pstmt ::= tname '<~>' pname ',' pname ';' pstmt          (* link *)
          |  [exec [',' exec [...]]] ';' [pstmt]            (* execution *)
          ;
      

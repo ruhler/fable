@@ -1,0 +1,10 @@
+
+struct Unit();
+struct A(Unit x, Unit y);
+
+/// Expect: ERROR
+func main( ; A) {
+  // The body of the let isn't valid.
+  Unit v = Unit();
+  ???;
+};

@@ -313,17 +313,27 @@ static FblcProc* NewProc(
 
 static int ParseFields(FblcTokenStream* toks, FieldList** plist)
 {
+  if (!FblcIsToken(toks, FBLC_TOK_NAME)) {
+    *plist = NULL;
+    return 0;
+  }
+
+  FieldList* list = AddField(NULL);
+  FblcGetNameToken(toks, "type name", &(list->field.type));
+  if (!FblcGetNameToken(toks, "field name", &(list->field.name))) {
+    return -1;
+  }
+
   int parsed;
-  FieldList* list = NULL;
-  for (parsed = 0; FblcIsToken(toks, FBLC_TOK_NAME); parsed++) {
+  for (parsed = 1; FblcIsToken(toks, ','); parsed++) {
+    FblcGetToken(toks, ',');
+
     list = AddField(list);
-    FblcGetNameToken(toks, "type name", &(list->field.type));
-    if (!FblcGetNameToken(toks, "field name", &(list->field.name))) {
+    if (!FblcGetNameToken(toks, "type name", &(list->field.type))) {
       return -1;
     }
-
-    if (FblcIsToken(toks, ',')) {
-      FblcGetToken(toks, ',');
+    if (!FblcGetNameToken(toks, "field name", &(list->field.name))) {
+      return -1;
     }
   }
   *plist = list;
@@ -856,7 +866,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
     } else {
-      FblcReportError("Expected %s, but got %s.\n",
+      FblcReportError("Expected %s, but got '%s'.\n",
           keyword.loc, keywords, keyword.name);
       return NULL;
     }

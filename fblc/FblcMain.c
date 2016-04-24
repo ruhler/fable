@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
   }
 
   FblcEnv* env = FblcParseProgram(toks);
+  FblcCloseTokenStream(toks);
   if (env == NULL) {
     fprintf(stderr, "failed to parse input FILE.\n");
     return expect_error ? 0 : 1;

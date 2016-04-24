@@ -1,0 +1,10 @@
+
+struct Unit();
+union Fruit(Unit apple, Unit banana, Unit pear);
+
+/// Expect: ERROR
+func main( ; Fruit) {
+  // The condition of the conditional has bad syntax.
+  ?( ??? ;
+    Fruit:pear(Unit()), Fruit:apple(Unit()), Fruit:banana(Unit()));
+};

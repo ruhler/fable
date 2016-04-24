@@ -36,6 +36,7 @@ Struct Decl       1000-1099
 Union Decl        1100-1199
 Func Decl         1200-1299
 Proc Decl         1300-1399
+General Decl      1400-1499
 
 Var Expr          2000-2099
 Struct Expr       2100-2199
@@ -44,6 +45,7 @@ Access Expr       2300-2399
 Cond Expr         2400-2499
 App Expr          2500-2599
 Let Expr          2600-2699
+Stmt Expr         2700-2799
 
 Eval Proc         3000-3099 
 Get Proc          3100-3199

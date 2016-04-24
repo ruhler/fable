@@ -1,0 +1,10 @@
+
+struct Unit();
+struct A(Unit x, Unit y);
+union Foo(Unit bar, A sludge);
+
+/// Expect: ERROR
+func main( ; Unit) {
+  // The argument isn't valid syntax.
+  Foo:bar(???).bar;
+};

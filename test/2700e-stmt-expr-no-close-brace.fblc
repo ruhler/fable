@@ -1,0 +1,8 @@
+
+struct Unit();
+
+/// Expect: ERROR
+func main( ; Unit) {
+  Unit();
+; // Missing the close brace.
+

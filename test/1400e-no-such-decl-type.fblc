@@ -1,0 +1,10 @@
+
+struct Unit();
+
+// 'foo' is not a valid declaration type.
+foo Bar();
+
+/// Expect: ERROR
+func main( ; Unit) {
+  Unit();
+};

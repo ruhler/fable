@@ -1,0 +1,10 @@
+
+struct Unit();
+
+// This struct declaration is missing the final close paren.
+struct Foo(Unit x, Donut y;
+
+/// Expect: ERROR
+func main( ; Unit) {
+  Unit();
+};
