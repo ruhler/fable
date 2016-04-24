@@ -706,6 +706,8 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
 
   if (in_stmt) {
     FblcGetToken(toks, ';');
+
+    // TODO: Support generalized exec actions instead of this special case.
     if (!FblcIsToken(toks, '}')) {
       FblcActn* second = ParseActn(toks, true);
       if (second == NULL) {
@@ -713,10 +715,13 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       }
 
       FblcActn* seq = GC_MALLOC(sizeof(FblcActn));
-      seq->tag = FBLC_SEQ_ACTN;
+      seq->tag = FBLC_EXEC_ACTN;
       seq->loc = actn->loc;
-      seq->ac.seq.first = actn;
-      seq->ac.seq.second = second;
+      seq->ac.exec.execc = 1;
+      seq->ac.exec.execv = GC_MALLOC(sizeof(FblcExec));
+      seq->ac.exec.execv->var = NULL;
+      seq->ac.exec.execv->proc = actn;
+      seq->ac.exec.body = second;
       return seq;
     }
   }

@@ -128,7 +128,6 @@ typedef enum {
   FBLC_CALL_ACTN,
   FBLC_LINK_ACTN,
   FBLC_EXEC_ACTN,
-  FBLC_SEQ_ACTN,
   FBLC_COND_ACTN,
 } FblcActnTag;
 
@@ -181,13 +180,6 @@ typedef struct FblcActn {
       FblcExec* execv;          // Array of execc execs.
       struct FblcActn* body;
     } exec;
-
-    // For processes of the form:
-    //    <proc> ; <proc>
-    struct {
-      struct FblcActn* first;
-      struct FblcActn* second;
-    } seq;
 
     // For processes of the form: <expr>?(<proc>, ...)
     struct {
