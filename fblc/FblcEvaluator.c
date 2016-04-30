@@ -30,32 +30,40 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
-// The evaluator works by breaking down expression evaluation into a sequence
-// of commands that can be executed in turn. All of the state of evaluation,
-// including the stack, is stored explicitly in the command list. By storing
-// the stack explicitly instead of piggy-backing off of the C runtime stack,
-// we are able to implement the evaluator as a single while loop and avoid
-// problems with supporting tail recursive Fblc programs.
+// The evaluator works by breaking down action and expression evaluation into
+// a sequence of commands that can be executed in turn. All of the state of
+// evaluation, including the stack, is stored explicitly in the command list.
+// By storing the stack explicitly instead of piggy-backing off of the C
+// runtime stack, we are able to implement the evaluator as a single while
+// loop and avoid problems with supporting tail recursive Fblc programs.
 
 // The following CmdTag enum identifies the types of commands used to evaluate
-// expression. The Cmd struct represents a command list. See the comments on
-// the extra data in the Cmd structure for the specification of the commands.
-// The state of the stack is captured in a command list by storing scopes in
-// 'scope' commands.
+// actions and expressions. The Cmd struct represents a command list. See the
+// comments on the extra data in the Cmd structure for the specification of
+// the commands.
+// The state of the stack is captured in a command list by storing variables
+// in 'vars' commands.
 
 typedef enum {
-  CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_VARS
+  CMD_EXPR, CMD_ACCESS, CMD_COND, CMD_VARS
 } CmdTag;
 
 typedef struct Cmd {
   CmdTag tag;
   union {
-    // The eval command evaluates expr and stores the resulting value in
+    // The expr command evaluates expr and stores the resulting value in
     // *target.
     struct {
       const FblcExpr* expr;
       FblcValue** target;
-    } eval;
+    } expr;
+
+    // The actn command executes actn and stores the resulting value, if any,
+    // in *target.
+    struct {
+      FblcActn* actn;
+      FblcValue** target;
+    } actn;
 
     // The access command accesses the given field of the given value and
     // stores the resulting value in *target.
@@ -88,7 +96,7 @@ static Vars* AddVar(Vars* vars, FblcName name);
 
 static FblcValue* NewValue(FblcType* type);
 static FblcValue* NewUnionValue(FblcType* type, int tag);
-static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next);
+static Cmd* MkExpr(const FblcExpr* expr, FblcValue** target, Cmd* next);
 static Cmd* MkAccess(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next);
 static Cmd* MkCond(
@@ -214,7 +222,7 @@ static FblcValue* NewUnionValue(FblcType* type, int tag)
   return value;
 }
 
-// MkEval --
+// MkExpr --
 //
 //   Creates a command to evaluate the given expression, storing the resulting
 //   value at the given target location.
@@ -231,15 +239,15 @@ static FblcValue* NewUnionValue(FblcType* type, int tag)
 // Side effects:
 //   None.
 
-static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next)
+static Cmd* MkExpr(const FblcExpr* expr, FblcValue** target, Cmd* next)
 {
   assert(expr != NULL);
   assert(target != NULL);
 
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
-  cmd->tag = CMD_EVAL;
-  cmd->ex.eval.expr = expr;
-  cmd->ex.eval.target = target;
+  cmd->tag = CMD_EXPR;
+  cmd->ex.expr.expr = expr;
+  cmd->ex.expr.target = target;
   cmd->next = next;
   return cmd;
 }
@@ -407,12 +415,12 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 {
   FblcValue* result = NULL;
   Vars* vars = NULL;
-  Cmd* cmd = MkEval(expr, &result, NULL);
+  Cmd* cmd = MkExpr(expr, &result, NULL);
   while (cmd != NULL) {
     switch (cmd->tag) {
-      case CMD_EVAL: {
-        const FblcExpr* expr = cmd->ex.eval.expr;
-        FblcValue** target = cmd->ex.eval.target;
+      case CMD_EXPR: {
+        const FblcExpr* expr = cmd->ex.expr.expr;
+        FblcValue** target = cmd->ex.expr.target;
         cmd = cmd->next;
         switch (expr->tag) {
           case FBLC_VAR_EXPR: {
@@ -430,7 +438,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
                 // the arguments to fill in the fields with the proper results.
                 *target = NewValue(type);
                 for (int i = 0; i < type->fieldc; i++) {
-                  cmd = MkEval(expr->argv[i], &((*target)->fieldv[i]), cmd);
+                  cmd = MkExpr(expr->argv[i], &((*target)->fieldv[i]), cmd);
                 }
               } else {
                 assert(false && "Invalid kind of type for application");
@@ -452,7 +460,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
                 cmd = MkVars(vars, cmd);
               }
 
-              cmd = MkEval(func->body, target, cmd);
+              cmd = MkExpr(func->body, target, cmd);
               cmd = MkVars(NULL, cmd);
 
               Cmd* vcmd = cmd;
@@ -460,7 +468,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
               for (int i = 0; i < func->argc; i++) {
                 FblcName var_name = func->argv[i].name.name;
                 nvars = AddVar(nvars, var_name);
-                cmd = MkEval(expr->argv[i], LookupRef(nvars, var_name), cmd);
+                cmd = MkExpr(expr->argv[i], LookupRef(nvars, var_name), cmd);
               }
               vcmd->ex.vars.vars = nvars;
               break;
@@ -472,7 +480,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             // Add to the top of the command list:
             // object -> access -> ...
             cmd = MkAccess(NULL, expr->ex.access.field.name, target, cmd);
-            cmd = MkEval(expr->ex.access.object, &(cmd->ex.access.value), cmd);
+            cmd = MkExpr(expr->ex.access.object, &(cmd->ex.access.value), cmd);
             break;
           }
 
@@ -484,7 +492,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             assert(type != NULL);
             int tag = TagForField(type, expr->ex.union_.field.name);
             *target = NewUnionValue(type, tag);
-            cmd = MkEval(expr->ex.union_.value, &((*target)->fieldv[0]), cmd);
+            cmd = MkExpr(expr->ex.union_.value, &((*target)->fieldv[0]), cmd);
             break;
           }
 
@@ -499,9 +507,9 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             }
             FblcName var_name = expr->ex.let.name.name;
             Vars* nvars = AddVar(vars, var_name);
-            cmd = MkEval(expr->ex.let.body, target, cmd);
+            cmd = MkExpr(expr->ex.let.body, target, cmd);
             cmd = MkVars(nvars, cmd);
-            cmd = MkEval(expr->ex.let.def, LookupRef(nvars, var_name), cmd);
+            cmd = MkExpr(expr->ex.let.def, LookupRef(nvars, var_name), cmd);
             break;
           }
 
@@ -509,7 +517,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             // Add to the top of the command list:
             // select -> cond -> ...
             cmd = MkCond(NULL, expr->argv, target, cmd);
-            cmd = MkEval(expr->ex.cond.select, &(cmd->ex.cond.value), cmd);
+            cmd = MkExpr(expr->ex.cond.select, &(cmd->ex.cond.value), cmd);
             break;
           }
         }
@@ -537,7 +545,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
         FblcValue* value = cmd->ex.cond.value;
         FblcValue** target = cmd->ex.cond.target;
         assert(value->type->kind == FBLC_KIND_UNION);
-        cmd = MkEval(cmd->ex.cond.choices[value->tag], target, cmd->next);
+        cmd = MkExpr(cmd->ex.cond.choices[value->tag], target, cmd->next);
         break;
       }
 
