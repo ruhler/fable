@@ -1,3 +1,5 @@
+* Should FblcExecute take a const FblcActn*?
+  Should we use const FblcActn* instead of FblcActn* everywhere there?
 * ParseActn calls GC_MALLOC in many paths. Should we just do that up front?
 * Test that process port types are valid.
 * Make sure we are consistent about variable sized arguments.

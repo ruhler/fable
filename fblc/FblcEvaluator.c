@@ -45,7 +45,7 @@ typedef struct Vars {
 // in 'vars' commands.
 
 typedef enum {
-  CMD_EXPR, CMD_ACCESS, CMD_COND, CMD_VARS
+  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_VARS
 } CmdTag;
 
 typedef struct Cmd {
@@ -97,6 +97,7 @@ static Vars* AddVar(Vars* vars, FblcName name);
 static FblcValue* NewValue(FblcType* type);
 static FblcValue* NewUnionValue(FblcType* type, int tag);
 static Cmd* MkExpr(const FblcExpr* expr, FblcValue** target, Cmd* next);
+static Cmd* MkActn(FblcActn* actn, FblcValue** target, Cmd* next);
 static Cmd* MkAccess(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next);
 static Cmd* MkCond(
@@ -248,6 +249,35 @@ static Cmd* MkExpr(const FblcExpr* expr, FblcValue** target, Cmd* next)
   cmd->tag = CMD_EXPR;
   cmd->ex.expr.expr = expr;
   cmd->ex.expr.target = target;
+  cmd->next = next;
+  return cmd;
+}
+
+// MkActn --
+//
+//   Creates a command to evaluate the given action, storing the resulting
+//   value, if any, at the given target location.
+//
+// Inputs:
+//   actn - The action for the created command to evaluate. This must not
+//          be NULL.
+//   target - The target of the result of evaluation.
+//   next - The command to run after this command.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
+static Cmd* MkActn(FblcActn* actn, FblcValue** target, Cmd* next)
+{
+  assert(actn != NULL);
+
+  Cmd* cmd = GC_MALLOC(sizeof(Cmd));
+  cmd->tag = CMD_ACTN;
+  cmd->ex.actn.actn = actn;
+  cmd->ex.actn.target = target;
   cmd->next = next;
   return cmd;
 }
@@ -413,9 +443,34 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
 
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 {
+  FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
+  actn->tag = FBLC_EVAL_ACTN;
+  actn->loc = expr->loc;
+  actn->ac.eval.expr = expr;
+  return FblcExecute(env, actn);
+}
+
+// FblcExecute --
+//
+//   Execute an action under the given program environment. The program
+//   and action must be well formed.
+//
+// Inputs:
+//   env - The program environment.
+//   actn - The action to execute.
+//
+// Returns:
+//   The result of executing the given action in the program environment
+//   in a scope with no local variables and no ports.
+//
+// Side effects:
+//   None.
+
+FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
+{
   FblcValue* result = NULL;
   Vars* vars = NULL;
-  Cmd* cmd = MkExpr(expr, &result, NULL);
+  Cmd* cmd = MkActn(actn, &result, NULL);
   while (cmd != NULL) {
     switch (cmd->tag) {
       case CMD_EXPR: {
@@ -523,6 +578,22 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
         }
         break;
       }
+
+      case CMD_ACTN: {
+        FblcActn* actn = cmd->ex.actn.actn;
+        FblcValue** target = cmd->ex.actn.target;
+        cmd = cmd->next;
+        switch (actn->tag) {
+          case FBLC_EVAL_ACTN: {
+            cmd = MkExpr(actn->ac.eval.expr, target, cmd);
+            break;
+          }
+
+          default:
+            assert(false && "TODO: support all actns");
+        }
+        break;
+      }               
 
       case CMD_ACCESS: {
         FblcType* type = cmd->ex.access.value->type;

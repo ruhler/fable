@@ -142,7 +142,7 @@ typedef struct FblcActn {
   union {
     // For processes of the form: $(<expr>)
     struct {
-      FblcExpr* expr;
+      const FblcExpr* expr;
     } eval;
 
     // For processes of the form: <pname>~()
@@ -256,8 +256,6 @@ bool FblcCheckProgram(const FblcEnv* env);
 typedef struct FblcValue FblcValue;
 void FblcPrintValue(FILE* fout, FblcValue* value);
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr);
-
-// FblcExecutor
-FblcValue* FblcExecute(const FblcEnv* env, const FblcActn* actn);
+FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn);
 
 #endif  // FBLC_INTERNAL_H_
