@@ -16,18 +16,19 @@ struct FblcValue {
   struct FblcValue* fieldv[];
 };
 
-// The following defines a Scope structure for storing the value of local
-// variables. Currently the code assumes it is possible to extend a scope
-// without modifying the original scope, and it is possible to access the
-// address of a value stored in scope.
-// TODO: Make this more explicit in the code to allow for fancier
-// implementations of scopes if needed in the future.
+// The following defines a Vars structure for storing the value of local
+// variables. It is possible to extend a local variable scope without
+// modifying the original local variable scope, and it is possible to access
+// the address of a value stored in the variable scope. Typical usage is to
+// extend the variable scope by reserving slots for values that are yet to be
+// computed, and to ensure the values are computed and updated by the time the
+// scope is used.
 
-typedef struct Scope {
+typedef struct Vars {
   FblcName name;
   FblcValue* value;
-  struct Scope* next;
-} Scope;
+  struct Vars* next;
+} Vars;
 
 // The evaluator works by breaking down expression evaluation into a sequence
 // of commands that can be executed in turn. All of the state of evaluation,
@@ -43,7 +44,7 @@ typedef struct Scope {
 // 'scope' commands.
 
 typedef enum {
-  CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_SCOPE
+  CMD_EVAL, CMD_ACCESS, CMD_COND, CMD_VARS
 } CmdTag;
 
 typedef struct Cmd {
@@ -73,16 +74,18 @@ typedef struct Cmd {
       FblcValue** target;
     } cond;
 
-    // The scope command sets the current scope to the given scope.
+    // The vars command sets the current vars to the given vars.
     struct {
-      Scope* scope;
-    } scope;
+      Vars* vars;
+    } vars;
   } ex;
   struct Cmd* next;
 } Cmd;
 
-static FblcValue* LookupVar(Scope* scope, FblcName name);
-static Scope* AddVar(Scope* scope, FblcName name, FblcValue* value);
+static FblcValue** LookupRef(Vars* vars, FblcName name);
+static FblcValue* LookupVal(Vars* vars, FblcName name);
+static Vars* AddVar(Vars* vars, FblcName name);
+
 static FblcValue* NewValue(FblcType* type);
 static FblcValue* NewUnionValue(FblcType* type, int tag);
 static Cmd* MkEval(const FblcExpr* expr, FblcValue** target, Cmd* next);
@@ -90,42 +93,63 @@ static Cmd* MkAccess(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next);
 static Cmd* MkCond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next);
-static Cmd* MkScope(Scope* scope, Cmd* next);
+static Cmd* MkVars(Vars* vars, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
 
-// LookupVar --
+// LookupRef --
 //
-//   Look up the value of a variable in the given scope.
+//   Look up a reference to the value of a variable in the given scope.
 //
 // Inputs:
-//   scope - The scope to look in for the variable.
+//   vars - The scope to look in for the variable reference.
 //   name - The name of the variable to lookup.
 //
 // Returns:
-//   The value of the variable with the given name in scope, or NULL if no
-//   such variable was found in scope.
+//   A pointer to the value of the variable with the given name in scope, or
+//   NULL if no such variable or value was found in scope.
 //
 // Side effects:
 //   None.
 
-static FblcValue* LookupVar(Scope* scope, FblcName name)
+static FblcValue** LookupRef(Vars* vars, FblcName name)
 {
-  for ( ; scope != NULL; scope = scope->next) {
-    if (FblcNamesEqual(scope->name, name)) {
-      return scope->value;
+  for ( ; vars != NULL; vars = vars->next) {
+    if (FblcNamesEqual(vars->name, name)) {
+      return &(vars->value);
     }
   }
   return NULL;
 }
 
-// AddVar --
-//   
-//   Extend the given scope with a new variable.
+// LookupVal --
+//
+//   Look up the value of a variable in the given scope.
 //
 // Inputs:
-//   scope - The scope to extend.
+//   vars - The scope to look in for the variable value.
+//   name - The name of the variable to lookup.
+//
+// Returns:
+//   The value of the variable with the given name in scope, or NULL if no
+//   such variable or value was found in scope.
+//
+// Side effects:
+//   None.
+
+static FblcValue* LookupVal(Vars* vars, FblcName name)
+{
+  FblcValue** ref = LookupRef(vars, name);
+  return ref == NULL ? NULL : *ref;
+}
+
+// AddVar --
+//   
+//   Extend the given scope with a new variable. Use LookupRef to access the
+//   newly added variable.
+//
+// Inputs:
+//   vars - The scope to extend.
 //   name - The name of the variable to add.
-//   value - The value of the variable to add.
 //
 // Returns:
 //   A new scope with the new variable and the contents of the given scope.
@@ -133,13 +157,13 @@ static FblcValue* LookupVar(Scope* scope, FblcName name)
 // Side effects:
 //   None.
 
-static Scope* AddVar(Scope* scope, FblcName name, FblcValue* value)
+static Vars* AddVar(Vars* vars, FblcName name)
 {
-  Scope* newscope = GC_MALLOC(sizeof(Scope));
-  newscope->name = name;
-  newscope->value = value;
-  newscope->next = scope;
-  return newscope;
+  Vars* newvars = GC_MALLOC(sizeof(Vars));
+  newvars->name = name;
+  newvars->value = NULL;
+  newvars->next = vars;
+  return newvars;
 }
 
 // NewValue --
@@ -278,12 +302,12 @@ static Cmd* MkCond(
   return cmd;
 }
 
-// MkScope --
+// MkVars --
 //   
-//   Create a command to set the scope to a new value.
+//   Create a command to change the current local variable scope.
 //
 // Inputs:
-//   scope - The new value of the scope to use.
+//   vars - The new value of the local variable scope to use.
 //   next - The command to run after this one.
 //
 // Returns:
@@ -292,11 +316,11 @@ static Cmd* MkCond(
 // Side effects:
 //   None.
 
-static Cmd* MkScope(Scope* scope, Cmd* next)
+static Cmd* MkVars(Vars* vars, Cmd* next)
 {
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
-  cmd->tag = CMD_SCOPE;
-  cmd->ex.scope.scope = scope;
+  cmd->tag = CMD_VARS;
+  cmd->ex.vars.vars = vars;
   cmd->next = next;
   return cmd;
 }
@@ -382,7 +406,7 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 {
   FblcValue* result = NULL;
-  Scope* scope = NULL;
+  Vars* vars = NULL;
   Cmd* cmd = MkEval(expr, &result, NULL);
   while (cmd != NULL) {
     switch (cmd->tag) {
@@ -393,7 +417,7 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
         switch (expr->tag) {
           case FBLC_VAR_EXPR: {
             FblcName var_name = expr->ex.var.name.name;
-            *target = LookupVar(scope, var_name);
+            *target = LookupVal(vars, var_name);
             assert(*target != NULL && "Var not in scope");
             break;
           }
@@ -417,27 +441,28 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
             FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func.name);
             if (func != NULL) {
               // Add to the top of the command list:
-              // arg -> ... -> arg -> scope -> body -> (scope) -> ...
+              // arg -> ... -> arg -> vars -> body -> (vars) -> ...
               // The results of the arg evaluations will be stored directly in
-              // the scope for the scope command.
+              // the vars for the vars command.
 
-              // Don't put a scope change if we will immediately 
-              // change it back to a different scope. This is important to
+              // Don't put a vars change if we will immediately 
+              // change it back to different vars. This is important to
               // avoid memory leaks for tail calls.
-              if (cmd != NULL && cmd->tag != CMD_SCOPE) {
-                cmd = MkScope(scope, cmd);
+              if (cmd != NULL && cmd->tag != CMD_VARS) {
+                cmd = MkVars(vars, cmd);
               }
 
               cmd = MkEval(func->body, target, cmd);
-              cmd = MkScope(NULL, cmd);
+              cmd = MkVars(NULL, cmd);
 
-              Cmd* scmd = cmd;
-              Scope* nscope = NULL;
+              Cmd* vcmd = cmd;
+              Vars* nvars = NULL;
               for (int i = 0; i < func->argc; i++) {
-                nscope = AddVar(nscope, func->argv[i].name.name, NULL);
-                cmd = MkEval(expr->argv[i], &(nscope->value), cmd);
+                FblcName var_name = func->argv[i].name.name;
+                nvars = AddVar(nvars, var_name);
+                cmd = MkEval(expr->argv[i], LookupRef(nvars, var_name), cmd);
               }
-              scmd->ex.scope.scope = nscope;
+              vcmd->ex.vars.vars = nvars;
               break;
             }
             assert(false && "No such struct type or function found");
@@ -465,16 +490,18 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 
           case FBLC_LET_EXPR: {
             // Add to the top of the command list:
-            // def -> var -> body -> (scope) -> ...
+            // def -> var -> body -> (vars) -> ...
 
-            // No need to pop the variable if we are going to switch to a
-            // different scope immediately after anyway.
-            if (cmd != NULL && cmd->tag != CMD_SCOPE) {
-              cmd = MkScope(scope, cmd);
+            // No need to pop the variable if we are going to switch to
+            // different vars immediately after anyway.
+            if (cmd != NULL && cmd->tag != CMD_VARS) {
+              cmd = MkVars(vars, cmd);
             }
+            FblcName var_name = expr->ex.let.name.name;
+            Vars* nvars = AddVar(vars, var_name);
             cmd = MkEval(expr->ex.let.body, target, cmd);
-            cmd = MkScope(AddVar(scope, expr->ex.let.name.name, NULL), cmd);
-            cmd = MkEval(expr->ex.let.def, &(cmd->ex.scope.scope->value), cmd);
+            cmd = MkVars(nvars, cmd);
+            cmd = MkEval(expr->ex.let.def, LookupRef(nvars, var_name), cmd);
             break;
           }
 
@@ -514,8 +541,8 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
         break;
       }
 
-      case CMD_SCOPE:
-        scope = cmd->ex.scope.scope;
+      case CMD_VARS:
+        vars = cmd->ex.vars.vars;
         cmd = cmd->next;
         break;
     }
