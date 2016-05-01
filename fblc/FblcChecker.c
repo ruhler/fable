@@ -25,7 +25,8 @@ static bool CheckArgs(
     int argc, FblcExpr* const* argv, const FblcLocName* func);
 static FblcName CheckExpr(
     const FblcEnv* env, Vars* vars, const FblcExpr* expr);
-static FblcName CheckActn(const FblcEnv* env, Vars* vars, FblcActn* actn);
+static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
+    Vars* puts, FblcActn* actn);
 static bool CheckFields(
     const FblcEnv* env, int fieldc, FblcField* fieldv, const char* kind);
 static bool CheckType(const FblcEnv* env, FblcType* type);
@@ -328,6 +329,8 @@ static FblcName CheckExpr(
 // Inputs:
 //   env - The program environment.
 //   vars - The names and types of the variables in scope.
+//   gets - The names and types of the get ports in scope.
+//   puts - The names and types of the put ports in scope.
 //   actn - The action to verify.
 //
 // Result:
@@ -338,32 +341,81 @@ static FblcName CheckExpr(
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
-static FblcName CheckActn(const FblcEnv* env, Vars* vars, FblcActn* actn)
+static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
+    Vars* puts, FblcActn* actn)
 {
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       return CheckExpr(env, vars, actn->ac.eval.expr);
     }
 
-    case FBLC_GET_ACTN:
-      assert(false && "TODO: Check GET_ACTN");
-      return NULL;
+    case FBLC_GET_ACTN: {
+      FblcName type = LookupVar(gets, actn->ac.get.port.name);
+      if (type == NULL) {
+        FblcReportError("Get port '%s' not in scope.\n", actn->loc,
+            actn->ac.get.port.name);
+        return NULL;
+      }
+      return type;
+    }
 
-    case FBLC_PUT_ACTN:
-      assert(false && "TODO: Check PUT_ACTN");
-      return NULL;
+    case FBLC_PUT_ACTN: {
+      FblcName port_type = LookupVar(puts, actn->ac.put.port.name);
+      if (port_type == NULL) {
+        FblcReportError("Put port '%s' not in scope.\n", actn->loc,
+            actn->ac.put.port.name);
+        return NULL;
+      }
+
+      FblcName arg_type = CheckExpr(env, vars, actn->ac.put.expr);
+      if (arg_type == NULL) {
+        return NULL;
+      }
+      if (!FblcNamesEqual(port_type, arg_type)) {
+        FblcReportError("Expected type %s, but found %s.\n",
+            actn->ac.put.expr->loc, port_type, arg_type);
+        return NULL;
+      }
+      return TYPE_NONE;
+    }
 
     case FBLC_CALL_ACTN:
       assert(false && "TODO: Check CALL_ACTN");
       return NULL;
 
-    case FBLC_LINK_ACTN:
-      assert(false && "TODO: Check LINK_ACTN");
-      return NULL;
+    case FBLC_LINK_ACTN: {
+      FblcName type = actn->ac.link.type.name;
+      Vars* ngets = AddVar(actn->ac.link.getname.name, type, gets);
+      Vars* nputs = AddVar(actn->ac.link.putname.name, type, puts);
+      return CheckActn(env, vars, ngets, nputs, actn->ac.link.body);
+    }
 
-    case FBLC_EXEC_ACTN:
-      assert(false && "TODO: Check EXEC_ACTN");
-      return NULL;
+    case FBLC_EXEC_ACTN: {
+      Vars* nvars = vars;
+      for (int i = 0; i < actn->ac.exec.execc; i++) {
+        FblcExec* exec = &(actn->ac.exec.execv[i]);
+        FblcName type = CheckActn(env, vars, gets, puts, exec->proc);
+        if (type == NULL) {
+          return NULL;
+        }
+
+        if (exec->var == NULL) {
+          if (type != TYPE_NONE) {
+            FblcReportError("Expected no type, but found %s,\n",
+                exec->proc->loc, type);
+            return NULL;
+          }
+        } else {
+          if (!FblcNamesEqual(exec->var->type.name, type)) {
+            FblcReportError("Expected type %s, but found %s.\n",
+                exec->proc->loc, exec->var->type.name, type);
+            return NULL;
+          }
+          nvars = AddVar(exec->var->name.name, exec->var->type.name, nvars);
+        }
+      }
+      return CheckActn(env, nvars, gets, puts, actn->ac.exec.body);
+    }
 
     case FBLC_COND_ACTN:
       assert(false && "TODO: Check COND_ACTN");
@@ -530,7 +582,22 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   for (int i = 0; i < proc->argc; i++) {
     vars = AddVar(proc->argv[i].name.name, proc->argv[i].type.name, vars);
   }
-  FblcName body_type = CheckActn(env, vars, proc->body);
+
+  Vars* gets = NULL;
+  Vars* puts = NULL;
+  for (int i = 0; i < proc->portc; i++) {
+    switch (proc->portv[i].polarity) {
+      case FBLC_POLARITY_GET:
+        gets = AddVar(proc->portv[i].name.name, proc->portv[i].type.name, gets);
+        break;
+
+      case FBLC_POLARITY_PUT:
+        puts = AddVar(proc->portv[i].name.name, proc->portv[i].type.name, puts);
+        break;
+    }
+  }
+
+  FblcName body_type = CheckActn(env, vars, gets, puts, proc->body);
   if (body_type == NULL) {
     return false;
   }
