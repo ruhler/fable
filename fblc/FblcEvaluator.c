@@ -69,7 +69,7 @@ typedef struct Ports {
 // in 'vars' commands.
 
 typedef enum {
-  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_VARS
+  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_VARS, CMD_JOIN,
 } CmdTag;
 
 typedef struct Cmd {
@@ -110,6 +110,12 @@ typedef struct Cmd {
     struct {
       Vars* vars;
     } vars;
+
+    // The join command halts the current thread of execution until count
+    // has reached zero.
+    struct {
+      int count;
+    } join;
   } ex;
   struct Cmd* next;
 } Cmd;
@@ -149,6 +155,7 @@ static Cmd* MkAccess(
 static Cmd* MkCond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next);
 static Cmd* MkVars(Vars* vars, Cmd* next);
+static Cmd* MkJoin(int count, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
 static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
     Cmd* cmd);
@@ -494,6 +501,29 @@ static Cmd* MkVars(Vars* vars, Cmd* next)
   return cmd;
 }
 
+// MkJoin --
+//
+//   Create a join command.
+//
+// Inputs:
+//   count - The number of threads to join.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
+static Cmd* MkJoin(int count, Cmd* next)
+{
+  Cmd* cmd = GC_MALLOC(sizeof(Cmd));
+  cmd->tag = CMD_JOIN;
+  cmd->ex.join.count = count;
+  cmd->next = next;
+  return cmd;
+}
+
 // TagForField --
 //
 //   Return the tag corresponding to the named field for the given type.
@@ -683,7 +713,28 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
           }
 
           case FBLC_EXEC_ACTN: {
-            assert(false && "TODO: Exec EXEC_ACTN");
+            // Create new threads for each action to execute.
+            // actn .>
+            // actn ..> join -> vars -> actn -> vars -> next
+            // actn .>
+            cmd = MkVars(vars, cmd);
+            cmd = MkActn(actn->ac.exec.body, target, cmd);
+            cmd = MkVars(NULL, cmd);
+            Cmd* vcmd = MkVars(NULL, cmd);
+            Cmd* jcmd = MkJoin(actn->ac.exec.execc, vcmd);
+
+            Vars* nvars = vars;
+            for (int i = 0; i < actn->ac.exec.execc; i++) {
+              FblcExec* exec = &(actn->ac.exec.execv[i]);
+              FblcValue** target = NULL;
+              if (exec->var != NULL) {
+                nvars = AddVar(vars, exec->var->name.name);
+                target = LookupRef(vars, exec->var->name.name);
+              }
+              AddThread(threads, vars, ports, MkActn(exec->actn, target, jcmd));
+            }
+            vcmd->ex.vars.vars = nvars;
+            cmd = NULL;
             break;
           }
 
@@ -722,6 +773,12 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
       case CMD_VARS:
         vars = cmd->ex.vars.vars;
         cmd = cmd->next;
+        break;
+
+      case CMD_JOIN:
+        assert(cmd->ex.join.count > 0);
+        cmd->ex.join.count--;
+        cmd = cmd->ex.join.count == 0 ? cmd->next : NULL;
         break;
     }
   }

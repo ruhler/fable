@@ -394,7 +394,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
       Vars* nvars = vars;
       for (int i = 0; i < actn->ac.exec.execc; i++) {
         FblcExec* exec = &(actn->ac.exec.execv[i]);
-        FblcName type = CheckActn(env, vars, gets, puts, exec->proc);
+        FblcName type = CheckActn(env, vars, gets, puts, exec->actn);
         if (type == NULL) {
           return NULL;
         }
@@ -402,13 +402,13 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
         if (exec->var == NULL) {
           if (type != TYPE_NONE) {
             FblcReportError("Expected no type, but found %s,\n",
-                exec->proc->loc, type);
+                exec->actn->loc, type);
             return NULL;
           }
         } else {
           if (!FblcNamesEqual(exec->var->type.name, type)) {
             FblcReportError("Expected type %s, but found %s.\n",
-                exec->proc->loc, exec->var->type.name, type);
+                exec->actn->loc, exec->var->type.name, type);
             return NULL;
           }
           nvars = AddVar(exec->var->name.name, exec->var->type.name, nvars);

@@ -733,7 +733,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       seq->ac.exec.execc = 1;
       seq->ac.exec.execv = GC_MALLOC(sizeof(FblcExec));
       seq->ac.exec.execv->var = NULL;
-      seq->ac.exec.execv->proc = actn;
+      seq->ac.exec.execv->actn = actn;
       seq->ac.exec.body = second;
       return seq;
     }

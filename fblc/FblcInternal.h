@@ -133,7 +133,7 @@ typedef enum {
 
 typedef struct FblcExec {
   FblcField* var;         // NULL if there is no execution result.
-  struct FblcActn* proc;
+  struct FblcActn* actn;
 } FblcExec;
 
 typedef struct FblcActn {
