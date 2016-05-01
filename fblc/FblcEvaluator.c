@@ -114,11 +114,31 @@ typedef struct Cmd {
   struct Cmd* next;
 } Cmd;
 
+// Singly-linked list of threads.
+
+typedef struct Thread {
+  Vars* vars;
+  Ports* ports;
+  Cmd* cmd;
+  struct Thread* next;
+} Thread;
+
+// List of threads with head and tail pointer. Threads are added to the tail
+// and removed from the head.
+
+typedef struct {
+  Thread* head;
+  Thread* tail;
+} Threads;
+
 static FblcValue** LookupRef(Vars* vars, FblcName name);
 static FblcValue* LookupVal(Vars* vars, FblcName name);
 static Vars* AddVar(Vars* vars, FblcName name);
 
 static Ports* AddPort(Ports* ports, FblcName name, Link* link);
+
+static void AddThread(Threads* threads, Vars* vars, Ports* ports, Cmd* cmd);
+static Thread* GetThread(Threads* threads);
 
 static FblcValue* NewValue(FblcType* type);
 static FblcValue* NewUnionValue(FblcType* type, int tag);
@@ -130,6 +150,8 @@ static Cmd* MkCond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next);
 static Cmd* MkVars(Vars* vars, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
+static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
+    Cmd* cmd);
 
 // LookupRef --
 //
@@ -223,6 +245,65 @@ static Ports* AddPort(Ports* ports, FblcName name, Link* link)
   nports->link = link;
   nports->next = ports;
   return nports;
+}
+
+// AddThread --
+//
+//   Add a thread to the thread list.
+//
+// Inputs:
+//   threads - The current thread list.
+//   vars - The thread's local variables.
+//   ports - The thread's ports.
+//   cmd - The thread's command list.
+//
+// Results:
+//   None.
+//
+// Side Effects:
+//   A thread is added to the current thread list.
+
+static void AddThread(Threads* threads, Vars* vars, Ports* ports, Cmd* cmd)
+{
+  Thread* thread = GC_MALLOC(sizeof(Thread));
+  thread->vars = vars;
+  thread->ports = ports;
+  thread->cmd = cmd;
+  thread->next = NULL;
+
+  if (threads->head == NULL) {
+    assert(threads->tail == NULL);
+    threads->head = thread;
+    threads->tail = thread;
+  } else {
+    threads->tail->next = thread;
+  }
+}
+
+// GetThread --
+//
+//   Get the next thread from the thread list.
+//
+// Inputs:
+//   threads - The current thread list.
+//
+// Results:
+//   The next thread on the thread list, or NULL if there are no more threads
+//   on the thread list.
+//
+// Side Effects:
+//   The returned thread is removed from the current thread list.
+
+static Thread* GetThread(Threads* threads)
+{
+  Thread* thread = threads->head;
+  if (thread != NULL) {
+    threads->head = thread->next;
+    if (threads->head == NULL) {
+      threads->tail = NULL;
+    }
+  }
+  return thread;
 }
 
 // NewValue --
@@ -439,90 +520,29 @@ static int TagForField(const FblcType* type, FblcName field)
   assert(false && "No such field.");
 }
 
-// FblcPrintValue --
+// Run --
 //
-//   Print a value in standard format to the given FILE stream.
+//   Spend a finite amount of time executing commands for a thread.
 //
 // Inputs:
-//   stream - The stream to print the value to.
-//   value - The value to print.
+//   env - The environment in which to run the thread.
+//   threads - The list of currently active threads.
+//   vars - Local variables in scope.
+//   ports - Ports in scope.
+//   cmd - The head of the command list for the thread.
 //
 // Result:
 //   None.
 //
-// Side effects:
-//   The value is printed to the given file stream.
+// Side Effects:
+//   Threads are added to the threads list based on the command executed. If
+//   the command list is not executed to completion, a thread will be added to
+//   the threads list representing the continuation of this thread.
 
-void FblcPrintValue(FILE* stream, FblcValue* value)
+static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
+    Cmd* cmd)
 {
-  FblcType* type = value->type;
-  if (type->kind == FBLC_KIND_STRUCT) {
-    fprintf(stream, "%s(", type->name.name);
-    for (int i = 0; i < type->fieldc; i++) {
-      if (i > 0) {
-        fprintf(stream, ",");
-      }
-      FblcPrintValue(stream, value->fieldv[i]);
-    }
-    fprintf(stream, ")");
-  } else if (type->kind == FBLC_KIND_UNION) {
-    fprintf(stream, "%s:%s(",
-        type->name.name, type->fieldv[value->tag].name.name);
-    FblcPrintValue(stream, value->fieldv[0]);
-    fprintf(stream, ")");
-  } else {
-    assert(false && "Invalid Kind");
-  }
-}
-
-// FblcEvaluate --
-//
-//   Evaluate an expression under the given program environment. The program
-//   and expression must be well formed.
-//
-// Inputs:
-//   env - The program environment.
-//   expr - The expression to evaluate.
-//
-// Returns:
-//   The result of evaluating the given expression in the program environment
-//   in a scope with no local variables.
-//
-// Side effects:
-//   None.
-
-FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
-{
-  FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
-  actn->tag = FBLC_EVAL_ACTN;
-  actn->loc = expr->loc;
-  actn->ac.eval.expr = expr;
-  return FblcExecute(env, actn);
-}
-
-// FblcExecute --
-//
-//   Execute an action under the given program environment. The program
-//   and action must be well formed.
-//
-// Inputs:
-//   env - The program environment.
-//   actn - The action to execute.
-//
-// Returns:
-//   The result of executing the given action in the program environment
-//   in a scope with no local variables and no ports.
-//
-// Side effects:
-//   None.
-
-FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
-{
-  FblcValue* result = NULL;
-  Vars* vars = NULL;
-  Ports* ports = NULL;
-  Cmd* cmd = MkActn(actn, &result, NULL);
-  while (cmd != NULL) {
+  for (int i = 0; i < 1024 && cmd != NULL; i++) {
     switch (cmd->tag) {
       case CMD_EXPR: {
         const FblcExpr* expr = cmd->ex.expr.expr;
@@ -704,6 +724,103 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
         cmd = cmd->next;
         break;
     }
+  }
+
+  if (cmd != NULL) {
+    AddThread(threads, vars, ports, cmd);
+  }
+}
+
+// FblcPrintValue --
+//
+//   Print a value in standard format to the given FILE stream.
+//
+// Inputs:
+//   stream - The stream to print the value to.
+//   value - The value to print.
+//
+// Result:
+//   None.
+//
+// Side effects:
+//   The value is printed to the given file stream.
+
+void FblcPrintValue(FILE* stream, FblcValue* value)
+{
+  FblcType* type = value->type;
+  if (type->kind == FBLC_KIND_STRUCT) {
+    fprintf(stream, "%s(", type->name.name);
+    for (int i = 0; i < type->fieldc; i++) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      FblcPrintValue(stream, value->fieldv[i]);
+    }
+    fprintf(stream, ")");
+  } else if (type->kind == FBLC_KIND_UNION) {
+    fprintf(stream, "%s:%s(",
+        type->name.name, type->fieldv[value->tag].name.name);
+    FblcPrintValue(stream, value->fieldv[0]);
+    fprintf(stream, ")");
+  } else {
+    assert(false && "Invalid Kind");
+  }
+}
+
+// FblcEvaluate --
+//
+//   Evaluate an expression under the given program environment. The program
+//   and expression must be well formed.
+//
+// Inputs:
+//   env - The program environment.
+//   expr - The expression to evaluate.
+//
+// Returns:
+//   The result of evaluating the given expression in the program environment
+//   in a scope with no local variables.
+//
+// Side effects:
+//   None.
+
+FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
+{
+  FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
+  actn->tag = FBLC_EVAL_ACTN;
+  actn->loc = expr->loc;
+  actn->ac.eval.expr = expr;
+  return FblcExecute(env, actn);
+}
+
+// FblcExecute --
+//
+//   Execute an action under the given program environment. The program
+//   and action must be well formed.
+//
+// Inputs:
+//   env - The program environment.
+//   actn - The action to execute.
+//
+// Returns:
+//   The result of executing the given action in the program environment
+//   in a scope with no local variables and no ports.
+//
+// Side effects:
+//   None.
+
+FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
+{
+  FblcValue* result = NULL;
+  Threads threads;
+  threads.head = NULL;
+  threads.tail = NULL;
+
+  AddThread(&threads, NULL, NULL, MkActn(actn, &result, NULL));
+
+  Thread* thread = GetThread(&threads);
+  while (thread != NULL) {
+    Run(env, &threads, thread->vars, thread->ports, thread->cmd);
+    thread = GetThread(&threads);
   }
   return result;
 }
