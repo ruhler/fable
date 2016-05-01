@@ -16,6 +16,22 @@ struct FblcValue {
   struct FblcValue* fieldv[];
 };
 
+// Singly-linked list of values.
+
+typedef struct Values {
+  FblcValue* value;
+  struct Values* next;
+} Values;
+
+// A Link is a FIFO list of values. Values are put to the tail of the list and
+// taken from the head of the list.
+// The empty list is represented with head and tail both set to NULL.
+
+typedef struct Link {
+  Values* head;
+  Values* tail;
+} Link;
+
 // The following defines a Vars structure for storing the value of local
 // variables. It is possible to extend a local variable scope without
 // modifying the original local variable scope, and it is possible to access
@@ -29,6 +45,14 @@ typedef struct Vars {
   FblcValue* value;
   struct Vars* next;
 } Vars;
+
+// Map from port name to link.
+
+typedef struct Ports {
+  FblcName name;
+  Link* link;
+  struct Ports* next;
+} Ports;
 
 // The evaluator works by breaking down action and expression evaluation into
 // a sequence of commands that can be executed in turn. All of the state of
@@ -93,6 +117,8 @@ typedef struct Cmd {
 static FblcValue** LookupRef(Vars* vars, FblcName name);
 static FblcValue* LookupVal(Vars* vars, FblcName name);
 static Vars* AddVar(Vars* vars, FblcName name);
+
+static Ports* AddPort(Ports* ports, FblcName name, Link* link);
 
 static FblcValue* NewValue(FblcType* type);
 static FblcValue* NewUnionValue(FblcType* type, int tag);
@@ -173,6 +199,30 @@ static Vars* AddVar(Vars* vars, FblcName name)
   newvars->value = NULL;
   newvars->next = vars;
   return newvars;
+}
+
+// AddPort --
+//   
+//   Extend the given port scope with a new port.
+//
+// Inputs:
+//   ports - The scope to extend.
+//   name - The name of the port to add.
+//   link - The underlying link of the port to add.
+//
+// Returns:
+//   A new scope with the new port and the contents of the given scope.
+//
+// Side effects:
+//   None.
+
+static Ports* AddPort(Ports* ports, FblcName name, Link* link)
+{
+  Ports* nports = GC_MALLOC(sizeof(Ports));
+  nports->name = name;
+  nports->link = link;
+  nports->next = ports;
+  return nports;
 }
 
 // NewValue --
@@ -470,6 +520,7 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
 {
   FblcValue* result = NULL;
   Vars* vars = NULL;
+  Ports* ports = NULL;
   Cmd* cmd = MkActn(actn, &result, NULL);
   while (cmd != NULL) {
     switch (cmd->tag) {
@@ -589,8 +640,36 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
             break;
           }
 
-          default:
-            assert(false && "TODO: support all actns");
+          case FBLC_GET_ACTN:
+            assert(false && "TODO: Exec GET_ACTN");
+            break;
+
+          case FBLC_PUT_ACTN:
+            assert(false && "TODO: Exec PUT_ACTN");
+            break;
+
+          case FBLC_CALL_ACTN:
+            assert(false && "TODO: Exec CALL_ACTN");
+            break;
+
+          case FBLC_LINK_ACTN: {
+            Link* link = GC_MALLOC(sizeof(Link));
+            link->head = NULL;
+            link->tail = NULL;
+            ports = AddPort(ports, actn->ac.link.getname.name, link);
+            ports = AddPort(ports, actn->ac.link.putname.name, link);
+            cmd = MkActn(actn->ac.link.body, target, cmd);
+            break;
+          }
+
+          case FBLC_EXEC_ACTN: {
+            assert(false && "TODO: Exec EXEC_ACTN");
+            break;
+          }
+
+          case FBLC_COND_ACTN:
+            assert(false && "TODO: Exec COND_ACTN");
+            break;
         }
         break;
       }               
