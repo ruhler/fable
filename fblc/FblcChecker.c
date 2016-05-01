@@ -14,6 +14,10 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
+// Sentinel value representing the type of an action that does not return a
+// value.
+static FblcName TYPE_NONE = "(none)";
+
 static Vars* AddVar(FblcName name, FblcName type, Vars* next);
 static FblcName LookupVar(Vars* vars, FblcName name);
 static bool CheckArgs(
@@ -21,6 +25,7 @@ static bool CheckArgs(
     int argc, FblcExpr* const* argv, const FblcLocName* func);
 static FblcName CheckExpr(
     const FblcEnv* env, Vars* vars, const FblcExpr* expr);
+static FblcName CheckActn(const FblcEnv* env, Vars* vars, FblcActn* actn);
 static bool CheckFields(
     const FblcEnv* env, int fieldc, FblcField* fieldv, const char* kind);
 static bool CheckType(const FblcEnv* env, FblcType* type);
@@ -315,6 +320,59 @@ static FblcName CheckExpr(
   }
 }
 
+// CheckActn --
+//
+//   Verify the given action is well formed and well typed, assuming the
+//   rest of the environment is well formed and well typed.
+//
+// Inputs:
+//   env - The program environment.
+//   vars - The names and types of the variables in scope.
+//   actn - The action to verify.
+//
+// Result:
+//   The type of the action, TYPE_NONE if the action returns no value, or NULL
+//   if the expression is not well formed and well typed.
+//
+// Side effects:
+//   If the expression is not well formed and well typed, an error message is
+//   printed to standard error describing the problem.
+
+static FblcName CheckActn(const FblcEnv* env, Vars* vars, FblcActn* actn)
+{
+  switch (actn->tag) {
+    case FBLC_EVAL_ACTN: {
+      return CheckExpr(env, vars, actn->ac.eval.expr);
+    }
+
+    case FBLC_GET_ACTN:
+      assert(false && "TODO: Check GET_ACTN");
+      return NULL;
+
+    case FBLC_PUT_ACTN:
+      assert(false && "TODO: Check PUT_ACTN");
+      return NULL;
+
+    case FBLC_CALL_ACTN:
+      assert(false && "TODO: Check CALL_ACTN");
+      return NULL;
+
+    case FBLC_LINK_ACTN:
+      assert(false && "TODO: Check LINK_ACTN");
+      return NULL;
+
+    case FBLC_EXEC_ACTN:
+      assert(false && "TODO: Check EXEC_ACTN");
+      return NULL;
+
+    case FBLC_COND_ACTN:
+      assert(false && "TODO: Check COND_ACTN");
+      return NULL;
+  }
+  assert(false && "UNREACHABLE");
+  return NULL;
+}
+
 // CheckFields --
 //
 //   Verify the given fields have valid types and unique names. This is used
@@ -472,20 +530,22 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   for (int i = 0; i < proc->argc; i++) {
     vars = AddVar(proc->argv[i].name.name, proc->argv[i].type.name, vars);
   }
-  assert(proc->body->tag == FBLC_EVAL_ACTN);
-  FblcName body_type = CheckExpr(env, vars, proc->body->ac.eval.expr);
+  FblcName body_type = CheckActn(env, vars, proc->body);
   if (body_type == NULL) {
     return false;
   }
   if (proc->return_type == NULL) {
-    FblcReportError("Type mismatch. Expected none, but found %s.\n",
-        proc->body->loc, body_type);
-    return false;
-  }
-  if (!FblcNamesEqual(proc->return_type->name, body_type)) {
-    FblcReportError("Type mismatch. Expected %s, but found %s.\n",
-        proc->body->loc, proc->return_type->name, body_type);
-    return false;
+    if (body_type != TYPE_NONE) {
+      FblcReportError("Type mismatch. Expected none, but found %s.\n",
+          proc->body->loc, body_type);
+      return false;
+    }
+  } else {
+    if (!FblcNamesEqual(proc->return_type->name, body_type)) {
+      FblcReportError("Type mismatch. Expected %s, but found %s.\n",
+          proc->body->loc, proc->return_type->name, body_type);
+      return false;
+    }
   }
   return true;
 }
