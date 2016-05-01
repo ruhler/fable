@@ -5,22 +5,22 @@
 
 #include "FblcInternal.h"
 
-// The following Scope structure describes a scope mapping variable names to
+// The following Vars structure describes a mapping variable names to
 // their types.
 
-typedef struct Scope {
+typedef struct Vars {
   FblcName name;
   FblcName type;
-  struct Scope* next;
-} Scope;
+  struct Vars* next;
+} Vars;
 
-static Scope* AddVar(FblcName name, FblcName type, Scope* next);
-static FblcName LookupVar(Scope* scope, FblcName name);
+static Vars* AddVar(FblcName name, FblcName type, Vars* next);
+static FblcName LookupVar(Vars* vars, FblcName name);
 static bool CheckArgs(
-    const FblcEnv* env, Scope* scope, int fieldc, FblcField* fieldv,
+    const FblcEnv* env, Vars* vars, int fieldc, FblcField* fieldv,
     int argc, FblcExpr* const* argv, const FblcLocName* func);
 static FblcName CheckExpr(
-    const FblcEnv* env, Scope* scope, const FblcExpr* expr);
+    const FblcEnv* env, Vars* vars, const FblcExpr* expr);
 static bool CheckFields(
     const FblcEnv* env, int fieldc, FblcField* fieldv, const char* kind);
 static bool CheckType(const FblcEnv* env, FblcType* type);
@@ -42,13 +42,13 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc);
 // Side effects:
 //   None.
 
-static Scope* AddVar(FblcName name, FblcName type, Scope* next)
+static Vars* AddVar(FblcName name, FblcName type, Vars* next)
 {
-  Scope* scope = GC_MALLOC(sizeof(Scope));
-  scope->name = name;
-  scope->type = type;
-  scope->next = next;
-  return scope;
+  Vars* vars = GC_MALLOC(sizeof(Vars));
+  vars->name = name;
+  vars->type = type;
+  vars->next = next;
+  return vars;
 }
 
 // LookupVar --
@@ -56,7 +56,7 @@ static Scope* AddVar(FblcName name, FblcName type, Scope* next)
 //   Look up the type of a variable in scope.
 //
 // Inputs:
-//   scope - The scope to look up the variable in.
+//   vars - The scope to look up the variable in.
 //   name - The name of the variable.
 //
 // Results:
@@ -66,13 +66,13 @@ static Scope* AddVar(FblcName name, FblcName type, Scope* next)
 // Side effects:
 //   None.
 
-static FblcName LookupVar(Scope* scope, FblcName name)
+static FblcName LookupVar(Vars* vars, FblcName name)
 {
-  while (scope != NULL) {
-    if (FblcNamesEqual(scope->name, name)) {
-      return scope->type;
+  while (vars != NULL) {
+    if (FblcNamesEqual(vars->name, name)) {
+      return vars->type;
     }
-    scope = scope->next;
+    vars = vars->next;
   }
   return NULL;
 }
@@ -84,7 +84,7 @@ static FblcName LookupVar(Scope* scope, FblcName name)
 //
 // Inputs:
 //   env - The program environment.
-//   scope - The types of local variables in scope.
+//   vars - The types of local variables in scope.
 //   fieldc - The number of arguments expected by the struct or function.
 //   fieldv - The fieldc fields from the struct or function declaration.
 //   argc - The number of arguments passed to the struct or function.
@@ -100,7 +100,7 @@ static FblcName LookupVar(Scope* scope, FblcName name)
 //   error describing what's wrong.
 
 static bool CheckArgs(
-    const FblcEnv* env, Scope* scope, int fieldc, FblcField* fieldv,
+    const FblcEnv* env, Vars* vars, int fieldc, FblcField* fieldv,
     int argc, FblcExpr* const* argv, const FblcLocName* func)
 {
   if (fieldc != argc) {
@@ -110,7 +110,7 @@ static bool CheckArgs(
   }
 
   for (int i = 0; i < fieldc; i++) {
-    FblcName arg_type = CheckExpr(env, scope, argv[i]);
+    FblcName arg_type = CheckExpr(env, vars, argv[i]);
     if (arg_type == NULL) {
       return false;
     }
@@ -130,7 +130,7 @@ static bool CheckArgs(
 //
 // Inputs:
 //   env - The program environment.
-//   scope - The names and types of the variables in scope.
+//   vars - The names and types of the variables in scope.
 //   expr - The expression to verify.
 //
 // Result:
@@ -142,11 +142,11 @@ static bool CheckArgs(
 //   printed to standard error describing the problem.
 
 static FblcName CheckExpr(
-    const FblcEnv* env, Scope* scope, const FblcExpr* expr)
+    const FblcEnv* env, Vars* vars, const FblcExpr* expr)
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
-      FblcName type = LookupVar(scope, expr->ex.var.name.name);
+      FblcName type = LookupVar(vars, expr->ex.var.name.name);
       if (type == NULL) {
         FblcReportError("Variable '%s' not in scope.\n",
             expr->ex.var.name.loc, expr->ex.var.name.name);
@@ -163,7 +163,7 @@ static FblcName CheckExpr(
               expr->ex.app.func.loc, expr->ex.app.func.name);
           return NULL;
         }
-        if (!CheckArgs(env, scope, type->fieldc, type->fieldv,
+        if (!CheckArgs(env, vars, type->fieldc, type->fieldv,
               expr->argc, expr->argv, &(expr->ex.app.func))) {
           return NULL;
         }
@@ -172,7 +172,7 @@ static FblcName CheckExpr(
 
       FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func.name);
       if (func != NULL) {
-        if (!CheckArgs(env, scope, func->argc, func->argv,
+        if (!CheckArgs(env, vars, func->argc, func->argv,
               expr->argc, expr->argv, &(expr->ex.app.func))) {
           return NULL;
         }
@@ -185,7 +185,7 @@ static FblcName CheckExpr(
     }
 
     case FBLC_ACCESS_EXPR: {
-      FblcName typename = CheckExpr(env, scope, expr->ex.access.object);
+      FblcName typename = CheckExpr(env, vars, expr->ex.access.object);
       if (typename == NULL) {
         return NULL;
       }
@@ -217,7 +217,7 @@ static FblcName CheckExpr(
         return NULL;
       }
 
-      FblcName arg_type = CheckExpr(env, scope, expr->ex.union_.value);
+      FblcName arg_type = CheckExpr(env, vars, expr->ex.union_.value);
       if (arg_type == NULL) {
         return NULL;
       }
@@ -247,13 +247,13 @@ static FblcName CheckExpr(
         return NULL;
       }
 
-      if (LookupVar(scope, expr->ex.let.name.name) != NULL) {
+      if (LookupVar(vars, expr->ex.let.name.name) != NULL) {
         FblcReportError("Variable %s already defined.\n",
             expr->ex.let.name.loc, expr->ex.let.name.name);
         return NULL;
       }
 
-      FblcName type = CheckExpr(env, scope, expr->ex.let.def);
+      FblcName type = CheckExpr(env, vars, expr->ex.let.def);
       if (type == NULL) {
         return NULL;
       }
@@ -264,12 +264,12 @@ static FblcName CheckExpr(
         return NULL;
       }
 
-      Scope* nscope = AddVar(expr->ex.let.name.name, type, scope);
-      return CheckExpr(env, nscope, expr->ex.let.body);
+      Vars* nvars = AddVar(expr->ex.let.name.name, type, vars);
+      return CheckExpr(env, nvars, expr->ex.let.body);
     }
 
     case FBLC_COND_EXPR: {
-      FblcName typename = CheckExpr(env, scope, expr->ex.cond.select);
+      FblcName typename = CheckExpr(env, vars, expr->ex.cond.select);
       if (typename == NULL) {
         return NULL;
       }
@@ -291,7 +291,7 @@ static FblcName CheckExpr(
 
       FblcName result_type = NULL;
       for (int i = 0; i < expr->argc; i++) {
-        FblcName arg_type = CheckExpr(env, scope, expr->argv[i]);
+        FblcName arg_type = CheckExpr(env, vars, expr->argv[i]);
         if (arg_type == NULL) {
           return NULL;
         }
@@ -418,11 +418,11 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
   }
 
   // Check the body.
-  Scope* scope = NULL;
+  Vars* vars = NULL;
   for (int i = 0; i < func->argc; i++) {
-    scope = AddVar(func->argv[i].name.name, func->argv[i].type.name, scope);
+    vars = AddVar(func->argv[i].name.name, func->argv[i].type.name, vars);
   }
-  FblcName body_type = CheckExpr(env, scope, func->body);
+  FblcName body_type = CheckExpr(env, vars, func->body);
   if (body_type == NULL) {
     return false;
   }
@@ -468,12 +468,12 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   }
 
   // Check the body.
-  Scope* scope = NULL;
+  Vars* vars = NULL;
   for (int i = 0; i < proc->argc; i++) {
-    scope = AddVar(proc->argv[i].name.name, proc->argv[i].type.name, scope);
+    vars = AddVar(proc->argv[i].name.name, proc->argv[i].type.name, vars);
   }
   assert(proc->body->tag == FBLC_EVAL_ACTN);
-  FblcName body_type = CheckExpr(env, scope, proc->body->ac.eval.expr);
+  FblcName body_type = CheckExpr(env, vars, proc->body->ac.eval.expr);
   if (body_type == NULL) {
     return false;
   }
