@@ -69,7 +69,7 @@ typedef struct Ports {
 // in 'vars' commands.
 
 typedef enum {
-  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_VARS, CMD_JOIN,
+  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_VARS, CMD_JOIN, CMD_PUT,
 } CmdTag;
 
 typedef struct Cmd {
@@ -116,6 +116,12 @@ typedef struct Cmd {
     struct {
       int count;
     } join;
+
+    // The put command puts a value onto a link.
+    struct {
+      Link* link;
+      FblcValue* value;
+    } put;
   } ex;
   struct Cmd* next;
 } Cmd;
@@ -141,6 +147,7 @@ static FblcValue** LookupRef(Vars* vars, FblcName name);
 static FblcValue* LookupVal(Vars* vars, FblcName name);
 static Vars* AddVar(Vars* vars, FblcName name);
 
+static Link* LookupPort(Ports* ports, FblcName name);
 static Ports* AddPort(Ports* ports, FblcName name, Link* link);
 
 static void AddThread(Threads* threads, Vars* vars, Ports* ports, Cmd* cmd);
@@ -228,6 +235,31 @@ static Vars* AddVar(Vars* vars, FblcName name)
   newvars->value = NULL;
   newvars->next = vars;
   return newvars;
+}
+
+// LookupPort --
+//   
+//   Lookup up the link associated with the given port.
+//
+// Inputs:
+//   ports - The set of ports to look at.
+//   name - The name of the port to look up.
+//
+// Returns:
+//   The link associated with the given port, or NULL if no such port was
+//   found.
+//
+// Side effects:
+//   None.
+
+static Link* LookupPort(Ports* ports, FblcName name)
+{
+  for ( ; ports != NULL; ports = ports->next) {
+    if (FblcNamesEqual(ports->name, name)) {
+      return ports->link;
+    }
+  }
+  return NULL;
 }
 
 // AddPort --
@@ -524,6 +556,30 @@ static Cmd* MkJoin(int count, Cmd* next)
   return cmd;
 }
 
+// MkPut --
+//
+//   Create a put command.
+//
+// Inputs:
+//   link - The link to put the value on.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
+static Cmd* MkPut(Link* link, Cmd* next)
+{
+  Cmd* cmd = GC_MALLOC(sizeof(Cmd));
+  cmd->tag = CMD_PUT;
+  cmd->ex.put.link = link;
+  cmd->ex.put.value = NULL;
+  cmd->next = next;
+  return cmd;
+}
+
 // TagForField --
 //
 //   Return the tag corresponding to the named field for the given type.
@@ -690,13 +746,26 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             break;
           }
 
-          case FBLC_GET_ACTN:
-            assert(false && "TODO: Exec GET_ACTN");
+          case FBLC_GET_ACTN: {
+            Link* link = LookupPort(ports, actn->ac.get.port.name);
+            assert(link != NULL && "Get port not in scope");
+            assert(link->head != NULL && "TODO: Allow get to block");
+            *target = link->head->value;
+            link->head = link->head->next;
+            if (link->head == NULL) {
+              link->tail = NULL;
+            }
             break;
+          }
 
-          case FBLC_PUT_ACTN:
-            assert(false && "TODO: Exec PUT_ACTN");
+          case FBLC_PUT_ACTN: {
+            // expr -> put -> next
+            Link* link = LookupPort(ports, actn->ac.put.port.name);
+            assert(link != NULL && "Put port not in scope");
+            cmd = MkPut(link, cmd);
+            cmd = MkExpr(actn->ac.put.expr, &(cmd->ex.put.value), cmd);
             break;
+          }
 
           case FBLC_CALL_ACTN:
             assert(false && "TODO: Exec CALL_ACTN");
@@ -780,6 +849,23 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         cmd->ex.join.count--;
         cmd = cmd->ex.join.count == 0 ? cmd->next : NULL;
         break;
+
+      case CMD_PUT: {
+        Link* link = cmd->ex.put.link;
+        assert(cmd->ex.put.value != NULL);
+        Values* ntail = GC_MALLOC(sizeof(Values));
+        ntail->value = cmd->ex.put.value;
+        ntail->next = NULL;
+        if (link->head == NULL) {
+          assert(link->tail == NULL);
+          link->head = ntail;
+        } else {
+          link->tail->next = ntail;
+        }
+        link->tail = ntail;
+        cmd = cmd->next;
+        break;
+      }
     }
   }
 
