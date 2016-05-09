@@ -396,8 +396,8 @@ static int ParsePorts(FblcTokenStream* toks, PortList** plist)
 // ParseArgs --
 //
 //   Parse a list of arguments in the form: <expr>, <expr>, ...)
-//   This is used for parsing arguments to function calls and conditional
-//   expressions.
+//   This is used for parsing arguments to function calls, conditional
+//   expressions, and process calls.
 //
 // Inputs:
 //   toks - The token stream to parse the arguments from.
@@ -703,8 +703,52 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       actn->ac.link.body = body;
       return actn;
     } else if (FblcIsToken(toks, '(')) {
-      assert(false && "TODO: Parse a call process.");
-      return NULL;
+      FblcGetToken(toks, '(');
+      actn = GC_MALLOC(sizeof(FblcActn));
+      actn->tag = FBLC_CALL_ACTN;
+      actn->loc = name.loc;
+      actn->ac.call.proc = name;
+
+      int portc = 0;
+      FblcLocName ports[BUFSIZ];
+      if (!FblcIsToken(toks, ';')) {
+        if (!FblcGetNameToken(toks, "port name", &ports[0])) {
+          return NULL;
+        }
+
+        for (portc = 1; FblcIsToken(toks, ','); portc++) {
+          if (portc >= BUFSIZ) {
+            FblcReportError("This implementation only supports "
+                "up to %d port arguments.\n", ports[BUFSIZ-1].loc, BUFSIZ);
+            return NULL;
+          }
+
+          FblcGetToken(toks, ',');
+          if (!FblcGetNameToken(toks, "port name", &ports[portc])) {
+            return NULL;
+          }
+        }
+      }
+
+      actn->ac.call.portc = portc;
+      actn->ac.call.ports = GC_MALLOC(sizeof(FblcLocName) * portc);
+      for (int i = 0; i < portc; i++) {
+        actn->ac.call.ports[i] = ports[i];
+      }
+
+      if (!FblcGetToken(toks, ';')) {
+        return NULL;
+      }
+
+      ArgList* args = NULL;
+      int exprc = ParseArgs(toks, &args);
+      if (exprc < 0) {
+        return NULL;
+      }
+      FblcExpr** exprs = GC_MALLOC(sizeof(FblcExpr*) * exprc);
+      actn->ac.call.exprc = exprc;
+      FillArgs(exprc, args, exprs);
+      actn->ac.call.exprs = exprs;
     } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
       assert(false && "TODO: Parse an exec process.");
       return NULL;

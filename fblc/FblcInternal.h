@@ -162,7 +162,7 @@ typedef struct FblcActn {
       int portc;
       FblcLocName* ports;   // Array of portc ports
       int exprc;
-      FblcExpr* exprs;      // Array of exprc exprs
+      FblcExpr** exprs;      // Array of exprc exprs
     } call;
 
     // For processes of the form: <tname> '<~>' <pname> ',' <pname> ';' <actn>
