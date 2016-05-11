@@ -1,3 +1,4 @@
+* Test that tail recursive functions and procedures don't smash the stack.
 * Replace ParseFoo, FillFoo, FooList with GC_REALLOC approach?
 * Test process call port arguments are valid
 * Rest process call expr arguments are valid

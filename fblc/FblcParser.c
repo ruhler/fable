@@ -369,14 +369,20 @@ static int ParsePorts(FblcTokenStream* toks, PortList** plist)
     FblcGetNameToken(toks, "type name", &(list->port.type));
 
     // Get the polarity.
-    if (FblcIsToken(toks, '/')) {
-      FblcGetToken(toks, '/');
+    if (FblcIsToken(toks, '<')) {
+      FblcGetToken(toks, '<');
+      if (!FblcGetToken(toks, '~')) {
+        return -1;
+      }
       list->port.polarity = FBLC_POLARITY_GET;
-    } else if (FblcIsToken(toks, '\\')) {
-      FblcGetToken(toks, '\\');
+    } else if (FblcIsToken(toks, '~')) {
+      FblcGetToken(toks, '~');
+      if (!FblcGetToken(toks, '>')) {
+        return -1;
+      }
       list->port.polarity = FBLC_POLARITY_PUT;
     } else {
-      FblcUnexpectedToken(toks, "'/' or '\\'");
+      FblcUnexpectedToken(toks, "'<~' or '~>'");
       return -1;
     }
 
