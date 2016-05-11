@@ -710,17 +710,17 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       actn->ac.call.proc = name;
 
       int portc = 0;
-      FblcLocName ports[BUFSIZ];
+      int capacity = 8;   // Usually there are less than 8 port arguments?
+      FblcLocName* ports = GC_MALLOC(capacity * sizeof(FblcLocName));
       if (!FblcIsToken(toks, ';')) {
         if (!FblcGetNameToken(toks, "port name", &ports[0])) {
           return NULL;
         }
 
         for (portc = 1; FblcIsToken(toks, ','); portc++) {
-          if (portc >= BUFSIZ) {
-            FblcReportError("This implementation only supports "
-                "up to %d port arguments.\n", ports[BUFSIZ-1].loc, BUFSIZ);
-            return NULL;
+          if (portc >= capacity) {
+            capacity *= 2;
+            ports = GC_REALLOC(ports, capacity * sizeof(FblcLocName));
           }
 
           FblcGetToken(toks, ',');
@@ -731,10 +731,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       }
 
       actn->ac.call.portc = portc;
-      actn->ac.call.ports = GC_MALLOC(sizeof(FblcLocName) * portc);
-      for (int i = 0; i < portc; i++) {
-        actn->ac.call.ports[i] = ports[i];
-      }
+      actn->ac.call.ports = GC_REALLOC(ports, portc * sizeof(FblcLocName));
 
       if (!FblcGetToken(toks, ';')) {
         return NULL;
