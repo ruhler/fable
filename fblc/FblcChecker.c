@@ -379,9 +379,16 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
       return TYPE_NONE;
     }
 
-    case FBLC_CALL_ACTN:
-      assert(false && "TODO: Check CALL_ACTN");
-      return NULL;
+    case FBLC_CALL_ACTN: {
+      // TODO: Check arguments.
+      FblcProc* proc = FblcLookupProc(env, actn->ac.call.proc.name);
+      if (proc == NULL) {
+        FblcReportError("'%s' is not a proc.\n",
+            actn->loc, actn->ac.call.proc.name);
+        return NULL;
+      }
+      return (proc->return_type == NULL) ? TYPE_NONE : proc->return_type->name;
+    }
 
     case FBLC_LINK_ACTN: {
       FblcName type = actn->ac.link.type.name;

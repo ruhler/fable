@@ -1,3 +1,5 @@
+* Test process call port arguments are valid
+* Rest process call expr arguments are valid
 * Make consistent or fix limitations of parsing a port list
   - parse arg, field, and port descriptions the same?
   - Don't limit to BUFSIZ number - possibly using recursive approach?

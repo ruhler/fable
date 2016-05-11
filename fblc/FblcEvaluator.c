@@ -768,6 +768,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
           }
 
           case FBLC_CALL_ACTN:
+            // expr -> expr -> ...
+            //      -> ports -> vars -> body -> ports -> vars -> next
             assert(false && "TODO: Exec CALL_ACTN");
             break;
 
