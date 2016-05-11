@@ -667,7 +667,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
               // Add to the top of the command list:
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...
               // The results of the arg evaluations will be stored directly in
-              // the vars for the vars command.
+              // the vars for the scope command.
 
               // Don't put a scope change if we will immediately 
               // change it back to a different scope. This is important to
@@ -771,11 +771,45 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             break;
           }
 
-          case FBLC_CALL_ACTN:
-            // expr -> expr -> ...
-            //      -> ports -> vars -> body -> ports -> vars -> next
-            assert(false && "TODO: Exec CALL_ACTN");
+          case FBLC_CALL_ACTN: {
+            FblcProc* proc = FblcLookupProc(env, actn->ac.call.proc.name);
+            assert(proc != NULL && "No such proc found");
+            assert(proc->portc == actn->ac.call.portc);
+            assert(proc->argc == actn->ac.call.exprc);
+
+            // Add to the top of the command list:
+            // arg -> ... -> arg -> scope -> body -> (scope) -> ...
+            // The results of the arg evaluations will be stored directly in
+            // the vars for the scope command.
+
+            // Don't put a scope change if we will immediately 
+            // change it back to a different scope. This is important to
+            // avoid memory leaks for tail calls.
+            if (cmd != NULL && cmd->tag != CMD_SCOPE) {
+              cmd = MkScope(vars, ports, cmd);
+            }
+
+            cmd = MkActn(proc->body, target, cmd);
+
+            Ports* nports = NULL;
+            for (int i = 0; i < proc->portc; i++) {
+              Link* link = LookupPort(ports, actn->ac.call.ports[i].name);
+              assert(link != NULL && "port not found in scope");
+              nports = AddPort(nports, proc->portv[i].name.name, link);
+            }
+            cmd = MkScope(NULL, nports, cmd);
+
+            Cmd* scmd = cmd;
+            Vars* nvars = NULL;
+            for (int i = 0; i < proc->argc; i++) {
+              FblcName var_name = proc->argv[i].name.name;
+              nvars = AddVar(nvars, var_name);
+              cmd = MkExpr(actn->ac.call.exprs[i],
+                  LookupRef(nvars, var_name), cmd);
+            }
+            scmd->ex.scope.vars = nvars;
             break;
+          }
 
           case FBLC_LINK_ACTN: {
             Link* link = GC_MALLOC(sizeof(Link));
