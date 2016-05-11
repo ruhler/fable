@@ -166,26 +166,22 @@ static void AdvanceTokenStream(FblcTokenStream* toks)
     toks->type = FBLC_TOK_EOF;
     toks->name = NULL;
   } else if (IsNameChar(c)) {
-    char buf[BUFSIZ];
     size_t n;
-    for (n = 0; n < BUFSIZ && IsNameChar(c); n++) {
-      buf[n] = c;
+    int capacity = 32;        // Most names are less than 32 chars?
+    char* name = GC_MALLOC(capacity * sizeof(char));
+    for (n = 0; IsNameChar(c); n++) {
+      if (n + 1 >= capacity) {
+        capacity *= 2;
+        name = GC_REALLOC(name, capacity * sizeof(char));
+      }
+      name[n] = c;
       c = GetChar(toks);
-    }
+    } 
+    name[n] = '\0';
 
-    if (IsNameChar(c)) {
-      FblcReportError("This implementation only supports "
-          "names with up to %d characters.\n", TokenLoc(toks), BUFSIZ);
-      toks->type = FBLC_TOK_ERR;
-      toks->name = NULL;
-    } else {
-      UnGetChar(toks, c);
-      char* name = GC_MALLOC((n+1) * sizeof(char));
-      strncpy(name, buf, n);
-      name[n] = '\0';
-      toks->type = FBLC_TOK_NAME;
-      toks->name = name;
-    }
+    UnGetChar(toks, c);
+    toks->type = FBLC_TOK_NAME;
+    toks->name = GC_REALLOC(name, (n+1) * sizeof(char));
   } else {
     toks->type = c;
     toks->name = NULL;
