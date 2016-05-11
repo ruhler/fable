@@ -1,8 +1,6 @@
+* Replace ParseFoo, FillFoo, FooList with GC_REALLOC approach?
 * Test process call port arguments are valid
 * Rest process call expr arguments are valid
-* Make consistent or fix limitations of parsing a port list
-  - parse arg, field, and port descriptions the same?
-  - Don't limit to BUFSIZ number - possibly using recursive approach?
 * Test that a link's type is valid.
 * Test that a link action's ports can't shadow ports already in scope.
 * Test that a link can't use the same name for the get and put ports.

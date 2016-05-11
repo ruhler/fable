@@ -69,7 +69,7 @@ typedef struct Ports {
 // in 'vars' commands.
 
 typedef enum {
-  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_VARS, CMD_JOIN, CMD_PUT,
+  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_SCOPE, CMD_JOIN, CMD_PUT,
 } CmdTag;
 
 typedef struct Cmd {
@@ -106,10 +106,12 @@ typedef struct Cmd {
       FblcValue** target;
     } cond;
 
-    // The vars command sets the current vars to the given vars.
+    // The scope command sets the current ports and vars to the given ports
+    // and vars.
     struct {
       Vars* vars;
-    } vars;
+      Ports* ports;
+    } scope;
 
     // The join command halts the current thread of execution until count
     // has reached zero.
@@ -161,7 +163,7 @@ static Cmd* MkAccess(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next);
 static Cmd* MkCond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next);
-static Cmd* MkVars(Vars* vars, Cmd* next);
+static Cmd* MkScope(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoin(int count, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
 static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
@@ -510,12 +512,13 @@ static Cmd* MkCond(
   return cmd;
 }
 
-// MkVars --
+// MkScope --
 //   
-//   Create a command to change the current local variable scope.
+//   Create a command to change the current ports and local variable scope.
 //
 // Inputs:
 //   vars - The new value of the local variable scope to use.
+//   ports - The new value of the ports scope to use.
 //   next - The command to run after this one.
 //
 // Returns:
@@ -524,11 +527,12 @@ static Cmd* MkCond(
 // Side effects:
 //   None.
 
-static Cmd* MkVars(Vars* vars, Cmd* next)
+static Cmd* MkScope(Vars* vars, Ports* ports, Cmd* next)
 {
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
-  cmd->tag = CMD_VARS;
-  cmd->ex.vars.vars = vars;
+  cmd->tag = CMD_SCOPE;
+  cmd->ex.scope.vars = vars;
+  cmd->ex.scope.ports = ports;
   cmd->next = next;
   return cmd;
 }
@@ -661,28 +665,28 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func.name);
             if (func != NULL) {
               // Add to the top of the command list:
-              // arg -> ... -> arg -> vars -> body -> (vars) -> ...
+              // arg -> ... -> arg -> scope -> body -> (scope) -> ...
               // The results of the arg evaluations will be stored directly in
               // the vars for the vars command.
 
-              // Don't put a vars change if we will immediately 
-              // change it back to different vars. This is important to
+              // Don't put a scope change if we will immediately 
+              // change it back to a different scope. This is important to
               // avoid memory leaks for tail calls.
-              if (cmd != NULL && cmd->tag != CMD_VARS) {
-                cmd = MkVars(vars, cmd);
+              if (cmd != NULL && cmd->tag != CMD_SCOPE) {
+                cmd = MkScope(vars, ports, cmd);
               }
 
               cmd = MkExpr(func->body, target, cmd);
-              cmd = MkVars(NULL, cmd);
+              cmd = MkScope(NULL, ports, cmd);
 
-              Cmd* vcmd = cmd;
+              Cmd* scmd = cmd;
               Vars* nvars = NULL;
               for (int i = 0; i < func->argc; i++) {
                 FblcName var_name = func->argv[i].name.name;
                 nvars = AddVar(nvars, var_name);
                 cmd = MkExpr(expr->argv[i], LookupRef(nvars, var_name), cmd);
               }
-              vcmd->ex.vars.vars = nvars;
+              scmd->ex.scope.vars = nvars;
               break;
             }
             assert(false && "No such struct type or function found");
@@ -712,15 +716,15 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // Add to the top of the command list:
             // def -> var -> body -> (vars) -> ...
 
-            // No need to pop the variable if we are going to switch to
-            // different vars immediately after anyway.
-            if (cmd != NULL && cmd->tag != CMD_VARS) {
-              cmd = MkVars(vars, cmd);
+            // No need to reset the scope if we are going to switch to
+            // different scope immediately after anyway.
+            if (cmd != NULL && cmd->tag != CMD_SCOPE) {
+              cmd = MkScope(vars, ports, cmd);
             }
             FblcName var_name = expr->ex.let.name.name;
             Vars* nvars = AddVar(vars, var_name);
             cmd = MkExpr(expr->ex.let.body, target, cmd);
-            cmd = MkVars(nvars, cmd);
+            cmd = MkScope(nvars, ports, cmd);
             cmd = MkExpr(expr->ex.let.def, LookupRef(nvars, var_name), cmd);
             break;
           }
@@ -788,11 +792,10 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // actn .>
             // actn ..> join -> vars -> actn -> vars -> next
             // actn .>
-            cmd = MkVars(vars, cmd);
+            cmd = MkScope(vars, ports, cmd);
             cmd = MkActn(actn->ac.exec.body, target, cmd);
-            cmd = MkVars(NULL, cmd);
-            Cmd* vcmd = MkVars(NULL, cmd);
-            Cmd* jcmd = MkJoin(actn->ac.exec.execc, vcmd);
+            Cmd* scmd = MkScope(NULL, ports, cmd);
+            Cmd* jcmd = MkJoin(actn->ac.exec.execc, scmd);
 
             Vars* nvars = vars;
             for (int i = 0; i < actn->ac.exec.execc; i++) {
@@ -804,7 +807,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
               }
               AddThread(threads, vars, ports, MkActn(exec->actn, target, jcmd));
             }
-            vcmd->ex.vars.vars = nvars;
+            scmd->ex.scope.vars = nvars;
             cmd = NULL;
             break;
           }
@@ -841,8 +844,9 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         break;
       }
 
-      case CMD_VARS:
-        vars = cmd->ex.vars.vars;
+      case CMD_SCOPE:
+        vars = cmd->ex.scope.vars;
+        ports = cmd->ex.scope.ports;
         cmd = cmd->next;
         break;
 
