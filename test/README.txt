@@ -53,7 +53,7 @@ Put Proc          3200-3299
 Call Proc         3300-3399
 Cond Proc         3400-3499
 Link Proc         3500-3599
-Let Proc          3600-3699
+Exec Proc         3600-3699
 
 Prog              4000-4099
 
