@@ -1,0 +1,11 @@
+
+// Test that the put process returns the put value.
+struct Unit();
+union Bool(Unit true, Unit false);
+
+/// Expect: Bool:true(Unit())
+proc main( ; ; Bool) {
+  Bool <~> get, put;
+  put~(Bool:true(Unit()));
+};
+
