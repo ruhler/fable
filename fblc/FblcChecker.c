@@ -5,7 +5,7 @@
 
 #include "FblcInternal.h"
 
-// The following Vars structure describes a mapping variable names to
+// The following Vars structure describes a mapping from variable names to
 // their types.
 
 typedef struct Vars {
@@ -13,10 +13,6 @@ typedef struct Vars {
   FblcName type;
   struct Vars* next;
 } Vars;
-
-// Sentinel value representing the type of an action that does not return a
-// value.
-static FblcName TYPE_NONE = "(none)";
 
 static Vars* AddVar(FblcName name, FblcName type, Vars* next);
 static FblcName LookupVar(Vars* vars, FblcName name);
@@ -334,8 +330,8 @@ static FblcName CheckExpr(
 //   actn - The action to verify.
 //
 // Result:
-//   The type of the action, TYPE_NONE if the action returns no value, or NULL
-//   if the expression is not well formed and well typed.
+//   The type of the action or NULL if the expression is not well formed and
+//   well typed.
 //
 // Side effects:
 //   If the expression is not well formed and well typed, an error message is
@@ -376,7 +372,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
             actn->ac.put.expr->loc, port_type, arg_type);
         return NULL;
       }
-      return TYPE_NONE;
+      return arg_type;
     }
 
     case FBLC_CALL_ACTN: {
@@ -387,7 +383,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
             actn->loc, actn->ac.call.proc.name);
         return NULL;
       }
-      return (proc->return_type == NULL) ? TYPE_NONE : proc->return_type->name;
+      return proc->return_type->name;
     }
 
     case FBLC_LINK_ACTN: {
@@ -406,20 +402,12 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
           return NULL;
         }
 
-        if (exec->var == NULL) {
-          if (type != TYPE_NONE) {
-            FblcReportError("Expected no type, but found %s,\n",
-                exec->actn->loc, type);
-            return NULL;
-          }
-        } else {
-          if (!FblcNamesEqual(exec->var->type.name, type)) {
-            FblcReportError("Expected type %s, but found %s.\n",
-                exec->actn->loc, exec->var->type.name, type);
-            return NULL;
-          }
-          nvars = AddVar(exec->var->name.name, exec->var->type.name, nvars);
+        if (!FblcNamesEqual(exec->var.type.name, type)) {
+          FblcReportError("Expected type %s, but found %s.\n",
+              exec->actn->loc, exec->var.type.name, type);
+          return NULL;
         }
+        nvars = AddVar(exec->var.name.name, exec->var.type.name, nvars);
       }
       return CheckActn(env, nvars, gets, puts, actn->ac.exec.body);
     }
@@ -577,8 +565,7 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   }
 
   // Check the return type.
-  if (proc->return_type != NULL
-      && FblcLookupType(env, proc->return_type->name) == NULL) {
+  if (FblcLookupType(env, proc->return_type->name) == NULL) {
     FblcReportError("Type '%s' not found.\n",
         proc->return_type->loc, proc->return_type->name);
     return false;
@@ -608,18 +595,10 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   if (body_type == NULL) {
     return false;
   }
-  if (proc->return_type == NULL) {
-    if (body_type != TYPE_NONE) {
-      FblcReportError("Type mismatch. Expected none, but found %s.\n",
-          proc->body->loc, body_type);
-      return false;
-    }
-  } else {
-    if (!FblcNamesEqual(proc->return_type->name, body_type)) {
-      FblcReportError("Type mismatch. Expected %s, but found %s.\n",
-          proc->body->loc, proc->return_type->name, body_type);
-      return false;
-    }
+  if (!FblcNamesEqual(proc->return_type->name, body_type)) {
+    FblcReportError("Type mismatch. Expected %s, but found %s.\n",
+        proc->body->loc, proc->return_type->name, body_type);
+    return false;
   }
   return true;
 }

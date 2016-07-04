@@ -1,0 +1,12 @@
+
+// Test exec with multiple processes.
+struct Unit();
+union Bool(Unit true, Unit false);
+struct Pair(Bool a, Bool b);
+
+/// Expect: Pair(Bool:true(Unit()),Bool:false(Unit()))
+proc main( ; ; Pair) {
+  Bool x = $(Bool:true(Unit())), Bool y = $(Bool:false(Unit()));
+  $(Pair(x, y));
+};
+

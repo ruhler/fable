@@ -1,12 +1,11 @@
 
-// Test simple process links.
+// Test simple exec.
 struct Unit();
 union Bool(Unit true, Unit false);
 
 /// Expect: Bool:true(Unit())
 proc main( ; ; Bool) {
-  Bool <~> get, put;
-  Bool putted = put~(Bool:true(Unit()));
-  get~();
+  Bool x = $(Bool:true(Unit()));
+  $(x);
 };
 

@@ -10,12 +10,12 @@ func incr(Digit a ; Digit)
         Digit:7(Unit()), Digit:8(Unit()), Digit:9(Unit()),
         Digit:0(Unit()));
 
-proc clock(Unit <~ tick, Digit ~> display ; Digit time ; ) {
-  display~(time);
+proc clock(Unit <~ tick, Digit ~> display ; Digit time ; Unit()) {
+  Digit displayed = display~(time),
   Unit ticked = tick~();
   clock(tick, display; incr(time));
 };
 
-proc main(Unit <~ tick, Digit ~> display ; ; )
+proc main(Unit <~ tick, Digit ~> display ; ; Unit())
   clock(tick, display; Digit:0(Unit()));
 

@@ -10,7 +10,7 @@ proc sub(Bool <~ get ; ; Bool) {
 /// Expect: Bool:true(Unit())
 proc main( ; ; Bool) {
   Bool <~> myget, put;
-  put~(Bool:true(Unit()));
+  Bool putted = put~(Bool:true(Unit()));
   sub(myget ; );
 };
 

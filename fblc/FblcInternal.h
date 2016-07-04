@@ -132,7 +132,7 @@ typedef enum {
 } FblcActnTag;
 
 typedef struct FblcExec {
-  FblcField* var;         // NULL if there is no execution result.
+  FblcField var;
   struct FblcActn* actn;
 } FblcExec;
 

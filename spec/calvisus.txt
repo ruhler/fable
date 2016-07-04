@@ -539,13 +539,13 @@
 
  @section Get Port
   There are two kinds of ports, a 'get' port is used to read data from outside the process.
-  A get port, denoted with polarity '<', as in 'Foo<', can be used repeatedly to get subsequent data of the given type -- in this case 'Foo' -- from the port.
+  A get port, denoted with polarity '<~', as in 'Foo <~ x', can be used repeatedly to get subsequent data of the given type -- in this case 'Foo' -- from the port -- in this case 'x'.
   When a process gets data from a get port, it will block until data is available on the port.
  @end
 
  @section Put Port
   A process can communicate data outside of itself using a 'put' port.
-  A put port has polarity '>', as in 'Foo>', and can be used to repeatedly put data of the given type onto the port.
+  A put port has polarity '~>', as in 'Foo ~> x', and can be used to repeatedly put data of the given type onto the port.
   The put operation does not block.
  @end
 
@@ -580,26 +580,23 @@ progress.
  @end
 
  @section Declaration
-  Syntax:  'proc' tname '(' [tname polarity pname [',' tname polarity pname [...]]] ';' [tname vname [',' tname vname [...]]] ';' [tname] ')' proc ';'
+  Syntax:  'proc' tname '(' [tname polarity pname [',' tname polarity pname [...]]] ';' [tname vname [',' tname vname [...]]] ';' tname ')' proc ';'
 
-  A process declaration defines the name, ports, input arguments, optional return type, and body of a process.
+  A process declaration defines the name, ports, input arguments, return type, and body of a process.
 
   Each port has a type and polarity.
-  The polarity '<' is used for get ports, and '>' is used for put ports.
-  To remember this, consider a port with type 'Foo<'.
-  This is a get port because the '<' points towards the type, meaning the port can be used to get a value of type 'Foo'.
-  A port with type 'Foo>' takes a value of type 'Foo', so is a put port. 
-
-  The return type of a process is optional.
+  The polarity '<~' is used for get ports, and '~>' is used for put ports.
+  To remember this, consider a port 'Foo <~ x'.
+  This is a get port because the '<~' points from the port to the type, meaning the port can be used to get a value of type 'Foo'.
+  A port 'Foo ~> x' puts a value of type 'Foo' onto the port x, so is a put port. 
  @end
 
  @section Processes
   This section discusses the syntax and behavior of processes in Calvisus.
 
-  In the typical case, given an environment of variables and ports, a process performs zero or more put and get operations on the ports in the environment then optionally returns a data value.
+  In the typical case, given an environment of variables and ports, a process performs zero or more put and get operations on the ports in the environment then returns a data value.
   Processes are typed.
   A well-formed process will produce a data value whose type matches the type of the process.
-  Processes with no return type do not produce data values.
 
   More generally, a process may also have undefined behavior or fail to terminate, either from evaluation of an expression that fails to terminate, deadlock, livelock, or because the process simply runs forever.
   In the following description of process behavior, we will not distinguish between undefined behavior and failure to terminate.
@@ -616,9 +613,9 @@ progress.
   @end
 
   @section Get Process
-   Syntax:   pname '(' ')'
+   Syntax:   pname '~' '(' ')'
 
-   The get process performs a get operation on the named port.
+   The get process performs a get operation on the named port, returning the value gotten from the port.
 
    The get process is well formed if the following conditions hold:
    @list
@@ -630,9 +627,9 @@ progress.
   @end
 
   @section Put Process
-   Syntax: pname '(' expr ')'
+   Syntax: pname '~' '(' expr ')'
 
-   The put process performs a put operation on the named port.
+   The put process performs a put operation on the named port, returning the value put on the port.
 
    The put process is well formed if the following conditions hold:
    @list
@@ -641,8 +638,9 @@ progress.
     @li The type of the named port matches the type of the expression.
    @end
 
-   The process has no type.
+   The type of the process is the type of the port.
    The process will finish if the expression finishes evaluating.
+   The reason the put process returns the value put onto the port is because it must return some value, and that's the only option available to return.
   @end
 
   @section Conditional Process
@@ -701,10 +699,10 @@ progress.
   @end
 
   @section Link Process Statement
-   Syntax: tname '<>' '(' pname ',' pname ')' ';' pstmt
+   Syntax: tname '<~>' pname ',' pname ';' pstmt
 
    The link process statement instantiates a link with joined put and get ports that can be used in subsequent process statements.
-   It adds to the port scope a get port with the first name in parenthesis and a put port with the second name in parenthesis.
+   It adds to the port scope a get port with the first name and a put port with the second name.
    Gets to the get port will read data values that were put to the put port, in the order they were put.
    The body of the process statement is executed in a scope with the new put and get ports.
 
@@ -715,27 +713,22 @@ progress.
     @li The body must be well formed.
    @end
 
-   The type of the link statement is the type of its body statement.
+   The type and return value of the link statement is the type and return value of its body statement.
   @end
 
   @section Execution Process Statement
-   Syntax:  [exec [',' exec [...]]] ';' [pstmt]
+   Syntax:  tname vname = pstmt [',' tname vname = pstmt [...]]] ';' pstmt
 
-   The execution process statement is used to execute zero or more processes in parallel, optionally followed by execution of a process in the scope that includes results of the parallely executed processes.
-
-   The syntax for exec is:  proc | tname vname = proc.
-
-   In the first form, an exec is a process with no return type.
-   In the second case, the exec is a process with a return type whose result will be added to scope under the given variable name.
+   The execution process statement is used to execute one or more processes in parallel, followed by execution of a process in the scope that includes results of the parallely executed processes.
 
    An execution process statement is well formed if:
    @list
-    @li Each execution is well formed, meaning either it is a proc that is well formed and has no return type, or it is tname vname = proc, the proc is well formed with type matching tname, and the variable doesn't refer to a variable or port in scope, and the variable name is distinct from all other variable names declared in the execution process statement.
+    @li Each execution is well formed, meaning the proc is well formed with type matching tname, and the variable doesn't refer to a variable or port in scope, and the variable name is distinct from all other variable names declared in the execution process statement.
     @li No port in scope is referred to by more than one of the executions.
     @li The body of the process statement, if any, is well formed.
    @end
 
-   The execution process statement has the same type as its body statement, or no type if it has no body statement.
+   The execution process statement has the same type as its body statement.
 
    To execute an execution process statement, first all processes listed are executed in parallel, according to the fairness rules already stated in another section and interleaved in such a way as to avoid violation of causality.
 
@@ -791,10 +784,9 @@ progress.
         |  '{ pstmt '}'                                 (* process statment *)
         ;
 
-  exec ::= [tname vname '='] proc ;
-
-  pstmt ::= tname '<~>' pname ',' pname ';' pstmt          (* link *)
-         |  [exec [',' exec [...]]] ';' [pstmt]            (* execution *)
+  pstmt ::= proc ';'                                                          (* proc *)
+         |  tname '<~>' pname ',' pname ';' pstmt                             (* link *)
+         |  tname vname = pstmt [',' tname vname = pstmt [...]]] ';' pstmt    (* execution *)
          ;
      
 
@@ -812,7 +804,6 @@ progress.
 
 @section TODO
  @list[bulleted]
-  @li Update the doc for the new process syntax.
   @li Add a section describing how we describe syntax?
   @bi
    Add a section talking about lexicography?
@@ -833,7 +824,6 @@ progress.
    I worry it is easy to get the order of conditional arguments wrong.
    Would it not make more sense to explicitly specify the tag corresponding to each conditional argument, so that the compiler can verify it for you?
   @end
-  @li Figure out how to distinguish between expr and proc for conditional procs in the concrete syntax.
   @li Do we allow whitespace in tokens <~, ~>, and <~>?
  @end
 @end

@@ -40,8 +40,6 @@ static int ParseFields(FblcTokenStream* toks, FieldList** plist);
 static int ParsePorts(FblcTokenStream* toks, PortList** plist);
 static int ParseArgs(FblcTokenStream* toks, ArgList** plist);
 static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt);
-static FblcActn* ParseActnStartingWithName(FblcTokenStream* toks,
-    FblcLocName* name);
 static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt);
 
 // AddField --
@@ -597,104 +595,6 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
   return expr;
 }
 
-// ParseActnStartingWithName --
-//
-//   Parse a process action from the token stream that begins with the given
-//   name token. As complete an action as can be will be parsed.
-//
-// Inputs:
-//   toks - The token stream to parse the action from.
-//   name - The name token that the action starts with.
-//
-// Returns:
-//   The parsed process action, or NULL on error.
-//
-// Side effects:
-//   Advances the token stream past the parsed action. In case of error,
-//   an error message is printed to standard error.
-
-static FblcActn* ParseActnStartingWithName(FblcTokenStream* toks,
-    FblcLocName* name)
-{
-  FblcActn* actn = NULL;
-  if (FblcIsToken(toks, '~')) {
-    FblcGetToken(toks, '~');
-    if (!FblcGetToken(toks, '(')) {
-      return NULL;
-    }
-
-    if (FblcIsToken(toks, ')')) {
-      FblcGetToken(toks, ')');
-      actn = GC_MALLOC(sizeof(FblcActn));
-      actn->tag = FBLC_GET_ACTN;
-      actn->loc = name->loc;
-      actn->ac.get.port.loc = name->loc;
-      actn->ac.get.port.name = name->name;
-    } else {
-      FblcExpr* expr = ParseExpr(toks, false);
-      if (expr == NULL) {
-        return NULL;
-      }
-      if (!FblcGetToken(toks, ')')) {
-        return NULL;
-      }
-
-      actn = GC_MALLOC(sizeof(FblcActn));
-      actn->tag = FBLC_PUT_ACTN;
-      actn->loc = name->loc;
-      actn->ac.put.port.loc = name->loc;
-      actn->ac.put.port.name = name->name;
-      actn->ac.put.expr = expr;
-    }
-  } else {
-    FblcGetToken(toks, '(');
-    actn = GC_MALLOC(sizeof(FblcActn));
-    actn->tag = FBLC_CALL_ACTN;
-    actn->loc = name->loc;
-    actn->ac.call.proc.loc = name->loc;
-    actn->ac.call.proc.name = name->name;
-
-    int portc = 0;
-    int capacity = 8;   // Usually there are less than 8 port arguments?
-    FblcLocName* ports = GC_MALLOC(capacity * sizeof(FblcLocName));
-    if (!FblcIsToken(toks, ';')) {
-      if (!FblcGetNameToken(toks, "port name", &ports[0])) {
-        return NULL;
-      }
-
-      for (portc = 1; FblcIsToken(toks, ','); portc++) {
-        if (portc >= capacity) {
-          capacity *= 2;
-          ports = GC_REALLOC(ports, capacity * sizeof(FblcLocName));
-        }
-
-        FblcGetToken(toks, ',');
-        if (!FblcGetNameToken(toks, "port name", &ports[portc])) {
-          return NULL;
-        }
-      }
-    }
-
-    actn->ac.call.portc = portc;
-    actn->ac.call.ports = GC_REALLOC(ports, portc * sizeof(FblcLocName));
-
-    if (!FblcGetToken(toks, ';')) {
-      return NULL;
-    }
-
-    ArgList* args = NULL;
-    int exprc = ParseArgs(toks, &args);
-    if (exprc < 0) {
-      return NULL;
-    }
-    FblcExpr** exprs = GC_MALLOC(sizeof(FblcExpr*) * exprc);
-    actn->ac.call.exprc = exprc;
-    FillArgs(exprc, args, exprs);
-    actn->ac.call.exprs = exprs;
-  }
-  return actn;
-}
-
 // ParseActn --
 //
 //   Parse a process action from the token stream.
@@ -715,7 +615,7 @@ static FblcActn* ParseActnStartingWithName(FblcTokenStream* toks,
 
 static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
 {
-  FblcActn* actn = NULL;
+  FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
     actn = ParseActn(toks, true);
@@ -739,15 +639,85 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       return NULL;
     }
 
-    actn = GC_MALLOC(sizeof(FblcActn));
     actn->tag = FBLC_EVAL_ACTN;
     actn->loc = expr->loc;
     actn->ac.eval.expr = expr;
   } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
     FblcLocName name;
-    FblcGetNameToken(toks, "port or process name", &name);
+    FblcGetNameToken(toks, "port, process, or type name", &name);
 
-    if (in_stmt && FblcIsToken(toks, '<')) {
+    if (FblcIsToken(toks, '~')) {
+      FblcGetToken(toks, '~');
+      if (!FblcGetToken(toks, '(')) {
+        return NULL;
+      }
+
+      if (FblcIsToken(toks, ')')) {
+        FblcGetToken(toks, ')');
+        actn->tag = FBLC_GET_ACTN;
+        actn->loc = name.loc;
+        actn->ac.get.port.loc = name.loc;
+        actn->ac.get.port.name = name.name;
+      } else {
+        FblcExpr* expr = ParseExpr(toks, false);
+        if (expr == NULL) {
+          return NULL;
+        }
+        if (!FblcGetToken(toks, ')')) {
+          return NULL;
+        }
+
+        actn->tag = FBLC_PUT_ACTN;
+        actn->loc = name.loc;
+        actn->ac.put.port.loc = name.loc;
+        actn->ac.put.port.name = name.name;
+        actn->ac.put.expr = expr;
+      }
+    } else if (FblcIsToken(toks, '(')) {
+      FblcGetToken(toks, '(');
+      actn->tag = FBLC_CALL_ACTN;
+      actn->loc = name.loc;
+      actn->ac.call.proc.loc = name.loc;
+      actn->ac.call.proc.name = name.name;
+
+      int portc = 0;
+      int capacity = 8;   // Usually there are less than 8 port arguments?
+      FblcLocName* ports = GC_MALLOC(capacity * sizeof(FblcLocName));
+      if (!FblcIsToken(toks, ';')) {
+        if (!FblcGetNameToken(toks, "port name", &ports[0])) {
+          return NULL;
+        }
+
+        for (portc = 1; FblcIsToken(toks, ','); portc++) {
+          if (portc >= capacity) {
+            capacity *= 2;
+            ports = GC_REALLOC(ports, capacity * sizeof(FblcLocName));
+          }
+
+          FblcGetToken(toks, ',');
+          if (!FblcGetNameToken(toks, "port name", &ports[portc])) {
+            return NULL;
+          }
+        }
+      }
+
+      actn->ac.call.portc = portc;
+      actn->ac.call.ports = GC_REALLOC(ports, portc * sizeof(FblcLocName));
+
+      if (!FblcGetToken(toks, ';')) {
+        return NULL;
+      }
+
+      ArgList* args = NULL;
+      int exprc = ParseArgs(toks, &args);
+      if (exprc < 0) {
+        return NULL;
+      }
+      FblcExpr** exprs = GC_MALLOC(sizeof(FblcExpr*) * exprc);
+      actn->ac.call.exprc = exprc;
+      FillArgs(exprc, args, exprs);
+      actn->ac.call.exprs = exprs;
+    } else if (in_stmt && FblcIsToken(toks, '<')) {
       FblcGetToken(toks, '<');
       if (!FblcGetToken(toks, '~')) {
         return NULL;
@@ -773,7 +743,6 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       if (body == NULL) {
         return NULL;
       }
-      actn = GC_MALLOC(sizeof(FblcActn));
       actn->tag = FBLC_LINK_ACTN;
       actn->loc = name.loc;
       actn->ac.link.type = name;
@@ -782,13 +751,57 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       actn->ac.link.body = body;
       return actn;
     } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
-      assert(false && "TODO: Parse an exec process.");
-      return NULL;
-    } else {
-      actn = ParseActnStartingWithName(toks, &name);
-      if (actn == NULL) {
+      int capacity = 4;
+      actn->tag = FBLC_EXEC_ACTN;
+      actn->loc = name.loc;
+      actn->ac.exec.execc = 0;
+      actn->ac.exec.execv = GC_MALLOC(capacity * sizeof(FblcExec));
+      do {
+        if (actn->ac.exec.execc >= capacity) {
+          capacity *= 2;
+          actn->ac.exec.execv = GC_REALLOC(actn->ac.exec.execv, capacity * sizeof(FblcExec));
+        }
+
+        FblcExec* exec = &(actn->ac.exec.execv[actn->ac.exec.execc]);
+        if (actn->ac.exec.execc == 0) {
+          exec->var.type.loc = name.loc;
+          exec->var.type.name = name.name;
+        } else {
+          if (!FblcGetToken(toks, ',')) {
+            return NULL;
+          }
+
+          if (!FblcGetNameToken(toks, "type name", &(exec->var.type))) {
+            return NULL;
+          }
+        }
+
+        if (!FblcGetNameToken(toks, "variable name", &(exec->var.name))) {
+          return NULL;
+        }
+
+        if (!FblcGetToken(toks, '=')) {
+          return NULL;
+        }
+
+        exec->actn = ParseActn(toks, false);
+        if (exec->actn == NULL) {
+          return NULL;
+        }
+        actn->ac.exec.execc++;
+      } while (FblcIsToken(toks, ','));
+
+      if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
+      actn->ac.exec.body = ParseActn(toks, true);
+      if (actn->ac.exec.body == NULL) {
+        return NULL;
+      }
+      return actn;
+    } else {
+      FblcUnexpectedToken(toks, "The rest of a process starting with a name.");
+      return NULL;
     }
   } else if (FblcIsToken(toks, '?')) {
     // ?(<expr> ; <proc>, ...)
@@ -799,24 +812,8 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
   }
 
   if (in_stmt) {
-    FblcGetToken(toks, ';');
-
-    // TODO: Support generalized exec actions instead of this special case.
-    if (!FblcIsToken(toks, '}')) {
-      FblcActn* second = ParseActn(toks, true);
-      if (second == NULL) {
-        return NULL;
-      }
-
-      FblcActn* seq = GC_MALLOC(sizeof(FblcActn));
-      seq->tag = FBLC_EXEC_ACTN;
-      seq->loc = actn->loc;
-      seq->ac.exec.execc = 1;
-      seq->ac.exec.execv = GC_MALLOC(sizeof(FblcExec));
-      seq->ac.exec.execv->var = NULL;
-      seq->ac.exec.execv->actn = actn;
-      seq->ac.exec.body = second;
-      return seq;
+    if (!FblcGetToken(toks, ';')) {
+      return NULL;
     }
   }
   return actn;

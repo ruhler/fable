@@ -119,8 +119,9 @@ typedef struct Cmd {
       int count;
     } join;
 
-    // The put command puts a value onto a link.
+    // The put command puts a value onto a link and into the target.
     struct {
+      FblcValue** target;
       Link* link;
       FblcValue* value;
     } put;
@@ -428,7 +429,7 @@ static Cmd* MkExpr(const FblcExpr* expr, FblcValue** target, Cmd* next)
 // MkActn --
 //
 //   Creates a command to evaluate the given action, storing the resulting
-//   value, if any, at the given target location.
+//   value at the given target location.
 //
 // Inputs:
 //   actn - The action for the created command to evaluate. This must not
@@ -445,6 +446,7 @@ static Cmd* MkExpr(const FblcExpr* expr, FblcValue** target, Cmd* next)
 static Cmd* MkActn(FblcActn* actn, FblcValue** target, Cmd* next)
 {
   assert(actn != NULL);
+  assert(target != NULL);
 
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
   cmd->tag = CMD_ACTN;
@@ -574,10 +576,12 @@ static Cmd* MkJoin(int count, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkPut(Link* link, Cmd* next)
+static Cmd* MkPut(FblcValue** target, Link* link, Cmd* next)
 {
+  assert(target != NULL);
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
   cmd->tag = CMD_PUT;
+  cmd->ex.put.target = target;
   cmd->ex.put.link = link;
   cmd->ex.put.value = NULL;
   cmd->next = next;
@@ -766,7 +770,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // expr -> put -> next
             Link* link = LookupPort(ports, actn->ac.put.port.name);
             assert(link != NULL && "Put port not in scope");
-            cmd = MkPut(link, cmd);
+            cmd = MkPut(target, link, cmd);
             cmd = MkExpr(actn->ac.put.expr, &(cmd->ex.put.value), cmd);
             break;
           }
@@ -824,7 +828,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
           case FBLC_EXEC_ACTN: {
             // Create new threads for each action to execute.
             // actn .>
-            // actn ..> join -> vars -> actn -> vars -> next
+            // actn ..> join -> scope -> actn -> scope -> next
             // actn .>
             cmd = MkScope(vars, ports, cmd);
             cmd = MkActn(actn->ac.exec.body, target, cmd);
@@ -834,11 +838,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             Vars* nvars = vars;
             for (int i = 0; i < actn->ac.exec.execc; i++) {
               FblcExec* exec = &(actn->ac.exec.execv[i]);
-              FblcValue** target = NULL;
-              if (exec->var != NULL) {
-                nvars = AddVar(vars, exec->var->name.name);
-                target = LookupRef(vars, exec->var->name.name);
-              }
+              nvars = AddVar(nvars, exec->var.name.name);
+              FblcValue** target = LookupRef(nvars, exec->var.name.name);
               AddThread(threads, vars, ports, MkActn(exec->actn, target, jcmd));
             }
             scmd->ex.scope.vars = nvars;
@@ -892,6 +893,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
       case CMD_PUT: {
         Link* link = cmd->ex.put.link;
+        FblcValue** target = cmd->ex.put.target;
+        *target = cmd->ex.put.value;
         assert(cmd->ex.put.value != NULL);
         Values* ntail = GC_MALLOC(sizeof(Values));
         ntail->value = cmd->ex.put.value;

@@ -121,11 +121,6 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    if (proc->return_type == NULL) {
-      fprintf(stderr, "main process does not return a value.\n");
-      return 1;
-    }
-    
     FblcValue* value = FblcExecute(env, proc->body);
     FblcPrintValue(stdout, value);
     printf("\n");
