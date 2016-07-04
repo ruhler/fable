@@ -1,0 +1,7 @@
+
+struct ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType();
+
+/// Expect: ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType()
+func main( ; ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType) {
+  ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType();
+};

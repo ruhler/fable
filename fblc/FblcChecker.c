@@ -423,7 +423,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 
       if (type->kind != FBLC_KIND_UNION) {
         FblcReportError("The condition has type %s, "
-            " which is not a union type.\n", actn->loc, typename);
+            "which is not a union type.\n", actn->loc, typename);
         return NULL;
       }
 

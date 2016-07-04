@@ -1,5 +1,4 @@
 
-// Test simple process calls.
 struct Unit();
 union Bool(Unit true, Unit false);
 

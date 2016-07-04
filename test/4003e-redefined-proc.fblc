@@ -1,0 +1,16 @@
+
+struct Unit();
+union Fruit(Unit apple, Unit banana);
+
+proc f( ; Fruit x ; Fruit) {
+  $(x);
+};
+
+proc f( ; Fruit x ; Fruit) {
+  ?(x ; $(Fruit:banana(Unit())), $(Fruit:apple(Unit())));
+};
+
+/// Expect: ERROR
+proc main( ; ; Fruit) {
+  f(; Fruit:apple(Unit()));
+};

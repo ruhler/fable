@@ -1,0 +1,5 @@
+
+struct Unit();
+
+/// Expect: ERROR
+func main( ; Unit) {

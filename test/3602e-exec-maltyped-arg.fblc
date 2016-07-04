@@ -1,0 +1,11 @@
+
+struct Unit();
+union Bool(Unit true, Unit false);
+
+/// Expect: ERROR
+proc main( ; ; Bool) {
+  // The body of the execution is not well typed.
+  Bool x = ?(Bool:true(Unit()); $(Unit()), $(Bool:false(Unit())));
+  $(x);
+};
+
