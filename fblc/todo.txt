@@ -1,4 +1,3 @@
-* Add support for getting from a link before it has been put to.
 * See whether it would be appropriate to change union data types to set of
   struct data types. union makes sense if we will change the tag after
   allocating, otherwise set of struct data types is more memory efficient.

@@ -804,6 +804,10 @@ progress.
 
 @section TODO
  @list[bulleted]
+  @bi
+   Is it unreasonable to support infinite size links?
+   Should we say they only hold 1 or K values before put blocks instead?
+  @end
   @li Add a section describing how we describe syntax?
   @bi
    Add a section talking about lexicography?

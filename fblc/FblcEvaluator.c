@@ -26,10 +26,12 @@ typedef struct Values {
 // A Link is a FIFO list of values. Values are put to the tail of the list and
 // taken from the head of the list.
 // The empty list is represented with head and tail both set to NULL.
+// waiting is a list of threads waiting to get values from the link.
 
 typedef struct Link {
   Values* head;
   Values* tail;
+  struct Thread* waiting;
 } Link;
 
 // The following defines a Vars structure for storing the value of local
@@ -798,11 +800,21 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
           case FBLC_GET_ACTN: {
             Link* link = LookupPort(ports, actn->ac.get.port.name);
             assert(link != NULL && "Get port not in scope");
-            assert(link->head != NULL && "TODO: Allow get to block");
-            *target = link->head->value;
-            link->head = link->head->next;
+
             if (link->head == NULL) {
-              link->tail = NULL;
+              Thread* waiting = GC_MALLOC(sizeof(Thread));
+              waiting->vars = vars;
+              waiting->ports = ports;
+              waiting->cmd = MkActn(actn, target, cmd);
+              waiting->next = link->waiting;
+              link->waiting = waiting;
+              cmd = NULL;
+            } else {
+              *target = link->head->value;
+              link->head = link->head->next;
+              if (link->head == NULL) {
+                link->tail = NULL;
+              }
             }
             break;
           }
@@ -860,6 +872,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             Link* link = GC_MALLOC(sizeof(Link));
             link->head = NULL;
             link->tail = NULL;
+            link->waiting = NULL;
             ports = AddPort(ports, actn->ac.link.getname.name, link);
             ports = AddPort(ports, actn->ac.link.putname.name, link);
             cmd = MkActn(actn->ac.link.body, target, cmd);
@@ -961,6 +974,12 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         }
         link->tail = ntail;
         cmd = cmd->next;
+
+        if (link->waiting != NULL) {
+          Thread* thread = link->waiting;
+          AddThread(threads, thread->vars, thread->ports, thread->cmd);
+          link->waiting = thread->next;
+        }
         break;
       }
     }
