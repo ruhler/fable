@@ -1,7 +1,18 @@
+* Add support for getting from a link before it has been put to.
+* See whether it would be appropriate to change union data types to set of
+  struct data types. union makes sense if we will change the tag after
+  allocating, otherwise set of struct data types is more memory efficient.
+* Replace libgc with custom memory management.
+
+* Design command line interface to fblc
+  - How should the main func/proc be specified?
+  - How should arguments be specified? Text/Binary Files? Text/Binary String
+    values?
+
 * Test that tail recursive functions and procedures don't smash the stack.
 * Replace ParseFoo, FillFoo, FooList with GC_REALLOC approach?
 * Test process call port arguments are valid
-* Rest process call expr arguments are valid
+* Test process call expr arguments are valid
 * Test that a link's type is valid.
 * Test that a link action's ports can't shadow ports already in scope.
 * Test that a link can't use the same name for the get and put ports.
@@ -9,7 +20,6 @@
   the same polarity.
 * Should FblcExecute take a const FblcActn*?
   Should we use const FblcActn* instead of FblcActn* everywhere there?
-* ParseActn calls GC_MALLOC in many paths. Should we just do that up front?
 * Test that process port types are valid.
 * Make sure we are consistent about variable sized arguments.
   I think we need to use foo* instead of foo[] because in some cases we need

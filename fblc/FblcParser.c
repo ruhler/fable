@@ -805,7 +805,47 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
     }
   } else if (FblcIsToken(toks, '?')) {
     // ?(<expr> ; <proc>, ...)
-    assert(false && "TODO: Parse a conditional process.");
+    FblcGetToken(toks, '?');
+    if (!FblcGetToken(toks, '(')) {
+      return NULL;
+    }
+    FblcExpr* condition = ParseExpr(toks, false);
+    if (condition == NULL) {
+      return NULL;
+    }
+
+    if (!FblcGetToken(toks, ';')) {
+      return NULL;
+    }
+
+    int argc = 0;
+    int capacity = 8;   // Usually there are less than 8 arguments?
+    FblcActn** args = GC_MALLOC(capacity * sizeof(FblcActn*));
+    do {
+      if (argc >= capacity) {
+        capacity *= 2;
+        args = GC_REALLOC(args, capacity * sizeof(FblcActn*));
+      }
+
+      if (argc > 0 && !FblcGetToken(toks, ',')) {
+        return NULL;
+      }
+
+      args[argc] = ParseActn(toks, false);
+      if (args[argc] == NULL) {
+        return NULL;
+      }
+      argc++;
+    } while (FblcIsToken(toks, ','));
+
+    if (!FblcGetToken(toks, ')')) {
+      return NULL;
+    }
+    actn->tag = FBLC_COND_ACTN;
+    actn->loc = condition->loc;
+    actn->ac.cond.select = condition;
+    actn->ac.cond.argc = argc;
+    actn->ac.cond.args = args;
   } else {
     FblcUnexpectedToken(toks, "a process action");
     return NULL;

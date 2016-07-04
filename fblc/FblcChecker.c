@@ -412,9 +412,47 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
       return CheckActn(env, nvars, gets, puts, actn->ac.exec.body);
     }
 
-    case FBLC_COND_ACTN:
-      assert(false && "TODO: Check COND_ACTN");
-      return NULL;
+    case FBLC_COND_ACTN: {
+      FblcName typename = CheckExpr(env, vars, actn->ac.cond.select);
+      if (typename == NULL) {
+        return NULL;
+      }
+
+      FblcType* type = FblcLookupType(env, typename);
+      assert(type != NULL && "Result of CheckExpr refers to undefined type?");
+
+      if (type->kind != FBLC_KIND_UNION) {
+        FblcReportError("The condition has type %s, "
+            " which is not a union type.\n", actn->loc, typename);
+        return NULL;
+      }
+
+      if (type->fieldc != actn->ac.cond.argc) {
+        FblcReportError("Wrong number of arguments to condition. Expected %d, "
+            "but found %d.\n", actn->loc, type->fieldc, actn->ac.cond.argc);
+        return NULL;
+      }
+
+      // TODO: Verify that no two branches of the condition refer to the same
+      // port.
+      FblcName result_type = NULL;
+      for (int i = 0; i < actn->ac.cond.argc; i++) {
+        FblcName arg_type = CheckActn(env, vars, gets, puts, actn->ac.cond.args[i]);
+        if (arg_type == NULL) {
+          return NULL;
+        }
+
+        if (result_type != NULL && !FblcNamesEqual(result_type, arg_type)) {
+          FblcReportError("Expected process of type %s, "
+              "but found process of type %s.\n",
+              actn->ac.cond.args[i]->loc, result_type, arg_type);
+          return NULL;
+        }
+        result_type = arg_type;
+      }
+      assert(result_type != NULL);
+      return result_type;
+    }
   }
   assert(false && "UNREACHABLE");
   return NULL;

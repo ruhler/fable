@@ -185,7 +185,7 @@ typedef struct FblcActn {
     struct {
       FblcExpr* select;
       int argc;
-      struct FblcActn* args;    //  Array of argc args.
+      struct FblcActn** args;    //  Array of argc args.
     } cond;
   } ac;
 } FblcActn;

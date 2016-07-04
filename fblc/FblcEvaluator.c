@@ -69,7 +69,8 @@ typedef struct Ports {
 // in 'vars' commands.
 
 typedef enum {
-  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND, CMD_SCOPE, CMD_JOIN, CMD_PUT,
+  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_ECOND, CMD_ACOND,
+  CMD_SCOPE, CMD_JOIN, CMD_PUT,
 } CmdTag;
 
 typedef struct Cmd {
@@ -97,14 +98,23 @@ typedef struct Cmd {
       FblcValue** target;
     } access;
 
-    // The cond command uses the tag of 'value' to select the choice to
+    // The econd command uses the tag of 'value' to select the choice to
     // evaluate. It then evaluates the chosen expression and stores the
     // resulting value in *target.
     struct {
       FblcValue* value;
       FblcExpr* const* choices;
       FblcValue** target;
-    } cond;
+    } econd;
+
+    // The acond command uses the tag of 'value' to select the choice to
+    // evaluate. It then evaluates the chosen action and stores the
+    // resulting value in *target.
+    struct {
+      FblcValue* value;
+      FblcActn** choices;
+      FblcValue** target;
+    } acond;
 
     // The scope command sets the current ports and vars to the given ports
     // and vars.
@@ -162,8 +172,10 @@ static Cmd* MkExpr(const FblcExpr* expr, FblcValue** target, Cmd* next);
 static Cmd* MkActn(FblcActn* actn, FblcValue** target, Cmd* next);
 static Cmd* MkAccess(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next);
-static Cmd* MkCond(
+static Cmd* MkECond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next);
+static Cmd* MkACond(
+    FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next);
 static Cmd* MkScope(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoin(int count, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
@@ -485,7 +497,7 @@ static Cmd* MkAccess(
   return cmd;
 }
 
-// MkCond --
+// MkECond --
 //   
 //   Create a command to select and evaluate an expression based on the tag of
 //   the given value.
@@ -502,14 +514,43 @@ static Cmd* MkAccess(
 // Side effects:
 //   None.
 
-static Cmd* MkCond(
+static Cmd* MkECond(
     FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next)
 {
   Cmd* cmd = GC_MALLOC(sizeof(Cmd));
-  cmd->tag = CMD_COND;
-  cmd->ex.cond.value = value;
-  cmd->ex.cond.choices = choices;
-  cmd->ex.cond.target = target;
+  cmd->tag = CMD_ECOND;
+  cmd->ex.econd.value = value;
+  cmd->ex.econd.choices = choices;
+  cmd->ex.econd.target = target;
+  cmd->next = next;
+  return cmd;
+}
+
+// MkACond --
+//   
+//   Create a command to select and evaluate an action based on the tag of
+//   the given value.
+//
+// Inputs:
+//   value - The value to condition on.
+//   choices - The list of actions to choose from based on the value.
+//   target - The target destination for the final evaluated value.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
+static Cmd* MkACond(
+    FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
+{
+  Cmd* cmd = GC_MALLOC(sizeof(Cmd));
+  cmd->tag = CMD_ACOND;
+  cmd->ex.acond.value = value;
+  cmd->ex.acond.choices = choices;
+  cmd->ex.acond.target = target;
   cmd->next = next;
   return cmd;
 }
@@ -735,9 +776,9 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
           case FBLC_COND_EXPR: {
             // Add to the top of the command list:
-            // select -> cond -> ...
-            cmd = MkCond(NULL, expr->argv, target, cmd);
-            cmd = MkExpr(expr->ex.cond.select, &(cmd->ex.cond.value), cmd);
+            // select -> econd -> ...
+            cmd = MkECond(NULL, expr->argv, target, cmd);
+            cmd = MkExpr(expr->ex.cond.select, &(cmd->ex.econd.value), cmd);
             break;
           }
         }
@@ -847,8 +888,13 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             break;
           }
 
-          case FBLC_COND_ACTN:
-            assert(false && "TODO: Exec COND_ACTN");
+          case FBLC_COND_ACTN: {
+            // Add to the top of the command list:
+            // select -> acond -> ...
+            cmd = MkACond(NULL, actn->ac.cond.args, target, cmd);
+            cmd = MkExpr(actn->ac.cond.select, &(cmd->ex.acond.value), cmd);
+            break;
+          }
             break;
         }
         break;
@@ -871,11 +917,19 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         break;
       }
 
-      case CMD_COND: {
-        FblcValue* value = cmd->ex.cond.value;
-        FblcValue** target = cmd->ex.cond.target;
+      case CMD_ECOND: {
+        FblcValue* value = cmd->ex.econd.value;
+        FblcValue** target = cmd->ex.econd.target;
         assert(value->type->kind == FBLC_KIND_UNION);
-        cmd = MkExpr(cmd->ex.cond.choices[value->tag], target, cmd->next);
+        cmd = MkExpr(cmd->ex.econd.choices[value->tag], target, cmd->next);
+        break;
+      }
+
+      case CMD_ACOND: {
+        FblcValue* value = cmd->ex.acond.value;
+        FblcValue** target = cmd->ex.acond.target;
+        assert(value->type->kind == FBLC_KIND_UNION);
+        cmd = MkActn(cmd->ex.acond.choices[value->tag], target, cmd->next);
         break;
       }
 
