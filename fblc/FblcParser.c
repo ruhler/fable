@@ -759,7 +759,8 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       do {
         if (actn->ac.exec.execc >= capacity) {
           capacity *= 2;
-          actn->ac.exec.execv = GC_REALLOC(actn->ac.exec.execv, capacity * sizeof(FblcExec));
+          actn->ac.exec.execv = GC_REALLOC(
+              actn->ac.exec.execv, capacity * sizeof(FblcExec));
         }
 
         FblcExec* exec = &(actn->ac.exec.execv[actn->ac.exec.execc]);
@@ -944,7 +945,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
     } else if (is_proc) {
-      // Process declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
+      // Proc declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
       PortList* ports;
       int portc = ParsePorts(toks, &ports);
       if (portc < 0) {
@@ -979,7 +980,8 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       if (body == NULL) {
         return NULL;
       }
-      FblcProc* proc = NewProc(&name, return_type, portc, ports, fieldc, fields, body);
+      FblcProc* proc = NewProc(
+          &name, return_type, portc, ports, fieldc, fields, body);
       if (!FblcAddProc(env, proc)) {
         return NULL;
       }

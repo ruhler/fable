@@ -437,7 +437,8 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
       // port.
       FblcName result_type = NULL;
       for (int i = 0; i < actn->ac.cond.argc; i++) {
-        FblcName arg_type = CheckActn(env, vars, gets, puts, actn->ac.cond.args[i]);
+        FblcName arg_type = CheckActn(
+            env, vars, gets, puts, actn->ac.cond.args[i]);
         if (arg_type == NULL) {
           return NULL;
         }
