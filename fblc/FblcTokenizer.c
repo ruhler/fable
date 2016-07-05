@@ -13,18 +13,19 @@
 // a character literal for single punctuation characters, FBLC_TOK_NAME for a
 // name token, FBLC_TOK_EOF for the token representing the end of the
 // token stream, and FBLC_TOK_ERR for a token representing an error has
-// occurred.
+// occurred. The special value FBLC_TOK_PENDING is used to indicate the next
+// token has not yet been determined.
 
 // A stream of tokens is represented using the FblcTokenStream data structure.
-// The data structure includes the next token in the stream, the underlying
-// FILE stream, and, for error reporting purposes, the location in the input
-// file of the next token and the FILE stream itself.
+// The data structure includes a cached of the next token in the stream, the
+// underlying FILE stream, and, for error reporting purposes, the location in
+// the input file of the next token and the FILE stream itself.
 //
 // The conventional variable name for a FblcTokenStream* is 'toks'.
 
 struct FblcTokenStream {
-  // The next token. This token has been read from the underlying FILE stream,
-  // but has not yet been taken by the user.
+  // A cache of the next token. If the 'type' of token is FBLC_TOK_PENDING,
+  // the next token has not yet been read from the underlying stream.
   // If the 'type' of token is FBLC_TOK_NAME, then 'name' is the value of the
   // name token. Otherwise 'name' is NULL.
   FblcTokenType type;
@@ -45,7 +46,7 @@ struct FblcTokenStream {
 static int GetChar(FblcTokenStream* toks);
 static void UnGetChar(FblcTokenStream* toks, int c);
 static bool IsNameChar(int c);
-static void AdvanceTokenStream(FblcTokenStream* toks);
+static void ReadNextIfPending(FblcTokenStream* toks);
 static FblcLoc* TokenLoc(FblcTokenStream* toks);
 static const char* DescribeTokenType(FblcTokenType which);
 
@@ -125,9 +126,10 @@ static bool IsNameChar(int c)
   return isalnum(c) || c == '_';
 }
 
-// AdvanceTokenStream --
+// ReadNextIfPending --
 //
-//   Advance to the next token in the given token stream.
+//   Read the next token from the underlying token stream if the next token is
+//   marked as FBLC_TOK_PENDING.
 //
 // Inputs:
 //   toks - the token stream to advance to the next token.
@@ -136,55 +138,57 @@ static bool IsNameChar(int c)
 //   None.
 //
 // Side effects:
-//   Overwrites the current token of the token stream with the next token read
-//   from the underlying FILE stream. Advances the underlying FILE stream to
-//   just after the token read.
+//   Updates the current cached next token of the token stream with the next
+//   token read from the underlying FILE stream if needed. Advances the
+//   underlying FILE stream to just after the token read.
 //
 //   If there is an error reading the next token, an error message will be
 //   printed to standard error and the current token will be of type
 //   FBLC_TOK_ERR.
 
-static void AdvanceTokenStream(FblcTokenStream* toks)
+static void ReadNextIfPending(FblcTokenStream* toks)
 {
-  int c;
-  do {
-    c = GetChar(toks);
-    if (c == '/') {
-      int c2 = GetChar(toks);
-      if (c2 == '/') {
-        do {
-          c = GetChar(toks);
-        } while (c != EOF && c != '\n');
-      } else {
-        UnGetChar(toks, c2);
-      }
-    }
-  } while (isspace(c));
-  toks->token_column = toks->stream_column;
-
-  if (c == EOF) {
-    toks->type = FBLC_TOK_EOF;
-    toks->name = NULL;
-  } else if (IsNameChar(c)) {
-    size_t n;
-    int capacity = 32;        // Most names are less than 32 chars?
-    char* name = GC_MALLOC(capacity * sizeof(char));
-    for (n = 0; IsNameChar(c); n++) {
-      if (n + 1 >= capacity) {
-        capacity *= 2;
-        name = GC_REALLOC(name, capacity * sizeof(char));
-      }
-      name[n] = c;
+  if (toks->type == FBLC_TOK_PENDING) {
+    int c;
+    do {
       c = GetChar(toks);
-    } 
-    name[n] = '\0';
+      if (c == '/') {
+        int c2 = GetChar(toks);
+        if (c2 == '/') {
+          do {
+            c = GetChar(toks);
+          } while (c != EOF && c != '\n');
+        } else {
+          UnGetChar(toks, c2);
+        }
+      }
+    } while (isspace(c));
+    toks->token_column = toks->stream_column;
 
-    UnGetChar(toks, c);
-    toks->type = FBLC_TOK_NAME;
-    toks->name = GC_REALLOC(name, (n+1) * sizeof(char));
-  } else {
-    toks->type = c;
-    toks->name = NULL;
+    if (c == EOF) {
+      toks->type = FBLC_TOK_EOF;
+      toks->name = NULL;
+    } else if (IsNameChar(c)) {
+      size_t n;
+      int capacity = 32;        // Most names are less than 32 chars?
+      char* name = GC_MALLOC(capacity * sizeof(char));
+      for (n = 0; IsNameChar(c); n++) {
+        if (n + 1 >= capacity) {
+          capacity *= 2;
+          name = GC_REALLOC(name, capacity * sizeof(char));
+        }
+        name[n] = c;
+        c = GetChar(toks);
+      } 
+      name[n] = '\0';
+
+      UnGetChar(toks, c);
+      toks->type = FBLC_TOK_NAME;
+      toks->name = GC_REALLOC(name, (n+1) * sizeof(char));
+    } else {
+      toks->type = c;
+      toks->name = NULL;
+    }
   }
 }
 
@@ -260,11 +264,12 @@ FblcTokenStream* FblcOpenTokenStream(const char* filename)
   if (toks->stream == NULL) {
     return NULL;
   }
+  toks->type = FBLC_TOK_PENDING;
+  toks->name = NULL;
   toks->filename = filename;
   toks->line = 1;
   toks->token_column = 0;
   toks->stream_column = 0;
-  AdvanceTokenStream(toks);
   return toks;
 }
 
@@ -297,10 +302,11 @@ void FblcCloseTokenStream(FblcTokenStream* toks)
 //   The value true if the next token has type 'which', false otherwise.
 //
 // Side effects:
-//   None.
+//   Reads the next token from the underlying stream if necessary.
 
 bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which)
 {
+  ReadNextIfPending(toks);
   return toks->type == which;
 }
 
@@ -330,10 +336,12 @@ bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which)
 bool FblcGetNameToken(
     FblcTokenStream* toks, const char* expected, FblcLocName* name)
 {
+  ReadNextIfPending(toks);
   if (toks->type == FBLC_TOK_NAME) {
     name->name = toks->name;
     name->loc = TokenLoc(toks);
-    AdvanceTokenStream(toks);
+    toks->type = FBLC_TOK_PENDING;
+    toks->name = NULL;
     return name;
   }
   FblcUnexpectedToken(toks, expected);
@@ -361,8 +369,9 @@ bool FblcGetNameToken(
 
 bool FblcGetToken(FblcTokenStream* toks, int which)
 {
+  ReadNextIfPending(toks);
   if (toks->type == which) {
-    AdvanceTokenStream(toks);
+    toks->type = FBLC_TOK_PENDING;
     return true;
   }
   FblcUnexpectedToken(toks, DescribeTokenType(which));

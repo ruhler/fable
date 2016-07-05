@@ -236,6 +236,7 @@ bool FblcAddProc(FblcEnv* env, FblcProc* proc);
 #define FBLC_TOK_EOF -1
 #define FBLC_TOK_NAME -2
 #define FBLC_TOK_ERR -3
+#define FBLC_TOK_PENDING -4
 typedef int FblcTokenType;
 typedef struct FblcTokenStream FblcTokenStream;
 FblcTokenStream* FblcOpenTokenStream(const char* filename);
