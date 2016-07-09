@@ -5,6 +5,25 @@
 
 #include "FblcInternal.h"
 
+// Vector is a helper for dynamically allocating an array of data whose
+// size is not known ahead of time.
+// 'size' is the number of bytes taken by a single element.
+// 'capacity' is the maximum number of elements supported by the current
+// allocation of data.
+// 'count' is the number of elements currently in use.
+// 'data' is where the data is stored.
+
+typedef struct {
+  int size;
+  int capacity;
+  int count;
+  void* data;
+} Vector;
+
+static void VectorInit(Vector* vector, int size);
+static void* VectorAppend(Vector* vector);
+static void* VectorFinish(Vector* vector, int* count);
+
 typedef struct FieldList {
   FblcField field;
   struct FieldList* next;
@@ -41,6 +60,71 @@ static int ParsePorts(FblcTokenStream* toks, PortList** plist);
 static int ParseArgs(FblcTokenStream* toks, ArgList** plist);
 static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt);
 static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt);
+
+// VectorInit --
+//
+//   Initialize a Vector for allocations.
+//
+// Inputs:
+//   vector - The vector to initialize.
+//   size - The size in bytes of a single element of the vector.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The vector is initialized for allocation.
+
+static void VectorInit(Vector* vector, int size)
+{
+  vector->size = size;
+  vector->capacity = 4;
+  vector->count = 0;
+  vector->data = GC_MALLOC(vector->capacity * size);
+}
+
+// VectorAppend --
+//
+//   Append an element to a vector.
+//
+// Inputs:
+//   vector - The vector to append an element to.
+//
+// Results:
+//   A pointer to the newly appended element.
+//
+// Side effects:
+//   The size of the vector is expanded by one element. Pointers returned for
+//   previous elements may become invalid.
+
+static void* VectorAppend(Vector* vector)
+{
+  if (vector->count == vector->capacity) {
+    vector->capacity *= 2;
+    vector->data = GC_REALLOC(vector->data, vector->capacity * vector->size);
+  }
+  return (void*)((uintptr_t)vector->data + vector->count++ * vector->size);
+}
+
+// VectorFinish
+//
+//   Get the completed data from a vector.
+//
+// Inputs:
+//   vector - The vector that has been completed.
+//   count - An out parameter for the final number of elements in the vector.
+//
+// Results:
+//   The element data for the vector.
+//
+// Side effects:
+//   count is updated with the final number of elements in the vector.
+
+static void* VectorFinish(Vector* vector, int* count)
+{
+  *count = vector->count;
+  return GC_REALLOC(vector->data, vector->count * vector->size);
+}
 
 // AddField --
 //
@@ -680,29 +764,21 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       actn->ac.call.proc.loc = name.loc;
       actn->ac.call.proc.name = name.name;
 
-      int portc = 0;
-      int capacity = 8;   // Usually there are less than 8 port arguments?
-      FblcLocName* ports = GC_MALLOC(capacity * sizeof(FblcLocName));
+      Vector ports;
+      VectorInit(&ports, sizeof(FblcLocName));
       if (!FblcIsToken(toks, ';')) {
-        if (!FblcGetNameToken(toks, "port name", &ports[0])) {
+        if (!FblcGetNameToken(toks, "port name", VectorAppend(&ports))) {
           return NULL;
         }
 
-        for (portc = 1; FblcIsToken(toks, ','); portc++) {
-          if (portc >= capacity) {
-            capacity *= 2;
-            ports = GC_REALLOC(ports, capacity * sizeof(FblcLocName));
-          }
-
+        while (FblcIsToken(toks, ',')) {
           FblcGetToken(toks, ',');
-          if (!FblcGetNameToken(toks, "port name", &ports[portc])) {
+          if (!FblcGetNameToken(toks, "port name", VectorAppend(&ports))) {
             return NULL;
           }
         }
       }
-
-      actn->ac.call.portc = portc;
-      actn->ac.call.ports = GC_REALLOC(ports, portc * sizeof(FblcLocName));
+      actn->ac.call.ports = VectorFinish(&ports, &(actn->ac.call.portc));
 
       if (!FblcGetToken(toks, ';')) {
         return NULL;
@@ -751,22 +827,18 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       actn->ac.link.body = body;
       return actn;
     } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
-      int capacity = 4;
       actn->tag = FBLC_EXEC_ACTN;
       actn->loc = name.loc;
-      actn->ac.exec.execc = 0;
-      actn->ac.exec.execv = GC_MALLOC(capacity * sizeof(FblcExec));
-      do {
-        if (actn->ac.exec.execc >= capacity) {
-          capacity *= 2;
-          actn->ac.exec.execv = GC_REALLOC(
-              actn->ac.exec.execv, capacity * sizeof(FblcExec));
-        }
 
-        FblcExec* exec = &(actn->ac.exec.execv[actn->ac.exec.execc]);
-        if (actn->ac.exec.execc == 0) {
+      Vector execs;
+      VectorInit(&execs, sizeof(FblcExec));
+      bool first = true;
+      do {
+        FblcExec* exec = VectorAppend(&execs);
+        if (first) {
           exec->var.type.loc = name.loc;
           exec->var.type.name = name.name;
+          first = false;
         } else {
           if (!FblcGetToken(toks, ',')) {
             return NULL;
@@ -789,8 +861,8 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
         if (exec->actn == NULL) {
           return NULL;
         }
-        actn->ac.exec.execc++;
       } while (FblcIsToken(toks, ','));
+      actn->ac.exec.execv = VectorFinish(&execs, &(actn->ac.exec.execc));
 
       if (!FblcGetToken(toks, ';')) {
         return NULL;
@@ -819,24 +891,20 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       return NULL;
     }
 
-    int argc = 0;
-    int capacity = 8;   // Usually there are less than 8 arguments?
-    FblcActn** args = GC_MALLOC(capacity * sizeof(FblcActn*));
+    Vector args;
+    VectorInit(&args, sizeof(FblcActn*));
+    bool first = true;
     do {
-      if (argc >= capacity) {
-        capacity *= 2;
-        args = GC_REALLOC(args, capacity * sizeof(FblcActn*));
-      }
-
-      if (argc > 0 && !FblcGetToken(toks, ',')) {
+      if (!first && !FblcGetToken(toks, ',')) {
         return NULL;
       }
+      first = false;
 
-      args[argc] = ParseActn(toks, false);
-      if (args[argc] == NULL) {
+      FblcActn** arg = VectorAppend(&args);
+      *arg = ParseActn(toks, false);
+      if (*arg == NULL) {
         return NULL;
       }
-      argc++;
     } while (FblcIsToken(toks, ','));
 
     if (!FblcGetToken(toks, ')')) {
@@ -845,8 +913,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
     actn->tag = FBLC_COND_ACTN;
     actn->loc = condition->loc;
     actn->ac.cond.select = condition;
-    actn->ac.cond.argc = argc;
-    actn->ac.cond.args = args;
+    actn->ac.cond.args = VectorFinish(&args, &(actn->ac.cond.argc));
   } else {
     FblcUnexpectedToken(toks, "a process action");
     return NULL;
