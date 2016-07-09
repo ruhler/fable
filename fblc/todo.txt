@@ -5,8 +5,11 @@
 
 * Design command line interface to fblc
   - How should the main func/proc be specified?
+    Answer: by name
   - How should arguments be specified? Text/Binary Files? Text/Binary String
     values?
+    Answer: For now: filenames of text files for port args, text string for
+    regular args.
 
 * Test that tail recursive functions and procedures don't smash the stack.
 * Replace ParseFoo, FillFoo, FooList with GC_REALLOC approach?

@@ -236,6 +236,25 @@ bool FblcAddType(FblcEnv* env, FblcType* type);
 bool FblcAddFunc(FblcEnv* env, FblcFunc* func);
 bool FblcAddProc(FblcEnv* env, FblcProc* proc);
 
+// FblcValue
+
+// An Fblc value is represented using the following FblcValue data structure.
+// For struct values, 'tag' is unused and 'fieldv' contains the field data in
+// the order the fields are declared in the type declaration.
+// For union values, 'tag' is the index of the active field and 'fieldv' is a
+// single element array with the field value.
+
+typedef struct FblcValue {
+  FblcType* type;
+  int tag;
+  struct FblcValue* fieldv[];
+} FblcValue;
+
+FblcValue* FblcNewValue(FblcType* type);
+FblcValue* FblcNewUnionValue(FblcType* type, int tag);
+void FblcPrintValue(FILE* fout, FblcValue* value);
+
+
 // FblcTokenizer
 #define FBLC_TOK_EOF -1
 #define FBLC_TOK_NAME -2
@@ -258,8 +277,6 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks);
 bool FblcCheckProgram(const FblcEnv* env);
 
 // FblcEvaluator
-typedef struct FblcValue FblcValue;
-void FblcPrintValue(FILE* fout, FblcValue* value);
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr);
 FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn);
 
