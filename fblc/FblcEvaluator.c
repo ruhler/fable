@@ -105,7 +105,7 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  FblcValue* value;
+  FblcUnionValue* value;
   FblcExpr* const* choices;
   FblcValue** target;
 } CondExprCmd;
@@ -116,7 +116,7 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  FblcValue* value;
+  FblcUnionValue* value;
   FblcActn** choices;
   FblcValue** target;
 } CondActnCmd;
@@ -179,9 +179,10 @@ static Cmd* MkActnCmd(FblcActn* actn, FblcValue** target, Cmd* next);
 static Cmd* MkAccessCmd(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next);
 static Cmd* MkCondExprCmd(
-    FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next);
+    FblcUnionValue* value, FblcExpr* const* choices, FblcValue** target,
+    Cmd* next);
 static Cmd* MkCondActnCmd(
-    FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next);
+    FblcUnionValue* value, FblcActn** choices, FblcValue** target, Cmd* next);
 static Cmd* MkScopeCmd(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoinCmd(int count, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
@@ -473,7 +474,8 @@ static Cmd* MkAccessCmd(
 //   None.
 
 static Cmd* MkCondExprCmd(
-    FblcValue* value, FblcExpr* const* choices, FblcValue** target, Cmd* next)
+    FblcUnionValue* value, FblcExpr* const* choices, FblcValue** target,
+    Cmd* next)
 {
   CondExprCmd* cmd = GC_MALLOC(sizeof(CondExprCmd));
   cmd->tag = CMD_COND_EXPR;
@@ -502,7 +504,7 @@ static Cmd* MkCondExprCmd(
 //   None.
 
 static Cmd* MkCondActnCmd(
-    FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
+    FblcUnionValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
 {
   CondActnCmd* cmd = GC_MALLOC(sizeof(CondActnCmd));
   cmd->tag = CMD_COND_ACTN;
@@ -656,10 +658,13 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
               if (type->kind == FBLC_KIND_STRUCT) {
                 // Create the struct value now, then add commands to evaluate
                 // the arguments to fill in the fields with the proper results.
-                *target = FblcNewValue(type);
-                for (int i = 0; i < type->fieldc; i++) {
-                  cmds = MkExprCmd(
-                      expr->argv[i], &((*target)->fieldv[i]), cmds);
+                int fieldc = type->fieldc;
+                FblcStructValue* value = GC_MALLOC(
+                    sizeof(FblcStructValue) + fieldc * sizeof(FblcValue*));
+                value->type = type;
+                *target = (FblcValue*)value;
+                for (int i = 0; i < fieldc; i++) {
+                  cmds = MkExprCmd(expr->argv[i], &(value->fieldv[i]), cmds);
                 }
               } else {
                 assert(false && "Invalid kind of type for application");
@@ -714,10 +719,11 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // union value.
             FblcType* type = FblcLookupType(env, expr->ex.union_.type.name);
             assert(type != NULL);
-            int tag = TagForField(type, expr->ex.union_.field.name);
-            *target = FblcNewUnionValue(type, tag);
-            cmds = MkExprCmd(
-                expr->ex.union_.value, &((*target)->fieldv[0]), cmds);
+            FblcUnionValue* value = GC_MALLOC(sizeof(FblcUnionValue));
+            value->type = type;
+            value->tag = TagForField(type, expr->ex.union_.field.name);
+            *target = (FblcValue*)value;
+            cmds = MkExprCmd(expr->ex.union_.value, &(value->field), cmds);
             break;
           }
 
@@ -744,7 +750,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // select -> econd -> ...
             CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(
                 NULL, expr->argv, target, cmds);
-            cmds = MkExprCmd(expr->ex.cond.select, &(ccmd->value), (Cmd*)ccmd);
+            cmds = MkExprCmd(
+                expr->ex.cond.select, (FblcValue**)&(ccmd->value), (Cmd*)ccmd);
             break;
           }
         }
@@ -872,7 +879,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // select -> acond -> ...
             CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(
                 NULL, actn->ac.cond.args, target, cmds);
-            cmds = MkExprCmd(actn->ac.cond.select, &(ccmd->value), (Cmd*)ccmd);
+            cmds = MkExprCmd(
+                actn->ac.cond.select, (FblcValue**)&(ccmd->value), (Cmd*)ccmd);
             break;
           }
             break;
@@ -884,15 +892,18 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         AccessCmd* cmd = (AccessCmd*)cmds;
         FblcType* type = cmd->value->type;
         int target_tag = TagForField(type, cmd->field);
-        int actual_tag = cmd->value->tag;
         FblcValue** target = cmd->target;
         if (type->kind == FBLC_KIND_STRUCT) {
-          *target = cmd->value->fieldv[target_tag];
-        } else if (actual_tag == target_tag) {
-          *target = cmd->value->fieldv[0];
+          *target = ((FblcStructValue*)cmd->value)->fieldv[target_tag];
         } else {
-          fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
-          abort();
+          assert(type->kind == FBLC_KIND_UNION);
+          FblcUnionValue* union_value = (FblcUnionValue*)cmd->value;
+          if (union_value->tag == target_tag) {
+            *target = union_value->field;
+          } else {
+            fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
+            abort();
+          }
         }
         cmds = cmds->next;
         break;
@@ -900,7 +911,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
       case CMD_COND_EXPR: {
         CondExprCmd* cmd = (CondExprCmd*)cmds;
-        FblcValue* value = cmd->value;
+        FblcUnionValue* value = cmd->value;
         FblcValue** target = cmd->target;
         assert(value->type->kind == FBLC_KIND_UNION);
         cmds = MkExprCmd(cmd->choices[value->tag], target, cmd->next);
@@ -909,7 +920,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
       case CMD_COND_ACTN: {
         CondActnCmd* cmd = (CondActnCmd*)cmds;
-        FblcValue* value = cmd->value;
+        FblcUnionValue* value = cmd->value;
         FblcValue** target = cmd->target;
         assert(value->type->kind == FBLC_KIND_UNION);
         cmds = MkActnCmd(cmd->choices[value->tag], target, cmd->next);
