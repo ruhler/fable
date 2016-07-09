@@ -646,14 +646,16 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         cmds = cmds->next;
         switch (expr->tag) {
           case FBLC_VAR_EXPR: {
-            FblcName var_name = expr->ex.var.name.name;
+            FblcVarExpr* var_expr = (FblcVarExpr*)expr;
+            FblcName var_name = var_expr->name.name;
             *target = LookupVal(vars, var_name);
             assert(*target != NULL && "Var not in scope");
             break;
           }
 
           case FBLC_APP_EXPR: {
-            FblcType* type = FblcLookupType(env, expr->ex.app.func.name);
+            FblcAppExpr* app_expr = (FblcAppExpr*)expr;
+            FblcType* type = FblcLookupType(env, app_expr->func.name);
             if (type != NULL) {
               if (type->kind == FBLC_KIND_STRUCT) {
                 // Create the struct value now, then add commands to evaluate
@@ -664,7 +666,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
                 value->type = type;
                 *target = (FblcValue*)value;
                 for (int i = 0; i < fieldc; i++) {
-                  cmds = MkExprCmd(expr->argv[i], &(value->fieldv[i]), cmds);
+                  cmds = MkExprCmd(
+                      app_expr->argv[i], &(value->fieldv[i]), cmds);
                 }
               } else {
                 assert(false && "Invalid kind of type for application");
@@ -672,7 +675,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
               break;
             }
 
-            FblcFunc* func = FblcLookupFunc(env, expr->ex.app.func.name);
+            FblcFunc* func = FblcLookupFunc(env, app_expr->func.name);
             if (func != NULL) {
               // Add to the top of the command list:
               // arg -> ... -> arg -> scope -> body -> (scope) -> ...
@@ -695,7 +698,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
                 FblcName var_name = func->argv[i].name.name;
                 nvars = AddVar(nvars, var_name);
                 cmds = MkExprCmd(
-                    expr->argv[i], LookupRef(nvars, var_name), cmds);
+                    app_expr->argv[i], LookupRef(nvars, var_name), cmds);
               }
               scmd->vars = nvars;
               break;
@@ -706,10 +709,10 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
           case FBLC_ACCESS_EXPR: {
             // Add to the top of the command list:
             // object -> access -> ...
+            FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
             AccessCmd* acmd = (AccessCmd*)MkAccessCmd(
-                NULL, expr->ex.access.field.name, target, cmds);
-            cmds = MkExprCmd(
-                expr->ex.access.object, &(acmd->value), (Cmd*)acmd);
+                NULL, access_expr->field.name, target, cmds);
+            cmds = MkExprCmd(access_expr->object, &(acmd->value), (Cmd*)acmd);
             break;
           }
 
@@ -717,41 +720,43 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // Create the union value now, then add a command to evaluate the
             // argument of the union constructor and set the field of the
             // union value.
-            FblcType* type = FblcLookupType(env, expr->ex.union_.type.name);
+            FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
+            FblcType* type = FblcLookupType(env, union_expr->type.name);
             assert(type != NULL);
             FblcUnionValue* value = GC_MALLOC(sizeof(FblcUnionValue));
             value->type = type;
-            value->tag = TagForField(type, expr->ex.union_.field.name);
+            value->tag = TagForField(type, union_expr->field.name);
             *target = (FblcValue*)value;
-            cmds = MkExprCmd(expr->ex.union_.value, &(value->field), cmds);
+            cmds = MkExprCmd(union_expr->value, &(value->field), cmds);
             break;
           }
 
           case FBLC_LET_EXPR: {
             // Add to the top of the command list:
             // def -> var -> body -> (vars) -> ...
+            FblcLetExpr* let_expr = (FblcLetExpr*)expr;
 
             // No need to reset the scope if we are going to switch to
             // different scope immediately after anyway.
             if (cmds != NULL && cmds->tag != CMD_SCOPE) {
               cmds = MkScopeCmd(vars, ports, cmds);
             }
-            FblcName var_name = expr->ex.let.name.name;
+            FblcName var_name = let_expr->name.name;
             Vars* nvars = AddVar(vars, var_name);
-            cmds = MkExprCmd(expr->ex.let.body, target, cmds);
+            cmds = MkExprCmd(let_expr->body, target, cmds);
             cmds = MkScopeCmd(nvars, ports, cmds);
-            cmds = MkExprCmd(
-                expr->ex.let.def, LookupRef(nvars, var_name), cmds);
+            cmds = MkExprCmd(let_expr->def, LookupRef(nvars, var_name), cmds);
             break;
           }
 
           case FBLC_COND_EXPR: {
             // Add to the top of the command list:
             // select -> econd -> ...
+            FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
             CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(
-                NULL, expr->argv, target, cmds);
+                NULL, cond_expr->argv, target, cmds);
             cmds = MkExprCmd(
-                expr->ex.cond.select, (FblcValue**)&(ccmd->value), (Cmd*)ccmd);
+                cond_expr->select, (FblcValue**)&(ccmd->value), (Cmd*)ccmd);
             break;
           }
         }

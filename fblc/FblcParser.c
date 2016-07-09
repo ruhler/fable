@@ -508,66 +508,70 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
       if (argc < 0) {
         return NULL;
       }
-      expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
-      expr->tag = FBLC_APP_EXPR;
-      expr->loc = start.loc;
-      expr->ex.app.func.name = start.name;
-      expr->ex.app.func.loc = start.loc;
-      expr->argc = argc;
-      FillArgs(argc, args, expr->argv);
+      FblcAppExpr* app_expr = GC_MALLOC(sizeof(FblcAppExpr));
+      app_expr->tag = FBLC_APP_EXPR;
+      app_expr->loc = start.loc;
+      app_expr->func.name = start.name;
+      app_expr->func.loc = start.loc;
+      app_expr->argc = argc;
+      app_expr->argv = GC_MALLOC(argc * sizeof(FblcExpr*));
+      FillArgs(argc, args, app_expr->argv);
+      expr = (FblcExpr*)app_expr;
     } else if (FblcIsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)
       FblcGetToken(toks, ':');
-      expr = GC_MALLOC(sizeof(FblcExpr));
-      expr->tag = FBLC_UNION_EXPR;
-      expr->loc = start.loc;
-      expr->ex.union_.type.name = start.name;
-      expr->ex.union_.type.loc = start.loc;
-      if (!FblcGetNameToken(toks, "field name", &(expr->ex.union_.field))) {
+      FblcUnionExpr* union_expr = GC_MALLOC(sizeof(FblcUnionExpr));
+      union_expr->tag = FBLC_UNION_EXPR;
+      union_expr->loc = start.loc;
+      union_expr->type.name = start.name;
+      union_expr->type.loc = start.loc;
+      if (!FblcGetNameToken(toks, "field name", &(union_expr->field))) {
         return NULL;
       }
       if (!FblcGetToken(toks, '(')) {
         return NULL;
       }
-      expr->ex.union_.value = ParseExpr(toks, false);
-      if (expr->ex.union_.value == NULL) {
+      union_expr->value = ParseExpr(toks, false);
+      if (union_expr->value == NULL) {
         return NULL;
       }
       if (!FblcGetToken(toks, ')')) {
         return NULL;
       }
+      expr = (FblcExpr*)union_expr;
     } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
-      FblcExpr* expr = GC_MALLOC(sizeof(FblcExpr));
-      expr->tag = FBLC_LET_EXPR;
-      expr->loc = start.loc;
-      expr->ex.let.type.name = start.name;
-      expr->ex.let.type.loc = start.loc;
-      FblcGetNameToken(toks, "variable name", &(expr->ex.let.name));
+      FblcLetExpr* let_expr = GC_MALLOC(sizeof(FblcLetExpr));
+      let_expr->tag = FBLC_LET_EXPR;
+      let_expr->loc = start.loc;
+      let_expr->type.name = start.name;
+      let_expr->type.loc = start.loc;
+      FblcGetNameToken(toks, "variable name", &(let_expr->name));
       if (!FblcGetToken(toks, '=')) {
         return NULL;
       }
-      expr->ex.let.def = ParseExpr(toks, false);
-      if (expr->ex.let.def == NULL) {
+      let_expr->def = ParseExpr(toks, false);
+      if (let_expr->def == NULL) {
         return NULL;
       }
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
-      expr->ex.let.body = ParseExpr(toks, true);
-      if (expr->ex.let.body == NULL) {
+      let_expr->body = ParseExpr(toks, true);
+      if (let_expr->body == NULL) {
         return NULL;
       }
 
       // Return the expression immediately, because it is already complete.
-      return expr;
+      return (FblcExpr*)let_expr;
     } else {
       // This is the variable expression: start
-      expr = GC_MALLOC(sizeof(FblcExpr));
-      expr->tag = FBLC_VAR_EXPR;
-      expr->loc = start.loc;
-      expr->ex.var.name.name = start.name;
-      expr->ex.var.name.loc = start.loc;
+      FblcVarExpr* var_expr = GC_MALLOC(sizeof(FblcVarExpr));
+      var_expr->tag = FBLC_VAR_EXPR;
+      var_expr->loc = start.loc;
+      var_expr->name.name = start.name;
+      var_expr->name.loc = start.loc;
+      expr = (FblcExpr*)var_expr;
     }
   } else if (FblcIsToken(toks, '?')) {
     // This is a conditional expression of the form: ?(<expr> ; <args>)
@@ -589,12 +593,14 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
     if (argc < 0) {
       return NULL;
     }
-    expr = GC_MALLOC(sizeof(FblcExpr) + argc * sizeof(FblcExpr*));
-    expr->tag = FBLC_COND_EXPR;
-    expr->loc = condition->loc;
-    expr->ex.cond.select = condition;
-    expr->argc = argc;
-    FillArgs(argc, args, expr->argv);
+    FblcCondExpr* cond_expr = GC_MALLOC(sizeof(FblcCondExpr));
+    cond_expr->tag = FBLC_COND_EXPR;
+    cond_expr->loc = condition->loc;
+    cond_expr->select = condition;
+    cond_expr->argc = argc;
+    cond_expr->argv = GC_MALLOC(argc * sizeof(FblcExpr*));
+    FillArgs(argc, args, cond_expr->argv);
+    expr = (FblcExpr*)cond_expr;
   } else {
     FblcUnexpectedToken(toks, "an expression");
     return NULL;
@@ -604,14 +610,14 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
     FblcGetToken(toks, '.');
 
     // This is an access expression of the form: <expr>.<field>
-    FblcExpr* object = expr;
-    expr = GC_MALLOC(sizeof(FblcExpr));
-    expr->tag = FBLC_ACCESS_EXPR;
-    expr->loc = expr->loc;
-    expr->ex.access.object = object;
-    if (!FblcGetNameToken(toks, "field name", &(expr->ex.access.field))) {
+    FblcAccessExpr* access_expr = GC_MALLOC(sizeof(FblcAccessExpr));
+    access_expr->tag = FBLC_ACCESS_EXPR;
+    access_expr->loc = expr->loc;
+    access_expr->object = expr;
+    if (!FblcGetNameToken(toks, "field name", &(access_expr->field))) {
       return NULL;
     }
+    expr = (FblcExpr*)access_expr;
   }
 
   if (in_stmt) {

@@ -1,9 +1,6 @@
-* See whether it would be appropriate to change union data types to set of
-  struct data types. union makes sense if we will change the tag after
-  allocating, otherwise set of struct data types is more memory efficient.
-  For: FblcExpr and FblcActn.
+* Change FblcActn union data types to set of struct data types.
+* Replace FieldList and ArgList with vector in FblcParser.
 * Replace libgc with custom memory management.
-
 * Design command line interface to fblc
   - How should the main func/proc be specified?
     Answer: by name
@@ -11,9 +8,7 @@
     values?
     Answer: For now: filenames of text files for port args, text string for
     regular args.
-
 * Test that tail recursive functions and procedures don't smash the stack.
-* Replace ParseFoo, FillFoo, FooList with GC_REALLOC approach?
 * Test process call port arguments are valid
 * Test process call expr arguments are valid
 * Test that a link's type is valid.
@@ -40,7 +35,6 @@
     evaluate in the context of the given program.
 * Be able to parse from a list of files instead of just one?
   This will help for tests or other programs that share some common functions.
-* Implement support for processes.
 * Write a man page for fblc?
 * Write tests to get 100% code coverage, or reasonably close.
   - Manually review reported errors for 'e' test cases to make sure the test

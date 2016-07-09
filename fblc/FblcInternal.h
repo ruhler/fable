@@ -43,58 +43,64 @@ typedef enum {
   FBLC_COND_EXPR,
 } FblcExprTag;
 
-typedef struct FblcExpr {
+// Base structure for all Fblc expressions.
+
+typedef struct {
   FblcExprTag tag;
   FblcLoc* loc;
-
-  union {
-    // For variable expressions of the form: <name>
-    struct {
-      FblcLocName name;
-    } var;
-
-    // For application expressions of the form: <func>(<argv>)
-    // The function args are in the 'argv' field of FblcExpr.
-    struct {
-      FblcLocName func;
-    } app;
-
-    // For member access expressions of the form: <object>.<field>
-    struct {
-      const struct FblcExpr* object;
-      FblcLocName field;
-    } access; 
-
-    // For union literals of the form: <type>:<field>(<value>)
-    // 'union' is a keyword in C, so we use 'union_' instead.
-    struct { 
-      FblcLocName type;
-      FblcLocName field;
-      const struct FblcExpr* value;
-    } union_;
-
-    // For let expressions of the form: <type> <name> = <def> ; <body>
-    struct {
-      FblcLocName type;
-      FblcLocName name;
-      const struct FblcExpr* def;
-      const struct FblcExpr* body;
-    } let;
-
-    // For conditional expressions of the form: <select>?(<argv>)
-    // The expressions to choose among are in the 'argv' field of FblcExpr.
-    struct {
-      const struct FblcExpr* select;
-    } cond;
-  } ex;
-
-  // Additional variable-length arguments for app and cond expressions.
-  // The number of arguments is given by argc, and the arguments themselves
-  // are in argv. The values of argc and argv are undefined unless the
-  // expression is an application or conditional expression.
-  int argc;
-  struct FblcExpr* argv[];
 } FblcExpr;
+
+// FBLC_VAR_EXPR: Variable expressions of the form: <name>
+typedef struct {
+  FblcExprTag tag;
+  FblcLoc* loc;
+  FblcLocName name;
+} FblcVarExpr;
+
+// FBLC_APP_EXPR: Application expressions of the form: <func>(<argv>)
+typedef struct {
+  FblcExprTag tag;
+  FblcLoc* loc;
+  FblcLocName func;
+  int argc;
+  FblcExpr** argv;
+} FblcAppExpr;
+
+// FBLC_ACCESS_EXPR: Member access expressions of the form: <object>.<field>
+typedef struct {
+  FblcExprTag tag;
+  FblcLoc* loc;
+  const FblcExpr* object;
+  FblcLocName field;
+} FblcAccessExpr;
+
+// FBLC_UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
+typedef struct {
+  FblcExprTag tag;
+  FblcLoc* loc;
+  FblcLocName type;
+  FblcLocName field;
+  const FblcExpr* value;
+} FblcUnionExpr;
+
+// FBLC_LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
+typedef struct {
+  FblcExprTag tag;
+  FblcLoc* loc;
+  FblcLocName type;
+  FblcLocName name;
+  const FblcExpr* def;
+  const FblcExpr* body;
+} FblcLetExpr;
+
+// FBLC_COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
+typedef struct {
+  FblcExprTag tag;
+  FblcLoc* loc;
+  const FblcExpr* select;
+  int argc;
+  FblcExpr** argv;
+} FblcCondExpr;
 
 typedef enum { FBLC_KIND_UNION, FBLC_KIND_STRUCT } FblcKind;
 
