@@ -7,6 +7,10 @@
 
 // The following Vars structure describes a mapping from variable names to
 // their types.
+//
+// We always allocate the Vars mapping on the stack. This means it is not safe
+// to return or otherwise capture a Vars* outside of the frame where it is
+// allocated.
 
 typedef struct Vars {
   FblcName name;
@@ -14,7 +18,7 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
-static Vars* AddVar(FblcName name, FblcName type, Vars* next);
+static Vars* AddVar(Vars* vars, FblcName name, FblcName type, Vars* next);
 static FblcName LookupVar(Vars* vars, FblcName name);
 static bool CheckArgs(
     const FblcEnv* env, Vars* vars, int fieldc, FblcField* fieldv,
@@ -34,19 +38,19 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc);
 //   Add a variable to the given scope.
 //
 // Inputs:
+//   vars - Memory to use for the new scope.
 //   name - The name of the variable to add.
 //   type - The type of the variable.
 //   next - The scope to add it to.
 //
 // Results:
-//   A new scope with the added variable.
+//   The 'vars' scope with the added variable.
 //
 // Side effects:
-//   None.
+//   Sets vars to a scope including the given variable and next scope.
 
-static Vars* AddVar(FblcName name, FblcName type, Vars* next)
+static Vars* AddVar(Vars* vars, FblcName name, FblcName type, Vars* next)
 {
-  Vars* vars = GC_MALLOC(sizeof(Vars));
   vars->name = name;
   vars->type = type;
   vars->next = next;
@@ -266,8 +270,9 @@ static FblcName CheckExpr(
         return NULL;
       }
 
-      Vars* nvars = AddVar(expr->ex.let.name.name, type, vars);
-      return CheckExpr(env, nvars, expr->ex.let.body);
+      Vars nvars;
+      AddVar(&nvars, expr->ex.let.name.name, type, vars);
+      return CheckExpr(env, &nvars, expr->ex.let.body);
     }
 
     case FBLC_COND_EXPR: {
@@ -388,13 +393,15 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 
     case FBLC_LINK_ACTN: {
       FblcName type = actn->ac.link.type.name;
-      Vars* ngets = AddVar(actn->ac.link.getname.name, type, gets);
-      Vars* nputs = AddVar(actn->ac.link.putname.name, type, puts);
-      return CheckActn(env, vars, ngets, nputs, actn->ac.link.body);
+      Vars ngets;
+      Vars nputs;
+      AddVar(&ngets, actn->ac.link.getname.name, type, gets);
+      AddVar(&nputs, actn->ac.link.putname.name, type, puts);
+      return CheckActn(env, vars, &ngets, &nputs, actn->ac.link.body);
     }
 
     case FBLC_EXEC_ACTN: {
-      Vars* nvars = vars;
+      Vars nvars[actn->ac.exec.execc];
       for (int i = 0; i < actn->ac.exec.execc; i++) {
         FblcExec* exec = &(actn->ac.exec.execv[i]);
         FblcName type = CheckActn(env, vars, gets, puts, exec->actn);
@@ -407,9 +414,9 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
               exec->actn->loc, exec->var.type.name, type);
           return NULL;
         }
-        nvars = AddVar(exec->var.name.name, exec->var.type.name, nvars);
+        vars = AddVar(nvars+i, exec->var.name.name, exec->var.type.name, vars);
       }
-      return CheckActn(env, nvars, gets, puts, actn->ac.exec.body);
+      return CheckActn(env, vars, gets, puts, actn->ac.exec.body);
     }
 
     case FBLC_COND_ACTN: {
@@ -562,9 +569,11 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
   }
 
   // Check the body.
+  Vars nvars[func->argc];
   Vars* vars = NULL;
   for (int i = 0; i < func->argc; i++) {
-    vars = AddVar(func->argv[i].name.name, func->argv[i].type.name, vars);
+    vars = AddVar(
+        nvars+i, func->argv[i].name.name, func->argv[i].type.name, vars);
   }
   FblcName body_type = CheckExpr(env, vars, func->body);
   if (body_type == NULL) {
@@ -611,9 +620,13 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   }
 
   // Check the body.
+  Vars vars_data[proc->argc + proc->portc];
+  Vars* nvar = vars_data;
+
   Vars* vars = NULL;
   for (int i = 0; i < proc->argc; i++) {
-    vars = AddVar(proc->argv[i].name.name, proc->argv[i].type.name, vars);
+    vars = AddVar(
+        nvar++, proc->argv[i].name.name, proc->argv[i].type.name, vars);
   }
 
   Vars* gets = NULL;
@@ -621,11 +634,13 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   for (int i = 0; i < proc->portc; i++) {
     switch (proc->portv[i].polarity) {
       case FBLC_POLARITY_GET:
-        gets = AddVar(proc->portv[i].name.name, proc->portv[i].type.name, gets);
+        gets = AddVar(
+            nvar++, proc->portv[i].name.name, proc->portv[i].type.name, gets);
         break;
 
       case FBLC_POLARITY_PUT:
-        puts = AddVar(proc->portv[i].name.name, proc->portv[i].type.name, puts);
+        puts = AddVar(
+            nvar++, proc->portv[i].name.name, proc->portv[i].type.name, puts);
         break;
     }
   }
