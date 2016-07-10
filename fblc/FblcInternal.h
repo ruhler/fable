@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define GC_DEBUG
 #include <gc/gc.h>
 
 // FblcProgram

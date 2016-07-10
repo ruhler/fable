@@ -53,6 +53,8 @@ static void PrintUsage(FILE* stream)
 
 int main(int argc, char* argv[])
 {
+  // GC_find_leak = 1;
+
   const char* filename = NULL;
   bool expect_error = false;
   for (int i = 1; i < argc; i++) {
@@ -106,6 +108,7 @@ int main(int argc, char* argv[])
     FblcValue* value = FblcEvaluate(env, func->body);
     FblcPrintValue(stdout, value);
     printf("\n");
+    GC_gcollect();
     return expect_error ? 1 : 0;
   }
 
@@ -124,6 +127,7 @@ int main(int argc, char* argv[])
     FblcValue* value = FblcExecute(env, proc->body);
     FblcPrintValue(stdout, value);
     printf("\n");
+    GC_gcollect();
     return expect_error ? 1 : 0;
   }
 

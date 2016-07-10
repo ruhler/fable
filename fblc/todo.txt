@@ -1,4 +1,6 @@
 * Replace libgc with custom memory management.
+  - By using it as a leak detector until everything is manually tracked.
+  - And implementing a reference-count based gc for FblcValues.
 * Design command line interface to fblc
   - How should the main func/proc be specified?
     Answer: by name
@@ -17,9 +19,6 @@
 * Should FblcExecute take a const FblcActn*?
   Should we use const FblcActn* instead of FblcActn* everywhere there?
 * Test that process port types are valid.
-* Make sure we are consistent about variable sized arguments.
-  I think we need to use foo* instead of foo[] because in some cases we need
-  multiple variable sized bits in the same struct.
 * It would be nice if 'Wrong number of arguments to ...' reported the opening
   '(' as the location of the error.
 * Test what happens when we try to access the wrong field of a union.
