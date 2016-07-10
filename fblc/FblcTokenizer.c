@@ -4,6 +4,11 @@
 
 #include "FblcInternal.h"
 
+#define FBLC_TOK_EOF -1
+#define FBLC_TOK_NAME -2
+#define FBLC_TOK_ERR -3
+#define FBLC_TOK_PENDING -4
+
 // For the most part, tokens are single punctuation characters, e.g. ';', '(',
 // ')'. The three exceptions are the name token, which is a string of name
 // characters, the token to represent the end of the token stream, and a token
@@ -27,7 +32,7 @@ struct FblcTokenStream {
   // the next token has not yet been read from the underlying file.
   // If the 'type' of token is FBLC_TOK_NAME, then 'name' is the value of the
   // name token. Otherwise 'name' is NULL.
-  FblcTokenType type;
+  int type;
   const char* name;
 
   // The underlying file descriptor and a buffer containing data read.
@@ -55,7 +60,7 @@ static void AdvanceChar(FblcTokenStream* toks);
 static bool IsNameChar(int c);
 static void ReadNextIfPending(FblcTokenStream* toks);
 static FblcLoc* TokenLoc(FblcTokenStream* toks);
-static const char* DescribeTokenType(FblcTokenType which);
+static const char* DescribeTokenType(int which);
 
 // CurrChar --
 //
@@ -260,7 +265,7 @@ static FblcLoc* TokenLoc(FblcTokenStream* toks)
 // Side effects:
 //   None.
 
-const char* DescribeTokenType(FblcTokenType which)
+const char* DescribeTokenType(int which)
 {
   if (which == FBLC_TOK_NAME) {
     return "NAME";
@@ -328,32 +333,100 @@ void FblcCloseTokenStream(FblcTokenStream* toks)
   close(toks->fd);
 }
 
-// FblcIsToken --
+// FblcIsEOFToken --
 //
-//   Check if the next token is of the given type.
+//   Check if the end of the token stream has been reached.
 //
 // Inputs:
-//   toks - The token stream to check the next token for.
-//   which - The type of token to check for.
+//   toks - The token stream to check for the end of.
 //
 // Returns:
-//   The value true if the next token has type 'which', false otherwise.
+//   The value true if the end of the token stream has been reached.
 //
 // Side effects:
 //   Reads the next token from the underlying file if necessary.
 
-bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which)
+bool FblcIsEOFToken(FblcTokenStream* toks)
+{
+  ReadNextIfPending(toks);
+  return toks->type == FBLC_TOK_EOF;
+}
+
+// FblcIsToken --
+//
+//   Check if the next token is the given character.
+//
+// Inputs:
+//   toks - The token stream to check the next token for.
+//   which - The character to check for.
+//
+// Returns:
+//   The value true if the next token is the character 'which', false otherwise.
+//
+// Side effects:
+//   Reads the next token from the underlying file if necessary.
+
+bool FblcIsToken(FblcTokenStream* toks, char which)
 {
   ReadNextIfPending(toks);
   return toks->type == which;
+}
+
+// FblcGetToken --
+//
+//   Remove the next token in the token stream, assuming the token is the
+//   given character. The result of this function should always be checked
+//   for false unless FblcIsToken has already been called to verify the next
+//   token has the given type.
+//
+// Inputs:
+//   toks - The token stream to get the next token from.
+//   which - The character that is expected to be the next token.
+//
+// Results:
+//   The value true if the next token is the character 'which', false otherwise.
+//
+// Side effects:
+//   If the next token in the stream is the character 'which', that token is
+//   removed from the front of the token stream. Otherwise an error message is
+//   printed to standard error.
+
+bool FblcGetToken(FblcTokenStream* toks, char which)
+{
+  ReadNextIfPending(toks);
+  if (toks->type == which) {
+    toks->type = FBLC_TOK_PENDING;
+    return true;
+  }
+  FblcUnexpectedToken(toks, DescribeTokenType(which));
+  return false;
+}
+
+// FblcIsNameToken --
+//
+//   Check if the next token is a name token.
+//
+// Inputs:
+//   toks - The token stream to check the next token for.
+//
+// Returns:
+//   The value true if the next token is a name token, false otherwise.
+//
+// Side effects:
+//   Reads the next token from the underlying file if necessary.
+
+bool FblcIsNameToken(FblcTokenStream* toks)
+{
+  ReadNextIfPending(toks);
+  return toks->type == FBLC_TOK_NAME;
 }
 
 // FblcGetNameToken --
 //
 //   Get the value and location of the next token in the stream, which is
 //   assumed to be a name token. The result of this function should always be
-//   checked for false unless FblcIsToken has already been called to verify
-//   the next token is a name token.
+//   checked for false unless FblcIsNameToken has already been called to
+//   verify the next token is a name token.
 //
 // Inputs:
 //   toks - The token stream to retrieve the name token from.
@@ -384,36 +457,6 @@ bool FblcGetNameToken(
   }
   FblcUnexpectedToken(toks, expected);
   return NULL;
-}
-
-// FblcGetToken --
-//
-//   Remove the next token in the token stream, assuming the token has the
-//   given token type. The result of this function should always be checked
-//   for false unless FblcIsToken has already been called to verify the next
-//   token has the given type.
-//
-// Inputs:
-//   toks - The token stream to get the next token from.
-//   which - The type of token that is expected to be next.
-//
-// Results:
-//   The value true if the next token has the type 'which', false otherwise.
-//
-// Side effects:
-//   If the next token in the stream has the type 'which', that token is
-//   removed from the front of the token stream. Otherwise an error message is
-//   printed to standard error.
-
-bool FblcGetToken(FblcTokenStream* toks, int which)
-{
-  ReadNextIfPending(toks);
-  if (toks->type == which) {
-    toks->type = FBLC_TOK_PENDING;
-    return true;
-  }
-  FblcUnexpectedToken(toks, DescribeTokenType(which));
-  return false;
 }
 
 // FblcUnexpectedToken --

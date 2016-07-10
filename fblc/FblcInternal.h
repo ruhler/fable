@@ -292,18 +292,15 @@ typedef struct {
 void FblcPrintValue(FILE* fout, FblcValue* value);
 
 // FblcTokenizer
-#define FBLC_TOK_EOF -1
-#define FBLC_TOK_NAME -2
-#define FBLC_TOK_ERR -3
-#define FBLC_TOK_PENDING -4
-typedef int FblcTokenType;
 typedef struct FblcTokenStream FblcTokenStream;
 FblcTokenStream* FblcOpenTokenStream(const char* filename);
 void FblcCloseTokenStream(FblcTokenStream* toks);
-bool FblcIsToken(FblcTokenStream* toks, FblcTokenType which);
+bool FblcIsEOFToken(FblcTokenStream* toks);
+bool FblcIsToken(FblcTokenStream* toks, char which);
+bool FblcGetToken(FblcTokenStream* toks, char which);
+bool FblcIsNameToken(FblcTokenStream* toks);
 bool FblcGetNameToken(
     FblcTokenStream* toks, const char* expected, FblcLocName* name);
-bool FblcGetToken(FblcTokenStream* toks, FblcTokenType which);
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
 // FblcParser

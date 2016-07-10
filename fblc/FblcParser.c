@@ -115,7 +115,7 @@ static void* VectorFinish(Vector* vector, int* count)
 
 static int ParseFields(FblcTokenStream* toks, FblcField** plist)
 {
-  if (!FblcIsToken(toks, FBLC_TOK_NAME)) {
+  if (!FblcIsNameToken(toks)) {
     *plist = NULL;
     return 0;
   }
@@ -168,7 +168,7 @@ static int ParsePorts(FblcTokenStream* toks, FblcPort** ports)
 {
   Vector portv;
   VectorInit(&portv, sizeof(FblcPort));
-  while (FblcIsToken(toks, FBLC_TOK_NAME)) {
+  while (FblcIsNameToken(toks)) {
     FblcPort* port = VectorAppend(&portv);
 
     // Get the type.
@@ -276,7 +276,7 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
     if (!FblcGetToken(toks, '}')) {
       return NULL;
     }
-  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+  } else if (FblcIsNameToken(toks)) {
     FblcLocName start;
     FblcGetNameToken(toks, "start of expression", &start);
 
@@ -319,7 +319,7 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
         return NULL;
       }
       expr = (FblcExpr*)union_expr;
-    } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
+    } else if (in_stmt && FblcIsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       FblcLetExpr* let_expr = GC_MALLOC(sizeof(FblcLetExpr));
       let_expr->tag = FBLC_LET_EXPR;
@@ -456,7 +456,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
     eval_actn->loc = expr->loc;
     eval_actn->expr = expr;
     actn = (FblcActn*)eval_actn;
-  } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
+  } else if (FblcIsNameToken(toks)) {
     FblcLocName name;
     FblcGetNameToken(toks, "port, process, or type name", &name);
 
@@ -561,7 +561,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       link_actn->putname = putname;
       link_actn->body = body;
       return (FblcActn*)link_actn;
-    } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
+    } else if (in_stmt && FblcIsNameToken(toks)) {
       FblcExecActn* exec_actn = GC_MALLOC(sizeof(FblcExecActn));
       exec_actn->tag = FBLC_EXEC_ACTN;
       exec_actn->loc = name.loc;
@@ -683,7 +683,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
 {
   const char* keywords = "'struct', 'union', 'func', or 'proc'";
   FblcEnv* env = FblcNewEnv();
-  while (!FblcIsToken(toks, FBLC_TOK_EOF)) {
+  while (!FblcIsEOFToken(toks)) {
     // All declarations start with the form: <keyword> <name> (...
     FblcLocName keyword;
     if (!FblcGetNameToken(toks, keywords, &keyword)) {
