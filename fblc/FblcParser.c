@@ -26,9 +26,6 @@ static void* VectorFinish(Vector* vector, int* count);
 
 static FblcType* NewType(
     const FblcLocName* name, FblcKind kind, int fieldc, FblcField* fields);
-static FblcFunc* NewFunc(
-    const FblcLocName* name, const FblcLocName* return_type,
-    int argc, FblcField* args, FblcExpr* body);
 static FblcProc* NewProc(
     const FblcLocName* name, FblcLocName* return_type,
     int portc, FblcPort* ports, int argc, FblcField* args, FblcActn* body);
@@ -131,39 +128,6 @@ static FblcType* NewType(
   type->fieldc = fieldc;
   type->fieldv = fields;
   return type;
-}
-
-// NewFunc --
-//
-//   Create a new function declaration of the form:
-//     <name>(<args> ; <type>) <expr>;
-//
-// Inputs:
-//   name - The name of the function being declared.
-//   return_type - The return type of the function.
-//   argc - The number of args in the function declaration.
-//   args - The array of the argc function arguments.
-//   body - The body of the function.
-//
-// Result:
-//   The new function declaration.
-//
-// Side effects:
-//   None.
-
-static FblcFunc* NewFunc(
-    const FblcLocName* name, const FblcLocName* return_type,
-    int argc, FblcField* args, FblcExpr* body)
-{
-  FblcFunc* func = GC_MALLOC(sizeof(FblcFunc));
-  func->name.name = name->name;
-  func->name.loc = name->loc;
-  func->return_type.name = return_type->name;
-  func->return_type.loc = return_type->loc;
-  func->body = body;
-  func->argc = argc;
-  func->argv = args;
-  return func;
 }
 
 // NewProc --
@@ -831,9 +795,11 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       }
     } else if (is_func) {
       // Function declarations end with: ... <fields>; <type>) <expr>;
-      FblcField* fields;
-      int fieldc = ParseFields(toks, &fields);
-      if (fieldc < 0) {
+      FblcFunc* func = GC_MALLOC(sizeof(FblcFunc));
+      func->name.name = name.name;
+      func->name.loc = name.loc;
+      func->argc = ParseFields(toks, &(func->argv));
+      if (func->argc < 0) {
         return NULL;
       }
 
@@ -841,8 +807,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcLocName return_type;
-      if (!FblcGetNameToken(toks, "type", &return_type)) {
+      if (!FblcGetNameToken(toks, "type", &(func->return_type))) {
         return NULL;
       }
 
@@ -850,11 +815,10 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcExpr* expr = ParseExpr(toks, false);
-      if (expr == NULL) {
+      func->body = ParseExpr(toks, false);
+      if (func->body == NULL) {
         return NULL;
       }
-      FblcFunc* func = NewFunc(&name, &return_type, fieldc, fields, expr);
       if (!FblcAddFunc(env, func)) {
         return NULL;
       }
