@@ -24,10 +24,6 @@ static void VectorInit(Vector* vector, int size);
 static void* VectorAppend(Vector* vector);
 static void* VectorFinish(Vector* vector, int* count);
 
-static FblcProc* NewProc(
-    const FblcLocName* name, FblcLocName* return_type,
-    int portc, FblcPort* ports, int argc, FblcField* args, FblcActn* body);
-
 static int ParseFields(FblcTokenStream* toks, FblcField** plist);
 static int ParsePorts(FblcTokenStream* toks, FblcPort** ports);
 static int ParseArgs(FblcTokenStream* toks, FblcExpr*** plist);
@@ -97,44 +93,6 @@ static void* VectorFinish(Vector* vector, int* count)
 {
   *count = vector->count;
   return GC_REALLOC(vector->data, vector->count * vector->size);
-}
-
-// NewProc --
-//
-//   Create a new process declaration of the form:
-//     <name>(<ports> ; <args> ; <type>) <proc>;
-//
-// Inputs:
-//   name - The name of the process being declared.
-//   return_type - The return type of the process.
-//   portc - The number of ports in the process declaration.
-//   ports - A list of the portc ports of the process declaration in reverse
-//           order.
-//   argc - The number of args in the process declaration.
-//   args - The array of argc process declaration arguments.
-//   body - The body of the process.
-//
-// Result:
-//   The new process declaration.
-//
-// Side effects:
-//   None.
-
-static FblcProc* NewProc(
-    const FblcLocName* name, FblcLocName* return_type,
-    int portc, FblcPort* ports, int argc, FblcField* args, FblcActn* body)
-{
-  FblcProc* proc = GC_MALLOC(sizeof(FblcProc));
-  proc->name.name = name->name;
-  proc->name.loc = name->loc;
-  proc->return_type.name = return_type->name;
-  proc->return_type.loc = return_type->loc;
-  proc->body = body;
-  proc->portc = portc;
-  proc->portv = ports;
-  proc->argc = argc;
-  proc->argv = args;
-  return proc;
 }
 
 // ParseFields -
@@ -794,9 +752,11 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       }
     } else if (is_proc) {
       // Proc declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
-      FblcPort* ports;
-      int portc = ParsePorts(toks, &ports);
-      if (portc < 0) {
+      FblcProc* proc = GC_MALLOC(sizeof(FblcProc));
+      proc->name.name = name.name;
+      proc->name.loc = name.loc;
+      proc->portc = ParsePorts(toks, &(proc->portv));
+      if (proc->portc < 0) {
         return NULL;
       }
 
@@ -804,9 +764,8 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcField* fields;
-      int fieldc = ParseFields(toks, &fields);
-      if (fieldc < 0) {
+      proc->argc = ParseFields(toks, &(proc->argv));
+      if (proc->argc < 0) {
         return NULL;
       }
 
@@ -814,8 +773,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcLocName return_type;
-      if (!FblcGetNameToken(toks, "type", &return_type)) {
+      if (!FblcGetNameToken(toks, "type", &(proc->return_type))) {
         return NULL;
       }
 
@@ -823,12 +781,10 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcActn* body = ParseActn(toks, false);
-      if (body == NULL) {
+      proc->body = ParseActn(toks, false);
+      if (proc->body == NULL) {
         return NULL;
       }
-      FblcProc* proc = NewProc(
-          &name, &return_type, portc, ports, fieldc, fields, body);
       if (!FblcAddProc(env, proc)) {
         return NULL;
       }
