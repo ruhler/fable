@@ -661,8 +661,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
                 // Create the struct value now, then add commands to evaluate
                 // the arguments to fill in the fields with the proper results.
                 int fieldc = type->fieldc;
-                FblcStructValue* value = GC_MALLOC(
-                    sizeof(FblcStructValue) + fieldc * sizeof(FblcValue*));
+                FblcStructValue* value = GC_MALLOC(sizeof(FblcStructValue));
+                value->fieldv = GC_MALLOC(fieldc * sizeof(FblcValue*));
                 value->type = type;
                 *target = (FblcValue*)value;
                 for (int i = 0; i < fieldc; i++) {

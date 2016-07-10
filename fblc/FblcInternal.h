@@ -115,7 +115,7 @@ typedef struct {
   FblcLocName name;
   FblcKind kind;
   int fieldc;
-  FblcField fieldv[];
+  FblcField* fieldv;
 } FblcType;
 
 typedef struct {
@@ -123,7 +123,7 @@ typedef struct {
   FblcLocName return_type;
   FblcExpr* body;
   int argc;
-  FblcField argv[];
+  FblcField* argv;
 } FblcFunc;
 
 typedef enum { FBLC_POLARITY_PUT, FBLC_POLARITY_GET } FblcPolarity;
@@ -276,7 +276,7 @@ typedef struct {
 
 typedef struct {
   FblcType* type;
-  FblcValue* fieldv[];
+  FblcValue** fieldv;
 } FblcStructValue;
 
 // For union values, 'tag' is the index of the active field and 'field'

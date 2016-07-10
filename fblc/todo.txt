@@ -1,4 +1,4 @@
-* Replace FieldList and ArgList with vector in FblcParser.
+* Inline NewType, NewFunc, and NewProc in FblcParser?
 * Replace libgc with custom memory management.
 * Design command line interface to fblc
   - How should the main func/proc be specified?

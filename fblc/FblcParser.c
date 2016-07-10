@@ -24,33 +24,18 @@ static void VectorInit(Vector* vector, int size);
 static void* VectorAppend(Vector* vector);
 static void* VectorFinish(Vector* vector, int* count);
 
-typedef struct FieldList {
-  FblcField field;
-  struct FieldList* next;
-} FieldList;
-
-typedef struct ArgList {
-  FblcExpr* arg;
-  struct ArgList* next;
-} ArgList;
-
-static FieldList* AddField(FieldList* tail);
-static ArgList* AddArg(FblcExpr* expr, ArgList* tail);
-static void FillFields(int fieldc, FieldList* list, FblcField* fieldv);
-static void FillArgs(int argc, ArgList* list, FblcExpr** argv);
-
 static FblcType* NewType(
-    const FblcLocName* name, FblcKind kind, int fieldc, FieldList* fields);
+    const FblcLocName* name, FblcKind kind, int fieldc, FblcField* fields);
 static FblcFunc* NewFunc(
     const FblcLocName* name, const FblcLocName* return_type,
-    int argc, FieldList* args, FblcExpr* body);
+    int argc, FblcField* args, FblcExpr* body);
 static FblcProc* NewProc(
     const FblcLocName* name, FblcLocName* return_type,
-    int portc, FblcPort* ports, int argc, FieldList* args, FblcActn* body);
+    int portc, FblcPort* ports, int argc, FblcField* args, FblcActn* body);
 
-static int ParseFields(FblcTokenStream* toks, FieldList** plist);
+static int ParseFields(FblcTokenStream* toks, FblcField** plist);
 static int ParsePorts(FblcTokenStream* toks, FblcPort** ports);
-static int ParseArgs(FblcTokenStream* toks, ArgList** plist);
+static int ParseArgs(FblcTokenStream* toks, FblcExpr*** plist);
 static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt);
 static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt);
 
@@ -119,104 +104,6 @@ static void* VectorFinish(Vector* vector, int* count)
   return GC_REALLOC(vector->data, vector->count * vector->size);
 }
 
-// AddField --
-//
-//   Add a field entry to the given list of fields. The contents of the field
-//   entry are left uninitialized.
-//
-// Inputs:
-//   tail - The list to add the field entry to.
-//
-// Result:
-//   A new list starting with the added field entry and followed by the given
-//   list of fields.
-//
-// Side effects:
-//   None.
-
-static FieldList* AddField(FieldList* tail)
-{
-    FieldList* list = GC_MALLOC(sizeof(FieldList));
-    list->next = tail;
-    return list;
-}
-
-// AddArg --
-//
-//   Add an argument to the given list of arguments.
-//
-// Inputs:
-//   arg - The argument to add.
-//   tail - An initial list of arguments.
-//
-// Result:
-//   A new list starting with the added argument and followed by the tail list
-//   of arguments.
-//
-// Side effects:
-//   None.
-
-static ArgList* AddArg(FblcExpr* arg, ArgList* tail)
-{
-    ArgList* list = GC_MALLOC(sizeof(ArgList));
-    list->arg = arg;
-    list->next = tail;
-    return list;
-}
-
-// FillFields --
-//
-//   Fill an array of fields in from a reversed list of fields.
-//
-// Inputs:
-//   fieldc - The number of fields to fill in.
-//   list - A list of fieldc fields in reverse order.
-//   fieldv - An array of fieldc fields to fill in.
-//
-// Return:
-//   None.
-//
-// Side effects:
-//   The 'fieldv' array is overwritten to contain the fields from 'list' in
-//   reverse order.
-
-static void FillFields(int fieldc, FieldList* list, FblcField* fieldv)
-{
-  for (int i = 0; i < fieldc; i++) {
-    assert(list != NULL && "Not enough fields in list.");
-    fieldv[fieldc-1-i].name = list->field.name;
-    fieldv[fieldc-1-i].type = list->field.type;
-    list = list->next;
-  }
-  assert(list == NULL && "Not all fields from list were used.");
-}
-
-// FillArgs --
-//
-//   Fill an array of args in from a reversed list of args.
-//
-// Inputs:
-//   argc - The number of args to fill in.
-//   list - A list of argc args in reverse order.
-//   argv - An array of argc args to fill in.
-//
-// Return:
-//   None.
-//
-// Side effects:
-//   The 'argv' array is overwritten to contain the args from 'list' in
-//   reverse order.
-
-static void FillArgs(int argc, ArgList* list, FblcExpr** argv)
-{
-  for (int i = 0; i < argc; i++) {
-    assert(list != NULL && "Not enough args in list.");
-    argv[argc-1-i] = list->arg;
-    list = list->next;
-  }
-  assert(list == NULL && "Not all args from list were used");
-}
-
 // NewType --
 //
 //   Create a new type declaration of the form: <kind> <name>(<fields>);
@@ -235,14 +122,14 @@ static void FillArgs(int argc, ArgList* list, FblcExpr** argv)
 //   None.
 
 static FblcType* NewType(
-    const FblcLocName* name, FblcKind kind, int fieldc, FieldList* fields)
+    const FblcLocName* name, FblcKind kind, int fieldc, FblcField* fields)
 {
-  FblcType* type = GC_MALLOC(sizeof(FblcType) + fieldc * sizeof(FblcField));
+  FblcType* type = GC_MALLOC(sizeof(FblcType));
   type->name.name = name->name;
   type->name.loc = name->loc;
   type->kind = kind;
   type->fieldc = fieldc;
-  FillFields(fieldc, fields, type->fieldv);
+  type->fieldv = fields;
   return type;
 }
 
@@ -255,8 +142,7 @@ static FblcType* NewType(
 //   name - The name of the function being declared.
 //   return_type - The return type of the function.
 //   argc - The number of args in the function declaration.
-//   args - A list of the argc args of the function declaration in reverse
-//          order.
+//   args - The array of the argc function arguments.
 //   body - The body of the function.
 //
 // Result:
@@ -267,16 +153,16 @@ static FblcType* NewType(
 
 static FblcFunc* NewFunc(
     const FblcLocName* name, const FblcLocName* return_type,
-    int argc, FieldList* args, FblcExpr* body)
+    int argc, FblcField* args, FblcExpr* body)
 {
-  FblcFunc* func = GC_MALLOC(sizeof(FblcFunc) + argc * sizeof(FblcField));
+  FblcFunc* func = GC_MALLOC(sizeof(FblcFunc));
   func->name.name = name->name;
   func->name.loc = name->loc;
   func->return_type.name = return_type->name;
   func->return_type.loc = return_type->loc;
   func->body = body;
   func->argc = argc;
-  FillFields(argc, args, func->argv);
+  func->argv = args;
   return func;
 }
 
@@ -292,8 +178,7 @@ static FblcFunc* NewFunc(
 //   ports - A list of the portc ports of the process declaration in reverse
 //           order.
 //   argc - The number of args in the process declaration.
-//   args - A list of the argc args of the process declaration in reverse
-//          order.
+//   args - The array of argc process declaration arguments.
 //   body - The body of the process.
 //
 // Result:
@@ -304,7 +189,7 @@ static FblcFunc* NewFunc(
 
 static FblcProc* NewProc(
     const FblcLocName* name, FblcLocName* return_type,
-    int portc, FblcPort* ports, int argc, FieldList* args, FblcActn* body)
+    int portc, FblcPort* ports, int argc, FblcField* args, FblcActn* body)
 {
   FblcProc* proc = GC_MALLOC(sizeof(FblcProc));
   proc->name.name = name->name;
@@ -315,8 +200,7 @@ static FblcProc* NewProc(
   proc->portc = portc;
   proc->portv = ports;
   proc->argc = argc;
-  proc->argv = GC_MALLOC(argc * sizeof(FblcField));
-  FillFields(argc, args, proc->argv);
+  proc->argv = args;
   return proc;
 }
 
@@ -338,16 +222,18 @@ static FblcProc* NewProc(
 //   The token stream is advanced past the tokens describing the fields.
 //   In case of an error, an error message is printed to standard error.
 
-static int ParseFields(FblcTokenStream* toks, FieldList** plist)
+static int ParseFields(FblcTokenStream* toks, FblcField** plist)
 {
   if (!FblcIsToken(toks, FBLC_TOK_NAME)) {
     *plist = NULL;
     return 0;
   }
 
-  FieldList* list = AddField(NULL);
-  FblcGetNameToken(toks, "type name", &(list->field.type));
-  if (!FblcGetNameToken(toks, "field name", &(list->field.name))) {
+  Vector fields;
+  VectorInit(&fields, sizeof(FblcField));
+  FblcField* field = VectorAppend(&fields);
+  FblcGetNameToken(toks, "type name", &(field->type));
+  if (!FblcGetNameToken(toks, "field name", &(field->name))) {
     return -1;
   }
 
@@ -355,16 +241,18 @@ static int ParseFields(FblcTokenStream* toks, FieldList** plist)
   for (parsed = 1; FblcIsToken(toks, ','); parsed++) {
     FblcGetToken(toks, ',');
 
-    list = AddField(list);
-    if (!FblcGetNameToken(toks, "type name", &(list->field.type))) {
+    field = VectorAppend(&fields);
+    if (!FblcGetNameToken(toks, "type name", &(field->type))) {
       return -1;
     }
-    if (!FblcGetNameToken(toks, "field name", &(list->field.name))) {
+    if (!FblcGetNameToken(toks, "field name", &(field->name))) {
       return -1;
     }
   }
-  *plist = list;
-  return parsed;
+
+  int fieldc;
+  *plist = VectorFinish(&fields, &fieldc);
+  return fieldc;
 }
 
 // ParsePorts -
@@ -435,35 +323,36 @@ static int ParsePorts(FblcTokenStream* toks, FblcPort** ports)
 //
 // Inputs:
 //   toks - The token stream to parse the arguments from.
-//   plist - A pointer to a list of arguments to output the parsed args to.
+//   plist - An out parameter that will be set to the list of parsed args.
 //
 // Returns:
 //   The number of arguments parsed or -1 on error.
 //
 // Side effects:
-//   *plist is ste to point to a list of the arguments parsed in reverse
-//   order. The token stream is advanced past the final ')' token in the
+//   *plist is set to point to the parsed arguments.
+//   The token stream is advanced past the final ')' token in the
 //   argument list. In case of an error, an error message is printed to
 //   standard error.
 
-static int ParseArgs(FblcTokenStream* toks, ArgList** plist)
+static int ParseArgs(FblcTokenStream* toks, FblcExpr*** plist)
 {
-  int parsed;
-  ArgList* list = NULL;
-  for (parsed = 0; !FblcIsToken(toks, ')'); parsed++) {
+  Vector args;
+  VectorInit(&args, sizeof(FblcExpr*));
+  while (!FblcIsToken(toks, ')')) {
     FblcExpr* arg = ParseExpr(toks, false);
     if (arg == NULL) {
       return -1;
     }
-    list = AddArg(arg, list);
+    *((FblcExpr**)VectorAppend(&args)) = arg;
 
     if (FblcIsToken(toks, ',')) {
       FblcGetToken(toks, ',');
     }
   }
   FblcGetToken(toks, ')');
-  *plist = list;
-  return parsed;
+  int argc;
+  *plist = VectorFinish(&args, &argc);
+  return argc;
 }
 
 // ParseExpr --
@@ -504,7 +393,7 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
       // This is an application expression of the form: start(<args>)
       FblcGetToken(toks, '(');
 
-      ArgList* args = NULL;
+      FblcExpr** args = NULL;
       int argc = ParseArgs(toks, &args);
       if (argc < 0) {
         return NULL;
@@ -515,8 +404,7 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
       app_expr->func.name = start.name;
       app_expr->func.loc = start.loc;
       app_expr->argc = argc;
-      app_expr->argv = GC_MALLOC(argc * sizeof(FblcExpr*));
-      FillArgs(argc, args, app_expr->argv);
+      app_expr->argv = args;
       expr = (FblcExpr*)app_expr;
     } else if (FblcIsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)
@@ -589,7 +477,7 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
       return NULL;
     }
     
-    ArgList* args = NULL;
+    FblcExpr** args = NULL;
     int argc = ParseArgs(toks, &args);
     if (argc < 0) {
       return NULL;
@@ -599,8 +487,7 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
     cond_expr->loc = condition->loc;
     cond_expr->select = condition;
     cond_expr->argc = argc;
-    cond_expr->argv = GC_MALLOC(argc * sizeof(FblcExpr*));
-    FillArgs(argc, args, cond_expr->argv);
+    cond_expr->argv = args;
     expr = (FblcExpr*)cond_expr;
   } else {
     FblcUnexpectedToken(toks, "an expression");
@@ -741,15 +628,13 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
         return NULL;
       }
 
-      ArgList* args = NULL;
+      FblcExpr** args = NULL;
       int exprc = ParseArgs(toks, &args);
       if (exprc < 0) {
         return NULL;
       }
-      FblcExpr** exprs = GC_MALLOC(sizeof(FblcExpr*) * exprc);
       call_actn->exprc = exprc;
-      FillArgs(exprc, args, exprs);
-      call_actn->exprs = exprs;
+      call_actn->exprs = args;
       actn = (FblcActn*)call_actn;
     } else if (in_stmt && FblcIsToken(toks, '<')) {
       FblcGetToken(toks, '<');
@@ -930,7 +815,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
 
     if (is_struct || is_union) {
       // Struct and union declarations end with: ... <fields>);
-      FieldList* fields;
+      FblcField* fields;
       int fieldc = ParseFields(toks, &fields);
       if (fieldc < 0) {
         return NULL;
@@ -946,7 +831,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
       }
     } else if (is_func) {
       // Function declarations end with: ... <fields>; <type>) <expr>;
-      FieldList* fields;
+      FblcField* fields;
       int fieldc = ParseFields(toks, &fields);
       if (fieldc < 0) {
         return NULL;
@@ -985,7 +870,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FieldList* fields;
+      FblcField* fields;
       int fieldc = ParseFields(toks, &fields);
       if (fieldc < 0) {
         return NULL;
