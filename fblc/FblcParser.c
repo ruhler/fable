@@ -24,8 +24,6 @@ static void VectorInit(Vector* vector, int size);
 static void* VectorAppend(Vector* vector);
 static void* VectorFinish(Vector* vector, int* count);
 
-static FblcType* NewType(
-    const FblcLocName* name, FblcKind kind, int fieldc, FblcField* fields);
 static FblcProc* NewProc(
     const FblcLocName* name, FblcLocName* return_type,
     int portc, FblcPort* ports, int argc, FblcField* args, FblcActn* body);
@@ -99,35 +97,6 @@ static void* VectorFinish(Vector* vector, int* count)
 {
   *count = vector->count;
   return GC_REALLOC(vector->data, vector->count * vector->size);
-}
-
-// NewType --
-//
-//   Create a new type declaration of the form: <kind> <name>(<fields>);
-//
-// Inputs:
-//   name - The name of the type declaration.
-//   kind - The kind of the type declaration.
-//   fieldc - The number of fields in the type declaration.
-//   fields - A list of the fieldc fields of the type declaration in
-//            reverse order.
-//
-// Result:
-//   The new type declaration.
-//
-// Side effects:
-//   None.
-
-static FblcType* NewType(
-    const FblcLocName* name, FblcKind kind, int fieldc, FblcField* fields)
-{
-  FblcType* type = GC_MALLOC(sizeof(FblcType));
-  type->name.name = name->name;
-  type->name.loc = name->loc;
-  type->kind = kind;
-  type->fieldc = fieldc;
-  type->fieldv = fields;
-  return type;
 }
 
 // NewProc --
@@ -779,17 +748,18 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
 
     if (is_struct || is_union) {
       // Struct and union declarations end with: ... <fields>);
-      FblcField* fields;
-      int fieldc = ParseFields(toks, &fields);
-      if (fieldc < 0) {
+      FblcType* type = GC_MALLOC(sizeof(FblcType));
+      type->name.name = name.name;
+      type->name.loc = name.loc;
+      type->kind = is_struct ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
+      type->fieldc = ParseFields(toks, &(type->fieldv));
+      if (type->fieldc < 0) {
         return NULL;
       }
 
       if (!FblcGetToken(toks, ')')) {
         return NULL;
       }
-      FblcKind kind =  is_struct ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
-      FblcType* type = NewType(&name, kind, fieldc, fields);
       if (!FblcAddType(env, type)) {
         return NULL;
       }
