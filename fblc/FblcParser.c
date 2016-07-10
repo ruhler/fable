@@ -648,7 +648,7 @@ static FblcExpr* ParseExpr(FblcTokenStream* toks, bool in_stmt)
 
 static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
 {
-  FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
+  FblcActn* actn = NULL;
   if (FblcIsToken(toks, '{')) {
     FblcGetToken(toks, '{');
     actn = ParseActn(toks, true);
@@ -672,9 +672,11 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       return NULL;
     }
 
-    actn->tag = FBLC_EVAL_ACTN;
-    actn->loc = expr->loc;
-    actn->ac.eval.expr = expr;
+    FblcEvalActn* eval_actn = GC_MALLOC(sizeof(FblcEvalActn));
+    eval_actn->tag = FBLC_EVAL_ACTN;
+    eval_actn->loc = expr->loc;
+    eval_actn->expr = expr;
+    actn = (FblcActn*)eval_actn;
   } else if (FblcIsToken(toks, FBLC_TOK_NAME)) {
     FblcLocName name;
     FblcGetNameToken(toks, "port, process, or type name", &name);
@@ -687,10 +689,12 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
 
       if (FblcIsToken(toks, ')')) {
         FblcGetToken(toks, ')');
-        actn->tag = FBLC_GET_ACTN;
-        actn->loc = name.loc;
-        actn->ac.get.port.loc = name.loc;
-        actn->ac.get.port.name = name.name;
+        FblcGetActn* get_actn = GC_MALLOC(sizeof(FblcGetActn));
+        get_actn->tag = FBLC_GET_ACTN;
+        get_actn->loc = name.loc;
+        get_actn->port.loc = name.loc;
+        get_actn->port.name = name.name;
+        actn = (FblcActn*)get_actn;
       } else {
         FblcExpr* expr = ParseExpr(toks, false);
         if (expr == NULL) {
@@ -700,18 +704,21 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
           return NULL;
         }
 
-        actn->tag = FBLC_PUT_ACTN;
-        actn->loc = name.loc;
-        actn->ac.put.port.loc = name.loc;
-        actn->ac.put.port.name = name.name;
-        actn->ac.put.expr = expr;
+        FblcPutActn* put_actn = GC_MALLOC(sizeof(FblcPutActn));
+        put_actn->tag = FBLC_PUT_ACTN;
+        put_actn->loc = name.loc;
+        put_actn->port.loc = name.loc;
+        put_actn->port.name = name.name;
+        put_actn->expr = expr;
+        actn = (FblcActn*)put_actn;
       }
     } else if (FblcIsToken(toks, '(')) {
       FblcGetToken(toks, '(');
-      actn->tag = FBLC_CALL_ACTN;
-      actn->loc = name.loc;
-      actn->ac.call.proc.loc = name.loc;
-      actn->ac.call.proc.name = name.name;
+      FblcCallActn* call_actn = GC_MALLOC(sizeof(FblcCallActn));
+      call_actn->tag = FBLC_CALL_ACTN;
+      call_actn->loc = name.loc;
+      call_actn->proc.loc = name.loc;
+      call_actn->proc.name = name.name;
 
       Vector ports;
       VectorInit(&ports, sizeof(FblcLocName));
@@ -727,7 +734,7 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
           }
         }
       }
-      actn->ac.call.ports = VectorFinish(&ports, &(actn->ac.call.portc));
+      call_actn->ports = VectorFinish(&ports, &(call_actn->portc));
 
       if (!FblcGetToken(toks, ';')) {
         return NULL;
@@ -739,9 +746,10 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
         return NULL;
       }
       FblcExpr** exprs = GC_MALLOC(sizeof(FblcExpr*) * exprc);
-      actn->ac.call.exprc = exprc;
+      call_actn->exprc = exprc;
       FillArgs(exprc, args, exprs);
-      actn->ac.call.exprs = exprs;
+      call_actn->exprs = exprs;
+      actn = (FblcActn*)call_actn;
     } else if (in_stmt && FblcIsToken(toks, '<')) {
       FblcGetToken(toks, '<');
       if (!FblcGetToken(toks, '~')) {
@@ -768,16 +776,18 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
       if (body == NULL) {
         return NULL;
       }
-      actn->tag = FBLC_LINK_ACTN;
-      actn->loc = name.loc;
-      actn->ac.link.type = name;
-      actn->ac.link.getname = getname;
-      actn->ac.link.putname = putname;
-      actn->ac.link.body = body;
-      return actn;
+      FblcLinkActn* link_actn = GC_MALLOC(sizeof(FblcLinkActn));
+      link_actn->tag = FBLC_LINK_ACTN;
+      link_actn->loc = name.loc;
+      link_actn->type = name;
+      link_actn->getname = getname;
+      link_actn->putname = putname;
+      link_actn->body = body;
+      return (FblcActn*)link_actn;
     } else if (in_stmt && FblcIsToken(toks, FBLC_TOK_NAME)) {
-      actn->tag = FBLC_EXEC_ACTN;
-      actn->loc = name.loc;
+      FblcExecActn* exec_actn = GC_MALLOC(sizeof(FblcExecActn));
+      exec_actn->tag = FBLC_EXEC_ACTN;
+      exec_actn->loc = name.loc;
 
       Vector execs;
       VectorInit(&execs, sizeof(FblcExec));
@@ -811,16 +821,16 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
           return NULL;
         }
       } while (FblcIsToken(toks, ','));
-      actn->ac.exec.execv = VectorFinish(&execs, &(actn->ac.exec.execc));
+      exec_actn->execv = VectorFinish(&execs, &(exec_actn->execc));
 
       if (!FblcGetToken(toks, ';')) {
         return NULL;
       }
-      actn->ac.exec.body = ParseActn(toks, true);
-      if (actn->ac.exec.body == NULL) {
+      exec_actn->body = ParseActn(toks, true);
+      if (exec_actn->body == NULL) {
         return NULL;
       }
-      return actn;
+      return (FblcActn*)exec_actn;
     } else {
       FblcUnexpectedToken(toks, "The rest of a process starting with a name.");
       return NULL;
@@ -859,10 +869,12 @@ static FblcActn* ParseActn(FblcTokenStream* toks, bool in_stmt)
     if (!FblcGetToken(toks, ')')) {
       return NULL;
     }
-    actn->tag = FBLC_COND_ACTN;
-    actn->loc = condition->loc;
-    actn->ac.cond.select = condition;
-    actn->ac.cond.args = VectorFinish(&args, &(actn->ac.cond.argc));
+    FblcCondActn* cond_actn = GC_MALLOC(sizeof(FblcCondActn));
+    cond_actn->tag = FBLC_COND_ACTN;
+    cond_actn->loc = condition->loc;
+    cond_actn->select = condition;
+    cond_actn->args = VectorFinish(&args, &(cond_actn->argc));
+    actn = (FblcActn*)cond_actn;
   } else {
     FblcUnexpectedToken(toks, "a process action");
     return NULL;

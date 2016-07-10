@@ -352,34 +352,37 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 {
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
-      return CheckExpr(env, vars, actn->ac.eval.expr);
+      FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
+      return CheckExpr(env, vars, eval_actn->expr);
     }
 
     case FBLC_GET_ACTN: {
-      FblcName type = LookupVar(gets, actn->ac.get.port.name);
+      FblcGetActn* get_actn = (FblcGetActn*)actn;
+      FblcName type = LookupVar(gets, get_actn->port.name);
       if (type == NULL) {
-        FblcReportError("Get port '%s' not in scope.\n", actn->loc,
-            actn->ac.get.port.name);
+        FblcReportError("Get port '%s' not in scope.\n", get_actn->loc,
+            get_actn->port.name);
         return NULL;
       }
       return type;
     }
 
     case FBLC_PUT_ACTN: {
-      FblcName port_type = LookupVar(puts, actn->ac.put.port.name);
+      FblcPutActn* put_actn = (FblcPutActn*)actn;
+      FblcName port_type = LookupVar(puts, put_actn->port.name);
       if (port_type == NULL) {
-        FblcReportError("Put port '%s' not in scope.\n", actn->loc,
-            actn->ac.put.port.name);
+        FblcReportError("Put port '%s' not in scope.\n", put_actn->loc,
+            put_actn->port.name);
         return NULL;
       }
 
-      FblcName arg_type = CheckExpr(env, vars, actn->ac.put.expr);
+      FblcName arg_type = CheckExpr(env, vars, put_actn->expr);
       if (arg_type == NULL) {
         return NULL;
       }
       if (!FblcNamesEqual(port_type, arg_type)) {
         FblcReportError("Expected type %s, but found %s.\n",
-            actn->ac.put.expr->loc, port_type, arg_type);
+            put_actn->expr->loc, port_type, arg_type);
         return NULL;
       }
       return arg_type;
@@ -387,28 +390,31 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 
     case FBLC_CALL_ACTN: {
       // TODO: Check arguments.
-      FblcProc* proc = FblcLookupProc(env, actn->ac.call.proc.name);
+      FblcCallActn* call_actn = (FblcCallActn*)actn;
+      FblcProc* proc = FblcLookupProc(env, call_actn->proc.name);
       if (proc == NULL) {
         FblcReportError("'%s' is not a proc.\n",
-            actn->loc, actn->ac.call.proc.name);
+            call_actn->loc, call_actn->proc.name);
         return NULL;
       }
       return proc->return_type->name;
     }
 
     case FBLC_LINK_ACTN: {
-      FblcName type = actn->ac.link.type.name;
+      FblcLinkActn* link_actn = (FblcLinkActn*)actn;
+      FblcName type = link_actn->type.name;
       Vars ngets;
       Vars nputs;
-      AddVar(&ngets, actn->ac.link.getname.name, type, gets);
-      AddVar(&nputs, actn->ac.link.putname.name, type, puts);
-      return CheckActn(env, vars, &ngets, &nputs, actn->ac.link.body);
+      AddVar(&ngets, link_actn->getname.name, type, gets);
+      AddVar(&nputs, link_actn->putname.name, type, puts);
+      return CheckActn(env, vars, &ngets, &nputs, link_actn->body);
     }
 
     case FBLC_EXEC_ACTN: {
-      Vars nvars[actn->ac.exec.execc];
-      for (int i = 0; i < actn->ac.exec.execc; i++) {
-        FblcExec* exec = &(actn->ac.exec.execv[i]);
+      FblcExecActn* exec_actn = (FblcExecActn*)actn;
+      Vars nvars[exec_actn->execc];
+      for (int i = 0; i < exec_actn->execc; i++) {
+        FblcExec* exec = &(exec_actn->execv[i]);
         FblcName type = CheckActn(env, vars, gets, puts, exec->actn);
         if (type == NULL) {
           return NULL;
@@ -421,11 +427,12 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
         }
         vars = AddVar(nvars+i, exec->var.name.name, exec->var.type.name, vars);
       }
-      return CheckActn(env, vars, gets, puts, actn->ac.exec.body);
+      return CheckActn(env, vars, gets, puts, exec_actn->body);
     }
 
     case FBLC_COND_ACTN: {
-      FblcName typename = CheckExpr(env, vars, actn->ac.cond.select);
+      FblcCondActn* cond_actn = (FblcCondActn*)actn;
+      FblcName typename = CheckExpr(env, vars, cond_actn->select);
       if (typename == NULL) {
         return NULL;
       }
@@ -435,22 +442,22 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 
       if (type->kind != FBLC_KIND_UNION) {
         FblcReportError("The condition has type %s, "
-            "which is not a union type.\n", actn->loc, typename);
+            "which is not a union type.\n", cond_actn->loc, typename);
         return NULL;
       }
 
-      if (type->fieldc != actn->ac.cond.argc) {
+      if (type->fieldc != cond_actn->argc) {
         FblcReportError("Wrong number of arguments to condition. Expected %d, "
-            "but found %d.\n", actn->loc, type->fieldc, actn->ac.cond.argc);
+            "but found %d.\n", cond_actn->loc, type->fieldc, cond_actn->argc);
         return NULL;
       }
 
       // TODO: Verify that no two branches of the condition refer to the same
       // port.
       FblcName result_type = NULL;
-      for (int i = 0; i < actn->ac.cond.argc; i++) {
+      for (int i = 0; i < cond_actn->argc; i++) {
         FblcName arg_type = CheckActn(
-            env, vars, gets, puts, actn->ac.cond.args[i]);
+            env, vars, gets, puts, cond_actn->args[i]);
         if (arg_type == NULL) {
           return NULL;
         }
@@ -458,7 +465,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
         if (result_type != NULL && !FblcNamesEqual(result_type, arg_type)) {
           FblcReportError("Expected process of type %s, "
               "but found process of type %s.\n",
-              actn->ac.cond.args[i]->loc, result_type, arg_type);
+              cond_actn->args[i]->loc, result_type, arg_type);
           return NULL;
         }
         result_type = arg_type;

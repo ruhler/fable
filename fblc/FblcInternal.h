@@ -43,7 +43,9 @@ typedef enum {
   FBLC_COND_EXPR,
 } FblcExprTag;
 
-// Base structure for all Fblc expressions.
+// FblcExpr is the base structure for all Fblc expressions. Each
+// specialization of FblcExpr has the same initial layout with tag and
+// location.
 
 typedef struct {
   FblcExprTag tag;
@@ -142,64 +144,81 @@ typedef enum {
   FBLC_COND_ACTN,
 } FblcActnTag;
 
-typedef struct FblcExec {
-  FblcField var;
-  struct FblcActn* actn;
-} FblcExec;
+// FblcActn is the base structure for all Fblc actions. Each specialization of
+// FblcActn will have the same initial layout with tag and location.
 
-typedef struct FblcActn {
+typedef struct {
   FblcActnTag tag;
   FblcLoc* loc;
-  union {
-    // For processes of the form: $(<expr>)
-    struct {
-      const FblcExpr* expr;
-    } eval;
-
-    // For processes of the form: <pname>~()
-    struct {
-      FblcLocName port;
-    } get;
-
-    // For processes of the form: <pname>~(<expr>)
-    struct {
-      FblcLocName port;
-      FblcExpr* expr;
-    } put;
-
-    // For processes of the form: <tname>(<port>, ... ; <expr>, ...)
-    struct {
-      FblcLocName proc;
-      int portc;
-      FblcLocName* ports;   // Array of portc ports
-      int exprc;
-      FblcExpr** exprs;      // Array of exprc exprs
-    } call;
-
-    // For processes of the form: <tname> '<~>' <pname> ',' <pname> ';' <actn>
-    struct {
-      FblcLocName type;
-      FblcLocName getname;
-      FblcLocName putname;
-      struct FblcActn* body;
-    } link;
-
-    // For processes of the form:
-    //    <tname> <vname> = <actn>,  ...  ; <body>
-    struct {
-      int execc;
-      FblcExec* execv;          // Array of execc execs.
-      struct FblcActn* body;
-    } exec;
-
-    // For processes of the form: <expr>?(<proc>, ...)
-    struct {
-      FblcExpr* select;
-      int argc;
-      struct FblcActn** args;    //  Array of argc args.
-    } cond;
-  } ac;
 } FblcActn;
+
+// FBLC_EVAL_ACTN: Processes of the form: $(<expr>)
+typedef struct {
+  FblcActnTag tag;
+  FblcLoc* loc;
+  const FblcExpr* expr;
+} FblcEvalActn;
+
+// FBLC_GET_ACTN: Processes of the form: <pname>~()
+typedef struct {
+  FblcActnTag tag;
+  FblcLoc* loc;
+  FblcLocName port;
+} FblcGetActn;
+
+// FBLC_PUT_ACTN: Processes of the form: <pname>~(<expr>)
+typedef struct {
+  FblcActnTag tag;
+  FblcLoc* loc;
+  FblcLocName port;
+  FblcExpr* expr;
+} FblcPutActn;
+
+// FBLC_CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
+typedef struct {
+  FblcActnTag tag;
+  FblcLoc* loc;
+  FblcLocName proc;
+  int portc;
+  FblcLocName* ports;   // Array of portc ports
+  int exprc;
+  FblcExpr** exprs;      // Array of exprc exprs
+} FblcCallActn;
+
+// FBLC_LINK_ACTN: Processes of the form:
+//    <tname> '<~>' <pname> ',' <pname> ';' <actn>
+typedef struct {
+  FblcActnTag tag;
+  FblcLoc* loc;
+  FblcLocName type;
+  FblcLocName getname;
+  FblcLocName putname;
+  FblcActn* body;
+} FblcLinkActn;
+
+typedef struct {
+  FblcField var;
+  FblcActn* actn;
+} FblcExec;
+
+// FBLC_EXEC_ACTN: Processes of the form:
+//    <tname> <vname> = <actn>,  ...  ; <body>
+typedef struct {
+  FblcActnTag tag;
+  FblcLoc* loc;
+  int execc;
+  FblcExec* execv;          // Array of execc execs.
+  FblcActn* body;
+} FblcExecActn;
+
+// FBLC_COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
+typedef struct {
+  FblcActnTag tag;
+  FblcLoc* loc;
+  FblcExpr* select;
+  int argc;
+  FblcActn** args;    //  Array of argc args.
+} FblcCondActn;
 
 typedef struct {
   FblcLocName name;

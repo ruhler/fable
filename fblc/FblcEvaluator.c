@@ -770,12 +770,14 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         FblcValue** target = cmd->target;
         switch (actn->tag) {
           case FBLC_EVAL_ACTN: {
-            cmds = MkExprCmd(actn->ac.eval.expr, target, cmds);
+            FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
+            cmds = MkExprCmd(eval_actn->expr, target, cmds);
             break;
           }
 
           case FBLC_GET_ACTN: {
-            Link* link = LookupPort(ports, actn->ac.get.port.name);
+            FblcGetActn* get_actn = (FblcGetActn*)actn;
+            Link* link = LookupPort(ports, get_actn->port.name);
             assert(link != NULL && "Get port not in scope");
 
             if (link->head == NULL) {
@@ -798,18 +800,20 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
           case FBLC_PUT_ACTN: {
             // expr -> put -> next
-            Link* link = LookupPort(ports, actn->ac.put.port.name);
+            FblcPutActn* put_actn = (FblcPutActn*)actn;
+            Link* link = LookupPort(ports, put_actn->port.name);
             assert(link != NULL && "Put port not in scope");
             PutCmd* pcmd = (PutCmd*)MkPutCmd(target, link, cmds);
-            cmds = MkExprCmd(actn->ac.put.expr, &(pcmd->value), (Cmd*)pcmd);
+            cmds = MkExprCmd(put_actn->expr, &(pcmd->value), (Cmd*)pcmd);
             break;
           }
 
           case FBLC_CALL_ACTN: {
-            FblcProc* proc = FblcLookupProc(env, actn->ac.call.proc.name);
+            FblcCallActn* call_actn = (FblcCallActn*)actn;
+            FblcProc* proc = FblcLookupProc(env, call_actn->proc.name);
             assert(proc != NULL && "No such proc found");
-            assert(proc->portc == actn->ac.call.portc);
-            assert(proc->argc == actn->ac.call.exprc);
+            assert(proc->portc == call_actn->portc);
+            assert(proc->argc == call_actn->exprc);
 
             // Add to the top of the command list:
             // arg -> ... -> arg -> scope -> body -> (scope) -> ...
@@ -827,7 +831,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
             Ports* nports = NULL;
             for (int i = 0; i < proc->portc; i++) {
-              Link* link = LookupPort(ports, actn->ac.call.ports[i].name);
+              Link* link = LookupPort(ports, call_actn->ports[i].name);
               assert(link != NULL && "port not found in scope");
               nports = AddPort(nports, proc->portv[i].name.name, link);
             }
@@ -838,21 +842,22 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             for (int i = 0; i < proc->argc; i++) {
               FblcName var_name = proc->argv[i].name.name;
               nvars = AddVar(nvars, var_name);
-              cmds = MkExprCmd(actn->ac.call.exprs[i],
-                  LookupRef(nvars, var_name), cmds);
+              cmds = MkExprCmd(
+                  call_actn->exprs[i], LookupRef(nvars, var_name), cmds);
             }
             scmd->vars = nvars;
             break;
           }
 
           case FBLC_LINK_ACTN: {
+            FblcLinkActn* link_actn = (FblcLinkActn*)actn;
             Link* link = GC_MALLOC(sizeof(Link));
             link->head = NULL;
             link->tail = NULL;
             link->waiting = NULL;
-            ports = AddPort(ports, actn->ac.link.getname.name, link);
-            ports = AddPort(ports, actn->ac.link.putname.name, link);
-            cmds = MkActnCmd(actn->ac.link.body, target, cmds);
+            ports = AddPort(ports, link_actn->getname.name, link);
+            ports = AddPort(ports, link_actn->putname.name, link);
+            cmds = MkActnCmd(link_actn->body, target, cmds);
             break;
           }
 
@@ -861,14 +866,15 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             // actn .>
             // actn ..> join -> scope -> actn -> scope -> next
             // actn .>
+            FblcExecActn* exec_actn = (FblcExecActn*)actn;
             cmds = MkScopeCmd(vars, ports, cmds);
-            cmds = MkActnCmd(actn->ac.exec.body, target, cmds);
+            cmds = MkActnCmd(exec_actn->body, target, cmds);
             ScopeCmd* scmd = (ScopeCmd*)MkScopeCmd(NULL, ports, cmds);
-            Cmd* jcmd = MkJoinCmd(actn->ac.exec.execc, (Cmd*)scmd);
+            Cmd* jcmd = MkJoinCmd(exec_actn->execc, (Cmd*)scmd);
 
             Vars* nvars = vars;
-            for (int i = 0; i < actn->ac.exec.execc; i++) {
-              FblcExec* exec = &(actn->ac.exec.execv[i]);
+            for (int i = 0; i < exec_actn->execc; i++) {
+              FblcExec* exec = &(exec_actn->execv[i]);
               nvars = AddVar(nvars, exec->var.name.name);
               FblcValue** target = LookupRef(nvars, exec->var.name.name);
               AddThread(
@@ -882,10 +888,11 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
           case FBLC_COND_ACTN: {
             // Add to the top of the command list:
             // select -> acond -> ...
+            FblcCondActn* cond_actn = (FblcCondActn*)actn;
             CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(
-                NULL, actn->ac.cond.args, target, cmds);
+                NULL, cond_actn->args, target, cmds);
             cmds = MkExprCmd(
-                actn->ac.cond.select, (FblcValue**)&(ccmd->value), (Cmd*)ccmd);
+                cond_actn->select, (FblcValue**)&(ccmd->value), (Cmd*)ccmd);
             break;
           }
             break;
@@ -999,11 +1006,11 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 {
-  FblcActn* actn = GC_MALLOC(sizeof(FblcActn));
+  FblcEvalActn* actn = GC_MALLOC(sizeof(FblcEvalActn));
   actn->tag = FBLC_EVAL_ACTN;
   actn->loc = expr->loc;
-  actn->ac.eval.expr = expr;
-  return FblcExecute(env, actn);
+  actn->expr = expr;
+  return FblcExecute(env, (FblcActn*)actn);
 }
 
 // FblcExecute --
