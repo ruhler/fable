@@ -309,7 +309,8 @@ static FblcProc* NewProc(
   FblcProc* proc = GC_MALLOC(sizeof(FblcProc));
   proc->name.name = name->name;
   proc->name.loc = name->loc;
-  proc->return_type = return_type;
+  proc->return_type.name = return_type->name;
+  proc->return_type.loc = return_type->loc;
   proc->body = body;
   proc->portc = portc;
   proc->portv = ports;
@@ -994,10 +995,9 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
 
-      FblcLocName* return_type = NULL;
-      if (FblcIsToken(toks, FBLC_TOK_NAME)) {
-        return_type = GC_MALLOC(sizeof(FblcLocName));
-        FblcGetNameToken(toks, "type", return_type);
+      FblcLocName return_type;
+      if (!FblcGetNameToken(toks, "type", &return_type)) {
+        return NULL;
       }
 
       if (!FblcGetToken(toks, ')')) {
@@ -1009,7 +1009,7 @@ FblcEnv* FblcParseProgram(FblcTokenStream* toks)
         return NULL;
       }
       FblcProc* proc = NewProc(
-          &name, return_type, portc, ports, fieldc, fields, body);
+          &name, &return_type, portc, ports, fieldc, fields, body);
       if (!FblcAddProc(env, proc)) {
         return NULL;
       }

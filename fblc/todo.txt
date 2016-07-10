@@ -1,4 +1,3 @@
-* FblcProc.return_type should not be a pointer.
 * Replace FieldList and ArgList with vector in FblcParser.
 * Replace libgc with custom memory management.
 * Design command line interface to fblc

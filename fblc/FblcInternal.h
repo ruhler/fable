@@ -222,7 +222,7 @@ typedef struct {
 
 typedef struct {
   FblcLocName name;
-  FblcLocName* return_type;     // NULL if no return type.
+  FblcLocName return_type;
   FblcActn* body;
   int portc;
   FblcPort* portv;              // Array of portc ports.

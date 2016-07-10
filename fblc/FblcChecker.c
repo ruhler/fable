@@ -397,7 +397,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
             call_actn->loc, call_actn->proc.name);
         return NULL;
       }
-      return proc->return_type->name;
+      return proc->return_type.name;
     }
 
     case FBLC_LINK_ACTN: {
@@ -625,9 +625,9 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   }
 
   // Check the return type.
-  if (FblcLookupType(env, proc->return_type->name) == NULL) {
+  if (FblcLookupType(env, proc->return_type.name) == NULL) {
     FblcReportError("Type '%s' not found.\n",
-        proc->return_type->loc, proc->return_type->name);
+        proc->return_type.loc, proc->return_type.name);
     return false;
   }
 
@@ -661,9 +661,9 @@ static bool CheckProc(const FblcEnv* env, FblcProc* proc)
   if (body_type == NULL) {
     return false;
   }
-  if (!FblcNamesEqual(proc->return_type->name, body_type)) {
+  if (!FblcNamesEqual(proc->return_type.name, body_type)) {
     FblcReportError("Type mismatch. Expected %s, but found %s.\n",
-        proc->body->loc, proc->return_type->name, body_type);
+        proc->body->loc, proc->return_type.name, body_type);
     return false;
   }
   return true;
