@@ -362,6 +362,7 @@ bool FblcIsNameToken(FblcTokenStream* toks)
 //   verify the next token is a name token.
 //
 // Inputs:
+//   alloc - The allocator to use for allocating the name.
 //   toks - The token stream to retrieve the name token from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a type name".
@@ -377,25 +378,22 @@ bool FblcIsNameToken(FblcTokenStream* toks)
 //   from the front of the token stream. Otherwise an error message is printed
 //   to standard error.
 
-bool FblcGetNameToken(
+bool FblcGetNameToken(FblcAllocator* alloc,
     FblcTokenStream* toks, const char* expected, FblcLocName* name)
 {
   SkipToToken(toks);
   if (IsNameChar(CurrChar(toks))) {
-    size_t n;
-    int capacity = 32;        // Most names are less than 32 chars?
+    FblcVector vector;
+    FblcVectorInit(alloc, &vector, sizeof(char));
+
     name->loc = TokenLoc(toks);
-    char* nm = GC_MALLOC(capacity * sizeof(char));
-    for (n = 0; IsNameChar(CurrChar(toks)); n++) {
-      if (n + 1 >= capacity) {
-        capacity *= 2;
-        nm = GC_REALLOC(nm, capacity * sizeof(char));
-      }
-      nm[n] = CurrChar(toks);
+    while (IsNameChar(CurrChar(toks))) {
+      *((char*)FblcVectorAppend(&vector)) = CurrChar(toks);
       AdvanceChar(toks);
     } 
-    nm[n] = '\0';
-    name->name = GC_REALLOC(nm, (n+1) * sizeof(char));
+    *((char*)FblcVectorAppend(&vector)) = '\0';
+    int n;
+    name->name = FblcVectorExtract(&vector, &n);
     return true;
   }
   FblcUnexpectedToken(toks, expected);

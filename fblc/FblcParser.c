@@ -46,8 +46,8 @@ static int ParseFields(FblcAllocator* alloc, FblcTokenStream* toks,
   FblcVector fields;
   FblcVectorInit(alloc, &fields, sizeof(FblcField));
   FblcField* field = FblcVectorAppend(&fields);
-  FblcGetNameToken(toks, "type name", &(field->type));
-  if (!FblcGetNameToken(toks, "field name", &(field->name))) {
+  FblcGetNameToken(alloc, toks, "type name", &(field->type));
+  if (!FblcGetNameToken(alloc, toks, "field name", &(field->name))) {
     return -1;
   }
 
@@ -56,10 +56,10 @@ static int ParseFields(FblcAllocator* alloc, FblcTokenStream* toks,
     FblcGetToken(toks, ',');
 
     field = FblcVectorAppend(&fields);
-    if (!FblcGetNameToken(toks, "type name", &(field->type))) {
+    if (!FblcGetNameToken(alloc, toks, "type name", &(field->type))) {
       return -1;
     }
-    if (!FblcGetNameToken(toks, "field name", &(field->name))) {
+    if (!FblcGetNameToken(alloc, toks, "field name", &(field->name))) {
       return -1;
     }
   }
@@ -97,7 +97,7 @@ static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
     FblcPort* port = FblcVectorAppend(&portv);
 
     // Get the type.
-    FblcGetNameToken(toks, "type name", &(port->type));
+    FblcGetNameToken(alloc, toks, "type name", &(port->type));
 
     // Get the polarity.
     if (FblcIsToken(toks, '<')) {
@@ -118,7 +118,7 @@ static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
     }
 
     // Get the name.
-    if (!FblcGetNameToken(toks, "port name", &(port->name))) {
+    if (!FblcGetNameToken(alloc, toks, "port name", &(port->name))) {
       return -1;
     }
 
@@ -207,7 +207,7 @@ static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
     }
   } else if (FblcIsNameToken(toks)) {
     FblcLocName start;
-    FblcGetNameToken(toks, "start of expression", &start);
+    FblcGetNameToken(alloc, toks, "start of expression", &start);
 
     if (FblcIsToken(toks, '(')) {
       // This is an application expression of the form: start(<args>)
@@ -234,7 +234,7 @@ static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
       union_expr->loc = start.loc;
       union_expr->type.name = start.name;
       union_expr->type.loc = start.loc;
-      if (!FblcGetNameToken(toks, "field name", &(union_expr->field))) {
+      if (!FblcGetNameToken(alloc, toks, "field name", &(union_expr->field))) {
         return NULL;
       }
       if (!FblcGetToken(toks, '(')) {
@@ -255,7 +255,7 @@ static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
       let_expr->loc = start.loc;
       let_expr->type.name = start.name;
       let_expr->type.loc = start.loc;
-      FblcGetNameToken(toks, "variable name", &(let_expr->name));
+      FblcGetNameToken(alloc, toks, "variable name", &(let_expr->name));
       if (!FblcGetToken(toks, '=')) {
         return NULL;
       }
@@ -322,7 +322,7 @@ static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
     access_expr->tag = FBLC_ACCESS_EXPR;
     access_expr->loc = expr->loc;
     access_expr->object = expr;
-    if (!FblcGetNameToken(toks, "field name", &(access_expr->field))) {
+    if (!FblcGetNameToken(alloc, toks, "field name", &(access_expr->field))) {
       return NULL;
     }
     expr = (FblcExpr*)access_expr;
@@ -389,7 +389,7 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
     actn = (FblcActn*)eval_actn;
   } else if (FblcIsNameToken(toks)) {
     FblcLocName name;
-    FblcGetNameToken(toks, "port, process, or type name", &name);
+    FblcGetNameToken(alloc, toks, "port, process, or type name", &name);
 
     if (FblcIsToken(toks, '~')) {
       FblcGetToken(toks, '~');
@@ -433,13 +433,15 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
       FblcVector ports;
       FblcVectorInit(alloc, &ports, sizeof(FblcLocName));
       if (!FblcIsToken(toks, ';')) {
-        if (!FblcGetNameToken(toks, "port name", FblcVectorAppend(&ports))) {
+        if (!FblcGetNameToken(
+              alloc, toks, "port name", FblcVectorAppend(&ports))) {
           return NULL;
         }
 
         while (FblcIsToken(toks, ',')) {
           FblcGetToken(toks, ',');
-          if (!FblcGetNameToken(toks, "port name", FblcVectorAppend(&ports))) {
+          if (!FblcGetNameToken(
+                alloc, toks, "port name", FblcVectorAppend(&ports))) {
             return NULL;
           }
         }
@@ -467,14 +469,14 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
         return NULL;
       }
       FblcLocName getname;
-      if (!FblcGetNameToken(toks, "port name", &getname)) {
+      if (!FblcGetNameToken(alloc, toks, "port name", &getname)) {
         return NULL;
       }
       if (!FblcGetToken(toks, ',')) {
         return NULL;
       }
       FblcLocName putname;
-      if (!FblcGetNameToken(toks, "port name", &putname)) {
+      if (!FblcGetNameToken(alloc, toks, "port name", &putname)) {
         return NULL;
       }
       if (!FblcGetToken(toks, ';')) {
@@ -511,12 +513,13 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
             return NULL;
           }
 
-          if (!FblcGetNameToken(toks, "type name", &(exec->var.type))) {
+          if (!FblcGetNameToken(alloc, toks, "type name", &(exec->var.type))) {
             return NULL;
           }
         }
 
-        if (!FblcGetNameToken(toks, "variable name", &(exec->var.name))) {
+        if (!FblcGetNameToken(
+              alloc, toks, "variable name", &(exec->var.name))) {
           return NULL;
         }
 
@@ -620,12 +623,12 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
   while (!FblcIsEOFToken(toks)) {
     // All declarations start with the form: <keyword> <name> (...
     FblcLocName keyword;
-    if (!FblcGetNameToken(toks, keywords, &keyword)) {
+    if (!FblcGetNameToken(alloc, toks, keywords, &keyword)) {
       return NULL;
     }
 
     FblcLocName name;
-    if (!FblcGetNameToken(toks, "declaration name", &name)) {
+    if (!FblcGetNameToken(alloc, toks, "declaration name", &name)) {
       return NULL;
     }
 
@@ -669,7 +672,7 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
         return NULL;
       }
 
-      if (!FblcGetNameToken(toks, "type", &(func->return_type))) {
+      if (!FblcGetNameToken(alloc, toks, "type", &(func->return_type))) {
         return NULL;
       }
 
@@ -707,7 +710,7 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
         return NULL;
       }
 
-      if (!FblcGetNameToken(toks, "type", &(proc->return_type))) {
+      if (!FblcGetNameToken(alloc, toks, "type", &(proc->return_type))) {
         return NULL;
       }
 

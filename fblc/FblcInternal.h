@@ -328,7 +328,7 @@ bool FblcIsEOFToken(FblcTokenStream* toks);
 bool FblcIsToken(FblcTokenStream* toks, char which);
 bool FblcGetToken(FblcTokenStream* toks, char which);
 bool FblcIsNameToken(FblcTokenStream* toks);
-bool FblcGetNameToken(
+bool FblcGetNameToken(FblcAllocator* alloc,
     FblcTokenStream* toks, const char* expected, FblcLocName* name);
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
