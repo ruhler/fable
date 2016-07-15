@@ -86,7 +86,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcEnv* env = FblcParseProgram(toks);
+  FblcAllocator alloc;
+  FblcInitAllocator(&alloc);
+  FblcEnv* env = FblcParseProgram(&alloc, toks);
   FblcCloseTokenStream(toks);
   if (env == NULL) {
     fprintf(stderr, "failed to parse input FILE.\n");
@@ -108,6 +110,7 @@ int main(int argc, char* argv[])
     FblcValue* value = FblcEvaluate(env, func->body);
     FblcPrintValue(stdout, value);
     printf("\n");
+    FblcFreeAll(&alloc);
     GC_gcollect();
     return expect_error ? 1 : 0;
   }
@@ -127,6 +130,7 @@ int main(int argc, char* argv[])
     FblcValue* value = FblcExecute(env, proc->body);
     FblcPrintValue(stdout, value);
     printf("\n");
+    FblcFreeAll(&alloc);
     GC_gcollect();
     return expect_error ? 1 : 0;
   }

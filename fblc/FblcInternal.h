@@ -22,6 +22,35 @@
 #define GC_DEBUG
 #include <gc/gc.h>
 
+// FblcAllocator
+typedef struct {
+  // TODO: Keep track of the allocations so they can be freed.
+  int ignored_;
+} FblcAllocator;
+
+// FblcVector is a helper for dynamically allocating an array of data whose
+// size is not known ahead of time.
+// 'size' is the number of bytes taken by a single element.
+// 'capacity' is the maximum number of elements supported by the current
+// allocation of data.
+// 'count' is the number of elements currently in use.
+// 'data' is where the data is stored.
+
+typedef struct {
+  FblcAllocator* allocator;
+  int size;
+  int capacity;
+  int count;
+  void* data;
+} FblcVector ;
+
+void FblcInitAllocator(FblcAllocator* alloc);
+void* FblcAlloc(FblcAllocator* alloc, int size);
+void FblcFreeAll(FblcAllocator* alloc);
+void FblcVectorInit(FblcAllocator* alloc, FblcVector* vector, int size);
+void* FblcVectorAppend(FblcVector* vector);
+void* FblcVectorExtract(FblcVector* vector, int* count);
+
 // FblcProgram
 typedef const char* FblcName;
 bool FblcNamesEqual(FblcName a, FblcName b);
@@ -255,7 +284,7 @@ typedef struct FblcEnv {
   FblcProcEnv* procs;
 } FblcEnv;
 
-FblcEnv* FblcNewEnv();
+FblcEnv* FblcNewEnv(FblcAllocator* alloc);
 FblcType* FblcLookupType(const FblcEnv* env, FblcName name);
 FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name);
 FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name);
@@ -304,7 +333,7 @@ bool FblcGetNameToken(
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
 // FblcParser
-FblcEnv* FblcParseProgram(FblcTokenStream* toks);
+FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks);
 
 // FblcChecker
 bool FblcCheckProgram(const FblcEnv* env);

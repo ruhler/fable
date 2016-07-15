@@ -113,17 +113,22 @@ void FblcReportError(const char* format, const FblcLoc* loc, ...)
 //   Create a new, empty, Fblc environment.
 //
 // Inputs:
-//   None.
+//   alloc - The allocator to use to allocate the environment.
 //
 // Result:
 //   A new, empty, Fblc environment.
 //
 // Side effects:
-//   None.
+//   Allocations are performed using the allocator as necessary to allocate
+//   the environment.
 
-FblcEnv* FblcNewEnv()
+FblcEnv* FblcNewEnv(FblcAllocator* alloc)
 {
-  return GC_MALLOC(sizeof(FblcEnv));
+  FblcEnv* env = FblcAlloc(alloc, sizeof(FblcEnv));
+  env->types = NULL;
+  env->funcs = NULL;
+  env->procs = NULL;
+  return env;
 }
 
 // FblcLookupType --

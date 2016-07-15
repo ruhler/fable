@@ -1,3 +1,4 @@
+* Use allocator in Tokenizer instead of GC_ALLOC.
 * Replace libgc with custom memory management.
   - By using it as a leak detector until everything is manually tracked.
   - And implementing a reference-count based gc for FblcValues.
