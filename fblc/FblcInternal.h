@@ -55,8 +55,12 @@ void* FblcVectorExtract(FblcVector* vector, int* count);
 typedef const char* FblcName;
 bool FblcNamesEqual(FblcName a, FblcName b);
 
-typedef struct FblcLoc FblcLoc;
-FblcLoc* FblcNewLoc(const char* source, int line, int col);
+typedef struct {
+  const char* source;
+  int line;
+  int col;
+} FblcLoc;
+
 void FblcReportError(const char* format, const FblcLoc* loc, ...);
 
 typedef struct FblcLocName {
@@ -339,9 +343,7 @@ typedef struct {
   char* end;
 
   // Location information for the next token.
-  const char* filename;
-  int line;
-  int column;
+  FblcLoc loc;
 } FblcTokenStream;
 
 bool FblcOpenTokenStream(FblcTokenStream* toks, const char* filename);

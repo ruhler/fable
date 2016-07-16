@@ -11,7 +11,6 @@ static int NextChar(FblcTokenStream* toks);
 static void AdvanceChar(FblcTokenStream* toks);
 static bool IsNameChar(int c);
 static void SkipToToken(FblcTokenStream* toks);
-static FblcLoc* TokenLoc(FblcTokenStream* toks);
 static void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN]);
 
 // CurrChar --
@@ -93,10 +92,10 @@ static void AdvanceChar(FblcTokenStream* toks)
   if (c != EOF) {
     toks->curr++;
     if (c == '\n') {
-      toks->line++;
-      toks->column = 1;
+      toks->loc.line++;
+      toks->loc.col = 1;
     } else {
-      toks->column++;
+      toks->loc.col++;
     }
   }
 }
@@ -148,24 +147,6 @@ static void SkipToToken(FblcTokenStream* toks)
     }
     is_comment_start = (CurrChar(toks) == '/' && NextChar(toks) == '/');
   }
-}
-
-// TokenLoc --
-//
-//   Return a location for the next token in the token stream.
-//
-// Inputs:
-//   toks - The token stream.
-//
-// Result:
-//   A new location object with the location of the next token in the stream.
-//
-// Side effects:
-//   None.
-
-static FblcLoc* TokenLoc(FblcTokenStream* toks)
-{
-  return FblcNewLoc(toks->filename, toks->line, toks->column);
 }
 
 // DescribeTokenType --
@@ -230,9 +211,9 @@ bool FblcOpenTokenStream(FblcTokenStream* toks, const char* filename)
   }
   toks->curr = toks->buffer;
   toks->end = toks->buffer;
-  toks->filename = filename;
-  toks->line = 1;
-  toks->column = 1;
+  toks->loc.source = filename;
+  toks->loc.line = 1;
+  toks->loc.col = 1;
   return true;
 }
 
@@ -375,7 +356,10 @@ bool FblcGetNameToken(FblcAllocator* alloc,
     FblcVector vector;
     FblcVectorInit(alloc, &vector, sizeof(char));
 
-    name->loc = TokenLoc(toks);
+    name->loc = FblcAlloc(alloc, sizeof(FblcLoc));
+    name->loc->source = toks->loc.source;
+    name->loc->line = toks->loc.line;
+    name->loc->col = toks->loc.col;
     while (IsNameChar(CurrChar(toks))) {
       *((char*)FblcVectorAppend(&vector)) = CurrChar(toks);
       AdvanceChar(toks);
@@ -411,5 +395,5 @@ void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected)
   char desc[MAX_TOK_DESC_LEN];
   DescribeTokenType(CurrChar(toks), desc);
   FblcReportError("Expected %s, but got token of type %s.\n",
-      TokenLoc(toks), expected, desc);
+      &toks->loc, expected, desc);
 }

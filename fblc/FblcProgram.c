@@ -5,12 +5,6 @@
 
 #include "FblcInternal.h"
 
-struct FblcLoc {
-  const char* source;
-  int line;
-  int col;
-};
-
 static bool NameIsDeclared(FblcEnv* env, FblcName name);
 
 
@@ -52,34 +46,6 @@ static bool NameIsDeclared(FblcEnv* env, FblcName name) {
 bool FblcNamesEqual(FblcName a, FblcName b)
 {
   return strcmp(a, b) == 0;
-}
-
-// FblcNewLoc --
-//
-//   Create a new location object. Location objects are used to identify a
-//   file, line number, and column number that is the source of a token,
-//   expression, or other part of the abstract syntax. Location objects are
-//   used to provide location information in error message.
-//
-// Inputs:
-//   source - The filename or some other description of the source of a line
-//            of code.
-//   line - The line number of the location. The first line is 1.
-//   col - The column number of the location. The first column is 1.
-//
-// Results:
-//   The created location object.
-//
-// Side effects:
-//   None.
-
-FblcLoc* FblcNewLoc(const char* source, int line, int col)
-{
-  FblcLoc* loc = GC_MALLOC(sizeof(FblcLoc));
-  loc->source = source;
-  loc->line = line;
-  loc->col = col;
-  return loc;
 }
 
 // FblcReportError --
