@@ -80,16 +80,16 @@ int main(int argc, char* argv[])
 
   GC_INIT();
 
-  FblcTokenStream* toks = FblcOpenTokenStream(filename);
-  if (toks == NULL) {
+  FblcTokenStream toks;
+  if (!FblcOpenTokenStream(&toks, filename)) {
     fprintf(stderr, "failed to open input FILE %s.\n", filename);
     return 1;
   }
 
   FblcAllocator alloc;
   FblcInitAllocator(&alloc);
-  FblcEnv* env = FblcParseProgram(&alloc, toks);
-  FblcCloseTokenStream(toks);
+  FblcEnv* env = FblcParseProgram(&alloc, &toks);
+  FblcCloseTokenStream(&toks);
   if (env == NULL) {
     fprintf(stderr, "failed to parse input FILE.\n");
     return expect_error ? 0 : 1;

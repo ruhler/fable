@@ -6,29 +6,6 @@
 
 #define MAX_TOK_DESC_LEN 5
 
-// A stream of tokens is represented using the FblcTokenStream data structure.
-// The data structure includes buffered characters read from the file, the
-// underlying file descriptor, and, for error reporting purposes, the location
-// in the input file of the next token and the file descriptor itself.
-//
-// The conventional variable name for a FblcTokenStream* is 'toks'.
-
-struct FblcTokenStream {
-  // The underlying file descriptor and a buffer containing data read.
-  // curr points to the current character in the buffer, if any.
-  // end points just past the last character in the buffer. If the buffer is
-  // empty, curr and end are equal.
-  int fd;
-  char buffer[BUFSIZ];
-  char* curr;
-  char* end;
-
-  // Location information for the next token.
-  const char* filename;
-  int line;
-  int column;
-};
-
 static int CurrChar(FblcTokenStream* toks);
 static int NextChar(FblcTokenStream* toks);
 static void AdvanceChar(FblcTokenStream* toks);
@@ -231,32 +208,32 @@ void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
 
 // FblcOpenTokenStream --
 //
-//   Create a token stream for the given file name.
+//   Open a token stream for the given file name.
 //
 // Inputs:
+//   toks - An uninitialized token stream to open.
 //   filename - The name of the file to return a token stream for.
 //
 // Results:
-//   A token stream for the given file, or NULL if there was an error opening
-//   the token stream.
+//   True if the token stream was successfully opened, false otherwise.
 //
 // Side effects:
-//   Opens the given file. The file can be closed when the token stream is no
+//   Initializes the toks object. Opens the given file. If the token stream is
+//   successfully opened, the file can be closed when the token stream is no
 //   longer in use by calling FblcCloseTokenStream.
 
-FblcTokenStream* FblcOpenTokenStream(const char* filename)
+bool FblcOpenTokenStream(FblcTokenStream* toks, const char* filename)
 {
-  FblcTokenStream* toks = GC_MALLOC(sizeof(FblcTokenStream));
   toks->fd = open(filename, O_RDONLY);
   if (toks->fd < 0) {
-    return NULL;
+    return false;
   }
   toks->curr = toks->buffer;
   toks->end = toks->buffer;
   toks->filename = filename;
   toks->line = 1;
   toks->column = 1;
-  return toks;
+  return true;
 }
 
 // FblcCloseTokenStream
