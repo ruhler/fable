@@ -1006,11 +1006,11 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
 FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 {
-  FblcEvalActn* actn = GC_MALLOC(sizeof(FblcEvalActn));
-  actn->tag = FBLC_EVAL_ACTN;
-  actn->loc = expr->loc;
-  actn->expr = expr;
-  return FblcExecute(env, (FblcActn*)actn);
+  FblcEvalActn actn;
+  actn.tag = FBLC_EVAL_ACTN;
+  actn.loc = expr->loc;
+  actn.expr = expr;
+  return FblcExecute(env, (FblcActn*)&actn);
 }
 
 // FblcExecute --
