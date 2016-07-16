@@ -213,6 +213,7 @@ FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name)
 //   Add a type declaration to the given environment.
 //
 // Inputs:
+//   alloc - The allocator to use for allocations.
 //   env - The environment to add the type declaration to.
 //   type - The type declaration to add.
 //
@@ -224,7 +225,7 @@ FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name)
 //   could not be added to the environment, an error message is printed to
 //   standard error explaining the problem.
 
-bool FblcAddType(FblcEnv* env, FblcType* type)
+bool FblcAddType(FblcAllocator* alloc, FblcEnv* env, FblcType* type)
 {
   if (NameIsDeclared(env, type->name.name)) {
     FblcReportError("Multiple declarations for %s.\n",
@@ -232,7 +233,7 @@ bool FblcAddType(FblcEnv* env, FblcType* type)
     return false;
   }
 
-  FblcTypeEnv* types = GC_MALLOC(sizeof(FblcTypeEnv));
+  FblcTypeEnv* types = FblcAlloc(alloc, sizeof(FblcTypeEnv));
   types->decl = type;
   types->next = env->types;
   env->types = types;
@@ -244,6 +245,7 @@ bool FblcAddType(FblcEnv* env, FblcType* type)
 //   Add a function declaration to the given environment.
 //
 // Inputs:
+//   alloc - The allocator to use for allocations.
 //   env - The environment to add the function declaration to.
 //   func - The function declaration to add.
 //
@@ -255,14 +257,14 @@ bool FblcAddType(FblcEnv* env, FblcType* type)
 //   could not be added to the environment, an error message is printed to
 //   standard error describing the problem.
 
-bool FblcAddFunc(FblcEnv* env, FblcFunc* func)
+bool FblcAddFunc(FblcAllocator* alloc, FblcEnv* env, FblcFunc* func)
 {
   if (NameIsDeclared(env, func->name.name)) {
     FblcReportError("Multiple declarations for %s.\n",
        func->name.loc, func->name.name);
     return false;
   }
-  FblcFuncEnv* funcs = GC_MALLOC(sizeof(FblcFuncEnv));
+  FblcFuncEnv* funcs = FblcAlloc(alloc, sizeof(FblcFuncEnv));
   funcs->decl = func;
   funcs->next = env->funcs;
   env->funcs = funcs;
@@ -274,6 +276,7 @@ bool FblcAddFunc(FblcEnv* env, FblcFunc* func)
 //   Add a process declaration to the given environment.
 //
 // Inputs:
+//   alloc - The allocator to use for allocations.
 //   env - The environment to add the process declaration to.
 //   proc - The process declaration to add.
 //
@@ -285,14 +288,14 @@ bool FblcAddFunc(FblcEnv* env, FblcFunc* func)
 //   could not be added to the environment, an error message is printed to
 //   standard error describing the problem.
 
-bool FblcAddProc(FblcEnv* env, FblcProc* proc)
+bool FblcAddProc(FblcAllocator* alloc, FblcEnv* env, FblcProc* proc)
 {
   if (NameIsDeclared(env, proc->name.name)) {
     FblcReportError("Multiple declarations for %s.\n",
        proc->name.loc, proc->name.name);
     return false;
   }
-  FblcProcEnv* procs = GC_MALLOC(sizeof(FblcProcEnv));
+  FblcProcEnv* procs = FblcAlloc(alloc, sizeof(FblcProcEnv));
   procs->decl = proc;
   procs->next = env->procs;
   env->procs = procs;

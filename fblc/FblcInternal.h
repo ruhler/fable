@@ -288,9 +288,9 @@ FblcEnv* FblcNewEnv(FblcAllocator* alloc);
 FblcType* FblcLookupType(const FblcEnv* env, FblcName name);
 FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name);
 FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name);
-bool FblcAddType(FblcEnv* env, FblcType* type);
-bool FblcAddFunc(FblcEnv* env, FblcFunc* func);
-bool FblcAddProc(FblcEnv* env, FblcProc* proc);
+bool FblcAddType(FblcAllocator* alloc, FblcEnv* env, FblcType* type);
+bool FblcAddFunc(FblcAllocator* alloc, FblcEnv* env, FblcFunc* func);
+bool FblcAddProc(FblcAllocator* alloc, FblcEnv* env, FblcProc* proc);
 
 // FblcValue
 

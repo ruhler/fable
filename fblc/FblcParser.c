@@ -655,7 +655,7 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
       if (!FblcGetToken(toks, ')')) {
         return NULL;
       }
-      if (!FblcAddType(env, type)) {
+      if (!FblcAddType(alloc, env, type)) {
         return NULL;
       }
     } else if (is_func) {
@@ -684,7 +684,7 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
       if (func->body == NULL) {
         return NULL;
       }
-      if (!FblcAddFunc(env, func)) {
+      if (!FblcAddFunc(alloc, env, func)) {
         return NULL;
       }
     } else if (is_proc) {
@@ -722,7 +722,7 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
       if (proc->body == NULL) {
         return NULL;
       }
-      if (!FblcAddProc(env, proc)) {
+      if (!FblcAddProc(alloc, env, proc)) {
         return NULL;
       }
     } else {
