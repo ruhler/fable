@@ -5,6 +5,11 @@
 
 #include "FblcInternal.h"
 
+struct FblcAllocList {
+  FblcAllocList* next;
+  uint8_t data[];
+};
+
 
 // FblcInitAllocator --
 //
@@ -21,7 +26,7 @@
 
 void FblcInitAllocator(FblcAllocator* alloc)
 {
-  // TODO: Initialize the allocator once it has something to initialize.
+  alloc->allocations = NULL;
 }
 
 // FblcAlloc --
@@ -41,7 +46,10 @@ void FblcInitAllocator(FblcAllocator* alloc)
 
 void* FblcAlloc(FblcAllocator* alloc, int size)
 {
-  return GC_MALLOC(size);
+  FblcAllocList* allocation = GC_MALLOC(sizeof(FblcAllocList) + size);
+  allocation->next = alloc->allocations;
+  alloc->allocations = allocation;
+  return allocation->data;
 }
 
 // FblcFreeAll --
@@ -60,7 +68,11 @@ void* FblcAlloc(FblcAllocator* alloc, int size)
 
 void FblcFreeAll(FblcAllocator* alloc)
 {
-  // TODO: Actually free the allocator memory.
+  while (alloc->allocations != NULL) {
+    FblcAllocList* this = alloc->allocations;
+    alloc->allocations = alloc->allocations->next;
+    GC_FREE(this);
+  }
 }
 
 // FblcVectorInit --
@@ -84,7 +96,7 @@ void FblcVectorInit(FblcAllocator* alloc, FblcVector* vector, int size)
   vector->size = size;
   vector->capacity = 4;
   vector->count = 0;
-  vector->data = GC_MALLOC(vector->capacity * size);
+  vector->data = FblcAlloc(alloc, vector->capacity * size);
 }
 
 // VectorAppend --
@@ -104,8 +116,13 @@ void FblcVectorInit(FblcAllocator* alloc, FblcVector* vector, int size)
 void* FblcVectorAppend(FblcVector* vector)
 {
   if (vector->count == vector->capacity) {
+    // TODO: Do something smarter to avoid wasting the previous allocation.
+    void* old = vector->data;
+    int old_capacity = vector->capacity;
     vector->capacity *= 2;
-    vector->data = GC_REALLOC(vector->data, vector->capacity * vector->size);
+    vector->data = FblcAlloc(
+        vector->allocator, vector->capacity * vector->size);
+    memcpy(vector->data, old, old_capacity * vector->size);
   }
   return (void*)((uintptr_t)vector->data + vector->count++ * vector->size);
 }
@@ -126,6 +143,7 @@ void* FblcVectorAppend(FblcVector* vector)
 
 void* FblcVectorExtract(FblcVector* vector, int* count)
 {
+  // TODO: Do something to save the unused space.
   *count = vector->count;
-  return GC_REALLOC(vector->data, vector->count * vector->size);
+  return vector->data;
 }

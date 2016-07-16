@@ -22,10 +22,11 @@
 #define GC_DEBUG
 #include <gc/gc.h>
 
+typedef struct FblcAllocList FblcAllocList;
+
 // FblcAllocator
 typedef struct {
-  // TODO: Keep track of the allocations so they can be freed.
-  int ignored_;
+  FblcAllocList* allocations;
 } FblcAllocator;
 
 // FblcVector is a helper for dynamically allocating an array of data whose
