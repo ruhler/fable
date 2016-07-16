@@ -4,6 +4,8 @@
 
 #include "FblcInternal.h"
 
+#define MAX_TOK_DESC_LEN 5
+
 // A stream of tokens is represented using the FblcTokenStream data structure.
 // The data structure includes buffered characters read from the file, the
 // underlying file descriptor, and, for error reporting purposes, the location
@@ -33,7 +35,7 @@ static void AdvanceChar(FblcTokenStream* toks);
 static bool IsNameChar(int c);
 static void SkipToToken(FblcTokenStream* toks);
 static FblcLoc* TokenLoc(FblcTokenStream* toks);
-static const char* DescribeTokenType(int which);
+static void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN]);
 
 // CurrChar --
 //
@@ -191,32 +193,40 @@ static FblcLoc* TokenLoc(FblcTokenStream* toks)
 
 // DescribeTokenType --
 //   
-//   Returns a human readable string description of the given token type.
+//   Computes a human readable string description of the given token type.
 //   The description is used in error message.
 //
 // Inputs:
 //   which - The type of token to describe.
+//   desc - A buffer of at least MAX_TOK_DESC_LEN bytes that will be filled
+//          with the token description.
 //
 // Results:
-//   A human reasonable string description of the given token type.
+//   None.
 //
 // Side effects:
-//   None.
+//   'desc' is filled with a human reasonable string description of the given
+//   token type.
 
-const char* DescribeTokenType(int which)
+void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
 {
+  char* p = desc;
   if (IsNameChar(which)) {
-    return "NAME";
+    *p++ = 'N';
+    *p++ = 'A';
+    *p++ = 'M';
+    *p++ = 'E';
   } else if (which == EOF) {
-    return "EOF";
+    *p++ = 'E';
+    *p++ = 'O';
+    *p++ = 'F';
   } else {
-    char* description = GC_MALLOC(4 * sizeof(char));
-    description[0] = '\'';
-    description[1] = which;
-    description[2] = '\'';
-    description[3] = '\0';
-    return description;
+    *p++ = '\'';
+    *p++ = which;
+    *p++ = '\'';
   }
+  *p = '\0';
+  assert(p < desc + MAX_TOK_DESC_LEN && "MAX_TOK_DESC_LEN is too small");
 }
 
 // FblcOpenTokenStream --
@@ -331,7 +341,9 @@ bool FblcGetToken(FblcTokenStream* toks, char which)
     *toks->curr = ' ';
     return true;
   }
-  FblcUnexpectedToken(toks, DescribeTokenType(which));
+  char desc[MAX_TOK_DESC_LEN];
+  DescribeTokenType(which, desc);
+  FblcUnexpectedToken(toks, desc);
   return false;
 }
 
@@ -419,7 +431,8 @@ bool FblcGetNameToken(FblcAllocator* alloc,
 void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected)
 {
   SkipToToken(toks);
-  const char* next_token = DescribeTokenType(CurrChar(toks));
+  char desc[MAX_TOK_DESC_LEN];
+  DescribeTokenType(CurrChar(toks), desc);
   FblcReportError("Expected %s, but got token of type %s.\n",
-      TokenLoc(toks), expected, next_token);
+      TokenLoc(toks), expected, desc);
 }
