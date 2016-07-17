@@ -176,7 +176,9 @@ static Vars* AddVar(Vars* vars, FblcName name);
 static Link* LookupPort(Ports* ports, FblcName name);
 static Ports* AddPort(Ports* ports, FblcName name, Link* link);
 
-static void AddThread(Threads* threads, Vars* vars, Ports* ports, Cmd* cmd);
+static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd);
+static void FreeThread(Thread* thread);
+static void AddThread(Threads* threads, Thread* thread);
 static Thread* GetThread(Threads* threads);
 
 static Cmd* MkExprCmd(const FblcExpr* expr, FblcValue** target, Cmd* next);
@@ -191,8 +193,7 @@ static Cmd* MkCondActnCmd(
 static Cmd* MkScopeCmd(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoinCmd(int count, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
-static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
-    Cmd* cmd);
+static void Run(const FblcEnv* env, Threads* threads, Thread* thread);
 
 // LookupRef --
 //
@@ -313,36 +314,75 @@ static Ports* AddPort(Ports* ports, FblcName name, Link* link)
   return nports;
 }
 
-// AddThread --
+// NewThread --
 //
-//   Add a thread to the thread list.
+//   Create a new thread.
 //
 // Inputs:
-//   threads - The current thread list.
 //   vars - The thread's local variables.
 //   ports - The thread's ports.
 //   cmd - The thread's command list.
 //
 // Results:
-//   None.
+//   A newly allocated and initialized thread object.
 //
-// Side Effects:
-//   A thread is added to the current thread list.
+// Side effects:
+//   A new thread object is allocated. The thread object should be freed by
+//   calling FreeThread when the object is no longer needed.
 
-static void AddThread(Threads* threads, Vars* vars, Ports* ports, Cmd* cmd)
+static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
 {
   Thread* thread = GC_MALLOC(sizeof(Thread));
   thread->vars = vars;
   thread->ports = ports;
   thread->cmd = cmd;
   thread->next = NULL;
+  return thread;
+}
+
+// FreeThread --
+//
+//   Free a thread object that is no longer needed.
+//
+// Inputs:
+//   thread - The thread object to free.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The resources for the thead object are released. The thread object should
+//   not be used after this call.
 
+static void FreeThread(Thread* thread)
+{
+  GC_FREE(thread);
+}
+
+// AddThread --
+//
+//   Add a thread to the thread list.
+//
+// Inputs:
+//   threads - The current thread list.
+//   thread - The thread to add to the thread list.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The thread is added to the current thread list.
+
+static void AddThread(Threads* threads, Thread* thread)
+{
+  assert(thread->next == NULL);
   if (threads->head == NULL) {
     assert(threads->tail == NULL);
     threads->head = thread;
     threads->tail = thread;
   } else {
     threads->tail->next = thread;
+    threads->tail = thread;
   }
 }
 
@@ -365,6 +405,7 @@ static Thread* GetThread(Threads* threads)
   Thread* thread = threads->head;
   if (thread != NULL) {
     threads->head = thread->next;
+    thread->next = NULL;
     if (threads->head == NULL) {
       threads->tail = NULL;
     }
@@ -627,21 +668,21 @@ static int TagForField(const FblcType* type, FblcName field)
 // Inputs:
 //   env - The environment in which to run the thread.
 //   threads - The list of currently active threads.
-//   vars - Local variables in scope.
-//   ports - Ports in scope.
-//   cmds - The head of the command list for the thread.
+//   thread - The thread to run.
 //
 // Result:
 //   None.
 //
 // Side Effects:
-//   Threads are added to the threads list based on the command executed. If
-//   the command list is not executed to completion, a thread will be added to
-//   the threads list representing the continuation of this thread.
+//   Threads are added to the threads list based on the commands executed for
+//   the thread. If the thread is not executed to completion, it will be added
+//   back to the threads list representing the continuation of this thread.
 
-static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
-    Cmd* cmds)
+static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
 {
+  Cmd* cmds = thread->cmd;
+  Vars* vars = thread->vars;
+  Ports* ports = thread->ports;
   for (int i = 0; i < 1024 && cmds != NULL; i++) {
     switch (cmds->tag) {
       case CMD_EXPR: {
@@ -786,7 +827,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             assert(link != NULL && "Get port not in scope");
 
             if (link->head == NULL) {
-              AddThread(&link->waiting, vars, ports, (Cmd*)cmd);
+              AddThread(&link->waiting, NewThread(vars, ports, (Cmd*)cmd));
               cmds = NULL;
             } else {
               *target = link->head->value;
@@ -878,8 +919,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
               FblcExec* exec = &(exec_actn->execv[i]);
               nvars = AddVar(nvars, exec->var.name.name);
               FblcValue** target = LookupRef(nvars, exec->var.name.name);
-              AddThread(
-                  threads, vars, ports, MkActnCmd(exec->actn, target, jcmd));
+              AddThread(threads, NewThread(
+                    vars, ports, MkActnCmd(exec->actn, target, jcmd)));
             }
             scmd->vars = nvars;
             cmds = NULL;
@@ -976,15 +1017,20 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
 
         Thread* waiting = GetThread(&link->waiting);
         if (waiting != NULL) {
-          AddThread(threads, waiting->vars, waiting->ports, waiting->cmd);
+          AddThread(threads, waiting);
         }
         break;
       }
     }
   }
 
-  if (cmds != NULL) {
-    AddThread(threads, vars, ports, cmds);
+  if (cmds == NULL) {
+    FreeThread(thread);
+  } else {
+    thread->vars = vars;
+    thread->ports = ports;
+    thread->cmd = cmds;
+    AddThread(threads, thread);
   }
 }
 
@@ -1036,11 +1082,11 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
   threads.head = NULL;
   threads.tail = NULL;
 
-  AddThread(&threads, NULL, NULL, MkActnCmd(actn, &result, NULL));
+  AddThread(&threads, NewThread(NULL, NULL, MkActnCmd(actn, &result, NULL)));
 
   Thread* thread = GetThread(&threads);
   while (thread != NULL) {
-    Run(env, &threads, thread->vars, thread->ports, thread->cmd);
+    Run(env, &threads, thread);
     thread = GetThread(&threads);
   }
   return result;
