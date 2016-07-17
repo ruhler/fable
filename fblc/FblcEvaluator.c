@@ -4,6 +4,28 @@
 
 #include "FblcInternal.h"
 
+typedef struct Vars Vars;
+typedef struct Ports Ports;
+typedef struct Cmd Cmd;
+typedef struct Thread Thread;
+
+// Singly-linked list of threads.
+
+struct Thread {
+  Vars* vars;
+  Ports* ports;
+  Cmd* cmd;
+  Thread* next;
+};
+
+// List of threads with head and tail pointer. Threads are added to the tail
+// and removed from the head.
+
+typedef struct Threads {
+  Thread* head;
+  Thread* tail;
+} Threads;
+
 // Singly-linked list of values.
 
 typedef struct Values {
@@ -19,7 +41,7 @@ typedef struct Values {
 typedef struct Link {
   Values* head;
   Values* tail;
-  struct Thread* waiting;
+  struct Threads waiting;
 } Link;
 
 // The following defines a Vars structure for storing the value of local
@@ -30,19 +52,19 @@ typedef struct Link {
 // computed, and to ensure the values are computed and updated by the time the
 // scope is used.
 
-typedef struct Vars {
+struct Vars {
   FblcName name;
   FblcValue* value;
   struct Vars* next;
-} Vars;
+};
 
 // Map from port name to link.
 
-typedef struct Ports {
+struct Ports {
   FblcName name;
   Link* link;
   struct Ports* next;
-} Ports;
+};
 
 // The evaluator works by breaking down action and expression evaluation into
 // a sequence of commands that can be executed in turn. All of the state of
@@ -66,10 +88,10 @@ typedef enum {
 // Cmd is the base structure common to all commands.
 // Specific commands will have the same initial layout, with additional
 // data following.
-typedef struct Cmd {
+struct Cmd {
   CmdTag tag;
   struct Cmd* next;
-} Cmd;
+};
 
 // CMD_EXPR: The expr command evaluates expr and stores the resulting value in
 // *target.
@@ -146,23 +168,6 @@ typedef struct {
   Link* link;
   FblcValue* value;
 } PutCmd;
-
-// Singly-linked list of threads.
-
-typedef struct Thread {
-  Vars* vars;
-  Ports* ports;
-  Cmd* cmd;
-  struct Thread* next;
-} Thread;
-
-// List of threads with head and tail pointer. Threads are added to the tail
-// and removed from the head.
-
-typedef struct {
-  Thread* head;
-  Thread* tail;
-} Threads;
 
 static FblcValue** LookupRef(Vars* vars, FblcName name);
 static FblcValue* LookupVal(Vars* vars, FblcName name);
@@ -781,12 +786,7 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             assert(link != NULL && "Get port not in scope");
 
             if (link->head == NULL) {
-              Thread* waiting = GC_MALLOC(sizeof(Thread));
-              waiting->vars = vars;
-              waiting->ports = ports;
-              waiting->cmd = (Cmd*)cmd;
-              waiting->next = link->waiting;
-              link->waiting = waiting;
+              AddThread(&link->waiting, vars, ports, (Cmd*)cmd);
               cmds = NULL;
             } else {
               *target = link->head->value;
@@ -854,7 +854,8 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
             Link* link = GC_MALLOC(sizeof(Link));
             link->head = NULL;
             link->tail = NULL;
-            link->waiting = NULL;
+            link->waiting.head = NULL;
+            link->waiting.tail = NULL;
             ports = AddPort(ports, link_actn->getname.name, link);
             ports = AddPort(ports, link_actn->putname.name, link);
             cmds = MkActnCmd(link_actn->body, target, cmds);
@@ -973,10 +974,9 @@ static void Run(const FblcEnv* env, Threads* threads, Vars* vars, Ports* ports,
         link->tail = ntail;
         cmds = cmd->next;
 
-        if (link->waiting != NULL) {
-          Thread* thread = link->waiting;
-          AddThread(threads, thread->vars, thread->ports, thread->cmd);
-          link->waiting = thread->next;
+        Thread* waiting = GetThread(&link->waiting);
+        if (waiting != NULL) {
+          AddThread(threads, waiting->vars, waiting->ports, waiting->cmd);
         }
         break;
       }
