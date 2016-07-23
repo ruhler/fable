@@ -276,7 +276,7 @@ static FblcValue* LookupVal(Vars* vars, FblcName name)
 
 static Vars* AddVar(Vars* vars, FblcName name)
 {
-  Vars* newvars = GC_MALLOC(sizeof(Vars));
+  Vars* newvars = MALLOC(sizeof(Vars));
   newvars->name = name;
   newvars->value = NULL;
   newvars->next = vars;
@@ -325,7 +325,7 @@ static Link* LookupPort(Ports* ports, FblcName name)
 
 static Ports* AddPort(Ports* ports, FblcName name, Link* link)
 {
-  Ports* nports = GC_MALLOC(sizeof(Ports));
+  Ports* nports = MALLOC(sizeof(Ports));
   nports->name = name;
   nports->link = link;
   nports->next = ports;
@@ -352,7 +352,7 @@ void FreeLink(Link* link)
   while (values != NULL) {
     link->head = values->next;
     FblcRelease(values->value);
-    GC_FREE(values);
+    FREE(values);
     values = link->head;
   }
 
@@ -362,7 +362,7 @@ void FreeLink(Link* link)
     thread = GetThread(&(link->waiting));
   }
 
-  GC_FREE(link);
+  FREE(link);
 }
 
 // NewThread --
@@ -383,7 +383,7 @@ void FreeLink(Link* link)
 
 static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
 {
-  Thread* thread = GC_MALLOC(sizeof(Thread));
+  Thread* thread = MALLOC(sizeof(Thread));
   thread->vars = vars;
   thread->ports = ports;
   thread->cmd = cmd;
@@ -407,7 +407,7 @@ static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
 
 static void FreeThread(Thread* thread)
 {
-  GC_FREE(thread);
+  FREE(thread);
 }
 
 // AddThread --
@@ -486,7 +486,7 @@ static Cmd* MkExprCmd(const FblcExpr* expr, FblcValue** target, Cmd* next)
   assert(expr != NULL);
   assert(target != NULL);
 
-  ExprCmd* cmd = GC_MALLOC(sizeof(ExprCmd));
+  ExprCmd* cmd = MALLOC(sizeof(ExprCmd));
   cmd->tag = CMD_EXPR;
   cmd->next = next;
   cmd->expr = expr;
@@ -516,7 +516,7 @@ static Cmd* MkActnCmd(FblcActn* actn, FblcValue** target, Cmd* next)
   assert(actn != NULL);
   assert(target != NULL);
 
-  ActnCmd* cmd = GC_MALLOC(sizeof(ActnCmd));
+  ActnCmd* cmd = MALLOC(sizeof(ActnCmd));
   cmd->tag = CMD_ACTN;
   cmd->next = next;
   cmd->actn = actn;
@@ -544,7 +544,7 @@ static Cmd* MkActnCmd(FblcActn* actn, FblcValue** target, Cmd* next)
 static Cmd* MkAccessCmd(
     FblcValue* value, FblcName field, FblcValue** target, Cmd* next)
 {
-  AccessCmd* cmd = GC_MALLOC(sizeof(AccessCmd));
+  AccessCmd* cmd = MALLOC(sizeof(AccessCmd));
   cmd->tag = CMD_ACCESS;
   cmd->next = next;
   cmd->value = value;
@@ -574,7 +574,7 @@ static Cmd* MkCondExprCmd(
     FblcUnionValue* value, FblcExpr* const* choices, FblcValue** target,
     Cmd* next)
 {
-  CondExprCmd* cmd = GC_MALLOC(sizeof(CondExprCmd));
+  CondExprCmd* cmd = MALLOC(sizeof(CondExprCmd));
   cmd->tag = CMD_COND_EXPR;
   cmd->next = next;
   cmd->value = value;
@@ -603,7 +603,7 @@ static Cmd* MkCondExprCmd(
 static Cmd* MkCondActnCmd(
     FblcUnionValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
 {
-  CondActnCmd* cmd = GC_MALLOC(sizeof(CondActnCmd));
+  CondActnCmd* cmd = MALLOC(sizeof(CondActnCmd));
   cmd->tag = CMD_COND_ACTN;
   cmd->next = next;
   cmd->value = value;
@@ -630,7 +630,7 @@ static Cmd* MkCondActnCmd(
 
 static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 {
-  ScopeCmd* cmd = GC_MALLOC(sizeof(ScopeCmd));
+  ScopeCmd* cmd = MALLOC(sizeof(ScopeCmd));
   cmd->tag = CMD_SCOPE;
   cmd->next = next;
   cmd->vars = vars;
@@ -697,7 +697,7 @@ static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 
 static Cmd* MkJoinCmd(int count, Cmd* next)
 {
-  JoinCmd* cmd = GC_MALLOC(sizeof(JoinCmd));
+  JoinCmd* cmd = MALLOC(sizeof(JoinCmd));
   cmd->tag = CMD_JOIN;
   cmd->next = next;
   cmd->count = count;
@@ -722,7 +722,7 @@ static Cmd* MkJoinCmd(int count, Cmd* next)
 static Cmd* MkPutCmd(FblcValue** target, Link* link, Cmd* next)
 {
   assert(target != NULL);
-  PutCmd* cmd = GC_MALLOC(sizeof(PutCmd));
+  PutCmd* cmd = MALLOC(sizeof(PutCmd));
   cmd->tag = CMD_PUT;
   cmd->next = next;
   cmd->target = target;
@@ -747,7 +747,7 @@ static Cmd* MkPutCmd(FblcValue** target, Link* link, Cmd* next)
 
 static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
 {
-  FreeLinkCmd* cmd = GC_MALLOC(sizeof(FreeLinkCmd));
+  FreeLinkCmd* cmd = MALLOC(sizeof(FreeLinkCmd));
   cmd->tag = CMD_FREE_LINK;
   cmd->next = next;
   cmd->link = link;
@@ -847,9 +847,9 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
                 // Create the struct value now, then add commands to evaluate
                 // the arguments to fill in the fields with the proper results.
                 int fieldc = type->fieldc;
-                FblcStructValue* value = GC_MALLOC(sizeof(FblcStructValue));
+                FblcStructValue* value = MALLOC(sizeof(FblcStructValue));
                 value->refcount = 1;
-                value->fieldv = GC_MALLOC(fieldc * sizeof(FblcValue*));
+                value->fieldv = MALLOC(fieldc * sizeof(FblcValue*));
                 value->type = type;
                 *target = (FblcValue*)value;
                 for (int i = 0; i < fieldc; i++) {
@@ -905,7 +905,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
             FblcType* type = FblcLookupType(env, union_expr->type.name);
             assert(type != NULL);
-            FblcUnionValue* value = GC_MALLOC(sizeof(FblcUnionValue));
+            FblcUnionValue* value = MALLOC(sizeof(FblcUnionValue));
             value->refcount = 1;
             value->type = type;
             value->tag = TagForField(type, union_expr->field.name);
@@ -969,7 +969,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
               Values* values = link->head;
               *target = values->value;
               link->head = values->next;
-              GC_FREE(values);
+              FREE(values);
               if (link->head == NULL) {
                 link->tail = NULL;
               }
@@ -1032,7 +1032,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             }
 
             FblcLinkActn* link_actn = (FblcLinkActn*)actn;
-            Link* link = GC_MALLOC(sizeof(Link));
+            Link* link = MALLOC(sizeof(Link));
             link->head = NULL;
             link->tail = NULL;
             link->waiting.head = NULL;
@@ -1136,13 +1136,13 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             Vars* vars = thread->vars;
             thread->vars = vars->next;
             FblcRelease(vars->value);
-            GC_FREE(vars);
+            FREE(vars);
           }
 
           while (thread->ports != NULL && thread->ports != cmd->ports) {
             Ports* ports = thread->ports;
             thread->ports = ports->next;
-            GC_FREE(ports);
+            FREE(ports);
           }
         }
 
@@ -1168,7 +1168,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         FblcValue** target = cmd->target;
         *target = cmd->value;
         assert(cmd->value != NULL);
-        Values* ntail = GC_MALLOC(sizeof(Values));
+        Values* ntail = MALLOC(sizeof(Values));
         ntail->value = FblcCopy(cmd->value);
         ntail->next = NULL;
         if (link->head == NULL) {
@@ -1193,7 +1193,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
       }
     }
 
-    GC_FREE(thread->cmd);
+    FREE(thread->cmd);
     thread->cmd = next;
   }
 

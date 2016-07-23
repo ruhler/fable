@@ -21,6 +21,11 @@
 
 #define GC_DEBUG
 #include <gc/gc.h>
+#define MALLOC_INIT() GC_INIT()
+#define MALLOC(x) GC_MALLOC(x)
+#define FREE(x) GC_FREE(x)
+#define ENABLE_LEAK_DETECTION() GC_find_leak = 1
+#define CHECK_FOR_LEAKS() GC_gcollect()
 
 typedef struct FblcAllocList FblcAllocList;
 

@@ -53,7 +53,8 @@ static void PrintUsage(FILE* stream)
 
 int main(int argc, char* argv[])
 {
-  GC_find_leak = 1;
+  ENABLE_LEAK_DETECTION();
+  MALLOC_INIT();
 
   const char* filename = NULL;
   bool expect_error = false;
@@ -77,8 +78,6 @@ int main(int argc, char* argv[])
     fprintf(stderr, "no input file.\n");
     return 1;
   }
-
-  GC_INIT();
 
   FblcTokenStream toks;
   if (!FblcOpenTokenStream(&toks, filename)) {
@@ -112,7 +111,7 @@ int main(int argc, char* argv[])
     printf("\n");
     FblcRelease(value);
     FblcFreeAll(&alloc);
-    GC_gcollect();
+    CHECK_FOR_LEAKS();
     return expect_error ? 1 : 0;
   }
 
@@ -133,7 +132,7 @@ int main(int argc, char* argv[])
     printf("\n");
     FblcRelease(value);
     FblcFreeAll(&alloc);
-    GC_gcollect();
+    CHECK_FOR_LEAKS();
     return expect_error ? 1 : 0;
   }
 

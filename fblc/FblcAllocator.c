@@ -46,7 +46,7 @@ void FblcInitAllocator(FblcAllocator* alloc)
 
 void* FblcAlloc(FblcAllocator* alloc, int size)
 {
-  FblcAllocList* allocation = GC_MALLOC(sizeof(FblcAllocList) + size);
+  FblcAllocList* allocation = MALLOC(sizeof(FblcAllocList) + size);
   allocation->next = alloc->allocations;
   alloc->allocations = allocation;
   return allocation->data;
@@ -71,7 +71,7 @@ void FblcFreeAll(FblcAllocator* alloc)
   while (alloc->allocations != NULL) {
     FblcAllocList* this = alloc->allocations;
     alloc->allocations = alloc->allocations->next;
-    GC_FREE(this);
+    FREE(this);
   }
 }
 

@@ -47,13 +47,13 @@ void FblcRelease(FblcValue* value)
       for (int i = 0; i < value->type->fieldc; i++) {
         FblcRelease(struct_value->fieldv[i]);
       }
-      GC_FREE(struct_value->fieldv);
+      FREE(struct_value->fieldv);
     } else {
       assert(value->type->kind == FBLC_KIND_UNION);
       FblcUnionValue* union_value = (FblcUnionValue*)value;
       FblcRelease(union_value->field);
     }
-    GC_FREE(value);
+    FREE(value);
   }
 }
 
