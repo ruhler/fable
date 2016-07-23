@@ -21,6 +21,7 @@
 FblcValue* FblcCopy(FblcValue* src)
 {
   src->refcount++;
+  assert(src->refcount > 0 && "refcount overflow");
   return src;
 }
 

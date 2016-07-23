@@ -53,7 +53,7 @@ static void PrintUsage(FILE* stream)
 
 int main(int argc, char* argv[])
 {
-  // GC_find_leak = 1;
+  GC_find_leak = 1;
 
   const char* filename = NULL;
   bool expect_error = false;

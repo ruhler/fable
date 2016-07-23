@@ -1,10 +1,11 @@
+* switch to MALLOC and FREE instead of GC_MALLOC and GC_FREE.
+  To make it clear we no longer depend on gc for reclaiming memory.
+* Encapsulate access to link values
+  In other words - have all allocation and deallocation of Values in one
+  place.
 * Make FblcNewStructValue and FblcNewUnionValue functions.
   So that allocation and freeing of values is all in FblcValue.c,
   not inlined in FblcEvaluator.c
-* Replace libgc with custom memory management.
-  - By using it as a leak detector until everything is manually tracked.
-  - And implementing a reference-count based gc for FblcValues.
-  - And remembering to free Link objects.
 * Design command line interface to fblc
   - How should the main func/proc be specified?
     Answer: by name

@@ -82,7 +82,7 @@ struct Ports {
 
 typedef enum {
   CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND_EXPR, CMD_COND_ACTN,
-  CMD_SCOPE, CMD_JOIN, CMD_PUT,
+  CMD_SCOPE, CMD_JOIN, CMD_PUT, CMD_FREE_LINK,
 } CmdTag;
 
 // Cmd is the base structure common to all commands.
@@ -174,12 +174,20 @@ typedef struct {
   FblcValue* value;
 } PutCmd;
 
+// CMD_FREE_LINK: Free resources associated with the given link.
+typedef struct {
+  CmdTag tag;
+  struct Cmd* next;
+  Link* link;
+} FreeLinkCmd;
+
 static FblcValue** LookupRef(Vars* vars, FblcName name);
 static FblcValue* LookupVal(Vars* vars, FblcName name);
 static Vars* AddVar(Vars* vars, FblcName name);
 
 static Link* LookupPort(Ports* ports, FblcName name);
 static Ports* AddPort(Ports* ports, FblcName name, Link* link);
+static void FreeLink(Link* link);
 
 static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd);
 static void FreeThread(Thread* thread);
@@ -199,6 +207,8 @@ static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next);
 static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoinCmd(int count, Cmd* next);
+static Cmd* MkPutCmd(FblcValue** target, Link* link, Cmd* next);
+static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
 static bool IsPopScope(Cmd* next);
 static void Run(const FblcEnv* env, Threads* threads, Thread* thread);
@@ -320,6 +330,39 @@ static Ports* AddPort(Ports* ports, FblcName name, Link* link)
   nports->link = link;
   nports->next = ports;
   return nports;
+}
+
+// FreeLink --
+//
+//   Free the given link object and resources associated with it.
+//
+// Inputs:
+//   link - The link to free.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The link object is freed along with any resources associated with it.
+//   After this call, the link object should not be accessed again.
+
+void FreeLink(Link* link)
+{
+  Values* values = link->head;
+  while (values != NULL) {
+    link->head = values->next;
+    FblcRelease(values->value);
+    GC_FREE(values);
+    values = link->head;
+  }
+
+  Thread* thread = GetThread(&(link->waiting));
+  while (thread != NULL) {
+    FreeThread(thread);
+    thread = GetThread(&(link->waiting));
+  }
+
+  GC_FREE(link);
 }
 
 // NewThread --
@@ -666,6 +709,7 @@ static Cmd* MkJoinCmd(int count, Cmd* next)
 //   Create a put command.
 //
 // Inputs:
+//   target - The target destination for the put value.
 //   link - The link to put the value on.
 //   next - The command to run after this one.
 //
@@ -684,6 +728,29 @@ static Cmd* MkPutCmd(FblcValue** target, Link* link, Cmd* next)
   cmd->target = target;
   cmd->link = link;
   cmd->value = NULL;
+  return (Cmd*)cmd;
+}
+
+// MkFreeLinkCmd --
+//
+//   Create a free link command.
+//
+// Inputs:
+//   link - The link to free.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
+static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
+{
+  FreeLinkCmd* cmd = GC_MALLOC(sizeof(FreeLinkCmd));
+  cmd->tag = CMD_FREE_LINK;
+  cmd->next = next;
+  cmd->link = link;
   return (Cmd*)cmd;
 }
 
@@ -737,20 +804,21 @@ static bool IsPopScope(Cmd* next)
 
 // Run --
 //
-//   spend a finite amount of time executing commands for a thread.
+//   Spend a finite amount of time executing commands for a thread.
 //
-// inputs:
-//   env - the environment in which to run the thread.
-//   threads - the list of currently active threads.
-//   thread - the thread to run.
+// Inputs:
+//   env - The environment in which to run the thread.
+//   threads - The list of currently active threads.
+//   thread - The thread to run.
 //
-// result:
-//   none.
+// Result:
+//   None.
 //
-// side effects:
-//   threads are added to the threads list based on the commands executed for
-//   the thread. if the thread is not executed to completion, it will be added
-//   back to the threads list representing the continuation of this thread.
+// Side effects:
+//   Threads are added to the threads list based on the commands executed for
+//   the thread. If the thread is executed to completion, it will be freed.
+//   Otherwise it will be added back to the threads list representing the
+//   continuation of this thread.
 
 static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
 {
@@ -898,8 +966,10 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
               AddThread(&link->waiting, thread);
               return;
             } else {
-              *target = link->head->value;
-              link->head = link->head->next;
+              Values* values = link->head;
+              *target = values->value;
+              link->head = values->next;
+              GC_FREE(values);
               if (link->head == NULL) {
                 link->tail = NULL;
               }
@@ -954,14 +1024,13 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
           }
 
           case FBLC_LINK_ACTN: {
-            // actn -> (pop scope) -> next
+            // actn -> free link -> (pop scope) -> next
             // Note: This modifies the scope in place rather than insert a
             // push scope command to do that as separate command.
             if (!IsPopScope(next)) {
               next = MkPopScopeCmd(thread->vars, thread->ports, next);
             }
 
-            // TODO: Free the allocation link object after the pop scope.
             FblcLinkActn* link_actn = (FblcLinkActn*)actn;
             Link* link = GC_MALLOC(sizeof(Link));
             link->head = NULL;
@@ -972,6 +1041,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
                 thread->ports, link_actn->getname.name, link);
             thread->ports = AddPort(
                 thread->ports, link_actn->putname.name, link);
+            next = MkFreeLinkCmd(link, next);
             next = MkActnCmd(link_actn->body, target, next);
             break;
           }
@@ -1086,6 +1156,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         assert(cmd->count > 0);
         cmd->count--;
         if (cmd->count != 0) {
+          FreeThread(thread);
           return;
         }
         break;
@@ -1112,6 +1183,12 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         if (waiting != NULL) {
           AddThread(threads, waiting);
         }
+        break;
+      }
+
+      case CMD_FREE_LINK: {
+        FreeLinkCmd* cmd = (FreeLinkCmd*)thread->cmd;
+        FreeLink(cmd->link);
         break;
       }
     }
