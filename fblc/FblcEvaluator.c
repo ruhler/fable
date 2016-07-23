@@ -145,11 +145,16 @@ typedef struct {
 
 // CMD_SCOPE: The scope command sets the current ports and vars to the given
 // ports and vars.
+// If is_pop is true, then the old scope is freed before pushing the new one.
+// More precisely, the current scope's vars and ports are freed one-by-one
+// until they match the given vars and ports or there are no more left. Then
+// the scope change is made if necessary.
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
   Vars* vars;
   Ports* ports;
+  bool is_pop;
 } ScopeCmd;
 
 // CMD_JOIN: The join command halts the current thread of execution until
@@ -190,9 +195,12 @@ static Cmd* MkCondExprCmd(
     Cmd* next);
 static Cmd* MkCondActnCmd(
     FblcUnionValue* value, FblcActn** choices, FblcValue** target, Cmd* next);
-static Cmd* MkScopeCmd(Vars* vars, Ports* ports, Cmd* next);
+static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next);
+static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next);
+static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoinCmd(int count, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
+static bool IsPopScope(Cmd* next);
 static void Run(const FblcEnv* env, Threads* threads, Thread* thread);
 
 // LookupRef --
@@ -568,6 +576,7 @@ static Cmd* MkCondActnCmd(
 // Inputs:
 //   vars - The new value of the local variable scope to use.
 //   ports - The new value of the ports scope to use.
+//   is_pop - True if this should be a pop scope command.
 //   next - The command to run after this one.
 //
 // Returns:
@@ -576,14 +585,57 @@ static Cmd* MkCondActnCmd(
 // Side effects:
 //   None.
 
-static Cmd* MkScopeCmd(Vars* vars, Ports* ports, Cmd* next)
+static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 {
   ScopeCmd* cmd = GC_MALLOC(sizeof(ScopeCmd));
   cmd->tag = CMD_SCOPE;
   cmd->next = next;
   cmd->vars = vars;
   cmd->ports = ports;
+  cmd->is_pop = is_pop;
   return (Cmd*)cmd;
+}
+
+// MkPushScopeCmd --
+//   
+//   Create a command to change the current ports and local variable scope
+//   without freeing the previous ports and local variable scope.
+//
+// Inputs:
+//   vars - The new value of the local variable scope to use.
+//   ports - The new value of the ports scope to use.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
+static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next)
+{
+  return MkScopeCmd(vars, ports, false, next);
+}
+
+// MkPopScopeCmd --
+//   
+//   Create a command to change the current ports and local variable scope
+//   that frees the previous ports and local variable scope.
+//
+// Inputs:
+//   vars - The new value of the local variable scope to use.
+//   ports - The new value of the ports scope to use.
+//   next - The command to run after this one.
+//
+// Returns:
+//   The newly created command.
+//
+// Side effects:
+//   None.
+
+static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
+{
+  return MkScopeCmd(vars, ports, true, next);
 }
 
 // MkJoinCmd --
@@ -661,21 +713,43 @@ static int TagForField(const FblcType* type, FblcName field)
   assert(false && "No such field.");
 }
 
+// IsPopScope --
+//
+//   Check wether the next command is a scope pop.
+//
+// inputs:
+//   next - the next command.
+//
+// result:
+//   true if the next command is a scope pop, false otherwise.
+//
+// side effects:
+//   None.
+
+static bool IsPopScope(Cmd* next)
+{
+  if (next == NULL || next->tag != CMD_SCOPE) {
+    return false;
+  }
+  ScopeCmd* scope_cmd = (ScopeCmd*)next;
+  return scope_cmd->is_pop;
+}
+
 // Run --
 //
-//   Spend a finite amount of time executing commands for a thread.
+//   spend a finite amount of time executing commands for a thread.
 //
-// Inputs:
-//   env - The environment in which to run the thread.
-//   threads - The list of currently active threads.
-//   thread - The thread to run.
+// inputs:
+//   env - the environment in which to run the thread.
+//   threads - the list of currently active threads.
+//   thread - the thread to run.
 //
-// Result:
-//   None.
+// result:
+//   none.
 //
-// Side Effects:
-//   Threads are added to the threads list based on the commands executed for
-//   the thread. If the thread is not executed to completion, it will be added
+// side effects:
+//   threads are added to the threads list based on the commands executed for
+//   the thread. if the thread is not executed to completion, it will be added
 //   back to the threads list representing the continuation of this thread.
 
 static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
@@ -722,19 +796,14 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             FblcFunc* func = FblcLookupFunc(env, app_expr->func.name);
             if (func != NULL) {
               // Add to the top of the command list:
-              // arg -> ... -> arg -> scope -> body -> (scope) -> ...
+              //  arg -> ... -> arg -> push scope -> body -> pop scope -> next 
               // The results of the arg evaluations will be stored directly in
-              // the vars for the scope command.
+              // the vars for the first scope command.
+              // TODO: Avoid memory leaks in the case of tail calls.
 
-              // Don't put a scope change if we will immediately 
-              // change it back to a different scope. This is important to
-              // avoid memory leaks for tail calls.
-              if (next != NULL && next->tag != CMD_SCOPE) {
-                next = MkScopeCmd(thread->vars, thread->ports, next);
-              }
-
+              next = MkPopScopeCmd(thread->vars, thread->ports, next);
               next = MkExprCmd(func->body, target, next);
-              next = MkScopeCmd(NULL, thread->ports, next);
+              next = MkPushScopeCmd(NULL, thread->ports, next);
 
               ScopeCmd* scmd = (ScopeCmd*)next;
               Vars* nvars = NULL;
@@ -778,18 +847,18 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
 
           case FBLC_LET_EXPR: {
             // Add to the top of the command list:
-            // def -> var -> body -> (vars) -> ...
+            // def -> push scope -> body -> (pop scope) -> ...
             FblcLetExpr* let_expr = (FblcLetExpr*)expr;
 
             // No need to reset the scope if we are going to switch to
             // different scope immediately after anyway.
-            if (next != NULL && next->tag != CMD_SCOPE) {
-              next = MkScopeCmd(thread->vars, thread->ports, next);
+            if (!IsPopScope(next)) {
+              next = MkPopScopeCmd(thread->vars, thread->ports, next);
             }
             FblcName var_name = let_expr->name.name;
             Vars* nvars = AddVar(thread->vars, var_name);
             next = MkExprCmd(let_expr->body, target, next);
-            next = MkScopeCmd(nvars, thread->ports, next);
+            next = MkPushScopeCmd(nvars, thread->ports, next);
             next = MkExprCmd(let_expr->def, LookupRef(nvars, var_name), next);
             break;
           }
@@ -855,17 +924,12 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             assert(proc->argc == call_actn->exprc);
 
             // Add to the top of the command list:
-            // arg -> ... -> arg -> scope -> body -> (scope) -> ...
+            //  arg -> ... -> arg -> push scope -> body -> pop scope -> next
             // The results of the arg evaluations will be stored directly in
             // the vars for the scope command.
+            // TODO: Avoid memory leaks in the case of tail calls.
 
-            // Don't put a scope change if we will immediately 
-            // change it back to a different scope. This is important to
-            // avoid memory leaks for tail calls.
-            if (next != NULL && next->tag != CMD_SCOPE) {
-              next = MkScopeCmd(thread->vars, thread->ports, next);
-            }
-
+            next = MkPopScopeCmd(thread->vars, thread->ports, next);
             next = MkActnCmd(proc->body, target, next);
 
             Ports* nports = NULL;
@@ -874,7 +938,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
               assert(link != NULL && "port not found in scope");
               nports = AddPort(nports, proc->portv[i].name.name, link);
             }
-            next = MkScopeCmd(NULL, nports, next);
+            next = MkPushScopeCmd(NULL, nports, next);
 
             ScopeCmd* scmd = (ScopeCmd*)next;
             Vars* nvars = NULL;
@@ -889,6 +953,14 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
           }
 
           case FBLC_LINK_ACTN: {
+            // actn -> (pop scope) -> next
+            // Note: This modifies the scope in place rather than insert a
+            // push scope command to do that as separate command.
+            if (!IsPopScope(next)) {
+              next = MkPopScopeCmd(thread->vars, thread->ports, next);
+            }
+
+            // TODO: Free the allocation link object after the pop scope.
             FblcLinkActn* link_actn = (FblcLinkActn*)actn;
             Link* link = GC_MALLOC(sizeof(Link));
             link->head = NULL;
@@ -906,12 +978,13 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
           case FBLC_EXEC_ACTN: {
             // Create new threads for each action to execute.
             // actn .>
-            // actn ..> join -> scope -> actn -> scope -> next
+            // actn ..> join -> push scope -> actn -> pop scope -> next
             // actn .>
             FblcExecActn* exec_actn = (FblcExecActn*)actn;
-            next = MkScopeCmd(thread->vars, thread->ports, next);
+            next = MkPopScopeCmd(thread->vars, thread->ports, next);
             next = MkActnCmd(exec_actn->body, target, next);
-            ScopeCmd* scmd = (ScopeCmd*)MkScopeCmd(NULL, thread->ports, next);
+            ScopeCmd* scmd = (ScopeCmd*)MkPushScopeCmd(
+                NULL, thread->ports, next);
             Cmd* jcmd = MkJoinCmd(exec_actn->execc, (Cmd*)scmd);
 
             Vars* nvars = thread->vars;
@@ -983,6 +1056,22 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
 
       case CMD_SCOPE: {
         ScopeCmd* cmd = (ScopeCmd*)thread->cmd;
+
+        if (cmd->is_pop) {
+          while (thread->vars != NULL && thread->vars != cmd->vars) {
+            Vars* vars = thread->vars;
+            thread->vars = vars->next;
+            // FblcRelease(vars->value);
+            GC_FREE(vars);
+          }
+
+          while (thread->ports != NULL && thread->ports != cmd->ports) {
+            Ports* ports = thread->ports;
+            thread->ports = ports->next;
+            GC_FREE(ports);
+          }
+        }
+
         thread->vars = cmd->vars;
         thread->ports = cmd->ports;
         break;

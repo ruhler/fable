@@ -4,6 +4,7 @@
 * Replace libgc with custom memory management.
   - By using it as a leak detector until everything is manually tracked.
   - And implementing a reference-count based gc for FblcValues.
+  - And remembering to free Link objects.
 * Design command line interface to fblc
   - How should the main func/proc be specified?
     Answer: by name
