@@ -5,6 +5,57 @@
 #include "FblcInternal.h"
 
 
+// FblcNewStructValue --
+//
+//  Allocate a new struct value of the given type.
+//
+// Inputs:
+//   type - The type of the struct value to allocate.
+//
+// Results:
+//   A newly allocated struct value of the given type. The fields of the
+//   struct are left uninitialized.
+//
+// Side effects:
+//   Allocates a new struct value. Use FblcCopy to make a (shared) copy of the
+//   struct value, and FblcRelease to release the resources associated with
+//   the value.
+
+FblcStructValue* FblcNewStructValue(FblcType* type)
+{
+  assert(type->kind == FBLC_KIND_STRUCT);
+  FblcStructValue* value = MALLOC(sizeof(FblcStructValue));
+  value->refcount = 1;
+  value->fieldv = MALLOC(type->fieldc * sizeof(FblcValue*));
+  value->type = type;
+  return value;
+}
+
+// FblcNewUnionValue --
+//
+//  Allocate a new union value of the given type.
+//
+// Inputs:
+//   type - The type of the union value to allocate.
+//
+// Results:
+//   A newly allocated union value of the given type. The field and tag of the
+//   union are left uninitialized.
+//
+// Side effects:
+//   Allocates a new union value. Use FblcCopy to make a (shared) copy of the
+//   union value, and FblcRelease to release the resources associated with
+//   the value.
+
+FblcUnionValue* FblcNewUnionValue(FblcType* type)
+{
+  assert(type->kind == FBLC_KIND_UNION);
+  FblcUnionValue* value = MALLOC(sizeof(FblcUnionValue));
+  value->refcount = 1;
+  value->type = type;
+  return value;
+}
+
 // FblcCopy --
 //
 //   Make a (likely shared) copy of the given value.

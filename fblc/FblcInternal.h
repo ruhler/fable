@@ -331,6 +331,8 @@ typedef struct {
   FblcValue* field;
 } FblcUnionValue;
 
+FblcStructValue* FblcNewStructValue(FblcType* type);
+FblcUnionValue* FblcNewUnionValue(FblcType* type);
 FblcValue* FblcCopy(FblcValue* src);
 void FblcRelease(FblcValue* value);
 void FblcPrintValue(FILE* fout, FblcValue* value);

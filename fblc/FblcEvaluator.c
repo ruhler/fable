@@ -846,13 +846,9 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
               if (type->kind == FBLC_KIND_STRUCT) {
                 // Create the struct value now, then add commands to evaluate
                 // the arguments to fill in the fields with the proper results.
-                int fieldc = type->fieldc;
-                FblcStructValue* value = MALLOC(sizeof(FblcStructValue));
-                value->refcount = 1;
-                value->fieldv = MALLOC(fieldc * sizeof(FblcValue*));
-                value->type = type;
+                FblcStructValue* value = FblcNewStructValue(type);
                 *target = (FblcValue*)value;
-                for (int i = 0; i < fieldc; i++) {
+                for (int i = 0; i < type->fieldc; i++) {
                   next = MkExprCmd(
                       app_expr->argv[i], &(value->fieldv[i]), next);
                 }
@@ -905,9 +901,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
             FblcType* type = FblcLookupType(env, union_expr->type.name);
             assert(type != NULL);
-            FblcUnionValue* value = MALLOC(sizeof(FblcUnionValue));
-            value->refcount = 1;
-            value->type = type;
+            FblcUnionValue* value = FblcNewUnionValue(type);
             value->tag = TagForField(type, union_expr->field.name);
             *target = (FblcValue*)value;
             next = MkExprCmd(union_expr->value, &(value->field), next);

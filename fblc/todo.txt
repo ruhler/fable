@@ -1,10 +1,6 @@
-  To make it clear we no longer depend on gc for reclaiming memory.
 * Encapsulate access to link values
   In other words - have all allocation and deallocation of Values in one
   place.
-* Make FblcNewStructValue and FblcNewUnionValue functions.
-  So that allocation and freeing of values is all in FblcValue.c,
-  not inlined in FblcEvaluator.c
 * Design command line interface to fblc
   - How should the main func/proc be specified?
     Answer: by name
