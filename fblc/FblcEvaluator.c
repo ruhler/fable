@@ -691,7 +691,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
           case FBLC_VAR_EXPR: {
             FblcVarExpr* var_expr = (FblcVarExpr*)expr;
             FblcName var_name = var_expr->name.name;
-            *target = LookupVal(thread->vars, var_name);
+            *target = FblcCopy(LookupVal(thread->vars, var_name));
             assert(*target != NULL && "Var not in scope");
             break;
           }
@@ -705,6 +705,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
                 // the arguments to fill in the fields with the proper results.
                 int fieldc = type->fieldc;
                 FblcStructValue* value = GC_MALLOC(sizeof(FblcStructValue));
+                value->refcount = 1;
                 value->fieldv = GC_MALLOC(fieldc * sizeof(FblcValue*));
                 value->type = type;
                 *target = (FblcValue*)value;
@@ -767,6 +768,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             FblcType* type = FblcLookupType(env, union_expr->type.name);
             assert(type != NULL);
             FblcUnionValue* value = GC_MALLOC(sizeof(FblcUnionValue));
+            value->refcount = 1;
             value->type = type;
             value->tag = TagForField(type, union_expr->field.name);
             *target = (FblcValue*)value;
@@ -957,6 +959,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             abort();
           }
         }
+        // FblcRelease(cmd->value);
         break;
       }
 

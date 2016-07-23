@@ -5,6 +5,50 @@
 #include "FblcInternal.h"
 
 
+// FblcCopy --
+//
+//   Make a (likely shared) copy of the given value.
+//
+// Inputs:
+//   src - The value to make a copy of.
+//
+// Results:
+//   A copy of the value, which may be the same as the original value.
+//
+// Side effects:
+//   None.
+
+FblcValue* FblcCopy(FblcValue* src)
+{
+  src->refcount++;
+  return src;
+}
+
+// FblcRelease --
+//
+//   Free the resources associated with a value.
+//
+// Inputs:
+//   value - The value to free the resources of.
+//
+// Results:
+//   None.
+//
+// Side effect:
+//   The resources for the value are freed.
+
+void FblcRelease(FblcValue* value)
+{
+  value->refcount--;
+  if (value->refcount == 0) {
+    if (value->type->kind == FBLC_KIND_STRUCT) {
+      FblcStructValue* struct_value = (FblcStructValue*)value;
+      GC_FREE(struct_value->fieldv);
+    }
+    GC_FREE(value);
+  }
+}
+
 // FblcPrintValue --
 //
 //   Print a value in standard format to the given FILE stream.

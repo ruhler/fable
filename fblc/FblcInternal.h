@@ -303,6 +303,7 @@ bool FblcAddProc(FblcAllocator* alloc, FblcEnv* env, FblcProc* proc);
 // both of which have the same initial layout.
 
 typedef struct {
+  int refcount;
   FblcType* type;
 } FblcValue;
 
@@ -310,6 +311,7 @@ typedef struct {
 // are declared in the type declaration.
 
 typedef struct {
+  int refcount;
   FblcType* type;
   FblcValue** fieldv;
 } FblcStructValue;
@@ -318,11 +320,14 @@ typedef struct {
 // is stores the value of the active field.
 
 typedef struct {
+  int refcount;
   FblcType* type;
   int tag;
   FblcValue* field;
 } FblcUnionValue;
 
+FblcValue* FblcCopy(FblcValue* src);
+void FblcRelease(FblcValue* value);
 void FblcPrintValue(FILE* fout, FblcValue* value);
 
 // FblcTokenizer
