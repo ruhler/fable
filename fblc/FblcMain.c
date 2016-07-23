@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
     FblcValue* value = FblcEvaluate(env, func->body);
     FblcPrintValue(stdout, value);
     printf("\n");
+    FblcRelease(value);
     FblcFreeAll(&alloc);
     GC_gcollect();
     return expect_error ? 1 : 0;

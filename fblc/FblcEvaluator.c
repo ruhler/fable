@@ -765,8 +765,9 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
           case FBLC_VAR_EXPR: {
             FblcVarExpr* var_expr = (FblcVarExpr*)expr;
             FblcName var_name = var_expr->name.name;
-            *target = FblcCopy(LookupVal(thread->vars, var_name));
-            assert(*target != NULL && "Var not in scope");
+            FblcValue* value = LookupVal(thread->vars, var_name);
+            assert(target != NULL && "Var not in scope");
+            *target = FblcCopy(value);
             break;
           }
 
@@ -1021,18 +1022,19 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         int target_tag = TagForField(type, cmd->field);
         FblcValue** target = cmd->target;
         if (type->kind == FBLC_KIND_STRUCT) {
-          *target = ((FblcStructValue*)cmd->value)->fieldv[target_tag];
+          FblcValue* value = ((FblcStructValue*)cmd->value)->fieldv[target_tag];
+          *target = FblcCopy(value);
         } else {
           assert(type->kind == FBLC_KIND_UNION);
           FblcUnionValue* union_value = (FblcUnionValue*)cmd->value;
           if (union_value->tag == target_tag) {
-            *target = union_value->field;
+            *target = FblcCopy(union_value->field);
           } else {
             fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
             abort();
           }
         }
-        // FblcRelease(cmd->value);
+        FblcRelease(cmd->value);
         break;
       }
 
@@ -1042,6 +1044,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         FblcValue** target = cmd->target;
         assert(value->type->kind == FBLC_KIND_UNION);
         next = MkExprCmd(cmd->choices[value->tag], target, next);
+        FblcRelease((FblcValue*)value);
         break;
       }
 
@@ -1051,6 +1054,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         FblcValue** target = cmd->target;
         assert(value->type->kind == FBLC_KIND_UNION);
         next = MkActnCmd(cmd->choices[value->tag], target, next);
+        FblcRelease((FblcValue*)value);
         break;
       }
 
@@ -1061,7 +1065,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
           while (thread->vars != NULL && thread->vars != cmd->vars) {
             Vars* vars = thread->vars;
             thread->vars = vars->next;
-            // FblcRelease(vars->value);
+            FblcRelease(vars->value);
             GC_FREE(vars);
           }
 
@@ -1094,7 +1098,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         *target = cmd->value;
         assert(cmd->value != NULL);
         Values* ntail = GC_MALLOC(sizeof(Values));
-        ntail->value = cmd->value;
+        ntail->value = FblcCopy(cmd->value);
         ntail->next = NULL;
         if (link->head == NULL) {
           assert(link->tail == NULL);

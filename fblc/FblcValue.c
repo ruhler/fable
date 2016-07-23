@@ -43,7 +43,14 @@ void FblcRelease(FblcValue* value)
   if (value->refcount == 0) {
     if (value->type->kind == FBLC_KIND_STRUCT) {
       FblcStructValue* struct_value = (FblcStructValue*)value;
+      for (int i = 0; i < value->type->fieldc; i++) {
+        FblcRelease(struct_value->fieldv[i]);
+      }
       GC_FREE(struct_value->fieldv);
+    } else {
+      assert(value->type->kind == FBLC_KIND_UNION);
+      FblcUnionValue* union_value = (FblcUnionValue*)value;
+      FblcRelease(union_value->field);
     }
     GC_FREE(value);
   }
