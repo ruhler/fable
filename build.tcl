@@ -52,6 +52,9 @@ puts [exec tail -n 1 out/fblc.spectest.gcov]
 puts "test ./out/fblc"
 expect_status 64 ./out/fblc
 
+puts "test ./out/fblc --help"
+expect_status 0 ./out/fblc --help
+
 puts "test ./out/fblc no_such_file"
 expect_status 66 ./out/fblc no_such_file
 
