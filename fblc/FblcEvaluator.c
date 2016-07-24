@@ -83,6 +83,12 @@ struct Ports {
   struct Ports* next;
 };
 
+static FblcValue** LookupRef(Vars* vars, FblcName name);
+static FblcValue* LookupVal(Vars* vars, FblcName name);
+static Vars* AddVar(Vars* vars, FblcName name);
+static Link* LookupPort(Ports* ports, FblcName name);
+static Ports* AddPort(Ports* ports, FblcName name, Link* link);
+
 // The evaluator works by breaking down action and expression evaluation into
 // a sequence of commands that can be executed in turn. All of the state of
 // evaluation, including the stack, is stored explicitly in the command list.
@@ -198,13 +204,6 @@ typedef struct {
   Link* link;
 } FreeLinkCmd;
 
-static FblcValue** LookupRef(Vars* vars, FblcName name);
-static FblcValue* LookupVal(Vars* vars, FblcName name);
-static Vars* AddVar(Vars* vars, FblcName name);
-
-static Link* LookupPort(Ports* ports, FblcName name);
-static Ports* AddPort(Ports* ports, FblcName name, Link* link);
-
 static Cmd* MkExprCmd(const FblcExpr* expr, FblcValue** target, Cmd* next);
 static Cmd* MkActnCmd(FblcActn* actn, FblcValue** target, Cmd* next);
 static Cmd* MkAccessCmd(
@@ -220,6 +219,7 @@ static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoinCmd(int count, Cmd* next);
 static Cmd* MkPutCmd(FblcValue** target, Link* link, Cmd* next);
 static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
+
 static int TagForField(const FblcType* type, FblcName field);
 static bool IsPopScope(Cmd* next);
 static void Run(const FblcEnv* env, Threads* threads, Thread* thread);
