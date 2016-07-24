@@ -8,8 +8,18 @@ typedef struct Vars Vars;
 typedef struct Ports Ports;
 typedef struct Cmd Cmd;
 typedef struct Thread Thread;
-
-// Singly-linked list of threads.
+
+// Threads
+//
+//   A thread holds the state of a single thread of execution, including local
+//   variables, local ports, and a sequence of commands to execute.
+//
+//   Threads often live on thread lists. A 'next' field is included in the
+//   Thread data structure to facilitate putting threads in lists.
+//
+//   The Threads data structure represents a singly-linked list of threads
+//   with head and tail pointer. Threads are added to the tail and removed
+//   from the head.
 
 struct Thread {
   Vars* vars;
@@ -18,14 +28,16 @@ struct Thread {
   Thread* next;
 };
 
-// List of threads with head and tail pointer. Threads are added to the tail
-// and removed from the head.
-
 typedef struct Threads {
   Thread* head;
   Thread* tail;
 } Threads;
 
+static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd);
+static void FreeThread(Thread* thread);
+static void AddThread(Threads* threads, Thread* thread);
+static Thread* GetThread(Threads* threads);
+
 // Singly-linked list of values.
 
 typedef struct Values {
@@ -189,11 +201,6 @@ static Link* LookupPort(Ports* ports, FblcName name);
 static Ports* AddPort(Ports* ports, FblcName name, Link* link);
 static void FreeLink(Link* link);
 
-static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd);
-static void FreeThread(Thread* thread);
-static void AddThread(Threads* threads, Thread* thread);
-static Thread* GetThread(Threads* threads);
-
 static Cmd* MkExprCmd(const FblcExpr* expr, FblcValue** target, Cmd* next);
 static Cmd* MkActnCmd(FblcActn* actn, FblcValue** target, Cmd* next);
 static Cmd* MkAccessCmd(
@@ -212,6 +219,105 @@ static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
 static int TagForField(const FblcType* type, FblcName field);
 static bool IsPopScope(Cmd* next);
 static void Run(const FblcEnv* env, Threads* threads, Thread* thread);
+
+// NewThread --
+//
+//   Create a new thread.
+//
+// Inputs:
+//   vars - The thread's local variables.
+//   ports - The thread's ports.
+//   cmd - The thread's command list.
+//
+// Results:
+//   A newly allocated and initialized thread object.
+//
+// Side effects:
+//   A new thread object is allocated. The thread object should be freed by
+//   calling FreeThread when the object is no longer needed.
+
+static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
+{
+  Thread* thread = MALLOC(sizeof(Thread));
+  thread->vars = vars;
+  thread->ports = ports;
+  thread->cmd = cmd;
+  thread->next = NULL;
+  return thread;
+}
+
+// FreeThread --
+//
+//   Free a thread object that is no longer needed.
+//
+// Inputs:
+//   thread - The thread object to free.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The resources for the thead object are released. The thread object should
+//   not be used after this call.
+
+static void FreeThread(Thread* thread)
+{
+  FREE(thread);
+}
+
+// AddThread --
+//
+//   Add a thread to the thread list.
+//
+// Inputs:
+//   threads - The current thread list.
+//   thread - The thread to add to the thread list.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The thread is added to the current thread list.
+
+static void AddThread(Threads* threads, Thread* thread)
+{
+  assert(thread->next == NULL);
+  if (threads->head == NULL) {
+    assert(threads->tail == NULL);
+    threads->head = thread;
+    threads->tail = thread;
+  } else {
+    threads->tail->next = thread;
+    threads->tail = thread;
+  }
+}
+
+// GetThread --
+//
+//   Get the next thread from the thread list.
+//
+// Inputs:
+//   threads - The current thread list.
+//
+// Results:
+//   The next thread on the thread list, or NULL if there are no more threads
+//   on the thread list.
+//
+// Side Effects:
+//   The returned thread is removed from the current thread list.
+
+static Thread* GetThread(Threads* threads)
+{
+  Thread* thread = threads->head;
+  if (thread != NULL) {
+    threads->head = thread->next;
+    thread->next = NULL;
+    if (threads->head == NULL) {
+      threads->tail = NULL;
+    }
+  }
+  return thread;
+}
 
 // LookupRef --
 //
@@ -363,105 +469,6 @@ void FreeLink(Link* link)
   }
 
   FREE(link);
-}
-
-// NewThread --
-//
-//   Create a new thread.
-//
-// Inputs:
-//   vars - The thread's local variables.
-//   ports - The thread's ports.
-//   cmd - The thread's command list.
-//
-// Results:
-//   A newly allocated and initialized thread object.
-//
-// Side effects:
-//   A new thread object is allocated. The thread object should be freed by
-//   calling FreeThread when the object is no longer needed.
-
-static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
-{
-  Thread* thread = MALLOC(sizeof(Thread));
-  thread->vars = vars;
-  thread->ports = ports;
-  thread->cmd = cmd;
-  thread->next = NULL;
-  return thread;
-}
-
-// FreeThread --
-//
-//   Free a thread object that is no longer needed.
-//
-// Inputs:
-//   thread - The thread object to free.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The resources for the thead object are released. The thread object should
-//   not be used after this call.
-
-static void FreeThread(Thread* thread)
-{
-  FREE(thread);
-}
-
-// AddThread --
-//
-//   Add a thread to the thread list.
-//
-// Inputs:
-//   threads - The current thread list.
-//   thread - The thread to add to the thread list.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The thread is added to the current thread list.
-
-static void AddThread(Threads* threads, Thread* thread)
-{
-  assert(thread->next == NULL);
-  if (threads->head == NULL) {
-    assert(threads->tail == NULL);
-    threads->head = thread;
-    threads->tail = thread;
-  } else {
-    threads->tail->next = thread;
-    threads->tail = thread;
-  }
-}
-
-// GetThread --
-//
-//   Get the next thread from the thread list.
-//
-// Inputs:
-//   threads - The current thread list.
-//
-// Results:
-//   The next thread on the thread list, or NULL if there are no more threads
-//   on the thread list.
-//
-// Side Effects:
-//   The returned thread is removed from the current thread list.
-
-static Thread* GetThread(Threads* threads)
-{
-  Thread* thread = threads->head;
-  if (thread != NULL) {
-    threads->head = thread->next;
-    thread->next = NULL;
-    if (threads->head == NULL) {
-      threads->tail = NULL;
-    }
-  }
-  return thread;
 }
 
 // MkExprCmd --
