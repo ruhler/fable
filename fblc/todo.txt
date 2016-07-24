@@ -1,10 +1,14 @@
-* Design command line interface to fblc
-  - How should the main func/proc be specified?
-    Answer: by name
-  - How should arguments be specified? Text/Binary Files? Text/Binary String
-    values?
-    Answer: For now: filenames of text files for port args, text string for
-    regular args.
+* Don't stop running tests after the first one fails
+  - It would be nice to see a list of all the tests that fail.
+* Add non-spec based fblc tests.
+  - Such as: specify program as non-existent file.
+* Implement FblcParseValue
+* Augment the FblcEvaluate and FblcExecute interfaces to accept external
+  values and ports.
+* Add expected line and column numbers for the expected error test cases.
+* Add support for passing values and ports on the command line.
+* Add FblcTokenWouldBlock function to support interactive use.
+* Be able to parse from a string as well as a file.
 * Test that tail recursive functions and procedures don't smash the stack.
 * Test process call port arguments are valid
 * Test process call expr arguments are valid
@@ -24,9 +28,6 @@
    - Put names in single quotes always.
    - Say 'expecting expression of type X' instead of 'expecting type X' when
      we are expecting an expression.
-* Be able to parse from a string as well as a file.
-  - Then add a '-e' option to fblc to specify an arbitrary expression to
-    evaluate in the context of the given program.
 * Be able to parse from a list of files instead of just one?
   This will help for tests or other programs that share some common functions.
 * Write a man page for fblc?

@@ -809,6 +809,8 @@ progress.
    Should we say they only hold 1 or K values before put blocks instead?
   @end
   @li Add a section describing how we describe syntax?
+  @li Discuss guarantees for not smashing stack with tail calls?
+  @li Discuss guarantees for freeing link resources?
   @bi
    Add a section talking about lexicography?
    Namely that tokens are punctuation or words and that whitespace is a token delimiter.
