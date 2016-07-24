@@ -11,6 +11,21 @@ foreach {x} [lsort [glob fblc/*.c]] {
 puts "ld -o out/fblc"
 exec gcc {*}$FLAGS -o out/fblc -lgc {*}[glob out/*.o]
 
+# Execute the given command, raising an error if the exit status doesn't match
+# the given expected status.
+proc expect_status {status args} {
+  set got -1
+  try {
+    exec {*}$args
+    set got 0
+  } trap CHILDSTATUS {results options} {
+    set got [lindex [dict get $options -errorcode] 2]
+  }
+  if {$got != $status} {
+    error "Expected exit status $status, but got $got"
+  }
+}
+
 # Well formed tests:
 foreach {x} [lsort [glob test/????v-*.fblc]] {
   puts "test $x"
@@ -25,15 +40,7 @@ foreach {x} [lsort [glob test/????v-*.fblc]] {
 foreach {x} [lsort [glob test/????e-*.fblc]] {
   puts "test $x"
   set fgot out/[string map {.fblc .got} [file tail $x]]
-  try {
-    exec ./out/fblc $x 2> $fgot
-    error "Expected exit code 65, but got 0"
-  } trap CHILDSTATUS {results options} {
-    set status [lindex [dict get $options -errorcode] 2]
-    if {$status != 65} {
-      error "Expected exit code 65, but got $status"
-    }
-  }
+  expect_status 65 ./out/fblc $x 2> $fgot
 }
 
 # Report how much code coverage we have from the spec tests.
@@ -41,8 +48,14 @@ exec gcov {*}[glob out/*.o] > out/fblc.spectest.gcov
 exec mv {*}[glob *.gcov] out
 puts [exec tail -n 1 out/fblc.spectest.gcov]
 
+# Test fblc.
+puts "test ./out/fblc"
+expect_status 64 ./out/fblc
+
+puts "test ./out/fblc no_such_file"
+expect_status 66 ./out/fblc no_such_file
+
 # Test the calculator.
-puts ""
 puts "test calc/calc.fblc"
 exec ./out/fblc calc/calc.fblc > out/calc.got
 exec grep "/// Expect: " calc/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt

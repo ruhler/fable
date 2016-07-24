@@ -1,7 +1,5 @@
 * Don't stop running tests after the first one fails
   - It would be nice to see a list of all the tests that fail.
-* Add non-spec based fblc tests.
-  - Such as: specify program as non-existent file.
 * Implement FblcParseValue
 * Augment the FblcEvaluate and FblcExecute interfaces to accept external
   values and ports.
