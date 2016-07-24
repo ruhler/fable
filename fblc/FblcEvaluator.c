@@ -38,17 +38,17 @@ static void FreeThread(Thread* thread);
 static void AddThread(Threads* threads, Thread* thread);
 static Thread* GetThread(Threads* threads);
 
-// Singly-linked list of values.
+// Links
+//
+// A Link consists of a list of values and a list of threads blocked waiting
+// to get values from the link. Values are added to the tail of the values
+// list and taken from the head. The empty values list is represented with
+// head and tail both set to NULL.
 
 typedef struct Values {
   FblcValue* value;
   struct Values* next;
 } Values;
-
-// A Link is a FIFO list of values. Values are put to the tail of the list and
-// taken from the head of the list.
-// The empty list is represented with head and tail both set to NULL.
-// waiting is a list of threads waiting to get values from the link.
 
 typedef struct Link {
   Values* head;
@@ -56,6 +56,11 @@ typedef struct Link {
   struct Threads waiting;
 } Link;
 
+static Link* NewLink();
+static void FreeLink(Link* link);
+static void PutValue(Link* link, FblcValue* value);
+static FblcValue* GetValue(Link* link);
+
 // The following defines a Vars structure for storing the value of local
 // variables. It is possible to extend a local variable scope without
 // modifying the original local variable scope, and it is possible to access
@@ -199,7 +204,6 @@ static Vars* AddVar(Vars* vars, FblcName name);
 
 static Link* LookupPort(Ports* ports, FblcName name);
 static Ports* AddPort(Ports* ports, FblcName name, Link* link);
-static void FreeLink(Link* link);
 
 static Cmd* MkExprCmd(const FblcExpr* expr, FblcValue** target, Cmd* next);
 static Cmd* MkActnCmd(FblcActn* actn, FblcValue** target, Cmd* next);
@@ -319,6 +323,120 @@ static Thread* GetThread(Threads* threads)
   return thread;
 }
 
+// NewLink --
+//  
+//   Create a new link object.
+//
+// Inputs:
+//   None.
+//
+// Results:
+//   A newly created link object with no initial values or waiting threads.
+//
+// Side effects:
+//   Allocates resources for a link object. The resources for the link object
+//   should be freed by calling FreeLink.
+
+static Link* NewLink()
+{
+  Link* link = MALLOC(sizeof(Link));
+  link->head = NULL;
+  link->tail = NULL;
+  link->waiting.head = NULL;
+  link->waiting.tail = NULL;
+  return link;
+}
+
+// FreeLink --
+//
+//   Free the given link object and resources associated with it.
+//
+// Inputs:
+//   link - The link to free.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The link object is freed along with any resources associated with it.
+//   After this call, the link object should not be accessed again.
+
+void FreeLink(Link* link)
+{
+  Values* values = link->head;
+  while (values != NULL) {
+    link->head = values->next;
+    FblcRelease(values->value);
+    FREE(values);
+    values = link->head;
+  }
+
+  Thread* thread = GetThread(&(link->waiting));
+  while (thread != NULL) {
+    FreeThread(thread);
+    thread = GetThread(&(link->waiting));
+  }
+
+  FREE(link);
+}
+
+// PutValue --
+//  
+//   Put a value onto a link.
+//
+// Inputs:
+//   link - The link to put the value on.
+//   value - The value to put on the link.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Places the given value on the link.
+
+static void PutValue(Link* link, FblcValue* value)
+{
+  Values* ntail = MALLOC(sizeof(Values));
+  ntail->value = value;
+  ntail->next = NULL;
+  if (link->head == NULL) {
+    assert(link->tail == NULL);
+    link->head = ntail;
+  } else {
+    link->tail->next = ntail;
+  }
+  link->tail = ntail;
+}
+
+// GetValue --
+//
+//   Get the next value from the link.
+//
+// Inputs:
+//   link - The link to get the value from.
+//
+// Results:
+//   The next value on the link, or NULL if there are no values available on
+//   the link.
+//
+// Side effects
+//   Removes the gotten value from the link.
+
+static FblcValue* GetValue(Link* link)
+{
+  FblcValue* value = NULL;
+  if (link->head != NULL) {
+    Values* values = link->head;
+    value = values->value;
+    link->head = values->next;
+    FREE(values);
+    if (link->head == NULL) {
+      link->tail = NULL;
+    }
+  }
+  return value;
+}
+
 // LookupRef --
 //
 //   Look up a reference to the value of a variable in the given scope.
@@ -436,39 +554,6 @@ static Ports* AddPort(Ports* ports, FblcName name, Link* link)
   nports->link = link;
   nports->next = ports;
   return nports;
-}
-
-// FreeLink --
-//
-//   Free the given link object and resources associated with it.
-//
-// Inputs:
-//   link - The link to free.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The link object is freed along with any resources associated with it.
-//   After this call, the link object should not be accessed again.
-
-void FreeLink(Link* link)
-{
-  Values* values = link->head;
-  while (values != NULL) {
-    link->head = values->next;
-    FblcRelease(values->value);
-    FREE(values);
-    values = link->head;
-  }
-
-  Thread* thread = GetThread(&(link->waiting));
-  while (thread != NULL) {
-    FreeThread(thread);
-    thread = GetThread(&(link->waiting));
-  }
-
-  FREE(link);
 }
 
 // MkExprCmd --
@@ -963,17 +1048,10 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             Link* link = LookupPort(thread->ports, get_actn->port.name);
             assert(link != NULL && "Get port not in scope");
 
-            if (link->head == NULL) {
+            *target = GetValue(link);
+            if (*target == NULL) {
               AddThread(&link->waiting, thread);
               return;
-            } else {
-              Values* values = link->head;
-              *target = values->value;
-              link->head = values->next;
-              FREE(values);
-              if (link->head == NULL) {
-                link->tail = NULL;
-              }
             }
             break;
           }
@@ -1033,11 +1111,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             }
 
             FblcLinkActn* link_actn = (FblcLinkActn*)actn;
-            Link* link = MALLOC(sizeof(Link));
-            link->head = NULL;
-            link->tail = NULL;
-            link->waiting.head = NULL;
-            link->waiting.tail = NULL;
+            Link* link = NewLink();
             thread->ports = AddPort(
                 thread->ports, link_actn->getname.name, link);
             thread->ports = AddPort(
@@ -1168,18 +1242,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
         Link* link = cmd->link;
         FblcValue** target = cmd->target;
         *target = cmd->value;
-        assert(cmd->value != NULL);
-        Values* ntail = MALLOC(sizeof(Values));
-        ntail->value = FblcCopy(cmd->value);
-        ntail->next = NULL;
-        if (link->head == NULL) {
-          assert(link->tail == NULL);
-          link->head = ntail;
-        } else {
-          link->tail->next = ntail;
-        }
-        link->tail = ntail;
-
+        PutValue(link, FblcCopy(cmd->value));
         Thread* waiting = GetThread(&link->waiting);
         if (waiting != NULL) {
           AddThread(threads, waiting);

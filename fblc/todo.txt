@@ -1,6 +1,3 @@
-* Encapsulate access to link values
-  In other words - have all allocation and deallocation of Values in one
-  place.
 * Design command line interface to fblc
   - How should the main func/proc be specified?
     Answer: by name
