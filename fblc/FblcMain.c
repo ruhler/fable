@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
       return EX_USAGE;
     }
 
-    FblcValue* value = FblcEvaluate(env, func->body);
+    FblcValue* value = FblcEvaluate(env, func, NULL);
     FblcPrintValue(stdout, value);
     printf("\n");
     FblcRelease(value);
@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
       return EX_USAGE;
     }
 
-    FblcValue* value = FblcExecute(env, proc->body);
+    FblcValue* value = FblcExecute(env, proc, NULL, NULL);
     FblcPrintValue(stdout, value);
     printf("\n");
     FblcRelease(value);

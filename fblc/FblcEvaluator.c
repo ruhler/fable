@@ -1275,22 +1275,35 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
 //
 // Inputs:
 //   env - The program environment.
-//   expr - The expression to evaluate.
+//   func - The function to evaluate.
+//   args - Arguments to the function.
 //
 // Returns:
-//   The result of evaluating the given expression in the program environment
-//   in a scope with no local variables.
+//   The result of evaluating the given function in the program environment
+//   with the given arguments.
 //
 // Side effects:
 //   None.
 
-FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
+FblcValue* FblcEvaluate(const FblcEnv* env, const FblcFunc* func,
+    FblcValue** args)
 {
-  FblcEvalActn actn;
-  actn.tag = FBLC_EVAL_ACTN;
-  actn.loc = expr->loc;
-  actn.expr = expr;
-  return FblcExecute(env, (FblcActn*)&actn);
+  // We create a FblcProc that wraps the function call so we can reuse
+  // FblcExecute to evaluate the function.
+  FblcEvalActn body;
+  body.tag = FBLC_EVAL_ACTN;
+  body.loc = func->body->loc;
+  body.expr = func->body;
+
+  FblcProc proc;
+  proc.name = func->name;
+  proc.return_type = func->return_type;
+  proc.body = (FblcActn*)&body;
+  proc.portc = 0;
+  proc.portv = NULL;
+  proc.argc = func->argc;
+  proc.argv = func->argv;
+  return FblcExecute(env, &proc, NULL, args);
 }
 
 // FblcExecute --
@@ -1300,26 +1313,71 @@ FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr)
 //
 // Inputs:
 //   env - The program environment.
-//   actn - The action to execute.
+//   proc - The procedure to execute.
+//   portios - IO routines for getting and putting from the procedure's port
+//             arguments.
+//   args - Arguments to the procedure.
 //
 // Returns:
-//   The result of executing the given action in the program environment
-//   in a scope with no local variables and no ports.
+//   The result of executing the given procedure in the program environment
+//   with the given ports and arguments.
 //
 // Side effects:
 //   None.
 
-FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn)
+FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
+    FblcIO* portios, FblcValue** args)
 {
+  Vars* vars = NULL;
+  for (int i = 0; i < proc->argc; i++) {
+    FblcName name = proc->argv[i].name.name;
+    vars = AddVar(vars, name);
+    *LookupRef(vars, name) = args[i];
+  }
+
+  Cmd* cmd = NULL;
+  Link* links[proc->portc];
+  Ports* ports = NULL;
+  for (int i = 0; i < proc->portc; i++) {
+    links[i] = NewLink();
+    cmd = MkFreeLinkCmd(links[i], cmd);
+    ports = AddPort(ports, proc->portv[i].name.name, links[i]);
+  }
+  cmd = MkPopScopeCmd(NULL, NULL, cmd);
+
   FblcValue* result = NULL;
+  cmd = MkActnCmd(proc->body, &result, cmd);
+
   Threads threads;
   threads.head = NULL;
   threads.tail = NULL;
-
-  AddThread(&threads, NewThread(NULL, NULL, MkActnCmd(actn, &result, NULL)));
+  AddThread(&threads, NewThread(vars, ports, cmd));
 
   Thread* thread = GetThread(&threads);
   while (thread != NULL) {
+    // Perform whatever IO is ready.
+    for (int i = 0; i < proc->portc; i++) {
+      if (proc->portv[i].polarity == FBLC_POLARITY_GET) {
+        Thread* waiting = GetThread(&(links[i]->waiting));
+        if (waiting != NULL) {
+          FblcValue* got = portios[i].io(portios[i].user, NULL);
+          if (got == NULL) {
+            AddThread(&(links[i]->waiting), waiting);
+          } else {
+            PutValue(links[i], got);
+            AddThread(&threads, waiting);
+          }
+        }
+      } else {
+        FblcValue* put = GetValue(links[i]);
+        if (put != NULL) {
+          FblcValue* result = portios[i].io(portios[i].user, put);
+          assert(result == NULL);
+        }
+      }
+    }
+
+    // Run the current thread.
     Run(env, &threads, thread);
     thread = GetThread(&threads);
   }

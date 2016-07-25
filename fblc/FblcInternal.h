@@ -376,7 +376,24 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks);
 bool FblcCheckProgram(const FblcEnv* env);
 
 // FblcEvaluator
-FblcValue* FblcEvaluate(const FblcEnv* env, const FblcExpr* expr);
-FblcValue* FblcExecute(const FblcEnv* env, FblcActn* actn);
+
+// FblcIO represents an abstract function for performing port IO.
+//
+// For ports with FBLC_POLARITY_GET, the 'io' function is passed its user data
+// with NULL as the value. The 'io' function should return the next value to
+// get, or NULL to indicate no value is currently available to be gotten.
+//
+// For ports with FBLC_POLARITY_PUT, the 'io' function is passed its user data
+// and the value to put. The 'io' function must return NULL.
+
+typedef struct {
+  FblcValue* (*io)(void* user, FblcValue* value);
+  void* user;
+} FblcIO;
+
+FblcValue* FblcEvaluate(const FblcEnv* env, const FblcFunc* func,
+    FblcValue** args);
+FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
+    FblcIO* portios, FblcValue** args);
 
 #endif  // FBLC_INTERNAL_H_
