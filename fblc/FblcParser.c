@@ -737,3 +737,105 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
   }
   return env;
 }
+
+// FblcParseValue --
+//
+//   Parse an Fblc value from the token stream.
+//
+// Inputs:
+//   env - The program environment.
+//   type - The type of value to parse.
+//   toks - The token stream to parse the program from.
+//
+// Result:
+//   The parsed value, or NULL on error.
+//
+// Side effects:
+//   The token stream is advanced to the end of the value. In the case of an
+//   error, an error message is printed to standard error.
+
+FblcValue* FblcParseValue(FblcEnv* env, FblcType* type, FblcTokenStream* toks)
+{
+  FblcAllocator alloc;
+  FblcInitAllocator(&alloc);
+
+  FblcLocName name;
+  if (!FblcGetNameToken(&alloc, toks, "type name", &name)) {
+    FblcFreeAll(&alloc);
+    return NULL;
+  }
+
+  if (!FblcNamesEqual(name.name, type->name.name)) {
+    FblcReportError("Expected %s, but got %s.\n", name.loc, type->name, name);
+    FblcFreeAll(&alloc);
+    return NULL;
+  }
+  FblcFreeAll(&alloc);
+
+  if (type->kind == FBLC_KIND_STRUCT) {
+    if (!FblcGetToken(toks, '(')) {
+      return NULL;
+    }
+
+    // If there is an error constructing the struct value, we need to release
+    // the resources allocated for it. FblcRelease requires we don't leave any
+    // of the fields of the struct value uninitialized. For that reason,
+    // assign something to all fields regardless of error, keeping track of
+    // whether we encountered an error as we go.
+    FblcStructValue* value = FblcNewStructValue(type);
+    bool err = false;
+    for (int i = 0; i < type->fieldc; i++) {
+      value->fieldv[i] = NULL;
+      if (!err && i > 0 && !FblcGetToken(toks, ',')) {
+        err = true;
+      }
+
+      if (!err) {
+        FblcType* field_type = FblcLookupType(env, type->fieldv[i].type.name);
+        assert(field_type != NULL);
+        value->fieldv[i] = FblcParseValue(env, field_type, toks);
+        err = err || value->fieldv[i] == NULL;
+      }
+    }
+
+    if (err || !FblcGetToken(toks, ')')) {
+      FblcRelease((FblcValue*)value);
+      return NULL;
+    }
+    return (FblcValue*)value;
+  } else {
+    assert(type->kind == FBLC_KIND_UNION);
+    if (!FblcGetToken(toks, ':')) {
+      return NULL;
+    }
+
+    FblcInitAllocator(&alloc);
+    if (!FblcGetNameToken(&alloc, toks, "field name", &name)) {
+      FblcFreeAll(&alloc);
+      return NULL;
+    }
+
+    int tag = FblcTagForField(type, name.name);
+    if (tag < 0) {
+      FblcReportError("Invalid field %s for type %s.\n",
+          name.loc, name, type->name);
+      FblcFreeAll(&alloc);
+      return NULL;
+    }
+    FblcFreeAll(&alloc);
+
+    if (!FblcGetToken(toks, '(')) {
+      return NULL;
+    }
+    FblcType* field_type = FblcLookupType(env, type->fieldv[tag].type.name);
+    assert(field_type != NULL);
+    FblcValue* field = FblcParseValue(env, field_type, toks);
+    if (field == NULL) {
+      return NULL;
+    }
+    FblcUnionValue* value = FblcNewUnionValue(type);
+    value->tag = tag;
+    value->field = field;
+    return (FblcValue*)value;
+  }
+}

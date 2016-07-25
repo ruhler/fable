@@ -336,6 +336,7 @@ FblcUnionValue* FblcNewUnionValue(FblcType* type);
 FblcValue* FblcCopy(FblcValue* src);
 void FblcRelease(FblcValue* value);
 void FblcPrintValue(FILE* fout, FblcValue* value);
+int FblcTagForField(const FblcType* type, FblcName field);
 
 // FblcTokenizer
 // A stream of tokens is represented using the FblcTokenStream data structure.
@@ -371,6 +372,7 @@ void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected);
 
 // FblcParser
 FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks);
+FblcValue* FblcParseValue(FblcEnv* env, FblcType* type, FblcTokenStream* toks);
 
 // FblcChecker
 bool FblcCheckProgram(const FblcEnv* env);

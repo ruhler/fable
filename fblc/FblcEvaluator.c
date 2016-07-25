@@ -219,9 +219,8 @@ static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoinCmd(int count, Cmd* next);
 static Cmd* MkPutCmd(FblcValue** target, Link* link, Cmd* next);
 static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
-
-static int TagForField(const FblcType* type, FblcName field);
 static bool IsPopScope(Cmd* next);
+
 static void Run(const FblcEnv* env, Threads* threads, Thread* thread);
 
 // NewThread --
@@ -846,32 +845,6 @@ static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
   return (Cmd*)cmd;
 }
 
-// TagForField --
-//
-//   Return the tag corresponding to the named field for the given type.
-//   It is a program error if the named field does not exist for the given
-//   type.
-//
-// Inputs:
-//   type - The type in question.
-//   field - The field to get the tag for.
-//
-// Result:
-//   The index in the list of fields for the type containing that field name.
-//
-// Side effects:
-//   None.
-
-static int TagForField(const FblcType* type, FblcName field)
-{
-  for (int i = 0; i < type->fieldc; i++) {
-    if (FblcNamesEqual(field, type->fieldv[i].name.name)) {
-      return i;
-    }
-  }
-  assert(false && "No such field.");
-}
-
 // IsPopScope --
 //
 //   Check wether the next command is a scope pop.
@@ -994,7 +967,8 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             FblcType* type = FblcLookupType(env, union_expr->type.name);
             assert(type != NULL);
             FblcUnionValue* value = FblcNewUnionValue(type);
-            value->tag = TagForField(type, union_expr->field.name);
+            value->tag = FblcTagForField(type, union_expr->field.name);
+            assert(value->tag >= 0 && "no such field");
             *target = (FblcValue*)value;
             next = MkExprCmd(union_expr->value, &(value->field), next);
             break;
@@ -1164,7 +1138,8 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
       case CMD_ACCESS: {
         AccessCmd* cmd = (AccessCmd*)thread->cmd;
         FblcType* type = cmd->value->type;
-        int target_tag = TagForField(type, cmd->field);
+        int target_tag = FblcTagForField(type, cmd->field);
+        assert(target_tag >= 0);
         FblcValue** target = cmd->target;
         if (type->kind == FBLC_KIND_STRUCT) {
           FblcValue* value = ((FblcStructValue*)cmd->value)->fieldv[target_tag];

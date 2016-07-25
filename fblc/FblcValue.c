@@ -87,24 +87,27 @@ FblcValue* FblcCopy(FblcValue* src)
 //   None.
 //
 // Side effect:
-//   The resources for the value are freed.
+//   The resources for the value are freed. The value may be NULL, in which
+//   case no action is taken.
 
 void FblcRelease(FblcValue* value)
 {
-  value->refcount--;
-  if (value->refcount == 0) {
-    if (value->type->kind == FBLC_KIND_STRUCT) {
-      FblcStructValue* struct_value = (FblcStructValue*)value;
-      for (int i = 0; i < value->type->fieldc; i++) {
-        FblcRelease(struct_value->fieldv[i]);
+  if (value != NULL) {
+    value->refcount--;
+    if (value->refcount == 0) {
+      if (value->type->kind == FBLC_KIND_STRUCT) {
+        FblcStructValue* struct_value = (FblcStructValue*)value;
+        for (int i = 0; i < value->type->fieldc; i++) {
+          FblcRelease(struct_value->fieldv[i]);
+        }
+        FREE(struct_value->fieldv);
+      } else {
+        assert(value->type->kind == FBLC_KIND_UNION);
+        FblcUnionValue* union_value = (FblcUnionValue*)value;
+        FblcRelease(union_value->field);
       }
-      FREE(struct_value->fieldv);
-    } else {
-      assert(value->type->kind == FBLC_KIND_UNION);
-      FblcUnionValue* union_value = (FblcUnionValue*)value;
-      FblcRelease(union_value->field);
+      FREE(value);
     }
-    FREE(value);
   }
 }
 
@@ -144,4 +147,29 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
   } else {
     assert(false && "Invalid Kind");
   }
+}
+
+// FblcTagForField --
+//
+//   Return the tag corresponding to the named field for the given type.
+//
+// Inputs:
+//   type - The type in question.
+//   field - The field to get the tag for.
+//
+// Result:
+//   The index in the list of fields for the type containing that field name,
+//   or -1 if there is no such field.
+//
+// Side effects:
+//   None.
+
+int FblcTagForField(const FblcType* type, FblcName field)
+{
+  for (int i = 0; i < type->fieldc; i++) {
+    if (FblcNamesEqual(field, type->fieldv[i].name.name)) {
+      return i;
+    }
+  }
+  return -1;
 }

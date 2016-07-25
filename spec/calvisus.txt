@@ -269,7 +269,7 @@
    fname ::= A field name.
 
    value ::= dname ':' fname '(' <value> ')'
-          |  dname '(' [<value> [<value> ..]] ')'
+          |  dname '(' [<value> [',' <value> ...]] ')'
           ;
   @end
 
