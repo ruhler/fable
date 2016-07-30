@@ -98,47 +98,48 @@ int main(int argc, char* argv[])
     return EX_DATAERR;
   }
 
-  FblcFunc* func = FblcLookupFunc(env, "main");
-  if (func != NULL) {
-    if (func->argc != 0) {
-      fprintf(stderr, "main function does not take 0 arguments.\n");
-      FblcFreeAll(&alloc);
-      return EX_USAGE;
-    }
-
-    FblcValue* value = FblcEvaluate(env, func, NULL);
-    FblcPrintValue(stdout, value);
-    printf("\n");
-    FblcRelease(value);
-    FblcFreeAll(&alloc);
-    CHECK_FOR_LEAKS();
-    return EX_OK;
-  }
-
   FblcProc* proc = FblcLookupProc(env, "main");
-  if (proc != NULL) {
-    if (proc->portc != 0) {
+  if (proc == NULL) {
+    FblcFunc* func = FblcLookupFunc(env, "main");
+    if (func == NULL) {
       FblcFreeAll(&alloc);
-      fprintf(stderr, "main process does not have 0 ports.\n");
+      fprintf(stderr, "failed to find 'main' function.\n");
       return EX_USAGE;
     }
 
-    if (proc->argc != 0) {
-      FblcFreeAll(&alloc);
-      fprintf(stderr, "main process does not take 0 arguments.\n");
-      return EX_USAGE;
-    }
+    // Make a proc wrapper for the function.
+    FblcEvalActn* body = FblcAlloc(&alloc, sizeof(FblcEvalActn));
+    body->tag = FBLC_EVAL_ACTN;
+    body->loc = func->body->loc;
+    body->expr = func->body;
 
-    FblcValue* value = FblcExecute(env, proc, NULL, NULL);
-    FblcPrintValue(stdout, value);
-    printf("\n");
-    FblcRelease(value);
-    FblcFreeAll(&alloc);
-    CHECK_FOR_LEAKS();
-    return EX_OK;
+    proc = FblcAlloc(&alloc, sizeof(FblcProc));
+    proc->name = func->name;
+    proc->return_type = func->return_type;
+    proc->body = (FblcActn*)body;
+    proc->portc = 0;
+    proc->portv = NULL;
+    proc->argc = func->argc;
+    proc->argv = func->argv;
   }
 
+  if (proc->portc != 0) {
+    FblcFreeAll(&alloc);
+    fprintf(stderr, "main process does not have 0 ports.\n");
+    return EX_USAGE;
+  }
+
+  if (proc->argc != 0) {
+    FblcFreeAll(&alloc);
+    fprintf(stderr, "main process does not take 0 arguments.\n");
+    return EX_USAGE;
+  }
+
+  FblcValue* value = FblcExecute(env, proc, NULL, NULL);
+  FblcPrintValue(stdout, value);
+  printf("\n");
+  FblcRelease(value);
   FblcFreeAll(&alloc);
-  fprintf(stderr, "failed to find 'main' function.\n");
-  return EX_USAGE;
+  CHECK_FOR_LEAKS();
+  return EX_OK;
 }

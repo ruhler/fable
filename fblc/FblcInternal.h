@@ -393,8 +393,6 @@ typedef struct {
   void* user;
 } FblcIO;
 
-FblcValue* FblcEvaluate(const FblcEnv* env, const FblcFunc* func,
-    FblcValue** args);
 FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
     FblcIO* portios, FblcValue** args);
 

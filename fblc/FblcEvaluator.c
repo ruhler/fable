@@ -1243,44 +1243,6 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
   }
 }
 
-// FblcEvaluate --
-//
-//   Evaluate an expression under the given program environment. The program
-//   and expression must be well formed.
-//
-// Inputs:
-//   env - The program environment.
-//   func - The function to evaluate.
-//   args - Arguments to the function.
-//
-// Returns:
-//   The result of evaluating the given function in the program environment
-//   with the given arguments.
-//
-// Side effects:
-//   None.
-
-FblcValue* FblcEvaluate(const FblcEnv* env, const FblcFunc* func,
-    FblcValue** args)
-{
-  // We create a FblcProc that wraps the function call so we can reuse
-  // FblcExecute to evaluate the function.
-  FblcEvalActn body;
-  body.tag = FBLC_EVAL_ACTN;
-  body.loc = func->body->loc;
-  body.expr = func->body;
-
-  FblcProc proc;
-  proc.name = func->name;
-  proc.return_type = func->return_type;
-  proc.body = (FblcActn*)&body;
-  proc.portc = 0;
-  proc.portv = NULL;
-  proc.argc = func->argc;
-  proc.argv = func->argv;
-  return FblcExecute(env, &proc, NULL, args);
-}
-
 // FblcExecute --
 //
 //   Execute an action under the given program environment. The program
