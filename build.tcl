@@ -31,7 +31,7 @@ foreach {x} [lsort [glob test/????v-*.fblc]] {
   puts "test $x"
   set fgot out/[string map {.fblc .got} [file tail $x]]
   set fwnt out/[string map {.fblc .wnt} [file tail $x]]
-  exec ./out/fblc $x > $fgot
+  exec ./out/fblc $x main > $fgot
   exec grep "/// Expect: " $x | sed -e "s/\\/\\/\\/ Expect: //" > $fwnt
   exec diff $fgot $fwnt
 }
@@ -40,7 +40,7 @@ foreach {x} [lsort [glob test/????v-*.fblc]] {
 foreach {x} [lsort [glob test/????e-*.fblc]] {
   puts "test $x"
   set fgot out/[string map {.fblc .got} [file tail $x]]
-  expect_status 65 ./out/fblc $x 2> $fgot
+  expect_status 65 ./out/fblc $x main 2> $fgot
 }
 
 # Report how much code coverage we have from the spec tests.
@@ -56,11 +56,16 @@ puts "test ./out/fblc --help"
 expect_status 0 ./out/fblc --help
 
 puts "test ./out/fblc no_such_file"
-expect_status 66 ./out/fblc no_such_file
+expect_status 66 ./out/fblc no_such_file main
+
+puts "test ./out/fblc clock/clock.fblc incr 'Digit:1(Unit())'"
+exec ./out/fblc clock/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
+exec echo "Digit:2(Unit())" > out/clockincr.wnt
+exec diff out/clockincr.wnt out/clockincr.got
 
 # Test the calculator.
 puts "test calc/calc.fblc"
-exec ./out/fblc calc/calc.fblc > out/calc.got
+exec ./out/fblc calc/calc.fblc main > out/calc.got
 exec grep "/// Expect: " calc/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
 exec diff out/calc.wnt out/calc.got
 

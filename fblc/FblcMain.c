@@ -27,54 +27,58 @@ static void PrintUsage(FILE* fout);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fblc FILE\n"
-      "Evaluate 'main()' in the environment of the fblc program FILE.\n"  
-      "Example: fblc foo.fblc\n"
+      "Usage: fblc FILE MAIN [PORT...] [ARG...] \n"
+      "Evaluate the function or process called MAIN in the environment of the\n"
+      "fblc program FILE with the given PORTs and ARGs.\n"  
+      "PORT is the filename to use to read or write the port from.\n"
+      "ARG is a value text representation of the argument value.\n"
+      "The number and type of ports and arguments must match the expected\n"
+      "types for the MAIN function or process.\n"
+      "Example: fblc main in.txt 'Bool:true(Unit())'\n"
   );
 }
 
 // main --
 //
-//   The main entry point for the fblc interpreter. Evaluates the expression
-//   'main()' in the environment of the given fblc program and prints the
-//   resulting value to standard output.
+//   The main entry point for the fblc interpreter. Evaluates the MAIN
+//   function or process from the given program with the given ports and
+//   arguments. The result is printed to standard output.
 //
 // Inputs:
 //   argc - The number of command line arguments.
 //   argv - The command line arguments.
 //
 // Results:
-//   Zero on success, non-zero on error.
+//   EX_OK success, EX_USAGE on user usage error, EX_DATAERR if the program is
+//   not well formed, EX_NOINPUT if the input program could not be accessed.
 //
 // Side effects:
-//   Prints the value resulting from the evaluation of 'main()' to standard
-//   out, or prints an error message to standard error if an error is
-//   encountered.
+//   Prints the value resulting from the evaluation of the MAIN process on the
+//   given arguments to standard out, or prints an error message to standard
+//   error if an error is encountered.
 
 int main(int argc, char* argv[])
 {
   ENABLE_LEAK_DETECTION();
   MALLOC_INIT();
 
-  const char* filename = NULL;
-  for (int i = 1; i < argc; i++) {
-    if (strcmp("--help", argv[i]) == 0) {
-      PrintUsage(stdout);
-      return EX_OK;
-    } else {
-      if (filename != NULL) {
-        fprintf(stderr, "multiple FILEs are not allowed.\n");
-        PrintUsage(stderr);
-        return EX_USAGE;
-      }
-      filename = argv[i];
-    }
+  if (argc > 1 && strcmp("--help", argv[1]) == 0) {
+    PrintUsage(stdout);
+    return EX_OK;
   }
 
-  if (filename == NULL) {
+  if (argc <= 1) {
     fprintf(stderr, "no input file.\n");
     return EX_USAGE;
   }
+
+  if (argc <= 2) {
+    fprintf(stderr, "no main entry point provided.\n");
+    return EX_USAGE;
+  }
+
+  const char* filename = argv[1];
+  const char* entry = argv[2];
 
   FblcTokenStream toks;
   if (!FblcOpenFileTokenStream(&toks, filename)) {
@@ -98,12 +102,12 @@ int main(int argc, char* argv[])
     return EX_DATAERR;
   }
 
-  FblcProc* proc = FblcLookupProc(env, "main");
+  FblcProc* proc = FblcLookupProc(env, entry);
   if (proc == NULL) {
-    FblcFunc* func = FblcLookupFunc(env, "main");
+    FblcFunc* func = FblcLookupFunc(env, entry);
     if (func == NULL) {
       FblcFreeAll(&alloc);
-      fprintf(stderr, "failed to find 'main' function.\n");
+      fprintf(stderr, "failed to find process or function '%s'.\n", entry);
       return EX_USAGE;
     }
 
@@ -123,23 +127,44 @@ int main(int argc, char* argv[])
     proc->argv = func->argv;
   }
 
+  if (argc != 3 + proc->portc + proc->argc) {
+    FblcFreeAll(&alloc);
+    fprintf(stderr, "expected %i ports/args for %s, but %i were provided.\n",
+        proc->portc + proc->argc, entry, argc-3);
+    return EX_USAGE;
+  }
+
   if (proc->portc != 0) {
     FblcFreeAll(&alloc);
     fprintf(stderr, "main process does not have 0 ports.\n");
     return EX_USAGE;
   }
 
-  if (proc->argc != 0) {
-    FblcFreeAll(&alloc);
-    fprintf(stderr, "main process does not take 0 arguments.\n");
-    return EX_USAGE;
+  argv += 3;
+  FblcValue* args[proc->argc];
+  bool err = false;
+  for (int i = 0; i < proc->argc; i++) {
+    const char* str = *argv++;
+    args[i] = NULL;
+    FblcType* type = FblcLookupType(env, proc->argv[i].type.name);
+    assert(type != NULL);
+    FblcOpenStringTokenStream(&toks, str, str);
+    args[i] = FblcParseValue(env, type, &toks);
+    FblcCloseTokenStream(&toks);
+    err = err || (args[i] == NULL);
   }
 
-  FblcValue* value = FblcExecute(env, proc, NULL, NULL);
-  FblcPrintValue(stdout, value);
-  printf("\n");
-  FblcRelease(value);
+  if (!err) {
+    FblcValue* value = FblcExecute(env, proc, NULL, args);
+    FblcPrintValue(stdout, value);
+    printf("\n");
+    FblcRelease(value);
+  }
+
+  for (int i = 0; i < proc->argc; i++) {
+    FblcRelease(args[i]);
+  }
   FblcFreeAll(&alloc);
   CHECK_FOR_LEAKS();
-  return EX_OK;
+  return err ? EX_USAGE : EX_OK;
 }

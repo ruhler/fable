@@ -1,9 +1,10 @@
+* Make it easier to write tests with expected outputs.
+  - See the clockincr test, for example.
 * Don't stop running tests after the first one fails
   - It would be nice to see a list of all the tests that fail.
 * Add expected line and column numbers for the expected error test cases.
-* Add support for passing values and ports on the command line.
+* Add support for passing ports on the command line.
 * Add FblcTokenWouldBlock function to support interactive use.
-* Be able to parse from a string as well as a file.
 * Test that tail recursive functions and procedures don't smash the stack.
 * Test process call port arguments are valid
 * Test process call expr arguments are valid
