@@ -30,6 +30,9 @@ static void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN]);
 static int CurrChar(FblcTokenStream* toks)
 {
   if (toks->curr == toks->end) {
+    if (toks->fd < 0) {
+      return EOF;
+    }
     ssize_t red = read(toks->fd, toks->buffer, BUFSIZ);
     if (red <= 0) {
       return EOF;
@@ -61,6 +64,10 @@ static int NextChar(FblcTokenStream* toks)
     return EOF;
   }
   if (toks->curr + 1 == toks->end) {
+    if (toks->fd < 0) {
+      return EOF;
+    }
+
     toks->buffer[0] = c;
     ssize_t red = read(toks->fd, toks->buffer + 1, BUFSIZ - 1);
     if (red <= 0) {
@@ -187,7 +194,7 @@ void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
   assert(p < desc + MAX_TOK_DESC_LEN && "MAX_TOK_DESC_LEN is too small");
 }
 
-// FblcOpenTokenStream --
+// FblcOpenFileTokenStream --
 //
 //   Open a token stream for the given file name.
 //
@@ -203,7 +210,7 @@ void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
 //   successfully opened, the file can be closed when the token stream is no
 //   longer in use by calling FblcCloseTokenStream.
 
-bool FblcOpenTokenStream(FblcTokenStream* toks, const char* filename)
+bool FblcOpenFileTokenStream(FblcTokenStream* toks, const char* filename)
 {
   toks->fd = open(filename, O_RDONLY);
   if (toks->fd < 0) {
@@ -216,10 +223,39 @@ bool FblcOpenTokenStream(FblcTokenStream* toks, const char* filename)
   toks->loc.col = 1;
   return true;
 }
+// FblcOpenStringTokenStream --
+//
+//   Open a token stream for the given string data.
+//
+// Inputs:
+//   toks - An uninitialized token stream to open.
+//   source - A label to identify the source for error reporting purposes.
+//   string - The string to return a token stream for.
+//
+// Results:
+//   True if the token stream was successfully opened, false otherwise.
+//
+// Side effects:
+//   Initializes the toks object.
+
+bool FblcOpenStringTokenStream(FblcTokenStream* toks, const char* source,
+    const char* string)
+{
+  toks->fd = -1;
+  toks->curr = string;
+  toks->end = string;
+  while (*(toks->end)) {
+    toks->end++;
+  }
+  toks->loc.source = source;
+  toks->loc.line = 1;
+  toks->loc.col = 1;
+  return true;
+}
 
 // FblcCloseTokenStream
 //
-//   Close the underlying file for the given token stream.
+//   Close the underlying file for the given token stream, if any.
 //
 // Inputs:
 //   toks - the token stream to close.
@@ -228,10 +264,12 @@ bool FblcOpenTokenStream(FblcTokenStream* toks, const char* filename)
 //   None.
 //
 // Side effects:
-//   Closes the underlying file for the given token stream.
+//   Closes the underlying file for the given token stream, if any.
 void FblcCloseTokenStream(FblcTokenStream* toks)
 {
-  close(toks->fd);
+  if (toks->fd >= 0) {
+    close(toks->fd);
+  }
 }
 
 // FblcIsEOFToken --
@@ -296,7 +334,7 @@ bool FblcGetToken(FblcTokenStream* toks, char which)
 {
   SkipToToken(toks);
   if (CurrChar(toks) == which) {
-    *toks->curr = ' ';
+    AdvanceChar(toks);
     return true;
   }
   char desc[MAX_TOK_DESC_LEN];

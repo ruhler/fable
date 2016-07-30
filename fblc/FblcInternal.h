@@ -340,27 +340,32 @@ int FblcTagForField(const FblcType* type, FblcName field);
 
 // FblcTokenizer
 // A stream of tokens is represented using the FblcTokenStream data structure.
-// The data structure includes buffered characters read from the file, the
-// underlying file descriptor, and, for error reporting purposes, the location
-// in the input file of the next token and the file descriptor itself.
+// Tokens can be read either from a file or a string.
 //
 // The conventional variable name for a FblcTokenStream* is 'toks'.
 
 typedef struct {
-  // The underlying file descriptor and a buffer containing data read.
-  // curr points to the current character in the buffer, if any.
-  // end points just past the last character in the buffer. If the buffer is
-  // empty, curr and end are equal.
+  // When reading from a file, fd is the file descriptor for the underlying
+  // file and buffer contains the most recently read data from the file. When
+  // reading from a string, fd is -1 and buffer is unused.
   int fd;
   char buffer[BUFSIZ];
-  char* curr;
-  char* end;
 
-  // Location information for the next token.
+  // curr points to the current character in the stream, if any.
+  // end points just past the last character in either the buffer or the
+  // string. If the end of the string has been reached or the no more file
+  // data is available in the buffer, curr and end are equal.
+  const char* curr;
+  const char* end;
+
+  // Location information for the next token for the purposes of error
+  // reporting.
   FblcLoc loc;
 } FblcTokenStream;
 
-bool FblcOpenTokenStream(FblcTokenStream* toks, const char* filename);
+bool FblcOpenFileTokenStream(FblcTokenStream* toks, const char* filename);
+bool FblcOpenStringTokenStream(FblcTokenStream* toks, const char* source,
+    const char* string);
 void FblcCloseTokenStream(FblcTokenStream* toks);
 bool FblcIsEOFToken(FblcTokenStream* toks);
 bool FblcIsToken(FblcTokenStream* toks, char which);

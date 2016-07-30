@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
   }
 
   FblcTokenStream toks;
-  if (!FblcOpenTokenStream(&toks, filename)) {
+  if (!FblcOpenFileTokenStream(&toks, filename)) {
     fprintf(stderr, "failed to open input FILE %s.\n", filename);
     return EX_NOINPUT;
   }
