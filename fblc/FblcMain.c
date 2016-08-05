@@ -9,7 +9,20 @@
 #define EX_DATAERR 65
 #define EX_NOINPUT 66
 
+typedef struct {
+  FblcEnv* env;
+  FblcType* type;
+  FblcTokenStream toks;
+} InputData;
+
+typedef union {
+  InputData input;
+  FILE* output;
+} UserData;
+
 static void PrintUsage(FILE* fout);
+static FblcValue* Input(InputData* user, FblcValue* value);
+static FblcValue* Output(FILE* user, FblcValue* value);
 
 // PrintUsage --
 //   
@@ -36,6 +49,58 @@ static void PrintUsage(FILE* stream)
       "types for the MAIN function or process.\n"
       "Example: fblc main in.txt 'Bool:true(Unit())'\n"
   );
+}
+
+// Input --
+//
+//   An FblcIO function for getting port values from a token stream.
+//
+// Inputs:
+//   user - User data with the token stream and value type to read.
+//   value - Ignored; must be NULL.
+//
+// Results:
+//   The next value read from the stream, or NULL if there is no value
+//   available.
+//
+// Side effects:
+//   Advances the token stream to the next value if a value is ready. This
+//   function should not block if no value is available.
+
+static FblcValue* Input(InputData* user, FblcValue* value)
+{
+  assert(value == NULL);
+
+  // TODO: Check if this would block before reading from the token stream.
+  FblcValue* got = FblcParseValue(user->env, user->type, &(user->toks));
+  if (got == NULL) {
+    return NULL;
+  }
+  if (!FblcGetToken(&(user->toks), ';')) {
+    return NULL;
+  }
+  return got;
+}
+
+// Output --
+//
+//   An FblcIO function for putting port values to a file stream.
+//
+// Inputs:
+//   user - The file stream to output the value to.
+//   value - The value to put to the stream.
+//
+// Results:
+//   NULL.
+//
+// Side effects:
+//   Prints the value to the file stream.
+
+static FblcValue* Output(FILE* user, FblcValue* value)
+{
+  FblcPrintValue(user, value);
+  fflush(user);
+  return NULL;
 }
 
 // main --
@@ -134,13 +199,36 @@ int main(int argc, char* argv[])
     return EX_USAGE;
   }
 
-  if (proc->portc != 0) {
-    FblcFreeAll(&alloc);
-    fprintf(stderr, "main process does not have 0 ports.\n");
-    return EX_USAGE;
+  argv += 3;
+
+  UserData user[proc->portc];
+  FblcIO ios[proc->portc];
+
+  for (int i = 0; i < proc->portc; i++) {
+    const char* filename = *argv++;
+    if (proc->portv[i].polarity == FBLC_POLARITY_PUT) {
+      user[i].output = fopen(filename, "w");
+      if  (user[i].output == NULL) {
+        // TODO: What's the right error code to return in this case?
+        fprintf(stderr, "unable to open %s for writing\n", filename);
+        return EX_NOINPUT;
+      }
+      ios[i].io = (FblcIOFunction)&Output;
+      ios[i].user = &(user[i].output);
+    } else {
+      assert(proc->portv[i].polarity == FBLC_POLARITY_GET);
+      user[i].input.env = env;
+      user[i].input.type = FblcLookupType(env, proc->portv[i].type.name);
+      assert(user[i].input.type != NULL);
+      if (!FblcOpenFileTokenStream(&(user[i].input.toks), filename)) {
+        fprintf(stderr, "unable to open %s for reading\n", filename);
+        return EX_NOINPUT;
+      }
+      ios[i].io = (FblcIOFunction)&Input;
+      ios[i].user = &(user[i].input);
+    }
   }
 
-  argv += 3;
   FblcValue* args[proc->argc];
   bool err = false;
   for (int i = 0; i < proc->argc; i++) {
@@ -155,7 +243,7 @@ int main(int argc, char* argv[])
   }
 
   if (!err) {
-    FblcValue* value = FblcExecute(env, proc, NULL, args);
+    FblcValue* value = FblcExecute(env, proc, ios, args);
     FblcPrintValue(stdout, value);
     printf("\n");
     FblcRelease(value);

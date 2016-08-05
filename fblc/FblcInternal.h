@@ -393,8 +393,9 @@ bool FblcCheckProgram(const FblcEnv* env);
 // For ports with FBLC_POLARITY_PUT, the 'io' function is passed its user data
 // and the value to put. The 'io' function must return NULL.
 
+typedef FblcValue* (*FblcIOFunction)(void* user, FblcValue* value);
 typedef struct {
-  FblcValue* (*io)(void* user, FblcValue* value);
+  FblcIOFunction io;
   void* user;
 } FblcIO;
 
