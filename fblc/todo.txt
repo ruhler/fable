@@ -1,3 +1,5 @@
+* Replace all of the old tests with the new format.
+* Add missing tests.
 * Test that passing ports on the command line actually works.
 * Make it easier to write tests with expected outputs.
   - See the clockincr test, for example.
