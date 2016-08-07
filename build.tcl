@@ -18,7 +18,6 @@ proc expect_result { result program entry args } {
   set loc [info frame -1]
   set line [dict get $loc line]
   set file [dict get $loc file]
-  puts "test $file:$line"
 
   try {
     set got [exec echo $program | ./out/fblc /dev/stdin $entry {*}$args]
@@ -36,7 +35,6 @@ proc expect_malformed { program entry args } {
   set loc [info frame -1]
   set line [dict get $loc line]
   set file [dict get $loc file]
-  puts "test $file:$line"
 
   try {
     set got [exec echo $program | ./out/fblc /dev/stdin $entry {*}$args]
@@ -50,6 +48,7 @@ proc expect_malformed { program entry args } {
 }
 
 foreach {x} [lsort [glob test/*.tcl]]  {
+  puts "test $x"
   source $x
 }
 
