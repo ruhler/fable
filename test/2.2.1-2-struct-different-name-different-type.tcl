@@ -13,3 +13,15 @@ set prg {
 
 expect_malformed $prg main
 
+set prg {
+  struct Unit();
+
+  struct A(Unit x, Unit y);
+  struct B(Unit x, Unit y);
+
+  func main( ; A) {
+    B(Unit(), Unit());
+  };
+}
+
+expect_malformed $prg main
