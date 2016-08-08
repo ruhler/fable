@@ -1,8 +1,0 @@
-
-struct Unit();
-struct Foo(Unit x, Unit, Unit z);
-
-/// Expect: ERROR
-func main( ; Foo) {
-  Foo(Unit(), Unit(), Unit());
-};
