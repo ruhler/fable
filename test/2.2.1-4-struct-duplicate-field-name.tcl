@@ -1,6 +1,5 @@
 
 # Each field of a struct type must have a different name.
-
 set prg {
   struct Unit();
   struct Donut();
@@ -10,6 +9,16 @@ set prg {
     BadStruct(Unit(), Donut());
   };
 }
-
 expect_malformed $prg main
 
+
+# Even if the types are the same.
+set prg {
+  struct Unit();
+  struct BadStruct(Unit x, Unit x);
+
+  func main( ; BadStruct) {
+    BadStruct(Unit(), Unit());
+  };
+}
+expect_malformed $prg main

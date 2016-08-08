@@ -9,6 +9,7 @@ clean:
 
 .PHONY: checkerr
 checkerr: all
+	cat out/*.err
 	cat out/????e-*.got
 
 .PHONY: doc

@@ -35,11 +35,14 @@ proc expect_malformed { program entry args } {
   set loc [info frame -1]
   set line [dict get $loc line]
   set file [dict get $loc file]
+  set name "[file tail $file]_$line"
 
   try {
-    set got [exec echo $program | ./out/fblc /dev/stdin $entry {*}$args]
+    exec echo $program > ./out/$name.fblc
+    set got [exec ./out/fblc ./out/$name.fblc $entry {*}$args]
     error "$file:$line: error: Expected error, but got '$got'"
   } trap CHILDSTATUS {results options} {
+    exec echo $results > ./out/$name.err
     set status [lindex [dict get $options -errorcode] 2]
     if {65 != $status} {
       error "$file:$line: error: Expected error code 65, but got code '$status'"
