@@ -1,9 +1,0 @@
-
-struct Unit();
-struct Donut();
-struct A(Unit x, Donut y);
-
-/// Expect: Donut()
-func main( ; Donut) {
-  A(Unit(), Donut()).y;
-};

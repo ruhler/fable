@@ -1,8 +1,0 @@
-
-struct Unit();
-struct A(Unit x, Unit y);
-
-func main( ; Unit) {
-  // The struct A has no field named 'z'.
-  A(Unit(), Unit()).z;
-};
