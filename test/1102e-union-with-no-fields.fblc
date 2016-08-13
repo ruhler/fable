@@ -1,7 +1,0 @@
-
-struct Unit();
-union Void();
-
-func main( ; Unit) {
-  Unit();
-};

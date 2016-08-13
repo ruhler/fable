@@ -152,7 +152,12 @@
    When a value of type CalcInstr is tagged with the field 'add', the Binary value corresponding to the 'add' field, with operands 'a' and 'b', can be accessed.
    If instead the value was tagged with the field 'negate', the Unary value with operand 'a' can be accessed, and so on.
 
-   As with structures, union types with different names are considered distinct and incompatible.
+   A union may contain fields of that union type itself, or other unions that depend on the union type being defined in a mutually recursive way.
+
+   Each field of a union type must have a different name.
+
+   Two union types with different names may have the same fields.
+   These union types are considered distinct and incompatible.
 
    A union declaration is valid if the following conditions hold:
    @list[numbered]

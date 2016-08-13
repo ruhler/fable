@@ -1,8 +1,0 @@
-
-struct Unit();
-union Fruit(Unit apple, Donut banana);
-
-/// Expect: ERROR
-func main( ; Fruit) {
-  Fruit:apple(Unit());
-};
