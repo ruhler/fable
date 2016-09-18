@@ -1,9 +1,0 @@
-
-struct Unit();
-union Fruit(Unit apple, Unit banana, Unit pear);
-union Maybe(Unit nothing, Fruit just);
-
-/// Expect: Fruit:pear(Unit())
-func main( ; Fruit) {
-  Maybe:just(Fruit:pear(Unit())).just;
-};
