@@ -1,9 +1,0 @@
-
-
-struct Unit();
-struct Foo(Unit bar);
-
-/// Expect: ERROR
-func main( ; Unit) {
-  Foo:bar(Unit()).bar;
-};
