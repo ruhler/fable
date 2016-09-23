@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
         return EX_NOINPUT;
       }
       ios[i].io = (FblcIOFunction)&Output;
-      ios[i].user = &(user[i].output);
+      ios[i].user = user[i].output;
     } else {
       assert(proc->portv[i].polarity == FBLC_POLARITY_GET);
       user[i].input.env = env;

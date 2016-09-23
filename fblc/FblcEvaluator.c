@@ -1277,7 +1277,6 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
   Ports* ports = NULL;
   for (int i = 0; i < proc->portc; i++) {
     links[i] = NewLink();
-    cmd = MkFreeLinkCmd(links[i], cmd);
     ports = AddPort(ports, proc->portv[i].name.name, links[i]);
   }
   cmd = MkPopScopeCmd(NULL, NULL, cmd);
@@ -1292,7 +1291,12 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
 
   Thread* thread = GetThread(&threads);
   while (thread != NULL) {
-    // Perform whatever IO is ready.
+    // Run the current thread.
+    Run(env, &threads, thread);
+    thread = GetThread(&threads);
+
+    // Perform whatever IO is ready. Do this after running the current thread
+    // to ensure we get whatever final IO there is before terminating.
     for (int i = 0; i < proc->portc; i++) {
       if (proc->portv[i].polarity == FBLC_POLARITY_GET) {
         Thread* waiting = GetThread(&(links[i]->waiting));
@@ -1310,13 +1314,14 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
         if (put != NULL) {
           FblcValue* result = portios[i].io(portios[i].user, put);
           assert(result == NULL);
+          FblcRelease(put);
         }
       }
     }
+  }
 
-    // Run the current thread.
-    Run(env, &threads, thread);
-    thread = GetThread(&threads);
+  for (int i = 0; i < proc->portc; i++) {
+    FreeLink(links[i]);
   }
   return result;
 }
