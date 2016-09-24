@@ -29,6 +29,61 @@ proc expect_result { result program entry args } {
   }
 }
 
+# Test that running the process 'entry' in 'program' with given ports and
+# arguments leads to the given 'result'.
+# The ports should be specified as {i <portid>} for input ports and as
+# {o <portid>} for output ports. The 'script' should be a sequence of commands
+# of the form 'put <portid> <value>' and 'get <portid> <value>'. The put
+# command causes the value to be written to the given port. The get command
+# gets a value from the given port and checks that it is equivalent to the
+# given value.
+proc expect_proc_result { result program entry ports args script } {
+  set loc [info frame -1]
+  set line [dict get $loc line]
+  set file [dict get $loc file]
+  set name "[file tail $file]_$line"
+
+  # Set up the ports.
+  set port_files [list]
+  foreach {type id} [join $ports] {
+    set portfile ./out/$name.id
+    exec mkfifo $portfile
+    lappend port_files $portfile
+  }
+  exec mkfifo ./out/$name.result
+
+  try {
+    exec echo $program > ./out/$name.fblc
+    exec sh -c "./out/fblc ./out/$name.fblc $entry $port_files $args > ./out/$name.result" &
+    # TODO: The result and ports must be opened in this order to avoid
+    # deadlock. It would be much better if we didn't rely on this or have to
+    # make assumptions about what order fblc opens the ports.
+    set result_channel [open ./out/$name.result r]
+    foreach {type id} [join $ports] {
+      set portfile ./out/$name.id
+      # TODO: Any way to avoid making port a global variable?
+      set ::port($id) [open $portfile [string map {i w o r} $type]]
+    }
+    proc put {id value} {
+      puts $::port($id) $value
+    }
+    proc get {id value} {
+      set got [read $::port($id) [string length $value]]
+      if {$got != $value} {
+        # TODO: Figure out how to report file and line number here.
+        error "error: get $id '$value' gave '$got'"
+      }
+    }
+    eval $script
+    set got [read -nonewline $result_channel]
+    if {$got != $result} {
+      error "$file:$line: error: Expected result '$result', but got '$got'"
+    }
+  } trap CHILDSTATUS {results options} {
+    error "$file:$line: error: Expected '$result', but got:\n$results"
+  }
+}
+
 # Test that running function or process 'entry' in 'program' with the given
 # 'args' and no ports leads to an error indicating the program is malformed.
 proc expect_malformed { program entry args } {
