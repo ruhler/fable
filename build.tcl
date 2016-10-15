@@ -164,15 +164,15 @@ expect_status 0 ./out/fblc --help
 puts "test ./out/fblc no_such_file"
 expect_status 66 ./out/fblc no_such_file main
 
-puts "test ./out/fblc clock/clock.fblc incr 'Digit:1(Unit())'"
-exec ./out/fblc clock/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
+puts "test prgms/clock.fblc"
+exec ./out/fblc prgms/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
 exec echo "Digit:2(Unit())" > out/clockincr.wnt
 exec diff out/clockincr.wnt out/clockincr.got
 
 # Test the calculator.
-puts "test calc/calc.fblc"
-exec ./out/fblc calc/calc.fblc main > out/calc.got
-exec grep "/// Expect: " calc/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
+puts "test prgms/calc.fblc"
+exec ./out/fblc prgms/calc.fblc main > out/calc.got
+exec grep "/// Expect: " prgms/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
 exec diff out/calc.wnt out/calc.got
 
 # Report the final test coverage stats.
