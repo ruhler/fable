@@ -1,0 +1,69 @@
+
+struct Unit();
+
+// A square is either filled with an 'X', filled with an 'O', 
+// or is 'E'mpty.
+union Square(Unit X, Unit O, Unit E);
+
+struct Board(
+    Square ul, Square uc, Square ur,    // Upper row.
+    Square ml, Square mc, Square mr,    // Middle row.
+    Square ll, Square lc, Square lr     // Lower row.
+);
+
+// The status of a (valid) board is one of:
+//  X: The player X has won.
+//  O: The player O has won.
+//  D: There is a draw.
+//  E: The board has empty squares.
+union Status(Unit X, Unit O, Unit D, Unit E);
+
+// Return the status of a single square.
+func SquareStatus(Square a ; Status) {
+  ?(a ; Status:X(Unit()), Status:O(Unit()), Status:E(Unit()));
+};
+
+// Combine two Status using an 'and' operation.
+func AndStatus(Status a, Status b; Status) {
+  ?(a ;
+      ?(b ; a, Status:D(Unit()), b, b), 
+      ?(b ; Status:D(Unit()), a, b, b),
+      ?(b ; a, a, a, b),
+      a);
+};
+
+// Combine two Status using an 'or' operation.
+func OrStatus(Status a, Status b; Status) {
+  ?(a ; a, a, b, ?(b ; b, b, a, a));
+};
+
+// Compute the status for a given row of squares.
+func RowStatus(Square a, Square b, Square c; Status) {
+  AndStatus(SquareStatus(a), AndStatus(SquareStatus(b), SquareStatus(c)));
+};
+
+// Compute the status for a board.
+func BoardStatus(Board a ; Status) {
+  OrStatus(
+      OrStatus(
+        OrStatus(RowStatus(a.ul, a.uc, a.ur), RowStatus(a.ml, a.mc, a.mr)),
+        OrStatus(RowStatus(a.ll, a.lc, a.lr), RowStatus(a.ul, a.ml, a.ll))),
+      OrStatus(
+        OrStatus(RowStatus(a.uc, a.mc, a.lc), RowStatus(a.ur, a.mr, a.lr)),
+        OrStatus(RowStatus(a.ul, a.mc, a.lr), RowStatus(a.ur, a.mc, a.ll))));
+};
+
+union TestResult(Unit Passed, Unit Failed);
+
+func Test( ; TestResult) {
+  Status status = BoardStatus(Board(
+        Square:X(Unit()), Square:O(Unit()), Square:O(Unit()),
+        Square:E(Unit()), Square:O(Unit()), Square:X(Unit()),
+        Square:O(Unit()), Square:X(Unit()), Square:X(Unit())));
+  ?(status ;
+      TestResult:Failed(Unit()),
+      TestResult:Passed(Unit()),
+      TestResult:Failed(Unit()),
+      TestResult:Failed(Unit()));
+};
+

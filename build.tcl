@@ -169,11 +169,15 @@ exec ./out/fblc prgms/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
 exec echo "Digit:2(Unit())" > out/clockincr.wnt
 exec diff out/clockincr.wnt out/clockincr.got
 
-# Test the calculator.
 puts "test prgms/calc.fblc"
 exec ./out/fblc prgms/calc.fblc main > out/calc.got
 exec grep "/// Expect: " prgms/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
 exec diff out/calc.wnt out/calc.got
+
+puts "test prgms/tictactoe.fblc"
+exec ./out/fblc prgms/tictactoe.fblc Test > out/tictactoe.got
+exec echo "TestResult:Passed(Unit())" > out/tictactoe.wnt
+exec diff out/tictactoe.wnt out/tictactoe.got
 
 # Report the final test coverage stats.
 exec gcov {*}[glob out/*.o] > out/fblc.gcov
