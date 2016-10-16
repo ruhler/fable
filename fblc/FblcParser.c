@@ -133,7 +133,7 @@ static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
 
 // ParseArgs --
 //
-//   Parse a list of arguments in the form: <expr>, <expr>, ...)
+//   Parse a list of zero or more arguments in the form: <expr>, <expr>, ...)
 //   This is used for parsing arguments to function calls, conditional
 //   expressions, and process calls.
 //
@@ -156,18 +156,26 @@ static int ParseArgs(FblcAllocator* alloc, FblcTokenStream* toks,
 {
   FblcVector args;
   FblcVectorInit(alloc, &args, sizeof(FblcExpr*));
-  while (!FblcIsToken(toks, ')')) {
+  if (!FblcIsToken(toks, ')')) {
     FblcExpr* arg = ParseExpr(alloc, toks, false);
     if (arg == NULL) {
       return -1;
     }
     *((FblcExpr**)FblcVectorAppend(&args)) = arg;
 
-    if (FblcIsToken(toks, ',')) {
+    while (FblcIsToken(toks, ',')) {
       FblcGetToken(toks, ',');
+      arg = ParseExpr(alloc, toks, false);
+      if (arg == NULL) {
+        return -1;
+      }
+      *((FblcExpr**)FblcVectorAppend(&args)) = arg;
     }
   }
-  FblcGetToken(toks, ')');
+  if (!FblcGetToken(toks, ')')) {
+    return -1;
+  }
+
   int argc;
   *plist = FblcVectorExtract(&args, &argc);
   return argc;

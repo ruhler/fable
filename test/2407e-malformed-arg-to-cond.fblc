@@ -1,8 +1,0 @@
-
-struct Unit();
-union Fruit(Unit apple, Unit banana);
-
-func main( ; Unit) {
-  // The variable 'x' has not been declared.
-  ?(Fruit:banana(Unit()) ; x, Unit());
-};

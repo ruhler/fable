@@ -1,8 +1,0 @@
-
-struct Unit();
-struct Donut();
-union Fruit(Unit apple, Unit banana);
-
-func main( ; Unit) {
-  ?(Fruit:banana(Unit()) ; Unit(), Donut());
-};
