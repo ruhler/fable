@@ -5,11 +5,58 @@ struct Unit();
 // or is 'E'mpty.
 union Square(Unit X, Unit O, Unit E);
 
+// A board is a 3x3 grid of squares.
 struct Board(
     Square ul, Square uc, Square ur,    // Upper row.
     Square ml, Square mc, Square mr,    // Middle row.
     Square ll, Square lc, Square lr     // Lower row.
 );
+
+// Position can be used to identify a specific square in the 3x3 grid.
+union Position(
+    Unit UL, Unit UC, Unit UR,
+    Unit ML, Unit MC, Unit MR,
+    Unit LL, Unit LC, Unit LR
+);
+
+// Returns the value of the square at position 'p' in board 'b'.
+func GetSquare(Board b, Position p; Square) {
+  ?(p; b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr);
+};
+
+// Sets the square at position 'p' in board 'b' to value 's'.
+func SetSquare(Board b, Position p, Square s ; Board) {
+  ?(p;
+      Board(   s, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul,    s, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc,    s, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur,    s, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml,    s, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc,    s, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr,    s, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll,    s, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
+};
+
+union MaybeBoard(Board Just, Unit Nothing);
+
+union Player(Unit X, Unit O);
+
+union Bool(Unit True, Unit False);
+
+// Returns true if the square 's' is empty.
+func IsEmpty(Square s ; Bool) {
+  ?(s; Bool:False(Unit()), Bool:False(Unit()), Bool:True(Unit()));
+};
+
+// Returns the board resulting from player 'x' making a play at position 'p'
+// of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
+// not empty.
+func Move(Board b, Position p, Player x; MaybeBoard) {
+  ?(IsEmpty(GetSquare(b, p)) ; 
+     MaybeBoard:Just(SetSquare(b, p, ?(x; Square:X(Unit()), Square:O(Unit())))),
+     MaybeBoard:Nothing(Unit()));
+};
 
 // The status of a (valid) board is one of:
 //  X: The player X has won.
@@ -53,9 +100,81 @@ func BoardStatus(Board a ; Status) {
         OrStatus(RowStatus(a.ul, a.mc, a.lr), RowStatus(a.ur, a.mc, a.ll))));
 };
 
+union Result(Unit Win, Unit Draw, Unit Loss);
+
+// Re-interpret the result from the perspective of the opposing player.
+func FlipResult(Result r; Result) {
+  ?(r ; Result:Loss(Unit()), Result:Draw(Unit()), Result:Win(Unit()));
+};
+
+// Return the expected result of the game for player 'x', assuming player 'x'
+// has just moved and that both players play optimally.
+func ExpectedResult(Board b, Player x; Result) {
+  ?(BoardStatus(b);
+      ?(x; Result:Win(Unit()), Result:Loss(Unit())),
+      ?(x; Result:Loss(Unit()), Result:Win(Unit())),
+      Result:Draw(Unit()),
+      {
+        Player o = ?(x; Player:O(Unit()), Player:X(Unit()));
+        Position move = ChooseBestMove(b, o);
+        FlipResult(ExpectedResult(Move(b, move, o).Just, o));
+      }
+   );
+};
+
+struct PositionResult(Position position, Result result);
+
+func ChooseBestPosition(PositionResult a, PositionResult b; PositionResult) {
+  Result ra = a.result;
+  Result rb = b.result;
+  ?(ra; a, ?(rb; b, a, a), b);
+};
+
+func ChooseBestMaybePosition(MaybePositionResult a, MaybePositionResult b;
+    MaybePositionResult) {
+  ?(a; ?(b; MaybePositionResult:Just(ChooseBestPosition(a.Just, b.Just)), a), b);
+};
+
+union MaybePositionResult(PositionResult Just, Unit Nothing);
+
+// Return the expected result of player 'x' moving at position 'p' on board
+// 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
+// 'b'.
+func MoveResult(Board b, Player x, Position p; MaybePositionResult) {
+  MaybeBoard moved = Move(b, p, x);
+  ?(moved;
+      MaybePositionResult:Just(PositionResult(p, ExpectedResult(moved.Just, x))),
+      MaybePositionResult:Nothing(Unit()));
+};
+
+// Choose the best move for player 'x' on the given board.
+// The results are undefined if there are no moves left to make.
+func ChooseBestMove(Board b, Player x; Position) {
+  MaybePositionResult ul = MoveResult(b, x, Position:UL(Unit()));
+  MaybePositionResult uc = MoveResult(b, x, Position:UC(Unit()));
+  MaybePositionResult ur = MoveResult(b, x, Position:UR(Unit()));
+  MaybePositionResult ml = MoveResult(b, x, Position:ML(Unit()));
+  MaybePositionResult mc = MoveResult(b, x, Position:MC(Unit()));
+  MaybePositionResult mr = MoveResult(b, x, Position:MR(Unit()));
+  MaybePositionResult ll = MoveResult(b, x, Position:LL(Unit()));
+  MaybePositionResult lc = MoveResult(b, x, Position:LC(Unit()));
+  MaybePositionResult lr = MoveResult(b, x, Position:LR(Unit()));
+  MaybePositionResult best = 
+    ChooseBestMaybePosition(
+      ChooseBestMaybePosition(
+        ChooseBestMaybePosition(
+          ChooseBestMaybePosition(ul, uc),
+          ChooseBestMaybePosition(ur, ml)),
+        ChooseBestMaybePosition(
+          ChooseBestMaybePosition(mc, mr),
+          ChooseBestMaybePosition(ll, lc))),
+      lr);
+  best.Just.position;
+};
+
 union TestResult(Unit Passed, Unit Failed);
 
-func Test( ; TestResult) {
+func TestBoardStatus( ; TestResult) {
   Status status = BoardStatus(Board(
         Square:X(Unit()), Square:O(Unit()), Square:O(Unit()),
         Square:E(Unit()), Square:O(Unit()), Square:X(Unit()),
@@ -66,4 +185,33 @@ func Test( ; TestResult) {
       TestResult:Failed(Unit()),
       TestResult:Failed(Unit()));
 };
+
+union PositionTestResult(Unit Passed, Position Failed);
+
+func TestChooseBestMoveWin( ; PositionTestResult) {
+  Position position = ChooseBestMove(Board(
+        Square:X(Unit()), Square:X(Unit()), Square:E(Unit()),
+        Square:O(Unit()), Square:O(Unit()), Square:E(Unit()),
+        Square:E(Unit()), Square:E(Unit()), Square:E(Unit())), Player:X(Unit()));
+  ?(position ;
+      PositionTestResult:Failed(position), PositionTestResult:Failed(position), PositionTestResult:Passed(Unit()),
+      PositionTestResult:Failed(position), PositionTestResult:Failed(position), PositionTestResult:Failed(position),
+      PositionTestResult:Failed(position), PositionTestResult:Failed(position), PositionTestResult:Failed(position));
+};
+
+func TestChooseBestMoveNoLose( ; PositionTestResult) {
+  Position position = ChooseBestMove(Board(
+        Square:E(Unit()), Square:E(Unit()), Square:E(Unit()),
+        Square:X(Unit()), Square:X(Unit()), Square:O(Unit()),
+        Square:E(Unit()), Square:E(Unit()), Square:O(Unit())), Player:X(Unit()));
+  ?(position ;
+      PositionTestResult:Failed(position), PositionTestResult:Failed(position), PositionTestResult:Passed(Unit()),
+      PositionTestResult:Failed(position), PositionTestResult:Failed(position), PositionTestResult:Failed(position),
+      PositionTestResult:Failed(position), PositionTestResult:Failed(position), PositionTestResult:Failed(position));
+};
+
+// TODO:
+// * Better way of expressing maybe monad
+// * Be able to easily combine multiple test cases
+// * Use PositionEquals for test result, and report position when failed.
 

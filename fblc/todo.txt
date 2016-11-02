@@ -1,3 +1,4 @@
+* Try running all the tests. Don't just give up at the first error.
 * Replace all of the old tests with the new format.
 * Add missing tests.
 * Test that passing ports on the command line actually works.
