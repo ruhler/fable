@@ -826,7 +826,7 @@ FblcValue* FblcParseValue(FblcEnv* env, FblcType* type, FblcTokenStream* toks)
     int tag = FblcTagForField(type, name.name);
     if (tag < 0) {
       FblcReportError("Invalid field %s for type %s.\n",
-          name.loc, name, type->name);
+          name.loc, name.name, type->name);
       FblcFreeAll(&alloc);
       return NULL;
     }

@@ -1,15 +1,18 @@
-* Try running all the tests. Don't just give up at the first error.
-* Replace all of the old tests with the new format.
-* Add missing tests.
-* Test that passing ports on the command line actually works.
-* Make it easier to write tests with expected outputs.
-  - See the clockincr test, for example.
+* Test fblc doesn't block waiting for input when it should move on.
+  For example, see foo.fblc.
+* Figure out how to test a process that runs forever, or add a quit command to
+  tictactoe program and test it using that.
+
 * Don't stop running tests after the first one fails
   - It would be nice to see a list of all the tests that fail.
+* Replace all of the old tests with the new format.
+* Add missing tests.
+* Make it easier to write tests with expected outputs.
+  - See the clockincr test, for example.
 * Add expected line and column numbers for the expected error test cases.
 * Add FblcTokenWouldBlock function to support interactive use.
 * Test that tail recursive functions and procedures don't smash the stack.
-* Test process call port arguments are valid
+* Test process call port argument counts and types are valid
 * Test process call expr arguments are valid
 * Test that a link's type is valid.
 * Test that a link action's ports can't shadow ports already in scope.
