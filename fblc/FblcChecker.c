@@ -360,7 +360,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
       FblcGetActn* get_actn = (FblcGetActn*)actn;
       FblcName type = LookupVar(gets, get_actn->port.name);
       if (type == NULL) {
-        FblcReportError("Get port '%s' not in scope.\n", get_actn->loc,
+        FblcReportError("'%s' is not a valid get port.\n", get_actn->loc,
             get_actn->port.name);
         return NULL;
       }
@@ -371,7 +371,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
       FblcPutActn* put_actn = (FblcPutActn*)actn;
       FblcName port_type = LookupVar(puts, put_actn->port.name);
       if (port_type == NULL) {
-        FblcReportError("Put port '%s' not in scope.\n", put_actn->loc,
+        FblcReportError("'%s' is not a valid put port.\n", put_actn->loc,
             put_actn->port.name);
         return NULL;
       }

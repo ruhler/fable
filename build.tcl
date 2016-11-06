@@ -168,20 +168,20 @@ exec ./out/fblc prgms/calc.fblc main > out/calc.got
 exec grep "/// Expect: " prgms/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
 exec diff out/calc.wnt out/calc.got
 
-#puts "test prgms/tictactoe.fblc TestBoardStatus"
-#exec ./out/fblc prgms/tictactoe.fblc TestBoardStatus > out/tictactoe.TestBoardStatus.got
-#exec echo "TestResult:Passed(Unit())" > out/tictactoe.TestBoardStatus.wnt
-#exec diff out/tictactoe.TestBoardStatus.wnt out/tictactoe.TestBoardStatus.got
-#
-#puts "test prgms/tictactoe.fblc TestChooseBestMoveNoLose"
-#exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveNoLose > out/tictactoe.TestChooseBestMoveNoLose.got
-#exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveNoLose.wnt
-#exec diff out/tictactoe.TestChooseBestMoveNoLose.wnt out/tictactoe.TestChooseBestMoveNoLose.got
-#
-#puts "test prgms/tictactoe.fblc TestChooseBestMoveWin"
-#exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
-#exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
-#exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
+puts "test prgms/tictactoe.fblc TestBoardStatus"
+exec ./out/fblc prgms/tictactoe.fblc TestBoardStatus > out/tictactoe.TestBoardStatus.got
+exec echo "TestResult:Passed(Unit())" > out/tictactoe.TestBoardStatus.wnt
+exec diff out/tictactoe.TestBoardStatus.wnt out/tictactoe.TestBoardStatus.got
+
+puts "test prgms/tictactoe.fblc TestChooseBestMoveNoLose"
+exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveNoLose > out/tictactoe.TestChooseBestMoveNoLose.got
+exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveNoLose.wnt
+exec diff out/tictactoe.TestChooseBestMoveNoLose.wnt out/tictactoe.TestChooseBestMoveNoLose.got
+
+puts "test prgms/tictactoe.fblc TestChooseBestMoveWin"
+exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
+exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
+exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
 
 # Report the final test coverage stats.
 exec gcov {*}[glob out/*.o] > out/fblc.gcov
