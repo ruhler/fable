@@ -11,6 +11,8 @@ foreach {x} [lsort [glob fblc/*.c]] {
 puts "ld -o out/fblc"
 exec gcc {*}$FLAGS -o out/fblc -lgc {*}[glob out/*.o]
 
+exec gcc -std=c99 -Wall -Werror -o out/proc_test_driver test/proc_test_driver.c
+
 # Spec tests
 # Test that running function or process 'entry' in 'program' with the given
 # 'args' and no ports leads to the given 'result'.
@@ -45,42 +47,34 @@ proc expect_proc_result { result program entry ports args script } {
 
   # Set up the ports.
   set port_files [list]
+  set port_specs [list]
   foreach {type id} [join $ports] {
-    set portfile ./out/$name.id
+    set portfile ./out/$name.$id
+    exec rm -f $portfile
     exec mkfifo $portfile
     lappend port_files $portfile
+    lappend port_specs $type:$id:$portfile
   }
-  exec mkfifo ./out/$name.result
+
+  exec rm -f ./out/$name.script
+  foreach cmd [split $script "\n"] {
+    exec echo [string trim $cmd] >> ./out/$name.script
+  }
+  exec echo $program > ./out/$name.fblc
+  exec sh -c "./out/proc_test_driver $port_specs < ./out/$name.script > ./out/$name.script.out 2> ./out/$name.script.err" &
 
   try {
-    exec echo $program > ./out/$name.fblc
-    exec sh -c "./out/fblc ./out/$name.fblc $entry $port_files $args > ./out/$name.result" &
-    # TODO: The result and ports must be opened in this order to avoid
-    # deadlock. It would be much better if we didn't rely on this or have to
-    # make assumptions about what order fblc opens the ports.
-    set result_channel [open ./out/$name.result r]
-    foreach {type id} [join $ports] {
-      set portfile ./out/$name.id
-      # TODO: Any way to avoid making port a global variable?
-      set ::port($id) [open $portfile [string map {i w o r} $type]]
-    }
-    proc put {id value} {
-      puts $::port($id) $value
-    }
-    proc get {id value} {
-      set got [read $::port($id) [string length $value]]
-      if {$got != $value} {
-        # TODO: Figure out how to report file and line number here.
-        error "error: get $id '$value' gave '$got'"
-      }
-    }
-    eval $script
-    set got [read -nonewline $result_channel]
+    set got [exec ./out/fblc ./out/$name.fblc $entry {*}$port_files {*}$args]
     if {$got != $result} {
-      error "$file:$line: error: Expected result '$result', but got '$got'"
+      error "$file:$line: error: Expected '$result', but got '$got'"
     }
   } trap CHILDSTATUS {results options} {
     error "$file:$line: error: Expected '$result', but got:\n$results"
+  }
+
+  set got [read [open ./out/$name.script.err]]
+  if {$got != ""} {
+    error "$file:$line: error: $got"
   }
 }
 
@@ -174,20 +168,20 @@ exec ./out/fblc prgms/calc.fblc main > out/calc.got
 exec grep "/// Expect: " prgms/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
 exec diff out/calc.wnt out/calc.got
 
-puts "test prgms/tictactoe.fblc TestBoardStatus"
-exec ./out/fblc prgms/tictactoe.fblc TestBoardStatus > out/tictactoe.TestBoardStatus.got
-exec echo "TestResult:Passed(Unit())" > out/tictactoe.TestBoardStatus.wnt
-exec diff out/tictactoe.TestBoardStatus.wnt out/tictactoe.TestBoardStatus.got
-
-puts "test prgms/tictactoe.fblc TestChooseBestMoveNoLose"
-exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveNoLose > out/tictactoe.TestChooseBestMoveNoLose.got
-exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveNoLose.wnt
-exec diff out/tictactoe.TestChooseBestMoveNoLose.wnt out/tictactoe.TestChooseBestMoveNoLose.got
-
-puts "test prgms/tictactoe.fblc TestChooseBestMoveWin"
-exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
-exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
-exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
+#puts "test prgms/tictactoe.fblc TestBoardStatus"
+#exec ./out/fblc prgms/tictactoe.fblc TestBoardStatus > out/tictactoe.TestBoardStatus.got
+#exec echo "TestResult:Passed(Unit())" > out/tictactoe.TestBoardStatus.wnt
+#exec diff out/tictactoe.TestBoardStatus.wnt out/tictactoe.TestBoardStatus.got
+#
+#puts "test prgms/tictactoe.fblc TestChooseBestMoveNoLose"
+#exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveNoLose > out/tictactoe.TestChooseBestMoveNoLose.got
+#exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveNoLose.wnt
+#exec diff out/tictactoe.TestChooseBestMoveNoLose.wnt out/tictactoe.TestChooseBestMoveNoLose.got
+#
+#puts "test prgms/tictactoe.fblc TestChooseBestMoveWin"
+#exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
+#exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
+#exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
 
 # Report the final test coverage stats.
 exec gcov {*}[glob out/*.o] > out/fblc.gcov

@@ -99,6 +99,7 @@ static FblcValue* Input(InputData* user, FblcValue* value)
 static FblcValue* Output(FILE* user, FblcValue* value)
 {
   FblcPrintValue(user, value);
+  fprintf(user, "\n");
   fflush(user);
   return NULL;
 }
@@ -244,6 +245,7 @@ int main(int argc, char* argv[])
 
   if (!err) {
     FblcValue* value = FblcExecute(env, proc, ios, args);
+    assert(value != NULL);
     FblcPrintValue(stdout, value);
     printf("\n");
     FblcRelease(value);
