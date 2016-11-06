@@ -841,6 +841,9 @@ FblcValue* FblcParseValue(FblcEnv* env, FblcType* type, FblcTokenStream* toks)
     if (field == NULL) {
       return NULL;
     }
+    if (!FblcGetToken(toks, ')')) {
+      return NULL;
+    }
     FblcUnionValue* value = FblcNewUnionValue(type);
     value->tag = tag;
     value->field = field;

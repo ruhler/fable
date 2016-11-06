@@ -57,7 +57,7 @@ proc expect_proc_result { result program entry ports args script } {
   }
 
   exec rm -f ./out/$name.script
-  foreach cmd [split $script "\n"] {
+  foreach cmd [split [string trim $script] "\n"] {
     exec echo [string trim $cmd] >> ./out/$name.script
   }
   exec echo $program > ./out/$name.fblc
