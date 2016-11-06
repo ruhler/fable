@@ -389,12 +389,41 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
     }
 
     case FBLC_CALL_ACTN: {
-      // TODO: Check arguments.
       FblcCallActn* call_actn = (FblcCallActn*)actn;
       FblcProc* proc = FblcLookupProc(env, call_actn->proc.name);
       if (proc == NULL) {
         FblcReportError("'%s' is not a proc.\n",
             call_actn->loc, call_actn->proc.name);
+        return NULL;
+      }
+
+      if (call_actn->portc  != proc->portc) {
+        FblcReportError("Wrong number of port arguments to %s. Expected %d, "
+            "bug got %d.\n", call_actn->loc, call_actn->proc.name,
+            proc->portc, call_actn->portc);
+      }
+
+      for (int i = 0; i < proc->portc; i++) {
+        bool isput = (proc->portv[i].polarity == FBLC_POLARITY_PUT);
+        Vars* ports = isput ? puts : gets;
+        FblcName port_type = LookupVar(ports, call_actn->ports[i].name);
+        if (port_type == NULL) {
+          FblcReportError("'%s' is not a valid %s port.\n",
+              call_actn->ports[i].loc,
+              call_actn->ports[i].name,
+              isput ? "put" : "get");
+          return NULL;
+        }
+
+        if (!FblcNamesEqual(proc->portv[i].type.name, port_type)) {
+          FblcReportError("Expected port type %s, but found %s.\n",
+              call_actn->ports[i].loc, proc->portv[i].type.name, port_type);
+          return NULL;
+        }
+      }
+
+      if (!CheckArgs(env, vars, proc->argc, proc->argv, call_actn->exprc,
+            call_actn->exprs, &(call_actn->proc))) {
         return NULL;
       }
       return proc->return_type.name;
