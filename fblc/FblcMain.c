@@ -72,14 +72,7 @@ static FblcValue* Input(InputData* user, FblcValue* value)
   assert(value == NULL);
 
   // TODO: Check if this would block before reading from the token stream.
-  FblcValue* got = FblcParseValue(user->env, user->type, &(user->toks));
-  if (got == NULL) {
-    return NULL;
-  }
-  if (!FblcGetToken(&(user->toks), ';')) {
-    return NULL;
-  }
-  return got;
+  return FblcParseValue(user->env, user->type, &(user->toks));
 }
 
 // Output --

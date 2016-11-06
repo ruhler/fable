@@ -1293,7 +1293,6 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
   while (thread != NULL) {
     // Run the current thread.
     Run(env, &threads, thread);
-    thread = GetThread(&threads);
 
     // Perform whatever IO is ready. Do this after running the current thread
     // to ensure we get whatever final IO there is before terminating.
@@ -1318,6 +1317,8 @@ FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
         }
       }
     }
+
+    thread = GetThread(&threads);
   }
 
   for (int i = 0; i < proc->portc; i++) {
