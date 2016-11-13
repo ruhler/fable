@@ -747,7 +747,7 @@ progress.
 @section 5. Program
  Syntax: decl [decl [...]] ;
 
- A program is a collection of type and function declarations.
+ A program is a collection of type, function, and process declarations.
  An interpreter or compiler should have an implementation-specific mechanism for selecting the main function or process to interpret or compile.
 @end
 
