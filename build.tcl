@@ -22,11 +22,10 @@ foreach {x} [lsort [glob prgms/*.c]] {
 set ::fblc ./out/prgms/fblc
 exec gcc -std=c99 -Wall -Werror -o out/proc_test_driver test/proc_test_driver.c
 
-proc report_coverage {name} {
+proc check_coverage {name} {
   exec mkdir -p out/$name
   exec gcov {*}[glob out/fblc/*.o out/prgms/fblc.o] > out/$name/fblc.gcov
   exec mv {*}[glob *.gcov] out/$name
-  puts [exec tail -n 1 out/$name/fblc.gcov]
 }
 
 # Spec tests
@@ -120,8 +119,7 @@ foreach {x} [lsort [glob test/*.tcl]]  {
   source $x
 }
 
-# Report how much code coverage we have from the spec tests.
-report_coverage spectest
+check_coverage spectest
 
 # Additional Tests.
 
@@ -157,8 +155,7 @@ foreach {x} [lsort [glob test/????e-*.fblc]] {
   expect_status 65 $::fblc $x main 2> $fgot
 }
 
-# Report how much code coverage we had with the old tests.
-report_coverage oldspec
+check_coverage oldspec
 
 # Test fblc.
 puts "test $::fblc"
@@ -195,5 +192,12 @@ exec $::fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChoo
 exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
 exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
 
-# Report how much code coverage we have overall
-report_coverage overall
+check_coverage overall
+
+# Report how much code coverage we have.
+puts ""
+puts "Coverage: "
+puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
+puts "  Old Spec: [exec tail -n 1 out/oldspec/fblc.gcov]"
+puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"
+

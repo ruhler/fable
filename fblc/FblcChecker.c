@@ -29,6 +29,7 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
     Vars* puts, FblcActn* actn);
 static bool CheckFields(
     const FblcEnv* env, int fieldc, FblcField* fieldv, const char* kind);
+static bool CheckPorts(const FblcEnv* env, int portc, FblcPort* portv);
 static bool CheckType(const FblcEnv* env, FblcType* type);
 static bool CheckFunc(const FblcEnv* env, FblcFunc* func);
 static bool CheckProc(const FblcEnv* env, FblcProc* proc);
@@ -510,8 +511,8 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 // CheckFields --
 //
 //   Verify the given fields have valid types and unique names. This is used
-//   to check fields in a type declaration and arguments in a function
-//   declaration.
+//   to check fields in a type declaration and arguments in a function or
+//   process declaration.
 //
 // Inputs:
 //   env - The program environment.
@@ -546,6 +547,47 @@ static bool CheckFields(
       if (FblcNamesEqual(fieldv[i].name.name, fieldv[j].name.name)) {
         FblcReportError("Multiple %ss named '%s'.\n",
             fieldv[j].name.loc, kind, fieldv[j].name.name);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// CheckPorts --
+//
+//   Verify the given ports have valid types and unique names.
+//
+// Inputs:
+//   env - The program environment.
+//   portc - The number of ports to verify.
+//   portv - The ports to verify.
+//
+// Results:
+//   Returns true if the ports have valid types and unique names, false
+//   otherwise.
+//
+// Side effects:
+//   If the ports don't have valid types or don't have unique names, a
+//   message is printed to standard error describing the problem.
+
+static bool CheckPorts(const FblcEnv* env, int portc, FblcPort* portv)
+{
+  // Verify the type for each port exists.
+  for (int i = 0; i < portc; i++) {
+    if (FblcLookupType(env, portv[i].type.name) == NULL) {
+      FblcReportError("Type '%s' not found.\n",
+          portv[i].type.loc, portv[i].type.name);
+      return false;
+    }
+  }
+
+  // Verify ports have unique names.
+  for (int i = 0; i < portc; i++) {
+    for (int j = i+1; j < portc; j++) {
+      if (FblcNamesEqual(portv[i].name.name, portv[j].name.name)) {
+        FblcReportError("Multiple ports named '%s'.\n",
+            portv[j].name.loc, portv[j].name.name);
         return false;
       }
     }
@@ -646,7 +688,10 @@ static bool CheckFunc(const FblcEnv* env, FblcFunc* func)
 
 static bool CheckProc(const FblcEnv* env, FblcProc* proc)
 {
-  // TODO: Check the ports.
+  // Check the ports.
+  if (!CheckPorts(env, proc->portc, proc->portv)) {
+    return false;
+  }
 
   // Check the arguments.
   if (!CheckFields(env, proc->argc, proc->argv, "arg")) {

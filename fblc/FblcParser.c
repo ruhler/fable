@@ -31,7 +31,7 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
 //   The number of fields parsed or -1 on error.
 //
 // Side effects:
-//   *plist is set to point to a list of the fields parsed in reverse order.
+//   *plist is set to point to a list of the parsed fields.
 //   The token stream is advanced past the tokens describing the fields.
 //   In case of an error, an error message is printed to standard error.
 
@@ -71,7 +71,7 @@ static int ParseFields(FblcAllocator* alloc, FblcTokenStream* toks,
 
 // ParsePorts -
 //
-//   Parse ports in the form:
+//   Parse a list of zero or more ports in the form:
 //      <type> <polarity> <name>, <type> <polarity> <name>, ...
 //   This is used for parsing the process input port parameters.
 //
@@ -85,19 +85,33 @@ static int ParseFields(FblcAllocator* alloc, FblcTokenStream* toks,
 //
 // Side effects:
 //   *ports is set to point to a list parsed ports.
-//   The token stream is advanced past the tokens describing the fields.
+//   The token stream is advanced past the last port token.
 //   In case of an error, an error message is printed to standard error.
 
 static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
     FblcPort** ports)
 {
+  if (!FblcIsNameToken(toks)) {
+    *ports = NULL;
+    return 0;
+  }
+
   FblcVector portv;
   FblcVectorInit(alloc, &portv, sizeof(FblcPort));
-  while (FblcIsNameToken(toks)) {
+  bool initial = true;
+  while (initial || FblcIsToken(toks, ',')) {
+    if (initial) {
+      initial = false;
+    } else {
+      FblcGetToken(toks, ',');
+    }
+
     FblcPort* port = FblcVectorAppend(&portv);
 
     // Get the type.
-    FblcGetNameToken(alloc, toks, "type name", &(port->type));
+    if (!FblcGetNameToken(alloc, toks, "type name", &(port->type))) {
+      return -1;
+    }
 
     // Get the polarity.
     if (FblcIsToken(toks, '<')) {
@@ -120,10 +134,6 @@ static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
     // Get the name.
     if (!FblcGetNameToken(alloc, toks, "port name", &(port->name))) {
       return -1;
-    }
-
-    if (FblcIsToken(toks, ',')) {
-      FblcGetToken(toks, ',');
     }
   }
   int portc;
