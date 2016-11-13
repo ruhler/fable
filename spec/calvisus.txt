@@ -351,8 +351,8 @@
   In general, names in Calvisus are interpreted according to the following name spaces:
   @list
    @bi
-    All type and function names belong to a single global namespace.
-    No type or function can have the same name as any other type or function.
+    All type, function, and process names belong to a single global namespace.
+    No type, function, or process can have the same name as any other type, function, or process.
    @end
    @bi
     Field names belong to a namespace associated with a specific struct or union type.
