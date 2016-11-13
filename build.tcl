@@ -1,17 +1,33 @@
 
 exec rm -rf out
-exec mkdir -p out/test/malformed
+exec mkdir -p out/test/malformed out/fblc out/prgms
 
-set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb]
+set FLAGS [list -I . -I fblc -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb]
 
 foreach {x} [lsort [glob fblc/*.c]] {
   puts "cc $x"
-  exec gcc {*}$FLAGS -c -o out/[string map {.c .o} [file tail $x]] $x
+  exec gcc {*}$FLAGS -c -o out/fblc/[string map {.c .o} [file tail $x]] $x
 }
-puts "ld -o out/fblc"
-exec gcc {*}$FLAGS -o out/fblc -lgc {*}[glob out/*.o]
 
+foreach {x} [lsort [glob prgms/*.c]] {
+  puts "cc $x"
+  set obj out/prgms/[string map {.c .o} [file tail $x]]
+  exec gcc {*}$FLAGS -c -o $obj $x
+
+  set exe out/prgms/[string map {.c ""} [file tail $x]]
+  puts "ld -o $exe"
+  exec gcc {*}$FLAGS -o $exe -lgc $obj {*}[glob out/fblc/*.o]
+}
+
+set ::fblc ./out/prgms/fblc
 exec gcc -std=c99 -Wall -Werror -o out/proc_test_driver test/proc_test_driver.c
+
+proc report_coverage {name} {
+  exec mkdir -p out/$name
+  exec gcov {*}[glob out/fblc/*.o out/prgms/*.o] > out/$name/fblc.gcov
+  exec mv {*}[glob *.gcov] out/$name
+  puts [exec tail -n 1 out/$name/fblc.gcov]
+}
 
 # Spec tests
 # Test that running function or process 'entry' in 'program' with the given
@@ -22,7 +38,7 @@ proc expect_result { result program entry args } {
   set file [dict get $loc file]
 
   try {
-    set got [exec echo $program | ./out/fblc /dev/stdin $entry {*}$args]
+    set got [exec echo $program | $::fblc /dev/stdin $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
@@ -64,7 +80,7 @@ proc expect_proc_result { result program entry ports args script } {
   exec sh -c "./out/proc_test_driver $port_specs < ./out/$name.script > ./out/$name.script.out 2> ./out/$name.script.err" &
 
   try {
-    set got [exec ./out/fblc ./out/$name.fblc $entry {*}$port_files {*}$args]
+    set got [exec $::fblc ./out/$name.fblc $entry {*}$port_files {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
@@ -88,7 +104,7 @@ proc expect_malformed { program entry args } {
 
   try {
     exec echo $program > ./out/$name.fblc
-    set got [exec ./out/fblc ./out/$name.fblc $entry {*}$args]
+    set got [exec $::fblc ./out/$name.fblc $entry {*}$args]
     error "$file:$line: error: Expected error, but got '$got'"
   } trap CHILDSTATUS {results options} {
     exec echo $results > ./out/$name.err
@@ -105,9 +121,7 @@ foreach {x} [lsort [glob test/*.tcl]]  {
 }
 
 # Report how much code coverage we have from the spec tests.
-exec gcov {*}[glob out/*.o] > out/fblc.spectest.gcov
-exec mv {*}[glob *.gcov] out
-puts [exec tail -n 1 out/fblc.spectest.gcov]
+report_coverage spectest
 
 # Additional Tests.
 
@@ -131,7 +145,7 @@ foreach {x} [lsort [glob test/????v-*.fblc]] {
   puts "test $x"
   set fgot out/[string map {.fblc .got} [file tail $x]]
   set fwnt out/[string map {.fblc .wnt} [file tail $x]]
-  exec ./out/fblc $x main > $fgot
+  exec $::fblc $x main > $fgot
   exec grep "/// Expect: " $x | sed -e "s/\\/\\/\\/ Expect: //" > $fwnt
   exec diff $fgot $fwnt
 }
@@ -140,51 +154,46 @@ foreach {x} [lsort [glob test/????v-*.fblc]] {
 foreach {x} [lsort [glob test/????e-*.fblc]] {
   puts "test $x"
   set fgot out/[string map {.fblc .got} [file tail $x]]
-  expect_status 65 ./out/fblc $x main 2> $fgot
+  expect_status 65 $::fblc $x main 2> $fgot
 }
 
-# Report how much code coverage we have from the old spec tests.
-exec gcov {*}[glob out/*.o] > out/fblc.spectest.old.gcov
-exec mv {*}[glob *.gcov] out
-puts [exec tail -n 1 out/fblc.spectest.old.gcov]
+# Report how much code coverage we had with the old tests.
+report_coverage oldspec
 
 # Test fblc.
-puts "test ./out/fblc"
-expect_status 64 ./out/fblc
+puts "test $::fblc"
+expect_status 64 $::fblc
 
-puts "test ./out/fblc --help"
-expect_status 0 ./out/fblc --help
+puts "test $::fblc --help"
+expect_status 0 $::fblc --help
 
-puts "test ./out/fblc no_such_file"
-expect_status 66 ./out/fblc no_such_file main
+puts "test $::fblc no_such_file"
+expect_status 66 $::fblc no_such_file main
 
 puts "test prgms/clock.fblc"
-exec ./out/fblc prgms/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
+exec $::fblc prgms/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
 exec echo "Digit:2(Unit())" > out/clockincr.wnt
 exec diff out/clockincr.wnt out/clockincr.got
 
 puts "test prgms/calc.fblc"
-exec ./out/fblc prgms/calc.fblc main > out/calc.got
+exec $::fblc prgms/calc.fblc main > out/calc.got
 exec grep "/// Expect: " prgms/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
 exec diff out/calc.wnt out/calc.got
 
 puts "test prgms/tictactoe.fblc TestBoardStatus"
-exec ./out/fblc prgms/tictactoe.fblc TestBoardStatus > out/tictactoe.TestBoardStatus.got
+exec $::fblc prgms/tictactoe.fblc TestBoardStatus > out/tictactoe.TestBoardStatus.got
 exec echo "TestResult:Passed(Unit())" > out/tictactoe.TestBoardStatus.wnt
 exec diff out/tictactoe.TestBoardStatus.wnt out/tictactoe.TestBoardStatus.got
 
 puts "test prgms/tictactoe.fblc TestChooseBestMoveNoLose"
-exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveNoLose > out/tictactoe.TestChooseBestMoveNoLose.got
+exec $::fblc prgms/tictactoe.fblc TestChooseBestMoveNoLose > out/tictactoe.TestChooseBestMoveNoLose.got
 exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveNoLose.wnt
 exec diff out/tictactoe.TestChooseBestMoveNoLose.wnt out/tictactoe.TestChooseBestMoveNoLose.got
 
 puts "test prgms/tictactoe.fblc TestChooseBestMoveWin"
-exec ./out/fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
+exec $::fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
 exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
 exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
 
-# Report the final test coverage stats.
-exec gcov {*}[glob out/*.o] > out/fblc.gcov
-exec mv {*}[glob *.gcov] out
-puts [exec tail -n 1 out/fblc.gcov]
-
+# Report how much code coverage we have overall
+report_coverage overall
