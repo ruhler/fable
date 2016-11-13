@@ -24,7 +24,7 @@ exec gcc -std=c99 -Wall -Werror -o out/proc_test_driver test/proc_test_driver.c
 
 proc report_coverage {name} {
   exec mkdir -p out/$name
-  exec gcov {*}[glob out/fblc/*.o out/prgms/*.o] > out/$name/fblc.gcov
+  exec gcov {*}[glob out/fblc/*.o out/prgms/fblc.o] > out/$name/fblc.gcov
   exec mv {*}[glob *.gcov] out/$name
   puts [exec tail -n 1 out/$name/fblc.gcov]
 }
