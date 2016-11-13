@@ -1,8 +1,0 @@
-
-struct Unit();
-struct Donut();
-
-/// Expect: ERROR
-func main( ; Unit) {
-  Donut();
-};

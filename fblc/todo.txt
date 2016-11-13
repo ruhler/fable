@@ -1,5 +1,7 @@
-* Test fblc doesn't block waiting for input when it should move on.
-  For example, see foo.fblc.
+* Figure out what a good foreign function interface for fblc would be.
+* Change FblcCheckProgram to check all declarations before giving up?
+  Rather than reporting a single error and then giving up.
+
 * Figure out how to test a process that runs forever, or add a quit command to
   tictactoe program and test it using that.
 
