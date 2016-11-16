@@ -194,6 +194,37 @@ void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
   assert(p < desc + MAX_TOK_DESC_LEN && "MAX_TOK_DESC_LEN is too small");
 }
 
+// FblcOpenFdTokenStream --
+//
+//   Open a token stream for the given file descriptor.
+//
+// Inputs:
+//   toks - An uninitialized token stream to open.
+//   fd - The file descriptor to open the token stream from.
+//   source - A label to identify the source for error reporting purposes.
+//
+// Results:
+//   True if the token stream was successfully opened, false otherwise.
+//
+// Side effects:
+//   Initializes the toks object. Opens the given file. If the token stream is
+//   successfully opened, the file can be closed when the token stream is no
+//   longer in use by calling FblcCloseTokenStream.
+
+bool FblcOpenFdTokenStream(FblcTokenStream* toks, int fd, const char* source)
+{
+  toks->fd = fd;
+  if (toks->fd < 0) {
+    return false;
+  }
+  toks->curr = toks->buffer;
+  toks->end = toks->buffer;
+  toks->loc.source = source;
+  toks->loc.line = 1;
+  toks->loc.col = 1;
+  return true;
+}
+
 // FblcOpenFileTokenStream --
 //
 //   Open a token stream for the given file name.
@@ -212,17 +243,9 @@ void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
 
 bool FblcOpenFileTokenStream(FblcTokenStream* toks, const char* filename)
 {
-  toks->fd = open(filename, O_RDONLY);
-  if (toks->fd < 0) {
-    return false;
-  }
-  toks->curr = toks->buffer;
-  toks->end = toks->buffer;
-  toks->loc.source = filename;
-  toks->loc.line = 1;
-  toks->loc.col = 1;
-  return true;
+  return FblcOpenFdTokenStream(toks, open(filename, O_RDONLY), filename);
 }
+
 // FblcOpenStringTokenStream --
 //
 //   Open a token stream for the given string data.

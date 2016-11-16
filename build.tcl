@@ -20,7 +20,7 @@ foreach {x} [lsort [glob prgms/*.c]] {
 }
 
 set ::fblc ./out/prgms/fblc
-exec gcc -std=c99 -Wall -Werror -o out/proc_test_driver test/proc_test_driver.c
+exec gcc -std=c99 -Wall -Werror -ggdb -o out/proc_test_driver test/proc_test_driver.c
 
 proc check_coverage {name} {
   exec mkdir -p out/$name
@@ -60,36 +60,30 @@ proc expect_proc_result { result program entry ports args script } {
   set file [dict get $loc file]
   set name "[file tail $file]_$line"
 
-  # Set up the ports.
-  set port_files [list]
+  # Set up the port spec.
   set port_specs [list]
   foreach {type id} [join $ports] {
-    set portfile ./out/$name.$id
-    exec rm -f $portfile
-    exec mkfifo $portfile
-    lappend port_files $portfile
-    lappend port_specs $type:$id:$portfile
+    lappend port_specs $type:$id
   }
+  set portspec [join $port_specs ","]
 
+  # Write the script to file.
   exec rm -f ./out/$name.script
   foreach cmd [split [string trim $script] "\n"] {
     exec echo [string trim $cmd] >> ./out/$name.script
   }
+
+  # Write the program to file.
   exec echo $program > ./out/$name.fblc
-  exec sh -c "./out/proc_test_driver $port_specs < ./out/$name.script > ./out/$name.script.out 2> ./out/$name.script.err" &
 
   try {
-    set got [exec $::fblc ./out/$name.fblc $entry {*}$port_files {*}$args]
+    puts "./out/proc_test_driver $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry $args"
+    set got [exec ./out/proc_test_driver $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
   } trap CHILDSTATUS {results options} {
     error "$file:$line: error: Expected '$result', but got:\n$results"
-  }
-
-  set got [read [open ./out/$name.script.err]]
-  if {$got != ""} {
-    error "$file:$line: error: $got"
   }
 }
 

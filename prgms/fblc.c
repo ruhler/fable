@@ -2,6 +2,7 @@
 //
 //   The file implements the main entry point for the Fblc interpreter.
 
+#define _POSIX_SOURCE     // for fdopen
 #include "FblcInternal.h"
 
 #define EX_OK 0
@@ -40,14 +41,16 @@ static FblcValue* Output(FILE* user, FblcValue* value);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fblc FILE MAIN [PORT...] [ARG...] \n"
+      "Usage: fblc FILE MAIN [ARG...] \n"
       "Evaluate the function or process called MAIN in the environment of the\n"
-      "fblc program FILE with the given PORTs and ARGs.\n"  
-      "PORT is the filename to use to read or write the port from.\n"
+      "fblc program FILE with the given ARGs.\n"  
+      "Ports should be provided by arranging for file descriptors 3, 4, ...\n"
+      "to be open on which data for port 1, 2, ... can be read or written as\n"
+      "appropriate.\n"
       "ARG is a value text representation of the argument value.\n"
-      "The number and type of ports and arguments must match the expected\n"
-      "types for the MAIN function or process.\n"
-      "Example: fblc main in.txt 'Bool:true(Unit())'\n"
+      "The number of arguments must match the expected types for the MAIN\n"
+      "function or process.\n"
+      "Example: fblc main 3<in.port 4>out.port 'Bool:true(Unit())'\n"
   );
 }
 
@@ -186,25 +189,25 @@ int main(int argc, char* argv[])
     proc->argv = func->argv;
   }
 
-  if (argc != 3 + proc->portc + proc->argc) {
+  argc -= 3;
+  argv += 3;
+  if (argc != proc->argc) {
     FblcFreeAll(&alloc);
     fprintf(stderr, "expected %i ports/args for %s, but %i were provided.\n",
-        proc->portc + proc->argc, entry, argc-3);
+        proc->portc + proc->argc, entry, argc);
     return EX_USAGE;
   }
-
-  argv += 3;
 
   UserData user[proc->portc];
   FblcIO ios[proc->portc];
 
   for (int i = 0; i < proc->portc; i++) {
-    const char* filename = *argv++;
+    int fd = i+3;
     if (proc->portv[i].polarity == FBLC_POLARITY_PUT) {
-      user[i].output = fopen(filename, "w");
+      user[i].output = fdopen(fd, "w");
       if  (user[i].output == NULL) {
         // TODO: What's the right error code to return in this case?
-        fprintf(stderr, "unable to open %s for writing\n", filename);
+        fprintf(stderr, "unable to open fd %i for writing port %i\n", fd, i);
         return EX_NOINPUT;
       }
       ios[i].io = (FblcIOFunction)&Output;
@@ -214,8 +217,9 @@ int main(int argc, char* argv[])
       user[i].input.env = env;
       user[i].input.type = FblcLookupType(env, proc->portv[i].type.name);
       assert(user[i].input.type != NULL);
-      if (!FblcOpenFileTokenStream(&(user[i].input.toks), filename)) {
-        fprintf(stderr, "unable to open %s for reading\n", filename);
+      if (!FblcOpenFdTokenStream(&(user[i].input.toks), fd,
+            proc->portv[i].name.name)) {
+        fprintf(stderr, "unable to open fd %i for reading port %i\n", fd, i);
         return EX_NOINPUT;
       }
       ios[i].io = (FblcIOFunction)&Input;

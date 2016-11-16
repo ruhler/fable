@@ -363,6 +363,7 @@ typedef struct {
   FblcLoc loc;
 } FblcTokenStream;
 
+bool FblcOpenFdTokenStream(FblcTokenStream* toks, int fd, const char* source);
 bool FblcOpenFileTokenStream(FblcTokenStream* toks, const char* filename);
 bool FblcOpenStringTokenStream(FblcTokenStream* toks, const char* source,
     const char* string);

@@ -4,47 +4,144 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+static void PrintUsage(FILE* stream)
+{
+  fprintf(stream,
+      "Usage: proc_test_driver PORTSPEC SCRIPT command\n"
+      "Test fblc interpreter invoked using command.\n"
+      "PORTSPEC should be a comma separated list of elements of the form:\n"
+      "      i:NAME     for input ports\n"
+      "and   o:NAME     for output ports\n"
+      "SCRIPT should be a file containing a sequence of commands of the form:\n"
+      "      put NAME VALUE\n"
+      "or    get NAME VALUE\n"
+      "The put command puts the fblc text VALUE onto the named port.\n"
+      "The get command reads the fblc value from the named port and asserts\n"
+      "that the value read matches the given value.\n" 
+  );
+}
 
 int main(int argc, char* argv[])
 {
-  argc--;
-  argv++;
-  bool isputs[argc];
-  char* ids[argc];
-  FILE* files[argc];
-  for (int i = 0; i < argc; i++) {
-    if (argv[i][0] != 'i' && argv[i][0] != 'o') {
-      fprintf(stderr, "Invalid polarity specifier in '%s'.\n", argv[i]);
+  if (argc > 1 && strcmp("--help", argv[1]) == 0) {
+    PrintUsage(stdout);
+    return 0;
+  }
+
+  if (argc < 4) {
+    PrintUsage(stderr);
+    return 1;
+  }
+
+  char* portspec = argv[1];
+  const char* script = argv[2];
+  char** cmd_argv = argv+3;
+
+  // Count the number of ports.
+  int portc = 1;
+  for (const char* ptr = portspec; *ptr != '\0'; ptr++) {
+    if (*ptr == ',') {
+      portc++;
+    }
+  }
+
+  // Prepare the ports based on the port spec.
+  bool isputs[portc];
+  char* ids[portc];
+  FILE* files[portc];
+  char* ptr = portspec;
+  for (int i = 0; ptr != NULL; i++) {
+    if (*ptr != 'i' && *ptr != 'o') {
+      fprintf(stderr, "Invalid polarity specifier in '%s'.\n", ptr);
       return 1;
     }
-    isputs[i] = (argv[i][0] == 'i');
+    isputs[i] = (*ptr == 'i');
 
-    if (argv[i][1] != ':') {
-      fprintf(stderr, "Missing ':' separator between polarity and id in '%s'.\n", argv[i]);
+    if (ptr[1] != ':') {
+      fprintf(stderr, "Missing ':' separator between polarity and id in '%s'.\n", ptr);
       return 1;
     }
-    ids[i] = &argv[i][2];
+    ids[i] = &ptr[2];
 
-    char* idend = strchr(ids[i], ':');
-    if (idend == NULL) {
-      fprintf(stderr, "Missing ':' separate between id and file in '%s'.\n", argv[i]);
+    ptr = strchr(ids[i], ',');
+    if (ptr != NULL) {
+      *ptr = '\0';
+      ptr++;
+    }
+
+    int pipefd[2];
+    if (pipe(pipefd) < 0) {
+      perror("pipe");
       return 1;
     }
 
-    *idend = '\0';
-    char* filename = idend + 1;
-    files[i] = fopen(filename, isputs[i] ? "w" : "r");
+    // Child fds range from 3 to (2+portc).
+    // Parent fds range from (4+portc) to (5+2*portc).
+    // The fd 3+portc is left unused to ensure we never have to swap two fds
+    // in place.
+    int child_fd = isputs[i] ? pipefd[0] : pipefd[1];
+    int parent_fd = isputs[i] ? pipefd[1] : pipefd[0];
+    int child_target_fd = 3 + i;
+    int parent_target_fd = 4 + portc + i;
+
+    if (dup2(parent_fd, parent_target_fd) < 0) {
+      perror("dup2 parent");
+      return 1;
+    }
+    if (parent_fd != parent_target_fd) {
+      close(parent_fd);
+    }
+
+    if (dup2(child_fd, child_target_fd) < 0) {
+      perror("dup2 child");
+      return 1;
+    }
+    if (child_fd != child_target_fd) {
+      close(child_fd);
+    }
+
+    files[i] = fdopen(parent_target_fd, isputs[i] ? "w" : "r");
     if (files[i] == NULL) {
-      perror("fopen");
+      perror("fdopen");
       return 1;
     }
+  }
+
+  pid_t pid = fork();
+  if (pid < 0) {
+    perror("fork");
+    return 1;
+  }
+
+  if (pid == 0) {
+    // Child. Close the parent fds and exec.
+    for (int i = 0; i < portc; i++) {
+      close(5 + portc + i);
+    }
+    execvp(cmd_argv[0], cmd_argv);
+    perror("execvp");
+    return 1;
+  }
+
+  // Parent. Close the child fds and run the script.
+  for (int i = 0; i < portc; i++) {
+    close(3 + i);
+  }
+
+  FILE* fin = fopen(script, "r");
+  if (fin == NULL) {
+    perror("fopen");
+    return 1;
   }
 
   char* line = NULL;
   size_t len = 0;
   int read = 0;
-  while ((read = getline(&line, &len, stdin)) != -1) {
-    printf("READ LINE: '%s'\n", line);
+  while ((read = getline(&line, &len, fin)) != -1) {
     char* cmd = line;
     char* ptr = strchr(cmd, ' ');
     if (ptr == NULL) {
@@ -84,6 +181,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Failed to write text to '%s'\n", ids[i]);
         return 1;
       }
+      fflush(files[i]);
     } else {
       if (strcmp(cmd, "get") != 0) {
         fprintf(stderr, "Expected 'get' command for port '%s', but got '%s'.\n", ids[i], cmd);
@@ -99,16 +197,26 @@ int main(int argc, char* argv[])
         fprintf(stderr, "  expected: '%s'\n", text);
         fprintf(stderr, "  actual  : '%s'\n", input);
         return 1;
-      } else {
-        printf("GOT EXPECTED VALUE \n");
       }
     }
   }
 
   for (int i = 0; i < argc; i++) {
-    fclose(files[i]);
+    // fclose(files[i]);
   }
   free(line);
-  return 0;
+
+  int status;
+  if (wait(&status) < 0) {
+    perror("wait");
+    return 1;
+  }
+
+  if (WIFEXITED(status)) {
+    return WEXITSTATUS(status);
+  }
+
+  fprintf(stderr, "child terminated abnormally\n");
+  return 1;
 }
 
