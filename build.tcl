@@ -1,6 +1,6 @@
 
 exec rm -rf out
-exec mkdir -p out/test/malformed out/fblc out/prgms
+exec mkdir -p out/test out/fblc out/prgms
 
 set FLAGS [list -I . -I fblc -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb]
 
@@ -68,17 +68,18 @@ proc expect_proc_result { result program entry ports args script } {
   set portspec [join $port_specs ","]
 
   # Write the script to file.
-  exec rm -f ./out/$name.script
+  set fscript ./out/test/$name.script
+  exec rm -f $fscript
   foreach cmd [split [string trim $script] "\n"] {
-    exec echo [string trim $cmd] >> ./out/$name.script
+    exec echo [string trim $cmd] >> $fscript
   }
 
   # Write the program to file.
-  exec echo $program > ./out/$name.fblc
+  set fprogram ./out/test/$name.fblc
+  exec echo $program > $fprogram
 
   try {
-    puts "$::testfblc $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry $args"
-    set got [exec $::testfblc $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry {*}$args]
+    set got [exec $::testfblc $portspec $fscript $::fblc $fprogram $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
@@ -96,11 +97,12 @@ proc expect_malformed { program entry args } {
   set name "[file tail $file]_$line"
 
   try {
-    exec echo $program > ./out/$name.fblc
-    set got [exec $::fblc ./out/$name.fblc $entry {*}$args]
+    set fprogram ./out/test/$name.fblc
+    exec echo $program > $fprogram
+    set got [exec $::fblc $fprogram $entry {*}$args]
     error "$file:$line: error: Expected error, but got '$got'"
   } trap CHILDSTATUS {results options} {
-    exec echo $results > ./out/$name.err
+    exec echo $results > ./out/test/$name.err
     set status [lindex [dict get $options -errorcode] 2]
     if {65 != $status} {
       error "$file:$line: error: Expected error code 65, but got code '$status'"
@@ -135,8 +137,8 @@ proc expect_status {status args} {
 # Old well formed tests:
 foreach {x} [lsort [glob test/????v-*.fblc]] {
   puts "test $x"
-  set fgot out/[string map {.fblc .got} [file tail $x]]
-  set fwnt out/[string map {.fblc .wnt} [file tail $x]]
+  set fgot out/test/[string map {.fblc .got} [file tail $x]]
+  set fwnt out/test/[string map {.fblc .wnt} [file tail $x]]
   exec $::fblc $x main > $fgot
   exec grep "/// Expect: " $x | sed -e "s/\\/\\/\\/ Expect: //" > $fwnt
   exec diff $fgot $fwnt
@@ -145,7 +147,7 @@ foreach {x} [lsort [glob test/????v-*.fblc]] {
 # Old malformed tests:
 foreach {x} [lsort [glob test/????e-*.fblc]] {
   puts "test $x"
-  set fgot out/[string map {.fblc .got} [file tail $x]]
+  set fgot out/test/[string map {.fblc .got} [file tail $x]]
   expect_status 65 $::fblc $x main 2> $fgot
 }
 
