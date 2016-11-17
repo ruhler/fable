@@ -11,7 +11,7 @@
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: proc_test_driver PORTSPEC SCRIPT command\n"
+      "Usage: testfblc PORTSPEC SCRIPT command\n"
       "Test fblc interpreter invoked using command.\n"
       "PORTSPEC should be a comma separated list of elements of the form:\n"
       "      i:NAME     for input ports\n"

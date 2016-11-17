@@ -1,3 +1,7 @@
+* Move fblc.c back to fblc/FblcMain.c
+* Change tictactoe to interact with fblc via text value interface.
+* Use expect_proc_result to implement expect_result?
+
 * Figure out what a good foreign function interface for fblc would be.
 * Change FblcCheckProgram to check all declarations before giving up?
   Rather than reporting a single error and then giving up.
@@ -14,8 +18,6 @@
 * Add expected line and column numbers for the expected error test cases.
 * Add FblcTokenWouldBlock function to support interactive use.
 * Test that tail recursive functions and procedures don't smash the stack.
-* Test process call port argument counts and types are valid
-* Test process call expr arguments are valid
 * Test that a link's type is valid.
 * Test that a link action's ports can't shadow ports already in scope.
 * Test that a link can't use the same name for the get and put ports.

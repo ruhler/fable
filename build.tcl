@@ -20,7 +20,7 @@ foreach {x} [lsort [glob prgms/*.c]] {
 }
 
 set ::fblc ./out/prgms/fblc
-exec gcc -std=c99 -Wall -Werror -ggdb -o out/proc_test_driver test/proc_test_driver.c
+set ::testfblc ./out/prgms/testfblc
 
 proc check_coverage {name} {
   exec mkdir -p out/$name
@@ -77,8 +77,8 @@ proc expect_proc_result { result program entry ports args script } {
   exec echo $program > ./out/$name.fblc
 
   try {
-    puts "./out/proc_test_driver $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry $args"
-    set got [exec ./out/proc_test_driver $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry {*}$args]
+    puts "$::testfblc $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry $args"
+    set got [exec $::testfblc $portspec ./out/$name.script $::fblc ./out/$name.fblc $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
