@@ -2,21 +2,19 @@
 exec rm -rf out
 exec mkdir -p out/test out/fblc out/prgms
 
-set FLAGS [list -I . -I fblc -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb]
-
+set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 foreach {x} [lsort [glob fblc/*.c]] {
   puts "cc $x"
   exec gcc {*}$FLAGS -c -o out/fblc/[string map {.c .o} [file tail $x]] $x
 }
+puts "ld -o out/fblc"
+exec gcc {*}$FLAGS -o out/prgms/fblc -lgc {*}[glob out/fblc/*.o]
 
-foreach {x} [lsort [glob prgms/*.c]] {
+set FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -ggdb]
+foreach {x} [glob prgms/*.c] {
   puts "cc $x"
-  set obj out/prgms/[string map {.c .o} [file tail $x]]
-  exec gcc {*}$FLAGS -c -o $obj $x
-
   set exe out/prgms/[string map {.c ""} [file tail $x]]
-  puts "ld -o $exe"
-  exec gcc {*}$FLAGS -o $exe -lgc $obj {*}[glob out/fblc/*.o]
+  exec gcc {*}$FLAGS -o $exe $x
 }
 
 set ::fblc ./out/prgms/fblc

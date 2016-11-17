@@ -1,5 +1,3 @@
-* Move fblc.c back to fblc/FblcMain.c
-* Change tictactoe to interact with fblc via text value interface.
 * Use expect_proc_result to implement expect_result?
 
 * Figure out what a good foreign function interface for fblc would be.
