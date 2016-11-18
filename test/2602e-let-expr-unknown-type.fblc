@@ -1,9 +1,0 @@
-
-struct Unit();
-
-/// Expect: ERROR
-func main( ; Unit) {
-  // The type 'Foo' has not been declared.
-  Foo v = Unit();
-  Unit();
-};
