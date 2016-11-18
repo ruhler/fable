@@ -1,9 +1,0 @@
-
-struct Unit();
-
-/// Expect: ERROR
-func main( ; Unit) {
-  // This is missing a semicolon.
-  Unit()
-};
-
