@@ -1,8 +1,0 @@
-
-// Test simple process evaluation.
-struct Unit();
-
-/// Expect: Unit()
-proc main( ; ; Unit) {
-  $(Unit());
-};

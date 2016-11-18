@@ -9,7 +9,6 @@
 
 * Don't stop running tests after the first one fails
   - It would be nice to see a list of all the tests that fail.
-* Replace all of the old tests with the new format.
 * Add missing tests.
 * Make it easier to write tests with expected outputs.
   - See the clockincr test, for example.

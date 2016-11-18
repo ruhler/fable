@@ -1,8 +1,0 @@
-
-struct Unit();
-
-/// Expect: ERROR
-proc main( ; ; Unit) {
-  myget~();
-};
-

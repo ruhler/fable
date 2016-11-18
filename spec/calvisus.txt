@@ -624,7 +624,7 @@ progress.
 
    The get process is well formed if the following conditions hold:
    @list
-    @li named port has get polarity.
+    @li named port is in scope and has get polarity.
    @end
 
    The type of the process is the type of the port.

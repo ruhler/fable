@@ -10,7 +10,6 @@ clean:
 .PHONY: checkerr
 checkerr: all
 	cat out/test/*.err
-	cat out/test/????e-*.got
 
 .PHONY: doc
 doc: build/calvisus.html

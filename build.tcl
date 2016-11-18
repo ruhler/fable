@@ -132,25 +132,6 @@ proc expect_status {status args} {
   }
 }
 
-# Old well formed tests:
-foreach {x} [lsort [glob test/????v-*.fblc]] {
-  puts "test $x"
-  set fgot out/test/[string map {.fblc .got} [file tail $x]]
-  set fwnt out/test/[string map {.fblc .wnt} [file tail $x]]
-  exec $::fblc $x main > $fgot
-  exec grep "/// Expect: " $x | sed -e "s/\\/\\/\\/ Expect: //" > $fwnt
-  exec diff $fgot $fwnt
-}
-
-# Old malformed tests:
-foreach {x} [lsort [glob test/????e-*.fblc]] {
-  puts "test $x"
-  set fgot out/test/[string map {.fblc .got} [file tail $x]]
-  expect_status 65 $::fblc $x main 2> $fgot
-}
-
-check_coverage oldspec
-
 # Test fblc.
 puts "test $::fblc"
 expect_status 64 $::fblc
@@ -192,6 +173,5 @@ check_coverage overall
 puts ""
 puts "Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
-puts "  Old Spec: [exec tail -n 1 out/oldspec/fblc.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"
 
