@@ -400,8 +400,9 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 
       if (call_actn->portc  != proc->portc) {
         FblcReportError("Wrong number of port arguments to %s. Expected %d, "
-            "bug got %d.\n", call_actn->loc, call_actn->proc.name,
+            "but got %d.\n", call_actn->loc, call_actn->proc.name,
             proc->portc, call_actn->portc);
+        return NULL;
       }
 
       for (int i = 0; i < proc->portc; i++) {
