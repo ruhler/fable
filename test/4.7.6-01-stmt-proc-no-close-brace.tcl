@@ -3,8 +3,8 @@ set prg {
 
   proc main( ; ; Unit) {
     $(Unit());
-  };
+  ; // Missing the '}' brace.
 }
 
-expect_result Unit() $prg main
+expect_malformed $prg main
 
