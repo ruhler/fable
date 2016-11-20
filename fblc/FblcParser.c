@@ -98,10 +98,10 @@ static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
 
   FblcVector portv;
   FblcVectorInit(alloc, &portv, sizeof(FblcPort));
-  bool initial = true;
-  while (initial || FblcIsToken(toks, ',')) {
-    if (initial) {
-      initial = false;
+  bool first = true;
+  while (first || FblcIsToken(toks, ',')) {
+    if (first) {
+      first = false;
     } else {
       FblcGetToken(toks, ',');
     }
@@ -520,16 +520,15 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
       FblcVector execs;
       FblcVectorInit(alloc, &execs, sizeof(FblcExec));
       bool first = true;
-      do {
+      while (first || FblcIsToken(toks, ',')) {
         FblcExec* exec = FblcVectorAppend(&execs);
         if (first) {
           exec->var.type.loc = name.loc;
           exec->var.type.name = name.name;
           first = false;
         } else {
-          if (!FblcGetToken(toks, ',')) {
-            return NULL;
-          }
+          assert(FblcIsToken(toks, ','));
+          FblcGetToken(toks, ',');
 
           if (!FblcGetNameToken(alloc, toks, "type name", &(exec->var.type))) {
             return NULL;
@@ -549,7 +548,7 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
         if (exec->actn == NULL) {
           return NULL;
         }
-      } while (FblcIsToken(toks, ','));
+      };
       exec_actn->execv = FblcVectorExtract(&execs, &(exec_actn->execc));
 
       if (!FblcGetToken(toks, ';')) {
@@ -561,7 +560,7 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
       }
       return (FblcActn*)exec_actn;
     } else {
-      FblcUnexpectedToken(toks, "The rest of a process starting with a name.");
+      FblcUnexpectedToken(toks, "The rest of a process starting with a name");
       return NULL;
     }
   } else if (FblcIsToken(toks, '?')) {
@@ -582,11 +581,13 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
     FblcVector args;
     FblcVectorInit(alloc, &args, sizeof(FblcActn*));
     bool first = true;
-    do {
-      if (!first && !FblcGetToken(toks, ',')) {
-        return NULL;
+    while (first || FblcIsToken(toks, ',')) {
+      if (first) {
+        first = false;
+      } else {
+        assert(FblcIsToken(toks, ','));
+        FblcGetToken(toks, ',');
       }
-      first = false;
 
       FblcActn** arg = FblcVectorAppend(&args);
       *arg = ParseActn(alloc, toks, false);

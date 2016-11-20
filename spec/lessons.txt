@@ -1,0 +1,106 @@
+fblc lessons from tictactoe
+---------------------------
+1. The Performance Model Matters
+I felt that I couldn't write high performance code without knowing more about
+the performance model. In particular, is evaluation strict or lazy?
+
+For example, consider the ChooseBestMove function:
+func ChooseBestMove(Board b, Player x; Position) {
+  MaybePositionResult ul = MoveResult(b, x, Position:UL(Unit()));
+  MaybePositionResult uc = MoveResult(b, x, Position:UC(Unit()));
+  MaybePositionResult ur = MoveResult(b, x, Position:UR(Unit()));
+  MaybePositionResult ml = MoveResult(b, x, Position:ML(Unit()));
+  MaybePositionResult mc = MoveResult(b, x, Position:MC(Unit()));
+  MaybePositionResult mr = MoveResult(b, x, Position:MR(Unit()));
+  MaybePositionResult ll = MoveResult(b, x, Position:LL(Unit()));
+  MaybePositionResult lc = MoveResult(b, x, Position:LC(Unit()));
+  MaybePositionResult lr = MoveResult(b, x, Position:LR(Unit()));
+  MaybePositionResult best = 
+    ChooseBestMaybePosition(
+      ChooseBestMaybePosition(
+        ChooseBestMaybePosition(
+          ChooseBestMaybePosition(ul, uc),
+          ChooseBestMaybePosition(ur, ml)),
+        ChooseBestMaybePosition(
+          ChooseBestMaybePosition(mc, mr),
+          ChooseBestMaybePosition(ll, lc))),
+      lr);
+  best.Just.position;
+};
+
+If evaluation is strict, this could do a significant amount of wasted work.
+Because it is a recursive, exponential function, it really does matter if it
+computes MoveResult for all blocks before knowing if a winning move was found.
+Or, at least, it feels that way.
+
+It would be great to have a deterministic way to evaluate the performance of a
+program, but reporting the performance with respect to a performance model.
+But that, again, very much depends on strict vs. lazy evaluation. Are
+expressions evaluated sequentialy, in order, completely? Are they evaluated
+lazily, in order, so that only the expressions that are needed are evaluated?
+Are they evaluated in parallel, as if executed by hardware?
+
+The spec currently says a call must not finish unless all of its arguments
+finish. Does this preclude the possibility of a non-strict evaluator? Is there
+any harm in allowing (but not requiring?) it to finish anyway, assuming the
+non-terminating argument doesn't matter?
+
+Sequential strict is great for understanding and debugging.
+Sequential lazy is good for modularity and performance, modulo concerns of
+leaking thunks.
+Hardware parallel is a nice way to think about it, but may not be achievable
+or relevant in a software implementation.
+
+2. Modularity and monads.
+One thing that was hard was figuring out how to describe the best move
+algorithm: choose the best result you get for moving at each empty square of
+the board. I would have loved to use a haskell like list with map, filter, and
+fold, but without higher order functions and parametric polymorphism, it would
+have been tedious to code.
+
+Another approach would have been to combine everything into one function. This
+would have been reasonable to code, I think, but it means we have to know
+about every part of the computation at once. We can't divide into the pieces
+of filter, map, and reduce. That also leads to over-specifying the solution
+approach, because we hard-code order and short circuits and such.
+
+I ended up doing a weird mix of approaches. In summary, it would be nice to
+have an easy way to describe monads with filter, map, reduce, etc.
+
+3. Imperative descriptions are easier.
+Consider the overall game logic:
+proc NewGame(Input <~ input, Output ~> output; ; Unit) {
+  PlayGame(input, output; EmptyBoard(), Player:X(Unit()));
+};
+
+proc PlayGame(Input <~ input, Output ~> output; Board board, Player x; Unit) {
+  GameStatus status = $(?(BoardStatus(board);
+                          GameStatus:Win(Player:X(Unit())),
+                          GameStatus:Win(Player:O(Unit())),
+                          GameStatus:Draw(Unit()),
+                          GameStatus:Move(x)));
+  Output ignored = output~(Output(board, status));
+  Input in = input~();
+  ?(GameIsOver(status) ; 
+      ?(in ; PlayGame(input, output; board, x),
+             PlayGame(input, output; board, x),
+             NewGame(input, output; )),
+      ?(InputIsReset(in) ; NewGame(input, output; ),
+        {
+          Position pos = $(?(InputIsPosition(in) ; in.position, ChooseBestMove(board, x)));
+          MaybeBoard nboard = $(Move(board, pos, x));
+          ?(nboard ;
+              PlayGame(input, output; nboard.Just, ?(x; Player:O(Unit()), Player:X(Unit()))),
+              PlayGame(input, output; board, x));
+        }));
+};
+
+This is made rather awkward to write and read due to having a pure functional
+syntax. I feel like we could modify the syntax slightly to allow something
+that looks like imperative code, but is still maps well to the underlying
+abstract syntax?
+
+In particular: having statements plus loops feels nicer than separate NewGame
+and PlayGame functions. Having if statements that can return early or flow
+through instead of requiring nested if/else expressions.
+

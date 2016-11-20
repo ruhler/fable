@@ -1,3 +1,7 @@
+* Use consistent naming in spec tests to distinguish between:
+  - Something with the wrong syntax, such as ???. "malformed"
+  - Something that cannot be typed, such as x, when x is not defined.  "maltyped"
+  - Something with the wrong type, such as Donut(), when Unit() is expected. "mistyped"
 * Use expect_proc_result to implement expect_result?
 
 * Figure out what a good foreign function interface for fblc would be.
