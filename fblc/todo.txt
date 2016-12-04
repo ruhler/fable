@@ -4,7 +4,6 @@
   - Something with the wrong type, such as Donut(), when Unit() is expected. "mistyped"
 * Use expect_proc_result to implement expect_result?
 
-* Figure out what a good foreign function interface for fblc would be.
 * Change FblcCheckProgram to check all declarations before giving up?
   Rather than reporting a single error and then giving up.
 
@@ -24,9 +23,6 @@
 * Test that a link can't use the same name for the get and put ports.
 * Test that a proc can't have multiple ports of the same name, with or without
   the same polarity.
-* Should FblcExecute take a const FblcActn*?
-  Should we use const FblcActn* instead of FblcActn* everywhere there?
-* Test that process port types are valid.
 * It would be nice if 'Wrong number of arguments to ...' reported the opening
   '(' as the location of the error.
 * Test what happens when we try to access the wrong field of a union.

@@ -1,0 +1,68 @@
+
+struct Unit();
+
+// TODO: Should Id's be unary, binary, or something else more efficient?
+union Id(Unit Z, Id S);
+
+struct NonEmptyTypeList(DeclId head, TypeList tail);
+union TypeList(Unit nil, NonEmptyTypeList cons);
+
+struct NonEmptyExprList(Expr head, ExprList tail);
+union ExprList(Unit nil, NonEmptyExprList cons);
+
+union Polarity(Unit get, Unit put);
+struct NonEmptyPortList(DeclId type, Polarity polarity, PortList tail);
+union PortList(Unit nil, NonEmptyPortList cons);
+
+struct NonEmptyIdList(Id head, IdList tail);
+union IdList(Unit nil, NonEmptyIdList cons);
+
+struct AppExpr(DeclId func, ExprList args);
+struct UnionExpr(DeclId type, Id field, Expr body);
+struct AccessExpr(Expr object, Id field);
+struct CondExpr(Expr select, ExprList args);
+struct LetExpr(DeclId type, Expr def, Expr body);
+
+union Expr(
+    Id var,
+    AppExpr apply,
+    UnionExpr union,
+    AccessExpr access,
+    CondExpr cond,
+    LetExpr let
+);
+
+struct FuncDecl(TypeList args, DeclId return, Expr body);
+
+struct PutActn(Id port, Expr arg);
+struct CondActn(Expr select, Actn args);
+struct CallActn(IdList ports, ExprList args);
+struct LinkActn(DeclId type, Actn body);
+
+struct NonEmptyDefList(DeclId type, Actn def, DefList tail);
+union DefList(Unit nil, NonEmptyDefList cons);
+struct ExecActn(DefList defs, Actn body);
+
+union Actn(
+    Expr eval,
+    Id get,
+    PutActn put,
+    CondActn cond,
+    CallActn call,
+    LinkActn link,
+    ExecActn exec
+);
+
+struct ProcDecl(PortList ports, TypeList args, DeclId return, Actn body);
+
+union Decl(
+    TypeList struct,
+    NonEmptyTypeList union,
+    FuncDecl func,
+    ProcDecl proc
+);
+
+struct DeclsPair(Decls first, Decls second);
+union Decls(Decl single, DeclsPair sum);
+union DeclId(Unit here, DeclId first, DeclId second); 
+

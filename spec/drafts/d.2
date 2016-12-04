@@ -1,0 +1,51 @@
+2. Parametric Polymorphism: avoid having to re-implement the same thing over
+and over again for different types. For example, we would like to be able to
+implement a single notion of list and common list utilities, regardless of
+what the type of elements of the list are.
+
+3. Ad-Hoc Polymorphism: avoid having to re-implement the same thing over and
+over again for different instances of the same abstract data type. For
+example, we don't want to have to re-implement the 'sum' function for every
+different kind of numeric type.
+
+Features
+--------
+1. Type parameters. Named entities, including type, function, and interface
+definitions, can be parameterized by type. Type parameters are introduced with
+the syntax: '<' 'type' name [',' 'type' name [...]] '>' after the definition
+of the name.  Values of type parameters are specified by supplying a list of
+types using angle brackets when the name is invoked.
+
+For example:
+  Type declaration: union Maybe<type T>(Unit Nothing, T Just);
+  Type constructor: Maybe<Bool>:Just(Bool:True(Unit()))
+  Function declaration: func isJust<type T>(Maybe<T> x; Bool) ...
+  Function use: isJust<Int>(x)
+
+2. Interfaces. An interface is used to describe a way to interact with a
+collection of abstract data types. It makes it possible to write a function
+that operates on different types, where behavior can be conditioned based on
+the value of the type using interface methods.
+
+An interface is a collection of function prototypes and subinterfaces. Most
+commonly interfaces will be parameterized by type. For example:
+
+  interf Monoid<type T> {
+    func identity( ; T);
+    func operator(T a, T b; T);
+  }
+
+  interf Foo<type T> {
+    ...
+    impl myFooMonoid Monoid<T>;
+  }
+
+  impl AndBoolMonoid Monoid<Bool> {
+    func identity( ; Bool) true();
+    func operator(Bool a, Bool b; Bool) a ? (b, false());
+  };
+
+  func pow<type T>[Monoid<T> monoid](T x, Nat y)
+    Eq(0, y) ? (monoid.identity(),
+                monoid.operator(x, pow<T>[monoid](x, Sub(y, 1)));
+

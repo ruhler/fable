@@ -760,7 +760,7 @@ progress.
         |  'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
         |  'proc' tname '('
               [tname polarity pname [',' tname polarity pname [...]]] ';'
-              [tname vname [',' tname vname [...]]] ';' [tname] ')' proc ';'
+              [tname vname [',' tname vname [...]]] ';' tname ')' proc ';'
         ;
 
   expr ::= vname                                        (* variable *)
