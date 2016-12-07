@@ -1,8 +1,8 @@
 
 struct Unit();
 
-// TODO: Should Id's be unary, binary, or something else more efficient?
-union Id(Unit Z, Id S);
+union Id(Unit 0, Unit 1, Id 2x, Id 2xp1);
+union DeclId(Unit 0, Unit 1, Id 2x, Id 2xp1);
 
 struct NonEmptyTypeList(DeclId head, TypeList tail);
 union TypeList(Unit nil, NonEmptyTypeList cons);
@@ -62,7 +62,8 @@ union Decl(
     ProcDecl proc
 );
 
-struct DeclsPair(Decls first, Decls second);
-union Decls(Decl single, DeclsPair sum);
-union DeclId(Unit here, DeclId first, DeclId second); 
+struct NonEmptyDeclList(Decl head, DeclList tail);
+union DeclList(Unit nil, NonEmptyDeclList cons);
+
+struct Program(NonEmptyDeclList decls);
 

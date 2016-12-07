@@ -108,6 +108,10 @@ proc expect_malformed { program entry args } {
   }
 }
 
+proc expect_result_b {args} {
+  # TODO: Implement me.
+}
+
 foreach {x} [lsort [glob test/*.tcl]]  {
   puts "test $x"
   source $x

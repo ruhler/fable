@@ -298,6 +298,8 @@
   For N fields, the tag will be the ceiling of the log based 2 of N.
   The value 0 is used for the tag of the first field in the union declaration, 1 is used for the tag of the second field in the union declaration, and so on.
 
+  A sequence of bits is represented as a sequence of bytes by having the most significant bit of the byte come first.
+
   A sequence of values is described as a sequence of bits for the individual elements, with the restriction that the bits for each value in the sequence must start on a new 8-bit boundary.
   In particular, individual values that normally are represented with 0 bits take 8 bits to represent as part of a binary stream.
   This makes it possible to represent a stream of valus that take 0 bits, and ensures every value in the stream is described by disjoint sets of bytes.

@@ -1,0 +1,9 @@
+
+* Implement fblci, fblc interpreter that takes binary description as input.
+ - implement bit input and bit output streams.
+ - port/translate fblc implementation to fblci.
+ - get initial binary test passing.
+* Implement fblc front end to fblci.
+* Implement fbld front end to fblci.
+* Port calc Integer to an fbld module.
+* Implementation space invaders game in fbld.
