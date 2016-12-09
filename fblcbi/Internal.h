@@ -97,20 +97,30 @@ typedef struct {
 typedef Decls Program;
 
 // Value
+
+#define UNION_KIND (-1)
 typedef struct {
   size_t refcount;
+  size_t kind;    // UNION_KIND for union, number of fields for struct.
 } Value;
 
 typedef struct {
   size_t refcount;
+  size_t kind;
   Value* fields[];
 } StructValue;
 
 typedef struct {
   size_t refcount;
+  size_t kind;
   size_t tag;
   Value field;
 } UnionValue;
+
+StructValue* NewStructValue(size_t fieldc);
+UnionValue* NewUnionValue();
+Value* Copy(Value* src);
+void Release(Value* value);
 
 // BitStream
 uint32_t ReadBits(BitStream* stream, int num_bits);
