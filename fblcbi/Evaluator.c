@@ -754,16 +754,16 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 
           case APP_EXPR: {
             AppExpr* app_expr = (AppExpr*)expr;
-            Decl* decl = program->decls[app_expr->func];
+            Decl* decl = program->declv[app_expr->func];
             if (decl->tag == STRUCT_DECL) {
               // Create the struct value now, then add commands to evaluate
               // the arguments to fill in the fields with the proper results.
               StructDecl* struct_decl = (StructDecl*)decl;
-              size_t fieldc = struct_decl->types.typec;
+              size_t fieldc = struct_decl->fieldc;
               StructValue* value = NewStructValue(fieldc);
               *target = (Value*)value;
               for (size_t i = 0; i < fieldc; ++i) {
-                next = MkExprCmd(app_expr->args->exprs[i], &(value->fields[i]), next);
+                next = MkExprCmd(app_expr->argv[i], &(value->fields[i]), next);
               }
               break;
             }
@@ -780,14 +780,14 @@ static void Run(Program* program, Threads* threads, Thread* thread)
               // array access. Remember to fix this when we add support for
               // let expressions!
               FuncDecl* func = (FuncDecl*)decl;
-              size_t frame_size = func->args->typec;
+              size_t frame_size = func->argc;
               Value** vars = MALLOC(frame_size * sizeof(Value*)); 
               bzero(vars, frame_size * sizeof(Value*));
               next = MkPopScopeCmd(thread->vars, thread->ports, next);
               next = MkExprCmd(func->body, target, next);
               next = MkPushScopeCmd(vars, thread->ports, next);
-              for (size_t i = 0; i < func->args->typec; ++i) {
-                next = MkExprCmd(app_expr->args->exprs[i], vars + i, next);
+              for (size_t i = 0; i < func->argc; ++i) {
+                next = MkExprCmd(app_expr->argv[i], vars + i, next);
               }
               break;
             }

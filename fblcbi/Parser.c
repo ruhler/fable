@@ -17,7 +17,7 @@ static DeclId ParseDeclId(Allocator* alloc, BitStream* bits)
   return ParseId(alloc, bits);
 }
 
-static Types* ParseTypes(Allocator* alloc, BitStream* bits)
+static Type* ParseTypes(Allocator* alloc, BitStream* bits, size_t* count)
 {
   Vector vector;
   VectorInit(alloc, &vector, sizeof(Type));
@@ -25,9 +25,7 @@ static Types* ParseTypes(Allocator* alloc, BitStream* bits)
     Type* ptr = VectorAppend(&vector);
     *ptr = ParseType(alloc, bits);
   }
-  Types* types = Alloc(alloc, sizeof(Types));
-  types->types = VectorExtract(&vector, &(types->typec));
-  return types;
+  return VectorExtract(&vector, count);
 }
 
 static Type ParseType(Allocator* alloc, BitStream* bits)
@@ -35,7 +33,7 @@ static Type ParseType(Allocator* alloc, BitStream* bits)
   return ParseId(alloc, bits);
 }
 
-static Exprs* ParseExprs(Allocator* alloc, BitStream* bits)
+static Expr* ParseExprs(Allocator* alloc, BitStream* bits, size_t* count)
 {
   Vector vector;
   VectorInit(alloc, &vector, sizeof(Expr*));
@@ -43,9 +41,7 @@ static Exprs* ParseExprs(Allocator* alloc, BitStream* bits)
     Expr** ptr = VectorAppend(&vector);
     *ptr = ParseExpr(alloc, bits);
   }
-  Exprs* exprs = Alloc(alloc, sizeof(Exprs));
-  exprs->exprs = VectorExtract(&vector, &(exprs->exprc));
-  return exprs;
+  return VectorExtract(&vector, count);
 }
 
 static Expr* ParseExpr(Allocator* alloc, BitStream* bits)
@@ -55,7 +51,7 @@ static Expr* ParseExpr(Allocator* alloc, BitStream* bits)
       AppExpr* expr = Alloc(alloc, sizeof(AppExpr));
       expr->tag = APP_EXPR;
       expr->func = ParseDeclId(alloc, bits);
-      expr->args = ParseExprs(alloc, bits);
+      expr->argv = ParseExprs(alloc, bits, &(expr->argc));
       return (Expr*)expr;
     }
 
@@ -71,7 +67,7 @@ static Decl* ParseDecl(Allocator* alloc, BitStream* bits)
     case 0: {
       StructDecl* decl = Alloc(alloc, sizeof(StructDecl));
       decl->tag = STRUCT_DECL;
-      ParseTypes(alloc, bits, &(decl->types));
+      decl->fieldv = ParseTypes(alloc, bits, &(decl->fieldc));
       return (Decl*)decl;
     }
 
@@ -82,8 +78,8 @@ static Decl* ParseDecl(Allocator* alloc, BitStream* bits)
     case 2: {
       FuncDecl* decl = Alloc(alloc, sizeof(FuncDecl));
       decl->tag = FUNC_DECL;
-      decl->args = ParseTypes(alloc, bits);
-      decl->return = ParseType(alloc, bits);
+      decl->argv = ParseTypes(alloc, bits, *(decl->argc));
+      decl->return_type = ParseType(alloc, bits);
       decl->body = ParseExpr(alloc, bits);
       return decl->body == NULL ? NULL : (Decl*)decl;
     }
@@ -98,7 +94,7 @@ static Decl* ParseDecl(Allocator* alloc, BitStream* bits)
   }
 }
 
-static Decls* ParseDecls(Allocator* alloc, BitStream* bits)
+Program* ParseProgram(Allocator* alloc, BitStream* bits)
 {
   Vector vector;
   VectorInit(alloc, &vector, sizeof(Decl*));
@@ -106,12 +102,7 @@ static Decls* ParseDecls(Allocator* alloc, BitStream* bits)
     Decl** ptr = VectorAppend(&vector);
     *ptr = ParseDecl(alloc, bits);
   } while (ReadBits(bits, 1));
-  Decls* decls = Alloc(alloc, sizeof(Decls));
-  decls->decls = VectorExtract(&vector, &(decls->declc));
-  return decls;
-}
-
-Program* ParseProgram(Allocator* alloc, BitStream* bits)
-{
-  return ParseDecls(alloc, bits);
+  Program* program = Alloc(alloc, sizeof(Decls));
+  program->decls = VectorExtract(&vector, &(program->declc));
+  return program;
 }

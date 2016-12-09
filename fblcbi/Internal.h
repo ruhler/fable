@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #define GC_DEBUG
 #include <gc/gc.h>
@@ -66,19 +67,10 @@ typedef struct {
 } Expr;
 
 typedef struct {
-  size_t exprc;
-  Expr** exprs;
-} Exprs;
-
-typedef struct {
-  size_t typec;
-  Type* types;
-} Types;
-
-typedef struct {
   ExprTag tag;
   DeclId func;
-  Exprs* args;
+  size_t argc;
+  Expr** argv;
 } AppExpr;
 
 typedef enum {
@@ -94,22 +86,22 @@ typedef struct {
 
 typedef struct {
   DeclTag tag;
-  Types types;
+  size_t fieldc;
+  Type* fieldv;
 } StructDecl;
 
 typedef struct {
   DeclTag tag;
-  Types* args;
+  size_t argc;
+  Type* argv;
   Type return_type; 
   Expr* body;
 } FuncDecl;
 
 typedef struct {
   size_t declc;
-  Decl** decls;
-} Decls;
-
-typedef Decls Program;
+  Decl** declv;
+} Program;
 
 // Value
 
