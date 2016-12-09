@@ -1,7 +1,11 @@
 
 struct Unit();
 
+// At a given point in a function, a variable/port is identified using
+// the number of other variables/port declared in scope before the
+// variable/port in question.
 union Id(Unit 0, Unit 1, Id 2x, Id 2xp1);
+
 union DeclId(Unit 0, Unit 1, Id 2x, Id 2xp1);
 
 struct NonEmptyTypeList(DeclId head, TypeList tail);

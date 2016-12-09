@@ -6,7 +6,7 @@
 struct BitStream {
   FILE* byte_stream;
   uint64_t pending_bits;
-  int num_pending_bits;
+  size_t num_pending_bits;
 };
 
 // ReadBits --
@@ -24,10 +24,11 @@ struct BitStream {
 //
 // Side effects:
 //   Advance the stream by num_bits bits.
-//   The behavior is undefined if num_bits is less than 0 or greater than 31.
+//   The behavior is undefined if num_bits is greater than 31.
 
-uint32_t ReadBits(BitStream* stream, int num_bits) {
-  assert(num_bits >= 0 && num_bits < 32 && "FblciReadBits invalid argument");
+uint32_t ReadBits(BitStream* stream, size_t num_bits)
+{
+  assert(num_bits < 32 && "ReadBits invalid argument");
 
   // Read in more bits until we can satisfy the request.
   while (stream->num_pending_bits < num_bits) {
@@ -45,4 +46,21 @@ uint32_t ReadBits(BitStream* stream, int num_bits) {
   uint32_t bits = stream->pending_bits >> stream->num_pending_bits;
   stream->pending_bits &= (1 << stream->num_pending_bits) - 1;
   return bits;
+}
+
+void WriteBits(BitStream* stream, size_t num_bits, uint32_t bits)
+{
+  assert(num_bits < 32 && "WriteBits invalid num_bits");
+  assert((bits >> num_bits) == 0 && "WriteBits invalid bits");
+
+  stream->pending_bits = (stream->pending_bits << num_bits) | bits;
+  stream->num_pending_bits += num_bits;
+
+  // Write out bits as long as we have enough to write out.
+  while (stream->num_pending_bits >= 8) {
+    stream->num_pending_bits -= 8;
+    int c = stream->pending_bits >> stream->num_pending_bits;
+    fputc(c, stream->byte_stream);
+    stream->pending_bits &= (1 << stream->pending_bits) - 1;
+  }
 }

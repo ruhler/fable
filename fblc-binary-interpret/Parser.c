@@ -1,63 +1,8 @@
 
-typedef size_t DeclId;
-typedef size_t Id;
-typedef DeclId Type;
+#include "Shared.h"
 
-typedef enum {
-  VAR_EXPR,
-  APP_EXPR,
-  UNION_EXPR,
-  ACCESS_EXPR,
-  COND_EXPR,
-  LET_EXPR
-} ExprTag;
-
-typedef struct {
-  ExprTag tag;
-} Expr;
-
-typedef struct {
-  size_t exprc;
-  Expr** exprs;
-} Exprs;
-
-typedef struct {
-  size_t typec;
-  Type* types;
-} Types;
-
-typedef struct {
-  ExprTag tag;
-  DeclId func;
-  Exprs* args;
-} AppExpr;
-
-typedef enum { STRUCT_DECL, UNION_DECL, FUNC_DECL, PROC_DECL } DeclTag;
-
-typedef struct {
-  DeclTag tag;
-} Decl;
-
-typedef struct {
-  DeclTag tag;
-  Types types;
-} StructDecl;
-
-typedef struct {
-  DeclTag tag;
-  Types* args;
-  Type return; 
-  Expr* body;
-} FuncDecl;
-
-typedef struct {
-  size_t declc;
-  Decl** decls;
-} Decls;
-
-typedef Decls Program;
-
-Id ParseId(Allocator* alloc, BitStream* bits) {
+static Id ParseId(Allocator* alloc, BitStream* bits)
+{
   switch (ReadBits(bits, 2)) {
     case 0: return 0;
     case 1: return 1;
@@ -67,37 +12,44 @@ Id ParseId(Allocator* alloc, BitStream* bits) {
   }
 }
 
-DeclId ParseDeclId(Allocator* alloc, BitStream* bits) {
+static DeclId ParseDeclId(Allocator* alloc, BitStream* bits)
+{
   return ParseId(alloc, bits);
 }
 
-Types* ParseTypes(Allocator* alloc, BitStream* bits) {
+static Types* ParseTypes(Allocator* alloc, BitStream* bits)
+{
   Vector vector;
   VectorInit(alloc, &vector, sizeof(Type));
   while (ReadBits(bits, 1)) {
-    VectorAppendValue(&vector, ParseType(alloc, bits));
+    Type* ptr = VectorAppend(&vector);
+    *ptr = ParseType(alloc, bits);
   }
   Types* types = Alloc(alloc, sizeof(Types));
   types->types = VectorExtract(&vector, &(types->typec));
   return types;
 }
 
-Type ParseType(Allocator* alloc, BitStream* bits) {
+static Type ParseType(Allocator* alloc, BitStream* bits)
+{
   return ParseId(alloc, bits);
 }
 
-Exprs* ParseExprs(Allocator* alloc, BitStream* bits) {
+static Exprs* ParseExprs(Allocator* alloc, BitStream* bits)
+{
   Vector vector;
   VectorInit(alloc, &vector, sizeof(Expr*));
   while (ReadBits(bits, 1)) {
-    VectorAppendValue(&vector, ParseExpr(alloc, bits));
+    Expr** ptr = VectorAppend(&vector);
+    *ptr = ParseExpr(alloc, bits);
   }
   Exprs* exprs = Alloc(alloc, sizeof(Exprs));
   exprs->exprs = VectorExtract(&vector, &(exprs->exprc));
   return exprs;
 }
 
-Expr* ParseExpr(Allocator* alloc, BitStream* bits) {
+static Expr* ParseExpr(Allocator* alloc, BitStream* bits)
+{
   switch (ReadBits(bits, 3)) {
     case APP_EXPR: {
       AppExpr* expr = Alloc(alloc, sizeof(AppExpr));
@@ -113,7 +65,8 @@ Expr* ParseExpr(Allocator* alloc, BitStream* bits) {
   }
 }
 
-Decl* ParseDecl(Allocator* alloc, BitStream* bits) {
+static Decl* ParseDecl(Allocator* alloc, BitStream* bits)
+{
   switch (ReadBits(bits, 2)) {
     case 0: {
       StructDecl* decl = Alloc(alloc, sizeof(StructDecl));
@@ -145,17 +98,20 @@ Decl* ParseDecl(Allocator* alloc, BitStream* bits) {
   }
 }
 
-Decls* ParseDecls(Allocator* alloc, BitStream* bits) {
+static Decls* ParseDecls(Allocator* alloc, BitStream* bits)
+{
   Vector vector;
   VectorInit(alloc, &vector, sizeof(Decl*));
   do {
-    VectorAppendValue(&vector, ParseDecl(alloc, bits));
+    Decl** ptr = VectorAppend(&vector);
+    *ptr = ParseDecl(alloc, bits);
   } while (ReadBits(bits, 1));
   Decls* decls = Alloc(alloc, sizeof(Decls));
   decls->decls = VectorExtract(&vector, &(decls->declc));
   return decls;
 }
 
-Program* ParseProgram(Allocator* alloc, BitStream* bits) {
+Program* ParseProgram(Allocator* alloc, BitStream* bits)
+{
   return ParseDecls(alloc, bits);
 }
