@@ -7,6 +7,16 @@
 typedef struct Link Link;
 typedef struct Cmd Cmd;
 typedef struct Thread Thread;
+
+typedef struct {
+  size_t size;
+  Value* values[];
+} Vars;
+
+typedef struct {
+  size_t size;
+  Link* links[];
+} Ports;
 
 // Threads
 //
@@ -21,8 +31,8 @@ typedef struct Thread Thread;
 //   from the head.
 
 struct Thread {
-  Value** vars;
-  Link** ports;
+  Vars* vars;
+  Ports* ports;
   Cmd* cmd;
   Thread* next;
 };
@@ -32,7 +42,7 @@ typedef struct Threads {
   Thread* tail;
 } Threads;
 
-static Thread* NewThread(Value** vars, Link** ports, Cmd* cmd);
+static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd);
 static void FreeThread(Thread* thread);
 static void AddThread(Threads* threads, Thread* thread);
 static Thread* GetThread(Threads* threads);
@@ -55,10 +65,10 @@ struct Link {
   struct Threads waiting;
 };
 
-static Link* NewLink();
+//static Link* NewLink();
 static void FreeLink(Link* link);
 static void PutValue(Link* link, Value* value);
-static Value* GetValue(Link* link);
+//static Value* GetValue(Link* link);
 
 // The evaluator works by breaking down action and expression evaluation into
 // a sequence of commands that can be executed in turn. All of the state of
@@ -70,7 +80,7 @@ static Value* GetValue(Link* link);
 // The following CmdTag enum identifies the types of commands used to evaluate
 // actions and expressions. The Cmd struct represents a command list.
 typedef enum {
-  CMD_EXPR, CMD_ACTN, CMD_STRUCT_ACCESS, CMD_UNION_ACCESS, CMD_COND_EXPR,
+  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND_EXPR,
   CMD_COND_ACTN, CMD_SCOPE, CMD_JOIN, CMD_PUT, CMD_FREE_LINK,
 } CmdTag;
 
@@ -100,25 +110,15 @@ typedef struct {
 //  Value** target;
 //} ActnCmd;
 
-// CMD_STRUCT_ACCESS: The struct access command accesses the given field of
-// the given struct value and stores the resulting value in *target.
+// CMD_ACCESS: The access command accesses the given field of
+// the given value and stores the resulting value in *target.
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  StructValue* value;
+  Value* value;
   size_t field;
   Value** target;
-} StructAccessCmd;
-
-// CMD_UNION_ACCESS: The union access command accesses the given field of
-// the given union value and stores the resulting value in *target.
-typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
-  UnionValue* value;
-  size_t field;
-  Value** target;
-} UnionAccessCmd;
+} AccessCmd;
 
 // CMD_COND_EXPR: The condition expression command uses the tag of 'value' to
 // select the choice to evaluate. It then evaluates the chosen expression and
@@ -148,8 +148,8 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  Value** vars;
-  Link** ports;
+  Vars* vars;
+  Ports* ports;
   bool is_pop;
 } ScopeCmd;
 
@@ -180,15 +180,15 @@ typedef struct {
 static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next);
 //static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next);
 //static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next);
-static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next);
+//static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next);
 //static Cmd* MkCondActnCmd(UnionValue* value, Actn** choices, Value** target, Cmd* next);
-static Cmd* MkScopeCmd(Value** vars, Link** ports, bool is_pop, Cmd* next);
-static Cmd* MkPushScopeCmd(Value** vars, Link** ports, Cmd* next);
-static Cmd* MkPopScopeCmd(Value** vars, Link** ports, Cmd* next);
-static Cmd* MkJoinCmd(size_t count, Cmd* next);
-static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next);
-static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
-static bool IsPopScope(Cmd* next);
+static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next);
+static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next);
+static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next);
+//static Cmd* MkJoinCmd(size_t count, Cmd* next);
+//static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next);
+//static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
+//static bool IsPopScope(Cmd* next);
 
 static void Run(Program* program, Threads* threads, Thread* thread);
 
@@ -208,7 +208,7 @@ static void Run(Program* program, Threads* threads, Thread* thread);
 //   A new thread object is allocated. The thread object should be freed by
 //   calling FreeThread when the object is no longer needed.
 
-static Thread* NewThread(Value** vars, Link** ports, Cmd* cmd)
+static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
 {
   Thread* thread = MALLOC(sizeof(Thread));
   thread->vars = vars;
@@ -305,15 +305,15 @@ static Thread* GetThread(Threads* threads)
 //   Allocates resources for a link object. The resources for the link object
 //   should be freed by calling FreeLink.
 
-static Link* NewLink()
-{
-  Link* link = MALLOC(sizeof(Link));
-  link->head = NULL;
-  link->tail = NULL;
-  link->waiting.head = NULL;
-  link->waiting.tail = NULL;
-  return link;
-}
+//static Link* NewLink()
+//{
+//  Link* link = MALLOC(sizeof(Link));
+//  link->head = NULL;
+//  link->tail = NULL;
+//  link->waiting.head = NULL;
+//  link->waiting.tail = NULL;
+//  return link;
+//}
 
 // FreeLink --
 //
@@ -390,20 +390,20 @@ static void PutValue(Link* link, Value* value)
 // Side effects
 //   Removes the gotten value from the link.
 
-static Value* GetValue(Link* link)
-{
-  Value* value = NULL;
-  if (link->head != NULL) {
-    Values* values = link->head;
-    value = values->value;
-    link->head = values->next;
-    FREE(values);
-    if (link->head == NULL) {
-      link->tail = NULL;
-    }
-  }
-  return value;
-}
+//static Value* GetValue(Link* link)
+//{
+//  Value* value = NULL;
+//  if (link->head != NULL) {
+//    Values* values = link->head;
+//    value = values->value;
+//    link->head = values->next;
+//    FREE(values);
+//    if (link->head == NULL) {
+//      link->tail = NULL;
+//    }
+//  }
+//  return value;
+//}
 
 // MkExprCmd --
 //
@@ -510,16 +510,16 @@ static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next)
-{
-  CondExprCmd* cmd = MALLOC(sizeof(CondExprCmd));
-  cmd->tag = CMD_COND_EXPR;
-  cmd->next = next;
-  cmd->value = value;
-  cmd->choices = choices;
-  cmd->target = target;
-  return (Cmd*)cmd;
-}
+//static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next)
+//{
+//  CondExprCmd* cmd = MALLOC(sizeof(CondExprCmd));
+//  cmd->tag = CMD_COND_EXPR;
+//  cmd->next = next;
+//  cmd->value = value;
+//  cmd->choices = choices;
+//  cmd->target = target;
+//  return (Cmd*)cmd;
+//}
 
 // MkCondActnCmd --
 //   
@@ -566,7 +566,7 @@ static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd
 // Side effects:
 //   None.
 
-static Cmd* MkScopeCmd(Value** vars, Link** ports, bool is_pop, Cmd* next)
+static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 {
   ScopeCmd* cmd = MALLOC(sizeof(ScopeCmd));
   cmd->tag = CMD_SCOPE;
@@ -593,7 +593,7 @@ static Cmd* MkScopeCmd(Value** vars, Link** ports, bool is_pop, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkPushScopeCmd(Value** vars, Link** ports, Cmd* next)
+static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 {
   return MkScopeCmd(vars, ports, false, next);
 }
@@ -614,7 +614,7 @@ static Cmd* MkPushScopeCmd(Value** vars, Link** ports, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkPopScopeCmd(Value** vars, Link** ports, Cmd* next)
+static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 {
   return MkScopeCmd(vars, ports, true, next);
 }
@@ -633,14 +633,14 @@ static Cmd* MkPopScopeCmd(Value** vars, Link** ports, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkJoinCmd(size_t count, Cmd* next)
-{
-  JoinCmd* cmd = MALLOC(sizeof(JoinCmd));
-  cmd->tag = CMD_JOIN;
-  cmd->next = next;
-  cmd->count = count;
-  return (Cmd*)cmd;
-}
+//static Cmd* MkJoinCmd(size_t count, Cmd* next)
+//{
+//  JoinCmd* cmd = MALLOC(sizeof(JoinCmd));
+//  cmd->tag = CMD_JOIN;
+//  cmd->next = next;
+//  cmd->count = count;
+//  return (Cmd*)cmd;
+//}
 
 // MkPutCmd --
 //
@@ -657,17 +657,17 @@ static Cmd* MkJoinCmd(size_t count, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next)
-{
-  assert(target != NULL);
-  PutCmd* cmd = MALLOC(sizeof(PutCmd));
-  cmd->tag = CMD_PUT;
-  cmd->next = next;
-  cmd->target = target;
-  cmd->link = link;
-  cmd->value = NULL;
-  return (Cmd*)cmd;
-}
+//static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next)
+//{
+//  assert(target != NULL);
+//  PutCmd* cmd = MALLOC(sizeof(PutCmd));
+//  cmd->tag = CMD_PUT;
+//  cmd->next = next;
+//  cmd->target = target;
+//  cmd->link = link;
+//  cmd->value = NULL;
+//  return (Cmd*)cmd;
+//}
 
 // MkFreeLinkCmd --
 //
@@ -683,14 +683,14 @@ static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
-{
-  FreeLinkCmd* cmd = MALLOC(sizeof(FreeLinkCmd));
-  cmd->tag = CMD_FREE_LINK;
-  cmd->next = next;
-  cmd->link = link;
-  return (Cmd*)cmd;
-}
+//static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
+//{
+//  FreeLinkCmd* cmd = MALLOC(sizeof(FreeLinkCmd));
+//  cmd->tag = CMD_FREE_LINK;
+//  cmd->next = next;
+//  cmd->link = link;
+//  return (Cmd*)cmd;
+//}
 
 // IsPopScope --
 //
@@ -705,14 +705,14 @@ static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
 // side effects:
 //   None.
 
-static bool IsPopScope(Cmd* next)
-{
-  if (next == NULL || next->tag != CMD_SCOPE) {
-    return false;
-  }
-  ScopeCmd* scope_cmd = (ScopeCmd*)next;
-  return scope_cmd->is_pop;
-}
+//static bool IsPopScope(Cmd* next)
+//{
+//  if (next == NULL || next->tag != CMD_SCOPE) {
+//    return false;
+//  }
+//  ScopeCmd* scope_cmd = (ScopeCmd*)next;
+//  return scope_cmd->is_pop;
+//}
 
 // Run --
 //
@@ -781,13 +781,14 @@ static void Run(Program* program, Threads* threads, Thread* thread)
               // let expressions!
               FuncDecl* func = (FuncDecl*)decl;
               size_t frame_size = func->argc;
-              Value** vars = MALLOC(frame_size * sizeof(Value*)); 
-              bzero(vars, frame_size * sizeof(Value*));
+              Vars* vars = MALLOC(sizeof(Vars) + frame_size * sizeof(Value*)); 
+              vars->size = frame_size;
+              bzero(vars->values, frame_size * sizeof(Value*));
               next = MkPopScopeCmd(thread->vars, thread->ports, next);
               next = MkExprCmd(func->body, target, next);
               next = MkPushScopeCmd(vars, thread->ports, next);
               for (size_t i = 0; i < func->argc; ++i) {
-                next = MkExprCmd(app_expr->argv[i], vars + i, next);
+                next = MkExprCmd(app_expr->argv[i], vars->values + i, next);
               }
               break;
             }
@@ -858,7 +859,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         break;
       }
 
-//      case CMD_ACTN: {
+      case CMD_ACTN: {
+        assert(false && "TODO");
 //        ActnCmd* cmd = (ActnCmd*)thread->cmd;
 //        Actn* actn = cmd->actn;
 //        Value** target = cmd->target;
@@ -985,9 +987,10 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 //            break;
 //        }
 //        break;
-//      }               
+      }               
 
-//      case CMD_ACCESS: {
+      case CMD_ACCESS: {
+        assert(false && "TODO");
 //        AccessCmd* cmd = (AccessCmd*)thread->cmd;
 //        Type* type = cmd->value->type;
 //        int target_tag = TagForField(type, cmd->field);
@@ -1008,7 +1011,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 //        }
 //        Release(cmd->value);
 //        break;
-//      }
+      }
 
       case CMD_COND_EXPR: {
         CondExprCmd* cmd = (CondExprCmd*)thread->cmd;
@@ -1035,18 +1038,12 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         ScopeCmd* cmd = (ScopeCmd*)thread->cmd;
 
         if (cmd->is_pop) {
-          while (thread->vars != NULL && thread->vars != cmd->vars) {
-            Vars* vars = thread->vars;
-            thread->vars = vars->next;
-            Release(vars->value);
-            FREE(vars);
+          Vars* vars = thread->vars;
+          for (size_t i = 0; i < vars->size; ++i) {
+            Release(vars->values[i]);
           }
-
-          while (thread->ports != NULL && thread->ports != cmd->ports) {
-            Ports* ports = thread->ports;
-            thread->ports = ports->next;
-            FREE(ports);
-          }
+          FREE(vars);
+          FREE(thread->ports);
         }
 
         thread->vars = cmd->vars;
@@ -1102,11 +1099,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 //   and action must be well formed.
 //
 // Inputs:
-//   env - The program environment.
-//   proc - The procedure to execute.
-//   portios - IO routines for getting and putting from the procedure's port
-//             arguments.
-//   args - Arguments to the procedure.
+//   program - The program environment.
+//   func - The function to execute.
 //
 // Returns:
 //   The result of executing the given procedure in the program environment
@@ -1115,67 +1109,23 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 // Side effects:
 //   None.
 
-Value* Execute(const Env* env, Proc* proc,
-    IO* portios, Value** args)
+Value* Execute(Program* program, FuncDecl* func)
 {
-  Vars* vars = NULL;
-  for (int i = 0; i < proc->argc; i++) {
-    Name name = proc->argv[i].name.name;
-    vars = AddVar(vars, name);
-    *LookupRef(vars, name) = args[i];
-  }
-
   Cmd* cmd = NULL;
-  Link* links[proc->portc];
-  Ports* ports = NULL;
-  for (int i = 0; i < proc->portc; i++) {
-    links[i] = NewLink();
-    ports = AddPort(ports, proc->portv[i].name.name, links[i]);
-  }
   cmd = MkPopScopeCmd(NULL, NULL, cmd);
-
   Value* result = NULL;
-  cmd = MkActnCmd(proc->body, &result, cmd);
+  cmd = MkExprCmd(func->body, &result, cmd);
 
   Threads threads;
   threads.head = NULL;
   threads.tail = NULL;
-  AddThread(&threads, NewThread(vars, ports, cmd));
+  AddThread(&threads, NewThread(NULL, NULL, cmd));
 
   Thread* thread = GetThread(&threads);
   while (thread != NULL) {
     // Run the current thread.
-    Run(env, &threads, thread);
-
-    // Perform whatever IO is ready. Do this after running the current thread
-    // to ensure we get whatever final IO there is before terminating.
-    for (int i = 0; i < proc->portc; i++) {
-      if (proc->portv[i].polarity == POLARITY_GET) {
-        Thread* waiting = GetThread(&(links[i]->waiting));
-        if (waiting != NULL) {
-          Value* got = portios[i].io(portios[i].user, NULL);
-          if (got == NULL) {
-            AddThread(&(links[i]->waiting), waiting);
-          } else {
-            PutValue(links[i], got);
-            AddThread(&threads, waiting);
-          }
-        }
-      } else {
-        Value* put = GetValue(links[i]);
-        if (put != NULL) {
-          Value* result = portios[i].io(portios[i].user, put);
-          assert(result == NULL);
-          Release(put);
-        }
-      }
-    }
-
+    Run(program, &threads, thread);
     thread = GetThread(&threads);
-  }
-
-  for (int i = 0; i < proc->portc; i++) {
-    FreeLink(links[i]);
   }
   return result;
 }

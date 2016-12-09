@@ -2,6 +2,8 @@
 //
 //   The file implements the main entry point for the Fblc binary interpreter.
 
+#include "Internal.h"
+
 
 // PrintUsage --
 //   
