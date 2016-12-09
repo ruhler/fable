@@ -2,6 +2,9 @@
 //
 //   This file implements routines for evaluating expressions.
 
+#include "Internal.h"
+
+typedef struct Link Link;
 typedef struct Cmd Cmd;
 typedef struct Thread Thread;
 
@@ -46,11 +49,11 @@ typedef struct Values {
   struct Values* next;
 } Values;
 
-typedef struct Link {
+struct Link {
   Values* head;
   Values* tail;
   struct Threads waiting;
-} Link;
+};
 
 static Link* NewLink();
 static void FreeLink(Link* link);
@@ -88,14 +91,14 @@ typedef struct {
   Value** target;
 } ExprCmd;
 
-// CMD_ACTN: The actn command executes actn and stores the resulting value in
-// *target.
-typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
-  Actn* actn;
-  Value** target;
-} ActnCmd;
+//// CMD_ACTN: The actn command executes actn and stores the resulting value in
+//// *target.
+//typedef struct {
+//  CmdTag tag;
+//  struct Cmd* next;
+//  Actn* actn;
+//  Value** target;
+//} ActnCmd;
 
 // CMD_STRUCT_ACCESS: The struct access command accesses the given field of
 // the given struct value and stores the resulting value in *target.
@@ -128,16 +131,16 @@ typedef struct {
   Value** target;
 } CondExprCmd;
 
-// CMD_COND_ACTN: The conditional action command uses the tag of 'value' to
-// select the choice to evaluate. It then evaluates the chosen action and
-// stores the resulting value in *target.
-typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
-  UnionValue* value;
-  Actn** choices;
-  Value** target;
-} CondActnCmd;
+//// CMD_COND_ACTN: The conditional action command uses the tag of 'value' to
+//// select the choice to evaluate. It then evaluates the chosen action and
+//// stores the resulting value in *target.
+//typedef struct {
+//  CmdTag tag;
+//  struct Cmd* next;
+//  UnionValue* value;
+//  Actn** choices;
+//  Value** target;
+//} CondActnCmd;
 
 // CMD_SCOPE: The scope command sets the current ports and vars to the given
 // ports and vars.
@@ -174,12 +177,12 @@ typedef struct {
   Link* link;
 } FreeLinkCmd;
 
-static Cmd* MkExprCmd(const Expr* expr, Value** target, Cmd* next);
-static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next);
-static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next);
+static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next);
+//static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next);
+//static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next);
 static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next);
-static Cmd* MkCondActnCmd(UnionValue* value, Actn** choices, Value** target, Cmd* next);
-static Cmd* MkScopeCmd(Value*** vars, Link** ports, bool is_pop, Cmd* next);
+//static Cmd* MkCondActnCmd(UnionValue* value, Actn** choices, Value** target, Cmd* next);
+static Cmd* MkScopeCmd(Value** vars, Link** ports, bool is_pop, Cmd* next);
 static Cmd* MkPushScopeCmd(Value** vars, Link** ports, Cmd* next);
 static Cmd* MkPopScopeCmd(Value** vars, Link** ports, Cmd* next);
 static Cmd* MkJoinCmd(size_t count, Cmd* next);
@@ -187,7 +190,7 @@ static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next);
 static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
 static bool IsPopScope(Cmd* next);
 
-static void Run(const Env* env, Threads* threads, Thread* thread);
+static void Run(Program* program, Threads* threads, Thread* thread);
 
 // NewThread --
 //
@@ -205,7 +208,7 @@ static void Run(const Env* env, Threads* threads, Thread* thread);
 //   A new thread object is allocated. The thread object should be freed by
 //   calling FreeThread when the object is no longer needed.
 
-static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
+static Thread* NewThread(Value** vars, Link** ports, Cmd* cmd)
 {
   Thread* thread = MALLOC(sizeof(Thread));
   thread->vars = vars;
@@ -402,125 +405,6 @@ static Value* GetValue(Link* link)
   return value;
 }
 
-// LookupRef --
-//
-//   Look up a reference to the value of a variable in the given scope.
-//
-// Inputs:
-//   vars - The scope to look in for the variable reference.
-//   name - The name of the variable to lookup.
-//
-// Returns:
-//   A pointer to the value of the variable with the given name in scope, or
-//   NULL if no such variable or value was found in scope.
-//
-// Side effects:
-//   None.
-
-static Value** LookupRef(Vars* vars, Name name)
-{
-  for ( ; vars != NULL; vars = vars->next) {
-    if (NamesEqual(vars->name, name)) {
-      return &(vars->value);
-    }
-  }
-  return NULL;
-}
-
-// LookupVal --
-//
-//   Look up the value of a variable in the given scope.
-//
-// Inputs:
-//   vars - The scope to look in for the variable value.
-//   name - The name of the variable to lookup.
-//
-// Returns:
-//   The value of the variable with the given name in scope, or NULL if no
-//   such variable or value was found in scope.
-//
-// Side effects:
-//   None.
-
-static Value* LookupVal(Vars* vars, Name name)
-{
-  Value** ref = LookupRef(vars, name);
-  return ref == NULL ? NULL : *ref;
-}
-
-// AddVar --
-//   
-//   Extend the given scope with a new variable. Use LookupRef to access the
-//   newly added variable.
-//
-// Inputs:
-//   vars - The scope to extend.
-//   name - The name of the variable to add.
-//
-// Returns:
-//   A new scope with the new variable and the contents of the given scope.
-//
-// Side effects:
-//   None.
-
-static Vars* AddVar(Vars* vars, Name name)
-{
-  Vars* newvars = MALLOC(sizeof(Vars));
-  newvars->name = name;
-  newvars->value = NULL;
-  newvars->next = vars;
-  return newvars;
-}
-
-// LookupPort --
-//   
-//   Lookup up the link associated with the given port.
-//
-// Inputs:
-//   ports - The set of ports to look at.
-//   name - The name of the port to look up.
-//
-// Returns:
-//   The link associated with the given port, or NULL if no such port was
-//   found.
-//
-// Side effects:
-//   None.
-
-static Link* LookupPort(Ports* ports, Name name)
-{
-  for ( ; ports != NULL; ports = ports->next) {
-    if (NamesEqual(ports->name, name)) {
-      return ports->link;
-    }
-  }
-  return NULL;
-}
-
-// AddPort --
-//   
-//   Extend the given port scope with a new port.
-//
-// Inputs:
-//   ports - The scope to extend.
-//   name - The name of the port to add.
-//   link - The underlying link of the port to add.
-//
-// Returns:
-//   A new scope with the new port and the contents of the given scope.
-//
-// Side effects:
-//   None.
-
-static Ports* AddPort(Ports* ports, Name name, Link* link)
-{
-  Ports* nports = MALLOC(sizeof(Ports));
-  nports->name = name;
-  nports->link = link;
-  nports->next = ports;
-  return nports;
-}
-
 // MkExprCmd --
 //
 //   Creates a command to evaluate the given expression, storing the resulting
@@ -538,7 +422,7 @@ static Ports* AddPort(Ports* ports, Name name, Link* link)
 // Side effects:
 //   None.
 
-static Cmd* MkExprCmd(const Expr* expr, Value** target, Cmd* next)
+static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next)
 {
   assert(expr != NULL);
   assert(target != NULL);
@@ -568,18 +452,18 @@ static Cmd* MkExprCmd(const Expr* expr, Value** target, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next)
-{
-  assert(actn != NULL);
-  assert(target != NULL);
-
-  ActnCmd* cmd = MALLOC(sizeof(ActnCmd));
-  cmd->tag = CMD_ACTN;
-  cmd->next = next;
-  cmd->actn = actn;
-  cmd->target = target;
-  return (Cmd*)cmd;
-}
+//static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next)
+//{
+//  assert(actn != NULL);
+//  assert(target != NULL);
+//
+//  ActnCmd* cmd = MALLOC(sizeof(ActnCmd));
+//  cmd->tag = CMD_ACTN;
+//  cmd->next = next;
+//  cmd->actn = actn;
+//  cmd->target = target;
+//  return (Cmd*)cmd;
+//}
 
 // MkAccessCmd --
 //   
@@ -598,17 +482,16 @@ static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkAccessCmd(
-    Value* value, Name field, Value** target, Cmd* next)
-{
-  AccessCmd* cmd = MALLOC(sizeof(AccessCmd));
-  cmd->tag = CMD_ACCESS;
-  cmd->next = next;
-  cmd->value = value;
-  cmd->field = field;
-  cmd->target = target;
-  return (Cmd*)cmd;
-}
+//static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next)
+//{
+//  AccessCmd* cmd = MALLOC(sizeof(AccessCmd));
+//  cmd->tag = CMD_ACCESS;
+//  cmd->next = next;
+//  cmd->value = value;
+//  cmd->field = field;
+//  cmd->target = target;
+//  return (Cmd*)cmd;
+//}
 
 // MkCondExprCmd --
 //   
@@ -627,9 +510,7 @@ static Cmd* MkAccessCmd(
 // Side effects:
 //   None.
 
-static Cmd* MkCondExprCmd(
-    UnionValue* value, Expr* const* choices, Value** target,
-    Cmd* next)
+static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next)
 {
   CondExprCmd* cmd = MALLOC(sizeof(CondExprCmd));
   cmd->tag = CMD_COND_EXPR;
@@ -657,17 +538,17 @@ static Cmd* MkCondExprCmd(
 // Side effects:
 //   None.
 
-static Cmd* MkCondActnCmd(
-    UnionValue* value, Actn** choices, Value** target, Cmd* next)
-{
-  CondActnCmd* cmd = MALLOC(sizeof(CondActnCmd));
-  cmd->tag = CMD_COND_ACTN;
-  cmd->next = next;
-  cmd->value = value;
-  cmd->choices = choices;
-  cmd->target = target;
-  return (Cmd*)cmd;
-}
+//static Cmd* MkCondActnCmd(
+//    UnionValue* value, Actn** choices, Value** target, Cmd* next)
+//{
+//  CondActnCmd* cmd = MALLOC(sizeof(CondActnCmd));
+//  cmd->tag = CMD_COND_ACTN;
+//  cmd->next = next;
+//  cmd->value = value;
+//  cmd->choices = choices;
+//  cmd->target = target;
+//  return (Cmd*)cmd;
+//}
 
 // MkScopeCmd --
 //   
@@ -685,7 +566,7 @@ static Cmd* MkCondActnCmd(
 // Side effects:
 //   None.
 
-static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
+static Cmd* MkScopeCmd(Value** vars, Link** ports, bool is_pop, Cmd* next)
 {
   ScopeCmd* cmd = MALLOC(sizeof(ScopeCmd));
   cmd->tag = CMD_SCOPE;
@@ -712,7 +593,7 @@ static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next)
+static Cmd* MkPushScopeCmd(Value** vars, Link** ports, Cmd* next)
 {
   return MkScopeCmd(vars, ports, false, next);
 }
@@ -733,7 +614,7 @@ static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
+static Cmd* MkPopScopeCmd(Value** vars, Link** ports, Cmd* next)
 {
   return MkScopeCmd(vars, ports, true, next);
 }
@@ -752,7 +633,7 @@ static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 // Side effects:
 //   None.
 
-static Cmd* MkJoinCmd(int count, Cmd* next)
+static Cmd* MkJoinCmd(size_t count, Cmd* next)
 {
   JoinCmd* cmd = MALLOC(sizeof(JoinCmd));
   cmd->tag = CMD_JOIN;
@@ -851,297 +732,303 @@ static bool IsPopScope(Cmd* next)
 //   Otherwise it will be added back to the threads list representing the
 //   continuation of this thread.
 
-static void Run(const Env* env, Threads* threads, Thread* thread)
+static void Run(Program* program, Threads* threads, Thread* thread)
 {
   for (int i = 0; i < 1024 && thread->cmd != NULL; i++) {
     Cmd* next = thread->cmd->next;
     switch (thread->cmd->tag) {
       case CMD_EXPR: {
         ExprCmd* cmd = (ExprCmd*)thread->cmd;
-        const Expr* expr = cmd->expr;
+        Expr* expr = cmd->expr;
         Value** target = cmd->target;
         switch (expr->tag) {
           case VAR_EXPR: {
-            VarExpr* var_expr = (VarExpr*)expr;
-            Name var_name = var_expr->name.name;
-            Value* value = LookupVal(thread->vars, var_name);
-            assert(target != NULL && "Var not in scope");
-            *target = Copy(value);
-            break;
+            assert(false && "TODO");
+//            VarExpr* var_expr = (VarExpr*)expr;
+//            Name var_name = var_expr->name.name;
+//            Value* value = LookupVal(thread->vars, var_name);
+//            assert(target != NULL && "Var not in scope");
+//            *target = Copy(value);
+//            break;
           }
 
           case APP_EXPR: {
             AppExpr* app_expr = (AppExpr*)expr;
-            Type* type = LookupType(env, app_expr->func.name);
-            if (type != NULL) {
-              if (type->kind == KIND_STRUCT) {
-                // Create the struct value now, then add commands to evaluate
-                // the arguments to fill in the fields with the proper results.
-                StructValue* value = NewStructValue(type);
-                *target = (Value*)value;
-                for (int i = 0; i < type->fieldc; i++) {
-                  next = MkExprCmd(
-                      app_expr->argv[i], &(value->fieldv[i]), next);
-                }
-              } else {
-                assert(false && "Invalid kind of type for application");
+            Decl* decl = program->decls[app_expr->func];
+            if (decl->tag == STRUCT_DECL) {
+              // Create the struct value now, then add commands to evaluate
+              // the arguments to fill in the fields with the proper results.
+              StructDecl* struct_decl = (StructDecl*)decl;
+              size_t fieldc = struct_decl->types.typec;
+              StructValue* value = NewStructValue(fieldc);
+              *target = (Value*)value;
+              for (size_t i = 0; i < fieldc; ++i) {
+                next = MkExprCmd(app_expr->args->exprs[i], &(value->fields[i]), next);
               }
               break;
             }
 
-            Func* func = LookupFunc(env, app_expr->func.name);
-            if (func != NULL) {
+            if (decl->tag == FUNC_DECL) {
               // Add to the top of the command list:
               //  arg -> ... -> arg -> push scope -> body -> pop scope -> next 
               // The results of the arg evaluations will be stored directly in
               // the vars for the first scope command.
               // TODO: Avoid memory leaks in the case of tail calls.
 
+              // TODO: frame_size depends on variables declared in let
+              // expressions too. This could lead to subtle out of bounds
+              // array access. Remember to fix this when we add support for
+              // let expressions!
+              FuncDecl* func = (FuncDecl*)decl;
+              size_t frame_size = func->args->typec;
+              Value** vars = MALLOC(frame_size * sizeof(Value*)); 
+              bzero(vars, frame_size * sizeof(Value*));
               next = MkPopScopeCmd(thread->vars, thread->ports, next);
               next = MkExprCmd(func->body, target, next);
-              next = MkPushScopeCmd(NULL, thread->ports, next);
-
-              ScopeCmd* scmd = (ScopeCmd*)next;
-              Vars* nvars = NULL;
-              for (int i = 0; i < func->argc; i++) {
-                Name var_name = func->argv[i].name.name;
-                nvars = AddVar(nvars, var_name);
-                next = MkExprCmd(
-                    app_expr->argv[i], LookupRef(nvars, var_name), next);
+              next = MkPushScopeCmd(vars, thread->ports, next);
+              for (size_t i = 0; i < func->args->typec; ++i) {
+                next = MkExprCmd(app_expr->args->exprs[i], vars + i, next);
               }
-              scmd->vars = nvars;
               break;
             }
+
             assert(false && "No such struct type or function found");
           }
 
           case ACCESS_EXPR: {
-            // Add to the top of the command list:
-            // object -> access -> ...
-            AccessExpr* access_expr = (AccessExpr*)expr;
-            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(
-                NULL, access_expr->field.name, target, next);
-            next = MkExprCmd(access_expr->object, &(acmd->value), (Cmd*)acmd);
-            break;
+            assert(false && "TODO");
+//            // Add to the top of the command list:
+//            // object -> access -> ...
+//            AccessExpr* access_expr = (AccessExpr*)expr;
+//            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(
+//                NULL, access_expr->field.name, target, next);
+//            next = MkExprCmd(access_expr->object, &(acmd->value), (Cmd*)acmd);
+//            break;
           }
 
           case UNION_EXPR: {
-            // Create the union value now, then add a command to evaluate the
-            // argument of the union constructor and set the field of the
-            // union value.
-            UnionExpr* union_expr = (UnionExpr*)expr;
-            Type* type = LookupType(env, union_expr->type.name);
-            assert(type != NULL);
-            UnionValue* value = NewUnionValue(type);
-            value->tag = TagForField(type, union_expr->field.name);
-            assert(value->tag >= 0 && "no such field");
-            *target = (Value*)value;
-            next = MkExprCmd(union_expr->value, &(value->field), next);
-            break;
+            assert(false && "TODO");
+//            // Create the union value now, then add a command to evaluate the
+//            // argument of the union constructor and set the field of the
+//            // union value.
+//            UnionExpr* union_expr = (UnionExpr*)expr;
+//            Type* type = LookupType(env, union_expr->type.name);
+//            assert(type != NULL);
+//            UnionValue* value = NewUnionValue(type);
+//            value->tag = TagForField(type, union_expr->field.name);
+//            assert(value->tag >= 0 && "no such field");
+//            *target = (Value*)value;
+//            next = MkExprCmd(union_expr->value, &(value->field), next);
+//            break;
           }
 
           case LET_EXPR: {
-            // Add to the top of the command list:
-            // def -> push scope -> body -> (pop scope) -> ...
-            LetExpr* let_expr = (LetExpr*)expr;
-
-            // No need to reset the scope if we are going to switch to
-            // different scope immediately after anyway.
-            if (!IsPopScope(next)) {
-              next = MkPopScopeCmd(thread->vars, thread->ports, next);
-            }
-            Name var_name = let_expr->name.name;
-            Vars* nvars = AddVar(thread->vars, var_name);
-            next = MkExprCmd(let_expr->body, target, next);
-            next = MkPushScopeCmd(nvars, thread->ports, next);
-            next = MkExprCmd(let_expr->def, LookupRef(nvars, var_name), next);
-            break;
+            assert(false && "TODO");
+//            assert(false && "Double check the frame size was set right!");
+//
+//            // Add to the top of the command list:
+//            // def -> push scope -> body -> (pop scope) -> ...
+//            LetExpr* let_expr = (LetExpr*)expr;
+//
+//            // No need to reset the scope if we are going to switch to
+//            // different scope immediately after anyway.
+//            if (!IsPopScope(next)) {
+//              next = MkPopScopeCmd(thread->vars, thread->ports, next);
+//            }
+//            Name var_name = let_expr->name.name;
+//            Vars* nvars = AddVar(thread->vars, var_name);
+//            next = MkExprCmd(let_expr->body, target, next);
+//            next = MkPushScopeCmd(nvars, thread->ports, next);
+//            next = MkExprCmd(let_expr->def, LookupRef(nvars, var_name), next);
+//            break;
           }
 
           case COND_EXPR: {
-            // Add to the top of the command list:
-            // select -> econd -> ...
-            CondExpr* cond_expr = (CondExpr*)expr;
-            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(
-                NULL, cond_expr->argv, target, next);
-            next = MkExprCmd(
-                cond_expr->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
-            break;
+            assert(false && "TODO");
+//            // Add to the top of the command list:
+//            // select -> econd -> ...
+//            CondExpr* cond_expr = (CondExpr*)expr;
+//            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(
+//                NULL, cond_expr->argv, target, next);
+//            next = MkExprCmd(
+//                cond_expr->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
+//            break;
           }
         }
         break;
       }
 
-      case CMD_ACTN: {
-        ActnCmd* cmd = (ActnCmd*)thread->cmd;
-        Actn* actn = cmd->actn;
-        Value** target = cmd->target;
-        switch (actn->tag) {
-          case EVAL_ACTN: {
-            EvalActn* eval_actn = (EvalActn*)actn;
-            next = MkExprCmd(eval_actn->expr, target, next);
-            break;
-          }
+//      case CMD_ACTN: {
+//        ActnCmd* cmd = (ActnCmd*)thread->cmd;
+//        Actn* actn = cmd->actn;
+//        Value** target = cmd->target;
+//        switch (actn->tag) {
+//          case EVAL_ACTN: {
+//            EvalActn* eval_actn = (EvalActn*)actn;
+//            next = MkExprCmd(eval_actn->expr, target, next);
+//            break;
+//          }
+//
+//          case GET_ACTN: {
+//            GetActn* get_actn = (GetActn*)actn;
+//            Link* link = LookupPort(thread->ports, get_actn->port.name);
+//            assert(link != NULL && "Get port not in scope");
+//
+//            *target = GetValue(link);
+//            if (*target == NULL) {
+//              AddThread(&link->waiting, thread);
+//              return;
+//            }
+//            break;
+//          }
+//
+//          case PUT_ACTN: {
+//            // expr -> put -> next
+//            PutActn* put_actn = (PutActn*)actn;
+//            Link* link = LookupPort(thread->ports, put_actn->port.name);
+//            assert(link != NULL && "Put port not in scope");
+//            PutCmd* pcmd = (PutCmd*)MkPutCmd(target, link, next);
+//            next = MkExprCmd(put_actn->expr, &(pcmd->value), (Cmd*)pcmd);
+//            break;
+//          }
+//
+//          case CALL_ACTN: {
+//            CallActn* call_actn = (CallActn*)actn;
+//            Proc* proc = LookupProc(env, call_actn->proc.name);
+//            assert(proc != NULL && "No such proc found");
+//            assert(proc->portc == call_actn->portc);
+//            assert(proc->argc == call_actn->exprc);
+//
+//            // Add to the top of the command list:
+//            //  arg -> ... -> arg -> push scope -> body -> pop scope -> next
+//            // The results of the arg evaluations will be stored directly in
+//            // the vars for the scope command.
+//            // TODO: Avoid memory leaks in the case of tail calls.
+//
+//            next = MkPopScopeCmd(thread->vars, thread->ports, next);
+//            next = MkActnCmd(proc->body, target, next);
+//
+//            Ports* nports = NULL;
+//            for (int i = 0; i < proc->portc; i++) {
+//              Link* link = LookupPort(thread->ports, call_actn->ports[i].name);
+//              assert(link != NULL && "port not found in scope");
+//              nports = AddPort(nports, proc->portv[i].name.name, link);
+//            }
+//            next = MkPushScopeCmd(NULL, nports, next);
+//
+//            ScopeCmd* scmd = (ScopeCmd*)next;
+//            Vars* nvars = NULL;
+//            for (int i = 0; i < proc->argc; i++) {
+//              Name var_name = proc->argv[i].name.name;
+//              nvars = AddVar(nvars, var_name);
+//              next = MkExprCmd(
+//                  call_actn->exprs[i], LookupRef(nvars, var_name), next);
+//            }
+//            scmd->vars = nvars;
+//            break;
+//          }
+//
+//          case LINK_ACTN: {
+//            // actn -> free link -> (pop scope) -> next
+//            // Note: This modifies the scope in place rather than insert a
+//            // push scope command to do that as separate command.
+//            if (!IsPopScope(next)) {
+//              next = MkPopScopeCmd(thread->vars, thread->ports, next);
+//            }
+//
+//            LinkActn* link_actn = (LinkActn*)actn;
+//            Link* link = NewLink();
+//            thread->ports = AddPort(
+//                thread->ports, link_actn->getname.name, link);
+//            thread->ports = AddPort(
+//                thread->ports, link_actn->putname.name, link);
+//            next = MkFreeLinkCmd(link, next);
+//            next = MkActnCmd(link_actn->body, target, next);
+//            break;
+//          }
+//
+//          case EXEC_ACTN: {
+//            // Create new threads for each action to execute.
+//            // actn .>
+//            // actn ..> join -> push scope -> actn -> pop scope -> next
+//            // actn .>
+//            ExecActn* exec_actn = (ExecActn*)actn;
+//            next = MkPopScopeCmd(thread->vars, thread->ports, next);
+//            next = MkActnCmd(exec_actn->body, target, next);
+//            ScopeCmd* scmd = (ScopeCmd*)MkPushScopeCmd(
+//                NULL, thread->ports, next);
+//            Cmd* jcmd = MkJoinCmd(exec_actn->execc, (Cmd*)scmd);
+//
+//            Vars* nvars = thread->vars;
+//            for (int i = 0; i < exec_actn->execc; i++) {
+//              Exec* exec = &(exec_actn->execv[i]);
+//              nvars = AddVar(nvars, exec->var.name.name);
+//              Value** target = LookupRef(nvars, exec->var.name.name);
+//              AddThread(threads, NewThread(thread->vars, thread->ports,
+//                    MkActnCmd(exec->actn, target, jcmd)));
+//            }
+//            scmd->vars = nvars;
+//            next = NULL;
+//            break;
+//          }
+//
+//          case COND_ACTN: {
+//            // Add to the top of the command list:
+//            // select -> acond -> ...
+//            CondActn* cond_actn = (CondActn*)actn;
+//            CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(
+//                NULL, cond_actn->args, target, next);
+//            next = MkExprCmd(
+//                cond_actn->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
+//            break;
+//          }
+//            break;
+//        }
+//        break;
+//      }               
 
-          case GET_ACTN: {
-            GetActn* get_actn = (GetActn*)actn;
-            Link* link = LookupPort(thread->ports, get_actn->port.name);
-            assert(link != NULL && "Get port not in scope");
-
-            *target = GetValue(link);
-            if (*target == NULL) {
-              AddThread(&link->waiting, thread);
-              return;
-            }
-            break;
-          }
-
-          case PUT_ACTN: {
-            // expr -> put -> next
-            PutActn* put_actn = (PutActn*)actn;
-            Link* link = LookupPort(thread->ports, put_actn->port.name);
-            assert(link != NULL && "Put port not in scope");
-            PutCmd* pcmd = (PutCmd*)MkPutCmd(target, link, next);
-            next = MkExprCmd(put_actn->expr, &(pcmd->value), (Cmd*)pcmd);
-            break;
-          }
-
-          case CALL_ACTN: {
-            CallActn* call_actn = (CallActn*)actn;
-            Proc* proc = LookupProc(env, call_actn->proc.name);
-            assert(proc != NULL && "No such proc found");
-            assert(proc->portc == call_actn->portc);
-            assert(proc->argc == call_actn->exprc);
-
-            // Add to the top of the command list:
-            //  arg -> ... -> arg -> push scope -> body -> pop scope -> next
-            // The results of the arg evaluations will be stored directly in
-            // the vars for the scope command.
-            // TODO: Avoid memory leaks in the case of tail calls.
-
-            next = MkPopScopeCmd(thread->vars, thread->ports, next);
-            next = MkActnCmd(proc->body, target, next);
-
-            Ports* nports = NULL;
-            for (int i = 0; i < proc->portc; i++) {
-              Link* link = LookupPort(thread->ports, call_actn->ports[i].name);
-              assert(link != NULL && "port not found in scope");
-              nports = AddPort(nports, proc->portv[i].name.name, link);
-            }
-            next = MkPushScopeCmd(NULL, nports, next);
-
-            ScopeCmd* scmd = (ScopeCmd*)next;
-            Vars* nvars = NULL;
-            for (int i = 0; i < proc->argc; i++) {
-              Name var_name = proc->argv[i].name.name;
-              nvars = AddVar(nvars, var_name);
-              next = MkExprCmd(
-                  call_actn->exprs[i], LookupRef(nvars, var_name), next);
-            }
-            scmd->vars = nvars;
-            break;
-          }
-
-          case LINK_ACTN: {
-            // actn -> free link -> (pop scope) -> next
-            // Note: This modifies the scope in place rather than insert a
-            // push scope command to do that as separate command.
-            if (!IsPopScope(next)) {
-              next = MkPopScopeCmd(thread->vars, thread->ports, next);
-            }
-
-            LinkActn* link_actn = (LinkActn*)actn;
-            Link* link = NewLink();
-            thread->ports = AddPort(
-                thread->ports, link_actn->getname.name, link);
-            thread->ports = AddPort(
-                thread->ports, link_actn->putname.name, link);
-            next = MkFreeLinkCmd(link, next);
-            next = MkActnCmd(link_actn->body, target, next);
-            break;
-          }
-
-          case EXEC_ACTN: {
-            // Create new threads for each action to execute.
-            // actn .>
-            // actn ..> join -> push scope -> actn -> pop scope -> next
-            // actn .>
-            ExecActn* exec_actn = (ExecActn*)actn;
-            next = MkPopScopeCmd(thread->vars, thread->ports, next);
-            next = MkActnCmd(exec_actn->body, target, next);
-            ScopeCmd* scmd = (ScopeCmd*)MkPushScopeCmd(
-                NULL, thread->ports, next);
-            Cmd* jcmd = MkJoinCmd(exec_actn->execc, (Cmd*)scmd);
-
-            Vars* nvars = thread->vars;
-            for (int i = 0; i < exec_actn->execc; i++) {
-              Exec* exec = &(exec_actn->execv[i]);
-              nvars = AddVar(nvars, exec->var.name.name);
-              Value** target = LookupRef(nvars, exec->var.name.name);
-              AddThread(threads, NewThread(thread->vars, thread->ports,
-                    MkActnCmd(exec->actn, target, jcmd)));
-            }
-            scmd->vars = nvars;
-            next = NULL;
-            break;
-          }
-
-          case COND_ACTN: {
-            // Add to the top of the command list:
-            // select -> acond -> ...
-            CondActn* cond_actn = (CondActn*)actn;
-            CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(
-                NULL, cond_actn->args, target, next);
-            next = MkExprCmd(
-                cond_actn->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
-            break;
-          }
-            break;
-        }
-        break;
-      }               
-
-      case CMD_ACCESS: {
-        AccessCmd* cmd = (AccessCmd*)thread->cmd;
-        Type* type = cmd->value->type;
-        int target_tag = TagForField(type, cmd->field);
-        assert(target_tag >= 0);
-        Value** target = cmd->target;
-        if (type->kind == KIND_STRUCT) {
-          Value* value = ((StructValue*)cmd->value)->fieldv[target_tag];
-          *target = Copy(value);
-        } else {
-          assert(type->kind == KIND_UNION);
-          UnionValue* union_value = (UnionValue*)cmd->value;
-          if (union_value->tag == target_tag) {
-            *target = Copy(union_value->field);
-          } else {
-            fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
-            abort();
-          }
-        }
-        Release(cmd->value);
-        break;
-      }
+//      case CMD_ACCESS: {
+//        AccessCmd* cmd = (AccessCmd*)thread->cmd;
+//        Type* type = cmd->value->type;
+//        int target_tag = TagForField(type, cmd->field);
+//        assert(target_tag >= 0);
+//        Value** target = cmd->target;
+//        if (type->kind == KIND_STRUCT) {
+//          Value* value = ((StructValue*)cmd->value)->fieldv[target_tag];
+//          *target = Copy(value);
+//        } else {
+//          assert(type->kind == KIND_UNION);
+//          UnionValue* union_value = (UnionValue*)cmd->value;
+//          if (union_value->tag == target_tag) {
+//            *target = Copy(union_value->field);
+//          } else {
+//            fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
+//            abort();
+//          }
+//        }
+//        Release(cmd->value);
+//        break;
+//      }
 
       case CMD_COND_EXPR: {
         CondExprCmd* cmd = (CondExprCmd*)thread->cmd;
         UnionValue* value = cmd->value;
         Value** target = cmd->target;
-        assert(value->type->kind == KIND_UNION);
+        assert(value->kind == UNION_KIND);
         next = MkExprCmd(cmd->choices[value->tag], target, next);
         Release((Value*)value);
         break;
       }
 
       case CMD_COND_ACTN: {
-        CondActnCmd* cmd = (CondActnCmd*)thread->cmd;
-        UnionValue* value = cmd->value;
-        Value** target = cmd->target;
-        assert(value->type->kind == KIND_UNION);
-        next = MkActnCmd(cmd->choices[value->tag], target, next);
-        Release((Value*)value);
-        break;
+        assert(false && "TODO");
+//        CondActnCmd* cmd = (CondActnCmd*)thread->cmd;
+//        UnionValue* value = cmd->value;
+//        Value** target = cmd->target;
+//        assert(value->type->kind == KIND_UNION);
+//        next = MkActnCmd(cmd->choices[value->tag], target, next);
+//        Release((Value*)value);
+//        break;
       }
 
       case CMD_SCOPE: {

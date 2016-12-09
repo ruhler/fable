@@ -1,8 +1,18 @@
 
 exec rm -rf out
-exec mkdir -p out/test out/fblc out/prgms
+exec mkdir -p out/test out/fblc out/fblcbi out/prgms
 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
+
+# Compile fblcbi
+foreach {x} [lsort [glob fblcbi/*.c]] {
+  puts "cc $x"
+  exec gcc {*}$FLAGS -c -o out/fblcbi/[string map {.c .o} [file tail $x]] $x
+}
+puts "ld -o out/fblcbi"
+exec gcc {*}$FLAGS -o out/prgms/fblcbi -lgc {*}[glob out/fblcbi/*.o]
+
+# Compile fblc
 foreach {x} [lsort [glob fblc/*.c]] {
   puts "cc $x"
   exec gcc {*}$FLAGS -c -o out/fblc/[string map {.c .o} [file tail $x]] $x
@@ -10,6 +20,7 @@ foreach {x} [lsort [glob fblc/*.c]] {
 puts "ld -o out/fblc"
 exec gcc {*}$FLAGS -o out/prgms/fblc -lgc {*}[glob out/fblc/*.o]
 
+# Compile pgrms
 set FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -ggdb]
 foreach {x} [glob prgms/*.c] {
   puts "cc $x"

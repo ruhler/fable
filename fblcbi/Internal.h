@@ -2,6 +2,21 @@
 #ifndef INTERNAL_H_
 #define INTERNAL_H_
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define GC_DEBUG
+#include <gc/gc.h>
+#define MALLOC_INIT() GC_INIT()
+#define MALLOC(x) GC_MALLOC(x)
+#define FREE(x) GC_FREE(x)
+#define ENABLE_LEAK_DETECTION() GC_find_leak = 1
+#define CHECK_FOR_LEAKS() GC_gcollect()
+
 // Allocator
 typedef struct AllocList AllocList;
 
@@ -26,11 +41,11 @@ typedef struct {
 } Vector ;
 
 void InitAllocator(Allocator* alloc);
-void* Alloc(Allocator* alloc, int size);
+void* Alloc(Allocator* alloc, size_t size);
 void FreeAll(Allocator* alloc);
-void VectorInit(Allocator* alloc, Vector* vector, int size);
+void VectorInit(Allocator* alloc, Vector* vector, size_t size);
 void* VectorAppend(Vector* vector);
-void* VectorExtract(Vector* vector, int* count);
+void* VectorExtract(Vector* vector, size_t* count);
 
 // Program
 typedef size_t DeclId;
@@ -85,7 +100,7 @@ typedef struct {
 typedef struct {
   DeclTag tag;
   Types* args;
-  Type return; 
+  Type return_type; 
   Expr* body;
 } FuncDecl;
 
@@ -123,10 +138,11 @@ Value* Copy(Value* src);
 void Release(Value* value);
 
 // BitStream
-uint32_t ReadBits(BitStream* stream, int num_bits);
+typedef struct BitStream BitStream;
+uint32_t ReadBits(BitStream* stream, size_t num_bits);
 
 // Parser
-Program* ParseProgram(Allocator* alloc, BitStream* bits)
+Program* ParseProgram(Allocator* alloc, BitStream* bits);
 
 #endif // INTERNAL_H_
 

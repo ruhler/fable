@@ -3,6 +3,8 @@
 //   This file implements routines for allocating memory that will be freed in
 //   bulk.
 
+#include "Internal.h"
+
 struct AllocList {
   AllocList* next;
   uint8_t data[];
@@ -42,7 +44,7 @@ void InitAllocator(Allocator* alloc)
 // Side effects:
 //   Memory is allocated.
 
-void* Alloc(Allocator* alloc, int size)
+void* Alloc(Allocator* alloc, size_t size)
 {
   AllocList* allocation = MALLOC(sizeof(AllocList) + size);
   allocation->next = alloc->allocations;
@@ -88,7 +90,7 @@ void FreeAll(Allocator* alloc)
 // Side effects:
 //   The vector is initialized for allocation.
 
-void VectorInit(Allocator* alloc, Vector* vector, int size)
+void VectorInit(Allocator* alloc, Vector* vector, size_t size)
 {
   vector->allocator = alloc;
   vector->size = size;
@@ -139,7 +141,7 @@ void* VectorAppend(Vector* vector)
 // Side effects:
 //   count is updated with the final number of elements in the vector.
 
-void* VectorExtract(Vector* vector, int* count)
+void* VectorExtract(Vector* vector, size_t* count)
 {
   // TODO: Do something to save the unused space.
   *count = vector->count;

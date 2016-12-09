@@ -2,6 +2,8 @@
 //
 //   This file implements routines for reading and writing bit streams.
 
+#include "Internal.h"
+
 
 struct BitStream {
   FILE* byte_stream;
