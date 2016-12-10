@@ -381,4 +381,14 @@ Value* ParseValue(Env* env, Type* type, TokenStream* toks);
 // Checker
 bool CheckProgram(const Env* env);
 
+// BitStream
+// Bit streams are represented as sequences of ascii digits '0' and '1'.
+// TODO: Support more efficient encodings of bit streams when desired.
+typedef struct {
+  int fd;
+} OutputBitStream;
+
+void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
+void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
+
 #endif  // INTERNAL_H_

@@ -1,6 +1,6 @@
 // Parser.c --
 //
-//   This file implements routines to parse an  program from a token
+//   This file implements routines to parse an fblc program from a token
 //   stream into abstract syntax form.
 
 #include "Internal.h"
