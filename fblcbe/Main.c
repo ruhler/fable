@@ -1,9 +1,9 @@
-// FblcMain.c --
+// Main.c --
 //
-//   The file implements the main entry point for the Fblc interpreter.
+//   The file implements the main entry point for the  interpreter.
 
 #define _POSIX_SOURCE     // for fdopen
-#include "FblcInternal.h"
+#include "Internal.h"
 
 #define EX_OK 0
 #define EX_USAGE 64
@@ -11,9 +11,9 @@
 #define EX_NOINPUT 66
 
 typedef struct {
-  FblcEnv* env;
-  FblcType* type;
-  FblcTokenStream toks;
+  Env* env;
+  Type* type;
+  TokenStream toks;
 } InputData;
 
 typedef union {
@@ -22,8 +22,8 @@ typedef union {
 } UserData;
 
 static void PrintUsage(FILE* fout);
-static FblcValue* Input(InputData* user, FblcValue* value);
-static FblcValue* Output(FILE* user, FblcValue* value);
+static Value* Input(InputData* user, Value* value);
+static Value* Output(FILE* user, Value* value);
 
 // PrintUsage --
 //   
@@ -56,7 +56,7 @@ static void PrintUsage(FILE* stream)
 
 // Input --
 //
-//   An FblcIO function for getting port values from a token stream.
+//   An IO function for getting port values from a token stream.
 //
 // Inputs:
 //   user - User data with the token stream and value type to read.
@@ -70,17 +70,17 @@ static void PrintUsage(FILE* stream)
 //   Advances the token stream to the next value if a value is ready. This
 //   function should not block if no value is available.
 
-static FblcValue* Input(InputData* user, FblcValue* value)
+static Value* Input(InputData* user, Value* value)
 {
   assert(value == NULL);
 
   // TODO: Check if this would block before reading from the token stream.
-  return FblcParseValue(user->env, user->type, &(user->toks));
+  return ParseValue(user->env, user->type, &(user->toks));
 }
 
 // Output --
 //
-//   An FblcIO function for putting port values to a file stream.
+//   An IO function for putting port values to a file stream.
 //
 // Inputs:
 //   user - The file stream to output the value to.
@@ -92,9 +92,9 @@ static FblcValue* Input(InputData* user, FblcValue* value)
 // Side effects:
 //   Prints the value to the file stream.
 
-static FblcValue* Output(FILE* user, FblcValue* value)
+static Value* Output(FILE* user, Value* value)
 {
-  FblcPrintValue(user, value);
+  PrintValue(user, value);
   fprintf(user, "\n");
   fflush(user);
   return NULL;
@@ -142,47 +142,47 @@ int main(int argc, char* argv[])
   const char* filename = argv[1];
   const char* entry = argv[2];
 
-  FblcTokenStream toks;
-  if (!FblcOpenFileTokenStream(&toks, filename)) {
+  TokenStream toks;
+  if (!OpenFileTokenStream(&toks, filename)) {
     fprintf(stderr, "failed to open input FILE %s.\n", filename);
     return EX_NOINPUT;
   }
 
-  FblcAllocator alloc;
-  FblcInitAllocator(&alloc);
-  FblcEnv* env = FblcParseProgram(&alloc, &toks);
-  FblcCloseTokenStream(&toks);
+  Allocator alloc;
+  InitAllocator(&alloc);
+  Env* env = ParseProgram(&alloc, &toks);
+  CloseTokenStream(&toks);
   if (env == NULL) {
     fprintf(stderr, "failed to parse input FILE.\n");
-    FblcFreeAll(&alloc);
+    FreeAll(&alloc);
     return EX_DATAERR;
   }
 
-  if (!FblcCheckProgram(env)) {
-    fprintf(stderr, "input FILE is not a well formed Fblc program.\n");
-    FblcFreeAll(&alloc);
+  if (!CheckProgram(env)) {
+    fprintf(stderr, "input FILE is not a well formed  program.\n");
+    FreeAll(&alloc);
     return EX_DATAERR;
   }
 
-  FblcProc* proc = FblcLookupProc(env, entry);
+  Proc* proc = LookupProc(env, entry);
   if (proc == NULL) {
-    FblcFunc* func = FblcLookupFunc(env, entry);
+    Func* func = LookupFunc(env, entry);
     if (func == NULL) {
-      FblcFreeAll(&alloc);
+      FreeAll(&alloc);
       fprintf(stderr, "failed to find process or function '%s'.\n", entry);
       return EX_USAGE;
     }
 
     // Make a proc wrapper for the function.
-    FblcEvalActn* body = FblcAlloc(&alloc, sizeof(FblcEvalActn));
+    EvalActn* body = Alloc(&alloc, sizeof(EvalActn));
     body->tag = FBLC_EVAL_ACTN;
     body->loc = func->body->loc;
     body->expr = func->body;
 
-    proc = FblcAlloc(&alloc, sizeof(FblcProc));
+    proc = Alloc(&alloc, sizeof(Proc));
     proc->name = func->name;
     proc->return_type = func->return_type;
-    proc->body = (FblcActn*)body;
+    proc->body = (Actn*)body;
     proc->portc = 0;
     proc->portv = NULL;
     proc->argc = func->argc;
@@ -192,14 +192,14 @@ int main(int argc, char* argv[])
   argc -= 3;
   argv += 3;
   if (argc != proc->argc) {
-    FblcFreeAll(&alloc);
+    FreeAll(&alloc);
     fprintf(stderr, "expected %i ports/args for %s, but %i were provided.\n",
         proc->portc + proc->argc, entry, argc);
     return EX_USAGE;
   }
 
   UserData user[proc->portc];
-  FblcIO ios[proc->portc];
+  IO ios[proc->portc];
 
   for (int i = 0; i < proc->portc; i++) {
     int fd = i+3;
@@ -210,48 +210,48 @@ int main(int argc, char* argv[])
         fprintf(stderr, "unable to open fd %i for writing port %i\n", fd, i);
         return EX_NOINPUT;
       }
-      ios[i].io = (FblcIOFunction)&Output;
+      ios[i].io = (IOFunction)&Output;
       ios[i].user = user[i].output;
     } else {
       assert(proc->portv[i].polarity == FBLC_POLARITY_GET);
       user[i].input.env = env;
-      user[i].input.type = FblcLookupType(env, proc->portv[i].type.name);
+      user[i].input.type = LookupType(env, proc->portv[i].type.name);
       assert(user[i].input.type != NULL);
-      if (!FblcOpenFdTokenStream(&(user[i].input.toks), fd,
+      if (!OpenFdTokenStream(&(user[i].input.toks), fd,
             proc->portv[i].name.name)) {
         fprintf(stderr, "unable to open fd %i for reading port %i\n", fd, i);
         return EX_NOINPUT;
       }
-      ios[i].io = (FblcIOFunction)&Input;
+      ios[i].io = (IOFunction)&Input;
       ios[i].user = &(user[i].input);
     }
   }
 
-  FblcValue* args[proc->argc];
+  Value* args[proc->argc];
   bool err = false;
   for (int i = 0; i < proc->argc; i++) {
     const char* str = *argv++;
     args[i] = NULL;
-    FblcType* type = FblcLookupType(env, proc->argv[i].type.name);
+    Type* type = LookupType(env, proc->argv[i].type.name);
     assert(type != NULL);
-    FblcOpenStringTokenStream(&toks, str, str);
-    args[i] = FblcParseValue(env, type, &toks);
-    FblcCloseTokenStream(&toks);
+    OpenStringTokenStream(&toks, str, str);
+    args[i] = ParseValue(env, type, &toks);
+    CloseTokenStream(&toks);
     err = err || (args[i] == NULL);
   }
 
   if (!err) {
-    FblcValue* value = FblcExecute(env, proc, ios, args);
+    Value* value = Execute(env, proc, ios, args);
     assert(value != NULL);
-    FblcPrintValue(stdout, value);
+    PrintValue(stdout, value);
     printf("\n");
-    FblcRelease(value);
+    Release(value);
   }
 
   for (int i = 0; i < proc->argc; i++) {
-    FblcRelease(args[i]);
+    Release(args[i]);
   }
-  FblcFreeAll(&alloc);
+  FreeAll(&alloc);
   CHECK_FOR_LEAKS();
   return err ? EX_USAGE : EX_OK;
 }

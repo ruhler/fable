@@ -1,11 +1,11 @@
-// FblcValue.c --
+// Value.c --
 //
-//   This file implements routines for manipulating Fblc values.
+//   This file implements routines for manipulating  values.
 
-#include "FblcInternal.h"
+#include "Internal.h"
 
 
-// FblcNewStructValue --
+// NewStructValue --
 //
 //  Allocate a new struct value of the given type.
 //
@@ -17,21 +17,21 @@
 //   struct are left uninitialized.
 //
 // Side effects:
-//   Allocates a new struct value. Use FblcCopy to make a (shared) copy of the
-//   struct value, and FblcRelease to release the resources associated with
+//   Allocates a new struct value. Use Copy to make a (shared) copy of the
+//   struct value, and Release to release the resources associated with
 //   the value.
 
-FblcStructValue* FblcNewStructValue(FblcType* type)
+StructValue* NewStructValue(Type* type)
 {
   assert(type->kind == FBLC_KIND_STRUCT);
-  FblcStructValue* value = MALLOC(sizeof(FblcStructValue));
+  StructValue* value = MALLOC(sizeof(StructValue));
   value->refcount = 1;
-  value->fieldv = MALLOC(type->fieldc * sizeof(FblcValue*));
+  value->fieldv = MALLOC(type->fieldc * sizeof(Value*));
   value->type = type;
   return value;
 }
 
-// FblcNewUnionValue --
+// NewUnionValue --
 //
 //  Allocate a new union value of the given type.
 //
@@ -43,20 +43,20 @@ FblcStructValue* FblcNewStructValue(FblcType* type)
 //   union are left uninitialized.
 //
 // Side effects:
-//   Allocates a new union value. Use FblcCopy to make a (shared) copy of the
-//   union value, and FblcRelease to release the resources associated with
+//   Allocates a new union value. Use Copy to make a (shared) copy of the
+//   union value, and Release to release the resources associated with
 //   the value.
 
-FblcUnionValue* FblcNewUnionValue(FblcType* type)
+UnionValue* NewUnionValue(Type* type)
 {
   assert(type->kind == FBLC_KIND_UNION);
-  FblcUnionValue* value = MALLOC(sizeof(FblcUnionValue));
+  UnionValue* value = MALLOC(sizeof(UnionValue));
   value->refcount = 1;
   value->type = type;
   return value;
 }
 
-// FblcCopy --
+// Copy --
 //
 //   Make a (likely shared) copy of the given value.
 //
@@ -69,14 +69,14 @@ FblcUnionValue* FblcNewUnionValue(FblcType* type)
 // Side effects:
 //   None.
 
-FblcValue* FblcCopy(FblcValue* src)
+Value* Copy(Value* src)
 {
   src->refcount++;
   assert(src->refcount > 0 && "refcount overflow");
   return src;
 }
 
-// FblcRelease --
+// Release --
 //
 //   Free the resources associated with a value.
 //
@@ -90,28 +90,28 @@ FblcValue* FblcCopy(FblcValue* src)
 //   The resources for the value are freed. The value may be NULL, in which
 //   case no action is taken.
 
-void FblcRelease(FblcValue* value)
+void Release(Value* value)
 {
   if (value != NULL) {
     value->refcount--;
     if (value->refcount == 0) {
       if (value->type->kind == FBLC_KIND_STRUCT) {
-        FblcStructValue* struct_value = (FblcStructValue*)value;
+        StructValue* struct_value = (StructValue*)value;
         for (int i = 0; i < value->type->fieldc; i++) {
-          FblcRelease(struct_value->fieldv[i]);
+          Release(struct_value->fieldv[i]);
         }
         FREE(struct_value->fieldv);
       } else {
         assert(value->type->kind == FBLC_KIND_UNION);
-        FblcUnionValue* union_value = (FblcUnionValue*)value;
-        FblcRelease(union_value->field);
+        UnionValue* union_value = (UnionValue*)value;
+        Release(union_value->field);
       }
       FREE(value);
     }
   }
 }
 
-// FblcPrintValue --
+// PrintValue --
 //
 //   Print a value in standard format to the given FILE stream.
 //
@@ -125,31 +125,31 @@ void FblcRelease(FblcValue* value)
 // Side effects:
 //   The value is printed to the given file stream.
 
-void FblcPrintValue(FILE* stream, FblcValue* value)
+void PrintValue(FILE* stream, Value* value)
 {
-  FblcType* type = value->type;
+  Type* type = value->type;
   if (type->kind == FBLC_KIND_STRUCT) {
-    FblcStructValue* struct_value = (FblcStructValue*)value;
+    StructValue* struct_value = (StructValue*)value;
     fprintf(stream, "%s(", type->name.name);
     for (int i = 0; i < type->fieldc; i++) {
       if (i > 0) {
         fprintf(stream, ",");
       }
-      FblcPrintValue(stream, struct_value->fieldv[i]);
+      PrintValue(stream, struct_value->fieldv[i]);
     }
     fprintf(stream, ")");
   } else if (type->kind == FBLC_KIND_UNION) {
-    FblcUnionValue* union_value = (FblcUnionValue*)value;
+    UnionValue* union_value = (UnionValue*)value;
     fprintf(stream, "%s:%s(",
         type->name.name, type->fieldv[union_value->tag].name.name);
-    FblcPrintValue(stream, union_value->field);
+    PrintValue(stream, union_value->field);
     fprintf(stream, ")");
   } else {
     assert(false && "Invalid Kind");
   }
 }
 
-// FblcTagForField --
+// TagForField --
 //
 //   Return the tag corresponding to the named field for the given type.
 //
@@ -164,10 +164,10 @@ void FblcPrintValue(FILE* stream, FblcValue* value)
 // Side effects:
 //   None.
 
-int FblcTagForField(const FblcType* type, FblcName field)
+int TagForField(const Type* type, Name field)
 {
   for (int i = 0; i < type->fieldc; i++) {
-    if (FblcNamesEqual(field, type->fieldv[i].name.name)) {
+    if (NamesEqual(field, type->fieldv[i].name.name)) {
       return i;
     }
   }

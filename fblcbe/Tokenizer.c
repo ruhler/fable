@@ -1,16 +1,16 @@
-// FblcTokenizer.c --
+// Tokenizer.c --
 //
 //   This file implements routines for turning a file into a stream of tokens. 
 
-#include "FblcInternal.h"
+#include "Internal.h"
 
 #define MAX_TOK_DESC_LEN 5
 
-static int CurrChar(FblcTokenStream* toks);
-static int NextChar(FblcTokenStream* toks);
-static void AdvanceChar(FblcTokenStream* toks);
+static int CurrChar(TokenStream* toks);
+static int NextChar(TokenStream* toks);
+static void AdvanceChar(TokenStream* toks);
 static bool IsNameChar(int c);
-static void SkipToToken(FblcTokenStream* toks);
+static void SkipToToken(TokenStream* toks);
 static void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN]);
 
 // CurrChar --
@@ -27,7 +27,7 @@ static void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN]);
 // Side effects:
 //   Reads data from the underlying file if necessary.
 
-static int CurrChar(FblcTokenStream* toks)
+static int CurrChar(TokenStream* toks)
 {
   if (toks->curr == toks->end) {
     if (toks->fd < 0) {
@@ -57,7 +57,7 @@ static int CurrChar(FblcTokenStream* toks)
 // Side effects:
 //   Reads data from the underlying file if necessary.
 
-static int NextChar(FblcTokenStream* toks)
+static int NextChar(TokenStream* toks)
 {
   int c = CurrChar(toks);
   if (c == EOF) {
@@ -93,7 +93,7 @@ static int NextChar(FblcTokenStream* toks)
 //   Advances to the next character in the underyling file and updates the
 //   current file location.
 
-static void AdvanceChar(FblcTokenStream* toks)
+static void AdvanceChar(TokenStream* toks)
 {
   int c = CurrChar(toks);
   if (c != EOF) {
@@ -142,7 +142,7 @@ static bool IsNameChar(int c)
 //   Advances past whitespace or comments to reach a token character, if the
 //   stream is not already positioned at a token character.
 
-static void SkipToToken(FblcTokenStream* toks)
+static void SkipToToken(TokenStream* toks)
 {
   bool is_comment_start = (CurrChar(toks) == '/' && NextChar(toks) == '/');
   while (isspace(CurrChar(toks)) || is_comment_start) {
@@ -194,7 +194,7 @@ void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
   assert(p < desc + MAX_TOK_DESC_LEN && "MAX_TOK_DESC_LEN is too small");
 }
 
-// FblcOpenFdTokenStream --
+// OpenFdTokenStream --
 //
 //   Open a token stream for the given file descriptor.
 //
@@ -209,9 +209,9 @@ void DescribeTokenType(int which, char desc[MAX_TOK_DESC_LEN])
 // Side effects:
 //   Initializes the toks object. Opens the given file. If the token stream is
 //   successfully opened, the file can be closed when the token stream is no
-//   longer in use by calling FblcCloseTokenStream.
+//   longer in use by calling CloseTokenStream.
 
-bool FblcOpenFdTokenStream(FblcTokenStream* toks, int fd, const char* source)
+bool OpenFdTokenStream(TokenStream* toks, int fd, const char* source)
 {
   toks->fd = fd;
   if (toks->fd < 0) {
@@ -225,7 +225,7 @@ bool FblcOpenFdTokenStream(FblcTokenStream* toks, int fd, const char* source)
   return true;
 }
 
-// FblcOpenFileTokenStream --
+// OpenFileTokenStream --
 //
 //   Open a token stream for the given file name.
 //
@@ -239,14 +239,14 @@ bool FblcOpenFdTokenStream(FblcTokenStream* toks, int fd, const char* source)
 // Side effects:
 //   Initializes the toks object. Opens the given file. If the token stream is
 //   successfully opened, the file can be closed when the token stream is no
-//   longer in use by calling FblcCloseTokenStream.
+//   longer in use by calling CloseTokenStream.
 
-bool FblcOpenFileTokenStream(FblcTokenStream* toks, const char* filename)
+bool OpenFileTokenStream(TokenStream* toks, const char* filename)
 {
-  return FblcOpenFdTokenStream(toks, open(filename, O_RDONLY), filename);
+  return OpenFdTokenStream(toks, open(filename, O_RDONLY), filename);
 }
 
-// FblcOpenStringTokenStream --
+// OpenStringTokenStream --
 //
 //   Open a token stream for the given string data.
 //
@@ -261,7 +261,7 @@ bool FblcOpenFileTokenStream(FblcTokenStream* toks, const char* filename)
 // Side effects:
 //   Initializes the toks object.
 
-bool FblcOpenStringTokenStream(FblcTokenStream* toks, const char* source,
+bool OpenStringTokenStream(TokenStream* toks, const char* source,
     const char* string)
 {
   toks->fd = -1;
@@ -276,7 +276,7 @@ bool FblcOpenStringTokenStream(FblcTokenStream* toks, const char* source,
   return true;
 }
 
-// FblcCloseTokenStream
+// CloseTokenStream
 //
 //   Close the underlying file for the given token stream, if any.
 //
@@ -288,14 +288,14 @@ bool FblcOpenStringTokenStream(FblcTokenStream* toks, const char* source,
 //
 // Side effects:
 //   Closes the underlying file for the given token stream, if any.
-void FblcCloseTokenStream(FblcTokenStream* toks)
+void CloseTokenStream(TokenStream* toks)
 {
   if (toks->fd >= 0) {
     close(toks->fd);
   }
 }
 
-// FblcIsEOFToken --
+// IsEOFToken --
 //
 //   Check if the end of the token stream has been reached.
 //
@@ -308,13 +308,13 @@ void FblcCloseTokenStream(FblcTokenStream* toks)
 // Side effects:
 //   Reads the next token from the underlying file if necessary.
 
-bool FblcIsEOFToken(FblcTokenStream* toks)
+bool IsEOFToken(TokenStream* toks)
 {
   SkipToToken(toks);
   return CurrChar(toks) == EOF;
 }
 
-// FblcIsToken --
+// IsToken --
 //
 //   Check if the next token is the given character.
 //
@@ -328,17 +328,17 @@ bool FblcIsEOFToken(FblcTokenStream* toks)
 // Side effects:
 //   Reads the next token from the underlying file if necessary.
 
-bool FblcIsToken(FblcTokenStream* toks, char which)
+bool IsToken(TokenStream* toks, char which)
 {
   SkipToToken(toks);
   return CurrChar(toks) == which;
 }
 
-// FblcGetToken --
+// GetToken --
 //
 //   Remove the next token in the token stream, assuming the token is the
 //   given character. The result of this function should always be checked
-//   for false unless FblcIsToken has already been called to verify the next
+//   for false unless IsToken has already been called to verify the next
 //   token has the given type.
 //
 // Inputs:
@@ -353,7 +353,7 @@ bool FblcIsToken(FblcTokenStream* toks, char which)
 //   removed from the front of the token stream. Otherwise an error message is
 //   printed to standard error.
 
-bool FblcGetToken(FblcTokenStream* toks, char which)
+bool GetToken(TokenStream* toks, char which)
 {
   SkipToToken(toks);
   if (CurrChar(toks) == which) {
@@ -362,11 +362,11 @@ bool FblcGetToken(FblcTokenStream* toks, char which)
   }
   char desc[MAX_TOK_DESC_LEN];
   DescribeTokenType(which, desc);
-  FblcUnexpectedToken(toks, desc);
+  UnexpectedToken(toks, desc);
   return false;
 }
 
-// FblcIsNameToken --
+// IsNameToken --
 //
 //   Check if the next token is a name token.
 //
@@ -379,17 +379,17 @@ bool FblcGetToken(FblcTokenStream* toks, char which)
 // Side effects:
 //   Reads the next token from the underlying file if necessary.
 
-bool FblcIsNameToken(FblcTokenStream* toks)
+bool IsNameToken(TokenStream* toks)
 {
   SkipToToken(toks);
   return IsNameChar(CurrChar(toks));
 }
 
-// FblcGetNameToken --
+// GetNameToken --
 //
 //   Get the value and location of the next token in the stream, which is
 //   assumed to be a name token. The result of this function should always be
-//   checked for false unless FblcIsNameToken has already been called to
+//   checked for false unless IsNameToken has already been called to
 //   verify the next token is a name token.
 //
 // Inputs:
@@ -397,7 +397,7 @@ bool FblcIsNameToken(FblcTokenStream* toks)
 //   toks - The token stream to retrieve the name token from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a type name".
-//   name - A pointer to an FblcLocName that will be filled in with the
+//   name - A pointer to an LocName that will be filled in with the
 //          token's value and location.
 //
 // Returns:
@@ -409,32 +409,32 @@ bool FblcIsNameToken(FblcTokenStream* toks)
 //   from the front of the token stream. Otherwise an error message is printed
 //   to standard error.
 
-bool FblcGetNameToken(FblcAllocator* alloc,
-    FblcTokenStream* toks, const char* expected, FblcLocName* name)
+bool GetNameToken(Allocator* alloc,
+    TokenStream* toks, const char* expected, LocName* name)
 {
   SkipToToken(toks);
   if (IsNameChar(CurrChar(toks))) {
-    FblcVector vector;
-    FblcVectorInit(alloc, &vector, sizeof(char));
+    Vector vector;
+    VectorInit(alloc, &vector, sizeof(char));
 
-    name->loc = FblcAlloc(alloc, sizeof(FblcLoc));
+    name->loc = Alloc(alloc, sizeof(Loc));
     name->loc->source = toks->loc.source;
     name->loc->line = toks->loc.line;
     name->loc->col = toks->loc.col;
     while (IsNameChar(CurrChar(toks))) {
-      *((char*)FblcVectorAppend(&vector)) = CurrChar(toks);
+      *((char*)VectorAppend(&vector)) = CurrChar(toks);
       AdvanceChar(toks);
     } 
-    *((char*)FblcVectorAppend(&vector)) = '\0';
+    *((char*)VectorAppend(&vector)) = '\0';
     int n;
-    name->name = FblcVectorExtract(&vector, &n);
+    name->name = VectorExtract(&vector, &n);
     return true;
   }
-  FblcUnexpectedToken(toks, expected);
+  UnexpectedToken(toks, expected);
   return false;
 }
 
-// FblcUnexpectedToken --
+// UnexpectedToken --
 //
 //   Report an error message indicating the next token was not of the expected
 //   type.
@@ -450,11 +450,11 @@ bool FblcGetNameToken(FblcAllocator* alloc,
 // Side effect:
 //   An error message is printed to standard error.
 
-void FblcUnexpectedToken(FblcTokenStream* toks, const char* expected)
+void UnexpectedToken(TokenStream* toks, const char* expected)
 {
   SkipToToken(toks);
   char desc[MAX_TOK_DESC_LEN];
   DescribeTokenType(CurrChar(toks), desc);
-  FblcReportError("Expected %s, but got token of type %s.\n",
+  ReportError("Expected %s, but got token of type %s.\n",
       &toks->loc, expected, desc);
 }

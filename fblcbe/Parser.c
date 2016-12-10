@@ -1,19 +1,19 @@
-// FblcParser.c --
+// Parser.c --
 //
-//   This file implements routines to parse an Fblc program from a token
+//   This file implements routines to parse an  program from a token
 //   stream into abstract syntax form.
 
-#include "FblcInternal.h"
+#include "Internal.h"
 
-static int ParseFields(FblcAllocator* alloc, FblcTokenStream* toks,
-    FblcField** plist);
-static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
-    FblcPort** ports);
-static int ParseArgs(FblcAllocator* alloc, FblcTokenStream* toks,
-    FblcExpr*** plist);
-static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
+static int ParseFields(Allocator* alloc, TokenStream* toks,
+    Field** plist);
+static int ParsePorts(Allocator* alloc, TokenStream* toks,
+    Port** ports);
+static int ParseArgs(Allocator* alloc, TokenStream* toks,
+    Expr*** plist);
+static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
     bool in_stmt);
-static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
+static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
     bool in_stmt);
 
 // ParseFields -
@@ -35,37 +35,37 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
 //   The token stream is advanced past the tokens describing the fields.
 //   In case of an error, an error message is printed to standard error.
 
-static int ParseFields(FblcAllocator* alloc, FblcTokenStream* toks,
-    FblcField** plist)
+static int ParseFields(Allocator* alloc, TokenStream* toks,
+    Field** plist)
 {
-  if (!FblcIsNameToken(toks)) {
+  if (!IsNameToken(toks)) {
     *plist = NULL;
     return 0;
   }
 
-  FblcVector fields;
-  FblcVectorInit(alloc, &fields, sizeof(FblcField));
-  FblcField* field = FblcVectorAppend(&fields);
-  FblcGetNameToken(alloc, toks, "type name", &(field->type));
-  if (!FblcGetNameToken(alloc, toks, "field name", &(field->name))) {
+  Vector fields;
+  VectorInit(alloc, &fields, sizeof(Field));
+  Field* field = VectorAppend(&fields);
+  GetNameToken(alloc, toks, "type name", &(field->type));
+  if (!GetNameToken(alloc, toks, "field name", &(field->name))) {
     return -1;
   }
 
   int parsed;
-  for (parsed = 1; FblcIsToken(toks, ','); parsed++) {
-    FblcGetToken(toks, ',');
+  for (parsed = 1; IsToken(toks, ','); parsed++) {
+    GetToken(toks, ',');
 
-    field = FblcVectorAppend(&fields);
-    if (!FblcGetNameToken(alloc, toks, "type name", &(field->type))) {
+    field = VectorAppend(&fields);
+    if (!GetNameToken(alloc, toks, "type name", &(field->type))) {
       return -1;
     }
-    if (!FblcGetNameToken(alloc, toks, "field name", &(field->name))) {
+    if (!GetNameToken(alloc, toks, "field name", &(field->name))) {
       return -1;
     }
   }
 
   int fieldc;
-  *plist = FblcVectorExtract(&fields, &fieldc);
+  *plist = VectorExtract(&fields, &fieldc);
   return fieldc;
 }
 
@@ -88,56 +88,56 @@ static int ParseFields(FblcAllocator* alloc, FblcTokenStream* toks,
 //   The token stream is advanced past the last port token.
 //   In case of an error, an error message is printed to standard error.
 
-static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
-    FblcPort** ports)
+static int ParsePorts(Allocator* alloc, TokenStream* toks,
+    Port** ports)
 {
-  if (!FblcIsNameToken(toks)) {
+  if (!IsNameToken(toks)) {
     *ports = NULL;
     return 0;
   }
 
-  FblcVector portv;
-  FblcVectorInit(alloc, &portv, sizeof(FblcPort));
+  Vector portv;
+  VectorInit(alloc, &portv, sizeof(Port));
   bool first = true;
-  while (first || FblcIsToken(toks, ',')) {
+  while (first || IsToken(toks, ',')) {
     if (first) {
       first = false;
     } else {
-      FblcGetToken(toks, ',');
+      GetToken(toks, ',');
     }
 
-    FblcPort* port = FblcVectorAppend(&portv);
+    Port* port = VectorAppend(&portv);
 
     // Get the type.
-    if (!FblcGetNameToken(alloc, toks, "type name", &(port->type))) {
+    if (!GetNameToken(alloc, toks, "type name", &(port->type))) {
       return -1;
     }
 
     // Get the polarity.
-    if (FblcIsToken(toks, '<')) {
-      FblcGetToken(toks, '<');
-      if (!FblcGetToken(toks, '~')) {
+    if (IsToken(toks, '<')) {
+      GetToken(toks, '<');
+      if (!GetToken(toks, '~')) {
         return -1;
       }
       port->polarity = FBLC_POLARITY_GET;
-    } else if (FblcIsToken(toks, '~')) {
-      FblcGetToken(toks, '~');
-      if (!FblcGetToken(toks, '>')) {
+    } else if (IsToken(toks, '~')) {
+      GetToken(toks, '~');
+      if (!GetToken(toks, '>')) {
         return -1;
       }
       port->polarity = FBLC_POLARITY_PUT;
     } else {
-      FblcUnexpectedToken(toks, "'<~' or '~>'");
+      UnexpectedToken(toks, "'<~' or '~>'");
       return -1;
     }
 
     // Get the name.
-    if (!FblcGetNameToken(alloc, toks, "port name", &(port->name))) {
+    if (!GetNameToken(alloc, toks, "port name", &(port->name))) {
       return -1;
     }
   }
   int portc;
-  *ports = FblcVectorExtract(&portv, &portc);
+  *ports = VectorExtract(&portv, &portc);
   return portc;
 }
 
@@ -161,33 +161,33 @@ static int ParsePorts(FblcAllocator* alloc, FblcTokenStream* toks,
 //   argument list. In case of an error, an error message is printed to
 //   standard error.
 
-static int ParseArgs(FblcAllocator* alloc, FblcTokenStream* toks,
-    FblcExpr*** plist)
+static int ParseArgs(Allocator* alloc, TokenStream* toks,
+    Expr*** plist)
 {
-  FblcVector args;
-  FblcVectorInit(alloc, &args, sizeof(FblcExpr*));
-  if (!FblcIsToken(toks, ')')) {
-    FblcExpr* arg = ParseExpr(alloc, toks, false);
+  Vector args;
+  VectorInit(alloc, &args, sizeof(Expr*));
+  if (!IsToken(toks, ')')) {
+    Expr* arg = ParseExpr(alloc, toks, false);
     if (arg == NULL) {
       return -1;
     }
-    *((FblcExpr**)FblcVectorAppend(&args)) = arg;
+    *((Expr**)VectorAppend(&args)) = arg;
 
-    while (FblcIsToken(toks, ',')) {
-      FblcGetToken(toks, ',');
+    while (IsToken(toks, ',')) {
+      GetToken(toks, ',');
       arg = ParseExpr(alloc, toks, false);
       if (arg == NULL) {
         return -1;
       }
-      *((FblcExpr**)FblcVectorAppend(&args)) = arg;
+      *((Expr**)VectorAppend(&args)) = arg;
     }
   }
-  if (!FblcGetToken(toks, ')')) {
+  if (!GetToken(toks, ')')) {
     return -1;
   }
 
   int argc;
-  *plist = FblcVectorExtract(&args, &argc);
+  *plist = VectorExtract(&args, &argc);
   return argc;
 }
 
@@ -210,78 +210,78 @@ static int ParseArgs(FblcAllocator* alloc, FblcTokenStream* toks,
 //   Advances the token stream past the parsed expression. In case of error,
 //   an error message is printed to standard error.
 
-static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
+static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
     bool in_stmt)
 {
-  FblcExpr* expr;
-  if (FblcIsToken(toks, '{')) {
-    FblcGetToken(toks, '{');
+  Expr* expr;
+  if (IsToken(toks, '{')) {
+    GetToken(toks, '{');
     expr = ParseExpr(alloc, toks, true);
     if (expr == NULL) {
       return NULL;
     }
-    if (!FblcGetToken(toks, '}')) {
+    if (!GetToken(toks, '}')) {
       return NULL;
     }
-  } else if (FblcIsNameToken(toks)) {
-    FblcLocName start;
-    FblcGetNameToken(alloc, toks, "start of expression", &start);
+  } else if (IsNameToken(toks)) {
+    LocName start;
+    GetNameToken(alloc, toks, "start of expression", &start);
 
-    if (FblcIsToken(toks, '(')) {
+    if (IsToken(toks, '(')) {
       // This is an application expression of the form: start(<args>)
-      FblcGetToken(toks, '(');
+      GetToken(toks, '(');
 
-      FblcExpr** args = NULL;
+      Expr** args = NULL;
       int argc = ParseArgs(alloc, toks, &args);
       if (argc < 0) {
         return NULL;
       }
-      FblcAppExpr* app_expr = FblcAlloc(alloc, sizeof(FblcAppExpr));
+      AppExpr* app_expr = Alloc(alloc, sizeof(AppExpr));
       app_expr->tag = FBLC_APP_EXPR;
       app_expr->loc = start.loc;
       app_expr->func.name = start.name;
       app_expr->func.loc = start.loc;
       app_expr->argc = argc;
       app_expr->argv = args;
-      expr = (FblcExpr*)app_expr;
-    } else if (FblcIsToken(toks, ':')) {
+      expr = (Expr*)app_expr;
+    } else if (IsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)
-      FblcGetToken(toks, ':');
-      FblcUnionExpr* union_expr = FblcAlloc(alloc, sizeof(FblcUnionExpr));
+      GetToken(toks, ':');
+      UnionExpr* union_expr = Alloc(alloc, sizeof(UnionExpr));
       union_expr->tag = FBLC_UNION_EXPR;
       union_expr->loc = start.loc;
       union_expr->type.name = start.name;
       union_expr->type.loc = start.loc;
-      if (!FblcGetNameToken(alloc, toks, "field name", &(union_expr->field))) {
+      if (!GetNameToken(alloc, toks, "field name", &(union_expr->field))) {
         return NULL;
       }
-      if (!FblcGetToken(toks, '(')) {
+      if (!GetToken(toks, '(')) {
         return NULL;
       }
       union_expr->value = ParseExpr(alloc, toks, false);
       if (union_expr->value == NULL) {
         return NULL;
       }
-      if (!FblcGetToken(toks, ')')) {
+      if (!GetToken(toks, ')')) {
         return NULL;
       }
-      expr = (FblcExpr*)union_expr;
-    } else if (in_stmt && FblcIsNameToken(toks)) {
+      expr = (Expr*)union_expr;
+    } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
-      FblcLetExpr* let_expr = FblcAlloc(alloc, sizeof(FblcLetExpr));
+      LetExpr* let_expr = Alloc(alloc, sizeof(LetExpr));
       let_expr->tag = FBLC_LET_EXPR;
       let_expr->loc = start.loc;
       let_expr->type.name = start.name;
       let_expr->type.loc = start.loc;
-      FblcGetNameToken(alloc, toks, "variable name", &(let_expr->name));
-      if (!FblcGetToken(toks, '=')) {
+      GetNameToken(alloc, toks, "variable name", &(let_expr->name));
+      if (!GetToken(toks, '=')) {
         return NULL;
       }
       let_expr->def = ParseExpr(alloc, toks, false);
       if (let_expr->def == NULL) {
         return NULL;
       }
-      if (!FblcGetToken(toks, ';')) {
+      if (!GetToken(toks, ';')) {
         return NULL;
       }
       let_expr->body = ParseExpr(alloc, toks, true);
@@ -290,64 +290,64 @@ static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
       }
 
       // Return the expression immediately, because it is already complete.
-      return (FblcExpr*)let_expr;
+      return (Expr*)let_expr;
     } else {
       // This is the variable expression: start
-      FblcVarExpr* var_expr = FblcAlloc(alloc, sizeof(FblcVarExpr));
+      VarExpr* var_expr = Alloc(alloc, sizeof(VarExpr));
       var_expr->tag = FBLC_VAR_EXPR;
       var_expr->loc = start.loc;
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
-      expr = (FblcExpr*)var_expr;
+      expr = (Expr*)var_expr;
     }
-  } else if (FblcIsToken(toks, '?')) {
+  } else if (IsToken(toks, '?')) {
     // This is a conditional expression of the form: ?(<expr> ; <args>)
-    FblcGetToken(toks, '?');
-    if (!FblcGetToken(toks, '(')) {
+    GetToken(toks, '?');
+    if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcExpr* condition = ParseExpr(alloc, toks, false);
+    Expr* condition = ParseExpr(alloc, toks, false);
     if (condition == NULL) {
       return NULL;
     }
 
-    if (!FblcGetToken(toks, ';')) {
+    if (!GetToken(toks, ';')) {
       return NULL;
     }
     
-    FblcExpr** args = NULL;
+    Expr** args = NULL;
     int argc = ParseArgs(alloc, toks, &args);
     if (argc < 0) {
       return NULL;
     }
-    FblcCondExpr* cond_expr = FblcAlloc(alloc, sizeof(FblcCondExpr));
+    CondExpr* cond_expr = Alloc(alloc, sizeof(CondExpr));
     cond_expr->tag = FBLC_COND_EXPR;
     cond_expr->loc = condition->loc;
     cond_expr->select = condition;
     cond_expr->argc = argc;
     cond_expr->argv = args;
-    expr = (FblcExpr*)cond_expr;
+    expr = (Expr*)cond_expr;
   } else {
-    FblcUnexpectedToken(toks, "an expression");
+    UnexpectedToken(toks, "an expression");
     return NULL;
   }
 
-  while (FblcIsToken(toks, '.')) {
-    FblcGetToken(toks, '.');
+  while (IsToken(toks, '.')) {
+    GetToken(toks, '.');
 
     // This is an access expression of the form: <expr>.<field>
-    FblcAccessExpr* access_expr = FblcAlloc(alloc, sizeof(FblcAccessExpr));
+    AccessExpr* access_expr = Alloc(alloc, sizeof(AccessExpr));
     access_expr->tag = FBLC_ACCESS_EXPR;
     access_expr->loc = expr->loc;
     access_expr->object = expr;
-    if (!FblcGetNameToken(alloc, toks, "field name", &(access_expr->field))) {
+    if (!GetNameToken(alloc, toks, "field name", &(access_expr->field))) {
       return NULL;
     }
-    expr = (FblcExpr*)access_expr;
+    expr = (Expr*)access_expr;
   }
 
   if (in_stmt) {
-    if (!FblcGetToken(toks, ';')) {
+    if (!GetToken(toks, ';')) {
       return NULL;
     }
   }
@@ -373,174 +373,174 @@ static FblcExpr* ParseExpr(FblcAllocator* alloc, FblcTokenStream* toks,
 //   Advances the token stream past the parsed action. In case of error,
 //   an error message is printed to standard error.
 
-static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
+static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
     bool in_stmt)
 {
-  FblcActn* actn = NULL;
-  if (FblcIsToken(toks, '{')) {
-    FblcGetToken(toks, '{');
+  Actn* actn = NULL;
+  if (IsToken(toks, '{')) {
+    GetToken(toks, '{');
     actn = ParseActn(alloc, toks, true);
     if (actn == NULL) {
       return NULL;
     }
-    if (!FblcGetToken(toks, '}')) {
+    if (!GetToken(toks, '}')) {
       return NULL;
     }
-  } else if (FblcIsToken(toks, '$')) {
+  } else if (IsToken(toks, '$')) {
     // $(<expr>)
-    FblcGetToken(toks, '$');
-    if (!FblcGetToken(toks, '(')) {
+    GetToken(toks, '$');
+    if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcExpr* expr = ParseExpr(alloc, toks, false);
+    Expr* expr = ParseExpr(alloc, toks, false);
     if (expr == NULL) {
       return NULL;
     }
-    if (!FblcGetToken(toks, ')')) {
+    if (!GetToken(toks, ')')) {
       return NULL;
     }
 
-    FblcEvalActn* eval_actn = FblcAlloc(alloc, sizeof(FblcEvalActn));
+    EvalActn* eval_actn = Alloc(alloc, sizeof(EvalActn));
     eval_actn->tag = FBLC_EVAL_ACTN;
     eval_actn->loc = expr->loc;
     eval_actn->expr = expr;
-    actn = (FblcActn*)eval_actn;
-  } else if (FblcIsNameToken(toks)) {
-    FblcLocName name;
-    FblcGetNameToken(alloc, toks, "port, process, or type name", &name);
+    actn = (Actn*)eval_actn;
+  } else if (IsNameToken(toks)) {
+    LocName name;
+    GetNameToken(alloc, toks, "port, process, or type name", &name);
 
-    if (FblcIsToken(toks, '~')) {
-      FblcGetToken(toks, '~');
-      if (!FblcGetToken(toks, '(')) {
+    if (IsToken(toks, '~')) {
+      GetToken(toks, '~');
+      if (!GetToken(toks, '(')) {
         return NULL;
       }
 
-      if (FblcIsToken(toks, ')')) {
-        FblcGetToken(toks, ')');
-        FblcGetActn* get_actn = FblcAlloc(alloc, sizeof(FblcGetActn));
+      if (IsToken(toks, ')')) {
+        GetToken(toks, ')');
+        GetActn* get_actn = Alloc(alloc, sizeof(GetActn));
         get_actn->tag = FBLC_GET_ACTN;
         get_actn->loc = name.loc;
         get_actn->port.loc = name.loc;
         get_actn->port.name = name.name;
-        actn = (FblcActn*)get_actn;
+        actn = (Actn*)get_actn;
       } else {
-        FblcExpr* expr = ParseExpr(alloc, toks, false);
+        Expr* expr = ParseExpr(alloc, toks, false);
         if (expr == NULL) {
           return NULL;
         }
-        if (!FblcGetToken(toks, ')')) {
+        if (!GetToken(toks, ')')) {
           return NULL;
         }
 
-        FblcPutActn* put_actn = FblcAlloc(alloc, sizeof(FblcPutActn));
+        PutActn* put_actn = Alloc(alloc, sizeof(PutActn));
         put_actn->tag = FBLC_PUT_ACTN;
         put_actn->loc = name.loc;
         put_actn->port.loc = name.loc;
         put_actn->port.name = name.name;
         put_actn->expr = expr;
-        actn = (FblcActn*)put_actn;
+        actn = (Actn*)put_actn;
       }
-    } else if (FblcIsToken(toks, '(')) {
-      FblcGetToken(toks, '(');
-      FblcCallActn* call_actn = FblcAlloc(alloc, sizeof(FblcCallActn));
+    } else if (IsToken(toks, '(')) {
+      GetToken(toks, '(');
+      CallActn* call_actn = Alloc(alloc, sizeof(CallActn));
       call_actn->tag = FBLC_CALL_ACTN;
       call_actn->loc = name.loc;
       call_actn->proc.loc = name.loc;
       call_actn->proc.name = name.name;
 
-      FblcVector ports;
-      FblcVectorInit(alloc, &ports, sizeof(FblcLocName));
-      if (!FblcIsToken(toks, ';')) {
-        if (!FblcGetNameToken(
-              alloc, toks, "port name", FblcVectorAppend(&ports))) {
+      Vector ports;
+      VectorInit(alloc, &ports, sizeof(LocName));
+      if (!IsToken(toks, ';')) {
+        if (!GetNameToken(
+              alloc, toks, "port name", VectorAppend(&ports))) {
           return NULL;
         }
 
-        while (FblcIsToken(toks, ',')) {
-          FblcGetToken(toks, ',');
-          if (!FblcGetNameToken(
-                alloc, toks, "port name", FblcVectorAppend(&ports))) {
+        while (IsToken(toks, ',')) {
+          GetToken(toks, ',');
+          if (!GetNameToken(
+                alloc, toks, "port name", VectorAppend(&ports))) {
             return NULL;
           }
         }
       }
-      call_actn->ports = FblcVectorExtract(&ports, &(call_actn->portc));
+      call_actn->ports = VectorExtract(&ports, &(call_actn->portc));
 
-      if (!FblcGetToken(toks, ';')) {
+      if (!GetToken(toks, ';')) {
         return NULL;
       }
 
-      FblcExpr** args = NULL;
+      Expr** args = NULL;
       int exprc = ParseArgs(alloc, toks, &args);
       if (exprc < 0) {
         return NULL;
       }
       call_actn->exprc = exprc;
       call_actn->exprs = args;
-      actn = (FblcActn*)call_actn;
-    } else if (in_stmt && FblcIsToken(toks, '<')) {
-      FblcGetToken(toks, '<');
-      if (!FblcGetToken(toks, '~')) {
+      actn = (Actn*)call_actn;
+    } else if (in_stmt && IsToken(toks, '<')) {
+      GetToken(toks, '<');
+      if (!GetToken(toks, '~')) {
         return NULL;
       }
-      if (!FblcGetToken(toks, '>')) {
+      if (!GetToken(toks, '>')) {
         return NULL;
       }
-      FblcLocName getname;
-      if (!FblcGetNameToken(alloc, toks, "port name", &getname)) {
+      LocName getname;
+      if (!GetNameToken(alloc, toks, "port name", &getname)) {
         return NULL;
       }
-      if (!FblcGetToken(toks, ',')) {
+      if (!GetToken(toks, ',')) {
         return NULL;
       }
-      FblcLocName putname;
-      if (!FblcGetNameToken(alloc, toks, "port name", &putname)) {
+      LocName putname;
+      if (!GetNameToken(alloc, toks, "port name", &putname)) {
         return NULL;
       }
-      if (!FblcGetToken(toks, ';')) {
+      if (!GetToken(toks, ';')) {
         return NULL;
       }
-      FblcActn* body = ParseActn(alloc, toks, true);
+      Actn* body = ParseActn(alloc, toks, true);
       if (body == NULL) {
         return NULL;
       }
-      FblcLinkActn* link_actn = FblcAlloc(alloc, sizeof(FblcLinkActn));
+      LinkActn* link_actn = Alloc(alloc, sizeof(LinkActn));
       link_actn->tag = FBLC_LINK_ACTN;
       link_actn->loc = name.loc;
       link_actn->type = name;
       link_actn->getname = getname;
       link_actn->putname = putname;
       link_actn->body = body;
-      return (FblcActn*)link_actn;
-    } else if (in_stmt && FblcIsNameToken(toks)) {
-      FblcExecActn* exec_actn = FblcAlloc(alloc, sizeof(FblcExecActn));
+      return (Actn*)link_actn;
+    } else if (in_stmt && IsNameToken(toks)) {
+      ExecActn* exec_actn = Alloc(alloc, sizeof(ExecActn));
       exec_actn->tag = FBLC_EXEC_ACTN;
       exec_actn->loc = name.loc;
 
-      FblcVector execs;
-      FblcVectorInit(alloc, &execs, sizeof(FblcExec));
+      Vector execs;
+      VectorInit(alloc, &execs, sizeof(Exec));
       bool first = true;
-      while (first || FblcIsToken(toks, ',')) {
-        FblcExec* exec = FblcVectorAppend(&execs);
+      while (first || IsToken(toks, ',')) {
+        Exec* exec = VectorAppend(&execs);
         if (first) {
           exec->var.type.loc = name.loc;
           exec->var.type.name = name.name;
           first = false;
         } else {
-          assert(FblcIsToken(toks, ','));
-          FblcGetToken(toks, ',');
+          assert(IsToken(toks, ','));
+          GetToken(toks, ',');
 
-          if (!FblcGetNameToken(alloc, toks, "type name", &(exec->var.type))) {
+          if (!GetNameToken(alloc, toks, "type name", &(exec->var.type))) {
             return NULL;
           }
         }
 
-        if (!FblcGetNameToken(
+        if (!GetNameToken(
               alloc, toks, "variable name", &(exec->var.name))) {
           return NULL;
         }
 
-        if (!FblcGetToken(toks, '=')) {
+        if (!GetToken(toks, '=')) {
           return NULL;
         }
 
@@ -549,78 +549,78 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
           return NULL;
         }
       };
-      exec_actn->execv = FblcVectorExtract(&execs, &(exec_actn->execc));
+      exec_actn->execv = VectorExtract(&execs, &(exec_actn->execc));
 
-      if (!FblcGetToken(toks, ';')) {
+      if (!GetToken(toks, ';')) {
         return NULL;
       }
       exec_actn->body = ParseActn(alloc, toks, true);
       if (exec_actn->body == NULL) {
         return NULL;
       }
-      return (FblcActn*)exec_actn;
+      return (Actn*)exec_actn;
     } else {
-      FblcUnexpectedToken(toks, "The rest of a process starting with a name");
+      UnexpectedToken(toks, "The rest of a process starting with a name");
       return NULL;
     }
-  } else if (FblcIsToken(toks, '?')) {
+  } else if (IsToken(toks, '?')) {
     // ?(<expr> ; <proc>, ...)
-    FblcGetToken(toks, '?');
-    if (!FblcGetToken(toks, '(')) {
+    GetToken(toks, '?');
+    if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcExpr* condition = ParseExpr(alloc, toks, false);
+    Expr* condition = ParseExpr(alloc, toks, false);
     if (condition == NULL) {
       return NULL;
     }
 
-    if (!FblcGetToken(toks, ';')) {
+    if (!GetToken(toks, ';')) {
       return NULL;
     }
 
-    FblcVector args;
-    FblcVectorInit(alloc, &args, sizeof(FblcActn*));
+    Vector args;
+    VectorInit(alloc, &args, sizeof(Actn*));
     bool first = true;
-    while (first || FblcIsToken(toks, ',')) {
+    while (first || IsToken(toks, ',')) {
       if (first) {
         first = false;
       } else {
-        assert(FblcIsToken(toks, ','));
-        FblcGetToken(toks, ',');
+        assert(IsToken(toks, ','));
+        GetToken(toks, ',');
       }
 
-      FblcActn** arg = FblcVectorAppend(&args);
+      Actn** arg = VectorAppend(&args);
       *arg = ParseActn(alloc, toks, false);
       if (*arg == NULL) {
         return NULL;
       }
-    } while (FblcIsToken(toks, ','));
+    } while (IsToken(toks, ','));
 
-    if (!FblcGetToken(toks, ')')) {
+    if (!GetToken(toks, ')')) {
       return NULL;
     }
-    FblcCondActn* cond_actn = FblcAlloc(alloc, sizeof(FblcCondActn));
+    CondActn* cond_actn = Alloc(alloc, sizeof(CondActn));
     cond_actn->tag = FBLC_COND_ACTN;
     cond_actn->loc = condition->loc;
     cond_actn->select = condition;
-    cond_actn->args = FblcVectorExtract(&args, &(cond_actn->argc));
-    actn = (FblcActn*)cond_actn;
+    cond_actn->args = VectorExtract(&args, &(cond_actn->argc));
+    actn = (Actn*)cond_actn;
   } else {
-    FblcUnexpectedToken(toks, "a process action");
+    UnexpectedToken(toks, "a process action");
     return NULL;
   }
 
   if (in_stmt) {
-    if (!FblcGetToken(toks, ';')) {
+    if (!GetToken(toks, ';')) {
       return NULL;
     }
   }
   return actn;
 }
 
-// FblcParseProgram --
+// ParseProgram --
 //
-//   Parse an Fblc program from the token stream.
+//   Parse an  program from the token stream.
 //
 // Inputs:
 //   alloc - An allocator to use for allocating the program environment.
@@ -635,34 +635,34 @@ static FblcActn* ParseActn(FblcAllocator* alloc, FblcTokenStream* toks,
 //   to standard error; the caller is still responsible for freeing (unused)
 //   allocations made with the allocator in this case.
 
-FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
+Env* ParseProgram(Allocator* alloc, TokenStream* toks)
 {
   const char* keywords = "'struct', 'union', 'func', or 'proc'";
-  FblcEnv* env = FblcNewEnv(alloc);
-  while (!FblcIsEOFToken(toks)) {
+  Env* env = NewEnv(alloc);
+  while (!IsEOFToken(toks)) {
     // All declarations start with the form: <keyword> <name> (...
-    FblcLocName keyword;
-    if (!FblcGetNameToken(alloc, toks, keywords, &keyword)) {
+    LocName keyword;
+    if (!GetNameToken(alloc, toks, keywords, &keyword)) {
       return NULL;
     }
 
-    FblcLocName name;
-    if (!FblcGetNameToken(alloc, toks, "declaration name", &name)) {
+    LocName name;
+    if (!GetNameToken(alloc, toks, "declaration name", &name)) {
       return NULL;
     }
 
-    if (!FblcGetToken(toks, '(')) {
+    if (!GetToken(toks, '(')) {
       return NULL;
     }
 
-    bool is_struct = FblcNamesEqual("struct", keyword.name);
-    bool is_union = FblcNamesEqual("union", keyword.name);
-    bool is_func = FblcNamesEqual("func", keyword.name);
-    bool is_proc = FblcNamesEqual("proc", keyword.name);
+    bool is_struct = NamesEqual("struct", keyword.name);
+    bool is_union = NamesEqual("union", keyword.name);
+    bool is_func = NamesEqual("func", keyword.name);
+    bool is_proc = NamesEqual("proc", keyword.name);
 
     if (is_struct || is_union) {
       // Struct and union declarations end with: ... <fields>);
-      FblcType* type = FblcAlloc(alloc, sizeof(FblcType));
+      Type* type = Alloc(alloc, sizeof(Type));
       type->name.name = name.name;
       type->name.loc = name.loc;
       type->kind = is_struct ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
@@ -671,15 +671,15 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
         return NULL;
       }
 
-      if (!FblcGetToken(toks, ')')) {
+      if (!GetToken(toks, ')')) {
         return NULL;
       }
-      if (!FblcAddType(alloc, env, type)) {
+      if (!AddType(alloc, env, type)) {
         return NULL;
       }
     } else if (is_func) {
       // Function declarations end with: ... <fields>; <type>) <expr>;
-      FblcFunc* func = FblcAlloc(alloc, sizeof(FblcFunc));
+      Func* func = Alloc(alloc, sizeof(Func));
       func->name.name = name.name;
       func->name.loc = name.loc;
       func->argc = ParseFields(alloc, toks, &(func->argv));
@@ -687,15 +687,15 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
         return NULL;
       }
 
-      if (!FblcGetToken(toks, ';')) {
+      if (!GetToken(toks, ';')) {
         return NULL;
       }
 
-      if (!FblcGetNameToken(alloc, toks, "type", &(func->return_type))) {
+      if (!GetNameToken(alloc, toks, "type", &(func->return_type))) {
         return NULL;
       }
 
-      if (!FblcGetToken(toks, ')')) {
+      if (!GetToken(toks, ')')) {
         return NULL;
       }
 
@@ -703,12 +703,12 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
       if (func->body == NULL) {
         return NULL;
       }
-      if (!FblcAddFunc(alloc, env, func)) {
+      if (!AddFunc(alloc, env, func)) {
         return NULL;
       }
     } else if (is_proc) {
       // Proc declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
-      FblcProc* proc = FblcAlloc(alloc, sizeof(FblcProc));
+      Proc* proc = Alloc(alloc, sizeof(Proc));
       proc->name.name = name.name;
       proc->name.loc = name.loc;
       proc->portc = ParsePorts(alloc, toks, &(proc->portv));
@@ -716,7 +716,7 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
         return NULL;
       }
 
-      if (!FblcGetToken(toks, ';')) {
+      if (!GetToken(toks, ';')) {
         return NULL;
       }
 
@@ -725,15 +725,15 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
         return NULL;
       }
 
-      if (!FblcGetToken(toks, ';')) {
+      if (!GetToken(toks, ';')) {
         return NULL;
       }
 
-      if (!FblcGetNameToken(alloc, toks, "type", &(proc->return_type))) {
+      if (!GetNameToken(alloc, toks, "type", &(proc->return_type))) {
         return NULL;
       }
 
-      if (!FblcGetToken(toks, ')')) {
+      if (!GetToken(toks, ')')) {
         return NULL;
       }
 
@@ -741,25 +741,25 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
       if (proc->body == NULL) {
         return NULL;
       }
-      if (!FblcAddProc(alloc, env, proc)) {
+      if (!AddProc(alloc, env, proc)) {
         return NULL;
       }
     } else {
-      FblcReportError("Expected %s, but got '%s'.\n",
+      ReportError("Expected %s, but got '%s'.\n",
           keyword.loc, keywords, keyword.name);
       return NULL;
     }
 
-    if (!FblcGetToken(toks, ';')) {
+    if (!GetToken(toks, ';')) {
       return NULL;
     }
   }
   return env;
 }
 
-// FblcParseValue --
+// ParseValue --
 //
-//   Parse an Fblc value from the token stream.
+//   Parse an  value from the token stream.
 //
 // Inputs:
 //   env - The program environment.
@@ -773,91 +773,91 @@ FblcEnv* FblcParseProgram(FblcAllocator* alloc, FblcTokenStream* toks)
 //   The token stream is advanced to the end of the value. In the case of an
 //   error, an error message is printed to standard error.
 
-FblcValue* FblcParseValue(FblcEnv* env, FblcType* type, FblcTokenStream* toks)
+Value* ParseValue(Env* env, Type* type, TokenStream* toks)
 {
-  FblcAllocator alloc;
-  FblcInitAllocator(&alloc);
+  Allocator alloc;
+  InitAllocator(&alloc);
 
-  FblcLocName name;
-  if (!FblcGetNameToken(&alloc, toks, "type name", &name)) {
-    FblcFreeAll(&alloc);
+  LocName name;
+  if (!GetNameToken(&alloc, toks, "type name", &name)) {
+    FreeAll(&alloc);
     return NULL;
   }
 
-  if (!FblcNamesEqual(name.name, type->name.name)) {
-    FblcReportError("Expected %s, but got %s.\n", name.loc, type->name, name);
-    FblcFreeAll(&alloc);
+  if (!NamesEqual(name.name, type->name.name)) {
+    ReportError("Expected %s, but got %s.\n", name.loc, type->name, name);
+    FreeAll(&alloc);
     return NULL;
   }
-  FblcFreeAll(&alloc);
+  FreeAll(&alloc);
 
   if (type->kind == FBLC_KIND_STRUCT) {
-    if (!FblcGetToken(toks, '(')) {
+    if (!GetToken(toks, '(')) {
       return NULL;
     }
 
     // If there is an error constructing the struct value, we need to release
-    // the resources allocated for it. FblcRelease requires we don't leave any
+    // the resources allocated for it. Release requires we don't leave any
     // of the fields of the struct value uninitialized. For that reason,
     // assign something to all fields regardless of error, keeping track of
     // whether we encountered an error as we go.
-    FblcStructValue* value = FblcNewStructValue(type);
+    StructValue* value = NewStructValue(type);
     bool err = false;
     for (int i = 0; i < type->fieldc; i++) {
       value->fieldv[i] = NULL;
-      if (!err && i > 0 && !FblcGetToken(toks, ',')) {
+      if (!err && i > 0 && !GetToken(toks, ',')) {
         err = true;
       }
 
       if (!err) {
-        FblcType* field_type = FblcLookupType(env, type->fieldv[i].type.name);
+        Type* field_type = LookupType(env, type->fieldv[i].type.name);
         assert(field_type != NULL);
-        value->fieldv[i] = FblcParseValue(env, field_type, toks);
+        value->fieldv[i] = ParseValue(env, field_type, toks);
         err = err || value->fieldv[i] == NULL;
       }
     }
 
-    if (err || !FblcGetToken(toks, ')')) {
-      FblcRelease((FblcValue*)value);
+    if (err || !GetToken(toks, ')')) {
+      Release((Value*)value);
       return NULL;
     }
-    return (FblcValue*)value;
+    return (Value*)value;
   } else {
     assert(type->kind == FBLC_KIND_UNION);
-    if (!FblcGetToken(toks, ':')) {
+    if (!GetToken(toks, ':')) {
       return NULL;
     }
 
-    FblcInitAllocator(&alloc);
-    if (!FblcGetNameToken(&alloc, toks, "field name", &name)) {
-      FblcFreeAll(&alloc);
+    InitAllocator(&alloc);
+    if (!GetNameToken(&alloc, toks, "field name", &name)) {
+      FreeAll(&alloc);
       return NULL;
     }
 
-    int tag = FblcTagForField(type, name.name);
+    int tag = TagForField(type, name.name);
     if (tag < 0) {
-      FblcReportError("Invalid field %s for type %s.\n",
+      ReportError("Invalid field %s for type %s.\n",
           name.loc, name.name, type->name);
-      FblcFreeAll(&alloc);
+      FreeAll(&alloc);
       return NULL;
     }
-    FblcFreeAll(&alloc);
+    FreeAll(&alloc);
 
-    if (!FblcGetToken(toks, '(')) {
+    if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcType* field_type = FblcLookupType(env, type->fieldv[tag].type.name);
+    Type* field_type = LookupType(env, type->fieldv[tag].type.name);
     assert(field_type != NULL);
-    FblcValue* field = FblcParseValue(env, field_type, toks);
+    Value* field = ParseValue(env, field_type, toks);
     if (field == NULL) {
       return NULL;
     }
-    if (!FblcGetToken(toks, ')')) {
+    if (!GetToken(toks, ')')) {
       return NULL;
     }
-    FblcUnionValue* value = FblcNewUnionValue(type);
+    UnionValue* value = NewUnionValue(type);
     value->tag = tag;
     value->field = field;
-    return (FblcValue*)value;
+    return (Value*)value;
   }
 }

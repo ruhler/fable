@@ -1,19 +1,19 @@
-// FblcAllocator.c --
+// Allocator.c --
 //
 //   This file implements routines for allocating memory that will be freed in
 //   bulk.
 
-#include "FblcInternal.h"
+#include "Internal.h"
 
-struct FblcAllocList {
-  FblcAllocList* next;
+struct AllocList {
+  AllocList* next;
   uint8_t data[];
 };
 
 
-// FblcInitAllocator --
+// InitAllocator --
 //
-//   Initialize an FblcAllocator.
+//   Initialize an Allocator.
 //
 // Inputs:
 //   alloc - The allocator to initialize.
@@ -24,12 +24,12 @@ struct FblcAllocList {
 // Side effects:
 //   The allocator is initialized and ready to be used for allocation.
 
-void FblcInitAllocator(FblcAllocator* alloc)
+void InitAllocator(Allocator* alloc)
 {
   alloc->allocations = NULL;
 }
 
-// FblcAlloc --
+// Alloc --
 //
 //   Allocate a block of memory 'size' bytes in length.
 //
@@ -39,20 +39,20 @@ void FblcInitAllocator(FblcAllocator* alloc)
 //
 // Results:
 //   A pointer to 'size' bytes of memory with undefined contents. The memory
-//   will be freed when FblcFreeAll is called on the allocator.
+//   will be freed when FreeAll is called on the allocator.
 //
 // Side effects:
 //   Memory is allocated.
 
-void* FblcAlloc(FblcAllocator* alloc, int size)
+void* Alloc(Allocator* alloc, int size)
 {
-  FblcAllocList* allocation = MALLOC(sizeof(FblcAllocList) + size);
+  AllocList* allocation = MALLOC(sizeof(AllocList) + size);
   allocation->next = alloc->allocations;
   alloc->allocations = allocation;
   return allocation->data;
 }
 
-// FblcFreeAll --
+// FreeAll --
 //
 //   Free all memory allocated with this allocator.
 //
@@ -66,16 +66,16 @@ void* FblcAlloc(FblcAllocator* alloc, int size)
 //   All memory allocated with this allocator is freed and should no longer be
 //   used.
 
-void FblcFreeAll(FblcAllocator* alloc)
+void FreeAll(Allocator* alloc)
 {
   while (alloc->allocations != NULL) {
-    FblcAllocList* this = alloc->allocations;
+    AllocList* this = alloc->allocations;
     alloc->allocations = alloc->allocations->next;
     FREE(this);
   }
 }
 
-// FblcVectorInit --
+// VectorInit --
 //
 //   Initialize a Vector for allocations.
 //
@@ -90,13 +90,13 @@ void FblcFreeAll(FblcAllocator* alloc)
 // Side effects:
 //   The vector is initialized for allocation.
 
-void FblcVectorInit(FblcAllocator* alloc, FblcVector* vector, int size)
+void VectorInit(Allocator* alloc, Vector* vector, int size)
 {
   vector->allocator = alloc;
   vector->size = size;
   vector->capacity = 4;
   vector->count = 0;
-  vector->data = FblcAlloc(alloc, vector->capacity * size);
+  vector->data = Alloc(alloc, vector->capacity * size);
 }
 
 // VectorAppend --
@@ -113,14 +113,14 @@ void FblcVectorInit(FblcAllocator* alloc, FblcVector* vector, int size)
 //   The size of the vector is expanded by one element. Pointers returned for
 //   previous elements may become invalid.
 
-void* FblcVectorAppend(FblcVector* vector)
+void* VectorAppend(Vector* vector)
 {
   if (vector->count == vector->capacity) {
     // TODO: Do something smarter to avoid wasting the previous allocation.
     void* old = vector->data;
     int old_capacity = vector->capacity;
     vector->capacity *= 2;
-    vector->data = FblcAlloc(
+    vector->data = Alloc(
         vector->allocator, vector->capacity * vector->size);
     memcpy(vector->data, old, old_capacity * vector->size);
   }
@@ -141,7 +141,7 @@ void* FblcVectorAppend(FblcVector* vector)
 // Side effects:
 //   count is updated with the final number of elements in the vector.
 
-void* FblcVectorExtract(FblcVector* vector, int* count)
+void* VectorExtract(Vector* vector, int* count)
 {
   // TODO: Do something to save the unused space.
   *count = vector->count;

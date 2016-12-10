@@ -1,11 +1,11 @@
-// FblcProgram.c --
+// Program.c --
 //
-//   The file contains utilities for working with the abstract syntax for Fblc
+//   The file contains utilities for working with the abstract syntax for 
 //   programs.
 
-#include "FblcInternal.h"
+#include "Internal.h"
 
-static bool NameIsDeclared(FblcEnv* env, FblcName name);
+static bool NameIsDeclared(Env* env, Name name);
 
 
 // NameIsDeclared --
@@ -22,14 +22,14 @@ static bool NameIsDeclared(FblcEnv* env, FblcName name);
 // Side effects:
 //   None.
 
-static bool NameIsDeclared(FblcEnv* env, FblcName name) {
-  return FblcLookupType(env, name) != NULL
-    || FblcLookupFunc(env, name) != NULL
-    || FblcLookupProc(env, name) != NULL;
+static bool NameIsDeclared(Env* env, Name name) {
+  return LookupType(env, name) != NULL
+    || LookupFunc(env, name) != NULL
+    || LookupProc(env, name) != NULL;
 }
 
 
-// FblcNamesEqual --
+// NamesEqual --
 //
 //   Test whether two names are the same.
 //
@@ -43,12 +43,12 @@ static bool NameIsDeclared(FblcEnv* env, FblcName name) {
 // Side effects:
 //   None
 
-bool FblcNamesEqual(FblcName a, FblcName b)
+bool NamesEqual(Name a, Name b)
 {
   return strcmp(a, b) == 0;
 }
 
-// FblcReportError --
+// ReportError --
 //
 //   Prints a formatted error message to standard error with location
 //   information. The format is the same as for printf, with the first
@@ -65,7 +65,7 @@ bool FblcNamesEqual(FblcName a, FblcName b)
 // Side effects:
 //   Prints an error message to standard error.
 
-void FblcReportError(const char* format, const FblcLoc* loc, ...)
+void ReportError(const char* format, const Loc* loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
@@ -74,30 +74,30 @@ void FblcReportError(const char* format, const FblcLoc* loc, ...)
   va_end(ap);
 }
 
-// FblcNewEnv --
+// NewEnv --
 //
-//   Create a new, empty, Fblc environment.
+//   Create a new, empty,  environment.
 //
 // Inputs:
 //   alloc - The allocator to use to allocate the environment.
 //
 // Result:
-//   A new, empty, Fblc environment.
+//   A new, empty,  environment.
 //
 // Side effects:
 //   Allocations are performed using the allocator as necessary to allocate
 //   the environment.
 
-FblcEnv* FblcNewEnv(FblcAllocator* alloc)
+Env* NewEnv(Allocator* alloc)
 {
-  FblcEnv* env = FblcAlloc(alloc, sizeof(FblcEnv));
+  Env* env = Alloc(alloc, sizeof(Env));
   env->types = NULL;
   env->funcs = NULL;
   env->procs = NULL;
   return env;
 }
 
-// FblcLookupType --
+// LookupType --
 //
 //   Look up the declaration of the type with the given name in the given
 //   environment.
@@ -113,17 +113,17 @@ FblcEnv* FblcNewEnv(FblcAllocator* alloc)
 // Side effects:
 //   None.
 
-FblcType* FblcLookupType(const FblcEnv* env, FblcName name)
+Type* LookupType(const Env* env, Name name)
 {
-  for (FblcTypeEnv* tenv = env->types; tenv != NULL; tenv = tenv->next) {
-    if (FblcNamesEqual(tenv->decl->name.name, name)) {
+  for (TypeEnv* tenv = env->types; tenv != NULL; tenv = tenv->next) {
+    if (NamesEqual(tenv->decl->name.name, name)) {
       return tenv->decl;
     }
   }
   return NULL;
 }
 
-// FblcLookupFunc --
+// LookupFunc --
 //
 //   Look up the declaration of the function with the given name in the given
 //   environment.
@@ -138,17 +138,17 @@ FblcType* FblcLookupType(const FblcEnv* env, FblcName name)
 //
 // Side effects:
 //   None.
-FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name)
+Func* LookupFunc(const Env* env, Name name)
 {
-  for (FblcFuncEnv* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
-    if (FblcNamesEqual(fenv->decl->name.name, name)) {
+  for (FuncEnv* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
+    if (NamesEqual(fenv->decl->name.name, name)) {
       return fenv->decl;
     }
   }
   return NULL;
 }
 
-// FblcLookupProc --
+// LookupProc --
 //
 //   Look up the declaration of the process with the given name in the given
 //   environment.
@@ -164,17 +164,17 @@ FblcFunc* FblcLookupFunc(const FblcEnv* env, FblcName name)
 // Side effects:
 //   None.
 
-FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name)
+Proc* LookupProc(const Env* env, Name name)
 {
-  for (FblcProcEnv* penv = env->procs; penv != NULL; penv = penv->next) {
-    if (FblcNamesEqual(penv->decl->name.name, name)) {
+  for (ProcEnv* penv = env->procs; penv != NULL; penv = penv->next) {
+    if (NamesEqual(penv->decl->name.name, name)) {
       return penv->decl;
     }
   }
   return NULL;
 }
 
-// FblcAddType --
+// AddType --
 //  
 //   Add a type declaration to the given environment.
 //
@@ -191,22 +191,22 @@ FblcProc* FblcLookupProc(const FblcEnv* env, FblcName name)
 //   could not be added to the environment, an error message is printed to
 //   standard error explaining the problem.
 
-bool FblcAddType(FblcAllocator* alloc, FblcEnv* env, FblcType* type)
+bool AddType(Allocator* alloc, Env* env, Type* type)
 {
   if (NameIsDeclared(env, type->name.name)) {
-    FblcReportError("Multiple declarations for %s.\n",
+    ReportError("Multiple declarations for %s.\n",
        type->name.loc, type->name.name);
     return false;
   }
 
-  FblcTypeEnv* types = FblcAlloc(alloc, sizeof(FblcTypeEnv));
+  TypeEnv* types = Alloc(alloc, sizeof(TypeEnv));
   types->decl = type;
   types->next = env->types;
   env->types = types;
   return true;
 }
 
-// FblcAddFunc --
+// AddFunc --
 //  
 //   Add a function declaration to the given environment.
 //
@@ -223,21 +223,21 @@ bool FblcAddType(FblcAllocator* alloc, FblcEnv* env, FblcType* type)
 //   could not be added to the environment, an error message is printed to
 //   standard error describing the problem.
 
-bool FblcAddFunc(FblcAllocator* alloc, FblcEnv* env, FblcFunc* func)
+bool AddFunc(Allocator* alloc, Env* env, Func* func)
 {
   if (NameIsDeclared(env, func->name.name)) {
-    FblcReportError("Multiple declarations for %s.\n",
+    ReportError("Multiple declarations for %s.\n",
        func->name.loc, func->name.name);
     return false;
   }
-  FblcFuncEnv* funcs = FblcAlloc(alloc, sizeof(FblcFuncEnv));
+  FuncEnv* funcs = Alloc(alloc, sizeof(FuncEnv));
   funcs->decl = func;
   funcs->next = env->funcs;
   env->funcs = funcs;
   return true;
 }
 
-// FblcAddProc --
+// AddProc --
 //
 //   Add a process declaration to the given environment.
 //
@@ -254,14 +254,14 @@ bool FblcAddFunc(FblcAllocator* alloc, FblcEnv* env, FblcFunc* func)
 //   could not be added to the environment, an error message is printed to
 //   standard error describing the problem.
 
-bool FblcAddProc(FblcAllocator* alloc, FblcEnv* env, FblcProc* proc)
+bool AddProc(Allocator* alloc, Env* env, Proc* proc)
 {
   if (NameIsDeclared(env, proc->name.name)) {
-    FblcReportError("Multiple declarations for %s.\n",
+    ReportError("Multiple declarations for %s.\n",
        proc->name.loc, proc->name.name);
     return false;
   }
-  FblcProcEnv* procs = FblcAlloc(alloc, sizeof(FblcProcEnv));
+  ProcEnv* procs = Alloc(alloc, sizeof(ProcEnv));
   procs->decl = proc;
   procs->next = env->procs;
   env->procs = procs;
