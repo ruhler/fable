@@ -4,12 +4,58 @@
 
 #include "Internal.h"
 
+// OpenBinaryStringInputBitStream
+//   Open an InputBitStream that reads from a string of ascii digits '0' and
+//   '1'.
+//
+// Inputs:
+//   stream - The stream to open.
+//   bits - The string to read the bit stream from.
+//
+// Returns:
+//   None.
+//
+// Side effects:
+//   The bit stream is positioned at the beginning of the string of bits to
+//   read from.
+
+void OpenBinaryStringInputBitStream(InputBitStream* stream, const char* bits)
+{
+  stream->bits = bits;
+}
 
-struct BitStream {
-  FILE* byte_stream;
-  uint64_t pending_bits;
-  size_t num_pending_bits;
-};
+// ReadBit --
+//   Read the next bit from the given bit stream.
+//
+// Inputs:
+//   stream - the bit stream to read from.
+//
+// Returns:
+//   The next bit in the stream. EOF if the end of the stream has been
+//   reached.
+//
+// Side effects:
+//   Advance the stream by a single bit.
+
+static int ReadBit(InputBitStream* stream)
+{
+  switch (*(stream->bits)) {
+    case '0':
+      stream->bits++;
+      return 0;
+
+    case '1':
+      stream->bits++;
+      return 1;
+
+    case '\0':
+      return EOF;
+
+    default:
+      assert(false && "Unexpected char in bit stream.");
+      return EOF;
+  }
+}
 
 // ReadBits --
 //
@@ -28,41 +74,61 @@ struct BitStream {
 //   Advance the stream by num_bits bits.
 //   The behavior is undefined if num_bits is greater than 31.
 
-uint32_t ReadBits(BitStream* stream, size_t num_bits)
+uint32_t ReadBits(InputBitStream* stream, size_t num_bits)
 {
   assert(num_bits < 32 && "ReadBits invalid argument");
 
-  // Read in more bits until we can satisfy the request.
-  while (stream->num_pending_bits < num_bits) {
-    int c = fgetc(stream->byte_stream);
-    if (c == EOF) {
+  uint32_t bits = 0;
+  for (size_t i = 0; i < num_bits; ++i) {
+    int bit = ReadBit(stream);
+    if (bit == EOF) {
       return EOF;
     }
-
-    assert(c >= 0 && c <= 0xFF && "Unexpected result of fgetc");
-    stream->num_pending_bits += 8;
-    stream->pending_bits = (stream->pending_bits << 8) | c;
+    bits = (bits << 1) | bit;
   }
-
-  stream->num_pending_bits -= num_bits;
-  uint32_t bits = stream->pending_bits >> stream->num_pending_bits;
-  stream->pending_bits &= (1 << stream->num_pending_bits) - 1;
   return bits;
 }
+
+// OpenBinaryOutputBitStream
+//   Open an OutputBitStream that writes ascii digits '0' and '1' to an open
+//   file.
+//
+// Inputs:
+//   stream - The stream to open.
+//   fd - The file descriptor of an open file to write to.
+//
+// Returns:
+//   None.
+//
+// Side effects:
+//   The bit stream set to write to the given file.
 
-void WriteBits(BitStream* stream, size_t num_bits, uint32_t bits)
+void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd)
+{
+  stream->fd = fd;
+}
+
+// WriteBits --
+//
+//   Write num_bits bits to the given bit stream.
+//
+// Inputs:
+//   stream - the bit stream to write to.
+//   num_bits - the number of bits to write. This must be less than 32.
+//   bits - the actual bits to write.
+//
+// Returns:
+//   None.
+//
+// Side effects:
+//   num_bits bits are written to the stream in the form of binary ascii
+//   digits '0' and '1'.
+void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits)
 {
   assert(num_bits < 32 && "WriteBits invalid num_bits");
-  assert((bits >> num_bits) == 0 && "WriteBits invalid bits");
 
-  stream->pending_bits = (stream->pending_bits << num_bits) | bits;
-  stream->num_pending_bits += num_bits;
-
-  // Write out bits as long as we have enough to write out.
-  while (stream->num_pending_bits >= 8) {
-    stream->num_pending_bits -= 8;
-    int c = stream->pending_bits >> stream->num_pending_bits;
-    fputc(c, stream->byte_stream);
-    stream->pending_bits &= (1 << stream->pending_bits) - 1;
+  for (uint32_t mask = (1 << (num_bits - 1)); mask > 0; mask >>= 1) {
+    char c = (bits & mask) ? '1' : '0';
+    write(stream->fd, &c, 1);
   }
 }

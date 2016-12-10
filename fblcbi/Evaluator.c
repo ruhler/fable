@@ -758,7 +758,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             if (decl->tag == STRUCT_DECL) {
               // Create the struct value now, then add commands to evaluate
               // the arguments to fill in the fields with the proper results.
-              StructDecl* struct_decl = (StructDecl*)decl;
+              TypeDecl* struct_decl = (TypeDecl*)decl;
               size_t fieldc = struct_decl->fieldc;
               StructValue* value = NewStructValue(fieldc);
               *target = (Value*)value;

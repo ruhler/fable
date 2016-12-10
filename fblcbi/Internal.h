@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <unistd.h>
 
 #define GC_DEBUG
 #include <gc/gc.h>
@@ -74,10 +75,10 @@ typedef struct {
 } AppExpr;
 
 typedef enum {
-  STRUCT_DECL,
-  UNION_DECL,
-  FUNC_DECL,
-  PROC_DECL
+  STRUCT_DECL,    // TypeDecl
+  UNION_DECL,     // TypeDecl
+  FUNC_DECL,      // FuncDecl
+  PROC_DECL       // ProcDecl
 } DeclTag;
 
 typedef struct {
@@ -88,7 +89,7 @@ typedef struct {
   DeclTag tag;
   size_t fieldc;
   Type* fieldv;
-} StructDecl;
+} TypeDecl;
 
 typedef struct {
   DeclTag tag;
@@ -121,7 +122,7 @@ typedef struct {
   size_t refcount;
   size_t kind;
   size_t tag;
-  Value field;
+  Value* field;
 } UnionValue;
 
 StructValue* NewStructValue(size_t fieldc);
@@ -130,11 +131,29 @@ Value* Copy(Value* src);
 void Release(Value* value);
 
 // BitStream
-typedef struct BitStream BitStream;
-uint32_t ReadBits(BitStream* stream, size_t num_bits);
+// Bit streams are represented as sequences of ascii digits '0' and '1'.
+// TODO: Support more efficient encodings of bit streams when desired.
+typedef struct {
+  const char* bits;
+} InputBitStream;
 
-// Parser
-Program* ParseProgram(Allocator* alloc, BitStream* bits);
+void OpenBinaryStringInputBitStream(InputBitStream* stream, const char* bits);
+uint32_t ReadBits(InputBitStream* stream, size_t num_bits);
+
+typedef struct {
+  int fd;
+} OutputBitStream;
+
+void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
+void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
+
+// Encoder
+Value* DecodeValue(Allocator* alloc, InputBitStream* bits, Program* prg, Type type);
+void EncodeValue(OutputBitStream* bits, Program* prg, Type type, Value* value);
+Program* DecodeProgram(Allocator* alloc, InputBitStream* bits);
+
+// Evaluator
+Value* Execute(Program* program, FuncDecl* func);
 
 #endif // INTERNAL_H_
 

@@ -21,16 +21,14 @@
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fblcbi FILE MAIN [ARG...] \n"
+      "Usage: fblcbi PROGRAM MAIN [ARG...] \n"
       "Evaluate the function or process with id MAIN in the environment of the\n"
-      "fblc program FILE with the given ARGs.\n"  
-      "Ports should be provided by arranging for file descriptors 3, 4, ...\n"
-      "to be open on which data for port 1, 2, ... can be read or written as\n"
-      "appropriate.\n"
-      "ARG is a binary representation of the argument value, such as b1001001.\n"
+      "fblc program PROGRAM with the given ARGs.\n"  
+      "PROGRAM should be a sequence of digits '0' and '1' representing the program.\n"
+      "MAIN should be the decimal integer id of the function to execute.\n"
+      "ARG should be a sequence of digits '0' and '1' representing an argument value.\n"
       "The number of arguments must match the expected number for the MAIN\n"
-      "function or process.\n"
-      "Example: fblcbi 17 3<in.port 4>out.port 'b1'\n"
+      "function.\n"
   );
 }
 
@@ -63,7 +61,7 @@ int main(int argc, char* argv[])
   }
 
   if (argc <= 1) {
-    fprintf(stderr, "no input file.\n");
+    fprintf(stderr, "no input program.\n");
     return 1;
   }
 
@@ -72,40 +70,39 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  const char* filename = argv[1];
+  const char* program_bits = argv[1];
   size_t entry = atoi(argv[2]);
 
-  BitStream bits;
-  if (!OpenFileBitStream(&bits, filename)) {
-    fprintf(stderr, "failed to open input FILE %s.\n", filename);
-    return 1;
-  }
+  InputBitStream bits;
+  OpenBinaryStringInputBitStream(&bits, program_bits);
 
   Allocator alloc;
   InitAllocator(&alloc);
-  Program* program = ParseProgram(&alloc, &bits);
-  CloseBitStream(&bits);
+  Program* program = DecodeProgram(&alloc, &bits);
 
   if (entry >= program->declc) {
-    fprintf(stderr, "invalid entry id: %i.\n", entry);
+    fprintf(stderr, "invalid entry id: %zi.\n", entry);
     return 1;
   }
 
-  Decl* decl = program->decls[entry];
+  Decl* decl = program->declv[entry];
   if (decl->tag != FUNC_DECL) {
-    fprintf(stderr, "entry %i is not a function.\n", entry);
+    fprintf(stderr, "entry %zi is not a function.\n", entry);
     return 1;
   }
 
   FuncDecl* func_decl = (FuncDecl*)decl;
-  if (func_decl->args->typec != 0) {
+  if (func_decl->argc != 0) {
     fprintf(stderr, "Error: TODO: support arguments to main function.\n");
     return 1;
   }
 
   Value* value = Execute(program, func_decl);
   assert(value != NULL);
-  PrintValue(value);
+
+  OutputBitStream output;
+  OpenBinaryOutputBitStream(&output, STDOUT_FILENO);
+  EncodeValue(&output, program, func_decl->return_type, value);
   Release(value);
 
   FreeAll(&alloc);
