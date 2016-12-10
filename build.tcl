@@ -33,9 +33,11 @@ set ::testfblc ./out/prgms/testfblc
 set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
-  exec mkdir -p out/$name
-  exec gcov {*}[glob out/fblc/*.o out/prgms/fblc.o] > out/$name/fblc.gcov
-  exec mv {*}[glob *.gcov] out/$name
+  exec mkdir -p out/$name/fblc out/$name/fblcbi
+  exec gcov {*}[glob out/fblc/*.o] > out/$name/fblc.gcov
+  exec mv {*}[glob *.gcov] out/$name/fblc
+  exec gcov {*}[glob out/fblcbi/*.o] > out/$name/fblcbi.gcov
+  exec mv {*}[glob *.gcov] out/$name/fblcbi
 }
 
 # Spec tests
@@ -203,7 +205,10 @@ check_coverage overall
 
 # Report how much code coverage we have.
 puts ""
-puts "Coverage: "
+puts "fblc Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"
+puts "fblcbi Coverage: "
+puts "  Spec    : [exec tail -n 1 out/spectest/fblcbi.gcov]"
+puts "  Overall : [exec tail -n 1 out/overall/fblcbi.gcov]"
 
