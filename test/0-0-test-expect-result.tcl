@@ -22,5 +22,5 @@ expect_result Unit() $prg main
 #       ExprList:0-nul()))
 #   ), DeclList:0-nil()))
 set bits 0001100000010000
-expect_result_b 00000000 $bits 10000000
+expect_result_b "" $bits 1
 

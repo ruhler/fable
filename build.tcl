@@ -30,6 +30,7 @@ foreach {x} [glob prgms/*.c] {
 
 set ::fblc ./out/prgms/fblc
 set ::testfblc ./out/prgms/testfblc
+set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
   exec mkdir -p out/$name
@@ -119,8 +120,24 @@ proc expect_malformed { program entry args } {
   }
 }
 
-proc expect_result_b {args} {
-  # TODO: Implement me.
+# Test that running function or process 'entry' in 'program' with the given
+# 'args' and no ports leads to the given 'result'.
+# result, program, and args should be specified as a sequence of
+# ascii digits '0' and '1'.
+# entry should be specified as an integer.
+proc expect_result_b { result program entry args } {
+  set loc [info frame -1]
+  set line [dict get $loc line]
+  set file [dict get $loc file]
+
+  try {
+    set got [exec $::fblcbi $program $entry {*}$args]
+    if {$got != $result} {
+      error "$file:$line: error: Expected '$result', but got '$got'"
+    }
+  } trap CHILDSTATUS {results options} {
+    error "$file:$line: error: Expected '$result', but got:\n$results"
+  }
 }
 
 foreach {x} [lsort [glob test/*.tcl]]  {

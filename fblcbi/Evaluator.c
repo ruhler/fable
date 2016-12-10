@@ -1039,11 +1039,16 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 
         if (cmd->is_pop) {
           Vars* vars = thread->vars;
-          for (size_t i = 0; i < vars->size; ++i) {
-            Release(vars->values[i]);
+          if (vars != NULL) {
+            for (size_t i = 0; i < vars->size; ++i) {
+              Release(vars->values[i]);
+            }
+            FREE(vars);
           }
-          FREE(vars);
-          FREE(thread->ports);
+
+          if (thread->ports != NULL) {
+            FREE(thread->ports);
+          }
         }
 
         thread->vars = cmd->vars;
