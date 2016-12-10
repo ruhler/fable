@@ -1,8 +1,15 @@
 
 exec rm -rf out
-exec mkdir -p out/test out/fblc out/fblcbi out/prgms
-
+exec mkdir -p out/test out/fblc out/fblcbe out/fblcbi out/prgms 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
+
+# Compile fblcbe
+foreach {x} [lsort [glob fblcbe/*.c]] {
+  puts "cc $x"
+  exec gcc {*}$FLAGS -c -o out/fblcbe/[string map {.c .o} [file tail $x]] $x
+}
+puts "ld -o out/fblcbe"
+exec gcc {*}$FLAGS -o out/prgms/fblcbe -lgc {*}[glob out/fblcbe/*.o]
 
 # Compile fblcbi
 foreach {x} [lsort [glob fblcbi/*.c]] {
@@ -30,12 +37,15 @@ foreach {x} [glob prgms/*.c] {
 
 set ::fblc ./out/prgms/fblc
 set ::testfblc ./out/prgms/testfblc
+set ::fblcbe ./out/prgms/fblcbe
 set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
-  exec mkdir -p out/$name/fblc out/$name/fblcbi
+  exec mkdir -p out/$name/fblc out/$name/fblcbi out/$name/fblcbe
   exec gcov {*}[glob out/fblc/*.o] > out/$name/fblc.gcov
   exec mv {*}[glob *.gcov] out/$name/fblc
+  exec gcov {*}[glob out/fblcbe/*.o] > out/$name/fblcbe.gcov
+  exec mv {*}[glob *.gcov] out/$name/fblcbe
   exec gcov {*}[glob out/fblcbi/*.o] > out/$name/fblcbi.gcov
   exec mv {*}[glob *.gcov] out/$name/fblcbi
 }
@@ -124,16 +134,19 @@ proc expect_malformed { program entry args } {
 
 # Test that running function or process 'entry' in 'program' with the given
 # 'args' and no ports leads to the given 'result'.
-# result, program, and args should be specified as a sequence of
-# ascii digits '0' and '1'.
+# result, and args should be specified as a sequence of ascii digits '0' and
+# '1'.
 # entry should be specified as an integer.
+# program should be specified as a text program, which will be converted to a
+# binary encoding using fblcbe.
 proc expect_result_b { result program entry args } {
   set loc [info frame -1]
   set line [dict get $loc line]
   set file [dict get $loc file]
 
   try {
-    set got [exec $::fblcbi $program $entry {*}$args]
+    set bits [exec echo $program | $::fblcbe /dev/stdin]
+    set got [exec $::fblcbi $bits $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
@@ -208,6 +221,9 @@ puts ""
 puts "fblc Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"
+puts "fblcbe Coverage: "
+puts "  Spec    : [exec tail -n 1 out/spectest/fblcbe.gcov]"
+puts "  Overall : [exec tail -n 1 out/overall/fblcbe.gcov]"
 puts "fblcbi Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblcbi.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblcbi.gcov]"

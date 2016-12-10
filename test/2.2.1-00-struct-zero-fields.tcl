@@ -10,4 +10,5 @@ set prg {
 }
 
 expect_result NoFields() $prg main
+expect_result_b "" $prg 1
 

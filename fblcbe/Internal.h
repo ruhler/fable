@@ -391,4 +391,7 @@ typedef struct {
 void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
 void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 
+// Encoder
+void EncodeProgram(OutputBitStream* stream, const Env* env);
+
 #endif  // INTERNAL_H_

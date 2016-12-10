@@ -12,4 +12,5 @@ set prg {
 }
 
 expect_result MultiField(Unit(),Donut()) $prg main
+#expect_result_b "" $prg 3
 

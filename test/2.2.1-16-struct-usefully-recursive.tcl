@@ -11,4 +11,5 @@ set prg {
   };
 }
 expect_result BoolList:nonempty(NonEmptyBoolList(Bool:true(Unit()),BoolList:empty(Unit()))) $prg main
+#expect_result_b "100" $prg 4
 

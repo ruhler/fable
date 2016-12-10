@@ -10,4 +10,5 @@ set prg {
   };
 }
 expect_result Unit() $prg main
+#expect_result_b "" $prg 3
 
