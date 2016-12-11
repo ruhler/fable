@@ -53,14 +53,18 @@ static uint32_t IdForDecl(const Env* env, Name name)
   return -1;
 }
 
-static void EncodeDeclId(OutputBitStream* stream, const Env* env, Name name)
+static void EncodeId(OutputBitStream* stream, size_t id)
 {
-  uint32_t id = IdForDecl(env, name);
   while (id > 1) {
     WriteBits(stream, 2, 2 + (id % 2));
     id /= 2;
   }
   WriteBits(stream, 2, id);
+}
+
+static void EncodeDeclId(OutputBitStream* stream, const Env* env, Name name)
+{
+  EncodeId(stream, IdForDecl(env, name));
 }
 
 static void EncodeType(OutputBitStream* stream, const Env* env, Type* type)
@@ -83,7 +87,7 @@ static void EncodeType(OutputBitStream* stream, const Env* env, Type* type)
   WriteBits(stream, 1, 0);
 }
 
-static void EncodeExpr(OutputBitStream* stream, const Env* env, Expr* expr)
+static void EncodeExpr(OutputBitStream* stream, const Env* env, const Expr* expr)
 {
   switch (expr->tag) {
     case VAR_EXPR:
@@ -105,11 +109,17 @@ static void EncodeExpr(OutputBitStream* stream, const Env* env, Expr* expr)
 
     case ACCESS_EXPR:
       assert(false && "TODO");
-      break;
 
-    case UNION_EXPR:
-      assert(false && "TODO");
+    case UNION_EXPR: {
+      UnionExpr* union_expr = (UnionExpr*)expr;
+      WriteBits(stream, 3, 2);
+      EncodeDeclId(stream, env, union_expr->type.name);
+      Type* type = LookupType(env, union_expr->type.name);
+      assert(type != NULL);
+      EncodeId(stream, TagForField(type, union_expr->field.name));
+      EncodeExpr(stream, env, union_expr->value);
       break;
+    }
 
     case LET_EXPR:
       assert(false && "TODO");
