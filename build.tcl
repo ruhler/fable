@@ -143,16 +143,26 @@ proc expect_result_b { result program entry args } {
   set loc [info frame -1]
   set line [dict get $loc line]
   set file [dict get $loc file]
+  set name "[file tail $file]_$line"
 
   try {
-    set bits [exec echo $program | $::fblcbe /dev/stdin]
+    set fprogram ./out/test/$name.fblc
+    exec echo $program > $fprogram
+    set bits [exec $::fblcbe $fprogram]
     set got [exec $::fblcbi $bits $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
   } trap CHILDSTATUS {results options} {
     error "$file:$line: error: Expected '$result', but got:\n$results"
+  } on error msg {
+    error "$file:$line: error: $msg"
   }
+}
+
+set ::skipped 0
+proc skip { args } {
+  set ::skipped [expr $::skipped + 1]
 }
 
 foreach {x} [lsort [glob test/*.tcl]]  {
@@ -216,8 +226,8 @@ exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMo
 
 check_coverage overall
 
-# Report how much code coverage we have.
-puts ""
+# Report summary results
+puts "Skipped Tests: $::skipped"
 puts "fblc Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"

@@ -10,5 +10,5 @@ set prg {
   };
 }
 expect_result A(Unit(),Unit()) $prg main
-expect_result_b "" $prg 2
+skip expect_result_b "" $prg 2
 

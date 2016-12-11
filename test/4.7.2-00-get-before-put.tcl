@@ -15,5 +15,5 @@ set prg {
 }
 
 expect_result Fruit:pear(Unit()) $prg main
-expect_result_b "10" $prg 2
+skip expect_result_b "10" $prg 2
 
