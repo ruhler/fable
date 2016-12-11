@@ -25,6 +25,17 @@ static Type DecodeType(Allocator* alloc, InputBitStream* bits)
   return DecodeId(alloc, bits);
 }
 
+static Type* DecodeNonEmptyTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
+{
+  Vector vector;
+  VectorInit(alloc, &vector, sizeof(Type));
+  do {
+    Type* ptr = VectorAppend(&vector);
+    *ptr = DecodeType(alloc, bits);
+  } while (ReadBits(bits, 1));
+  return VectorExtract(&vector, count);
+}
+
 static Type* DecodeTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
 {
   Vector vector;
@@ -44,6 +55,15 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
       expr->tag = APP_EXPR;
       expr->func = DecodeDeclId(alloc, bits);
       expr->argv = DecodeExprs(alloc, bits, &(expr->argc));
+      return (Expr*)expr;
+    }
+
+    case UNION_EXPR: {
+      UnionExpr* expr = Alloc(alloc, sizeof(UnionExpr));
+      expr->tag = UNION_EXPR;
+      expr->type = DecodeDeclId(alloc, bits);
+      expr->field = DecodeId(alloc, bits);
+      expr->body = DecodeExpr(alloc, bits);
       return (Expr*)expr;
     }
 
@@ -77,7 +97,7 @@ static Decl* DecodeDecl(Allocator* alloc, InputBitStream* bits)
     case 1: {
       TypeDecl* decl = Alloc(alloc, sizeof(TypeDecl));
       decl->tag = UNION_DECL;
-      decl->fieldv = DecodeTypes(alloc, bits, &(decl->fieldc));
+      decl->fieldv = DecodeNonEmptyTypes(alloc, bits, &(decl->fieldc));
       return (Decl*)decl;
     }
 
@@ -159,6 +179,7 @@ void EncodeValue(OutputBitStream* bits, Program* prg, Type type, Value* value)
       TypeDecl* struct_decl = (TypeDecl*)decl;
       StructValue* struct_value = (StructValue*)value;
       size_t fieldc = struct_decl->fieldc;
+      assert(value->kind == fieldc);
       for (size_t i = 0; i < fieldc; ++i) {
         EncodeValue(bits, prg, struct_decl->fieldv[i], struct_value->fields[i]);
       }
@@ -166,6 +187,7 @@ void EncodeValue(OutputBitStream* bits, Program* prg, Type type, Value* value)
     }
 
     case UNION_DECL: {
+      assert(value->kind == UNION_KIND);
       TypeDecl* union_decl = (TypeDecl*)decl;
       UnionValue* union_value = (UnionValue*)value;
       WriteBits(bits, SizeOfTag(union_decl->fieldc), union_value->tag);

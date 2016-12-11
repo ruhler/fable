@@ -74,6 +74,13 @@ typedef struct {
   Expr** argv;
 } AppExpr;
 
+typedef struct {
+  ExprTag tag;
+  DeclId type;
+  Id field;
+  Expr* body;
+} UnionExpr;
+
 typedef enum {
   STRUCT_DECL,    // TypeDecl
   UNION_DECL,     // TypeDecl

@@ -808,19 +808,15 @@ static void Run(Program* program, Threads* threads, Thread* thread)
           }
 
           case UNION_EXPR: {
-            assert(false && "TODO");
-//            // Create the union value now, then add a command to evaluate the
-//            // argument of the union constructor and set the field of the
-//            // union value.
-//            UnionExpr* union_expr = (UnionExpr*)expr;
-//            Type* type = LookupType(env, union_expr->type.name);
-//            assert(type != NULL);
-//            UnionValue* value = NewUnionValue(type);
-//            value->tag = TagForField(type, union_expr->field.name);
-//            assert(value->tag >= 0 && "no such field");
-//            *target = (Value*)value;
-//            next = MkExprCmd(union_expr->value, &(value->field), next);
-//            break;
+            // Create the union value now, then add a command to evaluate the
+            // argument of the union constructor and set the field of the
+            // union value.
+            UnionExpr* union_expr = (UnionExpr*)expr;
+            UnionValue* value = NewUnionValue();
+            value->tag = union_expr->field;
+            *target = (Value*)value;
+            next = MkExprCmd(union_expr->body, &(value->field), next);
+            break;
           }
 
           case LET_EXPR: {
