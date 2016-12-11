@@ -638,7 +638,8 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
 Env* ParseProgram(Allocator* alloc, TokenStream* toks)
 {
   const char* keywords = "'struct', 'union', 'func', or 'proc'";
-  Env* env = NewEnv(alloc);
+  Vector decls;
+  VectorInit(alloc, &decls, sizeof(Decl*));
   while (!IsEOFToken(toks)) {
     // All declarations start with the form: <keyword> <name> (...
     LocName keyword;
@@ -662,10 +663,10 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
 
     if (is_struct || is_union) {
       // Struct and union declarations end with: ... <fields>);
-      Type* type = Alloc(alloc, sizeof(Type));
+      TypeDecl* type = Alloc(alloc, sizeof(TypeDecl));
+      type->tag = is_struct ? STRUCT_DECL : UNION_DECL;
       type->name.name = name.name;
       type->name.loc = name.loc;
-      type->kind = is_struct ? KIND_STRUCT : KIND_UNION;
       type->fieldc = ParseFields(alloc, toks, &(type->fieldv));
       if (type->fieldc < 0) {
         return NULL;
@@ -674,12 +675,11 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       if (!GetToken(toks, ')')) {
         return NULL;
       }
-      if (!AddType(alloc, env, type)) {
-        return NULL;
-      }
+      *((Decl**)VectorAppend(&decls)) = (Decl*)type;
     } else if (is_func) {
       // Function declarations end with: ... <fields>; <type>) <expr>;
-      Func* func = Alloc(alloc, sizeof(Func));
+      FuncDecl* func = Alloc(alloc, sizeof(FuncDecl));
+      func->tag = FUNC_DECL;
       func->name.name = name.name;
       func->name.loc = name.loc;
       func->argc = ParseFields(alloc, toks, &(func->argv));
@@ -703,12 +703,11 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       if (func->body == NULL) {
         return NULL;
       }
-      if (!AddFunc(alloc, env, func)) {
-        return NULL;
-      }
+      *((Decl**)VectorAppend(&decls)) = (Decl*)func;
     } else if (is_proc) {
       // Proc declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
-      Proc* proc = Alloc(alloc, sizeof(Proc));
+      ProcDecl* proc = Alloc(alloc, sizeof(ProcDecl));
+      proc->tag = PROC_DECL;
       proc->name.name = name.name;
       proc->name.loc = name.loc;
       proc->portc = ParsePorts(alloc, toks, &(proc->portv));
@@ -741,9 +740,7 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       if (proc->body == NULL) {
         return NULL;
       }
-      if (!AddProc(alloc, env, proc)) {
-        return NULL;
-      }
+      *((Decl**)VectorAppend(&decls)) = (Decl*)proc;
     } else {
       ReportError("Expected %s, but got '%s'.\n",
           keyword.loc, keywords, keyword.name);
@@ -754,110 +751,7 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       return NULL;
     }
   }
-  return env;
-}
-
-// ParseValue --
-//
-//   Parse an  value from the token stream.
-//
-// Inputs:
-//   env - The program environment.
-//   type - The type of value to parse.
-//   toks - The token stream to parse the program from.
-//
-// Result:
-//   The parsed value, or NULL on error.
-//
-// Side effects:
-//   The token stream is advanced to the end of the value. In the case of an
-//   error, an error message is printed to standard error.
-
-Value* ParseValue(Env* env, Type* type, TokenStream* toks)
-{
-  Allocator alloc;
-  InitAllocator(&alloc);
-
-  LocName name;
-  if (!GetNameToken(&alloc, toks, "type name", &name)) {
-    FreeAll(&alloc);
-    return NULL;
-  }
-
-  if (!NamesEqual(name.name, type->name.name)) {
-    ReportError("Expected %s, but got %s.\n", name.loc, type->name, name);
-    FreeAll(&alloc);
-    return NULL;
-  }
-  FreeAll(&alloc);
-
-  if (type->kind == KIND_STRUCT) {
-    if (!GetToken(toks, '(')) {
-      return NULL;
-    }
-
-    // If there is an error constructing the struct value, we need to release
-    // the resources allocated for it. Release requires we don't leave any
-    // of the fields of the struct value uninitialized. For that reason,
-    // assign something to all fields regardless of error, keeping track of
-    // whether we encountered an error as we go.
-    StructValue* value = NewStructValue(type);
-    bool err = false;
-    for (int i = 0; i < type->fieldc; i++) {
-      value->fieldv[i] = NULL;
-      if (!err && i > 0 && !GetToken(toks, ',')) {
-        err = true;
-      }
-
-      if (!err) {
-        Type* field_type = LookupType(env, type->fieldv[i].type.name);
-        assert(field_type != NULL);
-        value->fieldv[i] = ParseValue(env, field_type, toks);
-        err = err || value->fieldv[i] == NULL;
-      }
-    }
-
-    if (err || !GetToken(toks, ')')) {
-      Release((Value*)value);
-      return NULL;
-    }
-    return (Value*)value;
-  } else {
-    assert(type->kind == KIND_UNION);
-    if (!GetToken(toks, ':')) {
-      return NULL;
-    }
-
-    InitAllocator(&alloc);
-    if (!GetNameToken(&alloc, toks, "field name", &name)) {
-      FreeAll(&alloc);
-      return NULL;
-    }
-
-    int tag = TagForField(type, name.name);
-    if (tag < 0) {
-      ReportError("Invalid field %s for type %s.\n",
-          name.loc, name.name, type->name);
-      FreeAll(&alloc);
-      return NULL;
-    }
-    FreeAll(&alloc);
-
-    if (!GetToken(toks, '(')) {
-      return NULL;
-    }
-    Type* field_type = LookupType(env, type->fieldv[tag].type.name);
-    assert(field_type != NULL);
-    Value* field = ParseValue(env, field_type, toks);
-    if (field == NULL) {
-      return NULL;
-    }
-    if (!GetToken(toks, ')')) {
-      return NULL;
-    }
-    UnionValue* value = NewUnionValue(type);
-    value->tag = tag;
-    value->field = field;
-    return (Value*)value;
-  }
+  int declc;
+  Decl** declv = VectorExtract(&decls, &declc);
+  return NewEnv(alloc, declc, declv);
 }

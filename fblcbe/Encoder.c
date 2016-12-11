@@ -22,33 +22,13 @@
 static uint32_t IdForDecl(Env* env, Name name)
 {
   // TODO: Linear search through the entire environment for every lookup seems
-  // excessively slow. Consider using a more efficient data structure, such as
-  // a hash table.
+  // excessively slow. Consider using a more efficient data structure.
 
-  // Note: The search order here corresponds to the order the declarations are
-  // generated in the EncodeProgram function.
-  size_t i = 0;
-  for (TypeEnv* types = env->types; types != NULL; types = types->next) {
-    if (NamesEqual(name, types->decl->name.name)) {
+  for (size_t i = 0; i < env->declc; ++i) {
+    if (NamesEqual(name, env->declv[i]->name.name)) {
       return i;
     }
-    ++i;
   }
-
-  for (FuncEnv* funcs = env->funcs; funcs != NULL; funcs = funcs->next) {
-    if (NamesEqual(name, funcs->decl->name.name)) {
-      return i;
-    }
-    ++i;
-  }
-
-  for (ProcEnv* procs = env->procs; procs != NULL; procs = procs->next) {
-    if (NamesEqual(name, procs->decl->name.name)) {
-      return i;
-    }
-    ++i;
-  }
-
   assert(false && "Name not found in environment.");
   return -1;
 }
@@ -67,13 +47,13 @@ static void EncodeDeclId(OutputBitStream* stream, Env* env, Name name)
   EncodeId(stream, IdForDecl(env, name));
 }
 
-static void EncodeType(OutputBitStream* stream, Env* env, Type* type)
+static void EncodeType(OutputBitStream* stream, Env* env, TypeDecl* type)
 {
-  bool cons = type->kind == KIND_STRUCT;
-  if (type->kind == KIND_STRUCT) {
+  bool cons = type->tag == STRUCT_DECL;
+  if (type->tag == STRUCT_DECL) {
     WriteBits(stream, 2, 0);
   } else {
-    assert(type->kind == KIND_UNION);
+    assert(type->tag == UNION_DECL);
     WriteBits(stream, 2, 1);
   }
 
@@ -112,7 +92,7 @@ static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
       WriteBits(stream, 3, 3);
       EncodeExpr(stream, env, access_expr->object);
       assert(false && "TODO: convert field to id for access expr");
-      Type* type = NULL;
+      TypeDecl* type = NULL;
       EncodeId(stream, TagForField(type, access_expr->field.name));
       break;
     }
@@ -121,7 +101,7 @@ static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
       UnionExpr* union_expr = (UnionExpr*)expr;
       WriteBits(stream, 3, 2);
       EncodeDeclId(stream, env, union_expr->type.name);
-      Type* type = LookupType(env, union_expr->type.name);
+      TypeDecl* type = LookupType(env, union_expr->type.name);
       assert(type != NULL);
       EncodeId(stream, TagForField(type, union_expr->field.name));
       EncodeExpr(stream, env, union_expr->value);
@@ -142,7 +122,7 @@ static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
   }
 }
 
-static void EncodeFunc(OutputBitStream* stream, Env* env, Func* func)
+static void EncodeFunc(OutputBitStream* stream, Env* env, FuncDecl* func)
 {
   WriteBits(stream, 2, 2);
   for (size_t i = 0; i < func->argc; ++i) {
@@ -154,7 +134,7 @@ static void EncodeFunc(OutputBitStream* stream, Env* env, Func* func)
   EncodeExpr(stream, env, func->body);
 }
 
-static void EncodeProc(OutputBitStream* stream, Env* env, Proc* proc)
+static void EncodeProc(OutputBitStream* stream, Env* env, ProcDecl* proc)
 {
   assert(false && "TODO");
 }
@@ -175,25 +155,29 @@ static void EncodeProc(OutputBitStream* stream, Env* env, Proc* proc)
 
 void EncodeProgram(OutputBitStream* stream, Env* env)
 {
-  bool initial = true;
-  for (TypeEnv* types = env->types; types != NULL; types = types->next) {
-    if (!initial) {
+  for (size_t i = 0; i < env->declc; ++i) {
+    if (i > 0) {
       WriteBits(stream, 1, 1);
     }
-    initial = false;
-    EncodeType(stream, env, types->decl);
-  }
+    Decl* decl = env->declv[i];
+    switch (decl->tag) {
+      case STRUCT_DECL:
+      case UNION_DECL:
+        EncodeType(stream, env, (TypeDecl*)decl);
+        break;
 
-  for (FuncEnv* funcs = env->funcs; funcs != NULL; funcs = funcs->next) {
-    assert(!initial);
-    WriteBits(stream, 1, 1);
-    EncodeFunc(stream, env, funcs->decl);
-  }
+      case FUNC_DECL:
+        EncodeFunc(stream, env, (FuncDecl*)decl);
+        break;
 
-  for (ProcEnv* procs = env->procs; procs != NULL; procs = procs->next) {
-    assert(!initial);
-    WriteBits(stream, 1, 1);
-    EncodeProc(stream, env, procs->decl);
+      case PROC_DECL:
+        EncodeProc(stream, env, (ProcDecl*)decl);
+        break;
+
+      default:
+        assert(false && "Invalid Decl type");
+        break;
+    }
   }
   WriteBits(stream, 1, 0);
 }

@@ -4,58 +4,6 @@
 
 #include "Internal.h"
 
-
-// NewStructValue --
-//
-//  Allocate a new struct value of the given type.
-//
-// Inputs:
-//   type - The type of the struct value to allocate.
-//
-// Results:
-//   A newly allocated struct value of the given type. The fields of the
-//   struct are left uninitialized.
-//
-// Side effects:
-//   Allocates a new struct value. Use Copy to make a (shared) copy of the
-//   struct value, and Release to release the resources associated with
-//   the value.
-
-StructValue* NewStructValue(Type* type)
-{
-  assert(type->kind == KIND_STRUCT);
-  StructValue* value = MALLOC(sizeof(StructValue));
-  value->refcount = 1;
-  value->fieldv = MALLOC(type->fieldc * sizeof(Value*));
-  value->type = type;
-  return value;
-}
-
-// NewUnionValue --
-//
-//  Allocate a new union value of the given type.
-//
-// Inputs:
-//   type - The type of the union value to allocate.
-//
-// Results:
-//   A newly allocated union value of the given type. The field and tag of the
-//   union are left uninitialized.
-//
-// Side effects:
-//   Allocates a new union value. Use Copy to make a (shared) copy of the
-//   union value, and Release to release the resources associated with
-//   the value.
-
-UnionValue* NewUnionValue(Type* type)
-{
-  assert(type->kind == KIND_UNION);
-  UnionValue* value = MALLOC(sizeof(UnionValue));
-  value->refcount = 1;
-  value->type = type;
-  return value;
-}
-
 // Copy --
 //
 //   Make a (likely shared) copy of the given value.
@@ -95,14 +43,14 @@ void Release(Value* value)
   if (value != NULL) {
     value->refcount--;
     if (value->refcount == 0) {
-      if (value->type->kind == KIND_STRUCT) {
+      if (value->type->tag == STRUCT_DECL) {
         StructValue* struct_value = (StructValue*)value;
         for (int i = 0; i < value->type->fieldc; i++) {
           Release(struct_value->fieldv[i]);
         }
         FREE(struct_value->fieldv);
       } else {
-        assert(value->type->kind == KIND_UNION);
+        assert(value->type->tag == UNION_DECL);
         UnionValue* union_value = (UnionValue*)value;
         Release(union_value->field);
       }
@@ -127,8 +75,8 @@ void Release(Value* value)
 
 void PrintValue(FILE* stream, Value* value)
 {
-  Type* type = value->type;
-  if (type->kind == KIND_STRUCT) {
+  TypeDecl* type = value->type;
+  if (type->tag == STRUCT_DECL) {
     StructValue* struct_value = (StructValue*)value;
     fprintf(stream, "%s(", type->name.name);
     for (int i = 0; i < type->fieldc; i++) {
@@ -138,7 +86,7 @@ void PrintValue(FILE* stream, Value* value)
       PrintValue(stream, struct_value->fieldv[i]);
     }
     fprintf(stream, ")");
-  } else if (type->kind == KIND_UNION) {
+  } else if (type->tag == UNION_DECL) {
     UnionValue* union_value = (UnionValue*)value;
     fprintf(stream, "%s:%s(",
         type->name.name, type->fieldv[union_value->tag].name.name);
@@ -164,7 +112,7 @@ void PrintValue(FILE* stream, Value* value)
 // Side effects:
 //   None.
 
-int TagForField(Type* type, Name field)
+int TagForField(TypeDecl* type, Name field)
 {
   for (int i = 0; i < type->fieldc; i++) {
     if (NamesEqual(field, type->fieldv[i].name.name)) {

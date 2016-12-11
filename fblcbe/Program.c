@@ -5,29 +5,6 @@
 
 #include "Internal.h"
 
-static bool NameIsDeclared(Env* env, Name name);
-
-
-// NameIsDeclared --
-//
-//   Test whether a particular name is declared in an environment.
-//
-// Inputs:
-//   env - The environment to look for the name in.
-//   name - The name to look for.
-//
-// Result:
-//   True if the name is declared in the environment, false otherwise.
-//
-// Side effects:
-//   None.
-
-static bool NameIsDeclared(Env* env, Name name) {
-  return LookupType(env, name) != NULL
-    || LookupFunc(env, name) != NULL
-    || LookupProc(env, name) != NULL;
-}
-
 
 // NamesEqual --
 //
@@ -76,24 +53,25 @@ void ReportError(const char* format, Loc* loc, ...)
 
 // NewEnv --
 //
-//   Create a new, empty,  environment.
+//   Create a new environment with the given declarations.
 //
 // Inputs:
 //   alloc - The allocator to use to allocate the environment.
+//   declc - The number of declarations of the environment.
+//   declv - The declarations of the environment.
 //
 // Result:
-//   A new, empty,  environment.
+//   A new environment with the given declarations.
 //
 // Side effects:
 //   Allocations are performed using the allocator as necessary to allocate
 //   the environment.
 
-Env* NewEnv(Allocator* alloc)
+Env* NewEnv(Allocator* alloc, int declc, Decl** declv)
 {
   Env* env = Alloc(alloc, sizeof(Env));
-  env->types = NULL;
-  env->funcs = NULL;
-  env->procs = NULL;
+  env->declc = declc;
+  env->declv = declv;
   return env;
 }
 
@@ -113,11 +91,13 @@ Env* NewEnv(Allocator* alloc)
 // Side effects:
 //   None.
 
-Type* LookupType(Env* env, Name name)
+TypeDecl* LookupType(Env* env, Name name)
 {
-  for (TypeEnv* tenv = env->types; tenv != NULL; tenv = tenv->next) {
-    if (NamesEqual(tenv->decl->name.name, name)) {
-      return tenv->decl;
+  for (size_t i = 0; i < env->declc; ++i) {
+    Decl* decl = env->declv[i];
+    if ((decl->tag == STRUCT_DECL || decl->tag == UNION_DECL)
+        && NamesEqual(decl->name.name, name)) {
+      return (TypeDecl*)decl;
     }
   }
   return NULL;
@@ -138,11 +118,12 @@ Type* LookupType(Env* env, Name name)
 //
 // Side effects:
 //   None.
-Func* LookupFunc(Env* env, Name name)
+FuncDecl* LookupFunc(Env* env, Name name)
 {
-  for (FuncEnv* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
-    if (NamesEqual(fenv->decl->name.name, name)) {
-      return fenv->decl;
+  for (size_t i = 0; i < env->declc; ++i) {
+    Decl* decl = env->declv[i];
+    if (decl->tag == FUNC_DECL && NamesEqual(decl->name.name, name)) {
+      return (FuncDecl*)decl;
     }
   }
   return NULL;
@@ -164,106 +145,13 @@ Func* LookupFunc(Env* env, Name name)
 // Side effects:
 //   None.
 
-Proc* LookupProc(Env* env, Name name)
+ProcDecl* LookupProc(Env* env, Name name)
 {
-  for (ProcEnv* penv = env->procs; penv != NULL; penv = penv->next) {
-    if (NamesEqual(penv->decl->name.name, name)) {
-      return penv->decl;
+  for (size_t i = 0; i < env->declc; ++i) {
+    Decl* decl = env->declv[i];
+    if (decl->tag == PROC_DECL && NamesEqual(decl->name.name, name)) {
+      return (ProcDecl*)decl;
     }
   }
   return NULL;
-}
-
-// AddType --
-//  
-//   Add a type declaration to the given environment.
-//
-// Inputs:
-//   alloc - The allocator to use for allocations.
-//   env - The environment to add the type declaration to.
-//   type - The type declaration to add.
-//
-// Result:
-//   True if the type was successfully added, false otherwise.
-//
-// Side effects:
-//   The type declaration is added to the environment. If the type declaration
-//   could not be added to the environment, an error message is printed to
-//   standard error explaining the problem.
-
-bool AddType(Allocator* alloc, Env* env, Type* type)
-{
-  if (NameIsDeclared(env, type->name.name)) {
-    ReportError("Multiple declarations for %s.\n",
-       type->name.loc, type->name.name);
-    return false;
-  }
-
-  TypeEnv* types = Alloc(alloc, sizeof(TypeEnv));
-  types->decl = type;
-  types->next = env->types;
-  env->types = types;
-  return true;
-}
-
-// AddFunc --
-//  
-//   Add a function declaration to the given environment.
-//
-// Inputs:
-//   alloc - The allocator to use for allocations.
-//   env - The environment to add the function declaration to.
-//   func - The function declaration to add.
-//
-// Result:
-//   True if the function was successfully added, false otherwise.
-//
-// Side effects:
-//   The function declaration is added to the environment. If the function
-//   could not be added to the environment, an error message is printed to
-//   standard error describing the problem.
-
-bool AddFunc(Allocator* alloc, Env* env, Func* func)
-{
-  if (NameIsDeclared(env, func->name.name)) {
-    ReportError("Multiple declarations for %s.\n",
-       func->name.loc, func->name.name);
-    return false;
-  }
-  FuncEnv* funcs = Alloc(alloc, sizeof(FuncEnv));
-  funcs->decl = func;
-  funcs->next = env->funcs;
-  env->funcs = funcs;
-  return true;
-}
-
-// AddProc --
-//
-//   Add a process declaration to the given environment.
-//
-// Inputs:
-//   alloc - The allocator to use for allocations.
-//   env - The environment to add the process declaration to.
-//   proc - The process declaration to add.
-//
-// Result:
-//   True if the process was successfully added, false otherwise.
-//
-// Side effects:
-//   The process declaration is added to the environment. If the process
-//   could not be added to the environment, an error message is printed to
-//   standard error describing the problem.
-
-bool AddProc(Allocator* alloc, Env* env, Proc* proc)
-{
-  if (NameIsDeclared(env, proc->name.name)) {
-    ReportError("Multiple declarations for %s.\n",
-       proc->name.loc, proc->name.name);
-    return false;
-  }
-  ProcEnv* procs = Alloc(alloc, sizeof(ProcEnv));
-  procs->decl = proc;
-  procs->next = env->procs;
-  env->procs = procs;
-  return true;
 }

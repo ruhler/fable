@@ -144,27 +144,33 @@ typedef struct {
   Expr** argv;
 } CondExpr;
 
-typedef enum { KIND_UNION, KIND_STRUCT } Kind;
-
 typedef struct {
   LocName type;
   LocName name;
 } Field;
 
-typedef struct {
-  LocName name;
-  Kind kind;
-  int fieldc;
-  Field* fieldv;
-} Type;
+typedef enum { STRUCT_DECL, UNION_DECL, FUNC_DECL, PROC_DECL } DeclTag;
 
 typedef struct {
+  DeclTag tag;
+  LocName name;
+} Decl;
+
+typedef struct {
+  DeclTag tag;
+  LocName name;
+  int fieldc;
+  Field* fieldv;
+} TypeDecl;
+
+typedef struct {
+  DeclTag tag;
   LocName name;
   LocName return_type;
   Expr* body;
   int argc;
   Field* argv;
-} Func;
+} FuncDecl;
 
 typedef enum { POLARITY_PUT, POLARITY_GET } Polarity;
 
@@ -261,6 +267,7 @@ typedef struct {
 } CondActn;
 
 typedef struct {
+  DeclTag tag;
   LocName name;
   LocName return_type;
   Actn* body;
@@ -268,39 +275,19 @@ typedef struct {
   Port* portv;              // Array of portc ports.
   int argc;
   Field* argv;              // Array of argv fields.
-} Proc;
+} ProcDecl;
 
 // An environment contains all the type, function, and process declarations
-// for a program. All names used for types, functions, and processes must be
-// unique. This is enforced during the construction of the environment.
-typedef struct TypeEnv {
-  Type* decl;
-  struct TypeEnv* next;
-} TypeEnv;
-
-typedef struct FuncEnv {
-  Func* decl;
-  struct FuncEnv* next;
-} FuncEnv;
-
-typedef struct ProcEnv {
-  Proc* decl;
-  struct ProcEnv* next;
-} ProcEnv;
-
-typedef struct Env {
-  TypeEnv* types;
-  FuncEnv* funcs;
-  ProcEnv* procs;
+// for a program.
+typedef struct {
+  int declc;
+  Decl** declv;
 } Env;
 
-Env* NewEnv(Allocator* alloc);
-Type* LookupType(Env* env, Name name);
-Func* LookupFunc(Env* env, Name name);
-Proc* LookupProc(Env* env, Name name);
-bool AddType(Allocator* alloc, Env* env, Type* type);
-bool AddFunc(Allocator* alloc, Env* env, Func* func);
-bool AddProc(Allocator* alloc, Env* env, Proc* proc);
+Env* NewEnv(Allocator* alloc, int declc, Decl** declv);
+TypeDecl* LookupType(Env* env, Name name);
+FuncDecl* LookupFunc(Env* env, Name name);
+ProcDecl* LookupProc(Env* env, Name name);
 
 // Value
 
@@ -309,7 +296,7 @@ bool AddProc(Allocator* alloc, Env* env, Proc* proc);
 
 typedef struct {
   int refcount;
-  Type* type;
+  TypeDecl* type;
 } Value;
 
 // For struct values 'fieldv' contains the field data in the order the fields
@@ -317,7 +304,7 @@ typedef struct {
 
 typedef struct {
   int refcount;
-  Type* type;
+  TypeDecl* type;
   Value** fieldv;
 } StructValue;
 
@@ -326,17 +313,15 @@ typedef struct {
 
 typedef struct {
   int refcount;
-  Type* type;
+  TypeDecl* type;
   int tag;
   Value* field;
 } UnionValue;
 
-StructValue* NewStructValue(Type* type);
-UnionValue* NewUnionValue(Type* type);
 Value* Copy(Value* src);
 void Release(Value* value);
 void PrintValue(FILE* fout, Value* value);
-int TagForField(Type* type, Name field);
+int TagForField(TypeDecl* type, Name field);
 
 // Tokenizer
 // A stream of tokens is represented using the TokenStream data structure.
@@ -376,7 +361,6 @@ void UnexpectedToken(TokenStream* toks, const char* expected);
 
 // Parser
 Env* ParseProgram(Allocator* alloc, TokenStream* toks);
-Value* ParseValue(Env* env, Type* type, TokenStream* toks);
 
 // Checker
 bool CheckProgram(Env* env);

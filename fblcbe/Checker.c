@@ -30,9 +30,9 @@ static Name CheckActn(Env* env, Vars* vars, Vars* gets,
 static bool CheckFields(
     Env* env, int fieldc, Field* fieldv, const char* kind);
 static bool CheckPorts(Env* env, int portc, Port* portv);
-static bool CheckType(Env* env, Type* type);
-static bool CheckFunc(Env* env, Func* func);
-static bool CheckProc(Env* env, Proc* proc);
+static bool CheckType(Env* env, TypeDecl* type);
+static bool CheckFunc(Env* env, FuncDecl* func);
+static bool CheckProc(Env* env, ProcDecl* proc);
 
 // AddVar --
 //
@@ -164,9 +164,9 @@ static Name CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
-      Type* type = LookupType(env, app_expr->func.name);
+      TypeDecl* type = LookupType(env, app_expr->func.name);
       if (type != NULL) {
-        if (type->kind != KIND_STRUCT) {
+        if (type->tag != STRUCT_DECL) {
           ReportError("Cannot do application on non-struct type %s.\n",
               app_expr->func.loc, app_expr->func.name);
           return NULL;
@@ -178,7 +178,7 @@ static Name CheckExpr(Env* env, Vars* vars, Expr* expr)
         return type->name.name;
       }
 
-      Func* func = LookupFunc(env, app_expr->func.name);
+      FuncDecl* func = LookupFunc(env, app_expr->func.name);
       if (func != NULL) {
         if (!CheckArgs(env, vars, func->argc, func->argv,
               app_expr->argc, app_expr->argv, &(app_expr->func))) {
@@ -199,7 +199,7 @@ static Name CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      Type* type = LookupType(env, typename);
+      TypeDecl* type = LookupType(env, typename);
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
       for (int i = 0; i < type->fieldc; i++) {
         if (NamesEqual(type->fieldv[i].name.name,
@@ -214,14 +214,14 @@ static Name CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
-      Type* type = LookupType(env, union_expr->type.name);
+      TypeDecl* type = LookupType(env, union_expr->type.name);
       if (type == NULL) {
         ReportError("Type %s not found.\n",
             union_expr->type.loc, union_expr->type.name);
         return NULL;
       }
 
-      if (type->kind != KIND_UNION) {
+      if (type->tag != UNION_DECL) {
         ReportError("Type %s is not a union type.\n",
             union_expr->loc, union_expr->type.name);
         return NULL;
@@ -286,10 +286,10 @@ static Name CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      Type* type = LookupType(env, typename);
+      TypeDecl* type = LookupType(env, typename);
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
 
-      if (type->kind != KIND_UNION) {
+      if (type->tag != UNION_DECL) {
         ReportError("The condition has type %s, "
             "which is not a union type.\n", cond_expr->loc, typename);
         return NULL;
@@ -389,7 +389,7 @@ static Name CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* actn)
 
     case CALL_ACTN: {
       CallActn* call_actn = (CallActn*)actn;
-      Proc* proc = LookupProc(env, call_actn->proc.name);
+      ProcDecl* proc = LookupProc(env, call_actn->proc.name);
       if (proc == NULL) {
         ReportError("'%s' is not a proc.\n",
             call_actn->loc, call_actn->proc.name);
@@ -466,10 +466,10 @@ static Name CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* actn)
         return NULL;
       }
 
-      Type* type = LookupType(env, typename);
+      TypeDecl* type = LookupType(env, typename);
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
 
-      if (type->kind != KIND_UNION) {
+      if (type->tag != UNION_DECL) {
         ReportError("The condition has type %s, "
             "which is not a union type.\n", cond_actn->loc, typename);
         return NULL;
@@ -609,9 +609,9 @@ static bool CheckPorts(Env* env, int portc, Port* portv)
 //   If the type declaration is not well formed, prints a message to standard
 //   error describing the problem.
 
-static bool CheckType(Env* env, Type* type)
+static bool CheckType(Env* env, TypeDecl* type)
 {
-  if (type->kind == KIND_UNION && type->fieldc == 0) {
+  if (type->tag == UNION_DECL && type->fieldc == 0) {
     ReportError("A union type must have at least one field.\n",
         type->name.loc);
     return false;
@@ -635,7 +635,7 @@ static bool CheckType(Env* env, Type* type)
 //   If the function declaration is not well formed, prints a message to
 //   standard error describing the problem.
 
-static bool CheckFunc(Env* env, Func* func)
+static bool CheckFunc(Env* env, FuncDecl* func)
 {
   // Check the arguments.
   if (!CheckFields(env, func->argc, func->argv, "arg")) {
@@ -684,7 +684,7 @@ static bool CheckFunc(Env* env, Func* func)
 //   If the process declaration is not well formed, prints a message to
 //   standard error describing the problem.
 
-static bool CheckProc(Env* env, Proc* proc)
+static bool CheckProc(Env* env, ProcDecl* proc)
 {
   // Check the ports.
   if (!CheckPorts(env, proc->portc, proc->portv)) {
@@ -760,24 +760,41 @@ static bool CheckProc(Env* env, Proc* proc)
 
 bool CheckProgram(Env* env)
 {
-  // Verify all type declarations are good.
-  for (TypeEnv* types = env->types; types != NULL; types = types->next) {
-    if (!CheckType(env, types->decl)) {
-      return false;
-    }
-  }
+  for (size_t i = 0; i < env->declc; ++i) {
+    Decl* decl = env->declv[i];
+    switch (decl->tag) {
+      case STRUCT_DECL:
+      case UNION_DECL:
+        if (!CheckType(env, (TypeDecl*)decl)) {
+          return false;
+        }
+        break;
 
-  // Verify all function declarations are good.
-  for (FuncEnv* funcs = env->funcs; funcs != NULL; funcs = funcs->next) {
-    if (!CheckFunc(env, funcs->decl)) {
-      return false;
-    }
-  }
+      case FUNC_DECL:
+        if (!CheckFunc(env, (FuncDecl*)decl)) {
+          return false;
+        }
+        break;
 
-  // Verify all process declarations are good.
-  for (ProcEnv* procs = env->procs; procs != NULL; procs = procs->next) {
-    if (!CheckProc(env, procs->decl)) {
-      return false;
+      case PROC_DECL:
+        if (!CheckProc(env, (ProcDecl*)decl)) {
+          return false;
+        }
+        break;
+
+      default:
+        assert(false && "Invalid decl type");
+        return false;
+    }
+
+    // Verify the declaration does not have the same name as one we have
+    // already seen.
+    for (size_t j = 0; j < i; ++j) {
+      if (NamesEqual(env->declv[i]->name.name, env->declv[j]->name.name)) {
+        ReportError("Multiple declarations for %s.\n",
+            env->declv[i]->name.loc, env->declv[i]->name.name);
+        return false;
+      }
     }
   }
   return true;
