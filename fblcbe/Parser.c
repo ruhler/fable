@@ -119,13 +119,13 @@ static int ParsePorts(Allocator* alloc, TokenStream* toks,
       if (!GetToken(toks, '~')) {
         return -1;
       }
-      port->polarity = FBLC_POLARITY_GET;
+      port->polarity = POLARITY_GET;
     } else if (IsToken(toks, '~')) {
       GetToken(toks, '~');
       if (!GetToken(toks, '>')) {
         return -1;
       }
-      port->polarity = FBLC_POLARITY_PUT;
+      port->polarity = POLARITY_PUT;
     } else {
       UnexpectedToken(toks, "'<~' or '~>'");
       return -1;
@@ -237,7 +237,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
         return NULL;
       }
       AppExpr* app_expr = Alloc(alloc, sizeof(AppExpr));
-      app_expr->tag = FBLC_APP_EXPR;
+      app_expr->tag = APP_EXPR;
       app_expr->loc = start.loc;
       app_expr->func.name = start.name;
       app_expr->func.loc = start.loc;
@@ -248,7 +248,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
       // This is a union expression of the form: start:field(<expr>)
       GetToken(toks, ':');
       UnionExpr* union_expr = Alloc(alloc, sizeof(UnionExpr));
-      union_expr->tag = FBLC_UNION_EXPR;
+      union_expr->tag = UNION_EXPR;
       union_expr->loc = start.loc;
       union_expr->type.name = start.name;
       union_expr->type.loc = start.loc;
@@ -269,7 +269,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
     } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       LetExpr* let_expr = Alloc(alloc, sizeof(LetExpr));
-      let_expr->tag = FBLC_LET_EXPR;
+      let_expr->tag = LET_EXPR;
       let_expr->loc = start.loc;
       let_expr->type.name = start.name;
       let_expr->type.loc = start.loc;
@@ -294,7 +294,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
     } else {
       // This is the variable expression: start
       VarExpr* var_expr = Alloc(alloc, sizeof(VarExpr));
-      var_expr->tag = FBLC_VAR_EXPR;
+      var_expr->tag = VAR_EXPR;
       var_expr->loc = start.loc;
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
@@ -321,7 +321,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
       return NULL;
     }
     CondExpr* cond_expr = Alloc(alloc, sizeof(CondExpr));
-    cond_expr->tag = FBLC_COND_EXPR;
+    cond_expr->tag = COND_EXPR;
     cond_expr->loc = condition->loc;
     cond_expr->select = condition;
     cond_expr->argc = argc;
@@ -337,7 +337,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
 
     // This is an access expression of the form: <expr>.<field>
     AccessExpr* access_expr = Alloc(alloc, sizeof(AccessExpr));
-    access_expr->tag = FBLC_ACCESS_EXPR;
+    access_expr->tag = ACCESS_EXPR;
     access_expr->loc = expr->loc;
     access_expr->object = expr;
     if (!GetNameToken(alloc, toks, "field name", &(access_expr->field))) {
@@ -401,7 +401,7 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
     }
 
     EvalActn* eval_actn = Alloc(alloc, sizeof(EvalActn));
-    eval_actn->tag = FBLC_EVAL_ACTN;
+    eval_actn->tag = EVAL_ACTN;
     eval_actn->loc = expr->loc;
     eval_actn->expr = expr;
     actn = (Actn*)eval_actn;
@@ -418,7 +418,7 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
       if (IsToken(toks, ')')) {
         GetToken(toks, ')');
         GetActn* get_actn = Alloc(alloc, sizeof(GetActn));
-        get_actn->tag = FBLC_GET_ACTN;
+        get_actn->tag = GET_ACTN;
         get_actn->loc = name.loc;
         get_actn->port.loc = name.loc;
         get_actn->port.name = name.name;
@@ -433,7 +433,7 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
         }
 
         PutActn* put_actn = Alloc(alloc, sizeof(PutActn));
-        put_actn->tag = FBLC_PUT_ACTN;
+        put_actn->tag = PUT_ACTN;
         put_actn->loc = name.loc;
         put_actn->port.loc = name.loc;
         put_actn->port.name = name.name;
@@ -443,7 +443,7 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
     } else if (IsToken(toks, '(')) {
       GetToken(toks, '(');
       CallActn* call_actn = Alloc(alloc, sizeof(CallActn));
-      call_actn->tag = FBLC_CALL_ACTN;
+      call_actn->tag = CALL_ACTN;
       call_actn->loc = name.loc;
       call_actn->proc.loc = name.loc;
       call_actn->proc.name = name.name;
@@ -505,7 +505,7 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
         return NULL;
       }
       LinkActn* link_actn = Alloc(alloc, sizeof(LinkActn));
-      link_actn->tag = FBLC_LINK_ACTN;
+      link_actn->tag = LINK_ACTN;
       link_actn->loc = name.loc;
       link_actn->type = name;
       link_actn->getname = getname;
@@ -514,7 +514,7 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
       return (Actn*)link_actn;
     } else if (in_stmt && IsNameToken(toks)) {
       ExecActn* exec_actn = Alloc(alloc, sizeof(ExecActn));
-      exec_actn->tag = FBLC_EXEC_ACTN;
+      exec_actn->tag = EXEC_ACTN;
       exec_actn->loc = name.loc;
 
       Vector execs;
@@ -600,7 +600,7 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
       return NULL;
     }
     CondActn* cond_actn = Alloc(alloc, sizeof(CondActn));
-    cond_actn->tag = FBLC_COND_ACTN;
+    cond_actn->tag = COND_ACTN;
     cond_actn->loc = condition->loc;
     cond_actn->select = condition;
     cond_actn->args = VectorExtract(&args, &(cond_actn->argc));
@@ -665,7 +665,7 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       Type* type = Alloc(alloc, sizeof(Type));
       type->name.name = name.name;
       type->name.loc = name.loc;
-      type->kind = is_struct ? FBLC_KIND_STRUCT : FBLC_KIND_UNION;
+      type->kind = is_struct ? KIND_STRUCT : KIND_UNION;
       type->fieldc = ParseFields(alloc, toks, &(type->fieldv));
       if (type->fieldc < 0) {
         return NULL;
@@ -791,7 +791,7 @@ Value* ParseValue(Env* env, Type* type, TokenStream* toks)
   }
   FreeAll(&alloc);
 
-  if (type->kind == FBLC_KIND_STRUCT) {
+  if (type->kind == KIND_STRUCT) {
     if (!GetToken(toks, '(')) {
       return NULL;
     }
@@ -823,7 +823,7 @@ Value* ParseValue(Env* env, Type* type, TokenStream* toks)
     }
     return (Value*)value;
   } else {
-    assert(type->kind == FBLC_KIND_UNION);
+    assert(type->kind == KIND_UNION);
     if (!GetToken(toks, ':')) {
       return NULL;
     }

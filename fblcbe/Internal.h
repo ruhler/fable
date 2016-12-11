@@ -75,12 +75,12 @@ typedef struct LocName {
 } LocName;
 
 typedef enum {
-  FBLC_VAR_EXPR,
-  FBLC_APP_EXPR,
-  FBLC_ACCESS_EXPR,
-  FBLC_UNION_EXPR,
-  FBLC_LET_EXPR,
-  FBLC_COND_EXPR,
+  VAR_EXPR,
+  APP_EXPR,
+  ACCESS_EXPR,
+  UNION_EXPR,
+  LET_EXPR,
+  COND_EXPR,
 } ExprTag;
 
 // Expr is the base structure for all  expressions. Each
@@ -92,14 +92,14 @@ typedef struct {
   Loc* loc;
 } Expr;
 
-// FBLC_VAR_EXPR: Variable expressions of the form: <name>
+// VAR_EXPR: Variable expressions of the form: <name>
 typedef struct {
   ExprTag tag;
   Loc* loc;
   LocName name;
 } VarExpr;
 
-// FBLC_APP_EXPR: Application expressions of the form: <func>(<argv>)
+// APP_EXPR: Application expressions of the form: <func>(<argv>)
 typedef struct {
   ExprTag tag;
   Loc* loc;
@@ -108,7 +108,7 @@ typedef struct {
   Expr** argv;
 } AppExpr;
 
-// FBLC_ACCESS_EXPR: Member access expressions of the form: <object>.<field>
+// ACCESS_EXPR: Member access expressions of the form: <object>.<field>
 typedef struct {
   ExprTag tag;
   Loc* loc;
@@ -116,7 +116,7 @@ typedef struct {
   LocName field;
 } AccessExpr;
 
-// FBLC_UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
+// UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
 typedef struct {
   ExprTag tag;
   Loc* loc;
@@ -125,7 +125,7 @@ typedef struct {
   const Expr* value;
 } UnionExpr;
 
-// FBLC_LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
+// LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
   ExprTag tag;
   Loc* loc;
@@ -135,7 +135,7 @@ typedef struct {
   const Expr* body;
 } LetExpr;
 
-// FBLC_COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
+// COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
 typedef struct {
   ExprTag tag;
   Loc* loc;
@@ -144,7 +144,7 @@ typedef struct {
   Expr** argv;
 } CondExpr;
 
-typedef enum { FBLC_KIND_UNION, FBLC_KIND_STRUCT } Kind;
+typedef enum { KIND_UNION, KIND_STRUCT } Kind;
 
 typedef struct {
   LocName type;
@@ -166,7 +166,7 @@ typedef struct {
   Field* argv;
 } Func;
 
-typedef enum { FBLC_POLARITY_PUT, FBLC_POLARITY_GET } Polarity;
+typedef enum { POLARITY_PUT, POLARITY_GET } Polarity;
 
 typedef struct {
   LocName type;
@@ -175,13 +175,13 @@ typedef struct {
 } Port;
 
 typedef enum {
-  FBLC_EVAL_ACTN,
-  FBLC_GET_ACTN,
-  FBLC_PUT_ACTN,
-  FBLC_CALL_ACTN,
-  FBLC_LINK_ACTN,
-  FBLC_EXEC_ACTN,
-  FBLC_COND_ACTN,
+  EVAL_ACTN,
+  GET_ACTN,
+  PUT_ACTN,
+  CALL_ACTN,
+  LINK_ACTN,
+  EXEC_ACTN,
+  COND_ACTN,
 } ActnTag;
 
 // Actn is the base structure for all  actions. Each specialization of
@@ -192,21 +192,21 @@ typedef struct {
   Loc* loc;
 } Actn;
 
-// FBLC_EVAL_ACTN: Processes of the form: $(<expr>)
+// EVAL_ACTN: Processes of the form: $(<expr>)
 typedef struct {
   ActnTag tag;
   Loc* loc;
   const Expr* expr;
 } EvalActn;
 
-// FBLC_GET_ACTN: Processes of the form: <pname>~()
+// GET_ACTN: Processes of the form: <pname>~()
 typedef struct {
   ActnTag tag;
   Loc* loc;
   LocName port;
 } GetActn;
 
-// FBLC_PUT_ACTN: Processes of the form: <pname>~(<expr>)
+// PUT_ACTN: Processes of the form: <pname>~(<expr>)
 typedef struct {
   ActnTag tag;
   Loc* loc;
@@ -214,7 +214,7 @@ typedef struct {
   Expr* expr;
 } PutActn;
 
-// FBLC_CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
+// CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
 typedef struct {
   ActnTag tag;
   Loc* loc;
@@ -225,7 +225,7 @@ typedef struct {
   Expr** exprs;      // Array of exprc exprs
 } CallActn;
 
-// FBLC_LINK_ACTN: Processes of the form:
+// LINK_ACTN: Processes of the form:
 //    <tname> '<~>' <pname> ',' <pname> ';' <actn>
 typedef struct {
   ActnTag tag;
@@ -241,7 +241,7 @@ typedef struct {
   Actn* actn;
 } Exec;
 
-// FBLC_EXEC_ACTN: Processes of the form:
+// EXEC_ACTN: Processes of the form:
 //    <tname> <vname> = <actn>,  ...  ; <body>
 typedef struct {
   ActnTag tag;
@@ -251,7 +251,7 @@ typedef struct {
   Actn* body;
 } ExecActn;
 
-// FBLC_COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
+// COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
 typedef struct {
   ActnTag tag;
   Loc* loc;

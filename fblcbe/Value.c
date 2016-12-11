@@ -23,7 +23,7 @@
 
 StructValue* NewStructValue(Type* type)
 {
-  assert(type->kind == FBLC_KIND_STRUCT);
+  assert(type->kind == KIND_STRUCT);
   StructValue* value = MALLOC(sizeof(StructValue));
   value->refcount = 1;
   value->fieldv = MALLOC(type->fieldc * sizeof(Value*));
@@ -49,7 +49,7 @@ StructValue* NewStructValue(Type* type)
 
 UnionValue* NewUnionValue(Type* type)
 {
-  assert(type->kind == FBLC_KIND_UNION);
+  assert(type->kind == KIND_UNION);
   UnionValue* value = MALLOC(sizeof(UnionValue));
   value->refcount = 1;
   value->type = type;
@@ -95,14 +95,14 @@ void Release(Value* value)
   if (value != NULL) {
     value->refcount--;
     if (value->refcount == 0) {
-      if (value->type->kind == FBLC_KIND_STRUCT) {
+      if (value->type->kind == KIND_STRUCT) {
         StructValue* struct_value = (StructValue*)value;
         for (int i = 0; i < value->type->fieldc; i++) {
           Release(struct_value->fieldv[i]);
         }
         FREE(struct_value->fieldv);
       } else {
-        assert(value->type->kind == FBLC_KIND_UNION);
+        assert(value->type->kind == KIND_UNION);
         UnionValue* union_value = (UnionValue*)value;
         Release(union_value->field);
       }
@@ -128,7 +128,7 @@ void Release(Value* value)
 void PrintValue(FILE* stream, Value* value)
 {
   Type* type = value->type;
-  if (type->kind == FBLC_KIND_STRUCT) {
+  if (type->kind == KIND_STRUCT) {
     StructValue* struct_value = (StructValue*)value;
     fprintf(stream, "%s(", type->name.name);
     for (int i = 0; i < type->fieldc; i++) {
@@ -138,7 +138,7 @@ void PrintValue(FILE* stream, Value* value)
       PrintValue(stream, struct_value->fieldv[i]);
     }
     fprintf(stream, ")");
-  } else if (type->kind == FBLC_KIND_UNION) {
+  } else if (type->kind == KIND_UNION) {
     UnionValue* union_value = (UnionValue*)value;
     fprintf(stream, "%s:%s(",
         type->name.name, type->fieldv[union_value->tag].name.name);

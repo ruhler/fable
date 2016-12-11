@@ -65,11 +65,11 @@ static void EncodeDeclId(OutputBitStream* stream, const Env* env, Name name)
 
 static void EncodeType(OutputBitStream* stream, const Env* env, Type* type)
 {
-  bool cons = type->kind == FBLC_KIND_STRUCT;
-  if (type->kind == FBLC_KIND_STRUCT) {
+  bool cons = type->kind == KIND_STRUCT;
+  if (type->kind == KIND_STRUCT) {
     WriteBits(stream, 2, 0);
   } else {
-    assert(type->kind == FBLC_KIND_UNION);
+    assert(type->kind == KIND_UNION);
     WriteBits(stream, 2, 1);
   }
 
@@ -86,12 +86,12 @@ static void EncodeType(OutputBitStream* stream, const Env* env, Type* type)
 static void EncodeExpr(OutputBitStream* stream, const Env* env, Expr* expr)
 {
   switch (expr->tag) {
-    case FBLC_VAR_EXPR:
+    case VAR_EXPR:
       WriteBits(stream, 3, 0);
       assert(false && "TODO: Map variable name to id");
       break;
 
-    case FBLC_APP_EXPR: {
+    case APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
       WriteBits(stream, 3, 1);
       EncodeDeclId(stream, env, app_expr->func.name);
@@ -103,19 +103,19 @@ static void EncodeExpr(OutputBitStream* stream, const Env* env, Expr* expr)
       break;
     }
 
-    case FBLC_ACCESS_EXPR:
+    case ACCESS_EXPR:
       assert(false && "TODO");
       break;
 
-    case FBLC_UNION_EXPR:
+    case UNION_EXPR:
       assert(false && "TODO");
       break;
 
-    case FBLC_LET_EXPR:
+    case LET_EXPR:
       assert(false && "TODO");
       break;
 
-    case FBLC_COND_EXPR:
+    case COND_EXPR:
       assert(false && "TODO");
       break;
 

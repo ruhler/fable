@@ -152,7 +152,7 @@ static Name CheckExpr(
     const Env* env, Vars* vars, const Expr* expr)
 {
   switch (expr->tag) {
-    case FBLC_VAR_EXPR: {
+    case VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
       Name type = LookupVar(vars, var_expr->name.name);
       if (type == NULL) {
@@ -163,11 +163,11 @@ static Name CheckExpr(
       return type;
     }
 
-    case FBLC_APP_EXPR: {
+    case APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
       Type* type = LookupType(env, app_expr->func.name);
       if (type != NULL) {
-        if (type->kind != FBLC_KIND_STRUCT) {
+        if (type->kind != KIND_STRUCT) {
           ReportError("Cannot do application on non-struct type %s.\n",
               app_expr->func.loc, app_expr->func.name);
           return NULL;
@@ -193,7 +193,7 @@ static Name CheckExpr(
       return NULL;
     }
 
-    case FBLC_ACCESS_EXPR: {
+    case ACCESS_EXPR: {
       AccessExpr* access_expr = (AccessExpr*)expr;
       Name typename = CheckExpr(env, vars, access_expr->object);
       if (typename == NULL) {
@@ -213,7 +213,7 @@ static Name CheckExpr(
       return NULL;
     }
 
-    case FBLC_UNION_EXPR: {
+    case UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
       Type* type = LookupType(env, union_expr->type.name);
       if (type == NULL) {
@@ -222,7 +222,7 @@ static Name CheckExpr(
         return NULL;
       }
 
-      if (type->kind != FBLC_KIND_UNION) {
+      if (type->kind != KIND_UNION) {
         ReportError("Type %s is not a union type.\n",
             union_expr->loc, union_expr->type.name);
         return NULL;
@@ -250,7 +250,7 @@ static Name CheckExpr(
       return NULL;
     }
 
-    case FBLC_LET_EXPR: {
+    case LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
       if (LookupType(env, let_expr->type.name) == NULL) {
         ReportError("Type '%s' not declared.\n",
@@ -280,7 +280,7 @@ static Name CheckExpr(
       return CheckExpr(env, &nvars, let_expr->body);
     }
 
-    case FBLC_COND_EXPR: {
+    case COND_EXPR: {
       CondExpr* cond_expr = (CondExpr*)expr;
       Name typename = CheckExpr(env, vars, cond_expr->select);
       if (typename == NULL) {
@@ -290,7 +290,7 @@ static Name CheckExpr(
       Type* type = LookupType(env, typename);
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
 
-      if (type->kind != FBLC_KIND_UNION) {
+      if (type->kind != KIND_UNION) {
         ReportError("The condition has type %s, "
             "which is not a union type.\n", cond_expr->loc, typename);
         return NULL;
@@ -352,12 +352,12 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
     Vars* puts, Actn* actn)
 {
   switch (actn->tag) {
-    case FBLC_EVAL_ACTN: {
+    case EVAL_ACTN: {
       EvalActn* eval_actn = (EvalActn*)actn;
       return CheckExpr(env, vars, eval_actn->expr);
     }
 
-    case FBLC_GET_ACTN: {
+    case GET_ACTN: {
       GetActn* get_actn = (GetActn*)actn;
       Name type = LookupVar(gets, get_actn->port.name);
       if (type == NULL) {
@@ -368,7 +368,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
       return type;
     }
 
-    case FBLC_PUT_ACTN: {
+    case PUT_ACTN: {
       PutActn* put_actn = (PutActn*)actn;
       Name port_type = LookupVar(puts, put_actn->port.name);
       if (port_type == NULL) {
@@ -389,7 +389,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
       return arg_type;
     }
 
-    case FBLC_CALL_ACTN: {
+    case CALL_ACTN: {
       CallActn* call_actn = (CallActn*)actn;
       Proc* proc = LookupProc(env, call_actn->proc.name);
       if (proc == NULL) {
@@ -406,7 +406,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
       }
 
       for (int i = 0; i < proc->portc; i++) {
-        bool isput = (proc->portv[i].polarity == FBLC_POLARITY_PUT);
+        bool isput = (proc->portv[i].polarity == POLARITY_PUT);
         Vars* ports = isput ? puts : gets;
         Name port_type = LookupVar(ports, call_actn->ports[i].name);
         if (port_type == NULL) {
@@ -431,7 +431,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
       return proc->return_type.name;
     }
 
-    case FBLC_LINK_ACTN: {
+    case LINK_ACTN: {
       LinkActn* link_actn = (LinkActn*)actn;
       Name type = link_actn->type.name;
       Vars ngets;
@@ -441,7 +441,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
       return CheckActn(env, vars, &ngets, &nputs, link_actn->body);
     }
 
-    case FBLC_EXEC_ACTN: {
+    case EXEC_ACTN: {
       ExecActn* exec_actn = (ExecActn*)actn;
       Vars nvars[exec_actn->execc];
       for (int i = 0; i < exec_actn->execc; i++) {
@@ -461,7 +461,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
       return CheckActn(env, vars, gets, puts, exec_actn->body);
     }
 
-    case FBLC_COND_ACTN: {
+    case COND_ACTN: {
       CondActn* cond_actn = (CondActn*)actn;
       Name typename = CheckExpr(env, vars, cond_actn->select);
       if (typename == NULL) {
@@ -471,7 +471,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
       Type* type = LookupType(env, typename);
       assert(type != NULL && "Result of CheckExpr refers to undefined type?");
 
-      if (type->kind != FBLC_KIND_UNION) {
+      if (type->kind != KIND_UNION) {
         ReportError("The condition has type %s, "
             "which is not a union type.\n", cond_actn->loc, typename);
         return NULL;
@@ -614,7 +614,7 @@ static bool CheckPorts(const Env* env, int portc, Port* portv)
 
 static bool CheckType(const Env* env, Type* type)
 {
-  if (type->kind == FBLC_KIND_UNION && type->fieldc == 0) {
+  if (type->kind == KIND_UNION && type->fieldc == 0) {
     ReportError("A union type must have at least one field.\n",
         type->name.loc);
     return false;
@@ -720,12 +720,12 @@ static bool CheckProc(const Env* env, Proc* proc)
   Vars* puts = NULL;
   for (int i = 0; i < proc->portc; i++) {
     switch (proc->portv[i].polarity) {
-      case FBLC_POLARITY_GET:
+      case POLARITY_GET:
         gets = AddVar(
             nvar++, proc->portv[i].name.name, proc->portv[i].type.name, gets);
         break;
 
-      case FBLC_POLARITY_PUT:
+      case POLARITY_PUT:
         puts = AddVar(
             nvar++, proc->portv[i].name.name, proc->portv[i].type.name, puts);
         break;
