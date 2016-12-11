@@ -56,7 +56,7 @@ static uint32_t IdForDecl(const Env* env, Name name)
 static void EncodeDeclId(OutputBitStream* stream, const Env* env, Name name)
 {
   uint32_t id = IdForDecl(env, name);
-  while (id > 2) {
+  while (id > 1) {
     WriteBits(stream, 2, 2 + (id % 2));
     id /= 2;
   }

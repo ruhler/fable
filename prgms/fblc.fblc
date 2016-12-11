@@ -6,7 +6,7 @@ struct Unit();
 // variable/port in question.
 union Id(Unit 0, Unit 1, Id 2x, Id 2xp1);
 
-union DeclId(Unit 0, Unit 1, Id 2x, Id 2xp1);
+union DeclId(Unit 0, Unit 1, DeclId 2x, DeclId 2xp1);
 
 struct NonEmptyTypeList(DeclId head, TypeList tail);
 union TypeList(Unit nil, NonEmptyTypeList cons);
