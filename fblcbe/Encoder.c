@@ -107,8 +107,15 @@ static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
       break;
     }
 
-    case ACCESS_EXPR:
-      assert(false && "TODO");
+    case ACCESS_EXPR: {
+      AccessExpr* access_expr = (AccessExpr*)expr;
+      WriteBits(stream, 3, 3);
+      EncodeExpr(stream, env, access_expr->object);
+      assert(false && "TODO: convert field to id for access expr");
+      Type* type = NULL;
+      EncodeId(stream, TagForField(type, access_expr->field.name));
+      break;
+    }
 
     case UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
