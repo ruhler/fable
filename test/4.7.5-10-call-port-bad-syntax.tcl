@@ -12,4 +12,5 @@ set prg {
   };
 }
 
+expect_malformed_b $prg 3
 expect_malformed $prg main

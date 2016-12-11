@@ -10,6 +10,7 @@ set prg {
   };
 }
 expect_malformed $prg main
+expect_malformed_b $prg 3
 
 
 # Even if the types are the same.
@@ -22,3 +23,4 @@ set prg {
   };
 }
 expect_malformed $prg main
+expect_malformed_b $prg 2

@@ -12,6 +12,7 @@ set prg {
 }
 
 expect_malformed $prg main
+expect_malformed_b $prg 2
 
 set prg {
   struct Unit();
@@ -25,3 +26,4 @@ set prg {
 }
 
 expect_malformed $prg main
+expect_malformed_b $prg 3
