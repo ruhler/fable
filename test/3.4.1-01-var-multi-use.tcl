@@ -12,4 +12,5 @@ set prg {
 }
 
 expect_result Pair(Bool:True(Unit()),Bool:True(Unit())) $prg main Bool:True(Unit())
+expect_result_b "00" $prg 3 "0"
 

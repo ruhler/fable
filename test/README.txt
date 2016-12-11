@@ -9,6 +9,13 @@ abstract tcl procedures:
 proc expect_result { result program entry args } { ... }
 
 # Test that running function or process 'entry' in 'program' with the given
+# 'args' and no ports leads to the given 'result'.
+# result and args should be specified in binary as a sequence of ascii digits
+# '0' and '1' and entry should be specified as the integer id of the entry
+# function or process based on order of declarations starting at 0.
+proc expect_result_b { result program entry args } { ... }
+
+# Test that running function or process 'entry' in 'program' with the given
 # 'args' and no ports leads to an error indicating the program is malformed.
 proc expect_malformed { program entry args } { ... }
 

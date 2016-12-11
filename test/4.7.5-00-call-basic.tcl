@@ -15,4 +15,5 @@ set prg {
 }
 
 expect_result Bool:true(Unit()) $prg main
+expect_result_b "0" $prg 3
 

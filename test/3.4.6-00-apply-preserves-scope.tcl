@@ -18,3 +18,6 @@ set prg {
 }
 expect_result B(Unit(),A(Unit(),Donut()),Unit()) $prg main
 
+# TODO: Fix bug with declaration order naming.
+expect_result_b "" $prg 5
+
