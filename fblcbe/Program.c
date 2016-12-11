@@ -65,7 +65,7 @@ bool NamesEqual(Name a, Name b)
 // Side effects:
 //   Prints an error message to standard error.
 
-void ReportError(const char* format, const Loc* loc, ...)
+void ReportError(const char* format, Loc* loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
@@ -113,7 +113,7 @@ Env* NewEnv(Allocator* alloc)
 // Side effects:
 //   None.
 
-Type* LookupType(const Env* env, Name name)
+Type* LookupType(Env* env, Name name)
 {
   for (TypeEnv* tenv = env->types; tenv != NULL; tenv = tenv->next) {
     if (NamesEqual(tenv->decl->name.name, name)) {
@@ -138,7 +138,7 @@ Type* LookupType(const Env* env, Name name)
 //
 // Side effects:
 //   None.
-Func* LookupFunc(const Env* env, Name name)
+Func* LookupFunc(Env* env, Name name)
 {
   for (FuncEnv* fenv = env->funcs; fenv != NULL; fenv = fenv->next) {
     if (NamesEqual(fenv->decl->name.name, name)) {
@@ -164,7 +164,7 @@ Func* LookupFunc(const Env* env, Name name)
 // Side effects:
 //   None.
 
-Proc* LookupProc(const Env* env, Name name)
+Proc* LookupProc(Env* env, Name name)
 {
   for (ProcEnv* penv = env->procs; penv != NULL; penv = penv->next) {
     if (NamesEqual(penv->decl->name.name, name)) {

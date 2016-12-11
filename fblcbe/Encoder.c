@@ -19,7 +19,7 @@
 //   None. The behavior is undefined if name does not refer to a declaration
 //   in the environment.
 
-static uint32_t IdForDecl(const Env* env, Name name)
+static uint32_t IdForDecl(Env* env, Name name)
 {
   // TODO: Linear search through the entire environment for every lookup seems
   // excessively slow. Consider using a more efficient data structure, such as
@@ -62,12 +62,12 @@ static void EncodeId(OutputBitStream* stream, size_t id)
   WriteBits(stream, 2, id);
 }
 
-static void EncodeDeclId(OutputBitStream* stream, const Env* env, Name name)
+static void EncodeDeclId(OutputBitStream* stream, Env* env, Name name)
 {
   EncodeId(stream, IdForDecl(env, name));
 }
 
-static void EncodeType(OutputBitStream* stream, const Env* env, Type* type)
+static void EncodeType(OutputBitStream* stream, Env* env, Type* type)
 {
   bool cons = type->kind == KIND_STRUCT;
   if (type->kind == KIND_STRUCT) {
@@ -87,7 +87,7 @@ static void EncodeType(OutputBitStream* stream, const Env* env, Type* type)
   WriteBits(stream, 1, 0);
 }
 
-static void EncodeExpr(OutputBitStream* stream, const Env* env, const Expr* expr)
+static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
 {
   switch (expr->tag) {
     case VAR_EXPR:
@@ -135,7 +135,7 @@ static void EncodeExpr(OutputBitStream* stream, const Env* env, const Expr* expr
   }
 }
 
-static void EncodeFunc(OutputBitStream* stream, const Env* env, Func* func)
+static void EncodeFunc(OutputBitStream* stream, Env* env, Func* func)
 {
   WriteBits(stream, 2, 2);
   for (size_t i = 0; i < func->argc; ++i) {
@@ -147,7 +147,7 @@ static void EncodeFunc(OutputBitStream* stream, const Env* env, Func* func)
   EncodeExpr(stream, env, func->body);
 }
 
-static void EncodeProc(OutputBitStream* stream, const Env* env, Proc* proc)
+static void EncodeProc(OutputBitStream* stream, Env* env, Proc* proc)
 {
   assert(false && "TODO");
 }
@@ -166,7 +166,7 @@ static void EncodeProc(OutputBitStream* stream, const Env* env, Proc* proc)
 // Side effects:
 //   The program is written to the bit stream.
 
-void EncodeProgram(OutputBitStream* stream, const Env* env)
+void EncodeProgram(OutputBitStream* stream, Env* env)
 {
   bool initial = true;
   for (TypeEnv* types = env->types; types != NULL; types = types->next) {

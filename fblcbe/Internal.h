@@ -67,7 +67,7 @@ typedef struct {
   int col;
 } Loc;
 
-void ReportError(const char* format, const Loc* loc, ...);
+void ReportError(const char* format, Loc* loc, ...);
 
 typedef struct LocName {
   Loc* loc;
@@ -112,7 +112,7 @@ typedef struct {
 typedef struct {
   ExprTag tag;
   Loc* loc;
-  const Expr* object;
+  Expr* object;
   LocName field;
 } AccessExpr;
 
@@ -122,7 +122,7 @@ typedef struct {
   Loc* loc;
   LocName type;
   LocName field;
-  const Expr* value;
+  Expr* value;
 } UnionExpr;
 
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
@@ -131,15 +131,15 @@ typedef struct {
   Loc* loc;
   LocName type;
   LocName name;
-  const Expr* def;
-  const Expr* body;
+  Expr* def;
+  Expr* body;
 } LetExpr;
 
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
 typedef struct {
   ExprTag tag;
   Loc* loc;
-  const Expr* select;
+  Expr* select;
   int argc;
   Expr** argv;
 } CondExpr;
@@ -196,7 +196,7 @@ typedef struct {
 typedef struct {
   ActnTag tag;
   Loc* loc;
-  const Expr* expr;
+  Expr* expr;
 } EvalActn;
 
 // GET_ACTN: Processes of the form: <pname>~()
@@ -295,9 +295,9 @@ typedef struct Env {
 } Env;
 
 Env* NewEnv(Allocator* alloc);
-Type* LookupType(const Env* env, Name name);
-Func* LookupFunc(const Env* env, Name name);
-Proc* LookupProc(const Env* env, Name name);
+Type* LookupType(Env* env, Name name);
+Func* LookupFunc(Env* env, Name name);
+Proc* LookupProc(Env* env, Name name);
 bool AddType(Allocator* alloc, Env* env, Type* type);
 bool AddFunc(Allocator* alloc, Env* env, Func* func);
 bool AddProc(Allocator* alloc, Env* env, Proc* proc);
@@ -336,7 +336,7 @@ UnionValue* NewUnionValue(Type* type);
 Value* Copy(Value* src);
 void Release(Value* value);
 void PrintValue(FILE* fout, Value* value);
-int TagForField(const Type* type, Name field);
+int TagForField(Type* type, Name field);
 
 // Tokenizer
 // A stream of tokens is represented using the TokenStream data structure.
@@ -379,7 +379,7 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks);
 Value* ParseValue(Env* env, Type* type, TokenStream* toks);
 
 // Checker
-bool CheckProgram(const Env* env);
+bool CheckProgram(Env* env);
 
 // BitStream
 // Bit streams are represented as sequences of ascii digits '0' and '1'.
@@ -392,6 +392,6 @@ void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
 void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 
 // Encoder
-void EncodeProgram(OutputBitStream* stream, const Env* env);
+void EncodeProgram(OutputBitStream* stream, Env* env);
 
 #endif  // INTERNAL_H_

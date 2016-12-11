@@ -21,18 +21,18 @@ typedef struct Vars {
 static Vars* AddVar(Vars* vars, Name name, Name type, Vars* next);
 static Name LookupVar(Vars* vars, Name name);
 static bool CheckArgs(
-    const Env* env, Vars* vars, int fieldc, Field* fieldv,
-    int argc, Expr* const* argv, const LocName* func);
+    Env* env, Vars* vars, int fieldc, Field* fieldv,
+    int argc, Expr** argv, LocName* func);
 static Name CheckExpr(
-    const Env* env, Vars* vars, const Expr* expr);
-static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
+    Env* env, Vars* vars, Expr* expr);
+static Name CheckActn(Env* env, Vars* vars, Vars* gets,
     Vars* puts, Actn* actn);
 static bool CheckFields(
-    const Env* env, int fieldc, Field* fieldv, const char* kind);
-static bool CheckPorts(const Env* env, int portc, Port* portv);
-static bool CheckType(const Env* env, Type* type);
-static bool CheckFunc(const Env* env, Func* func);
-static bool CheckProc(const Env* env, Proc* proc);
+    Env* env, int fieldc, Field* fieldv, const char* kind);
+static bool CheckPorts(Env* env, int portc, Port* portv);
+static bool CheckType(Env* env, Type* type);
+static bool CheckFunc(Env* env, Func* func);
+static bool CheckProc(Env* env, Proc* proc);
 
 // AddVar --
 //
@@ -107,8 +107,8 @@ static Name LookupVar(Vars* vars, Name name)
 //   error describing what's wrong.
 
 static bool CheckArgs(
-    const Env* env, Vars* vars, int fieldc, Field* fieldv,
-    int argc, Expr* const* argv, const LocName* func)
+    Env* env, Vars* vars, int fieldc, Field* fieldv,
+    int argc, Expr** argv, LocName* func)
 {
   if (fieldc != argc) {
     ReportError("Wrong number of arguments to %s. Expected %d, "
@@ -148,8 +148,7 @@ static bool CheckArgs(
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
-static Name CheckExpr(
-    const Env* env, Vars* vars, const Expr* expr)
+static Name CheckExpr(Env* env, Vars* vars, Expr* expr)
 {
   switch (expr->tag) {
     case VAR_EXPR: {
@@ -348,8 +347,7 @@ static Name CheckExpr(
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
-static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
-    Vars* puts, Actn* actn)
+static Name CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* actn)
 {
   switch (actn->tag) {
     case EVAL_ACTN: {
@@ -530,8 +528,7 @@ static Name CheckActn(const Env* env, Vars* vars, Vars* gets,
 //   If the fields don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
 
-static bool CheckFields(
-    const Env* env, int fieldc, Field* fieldv, const char* kind)
+static bool CheckFields(Env* env, int fieldc, Field* fieldv, const char* kind)
 {
   // Verify the type for each field exists.
   for (int i = 0; i < fieldc; i++) {
@@ -572,7 +569,7 @@ static bool CheckFields(
 //   If the ports don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
 
-static bool CheckPorts(const Env* env, int portc, Port* portv)
+static bool CheckPorts(Env* env, int portc, Port* portv)
 {
   // Verify the type for each port exists.
   for (int i = 0; i < portc; i++) {
@@ -612,7 +609,7 @@ static bool CheckPorts(const Env* env, int portc, Port* portv)
 //   If the type declaration is not well formed, prints a message to standard
 //   error describing the problem.
 
-static bool CheckType(const Env* env, Type* type)
+static bool CheckType(Env* env, Type* type)
 {
   if (type->kind == KIND_UNION && type->fieldc == 0) {
     ReportError("A union type must have at least one field.\n",
@@ -638,7 +635,7 @@ static bool CheckType(const Env* env, Type* type)
 //   If the function declaration is not well formed, prints a message to
 //   standard error describing the problem.
 
-static bool CheckFunc(const Env* env, Func* func)
+static bool CheckFunc(Env* env, Func* func)
 {
   // Check the arguments.
   if (!CheckFields(env, func->argc, func->argv, "arg")) {
@@ -687,7 +684,7 @@ static bool CheckFunc(const Env* env, Func* func)
 //   If the process declaration is not well formed, prints a message to
 //   standard error describing the problem.
 
-static bool CheckProc(const Env* env, Proc* proc)
+static bool CheckProc(Env* env, Proc* proc)
 {
   // Check the ports.
   if (!CheckPorts(env, proc->portc, proc->portv)) {
@@ -761,7 +758,7 @@ static bool CheckProc(const Env* env, Proc* proc)
 //   printed to standard error describing the problem with the program
 //   environment.
 
-bool CheckProgram(const Env* env)
+bool CheckProgram(Env* env)
 {
   // Verify all type declarations are good.
   for (TypeEnv* types = env->types; types != NULL; types = types->next) {

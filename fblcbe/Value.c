@@ -164,7 +164,7 @@ void PrintValue(FILE* stream, Value* value)
 // Side effects:
 //   None.
 
-int TagForField(const Type* type, Name field)
+int TagForField(Type* type, Name field)
 {
   for (int i = 0; i < type->fieldc; i++) {
     if (NamesEqual(field, type->fieldv[i].name.name)) {
