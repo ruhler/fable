@@ -4,37 +4,9 @@
 
 #include "Internal.h"
 
-// IdForDecl -
-//   
-//   Return the identifier for the declaration with the given name.
-//
-// Inputs:
-//   env - the program environment.
-//   name - the name of the declaration to identify.
-//
-// Returns:
-//   The identifier to use for the declaration.
-//
-// Side effects:
-//   None. The behavior is undefined if name does not refer to a declaration
-//   in the environment.
-
-static uint32_t IdForDecl(Env* env, Name name)
-{
-  // TODO: Linear search through the entire environment for every lookup seems
-  // excessively slow. Consider using a more efficient data structure.
-
-  for (size_t i = 0; i < env->declc; ++i) {
-    if (NamesEqual(name, env->declv[i]->name.name)) {
-      return i;
-    }
-  }
-  assert(false && "Name not found in environment.");
-  return -1;
-}
-
 static void EncodeId(OutputBitStream* stream, size_t id)
 {
+  assert(id != UNRESOLVED_ID);
   while (id > 1) {
     WriteBits(stream, 2, 2 + (id % 2));
     id /= 2;
@@ -42,12 +14,12 @@ static void EncodeId(OutputBitStream* stream, size_t id)
   WriteBits(stream, 2, id);
 }
 
-static void EncodeDeclId(OutputBitStream* stream, Env* env, Name name)
+static void EncodeDeclId(OutputBitStream* stream, size_t id)
 {
-  EncodeId(stream, IdForDecl(env, name));
+  EncodeId(stream, id);
 }
 
-static void EncodeType(OutputBitStream* stream, Env* env, TypeDecl* type)
+static void EncodeType(OutputBitStream* stream, TypeDecl* type)
 {
   bool cons = type->tag == STRUCT_DECL;
   if (type->tag == STRUCT_DECL) {
@@ -62,26 +34,26 @@ static void EncodeType(OutputBitStream* stream, Env* env, TypeDecl* type)
       WriteBits(stream, 1, 1);
     }
     cons = true;
-    EncodeDeclId(stream, env, type->fieldv[i].type.name);
+    EncodeDeclId(stream, type->fieldv[i].type.id);
   }
   WriteBits(stream, 1, 0);
 }
 
-static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
+static void EncodeExpr(OutputBitStream* stream, Expr* expr)
 {
   switch (expr->tag) {
     case VAR_EXPR:
       WriteBits(stream, 3, 0);
-      assert(false && "TODO: Map variable name to id");
+      assert(false && "TODO");
       break;
 
     case APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
       WriteBits(stream, 3, 1);
-      EncodeDeclId(stream, env, app_expr->func.name);
+      EncodeDeclId(stream, app_expr->func.id);
       for (size_t i = 0; i < app_expr->argc; ++i) {
         WriteBits(stream, 1, 1);
-        EncodeExpr(stream, env, app_expr->argv[i]);
+        EncodeExpr(stream, app_expr->argv[i]);
       }
       WriteBits(stream, 1, 0);
       break;
@@ -90,21 +62,17 @@ static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
     case ACCESS_EXPR: {
       AccessExpr* access_expr = (AccessExpr*)expr;
       WriteBits(stream, 3, 3);
-      EncodeExpr(stream, env, access_expr->object);
-      assert(false && "TODO: convert field to id for access expr");
-      TypeDecl* type = NULL;
-      EncodeId(stream, TagForField(type, access_expr->field.name));
+      EncodeExpr(stream, access_expr->object);
+      EncodeId(stream, access_expr->field.id);
       break;
     }
 
     case UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
       WriteBits(stream, 3, 2);
-      EncodeDeclId(stream, env, union_expr->type.name);
-      TypeDecl* type = LookupType(env, union_expr->type.name);
-      assert(type != NULL);
-      EncodeId(stream, TagForField(type, union_expr->field.name));
-      EncodeExpr(stream, env, union_expr->value);
+      EncodeDeclId(stream, union_expr->type.id);
+      EncodeId(stream, union_expr->field.id);
+      EncodeExpr(stream, union_expr->value);
       break;
     }
 
@@ -122,19 +90,19 @@ static void EncodeExpr(OutputBitStream* stream, Env* env, Expr* expr)
   }
 }
 
-static void EncodeFunc(OutputBitStream* stream, Env* env, FuncDecl* func)
+static void EncodeFunc(OutputBitStream* stream, FuncDecl* func)
 {
   WriteBits(stream, 2, 2);
   for (size_t i = 0; i < func->argc; ++i) {
     WriteBits(stream, 1, 1);
-    EncodeDeclId(stream, env, func->argv[i].type.name);
+    EncodeDeclId(stream, func->argv[i].type.id);
   }
   WriteBits(stream, 1, 0);
-  EncodeDeclId(stream, env, func->return_type.name);
-  EncodeExpr(stream, env, func->body);
+  EncodeDeclId(stream, func->return_type.id);
+  EncodeExpr(stream, func->body);
 }
 
-static void EncodeProc(OutputBitStream* stream, Env* env, ProcDecl* proc)
+static void EncodeProc(OutputBitStream* stream, ProcDecl* proc)
 {
   assert(false && "TODO");
 }
@@ -163,15 +131,15 @@ void EncodeProgram(OutputBitStream* stream, Env* env)
     switch (decl->tag) {
       case STRUCT_DECL:
       case UNION_DECL:
-        EncodeType(stream, env, (TypeDecl*)decl);
+        EncodeType(stream, (TypeDecl*)decl);
         break;
 
       case FUNC_DECL:
-        EncodeFunc(stream, env, (FuncDecl*)decl);
+        EncodeFunc(stream, (FuncDecl*)decl);
         break;
 
       case PROC_DECL:
-        EncodeProc(stream, env, (ProcDecl*)decl);
+        EncodeProc(stream, (ProcDecl*)decl);
         break;
 
       default:

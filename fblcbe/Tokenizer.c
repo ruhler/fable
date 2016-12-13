@@ -405,9 +405,9 @@ bool IsNameToken(TokenStream* toks)
 //
 // Side effects:
 //   If the next token in the stream is a name token, name is filled in with
-//   the value and location of the name token, and the name token is removed
-//   from the front of the token stream. Otherwise an error message is printed
-//   to standard error.
+//   the value and location of the name token and UNRESOLVED_ID, and the name
+//   token is removed from the front of the token stream. Otherwise an error
+//   message is printed to standard error.
 
 bool GetNameToken(Allocator* alloc,
     TokenStream* toks, const char* expected, LocName* name)
@@ -417,6 +417,7 @@ bool GetNameToken(Allocator* alloc,
     Vector vector;
     VectorInit(alloc, &vector, sizeof(char));
 
+    name->id = UNRESOLVED_ID;
     name->loc = Alloc(alloc, sizeof(Loc));
     name->loc->source = toks->loc.source;
     name->loc->line = toks->loc.line;

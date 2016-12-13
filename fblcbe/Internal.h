@@ -69,9 +69,15 @@ typedef struct {
 
 void ReportError(const char* format, Loc* loc, ...);
 
+// LocName stores a name along with a location for error reporting purposes.
+// The id field contains the id of name as used in the binary encoded program.
+// Initial id will be UNRESOLVED_ID. Relevant ids are resolved during the type
+// checking phase.
+#define UNRESOLVED_ID (-1)
 typedef struct LocName {
   Loc* loc;
   Name name;
+  size_t id;
 } LocName;
 
 typedef enum {
@@ -285,9 +291,6 @@ typedef struct {
 } Env;
 
 Env* NewEnv(Allocator* alloc, int declc, Decl** declv);
-TypeDecl* LookupType(Env* env, Name name);
-FuncDecl* LookupFunc(Env* env, Name name);
-ProcDecl* LookupProc(Env* env, Name name);
 
 // Value
 

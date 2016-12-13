@@ -252,6 +252,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
       union_expr->loc = start.loc;
       union_expr->type.name = start.name;
       union_expr->type.loc = start.loc;
+      union_expr->type.id = UNRESOLVED_ID;
       if (!GetNameToken(alloc, toks, "field name", &(union_expr->field))) {
         return NULL;
       }
@@ -273,6 +274,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
       let_expr->loc = start.loc;
       let_expr->type.name = start.name;
       let_expr->type.loc = start.loc;
+      let_expr->type.id = UNRESOLVED_ID;
       GetNameToken(alloc, toks, "variable name", &(let_expr->name));
       if (!GetToken(toks, '=')) {
         return NULL;
@@ -298,6 +300,7 @@ static Expr* ParseExpr(Allocator* alloc, TokenStream* toks,
       var_expr->loc = start.loc;
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
+      var_expr->name.id = UNRESOLVED_ID;
       expr = (Expr*)var_expr;
     }
   } else if (IsToken(toks, '?')) {
@@ -628,6 +631,8 @@ static Actn* ParseActn(Allocator* alloc, TokenStream* toks,
 //
 // Result:
 //   The parsed program environment, or NULL on error.
+//   The 'id' for LocNames throughout the parsed program will be set to
+//   UNRESOLVED_ID in the returned result.
 //
 // Side effects:
 //   A program environment is allocated. The token stream is advanced to the
@@ -667,6 +672,7 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       type->tag = is_struct ? STRUCT_DECL : UNION_DECL;
       type->name.name = name.name;
       type->name.loc = name.loc;
+      type->name.id = UNRESOLVED_ID;
       type->fieldc = ParseFields(alloc, toks, &(type->fieldv));
       if (type->fieldc < 0) {
         return NULL;
@@ -682,6 +688,7 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       func->tag = FUNC_DECL;
       func->name.name = name.name;
       func->name.loc = name.loc;
+      func->name.id = UNRESOLVED_ID;
       func->argc = ParseFields(alloc, toks, &(func->argv));
       if (func->argc < 0) {
         return NULL;
@@ -710,6 +717,7 @@ Env* ParseProgram(Allocator* alloc, TokenStream* toks)
       proc->tag = PROC_DECL;
       proc->name.name = name.name;
       proc->name.loc = name.loc;
+      proc->name.id = UNRESOLVED_ID;
       proc->portc = ParsePorts(alloc, toks, &(proc->portv));
       if (proc->portc < 0) {
         return NULL;
