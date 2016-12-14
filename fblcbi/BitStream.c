@@ -126,8 +126,7 @@ void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd)
 void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits)
 {
   assert(num_bits < 32 && "WriteBits invalid num_bits");
-
-  for (uint32_t mask = (1 << (num_bits - 1)); mask > 0; mask >>= 1) {
+  for (uint32_t mask = ((1 << num_bits) >> 1); mask > 0; mask >>= 1) {
     char c = (bits & mask) ? '1' : '0';
     write(stream->fd, &c, 1);
   }

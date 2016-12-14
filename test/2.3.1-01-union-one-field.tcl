@@ -11,5 +11,5 @@ set prg {
 }
 
 expect_result OneField:x(Unit()) $prg main
-skip expect_result_b "" $prg 2
+expect_result_b "" $prg 2
 
