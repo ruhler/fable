@@ -10,5 +10,6 @@ set prg {
   };
 }
 expect_result A(Unit(),Unit()) $prg main
+# skip: requires support for let expression
 skip expect_result_b "" $prg 2
 

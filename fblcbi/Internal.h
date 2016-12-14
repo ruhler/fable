@@ -69,6 +69,11 @@ typedef struct {
 
 typedef struct {
   ExprTag tag;
+  Id var;
+} VarExpr;
+
+typedef struct {
+  ExprTag tag;
   DeclId func;
   size_t argc;
   Expr** argv;

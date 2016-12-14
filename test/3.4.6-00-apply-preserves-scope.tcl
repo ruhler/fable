@@ -17,7 +17,6 @@ set prg {
   };
 }
 expect_result B(Unit(),A(Unit(),Donut()),Unit()) $prg main
-
-# TODO: Fix bug with declaration order naming.
+# skip: requires support for let expression
 skip expect_result_b "" $prg 5
 

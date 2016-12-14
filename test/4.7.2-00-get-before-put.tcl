@@ -15,5 +15,6 @@ set prg {
 }
 
 expect_result Fruit:pear(Unit()) $prg main
+# skip: requires support for procs
 skip expect_result_b "10" $prg 2
 

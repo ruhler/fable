@@ -43,9 +43,11 @@ static void EncodeExpr(OutputBitStream* stream, Expr* expr)
 {
   WriteBits(stream, 3, expr->tag);
   switch (expr->tag) {
-    case VAR_EXPR:
-      assert(false && "TODO");
+    case VAR_EXPR: {
+      VarExpr* var_expr = (VarExpr*)expr;
+      EncodeId(stream, var_expr->name.id);
       break;
+    }
 
     case APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;

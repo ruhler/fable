@@ -743,13 +743,10 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         Value** target = cmd->target;
         switch (expr->tag) {
           case VAR_EXPR: {
-            assert(false && "TODO");
-//            VarExpr* var_expr = (VarExpr*)expr;
-//            Name var_name = var_expr->name.name;
-//            Value* value = LookupVal(thread->vars, var_name);
-//            assert(target != NULL && "Var not in scope");
-//            *target = Copy(value);
-//            break;
+            VarExpr* var_expr = (VarExpr*)expr;
+            assert(var_expr->var < thread->vars->size);
+            *target = Copy(thread->vars->values[var_expr->var]);
+            break;
           }
 
           case APP_EXPR: {

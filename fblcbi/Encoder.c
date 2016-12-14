@@ -47,6 +47,13 @@ static Type* DecodeTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
 static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
 {
   switch (ReadBits(bits, 3)) {
+    case VAR_EXPR: {
+      VarExpr* expr = Alloc(alloc, sizeof(VarExpr));
+      expr->tag = VAR_EXPR;
+      expr->var = DecodeId(bits);
+      return (Expr*)expr;
+    }
+
     case APP_EXPR: {
       AppExpr* expr = Alloc(alloc, sizeof(AppExpr));
       expr->tag = APP_EXPR;

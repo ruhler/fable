@@ -21,6 +21,7 @@ union PortList(Unit nil, NonEmptyPortList cons);
 struct NonEmptyIdList(Id head, IdList tail);
 union IdList(Unit nil, NonEmptyIdList cons);
 
+struct VarExpr(Id var);
 struct AppExpr(DeclId func, ExprList args);
 struct UnionExpr(DeclId type, Id field, Expr body);
 struct AccessExpr(Expr object, Id field);
@@ -28,7 +29,7 @@ struct CondExpr(Expr select, NonEmptyExprList args);
 struct LetExpr(DeclId type, Expr def, Expr body);
 
 union Expr(
-    Id var,
+    VarExpr var,
     AppExpr apply,
     UnionExpr union,
     AccessExpr access,
