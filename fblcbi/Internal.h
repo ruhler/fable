@@ -81,6 +81,12 @@ typedef struct {
   Expr* body;
 } UnionExpr;
 
+typedef struct {
+  ExprTag tag;
+  Expr* object;
+  Id field;
+} AccessExpr;
+
 typedef enum {
   STRUCT_DECL,    // TypeDecl
   UNION_DECL,     // TypeDecl

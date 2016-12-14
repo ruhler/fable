@@ -9,5 +9,5 @@ set prg {
   };
 }
 expect_result Donut() $prg main
-skip expect_result_b "" $prg 3
+expect_result_b "" $prg 3
 

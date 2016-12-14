@@ -179,7 +179,7 @@ typedef struct {
 
 static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next);
 //static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next);
-//static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next);
+static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next);
 //static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next);
 //static Cmd* MkCondActnCmd(UnionValue* value, Actn** choices, Value** target, Cmd* next);
 static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next);
@@ -472,7 +472,7 @@ static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next)
 //
 // Inputs:
 //   value - The value that will be accessed.
-//   field - The name of the field to access.
+//   field - The id of the field to access.
 //   target - The target destination of the accessed field.
 //   next - The command to run after this one.
 //
@@ -482,16 +482,16 @@ static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next)
 // Side effects:
 //   None.
 
-//static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next)
-//{
-//  AccessCmd* cmd = MALLOC(sizeof(AccessCmd));
-//  cmd->tag = CMD_ACCESS;
-//  cmd->next = next;
-//  cmd->value = value;
-//  cmd->field = field;
-//  cmd->target = target;
-//  return (Cmd*)cmd;
-//}
+static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next)
+{
+  AccessCmd* cmd = MALLOC(sizeof(AccessCmd));
+  cmd->tag = CMD_ACCESS;
+  cmd->next = next;
+  cmd->value = value;
+  cmd->field = field;
+  cmd->target = target;
+  return (Cmd*)cmd;
+}
 
 // MkCondExprCmd --
 //   
@@ -797,14 +797,13 @@ static void Run(Program* program, Threads* threads, Thread* thread)
           }
 
           case ACCESS_EXPR: {
-            assert(false && "TODO");
-//            // Add to the top of the command list:
-//            // object -> access -> ...
-//            AccessExpr* access_expr = (AccessExpr*)expr;
-//            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(
-//                NULL, access_expr->field.name, target, next);
-//            next = MkExprCmd(access_expr->object, &(acmd->value), (Cmd*)acmd);
-//            break;
+            // Add to the top of the command list:
+            // object -> access -> ...
+            AccessExpr* access_expr = (AccessExpr*)expr;
+            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(
+                NULL, access_expr->field, target, next);
+            next = MkExprCmd(access_expr->object, &(acmd->value), (Cmd*)acmd);
+            break;
           }
 
           case UNION_EXPR: {
@@ -986,27 +985,23 @@ static void Run(Program* program, Threads* threads, Thread* thread)
       }               
 
       case CMD_ACCESS: {
-        assert(false && "TODO");
-//        AccessCmd* cmd = (AccessCmd*)thread->cmd;
-//        Type* type = cmd->value->type;
-//        int target_tag = TagForField(type, cmd->field);
-//        assert(target_tag >= 0);
-//        Value** target = cmd->target;
-//        if (type->kind == KIND_STRUCT) {
-//          Value* value = ((StructValue*)cmd->value)->fieldv[target_tag];
-//          *target = Copy(value);
-//        } else {
-//          assert(type->kind == KIND_UNION);
-//          UnionValue* union_value = (UnionValue*)cmd->value;
-//          if (union_value->tag == target_tag) {
-//            *target = Copy(union_value->field);
-//          } else {
-//            fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
-//            abort();
-//          }
-//        }
-//        Release(cmd->value);
-//        break;
+        AccessCmd* cmd = (AccessCmd*)thread->cmd;
+        Value** target = cmd->target;
+        if (cmd->value->kind == UNION_KIND) {
+          UnionValue* union_value = (UnionValue*)cmd->value;
+          if (union_value->tag == cmd->field) {
+            *target = Copy(union_value->field);
+          } else {
+            fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
+            abort();
+          }
+        } else {
+          assert(cmd->field < cmd->value->kind);
+          Value* value = ((StructValue*)cmd->value)->fields[cmd->field];
+          *target = Copy(value);
+        }
+        Release(cmd->value);
+        break;
       }
 
       case CMD_COND_EXPR: {

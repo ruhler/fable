@@ -4,25 +4,25 @@
 static Expr** DecodeExprs(Allocator* alloc, InputBitStream* bits, size_t* count);
 
 
-static Id DecodeId(Allocator* alloc, InputBitStream* bits)
+static Id DecodeId(InputBitStream* bits)
 {
   switch (ReadBits(bits, 2)) {
     case 0: return 0;
     case 1: return 1;
-    case 2: return 2 * DecodeId(alloc, bits);
-    case 3: return 2 * DecodeId(alloc, bits) + 1;
+    case 2: return 2 * DecodeId(bits);
+    case 3: return 2 * DecodeId(bits) + 1;
     default: assert(false && "Unsupported Id tag");
   }
 }
 
-static DeclId DecodeDeclId(Allocator* alloc, InputBitStream* bits)
+static DeclId DecodeDeclId(InputBitStream* bits)
 {
-  return DecodeId(alloc, bits);
+  return DecodeId(bits);
 }
 
-static Type DecodeType(Allocator* alloc, InputBitStream* bits)
+static Type DecodeType(InputBitStream* bits)
 {
-  return DecodeId(alloc, bits);
+  return DecodeId(bits);
 }
 
 static Type* DecodeNonEmptyTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
@@ -31,7 +31,7 @@ static Type* DecodeNonEmptyTypes(Allocator* alloc, InputBitStream* bits, size_t*
   VectorInit(alloc, &vector, sizeof(Type));
   do {
     Type* ptr = VectorAppend(&vector);
-    *ptr = DecodeType(alloc, bits);
+    *ptr = DecodeType(bits);
   } while (ReadBits(bits, 1));
   return VectorExtract(&vector, count);
 }
@@ -42,7 +42,7 @@ static Type* DecodeTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
   VectorInit(alloc, &vector, sizeof(Type));
   while (ReadBits(bits, 1)) {
     Type* ptr = VectorAppend(&vector);
-    *ptr = DecodeType(alloc, bits);
+    *ptr = DecodeType(bits);
   }
   return VectorExtract(&vector, count);
 }
@@ -53,7 +53,7 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
     case APP_EXPR: {
       AppExpr* expr = Alloc(alloc, sizeof(AppExpr));
       expr->tag = APP_EXPR;
-      expr->func = DecodeDeclId(alloc, bits);
+      expr->func = DecodeDeclId(bits);
       expr->argv = DecodeExprs(alloc, bits, &(expr->argc));
       return (Expr*)expr;
     }
@@ -61,10 +61,18 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
     case UNION_EXPR: {
       UnionExpr* expr = Alloc(alloc, sizeof(UnionExpr));
       expr->tag = UNION_EXPR;
-      expr->type = DecodeDeclId(alloc, bits);
-      expr->field = DecodeId(alloc, bits);
+      expr->type = DecodeDeclId(bits);
+      expr->field = DecodeId(bits);
       expr->body = DecodeExpr(alloc, bits);
       return (Expr*)expr;
+    }
+
+    case ACCESS_EXPR: {
+     AccessExpr* expr = Alloc(alloc, sizeof(AccessExpr));
+     expr->tag = ACCESS_EXPR;
+     expr->object = DecodeExpr(alloc, bits);
+     expr->field = DecodeId(bits);
+     return (Expr*)expr;
     }
 
     default:
@@ -105,7 +113,7 @@ static Decl* DecodeDecl(Allocator* alloc, InputBitStream* bits)
       FuncDecl* decl = Alloc(alloc, sizeof(FuncDecl));
       decl->tag = FUNC_DECL;
       decl->argv = DecodeTypes(alloc, bits, &(decl->argc));
-      decl->return_type = DecodeType(alloc, bits);
+      decl->return_type = DecodeType(bits);
       decl->body = DecodeExpr(alloc, bits);
       return decl->body == NULL ? NULL : (Decl*)decl;
     }
