@@ -180,7 +180,7 @@ typedef struct {
 static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next);
 //static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next);
 static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next);
-//static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next);
+static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next);
 //static Cmd* MkCondActnCmd(UnionValue* value, Actn** choices, Value** target, Cmd* next);
 static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next);
 static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next);
@@ -510,16 +510,16 @@ static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next)
 // Side effects:
 //   None.
 
-//static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next)
-//{
-//  CondExprCmd* cmd = MALLOC(sizeof(CondExprCmd));
-//  cmd->tag = CMD_COND_EXPR;
-//  cmd->next = next;
-//  cmd->value = value;
-//  cmd->choices = choices;
-//  cmd->target = target;
-//  return (Cmd*)cmd;
-//}
+static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next)
+{
+  CondExprCmd* cmd = MALLOC(sizeof(CondExprCmd));
+  cmd->tag = CMD_COND_EXPR;
+  cmd->next = next;
+  cmd->value = value;
+  cmd->choices = choices;
+  cmd->target = target;
+  return (Cmd*)cmd;
+}
 
 // MkCondActnCmd --
 //   
@@ -840,15 +840,14 @@ static void Run(Program* program, Threads* threads, Thread* thread)
           }
 
           case COND_EXPR: {
-            assert(false && "TODO");
-//            // Add to the top of the command list:
-//            // select -> econd -> ...
-//            CondExpr* cond_expr = (CondExpr*)expr;
-//            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(
-//                NULL, cond_expr->argv, target, next);
-//            next = MkExprCmd(
-//                cond_expr->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
-//            break;
+            // Add to the top of the command list:
+            // select -> econd -> ...
+            CondExpr* cond_expr = (CondExpr*)expr;
+            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(
+                NULL, cond_expr->argv, target, next);
+            next = MkExprCmd(
+                cond_expr->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
+            break;
           }
         }
         break;

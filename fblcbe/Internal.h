@@ -83,10 +83,10 @@ typedef struct LocName {
 typedef enum {
   VAR_EXPR,
   APP_EXPR,
-  ACCESS_EXPR,
   UNION_EXPR,
-  LET_EXPR,
+  ACCESS_EXPR,
   COND_EXPR,
+  LET_EXPR,
 } ExprTag;
 
 // Expr is the base structure for all  expressions. Each

@@ -87,6 +87,13 @@ typedef struct {
   Id field;
 } AccessExpr;
 
+typedef struct {
+  ExprTag tag;
+  Expr* select;
+  size_t argc;
+  Expr** argv;
+} CondExpr;
+
 typedef enum {
   STRUCT_DECL,    // TypeDecl
   UNION_DECL,     // TypeDecl

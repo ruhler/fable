@@ -24,7 +24,7 @@ union IdList(Unit nil, NonEmptyIdList cons);
 struct AppExpr(DeclId func, ExprList args);
 struct UnionExpr(DeclId type, Id field, Expr body);
 struct AccessExpr(Expr object, Id field);
-struct CondExpr(Expr select, ExprList args);
+struct CondExpr(Expr select, NonEmptyExprList args);
 struct LetExpr(DeclId type, Expr def, Expr body);
 
 union Expr(

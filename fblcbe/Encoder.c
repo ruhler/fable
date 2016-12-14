@@ -41,15 +41,14 @@ static void EncodeType(OutputBitStream* stream, TypeDecl* type)
 
 static void EncodeExpr(OutputBitStream* stream, Expr* expr)
 {
+  WriteBits(stream, 3, expr->tag);
   switch (expr->tag) {
     case VAR_EXPR:
-      WriteBits(stream, 3, 0);
       assert(false && "TODO");
       break;
 
     case APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
-      WriteBits(stream, 3, 1);
       EncodeDeclId(stream, app_expr->func.id);
       for (size_t i = 0; i < app_expr->argc; ++i) {
         WriteBits(stream, 1, 1);
@@ -59,28 +58,34 @@ static void EncodeExpr(OutputBitStream* stream, Expr* expr)
       break;
     }
 
-    case ACCESS_EXPR: {
-      AccessExpr* access_expr = (AccessExpr*)expr;
-      WriteBits(stream, 3, 3);
-      EncodeExpr(stream, access_expr->object);
-      EncodeId(stream, access_expr->field.id);
-      break;
-    }
-
     case UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
-      WriteBits(stream, 3, 2);
       EncodeDeclId(stream, union_expr->type.id);
       EncodeId(stream, union_expr->field.id);
       EncodeExpr(stream, union_expr->value);
       break;
     }
 
-    case LET_EXPR:
-      assert(false && "TODO");
+    case ACCESS_EXPR: {
+      AccessExpr* access_expr = (AccessExpr*)expr;
+      EncodeExpr(stream, access_expr->object);
+      EncodeId(stream, access_expr->field.id);
       break;
+    }
 
-    case COND_EXPR:
+    case COND_EXPR: {
+      CondExpr* cond_expr = (CondExpr*)expr;
+      EncodeExpr(stream, cond_expr->select);
+      EncodeExpr(stream, cond_expr->argv[0]);
+      for (size_t i = 1; i < cond_expr->argc; ++i) {
+        WriteBits(stream, 1, 1);
+        EncodeExpr(stream, cond_expr->argv[i]);
+      }
+      WriteBits(stream, 1, 0);
+      break;
+    }
+
+    case LET_EXPR:
       assert(false && "TODO");
       break;
 

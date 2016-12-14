@@ -1,9 +1,6 @@
 
 #include "Internal.h"
 
-static Expr** DecodeExprs(Allocator* alloc, InputBitStream* bits, size_t* count);
-
-
 static Id DecodeId(InputBitStream* bits)
 {
   switch (ReadBits(bits, 2)) {
@@ -54,7 +51,13 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
       AppExpr* expr = Alloc(alloc, sizeof(AppExpr));
       expr->tag = APP_EXPR;
       expr->func = DecodeDeclId(bits);
-      expr->argv = DecodeExprs(alloc, bits, &(expr->argc));
+      Vector vector;
+      VectorInit(alloc, &vector, sizeof(Expr*));
+      while (ReadBits(bits, 1)) {
+        Expr** ptr = VectorAppend(&vector);
+        *ptr = DecodeExpr(alloc, bits);
+      }
+      expr->argv = VectorExtract(&vector, &expr->argc);
       return (Expr*)expr;
     }
 
@@ -75,21 +78,24 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
      return (Expr*)expr;
     }
 
+    case COND_EXPR: {
+      CondExpr* expr = Alloc(alloc, sizeof(CondExpr));
+      expr->tag = COND_EXPR;
+      expr->select = DecodeExpr(alloc, bits);
+      Vector vector;
+      VectorInit(alloc, &vector, sizeof(Expr*));
+      do { 
+        Expr** ptr = VectorAppend(&vector);
+        *ptr = DecodeExpr(alloc, bits);
+      } while (ReadBits(bits, 1));
+      expr->argv = VectorExtract(&vector, &expr->argc);
+      return (Expr*)expr;
+    }
+
     default:
       assert(false && "TODO: Expr type");
       return NULL;
   }
-}
-
-static Expr** DecodeExprs(Allocator* alloc, InputBitStream* bits, size_t* count)
-{
-  Vector vector;
-  VectorInit(alloc, &vector, sizeof(Expr*));
-  while (ReadBits(bits, 1)) {
-    Expr** ptr = VectorAppend(&vector);
-    *ptr = DecodeExpr(alloc, bits);
-  }
-  return VectorExtract(&vector, count);
 }
 
 static Decl* DecodeDecl(Allocator* alloc, InputBitStream* bits)
