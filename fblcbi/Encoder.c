@@ -163,26 +163,29 @@ static size_t SizeOfTag(size_t count)
   return size;
 }
 
-Value* DecodeValue(Allocator* alloc, InputBitStream* bits, Program* prg, Type type)
+Value* DecodeValue(InputBitStream* bits, Program* prg, Type type)
 {
   Decl* decl = prg->declv[type];
   switch (decl->tag) {
     case STRUCT_DECL: {
       TypeDecl* struct_decl = (TypeDecl*)decl;
       size_t fieldc = struct_decl->fieldc;
-      StructValue* value = Alloc(alloc, sizeof(StructValue) + fieldc * sizeof(Value*));
+      StructValue* value = MALLOC(sizeof(StructValue) + fieldc * sizeof(Value*));
       value->refcount = 1;
+      value->kind = fieldc;
       for (size_t i = 0; i < fieldc; ++i) {
-        value->fields[i] = DecodeValue(alloc, bits, prg, struct_decl->fieldv[i]);
+        value->fields[i] = DecodeValue(bits, prg, struct_decl->fieldv[i]);
       }
       return (Value*)value;
     }
 
     case UNION_DECL: {
       TypeDecl* union_decl = (TypeDecl*)decl;
-      UnionValue* value = Alloc(alloc, sizeof(UnionValue));
+      UnionValue* value = MALLOC(sizeof(UnionValue));
+      value->refcount = 1;
+      value->kind = UNION_KIND;
       value->tag = ReadBits(bits, SizeOfTag(union_decl->fieldc));
-      value->field = DecodeValue(alloc, bits, prg, union_decl->fieldv[value->tag]);
+      value->field = DecodeValue(bits, prg, union_decl->fieldv[value->tag]);
       return (Value*)value;
     }
 

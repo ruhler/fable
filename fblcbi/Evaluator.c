@@ -1093,25 +1093,31 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 // Inputs:
 //   program - The program environment.
 //   func - The function to execute.
+//   args - Arguments to the function to execute.
 //
 // Returns:
 //   The result of executing the given procedure in the program environment
 //   with the given ports and arguments.
 //
 // Side effects:
-//   None.
+//   Releases the args values.
 
-Value* Execute(Program* program, FuncDecl* func)
+Value* Execute(Program* program, FuncDecl* func, Value** args)
 {
-  Cmd* cmd = NULL;
-  cmd = MkPopScopeCmd(NULL, NULL, cmd);
+  Vars* vars = MALLOC(sizeof(Vars) + func->argc * sizeof(Value*)); 
+  vars->size = func->argc;
+  for (size_t i = 0; i < func->argc; ++i) {
+    vars->values[i] = args[i];
+  }
+
   Value* result = NULL;
+  Cmd* cmd = MkPopScopeCmd(NULL, NULL, NULL);
   cmd = MkExprCmd(func->body, &result, cmd);
 
   Threads threads;
   threads.head = NULL;
   threads.tail = NULL;
-  AddThread(&threads, NewThread(NULL, NULL, cmd));
+  AddThread(&threads, NewThread(vars, NULL, cmd));
 
   Thread* thread = GetThread(&threads);
   while (thread != NULL) {

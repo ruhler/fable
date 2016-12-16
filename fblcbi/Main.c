@@ -72,6 +72,8 @@ int main(int argc, char* argv[])
 
   const char* program_bits = argv[1];
   size_t entry = atoi(argv[2]);
+  argv += 3;
+  argc -= 3;
 
   InputBitStream bits;
   OpenBinaryStringInputBitStream(&bits, program_bits);
@@ -92,12 +94,20 @@ int main(int argc, char* argv[])
   }
 
   FuncDecl* func_decl = (FuncDecl*)decl;
-  if (func_decl->argc != 0) {
-    fprintf(stderr, "Error: TODO: support arguments to main function.\n");
+  if (func_decl->argc != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n",
+        func_decl->argc, argc);
     return 1;
   }
 
-  Value* value = Execute(program, func_decl);
+  Value* args[argc];
+  for (size_t i = 0; i < argc; ++i) {
+    InputBitStream argbits;
+    OpenBinaryStringInputBitStream(&argbits, argv[i]);
+    args[i] = DecodeValue(&argbits, program, func_decl->argv[i]);
+  }
+
+  Value* value = Execute(program, func_decl, args);
   assert(value != NULL);
 
   OutputBitStream output;

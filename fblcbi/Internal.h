@@ -173,12 +173,12 @@ void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
 void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 
 // Encoder
-Value* DecodeValue(Allocator* alloc, InputBitStream* bits, Program* prg, Type type);
+Value* DecodeValue(InputBitStream* bits, Program* prg, Type type);
 void EncodeValue(OutputBitStream* bits, Program* prg, Type type, Value* value);
 Program* DecodeProgram(Allocator* alloc, InputBitStream* bits);
 
 // Evaluator
-Value* Execute(Program* program, FuncDecl* func);
+Value* Execute(Program* program, FuncDecl* func, Value** args);
 
 #endif // INTERNAL_H_
 
