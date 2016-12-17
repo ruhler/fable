@@ -99,6 +99,13 @@ typedef struct {
   Expr** argv;
 } CondExpr;
 
+typedef struct {
+  ExprTag tag;
+  DeclId type;
+  Expr* def;
+  Expr* body;
+} LetExpr;
+
 typedef enum {
   STRUCT_DECL,    // TypeDecl
   UNION_DECL,     // TypeDecl
