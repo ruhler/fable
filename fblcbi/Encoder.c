@@ -22,8 +22,8 @@ static TypeId* DecodeNonEmptyTypes(Allocator* alloc, InputBitStream* bits, size_
   } while (ReadBits(bits, 1));
   return VectorExtract(&vector, count);
 }
-
-static TypeId* DecodeTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
+
+static TypeId* DecodeTypeIds(Allocator* alloc, InputBitStream* bits, size_t* count)
 {
   Vector vector;
   VectorInit(alloc, &vector, sizeof(TypeId));
@@ -117,39 +117,160 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
       return NULL;
   }
 }
+
+static Port* DecodePorts(Allocator* alloc, InputBitStream* bits, size_t* count)
+{
+  Vector vector;
+  VectorInit(alloc, &vector, sizeof(Port));
+  while (ReadBits(bits, 1)) {
+    Port* ptr = VectorAppend(&vector);
+    ptr->type = DecodeId(bits);
+    ptr->polarity = ReadBits(bits, 1);
+  }
+  return VectorExtract(&vector, count);
+}
+
+// DecodeActn --
+//
+//   Read an action from a bit stream.
+//
+// Inputs:
+//   alloc - allocator to use to build the action.
+//   bits - stream of bits to read the action from.
+//
+// Results:
+//   The decoded action.
+//
+// Side effects:
+//   The bit stream is advanced to just past the action read.
 
+static Actn* DecodeActn(Allocator* alloc, InputBitStream* bits)
+{
+  switch (ReadBits(bits, 3)) {
+    case EVAL_ACTN: {
+      EvalActn* actn = Alloc(alloc, sizeof(EvalActn));
+      actn->tag = EVAL_ACTN;
+      actn->expr = DecodeExpr(alloc, bits);
+      return (Actn*)actn;
+    }
+
+    case GET_ACTN: {
+      GetActn* actn = Alloc(alloc, sizeof(GetActn));
+      actn->tag = GET_ACTN;
+      actn->port = DecodeId(bits);
+      return (Actn*)actn;
+    }
+
+    case PUT_ACTN: {
+      PutActn* actn = Alloc(alloc, sizeof(PutActn));
+      actn->tag = PUT_ACTN;
+      actn->port = DecodeId(bits);
+      actn->arg = DecodeExpr(alloc, bits);
+      return (Actn*)actn;
+    }
+
+    case COND_ACTN: {
+      CondActn* actn = Alloc(alloc, sizeof(CondActn));
+      actn->tag = COND_ACTN;
+      actn->select = DecodeExpr(alloc, bits);
+      Vector vector;
+      VectorInit(alloc, &vector, sizeof(Actn*));
+      do { 
+        Actn** ptr = VectorAppend(&vector);
+        *ptr = DecodeActn(alloc, bits);
+      } while (ReadBits(bits, 1));
+      actn->argv = VectorExtract(&vector, &actn->argc);
+      return (Actn*)actn;
+    }
+
+    case CALL_ACTN: {
+      CallActn* actn = Alloc(alloc, sizeof(CallActn));
+      actn->tag = CALL_ACTN;
+      actn->proc = DecodeId(bits);
+      Vector port_vector;
+      VectorInit(alloc, &port_vector, sizeof(PortId));
+      while (ReadBits(bits, 1)) {
+        PortId* ptr = VectorAppend(&port_vector);
+        *ptr = DecodeId(bits);
+      }
+      actn->portv = VectorExtract(&port_vector, &actn->portc);
+      Vector arg_vector;
+      VectorInit(alloc, &arg_vector, sizeof(Expr*));
+      while (ReadBits(bits, 1)) {
+        Expr** ptr = VectorAppend(&arg_vector);
+        *ptr = DecodeExpr(alloc, bits);
+      }
+      actn->argv = VectorExtract(&arg_vector, &actn->argc);
+      return (Actn*)actn;
+    }
+
+    case LINK_ACTN: {
+      LinkActn* actn = Alloc(alloc, sizeof(LinkActn));
+      actn->tag = LINK_ACTN;
+      actn->type = DecodeId(bits);
+      actn->body = DecodeActn(alloc, bits);
+      return (Actn*)actn;
+    }
+
+    case EXEC_ACTN: {
+      ExecActn* actn = Alloc(alloc, sizeof(ExecActn));
+      actn->tag = LINK_ACTN;
+      Vector vector;
+      VectorInit(alloc, &vector, sizeof(Exec));
+      do { 
+        Exec* ptr = VectorAppend(&vector);
+        ptr->type = DecodeId(bits);
+        ptr->def = DecodeActn(alloc, bits);
+      } while (ReadBits(bits, 1));
+      actn->execv = VectorExtract(&vector, &actn->execc);
+      actn->body = DecodeActn(alloc, bits);
+      return (Actn*)actn;
+    }
+
+    default:
+      assert(false && "Invalid action tag");
+      return NULL;
+  }
+}
+
 static Decl* DecodeDecl(Allocator* alloc, InputBitStream* bits)
 {
   switch (ReadBits(bits, 2)) {
-    case 0: {
+    case STRUCT_DECL: {
       TypeDecl* decl = Alloc(alloc, sizeof(TypeDecl));
       decl->tag = STRUCT_DECL;
-      decl->fieldv = DecodeTypes(alloc, bits, &(decl->fieldc));
+      decl->fieldv = DecodeTypeIds(alloc, bits, &(decl->fieldc));
       return (Decl*)decl;
     }
 
-    case 1: {
+    case UNION_DECL: {
       TypeDecl* decl = Alloc(alloc, sizeof(TypeDecl));
       decl->tag = UNION_DECL;
       decl->fieldv = DecodeNonEmptyTypes(alloc, bits, &(decl->fieldc));
       return (Decl*)decl;
     }
 
-    case 2: {
+    case FUNC_DECL: {
       FuncDecl* decl = Alloc(alloc, sizeof(FuncDecl));
       decl->tag = FUNC_DECL;
-      decl->argv = DecodeTypes(alloc, bits, &(decl->argc));
+      decl->argv = DecodeTypeIds(alloc, bits, &(decl->argc));
       decl->return_type = DecodeId(bits);
       decl->body = DecodeExpr(alloc, bits);
       return (Decl*)decl;
     }
 
-    case 3:
-      assert(false && "TODO: Support ProcDecl tag");
-      return NULL;
+    case PROC_DECL: {
+      ProcDecl* decl = Alloc(alloc, sizeof(ProcDecl));
+      decl->tag = PROC_DECL;
+      decl->portv = DecodePorts(alloc, bits, &(decl->portc));
+      decl->argv = DecodeTypeIds(alloc, bits, &(decl->argc));
+      decl->return_type = DecodeId(bits);
+      decl->body = DecodeActn(alloc, bits);
+      return (Decl*)decl;
+    }
 
     default:
-      assert(false && "Unsupported Decl tag");
+      assert(false && "invalid decl tag");
       return NULL;
   }
 }

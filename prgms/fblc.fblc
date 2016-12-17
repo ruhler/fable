@@ -44,7 +44,7 @@ struct FuncDecl(TypeList args, DeclId return, Expr body);
 
 struct PutActn(Id port, Expr arg);
 struct CondActn(Expr select, NonEmptyActnList args);
-struct CallActn(IdList ports, ExprList args);
+struct CallActn(DeclId proc, IdList ports, ExprList args);
 struct LinkActn(DeclId type, Actn body);
 
 struct NonEmptyExecList(DeclId type, Actn def, ExecList tail);

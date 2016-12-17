@@ -133,6 +133,90 @@ typedef struct {
   Expr* body;
 } FuncDecl;
 
+typedef enum {
+  GET_POLARITY,
+  PUT_POLARITY
+} Polarity;
+
+typedef struct {
+  TypeId type;
+  Polarity polarity;
+} Port;
+
+typedef enum {
+  EVAL_ACTN,
+  GET_ACTN,
+  PUT_ACTN,
+  COND_ACTN,
+  CALL_ACTN,
+  LINK_ACTN,
+  EXEC_ACTN
+} ActnTag;
+
+typedef struct {
+  ActnTag tag;
+} Actn;
+
+typedef struct {
+  ActnTag tag;
+  Expr* expr;
+} EvalActn;
+
+typedef struct {
+  ActnTag tag;
+  PortId port;
+} GetActn;
+
+typedef struct {
+  ActnTag tag;
+  PortId port;
+  Expr* arg;
+} PutActn;
+
+typedef struct {
+  ActnTag tag;
+  Expr* select;
+  size_t argc;
+  Actn** argv;
+} CondActn;
+
+typedef struct {
+  ActnTag tag;
+  DeclId proc;
+  size_t portc;
+  PortId* portv;
+  size_t argc;
+  Expr** argv;
+} CallActn;
+
+typedef struct {
+  ActnTag tag;
+  TypeId type;
+  Actn* body;
+} LinkActn;
+
+typedef struct {
+  TypeId type;
+  Actn* def;
+} Exec;
+
+typedef struct {
+  ActnTag tag;
+  size_t execc;
+  Exec* execv;
+  Actn* body;
+} ExecActn;
+
+typedef struct {
+  DeclTag tag;
+  size_t portc;
+  Port* portv;
+  size_t argc;
+  TypeId* argv; 
+  TypeId return_type;
+  Actn* body;
+} ProcDecl;
+
 typedef struct {
   size_t declc;
   Decl** declv;

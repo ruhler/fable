@@ -143,6 +143,7 @@ static void EncodeActn(OutputBitStream* stream, Actn* actn)
 
     case CALL_ACTN: {
       CallActn* call_actn = (CallActn*)actn;
+      EncodeId(stream, call_actn->proc.id);
       for (size_t i = 0; i < call_actn->portc; ++i) {
         WriteBits(stream, 1, 1);
         EncodeId(stream, call_actn->ports[i].id);
