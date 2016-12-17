@@ -15,7 +15,6 @@
 typedef struct Vars {
   Name name;
   TypeDecl* type;
-  int id;
   struct Vars* next;
 } Vars;
 
@@ -141,7 +140,6 @@ static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next)
 {
   vars->name = name;
   vars->type = type;
-  vars->id = next == NULL ? 0 : next->id + 1;
   vars->next = next;
   return vars;
 }
@@ -163,9 +161,9 @@ static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next)
 
 static TypeDecl* ResolveVar(Vars* vars, LocName* name)
 {
-  while (vars != NULL) {
+  for (size_t i = 0; vars != NULL; ++i) {
     if (NamesEqual(vars->name, name->name)) {
-      name->id = vars->id;
+      name->id = i;
       return vars->type;
     }
     vars = vars->next;

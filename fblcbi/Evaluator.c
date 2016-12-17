@@ -4,19 +4,10 @@
 
 #include "Internal.h"
 
-typedef struct Link Link;
+typedef struct Vars Vars;
+typedef struct Ports Ports;
 typedef struct Cmd Cmd;
 typedef struct Thread Thread;
-
-typedef struct {
-  size_t size;
-  Value* values[];
-} Vars;
-
-typedef struct {
-  size_t size;
-  Link* links[];
-} Ports;
 
 // Threads
 //
@@ -59,29 +50,54 @@ typedef struct Values {
   struct Values* next;
 } Values;
 
-struct Link {
+typedef struct Link {
   Values* head;
   Values* tail;
   struct Threads waiting;
-};
+} Link;
 
 //static Link* NewLink();
 static void FreeLink(Link* link);
 static void PutValue(Link* link, Value* value);
 //static Value* GetValue(Link* link);
 
+// The following defines a Vars structure for storing the value of local
+// variables. It is possible to extend a local variable scope without
+// modifying the original local variable scope, and it is possible to access
+// the address of a value stored in the variable scope. Typical usage is to
+// extend the variable scope by reserving slots for values that are yet to be
+// computed, and to ensure the values are computed and updated by the time the
+// scope is used.
+
+struct Vars {
+  Value* value;
+  struct Vars* next;
+};
+
+// List of ports in scope.
+
+struct Ports {
+  Link* link;
+  struct Ports* next;
+};
+static Value** LookupRef(Vars* vars, Id id);
+static Value* LookupVal(Vars* vars, Id id);
+static Vars* AddVar(Vars* vars);
+// static Link* LookupPort(Ports* ports, Id id);
+// static Ports* AddPort(Ports* ports, Link* link);
+
 // The evaluator works by breaking down action and expression evaluation into
 // a sequence of commands that can be executed in turn. All of the state of
 // evaluation, including the stack, is stored explicitly in the command list.
 // By storing the stack explicitly instead of piggy-backing off of the C
 // runtime stack, we are able to implement the evaluator as a single while
-// loop and avoid problems with supporting tail recursive  programs.
+// loop and avoid problems with supporting tail recursive programs.
 
 // The following CmdTag enum identifies the types of commands used to evaluate
 // actions and expressions. The Cmd struct represents a command list.
 typedef enum {
-  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND_EXPR,
-  CMD_COND_ACTN, CMD_SCOPE, CMD_JOIN, CMD_PUT, CMD_FREE_LINK,
+  CMD_EXPR, CMD_ACTN, CMD_ACCESS, CMD_COND_EXPR, CMD_COND_ACTN,
+  CMD_SCOPE, CMD_JOIN, CMD_PUT, CMD_FREE_LINK,
 } CmdTag;
 
 // Cmd is the base structure common to all commands.
@@ -145,6 +161,9 @@ typedef struct {
 // CMD_SCOPE: The scope command sets the current ports and vars to the given
 // ports and vars.
 // If is_pop is true, then the old scope is freed before pushing the new one.
+// More precisely, the current scope's vars and ports are freed one-by-one
+// until they match the given vars and ports or there are no more left. Then
+// the scope change is made if necessary.
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
@@ -403,6 +422,118 @@ static void PutValue(Link* link, Value* value)
 //    }
 //  }
 //  return value;
+//}
+
+// LookupRef --
+//
+//   Look up a reference to the value of a variable in the given scope.
+//
+// Inputs:
+//   vars - The scope to look in for the variable reference.
+//   id - The id of the variable to lookup.
+//
+// Returns:
+//   A pointer to the value of the variable with the given id in vars.
+//
+// Side effects:
+//   The behavior is undefined if the variable is not found in scope.
+
+static Value** LookupRef(Vars* vars, Id id)
+{
+  for (size_t i = 0; i < id; ++i) {
+    assert(vars != NULL);
+    vars = vars->next;
+  }
+  assert(vars != NULL);
+  return &(vars->value);
+}
+
+// LookupVal --
+//
+//   Look up the value of a variable in the given scope.
+//
+// Inputs:
+//   vars - The scope to look in for the variable value.
+//   id - The id of the variable to lookup.
+//
+// Returns:
+//   The value of the variable with the given id in scope.
+//
+// Side effects:
+//   The behavior is undefined if the variable is not found in scope.
+
+static Value* LookupVal(Vars* vars, Id id)
+{
+  Value** ref = LookupRef(vars, id);
+  return *ref;
+}
+
+// AddVar --
+//   
+//   Extend the given scope with a new variable. Use LookupRef to access the
+//   newly added variable.
+//
+// Inputs:
+//   vars - The scope to extend.
+//
+// Returns:
+//   A new scope with the new variable and the contents of the given scope.
+//
+// Side effects:
+//   None.
+
+static Vars* AddVar(Vars* vars)
+{
+  Vars* newvars = MALLOC(sizeof(Vars));
+  newvars->value = NULL;
+  newvars->next = vars;
+  return newvars;
+}
+
+// LookupPort --
+//   
+//   Lookup up the link associated with the given port.
+//
+// Inputs:
+//   ports - The set of ports to look at.
+//   id - The id of the port to look up.
+//
+// Returns:
+//   The link associated with the given port.
+//
+// Side effects:
+//   The behavior is undefined if the port is not found.
+
+//static Link* LookupPort(Ports* ports, Id id)
+//{
+//  for (size_t i = 0; i < id; ++i) {
+//    assert(ports != NULL);
+//    ports = ports->next;
+//  }
+//  assert(ports != NULL);
+//  return ports->link;
+//}
+
+// AddPort --
+//   
+//   Extend the given port scope with a new port.
+//
+// Inputs:
+//   ports - The scope to extend.
+//   link - The underlying link of the port to add.
+//
+// Returns:
+//   A new scope with the new port and the contents of the given scope.
+//
+// Side effects:
+//   None.
+
+//static Ports* AddPort(Ports* ports, Link* link)
+//{
+//  Ports* nports = MALLOC(sizeof(Ports));
+//  nports->link = link;
+//  nports->next = ports;
+//  return nports;
 //}
 
 // MkExprCmd --
@@ -744,8 +875,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         switch (expr->tag) {
           case VAR_EXPR: {
             VarExpr* var_expr = (VarExpr*)expr;
-            assert(var_expr->var < thread->vars->size);
-            *target = Copy(thread->vars->values[var_expr->var]);
+            Value* value = LookupVal(thread->vars, var_expr->var);
+            *target = Copy(value);
             break;
           }
 
@@ -772,24 +903,20 @@ static void Run(Program* program, Threads* threads, Thread* thread)
               // the vars for the first scope command.
               // TODO: Avoid memory leaks in the case of tail calls.
 
-              // TODO: frame_size depends on variables declared in let
-              // expressions too. This could lead to subtle out of bounds
-              // array access. Remember to fix this when we add support for
-              // let expressions!
               FuncDecl* func = (FuncDecl*)decl;
-              size_t frame_size = func->argc;
-              Vars* vars = MALLOC(sizeof(Vars) + frame_size * sizeof(Value*)); 
-              vars->size = frame_size;
-              bzero(vars->values, frame_size * sizeof(Value*));
               next = MkPopScopeCmd(thread->vars, thread->ports, next);
               next = MkExprCmd(func->body, target, next);
-              next = MkPushScopeCmd(vars, thread->ports, next);
+              next = MkPushScopeCmd(NULL, thread->ports, next);
+
+              ScopeCmd* scmd = (ScopeCmd*)next;
+              Vars* nvars = NULL;
               for (size_t i = 0; i < func->argc; ++i) {
-                next = MkExprCmd(app_expr->argv[i], vars->values + i, next);
+                nvars = AddVar(nvars);
+                next = MkExprCmd(app_expr->argv[i], LookupRef(nvars, i), next);
               }
+              scmd->vars = nvars;
               break;
             }
-
             assert(false && "No such struct type or function found");
           }
 
@@ -816,24 +943,17 @@ static void Run(Program* program, Threads* threads, Thread* thread)
           }
 
           case LET_EXPR: {
-            assert(false && "TODO");
-//            assert(false && "Double check the frame size was set right!");
-//
-//            // Add to the top of the command list:
-//            // def -> push scope -> body -> (pop scope) -> ...
-//            LetExpr* let_expr = (LetExpr*)expr;
-//
-//            // No need to reset the scope if we are going to switch to
-//            // different scope immediately after anyway.
-//            if (!IsPopScope(next)) {
-//              next = MkPopScopeCmd(thread->vars, thread->ports, next);
-//            }
-//            Name var_name = let_expr->name.name;
-//            Vars* nvars = AddVar(thread->vars, var_name);
-//            next = MkExprCmd(let_expr->body, target, next);
-//            next = MkPushScopeCmd(nvars, thread->ports, next);
-//            next = MkExprCmd(let_expr->def, LookupRef(nvars, var_name), next);
-//            break;
+            // Add to the top of the command list:
+            // def -> push scope -> body -> pop scope -> ...
+            // TODO: Avoid memory leaks for tail calls.
+            LetExpr* let_expr = (LetExpr*)expr;
+
+            next = MkPopScopeCmd(thread->vars, thread->ports, next);
+            Vars* nvars = AddVar(thread->vars);
+            next = MkExprCmd(let_expr->body, target, next);
+            next = MkPushScopeCmd(nvars, thread->ports, next);
+            next = MkExprCmd(let_expr->def, LookupRef(nvars, 0), next);
+            break;
           }
 
           case COND_EXPR: {
@@ -1025,16 +1145,17 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         ScopeCmd* cmd = (ScopeCmd*)thread->cmd;
 
         if (cmd->is_pop) {
-          Vars* vars = thread->vars;
-          if (vars != NULL) {
-            for (size_t i = 0; i < vars->size; ++i) {
-              Release(vars->values[i]);
-            }
+          while (thread->vars != NULL && thread->vars != cmd->vars) {
+            Vars* vars = thread->vars;
+            thread->vars = vars->next;
+            Release(vars->value);
             FREE(vars);
           }
 
-          if (thread->ports != NULL) {
-            FREE(thread->ports);
+          while (thread->ports != NULL && thread->ports != cmd->ports) {
+            Ports* ports = thread->ports;
+            thread->ports = ports->next;
+            FREE(ports);
           }
         }
 
@@ -1104,10 +1225,10 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 
 Value* Execute(Program* program, FuncDecl* func, Value** args)
 {
-  Vars* vars = MALLOC(sizeof(Vars) + func->argc * sizeof(Value*)); 
-  vars->size = func->argc;
+  Vars* vars = NULL;
   for (size_t i = 0; i < func->argc; ++i) {
-    vars->values[i] = args[i];
+    vars = AddVar(vars);
+    *LookupRef(vars, 0) = args[i];
   }
 
   Value* result = NULL;

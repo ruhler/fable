@@ -17,6 +17,5 @@ set prg {
   };
 }
 expect_result B(Unit(),A(Unit(),Donut()),Unit()) $prg main
-# skip: requires support for let expression
-skip expect_result_b "" $prg 5
+expect_result_b "" $prg 5
 

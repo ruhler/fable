@@ -21,7 +21,7 @@ union PortList(Unit nil, NonEmptyPortList cons);
 struct NonEmptyIdList(Id head, IdList tail);
 union IdList(Unit nil, NonEmptyIdList cons);
 
-struct VarExpr(Id var);
+struct VarExpr(Id var);   // De Bruijn index of the variable
 struct AppExpr(DeclId func, ExprList args);
 struct UnionExpr(DeclId type, Id field, Expr body);
 struct AccessExpr(Expr object, Id field);
