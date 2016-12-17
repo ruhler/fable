@@ -22,13 +22,6 @@ static void EncodeDeclId(OutputBitStream* stream, size_t id)
 static void EncodeType(OutputBitStream* stream, TypeDecl* type)
 {
   bool cons = type->tag == STRUCT_DECL;
-  if (type->tag == STRUCT_DECL) {
-    WriteBits(stream, 2, 0);
-  } else {
-    assert(type->tag == UNION_DECL);
-    WriteBits(stream, 2, 1);
-  }
-
   for (size_t i = 0; i < type->fieldc; ++i) {
     if (cons) {
       WriteBits(stream, 1, 1);
@@ -103,7 +96,6 @@ static void EncodeExpr(OutputBitStream* stream, Expr* expr)
 
 static void EncodeFunc(OutputBitStream* stream, FuncDecl* func)
 {
-  WriteBits(stream, 2, 2);
   for (size_t i = 0; i < func->argc; ++i) {
     WriteBits(stream, 1, 1);
     EncodeDeclId(stream, func->argv[i].type.id);
@@ -113,9 +105,102 @@ static void EncodeFunc(OutputBitStream* stream, FuncDecl* func)
   EncodeExpr(stream, func->body);
 }
 
+static void EncodeActn(OutputBitStream* stream, Actn* actn)
+{
+  WriteBits(stream, 3, actn->tag);
+  switch (actn->tag) {
+    case EVAL_ACTN: {
+      EvalActn* eval_actn = (EvalActn*)actn;
+      EncodeExpr(stream, eval_actn->expr);
+      break;
+    }
+
+    case GET_ACTN: {
+      GetActn* get_actn = (GetActn*)actn;
+      EncodeId(stream, get_actn->port.id);
+      break;
+    }
+
+    case PUT_ACTN: {
+      PutActn* put_actn = (PutActn*)actn;
+      EncodeId(stream, put_actn->port.id);
+      EncodeExpr(stream, put_actn->expr);
+      break;
+    }
+
+    case COND_ACTN: {
+      CondActn* cond_actn = (CondActn*)actn;
+      EncodeExpr(stream, cond_actn->select);
+      assert(cond_actn->argc > 0);
+      EncodeActn(stream, cond_actn->args[0]);
+      for (size_t i = 1; i < cond_actn->argc; ++i) {
+        WriteBits(stream, 1, 1);
+        EncodeActn(stream, cond_actn->args[i]);
+      }
+      WriteBits(stream, 1, 0);
+      break;
+    }
+
+    case CALL_ACTN: {
+      CallActn* call_actn = (CallActn*)actn;
+      for (size_t i = 0; i < call_actn->portc; ++i) {
+        WriteBits(stream, 1, 1);
+        EncodeId(stream, call_actn->ports[i].id);
+      }
+      WriteBits(stream, 1, 0);
+      for (size_t i = 0; i < call_actn->exprc; ++i) {
+        WriteBits(stream, 1, 1);
+        EncodeExpr(stream, call_actn->exprs[i]);
+      }
+      WriteBits(stream, 1, 0);
+      break;
+    }
+
+    case LINK_ACTN: {
+      LinkActn* link_actn = (LinkActn*)actn;
+      EncodeDeclId(stream, link_actn->type.id);
+      EncodeActn(stream, link_actn->body);
+      break;
+    }
+
+    case EXEC_ACTN: {
+      ExecActn* exec_actn = (ExecActn*)actn;
+      assert(exec_actn->execc > 0);
+      EncodeDeclId(stream, exec_actn->execv[0].var.type.id);
+      EncodeActn(stream, exec_actn->execv[0].actn);
+      for (size_t i = 1; i < exec_actn->execc; ++i) {
+        WriteBits(stream, 1, 1);
+        EncodeDeclId(stream, exec_actn->execv[i].var.type.id);
+        EncodeActn(stream, exec_actn->execv[i].actn);
+      }
+      WriteBits(stream, 1, 0);
+      EncodeActn(stream, exec_actn->body);
+      break;
+    }
+
+    default:
+      assert(false && "Invalid action tag");
+      break;
+  }
+}
+
 static void EncodeProc(OutputBitStream* stream, ProcDecl* proc)
 {
-  assert(false && "TODO");
+  for (size_t i = 0; i < proc->portc; ++i) {
+    WriteBits(stream, 1, 1);
+    EncodeDeclId(stream, proc->portv[i].type.id);
+    EncodeDeclId(stream, proc->portv[i].polarity);
+  }
+  WriteBits(stream, 1, 0);
+
+  for (size_t i = 0; i < proc->argc; ++i) {
+    WriteBits(stream, 1, 1);
+    EncodeDeclId(stream, proc->argv[i].type.id);
+  }
+  WriteBits(stream, 1, 0);
+
+  EncodeDeclId(stream, proc->return_type.id);
+  EncodeActn(stream, proc->body);
 }
 
 // EncodeProgram -
@@ -139,6 +224,7 @@ void EncodeProgram(OutputBitStream* stream, Env* env)
       WriteBits(stream, 1, 1);
     }
     Decl* decl = env->declv[i];
+    WriteBits(stream, 2, decl->tag);
     switch (decl->tag) {
       case STRUCT_DECL:
       case UNION_DECL:

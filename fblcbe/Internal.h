@@ -178,7 +178,10 @@ typedef struct {
   Field* argv;
 } FuncDecl;
 
-typedef enum { POLARITY_PUT, POLARITY_GET } Polarity;
+typedef enum {
+  POLARITY_GET,
+  POLARITY_PUT
+} Polarity;
 
 typedef struct {
   LocName type;

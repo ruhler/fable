@@ -14,6 +14,9 @@ union TypeList(Unit nil, NonEmptyTypeList cons);
 struct NonEmptyExprList(Expr head, ExprList tail);
 union ExprList(Unit nil, NonEmptyExprList cons);
 
+struct NonEmptyActnList(Actn head, ActnList tail);
+union ActnList(Unit nil, NonEmptyActnList cons);
+
 union Polarity(Unit get, Unit put);
 struct NonEmptyPortList(DeclId type, Polarity polarity, PortList tail);
 union PortList(Unit nil, NonEmptyPortList cons);
@@ -40,13 +43,13 @@ union Expr(
 struct FuncDecl(TypeList args, DeclId return, Expr body);
 
 struct PutActn(Id port, Expr arg);
-struct CondActn(Expr select, Actn args);
+struct CondActn(Expr select, NonEmptyActnList args);
 struct CallActn(IdList ports, ExprList args);
 struct LinkActn(DeclId type, Actn body);
 
-struct NonEmptyDefList(DeclId type, Actn def, DefList tail);
-union DefList(Unit nil, NonEmptyDefList cons);
-struct ExecActn(DefList defs, Actn body);
+struct NonEmptyExecList(DeclId type, Actn def, ExecList tail);
+union ExecList(Unit nil, NonEmptyExecList cons);
+struct ExecActn(NonEmptyExecList execs, Actn body);
 
 union Actn(
     Expr eval,
