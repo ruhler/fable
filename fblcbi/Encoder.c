@@ -43,6 +43,20 @@ static Type* DecodeTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
   }
   return VectorExtract(&vector, count);
 }
+
+// DecodeExpr --
+//
+//   Read an expression from a bit stream.
+//
+// Inputs:
+//   alloc - allocator to use to build the expression.
+//   bits - stream of bits to read the expression from.
+//
+// Results:
+//   The decoded expression.
+//
+// Side effects:
+//   The bit stream is advanced to just past the expression read.
 
 static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
 {
@@ -99,8 +113,17 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
       return (Expr*)expr;
     }
 
+    case LET_EXPR: {
+      LetExpr* expr = Alloc(alloc, sizeof(LetExpr));
+      expr->tag = LET_EXPR;
+      expr->type = DecodeType(bits);
+      expr->def = DecodeExpr(alloc, bits);
+      expr->body = DecodeExpr(alloc, bits);
+      return (Expr*)expr;
+    }
+
     default:
-      assert(false && "TODO: Expr type");
+      assert(false && "Invalid expression tag");
       return NULL;
   }
 }
@@ -128,7 +151,7 @@ static Decl* DecodeDecl(Allocator* alloc, InputBitStream* bits)
       decl->argv = DecodeTypes(alloc, bits, &(decl->argc));
       decl->return_type = DecodeType(bits);
       decl->body = DecodeExpr(alloc, bits);
-      return decl->body == NULL ? NULL : (Decl*)decl;
+      return (Decl*)decl;
     }
 
     case 3:
