@@ -88,15 +88,32 @@ int main(int argc, char* argv[])
   }
 
   Decl* decl = program->declv[entry];
-  if (decl->tag != FUNC_DECL) {
-    fprintf(stderr, "entry %zi is not a function.\n", entry);
+  ProcDecl* proc = NULL;
+  if (decl->tag == PROC_DECL) {
+    proc = (ProcDecl*)decl;
+  } else if (decl->tag == FUNC_DECL) {
+    // Make a proc wrapper for the function.
+    FuncDecl* func = (FuncDecl*)decl;
+    EvalActn* body = Alloc(&alloc, sizeof(EvalActn));
+    body->tag = EVAL_ACTN;
+    body->expr = func->body;
+
+    proc = Alloc(&alloc, sizeof(ProcDecl));
+    proc->tag = PROC_DECL;
+    proc->portc = 0;
+    proc->portv = NULL;
+    proc->argc = func->argc;
+    proc->argv = func->argv;
+    proc->return_type = func->return_type;
+    proc->body = (Actn*)body;
+  } else {
+    fprintf(stderr, "entry %zi is not a function or process.\n", entry);
     return 1;
   }
 
-  FuncDecl* func_decl = (FuncDecl*)decl;
-  if (func_decl->argc != argc) {
+  if (proc->argc != argc) {
     fprintf(stderr, "expected %zi args, but %i were provided.\n",
-        func_decl->argc, argc);
+        proc->argc, argc);
     return 1;
   }
 
@@ -104,15 +121,15 @@ int main(int argc, char* argv[])
   for (size_t i = 0; i < argc; ++i) {
     InputBitStream argbits;
     OpenBinaryStringInputBitStream(&argbits, argv[i]);
-    args[i] = DecodeValue(&argbits, program, func_decl->argv[i]);
+    args[i] = DecodeValue(&argbits, program, proc->argv[i]);
   }
 
-  Value* value = Execute(program, func_decl, args);
+  Value* value = Execute(program, proc, args);
   assert(value != NULL);
 
   OutputBitStream output;
   OpenBinaryOutputBitStream(&output, STDOUT_FILENO);
-  EncodeValue(&output, program, func_decl->return_type, value);
+  EncodeValue(&output, program, proc->return_type, value);
   Release(value);
 
   FreeAll(&alloc);

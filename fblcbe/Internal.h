@@ -193,10 +193,10 @@ typedef enum {
   EVAL_ACTN,
   GET_ACTN,
   PUT_ACTN,
+  COND_ACTN,
   CALL_ACTN,
   LINK_ACTN,
   EXEC_ACTN,
-  COND_ACTN,
 } ActnTag;
 
 // Actn is the base structure for all  actions. Each specialization of

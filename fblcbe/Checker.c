@@ -543,6 +543,10 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
               exec->actn->loc, exec->var.type.name, type->name.name);
           return NULL;
         }
+        // TODO: Don't modify vars until after we have checked all the execs,
+        // because vars from earlier execs should not be visible in later
+        // execs.
+        // TODO: Test this case!
         vars = AddVar(nvars+i, exec->var.name.name, actual_type, vars);
       }
       return CheckActn(env, vars, gets, puts, exec_actn->body);

@@ -214,7 +214,7 @@ static Actn* DecodeActn(Allocator* alloc, InputBitStream* bits)
 
     case EXEC_ACTN: {
       ExecActn* actn = Alloc(alloc, sizeof(ExecActn));
-      actn->tag = LINK_ACTN;
+      actn->tag = EXEC_ACTN;
       Vector vector;
       VectorInit(alloc, &vector, sizeof(Exec));
       do { 

@@ -1,8 +1,7 @@
 
-* Implement fblci, fblc interpreter that takes binary description as input.
- - implement bit input and bit output streams.
- - port/translate fblc implementation to fblci.
- - get initial binary test passing.
+* Get tests of fblcbe and fblcbi to pass
+ - decide whether port ids should be by link or by port.
+ - test and fix bug in Checking of exec definitions.
 * Implement fblc front end to fblci.
 * Implement fbld front end to fblci.
 * Port calc Integer to an fbld module.

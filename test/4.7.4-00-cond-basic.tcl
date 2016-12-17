@@ -11,6 +11,5 @@ set prg {
 }
 
 expect_result Fruit:banana(Unit()) $prg main
-# skip: requires support for procs
-skip expect_result_b "01" $prg 2
+expect_result_b "01" $prg 2
 

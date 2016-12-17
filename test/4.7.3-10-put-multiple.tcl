@@ -16,6 +16,5 @@ set prg {
 }
 
 expect_result Bool:true(Unit()) $prg main
-# skip: requires support for procs
-skip expect_result_b "0" $prg 2
+expect_result_b "0" $prg 2
 

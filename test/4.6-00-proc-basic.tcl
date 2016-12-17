@@ -10,6 +10,5 @@ set prg {
 }
 
 expect_result Unit() $prg main
-# skip: requires support for procs
-skip expect_result_b "" $prg 1
+expect_result_b "" $prg 1
 

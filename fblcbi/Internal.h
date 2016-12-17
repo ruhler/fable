@@ -271,7 +271,7 @@ void EncodeValue(OutputBitStream* bits, Program* prg, TypeId type, Value* value)
 Program* DecodeProgram(Allocator* alloc, InputBitStream* bits);
 
 // Evaluator
-Value* Execute(Program* program, FuncDecl* func, Value** args);
+Value* Execute(Program* program, ProcDecl* proc, Value** args);
 
 #endif // INTERNAL_H_
 

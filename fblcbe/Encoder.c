@@ -190,7 +190,7 @@ static void EncodeProc(OutputBitStream* stream, ProcDecl* proc)
   for (size_t i = 0; i < proc->portc; ++i) {
     WriteBits(stream, 1, 1);
     EncodeDeclId(stream, proc->portv[i].type.id);
-    EncodeDeclId(stream, proc->portv[i].polarity);
+    WriteBits(stream, 1, proc->portv[i].polarity);
   }
   WriteBits(stream, 1, 0);
 
