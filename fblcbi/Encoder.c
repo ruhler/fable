@@ -1,7 +1,7 @@
 
 #include "Internal.h"
 
-static Id DecodeId(InputBitStream* bits)
+static size_t DecodeId(InputBitStream* bits)
 {
   switch (ReadBits(bits, 2)) {
     case 0: return 0;
@@ -12,34 +12,24 @@ static Id DecodeId(InputBitStream* bits)
   }
 }
 
-static DeclId DecodeDeclId(InputBitStream* bits)
-{
-  return DecodeId(bits);
-}
-
-static Type DecodeType(InputBitStream* bits)
-{
-  return DecodeId(bits);
-}
-
-static Type* DecodeNonEmptyTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
+static TypeId* DecodeNonEmptyTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
 {
   Vector vector;
-  VectorInit(alloc, &vector, sizeof(Type));
+  VectorInit(alloc, &vector, sizeof(TypeId));
   do {
-    Type* ptr = VectorAppend(&vector);
-    *ptr = DecodeType(bits);
+    TypeId* ptr = VectorAppend(&vector);
+    *ptr = DecodeId(bits);
   } while (ReadBits(bits, 1));
   return VectorExtract(&vector, count);
 }
 
-static Type* DecodeTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
+static TypeId* DecodeTypes(Allocator* alloc, InputBitStream* bits, size_t* count)
 {
   Vector vector;
-  VectorInit(alloc, &vector, sizeof(Type));
+  VectorInit(alloc, &vector, sizeof(TypeId));
   while (ReadBits(bits, 1)) {
-    Type* ptr = VectorAppend(&vector);
-    *ptr = DecodeType(bits);
+    TypeId* ptr = VectorAppend(&vector);
+    *ptr = DecodeId(bits);
   }
   return VectorExtract(&vector, count);
 }
@@ -71,7 +61,7 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
     case APP_EXPR: {
       AppExpr* expr = Alloc(alloc, sizeof(AppExpr));
       expr->tag = APP_EXPR;
-      expr->func = DecodeDeclId(bits);
+      expr->func = DecodeId(bits);
       Vector vector;
       VectorInit(alloc, &vector, sizeof(Expr*));
       while (ReadBits(bits, 1)) {
@@ -85,7 +75,7 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
     case UNION_EXPR: {
       UnionExpr* expr = Alloc(alloc, sizeof(UnionExpr));
       expr->tag = UNION_EXPR;
-      expr->type = DecodeDeclId(bits);
+      expr->type = DecodeId(bits);
       expr->field = DecodeId(bits);
       expr->body = DecodeExpr(alloc, bits);
       return (Expr*)expr;
@@ -116,7 +106,7 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
     case LET_EXPR: {
       LetExpr* expr = Alloc(alloc, sizeof(LetExpr));
       expr->tag = LET_EXPR;
-      expr->type = DecodeType(bits);
+      expr->type = DecodeId(bits);
       expr->def = DecodeExpr(alloc, bits);
       expr->body = DecodeExpr(alloc, bits);
       return (Expr*)expr;
@@ -149,7 +139,7 @@ static Decl* DecodeDecl(Allocator* alloc, InputBitStream* bits)
       FuncDecl* decl = Alloc(alloc, sizeof(FuncDecl));
       decl->tag = FUNC_DECL;
       decl->argv = DecodeTypes(alloc, bits, &(decl->argc));
-      decl->return_type = DecodeType(bits);
+      decl->return_type = DecodeId(bits);
       decl->body = DecodeExpr(alloc, bits);
       return (Decl*)decl;
     }
@@ -186,7 +176,7 @@ static size_t SizeOfTag(size_t count)
   return size;
 }
 
-Value* DecodeValue(InputBitStream* bits, Program* prg, Type type)
+Value* DecodeValue(InputBitStream* bits, Program* prg, TypeId type)
 {
   Decl* decl = prg->declv[type];
   switch (decl->tag) {
@@ -218,7 +208,7 @@ Value* DecodeValue(InputBitStream* bits, Program* prg, Type type)
   }
 }
 
-void EncodeValue(OutputBitStream* bits, Program* prg, Type type, Value* value)
+void EncodeValue(OutputBitStream* bits, Program* prg, TypeId type, Value* value)
 {
   Decl* decl = prg->declv[type];
   switch (decl->tag) {

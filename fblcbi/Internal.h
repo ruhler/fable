@@ -51,8 +51,10 @@ void* VectorExtract(Vector* vector, size_t* count);
 
 // Program
 typedef size_t DeclId;
-typedef size_t Id;
-typedef DeclId Type;
+typedef size_t FieldId;
+typedef size_t PortId;
+typedef size_t TypeId;
+typedef size_t VarId;
 
 typedef enum {
   VAR_EXPR,
@@ -69,7 +71,7 @@ typedef struct {
 
 typedef struct {
   ExprTag tag;
-  Id var;
+  VarId var;
 } VarExpr;
 
 typedef struct {
@@ -81,15 +83,15 @@ typedef struct {
 
 typedef struct {
   ExprTag tag;
-  DeclId type;
-  Id field;
+  TypeId type;
+  FieldId field;
   Expr* body;
 } UnionExpr;
 
 typedef struct {
   ExprTag tag;
   Expr* object;
-  Id field;
+  FieldId field;
 } AccessExpr;
 
 typedef struct {
@@ -101,7 +103,7 @@ typedef struct {
 
 typedef struct {
   ExprTag tag;
-  DeclId type;
+  TypeId type;
   Expr* def;
   Expr* body;
 } LetExpr;
@@ -120,14 +122,14 @@ typedef struct {
 typedef struct {
   DeclTag tag;
   size_t fieldc;
-  Type* fieldv;
+  TypeId* fieldv;
 } TypeDecl;
 
 typedef struct {
   DeclTag tag;
   size_t argc;
-  Type* argv;
-  Type return_type; 
+  TypeId* argv;
+  TypeId return_type; 
   Expr* body;
 } FuncDecl;
 
@@ -180,8 +182,8 @@ void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
 void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 
 // Encoder
-Value* DecodeValue(InputBitStream* bits, Program* prg, Type type);
-void EncodeValue(OutputBitStream* bits, Program* prg, Type type, Value* value);
+Value* DecodeValue(InputBitStream* bits, Program* prg, TypeId type);
+void EncodeValue(OutputBitStream* bits, Program* prg, TypeId type, Value* value);
 Program* DecodeProgram(Allocator* alloc, InputBitStream* bits);
 
 // Evaluator

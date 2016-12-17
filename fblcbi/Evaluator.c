@@ -80,10 +80,10 @@ struct Ports {
   Link* link;
   struct Ports* next;
 };
-static Value** LookupRef(Vars* vars, Id id);
-static Value* LookupVal(Vars* vars, Id id);
+static Value** LookupRef(Vars* vars, VarId id);
+static Value* LookupVal(Vars* vars, VarId id);
 static Vars* AddVar(Vars* vars);
-// static Link* LookupPort(Ports* ports, Id id);
+// static Link* LookupPort(Ports* ports, PortId id);
 // static Ports* AddPort(Ports* ports, Link* link);
 
 // The evaluator works by breaking down action and expression evaluation into
@@ -438,7 +438,7 @@ static void PutValue(Link* link, Value* value)
 // Side effects:
 //   The behavior is undefined if the variable is not found in scope.
 
-static Value** LookupRef(Vars* vars, Id id)
+static Value** LookupRef(Vars* vars, VarId id)
 {
   for (size_t i = 0; i < id; ++i) {
     assert(vars != NULL);
@@ -462,7 +462,7 @@ static Value** LookupRef(Vars* vars, Id id)
 // Side effects:
 //   The behavior is undefined if the variable is not found in scope.
 
-static Value* LookupVal(Vars* vars, Id id)
+static Value* LookupVal(Vars* vars, VarId id)
 {
   Value** ref = LookupRef(vars, id);
   return *ref;
@@ -504,7 +504,7 @@ static Vars* AddVar(Vars* vars)
 // Side effects:
 //   The behavior is undefined if the port is not found.
 
-//static Link* LookupPort(Ports* ports, Id id)
+//static Link* LookupPort(Ports* ports, PortId id)
 //{
 //  for (size_t i = 0; i < id; ++i) {
 //    assert(ports != NULL);
