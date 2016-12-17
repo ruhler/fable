@@ -87,9 +87,13 @@ static void EncodeExpr(OutputBitStream* stream, Expr* expr)
       break;
     }
 
-    case LET_EXPR:
-      assert(false && "TODO");
+    case LET_EXPR: {
+      LetExpr* let_expr = (LetExpr*)expr;
+      EncodeDeclId(stream, let_expr->type.id);
+      EncodeExpr(stream, let_expr->def);
+      EncodeExpr(stream, let_expr->body);
       break;
+    }
 
     default:
       assert(false && "Invalid expression tag");
