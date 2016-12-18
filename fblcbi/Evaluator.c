@@ -889,7 +889,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
               Vars* nvars = NULL;
               for (size_t i = 0; i < func->argc; ++i) {
                 nvars = AddVar(nvars);
-                next = MkExprCmd(app_expr->argv[i], LookupRef(nvars, i), next);
+                next = MkExprCmd(app_expr->argv[i], LookupRef(nvars, 0), next);
               }
               scmd->vars = nvars;
               break;
