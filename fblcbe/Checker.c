@@ -18,16 +18,26 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
+typedef struct Ports {
+  Name name;
+  Polarity polarity;
+  TypeDecl* type;
+  struct Ports* next;
+} Ports;
+
 static TypeDecl* ResolveType(Env* env, LocName* name);
 static FuncDecl* ResolveFunc(Env* env, LocName* name);
 static ProcDecl* ResolveProc(Env* env, LocName* name);
 static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next);
 static TypeDecl* ResolveVar(Vars* vars, LocName* name);
+static Ports* AddPort(
+    Ports* vars, Name name, TypeDecl* type, Polarity polarity, Ports* next);
+static TypeDecl* ResolvePort(Ports* vars, LocName* name, Polarity polarity);
 static bool CheckArgs(
     Env* env, Vars* vars, int fieldc, Field* fieldv,
     int argc, Expr** argv, LocName* func);
 static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr);
-static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* actn);
+static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn);
 static bool CheckFields(Env* env, int fieldc, Field* fieldv, const char* kind);
 static bool CheckPorts(Env* env, int portc, Port* portv);
 static bool CheckType(Env* env, TypeDecl* type);
@@ -167,6 +177,65 @@ static TypeDecl* ResolveVar(Vars* vars, LocName* name)
       return vars->type;
     }
     vars = vars->next;
+  }
+  return NULL;
+}
+
+// AddPort --
+//
+//   Add a port to the given scope.
+//
+// Inputs:
+//   ports - Memory to use for the new scope.
+//   name - The name of the port to add.
+//   type - The type of the port.
+//   polarity - The polarity of the port to add.
+//   next - The scope to add it to.
+//
+// Results:
+//   The 'ports' scope with the added get port.
+//
+// Side effects:
+//   Sets ports to a scope including the given port and next scope.
+
+static Ports* AddPort(
+    Ports* ports, Name name, TypeDecl* type, Polarity polarity, Ports* next)
+{
+  ports->name = name;
+  ports->type = type;
+  ports->polarity = polarity;
+  ports->next = next;
+  return ports;
+}
+
+// ResolvePort --
+//
+//   Look up the type of a port in scope.
+//
+// Inputs:
+//   ports - The scope to look up the port in.
+//   name - The name of the port.
+//   polarity - The polarity of the port.
+//
+// Results:
+//   The type of the port in scope, or NULL if there is no port with
+//   that name and polarity in scope.
+//
+// Side effects:
+//   Resolves the id of the given LocName.
+
+static TypeDecl* ResolvePort(Ports* ports, LocName* name, Polarity polarity)
+{
+  for (size_t i = 0; ports != NULL; ++i) {
+    if (NamesEqual(ports->name, name->name)) {
+      if (ports->polarity == polarity) {
+        name->id = i;
+        return ports->type;
+      } else {
+        return NULL;
+      }
+    }
+    ports = ports->next;
   }
   return NULL;
 }
@@ -420,8 +489,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 // Inputs:
 //   env - The program environment.
 //   vars - The names and types of the variables in scope.
-//   gets - The names and types of the get ports in scope.
-//   puts - The names and types of the put ports in scope.
+//   ports - The names, types, and polarities of the ports in scope.
 //   actn - The action to verify.
 //
 // Result:
@@ -433,7 +501,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
-static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* actn)
+static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 {
   switch (actn->tag) {
     case EVAL_ACTN: {
@@ -443,7 +511,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
 
     case GET_ACTN: {
       GetActn* get_actn = (GetActn*)actn;
-      TypeDecl* type = ResolveVar(gets, &get_actn->port);
+      TypeDecl* type = ResolvePort(ports, &get_actn->port, POLARITY_GET);
       if (type == NULL) {
         ReportError("'%s' is not a valid get port.\n", get_actn->loc,
             get_actn->port.name);
@@ -454,7 +522,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
 
     case PUT_ACTN: {
       PutActn* put_actn = (PutActn*)actn;
-      TypeDecl* port_type = ResolveVar(puts, &put_actn->port);
+      TypeDecl* port_type = ResolvePort(ports, &put_actn->port, POLARITY_PUT);
       if (port_type == NULL) {
         ReportError("'%s' is not a valid put port.\n", put_actn->loc,
             put_actn->port.name);
@@ -491,8 +559,12 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
 
       for (int i = 0; i < proc->portc; i++) {
         bool isput = (proc->portv[i].polarity == POLARITY_PUT);
-        Vars* ports = isput ? puts : gets;
-        TypeDecl* port_type = ResolveVar(ports, &call_actn->ports[i]);
+        TypeDecl* port_type = NULL;
+        if (isput) {
+          port_type = ResolvePort(ports, &call_actn->ports[i], POLARITY_PUT);
+        } else {
+          port_type = ResolvePort(ports, &call_actn->ports[i], POLARITY_GET);
+        }
         if (port_type == NULL) {
           ReportError("'%s' is not a valid %s port.\n",
               call_actn->ports[i].loc,
@@ -519,11 +591,11 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
       // TODO: Test that we verify the link type resolves?
       LinkActn* link_actn = (LinkActn*)actn;
       TypeDecl* type = ResolveType(env, &link_actn->type);
-      Vars ngets;
-      Vars nputs;
-      AddVar(&ngets, link_actn->getname.name, type, gets);
-      AddVar(&nputs, link_actn->putname.name, type, puts);
-      return CheckActn(env, vars, &ngets, &nputs, link_actn->body);
+      Ports getport;
+      Ports putport;
+      AddPort(&getport, link_actn->getname.name, type, POLARITY_GET, ports);
+      AddPort(&putport, link_actn->putname.name, type, POLARITY_PUT, &getport);
+      return CheckActn(env, vars, &putport, link_actn->body);
     }
 
     case EXEC_ACTN: {
@@ -532,7 +604,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
       Vars* nvars = vars;
       for (int i = 0; i < exec_actn->execc; i++) {
         Exec* exec = &(exec_actn->execv[i]);
-        TypeDecl* type = CheckActn(env, vars, gets, puts, exec->actn);
+        TypeDecl* type = CheckActn(env, vars, ports, exec->actn);
         if (type == NULL) {
           return NULL;
         }
@@ -547,7 +619,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
 
         nvars = AddVar(vars_data+i, exec->var.name.name, actual_type, nvars);
       }
-      return CheckActn(env, nvars, gets, puts, exec_actn->body);
+      return CheckActn(env, nvars, ports, exec_actn->body);
     }
 
     case COND_ACTN: {
@@ -573,7 +645,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
       // port. Do we still want to do this?
       TypeDecl* result_type = NULL;
       for (int i = 0; i < cond_actn->argc; i++) {
-        TypeDecl* arg_type = CheckActn(env, vars, gets, puts, cond_actn->args[i]);
+        TypeDecl* arg_type = CheckActn(env, vars, ports, cond_actn->args[i]);
         if (arg_type == NULL) {
           return NULL;
         }
@@ -800,8 +872,10 @@ static bool CheckProc(Env* env, ProcDecl* proc)
   }
 
   // Check the body.
-  Vars vars_data[proc->argc + proc->portc];
+  Vars vars_data[proc->argc];
+  Ports ports_data[proc->portc];
   Vars* nvar = vars_data;
+  Ports* nport = ports_data;
 
   Vars* vars = NULL;
   for (int i = 0; i < proc->argc; i++) {
@@ -810,24 +884,23 @@ static bool CheckProc(Env* env, ProcDecl* proc)
         ResolveType(env, &proc->argv[i].type), vars);
   }
 
-  Vars* gets = NULL;
-  Vars* puts = NULL;
+  Ports* ports = NULL;
   for (int i = 0; i < proc->portc; i++) {
     // TODO: Add tests that we properly resolved the port types?
     switch (proc->portv[i].polarity) {
       case POLARITY_GET:
-        gets = AddVar(nvar++, proc->portv[i].name.name,
-            ResolveType(env, &proc->portv[i].type), gets);
+        ports = AddPort(nport++, proc->portv[i].name.name,
+            ResolveType(env, &proc->portv[i].type), POLARITY_GET, ports);
         break;
 
       case POLARITY_PUT:
-        puts = AddVar(nvar++, proc->portv[i].name.name,
-            ResolveType(env, &proc->portv[i].type), puts);
+        ports = AddPort(nport++, proc->portv[i].name.name,
+            ResolveType(env, &proc->portv[i].type), POLARITY_PUT, ports);
         break;
     }
   }
 
-  TypeDecl* body_type = CheckActn(env, vars, gets, puts, proc->body);
+  TypeDecl* body_type = CheckActn(env, vars, ports, proc->body);
   if (body_type == NULL) {
     return false;
   }

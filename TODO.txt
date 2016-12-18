@@ -1,8 +1,16 @@
-
-* Get tests of fblcbe and fblcbi to pass
- - decide whether port ids should be by link or by port.
- - test and fix bug in Checking of exec definitions.
-* Implement fblc front end to fblci.
-* Implement fbld front end to fblci.
+* Add support for the proc_tests for fblcbe/fblcbi
+ - Will require support for reading external port values
+* Test and fix reading/writing a stream of Units
+ - which requires some alignment be done.
+* Try tictactoe on fblcbe/fblcbi for the fun of it.
+ - And see how much faster it is to choose a move on an empty board.
+   (Set up some infrastructure for benchmarking?)
+* Document spec for binary format much better
+ - how do variable ids work?
+ - how do port ids work?
+ - is there any reason to include types for lets, execs, and links? Given that
+   the types can be inferred easily already?
+* Implement fblc front end to fblcbi.
+* Implement fbld front end to fblcbi.
 * Port calc Integer to an fbld module.
-* Implementation space invaders game in fbld.
+* Implement space invaders game in fbld.
