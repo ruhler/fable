@@ -15,7 +15,6 @@ set prg {
 }
 
 expect_result Fruit:pear(Unit()) $prg main
-# skip: fblcbe Checker for exec statements is broken.
 # skip: decide how to id ports: by link or by port?
 skip expect_result_b "10" $prg 2
 

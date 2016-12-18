@@ -528,7 +528,8 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
 
     case EXEC_ACTN: {
       ExecActn* exec_actn = (ExecActn*)actn;
-      Vars nvars[exec_actn->execc];
+      Vars vars_data[exec_actn->execc];
+      Vars* nvars = vars;
       for (int i = 0; i < exec_actn->execc; i++) {
         Exec* exec = &(exec_actn->execv[i]);
         TypeDecl* type = CheckActn(env, vars, gets, puts, exec->actn);
@@ -543,13 +544,10 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Vars* gets, Vars* puts, Actn* a
               exec->actn->loc, exec->var.type.name, type->name.name);
           return NULL;
         }
-        // TODO: Don't modify vars until after we have checked all the execs,
-        // because vars from earlier execs should not be visible in later
-        // execs.
-        // TODO: Test this case!
-        vars = AddVar(nvars+i, exec->var.name.name, actual_type, vars);
+
+        nvars = AddVar(vars_data+i, exec->var.name.name, actual_type, nvars);
       }
-      return CheckActn(env, vars, gets, puts, exec_actn->body);
+      return CheckActn(env, nvars, gets, puts, exec_actn->body);
     }
 
     case COND_ACTN: {

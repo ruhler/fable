@@ -899,7 +899,7 @@ static void Run(const FblcEnv* env, Threads* threads, Thread* thread)
             FblcVarExpr* var_expr = (FblcVarExpr*)expr;
             FblcName var_name = var_expr->name.name;
             FblcValue* value = LookupVal(thread->vars, var_name);
-            assert(target != NULL && "Var not in scope");
+            assert(value != NULL && "Var not in scope");
             *target = FblcCopy(value);
             break;
           }

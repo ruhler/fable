@@ -443,7 +443,8 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
 
     case FBLC_EXEC_ACTN: {
       FblcExecActn* exec_actn = (FblcExecActn*)actn;
-      Vars nvars[exec_actn->execc];
+      Vars vars_data[exec_actn->execc];
+      Vars* nvars = vars;
       for (int i = 0; i < exec_actn->execc; i++) {
         FblcExec* exec = &(exec_actn->execv[i]);
         FblcName type = CheckActn(env, vars, gets, puts, exec->actn);
@@ -456,9 +457,9 @@ static FblcName CheckActn(const FblcEnv* env, Vars* vars, Vars* gets,
               exec->actn->loc, exec->var.type.name, type);
           return NULL;
         }
-        vars = AddVar(nvars+i, exec->var.name.name, exec->var.type.name, vars);
+        nvars = AddVar(vars_data+i, exec->var.name.name, exec->var.type.name, nvars);
       }
-      return CheckActn(env, vars, gets, puts, exec_actn->body);
+      return CheckActn(env, nvars, gets, puts, exec_actn->body);
     }
 
     case FBLC_COND_ACTN: {
