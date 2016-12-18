@@ -106,7 +106,6 @@ static Expr* DecodeExpr(Allocator* alloc, InputBitStream* bits)
     case LET_EXPR: {
       LetExpr* expr = Alloc(alloc, sizeof(LetExpr));
       expr->tag = LET_EXPR;
-      expr->type = DecodeId(bits);
       expr->def = DecodeExpr(alloc, bits);
       expr->body = DecodeExpr(alloc, bits);
       return (Expr*)expr;
@@ -216,11 +215,10 @@ static Actn* DecodeActn(Allocator* alloc, InputBitStream* bits)
       ExecActn* actn = Alloc(alloc, sizeof(ExecActn));
       actn->tag = EXEC_ACTN;
       Vector vector;
-      VectorInit(alloc, &vector, sizeof(Exec));
+      VectorInit(alloc, &vector, sizeof(Actn*));
       do { 
-        Exec* ptr = VectorAppend(&vector);
-        ptr->type = DecodeId(bits);
-        ptr->def = DecodeActn(alloc, bits);
+        Actn** ptr = VectorAppend(&vector);
+        *ptr = DecodeActn(alloc, bits);
       } while (ReadBits(bits, 1));
       actn->execv = VectorExtract(&vector, &actn->execc);
       actn->body = DecodeActn(alloc, bits);

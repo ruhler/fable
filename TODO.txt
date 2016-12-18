@@ -5,11 +5,6 @@
 * Try tictactoe on fblcbe/fblcbi for the fun of it.
  - And see how much faster it is to choose a move on an empty board.
    (Set up some infrastructure for benchmarking?)
-* Document spec for binary format much better
- - how do variable ids work?
- - how do port ids work?
- - is there any reason to include types for lets, execs, and links? Given that
-   the types can be inferred easily already?
 * Implement fblc front end to fblcbi.
 * Implement fbld front end to fblcbi.
 * Port calc Integer to an fbld module.

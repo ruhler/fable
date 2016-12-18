@@ -82,7 +82,6 @@ static void EncodeExpr(OutputBitStream* stream, Expr* expr)
 
     case LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
-      EncodeDeclId(stream, let_expr->type.id);
       EncodeExpr(stream, let_expr->def);
       EncodeExpr(stream, let_expr->body);
       break;
@@ -167,11 +166,9 @@ static void EncodeActn(OutputBitStream* stream, Actn* actn)
     case EXEC_ACTN: {
       ExecActn* exec_actn = (ExecActn*)actn;
       assert(exec_actn->execc > 0);
-      EncodeDeclId(stream, exec_actn->execv[0].var.type.id);
       EncodeActn(stream, exec_actn->execv[0].actn);
       for (size_t i = 1; i < exec_actn->execc; ++i) {
         WriteBits(stream, 1, 1);
-        EncodeDeclId(stream, exec_actn->execv[i].var.type.id);
         EncodeActn(stream, exec_actn->execv[i].actn);
       }
       WriteBits(stream, 1, 0);

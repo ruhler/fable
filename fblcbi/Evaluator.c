@@ -1045,11 +1045,10 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 
             Vars* nvars = thread->vars;
             for (size_t i = 0; i < exec_actn->execc; ++i) {
-              Exec* exec = &(exec_actn->execv[i]);
               nvars = AddVar(nvars);
               Value** target = LookupRef(nvars, 0);
               AddThread(threads, NewThread(thread->vars, thread->ports,
-                    MkActnCmd(exec->def, target, jcmd)));
+                    MkActnCmd(exec_actn->execv[i], target, jcmd)));
             }
             scmd->vars = nvars;
             next = NULL;

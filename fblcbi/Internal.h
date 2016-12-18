@@ -103,7 +103,6 @@ typedef struct {
 
 typedef struct {
   ExprTag tag;
-  TypeId type;
   Expr* def;
   Expr* body;
 } LetExpr;
@@ -196,14 +195,9 @@ typedef struct {
 } LinkActn;
 
 typedef struct {
-  TypeId type;
-  Actn* def;
-} Exec;
-
-typedef struct {
   ActnTag tag;
   size_t execc;
-  Exec* execv;
+  Actn** execv;
   Actn* body;
 } ExecActn;
 
