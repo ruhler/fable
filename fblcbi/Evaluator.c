@@ -1229,14 +1229,13 @@ Value* Execute(Program* program, ProcDecl* proc, Value** args)
       if (proc->portv[i].polarity == GET_POLARITY) {
         Thread* waiting = GetThread(&(links[i]->waiting));
         if (waiting != NULL) {
-          assert(false && "TODO: read from external port");
-//          FblcValue* got = portios[i].io(portios[i].user, NULL);
-//          if (got == NULL) {
-//            AddThread(&(links[i]->waiting), waiting);
-//          } else {
-//            PutValue(links[i], got);
-//            AddThread(&threads, waiting);
-//          }
+          // TODO: Don't block if there isn't anything available to read.
+          // TODO: Flush the input stream to ensure alignment is met.
+          InputBitStream stream;
+          OpenBinaryFdInputBitStream(&stream, 3+i);
+          Value* got = DecodeValue(&stream, program, proc->portv[i].type);
+          PutValue(links[i], got);
+          AddThread(&threads, waiting);
         }
       } else {
         Value* put = GetValue(links[i]);
@@ -1244,6 +1243,7 @@ Value* Execute(Program* program, ProcDecl* proc, Value** args)
           OutputBitStream stream;
           OpenBinaryOutputBitStream(&stream, 3+i);
           EncodeValue(&stream, program, proc->portv[i].type, put);
+          FlushWriteBits(&stream);
           Release(put);
         }
       }

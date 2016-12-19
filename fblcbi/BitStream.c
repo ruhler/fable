@@ -21,7 +21,29 @@
 
 void OpenBinaryStringInputBitStream(InputBitStream* stream, const char* bits)
 {
-  stream->bits = bits;
+  stream->string = bits;
+  stream->fd = -1;
+}
+
+// OpenBinaryFdInputBitStream
+//   Open an InputBitStream that reads from a string of ascii digits '0' and
+//   '1' from the open file referred to by the given file descriptor.
+//
+// Inputs:
+//   stream - The stream to open.
+//   fd - A file descriptor for the open file to read from.
+//
+// Returns:
+//   None.
+//
+// Side effects:
+//   The bit stream is positioned at the beginning of the file of bits to
+//   read from.
+
+void OpenBinaryFdInputBitStream(InputBitStream* stream, int fd)
+{
+  stream->string = NULL;
+  stream->fd = fd;
 }
 
 // ReadBit --
@@ -39,17 +61,21 @@ void OpenBinaryStringInputBitStream(InputBitStream* stream, const char* bits)
 
 static int ReadBit(InputBitStream* stream)
 {
-  switch (*(stream->bits)) {
-    case '0':
-      stream->bits++;
-      return 0;
+  int bit = EOF;
+  if (stream->string != NULL && *stream->string != '\0') {
+    bit = *stream->string;
+    stream->string++;
+  } else if (stream->fd >= 0) {
+    char c;
+    if(read(stream->fd, &c, 1)) {
+      bit = c;
+    }
+  }
 
-    case '1':
-      stream->bits++;
-      return 1;
-
-    case '\0':
-      return EOF;
+  switch (bit) {
+    case '0': return 0;
+    case '1': return 1;
+    case EOF: return EOF;
 
     default:
       assert(false && "Unexpected char in bit stream.");
@@ -106,6 +132,7 @@ uint32_t ReadBits(InputBitStream* stream, size_t num_bits)
 void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd)
 {
   stream->fd = fd;
+  stream->flushed = false;
 }
 
 // WriteBits --
@@ -129,5 +156,26 @@ void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits)
   for (uint32_t mask = ((1 << num_bits) >> 1); mask > 0; mask >>= 1) {
     char c = (bits & mask) ? '1' : '0';
     write(stream->fd, &c, 1);
+    stream->flushed = true;
+  }
+}
+
+// FlushWriteBits --
+//
+//   Flush bits as necessary to mark the end of a value.
+//
+// Inputs:
+//   stream - the bit stream to flush the bits in.
+//
+// Returns:
+//   None.
+//
+// Side effects:
+//   If necessary, write padding bits to the stream to indicate the end of a
+//   value has been reached.
+void FlushWriteBits(OutputBitStream* stream)
+{
+  if (!stream->flushed) {
+    WriteBits(stream, 1, 0);
   }
 }

@@ -262,6 +262,13 @@ func TestChooseBestMoveNoLose( ; PositionTestResult) {
       PositionTestResult:Failed(position), PositionTestResult:Failed(position), PositionTestResult:Failed(position));
 };
 
+func BenchmarkChooseBestMove( ; Position) {
+  ChooseBestMove(Board(
+        Square:E(Unit()), Square:E(Unit()), Square:E(Unit()),
+        Square:E(Unit()), Square:E(Unit()), Square:E(Unit()),
+        Square:E(Unit()), Square:E(Unit()), Square:E(Unit())), Player:X(Unit()));
+};
+
 // TODO:
 // * Better way of expressing maybe monad
 // * Be able to easily combine multiple test cases

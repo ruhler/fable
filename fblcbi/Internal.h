@@ -245,19 +245,26 @@ void Release(Value* value);
 // BitStream
 // Bit streams are represented as sequences of ascii digits '0' and '1'.
 // TODO: Support more efficient encodings of bit streams when desired.
+// If the string field is non-null, digits are read from the string.
+// If the fd field is non-negative, digits are read from the file with that
+// descriptor.
 typedef struct {
-  const char* bits;
+  const char* string;
+  int fd;
 } InputBitStream;
 
 void OpenBinaryStringInputBitStream(InputBitStream* stream, const char* bits);
+void OpenBinaryFdInputBitStream(InputBitStream* stream, int fd);
 uint32_t ReadBits(InputBitStream* stream, size_t num_bits);
 
 typedef struct {
   int fd;
+  bool flushed;
 } OutputBitStream;
 
 void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
 void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
+void FlushWriteBits(OutputBitStream* stream);
 
 // Encoder
 Value* DecodeValue(InputBitStream* bits, Program* prg, TypeId type);

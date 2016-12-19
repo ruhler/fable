@@ -7,5 +7,5 @@ set prg {
   };
 }
 
-expect_proc_result Unit() $prg main {{o out}} {} { get out Unit() }
+expect_proc_result "" $prg 1 {{o out}} {} { get out 0 }
 

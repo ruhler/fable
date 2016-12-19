@@ -159,6 +159,10 @@ int main(int argc, char* argv[])
     *ptr = '\0';
     char* text = ptr+1;
     size_t count = strlen(text);
+    if (text[count-1] == '\n') {
+      text[count-1] = '\0';
+      count--;
+    }
 
     int i;
     for (i = 0; i < argc; i++) {
@@ -187,8 +191,8 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Expected 'get' command for port '%s', but got '%s'.\n", ids[i], cmd);
         return 1;
       }
-      char input[count+1];
-      if (fgets(input, count+1, files[i]) == NULL) {
+      char input[count];
+      if (fread(input, sizeof(char), count, files[i]) != count) {
         fprintf(stderr, "Error reading from '%s'\n", ids[i]);
         return 1;
       }
