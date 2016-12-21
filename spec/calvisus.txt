@@ -30,7 +30,7 @@
 @section 2. Data
  The representation and manipulation of data is a central part of the Calvisus language.
  Data in Calvisus is organized using structures and unions.
- Structures represent a grouping of data items, and unions represent a choice among data items.
+ A structure represents a grouping of data items, and a union represents a choice among data items.
 
  @section 2.1. A Note about Assumed Types for Illustration
   Unlike many programming language, Calvisus has no primitive data types.
@@ -825,6 +825,7 @@ progress.
   @li Add a section saying we support // style comments.
   @li Add those examples of recursive data types I promised but haven't included yet.
   @li Show how the types bool, char, and int can be defined in the Unions section.
+  @li Add a section with the suggested binary encoding of a program.
   @bi Idea: how about this for name terminology:
    @list[bulleted]
     @li "static name" for function, union, struct, and process names.

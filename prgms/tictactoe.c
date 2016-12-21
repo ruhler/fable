@@ -12,16 +12,23 @@
 // Writes nothing to fout if the input is not valid.
 static bool ConvertInput(const char* input, FILE* fout)
 {
-  char rows[] = "UML";
-  char cols[] = "LCR";
+  char* positions[3][3] = {
+    {"0000", "0001", "0010"},
+    {"0011", "0100", "0101"},
+    {"0110", "0111", "1000"}
+  };
+
   if (input[0] == 'R') {
-    fprintf(fout, "Input:reset(Unit())\n");
+    // reset
+    fprintf(fout, "10");
   } else if (input[0] == 'P') {
-    fprintf(fout, "Input:computer(Unit())\n");
+    // computer
+    fprintf(fout, "01");
   } else if (input[0] >= 'A' && input[0] <= 'C'
           && input[1] >= '1' && input[1] <= '3') {
-    fprintf(fout, "Input:position(Position:%c%c(Unit()))\n",
-        rows[input[0] - 'A'], cols[input[1]-'1']);
+    // position
+    fprintf(fout, "00");
+    fprintf(fout, "%s", positions[input[0]-'A'][input[1]-'1']);
   } else {
     fprintf(stderr, "Invalid Input\n");
     return false;
@@ -30,52 +37,10 @@ static bool ConvertInput(const char* input, FILE* fout)
   return true;
 }
 
-// Given a text representation of the tictactoe Output, render that output to
-// fout. Assumes the Output text is well formed.
-static void ConvertOutput(const char* output, FILE* fout)
-{
-  const char* ptr = output;
-  fprintf(fout, "  1 2 3\n");
-  for (int r = 0; r < 3; r++) {
-    fprintf(fout, "%c", 'A'+r);
-    for (int c = 0; c < 3; c++) {
-      ptr = strstr(ptr, "Square:");
-      char c = ptr == NULL ? '?' : ptr[7]; 
-      switch (c) {
-        case 'X': fprintf(fout, " X"); break;
-        case 'O': fprintf(fout, " O"); break;
-        case 'E': fprintf(fout, " _"); break;
-      }
-      ptr++;
-    }
-    fprintf(fout, "\n");
-  }
-
-  const char* move = strstr(ptr, "GameStatus:Move(Player:");
-  if (move != NULL) {
-    fprintf(fout, "Player %c move:\n", move[23]);
-    return;
-  }
-
-  const char* win = strstr(ptr, "GameStatus:Win(Player:");
-  if (win != NULL) {
-    fprintf(fout, "GAME OVER: Player %c wins\n", win[22]);
-    return;
-  }
-
-  if (strstr(ptr, "GameStatus:Draw") != NULL) {
-    fprintf(fout, "GAME OVER: DRAW\n");
-    return;
-  }
-
-  fprintf(fout, "???\n");
-  fflush(fout);
-}
-
 int main(int argc, char* argv[])
 {
   if (argc < 2) {
-    fprintf(stderr, "Usage: tictactoe FBLC tictactoe.fblc NewGame.\n");
+    fprintf(stderr, "Usage: tictactoe FBLCBI tictactoe.fblc.bin <NewGame id>.\n");
     return 1;
   }
   argv++;
@@ -136,11 +101,37 @@ int main(int argc, char* argv[])
   size_t len = 0;
   int read = 0;
   while (true) {
-    // Output the current status
-    if ((read = getline(&line, &len, fout)) == -1) {
-      break;
+    // Read, convert and output the current board and game status.
+    printf("  1 2 3\n");
+    for (int r = 0; r < 3; r++) {
+      printf("%c", 'A'+r);
+      for (int c = 0; c < 3; c++) {
+        int bit = fgetc(fout);
+        if (bit == '0') {
+          printf(fgetc(fout) == '0' ? " X" : " O");
+        } else if (bit == '1') {
+          printf(fgetc(fout) == '0' ? " _" : " ?");
+        } else {
+          fprintf(stderr, "Unexpected bit: '%c'\n", bit);
+          return 1;
+        }
+      }
+      printf("\n");
     }
-    ConvertOutput(line, stdout);
+
+    if (fgetc(fout) == '0') {
+      if (fgetc(fout) == '0') {
+        printf("Player %c move:\n", fgetc(fout) == '0' ? 'X' : 'O');
+      } else {
+        printf("GAME OVER: Player %c wins\n", fgetc(fout) == '0' ? 'X' : 'O');
+      }
+    } else {
+      if (fgetc(fout) == '0') {
+        printf("GAME OVER: DRAW\n");
+      } else {
+        printf("???\n");
+      }
+    }
 
     // Get the next move.
     while ((read = getline(&line, &len, stdin)) != -1

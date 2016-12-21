@@ -252,6 +252,9 @@ exec $::fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChoo
 exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
 exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
 
+puts "fblcbe tictactoe.fblc (NewGame is 33)"
+exec $::fblcbe prgms/tictactoe.fblc > out/prgms/tictactoe.fblc.bin
+
 check_coverage overall
 
 # Report summary results

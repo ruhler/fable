@@ -1,11 +1,13 @@
+* Change fblcbi to pass the program by file instead of a raw string.
+* Re-implement fblc/ as fblcbe/Fblc.c
+ - and remove the old fblc/ implementation.
+* Rename fblcbe/ fblc/
+* Revert expect_proc_result back to text interface.
+* Remove binary tests.
+
 * Test and fix writing a stream of Units
  - which requires some alignment be done.
-* Convert tictactoe.c to use fblcbe/fblcbi.
-* Remove fblc/ implementation.
-* Try tictactoe on fblcbe/fblcbi for the fun of it.
- - And see how much faster it is to choose a move on an empty board.
-   (Set up some infrastructure for benchmarking?)
-* Implement fblc front end to fblcbi.
+
 * Implement fbld front end to fblcbi.
 * Port calc Integer to an fbld module.
 * Implement space invaders game in fbld.

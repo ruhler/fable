@@ -78,7 +78,8 @@ static int ReadBit(InputBitStream* stream)
     case EOF: return EOF;
 
     default:
-      assert(false && "Unexpected char in bit stream.");
+      fprintf(stderr, "Unexpected char in bit stream: '%c'", bit);
+      assert(false);
       return EOF;
   }
 }
