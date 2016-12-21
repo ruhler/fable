@@ -24,7 +24,7 @@ static void PrintUsage(FILE* stream)
       "Usage: fblcbi PROGRAM MAIN [ARG...] \n"
       "Evaluate the function or process with id MAIN in the environment of the\n"
       "fblc program PROGRAM with the given ARGs.\n"  
-      "PROGRAM should be a sequence of digits '0' and '1' representing the program.\n"
+      "PROGRAM should be a file containing a sequence of digits '0' and '1' representing the program.\n"
       "MAIN should be the decimal integer id of the function to execute.\n"
       "ARG should be a sequence of digits '0' and '1' representing an argument value.\n"
       "The number of arguments must match the expected number for the MAIN\n"
@@ -70,13 +70,18 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  const char* program_bits = argv[1];
+  const char* program_file = argv[1];
   size_t entry = atoi(argv[2]);
   argv += 3;
   argc -= 3;
 
+  int fdin = open(program_file, O_RDONLY);
+  if (fdin < 0) {
+    fprintf(stderr, "Unable to open %s for reading\n", program_file);
+    return 1;
+  }
   InputBitStream bits;
-  OpenBinaryStringInputBitStream(&bits, program_bits);
+  OpenBinaryFdInputBitStream(&bits, fdin);
 
   Allocator alloc;
   InitAllocator(&alloc);

@@ -1,4 +1,3 @@
-* Change fblcbi to pass the program by file instead of a raw string.
 * Re-implement fblc/ as fblcbe/Fblc.c
  - and remove the old fblc/ implementation.
 * Rename fblcbe/ fblc/

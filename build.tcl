@@ -100,11 +100,12 @@ proc expect_proc_result { result program entry ports args script } {
 
   # Write the program to file.
   set fprogram ./out/test/$name.fblc
+  set fbits $fprogram.bin
   exec echo $program > $fprogram
-  set bits [exec $::fblcbe $fprogram]
+  exec $::fblcbe $fprogram > $fbits
 
   try {
-    set got [exec $::testfblc $portspec $fscript $::fblcbi $bits $entry {*}$args]
+    set got [exec $::testfblc $portspec $fscript $::fblcbi $fbits $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
@@ -150,9 +151,10 @@ proc expect_result_b { result program entry args } {
 
   try {
     set fprogram ./out/test/$name.fblc
+    set fbits $fprogram.bin
     exec echo $program > $fprogram
-    set bits [exec $::fblcbe $fprogram]
-    set got [exec $::fblcbi $bits $entry {*}$args]
+    exec $::fblcbe $fprogram > $fbits
+    set got [exec $::fblcbi $fbits $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }

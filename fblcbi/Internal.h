@@ -3,13 +3,17 @@
 #define INTERNAL_H_
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
+
 
 #define GC_DEBUG
 #include <gc/gc.h>
