@@ -1,8 +1,5 @@
-* Re-implement fblc/ as fblcbe/Fblc.c
- - and remove the old fblc/ implementation.
-* Rename fblcbe/ fblc/
-* Revert expect_proc_result back to text interface.
-* Remove binary tests.
+* Switch to library-based sharing rather than file based sharing.
+ - Revert expect_proc_result back to text interface.
 
 * Test and fix writing a stream of Units
  - which requires some alignment be done.

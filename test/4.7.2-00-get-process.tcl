@@ -7,5 +7,5 @@ set prg {
   };
 }
 
-expect_proc_result "" $prg 1 {{i in}} {} { put in 0 }
+expect_proc_result Unit() $prg main {{i in}} {} { put in Unit() }
 

@@ -76,8 +76,6 @@ proc expect_result { result program entry args } {
 # command causes the value to be written to the given port. The get command
 # gets a value from the given port and checks that it is equivalent to the
 # given value.
-# Values should be written as a string of binary digits '0' and '1', including
-# necessary alignment bits.
 proc expect_proc_result { result program entry ports args script } {
   set loc [info frame -1]
   set line [dict get $loc line]
@@ -100,12 +98,10 @@ proc expect_proc_result { result program entry ports args script } {
 
   # Write the program to file.
   set fprogram ./out/test/$name.fblc
-  set fbits $fprogram.bin
   exec echo $program > $fprogram
-  exec $::fblcbe $fprogram > $fbits
 
   try {
-    set got [exec $::testfblc $portspec $fscript $::fblcbi $fbits $entry {*}$args]
+    set got [exec $::testfblc $portspec $fscript $::fblc $fprogram $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
