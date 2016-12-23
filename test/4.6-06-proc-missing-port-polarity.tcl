@@ -11,6 +11,5 @@ set prg {
     $(Unit());
   };
 }
-expect_malformed $prg main
-expect_malformed_b $prg 2
+fblc-check-error $prg
 

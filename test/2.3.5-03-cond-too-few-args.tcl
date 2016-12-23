@@ -10,5 +10,4 @@ set prg {
       EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()));
   };
 }
-expect_malformed $prg main
-expect_malformed_b $prg 3
+fblc-check-error $prg

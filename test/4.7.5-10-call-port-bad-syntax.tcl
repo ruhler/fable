@@ -12,5 +12,4 @@ set prg {
   };
 }
 
-expect_malformed_b $prg 3
-expect_malformed $prg main
+fblc-check-error $prg

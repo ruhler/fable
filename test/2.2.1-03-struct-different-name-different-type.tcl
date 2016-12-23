@@ -11,8 +11,7 @@ set prg {
   };
 }
 
-expect_malformed $prg main
-expect_malformed_b $prg 2
+fblc-check-error $prg
 
 set prg {
   struct Unit();
@@ -25,5 +24,4 @@ set prg {
   };
 }
 
-expect_malformed $prg main
-expect_malformed_b $prg 3
+fblc-check-error $prg

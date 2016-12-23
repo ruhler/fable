@@ -9,8 +9,7 @@ set prg {
     BadStruct:x(Unit());
   };
 }
-expect_malformed $prg main
-expect_malformed_b $prg 3
+fblc-check-error $prg
 
 
 # Even if the types are the same.
@@ -22,5 +21,4 @@ set prg {
     BadStruct:x(Unit());
   };
 }
-expect_malformed $prg main
-expect_malformed_b $prg 2
+fblc-check-error $prg

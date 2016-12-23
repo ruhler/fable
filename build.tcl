@@ -110,9 +110,8 @@ proc expect_proc_result { result program entry ports args script } {
   }
 }
 
-# Test that running function or process 'entry' in 'program' with the given
-# 'args' and no ports leads to an error indicating the program is malformed.
-proc expect_malformed { program entry args } {
+# Test that the given fblc text program is malformed.
+proc fblc-check-error { program } {
   set loc [info frame -1]
   set line [dict get $loc line]
   set file [dict get $loc file]
@@ -153,31 +152,6 @@ proc expect_result_b { result program entry args } {
     error "$file:$line: error: Expected '$result', but got:\n$results"
   } on error msg {
     error "$file:$line: error: $msg"
-  }
-}
-
-# Test that running function or process 'entry' in 'program' with the given
-# 'args' and no ports leads to an error indicating the program is malformed.
-# The entry should be specified as the integer identifier of the main entry.
-# Args should be specified in binary as a sequence of ascii digits '0' and '1'.
-# Tests that fblcbe catches errors appropriately.
-proc expect_malformed_b { program entry args } {
-  set loc [info frame -1]
-  set line [dict get $loc line]
-  set file [dict get $loc file]
-  set name "[file tail $file]_$line"
-
-  try {
-    set fprogram ./out/test/$name.fblc
-    exec echo $program > $fprogram
-    set got [exec $::fblcbe $fprogram $entry {*}$args]
-    error "$file:$line: error: Expected error, but got '$got'"
-  } trap CHILDSTATUS {results options} {
-    exec echo $results > ./out/test/$name.err
-    set status [lindex [dict get $options -errorcode] 2]
-    if {1 != $status} {
-      error "$file:$line: error: Expected error code 1, but got code '$status'"
-    }
   }
 }
 

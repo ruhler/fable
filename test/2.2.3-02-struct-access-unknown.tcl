@@ -7,6 +7,5 @@ set prg {
     A(Unit(), Unit()).z;
   };
 }
-expect_malformed $prg main
-expect_malformed_b $prg 2
+fblc-check-error $prg
 

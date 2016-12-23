@@ -15,9 +15,8 @@ proc expect_result { result program entry args } { ... }
 # function or process based on order of declarations starting at 0.
 proc expect_result_b { result program entry args } { ... }
 
-# Test that running function or process 'entry' in 'program' with the given
-# 'args' and no ports leads to an error indicating the program is malformed.
-proc expect_malformed { program entry args } { ... }
+# Test that the given fblc text program is malformed.
+proc fblc-check-error { program } { ... }
 
 # Test that running the process 'entry' in 'program' with given ports and
 # arguments leads to the given 'result'.
