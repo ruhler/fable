@@ -3,6 +3,8 @@
 //   This file implements routines for allocating memory that will be freed in
 //   bulk.
 
+#include <string.h>
+
 #include "fblc.h"
 
 struct AllocList {

@@ -2,6 +2,15 @@
 //
 //   The file implements the main entry point for the Fblc binary interpreter.
 
+#include <assert.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "fblc.h"
 
 

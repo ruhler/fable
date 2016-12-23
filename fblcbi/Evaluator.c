@@ -2,6 +2,10 @@
 //
 //   This file implements routines for evaluating expressions.
 
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "fblc.h"
 
 typedef struct Vars Vars;

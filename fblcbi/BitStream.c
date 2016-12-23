@@ -2,6 +2,10 @@
 //
 //   This file implements routines for reading and writing bit streams.
 
+#include <assert.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "fblc.h"
 
 // OpenBinaryStringInputBitStream
