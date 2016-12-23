@@ -37,8 +37,8 @@ typedef struct Threads {
   Thread* tail;
 } Threads;
 
-static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd);
-static void FreeThread(Thread* thread);
+static Thread* NewThread(FblcArena* arena, Vars* vars, Ports* ports, Cmd* cmd);
+static void FreeThread(FblcArena*, Thread* thread);
 static void AddThread(Threads* threads, Thread* thread);
 static Thread* GetThread(Threads* threads);
 
@@ -60,10 +60,10 @@ typedef struct Link {
   struct Threads waiting;
 } Link;
 
-//static Link* NewLink();
-static void FreeLink(Link* link);
-static void PutValue(Link* link, Value* value);
-//static Value* GetValue(Link* link);
+static Link* NewLink(FblcArena* arena);
+static void FreeLink(FblcArena* arena, Link* link);
+static void PutValue(FblcArena* arena, Link* link, Value* value);
+static Value* GetValue(FblcArena* arena, Link* link);
 
 // The following defines a Vars structure for storing the value of local
 // variables. It is possible to extend a local variable scope without
@@ -86,9 +86,9 @@ struct Ports {
 };
 static Value** LookupRef(Vars* vars, VarId id);
 static Value* LookupVal(Vars* vars, VarId id);
-static Vars* AddVar(Vars* vars);
-// static Link* LookupPort(Ports* ports, PortId id);
-// static Ports* AddPort(Ports* ports, Link* link);
+static Vars* AddVar(FblcArena* arena, Vars* vars);
+static Link* LookupPort(Ports* ports, PortId id);
+static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link);
 
 // The evaluator works by breaking down action and expression evaluation into
 // a sequence of commands that can be executed in turn. All of the state of
@@ -200,25 +200,26 @@ typedef struct {
   Link* link;
 } FreeLinkCmd;
 
-static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next);
-static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next);
-static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next);
-static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next);
-static Cmd* MkCondActnCmd(UnionValue* value, Actn** choices, Value** target, Cmd* next);
-static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next);
-static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next);
-static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next);
-static Cmd* MkJoinCmd(size_t count, Cmd* next);
-static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next);
-static Cmd* MkFreeLinkCmd(Link* link, Cmd* next);
+static Cmd* MkExprCmd(FblcArena* arena, Expr* expr, Value** target, Cmd* next);
+static Cmd* MkActnCmd(FblcArena* arena, Actn* actn, Value** target, Cmd* next);
+static Cmd* MkAccessCmd(FblcArena* arena, Value* value, size_t field, Value** target, Cmd* next);
+static Cmd* MkCondExprCmd(FblcArena* arena, UnionValue* value, Expr** choices, Value** target, Cmd* next);
+static Cmd* MkCondActnCmd(FblcArena* arena, UnionValue* value, Actn** choices, Value** target, Cmd* next);
+static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next);
+static Cmd* MkPushScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next);
+static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next);
+static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next);
+static Cmd* MkPutCmd(FblcArena* arena, Value** target, Link* link, Cmd* next);
+static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next);
 
-static void Run(Program* program, Threads* threads, Thread* thread);
+static void Run(FblcArena* arena, Program* program, Threads* threads, Thread* thread);
 
 // NewThread --
 //
 //   Create a new thread.
 //
 // Inputs:
+//   arena - The arena to use for allocation.
 //   vars - The thread's local variables.
 //   ports - The thread's ports.
 //   cmd - The thread's command list.
@@ -230,9 +231,9 @@ static void Run(Program* program, Threads* threads, Thread* thread);
 //   A new thread object is allocated. The thread object should be freed by
 //   calling FreeThread when the object is no longer needed.
 
-static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
+static Thread* NewThread(FblcArena* arena, Vars* vars, Ports* ports, Cmd* cmd)
 {
-  Thread* thread = MALLOC(sizeof(Thread));
+  Thread* thread = arena->alloc(arena, sizeof(Thread));
   thread->vars = vars;
   thread->ports = ports;
   thread->cmd = cmd;
@@ -245,6 +246,7 @@ static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
 //   Free a thread object that is no longer needed.
 //
 // Inputs:
+//   arena - The arena used to allocate the thread.
 //   thread - The thread object to free.
 //
 // Results:
@@ -254,9 +256,9 @@ static Thread* NewThread(Vars* vars, Ports* ports, Cmd* cmd)
 //   The resources for the thead object are released. The thread object should
 //   not be used after this call.
 
-static void FreeThread(Thread* thread)
+static void FreeThread(FblcArena* arena, Thread* thread)
 {
-  FREE(thread);
+  arena->free(arena, thread);
 }
 
 // AddThread --
@@ -318,7 +320,7 @@ static Thread* GetThread(Threads* threads)
 //   Create a new link object.
 //
 // Inputs:
-//   None.
+//   arena - The arena to use for allocations.
 //
 // Results:
 //   A newly created link object with no initial values or waiting threads.
@@ -327,9 +329,9 @@ static Thread* GetThread(Threads* threads)
 //   Allocates resources for a link object. The resources for the link object
 //   should be freed by calling FreeLink.
 
-static Link* NewLink()
+static Link* NewLink(FblcArena* arena)
 {
-  Link* link = MALLOC(sizeof(Link));
+  Link* link = arena->alloc(arena, sizeof(Link));
   link->head = NULL;
   link->tail = NULL;
   link->waiting.head = NULL;
@@ -342,6 +344,7 @@ static Link* NewLink()
 //   Free the given link object and resources associated with it.
 //
 // Inputs:
+//   arena - The arena used to allocate the link.
 //   link - The link to free.
 //
 // Results:
@@ -351,23 +354,23 @@ static Link* NewLink()
 //   The link object is freed along with any resources associated with it.
 //   After this call, the link object should not be accessed again.
 
-void FreeLink(Link* link)
+void FreeLink(FblcArena* arena, Link* link)
 {
   Values* values = link->head;
   while (values != NULL) {
     link->head = values->next;
-    Release(values->value);
-    FREE(values);
+    Release(arena, values->value);
+    arena->free(arena, values);
     values = link->head;
   }
 
   Thread* thread = GetThread(&(link->waiting));
   while (thread != NULL) {
-    FreeThread(thread);
+    FreeThread(arena, thread);
     thread = GetThread(&(link->waiting));
   }
 
-  FREE(link);
+  arena->free(arena, link);
 }
 
 // PutValue --
@@ -375,6 +378,7 @@ void FreeLink(Link* link)
 //   Put a value onto a link.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   link - The link to put the value on.
 //   value - The value to put on the link.
 //
@@ -384,9 +388,9 @@ void FreeLink(Link* link)
 // Side effects:
 //   Places the given value on the link.
 
-static void PutValue(Link* link, Value* value)
+static void PutValue(FblcArena* arena, Link* link, Value* value)
 {
-  Values* ntail = MALLOC(sizeof(Values));
+  Values* ntail = arena->alloc(arena, sizeof(Values));
   ntail->value = value;
   ntail->next = NULL;
   if (link->head == NULL) {
@@ -403,6 +407,7 @@ static void PutValue(Link* link, Value* value)
 //   Get the next value from the link.
 //
 // Inputs:
+//   arena - The arena used to put values on the link.
 //   link - The link to get the value from.
 //
 // Results:
@@ -412,14 +417,14 @@ static void PutValue(Link* link, Value* value)
 // Side effects
 //   Removes the gotten value from the link.
 
-static Value* GetValue(Link* link)
+static Value* GetValue(FblcArena* arena, Link* link)
 {
   Value* value = NULL;
   if (link->head != NULL) {
     Values* values = link->head;
     value = values->value;
     link->head = values->next;
-    FREE(values);
+    arena->free(arena, values);
     if (link->head == NULL) {
       link->tail = NULL;
     }
@@ -477,17 +482,18 @@ static Value* LookupVal(Vars* vars, VarId id)
 //   newly added variable.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   vars - The scope to extend.
 //
 // Returns:
 //   A new scope with the new variable and the contents of the given scope.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Vars* AddVar(Vars* vars)
+static Vars* AddVar(FblcArena* arena, Vars* vars)
 {
-  Vars* newvars = MALLOC(sizeof(Vars));
+  Vars* newvars = arena->alloc(arena, sizeof(Vars));
   newvars->value = NULL;
   newvars->next = vars;
   return newvars;
@@ -522,6 +528,7 @@ static Link* LookupPort(Ports* ports, PortId id)
 //   Extend the given port scope with a new port.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   ports - The scope to extend.
 //   link - The underlying link of the port to add.
 //
@@ -529,11 +536,11 @@ static Link* LookupPort(Ports* ports, PortId id)
 //   A new scope with the new port and the contents of the given scope.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Ports* AddPort(Ports* ports, Link* link)
+static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link)
 {
-  Ports* nports = MALLOC(sizeof(Ports));
+  Ports* nports = arena->alloc(arena, sizeof(Ports));
   nports->link = link;
   nports->next = ports;
   return nports;
@@ -545,6 +552,7 @@ static Ports* AddPort(Ports* ports, Link* link)
 //   value at the given target location.
 //
 // Inputs:
+//   alloc - The arena to use for allocations.
 //   expr - The expression for the created command to evaluate. This must not
 //          be NULL.
 //   target - The target of the result of evaluation. This must not be NULL.
@@ -554,14 +562,14 @@ static Ports* AddPort(Ports* ports, Link* link)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next)
+static Cmd* MkExprCmd(FblcArena* arena, Expr* expr, Value** target, Cmd* next)
 {
   assert(expr != NULL);
   assert(target != NULL);
 
-  ExprCmd* cmd = MALLOC(sizeof(ExprCmd));
+  ExprCmd* cmd = arena->alloc(arena, sizeof(ExprCmd));
   cmd->tag = CMD_EXPR;
   cmd->next = next;
   cmd->expr = expr;
@@ -575,6 +583,7 @@ static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next)
 //   value at the given target location.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   actn - The action for the created command to evaluate. This must not
 //          be NULL.
 //   target - The target of the result of evaluation.
@@ -584,14 +593,14 @@ static Cmd* MkExprCmd(Expr* expr, Value** target, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next)
+static Cmd* MkActnCmd(FblcArena* arena, Actn* actn, Value** target, Cmd* next)
 {
   assert(actn != NULL);
   assert(target != NULL);
 
-  ActnCmd* cmd = MALLOC(sizeof(ActnCmd));
+  ActnCmd* cmd = arena->alloc(arena, sizeof(ActnCmd));
   cmd->tag = CMD_ACTN;
   cmd->next = next;
   cmd->actn = actn;
@@ -605,6 +614,7 @@ static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next)
 //   the given target location.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   value - The value that will be accessed.
 //   field - The id of the field to access.
 //   target - The target destination of the accessed field.
@@ -614,11 +624,11 @@ static Cmd* MkActnCmd(Actn* actn, Value** target, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next)
+static Cmd* MkAccessCmd(FblcArena* arena, Value* value, size_t field, Value** target, Cmd* next)
 {
-  AccessCmd* cmd = MALLOC(sizeof(AccessCmd));
+  AccessCmd* cmd = arena->alloc(arena, sizeof(AccessCmd));
   cmd->tag = CMD_ACCESS;
   cmd->next = next;
   cmd->value = value;
@@ -633,6 +643,7 @@ static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next)
 //   the given value.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   value - The value to condition on.
 //   choices - The list of expressions to choose from based on the value.
 //   target - The target destination for the final evaluated value.
@@ -642,11 +653,11 @@ static Cmd* MkAccessCmd(Value* value, size_t field, Value** target, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd* next)
+static Cmd* MkCondExprCmd(FblcArena* arena, UnionValue* value, Expr** choices, Value** target, Cmd* next)
 {
-  CondExprCmd* cmd = MALLOC(sizeof(CondExprCmd));
+  CondExprCmd* cmd = arena->alloc(arena, sizeof(CondExprCmd));
   cmd->tag = CMD_COND_EXPR;
   cmd->next = next;
   cmd->value = value;
@@ -661,6 +672,7 @@ static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd
 //   the given value.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   value - The value to condition on.
 //   choices - The list of actions to choose from based on the value.
 //   target - The target destination for the final evaluated value.
@@ -670,12 +682,11 @@ static Cmd* MkCondExprCmd(UnionValue* value, Expr** choices, Value** target, Cmd
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkCondActnCmd(
-    UnionValue* value, Actn** choices, Value** target, Cmd* next)
+static Cmd* MkCondActnCmd(FblcArena* arena, UnionValue* value, Actn** choices, Value** target, Cmd* next)
 {
-  CondActnCmd* cmd = MALLOC(sizeof(CondActnCmd));
+  CondActnCmd* cmd = arena->alloc(arena, sizeof(CondActnCmd));
   cmd->tag = CMD_COND_ACTN;
   cmd->next = next;
   cmd->value = value;
@@ -689,6 +700,7 @@ static Cmd* MkCondActnCmd(
 //   Create a command to change the current ports and local variable scope.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   vars - The new value of the local variable scope to use.
 //   ports - The new value of the ports scope to use.
 //   is_pop - True if this should be a pop scope command.
@@ -698,11 +710,11 @@ static Cmd* MkCondActnCmd(
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
+static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 {
-  ScopeCmd* cmd = MALLOC(sizeof(ScopeCmd));
+  ScopeCmd* cmd = arena->alloc(arena, sizeof(ScopeCmd));
   cmd->tag = CMD_SCOPE;
   cmd->next = next;
   cmd->vars = vars;
@@ -717,6 +729,7 @@ static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 //   without freeing the previous ports and local variable scope.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   vars - The new value of the local variable scope to use.
 //   ports - The new value of the ports scope to use.
 //   next - The command to run after this one.
@@ -725,11 +738,11 @@ static Cmd* MkScopeCmd(Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next)
+static Cmd* MkPushScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next)
 {
-  return MkScopeCmd(vars, ports, false, next);
+  return MkScopeCmd(arena, vars, ports, false, next);
 }
 
 // MkPopScopeCmd --
@@ -738,6 +751,7 @@ static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 //   that frees the previous ports and local variable scope.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   vars - The new value of the local variable scope to use.
 //   ports - The new value of the ports scope to use.
 //   next - The command to run after this one.
@@ -746,11 +760,11 @@ static Cmd* MkPushScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
+static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next)
 {
-  return MkScopeCmd(vars, ports, true, next);
+  return MkScopeCmd(arena, vars, ports, true, next);
 }
 
 // MkJoinCmd --
@@ -758,6 +772,7 @@ static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 //   Create a join command.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   count - The number of threads to join.
 //   next - The command to run after this one.
 //
@@ -765,11 +780,11 @@ static Cmd* MkPopScopeCmd(Vars* vars, Ports* ports, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkJoinCmd(size_t count, Cmd* next)
+static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 {
-  JoinCmd* cmd = MALLOC(sizeof(JoinCmd));
+  JoinCmd* cmd = arena->alloc(arena, sizeof(JoinCmd));
   cmd->tag = CMD_JOIN;
   cmd->next = next;
   cmd->count = count;
@@ -781,6 +796,7 @@ static Cmd* MkJoinCmd(size_t count, Cmd* next)
 //   Create a put command.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   target - The target destination for the put value.
 //   link - The link to put the value on.
 //   next - The command to run after this one.
@@ -789,12 +805,12 @@ static Cmd* MkJoinCmd(size_t count, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next)
+static Cmd* MkPutCmd(FblcArena* arena, Value** target, Link* link, Cmd* next)
 {
   assert(target != NULL);
-  PutCmd* cmd = MALLOC(sizeof(PutCmd));
+  PutCmd* cmd = arena->alloc(arena, sizeof(PutCmd));
   cmd->tag = CMD_PUT;
   cmd->next = next;
   cmd->target = target;
@@ -808,6 +824,7 @@ static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next)
 //   Create a free link command.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   link - The link to free.
 //   next - The command to run after this one.
 //
@@ -815,11 +832,11 @@ static Cmd* MkPutCmd(Value** target, Link* link, Cmd* next)
 //   The newly created command.
 //
 // Side effects:
-//   None.
+//   Performs arena allocations.
 
-static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
+static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 {
-  FreeLinkCmd* cmd = MALLOC(sizeof(FreeLinkCmd));
+  FreeLinkCmd* cmd = arena->alloc(arena, sizeof(FreeLinkCmd));
   cmd->tag = CMD_FREE_LINK;
   cmd->next = next;
   cmd->link = link;
@@ -831,6 +848,7 @@ static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
 //   Spend a finite amount of time executing commands for a thread.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   env - The environment in which to run the thread.
 //   threads - The list of currently active threads.
 //   thread - The thread to run.
@@ -843,8 +861,9 @@ static Cmd* MkFreeLinkCmd(Link* link, Cmd* next)
 //   the thread. If the thread is executed to completion, it will be freed.
 //   Otherwise it will be added back to the threads list representing the
 //   continuation of this thread.
+//   Performs arena allocations.
 
-static void Run(Program* program, Threads* threads, Thread* thread)
+static void Run(FblcArena* arena, Program* program, Threads* threads, Thread* thread)
 {
   for (int i = 0; i < 1024 && thread->cmd != NULL; i++) {
     Cmd* next = thread->cmd->next;
@@ -857,7 +876,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
           case VAR_EXPR: {
             VarExpr* var_expr = (VarExpr*)expr;
             Value* value = LookupVal(thread->vars, var_expr->var);
-            *target = Copy(value);
+            *target = Copy(arena, value);
             break;
           }
 
@@ -869,10 +888,10 @@ static void Run(Program* program, Threads* threads, Thread* thread)
               // the arguments to fill in the fields with the proper results.
               TypeDecl* struct_decl = (TypeDecl*)decl;
               size_t fieldc = struct_decl->fieldc;
-              StructValue* value = NewStructValue(fieldc);
+              StructValue* value = NewStructValue(arena, fieldc);
               *target = (Value*)value;
               for (size_t i = 0; i < fieldc; ++i) {
-                next = MkExprCmd(app_expr->argv[i], &(value->fields[i]), next);
+                next = MkExprCmd(arena, app_expr->argv[i], &(value->fields[i]), next);
               }
               break;
             }
@@ -885,15 +904,15 @@ static void Run(Program* program, Threads* threads, Thread* thread)
               // TODO: Avoid memory leaks in the case of tail calls.
 
               FuncDecl* func = (FuncDecl*)decl;
-              next = MkPopScopeCmd(thread->vars, thread->ports, next);
-              next = MkExprCmd(func->body, target, next);
-              next = MkPushScopeCmd(NULL, thread->ports, next);
+              next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
+              next = MkExprCmd(arena, func->body, target, next);
+              next = MkPushScopeCmd(arena, NULL, thread->ports, next);
 
               ScopeCmd* scmd = (ScopeCmd*)next;
               Vars* nvars = NULL;
               for (size_t i = 0; i < func->argc; ++i) {
-                nvars = AddVar(nvars);
-                next = MkExprCmd(app_expr->argv[i], LookupRef(nvars, 0), next);
+                nvars = AddVar(arena, nvars);
+                next = MkExprCmd(arena, app_expr->argv[i], LookupRef(nvars, 0), next);
               }
               scmd->vars = nvars;
               break;
@@ -905,9 +924,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // Add to the top of the command list:
             // object -> access -> ...
             AccessExpr* access_expr = (AccessExpr*)expr;
-            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(
-                NULL, access_expr->field, target, next);
-            next = MkExprCmd(access_expr->object, &(acmd->value), (Cmd*)acmd);
+            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(arena, NULL, access_expr->field, target, next);
+            next = MkExprCmd(arena, access_expr->object, &(acmd->value), (Cmd*)acmd);
             break;
           }
 
@@ -916,10 +934,10 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // argument of the union constructor and set the field of the
             // union value.
             UnionExpr* union_expr = (UnionExpr*)expr;
-            UnionValue* value = NewUnionValue();
+            UnionValue* value = NewUnionValue(arena);
             value->tag = union_expr->field;
             *target = (Value*)value;
-            next = MkExprCmd(union_expr->body, &(value->field), next);
+            next = MkExprCmd(arena, union_expr->body, &(value->field), next);
             break;
           }
 
@@ -929,11 +947,11 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // TODO: Avoid memory leaks for tail calls.
             LetExpr* let_expr = (LetExpr*)expr;
 
-            next = MkPopScopeCmd(thread->vars, thread->ports, next);
-            Vars* nvars = AddVar(thread->vars);
-            next = MkExprCmd(let_expr->body, target, next);
-            next = MkPushScopeCmd(nvars, thread->ports, next);
-            next = MkExprCmd(let_expr->def, LookupRef(nvars, 0), next);
+            next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
+            Vars* nvars = AddVar(arena, thread->vars);
+            next = MkExprCmd(arena, let_expr->body, target, next);
+            next = MkPushScopeCmd(arena, nvars, thread->ports, next);
+            next = MkExprCmd(arena, let_expr->def, LookupRef(nvars, 0), next);
             break;
           }
 
@@ -941,10 +959,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // Add to the top of the command list:
             // select -> econd -> ...
             CondExpr* cond_expr = (CondExpr*)expr;
-            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(
-                NULL, cond_expr->argv, target, next);
-            next = MkExprCmd(
-                cond_expr->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
+            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(arena, NULL, cond_expr->argv, target, next);
+            next = MkExprCmd(arena, cond_expr->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
             break;
           }
         }
@@ -958,7 +974,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         switch (actn->tag) {
           case EVAL_ACTN: {
             EvalActn* eval_actn = (EvalActn*)actn;
-            next = MkExprCmd(eval_actn->expr, target, next);
+            next = MkExprCmd(arena, eval_actn->expr, target, next);
             break;
           }
 
@@ -967,7 +983,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             Link* link = LookupPort(thread->ports, get_actn->port);
             assert(link != NULL && "Get port not in scope");
 
-            *target = GetValue(link);
+            *target = GetValue(arena, link);
             if (*target == NULL) {
               AddThread(&link->waiting, thread);
               return;
@@ -980,8 +996,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             PutActn* put_actn = (PutActn*)actn;
             Link* link = LookupPort(thread->ports, put_actn->port);
             assert(link != NULL && "Put port not in scope");
-            PutCmd* pcmd = (PutCmd*)MkPutCmd(target, link, next);
-            next = MkExprCmd(put_actn->arg, &(pcmd->value), (Cmd*)pcmd);
+            PutCmd* pcmd = (PutCmd*)MkPutCmd(arena, target, link, next);
+            next = MkExprCmd(arena, put_actn->arg, &(pcmd->value), (Cmd*)pcmd);
             break;
           }
 
@@ -999,22 +1015,22 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // the vars for the scope command.
             // TODO: Avoid memory leaks in the case of tail calls.
 
-            next = MkPopScopeCmd(thread->vars, thread->ports, next);
-            next = MkActnCmd(proc->body, target, next);
+            next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
+            next = MkActnCmd(arena, proc->body, target, next);
 
             Ports* nports = NULL;
             for (size_t i = 0; i < proc->portc; ++i) {
               Link* link = LookupPort(thread->ports, call_actn->portv[i]);
               assert(link != NULL && "port not found in scope");
-              nports = AddPort(nports, link);
+              nports = AddPort(arena, nports, link);
             }
-            next = MkPushScopeCmd(NULL, nports, next);
+            next = MkPushScopeCmd(arena, NULL, nports, next);
 
             ScopeCmd* scmd = (ScopeCmd*)next;
             Vars* nvars = NULL;
             for (size_t i = 0; i < proc->argc; ++i) {
-              nvars = AddVar(nvars);
-              next = MkExprCmd(call_actn->argv[i], LookupRef(nvars, 0), next);
+              nvars = AddVar(arena, nvars);
+              next = MkExprCmd(arena, call_actn->argv[i], LookupRef(nvars, 0), next);
             }
             scmd->vars = nvars;
             break;
@@ -1025,13 +1041,13 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // Note: This modifies the scope in place rather than insert a
             // push scope command to do that as separate command.
             // TODO: Avoid memory leaks on tail recursion?
-            next = MkPopScopeCmd(thread->vars, thread->ports, next);
+            next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
             LinkActn* link_actn = (LinkActn*)actn;
-            Link* link = NewLink();
-            thread->ports = AddPort(thread->ports, link);
-            thread->ports = AddPort(thread->ports, link);
-            next = MkFreeLinkCmd(link, next);
-            next = MkActnCmd(link_actn->body, target, next);
+            Link* link = NewLink(arena);
+            thread->ports = AddPort(arena, thread->ports, link);
+            thread->ports = AddPort(arena, thread->ports, link);
+            next = MkFreeLinkCmd(arena, link, next);
+            next = MkActnCmd(arena, link_actn->body, target, next);
             break;
           }
 
@@ -1041,18 +1057,17 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // actn ..> join -> push scope -> actn -> pop scope -> next
             // actn .>
             ExecActn* exec_actn = (ExecActn*)actn;
-            next = MkPopScopeCmd(thread->vars, thread->ports, next);
-            next = MkActnCmd(exec_actn->body, target, next);
-            ScopeCmd* scmd = (ScopeCmd*)MkPushScopeCmd(
-                NULL, thread->ports, next);
-            Cmd* jcmd = MkJoinCmd(exec_actn->execc, (Cmd*)scmd);
+            next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
+            next = MkActnCmd(arena, exec_actn->body, target, next);
+            ScopeCmd* scmd = (ScopeCmd*)MkPushScopeCmd(arena, NULL, thread->ports, next);
+            Cmd* jcmd = MkJoinCmd(arena, exec_actn->execc, (Cmd*)scmd);
 
             Vars* nvars = thread->vars;
             for (size_t i = 0; i < exec_actn->execc; ++i) {
-              nvars = AddVar(nvars);
+              nvars = AddVar(arena, nvars);
               Value** target = LookupRef(nvars, 0);
-              AddThread(threads, NewThread(thread->vars, thread->ports,
-                    MkActnCmd(exec_actn->execv[i], target, jcmd)));
+              AddThread(threads, NewThread(arena, thread->vars, thread->ports,
+                    MkActnCmd(arena, exec_actn->execv[i], target, jcmd)));
             }
             scmd->vars = nvars;
             next = NULL;
@@ -1063,10 +1078,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
             // Add to the top of the command list:
             // select -> acond -> ...
             CondActn* cond_actn = (CondActn*)actn;
-            CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(
-                NULL, cond_actn->argv, target, next);
-            next = MkExprCmd(
-                cond_actn->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
+            CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(arena, NULL, cond_actn->argv, target, next);
+            next = MkExprCmd(arena, cond_actn->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
             break;
           }
             break;
@@ -1080,7 +1093,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         if (cmd->value->kind == UNION_KIND) {
           UnionValue* union_value = (UnionValue*)cmd->value;
           if (union_value->tag == cmd->field) {
-            *target = Copy(union_value->field);
+            *target = Copy(arena, union_value->field);
           } else {
             fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
             abort();
@@ -1088,9 +1101,9 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         } else {
           assert(cmd->field < cmd->value->kind);
           Value* value = ((StructValue*)cmd->value)->fields[cmd->field];
-          *target = Copy(value);
+          *target = Copy(arena, value);
         }
-        Release(cmd->value);
+        Release(arena, cmd->value);
         break;
       }
 
@@ -1099,8 +1112,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         UnionValue* value = cmd->value;
         Value** target = cmd->target;
         assert(value->kind == UNION_KIND);
-        next = MkExprCmd(cmd->choices[value->tag], target, next);
-        Release((Value*)value);
+        next = MkExprCmd(arena, cmd->choices[value->tag], target, next);
+        Release(arena, (Value*)value);
         break;
       }
 
@@ -1109,8 +1122,8 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         UnionValue* value = cmd->value;
         Value** target = cmd->target;
         assert(value->kind == UNION_KIND);
-        next = MkActnCmd(cmd->choices[value->tag], target, next);
-        Release((Value*)value);
+        next = MkActnCmd(arena, cmd->choices[value->tag], target, next);
+        Release(arena, (Value*)value);
         break;
       }
 
@@ -1121,14 +1134,14 @@ static void Run(Program* program, Threads* threads, Thread* thread)
           while (thread->vars != NULL && thread->vars != cmd->vars) {
             Vars* vars = thread->vars;
             thread->vars = vars->next;
-            Release(vars->value);
-            FREE(vars);
+            Release(arena, vars->value);
+            arena->free(arena, vars);
           }
 
           while (thread->ports != NULL && thread->ports != cmd->ports) {
             Ports* ports = thread->ports;
             thread->ports = ports->next;
-            FREE(ports);
+            arena->free(arena, ports);
           }
         }
 
@@ -1142,7 +1155,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         assert(cmd->count > 0);
         cmd->count--;
         if (cmd->count != 0) {
-          FreeThread(thread);
+          FreeThread(arena, thread);
           return;
         }
         break;
@@ -1153,7 +1166,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
         Link* link = cmd->link;
         Value** target = cmd->target;
         *target = cmd->value;
-        PutValue(link, Copy(cmd->value));
+        PutValue(arena, link, Copy(arena, cmd->value));
         Thread* waiting = GetThread(&link->waiting);
         if (waiting != NULL) {
           AddThread(threads, waiting);
@@ -1163,17 +1176,17 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 
       case CMD_FREE_LINK: {
         FreeLinkCmd* cmd = (FreeLinkCmd*)thread->cmd;
-        FreeLink(cmd->link);
+        FreeLink(arena, cmd->link);
         break;
       }
     }
 
-    FREE(thread->cmd);
+    arena->free(arena, thread->cmd);
     thread->cmd = next;
   }
 
   if (thread->cmd == NULL) {
-    FreeThread(thread);
+    FreeThread(arena, thread);
   } else {
     AddThread(threads, thread);
   }
@@ -1185,6 +1198,7 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 //   and process must be well formed.
 //
 // Inputs:
+//   arena - The arena to use for allocations.
 //   program - The program environment.
 //   proc - The process to execute.
 //   args - Arguments to the function to execute.
@@ -1197,35 +1211,36 @@ static void Run(Program* program, Threads* threads, Thread* thread)
 //   Releases the args values.
 //   Reads and writes to the open file descriptors for the ports as specified
 //   by the program.
+//   Performs arena allocations.
 
-Value* Execute(Program* program, ProcDecl* proc, Value** args)
+Value* Execute(FblcArena* arena, Program* program, ProcDecl* proc, Value** args)
 {
   Vars* vars = NULL;
   for (size_t i = 0; i < proc->argc; ++i) {
-    vars = AddVar(vars);
+    vars = AddVar(arena, vars);
     *LookupRef(vars, 0) = args[i];
   }
 
   Value* result = NULL;
-  Cmd* cmd = MkPopScopeCmd(NULL, NULL, NULL);
-  cmd = MkActnCmd(proc->body, &result, cmd);
+  Cmd* cmd = MkPopScopeCmd(arena, NULL, NULL, NULL);
+  cmd = MkActnCmd(arena, proc->body, &result, cmd);
 
   Link* links[proc->portc];
   Ports* ports = NULL;
   for (size_t i = 0; i < proc->portc; ++i) {
-    links[i] = NewLink();
-    ports = AddPort(ports, links[i]);
+    links[i] = NewLink(arena);
+    ports = AddPort(arena, ports, links[i]);
   }
 
   Threads threads;
   threads.head = NULL;
   threads.tail = NULL;
-  AddThread(&threads, NewThread(vars, ports, cmd));
+  AddThread(&threads, NewThread(arena, vars, ports, cmd));
 
   Thread* thread = GetThread(&threads);
   while (thread != NULL) {
     // Run the current thread.
-    Run(program, &threads, thread);
+    Run(arena, program, &threads, thread);
 
     // Perform whatever IO is ready. Do this after running the current thread
     // to ensure we get whatever final IO there is before terminating.
@@ -1237,18 +1252,18 @@ Value* Execute(Program* program, ProcDecl* proc, Value** args)
           // TODO: Flush the input stream to ensure alignment is met.
           InputBitStream stream;
           OpenBinaryFdInputBitStream(&stream, 3+i);
-          Value* got = DecodeValue(&stream, program, proc->portv[i].type);
-          PutValue(links[i], got);
+          Value* got = DecodeValue(arena, &stream, program, proc->portv[i].type);
+          PutValue(arena, links[i], got);
           AddThread(&threads, waiting);
         }
       } else {
-        Value* put = GetValue(links[i]);
+        Value* put = GetValue(arena, links[i]);
         if (put != NULL) {
           OutputBitStream stream;
           OpenBinaryOutputBitStream(&stream, 3+i);
           EncodeValue(&stream, program, proc->portv[i].type, put);
           FlushWriteBits(&stream);
-          Release(put);
+          Release(arena, put);
         }
       }
     }
@@ -1257,7 +1272,7 @@ Value* Execute(Program* program, ProcDecl* proc, Value** args)
   }
 
   for (int i = 0; i < proc->portc; i++) {
-    FreeLink(links[i]);
+    FreeLink(arena, links[i]);
   }
   return result;
 }

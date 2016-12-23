@@ -4,22 +4,47 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
+// FblcArena --
+//   An interface for allocating and freeing memory.
+typedef struct FblcArena {
+  // alloc --
+  //   Allocate size bytes of memory.
+  //
+  // Inputs:
+  //   this - The arena to allocate memory from.
+  //   size - The number of bytes to allocate.
+  //
+  // Result:
+  //   A pointer to a newly allocated size bytes of memory in the arena.
+  //
+  // Side effects:
+  //   Allocates size bytes from the arena.
+  //   The behavior is undefined if the 'this' argument is not the same from
+  //   which the alloc function is invoked.
+  void* (*alloc)(struct FblcArena* this, size_t size);
 
-#define GC_DEBUG
-#include <gc/gc.h>
-#define MALLOC_INIT() GC_INIT()
-#define MALLOC(x) GC_MALLOC(x)
-#define FREE(x) GC_FREE(x)
-#define ENABLE_LEAK_DETECTION() GC_find_leak = 1
-#define CHECK_FOR_LEAKS() GC_gcollect()
-
-// Allocator
-typedef struct AllocList AllocList;
-
-typedef struct {
-  AllocList* allocations;
-} Allocator;
+  // free --
+  //   Free a memory allocation.
+  //
+  // Inputs:
+  //   this - The arena to free the memory from.
+  //   ptr - The allocation to free, which must have been returned by a call
+  //         to alloc on this arena.
+  //
+  // Result:
+  //   None.
+  //
+  // Side effects:
+  //   Frees memory associated with the ptr from the arena.
+  //   After this call, any accesses to the freed memory result in undefined
+  //   behavior.
+  //   Behavior is undefined if the 'this' argument is not the same from
+  //   which the alloc function is invoked, or if ptr was not previously
+  //   returned by a call to alloc on this arena.
+  void (*free)(struct FblcArena* this, void* ptr);
+} FblcArena;
 
 // Vector is a helper for dynamically allocating an array of data whose
 // size is not known ahead of time.
@@ -30,17 +55,14 @@ typedef struct {
 // 'data' is where the data is stored.
 
 typedef struct {
-  Allocator* allocator;
-  int size;
-  int capacity;
-  int count;
+  FblcArena* arena;
+  size_t size;
+  size_t capacity;
+  size_t count;
   void* data;
 } Vector ;
 
-void InitAllocator(Allocator* alloc);
-void* Alloc(Allocator* alloc, size_t size);
-void FreeAll(Allocator* alloc);
-void VectorInit(Allocator* alloc, Vector* vector, size_t size);
+void VectorInit(FblcArena* arena, Vector* vector, size_t size);
 void* VectorAppend(Vector* vector);
 void* VectorExtract(Vector* vector, size_t* count);
 
@@ -232,10 +254,10 @@ typedef struct {
   Value* field;
 } UnionValue;
 
-StructValue* NewStructValue(size_t fieldc);
-UnionValue* NewUnionValue();
-Value* Copy(Value* src);
-void Release(Value* value);
+StructValue* NewStructValue(FblcArena* arena, size_t fieldc);
+UnionValue* NewUnionValue(FblcArena* arena);
+Value* Copy(FblcArena* arena, Value* src);
+void Release(FblcArena* arena, Value* value);
 
 // BitStream
 // Bit streams are represented as sequences of ascii digits '0' and '1'.
@@ -262,12 +284,12 @@ void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 void FlushWriteBits(OutputBitStream* stream);
 
 // Encoder
-Value* DecodeValue(InputBitStream* bits, Program* prg, TypeId type);
+Value* DecodeValue(FblcArena* arena, InputBitStream* bits, Program* prg, TypeId type);
 void EncodeValue(OutputBitStream* bits, Program* prg, TypeId type, Value* value);
-Program* DecodeProgram(Allocator* alloc, InputBitStream* bits);
+Program* DecodeProgram(FblcArena* arena, InputBitStream* bits);
 
 // Evaluator
-Value* Execute(Program* program, ProcDecl* proc, Value** args);
+Value* Execute(FblcArena* arena, Program* program, ProcDecl* proc, Value** args);
 
 #endif // FBLC_H_
 

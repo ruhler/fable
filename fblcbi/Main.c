@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "fblc.h"
+#include "gc.h"
 
 
 // PrintUsage --
@@ -61,8 +62,6 @@ static void PrintUsage(FILE* stream)
 
 int main(int argc, char* argv[])
 {
-  ENABLE_LEAK_DETECTION();
-  MALLOC_INIT();
 
   if (argc > 1 && strcmp("--help", argv[1]) == 0) {
     PrintUsage(stdout);
@@ -92,12 +91,16 @@ int main(int argc, char* argv[])
   InputBitStream bits;
   OpenBinaryFdInputBitStream(&bits, fdin);
 
-  Allocator alloc;
-  InitAllocator(&alloc);
-  Program* program = DecodeProgram(&alloc, &bits);
+  GcInit();
+  FblcArena* program_underlying_arena = CreateGcArena();
+  FblcArena* program_arena = CreateBulkFreeArena(program_underlying_arena);
+  Program* program = DecodeProgram(program_arena, &bits);
 
   if (entry >= program->declc) {
     fprintf(stderr, "invalid entry id: %zi.\n", entry);
+    FreeBulkFreeArena(program_arena);
+    FreeGcArena(program_underlying_arena);
+    GcFinish();
     return 1;
   }
 
@@ -108,11 +111,11 @@ int main(int argc, char* argv[])
   } else if (decl->tag == FUNC_DECL) {
     // Make a proc wrapper for the function.
     FuncDecl* func = (FuncDecl*)decl;
-    EvalActn* body = Alloc(&alloc, sizeof(EvalActn));
+    EvalActn* body = program_arena->alloc(program_arena, sizeof(EvalActn));
     body->tag = EVAL_ACTN;
     body->expr = func->body;
 
-    proc = Alloc(&alloc, sizeof(ProcDecl));
+    proc = program_arena->alloc(program_arena, sizeof(ProcDecl));
     proc->tag = PROC_DECL;
     proc->portc = 0;
     proc->portv = NULL;
@@ -122,31 +125,40 @@ int main(int argc, char* argv[])
     proc->body = (Actn*)body;
   } else {
     fprintf(stderr, "entry %zi is not a function or process.\n", entry);
+    FreeBulkFreeArena(program_arena);
+    FreeGcArena(program_underlying_arena);
+    GcFinish();
     return 1;
   }
 
   if (proc->argc != argc) {
     fprintf(stderr, "expected %zi args, but %i were provided.\n",
         proc->argc, argc);
+    FreeBulkFreeArena(program_arena);
+    FreeGcArena(program_underlying_arena);
+    GcFinish();
     return 1;
   }
 
+  FblcArena* exec_arena = CreateGcArena();
   Value* args[argc];
   for (size_t i = 0; i < argc; ++i) {
     InputBitStream argbits;
     OpenBinaryStringInputBitStream(&argbits, argv[i]);
-    args[i] = DecodeValue(&argbits, program, proc->argv[i]);
+    args[i] = DecodeValue(exec_arena, &argbits, program, proc->argv[i]);
   }
 
-  Value* value = Execute(program, proc, args);
+  Value* value = Execute(exec_arena, program, proc, args);
   assert(value != NULL);
 
   OutputBitStream output;
   OpenBinaryOutputBitStream(&output, STDOUT_FILENO);
   EncodeValue(&output, program, proc->return_type, value);
-  Release(value);
+  Release(exec_arena, value);
 
-  FreeAll(&alloc);
-  CHECK_FOR_LEAKS();
+  FreeGcArena(exec_arena);
+  FreeBulkFreeArena(program_arena);
+  FreeGcArena(program_underlying_arena);
+  GcFinish();
   return 0;
 }

@@ -7,82 +7,12 @@
 
 #include "fblc.h"
 
-struct AllocList {
-  AllocList* next;
-  uint8_t data[];
-};
-
-
-// InitAllocator --
-//
-//   Initialize an Allocator.
-//
-// Inputs:
-//   alloc - The allocator to initialize.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The allocator is initialized and ready to be used for allocation.
-
-void InitAllocator(Allocator* alloc)
-{
-  alloc->allocations = NULL;
-}
-
-// Alloc --
-//
-//   Allocate a block of memory 'size' bytes in length.
-//
-// Inputs:
-//   alloc - The allocator to use for the allocation.
-//   size - The number of bytes to allocate.
-//
-// Results:
-//   A pointer to 'size' bytes of memory with undefined contents. The memory
-//   will be freed when FreeAll is called on the allocator.
-//
-// Side effects:
-//   Memory is allocated.
-
-void* Alloc(Allocator* alloc, size_t size)
-{
-  AllocList* allocation = MALLOC(sizeof(AllocList) + size);
-  allocation->next = alloc->allocations;
-  alloc->allocations = allocation;
-  return allocation->data;
-}
-
-// FreeAll --
-//
-//   Free all memory allocated with this allocator.
-//
-// Inputs:
-//   alloc - The allocator to free the memory for.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   All memory allocated with this allocator is freed and should no longer be
-//   used.
-
-void FreeAll(Allocator* alloc)
-{
-  while (alloc->allocations != NULL) {
-    AllocList* this = alloc->allocations;
-    alloc->allocations = alloc->allocations->next;
-    FREE(this);
-  }
-}
-
 // VectorInit --
 //
 //   Initialize a Vector for allocations.
 //
 // Inputs:
-//   alloc - The allocator to use for the allocations.
+//   arena - The arena to use for the allocations.
 //   vector - The vector to initialize.
 //   size - The size in bytes of a single element of the vector.
 //
@@ -92,13 +22,13 @@ void FreeAll(Allocator* alloc)
 // Side effects:
 //   The vector is initialized for allocation.
 
-void VectorInit(Allocator* alloc, Vector* vector, size_t size)
+void VectorInit(FblcArena* arena, Vector* vector, size_t size)
 {
-  vector->allocator = alloc;
+  vector->arena = arena;
   vector->size = size;
   vector->capacity = 4;
   vector->count = 0;
-  vector->data = Alloc(alloc, vector->capacity * size);
+  vector->data = arena->alloc(arena, vector->capacity * size);
 }
 
 // VectorAppend --
@@ -120,11 +50,13 @@ void* VectorAppend(Vector* vector)
   if (vector->count == vector->capacity) {
     // TODO: Do something smarter to avoid wasting the previous allocation.
     void* old = vector->data;
-    int old_capacity = vector->capacity;
+    size_t old_capacity = vector->capacity;
     vector->capacity *= 2;
-    vector->data = Alloc(
-        vector->allocator, vector->capacity * vector->size);
-    memcpy(vector->data, old, old_capacity * vector->size);
+    size_t old_size = old_capacity * vector->size;
+    size_t size = vector->capacity * vector->size;
+    vector->data = vector->arena->alloc(vector->arena, size);
+    memcpy(vector->data, old, old_size);
+    vector->arena->free(vector->arena, old);
   }
   return (void*)((uintptr_t)vector->data + vector->count++ * vector->size);
 }
@@ -145,7 +77,7 @@ void* VectorAppend(Vector* vector)
 
 void* VectorExtract(Vector* vector, size_t* count)
 {
-  // TODO: Do something to save the unused space.
+  // TODO: Do something to save the unused space?
   *count = vector->count;
   return vector->data;
 }
