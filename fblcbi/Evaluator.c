@@ -146,7 +146,7 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  UnionValue* value;
+  Value* value;
   FblcExpr** choices;
   Value** target;
 } CondExprCmd;
@@ -157,7 +157,7 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  UnionValue* value;
+  Value* value;
   FblcActn** choices;
   Value** target;
 } CondActnCmd;
@@ -203,8 +203,8 @@ typedef struct {
 static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, Value** target, Cmd* next);
 static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, Value** target, Cmd* next);
 static Cmd* MkAccessCmd(FblcArena* arena, Value* value, size_t field, Value** target, Cmd* next);
-static Cmd* MkCondExprCmd(FblcArena* arena, UnionValue* value, FblcExpr** choices, Value** target, Cmd* next);
-static Cmd* MkCondActnCmd(FblcArena* arena, UnionValue* value, FblcActn** choices, Value** target, Cmd* next);
+static Cmd* MkCondExprCmd(FblcArena* arena, Value* value, FblcExpr** choices, Value** target, Cmd* next);
+static Cmd* MkCondActnCmd(FblcArena* arena, Value* value, FblcActn** choices, Value** target, Cmd* next);
 static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next);
 static Cmd* MkPushScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next);
@@ -655,7 +655,7 @@ static Cmd* MkAccessCmd(FblcArena* arena, Value* value, size_t field, Value** ta
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkCondExprCmd(FblcArena* arena, UnionValue* value, FblcExpr** choices, Value** target, Cmd* next)
+static Cmd* MkCondExprCmd(FblcArena* arena, Value* value, FblcExpr** choices, Value** target, Cmd* next)
 {
   CondExprCmd* cmd = arena->alloc(arena, sizeof(CondExprCmd));
   cmd->tag = CMD_COND_EXPR;
@@ -684,7 +684,7 @@ static Cmd* MkCondExprCmd(FblcArena* arena, UnionValue* value, FblcExpr** choice
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkCondActnCmd(FblcArena* arena, UnionValue* value, FblcActn** choices, Value** target, Cmd* next)
+static Cmd* MkCondActnCmd(FblcArena* arena, Value* value, FblcActn** choices, Value** target, Cmd* next)
 {
   CondActnCmd* cmd = arena->alloc(arena, sizeof(CondActnCmd));
   cmd->tag = CMD_COND_ACTN;
@@ -888,10 +888,10 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
               // the arguments to fill in the fields with the proper results.
               FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
               size_t fieldc = struct_decl->fieldc;
-              StructValue* value = NewStructValue(arena, fieldc);
-              *target = (Value*)value;
+              Value* value = NewStructValue(arena, fieldc);
+              *target = value;
               for (size_t i = 0; i < fieldc; ++i) {
-                next = MkExprCmd(arena, app_expr->argv[i], &(value->fields[i]), next);
+                next = MkExprCmd(arena, app_expr->argv[i], GetStructFieldRef(value, i), next);
               }
               break;
             }
@@ -937,10 +937,10 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             FblcDecl* decl = program->declv[union_expr->type];
             assert(decl->tag == FBLC_UNION_DECL);
             FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
-            UnionValue* value = NewUnionValue(arena, union_decl->fieldc);
-            value->tag = union_expr->field;
-            *target = (Value*)value;
-            next = MkExprCmd(arena, union_expr->body, &(value->field), next);
+            Value* value = NewUnionValue(arena, union_decl->fieldc);
+            SetUnionField(value, union_expr->field, NULL);
+            *target = value;
+            next = MkExprCmd(arena, union_expr->body, GetUnionFieldRef(value), next);
             break;
           }
 
@@ -963,7 +963,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // select -> econd -> ...
             FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
             CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(arena, NULL, cond_expr->argv, target, next);
-            next = MkExprCmd(arena, cond_expr->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
+            next = MkExprCmd(arena, cond_expr->select, &(ccmd->value), (Cmd*)ccmd);
             break;
           }
         }
@@ -1082,7 +1082,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // select -> acond -> ...
             FblcCondActn* cond_actn = (FblcCondActn*)actn;
             CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(arena, NULL, cond_actn->argv, target, next);
-            next = MkExprCmd(arena, cond_actn->select, (Value**)&(ccmd->value), (Cmd*)ccmd);
+            next = MkExprCmd(arena, cond_actn->select, &(ccmd->value), (Cmd*)ccmd);
             break;
           }
             break;
@@ -1093,40 +1093,39 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
       case CMD_ACCESS: {
         AccessCmd* cmd = (AccessCmd*)thread->cmd;
         Value** target = cmd->target;
-        if (cmd->value->kind < 0) {
-          UnionValue* union_value = (UnionValue*)cmd->value;
-          if (union_value->tag == cmd->field) {
-            *target = Copy(arena, union_value->field);
+        Value* value = cmd->value;
+        if (IsUnionValue(value)) {
+          if (GetUnionTag(value) == cmd->field) {
+            *target = Copy(arena, GetUnionField(value));
           } else {
             fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
             abort();
           }
         } else {
-          assert(cmd->field < cmd->value->kind);
-          Value* value = ((StructValue*)cmd->value)->fields[cmd->field];
-          *target = Copy(arena, value);
+          assert(IsStructValue(value));
+          *target = Copy(arena, GetStructField(value, cmd->field));
         }
-        Release(arena, cmd->value);
+        Release(arena, value);
         break;
       }
 
       case CMD_COND_EXPR: {
         CondExprCmd* cmd = (CondExprCmd*)thread->cmd;
-        UnionValue* value = cmd->value;
+        Value* value = cmd->value;
         Value** target = cmd->target;
-        assert(value->kind < 0);
-        next = MkExprCmd(arena, cmd->choices[value->tag], target, next);
-        Release(arena, (Value*)value);
+        assert(IsUnionValue(value));
+        next = MkExprCmd(arena, cmd->choices[GetUnionTag(value)], target, next);
+        Release(arena, value);
         break;
       }
 
       case CMD_COND_ACTN: {
         CondActnCmd* cmd = (CondActnCmd*)thread->cmd;
-        UnionValue* value = cmd->value;
+        Value* value = cmd->value;
         Value** target = cmd->target;
-        assert(value->kind < 0);
-        next = MkActnCmd(arena, cmd->choices[value->tag], target, next);
-        Release(arena, (Value*)value);
+        assert(IsUnionValue(value));
+        next = MkActnCmd(arena, cmd->choices[GetUnionTag(value)], target, next);
+        Release(arena, value);
         break;
       }
 

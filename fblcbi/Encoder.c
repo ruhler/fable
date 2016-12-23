@@ -281,23 +281,19 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, Fbl
   switch (decl->tag) {
     case FBLC_STRUCT_DECL: {
       FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
-      size_t fieldc = struct_decl->fieldc;
-      size_t size = sizeof(StructValue) + fieldc * sizeof(Value*);
-      StructValue* value = arena->alloc(arena, size);
-      value->refcount = 1;
-      value->kind = fieldc;
-      for (size_t i = 0; i < fieldc; ++i) {
-        value->fields[i] = DecodeValue(arena, bits, prg, struct_decl->fieldv[i]);
+      Value* value = NewStructValue(arena, struct_decl->fieldc);
+      for (size_t i = 0; i < struct_decl->fieldc; ++i) {
+        SetStructField(value, i, DecodeValue(arena, bits, prg, struct_decl->fieldv[i]));
       }
-      return (Value*)value;
+      return value;
     }
 
     case FBLC_UNION_DECL: {
       FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
-      UnionValue* value = NewUnionValue(arena, union_decl->fieldc);
-      value->tag = ReadBits(bits, SizeOfTag(union_decl->fieldc));
-      value->field = DecodeValue(arena, bits, prg, union_decl->fieldv[value->tag]);
-      return (Value*)value;
+      Value* value = NewUnionValue(arena, union_decl->fieldc);
+      size_t tag = ReadBits(bits, SizeOfTag(union_decl->fieldc));
+      SetUnionField(value, tag, DecodeValue(arena, bits, prg, union_decl->fieldv[tag]));
+      return value;
     }
 
     default:
@@ -308,14 +304,12 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, Fbl
 
 void EncodeValue(OutputBitStream* bits, Value* value)
 {
-  if (value->kind >= 0) {
-    StructValue* struct_value = (StructValue*)value;
-    for (size_t i = 0; i < value->kind; ++i) {
-      EncodeValue(bits, struct_value->fields[i]);
+  if (IsStructValue(value)) {
+    for (size_t i = 0; i < NumStructFields(value); ++i) {
+      EncodeValue(bits, GetStructField(value, i));
     }
   } else {
-    UnionValue* union_value = (UnionValue*)value;
-    WriteBits(bits, SizeOfTag(-value->kind), union_value->tag);
-    EncodeValue(bits, union_value->field);
+    WriteBits(bits, SizeOfUnionTag(value), GetUnionTag(value));
+    EncodeValue(bits, GetUnionField(value));
   }
 }

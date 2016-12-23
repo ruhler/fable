@@ -398,39 +398,25 @@ typedef struct {
   FblcDecl** declv;
 } FblcProgram;
 
-// Value
-
-// Value --
-//   A struct or union value.
-//
-// Fields:
-//   refcount - The number of references to the value.
-//   kind - The kind of value and number of fields. If non-negative, the
-//   value is a StructValue with kind fields. If negative, the value is a
-//   UnionValue with abs(kind) fields.
-typedef struct {
-  size_t refcount;
-  ssize_t kind;
-} Value;
-
-typedef struct {
-  size_t refcount;
-  ssize_t kind;
-  Value* fields[];
-} StructValue;
-
-typedef struct {
-  size_t refcount;
-  ssize_t kind;
-  size_t tag;
-  Value* field;
-} UnionValue;
-
-StructValue* NewStructValue(FblcArena* arena, size_t fieldc);
-UnionValue* NewUnionValue(FblcArena* arena, size_t fieldc);
+typedef struct Value Value;
 Value* Copy(FblcArena* arena, Value* src);
 void Release(FblcArena* arena, Value* value);
 
+Value* NewStructValue(FblcArena* arena, size_t fieldc);
+bool IsStructValue(Value* value);
+size_t NumStructFields(Value* value);
+Value* GetStructField(Value* this, size_t tag);
+Value** GetStructFieldRef(Value* this, size_t tag);
+void SetStructField(Value* this, size_t tag, Value* field);
+
+Value* NewUnionValue(FblcArena* arena, size_t fieldc);
+bool IsUnionValue(Value* value);
+size_t SizeOfUnionTag(Value* value);
+size_t GetUnionTag(Value* value);
+Value* GetUnionField(Value* this);
+Value** GetUnionFieldRef(Value* this);
+void SetUnionField(Value* this, size_t tag, Value* field);
+
 // BitStream
 // Bit streams are represented as sequences of ascii digits '0' and '1'.
 // TODO: Support more efficient encodings of bit streams when desired.
