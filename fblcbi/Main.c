@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* program_underlying_arena = CreateGcArena();
   FblcArena* program_arena = CreateBulkFreeArena(program_underlying_arena);
-  Program* program = DecodeProgram(program_arena, &bits);
+  FblcProgram* program = DecodeProgram(program_arena, &bits);
 
   if (entry >= program->declc) {
     fprintf(stderr, "invalid entry id: %zi.\n", entry);
@@ -104,25 +104,25 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  Decl* decl = program->declv[entry];
-  ProcDecl* proc = NULL;
-  if (decl->tag == PROC_DECL) {
-    proc = (ProcDecl*)decl;
-  } else if (decl->tag == FUNC_DECL) {
+  FblcDecl* decl = program->declv[entry];
+  FblcProcDecl* proc = NULL;
+  if (decl->tag == FBLC_PROC_DECL) {
+    proc = (FblcProcDecl*)decl;
+  } else if (decl->tag == FBLC_FUNC_DECL) {
     // Make a proc wrapper for the function.
-    FuncDecl* func = (FuncDecl*)decl;
-    EvalActn* body = program_arena->alloc(program_arena, sizeof(EvalActn));
-    body->tag = EVAL_ACTN;
+    FblcFuncDecl* func = (FblcFuncDecl*)decl;
+    FblcEvalActn* body = program_arena->alloc(program_arena, sizeof(FblcEvalActn));
+    body->tag = FBLC_EVAL_ACTN;
     body->expr = func->body;
 
-    proc = program_arena->alloc(program_arena, sizeof(ProcDecl));
-    proc->tag = PROC_DECL;
+    proc = program_arena->alloc(program_arena, sizeof(FblcProcDecl));
+    proc->tag = FBLC_PROC_DECL;
     proc->portc = 0;
     proc->portv = NULL;
     proc->argc = func->argc;
     proc->argv = func->argv;
     proc->return_type = func->return_type;
-    proc->body = (Actn*)body;
+    proc->body = (FblcActn*)body;
   } else {
     fprintf(stderr, "entry %zi is not a function or process.\n", entry);
     FreeBulkFreeArena(program_arena);

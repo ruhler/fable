@@ -15,9 +15,9 @@ static size_t DecodeId(InputBitStream* bits)
   }
 }
 
-static TypeId* DecodeNonEmptyTypes(FblcArena* arena, InputBitStream* bits, size_t* count)
+static FblcTypeId* DecodeNonEmptyTypes(FblcArena* arena, InputBitStream* bits, size_t* count)
 {
-  TypeId* types;
+  FblcTypeId* types;
   FblcVectorInit(arena, types, *count);
   do {
     FblcVectorAppend(arena, types, *count, DecodeId(bits));
@@ -25,9 +25,9 @@ static TypeId* DecodeNonEmptyTypes(FblcArena* arena, InputBitStream* bits, size_
   return types;
 }
 
-static TypeId* DecodeTypeIds(FblcArena* arena, InputBitStream* bits, size_t* count)
+static FblcTypeId* DecodeTypeIds(FblcArena* arena, InputBitStream* bits, size_t* count)
 {
-  TypeId* types;
+  FblcTypeId* types;
   FblcVectorInit(arena, types, *count);
   while (ReadBits(bits, 1)) {
     FblcVectorAppend(arena, types, *count, DecodeId(bits));
@@ -49,61 +49,61 @@ static TypeId* DecodeTypeIds(FblcArena* arena, InputBitStream* bits, size_t* cou
 // Side effects:
 //   The bit stream is advanced to just past the expression read.
 
-static Expr* DecodeExpr(FblcArena* arena, InputBitStream* bits)
+static FblcExpr* DecodeExpr(FblcArena* arena, InputBitStream* bits)
 {
   switch (ReadBits(bits, 3)) {
-    case VAR_EXPR: {
-      VarExpr* expr = arena->alloc(arena, sizeof(VarExpr));
-      expr->tag = VAR_EXPR;
+    case FBLC_VAR_EXPR: {
+      FblcVarExpr* expr = arena->alloc(arena, sizeof(FblcVarExpr));
+      expr->tag = FBLC_VAR_EXPR;
       expr->var = DecodeId(bits);
-      return (Expr*)expr;
+      return (FblcExpr*)expr;
     }
 
-    case APP_EXPR: {
-      AppExpr* expr = arena->alloc(arena, sizeof(AppExpr));
-      expr->tag = APP_EXPR;
+    case FBLC_APP_EXPR: {
+      FblcAppExpr* expr = arena->alloc(arena, sizeof(FblcAppExpr));
+      expr->tag = FBLC_APP_EXPR;
       expr->func = DecodeId(bits);
       FblcVectorInit(arena, expr->argv, expr->argc);
       while (ReadBits(bits, 1)) {
         FblcVectorAppend(arena, expr->argv, expr->argc, DecodeExpr(arena, bits));
       }
-      return (Expr*)expr;
+      return (FblcExpr*)expr;
     }
 
-    case UNION_EXPR: {
-      UnionExpr* expr = arena->alloc(arena, sizeof(UnionExpr));
-      expr->tag = UNION_EXPR;
+    case FBLC_UNION_EXPR: {
+      FblcUnionExpr* expr = arena->alloc(arena, sizeof(FblcUnionExpr));
+      expr->tag = FBLC_UNION_EXPR;
       expr->type = DecodeId(bits);
       expr->field = DecodeId(bits);
       expr->body = DecodeExpr(arena, bits);
-      return (Expr*)expr;
+      return (FblcExpr*)expr;
     }
 
-    case ACCESS_EXPR: {
-     AccessExpr* expr = arena->alloc(arena, sizeof(AccessExpr));
-     expr->tag = ACCESS_EXPR;
+    case FBLC_ACCESS_EXPR: {
+     FblcAccessExpr* expr = arena->alloc(arena, sizeof(FblcAccessExpr));
+     expr->tag = FBLC_ACCESS_EXPR;
      expr->object = DecodeExpr(arena, bits);
      expr->field = DecodeId(bits);
-     return (Expr*)expr;
+     return (FblcExpr*)expr;
     }
 
-    case COND_EXPR: {
-      CondExpr* expr = arena->alloc(arena, sizeof(CondExpr));
-      expr->tag = COND_EXPR;
+    case FBLC_COND_EXPR: {
+      FblcCondExpr* expr = arena->alloc(arena, sizeof(FblcCondExpr));
+      expr->tag = FBLC_COND_EXPR;
       expr->select = DecodeExpr(arena, bits);
       FblcVectorInit(arena, expr->argv, expr->argc);
       do { 
         FblcVectorAppend(arena, expr->argv, expr->argc, DecodeExpr(arena, bits));
       } while (ReadBits(bits, 1));
-      return (Expr*)expr;
+      return (FblcExpr*)expr;
     }
 
-    case LET_EXPR: {
-      LetExpr* expr = arena->alloc(arena, sizeof(LetExpr));
-      expr->tag = LET_EXPR;
+    case FBLC_LET_EXPR: {
+      FblcLetExpr* expr = arena->alloc(arena, sizeof(FblcLetExpr));
+      expr->tag = FBLC_LET_EXPR;
       expr->def = DecodeExpr(arena, bits);
       expr->body = DecodeExpr(arena, bits);
-      return (Expr*)expr;
+      return (FblcExpr*)expr;
     }
 
     default:
@@ -112,9 +112,9 @@ static Expr* DecodeExpr(FblcArena* arena, InputBitStream* bits)
   }
 }
 
-static Port* DecodePorts(FblcArena* arena, InputBitStream* bits, size_t* count)
+static FblcPort* DecodePorts(FblcArena* arena, InputBitStream* bits, size_t* count)
 {
-  Port* ports;
+  FblcPort* ports;
   FblcVectorInit(arena, ports, *count);
   while (ReadBits(bits, 1)) {
     FblcVectorExtend(arena, ports, *count);
@@ -138,45 +138,45 @@ static Port* DecodePorts(FblcArena* arena, InputBitStream* bits, size_t* count)
 // Side effects:
 //   The bit stream is advanced to just past the action read.
 
-static Actn* DecodeActn(FblcArena* arena, InputBitStream* bits)
+static FblcActn* DecodeActn(FblcArena* arena, InputBitStream* bits)
 {
   switch (ReadBits(bits, 3)) {
-    case EVAL_ACTN: {
-      EvalActn* actn = arena->alloc(arena, sizeof(EvalActn));
-      actn->tag = EVAL_ACTN;
+    case FBLC_EVAL_ACTN: {
+      FblcEvalActn* actn = arena->alloc(arena, sizeof(FblcEvalActn));
+      actn->tag = FBLC_EVAL_ACTN;
       actn->expr = DecodeExpr(arena, bits);
-      return (Actn*)actn;
+      return (FblcActn*)actn;
     }
 
-    case GET_ACTN: {
-      GetActn* actn = arena->alloc(arena, sizeof(GetActn));
-      actn->tag = GET_ACTN;
+    case FBLC_GET_ACTN: {
+      FblcGetActn* actn = arena->alloc(arena, sizeof(FblcGetActn));
+      actn->tag = FBLC_GET_ACTN;
       actn->port = DecodeId(bits);
-      return (Actn*)actn;
+      return (FblcActn*)actn;
     }
 
-    case PUT_ACTN: {
-      PutActn* actn = arena->alloc(arena, sizeof(PutActn));
-      actn->tag = PUT_ACTN;
+    case FBLC_PUT_ACTN: {
+      FblcPutActn* actn = arena->alloc(arena, sizeof(FblcPutActn));
+      actn->tag = FBLC_PUT_ACTN;
       actn->port = DecodeId(bits);
       actn->arg = DecodeExpr(arena, bits);
-      return (Actn*)actn;
+      return (FblcActn*)actn;
     }
 
-    case COND_ACTN: {
-      CondActn* actn = arena->alloc(arena, sizeof(CondActn));
-      actn->tag = COND_ACTN;
+    case FBLC_COND_ACTN: {
+      FblcCondActn* actn = arena->alloc(arena, sizeof(FblcCondActn));
+      actn->tag = FBLC_COND_ACTN;
       actn->select = DecodeExpr(arena, bits);
       FblcVectorInit(arena, actn->argv, actn->argc);
       do { 
         FblcVectorAppend(arena, actn->argv, actn->argc, DecodeActn(arena, bits));
       } while (ReadBits(bits, 1));
-      return (Actn*)actn;
+      return (FblcActn*)actn;
     }
 
-    case CALL_ACTN: {
-      CallActn* actn = arena->alloc(arena, sizeof(CallActn));
-      actn->tag = CALL_ACTN;
+    case FBLC_CALL_ACTN: {
+      FblcCallActn* actn = arena->alloc(arena, sizeof(FblcCallActn));
+      actn->tag = FBLC_CALL_ACTN;
       actn->proc = DecodeId(bits);
       FblcVectorInit(arena, actn->portv, actn->portc);
       while (ReadBits(bits, 1)) {
@@ -186,26 +186,26 @@ static Actn* DecodeActn(FblcArena* arena, InputBitStream* bits)
       while (ReadBits(bits, 1)) {
         FblcVectorAppend(arena, actn->argv, actn->argc, DecodeExpr(arena, bits));
       }
-      return (Actn*)actn;
+      return (FblcActn*)actn;
     }
 
-    case LINK_ACTN: {
-      LinkActn* actn = arena->alloc(arena, sizeof(LinkActn));
-      actn->tag = LINK_ACTN;
+    case FBLC_LINK_ACTN: {
+      FblcLinkActn* actn = arena->alloc(arena, sizeof(FblcLinkActn));
+      actn->tag = FBLC_LINK_ACTN;
       actn->type = DecodeId(bits);
       actn->body = DecodeActn(arena, bits);
-      return (Actn*)actn;
+      return (FblcActn*)actn;
     }
 
-    case EXEC_ACTN: {
-      ExecActn* actn = arena->alloc(arena, sizeof(ExecActn));
-      actn->tag = EXEC_ACTN;
+    case FBLC_EXEC_ACTN: {
+      FblcExecActn* actn = arena->alloc(arena, sizeof(FblcExecActn));
+      actn->tag = FBLC_EXEC_ACTN;
       FblcVectorInit(arena, actn->execv, actn->execc);
       do { 
         FblcVectorAppend(arena, actn->execv, actn->execc, DecodeActn(arena, bits));
       } while (ReadBits(bits, 1));
       actn->body = DecodeActn(arena, bits);
-      return (Actn*)actn;
+      return (FblcActn*)actn;
     }
 
     default:
@@ -214,40 +214,40 @@ static Actn* DecodeActn(FblcArena* arena, InputBitStream* bits)
   }
 }
 
-static Decl* DecodeDecl(FblcArena* arena, InputBitStream* bits)
+static FblcDecl* DecodeDecl(FblcArena* arena, InputBitStream* bits)
 {
   switch (ReadBits(bits, 2)) {
-    case STRUCT_DECL: {
-      TypeDecl* decl = arena->alloc(arena, sizeof(TypeDecl));
-      decl->tag = STRUCT_DECL;
+    case FBLC_STRUCT_DECL: {
+      FblcTypeDecl* decl = arena->alloc(arena, sizeof(FblcTypeDecl));
+      decl->tag = FBLC_STRUCT_DECL;
       decl->fieldv = DecodeTypeIds(arena, bits, &(decl->fieldc));
-      return (Decl*)decl;
+      return (FblcDecl*)decl;
     }
 
-    case UNION_DECL: {
-      TypeDecl* decl = arena->alloc(arena, sizeof(TypeDecl));
-      decl->tag = UNION_DECL;
+    case FBLC_UNION_DECL: {
+      FblcTypeDecl* decl = arena->alloc(arena, sizeof(FblcTypeDecl));
+      decl->tag = FBLC_UNION_DECL;
       decl->fieldv = DecodeNonEmptyTypes(arena, bits, &(decl->fieldc));
-      return (Decl*)decl;
+      return (FblcDecl*)decl;
     }
 
-    case FUNC_DECL: {
-      FuncDecl* decl = arena->alloc(arena, sizeof(FuncDecl));
-      decl->tag = FUNC_DECL;
+    case FBLC_FUNC_DECL: {
+      FblcFuncDecl* decl = arena->alloc(arena, sizeof(FblcFuncDecl));
+      decl->tag = FBLC_FUNC_DECL;
       decl->argv = DecodeTypeIds(arena, bits, &(decl->argc));
       decl->return_type = DecodeId(bits);
       decl->body = DecodeExpr(arena, bits);
-      return (Decl*)decl;
+      return (FblcDecl*)decl;
     }
 
-    case PROC_DECL: {
-      ProcDecl* decl = arena->alloc(arena, sizeof(ProcDecl));
-      decl->tag = PROC_DECL;
+    case FBLC_PROC_DECL: {
+      FblcProcDecl* decl = arena->alloc(arena, sizeof(FblcProcDecl));
+      decl->tag = FBLC_PROC_DECL;
       decl->portv = DecodePorts(arena, bits, &(decl->portc));
       decl->argv = DecodeTypeIds(arena, bits, &(decl->argc));
       decl->return_type = DecodeId(bits);
       decl->body = DecodeActn(arena, bits);
-      return (Decl*)decl;
+      return (FblcDecl*)decl;
     }
 
     default:
@@ -256,9 +256,9 @@ static Decl* DecodeDecl(FblcArena* arena, InputBitStream* bits)
   }
 }
 
-Program* DecodeProgram(FblcArena* arena, InputBitStream* bits)
+FblcProgram* DecodeProgram(FblcArena* arena, InputBitStream* bits)
 {
-  Program* program = arena->alloc(arena, sizeof(Program));
+  FblcProgram* program = arena->alloc(arena, sizeof(FblcProgram));
   FblcVectorInit(arena, program->declv, program->declc);
   do {
     FblcVectorAppend(arena, program->declv, program->declc, DecodeDecl(arena, bits));
@@ -275,12 +275,12 @@ static size_t SizeOfTag(size_t count)
   return size;
 }
 
-Value* DecodeValue(FblcArena* arena, InputBitStream* bits, Program* prg, TypeId type)
+Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, FblcTypeId type)
 {
-  Decl* decl = prg->declv[type];
+  FblcDecl* decl = prg->declv[type];
   switch (decl->tag) {
-    case STRUCT_DECL: {
-      TypeDecl* struct_decl = (TypeDecl*)decl;
+    case FBLC_STRUCT_DECL: {
+      FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
       size_t fieldc = struct_decl->fieldc;
       size_t size = sizeof(StructValue) + fieldc * sizeof(Value*);
       StructValue* value = arena->alloc(arena, size);
@@ -292,8 +292,8 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, Program* prg, TypeId 
       return (Value*)value;
     }
 
-    case UNION_DECL: {
-      TypeDecl* union_decl = (TypeDecl*)decl;
+    case FBLC_UNION_DECL: {
+      FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
       UnionValue* value = NewUnionValue(arena, union_decl->fieldc);
       value->tag = ReadBits(bits, SizeOfTag(union_decl->fieldc));
       value->field = DecodeValue(arena, bits, prg, union_decl->fieldv[value->tag]);

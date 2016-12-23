@@ -2,9 +2,9 @@
 #ifndef FBLC_H_
 #define FBLC_H_
 
-#include <stdbool.h>  // for bool
-#include <stdint.h>   // for uint32_t
-#include <sys/types.h>   // for size_t and ssize_t
+#include <stdbool.h>    // for bool
+#include <stdint.h>     // for uint32_t
+#include <sys/types.h>  // for size_t and ssize_t
 
 // FblcArena --
 //   An interface for allocating and freeing memory.
@@ -122,173 +122,282 @@ typedef struct FblcArena {
   FblcVectorExtend(arena, vector, size); \
   vector[(size)++] = elem
 
-// Program
-typedef size_t DeclId;
-typedef size_t FieldId;
-typedef size_t PortId;
-typedef size_t TypeId;
-typedef size_t VarId;
+// FblcDeclId --
+//   Declarations are identified using the order in which they are defined in
+//   the program. The first declaration has id 0, the second declaration id 1,
+//   and so on.
+typedef size_t FblcDeclId;
 
+// FblcTypeId --
+//   An FblcDeclId that ought to be referring to a type declaration.
+typedef FblcDeclId FblcTypeId;
+
+// FblcFieldId --
+//   Fields are identified using the order in which they are defined in their
+//   type declaration. The first field has id 0, the second field has id 1,
+//   and so on.
+typedef size_t FblcFieldId;
+
+// FblcVarId --
+//   Variables are identified using De Bruijn indices. The inner most bound
+//   variable has id 0, the next inner most bound variable has id 1, and so
+//   on. For variables introduced as function arguments or exec actions, the
+//   right-most argument is considered inner most.
+typedef size_t FblcVarId;
+
+// FblcPortId --
+//   Ports are identified using De Bruijn indices. The inner most bound port
+//   has id 0, the next inner most bound variable has id 1, and so on. For
+//   ports introduced as process arguments, the right-most port is considered
+//   inner most. For ports declared as part of link actions, the put port is
+//   considered inner most with respect to the get port. Both put and get
+//   ports belong to the same namespace of indices.
+typedef size_t FblcPortId;
+
+// FblcExprTag --
+//   A tag used to distinguish among different kinds of expressions.
 typedef enum {
-  VAR_EXPR,
-  APP_EXPR,
-  UNION_EXPR,
-  ACCESS_EXPR,
-  COND_EXPR,
-  LET_EXPR
-} ExprTag;
+  FBLC_VAR_EXPR,
+  FBLC_APP_EXPR,
+  FBLC_UNION_EXPR,
+  FBLC_ACCESS_EXPR,
+  FBLC_COND_EXPR,
+  FBLC_LET_EXPR
+} FblcExprTag;
 
+// FblcExpr --
+//   A tagged union of expression types. All expressions have the same initial
+//   layout as FblcExpr. The tag can be used to determine what kind of
+//   expression this is to get access to additional fields of the expression
+//   by first casting to that specific type of expression.
 typedef struct {
-  ExprTag tag;
-} Expr;
+  FblcExprTag tag;
+} FblcExpr;
 
+// FblcVarExpr --
+//   A variable expression of the form 'var' whose value is the value of the
+//   corresponding variable in scope.
 typedef struct {
-  ExprTag tag;
-  VarId var;
-} VarExpr;
+  FblcExprTag tag;
+  FblcVarId var;
+} FblcVarExpr;
 
+// FblcAppExpr --
+//   An application expression of the form 'func(arg0, arg1, ...)'. func may
+//   refer to a function or a struct type.
 typedef struct {
-  ExprTag tag;
-  DeclId func;
+  FblcExprTag tag;
+  FblcDeclId func;
   size_t argc;
-  Expr** argv;
-} AppExpr;
+  FblcExpr** argv;
+} FblcAppExpr;
 
+// FblcUnionExpr --
+//   An union expression of the form 'type:field(body)', used to construct a
+//   union value.
 typedef struct {
-  ExprTag tag;
-  TypeId type;
-  FieldId field;
-  Expr* body;
-} UnionExpr;
+  FblcExprTag tag;
+  FblcTypeId type;
+  FblcFieldId field;
+  FblcExpr* body;
+} FblcUnionExpr;
 
+// FblcAccessExpr --
+//   An access expression of the form 'object.field' used to access a field of
+//   a struct or union value.
 typedef struct {
-  ExprTag tag;
-  Expr* object;
-  FieldId field;
-} AccessExpr;
+  FblcExprTag tag;
+  FblcExpr* object;
+  FblcFieldId field;
+} FblcAccessExpr;
 
+// FblcCondExpr --
+//   A conditional expression of the form '?(select; arg0, arg1, ...)', which
+//   conditionally selects an argument based on the tag of the select value.
 typedef struct {
-  ExprTag tag;
-  Expr* select;
+  FblcExprTag tag;
+  FblcExpr* select;
   size_t argc;
-  Expr** argv;
-} CondExpr;
+  FblcExpr** argv;
+} FblcCondExpr;
 
+// FblcLetExpr --
+//   A let expression of the form '{ type var = def; body }', where the type
+//   of the variable can be determined as the type of the def expression and
+//   the name of the variable is a De Bruijn index based on the context where
+//   the variable is accessed.
 typedef struct {
-  ExprTag tag;
-  Expr* def;
-  Expr* body;
-} LetExpr;
+  FblcExprTag tag;
+  FblcExpr* def;
+  FblcExpr* body;
+} FblcLetExpr;
 
+// FblcDeclTag --
+//   A tag used to distinguish among different kinds of declarations.
 typedef enum {
-  STRUCT_DECL,    // TypeDecl
-  UNION_DECL,     // TypeDecl
-  FUNC_DECL,      // FuncDecl
-  PROC_DECL       // ProcDecl
-} DeclTag;
+  FBLC_STRUCT_DECL,
+  FBLC_UNION_DECL,
+  FBLC_FUNC_DECL,
+  FBLC_PROC_DECL
+} FblcDeclTag;
 
+// FblcDecl --
+//   A tagged union of declaration types. All declarations have the same
+//   initial layout as FblcDecl. The tag can be used to determine what kind of
+//   declaration this is to get access to additional fields of the declaration
+//   by first casting to that specific type of declaration.
 typedef struct {
-  DeclTag tag;
-} Decl;
+  FblcDeclTag tag;
+} FblcDecl;
 
+// FblcTypeDecl --
+//   Common structure used for struct and union declarations.
 typedef struct {
-  DeclTag tag;
+  FblcDeclTag tag;
   size_t fieldc;
-  TypeId* fieldv;
-} TypeDecl;
+  FblcTypeId* fieldv;
+} FblcTypeDecl;
 
+// FblcStructDecl --
+//   Declaration of a struct type.
+typedef FblcTypeDecl FblcStructDecl;
+
+// FblcUnionDecl --
+//   Declaration of a union type.
+typedef FblcTypeDecl FblcUnionDecl;
+
+// FblcFuncDecl --
+//   Declaration of a function.
 typedef struct {
-  DeclTag tag;
+  FblcDeclTag tag;
   size_t argc;
-  TypeId* argv;
-  TypeId return_type; 
-  Expr* body;
-} FuncDecl;
+  FblcTypeId* argv;
+  FblcTypeId return_type; 
+  FblcExpr* body;
+} FblcFuncDecl;
 
+// FblcPolarity --
+//   The polarity of a port.
 typedef enum {
-  GET_POLARITY,
-  PUT_POLARITY
-} Polarity;
+  FBLC_GET_POLARITY,
+  FBLC_PUT_POLARITY
+} FblcPolarity;
 
+// FblcPort --
+//   The type and polarity of a port.
 typedef struct {
-  TypeId type;
-  Polarity polarity;
-} Port;
+  FblcTypeId type;
+  FblcPolarity polarity;
+} FblcPort;
 
+// FblcActnTag --
+//   A tag used to distinguish among different kinds of actions.
 typedef enum {
-  EVAL_ACTN,
-  GET_ACTN,
-  PUT_ACTN,
-  COND_ACTN,
-  CALL_ACTN,
-  LINK_ACTN,
-  EXEC_ACTN
-} ActnTag;
+  FBLC_EVAL_ACTN,
+  FBLC_GET_ACTN,
+  FBLC_PUT_ACTN,
+  FBLC_COND_ACTN,
+  FBLC_CALL_ACTN,
+  FBLC_LINK_ACTN,
+  FBLC_EXEC_ACTN
+} FblcActnTag;
 
+// FblcActn --
+//   A tagged union of action types. All actions have the same initial
+//   layout as FblcExpr. The tag can be used to determine what kind of
+//   action this is to get access to additional fields of the action
+//   by first casting to that specific type of action.
 typedef struct {
-  ActnTag tag;
-} Actn;
+  FblcActnTag tag;
+} FblcActn;
 
+// FblcEvalActn --
+//   An evaluation action of the form '$(expr)' which evaluates the given
+//   expression without side effects.
 typedef struct {
-  ActnTag tag;
-  Expr* expr;
-} EvalActn;
+  FblcActnTag tag;
+  FblcExpr* expr;
+} FblcEvalActn;
 
+// FblcGetActn --
+//   A get action of the form 'port~()' used to get a value from a port.
 typedef struct {
-  ActnTag tag;
-  PortId port;
-} GetActn;
+  FblcActnTag tag;
+  FblcPortId port;
+} FblcGetActn;
 
+// FblcPutActn --
+//   A put action of the form 'port(arg)' used to put a value onto a port.
 typedef struct {
-  ActnTag tag;
-  PortId port;
-  Expr* arg;
-} PutActn;
+  FblcActnTag tag;
+  FblcPortId port;
+  FblcExpr* arg;
+} FblcPutActn;
 
+// FblcCondActn --
+//   A conditional action of the form '?(select; arg0, arg1, ...)', which
+//   conditionally selects an argument based on the tag of the select value.
 typedef struct {
-  ActnTag tag;
-  Expr* select;
+  FblcActnTag tag;
+  FblcExpr* select;
   size_t argc;
-  Actn** argv;
-} CondActn;
+  FblcActn** argv;
+} FblcCondActn;
 
+// FblcCallActn --
+//   A call action of the form 'proc(port0, port1, ... ; arg0, arg1, ...)',
+//   which calls a process with the given port and value arguments.
 typedef struct {
-  ActnTag tag;
-  DeclId proc;
+  FblcActnTag tag;
+  FblcDeclId proc;
   size_t portc;
-  PortId* portv;
+  FblcPortId* portv;
   size_t argc;
-  Expr** argv;
-} CallActn;
+  FblcExpr** argv;
+} FblcCallActn;
 
+// FblcLinkActn --
+//   A link action of the form 'type <~> get, put; body'. The names of the get
+//   and put ports are De Bruijn indices based on the context where the ports
+//   are accessed.
 typedef struct {
-  ActnTag tag;
-  TypeId type;
-  Actn* body;
-} LinkActn;
+  FblcActnTag tag;
+  FblcTypeId type;
+  FblcActn* body;
+} FblcLinkActn;
 
+// FblcExecActn --
+//   An exec action of the form 'type0 var0 = exec0, type1 var1 = exec1, ...; body',
+//   which executes processes in parallel. The types of the variables can be
+//   determined as the types of their exec processes, and the name of the
+//   variables are De Bruijn indices based ont he context where they are
+//   accessed.
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   size_t execc;
-  Actn** execv;
-  Actn* body;
-} ExecActn;
+  FblcActn** execv;
+  FblcActn* body;
+} FblcExecActn;
 
+// FblcProcDecl --
+//   Declaration of a process.
 typedef struct {
-  DeclTag tag;
+  FblcDeclTag tag;
   size_t portc;
-  Port* portv;
+  FblcPort* portv;
   size_t argc;
-  TypeId* argv; 
-  TypeId return_type;
-  Actn* body;
-} ProcDecl;
+  FblcTypeId* argv; 
+  FblcTypeId return_type;
+  FblcActn* body;
+} FblcProcDecl;
 
+// FblcProgram --
+//   A collection of declarations that make up a program.
 typedef struct {
   size_t declc;
-  Decl** declv;
-} Program;
-
+  FblcDecl** declv;
+} FblcProgram;
+
 // Value
 
 // Value --
@@ -347,12 +456,12 @@ void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 void FlushWriteBits(OutputBitStream* stream);
 
 // Encoder
-Value* DecodeValue(FblcArena* arena, InputBitStream* bits, Program* prg, TypeId type);
+Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, FblcTypeId type);
 void EncodeValue(OutputBitStream* bits, Value* value);
-Program* DecodeProgram(FblcArena* arena, InputBitStream* bits);
+FblcProgram* DecodeProgram(FblcArena* arena, InputBitStream* bits);
 
 // Evaluator
-Value* Execute(FblcArena* arena, Program* program, ProcDecl* proc, Value** args);
+Value* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, Value** args);
 
 #endif // FBLC_H_
 
