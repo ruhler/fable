@@ -1,4 +1,6 @@
 
+#include <stdlib.h>
+
 #include "fblc.h"
 
 
@@ -43,11 +45,11 @@ StructValue* NewStructValue(FblcArena* arena, size_t fieldc)
 //   union value, and Release to release the resources associated with
 //   the value.
 
-UnionValue* NewUnionValue(FblcArena* arena)
+UnionValue* NewUnionValue(FblcArena* arena, size_t fieldc)
 {
   UnionValue* value = arena->alloc(arena, sizeof(UnionValue));
   value->refcount = 1;
-  value->kind = UNION_KIND;
+  value->kind = -fieldc;
   return value;
 }
 
@@ -91,7 +93,7 @@ void Release(FblcArena* arena, Value* value)
   if (value != NULL) {
     value->refcount--;
     if (value->refcount == 0) {
-      if (value->kind == UNION_KIND) {
+      if (value->kind < 0) {
         UnionValue* union_value = (UnionValue*)value;
         Release(arena, union_value->field);
       } else {

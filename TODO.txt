@@ -1,4 +1,6 @@
 * Switch to library-based sharing rather than file based sharing.
+ - Add helper functions to tell whether a value is a struct or union and
+   return the number of fields it has.
  - Turn fblcbi into -lfblc library + fblcbi main.
  - Reimplement fblc as -lfblc + fblcbe.
  - Remove expect_result_b tests.

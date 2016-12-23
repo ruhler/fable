@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
 
   OutputBitStream output;
   OpenBinaryOutputBitStream(&output, STDOUT_FILENO);
-  EncodeValue(&output, program, proc->return_type, value);
+  EncodeValue(&output, value);
   Release(exec_arena, value);
 
   FreeGcArena(exec_arena);

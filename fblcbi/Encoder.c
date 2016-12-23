@@ -294,9 +294,7 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, Program* prg, TypeId 
 
     case UNION_DECL: {
       TypeDecl* union_decl = (TypeDecl*)decl;
-      UnionValue* value = arena->alloc(arena, sizeof(UnionValue));
-      value->refcount = 1;
-      value->kind = UNION_KIND;
+      UnionValue* value = NewUnionValue(arena, union_decl->fieldc);
       value->tag = ReadBits(bits, SizeOfTag(union_decl->fieldc));
       value->field = DecodeValue(arena, bits, prg, union_decl->fieldv[value->tag]);
       return (Value*)value;
@@ -308,32 +306,16 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, Program* prg, TypeId 
   }
 }
 
-void EncodeValue(OutputBitStream* bits, Program* prg, TypeId type, Value* value)
+void EncodeValue(OutputBitStream* bits, Value* value)
 {
-  Decl* decl = prg->declv[type];
-  switch (decl->tag) {
-    case STRUCT_DECL: {
-      TypeDecl* struct_decl = (TypeDecl*)decl;
-      StructValue* struct_value = (StructValue*)value;
-      size_t fieldc = struct_decl->fieldc;
-      assert(value->kind == fieldc);
-      for (size_t i = 0; i < fieldc; ++i) {
-        EncodeValue(bits, prg, struct_decl->fieldv[i], struct_value->fields[i]);
-      }
-      break;
+  if (value->kind >= 0) {
+    StructValue* struct_value = (StructValue*)value;
+    for (size_t i = 0; i < value->kind; ++i) {
+      EncodeValue(bits, struct_value->fields[i]);
     }
-
-    case UNION_DECL: {
-      assert(value->kind == UNION_KIND);
-      TypeDecl* union_decl = (TypeDecl*)decl;
-      UnionValue* union_value = (UnionValue*)value;
-      WriteBits(bits, SizeOfTag(union_decl->fieldc), union_value->tag);
-      EncodeValue(bits, prg, union_decl->fieldv[union_value->tag], union_value->field);
-      break;
-    }
-
-    default:
-      assert(false && "type id does not refer to a type declaration");
-      break;
+  } else {
+    UnionValue* union_value = (UnionValue*)value;
+    WriteBits(bits, SizeOfTag(-value->kind), union_value->tag);
+    EncodeValue(bits, union_value->field);
   }
 }

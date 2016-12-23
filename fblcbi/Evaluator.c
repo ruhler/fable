@@ -934,7 +934,10 @@ static void Run(FblcArena* arena, Program* program, Threads* threads, Thread* th
             // argument of the union constructor and set the field of the
             // union value.
             UnionExpr* union_expr = (UnionExpr*)expr;
-            UnionValue* value = NewUnionValue(arena);
+            Decl* decl = program->declv[union_expr->type];
+            assert(decl->tag == UNION_DECL);
+            TypeDecl* union_decl = (TypeDecl*)decl;
+            UnionValue* value = NewUnionValue(arena, union_decl->fieldc);
             value->tag = union_expr->field;
             *target = (Value*)value;
             next = MkExprCmd(arena, union_expr->body, &(value->field), next);
@@ -1090,7 +1093,7 @@ static void Run(FblcArena* arena, Program* program, Threads* threads, Thread* th
       case CMD_ACCESS: {
         AccessCmd* cmd = (AccessCmd*)thread->cmd;
         Value** target = cmd->target;
-        if (cmd->value->kind == UNION_KIND) {
+        if (cmd->value->kind < 0) {
           UnionValue* union_value = (UnionValue*)cmd->value;
           if (union_value->tag == cmd->field) {
             *target = Copy(arena, union_value->field);
@@ -1111,7 +1114,7 @@ static void Run(FblcArena* arena, Program* program, Threads* threads, Thread* th
         CondExprCmd* cmd = (CondExprCmd*)thread->cmd;
         UnionValue* value = cmd->value;
         Value** target = cmd->target;
-        assert(value->kind == UNION_KIND);
+        assert(value->kind < 0);
         next = MkExprCmd(arena, cmd->choices[value->tag], target, next);
         Release(arena, (Value*)value);
         break;
@@ -1121,7 +1124,7 @@ static void Run(FblcArena* arena, Program* program, Threads* threads, Thread* th
         CondActnCmd* cmd = (CondActnCmd*)thread->cmd;
         UnionValue* value = cmd->value;
         Value** target = cmd->target;
-        assert(value->kind == UNION_KIND);
+        assert(value->kind < 0);
         next = MkActnCmd(arena, cmd->choices[value->tag], target, next);
         Release(arena, (Value*)value);
         break;
@@ -1261,7 +1264,7 @@ Value* Execute(FblcArena* arena, Program* program, ProcDecl* proc, Value** args)
         if (put != NULL) {
           OutputBitStream stream;
           OpenBinaryOutputBitStream(&stream, 3+i);
-          EncodeValue(&stream, program, proc->portv[i].type, put);
+          EncodeValue(&stream, put);
           FlushWriteBits(&stream);
           Release(arena, put);
         }

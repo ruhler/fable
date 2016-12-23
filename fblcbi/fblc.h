@@ -4,7 +4,7 @@
 
 #include <stdbool.h>  // for bool
 #include <stdint.h>   // for uint32_t
-#include <stdlib.h>   // for size_t
+#include <sys/types.h>   // for size_t and ssize_t
 
 // FblcArena --
 //   An interface for allocating and freeing memory.
@@ -91,8 +91,9 @@ typedef struct FblcArena {
 //
 // Implementation notes:
 //   We assume the capacity of the array is the smallest power of 2 that holds
-//   size elements. If size is equal to the capacity of the array coming in,
-//   we double the capacity of the array, which preserves the invariant.
+//   size elements. If size is equal to the capacity of the array, we double
+//   the capacity of the array, which preserves the invariant after the size is
+//   incremented.
 #define FblcVectorExtend(arena, vector, size) \
   if ((size) > 0 && (((size) & ((size)-1)) == 0)) { \
     void* resized = arena->alloc(arena, 2 * (size) * sizeof(*vector)); \
@@ -290,27 +291,34 @@ typedef struct {
 
 // Value
 
-#define UNION_KIND (-1)
+// Value --
+//   A struct or union value.
+//
+// Fields:
+//   refcount - The number of references to the value.
+//   kind - The kind of value and number of fields. If non-negative, the
+//   value is a StructValue with kind fields. If negative, the value is a
+//   UnionValue with abs(kind) fields.
 typedef struct {
   size_t refcount;
-  size_t kind;    // UNION_KIND for union, number of fields for struct.
+  ssize_t kind;
 } Value;
 
 typedef struct {
   size_t refcount;
-  size_t kind;
+  ssize_t kind;
   Value* fields[];
 } StructValue;
 
 typedef struct {
   size_t refcount;
-  size_t kind;
+  ssize_t kind;
   size_t tag;
   Value* field;
 } UnionValue;
 
 StructValue* NewStructValue(FblcArena* arena, size_t fieldc);
-UnionValue* NewUnionValue(FblcArena* arena);
+UnionValue* NewUnionValue(FblcArena* arena, size_t fieldc);
 Value* Copy(FblcArena* arena, Value* src);
 void Release(FblcArena* arena, Value* value);
 
@@ -340,7 +348,7 @@ void FlushWriteBits(OutputBitStream* stream);
 
 // Encoder
 Value* DecodeValue(FblcArena* arena, InputBitStream* bits, Program* prg, TypeId type);
-void EncodeValue(OutputBitStream* bits, Program* prg, TypeId type, Value* value);
+void EncodeValue(OutputBitStream* bits, Value* value);
 Program* DecodeProgram(FblcArena* arena, InputBitStream* bits);
 
 // Evaluator
