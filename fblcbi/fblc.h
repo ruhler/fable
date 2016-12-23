@@ -1,6 +1,6 @@
 
-#ifndef INTERNAL_H_
-#define INTERNAL_H_
+#ifndef FBLC_H_
+#define FBLC_H_
 
 #include <assert.h>
 #include <fcntl.h>
@@ -278,5 +278,5 @@ Program* DecodeProgram(Allocator* alloc, InputBitStream* bits);
 // Evaluator
 Value* Execute(Program* program, ProcDecl* proc, Value** args);
 
-#endif // INTERNAL_H_
+#endif // FBLC_H_
 

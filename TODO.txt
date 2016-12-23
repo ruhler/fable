@@ -1,5 +1,10 @@
 * Switch to library-based sharing rather than file based sharing.
- - Revert expect_proc_result back to text interface.
+ - Turn fblcbi into -lfblc library + fblcbi main.
+ - Reimplement fblc as -lfblc + fblcbe.
+ - Remove expect_result_b tests.
+ - Turn fblcbe into -lfblct library + fblcbe main.
+ - Implement testfblc on top of -lfblct
+ - Replace expect_result and expect_proc_result with fblc-test
 
 * Test and fix writing a stream of Units
  - which requires some alignment be done.

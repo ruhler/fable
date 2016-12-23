@@ -2,7 +2,7 @@
 //
 //   This file implements routines for reading and writing bit streams.
 
-#include "Internal.h"
+#include "fblc.h"
 
 // OpenBinaryStringInputBitStream
 //   Open an InputBitStream that reads from a string of ascii digits '0' and

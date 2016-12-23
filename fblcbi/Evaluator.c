@@ -2,7 +2,7 @@
 //
 //   This file implements routines for evaluating expressions.
 
-#include "Internal.h"
+#include "fblc.h"
 
 typedef struct Vars Vars;
 typedef struct Ports Ports;
