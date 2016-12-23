@@ -403,4 +403,6 @@ typedef struct {
 FblcValue* FblcExecute(const FblcEnv* env, FblcProc* proc,
     FblcIO* portios, FblcValue** args);
 
+int FblcCheckMain(int argc, char* argv[]);
+
 #endif  // FBLC_INTERNAL_H_

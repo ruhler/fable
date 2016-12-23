@@ -121,14 +121,9 @@ proc expect_malformed { program entry args } {
   try {
     set fprogram ./out/test/$name.fblc
     exec echo $program > $fprogram
-    set got [exec $::fblc $fprogram $entry {*}$args]
-    error "$file:$line: error: Expected error, but got '$got'"
+    exec $::fblc --check --error $fprogram
   } trap CHILDSTATUS {results options} {
-    exec echo $results > ./out/test/$name.err
-    set status [lindex [dict get $options -errorcode] 2]
-    if {65 != $status} {
-      error "$file:$line: error: Expected error code 65, but got code '$status'"
-    }
+    error "$file:$line: error: fblc-check passed unexpectedly"
   }
 }
 
