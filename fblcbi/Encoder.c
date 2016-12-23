@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <string.h>
 
 #include "fblc.h"
 
@@ -16,24 +17,22 @@ static size_t DecodeId(InputBitStream* bits)
 
 static TypeId* DecodeNonEmptyTypes(FblcArena* arena, InputBitStream* bits, size_t* count)
 {
-  Vector vector;
-  VectorInit(arena, &vector, sizeof(TypeId));
+  TypeId* types;
+  FblcVectorInit(arena, types, *count);
   do {
-    TypeId* ptr = VectorAppend(&vector);
-    *ptr = DecodeId(bits);
+    FblcVectorAppend(arena, types, *count, DecodeId(bits));
   } while (ReadBits(bits, 1));
-  return VectorExtract(&vector, count);
+  return types;
 }
 
 static TypeId* DecodeTypeIds(FblcArena* arena, InputBitStream* bits, size_t* count)
 {
-  Vector vector;
-  VectorInit(arena, &vector, sizeof(TypeId));
+  TypeId* types;
+  FblcVectorInit(arena, types, *count);
   while (ReadBits(bits, 1)) {
-    TypeId* ptr = VectorAppend(&vector);
-    *ptr = DecodeId(bits);
+    FblcVectorAppend(arena, types, *count, DecodeId(bits));
   }
-  return VectorExtract(&vector, count);
+  return types;
 }
 
 // DecodeExpr --
@@ -64,13 +63,10 @@ static Expr* DecodeExpr(FblcArena* arena, InputBitStream* bits)
       AppExpr* expr = arena->alloc(arena, sizeof(AppExpr));
       expr->tag = APP_EXPR;
       expr->func = DecodeId(bits);
-      Vector vector;
-      VectorInit(arena, &vector, sizeof(Expr*));
+      FblcVectorInit(arena, expr->argv, expr->argc);
       while (ReadBits(bits, 1)) {
-        Expr** ptr = VectorAppend(&vector);
-        *ptr = DecodeExpr(arena, bits);
+        FblcVectorAppend(arena, expr->argv, expr->argc, DecodeExpr(arena, bits));
       }
-      expr->argv = VectorExtract(&vector, &expr->argc);
       return (Expr*)expr;
     }
 
@@ -95,13 +91,10 @@ static Expr* DecodeExpr(FblcArena* arena, InputBitStream* bits)
       CondExpr* expr = arena->alloc(arena, sizeof(CondExpr));
       expr->tag = COND_EXPR;
       expr->select = DecodeExpr(arena, bits);
-      Vector vector;
-      VectorInit(arena, &vector, sizeof(Expr*));
+      FblcVectorInit(arena, expr->argv, expr->argc);
       do { 
-        Expr** ptr = VectorAppend(&vector);
-        *ptr = DecodeExpr(arena, bits);
+        FblcVectorAppend(arena, expr->argv, expr->argc, DecodeExpr(arena, bits));
       } while (ReadBits(bits, 1));
-      expr->argv = VectorExtract(&vector, &expr->argc);
       return (Expr*)expr;
     }
 
@@ -121,14 +114,14 @@ static Expr* DecodeExpr(FblcArena* arena, InputBitStream* bits)
 
 static Port* DecodePorts(FblcArena* arena, InputBitStream* bits, size_t* count)
 {
-  Vector vector;
-  VectorInit(arena, &vector, sizeof(Port));
+  Port* ports;
+  FblcVectorInit(arena, ports, *count);
   while (ReadBits(bits, 1)) {
-    Port* ptr = VectorAppend(&vector);
-    ptr->type = DecodeId(bits);
-    ptr->polarity = ReadBits(bits, 1);
+    FblcVectorExtend(arena, ports, *count);
+    ports[*count].type = DecodeId(bits);
+    ports[(*count)++].polarity = ReadBits(bits, 1);
   }
-  return VectorExtract(&vector, count);
+  return ports;
 }
 
 // DecodeActn --
@@ -174,13 +167,10 @@ static Actn* DecodeActn(FblcArena* arena, InputBitStream* bits)
       CondActn* actn = arena->alloc(arena, sizeof(CondActn));
       actn->tag = COND_ACTN;
       actn->select = DecodeExpr(arena, bits);
-      Vector vector;
-      VectorInit(arena, &vector, sizeof(Actn*));
+      FblcVectorInit(arena, actn->argv, actn->argc);
       do { 
-        Actn** ptr = VectorAppend(&vector);
-        *ptr = DecodeActn(arena, bits);
+        FblcVectorAppend(arena, actn->argv, actn->argc, DecodeActn(arena, bits));
       } while (ReadBits(bits, 1));
-      actn->argv = VectorExtract(&vector, &actn->argc);
       return (Actn*)actn;
     }
 
@@ -188,20 +178,14 @@ static Actn* DecodeActn(FblcArena* arena, InputBitStream* bits)
       CallActn* actn = arena->alloc(arena, sizeof(CallActn));
       actn->tag = CALL_ACTN;
       actn->proc = DecodeId(bits);
-      Vector port_vector;
-      VectorInit(arena, &port_vector, sizeof(PortId));
+      FblcVectorInit(arena, actn->portv, actn->portc);
       while (ReadBits(bits, 1)) {
-        PortId* ptr = VectorAppend(&port_vector);
-        *ptr = DecodeId(bits);
+        FblcVectorAppend(arena, actn->portv, actn->portc, DecodeId(bits));
       }
-      actn->portv = VectorExtract(&port_vector, &actn->portc);
-      Vector arg_vector;
-      VectorInit(arena, &arg_vector, sizeof(Expr*));
+      FblcVectorInit(arena, actn->argv, actn->argc);
       while (ReadBits(bits, 1)) {
-        Expr** ptr = VectorAppend(&arg_vector);
-        *ptr = DecodeExpr(arena, bits);
+        FblcVectorAppend(arena, actn->argv, actn->argc, DecodeExpr(arena, bits));
       }
-      actn->argv = VectorExtract(&arg_vector, &actn->argc);
       return (Actn*)actn;
     }
 
@@ -216,13 +200,10 @@ static Actn* DecodeActn(FblcArena* arena, InputBitStream* bits)
     case EXEC_ACTN: {
       ExecActn* actn = arena->alloc(arena, sizeof(ExecActn));
       actn->tag = EXEC_ACTN;
-      Vector vector;
-      VectorInit(arena, &vector, sizeof(Actn*));
+      FblcVectorInit(arena, actn->execv, actn->execc);
       do { 
-        Actn** ptr = VectorAppend(&vector);
-        *ptr = DecodeActn(arena, bits);
+        FblcVectorAppend(arena, actn->execv, actn->execc, DecodeActn(arena, bits));
       } while (ReadBits(bits, 1));
-      actn->execv = VectorExtract(&vector, &actn->execc);
       actn->body = DecodeActn(arena, bits);
       return (Actn*)actn;
     }
@@ -277,14 +258,11 @@ static Decl* DecodeDecl(FblcArena* arena, InputBitStream* bits)
 
 Program* DecodeProgram(FblcArena* arena, InputBitStream* bits)
 {
-  Vector vector;
-  VectorInit(arena, &vector, sizeof(Decl*));
-  do {
-    Decl** ptr = VectorAppend(&vector);
-    *ptr = DecodeDecl(arena, bits);
-  } while (ReadBits(bits, 1));
   Program* program = arena->alloc(arena, sizeof(Program));
-  program->declv = VectorExtract(&vector, &(program->declc));
+  FblcVectorInit(arena, program->declv, program->declc);
+  do {
+    FblcVectorAppend(arena, program->declv, program->declc, DecodeDecl(arena, bits));
+  } while (ReadBits(bits, 1));
   return program;
 }
 

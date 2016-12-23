@@ -46,26 +46,81 @@ typedef struct FblcArena {
   void (*free)(struct FblcArena* this, void* ptr);
 } FblcArena;
 
-// Vector is a helper for dynamically allocating an array of data whose
-// size is not known ahead of time.
-// 'size' is the number of bytes taken by a single element.
-// 'capacity' is the maximum number of elements supported by the current
-// allocation of data.
-// 'count' is the number of elements currently in use.
-// 'data' is where the data is stored.
+// FblcVectorInit --
+//   Initialize a vector for construction. A vector is used to construct an
+//   array of elements the size of which is not known ahead of time. A vector
+//   consists of a reference to an array of elements and a reference to the
+//   size of that array. The array of elements and size are updated and
+//   resized as necessary as elements are appended to the vector.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   vector - A reference to an uninitialized pointer T* to an array of
+//            elements of type T.
+//   size - A reference to a size_t to hold the size of the array.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   vector and size are initialized to an array containing 0 elements.
+//
+// Implementation notes:
+//   This array initially has size 0 and capacity 1.
+#define FblcVectorInit(arena, vector, size) \
+  size = 0; \
+  vector = arena->alloc(arena, sizeof(*vector))
 
-typedef struct {
-  FblcArena* arena;
-  size_t size;
-  size_t capacity;
-  size_t count;
-  void* data;
-} Vector ;
+// FblcVectorExtend --
+//   Extend a vector's capacity if necessary to ensure it has space for more
+//   than size elements.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   vector - A reference to a pointer T* to an array of elements of type T
+//            that was initialized using FblcVectorInit.
+//   size - A reference to a size_t that holds the size of the array.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Extends the vector's capacity if necessary to ensure it has space for
+//   more than size elements. If necessary, the array is re-allocated to make
+//   space for the new element.
+//
+// Implementation notes:
+//   We assume the capacity of the array is the smallest power of 2 that holds
+//   size elements. If size is equal to the capacity of the array coming in,
+//   we double the capacity of the array, which preserves the invariant.
+#define FblcVectorExtend(arena, vector, size) \
+  if ((size) > 0 && (((size) & ((size)-1)) == 0)) { \
+    void* resized = arena->alloc(arena, 2 * (size) * sizeof(*vector)); \
+    memcpy(resized, vector, (size) * sizeof(*vector)); \
+    arena->free(arena, vector); \
+    vector = resized; \
+  }
 
-void VectorInit(FblcArena* arena, Vector* vector, size_t size);
-void* VectorAppend(Vector* vector);
-void* VectorExtract(Vector* vector, size_t* count);
-
+// FblcVectorAppend --
+//   Append an element to a vector.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   vector - A reference to a pointer T* to an array of elements of type T
+//            that was initialized using FblcVectorInit.
+//   size - A reference to a size_t that holds the size of the array.
+//   elem - An element of type T to append to the array.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The given element is append to the array and the size is incremented. If
+//   necessary, the array is re-allocated to make space for the new element.
+#define FblcVectorAppend(arena, vector, size, elem) \
+  FblcVectorExtend(arena, vector, size); \
+  vector[(size)++] = elem
+
 // Program
 typedef size_t DeclId;
 typedef size_t FieldId;
