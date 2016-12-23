@@ -2,10 +2,10 @@
 #ifndef FBLC_H_
 #define FBLC_H_
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-
+#include <stdbool.h>  // for bool
+#include <stdint.h>   // for uint32_t
+#include <stdlib.h>   // for size_t
+
 // FblcArena --
 //   An interface for allocating and freeing memory.
 typedef struct FblcArena {
@@ -45,7 +45,7 @@ typedef struct FblcArena {
   //   returned by a call to alloc on this arena.
   void (*free)(struct FblcArena* this, void* ptr);
 } FblcArena;
-
+
 // Vector is a helper for dynamically allocating an array of data whose
 // size is not known ahead of time.
 // 'size' is the number of bytes taken by a single element.
