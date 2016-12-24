@@ -281,19 +281,18 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, Fbl
   switch (decl->tag) {
     case FBLC_STRUCT_DECL: {
       FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
-      Value* value = NewStructValue(arena, struct_decl->fieldc);
+      Value* value = NewStruct(arena, struct_decl->fieldc);
       for (size_t i = 0; i < struct_decl->fieldc; ++i) {
-        SetStructField(value, i, DecodeValue(arena, bits, prg, struct_decl->fieldv[i]));
+        *StructFieldRef(value, i) = DecodeValue(arena, bits, prg, struct_decl->fieldv[i]);
       }
       return value;
     }
 
     case FBLC_UNION_DECL: {
       FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
-      Value* value = NewUnionValue(arena, union_decl->fieldc);
       size_t tag = ReadBits(bits, SizeOfTag(union_decl->fieldc));
-      SetUnionField(value, tag, DecodeValue(arena, bits, prg, union_decl->fieldv[tag]));
-      return value;
+      Value* field = DecodeValue(arena, bits, prg, union_decl->fieldv[tag]);
+      return NewUnion(arena, union_decl->fieldc, tag, field);
     }
 
     default:
@@ -304,12 +303,19 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, Fbl
 
 void EncodeValue(OutputBitStream* bits, Value* value)
 {
-  if (IsStructValue(value)) {
-    for (size_t i = 0; i < NumStructFields(value); ++i) {
-      EncodeValue(bits, GetStructField(value, i));
-    }
-  } else {
-    WriteBits(bits, SizeOfUnionTag(value), GetUnionTag(value));
-    EncodeValue(bits, GetUnionField(value));
+  switch (Kind(value)) {
+    case STRUCT_KIND:
+      for (size_t i = 0; i < NumFields(value); ++i) {
+        EncodeValue(bits, StructField(value, i));
+      }
+      break;
+
+    case UNION_KIND:
+      WriteBits(bits, SizeOfUnionTag(value), UnionTag(value));
+      EncodeValue(bits, UnionField(value));
+      break;
+
+    default:
+      assert(false && "Unknown value kind");
   }
 }

@@ -399,23 +399,21 @@ typedef struct {
 } FblcProgram;
 
 typedef struct Value Value;
+typedef enum { STRUCT_KIND, UNION_KIND } ValueKind;
+ValueKind Kind(Value* value);
+size_t NumFields(Value* value);
 Value* Copy(FblcArena* arena, Value* src);
 void Release(FblcArena* arena, Value* value);
 
-Value* NewStructValue(FblcArena* arena, size_t fieldc);
-bool IsStructValue(Value* value);
-size_t NumStructFields(Value* value);
-Value* GetStructField(Value* this, size_t tag);
-Value** GetStructFieldRef(Value* this, size_t tag);
-void SetStructField(Value* this, size_t tag, Value* field);
+Value* NewStruct(FblcArena* arena, size_t fieldc);
+Value* StructField(Value* this, FblcFieldId tag);
+Value** StructFieldRef(Value* this, FblcFieldId tag);
 
-Value* NewUnionValue(FblcArena* arena, size_t fieldc);
-bool IsUnionValue(Value* value);
+Value* NewUnion(FblcArena* arena, size_t fieldc, FblcFieldId tag, Value* value);
 size_t SizeOfUnionTag(Value* value);
-size_t GetUnionTag(Value* value);
-Value* GetUnionField(Value* this);
-Value** GetUnionFieldRef(Value* this);
-void SetUnionField(Value* this, size_t tag, Value* field);
+FblcFieldId UnionTag(Value* value);
+Value* UnionField(Value* this);
+Value** UnionFieldRef(Value* this);
 
 // BitStream
 // Bit streams are represented as sequences of ascii digits '0' and '1'.

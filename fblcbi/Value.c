@@ -70,13 +70,20 @@ void Release(FblcArena* arena, Value* value)
   if (value != NULL) {
     value->refcount--;
     if (value->refcount == 0) {
-      if (IsUnionValue(value)) {
-        Release(arena, GetUnionField(value));
-      } else {
-        assert(IsStructValue(value));
-        for (size_t i = 0; i < NumStructFields(value); ++i) {
-          Release(arena, GetStructField(value, i));
-        }
+      switch (Kind(value)) {
+        case STRUCT_KIND:
+          for (size_t i = 0; i < NumFields(value); ++i) {
+            Release(arena, StructField(value, i));
+          }
+          break;
+
+        case UNION_KIND:
+          Release(arena, UnionField(value));
+          break;
+
+        default:
+          assert(false && "Unknown value kind");
+          break;
       }
       arena->free(arena, value);
     }
@@ -100,7 +107,7 @@ void Release(FblcArena* arena, Value* value)
 //   struct value and Release to release the resources associated with
 //   the value.
 
-Value* NewStructValue(FblcArena* arena, size_t fieldc)
+Value* NewStruct(FblcArena* arena, size_t fieldc)
 {
   StructValue* value = arena->alloc(arena, sizeof(StructValue) + fieldc * sizeof(Value*));
   value->refcount = 1;
@@ -108,39 +115,27 @@ Value* NewStructValue(FblcArena* arena, size_t fieldc)
   return (Value*)value;
 }
 
-bool IsStructValue(Value* value)
+ValueKind Kind(Value* value)
 {
-  return value->kind >= 0;
+  return value->kind >= 0 ? STRUCT_KIND : UNION_KIND;
 }
 
-size_t NumStructFields(Value* value)
+size_t NumFields(Value* value)
 {
-  assert(IsStructValue(value));
-  return value->kind;
+  return abs(value->kind);
 }
 
-Value* GetStructField(Value* this, size_t tag)
+Value* StructField(Value* this, size_t tag)
 {
-  assert(IsStructValue(this));
-  assert(tag < NumStructFields(this));
-  StructValue* struct_value = (StructValue*)this;
-  return struct_value->fields[tag];
+  return *StructFieldRef(this, tag);
 }
 
-Value** GetStructFieldRef(Value* this, size_t tag)
+Value** StructFieldRef(Value* this, size_t tag)
 {
-  assert(IsStructValue(this));
-  assert(tag < NumStructFields(this));
+  assert(Kind(this) == STRUCT_KIND);
+  assert(tag < NumFields(this));
   StructValue* struct_value = (StructValue*)this;
   return struct_value->fields + tag;
-}
-
-void SetStructField(Value* this, size_t tag, Value* field)
-{
-  assert(IsStructValue(this));
-  assert(tag < NumStructFields(this));
-  StructValue* struct_value = (StructValue*)this;
-  struct_value->fields[tag] = field;
 }
 
 // NewUnionValue --
@@ -159,22 +154,19 @@ void SetStructField(Value* this, size_t tag, Value* field)
 //   union value, and Release to release the resources associated with
 //   the value.
 
-Value* NewUnionValue(FblcArena* arena, size_t fieldc)
+Value* NewUnion(FblcArena* arena, size_t fieldc, size_t tag, Value* field)
 {
   UnionValue* value = arena->alloc(arena, sizeof(UnionValue));
   value->refcount = 1;
   value->kind = -fieldc;
+  value->tag = tag;
+  value->field = field;
   return (Value*)value;
-}
-
-bool IsUnionValue(Value* value)
-{
-  return value->kind < 0;
 }
 
 size_t SizeOfUnionTag(Value* value)
 {
-  assert(IsUnionValue(value));
+  assert(Kind(value) == UNION_KIND);
   size_t fieldc = -value->kind;
   size_t size = 0;
   while ((1 << size) < fieldc) {
@@ -183,31 +175,21 @@ size_t SizeOfUnionTag(Value* value)
   return size;
 }
 
-size_t GetUnionTag(Value* value)
+size_t UnionTag(Value* value)
 {
-  assert(IsUnionValue(value));
+  assert(Kind(value) == UNION_KIND);
   UnionValue* union_value = (UnionValue*)value;
   return union_value->tag;
 }
 
-Value* GetUnionField(Value* value)
+Value* UnionField(Value* value)
 {
-  assert(IsUnionValue(value));
-  UnionValue* union_value = (UnionValue*)value;
-  return union_value->field;
+  return *UnionFieldRef(value);
 }
 
-Value** GetUnionFieldRef(Value* value)
+Value** UnionFieldRef(Value* value)
 {
-  assert(IsUnionValue(value));
+  assert(Kind(value) == UNION_KIND);
   UnionValue* union_value = (UnionValue*)value;
   return &union_value->field;
-}
-
-void SetUnionField(Value* this, size_t tag, Value* field)
-{
-  assert(IsUnionValue(this));
-  UnionValue* union_value = (UnionValue*)this;
-  union_value->tag = tag;
-  union_value->field = field;
 }
