@@ -398,20 +398,97 @@ typedef struct {
   FblcDecl** declv;
 } FblcProgram;
 
-typedef enum { STRUCT_KIND, UNION_KIND } ValueKind;
+// FblcKind --
+//   An enum used to distinguish between struct and union values.
+typedef enum {
+  FBLC_STRUCT_KIND,
+  FBLC_UNION_KIND
+} FblcKind;
 
-typedef struct Value {
+// FblcValue --
+//   An fblc struct or union value.
+//
+// Fields:
+//   refcount - The number of references to this value.
+//   kind - Whether this is a struct or union value.
+//   fieldc - The number of fields in the value's corresponding struct or
+//            union type.
+//   tag - The tag of a union value. The tag field is unused for struct
+//         values.
+//   fields - The fields of this value. For struct values, there will be
+//            fieldc fields corresponding to the fields in the struct
+//            declarations. For union values, there will be a single field
+//            containing the value associated with the union tag.
+typedef struct FblcValue {
   size_t refcount;
-  ValueKind kind;
+  FblcKind kind;
   size_t fieldc;
   FblcFieldId tag;
-  struct Value* fields[];
-} Value;
+  struct FblcValue* fields[];
+} FblcValue;
 
-Value* NewStruct(FblcArena* arena, size_t fieldc);
-Value* NewUnion(FblcArena* arena, size_t fieldc, FblcFieldId tag, Value* value);
-Value* Copy(FblcArena* arena, Value* src);
-void Release(FblcArena* arena, Value* value);
+// FblcNewStruct --
+//   Construct a new struct value for a struct type with the given number of
+//   fields.
+// 
+// Inputs:
+//   arena - The arena to use for allocations.
+//   fieldc - The number of fields in the struct type.
+//
+// Results:
+//   A newly constructed struct value. The refcount, kind, and fieldc of the
+//   returned value are initialized. The fields are uninitialized.
+//
+// Side effects:
+//   Performs arena allocations.
+FblcValue* FblcNewStruct(FblcArena* arena, size_t fieldc);
+
+// FblcNewUnion --
+//   Construct a new union value.
+// 
+// Inputs:
+//   arena - The arena to use for allocations.
+//   fieldc - The number of fields in the union type.
+//   tag - The tag of the union value.
+//   value - The value associated with the tag of the union value.
+//
+// Results:
+//   A newly constructed, fully initialized union value.
+//
+// Side effects:
+//   Performs arena allocations.
+FblcValue* FblcNewUnion(FblcArena* arena, size_t fieldc, FblcFieldId tag, FblcValue* value);
+
+// FblcCopy --
+//
+//   Make a (likely shared) copy of the given value.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   src - The value to make a copy of.
+//
+// Results:
+//   A copy of the value, which may be the same as the original value.
+//
+// Side effects:
+//   May perform arena allocations.
+FblcValue* FblcCopy(FblcArena* arena, FblcValue* src);
+
+// FblcRelease --
+//
+//   Free the resources associated with a value.
+//
+// Inputs:
+//   arena - The arena the value was allocated with.
+//   value - The value to free the resources of.
+//
+// Results:
+//   None.
+//
+// Side effect:
+//   The resources for the value are freed. The value may be NULL, in which
+//   case no action is taken.
+void FblcRelease(FblcArena* arena, FblcValue* value);
 
 // BitStream
 // Bit streams are represented as sequences of ascii digits '0' and '1'.
@@ -438,12 +515,12 @@ void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 void FlushWriteBits(OutputBitStream* stream);
 
 // Encoder
-Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, FblcTypeId type);
-void EncodeValue(OutputBitStream* bits, Value* value);
+FblcValue* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, FblcTypeId type);
+void EncodeValue(OutputBitStream* bits, FblcValue* value);
 FblcProgram* DecodeProgram(FblcArena* arena, InputBitStream* bits);
 
 // Evaluator
-Value* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, Value** args);
+FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args);
 
 #endif // FBLC_H_
 

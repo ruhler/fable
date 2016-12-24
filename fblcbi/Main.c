@@ -141,20 +141,20 @@ int main(int argc, char* argv[])
   }
 
   FblcArena* exec_arena = CreateGcArena();
-  Value* args[argc];
+  FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
     InputBitStream argbits;
     OpenBinaryStringInputBitStream(&argbits, argv[i]);
     args[i] = DecodeValue(exec_arena, &argbits, program, proc->argv[i]);
   }
 
-  Value* value = Execute(exec_arena, program, proc, args);
+  FblcValue* value = Execute(exec_arena, program, proc, args);
   assert(value != NULL);
 
   OutputBitStream output;
   OpenBinaryOutputBitStream(&output, STDOUT_FILENO);
   EncodeValue(&output, value);
-  Release(exec_arena, value);
+  FblcRelease(exec_arena, value);
 
   FreeGcArena(exec_arena);
   FreeBulkFreeArena(program_arena);

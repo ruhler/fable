@@ -50,7 +50,7 @@ static Thread* GetThread(Threads* threads);
 // head and tail both set to NULL.
 
 typedef struct Values {
-  Value* value;
+  FblcValue* value;
   struct Values* next;
 } Values;
 
@@ -62,8 +62,8 @@ typedef struct Link {
 
 static Link* NewLink(FblcArena* arena);
 static void FreeLink(FblcArena* arena, Link* link);
-static void PutValue(FblcArena* arena, Link* link, Value* value);
-static Value* GetValue(FblcArena* arena, Link* link);
+static void PutValue(FblcArena* arena, Link* link, FblcValue* value);
+static FblcValue* GetValue(FblcArena* arena, Link* link);
 
 // The following defines a Vars structure for storing the value of local
 // variables. It is possible to extend a local variable scope without
@@ -74,7 +74,7 @@ static Value* GetValue(FblcArena* arena, Link* link);
 // scope is used.
 
 struct Vars {
-  Value* value;
+  FblcValue* value;
   struct Vars* next;
 };
 
@@ -84,8 +84,8 @@ struct Ports {
   Link* link;
   struct Ports* next;
 };
-static Value** LookupRef(Vars* vars, FblcVarId id);
-static Value* LookupVal(Vars* vars, FblcVarId id);
+static FblcValue** LookupRef(Vars* vars, FblcVarId id);
+static FblcValue* LookupVal(Vars* vars, FblcVarId id);
 static Vars* AddVar(FblcArena* arena, Vars* vars);
 static Link* LookupPort(Ports* ports, FblcPortId id);
 static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link);
@@ -118,7 +118,7 @@ typedef struct {
   CmdTag tag;
   struct Cmd* next;
   FblcExpr* expr;
-  Value** target;
+  FblcValue** target;
 } ExprCmd;
 
 // CMD_ACTN: The actn command executes actn and stores the resulting value in
@@ -127,7 +127,7 @@ typedef struct {
   CmdTag tag;
   struct Cmd* next;
   FblcActn* actn;
-  Value** target;
+  FblcValue** target;
 } ActnCmd;
 
 // CMD_ACCESS: The access command accesses the given field of
@@ -135,9 +135,9 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  Value* value;
+  FblcValue* value;
   size_t field;
-  Value** target;
+  FblcValue** target;
 } AccessCmd;
 
 // CMD_COND_EXPR: The condition expression command uses the tag of 'value' to
@@ -146,9 +146,9 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  Value* value;
+  FblcValue* value;
   FblcExpr** choices;
-  Value** target;
+  FblcValue** target;
 } CondExprCmd;
 
 // CMD_COND_ACTN: The conditional action command uses the tag of 'value' to
@@ -157,9 +157,9 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  Value* value;
+  FblcValue* value;
   FblcActn** choices;
-  Value** target;
+  FblcValue** target;
 } CondActnCmd;
 
 // CMD_SCOPE: The scope command sets the current ports and vars to the given
@@ -188,9 +188,9 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  Value** target;
+  FblcValue** target;
   Link* link;
-  Value* value;
+  FblcValue* value;
 } PutCmd;
 
 // CMD_FREE_LINK: Free resources associated with the given link.
@@ -200,16 +200,16 @@ typedef struct {
   Link* link;
 } FreeLinkCmd;
 
-static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, Value** target, Cmd* next);
-static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, Value** target, Cmd* next);
-static Cmd* MkAccessCmd(FblcArena* arena, Value* value, size_t field, Value** target, Cmd* next);
-static Cmd* MkCondExprCmd(FblcArena* arena, Value* value, FblcExpr** choices, Value** target, Cmd* next);
-static Cmd* MkCondActnCmd(FblcArena* arena, Value* value, FblcActn** choices, Value** target, Cmd* next);
+static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd* next);
+static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd* next);
+static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, Cmd* next);
+static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices, FblcValue** target, Cmd* next);
+static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next);
 static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next);
 static Cmd* MkPushScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next);
 static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next);
-static Cmd* MkPutCmd(FblcArena* arena, Value** target, Link* link, Cmd* next);
+static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next);
 static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next);
 
 static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread* thread);
@@ -359,7 +359,7 @@ void FreeLink(FblcArena* arena, Link* link)
   Values* values = link->head;
   while (values != NULL) {
     link->head = values->next;
-    Release(arena, values->value);
+    FblcRelease(arena, values->value);
     arena->free(arena, values);
     values = link->head;
   }
@@ -388,7 +388,7 @@ void FreeLink(FblcArena* arena, Link* link)
 // Side effects:
 //   Places the given value on the link.
 
-static void PutValue(FblcArena* arena, Link* link, Value* value)
+static void PutValue(FblcArena* arena, Link* link, FblcValue* value)
 {
   Values* ntail = arena->alloc(arena, sizeof(Values));
   ntail->value = value;
@@ -417,9 +417,9 @@ static void PutValue(FblcArena* arena, Link* link, Value* value)
 // Side effects
 //   Removes the gotten value from the link.
 
-static Value* GetValue(FblcArena* arena, Link* link)
+static FblcValue* GetValue(FblcArena* arena, Link* link)
 {
-  Value* value = NULL;
+  FblcValue* value = NULL;
   if (link->head != NULL) {
     Values* values = link->head;
     value = values->value;
@@ -446,7 +446,7 @@ static Value* GetValue(FblcArena* arena, Link* link)
 // Side effects:
 //   The behavior is undefined if the variable is not found in scope.
 
-static Value** LookupRef(Vars* vars, FblcVarId id)
+static FblcValue** LookupRef(Vars* vars, FblcVarId id)
 {
   for (size_t i = 0; i < id; ++i) {
     assert(vars != NULL);
@@ -470,9 +470,9 @@ static Value** LookupRef(Vars* vars, FblcVarId id)
 // Side effects:
 //   The behavior is undefined if the variable is not found in scope.
 
-static Value* LookupVal(Vars* vars, FblcVarId id)
+static FblcValue* LookupVal(Vars* vars, FblcVarId id)
 {
-  Value** ref = LookupRef(vars, id);
+  FblcValue** ref = LookupRef(vars, id);
   return *ref;
 }
 
@@ -564,7 +564,7 @@ static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link)
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, Value** target, Cmd* next)
+static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd* next)
 {
   assert(expr != NULL);
   assert(target != NULL);
@@ -595,7 +595,7 @@ static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, Value** target, Cmd* nex
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, Value** target, Cmd* next)
+static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd* next)
 {
   assert(actn != NULL);
   assert(target != NULL);
@@ -626,7 +626,7 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, Value** target, Cmd* nex
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkAccessCmd(FblcArena* arena, Value* value, size_t field, Value** target, Cmd* next)
+static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, Cmd* next)
 {
   AccessCmd* cmd = arena->alloc(arena, sizeof(AccessCmd));
   cmd->tag = CMD_ACCESS;
@@ -655,7 +655,7 @@ static Cmd* MkAccessCmd(FblcArena* arena, Value* value, size_t field, Value** ta
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkCondExprCmd(FblcArena* arena, Value* value, FblcExpr** choices, Value** target, Cmd* next)
+static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices, FblcValue** target, Cmd* next)
 {
   CondExprCmd* cmd = arena->alloc(arena, sizeof(CondExprCmd));
   cmd->tag = CMD_COND_EXPR;
@@ -684,7 +684,7 @@ static Cmd* MkCondExprCmd(FblcArena* arena, Value* value, FblcExpr** choices, Va
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkCondActnCmd(FblcArena* arena, Value* value, FblcActn** choices, Value** target, Cmd* next)
+static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
 {
   CondActnCmd* cmd = arena->alloc(arena, sizeof(CondActnCmd));
   cmd->tag = CMD_COND_ACTN;
@@ -807,7 +807,7 @@ static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 // Side effects:
 //   Performs arena allocations.
 
-static Cmd* MkPutCmd(FblcArena* arena, Value** target, Link* link, Cmd* next)
+static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next)
 {
   assert(target != NULL);
   PutCmd* cmd = arena->alloc(arena, sizeof(PutCmd));
@@ -871,12 +871,12 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
       case CMD_EXPR: {
         ExprCmd* cmd = (ExprCmd*)thread->cmd;
         FblcExpr* expr = cmd->expr;
-        Value** target = cmd->target;
+        FblcValue** target = cmd->target;
         switch (expr->tag) {
           case FBLC_VAR_EXPR: {
             FblcVarExpr* var_expr = (FblcVarExpr*)expr;
-            Value* value = LookupVal(thread->vars, var_expr->var);
-            *target = Copy(arena, value);
+            FblcValue* value = LookupVal(thread->vars, var_expr->var);
+            *target = FblcCopy(arena, value);
             break;
           }
 
@@ -888,7 +888,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
               // the arguments to fill in the fields with the proper results.
               FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
               size_t fieldc = struct_decl->fieldc;
-              Value* value = NewStruct(arena, fieldc);
+              FblcValue* value = FblcNewStruct(arena, fieldc);
               *target = value;
               for (size_t i = 0; i < fieldc; ++i) {
                 next = MkExprCmd(arena, app_expr->argv[i], value->fields + i, next);
@@ -937,7 +937,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             FblcDecl* decl = program->declv[union_expr->type];
             assert(decl->tag == FBLC_UNION_DECL);
             FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
-            *target = NewUnion(arena, union_decl->fieldc, union_expr->field, NULL);
+            *target = FblcNewUnion(arena, union_decl->fieldc, union_expr->field, NULL);
             next = MkExprCmd(arena, union_expr->body, (*target)->fields, next);
             break;
           }
@@ -971,7 +971,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
       case CMD_ACTN: {
         ActnCmd* cmd = (ActnCmd*)thread->cmd;
         FblcActn* actn = cmd->actn;
-        Value** target = cmd->target;
+        FblcValue** target = cmd->target;
         switch (actn->tag) {
           case FBLC_EVAL_ACTN: {
             FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
@@ -1066,7 +1066,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             Vars* nvars = thread->vars;
             for (size_t i = 0; i < exec_actn->execc; ++i) {
               nvars = AddVar(arena, nvars);
-              Value** target = LookupRef(nvars, 0);
+              FblcValue** target = LookupRef(nvars, 0);
               AddThread(threads, NewThread(arena, thread->vars, thread->ports,
                     MkActnCmd(arena, exec_actn->execv[i], target, jcmd)));
             }
@@ -1090,16 +1090,16 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 
       case CMD_ACCESS: {
         AccessCmd* cmd = (AccessCmd*)thread->cmd;
-        Value** target = cmd->target;
-        Value* value = cmd->value;
+        FblcValue** target = cmd->target;
+        FblcValue* value = cmd->value;
         switch (value->kind) {
-          case STRUCT_KIND:
-            *target = Copy(arena, value->fields[cmd->field]);
+          case FBLC_STRUCT_KIND:
+            *target = FblcCopy(arena, value->fields[cmd->field]);
             break;
 
-          case UNION_KIND:
+          case FBLC_UNION_KIND:
             if (value->tag == cmd->field) {
-              *target = Copy(arena, *value->fields);
+              *target = FblcCopy(arena, *value->fields);
             } else {
               fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
               abort();
@@ -1109,27 +1109,27 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
           default:
             assert(false && "Unknown value kind");
         }
-        Release(arena, value);
+        FblcRelease(arena, value);
         break;
       }
 
       case CMD_COND_EXPR: {
         CondExprCmd* cmd = (CondExprCmd*)thread->cmd;
-        Value* value = cmd->value;
-        Value** target = cmd->target;
-        assert(value->kind== UNION_KIND);
+        FblcValue* value = cmd->value;
+        FblcValue** target = cmd->target;
+        assert(value->kind == FBLC_UNION_KIND);
         next = MkExprCmd(arena, cmd->choices[value->tag], target, next);
-        Release(arena, value);
+        FblcRelease(arena, value);
         break;
       }
 
       case CMD_COND_ACTN: {
         CondActnCmd* cmd = (CondActnCmd*)thread->cmd;
-        Value* value = cmd->value;
-        Value** target = cmd->target;
-        assert(value->kind == UNION_KIND);
+        FblcValue* value = cmd->value;
+        FblcValue** target = cmd->target;
+        assert(value->kind == FBLC_UNION_KIND);
         next = MkActnCmd(arena, cmd->choices[value->tag], target, next);
-        Release(arena, value);
+        FblcRelease(arena, value);
         break;
       }
 
@@ -1140,7 +1140,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
           while (thread->vars != NULL && thread->vars != cmd->vars) {
             Vars* vars = thread->vars;
             thread->vars = vars->next;
-            Release(arena, vars->value);
+            FblcRelease(arena, vars->value);
             arena->free(arena, vars);
           }
 
@@ -1170,9 +1170,9 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
       case CMD_PUT: {
         PutCmd* cmd = (PutCmd*)thread->cmd;
         Link* link = cmd->link;
-        Value** target = cmd->target;
+        FblcValue** target = cmd->target;
         *target = cmd->value;
-        PutValue(arena, link, Copy(arena, cmd->value));
+        PutValue(arena, link, FblcCopy(arena, cmd->value));
         Thread* waiting = GetThread(&link->waiting);
         if (waiting != NULL) {
           AddThread(threads, waiting);
@@ -1219,7 +1219,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 //   by the program.
 //   Performs arena allocations.
 
-Value* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, Value** args)
+FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args)
 {
   Vars* vars = NULL;
   for (size_t i = 0; i < proc->argc; ++i) {
@@ -1227,7 +1227,7 @@ Value* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, Value
     *LookupRef(vars, 0) = args[i];
   }
 
-  Value* result = NULL;
+  FblcValue* result = NULL;
   Cmd* cmd = MkPopScopeCmd(arena, NULL, NULL, NULL);
   cmd = MkActnCmd(arena, proc->body, &result, cmd);
 
@@ -1258,19 +1258,19 @@ Value* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, Value
           // TODO: Flush the input stream to ensure alignment is met.
           InputBitStream stream;
           OpenBinaryFdInputBitStream(&stream, 3+i);
-          Value* got = DecodeValue(arena, &stream, program, proc->portv[i].type);
+          FblcValue* got = DecodeValue(arena, &stream, program, proc->portv[i].type);
           PutValue(arena, links[i], got);
           AddThread(&threads, waiting);
         }
       } else {
         assert(proc->portv[i].polarity == FBLC_PUT_POLARITY);
-        Value* put = GetValue(arena, links[i]);
+        FblcValue* put = GetValue(arena, links[i]);
         if (put != NULL) {
           OutputBitStream stream;
           OpenBinaryOutputBitStream(&stream, 3+i);
           EncodeValue(&stream, put);
           FlushWriteBits(&stream);
-          Release(arena, put);
+          FblcRelease(arena, put);
         }
       }
     }
