@@ -1,6 +1,5 @@
 * Switch to library-based sharing rather than file based sharing.
  - Finish cleaning up fblcbi/fblc.h.
-   -- starting with Value.
  - Turn fblcbi into -lfblc library + fblcbi main.
  - Reimplement fblc as -lfblc + fblcbe.
  - Remove expect_result_b tests.

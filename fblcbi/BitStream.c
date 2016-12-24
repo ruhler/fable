@@ -8,46 +8,28 @@
 
 #include "fblc.h"
 
-// OpenBinaryStringInputBitStream
-//   Open an InputBitStream that reads from a string of ascii digits '0' and
-//   '1'.
-//
-// Inputs:
-//   stream - The stream to open.
-//   bits - The string to read the bit stream from.
-//
-// Returns:
-//   None.
-//
-// Side effects:
-//   The bit stream is positioned at the beginning of the string of bits to
-//   read from.
-
-void OpenBinaryStringInputBitStream(InputBitStream* stream, const char* bits)
+struct BitSource {
+  const char* string;
+  int fd;
+  bool synced;
+};
+
+BitSource* CreateStringBitSource(FblcArena* arena, const char* string)
 {
-  stream->string = bits;
-  stream->fd = -1;
+  BitSource* source = arena->alloc(arena, sizeof(BitSource));
+  source->string = string;
+  source->fd = -1;
+  source->synced = false;
+  return source;
 }
 
-// OpenBinaryFdInputBitStream
-//   Open an InputBitStream that reads from a string of ascii digits '0' and
-//   '1' from the open file referred to by the given file descriptor.
-//
-// Inputs:
-//   stream - The stream to open.
-//   fd - A file descriptor for the open file to read from.
-//
-// Returns:
-//   None.
-//
-// Side effects:
-//   The bit stream is positioned at the beginning of the file of bits to
-//   read from.
-
-void OpenBinaryFdInputBitStream(InputBitStream* stream, int fd)
+BitSource* CreateFdBitSource(FblcArena* arena, int fd)
 {
-  stream->string = NULL;
-  stream->fd = fd;
+  BitSource* source = arena->alloc(arena, sizeof(BitSource));
+  source->string = NULL;
+  source->fd = fd;
+  source->synced = false;
+  return source;
 }
 
 // ReadBit --
@@ -63,15 +45,16 @@ void OpenBinaryFdInputBitStream(InputBitStream* stream, int fd)
 // Side effects:
 //   Advance the stream by a single bit.
 
-static int ReadBit(InputBitStream* stream)
+static int ReadBit(BitSource* source)
 {
+  source->synced = true;
   int bit = EOF;
-  if (stream->string != NULL && *stream->string != '\0') {
-    bit = *stream->string;
-    stream->string++;
-  } else if (stream->fd >= 0) {
+  if (source->string != NULL && *source->string != '\0') {
+    bit = *source->string;
+    source->string++;
+  } else if (source->fd >= 0) {
     char c;
-    if(read(stream->fd, &c, 1)) {
+    if(read(source->fd, &c, 1)) {
       bit = c;
     }
   }
@@ -82,7 +65,7 @@ static int ReadBit(InputBitStream* stream)
     case EOF: return EOF;
 
     default:
-      fprintf(stderr, "Unexpected char in bit stream: '%c'", bit);
+      fprintf(stderr, "Unexpected char in bit source: '%c'", bit);
       assert(false);
       return EOF;
   }
@@ -105,19 +88,29 @@ static int ReadBit(InputBitStream* stream)
 //   Advance the stream by num_bits bits.
 //   The behavior is undefined if num_bits is greater than 31.
 
-uint32_t ReadBits(InputBitStream* stream, size_t num_bits)
+uint32_t ReadBits(BitSource* source, size_t num_bits)
 {
   assert(num_bits < 32 && "ReadBits invalid argument");
 
   uint32_t bits = 0;
   for (size_t i = 0; i < num_bits; ++i) {
-    int bit = ReadBit(stream);
+    int bit = ReadBit(source);
     if (bit == EOF) {
       return EOF;
     }
     bits = (bits << 1) | bit;
   }
   return bits;
+}
+void SyncBitSource(BitSource* source)
+{
+  if (!source->synced) {
+    ReadBit(source);
+  }
+}
+void FreeBitSource(FblcArena* arena, BitSource* source)
+{
+  arena->free(arena, source);
 }
 
 // OpenBinaryOutputBitStream

@@ -1255,10 +1255,10 @@ FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, F
         Thread* waiting = GetThread(&(links[i]->waiting));
         if (waiting != NULL) {
           // TODO: Don't block if there isn't anything available to read.
-          // TODO: Flush the input stream to ensure alignment is met.
-          InputBitStream stream;
-          OpenBinaryFdInputBitStream(&stream, 3+i);
-          FblcValue* got = DecodeValue(arena, &stream, program, proc->portv[i].type);
+          BitSource* source = CreateFdBitSource(arena, 3+i);
+          FblcValue* got = DecodeValue(arena, source, program, proc->portv[i].type);
+          SyncBitSource(source);
+          FreeBitSource(arena, source);
           PutValue(arena, links[i], got);
           AddThread(&threads, waiting);
         }

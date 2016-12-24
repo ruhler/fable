@@ -496,14 +496,12 @@ void FblcRelease(FblcArena* arena, FblcValue* value);
 // If the string field is non-null, digits are read from the string.
 // If the fd field is non-negative, digits are read from the file with that
 // descriptor.
-typedef struct {
-  const char* string;
-  int fd;
-} InputBitStream;
-
-void OpenBinaryStringInputBitStream(InputBitStream* stream, const char* bits);
-void OpenBinaryFdInputBitStream(InputBitStream* stream, int fd);
-uint32_t ReadBits(InputBitStream* stream, size_t num_bits);
+typedef struct BitSource BitSource;
+BitSource* CreateStringBitSource(FblcArena* arena, const char* string);
+BitSource* CreateFdBitSource(FblcArena* arena, int fd);
+uint32_t ReadBits(BitSource* source, size_t num_bits);
+void SyncBitSource(BitSource* source);
+void FreeBitSource(FblcArena* arena, BitSource* source);
 
 typedef struct {
   int fd;
@@ -515,9 +513,9 @@ void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 void FlushWriteBits(OutputBitStream* stream);
 
 // Encoder
-FblcValue* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, FblcTypeId type);
+FblcValue* DecodeValue(FblcArena* arena, BitSource* source, FblcProgram* prg, FblcTypeId type);
 void EncodeValue(OutputBitStream* bits, FblcValue* value);
-FblcProgram* DecodeProgram(FblcArena* arena, InputBitStream* bits);
+FblcProgram* DecodeProgram(FblcArena* arena, BitSource* source);
 
 // Evaluator
 FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args);

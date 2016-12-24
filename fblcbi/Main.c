@@ -88,13 +88,13 @@ int main(int argc, char* argv[])
     fprintf(stderr, "Unable to open %s for reading\n", program_file);
     return 1;
   }
-  InputBitStream bits;
-  OpenBinaryFdInputBitStream(&bits, fdin);
 
   GcInit();
   FblcArena* program_underlying_arena = CreateGcArena();
   FblcArena* program_arena = CreateBulkFreeArena(program_underlying_arena);
-  FblcProgram* program = DecodeProgram(program_arena, &bits);
+  BitSource* bits = CreateFdBitSource(program_underlying_arena, fdin);
+  FblcProgram* program = DecodeProgram(program_arena, bits);
+  FreeBitSource(program_underlying_arena, bits);
 
   if (entry >= program->declc) {
     fprintf(stderr, "invalid entry id: %zi.\n", entry);
@@ -143,9 +143,9 @@ int main(int argc, char* argv[])
   FblcArena* exec_arena = CreateGcArena();
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    InputBitStream argbits;
-    OpenBinaryStringInputBitStream(&argbits, argv[i]);
-    args[i] = DecodeValue(exec_arena, &argbits, program, proc->argv[i]);
+    BitSource* argbits = CreateStringBitSource(exec_arena, argv[i]);
+    args[i] = DecodeValue(exec_arena, argbits, program, proc->argv[i]);
+    FreeBitSource(exec_arena, argbits);
   }
 
   FblcValue* value = Execute(exec_arena, program, proc, args);
