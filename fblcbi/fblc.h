@@ -398,22 +398,20 @@ typedef struct {
   FblcDecl** declv;
 } FblcProgram;
 
-typedef struct Value Value;
 typedef enum { STRUCT_KIND, UNION_KIND } ValueKind;
-ValueKind Kind(Value* value);
-size_t NumFields(Value* value);
-Value* Copy(FblcArena* arena, Value* src);
-void Release(FblcArena* arena, Value* value);
+
+typedef struct Value {
+  size_t refcount;
+  ValueKind kind;
+  size_t fieldc;
+  FblcFieldId tag;
+  struct Value* fields[];
+} Value;
 
 Value* NewStruct(FblcArena* arena, size_t fieldc);
-Value* StructField(Value* this, FblcFieldId tag);
-Value** StructFieldRef(Value* this, FblcFieldId tag);
-
 Value* NewUnion(FblcArena* arena, size_t fieldc, FblcFieldId tag, Value* value);
-size_t SizeOfUnionTag(Value* value);
-FblcFieldId UnionTag(Value* value);
-Value* UnionField(Value* this);
-Value** UnionFieldRef(Value* this);
+Value* Copy(FblcArena* arena, Value* src);
+void Release(FblcArena* arena, Value* value);
 
 // BitStream
 // Bit streams are represented as sequences of ascii digits '0' and '1'.

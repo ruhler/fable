@@ -4,31 +4,6 @@
 
 #include "fblc.h"
 
-// Value --
-//   A struct or union value.
-//
-// Fields:
-//   refcount - The number of references to the value.
-//   kind - The kind of value and number of fields. If non-negative, the
-//   value is a StructValue with kind fields. If negative, the value is a
-//   UnionValue with abs(kind) fields.
-struct Value {
-  size_t refcount;
-  ssize_t kind;
-};
-
-typedef struct {
-  size_t refcount;
-  ssize_t kind;
-  Value* fields[];
-} StructValue;
-
-typedef struct {
-  size_t refcount;
-  ssize_t kind;
-  size_t tag;
-  Value* field;
-} UnionValue;
 
 // Copy --
 //
@@ -70,15 +45,15 @@ void Release(FblcArena* arena, Value* value)
   if (value != NULL) {
     value->refcount--;
     if (value->refcount == 0) {
-      switch (Kind(value)) {
+      switch (value->kind) {
         case STRUCT_KIND:
-          for (size_t i = 0; i < NumFields(value); ++i) {
-            Release(arena, StructField(value, i));
+          for (size_t i = 0; i < value->fieldc; ++i) {
+            Release(arena, value->fields[i]);
           }
           break;
 
         case UNION_KIND:
-          Release(arena, UnionField(value));
+          Release(arena, *value->fields);
           break;
 
         default:
@@ -109,33 +84,12 @@ void Release(FblcArena* arena, Value* value)
 
 Value* NewStruct(FblcArena* arena, size_t fieldc)
 {
-  StructValue* value = arena->alloc(arena, sizeof(StructValue) + fieldc * sizeof(Value*));
+  Value* value = arena->alloc(arena, sizeof(Value) + fieldc * sizeof(Value*));
   value->refcount = 1;
-  value->kind = fieldc;
-  return (Value*)value;
-}
-
-ValueKind Kind(Value* value)
-{
-  return value->kind >= 0 ? STRUCT_KIND : UNION_KIND;
-}
-
-size_t NumFields(Value* value)
-{
-  return abs(value->kind);
-}
-
-Value* StructField(Value* this, size_t tag)
-{
-  return *StructFieldRef(this, tag);
-}
-
-Value** StructFieldRef(Value* this, size_t tag)
-{
-  assert(Kind(this) == STRUCT_KIND);
-  assert(tag < NumFields(this));
-  StructValue* struct_value = (StructValue*)this;
-  return struct_value->fields + tag;
+  value->kind = STRUCT_KIND;
+  value->fieldc = fieldc;
+  value->tag = -1;
+  return value;
 }
 
 // NewUnionValue --
@@ -156,40 +110,11 @@ Value** StructFieldRef(Value* this, size_t tag)
 
 Value* NewUnion(FblcArena* arena, size_t fieldc, size_t tag, Value* field)
 {
-  UnionValue* value = arena->alloc(arena, sizeof(UnionValue));
+  Value* value = arena->alloc(arena, sizeof(Value) + sizeof(Value*));
   value->refcount = 1;
-  value->kind = -fieldc;
+  value->kind = UNION_KIND;
+  value->fieldc = fieldc;
   value->tag = tag;
-  value->field = field;
-  return (Value*)value;
-}
-
-size_t SizeOfUnionTag(Value* value)
-{
-  assert(Kind(value) == UNION_KIND);
-  size_t fieldc = -value->kind;
-  size_t size = 0;
-  while ((1 << size) < fieldc) {
-    ++size;
-  }
-  return size;
-}
-
-size_t UnionTag(Value* value)
-{
-  assert(Kind(value) == UNION_KIND);
-  UnionValue* union_value = (UnionValue*)value;
-  return union_value->tag;
-}
-
-Value* UnionField(Value* value)
-{
-  return *UnionFieldRef(value);
-}
-
-Value** UnionFieldRef(Value* value)
-{
-  assert(Kind(value) == UNION_KIND);
-  UnionValue* union_value = (UnionValue*)value;
-  return &union_value->field;
+  *value->fields = field;
+  return value;
 }

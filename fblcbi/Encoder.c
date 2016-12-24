@@ -283,7 +283,7 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, Fbl
       FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
       Value* value = NewStruct(arena, struct_decl->fieldc);
       for (size_t i = 0; i < struct_decl->fieldc; ++i) {
-        *StructFieldRef(value, i) = DecodeValue(arena, bits, prg, struct_decl->fieldv[i]);
+        value->fields[i] = DecodeValue(arena, bits, prg, struct_decl->fieldv[i]);
       }
       return value;
     }
@@ -303,16 +303,16 @@ Value* DecodeValue(FblcArena* arena, InputBitStream* bits, FblcProgram* prg, Fbl
 
 void EncodeValue(OutputBitStream* bits, Value* value)
 {
-  switch (Kind(value)) {
+  switch (value->kind) {
     case STRUCT_KIND:
-      for (size_t i = 0; i < NumFields(value); ++i) {
-        EncodeValue(bits, StructField(value, i));
+      for (size_t i = 0; i < value->fieldc; ++i) {
+        EncodeValue(bits, value->fields[i]);
       }
       break;
 
     case UNION_KIND:
-      WriteBits(bits, SizeOfUnionTag(value), UnionTag(value));
-      EncodeValue(bits, UnionField(value));
+      WriteBits(bits, SizeOfTag(value->fieldc), value->tag);
+      EncodeValue(bits, *value->fields);
       break;
 
     default:

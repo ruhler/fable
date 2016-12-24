@@ -891,7 +891,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
               Value* value = NewStruct(arena, fieldc);
               *target = value;
               for (size_t i = 0; i < fieldc; ++i) {
-                next = MkExprCmd(arena, app_expr->argv[i], StructFieldRef(value, i), next);
+                next = MkExprCmd(arena, app_expr->argv[i], value->fields + i, next);
               }
               break;
             }
@@ -938,7 +938,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             assert(decl->tag == FBLC_UNION_DECL);
             FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
             *target = NewUnion(arena, union_decl->fieldc, union_expr->field, NULL);
-            next = MkExprCmd(arena, union_expr->body, UnionFieldRef(*target), next);
+            next = MkExprCmd(arena, union_expr->body, (*target)->fields, next);
             break;
           }
 
@@ -1092,14 +1092,14 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
         AccessCmd* cmd = (AccessCmd*)thread->cmd;
         Value** target = cmd->target;
         Value* value = cmd->value;
-        switch (Kind(value)) {
+        switch (value->kind) {
           case STRUCT_KIND:
-            *target = Copy(arena, StructField(value, cmd->field));
+            *target = Copy(arena, value->fields[cmd->field]);
             break;
 
           case UNION_KIND:
-            if (UnionTag(value) == cmd->field) {
-              *target = Copy(arena, UnionField(value));
+            if (value->tag == cmd->field) {
+              *target = Copy(arena, *value->fields);
             } else {
               fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
               abort();
@@ -1117,8 +1117,8 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
         CondExprCmd* cmd = (CondExprCmd*)thread->cmd;
         Value* value = cmd->value;
         Value** target = cmd->target;
-        assert(Kind(value) == UNION_KIND);
-        next = MkExprCmd(arena, cmd->choices[UnionTag(value)], target, next);
+        assert(value->kind== UNION_KIND);
+        next = MkExprCmd(arena, cmd->choices[value->tag], target, next);
         Release(arena, value);
         break;
       }
@@ -1127,8 +1127,8 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
         CondActnCmd* cmd = (CondActnCmd*)thread->cmd;
         Value* value = cmd->value;
         Value** target = cmd->target;
-        assert(Kind(value) == UNION_KIND);
-        next = MkActnCmd(arena, cmd->choices[UnionTag(value)], target, next);
+        assert(value->kind == UNION_KIND);
+        next = MkActnCmd(arena, cmd->choices[value->tag], target, next);
         Release(arena, value);
         break;
       }
