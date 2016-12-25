@@ -1,6 +1,9 @@
 * Switch to library-based sharing rather than file based sharing.
  - Finish cleaning up fblcbi/fblc.h.
    -- make Vector and bitstream internal?
+ - Better document that for binary encodings of values, the top level value is
+   guarenteed to take at least one bytes, regardless of whether or not it is
+   part of a stream.
  - Turn fblcbi into -lfblc library + fblcbi main.
  - Reimplement fblc as -lfblc + fblcbe.
  - Remove expect_result_b tests.

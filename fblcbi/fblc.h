@@ -569,7 +569,6 @@ FblcValue* FblcReadValueFromString(FblcArena* arena, FblcProgram* prg, FblcTypeI
 //
 // Side effects:
 //   The value is written to the file.
-//   Performs arena allocations.
 void FblcWriteValue(FblcValue* value, int fd);
 
 FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args);
