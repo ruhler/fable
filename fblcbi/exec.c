@@ -1,6 +1,6 @@
-// Evaluator.c --
+// exec.c --
 //
-//   This file implements routines for evaluating expressions.
+//   This file implements routines for execute fblc processes.
 
 #include <assert.h>
 #include <stdio.h>
@@ -12,9 +12,8 @@ typedef struct Vars Vars;
 typedef struct Ports Ports;
 typedef struct Cmd Cmd;
 typedef struct Thread Thread;
-
-// Threads
-//
+
+// Threads --
 //   A thread holds the state of a single thread of execution, including local
 //   variables, local ports, and a sequence of commands to execute.
 //
@@ -24,7 +23,6 @@ typedef struct Thread Thread;
 //   The Threads data structure represents a singly-linked list of threads
 //   with head and tail pointer. Threads are added to the tail and removed
 //   from the head.
-
 struct Thread {
   Vars* vars;
   Ports* ports;
@@ -42,19 +40,17 @@ static void FreeThread(FblcArena*, Thread* thread);
 static void AddThread(Threads* threads, Thread* thread);
 static Thread* GetThread(Threads* threads);
 
-// Links
-//
-// A Link consists of a list of values and a list of threads blocked waiting
-// to get values from the link. Values are added to the tail of the values
-// list and taken from the head. The empty values list is represented with
-// head and tail both set to NULL.
-
+// Links --
+//   A Link consists of a list of values and a list of threads blocked waiting
+//   to get values from the link. Values are added to the tail of the values
+//   list and taken from the head. The empty values list is represented with
+//   head and tail both set to NULL.
 typedef struct Values {
   FblcValue* value;
   struct Values* next;
 } Values;
 
-typedef struct Link {
+typedef struct {
   Values* head;
   Values* tail;
   struct Threads waiting;
@@ -65,25 +61,26 @@ static void FreeLink(FblcArena* arena, Link* link);
 static void PutValue(FblcArena* arena, Link* link, FblcValue* value);
 static FblcValue* GetValue(FblcArena* arena, Link* link);
 
-// The following defines a Vars structure for storing the value of local
-// variables. It is possible to extend a local variable scope without
-// modifying the original local variable scope, and it is possible to access
-// the address of a value stored in the variable scope. Typical usage is to
-// extend the variable scope by reserving slots for values that are yet to be
-// computed, and to ensure the values are computed and updated by the time the
-// scope is used.
-
+// Vars --
+//   The following defines a Vars structure for storing the value of local
+//   variables. It is possible to extend a local variable scope without
+//   modifying the original local variable scope, and it is possible to access
+//   the address of a value stored in the variable scope. Typical usage is to
+//   extend the variable scope by reserving slots for values that are yet to
+//   be computed, and to ensure the values are computed and updated by the
+//   time the scope is used.
 struct Vars {
   FblcValue* value;
   struct Vars* next;
 };
 
-// List of ports in scope.
-
+// Ports --
+//   A list of ports in scope.
 struct Ports {
   Link* link;
   struct Ports* next;
 };
+
 static FblcValue** LookupRef(Vars* vars, FblcVarId id);
 static FblcValue* LookupVal(Vars* vars, FblcVarId id);
 static Vars* AddVar(FblcArena* arena, Vars* vars);
@@ -215,7 +212,6 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next);
 static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread* thread);
 
 // NewThread --
-//
 //   Create a new thread.
 //
 // Inputs:
@@ -230,7 +226,6 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 // Side effects:
 //   A new thread object is allocated. The thread object should be freed by
 //   calling FreeThread when the object is no longer needed.
-
 static Thread* NewThread(FblcArena* arena, Vars* vars, Ports* ports, Cmd* cmd)
 {
   Thread* thread = arena->alloc(arena, sizeof(Thread));
@@ -242,7 +237,6 @@ static Thread* NewThread(FblcArena* arena, Vars* vars, Ports* ports, Cmd* cmd)
 }
 
 // FreeThread --
-//
 //   Free a thread object that is no longer needed.
 //
 // Inputs:
@@ -255,14 +249,12 @@ static Thread* NewThread(FblcArena* arena, Vars* vars, Ports* ports, Cmd* cmd)
 // Side effects:
 //   The resources for the thead object are released. The thread object should
 //   not be used after this call.
-
 static void FreeThread(FblcArena* arena, Thread* thread)
 {
   arena->free(arena, thread);
 }
 
 // AddThread --
-//
 //   Add a thread to the thread list.
 //
 // Inputs:
@@ -274,7 +266,6 @@ static void FreeThread(FblcArena* arena, Thread* thread)
 //
 // Side effects:
 //   The thread is added to the current thread list.
-
 static void AddThread(Threads* threads, Thread* thread)
 {
   assert(thread->next == NULL);
@@ -289,7 +280,6 @@ static void AddThread(Threads* threads, Thread* thread)
 }
 
 // GetThread --
-//
 //   Get the next thread from the thread list.
 //
 // Inputs:
@@ -301,7 +291,6 @@ static void AddThread(Threads* threads, Thread* thread)
 //
 // Side Effects:
 //   The returned thread is removed from the current thread list.
-
 static Thread* GetThread(Threads* threads)
 {
   Thread* thread = threads->head;
@@ -316,7 +305,6 @@ static Thread* GetThread(Threads* threads)
 }
 
 // NewLink --
-//  
 //   Create a new link object.
 //
 // Inputs:
@@ -328,7 +316,6 @@ static Thread* GetThread(Threads* threads)
 // Side effects:
 //   Allocates resources for a link object. The resources for the link object
 //   should be freed by calling FreeLink.
-
 static Link* NewLink(FblcArena* arena)
 {
   Link* link = arena->alloc(arena, sizeof(Link));
@@ -340,7 +327,6 @@ static Link* NewLink(FblcArena* arena)
 }
 
 // FreeLink --
-//
 //   Free the given link object and resources associated with it.
 //
 // Inputs:
@@ -353,7 +339,6 @@ static Link* NewLink(FblcArena* arena)
 // Side effects:
 //   The link object is freed along with any resources associated with it.
 //   After this call, the link object should not be accessed again.
-
 void FreeLink(FblcArena* arena, Link* link)
 {
   Values* values = link->head;
@@ -374,7 +359,6 @@ void FreeLink(FblcArena* arena, Link* link)
 }
 
 // PutValue --
-//  
 //   Put a value onto a link.
 //
 // Inputs:
@@ -387,7 +371,6 @@ void FreeLink(FblcArena* arena, Link* link)
 //
 // Side effects:
 //   Places the given value on the link.
-
 static void PutValue(FblcArena* arena, Link* link, FblcValue* value)
 {
   Values* ntail = arena->alloc(arena, sizeof(Values));
@@ -403,7 +386,6 @@ static void PutValue(FblcArena* arena, Link* link, FblcValue* value)
 }
 
 // GetValue --
-//
 //   Get the next value from the link.
 //
 // Inputs:
@@ -416,7 +398,6 @@ static void PutValue(FblcArena* arena, Link* link, FblcValue* value)
 //
 // Side effects
 //   Removes the gotten value from the link.
-
 static FblcValue* GetValue(FblcArena* arena, Link* link)
 {
   FblcValue* value = NULL;
@@ -433,7 +414,6 @@ static FblcValue* GetValue(FblcArena* arena, Link* link)
 }
 
 // LookupRef --
-//
 //   Look up a reference to the value of a variable in the given scope.
 //
 // Inputs:
@@ -445,7 +425,6 @@ static FblcValue* GetValue(FblcArena* arena, Link* link)
 //
 // Side effects:
 //   The behavior is undefined if the variable is not found in scope.
-
 static FblcValue** LookupRef(Vars* vars, FblcVarId id)
 {
   for (size_t i = 0; i < id; ++i) {
@@ -457,7 +436,6 @@ static FblcValue** LookupRef(Vars* vars, FblcVarId id)
 }
 
 // LookupVal --
-//
 //   Look up the value of a variable in the given scope.
 //
 // Inputs:
@@ -469,7 +447,6 @@ static FblcValue** LookupRef(Vars* vars, FblcVarId id)
 //
 // Side effects:
 //   The behavior is undefined if the variable is not found in scope.
-
 static FblcValue* LookupVal(Vars* vars, FblcVarId id)
 {
   FblcValue** ref = LookupRef(vars, id);
@@ -477,7 +454,6 @@ static FblcValue* LookupVal(Vars* vars, FblcVarId id)
 }
 
 // AddVar --
-//   
 //   Extend the given scope with a new variable. Use LookupRef to access the
 //   newly added variable.
 //
@@ -490,7 +466,6 @@ static FblcValue* LookupVal(Vars* vars, FblcVarId id)
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Vars* AddVar(FblcArena* arena, Vars* vars)
 {
   Vars* newvars = arena->alloc(arena, sizeof(Vars));
@@ -500,7 +475,6 @@ static Vars* AddVar(FblcArena* arena, Vars* vars)
 }
 
 // LookupPort --
-//   
 //   Lookup up the link associated with the given port.
 //
 // Inputs:
@@ -512,7 +486,6 @@ static Vars* AddVar(FblcArena* arena, Vars* vars)
 //
 // Side effects:
 //   The behavior is undefined if the port is not found.
-
 static Link* LookupPort(Ports* ports, FblcPortId id)
 {
   for (size_t i = 0; i < id; ++i) {
@@ -524,7 +497,6 @@ static Link* LookupPort(Ports* ports, FblcPortId id)
 }
 
 // AddPort --
-//   
 //   Extend the given port scope with a new port.
 //
 // Inputs:
@@ -537,7 +509,6 @@ static Link* LookupPort(Ports* ports, FblcPortId id)
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link)
 {
   Ports* nports = arena->alloc(arena, sizeof(Ports));
@@ -547,7 +518,6 @@ static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link)
 }
 
 // MkExprCmd --
-//
 //   Creates a command to evaluate the given expression, storing the resulting
 //   value at the given target location.
 //
@@ -563,7 +533,6 @@ static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link)
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd* next)
 {
   assert(expr != NULL);
@@ -578,7 +547,6 @@ static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd*
 }
 
 // MkActnCmd --
-//
 //   Creates a command to evaluate the given action, storing the resulting
 //   value at the given target location.
 //
@@ -594,7 +562,6 @@ static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd*
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd* next)
 {
   assert(actn != NULL);
@@ -609,7 +576,6 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
 }
 
 // MkAccessCmd --
-//   
 //   Create a command to access a field from a value, storing the result at
 //   the given target location.
 //
@@ -625,7 +591,6 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, Cmd* next)
 {
   AccessCmd* cmd = arena->alloc(arena, sizeof(AccessCmd));
@@ -638,7 +603,6 @@ static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcVa
 }
 
 // MkCondExprCmd --
-//   
 //   Create a command to select and evaluate an expression based on the tag of
 //   the given value.
 //
@@ -654,7 +618,6 @@ static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcVa
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices, FblcValue** target, Cmd* next)
 {
   CondExprCmd* cmd = arena->alloc(arena, sizeof(CondExprCmd));
@@ -667,7 +630,6 @@ static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices
 }
 
 // MkCondActnCmd --
-//   
 //   Create a command to select and evaluate an action based on the tag of
 //   the given value.
 //
@@ -683,7 +645,6 @@ static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
 {
   CondActnCmd* cmd = arena->alloc(arena, sizeof(CondActnCmd));
@@ -696,7 +657,6 @@ static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices
 }
 
 // MkScopeCmd --
-//   
 //   Create a command to change the current ports and local variable scope.
 //
 // Inputs:
@@ -711,7 +671,6 @@ static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 {
   ScopeCmd* cmd = arena->alloc(arena, sizeof(ScopeCmd));
@@ -724,7 +683,6 @@ static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, 
 }
 
 // MkPushScopeCmd --
-//   
 //   Create a command to change the current ports and local variable scope
 //   without freeing the previous ports and local variable scope.
 //
@@ -739,14 +697,12 @@ static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, 
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkPushScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next)
 {
   return MkScopeCmd(arena, vars, ports, false, next);
 }
 
 // MkPopScopeCmd --
-//   
 //   Create a command to change the current ports and local variable scope
 //   that frees the previous ports and local variable scope.
 //
@@ -761,14 +717,12 @@ static Cmd* MkPushScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next)
 {
   return MkScopeCmd(arena, vars, ports, true, next);
 }
 
 // MkJoinCmd --
-//
 //   Create a join command.
 //
 // Inputs:
@@ -781,7 +735,6 @@ static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next)
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 {
   JoinCmd* cmd = arena->alloc(arena, sizeof(JoinCmd));
@@ -792,7 +745,6 @@ static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 }
 
 // MkPutCmd --
-//
 //   Create a put command.
 //
 // Inputs:
@@ -806,7 +758,6 @@ static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next)
 {
   assert(target != NULL);
@@ -820,7 +771,6 @@ static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next
 }
 
 // MkFreeLinkCmd --
-//
 //   Create a free link command.
 //
 // Inputs:
@@ -833,7 +783,6 @@ static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next
 //
 // Side effects:
 //   Performs arena allocations.
-
 static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 {
   FreeLinkCmd* cmd = arena->alloc(arena, sizeof(FreeLinkCmd));
@@ -844,7 +793,6 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 }
 
 // Run --
-//
 //   Spend a finite amount of time executing commands for a thread.
 //
 // Inputs:
@@ -862,7 +810,6 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 //   Otherwise it will be added back to the threads list representing the
 //   continuation of this thread.
 //   Performs arena allocations.
-
 static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread* thread)
 {
   for (int i = 0; i < 1024 && thread->cmd != NULL; i++) {

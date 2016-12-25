@@ -1,5 +1,4 @@
 * Switch to library-based sharing rather than file based sharing.
- - Clean up fblcbi/Evaluator.c
  - Clean up fblcbi/Main.c
  - Better document that for binary encodings of values, the top level value is
    guarenteed to take at least one bytes, regardless of whether or not it is
