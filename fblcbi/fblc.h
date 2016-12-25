@@ -490,35 +490,87 @@ FblcValue* FblcCopy(FblcArena* arena, FblcValue* src);
 //   case no action is taken.
 void FblcRelease(FblcArena* arena, FblcValue* value);
 
-// BitStream
-// Bit streams are represented as sequences of ascii digits '0' and '1'.
-// TODO: Support more efficient encodings of bit streams when desired.
-// If the string field is non-null, digits are read from the string.
-// If the fd field is non-negative, digits are read from the file with that
-// descriptor.
-typedef struct BitSource BitSource;
-BitSource* CreateStringBitSource(FblcArena* arena, const char* string);
-BitSource* CreateFdBitSource(FblcArena* arena, int fd);
-uint32_t ReadBits(BitSource* source, size_t num_bits);
-void SyncBitSource(BitSource* source);
-void FreeBitSource(FblcArena* arena, BitSource* source);
+// FblcReadProgram --
+//   Read an FblcProgram from a file. The format of the program is a sequence
+//   of binary digits '0' and '1' encoding the value of a program as defined
+//   in fblc.fblc.
+//
+// Inputs:
+//   arena - Arena used for allocations.
+//   fd - A file descriptor for a file open for reading.
+//
+// Results:
+//   The program read from the given file.
+//
+// Side effects:
+//   Reads bits from the file.
+//   Performs arena allocations.
+//   
+// TODO:
+//  * Provide a better specification or link to a specification for how the
+//    program is encoded.
+//  * Have a better way to return errors in reading the program.
+FblcProgram* FblcReadProgram(FblcArena* arena, int fd);
 
-typedef struct {
-  int fd;
-  bool flushed;
-} OutputBitStream;
+// FblcReadValue --
+//   Read an FblcValue from a file. The format of the value is a sequence
+//   of binary digits '0' and '1' encoding the value as defined by the
+//   calvisis specification.
+//
+// Inputs:
+//   arena - Arena used for allocations.
+//   prg - The program containing the type description for the value.
+//   type - The id of the type of value to read.
+//   fd - A file descriptor for a file open for reading.
+//
+// Results:
+//   The value read from the given file.
+//
+// Side effects:
+//   Reads from the file.
+//   Performs arena allocations.
+//   
+// TODO:
+//  * Have a better way to return errors in reading the value.
+FblcValue* FblcReadValue(FblcArena* arena, FblcProgram* prg, FblcTypeId type, int fd);
 
-void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
-void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
-void FlushWriteBits(OutputBitStream* stream);
+// FblcReadValueFromString --
+//   Read an FblcValue from a string. The format of the value is a sequence
+//   of binary digits '0' and '1' encoding the value as defined by the
+//   calvisis specification.
+//
+// Inputs:
+//   arena - Arena used for allocations.
+//   prg - The program containing the type description for the value.
+//   type - The id of the type of value to read.
+//   string - The string to read the value from.
+//
+// Results:
+//   The value read from the given string.
+//
+// Side effects:
+//   Performs arena allocations.
+//   
+// TODO:
+//  * Have a better way to return errors in reading the value.
+FblcValue* FblcReadValueFromString(FblcArena* arena, FblcProgram* prg, FblcTypeId type, const char* string);
 
-// Encoder
-FblcValue* DecodeValue(FblcArena* arena, BitSource* source, FblcProgram* prg, FblcTypeId type);
-void EncodeValue(OutputBitStream* bits, FblcValue* value);
-FblcProgram* DecodeProgram(FblcArena* arena, BitSource* source);
-
-// Evaluator
+// FblcWriteValue
+//   Write an FblcValue to a file. The format of the value is a sequence
+//   of binary digits '0' and '1' encoding the value as defined by the
+//   calvisis specification.
+//
+// Inputs:
+//   value - The value to write.
+//   fd - A file descriptor of a file open for writing.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The value is written to the file.
+//   Performs arena allocations.
+void FblcWriteValue(FblcValue* value, int fd);
+
 FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args);
-
 #endif // FBLC_H_
-

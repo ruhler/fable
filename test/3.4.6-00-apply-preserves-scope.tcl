@@ -17,5 +17,5 @@ set prg {
   };
 }
 expect_result B(Unit(),A(Unit(),Donut()),Unit()) $prg main
-expect_result_b "" $prg 5
+expect_result_b 0 $prg 5
 

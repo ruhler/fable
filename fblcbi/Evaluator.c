@@ -1255,10 +1255,7 @@ FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, F
         Thread* waiting = GetThread(&(links[i]->waiting));
         if (waiting != NULL) {
           // TODO: Don't block if there isn't anything available to read.
-          BitSource* source = CreateFdBitSource(arena, 3+i);
-          FblcValue* got = DecodeValue(arena, source, program, proc->portv[i].type);
-          SyncBitSource(source);
-          FreeBitSource(arena, source);
+          FblcValue* got = FblcReadValue(arena, program, proc->portv[i].type, 3+i);
           PutValue(arena, links[i], got);
           AddThread(&threads, waiting);
         }
@@ -1266,10 +1263,7 @@ FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, F
         assert(proc->portv[i].polarity == FBLC_PUT_POLARITY);
         FblcValue* put = GetValue(arena, links[i]);
         if (put != NULL) {
-          OutputBitStream stream;
-          OpenBinaryOutputBitStream(&stream, 3+i);
-          EncodeValue(&stream, put);
-          FlushWriteBits(&stream);
+          FblcWriteValue(put, 3+i);
           FblcRelease(arena, put);
         }
       }

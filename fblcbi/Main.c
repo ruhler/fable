@@ -92,10 +92,7 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* program_underlying_arena = CreateGcArena();
   FblcArena* program_arena = CreateBulkFreeArena(program_underlying_arena);
-  BitSource* bits = CreateFdBitSource(program_underlying_arena, fdin);
-  FblcProgram* program = DecodeProgram(program_arena, bits);
-  FreeBitSource(program_underlying_arena, bits);
-
+  FblcProgram* program = FblcReadProgram(program_arena, fdin);
   if (entry >= program->declc) {
     fprintf(stderr, "invalid entry id: %zi.\n", entry);
     FreeBulkFreeArena(program_arena);
@@ -143,18 +140,16 @@ int main(int argc, char* argv[])
   FblcArena* exec_arena = CreateGcArena();
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    BitSource* argbits = CreateStringBitSource(exec_arena, argv[i]);
-    args[i] = DecodeValue(exec_arena, argbits, program, proc->argv[i]);
-    FreeBitSource(exec_arena, argbits);
+    args[i] = FblcReadValueFromString(exec_arena, program, proc->argv[i], argv[i]);
   }
 
   FblcValue* value = Execute(exec_arena, program, proc, args);
   assert(value != NULL);
 
-  OutputBitStream output;
-  OpenBinaryOutputBitStream(&output, STDOUT_FILENO);
-  EncodeValue(&output, value);
+  FblcWriteValue(value, STDOUT_FILENO);
   FblcRelease(exec_arena, value);
+
+  // TODO: Why doesn't GC complain that we haven't freed the arguments?
 
   FreeGcArena(exec_arena);
   FreeBulkFreeArena(program_arena);

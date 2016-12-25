@@ -18,4 +18,4 @@ set prg {
 }
 
 expect_result Bool:false(Unit()) $prg main
-expect_result_b "1" $prg 3
+expect_result_b 1 $prg 3
