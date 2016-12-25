@@ -5,6 +5,7 @@
 
 #define GC_DEBUG
 #include <gc/gc.h>
+#include <stdint.h> // for uint8_t
 
 #include "gc.h"
 

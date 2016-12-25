@@ -3,9 +3,8 @@
 #define FBLC_H_
 
 #include <stdbool.h>    // for bool
-#include <stdint.h>     // for uint32_t
-#include <sys/types.h>  // for size_t and ssize_t
-
+#include <sys/types.h>  // for size_t
+
 // FblcArena --
 //   An interface for allocating and freeing memory.
 typedef struct FblcArena {
@@ -571,5 +570,52 @@ FblcValue* FblcReadValueFromString(FblcArena* arena, FblcProgram* prg, FblcTypeI
 //   The value is written to the file.
 void FblcWriteValue(FblcValue* value, int fd);
 
-FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args);
+// FblcIOPort --
+//   An interface for reading or writing values over a port.
+typedef struct FblcIOPort {
+  // io --
+  //   Get a value put onto a port, or return a value to be gotten from a
+  //   port.
+  //
+  // Inputs:
+  //   data - The user data associated with this io.
+  //   value - The value put to the port for ports with PUT polarity. NULL
+  //           otherwise.
+  //
+  // Result:
+  //   A value to get from a port for ports with GET polarity. NULL to
+  //   indicate there is no value available to get from a GET port or in the
+  //   case of a PUT port.
+  //
+  // Side effects:
+  //   The behavior is undefined if the 'this' argument is not the same from
+  //   which the io function is invoked.
+  FblcValue* (*io)(void * data, FblcValue* put);
+  void* data;
+} FblcIOPort;
+
+// FblcExecute --
+//   Execute a process with the given args and ports in the given program
+//   environment.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   program - The program environment.
+//   proc - The process to execute.
+//   args - Arguments to the process to execute.
+//   ioports - Interfaces for getting and putting values on external ports.
+//
+// Returns:
+//   The result of executing the given procedure in the program environment
+//   with the given arguments and ports.
+//
+// Side effects:
+//   Releases the args values.
+//   Calls the corresponding io function with a value each time a value is put
+//   to an external port with PUT polarity.
+//   Calls the corresponding io function with a NULL value when a value is
+//   requested from an external port with GET polarity. The io function should
+//   return the next value on the port or NULL to indicate no values are ready
+//   yet.
+FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIOPort* ioports);
 #endif // FBLC_H_

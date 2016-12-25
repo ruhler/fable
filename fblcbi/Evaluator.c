@@ -1198,28 +1198,8 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
   }
 }
 
-// Execute --
-//
-//   Execute an process under the given program environment. The program
-//   and process must be well formed.
-//
-// Inputs:
-//   arena - The arena to use for allocations.
-//   program - The program environment.
-//   proc - The process to execute.
-//   args - Arguments to the function to execute.
-//
-// Returns:
-//   The result of executing the given procedure in the program environment
-//   with the given arguments and ports on open file descriptors 3 and on.
-//
-// Side effects:
-//   Releases the args values.
-//   Reads and writes to the open file descriptors for the ports as specified
-//   by the program.
-//   Performs arena allocations.
-
-FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args)
+// FblcExecute -- see documentationin fblc.h.
+FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIOPort* ioports)
 {
   Vars* vars = NULL;
   for (size_t i = 0; i < proc->argc; ++i) {
@@ -1254,16 +1234,17 @@ FblcValue* Execute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, F
       if (proc->portv[i].polarity == FBLC_GET_POLARITY) {
         Thread* waiting = GetThread(&(links[i]->waiting));
         if (waiting != NULL) {
-          // TODO: Don't block if there isn't anything available to read.
-          FblcValue* got = FblcReadValue(arena, program, proc->portv[i].type, 3+i);
-          PutValue(arena, links[i], got);
-          AddThread(&threads, waiting);
+          FblcValue* got = ioports[i].io(ioports[i].data, NULL);
+          if (got != NULL) {
+            PutValue(arena, links[i], got);
+            AddThread(&threads, waiting);
+          }
         }
       } else {
         assert(proc->portv[i].polarity == FBLC_PUT_POLARITY);
         FblcValue* put = GetValue(arena, links[i]);
         if (put != NULL) {
-          FblcWriteValue(put, 3+i);
+          ioports[i].io(ioports[i].data, put);
           FblcRelease(arena, put);
         }
       }

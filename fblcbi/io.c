@@ -4,6 +4,7 @@
 //   programs to and from strings and files.
 
 #include <assert.h>
+#include <stdint.h>   // for uint32_t
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

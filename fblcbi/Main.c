@@ -41,6 +41,26 @@ static void PrintUsage(FILE* stream)
       "function.\n"
   );
 }
+typedef struct {
+  FblcArena* arena;
+  FblcProgram* program;
+  FblcTypeId type;
+  int fd;
+} PortData;
+
+FblcValue* GetIO(void* data, FblcValue* value)
+{
+  // TODO: Don't block if there isn't anything available to read.
+  PortData* port_data = (PortData*)data;
+  return FblcReadValue(port_data->arena, port_data->program, port_data->type, port_data->fd);
+}
+
+FblcValue* PutIO(void* data, FblcValue* value)
+{
+  PortData* port_data = (PortData*)data;
+  FblcWriteValue(value, port_data->fd);
+  return NULL;
+}
 
 // main --
 //
@@ -143,7 +163,18 @@ int main(int argc, char* argv[])
     args[i] = FblcReadValueFromString(exec_arena, program, proc->argv[i], argv[i]);
   }
 
-  FblcValue* value = Execute(exec_arena, program, proc, args);
+  FblcIOPort ports[proc->portc];
+  PortData port_data[proc->portc];
+  for (size_t i = 0; i < proc->portc; ++i) {
+    ports[i].io = proc->portv[i].polarity == FBLC_PUT_POLARITY ? &PutIO : &GetIO;
+    ports[i].data = port_data + i;
+    port_data[i].arena = exec_arena;
+    port_data[i].program = program;
+    port_data[i].type = proc->portv[i].type;
+    port_data[i].fd = 3+i;
+  }
+
+  FblcValue* value = FblcExecute(exec_arena, program, proc, args, ports);
   assert(value != NULL);
 
   FblcWriteValue(value, STDOUT_FILENO);
