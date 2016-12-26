@@ -3,21 +3,20 @@ exec rm -rf out
 exec mkdir -p out/test out/fblc out/fblcbe out/fblcbi out/prgms 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
-# Compile fblcbe
-foreach {x} [lsort [glob fblcbe/*.c]] {
+# Compile fblcbe, fblcbi
+set objs [list]
+foreach {x} [glob fblcbi/*.c] {
+  set obj out/fblcbi/[string map {.c .o} [file tail $x]]
+  if {-1 == [lsearch [list fblcbi/fblcbe.c fblcbi/fblcbi.c] $x]} {
+    lappend objs $obj
+  }
   puts "cc $x"
-  exec gcc {*}$FLAGS -c -o out/fblcbe/[string map {.c .o} [file tail $x]] $x
+  exec gcc {*}$FLAGS -c -o $obj $x
 }
-puts "ld -o out/fblcbe"
-exec gcc {*}$FLAGS -o out/prgms/fblcbe -lgc {*}[glob out/fblcbe/*.o]
-
-# Compile fblcbi
-foreach {x} [lsort [glob fblcbi/*.c]] {
-  puts "cc $x"
-  exec gcc {*}$FLAGS -c -o out/fblcbi/[string map {.c .o} [file tail $x]] $x
+foreach {x} [list fblcbe fblcbi] {
+  puts "ld -o out/$x"
+  exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblcbi/$x.o {*}$objs
 }
-puts "ld -o out/fblcbi"
-exec gcc {*}$FLAGS -o out/prgms/fblcbi -lgc {*}[glob out/fblcbi/*.o]
 
 # Compile fblc
 foreach {x} [lsort [glob fblc/*.c]] {
@@ -44,8 +43,6 @@ proc check_coverage {name} {
   exec mkdir -p out/$name/fblc out/$name/fblcbi out/$name/fblcbe
   exec gcov {*}[glob out/fblc/*.o] > out/$name/fblc.gcov
   exec mv {*}[glob *.gcov] out/$name/fblc
-  exec gcov {*}[glob out/fblcbe/*.o] > out/$name/fblcbe.gcov
-  exec mv {*}[glob *.gcov] out/$name/fblcbe
   exec gcov {*}[glob out/fblcbi/*.o] > out/$name/fblcbi.gcov
   exec mv {*}[glob *.gcov] out/$name/fblcbi
 }
@@ -229,9 +226,6 @@ puts "Skipped Tests: $::skipped"
 puts "fblc Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"
-puts "fblcbe Coverage: "
-puts "  Spec    : [exec tail -n 1 out/spectest/fblcbe.gcov]"
-puts "  Overall : [exec tail -n 1 out/overall/fblcbe.gcov]"
 puts "fblcbi Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblcbi.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblcbi.gcov]"
