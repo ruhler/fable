@@ -1,4 +1,4 @@
-// Main.c --
+// fblcbe.c --
 //
 //   The file implements the main entry point for the fblc binary encoder.
 
