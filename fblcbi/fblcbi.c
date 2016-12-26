@@ -1,22 +1,33 @@
-// Main.c --
-//
-//   The file implements the main entry point for the Fblc binary interpreter.
+// fblcbi.c --
+//   This file implements the main entry point for the fblc binary interpreter.
 
-#include <assert.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <assert.h>     // for assert
+#include <fcntl.h>      // for open
+#include <stdio.h>      // for fprintf
+#include <stdlib.h>     // for atoi
+#include <string.h>     // for strcmp
+#include <sys/stat.h>   // for open
+#include <sys/types.h>  // for open
+#include <unistd.h>     // for STDOUT_FILENO
 
 #include "fblc.h"
 #include "gc.h"
 
+// PortData --
+//   User data for IOPorts.
+typedef struct {
+  FblcArena* arena;
+  FblcProgram* program;
+  FblcTypeId type;
+  int fd;
+} PortData;
+
+static void PrintUsage(FILE* stream);
+static FblcValue* GetIO(void* data, FblcValue* value);
+static FblcValue* PutIO(void* data, FblcValue* value);
+int main(int argc, char* argv[]);
 
 // PrintUsage --
-//   
 //   Prints help info to the given output stream.
 //
 // Inputs:
@@ -27,7 +38,6 @@
 //
 // Side effects:
 //   Outputs usage information to the given stream.
-
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
@@ -35,27 +45,50 @@ static void PrintUsage(FILE* stream)
       "Evaluate the function or process with id MAIN in the environment of the\n"
       "fblc program PROGRAM with the given ARGs.\n"  
       "PROGRAM should be a file containing a sequence of digits '0' and '1' representing the program.\n"
-      "MAIN should be the decimal integer id of the function to execute.\n"
+      "MAIN should be the decimal integer id of the function or process to execute.\n"
       "ARG should be a sequence of digits '0' and '1' representing an argument value.\n"
-      "The number of arguments must match the expected number for the MAIN\n"
-      "function.\n"
+      "The number of arguments must match the expected number for the MAIN function.\n"
+      "Ports should be provided by arranging for file descriptors 3, 4, ...\n"
+      "to be open on which data for port 1, 2, ... can be read or written as\n"
+      "a sequence of binary digits '0' and '1' as appropriate.\n"
   );
 }
-typedef struct {
-  FblcArena* arena;
-  FblcProgram* program;
-  FblcTypeId type;
-  int fd;
-} PortData;
 
-FblcValue* GetIO(void* data, FblcValue* value)
+// GetIO --
+//   io function for get ports. See the corresponding documentation in fblc.h.
+//
+// Inputs:
+//   data - PortData with the arena, program, type, and fd for reading the
+//          next value.
+//   value - ignored.
+//
+// Results:
+//   The next value of the given type read from the given file, or NULL if no
+//   value is available.
+//
+// Side effects:
+//   Performs arena allocations.
+//   Reads a value from the given file.
+static FblcValue* GetIO(void* data, FblcValue* value)
 {
   // TODO: Don't block if there isn't anything available to read.
   PortData* port_data = (PortData*)data;
   return FblcReadValue(port_data->arena, port_data->program, port_data->type, port_data->fd);
 }
 
-FblcValue* PutIO(void* data, FblcValue* value)
+// PutIO --
+//   io function for put ports. See the corresponding documentation in fblc.h.
+//
+// Inputs:
+//   data - PortData with the fd for writing the next value.
+//   value - The value to write.
+//
+// Results:
+//   NULL.
+//
+// Side effects:
+//   Writes the given value to the given file.
+static FblcValue* PutIO(void* data, FblcValue* value)
 {
   PortData* port_data = (PortData*)data;
   FblcWriteValue(value, port_data->fd);
@@ -63,7 +96,6 @@ FblcValue* PutIO(void* data, FblcValue* value)
 }
 
 // main --
-//
 //   The main entry point for the fblc binary interpreter. Evaluates the MAIN
 //   function or process from the given program with the given ports and
 //   arguments. The result is printed to standard output.
@@ -79,10 +111,8 @@ FblcValue* PutIO(void* data, FblcValue* value)
 //   Prints the value resulting from the evaluation of the MAIN process on the
 //   given arguments to standard out using the binary text format, or prints
 //   an error message to standard error if an error is encountered.
-
 int main(int argc, char* argv[])
 {
-
   if (argc > 1 && strcmp("--help", argv[1]) == 0) {
     PrintUsage(stdout);
     return 0;
@@ -149,8 +179,7 @@ int main(int argc, char* argv[])
   }
 
   if (proc->argc != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n",
-        proc->argc, argc);
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argc, argc);
     FreeBulkFreeArena(program_arena);
     FreeGcArena(program_underlying_arena);
     GcFinish();
@@ -179,8 +208,6 @@ int main(int argc, char* argv[])
 
   FblcWriteValue(value, STDOUT_FILENO);
   FblcRelease(exec_arena, value);
-
-  // TODO: Why doesn't GC complain that we haven't freed the arguments?
 
   FreeGcArena(exec_arena);
   FreeBulkFreeArena(program_arena);
