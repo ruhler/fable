@@ -9,7 +9,7 @@
 #include <sys/types.h>    // for ssize_t, open
 #include <unistd.h>       // for read, close
 
-#include "Internal.h"
+#include "fblct.h"
 
 #define MAX_TOK_DESC_LEN 5
 

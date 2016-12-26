@@ -1,10 +1,9 @@
-// Internal.h --
-//
-//   This header file describes the internally-visible facilities of the 
-//   interpreter.
+// fblct.h --
+//   This header file describes the externally visible interface to the
+//   text-level fblc facilities.
 
-#ifndef INTERNAL_H_
-#define INTERNAL_H_
+#ifndef FBLCT_H_
+#define FBLCT_H_
 
 #include <stdint.h>   // for uint32_t
 #include <stdio.h>    // for BUFSIZ
@@ -304,4 +303,4 @@ void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
 // Encoder
 void EncodeProgram(OutputBitStream* stream, Env* env);
 
-#endif  // INTERNAL_H_
+#endif  // FBLCT_H_

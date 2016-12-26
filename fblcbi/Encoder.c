@@ -4,7 +4,7 @@
 
 #include <assert.h>     // for assert
 
-#include "Internal.h"
+#include "fblct.h"
 
 static void EncodeId(OutputBitStream* stream, size_t id)
 {

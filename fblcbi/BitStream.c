@@ -5,7 +5,7 @@
 #include <assert.h>     // for assert.
 #include <unistd.h>     // for write.
 
-#include "Internal.h"
+#include "fblct.h"
 
 // OpenBinaryOutputBitStream
 //   Open an OutputBitStream that writes ascii digits '0' and '1' to an open

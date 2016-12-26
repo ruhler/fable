@@ -5,7 +5,7 @@
 #include <string.h>     // for strcmp
 #include <unistd.h>     // for STDOUT_FILENO
 
-#include "Internal.h"
+#include "fblct.h"
 #include "gc.h"
 
 static void PrintUsage(FILE* fout);

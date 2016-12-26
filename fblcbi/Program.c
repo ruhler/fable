@@ -5,7 +5,7 @@
 
 #include <stdarg.h>     // For va_start
 
-#include "Internal.h"
+#include "fblct.h"
 
 
 // NamesEqual --

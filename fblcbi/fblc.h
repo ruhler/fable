@@ -1,3 +1,6 @@
+// fblc.h --
+//   This header file describes the externally visible interface to the
+//   machine-level fblc facilities.
 
 #ifndef FBLC_H_
 #define FBLC_H_

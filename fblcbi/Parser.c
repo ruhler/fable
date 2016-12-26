@@ -5,7 +5,7 @@
 
 #include <assert.h>     // for assert
 
-#include "Internal.h"
+#include "fblct.h"
 
 static int ParseFields(FblcArena* arena, TokenStream* toks, Field** plist);
 static int ParsePorts(FblcArena* arena, TokenStream* toks, Port** ports);

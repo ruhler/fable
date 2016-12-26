@@ -5,7 +5,7 @@
 
 #include <assert.h>     // for assert
 
-#include "Internal.h"
+#include "fblct.h"
 
 // The following Vars structure describes a mapping from variable names to
 // their types and ids.
