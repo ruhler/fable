@@ -52,6 +52,11 @@ static FblcActn* ReadActn(FblcArena* arena, BitSource* source);
 static FblcDecl* ReadDecl(FblcArena* arena, BitSource* source);
 static FblcProgram* ReadProgram(FblcArena* arena, BitSource* source);
 
+static void WriteId(BitSink* sink, size_t id);
+static void WriteExpr(BitSink* sink, FblcExpr* expr);
+static void WriteActn(BitSink* sink, FblcActn* actn);
+static void WriteProgram(BitSink* sink, FblcProgram* program);
+
 static size_t TagSize(size_t fieldc);
 static FblcValue* ReadValue(FblcArena* arena, BitSource* source, FblcProgram* prg, FblcTypeId type);
 static void WriteValue(BitSink* bits, FblcValue* value);
@@ -468,6 +473,280 @@ FblcProgram* FblcReadProgram(FblcArena* arena, int fd)
 {
   BitSource source = { .string = NULL, .fd = fd, .synced = false };
   return ReadProgram(arena, &source);
+}
+
+// WriteId --
+//   Write an id to the given bit sink.
+//
+// Inputs:
+//   sink - The bit sink to write the id to.
+//   id - The id to write.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The id is written to the bit sink.
+static void WriteId(BitSink* sink, size_t id)
+{
+  while (id > 1) {
+    WriteBits(sink, 2, 2 + (id % 2));
+    id /= 2;
+  }
+  WriteBits(sink, 2, id);
+}
+
+// WriteExpr --
+//   Write an expression to the given bit sink.
+//
+// Inputs:
+//   sink - The bit sink to write the expression to.
+//   expr - The expression to write.
+//
+// Result:
+//   None.
+//
+// Side effect:
+//   Writes the given expression to the given bit sink.
+static void WriteExpr(BitSink* sink, FblcExpr* expr)
+{
+  WriteBits(sink, 3, expr->tag);
+  switch (expr->tag) {
+    case FBLC_VAR_EXPR: {
+      FblcVarExpr* var_expr = (FblcVarExpr*)expr;
+      WriteId(sink, var_expr->var);
+      break;
+    }
+
+    case FBLC_APP_EXPR: {
+      FblcAppExpr* app_expr = (FblcAppExpr*)expr;
+      WriteId(sink, app_expr->func);
+      for (size_t i = 0; i < app_expr->argc; ++i) {
+        WriteBits(sink, 1, 1);
+        WriteExpr(sink, app_expr->argv[i]);
+      }
+      WriteBits(sink, 1, 0);
+      break;
+    }
+
+    case FBLC_UNION_EXPR: {
+      FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
+      WriteId(sink, union_expr->type);
+      WriteId(sink, union_expr->field);
+      WriteExpr(sink, union_expr->body);
+      break;
+    }
+
+    case FBLC_ACCESS_EXPR: {
+      FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
+      WriteExpr(sink, access_expr->object);
+      WriteId(sink, access_expr->field);
+      break;
+    }
+
+    case FBLC_COND_EXPR: {
+      FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
+      WriteExpr(sink, cond_expr->select);
+      WriteExpr(sink, cond_expr->argv[0]);
+      for (size_t i = 1; i < cond_expr->argc; ++i) {
+        WriteBits(sink, 1, 1);
+        WriteExpr(sink, cond_expr->argv[i]);
+      }
+      WriteBits(sink, 1, 0);
+      break;
+    }
+
+    case FBLC_LET_EXPR: {
+      FblcLetExpr* let_expr = (FblcLetExpr*)expr;
+      WriteExpr(sink, let_expr->def);
+      WriteExpr(sink, let_expr->body);
+      break;
+    }
+
+    default:
+      assert(false && "Invalid expression tag");
+      break;
+  }
+}
+
+// WriteActn --
+//   Write an action to the given bit sink.
+//
+// Inputs:
+//   sink - The bit sink to write the action to.
+//   actn - The action to write.
+//
+// Result:
+//   None.
+//
+// Side effect:
+//   Writes the given action to the given bit sink.
+static void WriteActn(BitSink* sink, FblcActn* actn)
+{
+  WriteBits(sink, 3, actn->tag);
+  switch (actn->tag) {
+    case FBLC_EVAL_ACTN: {
+      FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
+      WriteExpr(sink, eval_actn->expr);
+      break;
+    }
+
+    case FBLC_GET_ACTN: {
+      FblcGetActn* get_actn = (FblcGetActn*)actn;
+      WriteId(sink, get_actn->port);
+      break;
+    }
+
+    case FBLC_PUT_ACTN: {
+      FblcPutActn* put_actn = (FblcPutActn*)actn;
+      WriteId(sink, put_actn->port);
+      WriteExpr(sink, put_actn->arg);
+      break;
+    }
+
+    case FBLC_COND_ACTN: {
+      FblcCondActn* cond_actn = (FblcCondActn*)actn;
+      WriteExpr(sink, cond_actn->select);
+      assert(cond_actn->argc > 0);
+      WriteActn(sink, cond_actn->argv[0]);
+      for (size_t i = 1; i < cond_actn->argc; ++i) {
+        WriteBits(sink, 1, 1);
+        WriteActn(sink, cond_actn->argv[i]);
+      }
+      WriteBits(sink, 1, 0);
+      break;
+    }
+
+    case FBLC_CALL_ACTN: {
+      FblcCallActn* call_actn = (FblcCallActn*)actn;
+      WriteId(sink, call_actn->proc);
+      for (size_t i = 0; i < call_actn->portc; ++i) {
+        WriteBits(sink, 1, 1);
+        WriteId(sink, call_actn->portv[i]);
+      }
+      WriteBits(sink, 1, 0);
+      for (size_t i = 0; i < call_actn->argc; ++i) {
+        WriteBits(sink, 1, 1);
+        WriteExpr(sink, call_actn->argv[i]);
+      }
+      WriteBits(sink, 1, 0);
+      break;
+    }
+
+    case FBLC_LINK_ACTN: {
+      FblcLinkActn* link_actn = (FblcLinkActn*)actn;
+      WriteId(sink, link_actn->type);
+      WriteActn(sink, link_actn->body);
+      break;
+    }
+
+    case FBLC_EXEC_ACTN: {
+      FblcExecActn* exec_actn = (FblcExecActn*)actn;
+      assert(exec_actn->execc > 0);
+      WriteActn(sink, exec_actn->execv[0]);
+      for (size_t i = 1; i < exec_actn->execc; ++i) {
+        WriteBits(sink, 1, 1);
+        WriteActn(sink, exec_actn->execv[i]);
+      }
+      WriteBits(sink, 1, 0);
+      WriteActn(sink, exec_actn->body);
+      break;
+    }
+
+    default:
+      assert(false && "Invalid action tag");
+      break;
+  }
+}
+
+// WriteProgram -
+//   Write the given program to the given bit sink.
+//
+// Inputs:
+//   sink - The bit sink to write the program to.
+//   program - The program to write.
+//
+// Returns:
+//   None.
+//
+// Side effects:
+//   The program is written to the bit sink.
+static void WriteProgram(BitSink* sink, FblcProgram* program)
+{
+  for (size_t i = 0; i < program->declc; ++i) {
+    if (i > 0) {
+      WriteBits(sink, 1, 1);
+    }
+    FblcDecl* decl = program->declv[i];
+    WriteBits(sink, 2, decl->tag);
+    switch (decl->tag) {
+      case FBLC_STRUCT_DECL: {
+        FblcTypeDecl* type = (FblcTypeDecl*)decl;
+        for (size_t i = 0; i < type->fieldc; ++i) {
+          WriteBits(sink, 1, 1);
+          WriteId(sink, type->fieldv[i]);
+        }
+        WriteBits(sink, 1, 0);
+        break;
+      }
+
+      case FBLC_UNION_DECL: {
+        FblcTypeDecl* type = (FblcTypeDecl*)decl;
+        assert(type->fieldc > 0);
+        WriteId(sink, type->fieldv[0]);
+        for (size_t i = 1; i < type->fieldc; ++i) {
+          WriteBits(sink, 1, 1);
+          WriteId(sink, type->fieldv[i]);
+        }
+        WriteBits(sink, 1, 0);
+        break;
+      }
+
+      case FBLC_FUNC_DECL: {
+        FblcFuncDecl* func = (FblcFuncDecl*)decl;
+        for (size_t i = 0; i < func->argc; ++i) {
+          WriteBits(sink, 1, 1);
+          WriteId(sink, func->argv[i]);
+        }
+        WriteBits(sink, 1, 0);
+        WriteId(sink, func->return_type);
+        WriteExpr(sink, func->body);
+        break;
+      }
+
+      case FBLC_PROC_DECL: {
+        FblcProcDecl* proc = (FblcProcDecl*)decl;
+        for (size_t i = 0; i < proc->portc; ++i) {
+          WriteBits(sink, 1, 1);
+          WriteId(sink, proc->portv[i].type);
+          WriteBits(sink, 1, proc->portv[i].polarity);
+        }
+        WriteBits(sink, 1, 0);
+
+        for (size_t i = 0; i < proc->argc; ++i) {
+          WriteBits(sink, 1, 1);
+          WriteId(sink, proc->argv[i]);
+        }
+        WriteBits(sink, 1, 0);
+
+        WriteId(sink, proc->return_type);
+        WriteActn(sink, proc->body);
+        break;
+      }
+
+      default:
+        assert(false && "Invalid Decl type");
+        break;
+    }
+  }
+  WriteBits(sink, 1, 0);
+}
+
+// FblcWriteProgram -- see documentation in fblc.h
+void FblcWriteProgram(FblcProgram* program, int fd)
+{
+  BitSink sink = { .fd = fd, .synced = false };
+  WriteProgram(&sink, program);
 }
 
 // TagSize --

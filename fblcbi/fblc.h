@@ -275,7 +275,7 @@ typedef struct {
   FblcDeclTag tag;
   size_t argc;
   FblcTypeId* argv;
-  FblcTypeId return_type; 
+  FblcTypeId return_type;
   FblcExpr* body;
 } FblcFuncDecl;
 
@@ -389,7 +389,7 @@ typedef struct {
   size_t portc;
   FblcPort* portv;
   size_t argc;
-  FblcTypeId* argv; 
+  FblcTypeId* argv;
   FblcTypeId return_type;
   FblcActn* body;
 } FblcProcDecl;
@@ -433,7 +433,7 @@ typedef struct FblcValue {
 // FblcNewStruct --
 //   Construct a new struct value for a struct type with the given number of
 //   fields.
-// 
+//
 // Inputs:
 //   arena - The arena to use for allocations.
 //   fieldc - The number of fields in the struct type.
@@ -448,7 +448,7 @@ FblcValue* FblcNewStruct(FblcArena* arena, size_t fieldc);
 
 // FblcNewUnion --
 //   Construct a new union value.
-// 
+//
 // Inputs:
 //   arena - The arena to use for allocations.
 //   fieldc - The number of fields in the union type.
@@ -508,12 +508,32 @@ void FblcRelease(FblcArena* arena, FblcValue* value);
 // Side effects:
 //   Reads bits from the file.
 //   Performs arena allocations.
-//   
+//
 // TODO:
 //  * Provide a better specification or link to a specification for how the
 //    program is encoded.
 //  * Have a better way to return errors in reading the program.
 FblcProgram* FblcReadProgram(FblcArena* arena, int fd);
+
+// FblcWriteProgram --
+//   Write an FblcProgram to a file. The format of the program is a sequence
+//   of binary digits '0' and '1' encoding the value of a program as defined
+//   in fblc.fblc.
+//
+// Inputs:
+//   program - The program to write.
+//   fd - A file descriptor for a file open for writing.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The program is written to the file.
+//
+// TODO:
+//  * Provide a better specification or link to a specification for how the
+//    program is encoded.
+void FblcWriteProgram(FblcProgram* program, int fd);
 
 // FblcReadValue --
 //   Read an FblcValue from a file. The format of the value is a sequence
@@ -532,7 +552,7 @@ FblcProgram* FblcReadProgram(FblcArena* arena, int fd);
 // Side effects:
 //   Reads from the file.
 //   Performs arena allocations.
-//   
+//
 // TODO:
 //  * Have a better way to return errors in reading the value.
 FblcValue* FblcReadValue(FblcArena* arena, FblcProgram* prg, FblcTypeId type, int fd);
@@ -553,7 +573,7 @@ FblcValue* FblcReadValue(FblcArena* arena, FblcProgram* prg, FblcTypeId type, in
 //
 // Side effects:
 //   Performs arena allocations.
-//   
+//
 // TODO:
 //  * Have a better way to return errors in reading the value.
 FblcValue* FblcReadValueFromString(FblcArena* arena, FblcProgram* prg, FblcTypeId type, const char* string);
