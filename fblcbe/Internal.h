@@ -295,40 +295,6 @@ typedef struct {
 
 Env* NewEnv(Allocator* alloc, int declc, Decl** declv);
 
-// Value
-
-// Value is the base structure for StructValue and UnionValue,
-// both of which have the same initial layout.
-
-typedef struct {
-  int refcount;
-  TypeDecl* type;
-} Value;
-
-// For struct values 'fieldv' contains the field data in the order the fields
-// are declared in the type declaration.
-
-typedef struct {
-  int refcount;
-  TypeDecl* type;
-  Value** fieldv;
-} StructValue;
-
-// For union values, 'tag' is the index of the active field and 'field'
-// is stores the value of the active field.
-
-typedef struct {
-  int refcount;
-  TypeDecl* type;
-  int tag;
-  Value* field;
-} UnionValue;
-
-Value* Copy(Value* src);
-void Release(Value* value);
-void PrintValue(FILE* fout, Value* value);
-int TagForField(TypeDecl* type, Name field);
-
 // Tokenizer
 // A stream of tokens is represented using the TokenStream data structure.
 // Tokens can be read either from a file or a string.
