@@ -1,4 +1,0 @@
-* decls should be output in the same order as they are in the input.
- - requires mixing decls in a single list instead of separating by type.
-* remove unused code
-* remove old references to FblcInterpreter

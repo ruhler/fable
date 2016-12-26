@@ -2,6 +2,9 @@
 //
 //   This file implements routines for writing bit streams.
 
+#include <assert.h>     // for assert.
+#include <unistd.h>     // for write.
+
 #include "Internal.h"
 
 // OpenBinaryOutputBitStream

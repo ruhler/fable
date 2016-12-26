@@ -2,6 +2,8 @@
 //
 //   This file implements routines for encoding an fblc program in binary.
 
+#include <assert.h>     // for assert
+
 #include "Internal.h"
 
 static void EncodeId(OutputBitStream* stream, size_t id)

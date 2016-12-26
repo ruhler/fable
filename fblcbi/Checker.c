@@ -3,6 +3,8 @@
 //   This file implements routines for checking an  program is well formed
 //   and well typed.
 
+#include <assert.h>     // for assert
+
 #include "Internal.h"
 
 // The following Vars structure describes a mapping from variable names to

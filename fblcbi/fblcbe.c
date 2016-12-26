@@ -2,7 +2,11 @@
 //
 //   The file implements the main entry point for the fblc binary encoder.
 
+#include <string.h>     // for strcmp
+#include <unistd.h>     // for STDOUT_FILENO
+
 #include "Internal.h"
+#include "gc.h"
 
 static void PrintUsage(FILE* fout);
 
@@ -44,9 +48,6 @@ static void PrintUsage(FILE* stream)
 
 int main(int argc, char* argv[])
 {
-  ENABLE_LEAK_DETECTION();
-  MALLOC_INIT();
-
   if (argc > 1 && strcmp("--help", argv[1]) == 0) {
     PrintUsage(stdout);
     return 0;
@@ -65,19 +66,24 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  Allocator alloc;
-  InitAllocator(&alloc);
-  Env* env = ParseProgram(&alloc, &toks);
+  GcInit();
+  FblcArena* gc_arena = CreateGcArena();
+  FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
+  Env* env = ParseProgram(bulk_arena, &toks);
   CloseTokenStream(&toks);
   if (env == NULL) {
     fprintf(stderr, "failed to parse input FILE.\n");
-    FreeAll(&alloc);
+    FreeBulkFreeArena(bulk_arena);
+    FreeGcArena(gc_arena);
+    GcFinish();
     return 1;
   }
 
   if (!CheckProgram(env)) {
     fprintf(stderr, "input FILE is not a well formed  program.\n");
-    FreeAll(&alloc);
+    FreeBulkFreeArena(bulk_arena);
+    FreeGcArena(gc_arena);
+    GcFinish();
     return 1;
   }
 
@@ -85,7 +91,8 @@ int main(int argc, char* argv[])
   OpenBinaryOutputBitStream(&output, STDOUT_FILENO);
   EncodeProgram(&output, env);
 
-  FreeAll(&alloc);
-  CHECK_FOR_LEAKS();
+  FreeBulkFreeArena(bulk_arena);
+  FreeGcArena(gc_arena);
+  GcFinish();
   return 0;
 }

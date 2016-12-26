@@ -3,6 +3,7 @@
 #define FBLC_H_
 
 #include <stdbool.h>    // for bool
+#include <string.h>     // for memcpy
 #include <sys/types.h>  // for size_t
 
 // FblcArena --

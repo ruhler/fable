@@ -2,6 +2,13 @@
 //
 //   This file implements routines for turning a file into a stream of tokens. 
 
+#include <assert.h>       // for assert
+#include <ctype.h>        // for isalnum, isspace
+#include <fcntl.h>        // for open
+#include <sys/stat.h>     // for open
+#include <sys/types.h>    // for ssize_t, open
+#include <unistd.h>       // for read, close
+
 #include "Internal.h"
 
 #define MAX_TOK_DESC_LEN 5
@@ -393,7 +400,7 @@ bool IsNameToken(TokenStream* toks)
 //   verify the next token is a name token.
 //
 // Inputs:
-//   alloc - The allocator to use for allocating the name.
+//   arena - The arena to use for allocating the name.
 //   toks - The token stream to retrieve the name token from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a type name".
@@ -409,26 +416,24 @@ bool IsNameToken(TokenStream* toks)
 //   token is removed from the front of the token stream. Otherwise an error
 //   message is printed to standard error.
 
-bool GetNameToken(Allocator* alloc,
-    TokenStream* toks, const char* expected, LocName* name)
+bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name)
 {
   SkipToToken(toks);
   if (IsNameChar(CurrChar(toks))) {
-    Vector vector;
-    VectorInit(alloc, &vector, sizeof(char));
-
+    size_t n;
+    char* namestr;
+    FblcVectorInit(arena, namestr, n);
     name->id = UNRESOLVED_ID;
-    name->loc = Alloc(alloc, sizeof(Loc));
+    name->loc = arena->alloc(arena, sizeof(Loc));
     name->loc->source = toks->loc.source;
     name->loc->line = toks->loc.line;
     name->loc->col = toks->loc.col;
     while (IsNameChar(CurrChar(toks))) {
-      *((char*)VectorAppend(&vector)) = CurrChar(toks);
+      FblcVectorAppend(arena, namestr, n, CurrChar(toks));
       AdvanceChar(toks);
     } 
-    *((char*)VectorAppend(&vector)) = '\0';
-    int n;
-    name->name = VectorExtract(&vector, &n);
+    FblcVectorAppend(arena, namestr, n, '\0');
+    name->name = namestr;
     return true;
   }
   UnexpectedToken(toks, expected);

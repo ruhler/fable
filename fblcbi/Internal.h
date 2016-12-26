@@ -6,56 +6,10 @@
 #ifndef INTERNAL_H_
 #define INTERNAL_H_
 
-#include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <stdint.h>   // for uint32_t
+#include <stdio.h>    // for BUFSIZ
 
-#define GC_DEBUG
-#include <gc/gc.h>
-#define MALLOC_INIT() GC_INIT()
-#define MALLOC(x) GC_MALLOC(x)
-#define FREE(x) GC_FREE(x)
-#define ENABLE_LEAK_DETECTION() GC_find_leak = 1
-#define CHECK_FOR_LEAKS() GC_gcollect()
-
-typedef struct AllocList AllocList;
-
-// Allocator
-typedef struct {
-  AllocList* allocations;
-} Allocator;
-
-// Vector is a helper for dynamically allocating an array of data whose
-// size is not known ahead of time.
-// 'size' is the number of bytes taken by a single element.
-// 'capacity' is the maximum number of elements supported by the current
-// allocation of data.
-// 'count' is the number of elements currently in use.
-// 'data' is where the data is stored.
-
-typedef struct {
-  Allocator* allocator;
-  int size;
-  int capacity;
-  int count;
-  void* data;
-} Vector ;
-
-void InitAllocator(Allocator* alloc);
-void* Alloc(Allocator* alloc, int size);
-void FreeAll(Allocator* alloc);
-void VectorInit(Allocator* alloc, Vector* vector, int size);
-void* VectorAppend(Vector* vector);
-void* VectorExtract(Vector* vector, int* count);
+#include "fblc.h"
 
 // Program
 typedef const char* Name;
@@ -293,7 +247,7 @@ typedef struct {
   Decl** declv;
 } Env;
 
-Env* NewEnv(Allocator* alloc, int declc, Decl** declv);
+Env* NewEnv(FblcArena* arena, int declc, Decl** declv);
 
 // Tokenizer
 // A stream of tokens is represented using the TokenStream data structure.
@@ -328,11 +282,11 @@ bool IsEOFToken(TokenStream* toks);
 bool IsToken(TokenStream* toks, char which);
 bool GetToken(TokenStream* toks, char which);
 bool IsNameToken(TokenStream* toks);
-bool GetNameToken(Allocator* alloc, TokenStream* toks, const char* expected, LocName* name);
+bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name);
 void UnexpectedToken(TokenStream* toks, const char* expected);
 
 // Parser
-Env* ParseProgram(Allocator* alloc, TokenStream* toks);
+Env* ParseProgram(FblcArena* arena, TokenStream* toks);
 
 // Checker
 bool CheckProgram(Env* env);

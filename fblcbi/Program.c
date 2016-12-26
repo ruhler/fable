@@ -3,6 +3,8 @@
 //   The file contains utilities for working with the abstract syntax for 
 //   programs.
 
+#include <stdarg.h>     // For va_start
+
 #include "Internal.h"
 
 
@@ -67,9 +69,9 @@ void ReportError(const char* format, Loc* loc, ...)
 //   Allocations are performed using the allocator as necessary to allocate
 //   the environment.
 
-Env* NewEnv(Allocator* alloc, int declc, Decl** declv)
+Env* NewEnv(FblcArena* arena, int declc, Decl** declv)
 {
-  Env* env = Alloc(alloc, sizeof(Env));
+  Env* env = arena->alloc(arena, sizeof(Env));
   env->declc = declc;
   env->declv = declv;
   return env;
