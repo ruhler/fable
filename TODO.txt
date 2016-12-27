@@ -1,8 +1,6 @@
 * Switch to library-based sharing rather than file based sharing.
- - implement fblc as part of fblcbi
-  -- remove fblc/
-  -- rename fblcbi/ fblc/
  - morph fblct.h to match fblc.h expr and actn definitions.
+  -- Remove Strip.c. A type cast should be sufficient.
  - Remove expect_result_b tests.
  - Implement fblc-test
   -- continue to test writing and reading fblc programs?

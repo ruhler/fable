@@ -1,13 +1,13 @@
 
 exec rm -rf out
-exec mkdir -p out/test out/fblc out/fblcbi out/prgms 
+exec mkdir -p out/test out/fblc out/prgms 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
 # Compile fblc, fblc-check, fblcbe, fblcbi
 set objs [list]
-foreach {x} [glob fblcbi/*.c] {
-  set obj out/fblcbi/[string map {.c .o} [file tail $x]]
-  if {-1 == [lsearch [list fblcbi/fblc.c fblcbi/fblcbe.c fblcbi/fblcbi.c fblcbi/fblc-check.c] $x]} {
+foreach {x} [glob fblc/*.c] {
+  set obj out/fblc/[string map {.c .o} [file tail $x]]
+  if {-1 == [lsearch [list fblc/fblc.c fblc/fblcbe.c fblc/fblcbi.c fblc/fblc-check.c] $x]} {
     lappend objs $obj
   }
   puts "cc $x"
@@ -15,7 +15,7 @@ foreach {x} [glob fblcbi/*.c] {
 }
 foreach {x} [list fblc fblcbe fblcbi fblc-check] {
   puts "ld -o out/$x"
-  exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblcbi/$x.o {*}$objs
+  exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblc/$x.o {*}$objs
 }
 
 # Compile pgrms
@@ -33,9 +33,9 @@ set ::fblcbe ./out/prgms/fblcbe
 set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
-  exec mkdir -p out/$name/fblcbi
-  exec gcov {*}[glob out/fblcbi/*.o] > out/$name/fblcbi.gcov
-  exec mv {*}[glob *.gcov] out/$name/fblcbi
+  exec mkdir -p out/$name/fblc
+  exec gcov {*}[glob out/fblc/*.o] > out/$name/fblc.gcov
+  exec mv {*}[glob *.gcov] out/$name/fblc
 }
 
 # Spec tests
@@ -214,7 +214,7 @@ check_coverage overall
 
 # Report summary results
 puts "Skipped Tests: $::skipped"
-puts "fblcbi Coverage: "
-puts "  Spec    : [exec tail -n 1 out/spectest/fblcbi.gcov]"
-puts "  Overall : [exec tail -n 1 out/overall/fblcbi.gcov]"
+puts "fblc Coverage: "
+puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
+puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"
 
