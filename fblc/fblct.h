@@ -248,42 +248,6 @@ typedef struct {
 
 Env* NewEnv(FblcArena* arena, int declc, Decl** declv);
 
-// Tokenizer
-// A stream of tokens is represented using the TokenStream data structure.
-// Tokens can be read either from a file or a string.
-//
-// The conventional variable name for a TokenStream* is 'toks'.
-
-typedef struct {
-  // When reading from a file, fd is the file descriptor for the underlying
-  // file and buffer contains the most recently read data from the file. When
-  // reading from a string, fd is -1 and buffer is unused.
-  int fd;
-  char buffer[BUFSIZ];
-
-  // curr points to the current character in the stream, if any.
-  // end points just past the last character in either the buffer or the
-  // string. If the end of the string has been reached or the no more file
-  // data is available in the buffer, curr and end are equal.
-  const char* curr;
-  const char* end;
-
-  // Location information for the next token for the purposes of error
-  // reporting.
-  Loc loc;
-} TokenStream;
-
-bool OpenFdTokenStream(TokenStream* toks, int fd, const char* source);
-bool OpenFileTokenStream(TokenStream* toks, const char* filename);
-bool OpenStringTokenStream(TokenStream* toks, const char* source, const char* string);
-void CloseTokenStream(TokenStream* toks);
-bool IsEOFToken(TokenStream* toks);
-bool IsToken(TokenStream* toks, char which);
-bool GetToken(TokenStream* toks, char which);
-bool IsNameToken(TokenStream* toks);
-bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name);
-void UnexpectedToken(TokenStream* toks, const char* expected);
-
 // Parser
 Env* ParseProgram(FblcArena* arena, const char* filename);
 FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, int fd);
