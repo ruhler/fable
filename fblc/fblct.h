@@ -42,8 +42,7 @@ typedef struct {
 
 // VAR_EXPR: Variable expressions of the form: <name>
 typedef struct {
-  FblcExprTag tag;
-  FblcVarId var;
+  FblcVarExpr x;
   LocName name;
 } VarExpr;
 

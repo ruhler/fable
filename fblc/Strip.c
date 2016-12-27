@@ -11,11 +11,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
 {
   switch (texpr->tag) {
     case FBLC_VAR_EXPR: {
-      VarExpr* tvar = (VarExpr*)texpr;
-      FblcVarExpr* expr = arena->alloc(arena, sizeof(FblcVarExpr));
-      expr->tag = FBLC_VAR_EXPR;
-      expr->var = tvar->var;
-      return (FblcExpr*)expr;
+      return (FblcExpr*)texpr;
     }
 
     case FBLC_APP_EXPR: {

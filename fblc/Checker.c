@@ -367,7 +367,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
-      TypeDecl* type = ResolveVar(vars, &var_expr->name, &var_expr->var);
+      TypeDecl* type = ResolveVar(vars, &var_expr->name, &var_expr->x.var);
       if (type == NULL) {
         ReportError("Variable '%s' not in scope.\n",
             var_expr->name.loc, var_expr->name.name);

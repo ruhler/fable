@@ -82,11 +82,11 @@ int main(int argc, char* argv[])
 
   FblcArena* bulk_arena_2 = CreateBulkFreeArena(gc_arena);
   FblcProgram* program = StripProgram(bulk_arena_2, env);
-  FreeBulkFreeArena(bulk_arena);
 
   FblcWriteProgram(program, STDOUT_FILENO);
 
   FreeBulkFreeArena(bulk_arena_2);
+  FreeBulkFreeArena(bulk_arena);
   FreeGcArena(gc_arena);
   GcFinish();
   return 0;

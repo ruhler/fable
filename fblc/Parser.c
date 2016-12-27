@@ -750,10 +750,10 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else {
       // This is the variable expression: start
       VarExpr* var_expr = arena->alloc(arena, sizeof(VarExpr));
-      var_expr->tag = FBLC_VAR_EXPR;
+      var_expr->x.tag = FBLC_VAR_EXPR;
+      var_expr->x.var = UNRESOLVED_ID;
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
-      var_expr->var = UNRESOLVED_ID;
       expr = (Expr*)var_expr;
     }
   } else if (IsToken(toks, '?')) {
