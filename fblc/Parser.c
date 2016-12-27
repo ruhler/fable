@@ -757,7 +757,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
   return NewEnv(arena, declc, declv);
 }
 
-// ParseValue --
+// ParseValueFromToks --
 //   Parse an Fblc value from the token stream.
 //
 // Inputs:
@@ -771,7 +771,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 // Side effects:
 //   The token stream is advanced to the end of the value. In the case of an
 //   error, an error message is printed to standard error.
-FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks)
+static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks)
 {
   TypeDecl* type = (TypeDecl*)env->declv[typeid];
   LocName name;
@@ -807,7 +807,7 @@ FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream
       }
 
       if (!err) {
-        value->fields[i] = ParseValue(arena, env, type->fieldv[i].type.id, toks);
+        value->fields[i] = ParseValueFromToks(arena, env, type->fieldv[i].type.id, toks);
         err = err || value->fields[i] == NULL;
       }
     }
@@ -846,7 +846,7 @@ FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcValue* field = ParseValue(arena, env, type->fieldv[tag].type.id, toks);
+    FblcValue* field = ParseValueFromToks(arena, env, type->fieldv[tag].type.id, toks);
     if (field == NULL) {
       return NULL;
     }
@@ -855,6 +855,27 @@ FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream
     }
     return FblcNewUnion(arena, type->fieldc, tag, field);
   }
+}
+
+// ParseValue --
+//   Parse an fblc value from a file.
+//
+// Inputs:
+//   env - The program environment.
+//   typeid - The type id of value to parse.
+//   fd - A file descriptor of a file open for reading.
+//
+// Result:
+//   The parsed value, or NULL on error.
+//
+// Side effects:
+//   The value is read from the given file descriptor. In the case of an
+//   error, an error message is printed to standard error.
+FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, int fd)
+{
+  TokenStream toks;
+  OpenFdTokenStream(&toks, fd, "file descriptor");
+  return ParseValueFromToks(arena, env, typeid, &toks);
 }
 
 // ParseValueFromString --
@@ -874,5 +895,5 @@ FblcValue* ParseValueFromString(FblcArena* arena, Env* env, FblcTypeId typeid, c
 {
   TokenStream toks;
   OpenStringTokenStream(&toks, string, string);
-  return ParseValue(arena, env, typeid, &toks);
+  return ParseValueFromToks(arena, env, typeid, &toks);
 }

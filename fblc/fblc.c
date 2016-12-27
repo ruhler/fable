@@ -110,9 +110,7 @@ static FblcValue* GetIO(void* data, FblcValue* value)
   fds.revents = 0;
   poll(&fds, 1, 0);
   if (fds.revents & POLLIN) {
-    TokenStream toks;
-    OpenFdTokenStream(&toks, port_data->fd, "external port");
-    return ParseValue(port_data->arena, port_data->program, port_data->type, &toks);
+    return ParseValue(port_data->arena, port_data->program, port_data->type, port_data->fd);
   }
   return NULL;
 }
