@@ -27,6 +27,9 @@ typedef struct Ports {
   struct Ports* next;
 } Ports;
 
+static Loc* ExprLoc(Expr* expr);
+static Loc* ActnLoc(Actn* actn);
+
 static FblcTypeId LookupType(Env* env, Name name);
 static TypeDecl* ResolveType(Env* env, LocName* name);
 static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next);
@@ -44,6 +47,93 @@ static bool CheckPorts(Env* env, int portc, Port* portv);
 static bool CheckType(Env* env, TypeDecl* type);
 static bool CheckFunc(Env* env, FuncDecl* func);
 static bool CheckProc(Env* env, ProcDecl* proc);
+
+// ExprLoc --
+//   Return the location of an expression.
+static Loc* ExprLoc(Expr* expr)
+{
+  switch (expr->tag) {
+    case VAR_EXPR: {
+      VarExpr* var_expr = (VarExpr*)expr;
+      return var_expr->name.loc;
+    }
+
+    case APP_EXPR: {
+      AppExpr* app_expr = (AppExpr*)expr;
+      return app_expr->func.loc;
+    }
+
+    case ACCESS_EXPR: {
+      AccessExpr* access_expr = (AccessExpr*)expr;
+      return ExprLoc(access_expr->object);
+    }
+
+    case UNION_EXPR: {
+      UnionExpr* union_expr = (UnionExpr*)expr;
+      return union_expr->type.loc;
+    }
+
+    case LET_EXPR: {
+      LetExpr* let_expr = (LetExpr*)expr;
+      return let_expr->type.loc;
+    }
+
+    case COND_EXPR: {
+      CondExpr* cond_expr = (CondExpr*)expr;
+      return ExprLoc(cond_expr->select);
+    }
+
+    default:
+      assert(false && "Invalid expr tag.");
+      return NULL;
+  }
+}
+
+// ActnLoc --
+//   Return the location of an action.
+static Loc* ActnLoc(Actn* actn)
+{
+  switch (actn->tag) {
+    case EVAL_ACTN: {
+      EvalActn* eval_actn = (EvalActn*)actn;
+      return ExprLoc(eval_actn->expr);
+    }
+
+    case GET_ACTN: {
+      GetActn* get_actn = (GetActn*)actn;
+      return get_actn->port.loc;
+    }
+
+    case PUT_ACTN: {
+      PutActn* put_actn = (PutActn*)actn;
+      return put_actn->port.loc;
+    }
+
+    case CALL_ACTN: {
+      CallActn* call_actn = (CallActn*)actn;
+      return call_actn->proc.loc;
+    }
+
+    case LINK_ACTN: {
+      LinkActn* link_actn = (LinkActn*)actn;
+      return link_actn->type.loc;
+    }
+
+    case EXEC_ACTN: {
+      ExecActn* exec_actn = (ExecActn*)actn;
+      return exec_actn->execv[0].var.type.loc;
+    }
+
+    case COND_ACTN: {
+      CondActn* cond_actn = (CondActn*)actn;
+      return ExprLoc(cond_actn->select);
+    }
+
+    default:
+      assert(false && "Invalid actn tag.");
+      return NULL;
+  }
+}
 
 // LookupType --
 //   Look up the declaration id of the type with the given name in the given
@@ -246,7 +336,7 @@ static bool CheckArgs(
     }
     if (!NamesEqual(fieldv[i].type.name, arg_type->name.name)) {
       ReportError("Expected type %s, but found %s.\n",
-          argv[i]->loc, fieldv[i].type.name, arg_type->name.name);
+          ExprLoc(argv[i]), fieldv[i].type.name, arg_type->name.name);
       return false;
     }
   }
@@ -296,7 +386,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         }
       }
       if (decl == NULL) {
-        ReportError("Declaration for '%s' not found.\n", app_expr->loc, app_expr->func.name);
+        ReportError("Declaration for '%s' not found.\n", app_expr->func.loc, app_expr->func.name);
         return NULL;
       }
 
@@ -366,7 +456,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
       if (type->tag != UNION_DECL) {
         ReportError("Type %s is not a union type.\n",
-            union_expr->loc, union_expr->type.name);
+            union_expr->type.loc, union_expr->type.name);
         return NULL;
       }
 
@@ -379,7 +469,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         if (NamesEqual(type->fieldv[i].name.name, union_expr->field.name)) {
           if (!NamesEqual(type->fieldv[i].type.name, arg_type->name.name)) {
             ReportError("Expected type '%s', but found type '%s'.\n",
-                union_expr->body->loc,
+                ExprLoc(union_expr->body),
                 type->fieldv[i].type.name, arg_type);
             return NULL;
           }
@@ -415,7 +505,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
       if (declared_type != actual_type) {
         ReportError("Expected type %s, but found expression of type %s.\n",
-            let_expr->def->loc, let_expr->type.name, actual_type->name.name);
+            ExprLoc(let_expr->def), let_expr->type.name, actual_type->name.name);
         return NULL;
       }
 
@@ -433,13 +523,13 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
       if (type->tag != UNION_DECL) {
         ReportError("The condition has type %s, "
-            "which is not a union type.\n", cond_expr->loc, type->name.name);
+            "which is not a union type.\n", ExprLoc(expr), type->name.name);
         return NULL;
       }
 
       if (type->fieldc != cond_expr->argc) {
         ReportError("Wrong number of arguments to condition. Expected %d, "
-            "but found %d.\n", cond_expr->loc, type->fieldc, cond_expr->argc);
+            "but found %d.\n", ExprLoc(expr), type->fieldc, cond_expr->argc);
         return NULL;
       }
 
@@ -453,7 +543,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         if (result_type != NULL && result_type != arg_type) {
           ReportError("Expected expression of type %s, "
               "but found expression of type %s.\n",
-              cond_expr->argv[i]->loc, result_type->name.name, arg_type->name.name);
+              ExprLoc(cond_expr->argv[i]), result_type->name.name, arg_type->name.name);
           return NULL;
         }
         result_type = arg_type;
@@ -501,7 +591,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       GetActn* get_actn = (GetActn*)actn;
       TypeDecl* type = ResolvePort(ports, &get_actn->port, POLARITY_GET, &get_actn->port_id);
       if (type == NULL) {
-        ReportError("'%s' is not a valid get port.\n", get_actn->loc,
+        ReportError("'%s' is not a valid get port.\n", get_actn->port.loc,
             get_actn->port.name);
         return NULL;
       }
@@ -512,7 +602,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       PutActn* put_actn = (PutActn*)actn;
       TypeDecl* port_type = ResolvePort(ports, &put_actn->port, POLARITY_PUT, &put_actn->port_id);
       if (port_type == NULL) {
-        ReportError("'%s' is not a valid put port.\n", put_actn->loc,
+        ReportError("'%s' is not a valid put port.\n", put_actn->port.loc,
             put_actn->port.name);
         return NULL;
       }
@@ -523,7 +613,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       }
       if (port_type != arg_type) {
         ReportError("Expected type %s, but found %s.\n",
-            put_actn->expr->loc, port_type->name.name, arg_type->name.name);
+            ExprLoc(put_actn->expr), port_type->name.name, arg_type->name.name);
         return NULL;
       }
       return arg_type;
@@ -540,14 +630,13 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         }
       }
       if (proc == NULL) {
-        ReportError("'%s' is not a proc.\n",
-            call_actn->loc, call_actn->proc.name);
+        ReportError("'%s' is not a proc.\n", call_actn->proc.loc, call_actn->proc.name);
         return NULL;
       }
 
       if (call_actn->portc  != proc->portc) {
         ReportError("Wrong number of port arguments to %s. Expected %d, "
-            "but got %d.\n", call_actn->loc, call_actn->proc.name,
+            "but got %d.\n", call_actn->proc.loc, call_actn->proc.name,
             proc->portc, call_actn->portc);
         return NULL;
       }
@@ -615,7 +704,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         TypeDecl* actual_type = ResolveType(env, &exec->var.type);
         if (actual_type != type) {
           ReportError("Expected type %s, but found %s.\n",
-              exec->actn->loc, exec->var.type.name, type->name.name);
+              exec->var.type.loc, exec->var.type.name, type->name.name);
           return NULL;
         }
 
@@ -633,13 +722,13 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
       if (type->tag != UNION_DECL) {
         ReportError("The condition has type %s, "
-            "which is not a union type.\n", cond_actn->loc, type->name.name);
+            "which is not a union type.\n", ActnLoc(actn), type->name.name);
         return NULL;
       }
 
       if (type->fieldc != cond_actn->argc) {
         ReportError("Wrong number of arguments to condition. Expected %d, "
-            "but found %d.\n", cond_actn->loc, type->fieldc, cond_actn->argc);
+            "but found %d.\n", ActnLoc(actn), type->fieldc, cond_actn->argc);
         return NULL;
       }
 
@@ -655,7 +744,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         if (result_type != NULL && result_type != arg_type) {
           ReportError("Expected process of type %s, "
               "but found process of type %s.\n",
-              cond_actn->args[i]->loc, result_type->name.name, arg_type->name.name);
+              ActnLoc(cond_actn->args[i]), result_type->name.name, arg_type->name.name);
           return NULL;
         }
         result_type = arg_type;
@@ -830,7 +919,7 @@ static bool CheckFunc(Env* env, FuncDecl* func)
   }
   if (return_type != body_type) {
     ReportError("Type mismatch. Expected %s, but found %s.\n",
-        func->body->loc, func->return_type.name, body_type);
+        ExprLoc(func->body), func->return_type.name, body_type);
     return false;
   }
   return true;
@@ -908,7 +997,7 @@ static bool CheckProc(Env* env, ProcDecl* proc)
   }
   if (return_type != body_type) {
     ReportError("Type mismatch. Expected %s, but found %s.\n",
-        proc->body->loc, proc->return_type.name, body_type->name.name);
+        ActnLoc(proc->body), proc->return_type.name, body_type->name.name);
     return false;
   }
   return true;

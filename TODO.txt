@@ -1,5 +1,10 @@
 * Switch to library-based sharing rather than file based sharing.
  - morph fblct.h to match fblc.h expr and actn definitions.
+  -- Add a Loc function to determine the location of an expression, rather
+     than a loc field. This allows us not to have the location right after the
+     tag.
+  -- Reorder and rename fields of fblct types to match fblc types.
+  -- Replace fields of fblct types with fblc types.
   -- Remove Strip.c. A type cast should be sufficient.
  - Remove expect_result_b tests.
  - Implement fblc-test

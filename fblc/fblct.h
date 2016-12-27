@@ -47,13 +47,11 @@ typedef enum {
 
 typedef struct {
   ExprTag tag;
-  Loc* loc;
 } Expr;
 
 // VAR_EXPR: Variable expressions of the form: <name>
 typedef struct {
   ExprTag tag;
-  Loc* loc;
   LocName name;
   FblcVarId var_id;
 } VarExpr;
@@ -61,7 +59,6 @@ typedef struct {
 // APP_EXPR: Application expressions of the form: <func>(<argv>)
 typedef struct {
   ExprTag tag;
-  Loc* loc;
   LocName func;
   int argc;
   Expr** argv;
@@ -71,7 +68,6 @@ typedef struct {
 // ACCESS_EXPR: Member access expressions of the form: <object>.<field>
 typedef struct {
   ExprTag tag;
-  Loc* loc;
   Expr* object;
   LocName field;
   FblcFieldId field_id;
@@ -80,7 +76,6 @@ typedef struct {
 // UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
 typedef struct {
   ExprTag tag;
-  Loc* loc;
   LocName type;
   LocName field;
   Expr* body;
@@ -91,7 +86,6 @@ typedef struct {
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
   ExprTag tag;
-  Loc* loc;
   LocName type;
   LocName name;
   Expr* def;
@@ -101,7 +95,6 @@ typedef struct {
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
 typedef struct {
   ExprTag tag;
-  Loc* loc;
   Expr* select;
   int argc;
   Expr** argv;
@@ -164,20 +157,17 @@ typedef enum {
 
 typedef struct {
   ActnTag tag;
-  Loc* loc;
 } Actn;
 
 // EVAL_ACTN: Processes of the form: $(<expr>)
 typedef struct {
   ActnTag tag;
-  Loc* loc;
   Expr* expr;
 } EvalActn;
 
 // GET_ACTN: Processes of the form: <pname>~()
 typedef struct {
   ActnTag tag;
-  Loc* loc;
   LocName port;
   FblcPortId port_id;
 } GetActn;
@@ -185,7 +175,6 @@ typedef struct {
 // PUT_ACTN: Processes of the form: <pname>~(<expr>)
 typedef struct {
   ActnTag tag;
-  Loc* loc;
   LocName port;
   Expr* expr;
   FblcPortId port_id;
@@ -194,7 +183,6 @@ typedef struct {
 // CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
 typedef struct {
   ActnTag tag;
-  Loc* loc;
   LocName proc;
   int portc;
   LocName* ports;   // Array of portc ports
@@ -208,7 +196,6 @@ typedef struct {
 //    <tname> '<~>' <pname> ',' <pname> ';' <actn>
 typedef struct {
   ActnTag tag;
-  Loc* loc;
   LocName type;
   LocName getname;
   LocName putname;
@@ -225,7 +212,6 @@ typedef struct {
 //    <tname> <vname> = <actn>,  ...  ; <body>
 typedef struct {
   ActnTag tag;
-  Loc* loc;
   int execc;
   Exec* execv;          // Array of execc execs.
   Actn* body;
@@ -234,7 +220,6 @@ typedef struct {
 // COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
 typedef struct {
   ActnTag tag;
-  Loc* loc;
   Expr* select;
   int argc;
   Actn** args;    //  Array of argc args.

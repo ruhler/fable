@@ -694,7 +694,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       }
       AppExpr* app_expr = arena->alloc(arena, sizeof(AppExpr));
       app_expr->tag = APP_EXPR;
-      app_expr->loc = start.loc;
       app_expr->func.name = start.name;
       app_expr->func.loc = start.loc;
       app_expr->argc = argc;
@@ -706,7 +705,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       GetToken(toks, ':');
       UnionExpr* union_expr = arena->alloc(arena, sizeof(UnionExpr));
       union_expr->tag = UNION_EXPR;
-      union_expr->loc = start.loc;
       union_expr->type.name = start.name;
       union_expr->type.loc = start.loc;
       union_expr->type_id = UNRESOLVED_ID;
@@ -729,7 +727,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       LetExpr* let_expr = arena->alloc(arena, sizeof(LetExpr));
       let_expr->tag = LET_EXPR;
-      let_expr->loc = start.loc;
       let_expr->type.name = start.name;
       let_expr->type.loc = start.loc;
       GetNameToken(arena, toks, "variable name", &(let_expr->name));
@@ -754,7 +751,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       // This is the variable expression: start
       VarExpr* var_expr = arena->alloc(arena, sizeof(VarExpr));
       var_expr->tag = VAR_EXPR;
-      var_expr->loc = start.loc;
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
       var_expr->var_id = UNRESOLVED_ID;
@@ -782,7 +778,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
     CondExpr* cond_expr = arena->alloc(arena, sizeof(CondExpr));
     cond_expr->tag = COND_EXPR;
-    cond_expr->loc = condition->loc;
     cond_expr->select = condition;
     cond_expr->argc = argc;
     cond_expr->argv = args;
@@ -798,7 +793,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     // This is an access expression of the form: <expr>.<field>
     AccessExpr* access_expr = arena->alloc(arena, sizeof(AccessExpr));
     access_expr->tag = ACCESS_EXPR;
-    access_expr->loc = expr->loc;
     access_expr->object = expr;
     access_expr->field_id = UNRESOLVED_ID;
     if (!GetNameToken(arena, toks, "field name", &(access_expr->field))) {
@@ -860,7 +854,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
 
     EvalActn* eval_actn = arena->alloc(arena, sizeof(EvalActn));
     eval_actn->tag = EVAL_ACTN;
-    eval_actn->loc = expr->loc;
     eval_actn->expr = expr;
     actn = (Actn*)eval_actn;
   } else if (IsNameToken(toks)) {
@@ -877,7 +870,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
         GetToken(toks, ')');
         GetActn* get_actn = arena->alloc(arena, sizeof(GetActn));
         get_actn->tag = GET_ACTN;
-        get_actn->loc = name.loc;
         get_actn->port.loc = name.loc;
         get_actn->port.name = name.name;
         get_actn->port_id = UNRESOLVED_ID;
@@ -893,7 +885,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
 
         PutActn* put_actn = arena->alloc(arena, sizeof(PutActn));
         put_actn->tag = PUT_ACTN;
-        put_actn->loc = name.loc;
         put_actn->port.loc = name.loc;
         put_actn->port.name = name.name;
         put_actn->expr = expr;
@@ -904,7 +895,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       GetToken(toks, '(');
       CallActn* call_actn = arena->alloc(arena, sizeof(CallActn));
       call_actn->tag = CALL_ACTN;
-      call_actn->loc = name.loc;
       call_actn->proc.loc = name.loc;
       call_actn->proc.name = name.name;
       call_actn->proc_id = UNRESOLVED_ID;
@@ -969,7 +959,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       }
       LinkActn* link_actn = arena->alloc(arena, sizeof(LinkActn));
       link_actn->tag = LINK_ACTN;
-      link_actn->loc = name.loc;
       link_actn->type = name;
       link_actn->getname = getname;
       link_actn->putname = putname;
@@ -979,7 +968,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else if (in_stmt && IsNameToken(toks)) {
       ExecActn* exec_actn = arena->alloc(arena, sizeof(ExecActn));
       exec_actn->tag = EXEC_ACTN;
-      exec_actn->loc = name.loc;
 
       FblcVectorInit(arena, exec_actn->execv, exec_actn->execc);
       bool first = true;
@@ -1042,7 +1030,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
 
     CondActn* cond_actn = arena->alloc(arena, sizeof(CondActn));
     cond_actn->tag = COND_ACTN;
-    cond_actn->loc = condition->loc;
     cond_actn->select = condition;
 
     FblcVectorInit(arena, cond_actn->args, cond_actn->argc);
