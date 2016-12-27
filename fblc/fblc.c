@@ -255,9 +255,7 @@ int main(int argc, char* argv[])
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    TokenStream toks;
-    OpenStringTokenStream(&toks, argv[i], argv[i]);
-    args[i] = ParseValue(gc_arena, env, proc->argv[i], &toks);
+    args[i] = ParseValueFromString(gc_arena, env, proc->argv[i], argv[i]);
   }
 
   FblcIOPort ports[proc->portc];

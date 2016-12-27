@@ -856,3 +856,23 @@ FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream
     return FblcNewUnion(arena, type->fieldc, tag, field);
   }
 }
+
+// ParseValueFromString --
+//   Parse an fblc value from a string.
+//
+// Inputs:
+//   env - The program environment.
+//   typeid - The type id of value to parse.
+//   string - The string to parse the value from.
+//
+// Result:
+//   The parsed value, or NULL on error.
+//
+// Side effects:
+//   In the case of an error, an error message is printed to standard error.
+FblcValue* ParseValueFromString(FblcArena* arena, Env* env, FblcTypeId typeid, const char* string)
+{
+  TokenStream toks;
+  OpenStringTokenStream(&toks, string, string);
+  return ParseValue(arena, env, typeid, &toks);
+}
