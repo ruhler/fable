@@ -36,7 +36,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
       expr->tag = FBLC_UNION_EXPR;
       expr->type = tunion->type_id;
       expr->field = tunion->field_id;
-      expr->body = StripExpr(arena, tunion->value);
+      expr->body = StripExpr(arena, tunion->body);
       return (FblcExpr*)expr;
     }
 

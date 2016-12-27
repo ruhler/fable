@@ -370,7 +370,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      TypeDecl* arg_type = CheckExpr(env, vars, union_expr->value);
+      TypeDecl* arg_type = CheckExpr(env, vars, union_expr->body);
       if (arg_type == NULL) {
         return NULL;
       }
@@ -379,7 +379,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         if (NamesEqual(type->fieldv[i].name.name, union_expr->field.name)) {
           if (!NamesEqual(type->fieldv[i].type.name, arg_type->name.name)) {
             ReportError("Expected type '%s', but found type '%s'.\n",
-                union_expr->value->loc,
+                union_expr->body->loc,
                 type->fieldv[i].type.name, arg_type);
             return NULL;
           }

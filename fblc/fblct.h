@@ -83,7 +83,7 @@ typedef struct {
   Loc* loc;
   LocName type;
   LocName field;
-  Expr* value;
+  Expr* body;
   FblcTypeId type_id;
   FblcFieldId field_id;
 } UnionExpr;

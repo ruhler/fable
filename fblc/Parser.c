@@ -717,8 +717,8 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (!GetToken(toks, '(')) {
         return NULL;
       }
-      union_expr->value = ParseExpr(arena, toks, false);
-      if (union_expr->value == NULL) {
+      union_expr->body = ParseExpr(arena, toks, false);
+      if (union_expr->body == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ')')) {
