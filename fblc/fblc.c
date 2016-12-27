@@ -177,17 +177,10 @@ int main(int argc, char* argv[])
   argv += 3;
   argc -= 3;
 
-  TokenStream toks;
-  if (!OpenFileTokenStream(&toks, filename)) {
-    fprintf(stderr, "failed to open input FILE %s.\n", filename);
-    return 1;
-  }
-
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  Env* env = ParseProgram(bulk_arena, &toks);
-  CloseTokenStream(&toks);
+  Env* env = ParseProgram(bulk_arena, filename);
   if (env == NULL) {
     fprintf(stderr, "failed to parse input FILE.\n");
     FreeBulkFreeArena(bulk_arena);
@@ -262,6 +255,7 @@ int main(int argc, char* argv[])
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
+    TokenStream toks;
     OpenStringTokenStream(&toks, argv[i], argv[i]);
     args[i] = ParseValue(gc_arena, env, proc->argv[i], &toks);
   }

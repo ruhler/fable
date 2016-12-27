@@ -285,7 +285,7 @@ bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, Loc
 void UnexpectedToken(TokenStream* toks, const char* expected);
 
 // Parser
-Env* ParseProgram(FblcArena* arena, TokenStream* toks);
+Env* ParseProgram(FblcArena* arena, const char* filename);
 FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks);
 
 // Checker

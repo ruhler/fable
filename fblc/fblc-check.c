@@ -83,12 +83,6 @@ int main(int argc, char* argv[])
 
   const char* filename = argv[0];
 
-  TokenStream toks;
-  if (!OpenFileTokenStream(&toks, filename)) {
-    fprintf(stderr, "failed to open input FILE %s.\n", filename);
-    return EX_USAGE;
-  }
-
   stderr = expect_error ? stdout : stderr;
   int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
   int exit_fail = expect_error ? EX_SUCCESS : EX_FAIL;
@@ -96,8 +90,7 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  Env* env = ParseProgram(bulk_arena, &toks);
-  CloseTokenStream(&toks);
+  Env* env = ParseProgram(bulk_arena, filename);
   bool error = env == NULL || !CheckProgram(env);
   FreeBulkFreeArena(bulk_arena);
   FreeGcArena(gc_arena);

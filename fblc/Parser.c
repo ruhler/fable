@@ -613,11 +613,11 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks,
 
 // ParseProgram --
 //
-//   Parse an  program from the token stream.
+//   Parse an fblc program from a file.
 //
 // Inputs:
 //   arena - The arena to use for allocations.
-//   toks - The token stream to parse the program from.
+//   filename - The name of the file to parse the program from.
 //
 // Result:
 //   The parsed program environment, or NULL on error.
@@ -625,30 +625,35 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks,
 //   UNRESOLVED_ID in the returned result.
 //
 // Side effects:
-//   A program environment is allocated. The token stream is advanced to the
-//   end of the stream. In the case of an error, an error message is printed
-//   to standard error; the caller is still responsible for freeing (unused)
-//   allocations made with the allocator in this case.
+//   A program environment is allocated. In the case of an error, an error
+//   message is printed to standard error; the caller is still responsible for
+//   freeing (unused) allocations made with the allocator in this case.
 
-Env* ParseProgram(FblcArena* arena, TokenStream* toks)
+Env* ParseProgram(FblcArena* arena, const char* filename)
 {
+  TokenStream toks;
+  if (!OpenFileTokenStream(&toks, filename)) {
+    fprintf(stderr, "failed to open %s.\n", filename);
+    return NULL;
+  }
+
   const char* keywords = "'struct', 'union', 'func', or 'proc'";
   Decl** declv;
   int declc;
   FblcVectorInit(arena, declv, declc);
-  while (!IsEOFToken(toks)) {
+  while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...
     LocName keyword;
-    if (!GetNameToken(arena, toks, keywords, &keyword)) {
+    if (!GetNameToken(arena, &toks, keywords, &keyword)) {
       return NULL;
     }
 
     LocName name;
-    if (!GetNameToken(arena, toks, "declaration name", &name)) {
+    if (!GetNameToken(arena, &toks, "declaration name", &name)) {
       return NULL;
     }
 
-    if (!GetToken(toks, '(')) {
+    if (!GetToken(&toks, '(')) {
       return NULL;
     }
 
@@ -664,12 +669,12 @@ Env* ParseProgram(FblcArena* arena, TokenStream* toks)
       type->name.name = name.name;
       type->name.loc = name.loc;
       type->name.id = UNRESOLVED_ID;
-      type->fieldc = ParseFields(arena, toks, &(type->fieldv));
+      type->fieldc = ParseFields(arena, &toks, &(type->fieldv));
       if (type->fieldc < 0) {
         return NULL;
       }
 
-      if (!GetToken(toks, ')')) {
+      if (!GetToken(&toks, ')')) {
         return NULL;
       }
       FblcVectorAppend(arena, declv, declc, (Decl*)type);
@@ -680,24 +685,24 @@ Env* ParseProgram(FblcArena* arena, TokenStream* toks)
       func->name.name = name.name;
       func->name.loc = name.loc;
       func->name.id = UNRESOLVED_ID;
-      func->argc = ParseFields(arena, toks, &(func->argv));
+      func->argc = ParseFields(arena, &toks, &(func->argv));
       if (func->argc < 0) {
         return NULL;
       }
 
-      if (!GetToken(toks, ';')) {
+      if (!GetToken(&toks, ';')) {
         return NULL;
       }
 
-      if (!GetNameToken(arena, toks, "type", &(func->return_type))) {
+      if (!GetNameToken(arena, &toks, "type", &(func->return_type))) {
         return NULL;
       }
 
-      if (!GetToken(toks, ')')) {
+      if (!GetToken(&toks, ')')) {
         return NULL;
       }
 
-      func->body = ParseExpr(arena, toks, false);
+      func->body = ParseExpr(arena, &toks, false);
       if (func->body == NULL) {
         return NULL;
       }
@@ -709,33 +714,33 @@ Env* ParseProgram(FblcArena* arena, TokenStream* toks)
       proc->name.name = name.name;
       proc->name.loc = name.loc;
       proc->name.id = UNRESOLVED_ID;
-      proc->portc = ParsePorts(arena, toks, &(proc->portv));
+      proc->portc = ParsePorts(arena, &toks, &(proc->portv));
       if (proc->portc < 0) {
         return NULL;
       }
 
-      if (!GetToken(toks, ';')) {
+      if (!GetToken(&toks, ';')) {
         return NULL;
       }
 
-      proc->argc = ParseFields(arena, toks, &(proc->argv));
+      proc->argc = ParseFields(arena, &toks, &(proc->argv));
       if (proc->argc < 0) {
         return NULL;
       }
 
-      if (!GetToken(toks, ';')) {
+      if (!GetToken(&toks, ';')) {
         return NULL;
       }
 
-      if (!GetNameToken(arena, toks, "type", &(proc->return_type))) {
+      if (!GetNameToken(arena, &toks, "type", &(proc->return_type))) {
         return NULL;
       }
 
-      if (!GetToken(toks, ')')) {
+      if (!GetToken(&toks, ')')) {
         return NULL;
       }
 
-      proc->body = ParseActn(arena, toks, false);
+      proc->body = ParseActn(arena, &toks, false);
       if (proc->body == NULL) {
         return NULL;
       }
@@ -745,7 +750,7 @@ Env* ParseProgram(FblcArena* arena, TokenStream* toks)
       return NULL;
     }
 
-    if (!GetToken(toks, ';')) {
+    if (!GetToken(&toks, ';')) {
       return NULL;
     }
   }
