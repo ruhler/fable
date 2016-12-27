@@ -741,8 +741,7 @@ Env* ParseProgram(FblcArena* arena, TokenStream* toks)
       }
       FblcVectorAppend(arena, declv, declc, (Decl*)proc);
     } else {
-      ReportError("Expected %s, but got '%s'.\n",
-          keyword.loc, keywords, keyword.name);
+      ReportError("Expected %s, but got '%s'.\n", keyword.loc, keywords, keyword.name);
       return NULL;
     }
 
@@ -751,4 +750,104 @@ Env* ParseProgram(FblcArena* arena, TokenStream* toks)
     }
   }
   return NewEnv(arena, declc, declv);
+}
+
+// ParseValue --
+//   Parse an Fblc value from the token stream.
+//
+// Inputs:
+//   env - The program environment.
+//   type - The type of value to parse.
+//   toks - The token stream to parse the program from.
+//
+// Result:
+//   The parsed value, or NULL on error.
+//
+// Side effects:
+//   The token stream is advanced to the end of the value. In the case of an
+//   error, an error message is printed to standard error.
+FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks)
+{
+  TypeDecl* type = (TypeDecl*)env->declv[typeid];
+  LocName name;
+  if (!GetNameToken(arena, toks, "type name", &name)) {
+    return NULL;
+  }
+
+  if (!NamesEqual(name.name, type->name.name)) {
+    ReportError("Expected %s, but got %s.\n", name.loc, type->name, name);
+    arena->free(arena, (void*)name.name);
+    arena->free(arena, (void*)name.loc);
+    return NULL;
+  }
+  arena->free(arena, (void*)name.name);
+  arena->free(arena, (void*)name.loc);
+
+  if (type->tag == STRUCT_DECL) {
+    if (!GetToken(toks, '(')) {
+      return NULL;
+    }
+
+    // If there is an error constructing the struct value, we need to release
+    // the resources allocated for it. FblcRelease requires we don't leave any
+    // of the fields of the struct value uninitialized. For that reason,
+    // assign something to all fields regardless of error, keeping track of
+    // whether we encountered an error as we go.
+    FblcValue* value = FblcNewStruct(arena, type->fieldc);
+    bool err = false;
+    for (int i = 0; i < type->fieldc; i++) {
+      value->fields[i] = NULL;
+      if (!err && i > 0 && !GetToken(toks, ',')) {
+        err = true;
+      }
+
+      if (!err) {
+        value->fields[i] = ParseValue(arena, env, type->fieldv[i].type.id, toks);
+        err = err || value->fields[i] == NULL;
+      }
+    }
+
+    if (err || !GetToken(toks, ')')) {
+      FblcRelease(arena, value);
+      return NULL;
+    }
+    return value;
+  } else {
+    assert(type->tag == UNION_DECL);
+    if (!GetToken(toks, ':')) {
+      return NULL;
+    }
+
+    if (!GetNameToken(arena, toks, "field name", &name)) {
+      return NULL;
+    }
+
+    int tag = -1;
+    for (size_t i = 0; i < type->fieldc; ++i) {
+      if (NamesEqual(type->fieldv[i].name.name, name.name)) {
+        tag = i;
+        break;
+      }
+    }
+    if (tag < 0) {
+      ReportError("Invalid field %s for type %s.\n", name.loc, name.name, type->name);
+      arena->free(arena, (void*)name.name);
+      arena->free(arena, (void*)name.loc);
+      return NULL;
+    }
+    arena->free(arena, (void*)name.name);
+    arena->free(arena, (void*)name.loc);
+
+    if (!GetToken(toks, '(')) {
+      return NULL;
+    }
+    FblcValue* field = ParseValue(arena, env, type->fieldv[tag].type.id, toks);
+    if (field == NULL) {
+      return NULL;
+    }
+    if (!GetToken(toks, ')')) {
+      return NULL;
+    }
+    return FblcNewUnion(arena, type->fieldc, tag, field);
+  }
 }

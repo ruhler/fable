@@ -1182,10 +1182,12 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
         Thread* waiting = GetThread(&(links[i]->waiting));
         if (waiting != NULL) {
           FblcValue* got = ioports[i].io(ioports[i].data, NULL);
-          if (got != NULL) {
+          if (got == NULL) {
+            AddThread(&(links[i]->waiting), waiting);
+          } else {
             PutValue(arena, links[i], got);
             AddThread(&threads, waiting);
-          }
+          } 
         }
       } else {
         assert(proc->portv[i].polarity == FBLC_PUT_POLARITY);

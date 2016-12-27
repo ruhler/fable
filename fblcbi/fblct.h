@@ -286,6 +286,7 @@ void UnexpectedToken(TokenStream* toks, const char* expected);
 
 // Parser
 Env* ParseProgram(FblcArena* arena, TokenStream* toks);
+FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks);
 
 // Checker
 bool CheckProgram(Env* env);

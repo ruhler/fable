@@ -3,28 +3,20 @@ exec rm -rf out
 exec mkdir -p out/test out/fblc out/fblcbi out/prgms 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
-# Compile fblc-check, fblcbe, fblcbi
+# Compile fblc, fblc-check, fblcbe, fblcbi
 set objs [list]
 foreach {x} [glob fblcbi/*.c] {
   set obj out/fblcbi/[string map {.c .o} [file tail $x]]
-  if {-1 == [lsearch [list fblcbi/fblcbe.c fblcbi/fblcbi.c fblcbi/fblc-check.c] $x]} {
+  if {-1 == [lsearch [list fblcbi/fblc.c fblcbi/fblcbe.c fblcbi/fblcbi.c fblcbi/fblc-check.c] $x]} {
     lappend objs $obj
   }
   puts "cc $x"
   exec gcc {*}$FLAGS -c -o $obj $x
 }
-foreach {x} [list fblcbe fblcbi fblc-check] {
+foreach {x} [list fblc fblcbe fblcbi fblc-check] {
   puts "ld -o out/$x"
   exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblcbi/$x.o {*}$objs
 }
-
-# Compile fblc
-foreach {x} [lsort [glob fblc/*.c]] {
-  puts "cc $x"
-  exec gcc {*}$FLAGS -c -o out/fblc/[string map {.c .o} [file tail $x]] $x
-}
-puts "ld -o out/fblc"
-exec gcc {*}$FLAGS -o out/prgms/fblc -lgc {*}[glob out/fblc/*.o]
 
 # Compile pgrms
 set FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -ggdb]
@@ -41,9 +33,7 @@ set ::fblcbe ./out/prgms/fblcbe
 set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
-  exec mkdir -p out/$name/fblc out/$name/fblcbi
-  exec gcov {*}[glob out/fblc/*.o] > out/$name/fblc.gcov
-  exec mv {*}[glob *.gcov] out/$name/fblc
+  exec mkdir -p out/$name/fblcbi
   exec gcov {*}[glob out/fblcbi/*.o] > out/$name/fblcbi.gcov
   exec mv {*}[glob *.gcov] out/$name/fblcbi
 }
@@ -184,13 +174,13 @@ proc expect_status {status args} {
 
 # Test fblc.
 puts "test $::fblc"
-expect_status 64 $::fblc
+expect_status 1 $::fblc
 
 puts "test $::fblc --help"
 expect_status 0 $::fblc --help
 
 puts "test $::fblc no_such_file"
-expect_status 66 $::fblc no_such_file main
+expect_status 1 $::fblc no_such_file main
 
 puts "test prgms/clock.fblc"
 exec $::fblc prgms/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
@@ -224,9 +214,6 @@ check_coverage overall
 
 # Report summary results
 puts "Skipped Tests: $::skipped"
-puts "fblc Coverage: "
-puts "  Spec    : [exec tail -n 1 out/spectest/fblc.gcov]"
-puts "  Overall : [exec tail -n 1 out/overall/fblc.gcov]"
 puts "fblcbi Coverage: "
 puts "  Spec    : [exec tail -n 1 out/spectest/fblcbi.gcov]"
 puts "  Overall : [exec tail -n 1 out/overall/fblcbi.gcov]"
