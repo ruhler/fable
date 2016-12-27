@@ -10,7 +10,6 @@ set prg {
     A(v, Donut());
   };
 
-  /// Expect: B(Unit(),A(Unit(),Donut()),Unit())
   func main( ; B) {
     Unit v = Unit();
     B(v, foo(v), v);

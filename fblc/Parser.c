@@ -19,17 +19,23 @@
 //   The conventional variable name for a TokenStream* is 'toks'.
 typedef struct {
   // When reading from a file, fd is the file descriptor for the underlying
-  // file and buffer contains the most recently read data from the file. When
-  // reading from a string, fd is -1 and buffer is unused.
+  // file, string is NULL. When reading from a string, string contains the
+  // characters of interest and fd is -1.
   int fd;
-  char buffer[BUFSIZ];
+  const char* string;
 
-  // curr points to the current character in the stream, if any.
-  // end points just past the last character in either the buffer or the
-  // string. If the end of the string has been reached or the no more file
-  // data is available in the buffer, curr and end are equal.
-  const char* curr;
-  const char* end;
+  // curr is the character currently at the front of the stream. It is valid
+  // only if has_curr is true, in which case the current character has already
+  // been read from the file or string.
+  bool has_curr;
+  int curr;
+
+  // next is the character after the character currently at the front of the
+  // stream. It is valid only if has_next is true, in which case the next
+  // character has already been read from the file or string.
+  // has_next implies has_curr.
+  bool has_next;
+  int next;
 
   // Location information for the next token for the purposes of error
   // reporting.
@@ -74,18 +80,26 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt);
 //   Reads data from the underlying file if necessary.
 static int CurrChar(TokenStream* toks)
 {
-  if (toks->curr == toks->end) {
-    if (toks->fd < 0) {
-      return EOF;
+  if (!toks->has_curr) {
+    assert(!toks->has_next);
+    if (toks->fd != -1) {
+      char c;
+      if (read(toks->fd, &c, 1) == 1) {
+        toks->curr = c;
+      } else {
+        toks->curr = EOF;
+      }
+    } else {
+      assert(toks->string != NULL);
+      if (*toks->string == '\0') {
+        toks->curr = EOF;
+      } else {
+        toks->curr = *toks->string++;
+      }
     }
-    ssize_t red = read(toks->fd, toks->buffer, BUFSIZ);
-    if (red <= 0) {
-      return EOF;
-    }
-    toks->curr = toks->buffer;
-    toks->end = toks->curr + red;
+    toks->has_curr = true;
   }
-  return *toks->curr;
+  return toks->curr;
 }
 
 // NextChar --
@@ -102,24 +116,29 @@ static int CurrChar(TokenStream* toks)
 //   Reads data from the underlying file if necessary.
 static int NextChar(TokenStream* toks)
 {
-  int c = CurrChar(toks);
-  if (c == EOF) {
-    return EOF;
-  }
-  if (toks->curr + 1 == toks->end) {
-    if (toks->fd < 0) {
+  if (!toks->has_next) {
+    if (CurrChar(toks) == EOF) {
       return EOF;
     }
-
-    toks->buffer[0] = c;
-    ssize_t red = read(toks->fd, toks->buffer + 1, BUFSIZ - 1);
-    if (red <= 0) {
-      return EOF;
+    assert(toks->has_curr);
+    if (toks->fd != -1) {
+      char c;
+      if (read(toks->fd, &c, 1) == 1) {
+        toks->next = c;
+      } else {
+        toks->next = EOF;
+      }
+    } else {
+      assert(toks->string != NULL);
+      if (*toks->string == '\0') {
+        toks->next = EOF;
+      } else {
+        toks->next = *toks->string++;
+      }
     }
-    toks->curr = toks->buffer;
-    toks->end = toks->curr + 1 + red;
+    toks->has_next = true;
   }
-  return *(toks->curr + 1);
+  return toks->next;
 }
 
 // AdvanceChar --
@@ -138,12 +157,19 @@ static void AdvanceChar(TokenStream* toks)
 {
   int c = CurrChar(toks);
   if (c != EOF) {
-    toks->curr++;
     if (c == '\n') {
       toks->loc.line++;
       toks->loc.col = 1;
     } else {
       toks->loc.col++;
+    }
+
+    if (toks->has_next) {
+      assert(toks->has_curr);
+      toks->curr = toks->next;
+      toks->has_next = false;
+    } else {
+      toks->has_curr = false;
     }
   }
 }
@@ -250,8 +276,9 @@ static bool OpenFdTokenStream(TokenStream* toks, int fd, const char* source)
   if (toks->fd < 0) {
     return false;
   }
-  toks->curr = toks->buffer;
-  toks->end = toks->buffer;
+  toks->string = NULL;
+  toks->has_curr = false;
+  toks->has_next = false;
   toks->loc.source = source;
   toks->loc.line = 1;
   toks->loc.col = 1;
@@ -293,11 +320,9 @@ static bool OpenFileTokenStream(TokenStream* toks, const char* filename)
 static bool OpenStringTokenStream(TokenStream* toks, const char* source, const char* string)
 {
   toks->fd = -1;
-  toks->curr = string;
-  toks->end = string;
-  while (*(toks->end)) {
-    toks->end++;
-  }
+  toks->string = string;
+  toks->has_curr = false;
+  toks->has_next = false;
   toks->loc.source = source;
   toks->loc.line = 1;
   toks->loc.col = 1;

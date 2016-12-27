@@ -1170,6 +1170,8 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
   threads.tail = NULL;
   AddThread(&threads, NewThread(arena, vars, ports, cmd));
 
+  // TODO: Don't exit the while loop if there is some thread waiting on IO.
+  // TODO: Test this case.
   Thread* thread = GetThread(&threads);
   while (thread != NULL) {
     // Run the current thread.

@@ -4,6 +4,7 @@
 set prg {
   struct Unit();
 
+  // Including one with a comment in it.
   func main( ; Unit) {
     Unit();
   };
