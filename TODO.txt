@@ -1,13 +1,16 @@
 * Switch to library-based sharing rather than file based sharing.
- - Better document that for binary encodings of values, the top level value is
-   guarenteed to take at least one bytes, regardless of whether or not it is
-   part of a stream.
- - Turn fblcbi into -lfblc library + fblcbi main.
- - Reimplement fblc as -lfblc + fblcbe.
+ - implement fblc as part of fblcbi
+  -- remove fblc/
+  -- rename fblcbi/ fblc/
+ - morph fblct.h to match fblc.h expr and actn definitions.
  - Remove expect_result_b tests.
- - Turn fblcbe into -lfblct library + fblcbe main.
- - Implement testfblc on top of -lfblct
+ - Implement fblc-test
+  -- continue to test writing and reading fblc programs?
  - Replace expect_result and expect_proc_result with fblc-test
+
+* Better document that for binary encodings of values, the top level value is
+  guarenteed to take at least one bytes, regardless of whether or not it is
+  part of a stream.
 
 * Test writing a stream of Units
  - which requires some alignment be done.

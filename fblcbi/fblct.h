@@ -290,17 +290,7 @@ Env* ParseProgram(FblcArena* arena, TokenStream* toks);
 // Checker
 bool CheckProgram(Env* env);
 
-// BitStream
-// Bit streams are represented as sequences of ascii digits '0' and '1'.
-// TODO: Support more efficient encodings of bit streams when desired.
-typedef struct {
-  int fd;
-} OutputBitStream;
-
-void OpenBinaryOutputBitStream(OutputBitStream* stream, int fd);
-void WriteBits(OutputBitStream* stream, size_t num_bits, uint32_t bits);
-
-// Encoder
-void EncodeProgram(OutputBitStream* stream, Env* env);
+// Strip
+FblcProgram* StripProgram(FblcArena* arena, Env* tprog);
 
 #endif  // FBLCT_H_
