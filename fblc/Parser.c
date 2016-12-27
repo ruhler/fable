@@ -693,7 +693,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
         return NULL;
       }
       AppExpr* app_expr = arena->alloc(arena, sizeof(AppExpr));
-      app_expr->tag = APP_EXPR;
+      app_expr->tag = FBLC_APP_EXPR;
       app_expr->func.name = start.name;
       app_expr->func.loc = start.loc;
       app_expr->argc = argc;
@@ -704,7 +704,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       // This is a union expression of the form: start:field(<expr>)
       GetToken(toks, ':');
       UnionExpr* union_expr = arena->alloc(arena, sizeof(UnionExpr));
-      union_expr->tag = UNION_EXPR;
+      union_expr->tag = FBLC_UNION_EXPR;
       union_expr->type.name = start.name;
       union_expr->type.loc = start.loc;
       union_expr->type_id = UNRESOLVED_ID;
@@ -726,7 +726,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       LetExpr* let_expr = arena->alloc(arena, sizeof(LetExpr));
-      let_expr->tag = LET_EXPR;
+      let_expr->tag = FBLC_LET_EXPR;
       let_expr->type.name = start.name;
       let_expr->type.loc = start.loc;
       GetNameToken(arena, toks, "variable name", &(let_expr->name));
@@ -750,7 +750,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else {
       // This is the variable expression: start
       VarExpr* var_expr = arena->alloc(arena, sizeof(VarExpr));
-      var_expr->tag = VAR_EXPR;
+      var_expr->tag = FBLC_VAR_EXPR;
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
       var_expr->var_id = UNRESOLVED_ID;
@@ -777,7 +777,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return NULL;
     }
     CondExpr* cond_expr = arena->alloc(arena, sizeof(CondExpr));
-    cond_expr->tag = COND_EXPR;
+    cond_expr->tag = FBLC_COND_EXPR;
     cond_expr->select = condition;
     cond_expr->argc = argc;
     cond_expr->argv = args;
@@ -792,7 +792,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
 
     // This is an access expression of the form: <expr>.<field>
     AccessExpr* access_expr = arena->alloc(arena, sizeof(AccessExpr));
-    access_expr->tag = ACCESS_EXPR;
+    access_expr->tag = FBLC_ACCESS_EXPR;
     access_expr->object = expr;
     access_expr->field_id = UNRESOLVED_ID;
     if (!GetNameToken(arena, toks, "field name", &(access_expr->field))) {

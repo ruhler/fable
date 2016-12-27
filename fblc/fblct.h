@@ -32,33 +32,24 @@ typedef struct LocName {
   Name name;
 } LocName;
 
-typedef enum {
-  VAR_EXPR,
-  APP_EXPR,
-  UNION_EXPR,
-  ACCESS_EXPR,
-  COND_EXPR,
-  LET_EXPR,
-} ExprTag;
-
 // Expr is the base structure for all  expressions. Each
 // specialization of Expr has the same initial layout with tag and
 // location.
 
 typedef struct {
-  ExprTag tag;
+  FblcExprTag tag;
 } Expr;
 
 // VAR_EXPR: Variable expressions of the form: <name>
 typedef struct {
-  ExprTag tag;
+  FblcExprTag tag;
   FblcVarId var_id;
   LocName name;
 } VarExpr;
 
 // APP_EXPR: Application expressions of the form: <func>(<argv>)
 typedef struct {
-  ExprTag tag;
+  FblcExprTag tag;
   FblcDeclId func_id;
   int argc;
   Expr** argv;
@@ -67,7 +58,7 @@ typedef struct {
 
 // ACCESS_EXPR: Member access expressions of the form: <object>.<field>
 typedef struct {
-  ExprTag tag;
+  FblcExprTag tag;
   Expr* object;
   FblcFieldId field_id;
   LocName field;
@@ -75,7 +66,7 @@ typedef struct {
 
 // UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
 typedef struct {
-  ExprTag tag;
+  FblcExprTag tag;
   FblcTypeId type_id;
   FblcFieldId field_id;
   Expr* body;
@@ -85,7 +76,7 @@ typedef struct {
 
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
-  ExprTag tag;
+  FblcExprTag tag;
   Expr* def;
   Expr* body;
   LocName type;
@@ -94,7 +85,7 @@ typedef struct {
 
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
 typedef struct {
-  ExprTag tag;
+  FblcExprTag tag;
   Expr* select;
   int argc;
   Expr** argv;

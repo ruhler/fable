@@ -53,32 +53,32 @@ static bool CheckProc(Env* env, ProcDecl* proc);
 static Loc* ExprLoc(Expr* expr)
 {
   switch (expr->tag) {
-    case VAR_EXPR: {
+    case FBLC_VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
       return var_expr->name.loc;
     }
 
-    case APP_EXPR: {
+    case FBLC_APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
       return app_expr->func.loc;
     }
 
-    case ACCESS_EXPR: {
+    case FBLC_ACCESS_EXPR: {
       AccessExpr* access_expr = (AccessExpr*)expr;
       return ExprLoc(access_expr->object);
     }
 
-    case UNION_EXPR: {
+    case FBLC_UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
       return union_expr->type.loc;
     }
 
-    case LET_EXPR: {
+    case FBLC_LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
       return let_expr->type.loc;
     }
 
-    case COND_EXPR: {
+    case FBLC_COND_EXPR: {
       CondExpr* cond_expr = (CondExpr*)expr;
       return ExprLoc(cond_expr->select);
     }
@@ -365,7 +365,7 @@ static bool CheckArgs(
 static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 {
   switch (expr->tag) {
-    case VAR_EXPR: {
+    case FBLC_VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
       TypeDecl* type = ResolveVar(vars, &var_expr->name, &var_expr->var_id);
       if (type == NULL) {
@@ -376,7 +376,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       return type;
     }
 
-    case APP_EXPR: {
+    case FBLC_APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
       Decl* decl = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
@@ -427,7 +427,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       }
     }
 
-    case ACCESS_EXPR: {
+    case FBLC_ACCESS_EXPR: {
       AccessExpr* access_expr = (AccessExpr*)expr;
       TypeDecl* type = CheckExpr(env, vars, access_expr->object);
       if (type == NULL) {
@@ -445,7 +445,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       return NULL;
     }
 
-    case UNION_EXPR: {
+    case FBLC_UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
       union_expr->type_id = LookupType(env, union_expr->type.name);
       if (union_expr->type_id == UNRESOLVED_ID) {
@@ -482,7 +482,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       return NULL;
     }
 
-    case LET_EXPR: {
+    case FBLC_LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
       TypeDecl* declared_type = ResolveType(env, &let_expr->type);
       if (declared_type == NULL) {
@@ -514,7 +514,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       return CheckExpr(env, &nvars, let_expr->body);
     }
 
-    case COND_EXPR: {
+    case FBLC_COND_EXPR: {
       CondExpr* cond_expr = (CondExpr*)expr;
       TypeDecl* type = CheckExpr(env, vars, cond_expr->select);
       if (type == NULL) {
