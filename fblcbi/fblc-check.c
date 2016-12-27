@@ -1,8 +1,11 @@
-// FblcCheckMain.c --
+// fblc-check.c
 //
 //   The file implements the main entry point for the fblc-check command.
 
-#include "FblcInternal.h"
+#include <string.h>     // for strcmp
+
+#include "fblct.h"
+#include "gc.h"
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -50,14 +53,10 @@ static void PrintUsage(FILE* stream)
 //   Prints an error message to standard error if the program is not well formed.
 //   With --error, prints the error message to standard out instead.
 
-int FblcCheckMain(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
-  ENABLE_LEAK_DETECTION();
-  MALLOC_INIT();
-
   argc--;
   argv++;
-
   if (argc > 0 && strcmp("--help", *argv) == 0) {
     PrintUsage(stdout);
     return EX_SUCCESS;
@@ -84,8 +83,8 @@ int FblcCheckMain(int argc, char* argv[])
 
   const char* filename = argv[0];
 
-  FblcTokenStream toks;
-  if (!FblcOpenFileTokenStream(&toks, filename)) {
+  TokenStream toks;
+  if (!OpenFileTokenStream(&toks, filename)) {
     fprintf(stderr, "failed to open input FILE %s.\n", filename);
     return EX_USAGE;
   }
@@ -93,12 +92,15 @@ int FblcCheckMain(int argc, char* argv[])
   stderr = expect_error ? stdout : stderr;
   int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
   int exit_fail = expect_error ? EX_SUCCESS : EX_FAIL;
-  FblcAllocator alloc;
-  FblcInitAllocator(&alloc);
-  FblcEnv* env = FblcParseProgram(&alloc, &toks);
-  FblcCloseTokenStream(&toks);
-  bool error = env == NULL || !FblcCheckProgram(env);
-  FblcFreeAll(&alloc);
-  CHECK_FOR_LEAKS();
+
+  GcInit();
+  FblcArena* gc_arena = CreateGcArena();
+  FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
+  Env* env = ParseProgram(bulk_arena, &toks);
+  CloseTokenStream(&toks);
+  bool error = env == NULL || !CheckProgram(env);
+  FreeBulkFreeArena(bulk_arena);
+  FreeGcArena(gc_arena);
+  GcFinish();
   return error ? exit_fail : exit_success;
 }

@@ -1,19 +1,19 @@
 
 exec rm -rf out
-exec mkdir -p out/test out/fblc out/fblcbe out/fblcbi out/prgms 
+exec mkdir -p out/test out/fblc out/fblcbi out/prgms 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
-# Compile fblcbe, fblcbi
+# Compile fblc-check, fblcbe, fblcbi
 set objs [list]
 foreach {x} [glob fblcbi/*.c] {
   set obj out/fblcbi/[string map {.c .o} [file tail $x]]
-  if {-1 == [lsearch [list fblcbi/fblcbe.c fblcbi/fblcbi.c] $x]} {
+  if {-1 == [lsearch [list fblcbi/fblcbe.c fblcbi/fblcbi.c fblcbi/fblc-check.c] $x]} {
     lappend objs $obj
   }
   puts "cc $x"
   exec gcc {*}$FLAGS -c -o $obj $x
 }
-foreach {x} [list fblcbe fblcbi] {
+foreach {x} [list fblcbe fblcbi fblc-check] {
   puts "ld -o out/$x"
   exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblcbi/$x.o {*}$objs
 }
@@ -35,12 +35,13 @@ foreach {x} [glob prgms/*.c] {
 }
 
 set ::fblc ./out/prgms/fblc
+set ::fblccheck ./out/prgms/fblc-check
 set ::testfblc ./out/prgms/testfblc
 set ::fblcbe ./out/prgms/fblcbe
 set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
-  exec mkdir -p out/$name/fblc out/$name/fblcbi out/$name/fblcbe
+  exec mkdir -p out/$name/fblc out/$name/fblcbi
   exec gcov {*}[glob out/fblc/*.o] > out/$name/fblc.gcov
   exec mv {*}[glob *.gcov] out/$name/fblc
   exec gcov {*}[glob out/fblcbi/*.o] > out/$name/fblcbi.gcov
@@ -117,7 +118,7 @@ proc fblc-check-error { program } {
   try {
     set fprogram ./out/test/$name.fblc
     exec echo $program > $fprogram
-    exec $::fblc --check --error $fprogram
+    exec $::fblccheck --error $fprogram
   } trap CHILDSTATUS {results options} {
     error "$file:$line: error: fblc-check passed unexpectedly"
   }

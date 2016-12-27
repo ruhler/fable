@@ -121,10 +121,6 @@ static FblcValue* Output(FILE* user, FblcValue* value)
 
 int main(int argc, char* argv[])
 {
-  if (argc > 1 && strcmp("--check", argv[1]) == 0) {
-    return FblcCheckMain(argc-1, argv+1);
-  }
-
   ENABLE_LEAK_DETECTION();
   MALLOC_INIT();
 
