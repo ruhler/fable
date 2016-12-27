@@ -753,7 +753,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       var_expr->tag = FBLC_VAR_EXPR;
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
-      var_expr->var_id = UNRESOLVED_ID;
+      var_expr->var = UNRESOLVED_ID;
       expr = (Expr*)var_expr;
     }
   } else if (IsToken(toks, '?')) {

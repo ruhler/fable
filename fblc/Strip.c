@@ -14,7 +14,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
       VarExpr* tvar = (VarExpr*)texpr;
       FblcVarExpr* expr = arena->alloc(arena, sizeof(FblcVarExpr));
       expr->tag = FBLC_VAR_EXPR;
-      expr->var = tvar->var_id;
+      expr->var = tvar->var;
       return (FblcExpr*)expr;
     }
 
