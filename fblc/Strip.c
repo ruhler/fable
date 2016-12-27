@@ -14,7 +14,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
       VarExpr* tvar = (VarExpr*)texpr;
       FblcVarExpr* expr = arena->alloc(arena, sizeof(FblcVarExpr));
       expr->tag = FBLC_VAR_EXPR;
-      expr->var = tvar->name.id;
+      expr->var = tvar->var_id;
       return (FblcExpr*)expr;
     }
 
@@ -22,7 +22,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
       AppExpr* tapp = (AppExpr*)texpr;
       FblcAppExpr* expr = arena->alloc(arena, sizeof(FblcAppExpr));
       expr->tag = FBLC_APP_EXPR;
-      expr->func = tapp->func.id;
+      expr->func = tapp->func_id;
       FblcVectorInit(arena, expr->argv, expr->argc);
       for (size_t i = 0; i < tapp->argc; ++i) {
         FblcVectorAppend(arena, expr->argv, expr->argc, StripExpr(arena, tapp->argv[i]));
@@ -34,8 +34,8 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
       UnionExpr* tunion = (UnionExpr*)texpr;
       FblcUnionExpr* expr = arena->alloc(arena, sizeof(FblcUnionExpr));
       expr->tag = FBLC_UNION_EXPR;
-      expr->type = tunion->type.id;
-      expr->field = tunion->field.id;
+      expr->type = tunion->type_id;
+      expr->field = tunion->field_id;
       expr->body = StripExpr(arena, tunion->value);
       return (FblcExpr*)expr;
     }
@@ -45,7 +45,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
       FblcAccessExpr* expr = arena->alloc(arena, sizeof(FblcAccessExpr));
       expr->tag = FBLC_ACCESS_EXPR;
       expr->object = StripExpr(arena, taccess->object);
-      expr->field = taccess->field.id;
+      expr->field = taccess->field_id;
       return (FblcExpr*)expr;
     }
 
@@ -91,7 +91,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       GetActn* tget = (GetActn*)tactn;
       FblcGetActn* actn = arena->alloc(arena, sizeof(FblcGetActn));
       actn->tag = FBLC_GET_ACTN;
-      actn->port = tget->port.id;
+      actn->port = tget->port_id;
       return (FblcActn*)actn;
     }
 
@@ -99,7 +99,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       PutActn* tput = (PutActn*)tactn;
       FblcPutActn* actn = arena->alloc(arena, sizeof(FblcPutActn));
       actn->tag = FBLC_PUT_ACTN;
-      actn->port = tput->port.id;
+      actn->port = tput->port_id;
       actn->arg = StripExpr(arena, tput->expr);
       return (FblcActn*)actn;
     }
@@ -120,10 +120,10 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       CallActn* tcall = (CallActn*)tactn;
       FblcCallActn* actn = arena->alloc(arena, sizeof(FblcCallActn));
       actn->tag = FBLC_CALL_ACTN;
-      actn->proc = tcall->proc.id;
+      actn->proc = tcall->proc_id;
       FblcVectorInit(arena, actn->portv, actn->portc);
       for (size_t i = 0; i < tcall->portc; ++i) {
-        FblcVectorAppend(arena, actn->portv, actn->portc, tcall->ports[i].id);
+        FblcVectorAppend(arena, actn->portv, actn->portc, tcall->port_ids[i]);
       }
       FblcVectorInit(arena, actn->argv, actn->argc);
       for (size_t i = 0; i < tcall->exprc; ++i) {
@@ -136,7 +136,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       LinkActn* tlink = (LinkActn*)tactn;
       FblcLinkActn* actn = arena->alloc(arena, sizeof(FblcLinkActn));
       actn->tag = FBLC_LINK_ACTN;
-      actn->type = tlink->type.id;
+      actn->type = tlink->type_id;
       actn->body = StripActn(arena, tlink->body);
       return (FblcActn*)actn;
     }
@@ -169,7 +169,7 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
       decl->tag = ttype->tag;
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
       for (size_t i = 0; i < ttype->fieldc; ++i) {
-        FblcVectorAppend(arena, decl->fieldv, decl->fieldc, ttype->fieldv[i].type.id);
+        FblcVectorAppend(arena, decl->fieldv, decl->fieldc, ttype->fieldv[i].type_id);
       }
       return (FblcDecl*)decl;
     }
@@ -180,9 +180,9 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
       decl->tag = FBLC_FUNC_DECL;
       FblcVectorInit(arena, decl->argv, decl->argc);
       for (size_t i = 0; i < tfunc->argc; ++i) {
-        FblcVectorAppend(arena, decl->argv, decl->argc, tfunc->argv[i].type.id);
+        FblcVectorAppend(arena, decl->argv, decl->argc, tfunc->argv[i].type_id);
       }
-      decl->return_type = tfunc->return_type.id;
+      decl->return_type = tfunc->return_type_id;
       decl->body = StripExpr(arena, tfunc->body);
       return (FblcDecl*)decl;
     }
@@ -194,14 +194,14 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
       FblcVectorInit(arena, decl->portv, decl->portc);
       for (size_t i = 0; i < tproc->portc; ++i) {
         FblcVectorExtend(arena, decl->portv, decl->portc);
-        decl->portv[decl->portc].type = tproc->portv[i].type.id;
+        decl->portv[decl->portc].type = tproc->portv[i].type_id;
         decl->portv[decl->portc++].polarity = tproc->portv[i].polarity;
       }
       FblcVectorInit(arena, decl->argv, decl->argc);
       for (size_t i = 0; i < tproc->argc; ++i) {
-        FblcVectorAppend(arena, decl->argv, decl->argc, tproc->argv[i].type.id);
+        FblcVectorAppend(arena, decl->argv, decl->argc, tproc->argv[i].type_id);
       }
-      decl->return_type = tproc->return_type.id;
+      decl->return_type = tproc->return_type_id;
       decl->body = StripActn(arena, tproc->body);
       return (FblcDecl*)decl;
     }

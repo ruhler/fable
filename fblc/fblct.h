@@ -30,7 +30,6 @@ void ReportError(const char* format, Loc* loc, ...);
 typedef struct LocName {
   Loc* loc;
   Name name;
-  size_t id;
 } LocName;
 
 typedef enum {
@@ -56,6 +55,7 @@ typedef struct {
   ExprTag tag;
   Loc* loc;
   LocName name;
+  FblcVarId var_id;
 } VarExpr;
 
 // APP_EXPR: Application expressions of the form: <func>(<argv>)
@@ -65,6 +65,7 @@ typedef struct {
   LocName func;
   int argc;
   Expr** argv;
+  FblcDeclId func_id;
 } AppExpr;
 
 // ACCESS_EXPR: Member access expressions of the form: <object>.<field>
@@ -73,6 +74,7 @@ typedef struct {
   Loc* loc;
   Expr* object;
   LocName field;
+  FblcFieldId field_id;
 } AccessExpr;
 
 // UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
@@ -82,6 +84,8 @@ typedef struct {
   LocName type;
   LocName field;
   Expr* value;
+  FblcTypeId type_id;
+  FblcFieldId field_id;
 } UnionExpr;
 
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
@@ -106,6 +110,7 @@ typedef struct {
 typedef struct {
   LocName type;
   LocName name;
+  FblcTypeId type_id;
 } Field;
 
 typedef enum { STRUCT_DECL, UNION_DECL, FUNC_DECL, PROC_DECL } DeclTag;
@@ -129,6 +134,7 @@ typedef struct {
   Expr* body;
   int argc;
   Field* argv;
+  FblcTypeId return_type_id;
 } FuncDecl;
 
 typedef enum {
@@ -140,6 +146,7 @@ typedef struct {
   LocName type;
   LocName name;
   Polarity polarity;
+  FblcTypeId type_id;
 } Port;
 
 typedef enum {
@@ -172,6 +179,7 @@ typedef struct {
   ActnTag tag;
   Loc* loc;
   LocName port;
+  FblcPortId port_id;
 } GetActn;
 
 // PUT_ACTN: Processes of the form: <pname>~(<expr>)
@@ -180,6 +188,7 @@ typedef struct {
   Loc* loc;
   LocName port;
   Expr* expr;
+  FblcPortId port_id;
 } PutActn;
 
 // CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
@@ -191,6 +200,8 @@ typedef struct {
   LocName* ports;   // Array of portc ports
   int exprc;
   Expr** exprs;      // Array of exprc exprs
+  FblcDeclId proc_id;
+  FblcPortId* port_ids;
 } CallActn;
 
 // LINK_ACTN: Processes of the form:
@@ -202,6 +213,7 @@ typedef struct {
   LocName getname;
   LocName putname;
   Actn* body;
+  FblcTypeId type_id;
 } LinkActn;
 
 typedef struct {
@@ -237,6 +249,7 @@ typedef struct {
   Port* portv;              // Array of portc ports.
   int argc;
   Field* argv;              // Array of argv fields.
+  FblcTypeId return_type_id;
 } ProcDecl;
 
 // An environment contains all the type, function, and process declarations

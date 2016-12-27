@@ -73,12 +73,12 @@ static void PrintValue(FILE* stream, Env* env, FblcTypeId typeid, FblcValue* val
       if (i > 0) {
         fprintf(stream, ",");
       }
-      PrintValue(stream, env, type->fieldv[i].type.id, value->fields[i]);
+      PrintValue(stream, env, type->fieldv[i].type_id, value->fields[i]);
     }
     fprintf(stream, ")");
   } else if (type->tag == UNION_DECL) {
     fprintf(stream, "%s:%s(", type->name.name, type->fieldv[value->tag].name.name);
-    PrintValue(stream, env, type->fieldv[value->tag].type.id, value->fields[0]);
+    PrintValue(stream, env, type->fieldv[value->tag].type_id, value->fields[0]);
     fprintf(stream, ")");
   } else {
     assert(false && "Invalid Kind");

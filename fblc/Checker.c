@@ -27,14 +27,13 @@ typedef struct Ports {
   struct Ports* next;
 } Ports;
 
+static FblcTypeId LookupType(Env* env, Name name);
 static TypeDecl* ResolveType(Env* env, LocName* name);
-static FuncDecl* ResolveFunc(Env* env, LocName* name);
-static ProcDecl* ResolveProc(Env* env, LocName* name);
 static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next);
-static TypeDecl* ResolveVar(Vars* vars, LocName* name);
+static TypeDecl* ResolveVar(Vars* vars, LocName* name, FblcVarId* var_id);
 static Ports* AddPort(
     Ports* vars, Name name, TypeDecl* type, Polarity polarity, Ports* next);
-static TypeDecl* ResolvePort(Ports* vars, LocName* name, Polarity polarity);
+static TypeDecl* ResolvePort(Ports* vars, LocName* name, Polarity polarity, FblcPortId* port_id);
 static bool CheckArgs(
     Env* env, Vars* vars, int fieldc, Field* fieldv,
     int argc, Expr** argv, LocName* func);
@@ -46,8 +45,33 @@ static bool CheckType(Env* env, TypeDecl* type);
 static bool CheckFunc(Env* env, FuncDecl* func);
 static bool CheckProc(Env* env, ProcDecl* proc);
 
-// ResolveType --
+// LookupType --
+//   Look up the declaration id of the type with the given name in the given
+//   environment.
+// 
+// Inputs:
+//   env - The environment to look up the type in.
+//   name - The name of the type to look up.
 //
+// Result:
+//   The declaration id for the type with the given name, or UNRESOLVED_ID if
+//   there is no type with the given name in the given environment.
+//
+// Side effects:
+//   None.
+static FblcTypeId LookupType(Env* env, Name name)
+{
+  for (size_t i = 0; i < env->declc; ++i) {
+    Decl* decl = env->declv[i];
+    if ((decl->tag == STRUCT_DECL || decl->tag == UNION_DECL)
+        && NamesEqual(decl->name.name, name)) {
+      return i;
+    }
+  }
+  return UNRESOLVED_ID;
+}
+
+// ResolveType --
 //   Look up the declaration of the type with the given name in the given
 //   environment.
 // 
@@ -60,73 +84,14 @@ static bool CheckProc(Env* env, ProcDecl* proc);
 //   type with the given name in the given environment.
 //
 // Side effects:
-//   Resolves the id of the given LocName.
-
+//   None.
 static TypeDecl* ResolveType(Env* env, LocName* name)
 {
-  // TODO: Make use of name->id if it is already set to speed up the lookup?
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
     if ((decl->tag == STRUCT_DECL || decl->tag == UNION_DECL)
         && NamesEqual(decl->name.name, name->name)) {
-      name->id = i;
       return (TypeDecl*)decl;
-    }
-  }
-  return NULL;
-}
-
-// ResolveFunc --
-//
-//   Look up the declaration of the function with the given name in the given
-//   environment.
-// 
-// Inputs:
-//   env - The environment to look up the type in.
-//   name - The name of the function to look up.
-//
-// Result:
-//   The declaration for the function with the given name, or NULL if there is
-//   no function with the given name in the given environment.
-//
-// Side effects:
-//   Resolves the id of the given LocName.
-
-static FuncDecl* ResolveFunc(Env* env, LocName* name)
-{
-  for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
-    if (decl->tag == FUNC_DECL && NamesEqual(decl->name.name, name->name)) {
-      name->id = i;
-      return (FuncDecl*)decl;
-    }
-  }
-  return NULL;
-}
-
-// ResolveProc --
-//
-//   Look up the declaration of the process with the given name in the given
-//   environment.
-//
-// Inputs:
-//   env - The environment to look up the type in.
-//   name - The name of the process to look up.
-//
-// Result:
-//   The declaration for the process with the given name, or NULL if there is
-//   no process with the given name in the given environment.
-//
-// Side effects:
-//   Resolves the id of the given LocName.
-
-static ProcDecl* ResolveProc(Env* env, LocName* name)
-{
-  for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
-    if (decl->tag == PROC_DECL && NamesEqual(decl->name.name, name->name)) {
-      name->id = i;
-      return (ProcDecl*)decl;
     }
   }
   return NULL;
@@ -157,25 +122,24 @@ static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next)
 }
 
 // ResolveVar --
-//
 //   Look up the type of a variable in scope.
 //
 // Inputs:
 //   vars - The scope to look up the variable in.
 //   name - The name of the variable.
+//   var_id - Output var id parameter.
 //
 // Results:
 //   The type of the variable in scope, or NULL if there is no variable with
 //   that name in scope.
 //
 // Side effects:
-//   Resolves the id of the given LocName.
-
-static TypeDecl* ResolveVar(Vars* vars, LocName* name)
+//   Sets var_id to the id of the resolved variable
+static TypeDecl* ResolveVar(Vars* vars, LocName* name, FblcVarId* var_id)
 {
   for (size_t i = 0; vars != NULL; ++i) {
     if (NamesEqual(vars->name, name->name)) {
-      name->id = i;
+      *var_id = i;
       return vars->type;
     }
     vars = vars->next;
@@ -218,20 +182,20 @@ static Ports* AddPort(
 //   ports - The scope to look up the port in.
 //   name - The name of the port.
 //   polarity - The polarity of the port.
+//   port_id - Port id out parameter.
 //
 // Results:
 //   The type of the port in scope, or NULL if there is no port with
 //   that name and polarity in scope.
 //
 // Side effects:
-//   Resolves the id of the given LocName.
-
-static TypeDecl* ResolvePort(Ports* ports, LocName* name, Polarity polarity)
+//   Sets port_id to the id of the resolved port.
+static TypeDecl* ResolvePort(Ports* ports, LocName* name, Polarity polarity, FblcPortId* port_id)
 {
   for (size_t i = 0; ports != NULL; ++i) {
     if (NamesEqual(ports->name, name->name)) {
       if (ports->polarity == polarity) {
-        name->id = i;
+        *port_id = i;
         return ports->type;
       } else {
         return NULL;
@@ -313,7 +277,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
   switch (expr->tag) {
     case VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
-      TypeDecl* type = ResolveVar(vars, &var_expr->name);
+      TypeDecl* type = ResolveVar(vars, &var_expr->name, &var_expr->var_id);
       if (type == NULL) {
         ReportError("Variable '%s' not in scope.\n",
             var_expr->name.loc, var_expr->name.name);
@@ -324,32 +288,53 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
-      TypeDecl* type = ResolveType(env, &app_expr->func);
-      if (type != NULL) {
-        if (type->tag != STRUCT_DECL) {
-          ReportError("Cannot do application on non-struct type %s.\n",
+      Decl* decl = NULL;
+      for (size_t i = 0; i < env->declc; ++i) {
+        if (NamesEqual(app_expr->func.name, env->declv[i]->name.name)) {
+          app_expr->func_id = i;
+          decl = env->declv[i];
+        }
+      }
+      if (decl == NULL) {
+        ReportError("Declaration for '%s' not found.\n", app_expr->loc, app_expr->func.name);
+        return NULL;
+      }
+
+      switch (decl->tag) {
+        case STRUCT_DECL: {
+          TypeDecl* type = (TypeDecl*)decl;
+          if (!CheckArgs(env, vars, type->fieldc, type->fieldv,
+                app_expr->argc, app_expr->argv, &(app_expr->func))) {
+            return NULL;
+          }
+          return type;
+        }
+
+        case UNION_DECL: {
+          ReportError("Cannot do application on union type %s.\n",
               app_expr->func.loc, app_expr->func.name);
           return NULL;
         }
-        if (!CheckArgs(env, vars, type->fieldc, type->fieldv,
-              app_expr->argc, app_expr->argv, &(app_expr->func))) {
+
+        case FUNC_DECL: {
+          FuncDecl* func = (FuncDecl*)decl;
+          if (!CheckArgs(env, vars, func->argc, func->argv,
+                app_expr->argc, app_expr->argv, &(app_expr->func))) {
+            return NULL;
+          }
+          return ResolveType(env, &func->return_type);
+        }
+
+        case PROC_DECL: {
+          ReportError("Cannot do application on a process %s.\n",
+              app_expr->func.loc, app_expr->func.name);
           return NULL;
         }
-        return type;
-      }
 
-      FuncDecl* func = ResolveFunc(env, &app_expr->func);
-      if (func != NULL) {
-        if (!CheckArgs(env, vars, func->argc, func->argv,
-              app_expr->argc, app_expr->argv, &(app_expr->func))) {
+        default:
+          assert(false && "Invalid decl tag");
           return NULL;
-        }
-        return ResolveType(env, &func->return_type);
       }
-
-      ReportError("'%s' is not a type or function.\n",
-          app_expr->loc, app_expr->func.name);
-      return NULL;
     }
 
     case ACCESS_EXPR: {
@@ -361,7 +346,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
       for (int i = 0; i < type->fieldc; i++) {
         if (NamesEqual(type->fieldv[i].name.name, access_expr->field.name)) {
-          access_expr->field.id = i;
+          access_expr->field_id = i;
           return ResolveType(env, &type->fieldv[i].type);
         }
       }
@@ -372,12 +357,12 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
-      TypeDecl* type = ResolveType(env, &union_expr->type);
-      if (type == NULL) {
-        ReportError("Type %s not found.\n",
-            union_expr->type.loc, union_expr->type.name);
+      union_expr->type_id = LookupType(env, union_expr->type.name);
+      if (union_expr->type_id == UNRESOLVED_ID) {
+        ReportError("Type %s not found.\n", union_expr->type.loc, union_expr->type.name);
         return NULL;
       }
+      TypeDecl* type = (TypeDecl*)env->declv[union_expr->type_id];
 
       if (type->tag != UNION_DECL) {
         ReportError("Type %s is not a union type.\n",
@@ -398,7 +383,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
                 type->fieldv[i].type.name, arg_type);
             return NULL;
           }
-          union_expr->field.id = i;
+          union_expr->field_id = i;
           return ResolveType(env, &type->name);
         }
       }
@@ -416,7 +401,8 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      if (ResolveVar(vars, &let_expr->name) != NULL) {
+      FblcVarId dummy;
+      if (ResolveVar(vars, &let_expr->name, &dummy) != NULL) {
         ReportError("Variable %s already defined.\n",
             let_expr->name.loc, let_expr->name.name);
         return NULL;
@@ -513,7 +499,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case GET_ACTN: {
       GetActn* get_actn = (GetActn*)actn;
-      TypeDecl* type = ResolvePort(ports, &get_actn->port, POLARITY_GET);
+      TypeDecl* type = ResolvePort(ports, &get_actn->port, POLARITY_GET, &get_actn->port_id);
       if (type == NULL) {
         ReportError("'%s' is not a valid get port.\n", get_actn->loc,
             get_actn->port.name);
@@ -524,7 +510,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case PUT_ACTN: {
       PutActn* put_actn = (PutActn*)actn;
-      TypeDecl* port_type = ResolvePort(ports, &put_actn->port, POLARITY_PUT);
+      TypeDecl* port_type = ResolvePort(ports, &put_actn->port, POLARITY_PUT, &put_actn->port_id);
       if (port_type == NULL) {
         ReportError("'%s' is not a valid put port.\n", put_actn->loc,
             put_actn->port.name);
@@ -545,7 +531,14 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case CALL_ACTN: {
       CallActn* call_actn = (CallActn*)actn;
-      ProcDecl* proc = ResolveProc(env, &call_actn->proc);
+      ProcDecl* proc = NULL;
+      for (size_t i = 0; i < env->declc; ++i) {
+        Decl* decl = env->declv[i];
+        if (decl->tag == PROC_DECL && NamesEqual(decl->name.name, call_actn->proc.name)) {
+          call_actn->proc_id = i;
+          proc = (ProcDecl*)decl;
+        }
+      }
       if (proc == NULL) {
         ReportError("'%s' is not a proc.\n",
             call_actn->loc, call_actn->proc.name);
@@ -563,9 +556,9 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         bool isput = (proc->portv[i].polarity == POLARITY_PUT);
         TypeDecl* port_type = NULL;
         if (isput) {
-          port_type = ResolvePort(ports, &call_actn->ports[i], POLARITY_PUT);
+          port_type = ResolvePort(ports, call_actn->ports + i, POLARITY_PUT, call_actn->port_ids + i);
         } else {
-          port_type = ResolvePort(ports, &call_actn->ports[i], POLARITY_GET);
+          port_type = ResolvePort(ports, call_actn->ports + i, POLARITY_GET, call_actn->port_ids + i);
         }
         if (port_type == NULL) {
           ReportError("'%s' is not a valid %s port.\n",
@@ -592,7 +585,14 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
     case LINK_ACTN: {
       // TODO: Test that we verify the link type resolves?
       LinkActn* link_actn = (LinkActn*)actn;
-      TypeDecl* type = ResolveType(env, &link_actn->type);
+      link_actn->type_id = LookupType(env, link_actn->type.name);
+      if (link_actn->type_id == UNRESOLVED_ID) {
+        ReportError("Type '%s' not declared.\n",
+            link_actn->type.loc, link_actn->type.name);
+        return NULL;
+      }
+
+      TypeDecl* type = (TypeDecl*)env->declv[link_actn->type_id];
       Ports getport;
       Ports putport;
       AddPort(&getport, link_actn->getname.name, type, POLARITY_GET, ports);
@@ -695,9 +695,9 @@ static bool CheckFields(Env* env, int fieldc, Field* fieldv, const char* kind)
 {
   // Verify the type for each field exists.
   for (int i = 0; i < fieldc; i++) {
-    if (ResolveType(env, &fieldv[i].type) == NULL) {
-      ReportError("Type '%s' not found.\n",
-          fieldv[i].type.loc, fieldv[i].type.name);
+    fieldv[i].type_id = LookupType(env, fieldv[i].type.name);
+    if (fieldv[i].type_id == UNRESOLVED_ID) {
+      ReportError("Type '%s' not found.\n", fieldv[i].type.loc, fieldv[i].type.name);
       return false;
     }
   }
@@ -737,9 +737,9 @@ static bool CheckPorts(Env* env, int portc, Port* portv)
 {
   // Verify the type for each port exists.
   for (int i = 0; i < portc; i++) {
-    if (ResolveType(env, &portv[i].type) == NULL) {
-      ReportError("Type '%s' not found.\n",
-          portv[i].type.loc, portv[i].type.name);
+    portv[i].type_id = LookupType(env, portv[i].type.name);
+    if (portv[i].type_id == UNRESOLVED_ID) {
+      ReportError("Type '%s' not found.\n", portv[i].type.loc, portv[i].type.name);
       return false;
     }
   }
@@ -809,12 +809,12 @@ static bool CheckFunc(Env* env, FuncDecl* func)
   }
 
   // Check the return type.
-  TypeDecl* return_type = ResolveType(env, &func->return_type);
-  if (return_type == NULL) {
-    ReportError("Type '%s' not found.\n",
-        func->return_type.loc, func->return_type.name);
+  func->return_type_id = LookupType(env, func->return_type.name);
+  if (func->return_type_id == UNRESOLVED_ID) {
+    ReportError("Type '%s' not found.\n", func->return_type.loc, func->return_type.name);
     return false;
   }
+  TypeDecl* return_type = (TypeDecl*)env->declv[func->return_type_id];
 
   // Check the body.
   Vars nvars[func->argc];
@@ -866,12 +866,12 @@ static bool CheckProc(Env* env, ProcDecl* proc)
   }
 
   // Check the return type.
-  TypeDecl* return_type = ResolveType(env, &proc->return_type);
-  if (return_type == NULL) {
-    ReportError("Type '%s' not found.\n",
-        proc->return_type.loc, proc->return_type.name);
+  proc->return_type_id = LookupType(env, proc->return_type.name);
+  if (proc->return_type_id == UNRESOLVED_ID) {
+    ReportError("Type '%s' not found.\n", proc->return_type.loc, proc->return_type.name);
     return false;
   }
+  TypeDecl* return_type = (TypeDecl*)env->declv[proc->return_type_id];
 
   // Check the body.
   Vars vars_data[proc->argc];
