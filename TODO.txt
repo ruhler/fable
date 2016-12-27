@@ -8,6 +8,19 @@
   -- continue to test writing and reading fblc programs?
  - Replace expect_result and expect_proc_result with fblc-test
 
+* Use consistent naming in spec tests to distinguish between:
+  - Something with the wrong syntax, such as ???. "malformed"
+  - Something that cannot be typed, such as x, when x is not defined.  "maltyped"
+  - Something with the wrong type, such as Donut(), when Unit() is expected. "mistyped"
+
+* Test that tail recursive functions and procedures don't smash the stack.
+* Test that a link's type is valid.
+* Test that a link action's ports can't shadow ports already in scope.
+* Test that a link can't use the same name for the get and put ports.
+* Test that a proc can't have multiple ports of the same name, with or without
+  the same polarity.
+* Test what happens when we try to access the wrong field of a union.
+
 * Better document that for binary encodings of values, the top level value is
   guarenteed to take at least one bytes, regardless of whether or not it is
   part of a stream.
@@ -18,3 +31,4 @@
 * Implement fbld front end to fblcbi.
 * Port calc Integer to an fbld module.
 * Implement space invaders game in fbld.
+* Write man pages for fblc and friends?
