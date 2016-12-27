@@ -52,44 +52,44 @@ typedef struct {
 // VAR_EXPR: Variable expressions of the form: <name>
 typedef struct {
   ExprTag tag;
-  LocName name;
   FblcVarId var_id;
+  LocName name;
 } VarExpr;
 
 // APP_EXPR: Application expressions of the form: <func>(<argv>)
 typedef struct {
   ExprTag tag;
-  LocName func;
+  FblcDeclId func_id;
   int argc;
   Expr** argv;
-  FblcDeclId func_id;
+  LocName func;
 } AppExpr;
 
 // ACCESS_EXPR: Member access expressions of the form: <object>.<field>
 typedef struct {
   ExprTag tag;
   Expr* object;
-  LocName field;
   FblcFieldId field_id;
+  LocName field;
 } AccessExpr;
 
 // UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
 typedef struct {
   ExprTag tag;
-  LocName type;
-  LocName field;
-  Expr* body;
   FblcTypeId type_id;
   FblcFieldId field_id;
+  Expr* body;
+  LocName type;
+  LocName field;
 } UnionExpr;
 
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
   ExprTag tag;
-  LocName type;
-  LocName name;
   Expr* def;
   Expr* body;
+  LocName type;
+  LocName name;
 } LetExpr;
 
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
