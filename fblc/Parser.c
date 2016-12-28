@@ -582,13 +582,13 @@ static int ParsePorts(FblcArena* arena, TokenStream* toks, Port** ports)
       if (!GetToken(toks, '~')) {
         return -1;
       }
-      port->polarity = POLARITY_GET;
+      port->polarity = FBLC_GET_POLARITY;
     } else if (IsToken(toks, '~')) {
       GetToken(toks, '~');
       if (!GetToken(toks, '>')) {
         return -1;
       }
-      port->polarity = POLARITY_PUT;
+      port->polarity = FBLC_PUT_POLARITY;
     } else {
       UnexpectedToken(toks, "'<~' or '~>'");
       return -1;

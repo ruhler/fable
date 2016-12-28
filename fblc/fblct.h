@@ -106,15 +106,10 @@ typedef struct {
   FblcTypeId return_type_id;
 } FuncDecl;
 
-typedef enum {
-  POLARITY_GET,
-  POLARITY_PUT
-} Polarity;
-
 typedef struct {
   LocName type;
   LocName name;
-  Polarity polarity;
+  FblcPolarity polarity;
   FblcTypeId type_id;
 } Port;
 

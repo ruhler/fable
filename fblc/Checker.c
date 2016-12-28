@@ -22,7 +22,7 @@ typedef struct Vars {
 
 typedef struct Ports {
   Name name;
-  Polarity polarity;
+  FblcPolarity polarity;
   TypeDecl* type;
   struct Ports* next;
 } Ports;
@@ -35,8 +35,8 @@ static TypeDecl* ResolveType(Env* env, LocName* name);
 static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next);
 static TypeDecl* ResolveVar(Vars* vars, LocName* name, FblcVarId* var_id);
 static Ports* AddPort(
-    Ports* vars, Name name, TypeDecl* type, Polarity polarity, Ports* next);
-static TypeDecl* ResolvePort(Ports* vars, LocName* name, Polarity polarity, FblcPortId* port_id);
+    Ports* vars, Name name, TypeDecl* type, FblcPolarity polarity, Ports* next);
+static TypeDecl* ResolvePort(Ports* vars, LocName* name, FblcPolarity polarity, FblcPortId* port_id);
 static bool CheckArgs(
     Env* env, Vars* vars, int fieldc, Field* fieldv,
     int argc, Expr** argv, LocName* func);
@@ -255,7 +255,7 @@ static TypeDecl* ResolveVar(Vars* vars, LocName* name, FblcVarId* var_id)
 //   Sets ports to a scope including the given port and next scope.
 
 static Ports* AddPort(
-    Ports* ports, Name name, TypeDecl* type, Polarity polarity, Ports* next)
+    Ports* ports, Name name, TypeDecl* type, FblcPolarity polarity, Ports* next)
 {
   ports->name = name;
   ports->type = type;
@@ -280,7 +280,7 @@ static Ports* AddPort(
 //
 // Side effects:
 //   Sets port_id to the id of the resolved port.
-static TypeDecl* ResolvePort(Ports* ports, LocName* name, Polarity polarity, FblcPortId* port_id)
+static TypeDecl* ResolvePort(Ports* ports, LocName* name, FblcPolarity polarity, FblcPortId* port_id)
 {
   for (size_t i = 0; ports != NULL; ++i) {
     if (NamesEqual(ports->name, name->name)) {
@@ -589,7 +589,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case FBLC_GET_ACTN: {
       GetActn* get_actn = (GetActn*)actn;
-      TypeDecl* type = ResolvePort(ports, &get_actn->port, POLARITY_GET, &get_actn->port_id);
+      TypeDecl* type = ResolvePort(ports, &get_actn->port, FBLC_GET_POLARITY, &get_actn->port_id);
       if (type == NULL) {
         ReportError("'%s' is not a valid get port.\n", get_actn->port.loc,
             get_actn->port.name);
@@ -600,7 +600,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case FBLC_PUT_ACTN: {
       PutActn* put_actn = (PutActn*)actn;
-      TypeDecl* port_type = ResolvePort(ports, &put_actn->port, POLARITY_PUT, &put_actn->port_id);
+      TypeDecl* port_type = ResolvePort(ports, &put_actn->port, FBLC_PUT_POLARITY, &put_actn->port_id);
       if (port_type == NULL) {
         ReportError("'%s' is not a valid put port.\n", put_actn->port.loc,
             put_actn->port.name);
@@ -642,12 +642,12 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       }
 
       for (int i = 0; i < proc->portc; i++) {
-        bool isput = (proc->portv[i].polarity == POLARITY_PUT);
+        bool isput = (proc->portv[i].polarity == FBLC_PUT_POLARITY);
         TypeDecl* port_type = NULL;
         if (isput) {
-          port_type = ResolvePort(ports, call_actn->ports + i, POLARITY_PUT, call_actn->port_ids + i);
+          port_type = ResolvePort(ports, call_actn->ports + i, FBLC_PUT_POLARITY, call_actn->port_ids + i);
         } else {
-          port_type = ResolvePort(ports, call_actn->ports + i, POLARITY_GET, call_actn->port_ids + i);
+          port_type = ResolvePort(ports, call_actn->ports + i, FBLC_GET_POLARITY, call_actn->port_ids + i);
         }
         if (port_type == NULL) {
           ReportError("'%s' is not a valid %s port.\n",
@@ -684,8 +684,8 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       TypeDecl* type = (TypeDecl*)env->declv[link_actn->type_id];
       Ports getport;
       Ports putport;
-      AddPort(&getport, link_actn->getname.name, type, POLARITY_GET, ports);
-      AddPort(&putport, link_actn->putname.name, type, POLARITY_PUT, &getport);
+      AddPort(&getport, link_actn->getname.name, type, FBLC_GET_POLARITY, ports);
+      AddPort(&putport, link_actn->putname.name, type, FBLC_PUT_POLARITY, &getport);
       return CheckActn(env, vars, &putport, link_actn->body);
     }
 
@@ -979,14 +979,14 @@ static bool CheckProc(Env* env, ProcDecl* proc)
   for (int i = 0; i < proc->portc; i++) {
     // TODO: Add tests that we properly resolved the port types?
     switch (proc->portv[i].polarity) {
-      case POLARITY_GET:
+      case FBLC_GET_POLARITY:
         ports = AddPort(nport++, proc->portv[i].name.name,
-            ResolveType(env, &proc->portv[i].type), POLARITY_GET, ports);
+            ResolveType(env, &proc->portv[i].type), FBLC_GET_POLARITY, ports);
         break;
 
-      case POLARITY_PUT:
+      case FBLC_PUT_POLARITY:
         ports = AddPort(nport++, proc->portv[i].name.name,
-            ResolveType(env, &proc->portv[i].type), POLARITY_PUT, ports);
+            ResolveType(env, &proc->portv[i].type), FBLC_PUT_POLARITY, ports);
         break;
     }
   }
