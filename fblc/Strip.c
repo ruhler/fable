@@ -7,47 +7,6 @@
 
 #include "fblct.h"
 
-static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
-{
-  switch (texpr->tag) {
-    case FBLC_VAR_EXPR: {
-      return (FblcExpr*)texpr;
-    }
-
-    case FBLC_APP_EXPR: {
-      return (FblcExpr*)texpr;
-    }
-
-    case FBLC_UNION_EXPR: {
-      return (FblcExpr*)texpr;
-    }
-
-    case FBLC_ACCESS_EXPR: {
-      return (FblcExpr*)texpr;
-    }
-
-    case FBLC_COND_EXPR: {
-      CondExpr* tcond = (CondExpr*)texpr;
-      FblcCondExpr* expr = arena->alloc(arena, sizeof(FblcCondExpr));
-      expr->tag = FBLC_COND_EXPR;
-      expr->select = StripExpr(arena, tcond->select);
-      FblcVectorInit(arena, expr->argv, expr->argc);
-      for (size_t i = 0; i < tcond->argc; ++i) {
-        FblcVectorAppend(arena, expr->argv, expr->argc, StripExpr(arena, tcond->argv[i]));
-      }
-      return (FblcExpr*)expr;
-    }
-
-    case FBLC_LET_EXPR: {
-      return (FblcExpr*)texpr;
-    }
-
-    default:
-      assert(false && "Invalid expression tag");
-      return NULL;
-  }
-}
-
 static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
 {
   switch (tactn->tag) {
@@ -55,7 +14,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       EvalActn* teval = (EvalActn*)tactn;
       FblcEvalActn* actn = arena->alloc(arena, sizeof(FblcEvalActn));
       actn->tag = FBLC_EVAL_ACTN;
-      actn->expr = StripExpr(arena, teval->expr);
+      actn->expr = (FblcExpr*)teval->expr;
       return (FblcActn*)actn;
     }
 
@@ -72,7 +31,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       FblcPutActn* actn = arena->alloc(arena, sizeof(FblcPutActn));
       actn->tag = FBLC_PUT_ACTN;
       actn->port = tput->port_id;
-      actn->arg = StripExpr(arena, tput->expr);
+      actn->arg = (FblcExpr*)tput->expr;
       return (FblcActn*)actn;
     }
 
@@ -80,7 +39,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       CondActn* tcond = (CondActn*)tactn;
       FblcCondActn* actn = arena->alloc(arena, sizeof(FblcCondActn));
       actn->tag = FBLC_COND_ACTN;
-      actn->select = StripExpr(arena, tcond->select);
+      actn->select = (FblcExpr*)tcond->select;
       FblcVectorInit(arena, actn->argv, actn->argc);
       for (size_t i = 0; i < tcond->argc; ++i) {
         FblcVectorAppend(arena, actn->argv, actn->argc, StripActn(arena, tcond->args[i]));
@@ -99,7 +58,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       }
       FblcVectorInit(arena, actn->argv, actn->argc);
       for (size_t i = 0; i < tcall->exprc; ++i) {
-        FblcVectorAppend(arena, actn->argv, actn->argc, StripExpr(arena, tcall->exprs[i]));
+        FblcVectorAppend(arena, actn->argv, actn->argc, (FblcExpr*)tcall->exprs[i]);
       }
       return (FblcActn*)actn;
     }
@@ -155,7 +114,7 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
         FblcVectorAppend(arena, decl->argv, decl->argc, tfunc->argv[i].type_id);
       }
       decl->return_type = tfunc->return_type_id;
-      decl->body = StripExpr(arena, tfunc->body);
+      decl->body = (FblcExpr*)tfunc->body;
       return (FblcDecl*)decl;
     }
 

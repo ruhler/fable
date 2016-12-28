@@ -80,7 +80,7 @@ static Loc* ExprLoc(Expr* expr)
 
     case FBLC_COND_EXPR: {
       CondExpr* cond_expr = (CondExpr*)expr;
-      return ExprLoc(cond_expr->select);
+      return ExprLoc((Expr*)cond_expr->x.select);
     }
 
     default:
@@ -516,7 +516,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case FBLC_COND_EXPR: {
       CondExpr* cond_expr = (CondExpr*)expr;
-      TypeDecl* type = CheckExpr(env, vars, cond_expr->select);
+      TypeDecl* type = CheckExpr(env, vars, (Expr*)cond_expr->x.select);
       if (type == NULL) {
         return NULL;
       }
@@ -527,15 +527,15 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      if (type->fieldc != cond_expr->argc) {
+      if (type->fieldc != cond_expr->x.argc) {
         ReportError("Wrong number of arguments to condition. Expected %d, "
-            "but found %d.\n", ExprLoc(expr), type->fieldc, cond_expr->argc);
+            "but found %d.\n", ExprLoc(expr), type->fieldc, cond_expr->x.argc);
         return NULL;
       }
 
       TypeDecl* result_type = NULL;
-      for (int i = 0; i < cond_expr->argc; i++) {
-        TypeDecl* arg_type = CheckExpr(env, vars, cond_expr->argv[i]);
+      for (int i = 0; i < cond_expr->x.argc; i++) {
+        TypeDecl* arg_type = CheckExpr(env, vars, (Expr*)cond_expr->x.argv[i]);
         if (arg_type == NULL) {
           return NULL;
         }
@@ -543,7 +543,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         if (result_type != NULL && result_type != arg_type) {
           ReportError("Expected expression of type %s, "
               "but found expression of type %s.\n",
-              ExprLoc(cond_expr->argv[i]), result_type->name.name, arg_type->name.name);
+              ExprLoc((Expr*)cond_expr->x.argv[i]), result_type->name.name, arg_type->name.name);
           return NULL;
         }
         result_type = arg_type;

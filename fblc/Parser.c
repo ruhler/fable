@@ -777,10 +777,10 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return NULL;
     }
     CondExpr* cond_expr = arena->alloc(arena, sizeof(CondExpr));
-    cond_expr->tag = FBLC_COND_EXPR;
-    cond_expr->select = condition;
-    cond_expr->argc = argc;
-    cond_expr->argv = args;
+    cond_expr->x.tag = FBLC_COND_EXPR;
+    cond_expr->x.select = (FblcExpr*)condition;
+    cond_expr->x.argc = argc;
+    cond_expr->x.argv = (FblcExpr**)args;
     expr = (Expr*)cond_expr;
   } else {
     UnexpectedToken(toks, "an expression");

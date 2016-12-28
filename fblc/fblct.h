@@ -75,10 +75,7 @@ typedef struct {
 
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
 typedef struct {
-  FblcExprTag tag;
-  Expr* select;
-  int argc;
-  Expr** argv;
+  FblcCondExpr x;
 } CondExpr;
 
 typedef struct {
