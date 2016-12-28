@@ -969,25 +969,27 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       ExecActn* exec_actn = arena->alloc(arena, sizeof(ExecActn));
       exec_actn->tag = FBLC_EXEC_ACTN;
 
+      size_t varc;
       FblcVectorInit(arena, exec_actn->execv, exec_actn->execc);
+      FblcVectorInit(arena, exec_actn->vars, varc);
       bool first = true;
       while (first || IsToken(toks, ',')) {
-        FblcVectorExtend(arena, exec_actn->execv, exec_actn->execc);
-        Exec* exec = exec_actn->execv + exec_actn->execc++;
+        FblcVectorExtend(arena, exec_actn->vars, varc);
+        Field* var = exec_actn->vars + varc++;
         if (first) {
-          exec->var.type.loc = name.loc;
-          exec->var.type.name = name.name;
+          var->type.loc = name.loc;
+          var->type.name = name.name;
           first = false;
         } else {
           assert(IsToken(toks, ','));
           GetToken(toks, ',');
 
-          if (!GetNameToken(arena, toks, "type name", &(exec->var.type))) {
+          if (!GetNameToken(arena, toks, "type name", &(var->type))) {
             return NULL;
           }
         }
 
-        if (!GetNameToken(arena, toks, "variable name", &(exec->var.name))) {
+        if (!GetNameToken(arena, toks, "variable name", &(var->name))) {
           return NULL;
         }
 
@@ -995,10 +997,11 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
           return NULL;
         }
 
-        exec->actn = ParseActn(arena, toks, false);
-        if (exec->actn == NULL) {
+        Actn* exec = ParseActn(arena, toks, false);
+        if (exec == NULL) {
           return NULL;
         }
+        FblcVectorAppend(arena, exec_actn->execv, exec_actn->execc, exec);
       };
 
       if (!GetToken(toks, ';')) {

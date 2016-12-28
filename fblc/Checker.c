@@ -121,7 +121,7 @@ static Loc* ActnLoc(Actn* actn)
 
     case FBLC_EXEC_ACTN: {
       ExecActn* exec_actn = (ExecActn*)actn;
-      return exec_actn->execv[0].var.type.loc;
+      return exec_actn->vars[0].type.loc;
     }
 
     case FBLC_COND_ACTN: {
@@ -694,21 +694,22 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       Vars vars_data[exec_actn->execc];
       Vars* nvars = vars;
       for (int i = 0; i < exec_actn->execc; i++) {
-        Exec* exec = &(exec_actn->execv[i]);
-        TypeDecl* type = CheckActn(env, vars, ports, exec->actn);
+        Field* var = exec_actn->vars + i;
+        Actn* exec = exec_actn->execv[i];
+        TypeDecl* type = CheckActn(env, vars, ports, exec);
         if (type == NULL) {
           return NULL;
         }
 
         // TODO: Test that we verify actual_type is not null?
-        TypeDecl* actual_type = ResolveType(env, &exec->var.type);
+        TypeDecl* actual_type = ResolveType(env, &var->type);
         if (actual_type != type) {
           ReportError("Expected type %s, but found %s.\n",
-              exec->var.type.loc, exec->var.type.name, type->name.name);
+              var->type.loc, var->type.name, type->name.name);
           return NULL;
         }
 
-        nvars = AddVar(vars_data+i, exec->var.name.name, actual_type, nvars);
+        nvars = AddVar(vars_data+i, var->name.name, actual_type, nvars);
       }
       return CheckActn(env, nvars, ports, exec_actn->body);
     }

@@ -37,7 +37,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       actn->tag = FBLC_EXEC_ACTN;
       FblcVectorInit(arena, actn->execv, actn->execc);
       for (size_t i = 0; i < texec->execc; ++i) {
-        FblcVectorAppend(arena, actn->execv, actn->execc, StripActn(arena, texec->execv[i].actn));
+        FblcVectorAppend(arena, actn->execv, actn->execc, StripActn(arena, texec->execv[i]));
       }
       actn->body = StripActn(arena, texec->body);
       return (FblcActn*)actn;

@@ -148,24 +148,20 @@ typedef struct {
 //    <tname> '<~>' <pname> ',' <pname> ';' <actn>
 typedef struct {
   FblcActnTag tag;
+  FblcTypeId type_id;
+  Actn* body;
   LocName type;
   LocName getname;
   LocName putname;
-  Actn* body;
-  FblcTypeId type_id;
 } LinkActn;
-
-typedef struct {
-  Field var;
-  Actn* actn;
-} Exec;
 
 // EXEC_ACTN: Processes of the form:
 //    <tname> <vname> = <actn>,  ...  ; <body>
 typedef struct {
   FblcActnTag tag;
   int execc;
-  Exec* execv;          // Array of execc execs.
+  Actn** execv;          // Array of execc actions.
+  Field* vars;           // Array of execc fields.
   Actn* body;
 } ExecActn;
 
