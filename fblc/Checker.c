@@ -65,7 +65,7 @@ static Loc* ExprLoc(Expr* expr)
 
     case FBLC_ACCESS_EXPR: {
       AccessExpr* access_expr = (AccessExpr*)expr;
-      return ExprLoc(access_expr->object);
+      return ExprLoc((Expr*)access_expr->x.object);
     }
 
     case FBLC_UNION_EXPR: {
@@ -429,14 +429,14 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case FBLC_ACCESS_EXPR: {
       AccessExpr* access_expr = (AccessExpr*)expr;
-      TypeDecl* type = CheckExpr(env, vars, access_expr->object);
+      TypeDecl* type = CheckExpr(env, vars, (Expr*)access_expr->x.object);
       if (type == NULL) {
         return NULL;
       }
 
       for (int i = 0; i < type->fieldc; i++) {
         if (NamesEqual(type->fieldv[i].name.name, access_expr->field.name)) {
-          access_expr->field_id = i;
+          access_expr->x.field = i;
           return ResolveType(env, &type->fieldv[i].type);
         }
       }

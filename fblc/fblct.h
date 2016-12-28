@@ -55,9 +55,7 @@ typedef struct {
 
 // ACCESS_EXPR: Member access expressions of the form: <object>.<field>
 typedef struct {
-  FblcExprTag tag;
-  Expr* object;
-  FblcFieldId field_id;
+  FblcAccessExpr x;
   LocName field;
 } AccessExpr;
 

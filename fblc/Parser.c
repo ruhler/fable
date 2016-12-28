@@ -792,9 +792,9 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
 
     // This is an access expression of the form: <expr>.<field>
     AccessExpr* access_expr = arena->alloc(arena, sizeof(AccessExpr));
-    access_expr->tag = FBLC_ACCESS_EXPR;
-    access_expr->object = expr;
-    access_expr->field_id = UNRESOLVED_ID;
+    access_expr->x.tag = FBLC_ACCESS_EXPR;
+    access_expr->x.object = (FblcExpr*)expr;
+    access_expr->x.field = UNRESOLVED_ID;
     if (!GetNameToken(arena, toks, "field name", &(access_expr->field))) {
       return NULL;
     }

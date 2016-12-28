@@ -29,12 +29,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
     }
 
     case FBLC_ACCESS_EXPR: {
-      AccessExpr* taccess = (AccessExpr*)texpr;
-      FblcAccessExpr* expr = arena->alloc(arena, sizeof(FblcAccessExpr));
-      expr->tag = FBLC_ACCESS_EXPR;
-      expr->object = StripExpr(arena, taccess->object);
-      expr->field = taccess->field_id;
-      return (FblcExpr*)expr;
+      return (FblcExpr*)texpr;
     }
 
     case FBLC_COND_EXPR: {
