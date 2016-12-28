@@ -61,10 +61,7 @@ typedef struct {
 
 // UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
 typedef struct {
-  FblcExprTag tag;
-  FblcTypeId type_id;
-  FblcFieldId field_id;
-  Expr* body;
+  FblcUnionExpr x;
   LocName type;
   LocName field;
 } UnionExpr;

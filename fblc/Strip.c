@@ -19,13 +19,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
     }
 
     case FBLC_UNION_EXPR: {
-      UnionExpr* tunion = (UnionExpr*)texpr;
-      FblcUnionExpr* expr = arena->alloc(arena, sizeof(FblcUnionExpr));
-      expr->tag = FBLC_UNION_EXPR;
-      expr->type = tunion->type_id;
-      expr->field = tunion->field_id;
-      expr->body = StripExpr(arena, tunion->body);
-      return (FblcExpr*)expr;
+      return (FblcExpr*)texpr;
     }
 
     case FBLC_ACCESS_EXPR: {

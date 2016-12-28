@@ -447,12 +447,12 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case FBLC_UNION_EXPR: {
       UnionExpr* union_expr = (UnionExpr*)expr;
-      union_expr->type_id = LookupType(env, union_expr->type.name);
-      if (union_expr->type_id == UNRESOLVED_ID) {
+      union_expr->x.type = LookupType(env, union_expr->type.name);
+      if (union_expr->x.type == UNRESOLVED_ID) {
         ReportError("Type %s not found.\n", union_expr->type.loc, union_expr->type.name);
         return NULL;
       }
-      TypeDecl* type = (TypeDecl*)env->declv[union_expr->type_id];
+      TypeDecl* type = (TypeDecl*)env->declv[union_expr->x.type];
 
       if (type->tag != UNION_DECL) {
         ReportError("Type %s is not a union type.\n",
@@ -460,7 +460,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      TypeDecl* arg_type = CheckExpr(env, vars, union_expr->body);
+      TypeDecl* arg_type = CheckExpr(env, vars, (Expr*)union_expr->x.body);
       if (arg_type == NULL) {
         return NULL;
       }
@@ -469,11 +469,11 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         if (NamesEqual(type->fieldv[i].name.name, union_expr->field.name)) {
           if (!NamesEqual(type->fieldv[i].type.name, arg_type->name.name)) {
             ReportError("Expected type '%s', but found type '%s'.\n",
-                ExprLoc(union_expr->body),
+                ExprLoc((Expr*)union_expr->x.body),
                 type->fieldv[i].type.name, arg_type);
             return NULL;
           }
-          union_expr->field_id = i;
+          union_expr->x.field = i;
           return ResolveType(env, &type->name);
         }
       }

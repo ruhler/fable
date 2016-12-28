@@ -704,19 +704,19 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       // This is a union expression of the form: start:field(<expr>)
       GetToken(toks, ':');
       UnionExpr* union_expr = arena->alloc(arena, sizeof(UnionExpr));
-      union_expr->tag = FBLC_UNION_EXPR;
+      union_expr->x.tag = FBLC_UNION_EXPR;
+      union_expr->x.type = UNRESOLVED_ID;
+      union_expr->x.field = UNRESOLVED_ID;
       union_expr->type.name = start.name;
       union_expr->type.loc = start.loc;
-      union_expr->type_id = UNRESOLVED_ID;
-      union_expr->field_id = UNRESOLVED_ID;
       if (!GetNameToken(arena, toks, "field name", &(union_expr->field))) {
         return NULL;
       }
       if (!GetToken(toks, '(')) {
         return NULL;
       }
-      union_expr->body = ParseExpr(arena, toks, false);
-      if (union_expr->body == NULL) {
+      union_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, false);
+      if (union_expr->x.body == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ')')) {
