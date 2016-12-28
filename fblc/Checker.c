@@ -625,7 +625,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       for (size_t i = 0; i < env->declc; ++i) {
         Decl* decl = env->declv[i];
         if (decl->tag == FBLC_PROC_DECL && NamesEqual(decl->name.name, call_actn->proc.name)) {
-          call_actn->proc_id = i;
+          call_actn->x.proc = i;
           proc = (ProcDecl*)decl;
         }
       }
@@ -634,10 +634,10 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         return NULL;
       }
 
-      if (call_actn->portc  != proc->portc) {
+      if (call_actn->x.portc  != proc->portc) {
         ReportError("Wrong number of port arguments to %s. Expected %d, "
             "but got %d.\n", call_actn->proc.loc, call_actn->proc.name,
-            proc->portc, call_actn->portc);
+            proc->portc, call_actn->x.portc);
         return NULL;
       }
 
@@ -645,9 +645,9 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         bool isput = (proc->portv[i].polarity == FBLC_PUT_POLARITY);
         TypeDecl* port_type = NULL;
         if (isput) {
-          port_type = ResolvePort(ports, call_actn->ports + i, FBLC_PUT_POLARITY, call_actn->port_ids + i);
+          port_type = ResolvePort(ports, call_actn->ports + i, FBLC_PUT_POLARITY, call_actn->x.portv + i);
         } else {
-          port_type = ResolvePort(ports, call_actn->ports + i, FBLC_GET_POLARITY, call_actn->port_ids + i);
+          port_type = ResolvePort(ports, call_actn->ports + i, FBLC_GET_POLARITY, call_actn->x.portv + i);
         }
         if (port_type == NULL) {
           ReportError("'%s' is not a valid %s port.\n",
@@ -664,8 +664,8 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         }
       }
 
-      if (!CheckArgs(env, vars, proc->argc, proc->argv, call_actn->exprc,
-            call_actn->exprs, &(call_actn->proc))) {
+      if (!CheckArgs(env, vars, proc->argc, proc->argv, call_actn->x.argc,
+            (Expr**)call_actn->x.argv, &(call_actn->proc))) {
         return NULL;
       }
       return ResolveType(env, &proc->return_type);

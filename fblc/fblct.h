@@ -139,14 +139,9 @@ typedef struct {
 
 // CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
 typedef struct {
-  FblcActnTag tag;
+  FblcCallActn x;
   LocName proc;
-  int portc;
-  LocName* ports;   // Array of portc ports
-  int exprc;
-  Expr** exprs;      // Array of exprc exprs
-  FblcDeclId proc_id;
-  FblcPortId* port_ids;
+  LocName* ports;   // Array of x.portc ports
 } CallActn;
 
 // LINK_ACTN: Processes of the form:

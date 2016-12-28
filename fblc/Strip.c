@@ -22,22 +22,6 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       return (FblcActn*)actn;
     }
 
-    case FBLC_CALL_ACTN: {
-      CallActn* tcall = (CallActn*)tactn;
-      FblcCallActn* actn = arena->alloc(arena, sizeof(FblcCallActn));
-      actn->tag = FBLC_CALL_ACTN;
-      actn->proc = tcall->proc_id;
-      FblcVectorInit(arena, actn->portv, actn->portc);
-      for (size_t i = 0; i < tcall->portc; ++i) {
-        FblcVectorAppend(arena, actn->portv, actn->portc, tcall->port_ids[i]);
-      }
-      FblcVectorInit(arena, actn->argv, actn->argc);
-      for (size_t i = 0; i < tcall->exprc; ++i) {
-        FblcVectorAppend(arena, actn->argv, actn->argc, (FblcExpr*)tcall->exprs[i]);
-      }
-      return (FblcActn*)actn;
-    }
-
     case FBLC_LINK_ACTN: {
       LinkActn* tlink = (LinkActn*)tactn;
       FblcLinkActn* actn = arena->alloc(arena, sizeof(FblcLinkActn));

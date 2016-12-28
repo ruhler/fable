@@ -894,29 +894,29 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else if (IsToken(toks, '(')) {
       GetToken(toks, '(');
       CallActn* call_actn = arena->alloc(arena, sizeof(CallActn));
-      call_actn->tag = FBLC_CALL_ACTN;
+      call_actn->x.tag = FBLC_CALL_ACTN;
+      call_actn->x.proc = UNRESOLVED_ID;
       call_actn->proc.loc = name.loc;
       call_actn->proc.name = name.name;
-      call_actn->proc_id = UNRESOLVED_ID;
 
-      FblcVectorInit(arena, call_actn->ports, call_actn->portc);
+      FblcVectorInit(arena, call_actn->ports, call_actn->x.portc);
       if (!IsToken(toks, ';')) {
-        FblcVectorExtend(arena, call_actn->ports, call_actn->portc);
-        if (!GetNameToken(arena, toks, "port name", call_actn->ports + call_actn->portc++)) {
+        FblcVectorExtend(arena, call_actn->ports, call_actn->x.portc);
+        if (!GetNameToken(arena, toks, "port name", call_actn->ports + call_actn->x.portc++)) {
           return NULL;
         }
 
         while (IsToken(toks, ',')) {
           GetToken(toks, ',');
-          FblcVectorExtend(arena, call_actn->ports, call_actn->portc);
-          if (!GetNameToken(arena, toks, "port name", call_actn->ports + call_actn->portc++)) {
+          FblcVectorExtend(arena, call_actn->ports, call_actn->x.portc);
+          if (!GetNameToken(arena, toks, "port name", call_actn->ports + call_actn->x.portc++)) {
             return NULL;
           }
         }
       }
-      call_actn->port_ids = arena->alloc(arena, call_actn->portc * sizeof(FblcPortId));
-      for (size_t i = 0; i < call_actn->portc; ++i) {
-        call_actn->port_ids[i] = UNRESOLVED_ID;
+      call_actn->x.portv = arena->alloc(arena, call_actn->x.portc * sizeof(FblcPortId));
+      for (size_t i = 0; i < call_actn->x.portc; ++i) {
+        call_actn->x.portv[i] = UNRESOLVED_ID;
       }
 
       if (!GetToken(toks, ';')) {
@@ -928,8 +928,8 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (exprc < 0) {
         return NULL;
       }
-      call_actn->exprc = exprc;
-      call_actn->exprs = args;
+      call_actn->x.argc = exprc;
+      call_actn->x.argv = (FblcExpr**)args;
       actn = (Actn*)call_actn;
     } else if (in_stmt && IsToken(toks, '<')) {
       GetToken(toks, '<');
