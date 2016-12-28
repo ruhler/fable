@@ -693,12 +693,12 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
         return NULL;
       }
       AppExpr* app_expr = arena->alloc(arena, sizeof(AppExpr));
-      app_expr->tag = FBLC_APP_EXPR;
+      app_expr->x.tag = FBLC_APP_EXPR;
+      app_expr->x.func = UNRESOLVED_ID;
+      app_expr->x.argc = argc;
+      app_expr->x.argv = (FblcExpr**)args;
       app_expr->func.name = start.name;
       app_expr->func.loc = start.loc;
-      app_expr->argc = argc;
-      app_expr->argv = args;
-      app_expr->func_id = UNRESOLVED_ID;
       expr = (Expr*)app_expr;
     } else if (IsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)

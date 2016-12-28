@@ -15,15 +15,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
     }
 
     case FBLC_APP_EXPR: {
-      AppExpr* tapp = (AppExpr*)texpr;
-      FblcAppExpr* expr = arena->alloc(arena, sizeof(FblcAppExpr));
-      expr->tag = FBLC_APP_EXPR;
-      expr->func = tapp->func_id;
-      FblcVectorInit(arena, expr->argv, expr->argc);
-      for (size_t i = 0; i < tapp->argc; ++i) {
-        FblcVectorAppend(arena, expr->argv, expr->argc, StripExpr(arena, tapp->argv[i]));
-      }
-      return (FblcExpr*)expr;
+      return (FblcExpr*)texpr;
     }
 
     case FBLC_UNION_EXPR: {

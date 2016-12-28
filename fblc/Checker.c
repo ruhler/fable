@@ -381,7 +381,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       Decl* decl = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
         if (NamesEqual(app_expr->func.name, env->declv[i]->name.name)) {
-          app_expr->func_id = i;
+          app_expr->x.func = i;
           decl = env->declv[i];
         }
       }
@@ -394,7 +394,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         case STRUCT_DECL: {
           TypeDecl* type = (TypeDecl*)decl;
           if (!CheckArgs(env, vars, type->fieldc, type->fieldv,
-                app_expr->argc, app_expr->argv, &(app_expr->func))) {
+                app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
             return NULL;
           }
           return type;
@@ -409,7 +409,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         case FUNC_DECL: {
           FuncDecl* func = (FuncDecl*)decl;
           if (!CheckArgs(env, vars, func->argc, func->argv,
-                app_expr->argc, app_expr->argv, &(app_expr->func))) {
+                app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
             return NULL;
           }
           return ResolveType(env, &func->return_type);

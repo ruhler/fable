@@ -24,9 +24,6 @@ void ReportError(const char* format, Loc* loc, ...);
 
 // LocName stores a name along with a location for error reporting purposes.
 // The id field contains the id of name as used in the binary encoded program.
-// Initial id will be UNRESOLVED_ID. Relevant ids are resolved during the type
-// checking phase.
-#define UNRESOLVED_ID (-1)
 typedef struct LocName {
   Loc* loc;
   Name name;
@@ -35,6 +32,10 @@ typedef struct LocName {
 // Expr is the base structure for all  expressions. Each
 // specialization of Expr has the same initial layout with tag and
 // location.
+
+// Initial ids are set to UNRESOLVED_ID. Relevant ids are resolved during the
+// type checking phase.
+#define UNRESOLVED_ID (-1)
 
 typedef struct {
   FblcExprTag tag;
@@ -48,10 +49,7 @@ typedef struct {
 
 // APP_EXPR: Application expressions of the form: <func>(<argv>)
 typedef struct {
-  FblcExprTag tag;
-  FblcDeclId func_id;
-  int argc;
-  Expr** argv;
+  FblcAppExpr x;
   LocName func;
 } AppExpr;
 
