@@ -10,18 +10,6 @@
 static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
 {
   switch (tactn->tag) {
-    case FBLC_EVAL_ACTN: {
-      return (FblcActn*)tactn;
-    }
-
-    case FBLC_GET_ACTN: {
-      GetActn* tget = (GetActn*)tactn;
-      FblcGetActn* actn = arena->alloc(arena, sizeof(FblcGetActn));
-      actn->tag = FBLC_GET_ACTN;
-      actn->port = tget->port_id;
-      return (FblcActn*)actn;
-    }
-
     case FBLC_PUT_ACTN: {
       PutActn* tput = (PutActn*)tactn;
       FblcPutActn* actn = arena->alloc(arena, sizeof(FblcPutActn));
@@ -80,9 +68,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
       return (FblcActn*)actn;
     }
 
-    default:
-      assert(false && "Invalid action tag");
-      return NULL;
+    default: return (FblcActn*)tactn;
   }
 }
 

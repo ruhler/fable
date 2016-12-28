@@ -589,7 +589,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case FBLC_GET_ACTN: {
       GetActn* get_actn = (GetActn*)actn;
-      TypeDecl* type = ResolvePort(ports, &get_actn->port, FBLC_GET_POLARITY, &get_actn->port_id);
+      TypeDecl* type = ResolvePort(ports, &get_actn->port, FBLC_GET_POLARITY, &get_actn->x.port);
       if (type == NULL) {
         ReportError("'%s' is not a valid get port.\n", get_actn->port.loc,
             get_actn->port.name);

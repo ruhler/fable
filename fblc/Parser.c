@@ -869,10 +869,10 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (IsToken(toks, ')')) {
         GetToken(toks, ')');
         GetActn* get_actn = arena->alloc(arena, sizeof(GetActn));
-        get_actn->tag = FBLC_GET_ACTN;
+        get_actn->x.tag = FBLC_GET_ACTN;
+        get_actn->x.port = UNRESOLVED_ID;
         get_actn->port.loc = name.loc;
         get_actn->port.name = name.name;
-        get_actn->port_id = UNRESOLVED_ID;
         actn = (Actn*)get_actn;
       } else {
         Expr* expr = ParseExpr(arena, toks, false);

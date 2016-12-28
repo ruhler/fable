@@ -127,9 +127,8 @@ typedef struct {
 
 // GET_ACTN: Processes of the form: <pname>~()
 typedef struct {
-  FblcActnTag tag;
+  FblcGetActn x;
   LocName port;
-  FblcPortId port_id;
 } GetActn;
 
 // PUT_ACTN: Processes of the form: <pname>~(<expr>)
