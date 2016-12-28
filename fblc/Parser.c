@@ -726,22 +726,22 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       LetExpr* let_expr = arena->alloc(arena, sizeof(LetExpr));
-      let_expr->tag = FBLC_LET_EXPR;
+      let_expr->x.tag = FBLC_LET_EXPR;
       let_expr->type.name = start.name;
       let_expr->type.loc = start.loc;
       GetNameToken(arena, toks, "variable name", &(let_expr->name));
       if (!GetToken(toks, '=')) {
         return NULL;
       }
-      let_expr->def = ParseExpr(arena, toks, false);
-      if (let_expr->def == NULL) {
+      let_expr->x.def = (FblcExpr*)ParseExpr(arena, toks, false);
+      if (let_expr->x.def == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      let_expr->body = ParseExpr(arena, toks, true);
-      if (let_expr->body == NULL) {
+      let_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, true);
+      if (let_expr->x.body == NULL) {
         return NULL;
       }
 

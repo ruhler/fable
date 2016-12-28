@@ -68,9 +68,7 @@ typedef struct {
 
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
-  FblcExprTag tag;
-  Expr* def;
-  Expr* body;
+  FblcLetExpr x;
   LocName type;
   LocName name;
 } LetExpr;

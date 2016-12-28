@@ -39,12 +39,7 @@ static FblcExpr* StripExpr(FblcArena* arena, Expr* texpr)
     }
 
     case FBLC_LET_EXPR: {
-      LetExpr* tlet = (LetExpr*)texpr;
-      FblcLetExpr* expr = arena->alloc(arena, sizeof(FblcLetExpr));
-      expr->tag = FBLC_LET_EXPR;
-      expr->def = StripExpr(arena, tlet->def);
-      expr->body = StripExpr(arena, tlet->body);
-      return (FblcExpr*)expr;
+      return (FblcExpr*)texpr;
     }
 
     default:

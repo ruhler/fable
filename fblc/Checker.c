@@ -498,20 +498,20 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      TypeDecl* actual_type = CheckExpr(env, vars, let_expr->def);
+      TypeDecl* actual_type = CheckExpr(env, vars, (Expr*)let_expr->x.def);
       if (actual_type == NULL) {
         return NULL;
       }
 
       if (declared_type != actual_type) {
         ReportError("Expected type %s, but found expression of type %s.\n",
-            ExprLoc(let_expr->def), let_expr->type.name, actual_type->name.name);
+            ExprLoc((Expr*)let_expr->x.def), let_expr->type.name, actual_type->name.name);
         return NULL;
       }
 
       Vars nvars;
       AddVar(&nvars, let_expr->name.name, actual_type, vars);
-      return CheckExpr(env, &nvars, let_expr->body);
+      return CheckExpr(env, &nvars, (Expr*)let_expr->x.body);
     }
 
     case FBLC_COND_EXPR: {
