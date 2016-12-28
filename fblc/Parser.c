@@ -958,12 +958,12 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
         return NULL;
       }
       LinkActn* link_actn = arena->alloc(arena, sizeof(LinkActn));
-      link_actn->tag = FBLC_LINK_ACTN;
+      link_actn->x.tag = FBLC_LINK_ACTN;
+      link_actn->x.type = UNRESOLVED_ID;
+      link_actn->x.body = (FblcActn*)body;
       link_actn->type = name;
       link_actn->getname = getname;
       link_actn->putname = putname;
-      link_actn->body = body;
-      link_actn->type_id = UNRESOLVED_ID;
       return (Actn*)link_actn;
     } else if (in_stmt && IsNameToken(toks)) {
       ExecActn* exec_actn = arena->alloc(arena, sizeof(ExecActn));

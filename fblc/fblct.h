@@ -147,9 +147,7 @@ typedef struct {
 // LINK_ACTN: Processes of the form:
 //    <tname> '<~>' <pname> ',' <pname> ';' <actn>
 typedef struct {
-  FblcActnTag tag;
-  FblcTypeId type_id;
-  Actn* body;
+  FblcLinkActn x;
   LocName type;
   LocName getname;
   LocName putname;

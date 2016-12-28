@@ -674,19 +674,19 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
     case FBLC_LINK_ACTN: {
       // TODO: Test that we verify the link type resolves?
       LinkActn* link_actn = (LinkActn*)actn;
-      link_actn->type_id = LookupType(env, link_actn->type.name);
-      if (link_actn->type_id == UNRESOLVED_ID) {
+      link_actn->x.type = LookupType(env, link_actn->type.name);
+      if (link_actn->x.type == UNRESOLVED_ID) {
         ReportError("Type '%s' not declared.\n",
             link_actn->type.loc, link_actn->type.name);
         return NULL;
       }
 
-      TypeDecl* type = (TypeDecl*)env->declv[link_actn->type_id];
+      TypeDecl* type = (TypeDecl*)env->declv[link_actn->x.type];
       Ports getport;
       Ports putport;
       AddPort(&getport, link_actn->getname.name, type, FBLC_GET_POLARITY, ports);
       AddPort(&putport, link_actn->putname.name, type, FBLC_PUT_POLARITY, &getport);
-      return CheckActn(env, vars, &putport, link_actn->body);
+      return CheckActn(env, vars, &putport, (Actn*)link_actn->x.body);
     }
 
     case FBLC_EXEC_ACTN: {

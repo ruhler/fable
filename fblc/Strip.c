@@ -7,22 +7,6 @@
 
 #include "fblct.h"
 
-static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
-{
-  switch (tactn->tag) {
-    case FBLC_LINK_ACTN: {
-      LinkActn* tlink = (LinkActn*)tactn;
-      FblcLinkActn* actn = arena->alloc(arena, sizeof(FblcLinkActn));
-      actn->tag = FBLC_LINK_ACTN;
-      actn->type = tlink->type_id;
-      actn->body = StripActn(arena, tlink->body);
-      return (FblcActn*)actn;
-    }
-
-    default: return (FblcActn*)tactn;
-  }
-}
-
 static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
 {
   switch (tdecl->tag) {
@@ -66,7 +50,7 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
         FblcVectorAppend(arena, decl->argv, decl->argc, tproc->argv[i].type_id);
       }
       decl->return_type = tproc->return_type_id;
-      decl->body = StripActn(arena, tproc->body);
+      decl->body = (FblcActn*)tproc->body;
       return (FblcDecl*)decl;
     }
 
