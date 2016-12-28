@@ -853,8 +853,8 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
 
     EvalActn* eval_actn = arena->alloc(arena, sizeof(EvalActn));
-    eval_actn->tag = FBLC_EVAL_ACTN;
-    eval_actn->expr = expr;
+    eval_actn->x.tag = FBLC_EVAL_ACTN;
+    eval_actn->x.expr = (FblcExpr*)expr;
     actn = (Actn*)eval_actn;
   } else if (IsNameToken(toks)) {
     LocName name;

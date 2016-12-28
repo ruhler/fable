@@ -122,8 +122,7 @@ typedef struct {
 
 // EVAL_ACTN: Processes of the form: $(<expr>)
 typedef struct {
-  FblcActnTag tag;
-  Expr* expr;
+  FblcEvalActn x;
 } EvalActn;
 
 // GET_ACTN: Processes of the form: <pname>~()

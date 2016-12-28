@@ -11,11 +11,7 @@ static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
 {
   switch (tactn->tag) {
     case FBLC_EVAL_ACTN: {
-      EvalActn* teval = (EvalActn*)tactn;
-      FblcEvalActn* actn = arena->alloc(arena, sizeof(FblcEvalActn));
-      actn->tag = FBLC_EVAL_ACTN;
-      actn->expr = (FblcExpr*)teval->expr;
-      return (FblcActn*)actn;
+      return (FblcActn*)tactn;
     }
 
     case FBLC_GET_ACTN: {

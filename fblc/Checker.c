@@ -96,7 +96,7 @@ static Loc* ActnLoc(Actn* actn)
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       EvalActn* eval_actn = (EvalActn*)actn;
-      return ExprLoc(eval_actn->expr);
+      return ExprLoc((Expr*)eval_actn->x.expr);
     }
 
     case FBLC_GET_ACTN: {
@@ -584,7 +584,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       EvalActn* eval_actn = (EvalActn*)actn;
-      return CheckExpr(env, vars, eval_actn->expr);
+      return CheckExpr(env, vars, (Expr*)eval_actn->x.expr);
     }
 
     case FBLC_GET_ACTN: {
