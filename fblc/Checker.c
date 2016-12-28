@@ -153,7 +153,7 @@ static FblcTypeId LookupType(Env* env, Name name)
 {
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
-    if ((decl->tag == STRUCT_DECL || decl->tag == UNION_DECL)
+    if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
         && NamesEqual(decl->name.name, name)) {
       return i;
     }
@@ -179,7 +179,7 @@ static TypeDecl* ResolveType(Env* env, LocName* name)
 {
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
-    if ((decl->tag == STRUCT_DECL || decl->tag == UNION_DECL)
+    if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
         && NamesEqual(decl->name.name, name->name)) {
       return (TypeDecl*)decl;
     }
@@ -391,7 +391,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       }
 
       switch (decl->tag) {
-        case STRUCT_DECL: {
+        case FBLC_STRUCT_DECL: {
           TypeDecl* type = (TypeDecl*)decl;
           if (!CheckArgs(env, vars, type->fieldc, type->fieldv,
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
@@ -400,13 +400,13 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
           return type;
         }
 
-        case UNION_DECL: {
+        case FBLC_UNION_DECL: {
           ReportError("Cannot do application on union type %s.\n",
               app_expr->func.loc, app_expr->func.name);
           return NULL;
         }
 
-        case FUNC_DECL: {
+        case FBLC_FUNC_DECL: {
           FuncDecl* func = (FuncDecl*)decl;
           if (!CheckArgs(env, vars, func->argc, func->argv,
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
@@ -415,7 +415,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
           return ResolveType(env, &func->return_type);
         }
 
-        case PROC_DECL: {
+        case FBLC_PROC_DECL: {
           ReportError("Cannot do application on a process %s.\n",
               app_expr->func.loc, app_expr->func.name);
           return NULL;
@@ -454,7 +454,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       }
       TypeDecl* type = (TypeDecl*)env->declv[union_expr->x.type];
 
-      if (type->tag != UNION_DECL) {
+      if (type->tag != FBLC_UNION_DECL) {
         ReportError("Type %s is not a union type.\n",
             union_expr->type.loc, union_expr->type.name);
         return NULL;
@@ -521,7 +521,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
         return NULL;
       }
 
-      if (type->tag != UNION_DECL) {
+      if (type->tag != FBLC_UNION_DECL) {
         ReportError("The condition has type %s, "
             "which is not a union type.\n", ExprLoc(expr), type->name.name);
         return NULL;
@@ -624,7 +624,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       ProcDecl* proc = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
         Decl* decl = env->declv[i];
-        if (decl->tag == PROC_DECL && NamesEqual(decl->name.name, call_actn->proc.name)) {
+        if (decl->tag == FBLC_PROC_DECL && NamesEqual(decl->name.name, call_actn->proc.name)) {
           call_actn->proc_id = i;
           proc = (ProcDecl*)decl;
         }
@@ -720,7 +720,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         return NULL;
       }
 
-      if (type->tag != UNION_DECL) {
+      if (type->tag != FBLC_UNION_DECL) {
         ReportError("The condition has type %s, "
             "which is not a union type.\n", ActnLoc(actn), type->name.name);
         return NULL;
@@ -865,7 +865,7 @@ static bool CheckPorts(Env* env, int portc, Port* portv)
 
 static bool CheckType(Env* env, TypeDecl* type)
 {
-  if (type->tag == UNION_DECL && type->fieldc == 0) {
+  if (type->tag == FBLC_UNION_DECL && type->fieldc == 0) {
     ReportError("A union type must have at least one field.\n",
         type->name.loc);
     return false;
@@ -1026,20 +1026,20 @@ bool CheckProgram(Env* env)
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
     switch (decl->tag) {
-      case STRUCT_DECL:
-      case UNION_DECL:
+      case FBLC_STRUCT_DECL:
+      case FBLC_UNION_DECL:
         if (!CheckType(env, (TypeDecl*)decl)) {
           return false;
         }
         break;
 
-      case FUNC_DECL:
+      case FBLC_FUNC_DECL:
         if (!CheckFunc(env, (FuncDecl*)decl)) {
           return false;
         }
         break;
 
-      case PROC_DECL:
+      case FBLC_PROC_DECL:
         if (!CheckProc(env, (ProcDecl*)decl)) {
           return false;
         }

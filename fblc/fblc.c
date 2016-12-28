@@ -67,7 +67,7 @@ static void PrintUsage(FILE* stream)
 static void PrintValue(FILE* stream, Env* env, FblcTypeId typeid, FblcValue* value)
 {
   TypeDecl* type = (TypeDecl*)env->declv[typeid];
-  if (type->tag == STRUCT_DECL) {
+  if (type->tag == FBLC_STRUCT_DECL) {
     fprintf(stream, "%s(", type->name.name);
     for (int i = 0; i < type->fieldc; i++) {
       if (i > 0) {
@@ -76,7 +76,7 @@ static void PrintValue(FILE* stream, Env* env, FblcTypeId typeid, FblcValue* val
       PrintValue(stream, env, type->fieldv[i].type_id, value->fields[i]);
     }
     fprintf(stream, ")");
-  } else if (type->tag == UNION_DECL) {
+  } else if (type->tag == FBLC_UNION_DECL) {
     fprintf(stream, "%s:%s(", type->name.name, type->fieldv[value->tag].name.name);
     PrintValue(stream, env, type->fieldv[value->tag].type_id, value->fields[0]);
     fprintf(stream, ")");

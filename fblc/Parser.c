@@ -1118,7 +1118,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     if (is_struct || is_union) {
       // Struct and union declarations end with: ... <fields>);
       TypeDecl* type = arena->alloc(arena, sizeof(TypeDecl));
-      type->tag = is_struct ? STRUCT_DECL : UNION_DECL;
+      type->tag = is_struct ? FBLC_STRUCT_DECL : FBLC_UNION_DECL;
       type->name.name = name.name;
       type->name.loc = name.loc;
       type->fieldc = ParseFields(arena, &toks, &(type->fieldv));
@@ -1133,7 +1133,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     } else if (is_func) {
       // Function declarations end with: ... <fields>; <type>) <expr>;
       FuncDecl* func = arena->alloc(arena, sizeof(FuncDecl));
-      func->tag = FUNC_DECL;
+      func->tag = FBLC_FUNC_DECL;
       func->name.name = name.name;
       func->name.loc = name.loc;
       func->argc = ParseFields(arena, &toks, &(func->argv));
@@ -1162,7 +1162,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     } else if (is_proc) {
       // Proc declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
       ProcDecl* proc = arena->alloc(arena, sizeof(ProcDecl));
-      proc->tag = PROC_DECL;
+      proc->tag = FBLC_PROC_DECL;
       proc->name.name = name.name;
       proc->name.loc = name.loc;
       proc->return_type_id = UNRESOLVED_ID;
@@ -1240,7 +1240,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
   arena->free(arena, (void*)name.name);
   arena->free(arena, (void*)name.loc);
 
-  if (type->tag == STRUCT_DECL) {
+  if (type->tag == FBLC_STRUCT_DECL) {
     if (!GetToken(toks, '(')) {
       return NULL;
     }
@@ -1270,7 +1270,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
     }
     return value;
   } else {
-    assert(type->tag == UNION_DECL);
+    assert(type->tag == FBLC_UNION_DECL);
     if (!GetToken(toks, ':')) {
       return NULL;
     }

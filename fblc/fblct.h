@@ -84,22 +84,20 @@ typedef struct {
   FblcTypeId type_id;
 } Field;
 
-typedef enum { STRUCT_DECL, UNION_DECL, FUNC_DECL, PROC_DECL } DeclTag;
-
 typedef struct {
-  DeclTag tag;
+  FblcDeclTag tag;
   LocName name;
 } Decl;
 
 typedef struct {
-  DeclTag tag;
+  FblcDeclTag tag;
   LocName name;
   int fieldc;
   Field* fieldv;
 } TypeDecl;
 
 typedef struct {
-  DeclTag tag;
+  FblcDeclTag tag;
   LocName name;
   LocName return_type;
   Expr* body;
@@ -204,7 +202,7 @@ typedef struct {
 } CondActn;
 
 typedef struct {
-  DeclTag tag;
+  FblcDeclTag tag;
   LocName name;
   LocName return_type;
   Actn* body;
