@@ -10,15 +10,6 @@
 static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
 {
   switch (tactn->tag) {
-    case FBLC_PUT_ACTN: {
-      PutActn* tput = (PutActn*)tactn;
-      FblcPutActn* actn = arena->alloc(arena, sizeof(FblcPutActn));
-      actn->tag = FBLC_PUT_ACTN;
-      actn->port = tput->port_id;
-      actn->arg = (FblcExpr*)tput->expr;
-      return (FblcActn*)actn;
-    }
-
     case FBLC_COND_ACTN: {
       CondActn* tcond = (CondActn*)tactn;
       FblcCondActn* actn = arena->alloc(arena, sizeof(FblcCondActn));

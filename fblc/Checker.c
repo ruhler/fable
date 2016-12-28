@@ -600,20 +600,20 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case FBLC_PUT_ACTN: {
       PutActn* put_actn = (PutActn*)actn;
-      TypeDecl* port_type = ResolvePort(ports, &put_actn->port, FBLC_PUT_POLARITY, &put_actn->port_id);
+      TypeDecl* port_type = ResolvePort(ports, &put_actn->port, FBLC_PUT_POLARITY, &put_actn->x.port);
       if (port_type == NULL) {
         ReportError("'%s' is not a valid put port.\n", put_actn->port.loc,
             put_actn->port.name);
         return NULL;
       }
 
-      TypeDecl* arg_type = CheckExpr(env, vars, put_actn->expr);
+      TypeDecl* arg_type = CheckExpr(env, vars, (Expr*)put_actn->x.arg);
       if (arg_type == NULL) {
         return NULL;
       }
       if (port_type != arg_type) {
         ReportError("Expected type %s, but found %s.\n",
-            ExprLoc(put_actn->expr), port_type->name.name, arg_type->name.name);
+            ExprLoc((Expr*)put_actn->x.arg), port_type->name.name, arg_type->name.name);
         return NULL;
       }
       return arg_type;

@@ -884,11 +884,11 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
         }
 
         PutActn* put_actn = arena->alloc(arena, sizeof(PutActn));
-        put_actn->tag = FBLC_PUT_ACTN;
+        put_actn->x.tag = FBLC_PUT_ACTN;
+        put_actn->x.arg = (FblcExpr*)expr;
+        put_actn->x.port = UNRESOLVED_ID;
         put_actn->port.loc = name.loc;
         put_actn->port.name = name.name;
-        put_actn->expr = expr;
-        put_actn->port_id = UNRESOLVED_ID;
         actn = (Actn*)put_actn;
       }
     } else if (IsToken(toks, '(')) {

@@ -133,10 +133,8 @@ typedef struct {
 
 // PUT_ACTN: Processes of the form: <pname>~(<expr>)
 typedef struct {
-  FblcActnTag tag;
+  FblcPutActn x;
   LocName port;
-  Expr* expr;
-  FblcPortId port_id;
 } PutActn;
 
 // CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
