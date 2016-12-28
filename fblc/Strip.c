@@ -10,18 +10,6 @@
 static FblcActn* StripActn(FblcArena* arena, Actn* tactn)
 {
   switch (tactn->tag) {
-    case FBLC_COND_ACTN: {
-      CondActn* tcond = (CondActn*)tactn;
-      FblcCondActn* actn = arena->alloc(arena, sizeof(FblcCondActn));
-      actn->tag = FBLC_COND_ACTN;
-      actn->select = (FblcExpr*)tcond->select;
-      FblcVectorInit(arena, actn->argv, actn->argc);
-      for (size_t i = 0; i < tcond->argc; ++i) {
-        FblcVectorAppend(arena, actn->argv, actn->argc, StripActn(arena, tcond->args[i]));
-      }
-      return (FblcActn*)actn;
-    }
-
     case FBLC_LINK_ACTN: {
       LinkActn* tlink = (LinkActn*)tactn;
       FblcLinkActn* actn = arena->alloc(arena, sizeof(FblcLinkActn));

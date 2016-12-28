@@ -126,7 +126,7 @@ static Loc* ActnLoc(Actn* actn)
 
     case FBLC_COND_ACTN: {
       CondActn* cond_actn = (CondActn*)actn;
-      return ExprLoc(cond_actn->select);
+      return ExprLoc((Expr*)cond_actn->x.select);
     }
 
     default:
@@ -716,7 +716,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case FBLC_COND_ACTN: {
       CondActn* cond_actn = (CondActn*)actn;
-      TypeDecl* type = CheckExpr(env, vars, cond_actn->select);
+      TypeDecl* type = CheckExpr(env, vars, (Expr*)cond_actn->x.select);
       if (type == NULL) {
         return NULL;
       }
@@ -727,17 +727,17 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         return NULL;
       }
 
-      if (type->fieldc != cond_actn->argc) {
+      if (type->fieldc != cond_actn->x.argc) {
         ReportError("Wrong number of arguments to condition. Expected %d, "
-            "but found %d.\n", ActnLoc(actn), type->fieldc, cond_actn->argc);
+            "but found %d.\n", ActnLoc(actn), type->fieldc, cond_actn->x.argc);
         return NULL;
       }
 
       // TODO: Verify that no two branches of the condition refer to the same
       // port. Do we still want to do this?
       TypeDecl* result_type = NULL;
-      for (int i = 0; i < cond_actn->argc; i++) {
-        TypeDecl* arg_type = CheckActn(env, vars, ports, cond_actn->args[i]);
+      for (int i = 0; i < cond_actn->x.argc; i++) {
+        TypeDecl* arg_type = CheckActn(env, vars, ports, (Actn*)cond_actn->x.argv[i]);
         if (arg_type == NULL) {
           return NULL;
         }
@@ -745,7 +745,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         if (result_type != NULL && result_type != arg_type) {
           ReportError("Expected process of type %s, "
               "but found process of type %s.\n",
-              ActnLoc(cond_actn->args[i]), result_type->name.name, arg_type->name.name);
+              ActnLoc((Actn*)cond_actn->x.argv[i]), result_type->name.name, arg_type->name.name);
           return NULL;
         }
         result_type = arg_type;

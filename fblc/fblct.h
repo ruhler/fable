@@ -164,10 +164,7 @@ typedef struct {
 
 // COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
 typedef struct {
-  FblcActnTag tag;
-  Expr* select;
-  int argc;
-  Actn** args;    //  Array of argc args.
+  FblcCondActn x;
 } CondActn;
 
 typedef struct {

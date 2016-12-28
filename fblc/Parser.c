@@ -1032,10 +1032,10 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
 
     CondActn* cond_actn = arena->alloc(arena, sizeof(CondActn));
-    cond_actn->tag = FBLC_COND_ACTN;
-    cond_actn->select = condition;
+    cond_actn->x.tag = FBLC_COND_ACTN;
+    cond_actn->x.select = (FblcExpr*)condition;
 
-    FblcVectorInit(arena, cond_actn->args, cond_actn->argc);
+    FblcVectorInit(arena, cond_actn->x.argv, cond_actn->x.argc);
     bool first = true;
     while (first || IsToken(toks, ',')) {
       if (first) {
@@ -1049,7 +1049,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (arg == NULL) {
         return NULL;
       }
-      FblcVectorAppend(arena, cond_actn->args, cond_actn->argc, arg);
+      FblcVectorAppend(arena, cond_actn->x.argv, cond_actn->x.argc, (FblcActn*)arg);
     } while (IsToken(toks, ','));
 
     if (!GetToken(toks, ')')) {
