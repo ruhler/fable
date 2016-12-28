@@ -94,37 +94,37 @@ static Loc* ExprLoc(Expr* expr)
 static Loc* ActnLoc(Actn* actn)
 {
   switch (actn->tag) {
-    case EVAL_ACTN: {
+    case FBLC_EVAL_ACTN: {
       EvalActn* eval_actn = (EvalActn*)actn;
       return ExprLoc(eval_actn->expr);
     }
 
-    case GET_ACTN: {
+    case FBLC_GET_ACTN: {
       GetActn* get_actn = (GetActn*)actn;
       return get_actn->port.loc;
     }
 
-    case PUT_ACTN: {
+    case FBLC_PUT_ACTN: {
       PutActn* put_actn = (PutActn*)actn;
       return put_actn->port.loc;
     }
 
-    case CALL_ACTN: {
+    case FBLC_CALL_ACTN: {
       CallActn* call_actn = (CallActn*)actn;
       return call_actn->proc.loc;
     }
 
-    case LINK_ACTN: {
+    case FBLC_LINK_ACTN: {
       LinkActn* link_actn = (LinkActn*)actn;
       return link_actn->type.loc;
     }
 
-    case EXEC_ACTN: {
+    case FBLC_EXEC_ACTN: {
       ExecActn* exec_actn = (ExecActn*)actn;
       return exec_actn->execv[0].var.type.loc;
     }
 
-    case COND_ACTN: {
+    case FBLC_COND_ACTN: {
       CondActn* cond_actn = (CondActn*)actn;
       return ExprLoc(cond_actn->select);
     }
@@ -582,12 +582,12 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 {
   switch (actn->tag) {
-    case EVAL_ACTN: {
+    case FBLC_EVAL_ACTN: {
       EvalActn* eval_actn = (EvalActn*)actn;
       return CheckExpr(env, vars, eval_actn->expr);
     }
 
-    case GET_ACTN: {
+    case FBLC_GET_ACTN: {
       GetActn* get_actn = (GetActn*)actn;
       TypeDecl* type = ResolvePort(ports, &get_actn->port, POLARITY_GET, &get_actn->port_id);
       if (type == NULL) {
@@ -598,7 +598,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       return type;
     }
 
-    case PUT_ACTN: {
+    case FBLC_PUT_ACTN: {
       PutActn* put_actn = (PutActn*)actn;
       TypeDecl* port_type = ResolvePort(ports, &put_actn->port, POLARITY_PUT, &put_actn->port_id);
       if (port_type == NULL) {
@@ -619,7 +619,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       return arg_type;
     }
 
-    case CALL_ACTN: {
+    case FBLC_CALL_ACTN: {
       CallActn* call_actn = (CallActn*)actn;
       ProcDecl* proc = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
@@ -671,7 +671,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       return ResolveType(env, &proc->return_type);
     }
 
-    case LINK_ACTN: {
+    case FBLC_LINK_ACTN: {
       // TODO: Test that we verify the link type resolves?
       LinkActn* link_actn = (LinkActn*)actn;
       link_actn->type_id = LookupType(env, link_actn->type.name);
@@ -689,7 +689,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       return CheckActn(env, vars, &putport, link_actn->body);
     }
 
-    case EXEC_ACTN: {
+    case FBLC_EXEC_ACTN: {
       ExecActn* exec_actn = (ExecActn*)actn;
       Vars vars_data[exec_actn->execc];
       Vars* nvars = vars;
@@ -713,7 +713,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       return CheckActn(env, nvars, ports, exec_actn->body);
     }
 
-    case COND_ACTN: {
+    case FBLC_COND_ACTN: {
       CondActn* cond_actn = (CondActn*)actn;
       TypeDecl* type = CheckExpr(env, vars, cond_actn->select);
       if (type == NULL) {

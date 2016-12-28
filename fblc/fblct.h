@@ -118,39 +118,29 @@ typedef struct {
   FblcTypeId type_id;
 } Port;
 
-typedef enum {
-  EVAL_ACTN,
-  GET_ACTN,
-  PUT_ACTN,
-  COND_ACTN,
-  CALL_ACTN,
-  LINK_ACTN,
-  EXEC_ACTN,
-} ActnTag;
-
 // Actn is the base structure for all  actions. Each specialization of
 // Actn will have the same initial layout with tag and location.
 
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
 } Actn;
 
 // EVAL_ACTN: Processes of the form: $(<expr>)
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   Expr* expr;
 } EvalActn;
 
 // GET_ACTN: Processes of the form: <pname>~()
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   LocName port;
   FblcPortId port_id;
 } GetActn;
 
 // PUT_ACTN: Processes of the form: <pname>~(<expr>)
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   LocName port;
   Expr* expr;
   FblcPortId port_id;
@@ -158,7 +148,7 @@ typedef struct {
 
 // CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   LocName proc;
   int portc;
   LocName* ports;   // Array of portc ports
@@ -171,7 +161,7 @@ typedef struct {
 // LINK_ACTN: Processes of the form:
 //    <tname> '<~>' <pname> ',' <pname> ';' <actn>
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   LocName type;
   LocName getname;
   LocName putname;
@@ -187,7 +177,7 @@ typedef struct {
 // EXEC_ACTN: Processes of the form:
 //    <tname> <vname> = <actn>,  ...  ; <body>
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   int execc;
   Exec* execv;          // Array of execc execs.
   Actn* body;
@@ -195,7 +185,7 @@ typedef struct {
 
 // COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
 typedef struct {
-  ActnTag tag;
+  FblcActnTag tag;
   Expr* select;
   int argc;
   Actn** args;    //  Array of argc args.
