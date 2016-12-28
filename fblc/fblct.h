@@ -158,11 +158,8 @@ typedef struct {
 // EXEC_ACTN: Processes of the form:
 //    <tname> <vname> = <actn>,  ...  ; <body>
 typedef struct {
-  FblcActnTag tag;
-  int execc;
-  Actn** execv;          // Array of execc actions.
-  Field* vars;           // Array of execc fields.
-  Actn* body;
+  FblcExecActn x;
+  Field* vars;           // Array of x.execc fields.
 } ExecActn;
 
 // COND_ACTN: Processes of the form: <expr>?(<proc>, ...)

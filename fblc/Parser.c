@@ -967,10 +967,10 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return (Actn*)link_actn;
     } else if (in_stmt && IsNameToken(toks)) {
       ExecActn* exec_actn = arena->alloc(arena, sizeof(ExecActn));
-      exec_actn->tag = FBLC_EXEC_ACTN;
+      exec_actn->x.tag = FBLC_EXEC_ACTN;
 
       size_t varc;
-      FblcVectorInit(arena, exec_actn->execv, exec_actn->execc);
+      FblcVectorInit(arena, exec_actn->x.execv, exec_actn->x.execc);
       FblcVectorInit(arena, exec_actn->vars, varc);
       bool first = true;
       while (first || IsToken(toks, ',')) {
@@ -1001,14 +1001,14 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
         if (exec == NULL) {
           return NULL;
         }
-        FblcVectorAppend(arena, exec_actn->execv, exec_actn->execc, exec);
+        FblcVectorAppend(arena, exec_actn->x.execv, exec_actn->x.execc, (FblcActn*)exec);
       };
 
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      exec_actn->body = ParseActn(arena, toks, true);
-      if (exec_actn->body == NULL) {
+      exec_actn->x.body = (FblcActn*)ParseActn(arena, toks, true);
+      if (exec_actn->x.body == NULL) {
         return NULL;
       }
       return (Actn*)exec_actn;

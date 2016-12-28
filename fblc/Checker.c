@@ -691,11 +691,11 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
     case FBLC_EXEC_ACTN: {
       ExecActn* exec_actn = (ExecActn*)actn;
-      Vars vars_data[exec_actn->execc];
+      Vars vars_data[exec_actn->x.execc];
       Vars* nvars = vars;
-      for (int i = 0; i < exec_actn->execc; i++) {
+      for (int i = 0; i < exec_actn->x.execc; i++) {
         Field* var = exec_actn->vars + i;
-        Actn* exec = exec_actn->execv[i];
+        Actn* exec = (Actn*)exec_actn->x.execv[i];
         TypeDecl* type = CheckActn(env, vars, ports, exec);
         if (type == NULL) {
           return NULL;
@@ -711,7 +711,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
         nvars = AddVar(vars_data+i, var->name.name, actual_type, nvars);
       }
-      return CheckActn(env, nvars, ports, exec_actn->body);
+      return CheckActn(env, nvars, ports, (Actn*)exec_actn->x.body);
     }
 
     case FBLC_COND_ACTN: {
