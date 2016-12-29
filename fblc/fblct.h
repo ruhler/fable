@@ -5,9 +5,6 @@
 #ifndef FBLCT_H_
 #define FBLCT_H_
 
-#include <stdint.h>   // for uint32_t
-#include <stdio.h>    // for BUFSIZ
-
 #include "fblc.h"
 
 // Program

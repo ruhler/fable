@@ -2,6 +2,7 @@
 //
 //   The file implements the main entry point for the fblc-check command.
 
+#include <stdio.h>      // for FILE
 #include <string.h>     // for strcmp
 
 #include "fblct.h"

@@ -6,6 +6,7 @@
 #include <assert.h>     // for assert
 #include <ctype.h>        // for isalnum, isspace
 #include <fcntl.h>        // for open
+#include <stdio.h>        // for EOF
 #include <sys/stat.h>     // for open
 #include <sys/types.h>    // for ssize_t, open
 #include <unistd.h>       // for read, close

@@ -2,6 +2,7 @@
 //
 //   The file implements the main entry point for the fblc binary encoder.
 
+#include <stdio.h>      // for FILE
 #include <string.h>     // for strcmp
 #include <unistd.h>     // for STDOUT_FILENO
 
