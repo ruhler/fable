@@ -90,8 +90,8 @@ typedef struct {
 typedef struct {
   FblcDeclTag tag;
   size_t fieldc;
-  LocName name;
   FblcTypeId* fieldv;
+  LocName name;
   Field* fields;
 } TypeDecl;
 
