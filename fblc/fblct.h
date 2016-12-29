@@ -97,13 +97,13 @@ typedef struct {
 
 typedef struct {
   FblcDeclTag tag;
-  LocName name;
-  LocName return_type;
-  Expr* body;
   size_t argc;
   FblcTypeId* argv;
-  Field* args;
   FblcTypeId return_type_id;
+  Expr* body;
+  LocName name;
+  LocName return_type;
+  Field* args;
 } FuncDecl;
 
 typedef struct {

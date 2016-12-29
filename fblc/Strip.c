@@ -11,20 +11,8 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
 {
   switch (tdecl->tag) {
     case FBLC_STRUCT_DECL:
-    case FBLC_UNION_DECL: return (FblcDecl*)tdecl;
-
-    case FBLC_FUNC_DECL: {
-      FuncDecl* tfunc = (FuncDecl*)tdecl;
-      FblcFuncDecl* decl = arena->alloc(arena, sizeof(FblcFuncDecl));
-      decl->tag = FBLC_FUNC_DECL;
-      FblcVectorInit(arena, decl->argv, decl->argc);
-      for (size_t i = 0; i < tfunc->argc; ++i) {
-        FblcVectorAppend(arena, decl->argv, decl->argc, tfunc->argv[i]);
-      }
-      decl->return_type = tfunc->return_type_id;
-      decl->body = (FblcExpr*)tfunc->body;
-      return (FblcDecl*)decl;
-    }
+    case FBLC_UNION_DECL:
+    case FBLC_FUNC_DECL: return (FblcDecl*)tdecl;
 
     case FBLC_PROC_DECL: {
       ProcDecl* tproc = (ProcDecl*)tdecl;
