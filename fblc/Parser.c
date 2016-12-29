@@ -61,7 +61,7 @@ static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expect
 static void UnexpectedToken(TokenStream* toks, const char* expected);
 
 static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count);
-static int ParsePorts(FblcArena* arena, TokenStream* toks, Port** ports);
+static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, Port** ports, size_t* portc);
 static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist);
 static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt);
 static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt);
@@ -548,16 +548,18 @@ static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count)
 //   *ports is set to point to a list parsed ports.
 //   The token stream is advanced past the last port token.
 //   In case of an error, an error message is printed to standard error.
-static int ParsePorts(FblcArena* arena, TokenStream* toks, Port** ports)
+static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, Port** ports, size_t* portc)
 {
   if (!IsNameToken(toks)) {
-    *ports = NULL;
-    return 0;
+    *portc = 0;
+    *portv = arena->alloc(arena, 0);
+    *ports = arena->alloc(arena, 0);
+    return true; 
   }
 
-  Port* portv;
-  int portc;
-  FblcVectorInit(arena, portv, portc);
+  size_t dummy;
+  FblcVectorInit(arena, *portv, *portc);
+  FblcVectorInit(arena, *ports, dummy);
   bool first = true;
   while (first || IsToken(toks, ',')) {
     if (first) {
@@ -566,40 +568,41 @@ static int ParsePorts(FblcArena* arena, TokenStream* toks, Port** ports)
       GetToken(toks, ',');
     }
 
-    FblcVectorExtend(arena, portv, portc);
-    Port* port = portv + portc++;
-    port->type_id = UNRESOLVED_ID;
+    FblcVectorExtend(arena, *portv, *portc);
+    FblcVectorExtend(arena, *ports, dummy);
+    FblcPort* fblc_port = *portv + (*portc)++;
+    Port* port = *ports + dummy++;
+    fblc_port->type = UNRESOLVED_ID;
 
     // Get the type.
     if (!GetNameToken(arena, toks, "type name", &(port->type))) {
-      return -1;
+      return false;
     }
 
     // Get the polarity.
     if (IsToken(toks, '<')) {
       GetToken(toks, '<');
       if (!GetToken(toks, '~')) {
-        return -1;
+        return false;
       }
-      port->polarity = FBLC_GET_POLARITY;
+      fblc_port->polarity = FBLC_GET_POLARITY;
     } else if (IsToken(toks, '~')) {
       GetToken(toks, '~');
       if (!GetToken(toks, '>')) {
-        return -1;
+        return false;
       }
-      port->polarity = FBLC_PUT_POLARITY;
+      fblc_port->polarity = FBLC_PUT_POLARITY;
     } else {
       UnexpectedToken(toks, "'<~' or '~>'");
-      return -1;
+      return false;
     }
 
     // Get the name.
     if (!GetNameToken(arena, toks, "port name", &(port->name))) {
-      return -1;
+      return false;
     }
   }
-  *ports = portv;
-  return portc;
+  return true;
 }
 
 // ParseArgs --
@@ -1176,8 +1179,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       proc->name.name = name.name;
       proc->name.loc = name.loc;
       proc->return_type_id = UNRESOLVED_ID;
-      proc->portc = ParsePorts(arena, &toks, &(proc->portv));
-      if (proc->portc < 0) {
+      if (!ParsePorts(arena, &toks, &(proc->portv), &(proc->ports), &(proc->portc))) {
         return NULL;
       }
 

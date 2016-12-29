@@ -70,7 +70,7 @@ void ReportError(const char* format, Loc* loc, ...)
 //   Allocations are performed using the allocator as necessary to allocate
 //   the environment.
 
-Env* NewEnv(FblcArena* arena, int declc, Decl** declv)
+Env* NewEnv(FblcArena* arena, size_t declc, Decl** declv)
 {
   Env* env = arena->alloc(arena, sizeof(Env));
   env->declc = declc;

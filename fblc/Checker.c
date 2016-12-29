@@ -43,7 +43,7 @@ static bool CheckArgs(
 static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr);
 static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn);
 static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields, const char* kind);
-static bool CheckPorts(Env* env, int portc, Port* portv);
+static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports);
 static bool CheckType(Env* env, TypeDecl* type);
 static bool CheckFunc(Env* env, FuncDecl* func);
 static bool CheckProc(Env* env, ProcDecl* proc);
@@ -657,9 +657,9 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
           return NULL;
         }
 
-        if (!NamesEqual(proc->portv[i].type.name, port_type->name.name)) {
+        if (!NamesEqual(proc->ports[i].type.name, port_type->name.name)) {
           ReportError("Expected port type %s, but found %s.\n",
-              call_actn->ports[i].loc, proc->portv[i].type.name, port_type);
+              call_actn->ports[i].loc, proc->ports[i].type.name, port_type);
           return NULL;
         }
       }
@@ -823,13 +823,13 @@ static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields,
 //   If the ports don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
 
-static bool CheckPorts(Env* env, int portc, Port* portv)
+static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports)
 {
   // Verify the type for each port exists.
   for (int i = 0; i < portc; i++) {
-    portv[i].type_id = LookupType(env, portv[i].type.name);
-    if (portv[i].type_id == UNRESOLVED_ID) {
-      ReportError("Type '%s' not found.\n", portv[i].type.loc, portv[i].type.name);
+    portv[i].type = LookupType(env, ports[i].type.name);
+    if (portv[i].type == UNRESOLVED_ID) {
+      ReportError("Type '%s' not found.\n", ports[i].type.loc, ports[i].type.name);
       return false;
     }
   }
@@ -837,9 +837,9 @@ static bool CheckPorts(Env* env, int portc, Port* portv)
   // Verify ports have unique names.
   for (int i = 0; i < portc; i++) {
     for (int j = i+1; j < portc; j++) {
-      if (NamesEqual(portv[i].name.name, portv[j].name.name)) {
+      if (NamesEqual(ports[i].name.name, ports[j].name.name)) {
         ReportError("Multiple ports named '%s'.\n",
-            portv[j].name.loc, portv[j].name.name);
+            ports[j].name.loc, ports[j].name.name);
         return false;
       }
     }
@@ -946,7 +946,7 @@ static bool CheckFunc(Env* env, FuncDecl* func)
 static bool CheckProc(Env* env, ProcDecl* proc)
 {
   // Check the ports.
-  if (!CheckPorts(env, proc->portc, proc->portv)) {
+  if (!CheckPorts(env, proc->portc, proc->portv, proc->ports)) {
     return false;
   }
 
@@ -981,13 +981,13 @@ static bool CheckProc(Env* env, ProcDecl* proc)
     // TODO: Add tests that we properly resolved the port types?
     switch (proc->portv[i].polarity) {
       case FBLC_GET_POLARITY:
-        ports = AddPort(nport++, proc->portv[i].name.name,
-            ResolveType(env, &proc->portv[i].type), FBLC_GET_POLARITY, ports);
+        ports = AddPort(nport++, proc->ports[i].name.name,
+            ResolveType(env, &proc->ports[i].type), FBLC_GET_POLARITY, ports);
         break;
 
       case FBLC_PUT_POLARITY:
-        ports = AddPort(nport++, proc->portv[i].name.name,
-            ResolveType(env, &proc->portv[i].type), FBLC_PUT_POLARITY, ports);
+        ports = AddPort(nport++, proc->ports[i].name.name,
+            ResolveType(env, &proc->ports[i].type), FBLC_PUT_POLARITY, ports);
         break;
     }
   }

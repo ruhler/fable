@@ -109,8 +109,6 @@ typedef struct {
 typedef struct {
   LocName type;
   LocName name;
-  FblcPolarity polarity;
-  FblcTypeId type_id;
 } Port;
 
 // Actn is the base structure for all  actions. Each specialization of
@@ -167,25 +165,26 @@ typedef struct {
 
 typedef struct {
   FblcDeclTag tag;
-  LocName name;
-  LocName return_type;
-  Actn* body;
-  int portc;
-  Port* portv;
+  size_t portc;
+  FblcPort* portv;
   size_t argc;
   FblcTypeId* argv;
-  Field* args;
   FblcTypeId return_type_id;
+  Actn* body;
+  LocName name;
+  LocName return_type;
+  Port* ports;
+  Field* args;
 } ProcDecl;
 
 // An environment contains all the type, function, and process declarations
 // for a program.
 typedef struct {
-  int declc;
+  size_t declc;
   Decl** declv;
 } Env;
 
-Env* NewEnv(FblcArena* arena, int declc, Decl** declv);
+Env* NewEnv(FblcArena* arena, size_t declc, Decl** declv);
 LocName* DeclName(Decl* decl);
 
 // Parser
