@@ -60,7 +60,7 @@ static bool IsNameToken(TokenStream* toks);
 static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name);
 static void UnexpectedToken(TokenStream* toks, const char* expected);
 
-static int ParseFields(FblcArena* arena, TokenStream* toks, Field** plist);
+static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count);
 static int ParsePorts(FblcArena* arena, TokenStream* toks, Port** ports);
 static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist);
 static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt);
@@ -487,20 +487,20 @@ static void UnexpectedToken(TokenStream* toks, const char* expected)
 // Inputs:
 //   arena - The arena to use for allocations.
 //   toks - The token stream to parse the fields from.
-//   plist - A pointer to a list of fields to output the parsed fields to.
+//   count - A pointer to an out parameter with the number of parsed fields.
 //
 // Returns:
-//   The number of fields parsed or -1 on error.
+//   The array of parsed fields, or NULL on error.
 //
 // Side effects:
-//   *plist is set to point to a list of the parsed fields.
+//   *count is set to the number of parsed fields.
 //   The token stream is advanced past the tokens describing the fields.
 //   In case of an error, an error message is printed to standard error.
-static int ParseFields(FblcArena* arena, TokenStream* toks, Field** plist)
+static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count)
 {
   if (!IsNameToken(toks)) {
-    *plist = NULL;
-    return 0;
+    *count = 0;
+    return arena->alloc(arena, 0);
   }
 
   Field* fieldv;
@@ -510,7 +510,7 @@ static int ParseFields(FblcArena* arena, TokenStream* toks, Field** plist)
   Field* field = fieldv + fieldc++;
   GetNameToken(arena, toks, "type name", &(field->type));
   if (!GetNameToken(arena, toks, "field name", &(field->name))) {
-    return -1;
+    return NULL;
   }
 
   int parsed;
@@ -520,15 +520,15 @@ static int ParseFields(FblcArena* arena, TokenStream* toks, Field** plist)
     FblcVectorExtend(arena, fieldv, fieldc);
     Field* field = fieldv + fieldc++;
     if (!GetNameToken(arena, toks, "type name", &(field->type))) {
-      return -1;
+      return NULL;
     }
     if (!GetNameToken(arena, toks, "field name", &(field->name))) {
-      return -1;
+      return NULL;
     }
   }
 
-  *plist = fieldv;
-  return fieldc;
+  *count = fieldc;
+  return fieldv;
 }
 
 // ParsePorts -
@@ -1123,8 +1123,8 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       type->tag = is_struct ? FBLC_STRUCT_DECL : FBLC_UNION_DECL;
       type->name.name = name.name;
       type->name.loc = name.loc;
-      type->fieldc = ParseFields(arena, &toks, &(type->fields));
-      if (type->fieldc < 0) {
+      type->fields = ParseFields(arena, &toks, &(type->fieldc));
+      if (type->fields == NULL) {
         return NULL;
       }
       type->fieldv = arena->alloc(arena, type->fieldc * sizeof(FblcTypeId));
@@ -1142,9 +1142,9 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       func->tag = FBLC_FUNC_DECL;
       func->name.name = name.name;
       func->name.loc = name.loc;
-      func->argc = ParseFields(arena, &toks, &(func->args));
+      func->args = ParseFields(arena, &toks, &(func->argc));
       func->return_type_id = UNRESOLVED_ID;
-      if (func->argc < 0) {
+      if (func->args == NULL) {
         return NULL;
       }
       func->argv = arena->alloc(arena, func->argc * sizeof(FblcTypeId));
@@ -1185,8 +1185,8 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      proc->argc = ParseFields(arena, &toks, &(proc->args));
-      if (proc->argc < 0) {
+      proc->args = ParseFields(arena, &toks, &(proc->argc));
+      if (proc->args == NULL) {
         return NULL;
       }
       proc->argv = arena->alloc(arena, proc->argc * sizeof(FblcTypeId));

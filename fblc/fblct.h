@@ -89,7 +89,7 @@ typedef struct {
 
 typedef struct {
   FblcDeclTag tag;
-  int fieldc;
+  size_t fieldc;
   LocName name;
   FblcTypeId* fieldv;
   Field* fields;
@@ -100,7 +100,7 @@ typedef struct {
   LocName name;
   LocName return_type;
   Expr* body;
-  int argc;
+  size_t argc;
   FblcTypeId* argv;
   Field* args;
   FblcTypeId return_type_id;
@@ -172,7 +172,7 @@ typedef struct {
   Actn* body;
   int portc;
   Port* portv;
-  int argc;
+  size_t argc;
   FblcTypeId* argv;
   Field* args;
   FblcTypeId return_type_id;
