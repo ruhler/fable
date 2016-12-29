@@ -42,7 +42,7 @@ static bool CheckArgs(
     int argc, Expr** argv, LocName* func);
 static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr);
 static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn);
-static bool CheckFields(Env* env, int fieldc, Field* fieldv, const char* kind);
+static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields, const char* kind);
 static bool CheckPorts(Env* env, int portc, Port* portv);
 static bool CheckType(Env* env, TypeDecl* type);
 static bool CheckFunc(Env* env, FuncDecl* func);
@@ -393,7 +393,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       switch (decl->tag) {
         case FBLC_STRUCT_DECL: {
           TypeDecl* type = (TypeDecl*)decl;
-          if (!CheckArgs(env, vars, type->fieldc, type->fieldv,
+          if (!CheckArgs(env, vars, type->fieldc, type->fields,
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
             return NULL;
           }
@@ -408,7 +408,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
         case FBLC_FUNC_DECL: {
           FuncDecl* func = (FuncDecl*)decl;
-          if (!CheckArgs(env, vars, func->argc, func->argv,
+          if (!CheckArgs(env, vars, func->argc, func->args,
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
             return NULL;
           }
@@ -435,9 +435,9 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       }
 
       for (int i = 0; i < type->fieldc; i++) {
-        if (NamesEqual(type->fieldv[i].name.name, access_expr->field.name)) {
+        if (NamesEqual(type->fields[i].name.name, access_expr->field.name)) {
           access_expr->x.field = i;
-          return ResolveType(env, &type->fieldv[i].type);
+          return ResolveType(env, &type->fields[i].type);
         }
       }
       ReportError("'%s' is not a field of the type '%s'.\n",
@@ -466,11 +466,11 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       }
 
       for (int i = 0; i < type->fieldc; i++) {
-        if (NamesEqual(type->fieldv[i].name.name, union_expr->field.name)) {
-          if (!NamesEqual(type->fieldv[i].type.name, arg_type->name.name)) {
+        if (NamesEqual(type->fields[i].name.name, union_expr->field.name)) {
+          if (!NamesEqual(type->fields[i].type.name, arg_type->name.name)) {
             ReportError("Expected type '%s', but found type '%s'.\n",
                 ExprLoc((Expr*)union_expr->x.body),
-                type->fieldv[i].type.name, arg_type);
+                type->fields[i].type.name, arg_type);
             return NULL;
           }
           union_expr->x.field = i;
@@ -664,7 +664,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         }
       }
 
-      if (!CheckArgs(env, vars, proc->argc, proc->argv, call_actn->x.argc,
+      if (!CheckArgs(env, vars, proc->argc, proc->args, call_actn->x.argc,
             (Expr**)call_actn->x.argv, &(call_actn->proc))) {
         return NULL;
       }
@@ -781,13 +781,13 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 //   If the fields don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
 
-static bool CheckFields(Env* env, int fieldc, Field* fieldv, const char* kind)
+static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields, const char* kind)
 {
   // Verify the type for each field exists.
   for (int i = 0; i < fieldc; i++) {
-    fieldv[i].type_id = LookupType(env, fieldv[i].type.name);
-    if (fieldv[i].type_id == UNRESOLVED_ID) {
-      ReportError("Type '%s' not found.\n", fieldv[i].type.loc, fieldv[i].type.name);
+    fieldv[i] = LookupType(env, fields[i].type.name);
+    if (fieldv[i] == UNRESOLVED_ID) {
+      ReportError("Type '%s' not found.\n", fields[i].type.loc, fields[i].type.name);
       return false;
     }
   }
@@ -795,9 +795,9 @@ static bool CheckFields(Env* env, int fieldc, Field* fieldv, const char* kind)
   // Verify fields have unique names.
   for (int i = 0; i < fieldc; i++) {
     for (int j = i+1; j < fieldc; j++) {
-      if (NamesEqual(fieldv[i].name.name, fieldv[j].name.name)) {
+      if (NamesEqual(fields[i].name.name, fields[j].name.name)) {
         ReportError("Multiple %ss named '%s'.\n",
-            fieldv[j].name.loc, kind, fieldv[j].name.name);
+            fields[j].name.loc, kind, fields[j].name.name);
         return false;
       }
     }
@@ -871,7 +871,7 @@ static bool CheckType(Env* env, TypeDecl* type)
         type->name.loc);
     return false;
   }
-  return CheckFields(env, type->fieldc, type->fieldv, "field");
+  return CheckFields(env, type->fieldc, type->fieldv, type->fields, "field");
 }
 
 // CheckFunc --
@@ -894,7 +894,7 @@ static bool CheckType(Env* env, TypeDecl* type)
 static bool CheckFunc(Env* env, FuncDecl* func)
 {
   // Check the arguments.
-  if (!CheckFields(env, func->argc, func->argv, "arg")) {
+  if (!CheckFields(env, func->argc, func->argv, func->args, "arg")) {
     return false;
   }
 
@@ -911,8 +911,8 @@ static bool CheckFunc(Env* env, FuncDecl* func)
   Vars* vars = NULL;
   for (int i = 0; i < func->argc; i++) {
     // TODO: Add test that we verify the argument types are valid?
-    vars = AddVar(nvars+i, func->argv[i].name.name,
-        ResolveType(env, &func->argv[i].type), vars);
+    vars = AddVar(nvars+i, func->args[i].name.name,
+        ResolveType(env, &func->args[i].type), vars);
   }
   TypeDecl* body_type = CheckExpr(env, vars, func->body);
   if (body_type == NULL) {
@@ -951,7 +951,7 @@ static bool CheckProc(Env* env, ProcDecl* proc)
   }
 
   // Check the arguments.
-  if (!CheckFields(env, proc->argc, proc->argv, "arg")) {
+  if (!CheckFields(env, proc->argc, proc->argv, proc->args, "arg")) {
     return false;
   }
 
@@ -972,8 +972,8 @@ static bool CheckProc(Env* env, ProcDecl* proc)
   Vars* vars = NULL;
   for (int i = 0; i < proc->argc; i++) {
     // TODO: Add test that we check we managed to resolve the arg types?
-    vars = AddVar(nvar++, proc->argv[i].name.name,
-        ResolveType(env, &proc->argv[i].type), vars);
+    vars = AddVar(nvar++, proc->args[i].name.name,
+        ResolveType(env, &proc->args[i].type), vars);
   }
 
   Ports* ports = NULL;

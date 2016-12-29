@@ -508,7 +508,6 @@ static int ParseFields(FblcArena* arena, TokenStream* toks, Field** plist)
   FblcVectorInit(arena, fieldv, fieldc);
   FblcVectorExtend(arena, fieldv, fieldc);
   Field* field = fieldv + fieldc++;
-  field->type_id = UNRESOLVED_ID;
   GetNameToken(arena, toks, "type name", &(field->type));
   if (!GetNameToken(arena, toks, "field name", &(field->name))) {
     return -1;
@@ -1124,9 +1123,13 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       type->tag = is_struct ? FBLC_STRUCT_DECL : FBLC_UNION_DECL;
       type->name.name = name.name;
       type->name.loc = name.loc;
-      type->fieldc = ParseFields(arena, &toks, &(type->fieldv));
+      type->fieldc = ParseFields(arena, &toks, &(type->fields));
       if (type->fieldc < 0) {
         return NULL;
+      }
+      type->fieldv = arena->alloc(arena, type->fieldc * sizeof(FblcTypeId));
+      for (size_t i = 0; i < type->fieldc; ++i) {
+        type->fieldv[i] = UNRESOLVED_ID;
       }
 
       if (!GetToken(&toks, ')')) {
@@ -1139,10 +1142,14 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       func->tag = FBLC_FUNC_DECL;
       func->name.name = name.name;
       func->name.loc = name.loc;
-      func->argc = ParseFields(arena, &toks, &(func->argv));
+      func->argc = ParseFields(arena, &toks, &(func->args));
       func->return_type_id = UNRESOLVED_ID;
       if (func->argc < 0) {
         return NULL;
+      }
+      func->argv = arena->alloc(arena, func->argc * sizeof(FblcTypeId));
+      for (size_t i = 0; i < func->argc; ++i) {
+        func->argv[i] = UNRESOLVED_ID;
       }
 
       if (!GetToken(&toks, ';')) {
@@ -1178,9 +1185,13 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      proc->argc = ParseFields(arena, &toks, &(proc->argv));
+      proc->argc = ParseFields(arena, &toks, &(proc->args));
       if (proc->argc < 0) {
         return NULL;
+      }
+      proc->argv = arena->alloc(arena, proc->argc * sizeof(FblcTypeId));
+      for (size_t i = 0; i < proc->argc; ++i) {
+        proc->argv[i] = UNRESOLVED_ID;
       }
 
       if (!GetToken(&toks, ';')) {
@@ -1262,7 +1273,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
       }
 
       if (!err) {
-        value->fields[i] = ParseValueFromToks(arena, env, type->fieldv[i].type_id, toks);
+        value->fields[i] = ParseValueFromToks(arena, env, type->fieldv[i], toks);
         err = err || value->fields[i] == NULL;
       }
     }
@@ -1284,7 +1295,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
 
     int tag = -1;
     for (size_t i = 0; i < type->fieldc; ++i) {
-      if (NamesEqual(type->fieldv[i].name.name, name.name)) {
+      if (NamesEqual(type->fields[i].name.name, name.name)) {
         tag = i;
         break;
       }
@@ -1301,7 +1312,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcValue* field = ParseValueFromToks(arena, env, type->fieldv[tag].type_id, toks);
+    FblcValue* field = ParseValueFromToks(arena, env, type->fieldv[tag], toks);
     if (field == NULL) {
       return NULL;
     }

@@ -81,7 +81,6 @@ typedef struct {
 typedef struct {
   LocName type;
   LocName name;
-  FblcTypeId type_id;
 } Field;
 
 typedef struct {
@@ -90,9 +89,10 @@ typedef struct {
 
 typedef struct {
   FblcDeclTag tag;
-  LocName name;
   int fieldc;
-  Field* fieldv;
+  LocName name;
+  FblcTypeId* fieldv;
+  Field* fields;
 } TypeDecl;
 
 typedef struct {
@@ -101,7 +101,8 @@ typedef struct {
   LocName return_type;
   Expr* body;
   int argc;
-  Field* argv;
+  FblcTypeId* argv;
+  Field* args;
   FblcTypeId return_type_id;
 } FuncDecl;
 
@@ -170,9 +171,10 @@ typedef struct {
   LocName return_type;
   Actn* body;
   int portc;
-  Port* portv;              // Array of portc ports.
+  Port* portv;
   int argc;
-  Field* argv;              // Array of argv fields.
+  FblcTypeId* argv;
+  Field* args;
   FblcTypeId return_type_id;
 } ProcDecl;
 

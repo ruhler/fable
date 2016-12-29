@@ -17,7 +17,7 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
       decl->tag = ttype->tag;
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
       for (size_t i = 0; i < ttype->fieldc; ++i) {
-        FblcVectorAppend(arena, decl->fieldv, decl->fieldc, ttype->fieldv[i].type_id);
+        FblcVectorAppend(arena, decl->fieldv, decl->fieldc, ttype->fieldv[i]);
       }
       return (FblcDecl*)decl;
     }
@@ -28,7 +28,7 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
       decl->tag = FBLC_FUNC_DECL;
       FblcVectorInit(arena, decl->argv, decl->argc);
       for (size_t i = 0; i < tfunc->argc; ++i) {
-        FblcVectorAppend(arena, decl->argv, decl->argc, tfunc->argv[i].type_id);
+        FblcVectorAppend(arena, decl->argv, decl->argc, tfunc->argv[i]);
       }
       decl->return_type = tfunc->return_type_id;
       decl->body = (FblcExpr*)tfunc->body;
@@ -47,7 +47,7 @@ static FblcDecl* StripDecl(FblcArena* arena, Decl* tdecl)
       }
       FblcVectorInit(arena, decl->argv, decl->argc);
       for (size_t i = 0; i < tproc->argc; ++i) {
-        FblcVectorAppend(arena, decl->argv, decl->argc, tproc->argv[i].type_id);
+        FblcVectorAppend(arena, decl->argv, decl->argc, tproc->argv[i]);
       }
       decl->return_type = tproc->return_type_id;
       decl->body = (FblcActn*)tproc->body;
