@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
 
   FblcDecl* decl = NULL;
   for (size_t i = 0; i < env->declc; ++i) {
-    if (NamesEqual(env->declv[i]->name.name, entry)) {
+    if (NamesEqual(DeclName(env->declv[i])->name, entry)) {
       decl = program->declv[i];
       break;
     }

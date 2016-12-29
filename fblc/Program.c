@@ -3,6 +3,7 @@
 //   The file contains utilities for working with the abstract syntax for 
 //   programs.
 
+#include <assert.h>     // For assert
 #include <stdarg.h>     // For va_start
 
 #include "fblct.h"
@@ -75,4 +76,31 @@ Env* NewEnv(FblcArena* arena, int declc, Decl** declv)
   env->declc = declc;
   env->declv = declv;
   return env;
+}
+
+// DeclName --
+//   Return the name of a declaration.
+LocName* DeclName(Decl* decl)
+{
+  switch (decl->tag) {
+    case FBLC_STRUCT_DECL:
+    case FBLC_UNION_DECL: {
+      TypeDecl* type_decl = (TypeDecl*)decl;
+      return &type_decl->name;
+    }
+
+    case FBLC_FUNC_DECL: {
+      FuncDecl* func_decl = (FuncDecl*)decl;
+      return &func_decl->name;
+    }
+
+    case FBLC_PROC_DECL: {
+      ProcDecl* proc_decl = (ProcDecl*)decl;
+      return &proc_decl->name;
+    }
+
+    default:
+      assert(false && "Invalid decl tag.");
+      return NULL;
+  }
 }

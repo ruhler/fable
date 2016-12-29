@@ -86,7 +86,6 @@ typedef struct {
 
 typedef struct {
   FblcDeclTag tag;
-  LocName name;
 } Decl;
 
 typedef struct {
@@ -185,6 +184,7 @@ typedef struct {
 } Env;
 
 Env* NewEnv(FblcArena* arena, int declc, Decl** declv);
+LocName* DeclName(Decl* decl);
 
 // Parser
 Env* ParseProgram(FblcArena* arena, const char* filename);

@@ -154,7 +154,7 @@ static FblcTypeId LookupType(Env* env, Name name)
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
     if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
-        && NamesEqual(decl->name.name, name)) {
+        && NamesEqual(DeclName(decl)->name, name)) {
       return i;
     }
   }
@@ -180,7 +180,7 @@ static TypeDecl* ResolveType(Env* env, LocName* name)
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
     if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
-        && NamesEqual(decl->name.name, name->name)) {
+        && NamesEqual(DeclName(decl)->name, name->name)) {
       return (TypeDecl*)decl;
     }
   }
@@ -380,7 +380,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       AppExpr* app_expr = (AppExpr*)expr;
       Decl* decl = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
-        if (NamesEqual(app_expr->func.name, env->declv[i]->name.name)) {
+        if (NamesEqual(app_expr->func.name, DeclName(env->declv[i])->name)) {
           app_expr->x.func = i;
           decl = env->declv[i];
         }
@@ -624,7 +624,7 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       ProcDecl* proc = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
         Decl* decl = env->declv[i];
-        if (decl->tag == FBLC_PROC_DECL && NamesEqual(decl->name.name, call_actn->proc.name)) {
+        if (decl->tag == FBLC_PROC_DECL && NamesEqual(DeclName(decl)->name, call_actn->proc.name)) {
           call_actn->x.proc = i;
           proc = (ProcDecl*)decl;
         }
@@ -1054,9 +1054,9 @@ bool CheckProgram(Env* env)
     // Verify the declaration does not have the same name as one we have
     // already seen.
     for (size_t j = 0; j < i; ++j) {
-      if (NamesEqual(env->declv[i]->name.name, env->declv[j]->name.name)) {
+      if (NamesEqual(DeclName(env->declv[i])->name, DeclName(env->declv[j])->name)) {
         ReportError("Multiple declarations for %s.\n",
-            env->declv[i]->name.loc, env->declv[i]->name.name);
+            DeclName(env->declv[i])->loc, DeclName(env->declv[i])->name);
         return false;
       }
     }
