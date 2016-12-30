@@ -62,22 +62,21 @@ typedef struct {
   LocName field;
 } UnionExpr;
 
+typedef struct {
+  LocName type;
+  LocName name;
+} SVar;
+
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
   FblcLetExpr x;
-  LocName type;
-  LocName name;
+  SVar var;
 } LetExpr;
 
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
 typedef struct {
   FblcCondExpr x;
 } CondExpr;
-
-typedef struct {
-  LocName type;
-  LocName name;
-} Field;
 
 typedef struct {
   FblcDeclTag tag;
@@ -89,13 +88,8 @@ typedef struct {
   FblcTypeId* argv;
   FblcTypeId return_type_id;
   Expr* body;
-  Field* args;
+  SVar* args;
 } FuncDecl;
-
-typedef struct {
-  LocName type;
-  LocName name;
-} Port;
 
 // Actn is the base structure for all  actions. Each specialization of
 // Actn will have the same initial layout with tag and location.
@@ -141,7 +135,7 @@ typedef struct {
 //    <tname> <vname> = <actn>,  ...  ; <body>
 typedef struct {
   FblcExecActn x;
-  Field* vars;           // Array of x.execc fields.
+  SVar* vars;           // Array of x.execc fields.
 } ExecActn;
 
 // COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
@@ -157,8 +151,8 @@ typedef struct {
   FblcTypeId* argv;
   FblcTypeId return_type_id;
   Actn* body;
-  Port* ports;
-  Field* args;
+  SVar* ports;
+  SVar* args;
 } ProcDecl;
 
 typedef struct {
@@ -167,7 +161,7 @@ typedef struct {
 
 typedef struct {
   LocName name;
-  Field* fields;
+  SVar* fields;
 } STypeDecl;
 
 typedef struct {

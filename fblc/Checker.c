@@ -37,12 +37,12 @@ static Ports* AddPort(
     Ports* vars, Name name, FblcTypeId type, FblcPolarity polarity, Ports* next);
 static FblcTypeId ResolvePort(Ports* vars, LocName* name, FblcPolarity polarity, FblcPortId* port_id);
 static bool CheckArgs(
-    Env* env, Vars* vars, int fieldc, Field* fieldv,
+    Env* env, Vars* vars, int fieldc, SVar* fieldv,
     int argc, Expr** argv, LocName* func);
 static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr);
 static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn);
-static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields, const char* kind);
-static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports);
+static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, SVar* fields, const char* kind);
+static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports);
 
 // ExprLoc --
 //   Return the location of an expression.
@@ -71,7 +71,7 @@ static Loc* ExprLoc(Expr* expr)
 
     case FBLC_LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
-      return let_expr->type.loc;
+      return let_expr->var.type.loc;
     }
 
     case FBLC_COND_EXPR: {
@@ -290,7 +290,7 @@ static FblcTypeId ResolvePort(Ports* ports, LocName* name, FblcPolarity polarity
 //   error describing what's wrong.
 
 static bool CheckArgs(
-    Env* env, Vars* vars, int fieldc, Field* fieldv,
+    Env* env, Vars* vars, int fieldc, SVar* fieldv,
     int argc, Expr** argv, LocName* func)
 {
   if (fieldc != argc) {
@@ -463,17 +463,15 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case FBLC_LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
-      FblcTypeId declared_type_id = LookupType(env, let_expr->type.name);
+      FblcTypeId declared_type_id = LookupType(env, let_expr->var.type.name);
       if (declared_type_id == UNRESOLVED_ID) {
-        ReportError("Type '%s' not declared.\n",
-            let_expr->type.loc, let_expr->type.name);
+        ReportError("Type '%s' not declared.\n", let_expr->var.type.loc, let_expr->var.type.name);
         return UNRESOLVED_ID;
       }
 
       FblcVarId dummy;
-      if (ResolveVar(vars, &let_expr->name, &dummy) != UNRESOLVED_ID) {
-        ReportError("Variable %s already defined.\n",
-            let_expr->name.loc, let_expr->name.name);
+      if (ResolveVar(vars, &let_expr->var.name, &dummy) != UNRESOLVED_ID) {
+        ReportError("Variable %s already defined.\n", let_expr->var.name.loc, let_expr->var.name.name);
         return UNRESOLVED_ID;
       }
 
@@ -485,12 +483,12 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       if (declared_type_id != actual_type_id) {
         SDecl* actual_type = env->sdeclv[actual_type_id];
         ReportError("Expected type %s, but found expression of type %s.\n",
-            ExprLoc((Expr*)let_expr->x.def), let_expr->type.name, actual_type->name.name);
+            ExprLoc((Expr*)let_expr->x.def), let_expr->var.type.name, actual_type->name.name);
         return UNRESOLVED_ID;
       }
 
       Vars nvars;
-      AddVar(&nvars, let_expr->name.name, actual_type_id, vars);
+      AddVar(&nvars, let_expr->var.name.name, actual_type_id, vars);
       return CheckExpr(env, &nvars, (Expr*)let_expr->x.body);
     }
 
@@ -681,7 +679,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       Vars vars_data[exec_actn->x.execc];
       Vars* nvars = vars;
       for (int i = 0; i < exec_actn->x.execc; i++) {
-        Field* var = exec_actn->vars + i;
+        SVar* var = exec_actn->vars + i;
         Actn* exec = (Actn*)exec_actn->x.execv[i];
         FblcTypeId type_id = CheckActn(env, vars, ports, exec);
         if (type_id == UNRESOLVED_ID) {
@@ -775,7 +773,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 //   If the fields don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
 
-static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields, const char* kind)
+static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, SVar* fields, const char* kind)
 {
   // Verify the type for each field exists.
   for (int i = 0; i < fieldc; i++) {
@@ -817,7 +815,7 @@ static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields,
 //   If the ports don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
 
-static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports)
+static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports)
 {
   // Verify the type for each port exists.
   for (int i = 0; i < portc; i++) {

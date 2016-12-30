@@ -61,8 +61,8 @@ static bool IsNameToken(TokenStream* toks);
 static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name);
 static void UnexpectedToken(TokenStream* toks, const char* expected);
 
-static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count);
-static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, Port** ports, size_t* portc);
+static SVar* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count);
+static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, SVar** ports, size_t* portc);
 static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist);
 static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt);
 static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt);
@@ -497,18 +497,18 @@ static void UnexpectedToken(TokenStream* toks, const char* expected)
 //   *count is set to the number of parsed fields.
 //   The token stream is advanced past the tokens describing the fields.
 //   In case of an error, an error message is printed to standard error.
-static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count)
+static SVar* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count)
 {
   if (!IsNameToken(toks)) {
     *count = 0;
     return arena->alloc(arena, 0);
   }
 
-  Field* fieldv;
+  SVar* fieldv;
   int fieldc;
   FblcVectorInit(arena, fieldv, fieldc);
   FblcVectorExtend(arena, fieldv, fieldc);
-  Field* field = fieldv + fieldc++;
+  SVar* field = fieldv + fieldc++;
   GetNameToken(arena, toks, "type name", &(field->type));
   if (!GetNameToken(arena, toks, "field name", &(field->name))) {
     return NULL;
@@ -519,7 +519,7 @@ static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count)
     GetToken(toks, ',');
 
     FblcVectorExtend(arena, fieldv, fieldc);
-    Field* field = fieldv + fieldc++;
+    SVar* field = fieldv + fieldc++;
     if (!GetNameToken(arena, toks, "type name", &(field->type))) {
       return NULL;
     }
@@ -549,7 +549,7 @@ static Field* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count)
 //   *ports is set to point to a list parsed ports.
 //   The token stream is advanced past the last port token.
 //   In case of an error, an error message is printed to standard error.
-static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, Port** ports, size_t* portc)
+static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, SVar** ports, size_t* portc)
 {
   if (!IsNameToken(toks)) {
     *portc = 0;
@@ -572,7 +572,7 @@ static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, Po
     FblcVectorExtend(arena, *portv, *portc);
     FblcVectorExtend(arena, *ports, dummy);
     FblcPort* fblc_port = *portv + (*portc)++;
-    Port* port = *ports + dummy++;
+    SVar* port = *ports + dummy++;
     fblc_port->type = UNRESOLVED_ID;
 
     // Get the type.
@@ -730,9 +730,9 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       LetExpr* let_expr = arena->alloc(arena, sizeof(LetExpr));
       let_expr->x.tag = FBLC_LET_EXPR;
-      let_expr->type.name = start.name;
-      let_expr->type.loc = start.loc;
-      GetNameToken(arena, toks, "variable name", &(let_expr->name));
+      let_expr->var.type.name = start.name;
+      let_expr->var.type.loc = start.loc;
+      GetNameToken(arena, toks, "variable name", &(let_expr->var.name));
       if (!GetToken(toks, '=')) {
         return NULL;
       }
@@ -978,7 +978,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       bool first = true;
       while (first || IsToken(toks, ',')) {
         FblcVectorExtend(arena, exec_actn->vars, varc);
-        Field* var = exec_actn->vars + varc++;
+        SVar* var = exec_actn->vars + varc++;
         if (first) {
           var->type.loc = name.loc;
           var->type.name = name.name;
