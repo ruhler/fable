@@ -1142,9 +1142,9 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       FblcVectorAppend(arena, env->declv, env->declc, (Decl*)type);
     } else if (is_func) {
       // func name(<fields>; <type>) <expr>;
-      SDecl* sdecl = arena->alloc(arena, sizeof(SDecl));
-      FblcVectorAppend(arena, env->sdeclv, sdeclc, sdecl);
-      if (!GetNameToken(arena, &toks, "declaration name", &sdecl->name)) {
+      SFuncDecl* sfunc = arena->alloc(arena, sizeof(SFuncDecl));
+      FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sfunc);
+      if (!GetNameToken(arena, &toks, "declaration name", &sfunc->name)) {
         return NULL;
       }
 
@@ -1168,7 +1168,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      if (!GetNameToken(arena, &toks, "type", &(func->return_type))) {
+      if (!GetNameToken(arena, &toks, "type", &(sfunc->return_type))) {
         return NULL;
       }
 
@@ -1183,9 +1183,9 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       FblcVectorAppend(arena, env->declv, env->declc, (Decl*)func);
     } else if (is_proc) {
       // proc name(<ports> ; <fields>; [<type>]) <proc>;
-      SDecl* sdecl = arena->alloc(arena, sizeof(SDecl));
-      FblcVectorAppend(arena, env->sdeclv, sdeclc, sdecl);
-      if (!GetNameToken(arena, &toks, "declaration name", &sdecl->name)) {
+      SProcDecl* sproc = arena->alloc(arena, sizeof(SProcDecl));
+      FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sproc);
+      if (!GetNameToken(arena, &toks, "declaration name", &sproc->name)) {
         return NULL;
       }
 
@@ -1216,7 +1216,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      if (!GetNameToken(arena, &toks, "type", &(proc->return_type))) {
+      if (!GetNameToken(arena, &toks, "type", &(sproc->return_type))) {
         return NULL;
       }
 

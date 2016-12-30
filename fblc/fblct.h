@@ -89,7 +89,6 @@ typedef struct {
   FblcTypeId* argv;
   FblcTypeId return_type_id;
   Expr* body;
-  LocName return_type;
   Field* args;
 } FuncDecl;
 
@@ -158,7 +157,6 @@ typedef struct {
   FblcTypeId* argv;
   FblcTypeId return_type_id;
   Actn* body;
-  LocName return_type;
   Port* ports;
   Field* args;
 } ProcDecl;
@@ -171,6 +169,16 @@ typedef struct {
   LocName name;
   Field* fields;
 } STypeDecl;
+
+typedef struct {
+  LocName name;
+  LocName return_type;
+} SFuncDecl;
+
+typedef struct {
+  LocName name;
+  LocName return_type;
+} SProcDecl;
 
 // An environment contains all the type, function, and process declarations
 // for a program.

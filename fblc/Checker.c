@@ -43,8 +43,6 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr);
 static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn);
 static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields, const char* kind);
 static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports);
-static bool CheckFunc(Env* env, FuncDecl* func);
-static bool CheckProc(Env* env, ProcDecl* proc);
 
 // ExprLoc --
 //   Return the location of an expression.
@@ -384,11 +382,12 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
 
         case FBLC_FUNC_DECL: {
           FuncDecl* func = (FuncDecl*)decl;
+          SFuncDecl* sfunc = (SFuncDecl*)sdecl;
           if (!CheckArgs(env, vars, func->argc, func->args,
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
             return UNRESOLVED_ID;
           }
-          return LookupType(env, func->return_type.name);
+          return LookupType(env, sfunc->return_type.name);
         }
 
         case FBLC_PROC_DECL: {
@@ -607,12 +606,14 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
     case FBLC_CALL_ACTN: {
       CallActn* call_actn = (CallActn*)actn;
       ProcDecl* proc = NULL;
+      SProcDecl* sproc = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
         Decl* decl = env->declv[i];
         SDecl* sdecl = env->sdeclv[i];
         if (decl->tag == FBLC_PROC_DECL && NamesEqual(sdecl->name.name, call_actn->proc.name)) {
           call_actn->x.proc = i;
           proc = (ProcDecl*)decl;
+          sproc = (SProcDecl*)sdecl;
         }
       }
       if (proc == NULL) {
@@ -655,7 +656,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
             (Expr**)call_actn->x.argv, &(call_actn->proc))) {
         return UNRESOLVED_ID;
       }
-      return LookupType(env, proc->return_type.name);
+      return LookupType(env, sproc->return_type.name);
     }
 
     case FBLC_LINK_ACTN: {
@@ -840,144 +841,6 @@ static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports)
   return true;
 }
 
-// CheckFunc --
-//
-//   Verify the given function declaration is well formed in the given
-//   environment.
-//
-// Inputs:
-//   env - The program environment.
-//   func - The function declaration to check.
-//
-// Results:
-//   Returns true if the function declaration is well formed, false otherwise.
-//
-// Side effects:
-//   LocName ids within the body of declaration are resolved.
-//   If the function declaration is not well formed, prints a message to
-//   standard error describing the problem.
-
-static bool CheckFunc(Env* env, FuncDecl* func)
-{
-  // Check the arguments.
-  if (!CheckFields(env, func->argc, func->argv, func->args, "arg")) {
-    return false;
-  }
-
-  // Check the return type.
-  func->return_type_id = LookupType(env, func->return_type.name);
-  if (func->return_type_id == UNRESOLVED_ID) {
-    ReportError("Type '%s' not found.\n", func->return_type.loc, func->return_type.name);
-    return false;
-  }
-
-  // Check the body.
-  Vars nvars[func->argc];
-  Vars* vars = NULL;
-  for (int i = 0; i < func->argc; i++) {
-    // TODO: Add test that we verify the argument types are valid?
-    FblcTypeId arg_type_id = LookupType(env, func->args[i].type.name);
-    if (arg_type_id == UNRESOLVED_ID) {
-      return false;
-    }
-    vars = AddVar(nvars+i, func->args[i].name.name, arg_type_id, vars);
-  }
-  FblcTypeId body_type_id = CheckExpr(env, vars, func->body);
-  if (body_type_id == UNRESOLVED_ID) {
-    return false;
-  }
-  if (func->return_type_id != body_type_id) {
-    FblcTypeDecl* body_type = (FblcTypeDecl*)env->declv[body_type_id];
-    ReportError("Type mismatch. Expected %s, but found %s.\n",
-        ExprLoc(func->body), func->return_type.name, body_type);
-    return false;
-  }
-  return true;
-}
-
-// CheckProc --
-//
-//   Verify the given process declaration is well formed in the given
-//   environment.
-//
-// Inputs:
-//   env - The program environment.
-//   proc - The process declaration to check.
-//
-// Results:
-//   Returns true if the process declaration is well formed, false otherwise.
-//
-// Side effects:
-//   LocName ids within the body of declaration are resolved.
-//   If the process declaration is not well formed, prints a message to
-//   standard error describing the problem.
-
-static bool CheckProc(Env* env, ProcDecl* proc)
-{
-  // Check the ports.
-  if (!CheckPorts(env, proc->portc, proc->portv, proc->ports)) {
-    return false;
-  }
-
-  // Check the arguments.
-  if (!CheckFields(env, proc->argc, proc->argv, proc->args, "arg")) {
-    return false;
-  }
-
-  // Check the return type.
-  proc->return_type_id = LookupType(env, proc->return_type.name);
-  if (proc->return_type_id == UNRESOLVED_ID) {
-    ReportError("Type '%s' not found.\n", proc->return_type.loc, proc->return_type.name);
-    return false;
-  }
-
-  // Check the body.
-  Vars vars_data[proc->argc];
-  Ports ports_data[proc->portc];
-  Vars* nvar = vars_data;
-  Ports* nport = ports_data;
-
-  Vars* vars = NULL;
-  for (int i = 0; i < proc->argc; i++) {
-    // TODO: Add test that we check we managed to resolve the arg types?
-    FblcTypeId arg_type_id = LookupType(env, proc->args[i].type.name);
-    if (arg_type_id == UNRESOLVED_ID) {
-      return false;
-    }
-    vars = AddVar(nvar++, proc->args[i].name.name, arg_type_id, vars);
-  }
-
-  Ports* ports = NULL;
-  for (int i = 0; i < proc->portc; i++) {
-    // TODO: Add tests that we properly resolved the port types?
-    FblcTypeId port_type_id = LookupType(env, proc->ports[i].type.name);
-    if (port_type_id == UNRESOLVED_ID) {
-      return false;
-    }
-    switch (proc->portv[i].polarity) {
-      case FBLC_GET_POLARITY:
-        ports = AddPort(nport++, proc->ports[i].name.name, port_type_id, FBLC_GET_POLARITY, ports);
-        break;
-
-      case FBLC_PUT_POLARITY:
-        ports = AddPort(nport++, proc->ports[i].name.name, port_type_id, FBLC_PUT_POLARITY, ports);
-        break;
-    }
-  }
-
-  FblcTypeId body_type_id = CheckActn(env, vars, ports, proc->body);
-  if (body_type_id == UNRESOLVED_ID) {
-    return false;
-  }
-  if (proc->return_type_id != body_type_id) {
-    SDecl* body_type = env->sdeclv[body_type_id];
-    ReportError("Type mismatch. Expected %s, but found %s.\n",
-        ActnLoc(proc->body), proc->return_type.name, body_type->name.name);
-    return false;
-  }
-  return true;
-}
-
 // CheckProgram --
 //
 //   Check that the given program environment describes a well formed and well
@@ -1023,17 +886,111 @@ bool CheckProgram(Env* env)
         break;
       }
 
-      case FBLC_FUNC_DECL:
-        if (!CheckFunc(env, (FuncDecl*)decl)) {
+      case FBLC_FUNC_DECL: {
+        FuncDecl* func = (FuncDecl*)decl;
+        SFuncDecl* sfunc = (SFuncDecl*)env->sdeclv[i];
+        // Check the arguments.
+        if (!CheckFields(env, func->argc, func->argv, func->args, "arg")) {
           return false;
         }
-        break;
 
-      case FBLC_PROC_DECL:
-        if (!CheckProc(env, (ProcDecl*)decl)) {
+        // Check the return type.
+        func->return_type_id = LookupType(env, sfunc->return_type.name);
+        if (func->return_type_id == UNRESOLVED_ID) {
+          ReportError("Type '%s' not found.\n", sfunc->return_type.loc, sfunc->return_type.name);
+          return false;
+        }
+
+        // Check the body.
+        Vars nvars[func->argc];
+        Vars* vars = NULL;
+        for (int i = 0; i < func->argc; i++) {
+          // TODO: Add test that we verify the argument types are valid?
+          FblcTypeId arg_type_id = LookupType(env, func->args[i].type.name);
+          if (arg_type_id == UNRESOLVED_ID) {
+            return false;
+          }
+          vars = AddVar(nvars+i, func->args[i].name.name, arg_type_id, vars);
+        }
+        FblcTypeId body_type_id = CheckExpr(env, vars, func->body);
+        if (body_type_id == UNRESOLVED_ID) {
+          return false;
+        }
+        if (func->return_type_id != body_type_id) {
+          FblcTypeDecl* body_type = (FblcTypeDecl*)env->declv[body_type_id];
+          ReportError("Type mismatch. Expected %s, but found %s.\n",
+              ExprLoc(func->body), sfunc->return_type.name, body_type);
           return false;
         }
         break;
+      }
+
+      case FBLC_PROC_DECL: {
+        ProcDecl* proc = (ProcDecl*)decl;
+        SProcDecl* sproc = (SProcDecl*)env->sdeclv[i];
+        // Check the ports.
+        if (!CheckPorts(env, proc->portc, proc->portv, proc->ports)) {
+          return false;
+        }
+
+        // Check the arguments.
+        if (!CheckFields(env, proc->argc, proc->argv, proc->args, "arg")) {
+          return false;
+        }
+
+        // Check the return type.
+        proc->return_type_id = LookupType(env, sproc->return_type.name);
+        if (proc->return_type_id == UNRESOLVED_ID) {
+          ReportError("Type '%s' not found.\n", sproc->return_type.loc, sproc->return_type.name);
+          return false;
+        }
+
+        // Check the body.
+        Vars vars_data[proc->argc];
+        Ports ports_data[proc->portc];
+        Vars* nvar = vars_data;
+        Ports* nport = ports_data;
+
+        Vars* vars = NULL;
+        for (int i = 0; i < proc->argc; i++) {
+          // TODO: Add test that we check we managed to resolve the arg types?
+          FblcTypeId arg_type_id = LookupType(env, proc->args[i].type.name);
+          if (arg_type_id == UNRESOLVED_ID) {
+            return false;
+          }
+          vars = AddVar(nvar++, proc->args[i].name.name, arg_type_id, vars);
+        }
+
+        Ports* ports = NULL;
+        for (int i = 0; i < proc->portc; i++) {
+          // TODO: Add tests that we properly resolved the port types?
+          FblcTypeId port_type_id = LookupType(env, proc->ports[i].type.name);
+          if (port_type_id == UNRESOLVED_ID) {
+            return false;
+          }
+          switch (proc->portv[i].polarity) {
+            case FBLC_GET_POLARITY:
+              ports = AddPort(nport++, proc->ports[i].name.name, port_type_id, FBLC_GET_POLARITY, ports);
+              break;
+
+            case FBLC_PUT_POLARITY:
+              ports = AddPort(nport++, proc->ports[i].name.name, port_type_id, FBLC_PUT_POLARITY, ports);
+              break;
+          }
+        }
+
+        FblcTypeId body_type_id = CheckActn(env, vars, ports, proc->body);
+        if (body_type_id == UNRESOLVED_ID) {
+          return false;
+        }
+        if (proc->return_type_id != body_type_id) {
+          SDecl* body_type = env->sdeclv[body_type_id];
+          ReportError("Type mismatch. Expected %s, but found %s.\n",
+              ActnLoc(proc->body), sproc->return_type.name, body_type->name.name);
+          return false;
+        }
+        break;
+      }
 
       default:
         assert(false && "Invalid decl type");
