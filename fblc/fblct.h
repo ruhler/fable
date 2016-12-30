@@ -87,7 +87,6 @@ typedef struct {
   FblcDeclTag tag;
   size_t fieldc;
   FblcTypeId* fieldv;
-  Field* fields;
 } TypeDecl;
 
 typedef struct {
@@ -173,6 +172,11 @@ typedef struct {
 typedef struct {
   LocName name;
 } SDecl;
+
+typedef struct {
+  LocName name;
+  Field* fields;
+} STypeDecl;
 
 // An environment contains all the type, function, and process declarations
 // for a program.

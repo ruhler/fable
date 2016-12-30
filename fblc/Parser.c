@@ -1108,7 +1108,18 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       return NULL;
     }
 
-    SDecl* sdecl = arena->alloc(arena, sizeof(SDecl));
+    bool is_struct = NamesEqual("struct", keyword.name);
+    bool is_union = NamesEqual("union", keyword.name);
+    bool is_func = NamesEqual("func", keyword.name);
+    bool is_proc = NamesEqual("proc", keyword.name);
+
+    SDecl* sdecl = NULL;
+    if (is_struct || is_union) {
+      sdecl = arena->alloc(arena, sizeof(STypeDecl));
+    } else {
+      sdecl = arena->alloc(arena, sizeof(SDecl));
+    }
+
     FblcVectorAppend(arena, env->sdeclv, sdeclc, sdecl);
     if (!GetNameToken(arena, &toks, "declaration name", &sdecl->name)) {
       return NULL;
@@ -1118,17 +1129,14 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       return NULL;
     }
 
-    bool is_struct = NamesEqual("struct", keyword.name);
-    bool is_union = NamesEqual("union", keyword.name);
-    bool is_func = NamesEqual("func", keyword.name);
-    bool is_proc = NamesEqual("proc", keyword.name);
 
     if (is_struct || is_union) {
       // Struct and union declarations end with: ... <fields>);
       TypeDecl* type = arena->alloc(arena, sizeof(TypeDecl));
+      STypeDecl* stype = (STypeDecl*)sdecl;
       type->tag = is_struct ? FBLC_STRUCT_DECL : FBLC_UNION_DECL;
-      type->fields = ParseFields(arena, &toks, &(type->fieldc));
-      if (type->fields == NULL) {
+      stype->fields = ParseFields(arena, &toks, &(type->fieldc));
+      if (stype->fields == NULL) {
         return NULL;
       }
       type->fieldv = arena->alloc(arena, type->fieldc * sizeof(FblcTypeId));
@@ -1239,7 +1247,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks)
 {
   TypeDecl* type = (TypeDecl*)env->declv[typeid];
-  SDecl* stype = env->sdeclv[typeid];
+  STypeDecl* stype = (STypeDecl*)env->sdeclv[typeid];
   LocName name;
   if (!GetNameToken(arena, toks, "type name", &name)) {
     return NULL;
@@ -1295,7 +1303,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
 
     int tag = -1;
     for (size_t i = 0; i < type->fieldc; ++i) {
-      if (NamesEqual(type->fields[i].name.name, name.name)) {
+      if (NamesEqual(stype->fields[i].name.name, name.name)) {
         tag = i;
         break;
       }

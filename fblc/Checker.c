@@ -352,10 +352,12 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
     case FBLC_APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
       Decl* decl = NULL;
+      SDecl* sdecl = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
         if (NamesEqual(app_expr->func.name, env->sdeclv[i]->name.name)) {
           app_expr->x.func = i;
           decl = env->declv[i];
+          sdecl = env->sdeclv[i];
         }
       }
       if (decl == NULL) {
@@ -366,7 +368,8 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       switch (decl->tag) {
         case FBLC_STRUCT_DECL: {
           TypeDecl* type = (TypeDecl*)decl;
-          if (!CheckArgs(env, vars, type->fieldc, type->fields,
+          STypeDecl* stype = (STypeDecl*)sdecl;
+          if (!CheckArgs(env, vars, type->fieldc, stype->fields,
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
             return UNRESOLVED_ID;
           }
@@ -407,14 +410,14 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
         return UNRESOLVED_ID;
       }
       TypeDecl* type = (TypeDecl*)env->declv[type_id];
+      STypeDecl* stype = (STypeDecl*)env->sdeclv[type_id];
 
       for (int i = 0; i < type->fieldc; i++) {
-        if (NamesEqual(type->fields[i].name.name, access_expr->field.name)) {
+        if (NamesEqual(stype->fields[i].name.name, access_expr->field.name)) {
           access_expr->x.field = i;
-          return LookupType(env, type->fields[i].type.name);
+          return LookupType(env, stype->fields[i].type.name);
         }
       }
-      SDecl* stype = env->sdeclv[type_id];
       ReportError("'%s' is not a field of the type '%s'.\n",
           access_expr->field.loc, access_expr->field.name, stype->name.name);
       return UNRESOLVED_ID;
@@ -428,6 +431,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
         return UNRESOLVED_ID;
       }
       TypeDecl* type = (TypeDecl*)env->declv[union_expr->x.type];
+      STypeDecl* stype = (STypeDecl*)env->sdeclv[union_expr->x.type];
 
       if (type->tag != FBLC_UNION_DECL) {
         ReportError("Type %s is not a union type.\n",
@@ -442,11 +446,11 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       SDecl* arg_type = env->sdeclv[arg_type_id];
 
       for (int i = 0; i < type->fieldc; i++) {
-        if (NamesEqual(type->fields[i].name.name, union_expr->field.name)) {
-          if (!NamesEqual(type->fields[i].type.name, arg_type->name.name)) {
+        if (NamesEqual(stype->fields[i].name.name, union_expr->field.name)) {
+          if (!NamesEqual(stype->fields[i].type.name, arg_type->name.name)) {
             ReportError("Expected type '%s', but found type '%s'.\n",
                 ExprLoc((Expr*)union_expr->x.body),
-                type->fields[i].type.name, arg_type->name.name);
+                stype->fields[i].type.name, arg_type->name.name);
             return UNRESOLVED_ID;
           }
           union_expr->x.field = i;
@@ -999,7 +1003,8 @@ bool CheckProgram(Env* env)
     switch (decl->tag) {
       case FBLC_STRUCT_DECL: {
         TypeDecl* type = (TypeDecl*)decl;
-        if (!CheckFields(env, type->fieldc, type->fieldv, type->fields, "field")) {
+        STypeDecl* stype = (STypeDecl*)env->sdeclv[i];
+        if (!CheckFields(env, type->fieldc, type->fieldv, stype->fields, "field")) {
           return false;
         }
         break;
@@ -1011,7 +1016,8 @@ bool CheckProgram(Env* env)
           ReportError("A union type must have at least one field.\n", env->sdeclv[i]->name.loc);
           return false;
         }
-        if (!CheckFields(env, type->fieldc, type->fieldv, type->fields, "field")) {
+        STypeDecl* stype = (STypeDecl*)env->sdeclv[i];
+        if (!CheckFields(env, type->fieldc, type->fieldv, stype->fields, "field")) {
           return false;
         }
         break;
