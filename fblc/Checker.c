@@ -31,7 +31,6 @@ static Loc* ExprLoc(Expr* expr);
 static Loc* ActnLoc(Actn* actn);
 
 static FblcTypeId LookupType(Env* env, Name name);
-static TypeDecl* ResolveType(Env* env, LocName* name);
 static Vars* AddVar(Vars* vars, Name name, TypeDecl* type, Vars* next);
 static TypeDecl* ResolveVar(Vars* vars, LocName* name, FblcVarId* var_id);
 static Ports* AddPort(
@@ -159,32 +158,6 @@ static FblcTypeId LookupType(Env* env, Name name)
     }
   }
   return UNRESOLVED_ID;
-}
-
-// ResolveType --
-//   Look up the declaration of the type with the given name in the given
-//   environment.
-// 
-// Inputs:
-//   env - The environment to look up the type in.
-//   name - The name of the type to look up.
-//
-// Result:
-//   The declaration for the type with the given name, or NULL if there is no
-//   type with the given name in the given environment.
-//
-// Side effects:
-//   None.
-static TypeDecl* ResolveType(Env* env, LocName* name)
-{
-  for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
-    if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
-        && NamesEqual(DeclName(decl)->name, name->name)) {
-      return (TypeDecl*)decl;
-    }
-  }
-  return NULL;
 }
 
 // AddVar --
@@ -412,7 +385,11 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
             return NULL;
           }
-          return ResolveType(env, &func->return_type);
+          FblcTypeId return_type_id = LookupType(env, func->return_type.name);
+          if (return_type_id == UNRESOLVED_ID) {
+            return NULL;
+          }
+          return (TypeDecl*)env->declv[return_type_id];
         }
 
         case FBLC_PROC_DECL: {
@@ -437,7 +414,11 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
       for (int i = 0; i < type->fieldc; i++) {
         if (NamesEqual(type->fields[i].name.name, access_expr->field.name)) {
           access_expr->x.field = i;
-          return ResolveType(env, &type->fields[i].type);
+          FblcTypeId field_type_id = LookupType(env, type->fields[i].type.name);
+          if (field_type_id == UNRESOLVED_ID) {
+            return NULL;
+          }
+          return (TypeDecl*)env->declv[field_type_id];
         }
       }
       ReportError("'%s' is not a field of the type '%s'.\n",
@@ -474,7 +455,7 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
             return NULL;
           }
           union_expr->x.field = i;
-          return ResolveType(env, &type->name);
+          return type;
         }
       }
       ReportError("Type '%s' has no field '%s'.\n", union_expr->field.loc,
@@ -484,12 +465,13 @@ static TypeDecl* CheckExpr(Env* env, Vars* vars, Expr* expr)
 
     case FBLC_LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
-      TypeDecl* declared_type = ResolveType(env, &let_expr->type);
-      if (declared_type == NULL) {
+      FblcTypeId declared_type_id = LookupType(env, let_expr->type.name);
+      if (declared_type_id == UNRESOLVED_ID) {
         ReportError("Type '%s' not declared.\n",
             let_expr->type.loc, let_expr->type.name);
         return NULL;
       }
+      TypeDecl* declared_type = (TypeDecl*)env->declv[declared_type_id];
 
       FblcVarId dummy;
       if (ResolveVar(vars, &let_expr->name, &dummy) != NULL) {
@@ -668,7 +650,11 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
             (Expr**)call_actn->x.argv, &(call_actn->proc))) {
         return NULL;
       }
-      return ResolveType(env, &proc->return_type);
+      FblcTypeId return_type_id = LookupType(env, proc->return_type.name);
+      if (return_type_id == UNRESOLVED_ID) {
+        return NULL;
+      }
+      return (TypeDecl*)env->declv[return_type_id];
     }
 
     case FBLC_LINK_ACTN: {
@@ -702,7 +688,11 @@ static TypeDecl* CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         }
 
         // TODO: Test that we verify actual_type is not null?
-        TypeDecl* actual_type = ResolveType(env, &var->type);
+        FblcTypeId actual_type_id = LookupType(env, var->type.name);
+        if (actual_type_id == UNRESOLVED_ID) {
+          return NULL;
+        }
+        TypeDecl* actual_type = (TypeDecl*)env->declv[actual_type_id];
         if (actual_type != type) {
           ReportError("Expected type %s, but found %s.\n",
               var->type.loc, var->type.name, type->name.name);
@@ -911,8 +901,12 @@ static bool CheckFunc(Env* env, FuncDecl* func)
   Vars* vars = NULL;
   for (int i = 0; i < func->argc; i++) {
     // TODO: Add test that we verify the argument types are valid?
+    FblcTypeId arg_type_id = LookupType(env, func->args[i].type.name);
+    if (arg_type_id == UNRESOLVED_ID) {
+      return false;
+    }
     vars = AddVar(nvars+i, func->args[i].name.name,
-        ResolveType(env, &func->args[i].type), vars);
+        (TypeDecl*)env->declv[arg_type_id], vars);
   }
   TypeDecl* body_type = CheckExpr(env, vars, func->body);
   if (body_type == NULL) {
@@ -972,22 +966,28 @@ static bool CheckProc(Env* env, ProcDecl* proc)
   Vars* vars = NULL;
   for (int i = 0; i < proc->argc; i++) {
     // TODO: Add test that we check we managed to resolve the arg types?
-    vars = AddVar(nvar++, proc->args[i].name.name,
-        ResolveType(env, &proc->args[i].type), vars);
+    FblcTypeId arg_type_id = LookupType(env, proc->args[i].type.name);
+    if (arg_type_id == UNRESOLVED_ID) {
+      return false;
+    }
+    vars = AddVar(nvar++, proc->args[i].name.name, (TypeDecl*)env->declv[arg_type_id], vars);
   }
 
   Ports* ports = NULL;
   for (int i = 0; i < proc->portc; i++) {
     // TODO: Add tests that we properly resolved the port types?
+    FblcTypeId port_type_id = LookupType(env, proc->ports[i].type.name);
+    if (port_type_id == UNRESOLVED_ID) {
+      return false;
+    }
+    TypeDecl* port_type = (TypeDecl*)env->declv[port_type_id];
     switch (proc->portv[i].polarity) {
       case FBLC_GET_POLARITY:
-        ports = AddPort(nport++, proc->ports[i].name.name,
-            ResolveType(env, &proc->ports[i].type), FBLC_GET_POLARITY, ports);
+        ports = AddPort(nport++, proc->ports[i].name.name, port_type, FBLC_GET_POLARITY, ports);
         break;
 
       case FBLC_PUT_POLARITY:
-        ports = AddPort(nport++, proc->ports[i].name.name,
-            ResolveType(env, &proc->ports[i].type), FBLC_PUT_POLARITY, ports);
+        ports = AddPort(nport++, proc->ports[i].name.name, port_type, FBLC_PUT_POLARITY, ports);
         break;
     }
   }
