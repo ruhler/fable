@@ -1113,27 +1113,19 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     bool is_func = NamesEqual("func", keyword.name);
     bool is_proc = NamesEqual("proc", keyword.name);
 
-    SDecl* sdecl = NULL;
     if (is_struct || is_union) {
-      sdecl = arena->alloc(arena, sizeof(STypeDecl));
-    } else {
-      sdecl = arena->alloc(arena, sizeof(SDecl));
-    }
+      // struct/union (<fields>);
+      STypeDecl* stype = arena->alloc(arena, sizeof(STypeDecl));
+      FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)stype);
+      if (!GetNameToken(arena, &toks, "declaration name", &stype->name)) {
+        return NULL;
+      }
 
-    FblcVectorAppend(arena, env->sdeclv, sdeclc, sdecl);
-    if (!GetNameToken(arena, &toks, "declaration name", &sdecl->name)) {
-      return NULL;
-    }
+      if (!GetToken(&toks, '(')) {
+        return NULL;
+      }
 
-    if (!GetToken(&toks, '(')) {
-      return NULL;
-    }
-
-
-    if (is_struct || is_union) {
-      // Struct and union declarations end with: ... <fields>);
       FblcTypeDecl* type = arena->alloc(arena, sizeof(FblcTypeDecl));
-      STypeDecl* stype = (STypeDecl*)sdecl;
       type->tag = is_struct ? FBLC_STRUCT_DECL : FBLC_UNION_DECL;
       stype->fields = ParseFields(arena, &toks, &(type->fieldc));
       if (stype->fields == NULL) {
@@ -1149,7 +1141,17 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       }
       FblcVectorAppend(arena, env->declv, env->declc, (Decl*)type);
     } else if (is_func) {
-      // Function declarations end with: ... <fields>; <type>) <expr>;
+      // func name(<fields>; <type>) <expr>;
+      SDecl* sdecl = arena->alloc(arena, sizeof(SDecl));
+      FblcVectorAppend(arena, env->sdeclv, sdeclc, sdecl);
+      if (!GetNameToken(arena, &toks, "declaration name", &sdecl->name)) {
+        return NULL;
+      }
+
+      if (!GetToken(&toks, '(')) {
+        return NULL;
+      }
+
       FuncDecl* func = arena->alloc(arena, sizeof(FuncDecl));
       func->tag = FBLC_FUNC_DECL;
       func->args = ParseFields(arena, &toks, &(func->argc));
@@ -1180,7 +1182,16 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       }
       FblcVectorAppend(arena, env->declv, env->declc, (Decl*)func);
     } else if (is_proc) {
-      // Proc declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
+      // proc name(<ports> ; <fields>; [<type>]) <proc>;
+      SDecl* sdecl = arena->alloc(arena, sizeof(SDecl));
+      FblcVectorAppend(arena, env->sdeclv, sdeclc, sdecl);
+      if (!GetNameToken(arena, &toks, "declaration name", &sdecl->name)) {
+        return NULL;
+      }
+
+      if (!GetToken(&toks, '(')) {
+        return NULL;
+      }
       ProcDecl* proc = arena->alloc(arena, sizeof(ProcDecl));
       proc->tag = FBLC_PROC_DECL;
       proc->return_type_id = UNRESOLVED_ID;
