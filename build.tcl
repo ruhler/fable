@@ -108,7 +108,7 @@ proc fblc-check-error { program } {
   try {
     set fprogram ./out/test/$name.fblc
     exec echo $program > $fprogram
-    exec $::fblccheck --error $fprogram
+    exec $::fblccheck --error $fprogram > ./out/test/$name.err
   } trap CHILDSTATUS {results options} {
     error "$file:$line: error: fblc-check passed unexpectedly"
   }

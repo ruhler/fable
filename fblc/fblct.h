@@ -20,7 +20,6 @@ typedef struct {
 void ReportError(const char* format, Loc* loc, ...);
 
 // LocName stores a name along with a location for error reporting purposes.
-// The id field contains the id of name as used in the binary encoded program.
 typedef struct LocName {
   Loc* loc;
   Name name;
