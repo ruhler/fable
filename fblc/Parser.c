@@ -1097,9 +1097,10 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
   }
 
   const char* keywords = "'struct', 'union', 'func', or 'proc'";
-  Decl** declv;
-  int declc;
-  FblcVectorInit(arena, declv, declc);
+  Env* env = arena->alloc(arena, sizeof(Env));
+  size_t sdeclc;
+  FblcVectorInit(arena, env->declv, env->declc);
+  FblcVectorInit(arena, env->sdeclv, sdeclc);
   while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...
     LocName keyword;
@@ -1107,8 +1108,9 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       return NULL;
     }
 
-    LocName name;
-    if (!GetNameToken(arena, &toks, "declaration name", &name)) {
+    SDecl* sdecl = arena->alloc(arena, sizeof(SDecl));
+    FblcVectorAppend(arena, env->sdeclv, sdeclc, sdecl);
+    if (!GetNameToken(arena, &toks, "declaration name", &sdecl->name)) {
       return NULL;
     }
 
@@ -1125,8 +1127,6 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       // Struct and union declarations end with: ... <fields>);
       TypeDecl* type = arena->alloc(arena, sizeof(TypeDecl));
       type->tag = is_struct ? FBLC_STRUCT_DECL : FBLC_UNION_DECL;
-      type->name.name = name.name;
-      type->name.loc = name.loc;
       type->fields = ParseFields(arena, &toks, &(type->fieldc));
       if (type->fields == NULL) {
         return NULL;
@@ -1139,13 +1139,11 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      FblcVectorAppend(arena, declv, declc, (Decl*)type);
+      FblcVectorAppend(arena, env->declv, env->declc, (Decl*)type);
     } else if (is_func) {
       // Function declarations end with: ... <fields>; <type>) <expr>;
       FuncDecl* func = arena->alloc(arena, sizeof(FuncDecl));
       func->tag = FBLC_FUNC_DECL;
-      func->name.name = name.name;
-      func->name.loc = name.loc;
       func->args = ParseFields(arena, &toks, &(func->argc));
       func->return_type_id = UNRESOLVED_ID;
       if (func->args == NULL) {
@@ -1172,13 +1170,11 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (func->body == NULL) {
         return NULL;
       }
-      FblcVectorAppend(arena, declv, declc, (Decl*)func);
+      FblcVectorAppend(arena, env->declv, env->declc, (Decl*)func);
     } else if (is_proc) {
       // Proc declarations end with: ... <ports> ; <fields>; [<type>]) <proc>;
       ProcDecl* proc = arena->alloc(arena, sizeof(ProcDecl));
       proc->tag = FBLC_PROC_DECL;
-      proc->name.name = name.name;
-      proc->name.loc = name.loc;
       proc->return_type_id = UNRESOLVED_ID;
       if (!ParsePorts(arena, &toks, &(proc->portv), &(proc->ports), &(proc->portc))) {
         return NULL;
@@ -1213,7 +1209,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (proc->body == NULL) {
         return NULL;
       }
-      FblcVectorAppend(arena, declv, declc, (Decl*)proc);
+      FblcVectorAppend(arena, env->declv, env->declc, (Decl*)proc);
     } else {
       ReportError("Expected %s, but got '%s'.\n", keyword.loc, keywords, keyword.name);
       return NULL;
@@ -1223,7 +1219,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       return NULL;
     }
   }
-  return NewEnv(arena, declc, declv);
+  return env;
 }
 
 // ParseValueFromToks --
@@ -1243,13 +1239,14 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks)
 {
   TypeDecl* type = (TypeDecl*)env->declv[typeid];
+  SDecl* stype = env->sdeclv[typeid];
   LocName name;
   if (!GetNameToken(arena, toks, "type name", &name)) {
     return NULL;
   }
 
-  if (!NamesEqual(name.name, type->name.name)) {
-    ReportError("Expected %s, but got %s.\n", name.loc, type->name, name);
+  if (!NamesEqual(name.name, stype->name.name)) {
+    ReportError("Expected %s, but got %s.\n", name.loc, stype->name, name);
     arena->free(arena, (void*)name.name);
     arena->free(arena, (void*)name.loc);
     return NULL;
@@ -1304,7 +1301,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
       }
     }
     if (tag < 0) {
-      ReportError("Invalid field %s for type %s.\n", name.loc, name.name, type->name);
+      ReportError("Invalid field %s for type %s.\n", name.loc, name.name, stype->name);
       arena->free(arena, (void*)name.name);
       arena->free(arena, (void*)name.loc);
       return NULL;

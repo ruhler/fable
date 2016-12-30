@@ -54,54 +54,3 @@ void ReportError(const char* format, Loc* loc, ...)
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
-
-// NewEnv --
-//
-//   Create a new environment with the given declarations.
-//
-// Inputs:
-//   alloc - The allocator to use to allocate the environment.
-//   declc - The number of declarations of the environment.
-//   declv - The declarations of the environment.
-//
-// Result:
-//   A new environment with the given declarations.
-//
-// Side effects:
-//   Allocations are performed using the allocator as necessary to allocate
-//   the environment.
-
-Env* NewEnv(FblcArena* arena, size_t declc, Decl** declv)
-{
-  Env* env = arena->alloc(arena, sizeof(Env));
-  env->declc = declc;
-  env->declv = declv;
-  return env;
-}
-
-// DeclName --
-//   Return the name of a declaration.
-LocName* DeclName(Decl* decl)
-{
-  switch (decl->tag) {
-    case FBLC_STRUCT_DECL:
-    case FBLC_UNION_DECL: {
-      TypeDecl* type_decl = (TypeDecl*)decl;
-      return &type_decl->name;
-    }
-
-    case FBLC_FUNC_DECL: {
-      FuncDecl* func_decl = (FuncDecl*)decl;
-      return &func_decl->name;
-    }
-
-    case FBLC_PROC_DECL: {
-      ProcDecl* proc_decl = (ProcDecl*)decl;
-      return &proc_decl->name;
-    }
-
-    default:
-      assert(false && "Invalid decl tag.");
-      return NULL;
-  }
-}

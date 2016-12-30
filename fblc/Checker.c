@@ -43,7 +43,6 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr);
 static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn);
 static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, Field* fields, const char* kind);
 static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports);
-static bool CheckType(Env* env, TypeDecl* type);
 static bool CheckFunc(Env* env, FuncDecl* func);
 static bool CheckProc(Env* env, ProcDecl* proc);
 
@@ -152,8 +151,9 @@ static FblcTypeId LookupType(Env* env, Name name)
 {
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
+    SDecl* sdecl = env->sdeclv[i];
     if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
-        && NamesEqual(DeclName(decl)->name, name)) {
+        && NamesEqual(sdecl->name.name, name)) {
       return i;
     }
   }
@@ -306,7 +306,7 @@ static bool CheckArgs(
     if (arg_type_id == UNRESOLVED_ID) {
       return false;
     }
-    TypeDecl* arg_type = (TypeDecl*)env->declv[arg_type_id];
+    SDecl* arg_type = env->sdeclv[arg_type_id];
     if (!NamesEqual(fieldv[i].type.name, arg_type->name.name)) {
       ReportError("Expected type %s, but found %s.\n",
           ExprLoc(argv[i]), fieldv[i].type.name, arg_type->name.name);
@@ -353,7 +353,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       AppExpr* app_expr = (AppExpr*)expr;
       Decl* decl = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
-        if (NamesEqual(app_expr->func.name, DeclName(env->declv[i])->name)) {
+        if (NamesEqual(app_expr->func.name, env->sdeclv[i]->name.name)) {
           app_expr->x.func = i;
           decl = env->declv[i];
         }
@@ -414,8 +414,9 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
           return LookupType(env, type->fields[i].type.name);
         }
       }
+      SDecl* stype = env->sdeclv[type_id];
       ReportError("'%s' is not a field of the type '%s'.\n",
-          access_expr->field.loc, access_expr->field.name, type->name.name);
+          access_expr->field.loc, access_expr->field.name, stype->name.name);
       return UNRESOLVED_ID;
     }
 
@@ -438,14 +439,14 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       if (arg_type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
-      TypeDecl* arg_type = (TypeDecl*)env->declv[arg_type_id];
+      SDecl* arg_type = env->sdeclv[arg_type_id];
 
       for (int i = 0; i < type->fieldc; i++) {
         if (NamesEqual(type->fields[i].name.name, union_expr->field.name)) {
           if (!NamesEqual(type->fields[i].type.name, arg_type->name.name)) {
             ReportError("Expected type '%s', but found type '%s'.\n",
                 ExprLoc((Expr*)union_expr->x.body),
-                type->fields[i].type.name, arg_type);
+                type->fields[i].type.name, arg_type->name.name);
             return UNRESOLVED_ID;
           }
           union_expr->x.field = i;
@@ -479,7 +480,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       }
 
       if (declared_type_id != actual_type_id) {
-        TypeDecl* actual_type = (TypeDecl*)env->declv[actual_type_id];
+        SDecl* actual_type = env->sdeclv[actual_type_id];
         ReportError("Expected type %s, but found expression of type %s.\n",
             ExprLoc((Expr*)let_expr->x.def), let_expr->type.name, actual_type->name.name);
         return UNRESOLVED_ID;
@@ -499,8 +500,9 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       TypeDecl* type = (TypeDecl*)env->declv[type_id];
 
       if (type->tag != FBLC_UNION_DECL) {
+        SDecl* stype = env->sdeclv[type_id];
         ReportError("The condition has type %s, "
-            "which is not a union type.\n", ExprLoc(expr), type->name.name);
+            "which is not a union type.\n", ExprLoc(expr), stype->name.name);
         return UNRESOLVED_ID;
       }
 
@@ -518,8 +520,8 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
         }
 
         if (i != 0 && result_type_id != arg_type_id) {
-          TypeDecl* arg_type = (TypeDecl*)env->declv[arg_type_id];
-          TypeDecl* result_type = (TypeDecl*)env->declv[result_type_id];
+          SDecl* arg_type = env->sdeclv[arg_type_id];
+          SDecl* result_type = env->sdeclv[result_type_id];
           ReportError("Expected expression of type %s, "
               "but found expression of type %s.\n",
               ExprLoc((Expr*)cond_expr->x.argv[i]), result_type->name.name, arg_type->name.name);
@@ -589,8 +591,8 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         return UNRESOLVED_ID;
       }
       if (port_type_id != arg_type_id) {
-        TypeDecl* port_type = (TypeDecl*)env->declv[port_type_id];
-        TypeDecl* arg_type = (TypeDecl*)env->declv[arg_type_id];
+        SDecl* port_type = env->sdeclv[port_type_id];
+        SDecl* arg_type = env->sdeclv[arg_type_id];
         ReportError("Expected type %s, but found %s.\n",
             ExprLoc((Expr*)put_actn->x.arg), port_type->name.name, arg_type->name.name);
         return UNRESOLVED_ID;
@@ -603,7 +605,8 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       ProcDecl* proc = NULL;
       for (size_t i = 0; i < env->declc; ++i) {
         Decl* decl = env->declv[i];
-        if (decl->tag == FBLC_PROC_DECL && NamesEqual(DeclName(decl)->name, call_actn->proc.name)) {
+        SDecl* sdecl = env->sdeclv[i];
+        if (decl->tag == FBLC_PROC_DECL && NamesEqual(sdecl->name.name, call_actn->proc.name)) {
           call_actn->x.proc = i;
           proc = (ProcDecl*)decl;
         }
@@ -636,7 +639,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
           return UNRESOLVED_ID;
         }
 
-        TypeDecl* port_type = (TypeDecl*)env->declv[port_type_id];
+        SDecl* port_type = env->sdeclv[port_type_id];
         if (!NamesEqual(proc->ports[i].type.name, port_type->name.name)) {
           ReportError("Expected port type %s, but found %s.\n",
               call_actn->ports[i].loc, proc->ports[i].type.name, port_type->name);
@@ -686,7 +689,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
           return UNRESOLVED_ID;
         }
         if (actual_type_id != type_id) {
-          TypeDecl* type = (TypeDecl*)env->declv[type_id];
+          SDecl* type = env->sdeclv[type_id];
           ReportError("Expected type %s, but found %s.\n", var->type.loc, var->type.name, type->name.name);
           return UNRESOLVED_ID;
         }
@@ -705,8 +708,9 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       TypeDecl* type = (TypeDecl*)env->declv[type_id];
 
       if (type->tag != FBLC_UNION_DECL) {
+        SDecl* stype = env->sdeclv[type_id];
         ReportError("The condition has type %s, "
-            "which is not a union type.\n", ActnLoc(actn), type->name.name);
+            "which is not a union type.\n", ActnLoc(actn), stype->name.name);
         return UNRESOLVED_ID;
       }
 
@@ -726,8 +730,8 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         }
 
         if (i > 0 && result_type_id != arg_type_id) {
-          TypeDecl* result_type = (TypeDecl*)env->declv[result_type_id];
-          TypeDecl* arg_type = (TypeDecl*)env->declv[arg_type_id];
+          SDecl* result_type = env->sdeclv[result_type_id];
+          SDecl* arg_type = env->sdeclv[arg_type_id];
           ReportError("Expected process of type %s, "
               "but found process of type %s.\n",
               ActnLoc((Actn*)cond_actn->x.argv[i]), result_type->name.name, arg_type->name.name);
@@ -830,33 +834,6 @@ static bool CheckPorts(Env* env, int portc, FblcPort* portv, Port* ports)
     }
   }
   return true;
-}
-
-// CheckType --
-//
-//   Verify the given type declaration is well formed in the given
-//   environment.
-//
-// Inputs:
-//   env - The program environment.
-//   type - The type declaration to check.
-//
-// Results:
-//   Returns true if the type declaration is well formed, false otherwise.
-//
-// Side effects:
-//   LocName ids within the body of the declaration are resolved.
-//   If the type declaration is not well formed, prints a message to standard
-//   error describing the problem.
-
-static bool CheckType(Env* env, TypeDecl* type)
-{
-  if (type->tag == FBLC_UNION_DECL && type->fieldc == 0) {
-    ReportError("A union type must have at least one field.\n",
-        type->name.loc);
-    return false;
-  }
-  return CheckFields(env, type->fieldc, type->fieldv, type->fields, "field");
 }
 
 // CheckFunc --
@@ -989,7 +966,7 @@ static bool CheckProc(Env* env, ProcDecl* proc)
     return false;
   }
   if (proc->return_type_id != body_type_id) {
-    TypeDecl* body_type = (TypeDecl*)env->declv[body_type_id];
+    SDecl* body_type = env->sdeclv[body_type_id];
     ReportError("Type mismatch. Expected %s, but found %s.\n",
         ActnLoc(proc->body), proc->return_type.name, body_type->name.name);
     return false;
@@ -1020,12 +997,25 @@ bool CheckProgram(Env* env)
   for (size_t i = 0; i < env->declc; ++i) {
     Decl* decl = env->declv[i];
     switch (decl->tag) {
-      case FBLC_STRUCT_DECL:
-      case FBLC_UNION_DECL:
-        if (!CheckType(env, (TypeDecl*)decl)) {
+      case FBLC_STRUCT_DECL: {
+        TypeDecl* type = (TypeDecl*)decl;
+        if (!CheckFields(env, type->fieldc, type->fieldv, type->fields, "field")) {
           return false;
         }
         break;
+      }
+
+      case FBLC_UNION_DECL: {
+        TypeDecl* type = (TypeDecl*)decl;
+        if (type->fieldc == 0) {
+          ReportError("A union type must have at least one field.\n", env->sdeclv[i]->name.loc);
+          return false;
+        }
+        if (!CheckFields(env, type->fieldc, type->fieldv, type->fields, "field")) {
+          return false;
+        }
+        break;
+      }
 
       case FBLC_FUNC_DECL:
         if (!CheckFunc(env, (FuncDecl*)decl)) {
@@ -1047,9 +1037,8 @@ bool CheckProgram(Env* env)
     // Verify the declaration does not have the same name as one we have
     // already seen.
     for (size_t j = 0; j < i; ++j) {
-      if (NamesEqual(DeclName(env->declv[i])->name, DeclName(env->declv[j])->name)) {
-        ReportError("Multiple declarations for %s.\n",
-            DeclName(env->declv[i])->loc, DeclName(env->declv[i])->name);
+      if (NamesEqual(env->sdeclv[i]->name.name, env->sdeclv[j]->name.name)) {
+        ReportError("Multiple declarations for %s.\n", env->sdeclv[i]->name.loc, env->sdeclv[i]->name.name);
         return false;
       }
     }
