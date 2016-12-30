@@ -1132,7 +1132,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 
     if (is_struct || is_union) {
       // Struct and union declarations end with: ... <fields>);
-      TypeDecl* type = arena->alloc(arena, sizeof(TypeDecl));
+      FblcTypeDecl* type = arena->alloc(arena, sizeof(FblcTypeDecl));
       STypeDecl* stype = (STypeDecl*)sdecl;
       type->tag = is_struct ? FBLC_STRUCT_DECL : FBLC_UNION_DECL;
       stype->fields = ParseFields(arena, &toks, &(type->fieldc));
@@ -1246,7 +1246,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 //   error, an error message is printed to standard error.
 static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks)
 {
-  TypeDecl* type = (TypeDecl*)env->declv[typeid];
+  FblcTypeDecl* type = (FblcTypeDecl*)env->declv[typeid];
   STypeDecl* stype = (STypeDecl*)env->sdeclv[typeid];
   LocName name;
   if (!GetNameToken(arena, toks, "type name", &name)) {

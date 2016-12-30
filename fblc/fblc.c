@@ -66,7 +66,7 @@ static void PrintUsage(FILE* stream)
 //   The value is printed to the given file stream.
 static void PrintValue(FILE* stream, Env* env, FblcTypeId typeid, FblcValue* value)
 {
-  TypeDecl* type = (TypeDecl*)env->declv[typeid];
+  FblcTypeDecl* type = (FblcTypeDecl*)env->declv[typeid];
   STypeDecl* stype = (STypeDecl*)env->sdeclv[typeid];
   if (type->tag == FBLC_STRUCT_DECL) {
     fprintf(stream, "%s(", stype->name.name);

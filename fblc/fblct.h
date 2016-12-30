@@ -85,12 +85,6 @@ typedef struct {
 
 typedef struct {
   FblcDeclTag tag;
-  size_t fieldc;
-  FblcTypeId* fieldv;
-} TypeDecl;
-
-typedef struct {
-  FblcDeclTag tag;
   size_t argc;
   FblcTypeId* argv;
   FblcTypeId return_type_id;

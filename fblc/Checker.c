@@ -367,7 +367,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
 
       switch (decl->tag) {
         case FBLC_STRUCT_DECL: {
-          TypeDecl* type = (TypeDecl*)decl;
+          FblcTypeDecl* type = (FblcTypeDecl*)decl;
           STypeDecl* stype = (STypeDecl*)sdecl;
           if (!CheckArgs(env, vars, type->fieldc, stype->fields,
                 app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func))) {
@@ -409,7 +409,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
-      TypeDecl* type = (TypeDecl*)env->declv[type_id];
+      FblcTypeDecl* type = (FblcTypeDecl*)env->declv[type_id];
       STypeDecl* stype = (STypeDecl*)env->sdeclv[type_id];
 
       for (int i = 0; i < type->fieldc; i++) {
@@ -430,7 +430,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
         ReportError("Type %s not found.\n", union_expr->type.loc, union_expr->type.name);
         return UNRESOLVED_ID;
       }
-      TypeDecl* type = (TypeDecl*)env->declv[union_expr->x.type];
+      FblcTypeDecl* type = (FblcTypeDecl*)env->declv[union_expr->x.type];
       STypeDecl* stype = (STypeDecl*)env->sdeclv[union_expr->x.type];
 
       if (type->tag != FBLC_UNION_DECL) {
@@ -501,7 +501,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
-      TypeDecl* type = (TypeDecl*)env->declv[type_id];
+      FblcTypeDecl* type = (FblcTypeDecl*)env->declv[type_id];
 
       if (type->tag != FBLC_UNION_DECL) {
         SDecl* stype = env->sdeclv[type_id];
@@ -709,7 +709,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
-      TypeDecl* type = (TypeDecl*)env->declv[type_id];
+      FblcTypeDecl* type = (FblcTypeDecl*)env->declv[type_id];
 
       if (type->tag != FBLC_UNION_DECL) {
         SDecl* stype = env->sdeclv[type_id];
@@ -887,7 +887,7 @@ static bool CheckFunc(Env* env, FuncDecl* func)
     return false;
   }
   if (func->return_type_id != body_type_id) {
-    TypeDecl* body_type = (TypeDecl*)env->declv[body_type_id];
+    FblcTypeDecl* body_type = (FblcTypeDecl*)env->declv[body_type_id];
     ReportError("Type mismatch. Expected %s, but found %s.\n",
         ExprLoc(func->body), func->return_type.name, body_type);
     return false;
@@ -1002,7 +1002,7 @@ bool CheckProgram(Env* env)
     Decl* decl = env->declv[i];
     switch (decl->tag) {
       case FBLC_STRUCT_DECL: {
-        TypeDecl* type = (TypeDecl*)decl;
+        FblcTypeDecl* type = (FblcTypeDecl*)decl;
         STypeDecl* stype = (STypeDecl*)env->sdeclv[i];
         if (!CheckFields(env, type->fieldc, type->fieldv, stype->fields, "field")) {
           return false;
@@ -1011,7 +1011,7 @@ bool CheckProgram(Env* env)
       }
 
       case FBLC_UNION_DECL: {
-        TypeDecl* type = (TypeDecl*)decl;
+        FblcTypeDecl* type = (FblcTypeDecl*)decl;
         if (type->fieldc == 0) {
           ReportError("A union type must have at least one field.\n", env->sdeclv[i]->name.loc);
           return false;
