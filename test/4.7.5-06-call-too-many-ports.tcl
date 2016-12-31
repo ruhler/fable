@@ -10,7 +10,7 @@ set prg {
     Bool <~> myget, put;
     Bool putted = put~(Bool:true(Unit()));
 
-    // sub takes 1 port argument, but two are provided.
+    # sub takes 1 port argument, but two are provided.
     sub(myget, put ; );
   };
 }

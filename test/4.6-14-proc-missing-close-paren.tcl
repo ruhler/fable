@@ -1,5 +1,5 @@
 set prg {
-  // Process declarations must have a close parenthesis.
+  # Process declarations must have a close parenthesis.
   struct Unit();
 
   proc p(Unit <~ px, Unit ~> py ; Unit x, Unit y ; Unit {

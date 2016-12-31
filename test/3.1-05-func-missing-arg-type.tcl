@@ -1,5 +1,5 @@
 set prg {
-  // Function declarations must have types for each argument.
+  # Function declarations must have types for each argument.
   struct Unit();
 
   func f(x, Unit y; Unit) {

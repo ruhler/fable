@@ -4,7 +4,7 @@ set prg {
   union Foo(Unit bar, A sludge);
 
   func main( ; Foo) {
-    // The close paren is missing.
+    # The close paren is missing.
     Foo:bar(Unit();
   };
 }

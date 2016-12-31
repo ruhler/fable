@@ -9,7 +9,7 @@ set prg {
   proc main( ; ; Bool) {
     Bool <~> myget, put;
     Bool putted = put~(Bool:true(Unit()));
-    // The semicolon after the port arguments is missing.
+    # The semicolon after the port arguments is missing.
     sub(myget);
   };
 }

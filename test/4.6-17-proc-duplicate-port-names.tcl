@@ -1,5 +1,5 @@
 set prg {
-  // Process port names must be unique.
+  # Process port names must be unique.
   struct Unit();
 
   proc p(Unit <~ px, Unit ~> px ; Unit x, Unit y ; Unit) {

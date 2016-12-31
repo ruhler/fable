@@ -1,5 +1,5 @@
 set prg {
-  // Process declarations must have a name.
+  # Process declarations must have a name.
   struct Unit();
 
   proc ( ; ; Unit) {

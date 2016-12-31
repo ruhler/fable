@@ -1,5 +1,5 @@
 set prg {
-  // Variable have the type they are declared to have.
+  # Variable have the type they are declared to have.
   struct Unit();
   union Bool(Unit True, Unit False);
 

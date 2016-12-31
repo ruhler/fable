@@ -3,7 +3,7 @@ set prg {
   struct A(Unit x, Unit y);
 
   func main( ; A) {
-    // The equals sign is missing.
+    # The equals sign is missing.
     Unit v Unit();
     A(v, v);
   };

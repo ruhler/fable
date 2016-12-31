@@ -4,7 +4,7 @@ set prg {
   struct Pair(Bool a, Bool b);
 
   proc main( ; ; Pair) {
-    // The second action of the exec has a poorly formed action.
+    # The second action of the exec has a poorly formed action.
     Bool x = $(Bool:true(Unit())), Unit y = ???;
     $(Pair(x, y));
   };

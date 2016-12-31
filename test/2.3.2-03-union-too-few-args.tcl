@@ -3,7 +3,7 @@ set prg {
   union Foo(Unit bar);
 
   func main( ; Foo) {
-    // The constructor is missing its argument.
+    # The constructor is missing its argument.
     Foo:bar();
   };
 }

@@ -1,5 +1,5 @@
 set prg {
-  // Variables must be declared in scope.
+  # Variables must be declared in scope.
   struct Unit();
   union Bool(Unit True, Unit False);
 

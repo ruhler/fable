@@ -7,7 +7,7 @@ set prg {
   };
 
   proc main( ; ; Bool) {
-    // The first port argument has invalid syntax.
+    # The first port argument has invalid syntax.
     sub( ??? ; );
   };
 }

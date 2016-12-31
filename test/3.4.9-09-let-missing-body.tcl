@@ -3,7 +3,7 @@ set prg {
   struct A(Unit x, Unit y);
 
   func main( ; A) {
-    // The body of the let is missing.
+    # The body of the let is missing.
     Unit v = Unit();
   };
 }

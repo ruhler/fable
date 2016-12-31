@@ -1,5 +1,5 @@
 set prg {
-  // A union and a function can't have the same name.
+  # A union and a function can't have the same name.
   struct Unit();
   union A(Unit x, Unit y);
 

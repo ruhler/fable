@@ -1,5 +1,5 @@
 set prg {
-  // Process port arguments must have a type.
+  # Process port arguments must have a type.
   struct Unit();
 
   proc p( <~ px, Unit ~> py ; Unit x, Unit y; Unit) {

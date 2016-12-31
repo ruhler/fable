@@ -1,5 +1,5 @@
 set prg {
-  // All arguments to the conditional must have the same type.
+  # All arguments to the conditional must have the same type.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);

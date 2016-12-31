@@ -7,7 +7,7 @@ set prg {
   };
 
   proc main( ; ; Bool) {
-    // The argument is malformed.
+    # The argument is malformed.
     sub( ; ???);
   };
 }

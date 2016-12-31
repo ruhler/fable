@@ -1,5 +1,5 @@
 set prg {
-  // Process port arguments must be separated with a comma.
+  # Process port arguments must be separated with a comma.
   struct Unit();
 
   proc p(Unit <~ px Unit ~> py ; Unit x, Unit y; Unit) {

@@ -2,7 +2,7 @@ set prg {
   struct Unit();
 
   proc f(Unit ~> myput ; ; Unit) {
-    // The variable 'x' is not not declared.
+    # The variable 'x' is not not declared.
     myput~(x);
   };
 

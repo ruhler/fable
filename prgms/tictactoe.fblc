@@ -1,15 +1,15 @@
 
 struct Unit();
 
-// A square is either filled with an 'X', filled with an 'O', 
-// or is 'E'mpty.
+# A square is either filled with an 'X', filled with an 'O', 
+# or is 'E'mpty.
 union Square(Unit X, Unit O, Unit E);
 
-// A board is a 3x3 grid of squares.
+# A board is a 3x3 grid of squares.
 struct Board(
-    Square ul, Square uc, Square ur,    // Upper row.
-    Square ml, Square mc, Square mr,    // Middle row.
-    Square ll, Square lc, Square lr     // Lower row.
+    Square ul, Square uc, Square ur,    # Upper row.
+    Square ml, Square mc, Square mr,    # Middle row.
+    Square ll, Square lc, Square lr     # Lower row.
 );
 
 func EmptyBoard( ; Board) {
@@ -18,19 +18,19 @@ func EmptyBoard( ; Board) {
         Square:E(Unit()), Square:E(Unit()), Square:E(Unit()));
 };
 
-// Position can be used to identify a specific square in the 3x3 grid.
+# Position can be used to identify a specific square in the 3x3 grid.
 union Position(
     Unit UL, Unit UC, Unit UR,
     Unit ML, Unit MC, Unit MR,
     Unit LL, Unit LC, Unit LR
 );
 
-// Returns the value of the square at position 'p' in board 'b'.
+# Returns the value of the square at position 'p' in board 'b'.
 func GetSquare(Board b, Position p; Square) {
   ?(p; b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr);
 };
 
-// Sets the square at position 'p' in board 'b' to value 's'.
+# Sets the square at position 'p' in board 'b' to value 's'.
 func SetSquare(Board b, Position p, Square s ; Board) {
   ?(p;
       Board(   s, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
@@ -50,33 +50,33 @@ union Player(Unit X, Unit O);
 
 union Bool(Unit True, Unit False);
 
-// Returns true if the square 's' is empty.
+# Returns true if the square 's' is empty.
 func IsEmpty(Square s ; Bool) {
   ?(s; Bool:False(Unit()), Bool:False(Unit()), Bool:True(Unit()));
 };
 
-// Returns the board resulting from player 'x' making a play at position 'p'
-// of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
-// not empty.
+# Returns the board resulting from player 'x' making a play at position 'p'
+# of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
+# not empty.
 func Move(Board b, Position p, Player x; MaybeBoard) {
   ?(IsEmpty(GetSquare(b, p)) ; 
      MaybeBoard:Just(SetSquare(b, p, ?(x; Square:X(Unit()), Square:O(Unit())))),
      MaybeBoard:Nothing(Unit()));
 };
 
-// The status of a (valid) board is one of:
-//  X: The player X has won.
-//  O: The player O has won.
-//  D: There is a draw.
-//  E: The board has empty squares.
+# The status of a (valid) board is one of:
+#  X: The player X has won.
+#  O: The player O has won.
+#  D: There is a draw.
+#  E: The board has empty squares.
 union Status(Unit X, Unit O, Unit D, Unit E);
 
-// Return the status of a single square.
+# Return the status of a single square.
 func SquareStatus(Square a ; Status) {
   ?(a ; Status:X(Unit()), Status:O(Unit()), Status:E(Unit()));
 };
 
-// Combine two Status using an 'and' operation.
+# Combine two Status using an 'and' operation.
 func AndStatus(Status a, Status b; Status) {
   ?(a ;
       ?(b ; a, Status:D(Unit()), b, b), 
@@ -85,17 +85,17 @@ func AndStatus(Status a, Status b; Status) {
       a);
 };
 
-// Combine two Status using an 'or' operation.
+# Combine two Status using an 'or' operation.
 func OrStatus(Status a, Status b; Status) {
   ?(a ; a, a, b, ?(b ; b, b, a, a));
 };
 
-// Compute the status for a given row of squares.
+# Compute the status for a given row of squares.
 func RowStatus(Square a, Square b, Square c; Status) {
   AndStatus(SquareStatus(a), AndStatus(SquareStatus(b), SquareStatus(c)));
 };
 
-// Compute the status for a board.
+# Compute the status for a board.
 func BoardStatus(Board a ; Status) {
   OrStatus(
       OrStatus(
@@ -108,13 +108,13 @@ func BoardStatus(Board a ; Status) {
 
 union Result(Unit Win, Unit Draw, Unit Loss);
 
-// Re-interpret the result from the perspective of the opposing player.
+# Re-interpret the result from the perspective of the opposing player.
 func FlipResult(Result r; Result) {
   ?(r ; Result:Loss(Unit()), Result:Draw(Unit()), Result:Win(Unit()));
 };
 
-// Return the expected result of the game for player 'x', assuming player 'x'
-// has just moved and that both players play optimally.
+# Return the expected result of the game for player 'x', assuming player 'x'
+# has just moved and that both players play optimally.
 func ExpectedResult(Board b, Player x; Result) {
   ?(BoardStatus(b);
       ?(x; Result:Win(Unit()), Result:Loss(Unit())),
@@ -143,9 +143,9 @@ func ChooseBestMaybePosition(MaybePositionResult a, MaybePositionResult b;
 
 union MaybePositionResult(PositionResult Just, Unit Nothing);
 
-// Return the expected result of player 'x' moving at position 'p' on board
-// 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
-// 'b'.
+# Return the expected result of player 'x' moving at position 'p' on board
+# 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
+# 'b'.
 func MoveResult(Board b, Player x, Position p; MaybePositionResult) {
   MaybeBoard moved = Move(b, p, x);
   ?(moved;
@@ -153,8 +153,8 @@ func MoveResult(Board b, Player x, Position p; MaybePositionResult) {
       MaybePositionResult:Nothing(Unit()));
 };
 
-// Choose the best move for player 'x' on the given board.
-// The results are undefined if there are no moves left to make.
+# Choose the best move for player 'x' on the given board.
+# The results are undefined if there are no moves left to make.
 func ChooseBestMove(Board b, Player x; Position) {
   MaybePositionResult ul = MoveResult(b, x, Position:UL(Unit()));
   MaybePositionResult uc = MoveResult(b, x, Position:UC(Unit()));
@@ -185,9 +185,9 @@ func GameIsOver(GameStatus status ; Bool) {
   ?(status; Bool:False(Unit()), Bool:True(Unit()), Bool:True(Unit()));
 };
 
-// position: Make a move at the given position for the current player.
-// computer: Have the computer make a move for the current player.
-// reset: Reset the game.
+# position: Make a move at the given position for the current player.
+# computer: Have the computer make a move for the current player.
+# reset: Reset the game.
 union Input(Position position, Unit computer, Unit reset);
 
 func InputIsReset(Input input; Bool) {
@@ -269,8 +269,8 @@ func BenchmarkChooseBestMove( ; Position) {
         Square:E(Unit()), Square:E(Unit()), Square:E(Unit())), Player:X(Unit()));
 };
 
-// TODO:
-// * Better way of expressing maybe monad
-// * Be able to easily combine multiple test cases
-// * Use PositionEquals for test result, and report position when failed.
+# TODO:
+# * Better way of expressing maybe monad
+# * Be able to easily combine multiple test cases
+# * Use PositionEquals for test result, and report position when failed.
 

@@ -1,5 +1,5 @@
 set prg {
-  // A function must not be declared multiple times.
+  # A function must not be declared multiple times.
   struct Unit();
 
   func foo(Unit x ; Unit) {

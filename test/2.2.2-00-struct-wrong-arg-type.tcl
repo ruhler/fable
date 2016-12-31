@@ -6,9 +6,8 @@ set prg {
   struct A(Unit x, Donut y);
 
   func main( ; A) {
-    // The second argument to A should be of type Donut, not Unit.
+    # The second argument to A should be of type Donut, not Unit.
     A(Unit(), Unit());
   };
 }
 fblc-check-error $prg 8:15
-

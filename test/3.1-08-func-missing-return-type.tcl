@@ -1,5 +1,5 @@
 set prg {
-  // Function declarations must have a return type
+  # Function declarations must have a return type
   struct Unit();
 
   func f(Unit x, Unit y; ) {

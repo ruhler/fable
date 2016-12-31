@@ -1,5 +1,5 @@
 set prg {
-  // 'foo' is not a valid kind of declaration.
+  # 'foo' is not a valid kind of declaration.
   struct Unit();
 
   foo Bar();

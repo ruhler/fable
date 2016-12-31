@@ -1,5 +1,5 @@
 set prg {
-  // The condition of the conditional should have union type, not struct type.
+  # The condition of the conditional should have union type, not struct type.
   struct Unit();
   struct StructABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);

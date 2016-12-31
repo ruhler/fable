@@ -1,5 +1,5 @@
 set prg {
-  // Test for calling a function with too many arguments.
+  # Test for calling a function with too many arguments.
   struct Unit();
 
   func f(Unit x; Unit) {

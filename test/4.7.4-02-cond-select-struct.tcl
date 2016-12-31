@@ -4,7 +4,7 @@ set prg {
   union Fruit(Unit apple, Unit banana, Unit pear);
 
   proc main( ; ; Fruit) {
-    // The condition is not a union type.
+    # The condition is not a union type.
     ?(Pair(Unit(), Unit(), Unit()) ;
       $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Fruit:banana(Unit())));
   };

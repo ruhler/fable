@@ -1,5 +1,5 @@
 set prg {
-  // Function declarations must have an open parenthesis.
+  # Function declarations must have an open parenthesis.
   struct Unit();
 
   func f Unit x, Unit y; Unit) {

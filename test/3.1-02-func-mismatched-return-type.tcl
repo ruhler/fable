@@ -1,5 +1,5 @@
 set prg {
-  // The return type of the function must match the type of the body.
+  # The return type of the function must match the type of the body.
   struct Unit();
   struct Donut();
 

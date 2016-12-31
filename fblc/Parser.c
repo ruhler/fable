@@ -31,13 +31,6 @@ typedef struct {
   bool has_curr;
   int curr;
 
-  // next is the character after the character currently at the front of the
-  // stream. It is valid only if has_next is true, in which case the next
-  // character has already been read from the file or string.
-  // has_next implies has_curr.
-  bool has_next;
-  int next;
-
   // Location information for the next token for the purposes of error
   // reporting.
   Loc loc;
@@ -45,7 +38,6 @@ typedef struct {
 
 #define MAX_TOK_DESC_LEN 5
 static int CurrChar(TokenStream* toks);
-static int NextChar(TokenStream* toks);
 static void AdvanceChar(TokenStream* toks);
 static bool IsNameChar(int c);
 static void SkipToToken(TokenStream* toks);
@@ -82,7 +74,6 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt);
 static int CurrChar(TokenStream* toks)
 {
   if (!toks->has_curr) {
-    assert(!toks->has_next);
     if (toks->fd != -1) {
       char c;
       if (read(toks->fd, &c, 1) == 1) {
@@ -101,45 +92,6 @@ static int CurrChar(TokenStream* toks)
     toks->has_curr = true;
   }
   return toks->curr;
-}
-
-// NextChar --
-//   Look at the next character of the token stream's file.
-//
-// Inputs:
-//   toks - The token stream to see the character from.
-//
-// Result:
-//   The next character of the token stream's file, or EOF if the end of the
-//   file has been reached.
-//
-// Side effects:
-//   Reads data from the underlying file if necessary.
-static int NextChar(TokenStream* toks)
-{
-  if (!toks->has_next) {
-    if (CurrChar(toks) == EOF) {
-      return EOF;
-    }
-    assert(toks->has_curr);
-    if (toks->fd != -1) {
-      char c;
-      if (read(toks->fd, &c, 1) == 1) {
-        toks->next = c;
-      } else {
-        toks->next = EOF;
-      }
-    } else {
-      assert(toks->string != NULL);
-      if (*toks->string == '\0') {
-        toks->next = EOF;
-      } else {
-        toks->next = *toks->string++;
-      }
-    }
-    toks->has_next = true;
-  }
-  return toks->next;
 }
 
 // AdvanceChar --
@@ -164,14 +116,7 @@ static void AdvanceChar(TokenStream* toks)
     } else {
       toks->loc.col++;
     }
-
-    if (toks->has_next) {
-      assert(toks->has_curr);
-      toks->curr = toks->next;
-      toks->has_next = false;
-    } else {
-      toks->has_curr = false;
-    }
+    toks->has_curr = false;
   }
 }
 
@@ -208,7 +153,7 @@ static bool IsNameChar(int c)
 //   stream is not already positioned at a token character.
 static void SkipToToken(TokenStream* toks)
 {
-  bool is_comment_start = (CurrChar(toks) == '/' && NextChar(toks) == '/');
+  bool is_comment_start = CurrChar(toks) == '#';
   while (isspace(CurrChar(toks)) || is_comment_start) {
     AdvanceChar(toks);
     if (is_comment_start) {
@@ -216,7 +161,7 @@ static void SkipToToken(TokenStream* toks)
         AdvanceChar(toks);
       }
     }
-    is_comment_start = (CurrChar(toks) == '/' && NextChar(toks) == '/');
+    is_comment_start = CurrChar(toks) == '#';
   }
 }
 
@@ -279,7 +224,6 @@ static bool OpenFdTokenStream(TokenStream* toks, int fd, const char* source)
   }
   toks->string = NULL;
   toks->has_curr = false;
-  toks->has_next = false;
   toks->loc.source = source;
   toks->loc.line = 1;
   toks->loc.col = 1;
@@ -323,7 +267,6 @@ static bool OpenStringTokenStream(TokenStream* toks, const char* source, const c
   toks->fd = -1;
   toks->string = string;
   toks->has_curr = false;
-  toks->has_next = false;
   toks->loc.source = source;
   toks->loc.line = 1;
   toks->loc.col = 1;

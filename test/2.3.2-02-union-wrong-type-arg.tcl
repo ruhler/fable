@@ -4,7 +4,7 @@ set prg {
   union Foo(Unit bar, A sludge);
 
   func main( ; Foo) {
-    // The bar field should have type Unit, not A.
+    # The bar field should have type Unit, not A.
     Foo:bar(A(Unit(), Unit()));
   };
 }

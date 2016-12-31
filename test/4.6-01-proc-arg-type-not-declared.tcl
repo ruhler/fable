@@ -1,7 +1,7 @@
 set prg {
   struct Unit();
 
-  // The process argument type Donut is not defined.
+  # The process argument type Donut is not defined.
   proc f( ; Unit x, Donut y; Unit) {
     $(x);
   };

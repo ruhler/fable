@@ -1,5 +1,5 @@
 set prg {
-  // Process declarations must have a body.
+  # Process declarations must have a body.
   struct Unit();
 
   proc p(Unit <~ px, Unit ~> py ; Unit x, Unit y ; Unit);

@@ -1,5 +1,5 @@
 set prg {
-  // Test for calling a function with a maltyped argument.
+  # Test for calling a function with a maltyped argument.
   struct Unit();
   struct Donut();
 

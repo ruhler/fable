@@ -1,5 +1,5 @@
 set prg {
-  // Process declarations must have a final semicolon.
+  # Process declarations must have a final semicolon.
   struct Unit();
 
   proc p(Unit <~ px, Unit ~> py ; Unit x, Unit y ; Unit) {

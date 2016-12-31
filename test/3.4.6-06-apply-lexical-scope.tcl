@@ -1,5 +1,5 @@
 set prg {
-  // Test that variables in the calling scope are not visible to the function.
+  # Test that variables in the calling scope are not visible to the function.
   struct Unit();
 
   func f(Unit x ; Unit) {

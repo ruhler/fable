@@ -1,5 +1,5 @@
 set prg {
-  // A union literal must be for a declared union type.
+  # A union literal must be for a declared union type.
   struct Unit();
 
   func main( ; Unit) {

@@ -1,5 +1,5 @@
 set prg {
-  // A union declaration must have a name.
+  # A union declaration must have a name.
   struct Unit();
   union (Unit x, Unit y);
 

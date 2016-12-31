@@ -3,7 +3,7 @@ set prg {
   union Fruit(Unit apple, Unit banana, Unit pear);
 
   proc main( ; ; Fruit) {
-    // A condition arg is malformed.
+    # A condition arg is malformed.
     ?(Fruit:pear(Unit()) ;
       $(Fruit:pear(Unit())), ???, $(Fruit:banana(Unit())));
   };

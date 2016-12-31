@@ -3,7 +3,7 @@ set prg {
   struct A(Unit x, Unit y);
 
   func main( ; A) {
-    // The semicolon after the declaration is missing.
+    # The semicolon after the declaration is missing.
     Unit v = Unit()
     A(v, v);
   };

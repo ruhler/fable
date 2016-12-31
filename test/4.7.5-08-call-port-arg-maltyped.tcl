@@ -10,7 +10,7 @@ set prg {
     Bool <~> myget, put;
     Bool putted = put~(Bool:true(Unit()));
 
-    // sub takes a port of type Unit, not Bool.
+    # sub takes a port of type Unit, not Bool.
     sub(myget ; );
   };
 }

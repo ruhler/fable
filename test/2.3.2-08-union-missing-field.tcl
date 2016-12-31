@@ -4,7 +4,7 @@ set prg {
   union Foo(Unit bar, A sludge);
 
   func main( ; Foo) {
-    // No field is provided for the constructor.
+    # No field is provided for the constructor.
     Foo:(Unit());
   };
 }

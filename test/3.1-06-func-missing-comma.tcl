@@ -1,5 +1,5 @@
 set prg {
-  // Function declarations must have commas separating arguments.
+  # Function declarations must have commas separating arguments.
   struct Unit();
 
   func f(Unit x Unit y; Unit) {

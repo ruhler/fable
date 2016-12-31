@@ -1,5 +1,5 @@
 set prg {
-  // The condition should take 3 args, not 4.
+  # The condition should take 3 args, not 4.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);

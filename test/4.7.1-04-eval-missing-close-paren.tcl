@@ -2,7 +2,7 @@ set prg {
   struct Unit();
 
   proc main( ; ; Unit) {
-    // The close parenthesis is missing.
+    # The close parenthesis is missing.
     $(Unit();
   };
 }

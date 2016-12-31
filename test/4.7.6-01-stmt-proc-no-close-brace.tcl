@@ -3,6 +3,6 @@ set prg {
 
   proc main( ; ; Unit) {
     $(Unit());
-  ; // Missing the '}' brace.
+  ; # Missing the '}' brace.
 }
 fblc-check-error $prg 6:3

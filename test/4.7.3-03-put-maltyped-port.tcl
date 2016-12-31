@@ -3,7 +3,7 @@ set prg {
   struct Donut();
 
   proc f(Donut ~> myput ; ; Unit) {
-    // myput port has the wrong type.
+    # myput port has the wrong type.
     myput~(Donut());
   };
 

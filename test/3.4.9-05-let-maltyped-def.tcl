@@ -1,5 +1,5 @@
 set prg {
-  // Variable definitions must have the right type.
+  # Variable definitions must have the right type.
   struct Unit();
   struct Donut();
   struct A(Unit x, Unit y);

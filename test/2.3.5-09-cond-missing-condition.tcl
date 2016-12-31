@@ -1,5 +1,5 @@
 set prg {
-  // The conditional is missing the condition.
+  # The conditional is missing the condition.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);

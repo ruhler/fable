@@ -7,7 +7,7 @@ set prg {
   };
 
   proc main( ; ; Bool) {
-    // Calling with a Unit when a Bool is expected.
+    # Calling with a Unit when a Bool is expected.
     sub( ; Unit());
   };
 }

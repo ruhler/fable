@@ -196,7 +196,7 @@ exec diff out/clockincr.wnt out/clockincr.got
 
 puts "test prgms/calc.fblc"
 exec $::fblc prgms/calc.fblc main > out/calc.got
-exec grep "/// Expect: " prgms/calc.fblc | sed -e "s/\\/\\/\\/ Expect: //" > out/calc.wnt
+exec echo "TL:pass(Unit())" > out/calc.wnt
 exec diff out/calc.wnt out/calc.got
 
 puts "test prgms/tictactoe.fblc TestBoardStatus"

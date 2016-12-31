@@ -2,7 +2,7 @@ set prg {
   struct Unit();
 
   func main( ; Unit) {
-    // Missing a semicolon.
+    # Missing a semicolon.
     Unit()
   };
 }

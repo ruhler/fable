@@ -1,5 +1,5 @@
 set prg {
-  // A struct and a function can't have the same name.
+  # A struct and a function can't have the same name.
   struct Unit();
   struct A(Unit x, Unit y);
 

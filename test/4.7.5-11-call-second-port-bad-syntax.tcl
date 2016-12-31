@@ -9,7 +9,7 @@ set prg {
   proc main( ; ; Bool) {
     Bool <~> myget, put;
     Bool putted = put~(Bool:true(Unit()));
-    // The second port argument has the wrong syntax. 
+    # The second port argument has the wrong syntax. 
     sub(myget, ??? ; );
   };
 }

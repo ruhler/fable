@@ -1,5 +1,5 @@
 set prg {
-  // A union must have at least one field.
+  # A union must have at least one field.
   struct Unit();
   union NoFields();
 
@@ -10,4 +10,3 @@ set prg {
 # TODO: Should the erro be at the NoFields, the open paren, or the close
 # paren?
 fblc-check-error $prg 4:9
-

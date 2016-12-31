@@ -1,5 +1,5 @@
 set prg {
-  // One of the conditional's arguments has bad syntax.
+  # One of the conditional's arguments has bad syntax.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);

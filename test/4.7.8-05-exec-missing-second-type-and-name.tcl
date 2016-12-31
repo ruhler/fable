@@ -4,7 +4,7 @@ set prg {
   struct Pair(Bool a, Bool b);
 
   proc main( ; ; Pair) {
-    // The second action of the exec is missing the type and name.
+    # The second action of the exec is missing the type and name.
     Bool x = $(Bool:true(Unit())), = $(Bool:false(Unit()));
     $(Pair(x, y));
   };

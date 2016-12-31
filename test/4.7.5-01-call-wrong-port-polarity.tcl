@@ -1,5 +1,5 @@
 set prg {
-  // Ports passed to a call must have the right polarity.
+  # Ports passed to a call must have the right polarity.
   struct Unit();
 
   proc put(Unit ~> out; ; Unit) {

@@ -806,6 +806,8 @@ progress.
  @section 6.1. Guidelines for Concrete Syntax
   Don't have keywords that aren't allowed to be used as variable or field names.
   Because I find it very annoying in C and Java how you can't use names like 'class' or 'union' for variable and field names.
+
+  Try to keep parsing simple, both in order to simplify parser implementations and under the assumption that something simpler to write a parser for is simpler for a human to parse as well.
  @end
 @end
 
@@ -822,7 +824,7 @@ progress.
    Add a section talking about lexicography?
    Namely that tokens are punctuation or words and that whitespace is a token delimiter.
   @end
-  @li Add a section saying we support // style comments.
+  @li Add a section saying we support # style comments.
   @li Add those examples of recursive data types I promised but haven't included yet.
   @li Show how the types bool, char, and int can be defined in the Unions section.
   @li Add a section with the suggested binary encoding of a program.

@@ -1,5 +1,5 @@
 set prg {
-  // Two processes can't have the same name.
+  # Two processes can't have the same name.
   struct Unit();
 
   proc foo( ; Unit x ; Unit) {

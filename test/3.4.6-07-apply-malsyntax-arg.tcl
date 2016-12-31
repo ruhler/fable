@@ -6,7 +6,7 @@ set prg {
   };
 
   func main( ; Unit) {
-    // The argument has invalid syntax.
+    # The argument has invalid syntax.
     f(???);
   };
 }

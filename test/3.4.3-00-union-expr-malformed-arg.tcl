@@ -1,11 +1,11 @@
 set prg {
-  // The argument to a union expression must be well formed.
+  # The argument to a union expression must be well formed.
   struct Unit();
   struct A(Unit x, Unit y);
   union Foo(Unit bar, A sludge);
 
   func main( ; Unit) {
-    // The variable 'x' has not  been declared.
+    # The variable 'x' has not  been declared.
     Foo:bar(x).bar;
   };
 }

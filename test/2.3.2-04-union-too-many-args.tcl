@@ -3,7 +3,7 @@ set prg {
   union Foo(Unit bar);
 
   func main( ; Foo) {
-    // The constructor has too many arguments.
+    # The constructor has too many arguments.
     Foo:bar(Unit(), Unit());
   };
 }

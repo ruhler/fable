@@ -1,5 +1,5 @@
 set prg {
-  // Each field of a union declaration needs a name.
+  # Each field of a union declaration needs a name.
   struct Unit();
   union Foo(Unit x, Unit, Unit z);
 

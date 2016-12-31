@@ -4,7 +4,7 @@ set prg {
   union Foo(Unit bar, A sludge);
 
   func main( ; Foo) {
-    // The open parenthesis before the argument is missing.
+    # The open parenthesis before the argument is missing.
     Foo:bar ?(Foo:bar(Unit()) ; Unit(), Unit()));
   };
 }

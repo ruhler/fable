@@ -1,5 +1,5 @@
 set prg {
-  // Declared functions must have a name.
+  # Declared functions must have a name.
   struct Unit();
 
   func (Unit x, Unit y; Unit) {

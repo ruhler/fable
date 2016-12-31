@@ -1,5 +1,5 @@
 set prg {
-  // Process port arguments must be terminated with a semicolon.
+  # Process port arguments must be terminated with a semicolon.
   struct Unit();
 
   proc p(Unit <~ px, Unit ~> py Unit x, Unit y; Unit) {

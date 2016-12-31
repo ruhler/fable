@@ -7,7 +7,7 @@ set prg {
   };
 
   proc main( ; ; Bool) {
-    // notproc is not a proc.
+    # notproc is not a proc.
     notproc( ; );
   };
 }

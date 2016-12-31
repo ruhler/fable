@@ -3,7 +3,7 @@ set prg {
   union Fruit(Unit apple, Unit banana, Unit pear);
 
   proc main( ; ; Fruit) {
-    // The select is malformed.
+    # The select is malformed.
     ?( ??? ;
       $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Fruit:banana(Unit())));
   };

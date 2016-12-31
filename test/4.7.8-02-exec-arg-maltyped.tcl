@@ -3,7 +3,7 @@ set prg {
   union Bool(Unit true, Unit false);
 
   proc main( ; ; Bool) {
-    // The variable y is not declared.
+    # The variable y is not declared.
     Bool x = $(y);
     $(x);
   };

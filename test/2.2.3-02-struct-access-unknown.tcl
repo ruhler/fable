@@ -1,5 +1,5 @@
 set prg {
-  // Accessing an unknown field of a struct.
+  # Accessing an unknown field of a struct.
   struct Unit();
   struct A(Unit x, Unit y);
 

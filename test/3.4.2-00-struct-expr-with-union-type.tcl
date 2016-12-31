@@ -1,5 +1,5 @@
 set prg {
-  // A struct expression can't be used for a union type.
+  # A struct expression can't be used for a union type.
   struct Unit();
   union Bool(Unit True, Unit False);
 

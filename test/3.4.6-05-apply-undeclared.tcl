@@ -1,5 +1,5 @@
 set prg {
-  // Test for calling a function that has not been declared.
+  # Test for calling a function that has not been declared.
   struct Unit();
 
   func main( ; Unit) {

@@ -3,7 +3,7 @@ set prg {
   union Bool(Unit true, Unit false);
 
   proc main( ; ; Bool) {
-    // The process is type Unit, but type Bool is expected.
+    # The process is type Unit, but type Bool is expected.
     Bool x = $(Unit());
     $(x);
   };

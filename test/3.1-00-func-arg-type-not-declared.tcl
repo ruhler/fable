@@ -1,7 +1,7 @@
 set prg {
   struct Unit();
 
-  // The type Donut is not defined.
+  # The type Donut is not defined.
   func f(Unit x, Donut y; Unit) {
     x;
   };

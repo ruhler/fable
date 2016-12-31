@@ -10,14 +10,14 @@ func False( ; Bool) {
   Bool:false(Unit());
 };
 
-// The following type is used to represent (unbounded) integers.
-// Note that this representation allows multiple ways of representing each
-// integer, because 2*0 = 0 and 2*(-1)+1 = -1.
-// Functions that operate on integers should work for all the representations
-// of various numbers. They should not assume the smallest representation for
-// a number and in general need not produce the smallest representation for a
-// number, though they should if all the arguments are in their most compact
-// form.
+# The following type is used to represent (unbounded) integers.
+# Note that this representation allows multiple ways of representing each
+# integer, because 2*0 = 0 and 2*(-1)+1 = -1.
+# Functions that operate on integers should work for all the representations
+# of various numbers. They should not assume the smallest representation for
+# a number and in general need not produce the smallest representation for a
+# number, though they should if all the arguments are in their most compact
+# form.
 union Integer(
    Unit 0,
    Unit minus_1,
@@ -26,7 +26,7 @@ union Integer(
 );
 
 func Eq(Integer a, Integer b; Bool) {
-  // For now, just assume the args are both in canonical form.
+  # For now, just assume the args are both in canonical form.
   ?(a ;
       ?(b ; True(), False(), False(), False()),
       ?(b ; False(), True(), False(), False()),
@@ -34,129 +34,129 @@ func Eq(Integer a, Integer b; Bool) {
       ?(b ; False(), False(), False(), Eq(a.double_plus_1, b.double_plus_1)));
 };
 
-// The integer 0
+# The integer 0
 func Zero( ; Integer) {
   Integer:0(Unit());
 };
 
-// The integer (-1)
+# The integer (-1)
 func Minus1( ; Integer) {
   Integer:minus_1(Unit());
 };
 
-// 2 * x
+# 2 * x
 func Double(Integer x; Integer) {
   Integer doubled = Integer:double(x);
   ?(x ; Zero(), doubled, doubled, doubled);
 };
 
-// 2 * x + 1
+# 2 * x + 1
 func DoublePlus1(Integer x; Integer) {
   Integer doubled_plus_1 = Integer:double_plus_1(x);
   ?(x ; doubled_plus_1, Minus1(), doubled_plus_1, doubled_plus_1);
 };
 
-// a + 1
+# a + 1
 func Add1(Integer a; Integer) {
   ?(a ; 
-    DoublePlus1(Zero()),            // 0 + 1 = 2*0+1
-    Zero(),                         // -1 + 1 = 0
-    DoublePlus1(a.double),          // 2*d + 1 = 2d*+1
-    Double(Add1(a.double_plus_1))); // 2*d+1 + 1 = 2*(d+1)
+    DoublePlus1(Zero()),            # 0 + 1 = 2*0+1
+    Zero(),                         # -1 + 1 = 0
+    DoublePlus1(a.double),          # 2*d + 1 = 2d*+1
+    Double(Add1(a.double_plus_1))); # 2*d+1 + 1 = 2*(d+1)
 };
 
-// a - 1
+# a - 1
 func Sub1(Integer a; Integer) {
   ?(a ;
-    Minus1(),                     // 0-1 = -1
-    Double(Minus1()),             // -1-1 = 2*(-1)
-    DoublePlus1(Sub1(a.double)),  // 2*d-1 = 2*(d-1)+1
-    Double(a.double_plus_1));     // 2*d+1-1 = 2*d
+    Minus1(),                     # 0-1 = -1
+    Double(Minus1()),             # -1-1 = 2*(-1)
+    DoublePlus1(Sub1(a.double)),  # 2*d-1 = 2*(d-1)+1
+    Double(a.double_plus_1));     # 2*d+1-1 = 2*d
 };
 
-// a + b
+# a + b
 func Add(Integer a, Integer b; Integer) {
   ?(a ;
-     b,                                        // 0 + b = b
+     b,                                        # 0 + b = b
      ?(b;
-       a,                                      // a + 0 = a
-       Double(Minus1()),                       // -1 + -1 = 2*(-1)
-       DoublePlus1(Add(b.double, Minus1())),   // -1 + 2*d = 2*(d-1)+1
-       Double(b.double_plus_1)),               // -1 + (2*d+1) = 2*d
+       a,                                      # a + 0 = a
+       Double(Minus1()),                       # -1 + -1 = 2*(-1)
+       DoublePlus1(Add(b.double, Minus1())),   # -1 + 2*d = 2*(d-1)+1
+       Double(b.double_plus_1)),               # -1 + (2*d+1) = 2*d
      ?(b;
-       a,                                      // a + 0 = a
-       DoublePlus1(Add(a.double, Minus1())),   // 2*d + -1 = 2*(d-1)+1
-       Double(Add(a.double, b.double)),        // 2*d + 2*e = 2*(d+e)
-       DoublePlus1(Add(a.double, b.double_plus_1))),// 2*d + 2*e+1 = 2*(d+e)+1
+       a,                                      # a + 0 = a
+       DoublePlus1(Add(a.double, Minus1())),   # 2*d + -1 = 2*(d-1)+1
+       Double(Add(a.double, b.double)),        # 2*d + 2*e = 2*(d+e)
+       DoublePlus1(Add(a.double, b.double_plus_1))),# 2*d + 2*e+1 = 2*(d+e)+1
      ?(b;
-       a,                                      // a + 0 = a
-       Double(a.double_plus_1),                // 2*d+1 + -1 = 2*d
-       DoublePlus1(Add(a.double_plus_1, b.double)), // 2*d+1 +2*e = 2*(d+e)+1
-       Double(Add1(Add(a.double_plus_1, b.double_plus_1)))));  // 2*d+1 + 2*e+1 = 2*((d+e)+1)
+       a,                                      # a + 0 = a
+       Double(a.double_plus_1),                # 2*d+1 + -1 = 2*d
+       DoublePlus1(Add(a.double_plus_1, b.double)), # 2*d+1 +2*e = 2*(d+e)+1
+       Double(Add1(Add(a.double_plus_1, b.double_plus_1)))));  # 2*d+1 + 2*e+1 = 2*((d+e)+1)
 };
 
-// -a 
+# -a 
 func Negate(Integer a; Integer) {
   ?(a ;
-    Zero(),                                   // -0 = 0
-    DoublePlus1(Zero()),                      // -(-1) = 2*0+1
-    Double(Negate(a.double)),                 // -(2*d) = 2*(-d)
-    Sub1(Double(Negate(a.double_plus_1))));   // -(2*d+1) = 2*(-d)-1
+    Zero(),                                   # -0 = 0
+    DoublePlus1(Zero()),                      # -(-1) = 2*0+1
+    Double(Negate(a.double)),                 # -(2*d) = 2*(-d)
+    Sub1(Double(Negate(a.double_plus_1))));   # -(2*d+1) = 2*(-d)-1
 };
 
-// a - b 
+# a - b 
 func Sub(Integer a, Integer b; Integer) {
-  // a - b = a + (-b)
+  # a - b = a + (-b)
   Add(a, Negate(b));
 };
 
-// a * b
+# a * b
 func Mul(Integer a, Integer b; Integer) {
   ?(a ; 
-    Zero(),       // 0 * b = 0
-    Negate(b),    // -1 * b = -b
+    Zero(),       # 0 * b = 0
+    Negate(b),    # -1 * b = -b
     ?(b ; 
-      Zero(),                             // 2*x * 0 = 0
-      Double(Negate(a.double)),           // 2*x * -1 = 2*(-x)
-      Double(Double(Mul(a.double, b.double))), // 2*x * 2*y = 2*(2*(x*y))
+      Zero(),                             # 2*x * 0 = 0
+      Double(Negate(a.double)),           # 2*x * -1 = 2*(-x)
+      Double(Double(Mul(a.double, b.double))), # 2*x * 2*y = 2*(2*(x*y))
       Add(Double(Double(Mul(a.double, b.double_plus_1))),
-          Double(a.double))),             // 2*x * (2*y+1) = 2*2*x*y + 2*x
+          Double(a.double))),             # 2*x * (2*y+1) = 2*2*x*y + 2*x
     ?(b ;
-      Zero(),         // (2*x+1) * 0 = 0
-      Sub1(Double(Negate(a.double_plus_1))),  // (2*x+1) * -1 = 2*(-x) - 1
+      Zero(),         # (2*x+1) * 0 = 0
+      Sub1(Double(Negate(a.double_plus_1))),  # (2*x+1) * -1 = 2*(-x) - 1
       Add(Double(Double(Mul(a.double_plus_1, b.double))),
-          Double(b.double)),        // (2*x+1) * 2*y = 2*2*x*y + 2*y
-      Add(    // (2*x+1) * (2*y+1) = 2*2*x*y + 2*x + (2*y +1)
+          Double(b.double)),        # (2*x+1) * 2*y = 2*2*x*y + 2*y
+      Add(    # (2*x+1) * (2*y+1) = 2*2*x*y + 2*x + (2*y +1)
        Add(
         Double(Double(Mul(a.double_plus_1, b.double_plus_1))),
         Double(a.double_plus_1)), b)));
 };
 
-// The Calculator machine has a stack of operands.
-// Initially the stack is empty. The following instructions can be used to
-// modify the stack.
+# The Calculator machine has a stack of operands.
+# Initially the stack is empty. The following instructions can be used to
+# modify the stack.
 union CalcInstr(
-    // Pop the top two operands from the stack, add them together, and push
-    // the result to the stack. If there are not enough operands on the stack,
-    // 0 is used in place of the missing operands.
+    # Pop the top two operands from the stack, add them together, and push
+    # the result to the stack. If there are not enough operands on the stack,
+    # 0 is used in place of the missing operands.
     Unit add,
 
-    // Pop the top two operands from the stack. Subtract what was the top
-    // operand on the stack from what was the operand just beneath the top
-    // operand on the stack. Push the result to the stack. If there are not
-    // enough operands on the stack, 0 is used in place of the missing
-    // operands.
+    # Pop the top two operands from the stack. Subtract what was the top
+    # operand on the stack from what was the operand just beneath the top
+    # operand on the stack. Push the result to the stack. If there are not
+    # enough operands on the stack, 0 is used in place of the missing
+    # operands.
     Unit sub,
 
-    // Pop the top two operands from the stack, multiply them together, and
-    // push the result to the stack. If there are not enough operands on the
-    // stack, 0 is used in place of the missing operands.
+    # Pop the top two operands from the stack, multiply them together, and
+    # push the result to the stack. If there are not enough operands on the
+    # stack, 0 is used in place of the missing operands.
     Unit mul,
 
-    // Clear the stack of all operands.
+    # Clear the stack of all operands.
     Unit clear,
 
-    // Push the given integer on top of the stack.
+    # Push the given integer on top of the stack.
     Integer push
 );
 
@@ -180,7 +180,7 @@ func Pop2(CalcStack stack; Pop2Result) {
   Pop2Result(p1.top, p2.top, p2.rest);
 };
 
-// Execute the given calculator instruction.
+# Execute the given calculator instruction.
 func ExecCalcInstr(CalcStack stack, CalcInstr instr; CalcStack) {
   ?(instr ;
       { Pop2Result p2 = Pop2(stack); Push(p2.rest, Add(p2.top2, p2.top1)); },
@@ -193,21 +193,21 @@ func ExecCalcInstr(CalcStack stack, CalcInstr instr; CalcStack) {
 union CalcProgram(Unit empty, CalcInstrs nonempty);
 struct CalcInstrs(CalcInstr instr, CalcProgram next);
 
-// Execute a sequence of calculator instructions.
+# Execute a sequence of calculator instructions.
 func ExecCalcInstrs(CalcStack stack, CalcProgram prg; CalcStack) {
   ?(prg ; stack,
           ExecCalcInstrs(ExecCalcInstr(stack, prg.nonempty.instr),
                          prg.nonempty.next));
 };
 
-// Run the calculator program and return the result on top of the stack. If
-// the final stack is empty, the value 0 is returned.
+# Run the calculator program and return the result on top of the stack. If
+# the final stack is empty, the value 0 is returned.
 func RunCalc(CalcProgram prg; Integer) {
   Pop1(ExecCalcInstrs(CalcStack:empty(Unit()), prg)).top;
 };
 
 
-// ************ TESTS ****************
+# ************ TESTS ****************
 union TestName(
     Unit add_pos_pos,
     Unit add_pos_neg,
@@ -230,7 +230,6 @@ func Test(TestName name, Integer want, Integer got, TL list; TL) {
   ?(Eq(want, got) ; list, TL:fail(FailedTestResult(name, want, got, list)));
 };
 
-/// Expect: TL:pass(Unit())
 func main( ; TL) {
   Integer minus_five = DoublePlus1(DoublePlus1(Double(Minus1())));
   Integer minus_two = Double(Minus1());
@@ -258,4 +257,3 @@ func main( ; TL) {
       fifteen, RunCalc(prg8), l7);
   l8;
 };
-

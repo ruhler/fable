@@ -1,5 +1,5 @@
 set prg {
-  // Test for calling a function with a malformed argument.
+  # Test for calling a function with a malformed argument.
   struct Unit();
 
   func f(Unit x; Unit) {
@@ -7,7 +7,7 @@ set prg {
   };
 
   func main( ; Unit) {
-    // The variable 'x' has not been declared.
+    # The variable 'x' has not been declared.
     f(x);
   };
 }

@@ -1,5 +1,5 @@
 set prg {
-  // A struct must not be declared multiple times.
+  # A struct must not be declared multiple times.
   struct Unit();
   struct A(Unit x, Unit y);
   struct A(Unit a, Unit b, Unit c);

@@ -1,10 +1,10 @@
 set prg {
-  // Variable declarations need both a type and variable name.
+  # Variable declarations need both a type and variable name.
   struct Unit();
   struct A(Unit x, Unit y);
 
   func main( ; A) {
-    // The variable name is missing.
+    # The variable name is missing.
     Unit = Unit();
     A(v, v);
   };

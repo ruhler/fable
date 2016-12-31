@@ -7,7 +7,7 @@ set prg {
   };
 
   proc main( ; ; Bool) {
-    // The open parenthesis is missing.
+    # The open parenthesis is missing.
     sub ; );
   };
 }

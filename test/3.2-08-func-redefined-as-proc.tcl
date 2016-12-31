@@ -1,5 +1,5 @@
 set prg {
-  // A function and process can't have the same name.
+  # A function and process can't have the same name.
   struct Unit();
 
   func foo(Unit x ; Unit) {

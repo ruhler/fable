@@ -1,5 +1,5 @@
 set prg {
-  // Process arg names must be unique.
+  # Process arg names must be unique.
   struct Unit();
 
   proc p(Unit <~ px, Unit ~> py ; Unit x, Unit x ; Unit) {

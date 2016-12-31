@@ -2,7 +2,7 @@ set prg {
   struct Unit();
 
   proc f(Unit ~> myput ; ; Unit) {
-    // The argument to the port has invalid syntax.
+    # The argument to the port has invalid syntax.
     myput~(???);
   };
 

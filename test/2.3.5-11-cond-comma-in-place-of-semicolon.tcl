@@ -1,5 +1,5 @@
 set prg {
-  // The conditional has a comma instead of a semicolon after the condition.
+  # The conditional has a comma instead of a semicolon after the condition.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);

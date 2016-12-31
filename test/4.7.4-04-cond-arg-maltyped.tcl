@@ -4,7 +4,7 @@ set prg {
   union Fruit(Unit apple, Unit banana, Unit pear);
 
   proc main( ; ; Fruit) {
-    // The variable x is not declared.
+    # The variable x is not declared.
     ?(Bool:true(Unit()) ; $(Fruit:pear(Unit())), $(x));
   };
 }

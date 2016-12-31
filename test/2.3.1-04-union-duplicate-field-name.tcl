@@ -1,5 +1,5 @@
 set prg {
-  // Each field of a union type must have a different name.
+  # Each field of a union type must have a different name.
   struct Unit();
   struct Donut();
   union BadStruct(Unit x, Donut x);
@@ -11,7 +11,7 @@ set prg {
 fblc-check-error $prg 5:33
 
 set prg {
-  // Even if the types are the same.
+  # Even if the types are the same.
   struct Unit();
   union BadStruct(Unit x, Unit x);
 
