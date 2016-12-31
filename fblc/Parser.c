@@ -510,6 +510,9 @@ static SVar* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count)
   FblcVectorExtend(arena, fieldv, fieldc);
   SVar* field = fieldv + fieldc++;
   GetNameToken(arena, toks, "type name", &(field->type));
+  // TODO: "field name" doesn't make as much sense when we are checking
+  // arguments to a function or process.
+  // See test 3.1-04-func-missing-arg-type for example.
   if (!GetNameToken(arena, toks, "field name", &(field->name))) {
     return NULL;
   }
@@ -1117,7 +1120,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       // struct/union (<fields>);
       STypeDecl* stype = arena->alloc(arena, sizeof(STypeDecl));
       FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)stype);
-      if (!GetNameToken(arena, &toks, "declaration name", &stype->name)) {
+      if (!GetNameToken(arena, &toks, "type name", &stype->name)) {
         return NULL;
       }
 
@@ -1144,7 +1147,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       // func name(<fields>; <type>) <expr>;
       SFuncDecl* sfunc = arena->alloc(arena, sizeof(SFuncDecl));
       FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sfunc);
-      if (!GetNameToken(arena, &toks, "declaration name", &sfunc->name)) {
+      if (!GetNameToken(arena, &toks, "function name", &sfunc->name)) {
         return NULL;
       }
 
@@ -1185,7 +1188,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       // proc name(<ports> ; <fields>; [<type>]) <proc>;
       SProcDecl* sproc = arena->alloc(arena, sizeof(SProcDecl));
       FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sproc);
-      if (!GetNameToken(arena, &toks, "declaration name", &sproc->name)) {
+      if (!GetNameToken(arena, &toks, "process name", &sproc->name)) {
         return NULL;
       }
 

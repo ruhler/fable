@@ -75,6 +75,9 @@ static Loc* ExprLoc(Expr* expr)
     }
 
     case FBLC_COND_EXPR: {
+      // TODO: This should return the location of the initial '?', not the
+      // location of the select expression.
+      // See test 2.3.5-02-cond-zero-args for example.
       CondExpr* cond_expr = (CondExpr*)expr;
       return ExprLoc((Expr*)cond_expr->x.select);
     }
@@ -340,8 +343,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       VarExpr* var_expr = (VarExpr*)expr;
       FblcTypeId type = ResolveVar(vars, &var_expr->name, &var_expr->x.var);
       if (type == UNRESOLVED_ID) {
-        ReportError("Variable '%s' not in scope.\n",
-            var_expr->name.loc, var_expr->name.name);
+        ReportError("Variable '%s' not in scope.\n", ExprLoc(expr), var_expr->name.name);
         return UNRESOLVED_ID;
       }
       return type;
@@ -359,7 +361,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
         }
       }
       if (decl == NULL) {
-        ReportError("Declaration for '%s' not found.\n", app_expr->func.loc, app_expr->func.name);
+        ReportError("Declaration for '%s' not found.\n", ExprLoc(expr), app_expr->func.name);
         return UNRESOLVED_ID;
       }
 
@@ -376,7 +378,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
 
         case FBLC_UNION_DECL: {
           ReportError("Cannot do application on union type %s.\n",
-              app_expr->func.loc, app_expr->func.name);
+              ExprLoc(expr), app_expr->func.name);
           return UNRESOLVED_ID;
         }
 
@@ -392,7 +394,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
 
         case FBLC_PROC_DECL: {
           ReportError("Cannot do application on a process %s.\n",
-              app_expr->func.loc, app_expr->func.name);
+              ExprLoc(expr), app_expr->func.name);
           return UNRESOLVED_ID;
         }
 
@@ -426,7 +428,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       UnionExpr* union_expr = (UnionExpr*)expr;
       union_expr->x.type = LookupType(env, union_expr->type.name);
       if (union_expr->x.type == UNRESOLVED_ID) {
-        ReportError("Type %s not found.\n", union_expr->type.loc, union_expr->type.name);
+        ReportError("Type %s not found.\n", ExprLoc(expr), union_expr->type.name);
         return UNRESOLVED_ID;
       }
       FblcTypeDecl* type = (FblcTypeDecl*)env->declv[union_expr->x.type];
@@ -434,7 +436,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
 
       if (type->tag != FBLC_UNION_DECL) {
         ReportError("Type %s is not a union type.\n",
-            union_expr->type.loc, union_expr->type.name);
+            ExprLoc(expr), union_expr->type.name);
         return UNRESOLVED_ID;
       }
 
@@ -465,7 +467,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
       LetExpr* let_expr = (LetExpr*)expr;
       FblcTypeId declared_type_id = LookupType(env, let_expr->var.type.name);
       if (declared_type_id == UNRESOLVED_ID) {
-        ReportError("Type '%s' not declared.\n", let_expr->var.type.loc, let_expr->var.type.name);
+        ReportError("Type '%s' not declared.\n", ExprLoc(expr), let_expr->var.type.name);
         return UNRESOLVED_ID;
       }
 
@@ -502,8 +504,8 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
 
       if (type->tag != FBLC_UNION_DECL) {
         SDecl* stype = env->sdeclv[type_id];
-        ReportError("The condition has type %s, "
-            "which is not a union type.\n", ExprLoc(expr), stype->name.name);
+        ReportError("The condition has type %s, which is not a union type.\n",
+            ExprLoc(expr), stype->name.name);
         return UNRESOLVED_ID;
       }
 
@@ -523,8 +525,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr)
         if (i != 0 && result_type_id != arg_type_id) {
           SDecl* arg_type = env->sdeclv[arg_type_id];
           SDecl* result_type = env->sdeclv[result_type_id];
-          ReportError("Expected expression of type %s, "
-              "but found expression of type %s.\n",
+          ReportError("Expected expression of type %s, but found expression of type %s.\n",
               ExprLoc((Expr*)cond_expr->x.argv[i]), result_type->name.name, arg_type->name.name);
           return UNRESOLVED_ID;
         }
@@ -573,7 +574,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       GetActn* get_actn = (GetActn*)actn;
       FblcTypeId type_id = ResolvePort(ports, &get_actn->port, FBLC_GET_POLARITY, &get_actn->x.port);
       if (type_id == UNRESOLVED_ID) {
-        ReportError("'%s' is not a valid get port.\n", get_actn->port.loc, get_actn->port.name);
+        ReportError("'%s' is not a valid get port.\n", ActnLoc(actn), get_actn->port.name);
         return UNRESOLVED_ID;
       }
       return type_id;
@@ -583,7 +584,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       PutActn* put_actn = (PutActn*)actn;
       FblcTypeId port_type_id = ResolvePort(ports, &put_actn->port, FBLC_PUT_POLARITY, &put_actn->x.port);
       if (port_type_id == UNRESOLVED_ID) {
-        ReportError("'%s' is not a valid put port.\n", put_actn->port.loc, put_actn->port.name);
+        ReportError("'%s' is not a valid put port.\n", ActnLoc(actn), put_actn->port.name);
         return UNRESOLVED_ID;
       }
 
@@ -615,13 +616,13 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         }
       }
       if (proc == NULL) {
-        ReportError("'%s' is not a proc.\n", call_actn->proc.loc, call_actn->proc.name);
+        ReportError("'%s' is not a proc.\n", ActnLoc(actn), call_actn->proc.name);
         return UNRESOLVED_ID;
       }
 
       if (call_actn->x.portc  != proc->portc) {
         ReportError("Wrong number of port arguments to %s. Expected %d, "
-            "but got %d.\n", call_actn->proc.loc, call_actn->proc.name,
+            "but got %d.\n", ActnLoc(actn), call_actn->proc.name,
             proc->portc, call_actn->x.portc);
         return UNRESOLVED_ID;
       }
@@ -645,7 +646,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         SDecl* port_type = env->sdeclv[port_type_id];
         if (!NamesEqual(proc->ports[i].type.name, port_type->name.name)) {
           ReportError("Expected port type %s, but found %s.\n",
-              call_actn->ports[i].loc, proc->ports[i].type.name, port_type->name);
+              call_actn->ports[i].loc, proc->ports[i].type.name, port_type->name.name);
           return UNRESOLVED_ID;
         }
       }
@@ -662,8 +663,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
       LinkActn* link_actn = (LinkActn*)actn;
       link_actn->x.type = LookupType(env, link_actn->type.name);
       if (link_actn->x.type == UNRESOLVED_ID) {
-        ReportError("Type '%s' not declared.\n",
-            link_actn->type.loc, link_actn->type.name);
+        ReportError("Type '%s' not declared.\n", ActnLoc(actn), link_actn->type.name);
         return UNRESOLVED_ID;
       }
 
@@ -712,14 +712,14 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
 
       if (type->tag != FBLC_UNION_DECL) {
         SDecl* stype = env->sdeclv[type_id];
-        ReportError("The condition has type %s, "
-            "which is not a union type.\n", ActnLoc(actn), stype->name.name);
+        ReportError("The condition has type %s, which is not a union type.\n",
+            ActnLoc(actn), stype->name.name);
         return UNRESOLVED_ID;
       }
 
       if (type->fieldc != cond_actn->x.argc) {
-        ReportError("Wrong number of arguments to condition. Expected %d, "
-            "but found %d.\n", ActnLoc(actn), type->fieldc, cond_actn->x.argc);
+        ReportError("Wrong number of arguments to condition. Expected %d, but found %d.\n",
+            ActnLoc(actn), type->fieldc, cond_actn->x.argc);
         return UNRESOLVED_ID;
       }
 
@@ -735,8 +735,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn)
         if (i > 0 && result_type_id != arg_type_id) {
           SDecl* result_type = env->sdeclv[result_type_id];
           SDecl* arg_type = env->sdeclv[arg_type_id];
-          ReportError("Expected process of type %s, "
-              "but found process of type %s.\n",
+          ReportError("Expected process of type %s, but found process of type %s.\n",
               ActnLoc((Actn*)cond_actn->x.argv[i]), result_type->name.name, arg_type->name.name);
           return UNRESOLVED_ID;
         }
@@ -915,9 +914,9 @@ bool CheckProgram(Env* env)
           return false;
         }
         if (func->return_type_id != body_type_id) {
-          FblcTypeDecl* body_type = (FblcTypeDecl*)env->declv[body_type_id];
+          SDecl* body_type = env->sdeclv[body_type_id];
           ReportError("Type mismatch. Expected %s, but found %s.\n",
-              ExprLoc(func->body), sfunc->return_type.name, body_type);
+              ExprLoc(func->body), sfunc->return_type.name, body_type->name.name);
           return false;
         }
         break;
