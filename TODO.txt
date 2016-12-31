@@ -1,5 +1,9 @@
 Primary Arc:
 * Separate rest of fblct Expr and Actn fields into SDecl info.
+ - Store loc, name, and type info for each variable and port in SDecl info.
+ - Resolve Vars and Ports in parser.
+ - Construct side table with temporary ID -> Name, Loc for type decl and
+   field references that are resolved in a later pass.
 * Change Env to be FblcProgram + Symbol information.
 * Clean up interface for loading and checking fblc text code.
 * Rewrite testfblc as fblc-test in top of fblc library.

@@ -323,14 +323,14 @@ typedef struct {
 } FblcEvalActn;
 
 // FblcGetActn --
-//   A get action of the form 'port~()' used to get a value from a port.
+//   A get action of the form '~port()' used to get a value from a port.
 typedef struct {
   FblcActnTag tag;
   FblcPortId port;
 } FblcGetActn;
 
 // FblcPutActn --
-//   A put action of the form 'port(arg)' used to put a value onto a port.
+//   A put action of the form '~port(arg)' used to put a value onto a port.
 typedef struct {
   FblcActnTag tag;
   FblcPortId port;

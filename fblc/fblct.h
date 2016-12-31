@@ -103,13 +103,13 @@ typedef struct {
   FblcEvalActn x;
 } EvalActn;
 
-// GET_ACTN: Processes of the form: <pname>~()
+// GET_ACTN: Processes of the form: ~<pname>()
 typedef struct {
   FblcGetActn x;
   LocName port;
 } GetActn;
 
-// PUT_ACTN: Processes of the form: <pname>~(<expr>)
+// PUT_ACTN: Processes of the form: ~<pname>(<expr>)
 typedef struct {
   FblcPutActn x;
   LocName port;
