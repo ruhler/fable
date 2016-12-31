@@ -731,23 +731,35 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     cond_expr->x.argc = argc;
     cond_expr->x.argv = (FblcExpr**)args;
     expr = (Expr*)cond_expr;
-  } else {
-    UnexpectedToken(toks, "an expression");
-    return NULL;
-  }
-
-  while (IsToken(toks, '.')) {
+  } else if (IsToken(toks, '.')) {
+    // This is an access expression of the form: .<field>(<expr>)
     GetToken(toks, '.');
 
-    // This is an access expression of the form: <expr>.<field>
     AccessExpr* access_expr = arena->alloc(arena, sizeof(AccessExpr));
     access_expr->x.tag = FBLC_ACCESS_EXPR;
-    access_expr->x.object = (FblcExpr*)expr;
     access_expr->x.field = UNRESOLVED_ID;
+
     if (!GetNameToken(arena, toks, "field name", &(access_expr->field))) {
       return NULL;
     }
+
+    if (!GetToken(toks, '(')) {
+      return NULL;
+    }
+
+    access_expr->x.object = (FblcExpr*)ParseExpr(arena, toks, false);
+    if (access_expr->x.object == NULL) {
+      return NULL;
+    }
+
+    if (!GetToken(toks, ')')) {
+      return NULL;
+    }
+
     expr = (Expr*)access_expr;
+  } else {
+    UnexpectedToken(toks, "an expression");
+    return NULL;
   }
 
   if (in_stmt) {
