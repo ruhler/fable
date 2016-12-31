@@ -8,5 +8,4 @@ set prg {
       $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Unit()));
   };
 }
-# TODO: Error location should be the $ sign, not the eval expression?
-fblc-check-error $prg 8:56
+fblc-check-error $prg 8:54

@@ -167,11 +167,15 @@ typedef struct {
 typedef struct {
   LocName name;
   LocName return_type;
+  size_t locc;
+  Loc* locv;  // locations of all expressions in body.
 } SFuncDecl;
 
 typedef struct {
   LocName name;
   LocName return_type;
+  size_t locc;
+  Loc* locv;  // locations of all actions and expressions in body.
 } SProcDecl;
 
 // An environment contains all the type, function, and process declarations

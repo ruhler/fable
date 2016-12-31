@@ -55,9 +55,9 @@ static void UnexpectedToken(TokenStream* toks, const char* expected);
 
 static SVar* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count);
 static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, SVar** ports, size_t* portc);
-static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist);
-static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt);
-static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt);
+static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** locv, size_t* locc);
+static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc);
+static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc);
 
 // CurrChar --
 //   Look at the character at the front of the token stream's file.
@@ -570,13 +570,13 @@ static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, SV
 //   The token stream is advanced past the final ')' token in the
 //   argument list. In case of an error, an error message is printed to
 //   standard error.
-static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist)
+static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** locv, size_t* locc)
 {
   Expr** argv;
   size_t argc;
   FblcVectorInit(arena, argv, argc);
   if (!IsToken(toks, ')')) {
-    Expr* arg = ParseExpr(arena, toks, false);
+    Expr* arg = ParseExpr(arena, toks, false, locv, locc);
     if (arg == NULL) {
       return -1;
     }
@@ -584,7 +584,7 @@ static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist)
 
     while (IsToken(toks, ',')) {
       GetToken(toks, ',');
-      arg = ParseExpr(arena, toks, false);
+      arg = ParseExpr(arena, toks, false, locv, locc);
       if (arg == NULL) {
         return -1;
       }
@@ -616,12 +616,20 @@ static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist)
 // Side effects:
 //   Advances the token stream past the parsed expression. In case of error,
 //   an error message is printed to standard error.
-static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
+static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc)
 {
+  if (!IsToken(toks, '{')) {
+    FblcVectorExtend(arena, *locv, *locc);
+    Loc* loc = *locv + (*locc)++;
+    loc->source = toks->loc.source;
+    loc->line = toks->loc.line;
+    loc->col = toks->loc.col;
+  }
+
   Expr* expr;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    expr = ParseExpr(arena, toks, true);
+    expr = ParseExpr(arena, toks, true, locv, locc);
     if (expr == NULL) {
       return NULL;
     }
@@ -637,7 +645,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       GetToken(toks, '(');
 
       Expr** args = NULL;
-      int argc = ParseArgs(arena, toks, &args);
+      int argc = ParseArgs(arena, toks, &args, locv, locc);
       if (argc < 0) {
         return NULL;
       }
@@ -664,7 +672,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (!GetToken(toks, '(')) {
         return NULL;
       }
-      union_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, false);
+      union_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc);
       if (union_expr->x.body == NULL) {
         return NULL;
       }
@@ -682,14 +690,14 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (!GetToken(toks, '=')) {
         return NULL;
       }
-      let_expr->x.def = (FblcExpr*)ParseExpr(arena, toks, false);
+      let_expr->x.def = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc);
       if (let_expr->x.def == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      let_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, true);
+      let_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, true, locv, locc);
       if (let_expr->x.body == NULL) {
         return NULL;
       }
@@ -711,7 +719,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* condition = ParseExpr(arena, toks, false);
+    Expr* condition = ParseExpr(arena, toks, false, locv, locc);
     if (condition == NULL) {
       return NULL;
     }
@@ -721,7 +729,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
     
     Expr** args = NULL;
-    int argc = ParseArgs(arena, toks, &args);
+    int argc = ParseArgs(arena, toks, &args, locv, locc);
     if (argc < 0) {
       return NULL;
     }
@@ -747,7 +755,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return NULL;
     }
 
-    access_expr->x.object = (FblcExpr*)ParseExpr(arena, toks, false);
+    access_expr->x.object = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc);
     if (access_expr->x.object == NULL) {
       return NULL;
     }
@@ -787,12 +795,20 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
 // Side effects:
 //   Advances the token stream past the parsed action. In case of error,
 //   an error message is printed to standard error.
-static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
+static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc)
 {
+  if (!IsToken(toks, '{')) {
+    FblcVectorExtend(arena, *locv, *locc);
+    Loc* loc = *locv + (*locc)++;
+    loc->source = toks->loc.source;
+    loc->line = toks->loc.line;
+    loc->col = toks->loc.col;
+  }
+  
   Actn* actn = NULL;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    actn = ParseActn(arena, toks, true);
+    actn = ParseActn(arena, toks, true, locv, locc);
     if (actn == NULL) {
       return NULL;
     }
@@ -805,7 +821,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* expr = ParseExpr(arena, toks, false);
+    Expr* expr = ParseExpr(arena, toks, false, locv, locc);
     if (expr == NULL) {
       return NULL;
     }
@@ -839,7 +855,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       get_actn->port.name = name.name;
       actn = (Actn*)get_actn;
     } else {
-      Expr* expr = ParseExpr(arena, toks, false);
+      Expr* expr = ParseExpr(arena, toks, false, locv, locc);
       if (expr == NULL) {
         return NULL;
       }
@@ -892,7 +908,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       }
 
       Expr** args = NULL;
-      int exprc = ParseArgs(arena, toks, &args);
+      int exprc = ParseArgs(arena, toks, &args, locv, locc);
       if (exprc < 0) {
         return NULL;
       }
@@ -921,7 +937,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      Actn* body = ParseActn(arena, toks, true);
+      Actn* body = ParseActn(arena, toks, true, locv, locc);
       if (body == NULL) {
         return NULL;
       }
@@ -965,7 +981,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
           return NULL;
         }
 
-        Actn* exec = ParseActn(arena, toks, false);
+        Actn* exec = ParseActn(arena, toks, false, locv, locc);
         if (exec == NULL) {
           return NULL;
         }
@@ -975,7 +991,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      exec_actn->x.body = (FblcActn*)ParseActn(arena, toks, true);
+      exec_actn->x.body = (FblcActn*)ParseActn(arena, toks, true, locv, locc);
       if (exec_actn->x.body == NULL) {
         return NULL;
       }
@@ -990,7 +1006,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* condition = ParseExpr(arena, toks, false);
+    Expr* condition = ParseExpr(arena, toks, false, locv, locc);
     if (condition == NULL) {
       return NULL;
     }
@@ -1013,7 +1029,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
         GetToken(toks, ',');
       }
 
-      Actn* arg = ParseActn(arena, toks, false);
+      Actn* arg = ParseActn(arena, toks, false, locv, locc);
       if (arg == NULL) {
         return NULL;
       }
@@ -1108,6 +1124,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     } else if (is_func) {
       // func name(<fields>; <type>) <expr>;
       SFuncDecl* sfunc = arena->alloc(arena, sizeof(SFuncDecl));
+      FblcVectorInit(arena, sfunc->locv, sfunc->locc);
       FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sfunc);
       if (!GetNameToken(arena, &toks, "function name", &sfunc->name)) {
         return NULL;
@@ -1141,7 +1158,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      func->body = ParseExpr(arena, &toks, false);
+      func->body = ParseExpr(arena, &toks, false, &sfunc->locv, &sfunc->locc);
       if (func->body == NULL) {
         return NULL;
       }
@@ -1149,6 +1166,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     } else if (is_proc) {
       // proc name(<ports> ; <fields>; [<type>]) <proc>;
       SProcDecl* sproc = arena->alloc(arena, sizeof(SProcDecl));
+      FblcVectorInit(arena, sproc->locv, sproc->locc);
       FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sproc);
       if (!GetNameToken(arena, &toks, "process name", &sproc->name)) {
         return NULL;
@@ -1189,7 +1207,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      proc->body = ParseActn(arena, &toks, false);
+      proc->body = ParseActn(arena, &toks, false, &sproc->locv, &sproc->locc);
       if (proc->body == NULL) {
         return NULL;
       }

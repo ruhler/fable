@@ -1,6 +1,4 @@
 Primary Arc:
-* Add action and expr locs to SDecls, computed in parser.
-* Replace use of ExprLoc and ActnLoc with SDecl locs info.
 * Separate rest of fblct Expr and Actn fields into SDecl info.
 * Change Env to be FblcProgram + Symbol information.
 * Clean up interface for loading and checking fblc text code.

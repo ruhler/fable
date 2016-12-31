@@ -9,4 +9,4 @@ set prg {
       EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit()), EnumXYZ:X(Unit()));
   };
 }
-fblc-check-error $prg 8:7
+fblc-check-error $prg 8:5

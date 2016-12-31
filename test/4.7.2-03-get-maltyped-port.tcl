@@ -11,4 +11,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg 7:6
+fblc-check-error $prg 7:5

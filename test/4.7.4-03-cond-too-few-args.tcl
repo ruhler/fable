@@ -9,4 +9,4 @@ set prg {
   };
 }
 # TODO: Where exactly should the error location be?
-fblc-check-error $prg 7:7
+fblc-check-error $prg 7:5
