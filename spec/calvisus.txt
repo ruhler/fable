@@ -620,7 +620,7 @@ progress.
   @end
 
   @section 4.7.2. Get Process
-   Syntax:   pname '~' '(' ')'
+   Syntax: '~' pname '(' ')'
 
    The get process performs a get operation on the named port, returning the value gotten from the port.
 
@@ -634,7 +634,7 @@ progress.
   @end
 
   @section 4.7.3. Put Process
-   Syntax: pname '~' '(' expr ')'
+   Syntax: '~' pname '(' expr ')'
 
    The put process performs a put operation on the named port, returning the value put on the port.
 
@@ -783,8 +783,8 @@ progress.
             ;
 
   proc ::= '$' '(' expr ')'                             (* eval *)
-        |  pname '~' '(' ')'                            (* get *)
-        |  pname '~' '(' expr ')'                       (* put *)
+        |  '~' pname '(' ')'                            (* get *)
+        |  '~' pname '(' expr ')'                       (* put *)
         |  '?'(expr ';' proc [',' proc [...]] ')'       (* conditional *)
         |  tname '(' [pname [',' pname [...]]] ';'      (* call *) 
                      [expr [',' expr [...]]] ')'        

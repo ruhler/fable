@@ -11,8 +11,8 @@ func incr(Digit a ; Digit)
         Digit:0(Unit()));
 
 proc clock(Unit <~ tick, Digit ~> display ; Digit time ; Unit) {
-  Digit displayed = display~(time),
-  Unit ticked = tick~();
+  Digit displayed = ~display(time),
+  Unit ticked = ~tick();
   clock(tick, display; incr(time));
 };
 

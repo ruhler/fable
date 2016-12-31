@@ -3,7 +3,7 @@ set prg {
 
   proc main( ; ; Unit) {
     # myget port is not in scope.
-    myget~();
+    ~myget();
   };
 }
-fblc-check-error $prg 6:5
+fblc-check-error $prg 6:6

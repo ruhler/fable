@@ -4,11 +4,11 @@ set prg {
 
   proc f(Donut ~> myput ; ; Unit) {
     # myput port has the wrong type.
-    myput~(Donut());
+    ~myput(Donut());
   };
 
   proc main( ; ; Unit) {
     $(Unit());
   };
 }
-fblc-check-error $prg 7:5
+fblc-check-error $prg 7:6

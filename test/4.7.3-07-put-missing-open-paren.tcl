@@ -3,7 +3,7 @@ set prg {
 
   proc f(Unit ~> myput ; ; Unit) {
     # The open parenthesis is missing.
-    myput~ Unit());
+    ~myput Unit());
   };
 
   proc main( ; ; Unit) {

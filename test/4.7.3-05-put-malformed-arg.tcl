@@ -3,7 +3,7 @@ set prg {
 
   proc f(Unit ~> myput ; ; Unit) {
     # The variable 'x' is not not declared.
-    myput~(x);
+    ~myput(x);
   };
 
   proc main( ; ; Unit) {

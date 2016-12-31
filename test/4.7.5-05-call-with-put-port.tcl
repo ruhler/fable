@@ -5,14 +5,14 @@ set prg {
   union Bool(Unit true, Unit false);
 
   proc sub(Bool ~> put ; ; Unit) {
-    Bool putted = put~(Bool:true(Unit()));
+    Bool putted = ~put(Bool:true(Unit()));
     $(Unit());
   };
 
   proc main( ; ; Bool) {
     Bool <~> myget, myput;
     Unit blah = sub(myput ; );
-    myget~();
+    ~myget();
   };
 }
 

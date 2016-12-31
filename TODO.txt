@@ -1,5 +1,4 @@
 Primary Arc:
-* Change port calls from foo~ to ~foo
 * Change access from foo.x to .x(foo)
 * Add action and expr locs to SDecls, computed in parser.
 * Replace use of ExprLoc and ActnLoc with SDecl locs info.

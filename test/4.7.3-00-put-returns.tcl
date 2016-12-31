@@ -6,7 +6,7 @@ set prg {
 
   proc main( ; ; Bool) {
     Bool <~> get, put;
-    put~(Bool:true(Unit()));
+    ~put(Bool:true(Unit()));
   };
 }
 

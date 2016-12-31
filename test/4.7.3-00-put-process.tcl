@@ -3,7 +3,7 @@ set prg {
   struct Unit();
 
   proc main( Unit ~> out ; ; Unit) {
-    out~(Unit());
+    ~out(Unit());
   };
 }
 

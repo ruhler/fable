@@ -3,11 +3,11 @@ set prg {
 
   proc f( ; ; Unit) {
     # myput port is not in scope.
-    myput~(Unit());
+    ~myput(Unit());
   };
 
   proc main( ; ; Unit) {
     $(Unit());
   };
 }
-fblc-check-error $prg 6:5
+fblc-check-error $prg 6:6

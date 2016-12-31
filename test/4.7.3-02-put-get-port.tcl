@@ -3,11 +3,11 @@ set prg {
 
   proc f(Unit <~ myput ; ; Unit) {
     # myput port has the wrong polarity.
-    myput~(Unit());
+    ~myput(Unit());
   };
 
   proc main( ; ; Unit) {
     $(Unit());
   };
 }
-fblc-check-error $prg 6:5
+fblc-check-error $prg 6:6

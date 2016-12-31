@@ -3,7 +3,7 @@ set prg {
 
   proc f(Unit ~> myget ; ; Unit) {
     # myget port is a put port, not a get port.
-    myget~();
+    ~myget();
   };
 
   proc main( ; ; Unit) {
@@ -11,4 +11,4 @@ set prg {
   };
 }
 
-fblc-check-error $prg 6:5
+fblc-check-error $prg 6:6

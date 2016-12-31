@@ -805,42 +805,49 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     eval_actn->x.tag = FBLC_EVAL_ACTN;
     eval_actn->x.expr = (FblcExpr*)expr;
     actn = (Actn*)eval_actn;
-  } else if (IsNameToken(toks)) {
-    LocName name;
-    GetNameToken(arena, toks, "port, process, or type name", &name);
+  } else if (IsToken(toks, '~')) {
+    // ~name() or ~name(<expr>)
+    GetToken(toks, '~');
 
-    if (IsToken(toks, '~')) {
-      GetToken(toks, '~');
-      if (!GetToken(toks, '(')) {
+    LocName name;
+    if (!GetNameToken(arena, toks, "port", &name)) {
+      return NULL;
+    }
+
+    if (!GetToken(toks, '(')) {
+      return NULL;
+    }
+
+    if (IsToken(toks, ')')) {
+      GetToken(toks, ')');
+      GetActn* get_actn = arena->alloc(arena, sizeof(GetActn));
+      get_actn->x.tag = FBLC_GET_ACTN;
+      get_actn->x.port = UNRESOLVED_ID;
+      get_actn->port.loc = name.loc;
+      get_actn->port.name = name.name;
+      actn = (Actn*)get_actn;
+    } else {
+      Expr* expr = ParseExpr(arena, toks, false);
+      if (expr == NULL) {
+        return NULL;
+      }
+      if (!GetToken(toks, ')')) {
         return NULL;
       }
 
-      if (IsToken(toks, ')')) {
-        GetToken(toks, ')');
-        GetActn* get_actn = arena->alloc(arena, sizeof(GetActn));
-        get_actn->x.tag = FBLC_GET_ACTN;
-        get_actn->x.port = UNRESOLVED_ID;
-        get_actn->port.loc = name.loc;
-        get_actn->port.name = name.name;
-        actn = (Actn*)get_actn;
-      } else {
-        Expr* expr = ParseExpr(arena, toks, false);
-        if (expr == NULL) {
-          return NULL;
-        }
-        if (!GetToken(toks, ')')) {
-          return NULL;
-        }
+      PutActn* put_actn = arena->alloc(arena, sizeof(PutActn));
+      put_actn->x.tag = FBLC_PUT_ACTN;
+      put_actn->x.arg = (FblcExpr*)expr;
+      put_actn->x.port = UNRESOLVED_ID;
+      put_actn->port.loc = name.loc;
+      put_actn->port.name = name.name;
+      actn = (Actn*)put_actn;
+    }
+  } else if (IsNameToken(toks)) {
+    LocName name;
+    GetNameToken(arena, toks, "process or type name", &name);
 
-        PutActn* put_actn = arena->alloc(arena, sizeof(PutActn));
-        put_actn->x.tag = FBLC_PUT_ACTN;
-        put_actn->x.arg = (FblcExpr*)expr;
-        put_actn->x.port = UNRESOLVED_ID;
-        put_actn->port.loc = name.loc;
-        put_actn->port.name = name.name;
-        actn = (Actn*)put_actn;
-      }
-    } else if (IsToken(toks, '(')) {
+    if (IsToken(toks, '(')) {
       GetToken(toks, '(');
       CallActn* call_actn = arena->alloc(arena, sizeof(CallActn));
       call_actn->x.tag = FBLC_CALL_ACTN;

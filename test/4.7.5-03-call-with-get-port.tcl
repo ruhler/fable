@@ -6,12 +6,12 @@ set prg {
   union Bool(Unit true, Unit false);
 
   proc sub(Bool <~ get ; ; Bool) {
-    get~();
+    ~get();
   };
 
   proc main( ; ; Bool) {
     Bool <~> myget, put;
-    Bool putted = put~(Bool:true(Unit()));
+    Bool putted = ~put(Bool:true(Unit()));
     sub(myget ; );
   };
 }
