@@ -1,6 +1,5 @@
-
-# The conditional has a comma instead of a semicolon after the condition.
 set prg {
+  // The conditional has a comma instead of a semicolon after the condition.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);
@@ -10,4 +9,4 @@ set prg {
       EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit()));
   };
 }
-fblc-check-error $prg
+fblc-check-error $prg 8:24

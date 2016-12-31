@@ -1,7 +1,5 @@
-
-# Test for calling a function with too few arguments.
-
 set prg {
+  // Test for calling a function with too few arguments.
   struct Unit();
 
   func f(Unit x; Unit) {
@@ -12,5 +10,4 @@ set prg {
     f();
   };
 }
-
-fblc-check-error $prg
+fblc-check-error $prg 10:5

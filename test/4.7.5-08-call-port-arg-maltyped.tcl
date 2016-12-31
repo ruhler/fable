@@ -14,6 +14,4 @@ set prg {
     sub(myget ; );
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 14:9

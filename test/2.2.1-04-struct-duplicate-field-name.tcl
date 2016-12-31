@@ -9,7 +9,7 @@ set prg {
     BadStruct(Unit(), Donut());
   };
 }
-fblc-check-error $prg
+fblc-check-error $prg 4:34
 
 
 # Even if the types are the same.
@@ -21,4 +21,4 @@ set prg {
     BadStruct(Unit(), Unit());
   };
 }
-fblc-check-error $prg
+fblc-check-error $prg 3:33

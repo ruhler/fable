@@ -1,8 +1,5 @@
-
-
-# Variables cannot be defined multiple times.
-
 set prg {
+  // Variables cannot be defined multiple times.
   struct Unit();
   struct A(Unit x, Unit y);
   struct B(A a, A b);
@@ -14,6 +11,4 @@ set prg {
     B(v, v);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 10:7

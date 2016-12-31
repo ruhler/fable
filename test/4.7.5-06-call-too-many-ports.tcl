@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
   union Bool(Unit true, Unit false);
@@ -15,6 +14,4 @@ set prg {
     sub(myget, put ; );
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 14:5

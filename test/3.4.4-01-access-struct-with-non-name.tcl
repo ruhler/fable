@@ -1,6 +1,5 @@
-
-# Field access must be used with a name, not an expression.
 set prg {
+  // Field access must be used with a name, not an expression.
   struct Unit();
   struct Donut();
   struct A(Unit x, Donut y);
@@ -11,5 +10,4 @@ set prg {
     A(Unit(), Donut()).?(Bool:true(Unit() ; Unit(), Unit()));
   };
 }
-
-fblc-check-error $prg
+fblc-check-error $prg 10:24

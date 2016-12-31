@@ -1,7 +1,5 @@
-
-
-# Function declarations must have a final semicolon.
 set prg {
+  // Function declarations must have a final semicolon.
   struct Unit();
 
   func f(Unit x, Unit y; Unit) {
@@ -12,5 +10,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 9:3

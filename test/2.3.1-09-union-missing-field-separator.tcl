@@ -1,6 +1,5 @@
-
-# Each field of a union should be separated by a comma.
 set prg {
+  // Each field of a union should be separated by a comma.
   struct Unit();
   union Foo(Unit x, Unit y Unit z);
 
@@ -8,5 +7,4 @@ set prg {
     Foo:x(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 4:28

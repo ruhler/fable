@@ -1,7 +1,5 @@
-
-# A union literal must be for a valid field of the union.
-
 set prg {
+  // A union literal must be for a valid field of the union.
   struct Unit();
   struct A(Unit x, Unit y);
   union Foo(Unit bar, A sludge);
@@ -11,6 +9,4 @@ set prg {
     Foo:blah(Unit());
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 9:9

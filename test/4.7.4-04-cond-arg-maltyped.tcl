@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
   union Bool(Unit true, Unit false);
@@ -9,6 +8,4 @@ set prg {
     ?(Bool:true(Unit()) ; $(Fruit:pear(Unit())), $(x));
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 8:52

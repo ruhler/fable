@@ -1,5 +1,5 @@
-# All process port arguments must have a type.
 set prg {
+  // All process port arguments must have a type.
   struct Unit();
 
   // The second port argument is missing its type.
@@ -11,5 +11,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 6:22

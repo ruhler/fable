@@ -1,7 +1,5 @@
-
-
-# A function must not be declared multiple times.
 set prg {
+  // A function must not be declared multiple times.
   struct Unit();
 
   func foo(Unit x ; Unit) {
@@ -16,5 +14,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 9:8

@@ -9,6 +9,4 @@ set prg {
     $(Pair(x, y));
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 8:36

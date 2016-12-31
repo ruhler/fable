@@ -1,6 +1,5 @@
-
-# A union declaration must have an open paren.
 set prg {
+  // A union declaration must have an open paren.
   struct Unit();
   union Foo Unit x, Donut y);
 
@@ -8,4 +7,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
+fblc-check-error $prg 4:13

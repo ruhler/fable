@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
   union Foo(Unit bar);
@@ -8,6 +7,5 @@ set prg {
     Foo:bar(Unit(), Unit());
   };
 }
-
-fblc-check-error $prg
-
+# TODO: Where exactly should the error be?
+fblc-check-error $prg 7:19

@@ -1,6 +1,5 @@
-
-# A struct must not be constructed with too many arguments.
 set prg {
+  // A struct must not be constructed with too many arguments.
   struct Unit();
   struct Donut();
   struct A(Unit x, Donut y);
@@ -10,5 +9,7 @@ set prg {
     A(Unit(), Donut(), Unit());
   };
 }
-fblc-check-error $prg
+# TODO: Should the error be at the A, the open paren, the start of the third
+# argument?
+fblc-check-error $prg 9:5
 

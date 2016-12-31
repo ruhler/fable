@@ -1,7 +1,5 @@
-
-# Test for calling a function with a malformed argument.
-
 set prg {
+  // Test for calling a function with a malformed argument.
   struct Unit();
 
   func f(Unit x; Unit) {
@@ -13,6 +11,4 @@ set prg {
     f(x);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 11:7

@@ -1,8 +1,5 @@
-
-
-# Variable have the type they are declared to have.
-
 set prg {
+  // Variable have the type they are declared to have.
   struct Unit();
   union Bool(Unit True, Unit False);
 
@@ -14,6 +11,4 @@ set prg {
     Unit();
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 7:5

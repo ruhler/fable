@@ -1,8 +1,5 @@
-
-
-# Variable definitions must not be malformed.
-
 set prg {
+  // Variable definitions must not be malformed.
   struct Unit();
   struct A(Unit x, Unit y);
 
@@ -12,6 +9,4 @@ set prg {
     A(v, v);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 8:14

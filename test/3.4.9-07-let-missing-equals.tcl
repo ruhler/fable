@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
   struct A(Unit x, Unit y);
@@ -9,6 +8,4 @@ set prg {
     A(v, v);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 7:12

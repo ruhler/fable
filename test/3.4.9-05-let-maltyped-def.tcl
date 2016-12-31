@@ -1,7 +1,5 @@
-
-# Variable definitions must have the right type.
-
 set prg {
+  // Variable definitions must have the right type.
   struct Unit();
   struct Donut();
   struct A(Unit x, Unit y);
@@ -11,6 +9,4 @@ set prg {
     A(v, v);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 8:14

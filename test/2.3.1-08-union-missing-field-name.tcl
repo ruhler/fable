@@ -1,6 +1,5 @@
-
-# Each field of a union declaration needs a name.
 set prg {
+  // Each field of a union declaration needs a name.
   struct Unit();
   union Foo(Unit x, Unit, Unit z);
 
@@ -8,5 +7,4 @@ set prg {
     Foo:x(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 4:25

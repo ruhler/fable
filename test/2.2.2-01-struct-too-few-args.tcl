@@ -10,5 +10,8 @@ set prg {
     A(Unit());
   };
 }
-fblc-check-error $prg
+
+# TODO: Should the error location be at the 'A', the open paren, or the close
+# paren?
+fblc-check-error $prg 8:5
 

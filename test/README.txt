@@ -15,8 +15,11 @@ proc expect_result { result program entry args } { ... }
 # function or process based on order of declarations starting at 0.
 proc expect_result_b { result program entry args } { ... }
 
-# Test that the given fblc text program is malformed.
-proc fblc-check-error { program } { ... }
+# Test that the given fblc text program is malformed, and that the error is
+# located at loc. loc should be of the form line:col, where line is the line
+# number of the expected error and col is the column number within that line
+# of the expected error.
+proc fblc-check-error { program loc } {
 
 # Test that running the process 'entry' in 'program' with given ports and
 # arguments leads to the given 'result'.

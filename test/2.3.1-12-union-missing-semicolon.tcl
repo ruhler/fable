@@ -1,7 +1,5 @@
-
-
-# A union declaration must have a final close paren.
 set prg {
+  // A union declaration must have a final semicolon.
   struct Unit();
   union Foo(Unit x, Unit y)
 
@@ -9,4 +7,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
+fblc-check-error $prg 6:3

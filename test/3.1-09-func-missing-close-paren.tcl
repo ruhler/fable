@@ -1,7 +1,5 @@
-
-
-# Function declarations must have a close paren.
 set prg {
+  // Function declarations must have a close paren.
   struct Unit();
 
   func f(Unit x, Unit y; Unit {
@@ -12,5 +10,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:31

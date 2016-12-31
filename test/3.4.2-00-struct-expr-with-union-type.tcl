@@ -1,7 +1,5 @@
-
-# A struct expression can't be used for a union type.
-
 set prg {
+  // A struct expression can't be used for a union type.
   struct Unit();
   union Bool(Unit True, Unit False);
 
@@ -9,6 +7,4 @@ set prg {
     Bool(Unit(), Unit());
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 7:5

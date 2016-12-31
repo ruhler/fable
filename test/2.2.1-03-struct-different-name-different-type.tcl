@@ -11,7 +11,8 @@ set prg {
   };
 }
 
-fblc-check-error $prg
+# TODO: Should the error be at the open brace on 5:22 instead?
+fblc-check-error $prg 6:5
 
 set prg {
   struct Unit();
@@ -24,4 +25,4 @@ set prg {
   };
 }
 
-fblc-check-error $prg
+fblc-check-error $prg 8:5

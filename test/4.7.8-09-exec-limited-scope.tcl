@@ -1,7 +1,6 @@
-
-# Test that expressions in exec actions do not have access to variables
-# defined by other exec actions in the same parallel block.
 set prg {
+  // Test that expressions in exec actions do not have access to variables
+  // defined by other exec actions in the same parallel block.
   struct Unit();
   union Bool(Unit true, Unit false);
 
@@ -10,6 +9,4 @@ set prg {
     $(b);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 8:48

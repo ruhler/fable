@@ -1,7 +1,5 @@
-
-
-# Function declarations must have unique argument names.
 set prg {
+  // Function declarations must have unique argument names.
   struct Unit();
 
   func f(Unit x, Unit x; Unit) {
@@ -12,5 +10,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:23

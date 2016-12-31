@@ -8,5 +8,4 @@ set prg {
       $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Fruit:banana(Unit())));
   };
 }
-
-fblc-check-error $prg
+fblc-check-error $prg 8:7

@@ -1,6 +1,5 @@
-
-# A union declaration must have a name.
 set prg {
+  // A union declaration must have a name.
   struct Unit();
   union (Unit x, Unit y);
 
@@ -8,4 +7,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
+fblc-check-error $prg 4:9

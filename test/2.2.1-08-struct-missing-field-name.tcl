@@ -8,5 +8,5 @@ set prg {
     Foo(Unit(), Unit(), Unit());
   };
 }
-fblc-check-error $prg
+fblc-check-error $prg 3:26
 

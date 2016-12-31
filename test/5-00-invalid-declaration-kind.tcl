@@ -1,6 +1,5 @@
-
-# 'foo' is not a valid kind of declaration.
 set prg {
+  // 'foo' is not a valid kind of declaration.
   struct Unit();
 
   foo Bar();
@@ -9,5 +8,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:3

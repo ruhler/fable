@@ -1,8 +1,6 @@
-
-# Two unions with different names are considered different types, even if
-# they have the same fields.
-
 set prg {
+  // Two unions with different names are considered different types, even if
+  // they have the same fields.
   struct Unit();
 
   union A(Unit x, Unit y);
@@ -13,4 +11,4 @@ set prg {
   };
 }
 
-fblc-check-error $prg
+fblc-check-error $prg 10:5

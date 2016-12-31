@@ -11,5 +11,4 @@ set prg {
     sub( ??? ; );
   };
 }
-
-fblc-check-error $prg
+fblc-check-error $prg 11:10

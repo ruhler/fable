@@ -1,16 +1,24 @@
-* Switch to library-based sharing rather than file based sharing.
- - morph fblct.h to match fblc.h expr and actn definitions.
-  -- Add a Loc function to determine the location of an expression, rather
-     than a loc field. This allows us not to have the location right after the
-     tag.
-  -- Reorder and rename fields of fblct types to match fblc types.
-  -- Replace fields of fblct types with fblc types.
-  -- Remove Strip.c. A type cast should be sufficient.
- - Remove expect_result_b tests.
- - Implement fblc-test
-  -- continue to test writing and reading fblc programs?
- - Replace expect_result and expect_proc_result with fblc-test
+Primary Arc:
+* Change comment character from '//' to '#'
+* Change port calls from foo~ to ~foo
+* Change access from foo.x to .x(foo)
+* Add action and expr locs to SDecls, computed in parser.
+* Replace use of ExprLoc and ActnLoc with SDecl locs info.
+* Separate rest of fblct Expr and Actn fields into SDecl info.
+* Change Env to be FblcProgram + Symbol information.
+* Clean up interface for loading and checking fblc text code.
+* Rewrite testfblc as fblc-test in top of fblc library.
+* Modify testfblc to exercise {Read,Write}{Program,Value} functions
+  - even though they aren't otherwise necessary to run.
+* Remove expect_result_b tests.
+* Replace expect_result and expect_proc_result with fblc-test
+* Port tictactoe.c to use fblc interface
+* Implement fbld front end to fblcbi.
+* Port calc Integer to an fbld module.
+* Implement space invaders game in fbld.
 
+Miscellanous:
+* Rename test/expect-malformed to test/fblc-check-error?
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
   - Something that cannot be typed, such as x, when x is not defined.  "maltyped"
@@ -28,10 +36,13 @@
   guarenteed to take at least one bytes, regardless of whether or not it is
   part of a stream.
 
+* Change fblc-check-error and friends to take the program last, and switch to
+  a style where an anonymous program is passed rather than setting a $prg
+  variable?
+
 * Test writing a stream of Units
  - which requires some alignment be done.
 
-* Implement fbld front end to fblcbi.
-* Port calc Integer to an fbld module.
-* Implement space invaders game in fbld.
+* Test that error messages don't contain garbled characters.
+
 * Write man pages for fblc and friends?

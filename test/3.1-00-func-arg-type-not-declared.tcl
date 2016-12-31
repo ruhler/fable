@@ -1,8 +1,7 @@
-
-# Argument types of a function must be defined.
 set prg {
   struct Unit();
 
+  // The type Donut is not defined.
   func f(Unit x, Donut y; Unit) {
     x;
   };
@@ -11,5 +10,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:18

@@ -1,6 +1,5 @@
-
-# Process declarations must have a name.
 set prg {
+  // Process declarations must have a name.
   struct Unit();
 
   proc ( ; ; Unit) {
@@ -11,5 +10,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:8

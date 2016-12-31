@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
   struct Foo(Unit bar);
@@ -8,6 +7,4 @@ set prg {
     Foo:bar(Unit());
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 7:5

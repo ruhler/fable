@@ -1,9 +1,7 @@
-
-
-# All port types must be declared.
 set prg {
   struct Unit();
 
+  // The process port type Donut is not declared
   proc p(Donut <~ px, Unit ~> py ; Unit x, Unit y ; Unit) {
     $(Unit());
   };
@@ -12,5 +10,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:10

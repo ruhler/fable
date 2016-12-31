@@ -1,6 +1,5 @@
-
-# Process declarations must have a body.
 set prg {
+  // Process declarations must have a body.
   struct Unit();
 
   proc p(Unit <~ px, Unit ~> py ; Unit x, Unit y ; Unit);
@@ -9,5 +8,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:57

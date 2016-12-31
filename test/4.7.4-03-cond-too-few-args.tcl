@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
   union Fruit(Unit apple, Unit banana, Unit pear);
@@ -9,6 +8,5 @@ set prg {
       $(Fruit:pear(Unit())), $(Fruit:apple(Unit())));
   };
 }
-
-fblc-check-error $prg
-
+# TODO: Where exactly should the error location be?
+fblc-check-error $prg 7:7

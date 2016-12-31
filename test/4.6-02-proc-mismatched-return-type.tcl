@@ -1,6 +1,5 @@
-
-# The return type of a process must match the type of the body.
 set prg {
+  // The return type of a process must match the type of the body.
   struct Unit();
   struct Donut();
 
@@ -8,5 +7,5 @@ set prg {
     $(Donut());
   };
 }
-fblc-check-error $prg
-
+# TODO: Where exactly should the error location be?
+fblc-check-error $prg 7:7

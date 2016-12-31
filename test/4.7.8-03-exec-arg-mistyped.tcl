@@ -1,5 +1,3 @@
-
-
 set prg {
   struct Unit();
   union Bool(Unit true, Unit false);
@@ -10,6 +8,5 @@ set prg {
     $(x);
   };
 }
-
-fblc-check-error $prg
-
+# TODO: Where exactly should the error be?
+fblc-check-error $prg 7:5

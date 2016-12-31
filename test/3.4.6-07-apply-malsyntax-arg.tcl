@@ -10,6 +10,4 @@ set prg {
     f(???);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 10:8

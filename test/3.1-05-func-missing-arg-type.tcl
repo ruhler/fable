@@ -1,7 +1,5 @@
-
-
-# Function declarations must have types for each argument.
 set prg {
+  // Function declarations must have types for each argument.
   struct Unit();
 
   func f(x, Unit y; Unit) {
@@ -12,5 +10,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:11

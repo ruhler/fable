@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
 
@@ -6,6 +5,4 @@ set prg {
     Unit();
   ; // Missing the '}' brace.
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 6:3

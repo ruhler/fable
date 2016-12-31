@@ -1,7 +1,5 @@
-
-# Variables must be declared in scope.
-
 set prg {
+  // Variables must be declared in scope.
   struct Unit();
   union Bool(Unit True, Unit False);
 
@@ -14,5 +12,4 @@ set prg {
   };
 }
 
-fblc-check-error $prg
-
+fblc-check-error $prg 7:5

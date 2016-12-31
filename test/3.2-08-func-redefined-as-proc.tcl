@@ -1,7 +1,5 @@
-
-
-# A function and process can't have the same name.
 set prg {
+  // A function and process can't have the same name.
   struct Unit();
 
   func foo(Unit x ; Unit) {
@@ -16,5 +14,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 9:8

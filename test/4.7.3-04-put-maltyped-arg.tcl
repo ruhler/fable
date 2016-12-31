@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
   struct Donut();
@@ -12,6 +11,4 @@ set prg {
     $(Unit());
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 7:12

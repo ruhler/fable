@@ -1,7 +1,5 @@
-
-# Test for calling a function with a maltyped argument.
-
 set prg {
+  // Test for calling a function with a maltyped argument.
   struct Unit();
   struct Donut();
 
@@ -13,6 +11,4 @@ set prg {
     f(Donut());
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 11:7

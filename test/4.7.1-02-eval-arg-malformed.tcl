@@ -6,6 +6,4 @@ set prg {
     $(???);
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 6:8

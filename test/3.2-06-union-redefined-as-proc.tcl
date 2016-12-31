@@ -1,7 +1,5 @@
-
-
-# A struct and a process can't have the same name.
 set prg {
+  // A struct and a process can't have the same name.
   struct Unit();
   union A(Unit x, Unit y);
 
@@ -13,5 +11,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 6:8

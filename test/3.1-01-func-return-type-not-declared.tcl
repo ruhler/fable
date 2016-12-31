@@ -1,8 +1,7 @@
-
-# The return type of a function must be defined.
 set prg {
   struct Unit();
 
+  // The return type Donut is not defined.
   func foo(Unit x ; Donut) {
     Donut();
   };
@@ -11,5 +10,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:21

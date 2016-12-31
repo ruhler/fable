@@ -1,7 +1,5 @@
-
-# The type of variables defined in let statements must be declared.
-
 set prg {
+  // The type of variables defined in let statements must be declared.
   struct Unit();
 
   func main( ; Unit) {
@@ -10,6 +8,4 @@ set prg {
     Unit();
   };
 }
-
-fblc-check-error $prg
-
+fblc-check-error $prg 7:5

@@ -98,17 +98,24 @@ proc expect_proc_result { result program entry ports args script } {
   }
 }
 
-# Test that the given fblc text program is malformed.
-proc fblc-check-error { program } {
-  set loc [info frame -1]
-  set line [dict get $loc line]
-  set file [dict get $loc file]
+# Test that the given fblc text program is malformed, and that the error is
+# located at loc. loc should be of the form line:col, where line is the line
+# number of the expected error and col is the column number within that line
+# of the expected error.
+proc fblc-check-error { program loc } {
+  set testloc [info frame -1]
+  set line [dict get $testloc line]
+  set file [dict get $testloc file]
   set name "[file tail $file]_$line"
 
   try {
     set fprogram ./out/test/$name.fblc
     exec echo $program > $fprogram
-    exec $::fblccheck --error $fprogram > ./out/test/$name.err
+    set errtext [exec $::fblccheck --error $fprogram]
+    exec echo $errtext > ./out/test/$name.err
+    if {-1 == [string first ":$loc: error" $errtext]} {
+      error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
+    }
   } trap CHILDSTATUS {results options} {
     error "$file:$line: error: fblc-check passed unexpectedly"
   }

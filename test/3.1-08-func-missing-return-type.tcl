@@ -1,7 +1,5 @@
-
-
-# Function declarations must have a return type
 set prg {
+  // Function declarations must have a return type
   struct Unit();
 
   func f(Unit x, Unit y; ) {
@@ -12,5 +10,4 @@ set prg {
     Unit();
   };
 }
-fblc-check-error $prg
-
+fblc-check-error $prg 5:26
