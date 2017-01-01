@@ -377,11 +377,6 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
         return UNRESOLVED_ID;
       }
 
-      if (LookupVar(vars, &let_expr->var.name) != UNRESOLVED_ID) {
-        ReportError("Variable %s already defined.\n", let_expr->var.name.loc, let_expr->var.name.name);
-        return UNRESOLVED_ID;
-      }
-
       Loc* defloc = *loc;
       FblcTypeId actual_type_id = CheckExpr(env, vars, (Expr*)let_expr->x.def, loc);
       if (actual_type_id == UNRESOLVED_ID) {

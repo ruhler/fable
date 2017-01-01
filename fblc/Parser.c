@@ -710,6 +710,12 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* 
       let_expr->var.type.name = start.name;
       let_expr->var.type.loc = start.loc;
       GetNameToken(arena, toks, "variable name", &(let_expr->var.name));
+      if (LookupVar(vars, let_expr->var.name.name) != UNRESOLVED_ID) {
+        ReportError("Variable %s already declared.",
+            let_expr->var.name.loc, let_expr->var.name.name);
+        return NULL;
+      }
+
       if (!GetToken(toks, '=')) {
         return NULL;
       }
