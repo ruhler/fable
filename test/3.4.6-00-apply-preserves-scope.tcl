@@ -1,6 +1,5 @@
-
-# Test that we can still refer to variables in scope after a function call.
 set prg {
+  # Test that we can still refer to variables in scope after a function call.
   struct Unit();
   struct Donut();
   struct A(Unit x, Donut y);

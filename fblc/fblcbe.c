@@ -66,7 +66,6 @@ int main(int argc, char* argv[])
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
   Env* env = ParseProgram(bulk_arena, filename);
   if (env == NULL) {
-    fprintf(stderr, "failed to parse input FILE.\n");
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
     GcFinish();

@@ -52,12 +52,24 @@ static bool GetToken(TokenStream* toks, char which);
 static bool IsNameToken(TokenStream* toks);
 static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name);
 static void UnexpectedToken(TokenStream* toks, const char* expected);
+
+// The following Vars structure describes a mapping from variable names to ids.
+//
+// We always allocate the Vars mapping on the stack. This means it is not safe
+// to return or otherwise capture a Vars* outside of the frame where it is
+// allocated.
 
+typedef struct Vars {
+  Name name;
+  struct Vars* next;
+} Vars;
+
+static FblcVarId LookupVar(Vars* vars, Name name);
 static SVar* ParseFields(FblcArena* arena, TokenStream* toks, size_t* count);
 static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, SVar** ports, size_t* portc);
-static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** locv, size_t* locc);
-static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc);
-static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc);
+static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Vars* vars, Loc** locv, size_t* locc);
+static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* vars, Loc** locv, size_t* locc);
+static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* vars, Loc** locv, size_t* locc);
 
 // CurrChar --
 //   Look at the character at the front of the token stream's file.
@@ -423,6 +435,17 @@ static void UnexpectedToken(TokenStream* toks, const char* expected)
       &toks->loc, expected, desc);
 }
 
+static FblcVarId LookupVar(Vars* vars, Name name)
+{
+  for (size_t i = 0; vars != NULL; ++i) {
+    if (NamesEqual(vars->name, name)) {
+      return i;
+    }
+    vars = vars->next;
+  }
+  return UNRESOLVED_ID;
+}
+
 // ParseFields -
 //   Parse fields in the form: <type> <name>, <type> <name>, ...
 //   This is used for parsing the fields of a struct or union type, and for
@@ -570,13 +593,13 @@ static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, SV
 //   The token stream is advanced past the final ')' token in the
 //   argument list. In case of an error, an error message is printed to
 //   standard error.
-static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** locv, size_t* locc)
+static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Vars* vars, Loc** locv, size_t* locc)
 {
   Expr** argv;
   size_t argc;
   FblcVectorInit(arena, argv, argc);
   if (!IsToken(toks, ')')) {
-    Expr* arg = ParseExpr(arena, toks, false, locv, locc);
+    Expr* arg = ParseExpr(arena, toks, false, vars, locv, locc);
     if (arg == NULL) {
       return -1;
     }
@@ -584,7 +607,7 @@ static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** l
 
     while (IsToken(toks, ',')) {
       GetToken(toks, ',');
-      arg = ParseExpr(arena, toks, false, locv, locc);
+      arg = ParseExpr(arena, toks, false, vars, locv, locc);
       if (arg == NULL) {
         return -1;
       }
@@ -616,7 +639,7 @@ static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** l
 // Side effects:
 //   Advances the token stream past the parsed expression. In case of error,
 //   an error message is printed to standard error.
-static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc)
+static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* vars, Loc** locv, size_t* locc)
 {
   if (!IsToken(toks, '{')) {
     FblcVectorExtend(arena, *locv, *locc);
@@ -629,7 +652,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
   Expr* expr;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    expr = ParseExpr(arena, toks, true, locv, locc);
+    expr = ParseExpr(arena, toks, true, vars, locv, locc);
     if (expr == NULL) {
       return NULL;
     }
@@ -645,7 +668,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       GetToken(toks, '(');
 
       Expr** args = NULL;
-      int argc = ParseArgs(arena, toks, &args, locv, locc);
+      int argc = ParseArgs(arena, toks, &args, vars, locv, locc);
       if (argc < 0) {
         return NULL;
       }
@@ -672,7 +695,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       if (!GetToken(toks, '(')) {
         return NULL;
       }
-      union_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc);
+      union_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, false, vars, locv, locc);
       if (union_expr->x.body == NULL) {
         return NULL;
       }
@@ -690,14 +713,15 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       if (!GetToken(toks, '=')) {
         return NULL;
       }
-      let_expr->x.def = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc);
+      let_expr->x.def = (FblcExpr*)ParseExpr(arena, toks, false, vars, locv, locc);
       if (let_expr->x.def == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      let_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, true, locv, locc);
+      Vars nvars = { .name = let_expr->var.name.name, .next = vars };
+      let_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, true, &nvars, locv, locc);
       if (let_expr->x.body == NULL) {
         return NULL;
       }
@@ -708,7 +732,11 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       // This is the variable expression: start
       VarExpr* var_expr = arena->alloc(arena, sizeof(VarExpr));
       var_expr->x.tag = FBLC_VAR_EXPR;
-      var_expr->x.var = UNRESOLVED_ID;
+      var_expr->x.var = LookupVar(vars, start.name);
+      if (var_expr->x.var == UNRESOLVED_ID) {
+        ReportError("Variable %s not in scope.", start.loc, start.name);
+        return NULL;
+      }
       var_expr->name.name = start.name;
       var_expr->name.loc = start.loc;
       expr = (Expr*)var_expr;
@@ -719,7 +747,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* condition = ParseExpr(arena, toks, false, locv, locc);
+    Expr* condition = ParseExpr(arena, toks, false, vars, locv, locc);
     if (condition == NULL) {
       return NULL;
     }
@@ -729,7 +757,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     }
     
     Expr** args = NULL;
-    int argc = ParseArgs(arena, toks, &args, locv, locc);
+    int argc = ParseArgs(arena, toks, &args, vars, locv, locc);
     if (argc < 0) {
       return NULL;
     }
@@ -755,7 +783,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       return NULL;
     }
 
-    access_expr->x.object = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc);
+    access_expr->x.object = (FblcExpr*)ParseExpr(arena, toks, false, vars, locv, locc);
     if (access_expr->x.object == NULL) {
       return NULL;
     }
@@ -795,7 +823,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
 // Side effects:
 //   Advances the token stream past the parsed action. In case of error,
 //   an error message is printed to standard error.
-static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc)
+static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* vars, Loc** locv, size_t* locc)
 {
   if (!IsToken(toks, '{')) {
     FblcVectorExtend(arena, *locv, *locc);
@@ -808,7 +836,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
   Actn* actn = NULL;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    actn = ParseActn(arena, toks, true, locv, locc);
+    actn = ParseActn(arena, toks, true, vars, locv, locc);
     if (actn == NULL) {
       return NULL;
     }
@@ -821,7 +849,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* expr = ParseExpr(arena, toks, false, locv, locc);
+    Expr* expr = ParseExpr(arena, toks, false, vars, locv, locc);
     if (expr == NULL) {
       return NULL;
     }
@@ -855,7 +883,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       get_actn->port.name = name.name;
       actn = (Actn*)get_actn;
     } else {
-      Expr* expr = ParseExpr(arena, toks, false, locv, locc);
+      Expr* expr = ParseExpr(arena, toks, false, vars, locv, locc);
       if (expr == NULL) {
         return NULL;
       }
@@ -908,7 +936,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       }
 
       Expr** args = NULL;
-      int exprc = ParseArgs(arena, toks, &args, locv, locc);
+      int exprc = ParseArgs(arena, toks, &args, vars, locv, locc);
       if (exprc < 0) {
         return NULL;
       }
@@ -937,7 +965,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      Actn* body = ParseActn(arena, toks, true, locv, locc);
+      Actn* body = ParseActn(arena, toks, true, vars, locv, locc);
       if (body == NULL) {
         return NULL;
       }
@@ -981,7 +1009,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
           return NULL;
         }
 
-        Actn* exec = ParseActn(arena, toks, false, locv, locc);
+        Actn* exec = ParseActn(arena, toks, false, vars, locv, locc);
         if (exec == NULL) {
           return NULL;
         }
@@ -991,7 +1019,14 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      exec_actn->x.body = (FblcActn*)ParseActn(arena, toks, true, locv, locc);
+      Vars vars_data[exec_actn->x.execc];
+      Vars* nvars = vars;
+      for (size_t i = 0; i < exec_actn->x.execc; ++i) {
+        vars_data[i].name = exec_actn->vars[i].name.name;
+        vars_data[i].next = nvars;
+        nvars = vars_data + i;
+      }
+      exec_actn->x.body = (FblcActn*)ParseActn(arena, toks, true, nvars, locv, locc);
       if (exec_actn->x.body == NULL) {
         return NULL;
       }
@@ -1006,7 +1041,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* condition = ParseExpr(arena, toks, false, locv, locc);
+    Expr* condition = ParseExpr(arena, toks, false, vars, locv, locc);
     if (condition == NULL) {
       return NULL;
     }
@@ -1029,7 +1064,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
         GetToken(toks, ',');
       }
 
-      Actn* arg = ParseActn(arena, toks, false, locv, locc);
+      Actn* arg = ParseActn(arena, toks, false, vars, locv, locc);
       if (arg == NULL) {
         return NULL;
       }
@@ -1158,7 +1193,14 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      func->body = ParseExpr(arena, &toks, false, &sfunc->locv, &sfunc->locc);
+      Vars nvars[func->argc];
+      Vars* vars = NULL;
+      for (size_t i = 0; i < func->argc; ++i) {
+        nvars[i].name = func->args[i].name.name;
+        nvars[i].next = vars;
+        vars = nvars + i;
+      }
+      func->body = ParseExpr(arena, &toks, false, vars, &sfunc->locv, &sfunc->locc);
       if (func->body == NULL) {
         return NULL;
       }
@@ -1207,7 +1249,14 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      proc->body = ParseActn(arena, &toks, false, &sproc->locv, &sproc->locc);
+      Vars nvars[proc->argc];
+      Vars* vars = NULL;
+      for (size_t i = 0; i < proc->argc; ++i) {
+        nvars[i].name = proc->args[i].name.name;
+        nvars[i].next = vars;
+        vars = nvars + i;
+      }
+      proc->body = ParseActn(arena, &toks, false, vars, &sproc->locv, &sproc->locc);
       if (proc->body == NULL) {
         return NULL;
       }

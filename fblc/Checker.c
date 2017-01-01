@@ -250,6 +250,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
+      assert(var_expr->x.var != UNRESOLVED_ID);
       FblcTypeId type = ResolveVar(vars, &var_expr->name, &var_expr->x.var);
       if (type == UNRESOLVED_ID) {
         ReportError("Variable '%s' not in scope.\n", myloc, var_expr->name.name);

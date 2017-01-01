@@ -9,4 +9,5 @@ set prg {
     A(v, v);
   };
 }
-fblc-check-error $prg 8:10
+# TODO: The error could be at the 'Unit' or the '='?
+fblc-check-error $prg 8:5
