@@ -29,7 +29,7 @@ typedef struct Ports {
 
 static FblcTypeId LookupType(Env* env, Name name);
 static Vars* AddVar(Vars* vars, Name name, FblcTypeId type, Vars* next);
-static FblcTypeId ResolveVar(Vars* vars, LocName* name, FblcVarId* var_id);
+static FblcTypeId LookupVar(Vars* vars, LocName* name);
 static Ports* AddPort(
     Ports* vars, Name name, FblcTypeId type, FblcPolarity polarity, Ports* next);
 static FblcTypeId ResolvePort(Ports* vars, LocName* name, FblcPolarity polarity, FblcPortId* port_id);
@@ -92,7 +92,7 @@ static Vars* AddVar(Vars* vars, Name name, FblcTypeId type, Vars* next)
   return vars;
 }
 
-// ResolveVar --
+// LookupVar --
 //   Look up the type of a variable in scope.
 //
 // Inputs:
@@ -106,11 +106,10 @@ static Vars* AddVar(Vars* vars, Name name, FblcTypeId type, Vars* next)
 //
 // Side effects:
 //   Sets var_id to the id of the resolved variable
-static FblcTypeId ResolveVar(Vars* vars, LocName* name, FblcVarId* var_id)
+static FblcTypeId LookupVar(Vars* vars, LocName* name)
 {
   for (size_t i = 0; vars != NULL; ++i) {
     if (NamesEqual(vars->name, name->name)) {
-      *var_id = i;
       return vars->type;
     }
     vars = vars->next;
@@ -251,7 +250,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
     case FBLC_VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
       assert(var_expr->x.var != UNRESOLVED_ID);
-      FblcTypeId type = ResolveVar(vars, &var_expr->name, &var_expr->x.var);
+      FblcTypeId type = LookupVar(vars, &var_expr->name);
       if (type == UNRESOLVED_ID) {
         ReportError("Variable '%s' not in scope.\n", myloc, var_expr->name.name);
         return UNRESOLVED_ID;
@@ -378,8 +377,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
         return UNRESOLVED_ID;
       }
 
-      FblcVarId dummy;
-      if (ResolveVar(vars, &let_expr->var.name, &dummy) != UNRESOLVED_ID) {
+      if (LookupVar(vars, &let_expr->var.name) != UNRESOLVED_ID) {
         ReportError("Variable %s already defined.\n", let_expr->var.name.loc, let_expr->var.name.name);
         return UNRESOLVED_ID;
       }
