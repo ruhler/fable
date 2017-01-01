@@ -343,9 +343,9 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
 
     case FBLC_LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
-      FblcTypeId declared_type_id = LookupType(env, let_expr->var.type.name);
+      FblcTypeId declared_type_id = LookupType(env, let_expr->type.name);
       if (declared_type_id == UNRESOLVED_ID) {
-        ReportError("Type '%s' not declared.\n", myloc, let_expr->var.type.name);
+        ReportError("Type '%s' not declared.\n", myloc, let_expr->type.name);
         return UNRESOLVED_ID;
       }
 
@@ -358,7 +358,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
       if (declared_type_id != actual_type_id) {
         SDecl* actual_type = env->sdeclv[actual_type_id];
         ReportError("Expected type %s, but found expression of type %s.\n",
-            defloc, let_expr->var.type.name, actual_type->name.name);
+            defloc, let_expr->type.name, actual_type->name.name);
         return UNRESOLVED_ID;
       }
 

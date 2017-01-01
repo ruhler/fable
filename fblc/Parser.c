@@ -707,12 +707,12 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* 
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       LetExpr* let_expr = arena->alloc(arena, sizeof(LetExpr));
       let_expr->x.tag = FBLC_LET_EXPR;
-      let_expr->var.type.name = start.name;
-      let_expr->var.type.loc = start.loc;
-      GetNameToken(arena, toks, "variable name", &(let_expr->var.name));
-      if (LookupVar(vars, let_expr->var.name.name) != UNRESOLVED_ID) {
-        ReportError("Variable %s already declared.",
-            let_expr->var.name.loc, let_expr->var.name.name);
+      let_expr->type.name = start.name;
+      let_expr->type.loc = start.loc;
+      LocName name;
+      GetNameToken(arena, toks, "variable name", &name);
+      if (LookupVar(vars, name.name) != UNRESOLVED_ID) {
+        ReportError("Variable %s already declared.", name.loc, name.name);
         return NULL;
       }
 
@@ -726,7 +726,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* 
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      Vars nvars = { .name = let_expr->var.name.name, .next = vars };
+      Vars nvars = { .name = name.name, .next = vars };
       let_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, true, &nvars, locv, locc);
       if (let_expr->x.body == NULL) {
         return NULL;

@@ -61,21 +61,21 @@ typedef struct {
   LocName field;
 } UnionExpr;
 
-typedef struct {
-  LocName type;
-  LocName name;
-} SVar;
-
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
   FblcLetExpr x;
-  SVar var;
+  LocName type;
 } LetExpr;
 
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
 typedef struct {
   FblcCondExpr x;
 } CondExpr;
+
+typedef struct {
+  LocName type;
+  LocName name;
+} SVar;
 
 typedef struct {
   FblcDeclTag tag;
