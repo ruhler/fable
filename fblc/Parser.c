@@ -743,8 +743,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Vars* 
         ReportError("Variable %s not in scope.", start.loc, start.name);
         return NULL;
       }
-      var_expr->name.name = start.name;
-      var_expr->name.loc = start.loc;
       expr = (Expr*)var_expr;
     }
   } else if (IsToken(toks, '?')) {

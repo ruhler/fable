@@ -15,7 +15,6 @@
 // allocated.
 
 typedef struct Vars {
-  Name name;
   FblcTypeId type;
   struct Vars* next;
 } Vars;
@@ -28,8 +27,7 @@ typedef struct Ports {
 } Ports;
 
 static FblcTypeId LookupType(Env* env, Name name);
-static Vars* AddVar(Vars* vars, Name name, FblcTypeId type, Vars* next);
-static FblcTypeId LookupVar(Vars* vars, LocName* name);
+static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next);
 static Ports* AddPort(
     Ports* vars, Name name, FblcTypeId type, FblcPolarity polarity, Ports* next);
 static FblcTypeId ResolvePort(Ports* vars, LocName* name, FblcPolarity polarity, FblcPortId* port_id);
@@ -74,7 +72,6 @@ static FblcTypeId LookupType(Env* env, Name name)
 //
 // Inputs:
 //   vars - Memory to use for the new scope.
-//   name - The name of the variable to add.
 //   type - The type of the variable.
 //   next - The scope to add it to.
 //
@@ -84,37 +81,11 @@ static FblcTypeId LookupType(Env* env, Name name)
 // Side effects:
 //   Sets vars to a scope including the given variable and next scope.
 
-static Vars* AddVar(Vars* vars, Name name, FblcTypeId type, Vars* next)
+static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next)
 {
-  vars->name = name;
   vars->type = type;
   vars->next = next;
   return vars;
-}
-
-// LookupVar --
-//   Look up the type of a variable in scope.
-//
-// Inputs:
-//   vars - The scope to look up the variable in.
-//   name - The name of the variable.
-//   var_id - Output var id parameter.
-//
-// Results:
-//   The type of the variable in scope, or UNRESOLVED_ID if there is no variable with
-//   that name in scope.
-//
-// Side effects:
-//   Sets var_id to the id of the resolved variable
-static FblcTypeId LookupVar(Vars* vars, LocName* name)
-{
-  for (size_t i = 0; vars != NULL; ++i) {
-    if (NamesEqual(vars->name, name->name)) {
-      return vars->type;
-    }
-    vars = vars->next;
-  }
-  return UNRESOLVED_ID;
 }
 
 // AddPort --
@@ -250,12 +221,13 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
     case FBLC_VAR_EXPR: {
       VarExpr* var_expr = (VarExpr*)expr;
       assert(var_expr->x.var != UNRESOLVED_ID);
-      FblcTypeId type = LookupVar(vars, &var_expr->name);
-      if (type == UNRESOLVED_ID) {
-        ReportError("Variable '%s' not in scope.\n", myloc, var_expr->name.name);
-        return UNRESOLVED_ID;
+      Vars* curr = vars;
+      for (size_t i = 0; i < var_expr->x.var; ++i) {
+        assert(curr != NULL && "already resolved variable should be in scope");
+        curr = curr->next;
       }
-      return type;
+      assert(curr != NULL && "already resolved variable should be in scope");
+      return curr->type;
     }
 
     case FBLC_APP_EXPR: {
@@ -391,7 +363,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
       }
 
       Vars nvars;
-      AddVar(&nvars, let_expr->var.name.name, actual_type_id, vars);
+      AddVar(&nvars, actual_type_id, vars);
       return CheckExpr(env, &nvars, (Expr*)let_expr->x.body, loc);
     }
 
@@ -602,7 +574,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
           return UNRESOLVED_ID;
         }
 
-        nvars = AddVar(vars_data+i, var->name.name, type_id, nvars);
+        nvars = AddVar(vars_data+i, type_id, nvars);
       }
       return CheckActn(env, nvars, ports, (Actn*)exec_actn->x.body, loc);
     }
@@ -814,7 +786,7 @@ bool CheckProgram(Env* env)
           if (arg_type_id == UNRESOLVED_ID) {
             return false;
           }
-          vars = AddVar(nvars+i, func->args[i].name.name, arg_type_id, vars);
+          vars = AddVar(nvars+i, arg_type_id, vars);
         }
         Loc* loc = sfunc->locv;
         FblcTypeId body_type_id = CheckExpr(env, vars, func->body, &loc);
@@ -863,7 +835,7 @@ bool CheckProgram(Env* env)
           if (arg_type_id == UNRESOLVED_ID) {
             return false;
           }
-          vars = AddVar(nvar++, proc->args[i].name.name, arg_type_id, vars);
+          vars = AddVar(nvar++, arg_type_id, vars);
         }
 
         Ports* ports = NULL;

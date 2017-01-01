@@ -40,7 +40,6 @@ typedef struct {
 // VAR_EXPR: Variable expressions of the form: <name>
 typedef struct {
   FblcVarExpr x;
-  LocName name;
 } VarExpr;
 
 // APP_EXPR: Application expressions of the form: <func>(<argv>)
