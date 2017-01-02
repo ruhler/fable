@@ -33,9 +33,9 @@ static Ports* AddPort(
 static FblcTypeId ResolvePort(Ports* vars, LocName* name, FblcPolarity polarity, FblcPortId* port_id);
 static bool CheckArgs(
     Env* env, Vars* vars, int fieldc, SVar* fieldv,
-    int argc, Expr** argv, LocName* func, Loc** loc);
-static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc);
-static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc);
+    int argc, Expr** argv, LocName* func, Loc** loc, SVar** svars);
+static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc, SVar** svars);
+static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars);
 static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, SVar* fields, const char* kind);
 static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports);
 
@@ -171,7 +171,7 @@ static FblcTypeId ResolvePort(Ports* ports, LocName* name, FblcPolarity polarity
 
 static bool CheckArgs(
     Env* env, Vars* vars, int fieldc, SVar* fieldv,
-    int argc, Expr** argv, LocName* func, Loc** loc)
+    int argc, Expr** argv, LocName* func, Loc** loc, SVar** svars)
 {
   if (fieldc != argc) {
     ReportError("Wrong number of arguments to %s. Expected %d, "
@@ -181,7 +181,7 @@ static bool CheckArgs(
 
   for (int i = 0; i < fieldc; i++) {
     Loc* argloc = *loc;
-    FblcTypeId arg_type_id = CheckExpr(env, vars, argv[i], loc);
+    FblcTypeId arg_type_id = CheckExpr(env, vars, argv[i], loc, svars);
     if (arg_type_id == UNRESOLVED_ID) {
       return false;
     }
@@ -204,6 +204,12 @@ static bool CheckArgs(
 //   env - The program environment.
 //   vars - The names and types of the variables in scope.
 //   expr - The expression to verify.
+//   loc - An array of locations starting with the location of the current
+//         expression and continuing with the locations of every subsequent
+//         expression in the order they are encountered in the program.
+//   svars - An array of svars starting with the next variable definition and
+//           continuing with the svar of every subseqent variable definition
+//           in the order it appears in the program.
 //
 // Result:
 //   The type of the expression, or UNRESOLVED_ID if the expression is not well formed
@@ -213,8 +219,10 @@ static bool CheckArgs(
 //   LocName ids within the expression are resolved.
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
+//   loc is advanced to the location after all locations in this expression.
+//   svars is advanced to the svar after all svars in this expression.
 
-static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
+static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc, SVar** svars)
 {
   Loc* myloc = (*loc)++;
   switch (expr->tag) {
@@ -251,7 +259,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
           FblcTypeDecl* type = (FblcTypeDecl*)decl;
           STypeDecl* stype = (STypeDecl*)sdecl;
           if (!CheckArgs(env, vars, type->fieldc, stype->fields,
-                app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func), loc)) {
+                app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func), loc, svars)) {
             return UNRESOLVED_ID;
           }
           return app_expr->x.func;
@@ -265,8 +273,8 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
         case FBLC_FUNC_DECL: {
           FuncDecl* func = (FuncDecl*)decl;
           SFuncDecl* sfunc = (SFuncDecl*)sdecl;
-          if (!CheckArgs(env, vars, func->argc, func->args,
-                app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func), loc)) {
+          if (!CheckArgs(env, vars, func->argc, sfunc->svarv,
+                app_expr->x.argc, (Expr**)app_expr->x.argv, &(app_expr->func), loc, svars)) {
             return UNRESOLVED_ID;
           }
           return LookupType(env, sfunc->return_type.name);
@@ -285,7 +293,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
 
     case FBLC_ACCESS_EXPR: {
       AccessExpr* access_expr = (AccessExpr*)expr;
-      FblcTypeId type_id = CheckExpr(env, vars, (Expr*)access_expr->x.object, loc);
+      FblcTypeId type_id = CheckExpr(env, vars, (Expr*)access_expr->x.object, loc, svars);
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -319,7 +327,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
       }
 
       Loc* bodyloc = *loc;
-      FblcTypeId arg_type_id = CheckExpr(env, vars, (Expr*)union_expr->x.body, loc);
+      FblcTypeId arg_type_id = CheckExpr(env, vars, (Expr*)union_expr->x.body, loc, svars);
       if (arg_type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -343,14 +351,15 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
 
     case FBLC_LET_EXPR: {
       LetExpr* let_expr = (LetExpr*)expr;
-      FblcTypeId declared_type_id = LookupType(env, let_expr->type.name);
+      SVar* svar = (*svars)++;
+      FblcTypeId declared_type_id = LookupType(env, svar->type.name);
       if (declared_type_id == UNRESOLVED_ID) {
-        ReportError("Type '%s' not declared.\n", myloc, let_expr->type.name);
+        ReportError("Type '%s' not declared.\n", myloc, svar->type.name);
         return UNRESOLVED_ID;
       }
 
       Loc* defloc = *loc;
-      FblcTypeId actual_type_id = CheckExpr(env, vars, (Expr*)let_expr->x.def, loc);
+      FblcTypeId actual_type_id = CheckExpr(env, vars, (Expr*)let_expr->x.def, loc, svars);
       if (actual_type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -358,19 +367,19 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
       if (declared_type_id != actual_type_id) {
         SDecl* actual_type = env->sdeclv[actual_type_id];
         ReportError("Expected type %s, but found expression of type %s.\n",
-            defloc, let_expr->type.name, actual_type->name.name);
+            defloc, svar->type.name, actual_type->name.name);
         return UNRESOLVED_ID;
       }
 
       Vars nvars;
       AddVar(&nvars, actual_type_id, vars);
-      return CheckExpr(env, &nvars, (Expr*)let_expr->x.body, loc);
+      return CheckExpr(env, &nvars, (Expr*)let_expr->x.body, loc, svars);
     }
 
     case FBLC_COND_EXPR: {
       CondExpr* cond_expr = (CondExpr*)expr;
       Loc* condloc = *loc;
-      FblcTypeId type_id = CheckExpr(env, vars, (Expr*)cond_expr->x.select, loc);
+      FblcTypeId type_id = CheckExpr(env, vars, (Expr*)cond_expr->x.select, loc, svars);
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -392,7 +401,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
       FblcTypeId result_type_id = UNRESOLVED_ID;
       for (int i = 0; i < cond_expr->x.argc; i++) {
         Loc* argloc = *loc;
-        FblcTypeId arg_type_id = CheckExpr(env, vars, (Expr*)cond_expr->x.argv[i], loc);
+        FblcTypeId arg_type_id = CheckExpr(env, vars, (Expr*)cond_expr->x.argv[i], loc, svars);
         if (arg_type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
@@ -437,13 +446,13 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc)
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
-static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc)
+static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars)
 {
   Loc* myloc = (*loc)++;
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       EvalActn* eval_actn = (EvalActn*)actn;
-      return CheckExpr(env, vars, (Expr*)eval_actn->x.expr, loc);
+      return CheckExpr(env, vars, (Expr*)eval_actn->x.expr, loc, svars);
     }
 
     case FBLC_GET_ACTN: {
@@ -465,7 +474,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
       }
 
       Loc* argloc = *loc;
-      FblcTypeId arg_type_id = CheckExpr(env, vars, (Expr*)put_actn->x.arg, loc);
+      FblcTypeId arg_type_id = CheckExpr(env, vars, (Expr*)put_actn->x.arg, loc, svars);
       if (arg_type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -528,8 +537,8 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
         }
       }
 
-      if (!CheckArgs(env, vars, proc->argc, proc->args, call_actn->x.argc,
-            (Expr**)call_actn->x.argv, &(call_actn->proc), loc)) {
+      if (!CheckArgs(env, vars, proc->argc, sproc->svarv, call_actn->x.argc,
+            (Expr**)call_actn->x.argv, &(call_actn->proc), loc, svars)) {
         return UNRESOLVED_ID;
       }
       return LookupType(env, sproc->return_type.name);
@@ -548,7 +557,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
       Ports putport;
       AddPort(&getport, link_actn->getname.name, link_actn->x.type, FBLC_GET_POLARITY, ports);
       AddPort(&putport, link_actn->putname.name, link_actn->x.type, FBLC_PUT_POLARITY, &getport);
-      return CheckActn(env, vars, &putport, (Actn*)link_actn->x.body, loc);
+      return CheckActn(env, vars, &putport, (Actn*)link_actn->x.body, loc, svars);
     }
 
     case FBLC_EXEC_ACTN: {
@@ -556,9 +565,9 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
       Vars vars_data[exec_actn->x.execc];
       Vars* nvars = vars;
       for (int i = 0; i < exec_actn->x.execc; i++) {
-        SVar* var = exec_actn->vars + i;
+        SVar* var = (*svars)++;
         Actn* exec = (Actn*)exec_actn->x.execv[i];
-        FblcTypeId type_id = CheckActn(env, vars, ports, exec, loc);
+        FblcTypeId type_id = CheckActn(env, vars, ports, exec, loc, svars);
         if (type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
@@ -576,13 +585,13 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
 
         nvars = AddVar(vars_data+i, type_id, nvars);
       }
-      return CheckActn(env, nvars, ports, (Actn*)exec_actn->x.body, loc);
+      return CheckActn(env, nvars, ports, (Actn*)exec_actn->x.body, loc, svars);
     }
 
     case FBLC_COND_ACTN: {
       CondActn* cond_actn = (CondActn*)actn;
       Loc* condloc = *loc;
-      FblcTypeId type_id = CheckExpr(env, vars, (Expr*)cond_actn->x.select, loc);
+      FblcTypeId type_id = CheckExpr(env, vars, (Expr*)cond_actn->x.select, loc, svars);
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -606,7 +615,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
       FblcTypeId result_type_id = UNRESOLVED_ID;
       for (int i = 0; i < cond_actn->x.argc; i++) {
         Loc* argloc = *loc;
-        FblcTypeId arg_type_id = CheckActn(env, vars, ports, (Actn*)cond_actn->x.argv[i], loc);
+        FblcTypeId arg_type_id = CheckActn(env, vars, ports, (Actn*)cond_actn->x.argv[i], loc, svars);
         if (arg_type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
@@ -766,7 +775,7 @@ bool CheckProgram(Env* env)
         FuncDecl* func = (FuncDecl*)decl;
         SFuncDecl* sfunc = (SFuncDecl*)env->sdeclv[i];
         // Check the arguments.
-        if (!CheckFields(env, func->argc, func->argv, func->args, "arg")) {
+        if (!CheckFields(env, func->argc, func->argv, sfunc->svarv, "arg")) {
           return false;
         }
 
@@ -780,16 +789,17 @@ bool CheckProgram(Env* env)
         // Check the body.
         Vars nvars[func->argc];
         Vars* vars = NULL;
+        SVar* svars = sfunc->svarv;
         for (int i = 0; i < func->argc; i++) {
           // TODO: Add test that we verify the argument types are valid?
-          FblcTypeId arg_type_id = LookupType(env, func->args[i].type.name);
+          FblcTypeId arg_type_id = LookupType(env, (svars++)->type.name);
           if (arg_type_id == UNRESOLVED_ID) {
             return false;
           }
           vars = AddVar(nvars+i, arg_type_id, vars);
         }
         Loc* loc = sfunc->locv;
-        FblcTypeId body_type_id = CheckExpr(env, vars, func->body, &loc);
+        FblcTypeId body_type_id = CheckExpr(env, vars, func->body, &loc, &svars);
         if (body_type_id == UNRESOLVED_ID) {
           return false;
         }
@@ -811,7 +821,7 @@ bool CheckProgram(Env* env)
         }
 
         // Check the arguments.
-        if (!CheckFields(env, proc->argc, proc->argv, proc->args, "arg")) {
+        if (!CheckFields(env, proc->argc, proc->argv, sproc->svarv, "arg")) {
           return false;
         }
 
@@ -829,9 +839,10 @@ bool CheckProgram(Env* env)
         Ports* nport = ports_data;
 
         Vars* vars = NULL;
+        SVar* svars = sproc->svarv;
         for (int i = 0; i < proc->argc; i++) {
           // TODO: Add test that we check we managed to resolve the arg types?
-          FblcTypeId arg_type_id = LookupType(env, proc->args[i].type.name);
+          FblcTypeId arg_type_id = LookupType(env, (svars++)->type.name);
           if (arg_type_id == UNRESOLVED_ID) {
             return false;
           }
@@ -857,7 +868,7 @@ bool CheckProgram(Env* env)
         }
 
         Loc* loc = sproc->locv;
-        FblcTypeId body_type_id = CheckActn(env, vars, ports, proc->body, &loc);
+        FblcTypeId body_type_id = CheckActn(env, vars, ports, proc->body, &loc, &svars);
         if (body_type_id == UNRESOLVED_ID) {
           return false;
         }

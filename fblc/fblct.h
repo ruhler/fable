@@ -64,7 +64,6 @@ typedef struct {
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
 typedef struct {
   FblcLetExpr x;
-  LocName type;
 } LetExpr;
 
 // COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
@@ -87,7 +86,6 @@ typedef struct {
   FblcTypeId* argv;
   FblcTypeId return_type_id;
   Expr* body;
-  SVar* args;
 } FuncDecl;
 
 // Actn is the base structure for all  actions. Each specialization of
@@ -134,7 +132,6 @@ typedef struct {
 //    <tname> <vname> = <actn>,  ...  ; <body>
 typedef struct {
   FblcExecActn x;
-  SVar* vars;           // Array of x.execc fields.
 } ExecActn;
 
 // COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
@@ -151,7 +148,6 @@ typedef struct {
   FblcTypeId return_type_id;
   Actn* body;
   SVar* ports;
-  SVar* args;
 } ProcDecl;
 
 typedef struct {
@@ -168,6 +164,8 @@ typedef struct {
   LocName return_type;
   size_t locc;
   Loc* locv;  // locations of all expressions in body.
+  size_t svarc;
+  SVar* svarv; // types and names of all local variables in order they appear.
 } SFuncDecl;
 
 typedef struct {
@@ -175,6 +173,8 @@ typedef struct {
   LocName return_type;
   size_t locc;
   Loc* locv;  // locations of all actions and expressions in body.
+  size_t svarc;
+  SVar* svarv; // types and names of all local variables in order they appear.
 } SProcDecl;
 
 // An environment contains all the type, function, and process declarations
