@@ -35,7 +35,7 @@ static bool CheckArgs(
     Env* env, Vars* vars, int fieldc, SVar* fieldv,
     int argc, Expr** argv, LocName* func, Loc** loc, SVar** svars);
 static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc, SVar** svars);
-static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars);
+static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars, SVar** sportv);
 static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, SVar* fields, const char* kind);
 static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports);
 
@@ -446,7 +446,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc, SVar** 
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
-static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars)
+static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars, SVar** sportv)
 {
   Loc* myloc = (*loc)++;
   switch (actn->tag) {
@@ -530,9 +530,9 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
         }
 
         SDecl* port_type = env->sdeclv[port_type_id];
-        if (!NamesEqual(proc->ports[i].type.name, port_type->name.name)) {
+        if (!NamesEqual(sproc->sportv[i].type.name, port_type->name.name)) {
           ReportError("Expected port type %s, but found %s.\n",
-              call_actn->ports[i].loc, proc->ports[i].type.name, port_type->name.name);
+              call_actn->ports[i].loc, sproc->sportv[i].type.name, port_type->name.name);
           return UNRESOLVED_ID;
         }
       }
@@ -547,17 +547,19 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
     case FBLC_LINK_ACTN: {
       // TODO: Test that we verify the link type resolves?
       LinkActn* link_actn = (LinkActn*)actn;
-      link_actn->x.type = LookupType(env, link_actn->type.name);
+      SVar* sgetport = (*sportv)++;
+      SVar* sputport = (*sportv)++;
+      link_actn->x.type = LookupType(env, sgetport->type.name);
       if (link_actn->x.type == UNRESOLVED_ID) {
-        ReportError("Type '%s' not declared.\n", myloc, link_actn->type.name);
+        ReportError("Type '%s' not declared.\n", myloc, sgetport->type.name);
         return UNRESOLVED_ID;
       }
 
       Ports getport;
       Ports putport;
-      AddPort(&getport, link_actn->getname.name, link_actn->x.type, FBLC_GET_POLARITY, ports);
-      AddPort(&putport, link_actn->putname.name, link_actn->x.type, FBLC_PUT_POLARITY, &getport);
-      return CheckActn(env, vars, &putport, (Actn*)link_actn->x.body, loc, svars);
+      AddPort(&getport, sgetport->name.name, link_actn->x.type, FBLC_GET_POLARITY, ports);
+      AddPort(&putport, sputport->name.name, link_actn->x.type, FBLC_PUT_POLARITY, &getport);
+      return CheckActn(env, vars, &putport, (Actn*)link_actn->x.body, loc, svars, sportv);
     }
 
     case FBLC_EXEC_ACTN: {
@@ -567,7 +569,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
       for (int i = 0; i < exec_actn->x.execc; i++) {
         SVar* var = (*svars)++;
         Actn* exec = (Actn*)exec_actn->x.execv[i];
-        FblcTypeId type_id = CheckActn(env, vars, ports, exec, loc, svars);
+        FblcTypeId type_id = CheckActn(env, vars, ports, exec, loc, svars, sportv);
         if (type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
@@ -585,7 +587,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
 
         nvars = AddVar(vars_data+i, type_id, nvars);
       }
-      return CheckActn(env, nvars, ports, (Actn*)exec_actn->x.body, loc, svars);
+      return CheckActn(env, nvars, ports, (Actn*)exec_actn->x.body, loc, svars, sportv);
     }
 
     case FBLC_COND_ACTN: {
@@ -615,7 +617,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
       FblcTypeId result_type_id = UNRESOLVED_ID;
       for (int i = 0; i < cond_actn->x.argc; i++) {
         Loc* argloc = *loc;
-        FblcTypeId arg_type_id = CheckActn(env, vars, ports, (Actn*)cond_actn->x.argv[i], loc, svars);
+        FblcTypeId arg_type_id = CheckActn(env, vars, ports, (Actn*)cond_actn->x.argv[i], loc, svars, sportv);
         if (arg_type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
@@ -816,7 +818,7 @@ bool CheckProgram(Env* env)
         ProcDecl* proc = (ProcDecl*)decl;
         SProcDecl* sproc = (SProcDecl*)env->sdeclv[i];
         // Check the ports.
-        if (!CheckPorts(env, proc->portc, proc->portv, proc->ports)) {
+        if (!CheckPorts(env, proc->portc, proc->portv, sproc->sportv)) {
           return false;
         }
 
@@ -850,25 +852,27 @@ bool CheckProgram(Env* env)
         }
 
         Ports* ports = NULL;
+        SVar* sportv = sproc->sportv;
         for (int i = 0; i < proc->portc; i++) {
           // TODO: Add tests that we properly resolved the port types?
-          FblcTypeId port_type_id = LookupType(env, proc->ports[i].type.name);
+          SVar* sport = sportv++;
+          FblcTypeId port_type_id = LookupType(env, sport->type.name);
           if (port_type_id == UNRESOLVED_ID) {
             return false;
           }
           switch (proc->portv[i].polarity) {
             case FBLC_GET_POLARITY:
-              ports = AddPort(nport++, proc->ports[i].name.name, port_type_id, FBLC_GET_POLARITY, ports);
+              ports = AddPort(nport++, sport->name.name, port_type_id, FBLC_GET_POLARITY, ports);
               break;
 
             case FBLC_PUT_POLARITY:
-              ports = AddPort(nport++, proc->ports[i].name.name, port_type_id, FBLC_PUT_POLARITY, ports);
+              ports = AddPort(nport++, sport->name.name, port_type_id, FBLC_PUT_POLARITY, ports);
               break;
           }
         }
 
         Loc* loc = sproc->locv;
-        FblcTypeId body_type_id = CheckActn(env, vars, ports, proc->body, &loc, &svars);
+        FblcTypeId body_type_id = CheckActn(env, vars, ports, proc->body, &loc, &svars, &sportv);
         if (body_type_id == UNRESOLVED_ID) {
           return false;
         }

@@ -72,11 +72,6 @@ typedef struct {
 } CondExpr;
 
 typedef struct {
-  LocName type;
-  LocName name;
-} SVar;
-
-typedef struct {
   FblcDeclTag tag;
 } Decl;
 
@@ -123,9 +118,6 @@ typedef struct {
 //    <tname> '<~>' <pname> ',' <pname> ';' <actn>
 typedef struct {
   FblcLinkActn x;
-  LocName type;
-  LocName getname;
-  LocName putname;
 } LinkActn;
 
 // EXEC_ACTN: Processes of the form:
@@ -147,8 +139,12 @@ typedef struct {
   FblcTypeId* argv;
   FblcTypeId return_type_id;
   Actn* body;
-  SVar* ports;
 } ProcDecl;
+
+typedef struct {
+  LocName type;
+  LocName name;
+} SVar;
 
 typedef struct {
   LocName name;
@@ -175,6 +171,8 @@ typedef struct {
   Loc* locv;  // locations of all actions and expressions in body.
   size_t svarc;
   SVar* svarv; // types and names of all local variables in order they appear.
+  size_t sportc;  // types and names of all ports in order they appear.
+  SVar* sportv;
 } SProcDecl;
 
 // An environment contains all the type, function, and process declarations
