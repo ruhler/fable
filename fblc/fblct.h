@@ -25,47 +25,9 @@ typedef struct LocName {
   Name name;
 } LocName;
 
-// Expr is the base structure for all  expressions. Each
-// specialization of Expr has the same initial layout with tag and
-// location.
-
 // Initial ids are set to UNRESOLVED_ID. Relevant ids are resolved during the
 // type checking phase.
 #define UNRESOLVED_ID (-1)
-
-typedef struct {
-  FblcExprTag tag;
-} Expr;
-
-// VAR_EXPR: Variable expressions of the form: <name>
-typedef struct {
-  FblcVarExpr x;
-} VarExpr;
-
-// APP_EXPR: Application expressions of the form: <func>(<argv>)
-typedef struct {
-  FblcAppExpr x;
-} AppExpr;
-
-// ACCESS_EXPR: Member access expressions of the form: <object>.<field>
-typedef struct {
-  FblcAccessExpr x;
-} AccessExpr;
-
-// UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
-typedef struct {
-  FblcUnionExpr x;
-} UnionExpr;
-
-// LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
-typedef struct {
-  FblcLetExpr x;
-} LetExpr;
-
-// COND_EXPR: Conditional expressions of the form: <select>?(<argv>)
-typedef struct {
-  FblcCondExpr x;
-} CondExpr;
 
 typedef struct {
   FblcDeclTag tag;
@@ -76,7 +38,7 @@ typedef struct {
   size_t argc;
   FblcTypeId* argv;
   FblcTypeId return_type_id;
-  Expr* body;
+  FblcExpr* body;
 } FuncDecl;
 
 // Actn is the base structure for all  actions. Each specialization of

@@ -55,8 +55,8 @@ static void UnexpectedToken(TokenStream* toks, const char* expected);
 
 static bool ParseFields(FblcArena* arena, TokenStream* toks, SVar** vars, size_t* count);
 static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, size_t* portc, SVar** sports, size_t* sportc);
-static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec);
-static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec);
+static int ParseArgs(FblcArena* arena, TokenStream* toks, FblcExpr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec);
+static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec);
 static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SVar** sportv, size_t* sportc, LocName** namev, size_t* namec);
 
 // CurrChar --
@@ -560,13 +560,13 @@ static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, si
 //   The token stream is advanced past the final ')' token in the
 //   argument list. In case of an error, an error message is printed to
 //   standard error.
-static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec)
+static int ParseArgs(FblcArena* arena, TokenStream* toks, FblcExpr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec)
 {
-  Expr** argv;
+  FblcExpr** argv;
   size_t argc;
   FblcVectorInit(arena, argv, argc);
   if (!IsToken(toks, ')')) {
-    Expr* arg = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+    FblcExpr* arg = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
     if (arg == NULL) {
       return -1;
     }
@@ -606,7 +606,7 @@ static int ParseArgs(FblcArena* arena, TokenStream* toks, Expr*** plist, Loc** l
 // Side effects:
 //   Advances the token stream past the parsed expression. In case of error,
 //   an error message is printed to standard error.
-static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec)
+static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec)
 {
   if (!IsToken(toks, '{')) {
     FblcVectorExtend(arena, *locv, *locc);
@@ -616,7 +616,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     loc->col = toks->loc.col;
   }
 
-  Expr* expr;
+  FblcExpr* expr;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
     expr = ParseExpr(arena, toks, true, locv, locc, svarv, svarc, namev, namec);
@@ -636,45 +636,45 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       // This is an application expression of the form: start(<args>)
       GetToken(toks, '(');
 
-      Expr** args = NULL;
+      FblcExpr** args = NULL;
       int argc = ParseArgs(arena, toks, &args, locv, locc, svarv, svarc, namev, namec);
       if (argc < 0) {
         return NULL;
       }
-      AppExpr* app_expr = arena->alloc(arena, sizeof(AppExpr));
-      app_expr->x.tag = FBLC_APP_EXPR;
-      app_expr->x.func = start_id;
-      app_expr->x.argc = argc;
-      app_expr->x.argv = (FblcExpr**)args;
-      expr = (Expr*)app_expr;
+      FblcAppExpr* app_expr = arena->alloc(arena, sizeof(FblcAppExpr));
+      app_expr->tag = FBLC_APP_EXPR;
+      app_expr->func = start_id;
+      app_expr->argc = argc;
+      app_expr->argv = args;
+      expr = (FblcExpr*)app_expr;
     } else if (IsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)
       GetToken(toks, ':');
-      UnionExpr* union_expr = arena->alloc(arena, sizeof(UnionExpr));
-      union_expr->x.tag = FBLC_UNION_EXPR;
-      union_expr->x.type = start_id;
+      FblcUnionExpr* union_expr = arena->alloc(arena, sizeof(FblcUnionExpr));
+      union_expr->tag = FBLC_UNION_EXPR;
+      union_expr->type = start_id;
 
       FblcVectorExtend(arena, *namev, *namec);
-      union_expr->x.field = (*namec)++;
-      LocName* field_name = *namev + union_expr->x.field;
+      union_expr->field = (*namec)++;
+      LocName* field_name = *namev + union_expr->field;
       if (!GetNameToken(arena, toks, "field name", field_name)) {
         return NULL;
       }
       if (!GetToken(toks, '(')) {
         return NULL;
       }
-      union_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
-      if (union_expr->x.body == NULL) {
+      union_expr->body = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+      if (union_expr->body == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ')')) {
         return NULL;
       }
-      expr = (Expr*)union_expr;
+      expr = (FblcExpr*)union_expr;
     } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
-      LetExpr* let_expr = arena->alloc(arena, sizeof(LetExpr));
-      let_expr->x.tag = FBLC_LET_EXPR;
+      FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
+      let_expr->tag = FBLC_LET_EXPR;
       FblcVectorExtend(arena, *svarv, *svarc);
       SVar* svar = *svarv + (*svarc)++;
       svar->type.name = start->name;
@@ -684,26 +684,26 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       if (!GetToken(toks, '=')) {
         return NULL;
       }
-      let_expr->x.def = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
-      if (let_expr->x.def == NULL) {
+      let_expr->def = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+      if (let_expr->def == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      let_expr->x.body = (FblcExpr*)ParseExpr(arena, toks, true, locv, locc, svarv, svarc, namev, namec);
-      if (let_expr->x.body == NULL) {
+      let_expr->body = ParseExpr(arena, toks, true, locv, locc, svarv, svarc, namev, namec);
+      if (let_expr->body == NULL) {
         return NULL;
       }
 
       // Return the expression immediately, because it is already complete.
-      return (Expr*)let_expr;
+      return (FblcExpr*)let_expr;
     } else {
       // This is the variable expression: start
-      VarExpr* var_expr = arena->alloc(arena, sizeof(VarExpr));
-      var_expr->x.tag = FBLC_VAR_EXPR;
-      var_expr->x.var = start_id;
-      expr = (Expr*)var_expr;
+      FblcVarExpr* var_expr = arena->alloc(arena, sizeof(FblcVarExpr));
+      var_expr->tag = FBLC_VAR_EXPR;
+      var_expr->var = start_id;
+      expr = (FblcExpr*)var_expr;
     }
   } else if (IsToken(toks, '?')) {
     // This is a conditional expression of the form: ?(<expr> ; <args>)
@@ -715,7 +715,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* condition = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+    FblcExpr* condition = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
     if (condition == NULL) {
       return NULL;
     }
@@ -724,7 +724,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       return NULL;
     }
     
-    Expr** args = NULL;
+    FblcExpr** args = NULL;
     int argc = ParseArgs(arena, toks, &args, locv, locc, svarv, svarc, namev, namec);
     if (argc == 0) {
       ReportError("Conditional expression is missing arguments.\n", &loc);
@@ -734,22 +734,22 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     if (argc < 0) {
       return NULL;
     }
-    CondExpr* cond_expr = arena->alloc(arena, sizeof(CondExpr));
-    cond_expr->x.tag = FBLC_COND_EXPR;
-    cond_expr->x.select = (FblcExpr*)condition;
-    cond_expr->x.argc = argc;
-    cond_expr->x.argv = (FblcExpr**)args;
-    expr = (Expr*)cond_expr;
+    FblcCondExpr* cond_expr = arena->alloc(arena, sizeof(FblcCondExpr));
+    cond_expr->tag = FBLC_COND_EXPR;
+    cond_expr->select = condition;
+    cond_expr->argc = argc;
+    cond_expr->argv = args;
+    expr = (FblcExpr*)cond_expr;
   } else if (IsToken(toks, '.')) {
     // This is an access expression of the form: .<field>(<expr>)
     GetToken(toks, '.');
 
-    AccessExpr* access_expr = arena->alloc(arena, sizeof(AccessExpr));
-    access_expr->x.tag = FBLC_ACCESS_EXPR;
+    FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
+    access_expr->tag = FBLC_ACCESS_EXPR;
 
     FblcVectorExtend(arena, *namev, *namec);
-    access_expr->x.field = (*namec)++;
-    LocName* field_name = *namev + access_expr->x.field;
+    access_expr->field = (*namec)++;
+    LocName* field_name = *namev + access_expr->field;
     if (!GetNameToken(arena, toks, "field name", field_name)) {
       return NULL;
     }
@@ -758,8 +758,8 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       return NULL;
     }
 
-    access_expr->x.object = (FblcExpr*)ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
-    if (access_expr->x.object == NULL) {
+    access_expr->object = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+    if (access_expr->object == NULL) {
       return NULL;
     }
 
@@ -767,7 +767,7 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       return NULL;
     }
 
-    expr = (Expr*)access_expr;
+    expr = (FblcExpr*)access_expr;
   } else {
     UnexpectedToken(toks, "an expression");
     return NULL;
@@ -824,7 +824,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* expr = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+    FblcExpr* expr = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
     if (expr == NULL) {
       return NULL;
     }
@@ -834,7 +834,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
 
     EvalActn* eval_actn = arena->alloc(arena, sizeof(EvalActn));
     eval_actn->x.tag = FBLC_EVAL_ACTN;
-    eval_actn->x.expr = (FblcExpr*)expr;
+    eval_actn->x.expr = expr;
     actn = (Actn*)eval_actn;
   } else if (IsToken(toks, '~')) {
     // ~name() or ~name(<expr>)
@@ -858,7 +858,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       get_actn->x.port = port_id;
       actn = (Actn*)get_actn;
     } else {
-      Expr* expr = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+      FblcExpr* expr = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
       if (expr == NULL) {
         return NULL;
       }
@@ -868,7 +868,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
 
       PutActn* put_actn = arena->alloc(arena, sizeof(PutActn));
       put_actn->x.tag = FBLC_PUT_ACTN;
-      put_actn->x.arg = (FblcExpr*)expr;
+      put_actn->x.arg = expr;
       put_actn->x.port = port_id;
       actn = (Actn*)put_actn;
     }
@@ -907,13 +907,13 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
         return NULL;
       }
 
-      Expr** args = NULL;
+      FblcExpr** args = NULL;
       int exprc = ParseArgs(arena, toks, &args, locv, locc, svarv, svarc, namev, namec);
       if (exprc < 0) {
         return NULL;
       }
       call_actn->x.argc = exprc;
-      call_actn->x.argv = (FblcExpr**)args;
+      call_actn->x.argv = args;
       actn = (Actn*)call_actn;
     } else if (in_stmt && IsToken(toks, '<')) {
       GetToken(toks, '<');
@@ -1010,7 +1010,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    Expr* condition = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+    FblcExpr* condition = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
     if (condition == NULL) {
       return NULL;
     }
@@ -1021,7 +1021,7 @@ static Actn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
 
     CondActn* cond_actn = arena->alloc(arena, sizeof(CondActn));
     cond_actn->x.tag = FBLC_COND_ACTN;
-    cond_actn->x.select = (FblcExpr*)condition;
+    cond_actn->x.select = condition;
 
     FblcVectorInit(arena, cond_actn->x.argv, cond_actn->x.argc);
     bool first = true;
