@@ -45,7 +45,6 @@ typedef struct {
 // APP_EXPR: Application expressions of the form: <func>(<argv>)
 typedef struct {
   FblcAppExpr x;
-  LocName func;
 } AppExpr;
 
 // ACCESS_EXPR: Member access expressions of the form: <object>.<field>

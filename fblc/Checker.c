@@ -204,20 +204,8 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc, SVar** 
 
     case FBLC_APP_EXPR: {
       AppExpr* app_expr = (AppExpr*)expr;
-      Decl* decl = NULL;
-      SDecl* sdecl = NULL;
-      for (size_t i = 0; i < env->declc; ++i) {
-        if (NamesEqual(app_expr->func.name, env->sdeclv[i]->name.name)) {
-          app_expr->x.func = i;
-          decl = env->declv[i];
-          sdecl = env->sdeclv[i];
-        }
-      }
-      if (decl == NULL) {
-        ReportError("Declaration for '%s' not found.\n", myloc, app_expr->func.name);
-        return UNRESOLVED_ID;
-      }
-
+      Decl* decl = env->declv[app_expr->x.func];
+      SDecl* sdecl = env->sdeclv[app_expr->x.func];
       switch (decl->tag) {
         case FBLC_STRUCT_DECL: {
           FblcTypeDecl* type = (FblcTypeDecl*)decl;
@@ -230,7 +218,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc, SVar** 
         }
 
         case FBLC_UNION_DECL: {
-          ReportError("Cannot do application on union type %s.\n", myloc, app_expr->func.name);
+          ReportError("Cannot do application on union type %s.\n", myloc, sdecl->name.name);
           return UNRESOLVED_ID;
         }
 
@@ -245,7 +233,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, Expr* expr, Loc** loc, SVar** 
         }
 
         case FBLC_PROC_DECL: {
-          ReportError("Cannot do application on a process %s.\n", myloc, app_expr->func.name);
+          ReportError("Cannot do application on a process %s.\n", myloc, sdecl->name.name);
           return UNRESOLVED_ID;
         }
 

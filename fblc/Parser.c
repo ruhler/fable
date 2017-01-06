@@ -646,8 +646,6 @@ static Expr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** 
       app_expr->x.func = start_id;
       app_expr->x.argc = argc;
       app_expr->x.argv = (FblcExpr**)args;
-      app_expr->func.name = start->name;
-      app_expr->func.loc = start->loc;
       expr = (Expr*)app_expr;
     } else if (IsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)
