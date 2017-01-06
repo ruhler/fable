@@ -10,4 +10,4 @@ set prg {
   };
 }
 # TODO: The error could be at the 'Unit' or the '='?
-fblc-check-error $prg 8:5
+fblc-check-error $prg 8:10

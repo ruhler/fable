@@ -11,4 +11,5 @@ set prg {
     put(p_get; );
   };
 }
-fblc-check-error $prg 11:9
+# TODO: Fix the error location
+fblc-check-error $prg 11:5

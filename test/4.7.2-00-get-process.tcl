@@ -1,4 +1,3 @@
-
 set prg {
   struct Unit();
 
@@ -6,6 +5,4 @@ set prg {
     ~in();
   };
 }
-
 expect_proc_result Unit() $prg main {{i in}} {} { put in Unit() }
-

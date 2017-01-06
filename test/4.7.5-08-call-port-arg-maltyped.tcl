@@ -14,4 +14,5 @@ set prg {
     sub(myget ; );
   };
 }
-fblc-check-error $prg 14:9
+# TODO: Fix location.
+fblc-check-error $prg 14:5

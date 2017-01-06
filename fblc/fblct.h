@@ -51,14 +51,11 @@ typedef struct {
 // ACCESS_EXPR: Member access expressions of the form: <object>.<field>
 typedef struct {
   FblcAccessExpr x;
-  LocName field;
 } AccessExpr;
 
 // UNION_EXPR: Union literals of the form: <type>:<field>(<value>)
 typedef struct {
   FblcUnionExpr x;
-  LocName type;
-  LocName field;
 } UnionExpr;
 
 // LET_EXPR: let expressions of the form: <type> <name> = <def> ; <body>
@@ -98,20 +95,16 @@ typedef struct {
 // GET_ACTN: Processes of the form: ~<pname>()
 typedef struct {
   FblcGetActn x;
-  LocName port;
 } GetActn;
 
 // PUT_ACTN: Processes of the form: ~<pname>(<expr>)
 typedef struct {
   FblcPutActn x;
-  LocName port;
 } PutActn;
 
 // CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
 typedef struct {
   FblcCallActn x;
-  LocName proc;
-  LocName* ports;   // Array of x.portc ports
 } CallActn;
 
 // LINK_ACTN: Processes of the form:
@@ -157,7 +150,6 @@ typedef struct {
 
 typedef struct {
   LocName name;
-  LocName return_type;
   size_t locc;
   Loc* locv;  // locations of all expressions in body.
   size_t svarc;
@@ -166,7 +158,6 @@ typedef struct {
 
 typedef struct {
   LocName name;
-  LocName return_type;
   size_t locc;
   Loc* locv;  // locations of all actions and expressions in body.
   size_t svarc;
@@ -187,6 +178,23 @@ typedef struct {
 Env* ParseProgram(FblcArena* arena, const char* filename);
 FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, int fd);
 FblcValue* ParseValueFromString(FblcArena* arena, Env* env, FblcTypeId typeid, const char* string);
+
+// ResolveProgram --
+//   Perform id and name resolution for references to variables, ports,
+//   declarations, and fields in the given program.
+//
+// Inputs:
+//   env - A program whose ids need to be resolved. Each ID in the program
+//         should be an index into the names array that gives the name and
+//         location corresponding to the id.
+//   names - Array of names for use in resolution.
+//
+// Results:
+//   true if name resolution succeeded, false otherwise.
+//
+// Side effects:
+//   IDs in the program are resolved.
+bool ResolveProgram(Env* env, LocName* names);
 
 // Checker
 bool CheckProgram(Env* env);

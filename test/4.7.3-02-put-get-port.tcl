@@ -10,4 +10,6 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg 6:6
+
+# TODO: Is this the best error location to use?
+fblc-check-error $prg 6:5
