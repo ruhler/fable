@@ -55,7 +55,7 @@ static Vars* AddVar(Vars* vars, FblcTypeId type, Name name, Vars* next)
 static FblcTypeId LookupType(Env* env, Name name)
 {
   for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
+    FblcDecl* decl = env->declv[i];
     SDecl* sdecl = env->sdeclv[i];
     if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
         && NamesEqual(sdecl->name.name, name)) {
@@ -115,8 +115,8 @@ static FblcTypeId ResolveExpr(Env* env, LocName* names, Vars* vars, FblcExpr* ex
         }
 
         case FBLC_FUNC_DECL: {
-          FuncDecl* func = (FuncDecl*)env->declv[app_expr->func];
-          return func->return_type_id;
+          FblcFuncDecl* func = (FblcFuncDecl*)env->declv[app_expr->func];
+          return func->return_type;
         }
 
         case FBLC_PROC_DECL: {
@@ -271,7 +271,7 @@ static FblcTypeId ResolveActn(Env* env, LocName* names, Vars* vars, Vars* ports,
 
       call_actn->proc = UNRESOLVED_ID;
       for (size_t i = 0; i < env->declc; ++i) {
-        Decl* decl = env->declv[i];
+        FblcDecl* decl = env->declv[i];
         SDecl* sdecl = env->sdeclv[i];
         if (decl->tag == FBLC_PROC_DECL && NamesEqual(sdecl->name.name, name->name)) {
           call_actn->proc = i;
@@ -283,7 +283,7 @@ static FblcTypeId ResolveActn(Env* env, LocName* names, Vars* vars, Vars* ports,
         return UNRESOLVED_ID;
       }
 
-      ProcDecl* proc = (ProcDecl*)env->declv[call_actn->proc];
+      FblcProcDecl* proc = (FblcProcDecl*)env->declv[call_actn->proc];
       if (proc->portc != call_actn->portc) {
         ReportError("Wrong number of port arguments to '%s'. Expected %i but found %i.\n", name->loc, name->name, proc->portc, call_actn->portc);
         return UNRESOLVED_ID;
@@ -312,7 +312,7 @@ static FblcTypeId ResolveActn(Env* env, LocName* names, Vars* vars, Vars* ports,
         }
       }
 
-      return proc->return_type_id;
+      return proc->return_type;
     }
 
     case FBLC_LINK_ACTN: {
@@ -375,7 +375,7 @@ bool ResolveProgram(Env* env, LocName* names)
   // of functions or processes. We must resolve the function and process
   // return types before we can do name resolution in bodies.
   for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
+    FblcDecl* decl = env->declv[i];
     switch (decl->tag) {
       case FBLC_STRUCT_DECL:
       case FBLC_UNION_DECL: {
@@ -392,7 +392,7 @@ bool ResolveProgram(Env* env, LocName* names)
       }
 
       case FBLC_FUNC_DECL: {
-        FuncDecl* func = (FuncDecl*)decl;
+        FblcFuncDecl* func = (FblcFuncDecl*)decl;
         SFuncDecl* sfunc = (SFuncDecl*)env->sdeclv[i];
 
         for (size_t i = 0; i < func->argc; ++i) {
@@ -403,9 +403,9 @@ bool ResolveProgram(Env* env, LocName* names)
           }
         }
 
-        LocName* name = names + func->return_type_id;
-        func->return_type_id = LookupType(env, name->name);
-        if (func->return_type_id == UNRESOLVED_ID) {
+        LocName* name = names + func->return_type;
+        func->return_type = LookupType(env, name->name);
+        if (func->return_type == UNRESOLVED_ID) {
           ReportError("Type '%s' not found.\n", name->loc, name->name);
           return false;
         }
@@ -413,7 +413,7 @@ bool ResolveProgram(Env* env, LocName* names)
       }
 
       case FBLC_PROC_DECL: {
-        ProcDecl* proc = (ProcDecl*)decl;
+        FblcProcDecl* proc = (FblcProcDecl*)decl;
         SProcDecl* sproc = (SProcDecl*)env->sdeclv[i];
 
         for (size_t i = 0; i < proc->portc; ++i) {
@@ -432,9 +432,9 @@ bool ResolveProgram(Env* env, LocName* names)
           }
         }
 
-        LocName* name = names + proc->return_type_id;
-        proc->return_type_id = LookupType(env, name->name);
-        if (proc->return_type_id == UNRESOLVED_ID) {
+        LocName* name = names + proc->return_type;
+        proc->return_type = LookupType(env, name->name);
+        if (proc->return_type == UNRESOLVED_ID) {
           ReportError("Type '%s' not found.\n", name->loc, name->name);
           return false;
         }
@@ -449,13 +449,13 @@ bool ResolveProgram(Env* env, LocName* names)
 
   // Now resolve function and process bodies
   for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
+    FblcDecl* decl = env->declv[i];
     switch (decl->tag) {
       case FBLC_STRUCT_DECL: break;
       case FBLC_UNION_DECL: break;
 
       case FBLC_FUNC_DECL: {
-        FuncDecl* func = (FuncDecl*)decl;
+        FblcFuncDecl* func = (FblcFuncDecl*)decl;
         SFuncDecl* sfunc = (SFuncDecl*)env->sdeclv[i];
 
         Vars nvars[func->argc];
@@ -472,7 +472,7 @@ bool ResolveProgram(Env* env, LocName* names)
       }
 
       case FBLC_PROC_DECL: {
-        ProcDecl* proc = (ProcDecl*)decl;
+        FblcProcDecl* proc = (FblcProcDecl*)decl;
         SProcDecl* sproc = (SProcDecl*)env->sdeclv[i];
 
         Vars nports[proc->portc];

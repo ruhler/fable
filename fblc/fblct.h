@@ -30,28 +30,6 @@ typedef struct LocName {
 #define UNRESOLVED_ID (-1)
 
 typedef struct {
-  FblcDeclTag tag;
-} Decl;
-
-typedef struct {
-  FblcDeclTag tag;
-  size_t argc;
-  FblcTypeId* argv;
-  FblcTypeId return_type_id;
-  FblcExpr* body;
-} FuncDecl;
-
-typedef struct {
-  FblcDeclTag tag;
-  size_t portc;
-  FblcPort* portv;
-  size_t argc;
-  FblcTypeId* argv;
-  FblcTypeId return_type_id;
-  FblcActn* body;
-} ProcDecl;
-
-typedef struct {
   LocName type;
   LocName name;
 } SVar;
@@ -87,7 +65,7 @@ typedef struct {
 // for a program.
 typedef struct {
   size_t declc;
-  Decl** declv;
+  FblcDecl** declv;
   SDecl** sdeclv;
 } Env;
 

@@ -1128,7 +1128,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      FblcVectorAppend(arena, env->declv, env->declc, (Decl*)type);
+      FblcVectorAppend(arena, env->declv, env->declc, (FblcDecl*)type);
     } else if (is_func) {
       // func name(<fields>; <type>) <expr>;
       SFuncDecl* sfunc = arena->alloc(arena, sizeof(SFuncDecl));
@@ -1142,7 +1142,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      FuncDecl* func = arena->alloc(arena, sizeof(FuncDecl));
+      FblcFuncDecl* func = arena->alloc(arena, sizeof(FblcFuncDecl));
       func->tag = FBLC_FUNC_DECL;
       FblcVectorInit(arena, sfunc->svarv, sfunc->svarc);
       if (!ParseFields(arena, &toks, &(sfunc->svarv), &(sfunc->svarc))) {
@@ -1160,8 +1160,8 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 
       
       FblcVectorExtend(arena, namev, namec);
-      func->return_type_id = namec++;
-      LocName* return_type = namev + func->return_type_id;
+      func->return_type = namec++;
+      LocName* return_type = namev + func->return_type;
       if (!GetNameToken(arena, &toks, "type", return_type)) {
         return NULL;
       }
@@ -1174,7 +1174,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (func->body == NULL) {
         return NULL;
       }
-      FblcVectorAppend(arena, env->declv, env->declc, (Decl*)func);
+      FblcVectorAppend(arena, env->declv, env->declc, (FblcDecl*)func);
     } else if (is_proc) {
       // proc name(<ports> ; <fields>; [<type>]) <proc>;
       SProcDecl* sproc = arena->alloc(arena, sizeof(SProcDecl));
@@ -1187,9 +1187,9 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, '(')) {
         return NULL;
       }
-      ProcDecl* proc = arena->alloc(arena, sizeof(ProcDecl));
+      FblcProcDecl* proc = arena->alloc(arena, sizeof(FblcProcDecl));
       proc->tag = FBLC_PROC_DECL;
-      proc->return_type_id = UNRESOLVED_ID;
+      proc->return_type = UNRESOLVED_ID;
       if (!ParsePorts(arena, &toks, &(proc->portv), &(proc->portc), &(sproc->sportv), &(sproc->sportc))) {
         return NULL;
       }
@@ -1213,8 +1213,8 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       }
 
       FblcVectorExtend(arena, namev, namec);
-      proc->return_type_id = namec++;
-      LocName* return_type = namev + proc->return_type_id;
+      proc->return_type = namec++;
+      LocName* return_type = namev + proc->return_type;
       if (!GetNameToken(arena, &toks, "type", return_type)) {
         return NULL;
       }
@@ -1227,7 +1227,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (proc->body == NULL) {
         return NULL;
       }
-      FblcVectorAppend(arena, env->declv, env->declc, (Decl*)proc);
+      FblcVectorAppend(arena, env->declv, env->declc, (FblcDecl*)proc);
     } else {
       ReportError("Expected %s, but got '%s'.\n", keyword.loc, keywords, keyword.name);
       return NULL;

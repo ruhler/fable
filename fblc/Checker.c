@@ -55,7 +55,7 @@ static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports);
 static FblcTypeId LookupType(Env* env, Name name)
 {
   for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
+    FblcDecl* decl = env->declv[i];
     SDecl* sdecl = env->sdeclv[i];
     if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
         && NamesEqual(sdecl->name.name, name)) {
@@ -204,7 +204,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
 
     case FBLC_APP_EXPR: {
       FblcAppExpr* app_expr = (FblcAppExpr*)expr;
-      Decl* decl = env->declv[app_expr->func];
+      FblcDecl* decl = env->declv[app_expr->func];
       SDecl* sdecl = env->sdeclv[app_expr->func];
       switch (decl->tag) {
         case FBLC_STRUCT_DECL: {
@@ -223,13 +223,13 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
         }
 
         case FBLC_FUNC_DECL: {
-          FuncDecl* func = (FuncDecl*)decl;
+          FblcFuncDecl* func = (FblcFuncDecl*)decl;
           SFuncDecl* sfunc = (SFuncDecl*)sdecl;
           if (!CheckArgs(env, vars, func->argc, sfunc->svarv,
                 app_expr->argc, app_expr->argv, myloc, loc, svars)) {
             return UNRESOLVED_ID;
           }
-          return func->return_type_id;
+          return func->return_type;
         }
 
         case FBLC_PROC_DECL: {
@@ -430,7 +430,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
       }
       SProcDecl* sproc = (SProcDecl*)env->sdeclv[call_actn->proc];
 
-      ProcDecl* proc = (ProcDecl*)env->declv[call_actn->proc];
+      FblcProcDecl* proc = (FblcProcDecl*)env->declv[call_actn->proc];
       if (call_actn->portc != proc->portc) {
         SProcDecl* sproc = (SProcDecl*)env->sdeclv[call_actn->proc];
         ReportError("Wrong number of port arguments to %s. Expected %d, "
@@ -467,7 +467,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
             call_actn->argv, myloc, loc, svars)) {
         return UNRESOLVED_ID;
       }
-      return proc->return_type_id;
+      return proc->return_type;
     }
 
     case FBLC_LINK_ACTN: {
@@ -675,7 +675,7 @@ static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports)
 bool CheckProgram(Env* env)
 {
   for (size_t i = 0; i < env->declc; ++i) {
-    Decl* decl = env->declv[i];
+    FblcDecl* decl = env->declv[i];
     switch (decl->tag) {
       case FBLC_STRUCT_DECL: {
         FblcTypeDecl* type = (FblcTypeDecl*)decl;
@@ -700,7 +700,7 @@ bool CheckProgram(Env* env)
       }
 
       case FBLC_FUNC_DECL: {
-        FuncDecl* func = (FuncDecl*)decl;
+        FblcFuncDecl* func = (FblcFuncDecl*)decl;
         SFuncDecl* sfunc = (SFuncDecl*)env->sdeclv[i];
         // Check the arguments.
         if (!CheckFields(env, func->argc, func->argv, sfunc->svarv, "arg")) {
@@ -724,9 +724,9 @@ bool CheckProgram(Env* env)
         if (body_type_id == UNRESOLVED_ID) {
           return false;
         }
-        if (func->return_type_id != body_type_id) {
+        if (func->return_type != body_type_id) {
           SDecl* body_type = env->sdeclv[body_type_id];
-          SDecl* return_type = env->sdeclv[func->return_type_id];
+          SDecl* return_type = env->sdeclv[func->return_type];
           ReportError("Type mismatch. Expected %s, but found %s.\n",
               sfunc->locv, return_type->name.name, body_type->name.name);
           return false;
@@ -735,7 +735,7 @@ bool CheckProgram(Env* env)
       }
 
       case FBLC_PROC_DECL: {
-        ProcDecl* proc = (ProcDecl*)decl;
+        FblcProcDecl* proc = (FblcProcDecl*)decl;
         SProcDecl* sproc = (SProcDecl*)env->sdeclv[i];
         // Check the ports.
         if (!CheckPorts(env, proc->portc, proc->portv, sproc->sportv)) {
@@ -789,9 +789,9 @@ bool CheckProgram(Env* env)
         if (body_type_id == UNRESOLVED_ID) {
           return false;
         }
-        if (proc->return_type_id != body_type_id) {
+        if (proc->return_type != body_type_id) {
           SDecl* body_type = env->sdeclv[body_type_id];
-          SDecl* return_type = env->sdeclv[proc->return_type_id];
+          SDecl* return_type = env->sdeclv[proc->return_type];
           ReportError("Type mismatch. Expected %s, but found %s.\n",
               sproc->locv, return_type->name.name, body_type->name.name);
           return false;
