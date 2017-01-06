@@ -41,50 +41,6 @@ typedef struct {
   FblcExpr* body;
 } FuncDecl;
 
-// Actn is the base structure for all  actions. Each specialization of
-// Actn will have the same initial layout with tag and location.
-
-typedef struct {
-  FblcActnTag tag;
-} Actn;
-
-// EVAL_ACTN: Processes of the form: $(<expr>)
-typedef struct {
-  FblcEvalActn x;
-} EvalActn;
-
-// GET_ACTN: Processes of the form: ~<pname>()
-typedef struct {
-  FblcGetActn x;
-} GetActn;
-
-// PUT_ACTN: Processes of the form: ~<pname>(<expr>)
-typedef struct {
-  FblcPutActn x;
-} PutActn;
-
-// CALL_ACTN: Processes of the form: <tname>(<port>, ... ; <expr>, ...)
-typedef struct {
-  FblcCallActn x;
-} CallActn;
-
-// LINK_ACTN: Processes of the form:
-//    <tname> '<~>' <pname> ',' <pname> ';' <actn>
-typedef struct {
-  FblcLinkActn x;
-} LinkActn;
-
-// EXEC_ACTN: Processes of the form:
-//    <tname> <vname> = <actn>,  ...  ; <body>
-typedef struct {
-  FblcExecActn x;
-} ExecActn;
-
-// COND_ACTN: Processes of the form: <expr>?(<proc>, ...)
-typedef struct {
-  FblcCondActn x;
-} CondActn;
-
 typedef struct {
   FblcDeclTag tag;
   size_t portc;
@@ -92,7 +48,7 @@ typedef struct {
   size_t argc;
   FblcTypeId* argv;
   FblcTypeId return_type_id;
-  Actn* body;
+  FblcActn* body;
 } ProcDecl;
 
 typedef struct {

@@ -34,7 +34,7 @@ static bool CheckArgs(
     Env* env, Vars* vars, int fieldc, SVar* fieldv,
     int argc, FblcExpr** argv, Loc* myloc, Loc** loc, SVar** svars);
 static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVar** svars);
-static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars, SVar** sportv);
+static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, Loc** loc, SVar** svars, SVar** sportv);
 static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, SVar* fields, const char* kind);
 static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports);
 
@@ -375,18 +375,18 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
-static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc** loc, SVar** svars, SVar** sportv)
+static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, Loc** loc, SVar** svars, SVar** sportv)
 {
   Loc* myloc = (*loc)++;
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
-      EvalActn* eval_actn = (EvalActn*)actn;
-      return CheckExpr(env, vars, eval_actn->x.expr, loc, svars);
+      FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
+      return CheckExpr(env, vars, eval_actn->expr, loc, svars);
     }
 
     case FBLC_GET_ACTN: {
-      GetActn* get_actn = (GetActn*)actn;
-      for (size_t i = 0; i < get_actn->x.port && ports != NULL; ++i) {
+      FblcGetActn* get_actn = (FblcGetActn*)actn;
+      for (size_t i = 0; i < get_actn->port && ports != NULL; ++i) {
         ports = ports->next;
       }
       if (ports == NULL || ports->polarity != FBLC_GET_POLARITY) {
@@ -397,8 +397,8 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
     }
 
     case FBLC_PUT_ACTN: {
-      PutActn* put_actn = (PutActn*)actn;
-      for (size_t i = 0; i < put_actn->x.port && ports != NULL; ++i) {
+      FblcPutActn* put_actn = (FblcPutActn*)actn;
+      for (size_t i = 0; i < put_actn->port && ports != NULL; ++i) {
         ports = ports->next;
       }
       if (ports == NULL || ports->polarity != FBLC_PUT_POLARITY) {
@@ -407,7 +407,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
       }
 
       Loc* argloc = *loc;
-      FblcTypeId arg_type_id = CheckExpr(env, vars, put_actn->x.arg, loc, svars);
+      FblcTypeId arg_type_id = CheckExpr(env, vars, put_actn->arg, loc, svars);
       if (arg_type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -422,26 +422,26 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
     }
 
     case FBLC_CALL_ACTN: {
-      CallActn* call_actn = (CallActn*)actn;
-      if (env->declv[call_actn->x.proc]->tag != FBLC_PROC_DECL) {
-        SDecl* sdecl = env->sdeclv[call_actn->x.proc];
+      FblcCallActn* call_actn = (FblcCallActn*)actn;
+      if (env->declv[call_actn->proc]->tag != FBLC_PROC_DECL) {
+        SDecl* sdecl = env->sdeclv[call_actn->proc];
         ReportError("'%s' is not a proc.\n", myloc, sdecl->name.name);
         return UNRESOLVED_ID;
       }
-      SProcDecl* sproc = (SProcDecl*)env->sdeclv[call_actn->x.proc];
+      SProcDecl* sproc = (SProcDecl*)env->sdeclv[call_actn->proc];
 
-      ProcDecl* proc = (ProcDecl*)env->declv[call_actn->x.proc];
-      if (call_actn->x.portc != proc->portc) {
-        SProcDecl* sproc = (SProcDecl*)env->sdeclv[call_actn->x.proc];
+      ProcDecl* proc = (ProcDecl*)env->declv[call_actn->proc];
+      if (call_actn->portc != proc->portc) {
+        SProcDecl* sproc = (SProcDecl*)env->sdeclv[call_actn->proc];
         ReportError("Wrong number of port arguments to %s. Expected %d, "
             "but got %d.\n", myloc, sproc->name.name,
-            proc->portc, call_actn->x.portc);
+            proc->portc, call_actn->portc);
         return UNRESOLVED_ID;
       }
 
       for (int i = 0; i < proc->portc; i++) {
         Ports* curr = ports;
-        for (size_t port_id = 0; port_id < call_actn->x.portv[i] && curr != NULL; ++port_id) {
+        for (size_t port_id = 0; port_id < call_actn->portv[i] && curr != NULL; ++port_id) {
           curr = curr->next;
         }
         if (curr == NULL) {
@@ -463,8 +463,8 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
         }
       }
 
-      if (!CheckArgs(env, vars, proc->argc, sproc->svarv, call_actn->x.argc,
-            call_actn->x.argv, myloc, loc, svars)) {
+      if (!CheckArgs(env, vars, proc->argc, sproc->svarv, call_actn->argc,
+            call_actn->argv, myloc, loc, svars)) {
         return UNRESOLVED_ID;
       }
       return proc->return_type_id;
@@ -472,29 +472,29 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
 
     case FBLC_LINK_ACTN: {
       // TODO: Test that we verify the link type resolves?
-      LinkActn* link_actn = (LinkActn*)actn;
+      FblcLinkActn* link_actn = (FblcLinkActn*)actn;
       SVar* sgetport = (*sportv)++;
       SVar* sputport = (*sportv)++;
-      link_actn->x.type = LookupType(env, sgetport->type.name);
-      if (link_actn->x.type == UNRESOLVED_ID) {
+      link_actn->type = LookupType(env, sgetport->type.name);
+      if (link_actn->type == UNRESOLVED_ID) {
         ReportError("Type '%s' not declared.\n", myloc, sgetport->type.name);
         return UNRESOLVED_ID;
       }
 
       Ports getport;
       Ports putport;
-      AddPort(&getport, sgetport->name.name, link_actn->x.type, FBLC_GET_POLARITY, ports);
-      AddPort(&putport, sputport->name.name, link_actn->x.type, FBLC_PUT_POLARITY, &getport);
-      return CheckActn(env, vars, &putport, (Actn*)link_actn->x.body, loc, svars, sportv);
+      AddPort(&getport, sgetport->name.name, link_actn->type, FBLC_GET_POLARITY, ports);
+      AddPort(&putport, sputport->name.name, link_actn->type, FBLC_PUT_POLARITY, &getport);
+      return CheckActn(env, vars, &putport, link_actn->body, loc, svars, sportv);
     }
 
     case FBLC_EXEC_ACTN: {
-      ExecActn* exec_actn = (ExecActn*)actn;
-      Vars vars_data[exec_actn->x.execc];
+      FblcExecActn* exec_actn = (FblcExecActn*)actn;
+      Vars vars_data[exec_actn->execc];
       Vars* nvars = vars;
-      for (int i = 0; i < exec_actn->x.execc; i++) {
+      for (int i = 0; i < exec_actn->execc; i++) {
         SVar* var = (*svars)++;
-        Actn* exec = (Actn*)exec_actn->x.execv[i];
+        FblcActn* exec = exec_actn->execv[i];
         FblcTypeId type_id = CheckActn(env, vars, ports, exec, loc, svars, sportv);
         if (type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
@@ -513,13 +513,13 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
 
         nvars = AddVar(vars_data+i, type_id, nvars);
       }
-      return CheckActn(env, nvars, ports, (Actn*)exec_actn->x.body, loc, svars, sportv);
+      return CheckActn(env, nvars, ports, exec_actn->body, loc, svars, sportv);
     }
 
     case FBLC_COND_ACTN: {
-      CondActn* cond_actn = (CondActn*)actn;
+      FblcCondActn* cond_actn = (FblcCondActn*)actn;
       Loc* condloc = *loc;
-      FblcTypeId type_id = CheckExpr(env, vars, cond_actn->x.select, loc, svars);
+      FblcTypeId type_id = CheckExpr(env, vars, cond_actn->select, loc, svars);
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -532,18 +532,18 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, Actn* actn, Loc*
         return UNRESOLVED_ID;
       }
 
-      if (type->fieldc != cond_actn->x.argc) {
+      if (type->fieldc != cond_actn->argc) {
         ReportError("Wrong number of arguments to condition. Expected %d, but found %d.\n",
-            myloc, type->fieldc, cond_actn->x.argc);
+            myloc, type->fieldc, cond_actn->argc);
         return UNRESOLVED_ID;
       }
 
       // TODO: Verify that no two branches of the condition refer to the same
       // port. Do we still want to do this?
       FblcTypeId result_type_id = UNRESOLVED_ID;
-      for (int i = 0; i < cond_actn->x.argc; i++) {
+      for (int i = 0; i < cond_actn->argc; i++) {
         Loc* argloc = *loc;
-        FblcTypeId arg_type_id = CheckActn(env, vars, ports, (Actn*)cond_actn->x.argv[i], loc, svars, sportv);
+        FblcTypeId arg_type_id = CheckActn(env, vars, ports, cond_actn->argv[i], loc, svars, sportv);
         if (arg_type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
