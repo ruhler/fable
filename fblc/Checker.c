@@ -26,17 +26,60 @@ typedef struct Ports {
   struct Ports* next;
 } Ports;
 
+static void ArgCountError(Loc* loc, size_t expected, size_t actual);
+static void TypeMismatchError(Env* env, Loc* loc, FblcTypeId expected, FblcTypeId actual);
+
 static FblcTypeId LookupType(Env* env, Name name);
 static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next);
 static Ports* AddPort(
     Ports* vars, Name name, FblcTypeId type, FblcPolarity polarity, Ports* next);
 static bool CheckArgs(
-    Env* env, Vars* vars, int fieldc, SVar* fieldv,
+    Env* env, Vars* vars, int fieldc, FblcTypeId* fieldv,
     int argc, FblcExpr** argv, Loc* myloc, Loc** loc, SVar** svars);
 static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVar** svars);
 static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, Loc** loc, SVar** svars, SVar** sportv);
 static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, SVar* fields, const char* kind);
 static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports);
+
+// ArgCountError --
+//   Reports an error of an argument count mismatch.
+//
+// Inputs:
+//   loc - The error location. Conventionally this is the location of the
+//         expression where the application of arguments occurs.
+//   expected - The number of expected arguments.
+//   actual - The number of provided arguments.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Reports an error to stderr.
+static void ArgCountError(Loc* loc, size_t expected, size_t actual)
+{
+  ReportError("Expected %d arguments, but %d were provided.\n", loc, expected, actual);
+}
+
+// TypeMismatchError --
+//   Reports an error where a wrong type is encounterd.
+//
+// Inputs:
+//   env - The program environment.
+//   loc - The error location. Conventionally this is the location of the
+//         expression or action with the wrong type.
+//   expected - The id of the expected type.
+//   actual - The id of the actual type.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Reports an error to stderr.
+static void TypeMismatchError(Env* env, Loc* loc, FblcTypeId expected, FblcTypeId actual)
+{
+  ReportError("Expected type %s, but found type %s.\n",
+      loc, env->sdeclv[expected]->name.name, env->sdeclv[actual]->name.name);
+}
 
 // LookupType --
 //   Look up the declaration id of the type with the given name in the given
@@ -135,11 +178,11 @@ static Ports* AddPort(Ports* ports, Name name, FblcTypeId type, FblcPolarity pol
 //   error describing what's wrong.
 
 static bool CheckArgs(
-    Env* env, Vars* vars, int fieldc, SVar* fieldv,
+    Env* env, Vars* vars, int fieldc, FblcTypeId* fieldv,
     int argc, FblcExpr** argv, Loc* myloc, Loc** loc, SVar** svars)
 {
   if (fieldc != argc) {
-    ReportError("Wrong number of arguments. Expected %d, " "but got %d.\n", myloc , fieldc, argc);
+    ArgCountError(myloc, fieldc, argc);
     return false;
   }
 
@@ -149,10 +192,8 @@ static bool CheckArgs(
     if (arg_type_id == UNRESOLVED_ID) {
       return false;
     }
-    SDecl* arg_type = env->sdeclv[arg_type_id];
-    if (!NamesEqual(fieldv[i].type.name, arg_type->name.name)) {
-      ReportError("Expected type %s, but found %s.\n",
-          argloc, fieldv[i].type.name, arg_type->name.name);
+    if (arg_type_id != fieldv[i]) {
+      TypeMismatchError(env, argloc, fieldv[i], arg_type_id);
       return false;
     }
   }
@@ -209,8 +250,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
       switch (decl->tag) {
         case FBLC_STRUCT_DECL: {
           FblcTypeDecl* type = (FblcTypeDecl*)decl;
-          STypeDecl* stype = (STypeDecl*)sdecl;
-          if (!CheckArgs(env, vars, type->fieldc, stype->fields,
+          if (!CheckArgs(env, vars, type->fieldc, type->fieldv,
                 app_expr->argc, app_expr->argv, myloc, loc, svars)) {
             return UNRESOLVED_ID;
           }
@@ -224,8 +264,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
 
         case FBLC_FUNC_DECL: {
           FblcFuncDecl* func = (FblcFuncDecl*)decl;
-          SFuncDecl* sfunc = (SFuncDecl*)sdecl;
-          if (!CheckArgs(env, vars, func->argc, sfunc->svarv,
+          if (!CheckArgs(env, vars, func->argc, func->argv,
                 app_expr->argc, app_expr->argv, myloc, loc, svars)) {
             return UNRESOLVED_ID;
           }
@@ -270,9 +309,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
 
       FblcTypeId field_type_id = type->fieldv[union_expr->field];
       if (arg_type_id != field_type_id) {
-        SDecl* arg_type = env->sdeclv[arg_type_id];
-        SDecl* field_type = env->sdeclv[field_type_id];
-        ReportError("Expected type '%s', but found type '%s'.\n", bodyloc, field_type->name.name, arg_type->name.name);
+        TypeMismatchError(env, bodyloc, field_type_id, arg_type_id);
         return UNRESOLVED_ID;
       }
       return union_expr->type;
@@ -294,9 +331,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
       }
 
       if (declared_type_id != actual_type_id) {
-        SDecl* actual_type = env->sdeclv[actual_type_id];
-        ReportError("Expected type %s, but found expression of type %s.\n",
-            defloc, svar->type.name, actual_type->name.name);
+        TypeMismatchError(env, defloc, declared_type_id, actual_type_id);
         return UNRESOLVED_ID;
       }
 
@@ -322,8 +357,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
       }
 
       if (type->fieldc != cond_expr->argc) {
-        ReportError("Wrong number of arguments to condition. Expected %d, "
-            "but found %d.\n", myloc, type->fieldc, cond_expr->argc);
+        ArgCountError(myloc, type->fieldc, cond_expr->argc);
         return UNRESOLVED_ID;
       }
 
@@ -336,10 +370,7 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
         }
 
         if (i != 0 && result_type_id != arg_type_id) {
-          SDecl* arg_type = env->sdeclv[arg_type_id];
-          SDecl* result_type = env->sdeclv[result_type_id];
-          ReportError("Expected expression of type %s, but found expression of type %s.\n",
-              argloc, result_type->name.name, arg_type->name.name);
+          TypeMismatchError(env, argloc, result_type_id, arg_type_id);
           return UNRESOLVED_ID;
         }
         result_type_id = arg_type_id;
@@ -412,10 +443,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
         return UNRESOLVED_ID;
       }
       if (ports->type != arg_type_id) {
-        SDecl* port_type = env->sdeclv[ports->type];
-        SDecl* arg_type = env->sdeclv[arg_type_id];
-        ReportError("Expected type %s, but found %s.\n",
-            argloc, port_type->name.name, arg_type->name.name);
+        TypeMismatchError(env, argloc, ports->type, arg_type_id);
         return UNRESOLVED_ID;
       }
       return arg_type_id;
@@ -463,7 +491,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
         }
       }
 
-      if (!CheckArgs(env, vars, proc->argc, sproc->svarv, call_actn->argc,
+      if (!CheckArgs(env, vars, proc->argc, proc->argv, call_actn->argc,
             call_actn->argv, myloc, loc, svars)) {
         return UNRESOLVED_ID;
       }
@@ -495,23 +523,21 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
       for (int i = 0; i < exec_actn->execc; i++) {
         SVar* var = (*svars)++;
         FblcActn* exec = exec_actn->execv[i];
-        FblcTypeId type_id = CheckActn(env, vars, ports, exec, loc, svars, sportv);
-        if (type_id == UNRESOLVED_ID) {
+        Loc* actnloc = *loc;
+        FblcTypeId actn_type = CheckActn(env, vars, ports, exec, loc, svars, sportv);
+        if (actn_type == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
 
-        // TODO: Test that we verify actual_type is not null?
-        FblcTypeId actual_type_id = LookupType(env, var->type.name);
-        if (actual_type_id == UNRESOLVED_ID) {
+        FblcTypeId var_type = LookupType(env, var->type.name);
+        if (var_type == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
-        if (actual_type_id != type_id) {
-          SDecl* type = env->sdeclv[type_id];
-          ReportError("Expected type %s, but found %s.\n", var->type.loc, var->type.name, type->name.name);
+        if (var_type != actn_type) {
+          TypeMismatchError(env, actnloc, var_type, actn_type);
           return UNRESOLVED_ID;
         }
-
-        nvars = AddVar(vars_data+i, type_id, nvars);
+        nvars = AddVar(vars_data+i, var_type, nvars);
       }
       return CheckActn(env, nvars, ports, exec_actn->body, loc, svars, sportv);
     }
@@ -533,8 +559,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
       }
 
       if (type->fieldc != cond_actn->argc) {
-        ReportError("Wrong number of arguments to condition. Expected %d, but found %d.\n",
-            myloc, type->fieldc, cond_actn->argc);
+        ArgCountError(myloc, type->fieldc, cond_actn->argc);
         return UNRESOLVED_ID;
       }
 
@@ -549,10 +574,7 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
         }
 
         if (i > 0 && result_type_id != arg_type_id) {
-          SDecl* result_type = env->sdeclv[result_type_id];
-          SDecl* arg_type = env->sdeclv[arg_type_id];
-          ReportError("Expected process of type %s, but found process of type %s.\n",
-              argloc, result_type->name.name, arg_type->name.name);
+          TypeMismatchError(env, argloc, result_type_id, arg_type_id);
           return UNRESOLVED_ID;
         }
         result_type_id = arg_type_id;
@@ -725,10 +747,7 @@ bool CheckProgram(Env* env)
           return false;
         }
         if (func->return_type != body_type_id) {
-          SDecl* body_type = env->sdeclv[body_type_id];
-          SDecl* return_type = env->sdeclv[func->return_type];
-          ReportError("Type mismatch. Expected %s, but found %s.\n",
-              sfunc->locv, return_type->name.name, body_type->name.name);
+          TypeMismatchError(env, sfunc->locv, func->return_type, body_type_id);
           return false;
         }
         break;
@@ -790,10 +809,7 @@ bool CheckProgram(Env* env)
           return false;
         }
         if (proc->return_type != body_type_id) {
-          SDecl* body_type = env->sdeclv[body_type_id];
-          SDecl* return_type = env->sdeclv[proc->return_type];
-          ReportError("Type mismatch. Expected %s, but found %s.\n",
-              sproc->locv, return_type->name.name, body_type->name.name);
+          TypeMismatchError(env, sproc->locv, proc->return_type, body_type_id);
           return false;
         }
         break;

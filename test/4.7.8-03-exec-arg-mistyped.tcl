@@ -8,5 +8,4 @@ set prg {
     $(x);
   };
 }
-# TODO: Where exactly should the error be?
-fblc-check-error $prg 7:5
+fblc-check-error $prg 7:14

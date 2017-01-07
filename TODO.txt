@@ -1,6 +1,4 @@
 Primary Arc:
-* Write separate 'ResolveProgram' function that resolves all ids (vars,
-  fields, types, ports) given an Env and map from temporary ID to LocName.
 * Change Env to be FblcProgram + Symbol information.
 * Clean up interface for loading and checking fblc text code.
 * Rewrite testfblc as fblc-test in top of fblc library.
