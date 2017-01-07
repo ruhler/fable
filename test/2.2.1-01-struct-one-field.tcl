@@ -1,7 +1,5 @@
-
-# A struct can be declared that contains one field.
-
 set prg {
+  # A struct can be declared that contains one field.
   struct Unit();
   struct OneField(Unit x);
 

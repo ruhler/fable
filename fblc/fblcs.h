@@ -91,4 +91,22 @@ bool ResolveProgram(SProgram* sprog);
 // Checker
 bool CheckProgram(SProgram* sprog);
 
+// SLoadProgram --
+//   Load a text fblc program from the given file using the given arena for
+//   allocations. Performs parsing, name resolution, and type checking of the
+//   program.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   filename - Name of the file to load the program from.
+//
+// Results:
+//   The fully parsed, name-resolved and type-checked loaded program, or NULL
+//   if the program could not be parsed, resolved, or failed to type check.
+//
+// Side effects:
+//   Arena allocations are made in order to load the program. If the program
+//   cannot be loaded, an error message is printed to stderr.
+SProgram* SLoadProgram(FblcArena* arena, const char* filename);
+
 #endif  // FBLCS_H_

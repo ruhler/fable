@@ -179,23 +179,13 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  SProgram* sprog = ParseProgram(bulk_arena, filename);
+  SProgram* sprog = SLoadProgram(bulk_arena, filename);
   if (sprog == NULL) {
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
     GcFinish();
     return 1;
   }
-
-  if (!CheckProgram(sprog)) {
-    fprintf(stderr, "input FILE is not a well formed  program.\n");
-    FreeBulkFreeArena(bulk_arena);
-    FreeGcArena(gc_arena);
-    GcFinish();
-    return 1;
-  }
-
-  FblcArena* bulk_arena_2 = CreateBulkFreeArena(gc_arena);
 
   FblcDecl* decl = NULL;
   for (size_t i = 0; i < sprog->program->declc; ++i) {
@@ -207,13 +197,13 @@ int main(int argc, char* argv[])
 
   if (decl == NULL) {
     fprintf(stderr, "entry %s not found.\n", entry);
-    FreeBulkFreeArena(bulk_arena_2);
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
     GcFinish();
     return 1;
   }
 
+  FblcArena* bulk_arena_2 = CreateBulkFreeArena(gc_arena);
   FblcProcDecl* proc = NULL;
   if (decl->tag == FBLC_PROC_DECL) {
     proc = (FblcProcDecl*)decl;

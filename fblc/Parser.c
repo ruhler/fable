@@ -1236,10 +1236,6 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
       return NULL;
     }
   }
-
-  if (!ResolveProgram(sprog)) {
-    return NULL;
-  }
   return sprog;
 }
 

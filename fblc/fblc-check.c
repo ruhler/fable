@@ -91,8 +91,7 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  SProgram* sprog = ParseProgram(bulk_arena, filename);
-  bool error = sprog == NULL || !CheckProgram(sprog);
+  bool error = ! SLoadProgram(bulk_arena, filename);
   FreeBulkFreeArena(bulk_arena);
   FreeGcArena(gc_arena);
   GcFinish();
