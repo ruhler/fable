@@ -13,9 +13,9 @@ typedef struct Vars {
 } Vars;
 
 static Vars* AddVar(Vars* vars, FblcTypeId type, Name name, Vars* next);
-static FblcTypeId LookupType(Env* env, Name name);
-static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr, SVar** svars);
-static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, FblcActn* actn, SVar** svars, SVar** sportv);
+static FblcTypeId LookupType(SProgram* sprog, Name name);
+static FblcTypeId ResolveExpr(SProgram* sprog, SName* names, Vars* vars, FblcExpr* expr, SVar** svars);
+static FblcTypeId ResolveActn(SProgram* sprog, SName* names, Vars* vars, Vars* ports, FblcActn* actn, SVar** svars, SVar** sportv);
 
 // AddVar --
 //   Add a variable to the given scope.
@@ -40,10 +40,10 @@ static Vars* AddVar(Vars* vars, FblcTypeId type, Name name, Vars* next)
 
 // LookupType --
 //   Look up the declaration id of the type with the given name in the given
-//   environment.
+//   sprog.
 // 
 // Inputs:
-//   env - The environment to look up the type in.
+//   sprog - The program to look up the type in.
 //   name - The name of the type to look up.
 //
 // Result:
@@ -52,11 +52,11 @@ static Vars* AddVar(Vars* vars, FblcTypeId type, Name name, Vars* next)
 //
 // Side effects:
 //   None.
-static FblcTypeId LookupType(Env* env, Name name)
+static FblcTypeId LookupType(SProgram* sprog, Name name)
 {
-  for (size_t i = 0; i < env->declc; ++i) {
-    FblcDecl* decl = env->declv[i];
-    SDecl* sdecl = env->sdeclv[i];
+  for (size_t i = 0; i < sprog->program->declc; ++i) {
+    FblcDecl* decl = sprog->program->declv[i];
+    SDecl* sdecl = sprog->symbols[i];
     if ((decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL)
         && NamesEqual(sdecl->name.name, name)) {
       return i;
@@ -65,7 +65,7 @@ static FblcTypeId LookupType(Env* env, Name name)
   return UNRESOLVED_ID;
 }
 
-static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr, SVar** svars)
+static FblcTypeId ResolveExpr(SProgram* sprog, SName* names, Vars* vars, FblcExpr* expr, SVar** svars)
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
@@ -87,8 +87,8 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
       FblcAppExpr* app_expr = (FblcAppExpr*)expr;
       SName* name = names + app_expr->func;
       app_expr->func = UNRESOLVED_ID;
-      for (size_t i = 0; i < env->declc; ++i) {
-        if (NamesEqual(name->name, env->sdeclv[i]->name.name)) {
+      for (size_t i = 0; i < sprog->program->declc; ++i) {
+        if (NamesEqual(name->name, sprog->symbols[i]->name.name)) {
           app_expr->func = i;
           break;
         }
@@ -99,12 +99,12 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
       }
 
       for (size_t i = 0 ; i < app_expr->argc; ++i) {
-        if (ResolveExpr(env, names, vars, app_expr->argv[i], svars) == UNRESOLVED_ID) {
+        if (ResolveExpr(sprog, names, vars, app_expr->argv[i], svars) == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
       }
 
-      switch (env->declv[app_expr->func]->tag) {
+      switch (sprog->program->declv[app_expr->func]->tag) {
         case FBLC_STRUCT_DECL: {
           return app_expr->func;
         }
@@ -115,7 +115,7 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
         }
 
         case FBLC_FUNC_DECL: {
-          FblcFuncDecl* func = (FblcFuncDecl*)env->declv[app_expr->func];
+          FblcFuncDecl* func = (FblcFuncDecl*)sprog->program->declv[app_expr->func];
           return func->return_type;
         }
 
@@ -132,19 +132,19 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
-      FblcTypeId type_id = ResolveExpr(env, names, vars, access_expr->object, svars);
+      FblcTypeId type_id = ResolveExpr(sprog, names, vars, access_expr->object, svars);
       if (type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
 
       SName* name = names + access_expr->field;
 
-      FblcTypeDecl* type = (FblcTypeDecl*)env->declv[type_id];
-      STypeDecl* stype = (STypeDecl*)env->sdeclv[type_id];
+      FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
+      STypeDecl* stype = (STypeDecl*)sprog->symbols[type_id];
       for (size_t i = 0; i < type->fieldc; ++i) {
         if (NamesEqual(stype->fields[i].name.name, name->name)) {
           access_expr->field = i;
-          return LookupType(env, stype->fields[i].type.name);
+          return LookupType(sprog, stype->fields[i].type.name);
         }
       }
       ReportError("'%s' is not a field of the type '%s'.\n",
@@ -156,15 +156,15 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
       FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
       SName* type_name = names + union_expr->type;
       SName* field_name = names + union_expr->field;
-      union_expr->type = LookupType(env, type_name->name);
+      union_expr->type = LookupType(sprog, type_name->name);
       if (union_expr->type == UNRESOLVED_ID) {
         ReportError("Type %s not found.\n", type_name->loc, type_name->name);
         return UNRESOLVED_ID;
       }
-      FblcTypeDecl* type = (FblcTypeDecl*)env->declv[union_expr->type];
-      STypeDecl* stype = (STypeDecl*)env->sdeclv[union_expr->type];
+      FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[union_expr->type];
+      STypeDecl* stype = (STypeDecl*)sprog->symbols[union_expr->type];
 
-      if (ResolveExpr(env, names, vars, union_expr->body, svars) == UNRESOLVED_ID) {
+      if (ResolveExpr(sprog, names, vars, union_expr->body, svars) == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
 
@@ -184,7 +184,7 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
       FblcLetExpr* let_expr = (FblcLetExpr*)expr;
       SVar* svar = (*svars)++;
 
-      FblcTypeId var_type_id = ResolveExpr(env, names, vars, let_expr->def, svars);
+      FblcTypeId var_type_id = ResolveExpr(sprog, names, vars, let_expr->def, svars);
       if (var_type_id == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
@@ -197,18 +197,18 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
       }
       Vars nvars;
       AddVar(&nvars, var_type_id, svar->name.name, vars);
-      return ResolveExpr(env, names, &nvars, let_expr->body, svars);
+      return ResolveExpr(sprog, names, &nvars, let_expr->body, svars);
     }
 
     case FBLC_COND_EXPR: {
       FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
-      if (ResolveExpr(env, names, vars, cond_expr->select, svars) == UNRESOLVED_ID) {
+      if (ResolveExpr(sprog, names, vars, cond_expr->select, svars) == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
 
       FblcTypeId result_type_id = UNRESOLVED_ID;
       for (size_t i = 0; i < cond_expr->argc; ++i) {
-        result_type_id = ResolveExpr(env, names, vars, cond_expr->argv[i], svars);
+        result_type_id = ResolveExpr(sprog, names, vars, cond_expr->argv[i], svars);
         if (result_type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
@@ -223,12 +223,12 @@ static FblcTypeId ResolveExpr(Env* env, SName* names, Vars* vars, FblcExpr* expr
   }
 }
 
-static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, FblcActn* actn, SVar** svars, SVar** sportv)
+static FblcTypeId ResolveActn(SProgram* sprog, SName* names, Vars* vars, Vars* ports, FblcActn* actn, SVar** svars, SVar** sportv)
 {
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
-      return ResolveExpr(env, names, vars, eval_actn->expr, svars);
+      return ResolveExpr(sprog, names, vars, eval_actn->expr, svars);
     }
 
     case FBLC_GET_ACTN: {
@@ -250,7 +250,7 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
       FblcPutActn* put_actn = (FblcPutActn*)actn;
       SName* name = names + put_actn->port;
 
-      if (ResolveExpr(env, names, vars, put_actn->arg, svars) == UNRESOLVED_ID) {
+      if (ResolveExpr(sprog, names, vars, put_actn->arg, svars) == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
 
@@ -270,9 +270,9 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
       SName* name = names + call_actn->proc;
 
       call_actn->proc = UNRESOLVED_ID;
-      for (size_t i = 0; i < env->declc; ++i) {
-        FblcDecl* decl = env->declv[i];
-        SDecl* sdecl = env->sdeclv[i];
+      for (size_t i = 0; i < sprog->program->declc; ++i) {
+        FblcDecl* decl = sprog->program->declv[i];
+        SDecl* sdecl = sprog->symbols[i];
         if (decl->tag == FBLC_PROC_DECL && NamesEqual(sdecl->name.name, name->name)) {
           call_actn->proc = i;
           break;
@@ -283,7 +283,7 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
         return UNRESOLVED_ID;
       }
 
-      FblcProcDecl* proc = (FblcProcDecl*)env->declv[call_actn->proc];
+      FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv[call_actn->proc];
       if (proc->portc != call_actn->portc) {
         ReportError("Wrong number of port arguments to '%s'. Expected %i but found %i.\n", name->loc, name->name, proc->portc, call_actn->portc);
         return UNRESOLVED_ID;
@@ -307,7 +307,7 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
       }
 
       for (size_t i = 0 ; i < call_actn->argc; ++i) {
-        if (ResolveExpr(env, names, vars, call_actn->argv[i], svars) == UNRESOLVED_ID) {
+        if (ResolveExpr(sprog, names, vars, call_actn->argv[i], svars) == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
       }
@@ -319,7 +319,7 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
       FblcLinkActn* link_actn = (FblcLinkActn*)actn;
       SVar* sget = (*sportv)++;
       SVar* sput = (*sportv)++;
-      link_actn->type = LookupType(env, sget->type.name);
+      link_actn->type = LookupType(sprog, sget->type.name);
       if (link_actn->type == UNRESOLVED_ID) {
         ReportError("Type '%s' not declared.\n", sget->type.loc, sget->type.name);
         return UNRESOLVED_ID;
@@ -329,7 +329,7 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
       Vars putport;
       AddVar(&getport, link_actn->type, sget->name.name, ports);
       AddVar(&putport, link_actn->type, sput->name.name, &getport);
-      return ResolveActn(env, names, vars, &putport, link_actn->body, svars, sportv);
+      return ResolveActn(sprog, names, vars, &putport, link_actn->body, svars, sportv);
     }
 
     case FBLC_EXEC_ACTN: {
@@ -339,24 +339,24 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
       for (int i = 0; i < exec_actn->execc; i++) {
         SVar* svar = (*svars)++;
         FblcActn* exec = exec_actn->execv[i];
-        FblcTypeId type_id = ResolveActn(env, names, vars, ports, exec, svars, sportv);
+        FblcTypeId type_id = ResolveActn(sprog, names, vars, ports, exec, svars, sportv);
         if (type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
         nvars = AddVar(vars_data+i, type_id, svar->name.name, nvars);
       }
-      return ResolveActn(env, names, nvars, ports, exec_actn->body, svars, sportv);
+      return ResolveActn(sprog, names, nvars, ports, exec_actn->body, svars, sportv);
     }
 
     case FBLC_COND_ACTN: {
       FblcCondActn* cond_actn = (FblcCondActn*)actn;
-      if (ResolveExpr(env, names, vars, cond_actn->select, svars) == UNRESOLVED_ID) {
+      if (ResolveExpr(sprog, names, vars, cond_actn->select, svars) == UNRESOLVED_ID) {
         return UNRESOLVED_ID;
       }
 
       FblcTypeId result_type_id = UNRESOLVED_ID;
       for (size_t i = 0; i < cond_actn->argc; ++i) {
-        result_type_id = ResolveActn(env, names, vars, ports, cond_actn->argv[i], svars, sportv);
+        result_type_id = ResolveActn(sprog, names, vars, ports, cond_actn->argv[i], svars, sportv);
         if (result_type_id == UNRESOLVED_ID) {
           return UNRESOLVED_ID;
         }
@@ -369,20 +369,20 @@ static FblcTypeId ResolveActn(Env* env, SName* names, Vars* vars, Vars* ports, F
 }
 
 // ResolveProgram -- see fblct.h for documentation.
-bool ResolveProgram(Env* env, SName* names)
+bool ResolveProgram(SProgram* sprog, SName* names)
 {
   // Resolve names in declarations first, before resolving names in the bodies
   // of functions or processes. We must resolve the function and process
   // return types before we can do name resolution in bodies.
-  for (size_t i = 0; i < env->declc; ++i) {
-    FblcDecl* decl = env->declv[i];
+  for (size_t i = 0; i < sprog->program->declc; ++i) {
+    FblcDecl* decl = sprog->program->declv[i];
     switch (decl->tag) {
       case FBLC_STRUCT_DECL:
       case FBLC_UNION_DECL: {
         FblcTypeDecl* type = (FblcTypeDecl*)decl;
-        STypeDecl* stype = (STypeDecl*)env->sdeclv[i];
+        STypeDecl* stype = (STypeDecl*)sprog->symbols[i];
         for (size_t i = 0; i < type->fieldc; ++i) {
-          type->fieldv[i] = LookupType(env, stype->fields[i].type.name);
+          type->fieldv[i] = LookupType(sprog, stype->fields[i].type.name);
           if (type->fieldv[i] == UNRESOLVED_ID) {
             ReportError("Type '%s' not found.\n", stype->fields[i].type.loc, stype->fields[i].type.name);
             return false;
@@ -393,10 +393,10 @@ bool ResolveProgram(Env* env, SName* names)
 
       case FBLC_FUNC_DECL: {
         FblcFuncDecl* func = (FblcFuncDecl*)decl;
-        SFuncDecl* sfunc = (SFuncDecl*)env->sdeclv[i];
+        SFuncDecl* sfunc = (SFuncDecl*)sprog->symbols[i];
 
         for (size_t i = 0; i < func->argc; ++i) {
-          func->argv[i] = LookupType(env, sfunc->svarv[i].type.name);
+          func->argv[i] = LookupType(sprog, sfunc->svarv[i].type.name);
           if (func->argv[i] == UNRESOLVED_ID) {
             ReportError("Type '%s' not found.\n", sfunc->svarv[i].type.loc, sfunc->svarv[i].type.name);
             return false;
@@ -404,7 +404,7 @@ bool ResolveProgram(Env* env, SName* names)
         }
 
         SName* name = names + func->return_type;
-        func->return_type = LookupType(env, name->name);
+        func->return_type = LookupType(sprog, name->name);
         if (func->return_type == UNRESOLVED_ID) {
           ReportError("Type '%s' not found.\n", name->loc, name->name);
           return false;
@@ -414,10 +414,10 @@ bool ResolveProgram(Env* env, SName* names)
 
       case FBLC_PROC_DECL: {
         FblcProcDecl* proc = (FblcProcDecl*)decl;
-        SProcDecl* sproc = (SProcDecl*)env->sdeclv[i];
+        SProcDecl* sproc = (SProcDecl*)sprog->symbols[i];
 
         for (size_t i = 0; i < proc->portc; ++i) {
-          proc->portv[i].type = LookupType(env, sproc->sportv[i].type.name);
+          proc->portv[i].type = LookupType(sprog, sproc->sportv[i].type.name);
           if (proc->portv[i].type == UNRESOLVED_ID) {
             ReportError("Type '%s' not found.\n", sproc->sportv[i].type.loc, sproc->sportv[i].type.name);
             return false;
@@ -425,7 +425,7 @@ bool ResolveProgram(Env* env, SName* names)
         }
 
         for (size_t i = 0; i < proc->argc; ++i) {
-          proc->argv[i] = LookupType(env, sproc->svarv[i].type.name);
+          proc->argv[i] = LookupType(sprog, sproc->svarv[i].type.name);
           if (proc->argv[i] == UNRESOLVED_ID) {
             ReportError("Type '%s' not found.\n", sproc->svarv[i].type.loc, sproc->svarv[i].type.name);
             return false;
@@ -433,7 +433,7 @@ bool ResolveProgram(Env* env, SName* names)
         }
 
         SName* name = names + proc->return_type;
-        proc->return_type = LookupType(env, name->name);
+        proc->return_type = LookupType(sprog, name->name);
         if (proc->return_type == UNRESOLVED_ID) {
           ReportError("Type '%s' not found.\n", name->loc, name->name);
           return false;
@@ -448,15 +448,15 @@ bool ResolveProgram(Env* env, SName* names)
   }
 
   // Now resolve function and process bodies
-  for (size_t i = 0; i < env->declc; ++i) {
-    FblcDecl* decl = env->declv[i];
+  for (size_t i = 0; i < sprog->program->declc; ++i) {
+    FblcDecl* decl = sprog->program->declv[i];
     switch (decl->tag) {
       case FBLC_STRUCT_DECL: break;
       case FBLC_UNION_DECL: break;
 
       case FBLC_FUNC_DECL: {
         FblcFuncDecl* func = (FblcFuncDecl*)decl;
-        SFuncDecl* sfunc = (SFuncDecl*)env->sdeclv[i];
+        SFuncDecl* sfunc = (SFuncDecl*)sprog->symbols[i];
 
         Vars nvars[func->argc];
         Vars* vars = NULL;
@@ -465,7 +465,7 @@ bool ResolveProgram(Env* env, SName* names)
           vars = AddVar(nvars+i, func->argv[i], (svars++)->name.name, vars);
         }
 
-        if (ResolveExpr(env, names, vars, func->body, &svars) == UNRESOLVED_ID) {
+        if (ResolveExpr(sprog, names, vars, func->body, &svars) == UNRESOLVED_ID) {
           return false;
         }
         break;
@@ -473,7 +473,7 @@ bool ResolveProgram(Env* env, SName* names)
 
       case FBLC_PROC_DECL: {
         FblcProcDecl* proc = (FblcProcDecl*)decl;
-        SProcDecl* sproc = (SProcDecl*)env->sdeclv[i];
+        SProcDecl* sproc = (SProcDecl*)sprog->symbols[i];
 
         Vars nports[proc->portc];
         Vars* ports = NULL;
@@ -489,7 +489,7 @@ bool ResolveProgram(Env* env, SName* names)
           vars = AddVar(nvars+i, proc->argv[i], (svars++)->name.name, vars);
         }
 
-        if (ResolveActn(env, names, vars, ports, proc->body, &svars, &sports) == UNRESOLVED_ID) {
+        if (ResolveActn(sprog, names, vars, ports, proc->body, &svars, &sports) == UNRESOLVED_ID) {
           return false;
         }
         break;

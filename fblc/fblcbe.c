@@ -64,15 +64,15 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  Env* env = ParseProgram(bulk_arena, filename);
-  if (env == NULL) {
+  SProgram* sprog = ParseProgram(bulk_arena, filename);
+  if (sprog == NULL) {
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
     GcFinish();
     return 1;
   }
 
-  if (!CheckProgram(env)) {
+  if (!CheckProgram(sprog)) {
     fprintf(stderr, "input FILE is not a well formed  program.\n");
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
@@ -81,9 +81,7 @@ int main(int argc, char* argv[])
   }
 
   FblcArena* bulk_arena_2 = CreateBulkFreeArena(gc_arena);
-  FblcProgram* program = StripProgram(bulk_arena_2, env);
-
-  FblcWriteProgram(program, STDOUT_FILENO);
+  FblcWriteProgram(sprog->program, STDOUT_FILENO);
 
   FreeBulkFreeArena(bulk_arena_2);
   FreeBulkFreeArena(bulk_arena);

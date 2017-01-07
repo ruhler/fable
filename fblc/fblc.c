@@ -14,13 +14,13 @@
 //   User data for IOPorts.
 typedef struct {
   FblcArena* arena;
-  Env* program;
+  SProgram* sprog;
   FblcTypeId type;
   int fd;
 } PortData;
 
 static void PrintUsage(FILE* stream);
-static void PrintValue(FILE* stream, Env* env, FblcTypeId typeid, FblcValue* value);
+static void PrintValue(FILE* stream, SProgram* sprog, FblcTypeId typeid, FblcValue* value);
 static FblcValue* GetIO(void* data, FblcValue* value);
 static FblcValue* PutIO(void* data, FblcValue* value);
 int main(int argc, char* argv[]);
@@ -64,22 +64,22 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   The value is printed to the given file stream.
-static void PrintValue(FILE* stream, Env* env, FblcTypeId typeid, FblcValue* value)
+static void PrintValue(FILE* stream, SProgram* sprog, FblcTypeId typeid, FblcValue* value)
 {
-  FblcTypeDecl* type = (FblcTypeDecl*)env->declv[typeid];
-  STypeDecl* stype = (STypeDecl*)env->sdeclv[typeid];
+  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[typeid];
+  STypeDecl* stype = (STypeDecl*)sprog->symbols[typeid];
   if (type->tag == FBLC_STRUCT_DECL) {
     fprintf(stream, "%s(", stype->name.name);
     for (int i = 0; i < type->fieldc; i++) {
       if (i > 0) {
         fprintf(stream, ",");
       }
-      PrintValue(stream, env, type->fieldv[i], value->fields[i]);
+      PrintValue(stream, sprog, type->fieldv[i], value->fields[i]);
     }
     fprintf(stream, ")");
   } else if (type->tag == FBLC_UNION_DECL) {
     fprintf(stream, "%s:%s(", stype->name.name, stype->fields[value->tag].name.name);
-    PrintValue(stream, env, type->fieldv[value->tag], value->fields[0]);
+    PrintValue(stream, sprog, type->fieldv[value->tag], value->fields[0]);
     fprintf(stream, ")");
   } else {
     assert(false && "Invalid Kind");
@@ -111,7 +111,7 @@ static FblcValue* GetIO(void* data, FblcValue* value)
   fds.revents = 0;
   poll(&fds, 1, 0);
   if (fds.revents & POLLIN) {
-    return ParseValue(port_data->arena, port_data->program, port_data->type, port_data->fd);
+    return ParseValue(port_data->arena, port_data->sprog, port_data->type, port_data->fd);
   }
   return NULL;
 }
@@ -132,7 +132,7 @@ static FblcValue* PutIO(void* data, FblcValue* value)
 {
   PortData* port_data = (PortData*)data;
   FILE* fout = fdopen(port_data->fd, "w");
-  PrintValue(fout, port_data->program, port_data->type, value);
+  PrintValue(fout, port_data->sprog, port_data->type, value);
   fprintf(fout, "\n");
   fflush(fout);
   return NULL;
@@ -179,15 +179,15 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  Env* env = ParseProgram(bulk_arena, filename);
-  if (env == NULL) {
+  SProgram* sprog = ParseProgram(bulk_arena, filename);
+  if (sprog == NULL) {
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
     GcFinish();
     return 1;
   }
 
-  if (!CheckProgram(env)) {
+  if (!CheckProgram(sprog)) {
     fprintf(stderr, "input FILE is not a well formed  program.\n");
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
@@ -196,12 +196,11 @@ int main(int argc, char* argv[])
   }
 
   FblcArena* bulk_arena_2 = CreateBulkFreeArena(gc_arena);
-  FblcProgram* program = StripProgram(bulk_arena_2, env);
 
   FblcDecl* decl = NULL;
-  for (size_t i = 0; i < env->declc; ++i) {
-    if (NamesEqual(env->sdeclv[i]->name.name, entry)) {
-      decl = program->declv[i];
+  for (size_t i = 0; i < sprog->program->declc; ++i) {
+    if (NamesEqual(sprog->symbols[i]->name.name, entry)) {
+      decl = sprog->program->declv[i];
       break;
     }
   }
@@ -253,7 +252,7 @@ int main(int argc, char* argv[])
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = ParseValueFromString(gc_arena, env, proc->argv[i], argv[i]);
+    args[i] = ParseValueFromString(gc_arena, sprog, proc->argv[i], argv[i]);
   }
 
   FblcIOPort ports[proc->portc];
@@ -262,15 +261,15 @@ int main(int argc, char* argv[])
     ports[i].io = proc->portv[i].polarity == FBLC_PUT_POLARITY ? &PutIO : &GetIO;
     ports[i].data = port_data + i;
     port_data[i].arena = gc_arena;
-    port_data[i].program = env;
+    port_data[i].sprog = sprog;
     port_data[i].type = proc->portv[i].type;
     port_data[i].fd = 3+i;
   }
 
-  FblcValue* value = FblcExecute(gc_arena, program, proc, args, ports);
+  FblcValue* value = FblcExecute(gc_arena, sprog->program, proc, args, ports);
   assert(value != NULL);
 
-  PrintValue(stdout, env, proc->return_type, value);
+  PrintValue(stdout, sprog, proc->return_type, value);
   fprintf(stdout, "\n");
   fflush(stdout);
   FblcRelease(gc_arena, value);

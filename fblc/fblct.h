@@ -61,18 +61,17 @@ typedef struct {
   SVar* sportv;
 } SProcDecl;
 
-// An environment contains all the type, function, and process declarations
-// for a program.
+// SProgram --
+//   An FblcProgram augmented with symbols information.
 typedef struct {
-  size_t declc;
-  FblcDecl** declv;
-  SDecl** sdeclv;
-} Env;
+  FblcProgram* program;
+  SDecl** symbols;
+} SProgram;
 
 // Parser
-Env* ParseProgram(FblcArena* arena, const char* filename);
-FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, int fd);
-FblcValue* ParseValueFromString(FblcArena* arena, Env* env, FblcTypeId typeid, const char* string);
+SProgram* ParseProgram(FblcArena* arena, const char* filename);
+FblcValue* ParseValue(FblcArena* arena, SProgram* sprog, FblcTypeId typeid, int fd);
+FblcValue* ParseValueFromString(FblcArena* arena, SProgram* sprog, FblcTypeId typeid, const char* string);
 
 // ResolveProgram --
 //   Perform id and name resolution for references to variables, ports,
@@ -89,12 +88,9 @@ FblcValue* ParseValueFromString(FblcArena* arena, Env* env, FblcTypeId typeid, c
 //
 // Side effects:
 //   IDs in the program are resolved.
-bool ResolveProgram(Env* env, SName* names);
+bool ResolveProgram(SProgram* sprog, SName* names);
 
 // Checker
-bool CheckProgram(Env* env);
-
-// Strip
-FblcProgram* StripProgram(FblcArena* arena, Env* tprog);
+bool CheckProgram(SProgram* sprog);
 
 #endif  // FBLCT_H_

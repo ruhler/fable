@@ -1073,7 +1073,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
 //   A program environment is allocated. In the case of an error, an error
 //   message is printed to standard error; the caller is still responsible for
 //   freeing (unused) allocations made with the allocator in this case.
-Env* ParseProgram(FblcArena* arena, const char* filename)
+SProgram* ParseProgram(FblcArena* arena, const char* filename)
 {
   TokenStream toks;
   if (!OpenFileTokenStream(&toks, filename)) {
@@ -1086,10 +1086,11 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
   FblcVectorInit(arena, namev, namec);
 
   const char* keywords = "'struct', 'union', 'func', or 'proc'";
-  Env* env = arena->alloc(arena, sizeof(Env));
+  SProgram* sprog = arena->alloc(arena, sizeof(SProgram));
+  sprog->program = arena->alloc(arena, sizeof(FblcProgram));
   size_t sdeclc;
-  FblcVectorInit(arena, env->declv, env->declc);
-  FblcVectorInit(arena, env->sdeclv, sdeclc);
+  FblcVectorInit(arena, sprog->program->declv, sprog->program->declc);
+  FblcVectorInit(arena, sprog->symbols, sdeclc);
   while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...
     SName keyword;
@@ -1105,7 +1106,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     if (is_struct || is_union) {
       // struct/union (<fields>);
       STypeDecl* stype = arena->alloc(arena, sizeof(STypeDecl));
-      FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)stype);
+      FblcVectorAppend(arena, sprog->symbols, sdeclc, (SDecl*)stype);
       if (!GetNameToken(arena, &toks, "type name", &stype->name)) {
         return NULL;
       }
@@ -1128,12 +1129,12 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      FblcVectorAppend(arena, env->declv, env->declc, (FblcDecl*)type);
+      FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)type);
     } else if (is_func) {
       // func name(<fields>; <type>) <expr>;
       SFuncDecl* sfunc = arena->alloc(arena, sizeof(SFuncDecl));
       FblcVectorInit(arena, sfunc->locv, sfunc->locc);
-      FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sfunc);
+      FblcVectorAppend(arena, sprog->symbols, sdeclc, (SDecl*)sfunc);
       if (!GetNameToken(arena, &toks, "function name", &sfunc->name)) {
         return NULL;
       }
@@ -1174,12 +1175,12 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (func->body == NULL) {
         return NULL;
       }
-      FblcVectorAppend(arena, env->declv, env->declc, (FblcDecl*)func);
+      FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)func);
     } else if (is_proc) {
       // proc name(<ports> ; <fields>; [<type>]) <proc>;
       SProcDecl* sproc = arena->alloc(arena, sizeof(SProcDecl));
       FblcVectorInit(arena, sproc->locv, sproc->locc);
-      FblcVectorAppend(arena, env->sdeclv, sdeclc, (SDecl*)sproc);
+      FblcVectorAppend(arena, sprog->symbols, sdeclc, (SDecl*)sproc);
       if (!GetNameToken(arena, &toks, "process name", &sproc->name)) {
         return NULL;
       }
@@ -1227,7 +1228,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       if (proc->body == NULL) {
         return NULL;
       }
-      FblcVectorAppend(arena, env->declv, env->declc, (FblcDecl*)proc);
+      FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)proc);
     } else {
       ReportError("Expected %s, but got '%s'.\n", keyword.loc, keywords, keyword.name);
       return NULL;
@@ -1238,18 +1239,18 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     }
   }
 
-  if (!ResolveProgram(env, namev)) {
+  if (!ResolveProgram(sprog, namev)) {
     return NULL;
   }
   arena->free(arena, namev);
-  return env;
+  return sprog;
 }
 
 // ParseValueFromToks --
 //   Parse an Fblc value from the token stream.
 //
 // Inputs:
-//   env - The program environment.
+//   sprog - The program environment.
 //   type - The type of value to parse.
 //   toks - The token stream to parse the program from.
 //
@@ -1259,10 +1260,10 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 // Side effects:
 //   The token stream is advanced to the end of the value. In the case of an
 //   error, an error message is printed to standard error.
-static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId typeid, TokenStream* toks)
+static FblcValue* ParseValueFromToks(FblcArena* arena, SProgram* sprog, FblcTypeId typeid, TokenStream* toks)
 {
-  FblcTypeDecl* type = (FblcTypeDecl*)env->declv[typeid];
-  STypeDecl* stype = (STypeDecl*)env->sdeclv[typeid];
+  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[typeid];
+  STypeDecl* stype = (STypeDecl*)sprog->symbols[typeid];
   SName name;
   if (!GetNameToken(arena, toks, "type name", &name)) {
     return NULL;
@@ -1296,7 +1297,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
       }
 
       if (!err) {
-        value->fields[i] = ParseValueFromToks(arena, env, type->fieldv[i], toks);
+        value->fields[i] = ParseValueFromToks(arena, sprog, type->fieldv[i], toks);
         err = err || value->fields[i] == NULL;
       }
     }
@@ -1335,7 +1336,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcValue* field = ParseValueFromToks(arena, env, type->fieldv[tag], toks);
+    FblcValue* field = ParseValueFromToks(arena, sprog, type->fieldv[tag], toks);
     if (field == NULL) {
       return NULL;
     }
@@ -1350,7 +1351,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
 //   Parse an fblc value from a file.
 //
 // Inputs:
-//   env - The program environment.
+//   sprog - The program environment.
 //   typeid - The type id of value to parse.
 //   fd - A file descriptor of a file open for reading.
 //
@@ -1360,18 +1361,18 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
 // Side effects:
 //   The value is read from the given file descriptor. In the case of an
 //   error, an error message is printed to standard error.
-FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, int fd)
+FblcValue* ParseValue(FblcArena* arena, SProgram* sprog, FblcTypeId typeid, int fd)
 {
   TokenStream toks;
   OpenFdTokenStream(&toks, fd, "file descriptor");
-  return ParseValueFromToks(arena, env, typeid, &toks);
+  return ParseValueFromToks(arena, sprog, typeid, &toks);
 }
 
 // ParseValueFromString --
 //   Parse an fblc value from a string.
 //
 // Inputs:
-//   env - The program environment.
+//   sprog - The program environment.
 //   typeid - The type id of value to parse.
 //   string - The string to parse the value from.
 //
@@ -1380,9 +1381,9 @@ FblcValue* ParseValue(FblcArena* arena, Env* env, FblcTypeId typeid, int fd)
 //
 // Side effects:
 //   In the case of an error, an error message is printed to standard error.
-FblcValue* ParseValueFromString(FblcArena* arena, Env* env, FblcTypeId typeid, const char* string)
+FblcValue* ParseValueFromString(FblcArena* arena, SProgram* sprog, FblcTypeId typeid, const char* string)
 {
   TokenStream toks;
   OpenStringTokenStream(&toks, string, string);
-  return ParseValueFromToks(arena, env, typeid, &toks);
+  return ParseValueFromToks(arena, sprog, typeid, &toks);
 }
