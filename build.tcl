@@ -98,6 +98,40 @@ proc expect_proc_result { result program entry ports args script } {
   }
 }
 
+# Test that running the process 'entry' in 'program' with given arguments
+# leads to the given 'result'. The 'script' should be a (possibly empty)
+# sequence of commands of the form 'put <port> <value>' and 'get <port>
+# <value>'. The put command causes the value to be written to the given port.
+# The get command gets a value from the given port and checks that it is
+# equivalent to the given value.
+proc fblc-test { result program entry args script } {
+  set loc [info frame -1]
+  set line [dict get $loc line]
+  set file [dict get $loc file]
+  set name "[file tail $file]_$line"
+
+  # Write the script to file.
+  set fscript ./out/test/$name.script
+  exec rm -f $fscript
+  exec touch $fscript
+  foreach cmd [split [string trim $script] "\n"] {
+    exec echo [string trim $cmd] >> $fscript
+  }
+
+  # Write the program to file.
+  set fprogram ./out/test/$name.fblc
+  exec echo $program > $fprogram
+
+  try {
+    set got [exec $::testfblc "" $fscript $::fblc $fprogram $entry {*}$args]
+    if {$got != $result} {
+      error "$file:$line: error: Expected '$result', but got '$got'"
+    }
+  } trap CHILDSTATUS {results options} {
+    error "$file:$line: error: Expected '$result', but got:\n$results"
+  }
+}
+
 # Test that the given fblc text program is malformed, and that the error is
 # located at loc. loc should be of the form line:col, where line is the line
 # number of the expected error and col is the column number within that line

@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
   char* ids[portc];
   FILE* files[portc];
   char* ptr = portspec;
-  for (int i = 0; ptr != NULL; i++) {
+  for (int i = 0; ptr != NULL && *ptr != '\0'; i++) {
     if (*ptr != 'i' && *ptr != 'o') {
       fprintf(stderr, "Invalid polarity specifier in '%s'.\n", ptr);
       return 1;
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
 
   FILE* fin = fopen(script, "r");
   if (fin == NULL) {
-    perror("fopen");
+    fprintf(stderr, "Unable to open %s for reading.\n", script);
     return 1;
   }
 
