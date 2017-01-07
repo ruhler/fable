@@ -50,14 +50,14 @@ static bool IsEOFToken(TokenStream* toks);
 static bool IsToken(TokenStream* toks, char which);
 static bool GetToken(TokenStream* toks, char which);
 static bool IsNameToken(TokenStream* toks);
-static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name);
+static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, SName* name);
 static void UnexpectedToken(TokenStream* toks, const char* expected);
 
 static bool ParseFields(FblcArena* arena, TokenStream* toks, SVar** vars, size_t* count);
 static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, size_t* portc, SVar** sports, size_t* sportc);
-static int ParseArgs(FblcArena* arena, TokenStream* toks, FblcExpr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec);
-static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec);
-static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SVar** sportv, size_t* sportc, LocName** namev, size_t* namec);
+static int ParseArgs(FblcArena* arena, TokenStream* toks, FblcExpr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SName** namev, size_t* namec);
+static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SName** namev, size_t* namec);
+static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SVar** sportv, size_t* sportc, SName** namev, size_t* namec);
 
 // CurrChar --
 //   Look at the character at the front of the token stream's file.
@@ -366,7 +366,7 @@ static bool IsNameToken(TokenStream* toks)
 //   toks - The token stream to retrieve the name token from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a type name".
-//   name - A pointer to an LocName that will be filled in with the
+//   name - A pointer to an SName that will be filled in with the
 //          token's value and location.
 //
 // Returns:
@@ -377,7 +377,7 @@ static bool IsNameToken(TokenStream* toks)
 //   the value and location of the name token, and the name token is removed
 //   from the front of the token stream. Otherwise an error message is printed
 //   to standard error.
-static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, LocName* name)
+static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, SName* name)
 {
   SkipToToken(toks);
   if (IsNameChar(CurrChar(toks))) {
@@ -560,7 +560,7 @@ static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, si
 //   The token stream is advanced past the final ')' token in the
 //   argument list. In case of an error, an error message is printed to
 //   standard error.
-static int ParseArgs(FblcArena* arena, TokenStream* toks, FblcExpr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec)
+static int ParseArgs(FblcArena* arena, TokenStream* toks, FblcExpr*** plist, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SName** namev, size_t* namec)
 {
   FblcExpr** argv;
   size_t argc;
@@ -606,7 +606,7 @@ static int ParseArgs(FblcArena* arena, TokenStream* toks, FblcExpr*** plist, Loc
 // Side effects:
 //   Advances the token stream past the parsed expression. In case of error,
 //   an error message is printed to standard error.
-static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, LocName** namev, size_t* namec)
+static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SName** namev, size_t* namec)
 {
   if (!IsToken(toks, '{')) {
     FblcVectorExtend(arena, *locv, *locc);
@@ -629,7 +629,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
   } else if (IsNameToken(toks)) {
     FblcVectorExtend(arena, *namev, *namec);
     size_t start_id = (*namec)++;
-    LocName* start = *namev + start_id;
+    SName* start = *namev + start_id;
     GetNameToken(arena, toks, "start of expression", start);
 
     if (IsToken(toks, '(')) {
@@ -656,7 +656,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
 
       FblcVectorExtend(arena, *namev, *namec);
       union_expr->field = (*namec)++;
-      LocName* field_name = *namev + union_expr->field;
+      SName* field_name = *namev + union_expr->field;
       if (!GetNameToken(arena, toks, "field name", field_name)) {
         return NULL;
       }
@@ -749,7 +749,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
 
     FblcVectorExtend(arena, *namev, *namec);
     access_expr->field = (*namec)++;
-    LocName* field_name = *namev + access_expr->field;
+    SName* field_name = *namev + access_expr->field;
     if (!GetNameToken(arena, toks, "field name", field_name)) {
       return NULL;
     }
@@ -798,7 +798,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
 // Side effects:
 //   Advances the token stream past the parsed action. In case of error,
 //   an error message is printed to standard error.
-static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SVar** sportv, size_t* sportc, LocName** namev, size_t* namec)
+static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Loc** locv, size_t* locc, SVar** svarv, size_t* svarc, SVar** sportv, size_t* sportc, SName** namev, size_t* namec)
 {
   if (!IsToken(toks, '{')) {
     FblcVectorExtend(arena, *locv, *locc);
@@ -842,7 +842,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
 
     FblcVectorExtend(arena, *namev, *namec);
     size_t port_id = (*namec)++;
-    LocName* port_name = *namev + port_id;
+    SName* port_name = *namev + port_id;
     if (!GetNameToken(arena, toks, "port", port_name)) {
       return NULL;
     }
@@ -875,7 +875,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
   } else if (IsNameToken(toks)) {
     FblcVectorExtend(arena, *namev, *namec);
     size_t name_id = (*namec)++;
-    LocName* name = *namev + name_id;
+    SName* name = *namev + name_id;
     GetNameToken(arena, toks, "process or type name", name);
 
     if (IsToken(toks, '(')) {
@@ -1081,7 +1081,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
     return NULL;
   }
 
-  LocName* namev;
+  SName* namev;
   size_t namec;
   FblcVectorInit(arena, namev, namec);
 
@@ -1092,7 +1092,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
   FblcVectorInit(arena, env->sdeclv, sdeclc);
   while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...
-    LocName keyword;
+    SName keyword;
     if (!GetNameToken(arena, &toks, keywords, &keyword)) {
       return NULL;
     }
@@ -1161,7 +1161,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
       
       FblcVectorExtend(arena, namev, namec);
       func->return_type = namec++;
-      LocName* return_type = namev + func->return_type;
+      SName* return_type = namev + func->return_type;
       if (!GetNameToken(arena, &toks, "type", return_type)) {
         return NULL;
       }
@@ -1214,7 +1214,7 @@ Env* ParseProgram(FblcArena* arena, const char* filename)
 
       FblcVectorExtend(arena, namev, namec);
       proc->return_type = namec++;
-      LocName* return_type = namev + proc->return_type;
+      SName* return_type = namev + proc->return_type;
       if (!GetNameToken(arena, &toks, "type", return_type)) {
         return NULL;
       }
@@ -1263,7 +1263,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, Env* env, FblcTypeId type
 {
   FblcTypeDecl* type = (FblcTypeDecl*)env->declv[typeid];
   STypeDecl* stype = (STypeDecl*)env->sdeclv[typeid];
-  LocName name;
+  SName name;
   if (!GetNameToken(arena, toks, "type name", &name)) {
     return NULL;
   }

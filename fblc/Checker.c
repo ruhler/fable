@@ -173,7 +173,6 @@ static Ports* AddPort(Ports* ports, Name name, FblcTypeId type, FblcPolarity pol
 //   The value true if the arguments have the right type, false otherwise.
 //
 // Side effects:
-//   LocName ids within the expressions are resolved.
 //   If the arguments do not have the right type, prints a message on standard
 //   error describing what's wrong.
 
@@ -221,7 +220,6 @@ static bool CheckArgs(
 //   and well typed.
 //
 // Side effects:
-//   LocName ids within the expression are resolved.
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 //   loc is advanced to the location after all locations in this expression.
@@ -402,7 +400,6 @@ static FblcTypeId CheckExpr(Env* env, Vars* vars, FblcExpr* expr, Loc** loc, SVa
 //   well typed.
 //
 // Side effects:
-//   LocName ids within the action are resolved.
 //   If the expression is not well formed and well typed, an error message is
 //   printed to standard error describing the problem.
 
@@ -601,12 +598,10 @@ static FblcTypeId CheckActn(Env* env, Vars* vars, Ports* ports, FblcActn* actn, 
 //          "arg".
 //
 // Results:
-//   LocName ids within the body of the declaration are resolved.
 //   Returns true if the fields have valid types and unique names, false
 //   otherwise.
 //
 // Side effects:
-//   LocName ids within the fields are resolved.
 //   If the fields don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
 
@@ -648,10 +643,8 @@ static bool CheckFields(Env* env, int fieldc, FblcTypeId* fieldv, SVar* fields, 
 //   otherwise.
 //
 // Side effects:
-//   LocName ids within the ports are resolved.
 //   If the ports don't have valid types or don't have unique names, a
 //   message is printed to standard error describing the problem.
-
 static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports)
 {
   // Verify the type for each port exists.
@@ -689,11 +682,9 @@ static bool CheckPorts(Env* env, int portc, FblcPort* portv, SVar* ports)
 //   false otherwise.
 //
 // Side effects:
-//   LocName ids within the body of declarations are resolved.
 //   If the program environment is not well formed, an error message is
 //   printed to standard error describing the problem with the program
 //   environment.
-
 bool CheckProgram(Env* env)
 {
   for (size_t i = 0; i < env->declc; ++i) {

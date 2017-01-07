@@ -19,32 +19,32 @@ typedef struct {
 
 void ReportError(const char* format, Loc* loc, ...);
 
-// LocName stores a name along with a location for error reporting purposes.
-typedef struct LocName {
+// SName stores a name along with a location for error reporting purposes.
+typedef struct SName {
   Loc* loc;
   Name name;
-} LocName;
+} SName;
 
 // Initial ids are set to UNRESOLVED_ID. Relevant ids are resolved during the
 // type checking phase.
 #define UNRESOLVED_ID (-1)
 
 typedef struct {
-  LocName type;
-  LocName name;
+  SName type;
+  SName name;
 } SVar;
 
 typedef struct {
-  LocName name;
+  SName name;
 } SDecl;
 
 typedef struct {
-  LocName name;
+  SName name;
   SVar* fields;
 } STypeDecl;
 
 typedef struct {
-  LocName name;
+  SName name;
   size_t locc;
   Loc* locv;  // locations of all expressions in body.
   size_t svarc;
@@ -52,7 +52,7 @@ typedef struct {
 } SFuncDecl;
 
 typedef struct {
-  LocName name;
+  SName name;
   size_t locc;
   Loc* locv;  // locations of all actions and expressions in body.
   size_t svarc;
@@ -89,7 +89,7 @@ FblcValue* ParseValueFromString(FblcArena* arena, Env* env, FblcTypeId typeid, c
 //
 // Side effects:
 //   IDs in the program are resolved.
-bool ResolveProgram(Env* env, LocName* names);
+bool ResolveProgram(Env* env, SName* names);
 
 // Checker
 bool CheckProgram(Env* env);
