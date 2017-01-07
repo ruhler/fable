@@ -1,7 +1,5 @@
-
-# Test calling a process with a get port.
-
 set prg {
+  # Test calling a process with a get port.
   struct Unit();
   union Bool(Unit true, Unit false);
 

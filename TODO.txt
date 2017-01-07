@@ -1,7 +1,7 @@
 Primary Arc:
-* Change Env to be FblcProgram + Symbol information.
-* Clean up interface for loading and checking fblc text code.
 * Rewrite testfblc as fblc-test in top of fblc library.
+* Change Checker to work on FblcProgram without symbols somehow.
+* Clean up interface for loading and checking fblc text code.
 * Modify testfblc to exercise {Read,Write}{Program,Value} functions
   - even though they aren't otherwise necessary to run.
 * Remove expect_result_b tests.

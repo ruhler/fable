@@ -6,6 +6,8 @@
 
 #include "fblct.h"
 
+#define INVALID_CASE() assert(false)
+
 typedef struct Vars {
   FblcTypeId type;
   Name name;
@@ -125,7 +127,7 @@ static FblcTypeId ResolveExpr(SProgram* sprog, SName* names, Vars* vars, FblcExp
         }
 
         default:
-          assert(false && "Invalid decl tag");
+          INVALID_CASE();
           return NULL_ID;
       }
     }
@@ -217,7 +219,7 @@ static FblcTypeId ResolveExpr(SProgram* sprog, SName* names, Vars* vars, FblcExp
     }
 
     default: {
-      assert(false && "Unknown expression type.");
+      INVALID_CASE();
       return NULL_ID;
     }
   }
@@ -363,9 +365,12 @@ static FblcTypeId ResolveActn(SProgram* sprog, SName* names, Vars* vars, Vars* p
       }
       return result_type_id;
     }
+
+    default: {
+      INVALID_CASE();
+      return NULL_ID;
+    }
   }
-  assert(false && "UNREACHABLE");
-  return NULL_ID;
 }
 
 // ResolveProgram -- see fblct.h for documentation.
@@ -441,9 +446,10 @@ bool ResolveProgram(SProgram* sprog, SName* names)
         break;
       }
 
-      default:
-        assert(false && "Invalid decl type");
+      default: {
+        INVALID_CASE();
         return false;
+      }
     }
   }
 
@@ -495,9 +501,10 @@ bool ResolveProgram(SProgram* sprog, SName* names)
         break;
       }
 
-      default:
-        assert(false && "Invalid decl type");
+      default: {
+        INVALID_CASE();
         return false;
+      }
     }
   }
   return true;
