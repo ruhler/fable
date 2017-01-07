@@ -1081,13 +1081,11 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
     return NULL;
   }
 
-  SName* namev;
-  size_t namec;
-  FblcVectorInit(arena, namev, namec);
-
   const char* keywords = "'struct', 'union', 'func', or 'proc'";
   SProgram* sprog = arena->alloc(arena, sizeof(SProgram));
   sprog->program = arena->alloc(arena, sizeof(FblcProgram));
+  size_t namec;
+  FblcVectorInit(arena, sprog->names, namec);
   size_t sdeclc;
   FblcVectorInit(arena, sprog->program->declv, sprog->program->declc);
   FblcVectorInit(arena, sprog->symbols, sdeclc);
@@ -1160,9 +1158,9 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
       }
 
       
-      FblcVectorExtend(arena, namev, namec);
+      FblcVectorExtend(arena, sprog->names, namec);
       func->return_type = namec++;
-      SName* return_type = namev + func->return_type;
+      SName* return_type = sprog->names + func->return_type;
       if (!GetNameToken(arena, &toks, "type", return_type)) {
         return NULL;
       }
@@ -1171,7 +1169,7 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      func->body = ParseExpr(arena, &toks, false, &sfunc->locv, &sfunc->locc, &sfunc->svarv, &sfunc->svarc, &namev, &namec);
+      func->body = ParseExpr(arena, &toks, false, &sfunc->locv, &sfunc->locc, &sfunc->svarv, &sfunc->svarc, &sprog->names, &namec);
       if (func->body == NULL) {
         return NULL;
       }
@@ -1213,9 +1211,9 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      FblcVectorExtend(arena, namev, namec);
+      FblcVectorExtend(arena, sprog->names, namec);
       proc->return_type = namec++;
-      SName* return_type = namev + proc->return_type;
+      SName* return_type = sprog->names + proc->return_type;
       if (!GetNameToken(arena, &toks, "type", return_type)) {
         return NULL;
       }
@@ -1224,7 +1222,7 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      proc->body = ParseActn(arena, &toks, false, &sproc->locv, &sproc->locc, &sproc->svarv, &sproc->svarc, &sproc->sportv, &sproc->sportc, &namev, &namec);
+      proc->body = ParseActn(arena, &toks, false, &sproc->locv, &sproc->locc, &sproc->svarv, &sproc->svarc, &sproc->sportv, &sproc->sportc, &sprog->names, &namec);
       if (proc->body == NULL) {
         return NULL;
       }
@@ -1239,10 +1237,9 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
     }
   }
 
-  if (!ResolveProgram(sprog, namev)) {
+  if (!ResolveProgram(sprog)) {
     return NULL;
   }
-  arena->free(arena, namev);
   return sprog;
 }
 

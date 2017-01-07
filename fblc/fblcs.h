@@ -66,6 +66,7 @@ typedef struct {
 typedef struct {
   FblcProgram* program;
   SDecl** symbols;
+  SName* names;     // Names passed from parser to resolve.
 } SProgram;
 
 // Parser
@@ -74,21 +75,18 @@ FblcValue* ParseValue(FblcArena* arena, SProgram* sprog, FblcTypeId typeid, int 
 FblcValue* ParseValueFromString(FblcArena* arena, SProgram* sprog, FblcTypeId typeid, const char* string);
 
 // ResolveProgram --
-//   Perform id and name resolution for references to variables, ports,
+//   Perform id/name resolution for references to variables, ports,
 //   declarations, and fields in the given program.
 //
 // Inputs:
-//   env - A program whose ids need to be resolved. Each ID in the program
-//         should be an index into the names array that gives the name and
-//         location corresponding to the id.
-//   names - Array of names for use in resolution.
+//   sprog - A program whose ids need to be resolved.
 //
 // Results:
 //   true if name resolution succeeded, false otherwise.
 //
 // Side effects:
 //   IDs in the program are resolved.
-bool ResolveProgram(SProgram* sprog, SName* names);
+bool ResolveProgram(SProgram* sprog);
 
 // Checker
 bool CheckProgram(SProgram* sprog);

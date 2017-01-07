@@ -374,7 +374,7 @@ static FblcTypeId ResolveActn(SProgram* sprog, SName* names, Vars* vars, Vars* p
 }
 
 // ResolveProgram -- see fblcs.h for documentation.
-bool ResolveProgram(SProgram* sprog, SName* names)
+bool ResolveProgram(SProgram* sprog)
 {
   // Resolve names in declarations first, before resolving names in the bodies
   // of functions or processes. We must resolve the function and process
@@ -408,7 +408,7 @@ bool ResolveProgram(SProgram* sprog, SName* names)
           }
         }
 
-        SName* name = names + func->return_type;
+        SName* name = sprog->names + func->return_type;
         func->return_type = LookupType(sprog, name->name);
         if (func->return_type == NULL_ID) {
           ReportError("Type '%s' not found.\n", name->loc, name->name);
@@ -437,7 +437,7 @@ bool ResolveProgram(SProgram* sprog, SName* names)
           }
         }
 
-        SName* name = names + proc->return_type;
+        SName* name = sprog->names + proc->return_type;
         proc->return_type = LookupType(sprog, name->name);
         if (proc->return_type == NULL_ID) {
           ReportError("Type '%s' not found.\n", name->loc, name->name);
@@ -471,7 +471,7 @@ bool ResolveProgram(SProgram* sprog, SName* names)
           vars = AddVar(nvars+i, func->argv[i], (svars++)->name.name, vars);
         }
 
-        if (ResolveExpr(sprog, names, vars, func->body, &svars) == NULL_ID) {
+        if (ResolveExpr(sprog, sprog->names, vars, func->body, &svars) == NULL_ID) {
           return false;
         }
         break;
@@ -495,7 +495,7 @@ bool ResolveProgram(SProgram* sprog, SName* names)
           vars = AddVar(nvars+i, proc->argv[i], (svars++)->name.name, vars);
         }
 
-        if (ResolveActn(sprog, names, vars, ports, proc->body, &svars, &sports) == NULL_ID) {
+        if (ResolveActn(sprog, sprog->names, vars, ports, proc->body, &svars, &sports) == NULL_ID) {
           return false;
         }
         break;
