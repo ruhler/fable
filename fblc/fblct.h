@@ -25,9 +25,9 @@ typedef struct SName {
   Name name;
 } SName;
 
-// Initial ids are set to UNRESOLVED_ID. Relevant ids are resolved during the
-// type checking phase.
-#define UNRESOLVED_ID (-1)
+// NULL_ID is used a sentinel value to indicate an otherwise invalid id.
+// Note that NULL_ID does not have the same value as NULL.
+#define NULL_ID (-1)
 
 typedef struct {
   SName type;

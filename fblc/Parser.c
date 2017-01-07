@@ -509,7 +509,7 @@ static bool ParsePorts(FblcArena* arena, TokenStream* toks, FblcPort** portv, si
     FblcVectorExtend(arena, *sports, *sportc);
     FblcPort* fblc_port = *portv + (*portc)++;
     SVar* port = *sports + (*sportc)++;
-    fblc_port->type = UNRESOLVED_ID;
+    fblc_port->type = NULL_ID;
 
     // Get the type.
     if (!GetNameToken(arena, toks, "type name", &(port->type))) {
@@ -952,7 +952,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
       }
       FblcLinkActn* link_actn = arena->alloc(arena, sizeof(FblcLinkActn));
       link_actn->tag = FBLC_LINK_ACTN;
-      link_actn->type = UNRESOLVED_ID;
+      link_actn->type = NULL_ID;
       link_actn->body = body;
       return (FblcActn*)link_actn;
     } else if (in_stmt && IsNameToken(toks)) {
@@ -1066,7 +1066,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
 //
 // Result:
 //   The parsed program environment, or NULL on error.
-//   ids throughout the parsed program will be set to UNRESOLVED_ID in the
+//   ids throughout the parsed program will be set to NULL_ID in the
 //   returned result.
 //
 // Side effects:
@@ -1123,7 +1123,7 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
       }
       type->fieldv = arena->alloc(arena, type->fieldc * sizeof(FblcTypeId));
       for (size_t i = 0; i < type->fieldc; ++i) {
-        type->fieldv[i] = UNRESOLVED_ID;
+        type->fieldv[i] = NULL_ID;
       }
 
       if (!GetToken(&toks, ')')) {
@@ -1152,7 +1152,7 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
       func->argc = sfunc->svarc;
       func->argv = arena->alloc(arena, func->argc * sizeof(FblcTypeId));
       for (size_t i = 0; i < func->argc; ++i) {
-        func->argv[i] = UNRESOLVED_ID;
+        func->argv[i] = NULL_ID;
       }
 
       if (!GetToken(&toks, ';')) {
@@ -1190,7 +1190,7 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
       }
       FblcProcDecl* proc = arena->alloc(arena, sizeof(FblcProcDecl));
       proc->tag = FBLC_PROC_DECL;
-      proc->return_type = UNRESOLVED_ID;
+      proc->return_type = NULL_ID;
       if (!ParsePorts(arena, &toks, &(proc->portv), &(proc->portc), &(sproc->sportv), &(sproc->sportc))) {
         return NULL;
       }
@@ -1206,7 +1206,7 @@ SProgram* ParseProgram(FblcArena* arena, const char* filename)
       proc->argc = sproc->svarc;
       proc->argv = arena->alloc(arena, proc->argc * sizeof(FblcTypeId));
       for (size_t i = 0; i < proc->argc; ++i) {
-        proc->argv[i] = UNRESOLVED_ID;
+        proc->argv[i] = NULL_ID;
       }
 
       if (!GetToken(&toks, ';')) {
