@@ -11,7 +11,7 @@
 #include <sys/types.h>    // for ssize_t, open
 #include <unistd.h>       // for read, close
 
-#include "fblct.h"
+#include "fblcs.h"
 
 // TokenStream --
 //   A stream of tokens is represented using the TokenStream data structure.

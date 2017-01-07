@@ -1,9 +1,9 @@
-// fblct.h --
+// fblcs.h --
 //   This header file describes the externally visible interface to the
 //   text-level fblc facilities.
 
-#ifndef FBLCT_H_
-#define FBLCT_H_
+#ifndef FBLCS_H_
+#define FBLCS_H_
 
 #include "fblc.h"
 
@@ -93,4 +93,4 @@ bool ResolveProgram(SProgram* sprog, SName* names);
 // Checker
 bool CheckProgram(SProgram* sprog);
 
-#endif  // FBLCT_H_
+#endif  // FBLCS_H_

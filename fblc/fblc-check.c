@@ -5,7 +5,7 @@
 #include <stdio.h>      // for FILE
 #include <string.h>     // for strcmp
 
-#include "fblct.h"
+#include "fblcs.h"
 #include "gc.h"
 
 #define EX_SUCCESS 0

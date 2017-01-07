@@ -7,7 +7,7 @@
 #include <stdio.h>      // for fdopen
 #include <string.h>     // for strcmp
 
-#include "fblct.h"
+#include "fblcs.h"
 #include "gc.h"
 
 // PortData --

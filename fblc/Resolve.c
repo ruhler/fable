@@ -4,7 +4,7 @@
 
 #include <assert.h>     // for assert
 
-#include "fblct.h"
+#include "fblcs.h"
 
 #define INVALID_CASE() assert(false)
 
@@ -373,7 +373,7 @@ static FblcTypeId ResolveActn(SProgram* sprog, SName* names, Vars* vars, Vars* p
   }
 }
 
-// ResolveProgram -- see fblct.h for documentation.
+// ResolveProgram -- see fblcs.h for documentation.
 bool ResolveProgram(SProgram* sprog, SName* names)
 {
   // Resolve names in declarations first, before resolving names in the bodies
