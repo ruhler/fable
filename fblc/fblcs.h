@@ -109,4 +109,8 @@ bool CheckProgram(SProgram* sprog);
 //   cannot be loaded, an error message is printed to stderr.
 SProgram* SLoadProgram(FblcArena* arena, const char* filename);
 
+// Symbols
+Name DeclName(SProgram* sprog, FblcDeclId decl_id);
+Name FieldName(SProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);
+FblcDeclId LookupDecl(SProgram* sprog, Name name);
 #endif  // FBLCS_H_

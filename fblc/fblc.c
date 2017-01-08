@@ -67,9 +67,8 @@ static void PrintUsage(FILE* stream)
 static void PrintValue(FILE* stream, SProgram* sprog, FblcTypeId typeid, FblcValue* value)
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[typeid];
-  STypeDecl* stype = (STypeDecl*)sprog->symbols[typeid];
   if (type->tag == FBLC_STRUCT_DECL) {
-    fprintf(stream, "%s(", stype->name.name);
+    fprintf(stream, "%s(", DeclName(sprog, typeid));
     for (int i = 0; i < type->fieldc; i++) {
       if (i > 0) {
         fprintf(stream, ",");
@@ -78,7 +77,7 @@ static void PrintValue(FILE* stream, SProgram* sprog, FblcTypeId typeid, FblcVal
     }
     fprintf(stream, ")");
   } else if (type->tag == FBLC_UNION_DECL) {
-    fprintf(stream, "%s:%s(", stype->name.name, stype->fields[value->tag].name.name);
+    fprintf(stream, "%s:%s(", DeclName(sprog, typeid), FieldName(sprog, typeid, value->tag));
     PrintValue(stream, sprog, type->fieldv[value->tag], value->fields[0]);
     fprintf(stream, ")");
   } else {
@@ -187,15 +186,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDecl* decl = NULL;
-  for (size_t i = 0; i < sprog->program->declc; ++i) {
-    if (NamesEqual(sprog->symbols[i]->name.name, entry)) {
-      decl = sprog->program->declv[i];
-      break;
-    }
-  }
-
-  if (decl == NULL) {
+  FblcDeclId decl_id = LookupDecl(sprog, entry);
+  if (decl_id == NULL_ID) {
     fprintf(stderr, "entry %s not found.\n", entry);
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
@@ -203,6 +195,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  FblcDecl* decl = sprog->program->declv[decl_id];
   FblcArena* bulk_arena_2 = CreateBulkFreeArena(gc_arena);
   FblcProcDecl* proc = NULL;
   if (decl->tag == FBLC_PROC_DECL) {

@@ -4,6 +4,9 @@ Cleanup Arc:
 * Rewrite resolver to use new definition of Symbols.
 * Rewrite checker to use new definition of Symbols.
 * Clean up all current fblc code.
+  - all non-static functions should have a proper prefix.
+  - document comments should be up to date.
+  - code should be clean.
 
 Space Invaders Arc:
 * Rewrite testfblc as fblc-test in top of fblc library.
