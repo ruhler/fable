@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
     FblcFuncDecl* func = (FblcFuncDecl*)decl;
     FblcEvalActn* body = bulk_arena_2->alloc(bulk_arena_2, sizeof(FblcEvalActn));
     body->tag = FBLC_EVAL_ACTN;
-    body->expr = func->body;
+    body->arg = func->body;
 
     proc = bulk_arena_2->alloc(bulk_arena_2, sizeof(FblcProcDecl));
     proc->tag = FBLC_PROC_DECL;

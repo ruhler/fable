@@ -250,15 +250,15 @@ static FblcExpr* ReadExpr(FblcArena* arena, BitSource* source)
       expr->tag = FBLC_UNION_EXPR;
       expr->type = ReadId(source);
       expr->field = ReadId(source);
-      expr->body = ReadExpr(arena, source);
+      expr->arg = ReadExpr(arena, source);
       return (FblcExpr*)expr;
     }
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* expr = arena->alloc(arena, sizeof(FblcAccessExpr));
       expr->tag = FBLC_ACCESS_EXPR;
-      expr->object = ReadExpr(arena, source);
       expr->field = ReadId(source);
+      expr->arg = ReadExpr(arena, source);
       return (FblcExpr*)expr;
     }
 
@@ -305,7 +305,7 @@ static FblcActn* ReadActn(FblcArena* arena, BitSource* source)
     case FBLC_EVAL_ACTN: {
       FblcEvalActn* actn = arena->alloc(arena, sizeof(FblcEvalActn));
       actn->tag = FBLC_EVAL_ACTN;
-      actn->expr = ReadExpr(arena, source);
+      actn->arg = ReadExpr(arena, source);
       return (FblcActn*)actn;
     }
 
@@ -533,14 +533,14 @@ static void WriteExpr(BitSink* sink, FblcExpr* expr)
       FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
       WriteId(sink, union_expr->type);
       WriteId(sink, union_expr->field);
-      WriteExpr(sink, union_expr->body);
+      WriteExpr(sink, union_expr->arg);
       break;
     }
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
-      WriteExpr(sink, access_expr->object);
       WriteId(sink, access_expr->field);
+      WriteExpr(sink, access_expr->arg);
       break;
     }
 
@@ -587,7 +587,7 @@ static void WriteActn(BitSink* sink, FblcActn* actn)
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
-      WriteExpr(sink, eval_actn->expr);
+      WriteExpr(sink, eval_actn->arg);
       break;
     }
 

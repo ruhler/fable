@@ -1,8 +1,14 @@
-Primary Arc:
+Cleanup Arc:
+* Define an abstract type for Symbols with Locs, Decls, and Names via GID.
+* Rewrite parser to use new definition of Symbols.
+* Rewrite resolver to use new definition of Symbols.
+* Rewrite checker to use new definition of Symbols.
+* Clean up all current fblc code.
+
+Space Invaders Arc:
 * Rewrite testfblc as fblc-test in top of fblc library.
-* Change Checker to work on FblcProgram without symbols somehow.
-* Clean up interface for loading and checking fblc text code.
-* Modify testfblc to exercise {Read,Write}{Program,Value} functions
+* Implement version of Checker that works on FblcProgram without symbols.
+* Modify fblc-test to exercise {Read,Write}{Program,Value} functions
   - even though they aren't otherwise necessary to run.
 * Remove expect_result_b tests.
 * Replace expect_result and expect_proc_result with fblc-test
@@ -40,3 +46,7 @@ Miscellanous:
 * Test that error messages don't contain garbled characters.
 
 * Write man pages for fblc and friends?
+
+* Rethink arenas and documentation, because some cases appear to assume you
+  have a bulk-free arena. Other cases its not well specified what is freed
+  explicitly and what is expected to be freed implicitly.

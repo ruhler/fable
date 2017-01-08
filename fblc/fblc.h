@@ -157,6 +157,15 @@ typedef size_t FblcVarId;
 //   ports belong to the same namespace of indices.
 typedef size_t FblcPortId;
 
+// FblcLocId --
+//   An identifier used to refer to a location in an fblc program, typically
+//   for debugging purposes. Every declaration, expression, action, and id in
+//   the program is assigned a unique FblcLocId based on its position in the
+//   program. FblcLocIds are assigned starting from 0 in order of a preorder
+//   traversal of the program's abstract syntax tree as defined by the
+//   following structures.
+typedef size_t FblcLocId;
+
 // FblcExprTag --
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
@@ -196,22 +205,22 @@ typedef struct {
 } FblcAppExpr;
 
 // FblcUnionExpr --
-//   An union expression of the form 'type:field(body)', used to construct a
+//   An union expression of the form 'type:field(arg)', used to construct a
 //   union value.
 typedef struct {
   FblcExprTag tag;
   FblcTypeId type;
   FblcFieldId field;
-  FblcExpr* body;
+  FblcExpr* arg;
 } FblcUnionExpr;
 
 // FblcAccessExpr --
-//   An access expression of the form 'object.field' used to access a field of
+//   An access expression of the form '.field(arg)' used to access a field of
 //   a struct or union value.
 typedef struct {
   FblcExprTag tag;
-  FblcExpr* object;
   FblcFieldId field;
+  FblcExpr* arg;
 } FblcAccessExpr;
 
 // FblcCondExpr --
@@ -225,10 +234,9 @@ typedef struct {
 } FblcCondExpr;
 
 // FblcLetExpr --
-//   A let expression of the form '{ type var = def; body }', where the type
-//   of the variable can be determined as the type of the def expression and
-//   the name of the variable is a De Bruijn index based on the context where
-//   the variable is accessed.
+//   A let expression of the form '{ type var = def; body }', where the name
+//   of the variable is a De Bruijn index based on the context where the
+//   variable is accessed.
 typedef struct {
   FblcExprTag tag;
   FblcExpr* def;
@@ -254,7 +262,8 @@ typedef struct {
 } FblcDecl;
 
 // FblcTypeDecl --
-//   Common structure used for struct and union declarations.
+//   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
+//   This is a common structure used for both struct and union declarations.
 typedef struct {
   FblcDeclTag tag;
   size_t fieldc;
@@ -270,7 +279,8 @@ typedef FblcTypeDecl FblcStructDecl;
 typedef FblcTypeDecl FblcUnionDecl;
 
 // FblcFuncDecl --
-//   Declaration of a function.
+//   Declaration of a function of the form:
+//     'name(arg0 name0, arg1 name1, ...; return_type) body'
 typedef struct {
   FblcDeclTag tag;
   size_t argc;
@@ -285,13 +295,6 @@ typedef enum {
   FBLC_GET_POLARITY,
   FBLC_PUT_POLARITY
 } FblcPolarity;
-
-// FblcPort --
-//   The type and polarity of a port.
-typedef struct {
-  FblcTypeId type;
-  FblcPolarity polarity;
-} FblcPort;
 
 // FblcActnTag --
 //   A tag used to distinguish among different kinds of actions.
@@ -315,11 +318,11 @@ typedef struct {
 } FblcActn;
 
 // FblcEvalActn --
-//   An evaluation action of the form '$(expr)' which evaluates the given
+//   An evaluation action of the form '$(arg)' which evaluates the given
 //   expression without side effects.
 typedef struct {
   FblcActnTag tag;
-  FblcExpr* expr;
+  FblcExpr* arg;
 } FblcEvalActn;
 
 // FblcGetActn --
@@ -382,8 +385,17 @@ typedef struct {
   FblcActn* body;
 } FblcExecActn;
 
+// FblcPort --
+//   The type and polarity of a port.
+typedef struct {
+  FblcTypeId type;
+  FblcPolarity polarity;
+} FblcPort;
+
 // FblcProcDecl --
-//   Declaration of a process.
+//   Declaration of a process of the form:
+//     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
+//           arg0 name0, arg1, name1, ... ; return_type) body'
 typedef struct {
   FblcDeclTag tag;
   size_t portc;

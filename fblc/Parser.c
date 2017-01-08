@@ -663,8 +663,8 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
       if (!GetToken(toks, '(')) {
         return NULL;
       }
-      union_expr->body = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
-      if (union_expr->body == NULL) {
+      union_expr->arg = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+      if (union_expr->arg == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ')')) {
@@ -758,8 +758,8 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
       return NULL;
     }
 
-    access_expr->object = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
-    if (access_expr->object == NULL) {
+    access_expr->arg = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+    if (access_expr->arg == NULL) {
       return NULL;
     }
 
@@ -824,8 +824,8 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    FblcExpr* expr = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
-    if (expr == NULL) {
+    FblcExpr* arg = ParseExpr(arena, toks, false, locv, locc, svarv, svarc, namev, namec);
+    if (arg == NULL) {
       return NULL;
     }
     if (!GetToken(toks, ')')) {
@@ -834,7 +834,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Lo
 
     FblcEvalActn* eval_actn = arena->alloc(arena, sizeof(FblcEvalActn));
     eval_actn->tag = FBLC_EVAL_ACTN;
-    eval_actn->expr = expr;
+    eval_actn->arg = arg;
     actn = (FblcActn*)eval_actn;
   } else if (IsToken(toks, '~')) {
     // ~name() or ~name(<expr>)

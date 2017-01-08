@@ -872,7 +872,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // object -> access -> ...
             FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
             AccessCmd* acmd = (AccessCmd*)MkAccessCmd(arena, NULL, access_expr->field, target, next);
-            next = MkExprCmd(arena, access_expr->object, &(acmd->value), (Cmd*)acmd);
+            next = MkExprCmd(arena, access_expr->arg, &(acmd->value), (Cmd*)acmd);
             break;
           }
 
@@ -885,7 +885,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             assert(decl->tag == FBLC_UNION_DECL);
             FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
             *target = FblcNewUnion(arena, union_decl->fieldc, union_expr->field, NULL);
-            next = MkExprCmd(arena, union_expr->body, (*target)->fields, next);
+            next = MkExprCmd(arena, union_expr->arg, (*target)->fields, next);
             break;
           }
 
@@ -922,7 +922,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
         switch (actn->tag) {
           case FBLC_EVAL_ACTN: {
             FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
-            next = MkExprCmd(arena, eval_actn->expr, target, next);
+            next = MkExprCmd(arena, eval_actn->arg, target, next);
             break;
           }
 

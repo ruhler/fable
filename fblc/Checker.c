@@ -282,7 +282,7 @@ static FblcTypeId CheckExpr(SProgram* sprog, Vars* vars, FblcExpr* expr, Loc** l
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
-      FblcTypeId type_id = CheckExpr(sprog, vars, access_expr->object, loc, svars);
+      FblcTypeId type_id = CheckExpr(sprog, vars, access_expr->arg, loc, svars);
       if (type_id == NULL_ID) {
         return NULL_ID;
       }
@@ -300,7 +300,7 @@ static FblcTypeId CheckExpr(SProgram* sprog, Vars* vars, FblcExpr* expr, Loc** l
       }
 
       Loc* bodyloc = *loc;
-      FblcTypeId arg_type_id = CheckExpr(sprog, vars, union_expr->body, loc, svars);
+      FblcTypeId arg_type_id = CheckExpr(sprog, vars, union_expr->arg, loc, svars);
       if (arg_type_id == NULL_ID) {
         return NULL_ID;
       }
@@ -409,7 +409,7 @@ static FblcTypeId CheckActn(SProgram* sprog, Vars* vars, Ports* ports, FblcActn*
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
-      return CheckExpr(sprog, vars, eval_actn->expr, loc, svars);
+      return CheckExpr(sprog, vars, eval_actn->arg, loc, svars);
     }
 
     case FBLC_GET_ACTN: {

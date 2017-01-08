@@ -134,7 +134,7 @@ static FblcTypeId ResolveExpr(SProgram* sprog, SName* names, Vars* vars, FblcExp
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
-      FblcTypeId type_id = ResolveExpr(sprog, names, vars, access_expr->object, svars);
+      FblcTypeId type_id = ResolveExpr(sprog, names, vars, access_expr->arg, svars);
       if (type_id == NULL_ID) {
         return NULL_ID;
       }
@@ -166,7 +166,7 @@ static FblcTypeId ResolveExpr(SProgram* sprog, SName* names, Vars* vars, FblcExp
       FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[union_expr->type];
       STypeDecl* stype = (STypeDecl*)sprog->symbols[union_expr->type];
 
-      if (ResolveExpr(sprog, names, vars, union_expr->body, svars) == NULL_ID) {
+      if (ResolveExpr(sprog, names, vars, union_expr->arg, svars) == NULL_ID) {
         return NULL_ID;
       }
 
@@ -230,7 +230,7 @@ static FblcTypeId ResolveActn(SProgram* sprog, SName* names, Vars* vars, Vars* p
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
-      return ResolveExpr(sprog, names, vars, eval_actn->expr, svars);
+      return ResolveExpr(sprog, names, vars, eval_actn->arg, svars);
     }
 
     case FBLC_GET_ACTN: {
