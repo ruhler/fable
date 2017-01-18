@@ -363,7 +363,10 @@ static FblcActn* ReadActn(FblcArena* arena, BitSource* source)
       actn->tag = FBLC_EXEC_ACTN;
       FblcVectorInit(arena, actn->execv, actn->execc);
       do { 
-        FblcVectorAppend(arena, actn->execv, actn->execc, ReadActn(arena, source));
+        FblcVectorExtend(arena, actn->execv, actn->execc);
+        FblcExec* exec = actn->execv + actn->execc++;
+        exec->type = ReadId(source);
+        exec->actn = ReadActn(arena, source);
       } while (ReadBits(source, 1));
       actn->body = ReadActn(arena, source);
       return (FblcActn*)actn;
@@ -643,10 +646,12 @@ static void WriteActn(BitSink* sink, FblcActn* actn)
     case FBLC_EXEC_ACTN: {
       FblcExecActn* exec_actn = (FblcExecActn*)actn;
       assert(exec_actn->execc > 0);
-      WriteActn(sink, exec_actn->execv[0]);
+      WriteId(sink, exec_actn->execv[0].type);
+      WriteActn(sink, exec_actn->execv[0].actn);
       for (size_t i = 1; i < exec_actn->execc; ++i) {
         WriteBits(sink, 1, 1);
-        WriteActn(sink, exec_actn->execv[i]);
+        WriteId(sink, exec_actn->execv[i].type);
+        WriteActn(sink, exec_actn->execv[i].actn);
       }
       WriteBits(sink, 1, 0);
       WriteActn(sink, exec_actn->body);

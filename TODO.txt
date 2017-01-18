@@ -1,12 +1,15 @@
 Cleanup Arc:
-* Define an abstract type for Symbols with Locs, Decls, and Names via GID.
-* Rewrite parser to use new definition of Symbols.
-* Rewrite resolver to use new definition of Symbols.
-* Rewrite checker to use new definition of Symbols.
+* Add tests for code coverage:
+  - wrong number of arguments to call (check.c:485)
+  - syntax errors in parsing of access expr and others.
+  - call on undefined decl (resolve.c:391)
+  - redefinition of port (resolve.c:432)
 * Clean up all current fblc code.
   - all non-static functions should have a proper prefix.
-  - document comments should be up to date.
+  - document comments should be present and up to date.
   - code should be clean.
+  - filenames are lowercase nouns.
+  - use of size_t instead of int where appropriate
 
 Space Invaders Arc:
 * Rewrite testfblc as fblc-test in top of fblc library.
@@ -53,3 +56,26 @@ Miscellanous:
 * Rethink arenas and documentation, because some cases appear to assume you
   have a bulk-free arena. Other cases its not well specified what is freed
   explicitly and what is expected to be freed implicitly.
+
+* Reorder count and vector in FblcVector macros.
+
+* In Parser have the caller parse the trailing semicolon for expressions
+  intstead of the callee? That way we can return the expression right away in
+  every branch.
+
+Future:
+* Implement compiler to C. Idea is translate a function body into a sequence
+  of commands like we have in the current interpreter. Split the command
+  sequence into blocks any place there is a function call. Gather up all the
+  blocks of all the command sequences in the program, give each a unique name
+  starting from zero, then generate a loop containing one large switch
+  statement with a case for each block. Global state is a list of thread
+  contexts. Thread context is a frame, which has variables, ports, the id of
+  the block that currently needs to be executed, and a pointer to the frame to
+  execute after executing this block.
+
+* Implement compiler to hardware. Same idea as compiler to C: break up into
+  blocks. Now each block can be its own hardware block. Frames are queued up
+  at their block, all blocks can execute in parallel as inputs are available,
+  and we can pipeline or duplicate the blocks to allow for even more
+  parallelism.

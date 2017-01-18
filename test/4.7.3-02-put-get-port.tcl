@@ -12,4 +12,4 @@ set prg {
 }
 
 # TODO: Is this the best error location to use?
-fblc-check-error $prg 6:5
+fblc-check-error $prg 6:6

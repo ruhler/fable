@@ -1015,7 +1015,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
               nvars = AddVar(arena, nvars);
               FblcValue** target = LookupRef(nvars, 0);
               AddThread(threads, NewThread(arena, thread->vars, thread->ports,
-                    MkActnCmd(arena, exec_actn->execv[i], target, jcmd)));
+                    MkActnCmd(arena, exec_actn->execv[i].actn, target, jcmd)));
             }
             scmd->vars = nvars;
             next = NULL;

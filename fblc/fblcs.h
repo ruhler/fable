@@ -29,44 +29,13 @@ typedef struct SName {
 // Note that NULL_ID does not have the same value as NULL.
 #define NULL_ID (-1)
 
-typedef struct {
-  SName type;
-  SName name;
-} SVar;
-
-typedef struct {
-  SName name;
-} SDecl;
-
-typedef struct {
-  SName name;
-  SVar* fields;
-} STypeDecl;
-
-typedef struct {
-  SName name;
-  size_t locc;
-  Loc* locv;  // locations of all expressions in body.
-  size_t svarc;
-  SVar* svarv; // types and names of all local variables in order they appear.
-} SFuncDecl;
-
-typedef struct {
-  SName name;
-  size_t locc;
-  Loc* locv;  // locations of all actions and expressions in body.
-  size_t svarc;
-  SVar* svarv; // types and names of all local variables in order they appear.
-  size_t sportc;  // types and names of all ports in order they appear.
-  SVar* sportv;
-} SProcDecl;
+typedef struct Symbols Symbols;
 
 // SProgram --
 //   An FblcProgram augmented with symbols information.
 typedef struct {
   FblcProgram* program;
-  SDecl** symbols;
-  SName* names;     // Names passed from parser to resolve.
+  Symbols* symbols;
 } SProgram;
 
 // Parser
@@ -86,6 +55,7 @@ FblcValue* ParseValueFromString(FblcArena* arena, SProgram* sprog, FblcTypeId ty
 //
 // Side effects:
 //   IDs in the program are resolved.
+//   Prints error messages to stderr in case of error.
 bool ResolveProgram(SProgram* sprog);
 
 // Checker
@@ -110,7 +80,23 @@ bool CheckProgram(SProgram* sprog);
 SProgram* SLoadProgram(FblcArena* arena, const char* filename);
 
 // Symbols
+Symbols* NewSymbols(FblcArena* arena);
+void SetLocExpr(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, Loc* loc);
+void SetLocActn(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, Loc* loc);
+void SetLocId(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* name);
+void SetLocTypedId(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* type, SName* name);
+void SetLocLink(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* type, SName* get, SName* put);
+void SetLocDecl(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* name, FblcDeclId decl_id);
+
+Loc* LocIdLoc(Symbols* symbols, FblcLocId loc_id);
+SName* LocIdName(Symbols* symbols, FblcLocId loc_id);
+SName* LocIdType(Symbols* symbols, FblcLocId loc_id);
+SName* LocIdLinkGet(Symbols* symbols, FblcLocId loc_id);
+SName* LocIdLinkPut(Symbols* symbols, FblcLocId loc_id);
+
 Name DeclName(SProgram* sprog, FblcDeclId decl_id);
 Name FieldName(SProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);
-FblcDeclId LookupDecl(SProgram* sprog, Name name);
+FblcLocId DeclLocId(SProgram* sprog, FblcDeclId decl_id);
+FblcDeclId SLookupDecl(SProgram* sprog, Name name);
+FblcFieldId SLookupField(SProgram* sprog, FblcDeclId decl_id, Name field);
 #endif  // FBLCS_H_

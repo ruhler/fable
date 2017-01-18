@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDeclId decl_id = LookupDecl(sprog, entry);
+  FblcDeclId decl_id = SLookupDecl(sprog, entry);
   if (decl_id == NULL_ID) {
     fprintf(stderr, "entry %s not found.\n", entry);
     FreeBulkFreeArena(bulk_arena);

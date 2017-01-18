@@ -12,4 +12,4 @@ set prg {
   };
 }
 # TODO: Fix the error location
-fblc-check-error $prg 11:5
+fblc-check-error $prg 11:9

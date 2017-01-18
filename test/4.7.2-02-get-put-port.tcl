@@ -11,5 +11,4 @@ set prg {
   };
 }
 
-# TODO: Is this the right location for the error message?
-fblc-check-error $prg 6:5
+fblc-check-error $prg 6:6

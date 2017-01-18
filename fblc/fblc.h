@@ -72,7 +72,7 @@ typedef struct FblcArena {
 //   This array initially has size 0 and capacity 1.
 #define FblcVectorInit(arena, vector, size) \
   size = 0; \
-  vector = arena->alloc(arena, sizeof(*vector))
+  (vector) = arena->alloc(arena, sizeof(*(vector)))
 
 // FblcVectorExtend --
 //   Extend a vector's capacity if necessary to ensure it has space for more
@@ -99,10 +99,10 @@ typedef struct FblcArena {
 //   incremented.
 #define FblcVectorExtend(arena, vector, size) \
   if ((size) > 0 && (((size) & ((size)-1)) == 0)) { \
-    void* resized = arena->alloc(arena, 2 * (size) * sizeof(*vector)); \
-    memcpy(resized, vector, (size) * sizeof(*vector)); \
+    void* resized = arena->alloc(arena, 2 * (size) * sizeof(*(vector))); \
+    memcpy(resized, vector, (size) * sizeof(*(vector))); \
     arena->free(arena, vector); \
-    vector = resized; \
+    (vector) = resized; \
   }
 
 // FblcVectorAppend --
@@ -123,7 +123,7 @@ typedef struct FblcArena {
 //   necessary, the array is re-allocated to make space for the new element.
 #define FblcVectorAppend(arena, vector, size, elem) \
   FblcVectorExtend(arena, vector, size); \
-  vector[(size)++] = elem
+  (vector)[(size)++] = elem
 
 // FblcDeclId --
 //   Declarations are identified using the order in which they are defined in
@@ -239,6 +239,7 @@ typedef struct {
 //   variable is accessed.
 typedef struct {
   FblcExprTag tag;
+  FblcTypeId type;
   FblcExpr* def;
   FblcExpr* body;
 } FblcLetExpr;
@@ -372,16 +373,21 @@ typedef struct {
   FblcActn* body;
 } FblcLinkActn;
 
+// FblcExec --
+//   Pair of type and action used in the FblcExecActn.
+typedef struct {
+  FblcTypeId type;
+  FblcActn* actn;
+} FblcExec;
+
 // FblcExecActn --
 //   An exec action of the form 'type0 var0 = exec0, type1 var1 = exec1, ...; body',
-//   which executes processes in parallel. The types of the variables can be
-//   determined as the types of their exec processes, and the name of the
-//   variables are De Bruijn indices based ont he context where they are
-//   accessed.
+//   which executes processes in parallel. The names of the variables are De
+//   Bruijn indices based ont he context where they are accessed.
 typedef struct {
   FblcActnTag tag;
   size_t execc;
-  FblcActn** execv;
+  FblcExec* execv;
   FblcActn* body;
 } FblcExecActn;
 

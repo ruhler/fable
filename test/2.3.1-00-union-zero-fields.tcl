@@ -7,6 +7,6 @@ set prg {
     Unit();
   };
 }
-# TODO: Should the erro be at the NoFields, the open paren, or the close
+# TODO: Should the error be at the NoFields, the open paren, or the close
 # paren?
-fblc-check-error $prg 4:9
+fblc-check-error $prg 4:18
