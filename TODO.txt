@@ -1,9 +1,4 @@
 Cleanup Arc:
-* Add tests for code coverage:
-  - wrong number of arguments to call (check.c:485)
-  - syntax errors in parsing of access expr and others.
-  - call on undefined decl (resolve.c:391)
-  - redefinition of port (resolve.c:432)
 * Clean up all current fblc code.
   - all non-static functions should have a proper prefix.
   - document comments should be present and up to date.
