@@ -3,8 +3,6 @@ Cleanup Arc:
   - all non-static functions should have a proper prefix.
   - document comments should be present and up to date.
   - code should be clean.
-  - filenames are lowercase nouns.
-  - use of size_t instead of int where appropriate
 
 Space Invaders Arc:
 * Rewrite testfblc as fblc-test in top of fblc library.

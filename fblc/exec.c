@@ -178,7 +178,7 @@ typedef struct {
 typedef struct {
   CmdTag tag;
   struct Cmd* next;
-  int count;
+  size_t count;
 } JoinCmd;
 
 // CMD_PUT: The put command puts a value onto a link and into the target.
@@ -812,7 +812,7 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 //   Performs arena allocations.
 static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread* thread)
 {
-  for (int i = 0; i < 1024 && thread->cmd != NULL; i++) {
+  for (size_t i = 0; i < 1024 && thread->cmd != NULL; ++i) {
     Cmd* next = thread->cmd->next;
     switch (thread->cmd->tag) {
       case CMD_EXPR: {
@@ -1204,7 +1204,7 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
     thread = GetThread(&threads);
   }
 
-  for (int i = 0; i < proc->portc; i++) {
+  for (size_t i = 0; i < proc->portc; ++i) {
     FreeLink(arena, links[i]);
   }
   return result;

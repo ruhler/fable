@@ -69,7 +69,7 @@ static void PrintValue(FILE* stream, SProgram* sprog, FblcTypeId typeid, FblcVal
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[typeid];
   if (type->tag == FBLC_STRUCT_DECL) {
     fprintf(stream, "%s(", DeclName(sprog, typeid));
-    for (int i = 0; i < type->fieldc; i++) {
+    for (size_t i = 0; i < type->fieldc; ++i) {
       if (i > 0) {
         fprintf(stream, ",");
       }

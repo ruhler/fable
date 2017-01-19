@@ -449,7 +449,7 @@ static FblcTypeId ResolveActn(SProgram* sprog, Vars* vars, Vars* ports, FblcLocI
       FblcExecActn* exec_actn = (FblcExecActn*)actn;
       Vars vars_data[exec_actn->execc];
       Vars* nvars = vars;
-      for (int i = 0; i < exec_actn->execc; i++) {
+      for (size_t i = 0; i < exec_actn->execc; ++i) {
         FblcExec* exec = exec_actn->execv + i;
         SName* var = LocIdName(sprog->symbols, *loc_id);
         exec->type = LookupType(sprog, (*loc_id)++);
