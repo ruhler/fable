@@ -15,8 +15,7 @@ typedef struct Vars {
 } Vars;
 
 static Vars* AddVar(Vars* vars, FblcTypeId type, Name name, Vars* next);
-static FblcTypeId LookupType(SProgram* sprog, FblcLocId loc_id);
-static FblcTypeId LookupTypeByName(SProgram* sprog, FblcLocId loc_id);
+static FblcTypeId LookupType(SProgram* sprog, SName* type);
 static FblcFieldId LookupField(SProgram* sprog, FblcTypeId type_id, FblcLocId loc_id);
 static FblcTypeId FieldType(SProgram* sprog, FblcTypeId type_id, FblcFieldId field_id);
 static FblcTypeId ResolveExpr(SProgram* sprog, Vars* vars, FblcLocId* loc_id, FblcExpr* expr);
@@ -44,11 +43,11 @@ static Vars* AddVar(Vars* vars, FblcTypeId type, Name name, Vars* next)
 }
 
 // LookupType --
-//   Look up the type id for the type referred to from the given location.
+//   Look up the type id for the give type name.
 //
 // Inputs:
 //   sprog - The program environment.
-//   loc_id - The location of an id node in the program that names a type.
+//   type - The name and location of the type to look up.
 //
 // Results:
 //   The type id corresponding to the type referred to at that given location
@@ -56,35 +55,8 @@ static Vars* AddVar(Vars* vars, FblcTypeId type, Name name, Vars* next)
 //
 // Side effects:
 //   Prints an error message to stderr in the case of an error.
-
-static FblcTypeId LookupType(SProgram* sprog, FblcLocId loc_id)
+static FblcTypeId LookupType(SProgram* sprog, SName* type)
 {
-  SName* type = LocIdType(sprog->symbols, loc_id);
-  FblcTypeId id = SLookupDecl(sprog, type->name);
-  if (id == NULL_ID) {
-    ReportError("Type %s not declared.\n", type->loc, type->name);
-    return NULL_ID;
-  }
-  return id;
-}
-
-// LookupTypeByName --
-//   Look up the type id for the type name referred to from the given location.
-//
-// Inputs:
-//   sprog - The program environment.
-//   loc_id - The location of an id node in the program that names a type.
-//
-// Results:
-//   The type id corresponding to the name referred to at that given location
-//   of the program, or NULL_ID if there is an error.
-//
-// Side effects:
-//   Prints an error message to stderr in the case of an error.
-
-static FblcTypeId LookupTypeByName(SProgram* sprog, FblcLocId loc_id)
-{
-  SName* type = LocIdName(sprog->symbols, loc_id);
   FblcTypeId id = SLookupDecl(sprog, type->name);
   if (id == NULL_ID) {
     ReportError("Type %s not declared.\n", type->loc, type->name);
@@ -140,7 +112,8 @@ static FblcTypeId FieldType(SProgram* sprog, FblcTypeId type_id, FblcFieldId fie
   assert(type_id < sprog->program->declc);
   FblcDecl* decl = sprog->program->declv[type_id];
   assert(decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL);
-  return LookupType(sprog, DeclLocId(sprog, type_id) + 1 + field_id);
+  SName* type = LocIdType(sprog->symbols, DeclLocId(sprog, type_id) + 1 + field_id);
+  return LookupType(sprog, type);
 }
 
 // ReturnType --
@@ -173,12 +146,14 @@ FblcTypeId ReturnType(SProgram* sprog, FblcDeclId decl_id)
 
     case FBLC_FUNC_DECL: {
       FblcFuncDecl* func = (FblcFuncDecl*)decl;
-      return LookupTypeByName(sprog, DeclLocId(sprog, decl_id) + 1 + func->argc);
+      SName* type = LocIdName(sprog->symbols, DeclLocId(sprog, decl_id) + 1 + func->argc);
+      return LookupType(sprog, type);
     }
 
     case FBLC_PROC_DECL: {
       FblcProcDecl* proc = (FblcProcDecl*)decl;
-      return LookupTypeByName(sprog, DeclLocId(sprog, decl_id) + 1 + proc->portc + proc->argc);
+      SName* type = LocIdName(sprog->symbols, DeclLocId(sprog, decl_id) + 1 + proc->portc + proc->argc);
+      return LookupType(sprog, type);
     }
 
     default: {
@@ -259,7 +234,8 @@ static FblcTypeId ResolveExpr(SProgram* sprog, Vars* vars, FblcLocId* loc_id, Fb
 
     case FBLC_UNION_EXPR: {
       FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
-      union_expr->type = LookupTypeByName(sprog, (*loc_id)++);
+      SName* type = LocIdName(sprog->symbols, (*loc_id)++);
+      union_expr->type = LookupType(sprog, type);
       if (union_expr->type == NULL_ID) {
         return NULL_ID;
       }
@@ -278,7 +254,8 @@ static FblcTypeId ResolveExpr(SProgram* sprog, Vars* vars, FblcLocId* loc_id, Fb
     case FBLC_LET_EXPR: {
       FblcLetExpr* let_expr = (FblcLetExpr*)expr;
       SName* var = LocIdName(sprog->symbols, *loc_id);
-      let_expr->type = LookupType(sprog, (*loc_id)++);
+      SName* type = LocIdType(sprog->symbols, (*loc_id)++);
+      let_expr->type = LookupType(sprog, type);
       if (let_expr->type == NULL_ID) {
         return NULL_ID;
       }
@@ -422,7 +399,8 @@ static FblcTypeId ResolveActn(SProgram* sprog, Vars* vars, Vars* ports, FblcLocI
       FblcLinkActn* link_actn = (FblcLinkActn*)actn;
       SName* get = LocIdLinkGet(sprog->symbols, *loc_id);
       SName* put = LocIdLinkPut(sprog->symbols, *loc_id);
-      link_actn->type = LookupType(sprog, (*loc_id)++);
+      SName* type = LocIdType(sprog->symbols, (*loc_id)++);
+      link_actn->type = LookupType(sprog, type);
       if (link_actn->type == NULL_ID) {
         return NULL_ID;
       }
@@ -452,7 +430,8 @@ static FblcTypeId ResolveActn(SProgram* sprog, Vars* vars, Vars* ports, FblcLocI
       for (size_t i = 0; i < exec_actn->execc; ++i) {
         FblcExec* exec = exec_actn->execv + i;
         SName* var = LocIdName(sprog->symbols, *loc_id);
-        exec->type = LookupType(sprog, (*loc_id)++);
+        SName* type = LocIdType(sprog->symbols, (*loc_id)++);
+        exec->type = LookupType(sprog, type);
         if (ResolveActn(sprog, vars, ports, loc_id, exec->actn) == NULL_ID) {
           return NULL_ID;
         }
@@ -525,7 +504,8 @@ bool ResolveProgram(SProgram* sprog)
         Vars* vars = NULL;
         for (size_t i = 0; i < func->argc; ++i) {
           SName* var = LocIdName(sprog->symbols, loc_id);
-          func->argv[i] = LookupType(sprog, loc_id++);
+          SName* type = LocIdType(sprog->symbols, loc_id++);
+          func->argv[i] = LookupType(sprog, type);
           if (func->argv[i] == NULL_ID) {
             return false;
           }
@@ -538,7 +518,8 @@ bool ResolveProgram(SProgram* sprog)
           vars = AddVar(nvars+i, func->argv[i], var->name, vars);
         }
 
-        func->return_type = LookupTypeByName(sprog, loc_id++);
+        SName* return_type = LocIdName(sprog->symbols, loc_id++);
+        func->return_type = LookupType(sprog, return_type);
         if (func->return_type == NULL_ID) {
           return false;
         }
@@ -555,7 +536,8 @@ bool ResolveProgram(SProgram* sprog)
         Vars* ports = NULL;
         for (size_t i = 0; i < proc->portc; ++i) {
           SName* port = LocIdName(sprog->symbols, loc_id);
-          proc->portv[i].type = LookupType(sprog, loc_id++);
+          SName* type = LocIdType(sprog->symbols, loc_id++);
+          proc->portv[i].type = LookupType(sprog, type);
           if (proc->portv[i].type == NULL_ID) {
             return false;
           }
@@ -572,7 +554,8 @@ bool ResolveProgram(SProgram* sprog)
         Vars* vars = NULL;
         for (size_t i = 0; i < proc->argc; ++i) {
           SName* var = LocIdName(sprog->symbols, loc_id);
-          proc->argv[i] = LookupType(sprog, loc_id++);
+          SName* type = LocIdType(sprog->symbols, loc_id++);
+          proc->argv[i] = LookupType(sprog, type);
           if (proc->argv[i] == NULL_ID) {
             return false;
           }
@@ -585,7 +568,8 @@ bool ResolveProgram(SProgram* sprog)
           vars = AddVar(nvars+i, proc->argv[i], var->name, vars);
         }
 
-        proc->return_type = LookupTypeByName(sprog, loc_id++);
+        SName* return_type = LocIdName(sprog->symbols, loc_id++);
+        proc->return_type = LookupType(sprog, return_type);
         if (proc->return_type == NULL_ID) {
           return false;
         }
