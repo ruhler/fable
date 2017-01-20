@@ -14,13 +14,13 @@
 //   User data for IOPorts.
 typedef struct {
   FblcArena* arena;
-  SProgram* sprog;
+  FblcsProgram* sprog;
   FblcTypeId type;
   int fd;
 } PortData;
 
 static void PrintUsage(FILE* stream);
-static void PrintValue(FILE* stream, SProgram* sprog, FblcTypeId typeid, FblcValue* value);
+static void PrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId typeid, FblcValue* value);
 static FblcValue* GetIO(void* data, FblcValue* value);
 static FblcValue* PutIO(void* data, FblcValue* value);
 int main(int argc, char* argv[]);
@@ -64,7 +64,7 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   The value is printed to the given file stream.
-static void PrintValue(FILE* stream, SProgram* sprog, FblcTypeId typeid, FblcValue* value)
+static void PrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId typeid, FblcValue* value)
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[typeid];
   if (type->tag == FBLC_STRUCT_DECL) {
@@ -110,7 +110,7 @@ static FblcValue* GetIO(void* data, FblcValue* value)
   fds.revents = 0;
   poll(&fds, 1, 0);
   if (fds.revents & POLLIN) {
-    return ParseValue(port_data->arena, port_data->sprog, port_data->type, port_data->fd);
+    return FblcsParseValue(port_data->arena, port_data->sprog, port_data->type, port_data->fd);
   }
   return NULL;
 }
@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  SProgram* sprog = SLoadProgram(bulk_arena, filename);
+  FblcsProgram* sprog = FblcsLoadProgram(bulk_arena, filename);
   if (sprog == NULL) {
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
@@ -186,8 +186,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDeclId decl_id = SLookupDecl(sprog, entry);
-  if (decl_id == NULL_ID) {
+  FblcDeclId decl_id = FblcsLookupDecl(sprog, entry);
+  if (decl_id == FBLC_NULL_ID) {
     fprintf(stderr, "entry %s not found.\n", entry);
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
@@ -235,7 +235,7 @@ int main(int argc, char* argv[])
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = ParseValueFromString(gc_arena, sprog, proc->argv[i], argv[i]);
+    args[i] = FblcsParseValueFromString(gc_arena, sprog, proc->argv[i], argv[i]);
   }
 
   FblcIOPort ports[proc->portc];

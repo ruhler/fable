@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
   GcInit();
   FblcArena* gc_arena = CreateGcArena();
   FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  SProgram* sprog = SLoadProgram(bulk_arena, filename);
+  FblcsProgram* sprog = FblcsLoadProgram(bulk_arena, filename);
   if (sprog == NULL) {
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);

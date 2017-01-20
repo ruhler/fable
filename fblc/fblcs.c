@@ -10,43 +10,14 @@
 #include "fblcs.h"
 
 
-// NamesEqual --
-//
-//   Test whether two names are the same.
-//
-// Inputs:
-//   a - The first name for the comparison.
-//   b - The second name for the comparison.
-//
-// Result:
-//   The value true if the names 'a' and 'b' are the same, false otherwise.
-//
-// Side effects:
-//   None
-
-bool NamesEqual(Name a, Name b)
+// FblcsNamesEqual -- see documentation in fblcs.h
+bool FblcsNamesEqual(FblcsName a, FblcsName b)
 {
   return strcmp(a, b) == 0;
 }
 
-// ReportError --
-//
-//   Prints a formatted error message to standard error with location
-//   information. The format is the same as for printf, with the first
-//   argument for conversion following the loc argument.
-//   
-// Inputs:
-//   format - A printf style format string.
-//   loc - The location associated with the error.
-//   ... - Subsequent arguments for conversion based on the format string.
-//
-// Result:
-//   None.
-//
-// Side effects:
-//   Prints an error message to standard error.
-
-void ReportError(const char* format, Loc* loc, ...)
+// FblcsReportError -- see documentation in fblcs.h
+void FblcsReportError(const char* format, FblcsLoc* loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
@@ -75,14 +46,14 @@ typedef struct {
 //   A symbol that stores information about a location only.
 typedef struct {
   SymbolTag tag;
-  Loc loc;
+  FblcsLoc loc;
 } LocSymbol;
 
 // IdSymbol --
 //   A symbol that stores information about a location and a name.
 typedef struct {
   SymbolTag tag;
-  SName name;
+  FblcsNameL name;
 } IdSymbol;
 
 // TypedIdSymbol --
@@ -90,8 +61,8 @@ typedef struct {
 //   type.
 typedef struct {
   SymbolTag tag;
-  SName name;
-  SName type;
+  FblcsNameL name;
+  FblcsNameL type;
 } TypedIdSymbol;
 
 // LinkSymbol --
@@ -99,25 +70,25 @@ typedef struct {
 //   type, get port name, and put port name.
 typedef struct {
   SymbolTag tag;
-  SName type;
-  SName get;
-  SName put;
+  FblcsNameL type;
+  FblcsNameL get;
+  FblcsNameL put;
 } LinkSymbol;
 
 // DeclSymbol --
 //   A symbol that stores information for a declaration.
 typedef struct {
   SymbolTag tag;
-  SName name;
+  FblcsNameL name;
   FblcDeclId decl_id;
 } DeclSymbol;
 
-// Symbols --
+// FblcsSymbols --
 //   Information associated with each location id in a program.
 //
 // symbolc/symbolv - A vector of symbol information indexed by FblcLocId.
 // declc/declv - A vector mapping FblcDeclId to corresponding FblcLocId.
-struct Symbols {
+struct FblcsSymbols {
   size_t symbolc;
   Symbol** symbolv;
 
@@ -125,15 +96,15 @@ struct Symbols {
   FblcLocId* declv;
 };
 
-Symbols* NewSymbols(FblcArena* arena)
+FblcsSymbols* NewSymbols(FblcArena* arena)
 {
-  Symbols* symbols = arena->alloc(arena, sizeof(Symbols));
+  FblcsSymbols* symbols = arena->alloc(arena, sizeof(FblcsSymbols));
   FblcVectorInit(arena, symbols->symbolv, symbols->symbolc);
   FblcVectorInit(arena, symbols->declv, symbols->declc);
   return symbols;
 }
 
-static void SetLocSymbol(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, Symbol* symbol)
+static void SetLocSymbol(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Symbol* symbol)
 {
   while (loc_id >= symbols->symbolc) {
     FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, NULL);
@@ -143,7 +114,7 @@ static void SetLocSymbol(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, S
   symbols->symbolv[loc_id] = symbol;
 }
 
-static void SetLocLoc(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, Loc* loc)
+static void SetLocLoc(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
 {
   LocSymbol* symbol = arena->alloc(arena, sizeof(LocSymbol));
   symbol->tag = LOC_SYMBOL;
@@ -153,17 +124,17 @@ static void SetLocLoc(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, Loc*
   SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
 }
 
-void SetLocExpr(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, Loc* loc)
+void SetLocExpr(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
 {
   SetLocLoc(arena, symbols, loc_id, loc);
 }
 
-void SetLocActn(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, Loc* loc)
+void SetLocActn(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
 {
   SetLocLoc(arena, symbols, loc_id, loc);
 }
 
-void SetLocId(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* name)
+void SetLocId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name)
 {
   IdSymbol* symbol = arena->alloc(arena, sizeof(IdSymbol));
   symbol->tag = ID_SYMBOL;
@@ -172,7 +143,7 @@ void SetLocId(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* name)
   SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
 }
 
-void SetLocTypedId(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* type, SName* name)
+void SetLocTypedId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* name)
 {
   TypedIdSymbol* symbol = arena->alloc(arena, sizeof(TypedIdSymbol));
   symbol->tag = TYPED_ID_SYMBOL;
@@ -183,7 +154,7 @@ void SetLocTypedId(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* 
   SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
 }
 
-void SetLocLink(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* type, SName* get, SName* put)
+void SetLocLink(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* get, FblcsNameL* put)
 {
   LinkSymbol* symbol = arena->alloc(arena, sizeof(LinkSymbol));
   symbol->tag = LINK_SYMBOL;
@@ -196,7 +167,7 @@ void SetLocLink(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* typ
   SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
 }
 
-void SetLocDecl(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* name, FblcDeclId decl_id)
+void SetLocDecl(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name, FblcDeclId decl_id)
 {
   DeclSymbol* symbol = arena->alloc(arena, sizeof(DeclSymbol));
   symbol->tag = DECL_SYMBOL;
@@ -206,13 +177,13 @@ void SetLocDecl(FblcArena* arena, Symbols* symbols, FblcLocId loc_id, SName* nam
   SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
 
   while (decl_id >= symbols->declc) {
-    FblcVectorAppend(arena, symbols->declv, symbols->declc, NULL_ID);
+    FblcVectorAppend(arena, symbols->declv, symbols->declc, FBLC_NULL_ID);
   }
   assert(decl_id < symbols->declc);
   symbols->declv[decl_id] = loc_id;
 }
 
-Loc* LocIdLoc(Symbols* symbols, FblcLocId loc_id)
+FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
   Symbol* symbol = symbols->symbolv[loc_id];
@@ -223,7 +194,7 @@ Loc* LocIdLoc(Symbols* symbols, FblcLocId loc_id)
   return LocIdName(symbols, loc_id)->loc;
 }
 
-SName* LocIdName(Symbols* symbols, FblcLocId loc_id)
+FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
   Symbol* symbol = symbols->symbolv[loc_id];
@@ -257,7 +228,7 @@ SName* LocIdName(Symbols* symbols, FblcLocId loc_id)
   return NULL;
 }
 
-SName* LocIdType(Symbols* symbols, FblcLocId loc_id)
+FblcsNameL* LocIdType(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
   Symbol* symbol = symbols->symbolv[loc_id];
@@ -291,7 +262,7 @@ SName* LocIdType(Symbols* symbols, FblcLocId loc_id)
   return NULL;
 }
 
-SName* LocIdLinkGet(Symbols* symbols, FblcLocId loc_id)
+FblcsNameL* LocIdLinkGet(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
   Symbol* symbol = symbols->symbolv[loc_id];
@@ -303,7 +274,7 @@ SName* LocIdLinkGet(Symbols* symbols, FblcLocId loc_id)
   return NULL;
 }
 
-SName* LocIdLinkPut(Symbols* symbols, FblcLocId loc_id)
+FblcsNameL* LocIdLinkPut(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
   Symbol* symbol = symbols->symbolv[loc_id];
@@ -316,41 +287,41 @@ SName* LocIdLinkPut(Symbols* symbols, FblcLocId loc_id)
 }
 
 // DeclName -- See documentation in fblcs.h
-Name DeclName(SProgram* sprog, FblcDeclId decl_id)
+FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
   return LocIdName(sprog->symbols, DeclLocId(sprog, decl_id))->name;
 }
 
 // FieldName -- See documentation in fblcs.h
-Name FieldName(SProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
+FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
 {
   return LocIdName(sprog->symbols, DeclLocId(sprog, decl_id) + field_id + 1)->name;
 }
 
-FblcLocId DeclLocId(SProgram* sprog, FblcDeclId decl_id)
+FblcLocId DeclLocId(FblcsProgram* sprog, FblcDeclId decl_id)
 {
   return sprog->symbols->declv[decl_id];
 }
 
 // LookupDecl -- See documentation in fblcs.h
-FblcDeclId SLookupDecl(SProgram* sprog, Name name)
+FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
 {
   for (FblcDeclId i = 0; i < sprog->program->declc; ++i) {
-    if (NamesEqual(DeclName(sprog, i), name)) {
+    if (FblcsNamesEqual(DeclName(sprog, i), name)) {
       return i;
     }
   }
-  return NULL_ID;
+  return FBLC_NULL_ID;
 }
 
-FblcFieldId SLookupField(SProgram* sprog, FblcDeclId decl_id, Name field)
+FblcFieldId SLookupField(FblcsProgram* sprog, FblcDeclId decl_id, FblcsName field)
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[decl_id];
   assert(type->tag == FBLC_STRUCT_DECL || type->tag == FBLC_UNION_DECL);
   for (FblcFieldId i = 0; i < type->fieldc; ++i) {
-    if (NamesEqual(FieldName(sprog, decl_id, i), field)) {
+    if (FblcsNamesEqual(FieldName(sprog, decl_id, i), field)) {
       return i;
     }
   }
-  return NULL_ID;
+  return FBLC_NULL_ID;
 }

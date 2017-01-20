@@ -5,19 +5,19 @@
 
 #include "fblcs.h"
 
-// SLoadProgram -- see documentation in fblcs.h
-SProgram* SLoadProgram(FblcArena* arena, const char* filename)
+// FblcsLoadProgram -- see documentation in fblcs.h
+FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename)
 {
-  SProgram* sprog = ParseProgram(arena, filename);
+  FblcsProgram* sprog = FblcsParseProgram(arena, filename);
   if (sprog == NULL) {
     return NULL;
   }
 
-  if (!ResolveProgram(sprog)) {
+  if (!FblcsResolveProgram(sprog)) {
     return NULL;
   }
 
-  if (!CheckProgram(sprog)) {
+  if (!FblcsCheckProgram(sprog)) {
     return NULL;
   }
   return sprog;

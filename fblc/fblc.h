@@ -166,6 +166,11 @@ typedef size_t FblcPortId;
 //   following structures.
 typedef size_t FblcLocId;
 
+// FBLC_NULL_ID -- 
+//   A sentinel value that can be used for ids to indicate an otherwise
+//   invalid id. Note that FBLC_NULL_ID does not have the same value as NULL.
+#define FBLC_NULL_ID (-1)
+
 // FblcExprTag --
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
