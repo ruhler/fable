@@ -1,6 +1,5 @@
-
-# Test that references to get ports are properly linked with their source.
 set prg {
+  # Test that references to get ports are properly linked with their source.
   struct Unit();
   union Bool(Unit true, Unit false);
 
