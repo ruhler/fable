@@ -52,14 +52,14 @@ static bool IsNameToken(TokenStream* toks);
 static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* name);
 static void UnexpectedToken(TokenStream* toks, const char* expected);
 
-static bool ParseId(FblcArena* arena, TokenStream* toks, const char* expected, FblcLocId* loc_id, FblcsSymbols* symbols);
-static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcLocId* loc_id, FblcsSymbols* symbols);
-static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcLocId* loc_id, FblcsSymbols* symbols);
-static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* type, FblcLocId* loc_id, FblcsSymbols* symbols);
-static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv);
-static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv);
-static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcLocId* loc_id, FblcsSymbols* symbols);
-static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcLocId* loc_id, FblcsSymbols* symbols);
+static bool ParseId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsSymbols* symbols);
+static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcsSymbols* symbols);
+static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsSymbols* symbols);
+static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* type, FblcsSymbols* symbols);
+static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv);
+static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv);
+static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsSymbols* symbols);
+static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsSymbols* symbols);
 
 // CurrChar --
 //   Look at the character at the front of the token stream's file.
@@ -433,7 +433,6 @@ static void UnexpectedToken(TokenStream* toks, const char* expected)
 //   toks - The token stream to parse the arguments from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a type name".
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //
 // Returns:
@@ -441,9 +440,9 @@ static void UnexpectedToken(TokenStream* toks, const char* expected)
 //
 // Side effects:
 //   Parses an id from the token stream, advancing the stream past the id.
-//   Updates loc_id and symbol information based on the parsed id.
+//   Updates symbol information based on the parsed id.
 //   In case of an error, an error message is printed to stderr.
-static bool ParseId(FblcArena* arena, TokenStream* toks, const char* expected, FblcLocId* loc_id, FblcsSymbols* symbols)
+static bool ParseId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsSymbols* symbols)
 {
   FblcsIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsIdSymbol));
   symbol->tag = FBLCS_ID_SYMBOL;
@@ -451,7 +450,6 @@ static bool ParseId(FblcArena* arena, TokenStream* toks, const char* expected, F
     return false;
   }
   FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
-  (*loc_id)++;
   return true;
 }
 
@@ -461,23 +459,21 @@ static bool ParseId(FblcArena* arena, TokenStream* toks, const char* expected, F
 // Inputs:
 //   arena - The arena to use for allocations.
 //   name - The value of the parsed id.
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //
 // Returns:
 //   None.
 //
 // Side effects:
-//   Updates loc_id and symbol information based on the parsed id.
+//   Updates symbol information based on the parsed id.
 //   In case of an error, an error message is printed to stderr.
-static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcLocId* loc_id, FblcsSymbols* symbols)
+static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcsSymbols* symbols)
 {
   FblcsIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsIdSymbol));
   symbol->tag = FBLCS_ID_SYMBOL;
   symbol->name.name = name->name;
   symbol->name.loc = name->loc;
   FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
-  (*loc_id)++;
 }
 
 // ParseTypedId --
@@ -488,7 +484,6 @@ static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcLocId* loc_id, Fblc
 //   toks - The token stream to parse the arguments from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a variable name".
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //
 // Returns:
@@ -496,9 +491,9 @@ static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcLocId* loc_id, Fblc
 //
 // Side effects:
 //   Parses two ids from the token stream, advancing the stream past the ids.
-//   Updates loc_id and symbol information based on the parsed id.
+//   Updates symbol information based on the parsed id.
 //   In case of an error, an error message is printed to stderr.
-static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcLocId* loc_id, FblcsSymbols* symbols)
+static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsSymbols* symbols)
 {
   FblcsTypedIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsTypedIdSymbol));
   symbol->tag = FBLCS_TYPED_ID_SYMBOL;
@@ -509,7 +504,6 @@ static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expect
     return false;
   }
   FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
-  (*loc_id)++;
   return true;
 }
 
@@ -522,7 +516,6 @@ static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expect
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "field name" or "port name".
 //   type - The already parsed type for the typed id.
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //
 // Returns:
@@ -530,9 +523,9 @@ static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expect
 //
 // Side effects:
 //   Parses an id from the token stream, advancing the stream past the id.
-//   Updates loc_id and symbol information based on the parsed typed id.
+//   Updates symbol information based on the parsed typed id.
 //   In case of an error, an error message is printed to stderr.
-static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* type, FblcLocId* loc_id, FblcsSymbols* symbols)
+static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* type, FblcsSymbols* symbols)
 {
   FblcsTypedIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsTypedIdSymbol));
   symbol->tag = FBLCS_TYPED_ID_SYMBOL;
@@ -542,7 +535,6 @@ static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* ex
     return false;
   }
   FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
-  (*loc_id)++;
   return true;
 }
 
@@ -554,7 +546,6 @@ static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* ex
 // Inputs:
 //   arena - The arena to use for allocations.
 //   toks - The token stream to parse the arguments from.
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //   argc - Pointer to the count field of a vector.
 //   argv - Pointer to the contents of a vector.
@@ -566,9 +557,9 @@ static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* ex
 //   Parses arguments from the token stream, advancing the stream past the
 //   final ')' token in the argument list.
 //   Initializes the argc/argv vector and fills it with the parsed arguments.
-//   Updates loc_id and symbol information based on the parsed arguments.
+//   Updates symbol information based on the parsed arguments.
 //   In case of an error, an error message is printed to stderr.
-static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv)
+static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv)
 {
   FblcVectorInit(arena, *argv, *argc);
   bool first = true;
@@ -579,7 +570,7 @@ static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc
       assert(IsToken(toks, ','));
       GetToken(toks, ',');
     }
-    FblcExpr* arg = ParseExpr(arena, toks, false, loc_id, symbols);
+    FblcExpr* arg = ParseExpr(arena, toks, false, symbols);
     if (arg == NULL) {
       return false;
     }
@@ -598,7 +589,6 @@ static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc
 // Inputs:
 //   arena - The arena to use for allocations.
 //   toks - The token stream to parse the arguments from.
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //   argc - Pointer to the count field of a vector.
 //   argv - Pointer to the contents of a vector.
@@ -610,16 +600,16 @@ static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc
 //   Parses arguments from the token stream, advancing the stream past the
 //   final ')' token in the argument list.
 //   Initializes the argc/argv vector and fills it with the parsed arguments.
-//   Updates loc_id and symbol information based on the parsed arguments.
+//   Updates symbol information based on the parsed arguments.
 //   In case of an error, an error message is printed to stderr.
-static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv)
+static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv)
 {
   if (IsToken(toks, ')')) {
     GetToken(toks, ')');
     FblcVectorInit(arena, *argv, *argc);
     return true;
   }
-  return ParseNonZeroArgs(arena, toks, loc_id, symbols, argc, argv);
+  return ParseNonZeroArgs(arena, toks, symbols, argc, argv);
 }
 
 // ParseExpr --
@@ -631,7 +621,6 @@ static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, Fb
 //   arena - The arena to use for allocations.
 //   toks - The token stream to parse the expression from.
 //   in_stmt - True if parsing an expression in the statement context.
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //
 // Returns:
@@ -641,9 +630,9 @@ static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, Fb
 //   Parses an expression from the token stream, advancing the token stream
 //   past the parsed expression, including the trailing semicolon if in_stmt
 //   is true.
-//   Updates loc_id and symbol information based on the parsed expression.
+//   Updates symbol information based on the parsed expression.
 //   In case of an error, an error message is printed to stderr.
-static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcLocId* loc_id, FblcsSymbols* symbols)
+static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsSymbols* symbols)
 {
   if (!IsToken(toks, '{')) {
     FblcsLocSymbol* symbol = arena->alloc(arena, sizeof(FblcsLocSymbol));
@@ -652,13 +641,12 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     symbol->loc.line = toks->loc.line;
     symbol->loc.col = toks->loc.col;
     FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
-    (*loc_id)++;
   }
 
   FblcExpr* expr = NULL;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    expr = ParseExpr(arena, toks, true, loc_id, symbols);
+    expr = ParseExpr(arena, toks, true, symbols);
     if (expr == NULL) {
       return NULL;
     }
@@ -673,9 +661,9 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       FblcAppExpr* app_expr = arena->alloc(arena, sizeof(FblcAppExpr));
       app_expr->tag = FBLC_APP_EXPR;
       app_expr->func = FBLC_NULL_ID;
-      ParsedId(arena, &start, loc_id, symbols);
+      ParsedId(arena, &start, symbols);
       GetToken(toks, '(');
-      if (!ParseArgs(arena, toks, loc_id, symbols, &app_expr->argc, &app_expr->argv)) {
+      if (!ParseArgs(arena, toks, symbols, &app_expr->argc, &app_expr->argv)) {
         return NULL;
       }
       expr = (FblcExpr*)app_expr;
@@ -685,16 +673,16 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       FblcUnionExpr* union_expr = arena->alloc(arena, sizeof(FblcUnionExpr));
       union_expr->tag = FBLC_UNION_EXPR;
       union_expr->type = FBLC_NULL_ID;
-      ParsedId(arena, &start, loc_id, symbols);
+      ParsedId(arena, &start, symbols);
       union_expr->field = FBLC_NULL_ID;
-      if (!ParseId(arena, toks, "field name", loc_id, symbols)) {
+      if (!ParseId(arena, toks, "field name", symbols)) {
         return NULL;
       }
 
       if (!GetToken(toks, '(')) {
         return NULL;
       }
-      union_expr->arg = ParseExpr(arena, toks, false, loc_id, symbols);
+      union_expr->arg = ParseExpr(arena, toks, false, symbols);
       if (union_expr->arg == NULL) {
         return NULL;
       }
@@ -707,20 +695,20 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
       let_expr->tag = FBLC_LET_EXPR;
       let_expr->type = FBLC_NULL_ID;
-      if (!ParseTypedIdName(arena, toks, "variable name", &start, loc_id, symbols)) {
+      if (!ParseTypedIdName(arena, toks, "variable name", &start, symbols)) {
         return NULL;
       }
       if (!GetToken(toks, '=')) {
         return NULL;
       }
-      let_expr->def = ParseExpr(arena, toks, false, loc_id, symbols);
+      let_expr->def = ParseExpr(arena, toks, false, symbols);
       if (let_expr->def == NULL) {
         return NULL;
       }
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      let_expr->body = ParseExpr(arena, toks, true, loc_id, symbols);
+      let_expr->body = ParseExpr(arena, toks, true, symbols);
       if (let_expr->body == NULL) {
         return NULL;
       }
@@ -732,7 +720,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       FblcVarExpr* var_expr = arena->alloc(arena, sizeof(FblcVarExpr));
       var_expr->tag = FBLC_VAR_EXPR;
       var_expr->var = FBLC_NULL_ID;
-      ParsedId(arena, &start, loc_id, symbols);
+      ParsedId(arena, &start, symbols);
       expr = (FblcExpr*)var_expr;
     }
   } else if (IsToken(toks, '?')) {
@@ -743,14 +731,14 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    cond_expr->select = ParseExpr(arena, toks, false, loc_id, symbols);
+    cond_expr->select = ParseExpr(arena, toks, false, symbols);
     if (cond_expr->select == NULL) {
       return NULL;
     }
     if (!GetToken(toks, ';')) {
       return NULL;
     }
-    if (!ParseNonZeroArgs(arena, toks, loc_id, symbols, &cond_expr->argc, &cond_expr->argv)) {
+    if (!ParseNonZeroArgs(arena, toks, symbols, &cond_expr->argc, &cond_expr->argv)) {
       return NULL;
     }
     expr = (FblcExpr*)cond_expr;
@@ -761,14 +749,14 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     GetToken(toks, '.');
 
     access_expr->field = FBLC_NULL_ID;
-    if (!ParseId(arena, toks, "field name", loc_id, symbols)) {
+    if (!ParseId(arena, toks, "field name", symbols)) {
       return NULL;
     }
 
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    access_expr->arg = ParseExpr(arena, toks, false, loc_id, symbols);
+    access_expr->arg = ParseExpr(arena, toks, false, symbols);
     if (access_expr->arg == NULL) {
       return NULL;
     }
@@ -798,7 +786,6 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
 //   arena - The arena to use for allocations.
 //   toks - The token stream to parse the action from.
 //   in_stmt - True if parsing an action in the statement context.
-//   loc_id - The current location in the program.
 //   symbols - The program symbols information.
 //
 // Returns:
@@ -808,9 +795,9 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
 //   Parses a process action from the token stream, advancing the token stream
 //   past the parsed action, including the trailing semicolon if in_stmt
 //   is true.
-//   Updates loc_id and symbol information based on the parsed action.
+//   Updates symbol information based on the parsed action.
 //   In case of an error, an error message is printed to stderr.
-static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcLocId* loc_id, FblcsSymbols* symbols)
+static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsSymbols* symbols)
 {
   if (!IsToken(toks, '{')) {
     FblcsLocSymbol* symbol = arena->alloc(arena, sizeof(FblcsLocSymbol));
@@ -819,13 +806,12 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     symbol->loc.line = toks->loc.line;
     symbol->loc.col = toks->loc.col;
     FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
-    (*loc_id)++;
   }
   
   FblcActn* actn = NULL;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    actn = ParseActn(arena, toks, true, loc_id, symbols);
+    actn = ParseActn(arena, toks, true, symbols);
     if (actn == NULL) {
       return NULL;
     }
@@ -840,7 +826,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    eval_actn->arg = ParseExpr(arena, toks, false, loc_id, symbols);
+    eval_actn->arg = ParseExpr(arena, toks, false, symbols);
     if (eval_actn->arg == NULL) {
       return NULL;
     }
@@ -851,7 +837,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
   } else if (IsToken(toks, '~')) {
     // This is a get action or put action of the form: ~name() or ~name(<arg>)
     GetToken(toks, '~');
-    if (!ParseId(arena, toks, "port", loc_id, symbols)) {
+    if (!ParseId(arena, toks, "port", symbols)) {
       return NULL;
     }
     if (!GetToken(toks, '(')) {
@@ -868,7 +854,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       FblcPutActn* put_actn = arena->alloc(arena, sizeof(FblcPutActn));
       put_actn->tag = FBLC_PUT_ACTN;
       put_actn->port = FBLC_NULL_ID;
-      put_actn->arg = ParseExpr(arena, toks, false, loc_id, symbols);
+      put_actn->arg = ParseExpr(arena, toks, false, symbols);
       if (put_actn->arg == NULL) {
         return NULL;
       }
@@ -887,12 +873,12 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       call_actn->tag = FBLC_CALL_ACTN;
       GetToken(toks, '(');
       call_actn->proc = FBLC_NULL_ID;
-      ParsedId(arena, &start, loc_id, symbols);
+      ParsedId(arena, &start, symbols);
       FblcVectorInit(arena, call_actn->portv, call_actn->portc);
       if (!IsToken(toks, ';')) {
         do {
           FblcVectorAppend(arena, call_actn->portv, call_actn->portc, FBLC_NULL_ID);
-          if (!ParseId(arena, toks, "port name", loc_id, symbols)) {
+          if (!ParseId(arena, toks, "port name", symbols)) {
             return NULL;
           }
         } while (IsToken(toks, ',') && GetToken(toks, ','));
@@ -900,7 +886,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      if (!ParseArgs(arena, toks, loc_id, symbols, &call_actn->argc, &call_actn->argv)) {
+      if (!ParseArgs(arena, toks, symbols, &call_actn->argc, &call_actn->argv)) {
         return NULL;
       }
       actn = (FblcActn*)call_actn;
@@ -930,11 +916,10 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
         return NULL;
       }
       FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
-      (*loc_id)++;
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      link_actn->body = ParseActn(arena, toks, true, loc_id, symbols);
+      link_actn->body = ParseActn(arena, toks, true, symbols);
       if (link_actn->body == NULL) {
         return NULL;
       }
@@ -956,7 +941,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
             return NULL;
           }
         }
-        if (!ParseTypedIdName(arena, toks, "variable name", &start, loc_id, symbols)) {
+        if (!ParseTypedIdName(arena, toks, "variable name", &start, symbols)) {
           return NULL;
         }
         if (!GetToken(toks, '=')) {
@@ -965,7 +950,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
         FblcVectorExtend(arena, exec_actn->execv, exec_actn->execc);
         FblcExec* exec = exec_actn->execv + exec_actn->execc++;
         exec->type = FBLC_NULL_ID;
-        exec->actn = ParseActn(arena, toks, false, loc_id, symbols);
+        exec->actn = ParseActn(arena, toks, false, symbols);
         if (exec->actn == NULL) {
           return NULL;
         }
@@ -974,7 +959,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!GetToken(toks, ';')) {
         return NULL;
       }
-      exec_actn->body = ParseActn(arena, toks, true, loc_id, symbols);
+      exec_actn->body = ParseActn(arena, toks, true, symbols);
       if (exec_actn->body == NULL) {
         return NULL;
       }
@@ -991,7 +976,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-    cond_actn->select = ParseExpr(arena, toks, false, loc_id, symbols);
+    cond_actn->select = ParseExpr(arena, toks, false, symbols);
     if (cond_actn->select == NULL) {
       return NULL;
     }
@@ -1008,7 +993,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
         assert(IsToken(toks, ','));
         GetToken(toks, ',');
       }
-      FblcActn* arg = ParseActn(arena, toks, false, loc_id, symbols);
+      FblcActn* arg = ParseActn(arena, toks, false, symbols);
       if (arg == NULL) {
         return NULL;
       }
@@ -1046,7 +1031,6 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
   FblcVectorInit(arena, sprog->program->declv, sprog->program->declc);
   FblcVectorInit(arena, sprog->symbols->symbolv, sprog->symbols->symbolc);
   FblcVectorInit(arena, sprog->symbols->declv, sprog->symbols->declc);
-  FblcLocId loc_id = 0;
   while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...
     static const char* keywords = "'struct', 'union', 'func', or 'proc'";
@@ -1060,8 +1044,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       return NULL;
     }
     symbol->decl = sprog->program->declc;
+    FblcVectorAppend(arena, sprog->symbols->declv, sprog->symbols->declc, sprog->symbols->symbolc);
     FblcVectorAppend(arena, sprog->symbols->symbolv, sprog->symbols->symbolc, (FblcsSymbol*)symbol);
-    FblcVectorAppend(arena, sprog->symbols->declv, sprog->symbols->declc, loc_id++);
     if (!GetToken(&toks, '(')) {
       return NULL;
     }
@@ -1080,7 +1064,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             return NULL;
           }
           FblcVectorAppend(arena, decl->fieldv, decl->fieldc, FBLC_NULL_ID);
-          if (!ParseTypedId(arena, &toks, "field name", &loc_id, sprog->symbols)) {
+          if (!ParseTypedId(arena, &toks, "field name", sprog->symbols)) {
             return NULL;
           }
         }
@@ -1100,7 +1084,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           return NULL;
         }
         FblcVectorAppend(arena, decl->fieldv, decl->fieldc, FBLC_NULL_ID);
-        if (!ParseTypedId(arena, &toks, "field name", &loc_id, sprog->symbols)) {
+        if (!ParseTypedId(arena, &toks, "field name", sprog->symbols)) {
           return NULL;
         }
       }
@@ -1120,7 +1104,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             return NULL;
           }
           FblcVectorAppend(arena, func->argv, func->argc, FBLC_NULL_ID);
-          if (!ParseTypedId(arena, &toks, "variable name", &loc_id, sprog->symbols)) {
+          if (!ParseTypedId(arena, &toks, "variable name", sprog->symbols)) {
             return NULL;
           }
         }
@@ -1130,13 +1114,13 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       }
 
       func->return_type = FBLC_NULL_ID;
-      if (!ParseId(arena, &toks, "type", &loc_id, sprog->symbols)) {
+      if (!ParseId(arena, &toks, "type", sprog->symbols)) {
         return NULL;
       }
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      func->body = ParseExpr(arena, &toks, false, &loc_id, sprog->symbols);
+      func->body = ParseExpr(arena, &toks, false, sprog->symbols);
       if (func->body == NULL) {
         return NULL;
       }
@@ -1178,7 +1162,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             return NULL;
           }
 
-          if (!ParseTypedIdName(arena, &toks, "port name", &type, &loc_id, sprog->symbols)) {
+          if (!ParseTypedIdName(arena, &toks, "port name", &type, sprog->symbols)) {
             return NULL;
           }
         }
@@ -1193,7 +1177,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             return NULL;
           }
           FblcVectorAppend(arena, proc->argv, proc->argc, FBLC_NULL_ID);
-          if (!ParseTypedId(arena, &toks, "variable name", &loc_id, sprog->symbols)) {
+          if (!ParseTypedId(arena, &toks, "variable name", sprog->symbols)) {
             return NULL;
           }
         }
@@ -1202,13 +1186,13 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
       proc->return_type = FBLC_NULL_ID;
-      if (!ParseId(arena, &toks, "type", &loc_id, sprog->symbols)) {
+      if (!ParseId(arena, &toks, "type", sprog->symbols)) {
         return NULL;
       }
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      proc->body = ParseActn(arena, &toks, false, &loc_id, sprog->symbols);
+      proc->body = ParseActn(arena, &toks, false, sprog->symbols);
       if (proc->body == NULL) {
         return NULL;
       }
