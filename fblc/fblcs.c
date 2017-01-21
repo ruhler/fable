@@ -26,62 +26,62 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
   va_end(ap);
 }
 
-// SymbolTag -- 
+// FblcsSymbolTag -- 
 //   Enum used to distinguish among different kinds of symbols.
 typedef enum {
-  LOC_SYMBOL,
-  ID_SYMBOL,
-  TYPED_ID_SYMBOL,
-  LINK_SYMBOL,
-  DECL_SYMBOL
-} SymbolTag;
+  FBLCS_LOC_SYMBOL,
+  FBLCS_ID_SYMBOL,
+  FBLCS_TYPED_ID_SYMBOL,
+  FBLCS_LINK_SYMBOL,
+  FBLCS_DECL_SYMBOL
+} FblcsSymbolTag;
 
-// Symbol --
+// FblcsSymbol --
 //   Common base structure for all kinds of symbols.
 typedef struct {
-  SymbolTag tag;
-} Symbol;
+  FblcsSymbolTag tag;
+} FblcsSymbol;
 
-// LocSymbol --
+// FblcsLocSymbol --
 //   A symbol that stores information about a location only.
 typedef struct {
-  SymbolTag tag;
+  FblcsSymbolTag tag;
   FblcsLoc loc;
-} LocSymbol;
+} FblcsLocSymbol;
 
-// IdSymbol --
+// FblcsIdSymbol --
 //   A symbol that stores information about a location and a name.
 typedef struct {
-  SymbolTag tag;
+  FblcsSymbolTag tag;
   FblcsNameL name;
-} IdSymbol;
+} FblcsIdSymbol;
 
-// TypedIdSymbol --
+// FblcsTypedIdSymbol --
 //   A symbol that stores location and name information for an id and it's
 //   type.
 typedef struct {
-  SymbolTag tag;
+  FblcsSymbolTag tag;
   FblcsNameL name;
   FblcsNameL type;
-} TypedIdSymbol;
+} FblcsTypedIdSymbol;
 
-// LinkSymbol --
+// FblcsLinkSymbol --
 //   A symbol that stores location and name information for a link actions
 //   type, get port name, and put port name.
 typedef struct {
-  SymbolTag tag;
+  FblcsSymbolTag tag;
   FblcsNameL type;
   FblcsNameL get;
   FblcsNameL put;
-} LinkSymbol;
+} FblcsLinkSymbol;
 
-// DeclSymbol --
+// FblcsDeclSymbol --
 //   A symbol that stores information for a declaration.
 typedef struct {
-  SymbolTag tag;
+  FblcsSymbolTag tag;
   FblcsNameL name;
   FblcDeclId decl_id;
-} DeclSymbol;
+} FblcsDeclSymbol;
 
 // FblcsSymbols --
 //   Information associated with each location id in a program.
@@ -90,7 +90,7 @@ typedef struct {
 // declc/declv - A vector mapping FblcDeclId to corresponding FblcLocId.
 struct FblcsSymbols {
   size_t symbolc;
-  Symbol** symbolv;
+  FblcsSymbol** symbolv;
 
   size_t declc;
   FblcLocId* declv;
@@ -104,7 +104,7 @@ FblcsSymbols* NewSymbols(FblcArena* arena)
   return symbols;
 }
 
-static void SetLocSymbol(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Symbol* symbol)
+static void SetLocSymbol(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsSymbol* symbol)
 {
   while (loc_id >= symbols->symbolc) {
     FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, NULL);
@@ -116,12 +116,12 @@ static void SetLocSymbol(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_
 
 static void SetLocLoc(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
 {
-  LocSymbol* symbol = arena->alloc(arena, sizeof(LocSymbol));
-  symbol->tag = LOC_SYMBOL;
+  FblcsLocSymbol* symbol = arena->alloc(arena, sizeof(FblcsLocSymbol));
+  symbol->tag = FBLCS_LOC_SYMBOL;
   symbol->loc.source = loc->source;
   symbol->loc.line = loc->line;
   symbol->loc.col = loc->col;
-  SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
+  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 }
 
 void SetLocExpr(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
@@ -136,45 +136,45 @@ void SetLocActn(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Fblcs
 
 void SetLocId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name)
 {
-  IdSymbol* symbol = arena->alloc(arena, sizeof(IdSymbol));
-  symbol->tag = ID_SYMBOL;
+  FblcsIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsIdSymbol));
+  symbol->tag = FBLCS_ID_SYMBOL;
   symbol->name.name = name->name;
   symbol->name.loc = name->loc;
-  SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
+  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 }
 
 void SetLocTypedId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* name)
 {
-  TypedIdSymbol* symbol = arena->alloc(arena, sizeof(TypedIdSymbol));
-  symbol->tag = TYPED_ID_SYMBOL;
+  FblcsTypedIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsTypedIdSymbol));
+  symbol->tag = FBLCS_TYPED_ID_SYMBOL;
   symbol->type.name = type->name;
   symbol->type.loc = type->loc;
   symbol->name.name = name->name;
   symbol->name.loc = name->loc;
-  SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
+  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 }
 
 void SetLocLink(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* get, FblcsNameL* put)
 {
-  LinkSymbol* symbol = arena->alloc(arena, sizeof(LinkSymbol));
-  symbol->tag = LINK_SYMBOL;
+  FblcsLinkSymbol* symbol = arena->alloc(arena, sizeof(FblcsLinkSymbol));
+  symbol->tag = FBLCS_LINK_SYMBOL;
   symbol->type.name = type->name;
   symbol->type.loc = type->loc;
   symbol->get.name = get->name;
   symbol->get.loc = get->loc;
   symbol->put.name = put->name;
   symbol->put.loc = put->loc;
-  SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
+  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 }
 
 void SetLocDecl(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name, FblcDeclId decl_id)
 {
-  DeclSymbol* symbol = arena->alloc(arena, sizeof(DeclSymbol));
-  symbol->tag = DECL_SYMBOL;
+  FblcsDeclSymbol* symbol = arena->alloc(arena, sizeof(FblcsDeclSymbol));
+  symbol->tag = FBLCS_DECL_SYMBOL;
   symbol->name.name = name->name;
   symbol->name.loc = name->loc;
   symbol->decl_id = decl_id;
-  SetLocSymbol(arena, symbols, loc_id, (Symbol*)symbol);
+  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 
   while (decl_id >= symbols->declc) {
     FblcVectorAppend(arena, symbols->declv, symbols->declc, FBLC_NULL_ID);
@@ -186,9 +186,9 @@ void SetLocDecl(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Fblcs
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
-  Symbol* symbol = symbols->symbolv[loc_id];
-  if (symbol->tag == LOC_SYMBOL) {
-    LocSymbol* loc_symbol = (LocSymbol*)symbol;
+  FblcsSymbol* symbol = symbols->symbolv[loc_id];
+  if (symbol->tag == FBLCS_LOC_SYMBOL) {
+    FblcsLocSymbol* loc_symbol = (FblcsLocSymbol*)symbol;
     return &loc_symbol->loc;
   }
   return LocIdName(symbols, loc_id)->loc;
@@ -197,30 +197,30 @@ FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
 FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
-  Symbol* symbol = symbols->symbolv[loc_id];
+  FblcsSymbol* symbol = symbols->symbolv[loc_id];
   switch (symbol->tag) {
-    case LOC_SYMBOL: {
+    case FBLCS_LOC_SYMBOL: {
       assert(false && "TODO: Unsupported tag?");
       return NULL;
     }
 
-    case ID_SYMBOL: {
-      IdSymbol* id_symbol = (IdSymbol*)symbol;
+    case FBLCS_ID_SYMBOL: {
+      FblcsIdSymbol* id_symbol = (FblcsIdSymbol*)symbol;
       return &id_symbol->name;
     }
 
-    case TYPED_ID_SYMBOL: {
-      TypedIdSymbol* typed_id_symbol = (TypedIdSymbol*)symbol;
+    case FBLCS_TYPED_ID_SYMBOL: {
+      FblcsTypedIdSymbol* typed_id_symbol = (FblcsTypedIdSymbol*)symbol;
       return &typed_id_symbol->name;
     }
 
-    case LINK_SYMBOL: {
+    case FBLCS_LINK_SYMBOL: {
       assert(false && "TODO: Unsupported tag?");
       return NULL;
     }
 
-    case DECL_SYMBOL: {
-      DeclSymbol* decl_symbol = (DeclSymbol*)symbol;
+    case FBLCS_DECL_SYMBOL: {
+      FblcsDeclSymbol* decl_symbol = (FblcsDeclSymbol*)symbol;
       return &decl_symbol->name;
     }
   }
@@ -231,29 +231,29 @@ FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
 FblcsNameL* LocIdType(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
-  Symbol* symbol = symbols->symbolv[loc_id];
+  FblcsSymbol* symbol = symbols->symbolv[loc_id];
   switch (symbol->tag) {
-    case LOC_SYMBOL: {
+    case FBLCS_LOC_SYMBOL: {
       assert(false && "TODO: Unsupported tag?");
       return NULL;
     }
 
-    case ID_SYMBOL: {
+    case FBLCS_ID_SYMBOL: {
       assert(false && "TODO: Unsupported tag?");
       return NULL;
     }
 
-    case TYPED_ID_SYMBOL: {
-      TypedIdSymbol* typed_id_symbol = (TypedIdSymbol*)symbol;
+    case FBLCS_TYPED_ID_SYMBOL: {
+      FblcsTypedIdSymbol* typed_id_symbol = (FblcsTypedIdSymbol*)symbol;
       return &typed_id_symbol->type;
     }
 
-    case LINK_SYMBOL: {
-      LinkSymbol* link_symbol = (LinkSymbol*)symbol;
+    case FBLCS_LINK_SYMBOL: {
+      FblcsLinkSymbol* link_symbol = (FblcsLinkSymbol*)symbol;
       return &link_symbol->type;
     }
 
-    case DECL_SYMBOL: {
+    case FBLCS_DECL_SYMBOL: {
       assert(false && "TODO: Unsupported tag?");
       return NULL;
     }
@@ -265,9 +265,9 @@ FblcsNameL* LocIdType(FblcsSymbols* symbols, FblcLocId loc_id)
 FblcsNameL* LocIdLinkGet(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
-  Symbol* symbol = symbols->symbolv[loc_id];
-  if (symbol->tag == LINK_SYMBOL) {
-    LinkSymbol* link_symbol = (LinkSymbol*)symbol;
+  FblcsSymbol* symbol = symbols->symbolv[loc_id];
+  if (symbol->tag == FBLCS_LINK_SYMBOL) {
+    FblcsLinkSymbol* link_symbol = (FblcsLinkSymbol*)symbol;
     return &link_symbol->get;
   }
   assert(false && "unsupported tag");
@@ -277,9 +277,9 @@ FblcsNameL* LocIdLinkGet(FblcsSymbols* symbols, FblcLocId loc_id)
 FblcsNameL* LocIdLinkPut(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
-  Symbol* symbol = symbols->symbolv[loc_id];
-  if (symbol->tag == LINK_SYMBOL) {
-    LinkSymbol* link_symbol = (LinkSymbol*)symbol;
+  FblcsSymbol* symbol = symbols->symbolv[loc_id];
+  if (symbol->tag == FBLCS_LINK_SYMBOL) {
+    FblcsLinkSymbol* link_symbol = (FblcsLinkSymbol*)symbol;
     return &link_symbol->put;
   }
   assert(false && "unsupported tag");
