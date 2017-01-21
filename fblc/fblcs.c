@@ -77,19 +77,6 @@ void SetLocTypedId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Fb
   SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 }
 
-void SetLocLink(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* get, FblcsNameL* put)
-{
-  FblcsLinkSymbol* symbol = arena->alloc(arena, sizeof(FblcsLinkSymbol));
-  symbol->tag = FBLCS_LINK_SYMBOL;
-  symbol->type.name = type->name;
-  symbol->type.loc = type->loc;
-  symbol->get.name = get->name;
-  symbol->get.loc = get->loc;
-  symbol->put.name = put->name;
-  symbol->put.loc = put->loc;
-  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
-}
-
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);

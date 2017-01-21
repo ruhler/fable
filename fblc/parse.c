@@ -777,6 +777,10 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       FblcLinkActn* link_actn = arena->alloc(arena, sizeof(FblcLinkActn));
       link_actn->tag = FBLC_LINK_ACTN;
       link_actn->type = FBLC_NULL_ID;
+      FblcsLinkSymbol* symbol = arena->alloc(arena, sizeof(FblcsLinkSymbol));
+      symbol->tag = FBLCS_LINK_SYMBOL;
+      symbol->type.name = start.name;
+      symbol->type.loc = start.loc;
       GetToken(toks, '<');
       if (!GetToken(toks, '~')) {
         return NULL;
@@ -784,18 +788,17 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!GetToken(toks, '>')) {
         return NULL;
       }
-      FblcsNameL get;
-      if (!GetNameToken(arena, toks, "port name", &get)) {
+      if (!GetNameToken(arena, toks, "port name", &symbol->get)) {
         return NULL;
       }
       if (!GetToken(toks, ',')) {
         return NULL;
       }
-      FblcsNameL put;
-      if (!GetNameToken(arena, toks, "port name", &put)) {
+      if (!GetNameToken(arena, toks, "port name", &symbol->put)) {
         return NULL;
       }
-      SetLocLink(arena, symbols, (*loc_id)++, &start, &get, &put);
+      FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
+      (*loc_id)++;
       if (!GetToken(toks, ';')) {
         return NULL;
       }
@@ -936,8 +939,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
     // Parse the remainder of the declaration, starting after the initial open
     // parenthesis.
     if (FblcsNamesEqual("struct", keyword.name)) {
-      // This is a struct declaration of the form:
-      //   struct name(type0 field0, type1 field1, ...)
+      // This is a struct declaration of the form: struct name(
+      //   type0 field0, type1 field1, ...)
       FblcStructDecl* decl = arena->alloc(arena, sizeof(FblcStructDecl));
       decl->tag = FBLC_STRUCT_DECL;
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
@@ -963,8 +966,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       }
       FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)decl);
     } else if (FblcsNamesEqual("union", keyword.name)) {
-      // This is a union declaration of the form:
-      //   union name(type0 field0, type1 field1, ...)
+      // This is a union declaration of the form: union name(
+      //   type0 field0, type1 field1, ...)
       FblcUnionDecl* decl = arena->alloc(arena, sizeof(FblcUnionDecl));
       decl->tag = FBLC_UNION_DECL;
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
@@ -988,8 +991,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       }
       FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)decl);
     } else if (FblcsNamesEqual("func", keyword.name)) {
-      // This is a function declaration of the form:
-      //    func name(type0 var0, type1 var1, ...; return_type) body
+      // This is a function declaration of the form: func name(
+      //   type0 var0, type1 var1, ...; return_type) body
       FblcFuncDecl* func = arena->alloc(arena, sizeof(FblcFuncDecl));
       func->tag = FBLC_FUNC_DECL;
       FblcVectorInit(arena, func->argv, func->argc);
@@ -1028,9 +1031,9 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       }
       FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)func);
     } else if (FblcsNamesEqual("proc", keyword.name)) {
-      // This is a process declaration of the form:
-      //   proc name(type0 polarity0 port0, type1 polarity1, port1, ... ;
-      //             type0 var0, type1 var1, ... ; return_type) body
+      // This is a process declaration of the form: proc name(
+      //   type0 polarity0 port0, type1 polarity1, port1, ... ;
+      //   type0 var0, type1 var1, ... ; return_type) body
       FblcProcDecl* proc = arena->alloc(arena, sizeof(FblcProcDecl));
       proc->tag = FBLC_PROC_DECL;
       FblcVectorInit(arena, proc->portv, proc->portc);
