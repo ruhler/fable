@@ -63,10 +63,85 @@ typedef struct FblcsNameL {
   FblcsLoc* loc;
 } FblcsNameL;
 
+// FblcsSymbolTag -- 
+//   Enum used to distinguish among different kinds of symbols.
+typedef enum {
+  FBLCS_LOC_SYMBOL,
+  FBLCS_ID_SYMBOL,
+  FBLCS_TYPED_ID_SYMBOL,
+  FBLCS_LINK_SYMBOL,
+  FBLCS_DECL_SYMBOL
+} FblcsSymbolTag;
+
+// FblcsSymbol --
+//   A tagged union of symbol types. All symbols have the same initial layout
+//   as FblcsSymbol. The tag can be used to determine what kind of symbol this
+//   is to get access to additional fields of the symbol by first casting to
+//   that specific type of symbol.
+//
+//   Symbols encode information about names, locations, and other useful
+//   information relevant to an FblcLocId location in an FblcProgram.
+typedef struct {
+  FblcsSymbolTag tag;
+} FblcsSymbol;
+
+// FblcsLocSymbol --
+//   A symbol that stores information about a location only. This is used to
+//   store the source location of expressions and actions.
+typedef struct {
+  FblcsSymbolTag tag;
+  FblcsLoc loc;
+} FblcsLocSymbol;
+
+// FblcsIdSymbol --
+//   A symbol that stores information about a name and a location. This is
+//   used to store the name and location of variable names and return types.
+typedef struct {
+  FblcsSymbolTag tag;
+  FblcsNameL name;
+} FblcsIdSymbol;
+
+// FblcsTypedIdSymbol --
+//   A symbol that stores location and name information for an id and it's
+//   type. This is used to store the name, type, and location for field and
+//   variable declarations.
+typedef struct {
+  FblcsSymbolTag tag;
+  FblcsNameL name;
+  FblcsNameL type;
+} FblcsTypedIdSymbol;
+
+// FblcsLinkSymbol --
+//   A symbol that stores location and name information for a link action's
+//   type, get port name, and put port name.
+typedef struct {
+  FblcsSymbolTag tag;
+  FblcsNameL type;
+  FblcsNameL get;
+  FblcsNameL put;
+} FblcsLinkSymbol;
+
+// FblcsDeclSymbol --
+//   A symbol that stores information for a declaration.
+typedef struct {
+  FblcsSymbolTag tag;
+  FblcsNameL name;
+  FblcDeclId decl;
+} FblcsDeclSymbol;
+
 // FblcsSymbols --
 //   A structure used for mapping source level names and locations to and from
 //   their corresponding abstract syntax FblcLocId locations.
-typedef struct FblcsSymbols FblcsSymbols;
+//
+// Fields:
+//   symbolc/symbolv - A vector of symbol information indexed by FblcLocId.
+//   declc/declv - A vector mapping FblcDeclId to corresponding FblcLocId.
+typedef struct {
+  size_t symbolc;
+  FblcsSymbol** symbolv;
+  size_t declc;
+  FblcLocId* declv;
+} FblcsSymbols;
 
 // FblcsProgram --
 //   An FblcProgram augmented with symbols information.

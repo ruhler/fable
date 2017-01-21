@@ -26,75 +26,6 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
   va_end(ap);
 }
 
-// FblcsSymbolTag -- 
-//   Enum used to distinguish among different kinds of symbols.
-typedef enum {
-  FBLCS_LOC_SYMBOL,
-  FBLCS_ID_SYMBOL,
-  FBLCS_TYPED_ID_SYMBOL,
-  FBLCS_LINK_SYMBOL,
-  FBLCS_DECL_SYMBOL
-} FblcsSymbolTag;
-
-// FblcsSymbol --
-//   Common base structure for all kinds of symbols.
-typedef struct {
-  FblcsSymbolTag tag;
-} FblcsSymbol;
-
-// FblcsLocSymbol --
-//   A symbol that stores information about a location only.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsLoc loc;
-} FblcsLocSymbol;
-
-// FblcsIdSymbol --
-//   A symbol that stores information about a location and a name.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsNameL name;
-} FblcsIdSymbol;
-
-// FblcsTypedIdSymbol --
-//   A symbol that stores location and name information for an id and it's
-//   type.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsNameL name;
-  FblcsNameL type;
-} FblcsTypedIdSymbol;
-
-// FblcsLinkSymbol --
-//   A symbol that stores location and name information for a link actions
-//   type, get port name, and put port name.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsNameL type;
-  FblcsNameL get;
-  FblcsNameL put;
-} FblcsLinkSymbol;
-
-// FblcsDeclSymbol --
-//   A symbol that stores information for a declaration.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsNameL name;
-  FblcDeclId decl_id;
-} FblcsDeclSymbol;
-
-// FblcsSymbols --
-//   Information associated with each location id in a program.
-//
-// symbolc/symbolv - A vector of symbol information indexed by FblcLocId.
-// declc/declv - A vector mapping FblcDeclId to corresponding FblcLocId.
-struct FblcsSymbols {
-  size_t symbolc;
-  FblcsSymbol** symbolv;
-
-  size_t declc;
-  FblcLocId* declv;
-};
 
 FblcsSymbols* NewSymbols(FblcArena* arena)
 {
@@ -173,7 +104,7 @@ void SetLocDecl(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Fblcs
   symbol->tag = FBLCS_DECL_SYMBOL;
   symbol->name.name = name->name;
   symbol->name.loc = name->loc;
-  symbol->decl_id = decl_id;
+  symbol->decl = decl_id;
   SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 
   while (decl_id >= symbols->declc) {
