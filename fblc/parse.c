@@ -921,25 +921,25 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
     if (!GetNameToken(arena, &toks, keywords, &keyword)) {
       return NULL;
     }
+    FblcsDeclSymbol* symbol = arena->alloc(arena, sizeof(FblcsDeclSymbol));
+    symbol->tag = FBLCS_DECL_SYMBOL;
+    if (!GetNameToken(arena, &toks, "declaration name", &symbol->name)) {
+      return NULL;
+    }
+    symbol->decl = sprog->program->declc;
+    FblcVectorAppend(arena, sprog->symbols->symbolv, sprog->symbols->symbolc, (FblcsSymbol*)symbol);
+    FblcVectorAppend(arena, sprog->symbols->declv, sprog->symbols->declc, loc_id++);
+    if (!GetToken(&toks, '(')) {
+      return NULL;
+    }
 
-    bool is_struct = FblcsNamesEqual("struct", keyword.name);
-    bool is_union = FblcsNamesEqual("union", keyword.name);
-    bool is_func = FblcsNamesEqual("func", keyword.name);
-    bool is_proc = FblcsNamesEqual("proc", keyword.name);
-
-    if (is_struct) {
+    // Parse the remainder of the declaration, starting after the initial open
+    // parenthesis.
+    if (FblcsNamesEqual("struct", keyword.name)) {
       // This is a struct declaration of the form:
-      //   name(type0 field0, type1 field1, ...)
+      //   struct name(type0 field0, type1 field1, ...)
       FblcStructDecl* decl = arena->alloc(arena, sizeof(FblcStructDecl));
       decl->tag = FBLC_STRUCT_DECL;
-      FblcsNameL name;
-      if (!GetNameToken(arena, &toks, "type name", &name)) {
-        return NULL;
-      }
-      SetLocDecl(arena, sprog->symbols, loc_id++, &name, sprog->program->declc);
-      if (!GetToken(&toks, '(')) {
-        return NULL;
-      }
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
       if (!IsToken(&toks, ')')) {
         while (decl->fieldc == 0 || IsToken(&toks, ',')) {
@@ -962,19 +962,11 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
       FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)decl);
-    } else if (is_union) {
+    } else if (FblcsNamesEqual("union", keyword.name)) {
       // This is a union declaration of the form:
-      //   name(type0 field0, type1 field1, ...)
+      //   union name(type0 field0, type1 field1, ...)
       FblcUnionDecl* decl = arena->alloc(arena, sizeof(FblcUnionDecl));
       decl->tag = FBLC_UNION_DECL;
-      FblcsNameL name;
-      if (!GetNameToken(arena, &toks, "type name", &name)) {
-        return NULL;
-      }
-      SetLocDecl(arena, sprog->symbols, loc_id++, &name, sprog->program->declc);
-      if (!GetToken(&toks, '(')) {
-        return NULL;
-      }
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
       while (decl->fieldc == 0 || IsToken(&toks, ',')) {
         if (decl->fieldc > 0 && !GetToken(&toks, ',')) {
@@ -995,19 +987,11 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
       FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)decl);
-    } else if (is_func) {
+    } else if (FblcsNamesEqual("func", keyword.name)) {
       // This is a function declaration of the form:
-      //    name(type0 var0, type1 var1, ...; return_type) body
+      //    func name(type0 var0, type1 var1, ...; return_type) body
       FblcFuncDecl* func = arena->alloc(arena, sizeof(FblcFuncDecl));
       func->tag = FBLC_FUNC_DECL;
-      FblcsNameL name;
-      if (!GetNameToken(arena, &toks, "function name", &name)) {
-        return NULL;
-      }
-      SetLocDecl(arena, sprog->symbols, loc_id++, &name, sprog->program->declc);
-      if (!GetToken(&toks, '(')) {
-        return NULL;
-      }
       FblcVectorInit(arena, func->argv, func->argc);
       if (!IsToken(&toks, ';')) {
         while (func->argc == 0 || IsToken(&toks, ',')) {
@@ -1043,20 +1027,12 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
       FblcVectorAppend(arena, sprog->program->declv, sprog->program->declc, (FblcDecl*)func);
-    } else if (is_proc) {
+    } else if (FblcsNamesEqual("proc", keyword.name)) {
       // This is a process declaration of the form:
-      //   name(type0 polarity0 port0, type1 polarity1, port1, ... ;
-      //        type0 var0, type1 var1, ... ; return_type) body
+      //   proc name(type0 polarity0 port0, type1 polarity1, port1, ... ;
+      //             type0 var0, type1 var1, ... ; return_type) body
       FblcProcDecl* proc = arena->alloc(arena, sizeof(FblcProcDecl));
       proc->tag = FBLC_PROC_DECL;
-      FblcsNameL name;
-      if (!GetNameToken(arena, &toks, "process name", &name)) {
-        return NULL;
-      }
-      SetLocDecl(arena, sprog->symbols, loc_id++, &name, sprog->program->declc);
-      if (!GetToken(&toks, '(')) {
-        return NULL;
-      }
       FblcVectorInit(arena, proc->portv, proc->portc);
       if (!IsToken(&toks, ';')) {
         while (proc->portc == 0 || IsToken(&toks, ',')) {

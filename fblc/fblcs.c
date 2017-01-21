@@ -90,22 +90,6 @@ void SetLocLink(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Fblcs
   SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
 }
 
-void SetLocDecl(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name, FblcDeclId decl_id)
-{
-  FblcsDeclSymbol* symbol = arena->alloc(arena, sizeof(FblcsDeclSymbol));
-  symbol->tag = FBLCS_DECL_SYMBOL;
-  symbol->name.name = name->name;
-  symbol->name.loc = name->loc;
-  symbol->decl = decl_id;
-  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
-
-  while (decl_id >= symbols->declc) {
-    FblcVectorAppend(arena, symbols->declv, symbols->declc, FBLC_NULL_ID);
-  }
-  assert(decl_id < symbols->declc);
-  symbols->declv[decl_id] = loc_id;
-}
-
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);

@@ -269,7 +269,6 @@ void SetLocActn(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, Fblcs
 void SetLocId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name);
 void SetLocTypedId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* name);
 void SetLocLink(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* get, FblcsNameL* put);
-void SetLocDecl(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name, FblcDeclId decl_id);
 
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id);
 FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id);
