@@ -54,6 +54,8 @@ static void UnexpectedToken(TokenStream* toks, const char* expected);
 
 static bool ParseId(FblcArena* arena, TokenStream* toks, const char* expected, FblcLocId* loc_id, FblcsSymbols* symbols);
 static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcLocId* loc_id, FblcsSymbols* symbols);
+static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcLocId* loc_id, FblcsSymbols* symbols);
+static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* type, FblcLocId* loc_id, FblcsSymbols* symbols);
 static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv);
 static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, FblcsSymbols* symbols, size_t* argc, FblcExpr*** argv);
 static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcLocId* loc_id, FblcsSymbols* symbols);
@@ -478,6 +480,72 @@ static void ParsedId(FblcArena* arena, FblcsNameL* name, FblcLocId* loc_id, Fblc
   (*loc_id)++;
 }
 
+// ParseTypedId --
+//   Parse a type id followed by a name id from the given token stream.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   toks - The token stream to parse the arguments from.
+//   expected - A short description of the expected name token, for use in
+//              error messages e.g. "a field name" or "a variable name".
+//   loc_id - The current location in the program.
+//   symbols - The program symbols information.
+//
+// Returns:
+//   True on success, false if an error is encountered.
+//
+// Side effects:
+//   Parses two ids from the token stream, advancing the stream past the ids.
+//   Updates loc_id and symbol information based on the parsed id.
+//   In case of an error, an error message is printed to stderr.
+static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcLocId* loc_id, FblcsSymbols* symbols)
+{
+  FblcsTypedIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsTypedIdSymbol));
+  symbol->tag = FBLCS_TYPED_ID_SYMBOL;
+  if (!GetNameToken(arena, toks, "type name", &symbol->type)) {
+    return false;
+  }
+  if (!GetNameToken(arena, toks, expected, &symbol->name)) {
+    return false;
+  }
+  FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
+  (*loc_id)++;
+  return true;
+}
+
+// ParseTypedIdName --
+//   Parse the name part of a typed id from the given token stream.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   toks - The token stream to parse the arguments from.
+//   expected - A short description of the expected name token, for use in
+//              error messages e.g. "field name" or "port name".
+//   type - The already parsed type for the typed id.
+//   loc_id - The current location in the program.
+//   symbols - The program symbols information.
+//
+// Returns:
+//   True on success, false if an error is encountered.
+//
+// Side effects:
+//   Parses an id from the token stream, advancing the stream past the id.
+//   Updates loc_id and symbol information based on the parsed typed id.
+//   In case of an error, an error message is printed to stderr.
+static bool ParseTypedIdName(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* type, FblcLocId* loc_id, FblcsSymbols* symbols)
+{
+  FblcsTypedIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsTypedIdSymbol));
+  symbol->tag = FBLCS_TYPED_ID_SYMBOL;
+  symbol->type.name = type->name;
+  symbol->type.loc = type->loc;
+  if (!GetNameToken(arena, toks, expected, &symbol->name)) {
+    return false;
+  }
+  FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
+  (*loc_id)++;
+  return true;
+}
+
 // ParseNonZeroArgs --
 //   Parse a list of one or more arguments in the form: <expr>, <expr>, ...)
 //   This is used for parsing arguments to function calls, conditional
@@ -638,10 +706,10 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
       let_expr->tag = FBLC_LET_EXPR;
-      FblcsNameL name;
-      GetNameToken(arena, toks, "variable name", &name);
       let_expr->type = FBLC_NULL_ID;
-      SetLocTypedId(arena, symbols, (*loc_id)++, &start, &name);
+      if (!ParseTypedIdName(arena, toks, "variable name", &start, loc_id, symbols)) {
+        return NULL;
+      }
       if (!GetToken(toks, '=')) {
         return NULL;
       }
@@ -888,11 +956,9 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
             return NULL;
           }
         }
-        FblcsNameL name;
-        if (!GetNameToken(arena, toks, "variable name", &name)) {
+        if (!ParseTypedIdName(arena, toks, "variable name", &start, loc_id, symbols)) {
           return NULL;
         }
-        SetLocTypedId(arena, symbols, (*loc_id)++, &start, &name);
         if (!GetToken(toks, '=')) {
           return NULL;
         }
@@ -1013,16 +1079,10 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (decl->fieldc > 0 && !GetToken(&toks, ',')) {
             return NULL;
           }
-          FblcsNameL type;
-          if (!GetNameToken(arena, &toks, "type name", &type)) {
-            return NULL;
-          }
-          FblcsNameL field;
-          if (!GetNameToken(arena, &toks, "field name", &field)) {
-            return NULL;
-          }
           FblcVectorAppend(arena, decl->fieldv, decl->fieldc, FBLC_NULL_ID);
-          SetLocTypedId(arena, sprog->symbols, loc_id++, &type, &field);
+          if (!ParseTypedId(arena, &toks, "field name", &loc_id, sprog->symbols)) {
+            return NULL;
+          }
         }
       }
       if (!GetToken(&toks, ')')) {
@@ -1039,16 +1099,10 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         if (decl->fieldc > 0 && !GetToken(&toks, ',')) {
           return NULL;
         }
-        FblcsNameL type;
-        if (!GetNameToken(arena, &toks, "type name", &type)) {
-          return NULL;
-        }
-        FblcsNameL field;
-        if (!GetNameToken(arena, &toks, "field name", &field)) {
-          return NULL;
-        }
         FblcVectorAppend(arena, decl->fieldv, decl->fieldc, FBLC_NULL_ID);
-        SetLocTypedId(arena, sprog->symbols, loc_id++, &type, &field);
+        if (!ParseTypedId(arena, &toks, "field name", &loc_id, sprog->symbols)) {
+          return NULL;
+        }
       }
       if (!GetToken(&toks, ')')) {
         return NULL;
@@ -1065,16 +1119,10 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (func->argc > 0 && !GetToken(&toks, ',')) {
             return NULL;
           }
-          FblcsNameL type;
-          if (!GetNameToken(arena, &toks, "type name", &type)) {
-            return NULL;
-          }
-          FblcsNameL var;
-          if (!GetNameToken(arena, &toks, "variable name", &var)) {
-            return NULL;
-          }
           FblcVectorAppend(arena, func->argv, func->argc, FBLC_NULL_ID);
-          SetLocTypedId(arena, sprog->symbols, loc_id++, &type, &var);
+          if (!ParseTypedId(arena, &toks, "variable name", &loc_id, sprog->symbols)) {
+            return NULL;
+          }
         }
       }
       if (!GetToken(&toks, ';')) {
@@ -1130,11 +1178,9 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             return NULL;
           }
 
-          FblcsNameL port_name;
-          if (!GetNameToken(arena, &toks, "port name", &port_name)) {
+          if (!ParseTypedIdName(arena, &toks, "port name", &type, &loc_id, sprog->symbols)) {
             return NULL;
           }
-          SetLocTypedId(arena, sprog->symbols, loc_id++, &type, &port_name);
         }
       }
       if (!GetToken(&toks, ';')) {
@@ -1146,16 +1192,10 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (proc->argc > 0 && !GetToken(&toks, ',')) {
             return NULL;
           }
-          FblcsNameL type;
-          if (!GetNameToken(arena, &toks, "type name", &type)) {
-            return NULL;
-          }
-          FblcsNameL var;
-          if (!GetNameToken(arena, &toks, "variable name", &var)) {
-            return NULL;
-          }
           FblcVectorAppend(arena, proc->argv, proc->argc, FBLC_NULL_ID);
-          SetLocTypedId(arena, sprog->symbols, loc_id++, &type, &var);
+          if (!ParseTypedId(arena, &toks, "variable name", &loc_id, sprog->symbols)) {
+            return NULL;
+          }
         }
       }
       if (!GetToken(&toks, ';')) {

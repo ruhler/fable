@@ -25,29 +25,7 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
-
 
-static void SetLocSymbol(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsSymbol* symbol)
-{
-  while (loc_id >= symbols->symbolc) {
-    FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, NULL);
-  }
-  assert(loc_id < symbols->symbolc);
-  assert(symbols->symbolv[loc_id] == NULL && "TODO: Support out of order SetLoc?");
-  symbols->symbolv[loc_id] = symbol;
-}
-
-void SetLocTypedId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* name)
-{
-  FblcsTypedIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsTypedIdSymbol));
-  symbol->tag = FBLCS_TYPED_ID_SYMBOL;
-  symbol->type.name = type->name;
-  symbol->type.loc = type->loc;
-  symbol->name.name = name->name;
-  symbol->name.loc = name->loc;
-  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
-}
-
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
@@ -58,7 +36,7 @@ FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
   }
   return LocIdName(symbols, loc_id)->loc;
 }
-
+
 FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
@@ -92,7 +70,7 @@ FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
   assert(false && "Invalid tag");
   return NULL;
 }
-
+
 FblcsNameL* LocIdType(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
@@ -126,7 +104,7 @@ FblcsNameL* LocIdType(FblcsSymbols* symbols, FblcLocId loc_id)
   assert(false && "TODO");
   return NULL;
 }
-
+
 FblcsNameL* LocIdLinkGet(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
@@ -138,7 +116,7 @@ FblcsNameL* LocIdLinkGet(FblcsSymbols* symbols, FblcLocId loc_id)
   assert(false && "unsupported tag");
   return NULL;
 }
-
+
 FblcsNameL* LocIdLinkPut(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
@@ -150,7 +128,7 @@ FblcsNameL* LocIdLinkPut(FblcsSymbols* symbols, FblcLocId loc_id)
   assert(false && "unsupported tag");
   return NULL;
 }
-
+
 // DeclName -- See documentation in fblcs.h
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
@@ -178,7 +156,7 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
   }
   return FBLC_NULL_ID;
 }
-
+
 FblcFieldId SLookupField(FblcsProgram* sprog, FblcDeclId decl_id, FblcsName field)
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[decl_id];
