@@ -909,8 +909,10 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
 
   FblcsProgram* sprog = arena->alloc(arena, sizeof(FblcsProgram));
   sprog->program = arena->alloc(arena, sizeof(FblcProgram));
-  sprog->symbols = NewSymbols(arena);
+  sprog->symbols = arena->alloc(arena, sizeof(FblcsSymbols));
   FblcVectorInit(arena, sprog->program->declv, sprog->program->declc);
+  FblcVectorInit(arena, sprog->symbols->symbolv, sprog->symbols->symbolc);
+  FblcVectorInit(arena, sprog->symbols->declv, sprog->symbols->declc);
   FblcLocId loc_id = 0;
   while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...

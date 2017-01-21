@@ -27,14 +27,6 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
 }
 
 
-FblcsSymbols* NewSymbols(FblcArena* arena)
-{
-  FblcsSymbols* symbols = arena->alloc(arena, sizeof(FblcsSymbols));
-  FblcVectorInit(arena, symbols->symbolv, symbols->symbolc);
-  FblcVectorInit(arena, symbols->declv, symbols->declc);
-  return symbols;
-}
-
 static void SetLocSymbol(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsSymbol* symbol)
 {
   while (loc_id >= symbols->symbolc) {
