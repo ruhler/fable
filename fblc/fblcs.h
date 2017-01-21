@@ -264,8 +264,6 @@ FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename);
 FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
 
 // TODO: Remove these functions?
-void SetLocExpr(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc);
-void SetLocActn(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc);
 void SetLocId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name);
 void SetLocTypedId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* type, FblcsNameL* name);
 

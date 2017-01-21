@@ -521,7 +521,13 @@ static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcLocId* loc_id, Fb
 static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcLocId* loc_id, FblcsSymbols* symbols)
 {
   if (!IsToken(toks, '{')) {
-    SetLocExpr(arena, symbols, (*loc_id)++, &toks->loc);
+    FblcsLocSymbol* symbol = arena->alloc(arena, sizeof(FblcsLocSymbol));
+    symbol->tag = FBLCS_LOC_SYMBOL;
+    symbol->loc.source = toks->loc.source;
+    symbol->loc.line = toks->loc.line;
+    symbol->loc.col = toks->loc.col;
+    FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
+    (*loc_id)++;
   }
 
   FblcExpr* expr = NULL;
@@ -683,7 +689,13 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
 static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcLocId* loc_id, FblcsSymbols* symbols)
 {
   if (!IsToken(toks, '{')) {
-    SetLocActn(arena, symbols, (*loc_id)++, &toks->loc);
+    FblcsLocSymbol* symbol = arena->alloc(arena, sizeof(FblcsLocSymbol));
+    symbol->tag = FBLCS_LOC_SYMBOL;
+    symbol->loc.source = toks->loc.source;
+    symbol->loc.line = toks->loc.line;
+    symbol->loc.col = toks->loc.col;
+    FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
+    (*loc_id)++;
   }
   
   FblcActn* actn = NULL;

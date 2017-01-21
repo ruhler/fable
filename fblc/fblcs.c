@@ -37,26 +37,6 @@ static void SetLocSymbol(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_
   symbols->symbolv[loc_id] = symbol;
 }
 
-static void SetLocLoc(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
-{
-  FblcsLocSymbol* symbol = arena->alloc(arena, sizeof(FblcsLocSymbol));
-  symbol->tag = FBLCS_LOC_SYMBOL;
-  symbol->loc.source = loc->source;
-  symbol->loc.line = loc->line;
-  symbol->loc.col = loc->col;
-  SetLocSymbol(arena, symbols, loc_id, (FblcsSymbol*)symbol);
-}
-
-void SetLocExpr(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
-{
-  SetLocLoc(arena, symbols, loc_id, loc);
-}
-
-void SetLocActn(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsLoc* loc)
-{
-  SetLocLoc(arena, symbols, loc_id, loc);
-}
-
 void SetLocId(FblcArena* arena, FblcsSymbols* symbols, FblcLocId loc_id, FblcsNameL* name)
 {
   FblcsIdSymbol* symbol = arena->alloc(arena, sizeof(FblcsIdSymbol));
