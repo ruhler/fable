@@ -617,29 +617,52 @@ FblcValue* FblcReadValueFromString(FblcArena* arena, FblcProgram* prg, FblcTypeI
 //   The value is written to the file.
 void FblcWriteValue(FblcValue* value, int fd);
 
-// FblcIOPort --
-//   An interface for reading or writing values over a port.
-typedef struct FblcIOPort {
+// FblcIO --
+//   An interface for reading or writing values over external ports.
+typedef struct FblcIO {
   // io --
-  //   Get a value put onto a port, or return a value to be gotten from a
-  //   port.
+  //   Read or write values over the external ports. An FblcValue* is supplied
+  //   for each port argument to the main entry point, in the order they are
+  //   declared. The behavior of the function depends on the port type and
+  //   whether the provided FblcValue* is NULL or non-NULL as follows:
+  //
+  //   Get Ports:
+  //     NULL: the io function may, at its option, read the next input
+  //       value and replace NULL with the newly read value.
+  //     non-NULL: the io function should do nothing for this port.
+  //
+  //   Put Ports:
+  //     NULL: the io function should do nothing for this port.
+  //     non-NULL: the io function may, at its option, output the value.
+  //       If the io function chooses to output the value, it should
+  //       FblcRelease the value and replace it with NULL. Otherwise the io
+  //       function should leave the existing value as is.
+  //
+  //   io may blocking or non-blocking depending on the 'block' input. For
+  //   non-blocking io, the io function should return immediately without
+  //   blocking for inputs to be ready. For blocking io, the io function
+  //   should block until there is an input available on one of the NULL get
+  //   ports.
   //
   // Inputs:
-  //   data - The user data associated with this io.
-  //   value - The value put to the port for ports with PUT polarity. NULL
-  //           otherwise.
+  //   user - The user data associated with this io.
+  //   arena - The arena to use for allocating and freeing values.
+  //   block - true if io should be blocking, false if it should be
+  //           non-blocking.
+  //   ports - Array of values indicating which of the external ports to read
+  //           to and write from. The length of the array is the number of
+  //           ports to the main entry function being executed.
   //
   // Result:
-  //   A value to get from a port for ports with GET polarity. NULL to
-  //   indicate there is no value available to get from a GET port or in the
-  //   case of a PUT port.
+  //   None.
   //
   // Side effects:
-  //   The behavior is undefined if the 'this' argument is not the same from
-  //   which the io function is invoked.
-  FblcValue* (*io)(void * data, FblcValue* put);
-  void* data;
-} FblcIOPort;
+  //   Reads or writes values to external ports depending on the provided
+  //   arguments and may block.
+  //   
+  void (*io)(void* user, FblcArena* arena, bool block, FblcValue** ports);
+  void* user;
+} FblcIO;
 
 // FblcExecute --
 //   Execute a process with the given args and ports in the given program
@@ -650,19 +673,15 @@ typedef struct FblcIOPort {
 //   program - The program environment.
 //   proc - The process to execute.
 //   args - Arguments to the process to execute.
-//   ioports - Interfaces for getting and putting values on external ports.
+//   io - Interface for getting and putting values on external ports.
 //
 // Returns:
 //   The result of executing the given procedure in the program environment
-//   with the given arguments and ports.
+//   with the given arguments and external port io.
 //
 // Side effects:
 //   Releases the args values.
-//   Calls the corresponding io function with a value each time a value is put
-//   to an external port with PUT polarity.
-//   Calls the corresponding io function with a NULL value when a value is
-//   requested from an external port with GET polarity. The io function should
-//   return the next value on the port or NULL to indicate no values are ready
-//   yet.
-FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIOPort* ioports);
+//   Calls the corresponding io function to read and write values from
+//   external ports.
+FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIO* io);
 #endif // FBLC_H_

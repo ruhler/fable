@@ -1146,7 +1146,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 }
 
 // FblcExecute -- see documentationin fblc.h.
-FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIOPort* ioports)
+FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIO* io)
 {
   Vars* vars = NULL;
   for (size_t i = 0; i < proc->argc; ++i) {
@@ -1160,9 +1160,11 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
 
   Link* links[proc->portc];
   Ports* ports = NULL;
+  FblcValue* iovals[proc->portc];
   for (size_t i = 0; i < proc->portc; ++i) {
     links[i] = NewLink(arena);
     ports = AddPort(arena, ports, links[i]);
+    iovals[i] = NULL;
   }
 
   Threads threads;
@@ -1170,38 +1172,39 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
   threads.tail = NULL;
   AddThread(&threads, NewThread(arena, vars, ports, cmd));
 
-  // TODO: Don't exit the while loop if there is some thread waiting on IO.
-  // TODO: Test this case.
-  Thread* thread = GetThread(&threads);
-  while (thread != NULL) {
-    // Run the current thread.
-    Run(arena, program, &threads, thread);
+  bool pending_output = false;
+  while (result == NULL || pending_output) {
+    // Execute the next thread, if any.
+    Thread* thread = GetThread(&threads);
+    if (thread != NULL) {
+      Run(arena, program, &threads, thread);
+    }
 
-    // Perform whatever IO is ready. Do this after running the current thread
-    // to ensure we get whatever final IO there is before terminating.
+    // Prepare pending output, if any.
+    pending_output = false;
     for (size_t i = 0; i < proc->portc; ++i) {
-      if (proc->portv[i].polarity == FBLC_GET_POLARITY) {
-        Thread* waiting = GetThread(&(links[i]->waiting));
-        if (waiting != NULL) {
-          FblcValue* got = ioports[i].io(ioports[i].data, NULL);
-          if (got == NULL) {
-            AddThread(&(links[i]->waiting), waiting);
-          } else {
-            PutValue(arena, links[i], got);
-            AddThread(&threads, waiting);
-          } 
+      if (proc->portv[i].polarity == FBLC_PUT_POLARITY) {
+        if (iovals[i] == NULL) {
+          iovals[i] = GetValue(arena, links[i]);
         }
-      } else {
-        assert(proc->portv[i].polarity == FBLC_PUT_POLARITY);
-        FblcValue* put = GetValue(arena, links[i]);
-        if (put != NULL) {
-          ioports[i].io(ioports[i].data, put);
-          FblcRelease(arena, put);
-        }
+        pending_output = pending_output || iovals[i] != NULL;
       }
     }
 
-    thread = GetThread(&threads);
+    // Perform io.
+    bool block = result == NULL && thread == NULL && !pending_output;
+    io->io(io->user, arena, block, iovals);
+
+    // Deal with new inputs, if any.
+    for (size_t i = 0; i < proc->portc; ++i) {
+      if (proc->portv[i].polarity == FBLC_GET_POLARITY) {
+        if (links[i]->waiting.head != NULL && iovals[i] != NULL) {
+          PutValue(arena, links[i], iovals[i]);
+          iovals[i] = NULL;
+          AddThread(&threads, GetThread(&(links[i]->waiting)));
+        }
+      }
+    }
   }
 
   for (size_t i = 0; i < proc->portc; ++i) {

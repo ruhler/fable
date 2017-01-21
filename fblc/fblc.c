@@ -6,23 +6,21 @@
 #include <poll.h>       // for poll
 #include <stdio.h>      // for fdopen
 #include <string.h>     // for strcmp
+#include <unistd.h>     // for read
 
 #include "fblcs.h"
 #include "gc.h"
 
-// PortData --
-//   User data for IOPorts.
+// IOUser --
+//   User data for FblcIO.
 typedef struct {
-  FblcArena* arena;
   FblcsProgram* sprog;
-  FblcTypeId type;
-  int fd;
-} PortData;
+  FblcProcDecl* proc;
+} IOUser;
 
 static void PrintUsage(FILE* stream);
 static void PrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId typeid, FblcValue* value);
-static FblcValue* GetIO(void* data, FblcValue* value);
-static FblcValue* PutIO(void* data, FblcValue* value);
+static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -85,56 +83,51 @@ static void PrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId typeid, Fbl
   }
 }
 
-// GetIO --
-//   io function for get ports. See the corresponding documentation in fblc.h.
-//
-// Inputs:
-//   data - PortData with the arena, program, type, and fd for reading the
-//          next value.
-//   value - ignored.
-//
-// Results:
-//   The next value of the given type read from the given file, or NULL if no
-//   value is available.
-//
-// Side effects:
-//   Performs arena allocations.
-//   Reads a value from the given file.
-static FblcValue* GetIO(void* data, FblcValue* value)
+// IO --
+//   io function for external ports with IOUser as user data.
+//   See the corresponding documentation in fblc.h.
+static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 {
-  PortData* port_data = (PortData*)data;
+  IOUser* io_user = (IOUser*)user;
 
-  struct pollfd fds;
-  fds.fd = port_data->fd;
-  fds.events = POLLIN;
-  fds.revents = 0;
-  poll(&fds, 1, 0);
-  if (fds.revents & POLLIN) {
-    return FblcsParseValue(port_data->arena, port_data->sprog, port_data->type, port_data->fd);
+  struct pollfd fds[io_user->proc->portc];
+  for (size_t i = 0; i < io_user->proc->portc; ++i) {
+    fds[i].fd = 3 + i;
+    fds[i].events = POLLIN;
+    fds[i].revents = 0;
+
+    if (io_user->proc->portv[i].polarity == FBLC_PUT_POLARITY) {
+      if (ports[i] != NULL) {
+        FILE* fout = fdopen(fds[i].fd, "w");
+        PrintValue(fout, io_user->sprog, io_user->proc->portv[i].type, ports[i]);
+        fprintf(fout, "\n");
+        fflush(fout);
+        FblcRelease(arena, ports[i]);
+        ports[i] = NULL;
+      }
+      fds[i].fd = -1;
+    } else {
+      if (ports[i] != NULL) {
+        fds[i].fd = -1;
+      }
+    }
   }
-  return NULL;
-}
-
-// PutIO --
-//   io function for put ports. See the corresponding documentation in fblc.h.
-//
-// Inputs:
-//   data - PortData with the fd for writing the next value.
-//   value - The value to write.
-//
-// Results:
-//   NULL.
-//
-// Side effects:
-//   Writes the given value to the given file.
-static FblcValue* PutIO(void* data, FblcValue* value)
-{
-  PortData* port_data = (PortData*)data;
-  FILE* fout = fdopen(port_data->fd, "w");
-  PrintValue(fout, port_data->sprog, port_data->type, value);
-  fprintf(fout, "\n");
-  fflush(fout);
-  return NULL;
+
+  poll(fds, io_user->proc->portc, block ? -1 : 0);
+
+  for (size_t i = 0; i < io_user->proc->portc; ++i) {
+    if (fds[i].revents & POLLIN) {
+      assert(io_user->proc->portv[i].polarity == FBLC_GET_POLARITY);
+      assert(ports[i] == NULL);
+      assert(fds[i].fd >= 0);
+      ports[i] = FblcsParseValue(arena, io_user->sprog, io_user->proc->portv[i].type, fds[i].fd);
+
+      // Parse the trailing newline.
+      char newline;
+      read(fds[i].fd, &newline, 1);
+      assert(newline == '\n');
+    }
+  }
 }
 
 // main --
@@ -238,18 +231,10 @@ int main(int argc, char* argv[])
     args[i] = FblcsParseValueFromString(gc_arena, sprog, proc->argv[i], argv[i]);
   }
 
-  FblcIOPort ports[proc->portc];
-  PortData port_data[proc->portc];
-  for (size_t i = 0; i < proc->portc; ++i) {
-    ports[i].io = proc->portv[i].polarity == FBLC_PUT_POLARITY ? &PutIO : &GetIO;
-    ports[i].data = port_data + i;
-    port_data[i].arena = gc_arena;
-    port_data[i].sprog = sprog;
-    port_data[i].type = proc->portv[i].type;
-    port_data[i].fd = 3+i;
-  }
+  IOUser user = { .sprog = sprog, .proc = proc };
+  FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(gc_arena, sprog->program, proc, args, ports);
+  FblcValue* value = FblcExecute(gc_arena, sprog->program, proc, args, &io);
   assert(value != NULL);
 
   PrintValue(stdout, sprog, proc->return_type, value);

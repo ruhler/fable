@@ -2,6 +2,7 @@
 //   This file implements the main entry point for the fblc binary interpreter.
 
 #include <assert.h>     // for assert
+#include <poll.h>       // for poll
 #include <fcntl.h>      // for open
 #include <stdio.h>      // for fprintf
 #include <stdlib.h>     // for atoi
@@ -13,18 +14,15 @@
 #include "fblc.h"
 #include "gc.h"
 
-// PortData --
-//   User data for IOPorts.
+// IOUser --
+//   User data for FblcIO.
 typedef struct {
-  FblcArena* arena;
   FblcProgram* program;
-  FblcTypeId type;
-  int fd;
-} PortData;
+  FblcProcDecl* proc;
+} IOUser;
 
 static void PrintUsage(FILE* stream);
-static FblcValue* GetIO(void* data, FblcValue* value);
-static FblcValue* PutIO(void* data, FblcValue* value);
+static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -54,45 +52,43 @@ static void PrintUsage(FILE* stream)
   );
 }
 
-// GetIO --
-//   io function for get ports. See the corresponding documentation in fblc.h.
-//
-// Inputs:
-//   data - PortData with the arena, program, type, and fd for reading the
-//          next value.
-//   value - ignored.
-//
-// Results:
-//   The next value of the given type read from the given file, or NULL if no
-//   value is available.
-//
-// Side effects:
-//   Performs arena allocations.
-//   Reads a value from the given file.
-static FblcValue* GetIO(void* data, FblcValue* value)
+// IO --
+//   io function for external ports with IOUser as user data.
+//   See the corresponding documentation in fblc.h.
+static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 {
-  // TODO: Don't block if there isn't anything available to read.
-  PortData* port_data = (PortData*)data;
-  return FblcReadValue(port_data->arena, port_data->program, port_data->type, port_data->fd);
-}
-
-// PutIO --
-//   io function for put ports. See the corresponding documentation in fblc.h.
-//
-// Inputs:
-//   data - PortData with the fd for writing the next value.
-//   value - The value to write.
-//
-// Results:
-//   NULL.
-//
-// Side effects:
-//   Writes the given value to the given file.
-static FblcValue* PutIO(void* data, FblcValue* value)
-{
-  PortData* port_data = (PortData*)data;
-  FblcWriteValue(value, port_data->fd);
-  return NULL;
+  IOUser* io_user = (IOUser*)user;
+
+  struct pollfd fds[io_user->proc->portc];
+  for (size_t i = 0; i < io_user->proc->portc; ++i) {
+    fds[i].fd = 3 + i;
+    fds[i].events = POLLIN;
+    fds[i].revents = 0;
+
+    if (io_user->proc->portv[i].polarity == FBLC_PUT_POLARITY) {
+      if (ports[i] != NULL) {
+        FblcWriteValue(ports[i], fds[i].fd);
+        FblcRelease(arena, ports[i]);
+        ports[i] = NULL;
+      }
+      fds[i].fd = -1;
+    } else {
+      if (ports[i] != NULL) {
+        fds[i].fd = -1;
+      }
+    }
+  }
+
+  poll(fds, io_user->proc->portc, block ? -1 : 0);
+
+  for (size_t i = 0; i < io_user->proc->portc; ++i) {
+    if (fds[i].revents & POLLIN) {
+      assert(io_user->proc->portv[i].polarity == FBLC_GET_POLARITY);
+      assert(ports[i] == NULL);
+      assert(fds[i].fd >= 0);
+      ports[i] = FblcReadValue(arena, io_user->program, io_user->proc->portv[i].type, fds[i].fd);
+    }
+  }
 }
 
 // main --
@@ -192,18 +188,10 @@ int main(int argc, char* argv[])
     args[i] = FblcReadValueFromString(exec_arena, program, proc->argv[i], argv[i]);
   }
 
-  FblcIOPort ports[proc->portc];
-  PortData port_data[proc->portc];
-  for (size_t i = 0; i < proc->portc; ++i) {
-    ports[i].io = proc->portv[i].polarity == FBLC_PUT_POLARITY ? &PutIO : &GetIO;
-    ports[i].data = port_data + i;
-    port_data[i].arena = exec_arena;
-    port_data[i].program = program;
-    port_data[i].type = proc->portv[i].type;
-    port_data[i].fd = 3+i;
-  }
+  IOUser user = { .program = program, .proc = proc };
+  FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(exec_arena, program, proc, args, ports);
+  FblcValue* value = FblcExecute(exec_arena, program, proc, args, &io);
   assert(value != NULL);
 
   FblcWriteValue(value, STDOUT_FILENO);

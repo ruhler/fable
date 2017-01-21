@@ -1,14 +1,10 @@
 Cleanup Arc:
-* Clean up all current fblc code.
-  - all non-static functions should have a proper prefix.
-  - document comments should be present and up to date.
-  - code should be clean.
+* Rewrite resolve to pass a Symbol** instead of loc_id.
+* Remove now unused LocId* functions.
+* Remove or clean up the last of the unprefixed functions in fblcs.h
+* Verify all document comments are present and up to date.
 
 Space Invaders Arc:
-* Write a test to show current FblcExecute fails if all threads block for
-  input.
-* Change IO for FblcExecute to take a single function
-   io(void* user_data, FblcValue* ports, bool block)
 * Rewrite testfblc as fblc-test in top of fblc library.
 * Implement version of Checker that works on FblcProgram without symbols.
 * Modify fblc-test to exercise {Read,Write}{Program,Value} functions
