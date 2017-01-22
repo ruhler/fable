@@ -112,8 +112,10 @@ static FblcTypeId FieldType(FblcsProgram* sprog, FblcTypeId type_id, FblcFieldId
   assert(type_id < sprog->program->declc);
   FblcDecl* decl = sprog->program->declv[type_id];
   assert(decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL);
-  FblcsNameL* type = LocIdType(sprog->symbols, DeclLocId(sprog, type_id) + 1 + field_id);
-  return LookupType(sprog, type);
+  FblcLocId field_loc_id = DeclLocId(sprog, type_id) + 1 + field_id;
+  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+  assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
+  return LookupType(sprog, &field->type);
 }
 
 // ReturnType --
@@ -253,9 +255,9 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
 
     case FBLC_LET_EXPR: {
       FblcLetExpr* let_expr = (FblcLetExpr*)expr;
-      FblcsNameL* var = LocIdName(sprog->symbols, *loc_id);
-      FblcsNameL* type = LocIdType(sprog->symbols, (*loc_id)++);
-      let_expr->type = LookupType(sprog, type);
+      FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
+      let_expr->type = LookupType(sprog, &var->type);
       if (let_expr->type == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
@@ -265,14 +267,14 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
       }
 
       for (Vars* curr = vars; curr != NULL; curr = curr->next) {
-        if (FblcsNamesEqual(curr->name, var->name)) {
-          FblcsReportError("Redefinition of variable '%s'\n", var->loc, var->name);
+        if (FblcsNamesEqual(curr->name, var->name.name)) {
+          FblcsReportError("Redefinition of variable '%s'\n", var->name.loc, var->name.name);
           return FBLC_NULL_ID;
         }
       }
 
       Vars nvars;
-      AddVar(&nvars, let_expr->type, var->name, vars);
+      AddVar(&nvars, let_expr->type, var->name.name, vars);
       return ResolveExpr(sprog, &nvars, loc_id, let_expr->body);
     }
 
@@ -428,13 +430,13 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
       Vars* nvars = vars;
       for (size_t i = 0; i < exec_actn->execc; ++i) {
         FblcExec* exec = exec_actn->execv + i;
-        FblcsNameL* var = LocIdName(sprog->symbols, *loc_id);
-        FblcsNameL* type = LocIdType(sprog->symbols, (*loc_id)++);
-        exec->type = LookupType(sprog, type);
+        FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+        assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
+        exec->type = LookupType(sprog, &var->type);
         if (ResolveActn(sprog, vars, ports, loc_id, exec->actn) == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
-        nvars = AddVar(vars_data+i, exec->type, var->name, nvars);
+        nvars = AddVar(vars_data+i, exec->type, var->name.name, nvars);
       }
       return ResolveActn(sprog, nvars, ports, loc_id, exec_actn->body);
     }
@@ -502,19 +504,19 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
         Vars nvars[func->argc];
         Vars* vars = NULL;
         for (size_t i = 0; i < func->argc; ++i) {
-          FblcsNameL* var = LocIdName(sprog->symbols, loc_id);
-          FblcsNameL* type = LocIdType(sprog->symbols, loc_id++);
-          func->argv[i] = LookupType(sprog, type);
+          FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id++];
+          assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
+          func->argv[i] = LookupType(sprog, &var->type);
           if (func->argv[i] == FBLC_NULL_ID) {
             return false;
           }
           for (Vars* curr = vars; curr != NULL; curr = curr->next) {
-            if (FblcsNamesEqual(curr->name, var->name)) {
-              FblcsReportError("Redefinition of argument '%s'\n", var->loc, var->name);
+            if (FblcsNamesEqual(curr->name, var->name.name)) {
+              FblcsReportError("Redefinition of argument '%s'\n", var->name.loc, var->name.name);
               return FBLC_NULL_ID;
             }
           }
-          vars = AddVar(nvars+i, func->argv[i], var->name, vars);
+          vars = AddVar(nvars+i, func->argv[i], var->name.name, vars);
         }
 
         FblcsNameL* return_type = LocIdName(sprog->symbols, loc_id++);
@@ -534,37 +536,37 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
         Vars nports[proc->portc];
         Vars* ports = NULL;
         for (size_t i = 0; i < proc->portc; ++i) {
-          FblcsNameL* port = LocIdName(sprog->symbols, loc_id);
-          FblcsNameL* type = LocIdType(sprog->symbols, loc_id++);
-          proc->portv[i].type = LookupType(sprog, type);
+          FblcsTypedIdSymbol* port = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id++];
+          assert(port->tag == FBLCS_TYPED_ID_SYMBOL);
+          proc->portv[i].type = LookupType(sprog, &port->type);
           if (proc->portv[i].type == FBLC_NULL_ID) {
             return false;
           }
           for (Vars* curr = ports; curr != NULL; curr = curr->next) {
-            if (FblcsNamesEqual(curr->name, port->name)) {
-              FblcsReportError("Redefinition of port '%s'\n", port->loc, port->name);
+            if (FblcsNamesEqual(curr->name, port->name.name)) {
+              FblcsReportError("Redefinition of port '%s'\n", port->name.loc, port->name.name);
               return FBLC_NULL_ID;
             }
           }
-          ports = AddVar(nports+i, proc->portv[i].type, port->name, ports);
+          ports = AddVar(nports+i, proc->portv[i].type, port->name.name, ports);
         }
 
         Vars nvars[proc->argc];
         Vars* vars = NULL;
         for (size_t i = 0; i < proc->argc; ++i) {
-          FblcsNameL* var = LocIdName(sprog->symbols, loc_id);
-          FblcsNameL* type = LocIdType(sprog->symbols, loc_id++);
-          proc->argv[i] = LookupType(sprog, type);
+          FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id++];
+          assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
+          proc->argv[i] = LookupType(sprog, &var->type);
           if (proc->argv[i] == FBLC_NULL_ID) {
             return false;
           }
           for (Vars* curr = vars; curr != NULL; curr = curr->next) {
-            if (FblcsNamesEqual(curr->name, var->name)) {
-              FblcsReportError("Redefinition of argument '%s'\n", var->loc, var->name);
+            if (FblcsNamesEqual(curr->name, var->name.name)) {
+              FblcsReportError("Redefinition of argument '%s'\n", var->name.loc, var->name.name);
               return FBLC_NULL_ID;
             }
           }
-          vars = AddVar(nvars+i, proc->argv[i], var->name, vars);
+          vars = AddVar(nvars+i, proc->argv[i], var->name.name, vars);
         }
 
         FblcsNameL* return_type = LocIdName(sprog->symbols, loc_id++);

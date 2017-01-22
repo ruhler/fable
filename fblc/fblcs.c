@@ -71,40 +71,6 @@ FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
   return NULL;
 }
 
-FblcsNameL* LocIdType(FblcsSymbols* symbols, FblcLocId loc_id)
-{
-  assert(loc_id < symbols->symbolc);
-  FblcsSymbol* symbol = symbols->symbolv[loc_id];
-  switch (symbol->tag) {
-    case FBLCS_LOC_SYMBOL: {
-      assert(false && "TODO: Unsupported tag?");
-      return NULL;
-    }
-
-    case FBLCS_ID_SYMBOL: {
-      assert(false && "TODO: Unsupported tag?");
-      return NULL;
-    }
-
-    case FBLCS_TYPED_ID_SYMBOL: {
-      FblcsTypedIdSymbol* typed_id_symbol = (FblcsTypedIdSymbol*)symbol;
-      return &typed_id_symbol->type;
-    }
-
-    case FBLCS_LINK_SYMBOL: {
-      FblcsLinkSymbol* link_symbol = (FblcsLinkSymbol*)symbol;
-      return &link_symbol->type;
-    }
-
-    case FBLCS_DECL_SYMBOL: {
-      assert(false && "TODO: Unsupported tag?");
-      return NULL;
-    }
-  }
-  assert(false && "TODO");
-  return NULL;
-}
-
 // DeclName -- See documentation in fblcs.h
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
