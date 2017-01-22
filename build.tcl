@@ -4,7 +4,7 @@ exec mkdir -p out/test out/fblc out/prgms
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
 # Compile the main programs.
-set mains [list fblc fblcbe fblcbi fblc-check fblc-tictactoe]
+set mains [list fblc fblcbe fblcbi fblc-check fblc-test fblc-tictactoe]
 set main_srcs [list]
 foreach {x} $mains { lappend main_srcs fblc/$x.c }
 set ::objs [list]
@@ -21,17 +21,9 @@ foreach {x} $mains {
   exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblc/$x.o {*}$::objs
 }
 
-# Compile pgrms
-set FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -ggdb]
-foreach {x} [glob prgms/*.c] {
-  puts "cc $x"
-  set exe out/prgms/[string map {.c ""} [file tail $x]]
-  exec gcc {*}$FLAGS -o $exe $x
-}
-
 set ::fblc ./out/prgms/fblc
 set ::fblccheck ./out/prgms/fblc-check
-set ::testfblc ./out/prgms/testfblc
+set ::fblctest ./out/prgms/fblc-test
 set ::fblcbe ./out/prgms/fblcbe
 set ::fblcbi ./out/prgms/fblcbi
 
@@ -92,7 +84,7 @@ proc expect_proc_result { result program entry ports args script } {
   exec echo $program > $fprogram
 
   try {
-    set got [exec $::testfblc $portspec $fscript $::fblc $fprogram $entry {*}$args]
+    set got [exec $::fblctest $portspec $fscript $::fblc $fprogram $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
@@ -126,7 +118,7 @@ proc fblc-test { result program entry args script } {
   exec echo $program > $fprogram
 
   try {
-    set got [exec $::testfblc "" $fscript $::fblc $fprogram $entry {*}$args]
+    set got [exec $::fblctest "" $fscript $::fblc $fprogram $entry {*}$args]
     if {$got != $result} {
       error "$file:$line: error: Expected '$result', but got '$got'"
     }
