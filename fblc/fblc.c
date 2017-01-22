@@ -46,7 +46,7 @@ static void PrintUsage(FILE* stream)
       "ARG is a value text representation of the argument value.\n"
       "The number of arguments must match the expected types for the MAIN\n"
       "function or process.\n"
-      "Example: fblc main 3<in.port 4>out.port 'Bool:true(Unit())'\n"
+      "Example: fblc program.fblc main 3<in.port 4>out.port 'Bool:true(Unit())'\n"
   );
 }
 
@@ -155,11 +155,13 @@ int main(int argc, char* argv[])
 
   if (argc <= 1) {
     fprintf(stderr, "no input file.\n");
+    PrintUsage(stderr);
     return 1;
   }
 
   if (argc <= 2) {
     fprintf(stderr, "no main entry point provided.\n");
+    PrintUsage(stderr);
     return 1;
   }
 
