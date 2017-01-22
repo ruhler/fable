@@ -397,29 +397,28 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
 
     case FBLC_LINK_ACTN: {
       FblcLinkActn* link_actn = (FblcLinkActn*)actn;
-      FblcsNameL* get = LocIdLinkGet(sprog->symbols, *loc_id);
-      FblcsNameL* put = LocIdLinkPut(sprog->symbols, *loc_id);
-      FblcsNameL* type = LocIdType(sprog->symbols, (*loc_id)++);
-      link_actn->type = LookupType(sprog, type);
+      FblcsLinkSymbol* symbol = (FblcsLinkSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      assert(symbol->tag == FBLCS_LINK_SYMBOL);
+      link_actn->type = LookupType(sprog, &symbol->type);
       if (link_actn->type == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
       for (Vars* curr = ports; curr != NULL; curr = curr->next) {
-        if (FblcsNamesEqual(curr->name, get->name)) {
-          FblcsReportError("Redefinition of port '%s'\n", get->loc, get->name);
+        if (FblcsNamesEqual(curr->name, symbol->get.name)) {
+          FblcsReportError("Redefinition of port '%s'\n", symbol->get.loc, symbol->get.name);
           return FBLC_NULL_ID;
         }
-        if (FblcsNamesEqual(curr->name, put->name)) {
-          FblcsReportError("Redefinition of port '%s'\n", put->loc, put->name);
+        if (FblcsNamesEqual(curr->name, symbol->put.name)) {
+          FblcsReportError("Redefinition of port '%s'\n", symbol->put.loc, symbol->put.name);
           return FBLC_NULL_ID;
         }
       }
 
       Vars getport;
       Vars putport;
-      AddVar(&getport, link_actn->type, get->name, ports);
-      AddVar(&putport, link_actn->type, put->name, &getport);
+      AddVar(&getport, link_actn->type, symbol->get.name, ports);
+      AddVar(&putport, link_actn->type, symbol->put.name, &getport);
       return ResolveActn(sprog, vars, &putport, loc_id, link_actn->body);
     }
 

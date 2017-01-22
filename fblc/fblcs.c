@@ -105,30 +105,6 @@ FblcsNameL* LocIdType(FblcsSymbols* symbols, FblcLocId loc_id)
   return NULL;
 }
 
-FblcsNameL* LocIdLinkGet(FblcsSymbols* symbols, FblcLocId loc_id)
-{
-  assert(loc_id < symbols->symbolc);
-  FblcsSymbol* symbol = symbols->symbolv[loc_id];
-  if (symbol->tag == FBLCS_LINK_SYMBOL) {
-    FblcsLinkSymbol* link_symbol = (FblcsLinkSymbol*)symbol;
-    return &link_symbol->get;
-  }
-  assert(false && "unsupported tag");
-  return NULL;
-}
-
-FblcsNameL* LocIdLinkPut(FblcsSymbols* symbols, FblcLocId loc_id)
-{
-  assert(loc_id < symbols->symbolc);
-  FblcsSymbol* symbol = symbols->symbolv[loc_id];
-  if (symbol->tag == FBLCS_LINK_SYMBOL) {
-    FblcsLinkSymbol* link_symbol = (FblcsLinkSymbol*)symbol;
-    return &link_symbol->put;
-  }
-  assert(false && "unsupported tag");
-  return NULL;
-}
-
 // DeclName -- See documentation in fblcs.h
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
