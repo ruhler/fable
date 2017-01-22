@@ -74,18 +74,15 @@ FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
 // DeclName -- See documentation in fblcs.h
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
-  return LocIdName(sprog->symbols, DeclLocId(sprog, decl_id))->name;
+  FblcLocId decl_loc_id = sprog->symbols->declv[decl_id];
+  return LocIdName(sprog->symbols, decl_loc_id)->name;
 }
 
 // FieldName -- See documentation in fblcs.h
 FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
 {
-  return LocIdName(sprog->symbols, DeclLocId(sprog, decl_id) + field_id + 1)->name;
-}
-
-FblcLocId DeclLocId(FblcsProgram* sprog, FblcDeclId decl_id)
-{
-  return sprog->symbols->declv[decl_id];
+  FblcLocId field_loc_id = sprog->symbols->declv[decl_id] + field_id + 1;
+  return LocIdName(sprog->symbols, field_loc_id)->name;
 }
 
 // LookupDecl -- See documentation in fblcs.h

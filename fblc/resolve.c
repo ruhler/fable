@@ -112,7 +112,7 @@ static FblcTypeId FieldType(FblcsProgram* sprog, FblcTypeId type_id, FblcFieldId
   assert(type_id < sprog->program->declc);
   FblcDecl* decl = sprog->program->declv[type_id];
   assert(decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL);
-  FblcLocId field_loc_id = DeclLocId(sprog, type_id) + 1 + field_id;
+  FblcLocId field_loc_id = sprog->symbols->declv[type_id] + 1 + field_id;
   FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
   assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
   return LookupType(sprog, &field->type);
@@ -148,13 +148,15 @@ FblcTypeId ReturnType(FblcsProgram* sprog, FblcDeclId decl_id)
 
     case FBLC_FUNC_DECL: {
       FblcFuncDecl* func = (FblcFuncDecl*)decl;
-      FblcsNameL* type = LocIdName(sprog->symbols, DeclLocId(sprog, decl_id) + 1 + func->argc);
+      FblcLocId return_type_loc_id = sprog->symbols->declv[decl_id] + 1 + func->argc;
+      FblcsNameL* type = LocIdName(sprog->symbols, return_type_loc_id);
       return LookupType(sprog, type);
     }
 
     case FBLC_PROC_DECL: {
       FblcProcDecl* proc = (FblcProcDecl*)decl;
-      FblcsNameL* type = LocIdName(sprog->symbols, DeclLocId(sprog, decl_id) + 1 + proc->portc + proc->argc);
+      FblcLocId return_type_loc_id = sprog->symbols->declv[decl_id] + 1 + proc->portc + proc->argc;
+      FblcsNameL* type = LocIdName(sprog->symbols, return_type_loc_id);
       return LookupType(sprog, type);
     }
 

@@ -267,7 +267,6 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id);
 FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id);
 
-FblcLocId DeclLocId(FblcsProgram* sprog, FblcDeclId decl_id);
 FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id);
 FblcFieldId SLookupField(FblcsProgram* sprog, FblcDeclId decl_id, FblcsName field);
