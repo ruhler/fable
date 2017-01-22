@@ -3,19 +3,22 @@ exec rm -rf out
 exec mkdir -p out/test out/fblc out/prgms 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
-# Compile fblc, fblc-check, fblcbe, fblcbi
-set objs [list]
+# Compile the main programs.
+set mains [list fblc fblcbe fblcbi fblc-check fblc-tictactoe]
+set main_srcs [list]
+foreach {x} $mains { lappend main_srcs fblc/$x.c }
+set ::objs [list]
 foreach {x} [glob fblc/*.c] {
   set obj out/fblc/[string map {.c .o} [file tail $x]]
-  if {-1 == [lsearch [list fblc/fblc.c fblc/fblcbe.c fblc/fblcbi.c fblc/fblc-check.c] $x]} {
-    lappend objs $obj
+  if {-1 == [lsearch $main_srcs $x]} {
+    lappend ::objs $obj
   }
   puts "cc $x"
   exec gcc {*}$FLAGS -c -o $obj $x
 }
-foreach {x} [list fblc fblcbe fblcbi fblc-check] {
+foreach {x} $mains {
   puts "ld -o out/$x"
-  exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblc/$x.o {*}$objs
+  exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblc/$x.o {*}$::objs
 }
 
 # Compile pgrms
@@ -34,7 +37,7 @@ set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
   exec mkdir -p out/$name/fblc
-  exec gcov {*}[glob out/fblc/*.o] > out/$name/fblc.gcov
+  exec gcov {*}$::objs > out/$name/fblc.gcov
   exec mv {*}[glob *.gcov] out/$name/fblc
 }
 

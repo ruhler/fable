@@ -1,3 +1,5 @@
+// fblc-tictactoe
+//   A program to run fblc programs with a tictactoe interface.
 
 #define _GNU_SOURCE
 #include <stdbool.h>
