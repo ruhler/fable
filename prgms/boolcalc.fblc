@@ -1,0 +1,218 @@
+
+struct Unit();
+
+union Bool(Unit true, Unit false);
+
+union Operator(
+  Unit OPEN_PAREN,
+  Unit CLOSE_PAREN,
+  Unit AND,
+  Unit OR,
+  Unit NOT
+);
+
+union Token(Bool operand, Operator operator);
+
+struct NonEmptyTokens(Token head, Tokens tail);
+union Tokens(Unit nil, NonEmptyTokens cons);
+
+struct NonEmptyOperands(Bool head, Operands tail);
+union Operands(Unit nil, NonEmptyOperands cons);
+
+struct NonEmptyOperators(Operator head, Operators tail);
+union Operators(Unit nil, NonEmptyOperators cons);
+
+struct MachineOk(Operands operands, Operators operators);
+union Machine(Unit error, MachineOk ok);
+
+func True( ; Bool) {
+  Bool:true(Unit());
+};
+
+func False( ; Bool) {
+  Bool:false(Unit());
+};
+
+func Not(Bool a ; Bool) {
+  ?(a; Bool:false(Unit()), Bool:true(Unit()));
+};
+
+func Or(Bool a, Bool b ; Bool) {
+  ?(a ; a, b);
+};
+
+func And(Bool a, Bool b ; Bool) {
+  ?(a ; b, Bool:false(Unit()));
+};
+
+func MError( ; Machine) {
+  Machine:error(Unit());
+};
+
+func MOk(Operands operands, Operators operators ; Machine) {
+  Machine:ok(MachineOk(operands, operators));
+};
+
+# Perform the operation on the top of the stacks.
+func Operate(Machine m ; Machine) {
+  ?(m ; MError(),
+    ?(.operators(.ok(m)) ; MError(),
+      ?(.head(.cons(.operators(.ok(m))));
+        # OPEN PAREN
+        MError(),
+
+        # CLOSE PAREN - should match an open paren. Pop them both.
+        ?(.tail(.cons(.operators(.ok(m)))) ; MError(),
+           ?(.head(.cons(.tail(.cons(.operators(.ok(m))))));
+              MOk(.operands(.ok(m)), .tail(.cons(.tail(.cons(.operators(.ok(m))))))),
+              MError(), MError(), MError(), MError())),
+        
+        # AND
+        ?(.operands(.ok(m)) ; MError(),
+          ?(.tail(.cons(.operands(.ok(m)))) ; MError(),
+            MOk(
+              Operands:cons(
+                NonEmptyOperands(
+                  And(.head(.cons(.operands(.ok(m)))),
+                      .head(.cons(.tail(.cons(.operands(.ok(m))))))),
+                  .tail(.cons(.tail(.cons(.operands(.ok(m)))))))),
+              .tail(.cons(.operators(.ok(m))))))),
+
+        # OR
+        ?(.operands(.ok(m)) ; MError(),
+          ?(.tail(.cons(.operands(.ok(m)))) ; MError(),
+            MOk(
+              Operands:cons(
+                NonEmptyOperands(
+                  Or(.head(.cons(.operands(.ok(m)))),
+                     .head(.cons(.tail(.cons(.operands(.ok(m))))))),
+                  .tail(.cons(.tail(.cons(.operands(.ok(m)))))))),
+              .tail(.cons(.operators(.ok(m))))))),
+
+        # NOT
+        ?(.operands(.ok(m)) ; MError(),
+          MOk(
+            Operands:cons(
+              NonEmptyOperands(
+                Not(.head(.cons(.operands(.ok(m))))),
+                .tail(.cons(.operands(.ok(m)))))),
+            .tail(.cons(.operators(.ok(m))))))
+      )
+    )
+  );
+};
+
+# Return true if the given operator should be pushed on the operator stack.
+func ShouldPush(MachineOk m, Operator op ; Bool) {
+  ?(.operators(m) ;
+    # nil: Always push if we don't have any operators yet.
+    True(),
+
+    # cons: Push depending on the operator.
+    ?(op ;
+      # OPEN_PAREN:
+      ?(.head(.cons(.operators(m))) ;
+        True(), True(), True(), True(), True()),
+
+      # CLOSE_PAREN:
+      ?(.head(.cons(.operators(m))) ;
+        True(), False(), False(), False(), False()),
+
+      # AND:
+      ?(.head(.cons(.operators(m))) ;
+        True(), False(), False(), True(), False()),
+
+      # OR:
+      ?(.head(.cons(.operators(m))) ;
+        True(), False(), False(), False(), False()),
+
+      # NOT:
+      ?(.head(.cons(.operators(m))) ;
+        True(), False(), True(), True(), False())
+    )
+  );
+};
+
+# Feed the machine a single token.
+func Input(Machine m, Token tok ; Machine) {
+  ?(m ; MError(),
+     ?(tok ; 
+       # Operand: Push the operand onto the operand stack.
+       MOk(
+         Operands:cons(NonEmptyOperands(.operand(tok), .operands(.ok(m)))),
+         .operators(.ok(m))),
+
+       # Operator: Push the operator or operate as appropriate.
+       ?(ShouldPush(.ok(m), .operator(tok)) ;
+         MOk(
+           .operands(.ok(m)),
+           Operators:cons(NonEmptyOperators(.operator(tok), .operators(.ok(m))))),
+         Input(Operate(m), tok))
+      )
+   );
+};
+
+# Feed all tokens into the given machine.
+func InputAll(Machine m, Tokens toks ; Machine) {
+  ?(toks; m, InputAll(Input(m, .head(.cons(toks))), .tail(.cons(toks))));
+};
+
+union Result(Bool value, Unit error);
+
+# Perform all remaining operations for the given machine and return the final
+# machine.
+func FinishMachine(Machine m ; Machine) {
+  ?(m ; MError(), ?(.operators(.ok(m)) ; m, FinishMachine(Operate(m))));
+};
+
+# Perform all remaining operations for the given machine and return the final
+# result.
+func Finish(Machine m ; Result) {
+  Machine finished = FinishMachine(m);
+  ?(finished ; Result:error(Unit()),
+      ?(.operands(.ok(m)); Result:error(Unit()),
+        ?(.tail(.cons(.operands(.ok(m)))) ;
+          Result:value(.head(.cons(.operands(.ok(m))))),
+          Result:error(Unit()))));
+};
+
+# Evaluate the boolean formula described by the given sequence of tokens.
+func Eval(Tokens toks ; Result) {
+  Finish(InputAll(MOk(Operands:nil(Unit()), Operators:nil(Unit())), toks));
+};
+
+func Test0( ; Result) {
+  Eval(
+    Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:false(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:OR(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:true(Unit())),
+    Tokens:nil(Unit()))))))));
+};
+
+# 0 + 1 * !1 + !0
+func Test1( ; Result) {
+  Eval(
+    Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:false(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:OR(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:true(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:AND(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:NOT(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:true(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:OR(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:NOT(Unit())),
+    Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:false(Unit())),
+    Tokens:nil(Unit()))))))))))))))))))));
+};
+
