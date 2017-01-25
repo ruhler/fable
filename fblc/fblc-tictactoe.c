@@ -186,11 +186,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcArena* bulk_arena_2 = CreateBulkFreeArena(gc_arena);
-
   if (proc->argc != argc) {
     fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argc, argc);
-    FreeBulkFreeArena(bulk_arena_2);
     FreeBulkFreeArena(bulk_arena);
     FreeGcArena(gc_arena);
     GcFinish();
@@ -209,7 +206,6 @@ int main(int argc, char* argv[])
   assert(value != NULL);
   FblcRelease(gc_arena, value);
 
-  FreeBulkFreeArena(bulk_arena_2);
   FreeBulkFreeArena(bulk_arena);
   FreeGcArena(gc_arena);
   GcFinish();
