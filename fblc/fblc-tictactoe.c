@@ -3,9 +3,9 @@
 
 #include <assert.h>     // for assert
 #include <stdio.h>      // for FILE, printf, fprintf
+#include <stdlib.h>     // for malloc, free
 
 #include "fblcs.h"
-#include "gc.h"
 
 // IOUser --
 //   User data for FblcIO.
@@ -16,6 +16,8 @@ typedef struct {
 
 static void PrintUsage(FILE* stream);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
+static void* MallocAlloc(FblcArena* this, size_t size);
+static void MallocFree(FblcArena* this, void* ptr);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -117,6 +119,18 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
     }
   }
 }
+// MallocAlloc -- FblcArena alloc function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void* MallocAlloc(FblcArena* this, size_t size)
+{
+  return malloc(size);
+}
+// MallocFree -- FblcArena free function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void MallocFree(FblcArena* this, void* ptr)
+{
+  free(ptr);
+}
 
 // main --
 //   The main entry point for fblc-tictactoe. Evaluates the MAIN
@@ -133,6 +147,10 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 //   Performs IO based on the execution of the MAIN process on the
 //   given arguments, or prints an error message to standard error if an error
 //   is encountered.
+//
+//   This function leaks memory under the assumption it is called as the main
+//   entry point of the program and the OS will free the memory resources used
+//   immediately after the function returns.
 int main(int argc, char* argv[])
 {
   if (argc > 1 && strcmp("--help", argv[1]) == 0) {
@@ -157,57 +175,44 @@ int main(int argc, char* argv[])
   argv += 3;
   argc -= 3;
 
-  GcInit();
-  FblcArena* gc_arena = CreateGcArena();
-  FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  FblcsProgram* sprog = FblcsLoadProgram(bulk_arena, filename);
+  // Simply pass allocations through to malloc. We won't be able to track or
+  // free memory that the caller is supposed to track and free, but we don't
+  // leak memory in a loop and we assume this is the main entry point of the
+  // program, so we should be okay.
+  FblcArena arena = { .alloc = &MallocAlloc, .free = &MallocFree };
+
+  FblcsProgram* sprog = FblcsLoadProgram(&arena, filename);
   if (sprog == NULL) {
-    FreeBulkFreeArena(bulk_arena);
-    FreeGcArena(gc_arena);
-    GcFinish();
     return 1;
   }
 
   FblcDeclId decl_id = FblcsLookupDecl(sprog, entry);
   if (decl_id == FBLC_NULL_ID) {
     fprintf(stderr, "entry %s not found.\n", entry);
-    FreeBulkFreeArena(bulk_arena);
-    FreeGcArena(gc_arena);
-    GcFinish();
     return 1;
   }
 
   FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv[decl_id];
   if (proc->tag != FBLC_PROC_DECL) {
     fprintf(stderr, "entry %s is not a process.\n", entry);
-    FreeBulkFreeArena(bulk_arena);
-    FreeGcArena(gc_arena);
-    GcFinish();
     return 1;
   }
 
   if (proc->argc != argc) {
     fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argc, argc);
-    FreeBulkFreeArena(bulk_arena);
-    FreeGcArena(gc_arena);
-    GcFinish();
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(gc_arena, sprog, proc->argv[i], argv[i]);
+    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv[i], argv[i]);
   }
 
   IOUser user = { .sprog = sprog, .proc = proc };
   FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(gc_arena, sprog->program, proc, args, &io);
+  FblcValue* value = FblcExecute(&arena, sprog->program, proc, args, &io);
   assert(value != NULL);
-  FblcRelease(gc_arena, value);
-
-  FreeBulkFreeArena(bulk_arena);
-  FreeGcArena(gc_arena);
-  GcFinish();
+  FblcRelease(&arena, value);
   return 0;
 }
