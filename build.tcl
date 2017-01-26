@@ -246,6 +246,11 @@ exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMo
 puts "fblcbe tictactoe.fblc (NewGame is 33)"
 exec $::fblcbe prgms/tictactoe.fblc > out/prgms/tictactoe.fblc.bin
 
+puts "test prgms/boolcalc.fblc Test"
+exec $::fblc prgms/boolcalc.fblc Test > out/boolcalc.Test.got
+exec echo "TestFailures:nil(Unit())" > out/boolcalc.Test.wnt
+exec diff out/boolcalc.Test.wnt out/boolcalc.Test.got
+
 check_coverage overall
 
 # Report summary results

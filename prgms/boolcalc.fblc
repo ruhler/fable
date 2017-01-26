@@ -157,7 +157,7 @@ func InputAll(Machine m, Tokens toks ; Machine) {
   ?(toks; m, InputAll(Input(m, .head(.cons(toks))), .tail(.cons(toks))));
 };
 
-union Result(Bool value, Unit error);
+union Result(Unit error, Bool value);
 
 # Perform all remaining operations for the given machine and return the final
 # machine.
@@ -170,9 +170,9 @@ func FinishMachine(Machine m ; Machine) {
 func Finish(Machine m ; Result) {
   Machine finished = FinishMachine(m);
   ?(finished ; Result:error(Unit()),
-      ?(.operands(.ok(m)); Result:error(Unit()),
-        ?(.tail(.cons(.operands(.ok(m)))) ;
-          Result:value(.head(.cons(.operands(.ok(m))))),
+      ?(.operands(.ok(finished)); Result:error(Unit()),
+        ?(.tail(.cons(.operands(.ok(finished)))) ;
+          Result:value(.head(.cons(.operands(.ok(finished))))),
           Result:error(Unit()))));
 };
 
@@ -181,38 +181,74 @@ func Eval(Tokens toks ; Result) {
   Finish(InputAll(MOk(Operands:nil(Unit()), Operators:nil(Unit())), toks));
 };
 
-func Test0( ; Result) {
-  Eval(
-    Tokens:cons(NonEmptyTokens(
-      Token:operand(Bool:false(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operator(Operator:OR(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operand(Bool:true(Unit())),
-    Tokens:nil(Unit()))))))));
+
+union TestName(
+  Unit 0,
+  Unit 1,
+  Unit 0o1,
+  Unit n0,
+  Unit 0o1an1on0
+);
+
+struct TestFail(TestName name, Result expected, Result actual, Machine machine);
+struct NonEmptyTestFailures(TestFail head, TestFailures tail);
+union TestFailures(Unit nil, NonEmptyTestFailures cons);
+
+func T(TestName name, Result expected, Tokens toks, TestFailures rest ; TestFailures) {
+  Machine final = FinishMachine(InputAll(MOk(Operands:nil(Unit()), Operators:nil(Unit())), toks));
+  Result actual = Eval(toks);
+  TestFailures pass = rest;
+  TestFailures fail = TestFailures:cons(NonEmptyTestFailures(TestFail(name, expected, actual, final), rest));
+  ?(expected ;
+      ?(actual ; pass, fail),
+      ?(actual ; fail,
+          ?(.value(expected);
+              ?(.value(actual); pass, fail),
+              ?(.value(actual); fail, pass))));
 };
 
-# 0 + 1 * !1 + !0
-func Test1( ; Result) {
-  Eval(
-    Tokens:cons(NonEmptyTokens(
-      Token:operand(Bool:false(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operator(Operator:OR(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operand(Bool:true(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operator(Operator:AND(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operator(Operator:NOT(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operand(Bool:true(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operator(Operator:OR(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operator(Operator:NOT(Unit())),
-    Tokens:cons(NonEmptyTokens(
-      Token:operand(Bool:false(Unit())),
-    Tokens:nil(Unit()))))))))))))))))))));
+func Test( ; TestFailures) {
+  T(TestName:0(Unit()),     #0
+    Result:value(False()),
+    {
+      Tokens:cons(NonEmptyTokens(
+      Token:operand(False()), Tokens:nil(Unit())));
+    },
+  T(TestName:1(Unit()),     #1
+    Result:value(True()),
+    {
+      Tokens:cons(NonEmptyTokens(
+      Token:operand(True()), Tokens:nil(Unit())));
+    },
+  T(TestName:0o1(Unit()),   # 0 + 1
+    Result:value(True()),
+    {
+      Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:false(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:OR(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:true(Unit())), Tokens:nil(Unit())))))));
+    },
+  T(TestName:n0(Unit()),    # !0
+    Result:value(True()),
+    {
+      Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:NOT(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:false(Unit())), Tokens:nil(Unit())))));
+    },
+  T(TestName:0o1an1on0(Unit()),    # 0 + 1 * !1 + !0
+    Result:value(True()),
+    {
+      Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:false(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:OR(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:true(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:AND(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:NOT(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:true(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:OR(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operator(Operator:NOT(Unit())), Tokens:cons(NonEmptyTokens(
+      Token:operand(Bool:false(Unit())), Tokens:nil(Unit())))))))))))))))))));
+    },
+    TestFailures:nil(Unit()))))));
 };
 

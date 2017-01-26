@@ -4,10 +4,6 @@ Cleanup Arc:
 * Remove or clean up the last of the unprefixed functions in fblcs.h
 * Verify all document comments are present and up to date.
 
-Proliferation Arc:
-* Implement fblc debugger of some sort?
-* Fix bugs in boolean arithmetic calculator in fblc.
-
 Space Invaders Arc:
 * Factor out common code for running fblcs from command line: FblcsExec
   - use it for fblc, fblc-test, and tictactoe
@@ -22,6 +18,8 @@ Space Invaders Arc:
 * Implement space invaders game in fbld.
 
 Miscellanous:
+* Document allocations for every function that takes an FblcArena
+ - specifically, what the caller should do to free all allocations.
 * Add test to fblc-test that we don't leak memory in FblcExecute.
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
@@ -90,3 +88,9 @@ Future:
   at their block, all blocks can execute in parallel as inputs are available,
   and we can pipeline or duplicate the blocks to allow for even more
   parallelism.
+
+* Implement an fblc debugger. Where at minimum you can trace through source
+  locations as the program executes. Maybe we want fancy stuff like viewing
+  variables, breakpoints, setting values, etc... but mostly to start tracing
+  through source locations.
+
