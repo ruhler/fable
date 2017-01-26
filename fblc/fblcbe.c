@@ -1,15 +1,17 @@
 // fblcbe.c --
-//
 //   The file implements the main entry point for the fblc binary encoder.
 
 #include <stdio.h>      // for FILE
 #include <string.h>     // for strcmp
+#include <stdlib.h>     // for malloc, free
 #include <unistd.h>     // for STDOUT_FILENO
 
 #include "fblcs.h"
-#include "gc.h"
 
 static void PrintUsage(FILE* fout);
+static void* MallocAlloc(FblcArena* this, size_t size);
+static void MallocFree(FblcArena* this, void* ptr);
+int main(int argc, char* argv[]);
 
 // PrintUsage --
 //   
@@ -32,6 +34,19 @@ static void PrintUsage(FILE* stream)
   );
 }
 
+// MallocAlloc -- FblcArena alloc function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void* MallocAlloc(FblcArena* this, size_t size)
+{
+  return malloc(size);
+}
+// MallocFree -- FblcArena free function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void MallocFree(FblcArena* this, void* ptr)
+{
+  free(ptr);
+}
+
 // main --
 //
 //   The main entry point for the fblc binary encoder.
@@ -46,7 +61,10 @@ static void PrintUsage(FILE* stream)
 // Side effects:
 //   Prints the binary encoding of the given program to standard out, or
 //   prints an error message to standard error if an error is encountered.
-
+//
+//   This function leaks memory under the assumption it is called as the main
+//   entry point of the program and the OS will free the memory resources used
+//   immediately after the function returns.
 int main(int argc, char* argv[])
 {
   if (argc > 1 && strcmp("--help", argv[1]) == 0) {
@@ -61,20 +79,17 @@ int main(int argc, char* argv[])
 
   const char* filename = argv[1];
 
-  GcInit();
-  FblcArena* gc_arena = CreateGcArena();
-  FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  FblcsProgram* sprog = FblcsLoadProgram(bulk_arena, filename);
+  // Simply pass allocations through to malloc. We won't be able to track or
+  // free memory that the caller is supposed to track and free, but we don't
+  // leak memory in a loop and we assume this is the main entry point of the
+  // program, so we should be okay.
+  FblcArena arena = { .alloc = &MallocAlloc, .free = &MallocFree };
+
+  FblcsProgram* sprog = FblcsLoadProgram(&arena, filename);
   if (sprog == NULL) {
-    FreeBulkFreeArena(bulk_arena);
-    FreeGcArena(gc_arena);
-    GcFinish();
     return 1;
   }
 
   FblcWriteProgram(sprog->program, STDOUT_FILENO);
-  FreeBulkFreeArena(bulk_arena);
-  FreeGcArena(gc_arena);
-  GcFinish();
   return 0;
 }

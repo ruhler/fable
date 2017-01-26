@@ -3,16 +3,19 @@
 //   The file implements the main entry point for the fblc-check command.
 
 #include <stdio.h>      // for FILE
+#include <stdlib.h>     // for malloc, free
 #include <string.h>     // for strcmp
 
 #include "fblcs.h"
-#include "gc.h"
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* fout);
+static void* MallocAlloc(FblcArena* this, size_t size);
+static void MallocFree(FblcArena* this, void* ptr);
+int main(int argc, char* argv[]);
 
 // PrintUsage --
 //   
@@ -37,6 +40,20 @@ static void PrintUsage(FILE* stream)
   );
 }
 
+// MallocAlloc -- FblcArena alloc function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void* MallocAlloc(FblcArena* this, size_t size)
+{
+  return malloc(size);
+}
+
+// MallocFree -- FblcArena free function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void MallocFree(FblcArena* this, void* ptr)
+{
+  free(ptr);
+}
+
 // main --
 //
 //   The main entry point for fblc-check.
@@ -53,7 +70,10 @@ static void PrintUsage(FILE* stream)
 // Side effects:
 //   Prints an error message to standard error if the program is not well formed.
 //   With --error, prints the error message to standard out instead.
-
+//
+//   This function leaks memory under the assumption it is called as the main
+//   entry point of the program and the OS will free the memory resources used
+//   immediately after the function returns.
 int main(int argc, char* argv[])
 {
   argc--;
@@ -88,12 +108,10 @@ int main(int argc, char* argv[])
   int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
   int exit_fail = expect_error ? EX_SUCCESS : EX_FAIL;
 
-  GcInit();
-  FblcArena* gc_arena = CreateGcArena();
-  FblcArena* bulk_arena = CreateBulkFreeArena(gc_arena);
-  bool error = !FblcsLoadProgram(bulk_arena, filename);
-  FreeBulkFreeArena(bulk_arena);
-  FreeGcArena(gc_arena);
-  GcFinish();
-  return error ? exit_fail : exit_success;
+  // Simply pass allocations through to malloc. We won't be able to track or
+  // free memory that the caller is supposed to track and free, but we don't
+  // leak memory in a loop and we assume this is the main entry point of the
+  // program, so we should be okay.
+  FblcArena arena = { .alloc = &MallocAlloc, .free = &MallocFree };
+  return FblcsLoadProgram(&arena, filename) ? exit_success : exit_fail;
 }

@@ -18,7 +18,7 @@ foreach {x} [glob fblc/*.c] {
 }
 foreach {x} $mains {
   puts "ld -o out/$x"
-  exec gcc {*}$FLAGS -o out/prgms/$x -lgc out/fblc/$x.o {*}$::objs
+  exec gcc {*}$FLAGS -o out/prgms/$x out/fblc/$x.o {*}$::objs
 }
 
 set ::fblc ./out/prgms/fblc

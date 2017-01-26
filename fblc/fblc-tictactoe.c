@@ -119,12 +119,14 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
     }
   }
 }
+
 // MallocAlloc -- FblcArena alloc function implemented using malloc.
 // See fblc.h for documentation about FblcArena alloc functions.
 static void* MallocAlloc(FblcArena* this, size_t size)
 {
   return malloc(size);
 }
+
 // MallocFree -- FblcArena free function implemented using malloc.
 // See fblc.h for documentation about FblcArena alloc functions.
 static void MallocFree(FblcArena* this, void* ptr)
