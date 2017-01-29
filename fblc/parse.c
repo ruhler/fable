@@ -787,8 +787,8 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
 //
 // Side effects:
 //   Parses a process action from the token stream, advancing the token stream
-//   past the parsed action, including the trailing semicolon if in_stmt
-//   is true.
+//   past the parsed action, not including the trailing semicolon in the case
+//   when in_stmt is true.
 //   Updates symbol information based on the parsed action.
 //   In case of an error, an error message is printed to stderr.
 static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsSymbols* symbols)
@@ -802,16 +802,19 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
   }
   
-  FblcActn* actn = NULL;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    actn = ParseActn(arena, toks, true, symbols);
+    FblcActn* actn = ParseActn(arena, toks, true, symbols);
     if (actn == NULL) {
+      return NULL;
+    }
+    if (!GetToken(toks, ';')) {
       return NULL;
     }
     if (!GetToken(toks, '}')) {
       return NULL;
     }
+    return actn;
   } else if (IsToken(toks, '$')) {
     // This is an eval action of the form: $(<arg>)
     FblcEvalActn* eval_actn = arena->alloc(arena, sizeof(FblcEvalActn));
@@ -827,7 +830,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!GetToken(toks, ')')) {
       return NULL;
     }
-    actn = (FblcActn*)eval_actn;
+    return (FblcActn*)eval_actn;
   } else if (IsToken(toks, '~')) {
     // This is a get action or put action of the form: ~name() or ~name(<arg>)
     GetToken(toks, '~');
@@ -843,7 +846,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       get_actn->tag = FBLC_GET_ACTN;
       get_actn->port = FBLC_NULL_ID;
       GetToken(toks, ')');
-      actn = (FblcActn*)get_actn;
+      return (FblcActn*)get_actn;
     } else {
       FblcPutActn* put_actn = arena->alloc(arena, sizeof(FblcPutActn));
       put_actn->tag = FBLC_PUT_ACTN;
@@ -855,7 +858,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!GetToken(toks, ')')) {
         return NULL;
       }
-      actn = (FblcActn*)put_actn;
+      return (FblcActn*)put_actn;
     }
   } else if (IsNameToken(toks)) {
     FblcsNameL start;
@@ -883,7 +886,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!ParseArgs(arena, toks, symbols, &call_actn->argc, &call_actn->argv)) {
         return NULL;
       }
-      actn = (FblcActn*)call_actn;
+      return (FblcActn*)call_actn;
     } else if (in_stmt && IsToken(toks, '<')) {
       // This is a link expression of the form: start <~> get, put; body
       FblcLinkActn* link_actn = arena->alloc(arena, sizeof(FblcLinkActn));
@@ -996,18 +999,11 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!GetToken(toks, ')')) {
       return NULL;
     }
-    actn = (FblcActn*)cond_actn;
+    return (FblcActn*)cond_actn;
   } else {
     UnexpectedToken(toks, "a process action");
     return NULL;
   }
-
-  if (in_stmt) {
-    if (!GetToken(toks, ';')) {
-      return NULL;
-    }
-  }
-  return actn;
 }
 
 // FblcsParseProgram -- see documentation in fblcs.h.
