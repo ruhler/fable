@@ -57,10 +57,6 @@ Miscellanous:
 
 * Reorder count and vector in FblcVector macros.
 
-* In Parser have the caller parse the trailing semicolon for expressions
-  intstead of the callee? That way we can return the expression right away in
-  every branch.
-
 * Document performance model.
   Specifically that we use strict evaluation to model performance because it
   is a simple model, which is essential for writing high performance code.
