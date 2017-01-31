@@ -1,25 +1,30 @@
-Cleanup Arc:
-* Rewrite resolve to pass a Symbol** instead of loc_id.
-* Remove now unused LocId* functions.
-* Remove or clean up the last of the unprefixed functions in fblcs.h
-* Verify all document comments are present and up to date.
+Phantom Release Arc:
+* Revert syntax for field access to its original form.
+* Rewrite testfblc as fblc-test in top of fblc library.
+* Replace expect_result and expect_proc_result with fblc-test
+* Remove expect_result_b tests and code for reading and writing binary values
+  and programs.
+* Implement version of Checker that works on FblcProgram without symbols.
+* Cleanup Fblcs Interface
+ - Rewrite resolve to pass a Symbol** instead of loc_id.
+ - Remove now unused LocId* functions.
+ - Remove or clean up the last of the unprefixed functions in fblcs.h
+* General Cleanup
+ - Verify all document comments are present and up to date.
+ - Document allocations for every function that takes an FblcArena,
+   specifically, what the caller should do to free all allocations.
+ - Increase test code coverage as much as reasonably possible.
+
+Post Phantom Release Arc:
+* Design my language for source level abstraction, implement it, and write
+  some cool programs.
 
 Space Invaders Arc:
-* Factor out common code for running fblcs from command line: FblcsExec
-  - use it for fblc, fblc-test, and tictactoe
-* Rewrite testfblc as fblc-test in top of fblc library.
-* Implement version of Checker that works on FblcProgram without symbols.
-* Modify fblc-test to exercise {Read,Write}{Program,Value} functions
-  - even though they aren't otherwise necessary to run.
-* Remove expect_result_b tests.
-* Replace expect_result and expect_proc_result with fblc-test
 * Implement fbld front end to fblcbi.
 * Port calc Integer to an fbld module.
 * Implement space invaders game in fbld.
 
 Miscellanous:
-* Document allocations for every function that takes an FblcArena
- - specifically, what the caller should do to free all allocations.
 * Add test to fblc-test that we don't leak memory in FblcExecute.
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
