@@ -643,9 +643,10 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
   }
 
+  FblcExpr* expr = NULL;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
-    FblcExpr* expr = ParseExpr(arena, toks, true, symbols);
+    expr = ParseExpr(arena, toks, true, symbols);
     if (expr == NULL) {
       return NULL;
     }
@@ -655,7 +656,6 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!GetToken(toks, '}')) {
       return NULL;
     }
-    return expr;
   } else if (IsNameToken(toks)) {
     FblcsNameL start;
     GetNameToken(arena, toks, "start of expression", &start);
@@ -669,7 +669,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!ParseArgs(arena, toks, symbols, &app_expr->argc, &app_expr->argv)) {
         return NULL;
       }
-      return (FblcExpr*)app_expr;
+      expr = (FblcExpr*)app_expr;
     } else if (IsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)
       GetToken(toks, ':');
@@ -692,7 +692,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!GetToken(toks, ')')) {
         return NULL;
       }
-      return (FblcExpr*)union_expr;
+      expr = (FblcExpr*)union_expr;
     } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
@@ -722,7 +722,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       var_expr->tag = FBLC_VAR_EXPR;
       var_expr->var = FBLC_NULL_ID;
       ParsedId(arena, &start, symbols);
-      return (FblcExpr*)var_expr;
+      expr = (FblcExpr*)var_expr;
     }
   } else if (IsToken(toks, '?')) {
     // This is a conditional expression of the form: ?(<expr> ; <args>)
@@ -742,7 +742,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!ParseNonZeroArgs(arena, toks, symbols, &cond_expr->argc, &cond_expr->argv)) {
       return NULL;
     }
-    return (FblcExpr*)cond_expr;
+    expr = (FblcExpr*)cond_expr;
   } else if (IsToken(toks, '.')) {
     // This is an access expression of the form: .<field>(<expr>)
     FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
@@ -764,11 +764,12 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     if (!GetToken(toks, ')')) {
       return NULL;
     }
-    return (FblcExpr*)access_expr;
+    expr = (FblcExpr*)access_expr;
   } else {
     UnexpectedToken(toks, "an expression");
     return NULL;
   }
+  return expr;
 }
 
 // ParseActn --
