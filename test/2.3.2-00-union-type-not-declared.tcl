@@ -3,7 +3,7 @@ set prg {
   struct Unit();
 
   func main( ; Unit) {
-    .bar(Foo:bar(Unit()));
+    Foo:bar(Unit()).bar;
   };
 }
-fblc-check-error $prg 6:10
+fblc-check-error $prg 6:5

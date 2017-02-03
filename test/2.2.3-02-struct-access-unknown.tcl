@@ -4,7 +4,7 @@ set prg {
   struct A(Unit x, Unit y);
 
   func main( ; Unit) {
-    .z(A(Unit(), Unit()));
+    A(Unit(), Unit()).z;
   };
 }
-fblc-check-error $prg 7:6
+fblc-check-error $prg 7:23

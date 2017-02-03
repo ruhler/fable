@@ -7,7 +7,7 @@ set prg {
 
   func main( ; Unit) {
     # You can't access a struct with a conditional expression.
-    .?(Bool:true(Unit() ; Unit(), Unit()))(A(Unit(), Donut()));
+    A(Unit(), Donut()).?(Bool:true(Unit() ; Unit(), Unit()));
   };
 }
-fblc-check-error $prg 10:6
+fblc-check-error $prg 10:24

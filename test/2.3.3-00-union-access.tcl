@@ -5,7 +5,7 @@ set prg {
   union Maybe(Unit nothing, Fruit just);
 
   func main( ; Fruit) {
-    .just(Maybe:just(Fruit:pear(Unit())));
+    Maybe:just(Fruit:pear(Unit())).just;
   };
 }
 expect_result Fruit:pear(Unit()) $prg main

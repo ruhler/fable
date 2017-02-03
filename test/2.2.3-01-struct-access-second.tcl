@@ -5,7 +5,7 @@ set prg {
   struct A(Unit x, Donut y);
 
   func main( ; Donut) {
-    .y(A(Unit(), Donut()));
+    A(Unit(), Donut()).y;
   };
 }
 expect_result Donut() $prg main

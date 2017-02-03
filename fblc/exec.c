@@ -872,7 +872,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // object -> access -> ...
             FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
             AccessCmd* acmd = (AccessCmd*)MkAccessCmd(arena, NULL, access_expr->field, target, next);
-            next = MkExprCmd(arena, access_expr->arg, &(acmd->value), (Cmd*)acmd);
+            next = MkExprCmd(arena, access_expr->obj, &(acmd->value), (Cmd*)acmd);
             break;
           }
 

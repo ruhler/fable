@@ -5,7 +5,7 @@ set prg {
 
   func main( ; Unit) {
     # The field name is missing.
-    . (A(Unit(), Donut()));
+    A(Unit(), Donut()).;
   };
 }
-fblc-check-error $prg 8:7
+fblc-check-error $prg 8:24

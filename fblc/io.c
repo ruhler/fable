@@ -257,8 +257,8 @@ static FblcExpr* ReadExpr(FblcArena* arena, BitSource* source)
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* expr = arena->alloc(arena, sizeof(FblcAccessExpr));
       expr->tag = FBLC_ACCESS_EXPR;
+      expr->obj = ReadExpr(arena, source);
       expr->field = ReadId(source);
-      expr->arg = ReadExpr(arena, source);
       return (FblcExpr*)expr;
     }
 
@@ -542,8 +542,8 @@ static void WriteExpr(BitSink* sink, FblcExpr* expr)
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
+      WriteExpr(sink, access_expr->obj);
       WriteId(sink, access_expr->field);
-      WriteExpr(sink, access_expr->arg);
       break;
     }
 

@@ -222,14 +222,13 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
-      FblcLocId field_loc = (*loc_id)++;
 
-      FblcTypeId type_id = ResolveExpr(sprog, vars, loc_id, access_expr->arg);
+      FblcTypeId type_id = ResolveExpr(sprog, vars, loc_id, access_expr->obj);
       if (type_id == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      access_expr->field = LookupField(sprog, type_id, field_loc);
+      access_expr->field = LookupField(sprog, type_id, (*loc_id)++);
       if (access_expr->field == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }

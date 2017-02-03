@@ -1,5 +1,4 @@
 Phantom Release Arc:
-* Revert syntax for field access to its original form.
 * Rewrite testfblc as fblc-test in top of fblc library.
 * Replace expect_result and expect_proc_result with fblc-test
 * Remove expect_result_b tests and code for reading and writing binary values

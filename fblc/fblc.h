@@ -220,12 +220,12 @@ typedef struct {
 } FblcUnionExpr;
 
 // FblcAccessExpr --
-//   An access expression of the form '.field(arg)' used to access a field of
+//   An access expression of the form 'obj.field' used to access a field of
 //   a struct or union value.
 typedef struct {
   FblcExprTag tag;
+  FblcExpr* obj;
   FblcFieldId field;
-  FblcExpr* arg;
 } FblcAccessExpr;
 
 // FblcCondExpr --

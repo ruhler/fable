@@ -262,8 +262,8 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
+      FblcTypeId type_id = CheckExpr(sprog, vars, access_expr->obj, loc_id, error);
       FblcsNameL* field = LocIdName(sprog->symbols, (*loc_id)++);
-      FblcTypeId type_id = CheckExpr(sprog, vars, access_expr->arg, loc_id, error);
       if (IsType(sprog, type_id)) {
         FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
         if (access_expr->field < type->fieldc) {

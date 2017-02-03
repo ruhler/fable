@@ -6,7 +6,7 @@ set prg {
 
   func main( ; Unit) {
     # The variable 'x' has not  been declared.
-    .bar(Foo:bar(x));
+    Foo:bar(x).bar;
   };
 }
-fblc-check-error $prg 9:18
+fblc-check-error $prg 9:13

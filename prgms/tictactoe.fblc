@@ -27,21 +27,21 @@ union Position(
 
 # Returns the value of the square at position 'p' in board 'b'.
 func GetSquare(Board b, Position p; Square) {
-  ?(p; .ul(b), .uc(b), .ur(b), .ml(b), .mc(b), .mr(b), .ll(b), .lc(b), .lr(b));
+  ?(p; b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr);
 };
 
 # Sets the square at position 'p' in board 'b' to value 's'.
 func SetSquare(Board b, Position p, Square s ; Board) {
   ?(p;
-      Board(     s, .uc(b), .ur(b), .ml(b), .mc(b), .mr(b), .ll(b), .lc(b), .lr(b)),
-      Board(.ul(b),      s, .ur(b), .ml(b), .mc(b), .mr(b), .ll(b), .lc(b), .lr(b)),
-      Board(.ul(b), .uc(b),      s, .ml(b), .mc(b), .mr(b), .ll(b), .lc(b), .lr(b)),
-      Board(.ul(b), .uc(b), .ur(b),      s, .mc(b), .mr(b), .ll(b), .lc(b), .lr(b)),
-      Board(.ul(b), .uc(b), .ur(b), .ml(b),      s, .mr(b), .ll(b), .lc(b), .lr(b)),
-      Board(.ul(b), .uc(b), .ur(b), .ml(b), .mc(b),      s, .ll(b), .lc(b), .lr(b)),
-      Board(.ul(b), .uc(b), .ur(b), .ml(b), .mc(b), .mr(b),      s, .lc(b), .lr(b)),
-      Board(.ul(b), .uc(b), .ur(b), .ml(b), .mc(b), .mr(b), .ll(b),      s, .lr(b)),
-      Board(.ul(b), .uc(b), .ur(b), .ml(b), .mc(b), .mr(b), .ll(b), .lc(b),      s));
+      Board(   s, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul,    s, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc,    s, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur,    s, b.mc, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml,    s, b.mr, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc,    s, b.ll, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr,    s, b.lc, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll,    s, b.lr),
+      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
 };
 
 union MaybeBoard(Board Just, Unit Nothing);
@@ -99,11 +99,11 @@ func RowStatus(Square a, Square b, Square c; Status) {
 func BoardStatus(Board a ; Status) {
   OrStatus(
       OrStatus(
-        OrStatus(RowStatus(.ul(a), .uc(a), .ur(a)), RowStatus(.ml(a), .mc(a), .mr(a))),
-        OrStatus(RowStatus(.ll(a), .lc(a), .lr(a)), RowStatus(.ul(a), .ml(a), .ll(a)))),
+        OrStatus(RowStatus(a.ul, a.uc, a.ur), RowStatus(a.ml, a.mc, a.mr)),
+        OrStatus(RowStatus(a.ll, a.lc, a.lr), RowStatus(a.ul, a.ml, a.ll))),
       OrStatus(
-        OrStatus(RowStatus(.uc(a), .mc(a), .lc(a)), RowStatus(.ur(a), .mr(a), .lr(a))),
-        OrStatus(RowStatus(.ul(a), .mc(a), .lr(a)), RowStatus(.ur(a), .mc(a), .ll(a)))));
+        OrStatus(RowStatus(a.uc, a.mc, a.lc), RowStatus(a.ur, a.mr, a.lr)),
+        OrStatus(RowStatus(a.ul, a.mc, a.lr), RowStatus(a.ur, a.mc, a.ll))));
 };
 
 union Result(Unit Win, Unit Draw, Unit Loss);
@@ -123,7 +123,7 @@ func ExpectedResult(Board b, Player x; Result) {
       {
         Player o = ?(x; Player:O(Unit()), Player:X(Unit()));
         Position move = ChooseBestMove(b, o);
-        FlipResult(ExpectedResult(.Just(Move(b, move, o)), o));
+        FlipResult(ExpectedResult(Move(b, move, o).Just, o));
       }
    );
 };
@@ -131,14 +131,14 @@ func ExpectedResult(Board b, Player x; Result) {
 struct PositionResult(Position position, Result result);
 
 func ChooseBestPosition(PositionResult a, PositionResult b; PositionResult) {
-  Result ra = .result(a);
-  Result rb = .result(b);
+  Result ra = a.result;
+  Result rb = b.result;
   ?(ra; a, ?(rb; b, a, a), b);
 };
 
 func ChooseBestMaybePosition(MaybePositionResult a, MaybePositionResult b;
     MaybePositionResult) {
-  ?(a; ?(b; MaybePositionResult:Just(ChooseBestPosition(.Just(a), .Just(b))), a), b);
+  ?(a; ?(b; MaybePositionResult:Just(ChooseBestPosition(a.Just, b.Just)), a), b);
 };
 
 union MaybePositionResult(PositionResult Just, Unit Nothing);
@@ -149,7 +149,7 @@ union MaybePositionResult(PositionResult Just, Unit Nothing);
 func MoveResult(Board b, Player x, Position p; MaybePositionResult) {
   MaybeBoard moved = Move(b, p, x);
   ?(moved;
-      MaybePositionResult:Just(PositionResult(p, ExpectedResult(.Just(moved), x))),
+      MaybePositionResult:Just(PositionResult(p, ExpectedResult(moved.Just, x))),
       MaybePositionResult:Nothing(Unit()));
 };
 
@@ -175,7 +175,7 @@ func ChooseBestMove(Board b, Player x; Position) {
           ChooseBestMaybePosition(mc, mr),
           ChooseBestMaybePosition(ll, lc))),
       lr);
-  .position(.Just(best));
+  best.Just.position;
 };
 
 union GameStatus(Player Move, Player Win, Unit Draw); 
@@ -216,10 +216,10 @@ proc PlayGame(Input <~ input, Output ~> output; Board board, Player x; Unit) {
              NewGame(input, output; )),
       ?(InputIsReset(in) ; NewGame(input, output; ),
         {
-          Position pos = $(?(InputIsPosition(in) ; .position(in), ChooseBestMove(board, x)));
+          Position pos = $(?(InputIsPosition(in) ; in.position, ChooseBestMove(board, x)));
           MaybeBoard nboard = $(Move(board, pos, x));
           ?(nboard ;
-              PlayGame(input, output; .Just(nboard), ?(x; Player:O(Unit()), Player:X(Unit()))),
+              PlayGame(input, output; nboard.Just, ?(x; Player:O(Unit()), Player:X(Unit()))),
               PlayGame(input, output; board, x));
         }));
 };

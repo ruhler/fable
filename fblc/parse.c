@@ -643,6 +643,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, (FblcsSymbol*)symbol);
   }
 
+  FblcLocId expr_loc_id = symbols->symbolc - 1;
   FblcExpr* expr = NULL;
   if (IsToken(toks, '{')) {
     GetToken(toks, '{');
@@ -743,32 +744,44 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       return NULL;
     }
     expr = (FblcExpr*)cond_expr;
-  } else if (IsToken(toks, '.')) {
-    // This is an access expression of the form: .<field>(<expr>)
-    FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
-    access_expr->tag = FBLC_ACCESS_EXPR;
-    GetToken(toks, '.');
-
-    access_expr->field = FBLC_NULL_ID;
-    if (!ParseId(arena, toks, "field name", symbols)) {
-      return NULL;
-    }
-
-    if (!GetToken(toks, '(')) {
-      return NULL;
-    }
-    access_expr->arg = ParseExpr(arena, toks, false, symbols);
-    if (access_expr->arg == NULL) {
-      return NULL;
-    }
-    if (!GetToken(toks, ')')) {
-      return NULL;
-    }
-    expr = (FblcExpr*)access_expr;
   } else {
     UnexpectedToken(toks, "an expression");
     return NULL;
   }
+
+  size_t num_field_access;
+  for (num_field_access = 0; IsToken(toks, '.'); ++num_field_access) {
+    // This is an access expression of the form: <obj>.<field>
+    FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
+    access_expr->tag = FBLC_ACCESS_EXPR;
+    access_expr->obj = expr;
+    GetToken(toks, '.');
+    access_expr->field = FBLC_NULL_ID;
+    if (!ParseId(arena, toks, "field name", symbols)) {
+      return NULL;
+    }
+    expr = (FblcExpr*)access_expr;
+  }
+
+  // If there were field accesses, we need to fix up the symbols, inserting
+  // location symbols for each field access expression before all the symbols
+  // starting at expr_loc_id.
+  if (num_field_access > 0) {
+    FblcsSymbol* symbol = symbols->symbolv[expr_loc_id];
+
+    for (size_t i = 0; i < num_field_access; ++i) {
+      FblcVectorAppend(arena, symbols->symbolv, symbols->symbolc, NULL);
+    }
+
+    for (size_t i = symbols->symbolc - 1; i > expr_loc_id + num_field_access; --i) {
+      symbols->symbolv[i] = symbols->symbolv[i - num_field_access];
+    }
+
+    for (size_t i = 0; i < num_field_access; ++i) {
+      symbols->symbolv[expr_loc_id + i] = symbol;
+    }
+  }
+
   return expr;
 }
 

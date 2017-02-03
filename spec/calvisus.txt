@@ -110,12 +110,12 @@
   @end
 
   @section 2.2.3. Field Access
-   Syntax:  '.' fname '(' value ')'
+   Syntax:  value '.' fname
         
    The fields of a structure are accessed using the dot notation.
-   For example, if coord is the value of type Coord constructed with 'Coord(5(), 6())', then '.x(coord)' is the value of type int representing the x coordinate (5), and '.y(coord)' is the value of type int representing the y coordinate (6).
+   For example, if coord is the value of type Coord constructed with 'Coord(5(), 6())', then 'coord.x' is the value of type int representing the x coordinate (5), and 'coord.y' is the value of type int representing the y coordinate (6).
 
-   More generally, a '.' followed by a field name followed by a value in parentheses refers to the value of the field of the structure with that name.
+   More generally, a value of a structure type followed by a '.' then a field name, refers to the value of the field of the structure with that name.
 
    The following is required for a field access to be valid:
    @list[numbered]
@@ -186,12 +186,12 @@
   @end
  
   @section 2.3.3. Field Access
-   Syntax: '.' fname '(' value ')' fname
+   Syntax: value '.' fname
 
    Field access can be used for unions to access fields using the same syntax as field access for structures.
    The key difference is a field access is considered illegal and produces undefined results if the union is not tagged with that field.
-   For example, given a calculator instruction 6_minus_2 formed with 'CalcInstr:subtract(Binary(6(), 2()))', '.subtract(6_minus_2)' is a well defined value of type Binary.
-   On the other hand, '.negate(6_minus_2)' is illegal and produces undefined behavior, because the CalcInstr value is not tagged with the 'negate' field.
+   For example, given a calculator instruction 6_minus_2 formed with 'CalcInstr:subtract(Binary(6(), 2()))', '6_minus_2.subtract' is a well defined value of type Binary.
+   On the other hand, '6_minus_2.negate' is illegal and produces undefined behavior, because the CalcInstr value is not tagged with the 'negate' field.
 
    As with field access for structures, the following is required for a field access to be valid:
    @list[numbered]
@@ -223,9 +223,9 @@
    For example, assuming instr is a value of type CalcInstr, and that 'add', 'sub', and 'neg' are functions for performing addition, subtraction, and negation of integers respectively, the following represents a value of type 'int' containing the result of executing the calculator instruction:
    @example
     ?(instr ;
-        add(.a(.add(instr)), .b(.add(instr))),
-        sub(.a(.sub(instr)), .b(.sub(instr))),
-        neg(.a(.negate(instr))),
+        add(instr.add.a, instr.add.b),
+        sub(instr.sub.a, instr.sub.b),
+        neg(instr.negate.a),
         0())
    @end
 
@@ -323,9 +323,9 @@
   @example
    func Calculate(CalcInstr instr; int) {
      ?(instr ;
-         add(.a(.add(instr)), .b.add(instr))),
-         sub(.a(.sub(instr)), .b(.sub(instr))),
-         neg(.a(.negate(instr))),
+         add(instr.add.a, instr.add.b),
+         sub(instr.sub.a, instr.sub.b),
+         neg(instr.negate.a),
          0());
    };
   @end
@@ -432,7 +432,7 @@
   @end
 
   @section 3.4.4. Field Access Expression
-   Syntax: '.' fname '(' expr ')'
+   Syntax: expr '.' fname
 
    The field access expression is used to access data from a struct or union.
    First the argument expression, sometimes referred to as the object of the access, is evaluated to a value.
@@ -610,7 +610,7 @@ progress.
   Instead we will say the process does not finish.
 
   @section 4.7.1. Evaluation Process
-   Syntax: '$' '(' expr ')'
+   Syntax:    '$' '(' expr ')'
 
    The evaluation process evaluates an expression and returns the result without performing any put or get operations.
 
@@ -672,7 +672,7 @@ progress.
   @end
 
   @section 4.7.5. Call Process
-   Syntax:  tname '(' [pname [',' pname [...]]] ';' [expr [',' expr [...]]] ')'
+   Syntax:  tname '(' [pname [',' pname [...]]] ';' [expr [',' expr [...]]] ')'        
 
    A call process is used to call a process with given port and data arguments.
    A call process is well formed if the following hold:
@@ -694,7 +694,7 @@ progress.
   @end
 
   @section 4.7.6. Statement Process
-   Syntax: '{ pstmt '}'
+   Syntax:  '{ pstmt '}'
 
    As with the statement expression, the statement process is an artifact of the concrete syntax to support execution and link process statements.
    The statement syntax makes it clear what the scope of a variable or port is while allowing a single close brace to end the scope for multiple variables and ports.
@@ -768,7 +768,7 @@ progress.
   expr ::= vname                                        (* variable *)
         |  tname '(' [expr [',' expr [...]]] ')'        (* struct *)
         |  tname ':' fname '(' expr ')'                 (* union *)
-        |  '.' fname '(' expr ')'                       (* field access *)
+        |  expr '.' fname                               (* field access *)
         |  '?' '(' expr ';' expr [',' expr [...]] ')'   (* conditional *)
         |  tname '(' [expr [',' expr [...]]] ')'        (* application *)
         |  '{' stmt '}'                                 (* statement *)

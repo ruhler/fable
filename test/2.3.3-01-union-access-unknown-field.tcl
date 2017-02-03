@@ -5,7 +5,7 @@ set prg {
 
   func main( ; Fruit) {
     # nosuchfield is not a field of Maybe
-    .nosuchfield(Maybe:just(Fruit:pear(Unit())));
+    Maybe:just(Fruit:pear(Unit())).nosuchfield;
   };
 }
-fblc-check-error $prg 8:6
+fblc-check-error $prg 8:36
