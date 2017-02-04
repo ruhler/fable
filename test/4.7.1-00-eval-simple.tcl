@@ -1,4 +1,5 @@
 set prg {
+  # Test a simple eval process.
   struct Unit();
 
   proc main( ; ; Unit) {
@@ -6,4 +7,4 @@ set prg {
   };
 }
 
-expect_result Unit() $prg main
+fblc-test $prg main {} "return Unit()"

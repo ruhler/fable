@@ -1,7 +1,5 @@
-
-# A struct can be declared that contains no fields.
-
 set prg {
+  # A struct can be declared that contains no fields.
   struct NoFields();
 
   func main( ; NoFields) {
@@ -9,4 +7,4 @@ set prg {
   };
 }
 
-expect_result NoFields() $prg main
+fblc-test $prg main {} "return NoFields()"

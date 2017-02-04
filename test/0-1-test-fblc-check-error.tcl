@@ -1,5 +1,5 @@
 set prg {
-  # Test the most basic 'expect_malformed' test.
+  # Test the most basic 'fblc-check-error' test.
   struct Unit();
 
   X X X X X X X 

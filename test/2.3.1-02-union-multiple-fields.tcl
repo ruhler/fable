@@ -1,7 +1,5 @@
-
-# A union can be declared that contains multiple fields.
-
 set prg {
+  # A union can be declared that contains multiple fields.
   struct Unit();
   struct Donut();
   union MultiField(Unit x, Donut y);
@@ -11,4 +9,4 @@ set prg {
   };
 }
 
-expect_result MultiField:x(Unit()) $prg main
+fblc-test $prg main {} "return MultiField:x(Unit())"

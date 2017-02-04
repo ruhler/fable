@@ -1,9 +1,5 @@
-
-
-
-# Test exec with multiple processes.
-
 set prg {
+  # Test exec with multiple processes.
   struct Unit();
   union Bool(Unit true, Unit false);
   struct Pair(Bool a, Bool b);
@@ -14,4 +10,6 @@ set prg {
   };
 }
 
-expect_result Pair(Bool:true(Unit()),Bool:false(Unit())) $prg main
+fblc-test $prg main {} {
+  return Pair(Bool:true(Unit()),Bool:false(Unit()))
+}

@@ -1,6 +1,5 @@
-
-# Test process call that takes a put port.
 set prg {
+  # Test process call that takes a put port.
   struct Unit();
   union Bool(Unit true, Unit false);
 
@@ -16,4 +15,4 @@ set prg {
   };
 }
 
-expect_result Bool:true(Unit()) $prg main
+fblc-test $prg main {} "return Bool:true(Unit())"

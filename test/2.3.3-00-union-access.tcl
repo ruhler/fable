@@ -8,4 +8,5 @@ set prg {
     Maybe:just(Fruit:pear(Unit())).just;
   };
 }
-expect_result Fruit:pear(Unit()) $prg main
+
+fblc-test $prg main {} "return Fruit:pear(Unit())"

@@ -10,8 +10,9 @@ set prg {
 
 # Verify we can read two union values in a row. There was a bug in the past
 # where we failed to check for the close paren at the end of a union type.
-fblc-test Bool:True(Unit()) $prg main {} {
+fblc-test $prg main {} {
   put in Bool:False(Unit())
   put in Bool:True(Unit())
+  return Bool:True(Unit())
 }
 

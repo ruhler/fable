@@ -1,7 +1,5 @@
-
-# Test a simple link process.
-
 set prg {
+  # Test a simple link process.
   struct Unit();
   union Bool(Unit true, Unit false);
 
@@ -12,4 +10,4 @@ set prg {
   };
 }
 
-expect_result Bool:true(Unit()) $prg main
+fblc-test $prg main {} "return Bool:true(Unit())"

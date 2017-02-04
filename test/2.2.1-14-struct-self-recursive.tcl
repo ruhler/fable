@@ -1,7 +1,6 @@
-
-# In theory a struct can have a field with its same type, though it's not
-# clear how you could possibly construct such a thing.
 set prg {
+  # In theory a struct can have a field with its same type, though it's not
+  # clear how you could possibly construct such a thing.
   struct Unit();
   struct Recursive(Recursive x, Recursive y);
 
@@ -9,4 +8,5 @@ set prg {
     Unit();
   };
 }
-expect_result Unit() $prg main
+
+fblc-test $prg main {} "return Unit()"

@@ -1,6 +1,5 @@
-
-# Test a basic let expression.
 set prg {
+  # Test a basic let expression.
   struct Unit();
   struct A(Unit x, Unit y);
 
@@ -9,4 +8,5 @@ set prg {
     A(v, v);
   };
 }
-expect_result A(Unit(),Unit()) $prg main
+
+fblc-test $prg main {} "return A(Unit(),Unit())"

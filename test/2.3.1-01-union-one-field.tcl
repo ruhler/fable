@@ -1,7 +1,5 @@
-
-# A union can be declared that contains one field.
-
 set prg {
+  # A union can be declared that contains one field.
   struct Unit();
   union OneField(Unit x);
 
@@ -10,4 +8,4 @@ set prg {
   };
 }
 
-expect_result OneField:x(Unit()) $prg main
+fblc-test $prg main {} "return OneField:x(Unit())"

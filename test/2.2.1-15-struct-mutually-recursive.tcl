@@ -1,6 +1,5 @@
-
-# structs can be mutually recursive.
 set prg {
+  # structs can be mutually recursive.
   struct Unit();
   struct Foo(Bar x);
   struct Bar(Foo y);
@@ -9,4 +8,5 @@ set prg {
     Unit();
   };
 }
-expect_result Unit() $prg main
+
+fblc-test $prg main {} "return Unit()"

@@ -1,7 +1,5 @@
-
-
-# Test that we can call a function with multiple arguments.
 set prg {
+  # Test that we can call a function with multiple arguments.
   struct Unit();
   struct Pair(Unit a, Unit b);
 
@@ -13,4 +11,7 @@ set prg {
     foo(Unit(), Unit());
   };
 }
-expect_result Pair(Unit(),Unit()) $prg main
+
+fblc-test $prg main {} {
+  return Pair(Unit(),Unit())
+}

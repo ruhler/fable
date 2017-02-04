@@ -1,6 +1,5 @@
-
-# Access a component of a union.
 set prg {
+  # Access a component of a union.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);
@@ -10,4 +9,5 @@ set prg {
       EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit()));
   };
 }
-expect_result EnumXYZ:Z(Unit()) $prg main
+
+fblc-test $prg main {} "return EnumXYZ:Z(Unit())"

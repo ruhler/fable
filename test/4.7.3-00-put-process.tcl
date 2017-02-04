@@ -7,5 +7,8 @@ set prg {
   };
 }
 
-fblc-test Unit() $prg main {} { get out Unit() }
+fblc-test $prg main {} {
+  get out Unit()
+  return Unit()
+}
 

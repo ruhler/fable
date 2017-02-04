@@ -11,7 +11,7 @@
 // CmdTag --
 //   Enum used to distinguish among the different command types.
 typedef enum {
-  CMD_PUT, CMD_GET, CMD_END
+  CMD_PUT, CMD_GET, CMD_RETURN
 } CmdTag;
 
 // Command --
@@ -74,11 +74,11 @@ static void PrintUsage(FILE* stream)
       "read from SCRIPT. The commands are of the form:"
       "      put NAME VALUE\n"
       "or    get NAME VALUE\n"
-      "or    end VALUE\n"
+      "or    return VALUE\n"
       "The put command puts the fblc text VALUE onto the named port.\n"
       "The get command reads the fblc value from the named port and asserts\n"
       "that the value read matches the given value.\n" 
-      "The end command waits for the result of the process and asserts\n"
+      "The return command waits for the result of the process and asserts\n"
       "that the resultinv value matches the given value.\n"
   );
 }
@@ -155,8 +155,8 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
         abort();
       }
       type = user->proc->portv[user->cmd.port].type;
-    } else if (sscanf(line, "end %s", value) == 1) {
-      user->cmd.tag = CMD_END;
+    } else if (sscanf(line, "return %s", value) == 1) {
+      user->cmd.tag = CMD_RETURN;
       type = user->proc->return_type;
     } else {
       ReportError(user, "malformed command line: ");
@@ -394,7 +394,7 @@ int main(int argc, char* argv[])
   assert(value != NULL);
 
   EnsureCommandReady(&user, &arena);
-  if (user.cmd.tag != CMD_END) {
+  if (user.cmd.tag != CMD_RETURN) {
     ReportError(&user, "premature program termination.\n");
     abort();
   }

@@ -1,6 +1,5 @@
-
-# Test a basic conditional process.
 set prg {
+  # Test a basic conditional process.
   struct Unit();
   union Fruit(Unit apple, Unit banana, Unit pear);
 
@@ -10,4 +9,4 @@ set prg {
   };
 }
 
-expect_result Fruit:banana(Unit()) $prg main
+fblc-test $prg main {} "return Fruit:banana(Unit())"

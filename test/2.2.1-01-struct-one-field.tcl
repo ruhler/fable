@@ -8,4 +8,4 @@ set prg {
   };
 }
 
-expect_result OneField(Unit()) $prg main
+fblc-test $prg main {} "return OneField(Unit())"

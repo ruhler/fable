@@ -1,7 +1,5 @@
-
-# Test a simple variable expression.
-
 set prg {
+  # Test a simple variable expression.
   struct Unit();
   union Bool(Unit True, Unit False);
 
@@ -10,5 +8,5 @@ set prg {
   };
 }
 
-expect_result Bool:True(Unit()) $prg main Bool:True(Unit())
-expect_result Bool:False(Unit()) $prg main Bool:False(Unit())
+fblc-test $prg main { Bool:True(Unit()) } "return Bool:True(Unit())"
+fblc-test $prg main { Bool:False(Unit()) } "return Bool:False(Unit())"

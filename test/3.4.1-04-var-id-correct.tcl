@@ -1,6 +1,5 @@
-
-# Verify that a variable refers to the proper value.
 set prg {
+  # Verify that a variable refers to the proper value.
   struct Unit();
   union Bool(Unit True, Unit False);
 
@@ -9,5 +8,9 @@ set prg {
   };
 }
 
-expect_result Bool:True(Unit()) $prg main Bool:False(Unit()) Bool:True(Unit())
-expect_result Bool:False(Unit()) $prg main Bool:True(Unit()) Bool:False(Unit())
+fblc-test $prg main { Bool:False(Unit()) Bool:True(Unit()) } {
+  return Bool:True(Unit())
+}
+fblc-test $prg main { Bool:True(Unit()) Bool:False(Unit()) } {
+  return Bool:False(Unit())
+}

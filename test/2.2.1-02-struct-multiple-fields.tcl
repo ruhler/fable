@@ -1,4 +1,3 @@
-
 set prg {
   # A struct can be declared that contains multiple fields.
   struct Unit();
@@ -10,4 +9,4 @@ set prg {
   };
 }
 
-expect_result MultiField(Unit(),Donut()) $prg main
+fblc-test $prg main {} "return MultiField(Unit(),Donut())"

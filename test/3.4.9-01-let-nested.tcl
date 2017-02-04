@@ -1,7 +1,5 @@
-
-
-# Test a nested let expression.
 set prg {
+  # Test a nested let expression.
   struct Unit();
   struct A(Unit x, Unit y);
   struct A2(A x, A y);
@@ -12,4 +10,7 @@ set prg {
     B(u, { A a = A(u, u); A2(a,a); }, u);
   };
 }
-expect_result B(Unit(),A2(A(Unit(),Unit()),A(Unit(),Unit())),Unit()) $prg main
+
+fblc-test $prg main {} {
+  return B(Unit(),A2(A(Unit(),Unit()),A(Unit(),Unit())),Unit())
+}

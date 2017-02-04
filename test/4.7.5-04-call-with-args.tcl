@@ -1,6 +1,5 @@
-
-# Test process call that takes regular arguments.
 set prg {
+  # Test process call that takes regular arguments.
   struct Unit();
   union Bool(Unit true, Unit false);
 
@@ -13,4 +12,4 @@ set prg {
   };
 }
 
-expect_result Bool:true(Unit()) $prg main
+fblc-test $prg main {} "return Bool:true(Unit())"

@@ -14,4 +14,7 @@ set prg {
     B(v, foo(v), v);
   };
 }
-expect_result B(Unit(),A(Unit(),Donut()),Unit()) $prg main
+
+fblc-test $prg main {} {
+  return B(Unit(),A(Unit(),Donut()),Unit())
+}

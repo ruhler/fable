@@ -1,5 +1,5 @@
 set prg {
-  # Test a function with no inputs arguments.
+  # Test the most basic 'fblc-test' test.
   struct Unit();
 
   func main( ; Unit) {

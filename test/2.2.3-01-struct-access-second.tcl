@@ -8,4 +8,5 @@ set prg {
     A(Unit(), Donut()).y;
   };
 }
-expect_result Donut() $prg main
+
+fblc-test $prg main {} "return Donut()"

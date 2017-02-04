@@ -1,8 +1,5 @@
-
-
-# Test that you can put twice to the same port before getting.
-
 set prg {
+  # Test that you can put twice to the same port before getting.
   struct Unit();
   union Bool(Unit true, Unit false);
 
@@ -15,4 +12,4 @@ set prg {
   };
 }
 
-expect_result Bool:true(Unit()) $prg main
+fblc-test $prg main {} "return Bool:true(Unit())"

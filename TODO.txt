@@ -1,5 +1,4 @@
 Phantom Release Arc:
-* Replace expect_result with fblc-test
 * Implement version of Checker that works on FblcProgram without symbols.
 * Cleanup Fblcs Interface
  - Rewrite resolve to pass a Symbol** instead of loc_id.

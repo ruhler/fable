@@ -1,6 +1,5 @@
-
-# A union can have a field with its same type.
 set prg {
+  # A union can have a field with its same type.
   struct Unit();
   union Recursive(Unit x, Recursive y);
 
@@ -8,4 +7,5 @@ set prg {
     Recursive:y(Recursive:x(Unit()));
   };
 }
-expect_result Recursive:y(Recursive:x(Unit())) $prg main
+
+fblc-test $prg main {} "return Recursive:y(Recursive:x(Unit()))"

@@ -16,4 +16,4 @@ set prg {
   };
 }
 
-expect_result Bool:false(Unit()) $prg main
+fblc-test $prg main {} "return Bool:false(Unit())"

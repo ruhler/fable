@@ -17,10 +17,11 @@ set prg {
   };
 }
 
-fblc-test Unit() $prg main {} {
+fblc-test $prg main {} {
   get p Unit()
   get p Unit()
   get p Unit()
   put g Unit()
+  return Unit()
 }
 

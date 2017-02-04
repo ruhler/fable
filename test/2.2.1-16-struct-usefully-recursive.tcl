@@ -1,6 +1,5 @@
-
-# structs can be mutually recursive with unions.
 set prg {
+  # structs can be mutually recursive with unions.
   struct Unit();
   union Bool(Unit true, Unit false);
   struct NonEmptyBoolList(Bool head, BoolList tail);
@@ -10,4 +9,5 @@ set prg {
     BoolList:nonempty(NonEmptyBoolList(Bool:true(Unit()),BoolList:empty(Unit())));
   };
 }
-expect_result BoolList:nonempty(NonEmptyBoolList(Bool:true(Unit()),BoolList:empty(Unit()))) $prg main
+
+fblc-test $prg main {} "return BoolList:nonempty(NonEmptyBoolList(Bool:true(Unit()),BoolList:empty(Unit())))"

@@ -5,4 +5,7 @@ set prg {
     ~in();
   };
 }
-fblc-test Unit() $prg main {} { put in Unit() }
+fblc-test $prg main {} {
+  put in Unit()
+  return Unit()
+}
