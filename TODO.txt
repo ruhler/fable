@@ -1,8 +1,6 @@
 Phantom Release Arc:
 * Rewrite testfblc as fblc-test in top of fblc library.
 * Replace expect_result and expect_proc_result with fblc-test
-* Remove expect_result_b tests and code for reading and writing binary values
-  and programs.
 * Implement version of Checker that works on FblcProgram without symbols.
 * Cleanup Fblcs Interface
  - Rewrite resolve to pass a Symbol** instead of loc_id.

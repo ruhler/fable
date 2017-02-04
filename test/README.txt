@@ -8,13 +8,6 @@ abstract tcl procedures:
 # 'args' and no ports leads to the given 'result'.
 proc expect_result { result program entry args } { ... }
 
-# Test that running function or process 'entry' in 'program' with the given
-# 'args' and no ports leads to the given 'result'.
-# result and args should be specified in binary as a sequence of ascii digits
-# '0' and '1' and entry should be specified as the integer id of the entry
-# function or process based on order of declarations starting at 0.
-proc expect_result_b { result program entry args } { ... }
-
 # Test that the given fblc text program is malformed, and that the error is
 # located at loc. loc should be of the form line:col, where line is the line
 # number of the expected error and col is the column number within that line

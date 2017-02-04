@@ -11,5 +11,3 @@ set prg {
 }
 
 expect_result Fruit:banana(Unit()) $prg main
-expect_result_b 01 $prg 2
-

@@ -15,5 +15,3 @@ set prg {
 }
 
 expect_result Pair(Bool:true(Unit()),Bool:false(Unit())) $prg main
-expect_result_b 01 $prg 3
-

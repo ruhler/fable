@@ -11,4 +11,3 @@ set prg {
   };
 }
 expect_result EnumXYZ:Z(Unit()) $prg main
-expect_result_b 10 $prg 3

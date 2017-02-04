@@ -14,5 +14,3 @@ set prg {
   };
 }
 expect_result Pair(Unit(),Unit()) $prg main
-expect_result_b 0 $prg 3
-

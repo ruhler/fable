@@ -1,7 +1,6 @@
 
-# A struct can be declared that contains multiple fields.
-
 set prg {
+  # A struct can be declared that contains multiple fields.
   struct Unit();
   struct Donut();
   struct MultiField(Unit x, Donut y);
@@ -12,5 +11,3 @@ set prg {
 }
 
 expect_result MultiField(Unit(),Donut()) $prg main
-expect_result_b 0 $prg 3
-

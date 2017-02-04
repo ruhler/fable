@@ -9,5 +9,3 @@ set prg {
   };
 }
 expect_result Recursive:y(Recursive:x(Unit())) $prg main
-expect_result_b 10 $prg 2
-

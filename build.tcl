@@ -4,7 +4,7 @@ exec mkdir -p out/test out/fblc out/prgms
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
 # Compile the main programs.
-set mains [list fblc fblcbe fblcbi fblc-check fblc-test fblc-tictactoe]
+set mains [list fblc fblc-check fblc-test fblc-tictactoe]
 set main_srcs [list]
 foreach {x} $mains { lappend main_srcs fblc/$x.c }
 set ::objs [list]
@@ -24,8 +24,6 @@ foreach {x} $mains {
 set ::fblc ./out/prgms/fblc
 set ::fblccheck ./out/prgms/fblc-check
 set ::fblctest ./out/prgms/fblc-test
-set ::fblcbe ./out/prgms/fblcbe
-set ::fblcbi ./out/prgms/fblcbi
 
 proc check_coverage {name} {
   exec mkdir -p out/$name/fblc
@@ -150,35 +148,6 @@ proc fblc-check-error { program loc } {
   }
 }
 
-# Test that running function or process 'entry' in 'program' with the given
-# 'args' and no ports leads to the given 'result'.
-# result, and args should be specified as a sequence of ascii digits '0' and
-# '1'.
-# entry should be specified as an integer.
-# program should be specified as a text program, which will be converted to a
-# binary encoding using fblcbe.
-proc expect_result_b { result program entry args } {
-  set loc [info frame -1]
-  set line [dict get $loc line]
-  set file [dict get $loc file]
-  set name "[file tail $file]_$line"
-
-  try {
-    set fprogram ./out/test/$name.fblc
-    set fbits $fprogram.bin
-    exec echo $program > $fprogram
-    exec $::fblcbe $fprogram > $fbits
-    set got [exec $::fblcbi $fbits $entry {*}$args]
-    if {$got != $result} {
-      error "$file:$line: error: Expected '$result', but got '$got'"
-    }
-  } trap CHILDSTATUS {results options} {
-    error "$file:$line: error: Expected '$result', but got:\n$results"
-  } on error msg {
-    error "$file:$line: error: $msg"
-  }
-}
-
 set ::skipped 0
 proc skip { args } {
   set ::skipped [expr $::skipped + 1]
@@ -242,9 +211,6 @@ puts "test prgms/tictactoe.fblc TestChooseBestMoveWin"
 exec $::fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
 exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
 exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
-
-puts "fblcbe tictactoe.fblc (NewGame is 33)"
-exec $::fblcbe prgms/tictactoe.fblc > out/prgms/tictactoe.fblc.bin
 
 puts "test prgms/boolcalc.fblc Test"
 exec $::fblc prgms/boolcalc.fblc Test > out/boolcalc.Test.got

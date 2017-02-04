@@ -10,5 +10,3 @@ set prg {
   };
 }
 expect_result A(Unit(),Unit()) $prg main
-expect_result_b 0 $prg 2
-

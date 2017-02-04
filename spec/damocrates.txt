@@ -90,7 +90,7 @@ including anything in the spec for this case until it occurs in practice.
 
 Syntax example:
 
-spec Integer(Bool) {
+mdecl Integer(Bool) {
   type Integer;
   func Add(Integer a, Integer b; Integer);
   func Mul(Integer a, Integer b; Integer);
@@ -102,7 +102,7 @@ This declares an interface for (or "specification of") the Integer module with
 an opaque integer type.  The module depends on the Bool module (and implicitly
 everything that Bool depends on).
 
-impl Integer(List) {
+mdefn Integer(List) {
   struct Integer(...);
   ...
   func LessThan(Integer a, Integer b; Bool) {
