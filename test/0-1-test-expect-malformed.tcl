@@ -1,6 +1,12 @@
+set prg {
+  # Test the most basic 'expect_malformed' test.
+  struct Unit();
 
-# Test a basic 'expect_malformed' test.
-set prg { X X X X X X X }
+  X X X X X X X 
 
-fblc-check-error $prg 1:6
+  func main( ; Unit) {
+    Unit();
+  };
+}
 
+fblc-check-error $prg 5:7

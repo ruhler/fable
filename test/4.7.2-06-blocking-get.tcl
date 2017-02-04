@@ -17,7 +17,7 @@ set prg {
   };
 }
 
-expect_proc_result Unit() $prg main {{i g} {o p}} {} {
+fblc-test Unit() $prg main {} {
   get p Unit()
   get p Unit()
   get p Unit()

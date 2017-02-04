@@ -5,6 +5,8 @@
 #ifndef FBLCS_H_
 #define FBLCS_H_
 
+#include <stdio.h>    // for FILE
+
 #include "fblc.h"
 
 // FblcsName --
@@ -199,6 +201,20 @@ FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcTypeId typ
 //   In the case of an error, an error message is printed to standard error.
 FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcTypeId type, const char* string);
 
+// FblcsPrintValue --
+//   Print a value in standard format to the given FILE stream.
+//
+// Inputs:
+//   stream - The stream to print the value to.
+//   value - The value to print.
+//
+// Result:
+//   None.
+//
+// Side effects:
+//   The value is printed to the given file stream.
+void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, FblcValue* value);
+
 // FblcsResolveProgram --
 //   Perform id/name resolution for references to variables, ports,
 //   declarations, and fields in the given program.
@@ -252,7 +268,7 @@ FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename);
 //   Look up the id of a declaration with the given name.
 //
 // Inputs:
-//   sprog - The program to look up th declaration in.
+//   sprog - The program to look up the declaration in.
 //   name - The name of the declaration to look up.
 //
 // Results:
@@ -262,6 +278,23 @@ FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename);
 // Side effects:
 //   None.
 FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
+
+// FblcsLookupDecl --
+//   Look up the id of a port argument with the given name.
+//
+// Inputs:
+//   sprog - The program to look up the port in.
+//   proc_id - The id of the process declaration to look the port up in.
+//   port - The name of the port to look up.
+//
+// Results:
+//   The (field) id of the declared port in the process with the given name, or
+//   FBLC_NULL_ID if no such port was found. For example, if name refers to
+//   the third port argument to the process, the id '2' is returned.
+//
+// Side effects:
+//   None.
+FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port);
 
 // TODO: Remove these functions?
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id);

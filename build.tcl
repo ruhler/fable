@@ -49,48 +49,6 @@ proc expect_result { result program entry args } {
   }
 }
 
-# Test that running the process 'entry' in 'program' with given ports and
-# arguments leads to the given 'result'.
-# The ports should be specified as {i <portid>} for input ports and as
-# {o <portid>} for output ports. The 'script' should be a sequence of commands
-# of the form 'put <portid> <value>' and 'get <portid> <value>'. The put
-# command causes the value to be written to the given port. The get command
-# gets a value from the given port and checks that it is equivalent to the
-# given value.
-proc expect_proc_result { result program entry ports args script } {
-  set loc [info frame -1]
-  set line [dict get $loc line]
-  set file [dict get $loc file]
-  set name "[file tail $file]_$line"
-
-  # Set up the port spec.
-  set port_specs [list]
-  foreach {type id} [join $ports] {
-    lappend port_specs $type:$id
-  }
-  set portspec [join $port_specs ","]
-
-  # Write the script to file.
-  set fscript ./out/test/$name.script
-  exec rm -f $fscript
-  foreach cmd [split [string trim $script] "\n"] {
-    exec echo [string trim $cmd] >> $fscript
-  }
-
-  # Write the program to file.
-  set fprogram ./out/test/$name.fblc
-  exec echo $program > $fprogram
-
-  try {
-    set got [exec $::fblctest $portspec $fscript $::fblc $fprogram $entry {*}$args]
-    if {$got != $result} {
-      error "$file:$line: error: Expected '$result', but got '$got'"
-    }
-  } trap CHILDSTATUS {results options} {
-    error "$file:$line: error: Expected '$result', but got:\n$results"
-  }
-}
-
 # Test that running the process 'entry' in 'program' with given arguments
 # leads to the given 'result'. The 'script' should be a (possibly empty)
 # sequence of commands of the form 'put <port> <value>' and 'get <port>
@@ -110,18 +68,16 @@ proc fblc-test { result program entry args script } {
   foreach cmd [split [string trim $script] "\n"] {
     exec echo [string trim $cmd] >> $fscript
   }
+  exec echo "end $result" >> $fscript
 
   # Write the program to file.
   set fprogram ./out/test/$name.fblc
   exec echo $program > $fprogram
 
   try {
-    set got [exec $::fblctest "" $fscript $::fblc $fprogram $entry {*}$args]
-    if {$got != $result} {
-      error "$file:$line: error: Expected '$result', but got '$got'"
-    }
-  } trap CHILDSTATUS {results options} {
-    error "$file:$line: error: Expected '$result', but got:\n$results"
+    exec $::fblctest $fscript $fprogram $entry {*}$args
+  } on error {results options} {
+    error "$file:$line: error: \n$results"
   }
 }
 
@@ -143,7 +99,7 @@ proc fblc-check-error { program loc } {
     if {-1 == [string first ":$loc: error" $errtext]} {
       error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
     }
-  } trap CHILDSTATUS {results options} {
+  } on error {results options} {
     error "$file:$line: error: fblc-check passed unexpectedly"
   }
 }

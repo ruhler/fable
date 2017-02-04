@@ -26,6 +26,28 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
   va_end(ap);
 }
 
+// FblcsPrintValue -- see documentation in fblcs.h.
+void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, FblcValue* value)
+{
+  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
+  if (type->tag == FBLC_STRUCT_DECL) {
+    fprintf(stream, "%s(", DeclName(sprog, type_id));
+    for (size_t i = 0; i < type->fieldc; ++i) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      FblcsPrintValue(stream, sprog, type->fieldv[i], value->fields[i]);
+    }
+    fprintf(stream, ")");
+  } else if (type->tag == FBLC_UNION_DECL) {
+    fprintf(stream, "%s:%s(", DeclName(sprog, type_id), FieldName(sprog, type_id, value->tag));
+    FblcsPrintValue(stream, sprog, type->fieldv[value->tag], value->fields[0]);
+    fprintf(stream, ")");
+  } else {
+    assert(false && "Invalid Kind");
+  }
+}
+
 FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);
@@ -85,11 +107,23 @@ FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_i
   return LocIdName(sprog->symbols, field_loc_id)->name;
 }
 
-// LookupDecl -- See documentation in fblcs.h
+// FblcsLookupDecl -- See documentation in fblcs.h
 FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
 {
   for (FblcDeclId i = 0; i < sprog->program->declc; ++i) {
     if (FblcsNamesEqual(DeclName(sprog, i), name)) {
+      return i;
+    }
+  }
+  return FBLC_NULL_ID;
+}
+// FblcsLookupPort -- See documentation in fblcs.h
+FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port)
+{
+  FblcLocId port_loc_id = sprog->symbols->declv[proc_id] + 1;
+  FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv[proc_id];
+  for (FblcFieldId i = 0; i < proc->portc; ++i) {
+    if (FblcsNamesEqual(LocIdName(sprog->symbols, port_loc_id + i)->name, port)) {
       return i;
     }
   }

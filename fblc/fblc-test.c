@@ -1,30 +1,299 @@
+// fblc-test.c --
+//   This file implements the main entry point for the fblc-test program.
 
-#define _GNU_SOURCE
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#define _GNU_SOURCE   // for getline
+#include <assert.h>   // for assert
+#include <stdio.h>    // for getline
+#include <stdlib.h>   // for abort
 
+#include "fblcs.h"
+
+// CmdTag --
+//   Enum used to distinguish among the different command types.
+typedef enum {
+  CMD_PUT, CMD_GET, CMD_END
+} CmdTag;
+
+// Command --
+//   Structure representing a command to execute.
+typedef struct {
+  CmdTag tag;
+  FblcFieldId port;
+  FblcValue* value;
+} Command;
+
+// IOUser --
+//   User data for FblcIO.
+//
+// Fields:
+//   sprog - The program environment.
+//   proc - The main entry.
+//   file - The name of the file containing the commands to execute.
+//   line - The line number of the current command being executed.
+//   stream - The stream with the commands to be executed.
+//   cmd - The next command to execute, if cmd_ready is true.
+typedef struct {
+  FblcsProgram* sprog;
+  FblcProcDecl* proc;
+  FblcDeclId proc_id;
+  const char* file;
+  size_t line;
+  FILE* stream;
+  bool cmd_ready;
+  Command cmd;
+} IOUser;
+
+static void PrintUsage(FILE* stream);
+static void ReportError(IOUser* user, const char* msg);
+static void EnsureCommandReady(IOUser* user, FblcArena* arena);
+static bool ValuesEqual(FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FblcTypeId type, FblcValue* a, FblcValue* b);
+static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
+static void* MallocAlloc(FblcArena* this, size_t size);
+static void MallocFree(FblcArena* this, void* ptr);
+int main(int argc, char* argv[]);
+
+// PrintUsage --
+//   Prints help info to the given output stream.
+//
+// Inputs:
+//   stream - The output stream to write the usage information to.
+//
+// Result:
+//   None.
+//
+// Side effects:
+//   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: testfblc PORTSPEC SCRIPT command\n"
-      "Test fblc interpreter invoked using command.\n"
-      "PORTSPEC should be a comma separated list of elements of the form:\n"
-      "      i:NAME     for input ports\n"
-      "and   o:NAME     for output ports\n"
-      "SCRIPT should be a file containing a sequence of commands of the form:\n"
+      "Usage: fblc-test SCIPRT FILE MAIN [ARG...]\n"
+      "Execute the function or process called MAIN in the environment of the\n"
+      "fblc program FILE with the given ARGs.\n"  
+      "The program is driven and tested based on the sequence of commands\n"
+      "read from SCRIPT. The commands are of the form:"
       "      put NAME VALUE\n"
       "or    get NAME VALUE\n"
+      "or    end VALUE\n"
       "The put command puts the fblc text VALUE onto the named port.\n"
       "The get command reads the fblc value from the named port and asserts\n"
       "that the value read matches the given value.\n" 
+      "The end command waits for the result of the process and asserts\n"
+      "that the resultinv value matches the given value.\n"
   );
 }
+
+// ReportError --
+//   Reports an error message with command location to stderr.
+//
+// Inputs:
+//   user - Contains the current location of the command script.
+//   msg - An error message to print.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Outputs the current command location and error message to stderr.
+static void ReportError(IOUser* user, const char* msg)
+{
+  fprintf(stderr, "%s:%zd: error: %s", user->file, user->line, msg);
+}
+
+// EnsureCommandReady --
+//   Read the next command to execute if the current command is not ready.
+//
+// Inputs:
+//   arena - Arena used to allocated fblc values used in the commands.
+//   user - Contains the command input stream and cmd result.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Reads the next command from the command stream and sets user->cmd_ready
+//   to true. Aborts if there is no next command or the command is malformed.
+static void EnsureCommandReady(IOUser* user, FblcArena* arena)
+{
+  if (!user->cmd_ready) {
+    char* line = NULL;
+    size_t len = 0;
+    if (getline(&line, &len, user->stream) < 0) {
+      ReportError(user, "failed to read command\n");
+      abort();
+    }
+    user->line++;
 
+    FblcTypeId type = FBLC_NULL_ID;
+    char port[len+1];
+    char value[len+1];
+    if (sscanf(line, "get %s %s", port, value) == 2) {
+      user->cmd.tag = CMD_GET;
+      user->cmd.port = FblcsLookupPort(user->sprog, user->proc_id, port);
+      if (user->cmd.port == FBLC_NULL_ID) {
+        ReportError(user, "port not defined: ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+      if (user->proc->portv[user->cmd.port].polarity != FBLC_PUT_POLARITY) {
+        ReportError(user, "expected put polarity for port ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+      type = user->proc->portv[user->cmd.port].type;
+    } else if (sscanf(line, "put %s %s", port, value) == 2) {
+      user->cmd.tag = CMD_PUT;
+      user->cmd.port = FblcsLookupPort(user->sprog, user->proc_id, port);
+      if (user->cmd.port == FBLC_NULL_ID) {
+        ReportError(user, "port not defined: ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+      if (user->proc->portv[user->cmd.port].polarity != FBLC_GET_POLARITY) {
+        ReportError(user, "expected get polarity for port ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+      type = user->proc->portv[user->cmd.port].type;
+    } else if (sscanf(line, "end %s", value) == 1) {
+      user->cmd.tag = CMD_END;
+      type = user->proc->return_type;
+    } else {
+      ReportError(user, "malformed command line: ");
+      fprintf(stderr, "'%s'\n", line);
+      abort();
+    }
+
+    user->cmd.value = FblcsParseValueFromString(arena, user->sprog, type, value);
+    if (user->cmd.value == NULL) {
+      ReportError(user, "error parsing value\n");
+      abort();
+    }
+    user->cmd_ready = true;
+    free(line);
+  }
+}
+
+// ValuesEqual --
+//   Check whether two values are structurally equal.
+//
+// Inputs:
+//   a - the first value. 
+//   b - the second value. 
+//
+// Result:
+//   true if the first value is structurally equivalent to the second value,
+//   false otherwise.
+//
+// Side effects:
+//   None.
+static bool ValuesEqual(FblcValue* a, FblcValue* b)
+{
+  if (a->kind != b->kind) {
+    return false;
+  }
+
+  if (a->fieldc != b->fieldc) {
+    return false;
+  }
+
+  if (a->tag != b->tag) {
+    return false;
+  }
+
+  size_t fieldc = a->fieldc;
+  if (a->kind == FBLC_UNION_KIND) {
+    fieldc = 1;
+  }
+
+  for (size_t i = 0; i < fieldc; ++i) {
+    if (!ValuesEqual(a->fields[i], b->fields[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// AssertValuesEqual --
+//   Assert that the two given values are equal.
+//
+// Input:
+//   user - Used for error reporting purposes.
+//   type - The type of value being compared.
+//   a - The first value.
+//   b - The second value.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Reports an error message to stderr and aborts if the two values are not
+//   structurally equivalent.
+static void AssertValuesEqual(IOUser* user, FblcTypeId type, FblcValue* a, FblcValue* b)
+{
+  if (!ValuesEqual(a, b)) {
+    ReportError(user, "value mismatch.");
+    fprintf(stderr, "\nexpected: ");
+    FblcsPrintValue(stderr, user->sprog, type, a);
+    fprintf(stderr, "\nactual  : ");
+    FblcsPrintValue(stderr, user->sprog, type, b);
+    fprintf(stderr, "\n");
+    abort();
+  }
+}
+
+// IO --
+//   io function for external ports with IOUser as user data.
+//   See the corresponding documentation in fblc.h.
+static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
+{
+  IOUser* io_user = (IOUser*)user;
+  EnsureCommandReady(io_user, arena);
+  if (io_user->cmd.tag == CMD_GET && ports[io_user->cmd.port] != NULL) {
+    AssertValuesEqual(io_user, io_user->proc->portv[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
+    io_user->cmd_ready = false;
+    FblcRelease(arena, ports[io_user->cmd.port]);
+    ports[io_user->cmd.port] = NULL;
+  } else if (io_user->cmd.tag == CMD_PUT && ports[io_user->cmd.port] == NULL) {
+    io_user->cmd_ready = false;
+    ports[io_user->cmd.port] = io_user->cmd.value;
+  } else if (block) {
+    ReportError(io_user, "process blocked\n");
+    abort();
+  }
+}
+
+// MallocAlloc -- FblcArena alloc function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void* MallocAlloc(FblcArena* this, size_t size)
+{
+  return malloc(size);
+}
+
+// MallocFree -- FblcArena free function implemented using malloc.
+// See fblc.h for documentation about FblcArena alloc functions.
+static void MallocFree(FblcArena* this, void* ptr)
+{
+  free(ptr);
+}
+
+// main --
+//   The main entry point for the fblc-test program.
+//
+// Inputs:
+//   argc - The number of command line arguments.
+//   argv - The command line arguments.
+//
+// Results:
+//   0 on success, non-zero on error.
+//
+// Side effects:
+//   Reads and executes test commands from stdin.
+//   Prints an error to stderr and exits the program in the case of error.
+//   This function leaks memory under the assumption it is called as the main
+//   entry point of the program and the OS will free the memory resources used
+//   immediately after the function returns.
 int main(int argc, char* argv[])
 {
   if (argc > 1 && strcmp("--help", argv[1]) == 0) {
@@ -32,191 +301,105 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  if (argc < 4) {
+  if (argc <= 1) {
+    fprintf(stderr, "no script file.\n");
     PrintUsage(stderr);
     return 1;
   }
 
-  char* portspec = argv[1];
-  const char* script = argv[2];
-  char** cmd_argv = argv+3;
-
-  // Count the number of ports.
-  int portc = 1;
-  for (const char* ptr = portspec; *ptr != '\0'; ptr++) {
-    if (*ptr == ',') {
-      portc++;
-    }
-  }
-
-  // Prepare the ports based on the port spec.
-  bool isputs[portc];
-  char* ids[portc];
-  FILE* files[portc];
-  char* ptr = portspec;
-  for (int i = 0; ptr != NULL && *ptr != '\0'; i++) {
-    if (*ptr != 'i' && *ptr != 'o') {
-      fprintf(stderr, "Invalid polarity specifier in '%s'.\n", ptr);
-      return 1;
-    }
-    isputs[i] = (*ptr == 'i');
-
-    if (ptr[1] != ':') {
-      fprintf(stderr, "Missing ':' separator between polarity and id in '%s'.\n", ptr);
-      return 1;
-    }
-    ids[i] = &ptr[2];
-
-    ptr = strchr(ids[i], ',');
-    if (ptr != NULL) {
-      *ptr = '\0';
-      ptr++;
-    }
-
-    int pipefd[2];
-    if (pipe(pipefd) < 0) {
-      perror("pipe");
-      return 1;
-    }
-
-    // Child fds range from 3 to (2+portc).
-    // Parent fds range from (4+portc) to (5+2*portc).
-    // The fd 3+portc is left unused to ensure we never have to swap two fds
-    // in place.
-    int child_fd = isputs[i] ? pipefd[0] : pipefd[1];
-    int parent_fd = isputs[i] ? pipefd[1] : pipefd[0];
-    int child_target_fd = 3 + i;
-    int parent_target_fd = 4 + portc + i;
-
-    if (dup2(parent_fd, parent_target_fd) < 0) {
-      perror("dup2 parent");
-      return 1;
-    }
-    if (parent_fd != parent_target_fd) {
-      close(parent_fd);
-    }
-
-    if (dup2(child_fd, child_target_fd) < 0) {
-      perror("dup2 child");
-      return 1;
-    }
-    if (child_fd != child_target_fd) {
-      close(child_fd);
-    }
-
-    files[i] = fdopen(parent_target_fd, isputs[i] ? "w" : "r");
-    if (files[i] == NULL) {
-      perror("fdopen");
-      return 1;
-    }
-  }
-
-  pid_t pid = fork();
-  if (pid < 0) {
-    perror("fork");
+  if (argc <= 2) {
+    fprintf(stderr, "no input file.\n");
+    PrintUsage(stderr);
     return 1;
   }
 
-  if (pid == 0) {
-    // Child. Close the parent fds and exec.
-    for (int i = 0; i < portc; i++) {
-      close(5 + portc + i);
-    }
-    execvp(cmd_argv[0], cmd_argv);
-    perror("execvp");
+  if (argc <= 3) {
+    fprintf(stderr, "no main entry point provided.\n");
+    PrintUsage(stderr);
     return 1;
   }
 
-  // Parent. Close the child fds and run the script.
-  for (int i = 0; i < portc; i++) {
-    close(3 + i);
-  }
+  const char* script = argv[1];
+  const char* filename = argv[2];
+  const char* entry = argv[3];
+  argv += 4;
+  argc -= 4;
 
-  FILE* fin = fopen(script, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "Unable to open %s for reading.\n", script);
+  // Simply pass allocations through to malloc. We won't be able to track or
+  // free memory that the caller is supposed to track and free, but we don't
+  // leak memory in a loop and we assume this is the main entry point of the
+  // program, so we should be okay.
+  FblcArena arena = { .alloc = &MallocAlloc, .free = &MallocFree };
+
+  FblcsProgram* sprog = FblcsLoadProgram(&arena, filename);
+  if (sprog == NULL) {
     return 1;
   }
 
-  char* line = NULL;
-  size_t len = 0;
-  int read = 0;
-  while ((read = getline(&line, &len, fin)) != -1) {
-    char* cmd = line;
-    char* ptr = strchr(cmd, ' ');
-    if (ptr == NULL) {
-      fprintf(stderr, "malformed command line: '%s'\n", line);
-      return 1;
-    }
-    *ptr = '\0';
-    char* id = ptr+1;
-
-    ptr = strchr(id, ' ');
-    if (ptr == NULL) {
-      fprintf(stderr, "malformed command line: '%s'\n", line);
-      return 1;
-    }
-    *ptr = '\0';
-    char* text = ptr+1;
-    size_t count = strlen(text);
-
-    int i;
-    for (i = 0; i < argc; i++) {
-      if (strcmp(id, ids[i]) == 0) {
-        break;
-      }
-    }
-
-    if (i == argc) {
-      fprintf(stderr, "No such port: '%s'\n", id);
-      return 1;
-    }
-
-    if (isputs[i]) {
-      if (strcmp(cmd, "put") != 0) {
-        fprintf(stderr, "Expected 'put' command for port '%s', but got '%s'.\n", ids[i], cmd);
-        return 1;
-      }
-      if (fwrite(text, sizeof(char), count, files[i]) < count) {
-        fprintf(stderr, "Failed to write text to '%s'\n", ids[i]);
-        return 1;
-      }
-      fflush(files[i]);
-    } else {
-      if (strcmp(cmd, "get") != 0) {
-        fprintf(stderr, "Expected 'get' command for port '%s', but got '%s'.\n", ids[i], cmd);
-        return 1;
-      }
-      char input[count+1];
-      if (fgets(input, count+1, files[i]) == NULL) {
-        fprintf(stderr, "Error reading from '%s'\n", ids[i]);
-        return 1;
-      }
-      if (strcmp(text, input) != 0) {
-        fprintf(stderr, "Unexpected get on '%s'.\n", ids[i]);
-        fprintf(stderr, "  expected: '%s'\n", text);
-        fprintf(stderr, "  actual  : '%s'\n", input);
-        return 1;
-      }
-    }
-  }
-
-  for (int i = 0; i < argc; i++) {
-    // fclose(files[i]);
-  }
-  free(line);
-
-  int status;
-  if (wait(&status) < 0) {
-    perror("wait");
+  FblcDeclId decl_id = FblcsLookupDecl(sprog, entry);
+  if (decl_id == FBLC_NULL_ID) {
+    fprintf(stderr, "entry %s not found.\n", entry);
     return 1;
   }
 
-  if (WIFEXITED(status)) {
-    return WEXITSTATUS(status);
+  FblcDecl* decl = sprog->program->declv[decl_id];
+  FblcProcDecl* proc = NULL;
+  if (decl->tag == FBLC_PROC_DECL) {
+    proc = (FblcProcDecl*)decl;
+  } else if (decl->tag == FBLC_FUNC_DECL) {
+    // Make a proc wrapper for the function.
+    FblcFuncDecl* func = (FblcFuncDecl*)decl;
+    FblcEvalActn* body = arena.alloc(&arena, sizeof(FblcEvalActn));
+    body->tag = FBLC_EVAL_ACTN;
+    body->arg = func->body;
+
+    proc = arena.alloc(&arena, sizeof(FblcProcDecl));
+    proc->tag = FBLC_PROC_DECL;
+    proc->portc = 0;
+    proc->portv = NULL;
+    proc->argc = func->argc;
+    proc->argv = func->argv;
+    proc->return_type = func->return_type;
+    proc->body = (FblcActn*)body;
+  } else {
+    fprintf(stderr, "entry %s is not a function or process.\n", entry);
+    return 1;
   }
 
-  fprintf(stderr, "child terminated abnormally\n");
-  return 1;
+  if (proc->argc != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argc, argc);
+    return 1;
+  }
+
+  FblcValue* args[argc];
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv[i], argv[i]);
+  }
+
+  IOUser user;
+  user.sprog = sprog;
+  user.proc = proc;
+  user.proc_id = decl_id;
+  user.file = script;
+  user.line = 0;
+  user.stream = fopen(script, "r");
+  if (user.stream == NULL) {
+    fprintf(stderr, "failed to open command script '%s'\n", script);
+    return 1;
+  }
+  user.cmd_ready = false;
+  FblcIO io = { .io = &IO, .user = &user };
+
+  FblcValue* value = FblcExecute(&arena, sprog->program, proc, args, &io);
+  assert(value != NULL);
+
+  EnsureCommandReady(&user, &arena);
+  if (user.cmd.tag != CMD_END) {
+    ReportError(&user, "premature program termination.\n");
+    abort();
+  }
+  AssertValuesEqual(&user, proc->return_type, user.cmd.value, value);
+  FblcRelease(&arena, user.cmd.value);
+  FblcRelease(&arena, value);
+  return 0;
 }
-

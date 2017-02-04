@@ -19,7 +19,6 @@ typedef struct {
 } IOUser;
 
 static void PrintUsage(FILE* stream);
-static void PrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId typeid, FblcValue* value);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 static void* MallocAlloc(FblcArena* this, size_t size);
 static void MallocFree(FblcArena* this, void* ptr);
@@ -39,8 +38,8 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fblc FILE MAIN [ARG...] \n"
-      "Evaluate the function or process called MAIN in the environment of the\n"
+      "Usage: fblc FILE MAIN [ARG...]\n"
+      "Execute the function or process called MAIN in the environment of the\n"
       "fblc program FILE with the given ARGs.\n"  
       "Ports should be provided by arranging for file descriptors 3, 4, ...\n"
       "to be open on which data for port 1, 2, ... can be read or written as\n"
@@ -50,39 +49,6 @@ static void PrintUsage(FILE* stream)
       "function or process.\n"
       "Example: fblc program.fblc main 3<in.port 4>out.port 'Bool:true(Unit())'\n"
   );
-}
-
-// PrintValue --
-//   Print a value in standard format to the given FILE stream.
-//
-// Inputs:
-//   stream - The stream to print the value to.
-//   value - The value to print.
-//
-// Result:
-//   None.
-//
-// Side effects:
-//   The value is printed to the given file stream.
-static void PrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId typeid, FblcValue* value)
-{
-  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[typeid];
-  if (type->tag == FBLC_STRUCT_DECL) {
-    fprintf(stream, "%s(", DeclName(sprog, typeid));
-    for (size_t i = 0; i < type->fieldc; ++i) {
-      if (i > 0) {
-        fprintf(stream, ",");
-      }
-      PrintValue(stream, sprog, type->fieldv[i], value->fields[i]);
-    }
-    fprintf(stream, ")");
-  } else if (type->tag == FBLC_UNION_DECL) {
-    fprintf(stream, "%s:%s(", DeclName(sprog, typeid), FieldName(sprog, typeid, value->tag));
-    PrintValue(stream, sprog, type->fieldv[value->tag], value->fields[0]);
-    fprintf(stream, ")");
-  } else {
-    assert(false && "Invalid Kind");
-  }
 }
 
 // IO --
@@ -101,7 +67,7 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
     if (io_user->proc->portv[i].polarity == FBLC_PUT_POLARITY) {
       if (ports[i] != NULL) {
         FILE* fout = fdopen(fds[i].fd, "w");
-        PrintValue(fout, io_user->sprog, io_user->proc->portv[i].type, ports[i]);
+        FblcsPrintValue(fout, io_user->sprog, io_user->proc->portv[i].type, ports[i]);
         fprintf(fout, "\n");
         fflush(fout);
         FblcRelease(arena, ports[i]);
@@ -247,7 +213,7 @@ int main(int argc, char* argv[])
   FblcValue* value = FblcExecute(&arena, sprog->program, proc, args, &io);
   assert(value != NULL);
 
-  PrintValue(stdout, sprog, proc->return_type, value);
+  FblcsPrintValue(stdout, sprog, proc->return_type, value);
   fprintf(stdout, "\n");
   fflush(stdout);
   FblcRelease(&arena, value);

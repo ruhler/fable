@@ -7,5 +7,5 @@ set prg {
   };
 }
 
-expect_proc_result Unit() $prg main {{o out}} {} { get out Unit() }
+fblc-test Unit() $prg main {} { get out Unit() }
 
