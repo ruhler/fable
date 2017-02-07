@@ -1,3 +1,14 @@
+Ints:
+* Test ToDigitsN(3), ToDigitsN(13), ToDigitsN(123)
+* Test MulN(123 * 321)
+* Write and test function to generate 100th prime using natural numbers.
+* Implement and test unbounded binary integer representation.
+* Implement and test 8 or 16 bit unsigned integer representation.
+* Implement and test DigitP based integer representation.
+* See how large we can increase 'N' to compute the Nth prime for each
+  different integer representation before it takes more than, say, 1 minute to
+  complete.
+
 Phantom Release Arc:
 * Implement version of Checker that works on FblcProgram without symbols.
 * Cleanup Fblcs Interface

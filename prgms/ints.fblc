@@ -1,0 +1,199 @@
+
+struct Unit();
+
+union Bool(Unit true, Unit false);
+
+func True( ; Bool) {
+  Bool:true(Unit());
+};
+
+func False( ; Bool) {
+  Bool:false(Unit());
+};
+
+func Not(Bool a; Bool) {
+  ?(a; False(), True());
+};
+
+union Digit(
+    Unit 0, Unit 1, Unit 2, Unit 3, Unit 4,
+    Unit 5, Unit 6, Unit 7, Unit 8, Unit 9);
+
+struct DigitP(Digit head, DigitS tail);
+union DigitS(Unit nil, DigitP cons);
+
+func IncrD(Digit d ; Digit) {
+  ?(d ;
+      Digit:1(Unit()), Digit:2(Unit()), Digit:3(Unit()),
+      Digit:4(Unit()), Digit:5(Unit()), Digit:6(Unit()),
+      Digit:7(Unit()), Digit:8(Unit()), Digit:9(Unit()),
+      Digit:0(Unit()));
+};
+
+func ZeroDP( ; DigitP) {
+  DigitP(Digit:0(Unit()), DigitS:nil(Unit()));
+};
+
+# Increment the given list of digits, but in case of overflow, change the most
+# significant digit to 0 without changing the number of digits.
+func IncrDPAux(DigitP dp ; DigitP) {
+  ?(dp.tail ; 
+      DigitP(IncrD(dp.head), DigitS:nil(Unit())),
+      {
+        DigitP x = IncrDPAux(dp.tail.cons);
+        DigitP nover = DigitP(dp.head, DigitS:cons(x));
+        DigitP over = DigitP(IncrD(dp.head), DigitS:cons(x));
+        ?(x.head ; over,
+              nover, nover, nover,
+              nover, nover, nover,
+              nover, nover, nover);
+      });
+};
+
+func IncrDP(DigitP dp ; DigitP) {
+  DigitP x = IncrDPAux(dp);
+  DigitP over = DigitP(Digit:1(Unit()), DigitS:cons(x));
+  ?(x.head ; over,
+      x, x, x,
+      x, x, x,
+      x, x, x);
+};
+
+# N -- Unary representation of a natural number.
+union N(Unit Z, N S);
+
+func ZeroN( ; N) {
+  N:Z(Unit());
+};
+
+func OneN( ; N) {
+  N:S(ZeroN());
+};
+
+func DigitN(Digit d ; N) {
+  ?(d; ZeroN(), OneN(),
+      N:S(DigitN(Digit:1(Unit()))),
+      N:S(DigitN(Digit:2(Unit()))),
+      N:S(DigitN(Digit:3(Unit()))),
+      N:S(DigitN(Digit:4(Unit()))),
+      N:S(DigitN(Digit:5(Unit()))),
+      N:S(DigitN(Digit:6(Unit()))),
+      N:S(DigitN(Digit:7(Unit()))),
+      N:S(DigitN(Digit:8(Unit()))));
+};
+
+func TenN( ; N) {
+  N:S(DigitN(Digit:9(Unit())));
+};
+
+func DigitsNAux(DigitS ds, N sum; N) {
+  ?(ds ; sum,
+         DigitsNAux(ds.cons.tail, AddN(MulN(TenN(), sum), DigitN(ds.cons.head))));
+};
+
+func DigitsN(DigitP ds ; N) {
+  DigitsNAux(DigitS:cons(ds), ZeroN());
+};
+
+func ToDigitsN(N n; DigitP) {
+  ?(n ; ZeroDP(), IncrDP(ToDigitsN(n.S)));
+};
+
+func AddN(N a, N b; N) {
+  ?(a; b, AddN(a.S, N:S(b)));
+};
+
+func MulN(N a, N b; N) {
+  ?(a; a, AddN(b, MulN(a.S, b)));
+};
+
+func EqN(N a, N b; Bool) {
+  ?(a;
+      ?(b; True(), False()),
+      ?(b; False(), EqN(a.S, b.S)));
+};
+
+func NeqN(N a, N b; Bool) {
+  Not(EqN(a, b));
+};
+
+func LtN(N a, N b; Bool) {
+  ?(a;
+      ?(b; False(), True()),
+      ?(b; False(), LtN(a.S, b.S)));
+};
+
+# Tests
+union TestName(
+  Unit EqN_0_0,
+  Unit EqN_3_3,
+  Unit NeqN_0_3,
+  Unit DigitsN_3,
+  Unit DigitsN_13,
+  Unit DigitsN_123
+);
+
+struct TestFailure2N(TestName name, N a, N b);
+union TestFailure(TestFailure2N 2n);
+union TestResult(Unit passed, TestFailure failed);
+struct TestFailureP(TestFailure head, TestFailureS tail);
+union TestFailureS(Unit nil, TestFailureP cons);
+
+func T(TestResult result, TestFailureS rest; TestFailureS) {
+  ?(result; rest, TestFailureS:cons(TestFailureP(result.failed, rest)));
+};
+
+func T_EqN(TestName name, N a, N b; TestResult) {
+  ?(EqN(a, b); TestResult:passed(Unit()),
+      TestResult:failed(TestFailure:2n(TestFailure2N(name, a, b))));
+};
+
+func T_NeqN(TestName name, N a, N b; TestResult) {
+  ?(NeqN(a, b); TestResult:passed(Unit()),
+      TestResult:failed(TestFailure:2n(TestFailure2N(name, a, b))));
+};
+
+func Test( ; TestFailureS) {
+  T({ # 0 == 0
+      T_EqN(TestName:EqN_0_0(Unit()), ZeroN(), ZeroN());
+    },
+
+  T({ # 3 == 3
+      N three = AddN(OneN(), AddN(OneN(), OneN()));
+      T_EqN(TestName:EqN_3_3(Unit()), three, three);
+    },
+
+  T({ # 0 != 3
+      N three = AddN(OneN(), AddN(OneN(), OneN()));
+      T_NeqN(TestName:NeqN_0_3(Unit()), ZeroN(), three);
+    },
+
+  T({ # 3 == DigitsN("3")
+      DigitP threeDP = DigitP(Digit:3(Unit()), DigitS:nil(Unit()));
+      N threeN = AddN(OneN(), AddN(OneN(), OneN()));
+      T_EqN(TestName:DigitsN_3(Unit()), threeN, DigitsN(threeDP));
+    },
+
+  T({ # 13 == DigitsN("13")
+      DigitP thirteenDP = DigitP(Digit:1(Unit()), DigitS:cons(
+                          DigitP(Digit:3(Unit()), DigitS:nil(Unit()))));
+      N threeN = AddN(OneN(), AddN(OneN(), OneN()));
+      N thirteenN = AddN(threeN, AddN(threeN, AddN(threeN, AddN(threeN, OneN()))));
+      T_EqN(TestName:DigitsN_13(Unit()), thirteenN, DigitsN(thirteenDP));
+    },
+
+  T({ # 123 == DigitsN("123")
+      DigitP 123DP = DigitP(Digit:1(Unit()), DigitS:cons(
+                     DigitP(Digit:2(Unit()), DigitS:cons(
+                     DigitP(Digit:3(Unit()), DigitS:nil(Unit()))))));
+      N 3N = AddN(OneN(), AddN(OneN(), OneN()));
+      N 10N = AddN(OneN(), AddN(3N, AddN(3N, 3N)));
+      N 30N = AddN(10N, AddN(10N, 10N));
+      N 90N = AddN(30N, AddN(30N, 30N));
+      N 123N = AddN(90N, AddN(30N, 3N));
+      T_EqN(TestName:DigitsN_123(Unit()), 123N, DigitsN(123DP));
+    },
+
+  TestFailureS:nil(Unit())))))));
+};
+

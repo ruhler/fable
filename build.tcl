@@ -156,6 +156,11 @@ exec $::fblc prgms/boolcalc.fblc Test > out/boolcalc.Test.got
 exec echo "TestFailures:nil(Unit())" > out/boolcalc.Test.wnt
 exec diff out/boolcalc.Test.wnt out/boolcalc.Test.got
 
+puts "test prgms/ints.fblc Test"
+exec $::fblc prgms/ints.fblc Test > out/ints.Test.got
+exec echo "TestFailureS:nil(Unit())" > out/ints.Test.wnt
+exec diff out/ints.Test.wnt out/ints.Test.got
+
 check_coverage overall
 
 # Report summary results
