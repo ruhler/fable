@@ -1,6 +1,4 @@
 Ints:
-* Test ToDigitsN(3), ToDigitsN(13), ToDigitsN(123)
-* Test MulN(123 * 321)
 * Write and test function to generate 100th prime using natural numbers.
 * Implement and test unbounded binary integer representation.
 * Implement and test 8 or 16 bit unsigned integer representation.

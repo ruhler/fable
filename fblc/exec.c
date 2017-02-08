@@ -349,12 +349,11 @@ void FreeLink(FblcArena* arena, Link* link)
     values = link->head;
   }
 
-  Thread* thread = GetThread(&(link->waiting));
-  while (thread != NULL) {
-    FreeThread(arena, thread);
-    thread = GetThread(&(link->waiting));
-  }
-
+  // It should not be possible for someone to be waiting on the link we about
+  // to free, because if someone is waiting on the link, then the process that
+  // created the link must be waiting on that someone, so it is not yet time
+  // to free the link.
+  assert(NULL == GetThread(&link->waiting));
   arena->free(arena, link);
 }
 
