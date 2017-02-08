@@ -41,24 +41,22 @@ func ZeroDP( ; DigitP) {
 # Increment the given list of digits with a carry out. The carry out is
 # returned as the most significant digit of the result. It will be either '0'
 # or '1'.
-func IncrDPAux(DigitP dp ; DigitP) {
-  ?(dp.tail ; 
-      ?(EqD(dp.head, Digit:9(Unit()));
-          DigitP(Digit:1(Unit()), DigitS:cons(DigitP(Digit:0(Unit()), DigitS:nil(Unit())))),
-          DigitP(Digit:0(Unit()), DigitS:cons(DigitP(IncrD(dp.head), DigitS:nil(Unit()))))),
+func IncrDS(DigitS ds ; DigitP) {
+  ?(ds ;
+      DigitP(Digit:1(Unit()), DigitS:nil(Unit())),
       {
-        DigitP x = IncrDPAux(dp.tail.cons);
+        DigitP x = IncrDS(ds.cons.tail);
         ?(EqD(x.head, Digit:0(Unit()));
-            DigitP(Digit:0(Unit()), DigitS:cons(DigitP(dp.head, x.tail))),
-            ?(EqD(dp.head, Digit:9(Unit()));
+            DigitP(Digit:0(Unit()), DigitS:cons(DigitP(ds.cons.head, x.tail))),
+            ?(EqD(ds.cons.head, Digit:9(Unit()));
                 DigitP(Digit:1(Unit()), DigitS:cons(DigitP(Digit:0(Unit()), x.tail))),
-                DigitP(Digit:0(Unit()), DigitS:cons(DigitP(IncrD(dp.head), x.tail)))));
-       });
+                DigitP(Digit:0(Unit()), DigitS:cons(DigitP(IncrD(ds.cons.head), x.tail)))));
+      });
 };
 
 func IncrDP(DigitP dp ; DigitP) {
-  DigitP x = IncrDPAux(dp);
-  ?(EqD(Digit:0(Unit()), x.head) ; x.tail.cons, x);
+  DigitP x = IncrDS(DigitS:cons(dp));
+  ?(EqD(Digit:0(Unit()), x.head); x.tail.cons, x);
 };
 
 func EqD(Digit a, Digit b ; Bool) {
