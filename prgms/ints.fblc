@@ -15,6 +15,10 @@ func Not(Bool a; Bool) {
   ?(a; False(), True());
 };
 
+func And(Bool a, Bool b ; Bool) {
+  ?(a; b, False());
+};
+
 union Digit(
     Unit 0, Unit 1, Unit 2, Unit 3, Unit 4,
     Unit 5, Unit 6, Unit 7, Unit 8, Unit 9);
@@ -34,29 +38,54 @@ func ZeroDP( ; DigitP) {
   DigitP(Digit:0(Unit()), DigitS:nil(Unit()));
 };
 
-# Increment the given list of digits, but in case of overflow, change the most
-# significant digit to 0 without changing the number of digits.
+# Increment the given list of digits with a carry out. The carry out is
+# returned as the most significant digit of the result. It will be either '0'
+# or '1'.
 func IncrDPAux(DigitP dp ; DigitP) {
   ?(dp.tail ; 
-      DigitP(IncrD(dp.head), DigitS:nil(Unit())),
+      ?(EqD(dp.head, Digit:9(Unit()));
+          DigitP(Digit:1(Unit()), DigitS:cons(DigitP(Digit:0(Unit()), DigitS:nil(Unit())))),
+          DigitP(Digit:0(Unit()), DigitS:cons(DigitP(IncrD(dp.head), DigitS:nil(Unit()))))),
       {
         DigitP x = IncrDPAux(dp.tail.cons);
-        DigitP nover = DigitP(dp.head, DigitS:cons(x));
-        DigitP over = DigitP(IncrD(dp.head), DigitS:cons(x));
-        ?(x.head ; over,
-              nover, nover, nover,
-              nover, nover, nover,
-              nover, nover, nover);
-      });
+        ?(EqD(x.head, Digit:0(Unit()));
+            DigitP(Digit:0(Unit()), DigitS:cons(DigitP(dp.head, x.tail))),
+            ?(EqD(dp.head, Digit:9(Unit()));
+                DigitP(Digit:1(Unit()), DigitS:cons(DigitP(Digit:0(Unit()), x.tail))),
+                DigitP(Digit:0(Unit()), DigitS:cons(DigitP(IncrD(dp.head), x.tail)))));
+       });
 };
 
 func IncrDP(DigitP dp ; DigitP) {
   DigitP x = IncrDPAux(dp);
-  DigitP over = DigitP(Digit:1(Unit()), DigitS:cons(x));
-  ?(x.head ; over,
-      x, x, x,
-      x, x, x,
-      x, x, x);
+  ?(EqD(Digit:0(Unit()), x.head) ; x.tail.cons, x);
+};
+
+func EqD(Digit a, Digit b ; Bool) {
+  ?(a; 
+      ?(b; True(), False(), False(), False(), False(), False(), False(), False(), False(), False()),
+      ?(b; False(), True(), False(), False(), False(), False(), False(), False(), False(), False()),
+      ?(b; False(), False(), True(), False(), False(), False(), False(), False(), False(), False()),
+      ?(b; False(), False(), False(), True(), False(), False(), False(), False(), False(), False()),
+      ?(b; False(), False(), False(), False(), True(), False(), False(), False(), False(), False()),
+      ?(b; False(), False(), False(), False(), False(), True(), False(), False(), False(), False()),
+      ?(b; False(), False(), False(), False(), False(), False(), True(), False(), False(), False()),
+      ?(b; False(), False(), False(), False(), False(), False(), False(), True(), False(), False()),
+      ?(b; False(), False(), False(), False(), False(), False(), False(), False(), True(), False()),
+      ?(b; False(), False(), False(), False(), False(), False(), False(), False(), False(), True()));
+};
+
+func EqDS(DigitS a, DigitS b ; Bool) {
+  ?(a; ?(b; True(), False()),
+       ?(b; False(), EqDP(a.cons, b.cons)));
+};
+
+func EqDP(DigitP a, DigitP b ; Bool) {
+  And(EqD(a.head, b.head), EqDS(a.tail, b.tail));
+};
+
+func NeqDP(DigitP a, DigitP b ; Bool) {
+  Not(EqDP(a, b));
 };
 
 # N -- Unary representation of a natural number.
@@ -130,11 +159,20 @@ union TestName(
   Unit NeqN_0_3,
   Unit DigitsN_3,
   Unit DigitsN_13,
-  Unit DigitsN_123
+  Unit DigitsN_123,
+  Unit EqDP_0_0,
+  Unit EqDP_3_3,
+  Unit NeqDP_0_3,
+  Unit EqDP_13_13,
+  Unit EqDP_123_123,
+  Unit ToDigitsN_3,
+  Unit ToDigitsN_13,
+  Unit ToDigitsN_123
 );
 
 struct TestFailure2N(TestName name, N a, N b);
-union TestFailure(TestFailure2N 2n);
+struct TestFailure2DP(TestName name, DigitP a, DigitP b);
+union TestFailure(TestFailure2N 2n, TestFailure2DP 2dp);
 union TestResult(Unit passed, TestFailure failed);
 struct TestFailureP(TestFailure head, TestFailureS tail);
 union TestFailureS(Unit nil, TestFailureP cons);
@@ -148,9 +186,19 @@ func T_EqN(TestName name, N a, N b; TestResult) {
       TestResult:failed(TestFailure:2n(TestFailure2N(name, a, b))));
 };
 
+func T_EqDP(TestName name, DigitP a, DigitP b; TestResult) {
+  ?(EqDP(a, b); TestResult:passed(Unit()),
+      TestResult:failed(TestFailure:2dp(TestFailure2DP(name, a, b))));
+};
+
 func T_NeqN(TestName name, N a, N b; TestResult) {
   ?(NeqN(a, b); TestResult:passed(Unit()),
       TestResult:failed(TestFailure:2n(TestFailure2N(name, a, b))));
+};
+
+func T_NeqDP(TestName name, DigitP a, DigitP b; TestResult) {
+  ?(NeqDP(a, b); TestResult:passed(Unit()),
+      TestResult:failed(TestFailure:2dp(TestFailure2DP(name, a, b))));
 };
 
 func Test( ; TestFailureS) {
@@ -194,6 +242,51 @@ func Test( ; TestFailureS) {
       T_EqN(TestName:DigitsN_123(Unit()), 123N, DigitsN(123DP));
     },
 
-  TestFailureS:nil(Unit())))))));
+  T({ # 0 == 0 DP
+      T_EqDP(TestName:EqDP_0_0(Unit()), ZeroDP(), ZeroDP());
+    },
+
+  T({ # 3 == 3 DP
+      DigitP three = DigitP(Digit:3(Unit()), DigitS:nil(Unit()));
+      T_EqDP(TestName:EqDP_3_3(Unit()), three, three);
+    },
+
+  T({ # 0 != 3 DP
+      DigitP three = DigitP(Digit:3(Unit()), DigitS:nil(Unit()));
+      T_NeqDP(TestName:NeqDP_0_3(Unit()), ZeroDP(), three);
+    },
+
+  T({ # 13 == 13 DP
+      DigitP 13DP = DigitP(Digit:1(Unit()), DigitS:cons(
+                           DigitP(Digit:3(Unit()), DigitS:nil(Unit()))));
+      T_EqDP(TestName:EqDP_13_13(Unit()), 13DP, 13DP);
+    },
+
+  T({ # 123 == 123 DP
+      DigitP 123DP = DigitP(Digit:1(Unit()), DigitS:cons(
+                     DigitP(Digit:2(Unit()), DigitS:cons(
+                     DigitP(Digit:3(Unit()), DigitS:nil(Unit()))))));
+      T_EqDP(TestName:EqDP_123_123(Unit()), 123DP, 123DP);
+    },
+
+  T({ # "3" == ToDigitsN(3)
+      DigitP three = DigitP(Digit:3(Unit()), DigitS:nil(Unit()));
+      T_EqDP(TestName:ToDigitsN_3(Unit()), three, ToDigitsN(DigitsN(three)));
+    },
+
+  T({ # "13" == ToDigitsN(13)
+      DigitP 13DP = DigitP(Digit:1(Unit()), DigitS:cons(
+                           DigitP(Digit:3(Unit()), DigitS:nil(Unit()))));
+      T_EqDP(TestName:ToDigitsN_13(Unit()), 13DP, ToDigitsN(DigitsN(13DP)));
+    },
+
+  T({ # "123" == ToDigitsN(123)
+      DigitP 123DP = DigitP(Digit:1(Unit()), DigitS:cons(
+                     DigitP(Digit:2(Unit()), DigitS:cons(
+                     DigitP(Digit:3(Unit()), DigitS:nil(Unit()))))));
+      T_EqDP(TestName:ToDigitsN_123(Unit()), 123DP, ToDigitsN(DigitsN(123DP)));
+    },
+
+  TestFailureS:nil(Unit())))))))))))))));
 };
 
