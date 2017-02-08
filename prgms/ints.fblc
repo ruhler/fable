@@ -165,7 +165,8 @@ union TestName(
   Unit EqDP_123_123,
   Unit ToDigitsN_3,
   Unit ToDigitsN_13,
-  Unit ToDigitsN_123
+  Unit ToDigitsN_123,
+  Unit MulN_123_321
 );
 
 struct TestFailure2N(TestName name, N a, N b);
@@ -285,6 +286,27 @@ func Test( ; TestFailureS) {
       T_EqDP(TestName:ToDigitsN_123(Unit()), 123DP, ToDigitsN(DigitsN(123DP)));
     },
 
-  TestFailureS:nil(Unit())))))))))))))));
+  T({ # 123 * 321 == 39483
+      DigitP 123DP = DigitP(Digit:1(Unit()), DigitS:cons(
+                     DigitP(Digit:2(Unit()), DigitS:cons(
+                     DigitP(Digit:3(Unit()), DigitS:nil(Unit()))))));
+      N 123N = DigitsN(123DP);
+
+      DigitP 321DP = DigitP(Digit:3(Unit()), DigitS:cons(
+                     DigitP(Digit:2(Unit()), DigitS:cons(
+                     DigitP(Digit:1(Unit()), DigitS:nil(Unit()))))));
+      N 321N = DigitsN(321DP);
+
+      DigitP 39483DP = DigitP(Digit:3(Unit()), DigitS:cons(
+                       DigitP(Digit:9(Unit()), DigitS:cons(
+                       DigitP(Digit:4(Unit()), DigitS:cons(
+                       DigitP(Digit:8(Unit()), DigitS:cons(
+                       DigitP(Digit:3(Unit()), DigitS:nil(Unit()))))))))));
+      N 39483N = MulN(123N, 321N);
+
+      T_EqDP(TestName:MulN_123_321(Unit()), 39483DP, ToDigitsN(39483N));
+    },
+
+  TestFailureS:nil(Unit()))))))))))))))));
 };
 
