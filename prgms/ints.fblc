@@ -97,6 +97,10 @@ func OneN( ; N) {
   N:S(ZeroN());
 };
 
+func TwoN( ; N) {
+  AddN(OneN(), OneN());
+};
+
 func DigitN(Digit d ; N) {
   ?(d; ZeroN(), OneN(),
       N:S(DigitN(Digit:1(Unit()))),
@@ -126,8 +130,19 @@ func ToDigitsN(N n; DigitP) {
   ?(n ; ZeroDP(), IncrDP(ToDigitsN(n.S)));
 };
 
+func IncrN(N a; N) {
+  N:S(a);
+};
+
 func AddN(N a, N b; N) {
   ?(a; b, AddN(a.S, N:S(b)));
+};
+
+# SubN -- 
+#   a - b
+#  Returns 0 if a <= b.
+func SubN(N a, N b; N) {
+  ?(b ; a, ?(a ; ZeroN(), SubN(a.S, b.S)));
 };
 
 func MulN(N a, N b; N) {
@@ -150,6 +165,46 @@ func LtN(N a, N b; Bool) {
       ?(b; False(), LtN(a.S, b.S)));
 };
 
+func GtN(N a, N b; Bool) {
+  ?(a;
+      ?(b; False(), False()),
+      ?(b; True(), GtN(a.S, b.S)));
+};
+
+# DividesN --
+#   Returns true if the divisor exactly devides the dividend.
+#   For example, DividesN(18, 2) is true, but DividesN(17, 2) is false.
+func DividesN(N dividend, N divisor ; Bool) {
+  ?(EqN(dividend, divisor) ; True(),
+      ?(LtN(dividend, divisor) ; False(),
+          DividesN(SubN(dividend, divisor), divisor)));
+};
+
+# Helper function for IsPrimeN.
+#   Computes whether x is prime given that no factors of x other than 1 are
+#   less than f.
+func IsPrimeN_(N x, N f ; Bool) {
+  ?(GtN(MulN(f, f), x); True(),
+      ?(DividesN(x, f); False(),
+          IsPrimeN_(x, IncrN(f))));
+};
+
+func IsPrimeN(N x ; Bool) {
+  ?(LtN(x, TwoN()) ; False(), IsPrimeN_(x, TwoN()));
+};
+
+# Return the nth prime after x, starting with 0.
+# For example:
+#   NthPrimeN(5, 0) gives 5
+#   NthPrimeN(6, 0) gives 7
+#   NthPrimeN(5, 1) gives 7
+#   NthPrimeN(6, 1) gives 7
+func NthPrimeN(N x, N n; N) {
+  ?(IsPrimeN(x) ;
+      ?(n ; x, NthPrimeN(IncrN(x), n.S)),
+      NthPrimeN(IncrN(x), n));
+};
+
 # Tests
 union TestName(
   Unit EqN_0_0,
@@ -166,7 +221,8 @@ union TestName(
   Unit ToDigitsN_3,
   Unit ToDigitsN_13,
   Unit ToDigitsN_123,
-  Unit MulN_123_321
+  Unit MulN_123_321,
+  Unit NthPrimeN_1_10
 );
 
 struct TestFailure2N(TestName name, N a, N b);
@@ -307,6 +363,14 @@ func Test( ; TestFailureS) {
       T_EqDP(TestName:MulN_123_321(Unit()), 39483DP, ToDigitsN(39483N));
     },
 
-  TestFailureS:nil(Unit()))))))))))))))));
+  T({ # NthPrimeN(1, 10) == 31 (29, 23, 19, 17, 13, 11, 7, 5, 3, 2)
+      DigitP 31DP = DigitP(Digit:3(Unit()), DigitS:cons(
+                    DigitP(Digit:1(Unit()), DigitS:nil(Unit()))));
+      N 31N = NthPrimeN(OneN(), TenN());
+
+      T_EqDP(TestName:NthPrimeN_1_10(Unit()), 31DP, ToDigitsN(31N));
+    },
+
+  TestFailureS:nil(Unit())))))))))))))))));
 };
 
