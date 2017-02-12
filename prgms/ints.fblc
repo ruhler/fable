@@ -146,7 +146,9 @@ func SubN(N a, N b; N) {
 };
 
 func MulN(N a, N b; N) {
-  ?(a; a, AddN(b, MulN(a.S, b)));
+  ?(a; ZeroN(),
+      ?(b; ZeroN(),
+          IncrN(AddN(AddN(a.S, b.S), MulN(a.S, b.S)))));
 };
 
 func EqN(N a, N b; Bool) {
