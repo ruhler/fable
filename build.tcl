@@ -161,6 +161,9 @@ exec $::fblc prgms/ints.fblc Test > out/ints.Test.got
 exec echo "TestFailureS:nil(Unit())" > out/ints.Test.wnt
 exec diff out/ints.Test.wnt out/ints.Test.got
 
+puts "test prgms/snake.fblc Test"
+exec $::fblccheck prgms/snake.fblc
+
 check_coverage overall
 
 # Report summary results

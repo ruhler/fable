@@ -1,5 +1,4 @@
 Ints:
-* Write and test function to generate 100th prime using natural numbers.
 * Implement and test unbounded binary integer representation.
 * Implement and test 8 or 16 bit unsigned integer representation.
 * Implement and test DigitP based integer representation.

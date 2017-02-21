@@ -1,0 +1,210 @@
+
+struct Unit();
+union Bool(Unit true, Unit false);
+
+func True( ; Bool) {
+  Bool:true(Unit());
+};
+
+func False( ; Bool) {
+  Bool:false(Unit());
+};
+
+func And(Bool a, Bool b; Bool) {
+  ?(a; b, False());
+};
+
+union Row(Unit Z, Row S);
+union Col(Unit Z, Col S);
+
+struct Pos(Row row, Col col);
+
+func MinRow( ; Row) {
+  Row:Z(Unit());
+};
+
+func Row20( ; Row) {
+  Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(
+  Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(Row:S(
+  Row:Z(Unit())))))))))))))))))))));
+};
+
+func MaxRow( ; Row) {
+  Row20();
+};
+
+func MinCol( ; Col) {
+  Col:Z(Unit());
+};
+
+func Col60( ; Col) {
+  Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(
+  Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(
+  Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(
+  Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(
+  Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(
+  Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(Col:S(
+  Col:Z(Unit())))))))))))))))))))))))))))))))))))))))))))))))))))))))))))));
+};
+
+func MaxCol( ; Col) {
+  Col60();
+};
+
+func EqRow(Row a, Row b; Bool) {
+  ?(a;
+      ?(b; True(), False()),
+      ?(b; False(), EqRow(a.S, b.S)));
+};
+
+func EqCol(Col a, Col b; Bool) {
+  ?(a;
+      ?(b; True(), False()),
+      ?(b; False(), EqCol(a.S, b.S)));
+};
+
+func EqPos(Pos a, Pos b; Bool) {
+  And(EqRow(a.row, b.row), EqCol(a.col, b.col));
+};
+
+func IncrRow(Row a ; Row) {
+  Row:S(a);
+};
+
+func IncrCol(Col a ; Col) {
+  Col:S(a);
+};
+
+func DecrRow(Row a ; Row) {
+  ?(a; Row:Z(Unit()), a.S);
+};
+
+func DecrCol(Col a ; Col) {
+  ?(a; Col:Z(Unit()), a.S);
+};
+
+union Direction(Unit up, Unit down, Unit left, Unit right);
+union Input(Direction dir, Unit tick);
+
+union Cell(Unit empty, Unit snake, Unit food);
+struct Draw(Pos pos, Cell cell);
+
+struct DrawP(Draw head, DrawS tail);
+union DrawS(Unit nil, DrawP cons);
+
+struct PosP(Pos head, PosS tail);
+union PosS(Unit nil, PosP cons);
+
+# State --
+#   The state of the game.
+# 
+# Fields:
+#   dir - The current direction of the snake.
+#   food - The current position of the food.
+#   nfood - The position of the next food.
+#   snake - The positions of the snake, in order from head to tail.
+struct State(Direction dir, Pos food, Pos nfood, PosP snake);
+
+func InitialState( ; State) {
+  Col c0 = MinCol();
+  Col c1 = IncrCol(c0); Col c2 = IncrCol(c1);
+  Col c3 = IncrCol(c2); Col c4 = IncrCol(c3);
+  Row r0 = MinRow();
+  Row r1 = IncrRow(r0); Row r2 = IncrRow(r1);
+  Row r3 = IncrRow(r2); Row r4 = IncrRow(r3);
+  State(
+      Direction:right(Unit()),
+      Pos(r4, c1),
+      Pos(r1, c0),
+      PosP(Pos(r1, c4), PosS:cons(PosP(
+           Pos(r1, c3), PosS:cons(PosP(
+           Pos(r1, c2), PosS:cons(PosP(
+           Pos(r1, c1), PosS:nil(Unit())))))))));
+};
+
+struct MoveResult(State state, DrawS draw);
+union MoveResultM(Unit dead, MoveResult mr);
+
+union PosM(Unit dead, Pos pos);
+
+# Return true if the given position is found in the list of positions.
+func InPosS(PosS s, Pos p ; Bool) {
+  ?(s ; False(), InPosP(s.cons, p));
+};
+
+# Return true if the given position is found in the list of positions.
+func InPosP(PosP s, Pos p ; Bool) {
+  ?(EqPos(s.head, p); True(), InPosS(s.tail, p));
+};
+
+# Return all but the last element in l.
+func InitPosP(PosP l ; PosS) {
+  ?(l.tail; PosS:nil(Unit()), PosS:cons(PosP(l.head, InitPosP(l.tail.cons))));
+};
+
+# Return the last element in l.
+func LastPosP(PosP l ; Pos) {
+  ?(l.tail; l.head, LastPosP(l.tail.cons));
+};
+
+func Move(State s; MoveResultM) {
+  PosM pm = ?(s.dir;
+    ?(EqRow(s.snake.head.row, MaxRow()); PosM:dead(Unit()), 
+        PosM:pos(Pos(IncrRow(s.snake.head.row), s.snake.head.col))),
+    ?(EqRow(s.snake.head.row, MinRow()); PosM:dead(Unit()), 
+        PosM:pos(Pos(DecrRow(s.snake.head.row), s.snake.head.col))),
+    ?(EqCol(s.snake.head.col, MinCol()); PosM:dead(Unit()), 
+        PosM:pos(Pos(s.snake.head.row, DecrCol(s.snake.head.col)))),
+    ?(EqCol(s.snake.head.col, MaxCol()); PosM:dead(Unit()), 
+        PosM:pos(Pos(s.snake.head.row, IncrCol(s.snake.head.col)))));
+  ?(pm; MoveResultM:dead(Unit()),
+      ?(EqPos(pm.pos, s.food);
+          {
+            # TODO: Properly handle the case where the snake eats food at its
+            # tail.
+            PosP nsnake = PosP(s.food, PosS:cons(s.snake));
+            State ns = State(s.dir, s.nfood, s.nfood, nsnake);
+            DrawS draw = DrawS:cons(DrawP(Draw(s.food, Cell:snake(Unit())),
+                         DrawS:cons(DrawP(Draw(s.nfood, Cell:food(Unit())),
+                         DrawS:nil(Unit())))));
+            MoveResultM:mr(MoveResult(ns, draw));
+          },
+          ?(InPosP(s.snake, pm.pos); MoveResultM:dead(Unit()),
+            {
+              # TODO: Combine calls to Init and Last so we only have to
+              # iterate over the list of elements once instead of twice?
+              PosP nsnake = PosP(pm.pos, InitPosP(s.snake));
+              Pos nfood = LastPosP(s.snake);
+              State ns = State(s.dir, s.food, nfood, nsnake);
+              DrawS draw = DrawS:cons(DrawP(Draw(pm.pos, Cell:snake(Unit())),
+                           DrawS:cons(DrawP(Draw(nfood, Cell:empty(Unit())),
+                           DrawS:nil(Unit())))));
+              MoveResultM:mr(MoveResult(ns, draw));
+            })));
+};
+
+proc DrawAll(Draw ~> out; DrawS draw ; Unit) {
+  ?(draw ; $(Unit()),
+      {
+         Draw x = ~out(draw.cons.head);
+         DrawAll(out; draw.cons.tail);
+      });
+};
+
+proc Snake(Input <~ in, Draw ~> out; State s ; Unit) {
+  Input x = ~in();
+  ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
+       {
+           MoveResultM m = $(Move(s));
+           ?(m;
+              $(Unit()),
+              {
+                 Unit u = DrawAll(out; m.mr.draw);
+                 Snake(in, out; m.mr.state);
+              });
+       });
+};
+
+proc Main(Input <~ in, Draw ~> out; ; Unit) {
+  Snake(in, out; InitialState());
+};
