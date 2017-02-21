@@ -3,8 +3,11 @@ exec rm -rf out
 exec mkdir -p out/test out/fblc out/prgms 
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
+# fblc-snake requires -lncurses (but none of the others should)
+lappend FLAGS -lncurses
+
 # Compile the main programs.
-set mains [list fblc fblc-check fblc-test fblc-tictactoe]
+set mains [list fblc fblc-check fblc-test fblc-tictactoe fblc-snake]
 set main_srcs [list]
 foreach {x} $mains { lappend main_srcs fblc/$x.c }
 set ::objs [list]
