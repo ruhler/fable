@@ -10,7 +10,7 @@
 
 #define MAX_ROW 20
 #define MAX_COL 60
-#define TICK_INTERVAL 400
+#define TICK_INTERVAL 200
 
 // Time --
 //   Opaque representation of a point in time.

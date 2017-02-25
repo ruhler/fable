@@ -18,9 +18,10 @@ Phantom Release Arc:
    specifically, what the caller should do to free all allocations.
  - Increase test code coverage as much as reasonably possible.
 
-Post Phantom Release Arc:
-* Design my language for source level abstraction, implement it, and write
-  some cool programs.
+Snake Arc:
+* Make food appear randomly instead of at the tail.
+* Speed up the snake every time it eats something.
+* Test and fix bug when snake eats its tail.
 
 Space Invaders Arc:
 * Implement fbld front end to fblcbi.
