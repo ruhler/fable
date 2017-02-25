@@ -105,6 +105,19 @@ union PosS(Unit nil, PosP cons);
 #   snake - The positions of the snake, in order from head to tail.
 struct State(Direction dir, Pos food, Pos nfood, PosP snake);
 
+func DrawSnakeS(PosS s ; DrawS) {
+  ?(s; DrawS:nil(Unit()), DrawS:cons(DrawSnakeP(s.cons)));
+};
+
+func DrawSnakeP(PosP s ; DrawP) {
+  DrawP(Draw(s.head, Cell:snake(Unit())), DrawSnakeS(s.tail));
+};
+
+func DrawState(State s ; DrawS) {
+  DrawS:cons(DrawP(Draw(s.food, Cell:food(Unit())),
+  DrawS:cons(DrawSnakeP(s.snake))));
+};
+
 func InitialState( ; State) {
   Col c0 = MinCol();
   Col c1 = IncrCol(c0); Col c2 = IncrCol(c1);
@@ -206,5 +219,7 @@ proc Snake(Input <~ in, Draw ~> out; State s ; Unit) {
 };
 
 proc Main(Input <~ in, Draw ~> out; ; Unit) {
-  Snake(in, out; InitialState());
+  State s = $(InitialState());
+  Unit u = DrawAll(out ; DrawState(s));
+  Snake(in, out; s);
 };
