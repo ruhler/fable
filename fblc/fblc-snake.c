@@ -10,7 +10,7 @@
 
 #define MAX_ROW 20
 #define MAX_COL 60
-#define TICK_INTERVAL 600
+#define TICK_INTERVAL 400
 
 // Time --
 //   Opaque representation of a point in time.
@@ -283,6 +283,7 @@ int main(int argc, char* argv[])
   initscr();
   cbreak();
   noecho();
+  curs_set(0);
 
   for (int c = 0; c <= MAX_COL + 2; ++c) {
     mvaddch(0, c, '#');
