@@ -19,8 +19,6 @@ typedef int Time;
 // IOUser --
 //   User data for FblcIO.
 typedef struct {
-  FblcsProgram* sprog;
-  FblcProcDecl* proc;
   Time tnext;
 } IOUser;
 
@@ -296,7 +294,7 @@ int main(int argc, char* argv[])
   }
   refresh();
 
-  IOUser user = { .sprog = sprog, .proc = proc };
+  IOUser user;
   GetCurrentTime(&user.tnext);
   AddTimeMillis(&user.tnext, TICK_INTERVAL);
   FblcIO io = { .io = &IO, .user = &user };

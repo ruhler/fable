@@ -22,6 +22,8 @@ Snake Arc:
 * Make food appear randomly instead of at the tail.
 * Speed up the snake every time it eats something.
 * Test and fix bug when snake eats its tail.
+* Ignore moves that aren't orthoginal to current snake direction.
+* Keep track of and report score.
 
 Space Invaders Arc:
 * Implement fbld front end to fblcbi.

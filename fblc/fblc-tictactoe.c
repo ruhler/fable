@@ -7,13 +7,6 @@
 
 #include "fblcs.h"
 
-// IOUser --
-//   User data for FblcIO.
-typedef struct {
-  FblcsProgram* sprog;
-  FblcProcDecl* proc;
-} IOUser;
-
 static void PrintUsage(FILE* stream);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 static void* MallocAlloc(FblcArena* this, size_t size);
@@ -45,12 +38,10 @@ static void PrintUsage(FILE* stream)
 }
 
 // IO --
-//   io function for external ports with IOUser as user data.
+//   io function for external ports with NULL as user data.
 //   See the corresponding documentation in fblc.h.
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 {
-  IOUser* io_user = (IOUser*)user;
-
   if (ports[1] != NULL) {
     FblcValue** squares = ports[1]->fields[0]->fields;
     printf("  1 2 3\n");
@@ -97,17 +88,14 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
     // Read the next input from the user.
     int c0 = getchar();
     if (c0 == 'R') {
-      const char* s = "Input:reset(Unit())";
-      ports[0] = FblcsParseValueFromString(arena, io_user->sprog, io_user->proc->portv[0].type, s);
+      ports[0] = FblcNewUnion(arena, 3, 2, FblcNewStruct(arena, 0));
     } else if (c0 == 'P') {
-      const char* s = "Input:computer(Unit())";
-      ports[0] = FblcsParseValueFromString(arena, io_user->sprog, io_user->proc->portv[0].type, s);
+      ports[0] = FblcNewUnion(arena, 3, 1, FblcNewStruct(arena, 0));
     } else if (c0 >= 'A' && c0 <= 'C') {
       int c1 = getchar();
       if (c1 >= '1' && c1 <= '3') {
-        const char* s = "Input:position(Position:UL(Unit()))";
-        ports[0] = FblcsParseValueFromString(arena, io_user->sprog, io_user->proc->portv[0].type, s);
-        ports[0]->fields[0]->tag = (c0 - 'A') * 3 + (c1 - '1');
+        int tag = (c0 - 'A') * 3 + (c1 - '1');
+        ports[0] = FblcNewUnion(arena, 3, 0, FblcNewUnion(arena, 9, tag, FblcNewStruct(arena, 0)));
       }
     }
     c0 = getchar();
@@ -210,8 +198,7 @@ int main(int argc, char* argv[])
     args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv[i], argv[i]);
   }
 
-  IOUser user = { .sprog = sprog, .proc = proc };
-  FblcIO io = { .io = &IO, .user = &user };
+  FblcIO io = { .io = &IO, .user = NULL };
 
   FblcValue* value = FblcExecute(&arena, sprog->program, proc, args, &io);
   assert(value != NULL);
