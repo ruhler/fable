@@ -9,31 +9,6 @@
 
 #include "fblcs.h"
 
-static FblcsName FieldName(FblcsProgram* sprog, FblcDeclId type_id, FblcFieldId field_id);
-
-
-// FieldName --
-//   Return the name of a field with the given id.
-//
-// Inputs:
-//   sprog - The program to get the field name from.
-//   type_id - The id of the type to get the field name from.
-//   field_id - The id of the field within the type to get the name of.
-//
-// Results:
-//   The name of the field with given field_id in the type declaration with
-//   given type_id.
-//
-// Side effects:
-//   The behavior is undefined if type_id does not refer to a type declaring a
-//   field with field_id.
-static FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
-{
-  FblcLocId field_loc_id = sprog->symbols->declv[decl_id] + field_id + 1;
-  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
-  assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
-  return field->name.name;
-}
 
 // FblcsNamesEqual -- see documentation in fblcs.h
 bool FblcsNamesEqual(FblcsName a, FblcsName b)
@@ -56,7 +31,7 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, Fblc
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
   if (type->tag == FBLC_STRUCT_DECL) {
-    fprintf(stream, "%s(", DeclName(sprog, type_id));
+    fprintf(stream, "%s(", FblcsDeclName(sprog, type_id));
     for (size_t i = 0; i < type->fieldc; ++i) {
       if (i > 0) {
         fprintf(stream, ",");
@@ -65,7 +40,7 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, Fblc
     }
     fprintf(stream, ")");
   } else if (type->tag == FBLC_UNION_DECL) {
-    fprintf(stream, "%s:%s(", DeclName(sprog, type_id), FieldName(sprog, type_id, value->tag));
+    fprintf(stream, "%s:%s(", FblcsDeclName(sprog, type_id), FblcsFieldName(sprog, type_id, value->tag));
     FblcsPrintValue(stream, sprog, type->fieldv[value->tag], value->fields[0]);
     fprintf(stream, ")");
   } else {
@@ -73,20 +48,11 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, Fblc
   }
 }
 
-// DeclName -- See documentation in fblcs.h
-FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
-{
-  FblcLocId decl_loc_id = sprog->symbols->declv[decl_id];
-  FblcsDeclSymbol* decl = (FblcsDeclSymbol*)sprog->symbols->symbolv[decl_loc_id];
-  assert(decl->tag == FBLCS_DECL_SYMBOL);
-  return decl->name.name;
-}
-
 // FblcsLookupDecl -- See documentation in fblcs.h
 FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
 {
   for (FblcDeclId i = 0; i < sprog->program->declc; ++i) {
-    if (FblcsNamesEqual(DeclName(sprog, i), name)) {
+    if (FblcsNamesEqual(FblcsDeclName(sprog, i), name)) {
       return i;
     }
   }
@@ -99,7 +65,7 @@ FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName 
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
   assert(type->tag == FBLC_STRUCT_DECL || type->tag == FBLC_UNION_DECL);
   for (FblcFieldId i = 0; i < type->fieldc; ++i) {
-    if (FblcsNamesEqual(FieldName(sprog, type_id, i), field)) {
+    if (FblcsNamesEqual(FblcsFieldName(sprog, type_id, i), field)) {
       return i;
     }
   }
@@ -119,4 +85,22 @@ FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName p
     }
   }
   return FBLC_NULL_ID;
+}
+
+// FblcsDeclName -- See documentation in fblcs.h
+FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDeclId decl_id)
+{
+  FblcLocId decl_loc_id = sprog->symbols->declv[decl_id];
+  FblcsDeclSymbol* decl = (FblcsDeclSymbol*)sprog->symbols->symbolv[decl_loc_id];
+  assert(decl->tag == FBLCS_DECL_SYMBOL);
+  return decl->name.name;
+}
+
+// FblcsFieldName  -- See documentation in fblcs.h
+FblcsName FblcsFieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
+{
+  FblcLocId field_loc_id = sprog->symbols->declv[decl_id] + field_id + 1;
+  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+  assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
+  return field->name.name;
 }

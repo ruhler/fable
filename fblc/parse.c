@@ -1234,7 +1234,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, Fblc
     return NULL;
   }
 
-  FblcsName expected = DeclName(sprog, type_id);
+  FblcsName expected = FblcsDeclName(sprog, type_id);
   if (!FblcsNamesEqual(name.name, expected)) {
     FblcsReportError("Expected %s, but got %s.\n", name.loc, expected, name);
     arena->free(arena, (void*)name.name);
@@ -1286,7 +1286,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, Fblc
 
     FblcFieldId tag = FblcsLookupField(sprog, type_id, name.name);
     if (tag == FBLC_NULL_ID) {
-      FblcsReportError("Invalid field %s for type %s.\n", name.loc, name.name, DeclName(sprog, type_id));
+      FblcsReportError("Invalid field %s for type %s.\n", name.loc, name.name, FblcsDeclName(sprog, type_id));
       arena->free(arena, (void*)name.name);
       arena->free(arena, (void*)name.loc);
       return NULL;

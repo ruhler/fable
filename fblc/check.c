@@ -211,7 +211,7 @@ void CheckTypesMatch(FblcsProgram* sprog, FblcLocId loc_id, FblcTypeId expected,
 
   if (expected != actual) {
     FblcsReportError("Expected type %s, but found type %s.\n",
-        LocIdLoc(sprog->symbols, loc_id), DeclName(sprog, expected), DeclName(sprog, actual));
+        LocIdLoc(sprog->symbols, loc_id), FblcsDeclName(sprog, expected), FblcsDeclName(sprog, actual));
     *error = true;
   }
 }
@@ -326,7 +326,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
         if (access_expr->field < type->fieldc) {
           return type->fieldv[access_expr->field];
         } else {
-          FblcsReportError("%s is not a field of type %s\n", field->loc, field->name, DeclName(sprog, type_id));
+          FblcsReportError("%s is not a field of type %s\n", field->loc, field->name, FblcsDeclName(sprog, type_id));
           *error = true;
         }
       }
@@ -387,7 +387,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
             *error = true;
           }
         } else {
-          FblcsReportError("The condition has type %s, which is not a union type.\n", select_loc, DeclName(sprog, select_type));
+          FblcsReportError("The condition has type %s, which is not a union type.\n", select_loc, FblcsDeclName(sprog, select_type));
           *error = true;
         }
       }
@@ -594,7 +594,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
             *error = true;
           }
         } else {
-          FblcsReportError("The condition has type %s, which is not a union type.\n", select_loc, DeclName(sprog, select_type));
+          FblcsReportError("The condition has type %s, which is not a union type.\n", select_loc, FblcsDeclName(sprog, select_type));
           *error = true;
         }
       }

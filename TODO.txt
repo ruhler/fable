@@ -8,9 +8,6 @@ Ints:
 
 Phantom Release Arc:
 * Implement version of Checker that works on FblcProgram without symbols.
-* Cleanup Fblcs Interface
- - Remove now unused LocId* functions.
- - Remove or clean up the last of the unprefixed functions in fblcs.h
 * General Cleanup
  - Verify all document comments are present and up to date.
  - Document allocations for every function that takes an FblcArena,

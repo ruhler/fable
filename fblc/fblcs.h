@@ -312,7 +312,36 @@ FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName 
 //   None.
 FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port);
 
-// TODO: Remove these functions?
-FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id);
+// FblcsDeclName --
+//   Return the name of a declaration with the given id.
+//
+// Inputs:
+//   sprog - The program to get the declaration name in.
+//   decl_id - The id of the declaration to get the name of.
+//
+// Results:
+//   The name of the declaration with given decl_id in the program.
+//
+// Side effects:
+//   The behavior is undefined if decl_id does not refer to a declaration in
+//   the program.
+FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDeclId decl_id);
+
+// FblcsFieldName --
+//   Return the name of a field with the given id.
+//
+// Inputs:
+//   sprog - The program to get the field name from.
+//   type_id - The id of the type to get the field name from.
+//   field_id - The id of the field within the type to get the name of.
+//
+// Results:
+//   The name of the field with given field_id in the type declaration with
+//   given type_id.
+//
+// Side effects:
+//   The behavior is undefined if type_id does not refer to a type declaring a
+//   field with field_id.
+FblcsName FblcsFieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);
 
 #endif  // FBLCS_H_
