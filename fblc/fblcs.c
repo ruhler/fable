@@ -48,17 +48,6 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, Fblc
   }
 }
 
-FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
-{
-  assert(loc_id < symbols->symbolc);
-  FblcsSymbol* symbol = symbols->symbolv[loc_id];
-  if (symbol->tag == FBLCS_LOC_SYMBOL) {
-    FblcsLocSymbol* loc_symbol = (FblcsLocSymbol*)symbol;
-    return &loc_symbol->loc;
-  }
-  return LocIdName(symbols, loc_id)->loc;
-}
-
 FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
 {
   assert(loc_id < symbols->symbolc);

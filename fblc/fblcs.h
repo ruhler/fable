@@ -297,7 +297,6 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
 FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port);
 
 // TODO: Remove these functions?
-FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id);
 FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id);
 
 FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);

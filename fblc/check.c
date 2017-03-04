@@ -29,10 +29,27 @@ typedef struct Ports {
   struct Ports* next;
 } Ports;
 
+static FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id);
 static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next);
 static Ports* AddPort(Ports* vars, FblcTypeId type, FblcPolarity polarity, Ports* next);
 static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, FblcLocId* loc_id, bool* error);
 static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcActn* actn, FblcLocId* loc_id, bool* error);
+
+// LocIdLoc -- 
+//   Return the location corresponding to a given loc_id.
+//
+// TODO: Remove this function. We should know the symbol type from context and
+// be able to look up the location from the symbol directly.
+static FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
+{
+  assert(loc_id < symbols->symbolc);
+  FblcsSymbol* symbol = symbols->symbolv[loc_id];
+  if (symbol->tag == FBLCS_LOC_SYMBOL) {
+    FblcsLocSymbol* loc_symbol = (FblcsLocSymbol*)symbol;
+    return &loc_symbol->loc;
+  }
+  return LocIdName(symbols, loc_id)->loc;
+}
 
 // AddVar --
 //   Add a variable to the given scope.
