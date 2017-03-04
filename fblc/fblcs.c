@@ -48,52 +48,22 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, Fblc
   }
 }
 
-FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
-{
-  assert(loc_id < symbols->symbolc);
-  FblcsSymbol* symbol = symbols->symbolv[loc_id];
-  switch (symbol->tag) {
-    case FBLCS_LOC_SYMBOL: {
-      assert(false && "TODO: Unsupported tag?");
-      return NULL;
-    }
-
-    case FBLCS_ID_SYMBOL: {
-      FblcsIdSymbol* id_symbol = (FblcsIdSymbol*)symbol;
-      return &id_symbol->name;
-    }
-
-    case FBLCS_TYPED_ID_SYMBOL: {
-      FblcsTypedIdSymbol* typed_id_symbol = (FblcsTypedIdSymbol*)symbol;
-      return &typed_id_symbol->name;
-    }
-
-    case FBLCS_LINK_SYMBOL: {
-      assert(false && "TODO: Unsupported tag?");
-      return NULL;
-    }
-
-    case FBLCS_DECL_SYMBOL: {
-      FblcsDeclSymbol* decl_symbol = (FblcsDeclSymbol*)symbol;
-      return &decl_symbol->name;
-    }
-  }
-  assert(false && "Invalid tag");
-  return NULL;
-}
-
 // DeclName -- See documentation in fblcs.h
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
   FblcLocId decl_loc_id = sprog->symbols->declv[decl_id];
-  return LocIdName(sprog->symbols, decl_loc_id)->name;
+  FblcsDeclSymbol* decl = (FblcsDeclSymbol*)sprog->symbols->symbolv[decl_loc_id];
+  assert(decl->tag == FBLCS_DECL_SYMBOL);
+  return decl->name.name;
 }
 
 // FieldName -- See documentation in fblcs.h
 FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
 {
   FblcLocId field_loc_id = sprog->symbols->declv[decl_id] + field_id + 1;
-  return LocIdName(sprog->symbols, field_loc_id)->name;
+  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+  assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
+  return field->name.name;
 }
 
 // FblcsLookupDecl -- See documentation in fblcs.h
@@ -112,7 +82,9 @@ FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName p
   FblcLocId port_loc_id = sprog->symbols->declv[proc_id] + 1;
   FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv[proc_id];
   for (FblcFieldId i = 0; i < proc->portc; ++i) {
-    if (FblcsNamesEqual(LocIdName(sprog->symbols, port_loc_id + i)->name, port)) {
+    FblcsTypedIdSymbol* port_i = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[port_loc_id + i];
+    assert(port_i->tag == FBLCS_TYPED_ID_SYMBOL);
+    if (FblcsNamesEqual(port_i->name.name, port)) {
       return i;
     }
   }

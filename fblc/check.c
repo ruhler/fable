@@ -30,6 +30,7 @@ typedef struct Ports {
 } Ports;
 
 static FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id);
+static FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id);
 static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next);
 static Ports* AddPort(Ports* vars, FblcTypeId type, FblcPolarity polarity, Ports* next);
 static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, FblcLocId* loc_id, bool* error);
@@ -49,6 +50,45 @@ static FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
     return &loc_symbol->loc;
   }
   return LocIdName(symbols, loc_id)->loc;
+}
+
+// LocIdLoc -- 
+//   Return the name corresponding to a given loc_id.
+//
+// TODO: Remove this function. We should know the symbol type from context and
+// be able to look up the name from the symbol directly.
+static FblcsNameL* LocIdName(FblcsSymbols* symbols, FblcLocId loc_id)
+{
+  assert(loc_id < symbols->symbolc);
+  FblcsSymbol* symbol = symbols->symbolv[loc_id];
+  switch (symbol->tag) {
+    case FBLCS_LOC_SYMBOL: {
+      assert(false && "TODO: Unsupported tag?");
+      return NULL;
+    }
+
+    case FBLCS_ID_SYMBOL: {
+      FblcsIdSymbol* id_symbol = (FblcsIdSymbol*)symbol;
+      return &id_symbol->name;
+    }
+
+    case FBLCS_TYPED_ID_SYMBOL: {
+      FblcsTypedIdSymbol* typed_id_symbol = (FblcsTypedIdSymbol*)symbol;
+      return &typed_id_symbol->name;
+    }
+
+    case FBLCS_LINK_SYMBOL: {
+      assert(false && "TODO: Unsupported tag?");
+      return NULL;
+    }
+
+    case FBLCS_DECL_SYMBOL: {
+      FblcsDeclSymbol* decl_symbol = (FblcsDeclSymbol*)symbol;
+      return &decl_symbol->name;
+    }
+  }
+  assert(false && "Invalid tag");
+  return NULL;
 }
 
 // AddVar --
