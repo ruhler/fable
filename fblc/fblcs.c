@@ -9,6 +9,31 @@
 
 #include "fblcs.h"
 
+static FblcsName FieldName(FblcsProgram* sprog, FblcDeclId type_id, FblcFieldId field_id);
+
+
+// FieldName --
+//   Return the name of a field with the given id.
+//
+// Inputs:
+//   sprog - The program to get the field name from.
+//   type_id - The id of the type to get the field name from.
+//   field_id - The id of the field within the type to get the name of.
+//
+// Results:
+//   The name of the field with given field_id in the type declaration with
+//   given type_id.
+//
+// Side effects:
+//   The behavior is undefined if type_id does not refer to a type declaring a
+//   field with field_id.
+static FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
+{
+  FblcLocId field_loc_id = sprog->symbols->declv[decl_id] + field_id + 1;
+  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+  assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
+  return field->name.name;
+}
 
 // FblcsNamesEqual -- see documentation in fblcs.h
 bool FblcsNamesEqual(FblcsName a, FblcsName b)
@@ -57,15 +82,6 @@ FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id)
   return decl->name.name;
 }
 
-// FieldName -- See documentation in fblcs.h
-FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
-{
-  FblcLocId field_loc_id = sprog->symbols->declv[decl_id] + field_id + 1;
-  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
-  assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
-  return field->name.name;
-}
-
 // FblcsLookupDecl -- See documentation in fblcs.h
 FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
 {
@@ -77,7 +93,7 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
   return FBLC_NULL_ID;
 }
 
-// FblcsLookupFIeld -- See documentation in fblcs.h
+// FblcsLookupField -- See documentation in fblcs.h
 FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName field)
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];

@@ -313,7 +313,6 @@ FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName 
 FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port);
 
 // TODO: Remove these functions?
-FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id);
 
 #endif  // FBLCS_H_
