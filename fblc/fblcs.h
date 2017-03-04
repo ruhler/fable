@@ -279,7 +279,23 @@ FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename);
 //   None.
 FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
 
-// FblcsLookupDecl --
+// FblcsLookupField --
+//   Look up the id of a field with the given name.
+//
+// Inputs:
+//   sprog - The program to look up the field in.
+//   type_id - The id of the type to look the field up in.
+//   field - The name of the field to look up.
+//
+// Results:
+//   The field id of the declared field in the type with the given name, or
+//   FBLC_NULL_ID if no such field was found.
+//
+// Side effects:
+//   None.
+FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName field);
+
+// FblcsLookupPort --
 //   Look up the id of a port argument with the given name.
 //
 // Inputs:
@@ -299,6 +315,5 @@ FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName p
 // TODO: Remove these functions?
 FblcsName FieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);
 FblcsName DeclName(FblcsProgram* sprog, FblcDeclId decl_id);
-FblcFieldId SLookupField(FblcsProgram* sprog, FblcDeclId decl_id, FblcsName field);
 
 #endif  // FBLCS_H_

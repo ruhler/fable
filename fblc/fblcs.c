@@ -76,6 +76,20 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
   }
   return FBLC_NULL_ID;
 }
+
+// FblcsLookupFIeld -- See documentation in fblcs.h
+FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName field)
+{
+  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
+  assert(type->tag == FBLC_STRUCT_DECL || type->tag == FBLC_UNION_DECL);
+  for (FblcFieldId i = 0; i < type->fieldc; ++i) {
+    if (FblcsNamesEqual(FieldName(sprog, type_id, i), field)) {
+      return i;
+    }
+  }
+  return FBLC_NULL_ID;
+}
+
 // FblcsLookupPort -- See documentation in fblcs.h
 FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port)
 {
@@ -85,18 +99,6 @@ FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName p
     FblcsTypedIdSymbol* port_i = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[port_loc_id + i];
     assert(port_i->tag == FBLCS_TYPED_ID_SYMBOL);
     if (FblcsNamesEqual(port_i->name.name, port)) {
-      return i;
-    }
-  }
-  return FBLC_NULL_ID;
-}
-
-FblcFieldId SLookupField(FblcsProgram* sprog, FblcDeclId decl_id, FblcsName field)
-{
-  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[decl_id];
-  assert(type->tag == FBLC_STRUCT_DECL || type->tag == FBLC_UNION_DECL);
-  for (FblcFieldId i = 0; i < type->fieldc; ++i) {
-    if (FblcsNamesEqual(FieldName(sprog, decl_id, i), field)) {
       return i;
     }
   }

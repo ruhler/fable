@@ -82,7 +82,7 @@ static FblcTypeId LookupType(FblcsProgram* sprog, FblcsNameL* type)
 
 static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsNameL* field)
 {
-  FblcFieldId id = SLookupField(sprog, type_id, field->name);
+  FblcFieldId id = FblcsLookupField(sprog, type_id, field->name);
   if (id == FBLC_NULL_ID) {
     FblcsReportError("'%s' is not a field of the type '%s'.\n", field->loc, field->name, DeclName(sprog, type_id));
     return FBLC_NULL_ID;
