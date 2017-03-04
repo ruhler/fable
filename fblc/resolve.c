@@ -16,7 +16,7 @@ typedef struct Vars {
 
 static Vars* AddVar(Vars* vars, FblcTypeId type, FblcsName name, Vars* next);
 static FblcTypeId LookupType(FblcsProgram* sprog, FblcsNameL* type);
-static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcLocId loc_id);
+static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsNameL* field);
 static FblcTypeId FieldType(FblcsProgram* sprog, FblcTypeId type_id, FblcFieldId field_id);
 static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id, FblcExpr* expr);
 static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, FblcLocId* loc_id, FblcActn* actn);
@@ -71,7 +71,7 @@ static FblcTypeId LookupType(FblcsProgram* sprog, FblcsNameL* type)
 // Inputs:
 //   sprog - The program environment.
 //   type_id - The id of the type to look up the field in.
-//   loc_id - The location of an id node in the program that names a field.
+//   field - The name and location of the field to look up.
 //
 // Results:
 //   The field id corresponding to the field referred to at that given
@@ -80,9 +80,8 @@ static FblcTypeId LookupType(FblcsProgram* sprog, FblcsNameL* type)
 // Side effects:
 //   Prints an error message to stderr in the case of an error.
 
-static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcLocId loc_id)
+static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsNameL* field)
 {
-  FblcsNameL* field = LocIdName(sprog->symbols, loc_id);
   FblcFieldId id = SLookupField(sprog, type_id, field->name);
   if (id == FBLC_NULL_ID) {
     FblcsReportError("'%s' is not a field of the type '%s'.\n", field->loc, field->name, DeclName(sprog, type_id));
@@ -228,7 +227,9 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
         return FBLC_NULL_ID;
       }
 
-      access_expr->field = LookupField(sprog, type_id, (*loc_id)++);
+      FblcsIdSymbol* field_name = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      assert(field_name->tag == FBLCS_ID_SYMBOL);
+      access_expr->field = LookupField(sprog, type_id, &field_name->name);
       if (access_expr->field == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
@@ -243,7 +244,10 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
         return FBLC_NULL_ID;
       }
 
-      union_expr->field = LookupField(sprog, union_expr->type, (*loc_id)++);
+
+      FblcsIdSymbol* field_name = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      assert(field_name->tag == FBLCS_ID_SYMBOL);
+      union_expr->field = LookupField(sprog, union_expr->type, &field_name->name);
       if (union_expr->field == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
