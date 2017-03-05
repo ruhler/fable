@@ -1064,8 +1064,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
       if (!IsToken(&toks, ')')) {
         while (decl->fieldc == 0 || IsToken(&toks, ',')) {
-          if (decl->fieldc > 0 && !GetToken(&toks, ',')) {
-            return NULL;
+          if (decl->fieldc > 0) {
+            GetToken(&toks, ',');
           }
           FblcVectorAppend(arena, decl->fieldv, decl->fieldc, FBLC_NULL_ID);
           if (!ParseTypedId(arena, &toks, "field name", sprog->symbols)) {
@@ -1084,8 +1084,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       decl->tag = FBLC_UNION_DECL;
       FblcVectorInit(arena, decl->fieldv, decl->fieldc);
       while (decl->fieldc == 0 || IsToken(&toks, ',')) {
-        if (decl->fieldc > 0 && !GetToken(&toks, ',')) {
-          return NULL;
+        if (decl->fieldc > 0) {
+          GetToken(&toks, ',');
         }
         FblcVectorAppend(arena, decl->fieldv, decl->fieldc, FBLC_NULL_ID);
         if (!ParseTypedId(arena, &toks, "field name", sprog->symbols)) {
@@ -1104,8 +1104,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       FblcVectorInit(arena, func->argv, func->argc);
       if (!IsToken(&toks, ';')) {
         while (func->argc == 0 || IsToken(&toks, ',')) {
-          if (func->argc > 0 && !GetToken(&toks, ',')) {
-            return NULL;
+          if (func->argc > 0) {
+            GetToken(&toks, ',');
           }
           FblcVectorAppend(arena, func->argv, func->argc, FBLC_NULL_ID);
           if (!ParseTypedId(arena, &toks, "variable name", sprog->symbols)) {
@@ -1177,8 +1177,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       FblcVectorInit(arena, proc->argv, proc->argc);
       if (!IsToken(&toks, ';')) {
         while (proc->argc == 0 || IsToken(&toks, ',')) {
-          if (proc->argc > 0 && !GetToken(&toks, ',')) {
-            return NULL;
+          if (proc->argc > 0) {
+            GetToken(&toks, ',');
           }
           FblcVectorAppend(arena, proc->argv, proc->argc, FBLC_NULL_ID);
           if (!ParseTypedId(arena, &toks, "variable name", sprog->symbols)) {

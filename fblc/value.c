@@ -1,8 +1,9 @@
 
-#include <assert.h>
-#include <stdlib.h>
+#include <assert.h>   // for assert
 
 #include "fblc.h"
+
+#define UNREACHABLE(x) assert(false && x)
 
 
 // FblcNewStruct -- See documentation in fblc.h.
@@ -53,7 +54,7 @@ void FblcRelease(FblcArena* arena, FblcValue* value)
           break;
 
         default:
-          assert(false && "Unknown value kind");
+          UNREACHABLE("Invalid value kind");
           break;
       }
       arena->free(arena, value);

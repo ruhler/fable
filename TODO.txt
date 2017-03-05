@@ -6,7 +6,7 @@ Ints:
   different integer representation before it takes more than, say, 1 minute to
   complete.
 
-Phantom Release Arc:
+Fblc Cleanup:
 * Implement version of Checker that works on FblcProgram without symbols.
 * General Cleanup
  - Verify all document comments are present and up to date.

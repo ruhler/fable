@@ -6,7 +6,7 @@
 
 #include "fblcs.h"
 
-#define INVALID_CASE() assert(false)
+#define UNREACHABLE(x) assert(false && x)
 
 typedef struct Vars {
   FblcTypeId type;
@@ -162,7 +162,7 @@ FblcTypeId ReturnType(FblcsProgram* sprog, FblcDeclId decl_id)
     }
 
     default: {
-      INVALID_CASE();
+      UNREACHABLE("Invalid Case");
       return FBLC_NULL_ID;
     }
   }
@@ -306,7 +306,7 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
     }
 
     default: {
-      INVALID_CASE();
+      UNREACHABLE("Invalid Case");
       return FBLC_NULL_ID;
     }
   }
@@ -473,7 +473,7 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
     }
 
     default: {
-      INVALID_CASE();
+      UNREACHABLE("Invalid Case");
       return FBLC_NULL_ID;
     }
   }
@@ -601,7 +601,7 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
       }
 
       default: {
-        INVALID_CASE();
+        UNREACHABLE("Invalid Case");
         return false;
       }
     }

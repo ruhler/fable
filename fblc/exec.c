@@ -1,12 +1,14 @@
 // exec.c --
 //
-//   This file implements routines for execute fblc processes.
+//   This file implements routines for executing fblc processes.
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <assert.h>     // for assert
+#include <stdio.h>      // for fprintf
+#include <stdlib.h>     // for abort
 
 #include "fblc.h"
+
+#define UNREACHABLE(x) assert(false && x)
 
 typedef struct Vars Vars;
 typedef struct Ports Ports;
@@ -863,7 +865,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
               scmd->vars = nvars;
               break;
             }
-            assert(false && "No such struct type or function found");
+            UNREACHABLE("No such struct type or function found");
           }
 
           case FBLC_ACCESS_EXPR: {
@@ -1053,7 +1055,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             break;
 
           default:
-            assert(false && "Unknown value kind");
+            UNREACHABLE("Invalid value kind");
         }
         FblcRelease(arena, value);
         break;
