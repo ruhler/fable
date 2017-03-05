@@ -95,7 +95,7 @@ proc skip { args } {
   set ::skipped [expr $::skipped + 1]
 }
 
-foreach {x} [lsort [glob test/*.tcl]]  {
+foreach {x} [lsort [glob langs/fblc/*.tcl]]  {
   puts "test $x"
   source $x
 }

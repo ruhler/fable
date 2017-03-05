@@ -1,8 +1,0 @@
-
-* For each part of the syntax, have a section with explicit bulleted (And
-  labelled) points for what is required for that syntactic item to be 'well
-  formed' (where by well formed, I mean well formed and well typed and all
-  that goodness).
-
-* Is it an error if there is an error in unreachable code?
-  Answer should probably be yes, and I should make this explicit.

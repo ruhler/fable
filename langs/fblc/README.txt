@@ -19,5 +19,5 @@ proc fblc-check-error { program loc } { ... }
 # result equivalent to the given value.
 proc fblc-test { program entry args script } { ... }
 
-Test cases are organized by numbered sections spec/calvisis.txt.
+Test cases are organized by numbered sections from the fblc.txt specification.
 
