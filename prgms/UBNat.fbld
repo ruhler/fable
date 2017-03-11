@@ -1,0 +1,132 @@
+
+# Unbounded Binary Natural Number
+mdecl UBNat(Bool) {
+  import Bool(Bool);
+
+  type Nat;
+
+  func 0( ; Nat);
+  func 1( ; Nat);
+  func 2( ; Nat);
+  func 3( ; Nat);
+  func 4( ; Nat);
+  func 5( ; Nat);
+  func 6( ; Nat);
+  func 7( ; Nat);
+  func 8( ; Nat);
+  func 9( ; Nat);
+
+  func Lit2(Nat a, Nat b; Nat);           # 10 * a + b
+  func Lit3(Nat a, Nat b, Nat c; Nat);    # 100 * a + 10 * b + c
+
+  func Inc(Nat a; Nat);          # a + 1
+  func Dec(Nat a; Nat);          # max(0, a - 1)
+  func Add(Nat a, Nat b; Nat);   # a + b
+  func Sub(Nat a, Nat b; Nat);   # max(0, a - b)
+  func Mul(Nat a, Nat b; Nat);   # a * b
+  func Div(Nat a, Nat b; Nat);   # a / b
+  func Mod(Nat a, Nat b; Nat);   # a % b
+
+  func Eq(Nat a, Nat b; Bool);   # a == b
+  func Ne(Nat a, Nat b; Bool);   # a != b
+  func Lt(Nat a, Nat b; Bool);   # a < b
+  func Le(Nat a, Nat b; Bool);   # a <= b
+  func Gt(Nat a, Nat b; Bool);   # a > b
+  func Ge(Nat a, Nat b; Bool);   # a > b
+};
+
+mdefn UBNat(Unit, Bool) {
+  import Unit(Unit);
+  import Bool(True, False);
+
+  union Nat(
+    Unit 0,
+    Unit 1,
+    Nat 2p0,  # 2 * x + 0, where x != 0
+    Nat 2p1   # 2 * x + 1, where x != 0
+  );
+
+  func 0( ; Nat) Nat:0(Unit());
+  func 1( ; Nat) Nat:1(Unit());
+  func 2( ; Nat) Nat:2p0(1());
+  func 3( ; Nat) Nat:2p1(1());
+  func 4( ; Nat) Nat:2p0(2());
+  func 5( ; Nat) Nat:2p1(2());
+  func 6( ; Nat) Nat:2p0(3());
+  func 7( ; Nat) Nat:2p1(3());
+  func 8( ; Nat) Nat:2p0(4());
+  func 9( ; Nat) Nat:2p1(4());
+  func 10( ; Nat) Nat:2p0(5());
+
+  func Lit2(Nat a, Nat b; Nat) Add(Mul(10(), a), b);
+  func Lit3(Nat a, Nat b, Nat c; Nat) Add(Mul(100(), a), Lit2(b, c));
+
+  func Inc(Nat a; Nat) {
+    ?(a; 1(), 2(), Nat:2p1(a.2p0), Nat:2p0(Inc(a.2p1))); 
+  };
+
+  func Dec(Nat a; Nat) {
+    ?(a; 0(), 0(), ?(Eq(1(), a.2p0); 1(), Dec(a.2p0)), Nat:2p0(a.2p1));
+  };
+
+  func Add(Nat a, Nat b; Nat) {
+    ?(a; b,
+         Inc(b),
+         ?(b; a,
+              Nat:2p1(a.2p0),
+              Nat:2p0(Add(a.2p0, b.2p0)),        # 2a + 2b = 2(a+b)
+              Nat:2p1(Add(a.2p0, b.2p1))),       # 2a + 2b+1 = 2(a+b)+1
+         ?(b; a, 
+              Nat:2p0(Inc(a.2p0)),               # 2a+1 + 1 = 2(a+1)
+              Nat:2p1(Add(a.2p1, b.2p0)),        # 2a+1 + 2b = 2(a+b)+1
+              Nat:2p0(Inc(Add(a.2p1, b.2p1))))); # 2a+1 + 2b+1 = 2(a+b+1)
+  };
+
+  func Eq(Nat a, Nat b; Bool) {
+    ?(a;
+       ?(b; True(), False(), False(), False()),
+       ?(b; False(), True(), False(), False()),
+       ?(b; False(), False(), Eq(a.2p0, b.2p0), False()),
+       ?(b; False(), False(), False(), Eq(a.2p1, b.2p1)));
+  };
+
+  func Ne(Nat a, Nat b; Bool) {
+    ?(a;
+       ?(b; False(), True(), True(), True()),
+       ?(b; True(), False(), True(), True()),
+       ?(b; True(), True(), Ne(a.2p0, b.2p0), True()),
+       ?(b; True(), True(), True(), Ne(a.2p1, b.2p1)));
+  };
+
+  func Lt(Nat a, Nat b; Bool) {
+    ?(a;
+       ?(b; False(), True(), True(), True()),
+       ?(b; False(), False(), True(), True()),
+       ?(b; False(), False(), Lt(a.2p0, b.2p0), Le(a.2p1, b.2p1)),
+       ?(b; False(), False(), Lt(a.2p0, b.2p0), Lt(a.2p1, b.2p1)));
+  };
+
+  func Le(Nat a, Nat b; Bool) {
+    ?(a;
+       ?(b; True(), True(), True(), True()),
+       ?(b; False(), True(), True(), True()),
+       ?(b; False(), False(), Le(a.2p0, b.2p0), Le(a.2p1, b.2p1)),
+       ?(b; False(), False(), Lt(a.2p0, b.2p0), Le(a.2p1, b.2p1)));
+  };
+
+  func Gt(Nat a, Nat b; Bool) {
+    ?(a; False()
+       ?(b; True(), False(), False(), False()),
+       ?(b; True(), True(), Gt(a.2p0, b.2p0), Gt(a.2p1, b.2p1)),
+       ?(b; True(), True(), Ge(a.2p0, b.2p0), Gt(a.2p1, b.2p1)));
+  };
+
+  func Ge(Nat a, Nat b; Bool) {
+    ?(a;
+       ?(b; True(), False(), False(), False()),
+       ?(b; True(), True(), False(), False()),
+       ?(b; True(), True(), Ge(a.2p0, b.2p0), Gt(a.2p1, b.2p1)),
+       ?(b; True(), True(), Ge(a.2p0, b.2p0), Ge(a.2p1, b.2p1)));
+  };
+};
+

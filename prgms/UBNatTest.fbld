@@ -1,0 +1,76 @@
+
+mdecl UBNatTest(Unit, UBNat) {
+  import Unit(Unit);
+  import UBNat(Nat);
+ 
+  union TestName(
+    Unit Eq_0_0, Unit Eq_0_1, Unit Eq_1_1,
+    Unit Ne_0_1, Unit Ne_0_0,
+    Unit Le_5_5, Unit Le_5_7, Unit Le_7_5,
+    Unit Lt_5_5, Unit Lt_5_7, Unit Lt_7_5,
+    Unit Ge_5_5, Unit Ge_5_7, Unit Ge_7_5,
+    Unit Gt_5_5, Unit Gt_5_7, Unit Gt_7_5,
+    Unit Inc_5,
+    Unit Dec_5,
+    Unit Add_5_7,
+    Unit Sub_7_5, Unit Sub_5_7,
+    Unit Mul_5_7,
+    Unit Div_6_3, Unit Div_10_3,
+    Unit Mod_6_3, Unit Mod_10_3
+  );
+
+  struct TestFailure(TestName name, Nat a, Nat b);
+  union TestFailureP(TestFailure head, TestFailureS tail);
+  union TestFailureS(Unit nil, TestFailureP cons);
+
+  func Test( ; TestFailureS);
+};
+
+mdefn UBNatTest(Unit, Bool, UBNat) {
+  import Unit(Unit);
+  import Bool(Bool, Not);
+  import UBNat(Nat, 0, 1, 2, 3, 4, 5, 6, 7, Eq, Lt, Le, Gt, Ge, Lit2);
+
+  func T(TestName name, Bool p, TestFailureS rest; TestFailureS) {
+    # Just use 0 for the context arguments for now to avoid introducing
+    # a union for the test failure type.
+    ?(p; rest, TestFailureS:cons(TestFailureP(TestFailure(name, 0(), 0()), rest)));
+  };
+
+  func TEq(TestName name, Nat a, Nat b, TestFailureS rest; TestFailureS) {
+    ?(Eq(a, b); rest,
+      TestFailureS:cons(TestFailureP(TestFailure(name, a, b), rest)));
+  };
+
+  func Test( ; TestFailureS) {
+    T(TestName:Eq_0_0(Unit()), Eq(0(), 0()),
+    T(TestName:Eq_0_1(Unit()), Not(Eq(0(), 0())),
+    T(TestName:Eq_1_1(Unit()), Eq(1(), 1()),
+    T(TestName:Ne_0_1(Unit()), Ne(0(), 1()),
+    T(TestName:Ne_0_0(Unit()), Not(Ne(0(), 0())),
+    T(TestName:Le_5_5(Unit()), Le(5(), 5()),
+    T(TestName:Le_5_7(Unit()), Le(5(), 7()),
+    T(TestName:Le_7_5(Unit()), Not(Le(7(), 5())),
+    T(TestName:Lt_5_5(Unit()), Not(Lt(5(), 5())),
+    T(TestName:Lt_5_7(Unit()), Lt(5(), 7()),
+    T(TestName:Lt_7_5(Unit()), Not(Lt(7(), 5())),
+    T(TestName:Ge_5_5(Unit()), Ge(5(), 5()),
+    T(TestName:Ge_5_7(Unit()), Not(Ge(5(), 7())),
+    T(TestName:Ge_7_5(Unit()), Ge(7(), 5()),
+    T(TestName:Gt_5_5(Unit()), Not(Gt(5(), 5())),
+    T(TestName:Gt_5_7(Unit()), Not(Gt(5(), 7())),
+    T(TestName:Gt_7_5(Unit()), Gt(7(), 5()),
+    TEq(TestName:Inc_5(Unit()), 6(), Inc(5()),
+    TEq(TestName:Dec_5(Unit()), 4(), Dec(5()),
+    TEq(TestName:Dec_5(Unit()), 4(), Dec(5()),
+    TEq(TestName:Add_5_7(Unit()), Lit2(1(), 2()), Add(5(), 7()),
+    TEq(TestName:Sub_5_7(Unit()), 0(), Sub(5(), 7()),
+    TEq(TestName:Mul_5_7(Unit()), Lit2(3(), 5()), Mul(5(), 7()),
+    TEq(TestName:Div_6_3(Unit()), 2(), Div(6(), 3()),
+    TEq(TestName:Div_10_3(Unit()), 3(), Div(Lit2(1(), 0()), 3()),
+    TEq(TestName:Mod_6_3(Unit()), 0(), Mod(6(), 3()),
+    TEq(TestName:Mod_10_3(Unit()), 1(), Mod(Lit2(1(), 0()), 3()),
+    TestFailureS:nil(Unit()))))))))))))))))))))))))))));
+  };
+};
+

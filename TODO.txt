@@ -1,3 +1,11 @@
+Fbld Kickoff:
+* Revise fbld modules specification.
+* Draft code for:
+  - UBNat: Sub, Mul, Div, Mod
+  - Primes: IsPrime, NthPrime
+  - PrimesTest
+* Design and implement fbld (or fbld-test as makes sense)
+
 Ints:
 * Implement and test unbounded binary integer representation.
 * Implement and test 8 or 16 bit unsigned integer representation.

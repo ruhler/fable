@@ -8,113 +8,9 @@ sense that they will have no overhead at runtime after compiling the program
 down to Androcles/Bathylus/Calvisus. The developer should not have to make a
 tradeoff between modularity/abstraction and runtime performance.
 
-Library
-=======
-Goal: Allow parts of fblc programs to be developed independently and
-distributed as reusable components.
-
-Solution:
-Modules
-
 Features:
-1. Separate Interface and Implementation
-A developer should be able to use someone else's module in their program
-without knowing how it is implemented. This means a module should have a
-separate interface and implementation.
-
-If modules are developed concurrently by collaborating teams, it is necessary
-that an interface for using the modules be defined that both the user and
-implementor of a module can agree upon before implementation begins.
-
-Separating the interface from the implementation also helps reduce naming
-conflicts, because names chosen for the implementation are not exposed outside
-of a module.
-
-2. Name conflict resolution.
-When modules are developed independently, it is possible that two separate
-modules will expose entities with the same names. In order to compose these
-modules together in the same program, some form of name conflict resolution
-must be provided.
-
-The name conflict resolution typically comes in the form of separate
-namespaces and optional use of qualified naming.
-
-3. Module dependencies.
-For modules to be used, there must be module dependencies of some sort. A
-module can only be used if its module dependencies are met.
-
-Dependencies are external if they involve a modules interface. In this case,
-the module depended on must be shared by any program using the module.
-
-Dependencies may be internal. In this case it is not required that depended
-modules are shared (as opposed to duplicated), but practically speaking, it is
-not unexpected for the same internal module to appear multiple places in a
-program, in which case it would be nice to share it.
-
-Proposal:
-A module's interface and implementation are specified as separate
-declarations, to facilitate development and sharing of the interface before
-the implementation is available. Interface declarations are introduced using
-the keyword 'mdecl' for "module declaration". Implementation declarations are
-introduced using the keyword 'mdefn' for "module definition".
-
-There is a one-to-one correspondence between interfaces and implementation,
-where the name is used to link an interface with its implementation. If there
-were not a one-to-one correspondence, then an interface may depend on an
-implementation. For example, if an interface uses a List, and List is defined
-as an opaque type in some other interface, there would be no way to know which
-implementation of List the interface referred to without identifying a module.
-Using a one-to-one mapping allows an interface to identify a module through
-its interface, which means interfaces depend only on other interfaces. The
-hope is this helps with distributing modules and reduces the work required to
-check the validity of an interface.
-
-Importing an interface brings all of its declarations directly into context.
-For the rare case when two interfaces bring in declarations of the same name,
-you may also refer to the declarations brought in by an interface using a
-qualified name, where the name is qualified by the interface name. It is not
-an error to have multiple entities referred to by the same name, but it is an
-error to use a name that refers to multiple declared entities. Declarations
-declared in the module itself can be referred to qualified under the module
-name, to help with the case where an imported entity conflicts with a locally
-defined entitiy.
-
-For the rarer case when there is a name conflict and it becomes excessively
-tedious to refer to a name using the qualified form, wrappers can be
-implemented for funcs and procs to rename them. types are much harder to wrap.
-We could consider adding a 'typedef' like construct to allow types to be
-renamed. The typedef would be local, so that external use of types that are
-internally typedefed would see them as different types. Or, we could provide a
-tool for renaming entities from modules on the fly. Either way, I would avoid
-including anything in the spec for this case until it occurs in practice.
-
-Syntax example:
-
-mdecl Integer(Bool) {
-  type Integer;
-  func Add(Integer a, Integer b; Integer);
-  func Mul(Integer a, Integer b; Integer);
-  func LessThan(Integer a, Integer b; Bool);
-  ...
-};
-
-This declares an interface for (or "specification of") the Integer module with
-an opaque integer type.  The module depends on the Bool module (and implicitly
-everything that Bool depends on).
-
-mdefn Integer(List) {
-  struct Integer(...);
-  ...
-  func LessThan(Integer a, Integer b; Bool) {
-     ?(a ; ... Bool:True());
-  };
-};
-
-This defines the implementation of the Integer module. The module internally
-depends on the List module, in addition to everything its interface depends
-on.
-
-It is an error for an interface or modules to depend on itself recursively.
+* Modules: see fbld.modules.txt
+* Polymorphism: see below 
 
 Polymorphism
 ============
@@ -133,5 +29,10 @@ Example:
   Function declaration and use:
     func mapMaybe<type A, type B; func F(A;B)>(Maybe<A> x; Maybe<B>) ...
     mapMaybe<Int, Bool; IsNegative>(x)
+
+Other Needs
+===========
+* A way to make a list of tests without requiring the number of parenthesis
+  to be linear in the number of tests in the list.
     
 
