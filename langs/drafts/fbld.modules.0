@@ -1,0 +1,216 @@
+The current reference implementation of fblc reads an entire program from a
+single file. More and more I wish to reuse code in multiple fblc programs. For
+example, the definition of an integer type and common operations is widely
+useful and of sufficient complexity to discourage reimplementing and retesting
+it for every program I write.
+
+A relatively simple approach to work around the need to specify an entire
+program in a single file is to use some form of preprocessing that forms the
+program by concatenation of several files. This approach suffers from a
+number of drawbacks that help to reveal the underlying issue at hand:
+
+* A single file cannot easily be developed or changed without detailed
+  knowledge of all the users of that module. In particular, (1) introducing
+  new named entities in the local file may introduce name conflicts not
+  visible locally, and (2) removing or changing existing named entities may
+  break uses of the entity not visible locally.
+
+* Understanding how to reuse the code from a file requires detailed knowledge
+  of the implementation of the code in that file. In particular, the user must
+  look through all of the declarations and implementations of all named
+  entities in order to find entities relevant to the user, when ideally the
+  user should not need to know how anything is implemented and may not be
+  interested or care about entities introduced primarily for implementation
+  purposes.
+
+In summary, the goal is to be able to break a program up into modules that
+allow for each module to be implemented without detailed knowledge of the
+module's users, and to allow modules to be used without detailed knowledge of
+the module's implementation.
+
+Introducing a module system that satisfies these requirements will increase
+the scale of programs that can be written because a single developer can
+feasibly write code that is reused in many programs rather than a single
+program, and a developer can re-use code from another developer with
+significantly less cost than it would require to implement the code from
+scratch.
+
+The module system also reduces the cost of development for a single programmer
+assuming limited cognitive capacity because the programmer can reason about
+and develop each module in isolation at separate periods of time without
+having to understanding the full details of more than one module at any given
+time.
+
+Features:
+1. Separate Interface and Implementation
+A developer should be able to use someone else's module in their program
+without knowing how it is implemented. This means a module should have a
+separate interface and implementation.
+
+If modules are developed concurrently by collaborating teams, it is necessary
+that an interface for using the modules be defined that both the user and
+implementor of a module can agree upon before implementation begins.
+
+Separating the interface from the implementation also helps reduce naming
+conflicts, because names chosen for the implementation are not exposed outside
+of a module.
+
+2. Name conflict resolution.
+When modules are developed independently, it is possible that two separate
+modules will expose entities with the same names. In order to compose these
+modules together in the same program, some form of name conflict resolution
+must be provided.
+
+The name conflict resolution typically comes in the form of separate
+namespaces and optional use of qualified naming.
+
+3. Module dependencies.
+For modules to be used, there must be module dependencies of some sort. A
+module can only be used if its module dependencies are met.
+
+Dependencies are external if they involve a module's interface. In this case,
+the module depended on must be shared by any program using the module.
+
+Dependencies may be internal. In this case it is not required that depended
+modules are shared (as opposed to duplicated), but practically speaking, it is
+not unexpected for the same internal module to appear multiple places in a
+program, in which case it would be nice to share it.
+
+Proposal:
+A module's interface and implementation are specified as separate
+declarations, to facilitate development and sharing of the interface before
+the implementation is available. Interface declarations are introduced using
+the keyword 'mdecl' for "module declaration". Implementation declarations are
+introduced using the keyword 'mdefn' for "module definition".
+
+There is a one-to-one correspondence between interfaces and implementation,
+where the name is used to link an interface with its implementation. If there
+were not a one-to-one correspondence, then an interface may depend on an
+implementation. For example, if an interface uses a List, and List is defined
+as an opaque type in some other interface, there would be no way to know which
+implementation of List the interface referred to without identifying a module.
+Using a one-to-one mapping allows an interface to identify a module through
+its interface, which means interfaces depend only on other interfaces. The
+hope is this helps with distributing modules and reduces the work required to
+check the validity of an interface.
+
+Importing an interface brings all of its declarations directly into context.
+For the rare case when two interfaces bring in declarations of the same name,
+you may also refer to the declarations brought in by an interface using a
+qualified name, where the name is qualified by the interface name. It is not
+an error to have multiple entities referred to by the same name, but it is an
+error to use a name that refers to multiple declared entities. Declarations
+declared in the module itself can be referred to qualified under the module
+name, to help with the case where an imported entity conflicts with a locally
+defined entitiy.
+
+For the rarer case when there is a name conflict and it becomes excessively
+tedious to refer to a name using the qualified form, wrappers can be
+implemented for funcs and procs to rename them. types are much harder to wrap.
+We could consider adding a 'typedef' like construct to allow types to be
+renamed. The typedef would be local, so that external use of types that are
+internally typedefed would see them as different types. Or, we could provide a
+tool for renaming entities from modules on the fly. Either way, I would avoid
+including anything in the spec for this case until it occurs in practice.
+
+Syntax example:
+
+mdecl Integer(Bool) {
+  type Integer;
+  func Add(Integer a, Integer b; Integer);
+  func Mul(Integer a, Integer b; Integer);
+  func LessThan(Integer a, Integer b; Bool);
+  ...
+};
+
+This declares an interface for (or "specification of") the Integer module with
+an opaque integer type.  The module depends on the Bool module (and implicitly
+everything that Bool depends on).
+
+mdefn Integer(List) {
+  struct Integer(...);
+  ...
+  func LessThan(Integer a, Integer b; Bool) {
+     ?(a ; ... Bool:True());
+  };
+};
+
+This defines the implementation of the Integer module. The module internally
+depends on the List module, in addition to everything its interface depends
+on.
+
+It is an error for an interface or modules to depend on itself recursively.
+
+It is natural on a posix-like system to have different modules implemented in
+different files. This allows for reuse of modules in different programs
+without requiring the text of unused modules to be parsed. In this case, some
+mapping from module name to file name is required to find the implementations
+of modules. I propose the mapping be specified as a search path. A module
+declaration or definition for module 'Foo' is searched first in the relevant
+local file, next in files Foo.fbld under each directory in the search path.
+This allows for a few different interesting use cases:
+1. Test cases - all module definitions and declarations are in a single file.
+2. Compact - Both the declaration and definition of a module is found in its
+Foo.fbld file. If the declaration is first, the definition need not be read
+when checking the validity of a module.
+3. Decl Only - Only the declaration is in Foo.fbld. No definition is provided.
+This can be used to check the validity of a module, but cannot be used to run
+code from it.
+4. Separate - The definition can be in a file Foo.fbld in one directory and
+the declaration can be in a file Foo.fbld in a separate directory.
+
+Questions:
+* Do we need to provide an mdefn if it would be empty? For example, for Unit?
+* Is it an error to give unused or repeated module dependencies? 
+  - For example, if I depend on Foo, and Foo depends on Bar, and I otherwise
+    use Bar, should I list Bar as a dependency?
+
+Some Details:
+For an mdecl, you must include the list of modules the declaration depends on.
+These are exactly those modules that any qualified named entities are referred
+to from.  It is an error to list a module as a dependency if you don't use a
+name from it. It is an error to use a name that is not defined.
+
+Qualified names are of the form Foo@Bar, where Foo is the module the name is
+imported from in. Use of a qualified name Foo@Bar requires the module depend
+on module Foo.
+
+An 'import' declaration can be used to import type names from another module
+into the module declarations name space:
+
+  import Bool(Bool);
+
+The consequences of this import statement are:
+1. You can refer to the Bool type inside the module declaration without
+qualification.
+2. The Bool type is exported as part of the module. For example, if the module
+is named Foo, then Foo@Bool is a valid reference to the original definition of
+the Bool type. The user need not (but has the option to) explicitly depend on
+the original Bool module.
+
+An import statement importing entities from module Bool requires the module
+declaration depend on the Bool module.
+
+For mdefn, similar rules apply. You may refer to qualified module entities
+using Foo@Bar, which requires explicitly depending on the module Foo. You can
+import module entities using an import statement. Additionally, mdefn
+implicitly imports all types defined or exported by its corresponding mdecl.
+
+Additional Notes:
+* Importing an unused reference is treated the same as a locally defined
+  unused entity. Probably a compile time warning.
+* You may not refer to entities from your own module as qualified. What
+  purpose would it serve?
+* You may not have multiple different entities in your module with the same
+  name; as a result of duplicate definitions, duplicate imports, etc.
+* import statements need not be at the top of a module.
+* You can always check the reason for a module dependency by grepping for uses
+  of Foo@ or import Foo in your module.
+* import statements must import at least one named entity.
+* This proposal has no explicit support for importing modules or
+  entities under different names than they were defined. Processes and
+  functions can be renamed by introducing wrapper functions. Types cannot be
+  renamed (is this a good thing or a bad thing?).
+* This proposal has no support for explicit importing all entities from a
+  given module. Entities must be explicitly individually imported.
+

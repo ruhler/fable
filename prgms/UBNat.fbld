@@ -46,6 +46,26 @@ mdefn UBNat(Unit, Bool) {
     Nat 2p1   # 2 * x + 1, where x != 0
   );
 
+  # Compute 2 * x.
+  # This is like Nat:2p0(x), but properly handles the case when x is 0.
+  func 2p0(Nat x; Nat) {
+    Nat z = Nat:2p0(x);
+    ?(x; 0(), z, z, z);
+  }
+
+  # Compute 2 * x + 1.
+  # This is like Nat:2p1(x), but properly handles the case when x is 0.
+  func 2p1(Nat x; Nat) {
+    Nat z = Nat:2p1(x);
+    ?(x; 1(), z, z, z);
+  };
+
+  # Compute 4 * x.
+  func 4p0(Nat x; Nat) {
+    Nat z = Nat:2p0(Nat:2p0(x));
+    ?(x; 0(), z, z, z);
+  };
+
   func 0( ; Nat) Nat:0(Unit());
   func 1( ; Nat) Nat:1(Unit());
   func 2( ; Nat) Nat:2p0(1());
@@ -66,7 +86,10 @@ mdefn UBNat(Unit, Bool) {
   };
 
   func Dec(Nat a; Nat) {
-    ?(a; 0(), 0(), ?(Eq(1(), a.2p0); 1(), Dec(a.2p0)), Nat:2p0(a.2p1));
+    ?(a; 0(),                     # 0 - 1 ==> 0
+         0(),                     # 1 - 1 = 0
+         2p1(Dec(a.2p0)),         # 2a - 1 = 2(a-1)+1
+         Nat:2p0(a.2p1));         # 2a+1 - 1 = 2a
   };
 
   func Add(Nat a, Nat b; Nat) {
@@ -80,6 +103,34 @@ mdefn UBNat(Unit, Bool) {
               Nat:2p0(Inc(a.2p0)),               # 2a+1 + 1 = 2(a+1)
               Nat:2p1(Add(a.2p1, b.2p0)),        # 2a+1 + 2b = 2(a+b)+1
               Nat:2p0(Inc(Add(a.2p1, b.2p1))))); # 2a+1 + 2b+1 = 2(a+b+1)
+  };
+
+  func Sub(Nat a, Nat b; Nat) {             
+    ?(b; a,                                   # a - 0 = a
+         Dec(a),                              # a - 1 = a - 1
+         ?(a; 0(),                            # 0 - 2b ==> 0
+              0(),                            # 1 - 2b ==> 0
+              2p0(Sub(a.2p0, b.2p0)),         # 2a - 2b = 2(a-b)
+              2p1(Sub(a.2p1, b.2p0))),        # 2a+1 - 2b = 2(a-b) + 1
+         ?(a; 0(),                            # 0 - (2b+1) ==> 0
+              0(),                            # 1 - (2b+1) ==> 0
+              Dec(2p0(Sub(a.2p0, b.2p1))),    # 2a - (2b+1) = 2(a-b) - 1
+              2p0(Sub(a.2p1, b.2p1))));       # 2a+1 - (2b+1) = 2(a-b)
+  };
+
+  func Mul(Nat a, Nat b; Nat) {              
+    ?(a; 0(),                                   # 0 * b = 0
+         b,                                     # 1 * b = b
+         ?(b; 0(),                              # 2a * 0 = 0
+              a,                                # 2a * 1 = 2a
+              4p0(Mul(a.2p0, b.2p0)),           # 2a * 2b = 4ab
+              Add(4p0(a.2p0, b.2p1), a)),       # 2a * (2b+1) = 4ab + 2a
+         ?(b; 0(),                              # (2a+1) * 0 = 0
+              a,                                # (2a+1) * 1 = 2a+1
+              Add(4p0(Mul(a.2p1, b.2p0), b)),   # (2a+1) * 2b = 4ab + 2b
+                                                # (2a+1) * (2b+1) = 2(2ab + a + b) + 1
+              Nat:2p1(Add(Nat:2p0(Mul(a.2p1, b.2p1)), Add(a.2p1, b.2p1)))));
+                  
   };
 
   func Eq(Nat a, Nat b; Bool) {

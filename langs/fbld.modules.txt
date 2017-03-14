@@ -1,218 +1,190 @@
 FBLD Modules
 ============
-The current reference implementation of fblc reads an entire program from a
-single file. More and more I wish to reuse code in multiple fblc programs. For
-example, the definition of an integer type and common operations is widely
-useful and of sufficient complexity to discourage reimplementing and retesting
-it for every program I write.
+Damocrates adds support for modules on top of the Calvisus language. The
+purpose of modules is to facilitate reuse of code across multiple programs,
+expanding the scale of programs that can be developed.
 
-A relatively simple approach to work around the need to specify an entire
-program in a single file is to use some form of preprocessing that forms the
-program by concatenation of several files. This approach suffers from a
-number of drawbacks that help to reveal the underlying issue at hand:
+The fundamental concept behind modules is that programs can be broken down
+into reusable bits of code that can be developed independent of their use and
+can be reused independent of their development. These reusable bits of code
+can be understood and developed in isolation then combined to form large
+programs that would otherwise be too complex and costly to develop.
 
-* A single file cannot easily be developed or changed without detailed
-  knowledge of all the users of that module. In particular, (1) introducing
-  new named entities in the local file may introduce name conflicts not
-  visible locally, and (2) removing or changing existing named entities may
-  break uses of the entity not visible locally.
+For example, many programs make use of some form of integer arithmetic. Rather
+than re-implement and re-test integer arithmetic for each program, a single
+integer arithmetic module can be developed and reused.
 
-* Understanding how to reuse the code from a file requires detailed knowledge
-  of the implementation of the code in that file. In particular, the user must
-  look through all of the declarations and implementations of all named
-  entities in order to find entities relevant to the user, when ideally the
-  user should not need to know how anything is implemented and may not be
-  interested or care about entities introduced primarily for implementation
-  purposes.
+With proper support for modules, a user should be able to reuse a module
+solely given an interface specification for the module, without any additional
+knowledge of the implementation. Some mechanism must also be provided to avoid
+name conflicts between modules. Damocrates modules achieve these by having
+separate interface and implementations for modules, and giving each module
+its own namespace.
 
-In summary, the goal is to be able to break a program up into modules that
-allow for each module to be implemented without detailed knowledge of the
-module's users, and to allow modules to be used without detailed knowledge of
-the module's implementation.
+Module Interfaces
+-----------------
+The following is a slightly contrived example of the interface definition for
+an integer arithmetic module that illustrates the features of module
+interfaces.
 
-Introducing a module system that satisfies these requirements will increase
-the scale of programs that can be written because a single developer can
-feasibly write code that is reused in many programs rather than a single
-program, and a developer can re-use code from another developer with
-significantly less cost than it would require to implement the code from
-scratch.
+  mdecl Int(Bool) {
+    import Bool(Bool);
 
-The module system also reduces the cost of development for a single programmer
-assuming limited cognitive capacity because the programmer can reason about
-and develop each module in isolation at separate periods of time without
-having to understanding the full details of more than one module at any given
-time.
+    type Int;
+    struct DivModResult(Int quotient, Int remainder);
 
-Features:
-1. Separate Interface and Implementation
-A developer should be able to use someone else's module in their program
-without knowing how it is implemented. This means a module should have a
-separate interface and implementation.
+    func Zero( ; Int);
+    func One( ; Int);
+    func Add(Int a, Int b; Int);
+    func Mul(Int a, Int b; Int);
+    func DivMod(Int a, Int b; DivModResult);
+    func Equals(Int a, Int b; Bool@Bool);
+    func LessThan(Int a, Int b; Bool);
+  };
 
-If modules are developed concurrently by collaborating teams, it is necessary
-that an interface for using the modules be defined that both the user and
-implementor of a module can agree upon before implementation begins.
+Module interfaces are introduce using the 'mdecl' keyword, which is short for
+"module declaration". The 'mdecl' keyword is followed by the name of the
+module, in this case 'Int'. Each module is uniquely identified with a name
+from a global namespace of modules. In the future we expect additional
+mechanisms will need to be put in place to address module name conflicts, but
+for now we assume there is no desire to have two modules with the same name.
 
-Separating the interface from the implementation also helps reduce naming
-conflicts, because names chosen for the implementation are not exposed outside
-of a module.
+Following the module's name is a comma separated list of names of modules that
+this module depends on. In this example, Int module depends on one other
+module, the 'Bool' module. In order to fully understand the Int module
+interface, a user must also be familiar with the Bool module interface,
+because the Int module interface references the Bool module interface.
 
-2. Name conflict resolution.
-When modules are developed independently, it is possible that two separate
-modules will expose entities with the same names. In order to compose these
-modules together in the same program, some form of name conflict resolution
-must be provided.
+A module is not allowed to depend on itself recursively. There is no
+significance or prescription of the order of modules in the dependency list.
+The same module dependency must not be listed more than once in the list. A
+module should be listed as a dependency if and only if this module declaration
+imports type names from the module interface using an import declaration or
+refers to types from the module interface using a qualified type name.
 
-The name conflict resolution typically comes in the form of separate
-namespaces and optional use of qualified naming.
+After the list of module dependencies comes the module interface declarations.
+These can be in any order. There are a handful of different kinds of
+declarations that can be used.
 
-3. Module dependencies.
-For modules to be used, there must be module dependencies of some sort. A
-module can only be used if its module dependencies are met.
+Import
+^^^^^^
+The import declaration is used to import entities from another module. The
+import declaration consists of the name of a module to import types from,
+followed by a list of entities to import that belong to that module's interface.
+In this case, the 'Bool' type is being imported from the Bool module.
+Importing the entity means it can be referred to without qualification in the
+module interface, and that the entity is now considered to belong to the
+module's interface.
 
-Dependencies are external if they involve a module's interface. In this case,
-the module depended on must be shared by any program using the module.
+Importing from some module 'Foo' requires that the module 'Foo' be listed as
+an explicit dependency of this module. Entities that are imported from other
+modules must not conflict by name with any other entities imported or declared
+in the module interface.
 
-Dependencies may be internal. In this case it is not required that depended
-modules are shared (as opposed to duplicated), but practically speaking, it is
-not unexpected for the same internal module to appear multiple places in a
-program, in which case it would be nice to share it.
+Both types and function declarations can be imported. When importing a
+function declaration, any types used in the declaration must belong to a
+module that this module depends on.
 
-Proposal:
-A module's interface and implementation are specified as separate
-declarations, to facilitate development and sharing of the interface before
-the implementation is available. Interface declarations are introduced using
-the keyword 'mdecl' for "module declaration". Implementation declarations are
-introduced using the keyword 'mdefn' for "module definition".
+Abstract Types
+^^^^^^^^^^^^^^
+The 'type' keyword is used to introduce an abstract type. In this case, the
+abstract type 'Int' is declared. A user of the module can store and pass
+around values of the abstract type, but they cannot construct values of the
+type, access fields of the type, or use the type as the condition in a
+conditional expression.
 
-There is a one-to-one correspondence between interfaces and implementation,
-where the name is used to link an interface with its implementation. If there
-were not a one-to-one correspondence, then an interface may depend on an
-implementation. For example, if an interface uses a List, and List is defined
-as an opaque type in some other interface, there would be no way to know which
-implementation of List the interface referred to without identifying a module.
-Using a one-to-one mapping allows an interface to identify a module through
-its interface, which means interfaces depend only on other interfaces. The
-hope is this helps with distributing modules and reduces the work required to
-check the validity of an interface.
+Concrete Types
+^^^^^^^^^^^^^^
+A concrete struct or union type can be declared as in Calvisus. A user of the
+module can use the type constructors, field access, and use the type as the
+condition in a conditional if it is a union type.
 
-Importing an interface brings all of its declarations directly into context.
-For the rare case when two interfaces bring in declarations of the same name,
-you may also refer to the declarations brought in by an interface using a
-qualified name, where the name is qualified by the interface name. It is not
-an error to have multiple entities referred to by the same name, but it is an
-error to use a name that refers to multiple declared entities. Declarations
-declared in the module itself can be referred to qualified under the module
-name, to help with the case where an imported entity conflicts with a locally
-defined entitiy.
+Function or Process
+^^^^^^^^^^^^^^^^^^^
+A function or process is declared using the 'func' or 'proc' keyword, as in
+Calvisus but without any body. A user of the module can call the function or
+the process.
 
-For the rarer case when there is a name conflict and it becomes excessively
-tedious to refer to a name using the qualified form, wrappers can be
-implemented for funcs and procs to rename them. types are much harder to wrap.
-We could consider adding a 'typedef' like construct to allow types to be
-renamed. The typedef would be local, so that external use of types that are
-internally typedefed would see them as different types. Or, we could provide a
-tool for renaming entities from modules on the fly. Either way, I would avoid
-including anything in the spec for this case until it occurs in practice.
+Qualified Names
+^^^^^^^^^^^^^^^
+Entities from other modules can be referred to without importing them by using
+qualified names. Qualified names consist of a module name, followed by the '@'
+symbol, followed by the name of an entity within the module. If a qualified
+name is used to refer to some module Foo, then Foo must be listed as a module
+dependency. In this example, Bool@Bool is used to refer to the Bool type in
+the declaration of the Equals function. In this case, no qualification is
+needed for the Bool type because it has already been imported, but if the Bool
+type was not imported into the Int module interface, the qualified form
+"Bool@Bool" would need to be used.
 
-Syntax example:
+Module Implementations
+----------------------
+The following is a slightly contrived exaple of the odule definition
+corresponding to the interface definition in the previous section for an
+integer arithmetic module. In this example, the integers are unbounded natural
+numbers starting from 0.
 
-mdecl Integer(Bool) {
-  type Integer;
-  func Add(Integer a, Integer b; Integer);
-  func Mul(Integer a, Integer b; Integer);
-  func LessThan(Integer a, Integer b; Bool);
+mdefn Int(Unit, Bool) {
+  import Unit(Unit);
+  import Bool(True);
+
+  union Int(Unit 0, Int S);
+
+  func Zero( ; Int) {
+    Int:0();
+  };
+
   ...
-};
 
-This declares an interface for (or "specification of") the Integer module with
-an opaque integer type.  The module depends on the Bool module (and implicitly
-everything that Bool depends on).
-
-mdefn Integer(List) {
-  struct Integer(...);
-  ...
-  func LessThan(Integer a, Integer b; Bool) {
-     ?(a ; ... Bool:True());
+  func Equals(Int a, Int b; Bool) {
+    ?(a; ?(b; True(),           # 0 == 0
+              Bool@False()),    # 0 != 1+s
+         ?(b; Bool@False(),     # 1 + s != 0
+              Equals(a.S, b.S)));
   };
 };
 
-This defines the implementation of the Integer module. The module internally
-depends on the List module, in addition to everything its interface depends
-on.
+The module implementation is introduced with the 'mdefn' keyword, which is
+short for "module definition". Following the 'mdefn' keyword is the module
+name, which must match the name provided for the corresponding 'mdecl'
+interface definition.
 
-It is an error for an interface or modules to depend on itself recursively.
+As with interface definitions, module definitions have a list of module
+dependencies. These are other modules that the implementation depends on,
+which may be different from the modules the interface depends on. For example,
+in this case, the implementation reuses the 'Unit' module to define the Int
+type, so it depends on the 'Unit' module even though the interface does not.
+The module definition also depends on the 'Bool' module, because it uses the
+functions 'True' and 'False'.
 
-It is natural on a posix-like system to have different modules implemented in
-different files. This allows for reuse of modules in different programs
-without requiring the text of unused modules to be parsed. In this case, some
-mapping from module name to file name is required to find the implementations
-of modules. I propose the mapping be specified as a search path. A module
-declaration or definition for module 'Foo' is searched first in the relevant
-local file, next in files Foo.fbld under each directory in the search path.
-This allows for a few different interesting use cases:
-1. Test cases - all module definitions and declarations are in a single file.
-2. Compact - Both the declaration and definition of a module is found in its
-Foo.fbld file. If the declaration is first, the definition need not be read
-when checking the validity of a module.
-3. Decl Only - Only the declaration is in Foo.fbld. No definition is provided.
-This can be used to check the validity of a module, but cannot be used to run
-code from it.
-4. Separate - The definition can be in a file Foo.fbld in one directory and
-the declaration can be in a file Foo.fbld in a separate directory.
+Any names explicitly imported into a module's interface definition are
+implicitly available in the module's definition. For example, because the Bool
+type from the Bool module was imported in the Int module declaration, it is
+available to use in the module definition.
 
-Questions:
-* Do we need to provide an mdefn if it would be empty? For example, for Unit?
-* Is it an error to give unused or repeated module dependencies? 
-  - For example, if I depend on Foo, and Foo depends on Bar, and I otherwise
-    use Bar, should I list Bar as a dependency?
+Aside from the implicit availabilty of names declared and imported into the
+module declaration, the same rules apply for what to list as a module
+dependency for the module definition as for the module declaration.
 
-Some Details:
-For an mdecl, you must include the list of modules the declaration depends on.
-These are exactly those modules that any qualified named entities are referred
-to from.  It is an error to list a module as a dependency if you don't use a
-name from it. It is an error to use a name that is not defined.
+The body of the 'mdefn' consists of a sequence of declarations including
+imports, type declarations, function declarations, and process declarations in
+any order.
 
-Qualified names are of the form Foo@Bar, where Foo is the module the name is
-imported from in. Use of a qualified name Foo@Bar requires the module depend
-on module Foo.
+The import statement for 'mdefn' behaves exactly as it does for 'mdecl'. For
+example, because the 'True' function from Bool is imported, it can be used
+unqualified in the implementation of Equals. In constrast, for illustration
+purposes, the 'False' function was not imported, so it the qualified form
+'Bool@False' must be used instead.
 
-An 'import' declaration can be used to import type names from another module
-into the module declarations name space:
+Type, function, and process declarations are the same as in Calvisus, except
+that they may refer to qualified names for modules listed as dependencies in
+addition to the usual unqualified names.
 
-  import Bool(Bool);
-
-The consequences of this import statement are:
-1. You can refer to the Bool type inside the module declaration without
-qualification.
-2. The Bool type is exported as part of the module. For example, if the module
-is named Foo, then Foo@Bool is a valid reference to the original definition of
-the Bool type. The user need not (but has the option to) explicitly depend on
-the original Bool module.
-
-An import statement importing entities from module Bool requires the module
-declaration depend on the Bool module.
-
-For mdefn, similar rules apply. You may refer to qualified module entities
-using Foo@Bar, which requires explicitly depending on the module Foo. You can
-import module entities using an import statement. Additionally, mdefn
-implicitly imports all types defined or exported by its corresponding mdecl.
-
-Additional Notes:
-* Importing an unused reference is treated the same as a locally defined
-  unused entity. Probably a compile time warning.
-* You may not refer to entities from your own module as qualified. What
-  purpose would it serve?
-* You may not have multiple different entities in your module with the same
-  name; as a result of duplicate definitions, duplicate imports, etc.
-* import statements need not be at the top of a module.
-* You can always check the reason for a module dependency by grepping for uses
-  of Foo@ or import Foo in your module.
-* import statements must import at least one named entity.
-* This proposal has no explicit support for importing modules or
-  entities under different names than they were defined. Processes and
-  functions can be renamed by introducing wrapper functions. Types cannot be
-  renamed (is this a good thing or a bad thing?).
-* This proposal has no support for explicit importing all entities from a
-  given module. Entities must be explicitly individually imported.
+For a module definition to be valid, it must include a struct or union type
+declaration for every abstract 'type' declared in module declaration. It must
+also provide an implementation of every function and process declared in the
+module declaration, and the types of those functions and process must match
+the types listed in the declaration. The module may include additional types,
+functions, or processes that are not visible outside of the module
+implementation.
 
