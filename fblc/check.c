@@ -239,16 +239,18 @@ void CheckTypesMatch(FblcsProgram* sprog, FblcLocId loc_id, FblcTypeId expected,
 //   whether the expression is well formed or not.
 static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, FblcLocId* loc_id, bool* error)
 {
-  FblcLocId expr_loc = (*loc_id)++;
+  FblcLocId expr_loc_id = (*loc_id)++;
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
       FblcVarExpr* var_expr = (FblcVarExpr*)expr;
-      FblcsNameL* var = LocIdName(sprog->symbols, (*loc_id)++);
+      FblcLocId var_loc_id = (*loc_id)++;
       for (size_t i = 0; vars != NULL && i < var_expr->var; ++i) {
         vars = vars->next;
       }
       if (vars == NULL) {
-        FblcsReportError("Variable '%s' not defined.\n", var->loc, var->name);
+        FblcsIdSymbol* var = (FblcsIdSymbol*)sprog->symbols->symbolv[var_loc_id];
+        assert(var->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Variable '%s' not defined.\n", var->name.loc, var->name.name);
         *error = true;
         return FBLC_NULL_ID;
       }
@@ -257,7 +259,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
 
     case FBLC_APP_EXPR: {
       FblcAppExpr* app_expr = (FblcAppExpr*)expr;
-      FblcsNameL* func = LocIdName(sprog->symbols, (*loc_id)++);
+      FblcLocId func_loc_id = (*loc_id)++;
       size_t argc = 0;
       FblcTypeId* argv = NULL;
       FblcTypeId return_type = FBLC_NULL_ID;
@@ -273,7 +275,9 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
           }
 
           case FBLC_UNION_DECL: {
-            FblcsReportError("Cannot do application on union type %s.\n", func->loc, func->name);
+            FblcsIdSymbol* func = (FblcsIdSymbol*)sprog->symbols->symbolv[func_loc_id];
+            assert(func->tag == FBLCS_ID_SYMBOL);
+            FblcsReportError("Cannot do application on union type %s.\n", func->name.loc, func->name.name);
             *error = true;
             break;
           }
@@ -287,7 +291,9 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
           }
 
           case FBLC_PROC_DECL: {
-            FblcsReportError("Cannot do application on a process %s.\n", func->loc, func->name);
+            FblcsIdSymbol* func = (FblcsIdSymbol*)sprog->symbols->symbolv[func_loc_id];
+            assert(func->tag == FBLCS_ID_SYMBOL);
+            FblcsReportError("Cannot do application on a process %s.\n", func->name.loc, func->name.name);
             *error = true;
             break;
           }
@@ -297,12 +303,16 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
             break;
         }
       } else {
-        FblcsReportError("%s does not refer to a function.\n", func->loc, func->name);
+        FblcsIdSymbol* func = (FblcsIdSymbol*)sprog->symbols->symbolv[func_loc_id];
+        assert(func->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("%s does not refer to a function.\n", func->name.loc, func->name.name);
         *error = true;
       }
 
       if (argv != NULL && argc != app_expr->argc) {
-        FblcsReportError("Expected %d arguments to %s, but %d were provided.\n", func->loc, argc, func->name, app_expr->argc);
+        FblcsIdSymbol* func = (FblcsIdSymbol*)sprog->symbols->symbolv[func_loc_id];
+        assert(func->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Expected %d arguments to %s, but %d were provided.\n", func->name.loc, argc, func->name.name, app_expr->argc);
         argv = NULL;
         *error = true;
       }
@@ -320,13 +330,15 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
       FblcTypeId type_id = CheckExpr(sprog, vars, access_expr->obj, loc_id, error);
-      FblcsNameL* field = LocIdName(sprog->symbols, (*loc_id)++);
+      FblcLocId field_loc_id = (*loc_id)++;
       if (IsType(sprog, type_id)) {
         FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
         if (access_expr->field < type->fieldc) {
           return type->fieldv[access_expr->field];
         } else {
-          FblcsReportError("%s is not a field of type %s\n", field->loc, field->name, FblcsDeclName(sprog, type_id));
+          FblcsIdSymbol* field = (FblcsIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+          assert(field->tag == FBLCS_ID_SYMBOL);
+          FblcsReportError("%s is not a field of type %s\n", field->name.loc, field->name.name, FblcsDeclName(sprog, type_id));
           *error = true;
         }
       }
@@ -335,8 +347,8 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
 
     case FBLC_UNION_EXPR: {
       FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
-      FblcsNameL* type = LocIdName(sprog->symbols, (*loc_id)++);
-      FblcsNameL* field = LocIdName(sprog->symbols, (*loc_id)++);
+      FblcLocId type_loc_id = (*loc_id)++;
+      FblcLocId field_loc_id = (*loc_id)++;
 
       FblcTypeId field_type = FBLC_NULL_ID;
       if (union_expr->type < sprog->program->declc) {
@@ -345,15 +357,23 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
           if (union_expr->field < type_decl->fieldc) {
             field_type = type_decl->fieldv[union_expr->field];
           } else {
-            FblcsReportError("%s is not a valid field of the type %s", field->loc, field->name, type->name);
+            FblcsIdSymbol* field = (FblcsIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+            assert(field->tag == FBLCS_ID_SYMBOL);
+            FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv[type_loc_id];
+            assert(type->tag == FBLCS_ID_SYMBOL);
+            FblcsReportError("%s is not a valid field of the type %s", field->name.loc, field->name.name, type->name.name);
             *error = true;
           }
         } else {
-          FblcsReportError("%s does not refer to a union type.\n", type->loc, type->name);
+          FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv[type_loc_id];
+          assert(type->tag == FBLCS_ID_SYMBOL);
+          FblcsReportError("%s does not refer to a union type.\n", type->name.loc, type->name.name);
           *error = true;
         }
       } else {
-        FblcsReportError("%s does not refer to a type.\n", type->loc, type->name);
+        FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv[type_loc_id];
+        assert(type->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("%s does not refer to a type.\n", type->name.loc, type->name.name);
         *error = true;
       }
 
@@ -377,17 +397,21 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
 
     case FBLC_COND_EXPR: {
       FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
-      FblcsLoc* select_loc = LocIdLoc(sprog->symbols, *loc_id);
+      FblcLocId select_loc_id = *loc_id;
       FblcTypeId select_type = CheckExpr(sprog, vars, cond_expr->select, loc_id, error);
       if (select_type < sprog->program->declc) {
         FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[select_type];
         if (type->tag == FBLC_UNION_DECL) {
           if (type->fieldc != cond_expr->argc) {
-            FblcsReportError("Expected %d arguments, but %d were provided.\n", LocIdLoc(sprog->symbols, expr_loc), type->fieldc, cond_expr->argc);
+            FblcsLocSymbol* expr_loc = (FblcsLocSymbol*)sprog->symbols->symbolv[expr_loc_id];
+            assert(expr_loc->tag == FBLCS_LOC_SYMBOL);
+            FblcsReportError("Expected %d arguments, but %d were provided.\n", &expr_loc->loc, type->fieldc, cond_expr->argc);
             *error = true;
           }
         } else {
-          FblcsReportError("The condition has type %s, which is not a union type.\n", select_loc, FblcsDeclName(sprog, select_type));
+          FblcsLocSymbol* select_loc = (FblcsLocSymbol*)sprog->symbols->symbolv[select_loc_id];
+          assert(select_loc->tag == FBLCS_LOC_SYMBOL);
+          FblcsReportError("The condition has type %s, which is not a union type.\n", &select_loc->loc, FblcsDeclName(sprog, select_type));
           *error = true;
         }
       }
@@ -437,7 +461,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
 //   the action is well formed or not.
 static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcActn* actn, FblcLocId* loc_id, bool* error)
 {
-  FblcLocId actn_loc = (*loc_id)++;
+  FblcLocId actn_loc_id = (*loc_id)++;
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
@@ -590,7 +614,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
         FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[select_type];
         if (type->tag == FBLC_UNION_DECL) {
           if (type->fieldc != cond_actn->argc) {
-            FblcsReportError("Expected %d arguments, but %d were provided.\n", LocIdLoc(sprog->symbols, actn_loc), type->fieldc, cond_actn->argc);
+            FblcsReportError("Expected %d arguments, but %d were provided.\n", LocIdLoc(sprog->symbols, actn_loc_id), type->fieldc, cond_actn->argc);
             *error = true;
           }
         } else {
