@@ -45,16 +45,16 @@ proc fblc-check-error { program loc } {
   set file [dict get $testloc file]
   set name "[file tail $file]_$line"
 
+  set fprogram ./out/test/$name.fblc
+  exec echo $program > $fprogram
   try {
-    set fprogram ./out/test/$name.fblc
-    exec echo $program > $fprogram
     set errtext [exec $::fblccheck --error $fprogram]
-    exec echo $errtext > ./out/test/$name.err
-    if {-1 == [string first ":$loc: error" $errtext]} {
-      error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
-    }
   } on error {results options} {
-    error "$file:$line: error: fblc-check passed unexpectedly"
+    error "$file:$line: error: fblc-check passed unexpectedly: $results"
+  }
+  exec echo $errtext > ./out/test/$name.err
+  if {-1 == [string first ":$loc: error" $errtext]} {
+    error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
   }
 }
 

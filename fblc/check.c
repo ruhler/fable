@@ -385,7 +385,12 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
 
     case FBLC_LET_EXPR: {
       FblcLetExpr* let_expr = (FblcLetExpr*)expr;
-      CheckIsType(sprog, (*loc_id)++, let_expr->type, error);
+      FblcLocId type_loc_id = (*loc_id)++;
+      if (!IsType(sprog, let_expr->type)) {
+        FblcsTypedIdSymbol* type = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[type_loc_id];
+        FblcsReportError("%s does not refer to a type.\n", type->type.loc, type->type.name);
+        *error = true;
+      }
       FblcLocId def_loc_id = *loc_id;
       FblcTypeId def_type = CheckExpr(sprog, vars, let_expr->def, loc_id, error);
       CheckTypesMatch(sprog, def_loc_id, let_expr->type, def_type, error);
