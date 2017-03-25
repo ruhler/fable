@@ -52,7 +52,7 @@ static FblcsLoc* LocIdLoc(FblcsSymbols* symbols, FblcLocId loc_id)
   return LocIdName(symbols, loc_id)->loc;
 }
 
-// LocIdLoc -- 
+// LocIdName -- 
 //   Return the name corresponding to a given loc_id.
 //
 // TODO: Remove this function. We should know the symbol type from context and
@@ -470,17 +470,21 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
 
     case FBLC_GET_ACTN: {
       FblcGetActn* get_actn = (FblcGetActn*)actn;
-      FblcsNameL* port = LocIdName(sprog->symbols, (*loc_id)++);
+      FblcLocId port_loc_id = (*loc_id)++;
       for (size_t i = 0; ports != NULL && i < get_actn->port; ++i) {
         ports = ports->next;
       }
 
       FblcTypeId port_type = FBLC_NULL_ID;
       if (ports == NULL) {
-        FblcsReportError("Port '%s' not defined.\n", port->loc, port->name);
+        FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[port_loc_id];
+        assert(port->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Port '%s' not defined.\n", port->name.loc, port->name.name);
         *error = true;
       } else if (ports->polarity != FBLC_GET_POLARITY) {
-        FblcsReportError("Port '%s' should have get polarity, but has put polarity.\n", port->loc, port->name);
+        FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[port_loc_id];
+        assert(port->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Port '%s' should have get polarity, but has put polarity.\n", port->name.loc, port->name.name);
         *error = true;
       } else {
         port_type = ports->type;
@@ -490,17 +494,21 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
 
     case FBLC_PUT_ACTN: {
       FblcPutActn* put_actn = (FblcPutActn*)actn;
-      FblcsNameL* port = LocIdName(sprog->symbols, (*loc_id)++);
+      FblcLocId port_loc_id = (*loc_id)++;
       for (size_t i = 0; ports != NULL && i < put_actn->port; ++i) {
         ports = ports->next;
       }
 
       FblcTypeId port_type = FBLC_NULL_ID;
       if (ports == NULL) {
-        FblcsReportError("Port '%s' not defined.\n", port->loc, port->name);
+        FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[port_loc_id];
+        assert(port->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Port '%s' not defined.\n", port->name.loc, port->name.name);
         *error = true;
       } else if (ports->polarity != FBLC_PUT_POLARITY) {
-        FblcsReportError("Port '%s' should have put polarity, but has get polarity.\n", port->loc, port->name);
+        FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[port_loc_id];
+        assert(port->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Port '%s' should have put polarity, but has get polarity.\n", port->name.loc, port->name.name);
         *error = true;
       } else {
         port_type = ports->type;
@@ -514,24 +522,30 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
 
     case FBLC_CALL_ACTN: {
       FblcCallActn* call_actn = (FblcCallActn*)actn;
-      FblcsNameL* proc = LocIdName(sprog->symbols, (*loc_id)++);
+      FblcLocId proc_loc_id = (*loc_id)++;
       FblcProcDecl* proc_decl = NULL;
       if (call_actn->proc < sprog->program->declc) {
         FblcDecl* decl = sprog->program->declv[call_actn->proc];
         if (decl->tag == FBLC_PROC_DECL) {
           proc_decl = (FblcProcDecl*)decl;
         } else {
-          FblcsReportError("%s does not refer to a process.\n", proc->loc, proc->name);
+          FblcsIdSymbol* proc = (FblcsIdSymbol*)sprog->symbols->symbolv[proc_loc_id];
+          assert(proc->tag == FBLCS_ID_SYMBOL);
+          FblcsReportError("%s does not refer to a process.\n", proc->name.loc, proc->name.name);
           *error = true;
         }
       } else {
-        FblcsReportError("%s not defined.\n", proc->loc, proc->name);
+        FblcsIdSymbol* proc = (FblcsIdSymbol*)sprog->symbols->symbolv[proc_loc_id];
+        assert(proc->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("%s not defined.\n", proc->name.loc, proc->name.name);
         *error = true;
       }
 
       bool check_ports = proc_decl != NULL;
       if (proc_decl != NULL && proc_decl->portc != call_actn->portc) {
-        FblcsReportError("Expected %d port arguments to %s, but %d were provided.\n", proc->loc, proc_decl->portc, proc->name, call_actn->portc);
+        FblcsIdSymbol* proc = (FblcsIdSymbol*)sprog->symbols->symbolv[proc_loc_id];
+        assert(proc->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Expected %d port arguments to %s, but %d were provided.\n", proc->name.loc, proc_decl->portc, proc->name.name, call_actn->portc);
         *error = true;
         check_ports = false;
       }
@@ -543,15 +557,17 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
           curr = curr->next;
         }
         if (curr == NULL) {
-          FblcsNameL* port = LocIdName(sprog->symbols, port_loc_id);
-          FblcsReportError("Port '%s' not defined.\n", port->loc, port->name);
+          FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[port_loc_id];
+          assert(port->tag == FBLCS_ID_SYMBOL);
+          FblcsReportError("Port '%s' not defined.\n", port->name.loc, port->name.name);
           *error = true;
         } else {
           if (check_ports) {
             if (curr->polarity != proc_decl->portv[i].polarity) {
-              FblcsNameL* port = LocIdName(sprog->symbols, port_loc_id);
+              FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[port_loc_id];
+              assert(port->tag == FBLCS_ID_SYMBOL);
               FblcsReportError("Port '%s' has wrong polarity. Expected '%s', but found '%s'.\n",
-                  port->loc, port->name,
+                  port->name.loc, port->name.name,
                   proc_decl->portv[i].polarity == FBLC_PUT_POLARITY ? "put" : "get",
                   curr->polarity == FBLC_PUT_POLARITY ? "put" : "get");
               *error = true;
@@ -563,7 +579,9 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
 
       bool check_args = proc_decl != NULL;
       if (proc_decl != NULL && proc_decl->argc != call_actn->argc) {
-        FblcsReportError("Expected %d arguments to %s, but %d were provided.\n", proc->loc, proc_decl->argc, proc->name, call_actn->argc);
+        FblcsIdSymbol* proc = (FblcsIdSymbol*)sprog->symbols->symbolv[proc_loc_id];
+        assert(proc->tag == FBLCS_ID_SYMBOL);
+        FblcsReportError("Expected %d arguments to %s, but %d were provided.\n", proc->name.loc, proc_decl->argc, proc->name.name, call_actn->argc);
         *error = true;
         check_args = false;
       }
@@ -608,17 +626,21 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
 
     case FBLC_COND_ACTN: {
       FblcCondActn* cond_actn = (FblcCondActn*)actn;
-      FblcsLoc* select_loc = LocIdLoc(sprog->symbols, *loc_id);
+      FblcLocId select_loc_id = *loc_id;
       FblcTypeId select_type = CheckExpr(sprog, vars, cond_actn->select, loc_id, error);
       if (select_type < sprog->program->declc) {
         FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[select_type];
         if (type->tag == FBLC_UNION_DECL) {
           if (type->fieldc != cond_actn->argc) {
-            FblcsReportError("Expected %d arguments, but %d were provided.\n", LocIdLoc(sprog->symbols, actn_loc_id), type->fieldc, cond_actn->argc);
+            FblcsLocSymbol* actn_loc = (FblcsLocSymbol*)sprog->symbols->symbolv[actn_loc_id];
+            assert(actn_loc->tag == FBLCS_LOC_SYMBOL);
+            FblcsReportError("Expected %d arguments, but %d were provided.\n", &actn_loc->loc, type->fieldc, cond_actn->argc);
             *error = true;
           }
         } else {
-          FblcsReportError("The condition has type %s, which is not a union type.\n", select_loc, FblcsDeclName(sprog, select_type));
+          FblcsLocSymbol* select_loc = (FblcsLocSymbol*)sprog->symbols->symbolv[select_loc_id];
+          assert(select_loc->tag == FBLCS_LOC_SYMBOL);
+          FblcsReportError("The condition has type %s, which is not a union type.\n", &select_loc->loc, FblcsDeclName(sprog, select_type));
           *error = true;
         }
       }
