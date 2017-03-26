@@ -1,6 +1,5 @@
 Fbld Kickoff:
 * Draft code for:
-  - Primes: IsPrime, NthPrime
   - PrimesTest
 * Design and implement fbld (or fbld-test as makes sense)
 

@@ -30,6 +30,7 @@ mdecl UBNat(Bool) {
   struct DivModResult(Nat quotient, Nat remainder);
   func DivMod(Nat a, Nat b; DivModResult);  # (a / b, a % b)
 
+  func IsZero(Nat a; Bool);      # a == 0
   func Eq(Nat a, Nat b; Bool);   # a == b
   func Ne(Nat a, Nat b; Bool);   # a != b
   func Lt(Nat a, Nat b; Bool);   # a < b
@@ -164,6 +165,10 @@ mdefn UBNat(Unit, Bool) {
                 DivModResult(2p0(qr.quotient), 2rp1),
                 DivModResult(2p1(qr.quotient), Sub(2rp1, b)));
          });
+  };
+
+  func IsZero(Nat a; Bool) {
+    ?(a; True(), False(), False(), False());
   };
 
   func Eq(Nat a, Nat b; Bool) {

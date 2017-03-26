@@ -1,0 +1,15 @@
+
+mdecl PrimesTest(Unit, Primes) {
+  import Unit(Unit);
+
+  union TestName(
+      Unit NthPrimeN_1_10
+  );
+
+  struct TestFailure(TestName name, Nat a, Nat b);
+  union TestFailureP(TestFailure head, TestFailureS tail);
+  union TestFailureS(Unit nil, TestFailureP cons);
+
+  func Test( ; TestFailureS);
+}
+
