@@ -114,8 +114,7 @@ struct Cmd {
 // CMD_EXPR: The expr command evaluates expr and stores the resulting value in
 // *target.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   FblcExpr* expr;
   FblcValue** target;
 } ExprCmd;
@@ -123,8 +122,7 @@ typedef struct {
 // CMD_ACTN: The actn command executes actn and stores the resulting value in
 // *target.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   FblcActn* actn;
   FblcValue** target;
 } ActnCmd;
@@ -132,8 +130,7 @@ typedef struct {
 // CMD_ACCESS: The access command accesses the given field of
 // the given value and stores the resulting value in *target.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   FblcValue* value;
   size_t field;
   FblcValue** target;
@@ -143,8 +140,7 @@ typedef struct {
 // select the choice to evaluate. It then evaluates the chosen expression and
 // stores the resulting value in *target.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   FblcValue* value;
   FblcExpr** choices;
   FblcValue** target;
@@ -154,8 +150,7 @@ typedef struct {
 // select the choice to evaluate. It then evaluates the chosen action and
 // stores the resulting value in *target.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   FblcValue* value;
   FblcActn** choices;
   FblcValue** target;
@@ -168,8 +163,7 @@ typedef struct {
 // until they match the given vars and ports or there are no more left. Then
 // the scope change is made if necessary.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   Vars* vars;
   Ports* ports;
   bool is_pop;
@@ -178,15 +172,13 @@ typedef struct {
 // CMD_JOIN: The join command halts the current thread of execution until
 // count has reached zero.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   size_t count;
 } JoinCmd;
 
 // CMD_PUT: The put command puts a value onto a link and into the target.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   FblcValue** target;
   Link* link;
   FblcValue* value;
@@ -194,8 +186,7 @@ typedef struct {
 
 // CMD_FREE_LINK: Free resources associated with the given link.
 typedef struct {
-  CmdTag tag;
-  struct Cmd* next;
+  Cmd _base;
   Link* link;
 } FreeLinkCmd;
 
@@ -540,11 +531,11 @@ static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd*
   assert(target != NULL);
 
   ExprCmd* cmd = arena->alloc(arena, sizeof(ExprCmd));
-  cmd->tag = CMD_EXPR;
-  cmd->next = next;
+  cmd->_base.tag = CMD_EXPR;
+  cmd->_base.next = next;
   cmd->expr = expr;
   cmd->target = target;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkActnCmd --
@@ -569,11 +560,11 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
   assert(target != NULL);
 
   ActnCmd* cmd = arena->alloc(arena, sizeof(ActnCmd));
-  cmd->tag = CMD_ACTN;
-  cmd->next = next;
+  cmd->_base.tag = CMD_ACTN;
+  cmd->_base.next = next;
   cmd->actn = actn;
   cmd->target = target;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkAccessCmd --
@@ -595,12 +586,12 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
 static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, Cmd* next)
 {
   AccessCmd* cmd = arena->alloc(arena, sizeof(AccessCmd));
-  cmd->tag = CMD_ACCESS;
-  cmd->next = next;
+  cmd->_base.tag = CMD_ACCESS;
+  cmd->_base.next = next;
   cmd->value = value;
   cmd->field = field;
   cmd->target = target;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkCondExprCmd --
@@ -622,12 +613,12 @@ static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcVa
 static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices, FblcValue** target, Cmd* next)
 {
   CondExprCmd* cmd = arena->alloc(arena, sizeof(CondExprCmd));
-  cmd->tag = CMD_COND_EXPR;
-  cmd->next = next;
+  cmd->_base.tag = CMD_COND_EXPR;
+  cmd->_base.next = next;
   cmd->value = value;
   cmd->choices = choices;
   cmd->target = target;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkCondActnCmd --
@@ -649,12 +640,12 @@ static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices
 static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
 {
   CondActnCmd* cmd = arena->alloc(arena, sizeof(CondActnCmd));
-  cmd->tag = CMD_COND_ACTN;
-  cmd->next = next;
+  cmd->_base.tag = CMD_COND_ACTN;
+  cmd->_base.next = next;
   cmd->value = value;
   cmd->choices = choices;
   cmd->target = target;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkScopeCmd --
@@ -675,12 +666,12 @@ static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices
 static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 {
   ScopeCmd* cmd = arena->alloc(arena, sizeof(ScopeCmd));
-  cmd->tag = CMD_SCOPE;
-  cmd->next = next;
+  cmd->_base.tag = CMD_SCOPE;
+  cmd->_base.next = next;
   cmd->vars = vars;
   cmd->ports = ports;
   cmd->is_pop = is_pop;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkPushScopeCmd --
@@ -739,10 +730,10 @@ static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next)
 static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 {
   JoinCmd* cmd = arena->alloc(arena, sizeof(JoinCmd));
-  cmd->tag = CMD_JOIN;
-  cmd->next = next;
+  cmd->_base.tag = CMD_JOIN;
+  cmd->_base.next = next;
   cmd->count = count;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkPutCmd --
@@ -763,12 +754,12 @@ static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next
 {
   assert(target != NULL);
   PutCmd* cmd = arena->alloc(arena, sizeof(PutCmd));
-  cmd->tag = CMD_PUT;
-  cmd->next = next;
+  cmd->_base.tag = CMD_PUT;
+  cmd->_base.next = next;
   cmd->target = target;
   cmd->link = link;
   cmd->value = NULL;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // MkFreeLinkCmd --
@@ -787,10 +778,10 @@ static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next
 static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 {
   FreeLinkCmd* cmd = arena->alloc(arena, sizeof(FreeLinkCmd));
-  cmd->tag = CMD_FREE_LINK;
-  cmd->next = next;
+  cmd->_base.tag = CMD_FREE_LINK;
+  cmd->_base.next = next;
   cmd->link = link;
-  return (Cmd*)cmd;
+  return &cmd->_base;
 }
 
 // Run --
