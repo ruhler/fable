@@ -30,7 +30,7 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
 void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, FblcValue* value)
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
-  if (type->tag == FBLC_STRUCT_DECL) {
+  if (type->_base.tag == FBLC_STRUCT_DECL) {
     fprintf(stream, "%s(", FblcsDeclName(sprog, type_id));
     for (size_t i = 0; i < type->fieldc; ++i) {
       if (i > 0) {
@@ -39,7 +39,7 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, Fblc
       FblcsPrintValue(stream, sprog, type->fieldv[i], value->fields[i]);
     }
     fprintf(stream, ")");
-  } else if (type->tag == FBLC_UNION_DECL) {
+  } else if (type->_base.tag == FBLC_UNION_DECL) {
     fprintf(stream, "%s:%s(", FblcsDeclName(sprog, type_id), FblcsFieldName(sprog, type_id, value->tag));
     FblcsPrintValue(stream, sprog, type->fieldv[value->tag], value->fields[0]);
     fprintf(stream, ")");
@@ -63,7 +63,7 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
 FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName field)
 {
   FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
-  assert(type->tag == FBLC_STRUCT_DECL || type->tag == FBLC_UNION_DECL);
+  assert(type->_base.tag == FBLC_STRUCT_DECL || type->_base.tag == FBLC_UNION_DECL);
   for (FblcFieldId i = 0; i < type->fieldc; ++i) {
     if (FblcsNamesEqual(FblcsFieldName(sprog, type_id, i), field)) {
       return i;

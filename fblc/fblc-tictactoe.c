@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
   }
 
   FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv[decl_id];
-  if (proc->tag != FBLC_PROC_DECL) {
+  if (proc->_base.tag != FBLC_PROC_DECL) {
     fprintf(stderr, "entry %s is not a process.\n", entry);
     return 1;
   }

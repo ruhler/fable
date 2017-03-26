@@ -350,17 +350,17 @@ int main(int argc, char* argv[])
     // Make a proc wrapper for the function.
     FblcFuncDecl* func = (FblcFuncDecl*)decl;
     FblcEvalActn* body = arena.alloc(&arena, sizeof(FblcEvalActn));
-    body->tag = FBLC_EVAL_ACTN;
+    body->_base.tag = FBLC_EVAL_ACTN;
     body->arg = func->body;
 
     proc = arena.alloc(&arena, sizeof(FblcProcDecl));
-    proc->tag = FBLC_PROC_DECL;
+    proc->_base.tag = FBLC_PROC_DECL;
     proc->portc = 0;
     proc->portv = NULL;
     proc->argc = func->argc;
     proc->argv = func->argv;
     proc->return_type = func->return_type;
-    proc->body = (FblcActn*)body;
+    proc->body = &body->_base;
   } else {
     fprintf(stderr, "entry %s is not a function or process.\n", entry);
     return 1;

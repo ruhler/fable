@@ -195,7 +195,7 @@ typedef struct {
 //   A variable expression of the form 'var' whose value is the value of the
 //   corresponding variable in scope.
 typedef struct {
-  FblcExprTag tag;
+  FblcExpr _base;
   FblcVarId var;
 } FblcVarExpr;
 
@@ -203,7 +203,7 @@ typedef struct {
 //   An application expression of the form 'func(arg0, arg1, ...)'. func may
 //   refer to a function or a struct type.
 typedef struct {
-  FblcExprTag tag;
+  FblcExpr _base;
   FblcDeclId func;
   size_t argc;
   FblcExpr** argv;
@@ -213,7 +213,7 @@ typedef struct {
 //   An union expression of the form 'type:field(arg)', used to construct a
 //   union value.
 typedef struct {
-  FblcExprTag tag;
+  FblcExpr _base;
   FblcTypeId type;
   FblcFieldId field;
   FblcExpr* arg;
@@ -223,7 +223,7 @@ typedef struct {
 //   An access expression of the form 'obj.field' used to access a field of
 //   a struct or union value.
 typedef struct {
-  FblcExprTag tag;
+  FblcExpr _base;
   FblcExpr* obj;
   FblcFieldId field;
 } FblcAccessExpr;
@@ -232,7 +232,7 @@ typedef struct {
 //   A conditional expression of the form '?(select; arg0, arg1, ...)', which
 //   conditionally selects an argument based on the tag of the select value.
 typedef struct {
-  FblcExprTag tag;
+  FblcExpr _base;
   FblcExpr* select;
   size_t argc;
   FblcExpr** argv;
@@ -243,7 +243,7 @@ typedef struct {
 //   of the variable is a De Bruijn index based on the context where the
 //   variable is accessed.
 typedef struct {
-  FblcExprTag tag;
+  FblcExpr _base;
   FblcTypeId type;
   FblcExpr* def;
   FblcExpr* body;
@@ -274,21 +274,21 @@ typedef struct {
 //   An evaluation action of the form '$(arg)' which evaluates the given
 //   expression without side effects.
 typedef struct {
-  FblcActnTag tag;
+  FblcActn _base;
   FblcExpr* arg;
 } FblcEvalActn;
 
 // FblcGetActn --
 //   A get action of the form '~port()' used to get a value from a port.
 typedef struct {
-  FblcActnTag tag;
+  FblcActn _base;
   FblcPortId port;
 } FblcGetActn;
 
 // FblcPutActn --
 //   A put action of the form '~port(arg)' used to put a value onto a port.
 typedef struct {
-  FblcActnTag tag;
+  FblcActn _base;
   FblcPortId port;
   FblcExpr* arg;
 } FblcPutActn;
@@ -297,7 +297,7 @@ typedef struct {
 //   A conditional action of the form '?(select; arg0, arg1, ...)', which
 //   conditionally selects an argument based on the tag of the select value.
 typedef struct {
-  FblcActnTag tag;
+  FblcActn _base;
   FblcExpr* select;
   size_t argc;
   FblcActn** argv;
@@ -307,7 +307,7 @@ typedef struct {
 //   A call action of the form 'proc(port0, port1, ... ; arg0, arg1, ...)',
 //   which calls a process with the given port and value arguments.
 typedef struct {
-  FblcActnTag tag;
+  FblcActn _base;
   FblcDeclId proc;
   size_t portc;
   FblcPortId* portv;
@@ -320,7 +320,7 @@ typedef struct {
 //   and put ports are De Bruijn indices based on the context where the ports
 //   are accessed.
 typedef struct {
-  FblcActnTag tag;
+  FblcActn _base;
   FblcTypeId type;
   FblcActn* body;
 } FblcLinkActn;
@@ -337,7 +337,7 @@ typedef struct {
 //   which executes processes in parallel. The names of the variables are De
 //   Bruijn indices based ont he context where they are accessed.
 typedef struct {
-  FblcActnTag tag;
+  FblcActn _base;
   size_t execc;
   FblcExec* execv;
   FblcActn* body;
@@ -365,7 +365,7 @@ typedef struct {
 //   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
 //   This is a common structure used for both struct and union declarations.
 typedef struct {
-  FblcDeclTag tag;
+  FblcDecl _base;
   size_t fieldc;
   FblcTypeId* fieldv;
 } FblcTypeDecl;
@@ -382,7 +382,7 @@ typedef FblcTypeDecl FblcUnionDecl;
 //   Declaration of a function of the form:
 //     'name(arg0 name0, arg1 name1, ...; return_type) body'
 typedef struct {
-  FblcDeclTag tag;
+  FblcDecl _base;
   size_t argc;
   FblcTypeId* argv;
   FblcTypeId return_type;
@@ -408,7 +408,7 @@ typedef struct {
 //     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
 //           arg0 name0, arg1, name1, ... ; return_type) body'
 typedef struct {
-  FblcDeclTag tag;
+  FblcDecl _base;
   size_t portc;
   FblcPort* portv;
   size_t argc;

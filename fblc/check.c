@@ -353,7 +353,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
       FblcTypeId field_type = FBLC_NULL_ID;
       if (union_expr->type < sprog->program->declc) {
         FblcTypeDecl* type_decl = (FblcTypeDecl*)sprog->program->declv[union_expr->type];
-        if (type_decl->tag == FBLC_UNION_DECL) {
+        if (type_decl->_base.tag == FBLC_UNION_DECL) {
           if (union_expr->field < type_decl->fieldc) {
             field_type = type_decl->fieldv[union_expr->field];
           } else {
@@ -406,7 +406,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, Vars* vars, FblcExpr* expr, Fbl
       FblcTypeId select_type = CheckExpr(sprog, vars, cond_expr->select, loc_id, error);
       if (select_type < sprog->program->declc) {
         FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[select_type];
-        if (type->tag == FBLC_UNION_DECL) {
+        if (type->_base.tag == FBLC_UNION_DECL) {
           if (type->fieldc != cond_expr->argc) {
             FblcsLocSymbol* expr_loc = (FblcsLocSymbol*)sprog->symbols->symbolv[expr_loc_id];
             assert(expr_loc->tag == FBLCS_LOC_SYMBOL);
@@ -635,7 +635,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, Vars* vars, Ports* ports, FblcA
       FblcTypeId select_type = CheckExpr(sprog, vars, cond_actn->select, loc_id, error);
       if (select_type < sprog->program->declc) {
         FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[select_type];
-        if (type->tag == FBLC_UNION_DECL) {
+        if (type->_base.tag == FBLC_UNION_DECL) {
           if (type->fieldc != cond_actn->argc) {
             FblcsLocSymbol* actn_loc = (FblcsLocSymbol*)sprog->symbols->symbolv[actn_loc_id];
             assert(actn_loc->tag == FBLCS_LOC_SYMBOL);
