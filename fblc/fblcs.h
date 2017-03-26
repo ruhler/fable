@@ -60,111 +60,201 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...);
 // FblcsNameL -- 
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
-typedef struct FblcsNameL {
+typedef struct {
   FblcsName name;
   FblcsLoc* loc;
 } FblcsNameL;
 
-// FblcsSymbolTag -- 
-//   Enum used to distinguish among different kinds of symbols.
-typedef enum {
-  FBLCS_LOC_SYMBOL,
-  FBLCS_ID_SYMBOL,
-  FBLCS_TYPED_ID_SYMBOL,
-  FBLCS_LINK_SYMBOL,
-  FBLCS_DECL_SYMBOL
-} FblcsSymbolTag;
-
-// FblcsSymbol --
-//   A tagged union of symbol types. All symbols have the same initial layout
-//   as FblcsSymbol. The tag can be used to determine what kind of symbol this
-//   is to get access to additional fields of the symbol by first casting to
-//   that specific type of symbol.
-//
-//   Symbols encode information about names, locations, and other useful
-//   information relevant to an FblcLocId location in an FblcProgram.
+// FblcsTypedName --
+//   A pair of type and name, each with location, commonly used for
+//   representing symbol information in fblcs programs.
 typedef struct {
-  FblcsSymbolTag tag;
-} FblcsSymbol;
-
-// FblcsLocSymbol --
-//   A symbol that stores information about a location only. This is used to
-//   store the source location of expressions and actions.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsLoc loc;
-} FblcsLocSymbol;
-
-// FblcsIdSymbol --
-//   A symbol that stores information about a name and a location. This is
-//   used to store the name and location of variable names and return types.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsNameL name;
-} FblcsIdSymbol;
-
-// FblcsTypedIdSymbol --
-//   A symbol that stores location and name information for an id and it's
-//   type. This is used to store the name, type, and location for field and
-//   variable declarations.
-typedef struct {
-  FblcsSymbolTag tag;
-  FblcsNameL name;
   FblcsNameL type;
-} FblcsTypedIdSymbol;
-
-// FblcsLinkSymbol --
-//   A symbol that stores location and name information for a link action's
-//   type, get port name, and put port name.
+  FblcsNameL name;
+} FblcsTypedName;
+
+// FblcsExpr --
+//   Common base type for the following fblcs expr types. It should be clear
+//   from the context based on the tag of the corresponding FblcExpr which
+//   specific type an instance of FblcsExpr refers to.
 typedef struct {
-  FblcsSymbolTag tag;
+  FblcsLoc* loc;
+} FblcsExpr;
+
+// FblcsVarExpr --
+//   Symbol information associated with a variable expression.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL var;
+} FblcsVarExpr;
+
+// FblcsAppExpr --
+//   Symbol information associated with an application expression.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL func;
+} FblcsAppExpr;
+
+// FblcsUnionExpr --
+//   Symbol information associated with a union expression.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL type;
+  FblcsNameL field;
+} FblcsUnionExpr;
+
+// FblcsAccessExpr --
+//   Symbol information associated with an access expression.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL field;
+} FblcsAccessExpr;
+
+// FblcsCondExpr --
+//   Symbol information associated with a conditional expression.
+typedef struct {
+  FblcsExpr _base;
+} FblcsCondExpr;
+
+// FblcsLetExpr --
+//   Symbol information associated with a let expression.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL type;
+  FblcsNameL name;
+} FblcsLetExpr;
+
+// FblcsActn --
+//   Common base type for the following fblcs actn types. It should be clear
+//   from the context based on the tag of the corresponding FblcActn which
+//   specific type an instance of FblcsActn refers to.
+typedef struct {
+  FblcsLoc* loc;
+} FblcsActn;
+
+// FblcsEvalActn --
+//   Symbol information associated with an eval action.
+typedef struct {
+  FblcsActn _base;
+} FblcsEvalActn;
+
+// FblcsGetActn --
+//   Symbol information associated with a get action.
+typedef struct {
+  FblcsActn _base;
+  FblcsNameL port;
+} FblcsGetActn;
+
+// FblcsPutActn --
+//   Symbol information associated with a put action.
+typedef struct {
+  FblcsActn _base;
+  FblcsNameL port;
+} FblcsPutActn;
+
+// FblcsCondActn --
+//   Symbol information associated with a conditional action.
+typedef struct {
+  FblcsActn _base;
+} FblcsCondActn;
+
+// FblcsNameLV --
+//   A vector of FblcsNameLs.
+typedef struct {
+  size_t size;
+  FblcsNameL* xs;
+} FblcsNameLV;
+
+// FblcsCallActn --
+//   Symbol information associated with a call action.
+typedef struct {
+  FblcsActn _base;
+  FblcsNameL proc;
+  FblcsNameLV portv;
+} FblcsCallActn;
+
+// FblcsLinkActn --
+//   Symbol information associated with a link action.
+typedef struct {
+  FblcsActn _base;
   FblcsNameL type;
   FblcsNameL get;
   FblcsNameL put;
-} FblcsLinkSymbol;
+} FblcsLinkActn;
 
-// FblcsDeclSymbol --
-//   A symbol that stores information for a declaration.
+// FblcsTypedNameV --
+//   A vector of typed names.
 typedef struct {
-  FblcsSymbolTag tag;
+  size_t size;
+  FblcsTypedName* xs;
+} FblcsTypedNameV;
+
+// FblcsExecActn --
+//   Symbol information associated with an exec action.
+typedef struct {
+  FblcsActn _base;
+  FblcsTypedNameV execv;
+} FblcsExecActn;
+
+// FblcsDecl --
+//   Common base type for all the fblcs decl types.
+typedef struct {
   FblcsNameL name;
-  FblcDeclId decl;
-} FblcsDeclSymbol;
+} FblcsDecl;
 
-// FblcsSymbolV --
-//   A vector of fblcs symbols.
+// FblcsTypeDecl --
+//   Symbol information associated with a type declaration.
+typedef struct {
+  FblcsDecl _base;
+  FblcsTypedNameV fieldv;
+} FblcsTypeDecl;
+
+// FblcsExprV --
+//   A vector of fblcs exprs.
 typedef struct {
   size_t size;
-  FblcsSymbol** xs;
-} FblcsSymbolV;
+  FblcsExpr** xs;
+} FblcsExprV;
 
-// FblcsLocIdV --
-//   A vector of fblc loc ids.
+// FblcsFuncDecl --
+//   Symbol information associated with a function declaration.
+typedef struct {
+  FblcsDecl _base;
+  FblcsTypedNameV argv;
+  FblcsNameL return_type;
+  FblcsExprV exprv;
+} FblcsFuncDecl;
+
+// FblcsActnV --
+//   A vector of fblcs actns.
 typedef struct {
   size_t size;
-  FblcLocId* xs;
-} FblcsLocIdV;
+  FblcsActn** xs;
+} FblcsActnV;
 
-
-// FblcsSymbols --
-//   A structure used for mapping source level names and locations to and from
-//   their corresponding abstract syntax FblcLocId locations.
-//
-// Fields:
-//   symbolc/symbolv - A vector of symbol information indexed by FblcLocId.
-//   declc/declv - A vector mapping FblcDeclId to corresponding FblcLocId.
+// FblcsProcDecl --
+//   Symbol information associated with a process declaration.
 typedef struct {
-  FblcsSymbolV symbolv;
-  FblcsLocIdV declv;
-} FblcsSymbols;
+  FblcsDecl _base;
+  FblcsTypedNameV portv;
+  FblcsTypedNameV argv;
+  FblcsNameL return_type;
+  FblcsExprV exprv;
+  FblcsActnV actnv;
+} FblcsProcDecl;
+
+typedef struct {
+  size_t size;
+  FblcsDecl** xs;
+} FblcsDeclV;
 
 // FblcsProgram --
 //   An FblcProgram augmented with symbols information.
 typedef struct {
   FblcProgram* program;
-  FblcsSymbols* symbols;
+  FblcsDeclV sdeclv;
 } FblcsProgram;
-
+
 // FblcsParseProgram --
 //   Parse an fblc program from a file.
 //

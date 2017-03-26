@@ -75,12 +75,10 @@ FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName 
 // FblcsLookupPort -- See documentation in fblcs.h
 FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port)
 {
-  FblcLocId port_loc_id = sprog->symbols->declv.xs[proc_id] + 1;
   FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv.xs[proc_id];
+  FblcsProcDecl* sproc = (FblcsProcDecl*)sprog->sdeclv.xs[proc_id];
   for (FblcFieldId i = 0; i < proc->portv.size; ++i) {
-    FblcsTypedIdSymbol* port_i = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[port_loc_id + i];
-    assert(port_i->tag == FBLCS_TYPED_ID_SYMBOL);
-    if (FblcsNamesEqual(port_i->name.name, port)) {
+    if (FblcsNamesEqual(sproc->portv.xs[i].name.name, port)) {
       return i;
     }
   }
@@ -90,17 +88,17 @@ FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName p
 // FblcsDeclName -- See documentation in fblcs.h
 FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
-  FblcLocId decl_loc_id = sprog->symbols->declv.xs[decl_id];
-  FblcsDeclSymbol* decl = (FblcsDeclSymbol*)sprog->symbols->symbolv.xs[decl_loc_id];
-  assert(decl->tag == FBLCS_DECL_SYMBOL);
+  FblcsDecl* decl = sprog->sdeclv.xs[decl_id];
   return decl->name.name;
 }
 
 // FblcsFieldName  -- See documentation in fblcs.h
 FblcsName FblcsFieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
 {
-  FblcLocId field_loc_id = sprog->symbols->declv.xs[decl_id] + field_id + 1;
-  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[field_loc_id];
-  assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
-  return field->name.name;
+  assert(decl_id < sprog->program->declv.size);
+  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv.xs[decl_id];
+  assert(type->_base.tag == FBLC_STRUCT_DECL || type->_base.tag == FBLC_UNION_DECL);
+  assert(field_id < type->fieldv.size);
+  FblcsTypeDecl* stype = (FblcsTypeDecl*)sprog->sdeclv.xs[decl_id];
+  return stype->fieldv.xs[field_id].name.name;
 }

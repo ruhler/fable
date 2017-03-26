@@ -12,7 +12,10 @@ Ints:
   complete.
 
 Fblc Cleanup:
-* Implement version of Checker that works on FblcProgram without symbols.
+* Remove ActnCtx and ExprCtx from resolve. Just inline the args.
+* Change VectorExtend to VectorAppend undefined and return a pointer?
+  - because otherwise you have to remember to increment the size too.
+* Implement version of Checker that works on FblcProgram without fblcs.
 * General Cleanup
  - Verify all document comments are present and up to date.
  - Document allocations for every function that takes an FblcArena,

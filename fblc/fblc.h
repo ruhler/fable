@@ -81,14 +81,19 @@ typedef size_t FblcVarId;
 //   ports belong to the same namespace of indices.
 typedef size_t FblcPortId;
 
-// FblcLocId --
-//   An identifier used to refer to a location in an fblc program, typically
-//   for debugging purposes. Every declaration, expression, action, and id in
-//   the program is assigned a unique FblcLocId based on its position in the
-//   program. FblcLocIds are assigned starting from 0 in order of a preorder
-//   traversal of the program's abstract syntax tree as defined by the
-//   following structures.
-typedef size_t FblcLocId;
+// FblcExprId --
+//   Each expression within a declaration is assigned a unique id starting
+//   from 0, followed by 1, and so on. These ids can be used as indices into
+//   maps of other data associated with expressions, such as symbol
+//   information.
+typedef size_t FblcExprId;
+
+// FblcActnId --
+//   Each action within a declaration is assigned a unique id starting
+//   from 0, followed by 1, and so on. These ids can be used as indices into
+//   maps of other data associated with actions, such as symbol
+//   information.
+typedef size_t FblcActnId;
 
 // FBLC_NULL_ID -- 
 //   A sentinel value that can be used for ids to indicate an otherwise
@@ -113,6 +118,7 @@ typedef enum {
 //   by first casting to that specific type of expression.
 typedef struct {
   FblcExprTag tag;
+  FblcExprId id;
 } FblcExpr;
 
 // FblcVarExpr --
@@ -140,7 +146,7 @@ typedef struct {
 } FblcAppExpr;
 
 // FblcUnionExpr --
-//   An union expression of the form 'type:field(arg)', used to construct a
+//   A union expression of the form 'type:field(arg)', used to construct a
 //   union value.
 typedef struct {
   FblcExpr _base;
@@ -197,6 +203,7 @@ typedef enum {
 //   by first casting to that specific type of action.
 typedef struct {
   FblcActnTag tag;
+  FblcActnId id;
 } FblcActn;
 
 // FblcEvalActn --

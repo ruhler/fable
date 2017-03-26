@@ -1,8 +1,6 @@
-
-# Two structs with different names are considered different types, even if
-# they have the same fields.
-
 set prg {
+  # Two structs with different names are considered different types, even if
+  # they have the same fields.
   struct Unit();
   struct Donut();
 
@@ -11,8 +9,7 @@ set prg {
   };
 }
 
-# TODO: Should the error be at the open brace on 5:22 instead?
-fblc-check-error $prg 6:5
+fblc-check-error $prg 8:5
 
 set prg {
   struct Unit();

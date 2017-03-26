@@ -9,4 +9,4 @@ set prg {
   };
 }
 
-fblc-check-error $prg 5:7
+fblc-check-error $prg 5:3

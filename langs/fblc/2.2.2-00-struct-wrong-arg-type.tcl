@@ -1,6 +1,5 @@
-
-# Types passed to a struct constructor must have the right type.
 set prg {
+  # Types passed to a struct constructor must have the right type.
   struct Unit();
   struct Donut();
   struct A(Unit x, Donut y);
@@ -10,4 +9,4 @@ set prg {
     A(Unit(), Unit());
   };
 }
-fblc-check-error $prg 8:15
+fblc-check-error $prg 9:15
