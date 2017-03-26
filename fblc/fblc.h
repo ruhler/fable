@@ -170,7 +170,7 @@ typedef size_t FblcLocId;
 //   A sentinel value that can be used for ids to indicate an otherwise
 //   invalid id. Note that FBLC_NULL_ID does not have the same value as NULL.
 #define FBLC_NULL_ID (-1)
-
+
 // FblcExprTag --
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
@@ -248,60 +248,7 @@ typedef struct {
   FblcExpr* def;
   FblcExpr* body;
 } FblcLetExpr;
-
-// FblcDeclTag --
-//   A tag used to distinguish among different kinds of declarations.
-typedef enum {
-  FBLC_STRUCT_DECL,
-  FBLC_UNION_DECL,
-  FBLC_FUNC_DECL,
-  FBLC_PROC_DECL
-} FblcDeclTag;
-
-// FblcDecl --
-//   A tagged union of declaration types. All declarations have the same
-//   initial layout as FblcDecl. The tag can be used to determine what kind of
-//   declaration this is to get access to additional fields of the declaration
-//   by first casting to that specific type of declaration.
-typedef struct {
-  FblcDeclTag tag;
-} FblcDecl;
-
-// FblcTypeDecl --
-//   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
-//   This is a common structure used for both struct and union declarations.
-typedef struct {
-  FblcDeclTag tag;
-  size_t fieldc;
-  FblcTypeId* fieldv;
-} FblcTypeDecl;
-
-// FblcStructDecl --
-//   Declaration of a struct type.
-typedef FblcTypeDecl FblcStructDecl;
-
-// FblcUnionDecl --
-//   Declaration of a union type.
-typedef FblcTypeDecl FblcUnionDecl;
-
-// FblcFuncDecl --
-//   Declaration of a function of the form:
-//     'name(arg0 name0, arg1 name1, ...; return_type) body'
-typedef struct {
-  FblcDeclTag tag;
-  size_t argc;
-  FblcTypeId* argv;
-  FblcTypeId return_type;
-  FblcExpr* body;
-} FblcFuncDecl;
-
-// FblcPolarity --
-//   The polarity of a port.
-typedef enum {
-  FBLC_GET_POLARITY,
-  FBLC_PUT_POLARITY
-} FblcPolarity;
-
+
 // FblcActnTag --
 //   A tag used to distinguish among different kinds of actions.
 typedef enum {
@@ -395,6 +342,59 @@ typedef struct {
   FblcExec* execv;
   FblcActn* body;
 } FblcExecActn;
+
+// FblcDeclTag --
+//   A tag used to distinguish among different kinds of declarations.
+typedef enum {
+  FBLC_STRUCT_DECL,
+  FBLC_UNION_DECL,
+  FBLC_FUNC_DECL,
+  FBLC_PROC_DECL
+} FblcDeclTag;
+
+// FblcDecl --
+//   A tagged union of declaration types. All declarations have the same
+//   initial layout as FblcDecl. The tag can be used to determine what kind of
+//   declaration this is to get access to additional fields of the declaration
+//   by first casting to that specific type of declaration.
+typedef struct {
+  FblcDeclTag tag;
+} FblcDecl;
+
+// FblcTypeDecl --
+//   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
+//   This is a common structure used for both struct and union declarations.
+typedef struct {
+  FblcDeclTag tag;
+  size_t fieldc;
+  FblcTypeId* fieldv;
+} FblcTypeDecl;
+
+// FblcStructDecl --
+//   Declaration of a struct type.
+typedef FblcTypeDecl FblcStructDecl;
+
+// FblcUnionDecl --
+//   Declaration of a union type.
+typedef FblcTypeDecl FblcUnionDecl;
+
+// FblcFuncDecl --
+//   Declaration of a function of the form:
+//     'name(arg0 name0, arg1 name1, ...; return_type) body'
+typedef struct {
+  FblcDeclTag tag;
+  size_t argc;
+  FblcTypeId* argv;
+  FblcTypeId return_type;
+  FblcExpr* body;
+} FblcFuncDecl;
+
+// FblcPolarity --
+//   The polarity of a port.
+typedef enum {
+  FBLC_GET_POLARITY,
+  FBLC_PUT_POLARITY
+} FblcPolarity;
 
 // FblcPort --
 //   The type and polarity of a port.
