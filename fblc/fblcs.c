@@ -29,19 +29,19 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
 // FblcsPrintValue -- see documentation in fblcs.h.
 void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, FblcValue* value)
 {
-  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
+  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv.xs[type_id];
   if (type->_base.tag == FBLC_STRUCT_DECL) {
     fprintf(stream, "%s(", FblcsDeclName(sprog, type_id));
-    for (size_t i = 0; i < type->fieldc; ++i) {
+    for (size_t i = 0; i < type->fieldv.size; ++i) {
       if (i > 0) {
         fprintf(stream, ",");
       }
-      FblcsPrintValue(stream, sprog, type->fieldv[i], value->fields[i]);
+      FblcsPrintValue(stream, sprog, type->fieldv.xs[i], value->fields[i]);
     }
     fprintf(stream, ")");
   } else if (type->_base.tag == FBLC_UNION_DECL) {
     fprintf(stream, "%s:%s(", FblcsDeclName(sprog, type_id), FblcsFieldName(sprog, type_id, value->tag));
-    FblcsPrintValue(stream, sprog, type->fieldv[value->tag], value->fields[0]);
+    FblcsPrintValue(stream, sprog, type->fieldv.xs[value->tag], value->fields[0]);
     fprintf(stream, ")");
   } else {
     assert(false && "Invalid Kind");
@@ -51,7 +51,7 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, Fblc
 // FblcsLookupDecl -- See documentation in fblcs.h
 FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
 {
-  for (FblcDeclId i = 0; i < sprog->program->declc; ++i) {
+  for (FblcDeclId i = 0; i < sprog->program->declv.size; ++i) {
     if (FblcsNamesEqual(FblcsDeclName(sprog, i), name)) {
       return i;
     }
@@ -62,9 +62,9 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name)
 // FblcsLookupField -- See documentation in fblcs.h
 FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName field)
 {
-  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv[type_id];
+  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv.xs[type_id];
   assert(type->_base.tag == FBLC_STRUCT_DECL || type->_base.tag == FBLC_UNION_DECL);
-  for (FblcFieldId i = 0; i < type->fieldc; ++i) {
+  for (FblcFieldId i = 0; i < type->fieldv.size; ++i) {
     if (FblcsNamesEqual(FblcsFieldName(sprog, type_id, i), field)) {
       return i;
     }
@@ -75,10 +75,10 @@ FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName 
 // FblcsLookupPort -- See documentation in fblcs.h
 FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port)
 {
-  FblcLocId port_loc_id = sprog->symbols->declv[proc_id] + 1;
-  FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv[proc_id];
-  for (FblcFieldId i = 0; i < proc->portc; ++i) {
-    FblcsTypedIdSymbol* port_i = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[port_loc_id + i];
+  FblcLocId port_loc_id = sprog->symbols->declv.xs[proc_id] + 1;
+  FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv.xs[proc_id];
+  for (FblcFieldId i = 0; i < proc->portv.size; ++i) {
+    FblcsTypedIdSymbol* port_i = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[port_loc_id + i];
     assert(port_i->tag == FBLCS_TYPED_ID_SYMBOL);
     if (FblcsNamesEqual(port_i->name.name, port)) {
       return i;
@@ -90,8 +90,8 @@ FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName p
 // FblcsDeclName -- See documentation in fblcs.h
 FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 {
-  FblcLocId decl_loc_id = sprog->symbols->declv[decl_id];
-  FblcsDeclSymbol* decl = (FblcsDeclSymbol*)sprog->symbols->symbolv[decl_loc_id];
+  FblcLocId decl_loc_id = sprog->symbols->declv.xs[decl_id];
+  FblcsDeclSymbol* decl = (FblcsDeclSymbol*)sprog->symbols->symbolv.xs[decl_loc_id];
   assert(decl->tag == FBLCS_DECL_SYMBOL);
   return decl->name.name;
 }
@@ -99,8 +99,8 @@ FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDeclId decl_id)
 // FblcsFieldName  -- See documentation in fblcs.h
 FblcsName FblcsFieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id)
 {
-  FblcLocId field_loc_id = sprog->symbols->declv[decl_id] + field_id + 1;
-  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+  FblcLocId field_loc_id = sprog->symbols->declv.xs[decl_id] + field_id + 1;
+  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[field_loc_id];
   assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
   return field->name.name;
 }

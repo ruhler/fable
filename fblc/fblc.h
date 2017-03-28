@@ -49,82 +49,6 @@ typedef struct FblcArena {
   void (*free)(struct FblcArena* this, void* ptr);
 } FblcArena;
 
-// FblcVectorInit --
-//   Initialize a vector for construction. A vector is used to construct an
-//   array of elements the size of which is not known ahead of time. A vector
-//   consists of a reference to an array of elements and a reference to the
-//   size of that array. The array of elements and size are updated and
-//   resized as necessary as elements are appended to the vector.
-//
-// Inputs:
-//   arena - The arena to use for allocations.
-//   vector - A reference to an uninitialized pointer T* to an array of
-//            elements of type T.
-//   size - A reference to a size_t to hold the size of the array.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   vector and size are initialized to an array containing 0 elements.
-//
-// Implementation notes:
-//   This array initially has size 0 and capacity 1.
-#define FblcVectorInit(arena, vector, size) \
-  size = 0; \
-  (vector) = arena->alloc(arena, sizeof(*(vector)))
-
-// FblcVectorExtend --
-//   Extend a vector's capacity if necessary to ensure it has space for more
-//   than size elements.
-//
-// Inputs:
-//   arena - The arena to use for allocations.
-//   vector - A reference to a pointer T* to an array of elements of type T
-//            that was initialized using FblcVectorInit.
-//   size - A reference to a size_t that holds the size of the array.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Extends the vector's capacity if necessary to ensure it has space for
-//   more than size elements. If necessary, the array is re-allocated to make
-//   space for the new element.
-//
-// Implementation notes:
-//   We assume the capacity of the array is the smallest power of 2 that holds
-//   size elements. If size is equal to the capacity of the array, we double
-//   the capacity of the array, which preserves the invariant after the size is
-//   incremented.
-#define FblcVectorExtend(arena, vector, size) \
-  if ((size) > 0 && (((size) & ((size)-1)) == 0)) { \
-    void* resized = arena->alloc(arena, 2 * (size) * sizeof(*(vector))); \
-    memcpy(resized, vector, (size) * sizeof(*(vector))); \
-    arena->free(arena, vector); \
-    (vector) = resized; \
-  }
-
-// FblcVectorAppend --
-//   Append an element to a vector.
-//
-// Inputs:
-//   arena - The arena to use for allocations.
-//   vector - A reference to a pointer T* to an array of elements of type T
-//            that was initialized using FblcVectorInit.
-//   size - A reference to a size_t that holds the size of the array.
-//   elem - An element of type T to append to the array.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The given element is append to the array and the size is incremented. If
-//   necessary, the array is re-allocated to make space for the new element.
-#define FblcVectorAppend(arena, vector, size, elem) \
-  FblcVectorExtend(arena, vector, size); \
-  (vector)[(size)++] = elem
-
 // FblcDeclId --
 //   Declarations are identified using the order in which they are defined in
 //   the program. The first declaration has id 0, the second declaration id 1,
@@ -199,14 +123,20 @@ typedef struct {
   FblcVarId var;
 } FblcVarExpr;
 
+// FblcExprV --
+//   A vector of fblc expressions.
+typedef struct {
+  size_t size;
+  FblcExpr** xs;
+} FblcExprV;
+
 // FblcAppExpr --
 //   An application expression of the form 'func(arg0, arg1, ...)'. func may
 //   refer to a function or a struct type.
 typedef struct {
   FblcExpr _base;
   FblcDeclId func;
-  size_t argc;
-  FblcExpr** argv;
+  FblcExprV argv;
 } FblcAppExpr;
 
 // FblcUnionExpr --
@@ -234,8 +164,7 @@ typedef struct {
 typedef struct {
   FblcExpr _base;
   FblcExpr* select;
-  size_t argc;
-  FblcExpr** argv;
+  FblcExprV argv;
 } FblcCondExpr;
 
 // FblcLetExpr --
@@ -293,15 +222,28 @@ typedef struct {
   FblcExpr* arg;
 } FblcPutActn;
 
+// FblcActnV --
+//   A vector of fblc actions.
+typedef struct {
+  size_t size;
+  FblcActn** xs;
+} FblcActnV;
+
 // FblcCondActn --
 //   A conditional action of the form '?(select; arg0, arg1, ...)', which
 //   conditionally selects an argument based on the tag of the select value.
 typedef struct {
   FblcActn _base;
   FblcExpr* select;
-  size_t argc;
-  FblcActn** argv;
+  FblcActnV argv;
 } FblcCondActn;
+
+// FblcPortIdV --
+//   A vector of fblc port ids.
+typedef struct {
+  size_t size;
+  FblcPortId* xs;
+} FblcPortIdV;
 
 // FblcCallActn --
 //   A call action of the form 'proc(port0, port1, ... ; arg0, arg1, ...)',
@@ -309,10 +251,8 @@ typedef struct {
 typedef struct {
   FblcActn _base;
   FblcDeclId proc;
-  size_t portc;
-  FblcPortId* portv;
-  size_t argc;
-  FblcExpr** argv;
+  FblcPortIdV portv;
+  FblcExprV argv;
 } FblcCallActn;
 
 // FblcLinkActn --
@@ -332,14 +272,20 @@ typedef struct {
   FblcActn* actn;
 } FblcExec;
 
+// FblcExecV --
+//   A vector of fblc execs.
+typedef struct {
+  size_t size;
+  FblcExec* xs;
+} FblcExecV;
+
 // FblcExecActn --
 //   An exec action of the form 'type0 var0 = exec0, type1 var1 = exec1, ...; body',
 //   which executes processes in parallel. The names of the variables are De
 //   Bruijn indices based ont he context where they are accessed.
 typedef struct {
   FblcActn _base;
-  size_t execc;
-  FblcExec* execv;
+  FblcExecV execv;
   FblcActn* body;
 } FblcExecActn;
 
@@ -361,13 +307,19 @@ typedef struct {
   FblcDeclTag tag;
 } FblcDecl;
 
+// FblcTypeIdV -- 
+//   A vector of FblcType ids.
+typedef struct {
+  size_t size;
+  FblcTypeId* xs;
+} FblcTypeIdV;
+
 // FblcTypeDecl --
 //   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
 //   This is a common structure used for both struct and union declarations.
 typedef struct {
   FblcDecl _base;
-  size_t fieldc;
-  FblcTypeId* fieldv;
+  FblcTypeIdV fieldv;
 } FblcTypeDecl;
 
 // FblcStructDecl --
@@ -383,8 +335,7 @@ typedef FblcTypeDecl FblcUnionDecl;
 //     'name(arg0 name0, arg1 name1, ...; return_type) body'
 typedef struct {
   FblcDecl _base;
-  size_t argc;
-  FblcTypeId* argv;
+  FblcTypeIdV argv;
   FblcTypeId return_type;
   FblcExpr* body;
 } FblcFuncDecl;
@@ -403,25 +354,36 @@ typedef struct {
   FblcPolarity polarity;
 } FblcPort;
 
+// FblcPortV --
+//   A vector of fblc ports.
+typedef struct {
+  size_t size;
+  FblcPort* xs;
+} FblcPortV;
+
 // FblcProcDecl --
 //   Declaration of a process of the form:
 //     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
 //           arg0 name0, arg1, name1, ... ; return_type) body'
 typedef struct {
   FblcDecl _base;
-  size_t portc;
-  FblcPort* portv;
-  size_t argc;
-  FblcTypeId* argv;
+  FblcPortV portv;
+  FblcTypeIdV argv;
   FblcTypeId return_type;
   FblcActn* body;
 } FblcProcDecl;
 
+// FblcDeclV --
+//   An array of fblc decls.
+typedef struct {
+  size_t size;
+  FblcDecl** xs;
+} FblcDeclV;
+
 // FblcProgram --
 //   A collection of declarations that make up a program.
 typedef struct {
-  size_t declc;
-  FblcDecl** declv;
+  FblcDeclV declv;
 } FblcProgram;
 
 // FblcKind --

@@ -135,12 +135,12 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
         fprintf(stderr, "'%s'\n", port);
         abort();
       }
-      if (user->proc->portv[user->cmd.port].polarity != FBLC_PUT_POLARITY) {
+      if (user->proc->portv.xs[user->cmd.port].polarity != FBLC_PUT_POLARITY) {
         ReportError(user, "expected put polarity for port ");
         fprintf(stderr, "'%s'\n", port);
         abort();
       }
-      type = user->proc->portv[user->cmd.port].type;
+      type = user->proc->portv.xs[user->cmd.port].type;
     } else if (sscanf(line, "put %s %s", port, value) == 2) {
       user->cmd.tag = CMD_PUT;
       user->cmd.port = FblcsLookupPort(user->sprog, user->proc_id, port);
@@ -149,12 +149,12 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
         fprintf(stderr, "'%s'\n", port);
         abort();
       }
-      if (user->proc->portv[user->cmd.port].polarity != FBLC_GET_POLARITY) {
+      if (user->proc->portv.xs[user->cmd.port].polarity != FBLC_GET_POLARITY) {
         ReportError(user, "expected get polarity for port ");
         fprintf(stderr, "'%s'\n", port);
         abort();
       }
-      type = user->proc->portv[user->cmd.port].type;
+      type = user->proc->portv.xs[user->cmd.port].type;
     } else if (sscanf(line, "return %s", value) == 1) {
       user->cmd.tag = CMD_RETURN;
       type = user->proc->return_type;
@@ -251,7 +251,7 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
   IOUser* io_user = (IOUser*)user;
   EnsureCommandReady(io_user, arena);
   if (io_user->cmd.tag == CMD_GET && ports[io_user->cmd.port] != NULL) {
-    AssertValuesEqual(io_user, io_user->proc->portv[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
+    AssertValuesEqual(io_user, io_user->proc->portv.xs[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
     io_user->cmd_ready = false;
     FblcRelease(arena, ports[io_user->cmd.port]);
     ports[io_user->cmd.port] = NULL;
@@ -342,7 +342,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDecl* decl = sprog->program->declv[decl_id];
+  FblcDecl* decl = sprog->program->declv.xs[decl_id];
   FblcProcDecl* proc = NULL;
   if (decl->tag == FBLC_PROC_DECL) {
     proc = (FblcProcDecl*)decl;
@@ -355,10 +355,10 @@ int main(int argc, char* argv[])
 
     proc = arena.alloc(&arena, sizeof(FblcProcDecl));
     proc->_base.tag = FBLC_PROC_DECL;
-    proc->portc = 0;
-    proc->portv = NULL;
-    proc->argc = func->argc;
-    proc->argv = func->argv;
+    proc->portv.size = 0;
+    proc->portv.xs = NULL;
+    proc->argv.size = func->argv.size;
+    proc->argv.xs = func->argv.xs;
     proc->return_type = func->return_type;
     proc->body = &body->_base;
   } else {
@@ -366,14 +366,14 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  if (proc->argc != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argc, argc);
+  if (proc->argv.size != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv[i], argv[i]);
+    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv.xs[i], argv[i]);
   }
 
   IOUser user;

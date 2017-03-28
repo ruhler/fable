@@ -58,16 +58,16 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 {
   IOUser* io_user = (IOUser*)user;
 
-  struct pollfd fds[io_user->proc->portc];
-  for (size_t i = 0; i < io_user->proc->portc; ++i) {
+  struct pollfd fds[io_user->proc->portv.size];
+  for (size_t i = 0; i < io_user->proc->portv.size; ++i) {
     fds[i].fd = 3 + i;
     fds[i].events = POLLIN;
     fds[i].revents = 0;
 
-    if (io_user->proc->portv[i].polarity == FBLC_PUT_POLARITY) {
+    if (io_user->proc->portv.xs[i].polarity == FBLC_PUT_POLARITY) {
       if (ports[i] != NULL) {
         FILE* fout = fdopen(fds[i].fd, "w");
-        FblcsPrintValue(fout, io_user->sprog, io_user->proc->portv[i].type, ports[i]);
+        FblcsPrintValue(fout, io_user->sprog, io_user->proc->portv.xs[i].type, ports[i]);
         fprintf(fout, "\n");
         fflush(fout);
         FblcRelease(arena, ports[i]);
@@ -81,14 +81,14 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
     }
   }
 
-  poll(fds, io_user->proc->portc, block ? -1 : 0);
+  poll(fds, io_user->proc->portv.size, block ? -1 : 0);
 
-  for (size_t i = 0; i < io_user->proc->portc; ++i) {
+  for (size_t i = 0; i < io_user->proc->portv.size; ++i) {
     if (fds[i].revents & POLLIN) {
-      assert(io_user->proc->portv[i].polarity == FBLC_GET_POLARITY);
+      assert(io_user->proc->portv.xs[i].polarity == FBLC_GET_POLARITY);
       assert(ports[i] == NULL);
       assert(fds[i].fd >= 0);
-      ports[i] = FblcsParseValue(arena, io_user->sprog, io_user->proc->portv[i].type, fds[i].fd);
+      ports[i] = FblcsParseValue(arena, io_user->sprog, io_user->proc->portv.xs[i].type, fds[i].fd);
 
       // Parse the trailing newline.
       char newline;
@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDecl* decl = sprog->program->declv[decl_id];
+  FblcDecl* decl = sprog->program->declv.xs[decl_id];
   FblcProcDecl* proc = NULL;
   if (decl->tag == FBLC_PROC_DECL) {
     proc = (FblcProcDecl*)decl;
@@ -186,10 +186,10 @@ int main(int argc, char* argv[])
 
     proc = arena.alloc(&arena, sizeof(FblcProcDecl));
     proc->_base.tag = FBLC_PROC_DECL;
-    proc->portc = 0;
-    proc->portv = NULL;
-    proc->argc = func->argc;
-    proc->argv = func->argv;
+    proc->portv.size = 0;
+    proc->portv.xs = NULL;
+    proc->argv.size = func->argv.size;
+    proc->argv.xs = func->argv.xs;
     proc->return_type = func->return_type;
     proc->body = &body->_base;
   } else {
@@ -197,14 +197,14 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  if (proc->argc != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argc, argc);
+  if (proc->argv.size != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv[i], argv[i]);
+    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv.xs[i], argv[i]);
   }
 
   IOUser user = { .sprog = sprog, .proc = proc };

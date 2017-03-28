@@ -131,6 +131,21 @@ typedef struct {
   FblcDeclId decl;
 } FblcsDeclSymbol;
 
+// FblcsSymbolV --
+//   A vector of fblcs symbols.
+typedef struct {
+  size_t size;
+  FblcsSymbol** xs;
+} FblcsSymbolV;
+
+// FblcsLocIdV --
+//   A vector of fblc loc ids.
+typedef struct {
+  size_t size;
+  FblcLocId* xs;
+} FblcsLocIdV;
+
+
 // FblcsSymbols --
 //   A structure used for mapping source level names and locations to and from
 //   their corresponding abstract syntax FblcLocId locations.
@@ -139,10 +154,8 @@ typedef struct {
 //   symbolc/symbolv - A vector of symbol information indexed by FblcLocId.
 //   declc/declv - A vector mapping FblcDeclId to corresponding FblcLocId.
 typedef struct {
-  size_t symbolc;
-  FblcsSymbol** symbolv;
-  size_t declc;
-  FblcLocId* declv;
+  FblcsSymbolV symbolv;
+  FblcsLocIdV declv;
 } FblcsSymbols;
 
 // FblcsProgram --

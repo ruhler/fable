@@ -108,11 +108,11 @@ static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsNam
 //   Prints an error message to stderr in the case of an error.
 static FblcTypeId FieldType(FblcsProgram* sprog, FblcTypeId type_id, FblcFieldId field_id)
 {
-  assert(type_id < sprog->program->declc);
-  FblcDecl* decl = sprog->program->declv[type_id];
+  assert(type_id < sprog->program->declv.size);
+  FblcDecl* decl = sprog->program->declv.xs[type_id];
   assert(decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL);
-  FblcLocId field_loc_id = sprog->symbols->declv[type_id] + 1 + field_id;
-  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[field_loc_id];
+  FblcLocId field_loc_id = sprog->symbols->declv.xs[type_id] + 1 + field_id;
+  FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[field_loc_id];
   assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
   return LookupType(sprog, &field->type);
 }
@@ -134,8 +134,8 @@ static FblcTypeId FieldType(FblcsProgram* sprog, FblcTypeId type_id, FblcFieldId
 //   Prints an error message to stderr in the case of an error.
 FblcTypeId ReturnType(FblcsProgram* sprog, FblcDeclId decl_id)
 {
-  assert(decl_id < sprog->program->declc);
-  FblcDecl* decl = sprog->program->declv[decl_id];
+  assert(decl_id < sprog->program->declv.size);
+  FblcDecl* decl = sprog->program->declv.xs[decl_id];
   switch (decl->tag) {
     case FBLC_STRUCT_DECL: {
       return decl_id;
@@ -147,16 +147,16 @@ FblcTypeId ReturnType(FblcsProgram* sprog, FblcDeclId decl_id)
 
     case FBLC_FUNC_DECL: {
       FblcFuncDecl* func = (FblcFuncDecl*)decl;
-      FblcLocId return_type_loc_id = sprog->symbols->declv[decl_id] + 1 + func->argc;
-      FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv[return_type_loc_id];
+      FblcLocId return_type_loc_id = sprog->symbols->declv.xs[decl_id] + 1 + func->argv.size;
+      FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[return_type_loc_id];
       assert(type->tag == FBLCS_ID_SYMBOL);
       return LookupType(sprog, &type->name);
     }
 
     case FBLC_PROC_DECL: {
       FblcProcDecl* proc = (FblcProcDecl*)decl;
-      FblcLocId return_type_loc_id = sprog->symbols->declv[decl_id] + 1 + proc->portc + proc->argc;
-      FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv[return_type_loc_id];
+      FblcLocId return_type_loc_id = sprog->symbols->declv.xs[decl_id] + 1 + proc->portv.size + proc->argv.size;
+      FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[return_type_loc_id];
       assert(type->tag == FBLCS_ID_SYMBOL);
       return LookupType(sprog, &type->name);
     }
@@ -192,7 +192,7 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
       FblcVarExpr* var_expr = (FblcVarExpr*)expr;
-      FblcsIdSymbol* var = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* var = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(var->tag == FBLCS_ID_SYMBOL);
       for (size_t i = 0; vars != NULL; ++i) {
         if (FblcsNamesEqual(vars->name, var->name.name)) {
@@ -207,7 +207,7 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
 
     case FBLC_APP_EXPR: {
       FblcAppExpr* app_expr = (FblcAppExpr*)expr;
-      FblcsIdSymbol* func = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* func = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(func->tag == FBLCS_ID_SYMBOL);
       app_expr->func = FblcsLookupDecl(sprog, func->name.name);
       if (app_expr->func == FBLC_NULL_ID) {
@@ -215,8 +215,8 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
         return FBLC_NULL_ID;
       }
 
-      for (size_t i = 0; i < app_expr->argc; ++i) {
-        if (ResolveExpr(sprog, vars, loc_id, app_expr->argv[i]) == FBLC_NULL_ID) {
+      for (size_t i = 0; i < app_expr->argv.size; ++i) {
+        if (ResolveExpr(sprog, vars, loc_id, app_expr->argv.xs[i]) == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
       }
@@ -231,7 +231,7 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
         return FBLC_NULL_ID;
       }
 
-      FblcsIdSymbol* field_name = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* field_name = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(field_name->tag == FBLCS_ID_SYMBOL);
       access_expr->field = LookupField(sprog, type_id, &field_name->name);
       if (access_expr->field == FBLC_NULL_ID) {
@@ -242,7 +242,7 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
 
     case FBLC_UNION_EXPR: {
       FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
-      FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* type = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(type->tag == FBLCS_ID_SYMBOL);
       union_expr->type = LookupType(sprog, &type->name);
       if (union_expr->type == FBLC_NULL_ID) {
@@ -250,7 +250,7 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
       }
 
 
-      FblcsIdSymbol* field_name = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* field_name = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(field_name->tag == FBLCS_ID_SYMBOL);
       union_expr->field = LookupField(sprog, union_expr->type, &field_name->name);
       if (union_expr->field == FBLC_NULL_ID) {
@@ -265,7 +265,7 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
 
     case FBLC_LET_EXPR: {
       FblcLetExpr* let_expr = (FblcLetExpr*)expr;
-      FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
       let_expr->type = LookupType(sprog, &var->type);
       if (let_expr->type == FBLC_NULL_ID) {
@@ -295,9 +295,9 @@ static FblcTypeId ResolveExpr(FblcsProgram* sprog, Vars* vars, FblcLocId* loc_id
       }
 
       FblcTypeId result_type_id = FBLC_NULL_ID;
-      assert(cond_expr->argc > 0);
-      for (size_t i = 0; i < cond_expr->argc; ++i) {
-        result_type_id = ResolveExpr(sprog, vars, loc_id, cond_expr->argv[i]);
+      assert(cond_expr->argv.size > 0);
+      for (size_t i = 0; i < cond_expr->argv.size; ++i) {
+        result_type_id = ResolveExpr(sprog, vars, loc_id, cond_expr->argv.xs[i]);
         if (result_type_id == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
@@ -341,7 +341,7 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
 
     case FBLC_GET_ACTN: {
       FblcGetActn* get_actn = (FblcGetActn*)actn;
-      FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(port->tag == FBLCS_ID_SYMBOL);
       for (size_t i = 0; ports != NULL; ++i) {
         if (FblcsNamesEqual(ports->name, port->name.name)) {
@@ -356,7 +356,7 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
 
     case FBLC_PUT_ACTN: {
       FblcPutActn* put_actn = (FblcPutActn*)actn;
-      FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(port->tag == FBLCS_ID_SYMBOL);
 
       if (ResolveExpr(sprog, vars, loc_id, put_actn->arg) == FBLC_NULL_ID) {
@@ -376,7 +376,7 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
 
     case FBLC_CALL_ACTN: {
       FblcCallActn* call_actn = (FblcCallActn*)actn;
-      FblcsIdSymbol* proc = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsIdSymbol* proc = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(proc->tag == FBLCS_ID_SYMBOL);
       call_actn->proc = FblcsLookupDecl(sprog, proc->name.name);
       if (call_actn->proc == FBLC_NULL_ID) {
@@ -384,26 +384,26 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
         return FBLC_NULL_ID;
       }
 
-      for (size_t i = 0; i < call_actn->portc; ++i) {
-        FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      for (size_t i = 0; i < call_actn->portv.size; ++i) {
+        FblcsIdSymbol* port = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
         assert(port->tag == FBLCS_ID_SYMBOL);
-        call_actn->portv[i] = FBLC_NULL_ID;
+        call_actn->portv.xs[i] = FBLC_NULL_ID;
         Vars* curr = ports;
         for (size_t port_id = 0; curr != NULL; ++port_id) {
           if (FblcsNamesEqual(curr->name, port->name.name)) {
-            call_actn->portv[i] = port_id;
+            call_actn->portv.xs[i] = port_id;
             break;
           }
           curr = curr->next;
         }
-        if (call_actn->portv[i] == FBLC_NULL_ID) {
+        if (call_actn->portv.xs[i] == FBLC_NULL_ID) {
           FblcsReportError("port '%s' not defined.\n", port->name.loc, port->name.name);
           return FBLC_NULL_ID;
         }
       }
 
-      for (size_t i = 0 ; i < call_actn->argc; ++i) {
-        if (ResolveExpr(sprog, vars, loc_id, call_actn->argv[i]) == FBLC_NULL_ID) {
+      for (size_t i = 0 ; i < call_actn->argv.size; ++i) {
+        if (ResolveExpr(sprog, vars, loc_id, call_actn->argv.xs[i]) == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
       }
@@ -413,7 +413,7 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
 
     case FBLC_LINK_ACTN: {
       FblcLinkActn* link_actn = (FblcLinkActn*)actn;
-      FblcsLinkSymbol* symbol = (FblcsLinkSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      FblcsLinkSymbol* symbol = (FblcsLinkSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
       assert(symbol->tag == FBLCS_LINK_SYMBOL);
       link_actn->type = LookupType(sprog, &symbol->type);
       if (link_actn->type == FBLC_NULL_ID) {
@@ -440,11 +440,11 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
 
     case FBLC_EXEC_ACTN: {
       FblcExecActn* exec_actn = (FblcExecActn*)actn;
-      Vars vars_data[exec_actn->execc];
+      Vars vars_data[exec_actn->execv.size];
       Vars* nvars = vars;
-      for (size_t i = 0; i < exec_actn->execc; ++i) {
-        FblcExec* exec = exec_actn->execv + i;
-        FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[(*loc_id)++];
+      for (size_t i = 0; i < exec_actn->execv.size; ++i) {
+        FblcExec* exec = exec_actn->execv.xs + i;
+        FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[(*loc_id)++];
         assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
         exec->type = LookupType(sprog, &var->type);
         if (ResolveActn(sprog, vars, ports, loc_id, exec->actn) == FBLC_NULL_ID) {
@@ -462,9 +462,9 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
       }
 
       FblcTypeId result_type_id = FBLC_NULL_ID;
-      assert(cond_actn->argc > 0);
-      for (size_t i = 0; i < cond_actn->argc; ++i) {
-        result_type_id = ResolveActn(sprog, vars, ports, loc_id, cond_actn->argv[i]);
+      assert(cond_actn->argv.size > 0);
+      for (size_t i = 0; i < cond_actn->argv.size; ++i) {
+        result_type_id = ResolveActn(sprog, vars, ports, loc_id, cond_actn->argv.xs[i]);
         if (result_type_id == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
@@ -483,24 +483,24 @@ static FblcTypeId ResolveActn(FblcsProgram* sprog, Vars* vars, Vars* ports, Fblc
 bool FblcsResolveProgram(FblcsProgram* sprog)
 {
   FblcLocId loc_id = 0;
-  for (FblcDeclId decl_id = 0; decl_id < sprog->program->declc; ++decl_id) {
-    FblcsDeclSymbol* other_decl = (FblcsDeclSymbol*)sprog->symbols->symbolv[loc_id++];
+  for (FblcDeclId decl_id = 0; decl_id < sprog->program->declv.size; ++decl_id) {
+    FblcsDeclSymbol* other_decl = (FblcsDeclSymbol*)sprog->symbols->symbolv.xs[loc_id++];
     assert(other_decl->tag == FBLCS_DECL_SYMBOL);
     if (FblcsLookupDecl(sprog, other_decl->name.name) != decl_id) {
       FblcsReportError("Redefinition of %s\n", other_decl->name.loc, other_decl->name.name);
       return false;
     }
 
-    FblcDecl* decl = sprog->program->declv[decl_id];
+    FblcDecl* decl = sprog->program->declv.xs[decl_id];
     switch (decl->tag) {
       case FBLC_STRUCT_DECL:
       case FBLC_UNION_DECL: {
         FblcTypeDecl* type = (FblcTypeDecl*)decl;
-        for (FblcFieldId field_id = 0; field_id < type->fieldc; ++field_id) {
-          FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id++];
+        for (FblcFieldId field_id = 0; field_id < type->fieldv.size; ++field_id) {
+          FblcsTypedIdSymbol* field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[loc_id++];
           assert(field->tag == FBLCS_TYPED_ID_SYMBOL);
           for (FblcFieldId i = 0; i < field_id; ++i) {
-            FblcsTypedIdSymbol* prior_field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id - i - 2];
+            FblcsTypedIdSymbol* prior_field = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[loc_id - i - 2];
             assert(prior_field->tag == FBLCS_TYPED_ID_SYMBOL);
             if (FblcsNamesEqual(field->name.name, prior_field->name.name)) {
               FblcsReportError("Redefinition of field %s\n", field->name.loc, field->name.name);
@@ -508,8 +508,8 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
             }
           }
 
-          type->fieldv[field_id] = FieldType(sprog, decl_id, field_id);
-          if (type->fieldv[field_id] == FBLC_NULL_ID) {
+          type->fieldv.xs[field_id] = FieldType(sprog, decl_id, field_id);
+          if (type->fieldv.xs[field_id] == FBLC_NULL_ID) {
             return false;
           }
         }
@@ -518,13 +518,13 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
 
       case FBLC_FUNC_DECL: {
         FblcFuncDecl* func = (FblcFuncDecl*)decl;
-        Vars nvars[func->argc];
+        Vars nvars[func->argv.size];
         Vars* vars = NULL;
-        for (size_t i = 0; i < func->argc; ++i) {
-          FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id++];
+        for (size_t i = 0; i < func->argv.size; ++i) {
+          FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[loc_id++];
           assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
-          func->argv[i] = LookupType(sprog, &var->type);
-          if (func->argv[i] == FBLC_NULL_ID) {
+          func->argv.xs[i] = LookupType(sprog, &var->type);
+          if (func->argv.xs[i] == FBLC_NULL_ID) {
             return false;
           }
           for (Vars* curr = vars; curr != NULL; curr = curr->next) {
@@ -533,10 +533,10 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
               return FBLC_NULL_ID;
             }
           }
-          vars = AddVar(nvars+i, func->argv[i], var->name.name, vars);
+          vars = AddVar(nvars+i, func->argv.xs[i], var->name.name, vars);
         }
 
-        FblcsIdSymbol* return_type = (FblcsIdSymbol*)sprog->symbols->symbolv[loc_id++];
+        FblcsIdSymbol* return_type = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[loc_id++];
         assert(return_type->tag == FBLCS_ID_SYMBOL);
         func->return_type = LookupType(sprog, &return_type->name);
         if (func->return_type == FBLC_NULL_ID) {
@@ -551,13 +551,13 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
 
       case FBLC_PROC_DECL: {
         FblcProcDecl* proc = (FblcProcDecl*)decl;
-        Vars nports[proc->portc];
+        Vars nports[proc->portv.size];
         Vars* ports = NULL;
-        for (size_t i = 0; i < proc->portc; ++i) {
-          FblcsTypedIdSymbol* port = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id++];
+        for (size_t i = 0; i < proc->portv.size; ++i) {
+          FblcsTypedIdSymbol* port = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[loc_id++];
           assert(port->tag == FBLCS_TYPED_ID_SYMBOL);
-          proc->portv[i].type = LookupType(sprog, &port->type);
-          if (proc->portv[i].type == FBLC_NULL_ID) {
+          proc->portv.xs[i].type = LookupType(sprog, &port->type);
+          if (proc->portv.xs[i].type == FBLC_NULL_ID) {
             return false;
           }
           for (Vars* curr = ports; curr != NULL; curr = curr->next) {
@@ -566,16 +566,16 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
               return FBLC_NULL_ID;
             }
           }
-          ports = AddVar(nports+i, proc->portv[i].type, port->name.name, ports);
+          ports = AddVar(nports+i, proc->portv.xs[i].type, port->name.name, ports);
         }
 
-        Vars nvars[proc->argc];
+        Vars nvars[proc->argv.size];
         Vars* vars = NULL;
-        for (size_t i = 0; i < proc->argc; ++i) {
-          FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv[loc_id++];
+        for (size_t i = 0; i < proc->argv.size; ++i) {
+          FblcsTypedIdSymbol* var = (FblcsTypedIdSymbol*)sprog->symbols->symbolv.xs[loc_id++];
           assert(var->tag == FBLCS_TYPED_ID_SYMBOL);
-          proc->argv[i] = LookupType(sprog, &var->type);
-          if (proc->argv[i] == FBLC_NULL_ID) {
+          proc->argv.xs[i] = LookupType(sprog, &var->type);
+          if (proc->argv.xs[i] == FBLC_NULL_ID) {
             return false;
           }
           for (Vars* curr = vars; curr != NULL; curr = curr->next) {
@@ -584,10 +584,10 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
               return FBLC_NULL_ID;
             }
           }
-          vars = AddVar(nvars+i, proc->argv[i], var->name.name, vars);
+          vars = AddVar(nvars+i, proc->argv.xs[i], var->name.name, vars);
         }
 
-        FblcsIdSymbol* return_type = (FblcsIdSymbol*)sprog->symbols->symbolv[loc_id++];
+        FblcsIdSymbol* return_type = (FblcsIdSymbol*)sprog->symbols->symbolv.xs[loc_id++];
         assert(return_type->tag == FBLCS_ID_SYMBOL);
         proc->return_type = LookupType(sprog, &return_type->name);
         if (proc->return_type == FBLC_NULL_ID) {

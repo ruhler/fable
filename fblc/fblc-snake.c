@@ -262,20 +262,20 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv[decl_id];
+  FblcProcDecl* proc = (FblcProcDecl*)sprog->program->declv.xs[decl_id];
   if (proc->_base.tag != FBLC_PROC_DECL) {
     fprintf(stderr, "entry %s is not a process.\n", entry);
     return 1;
   }
 
-  if (proc->argc != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argc, argc);
+  if (proc->argv.size != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv[i], argv[i]);
+    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv.xs[i], argv[i]);
   }
   
   initscr();

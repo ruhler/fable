@@ -821,16 +821,16 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 
           case FBLC_APP_EXPR: {
             FblcAppExpr* app_expr = (FblcAppExpr*)expr;
-            FblcDecl* decl = program->declv[app_expr->func];
+            FblcDecl* decl = program->declv.xs[app_expr->func];
             if (decl->tag == FBLC_STRUCT_DECL) {
               // Create the struct value now, then add commands to evaluate
               // the arguments to fill in the fields with the proper results.
               FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
-              size_t fieldc = struct_decl->fieldc;
+              size_t fieldc = struct_decl->fieldv.size;
               FblcValue* value = FblcNewStruct(arena, fieldc);
               *target = value;
               for (size_t i = 0; i < fieldc; ++i) {
-                next = MkExprCmd(arena, app_expr->argv[i], value->fields + i, next);
+                next = MkExprCmd(arena, app_expr->argv.xs[i], value->fields + i, next);
               }
               break;
             }
@@ -849,9 +849,9 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 
               ScopeCmd* scmd = (ScopeCmd*)next;
               Vars* nvars = NULL;
-              for (size_t i = 0; i < func->argc; ++i) {
+              for (size_t i = 0; i < func->argv.size; ++i) {
                 nvars = AddVar(arena, nvars);
-                next = MkExprCmd(arena, app_expr->argv[i], LookupRef(nvars, 0), next);
+                next = MkExprCmd(arena, app_expr->argv.xs[i], LookupRef(nvars, 0), next);
               }
               scmd->vars = nvars;
               break;
@@ -873,10 +873,10 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // argument of the union constructor and set the field of the
             // union value.
             FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
-            FblcDecl* decl = program->declv[union_expr->type];
+            FblcDecl* decl = program->declv.xs[union_expr->type];
             assert(decl->tag == FBLC_UNION_DECL);
             FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
-            *target = FblcNewUnion(arena, union_decl->fieldc, union_expr->field, NULL);
+            *target = FblcNewUnion(arena, union_decl->fieldv.size, union_expr->field, NULL);
             next = MkExprCmd(arena, union_expr->arg, (*target)->fields, next);
             break;
           }
@@ -899,7 +899,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // Add to the top of the command list:
             // select -> econd -> ...
             FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
-            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(arena, NULL, cond_expr->argv, target, next);
+            CondExprCmd* ccmd = (CondExprCmd*)MkCondExprCmd(arena, NULL, cond_expr->argv.xs, target, next);
             next = MkExprCmd(arena, cond_expr->select, &(ccmd->value), (Cmd*)ccmd);
             break;
           }
@@ -943,11 +943,11 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 
           case FBLC_CALL_ACTN: {
             FblcCallActn* call_actn = (FblcCallActn*)actn;
-            FblcDecl* decl = program->declv[call_actn->proc];
+            FblcDecl* decl = program->declv.xs[call_actn->proc];
             assert(decl->tag == FBLC_PROC_DECL);
             FblcProcDecl* proc = (FblcProcDecl*)decl;
-            assert(proc->portc == call_actn->portc);
-            assert(proc->argc == call_actn->argc);
+            assert(proc->portv.size == call_actn->portv.size);
+            assert(proc->argv.size == call_actn->argv.size);
 
             // Add to the top of the command list:
             //  arg -> ... -> arg -> push scope -> body -> pop scope -> next
@@ -959,8 +959,8 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             next = MkActnCmd(arena, proc->body, target, next);
 
             Ports* nports = NULL;
-            for (size_t i = 0; i < proc->portc; ++i) {
-              Link* link = LookupPort(thread->ports, call_actn->portv[i]);
+            for (size_t i = 0; i < proc->portv.size; ++i) {
+              Link* link = LookupPort(thread->ports, call_actn->portv.xs[i]);
               assert(link != NULL && "port not found in scope");
               nports = AddPort(arena, nports, link);
             }
@@ -968,9 +968,9 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 
             ScopeCmd* scmd = (ScopeCmd*)next;
             Vars* nvars = NULL;
-            for (size_t i = 0; i < proc->argc; ++i) {
+            for (size_t i = 0; i < proc->argv.size; ++i) {
               nvars = AddVar(arena, nvars);
-              next = MkExprCmd(arena, call_actn->argv[i], LookupRef(nvars, 0), next);
+              next = MkExprCmd(arena, call_actn->argv.xs[i], LookupRef(nvars, 0), next);
             }
             scmd->vars = nvars;
             break;
@@ -1000,14 +1000,14 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
             next = MkActnCmd(arena, exec_actn->body, target, next);
             ScopeCmd* scmd = (ScopeCmd*)MkPushScopeCmd(arena, NULL, thread->ports, next);
-            Cmd* jcmd = MkJoinCmd(arena, exec_actn->execc, (Cmd*)scmd);
+            Cmd* jcmd = MkJoinCmd(arena, exec_actn->execv.size, (Cmd*)scmd);
 
             Vars* nvars = thread->vars;
-            for (size_t i = 0; i < exec_actn->execc; ++i) {
+            for (size_t i = 0; i < exec_actn->execv.size; ++i) {
               nvars = AddVar(arena, nvars);
               FblcValue** target = LookupRef(nvars, 0);
               AddThread(threads, NewThread(arena, thread->vars, thread->ports,
-                    MkActnCmd(arena, exec_actn->execv[i].actn, target, jcmd)));
+                    MkActnCmd(arena, exec_actn->execv.xs[i].actn, target, jcmd)));
             }
             scmd->vars = nvars;
             next = NULL;
@@ -1018,7 +1018,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // Add to the top of the command list:
             // select -> acond -> ...
             FblcCondActn* cond_actn = (FblcCondActn*)actn;
-            CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(arena, NULL, cond_actn->argv, target, next);
+            CondActnCmd* ccmd = (CondActnCmd*)MkCondActnCmd(arena, NULL, cond_actn->argv.xs, target, next);
             next = MkExprCmd(arena, cond_actn->select, &(ccmd->value), (Cmd*)ccmd);
             break;
           }
@@ -1141,7 +1141,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIO* io)
 {
   Vars* vars = NULL;
-  for (size_t i = 0; i < proc->argc; ++i) {
+  for (size_t i = 0; i < proc->argv.size; ++i) {
     vars = AddVar(arena, vars);
     *LookupRef(vars, 0) = args[i];
   }
@@ -1150,10 +1150,10 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
   Cmd* cmd = MkPopScopeCmd(arena, NULL, NULL, NULL);
   cmd = MkActnCmd(arena, proc->body, &result, cmd);
 
-  Link* links[proc->portc];
+  Link* links[proc->portv.size];
   Ports* ports = NULL;
-  FblcValue* iovals[proc->portc];
-  for (size_t i = 0; i < proc->portc; ++i) {
+  FblcValue* iovals[proc->portv.size];
+  for (size_t i = 0; i < proc->portv.size; ++i) {
     links[i] = NewLink(arena);
     ports = AddPort(arena, ports, links[i]);
     iovals[i] = NULL;
@@ -1174,8 +1174,8 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
 
     // Prepare pending output, if any.
     pending_output = false;
-    for (size_t i = 0; i < proc->portc; ++i) {
-      if (proc->portv[i].polarity == FBLC_PUT_POLARITY) {
+    for (size_t i = 0; i < proc->portv.size; ++i) {
+      if (proc->portv.xs[i].polarity == FBLC_PUT_POLARITY) {
         if (iovals[i] == NULL) {
           iovals[i] = GetValue(arena, links[i]);
         }
@@ -1188,8 +1188,8 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
     io->io(io->user, arena, block, iovals);
 
     // Deal with new inputs, if any.
-    for (size_t i = 0; i < proc->portc; ++i) {
-      if (proc->portv[i].polarity == FBLC_GET_POLARITY) {
+    for (size_t i = 0; i < proc->portv.size; ++i) {
+      if (proc->portv.xs[i].polarity == FBLC_GET_POLARITY) {
         if (links[i]->waiting.head != NULL && iovals[i] != NULL) {
           PutValue(arena, links[i], iovals[i]);
           iovals[i] = NULL;
@@ -1199,7 +1199,7 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
     }
   }
 
-  for (size_t i = 0; i < proc->portc; ++i) {
+  for (size_t i = 0; i < proc->portv.size; ++i) {
     FreeLink(arena, links[i]);
   }
   return result;
