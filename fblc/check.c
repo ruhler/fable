@@ -6,6 +6,8 @@
 
 #include "fblcs.h"
 
+#define UNREACHABLE(x) assert(false && x)
+
 // Vars --
 //   A mapping from variable id to type.
 //
@@ -211,7 +213,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
           }
 
           default:
-            assert(false && "Invalid decl tag");
+            UNREACHABLE("Invalid decl tag");
             break;
         }
       } else {
@@ -322,12 +324,9 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
       }
       return result_type;
     }
-
-    default: {
-      assert(false && "Unknown expression type.");
-      return FBLC_NULL_ID;
-    }
   }
+  UNREACHABLE("Invalid expression tag.");
+  return FBLC_NULL_ID;
 }
 
 // CheckActn --
@@ -531,7 +530,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
       return result_type;
     }
   }
-  assert(false && "UNREACHABLE");
+  UNREACHABLE("Invalid action tag.");
   return FBLC_NULL_ID;
 }
 
@@ -626,7 +625,7 @@ bool FblcsCheckProgram(FblcsProgram* sprog)
       }
 
       default:
-        assert(false && "Invalid decl type");
+        UNREACHABLE("Invalid decl tag");
         error = true;
         break;
     }
