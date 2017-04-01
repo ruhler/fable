@@ -40,33 +40,21 @@
   (vector).xs = arena->alloc(arena, sizeof(*((vector).xs)))
 
 // VectorExtend --
-//   Extend a vector's capacity if necessary to ensure it has space for more
-//   than size elements.
+//   Append an uninitialized element to the vector.
 //
 // Inputs:
 //   arena - The arena to use for allocations.
 //   vector - A reference to a vector that was initialized using VectorInit.
 //
 // Results:
-//   None.
+//   A pointer to the newly appended uninitialized element.
 //
 // Side effects:
-//   Extends the vector's capacity if necessary to ensure it has space for
-//   more than size elements. If necessary, the array is re-allocated to make
-//   space for the new element.
-//
-// Implementation notes:
-//   We assume the capacity of the array is the smallest power of 2 that holds
-//   size elements. If size is equal to the capacity of the array, we double
-//   the capacity of the array, which preserves the invariant after the size is
-//   incremented.
+//   A new uninitialized element is appended to the array and the size is
+//   incremented. If necessary, the array is re-allocated to make space for
+//   the new element.
 #define VectorExtend(arena, vector) \
-  if ((vector).size > 0 && (((vector).size & ((vector).size-1)) == 0)) { \
-    void* resized = arena->alloc(arena, 2 * (vector).size * sizeof(*((vector).xs))); \
-    memcpy(resized, (vector).xs, (vector).size * sizeof(*((vector).xs))); \
-    arena->free(arena, (vector).xs); \
-    (vector).xs = resized; \
-  }
+  (VectorIncrSize(arena, sizeof(*((vector).xs)), &(vector).size, (void**)&(vector).xs), (vector).xs + (vector).size - 1)
 
 // VectorAppend --
 //   Append an element to a vector.
@@ -84,8 +72,7 @@
 //   If necessary, the array is re-allocated to make space for the new
 //   element.
 #define VectorAppend(arena, vector, elem) \
-  VectorExtend(arena, vector); \
-  (vector).xs[(vector).size++] = elem
+  (*VectorExtend(arena, vector) = elem)
 
 // TokenStream --
 //   A stream of tokens is represented using the TokenStream data structure.
@@ -110,6 +97,8 @@ typedef struct {
   FblcsLoc loc;
 } TokenStream;
 
+static void VectorIncrSize(FblcArena* arena, size_t elem_size, size_t* size, void** xs);
+
 #define MAX_TOK_DESC_LEN 5
 static int CurrChar(TokenStream* toks);
 static void AdvanceChar(TokenStream* toks);
@@ -133,6 +122,37 @@ static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcExprV* arg
 static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcExprV* argv, FblcsExprV* exprv);
 static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsExprV* exprv);
 static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsActnV* actnv, FblcsExprV* exprv);
+
+// VectorIncrSize --
+//   Helper function to increase the size of a vector by a single element.
+//
+// Inputs:
+//   arena - The arena used for allocations.
+//   elem_size - The sizeof the element type in bytes.
+//   size - A pointer to the size field of the vector.
+//   xs - A pointer to the xs field of the vector.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   A new uninitialized element is appended to the vector and the size is
+//   incremented. If necessary, the array is re-allocated to make space for
+//   the new element.
+static void VectorIncrSize(FblcArena* arena, size_t elem_size, size_t* size, void** xs)
+{
+  // We assume the capacity of the array is the smallest power of 2 that holds
+  // size elements. If size is equal to the capacity of the array, we double
+  // the capacity of the array, which preserves the invariant after the size is
+  // incremented.
+  size_t s = (*size)++;
+  if (s > 0 && (s & (s - 1)) == 0) {
+    void* resized = arena->alloc(arena, 2 * s * elem_size);
+    memcpy(resized, *xs, s * elem_size);
+    arena->free(arena, *xs);
+    *xs = resized;
+  }
+}
 
 // CurrChar --
 //   Look at the character at the front of the token stream's file.
@@ -910,8 +930,8 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (!IsToken(toks, ';')) {
         do {
           VectorAppend(arena, call_actn->portv, FBLC_NULL_ID);
-          VectorExtend(arena, scall_actn->portv);
-          if (!GetNameToken(arena, toks, "port name", scall_actn->portv.xs + scall_actn->portv.size++)) {
+          FblcsNameL* port = VectorExtend(arena, scall_actn->portv);
+          if (!GetNameToken(arena, toks, "port name", port)) {
             return NULL;
           }
         } while (IsToken(toks, ',') && GetToken(toks, ','));
@@ -980,8 +1000,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
             return NULL;
           }
         }
-        VectorExtend(arena, sexec_actn->execv);
-        FblcsTypedName* name = sexec_actn->execv.xs + sexec_actn->execv.size++;
+        FblcsTypedName* name = VectorExtend(arena, sexec_actn->execv);
         name->type.loc = start.loc;
         name->type.name = start.name;
         if (!GetNameToken(arena, toks, "variable name", &name->name)) {
@@ -990,8 +1009,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
         if (!GetToken(toks, '=')) {
           return NULL;
         }
-        VectorExtend(arena, exec_actn->execv);
-        FblcExec* exec = exec_actn->execv.xs + exec_actn->execv.size++;
+        FblcExec* exec = VectorExtend(arena, exec_actn->execv);
         exec->type = FBLC_NULL_ID;
         exec->actn = ParseActn(arena, toks, false, actnv, exprv);
         if (exec->actn == NULL) {
@@ -1099,8 +1117,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             GetToken(&toks, ',');
           }
           VectorAppend(arena, type->fieldv, FBLC_NULL_ID);
-          VectorExtend(arena, stype->fieldv);
-          if (!ParseTypedId(arena, &toks, "field name", stype->fieldv.xs + stype->fieldv.size++)) {
+          FblcsTypedName* field = VectorExtend(arena, stype->fieldv);
+          if (!ParseTypedId(arena, &toks, "field name", field)) {
             return NULL;
           }
         }
@@ -1129,8 +1147,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           GetToken(&toks, ',');
         }
         VectorAppend(arena, type->fieldv, FBLC_NULL_ID);
-        VectorExtend(arena, stype->fieldv);
-        if (!ParseTypedId(arena, &toks, "field name", stype->fieldv.xs + stype->fieldv.size++)) {
+        FblcsTypedName* field = VectorExtend(arena, stype->fieldv);
+        if (!ParseTypedId(arena, &toks, "field name", field)) {
           return NULL;
         }
       }
@@ -1158,11 +1176,11 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (func->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorExtend(arena, sfunc->argv);
-          if (!ParseTypedId(arena, &toks, "variable name", sfunc->argv.xs + sfunc->argv.size++)) {
+          VectorAppend(arena, func->argv, FBLC_NULL_ID);
+          FblcsTypedName* arg = VectorExtend(arena, sfunc->argv);
+          if (!ParseTypedId(arena, &toks, "variable name", arg)) {
             return NULL;
           }
-          VectorAppend(arena, func->argv, FBLC_NULL_ID);
         }
       }
       if (!GetToken(&toks, ';')) {
@@ -1200,17 +1218,16 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       VectorInit(arena, sproc->portv);
       if (!IsToken(&toks, ';')) {
         while (proc->portv.size == 0 || IsToken(&toks, ',')) {
-          VectorExtend(arena, proc->portv);
-          VectorExtend(arena, sproc->portv);
           if (proc->portv.size > 0 && !GetToken(&toks, ',')) {
             return NULL;
           }
-          FblcsTypedName* port_name = sproc->portv.xs + sproc->portv.size++;
+
+          FblcPort* port = VectorExtend(arena, proc->portv);
+          FblcsTypedName* port_name = VectorExtend(arena, sproc->portv);
           if (!GetNameToken(arena, &toks, "type name", &port_name->type)) {
             return NULL;
           }
 
-          FblcPort* port = proc->portv.xs + proc->portv.size++;
           port->type = FBLC_NULL_ID;
           if (IsToken(&toks, '<')) {
             GetToken(&toks, '<');
@@ -1244,11 +1261,11 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (proc->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorExtend(arena, sproc->argv);
-          if (!ParseTypedId(arena, &toks, "variable name", sproc->argv.xs + sproc->argv.size++)) {
+          VectorAppend(arena, proc->argv, FBLC_NULL_ID);
+          FblcsTypedName* var = VectorExtend(arena, sproc->argv);
+          if (!ParseTypedId(arena, &toks, "variable name", var)) {
             return NULL;
           }
-          VectorAppend(arena, proc->argv, FBLC_NULL_ID);
         }
       }
       if (!GetToken(&toks, ';')) {
