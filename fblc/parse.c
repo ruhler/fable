@@ -730,9 +730,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       let_expr->type = FBLC_NULL_ID;
       slet_expr->type.loc = start.loc;
       slet_expr->type.name = start.name;
-      if (!GetNameToken(arena, toks, "variable name", &slet_expr->name)) {
-        return NULL;
-      }
+      GetNameToken(arena, toks, "variable name", &slet_expr->name);
       if (!GetToken(toks, '=')) {
         return NULL;
       }
@@ -1218,8 +1216,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       VectorInit(arena, sproc->portv);
       if (!IsToken(&toks, ';')) {
         while (proc->portv.size == 0 || IsToken(&toks, ',')) {
-          if (proc->portv.size > 0 && !GetToken(&toks, ',')) {
-            return NULL;
+          if (proc->portv.size > 0) {
+            GetToken(&toks, ',');
           }
 
           FblcPort* port = VectorExtend(arena, proc->portv);
