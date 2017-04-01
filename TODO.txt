@@ -1,15 +1,5 @@
 Fbld Kickoff:
-* Draft code for:
-  - PrimesTest
 * Design and implement fbld (or fbld-test as makes sense)
-
-Ints:
-* Implement and test unbounded binary integer representation.
-* Implement and test 8 or 16 bit unsigned integer representation.
-* Implement and test DigitP based integer representation.
-* See how large we can increase 'N' to compute the Nth prime for each
-  different integer representation before it takes more than, say, 1 minute to
-  complete.
 
 Fblc Cleanup:
 * Implement version of Checker that works on FblcProgram without fblcs.
@@ -66,8 +56,6 @@ Miscellanous:
 * Rethink arenas and documentation, because some cases appear to assume you
   have a bulk-free arena. Other cases its not well specified what is freed
   explicitly and what is expected to be freed implicitly.
-
-* Reorder count and vector in FblcVector macros.
 
 * Document performance model.
   Specifically that we use strict evaluation to model performance because it

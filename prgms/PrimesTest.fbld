@@ -1,9 +1,10 @@
 
-mdecl PrimesTest(Unit, Primes) {
+mdecl PrimesTest(Unit, UBNat) {
   import Unit(Unit);
+  import UBNat(Nat);
 
   union TestName(
-      Unit NthPrimeN_1_10
+      Unit NthPrime_1_10
   );
 
   struct TestFailure(TestName name, Nat a, Nat b);
@@ -11,5 +12,19 @@ mdecl PrimesTest(Unit, Primes) {
   union TestFailureS(Unit nil, TestFailureP cons);
 
   func Test( ; TestFailureS);
-}
+};
 
+mdefn PrimesTest(UBNat, Primes) {
+  import UBNat(1, 3, 10, Lit2, Eq);
+  import Primes(NthPrime);
+  
+  func TEq(TestName name, Nat a, Nat b, TestFailureS rest; TestFailureS) {
+    ?(Eq(a, b); rest,
+      TestFailureS:cons(TestFailureP(TestFailure(name, a, b), rest)));
+  };
+
+  func Test( ; TestFailureS) {
+    TEq(TestName:NthPrime_1_10(Unit()), Lit2(3(), 1()), NthPrime(1(), 10()),
+    TestFailureS:nil(Unit()));
+  };
+};
