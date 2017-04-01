@@ -12,7 +12,6 @@ Ints:
   complete.
 
 Fblc Cleanup:
-* Remove ActnCtx and ExprCtx from resolve. Just inline the args.
 * Change VectorExtend to VectorAppend undefined and return a pointer?
   - because otherwise you have to remember to increment the size too.
 * Implement version of Checker that works on FblcProgram without fblcs.

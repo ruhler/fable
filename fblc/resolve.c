@@ -14,38 +14,12 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
-// ExprCtx --
-//   Context used when resolving expressions.
-//
-// Fields:
-//   sprog - The program environment.
-//   exprs - Symbol information for the expressions from the current declaration.
-//   vars - The variables currently in scope.
-typedef struct {
-  FblcsProgram* sprog;
-  FblcsExpr** exprs;
-  Vars* vars;
-} ExprCtx;
-
-// ActnCtx --
-//   Context used when resolving actions.
-//
-// Fields:
-//   ectx - The program environment, exprs symbols, and variables in scope.
-//   actns - Symbol information for the actions from the current declaration.
-//   ports - The ports currently in scope.
-typedef struct {
-  ExprCtx ectx;
-  FblcsActn** actns;
-  Vars* ports;
-} ActnCtx;
-
 static Vars* AddVar(Vars* vars, FblcTypeId type, FblcsName name, Vars* next);
 static FblcTypeId LookupType(FblcsProgram* sprog, FblcsNameL* type);
 static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsNameL* field);
 static FblcTypeId FieldType(FblcsProgram* sprog, FblcTypeId type_id, FblcFieldId field_id);
-static FblcTypeId ResolveExpr(ExprCtx* ctx, FblcExpr* expr);
-static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn);
+static FblcTypeId ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr);
+static FblcTypeId ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Vars* ports, FblcActn* actn);
 
 // AddVar --
 //   Add a variable to the given scope.
@@ -192,7 +166,9 @@ FblcTypeId ReturnType(FblcsProgram* sprog, FblcDeclId decl_id)
 //   declarations, and fields in the given expression.
 //
 // Inputs:
-//   ctx - The context to use for performing name resolution.
+//   sprog - The program environment.
+//   exprv - Symbol information for the expressions from the current declaration.
+//   vars - The variables currently in scope.
 //   expr - The expression to perform name resolution on.
 //
 // Results:
@@ -202,14 +178,13 @@ FblcTypeId ReturnType(FblcsProgram* sprog, FblcDeclId decl_id)
 // Side effects:
 //   IDs in the expression are resolved.
 //   Prints error messages to stderr in case of error.
-static FblcTypeId ResolveExpr(ExprCtx* ctx, FblcExpr* expr)
+static FblcTypeId ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr)
 {
-  FblcsExpr* sexpr = ctx->exprs[expr->id];
+  FblcsExpr* sexpr = exprv->xs[expr->id];
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
       FblcVarExpr* var_expr = (FblcVarExpr*)expr;
       FblcsVarExpr* svar_expr = (FblcsVarExpr*)sexpr;
-      Vars* vars = ctx->vars;
       for (size_t i = 0; vars != NULL; ++i) {
         if (FblcsNamesEqual(vars->name, svar_expr->var.name)) {
           var_expr->var = i;
@@ -224,51 +199,51 @@ static FblcTypeId ResolveExpr(ExprCtx* ctx, FblcExpr* expr)
     case FBLC_APP_EXPR: {
       FblcAppExpr* app_expr = (FblcAppExpr*)expr;
       FblcsAppExpr* sapp_expr = (FblcsAppExpr*)sexpr;
-      app_expr->func = FblcsLookupDecl(ctx->sprog, sapp_expr->func.name);
+      app_expr->func = FblcsLookupDecl(sprog, sapp_expr->func.name);
       if (app_expr->func == FBLC_NULL_ID) {
         FblcsReportError("'%s' not defined.\n", sapp_expr->func.loc, sapp_expr->func.name);
         return FBLC_NULL_ID;
       }
 
       for (size_t i = 0; i < app_expr->argv.size; ++i) {
-        if (ResolveExpr(ctx, app_expr->argv.xs[i]) == FBLC_NULL_ID) {
+        if (ResolveExpr(sprog, exprv, vars, app_expr->argv.xs[i]) == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
       }
-      return ReturnType(ctx->sprog, app_expr->func);
+      return ReturnType(sprog, app_expr->func);
     }
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
       FblcsAccessExpr* saccess_expr = (FblcsAccessExpr*)sexpr;
 
-      FblcTypeId type_id = ResolveExpr(ctx, access_expr->obj);
+      FblcTypeId type_id = ResolveExpr(sprog, exprv, vars, access_expr->obj);
       if (type_id == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      access_expr->field = LookupField(ctx->sprog, type_id, &saccess_expr->field);
+      access_expr->field = LookupField(sprog, type_id, &saccess_expr->field);
       if (access_expr->field == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
-      return FieldType(ctx->sprog, type_id, access_expr->field);
+      return FieldType(sprog, type_id, access_expr->field);
     }
 
     case FBLC_UNION_EXPR: {
       FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
       FblcsUnionExpr* sunion_expr = (FblcsUnionExpr*)sexpr;
 
-      union_expr->type = LookupType(ctx->sprog, &sunion_expr->type);
+      union_expr->type = LookupType(sprog, &sunion_expr->type);
       if (union_expr->type == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      union_expr->field = LookupField(ctx->sprog, union_expr->type, &sunion_expr->field);
+      union_expr->field = LookupField(sprog, union_expr->type, &sunion_expr->field);
       if (union_expr->field == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      if (ResolveExpr(ctx, union_expr->arg) == FBLC_NULL_ID) {
+      if (ResolveExpr(sprog, exprv, vars, union_expr->arg) == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
       return union_expr->type;
@@ -278,16 +253,16 @@ static FblcTypeId ResolveExpr(ExprCtx* ctx, FblcExpr* expr)
       FblcLetExpr* let_expr = (FblcLetExpr*)expr;
       FblcsLetExpr* slet_expr = (FblcsLetExpr*)sexpr;
 
-      let_expr->type = LookupType(ctx->sprog, &slet_expr->type);
+      let_expr->type = LookupType(sprog, &slet_expr->type);
       if (let_expr->type == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      if (ResolveExpr(ctx, let_expr->def) == FBLC_NULL_ID) {
+      if (ResolveExpr(sprog, exprv, vars, let_expr->def) == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      for (Vars* curr = ctx->vars; curr != NULL; curr = curr->next) {
+      for (Vars* curr = vars; curr != NULL; curr = curr->next) {
         if (FblcsNamesEqual(curr->name, slet_expr->name.name)) {
           FblcsReportError("Redefinition of variable '%s'\n", slet_expr->name.loc, slet_expr->name.name);
           return FBLC_NULL_ID;
@@ -295,21 +270,20 @@ static FblcTypeId ResolveExpr(ExprCtx* ctx, FblcExpr* expr)
       }
 
       Vars nvars;
-      AddVar(&nvars, let_expr->type, slet_expr->name.name, ctx->vars);
-      ExprCtx nctx = { .sprog = ctx->sprog, .exprs = ctx->exprs, .vars = &nvars };
-      return ResolveExpr(&nctx, let_expr->body);
+      AddVar(&nvars, let_expr->type, slet_expr->name.name, vars);
+      return ResolveExpr(sprog, exprv, &nvars, let_expr->body);
     }
 
     case FBLC_COND_EXPR: {
       FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
-      if (ResolveExpr(ctx, cond_expr->select) == FBLC_NULL_ID) {
+      if (ResolveExpr(sprog, exprv, vars, cond_expr->select) == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
       FblcTypeId result_type_id = FBLC_NULL_ID;
       assert(cond_expr->argv.size > 0);
       for (size_t i = 0; i < cond_expr->argv.size; ++i) {
-        result_type_id = ResolveExpr(ctx, cond_expr->argv.xs[i]);
+        result_type_id = ResolveExpr(sprog, exprv, vars, cond_expr->argv.xs[i]);
         if (result_type_id == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
@@ -329,7 +303,11 @@ static FblcTypeId ResolveExpr(ExprCtx* ctx, FblcExpr* expr)
 //   declarations, and fields in the given action.
 //
 // Inputs:
-//   ctx - The context to use for performing name resolution.
+//   sprog - The program environment.
+//   actnv - Symbol information for the actions from the current declaration.
+//   exprv - Symbol information for the expressions from the current declaration.
+//   vars - The variables currently in scope.
+//   ports - The ports currently in scope.
 //   actn - The action to perform name resolution on.
 //
 // Results:
@@ -338,20 +316,19 @@ static FblcTypeId ResolveExpr(ExprCtx* ctx, FblcExpr* expr)
 // Side effects:
 //   IDs in the action are resolved.
 //   Prints error messages to stderr in case of error.
-static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn)
+static FblcTypeId ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Vars* ports, FblcActn* actn)
 {
-  FblcsActn* sactn = ctx->actns[actn->id];
+  FblcsActn* sactn = actnv->xs[actn->id];
   switch (actn->tag) {
     case FBLC_EVAL_ACTN: {
       FblcEvalActn* eval_actn = (FblcEvalActn*)actn;
-      return ResolveExpr(&ctx->ectx, eval_actn->arg);
+      return ResolveExpr(sprog, exprv, vars, eval_actn->arg);
     }
 
     case FBLC_GET_ACTN: {
       FblcGetActn* get_actn = (FblcGetActn*)actn;
       FblcsGetActn* sget_actn = (FblcsGetActn*)sactn;
 
-      Vars* ports = ctx->ports;
       for (size_t i = 0; ports != NULL; ++i) {
         if (FblcsNamesEqual(ports->name, sget_actn->port.name)) {
           get_actn->port = i;
@@ -367,11 +344,10 @@ static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn)
       FblcPutActn* put_actn = (FblcPutActn*)actn;
       FblcsPutActn* sput_actn = (FblcsPutActn*)sactn;
 
-      if (ResolveExpr(&ctx->ectx, put_actn->arg) == FBLC_NULL_ID) {
+      if (ResolveExpr(sprog, exprv, vars, put_actn->arg) == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      Vars* ports = ctx->ports;
       for (size_t i = 0; ports != NULL; ++i) {
         if (FblcsNamesEqual(ports->name, sput_actn->port.name)) {
           put_actn->port = i;
@@ -387,7 +363,7 @@ static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn)
       FblcCallActn* call_actn = (FblcCallActn*)actn;
       FblcsCallActn* scall_actn = (FblcsCallActn*)sactn;
 
-      call_actn->proc = FblcsLookupDecl(ctx->ectx.sprog, scall_actn->proc.name);
+      call_actn->proc = FblcsLookupDecl(sprog, scall_actn->proc.name);
       if (call_actn->proc == FBLC_NULL_ID) {
         FblcsReportError("'%s' not defined.\n", scall_actn->proc.loc, scall_actn->proc.name);
         return FBLC_NULL_ID;
@@ -395,8 +371,8 @@ static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn)
 
       for (size_t i = 0; i < call_actn->portv.size; ++i) {
         call_actn->portv.xs[i] = FBLC_NULL_ID;
-        Vars* curr = ctx->ports;
         FblcsNameL* port = scall_actn->portv.xs + i;
+        Vars* curr = ports;
         for (size_t port_id = 0; curr != NULL; ++port_id) {
           if (FblcsNamesEqual(curr->name, port->name)) {
             call_actn->portv.xs[i] = port_id;
@@ -411,23 +387,23 @@ static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn)
       }
 
       for (size_t i = 0 ; i < call_actn->argv.size; ++i) {
-        if (ResolveExpr(&ctx->ectx, call_actn->argv.xs[i]) == FBLC_NULL_ID) {
+        if (ResolveExpr(sprog, exprv, vars, call_actn->argv.xs[i]) == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
       }
 
-      return ReturnType(ctx->ectx.sprog, call_actn->proc);
+      return ReturnType(sprog, call_actn->proc);
     }
 
     case FBLC_LINK_ACTN: {
       FblcLinkActn* link_actn = (FblcLinkActn*)actn;
       FblcsLinkActn* slink_actn = (FblcsLinkActn*)sactn;
-      link_actn->type = LookupType(ctx->ectx.sprog, &slink_actn->type);
+      link_actn->type = LookupType(sprog, &slink_actn->type);
       if (link_actn->type == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
-      for (Vars* curr = ctx->ports; curr != NULL; curr = curr->next) {
+      for (Vars* curr = ports; curr != NULL; curr = curr->next) {
         if (FblcsNamesEqual(curr->name, slink_actn->get.name)) {
           FblcsReportError("Redefinition of port '%s'\n", slink_actn->get.loc, slink_actn->get.name);
           return FBLC_NULL_ID;
@@ -440,18 +416,9 @@ static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn)
 
       Vars getport;
       Vars putport;
-      AddVar(&getport, link_actn->type, slink_actn->get.name, ctx->ports);
+      AddVar(&getport, link_actn->type, slink_actn->get.name, ports);
       AddVar(&putport, link_actn->type, slink_actn->put.name, &getport);
-      ActnCtx nctx = {
-        .ectx = {
-          .sprog = ctx->ectx.sprog,
-          .exprs = ctx->ectx.exprs,
-          .vars = ctx->ectx.vars
-        },
-        .actns = ctx->actns,
-        .ports = &putport
-      };
-      return ResolveActn(&nctx, link_actn->body);
+      return ResolveActn(sprog, actnv, exprv, vars, &putport, link_actn->body);
     }
 
     case FBLC_EXEC_ACTN: {
@@ -459,38 +426,29 @@ static FblcTypeId ResolveActn(ActnCtx* ctx, FblcActn* actn)
       FblcsExecActn* sexec_actn = (FblcsExecActn*)sactn;
 
       Vars vars_data[exec_actn->execv.size];
-      Vars* nvars = ctx->ectx.vars;
+      Vars* nvars = vars;
       for (size_t i = 0; i < exec_actn->execv.size; ++i) {
         FblcExec* exec = exec_actn->execv.xs + i;
         FblcsTypedName* var = sexec_actn->execv.xs + i;
-        exec->type = LookupType(ctx->ectx.sprog, &var->type);
-        if (ResolveActn(ctx, exec->actn) == FBLC_NULL_ID) {
+        exec->type = LookupType(sprog, &var->type);
+        if (ResolveActn(sprog, actnv, exprv, vars, ports, exec->actn) == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
         nvars = AddVar(vars_data+i, exec->type, var->name.name, nvars);
       }
-      ActnCtx nctx = {
-        .ectx = {
-          .sprog = ctx->ectx.sprog,
-          .exprs = ctx->ectx.exprs,
-          .vars = nvars
-        },
-        .actns = ctx->actns,
-        .ports = ctx->ports
-      };
-      return ResolveActn(&nctx, exec_actn->body);
+      return ResolveActn(sprog, actnv, exprv, nvars, ports, exec_actn->body);
     }
 
     case FBLC_COND_ACTN: {
       FblcCondActn* cond_actn = (FblcCondActn*)actn;
-      if (ResolveExpr(&ctx->ectx, cond_actn->select) == FBLC_NULL_ID) {
+      if (ResolveExpr(sprog, exprv, vars, cond_actn->select) == FBLC_NULL_ID) {
         return FBLC_NULL_ID;
       }
 
       FblcTypeId result_type_id = FBLC_NULL_ID;
       assert(cond_actn->argv.size > 0);
       for (size_t i = 0; i < cond_actn->argv.size; ++i) {
-        result_type_id = ResolveActn(ctx, cond_actn->argv.xs[i]);
+        result_type_id = ResolveActn(sprog, actnv, exprv, vars, ports, cond_actn->argv.xs[i]);
         if (result_type_id == FBLC_NULL_ID) {
           return FBLC_NULL_ID;
         }
@@ -564,8 +522,7 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
           return false;
         }
 
-        ExprCtx ctx = { .sprog = sprog, .exprs = sfunc->exprv.xs, .vars = vars };
-        if (ResolveExpr(&ctx, func->body) == FBLC_NULL_ID) {
+        if (ResolveExpr(sprog, &sfunc->exprv, vars, func->body) == FBLC_NULL_ID) {
           return false;
         }
         break;
@@ -613,16 +570,7 @@ bool FblcsResolveProgram(FblcsProgram* sprog)
           return false;
         }
 
-        ActnCtx ctx = {
-          .ectx = {
-            .sprog = sprog,
-            .exprs = sproc->exprv.xs,
-            .vars = vars
-          },
-          .actns = sproc->actnv.xs,
-          .ports = ports
-        };
-        if (ResolveActn(&ctx, proc->body) == FBLC_NULL_ID) {
+        if (ResolveActn(sprog, &sproc->actnv, &sproc->exprv, vars, ports, proc->body) == FBLC_NULL_ID) {
           return false;
         }
         break;
