@@ -1,19 +1,4 @@
 
-mdecl Primes(Bool, UBNat) {
-  import Bool(Bool);
-  import UBNat(Nat);
- 
-  func IsPrime(Nat x ; Bool);
-
-  # Return the nth prime after x, starting with 0.
-  # For example:
-  #   NthPrime(5, 0) gives 5
-  #   NthPrime(6, 0) gives 7
-  #   NthPrime(5, 1) gives 7
-  #   NthPrime(6, 1) gives 7
-  func NthPrime(Nat x, Nat n; Nat);
-};
-
 mdefn Primes() {
   import Bool(True, False);
   import UBNat(2, IsZero, Eq, Lt, Gt, Inc, Mul, Mod);

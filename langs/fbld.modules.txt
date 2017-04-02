@@ -188,3 +188,35 @@ the types listed in the declaration. The module may include additional types,
 functions, or processes that are not visible outside of the module
 implementation.
 
+Modules and the Filesystem 
+--------------------------
+In practice it is anticipated that a developer will have a library of a large
+number of modules and only a small subset of the modules will be used for any
+given program. To avoid processing every module in the library every time a
+program is compiled, we take advantage of the linux file system to separate
+declarations from different modules.
+
+An fbld processor needs a way to quickly find the declaration and definition
+of a module given the modules name. We achieve this by separating declaration
+and definitions for different modules into different files, where each file is
+named according to the name of the module. To find the declaration and
+definition for a specific module, the fbld processor need only look for a file
+with the proper name.
+
+For directness and simplicity we require each file contain exactly one
+declaration or definition. To encourage separation of a module's declaration
+from its definition, we use different file naming schemes for module
+declarations and module definitions. To facilitate composition of libraries of
+modules, we allow the user to specify a search path with multiple directory
+components that are used to search for a module's declaration or definition.
+
+Specifically, given a module named Foo, the declaration of the module should
+be located in a file named Foo.mdecl in one of the directories on the module
+search path. The definition of the module should be located in a file named
+Foo.mdefn in one of the directories on the module search path.
+
+The Foo.mdecl and Foo.mdefn files need not be in the same directory. It is
+permissible for different versions of Foo.mdecl or Foo.mdefn to appear in
+multiple directories on the search path; in this case the version for the
+earliest directory in the search path is given preference.
+

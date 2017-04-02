@@ -3,5 +3,3 @@ mdecl Unit() {
   struct Unit();
 };
 
-mdefn Unit() {
-};
