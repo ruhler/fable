@@ -1,5 +1,5 @@
 Fbld Kickoff:
-* Set up most basic fbld-test case in tcl.
+* Update build system to run fbld tests.
 * Implement most basic version of fbld-test.
  - parse needed mdecls and mdefns.
  - check each mdefn against the mdecls it uses.
