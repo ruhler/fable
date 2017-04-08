@@ -67,7 +67,7 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fblc-test SCIPRT FILE MAIN [ARG...]\n"
+      "Usage: fblc-test SCRIPT FILE MAIN [ARG...]\n"
       "Execute the function or process called MAIN in the environment of the\n"
       "fblc program FILE with the given ARGs.\n"  
       "The program is driven and tested based on the sequence of commands\n"

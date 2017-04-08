@@ -23,9 +23,11 @@ run ar rcs out/libfblc.a {*}$fblc_objs
 set ::fblc ./out/fblc
 set ::fblccheck ./out/fblc-check
 set ::fblctest ./out/fblc-test
+set ::fbldtest ./out/fbld-test
 run gcc {*}$FLAGS -o $::fblc fblc/fblc.c -L out -lfblc
 run gcc {*}$FLAGS -o $::fblccheck fblc/fblc-check.c -L out -lfblc
 run gcc {*}$FLAGS -o $::fblctest fblc/fblc-test.c -L out -lfblc
+run gcc {*}$FLAGS -o $::fbldtest fbld/fbld-test.c -L out -lfblc
 run gcc {*}$FLAGS -o out/fblc-snake fblc/fblc-snake.c -L out -lfblc -lncurses
 run gcc {*}$FLAGS -o out/fblc-tictactoe fblc/fblc-tictactoe.c -L out -lfblc
 

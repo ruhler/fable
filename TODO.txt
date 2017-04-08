@@ -1,4 +1,5 @@
 Fbld Kickoff:
+* Implement fbld-test in build system._
 * Update build system to run fbld tests.
 * Implement most basic version of fbld-test.
  - parse needed mdecls and mdefns.
