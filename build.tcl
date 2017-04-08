@@ -101,12 +101,46 @@ proc fblc-test { program entry args script } {
   }
 }
 
+# See langs/fbld/README.txt for the description of this function.
+proc fbld-test { program entry args script } {
+  set loc [info frame -1]
+  set line [dict get $loc line]
+  set file [dict get $loc file]
+  set name "[file tail $file]_$line"
+  set dir ./out/test/fbld/$name
+  exec mkdir -p $dir
+
+  # Generate the script.
+  set fscript $dir/script
+  exec rm -f $fscript
+  exec touch $fscript
+  foreach cmd [split [string trim $script] "\n"] {
+    exec echo [string trim $cmd] >> $fscript
+  }
+
+  # Write the modules to file.
+  foreach m $program {
+    exec echo [lindex $m 1] > $dir/[lindex $m 0]
+  }
+
+  try {
+    exec $::fbldtest $fscript $dir $entry {*}$args
+  } on error {results options} {
+    error "$file:$line: error: \n$results"
+  }
+}
+
 set ::skipped 0
 proc skip { args } {
   set ::skipped [expr $::skipped + 1]
 }
 
 foreach {x} [lsort [glob langs/fblc/*.tcl]]  {
+  puts "test $x"
+  source $x
+}
+
+foreach {x} [lsort [glob langs/fbld/*.tcl]]  {
   puts "test $x"
   source $x
 }
