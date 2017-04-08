@@ -8,14 +8,20 @@ proc run {args} {
 exec rm -rf out
 set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
-# Compile libfblc.a
-exec mkdir -p out/libfblc
-set fblc_srcs [list check.c exec.c fblcs.c load.c parse.c resolve.c value.c]
+# Compile all object files.
+# We compile these separately and ensure they are placed in a subdirectory of
+# the out directory so that the profile information generated when running
+# code from the objects is placed in a subdirectory of the out directory.
+exec mkdir -p out/obj/fblc out/obj/fbld
+foreach {x} [glob fblc/*.c fbld/*.c] {
+  set obj out/obj/[string map {.c .o} $x]
+  run gcc {*}$FLAGS -c -o $obj $x
+}
+
+# Generate libfblc.a
 set fblc_objs [list]
-foreach {x} $fblc_srcs {
-  set obj out/libfblc/[string map {.c .o} $x]
-  lappend fblc_objs $obj
-  run gcc {*}$FLAGS -c -o $obj fblc/$x
+foreach {x} [list check exec fblcs load parse resolve value] {
+  lappend fblc_objs out/obj/fblc/$x.o
 }
 run ar rcs out/libfblc.a {*}$fblc_objs
 
@@ -24,18 +30,17 @@ set ::fblc ./out/fblc
 set ::fblccheck ./out/fblc-check
 set ::fblctest ./out/fblc-test
 set ::fbldtest ./out/fbld-test
-run gcc {*}$FLAGS -o $::fblc fblc/fblc.c -L out -lfblc
-run gcc {*}$FLAGS -o $::fblccheck fblc/fblc-check.c -L out -lfblc
-run gcc {*}$FLAGS -o $::fblctest fblc/fblc-test.c -L out -lfblc
-run gcc {*}$FLAGS -o $::fbldtest fbld/fbld-test.c -L out -lfblc
-run gcc {*}$FLAGS -o out/fblc-snake fblc/fblc-snake.c -L out -lfblc -lncurses
-run gcc {*}$FLAGS -o out/fblc-tictactoe fblc/fblc-tictactoe.c -L out -lfblc
+run gcc {*}$FLAGS -o $::fblc out/obj/fblc/fblc.o -L out -lfblc
+run gcc {*}$FLAGS -o $::fblccheck out/obj/fblc/fblc-check.o -L out -lfblc
+run gcc {*}$FLAGS -o $::fblctest out/obj/fblc/fblc-test.o -L out -lfblc
+run gcc {*}$FLAGS -o $::fbldtest out/obj/fbld/fbld-test.o -L out -lfblc
+run gcc {*}$FLAGS -o out/fblc-snake out/obj/fblc/fblc-snake.o -L out -lfblc -lncurses
+run gcc {*}$FLAGS -o out/fblc-tictactoe out/obj/fblc/fblc-tictactoe.o -L out -lfblc
 
 proc check_coverage {name} {
-  exec mkdir -p out/coverage/$name
-  run gcov {*}[glob out/libfblc/*.o] > out/coverage/$name/fblc.gcov
-  exec mv {*}[glob *.gcov] out/coverage/$name
-  exec rm {*}[glob *.gcno *.gcda]
+  exec mkdir -p out/cov/$name
+  run gcov {*}$::fblc_objs > out/cov/$name/fblc.gcov
+  exec mv {*}[glob *.gcov] out/cov/$name
 }
 
 # Spec tests
@@ -163,6 +168,6 @@ check_coverage overall
 # Report summary results
 puts "Skipped Tests: $::skipped"
 puts "fblc Coverage: "
-puts "  Spec    : [exec tail -n 1 out/coverage/spectest/fblc.gcov]"
-puts "  Overall : [exec tail -n 1 out/coverage/overall/fblc.gcov]"
+puts "  Spec    : [exec tail -n 1 out/cov/spectest/fblc.gcov]"
+puts "  Overall : [exec tail -n 1 out/cov/overall/fblc.gcov]"
 
