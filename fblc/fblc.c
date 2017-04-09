@@ -167,13 +167,12 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDeclId decl_id = FblcsLookupDecl(sprog, entry);
-  if (decl_id == FBLC_NULL_ID) {
+  FblcDecl* decl = FblcsLookupDecl(sprog, entry);
+  if (decl == NULL) {
     fprintf(stderr, "entry %s not found.\n", entry);
     return 1;
   }
 
-  FblcDecl* decl = sprog->program->declv.xs[decl_id];
   FblcProcDecl* proc = NULL;
   if (decl->tag == FBLC_PROC_DECL) {
     proc = (FblcProcDecl*)decl;

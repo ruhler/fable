@@ -821,7 +821,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 
           case FBLC_APP_EXPR: {
             FblcAppExpr* app_expr = (FblcAppExpr*)expr;
-            FblcDecl* decl = program->declv.xs[app_expr->func];
+            FblcDecl* decl = app_expr->func;
             if (decl->tag == FBLC_STRUCT_DECL) {
               // Create the struct value now, then add commands to evaluate
               // the arguments to fill in the fields with the proper results.
@@ -873,10 +873,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
             // argument of the union constructor and set the field of the
             // union value.
             FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
-            FblcDecl* decl = program->declv.xs[union_expr->type];
-            assert(decl->tag == FBLC_UNION_DECL);
-            FblcTypeDecl* union_decl = (FblcTypeDecl*)decl;
-            *target = FblcNewUnion(arena, union_decl->fieldv.size, union_expr->field, NULL);
+            *target = FblcNewUnion(arena, union_expr->type->fieldv.size, union_expr->field, NULL);
             next = MkExprCmd(arena, union_expr->arg, (*target)->fields, next);
             break;
           }
@@ -943,9 +940,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 
           case FBLC_CALL_ACTN: {
             FblcCallActn* call_actn = (FblcCallActn*)actn;
-            FblcDecl* decl = program->declv.xs[call_actn->proc];
-            assert(decl->tag == FBLC_PROC_DECL);
-            FblcProcDecl* proc = (FblcProcDecl*)decl;
+            FblcProcDecl* proc = call_actn->proc;
             assert(proc->portv.size == call_actn->portv.size);
             assert(proc->argv.size == call_actn->argv.size);
 

@@ -287,7 +287,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename);
 // Side effects:
 //   The value is read from the given file descriptor. In the case of an
 //   error, an error message is printed to stderr
-FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcTypeId type, int fd);
+FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcTypeDecl* type, int fd);
 
 // FblcsParseValueFromString --
 //   Parse an fblc value from a string.
@@ -302,7 +302,7 @@ FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcTypeId typ
 //
 // Side effects:
 //   In the case of an error, an error message is printed to standard error.
-FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcTypeId type, const char* string);
+FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcTypeDecl* type, const char* string);
 
 // FblcsPrintValue --
 //   Print a value in standard format to the given FILE stream.
@@ -316,7 +316,7 @@ FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, Fblc
 //
 // Side effects:
 //   The value is printed to the given file stream.
-void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeId type_id, FblcValue* value);
+void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeDecl* type, FblcValue* value);
 
 // FblcsResolveProgram --
 //   Perform id/name resolution for references to variables, ports,
@@ -368,7 +368,7 @@ bool FblcsCheckProgram(FblcsProgram* sprog);
 FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename);
 
 // FblcsLookupDecl --
-//   Look up the id of a declaration with the given name.
+//   Look up the declaration with the given name.
 //
 // Inputs:
 //   sprog - The program to look up the declaration in.
@@ -376,18 +376,18 @@ FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename);
 //
 // Results:
 //   The id of the declaration in the program with the given name, or
-//   FBLC_NULL_ID if no such declaration was found.
+//   NULL if no such declaration was found.
 //
 // Side effects:
 //   None.
-FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
+FblcDecl* FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
 
 // FblcsLookupField --
 //   Look up the id of a field with the given name.
 //
 // Inputs:
 //   sprog - The program to look up the field in.
-//   type_id - The id of the type to look the field up in.
+//   type - The type to look the field up in.
 //   field - The name of the field to look up.
 //
 // Results:
@@ -396,14 +396,14 @@ FblcDeclId FblcsLookupDecl(FblcsProgram* sprog, FblcsName name);
 //
 // Side effects:
 //   None.
-FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName field);
+FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeDecl* type, FblcsName field);
 
 // FblcsLookupPort --
 //   Look up the id of a port argument with the given name.
 //
 // Inputs:
 //   sprog - The program to look up the port in.
-//   proc_id - The id of the process declaration to look the port up in.
+//   proc - The process declaration to look the port up in.
 //   port - The name of the port to look up.
 //
 // Results:
@@ -413,14 +413,14 @@ FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcTypeId type_id, FblcsName 
 //
 // Side effects:
 //   None.
-FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName port);
+FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcProcDecl* proc, FblcsName port);
 
 // FblcsDeclName --
-//   Return the name of a declaration with the given id.
+//   Return the name of a declaration.
 //
 // Inputs:
 //   sprog - The program to get the declaration name in.
-//   decl_id - The id of the declaration to get the name of.
+//   decl - The declaration to get the name of.
 //
 // Results:
 //   The name of the declaration with given decl_id in the program.
@@ -428,14 +428,14 @@ FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcDeclId proc_id, FblcsName p
 // Side effects:
 //   The behavior is undefined if decl_id does not refer to a declaration in
 //   the program.
-FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDeclId decl_id);
+FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDecl* decl);
 
 // FblcsFieldName --
 //   Return the name of a field with the given id.
 //
 // Inputs:
 //   sprog - The program to get the field name from.
-//   type_id - The id of the type to get the field name from.
+//   type - The type to get the field name from.
 //   field_id - The id of the field within the type to get the name of.
 //
 // Results:
@@ -445,6 +445,6 @@ FblcsName FblcsDeclName(FblcsProgram* sprog, FblcDeclId decl_id);
 // Side effects:
 //   The behavior is undefined if type_id does not refer to a type declaring a
 //   field with field_id.
-FblcsName FblcsFieldName(FblcsProgram* sprog, FblcDeclId decl_id, FblcFieldId field_id);
+FblcsName FblcsFieldName(FblcsProgram* sprog, FblcTypeDecl* type, FblcFieldId field_id);
 
 #endif  // FBLCS_H_

@@ -35,7 +35,6 @@ typedef struct {
 typedef struct {
   FblcsProgram* sprog;
   FblcProcDecl* proc;
-  FblcDeclId proc_id;
   const char* file;
   size_t line;
   FILE* stream;
@@ -47,7 +46,7 @@ static void PrintUsage(FILE* stream);
 static void ReportError(IOUser* user, const char* msg);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FblcTypeId type, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FblcTypeDecl* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 static void* MallocAlloc(FblcArena* this, size_t size);
 static void MallocFree(FblcArena* this, void* ptr);
@@ -124,12 +123,12 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     }
     user->line++;
 
-    FblcTypeId type = FBLC_NULL_ID;
+    FblcTypeDecl* type = NULL;
     char port[len+1];
     char value[len+1];
     if (sscanf(line, "get %s %s", port, value) == 2) {
       user->cmd.tag = CMD_GET;
-      user->cmd.port = FblcsLookupPort(user->sprog, user->proc_id, port);
+      user->cmd.port = FblcsLookupPort(user->sprog, user->proc, port);
       if (user->cmd.port == FBLC_NULL_ID) {
         ReportError(user, "port not defined: ");
         fprintf(stderr, "'%s'\n", port);
@@ -143,7 +142,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
       type = user->proc->portv.xs[user->cmd.port].type;
     } else if (sscanf(line, "put %s %s", port, value) == 2) {
       user->cmd.tag = CMD_PUT;
-      user->cmd.port = FblcsLookupPort(user->sprog, user->proc_id, port);
+      user->cmd.port = FblcsLookupPort(user->sprog, user->proc, port);
       if (user->cmd.port == FBLC_NULL_ID) {
         ReportError(user, "port not defined: ");
         fprintf(stderr, "'%s'\n", port);
@@ -230,7 +229,7 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FblcTypeId type, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(IOUser* user, FblcTypeDecl* type, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
@@ -336,13 +335,12 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDeclId decl_id = FblcsLookupDecl(sprog, entry);
-  if (decl_id == FBLC_NULL_ID) {
+  FblcDecl* decl = FblcsLookupDecl(sprog, entry);
+  if (decl == NULL) {
     fprintf(stderr, "entry %s not found.\n", entry);
     return 1;
   }
 
-  FblcDecl* decl = sprog->program->declv.xs[decl_id];
   FblcProcDecl* proc = NULL;
   if (decl->tag == FBLC_PROC_DECL) {
     proc = (FblcProcDecl*)decl;
@@ -379,7 +377,6 @@ int main(int argc, char* argv[])
   IOUser user;
   user.sprog = sprog;
   user.proc = proc;
-  user.proc_id = decl_id;
   user.file = script;
   user.line = 0;
   user.stream = fopen(script, "r");

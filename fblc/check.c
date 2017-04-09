@@ -15,7 +15,7 @@
 //   return or otherwise capture a Vars* outside of the frame where it is
 //   allocated.
 typedef struct Vars {
-  FblcTypeId type;
+  FblcTypeDecl* type;
   struct Vars* next;
 } Vars;
 
@@ -26,17 +26,16 @@ typedef struct Vars {
 //   to return or otherwise capture a Ports* outside of the frame where it is
 //   allocated.
 typedef struct Ports {
-  FblcTypeId type;
+  FblcTypeDecl* type;
   FblcPolarity polarity;
   struct Ports* next;
 } Ports;
 
-static bool IsType(FblcsProgram* sprog, FblcDeclId decl_id);
-static void CheckTypesMatch(FblcsProgram* sprog, FblcsLoc* loc, FblcTypeId expected, FblcTypeId actual, bool* error);
-static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next);
-static Ports* AddPort(Ports* vars, FblcTypeId type, FblcPolarity polarity, Ports* next);
-static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr, bool* error);
-static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Ports* ports, FblcActn* actn, bool* error);
+static void CheckTypesMatch(FblcsProgram* sprog, FblcsLoc* loc, FblcTypeDecl* expected, FblcTypeDecl* actual, bool* error);
+static Vars* AddVar(Vars* vars, FblcTypeDecl* type, Vars* next);
+static Ports* AddPort(Ports* vars, FblcTypeDecl* type, FblcPolarity polarity, Ports* next);
+static FblcTypeDecl* CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr, bool* error);
+static FblcTypeDecl* CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Ports* ports, FblcActn* actn, bool* error);
 
 // AddVar --
 //   Add a variable to the given scope.
@@ -51,7 +50,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
 //
 // Side effects:
 //   Sets vars to a scope including the given variable and next scope.
-static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next)
+static Vars* AddVar(Vars* vars, FblcTypeDecl* type, Vars* next)
 {
   vars->type = type;
   vars->next = next;
@@ -74,36 +73,12 @@ static Vars* AddVar(Vars* vars, FblcTypeId type, Vars* next)
 // Side effects:
 //   Sets ports to a scope including the given port and next scope.
 
-static Ports* AddPort(Ports* ports, FblcTypeId type, FblcPolarity polarity, Ports* next)
+static Ports* AddPort(Ports* ports, FblcTypeDecl* type, FblcPolarity polarity, Ports* next)
 {
   ports->type = type;
   ports->polarity = polarity;
   ports->next = next;
   return ports;
-}
-
-// IsType --
-//   Return whether a declaration id refers to a valid type declaration.
-//
-// Inputs:
-//   sprog - The program environment.
-//   decl_id - The declaration id to check.
-//
-// Results:
-//   true if the declaration id refers to a valid type declaration, false
-//   otherwise.
-//
-// Side effects:
-//   None.
-static bool IsType(FblcsProgram* sprog, FblcDeclId decl_id)
-{
-  if (decl_id < sprog->program->declv.size) {
-    FblcDecl* decl = sprog->program->declv.xs[decl_id];
-    if (decl->tag == FBLC_UNION_DECL || decl->tag == FBLC_STRUCT_DECL) {
-      return true;
-    }
-  }
-  return false;
 }
 
 // CheckTypesMatch --
@@ -124,16 +99,16 @@ static bool IsType(FblcsProgram* sprog, FblcDeclId decl_id)
 //   and print an error message to stderr.
 //   No message is printed if either type is invalid, under the assumption
 //   that an error has already been reported in that case.
-static void CheckTypesMatch(FblcsProgram* sprog, FblcsLoc* loc, FblcTypeId expected, FblcTypeId actual, bool* error)
+static void CheckTypesMatch(FblcsProgram* sprog, FblcsLoc* loc, FblcTypeDecl* expected, FblcTypeDecl* actual, bool* error)
 {
-  if (!IsType(sprog, expected) || !IsType(sprog, actual)) {
+  if (expected == NULL || actual == NULL) {
     // Assume a type error has already been reported or will be reported in
     // this case and that additional error messages would not be helpful.
     return;
   }
 
   if (expected != actual) {
-    FblcsReportError("Expected type %s, but found type %s.\n", loc, FblcsDeclName(sprog, expected), FblcsDeclName(sprog, actual));
+    FblcsReportError("Expected type %s, but found type %s.\n", loc, FblcsDeclName(sprog, &expected->_base), FblcsDeclName(sprog, &actual->_base));
     *error = true;
   }
 }
@@ -150,14 +125,14 @@ static void CheckTypesMatch(FblcsProgram* sprog, FblcsLoc* loc, FblcTypeId expec
 //   error - An out parameter to indicate error.
 //
 // Result:
-//   The type of the expression, or FBLC_NULL_ID if the expression is not well
-//   formed and well typed.
+//   The type of the expression, or NULL if the expression is not well formed
+//   and well typed.
 //
 // Side effects:
 //   If the expression is not well formed, an error message is printed to
 //   stderr describing the problem with the expression and error is set to
 //   true.
-static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr, bool* error)
+static FblcTypeDecl* CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr, bool* error)
 {
   FblcsExpr* sexpr = exprv->xs[expr->id];
   switch (expr->tag) {
@@ -170,7 +145,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
         FblcsVarExpr* svar_expr = (FblcsVarExpr*)sexpr;
         FblcsReportError("Variable '%s' not defined.\n", svar_expr->var.loc, svar_expr->var.name);
         *error = true;
-        return FBLC_NULL_ID;
+        return NULL;
       }
       return vars->type;
     }
@@ -178,59 +153,51 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
     case FBLC_APP_EXPR: {
       FblcAppExpr* app_expr = (FblcAppExpr*)expr;
       FblcsAppExpr* sapp_expr = (FblcsAppExpr*)sexpr;
-      size_t argc = 0;
-      FblcTypeId* argv = NULL;
-      FblcTypeId return_type = FBLC_NULL_ID;
-      if (app_expr->func < sprog->program->declv.size) {
-        FblcDecl* decl = sprog->program->declv.xs[app_expr->func];
-        switch (decl->tag) {
-          case FBLC_STRUCT_DECL: {
-            FblcTypeDecl* type = (FblcTypeDecl*)decl;
-            argc = type->fieldv.size;
-            argv = type->fieldv.xs;
-            return_type = app_expr->func;
-            break;
-          }
-
-          case FBLC_UNION_DECL: {
-            FblcsReportError("Cannot do application on union type %s.\n", sapp_expr->func.loc, sapp_expr->func.name);
-            *error = true;
-            break;
-          }
-
-          case FBLC_FUNC_DECL: {
-            FblcFuncDecl* func = (FblcFuncDecl*)decl;
-            argc = func->argv.size;
-            argv = func->argv.xs;
-            return_type = func->return_type;
-            break;
-          }
-
-          case FBLC_PROC_DECL: {
-            FblcsReportError("Cannot do application on a process %s.\n", sapp_expr->func.loc, sapp_expr->func.name);
-            *error = true;
-            break;
-          }
-
-          default:
-            UNREACHABLE("Invalid decl tag");
-            break;
+      FblcTypeDeclV* argv = NULL;
+      FblcTypeDecl* return_type = NULL;
+      FblcDecl* decl = app_expr->func;
+      switch (decl->tag) {
+        case FBLC_STRUCT_DECL: {
+          FblcTypeDecl* type = (FblcTypeDecl*)decl;
+          argv = &type->fieldv;
+          return_type = type;
+          break;
         }
-      } else {
-        FblcsReportError("%s does not refer to a function.\n", sapp_expr->func.loc, sapp_expr->func.name);
-        *error = true;
+
+        case FBLC_UNION_DECL: {
+          FblcsReportError("Cannot do application on union type %s.\n", sapp_expr->func.loc, sapp_expr->func.name);
+          *error = true;
+          break;
+        }
+
+        case FBLC_FUNC_DECL: {
+          FblcFuncDecl* func = (FblcFuncDecl*)decl;
+          argv = &func->argv;
+          return_type = func->return_type;
+          break;
+        }
+
+        case FBLC_PROC_DECL: {
+          FblcsReportError("Cannot do application on a process %s.\n", sapp_expr->func.loc, sapp_expr->func.name);
+          *error = true;
+          break;
+        }
+
+        default:
+          UNREACHABLE("Invalid decl tag");
+          break;
       }
 
-      if (argv != NULL && argc != app_expr->argv.size) {
-        FblcsReportError("Expected %d arguments to %s, but %d were provided.\n", sapp_expr->func.loc, argc, sapp_expr->func.name, app_expr->argv.size);
+      if (argv != NULL && argv->size != app_expr->argv.size) {
+        FblcsReportError("Expected %d arguments to %s, but %d were provided.\n", sapp_expr->func.loc, argv->size, sapp_expr->func.name, app_expr->argv.size);
         argv = NULL;
         *error = true;
       }
 
       for (size_t i = 0; i < app_expr->argv.size; ++i) {
-        FblcTypeId arg_type = CheckExpr(sprog, exprv, vars, app_expr->argv.xs[i], error);
+        FblcTypeDecl* arg_type = CheckExpr(sprog, exprv, vars, app_expr->argv.xs[i], error);
         if (argv != NULL) {
-          CheckTypesMatch(sprog, exprv->xs[app_expr->argv.xs[i]->id]->loc, argv[i], arg_type, error);
+          CheckTypesMatch(sprog, exprv->xs[app_expr->argv.xs[i]->id]->loc, argv->xs[i], arg_type, error);
         }
       }
       return return_type;
@@ -239,43 +206,38 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
       FblcsAccessExpr* saccess_expr = (FblcsAccessExpr*)sexpr;
-      FblcTypeId type_id = CheckExpr(sprog, exprv, vars, access_expr->obj, error);
-      if (IsType(sprog, type_id)) {
-        FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv.xs[type_id];
-        if (access_expr->field < type->fieldv.size) {
-          return type->fieldv.xs[access_expr->field];
-        } else {
-          FblcsReportError("%s is not a field of type %s\n", saccess_expr->field.loc, saccess_expr->field.name, FblcsDeclName(sprog, type_id));
-          *error = true;
-        }
+      FblcTypeDecl* type = CheckExpr(sprog, exprv, vars, access_expr->obj, error);
+      if (type == NULL) {
+        return NULL;
       }
-      return FBLC_NULL_ID;
+
+      if (access_expr->field < type->fieldv.size) {
+        return type->fieldv.xs[access_expr->field];
+      } else {
+        FblcsReportError("%s is not a field of type %s\n", saccess_expr->field.loc, saccess_expr->field.name, FblcsDeclName(sprog, &type->_base));
+        *error = true;
+      }
+      return NULL;
     }
 
     case FBLC_UNION_EXPR: {
       FblcUnionExpr* union_expr = (FblcUnionExpr*)expr;
       FblcsUnionExpr* sunion_expr = (FblcsUnionExpr*)sexpr;
 
-      FblcTypeId field_type = FBLC_NULL_ID;
-      if (union_expr->type < sprog->program->declv.size) {
-        FblcTypeDecl* type_decl = (FblcTypeDecl*)sprog->program->declv.xs[union_expr->type];
-        if (type_decl->_base.tag == FBLC_UNION_DECL) {
-          if (union_expr->field < type_decl->fieldv.size) {
-            field_type = type_decl->fieldv.xs[union_expr->field];
-          } else {
-            FblcsReportError("%s is not a valid field of the type %s", sunion_expr->field.loc, sunion_expr->field.name, sunion_expr->type.name);
-            *error = true;
-          }
+      FblcTypeDecl* field_type = NULL;
+      if (union_expr->type->_base.tag == FBLC_UNION_DECL) {
+        if (union_expr->field < union_expr->type->fieldv.size) {
+          field_type = union_expr->type->fieldv.xs[union_expr->field];
         } else {
-          FblcsReportError("%s does not refer to a union type.\n", sunion_expr->type.loc, sunion_expr->type.name);
+          FblcsReportError("%s is not a valid field of the type %s", sunion_expr->field.loc, sunion_expr->field.name, sunion_expr->type.name);
           *error = true;
         }
       } else {
-        FblcsReportError("%s does not refer to a type.\n", sunion_expr->type.loc, sunion_expr->type.name);
+        FblcsReportError("%s does not refer to a union type.\n", sunion_expr->type.loc, sunion_expr->type.name);
         *error = true;
       }
 
-      FblcTypeId expr_type = CheckExpr(sprog, exprv, vars, union_expr->arg, error);
+      FblcTypeDecl* expr_type = CheckExpr(sprog, exprv, vars, union_expr->arg, error);
       CheckTypesMatch(sprog, exprv->xs[union_expr->arg->id]->loc, field_type, expr_type, error);
       return union_expr->type;
     }
@@ -283,11 +245,11 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
     case FBLC_LET_EXPR: {
       FblcLetExpr* let_expr = (FblcLetExpr*)expr;
       FblcsLetExpr* slet_expr = (FblcsLetExpr*)sexpr;
-      if (!IsType(sprog, let_expr->type)) {
+      if (let_expr->type == NULL) {
         FblcsReportError("%s does not refer to a type.\n", slet_expr->type.loc, slet_expr->type.name);
         *error = true;
       }
-      FblcTypeId def_type = CheckExpr(sprog, exprv, vars, let_expr->def, error);
+      FblcTypeDecl* def_type = CheckExpr(sprog, exprv, vars, let_expr->def, error);
       CheckTypesMatch(sprog, exprv->xs[let_expr->def->id]->loc, let_expr->type, def_type, error);
 
       Vars nvars;
@@ -298,24 +260,23 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
     case FBLC_COND_EXPR: {
       FblcCondExpr* cond_expr = (FblcCondExpr*)expr;
       FblcsCondExpr* scond_expr = (FblcsCondExpr*)sexpr;
-      FblcTypeId select_type = CheckExpr(sprog, exprv, vars, cond_expr->select, error);
-      if (select_type < sprog->program->declv.size) {
-        FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv.xs[select_type];
+      FblcTypeDecl* type = CheckExpr(sprog, exprv, vars, cond_expr->select, error);
+      if (type != NULL) {
         if (type->_base.tag == FBLC_UNION_DECL) {
           if (type->fieldv.size != cond_expr->argv.size) {
             FblcsReportError("Expected %d arguments, but %d were provided.\n", scond_expr->_base.loc, type->fieldv.size, cond_expr->argv.size);
             *error = true;
           }
         } else {
-          FblcsReportError("The condition has type %s, which is not a union type.\n", exprv->xs[cond_expr->select->id]->loc, FblcsDeclName(sprog, select_type));
+          FblcsReportError("The condition has type %s, which is not a union type.\n", exprv->xs[cond_expr->select->id]->loc, FblcsDeclName(sprog, &type->_base));
           *error = true;
         }
       }
 
       assert(cond_expr->argv.size > 0);
-      FblcTypeId result_type = FBLC_NULL_ID;
+      FblcTypeDecl* result_type = NULL;
       for (size_t i = 0; i < cond_expr->argv.size; ++i) {
-        FblcTypeId arg_type = CheckExpr(sprog, exprv, vars, cond_expr->argv.xs[i], error);
+        FblcTypeDecl* arg_type = CheckExpr(sprog, exprv, vars, cond_expr->argv.xs[i], error);
         if (i == 0) {
           result_type = arg_type;
         } else {
@@ -326,7 +287,7 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
     }
   }
   UNREACHABLE("Invalid expression tag.");
-  return FBLC_NULL_ID;
+  return NULL;
 }
 
 // CheckActn --
@@ -343,14 +304,14 @@ static FblcTypeId CheckExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, 
 //   error - An out parameter to indicate error.
 //
 // Result:
-//   The type of the action or FBLC_NULL_ID if the expression is not well
-//   formed and well typed.
+//   The type of the action or NULL if the expression is not well formed and
+//   well typed.
 //
 // Side effects:
 //   If the expression is not well formed and well typed, an error message is
 //   printed to stderr describing the problem with the action and error is set
 //   to true.
-static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Ports* ports, FblcActn* actn, bool* error)
+static FblcTypeDecl* CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Ports* ports, FblcActn* actn, bool* error)
 {
   FblcsActn* sactn = actnv->xs[actn->id];
   switch (actn->tag) {
@@ -366,7 +327,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
         ports = ports->next;
       }
 
-      FblcTypeId port_type = FBLC_NULL_ID;
+      FblcTypeDecl* port_type = NULL;
       if (ports == NULL) {
         FblcsReportError("Port '%s' not defined.\n", sget_actn->port.loc, sget_actn->port.name);
         *error = true;
@@ -386,7 +347,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
         ports = ports->next;
       }
 
-      FblcTypeId port_type = FBLC_NULL_ID;
+      FblcTypeDecl* port_type = NULL;
       if (ports == NULL) {
         FblcsReportError("Port '%s' not defined.\n", sput_actn->port.loc, sput_actn->port.name);
         *error = true;
@@ -397,7 +358,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
         port_type = ports->type;
       }
 
-      FblcTypeId arg_type = CheckExpr(sprog, exprv, vars, put_actn->arg, error);
+      FblcTypeDecl* arg_type = CheckExpr(sprog, exprv, vars, put_actn->arg, error);
       CheckTypesMatch(sprog, exprv->xs[put_actn->arg->id]->loc, port_type, arg_type, error);
       return port_type;
     }
@@ -405,19 +366,7 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
     case FBLC_CALL_ACTN: {
       FblcCallActn* call_actn = (FblcCallActn*)actn;
       FblcsCallActn* scall_actn = (FblcsCallActn*)sactn;
-      FblcProcDecl* proc_decl = NULL;
-      if (call_actn->proc < sprog->program->declv.size) {
-        FblcDecl* decl = sprog->program->declv.xs[call_actn->proc];
-        if (decl->tag == FBLC_PROC_DECL) {
-          proc_decl = (FblcProcDecl*)decl;
-        } else {
-          FblcsReportError("%s does not refer to a process.\n", scall_actn->proc.loc, scall_actn->proc.name);
-          *error = true;
-        }
-      } else {
-        FblcsReportError("%s not defined.\n", scall_actn->proc.loc, scall_actn->proc.name);
-        *error = true;
-      }
+      FblcProcDecl* proc_decl = call_actn->proc;
 
       bool check_ports = proc_decl != NULL;
       if (proc_decl != NULL && proc_decl->portv.size != call_actn->portv.size) {
@@ -456,20 +405,20 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
       }
 
       for (size_t i = 0; i < call_actn->argv.size; ++i) {
-        FblcTypeId arg_type = CheckExpr(sprog, exprv, vars, call_actn->argv.xs[i], error);
+        FblcTypeDecl* arg_type = CheckExpr(sprog, exprv, vars, call_actn->argv.xs[i], error);
         if (check_args) {
           assert(proc_decl != NULL);
           CheckTypesMatch(sprog, exprv->xs[call_actn->argv.xs[i]->id]->loc, proc_decl->argv.xs[i], arg_type, error);
         }
       }
 
-      return proc_decl == NULL ? FBLC_NULL_ID : proc_decl->return_type;
+      return proc_decl == NULL ? NULL : proc_decl->return_type;
     }
 
     case FBLC_LINK_ACTN: {
       FblcLinkActn* link_actn = (FblcLinkActn*)actn;
       FblcsLinkActn* slink_actn = (FblcsLinkActn*)sactn;
-      if (!IsType(sprog, link_actn->type)) {
+      if (link_actn->type == NULL) {
         FblcsReportError("%s does not refer to a type.\n", slink_actn->type.loc, slink_actn->type.name);
         *error = true;
       }
@@ -488,12 +437,12 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
       Vars* nvars = vars;
       for (size_t i = 0; i < exec_actn->execv.size; ++i) {
         FblcExec* exec = exec_actn->execv.xs + i;
-        if (!IsType(sprog, exec->type)) {
+        if (exec->type == NULL) {
           FblcsTypedName* sexec = sexec_actn->execv.xs + i;
           FblcsReportError("%s does not refer to a type.\n", sexec->type.loc, sexec->type.name);
           *error = true;
         }
-        FblcTypeId def_type = CheckActn(sprog, actnv, exprv, vars, ports, exec->actn, error);
+        FblcTypeDecl* def_type = CheckActn(sprog, actnv, exprv, vars, ports, exec->actn, error);
         CheckTypesMatch(sprog, actnv->xs[exec->actn->id]->loc, exec->type, def_type, error);
         nvars = AddVar(vars_data+i, exec->type, nvars);
       }
@@ -503,24 +452,23 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
     case FBLC_COND_ACTN: {
       FblcCondActn* cond_actn = (FblcCondActn*)actn;
       FblcsCondActn* scond_actn = (FblcsCondActn*)sactn;
-      FblcTypeId select_type = CheckExpr(sprog, exprv, vars, cond_actn->select, error);
-      if (select_type < sprog->program->declv.size) {
-        FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv.xs[select_type];
+      FblcTypeDecl* type = CheckExpr(sprog, exprv, vars, cond_actn->select, error);
+      if (type != NULL) {
         if (type->_base.tag == FBLC_UNION_DECL) {
           if (type->fieldv.size != cond_actn->argv.size) {
             FblcsReportError("Expected %d arguments, but %d were provided.\n", scond_actn->_base.loc, type->fieldv.size, cond_actn->argv.size);
             *error = true;
           }
         } else {
-          FblcsReportError("The condition has type %s, which is not a union type.\n", exprv->xs[cond_actn->select->id]->loc, FblcsDeclName(sprog, select_type));
+          FblcsReportError("The condition has type %s, which is not a union type.\n", exprv->xs[cond_actn->select->id]->loc, FblcsDeclName(sprog, &type->_base));
           *error = true;
         }
       }
 
       assert(cond_actn->argv.size > 0);
-      FblcTypeId result_type = FBLC_NULL_ID;
+      FblcTypeDecl* result_type = NULL;
       for (size_t i = 0; i < cond_actn->argv.size; ++i) {
-        FblcTypeId arg_type = CheckActn(sprog, actnv, exprv, vars, ports, cond_actn->argv.xs[i], error);
+        FblcTypeDecl* arg_type = CheckActn(sprog, actnv, exprv, vars, ports, cond_actn->argv.xs[i], error);
         if (i == 0) {
           result_type = arg_type;
         } else {
@@ -531,14 +479,14 @@ static FblcTypeId CheckActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* 
     }
   }
   UNREACHABLE("Invalid action tag.");
-  return FBLC_NULL_ID;
+  return NULL;
 }
 
 // FblcsCheckProgram -- see documentation in fblcs.h
 bool FblcsCheckProgram(FblcsProgram* sprog)
 {
   bool error = false;
-  for (FblcDeclId decl_id = 0; decl_id < sprog->program->declv.size; ++decl_id) {
+  for (size_t decl_id = 0; decl_id < sprog->program->declv.size; ++decl_id) {
     FblcDecl* decl = sprog->program->declv.xs[decl_id];
     FblcsDecl* sdecl = sprog->sdeclv.xs[decl_id];
     switch (decl->tag) {
@@ -546,7 +494,7 @@ bool FblcsCheckProgram(FblcsProgram* sprog)
         FblcTypeDecl* type = (FblcTypeDecl*)decl;
         FblcsTypeDecl* stype = (FblcsTypeDecl*)sdecl;
         for (FblcFieldId field_id = 0; field_id < type->fieldv.size; ++field_id) {
-          if (!IsType(sprog, type->fieldv.xs[field_id])) {
+          if (type->fieldv.xs[field_id] == NULL) {
             FblcsTypedName* sfield = stype->fieldv.xs + field_id;
             FblcsReportError("%s does not refer to a type.\n", sfield->type.loc, sfield->type.name);
             error = true;
@@ -560,7 +508,7 @@ bool FblcsCheckProgram(FblcsProgram* sprog)
         FblcsTypeDecl* stype = (FblcsTypeDecl*)sdecl;
         assert(type->fieldv.size > 0);
         for (FblcFieldId field_id = 0; field_id < type->fieldv.size; ++field_id) {
-          if (!IsType(sprog, type->fieldv.xs[field_id])) {
+          if (type->fieldv.xs[field_id] == NULL) {
             FblcsTypedName* sfield = stype->fieldv.xs + field_id;
             FblcsReportError("%s does not refer to a type.\n", sfield->type.loc, sfield->type.name);
             error = true;
@@ -575,18 +523,18 @@ bool FblcsCheckProgram(FblcsProgram* sprog)
         Vars nvars[func->argv.size];
         Vars* vars = NULL;
         for (size_t i = 0; i < func->argv.size; i++) {
-          if (!IsType(sprog, func->argv.xs[i])) {
+          if (func->argv.xs[i] == NULL) {
             FblcsTypedName* sarg = sfunc->argv.xs + i;
             FblcsReportError("%s does not refer to a type.\n", sarg->type.loc, sarg->type.name);
             error = true;
           }
           vars = AddVar(nvars+i, func->argv.xs[i], vars);
         }
-        if (!IsType(sprog, func->return_type)) {
+        if (func->return_type == NULL) {
           FblcsReportError("%s does not refer to a type.\n", sfunc->return_type.loc, sfunc->return_type.name);
           error = true;
         }
-        FblcTypeId expr_type = CheckExpr(sprog, &sfunc->exprv, vars, func->body, &error);
+        FblcTypeDecl* expr_type = CheckExpr(sprog, &sfunc->exprv, vars, func->body, &error);
         CheckTypesMatch(sprog, sfunc->exprv.xs[func->body->id]->loc, func->return_type, expr_type, &error);
         break;
       }
@@ -598,7 +546,7 @@ bool FblcsCheckProgram(FblcsProgram* sprog)
         Ports* ports = NULL;
         for (size_t i = 0; i < proc->portv.size; ++i) {
           FblcPort* port = proc->portv.xs + i;
-          if (!IsType(sprog, port->type)) {
+          if (port->type == NULL) {
             FblcsTypedName* sport = sproc->portv.xs + i;
             FblcsReportError("%s does not refer to a type.\n", sport->type.loc, sport->type.name);
             error = true;
@@ -608,18 +556,18 @@ bool FblcsCheckProgram(FblcsProgram* sprog)
         Vars nvars[proc->argv.size];
         Vars* vars = NULL;
         for (size_t i = 0; i < proc->argv.size; i++) {
-          if (!IsType(sprog, proc->argv.xs[i])) {
+          if (proc->argv.xs[i] == NULL) {
             FblcsTypedName* sarg = sproc->argv.xs + i;
             FblcsReportError("%s does not refer to a type.\n", sarg->type.loc, sarg->type.name);
             error = true;
           }
           vars = AddVar(nvars+i, proc->argv.xs[i], vars);
         }
-        if (!IsType(sprog, proc->return_type)) {
+        if (proc->return_type == NULL) {
           FblcsReportError("%s does not refer to a type.\n", sproc->return_type.loc, sproc->return_type.name);
           error = true;
         }
-        FblcTypeId body_type = CheckActn(sprog, &sproc->actnv, &sproc->exprv, vars, ports, proc->body, &error);
+        FblcTypeDecl* body_type = CheckActn(sprog, &sproc->actnv, &sproc->exprv, vars, ports, proc->body, &error);
         CheckTypesMatch(sprog, sproc->actnv.xs[proc->body->id]->loc, proc->return_type, body_type, &error);
         break;
       }

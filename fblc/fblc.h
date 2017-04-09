@@ -49,16 +49,6 @@ typedef struct FblcArena {
   void (*free)(struct FblcArena* this, void* ptr);
 } FblcArena;
 
-// FblcDeclId --
-//   Declarations are identified using the order in which they are defined in
-//   the program. The first declaration has id 0, the second declaration id 1,
-//   and so on.
-typedef size_t FblcDeclId;
-
-// FblcTypeId --
-//   An FblcDeclId that ought to be referring to a type declaration.
-typedef FblcDeclId FblcTypeId;
-
 // FblcFieldId --
 //   Fields are identified using the order in which they are defined in their
 //   type declaration. The first field has id 0, the second field has id 1,
@@ -100,6 +90,11 @@ typedef size_t FblcActnId;
 //   invalid id. Note that FBLC_NULL_ID does not have the same value as NULL.
 #define FBLC_NULL_ID (-1)
 
+// Forward declarations. See below for descriptions of these types.
+typedef struct FblcDecl FblcDecl;
+typedef struct FblcTypeDecl FblcTypeDecl;
+typedef struct FblcProcDecl FblcProcDecl;
+
 // FblcExprTag --
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
@@ -141,7 +136,7 @@ typedef struct {
 //   refer to a function or a struct type.
 typedef struct {
   FblcExpr _base;
-  FblcDeclId func;
+  FblcDecl* func;
   FblcExprV argv;
 } FblcAppExpr;
 
@@ -150,7 +145,7 @@ typedef struct {
 //   union value.
 typedef struct {
   FblcExpr _base;
-  FblcTypeId type;
+  FblcTypeDecl* type;
   FblcFieldId field;
   FblcExpr* arg;
 } FblcUnionExpr;
@@ -179,7 +174,7 @@ typedef struct {
 //   variable is accessed.
 typedef struct {
   FblcExpr _base;
-  FblcTypeId type;
+  FblcTypeDecl* type;
   FblcExpr* def;
   FblcExpr* body;
 } FblcLetExpr;
@@ -257,7 +252,7 @@ typedef struct {
 //   which calls a process with the given port and value arguments.
 typedef struct {
   FblcActn _base;
-  FblcDeclId proc;
+  FblcProcDecl* proc;
   FblcPortIdV portv;
   FblcExprV argv;
 } FblcCallActn;
@@ -268,14 +263,14 @@ typedef struct {
 //   are accessed.
 typedef struct {
   FblcActn _base;
-  FblcTypeId type;
+  FblcTypeDecl* type;
   FblcActn* body;
 } FblcLinkActn;
 
 // FblcExec --
 //   Pair of type and action used in the FblcExecActn.
 typedef struct {
-  FblcTypeId type;
+  FblcTypeDecl* type;
   FblcActn* actn;
 } FblcExec;
 
@@ -310,24 +305,25 @@ typedef enum {
 //   initial layout as FblcDecl. The tag can be used to determine what kind of
 //   declaration this is to get access to additional fields of the declaration
 //   by first casting to that specific type of declaration.
-typedef struct {
+struct FblcDecl {
   FblcDeclTag tag;
-} FblcDecl;
+  size_t id;
+};
 
-// FblcTypeIdV -- 
-//   A vector of FblcType ids.
+// FblcTypeDeclV -- 
+//   A vector of FblcTypeDecls.
 typedef struct {
   size_t size;
-  FblcTypeId* xs;
-} FblcTypeIdV;
+  FblcTypeDecl** xs;
+} FblcTypeDeclV;
 
 // FblcTypeDecl --
 //   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
 //   This is a common structure used for both struct and union declarations.
-typedef struct {
+struct FblcTypeDecl {
   FblcDecl _base;
-  FblcTypeIdV fieldv;
-} FblcTypeDecl;
+  FblcTypeDeclV fieldv;
+};
 
 // FblcStructDecl --
 //   Declaration of a struct type.
@@ -342,8 +338,8 @@ typedef FblcTypeDecl FblcUnionDecl;
 //     'name(arg0 name0, arg1 name1, ...; return_type) body'
 typedef struct {
   FblcDecl _base;
-  FblcTypeIdV argv;
-  FblcTypeId return_type;
+  FblcTypeDeclV argv;
+  FblcTypeDecl* return_type;
   FblcExpr* body;
 } FblcFuncDecl;
 
@@ -357,7 +353,7 @@ typedef enum {
 // FblcPort --
 //   The type and polarity of a port.
 typedef struct {
-  FblcTypeId type;
+  FblcTypeDecl* type;
   FblcPolarity polarity;
 } FblcPort;
 
@@ -372,13 +368,13 @@ typedef struct {
 //   Declaration of a process of the form:
 //     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
 //           arg0 name0, arg1, name1, ... ; return_type) body'
-typedef struct {
+struct FblcProcDecl {
   FblcDecl _base;
   FblcPortV portv;
-  FblcTypeIdV argv;
-  FblcTypeId return_type;
+  FblcTypeDeclV argv;
+  FblcTypeDecl* return_type;
   FblcActn* body;
-} FblcProcDecl;
+};
 
 // FblcDeclV --
 //   An array of fblc decls.

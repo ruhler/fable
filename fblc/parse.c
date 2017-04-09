@@ -123,6 +123,8 @@ static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcExprV* argv, Fblc
 static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsExprV* exprv);
 static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsActnV* actnv, FblcsExprV* exprv);
 
+static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, FblcTypeDecl* type, TokenStream* toks);
+
 // VectorIncrSize --
 //   Helper function to increase the size of a vector by a single element.
 //
@@ -683,7 +685,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       app_expr->_base.id = exprv->size;
       sapp_expr->_base.loc = loc;
       VectorAppend(arena, *exprv, &sapp_expr->_base);
-      app_expr->func = FBLC_NULL_ID;
+      app_expr->func = NULL;
       sapp_expr->func.loc = start.loc;
       sapp_expr->func.name = start.name;
       GetToken(toks, '(');
@@ -700,7 +702,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       union_expr->_base.id = exprv->size;
       sunion_expr->_base.loc = loc;
       VectorAppend(arena, *exprv, &sunion_expr->_base);
-      union_expr->type = FBLC_NULL_ID;
+      union_expr->type = NULL;
       sunion_expr->type.loc = start.loc;
       sunion_expr->type.name = start.name;
       union_expr->field = FBLC_NULL_ID;
@@ -727,7 +729,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       let_expr->_base.id = exprv->size;
       slet_expr->_base.loc = loc;
       VectorAppend(arena, *exprv, &slet_expr->_base);
-      let_expr->type = FBLC_NULL_ID;
+      let_expr->type = NULL;
       slet_expr->type.loc = start.loc;
       slet_expr->type.name = start.name;
       GetNameToken(arena, toks, "variable name", &slet_expr->name);
@@ -920,7 +922,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       scall_actn->_base.loc = loc;
       VectorAppend(arena, *actnv, &scall_actn->_base);
       GetToken(toks, '(');
-      call_actn->proc = FBLC_NULL_ID;
+      call_actn->proc = NULL;
       scall_actn->proc.loc = start.loc;
       scall_actn->proc.name = start.name;
       VectorInit(arena, call_actn->portv);
@@ -949,7 +951,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       link_actn->_base.id = actnv->size;
       slink_actn->_base.loc = loc;
       VectorAppend(arena, *actnv, &slink_actn->_base);
-      link_actn->type = FBLC_NULL_ID;
+      link_actn->type = NULL;
       slink_actn->type.name = start.name;
       slink_actn->type.loc = start.loc;
       GetToken(toks, '<');
@@ -1008,7 +1010,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
           return NULL;
         }
         FblcExec* exec = VectorExtend(arena, exec_actn->execv);
-        exec->type = FBLC_NULL_ID;
+        exec->type = NULL;
         exec->actn = ParseActn(arena, toks, false, actnv, exprv);
         if (exec->actn == NULL) {
           return NULL;
@@ -1101,6 +1103,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       FblcStructDecl* type = arena->alloc(arena, sizeof(FblcStructDecl));
       FblcsTypeDecl* stype = arena->alloc(arena, sizeof(FblcsTypeDecl));
       type->_base.tag = FBLC_STRUCT_DECL;
+      type->_base.id = sprog->program->declv.size;
       if (!GetNameToken(arena, &toks, "declaration name", &stype->_base.name)) {
         return NULL;
       }
@@ -1114,7 +1117,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (type->fieldv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorAppend(arena, type->fieldv, FBLC_NULL_ID);
+          VectorAppend(arena, type->fieldv, NULL);
           FblcsTypedName* field = VectorExtend(arena, stype->fieldv);
           if (!ParseTypedId(arena, &toks, "field name", field)) {
             return NULL;
@@ -1132,6 +1135,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       FblcUnionDecl* type = arena->alloc(arena, sizeof(FblcUnionDecl));
       FblcsTypeDecl* stype = arena->alloc(arena, sizeof(FblcsTypeDecl));
       type->_base.tag = FBLC_UNION_DECL;
+      type->_base.id = sprog->program->declv.size;
       if (!GetNameToken(arena, &toks, "declaration name", &stype->_base.name)) {
         return NULL;
       }
@@ -1144,7 +1148,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         if (type->fieldv.size > 0) {
           GetToken(&toks, ',');
         }
-        VectorAppend(arena, type->fieldv, FBLC_NULL_ID);
+        VectorAppend(arena, type->fieldv, NULL);
         FblcsTypedName* field = VectorExtend(arena, stype->fieldv);
         if (!ParseTypedId(arena, &toks, "field name", field)) {
           return NULL;
@@ -1161,6 +1165,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       FblcFuncDecl* func = arena->alloc(arena, sizeof(FblcFuncDecl));
       FblcsFuncDecl* sfunc = arena->alloc(arena, sizeof(FblcsFuncDecl));
       func->_base.tag = FBLC_FUNC_DECL;
+      func->_base.id = sprog->program->declv.size;
       if (!GetNameToken(arena, &toks, "declaration name", &sfunc->_base.name)) {
         return NULL;
       }
@@ -1174,7 +1179,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (func->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorAppend(arena, func->argv, FBLC_NULL_ID);
+          VectorAppend(arena, func->argv, NULL);
           FblcsTypedName* arg = VectorExtend(arena, sfunc->argv);
           if (!ParseTypedId(arena, &toks, "variable name", arg)) {
             return NULL;
@@ -1185,7 +1190,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         return NULL;
       }
 
-      func->return_type = FBLC_NULL_ID;
+      func->return_type = NULL;
       if (!GetNameToken(arena, &toks, "type", &sfunc->return_type)) {
         return NULL;
       }
@@ -1206,6 +1211,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       FblcProcDecl* proc = arena->alloc(arena, sizeof(FblcProcDecl));
       FblcsProcDecl* sproc = arena->alloc(arena, sizeof(FblcsProcDecl));
       proc->_base.tag = FBLC_PROC_DECL;
+      proc->_base.id = sprog->program->declv.size;
       if (!GetNameToken(arena, &toks, "declaration name", &sproc->_base.name)) {
         return NULL;
       }
@@ -1226,7 +1232,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             return NULL;
           }
 
-          port->type = FBLC_NULL_ID;
+          port->type = NULL;
           if (IsToken(&toks, '<')) {
             GetToken(&toks, '<');
             if (!GetToken(&toks, '~')) {
@@ -1259,7 +1265,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (proc->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorAppend(arena, proc->argv, FBLC_NULL_ID);
+          VectorAppend(arena, proc->argv, NULL);
           FblcsTypedName* var = VectorExtend(arena, sproc->argv);
           if (!ParseTypedId(arena, &toks, "variable name", var)) {
             return NULL;
@@ -1269,7 +1275,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ';')) {
         return NULL;
       }
-      proc->return_type = FBLC_NULL_ID;
+      proc->return_type = NULL;
       if (!GetNameToken(arena, &toks, "type", &sproc->return_type)) {
         return NULL;
       }
@@ -1310,14 +1316,14 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
 // Side effects:
 //   The token stream is advanced to the end of the value. In the case of an
 //   error, an error message is printed to standard error.
-static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, FblcTypeId type_id, TokenStream* toks)
+static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, FblcTypeDecl* type, TokenStream* toks)
 {
   FblcsNameL name;
   if (!GetNameToken(arena, toks, "type name", &name)) {
     return NULL;
   }
 
-  FblcsName expected = FblcsDeclName(sprog, type_id);
+  FblcsName expected = FblcsDeclName(sprog, &type->_base);
   if (!FblcsNamesEqual(name.name, expected)) {
     FblcsReportError("Expected %s, but got %s.\n", name.loc, expected, name);
     arena->free(arena, (void*)name.name);
@@ -1327,7 +1333,6 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, Fblc
   arena->free(arena, (void*)name.name);
   arena->free(arena, (void*)name.loc);
 
-  FblcTypeDecl* type = (FblcTypeDecl*)sprog->program->declv.xs[type_id];
   if (type->_base.tag == FBLC_STRUCT_DECL) {
     if (!GetToken(toks, '(')) {
       return NULL;
@@ -1367,9 +1372,9 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, Fblc
       return NULL;
     }
 
-    FblcFieldId tag = FblcsLookupField(sprog, type_id, name.name);
+    FblcFieldId tag = FblcsLookupField(sprog, type, name.name);
     if (tag == FBLC_NULL_ID) {
-      FblcsReportError("Invalid field %s for type %s.\n", name.loc, name.name, FblcsDeclName(sprog, type_id));
+      FblcsReportError("Invalid field %s for type %s.\n", name.loc, name.name, FblcsDeclName(sprog, &type->_base));
       arena->free(arena, (void*)name.name);
       arena->free(arena, (void*)name.loc);
       return NULL;
@@ -1392,7 +1397,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, Fblc
 }
 
 // FblcsParseValue -- see documentation in fblcs.h
-FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcTypeId type, int fd)
+FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcTypeDecl* type, int fd)
 {
   TokenStream toks;
   OpenFdTokenStream(&toks, fd, "file descriptor");
@@ -1400,7 +1405,7 @@ FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcTypeId typ
 }
 
 // ParseValueFromString -- see documentation in fblcs.h
-FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcTypeId type, const char* string)
+FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcTypeDecl* type, const char* string)
 {
   TokenStream toks;
   OpenStringTokenStream(&toks, string, string);
