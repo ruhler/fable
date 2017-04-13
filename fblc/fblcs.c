@@ -6,6 +6,7 @@
 #include <assert.h>     // For assert
 #include <stdarg.h>     // For va_start
 #include <stdio.h>      // For fprintf
+#include <string.h>     // For strcmp
 
 #include "fblcs.h"
 

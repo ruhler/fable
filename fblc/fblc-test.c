@@ -5,6 +5,7 @@
 #include <assert.h>   // for assert
 #include <stdio.h>    // for getline
 #include <stdlib.h>   // for abort
+#include <string.h>   // for strcmp
 
 #include "fblcs.h"
 

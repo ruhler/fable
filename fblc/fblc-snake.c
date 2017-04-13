@@ -4,6 +4,7 @@
 #include <curses.h>     // for initscr, cbreak, etc.
 #include <stdio.h>      // for FILE, printf, fprintf
 #include <stdlib.h>     // for malloc, free
+#include <string.h>     // for strcmp
 #include <sys/time.h>   // for gettimeofday
 
 #include "fblcs.h"

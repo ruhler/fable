@@ -1,5 +1,6 @@
 
 #include <assert.h>   // for assert
+#include <stdlib.h>   // for NULL
 
 #include "fblc.h"
 

@@ -13,67 +13,6 @@
 #include "fblcs.h"
 
 
-// Vector --
-//   There are quite a few places in the fblc data structure where vectors are
-//   used: an array of elements with a size. Specifically the type of a vector
-//   of elements T is struct { size_t size; T* xs; }.
-//   Often these vectors are constructed without knowing the size ahead of
-//   time. The following macros are used to help construct these vectors.
-
-// VectorInit --
-//   Initialize a vector for construction.
-//
-// Inputs:
-//   arena - The arena to use for allocations.
-//   vector - A reference to an uninitialized vector.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The vector is initialized to an array containing 0 elements.
-//
-// Implementation notes:
-//   The array initially has size 0 and capacity 1.
-#define VectorInit(arena, vector) \
-  (vector).size = 0; \
-  (vector).xs = arena->alloc(arena, sizeof(*((vector).xs)))
-
-// VectorExtend --
-//   Append an uninitialized element to the vector.
-//
-// Inputs:
-//   arena - The arena to use for allocations.
-//   vector - A reference to a vector that was initialized using VectorInit.
-//
-// Results:
-//   A pointer to the newly appended uninitialized element.
-//
-// Side effects:
-//   A new uninitialized element is appended to the array and the size is
-//   incremented. If necessary, the array is re-allocated to make space for
-//   the new element.
-#define VectorExtend(arena, vector) \
-  (VectorIncrSize(arena, sizeof(*((vector).xs)), &(vector).size, (void**)&(vector).xs), (vector).xs + (vector).size - 1)
-
-// VectorAppend --
-//   Append an element to a vector.
-//
-// Inputs:
-//   arena - The arena to use for allocations.
-//   vector - A reference to a vector that was initialized using VectorInit.
-//   elem - An element of type T to append to the array.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The given element is appended to the array and the size is incremented.
-//   If necessary, the array is re-allocated to make space for the new
-//   element.
-#define VectorAppend(arena, vector, elem) \
-  (*VectorExtend(arena, vector) = elem)
-
 // TokenStream --
 //   A stream of tokens is represented using the TokenStream data structure.
 //   Tokens can be read either from a file or a string.
@@ -96,8 +35,6 @@ typedef struct {
   // reporting.
   FblcsLoc loc;
 } TokenStream;
-
-static void VectorIncrSize(FblcArena* arena, size_t elem_size, size_t* size, void** xs);
 
 #define MAX_TOK_DESC_LEN 5
 static int CurrChar(TokenStream* toks);
@@ -124,37 +61,6 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
 static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, FblcsActnV* actnv, FblcsExprV* exprv);
 
 static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* sprog, FblcTypeDecl* type, TokenStream* toks);
-
-// VectorIncrSize --
-//   Helper function to increase the size of a vector by a single element.
-//
-// Inputs:
-//   arena - The arena used for allocations.
-//   elem_size - The sizeof the element type in bytes.
-//   size - A pointer to the size field of the vector.
-//   xs - A pointer to the xs field of the vector.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   A new uninitialized element is appended to the vector and the size is
-//   incremented. If necessary, the array is re-allocated to make space for
-//   the new element.
-static void VectorIncrSize(FblcArena* arena, size_t elem_size, size_t* size, void** xs)
-{
-  // We assume the capacity of the array is the smallest power of 2 that holds
-  // size elements. If size is equal to the capacity of the array, we double
-  // the capacity of the array, which preserves the invariant after the size is
-  // incremented.
-  size_t s = (*size)++;
-  if (s > 0 && (s & (s - 1)) == 0) {
-    void* resized = arena->alloc(arena, 2 * s * elem_size);
-    memcpy(resized, *xs, s * elem_size);
-    arena->free(arena, *xs);
-    *xs = resized;
-  }
-}
 
 // CurrChar --
 //   Look at the character at the front of the token stream's file.
@@ -504,13 +410,13 @@ static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expect
   SkipToToken(toks);
   if (IsNameChar(CurrChar(toks))) {
     struct { size_t size; char* xs; } namev;
-    VectorInit(arena, namev);
+    FblcVectorInit(arena, namev);
     name->loc = GetCurrentLoc(arena, toks);
     while (IsNameChar(CurrChar(toks))) {
-      VectorAppend(arena, namev, CurrChar(toks));
+      FblcVectorAppend(arena, namev, CurrChar(toks));
       AdvanceChar(toks);
     } 
-    VectorAppend(arena, namev, '\0');
+    FblcVectorAppend(arena, namev, '\0');
     name->name = namev.xs;
     return true;
   }
@@ -587,7 +493,7 @@ static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expect
 //   In case of an error, an error message is printed to stderr.
 static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcExprV* argv, FblcsExprV* exprv)
 {
-  VectorInit(arena, *argv);
+  FblcVectorInit(arena, *argv);
   bool first = true;
   while (first || IsToken(toks, ',')) {
     if (first) {
@@ -600,7 +506,7 @@ static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcExprV* arg
     if (arg == NULL) {
       return false;
     }
-    VectorAppend(arena, *argv, arg);
+    FblcVectorAppend(arena, *argv, arg);
   }
   if (!GetToken(toks, ')')) {
     return false;
@@ -632,7 +538,7 @@ static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcExprV* argv, Fblc
 {
   if (IsToken(toks, ')')) {
     GetToken(toks, ')');
-    VectorInit(arena, *argv);
+    FblcVectorInit(arena, *argv);
     return true;
   }
   return ParseNonZeroArgs(arena, toks, argv, exprv);
@@ -684,7 +590,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       app_expr->_base.tag = FBLC_APP_EXPR;
       app_expr->_base.id = exprv->size;
       sapp_expr->_base.loc = loc;
-      VectorAppend(arena, *exprv, &sapp_expr->_base);
+      FblcVectorAppend(arena, *exprv, &sapp_expr->_base);
       app_expr->func = NULL;
       sapp_expr->func.loc = start.loc;
       sapp_expr->func.name = start.name;
@@ -701,7 +607,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->_base.id = exprv->size;
       sunion_expr->_base.loc = loc;
-      VectorAppend(arena, *exprv, &sunion_expr->_base);
+      FblcVectorAppend(arena, *exprv, &sunion_expr->_base);
       union_expr->type = NULL;
       sunion_expr->type.loc = start.loc;
       sunion_expr->type.name = start.name;
@@ -728,7 +634,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       let_expr->_base.tag = FBLC_LET_EXPR;
       let_expr->_base.id = exprv->size;
       slet_expr->_base.loc = loc;
-      VectorAppend(arena, *exprv, &slet_expr->_base);
+      FblcVectorAppend(arena, *exprv, &slet_expr->_base);
       let_expr->type = NULL;
       slet_expr->type.loc = start.loc;
       slet_expr->type.name = start.name;
@@ -755,7 +661,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       var_expr->_base.tag = FBLC_VAR_EXPR;
       var_expr->_base.id = exprv->size;
       svar_expr->_base.loc = loc;
-      VectorAppend(arena, *exprv, &svar_expr->_base);
+      FblcVectorAppend(arena, *exprv, &svar_expr->_base);
       var_expr->var = FBLC_NULL_ID;
       svar_expr->var.loc = start.loc;
       svar_expr->var.name = start.name;
@@ -768,7 +674,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     cond_expr->_base.tag = FBLC_COND_EXPR;
     cond_expr->_base.id = exprv->size;
     scond_expr->_base.loc = loc;
-    VectorAppend(arena, *exprv, &scond_expr->_base);
+    FblcVectorAppend(arena, *exprv, &scond_expr->_base);
     GetToken(toks, '?');
     if (!GetToken(toks, '(')) {
       return NULL;
@@ -796,7 +702,7 @@ static FblcExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     access_expr->_base.tag = FBLC_ACCESS_EXPR;
     access_expr->_base.id = exprv->size;
     saccess_expr->_base.loc = loc;
-    VectorAppend(arena, *exprv, &saccess_expr->_base);
+    FblcVectorAppend(arena, *exprv, &saccess_expr->_base);
     access_expr->obj = expr;
     GetToken(toks, '.');
     access_expr->field = FBLC_NULL_ID;
@@ -853,7 +759,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     eval_actn->_base.tag = FBLC_EVAL_ACTN;
     eval_actn->_base.id = actnv->size;
     seval_actn->_base.loc = loc;
-    VectorAppend(arena, *actnv, &seval_actn->_base);
+    FblcVectorAppend(arena, *actnv, &seval_actn->_base);
 
     GetToken(toks, '$');
     if (!GetToken(toks, '(')) {
@@ -884,7 +790,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       get_actn->_base.tag = FBLC_GET_ACTN;
       get_actn->_base.id = actnv->size;
       sget_actn->_base.loc = loc;
-      VectorAppend(arena, *actnv, &sget_actn->_base);
+      FblcVectorAppend(arena, *actnv, &sget_actn->_base);
       get_actn->port = FBLC_NULL_ID;
       sget_actn->port.loc = port.loc;
       sget_actn->port.name = port.name;
@@ -896,7 +802,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       put_actn->_base.tag = FBLC_PUT_ACTN;
       put_actn->_base.id = actnv->size;
       sput_actn->_base.loc = loc;
-      VectorAppend(arena, *actnv, &sput_actn->_base);
+      FblcVectorAppend(arena, *actnv, &sput_actn->_base);
       put_actn->port = FBLC_NULL_ID;
       sput_actn->port.loc = port.loc;
       sput_actn->port.name = port.name;
@@ -920,17 +826,17 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       call_actn->_base.tag = FBLC_CALL_ACTN;
       call_actn->_base.id = actnv->size;
       scall_actn->_base.loc = loc;
-      VectorAppend(arena, *actnv, &scall_actn->_base);
+      FblcVectorAppend(arena, *actnv, &scall_actn->_base);
       GetToken(toks, '(');
       call_actn->proc = NULL;
       scall_actn->proc.loc = start.loc;
       scall_actn->proc.name = start.name;
-      VectorInit(arena, call_actn->portv);
-      VectorInit(arena, scall_actn->portv);
+      FblcVectorInit(arena, call_actn->portv);
+      FblcVectorInit(arena, scall_actn->portv);
       if (!IsToken(toks, ';')) {
         do {
-          VectorAppend(arena, call_actn->portv, FBLC_NULL_ID);
-          FblcsNameL* port = VectorExtend(arena, scall_actn->portv);
+          FblcVectorAppend(arena, call_actn->portv, FBLC_NULL_ID);
+          FblcsNameL* port = FblcVectorExtend(arena, scall_actn->portv);
           if (!GetNameToken(arena, toks, "port name", port)) {
             return NULL;
           }
@@ -950,7 +856,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       link_actn->_base.tag = FBLC_LINK_ACTN;
       link_actn->_base.id = actnv->size;
       slink_actn->_base.loc = loc;
-      VectorAppend(arena, *actnv, &slink_actn->_base);
+      FblcVectorAppend(arena, *actnv, &slink_actn->_base);
       link_actn->type = NULL;
       slink_actn->type.name = start.name;
       slink_actn->type.loc = start.loc;
@@ -986,9 +892,9 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       exec_actn->_base.tag = FBLC_EXEC_ACTN;
       exec_actn->_base.id = actnv->size;
       sexec_actn->_base.loc = loc;
-      VectorAppend(arena, *actnv, &sexec_actn->_base);
-      VectorInit(arena, exec_actn->execv);
-      VectorInit(arena, sexec_actn->execv);
+      FblcVectorAppend(arena, *actnv, &sexec_actn->_base);
+      FblcVectorInit(arena, exec_actn->execv);
+      FblcVectorInit(arena, sexec_actn->execv);
       bool first = true;
       while (first || IsToken(toks, ',')) {
         if (first) {
@@ -1000,7 +906,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
             return NULL;
           }
         }
-        FblcsTypedName* name = VectorExtend(arena, sexec_actn->execv);
+        FblcsTypedName* name = FblcVectorExtend(arena, sexec_actn->execv);
         name->type.loc = start.loc;
         name->type.name = start.name;
         if (!GetNameToken(arena, toks, "variable name", &name->name)) {
@@ -1009,7 +915,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
         if (!GetToken(toks, '=')) {
           return NULL;
         }
-        FblcExec* exec = VectorExtend(arena, exec_actn->execv);
+        FblcExec* exec = FblcVectorExtend(arena, exec_actn->execv);
         exec->type = NULL;
         exec->actn = ParseActn(arena, toks, false, actnv, exprv);
         if (exec->actn == NULL) {
@@ -1036,7 +942,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
     cond_actn->_base.tag = FBLC_COND_ACTN;
     cond_actn->_base.id = actnv->size;
     scond_actn->_base.loc = loc;
-    VectorAppend(arena, *actnv, &scond_actn->_base);
+    FblcVectorAppend(arena, *actnv, &scond_actn->_base);
     GetToken(toks, '?');
     if (!GetToken(toks, '(')) {
       return NULL;
@@ -1049,7 +955,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       return NULL;
     }
 
-    VectorInit(arena, cond_actn->argv);
+    FblcVectorInit(arena, cond_actn->argv);
     bool first = true;
     while (first || IsToken(toks, ',')) {
       if (first) {
@@ -1062,7 +968,7 @@ static FblcActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt, Fb
       if (arg == NULL) {
         return NULL;
       }
-      VectorAppend(arena, cond_actn->argv, arg);
+      FblcVectorAppend(arena, cond_actn->argv, arg);
     }
     if (!GetToken(toks, ')')) {
       return NULL;
@@ -1085,8 +991,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
 
   FblcsProgram* sprog = arena->alloc(arena, sizeof(FblcsProgram));
   sprog->program = arena->alloc(arena, sizeof(FblcProgram));
-  VectorInit(arena, sprog->program->declv);
-  VectorInit(arena, sprog->sdeclv);
+  FblcVectorInit(arena, sprog->program->declv);
+  FblcVectorInit(arena, sprog->sdeclv);
   while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...
     static const char* keywords = "'struct', 'union', 'func', or 'proc'";
@@ -1110,15 +1016,15 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, '(')) {
         return NULL;
       }
-      VectorInit(arena, type->fieldv);
-      VectorInit(arena, stype->fieldv);
+      FblcVectorInit(arena, type->fieldv);
+      FblcVectorInit(arena, stype->fieldv);
       if (!IsToken(&toks, ')')) {
         while (type->fieldv.size == 0 || IsToken(&toks, ',')) {
           if (type->fieldv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorAppend(arena, type->fieldv, NULL);
-          FblcsTypedName* field = VectorExtend(arena, stype->fieldv);
+          FblcVectorAppend(arena, type->fieldv, NULL);
+          FblcsTypedName* field = FblcVectorExtend(arena, stype->fieldv);
           if (!ParseTypedId(arena, &toks, "field name", field)) {
             return NULL;
           }
@@ -1127,8 +1033,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      VectorAppend(arena, sprog->program->declv, &type->_base);
-      VectorAppend(arena, sprog->sdeclv, &stype->_base);
+      FblcVectorAppend(arena, sprog->program->declv, &type->_base);
+      FblcVectorAppend(arena, sprog->sdeclv, &stype->_base);
     } else if (FblcsNamesEqual("union", keyword.name)) {
       // This is a union declaration of the form: union name(
       //   type0 field0, type1 field1, ...)
@@ -1142,14 +1048,14 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, '(')) {
         return NULL;
       }
-      VectorInit(arena, type->fieldv);
-      VectorInit(arena, stype->fieldv);
+      FblcVectorInit(arena, type->fieldv);
+      FblcVectorInit(arena, stype->fieldv);
       while (type->fieldv.size == 0 || IsToken(&toks, ',')) {
         if (type->fieldv.size > 0) {
           GetToken(&toks, ',');
         }
-        VectorAppend(arena, type->fieldv, NULL);
-        FblcsTypedName* field = VectorExtend(arena, stype->fieldv);
+        FblcVectorAppend(arena, type->fieldv, NULL);
+        FblcsTypedName* field = FblcVectorExtend(arena, stype->fieldv);
         if (!ParseTypedId(arena, &toks, "field name", field)) {
           return NULL;
         }
@@ -1157,8 +1063,8 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      VectorAppend(arena, sprog->program->declv, &type->_base);
-      VectorAppend(arena, sprog->sdeclv, &stype->_base);
+      FblcVectorAppend(arena, sprog->program->declv, &type->_base);
+      FblcVectorAppend(arena, sprog->sdeclv, &stype->_base);
     } else if (FblcsNamesEqual("func", keyword.name)) {
       // This is a function declaration of the form: func name(
       //   type0 var0, type1 var1, ...; return_type) body
@@ -1172,15 +1078,15 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, '(')) {
         return NULL;
       }
-      VectorInit(arena, func->argv);
-      VectorInit(arena, sfunc->argv);
+      FblcVectorInit(arena, func->argv);
+      FblcVectorInit(arena, sfunc->argv);
       if (!IsToken(&toks, ';')) {
         while (func->argv.size == 0 || IsToken(&toks, ',')) {
           if (func->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorAppend(arena, func->argv, NULL);
-          FblcsTypedName* arg = VectorExtend(arena, sfunc->argv);
+          FblcVectorAppend(arena, func->argv, NULL);
+          FblcsTypedName* arg = FblcVectorExtend(arena, sfunc->argv);
           if (!ParseTypedId(arena, &toks, "variable name", arg)) {
             return NULL;
           }
@@ -1197,13 +1103,13 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      VectorInit(arena, sfunc->exprv);
+      FblcVectorInit(arena, sfunc->exprv);
       func->body = ParseExpr(arena, &toks, false, &sfunc->exprv);
       if (func->body == NULL) {
         return NULL;
       }
-      VectorAppend(arena, sprog->program->declv, &func->_base);
-      VectorAppend(arena, sprog->sdeclv, &sfunc->_base);
+      FblcVectorAppend(arena, sprog->program->declv, &func->_base);
+      FblcVectorAppend(arena, sprog->sdeclv, &sfunc->_base);
     } else if (FblcsNamesEqual("proc", keyword.name)) {
       // This is a process declaration of the form: proc name(
       //   type0 polarity0 port0, type1 polarity1, port1, ... ;
@@ -1218,16 +1124,16 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, '(')) {
         return NULL;
       }
-      VectorInit(arena, proc->portv);
-      VectorInit(arena, sproc->portv);
+      FblcVectorInit(arena, proc->portv);
+      FblcVectorInit(arena, sproc->portv);
       if (!IsToken(&toks, ';')) {
         while (proc->portv.size == 0 || IsToken(&toks, ',')) {
           if (proc->portv.size > 0) {
             GetToken(&toks, ',');
           }
 
-          FblcPort* port = VectorExtend(arena, proc->portv);
-          FblcsTypedName* port_name = VectorExtend(arena, sproc->portv);
+          FblcPort* port = FblcVectorExtend(arena, proc->portv);
+          FblcsTypedName* port_name = FblcVectorExtend(arena, sproc->portv);
           if (!GetNameToken(arena, &toks, "type name", &port_name->type)) {
             return NULL;
           }
@@ -1258,15 +1164,15 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ';')) {
         return NULL;
       }
-      VectorInit(arena, proc->argv);
-      VectorInit(arena, sproc->argv);
+      FblcVectorInit(arena, proc->argv);
+      FblcVectorInit(arena, sproc->argv);
       if (!IsToken(&toks, ';')) {
         while (proc->argv.size == 0 || IsToken(&toks, ',')) {
           if (proc->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          VectorAppend(arena, proc->argv, NULL);
-          FblcsTypedName* var = VectorExtend(arena, sproc->argv);
+          FblcVectorAppend(arena, proc->argv, NULL);
+          FblcsTypedName* var = FblcVectorExtend(arena, sproc->argv);
           if (!ParseTypedId(arena, &toks, "variable name", var)) {
             return NULL;
           }
@@ -1282,14 +1188,14 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       if (!GetToken(&toks, ')')) {
         return NULL;
       }
-      VectorInit(arena, sproc->exprv);
-      VectorInit(arena, sproc->actnv);
+      FblcVectorInit(arena, sproc->exprv);
+      FblcVectorInit(arena, sproc->actnv);
       proc->body = ParseActn(arena, &toks, false, &sproc->actnv, &sproc->exprv);
       if (proc->body == NULL) {
         return NULL;
       }
-      VectorAppend(arena, sprog->program->declv, &proc->_base);
-      VectorAppend(arena, sprog->sdeclv, &sproc->_base);
+      FblcVectorAppend(arena, sprog->program->declv, &proc->_base);
+      FblcVectorAppend(arena, sprog->sdeclv, &sproc->_base);
     } else {
       FblcsReportError("Expected %s, but got '%s'.\n", keyword.loc, keywords, keyword.name);
       return NULL;

@@ -20,7 +20,7 @@ foreach {x} [glob fblc/*.c fbld/*.c] {
 
 # Generate libfblc.a
 set fblc_objs [list]
-foreach {x} [list check exec fblcs load parse resolve value] {
+foreach {x} [list check exec fblcs load parse resolve value vector] {
   lappend fblc_objs out/obj/fblc/$x.o
 }
 run ar rcs out/libfblc.a {*}$fblc_objs
