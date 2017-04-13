@@ -47,6 +47,15 @@ typedef struct FblcArena {
   //   returned by a call to alloc on this arena.
   void (*free)(struct FblcArena* this, void* ptr);
 } FblcArena;
+
+// FblcMallocArena --
+//   A stateless FblcArena that uses malloc and free to implement its alloc
+//   and free functions respectively.
+//
+//   Note that the FblcMallocArena does not keep track of current allocations,
+//   which means it is not suited for use with functions that rely on the
+//   allocator to track allocations, unless it is okay to leak the memory.
+extern FblcArena FblcMallocArena;
 
 // FblcVector --
 //   A common data structure in fblc is an array of elements with a size. By

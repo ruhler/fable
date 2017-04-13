@@ -30,8 +30,6 @@ static int DiffTimeMillis(Time* a, Time* b);
 static void PrintUsage(FILE* stream);
 static int ReadNum(FblcValue* num);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
-static void* MallocAlloc(FblcArena* this, size_t size);
-static void MallocFree(FblcArena* this, void* ptr);
 int main(int argc, char* argv[]);
 
 // GetCurrentTime --
@@ -189,20 +187,6 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
   }
 }
 
-// MallocAlloc -- FblcArena alloc function implemented using malloc.
-// See fblc.h for documentation about FblcArena alloc functions.
-static void* MallocAlloc(FblcArena* this, size_t size)
-{
-  return malloc(size);
-}
-
-// MallocFree -- FblcArena free function implemented using malloc.
-// See fblc.h for documentation about FblcArena alloc functions.
-static void MallocFree(FblcArena* this, void* ptr)
-{
-  free(ptr);
-}
-
 // main --
 //   The main entry point for fblc-tictactoe. Evaluates the MAIN
 //   process from the given program with the given arguments.
@@ -250,9 +234,9 @@ int main(int argc, char* argv[])
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
   // program, so we should be okay.
-  FblcArena arena = { .alloc = &MallocAlloc, .free = &MallocFree };
+  FblcArena* arena = &FblcMallocArena;
 
-  FblcsProgram* sprog = FblcsLoadProgram(&arena, filename);
+  FblcsProgram* sprog = FblcsLoadProgram(arena, filename);
   if (sprog == NULL) {
     return 1;
   }
@@ -276,7 +260,7 @@ int main(int argc, char* argv[])
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv.xs[i], argv[i]);
+    args[i] = FblcsParseValueFromString(arena, sprog, proc->argv.xs[i], argv[i]);
   }
   
   initscr();
@@ -300,8 +284,8 @@ int main(int argc, char* argv[])
   AddTimeMillis(&user.tnext, TICK_INTERVAL);
   FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(&arena, sprog->program, proc, args, &io);
-  FblcRelease(&arena, value);
+  FblcValue* value = FblcExecute(arena, sprog->program, proc, args, &io);
+  FblcRelease(arena, value);
 
   mvaddstr(MAX_ROW + 3, 3, "GAME OVER");
   refresh();

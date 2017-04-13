@@ -13,8 +13,6 @@
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* fout);
-static void* MallocAlloc(FblcArena* this, size_t size);
-static void MallocFree(FblcArena* this, void* ptr);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -38,20 +36,6 @@ static void PrintUsage(FILE* stream)
       "Exit status is 0 if the program is well formed, 1 otherwise.\n"
       "With --error, exit status is 0 if the program is not well formed, 0 otherwise.\n"
   );
-}
-
-// MallocAlloc -- FblcArena alloc function implemented using malloc.
-// See fblc.h for documentation about FblcArena alloc functions.
-static void* MallocAlloc(FblcArena* this, size_t size)
-{
-  return malloc(size);
-}
-
-// MallocFree -- FblcArena free function implemented using malloc.
-// See fblc.h for documentation about FblcArena alloc functions.
-static void MallocFree(FblcArena* this, void* ptr)
-{
-  free(ptr);
 }
 
 // main --
@@ -112,6 +96,5 @@ int main(int argc, char* argv[])
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
   // program, so we should be okay.
-  FblcArena arena = { .alloc = &MallocAlloc, .free = &MallocFree };
-  return FblcsLoadProgram(&arena, filename) ? exit_success : exit_fail;
+  return FblcsLoadProgram(&FblcMallocArena, filename) ? exit_success : exit_fail;
 }

@@ -20,8 +20,6 @@ typedef struct {
 
 static void PrintUsage(FILE* stream);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
-static void* MallocAlloc(FblcArena* this, size_t size);
-static void MallocFree(FblcArena* this, void* ptr);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -98,19 +96,6 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
   }
 }
 
-// MallocAlloc -- FblcArena alloc function implemented using malloc.
-// See fblc.h for documentation about FblcArena alloc functions.
-static void* MallocAlloc(FblcArena* this, size_t size)
-{
-  return malloc(size);
-}
-
-// MallocFree -- FblcArena free function implemented using malloc.
-// See fblc.h for documentation about FblcArena alloc functions.
-static void MallocFree(FblcArena* this, void* ptr)
-{
-  free(ptr);
-}
 
 // main --
 //   The main entry point for the fblc interpreter. Evaluates the MAIN
@@ -160,9 +145,9 @@ int main(int argc, char* argv[])
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
   // program, so we should be okay.
-  FblcArena arena = { .alloc = &MallocAlloc, .free = &MallocFree };
+  FblcArena* arena = &FblcMallocArena;
 
-  FblcsProgram* sprog = FblcsLoadProgram(&arena, filename);
+  FblcsProgram* sprog = FblcsLoadProgram(arena, filename);
   if (sprog == NULL) {
     return 1;
   }
@@ -179,11 +164,11 @@ int main(int argc, char* argv[])
   } else if (decl->tag == FBLC_FUNC_DECL) {
     // Make a proc wrapper for the function.
     FblcFuncDecl* func = (FblcFuncDecl*)decl;
-    FblcEvalActn* body = arena.alloc(&arena, sizeof(FblcEvalActn));
+    FblcEvalActn* body = arena->alloc(arena, sizeof(FblcEvalActn));
     body->_base.tag = FBLC_EVAL_ACTN;
     body->arg = func->body;
 
-    proc = arena.alloc(&arena, sizeof(FblcProcDecl));
+    proc = arena->alloc(arena, sizeof(FblcProcDecl));
     proc->_base.tag = FBLC_PROC_DECL;
     proc->portv.size = 0;
     proc->portv.xs = NULL;
@@ -203,18 +188,18 @@ int main(int argc, char* argv[])
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(&arena, sprog, proc->argv.xs[i], argv[i]);
+    args[i] = FblcsParseValueFromString(arena, sprog, proc->argv.xs[i], argv[i]);
   }
 
   IOUser user = { .sprog = sprog, .proc = proc };
   FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(&arena, sprog->program, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, sprog->program, proc, args, &io);
   assert(value != NULL);
 
   FblcsPrintValue(stdout, sprog, proc->return_type, value);
   fprintf(stdout, "\n");
   fflush(stdout);
-  FblcRelease(&arena, value);
+  FblcRelease(arena, value);
   return 0;
 }
