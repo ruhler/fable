@@ -16,4 +16,4 @@ set mdefn {
 
 set prg [list [list Main.mdecl $mdecl] [list Main.mdefn $mdefn]]
 
-skip fbld-test $prg Main@main {} "return Main@Unit()"
+fbld-test $prg Main@main {} "return Main@Unit()"

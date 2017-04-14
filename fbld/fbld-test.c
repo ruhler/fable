@@ -1,8 +1,12 @@
 // fbld-test.c --
 //   This file implements the main entry point for the fbld-test program.
 
-#include <stdio.h>     // FILE, fprintf, stdout, stderr
-#include <string.h>    // for strcmp
+#include <stdio.h>        // FILE, fprintf, stdout, stderr
+#include <string.h>       // for strcmp, strchr, strncpy
+#include <unistd.h>       // for access
+
+#include "fblc.h"
+#include "fbld.h"
 
 static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
@@ -64,6 +68,64 @@ int main(int argc, char* argv[])
     return 0;
   }
 
+  if (argc <= 1) {
+    fprintf(stderr, "no script file.\n");
+    PrintUsage(stderr);
+    return 1;
+  }
+  
+  if (argc <= 2) {
+    fprintf(stderr, "no module search path.\n");
+    PrintUsage(stderr);
+    return 1;
+  }
+
+  if (argc <= 3) {
+    fprintf(stderr, "no main entry point provided.\n");
+    PrintUsage(stderr);
+    return 1;
+  }
+
+  const char* script = argv[1];
+  const char* path = argv[2];
+  const char* entry = argv[3];
+  argv += 4;
+  argc -= 4;
+
+  const char* entry_at = strchr(entry, '@');
+  if (entry_at == NULL) {
+    fprintf(stderr, "entry should be a qualified name of the form 'module@process', but got '%s'\n", entry);
+    return 1;
+  }
+
+  char entry_module[entry_at - entry + 1];
+  strncpy(entry_module, entry, entry_at - entry);
+  entry_module[entry_at - entry] = '\0';
+
+  char mdecl_path[strlen(path) + 1 + strlen(entry_module) + strlen(".mdecl") + 1];
+  sprintf(mdecl_path, "%s/%s.mdecl", path, entry_module);
+  if (access(mdecl_path, F_OK) < 0) {
+    fprintf(stderr, "unable to access %s\n", mdecl_path);
+    return 1;
+  }
+
+  // Simply pass allocations through to malloc. We won't be able to track or
+  // free memory that the caller is supposed to track and free, but we don't
+  // leak memory in a loop and we assume this is the main entry point of the
+  // program, so we should be okay.
+  FblcArena* arena = &FblcMallocArena;
+
+  FbldMDecl* mdecl = FbldParseMDecl(arena, mdecl_path);
+  if (mdecl == NULL) {
+    fprintf(stderr, "failed to parse mdecl at %s\n", mdecl_path);
+    return 1;
+  }
+
+  fprintf(stderr, "script: %s\n", script);
+  fprintf(stderr, "path: %s\n", path);
+  fprintf(stderr, "entry: %s\n", entry);
+  fprintf(stderr, "entry_module: %s\n", entry_module);
+  fprintf(stderr, "mdecl_path: %s\n", mdecl_path);
   fprintf(stderr, "TODO: implement fbld-test.\n");
   return 1;
 }

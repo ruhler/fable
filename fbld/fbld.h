@@ -5,6 +5,8 @@
 #ifndef FBLD_H_
 #define FBLD_H_
 
+#include "fblc.h"   // for FblcArena
+
 // FbldName --
 //   A type used for unqualified names in fbld programs.
 typedef const char* FbldName;
@@ -78,7 +80,7 @@ typedef enum {
 typedef struct {
   FbldDeclItemTag tag;
   FbldNameL name;
-} FblcDeclItem;
+} FbldDeclItem;
 
 // FbldStructDeclItem --
 //   A declaration of a struct in a module declaration.
@@ -95,6 +97,13 @@ typedef struct {
   FbldQualifiedName return_type;
 } FbldFuncDeclItem;
 
+// FbldDeclItemV --
+//   A vector of FbldDeclItems.
+typedef struct {
+  size_t size;
+  FbldDeclItem** xs;
+} FbldDeclItemV;
+
 // FbldMDecl --
 //   An fbld module declaration.
 typedef struct {
@@ -103,7 +112,24 @@ typedef struct {
   FbldDeclItemV items;
 } FbldMDecl;
 
-FbldMDecl* FbldParseMDecl(
+// FbldParseMDecl --
+//   Parse the module declaration from the file with the given filename.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed declaration.
+//   filename - The name of the file to parse the declaration from.
+//
+// Results:
+//   The parsed declaration, or NULL if the declaration could not be parsed.
+//
+// Side effects:
+//   Prints an error message to stderr if the declaration cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned declaration if there is no error.
+FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename);
 
 #endif // FBLD_H_
 

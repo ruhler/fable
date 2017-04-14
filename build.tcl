@@ -6,7 +6,7 @@ proc run {args} {
 }
 
 exec rm -rf out
-set FLAGS [list -I . -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
+set FLAGS [list -I fblc -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
 # Compile all object files.
 # We compile these separately and ensure they are placed in a subdirectory of
@@ -25,6 +25,13 @@ foreach {x} [list check exec fblcs load malloc parse resolve value vector] {
 }
 run ar rcs out/libfblc.a {*}$fblc_objs
 
+# Generate libfbld.a
+set fbld_objs [list]
+foreach {x} [list parse] {
+  lappend fbld_objs out/obj/fbld/$x.o
+}
+run ar rcs out/libfbld.a {*}$fbld_objs
+
 # Compile the executables
 set ::fblc ./out/fblc
 set ::fblccheck ./out/fblc-check
@@ -33,7 +40,7 @@ set ::fbldtest ./out/fbld-test
 run gcc {*}$FLAGS -o $::fblc out/obj/fblc/fblc.o -L out -lfblc
 run gcc {*}$FLAGS -o $::fblccheck out/obj/fblc/fblc-check.o -L out -lfblc
 run gcc {*}$FLAGS -o $::fblctest out/obj/fblc/fblc-test.o -L out -lfblc
-run gcc {*}$FLAGS -o $::fbldtest out/obj/fbld/fbld-test.o -L out -lfblc
+run gcc {*}$FLAGS -o $::fbldtest out/obj/fbld/fbld-test.o -L out -lfblc -lfbld
 run gcc {*}$FLAGS -o out/fblc-snake out/obj/fblc/fblc-snake.o -L out -lfblc -lncurses
 run gcc {*}$FLAGS -o out/fblc-tictactoe out/obj/fblc/fblc-tictactoe.o -L out -lfblc
 
