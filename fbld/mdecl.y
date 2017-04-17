@@ -10,8 +10,9 @@
   #include "fbld.h"
 
   static bool IsNameChar(int c);
-  static int yylex(FblcArena* arena, FILE* fin);
-  static void yyerror(FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out, const char* msg);
+  static int GetNextChar(FILE* fin, FbldLoc* loc);
+  static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc);
+  static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, const char* msg);
 %}
 
 %union {
@@ -24,7 +25,8 @@
   FbldTypedNameV* tnamev;
 }
 
-%param {FblcArena* arena} {FILE* fin}
+%define parse.error verbose
+%param {FblcArena* arena} {FILE* fin} {FbldLoc* loc}
 %parse-param {FbldMDecl** mdecl_out}
 
 %token END 0 "end of file"
@@ -55,6 +57,7 @@ mdecl: "mdecl" name '(' name_list ')' '{' item_list '}' ';' {
           $$->name = $2;
           $$->deps = $4;
           $$->items = $7;
+          *mdecl_out = $$;
         }
      ;
 
@@ -178,6 +181,32 @@ static bool IsNameChar(int c)
   return isalnum(c) || c == '_';
 }
 
+// GetNextChar --
+//   Return the next character from the given file, while keeping track of
+//   location information.
+//
+// Inputs:
+//   fin - The file to read from.
+//   loc - A pointer to the location to update.
+//
+// Results:
+//   The next character read from the file.
+//
+// Side effects:
+//   Updates loc based on the character and advances the file pointer by one
+//   character.
+static int GetNextChar(FILE* fin, FbldLoc* loc)
+{
+  int c = fgetc(fin);
+  if (c == '\n') {
+    loc->line++;
+    loc->col = 1;
+  } else if (c != EOF) {
+    loc->col++;
+  }
+  return c;
+}
+
 // yylex -- 
 //   Return the next token in the given input stream.
 //   This is the lexer for the bison generated parser.
@@ -185,42 +214,54 @@ static bool IsNameChar(int c)
 // Inputs:
 //   arena - Arena used for allocating names.
 //   fin - The stream to parse the next token from.
+//   loc - A pointer to the current parse location.
 // 
 // Results:
 //   The id of the next terminal symbol in the input stream.
 //
 // Side effects:
-//   Sets yylval with the semantic value of the next token in the input stream
-//   and advances the stream to the subsequent token.
-static int yylex(FblcArena* arena, FILE* fin)
+//   Sets yylval with the semantic value of the next token in the input
+//   stream, advances the stream to the subsequent token and updates loc
+//   accordingly.
+static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc)
 {
-  int c = fgetc(fin);
+  int c = GetNextChar(fin, loc);
 
   // Skip past white space and comments.
   bool is_comment_start = (c == '#');
   while (isspace(c) || is_comment_start) {
-    c = fgetc(fin);
+    c = GetNextChar(fin, loc);
     if (is_comment_start) {
       while (c != EOF && c != '\n') {
-        c = fgetc(fin);
+        c = GetNextChar(fin, loc);
       }
     }
     is_comment_start = (c == '#');
+  }
+
+  if (c == EOF) {
+    return END;
   }
 
   if (!IsNameChar(c)) {
     return c;
   };
 
+  yylval.name = arena->alloc(arena, sizeof(FbldNameL));
+  yylval.name->loc = arena->alloc(arena, sizeof(FbldLoc));
+  yylval.name->loc->source = loc->source;
+  yylval.name->loc->line = loc->line;
+  yylval.name->loc->col = loc->col-1;
+
   struct { size_t size; char* xs; } namev;
   FblcVectorInit(arena, namev);
   while (IsNameChar(c)) {
     FblcVectorAppend(arena, namev, c);
-    c = fgetc(fin);
+    c = GetNextChar(fin, loc);
   }
+  ungetc(c == '\n' ? ' ' : c, fin);
+  loc->col--;
   FblcVectorAppend(arena, namev, '\0');
-  yylval.name = arena->alloc(arena, sizeof(FbldNameL));
-  yylval.name->loc = NULL;
   yylval.name->name = namev.xs;
 
   struct { char* keyword; int symbol; } keywords[] = {
@@ -247,6 +288,7 @@ static int yylex(FblcArena* arena, FILE* fin)
 // Inputs:
 //   arena - unused.
 //   fin - unused.
+//   loc - The location of the next item in the input stream.
 //   mdecl_out - unused.
 //   msg - The error message.
 //
@@ -255,9 +297,9 @@ static int yylex(FblcArena* arena, FILE* fin)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out, const char* msg)
+static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, const char* msg)
 {
-  fprintf(stderr, "%s\n", msg);
+  fprintf(stderr, "%s:%d:%d: error: %s\n", loc->source, loc->line, loc->col, msg);
 }
 
 // FbldParseMDecl -- see documentation in fbld.h
@@ -268,8 +310,9 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
     fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
     return NULL;
   }
+  FbldLoc loc = { .source = filename, .line = 1, .col = 1 };
   FbldMDecl* mdecl = NULL;
-  yyparse(arena, fin, &mdecl);
+  yyparse(arena, fin, &loc, &mdecl);
   return mdecl;
 }
 

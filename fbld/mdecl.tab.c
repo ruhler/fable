@@ -72,10 +72,11 @@
   #include "fbld.h"
 
   static bool IsNameChar(int c);
-  static int yylex(FblcArena* arena, FILE* fin);
-  static void yyerror(FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out, const char* msg);
+  static int GetNextChar(FILE* fin, FbldLoc* loc);
+  static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc);
+  static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, const char* msg);
 
-#line 79 "fbld/mdecl.tab.c" /* yacc.c:339  */
+#line 80 "fbld/mdecl.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -90,7 +91,7 @@
 # undef YYERROR_VERBOSE
 # define YYERROR_VERBOSE 1
 #else
-# define YYERROR_VERBOSE 0
+# define YYERROR_VERBOSE 1
 #endif
 
 
@@ -124,7 +125,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 17 "fbld/mdecl.y" /* yacc.c:355  */
+#line 18 "fbld/mdecl.y" /* yacc.c:355  */
 
   FbldNameL* name;
   FbldQualifiedName* qname;
@@ -134,7 +135,7 @@ union YYSTYPE
   FbldNameV* namev;
   FbldTypedNameV* tnamev;
 
-#line 138 "fbld/mdecl.tab.c" /* yacc.c:355  */
+#line 139 "fbld/mdecl.tab.c" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -143,13 +144,13 @@ union YYSTYPE
 
 extern YYSTYPE yylval;
 
-int yyparse (FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out);
+int yyparse (FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out);
 
 
 
 /* Copy the second part of user declarations.  */
 
-#line 153 "fbld/mdecl.tab.c" /* yacc.c:358  */
+#line 154 "fbld/mdecl.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -447,13 +448,13 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    53,    53,    61,    61,    63,    63,    63,    63,    63,
-      63,    63,    66,    70,    77,    80,    83,    90,    93,   101,
-     107,   111,   116,   123,   127,   130,   138,   148,   153
+       0,    55,    55,    64,    64,    66,    66,    66,    66,    66,
+      66,    66,    69,    73,    80,    83,    86,    93,    96,   104,
+     110,   114,   119,   126,   130,   133,   141,   151,   156
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+#if YYDEBUG || YYERROR_VERBOSE || 1
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
@@ -607,7 +608,7 @@ do                                                              \
     }                                                           \
   else                                                          \
     {                                                           \
-      yyerror (arena, fin, mdecl_out, YY_("syntax error: cannot back up")); \
+      yyerror (arena, fin, loc, mdecl_out, YY_("syntax error: cannot back up")); \
       YYERROR;                                                  \
     }                                                           \
 while (0)
@@ -644,7 +645,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value, arena, fin, mdecl_out); \
+                  Type, Value, arena, fin, loc, mdecl_out); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -655,12 +656,13 @@ do {                                                                      \
 `----------------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out)
 {
   FILE *yyo = yyoutput;
   YYUSE (yyo);
   YYUSE (arena);
   YYUSE (fin);
+  YYUSE (loc);
   YYUSE (mdecl_out);
   if (!yyvaluep)
     return;
@@ -677,12 +679,12 @@ yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvalue
 `--------------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out)
 {
   YYFPRINTF (yyoutput, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, arena, fin, mdecl_out);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, arena, fin, loc, mdecl_out);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -715,7 +717,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out)
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out)
 {
   unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -729,7 +731,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, FblcArena* are
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
                        &(yyvsp[(yyi + 1) - (yynrhs)])
-                                              , arena, fin, mdecl_out);
+                                              , arena, fin, loc, mdecl_out);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -737,7 +739,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, FblcArena* are
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, arena, fin, mdecl_out); \
+    yy_reduce_print (yyssp, yyvsp, Rule, arena, fin, loc, mdecl_out); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -995,11 +997,12 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out)
 {
   YYUSE (yyvaluep);
   YYUSE (arena);
   YYUSE (fin);
+  YYUSE (loc);
   YYUSE (mdecl_out);
   if (!yymsg)
     yymsg = "Deleting";
@@ -1027,7 +1030,7 @@ int yynerrs;
 `----------*/
 
 int
-yyparse (FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out)
+yyparse (FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out)
 {
     int yystate;
     /* Number of tokens to shift before error messages enabled.  */
@@ -1183,7 +1186,7 @@ yybackup:
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
-      yychar = yylex (arena, fin);
+      yychar = yylex (arena, fin, loc);
     }
 
   if (yychar <= YYEOF)
@@ -1262,52 +1265,53 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 53 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 55 "fbld/mdecl.y" /* yacc.c:1646  */
     {
           (yyval.mdecl) = arena->alloc(arena, sizeof(FbldMDecl));
           (yyval.mdecl)->name = (yyvsp[-7].name);
           (yyval.mdecl)->deps = (yyvsp[-5].namev);
           (yyval.mdecl)->items = (yyvsp[-2].itemv);
+          *mdecl_out = (yyval.mdecl);
         }
-#line 1273 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1277 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 66 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 69 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       (yyval.itemv) = arena->alloc(arena, sizeof(FbldDeclItemV));
       FblcVectorInit(arena, *(yyval.itemv));
     }
-#line 1282 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1286 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 70 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 73 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       FblcVectorAppend(arena, *(yyvsp[-1].itemv), (yyvsp[0].item));
       (yyval.itemv) = (yyvsp[-1].itemv);
     }
-#line 1291 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1295 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 77 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 80 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       assert(false && "TODO: import");
     }
-#line 1299 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1303 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 80 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 83 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       assert(false && "TODO: type");
     }
-#line 1307 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1311 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 83 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 86 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       FbldStructDeclItem* struct_decl = arena->alloc(arena, sizeof(FbldStructDeclItem));
       struct_decl->_base.tag = FBLD_STRUCT_DECL_ITEM;
@@ -1315,19 +1319,19 @@ yyreduce:
       struct_decl->fieldv = (yyvsp[-2].tnamev);
       (yyval.item) = &struct_decl->_base;
     }
-#line 1319 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1323 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 90 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 93 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       assert(false && "TODO: union");
     }
-#line 1327 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1331 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 93 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 96 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       FbldFuncDeclItem* func_decl = arena->alloc(arena, sizeof(FbldFuncDeclItem));
       func_decl->_base.tag = FBLD_FUNC_DECL_ITEM;
@@ -1336,56 +1340,56 @@ yyreduce:
       func_decl->return_type = (yyvsp[-2].qname);
       (yyval.item) = &func_decl->_base;
     }
-#line 1340 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1344 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 101 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 104 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       assert(false && "TODO: proc");
     }
-#line 1348 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1352 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 107 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 110 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       (yyval.namev) = arena->alloc(arena, sizeof(FbldNameV));
       FblcVectorInit(arena, *(yyval.namev));
     }
-#line 1357 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1361 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 111 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 114 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       (yyval.namev) = arena->alloc(arena, sizeof(FbldNameV));
       FblcVectorInit(arena, *(yyval.namev));
       FblcVectorAppend(arena, *(yyval.namev), (yyvsp[0].name));
     }
-#line 1367 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1371 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 116 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 119 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       FblcVectorAppend(arena, *(yyvsp[-2].namev), (yyvsp[0].name));
       (yyval.namev) = (yyvsp[-2].namev);
     }
-#line 1376 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1380 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 123 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 126 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       (yyval.tnamev) = arena->alloc(arena, sizeof(FbldTypedNameV));
       FblcVectorInit(arena, *(yyval.tnamev));
     }
-#line 1385 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1389 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 130 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 133 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       (yyval.tnamev) = arena->alloc(arena, sizeof(FbldTypedNameV));
       FblcVectorInit(arena, *(yyval.tnamev));
@@ -1394,11 +1398,11 @@ yyreduce:
       tname->name = (yyvsp[0].name);
       FblcVectorAppend(arena, *(yyval.tnamev), tname);
     }
-#line 1398 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1402 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 138 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 141 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       FbldTypedName* tname = arena->alloc(arena, sizeof(FbldTypedName));
       tname->type = (yyvsp[-1].qname);
@@ -1406,31 +1410,31 @@ yyreduce:
       FblcVectorAppend(arena, *(yyvsp[-3].tnamev), tname);
       (yyval.tnamev) = (yyvsp[-3].tnamev);
     }
-#line 1410 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1414 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 148 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 151 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       (yyval.qname) = arena->alloc(arena, sizeof(FbldQualifiedName));
       (yyval.qname)->module = NULL;
       (yyval.qname)->name = (yyvsp[0].name);
     }
-#line 1420 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1424 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 153 "fbld/mdecl.y" /* yacc.c:1646  */
+#line 156 "fbld/mdecl.y" /* yacc.c:1646  */
     {
       (yyval.qname) = arena->alloc(arena, sizeof(FbldQualifiedName));
       (yyval.qname)->module = (yyvsp[-2].name);
       (yyval.qname)->name = (yyvsp[0].name);
     }
-#line 1430 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1434 "fbld/mdecl.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1434 "fbld/mdecl.tab.c" /* yacc.c:1646  */
+#line 1438 "fbld/mdecl.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1480,7 +1484,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (arena, fin, mdecl_out, YY_("syntax error"));
+      yyerror (arena, fin, loc, mdecl_out, YY_("syntax error"));
 #else
 # define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
                                         yyssp, yytoken)
@@ -1507,7 +1511,7 @@ yyerrlab:
                 yymsgp = yymsg;
               }
           }
-        yyerror (arena, fin, mdecl_out, yymsgp);
+        yyerror (arena, fin, loc, mdecl_out, yymsgp);
         if (yysyntax_error_status == 2)
           goto yyexhaustedlab;
       }
@@ -1531,7 +1535,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, arena, fin, mdecl_out);
+                      yytoken, &yylval, arena, fin, loc, mdecl_out);
           yychar = YYEMPTY;
         }
     }
@@ -1587,7 +1591,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp, arena, fin, mdecl_out);
+                  yystos[yystate], yyvsp, arena, fin, loc, mdecl_out);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1624,7 +1628,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (arena, fin, mdecl_out, YY_("memory exhausted"));
+  yyerror (arena, fin, loc, mdecl_out, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1636,7 +1640,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, arena, fin, mdecl_out);
+                  yytoken, &yylval, arena, fin, loc, mdecl_out);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1645,7 +1649,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp, arena, fin, mdecl_out);
+                  yystos[*yyssp], yyvsp, arena, fin, loc, mdecl_out);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1658,7 +1662,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 160 "fbld/mdecl.y" /* yacc.c:1906  */
+#line 163 "fbld/mdecl.y" /* yacc.c:1906  */
 
 
 // IsNameChar --
@@ -1680,6 +1684,32 @@ static bool IsNameChar(int c)
   return isalnum(c) || c == '_';
 }
 
+// GetNextChar --
+//   Return the next character from the given file, while keeping track of
+//   location information.
+//
+// Inputs:
+//   fin - The file to read from.
+//   loc - A pointer to the location to update.
+//
+// Results:
+//   The next character read from the file.
+//
+// Side effects:
+//   Updates loc based on the character and advances the file pointer by one
+//   character.
+static int GetNextChar(FILE* fin, FbldLoc* loc)
+{
+  int c = fgetc(fin);
+  if (c == '\n') {
+    loc->line++;
+    loc->col = 1;
+  } else if (c != EOF) {
+    loc->col++;
+  }
+  return c;
+}
+
 // yylex -- 
 //   Return the next token in the given input stream.
 //   This is the lexer for the bison generated parser.
@@ -1687,42 +1717,54 @@ static bool IsNameChar(int c)
 // Inputs:
 //   arena - Arena used for allocating names.
 //   fin - The stream to parse the next token from.
+//   loc - A pointer to the current parse location.
 // 
 // Results:
 //   The id of the next terminal symbol in the input stream.
 //
 // Side effects:
-//   Sets yylval with the semantic value of the next token in the input stream
-//   and advances the stream to the subsequent token.
-static int yylex(FblcArena* arena, FILE* fin)
+//   Sets yylval with the semantic value of the next token in the input
+//   stream, advances the stream to the subsequent token and updates loc
+//   accordingly.
+static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc)
 {
-  int c = fgetc(fin);
+  int c = GetNextChar(fin, loc);
 
   // Skip past white space and comments.
   bool is_comment_start = (c == '#');
   while (isspace(c) || is_comment_start) {
-    c = fgetc(fin);
+    c = GetNextChar(fin, loc);
     if (is_comment_start) {
       while (c != EOF && c != '\n') {
-        c = fgetc(fin);
+        c = GetNextChar(fin, loc);
       }
     }
     is_comment_start = (c == '#');
+  }
+
+  if (c == EOF) {
+    return END;
   }
 
   if (!IsNameChar(c)) {
     return c;
   };
 
+  yylval.name = arena->alloc(arena, sizeof(FbldNameL));
+  yylval.name->loc = arena->alloc(arena, sizeof(FbldLoc));
+  yylval.name->loc->source = loc->source;
+  yylval.name->loc->line = loc->line;
+  yylval.name->loc->col = loc->col-1;
+
   struct { size_t size; char* xs; } namev;
   FblcVectorInit(arena, namev);
   while (IsNameChar(c)) {
     FblcVectorAppend(arena, namev, c);
-    c = fgetc(fin);
+    c = GetNextChar(fin, loc);
   }
+  ungetc(c == '\n' ? ' ' : c, fin);
+  loc->col--;
   FblcVectorAppend(arena, namev, '\0');
-  yylval.name = arena->alloc(arena, sizeof(FbldNameL));
-  yylval.name->loc = NULL;
   yylval.name->name = namev.xs;
 
   struct { char* keyword; int symbol; } keywords[] = {
@@ -1749,6 +1791,7 @@ static int yylex(FblcArena* arena, FILE* fin)
 // Inputs:
 //   arena - unused.
 //   fin - unused.
+//   loc - The location of the next item in the input stream.
 //   mdecl_out - unused.
 //   msg - The error message.
 //
@@ -1757,9 +1800,9 @@ static int yylex(FblcArena* arena, FILE* fin)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(FblcArena* arena, FILE* fin, FbldMDecl** mdecl_out, const char* msg)
+static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, const char* msg)
 {
-  fprintf(stderr, "%s\n", msg);
+  fprintf(stderr, "%s:%d:%d: error: %s\n", loc->source, loc->line, loc->col, msg);
 }
 
 // FbldParseMDecl -- see documentation in fbld.h
@@ -1770,8 +1813,9 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
     fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
     return NULL;
   }
+  FbldLoc loc = { .source = filename, .line = 1, .col = 1 };
   FbldMDecl* mdecl = NULL;
-  yyparse(arena, fin, &mdecl);
+  yyparse(arena, fin, &loc, &mdecl);
   return mdecl;
 }
 

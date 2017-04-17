@@ -3,7 +3,7 @@ set mdecl {
   mdecl Main() {
     struct Unit();
     func main( ; Unit);
-  }
+  };
 }
 
 set mdefn {
