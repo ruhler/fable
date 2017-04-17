@@ -50,15 +50,15 @@ typedef struct {
 
 typedef struct {
   size_t size;
-  FbldTypedName* xs;
+  FbldTypedName** xs;
 } FbldTypedNameV;
 
 // FbldNameV --
 //   A vector of fbld names.
 typedef struct {
   size_t size;
-  FbldNameL* xs;
-} FbldNameLV;
+  FbldNameL** xs;
+} FbldNameV;
 
 // FbldDeclItemTag --
 //   Tag used to distinguish amongs different kinds of fbld module declaration
@@ -79,22 +79,22 @@ typedef enum {
 //   decl item by first casting to that specific type.
 typedef struct {
   FbldDeclItemTag tag;
-  FbldNameL name;
+  FbldNameL* name;
 } FbldDeclItem;
 
 // FbldStructDeclItem --
 //   A declaration of a struct in a module declaration.
 typedef struct {
   FbldDeclItem _base;
-  FbldTypedNameV fieldv;
+  FbldTypedNameV* fieldv;
 } FbldStructDeclItem;
 
 // FbldFuncDeclItem --
 //   A declaration of a function in a module declaration.
 typedef struct {
   FbldDeclItem _base;
-  FbldTypedNameV argv;
-  FbldQualifiedName return_type;
+  FbldTypedNameV* argv;
+  FbldQualifiedName* return_type;
 } FbldFuncDeclItem;
 
 // FbldDeclItemV --
@@ -107,9 +107,9 @@ typedef struct {
 // FbldMDecl --
 //   An fbld module declaration.
 typedef struct {
-  FbldNameL name;
-  FbldNameLV deps;
-  FbldDeclItemV items;
+  FbldNameL* name;
+  FbldNameV* deps;
+  FbldDeclItemV* items;
 } FbldMDecl;
 
 // FbldParseMDecl --
