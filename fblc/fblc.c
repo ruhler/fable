@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
   IOUser user = { .sprog = sprog, .proc = proc };
   FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(arena, sprog->program, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, proc, args, &io);
   assert(value != NULL);
 
   FblcsPrintValue(stdout, sprog, proc->return_type, value);

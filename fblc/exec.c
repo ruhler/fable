@@ -202,7 +202,7 @@ static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next);
 static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next);
 static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next);
 
-static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread* thread);
+static void Run(FblcArena* arena, Threads* threads, Thread* thread);
 
 // NewThread --
 //   Create a new thread.
@@ -789,7 +789,6 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 //
 // Inputs:
 //   arena - The arena to use for allocations.
-//   env - The environment in which to run the thread.
 //   threads - The list of currently active threads.
 //   thread - The thread to run.
 //
@@ -802,7 +801,7 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 //   Otherwise it will be added back to the threads list representing the
 //   continuation of this thread.
 //   Performs arena allocations.
-static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread* thread)
+static void Run(FblcArena* arena, Threads* threads, Thread* thread)
 {
   for (size_t i = 0; i < 1024 && thread->cmd != NULL; ++i) {
     Cmd* next = thread->cmd->next;
@@ -1133,7 +1132,7 @@ static void Run(FblcArena* arena, FblcProgram* program, Threads* threads, Thread
 }
 
 // FblcExecute -- see documentationin fblc.h.
-FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIO* io)
+FblcValue* FblcExecute(FblcArena* arena, FblcProcDecl* proc, FblcValue** args, FblcIO* io)
 {
   Vars* vars = NULL;
   for (size_t i = 0; i < proc->argv.size; ++i) {
@@ -1164,7 +1163,7 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* pro
     // Execute the next thread, if any.
     Thread* thread = GetThread(&threads);
     if (thread != NULL) {
-      Run(arena, program, &threads, thread);
+      Run(arena, &threads, thread);
     }
 
     // Prepare pending output, if any.

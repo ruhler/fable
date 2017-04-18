@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
   AddTimeMillis(&user.tnext, TICK_INTERVAL);
   FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(arena, sprog->program, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, proc, args, &io);
   FblcRelease(arena, value);
 
   mvaddstr(MAX_ROW + 3, 3, "GAME OVER");

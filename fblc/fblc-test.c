@@ -372,7 +372,7 @@ int main(int argc, char* argv[])
   user.cmd_ready = false;
   FblcIO io = { .io = &IO, .user = &user };
 
-  FblcValue* value = FblcExecute(arena, sprog->program, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, proc, args, &io);
   assert(value != NULL);
 
   EnsureCommandReady(&user, arena);

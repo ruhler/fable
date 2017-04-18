@@ -626,23 +626,21 @@ typedef struct FblcIO {
 } FblcIO;
 
 // FblcExecute --
-//   Execute a process with the given args and ports in the given program
-//   environment.
+//   Execute a process with the given args and ports.
 //
 // Inputs:
 //   arena - The arena to use for allocations.
-//   program - The program environment.
 //   proc - The process to execute.
 //   args - Arguments to the process to execute.
 //   io - Interface for getting and putting values on external ports.
 //
 // Returns:
-//   The result of executing the given procedure in the program environment
-//   with the given arguments and external port io.
+//   The result of executing the given procedure with the given arguments and
+//   external port io.
 //
 // Side effects:
 //   Releases the args values.
 //   Calls the corresponding io function to read and write values from
 //   external ports.
-FblcValue* FblcExecute(FblcArena* arena, FblcProgram* program, FblcProcDecl* proc, FblcValue** args, FblcIO* io);
+FblcValue* FblcExecute(FblcArena* arena, FblcProcDecl* proc, FblcValue** args, FblcIO* io);
 #endif // FBLC_H_
