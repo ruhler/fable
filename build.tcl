@@ -6,10 +6,7 @@ proc run {args} {
 }
 
 exec rm -rf out
-set FLAGS [list -I fblc -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
-
-# Run bison to generate the fbld parser.
-run bison -o fbld/mdecl.tab.c fbld/mdecl.y 
+set FLAGS [list -I fblc -I fbld -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
 
 # Compile all object files.
 # We compile these separately and ensure they are placed in a subdirectory of
@@ -20,6 +17,11 @@ foreach {x} [glob fblc/*.c fbld/*.c] {
   set obj out/obj/[string map {.c .o} $x]
   run gcc {*}$FLAGS -c -o $obj $x
 }
+
+# Generate and compile the fbld parser.
+exec mkdir -p out/src/fbld
+run bison -o out/src/fbld/mdecl.tab.c fbld/mdecl.y 
+run gcc {*}$FLAGS -c -o out/obj/fbld/mdecl.tab.o out/src/fbld/mdecl.tab.c
 
 # Generate libfblc.a
 set fblc_objs [list]
