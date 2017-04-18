@@ -19,8 +19,8 @@
   FbldNameL* name;
   FbldQualifiedName* qname;
   FbldMDecl* mdecl;
-  FbldDeclItem* item;
-  FbldDeclItemV* itemv;
+  FbldDecl* decl;
+  FbldDeclV* declv;
   FbldNameV* namev;
   FbldTypedNameV* tnamev;
 }
@@ -45,18 +45,18 @@
 %type <name> keyword name
 %type <qname> qualified_name
 %type <mdecl> mdecl
-%type <item> item
-%type <itemv> item_list
+%type <decl> decl
+%type <declv> decl_list
 %type <namev> name_list
 %type <tnamev> field_list non_empty_field_list
 
 %%
  
-mdecl: "mdecl" name '(' name_list ')' '{' item_list '}' ';' {
+mdecl: "mdecl" name '(' name_list ')' '{' decl_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDecl));
           $$->name = $2;
           $$->deps = $4;
-          $$->items = $7;
+          $$->decls = $7;
           *mdecl_out = $$;
         }
      ;
@@ -65,18 +65,18 @@ name: NAME | keyword ;
 
 keyword: "mdecl" | "type" | "struct" | "union" | "func" | "proc" | "import" ;
 
-item_list:
+decl_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldDeclItemV));
+      $$ = arena->alloc(arena, sizeof(FbldDeclV));
       FblcVectorInit(arena, *$$);
     }
-  | item_list item {
+  | decl_list decl {
       FblcVectorAppend(arena, *$1, $2);
       $$ = $1;
     }
   ;
 
-item:
+decl:
     "import" name '(' name_list ')' ';' {
       assert(false && "TODO: import");
     }
@@ -84,8 +84,8 @@ item:
       assert(false && "TODO: type");
     }
   | "struct" name '(' field_list ')' ';' {
-      FbldStructDeclItem* struct_decl = arena->alloc(arena, sizeof(FbldStructDeclItem));
-      struct_decl->_base.tag = FBLD_STRUCT_DECL_ITEM;
+      FbldStructDecl* struct_decl = arena->alloc(arena, sizeof(FbldStructDecl));
+      struct_decl->_base.tag = FBLD_STRUCT_DECL;
       struct_decl->_base.name = $2;
       struct_decl->fieldv = $4;
       $$ = &struct_decl->_base;
@@ -94,8 +94,8 @@ item:
       assert(false && "TODO: union");
     }
   | "func" name '(' field_list ';' qualified_name ')' ';' {
-      FbldFuncDeclItem* func_decl = arena->alloc(arena, sizeof(FbldFuncDeclItem));
-      func_decl->_base.tag = FBLD_FUNC_DECL_ITEM;
+      FbldFuncDecl* func_decl = arena->alloc(arena, sizeof(FbldFuncDecl));
+      func_decl->_base.tag = FBLD_FUNC_DECL;
       func_decl->_base.name = $2;
       func_decl->argv = $4;
       func_decl->return_type = $6;
@@ -315,4 +315,16 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
   yyparse(arena, fin, &loc, &mdecl);
   return mdecl;
 }
-
+
+// FbldParseMDefn -- see documentation in fbld.h
+FbldMDecl* FbldParseMDefn(FblcArena* arena, const char* filename)
+{
+  FILE* fin = fopen(filename, "r");
+  if (fin == NULL) {
+    fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
+    return NULL;
+  }
+  FbldLoc loc = { .source = filename, .line = 1, .col = 1 };
+  fprintf(stderr, "TODO: implement FbldParseMDefn (%p, %p)\n", (void*)fin, (void*)&loc);
+  return NULL;
+}

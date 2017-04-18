@@ -59,58 +59,82 @@ typedef struct {
   size_t size;
   FbldNameL** xs;
 } FbldNameV;
+
+// FbldExpr --
+//   Common base type for the following fbld expr types. The tag can be used
+//   to determine what kind of expr this is to get access to additional fields
+//   of the expr by first casting to that specific type.
+typedef struct {
+  FblcExprTag tag;
+  FbldLoc* loc;
+} FbldExpr;
 
-// FbldDeclItemTag --
-//   Tag used to distinguish amongs different kinds of fbld module declaration
-//   items.
+// FbldDeclTag --
+//   Tag used to distinguish amongs different kinds of fbld declarations.
 typedef enum {
-  FBLD_IMPORT_DECL_ITEM,
-  FBLD_TYPE_DECL_ITEM,
-  FBLD_UNION_DECL_ITEM,
-  FBLD_STRUCT_DECL_ITEM,
-  FBLD_FUNC_DECL_ITEM,
-  FBLD_PROC_DECL_ITEM
-} FbldDeclItemTag;
+  FBLD_IMPORT_DECL,
+  FBLD_TYPE_DECL,
+  FBLD_UNION_DECL,
+  FBLD_STRUCT_DECL,
+  FBLD_FUNC_DECL,
+  FBLD_PROC_DECL
+} FbldDeclTag;
 
-// FbldDeclItem --
-//   A tagged union of fbdl module declaration items. All decl items have the
-//   same initial layout as FbldDeclItem. The tag can be used to determine
-//   what kind of decl item this is to get access to additional fields of the
-//   decl item by first casting to that specific type.
+// FbldDecl --
+//   A tagged union of fbdl declarations. All decls have the same initial
+//   layout as FbldDecl. The tag can be used to determine what kind of decl
+//   this is to get access to additional fields of the decl by first casting
+//   to that specific type.
 typedef struct {
-  FbldDeclItemTag tag;
+  FbldDeclTag tag;
   FbldNameL* name;
-} FbldDeclItem;
+} FbldDecl;
 
-// FbldStructDeclItem --
-//   A declaration of a struct in a module declaration.
+// FbldStructDecl --
+//   A declaration of a struct type.
 typedef struct {
-  FbldDeclItem _base;
+  FbldDecl _base;
   FbldTypedNameV* fieldv;
-} FbldStructDeclItem;
+} FbldStructDecl;
 
-// FbldFuncDeclItem --
-//   A declaration of a function in a module declaration.
+// FbldFuncDecl --
+//   A declaration of a function.
+//   The body is NULL for function prototypes specified in module
+//   declarations.
 typedef struct {
-  FbldDeclItem _base;
+  FbldDecl _base;
   FbldTypedNameV* argv;
   FbldQualifiedName* return_type;
-} FbldFuncDeclItem;
+  FbldExpr* body;
+} FbldFuncDecl;
 
-// FbldDeclItemV --
-//   A vector of FbldDeclItems.
+// FbldDeclV --
+//   A vector of FbldDecls.
 typedef struct {
   size_t size;
-  FbldDeclItem** xs;
-} FbldDeclItemV;
+  FbldDecl** xs;
+} FbldDeclV;
 
-// FbldMDecl --
-//   An fbld module declaration.
+// FbldModule --
+//   An fbld module declaration or definition.
 typedef struct {
   FbldNameL* name;
   FbldNameV* deps;
-  FbldDeclItemV* items;
-} FbldMDecl;
+  FbldDeclV* decls;
+} FbldModule;
+
+// FbldMDecl --
+//   A module declaration is an FbldModule with the bodies of functions and
+//   processes set to NULL. We introduce a separate typedef to help document
+//   when we expect this to be the case.
+typedef FbldModule FbldMDecl;
+
+// FbldMDefn --
+//   A module declaration is an FbldModule with the bodies of functions and
+//   processes defined. We introduce a separate typedef to help document when
+//   we expect this to be the case.
+typedef FbldModule FbldMDefn;
+
 
 // FbldParseMDecl --
 //   Parse the module declaration from the file with the given filename.
@@ -130,6 +154,25 @@ typedef struct {
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned declaration if there is no error.
 FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename);
+
+// FbldParseMDefn --
+//   Parse the module definition from the file with the given filename.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed definition.
+//   filename - The name of the file to parse the definition from.
+//
+// Results:
+//   The parsed definition, or NULL if the definition could not be parsed.
+//
+// Side effects:
+//   Prints an error message to stderr if the definition cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned definition if there is no error.
+FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename);
 
 #endif // FBLD_H_
 
