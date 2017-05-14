@@ -115,25 +115,50 @@ typedef struct {
   FbldDecl** xs;
 } FbldDeclV;
 
-// FbldModule --
-//   An fbld module declaration or definition.
+// FbldMDecl --
+//   An fbld module declaration.
 typedef struct {
   FbldNameL* name;
   FbldNameV* deps;
   FbldDeclV* decls;
-} FbldModule;
+} FbldMDecl;
 
-// FbldMDecl --
-//   A module declaration is an FbldModule with the bodies of functions and
-//   processes set to NULL. We introduce a separate typedef to help document
-//   when we expect this to be the case.
-typedef FbldModule FbldMDecl;
+// FbldDefn --
+//   A tagged union of fbdl definitions. All defns have the same initial
+//   layout as FbldDefn. The tag from the decl field can be used to determine
+//   what kind of defn this is to get access to additional fields of the defn
+//   by first casting to that specific type.
+typedef struct {
+  FbldDecl* decl;
+} FbldDefn;
+
+// FbldStructDefn --
+//   A definition of a struct type.
+typedef struct {
+  FbldStructDecl* decl;
+} FbldStructDefn;
+
+// FbldFuncDefn --
+//   A definition of a function.
+typedef struct {
+  FbldFuncDecl* decl;
+  FbldExpr* body;
+} FbldFuncDefn;
+
+// FbldDefnV --
+//   A vector of FbldDefns.
+typedef struct {
+  size_t size;
+  FbldDefn** xs;
+} FbldDefnV;
 
 // FbldMDefn --
-//   A module declaration is an FbldModule with the bodies of functions and
-//   processes defined. We introduce a separate typedef to help document when
-//   we expect this to be the case.
-typedef FbldModule FbldMDefn;
+//   An fbld module definition.
+typedef struct {
+  FbldNameL* name;
+  FbldNameV* deps;
+  FbldDefnV* defns;
+} FbldMDefn;
 
 
 // FbldParseMDecl --

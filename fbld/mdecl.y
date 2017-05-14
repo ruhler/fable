@@ -317,7 +317,7 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
 }
 
 // FbldParseMDefn -- see documentation in fbld.h
-FbldMDecl* FbldParseMDefn(FblcArena* arena, const char* filename)
+FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {

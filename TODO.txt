@@ -1,5 +1,4 @@
 Fbld Kickoff:
-* Rewrite data structure so that mdefns reuse mdecls but have different types.
 * Write a function to ensure a list of required mdecls is parsed, loaded, and
   checked (check can be a noop for now).
 * Implement code to check an mdecl against all mdecls it depends on.
