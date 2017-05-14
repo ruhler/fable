@@ -1,14 +1,26 @@
 Fbld Kickoff:
-* Implement most basic version of fbld-test.
- - parse needed mdecls and mdefns.
- - check each mdefn against the mdecls it uses.
- - collect needed definitions into an fblc program with proper resolution.
- - execute via FblcExecute.
-* Add tests and features as needed until UBNatTest and PrimesTest both pass.
+* Revise specification so that imports don't influence exported entities.
+* Revise specification so that mdecl type declarations must be redeclared
+  in mdefns.
+* Rewrite data structure so that mdefns reuse mdecls but have different types.
+* Write a function to ensure a list of required mdecls is parsed, loaded, and
+  checked (check can be a noop for now).
+* Implement code to check an mdecl against all mdecls it depends on.
+* Be able to parse both mdecls and mdefns from same bison grammar.
+* Write a function to check an mdefn against all mdecls it depends on.
+* Write a function to check an mdefn against its own mdecl.
+* Write a function to ensure a list of required mdefns is parsed, loaded, and
+  checked.
+* Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
-Fblc Cleanup:
-* Implement version of Checker that works on FblcProgram without fblcs.
-* General Cleanup
+Fblc Front End Cleanup:
+* Make fblcs structure standalone rather than tied to fblc structure.
+ - Parser should create fblcs structure only.
+ - Perform check entirely on fblcs structure before resolution.
+ - Resolution to convert fblcs structure to (correct by construction) fblc
+   structure.
+
+General Cleanup:
  - Verify all document comments are present and up to date.
  - Document allocations for every function that takes an FblcArena,
    specifically, what the caller should do to free all allocations.
@@ -94,4 +106,7 @@ Future:
   locations as the program executes. Maybe we want fancy stuff like viewing
   variables, breakpoints, setting values, etc... but mostly to start tracing
   through source locations.
+
+* Implement fblc code coverage tool. Input is a program to run. Output is a
+  list of error messages for each line of code not exercise by the program?
 
