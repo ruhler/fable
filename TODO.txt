@@ -1,7 +1,4 @@
 Fbld Kickoff:
-* Revise specification so that imports don't influence exported entities.
-* Revise specification so that mdecl type declarations must be redeclared
-  in mdefns.
 * Rewrite data structure so that mdefns reuse mdecls but have different types.
 * Write a function to ensure a list of required mdecls is parsed, loaded, and
   checked (check can be a noop for now).

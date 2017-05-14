@@ -42,7 +42,7 @@ interfaces.
     func LessThan(Int a, Int b; Bool);
   };
 
-Module interfaces are introduce using the 'mdecl' keyword, which is short for
+Module interfaces are introduced using the 'mdecl' keyword, which is short for
 "module declaration". The 'mdecl' keyword is followed by the name of the
 module, in this case 'Int'. Each module is uniquely identified with a name
 from a global namespace of modules. In the future we expect additional
@@ -68,22 +68,21 @@ declarations that can be used.
 
 Import
 ^^^^^^
-The import declaration is used to import entities from another module. The
-import declaration consists of the name of a module to import types from,
-followed by a list of entities to import that belong to that module's interface.
-In this case, the 'Bool' type is being imported from the Bool module.
-Importing the entity means it can be referred to without qualification in the
-module interface, and that the entity is now considered to belong to the
-module's interface.
+The import declaration is a syntactic convenience for referring to entities
+from other modules without having to use a qualified name. The import
+declaration consists of the name of a module to import entities from, followed
+by a list of entities to import that belong to that module's interface. In
+this case, the 'Bool' type is being imported from the Bool module. Importing
+the entity means it can be referred to without qualification in the module
+interface.
 
 Importing from some module 'Foo' requires that the module 'Foo' be listed as
 an explicit dependency of this module. Entities that are imported from other
 modules must not conflict by name with any other entities imported or declared
 in the module interface.
 
-Both types and function declarations can be imported. When importing a
-function declaration, any types used in the declaration must belong to a
-module that this module depends on.
+Only type declarations can be imported into module declarations, because they
+are the only kind of entity that can be referred to in a module declaration.
 
 Abstract Types
 ^^^^^^^^^^^^^^
@@ -119,16 +118,17 @@ type was not imported into the Int module interface, the qualified form
 
 Module Implementations
 ----------------------
-The following is a slightly contrived exaple of the odule definition
+The following is a slightly contrived example of the module definition
 corresponding to the interface definition in the previous section for an
 integer arithmetic module. In this example, the integers are unbounded natural
 numbers starting from 0.
 
 mdefn Int(Unit, Bool) {
   import Unit(Unit);
-  import Bool(True);
+  import Bool(Bool, True);
 
   union Int(Unit 0, Int S);
+  struct DivModResult(Int quotient, Int remainder);
 
   func Zero( ; Int) {
     Int:0();
@@ -155,38 +155,42 @@ which may be different from the modules the interface depends on. For example,
 in this case, the implementation reuses the 'Unit' module to define the Int
 type, so it depends on the 'Unit' module even though the interface does not.
 The module definition also depends on the 'Bool' module, because it uses the
-functions 'True' and 'False'.
+Bool type and the functions 'True' and 'False'.
 
-Any names explicitly imported into a module's interface definition are
-implicitly available in the module's definition. For example, because the Bool
-type from the Bool module was imported in the Int module declaration, it is
-available to use in the module definition.
+A module definition does not inherit anything from its corresponding module
+declaration. All module dependencies must be listed according to what
+entities are referenced in the body of the module definition. Names explicitly
+imported into a module's declaration are not automatically available to the
+module's definition.
 
-Aside from the implicit availabilty of names declared and imported into the
-module declaration, the same rules apply for what to list as a module
-dependency for the module definition as for the module declaration.
+The same rules apply for what to list as a module dependency for the module
+definition as for the module declaration.
 
 The body of the 'mdefn' consists of a sequence of declarations including
 imports, type declarations, function declarations, and process declarations in
 any order.
 
 The import statement for 'mdefn' behaves exactly as it does for 'mdecl'. For
-example, because the 'True' function from Bool is imported, it can be used
-unqualified in the implementation of Equals. In constrast, for illustration
-purposes, the 'False' function was not imported, so it the qualified form
-'Bool@False' must be used instead.
+example, because the 'Bool' type and 'True' function from Bool is imported,
+they can be used unqualified in the implementation of Equals. In contrast,
+for illustration purposes, the 'False' function was not imported, so the
+qualified form 'Bool@False' must be used instead.
 
 Type, function, and process declarations are the same as in Calvisus, except
 that they may refer to qualified names for modules listed as dependencies in
 addition to the usual unqualified names.
 
 For a module definition to be valid, it must include a struct or union type
-declaration for every abstract 'type' declared in module declaration. It must
-also provide an implementation of every function and process declared in the
-module declaration, and the types of those functions and process must match
-the types listed in the declaration. The module may include additional types,
-functions, or processes that are not visible outside of the module
-implementation.
+declaration for every abstract 'type' and concrete 'struct' or 'union' type
+declared in module declaration. For each concrete 'struct' and 'union' type
+declared in the module declaration, there should be an identical declaration
+in the module definition.
+
+The module definition must also provide an implementation of every function
+and process declared in the module declaration, and the types of those
+functions and process must match the types listed in the declaration. The
+module may include additional types, functions, or processes that are not
+visible outside of the module definition.
 
 Modules and the Filesystem 
 --------------------------
