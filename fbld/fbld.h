@@ -69,6 +69,22 @@ typedef struct {
   FbldLoc* loc;
 } FbldExpr;
 
+// FbldExprV --
+//   A vector of fbld expressions.
+typedef struct {
+  size_t size;
+  FbldExpr** xs;
+} FbldExprV;
+
+// FbldAppExpr --
+//   An application expression of the form 'func(arg0, arg1, ...)'. func may
+//   refer to a function or a struct type.
+typedef struct {
+  FbldExpr _base;
+  FbldQualifiedName* func;
+  FbldExprV* argv;
+} FbldAppExpr;
+
 // FbldDeclTag --
 //   Tag used to distinguish amongs different kinds of fbld declarations.
 typedef enum {

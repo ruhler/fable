@@ -12,22 +12,29 @@
   static bool IsNameChar(int c);
   static int GetNextChar(FILE* fin, FbldLoc* loc);
   static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc);
-  static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, const char* msg);
+  static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg);
 %}
 
 %union {
   FbldNameL* name;
   FbldQualifiedName* qname;
   FbldMDecl* mdecl;
+  FbldStructDecl* struct_decl;
+  FbldFuncDecl* func_decl;
+  FbldMDefn* mdefn;
   FbldDecl* decl;
+  FbldDefn* defn;
   FbldDeclV* declv;
+  FbldDefnV* defnv;
+  FbldExpr* expr;
   FbldNameV* namev;
   FbldTypedNameV* tnamev;
+  FbldExprV* exprv;
 }
 
 %define parse.error verbose
 %param {FblcArena* arena} {FILE* fin} {FbldLoc* loc}
-%parse-param {FbldMDecl** mdecl_out}
+%parse-param {FbldMDecl** mdecl_out} {FbldMDefn** mdefn_out}
 
 %token END 0 "end of file"
 %token <name> NAME
@@ -35,6 +42,7 @@
 // Keywords. These have type 'name' because in many contexts they are treated
 // as normal names rather than keywords.
 %token <name> MDECL "mdecl"
+%token <name> MDEFN "mdefn"
 %token <name> TYPE "type"
 %token <name> STRUCT "struct"
 %token <name> UNION "union"
@@ -45,12 +53,24 @@
 %type <name> keyword name
 %type <qname> qualified_name
 %type <mdecl> mdecl
+%type <mdefn> mdefn
 %type <decl> decl
+%type <defn> defn
+%type <struct_decl> struct_decl
+%type <func_decl> func_decl
 %type <declv> decl_list
+%type <defnv> defn_list
+%type <expr> expr stmt
 %type <namev> name_list
 %type <tnamev> field_list non_empty_field_list
+%type <exprv> expr_list non_empty_expr_list
 
 %%
+
+// This grammar is used for parsing both module declarations and
+// definitions.  We insert an arbitrary, artificial single-character token
+// to indicate which we want to parse.
+start: '(' mdecl | ')' mdefn ;
  
 mdecl: "mdecl" name '(' name_list ')' '{' decl_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDecl));
@@ -61,9 +81,18 @@ mdecl: "mdecl" name '(' name_list ')' '{' decl_list '}' ';' {
         }
      ;
 
+mdefn: "mdefn" name '(' name_list ')' '{' defn_list '}' ';' {
+          $$ = arena->alloc(arena, sizeof(FbldMDefn));
+          $$->name = $2;
+          $$->deps = $4;
+          $$->defns = $7;
+          *mdefn_out = $$;
+        }
+     ;
+
 name: NAME | keyword ;
 
-keyword: "mdecl" | "type" | "struct" | "union" | "func" | "proc" | "import" ;
+keyword: "mdecl" | "mdefn" | "type" | "struct" | "union" | "func" | "proc" | "import" ;
 
 decl_list:
     %empty {
@@ -76,6 +105,42 @@ decl_list:
     }
   ;
 
+expr_list:
+    %empty {
+      $$ = arena->alloc(arena, sizeof(FbldExprV));
+      FblcVectorInit(arena, *$$);
+    }
+  | non_empty_expr_list
+  ;
+
+non_empty_expr_list:
+  expr {
+      $$ = arena->alloc(arena, sizeof(FbldExprV));
+      FblcVectorInit(arena, *$$);
+      FblcVectorAppend(arena, *$$, $1);
+    }
+  | non_empty_expr_list ',' expr {
+      FblcVectorAppend(arena, *$1, $3);
+      $$ = $1;
+    }
+  ;
+
+struct_decl: "struct" name '(' field_list ')' {
+      $$ = arena->alloc(arena, sizeof(FbldStructDecl));
+      $$->_base.tag = FBLD_STRUCT_DECL;
+      $$->_base.name = $2;
+      $$->fieldv = $4;
+    }
+    ;
+
+func_decl: "func" name '(' field_list ';' qualified_name ')' {
+      $$ = arena->alloc(arena, sizeof(FbldFuncDecl));
+      $$->_base.tag = FBLD_FUNC_DECL;
+      $$->_base.name = $2;
+      $$->argv = $4;
+      $$->return_type = $6;
+    }
+
 decl:
     "import" name '(' name_list ')' ';' {
       assert(false && "TODO: import");
@@ -83,26 +148,62 @@ decl:
   | "type" name ';' {
       assert(false && "TODO: type");
     }
-  | "struct" name '(' field_list ')' ';' {
-      FbldStructDecl* struct_decl = arena->alloc(arena, sizeof(FbldStructDecl));
-      struct_decl->_base.tag = FBLD_STRUCT_DECL;
-      struct_decl->_base.name = $2;
-      struct_decl->fieldv = $4;
-      $$ = &struct_decl->_base;
+  | struct_decl ';' {
+      $$ = &$1->_base;
     }
   | "union" name '(' non_empty_field_list ')' ';' {
       assert(false && "TODO: union");
     }
-  | "func" name '(' field_list ';' qualified_name ')' ';' {
-      FbldFuncDecl* func_decl = arena->alloc(arena, sizeof(FbldFuncDecl));
-      func_decl->_base.tag = FBLD_FUNC_DECL;
-      func_decl->_base.name = $2;
-      func_decl->argv = $4;
-      func_decl->return_type = $6;
-      $$ = &func_decl->_base;
+  | func_decl ';' {
+      $$ = &$1->_base;
     }
   | "proc" name '(' name_list ';' field_list ';' qualified_name ')' ';' {
       assert(false && "TODO: proc");
+    }
+  ;
+
+defn:
+    "import" name '(' name_list ')' ';' {
+      assert(false && "TODO: import");
+    }
+  | struct_decl ';' {
+      FbldStructDefn* struct_defn = arena->alloc(arena, sizeof(FbldStructDefn));
+      struct_defn->decl = $1;
+      $$ = (FbldDefn*)struct_defn;
+    }
+  | "union" name '(' non_empty_field_list ')' ';' {
+      assert(false && "TODO: union");
+    }
+  | func_decl expr ';' {
+      FbldFuncDefn* func_defn = arena->alloc(arena, sizeof(FbldFuncDefn));
+      func_defn->decl = $1;
+      func_defn->body = $2;
+      $$ = (FbldDefn*)func_defn;
+    }
+  ;
+
+stmt: expr ';' { $$ = $1; } ;
+
+expr:
+    '{' stmt '}' {
+       $$ = $2;
+    }
+  | qualified_name '(' expr_list ')' {
+      FbldAppExpr* app_expr = arena->alloc(arena, sizeof(FbldAppExpr));
+      app_expr->func = $1;
+      app_expr->argv = $3;
+      $$ = &app_expr->_base;
+   }
+   ;
+    
+defn_list:
+    %empty {
+      $$ = arena->alloc(arena, sizeof(FbldDefnV));
+      FblcVectorInit(arena, *$$);
+    }
+  | defn_list defn {
+      FblcVectorAppend(arena, *$1, $2);
+      $$ = $1;
     }
   ;
 
@@ -266,6 +367,7 @@ static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc)
 
   struct { char* keyword; int symbol; } keywords[] = {
     {.keyword = "mdecl", .symbol = MDECL},
+    {.keyword = "mdefn", .symbol = MDEFN},
     {.keyword = "type", .symbol = TYPE},
     {.keyword = "struct", .symbol = STRUCT},
     {.keyword = "union", .symbol = UNION},
@@ -290,6 +392,7 @@ static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc)
 //   fin - unused.
 //   loc - The location of the next item in the input stream.
 //   mdecl_out - unused.
+//   mdefn_out - unused.
 //   msg - The error message.
 //
 // Results:
@@ -297,7 +400,7 @@ static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, const char* msg)
+static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg)
 {
   fprintf(stderr, "%s:%d:%d: error: %s\n", loc->source, loc->line, loc->col, msg);
 }
@@ -310,9 +413,10 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
     fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
     return NULL;
   }
-  FbldLoc loc = { .source = filename, .line = 1, .col = 1 };
+  ungetc('(', fin);
+  FbldLoc loc = { .source = filename, .line = 1, .col = 0 };
   FbldMDecl* mdecl = NULL;
-  yyparse(arena, fin, &loc, &mdecl);
+  yyparse(arena, fin, &loc, &mdecl, NULL);
   return mdecl;
 }
 
@@ -324,7 +428,9 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
     fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
     return NULL;
   }
-  FbldLoc loc = { .source = filename, .line = 1, .col = 1 };
-  fprintf(stderr, "TODO: implement FbldParseMDefn (%p, %p)\n", (void*)fin, (void*)&loc);
-  return NULL;
+  ungetc(')', fin);
+  FbldLoc loc = { .source = filename, .line = 1, .col = 0 };
+  FbldMDefn* mdefn = NULL;
+  yyparse(arena, fin, &loc, NULL, &mdefn);
+  return mdefn;
 }
