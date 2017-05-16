@@ -1,6 +1,6 @@
-// mdecl.y --
+// parse.y --
 //   This file describes the bison grammar for parsing fbld module
-//   declarations.
+//   declarations and definitions.
 %{
   #include <assert.h>       // for assert
   #include <ctype.h>        // for isalnum, isspace

@@ -20,8 +20,8 @@ foreach {x} [glob fblc/*.c fbld/*.c] {
 
 # Generate and compile the fbld parser.
 exec mkdir -p out/src/fbld
-run bison -o out/src/fbld/mdecl.tab.c fbld/mdecl.y 
-run gcc {*}$FLAGS -c -o out/obj/fbld/mdecl.tab.o out/src/fbld/mdecl.tab.c
+run bison -o out/src/fbld/parse.tab.c fbld/parse.y 
+run gcc {*}$FLAGS -c -o out/obj/fbld/parse.tab.o out/src/fbld/parse.tab.c
 
 # Generate libfblc.a
 set fblc_objs [list]
@@ -32,7 +32,7 @@ run ar rcs out/libfblc.a {*}$fblc_objs
 
 # Generate libfbld.a
 set fbld_objs [list]
-foreach {x} [list mdecl.tab] {
+foreach {x} [list parse.tab] {
   lappend fbld_objs out/obj/fbld/$x.o
 }
 run ar rcs out/libfbld.a {*}$fbld_objs
