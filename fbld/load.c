@@ -10,6 +10,42 @@
 #include "fblc.h"
 #include "fbld.h"
 
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension);
+
+
+// FindModuleFile --
+//   Find the name of a module declaration or definition file on disk.
+//
+// Inputs:
+//   arena - Arena to use for allocating the returned filename.
+//   path - The module search path.
+//   name - The name of the module.
+//   extension - The extension of the module file: ".mdecl" or ".mdefn".
+//
+// Result:
+//   The filename of the requested module file or NULL if no such file could
+//   be found.
+//
+// Side effects:
+//   Tests whether files exist on the search path.
+//
+// Allocations:
+//   The user is responsible for freeing the returned filename if not null
+//   using the arena passed to this function.
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension)
+{
+  for (size_t i = 0; i < path->size; ++i) {
+    size_t length = strlen(path->xs[i]) + 1 + strlen(name) + strlen(extension) + 1;
+    char* filename = arena->alloc(arena, sizeof(char) * length);
+    sprintf(filename, "%s/%s%s", path->xs[i], name, extension);
+    if (access(filename, F_OK) == 0) {
+      return filename;
+    }
+    arena->free(arena, filename);
+  }
+  return NULL;
+}
+
 // FbldLoadMDecl -- see documentation in fbld.h
 FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv)
 {
@@ -20,20 +56,9 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
     }
   }
 
-  // Locate the module declaration on the path.
-  char* filename = NULL;
-  for (size_t i = 0; filename == NULL && i < path->size; ++i) {
-    size_t length = strlen(path->xs[i]) + 1 + strlen(name) + strlen(".mdecl") + 1;
-    filename = arena->alloc(arena, sizeof(char) * length);
-    sprintf(filename, "%s/%s.mdecl", path->xs[i], name);
-    if (access(filename, F_OK) < 0) {
-      arena->free(arena, filename);
-      filename = NULL;
-    }
-  }
-
+  char* filename = FindModuleFile(arena, path, name, ".mdecl");
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.mdecl on search path", name);
+    fprintf(stderr, "unable to locate %s.mdecl on search path\n", name);
     return NULL;
   }
 
@@ -57,4 +82,34 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
   }
 
   return mdecl;
+}
+
+// FbldLoadMDefn -- see documentation in fbld.h
+FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv)
+{
+  char* filename = FindModuleFile(arena, path, name, ".mdefn");
+  if (filename == NULL) {
+    fprintf(stderr, "unable to locate %s.mdefn on search path", name);
+    return NULL;
+  }
+
+  // Parse the module.
+  FbldMDefn* mdefn = FbldParseMDefn(arena, filename);
+  if (mdefn == NULL) {
+    fprintf(stderr, "failed to parse module from %s\n", filename);
+    return NULL;
+  }
+
+  assert(strcmp(mdefn->name->name, name) == 0);
+
+  // Load all modules that this one depends on.
+  // TODO: detect and abort if the module recursively depends on itself.
+  for (size_t i = 0; i < mdefn->deps->size; ++i) {
+    if (!FbldLoadMDecl(arena, path, mdefn->deps->xs[i]->name, mdeclv)) {
+      fprintf(stderr, "failed to load module required by %s\n", name);
+      return NULL;
+    }
+  }
+
+  return mdefn;
 }

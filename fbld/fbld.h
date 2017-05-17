@@ -237,7 +237,7 @@ typedef struct {
 //   returned.
 //
 // Inputs:
-//   arena - The arena to use for allocating the parsed definition.
+//   arena - The arena to use for allocating the parsed declaration.
 //   path - A search path used to find the module declaration on disk.
 //   name - The name of the module whose declaration to load.
 //   mdeclv - A vector of module declarations that have already been
@@ -259,6 +259,39 @@ typedef struct {
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations if there is no error.
 FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
+
+// FbldLoadMDefn --
+//   Load the module definition for the module with the given name.
+//   The module definition and all of the module declarations it depends on
+//   are located according to the given search path, parsed, checked, and
+//   for the module declarations added to the collection of loaded module
+//   declarations before the loaded module definition is returned.
+//
+// Inputs:
+//   arena - The arena to use for allocating the loaded definition and
+//           declarations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   name - The name of the module whose definition to load.
+//   mdeclv - A vector of module declarations that have already been
+//            loaded using FbldLoadMDecl or FbldLoadMDefn.
+//
+// Results:
+//   The loaded module definition, or NULL if the module definition could
+//   not be loaded.
+//
+// Side effects:
+//   Read the module definition and any other required module delacarations
+//   from disk and add the module declarations to the mdeclv vector.
+//   Prints an error message to stderr if the module definition or any other
+//   required module declarations cannot be loaded, either because they cannot
+//   be found on the path, fail to parse, or fail to check.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the definition and all loaded declarations if there is no error.
+FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
 
 #endif // FBLD_H_
 

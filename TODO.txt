@@ -1,7 +1,6 @@
 Fbld Kickoff:
-* Implement FbldLoadMDefn, which loads a module definition and required module
-  declarations.
 * Write code to generate FblcProgram from Fbld.
+  - by lazily construction FblcDecls as referenced from the main entry point.
 * Implement code to check an mdecl against all mdecls it depends on.
 * Implement code to check an mdefn against all mdecls it depends on.
 * Implement code to check an mdefn against its own mdecl.
