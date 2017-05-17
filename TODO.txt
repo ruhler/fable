@@ -1,13 +1,14 @@
 Fbld Kickoff:
-* Write a function to ensure a list of required mdecls is parsed, loaded, and
-  checked (check can be a noop for now).
+* Implement FbldLoadMDefn, which loads a module definition and required module
+  declarations.
+* Write code to generate FblcProgram from Fbld.
 * Implement code to check an mdecl against all mdecls it depends on.
-* Be able to parse both mdecls and mdefns from same bison grammar.
-* Write a function to check an mdefn against all mdecls it depends on.
-* Write a function to check an mdefn against its own mdecl.
-* Write a function to ensure a list of required mdefns is parsed, loaded, and
-  checked.
+* Implement code to check an mdefn against all mdecls it depends on.
+* Implement code to check an mdefn against its own mdecl.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
+
+Fbld Cleanup:
+* Better organize the contents parse.y.
 
 Fblc Front End Cleanup:
 * Make fblcs structure standalone rather than tied to fblc structure.
@@ -21,6 +22,9 @@ General Cleanup:
  - Document allocations for every function that takes an FblcArena,
    specifically, what the caller should do to free all allocations.
  - Increase test code coverage as much as reasonably possible.
+
+MiniGolf Arc:
+* Design 2D minigolf game and implement.
 
 Snake Arc:
 * Make food appear randomly instead of at the tail.

@@ -102,29 +102,30 @@ int main(int argc, char* argv[])
   strncpy(entry_module, entry, entry_at - entry);
   entry_module[entry_at - entry] = '\0';
 
-  char mdecl_path[strlen(path) + 1 + strlen(entry_module) + strlen(".mdecl") + 1];
-  sprintf(mdecl_path, "%s/%s.mdecl", path, entry_module);
-  if (access(mdecl_path, F_OK) < 0) {
-    fprintf(stderr, "unable to access %s\n", mdecl_path);
-    return 1;
-  }
-
-  char mdefn_path[strlen(path) + 1 + strlen(entry_module) + strlen(".mdefn") + 1];
-  sprintf(mdefn_path, "%s/%s.mdefn", path, entry_module);
-  if (access(mdefn_path, F_OK) < 0) {
-    fprintf(stderr, "unable to access %s\n", mdefn_path);
-    return 1;
-  }
-
   // Simply pass allocations through to malloc. We won't be able to track or
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FbldMDecl* mdecl = FbldParseMDecl(arena, mdecl_path);
+  FbldStringV search_path;
+  FblcVectorInit(arena, search_path);
+  FblcVectorAppend(arena, search_path, path);
+
+  FbldMDeclV mdeclv;
+  FblcVectorInit(arena, mdeclv);
+
+  FbldMDecl* mdecl = FbldLoadMDecl(arena, &search_path, entry_module, &mdeclv);
   if (mdecl == NULL) {
-    fprintf(stderr, "failed to parse mdecl at %s\n", mdecl_path);
+    fprintf(stderr, "failed to load mdecl for %s\n", entry_module);
+    return 1;
+  }
+
+
+  char mdefn_path[strlen(path) + 1 + strlen(entry_module) + strlen(".mdefn") + 1];
+  sprintf(mdefn_path, "%s/%s.mdefn", path, entry_module);
+  if (access(mdefn_path, F_OK) < 0) {
+    fprintf(stderr, "unable to access %s\n", mdefn_path);
     return 1;
   }
 
@@ -138,7 +139,6 @@ int main(int argc, char* argv[])
   fprintf(stderr, "path: %s\n", path);
   fprintf(stderr, "entry: %s\n", entry);
   fprintf(stderr, "entry_module: %s\n", entry_module);
-  fprintf(stderr, "mdecl_path: %s\n", mdecl_path);
   fprintf(stderr, "mdefn_path: %s\n", mdefn_path);
   fprintf(stderr, "TODO: finish implementing fbld-test.\n");
   return 1;

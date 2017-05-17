@@ -139,6 +139,13 @@ typedef struct {
   FbldDeclV* decls;
 } FbldMDecl;
 
+// FbldMDeclV --
+//   A vector of fbld module declarations.
+typedef struct {
+  size_t size;
+  FbldMDecl** xs;
+} FbldMDeclV;
+
 // FbldDefn --
 //   A tagged union of fbdl definitions. All defns have the same initial
 //   layout as FbldDefn. The tag from the decl field can be used to determine
@@ -175,7 +182,6 @@ typedef struct {
   FbldNameV* deps;
   FbldDefnV* defns;
 } FbldMDefn;
-
 
 // FbldParseMDecl --
 //   Parse the module declaration from the file with the given filename.
@@ -214,6 +220,45 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename);
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned definition if there is no error.
 FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename);
+
+// FbldStringV --
+//   A vector of char* used for describing fbld search paths.
+typedef struct {
+  size_t size;
+  const char** xs;
+} FbldStringV;
+
+// FbldLoadMDecl --
+//   Load the module declaration for the module with the given name.
+//   If the module declaration has already been loaded, it is returned as is.
+//   Otherwise the module declaration and all of its dependencies are located
+//   according to the given search path, parsed, checked, and added to the
+//   collection of loaded modules before the requested module declaration is
+//   returned.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed definition.
+//   path - A search path used to find the module declaration on disk.
+//   name - The name of the module whose declaration to load.
+//   mdeclv - A vector of module declarations that have already been
+//            loaded using FbldLoadMDecl.
+//
+// Results:
+//   The loaded module declaration, or NULL if the module declaration could
+//   not be loaded.
+//
+// Side effects:
+//   Read the module delacaration and any other required module delacarations
+//   from disk and add them to the mdeclv vector.
+//   Prints an error message to stderr if the module declaration or any other
+//   required module declarations cannot be loaded, either because they cannot
+//   be found on the path, fail to parse, or fail to check.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of all loaded declarations if there is no error.
+FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
 
 #endif // FBLD_H_
 
