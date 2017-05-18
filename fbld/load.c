@@ -113,3 +113,24 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, 
 
   return mdefn;
 }
+
+// FbldLoadModules -- see documentation in fbld.h
+bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv)
+{
+  FbldMDefn* mdefn = FbldLoadMDefn(arena, path, name, mdeclv);
+  if (mdefn == NULL) {
+    return false;
+  }
+
+  FblcVectorAppend(arena, *mdefnv, mdefn);
+
+  // Load all modules that this one depends on.
+  // TODO: detect and abort if the module recursively depends on itself.
+  for (size_t i = 0; i < mdefn->deps->size; ++i) {
+    if (!FbldLoadModules(arena, path, mdefn->deps->xs[i]->name, mdeclv, mdefnv)) {
+      fprintf(stderr, "failed to load module required by %s\n", name);
+      return false;
+    }
+  }
+  return true;
+}

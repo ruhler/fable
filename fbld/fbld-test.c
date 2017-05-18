@@ -115,15 +115,10 @@ int main(int argc, char* argv[])
   FbldMDeclV mdeclv;
   FblcVectorInit(arena, mdeclv);
 
-  FbldMDecl* mdecl = FbldLoadMDecl(arena, &search_path, entry_module, &mdeclv);
-  if (mdecl == NULL) {
-    fprintf(stderr, "failed to load mdecl for %s\n", entry_module);
-    return 1;
-  }
+  FbldMDefnV mdefnv;
+  FblcVectorInit(arena, mdefnv);
 
-  FbldMDefn* mdefn = FbldLoadMDefn(arena, &search_path, entry_module, &mdeclv);
-  if (mdefn == NULL) {
-    fprintf(stderr, "failed to parse mdefn for %s\n", entry_module);
+  if (!FbldLoadModules(arena, &search_path, entry_module, &mdeclv, &mdefnv)) {
     return 1;
   }
 

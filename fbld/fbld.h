@@ -182,6 +182,13 @@ typedef struct {
   FbldNameV* deps;
   FbldDefnV* defns;
 } FbldMDefn;
+
+// FbldMDefnV --
+//   A vector of FbldMDefns.
+typedef struct {
+  size_t size;
+  FbldMDefn** xs;
+} FbldMDefnV;
 
 // FbldParseMDecl --
 //   Parse the module declaration from the file with the given filename.
@@ -293,5 +300,36 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
 //   size of the definition and all loaded declarations if there is no error.
 FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
 
+// FbldLoadModules --
+//   Load all module definitions and declarations required to compile the
+//   named module.
+//   All of the module declarations and definitions the named module depends
+//   on are located according to the given search path, parsed, checked, and
+//   fadded to the collections of loaded module declarations and definitions.
+//
+// Inputs:
+//   arena - The arena to use for allocating the loaded definition and
+//           declarations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   name - The name of a module whose self and dependencies to load.
+//   mdeclv - A vector of module declarations that have already been
+//            loaded using FbldLoadMDecl or FbldLoadMDefn or FbldLoadModule.
+//   mdefnv - A vector of module definitions that have already been
+//            loaded using FbldLoadMDecl or FbldLoadMDefn or FbldLoadModule.
+//
+// Results:
+//   True on success, false on error.
+//
+// Side effects:
+//   Reads required module delacarations and definitions from disk and adds
+//   them to the mdeclv and mdefnv vectors.
+//   Prints an error message to stderr if there is an error.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of all loaded declarations and definitions if there is no error.
+bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
 #endif // FBLD_H_
 
