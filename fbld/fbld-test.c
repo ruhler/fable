@@ -92,16 +92,6 @@ int main(int argc, char* argv[])
   argv += 4;
   argc -= 4;
 
-  const char* entry_at = strchr(entry, '@');
-  if (entry_at == NULL) {
-    fprintf(stderr, "entry should be a qualified name of the form 'module@process', but got '%s'\n", entry);
-    return 1;
-  }
-
-  char entry_module[entry_at - entry + 1];
-  strncpy(entry_module, entry, entry_at - entry);
-  entry_module[entry_at - entry] = '\0';
-
   // Simply pass allocations through to malloc. We won't be able to track or
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
@@ -112,20 +102,56 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, search_path);
   FblcVectorAppend(arena, search_path, path);
 
+  // Parse the entry.
+  const char* entry_at = strchr(entry, '@');
+  if (entry_at == NULL) {
+    fprintf(stderr, "entry should be a qualified name of the form 'module@process', but got '%s'\n", entry);
+    return 1;
+  }
+  char entry_module_name[entry_at - entry + 1];
+  strncpy(entry_module_name, entry, entry_at - entry);
+  entry_module_name[entry_at - entry] = '\0';
+  FbldLoc entry_module_loc = {
+    .source = entry,
+    .line = 1,
+    .col = 1
+  };
+  FbldNameL entry_module = {
+    .name = entry_module_name,
+    .loc = &entry_module_loc
+  };
+  FbldLoc entry_name_loc = {
+    .source = entry,
+    .line = 1,
+    .col = entry_at - entry + 2
+  };
+  FbldNameL entry_name = {
+    .name = entry_at + 1,
+    .loc = &entry_name_loc
+  };
+  FbldQualifiedName entry_entity = {
+    .module = &entry_module,
+    .name = &entry_name
+  };
+
   FbldMDeclV mdeclv;
   FblcVectorInit(arena, mdeclv);
 
   FbldMDefnV mdefnv;
   FblcVectorInit(arena, mdefnv);
 
-  if (!FbldLoadModules(arena, &search_path, entry_module, &mdeclv, &mdefnv)) {
+  if (!FbldLoadModules(arena, &search_path, entry_module.name, &mdeclv, &mdefnv)) {
+    fprintf(stderr, "failed to load modules");
+    return 1;
+  }
+
+  FblcDecl* decl = FbldCompile(arena, &mdefnv, &entry_entity);
+  if (decl == NULL) {
+    fprintf(stderr, "failed to compile");
     return 1;
   }
 
   fprintf(stderr, "script: %s\n", script);
-  fprintf(stderr, "path: %s\n", path);
-  fprintf(stderr, "entry: %s\n", entry);
-  fprintf(stderr, "entry_module: %s\n", entry_module);
   fprintf(stderr, "TODO: finish implementing fbld-test.\n");
   return 1;
 }

@@ -265,7 +265,7 @@ typedef struct {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations if there is no error.
-FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
+FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv);
 
 // FbldLoadMDefn --
 //   Load the module definition for the module with the given name.
@@ -298,7 +298,7 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the definition and all loaded declarations if there is no error.
-FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
+FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv);
 
 // FbldLoadModules --
 //   Load all module definitions and declarations required to compile the
@@ -330,6 +330,22 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, 
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations and definitions if there is no error.
-bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
+bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
+
+// FbldCompile --
+//   Compile an fbld program to fblc.
+//
+// Inputs:
+//   arena - Arena to use for allocating the fblc program.
+//   mdefnv - Modules describing a valid fbld program.
+//   entity - The name of the main entry to compile the program for.
+//
+// Result:
+//   A complete fblc program for running the named entity.
+//
+// Side effects:
+//   The behavior is undefined if the fbld program is not a valid fbld
+//   program.
+FblcDecl* FbldCompile(FblcArena* arena, FbldMDefnV* mdefnv, FbldQualifiedName* entity);
 #endif // FBLD_H_
 

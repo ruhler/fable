@@ -10,7 +10,7 @@
 #include "fblc.h"
 #include "fbld.h"
 
-static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension);
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, FbldName name, const char* extension);
 
 
 // FindModuleFile --
@@ -32,7 +32,7 @@ static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* nam
 // Allocations:
 //   The user is responsible for freeing the returned filename if not null
 //   using the arena passed to this function.
-static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension)
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, FbldName name, const char* extension)
 {
   for (size_t i = 0; i < path->size; ++i) {
     size_t length = strlen(path->xs[i]) + 1 + strlen(name) + strlen(extension) + 1;
@@ -47,7 +47,7 @@ static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* nam
 }
 
 // FbldLoadMDecl -- see documentation in fbld.h
-FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv)
+FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv)
 {
   // Return the existing module declaration if it has already been loaded.
   for (size_t i = 0; i < mdeclv->size; ++i) {
@@ -85,7 +85,7 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
 }
 
 // FbldLoadMDefn -- see documentation in fbld.h
-FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv)
+FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv)
 {
   char* filename = FindModuleFile(arena, path, name, ".mdefn");
   if (filename == NULL) {
@@ -115,7 +115,7 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, 
 }
 
 // FbldLoadModules -- see documentation in fbld.h
-bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv)
+bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv)
 {
   FbldMDefn* mdefn = FbldLoadMDefn(arena, path, name, mdeclv);
   if (mdefn == NULL) {

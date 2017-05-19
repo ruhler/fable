@@ -1,6 +1,8 @@
 Fbld Kickoff:
 * Write code to generate FblcProgram from Fbld.
   - by lazily construction FblcDecls as referenced from the main entry point.
+  - Decide whether compilation can fail and what to do then.
+  - Properly handle unqualified names as Qualified with NULL?
 * Implement code to check an mdecl against all mdecls it depends on.
 * Implement code to check an mdefn against all mdecls it depends on.
 * Implement code to check an mdefn against its own mdecl.
