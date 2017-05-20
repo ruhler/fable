@@ -46,7 +46,78 @@ typedef struct {
   CompiledModule** xs;
 } CompiledModuleV;
 
+static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldExpr* expr);
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldQualifiedName* entity);
+
+// CompileExpr --
+//   Compile the given fbld expression.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   mdefnv - vector of module definitions in which to find the entities to compile
+//   codev - collection of entities that have already been compiled.
+//   mctx - The module definition to use as the context for unqualified entities.
+//   cctx - The code already compiled for the mctx module.
+//   expr - the fbld expression to compile.
+//   TODO: Add context for tracking variable ids.
+//
+// Result:
+//   An fblc expression compiled from the given fbld expression.
+//
+// Side effects:
+//   Compiles and updates codev with the compiled code for every other entity
+//   the expression depends on that has not already been compiled.
+//
+//   The behavior is undefined if the modules or expression is not well
+//   formed.
+//
+// Allocations:
+//   The caller is responsible for tracking the allocations through the arena
+//   and freeing them when no longer needed. This function will allocate
+//   memory proportional to the size of the expression and all declarations
+//   compiled.
+static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldExpr* expr)
+{
+  switch (expr->tag) {
+    case FBLC_VAR_EXPR:
+      assert(false && "TODO: Compile var expr");
+      return NULL;
+
+    case FBLC_APP_EXPR: {
+      FbldAppExpr* source = (FbldAppExpr*)expr;
+      FblcAppExpr* app_expr = arena->alloc(arena, sizeof(FblcAppExpr));
+      app_expr->_base.tag = FBLC_APP_EXPR;
+      app_expr->_base.id = 0xDEAD;    // unused
+      app_expr->func = CompileDecl(arena, mdefnv, codev, mctx, cctx, source->func);
+      FblcVectorInit(arena, app_expr->argv);
+      for (size_t i = 0; i < source->argv->size; ++i) {
+        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, mctx, cctx, source->argv->xs[i]);
+        FblcVectorAppend(arena, app_expr->argv, arg);
+      }
+      return &app_expr->_base;
+    }
+
+    case FBLC_UNION_EXPR:
+      assert(false && "TODO: Compile union expr");
+      return NULL;
+
+    case FBLC_ACCESS_EXPR:
+      assert(false && "TODO: Compile access expr");
+      return NULL;
+
+    case FBLC_COND_EXPR:
+      assert(false && "TODO: Compile cond expr");
+      return NULL;
+
+    case FBLC_LET_EXPR:
+      assert(false && "TODO: Compile let expr");
+      return NULL;
+
+    default:
+      assert(false && "Invalid expr tag");
+      return NULL;
+  }
+}
 
 // CompileDecl --
 //   Compile as needed and return the fblc declaration for the named fbld
@@ -139,9 +210,21 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
       assert(false && "TODO: Compile a union declaration");
       break;
 
-    case FBLD_STRUCT_DECL:
-      assert(false && "TODO: Compile a struct declaration");
+    case FBLD_STRUCT_DECL: {
+      FbldStructDefn* struct_defn = (FbldStructDefn*)defn;
+      FblcStructDecl* struct_decl = arena->alloc(arena, sizeof(FblcStructDecl));
+      struct_decl->_base.tag = FBLC_STRUCT_DECL;
+      struct_decl->_base.id = 0xDEAD;   // id field unused
+      FblcVectorInit(arena, struct_decl->fieldv);
+      for (size_t i = 0; i < struct_defn->decl->fieldv->size; ++i) {
+        FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
+            arena, mdefnv, codev, mctx, cctx,
+            struct_defn->decl->fieldv->xs[i]->type);
+        FblcVectorAppend(arena, struct_decl->fieldv, type);
+      }
+      decl = &struct_decl->_base;
       break;
+    }
 
     case FBLD_FUNC_DECL: {
       FbldFuncDefn* func_defn = (FbldFuncDefn*)defn;
@@ -158,8 +241,8 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
       func_decl->return_type = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, mctx, cctx,
             func_defn->decl->return_type);
-      //func_decl->body = CompileExpr(
-      assert(false && "TODO: Compile function body");
+      func_decl->body = CompileExpr(
+            arena, mdefnv, codev, mctx, cctx, func_defn->body);
       decl = &func_decl->_base;
       break;
     }

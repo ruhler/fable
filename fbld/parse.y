@@ -190,6 +190,13 @@ expr:
     }
   | qualified_name '(' expr_list ')' {
       FbldAppExpr* app_expr = arena->alloc(arena, sizeof(FbldAppExpr));
+      app_expr->_base.tag = FBLC_APP_EXPR;
+      // TODO: Use the location at the beginning of the expression, not the
+      // one at the end.
+      app_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
+      app_expr->_base.loc->source = loc->source;
+      app_expr->_base.loc->line = loc->line;
+      app_expr->_base.loc->col = loc->col;
       app_expr->func = $1;
       app_expr->argv = $3;
       $$ = &app_expr->_base;
