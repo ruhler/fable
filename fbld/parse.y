@@ -9,10 +9,24 @@
 
   #include "fbld.h"
 
+  // Lex --
+  //   State for the lexer.
+  //
+  // Fields:
+  //   c - The next character in the input stream. EOF is used to indicate the
+  //   end of the input stream.
+  //   loc - The location corresponding to the character c.
+  //   fin - The input stream.
+  typedef struct {
+    int c;
+    FbldLoc loc;
+    FILE* fin;
+  } Lex;
+
   static bool IsNameChar(int c);
-  static int GetNextChar(FILE* fin, FbldLoc* loc);
-  static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc);
-  static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg);
+  static void ReadNextChar(Lex* lex);
+  static int yylex(FblcArena* arena, Lex* lex);
+  static void yyerror(FblcArena* arena, Lex* lex, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg);
 %}
 
 %union {
@@ -33,7 +47,7 @@
 }
 
 %define parse.error verbose
-%param {FblcArena* arena} {FILE* fin} {FbldLoc* loc}
+%param {FblcArena* arena} {Lex* lex}
 %parse-param {FbldMDecl** mdecl_out} {FbldMDefn** mdefn_out}
 
 %token END 0 "end of file"
@@ -194,9 +208,9 @@ expr:
       // TODO: Use the location at the beginning of the expression, not the
       // one at the end.
       app_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
-      app_expr->_base.loc->source = loc->source;
-      app_expr->_base.loc->line = loc->line;
-      app_expr->_base.loc->col = loc->col;
+      app_expr->_base.loc->source = lex->loc.source;
+      app_expr->_base.loc->line = lex->loc.line;
+      app_expr->_base.loc->col = lex->loc.col;
       app_expr->func = $1;
       app_expr->argv = $3;
       $$ = &app_expr->_base;
@@ -289,86 +303,82 @@ static bool IsNameChar(int c)
   return isalnum(c) || c == '_';
 }
 
-// GetNextChar --
-//   Return the next character from the given file, while keeping track of
-//   location information.
+// ReadNextChar --
+//   Advance to the next character in the input stream.
 //
 // Inputs:
-//   fin - The file to read from.
-//   loc - A pointer to the location to update.
+//   lex - The context of the lexer to advance.
 //
 // Results:
-//   The next character read from the file.
+//   None.
 //
 // Side effects:
-//   Updates loc based on the character and advances the file pointer by one
-//   character.
-static int GetNextChar(FILE* fin, FbldLoc* loc)
+//   Updates the character, location, and input stream of the lex context.
+static void ReadNextChar(Lex* lex)
 {
-  int c = fgetc(fin);
-  if (c == '\n') {
-    loc->line++;
-    loc->col = 1;
-  } else if (c != EOF) {
-    loc->col++;
+  lex->c = fgetc(lex->fin);
+  if (lex->c == '\n') {
+    lex->loc.line++;
+    lex->loc.col = 1;
+  } else if (lex->c != EOF) {
+    lex->loc.col++;
   }
-  return c;
 }
 
 // yylex -- 
-//   Return the next token in the given input stream.
+//   Return the next token in the input stream for the given lex context.
 //   This is the lexer for the bison generated parser.
 //
 // Inputs:
 //   arena - Arena used for allocating names.
-//   fin - The stream to parse the next token from.
-//   loc - A pointer to the current parse location.
+//   lex - The lex context to parse the next token from.
 // 
 // Results:
 //   The id of the next terminal symbol in the input stream.
 //
 // Side effects:
 //   Sets yylval with the semantic value of the next token in the input
-//   stream, advances the stream to the subsequent token and updates loc
-//   accordingly.
-static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc)
+//   stream, advances the stream to the subsequent token and updates the lex
+//   loc accordingly.
+static int yylex(FblcArena* arena, Lex* lex)
 {
-  int c = GetNextChar(fin, loc);
-
   // Skip past white space and comments.
-  bool is_comment_start = (c == '#');
-  while (isspace(c) || is_comment_start) {
-    c = GetNextChar(fin, loc);
+  bool is_comment_start = (lex->c == '#');
+  while (isspace(lex->c) || is_comment_start) {
+    ReadNextChar(lex);
     if (is_comment_start) {
-      while (c != EOF && c != '\n') {
-        c = GetNextChar(fin, loc);
+      while (lex->c != EOF && lex->c != '\n') {
+        ReadNextChar(lex);
       }
     }
-    is_comment_start = (c == '#');
+    is_comment_start = (lex->c == '#');
   }
-
-  if (c == EOF) {
+  
+  if (lex->c == EOF) {
     return END;
   }
 
-  if (!IsNameChar(c)) {
+  if (!IsNameChar(lex->c)) {
+    // Return the character and set the lexer character to whitespace so it
+    // will be skipped over the next time we go to read a token from the
+    // stream.
+    int c = lex->c;
+    lex->c = ' ';
     return c;
   };
 
   yylval.name = arena->alloc(arena, sizeof(FbldNameL));
   yylval.name->loc = arena->alloc(arena, sizeof(FbldLoc));
-  yylval.name->loc->source = loc->source;
-  yylval.name->loc->line = loc->line;
-  yylval.name->loc->col = loc->col-1;
+  yylval.name->loc->source = lex->loc.source;
+  yylval.name->loc->line = lex->loc.line;
+  yylval.name->loc->col = lex->loc.col;
 
   struct { size_t size; char* xs; } namev;
   FblcVectorInit(arena, namev);
-  while (IsNameChar(c)) {
-    FblcVectorAppend(arena, namev, c);
-    c = GetNextChar(fin, loc);
+  while (IsNameChar(lex->c)) {
+    FblcVectorAppend(arena, namev, lex->c);
+    ReadNextChar(lex);
   }
-  ungetc(c == '\n' ? ' ' : c, fin);
-  loc->col--;
   FblcVectorAppend(arena, namev, '\0');
   yylval.name->name = namev.xs;
 
@@ -407,9 +417,9 @@ static int yylex(FblcArena* arena, FILE* fin, FbldLoc* loc)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(FblcArena* arena, FILE* fin, FbldLoc* loc, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg)
+static void yyerror(FblcArena* arena, Lex* lex, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg)
 {
-  fprintf(stderr, "%s:%d:%d: error: %s\n", loc->source, loc->line, loc->col, msg);
+  fprintf(stderr, "%s:%d:%d: error: %s\n", lex->loc.source, lex->loc.line, lex->loc.col, msg);
 }
 
 // FbldParseMDecl -- see documentation in fbld.h
@@ -420,10 +430,16 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
     fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
     return NULL;
   }
-  ungetc('(', fin);
-  FbldLoc loc = { .source = filename, .line = 1, .col = 0 };
+
+  // '(' is the magic symbol that tells the parse to parse a module
+  // declaration instead of a module definition.
+  Lex lex = {
+    .c = '(',
+    .loc = { .source = filename, .line = 1, .col = 0 },
+    .fin = fin
+  };
   FbldMDecl* mdecl = NULL;
-  yyparse(arena, fin, &loc, &mdecl, NULL);
+  yyparse(arena, &lex, &mdecl, NULL);
   return mdecl;
 }
 
@@ -435,9 +451,15 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
     fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
     return NULL;
   }
-  ungetc(')', fin);
-  FbldLoc loc = { .source = filename, .line = 1, .col = 0 };
+
+  // ')' is the magic symbol that tells the parse to parse a module
+  // definition instead of a module declaration.
+  Lex lex = {
+    .c = ')',
+    .loc = { .source = filename, .line = 1, .col = 0 },
+    .fin = fin
+  };
   FbldMDefn* mdefn = NULL;
-  yyparse(arena, fin, &loc, NULL, &mdefn);
+  yyparse(arena, &lex, NULL, &mdefn);
   return mdefn;
 }
