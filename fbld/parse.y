@@ -53,6 +53,15 @@
 %parse-param {FbldMDecl** mdecl_out} {FbldMDefn** mdefn_out}
 
 %token END 0 "end of file"
+
+// Bison grammars only support a single start symbol, but we sometimes want to
+// parse different things. To get around this limitation in bison, we insert a
+// single-character non-whitespace, non-name indicator token at the beginning
+// of the input stream to indicate the start symbol to use depending on what
+// we want to parse.
+%token START_MDECL 1 "mdecl parse start indicator"
+%token START_MDEFN 2 "mdefn parse start indicator"
+
 %token <name> NAME
 
 // Keywords. These have type 'name' because in many contexts they are treated
@@ -86,7 +95,7 @@
 // This grammar is used for parsing both module declarations and
 // definitions.  We insert an arbitrary, artificial single-character token
 // to indicate which we want to parse.
-start: '(' mdecl | ')' mdefn ;
+start: START_MDECL mdecl | START_MDEFN mdefn ;
  
 mdecl: "mdecl" name '(' name_list ')' '{' decl_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDecl));
@@ -442,10 +451,8 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
     return NULL;
   }
 
-  // '(' is the magic symbol that tells the parse to parse a module
-  // declaration instead of a module definition.
   Lex lex = {
-    .c = '(',
+    .c = START_MDECL,
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
@@ -464,10 +471,8 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
     return NULL;
   }
 
-  // ')' is the magic symbol that tells the parse to parse a module
-  // definition instead of a module declaration.
   Lex lex = {
-    .c = ')',
+    .c = START_MDEFN,
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
