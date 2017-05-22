@@ -46,8 +46,79 @@ typedef struct {
   CompiledModule** xs;
 } CompiledModuleV;
 
+static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name);
+static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name);
+//static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
 static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldExpr* expr);
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldQualifiedName* entity);
+
+// LookupMDefn --
+//   Look up the module definition with the given name.
+//
+// Inputs:
+//   mdefnv - The set of all module definitions.
+//   name - The name of the module definition to look up.
+//
+// Returns:
+//   The module definition with the given name, or NULL if no such module
+//   could be found.
+//
+// Side effects:
+//   None.
+static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name)
+{
+  for (size_t i = 0; i < mdefnv->size; ++i) {
+    if (strcmp(mdefnv->xs[i]->name->name, name->name) == 0) {
+      return mdefnv->xs[i];
+    }
+  }
+  return NULL;
+}
+
+// LookupDefn --
+//   Look up the definition with the given name in given module defintion.
+//
+// Inputs:
+//   mdefn - The module to look up the definition in.
+//   name - The name of the definition to look up.
+//
+// Returns:
+//   The definition with the given name, or NULL if no such definition
+//   could be found.
+//
+// Side effects:
+//   None.
+static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name)
+{
+  for (size_t i = 0; i < mdefn->defns->size; ++i) {
+    if (strcmp(mdefn->defns->xs[i]->decl->name->name, name->name) == 0) {
+      return mdefn->defns->xs[i];
+    }
+  }
+  return NULL;
+}
+
+// LookupQDefn --
+//   Look up the qualified definition with the given name in the given program.
+//
+// Inputs:
+//   mdefnv - The collection of modules to look up the definition in.
+//   entity - The name of the entity to look up.
+//
+// Returns:
+//   The definition with the given name, or NULL if no such definition
+//   could be found.
+//
+// Side effects:
+//   None.
+//static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
+//{
+//  FbldMDefn* mdefn = LookupMDefn(mdefnv, entity->module);
+//  if (mdefn == NULL) {
+//    return NULL;
+//  }
+//  return LookupDefn(mdefn, entity->name);
+//}
 
 // CompileExpr --
 //   Compile the given fbld expression.
@@ -153,14 +224,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
 {
   // Find the module and code context for the entity.
   if (entity->module != NULL) {
-    mctx = NULL;
-    for (size_t i = 0; i < mdefnv->size; ++i) {
-      if (strcmp(mdefnv->xs[i]->name->name, entity->module->name) == 0) {
-        mctx = mdefnv->xs[i];
-        break;
-      }
-    }
-
+    mctx = LookupMDefn(mdefnv, entity->module);
     cctx = NULL;
     for (size_t i = 0; i < codev->size; ++i) {
       if (strcmp(codev->xs[i]->name, entity->module->name) == 0) {
@@ -187,13 +251,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
   }
 
   // Find the fbld definition of the entity.
-  FbldDefn* defn = NULL;
-  for (size_t i = 0; i < mctx->defns->size; ++i) {
-    if (strcmp(mctx->defns->xs[i]->decl->name->name, entity->name->name) == 0) {
-      defn = mctx->defns->xs[i];
-      break;
-    }
-  }
+  FbldDefn* defn = LookupDefn(mctx, entity->name);
   assert(defn != NULL && "Entiry definition not found");
 
   FblcDecl* decl = NULL;
