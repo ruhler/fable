@@ -25,10 +25,19 @@
     const char* sin;
   } Lex;
 
+  // ParseResult --
+  //   Used to store the final parsed object depending on what kind of object
+  //   is parsed.
+  typedef union {
+    FbldMDecl* mdecl;
+    FbldMDefn* mdefn;
+    FbldValue* value;
+  } ParseResult;
+
   static bool IsNameChar(int c);
   static void ReadNextChar(Lex* lex);
   static int yylex(FblcArena* arena, Lex* lex);
-  static void yyerror(FblcArena* arena, Lex* lex, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg);
+  static void yyerror(FblcArena* arena, Lex* lex, ParseResult* result, const char* msg);
 %}
 
 %union {
@@ -46,11 +55,13 @@
   FbldNameV* namev;
   FbldTypedNameV* tnamev;
   FbldExprV* exprv;
+  FbldValue* value;
+  FbldValueV* valuev;
 }
 
 %define parse.error verbose
 %param {FblcArena* arena} {Lex* lex}
-%parse-param {FbldMDecl** mdecl_out} {FbldMDefn** mdefn_out}
+%parse-param {ParseResult* result}
 
 %token END 0 "end of file"
 
@@ -61,6 +72,7 @@
 // we want to parse.
 %token START_MDECL 1 "mdecl parse start indicator"
 %token START_MDEFN 2 "mdefn parse start indicator"
+%token START_VALUE 3 "value parse start indicator"
 
 %token <name> NAME
 
@@ -89,20 +101,25 @@
 %type <namev> name_list
 %type <tnamev> field_list non_empty_field_list
 %type <exprv> expr_list non_empty_expr_list
+%type <value> value
+%type <valuev> value_list
 
 %%
 
 // This grammar is used for parsing both module declarations and
 // definitions.  We insert an arbitrary, artificial single-character token
 // to indicate which we want to parse.
-start: START_MDECL mdecl | START_MDEFN mdefn ;
+start:
+     START_MDECL mdecl { result->mdecl = $2; }
+   | START_MDEFN mdefn { result->mdefn = $2; }
+   | START_VALUE value { result->value = $2; }
+   ;
  
 mdecl: "mdecl" name '(' name_list ')' '{' decl_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDecl));
           $$->name = $2;
           $$->deps = $4;
           $$->decls = $7;
-          *mdecl_out = $$;
         }
      ;
 
@@ -111,7 +128,6 @@ mdefn: "mdefn" name '(' name_list ')' '{' defn_list '}' ';' {
           $$->name = $2;
           $$->deps = $4;
           $$->defns = $7;
-          *mdefn_out = $$;
         }
      ;
 
@@ -292,6 +308,36 @@ qualified_name:
       $$->name = $3;
     }
   ;
+
+value:
+    qualified_name '(' value_list ')' {
+      $$ = arena->alloc(arena, sizeof(FbldValue));
+      $$->kind = FBLD_STRUCT_KIND;
+      $$->type = $1;
+      $$->field = NULL;
+      $$->argv = $3;
+    }
+  | qualified_name ':' name '(' value ')' {
+      $$ = arena->alloc(arena, sizeof(FbldValue));
+      $$->kind = FBLD_UNION_KIND;
+      $$->type = $1;
+      $$->field = $3;
+      $$->argv = arena->alloc(arena, sizeof(FbldValueV));
+      FblcVectorInit(arena, *$$->argv);
+      FblcVectorAppend(arena, *$$->argv, $5);
+    }
+  ;
+
+value_list:
+    %empty {
+      $$ = arena->alloc(arena, sizeof(FbldValueV));
+      FblcVectorInit(arena, *$$);
+    }
+  | value_list ',' value {
+      FblcVectorAppend(arena, *$1, $3);
+      $$ = $1;
+    }
+  ;
            
 %%
 
@@ -428,8 +474,7 @@ static int yylex(FblcArena* arena, Lex* lex)
 //   arena - unused.
 //   fin - unused.
 //   loc - The location of the next item in the input stream.
-//   mdecl_out - unused.
-//   mdefn_out - unused.
+//   result - unused.
 //   msg - The error message.
 //
 // Results:
@@ -437,7 +482,7 @@ static int yylex(FblcArena* arena, Lex* lex)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(FblcArena* arena, Lex* lex, FbldMDecl** mdecl_out, FbldMDefn** mdefn_out, const char* msg)
+static void yyerror(FblcArena* arena, Lex* lex, ParseResult* result, const char* msg)
 {
   fprintf(stderr, "%s:%d:%d: error: %s\n", lex->loc.source, lex->loc.line, lex->loc.col, msg);
 }
@@ -457,9 +502,10 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
     .fin = fin,
     .sin = NULL
   };
-  FbldMDecl* mdecl = NULL;
-  yyparse(arena, &lex, &mdecl, NULL);
-  return mdecl;
+  ParseResult result;
+  result.mdecl = NULL;
+  yyparse(arena, &lex, &result);
+  return result.mdecl;
 }
 
 // FbldParseMDefn -- see documentation in fbld.h
@@ -477,7 +523,22 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
     .fin = fin,
     .sin = NULL
   };
-  FbldMDefn* mdefn = NULL;
-  yyparse(arena, &lex, NULL, &mdefn);
-  return mdefn;
+  ParseResult result;
+  result.mdefn = NULL;
+  yyparse(arena, &lex, &result);
+  return result.mdefn;
+}
+
+FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string)
+{
+  Lex lex = {
+    .c = START_VALUE,
+    .loc = { .source = string, .line = 1, .col = 0 },
+    .fin = NULL,
+    .sin = string
+  };
+  ParseResult result;
+  result.value = NULL;
+  yyparse(arena, &lex, &result);
+  return result.value;
 }

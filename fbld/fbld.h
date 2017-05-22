@@ -190,6 +190,32 @@ typedef struct {
   FbldMDefn** xs;
 } FbldMDefnV;
 
+// FbldKind --
+//   An enum used to distinguish between struct and union values.
+typedef enum {
+  FBLD_STRUCT_KIND,
+  FBLD_UNION_KIND
+} FbldKind;
+
+// Forward declaration of FbldValue type.
+typedef struct FbldValue FbldValue;
+
+// FbldValueV -- 
+//   A vector of fbld values.
+typedef struct {
+  size_t size;
+  FbldValue** xs;
+} FbldValueV;
+
+// FbldValue --
+//   fbld representation of an value object.
+struct FbldValue {
+  FbldKind kind;
+  FbldQualifiedName* type;
+  FbldNameL* field;
+  FbldValueV* argv;
+};
+
 // FbldParseMDecl --
 //   Parse the module declaration from the file with the given filename.
 //
@@ -227,6 +253,25 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename);
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned definition if there is no error.
 FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename);
+
+// FbldParseValueFromString --
+//   Parse an fbld value from the given string.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed definition.
+//   string - The string to parse the value from.
+//
+// Results:
+//   The parsed value, or NULL if the value could not be parsed.
+//
+// Side effects:
+//   Prints an error message to stderr if the value cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned value if there is no error.
+FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string);
 
 // FbldStringV --
 //   A vector of char* used for describing fbld search paths.
