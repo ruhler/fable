@@ -1,5 +1,7 @@
-FBLD Modules
-============
+M. FBLD Modules
+================
+M1. Introduction
+----------------
 Damocrates adds support for modules on top of the Calvisus language. The
 purpose of modules is to facilitate reuse of code across multiple programs,
 expanding the scale of programs that can be developed.
@@ -21,8 +23,8 @@ name conflicts between modules. Damocrates modules achieve these by having
 separate interface and implementations for modules, and giving each module
 its own namespace.
 
-Module Interfaces
------------------
+M2. Module Interfaces
+---------------------
 The following is a slightly contrived example of the interface definition for
 an integer arithmetic module that illustrates the features of module
 interfaces.
@@ -66,8 +68,8 @@ After the list of module dependencies comes the module interface declarations.
 These can be in any order. There are a handful of different kinds of
 declarations that can be used.
 
-Import
-^^^^^^
+M2.1 Import
+^^^^^^^^^^^
 The import declaration is a syntactic convenience for referring to entities
 from other modules without having to use a qualified name. The import
 declaration consists of the name of a module to import entities from, followed
@@ -84,28 +86,28 @@ in the module interface.
 Only type declarations can be imported into module declarations, because they
 are the only kind of entity that can be referred to in a module declaration.
 
-Abstract Types
-^^^^^^^^^^^^^^
+M2.2 Abstract Types
+^^^^^^^^^^^^^^^^^^^
 The 'type' keyword is used to introduce an abstract type. In this case, the
 abstract type 'Int' is declared. A user of the module can store and pass
 around values of the abstract type, but they cannot construct values of the
 type, access fields of the type, or use the type as the condition in a
 conditional expression.
 
-Concrete Types
-^^^^^^^^^^^^^^
+M2.3 Concrete Types
+^^^^^^^^^^^^^^^^^^^
 A concrete struct or union type can be declared as in Calvisus. A user of the
 module can use the type constructors, field access, and use the type as the
 condition in a conditional if it is a union type.
 
-Function or Process
-^^^^^^^^^^^^^^^^^^^
+M2.4 Function or Process
+^^^^^^^^^^^^^^^^^^^^^^^^
 A function or process is declared using the 'func' or 'proc' keyword, as in
 Calvisus but without any body. A user of the module can call the function or
 the process.
 
-Qualified Names
-^^^^^^^^^^^^^^^
+M2.5 Qualified Names
+^^^^^^^^^^^^^^^^^^^^
 Entities from other modules can be referred to without importing them by using
 qualified names. Qualified names consist of a module name, followed by the '@'
 symbol, followed by the name of an entity within the module. If a qualified
@@ -116,8 +118,8 @@ needed for the Bool type because it has already been imported, but if the Bool
 type was not imported into the Int module interface, the qualified form
 "Bool@Bool" would need to be used.
 
-Module Implementations
-----------------------
+M3. Module Implementations
+--------------------------
 The following is a slightly contrived example of the module definition
 corresponding to the interface definition in the previous section for an
 integer arithmetic module. In this example, the integers are unbounded natural
@@ -192,8 +194,8 @@ functions and process must match the types listed in the declaration. The
 module may include additional types, functions, or processes that are not
 visible outside of the module definition.
 
-Modules and the Filesystem 
---------------------------
+M4. Modules and the Filesystem 
+------------------------------
 In practice it is anticipated that a developer will have a library of a large
 number of modules and only a small subset of the modules will be used for any
 given program. To avoid processing every module in the library every time a

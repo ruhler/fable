@@ -125,8 +125,8 @@ proc fbld-test { program entry args script } {
   }
 
   # Write the modules to file.
-  foreach m $program {
-    exec echo [lindex $m 1] > $dir/[lindex $m 0]
+  foreach {name content} $program {
+    exec echo $content > $dir/$name
   }
 
   try {

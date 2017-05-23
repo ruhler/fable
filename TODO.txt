@@ -1,11 +1,6 @@
 Fbld Kickoff:
-* Write code to generate FblcProgram from Fbld.
-  - by lazily construction FblcDecls as referenced from the main entry point.
-  - Decide whether compilation can fail and what to do then.
-  - Properly handle unqualified names as Qualified with NULL?
-* Implement code to check an mdecl against all mdecls it depends on.
-* Implement code to check an mdefn against all mdecls it depends on.
-* Implement code to check an mdefn against its own mdecl.
+* Number the sections of the fbld.modules spec.
+* Write a basic test that separates Unit module from Test module.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:

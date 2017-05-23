@@ -1,21 +1,21 @@
 # Test the most basic 'fbld-test' test.
-set mdecl {
-  mdecl Main() {
-    struct Unit();
-    func main( ; Unit);
-  };
-}
-
-set mdefn {
-  mdefn Main() {
-    struct Unit();
-
-    func main( ; Unit) {
-      Unit();
+set prg {
+  Main.mdecl {
+    mdecl Main() {
+      struct Unit();
+      func main( ; Unit);
     };
-  };
-}
+  }
 
-set prg [list [list Main.mdecl $mdecl] [list Main.mdefn $mdefn]]
+  Main.mdefn {
+    mdefn Main() {
+      struct Unit();
+
+      func main( ; Unit) {
+        Unit();
+      };
+    };
+  }
+}
 
 fbld-test $prg Main@main {} "return Main@Unit()"
