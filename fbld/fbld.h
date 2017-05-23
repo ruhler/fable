@@ -212,8 +212,8 @@ typedef struct {
 struct FbldValue {
   FbldKind kind;
   FbldQualifiedName* type;
-  FbldNameL* field;
-  FbldValueV* argv;
+  FbldNameL* tag;
+  FbldValueV* fieldv;
 };
 
 // FbldParseMDecl --
@@ -392,5 +392,21 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDe
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program.
 FblcDecl* FbldCompile(FblcArena* arena, FbldMDefnV* mdefnv, FbldQualifiedName* entity);
+
+// FbldCompileValue --
+//   Compile an fbld value to an fblc value.
+//
+// Inputs:
+//   arena - Arena to use for allocating the fblc program.
+//   mdefnv - Modules describing a valid fbld program.
+//   value - The fbld value to compile.
+//
+// Result:
+//   An fblc value equivalent to the given fbld value.
+//
+// Side effects:
+//   The behavior is undefined if the fbld program is not a valid fbld
+//   program or the fbld value is not well typed.
+FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value);
 #endif // FBLD_H_
 

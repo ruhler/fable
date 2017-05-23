@@ -314,17 +314,17 @@ value:
       $$ = arena->alloc(arena, sizeof(FbldValue));
       $$->kind = FBLD_STRUCT_KIND;
       $$->type = $1;
-      $$->field = NULL;
-      $$->argv = $3;
+      $$->tag = NULL;
+      $$->fieldv = $3;
     }
   | qualified_name ':' name '(' value ')' {
       $$ = arena->alloc(arena, sizeof(FbldValue));
       $$->kind = FBLD_UNION_KIND;
       $$->type = $1;
-      $$->field = $3;
-      $$->argv = arena->alloc(arena, sizeof(FbldValueV));
-      FblcVectorInit(arena, *$$->argv);
-      FblcVectorAppend(arena, *$$->argv, $5);
+      $$->tag = $3;
+      $$->fieldv = arena->alloc(arena, sizeof(FbldValueV));
+      FblcVectorInit(arena, *$$->fieldv);
+      FblcVectorAppend(arena, *$$->fieldv, $5);
     }
   ;
 

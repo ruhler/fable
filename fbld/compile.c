@@ -48,7 +48,7 @@ typedef struct {
 
 static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name);
 static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name);
-//static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
+static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
 static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldExpr* expr);
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldQualifiedName* entity);
 
@@ -111,14 +111,14 @@ static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name)
 //
 // Side effects:
 //   None.
-//static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
-//{
-//  FbldMDefn* mdefn = LookupMDefn(mdefnv, entity->module);
-//  if (mdefn == NULL) {
-//    return NULL;
-//  }
-//  return LookupDefn(mdefn, entity->name);
-//}
+static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
+{
+  FbldMDefn* mdefn = LookupMDefn(mdefnv, entity->module);
+  if (mdefn == NULL) {
+    return NULL;
+  }
+  return LookupDefn(mdefn, entity->name);
+}
 
 // CompileExpr --
 //   Compile the given fbld expression.
@@ -330,4 +330,30 @@ FblcDecl* FbldCompile(FblcArena* arena, FbldMDefnV* mdefnv, FbldQualifiedName* e
   FblcDecl* compiled = CompileDecl(arena, mdefnv, &codev, NULL, NULL, entity);
   arena->free(arena, codev.xs);
   return compiled;
+}
+
+// FbldCompileValue -- see documentation in fbld.h
+FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value)
+{
+  FbldDefn* type_defn = LookupQDefn(mdefnv, value->type);
+  assert(type_defn != NULL);
+  switch (value->kind) {
+    case FBLD_STRUCT_KIND: {
+      FbldStructDefn* struct_defn = (FbldStructDefn*)type_defn;
+      FbldStructDecl* struct_decl = struct_defn->decl;
+      size_t fieldc = struct_decl->fieldv->size;
+      FblcValue* struct_value = FblcNewStruct(arena, fieldc);
+      for (size_t i = 0; i < fieldc; ++i) {
+        struct_value->fields[i] = FbldCompileValue(arena, mdefnv, value->fieldv->xs[i]);
+      }
+      return struct_value;
+    }
+
+    case FBLD_UNION_KIND: {
+      assert(false && "TODO: Compile fbld union value");
+      return NULL;
+    }
+  }
+  assert(false && "invalid fbld value kind");
+  return NULL;
 }
