@@ -179,35 +179,27 @@ proc expect_status {status args} {
 expect_status 1 $::fblc
 expect_status 0 $::fblc --help
 expect_status 1 $::fblc no_such_file main
-run $::fblc prgms/clock.fblc incr "Digit:1(Unit())" > out/clockincr.got
-exec echo "Digit:2(Unit())" > out/clockincr.wnt
-exec diff out/clockincr.wnt out/clockincr.got
 
-run $::fblc prgms/calc.fblc main > out/calc.got
-exec echo "TL:pass(Unit())" > out/calc.wnt
-exec diff out/calc.wnt out/calc.got
+exec echo "return Digit:2(Unit())" > out/clockincr.wnt
+run $::fblctest out/clockincr.wnt prgms/clock.fblc incr "Digit:1(Unit())"
 
-run $::fblc prgms/tictactoe.fblc TestBoardStatus > out/tictactoe.TestBoardStatus.got
-exec echo "TestResult:Passed(Unit())" > out/tictactoe.TestBoardStatus.wnt
-exec diff out/tictactoe.TestBoardStatus.wnt out/tictactoe.TestBoardStatus.got
+exec echo "return TL:pass(Unit())" > out/calc.wnt
+run $::fblctest out/calc.wnt prgms/calc.fblc main
 
-run $::fblc prgms/tictactoe.fblc TestChooseBestMoveNoLose > out/tictactoe.TestChooseBestMoveNoLose.got
-exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveNoLose.wnt
-exec diff out/tictactoe.TestChooseBestMoveNoLose.wnt out/tictactoe.TestChooseBestMoveNoLose.got
+exec echo "return TestResult:Passed(Unit())" > out/tictactoe.TestBoardStatus.wnt
+run $::fblctest out/tictactoe.TestBoardStatus.wnt prgms/tictactoe.fblc TestBoardStatus
 
-run $::fblc prgms/tictactoe.fblc TestChooseBestMoveWin > out/tictactoe.TestChooseBestMoveWin.got
-exec echo "PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
-exec diff out/tictactoe.TestChooseBestMoveWin.wnt out/tictactoe.TestChooseBestMoveWin.got
+exec echo "return PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveNoLose.wnt
+run $::fblctest out/tictactoe.TestChooseBestMoveNoLose.wnt prgms/tictactoe.fblc TestChooseBestMoveNoLose
 
-run $::fblc prgms/boolcalc.fblc Test > out/boolcalc.Test.got
-exec echo "TestFailures:nil(Unit())" > out/boolcalc.Test.wnt
-exec diff out/boolcalc.Test.wnt out/boolcalc.Test.got
+exec echo "return PositionTestResult:Passed(Unit())" > out/tictactoe.TestChooseBestMoveWin.wnt
+run $::fblctest out/tictactoe.TestChooseBestMoveWin.wnt prgms/tictactoe.fblc TestChooseBestMoveWin
 
-run $::fblc prgms/ints.fblc Test > out/ints.Test.got
-exec echo "TestFailureS:nil(Unit())" > out/ints.Test.wnt
-exec diff out/ints.Test.wnt out/ints.Test.got
-
+run $::fblctest prgms/boolcalc.wnt prgms/boolcalc.fblc Test
+run $::fblctest prgms/ints.wnt prgms/ints.fblc Test
 run $::fblccheck prgms/snake.fblc
+skip run $::fbldtest prgms/UBNatTest.wnt prgms UBNatTest@Test
+skip run $::fbldtest prgms/PrimesTest.wnt prgms PrimesTest@Test
 
 exec mkdir -p out/cov/fblc/all out/cov/fbld/all
 run gcov {*}$::fblc_objs > out/cov/fblc/all/fblc.gcov
