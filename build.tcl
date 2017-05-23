@@ -49,12 +49,6 @@ run gcc {*}$FLAGS -o $::fbldtest out/obj/fbld/fbld-test.o -L out -lfbld -lfblc
 run gcc {*}$FLAGS -o out/fblc-snake out/obj/fblc/fblc-snake.o -L out -lfblc -lncurses
 run gcc {*}$FLAGS -o out/fblc-tictactoe out/obj/fblc/fblc-tictactoe.o -L out -lfblc
 
-proc check_coverage {name} {
-  exec mkdir -p out/cov/$name
-  run gcov {*}$::fblc_objs > out/cov/$name/fblc.gcov
-  exec mv {*}[glob *.gcov] out/cov/$name
-}
-
 # Spec tests
 # Test that the given fblc text program is malformed, and that the error is
 # located at loc. loc should be of the form line:col, where line is the line
@@ -152,12 +146,18 @@ foreach {x} [lsort [glob langs/fblc/*.tcl]]  {
   source $x
 }
 
+exec mkdir -p out/cov/fblc/spec
+run gcov {*}$::fblc_objs > out/cov/fblc/spec/fblc.gcov
+exec mv {*}[glob *.gcov] out/cov/fblc/spec
+
 foreach {x} [lsort [glob langs/fbld/*.tcl]]  {
   puts "test $x"
   source $x
 }
 
-check_coverage spectest
+exec mkdir -p out/cov/fbld/spec
+run gcov {*}$::fbld_objs > out/cov/fbld/spec/fbld.gcov
+exec mv {*}[glob *.gcov] out/cov/fbld/spec
 
 # Additional Tests.
 
@@ -209,11 +209,18 @@ exec diff out/ints.Test.wnt out/ints.Test.got
 
 run $::fblccheck prgms/snake.fblc
 
-check_coverage overall
+exec mkdir -p out/cov/fblc/all out/cov/fbld/all
+run gcov {*}$::fblc_objs > out/cov/fblc/all/fblc.gcov
+exec mv {*}[glob *.gcov] out/cov/fblc/all
+run gcov {*}$::fbld_objs > out/cov/fbld/all/fbld.gcov
+exec mv {*}[glob *.gcov] out/cov/fbld/all
 
 # Report summary results
 puts "Skipped Tests: $::skipped"
 puts "fblc Coverage: "
-puts "  Spec    : [exec tail -n 1 out/cov/spectest/fblc.gcov]"
-puts "  Overall : [exec tail -n 1 out/cov/overall/fblc.gcov]"
+puts "  Spec: [exec tail -n 1 out/cov/fblc/spec/fblc.gcov]"
+puts "  All : [exec tail -n 1 out/cov/fblc/all/fblc.gcov]"
+puts "fbld Coverage: "
+puts "  Spec: [exec tail -n 1 out/cov/fbld/spec/fbld.gcov]"
+puts "  All : [exec tail -n 1 out/cov/fbld/all/fbld.gcov]"
 
