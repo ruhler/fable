@@ -35,6 +35,7 @@
   } ParseResult;
 
   static bool IsNameChar(int c);
+  static bool IsSingleChar(int c);
   static void ReadNextChar(Lex* lex);
   static int yylex(FblcArena* arena, Lex* lex);
   static void yyerror(FblcArena* arena, Lex* lex, ParseResult* result, const char* msg);
@@ -65,6 +66,7 @@
 %parse-param {ParseResult* result}
 
 %token END 0 "end of file"
+%token INVALID "invalid character"
 
 // Bison grammars only support a single start symbol, but we sometimes want to
 // parse different things. To get around this limitation in bison, we insert a
@@ -372,6 +374,28 @@ static bool IsNameChar(int c)
   return isalnum(c) || c == '_';
 }
 
+// IsNameChar --
+//   Tests whether a character is an acceptable single-character token.
+//   token.
+//
+// Inputs:
+//   c - The character to test. This must have a value of an unsigned char or
+//       EOF.
+//
+// Result:
+//   The value true if the character is an acceptable character to use as a
+//   single character token, and the value false otherwise.
+//
+// Side effects:
+//   None.
+static bool IsSingleChar(int c)
+{
+  return strchr("(){};,@:", c) != NULL
+    || c == START_MDECL
+    || c == START_MDEFN
+    || c == START_VALUE;
+}
+
 // ReadNextChar --
 //   Advance to the next character in the input stream.
 //
@@ -436,7 +460,7 @@ static int yylex(FblcArena* arena, Lex* lex)
     return END;
   }
 
-  if (!IsNameChar(lex->c)) {
+  if (IsSingleChar(lex->c)) {
     // Return the character and set the lexer character to whitespace so it
     // will be skipped over the next time we go to read a token from the
     // stream.
@@ -444,6 +468,10 @@ static int yylex(FblcArena* arena, Lex* lex)
     lex->c = ' ';
     return c;
   };
+
+  if (!IsNameChar(lex->c)) {
+    return INVALID;
+  }
 
   yylval.name = arena->alloc(arena, sizeof(FbldNameL));
   yylval.name->loc = arena->alloc(arena, sizeof(FbldLoc));
