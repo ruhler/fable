@@ -106,6 +106,13 @@ typedef struct {
   FbldNameL* name;
 } FbldDecl;
 
+// FbldImportDecl --
+//   An import declaration of the form 'import <module>(<name1>, <name2>, ...)'
+typedef struct {
+  FbldDecl _base;
+  FbldNameV* namev;
+} FbldImportDecl;
+
 // FbldStructDecl --
 //   A declaration of a struct type.
 typedef struct {
@@ -136,7 +143,7 @@ typedef struct {
 typedef struct {
   FbldNameL* name;
   FbldNameV* deps;
-  FbldDeclV* decls;
+  FbldDeclV* declv;
 } FbldMDecl;
 
 // FbldMDeclV --
@@ -154,6 +161,12 @@ typedef struct {
 typedef struct {
   FbldDecl* decl;
 } FbldDefn;
+
+// FbldImportDefn --
+//   A import declaration used in a module definition.
+typedef struct {
+  FbldImportDecl* decl;
+} FbldImportDefn;
 
 // FbldStructDefn --
 //   A definition of a struct type.
@@ -180,7 +193,7 @@ typedef struct {
 typedef struct {
   FbldNameL* name;
   FbldNameV* deps;
-  FbldDefnV* defns;
+  FbldDefnV* defnv;
 } FbldMDefn;
 
 // FbldMDefnV --

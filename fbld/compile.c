@@ -29,7 +29,7 @@ typedef struct {
 } CompiledDeclV;
 
 static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
-static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name);
+static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldName name);
 static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name);
 static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
 static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldExpr* expr);
@@ -50,11 +50,25 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 //   None.
 static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
 {
+  // If the entity is explicitly qualified, use the named module.
   if (entity->module != NULL) {
     return entity->module->name;
   }
 
-  // TODO: Check first if the entity has been imported.
+  // Check if the entity has been imported.
+  for (size_t i = 0; i < mctx->defnv->size; ++i) {
+    if (mctx->defnv->xs[i]->decl->tag == FBLD_IMPORT_DECL) {
+      FbldImportDefn* defn = (FbldImportDefn*)mctx->defnv->xs[i];
+      FbldImportDecl* decl = defn->decl;
+      for (size_t j = 0; j < decl->namev->size; ++j) {
+        if (strcmp(entity->name->name, decl->namev->xs[j]->name) == 0) {
+          return decl->_base.name->name;
+        }
+      }
+    }
+  }
+
+  // Otherwise use the local module.
   if (mctx != NULL) {
     return mctx->name->name;
   }
@@ -75,10 +89,10 @@ static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
 //
 // Side effects:
 //   None.
-static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name)
+static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldName name)
 {
   for (size_t i = 0; i < mdefnv->size; ++i) {
-    if (strcmp(mdefnv->xs[i]->name->name, name->name) == 0) {
+    if (strcmp(mdefnv->xs[i]->name->name, name) == 0) {
       return mdefnv->xs[i];
     }
   }
@@ -100,9 +114,9 @@ static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name)
 //   None.
 static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name)
 {
-  for (size_t i = 0; i < mdefn->defns->size; ++i) {
-    if (strcmp(mdefn->defns->xs[i]->decl->name->name, name->name) == 0) {
-      return mdefn->defns->xs[i];
+  for (size_t i = 0; i < mdefn->defnv->size; ++i) {
+    if (strcmp(mdefn->defnv->xs[i]->decl->name->name, name->name) == 0) {
+      return mdefn->defnv->xs[i];
     }
   }
   return NULL;
@@ -123,7 +137,7 @@ static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name)
 //   None.
 static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
 {
-  FbldMDefn* mdefn = LookupMDefn(mdefnv, entity->module);
+  FbldMDefn* mdefn = LookupMDefn(mdefnv, entity->module->name);
   if (mdefn == NULL) {
     return NULL;
   }
@@ -240,9 +254,8 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
   }
 
   // Find the fbld definition of the entity.
-  if (entity->module != NULL) {
-    mctx = LookupMDefn(mdefnv, entity->module);
-  }
+  assert(module != NULL);
+  mctx = LookupMDefn(mdefnv, module);
   assert(mctx != NULL && "Failed to find module for entity");
 
   FbldDefn* defn = LookupDefn(mctx, entity->name);

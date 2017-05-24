@@ -136,9 +136,13 @@ proc fbld-test { program entry args script } {
   }
 }
 
-set ::skipped 0
+set ::skipped [list]
 proc skip { args } {
-  set ::skipped [expr $::skipped + 1]
+  set testloc [info frame -1]
+  set line [dict get $testloc line]
+  set file [dict get $testloc file]
+  set name "[file tail $file]_$line"
+  lappend ::skipped $name
 }
 
 foreach {x} [lsort [glob langs/fblc/*.tcl]]  {
@@ -198,7 +202,7 @@ run $::fblctest out/tictactoe.TestChooseBestMoveWin.wnt prgms/tictactoe.fblc Tes
 run $::fblctest prgms/boolcalc.wnt prgms/boolcalc.fblc Test
 run $::fblctest prgms/ints.wnt prgms/ints.fblc Test
 run $::fblccheck prgms/snake.fblc
-skip run $::fbldtest prgms/UBNatTest.wnt prgms UBNatTest@Test
+run $::fbldtest prgms/UBNatTest.wnt prgms UBNatTest@Test
 skip run $::fbldtest prgms/PrimesTest.wnt prgms PrimesTest@Test
 
 exec mkdir -p out/cov/fblc/all out/cov/fbld/all
@@ -208,7 +212,10 @@ run gcov {*}$::fbld_objs > out/cov/fbld/all/fbld.gcov
 exec mv {*}[glob *.gcov] out/cov/fbld/all
 
 # Report summary results
-puts "Skipped Tests: $::skipped"
+puts "Skipped Tests:"
+foreach test $::skipped {
+  puts "  $test"
+}
 puts "fblc Coverage: "
 puts "  Spec: [exec tail -n 1 out/cov/fblc/spec/fblc.gcov]"
 puts "  All : [exec tail -n 1 out/cov/fblc/all/fblc.gcov]"

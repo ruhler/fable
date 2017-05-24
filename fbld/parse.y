@@ -44,6 +44,7 @@
   FbldNameL* name;
   FbldQualifiedName* qname;
   FbldMDecl* mdecl;
+  FbldImportDecl* import_decl;
   FbldStructDecl* struct_decl;
   FbldFuncDecl* func_decl;
   FbldMDefn* mdefn;
@@ -93,6 +94,7 @@
 %type <mdefn> mdefn
 %type <decl> decl
 %type <defn> defn
+%type <import_decl> import_decl
 %type <struct_decl> struct_decl
 %type <func_decl> func_decl
 %type <declv> decl_list
@@ -119,7 +121,7 @@ mdecl: "mdecl" name '(' name_list ')' '{' decl_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDecl));
           $$->name = $2;
           $$->deps = $4;
-          $$->decls = $7;
+          $$->declv = $7;
         }
      ;
 
@@ -127,7 +129,7 @@ mdefn: "mdefn" name '(' name_list ')' '{' defn_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDefn));
           $$->name = $2;
           $$->deps = $4;
-          $$->defns = $7;
+          $$->defnv = $7;
         }
      ;
 
@@ -166,6 +168,14 @@ non_empty_expr_list:
     }
   ;
 
+import_decl: "import" name '(' name_list ')' {
+      $$ = arena->alloc(arena, sizeof(FbldImportDecl));
+      $$->_base.tag = FBLD_IMPORT_DECL;
+      $$->_base.name = $2;
+      $$->namev = $4;
+    }
+    ;
+
 struct_decl: "struct" name '(' field_list ')' {
       $$ = arena->alloc(arena, sizeof(FbldStructDecl));
       $$->_base.tag = FBLD_STRUCT_DECL;
@@ -183,8 +193,8 @@ func_decl: "func" name '(' field_list ';' qualified_name ')' {
     }
 
 decl:
-    "import" name '(' name_list ')' ';' {
-      assert(false && "TODO: import");
+    import_decl ';' {
+      $$ = &$1->_base;
     }
   | "type" name ';' {
       assert(false && "TODO: type");
@@ -204,8 +214,10 @@ decl:
   ;
 
 defn:
-    "import" name '(' name_list ')' ';' {
-      assert(false && "TODO: import");
+    import_decl ';' {
+      FbldImportDefn* import_defn = arena->alloc(arena, sizeof(FbldImportDefn));
+      import_defn->decl = $1;
+      $$ = (FbldDefn*)import_defn;
     }
   | struct_decl ';' {
       FbldStructDefn* struct_defn = arena->alloc(arena, sizeof(FbldStructDefn));

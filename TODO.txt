@@ -1,4 +1,5 @@
 Fbld Kickoff:
+* Add a test for conditional expressions.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:
