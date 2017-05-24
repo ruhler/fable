@@ -28,11 +28,39 @@ typedef struct {
   CompiledDecl** xs;
 } CompiledDeclV;
 
+static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name);
 static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name);
 static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
 static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldExpr* expr);
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldQualifiedName* entity);
+
+// ResolveModule --
+//   Determine the name of the module for the given entity.
+//
+// Inputs:
+//   mctx - The current module context.
+//   entity - The entity to resolve the module for.
+//
+// Results:
+//   The module where the entity is defined, or NULL if the module for the
+//   entity could not be resolved.
+//
+// Side effects:
+//   None.
+static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
+{
+  if (entity->module != NULL) {
+    return entity->module->name;
+  }
+
+  // TODO: Check first if the entity has been imported.
+  if (mctx != NULL) {
+    return mctx->name->name;
+  }
+
+  return NULL;
+}
 
 // LookupMDefn --
 //   Look up the module definition with the given name.
@@ -201,7 +229,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 //   memory proportional to the size of all declarations compiled.
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldQualifiedName* entity)
 {
-  FbldName module = entity->module == NULL ? mctx->name->name : entity->module->name;
+  FbldName module = ResolveModule(mctx, entity);
 
   // Check if the entity has already been compiled.
   for (size_t i = 0; i < codev->size; ++i) {
@@ -211,16 +239,16 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
     }
   }
 
-  // Find the module that the entity belongs to.
+  // Find the fbld definition of the entity.
   if (entity->module != NULL) {
     mctx = LookupMDefn(mdefnv, entity->module);
   }
   assert(mctx != NULL && "Failed to find module for entity");
 
-  // Find the fbld definition of the entity.
   FbldDefn* defn = LookupDefn(mctx, entity->name);
   assert(defn != NULL && "Entry definition not found");
 
+  // Compile the declaration
   FblcDecl* decl = NULL;
   switch (defn->decl->tag) {
     case FBLD_IMPORT_DECL:
