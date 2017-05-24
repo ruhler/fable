@@ -1,4 +1,3 @@
-# A basic test case using multiple modules.
 set prg {
   Unit.mdecl {
     mdecl Unit() {
@@ -19,7 +18,8 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main(Unit) {
+    # The Main module must list Unit as a dependency.
+    mdefn Main() {
       func main( ; Unit@Unit) {
         Unit@Unit();
       };
@@ -27,4 +27,4 @@ set prg {
   }
 }
 
-fbld-test $prg Main@main {} "return Unit@Unit()"
+skip fbld-check-error $prg Main@main

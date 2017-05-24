@@ -1,6 +1,4 @@
 Fbld Kickoff:
-* Number the sections of the fbld.modules spec.
-* Write a basic test that separates Unit module from Test module.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:

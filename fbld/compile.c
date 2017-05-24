@@ -12,9 +12,11 @@
 //   A single compiled fblc declaration.
 //
 // Fields:
+//   module - The module the declaration was defined in.
 //   name - The name of the compiled declaration.
 //   decl - The compiled declaration.
 typedef struct {
+  FbldName module;
   FbldName name;
   FblcDecl* decl;
 } CompiledDecl;
@@ -26,31 +28,11 @@ typedef struct {
   CompiledDecl** xs;
 } CompiledDeclV;
 
-// CompiledModule --
-//   A collection of declarations compiled so far for a given module.
-//
-// Fields:
-//   name - The name of the module the code is for.
-//   declv - The declarations compiled for the module so far, in no particular
-//           order.
-typedef struct {
-  FbldName name;
-  CompiledDeclV declv;
-} CompiledModule;
-
-// CompiledModuleV --
-//   A vector of codes used to store all compiled declarations for a set of
-//   modules.
-typedef struct {
-  size_t size;
-  CompiledModule** xs;
-} CompiledModuleV;
-
 static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldNameL* name);
 static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name);
 static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
-static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldExpr* expr);
-static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldQualifiedName* entity);
+static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldExpr* expr);
+static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldQualifiedName* entity);
 
 // LookupMDefn --
 //   Look up the module definition with the given name.
@@ -126,9 +108,8 @@ static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
 // Inputs:
 //   arena - arena to use for allocations.
 //   mdefnv - vector of module definitions in which to find the entities to compile
-//   codev - collection of entities that have already been compiled.
+//   codev - collection of declarations that have already been compiled.
 //   mctx - The module definition to use as the context for unqualified entities.
-//   cctx - The code already compiled for the mctx module.
 //   expr - the fbld expression to compile.
 //   TODO: Add context for tracking variable ids.
 //
@@ -147,7 +128,7 @@ static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
 //   and freeing them when no longer needed. This function will allocate
 //   memory proportional to the size of the expression and all declarations
 //   compiled.
-static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldExpr* expr)
+static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldExpr* expr)
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR:
@@ -159,10 +140,10 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
       FblcAppExpr* app_expr = arena->alloc(arena, sizeof(FblcAppExpr));
       app_expr->_base.tag = FBLC_APP_EXPR;
       app_expr->_base.id = 0xDEAD;    // unused
-      app_expr->func = CompileDecl(arena, mdefnv, codev, mctx, cctx, source->func);
+      app_expr->func = CompileDecl(arena, mdefnv, codev, mctx, source->func);
       FblcVectorInit(arena, app_expr->argv);
       for (size_t i = 0; i < source->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, mctx, cctx, source->argv->xs[i]);
+        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, mctx, source->argv->xs[i]);
         FblcVectorAppend(arena, app_expr->argv, arg);
       }
       return &app_expr->_base;
@@ -197,10 +178,8 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
 // Inputs:
 //   arena - arena to use for allocations.
 //   mdefnv - vector of module definitions in which to find the entity to compile
-//   codev - collection of entities that have already been compiled.
+//   codev - collection of declarations that have already been compiled.
 //   mctx - The module definition to use as the context for unqualified entities.
-//          May be NULL only if the entity is explicitly qualified.
-//   cctx - The code already compiled for the mctx module.
 //          May be NULL only if the entity is explicitly qualified.
 //   entity - the name of the entity to compile.
 //
@@ -220,39 +199,27 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
 //   The caller is responsible for tracking the allocations through the arena
 //   and freeing them when no longer needed. This function will allocate
 //   memory proportional to the size of all declarations compiled.
-static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModuleV* codev, FbldMDefn* mctx, CompiledModule* cctx, FbldQualifiedName* entity)
+static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldQualifiedName* entity)
 {
-  // Find the module and code context for the entity.
-  if (entity->module != NULL) {
-    mctx = LookupMDefn(mdefnv, entity->module);
-    cctx = NULL;
-    for (size_t i = 0; i < codev->size; ++i) {
-      if (strcmp(codev->xs[i]->name, entity->module->name) == 0) {
-        cctx = codev->xs[i];
-        break;
-      }
-    }
-
-    if (cctx == NULL) {
-      cctx = arena->alloc(arena, sizeof(CompiledModule));
-      cctx->name = entity->module->name;
-      FblcVectorInit(arena, cctx->declv);
-      FblcVectorAppend(arena, *codev, cctx);
-    }
-  }
-  assert(mctx != NULL && "Failed to find module for entity");
-  assert(cctx != NULL && "Code context not provided for unqualified entity");
+  FbldName module = entity->module == NULL ? mctx->name->name : entity->module->name;
 
   // Check if the entity has already been compiled.
-  for (size_t i = 0; i < cctx->declv.size; ++i) {
-    if (strcmp(cctx->declv.xs[i]->name, entity->name->name) == 0) {
-      return cctx->declv.xs[i]->decl;
+  for (size_t i = 0; i < codev->size; ++i) {
+    if (strcmp(codev->xs[i]->module, module) == 0
+        && strcmp(codev->xs[i]->name, entity->name->name) == 0) {
+      return codev->xs[i]->decl;
     }
   }
+
+  // Find the module that the entity belongs to.
+  if (entity->module != NULL) {
+    mctx = LookupMDefn(mdefnv, entity->module);
+  }
+  assert(mctx != NULL && "Failed to find module for entity");
 
   // Find the fbld definition of the entity.
   FbldDefn* defn = LookupDefn(mctx, entity->name);
-  assert(defn != NULL && "Entiry definition not found");
+  assert(defn != NULL && "Entry definition not found");
 
   FblcDecl* decl = NULL;
   switch (defn->decl->tag) {
@@ -276,7 +243,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
       FblcVectorInit(arena, struct_decl->fieldv);
       for (size_t i = 0; i < struct_defn->decl->fieldv->size; ++i) {
         FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
-            arena, mdefnv, codev, mctx, cctx,
+            arena, mdefnv, codev, mctx,
             struct_defn->decl->fieldv->xs[i]->type);
         FblcVectorAppend(arena, struct_decl->fieldv, type);
       }
@@ -292,15 +259,14 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
       FblcVectorInit(arena, func_decl->argv);
       for (size_t i = 0; i < func_defn->decl->argv->size; ++i) {
         FblcTypeDecl* arg = (FblcTypeDecl*)CompileDecl(
-            arena, mdefnv, codev, mctx, cctx,
+            arena, mdefnv, codev, mctx,
             func_defn->decl->argv->xs[i]->type);
         FblcVectorAppend(arena, func_decl->argv, arg);
       }
       func_decl->return_type = (FblcTypeDecl*)CompileDecl(
-            arena, mdefnv, codev, mctx, cctx,
+            arena, mdefnv, codev, mctx,
             func_defn->decl->return_type);
-      func_decl->body = CompileExpr(
-            arena, mdefnv, codev, mctx, cctx, func_defn->body);
+      func_decl->body = CompileExpr(arena, mdefnv, codev, mctx, func_defn->body);
       decl = &func_decl->_base;
       break;
     }
@@ -316,18 +282,19 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledModul
 
   assert(decl != NULL);
   CompiledDecl* c = arena->alloc(arena, sizeof(CompiledDecl));
+  c->module = module;
   c->name = entity->name->name;
   c->decl = decl;
-  FblcVectorAppend(arena, cctx->declv, c);
+  FblcVectorAppend(arena, *codev, c);
   return decl;
 }
 
 // FbldCompile -- see documentation in fbld.h
 FblcDecl* FbldCompile(FblcArena* arena, FbldMDefnV* mdefnv, FbldQualifiedName* entity)
 {
-  CompiledModuleV codev;
+  CompiledDeclV codev;
   FblcVectorInit(arena, codev);
-  FblcDecl* compiled = CompileDecl(arena, mdefnv, &codev, NULL, NULL, entity);
+  FblcDecl* compiled = CompileDecl(arena, mdefnv, &codev, NULL, entity);
   arena->free(arena, codev.xs);
   return compiled;
 }

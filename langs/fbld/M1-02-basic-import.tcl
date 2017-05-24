@@ -1,4 +1,3 @@
-# A basic test case using multiple modules.
 set prg {
   Unit.mdecl {
     mdecl Unit() {
@@ -20,8 +19,10 @@ set prg {
 
   Main.mdefn {
     mdefn Main(Unit) {
-      func main( ; Unit@Unit) {
-        Unit@Unit();
+      import Unit(Unit);
+
+      func main( ; Unit) {
+        Unit();
       };
     };
   }
