@@ -202,7 +202,7 @@ run $::fblctest out/tictactoe.TestChooseBestMoveWin.wnt prgms/tictactoe.fblc Tes
 run $::fblctest prgms/boolcalc.wnt prgms/boolcalc.fblc Test
 run $::fblctest prgms/ints.wnt prgms/ints.fblc Test
 run $::fblccheck prgms/snake.fblc
-run $::fbldtest prgms/UBNatTest.wnt prgms UBNatTest@Test
+skip run $::fbldtest prgms/UBNatTest.wnt prgms UBNatTest@Test
 skip run $::fbldtest prgms/PrimesTest.wnt prgms PrimesTest@Test
 
 exec mkdir -p out/cov/fblc/all out/cov/fbld/all

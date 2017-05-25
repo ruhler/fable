@@ -89,7 +89,7 @@ typedef struct {
 //   Tag used to distinguish amongs different kinds of fbld declarations.
 typedef enum {
   FBLD_IMPORT_DECL,
-  FBLD_TYPE_DECL,
+  FBLD_ABSTRACT_TYPE_DECL,
   FBLD_UNION_DECL,
   FBLD_STRUCT_DECL,
   FBLD_FUNC_DECL,
@@ -113,12 +113,26 @@ typedef struct {
   FbldNameV* namev;
 } FbldImportDecl;
 
-// FbldStructDecl --
-//   A declaration of a struct type.
+// FbldAbstractTypeDecl --
+//   A declaration of an abstract type.
+typedef struct {
+  FbldDecl _base;
+} FbldAbstractTypeDecl;
+
+// FbldConcreteTypeDecl --
+//   A declaration of a struct or union type.
 typedef struct {
   FbldDecl _base;
   FbldTypedNameV* fieldv;
-} FbldStructDecl;
+} FbldConcreteTypeDecl;
+
+// FbldStructDecl --
+//   A declaration of a struct type.
+typedef FbldConcreteTypeDecl FbldStructDecl;
+
+// FbldUnionDecl --
+//   A declaration of a union type.
+typedef FbldConcreteTypeDecl FbldUnionDecl;
 
 // FbldFuncDecl --
 //   A declaration of a function.
@@ -138,70 +152,40 @@ typedef struct {
   FbldDecl** xs;
 } FbldDeclV;
 
-// FbldMDecl --
-//   An fbld module declaration.
+// FbldModule --
+//   An fbld module declaration or definition.
 typedef struct {
   FbldNameL* name;
   FbldNameV* deps;
   FbldDeclV* declv;
-} FbldMDecl;
+} FbldModule;
 
-// FbldMDeclV --
+// FbldModuleV --
+//   A vector of fbld module declarations or definitions.
+typedef struct {
+  size_t size;
+  FbldModule** xs;
+} FbldModuleV;
+
+// FbldMDecl --
+//   An fbld module declaration.
+//   FbldMDecls may contain abstract type declarations and have the bodies of
+//   function and process declarations set to NULL.
+typedef FbldModule FbldMDecl;
+
+// FbldModuleV --
 //   A vector of fbld module declarations.
-typedef struct {
-  size_t size;
-  FbldMDecl** xs;
-} FbldMDeclV;
-
-// FbldDefn --
-//   A tagged union of fbdl definitions. All defns have the same initial
-//   layout as FbldDefn. The tag from the decl field can be used to determine
-//   what kind of defn this is to get access to additional fields of the defn
-//   by first casting to that specific type.
-typedef struct {
-  FbldDecl* decl;
-} FbldDefn;
-
-// FbldImportDefn --
-//   A import declaration used in a module definition.
-typedef struct {
-  FbldImportDecl* decl;
-} FbldImportDefn;
-
-// FbldStructDefn --
-//   A definition of a struct type.
-typedef struct {
-  FbldStructDecl* decl;
-} FbldStructDefn;
-
-// FbldFuncDefn --
-//   A definition of a function.
-typedef struct {
-  FbldFuncDecl* decl;
-  FbldExpr* body;
-} FbldFuncDefn;
-
-// FbldDefnV --
-//   A vector of FbldDefns.
-typedef struct {
-  size_t size;
-  FbldDefn** xs;
-} FbldDefnV;
+typedef FbldModuleV FbldMDeclV;
 
 // FbldMDefn --
 //   An fbld module definition.
-typedef struct {
-  FbldNameL* name;
-  FbldNameV* deps;
-  FbldDefnV* defnv;
-} FbldMDefn;
+//   FbldmDefns do not contain abstract type declarations and have non-NULL
+//   bodies of functions and processes.
+typedef FbldModule FbldMDefn;
 
 // FbldMDefnV --
 //   A vector of FbldMDefns.
-typedef struct {
-  size_t size;
-  FbldMDefn** xs;
-} FbldMDefnV;
+typedef FbldModuleV FbldMDefnV;
 
 // FbldKind --
 //   An enum used to distinguish between struct and union values.

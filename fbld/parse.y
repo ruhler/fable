@@ -44,15 +44,12 @@
 %union {
   FbldNameL* name;
   FbldQualifiedName* qname;
-  FbldMDecl* mdecl;
   FbldImportDecl* import_decl;
   FbldStructDecl* struct_decl;
   FbldFuncDecl* func_decl;
-  FbldMDefn* mdefn;
+  FbldModule* module;
   FbldDecl* decl;
-  FbldDefn* defn;
   FbldDeclV* declv;
-  FbldDefnV* defnv;
   FbldExpr* expr;
   FbldNameV* namev;
   FbldTypedNameV* tnamev;
@@ -92,15 +89,12 @@
 
 %type <name> keyword name
 %type <qname> qualified_name
-%type <mdecl> mdecl
-%type <mdefn> mdefn
-%type <decl> decl
-%type <defn> defn
+%type <module> mdecl mdefn
+%type <decl> decl defn
 %type <import_decl> import_decl
 %type <struct_decl> struct_decl
 %type <func_decl> func_decl
-%type <declv> decl_list
-%type <defnv> defn_list
+%type <declv> decl_list defn_list
 %type <expr> expr stmt
 %type <namev> name_list
 %type <tnamev> field_list non_empty_field_list
@@ -131,7 +125,7 @@ mdefn: "mdefn" name '(' name_list ')' '{' defn_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDefn));
           $$->name = $2;
           $$->deps = $4;
-          $$->defnv = $7;
+          $$->declv = $7;
         }
      ;
 
@@ -192,6 +186,7 @@ func_decl: "func" name '(' field_list ';' qualified_name ')' {
       $$->_base.name = $2;
       $$->argv = $4;
       $$->return_type = $6;
+      $$->body = NULL;
     }
 
 decl:
@@ -217,23 +212,17 @@ decl:
 
 defn:
     import_decl ';' {
-      FbldImportDefn* import_defn = arena->alloc(arena, sizeof(FbldImportDefn));
-      import_defn->decl = $1;
-      $$ = (FbldDefn*)import_defn;
+      $$ = &$1->_base;
     }
   | struct_decl ';' {
-      FbldStructDefn* struct_defn = arena->alloc(arena, sizeof(FbldStructDefn));
-      struct_defn->decl = $1;
-      $$ = (FbldDefn*)struct_defn;
+      $$ = &$1->_base;
     }
   | "union" name '(' non_empty_field_list ')' ';' {
       assert(false && "TODO: union");
     }
   | func_decl expr ';' {
-      FbldFuncDefn* func_defn = arena->alloc(arena, sizeof(FbldFuncDefn));
-      func_defn->decl = $1;
-      func_defn->body = $2;
-      $$ = (FbldDefn*)func_defn;
+      $1->body = $2;
+      $$ = &$1->_base;
     }
   ;
 
@@ -260,7 +249,7 @@ expr:
     
 defn_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldDefnV));
+      $$ = arena->alloc(arena, sizeof(FbldDeclV));
       FblcVectorInit(arena, *$$);
     }
   | defn_list defn {

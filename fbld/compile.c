@@ -30,8 +30,8 @@ typedef struct {
 
 static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldName name);
-static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name);
-static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
+static FbldDecl* LookupDecl(FbldMDefn* mdefn, FbldNameL* name);
+static FbldDecl* LookupQDecl(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
 static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldExpr* expr);
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldQualifiedName* entity);
 
@@ -56,10 +56,9 @@ static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
   }
 
   // Check if the entity has been imported.
-  for (size_t i = 0; i < mctx->defnv->size; ++i) {
-    if (mctx->defnv->xs[i]->decl->tag == FBLD_IMPORT_DECL) {
-      FbldImportDefn* defn = (FbldImportDefn*)mctx->defnv->xs[i];
-      FbldImportDecl* decl = defn->decl;
+  for (size_t i = 0; i < mctx->declv->size; ++i) {
+    if (mctx->declv->xs[i]->tag == FBLD_IMPORT_DECL) {
+      FbldImportDecl* decl = (FbldImportDecl*)mctx->declv->xs[i];
       for (size_t j = 0; j < decl->namev->size; ++j) {
         if (strcmp(entity->name->name, decl->namev->xs[j]->name) == 0) {
           return decl->_base.name->name;
@@ -99,8 +98,8 @@ static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldName name)
   return NULL;
 }
 
-// LookupDefn --
-//   Look up the definition with the given name in given module defintion.
+// LookupDecl --
+//   Look up the declaration with the given name in given module defintion.
 //
 // Inputs:
 //   mdefn - The module to look up the definition in.
@@ -112,36 +111,36 @@ static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldName name)
 //
 // Side effects:
 //   None.
-static FbldDefn* LookupDefn(FbldMDefn* mdefn, FbldNameL* name)
+static FbldDecl* LookupDecl(FbldMDefn* mdefn, FbldNameL* name)
 {
-  for (size_t i = 0; i < mdefn->defnv->size; ++i) {
-    if (strcmp(mdefn->defnv->xs[i]->decl->name->name, name->name) == 0) {
-      return mdefn->defnv->xs[i];
+  for (size_t i = 0; i < mdefn->declv->size; ++i) {
+    if (strcmp(mdefn->declv->xs[i]->name->name, name->name) == 0) {
+      return mdefn->declv->xs[i];
     }
   }
   return NULL;
 }
 
-// LookupQDefn --
-//   Look up the qualified definition with the given name in the given program.
+// LookupQDecl --
+//   Look up the qualified declaration with the given name in the given program.
 //
 // Inputs:
-//   mdefnv - The collection of modules to look up the definition in.
+//   mdefnv - The collection of modules to look up the declaration in.
 //   entity - The name of the entity to look up.
 //
 // Returns:
-//   The definition with the given name, or NULL if no such definition
+//   The declaration with the given name, or NULL if no such declaration
 //   could be found.
 //
 // Side effects:
 //   None.
-static FbldDefn* LookupQDefn(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
+static FbldDecl* LookupQDecl(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
 {
   FbldMDefn* mdefn = LookupMDefn(mdefnv, entity->module->name);
   if (mdefn == NULL) {
     return NULL;
   }
-  return LookupDefn(mdefn, entity->name);
+  return LookupDecl(mdefn, entity->name);
 }
 
 // CompileExpr --
@@ -258,17 +257,17 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
   mctx = LookupMDefn(mdefnv, module);
   assert(mctx != NULL && "Failed to find module for entity");
 
-  FbldDefn* defn = LookupDefn(mctx, entity->name);
-  assert(defn != NULL && "Entry definition not found");
+  FbldDecl* src_decl = LookupDecl(mctx, entity->name);
+  assert(src_decl != NULL && "Entry definition not found");
 
   // Compile the declaration
   FblcDecl* decl = NULL;
-  switch (defn->decl->tag) {
+  switch (src_decl->tag) {
     case FBLD_IMPORT_DECL:
       assert(false && "Cannot compile an import declaration");
       break;
 
-    case FBLD_TYPE_DECL:
+    case FBLD_ABSTRACT_TYPE_DECL:
       assert(false && "Cannot compile a abstract type declaration");
       break;
 
@@ -277,15 +276,15 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       break;
 
     case FBLD_STRUCT_DECL: {
-      FbldStructDefn* struct_defn = (FbldStructDefn*)defn;
+      FbldStructDecl* src_struct_decl = (FbldStructDecl*)src_decl;
       FblcStructDecl* struct_decl = arena->alloc(arena, sizeof(FblcStructDecl));
       struct_decl->_base.tag = FBLC_STRUCT_DECL;
       struct_decl->_base.id = 0xDEAD;   // id field unused
       FblcVectorInit(arena, struct_decl->fieldv);
-      for (size_t i = 0; i < struct_defn->decl->fieldv->size; ++i) {
+      for (size_t i = 0; i < src_struct_decl->fieldv->size; ++i) {
         FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, mctx,
-            struct_defn->decl->fieldv->xs[i]->type);
+            src_struct_decl->fieldv->xs[i]->type);
         FblcVectorAppend(arena, struct_decl->fieldv, type);
       }
       decl = &struct_decl->_base;
@@ -293,21 +292,21 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
     }
 
     case FBLD_FUNC_DECL: {
-      FbldFuncDefn* func_defn = (FbldFuncDefn*)defn;
+      FbldFuncDecl* src_func_decl = (FbldFuncDecl*)src_decl;
       FblcFuncDecl* func_decl = arena->alloc(arena, sizeof(FblcFuncDecl));
       func_decl->_base.tag = FBLC_FUNC_DECL;
       func_decl->_base.id = 0xDEAD;     // id field unused
       FblcVectorInit(arena, func_decl->argv);
-      for (size_t i = 0; i < func_defn->decl->argv->size; ++i) {
+      for (size_t i = 0; i < src_func_decl->argv->size; ++i) {
         FblcTypeDecl* arg = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, mctx,
-            func_defn->decl->argv->xs[i]->type);
+            src_func_decl->argv->xs[i]->type);
         FblcVectorAppend(arena, func_decl->argv, arg);
       }
       func_decl->return_type = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, mctx,
-            func_defn->decl->return_type);
-      func_decl->body = CompileExpr(arena, mdefnv, codev, mctx, func_defn->body);
+            src_func_decl->return_type);
+      func_decl->body = CompileExpr(arena, mdefnv, codev, mctx, src_func_decl->body);
       decl = &func_decl->_base;
       break;
     }
@@ -343,12 +342,11 @@ FblcDecl* FbldCompile(FblcArena* arena, FbldMDefnV* mdefnv, FbldQualifiedName* e
 // FbldCompileValue -- see documentation in fbld.h
 FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value)
 {
-  FbldDefn* type_defn = LookupQDefn(mdefnv, value->type);
-  assert(type_defn != NULL);
+  FbldDecl* type_decl = LookupQDecl(mdefnv, value->type);
+  assert(type_decl != NULL);
   switch (value->kind) {
     case FBLD_STRUCT_KIND: {
-      FbldStructDefn* struct_defn = (FbldStructDefn*)type_defn;
-      FbldStructDecl* struct_decl = struct_defn->decl;
+      FbldStructDecl* struct_decl = (FbldStructDecl*)type_decl;
       size_t fieldc = struct_decl->fieldv->size;
       FblcValue* struct_value = FblcNewStruct(arena, fieldc);
       for (size_t i = 0; i < fieldc; ++i) {
