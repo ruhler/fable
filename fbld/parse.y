@@ -44,12 +44,9 @@
 %union {
   FbldNameL* name;
   FbldQualifiedName* qname;
-  FbldImportDecl* import_decl;
-  FbldStructDecl* struct_decl;
-  FbldUnionDecl* union_decl;
-  FbldFuncDecl* func_decl;
   FbldModule* module;
   FbldDecl* decl;
+  FbldFuncDecl* func_decl;
   FbldDeclV* declv;
   FbldExpr* expr;
   FbldNameV* namev;
@@ -91,10 +88,7 @@
 %type <name> keyword name
 %type <qname> qualified_name
 %type <module> mdecl mdefn
-%type <decl> decl defn
-%type <import_decl> import_decl
-%type <struct_decl> struct_decl
-%type <union_decl> union_decl
+%type <decl> decl defn import_decl struct_decl union_decl
 %type <func_decl> func_decl
 %type <declv> decl_list defn_list
 %type <expr> expr stmt
@@ -167,26 +161,29 @@ non_empty_expr_list:
   ;
 
 import_decl: "import" name '(' name_list ')' {
-      $$ = arena->alloc(arena, sizeof(FbldImportDecl));
-      $$->_base.tag = FBLD_IMPORT_DECL;
-      $$->_base.name = $2;
-      $$->namev = $4;
+      FbldImportDecl* decl = arena->alloc(arena, sizeof(FbldImportDecl));
+      decl->_base.tag = FBLD_IMPORT_DECL;
+      decl->_base.name = $2;
+      decl->namev = $4;
+      $$ = &decl->_base;
     }
     ;
 
 struct_decl: "struct" name '(' field_list ')' {
-      $$ = arena->alloc(arena, sizeof(FbldStructDecl));
-      $$->_base.tag = FBLD_STRUCT_DECL;
-      $$->_base.name = $2;
-      $$->fieldv = $4;
+      FbldStructDecl* decl = arena->alloc(arena, sizeof(FbldStructDecl));
+      decl->_base.tag = FBLD_STRUCT_DECL;
+      decl->_base.name = $2;
+      decl->fieldv = $4;
+      $$ = &decl->_base;
     }
     ;
 
 union_decl: "union" name '(' non_empty_field_list ')' {
-      $$ = arena->alloc(arena, sizeof(FbldUnionDecl));
-      $$->_base.tag = FBLD_UNION_DECL;
-      $$->_base.name = $2;
-      $$->fieldv = $4;
+      FbldUnionDecl* decl = arena->alloc(arena, sizeof(FbldUnionDecl));
+      decl->_base.tag = FBLD_UNION_DECL;
+      decl->_base.name = $2;
+      decl->fieldv = $4;
+      $$ = &decl->_base;
     }
     ;
 
@@ -200,18 +197,12 @@ func_decl: "func" name '(' field_list ';' qualified_name ')' {
     }
 
 decl:
-    import_decl ';' {
-      $$ = &$1->_base;
-    }
+    import_decl ';'
   | "type" name ';' {
       assert(false && "TODO: type");
     }
-  | struct_decl ';' {
-      $$ = &$1->_base;
-    }
-  | union_decl ';' {
-      $$ = &$1->_base;
-    }
+  | struct_decl ';'
+  | union_decl ';'
   | func_decl ';' {
       $$ = &$1->_base;
     }
@@ -221,15 +212,9 @@ decl:
   ;
 
 defn:
-    import_decl ';' {
-      $$ = &$1->_base;
-    }
-  | struct_decl ';' {
-      $$ = &$1->_base;
-    }
-  | union_decl ';' {
-      $$ = &$1->_base;
-    }
+    import_decl ';'
+  | struct_decl ';'
+  | union_decl ';'
   | func_decl expr ';' {
       $1->body = $2;
       $$ = &$1->_base;
