@@ -85,6 +85,25 @@ typedef struct {
   FbldExprV* argv;
 } FbldAppExpr;
 
+// FbldUnionExpr --
+//   A union expression of the form 'type:field(arg)', used to construct a
+//   union value.
+typedef struct {
+  FbldExpr _base;
+  FbldQualifiedName* type;
+  FbldNameL* field;
+  FbldExpr* arg;
+} FbldUnionExpr;
+
+// FblcCondExpr --
+//   A conditional expression of the form '?(select; arg0, arg1, ...)', which
+//   conditionally selects an argument based on the tag of the select value.
+typedef struct {
+  FbldExpr _base;
+  FbldExpr* select;
+  FbldExprV* argv;
+} FbldCondExpr;
+
 // FbldDeclTag --
 //   Tag used to distinguish amongs different kinds of fbld declarations.
 typedef enum {

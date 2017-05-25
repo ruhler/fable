@@ -23,4 +23,4 @@ set prg {
   }
 }
 
-skip fbld-test $prg Main@main {} "return Main@EnumXYZ:Z(Main@Unit())"
+fbld-test $prg Main@main {} "return Main@EnumXYZ:Z(Main@Unit())"

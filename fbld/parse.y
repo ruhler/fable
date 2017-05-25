@@ -46,6 +46,7 @@
   FbldQualifiedName* qname;
   FbldImportDecl* import_decl;
   FbldStructDecl* struct_decl;
+  FbldUnionDecl* union_decl;
   FbldFuncDecl* func_decl;
   FbldModule* module;
   FbldDecl* decl;
@@ -93,6 +94,7 @@
 %type <decl> decl defn
 %type <import_decl> import_decl
 %type <struct_decl> struct_decl
+%type <union_decl> union_decl
 %type <func_decl> func_decl
 %type <declv> decl_list defn_list
 %type <expr> expr stmt
@@ -180,6 +182,14 @@ struct_decl: "struct" name '(' field_list ')' {
     }
     ;
 
+union_decl: "union" name '(' non_empty_field_list ')' {
+      $$ = arena->alloc(arena, sizeof(FbldUnionDecl));
+      $$->_base.tag = FBLD_UNION_DECL;
+      $$->_base.name = $2;
+      $$->fieldv = $4;
+    }
+    ;
+
 func_decl: "func" name '(' field_list ';' qualified_name ')' {
       $$ = arena->alloc(arena, sizeof(FbldFuncDecl));
       $$->_base.tag = FBLD_FUNC_DECL;
@@ -199,8 +209,8 @@ decl:
   | struct_decl ';' {
       $$ = &$1->_base;
     }
-  | "union" name '(' non_empty_field_list ')' ';' {
-      assert(false && "TODO: union");
+  | union_decl ';' {
+      $$ = &$1->_base;
     }
   | func_decl ';' {
       $$ = &$1->_base;
@@ -217,8 +227,8 @@ defn:
   | struct_decl ';' {
       $$ = &$1->_base;
     }
-  | "union" name '(' non_empty_field_list ')' ';' {
-      assert(false && "TODO: union");
+  | union_decl ';' {
+      $$ = &$1->_base;
     }
   | func_decl expr ';' {
       $1->body = $2;
@@ -244,7 +254,34 @@ expr:
       app_expr->func = $1;
       app_expr->argv = $3;
       $$ = &app_expr->_base;
-   }
+    }
+  | qualified_name ':' name '(' expr ')' {
+      FbldUnionExpr* union_expr = arena->alloc(arena, sizeof(FbldUnionExpr));
+      union_expr->_base.tag = FBLC_UNION_EXPR;
+      // TODO: Use the location at the beginning of the expression, not the
+      // one at the end.
+      union_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
+      union_expr->_base.loc->source = lex->loc.source;
+      union_expr->_base.loc->line = lex->loc.line;
+      union_expr->_base.loc->col = lex->loc.col;
+      union_expr->type = $1;
+      union_expr->field = $3;
+      union_expr->arg = $5;
+      $$ = &union_expr->_base;
+    }
+  | '?' '(' expr ';' non_empty_expr_list ')' {
+      FbldCondExpr* cond_expr = arena->alloc(arena, sizeof(FbldCondExpr));
+      cond_expr->_base.tag = FBLC_COND_EXPR;
+      // TODO: Use the location at the beginning of the expression, not the
+      // one at the end.
+      cond_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
+      cond_expr->_base.loc->source = lex->loc.source;
+      cond_expr->_base.loc->line = lex->loc.line;
+      cond_expr->_base.loc->col = lex->loc.col;
+      cond_expr->select = $3;
+      cond_expr->argv = $5;
+      $$ = &cond_expr->_base;
+  }
    ;
     
 defn_list:
@@ -379,7 +416,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,@:", c) != NULL
+  return strchr("(){};,@:?", c) != NULL
     || c == START_MDECL
     || c == START_MDEFN
     || c == START_VALUE;
