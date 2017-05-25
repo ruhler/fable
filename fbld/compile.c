@@ -31,7 +31,7 @@ typedef struct {
 static FbldName ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldMDefn* LookupMDefn(FbldMDefnV* mdefnv, FbldName name);
 static FbldDecl* LookupDecl(FbldMDefn* mdefn, FbldNameL* name);
-static FbldDecl* LookupQDecl(FbldMDefnV* mdefnv, FbldQualifiedName* entity);
+static FbldDecl* LookupQDecl(FbldMDefnV* mdefnv, FbldMDefn* mctx, FbldQualifiedName* entity);
 static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldExpr* expr);
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldMDefn* mctx, FbldQualifiedName* entity);
 
@@ -126,6 +126,7 @@ static FbldDecl* LookupDecl(FbldMDefn* mdefn, FbldNameL* name)
 //
 // Inputs:
 //   mdefnv - The collection of modules to look up the declaration in.
+//   mctx - Context to use for module resultion.
 //   entity - The name of the entity to look up.
 //
 // Returns:
@@ -134,9 +135,13 @@ static FbldDecl* LookupDecl(FbldMDefn* mdefn, FbldNameL* name)
 //
 // Side effects:
 //   None.
-static FbldDecl* LookupQDecl(FbldMDefnV* mdefnv, FbldQualifiedName* entity)
+static FbldDecl* LookupQDecl(FbldMDefnV* mdefnv, FbldMDefn* mctx, FbldQualifiedName* entity)
 {
-  FbldMDefn* mdefn = LookupMDefn(mdefnv, entity->module->name);
+  FbldName module = ResolveModule(mctx, entity);
+  if (module == NULL) {
+    return NULL;
+  }
+  FbldMDefn* mdefn = LookupMDefn(mdefnv, module);
   if (mdefn == NULL) {
     return NULL;
   }
@@ -190,9 +195,24 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       return &app_expr->_base;
     }
 
-    case FBLC_UNION_EXPR:
-      assert(false && "TODO: Compile union expr");
-      return NULL;
+    case FBLC_UNION_EXPR: {
+      FbldUnionExpr* source = (FbldUnionExpr*)expr;
+      FblcUnionExpr* union_expr = arena->alloc(arena, sizeof(FblcUnionExpr));
+      union_expr->_base.tag = FBLC_UNION_EXPR;
+      union_expr->_base.id = 0xDEAD;  // unused
+      union_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, mctx, source->type);
+      FbldUnionDecl* union_decl = (FbldUnionDecl*)LookupQDecl(mdefnv, mctx, source->type);
+      union_expr->field = FBLC_NULL_ID;
+      for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
+        if (strcmp(source->field->name, union_decl->fieldv->xs[i]->name->name) == 0) {
+          union_expr->field = i;
+          break;
+        }
+      }
+      assert(union_expr->field != FBLC_NULL_ID && "invalid field name");
+      union_expr->arg = CompileExpr(arena, mdefnv, codev, mctx, source->arg);
+      return &union_expr->_base;
+   }
 
     case FBLC_ACCESS_EXPR:
       assert(false && "TODO: Compile access expr");
@@ -364,7 +384,7 @@ FblcDecl* FbldCompile(FblcArena* arena, FbldMDefnV* mdefnv, FbldQualifiedName* e
 // FbldCompileValue -- see documentation in fbld.h
 FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value)
 {
-  FbldDecl* type_decl = LookupQDecl(mdefnv, value->type);
+  FbldDecl* type_decl = LookupQDecl(mdefnv, NULL, value->type);
   assert(type_decl != NULL);
   switch (value->kind) {
     case FBLD_STRUCT_KIND: {
@@ -378,8 +398,17 @@ FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* val
     }
 
     case FBLD_UNION_KIND: {
-      assert(false && "TODO: Compile fbld union value");
-      return NULL;
+      FbldUnionDecl* union_decl = (FbldUnionDecl*)type_decl;
+      FblcValue* arg = FbldCompileValue(arena, mdefnv, value->fieldv->xs[0]);
+      size_t tag = FBLC_NULL_ID;
+      for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
+        if (strcmp(union_decl->fieldv->xs[i]->name->name, value->tag->name) == 0) {
+          tag = i;
+          break;
+        }
+      }
+      assert(tag != FBLC_NULL_ID && "Invalid union tag");
+      return FblcNewUnion(arena, union_decl->fieldv->size, tag, arg);
     }
   }
   assert(false && "invalid fbld value kind");
