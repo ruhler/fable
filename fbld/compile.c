@@ -198,9 +198,19 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       assert(false && "TODO: Compile access expr");
       return NULL;
 
-    case FBLC_COND_EXPR:
-      assert(false && "TODO: Compile cond expr");
-      return NULL;
+    case FBLC_COND_EXPR: {
+      FbldCondExpr* source = (FbldCondExpr*)expr;
+      FblcCondExpr* cond_expr = arena->alloc(arena, sizeof(FblcCondExpr));
+      cond_expr->_base.tag = FBLC_COND_EXPR;
+      cond_expr->_base.id = 0xDEAD;   // unused
+      cond_expr->select = CompileExpr(arena, mdefnv, codev, mctx, source->select);
+      FblcVectorInit(arena, cond_expr->argv);
+      for (size_t i = 0; i < source->argv->size; ++i) {
+        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, mctx, source->argv->xs[i]);
+        FblcVectorAppend(arena, cond_expr->argv, arg);
+      }
+      return &cond_expr->_base;
+    }
 
     case FBLC_LET_EXPR:
       assert(false && "TODO: Compile let expr");
@@ -271,9 +281,21 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       assert(false && "Cannot compile a abstract type declaration");
       break;
 
-    case FBLD_UNION_DECL:
-      assert(false && "TODO: Compile a union declaration");
+    case FBLD_UNION_DECL: {
+      FbldUnionDecl* src_union_decl = (FbldUnionDecl*)src_decl;
+      FblcUnionDecl* union_decl = arena->alloc(arena, sizeof(FblcUnionDecl));
+      union_decl->_base.tag = FBLC_UNION_DECL;
+      union_decl->_base.id = 0xDEAD;   // id field unused
+      FblcVectorInit(arena, union_decl->fieldv);
+      for (size_t i = 0; i < src_union_decl->fieldv->size; ++i) {
+        FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
+            arena, mdefnv, codev, mctx,
+            src_union_decl->fieldv->xs[i]->type);
+        FblcVectorAppend(arena, union_decl->fieldv, type);
+      }
+      decl = &union_decl->_base;
       break;
+    }
 
     case FBLD_STRUCT_DECL: {
       FbldStructDecl* src_struct_decl = (FbldStructDecl*)src_decl;
