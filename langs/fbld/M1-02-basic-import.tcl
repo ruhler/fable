@@ -1,25 +1,25 @@
 set prg {
-  Unit.mdecl {
-    mdecl Unit() {
+  UnitM.mdecl {
+    mdecl UnitM() {
       struct Unit();
     };
   }
 
-  Unit.mdefn {
-    mdefn Unit() {
+  UnitM.mdefn {
+    mdefn UnitM() {
       struct Unit();
     };
   }
 
   Main.mdecl {
-    mdecl Main(Unit) {
-      func Main( ; Unit@Unit);
+    mdecl Main(UnitM) {
+      func Main( ; Unit@UnitM);
     };
   }
 
   Main.mdefn {
-    mdefn Main(Unit) {
-      import Unit(Unit);
+    mdefn Main(UnitM) {
+      import UnitM(Unit);
 
       func main( ; Unit) {
         Unit();
@@ -28,4 +28,4 @@ set prg {
   }
 }
 
-fbld-test $prg Main@main {} "return Unit@Unit()"
+fbld-test $prg main@Main {} "return Unit@UnitM()"

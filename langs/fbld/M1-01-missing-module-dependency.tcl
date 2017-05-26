@@ -1,30 +1,30 @@
 set prg {
-  Unit.mdecl {
-    mdecl Unit() {
+  UnitM.mdecl {
+    mdecl UnitM() {
       struct Unit();
     };
   }
 
-  Unit.mdefn {
-    mdefn Unit() {
+  UnitM.mdefn {
+    mdefn UnitM() {
       struct Unit();
     };
   }
 
   Main.mdecl {
-    mdecl Main(Unit) {
-      func Main( ; Unit@Unit);
+    mdecl Main(UnitM) {
+      func Main( ; Unit@UnitM);
     };
   }
 
   Main.mdefn {
     # The Main module must list Unit as a dependency.
     mdefn Main() {
-      func main( ; Unit@Unit) {
-        Unit@Unit();
+      func main( ; Unit@UnitM) {
+        Unit@UnitM();
       };
     };
   }
 }
 
-skip fbld-check-error $prg Main@main
+skip fbld-check-error $prg main@Main

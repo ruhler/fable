@@ -30,7 +30,7 @@ an integer arithmetic module that illustrates the features of module
 interfaces.
 
   mdecl Int(Bool) {
-    import Bool(Bool);
+    import Bool(BoolT);
 
     type Int;
     struct DivModResult(Int quotient, Int remainder);
@@ -40,8 +40,8 @@ interfaces.
     func Add(Int a, Int b; Int);
     func Mul(Int a, Int b; Int);
     func DivMod(Int a, Int b; DivModResult);
-    func Equals(Int a, Int b; Bool@Bool);
-    func LessThan(Int a, Int b; Bool);
+    func Equals(Int a, Int b; BoolT@Bool);
+    func LessThan(Int a, Int b; BoolT);
   };
 
 Module interfaces are introduced using the 'mdecl' keyword, which is short for
@@ -74,7 +74,7 @@ The import declaration is a syntactic convenience for referring to entities
 from other modules without having to use a qualified name. The import
 declaration consists of the name of a module to import entities from, followed
 by a list of entities to import that belong to that module's interface. In
-this case, the 'Bool' type is being imported from the Bool module. Importing
+this case, the 'BoolT' type is being imported from the Bool module. Importing
 the entity means it can be referred to without qualification in the module
 interface.
 
@@ -109,14 +109,14 @@ the process.
 M2.5 Qualified Names
 ^^^^^^^^^^^^^^^^^^^^
 Entities from other modules can be referred to without importing them by using
-qualified names. Qualified names consist of a module name, followed by the '@'
-symbol, followed by the name of an entity within the module. If a qualified
-name is used to refer to some module Foo, then Foo must be listed as a module
-dependency. In this example, Bool@Bool is used to refer to the Bool type in
-the declaration of the Equals function. In this case, no qualification is
-needed for the Bool type because it has already been imported, but if the Bool
-type was not imported into the Int module interface, the qualified form
-"Bool@Bool" would need to be used.
+qualified names. Qualified names consist of the name of an entity followed by
+the '@' symbol, followed by the name of the module to which the entity
+belongs. If a qualified name is used to refer to some module Foo, then Foo
+must be listed as a module dependency. In this example, BoolT@Bool is used to
+refer to the BoolT type in the declaration of the Equals function. In this
+case, no qualification is needed for the BoolT type because it has already been
+imported, but if the BoolT type was not imported into the Int module interface,
+the qualified form "BoolT@Bool" would need to be used.
 
 M3. Module Implementations
 --------------------------
@@ -127,7 +127,7 @@ numbers starting from 0.
 
 mdefn Int(Unit, Bool) {
   import Unit(Unit);
-  import Bool(Bool, True);
+  import Bool(BoolT, True);
 
   union Int(Unit 0, Int S);
   struct DivModResult(Int quotient, Int remainder);
@@ -138,10 +138,10 @@ mdefn Int(Unit, Bool) {
 
   ...
 
-  func Equals(Int a, Int b; Bool) {
+  func Equals(Int a, Int b; BoolT) {
     ?(a; ?(b; True(),           # 0 == 0
-              Bool@False()),    # 0 != 1+s
-         ?(b; Bool@False(),     # 1 + s != 0
+              False@Bool()),    # 0 != 1+s
+         ?(b; False@Bool(),     # 1 + s != 0
               Equals(a.S, b.S)));
   };
 };
@@ -157,7 +157,7 @@ which may be different from the modules the interface depends on. For example,
 in this case, the implementation reuses the 'Unit' module to define the Int
 type, so it depends on the 'Unit' module even though the interface does not.
 The module definition also depends on the 'Bool' module, because it uses the
-Bool type and the functions 'True' and 'False'.
+BoolT type and the functions 'True' and 'False'.
 
 A module definition does not inherit anything from its corresponding module
 declaration. All module dependencies must be listed according to what
@@ -173,10 +173,10 @@ imports, type declarations, function declarations, and process declarations in
 any order.
 
 The import statement for 'mdefn' behaves exactly as it does for 'mdecl'. For
-example, because the 'Bool' type and 'True' function from Bool is imported,
+example, because the 'BoolT' type and 'True' function from Bool is imported,
 they can be used unqualified in the implementation of Equals. In contrast,
 for illustration purposes, the 'False' function was not imported, so the
-qualified form 'Bool@False' must be used instead.
+qualified form 'False@BoolT' must be used instead.
 
 Type, function, and process declarations are the same as in Calvisus, except
 that they may refer to qualified names for modules listed as dependencies in

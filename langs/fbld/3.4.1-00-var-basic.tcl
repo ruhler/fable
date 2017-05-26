@@ -19,5 +19,5 @@ set prg {
   }
 }
 
-fbld-test $prg Main@main { Main@Bool:True(Main@Unit()) } "return Main@Bool:True(Main@Unit())"
-fbld-test $prg Main@main { Main@Bool:False(Main@Unit()) } "return Main@Bool:False(Main@Unit())"
+skip fbld-test $prg main@Main { Bool@Main:True(Unit@Main()) } "return Bool@Main:True(Unit@Main())"
+skip fbld-test $prg main@Main { Bool@Main:False(Unit@Main()) } "return Bool@Main:False(Unit@Main())"

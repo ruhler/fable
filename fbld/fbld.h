@@ -34,11 +34,11 @@ typedef struct {
 } FbldNameL;
 
 // FbldQualifiedName --
-//   A qualified fbld name of the form 'Foo@bar'. The module component of the
+//   A qualified fbld name of the form 'bar@Foo'. The module component of the
 //   name may be NULL to indicate the name is not explicitly qualified.
 typedef struct {
-  FbldNameL* module;
   FbldNameL* name;
+  FbldNameL* module;
 } FbldQualifiedName;
 
 // FbldTypedName --

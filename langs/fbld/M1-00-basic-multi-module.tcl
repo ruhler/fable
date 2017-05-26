@@ -1,30 +1,30 @@
 # A basic test case using multiple modules.
 set prg {
-  Unit.mdecl {
-    mdecl Unit() {
+  UnitM.mdecl {
+    mdecl UnitM() {
       struct Unit();
     };
   }
 
-  Unit.mdefn {
-    mdefn Unit() {
+  UnitM.mdefn {
+    mdefn UnitM() {
       struct Unit();
     };
   }
 
   Main.mdecl {
-    mdecl Main(Unit) {
-      func Main( ; Unit@Unit);
+    mdecl Main(UnitM) {
+      func Main( ; Unit@UnitM);
     };
   }
 
   Main.mdefn {
-    mdefn Main(Unit) {
-      func main( ; Unit@Unit) {
-        Unit@Unit();
+    mdefn Main(UnitM) {
+      func main( ; Unit@UnitM) {
+        Unit@UnitM();
       };
     };
   }
 }
 
-fbld-test $prg Main@main {} "return Unit@Unit()"
+fbld-test $prg main@Main {} "return Unit@UnitM()"

@@ -7,7 +7,7 @@ abstract tcl procedures:
 # Test running the process 'entry' in 'program' with given arguments.
 # The program is specified as a list of alternating file name, file content
 # elements, such as {Foo.mdecl { mdecl Foo...} Foo.mdefn { mdefn Foo...}}
-# The entry should be a qualified function, such as 'Foo@main'.
+# The entry should be a qualified function, such as 'main@Foo'.
 # The 'script' should be a sequence of commands of the form
 # 'put <port> <value>', 'get <portid> <value>', and 'return <value>'.
 # The put command causes the value to be written to the given port. The get

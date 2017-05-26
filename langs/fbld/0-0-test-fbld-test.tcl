@@ -18,4 +18,4 @@ set prg {
   }
 }
 
-fbld-test $prg Main@main {} "return Main@Unit()"
+fbld-test $prg main@Main {} "return Unit@Main()"

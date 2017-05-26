@@ -81,7 +81,7 @@ static void PrintUsage(FILE* stream)
       "that the resultinv value matches the given value.\n"
       "PATH should be a colon separated list of directories to search for fbld\n"
       "modules.\n"
-      "MAIN should be a qualified entry, such as Foo@main.\n"
+      "MAIN should be a qualified entry, such as main@Foo.\n"
       "VALUEs should be specified using qualified names.\n"
   );
 }
@@ -355,29 +355,29 @@ int main(int argc, char* argv[])
   // Parse the entry.
   const char* entry_at = strchr(entry, '@');
   if (entry_at == NULL) {
-    fprintf(stderr, "entry should be a qualified name of the form 'module@process', but got '%s'\n", entry);
+    fprintf(stderr, "entry should be a qualified name of the form 'process@module', but got '%s'\n", entry);
     return 1;
   }
-  char entry_module_name[entry_at - entry + 1];
-  strncpy(entry_module_name, entry, entry_at - entry);
-  entry_module_name[entry_at - entry] = '\0';
-  FbldLoc entry_module_loc = {
-    .source = entry,
-    .line = 1,
-    .col = 1
-  };
-  FbldNameL entry_module = {
-    .name = entry_module_name,
-    .loc = &entry_module_loc
-  };
+  char entry_name_name[entry_at - entry + 1];
+  strncpy(entry_name_name, entry, entry_at - entry);
+  entry_name_name[entry_at - entry] = '\0';
   FbldLoc entry_name_loc = {
     .source = entry,
     .line = 1,
     .col = entry_at - entry + 2
   };
   FbldNameL entry_name = {
-    .name = entry_at + 1,
+    .name = entry_name_name,
     .loc = &entry_name_loc
+  };
+  FbldLoc entry_module_loc = {
+    .source = entry,
+    .line = 1,
+    .col = 1
+  };
+  FbldNameL entry_module = {
+    .name = entry_at + 1,
+    .loc = &entry_module_loc
   };
   FbldQualifiedName entry_entity = {
     .module = &entry_module,

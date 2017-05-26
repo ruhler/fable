@@ -339,8 +339,8 @@ qualified_name:
     }
   | name '@' name {
       $$ = arena->alloc(arena, sizeof(FbldQualifiedName));
-      $$->module = $1;
-      $$->name = $3;
+      $$->name = $1;
+      $$->module = $3;
     }
   ;
 
