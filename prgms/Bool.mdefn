@@ -1,5 +1,9 @@
 
-mdefn Bool() {
+mdefn Bool(Unit) {
+  import Unit(Unit);
+
+  union Bool(Unit true, Unit false);
+
   func True( ; Bool) {
     Bool:true(Unit());
   };

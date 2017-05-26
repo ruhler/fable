@@ -1,5 +1,3 @@
-
 mdecl Unit() {
   struct Unit();
 };
-

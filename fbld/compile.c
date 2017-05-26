@@ -3,6 +3,7 @@
 //   program.
 
 #include <assert.h>   // for assert
+#include <stdio.h>    // for fprintf
 #include <string.h>   // for strcmp
 
 #include "fblc.h"
@@ -350,10 +351,17 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
   assert(mctx != NULL && "Failed to find module for entity");
 
   FbldDecl* src_decl = LookupDecl(mctx, entity->name);
-  assert(src_decl != NULL && "Entry definition not found");
+  if (src_decl == NULL) {
+      fprintf(stderr, "Failed to find %s in %s\n", entity->name->name, mctx->name->name);
+      assert(false && "Entry definition not found");
+  }
 
   // Compile the declaration
-  FblcDecl* decl = NULL;
+  CompiledDecl* c = arena->alloc(arena, sizeof(CompiledDecl));
+  c->module = module;
+  c->name = entity->name->name;
+  c->decl = NULL;
+  FblcVectorAppend(arena, *codev, c);
   switch (src_decl->tag) {
     case FBLD_IMPORT_DECL:
       assert(false && "Cannot compile an import declaration");
@@ -366,6 +374,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
     case FBLD_UNION_DECL: {
       FbldUnionDecl* src_union_decl = (FbldUnionDecl*)src_decl;
       FblcUnionDecl* union_decl = arena->alloc(arena, sizeof(FblcUnionDecl));
+      c->decl = &union_decl->_base;
       union_decl->_base.tag = FBLC_UNION_DECL;
       union_decl->_base.id = 0xDEAD;   // id field unused
       FblcVectorInit(arena, union_decl->fieldv);
@@ -375,13 +384,13 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
             src_union_decl->fieldv->xs[i]->type);
         FblcVectorAppend(arena, union_decl->fieldv, type);
       }
-      decl = &union_decl->_base;
       break;
     }
 
     case FBLD_STRUCT_DECL: {
       FbldStructDecl* src_struct_decl = (FbldStructDecl*)src_decl;
       FblcStructDecl* struct_decl = arena->alloc(arena, sizeof(FblcStructDecl));
+      c->decl = &struct_decl->_base;
       struct_decl->_base.tag = FBLC_STRUCT_DECL;
       struct_decl->_base.id = 0xDEAD;   // id field unused
       FblcVectorInit(arena, struct_decl->fieldv);
@@ -391,13 +400,13 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
             src_struct_decl->fieldv->xs[i]->type);
         FblcVectorAppend(arena, struct_decl->fieldv, type);
       }
-      decl = &struct_decl->_base;
       break;
     }
 
     case FBLD_FUNC_DECL: {
       FbldFuncDecl* src_func_decl = (FbldFuncDecl*)src_decl;
       FblcFuncDecl* func_decl = arena->alloc(arena, sizeof(FblcFuncDecl));
+      c->decl = &func_decl->_base;
       func_decl->_base.tag = FBLC_FUNC_DECL;
       func_decl->_base.id = 0xDEAD;     // id field unused
       FblcVectorInit(arena, func_decl->argv);
@@ -417,7 +426,6 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
             arena, mdefnv, codev, mctx,
             src_func_decl->return_type);
       CompileExpr(arena, mdefnv, codev, mctx, vars, src_func_decl->body, &func_decl->body);
-      decl = &func_decl->_base;
       break;
     }
 
@@ -430,13 +438,8 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       break;
   }
 
-  assert(decl != NULL);
-  CompiledDecl* c = arena->alloc(arena, sizeof(CompiledDecl));
-  c->module = module;
-  c->name = entity->name->name;
-  c->decl = decl;
-  FblcVectorAppend(arena, *codev, c);
-  return decl;
+  assert(c->decl != NULL);
+  return c->decl;
 }
 
 // FbldCompile -- see documentation in fbld.h
