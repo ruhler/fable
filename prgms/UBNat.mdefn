@@ -164,7 +164,7 @@ mdefn UBNat(Unit, Bool) {
   };
 
   func Gt(Nat a, Nat b; Bool) {
-    ?(a; False()
+    ?(a; False(),
        ?(b; True(), False(), False(), False()),
        ?(b; True(), True(), Gt(a.2p0, b.2p0), Gt(a.2p1, b.2p1)),
        ?(b; True(), True(), Ge(a.2p0, b.2p0), Gt(a.2p1, b.2p1)));

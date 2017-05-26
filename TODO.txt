@@ -1,9 +1,11 @@
 Fbld Kickoff:
-* Figure out how to resolve field id when compiling.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:
 * Better organize the contents parse.y.
+* Avoid duplicate calls to LookupDecl arising from compiling a type
+  declaration and looking up the type declaration to return when compiling an
+  expression.
 
 Fblc Front End Cleanup:
 * Make fblcs structure standalone rather than tied to fblc structure.
