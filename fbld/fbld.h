@@ -76,6 +76,14 @@ typedef struct {
   FbldExpr** xs;
 } FbldExprV;
 
+// FblcVarExpr --
+//   A variable expression of the form 'var' whose value is the value of the
+//   corresponding variable in scope.
+typedef struct {
+  FbldExpr _base;
+  FbldNameL* var;
+} FbldVarExpr;
+
 // FbldAppExpr --
 //   An application expression of the form 'func(arg0, arg1, ...)'. func may
 //   refer to a function or a struct type.

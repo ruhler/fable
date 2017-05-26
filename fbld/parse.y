@@ -227,6 +227,16 @@ expr:
     '{' stmt '}' {
        $$ = $2;
     }
+  | name {
+      FbldVarExpr* var_expr = arena->alloc(arena, sizeof(FbldVarExpr));
+      var_expr->_base.tag = FBLC_VAR_EXPR;
+      var_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
+      var_expr->_base.loc->source = $1->loc->source;
+      var_expr->_base.loc->line = $1->loc->line;
+      var_expr->_base.loc->col = $1->loc->col;
+      var_expr->var = $1;
+      $$ = &var_expr->_base;
+    }
   | qualified_name '(' expr_list ')' {
       FbldAppExpr* app_expr = arena->alloc(arena, sizeof(FbldAppExpr));
       app_expr->_base.tag = FBLC_APP_EXPR;

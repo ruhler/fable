@@ -1,5 +1,5 @@
 Fbld Kickoff:
-* Add a test for conditional expressions.
+* Consider switching qualified names Foo@Bar to Bar@Foo?
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:
