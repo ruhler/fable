@@ -252,9 +252,17 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       return &cond_expr->_base;
     }
 
-    case FBLC_LET_EXPR:
-      assert(false && "TODO: Compile let expr");
-      return NULL;
+    case FBLC_LET_EXPR: {
+      FbldLetExpr* source = (FbldLetExpr*)expr;
+      FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
+      let_expr->_base.tag = FBLC_LET_EXPR;
+      let_expr->_base.id = 0xDEAD;  // unused
+      let_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, mctx, source->type);
+      let_expr->def = CompileExpr(arena, mdefnv, codev, mctx, vars, source->def);
+      Vars nvars = { .name = source->var->name, .next = vars };
+      let_expr->body = CompileExpr(arena, mdefnv, codev, mctx, &nvars, source->body);
+      return &let_expr->_base;
+    }
 
     default:
       assert(false && "Invalid expr tag");

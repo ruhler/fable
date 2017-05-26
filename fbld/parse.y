@@ -96,7 +96,7 @@
 %type <tnamev> field_list non_empty_field_list
 %type <exprv> expr_list non_empty_expr_list
 %type <value> value
-%type <valuev> value_list
+%type <valuev> value_list non_empty_value_list
 
 %%
 
@@ -223,7 +223,18 @@ defn:
     }
   ;
 
-stmt: expr ';' { $$ = $1; } ;
+stmt: expr ';' { $$ = $1; }
+    | qualified_name name '=' expr ';' stmt {
+        FbldLetExpr* let_expr = arena->alloc(arena, sizeof(FbldLetExpr));
+        let_expr->_base.tag = FBLC_LET_EXPR;
+        let_expr->_base.loc = $1->module == NULL ? $1->name->loc : $1->module->loc;
+        let_expr->type = $1;
+        let_expr->var = $2;
+        let_expr->def = $4;
+        let_expr->body = $6;
+        $$ = &let_expr->_base;
+      } 
+    ;
 
 expr:
     '{' stmt '}' {
@@ -232,10 +243,7 @@ expr:
   | name {
       FbldVarExpr* var_expr = arena->alloc(arena, sizeof(FbldVarExpr));
       var_expr->_base.tag = FBLC_VAR_EXPR;
-      var_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
-      var_expr->_base.loc->source = $1->loc->source;
-      var_expr->_base.loc->line = $1->loc->line;
-      var_expr->_base.loc->col = $1->loc->col;
+      var_expr->_base.loc = $1->loc;
       var_expr->var = $1;
       $$ = &var_expr->_base;
     }
@@ -370,7 +378,16 @@ value_list:
       $$ = arena->alloc(arena, sizeof(FbldValueV));
       FblcVectorInit(arena, *$$);
     }
-  | value_list ',' value {
+  | non_empty_value_list
+  ;
+
+non_empty_value_list:
+    value {
+      $$ = arena->alloc(arena, sizeof(FbldValueV));
+      FblcVectorInit(arena, *$$);
+      FblcVectorAppend(arena, *$$, $1);
+    }
+  | non_empty_value_list ',' value {
       FblcVectorAppend(arena, *$1, $3);
       $$ = $1;
     }
@@ -413,7 +430,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,@:?", c) != NULL
+  return strchr("(){};,@:?=", c) != NULL
     || c == START_MDECL
     || c == START_MDEFN
     || c == START_VALUE;

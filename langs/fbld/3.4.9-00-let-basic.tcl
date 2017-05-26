@@ -20,4 +20,4 @@ set prg {
   }
 }
 
-fbld-test $prg main@Main {} "return A@Main(Unit@Main(), Unit@Main())"
+fbld-test $prg main@Main {} "return A@Main(Unit@Main(),Unit@Main())"

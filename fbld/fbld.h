@@ -112,6 +112,16 @@ typedef struct {
   FbldExprV* argv;
 } FbldCondExpr;
 
+// FbldLetExpr --
+//   A let expression of the form '{ type var = def; body }'.
+typedef struct {
+  FbldExpr _base;
+  FbldQualifiedName* type;
+  FbldNameL* var;
+  FbldExpr* def;
+  FbldExpr* body;
+} FbldLetExpr;
+
 // FbldDeclTag --
 //   Tag used to distinguish amongs different kinds of fbld declarations.
 typedef enum {
