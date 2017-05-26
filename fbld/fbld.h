@@ -142,9 +142,7 @@ typedef struct {
 
 // FbldAbstractTypeDecl --
 //   A declaration of an abstract type.
-typedef struct {
-  FbldDecl _base;
-} FbldAbstractTypeDecl;
+typedef FbldDecl FbldAbstractTypeDecl;
 
 // FbldConcreteTypeDecl --
 //   A declaration of a struct or union type.

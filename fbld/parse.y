@@ -199,7 +199,9 @@ func_decl: "func" name '(' field_list ';' qualified_name ')' {
 decl:
     import_decl ';'
   | "type" name ';' {
-      assert(false && "TODO: type");
+      $$ = arena->alloc(arena, sizeof(FbldAbstractTypeDecl));
+      $$->tag = FBLD_ABSTRACT_TYPE_DECL;
+      $$->name = $2;
     }
   | struct_decl ';'
   | union_decl ';'
