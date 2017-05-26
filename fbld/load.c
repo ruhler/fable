@@ -89,7 +89,7 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 {
   char* filename = FindModuleFile(arena, path, name, ".mdefn");
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.mdefn on search path", name);
+    fprintf(stderr, "unable to locate %s.mdefn on search path\n", name);
     return NULL;
   }
 

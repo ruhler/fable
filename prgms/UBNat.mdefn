@@ -15,7 +15,7 @@ mdefn UBNat(Unit, Bool) {
   func 2p0(Nat x; Nat) {
     Nat z = Nat:2p0(x);
     ?(x; 0(), z, z, z);
-  }
+  };
 
   # Compute 2 * x + 1.
   # This is like Nat:2p1(x), but properly handles the case when x is 0.

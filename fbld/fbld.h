@@ -103,6 +103,15 @@ typedef struct {
   FbldExpr* arg;
 } FbldUnionExpr;
 
+// FbldAccessExpr --
+//   An access expression of the form 'obj.field' used to access a field of
+//   a struct or union value.
+typedef struct {
+  FbldExpr _base;
+  FbldExpr* obj;
+  FbldNameL* field;
+} FbldAccessExpr;
+
 // FblcCondExpr --
 //   A conditional expression of the form '?(select; arg0, arg1, ...)', which
 //   conditionally selects an argument based on the tag of the select value.

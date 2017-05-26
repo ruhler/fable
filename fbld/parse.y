@@ -250,12 +250,7 @@ expr:
   | qualified_name '(' expr_list ')' {
       FbldAppExpr* app_expr = arena->alloc(arena, sizeof(FbldAppExpr));
       app_expr->_base.tag = FBLC_APP_EXPR;
-      // TODO: Use the location at the beginning of the expression, not the
-      // one at the end.
-      app_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
-      app_expr->_base.loc->source = lex->loc.source;
-      app_expr->_base.loc->line = lex->loc.line;
-      app_expr->_base.loc->col = lex->loc.col;
+      app_expr->_base.loc = $1->module == NULL ? $1->name->loc : $1->module->loc;
       app_expr->func = $1;
       app_expr->argv = $3;
       $$ = &app_expr->_base;
@@ -263,16 +258,19 @@ expr:
   | qualified_name ':' name '(' expr ')' {
       FbldUnionExpr* union_expr = arena->alloc(arena, sizeof(FbldUnionExpr));
       union_expr->_base.tag = FBLC_UNION_EXPR;
-      // TODO: Use the location at the beginning of the expression, not the
-      // one at the end.
-      union_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
-      union_expr->_base.loc->source = lex->loc.source;
-      union_expr->_base.loc->line = lex->loc.line;
-      union_expr->_base.loc->col = lex->loc.col;
+      union_expr->_base.loc = $1->module == NULL ? $1->name->loc : $1->module->loc;
       union_expr->type = $1;
       union_expr->field = $3;
       union_expr->arg = $5;
       $$ = &union_expr->_base;
+    }
+  | expr '.' name {
+      FbldAccessExpr* access_expr = arena->alloc(arena, sizeof(FbldAccessExpr));
+      access_expr->_base.tag = FBLC_ACCESS_EXPR;
+      access_expr->_base.loc = $1->loc;
+      access_expr->obj = $1;
+      access_expr->field = $3;
+      $$ = &access_expr->_base;
     }
   | '?' '(' expr ';' non_empty_expr_list ')' {
       FbldCondExpr* cond_expr = arena->alloc(arena, sizeof(FbldCondExpr));
@@ -430,7 +428,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,@:?=", c) != NULL
+  return strchr("(){};,@:?=.", c) != NULL
     || c == START_MDECL
     || c == START_MDEFN
     || c == START_VALUE;

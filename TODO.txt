@@ -1,5 +1,5 @@
 Fbld Kickoff:
-* Consider switching qualified names Foo@Bar to Bar@Foo?
+* Figure out how to resolve field id when compiling.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:

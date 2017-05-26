@@ -234,9 +234,16 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       return &union_expr->_base;
    }
 
-    case FBLC_ACCESS_EXPR:
-      assert(false && "TODO: Compile access expr");
-      return NULL;
+    case FBLC_ACCESS_EXPR: {
+      FbldAccessExpr* source = (FbldAccessExpr*)expr;
+      FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
+      access_expr->_base.tag = FBLC_ACCESS_EXPR;
+      access_expr->_base.id = 0xDEAD;   // unused
+      access_expr->obj = CompileExpr(arena, mdefnv, codev, mctx, vars, source->obj);
+      //access_expr->field = FBLC_NULL_ID;
+      assert(false && "TODO: Resolve field id for access expr");
+      return &access_expr->_base;
+    }
 
     case FBLC_COND_EXPR: {
       FbldCondExpr* source = (FbldCondExpr*)expr;
