@@ -202,6 +202,7 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
           type = vars->type;
           break;
         }
+        vars = vars->next;
       }
       assert(var_expr->var != FBLC_NULL_ID && "variable not found");
       *compiled = &var_expr->_base;
