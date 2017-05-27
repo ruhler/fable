@@ -27,4 +27,4 @@ set prg {
   }
 }
 
-skip fbld-check-error $prg main@Main
+skip fbld-check-error $prg Main Main.defn:4:20

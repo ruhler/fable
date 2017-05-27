@@ -6,7 +6,6 @@
 #include <stdio.h>        // for FILE, fprintf, stdout, stderr, getline
 #include <stdlib.h>       // for abort
 #include <string.h>       // for strcmp, strchr, strncpy
-#include <unistd.h>       // for access
 
 #include "fblc.h"
 #include "fbld.h"

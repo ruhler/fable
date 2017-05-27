@@ -41,10 +41,12 @@ run ar rcs out/libfbld.a {*}$fbld_objs
 set ::fblc ./out/fblc
 set ::fblccheck ./out/fblc-check
 set ::fblctest ./out/fblc-test
+set ::fbldcheck ./out/fbld-check
 set ::fbldtest ./out/fbld-test
 run gcc {*}$FLAGS -o $::fblc out/obj/fblc/fblc.o -L out -lfblc
 run gcc {*}$FLAGS -o $::fblccheck out/obj/fblc/fblc-check.o -L out -lfblc
 run gcc {*}$FLAGS -o $::fblctest out/obj/fblc/fblc-test.o -L out -lfblc
+run gcc {*}$FLAGS -o $::fbldcheck out/obj/fbld/fbld-check.o -L out -lfbld -lfblc
 run gcc {*}$FLAGS -o $::fbldtest out/obj/fbld/fbld-test.o -L out -lfbld -lfblc
 run gcc {*}$FLAGS -o out/fblc-snake out/obj/fblc/fblc-snake.o -L out -lfblc -lncurses
 run gcc {*}$FLAGS -o out/fblc-tictactoe out/obj/fblc/fblc-tictactoe.o -L out -lfblc
@@ -104,6 +106,31 @@ proc fblc-test { program entry args script } {
     exec $::fblctest $fscript $fprogram $entry {*}$args
   } on error {results options} {
     error "$file:$line: error: \n$results"
+  }
+}
+
+# See langs/fbld/README.txt for the description of this function
+proc fbld-check-error { program module loc } {
+  set testloc [info frame -1]
+  set line [dict get $testloc line]
+  set file [dict get $testloc file]
+  set name "[file tail $file]_$line"
+  set dir ./out/test/fbld/$name
+  exec mkdir -p $dir
+
+  # Write the modules to file.
+  foreach {name content} $program {
+    exec echo $content > $dir/$name
+  }
+
+  try {
+    set errtext [exec $::fbldcheck --error $dir $module]
+  } on error {results options} {
+    error "$file:$line: error: fbld-check passed unexpectedly: $results"
+  }
+  exec echo $errtext > $dir/$name.err
+  if {-1 == [string first "$loc: error" $errtext]} {
+    error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
   }
 }
 
@@ -202,7 +229,7 @@ run $::fblctest out/tictactoe.TestChooseBestMoveWin.wnt prgms/tictactoe.fblc Tes
 run $::fblctest prgms/boolcalc.wnt prgms/boolcalc.fblc Test
 run $::fblctest prgms/ints.wnt prgms/ints.fblc Test
 run $::fblccheck prgms/snake.fblc
-run $::fbldtest prgms/UBNatTest.wnt prgms Test@UBNatTest
+skip run $::fbldtest prgms/UBNatTest.wnt prgms Test@UBNatTest
 skip run $::fbldtest prgms/PrimesTest.wnt prgms Test@PrimesTest
 
 exec mkdir -p out/cov/fblc/all out/cov/fbld/all

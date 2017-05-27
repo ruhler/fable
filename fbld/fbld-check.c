@@ -1,17 +1,17 @@
-// fblc-check.c --
-//   The file implements the main entry point for the fblc-check command.
+// fbld-check.c --
+//   This file implements the main entry point for the fbld-check program.
 
-#include <stdio.h>      // for FILE
-#include <stdlib.h>     // for malloc, free
-#include <string.h>     // for strcmp
+#include <stdio.h>        // for FILE, fprintf, stdout, stderr
+#include <string.h>       // for strcmp
 
-#include "fblcs.h"
+#include "fblc.h"
+#include "fbld.h"
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static void PrintUsage(FILE* fout);
+static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -28,16 +28,15 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fblc-check [--error] FILE\n"
-      "Check whether FILE is a well formed text fblc program.\n"
+      "Usage: fbld-check [--error] PATH MAIN\n"
+      "Check whether the module MAIN is a well formed fbld program.\n"
       "Exit status is 0 if the program is well formed, 1 otherwise.\n"
       "With --error, exit status is 0 if the program is not well formed, 0 otherwise.\n"
   );
 }
 
 // main --
-//   The main entry point for fblc-check.
-//   Checks whether FILE is a well formed text fblc program.
+//   The main entry point for the fbld-check program.
 //
 // Inputs:
 //   argc - The number of command line arguments.
@@ -71,18 +70,27 @@ int main(int argc, char* argv[])
   }
 
   if (argc < 1) {
-    fprintf(stderr, "no input file.\n");
+    fprintf(stderr, "no program path.\n");
     PrintUsage(stderr);
     return EX_USAGE;
   }
+  const char* path = *argv;
+  argv++;
+  argc--;
   
-  if (argc > 1) {
-    fprintf(stderr, "too many input files.\n");
+  if (argc < 1) {
+    fprintf(stderr, "no main module.\n");
     PrintUsage(stderr);
     return EX_USAGE;
   }
+  const char* main_module = *argv;
+  argv++;
+  argc--;
 
-  const char* filename = argv[0];
+  if (argc > 0) {
+    fprintf(stderr, "too many arguments.\n");
+    return EX_USAGE;
+  }
 
   stderr = expect_error ? stdout : stderr;
   int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
@@ -92,5 +100,20 @@ int main(int argc, char* argv[])
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
   // program, so we should be okay.
-  return FblcsLoadProgram(&FblcMallocArena, filename) ? exit_success : exit_fail;
+  FblcArena* arena = &FblcMallocArena;
+
+  FbldStringV search_path;
+  FblcVectorInit(arena, search_path);
+  FblcVectorAppend(arena, search_path, path);
+
+  FbldMDeclV mdeclv;
+  FblcVectorInit(arena, mdeclv);
+
+  FbldMDefnV mdefnv;
+  FblcVectorInit(arena, mdefnv);
+
+  if (FbldLoadModules(arena, &search_path, main_module, &mdeclv, &mdefnv)) {
+    return exit_success;
+  }
+  return exit_fail;
 }
