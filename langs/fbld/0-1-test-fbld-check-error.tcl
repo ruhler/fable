@@ -19,4 +19,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:5:9
+fbld-check-error $prg Main Main.mdefn:5:7

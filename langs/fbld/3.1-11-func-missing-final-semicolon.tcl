@@ -22,4 +22,4 @@ set prg {
     };
   }
 }
-skip fbld-check-error $prg Main Main.mdefn:10:7
+fbld-check-error $prg Main Main.mdefn:10:7

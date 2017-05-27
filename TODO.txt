@@ -2,6 +2,7 @@ Fbld Kickoff:
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:
+* Don't allocate and leak FbldLocs like crazy in the lexer/parser.
 * Test case when struct or union type is not redeclared in mdefn from mdecl.
 * Better organize the contents parse.y.
 * Avoid duplicate calls to LookupDecl arising from compiling a type

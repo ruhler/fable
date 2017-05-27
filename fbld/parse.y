@@ -34,11 +34,19 @@
     FbldValue* value;
   } ParseResult;
 
-  static bool IsNameChar(int c);
-  static bool IsSingleChar(int c);
-  static void ReadNextChar(Lex* lex);
-  static int yylex(FblcArena* arena, Lex* lex);
-  static void yyerror(FblcArena* arena, Lex* lex, ParseResult* result, const char* msg);
+  #define YYLTYPE FbldLoc*
+
+  #define YYLLOC_DEFAULT(Cur, Rhs, N)  \
+  do                                    \
+    if (N)                              \
+      {                                 \
+        (Cur) = YYRHSLOC(Rhs, 1);       \
+      }                                 \
+    else                                \
+      {                                 \
+        (Cur) = YYRHSLOC(Rhs, 0);       \
+      }                                 \
+  while (0)
 %}
 
 %union {
@@ -56,6 +64,16 @@
   FbldValueV* valuev;
 }
 
+%{
+  static bool IsNameChar(int c);
+  static bool IsSingleChar(int c);
+  static void ReadNextChar(Lex* lex);
+  static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex);
+  static void yyerror(YYLTYPE* llocp, FblcArena* arena, Lex* lex, ParseResult* result, const char* msg);
+%}
+
+%locations
+%define api.pure
 %define parse.error verbose
 %param {FblcArena* arena} {Lex* lex}
 %parse-param {ParseResult* result}
@@ -227,7 +245,7 @@ stmt: expr ';' { $$ = $1; }
     | qualified_name name '=' expr ';' stmt {
         FbldLetExpr* let_expr = arena->alloc(arena, sizeof(FbldLetExpr));
         let_expr->_base.tag = FBLC_LET_EXPR;
-        let_expr->_base.loc = $1->module == NULL ? $1->name->loc : $1->module->loc;
+        let_expr->_base.loc = @$;
         let_expr->type = $1;
         let_expr->var = $2;
         let_expr->def = $4;
@@ -243,14 +261,14 @@ expr:
   | name {
       FbldVarExpr* var_expr = arena->alloc(arena, sizeof(FbldVarExpr));
       var_expr->_base.tag = FBLC_VAR_EXPR;
-      var_expr->_base.loc = $1->loc;
+      var_expr->_base.loc = @$;
       var_expr->var = $1;
       $$ = &var_expr->_base;
     }
   | qualified_name '(' expr_list ')' {
       FbldAppExpr* app_expr = arena->alloc(arena, sizeof(FbldAppExpr));
       app_expr->_base.tag = FBLC_APP_EXPR;
-      app_expr->_base.loc = $1->module == NULL ? $1->name->loc : $1->module->loc;
+      app_expr->_base.loc = @$;
       app_expr->func = $1;
       app_expr->argv = $3;
       $$ = &app_expr->_base;
@@ -258,7 +276,7 @@ expr:
   | qualified_name ':' name '(' expr ')' {
       FbldUnionExpr* union_expr = arena->alloc(arena, sizeof(FbldUnionExpr));
       union_expr->_base.tag = FBLC_UNION_EXPR;
-      union_expr->_base.loc = $1->module == NULL ? $1->name->loc : $1->module->loc;
+      union_expr->_base.loc = @$;
       union_expr->type = $1;
       union_expr->field = $3;
       union_expr->arg = $5;
@@ -267,7 +285,7 @@ expr:
   | expr '.' name {
       FbldAccessExpr* access_expr = arena->alloc(arena, sizeof(FbldAccessExpr));
       access_expr->_base.tag = FBLC_ACCESS_EXPR;
-      access_expr->_base.loc = $1->loc;
+      access_expr->_base.loc = @$;
       access_expr->obj = $1;
       access_expr->field = $3;
       $$ = &access_expr->_base;
@@ -275,12 +293,7 @@ expr:
   | '?' '(' expr ';' non_empty_expr_list ')' {
       FbldCondExpr* cond_expr = arena->alloc(arena, sizeof(FbldCondExpr));
       cond_expr->_base.tag = FBLC_COND_EXPR;
-      // TODO: Use the location at the beginning of the expression, not the
-      // one at the end.
-      cond_expr->_base.loc = arena->alloc(arena, sizeof(FbldLoc));
-      cond_expr->_base.loc->source = lex->loc.source;
-      cond_expr->_base.loc->line = lex->loc.line;
-      cond_expr->_base.loc->col = lex->loc.col;
+      cond_expr->_base.loc = @$;
       cond_expr->select = $3;
       cond_expr->argv = $5;
       $$ = &cond_expr->_base;
@@ -447,6 +460,7 @@ static bool IsSingleChar(int c)
 //   Updates the character, location, and input stream of the lex context.
 static void ReadNextChar(Lex* lex)
 {
+  int c = lex->c;
   if (lex->fin) {
     lex->c = fgetc(lex->fin);
   } else if (lex->sin) {
@@ -457,10 +471,10 @@ static void ReadNextChar(Lex* lex)
     }
   }
 
-  if (lex->c == '\n') {
+  if (c == '\n') {
     lex->loc.line++;
     lex->loc.col = 1;
-  } else if (lex->c != EOF) {
+  } else if (c != EOF) {
     lex->loc.col++;
   }
 }
@@ -470,6 +484,8 @@ static void ReadNextChar(Lex* lex)
 //   This is the lexer for the bison generated parser.
 //
 // Inputs:
+//   lvalp - Output parameter for returned token value.
+//   llocp - Output parameter for the returned token's location.
 //   arena - Arena used for allocating names.
 //   lex - The lex context to parse the next token from.
 // 
@@ -477,10 +493,11 @@ static void ReadNextChar(Lex* lex)
 //   The id of the next terminal symbol in the input stream.
 //
 // Side effects:
-//   Sets yylval with the semantic value of the next token in the input
+//   Sets lvalp with the semantic value of the next token in the input
+//   stream, sets llocp with the location of the next token in the input
 //   stream, advances the stream to the subsequent token and updates the lex
 //   loc accordingly.
-static int yylex(FblcArena* arena, Lex* lex)
+static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
 {
   // Skip past white space and comments.
   bool is_comment_start = (lex->c == '#');
@@ -493,6 +510,12 @@ static int yylex(FblcArena* arena, Lex* lex)
     }
     is_comment_start = (lex->c == '#');
   }
+
+  FbldLoc* loc = arena->alloc(arena, sizeof(FbldLoc));
+  loc->source = lex->loc.source;
+  loc->line = lex->loc.line;
+  loc->col = lex->loc.col;
+  *llocp = loc;
   
   if (lex->c == EOF) {
     return END;
@@ -511,12 +534,6 @@ static int yylex(FblcArena* arena, Lex* lex)
     return INVALID;
   }
 
-  yylval.name = arena->alloc(arena, sizeof(FbldNameL));
-  yylval.name->loc = arena->alloc(arena, sizeof(FbldLoc));
-  yylval.name->loc->source = lex->loc.source;
-  yylval.name->loc->line = lex->loc.line;
-  yylval.name->loc->col = lex->loc.col;
-
   struct { size_t size; char* xs; } namev;
   FblcVectorInit(arena, namev);
   while (IsNameChar(lex->c)) {
@@ -524,7 +541,9 @@ static int yylex(FblcArena* arena, Lex* lex)
     ReadNextChar(lex);
   }
   FblcVectorAppend(arena, namev, '\0');
-  yylval.name->name = namev.xs;
+  lvalp->name = arena->alloc(arena, sizeof(FbldNameL));
+  lvalp->name->name = namev.xs;
+  lvalp->name->loc = loc;
 
   struct { char* keyword; int symbol; } keywords[] = {
     {.keyword = "mdecl", .symbol = MDECL},
@@ -549,9 +568,10 @@ static int yylex(FblcArena* arena, Lex* lex)
 //   The error reporting function for the bison generated parser.
 // 
 // Inputs:
+//   llocp - The location of the error.
 //   arena - unused.
 //   fin - unused.
-//   loc - The location of the next item in the input stream.
+//   lex - The lexical context.
 //   result - unused.
 //   msg - The error message.
 //
@@ -560,9 +580,10 @@ static int yylex(FblcArena* arena, Lex* lex)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(FblcArena* arena, Lex* lex, ParseResult* result, const char* msg)
+static void yyerror(YYLTYPE* llocp, FblcArena* arena, Lex* lex, ParseResult* result, const char* msg)
 {
-  fprintf(stderr, "%s:%d:%d: error: %s\n", lex->loc.source, lex->loc.line, lex->loc.col, msg);
+  FbldLoc* loc = *llocp;
+  fprintf(stderr, "%s:%d:%d: error: %s\n", loc->source, loc->line, loc->col, msg);
 }
 
 // FbldParseMDecl -- see documentation in fbld.h
