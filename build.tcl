@@ -32,7 +32,7 @@ run ar rcs out/libfblc.a {*}$fblc_objs
 
 # Generate libfbld.a
 set fbld_objs [list]
-foreach {x} [list compile load parse.tab] {
+foreach {x} [list check compile fbld load parse.tab] {
   lappend fbld_objs out/obj/fbld/$x.o
 }
 run ar rcs out/libfbld.a {*}$fbld_objs

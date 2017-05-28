@@ -2,6 +2,10 @@ Fbld Kickoff:
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:
+* Define an FbldNamesEqual function instead of using strcmp everywhere.
+* Refactor fbld compile.c so it doesn't need LookupMDefn, LookupDecl, and
+  ResolveModule?
+* Define FBLD_*_EXPR tags separate from FBLC_*_EXPR tags.
 * Don't allocate and leak FbldLocs like crazy in the lexer/parser.
 * Test case when struct or union type is not redeclared in mdefn from mdecl.
 * Better organize the contents parse.y.

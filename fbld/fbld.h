@@ -25,6 +25,21 @@ typedef struct {
   int col;
 } FbldLoc;
 
+// FbldReportError --
+//   Report an error message associated with a location in a source file.
+//
+// Inputs:
+//   format - A printf format string for the error message.
+//   loc - The location of the error message to report.
+//   ... - printf arguments as specified by the format string.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints an error message to stderr with error location.
+void FbldReportError(const char* format, FbldLoc* loc, ...);
+
 // FbldNameL -- 
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
@@ -417,6 +432,84 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
+
+// FbldResolveModule --
+//   Determine the name of the module for the given entity.
+//
+// Inputs:
+//   mctx - The current module context.
+//   entity - The entity to resolve the module for.
+//
+// Results:
+//   The module where the entity is defined, or NULL if the module for the
+//   entity could not be resolved.
+//
+// Side effects:
+//   None.
+FbldName FbldResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
+
+// FbldLookupMDefn --
+//   Look up the module definition with the given name.
+//
+// Inputs:
+//   mdefnv - The set of all module definitions.
+//   name - The name of the module definition to look up.
+//
+// Returns:
+//   The module definition with the given name, or NULL if no such module
+//   could be found.
+//
+// Side effects:
+//   None.
+FbldMDefn* FbldLookupMDefn(FbldMDefnV* mdefnv, FbldName name);
+
+// FbldLookupDecl --
+//   Look up the declaration with the given name in given module defintion.
+//
+// Inputs:
+//   mdefn - The module to look up the definition in.
+//   name - The name of the definition to look up.
+//
+// Returns:
+//   The definition with the given name, or NULL if no such definition
+//   could be found.
+//
+// Side effects:
+//   None.
+FbldDecl* FbldLookupDecl(FbldMDefn* mdefn, FbldNameL* name);
+
+// FbldLookupQDecl --
+//   Look up the qualified declaration with the given name in the given program.
+//
+// Inputs:
+//   env - The collection of modules to look up the declaration in.
+//   mctx - Context to use for module resultion.
+//   entity - The name of the entity to look up.
+//
+// Returns:
+//   The declaration with the given name, or NULL if no such declaration
+//   could be found.
+//
+// Side effects:
+//   None.
+FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mctx, FbldQualifiedName* entity);
+
+// FbldCheckMDefn --
+//   Check that the given module definition is well formed and well typed.
+//
+// Inputs:
+//   mdeclv - Already loaded and checked module declarations required by the
+//            module definition.
+//   mdefn - The module definition to check.
+//
+// Results:
+//   true if the module definition is well formed and well typed in the
+//   environment of the given module declarations, false otherwise.
+//
+// Side effects:
+//   If the module definition is not well formed, an error message is
+//   printed to stderr describing the problem with the module definition.
+bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn);
 
 // FbldCompile --
 //   Compile an fbld program to fblc.

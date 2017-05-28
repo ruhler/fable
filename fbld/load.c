@@ -111,6 +111,11 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
     }
   }
 
+  // Check that this definition is valid.
+  if (!FbldCheckMDefn(mdeclv, mdefn)) {
+    return NULL;
+  }
+
   return mdefn;
 }
 

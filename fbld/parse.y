@@ -582,8 +582,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
 //   An error message is printed to stderr.
 static void yyerror(YYLTYPE* llocp, FblcArena* arena, Lex* lex, ParseResult* result, const char* msg)
 {
-  FbldLoc* loc = *llocp;
-  fprintf(stderr, "%s:%d:%d: error: %s\n", loc->source, loc->line, loc->col, msg);
+  FbldReportError("%s\n", *llocp, msg);
 }
 
 // FbldParseMDecl -- see documentation in fbld.h

@@ -333,7 +333,7 @@ void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcTypeDecl* type, Fblc
 //   Prints error messages to stderr in case of error.
 bool FblcsResolveProgram(FblcsProgram* sprog);
 
-// FblcsCheckProgram -- see documentation in fblcs.h
+// FblcsCheckProgram --
 //   Check that the given program environment describes a well formed and well
 //   typed program.
 //
