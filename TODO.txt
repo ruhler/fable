@@ -1,4 +1,6 @@
 Fbld Kickoff:
+* Port rest of unit tests from fblc to fbld until PrimesTest and UBnat tests
+  work.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:
@@ -12,6 +14,8 @@ Fbld Cleanup:
 * Avoid duplicate calls to LookupDecl arising from compiling a type
   declaration and looking up the type declaration to return when compiling an
   expression. Return type name instead of Decl?
+* Add support for returning multiple errors from check.
+* Factor out common code for checking types match in fbld check.
 
 Fblc Front End Cleanup:
 * Make fblcs structure standalone rather than tied to fblc structure.

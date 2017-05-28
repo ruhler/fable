@@ -1,10 +1,9 @@
 set prg {
-  # Variables must be declared in scope.
   struct Unit();
   union Bool(Unit True, Unit False);
 
   func foo(Bool x ; Bool) {
-    y;
+    y;  # The variable 'y' has not been declared.
   };
 
   func main( ; Unit) {
@@ -12,4 +11,4 @@ set prg {
   };
 }
 
-fblc-check-error $prg 7:5
+fblc-check-error $prg 6:5

@@ -41,6 +41,7 @@ mdefn UBNat(Unit, Bool) {
   func 8( ; Nat) Nat:2p0(4());
   func 9( ; Nat) Nat:2p1(4());
   func 10( ; Nat) Nat:2p0(5());
+  func 100( ; Nat) Mul(10(), 10());
 
   func Lit2(Nat a, Nat b; Nat) Add(Mul(10(), a), b);
   func Lit3(Nat a, Nat b, Nat c; Nat) Add(Mul(100(), a), Lit2(b, c));
@@ -88,10 +89,10 @@ mdefn UBNat(Unit, Bool) {
          ?(b; 0(),                              # 2a * 0 = 0
               a,                                # 2a * 1 = 2a
               4p0(Mul(a.2p0, b.2p0)),           # 2a * 2b = 4ab
-              Add(4p0(a.2p0, b.2p1), a)),       # 2a * (2b+1) = 4ab + 2a
+              Add(4p0(Mul(a.2p0, b.2p1)), a)),  # 2a * (2b+1) = 4ab + 2a
          ?(b; 0(),                              # (2a+1) * 0 = 0
               a,                                # (2a+1) * 1 = 2a+1
-              Add(4p0(Mul(a.2p1, b.2p0), b)),   # (2a+1) * 2b = 4ab + 2b
+              Add(4p0(Mul(a.2p1, b.2p0)), b),   # (2a+1) * 2b = 4ab + 2b
                                                 # (2a+1) * (2b+1) = 2(2ab + a + b) + 1
               Nat:2p1(Add(Nat:2p0(Mul(a.2p1, b.2p1)), Add(a.2p1, b.2p1)))));
                   
@@ -109,7 +110,7 @@ mdefn UBNat(Unit, Bool) {
   };
 
   # DivMod assuming b > 1
-  func DivModAux(Nat a, Nat b; DivMod) {
+  func DivModAux(Nat a, Nat b; DivModResult) {
     ?(a; DivModResult(0(), 0()),
          DivModResult(0(), 1()),
          { 

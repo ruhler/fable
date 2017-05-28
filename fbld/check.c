@@ -37,7 +37,7 @@ static FbldDecl* LookupDecl(FbldMDefnV* env, FbldMDefn* mctx, FbldQualifiedName*
 {
   FbldDecl* decl = FbldLookupQDecl(env, mctx, entity);
   if (decl == NULL) {
-    FbldReportError("%s not found\n", entity->name->loc, entity->name->name);
+    FbldReportError("%s not declared\n", entity->name->loc, entity->name->name);
   }
   return decl;
 }
@@ -80,28 +80,97 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
         return NULL;
       }
 
+      FbldDecl* return_type = NULL;
+      FbldTypedNameV* argv = NULL;
       switch (func->tag) {
-        case FBLD_STRUCT_DECL:
-          return func;
+        case FBLD_STRUCT_DECL: {
+          FbldStructDecl* struct_decl = (FbldStructDecl*)func;
+          return_type = func;
+          argv = struct_decl->fieldv;
+          break;
+        }
 
         case FBLD_FUNC_DECL: {
           FbldFuncDecl* func_decl = (FbldFuncDecl*)func;
-          return LookupDecl(mdeclv, mdefn, func_decl->return_type);
+          return_type = LookupDecl(mdeclv, mdefn, func_decl->return_type);
+          if (return_type == NULL) {
+            return NULL;
+          }
+          argv = func_decl->argv;
+          break;
         }
 
         default:
           FbldReportError("%s is not a struct or func\n", app_expr->func->name->loc, app_expr->func->name->name);
           return NULL;
       }
+
+      if (argv->size != app_expr->argv->size) {
+        FbldReportError("expected %i args to %s, but only %i given\n",
+            app_expr->_base.loc, argv->size, app_expr->func->name->name, app_expr->argv->size);
+        return NULL;
+      }
+
+      for (size_t i = 0; i < argv->size; ++i) {
+        FbldDecl* arg_type_expected = LookupDecl(mdeclv, mdefn, argv->xs[i]->type);
+        if (arg_type_expected == NULL) {
+          return NULL;
+        }
+
+        FbldDecl* arg_type_actual = CheckExpr(mdeclv, mdefn, vars, app_expr->argv->xs[i]);
+        if (arg_type_actual == NULL) {
+          return NULL;
+        }
+
+        if (arg_type_expected != arg_type_actual) {
+          FbldReportError("Expected type %s, but found type %s\n",
+              app_expr->argv->xs[i]->loc, arg_type_expected->name->name, arg_type_actual->name->name);
+          return NULL;
+        }
+      }
+      return return_type;
     }
 
     case FBLC_UNION_EXPR: {
       FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
-      // TODO: Check that the type of the argument matches the field type.
-      if (CheckExpr(mdeclv, mdefn, vars, union_expr->arg) == NULL) {
+      FbldDecl* type = LookupDecl(mdeclv, mdefn, union_expr->type);
+      if (type == NULL) {
         return NULL;
       }
-      return LookupDecl(mdeclv, mdefn, union_expr->type);
+      if (type->tag != FBLD_UNION_DECL) {
+        FbldReportError("%s does not refer to a union type\n",
+            union_expr->type->name->loc, union_expr->type->name->name);
+        return NULL;
+      }
+
+      FbldUnionDecl* union_decl = (FbldUnionDecl*)type;
+      FbldDecl* arg_type_expected = NULL;
+      for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
+        if (strcmp(union_expr->field->name, union_decl->fieldv->xs[i]->name->name) == 0) {
+          arg_type_expected = LookupDecl(mdeclv, mdefn, union_decl->fieldv->xs[i]->type);
+          if (arg_type_expected == NULL) {
+            return NULL;
+          }
+          break;
+        }
+      }
+      if (arg_type_expected == NULL) {
+        FbldReportError("%s is not a field of type %s\n",
+            union_expr->field->loc, union_expr->field->name, union_expr->type->name->name);
+        return NULL;
+      }
+
+      FbldDecl* arg_type_actual = CheckExpr(mdeclv, mdefn, vars, union_expr->arg);
+      if (arg_type_actual == NULL) {
+        return NULL;
+      }
+
+      if (arg_type_expected != arg_type_actual) {
+        FbldReportError("Expected type %s, but found type %s\n",
+            union_expr->arg->loc, arg_type_expected->name->name, arg_type_actual->name->name);
+        return NULL;
+      }
+      return type;
     }
 
     case FBLC_ACCESS_EXPR: {
@@ -191,7 +260,6 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
       case FBLD_FUNC_DECL: {
         FbldFuncDecl* func_decl = (FbldFuncDecl*)decl;
         // TODO: Check that arguments have unique names.
-        // TODO: Check the body of the function.
         Vars nvars[func_decl->argv->size];
         Vars* vars = NULL;
         for (size_t i = 0; i < func_decl->argv->size; ++i) {
@@ -204,14 +272,19 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
           vars = nvars + i;
         }
 
-        FbldDecl* return_type = LookupDecl(mdeclv, mdefn, func_decl->return_type);
-        if (return_type == NULL) {
+        FbldDecl* return_type_expected = LookupDecl(mdeclv, mdefn, func_decl->return_type);
+        if (return_type_expected == NULL) {
           return false;
         }
 
-        // TODO: Check the return type matches the expression type.
+        FbldDecl* return_type_actual = CheckExpr(mdeclv, mdefn, vars, func_decl->body);
+        if (return_type_actual == NULL) {
+          return false;
+        }
 
-        if (CheckExpr(mdeclv, mdefn, vars, func_decl->body) == NULL) {
+        if (return_type_expected != return_type_actual) {
+          FbldReportError("Expected type %s, but found type %s\n",
+              func_decl->body->loc, return_type_expected->name->name, return_type_actual->name->name);
           return false;
         }
         break;

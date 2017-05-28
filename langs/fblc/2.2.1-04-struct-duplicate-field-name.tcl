@@ -1,6 +1,5 @@
-
-# Each field of a struct type must have a different name.
 set prg {
+  # Each field of a struct type must have a different name.
   struct Unit();
   struct Donut();
   struct BadStruct(Unit x, Donut x);
@@ -9,7 +8,7 @@ set prg {
     BadStruct(Unit(), Donut());
   };
 }
-fblc-check-error $prg 4:34
+fblc-check-error $prg 5:34
 
 
 # Even if the types are the same.

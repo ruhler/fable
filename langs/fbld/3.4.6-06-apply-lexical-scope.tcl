@@ -1,0 +1,27 @@
+set prg {
+  Main.mdecl {
+    mdecl Main() {
+      struct Unit();
+      func f(Unit x ; Unit);
+      func main( ; Unit);
+    };
+  }
+
+  Main.mdefn {
+    mdefn Main() {
+      struct Unit();
+
+      func f(Unit x ; Unit) {
+        y;
+      };
+
+      func main( ; Unit) {
+        # The variable y should not be visible from the body of function 'f'.
+        Unit y = Unit();
+        f(Unit());
+      };
+    };
+  }
+}
+
+fbld-check-error $prg Main Main.mdefn:6:9
