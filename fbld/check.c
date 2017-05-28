@@ -97,6 +97,10 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
 
     case FBLC_UNION_EXPR: {
       FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
+      // TODO: Check that the type of the argument matches the field type.
+      if (CheckExpr(mdeclv, mdefn, vars, union_expr->arg) == NULL) {
+        return NULL;
+      }
       return LookupDecl(mdeclv, mdefn, union_expr->type);
     }
 
@@ -124,7 +128,8 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
       FbldDecl* select_type = CheckExpr(mdeclv, mdefn, vars, cond_expr->select);
       if (select_type->tag != FBLD_UNION_DECL) {
-        FbldReportError("condition must be of union type\n", cond_expr->select->loc);
+        FbldReportError("condition must be of union type, but found type %s\n", cond_expr->select->loc, select_type->name->name);
+        FbldReportError("(%s defined here)\n", select_type->name->loc, select_type->name->name);
         return NULL;
       }
       FbldDecl* type = NULL;
@@ -186,8 +191,6 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
       case FBLD_FUNC_DECL: {
         FbldFuncDecl* func_decl = (FbldFuncDecl*)decl;
         // TODO: Check that arguments have unique names.
-        // TODO: Check that args refer to valid types.
-        // TODO: Check that the return type refers to a valid type.
         // TODO: Check the body of the function.
         Vars nvars[func_decl->argv->size];
         Vars* vars = NULL;
@@ -200,6 +203,13 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
           nvars[i].next = vars;
           vars = nvars + i;
         }
+
+        FbldDecl* return_type = LookupDecl(mdeclv, mdefn, func_decl->return_type);
+        if (return_type == NULL) {
+          return false;
+        }
+
+        // TODO: Check the return type matches the expression type.
 
         if (CheckExpr(mdeclv, mdefn, vars, func_decl->body) == NULL) {
           return false;

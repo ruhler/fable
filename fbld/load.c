@@ -133,7 +133,7 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDe
   // TODO: detect and abort if the module recursively depends on itself.
   for (size_t i = 0; i < mdefn->deps->size; ++i) {
     if (!FbldLoadModules(arena, path, mdefn->deps->xs[i]->name, mdeclv, mdefnv)) {
-      fprintf(stderr, "failed to load module required by %s\n", name);
+      FbldReportError("failed to load %s\n", mdefn->deps->xs[i]->loc, mdefn->deps->xs[i]->name);
       return false;
     }
   }

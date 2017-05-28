@@ -21,7 +21,7 @@ mdefn UBNatTest(Unit, Bool, UBNat) {
   );
 
   struct TestFailure(TestName name, Nat a, Nat b);
-  union TestFailureP(TestFailure head, TestFailureS tail);
+  struct TestFailureP(TestFailure head, TestFailureS tail);
   union TestFailureS(Unit nil, TestFailureP cons);
 
   func T(TestName name, Bool p, TestFailureS rest; TestFailureS) {

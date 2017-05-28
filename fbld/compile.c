@@ -108,6 +108,7 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       if (decl->tag == FBLD_STRUCT_DECL) {
           return (FbldConcreteTypeDecl*)decl;
       }
+      assert(decl->tag == FBLD_FUNC_DECL);
       FbldFuncDecl* func_decl = (FbldFuncDecl*)decl;
       return (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, mctx, func_decl->return_type);
     }

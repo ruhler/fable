@@ -1,7 +1,7 @@
 
 mdefn UBNat(Unit, Bool) {
   import Unit(Unit);
-  import Bool(True, False);
+  import Bool(Bool, True, False);
 
   union Nat(
     Unit 0,
@@ -97,6 +97,7 @@ mdefn UBNat(Unit, Bool) {
                   
   };
 
+  struct DivModResult(Nat quotient, Nat remainder);
   func Div(Nat a, Nat b; Nat) DivMod(a, b).quotient;
   func Mod(Nat a, Nat b; Nat) DivMod(a, b).remainder;
 

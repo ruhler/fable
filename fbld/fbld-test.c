@@ -390,7 +390,6 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, mdefnv);
 
   if (!FbldLoadModules(arena, &search_path, entry_module.name, &mdeclv, &mdefnv)) {
-    fprintf(stderr, "failed to load modules");
     return 1;
   }
 

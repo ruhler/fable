@@ -61,7 +61,8 @@ FbldMDefn* FbldLookupMDefn(FbldMDefnV* mdefnv, FbldName name)
 FbldDecl* FbldLookupDecl(FbldMDefn* mdefn, FbldNameL* name)
 {
   for (size_t i = 0; i < mdefn->declv->size; ++i) {
-    if (strcmp(mdefn->declv->xs[i]->name->name, name->name) == 0) {
+    if (mdefn->declv->xs[i]->tag != FBLD_IMPORT_DECL
+        && strcmp(mdefn->declv->xs[i]->name->name, name->name) == 0) {
       return mdefn->declv->xs[i];
     }
   }
