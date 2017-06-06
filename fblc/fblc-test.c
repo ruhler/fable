@@ -371,8 +371,9 @@ int main(int argc, char* argv[])
   }
   user.cmd_ready = false;
   FblcIO io = { .io = &IO, .user = &user };
+  FblcInstr instr = { .on_undefined_access = NULL };
 
-  FblcValue* value = FblcExecute(arena, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr, proc, args, &io);
   assert(value != NULL);
 
   EnsureCommandReady(&user, arena);

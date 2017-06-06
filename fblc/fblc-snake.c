@@ -283,8 +283,9 @@ int main(int argc, char* argv[])
   GetCurrentTime(&user.tnext);
   AddTimeMillis(&user.tnext, TICK_INTERVAL);
   FblcIO io = { .io = &IO, .user = &user };
+  FblcInstr instr = { .on_undefined_access = NULL };
 
-  FblcValue* value = FblcExecute(arena, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr, proc, args, &io);
   FblcRelease(arena, value);
 
   mvaddstr(MAX_ROW + 3, 3, "GAME OVER");

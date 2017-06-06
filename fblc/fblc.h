@@ -625,11 +625,31 @@ typedef struct FblcIO {
   void* user;
 } FblcIO;
 
+// FblcInstr --
+//   An interface for instrumenting execution of fblc programs.
+//   These fields may be NULL to use the default action.
+typedef struct FblcInstr {
+  // on_undefined_access --
+  //   Report an undefined member access error.
+  //
+  // Inputs:
+  //   this - This instrumentation object.
+  //   source - The expression that led to the undefined member access.
+  //
+  // Result:
+  //   None.
+  //
+  // Side effects:
+  //   Implementation specific.
+  void (*on_undefined_access)(struct FblcInstr* this, FblcExpr* source);
+} FblcInstr;
+
 // FblcExecute --
 //   Execute a process with the given args and ports.
 //
 // Inputs:
 //   arena - The arena to use for allocations.
+//   instr - Instrumentation to use when executing the program.
 //   proc - The process to execute.
 //   args - Arguments to the process to execute.
 //   io - Interface for getting and putting values on external ports.
@@ -642,5 +662,7 @@ typedef struct FblcIO {
 //   Releases the args values.
 //   Calls the corresponding io function to read and write values from
 //   external ports.
-FblcValue* FblcExecute(FblcArena* arena, FblcProcDecl* proc, FblcValue** args, FblcIO* io);
+//   Calls the instrumentation functions as appropriate during the course of
+//   execution.
+FblcValue* FblcExecute(FblcArena* arena, FblcInstr* instr, FblcProcDecl* proc, FblcValue** args, FblcIO* io);
 #endif // FBLC_H_

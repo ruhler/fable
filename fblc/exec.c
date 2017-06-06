@@ -127,13 +127,17 @@ typedef struct {
   FblcValue** target;
 } ActnCmd;
 
-// CMD_ACCESS: The access command accesses the given field of
-// the given value and stores the resulting value in *target.
+// CMD_ACCESS: The access command accesses the given field of the given value
+// and stores the resulting value in *target.
+//
+// The 'source' field is used to store the original access expression to aid
+// in debugging undefined member accesses.
 typedef struct {
   Cmd _base;
   FblcValue* value;
   size_t field;
   FblcValue** target;
+  FblcExpr* source;
 } AccessCmd;
 
 // CMD_COND_EXPR: The condition expression command uses the tag of 'value' to
@@ -192,7 +196,7 @@ typedef struct {
 
 static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd* next);
 static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd* next);
-static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, Cmd* next);
+static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, FblcExpr* source, Cmd* next);
 static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices, FblcValue** target, Cmd* next);
 static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next);
 static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next);
@@ -202,7 +206,7 @@ static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next);
 static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next);
 static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next);
 
-static void Run(FblcArena* arena, Threads* threads, Thread* thread);
+static void Run(FblcArena* arena, FblcInstr* instr, Threads* threads, Thread* thread);
 
 // NewThread --
 //   Create a new thread.
@@ -576,6 +580,7 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
 //   value - The value that will be accessed.
 //   field - The id of the field to access.
 //   target - The target destination of the accessed field.
+//   source - The originating access expression for debugging purposes.
 //   next - The command to run after this one.
 //
 // Returns:
@@ -583,7 +588,7 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
 //
 // Side effects:
 //   Performs arena allocations.
-static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, Cmd* next)
+static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, FblcExpr* source, Cmd* next)
 {
   AccessCmd* cmd = arena->alloc(arena, sizeof(AccessCmd));
   cmd->_base.tag = CMD_ACCESS;
@@ -591,6 +596,7 @@ static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcVa
   cmd->value = value;
   cmd->field = field;
   cmd->target = target;
+  cmd->source = source;
   return &cmd->_base;
 }
 
@@ -789,6 +795,7 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 //
 // Inputs:
 //   arena - The arena to use for allocations.
+//   instr - Instrumentation to use when executing the program.
 //   threads - The list of currently active threads.
 //   thread - The thread to run.
 //
@@ -801,7 +808,9 @@ static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 //   Otherwise it will be added back to the threads list representing the
 //   continuation of this thread.
 //   Performs arena allocations.
-static void Run(FblcArena* arena, Threads* threads, Thread* thread)
+//   Calls the instrumentation functions as appropriate during the course of
+//   execution.
+static void Run(FblcArena* arena, FblcInstr* instr, Threads* threads, Thread* thread)
 {
   for (size_t i = 0; i < 1024 && thread->cmd != NULL; ++i) {
     Cmd* next = thread->cmd->next;
@@ -862,7 +871,7 @@ static void Run(FblcArena* arena, Threads* threads, Thread* thread)
             // Add to the top of the command list:
             // object -> access -> ...
             FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
-            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(arena, NULL, access_expr->field, target, next);
+            AccessCmd* acmd = (AccessCmd*)MkAccessCmd(arena, NULL, access_expr->field, target, expr, next);
             next = MkExprCmd(arena, access_expr->obj, &(acmd->value), (Cmd*)acmd);
             break;
           }
@@ -1034,7 +1043,11 @@ static void Run(FblcArena* arena, Threads* threads, Thread* thread)
             if (value->tag == cmd->field) {
               *target = FblcCopy(arena, *value->fields);
             } else {
-              fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
+              if (instr->on_undefined_access != NULL) {
+                instr->on_undefined_access(instr, cmd->source);
+              } else {
+                fprintf(stderr, "MEMBER ACCESS UNDEFINED\n");
+              }
               abort();
             }
             break;
@@ -1132,7 +1145,7 @@ static void Run(FblcArena* arena, Threads* threads, Thread* thread)
 }
 
 // FblcExecute -- see documentationin fblc.h.
-FblcValue* FblcExecute(FblcArena* arena, FblcProcDecl* proc, FblcValue** args, FblcIO* io)
+FblcValue* FblcExecute(FblcArena* arena, FblcInstr* instr, FblcProcDecl* proc, FblcValue** args, FblcIO* io)
 {
   Vars* vars = NULL;
   for (size_t i = 0; i < proc->argv.size; ++i) {
@@ -1163,7 +1176,7 @@ FblcValue* FblcExecute(FblcArena* arena, FblcProcDecl* proc, FblcValue** args, F
     // Execute the next thread, if any.
     Thread* thread = GetThread(&threads);
     if (thread != NULL) {
-      Run(arena, &threads, thread);
+      Run(arena, instr, &threads, thread);
     }
 
     // Prepare pending output, if any.

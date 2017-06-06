@@ -65,7 +65,7 @@ mdefn UBNat(Unit, Bool) {
               Nat:2p0(Add(a.2p0, b.2p0)),        # 2a + 2b = 2(a+b)
               Nat:2p1(Add(a.2p0, b.2p1))),       # 2a + 2b+1 = 2(a+b)+1
          ?(b; a, 
-              Nat:2p0(Inc(a.2p0)),               # 2a+1 + 1 = 2(a+1)
+              Nat:2p0(Inc(a.2p1)),               # 2a+1 + 1 = 2(a+1)
               Nat:2p1(Add(a.2p1, b.2p0)),        # 2a+1 + 2b = 2(a+b)+1
               Nat:2p0(Inc(Add(a.2p1, b.2p1))))); # 2a+1 + 2b+1 = 2(a+b+1)
   };
@@ -153,31 +153,31 @@ mdefn UBNat(Unit, Bool) {
     ?(a;
        ?(b; False(), True(), True(), True()),
        ?(b; False(), False(), True(), True()),
-       ?(b; False(), False(), Lt(a.2p0, b.2p0), Le(a.2p1, b.2p1)),
-       ?(b; False(), False(), Lt(a.2p0, b.2p0), Lt(a.2p1, b.2p1)));
+       ?(b; False(), False(), Lt(a.2p0, b.2p0), Le(a.2p0, b.2p1)),
+       ?(b; False(), False(), Lt(a.2p1, b.2p0), Lt(a.2p1, b.2p1)));
   };
 
   func Le(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; True(), True(), True(), True()),
        ?(b; False(), True(), True(), True()),
-       ?(b; False(), False(), Le(a.2p0, b.2p0), Le(a.2p1, b.2p1)),
-       ?(b; False(), False(), Lt(a.2p0, b.2p0), Le(a.2p1, b.2p1)));
+       ?(b; False(), False(), Le(a.2p0, b.2p0), Le(a.2p0, b.2p1)),
+       ?(b; False(), False(), Lt(a.2p1, b.2p0), Le(a.2p1, b.2p1)));
   };
 
   func Gt(Nat a, Nat b; Bool) {
     ?(a; False(),
        ?(b; True(), False(), False(), False()),
-       ?(b; True(), True(), Gt(a.2p0, b.2p0), Gt(a.2p1, b.2p1)),
-       ?(b; True(), True(), Ge(a.2p0, b.2p0), Gt(a.2p1, b.2p1)));
+       ?(b; True(), True(), Gt(a.2p0, b.2p0), Gt(a.2p0, b.2p1)),
+       ?(b; True(), True(), Ge(a.2p1, b.2p0), Gt(a.2p1, b.2p1)));
   };
 
   func Ge(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; True(), False(), False(), False()),
        ?(b; True(), True(), False(), False()),
-       ?(b; True(), True(), Ge(a.2p0, b.2p0), Gt(a.2p1, b.2p1)),
-       ?(b; True(), True(), Ge(a.2p0, b.2p0), Ge(a.2p1, b.2p1)));
+       ?(b; True(), True(), Ge(a.2p0, b.2p0), Gt(a.2p0, b.2p1)),
+       ?(b; True(), True(), Ge(a.2p1, b.2p0), Ge(a.2p1, b.2p1)));
   };
 };
 

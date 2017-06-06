@@ -42,8 +42,16 @@ typedef struct {
   Command cmd;
 } IOUser;
 
+// Instr --
+//   Instrumentation to use when executing the program.
+typedef struct {
+  FblcInstr _base;
+  FbldAccessLocV* accessv;
+} Instr;
+
 static void PrintUsage(FILE* stream);
 static void ReportError(IOUser* user, const char* msg);
+static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
 static FblcValue* ParseValueFromString(FblcArena* arena, FbldMDefnV* mdefnv, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
@@ -100,6 +108,30 @@ static void PrintUsage(FILE* stream)
 static void ReportError(IOUser* user, const char* msg)
 {
   fprintf(stderr, "%s:%zd: error: %s", user->file, user->line, msg);
+}
+
+// OnUndefinedAccess --
+//   Function called when undefined member access occurs.
+//
+// Inputs:
+//   this - The instrumentation object..
+//   expr - The access expression that had undefined behavior.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints an error message to stderr.
+static void OnUndefinedAccess(FblcInstr* this, FblcExpr* expr)
+{
+  Instr* instr = (Instr*)this;
+  for (size_t i = 0; i < instr->accessv->size; ++i) {
+    if (expr == instr->accessv->xs[i].expr) {
+      FbldReportError("UNDEFINED MEMBER ACCESS", instr->accessv->xs[i].loc);
+      return;
+    }
+  }
+  assert(false && "Unknown undefined member access expr");
 }
 
 // ParseValueFromString --
@@ -393,7 +425,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDecl* decl = FbldCompile(arena, &mdefnv, &entry_entity);
+  FbldAccessLocV accessv;
+  FblcVectorInit(arena, accessv);
+  FblcDecl* decl = FbldCompile(arena, &accessv, &mdefnv, &entry_entity);
   if (decl == NULL) {
     fprintf(stderr, "failed to compile");
     return 1;
@@ -443,8 +477,12 @@ int main(int argc, char* argv[])
   }
   user.cmd_ready = false;
   FblcIO io = { .io = &IO, .user = &user };
+  Instr instr = { 
+    ._base = { .on_undefined_access = OnUndefinedAccess },
+    .accessv = &accessv
+  };
 
-  FblcValue* value = FblcExecute(arena, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr._base, proc, args, &io);
   assert(value != NULL);
 
   EnsureCommandReady(&user, arena);

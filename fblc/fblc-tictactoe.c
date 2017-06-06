@@ -184,8 +184,9 @@ int main(int argc, char* argv[])
   }
 
   FblcIO io = { .io = &IO, .user = NULL };
+  FblcInstr instr = { .on_undefined_access = NULL };
 
-  FblcValue* value = FblcExecute(arena, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr, proc, args, &io);
   assert(value != NULL);
   FblcRelease(arena, value);
   return 0;

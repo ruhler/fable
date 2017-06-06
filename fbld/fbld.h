@@ -511,11 +511,31 @@ FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mctx, FbldQualifiedName* 
 //   printed to stderr describing the problem with the module definition.
 bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn);
 
+// FbldAccessLoc --
+//   The location of an access expression, for aid in debugging undefined
+//   member access.
+//
+// Fields:
+//   expr - An access expression.
+//   loc - The source location of the access expression.
+typedef struct {
+  FblcExpr* expr;
+  FbldLoc* loc;
+} FbldAccessLoc;
+
+// FbldAccessLocV --
+//   A vector of access locs.
+typedef struct {
+  size_t size;
+  FbldAccessLoc* xs;
+} FbldAccessLocV;
+
 // FbldCompile --
 //   Compile an fbld program to fblc.
 //
 // Inputs:
 //   arena - Arena to use for allocating the fblc program.
+//   accessv - collection of access expression locations.
 //   mdefnv - Modules describing a valid fbld program.
 //   entity - The name of the main entry to compile the program for.
 //
@@ -523,9 +543,10 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn);
 //   A complete fblc program for running the named entity.
 //
 // Side effects:
+//   Updates accessv with the location of compiled access expressions.
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program.
-FblcDecl* FbldCompile(FblcArena* arena, FbldMDefnV* mdefnv, FbldQualifiedName* entity);
+FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mdefnv, FbldQualifiedName* entity);
 
 // FbldCompileValue --
 //   Compile an fbld value to an fblc value.
