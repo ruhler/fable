@@ -49,8 +49,8 @@ typedef struct {
 } FbldNameL;
 
 // FbldQualifiedName --
-//   A qualified fbld name of the form 'bar@Foo'. The module component of the
-//   name may be NULL to indicate the name is not explicitly qualified.
+//   A qualified fbld name of the form 'bar@Foo'. The module->name component
+//   of the name may be NULL to indicate the name is not explicitly qualified.
 typedef struct {
   FbldNameL* name;
   FbldNameL* module;
@@ -433,21 +433,6 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
 
-// FbldResolveModule --
-//   Determine the name of the module for the given entity.
-//
-// Inputs:
-//   mctx - The current module context.
-//   entity - The entity to resolve the module for.
-//
-// Results:
-//   The module where the entity is defined, or NULL if the module for the
-//   entity could not be resolved.
-//
-// Side effects:
-//   None.
-FbldName FbldResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
-
 // FbldLookupMDefn --
 //   Look up the module definition with the given name.
 //
@@ -483,7 +468,7 @@ FbldDecl* FbldLookupDecl(FbldMDefn* mdefn, FbldNameL* name);
 //
 // Inputs:
 //   env - The collection of modules to look up the declaration in.
-//   mctx - Context to use for module resultion.
+//   mdefn - An optional module to look the declaration up in before env.
 //   entity - The name of the entity to look up.
 //
 // Returns:
@@ -491,8 +476,9 @@ FbldDecl* FbldLookupDecl(FbldMDefn* mdefn, FbldNameL* name);
 //   could be found.
 //
 // Side effects:
-//   None.
-FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mctx, FbldQualifiedName* entity);
+//   Behavior is undefined if the module name of the entity has not been
+//   resolved.
+FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity);
 
 // FbldCheckMDefn --
 //   Check that the given module definition is well formed and well typed.

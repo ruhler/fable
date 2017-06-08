@@ -355,8 +355,10 @@ non_empty_field_list:
 qualified_name:
     name {
       $$ = arena->alloc(arena, sizeof(FbldQualifiedName));
-      $$->module = NULL;
       $$->name = $1;
+      $$->module = arena->alloc(arena, sizeof(FbldNameL));
+      $$->module->name = NULL;
+      $$->module->loc = $1->loc;
     }
   | name '@' name {
       $$ = arena->alloc(arena, sizeof(FbldQualifiedName));

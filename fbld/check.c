@@ -16,15 +16,49 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
+static void ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldDecl* LookupDecl(FbldMDefnV* env, FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, FbldExpr* expr);
+
+// ResolveModule --
+//   Resolve the module part of the entity if needed.
+//
+// Inputs:
+//   mctx - the module in which the entity reference occurs.
+//   entity - the entity reference, possibly with NULL module.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Sets entity->module->name to the properly resolved module if it is NULL.
+static void ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
+{
+  if (entity->module->name == NULL) {
+    // Tentatively set the current module as the module to use.
+    entity->module->name = mctx->name->name;
+
+    // Override the module to use if the entity has been imported.
+    for (size_t i = 0; i < mctx->declv->size; ++i) {
+      if (mctx->declv->xs[i]->tag == FBLD_IMPORT_DECL) {
+        FbldImportDecl* decl = (FbldImportDecl*)mctx->declv->xs[i];
+        for (size_t j = 0; j < decl->namev->size; ++j) {
+          if (strcmp(entity->name->name, decl->namev->xs[j]->name) == 0) {
+            entity->module->name = decl->_base.name->name;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
 
 // LookupDecl --
 //   Look up the qualified declaration with the given name in the given program.
 //
 // Inputs:
 //   env - The collection of modules to look up the declaration in.
-//   mctx - Context to use for module resultion.
+//   mctx - The current module used for resolving references.
 //   entity - The name of the entity to look up.
 //
 // Returns:
@@ -32,9 +66,11 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
 //   could be found.
 //
 // Side effects:
+//   Resolves module references as needed.
 //   Prints a message to stderr if the declaration cannot be found.
 static FbldDecl* LookupDecl(FbldMDefnV* env, FbldMDefn* mctx, FbldQualifiedName* entity)
 {
+  ResolveModule(mctx, entity);
   FbldDecl* decl = FbldLookupQDecl(env, mctx, entity);
   if (decl == NULL) {
     FbldReportError("%s not declared\n", entity->name->loc, entity->name->name);
@@ -216,6 +252,10 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       FbldLetExpr* let_expr = (FbldLetExpr*)expr;
 
       // TODO: Check that the variable type matches what was declared.
+      if (LookupDecl(mdeclv, mdefn, let_expr->type) == NULL) {
+        return NULL;
+      }
+
       FbldDecl* var_type = CheckExpr(mdeclv, mdefn, vars, let_expr->def);
       if (var_type == NULL) {
         return NULL;
@@ -252,10 +292,16 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
         break;
 
       case FBLD_UNION_DECL:
-      case FBLD_STRUCT_DECL:
+      case FBLD_STRUCT_DECL: {
         // TODO: Check that fields have unique names.
-        // TODO: Check that fields refer to valid types.
+        FbldConcreteTypeDecl* type_decl = (FbldConcreteTypeDecl*)decl;
+        for (size_t i = 0; i < type_decl->fieldv->size; ++i) {
+          if (LookupDecl(mdeclv, mdefn, type_decl->fieldv->xs[i]->type) == NULL) {
+            return NULL;
+          }
+        }
         break;
+      }
 
       case FBLD_FUNC_DECL: {
         FbldFuncDecl* func_decl = (FbldFuncDecl*)decl;

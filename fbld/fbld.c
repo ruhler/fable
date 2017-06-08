@@ -1,6 +1,7 @@
 // fbld.c --
 //   This file implements utility routines for manipulating fbld programs.
 
+#include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdio.h>    // for fprintf, vfprintf, stderr
 #include <string.h>   // for strcmp
@@ -16,34 +17,6 @@ void FbldReportError(const char* format, FbldLoc* loc, ...)
   fprintf(stderr, "%s:%d:%d: error: ", loc->source, loc->line, loc->col);
   vfprintf(stderr, format, ap);
   va_end(ap);
-}
-
-// FbldResolveModule -- see documentation in fbld.h
-FbldName FbldResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
-{
-  // If the entity is explicitly qualified, use the named module.
-  if (entity->module != NULL) {
-    return entity->module->name;
-  }
-
-  // Check if the entity has been imported.
-  for (size_t i = 0; i < mctx->declv->size; ++i) {
-    if (mctx->declv->xs[i]->tag == FBLD_IMPORT_DECL) {
-      FbldImportDecl* decl = (FbldImportDecl*)mctx->declv->xs[i];
-      for (size_t j = 0; j < decl->namev->size; ++j) {
-        if (strcmp(entity->name->name, decl->namev->xs[j]->name) == 0) {
-          return decl->_base.name->name;
-        }
-      }
-    }
-  }
-
-  // Otherwise use the local module.
-  if (mctx != NULL) {
-    return mctx->name->name;
-  }
-
-  return NULL;
 }
 
 // FbldLookupMDefn -- see documentation in fbld.h
@@ -70,22 +43,12 @@ FbldDecl* FbldLookupDecl(FbldMDefn* mdefn, FbldNameL* name)
 }
 
 // FbldLookupQDecl -- see documentation in fbld.h
-FbldDecl* FbldLookupQDecl(FbldMDefnV* env, FbldMDefn* mctx, FbldQualifiedName* entity)
+FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity)
 {
-  FbldName module = FbldResolveModule(mctx, entity);
-  if (module == NULL) {
-    return NULL;
-  }
+  assert(entity->module->name != NULL);
 
-  FbldMDefn* mdefn = NULL;
-  if (mctx != NULL && strcmp(mctx->name->name, module) == 0) {
-    mdefn = mctx;
-  } else {
-    mdefn = FbldLookupMDefn(env, module);
+  if (mdefn == NULL || strcmp(mdefn->name->name, entity->module->name) != 0) {
+    mdefn = FbldLookupMDefn(env, entity->module->name);
   }
-
-  if (mdefn == NULL) {
-    return NULL;
-  }
-  return FbldLookupDecl(mdefn, entity->name);
+  return mdefn == NULL ? NULL : FbldLookupDecl(mdefn, entity->name);
 }

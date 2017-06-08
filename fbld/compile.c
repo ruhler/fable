@@ -38,8 +38,8 @@ typedef struct {
   CompiledDecl** xs;
 } CompiledDeclV;
 
-static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldMDefn* mctx, Vars* vars, FbldExpr* expr, FblcExpr** compiled);
-static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldMDefn* mctx, FbldQualifiedName* entity);
+static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, Vars* vars, FbldExpr* expr, FblcExpr** compiled);
+static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldQualifiedName* entity);
 
 // CompileExpr --
 //   Compile the given fbld expression.
@@ -49,7 +49,6 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 //   mdefnv - vector of module definitions in which to find the entities to compile
 //   codev - collection of declarations that have already been compiled.
 //   accessv - collection of access expression locations.
-//   mctx - The module definition to use as the context for unqualified entities.
 //   vars - The variables currently in scope.
 //   expr - the fbld expression to compile.
 //   compiled - output parameter for result of compiled expression.
@@ -72,7 +71,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 //   and freeing them when no longer needed. This function will allocate
 //   memory proportional to the size of the expression and all declarations
 //   compiled.
-static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldMDefn* mctx, Vars* vars, FbldExpr* expr, FblcExpr** compiled)
+static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, Vars* vars, FbldExpr* expr, FblcExpr** compiled)
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
@@ -100,20 +99,20 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       FblcAppExpr* app_expr = arena->alloc(arena, sizeof(FblcAppExpr));
       app_expr->_base.tag = FBLC_APP_EXPR;
       app_expr->_base.id = 0xDEAD;    // unused
-      app_expr->func = CompileDecl(arena, mdefnv, codev, accessv, mctx, source->func);
+      app_expr->func = CompileDecl(arena, mdefnv, codev, accessv, source->func);
       FblcVectorInit(arena, app_expr->argv);
       for (size_t i = 0; i < source->argv->size; ++i) {
-        CompileExpr(arena, mdefnv, codev, accessv, mctx, vars, source->argv->xs[i], FblcVectorExtend(arena, app_expr->argv));
+        CompileExpr(arena, mdefnv, codev, accessv, vars, source->argv->xs[i], FblcVectorExtend(arena, app_expr->argv));
       }
       *compiled = &app_expr->_base;
 
-      FbldDecl* decl = FbldLookupQDecl(mdefnv, mctx, source->func);
+      FbldDecl* decl = FbldLookupQDecl(mdefnv, NULL, source->func);
       if (decl->tag == FBLD_STRUCT_DECL) {
           return (FbldConcreteTypeDecl*)decl;
       }
       assert(decl->tag == FBLD_FUNC_DECL);
       FbldFuncDecl* func_decl = (FbldFuncDecl*)decl;
-      return (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, mctx, func_decl->return_type);
+      return (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, NULL, func_decl->return_type);
     }
 
     case FBLC_UNION_EXPR: {
@@ -121,8 +120,8 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       FblcUnionExpr* union_expr = arena->alloc(arena, sizeof(FblcUnionExpr));
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->_base.id = 0xDEAD;  // unused
-      union_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, mctx, source->type);
-      FbldUnionDecl* union_decl = (FbldUnionDecl*)FbldLookupQDecl(mdefnv, mctx, source->type);
+      union_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
+      FbldUnionDecl* union_decl = (FbldUnionDecl*)FbldLookupQDecl(mdefnv, NULL, source->type);
       union_expr->field = FBLC_NULL_ID;
       for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
         if (strcmp(source->field->name, union_decl->fieldv->xs[i]->name->name) == 0) {
@@ -131,7 +130,7 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
         }
       }
       assert(union_expr->field != FBLC_NULL_ID && "invalid field name");
-      CompileExpr(arena, mdefnv, codev, accessv, mctx, vars, source->arg, &union_expr->arg);
+      CompileExpr(arena, mdefnv, codev, accessv, vars, source->arg, &union_expr->arg);
       *compiled = &union_expr->_base;
       return union_decl;
    }
@@ -141,7 +140,7 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
       access_expr->_base.tag = FBLC_ACCESS_EXPR;
       access_expr->_base.id = 0xDEAD;   // unused
-      FbldConcreteTypeDecl* obj_type = CompileExpr(arena, mdefnv, codev, accessv, mctx, vars, source->obj, &access_expr->obj);
+      FbldConcreteTypeDecl* obj_type = CompileExpr(arena, mdefnv, codev, accessv, vars, source->obj, &access_expr->obj);
       access_expr->field = FBLC_NULL_ID;
       for (size_t i = 0; i < obj_type->fieldv->size; ++i) {
         if (strcmp(source->field->name, obj_type->fieldv->xs[i]->name->name) == 0) {
@@ -150,7 +149,7 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
           FbldAccessLoc* access_loc = FblcVectorExtend(arena, *accessv);
           access_loc->expr = &access_expr->_base;
           access_loc->loc = expr->loc;
-          return (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, mctx, obj_type->fieldv->xs[i]->type);
+          return (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, NULL, obj_type->fieldv->xs[i]->type);
         }
       }
 
@@ -163,11 +162,11 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       FblcCondExpr* cond_expr = arena->alloc(arena, sizeof(FblcCondExpr));
       cond_expr->_base.tag = FBLC_COND_EXPR;
       cond_expr->_base.id = 0xDEAD;   // unused
-      CompileExpr(arena, mdefnv, codev, accessv, mctx, vars, source->select, &cond_expr->select);
+      CompileExpr(arena, mdefnv, codev, accessv, vars, source->select, &cond_expr->select);
       FblcVectorInit(arena, cond_expr->argv);
       FbldConcreteTypeDecl* type = NULL;
       for (size_t i = 0; i < source->argv->size; ++i) {
-        type = CompileExpr(arena, mdefnv, codev, accessv, mctx, vars, source->argv->xs[i], FblcVectorExtend(arena, cond_expr->argv));
+        type = CompileExpr(arena, mdefnv, codev, accessv, vars, source->argv->xs[i], FblcVectorExtend(arena, cond_expr->argv));
       }
       *compiled = &cond_expr->_base;
       assert(type != NULL);
@@ -179,15 +178,15 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
       let_expr->_base.tag = FBLC_LET_EXPR;
       let_expr->_base.id = 0xDEAD;  // unused
-      let_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, mctx, source->type);
-      FbldConcreteTypeDecl* def_type = CompileExpr(arena, mdefnv, codev, accessv, mctx, vars, source->def, &let_expr->def);
+      let_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
+      FbldConcreteTypeDecl* def_type = CompileExpr(arena, mdefnv, codev, accessv, vars, source->def, &let_expr->def);
       Vars nvars = {
         .name = source->var->name,
         .type = def_type,
         .next = vars
       };
       *compiled = &let_expr->_base;
-      return CompileExpr(arena, mdefnv, codev, accessv, mctx, &nvars, source->body, &let_expr->body);
+      return CompileExpr(arena, mdefnv, codev, accessv, &nvars, source->body, &let_expr->body);
     }
 
     default:
@@ -205,8 +204,6 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
 //   mdefnv - vector of module definitions in which to find the entity to compile
 //   codev - collection of declarations that have already been compiled.
 //   accessv - collection of access expression locations.
-//   mctx - The module definition to use as the context for unqualified entities.
-//          May be NULL only if the entity is explicitly qualified.
 //   entity - the name of the entity to compile.
 //
 // Result:
@@ -227,32 +224,29 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
 //   The caller is responsible for tracking the allocations through the arena
 //   and freeing them when no longer needed. This function will allocate
 //   memory proportional to the size of all declarations compiled.
-static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldMDefn* mctx, FbldQualifiedName* entity)
+static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldQualifiedName* entity)
 {
-  FbldName module = FbldResolveModule(mctx, entity);
-
   // Check if the entity has already been compiled.
   for (size_t i = 0; i < codev->size; ++i) {
-    if (strcmp(codev->xs[i]->module, module) == 0
+    if (strcmp(codev->xs[i]->module, entity->module->name) == 0
         && strcmp(codev->xs[i]->name, entity->name->name) == 0) {
       return codev->xs[i]->decl;
     }
   }
 
   // Find the fbld definition of the entity.
-  assert(module != NULL);
-  mctx = FbldLookupMDefn(mdefnv, module);
-  assert(mctx != NULL && "Failed to find module for entity");
+  FbldMDefn* mdefn = FbldLookupMDefn(mdefnv, entity->module->name);
+  assert(mdefn != NULL && "Failed to find module for entity");
 
-  FbldDecl* src_decl = FbldLookupDecl(mctx, entity->name);
+  FbldDecl* src_decl = FbldLookupDecl(mdefn, entity->name);
   if (src_decl == NULL) {
-      fprintf(stderr, "Failed to find %s in %s\n", entity->name->name, mctx->name->name);
+      fprintf(stderr, "Failed to find %s in %s\n", entity->name->name, mdefn->name->name);
       assert(false && "Entry definition not found");
   }
 
   // Compile the declaration
   CompiledDecl* c = arena->alloc(arena, sizeof(CompiledDecl));
-  c->module = module;
+  c->module = entity->module->name;
   c->name = entity->name->name;
   c->decl = NULL;
   FblcVectorAppend(arena, *codev, c);
@@ -274,7 +268,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       FblcVectorInit(arena, union_decl->fieldv);
       for (size_t i = 0; i < src_union_decl->fieldv->size; ++i) {
         FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
-            arena, mdefnv, codev, accessv, mctx,
+            arena, mdefnv, codev, accessv,
             src_union_decl->fieldv->xs[i]->type);
         FblcVectorAppend(arena, union_decl->fieldv, type);
       }
@@ -290,7 +284,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       FblcVectorInit(arena, struct_decl->fieldv);
       for (size_t i = 0; i < src_struct_decl->fieldv->size; ++i) {
         FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
-            arena, mdefnv, codev, accessv, mctx,
+            arena, mdefnv, codev, accessv,
             src_struct_decl->fieldv->xs[i]->type);
         FblcVectorAppend(arena, struct_decl->fieldv, type);
       }
@@ -308,18 +302,18 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       Vars* vars = NULL;
       for (size_t i = 0; i < src_func_decl->argv->size; ++i) {
         FblcTypeDecl* arg = (FblcTypeDecl*)CompileDecl(
-            arena, mdefnv, codev, accessv, mctx,
+            arena, mdefnv, codev, accessv,
             src_func_decl->argv->xs[i]->type);
         FblcVectorAppend(arena, func_decl->argv, arg);
         nvars[i].name = src_func_decl->argv->xs[i]->name->name;
-        nvars[i].type = (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, mctx, src_func_decl->argv->xs[i]->type);
+        nvars[i].type = (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, NULL, src_func_decl->argv->xs[i]->type);
         nvars[i].next = vars;
         vars = nvars + i;
       }
       func_decl->return_type = (FblcTypeDecl*)CompileDecl(
-            arena, mdefnv, codev, accessv, mctx,
+            arena, mdefnv, codev, accessv,
             src_func_decl->return_type);
-      CompileExpr(arena, mdefnv, codev, accessv, mctx, vars, src_func_decl->body, &func_decl->body);
+      CompileExpr(arena, mdefnv, codev, accessv, vars, src_func_decl->body, &func_decl->body);
       break;
     }
 
@@ -341,7 +335,7 @@ FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mde
 {
   CompiledDeclV codev;
   FblcVectorInit(arena, codev);
-  FblcDecl* compiled = CompileDecl(arena, mdefnv, &codev, accessv, NULL, entity);
+  FblcDecl* compiled = CompileDecl(arena, mdefnv, &codev, accessv, entity);
   arena->free(arena, codev.xs);
   return compiled;
 }
