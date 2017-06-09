@@ -1,13 +1,6 @@
 Fbld Kickoff:
-1. Figure out how to deal with resolving names
-  - pass the module context around and traverse in some nice way?
-  - or fully qualify everything ahead of time?
-2. Change compile to save compiled decls by FbldDecl*, not by name?
-3. Add support for printing values, passing around types by name.
-4. Add type field to FbldExpr, fill it in during check and reuse it during
+* Add type field to FbldExpr, fill it in during check and reuse it during
 compile rather than recomputing types there.
-* Port rest of unit tests from fblc to fbld until PrimesTest and UBnat tests
-  work.
 * Flesh out unit tests as needed until PrimesTest and UBNat tests work.
 
 Fbld Cleanup:

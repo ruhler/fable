@@ -29,12 +29,14 @@ typedef struct {
 //
 // Fields:
 //   prog - The program environment.
+//   return_type - The return type of the program.
 //   file - The name of the file containing the commands to execute.
 //   line - The line number of the current command being executed.
 //   stream - The stream with the commands to be executed.
 //   cmd - The next command to execute, if cmd_ready is true.
 typedef struct {
   FbldMDefnV* prog;
+  FbldQualifiedName* return_type;
   const char* file;
   size_t line;
   FILE* stream;
@@ -54,8 +56,9 @@ static void ReportError(IOUser* user, const char* msg);
 static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
 static FblcValue* ParseValueFromString(FblcArena* arena, FbldMDefnV* mdefnv, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
+static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQualifiedName* type_name, FblcValue* value);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FblcTypeDecl* type, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FbldQualifiedName* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -235,6 +238,43 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
   }
 }
 
+// PrintValue --
+//   Print the given fblc value in fbld format.
+//
+// Inputs:
+//   stream - The stream to print the value to.
+//   env - The program environment.
+//   type_name - The name of the type of the value to print.
+//   value - The value to print.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints the value to the stream in fbld format.
+static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQualifiedName* type_name, FblcValue* value)
+{
+  FbldConcreteTypeDecl* type = (FbldConcreteTypeDecl*)FbldLookupQDecl(env, NULL, type_name);
+  assert(type != NULL);
+  if (type->_base.tag == FBLD_STRUCT_DECL) {
+    fprintf(stream, "%s@%s(", type_name->name->name, type_name->module->name);
+    for (size_t i = 0; i < type->fieldv->size; ++i) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      PrintValue(stream, env, type->fieldv->xs[i]->type, value->fields[i]);
+    }
+    fprintf(stream, ")");
+  } else if (type->_base.tag == FBLD_UNION_DECL) {
+    fprintf(stream, "%s@%s:%s(", type_name->name->name, type_name->module->name,
+        type->fieldv->xs[value->tag]->name->name);
+    PrintValue(stream, env, type->fieldv->xs[value->tag]->type, value->fields[0]);
+    fprintf(stream, ")");
+  } else {
+    assert(false && "Invalid Kind");
+  }
+}
+
 // ValuesEqual --
 //   Check whether two values are structurally equal.
 //
@@ -291,14 +331,14 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FblcTypeDecl* type, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(IOUser* user, FbldQualifiedName* type, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
-    fprintf(stderr, "\nexpected: ???");
-    //FbldPrintValue(stderr, user->prog, type, a);
-    fprintf(stderr, "\nactual  : ???");
-    //FbldPrintValue(stderr, user->prog, type, b);
+    fprintf(stderr, "\nexpected: ");
+    PrintValue(stderr, user->prog, type, a);
+    fprintf(stderr, "\nactual:   ");
+    PrintValue(stderr, user->prog, type, b);
     fprintf(stderr, "\n");
     abort();
   }
@@ -466,8 +506,13 @@ int main(int argc, char* argv[])
     args[i] = ParseValueFromString(arena, &mdefnv, argv[i]);
   }
 
+  FbldFuncDecl* entry_decl = (FbldFuncDecl*)FbldLookupQDecl(&mdefnv, NULL, &entry_entity);
+  assert(entry_decl != NULL);
+  assert(entry_decl->_base.tag == FBLD_FUNC_DECL);
+
   IOUser user;
   user.prog = &mdefnv;
+  user.return_type = entry_decl->return_type;
   user.file = script;
   user.line = 0;
   user.stream = fopen(script, "r");
@@ -490,7 +535,7 @@ int main(int argc, char* argv[])
     ReportError(&user, "premature program termination.\n");
     abort();
   }
-  AssertValuesEqual(&user, proc->return_type, user.cmd.value, value);
+  AssertValuesEqual(&user, user.return_type, user.cmd.value, value);
   FblcRelease(arena, user.cmd.value);
   FblcRelease(arena, value);
   return 0;

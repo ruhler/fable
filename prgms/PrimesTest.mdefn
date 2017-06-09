@@ -1,7 +1,16 @@
 
-mdefn PrimesTest(UBNat, Primes) {
-  import UBNat(1, 3, 10, Lit2, Eq);
+mdefn PrimesTest(Unit, UBNat, Primes) {
+  import Unit(Unit);
+  import UBNat(Nat, 1, 3, 10, Lit2, Eq);
   import Primes(NthPrime);
+
+  union TestName(
+      Unit NthPrime_1_10
+  );
+
+  struct TestFailure(TestName name, Nat a, Nat b);
+  union TestFailureP(TestFailure head, TestFailureS tail);
+  union TestFailureS(Unit nil, TestFailureP cons);
   
   func TEq(TestName name, Nat a, Nat b, TestFailureS rest; TestFailureS) {
     ?(Eq(a, b); rest,

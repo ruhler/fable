@@ -40,7 +40,7 @@ mdefn UBNatTest(Unit, Bool, UBNat) {
 
   func Test( ; TestFailureS) {
     T(TestName:Eq_0_0(Unit()), Eq(0(), 0()),
-    T(TestName:Eq_0_1(Unit()), Not(Eq(0(), 0())),
+    T(TestName:Eq_0_1(Unit()), Not(Eq(0(), 1())),
     T(TestName:Eq_1_1(Unit()), Eq(1(), 1()),
     T(TestName:Ne_0_1(Unit()), Ne(0(), 1()),
     T(TestName:Ne_0_0(Unit()), Not(Ne(0(), 0())),
