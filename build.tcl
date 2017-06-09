@@ -230,7 +230,7 @@ run $::fblctest prgms/boolcalc.wnt prgms/boolcalc.fblc Test
 run $::fblctest prgms/ints.wnt prgms/ints.fblc Test
 run $::fblccheck prgms/snake.fblc
 run $::fbldtest prgms/UBNatTest.wnt prgms Test@UBNatTest
-run $::fbldtest prgms/PrimesTest.wnt prgms Test@PrimesTest
+skip run $::fbldtest prgms/PrimesTest.wnt prgms Test@PrimesTest
 
 exec mkdir -p out/cov/fblc/all out/cov/fbld/all
 run gcov {*}$::fblc_objs > out/cov/fblc/all/fblc.gcov

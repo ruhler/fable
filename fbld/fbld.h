@@ -433,21 +433,6 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
 
-// FbldLookupMDefn --
-//   Look up the module definition with the given name.
-//
-// Inputs:
-//   mdefnv - The set of all module definitions.
-//   name - The name of the module definition to look up.
-//
-// Returns:
-//   The module definition with the given name, or NULL if no such module
-//   could be found.
-//
-// Side effects:
-//   None.
-FbldMDefn* FbldLookupMDefn(FbldMDefnV* mdefnv, FbldName name);
-
 // FbldLookupQDecl --
 //   Look up the qualified declaration with the given name in the given program.
 //

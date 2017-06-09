@@ -19,33 +19,26 @@ void FbldReportError(const char* format, FbldLoc* loc, ...)
   va_end(ap);
 }
 
-// FbldLookupMDefn -- see documentation in fbld.h
-FbldMDefn* FbldLookupMDefn(FbldMDefnV* mdefnv, FbldName name)
-{
-  for (size_t i = 0; i < mdefnv->size; ++i) {
-    if (strcmp(mdefnv->xs[i]->name->name, name) == 0) {
-      return mdefnv->xs[i];
-    }
-  }
-  return NULL;
-}
-
 // FbldLookupQDecl -- see documentation in fbld.h
 FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity)
 {
   assert(entity->module->name != NULL);
 
   if (mdefn == NULL || strcmp(mdefn->name->name, entity->module->name) != 0) {
-    mdefn = FbldLookupMDefn(env, entity->module->name);
-  }
-  if (mdefn == NULL) {
-    return NULL;
+    for (size_t i = 0; i < env->size; ++i) {
+      if (strcmp(env->xs[i]->name->name, entity->module->name) == 0) {
+        mdefn = env->xs[i];
+        break;
+      }
+    }
   }
 
-  for (size_t i = 0; i < mdefn->declv->size; ++i) {
-    if (mdefn->declv->xs[i]->tag != FBLD_IMPORT_DECL
-        && strcmp(mdefn->declv->xs[i]->name->name, entity->name->name) == 0) {
-      return mdefn->declv->xs[i];
+  if (mdefn != NULL) {
+    for (size_t i = 0; i < mdefn->declv->size; ++i) {
+      if (mdefn->declv->xs[i]->tag != FBLD_IMPORT_DECL
+          && strcmp(mdefn->declv->xs[i]->name->name, entity->name->name) == 0) {
+        return mdefn->declv->xs[i];
+      }
     }
   }
   return NULL;
