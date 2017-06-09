@@ -30,18 +30,6 @@ FbldMDefn* FbldLookupMDefn(FbldMDefnV* mdefnv, FbldName name)
   return NULL;
 }
 
-// FbldLookupDecl -- see documentation in fbld.h
-FbldDecl* FbldLookupDecl(FbldMDefn* mdefn, FbldNameL* name)
-{
-  for (size_t i = 0; i < mdefn->declv->size; ++i) {
-    if (mdefn->declv->xs[i]->tag != FBLD_IMPORT_DECL
-        && strcmp(mdefn->declv->xs[i]->name->name, name->name) == 0) {
-      return mdefn->declv->xs[i];
-    }
-  }
-  return NULL;
-}
-
 // FbldLookupQDecl -- see documentation in fbld.h
 FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity)
 {
@@ -50,5 +38,15 @@ FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName*
   if (mdefn == NULL || strcmp(mdefn->name->name, entity->module->name) != 0) {
     mdefn = FbldLookupMDefn(env, entity->module->name);
   }
-  return mdefn == NULL ? NULL : FbldLookupDecl(mdefn, entity->name);
+  if (mdefn == NULL) {
+    return NULL;
+  }
+
+  for (size_t i = 0; i < mdefn->declv->size; ++i) {
+    if (mdefn->declv->xs[i]->tag != FBLD_IMPORT_DECL
+        && strcmp(mdefn->declv->xs[i]->name->name, entity->name->name) == 0) {
+      return mdefn->declv->xs[i];
+    }
+  }
+  return NULL;
 }

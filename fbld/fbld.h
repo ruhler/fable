@@ -448,21 +448,6 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDe
 //   None.
 FbldMDefn* FbldLookupMDefn(FbldMDefnV* mdefnv, FbldName name);
 
-// FbldLookupDecl --
-//   Look up the declaration with the given name in given module defintion.
-//
-// Inputs:
-//   mdefn - The module to look up the definition in.
-//   name - The name of the definition to look up.
-//
-// Returns:
-//   The definition with the given name, or NULL if no such definition
-//   could be found.
-//
-// Side effects:
-//   None.
-FbldDecl* FbldLookupDecl(FbldMDefn* mdefn, FbldNameL* name);
-
 // FbldLookupQDecl --
 //   Look up the qualified declaration with the given name in the given program.
 //

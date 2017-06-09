@@ -235,14 +235,8 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
   }
 
   // Find the fbld definition of the entity.
-  FbldMDefn* mdefn = FbldLookupMDefn(mdefnv, entity->module->name);
-  assert(mdefn != NULL && "Failed to find module for entity");
-
-  FbldDecl* src_decl = FbldLookupDecl(mdefn, entity->name);
-  if (src_decl == NULL) {
-      fprintf(stderr, "Failed to find %s in %s\n", entity->name->name, mdefn->name->name);
-      assert(false && "Entry definition not found");
-  }
+  FbldDecl* src_decl = FbldLookupQDecl(mdefnv, NULL, entity);
+  assert(src_decl != NULL && "Entry definition not found");
 
   // Compile the declaration
   CompiledDecl* c = arena->alloc(arena, sizeof(CompiledDecl));
