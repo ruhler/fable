@@ -71,7 +71,7 @@ static void ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
 static FbldDecl* LookupDecl(FbldMDefnV* env, FbldMDefn* mctx, FbldQualifiedName* entity)
 {
   ResolveModule(mctx, entity);
-  FbldDecl* decl = FbldLookupQDecl(env, mctx, entity);
+  FbldDecl* decl = FbldLookupDecl(env, mctx, entity);
   if (decl == NULL) {
     FbldReportError("%s not declared\n", entity->name->loc, entity->name->name);
   }

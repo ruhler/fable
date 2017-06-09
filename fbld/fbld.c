@@ -19,8 +19,8 @@ void FbldReportError(const char* format, FbldLoc* loc, ...)
   va_end(ap);
 }
 
-// FbldLookupQDecl -- see documentation in fbld.h
-FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity)
+// FbldLookupDecl -- see documentation in fbld.h
+FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity)
 {
   assert(entity->module->name != NULL);
 

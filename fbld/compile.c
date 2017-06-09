@@ -106,13 +106,13 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       }
       *compiled = &app_expr->_base;
 
-      FbldDecl* decl = FbldLookupQDecl(mdefnv, NULL, source->func);
+      FbldDecl* decl = FbldLookupDecl(mdefnv, NULL, source->func);
       if (decl->tag == FBLD_STRUCT_DECL) {
           return (FbldConcreteTypeDecl*)decl;
       }
       assert(decl->tag == FBLD_FUNC_DECL);
       FbldFuncDecl* func_decl = (FbldFuncDecl*)decl;
-      return (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, NULL, func_decl->return_type);
+      return (FbldConcreteTypeDecl*)FbldLookupDecl(mdefnv, NULL, func_decl->return_type);
     }
 
     case FBLC_UNION_EXPR: {
@@ -121,7 +121,7 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->_base.id = 0xDEAD;  // unused
       union_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
-      FbldUnionDecl* union_decl = (FbldUnionDecl*)FbldLookupQDecl(mdefnv, NULL, source->type);
+      FbldUnionDecl* union_decl = (FbldUnionDecl*)FbldLookupDecl(mdefnv, NULL, source->type);
       union_expr->field = FBLC_NULL_ID;
       for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
         if (strcmp(source->field->name, union_decl->fieldv->xs[i]->name->name) == 0) {
@@ -149,7 +149,7 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
           FbldAccessLoc* access_loc = FblcVectorExtend(arena, *accessv);
           access_loc->expr = &access_expr->_base;
           access_loc->loc = expr->loc;
-          return (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, NULL, obj_type->fieldv->xs[i]->type);
+          return (FbldConcreteTypeDecl*)FbldLookupDecl(mdefnv, NULL, obj_type->fieldv->xs[i]->type);
         }
       }
 
@@ -235,7 +235,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
   }
 
   // Find the fbld definition of the entity.
-  FbldDecl* src_decl = FbldLookupQDecl(mdefnv, NULL, entity);
+  FbldDecl* src_decl = FbldLookupDecl(mdefnv, NULL, entity);
   assert(src_decl != NULL && "Entry definition not found");
 
   // Compile the declaration
@@ -300,7 +300,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
             src_func_decl->argv->xs[i]->type);
         FblcVectorAppend(arena, func_decl->argv, arg);
         nvars[i].name = src_func_decl->argv->xs[i]->name->name;
-        nvars[i].type = (FbldConcreteTypeDecl*)FbldLookupQDecl(mdefnv, NULL, src_func_decl->argv->xs[i]->type);
+        nvars[i].type = (FbldConcreteTypeDecl*)FbldLookupDecl(mdefnv, NULL, src_func_decl->argv->xs[i]->type);
         nvars[i].next = vars;
         vars = nvars + i;
       }
@@ -337,7 +337,7 @@ FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mde
 // FbldCompileValue -- see documentation in fbld.h
 FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value)
 {
-  FbldDecl* type_decl = FbldLookupQDecl(mdefnv, NULL, value->type);
+  FbldDecl* type_decl = FbldLookupDecl(mdefnv, NULL, value->type);
   assert(type_decl != NULL);
   switch (value->kind) {
     case FBLD_STRUCT_KIND: {

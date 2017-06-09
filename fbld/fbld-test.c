@@ -254,7 +254,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
 //   Prints the value to the stream in fbld format.
 static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQualifiedName* type_name, FblcValue* value)
 {
-  FbldConcreteTypeDecl* type = (FbldConcreteTypeDecl*)FbldLookupQDecl(env, NULL, type_name);
+  FbldConcreteTypeDecl* type = (FbldConcreteTypeDecl*)FbldLookupDecl(env, NULL, type_name);
   assert(type != NULL);
   if (type->_base.tag == FBLD_STRUCT_DECL) {
     fprintf(stream, "%s@%s(", type_name->name->name, type_name->module->name);
@@ -506,7 +506,7 @@ int main(int argc, char* argv[])
     args[i] = ParseValueFromString(arena, &mdefnv, argv[i]);
   }
 
-  FbldFuncDecl* entry_decl = (FbldFuncDecl*)FbldLookupQDecl(&mdefnv, NULL, &entry_entity);
+  FbldFuncDecl* entry_decl = (FbldFuncDecl*)FbldLookupDecl(&mdefnv, NULL, &entry_entity);
   assert(entry_decl != NULL);
   assert(entry_decl->_base.tag == FBLD_FUNC_DECL);
 

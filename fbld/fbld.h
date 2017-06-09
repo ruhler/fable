@@ -433,7 +433,7 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
 
-// FbldLookupQDecl --
+// FbldLookupDecl --
 //   Look up the qualified declaration with the given name in the given program.
 //
 // Inputs:
@@ -448,7 +448,7 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDe
 // Side effects:
 //   Behavior is undefined if the module name of the entity has not been
 //   resolved.
-FbldDecl* FbldLookupQDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity);
+FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity);
 
 // FbldCheckMDefn --
 //   Check that the given module definition is well formed and well typed.
