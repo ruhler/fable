@@ -108,13 +108,25 @@ typedef struct {
   FbldExprV* argv;
 } FbldAppExpr;
 
+// FbldField --
+//   A reference to a field.
+//
+// Fields:
+//   name - The name of the field.
+//   id - The fblc id of the field. This is set to FBLC_NULL_ID by the parser,
+//        then later filled in during type check.
+typedef struct {
+  FbldNameL* name;
+  FblcFieldId id;
+} FbldField;
+
 // FbldUnionExpr --
 //   A union expression of the form 'type:field(arg)', used to construct a
 //   union value.
 typedef struct {
   FbldExpr _base;
   FbldQualifiedName* type;
-  FbldNameL* field;
+  FbldField field;
   FbldExpr* arg;
 } FbldUnionExpr;
 
@@ -124,7 +136,7 @@ typedef struct {
 typedef struct {
   FbldExpr _base;
   FbldExpr* obj;
-  FbldNameL* field;
+  FbldField field;
 } FbldAccessExpr;
 
 // FblcCondExpr --

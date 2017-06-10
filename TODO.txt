@@ -1,7 +1,8 @@
 Fbld Cleanup:
-* Add type field to FbldExpr, fill it in during check and reuse it during
-compile rather than recomputing types there. Or save as little info as is
-needed to implement compile without tracking expression types.
+* Document that parse returns FBLC_NULL_ID for field ids and check fills in
+  field ids.
+* Remove type tracking from FbldCompileExpr, because it should no longer need
+  it.
 * Update comments on FbldCompile functions to clarify assumptions about the
   input program, namely that entity modules have already been resolved.
 * Update comments on FbldCheck functions to clarify that module names are

@@ -182,7 +182,8 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       FbldUnionDecl* union_decl = (FbldUnionDecl*)type;
       FbldDecl* arg_type_expected = NULL;
       for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
-        if (strcmp(union_expr->field->name, union_decl->fieldv->xs[i]->name->name) == 0) {
+        if (strcmp(union_expr->field.name->name, union_decl->fieldv->xs[i]->name->name) == 0) {
+          union_expr->field.id = i;
           arg_type_expected = LookupDecl(mdeclv, mdefn, union_decl->fieldv->xs[i]->type);
           if (arg_type_expected == NULL) {
             return NULL;
@@ -192,7 +193,7 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       }
       if (arg_type_expected == NULL) {
         FbldReportError("%s is not a field of type %s\n",
-            union_expr->field->loc, union_expr->field->name, union_expr->type->name->name);
+            union_expr->field.name->loc, union_expr->field.name->name, union_expr->type->name->name);
         return NULL;
       }
 
@@ -218,14 +219,15 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       if (type->tag == FBLD_STRUCT_DECL || type->tag == FBLD_UNION_DECL) {
         FbldConcreteTypeDecl* concrete_type = (FbldConcreteTypeDecl*)type;
         for (size_t i = 0; i < concrete_type->fieldv->size; ++i) {
-          if (strcmp(access_expr->field->name, concrete_type->fieldv->xs[i]->name->name) == 0) {
+          if (strcmp(access_expr->field.name->name, concrete_type->fieldv->xs[i]->name->name) == 0) {
+            access_expr->field.id = i;
             return LookupDecl(mdeclv, mdefn, concrete_type->fieldv->xs[i]->type);
           }
         }
-        FbldReportError("%s is not a field of type %s\n", access_expr->field->loc, access_expr->field->name, type->name->name);
+        FbldReportError("%s is not a field of type %s\n", access_expr->field.name->loc, access_expr->field.name->name, type->name->name);
         return NULL;
       }
-      FbldReportError("can only access fields of struct or union type objects\n", access_expr->field->loc);
+      FbldReportError("can only access fields of struct or union type objects\n", access_expr->field.name->loc);
       return NULL;
     }
 

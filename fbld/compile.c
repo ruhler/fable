@@ -122,14 +122,8 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       union_expr->_base.id = 0xDEAD;  // unused
       union_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
       FbldUnionDecl* union_decl = (FbldUnionDecl*)FbldLookupDecl(mdefnv, NULL, source->type);
-      union_expr->field = FBLC_NULL_ID;
-      for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
-        if (strcmp(source->field->name, union_decl->fieldv->xs[i]->name->name) == 0) {
-          union_expr->field = i;
-          break;
-        }
-      }
-      assert(union_expr->field != FBLC_NULL_ID && "invalid field name");
+      union_expr->field = source->field.id;
+      assert(union_expr->field != FBLC_NULL_ID);
       CompileExpr(arena, mdefnv, codev, accessv, vars, source->arg, &union_expr->arg);
       *compiled = &union_expr->_base;
       return union_decl;
@@ -141,20 +135,13 @@ static FbldConcreteTypeDecl* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, C
       access_expr->_base.tag = FBLC_ACCESS_EXPR;
       access_expr->_base.id = 0xDEAD;   // unused
       FbldConcreteTypeDecl* obj_type = CompileExpr(arena, mdefnv, codev, accessv, vars, source->obj, &access_expr->obj);
-      access_expr->field = FBLC_NULL_ID;
-      for (size_t i = 0; i < obj_type->fieldv->size; ++i) {
-        if (strcmp(source->field->name, obj_type->fieldv->xs[i]->name->name) == 0) {
-          access_expr->field = i;
-          *compiled = &access_expr->_base;
-          FbldAccessLoc* access_loc = FblcVectorExtend(arena, *accessv);
-          access_loc->expr = &access_expr->_base;
-          access_loc->loc = expr->loc;
-          return (FbldConcreteTypeDecl*)FbldLookupDecl(mdefnv, NULL, obj_type->fieldv->xs[i]->type);
-        }
-      }
-
-      assert(false && "Invalid field for access expr.");
-      return NULL;
+      access_expr->field = source->field.id;
+      assert(access_expr->field != FBLC_NULL_ID);
+      *compiled = &access_expr->_base;
+      FbldAccessLoc* access_loc = FblcVectorExtend(arena, *accessv);
+      access_loc->expr = &access_expr->_base;
+      access_loc->loc = expr->loc;
+      return (FbldConcreteTypeDecl*)FbldLookupDecl(mdefnv, NULL, obj_type->fieldv->xs[source->field.id]->type);
     }
 
     case FBLC_COND_EXPR: {

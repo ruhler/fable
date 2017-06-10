@@ -278,7 +278,8 @@ expr:
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->_base.loc = @$;
       union_expr->type = $1;
-      union_expr->field = $3;
+      union_expr->field.name = $3;
+      union_expr->field.id = FBLC_NULL_ID;
       union_expr->arg = $5;
       $$ = &union_expr->_base;
     }
@@ -287,7 +288,8 @@ expr:
       access_expr->_base.tag = FBLC_ACCESS_EXPR;
       access_expr->_base.loc = @$;
       access_expr->obj = $1;
-      access_expr->field = $3;
+      access_expr->field.name = $3;
+      access_expr->field.id = FBLC_NULL_ID;
       $$ = &access_expr->_base;
     }
   | '?' '(' expr ';' non_empty_expr_list ')' {
