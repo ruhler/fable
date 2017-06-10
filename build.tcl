@@ -126,7 +126,7 @@ proc fbld-check-error { program module loc } {
   try {
     set errtext [exec $::fbldcheck --error $dir $module]
   } on error {results options} {
-    error "$file:$line: error: fbld-check passed unexpectedly: $results"
+    error "$file:$line: error: $results"
   }
   exec echo $errtext > $dir/$name.err
   if {-1 == [string first "$loc: error" $errtext]} {

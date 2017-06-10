@@ -233,21 +233,41 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
 
     case FBLC_COND_EXPR: {
       FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
-      FbldDecl* select_type = CheckExpr(mdeclv, mdefn, vars, cond_expr->select);
-      if (select_type->tag != FBLD_UNION_DECL) {
-        FbldReportError("condition must be of union type, but found type %s\n", cond_expr->select->loc, select_type->name->name);
-        FbldReportError("(%s defined here)\n", select_type->name->loc, select_type->name->name);
+      FbldConcreteTypeDecl* select_type = (FbldConcreteTypeDecl*)CheckExpr(mdeclv, mdefn, vars, cond_expr->select);
+      if (select_type == NULL) {
         return NULL;
       }
-      FbldDecl* type = NULL;
+
+      if (select_type->_base.tag != FBLD_UNION_DECL) {
+        FbldReportError("condition must be of union type, but found type %s\n", cond_expr->select->loc, select_type->_base.name->name);
+        FbldReportError("(%s defined here)\n", select_type->_base.name->loc, select_type->_base.name->name);
+        return NULL;
+      }
+
+      if (select_type->fieldv->size != cond_expr->argv->size) {
+        FbldReportError("Expected %d arguments, but %d were provided.\n", cond_expr->_base.loc, select_type->fieldv->size, cond_expr->argv->size);
+        return NULL;
+      }
+
+      assert(cond_expr->argv->size > 0);
+      FbldDecl* result_type = NULL;
       for (size_t i = 0; i < cond_expr->argv->size; ++i) {
-        type = CheckExpr(mdeclv, mdefn, vars, cond_expr->argv->xs[i]);
-        // TODO: Check that all argument types match.
-        if (type == NULL) {
+        FbldDecl* arg_type = CheckExpr(mdeclv, mdefn, vars, cond_expr->argv->xs[i]);
+        if (i == 0) {
+          result_type = arg_type;
+        }
+
+        if (arg_type == NULL) {
+          return NULL;
+        }
+
+        if (arg_type != result_type) {
+          FbldReportError("Expected type %s, but found type %s\n",
+              cond_expr->argv->xs[i]->loc, result_type->name->name, arg_type->name->name);
           return NULL;
         }
       }
-      return type;
+      return result_type;
     }
 
     case FBLC_LET_EXPR: {

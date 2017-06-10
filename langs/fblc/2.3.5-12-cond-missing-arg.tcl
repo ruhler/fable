@@ -1,10 +1,10 @@
 set prg {
-  # The conditional is missing one of its arguments.
   struct Unit();
   union EnumABC(Unit A, Unit B, Unit C);
   union EnumXYZ(Unit X, Unit Y, Unit Z);
 
   func main( ; EnumXYZ) {
+    # The conditional is missing one of its arguments.
     ?(EnumABC:C(Unit());
       EnumXYZ:X(Unit()), , EnumXYZ:Z(Unit()));
   };
