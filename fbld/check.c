@@ -99,8 +99,9 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
       FbldVarExpr* var_expr = (FbldVarExpr*)expr;
-      while (vars != NULL) {
+      for (size_t i = 0; vars != NULL; ++i) {
         if (strcmp(vars->name, var_expr->var->name) == 0) {
+          var_expr->id = i;
           return vars->type;
         }
         vars = vars->next;

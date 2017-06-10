@@ -263,6 +263,7 @@ expr:
       var_expr->_base.tag = FBLC_VAR_EXPR;
       var_expr->_base.loc = @$;
       var_expr->var = $1;
+      var_expr->id = FBLC_NULL_ID;
       $$ = &var_expr->_base;
     }
   | qualified_name '(' expr_list ')' {

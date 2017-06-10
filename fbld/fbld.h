@@ -94,9 +94,16 @@ typedef struct {
 // FblcVarExpr --
 //   A variable expression of the form 'var' whose value is the value of the
 //   corresponding variable in scope.
+//
+// Fields:
+//   var - The name of the variable.
+//   id - The id of the variable. This will be set to FBLC_NULL_ID by the
+//        parser, and filled in with the actual id when the expression is type
+//        checked.
 typedef struct {
   FbldExpr _base;
   FbldNameL* var;
+  FblcVarId id;
 } FbldVarExpr;
 
 // FbldAppExpr --

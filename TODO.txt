@@ -1,6 +1,6 @@
 Fbld Cleanup:
 * Document that parse returns FBLC_NULL_ID for field ids and check fills in
-  field ids.
+  field ids. Ditto for var ids.
 * Do variable id tracking in 'check' to be reused in 'compile' rather than
   recomputed?
 * Update comments on FbldCompile functions to clarify assumptions about the

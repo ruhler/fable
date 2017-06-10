@@ -78,15 +78,8 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       FblcVarExpr* var_expr = arena->alloc(arena, sizeof(FblcVarExpr));
       var_expr->_base.tag = FBLC_VAR_EXPR;
       var_expr->_base.id = 0xDEAD;    // unused
-      var_expr->var = FBLC_NULL_ID;
-      for (size_t i = 0; vars != NULL; ++i) {
-        if (strcmp(vars->name, source->var->name) == 0) {
-          var_expr->var = i;
-          break;
-        }
-        vars = vars->next;
-      }
-      assert(var_expr->var != FBLC_NULL_ID && "variable not found");
+      var_expr->var = source->id;
+      assert(var_expr->var != FBLC_NULL_ID);
       return &var_expr->_base;
     }
 
