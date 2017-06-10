@@ -1,7 +1,7 @@
 
-mdefn Primes() {
-  import Bool(True, False);
-  import UBNat(2, IsZero, Eq, Lt, Gt, Inc, Mul, Mod);
+mdefn Primes(Bool, UBNat) {
+  import Bool(Bool, True, False);
+  import UBNat(Nat, 2, IsZero, Eq, Lt, Gt, Inc, Dec, Mul, Mod);
 
   # Returns true if f evenly divides x.
   func Divides(Nat x, Nat f; Bool) {
@@ -23,7 +23,7 @@ mdefn Primes() {
     ?(Lt(x, 2()) ; False(), IsPrimeHelper(x, 2()));
   };
 
-  func NthPrime(Nat x, Nat n; N) {
+  func NthPrime(Nat x, Nat n; Nat) {
     ?(IsPrime(x) ;
         ?(IsZero(n) ; x, NthPrime(Inc(x), Dec(n))),
         NthPrime(Inc(x), n));

@@ -166,7 +166,17 @@ imported into a module's declaration are not automatically available to the
 module's definition.
 
 The same rules apply for what to list as a module dependency for the module
-definition as for the module declaration.
+definition as for the module declaration, with the additional rule that for
+any type T that a function within the module returns, there must be dependency
+on the module where the type T is defined.
+
+For example, if a function is called that returns some type Foo, and that type
+Foo is used only as an argument to another function, there may be no
+explicitly named entity from the module where type Foo is defined.
+Never-the-less, the module where type Foo is defined must still be listed as a
+dependency. Note that this means there may be some dependecies listed where
+grepping for the name of the dependency elsewhere in the module may not be
+sufficient to identify why the dependency is listed.
 
 The body of the 'mdefn' consists of a sequence of declarations including
 imports, type declarations, function declarations, and process declarations in

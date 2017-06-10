@@ -15,6 +15,7 @@ mdecl UBNat(Bool) {
   func 7( ; Nat);
   func 8( ; Nat);
   func 9( ; Nat);
+  func 10( ; Nat);
 
   func Lit2(Nat a, Nat b; Nat);           # 10 * a + b
   func Lit3(Nat a, Nat b, Nat c; Nat);    # 100 * a + 10 * b + c

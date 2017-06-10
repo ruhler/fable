@@ -1,19 +1,22 @@
-Fbld Kickoff:
-* Add type field to FbldExpr, fill it in during check and reuse it during
-compile rather than recomputing types there.
-* Flesh out unit tests as needed until PrimesTest and UBNat tests work.
-
 Fbld Cleanup:
+* Add type field to FbldExpr, fill it in during check and reuse it during
+compile rather than recomputing types there. Or save as little info as is
+needed to implement compile without tracking expression types.
 * Update comments on FbldCompile functions to clarify assumptions about the
   input program, namely that entity modules have already been resolved.
 * Update comments on FbldCheck functions to clarify that module names are
   resolved as a side effect.
 * Define an FbldNamesEqual function instead of using strcmp everywhere.
-* Refactor fbld compile.c so it doesn't need LookupMDefn, LookupDecl, and
-  ResolveModule?
 * Define FBLD_*_EXPR tags separate from FBLC_*_EXPR tags.
 * Don't allocate and leak FbldLocs like crazy in the lexer/parser.
 * Test case when struct or union type is not redeclared in mdefn from mdecl.
+* Test case when an mdefn decl doesn't match its corresponding mdecl decl.
+* Test case when abstract type is used as select for conditional.
+* Test case when type from module not listed as a dependency is used as select
+  for conditional.
+* Test that all imported names exist in the module they are imported from.
+* Test case when type from module not listed as a dependency is used as obj
+  for field access.
 * Better organize the contents parse.y.
 * Avoid duplicate calls to LookupDecl arising from compiling a type
   declaration and looking up the type declaration to return when compiling an
