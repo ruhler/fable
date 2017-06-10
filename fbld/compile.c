@@ -9,15 +9,6 @@
 #include "fblc.h"
 #include "fbld.h"
 
-// Vars --
-//   List of variables in scope, stored in increasing order of variable id
-//   starting from variable id 0.
-typedef struct Vars {
-  FbldName name;
-  FbldConcreteTypeDecl* type;
-  struct Vars* next;
-} Vars;
-
 // CompiledDecl --
 //   A single compiled fblc declaration.
 //
@@ -38,7 +29,7 @@ typedef struct {
   CompiledDecl** xs;
 } CompiledDeclV;
 
-static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, Vars* vars, FbldExpr* expr);
+static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldExpr* expr);
 static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldQualifiedName* entity);
 
 // CompileExpr --
@@ -49,7 +40,6 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 //   mdefnv - vector of module definitions in which to find the entities to compile
 //   codev - collection of declarations that have already been compiled.
 //   accessv - collection of access expression locations.
-//   vars - The variables currently in scope.
 //   expr - the fbld expression to compile.
 //
 // Result:
@@ -70,7 +60,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 //   and freeing them when no longer needed. This function will allocate
 //   memory proportional to the size of the expression and all declarations
 //   compiled.
-static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, Vars* vars, FbldExpr* expr)
+static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV* codev, FbldAccessLocV* accessv, FbldExpr* expr)
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
@@ -91,7 +81,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       app_expr->func = CompileDecl(arena, mdefnv, codev, accessv, source->func);
       FblcVectorInit(arena, app_expr->argv);
       for (size_t i = 0; i < source->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, vars, source->argv->xs[i]);
+        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, source->argv->xs[i]);
         FblcVectorAppend(arena, app_expr->argv, arg);
       }
       return &app_expr->_base;
@@ -105,7 +95,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       union_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
       union_expr->field = source->field.id;
       assert(union_expr->field != FBLC_NULL_ID);
-      union_expr->arg = CompileExpr(arena, mdefnv, codev, accessv, vars, source->arg);
+      union_expr->arg = CompileExpr(arena, mdefnv, codev, accessv, source->arg);
       return &union_expr->_base;
    }
 
@@ -114,7 +104,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
       access_expr->_base.tag = FBLC_ACCESS_EXPR;
       access_expr->_base.id = 0xDEAD;   // unused
-      access_expr->obj = CompileExpr(arena, mdefnv, codev, accessv, vars, source->obj);
+      access_expr->obj = CompileExpr(arena, mdefnv, codev, accessv, source->obj);
       access_expr->field = source->field.id;
       assert(access_expr->field != FBLC_NULL_ID);
       FbldAccessLoc* access_loc = FblcVectorExtend(arena, *accessv);
@@ -128,10 +118,10 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       FblcCondExpr* cond_expr = arena->alloc(arena, sizeof(FblcCondExpr));
       cond_expr->_base.tag = FBLC_COND_EXPR;
       cond_expr->_base.id = 0xDEAD;   // unused
-      cond_expr->select = CompileExpr(arena, mdefnv, codev, accessv, vars, source->select);
+      cond_expr->select = CompileExpr(arena, mdefnv, codev, accessv, source->select);
       FblcVectorInit(arena, cond_expr->argv);
       for (size_t i = 0; i < source->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, vars, source->argv->xs[i]);
+        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, source->argv->xs[i]);
         FblcVectorAppend(arena, cond_expr->argv, arg);
       }
       return &cond_expr->_base;
@@ -143,12 +133,8 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       let_expr->_base.tag = FBLC_LET_EXPR;
       let_expr->_base.id = 0xDEAD;  // unused
       let_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
-      let_expr->def = CompileExpr(arena, mdefnv, codev, accessv, vars, source->def);
-      Vars nvars = {
-        .name = source->var->name,
-        .next = vars
-      };
-      let_expr->body = CompileExpr(arena, mdefnv, codev, accessv, &nvars, source->body);
+      let_expr->def = CompileExpr(arena, mdefnv, codev, accessv, source->def);
+      let_expr->body = CompileExpr(arena, mdefnv, codev, accessv, source->body);
       return &let_expr->_base;
     }
 
@@ -255,22 +241,16 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       func_decl->_base.tag = FBLC_FUNC_DECL;
       func_decl->_base.id = 0xDEAD;     // id field unused
       FblcVectorInit(arena, func_decl->argv);
-      Vars nvars[src_func_decl->argv->size];
-      Vars* vars = NULL;
       for (size_t i = 0; i < src_func_decl->argv->size; ++i) {
         FblcTypeDecl* arg = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, accessv,
             src_func_decl->argv->xs[i]->type);
         FblcVectorAppend(arena, func_decl->argv, arg);
-        nvars[i].name = src_func_decl->argv->xs[i]->name->name;
-        nvars[i].type = (FbldConcreteTypeDecl*)FbldLookupDecl(mdefnv, NULL, src_func_decl->argv->xs[i]->type);
-        nvars[i].next = vars;
-        vars = nvars + i;
       }
       func_decl->return_type = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, accessv,
             src_func_decl->return_type);
-      func_decl->body = CompileExpr(arena, mdefnv, codev, accessv, vars, src_func_decl->body);
+      func_decl->body = CompileExpr(arena, mdefnv, codev, accessv, src_func_decl->body);
       break;
     }
 
