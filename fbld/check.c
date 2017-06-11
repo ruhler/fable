@@ -19,6 +19,7 @@ static bool TypesMatch(FbldLoc* loc, FbldDecl* expected, FbldDecl* actual);
 static void ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldDecl* LookupDecl(FbldMDefnV* env, FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, FbldExpr* expr);
+static bool CheckModule(FbldMDeclV* mdeclv, FbldModule* module);
 
 // TypesMatch --
 //   Check whether the given types match.
@@ -304,11 +305,29 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
   }
 }
 
-// FbldCheckMDefn -- see documentation in fbld.h
-bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
+// CheckModule --
+//   Check that the given module is well formed and well typed. Works for both
+//   module declarations and module definitions.
+//
+//   Does not check whether the module declaration and module definitions for
+//   a given module are consistent.
+//
+// Inputs:
+//   mdeclv - Already loaded and checked module declarations required by the
+//            module declaration.
+//   module - The module to check.
+//
+// Results:
+//   true if the module is well formed and well typed in the
+//   environment of the given module declarations, false otherwise.
+//
+// Side effects:
+//   If the module is not well formed, an error message is printed to stderr
+//   describing the problem with the module.
+static bool CheckModule(FbldMDeclV* mdeclv, FbldModule* module)
 {
-  for (size_t d = 0; d < mdefn->declv->size; ++d) {
-    FbldDecl* decl = mdefn->declv->xs[d];
+  for (size_t d = 0; d < module->declv->size; ++d) {
+    FbldDecl* decl = module->declv->xs[d];
     switch (decl->tag) {
       case FBLD_IMPORT_DECL:
         // TODO: Verify the module has been listed as a dependency.
@@ -325,7 +344,7 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
         // TODO: Check that fields have unique names.
         FbldConcreteTypeDecl* type_decl = (FbldConcreteTypeDecl*)decl;
         for (size_t i = 0; i < type_decl->fieldv->size; ++i) {
-          if (LookupDecl(mdeclv, mdefn, type_decl->fieldv->xs[i]->type) == NULL) {
+          if (LookupDecl(mdeclv, module, type_decl->fieldv->xs[i]->type) == NULL) {
             return NULL;
           }
         }
@@ -339,7 +358,7 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
         Vars* vars = NULL;
         for (size_t i = 0; i < func_decl->argv->size; ++i) {
           nvars[i].name = func_decl->argv->xs[i]->name->name;
-          nvars[i].type = LookupDecl(mdeclv, mdefn, func_decl->argv->xs[i]->type);
+          nvars[i].type = LookupDecl(mdeclv, module, func_decl->argv->xs[i]->type);
           if (nvars[i].type == NULL) {
             return false;
           }
@@ -347,10 +366,16 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
           vars = nvars + i;
         }
 
-        FbldDecl* return_type_expected = LookupDecl(mdeclv, mdefn, func_decl->return_type);
-        FbldDecl* return_type_actual = CheckExpr(mdeclv, mdefn, vars, func_decl->body);
-        if (!TypesMatch(func_decl->body->loc, return_type_expected, return_type_actual)) {
+        FbldDecl* return_type_expected = LookupDecl(mdeclv, module, func_decl->return_type);
+        if (return_type_expected == NULL) {
           return false;
+        }
+
+        if (func_decl->body != NULL) {
+          FbldDecl* return_type_actual = CheckExpr(mdeclv, module, vars, func_decl->body);
+          if (!TypesMatch(func_decl->body->loc, return_type_expected, return_type_actual)) {
+            return false;
+          }
         }
         break;
       }
@@ -370,4 +395,17 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
     }
   }
   return true;
+}
+
+// FbldCheckMDecl -- see documentation in fbld.h
+bool FbldCheckMDecl(FbldMDeclV* mdeclv, FbldMDecl* mdecl)
+{
+  return CheckModule(mdeclv, mdecl);
+}
+
+// FbldCheckMDefn -- see documentation in fbld.h
+bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
+{
+  // TODO: Check the module against its declaration too.
+  return CheckModule(mdeclv, mdefn);
 }

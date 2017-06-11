@@ -18,4 +18,4 @@ set prg {
   }
 }
 
-skip fbld-check-error $prg Main Main.mdecl:5:20
+fbld-check-error $prg Main Main.mdecl:5:20

@@ -81,12 +81,22 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
     }
   }
 
+  // Check that this declaration is valid.
+  if (!FbldCheckMDecl(mdeclv, mdecl)) {
+    return NULL;
+  }
+
   return mdecl;
 }
 
 // FbldLoadMDefn -- see documentation in fbld.h
 FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv)
 {
+  // Load the module's declaration first.
+  if (!FbldLoadMDecl(arena, path, name, mdeclv)) {
+    return NULL;
+  }
+
   char* filename = FindModuleFile(arena, path, name, ".mdefn");
   if (filename == NULL) {
     fprintf(stderr, "unable to locate %s.mdefn on search path\n", name);

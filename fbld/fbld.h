@@ -191,7 +191,7 @@ typedef enum {
 } FbldDeclTag;
 
 // FbldDecl --
-//   A tagged union of fbdl declarations. All decls have the same initial
+//   A tagged union of fbld declarations. All decls have the same initial
 //   layout as FbldDecl. The tag can be used to determine what kind of decl
 //   this is to get access to additional fields of the decl by first casting
 //   to that specific type.
@@ -420,10 +420,11 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 
 // FbldLoadMDefn --
 //   Load the module definition for the module with the given name.
-//   The module definition and all of the module declarations it depends on
-//   are located according to the given search path, parsed, checked, and
-//   for the module declarations added to the collection of loaded module
-//   declarations before the loaded module definition is returned.
+//   The module definition, its corresponding module declaration, and all of
+//   the module declarations they depend on are located according to the given
+//   search path, parsed, checked, and for the module declarations added to
+//   the collection of loaded module declarations before the loaded module
+//   definition is returned.
 //
 // Inputs:
 //   arena - The arena to use for allocating the loaded definition and
@@ -483,12 +484,30 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
 
-// FbldCheckMDefn --
-//   Check that the given module definition is well formed and well typed.
+// FbldCheckMDecl --
+//   Check that the given module declaration is well formed and well typed.
 //
 // Inputs:
 //   mdeclv - Already loaded and checked module declarations required by the
-//            module definition.
+//            module declaration.
+//   mdefn - The module declaration to check.
+//
+// Results:
+//   true if the module declaration is well formed and well typed in the
+//   environment of the given module declarations, false otherwise.
+//
+// Side effects:
+//   If the module declaration is not well formed, an error message is
+//   printed to stderr describing the problem with the module declaration.
+bool FbldCheckMDecl(FbldMDeclV* mdeclv, FbldMDecl* mdecl);
+
+// FbldCheckMDefn --
+//   Check that the given module definition is well formed, well typed, and
+//   consistent with its own module declaration.
+//
+// Inputs:
+//   mdeclv - Already loaded and checked module declarations required by the
+//            module definition, including its own module declaration.
 //   mdefn - The module definition to check.
 //
 // Results:
@@ -553,4 +572,3 @@ FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mde
 //   program or the fbld value is not well typed.
 FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value);
 #endif // FBLD_H_
-
