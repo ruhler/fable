@@ -123,11 +123,13 @@ proc fbld-check-error { program module loc } {
     exec echo $content > $dir/$name
   }
 
+  set errtext "no error reported"
   try {
     set errtext [exec $::fbldcheck --error $dir $module]
   } on error {results options} {
     error "$file:$line: error: $results"
   }
+
   exec echo $errtext > $dir/$name.err
   if {-1 == [string first "$loc: error" $errtext]} {
     error "$file:$line: error: Expected error at $loc, but got:\n$errtext"

@@ -92,9 +92,8 @@ int main(int argc, char* argv[])
     return EX_USAGE;
   }
 
+  FILE* old_stderr = stderr;
   stderr = expect_error ? stdout : stderr;
-  int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
-  int exit_fail = expect_error ? EX_SUCCESS : EX_FAIL;
 
   // Simply pass allocations through to malloc. We won't be able to track or
   // free memory that the caller is supposed to track and free, but we don't
@@ -113,7 +112,11 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, mdefnv);
 
   if (FbldLoadModules(arena, &search_path, main_module, &mdeclv, &mdefnv)) {
-    return exit_success;
+    if (expect_error) {
+      fprintf(old_stderr, "expected error, but no error encountered.\n");
+      return EX_FAIL;
+    }
+    return EX_SUCCESS;
   }
-  return exit_fail;
+  return expect_error ? EX_SUCCESS : EX_FAIL;
 }
