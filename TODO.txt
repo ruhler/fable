@@ -1,3 +1,14 @@
+Fbld Test:
+* Port remainder of fblc tests to fbld.
+* Test case when struct or union type is not redeclared in mdefn from mdecl.
+* Test case when an mdefn decl doesn't match its corresponding mdecl decl.
+* Test case when abstract type is used as select for conditional.
+* Test case when type from module not listed as a dependency is used as select
+  for conditional.
+* Test that all imported names exist in the module they are imported from.
+* Test case when type from module not listed as a dependency is used as obj
+  for field access.
+
 Fbld Cleanup:
 * Document that parse returns FBLC_NULL_ID for field ids and check fills in
   field ids. Ditto for var ids.
@@ -8,22 +19,19 @@ Fbld Cleanup:
 * Define an FbldNamesEqual function instead of using strcmp everywhere.
 * Define FBLD_*_EXPR tags separate from FBLC_*_EXPR tags.
 * Don't allocate and leak FbldLocs like crazy in the lexer/parser.
-* Test case when struct or union type is not redeclared in mdefn from mdecl.
-* Test case when an mdefn decl doesn't match its corresponding mdecl decl.
-* Test case when abstract type is used as select for conditional.
-* Test case when type from module not listed as a dependency is used as select
-  for conditional.
-* Test that all imported names exist in the module they are imported from.
-* Test case when type from module not listed as a dependency is used as obj
-  for field access.
 * Better organize the contents parse.y.
-* Avoid duplicate calls to LookupDecl arising from compiling a type
-  declaration and looking up the type declaration to return when compiling an
-  expression. Return type name instead of Decl?
 * Add support for returning multiple errors from check.
-* Factor out common code for checking types match in fbld check.
 * Cleanup fbld types to have less pointers - don't include an indirection just
   because it makes parsing easier. Copy values in parser as needed instead.
+
+Fbld Application:
+* Set up vector graphics interface.
+ - Define a basic vector-graphics interface suitable for drawing colored
+   squares.
+ - Write program to draw fixed set of colored squares on screen and quit on
+   command.
+ - Implement libsdl graphics interface so program is actually rendered to
+   screen.
 
 Fblc Front End Cleanup:
 * Make fblcs structure standalone rather than tied to fblc structure.
@@ -49,8 +57,6 @@ Snake Arc:
 * Keep track of and report score.
 
 Space Invaders Arc:
-* Implement fbld front end to fblcbi.
-* Port calc Integer to an fbld module.
 * Implement space invaders game in fbld.
 
 Miscellanous:

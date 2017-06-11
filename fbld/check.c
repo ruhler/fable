@@ -16,9 +16,38 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
+static bool TypesMatch(FbldLoc* loc, FbldDecl* expected, FbldDecl* actual);
 static void ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldDecl* LookupDecl(FbldMDefnV* env, FbldMDefn* mctx, FbldQualifiedName* entity);
 static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, FbldExpr* expr);
+
+// TypesMatch --
+//   Check whether the given types match.
+//
+// Inputs:
+//   loc - location to use for error reporting.
+//   expected - the expected type.
+//   actual - the actual type.
+//
+// Results:
+//   true if the expected and actual types match, false otherwise.
+//
+// Side effects:
+//   Prints an error message to stderr i case the types don't match.
+//   If either type is null, it is assumed an error has already been printed,
+//   in which case no additional error message will be reported.
+static bool TypesMatch(FbldLoc* loc, FbldDecl* expected, FbldDecl* actual)
+{
+  if (expected == NULL || actual == NULL) {
+    return false;
+  }
+
+  if (expected != actual) {
+    FbldReportError("Expected type %s, but found type %s\n", loc, expected->name->name, actual->name->name);
+    return false;
+  }
+  return true;
+}
 
 // ResolveModule --
 //   Resolve the module part of the entity if needed.
@@ -150,18 +179,8 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
 
       for (size_t i = 0; i < argv->size; ++i) {
         FbldDecl* arg_type_expected = LookupDecl(mdeclv, mdefn, argv->xs[i]->type);
-        if (arg_type_expected == NULL) {
-          return NULL;
-        }
-
         FbldDecl* arg_type_actual = CheckExpr(mdeclv, mdefn, vars, app_expr->argv->xs[i]);
-        if (arg_type_actual == NULL) {
-          return NULL;
-        }
-
-        if (arg_type_expected != arg_type_actual) {
-          FbldReportError("Expected type %s, but found type %s\n",
-              app_expr->argv->xs[i]->loc, arg_type_expected->name->name, arg_type_actual->name->name);
+        if (!TypesMatch(app_expr->argv->xs[i]->loc, arg_type_expected, arg_type_actual)) {
           return NULL;
         }
       }
@@ -199,13 +218,7 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       }
 
       FbldDecl* arg_type_actual = CheckExpr(mdeclv, mdefn, vars, union_expr->arg);
-      if (arg_type_actual == NULL) {
-        return NULL;
-      }
-
-      if (arg_type_expected != arg_type_actual) {
-        FbldReportError("Expected type %s, but found type %s\n",
-            union_expr->arg->loc, arg_type_expected->name->name, arg_type_actual->name->name);
+      if (!TypesMatch(union_expr->arg->loc, arg_type_expected, arg_type_actual)) {
         return NULL;
       }
       return type;
@@ -258,13 +271,7 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
           result_type = arg_type;
         }
 
-        if (arg_type == NULL) {
-          return NULL;
-        }
-
-        if (arg_type != result_type) {
-          FbldReportError("Expected type %s, but found type %s\n",
-              cond_expr->argv->xs[i]->loc, result_type->name->name, arg_type->name->name);
+        if (!TypesMatch(cond_expr->argv->xs[i]->loc, result_type, arg_type)) {
           return NULL;
         }
       }
@@ -342,18 +349,8 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
         }
 
         FbldDecl* return_type_expected = LookupDecl(mdeclv, mdefn, func_decl->return_type);
-        if (return_type_expected == NULL) {
-          return false;
-        }
-
         FbldDecl* return_type_actual = CheckExpr(mdeclv, mdefn, vars, func_decl->body);
-        if (return_type_actual == NULL) {
-          return false;
-        }
-
-        if (return_type_expected != return_type_actual) {
-          FbldReportError("Expected type %s, but found type %s\n",
-              func_decl->body->loc, return_type_expected->name->name, return_type_actual->name->name);
+        if (!TypesMatch(func_decl->body->loc, return_type_expected, return_type_actual)) {
           return false;
         }
         break;
