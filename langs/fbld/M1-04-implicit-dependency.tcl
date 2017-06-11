@@ -39,7 +39,7 @@ set prg {
 
   Main.mdecl {
     mdecl Main(Unit) {
-      func Main( ; Unit@Unit);
+      func main( ; Unit@Unit);
     };
   }
 

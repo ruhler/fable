@@ -20,7 +20,7 @@ mdecl UBNatTest(Unit, UBNat) {
   );
 
   struct TestFailure(TestName name, Nat a, Nat b);
-  union TestFailureP(TestFailure head, TestFailureS tail);
+  struct TestFailureP(TestFailure head, TestFailureS tail);
   union TestFailureS(Unit nil, TestFailureP cons);
 
   func Test( ; TestFailureS);

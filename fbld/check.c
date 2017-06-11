@@ -406,6 +406,110 @@ bool FbldCheckMDecl(FbldMDeclV* mdeclv, FbldMDecl* mdecl)
 // FbldCheckMDefn -- see documentation in fbld.h
 bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
 {
-  // TODO: Check the module against its declaration too.
-  return CheckModule(mdeclv, mdefn);
+  if (!CheckModule(mdeclv, mdefn)) {
+    return false;
+  }
+
+  // Verify the mdefn has everything it should according to the mdecl.
+  FbldMDecl* mdecl = NULL;
+  for (size_t i = 0; i < mdeclv->size; ++i) {
+    if (FbldNamesEqual(mdefn->name->name, mdeclv->xs[i]->name->name)) {
+      mdecl = mdeclv->xs[i];
+      break;
+    }
+  }
+  assert(mdecl != NULL && "mdecl for mdefn not loaded");
+
+  FbldMDeclV empty_declv = {
+    .size = 0,
+    .xs = NULL
+  };
+  for (size_t d = 0; d < mdecl->declv->size; ++d) {
+    FbldDecl* from_mdecl = mdecl->declv->xs[d];
+    FbldQualifiedName name = {
+      .name = from_mdecl->name,
+      .module = mdecl->name
+    };
+    FbldDecl* from_mdefn = FbldLookupDecl(&empty_declv, mdefn, &name);
+
+    // Verify the mdecl declaration has a matching declaration in the mdefn.
+    if (from_mdecl->tag != FBLD_IMPORT_DECL && from_mdefn == NULL) {
+      FbldReportError("%s not defined in %s.mdefn.\n",
+          from_mdecl->name->loc, from_mdecl->name->name, mdecl->name->name);
+      return false;
+    }
+
+    // Check that the matching declarations actually do match.
+    switch (from_mdecl->tag) {
+      case FBLD_IMPORT_DECL: break;
+
+      case FBLD_ABSTRACT_TYPE_DECL: {
+        if (from_mdefn->tag != FBLD_STRUCT_DECL && from_mdefn->tag != FBLD_UNION_DECL) {
+          FbldReportError("Expected struct or union declaration.\n", from_mdefn->name->loc);
+          FbldReportError("Based on abstract type declaration here.\n", from_mdecl->name->loc);
+          return false;
+        }
+        break;
+      }
+
+      case FBLD_UNION_DECL:
+      case FBLD_STRUCT_DECL: {
+        if (from_mdecl->tag == FBLD_UNION_DECL && from_mdefn->tag != FBLD_UNION_DECL) {
+          FbldReportError("Expected union declaration.\n", from_mdefn->name->loc);
+          FbldReportError("Based on union declaration here.\n", from_mdecl->name->loc);
+          return false;
+        }
+
+        if (from_mdecl->tag == FBLD_STRUCT_DECL && from_mdefn->tag != FBLD_STRUCT_DECL) {
+          FbldReportError("Expected struct declaration.\n", from_mdefn->name->loc);
+          FbldReportError("Based on struct declaration here.\n", from_mdecl->name->loc);
+          return false;
+        }
+
+        FbldConcreteTypeDecl* type_mdecl = (FbldConcreteTypeDecl*)from_mdecl;
+        FbldConcreteTypeDecl* type_mdefn = (FbldConcreteTypeDecl*)from_mdefn;
+
+        if (type_mdecl->fieldv->size != type_mdefn->fieldv->size) {
+          FbldReportError("type declaration doesn't match.\n", from_mdefn->name->loc);
+          FbldReportError("what was declared here.\n", from_mdecl->name->loc);
+          return false;
+        }
+
+        for (size_t i = 0; i < type_mdecl->fieldv->size; ++i) {
+          FbldTypedName* field_mdecl = type_mdecl->fieldv->xs[i];
+          FbldTypedName* field_mdefn = type_mdefn->fieldv->xs[i];
+          if (!FbldNamesEqual(field_mdecl->type->name->name, field_mdefn->type->name->name)) {
+            FbldReportError("type declaration doesn't match.\n", field_mdecl->type->name->loc);
+            FbldReportError("what was declared here.\n", field_mdefn->type->name->loc);
+            return false;
+          }
+          if (!FbldNamesEqual(field_mdecl->type->module->name, field_mdefn->type->module->name)) {
+            FbldReportError("type declaration doesn't match.\n", field_mdecl->type->module->loc);
+            FbldReportError("what was declared here.\n", field_mdefn->type->module->loc);
+            return false;
+          }
+          if (!FbldNamesEqual(field_mdecl->name->name, field_mdefn->name->name)) {
+            FbldReportError("type declaration doesn't match.\n", field_mdecl->name->loc);
+            FbldReportError("what was declared here.\n", field_mdefn->name->loc);
+            return false;
+          }
+        }
+        break;
+      }
+
+      case FBLD_FUNC_DECL: {
+        // TODO: Check that the func matches as it should.
+        break;
+      }
+
+      case FBLD_PROC_DECL:
+        // TODO: Check that the proc matches as it should.
+        break;
+
+      default:
+        assert(false && "Invalid decl type.");
+        return false;
+    }
+  }
+  return true;
 }

@@ -8,6 +8,7 @@ Fbld Test:
 * Test that all imported names exist in the module they are imported from.
 * Test case when type from module not listed as a dependency is used as obj
   for field access.
+* Test all ways an mdefn decl can mismatch against an mdecl decl.
 
 Fbld Cleanup:
 * Document that parse returns FBLC_NULL_ID for field ids and check fills in
