@@ -4,7 +4,6 @@
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf
-#include <string.h>   // for strcmp
 
 #include "fblc.h"
 #include "fbld.h"
@@ -177,8 +176,8 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 {
   // Check if the entity has already been compiled.
   for (size_t i = 0; i < codev->size; ++i) {
-    if (strcmp(codev->xs[i]->module, entity->module->name) == 0
-        && strcmp(codev->xs[i]->name, entity->name->name) == 0) {
+    if (FbldNamesEqual(codev->xs[i]->module, entity->module->name)
+        && FbldNamesEqual(codev->xs[i]->name, entity->name->name)) {
       return codev->xs[i]->decl;
     }
   }
@@ -298,7 +297,7 @@ FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* val
       FblcValue* arg = FbldCompileValue(arena, mdefnv, value->fieldv->xs[0]);
       size_t tag = FBLC_NULL_ID;
       for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
-        if (strcmp(union_decl->fieldv->xs[i]->name->name, value->tag->name) == 0) {
+        if (FbldNamesEqual(union_decl->fieldv->xs[i]->name->name, value->tag->name)) {
           tag = i;
           break;
         }

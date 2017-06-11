@@ -7,10 +7,6 @@
 
 #include "fblc.h"   // for FblcArena
 
-// FbldName --
-//   A type used for unqualified names in fbld programs.
-typedef const char* FbldName;
-
 // FbldLoc --
 //   Represents a location in a source file.
 //
@@ -39,6 +35,10 @@ typedef struct {
 // Side effects:
 //   Prints an error message to stderr with error location.
 void FbldReportError(const char* format, FbldLoc* loc, ...);
+
+// FbldName --
+//   A type used for unqualified names in fbld programs.
+typedef const char* FbldName;
 
 // FbldNameL -- 
 //   A name along with its associated location in a source file. The location
@@ -74,6 +74,20 @@ typedef struct {
   size_t size;
   FbldNameL** xs;
 } FbldNameV;
+
+// FbldNamesEqual --
+//   Test whether two names are equal.
+//
+// Inputs:
+//   a - The first name.
+//   b - The second name.
+//
+// Results:
+//   true if the first name equals the second, false otherwise.
+//
+// Side effects:
+//   None.
+bool FbldNamesEqual(FbldName a, FbldName b);
 
 // FbldExpr --
 //   Common base type for the following fbld expr types. The tag can be used
@@ -264,6 +278,23 @@ typedef FbldModule FbldMDefn;
 // FbldMDefnV --
 //   A vector of FbldMDefns.
 typedef FbldModuleV FbldMDefnV;
+
+// FbldLookupDecl --
+//   Look up the qualified declaration with the given name in the given program.
+//
+// Inputs:
+//   env - The collection of modules to look up the declaration in.
+//   mdefn - An optional module to look the declaration up in before env.
+//   entity - The name of the entity to look up.
+//
+// Returns:
+//   The declaration with the given name, or NULL if no such declaration
+//   could be found.
+//
+// Side effects:
+//   Behavior is undefined if the module name of the entity has not been
+//   resolved.
+FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity);
 
 // FbldKind --
 //   An enum used to distinguish between struct and union values.
@@ -451,23 +482,6 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
-
-// FbldLookupDecl --
-//   Look up the qualified declaration with the given name in the given program.
-//
-// Inputs:
-//   env - The collection of modules to look up the declaration in.
-//   mdefn - An optional module to look the declaration up in before env.
-//   entity - The name of the entity to look up.
-//
-// Returns:
-//   The declaration with the given name, or NULL if no such declaration
-//   could be found.
-//
-// Side effects:
-//   Behavior is undefined if the module name of the entity has not been
-//   resolved.
-FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity);
 
 // FbldCheckMDefn --
 //   Check that the given module definition is well formed and well typed.

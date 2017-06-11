@@ -16,7 +16,6 @@ Fbld Cleanup:
   input program, namely that entity modules have already been resolved.
 * Update comments on FbldCheck functions to clarify that module names are
   resolved as a side effect.
-* Define an FbldNamesEqual function instead of using strcmp everywhere.
 * Define FBLD_*_EXPR tags separate from FBLC_*_EXPR tags.
 * Don't allocate and leak FbldLocs like crazy in the lexer/parser.
 * Better organize the contents parse.y.

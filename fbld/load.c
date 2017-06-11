@@ -4,7 +4,7 @@
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for sprintf, fprintf, stderr
-#include <string.h>   // for strcmp, strlen
+#include <string.h>   // for strlen
 #include <unistd.h>   // for access
 
 #include "fblc.h"
@@ -51,7 +51,7 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 {
   // Return the existing module declaration if it has already been loaded.
   for (size_t i = 0; i < mdeclv->size; ++i) {
-    if (strcmp(mdeclv->xs[i]->name->name, name) == 0) {
+    if (FbldNamesEqual(mdeclv->xs[i]->name->name, name)) {
       return mdeclv->xs[i];
     }
   }
@@ -69,7 +69,7 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
     return NULL;
   }
 
-  assert(strcmp(mdecl->name->name, name) == 0);
+  assert(FbldNamesEqual(mdecl->name->name, name));
   FblcVectorAppend(arena, *mdeclv, mdecl);
 
   // Load all modules that this one depends on.
@@ -100,7 +100,7 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
     return NULL;
   }
 
-  assert(strcmp(mdefn->name->name, name) == 0);
+  assert(FbldNamesEqual(mdefn->name->name, name));
 
   // Load all modules that this one depends on.
   // TODO: detect and abort if the module recursively depends on itself.

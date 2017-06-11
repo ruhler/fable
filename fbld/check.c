@@ -4,7 +4,6 @@
 
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for NULL
-#include <string.h>   // for strcmp
 
 #include "fbld.h"
 
@@ -72,7 +71,7 @@ static void ResolveModule(FbldMDefn* mctx, FbldQualifiedName* entity)
       if (mctx->declv->xs[i]->tag == FBLD_IMPORT_DECL) {
         FbldImportDecl* decl = (FbldImportDecl*)mctx->declv->xs[i];
         for (size_t j = 0; j < decl->namev->size; ++j) {
-          if (strcmp(entity->name->name, decl->namev->xs[j]->name) == 0) {
+          if (FbldNamesEqual(entity->name->name, decl->namev->xs[j]->name)) {
             entity->module->name = decl->_base.name->name;
             break;
           }
@@ -129,7 +128,7 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
     case FBLC_VAR_EXPR: {
       FbldVarExpr* var_expr = (FbldVarExpr*)expr;
       for (size_t i = 0; vars != NULL; ++i) {
-        if (strcmp(vars->name, var_expr->var->name) == 0) {
+        if (FbldNamesEqual(vars->name, var_expr->var->name)) {
           var_expr->id = i;
           return vars->type;
         }
@@ -202,7 +201,7 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       FbldUnionDecl* union_decl = (FbldUnionDecl*)type;
       FbldDecl* arg_type_expected = NULL;
       for (size_t i = 0; i < union_decl->fieldv->size; ++i) {
-        if (strcmp(union_expr->field.name->name, union_decl->fieldv->xs[i]->name->name) == 0) {
+        if (FbldNamesEqual(union_expr->field.name->name, union_decl->fieldv->xs[i]->name->name)) {
           union_expr->field.id = i;
           arg_type_expected = LookupDecl(mdeclv, mdefn, union_decl->fieldv->xs[i]->type);
           if (arg_type_expected == NULL) {
@@ -233,7 +232,7 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
       if (type->tag == FBLD_STRUCT_DECL || type->tag == FBLD_UNION_DECL) {
         FbldConcreteTypeDecl* concrete_type = (FbldConcreteTypeDecl*)type;
         for (size_t i = 0; i < concrete_type->fieldv->size; ++i) {
-          if (strcmp(access_expr->field.name->name, concrete_type->fieldv->xs[i]->name->name) == 0) {
+          if (FbldNamesEqual(access_expr->field.name->name, concrete_type->fieldv->xs[i]->name->name)) {
             access_expr->field.id = i;
             return LookupDecl(mdeclv, mdefn, concrete_type->fieldv->xs[i]->type);
           }
