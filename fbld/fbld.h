@@ -105,7 +105,7 @@ typedef struct {
   FbldExpr** xs;
 } FbldExprV;
 
-// FblcVarExpr --
+// FbldVarExpr --
 //   A variable expression of the form 'var' whose value is the value of the
 //   corresponding variable in scope.
 //
@@ -160,7 +160,7 @@ typedef struct {
   FbldField field;
 } FbldAccessExpr;
 
-// FblcCondExpr --
+// FbldCondExpr --
 //   A conditional expression of the form '?(select; arg0, arg1, ...)', which
 //   conditionally selects an argument based on the tag of the select value.
 typedef struct {

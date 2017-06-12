@@ -498,7 +498,54 @@ bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn)
       }
 
       case FBLD_FUNC_DECL: {
-        // TODO: Check that the func matches as it should.
+        FbldFuncDecl* func_mdecl = (FbldFuncDecl*)from_mdecl;
+        FbldFuncDecl* func_mdefn = (FbldFuncDecl*)from_mdefn;
+
+        if (func_mdefn->_base.tag != FBLD_FUNC_DECL) {
+          FbldReportError("expected func declaration.\n", from_mdefn->name->loc);
+          FbldReportError("based on union declaration here.\n", from_mdecl->name->loc);
+          return false;
+        }
+
+
+        if (func_mdecl->argv->size != func_mdefn->argv->size) {
+          FbldReportError("type declaration doesn't match.\n", from_mdefn->name->loc);
+          FbldReportError("what was declared here.\n", from_mdecl->name->loc);
+          return false;
+        }
+
+        for (size_t i = 0; i < func_mdecl->argv->size; ++i) {
+          FbldTypedName* arg_mdecl = func_mdecl->argv->xs[i];
+          FbldTypedName* arg_mdefn = func_mdefn->argv->xs[i];
+          if (!FbldNamesEqual(arg_mdecl->type->name->name, arg_mdefn->type->name->name)) {
+            FbldReportError("func declaration doesn't match.\n", arg_mdefn->type->name->loc);
+            FbldReportError("what was declared here.\n", arg_mdecl->type->name->loc);
+            return false;
+          }
+          if (!FbldNamesEqual(arg_mdecl->type->module->name, arg_mdefn->type->module->name)) {
+            FbldReportError("func declaration doesn't match.\n", arg_mdefn->type->module->loc);
+            FbldReportError("what was declared here.\n", arg_mdecl->type->module->loc);
+            return false;
+          }
+          if (!FbldNamesEqual(arg_mdecl->name->name, arg_mdefn->name->name)) {
+            FbldReportError("func declaration doesn't match.\n", arg_mdefn->name->loc);
+            FbldReportError("what was declared here.\n", arg_mdecl->name->loc);
+            return false;
+          }
+        }
+
+        FbldQualifiedName* ret_mdecl = func_mdecl->return_type;
+        FbldQualifiedName* ret_mdefn = func_mdefn->return_type;
+        if (!FbldNamesEqual(ret_mdecl->name->name, ret_mdefn->name->name)) {
+          FbldReportError("return type doesn't match.\n", ret_mdefn->name->loc);
+          FbldReportError("what was declared here.\n", ret_mdecl->name->loc);
+          return false;
+        }
+        if (!FbldNamesEqual(ret_mdecl->module->name, ret_mdefn->module->name)) {
+          FbldReportError("return type doesn't match.\n", ret_mdefn->module->loc);
+          FbldReportError("what was declared here.\n", ret_mdecl->module->loc);
+          return false;
+        }
         break;
       }
 
