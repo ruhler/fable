@@ -63,78 +63,78 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
-      FbldVarExpr* source = (FbldVarExpr*)expr;
-      FblcVarExpr* var_expr = arena->alloc(arena, sizeof(FblcVarExpr));
-      var_expr->_base.tag = FBLC_VAR_EXPR;
-      var_expr->_base.id = 0xDEAD;    // unused
-      var_expr->var = source->id;
-      assert(var_expr->var != FBLC_NULL_ID);
-      return &var_expr->_base;
+      FbldVarExpr* var_dexpr = (FbldVarExpr*)expr;
+      FblcVarExpr* var_cexpr = arena->alloc(arena, sizeof(FblcVarExpr));
+      var_cexpr->_base.tag = FBLC_VAR_EXPR;
+      var_cexpr->_base.id = 0xDEAD;    // unused
+      var_cexpr->var = var_dexpr->id;
+      assert(var_cexpr->var != FBLC_NULL_ID);
+      return &var_cexpr->_base;
     }
 
     case FBLC_APP_EXPR: {
-      FbldAppExpr* source = (FbldAppExpr*)expr;
-      FblcAppExpr* app_expr = arena->alloc(arena, sizeof(FblcAppExpr));
-      app_expr->_base.tag = FBLC_APP_EXPR;
-      app_expr->_base.id = 0xDEAD;    // unused
-      app_expr->func = CompileDecl(arena, mdefnv, codev, accessv, source->func);
-      FblcVectorInit(arena, app_expr->argv);
-      for (size_t i = 0; i < source->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, source->argv->xs[i]);
-        FblcVectorAppend(arena, app_expr->argv, arg);
+      FbldAppExpr* app_dexpr = (FbldAppExpr*)expr;
+      FblcAppExpr* app_cexpr = arena->alloc(arena, sizeof(FblcAppExpr));
+      app_cexpr->_base.tag = FBLC_APP_EXPR;
+      app_cexpr->_base.id = 0xDEAD;    // unused
+      app_cexpr->func = CompileDecl(arena, mdefnv, codev, accessv, app_dexpr->func);
+      FblcVectorInit(arena, app_cexpr->argv);
+      for (size_t i = 0; i < app_dexpr->argv->size; ++i) {
+        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, app_dexpr->argv->xs[i]);
+        FblcVectorAppend(arena, app_cexpr->argv, arg);
       }
-      return &app_expr->_base;
+      return &app_cexpr->_base;
     }
 
     case FBLC_UNION_EXPR: {
-      FbldUnionExpr* source = (FbldUnionExpr*)expr;
-      FblcUnionExpr* union_expr = arena->alloc(arena, sizeof(FblcUnionExpr));
-      union_expr->_base.tag = FBLC_UNION_EXPR;
-      union_expr->_base.id = 0xDEAD;  // unused
-      union_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
-      union_expr->field = source->field.id;
-      assert(union_expr->field != FBLC_NULL_ID);
-      union_expr->arg = CompileExpr(arena, mdefnv, codev, accessv, source->arg);
-      return &union_expr->_base;
+      FbldUnionExpr* union_dexpr = (FbldUnionExpr*)expr;
+      FblcUnionExpr* union_cexpr = arena->alloc(arena, sizeof(FblcUnionExpr));
+      union_cexpr->_base.tag = FBLC_UNION_EXPR;
+      union_cexpr->_base.id = 0xDEAD;  // unused
+      union_cexpr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, union_dexpr->type);
+      union_cexpr->field = union_dexpr->field.id;
+      assert(union_cexpr->field != FBLC_NULL_ID);
+      union_cexpr->arg = CompileExpr(arena, mdefnv, codev, accessv, union_dexpr->arg);
+      return &union_cexpr->_base;
    }
 
     case FBLC_ACCESS_EXPR: {
-      FbldAccessExpr* source = (FbldAccessExpr*)expr;
-      FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
-      access_expr->_base.tag = FBLC_ACCESS_EXPR;
-      access_expr->_base.id = 0xDEAD;   // unused
-      access_expr->obj = CompileExpr(arena, mdefnv, codev, accessv, source->obj);
-      access_expr->field = source->field.id;
-      assert(access_expr->field != FBLC_NULL_ID);
+      FbldAccessExpr* access_dexpr = (FbldAccessExpr*)expr;
+      FblcAccessExpr* access_cexpr = arena->alloc(arena, sizeof(FblcAccessExpr));
+      access_cexpr->_base.tag = FBLC_ACCESS_EXPR;
+      access_cexpr->_base.id = 0xDEAD;   // unused
+      access_cexpr->obj = CompileExpr(arena, mdefnv, codev, accessv, access_dexpr->obj);
+      access_cexpr->field = access_dexpr->field.id;
+      assert(access_cexpr->field != FBLC_NULL_ID);
       FbldAccessLoc* access_loc = FblcVectorExtend(arena, *accessv);
-      access_loc->expr = &access_expr->_base;
+      access_loc->expr = &access_cexpr->_base;
       access_loc->loc = expr->loc;
-      return &access_expr->_base;
+      return &access_cexpr->_base;
     }
 
     case FBLC_COND_EXPR: {
-      FbldCondExpr* source = (FbldCondExpr*)expr;
-      FblcCondExpr* cond_expr = arena->alloc(arena, sizeof(FblcCondExpr));
-      cond_expr->_base.tag = FBLC_COND_EXPR;
-      cond_expr->_base.id = 0xDEAD;   // unused
-      cond_expr->select = CompileExpr(arena, mdefnv, codev, accessv, source->select);
-      FblcVectorInit(arena, cond_expr->argv);
-      for (size_t i = 0; i < source->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, source->argv->xs[i]);
-        FblcVectorAppend(arena, cond_expr->argv, arg);
+      FbldCondExpr* cond_dexpr = (FbldCondExpr*)expr;
+      FblcCondExpr* cond_cexpr = arena->alloc(arena, sizeof(FblcCondExpr));
+      cond_cexpr->_base.tag = FBLC_COND_EXPR;
+      cond_cexpr->_base.id = 0xDEAD;   // unused
+      cond_cexpr->select = CompileExpr(arena, mdefnv, codev, accessv, cond_dexpr->select);
+      FblcVectorInit(arena, cond_cexpr->argv);
+      for (size_t i = 0; i < cond_dexpr->argv->size; ++i) {
+        FblcExpr* arg = CompileExpr(arena, mdefnv, codev, accessv, cond_dexpr->argv->xs[i]);
+        FblcVectorAppend(arena, cond_cexpr->argv, arg);
       }
-      return &cond_expr->_base;
+      return &cond_cexpr->_base;
     }
 
     case FBLC_LET_EXPR: {
-      FbldLetExpr* source = (FbldLetExpr*)expr;
-      FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
-      let_expr->_base.tag = FBLC_LET_EXPR;
-      let_expr->_base.id = 0xDEAD;  // unused
-      let_expr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, source->type);
-      let_expr->def = CompileExpr(arena, mdefnv, codev, accessv, source->def);
-      let_expr->body = CompileExpr(arena, mdefnv, codev, accessv, source->body);
-      return &let_expr->_base;
+      FbldLetExpr* let_dexpr = (FbldLetExpr*)expr;
+      FblcLetExpr* let_cexpr = arena->alloc(arena, sizeof(FblcLetExpr));
+      let_cexpr->_base.tag = FBLC_LET_EXPR;
+      let_cexpr->_base.id = 0xDEAD;  // unused
+      let_cexpr->type = (FblcTypeDecl*)CompileDecl(arena, mdefnv, codev, accessv, let_dexpr->type);
+      let_cexpr->def = CompileExpr(arena, mdefnv, codev, accessv, let_dexpr->def);
+      let_cexpr->body = CompileExpr(arena, mdefnv, codev, accessv, let_dexpr->body);
+      return &let_cexpr->_base;
     }
 
     default:
@@ -183,8 +183,8 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
   }
 
   // Find the fbld definition of the entity.
-  FbldDecl* src_decl = FbldLookupDecl(mdefnv, NULL, entity);
-  assert(src_decl != NULL && "Entry definition not found");
+  FbldDecl* ddecl = FbldLookupDecl(mdefnv, NULL, entity);
+  assert(ddecl != NULL && "Entry definition not found");
 
   // Compile the declaration
   CompiledDecl* c = arena->alloc(arena, sizeof(CompiledDecl));
@@ -192,7 +192,7 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
   c->name = entity->name->name;
   c->decl = NULL;
   FblcVectorAppend(arena, *codev, c);
-  switch (src_decl->tag) {
+  switch (ddecl->tag) {
     case FBLD_IMPORT_DECL:
       assert(false && "Cannot compile an import declaration");
       break;
@@ -202,54 +202,54 @@ static FblcDecl* CompileDecl(FblcArena* arena, FbldMDefnV* mdefnv, CompiledDeclV
       break;
 
     case FBLD_UNION_DECL: {
-      FbldUnionDecl* src_union_decl = (FbldUnionDecl*)src_decl;
-      FblcUnionDecl* union_decl = arena->alloc(arena, sizeof(FblcUnionDecl));
-      c->decl = &union_decl->_base;
-      union_decl->_base.tag = FBLC_UNION_DECL;
-      union_decl->_base.id = 0xDEAD;   // id field unused
-      FblcVectorInit(arena, union_decl->fieldv);
-      for (size_t i = 0; i < src_union_decl->fieldv->size; ++i) {
+      FbldUnionDecl* union_ddecl = (FbldUnionDecl*)ddecl;
+      FblcUnionDecl* union_cdecl = arena->alloc(arena, sizeof(FblcUnionDecl));
+      c->decl = &union_cdecl->_base;
+      union_cdecl->_base.tag = FBLC_UNION_DECL;
+      union_cdecl->_base.id = 0xDEAD;   // id field unused
+      FblcVectorInit(arena, union_cdecl->fieldv);
+      for (size_t i = 0; i < union_ddecl->fieldv->size; ++i) {
         FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, accessv,
-            src_union_decl->fieldv->xs[i]->type);
-        FblcVectorAppend(arena, union_decl->fieldv, type);
+            union_ddecl->fieldv->xs[i]->type);
+        FblcVectorAppend(arena, union_cdecl->fieldv, type);
       }
       break;
     }
 
     case FBLD_STRUCT_DECL: {
-      FbldStructDecl* src_struct_decl = (FbldStructDecl*)src_decl;
-      FblcStructDecl* struct_decl = arena->alloc(arena, sizeof(FblcStructDecl));
-      c->decl = &struct_decl->_base;
-      struct_decl->_base.tag = FBLC_STRUCT_DECL;
-      struct_decl->_base.id = 0xDEAD;   // id field unused
-      FblcVectorInit(arena, struct_decl->fieldv);
-      for (size_t i = 0; i < src_struct_decl->fieldv->size; ++i) {
+      FbldStructDecl* struct_ddecl = (FbldStructDecl*)ddecl;
+      FblcStructDecl* struct_cdecl = arena->alloc(arena, sizeof(FblcStructDecl));
+      c->decl = &struct_cdecl->_base;
+      struct_cdecl->_base.tag = FBLC_STRUCT_DECL;
+      struct_cdecl->_base.id = 0xDEAD;   // id field unused
+      FblcVectorInit(arena, struct_cdecl->fieldv);
+      for (size_t i = 0; i < struct_ddecl->fieldv->size; ++i) {
         FblcTypeDecl* type = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, accessv,
-            src_struct_decl->fieldv->xs[i]->type);
-        FblcVectorAppend(arena, struct_decl->fieldv, type);
+            struct_ddecl->fieldv->xs[i]->type);
+        FblcVectorAppend(arena, struct_cdecl->fieldv, type);
       }
       break;
     }
 
     case FBLD_FUNC_DECL: {
-      FbldFuncDecl* src_func_decl = (FbldFuncDecl*)src_decl;
-      FblcFuncDecl* func_decl = arena->alloc(arena, sizeof(FblcFuncDecl));
-      c->decl = &func_decl->_base;
-      func_decl->_base.tag = FBLC_FUNC_DECL;
-      func_decl->_base.id = 0xDEAD;     // id field unused
-      FblcVectorInit(arena, func_decl->argv);
-      for (size_t i = 0; i < src_func_decl->argv->size; ++i) {
+      FbldFuncDecl* func_ddecl = (FbldFuncDecl*)ddecl;
+      FblcFuncDecl* func_cdecl = arena->alloc(arena, sizeof(FblcFuncDecl));
+      c->decl = &func_cdecl->_base;
+      func_cdecl->_base.tag = FBLC_FUNC_DECL;
+      func_cdecl->_base.id = 0xDEAD;     // id field unused
+      FblcVectorInit(arena, func_cdecl->argv);
+      for (size_t i = 0; i < func_ddecl->argv->size; ++i) {
         FblcTypeDecl* arg = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, accessv,
-            src_func_decl->argv->xs[i]->type);
-        FblcVectorAppend(arena, func_decl->argv, arg);
+            func_ddecl->argv->xs[i]->type);
+        FblcVectorAppend(arena, func_cdecl->argv, arg);
       }
-      func_decl->return_type = (FblcTypeDecl*)CompileDecl(
+      func_cdecl->return_type = (FblcTypeDecl*)CompileDecl(
             arena, mdefnv, codev, accessv,
-            src_func_decl->return_type);
-      func_decl->body = CompileExpr(arena, mdefnv, codev, accessv, src_func_decl->body);
+            func_ddecl->return_type);
+      func_cdecl->body = CompileExpr(arena, mdefnv, codev, accessv, func_ddecl->body);
       break;
     }
 

@@ -271,7 +271,7 @@ typedef FbldModuleV FbldMDeclV;
 
 // FbldMDefn --
 //   An fbld module definition.
-//   FbldmDefns do not contain abstract type declarations and have non-NULL
+//   FbldMDefns do not contain abstract type declarations and have non-NULL
 //   bodies of functions and processes.
 typedef FbldModule FbldMDefn;
 
