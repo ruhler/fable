@@ -281,19 +281,34 @@ static FbldDecl* CheckExpr(FbldMDeclV* mdeclv, FbldMDefn* mdefn, Vars* vars, Fbl
     case FBLC_LET_EXPR: {
       FbldLetExpr* let_expr = (FbldLetExpr*)expr;
 
-      // TODO: Check that the variable type matches what was declared.
-      if (LookupDecl(mdeclv, mdefn, let_expr->type) == NULL) {
+      FbldDecl* var_type_expected = LookupDecl(mdeclv, mdefn, let_expr->type);
+      if (var_type_expected == NULL) {
         return NULL;
       }
 
-      FbldDecl* var_type = CheckExpr(mdeclv, mdefn, vars, let_expr->def);
-      if (var_type == NULL) {
+      if (var_type_expected->tag != FBLD_STRUCT_DECL
+          && var_type_expected->tag != FBLD_UNION_DECL
+          && var_type_expected->tag != FBLD_ABSTRACT_TYPE_DECL) {
+        FbldReportError("%s does not refer to a type.\n", let_expr->type->name->loc, let_expr->type->name->name);
         return NULL;
+      }
+
+      FbldDecl* var_type_actual = CheckExpr(mdeclv, mdefn, vars, let_expr->def);
+      if (!TypesMatch(let_expr->def->loc, var_type_expected, var_type_actual)) {
+        return NULL;
+      }
+
+      for (Vars* curr = vars; curr != NULL; curr = curr->next) {
+        if (FbldNamesEqual(curr->name, let_expr->var->name)) {
+          FbldReportError("Redefinition of variable '%s'\n",
+              let_expr->var->loc, let_expr->var->name);
+          return NULL;
+        }
       }
 
       Vars nvars = {
         .name = let_expr->var->name,
-        .type = var_type,
+        .type = var_type_expected,
         .next = vars
       };
       return CheckExpr(mdeclv, mdefn, &nvars, let_expr->body);
