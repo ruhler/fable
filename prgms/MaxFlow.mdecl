@@ -1,0 +1,14 @@
+
+mdecl (Unit, UBNat) {
+  import Unit(Unit);
+  import UBNat(Nat);
+
+  union Node(Unit A, Unit B, Unit C);
+  struct Edge(Node src, Node dst);
+  struct EdgeP(Edge head, EdgeS tail);
+  struct EdgeS(Unit nil, EdgeP cons);
+
+  # Return the max flow from source node src to destination node dst in the
+  # graph defined by the given list of edges.
+  func MaxFlow(EdgeS edges, Node src, Node dst ; Nat);
+}

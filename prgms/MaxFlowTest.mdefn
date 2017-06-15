@@ -1,0 +1,25 @@
+
+mdefn MaxFlowTest(Unit, Bool, UBNat) {
+  import Unit(Unit);
+  import Bool(Bool);
+  import UBNat(Nat, Eq);
+
+  union TestName(Unit Basic);
+  struct TestFailure(TestName name, Nat a, Nat b);
+  struct TestFailureP(TestFailure head, TestFailureS tail);
+  union TestFailureS(Unit nil, TestFailureP cons);
+
+  func TEq(TestName name, Nat a, Nat b, TestFailureS rest; TestFailureS) {
+    ?(Eq(a, b); rest,
+      TestFailureS:cons(TestFailureP(TestFailure(name, a, b), rest)));
+  };
+
+  func Graph( ; EdgeS) {
+  };
+
+  func Test( ; TestFailureS) {
+    TEq(TestName:Basic(Unit()), 4(), MaxFlow(Graph(), Node:A(Unit()), Node:C(Unit())),
+    TestFailureS:nil(Unit()));
+  };
+}
+

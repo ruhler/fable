@@ -1,0 +1,13 @@
+
+mdecl MaxFlowTest(Unit, UBNat) {
+  import Unit(Unit);
+  import UBNat(Nat);
+ 
+  union TestName(Unit Basic);
+  struct TestFailure(TestName name, Nat a, Nat b);
+  struct TestFailureP(TestFailure head, TestFailureS tail);
+  union TestFailureS(Unit nil, TestFailureP cons);
+
+  func Test( ; TestFailureS);
+};
+
