@@ -30,7 +30,7 @@ Interfaces define a set of types, functions, and processes that a module
 implements. An interface can be thought of as a type of module.
 
 We say each module implements a specific interface. It's not hard to have a
-module effectively implementing multiple interfaces  by defining wrapper
+module effectively implementing multiple interfaces by defining wrapper
 modules for each different interface.
 
 Multiple modules may implement the same interface. This is required for
@@ -41,6 +41,9 @@ is no need to parameterize interfaces by func, proc, or module more generally,
 because types is the only thing an interface depends on from the outside
 world. Modules may also be parameterized by type.
 
+In other words, interfaces are parameterized by type in order to allow a
+single module definition to be re-used for interfaces with different types.
+
 A concrete interface is one without any type parameters. An abstract interface
 can be made concrete by supplying all its type parameters. A type parameter is
 supplied by giving a type (concrete or abstract) declared as part of some
@@ -50,49 +53,76 @@ Given interface I with type parameters a and b, any occurence of I(A, B)
 refers to the same interface as I(A, B), so long as I, A, and B are all the
 same.
 
-Concern: Is there any problem with the fact that you could have two modules
-with the same interface that have different implementations of concrete types?
-For example, given some Map interface, where underneath it could be a ListMap
-or a SetMap or a HashMap? That just means that distinct module variables with
-the same interface should not be considered to have the same types. I think it
-should be fine.
+Similarly given module M with type or module parameters a and b, any
+occurence of M(A, B) refers to the same as M(A, B).
 
-Similarly given mnodule M with type or module parameters a and b, any
-occurence of M(A, B) refers to the same as M(A, B), such that some type M(A,
-B).T is considered equal to some other M(A,B).T. But note that isn't true in
-general unless the modules can be shown to be the same (it is not enough to
-show the interfaces are the same).
+Types declared in interfaces are not comparable in general, because there is
+no gaurentee they come from the same module implementing the interface. For
+example, it does not make sense to try and use a Map.Map type for maps that
+could be either HashMap or TreeMap. In general, whenever a type is needed, the
+module that type is associated with must be supplied.
 
-In other words, I(A, B).T != I(A, B).T in general, but M(A, B).T = M(A, B).T.
+Example: Assume a Unit interface. In theory it's possible that there are
+multiple modules implementing this interface, each of which defines a
+different type. In an interface, if you tried to use the interface type
+Unit@Unit, it would not be clear that all occurences of Unit@Unit should refer
+to the same type. On the other hand, imagine you want to write a function to
+convert a HashMap to a TreeMap. You couldn't describe this in an interface if
+the interface only referred to interface types Map and Map.
+
+So, wherever a type is needed, a type from a module must be supplied, such as
+T@M(A, B), which uniquely defines a type, even if that type is abstract.
+T@M(A, B) = T@M(A, B) if T, M, A, and B are all the same. This means
+interfaces depend in some part on module definitions, but really only on
+module declarations - the 'prototype' of a module, rather than its body.
 
 Proposed syntax:
 
-interface Map(K, V) {
+mtype Bool() {
+  struct Unit();
+  union Bool(Unit true, Unit false);
+};
+
+mdecl MyBool( ; ; Bool());
+
+mdefn MyBool( ; ; Bool()) {
+  struct Unit();
+  union Bool(Unit true, Unit false);
+};
+
+mtype Map(K, V) {
   type Map;
   func empty( ; Map);
   func single(K key, V value; Map);
   func union(Map a, Map b; Map);
-  func contains(Map m, K key; Bool@Bool);
+  func contains(Map m, K key; Bool@MyBool());
+  ...
+};
+
+mdefn ListMap(K, V ; List(Pair(K, V)) list; Map(K, V)) {
   ...
 }
 
 Notes: 
  - No explicit dependency list. Dependencies should be clear enough from the
-   interface description I hope. If need be, we can add extra syntax to
-   document required dependencies.
+   code I hope. If need be, we can add extra syntax to document required
+   dependencies.
  - The interface is parameterized, not the types within it.
-
-module ListMap(K, V ; List(Pair(K, V)) list; Map(K, V)) {
-  ...
-}
-
-Notes:
- - Defined like a function: name, type args, module args, resulting module
-   type. Where module args and resulting module type are functions of the type
-   args.
- - Types referred to from within a module must be associated with a specific
-   module - either a module passed as a parameter, or a named module. We can
-   still test the module is correct without knowing the implementation of a
-   named module it depends on by assuming each differently named module
-   defines different opaque types.
+ - module declarations and definitions are like a function: name, type args,
+   module args, resulting module type. Where module args and resulting module
+   type are functions of the type args.
+ - Types referred to from within an interface or module must be associated
+   with a specific module - either a module passed as a parameter, or a named
+   module. We can still test the module is correct without knowing the
+   implementation of a named module it depends on by assuming each differently
+   named module defines different opaque types.
+ - The mtype namespace is separate from the module namespace. We used a
+   different name for Bool and MyBool in the example to highlight that the
+   interface reference must be to the module, but in practice we would
+   probably use Bool for the module name as well because we only expect one
+   implementation of the module.
+ - For now don't worry about syntactic sugar. Some form of importing will be
+   needed to avoid verbose qualified names. Interface and module declarations
+   that don't take parameters still have space for them, as can be seen with
+   Bool and MyBool.
 
