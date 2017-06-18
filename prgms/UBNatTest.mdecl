@@ -1,7 +1,6 @@
-
 mdecl UBNatTest(Unit, UBNat) {
-  import Unit(Unit);
-  import UBNat(Nat);
+  import Unit() { Unit; };
+  import UBNat() { Nat; };
  
   union TestName(
     Unit Eq_0_0, Unit Eq_0_1, Unit Eq_1_1,
@@ -20,9 +19,6 @@ mdecl UBNatTest(Unit, UBNat) {
   );
 
   struct TestFailure(TestName name, Nat a, Nat b);
-  struct TestFailureP(TestFailure head, TestFailureS tail);
-  union TestFailureS(Unit nil, TestFailureP cons);
-
-  func Test( ; TestFailureS);
+  func Test( ; S@List(TestFailure));
 };
 

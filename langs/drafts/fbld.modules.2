@@ -126,3 +126,113 @@ Notes:
    that don't take parameters still have space for them, as can be seen with
    Bool and MyBool.
 
+One way to organize the code would be to put an mtype Foo in the file
+Foo.mtype, an mdecl Foo in the file Foo.mdecl, and an mdefn Foo in the file
+Foo.mdefn. It seems tedious to have Foo.mdecl, which will literally be a
+single line of code. Is it worth making it so that a developer can see the
+declaration of a module without its associated implementation? Maybe it's okay
+if the mdecl is liberally documented? Not sure. Let me be pedantic and go with
+it for now.
+
+TODO
+----
+There are three issues with this proposal worth noting:
+* It's very awkward to call functions from other modules now.
+  For example: calling foo from module Foo is now: foo@Foo()()
+  It will also be hard to tell when we have module variables what the syntax
+  is. For example: foo@Foo() could be the module global Foo, or calling a
+  function on the local Foo module.
+* We no longer have an explicit list of requirements, which is nice for
+  limiting the scope of the understanding the module. It's nice to say: here
+  are the things you need to understand this module.
+* It is now common to use the same module with different types, so that
+  foo@Foo(A) and foo@Foo(B) are different. If we try to import 'foo' into the
+  local scope, it will almost certainly conflict.
+
+These are all surface issues. They are questions about concrete syntax, how to
+refer to global entities, and compile-assisted module documentation.
+
+Brainstorm for how to solve:
+
+1. using <local name> <module entity>
+ ex: "using Unit Unit@Unit();"
+ Required to access names under local name.
+ Convention to put at top of the module for documentation.
+ Downside: one line per entity imported is too many?
+ Downside: the using might depend on a locally defined type, because you might
+ use a locally defined type as a type argument to a module. Then it is awkward
+ to put the using before the type is defined.
+ Downside: there's nothing to stop you from importing the same thing under
+ different names. Is that bad?
+
+2. [references]
+Idea is to have a very distinct syntax for refering to external entities. To
+start we can require everything explicit. We can add context or
+typedefs/aliases later.
+
+ex: "struct Bool([Unit@Unit()] True, [Unit@Unit()] False);
+ex: " [Bool@Bool()]:True([Unit@Unit()]())"
+
+Maybe better with syntax highlighting?
+
+3. Explicitly import every entity.
+Idea is, in practice, we really just want to use a simple name for every
+entity. So how about explicitly importing all the entities we want, and only
+allowing them to be used by name?
+
+ex:  define Unit Unit@Unit();
+
+The downside being that if you are importing a lot of stuff, such as UBNatTest
+does (almost 20 items imported from UBNat), this because very verbose and
+tedious. It would be nice if there were some way to do bulk define?
+
+define * (Nat, 0, 1, 2, 3, 4, 5, 6, 7, Lit2, Eq, Ne, Lt, Le, Gt, Ge, Inc, Dec, Add)@UBnat();
+
+Or, otherwise, patterns that would be nice to take advantage of:
+1. Importing under the same name as defined in the given module.
+2. Importing multiple things from the same module.
+
+Have one kind of statement to import all different ways? Or different kinds
+depending on what you are trying to do?
+
+I'm certainly happy with importing from at most one module at a time. So each
+statement will give the name of the module to import from.
+
+We may want one or more things imported.
+Each thing we may want to import as is, or under a different name.
+
+import UBNat() {
+  Nat; 0; 1; 2; 3; 4; 5; ...;
+}
+
+import Maybe(Bool()) {
+  JustBool=Just;
+};
+
+import Maybe(Bool()) (JustBool=Just);
+
+Okay, here is the proposal:
+
+import [concrete module] (import_list);
+
+import_list: import_item ',' import_item ',' ...
+import_item: name | name '=' name;
+
+Imports of the form: 'foo' mean import the entity 'foo' under the name 'foo'.
+Imports of the form: 'foo=bar' mean import the entity 'bar' under the name 'foo'.
+
+That looks good. The only thing is that it is weird to call it 'import' when
+it takes a module parameter. How about calling it 'using' instead?
+
+Trouble with the syntax: for variable modules, we can't distinguish between ()
+as making the module concrete, or as the subsequent list of things. Propose
+instead to have:
+ using (<module> ; <import_list>);
+
+Or:
+ using <module> { <import_list> };
+Where <import_list> is semicolon separated instead of comma separated. I like
+that. I think it makes sense.
+
+Perfect!
+
