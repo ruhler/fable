@@ -1,12 +1,10 @@
-
 mdefn UBNat( ; ; UBNat()) {
-
-  func True( ; Bool@Bool()) True@Bool()();
-  func False( ; Bool@Bool()) False@Bool()();
+  using Unit() { Unit; };
+  using Bool() { Bool; True; False; };
 
   union Nat(
-    Unit@Unit() 0,
-    Unit@Unit() 1,
+    Unit 0,
+    Unit 1,
     Nat 2p0,  # 2 * x + 0, where x != 0
     Nat 2p1   # 2 * x + 1, where x != 0
   );
@@ -31,8 +29,8 @@ mdefn UBNat( ; ; UBNat()) {
     ?(x; 0(), z, z, z);
   };
 
-  func 0( ; Nat) Nat:0(Unit@Unit()());
-  func 1( ; Nat) Nat:1(Unit@Unit()());
+  func 0( ; Nat) Nat:0(Unit());
+  func 1( ; Nat) Nat:1(Unit());
   func 2( ; Nat) Nat:2p0(1());
   func 3( ; Nat) Nat:2p1(1());
   func 4( ; Nat) Nat:2p0(2());
@@ -130,11 +128,11 @@ mdefn UBNat( ; ; UBNat()) {
          });
   };
 
-  func IsZero(Nat a; Bool@Bool()) {
+  func IsZero(Nat a; Bool) {
     ?(a; True(), False(), False(), False());
   };
 
-  func Eq(Nat a, Nat b; Bool@Bool()) {
+  func Eq(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; True(), False(), False(), False()),
        ?(b; False(), True(), False(), False()),
@@ -142,7 +140,7 @@ mdefn UBNat( ; ; UBNat()) {
        ?(b; False(), False(), False(), Eq(a.2p1, b.2p1)));
   };
 
-  func Ne(Nat a, Nat b; Bool@Bool()) {
+  func Ne(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; False(), True(), True(), True()),
        ?(b; True(), False(), True(), True()),
@@ -150,7 +148,7 @@ mdefn UBNat( ; ; UBNat()) {
        ?(b; True(), True(), True(), Ne(a.2p1, b.2p1)));
   };
 
-  func Lt(Nat a, Nat b; Bool@Bool()) {
+  func Lt(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; False(), True(), True(), True()),
        ?(b; False(), False(), True(), True()),
@@ -158,7 +156,7 @@ mdefn UBNat( ; ; UBNat()) {
        ?(b; False(), False(), Lt(a.2p1, b.2p0), Lt(a.2p1, b.2p1)));
   };
 
-  func Le(Nat a, Nat b; Bool@Bool()) {
+  func Le(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; True(), True(), True(), True()),
        ?(b; False(), True(), True(), True()),
@@ -166,14 +164,14 @@ mdefn UBNat( ; ; UBNat()) {
        ?(b; False(), False(), Lt(a.2p1, b.2p0), Le(a.2p1, b.2p1)));
   };
 
-  func Gt(Nat a, Nat b; Bool@Bool()) {
+  func Gt(Nat a, Nat b; Bool) {
     ?(a; False(),
        ?(b; True(), False(), False(), False()),
        ?(b; True(), True(), Gt(a.2p0, b.2p0), Gt(a.2p0, b.2p1)),
        ?(b; True(), True(), Ge(a.2p1, b.2p0), Gt(a.2p1, b.2p1)));
   };
 
-  func Ge(Nat a, Nat b; Bool@Bool()) {
+  func Ge(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; True(), False(), False(), False()),
        ?(b; True(), True(), False(), False()),
@@ -181,4 +179,3 @@ mdefn UBNat( ; ; UBNat()) {
        ?(b; True(), True(), Ge(a.2p1, b.2p0), Ge(a.2p1, b.2p1)));
   };
 };
-

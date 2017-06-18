@@ -1,0 +1,12 @@
+
+mtype Bool() {
+  using Unit() { Unit; };
+
+  union Bool(Unit true, Unit false);
+
+  func True( ; Bool);
+  func False( ; Bool);
+  func Not(Bool a; Bool);
+  func And(Bool a, Bool b; Bool);
+  func Or(Bool a, Bool b; Bool);
+};

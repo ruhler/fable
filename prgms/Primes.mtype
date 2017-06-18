@@ -1,7 +1,6 @@
-
-mdecl Primes(Bool, UBNat) {
-  import Bool(Bool);
-  import UBNat(Nat);
+mtype Primes() {
+  using Bool() { Bool; };
+  using UBNat() { Nat; };
  
   func IsPrime(Nat x ; Bool);
 
@@ -13,4 +12,3 @@ mdecl Primes(Bool, UBNat) {
   #   NthPrime(6, 1) gives 7
   func NthPrime(Nat x, Nat n; Nat);
 };
-

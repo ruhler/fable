@@ -3,10 +3,8 @@
 " Maintainer:	Richard Uhler <ruhler@degralder.com>
 
 syn case match
-syn keyword	fblcStructure	type struct union func proc mtype mdefn mdecl
-syn keyword	fblcStructure	alias define let local module
-syn keyword fblcInclude import using
-syn region fblcId start="[[]" end="[]]"
+syn keyword	fblcStructure	type struct union func proc
+syn keyword fblcInclude mtype mdefn using
 syn match fblcComment "#.*"
 
 hi def link fblcStructure	Structure

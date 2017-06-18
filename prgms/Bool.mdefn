@@ -1,6 +1,6 @@
 
 mdefn Bool( ; ; Bool()) {
-  import Unit() (Unit);
+  using Unit() { Unit; };
 
   union Bool(Unit true, Unit false);
 
