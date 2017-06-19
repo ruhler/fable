@@ -113,7 +113,7 @@ using the same name they are declared with, but it is possible to specify an
 alternate name when importing an entity in order to avoid name conflicts.
 
 For example:
-  using Bool() { Bool; true=True; false=False; };
+  using Bool(;) { Bool; true=True; false=False; };
 
 The above statement imports three entities from the Bool module. In this case
 the Bool module does not have any type parameters, so no type arguments are
@@ -133,12 +133,15 @@ As a more complex example, consider a polymorphic List implementation, which
 is reused both as an integer list and a boolean list. This entities from the
 List implementation would need to be imported using multiple 'using'
 declarations, with different names chosen to avoid name conflict:
-  using List(Int) { IntList=List; IntHead = head; IntTail = tail; };
-  using List(Bool) { BoolList=List; BoolHead = head; BoolTail = tail; };
+  using List(Int;) { IntList=List; IntHead = head; IntTail = tail; };
+  using List(Bool;) { BoolList=List; BoolHead = head; BoolTail = tail; };
 
 The result is as if two types IntList and BoolList have been defined and four
 functions, IntHead, IntTail, BoolHead, and BooLTail have been defined and can
 be referenced from elsewhere in the interface.
+
+And finally, consider importing from a module with module parameters:
+  using HashMap(Int, String ; IntHash(;)) { Map; };
 
 Modules
 --------
@@ -179,14 +182,66 @@ appropriate. Both of these modules implement the same Map interface:
 
 A module that implements a specific kind of interface without being fully
 polymorphic:
-  mdefn BoolHashMap(V; ; Map(Bool@Bool(), V));
+  mdefn BoolHashMap(V; ; { using Bool(;) { Bool; }; Map(Bool, V); });
 
-In this last case, the syntax <name> @ <module> is used to refer to a type
-declared within a module. This is the only place in the fbld language where
-this notation is needed. All other times a 'using' directive is used to refer
-to an entity defined in another module.
+In this last case, the brace syntax is used to allow using statements with the
+module declaration to access external types.
+
+Alternative candidate syntaxes for this case:
+ * Map(Bool@Bool(;), V)
+ * Map(Bool(;){Bool;}, V)
+ * { using Bool(;) { Bool; }; Map(Bool, V) }
 
 Following the module declaration is a list of module declaration items. These
 include 'using', 'struct', 'union', 'func', and 'proc' declarations. The
 'using' declaration is as for module interfaces. The 'union', 'func', and
 'proc' declarations are as for fblc.
+
+Syntax Reference
+----------------
+  mtype ::= 'mtype' mname '(' [tname [',' tname [...]]] ')' '{'
+                [mtype_decl [mtype_decl [...]]] '}' ';' ;
+
+  mdefn ::= 'mdefn' mname '(' [tname [',' tname [...]]] ';'
+                              [module [',' module [...]]] ';'
+                              interface ')' {
+                [mdefn_decl [mdefn_decl [...]]] '}' ';' ;
+
+  interface ::= mname '(' [tname [',' tname [...]]] ')'
+             |  '{' interface_stmt '}'
+             ;
+  interface_stmt ::= interface ';'
+                  |  'using' module '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';' interface_stmt
+                  ;
+
+  module ::= mname '(' [tname [',' tname [...]]] '; [module [',' module [...]]] ')' ;
+  
+  mtype_decl ::= 'type' tname ';'
+              |  'using' module '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+              |  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+              |  'union' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+              |  'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' ';'
+              |  'proc' tname '('
+                    [tname polarity pname [',' tname polarity pname [...]]] ';'
+                    [tname vname [',' tname vname [...]]] ';' tname ')' ';'
+              ;
+
+  mdefn_decl ::= 'using' module '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+              |  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+              |  'union' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+              |  'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
+              |  'proc' tname '('
+                    [tname polarity pname [',' tname polarity pname [...]]] ';'
+                    [tname vname [',' tname vname [...]]] ';' tname ')' proc ';'
+              ;
+
+  mname ::= name ;  (* A name referring to an interface or module *)
+
+Questions
+---------
+* Is it legal to have two using statements for the same concrete module?
+* Is it legal to import the same entity multiple times under the same name?
+* Is it legal to import the same entity multiple times under different names?
+* Is it required to import an entity that is not explicitly referred to by
+  name? For example, a type returned by a function you call and consumed by
+  another function you call.

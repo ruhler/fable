@@ -1,13 +1,13 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main() {
       struct Unit();
       func main( ; Unit);
     };
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main( ; ; Main()) {
       struct Unit();
 
       X X X X X X

@@ -1,10 +1,10 @@
 
 mdefn MaxFlowTest( ; ; MaxFlowTest()) {
-  using Unit() { Unit; };
-  using Bool() { Bool; };
-  using UBNat() { Nat; Eq; };
-  using List(TestFailure) { TestFailureS = S; TestFailureP = P; };
-  using MaxFlow(Node) { EdgeS; MaxFlow; };
+  using Unit(;) { Unit; };
+  using Bool(;) { Bool; };
+  using UBNat(;) { Nat; Eq; };
+  using List(TestFailure;) { TestFailureS = S; TestFailureP = P; };
+  using MaxFlow(Node;) { EdgeS; MaxFlow; };
 
   union TestName(Unit Basic);
   struct TestFailure(TestName name, Nat a, Nat b);

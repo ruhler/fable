@@ -1,14 +1,14 @@
 # A struct can be declared that contains no fields.
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main() {
       struct NoFields();
       func main( ; NoFields);
     };
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main(;;) {
       struct NoFields();
 
       func main( ; NoFields) {
@@ -18,4 +18,7 @@ set prg {
   }
 }
 
-fbld-test $prg main@Main {} "return NoFields@Main()"
+fbld-test $prg Main(;) main {} {
+  using Main(;) { NoFields; }
+  return NoFields()
+}

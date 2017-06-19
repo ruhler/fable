@@ -1,9 +1,9 @@
 
 mdefn UBNatTest( ; ; UBNatTest()) {
-  using Unit() { Unit; };
-  using Bool() { Bool; Not; };
-  using List(TestFailure) { TestFailureP = P; TestFailureS = S; };
-  using UBNat() {
+  using Unit(;) { Unit; };
+  using Bool(;) { Bool; Not; };
+  using List(TestFailure;) { TestFailureP = P; TestFailureS = S; };
+  using UBNat(;) {
     Nat;
     0; 1; 2; 3; 4; 5; 6; 7; Lit2;
     Eq; Ne; Lt; Le; Gt; Ge;
