@@ -1,8 +1,8 @@
 
-mtype MaxFlowTest() {
-  using Unit() { Unit; };
-  using UBNat() { Nat; };
-  using List(TestFailure) { TestFailureS = S; };
+mtype MaxFlowTest<> {
+  using Unit<;> { Unit; };
+  using UBNat<;> { Nat; };
+  using List<TestFailure;> { TestFailureS = S; };
  
   union TestName(Unit Basic);
   struct TestFailure(TestName name, Nat a, Nat b);

@@ -1,3 +1,6 @@
+Fbld M2 Kickoff:
+* Figure out how to adapt fbld for new syntax and polymorphism support.
+
 Fbld Test:
 * Test case when struct or union type is not redeclared in mdefn from mdecl.
 * Test case when an mdefn decl doesn't match its corresponding mdecl decl.

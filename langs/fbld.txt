@@ -79,7 +79,7 @@ the interface must have a corresponding implementation supplied by the module.
 
 Interfaces
 ----------
-mtype <interface_name> (<type_parameters>) {
+mtype <interface_name> '<' <type_parameters> '>' {
   <interface_declarations>
 };
 
@@ -89,9 +89,32 @@ comma-separated list of simple names. These names can be used within the
 interface_declarations to refer to the types passed to the interface when the
 interface is instantiated.
 
+Angle brackets are used to denote interface and module parameters, analgous to
+how parentheses are used to denote function patameters.
+
 There are 6 kinds of interface_declaration items: using, type, struct, union,
-func, and proc. The struct, union, func, and proc declarations are exactly as
-in fblc.
+func, and proc.
+
+Qualified References
+-^^^^^^^^^^^^^^^^^^^
+The struct, union, func, and proc declarations are as in fblc, except that
+references to types, functions, and processes can be qualified using the
+syntax <name>@<mref>. For example, to refer to a function 'True' in a module
+named Bool that takes no type or module parameters:
+   True@Bool<;>
+
+If the module takes type or module parameters, those can be specified as well.
+For example, the following references the contains function for a hash map
+from Ints to Strings that uses the IntHash module to compute the hash.
+   contains@HashMap<Int@Int<;>, String@String<;> ; IntHash<;>>
+
+The 'using' declaration described later can greatly reduce the quantity of
+syntax needed to describe references to external entities.
+
+Interfaces and modules must not recursively reference any other modules. In
+other words, the graph of interface and module dependencies should be a
+directed acyclic graph. The reason for this is to avoid complex and confusing
+module dependencies.
 
 Abstract Type Declarations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -106,14 +129,16 @@ or arguments to conditional expressions or processes.
 
 Using Declarations
 ^^^^^^^^^^^^^^^^^^
-The 'using' declaration is used to refer to entities declared within another
-module. Each 'using' declaration brings one or more entities into the local
-interface's namespace from another module. By default entities are imported
-using the same name they are declared with, but it is possible to specify an
-alternate name when importing an entity in order to avoid name conflicts.
+The 'using' declaration provides a syntactic sugar to make it easier to refer
+to entities declared within another module. Each 'using' declaration creates
+a simple local alias for one or more entities from an another module.
+
+By default entities are imported using the same name they are declared with,
+but it is possible to specify an alternate name when importing an entity in
+order to avoid name conflicts.
 
 For example:
-  using Bool(;) { Bool; true=True; false=False; };
+  using Bool<;> { Bool; true=True; false=False; };
 
 The above statement imports three entities from the Bool module. In this case
 the Bool module does not have any type parameters, so no type arguments are
@@ -121,37 +146,47 @@ provided. If the module has type parameters, then type arguments must be
 specified for every type parameter. The entities that are imported are
 specific to the type arguments provided.
 
-Following the module is a list of entities to bring in, each entity terminated
-with a semicolon. The entity can either be a single name, indicating that
-entity from the module is being imported under its same name, and can be
-referred to elsewhere by that simple name. Or the entity can have the form
-'name' = 'name', where the first name is the name the entity is imported
-under, and the second name is the name of the entity as declared in the module
-it is being imported from.
+Following the module is a list of entities to give local names to, each entity
+terminated with a semicolon. The entity can either be a single name,
+indicating that entity from the module is being imported under its same name,
+and can be referred to elsewhere by that simple name. Or the entity can have
+the form 'name' = 'name', where the first name is the name the entity is
+imported under, and the second name is the name of the entity as declared in
+the module it is being imported from.
 
 As a more complex example, consider a polymorphic List implementation, which
 is reused both as an integer list and a boolean list. This entities from the
 List implementation would need to be imported using multiple 'using'
 declarations, with different names chosen to avoid name conflict:
-  using List(Int;) { IntList=List; IntHead = head; IntTail = tail; };
-  using List(Bool;) { BoolList=List; BoolHead = head; BoolTail = tail; };
+  using List<Int;> { IntList=List; IntHead = head; IntTail = tail; };
+  using List<Bool;> { BoolList=List; BoolHead = head; BoolTail = tail; };
 
 The result is as if two types IntList and BoolList have been defined and four
 functions, IntHead, IntTail, BoolHead, and BooLTail have been defined and can
 be referenced from elsewhere in the interface.
 
-And finally, consider importing from a module with module parameters:
-  using HashMap(Int, String ; IntHash(;)) { Map; };
+Here is an example of of importing from a module with module parameters:
+  using HashMap<Int, String ; IntHash<;>> { Map; };
+
+It is legal to have multiple using statements for the same concrete module and
+to import the same external entity multiple times under the same or different
+names, either within a single using statement or spanning across multiple
+using statements for the same concrete module. It is not required to have a
+using statement for all references to external entities.
 
 Modules
 --------
-mdefn <module_name> (<type_parameters> ; <module_parameters> ; <interface> ) {
+mdefn <module_name> '<' <type_parameters> ; <module_parameters> ; <interface> '>' {
   <module_declarations>
 };
 
 Module are named. Modules have type parameters and module parameters. The type
 paramaters are as in interfaces, a comma separate list of simple names of
 types that can be referred to from within the module.
+
+Module names belong to a different namespace than interface names. It is
+acceptable to have a module with the same name as an interface. This is common
+practice for interfaces that are expected to have a single implementation.
 
 Each module parameter is specified as an interface and a module parameter
 name. The module parameter can be used by providing any concrete module that
@@ -169,79 +204,68 @@ Here are some examples of the initial parts of module definitions, called
 module declarations:
 
 A Bool module implementing a Bool interface with no parameters:
-  mdefn Bool( ; ; Bool());
+  mdefn Bool< ; ; Bool<>>;
 
 A Maybe module implementing the Maybe interface with type parameter T:
-  mdefn Maybe(T ; ; Maybe(T));
+  mdefn Maybe<T ; ; Maybe<T>);
 
 HashMap and TreeMap modules, parameters by the key and value type, and with
 module parameters to compute the hash value or compare key values as
 appropriate. Both of these modules implement the same Map interface:
-  mdefn HashMap(K, V; Hash(K) hash; Map(K, V));
-  mdefn TreeMap(K, V; Ord(K) ord; Map(K, V));
+  mdefn HashMap<K, V; Hash<K;> hash; Map<K, V>>;
+  mdefn TreeMap<K, V; Ord<K;> ord; Map<K, V>>;
 
 A module that implements a specific kind of interface without being fully
 polymorphic:
-  mdefn BoolHashMap(V; ; { using Bool(;) { Bool; }; Map(Bool, V); });
-
-In this last case, the brace syntax is used to allow using statements with the
-module declaration to access external types.
-
-Alternative candidate syntaxes for this case:
- * Map(Bool@Bool(;), V)
- * Map(Bool(;){Bool;}, V)
- * { using Bool(;) { Bool; }; Map(Bool, V) }
+  mdefn BoolHashMap<V; ; Map<Bool@Bool<;>, V>>;
 
 Following the module declaration is a list of module declaration items. These
 include 'using', 'struct', 'union', 'func', and 'proc' declarations. The
 'using' declaration is as for module interfaces. The 'union', 'func', and
-'proc' declarations are as for fblc.
+'proc' declarations are as for fblc with additional support for qualified
+references to external entities.
 
 Syntax Reference
 ----------------
-  mtype ::= 'mtype' mname '(' [tname [',' tname [...]]] ')' '{'
+  mtype ::= 'mtype' mname '<' [tname [',' tname [...]]] '>' '{'
                 [mtype_decl [mtype_decl [...]]] '}' ';' ;
 
-  mdefn ::= 'mdefn' mname '(' [tname [',' tname [...]]] ';'
-                              [module [',' module [...]]] ';'
-                              interface ')' {
+  mdefn ::= 'mdefn' mname '<' [tname [',' tname [...]]] ';'
+                              [mref [',' mref [...]]] ';'
+                              iref '>' {
                 [mdefn_decl [mdefn_decl [...]]] '}' ';' ;
 
-  interface ::= mname '(' [tname [',' tname [...]]] ')'
-             |  '{' interface_stmt '}'
-             ;
-  interface_stmt ::= interface ';'
-                  |  'using' module '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';' interface_stmt
-                  ;
+  iref ::= mname '<' [qname [',' qname [...]]] ')' ;
+  mref ::= mname '<' [qname [',' qname [...]]] '; [mref [',' mref [...]]] ')' ;
 
-  module ::= mname '(' [tname [',' tname [...]]] '; [module [',' module [...]]] ')' ;
+  qname ::= tname ['@' mref] ;
   
   mtype_decl ::= 'type' tname ';'
-              |  'using' module '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-              |  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-              |  'union' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-              |  'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' ';'
+              |  'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+              |  'struct' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
+              |  'union' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
+              |  'func' tname '(' [qname vname [',' qname vname [...]]] ';' qname ')' ';'
               |  'proc' tname '('
-                    [tname polarity pname [',' tname polarity pname [...]]] ';'
-                    [tname vname [',' tname vname [...]]] ';' tname ')' ';'
+                    [qname polarity pname [',' qname polarity pname [...]]] ';'
+                    [qname vname [',' qname vname [...]]] ';' qname ')' ';'
               ;
 
-  mdefn_decl ::= 'using' module '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-              |  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-              |  'union' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
-              |  'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
+  mdefn_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+              |  'struct' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
+              |  'union' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
+              |  'func' tname '(' [qname vname [',' qname vname [...]]] ';' qname ')' expr ';'
               |  'proc' tname '('
-                    [tname polarity pname [',' tname polarity pname [...]]] ';'
-                    [tname vname [',' tname vname [...]]] ';' tname ')' proc ';'
+                    [qname polarity pname [',' qname polarity pname [...]]] ';'
+                    [qname vname [',' qname vname [...]]] ';' qname ')' proc ';'
               ;
 
   mname ::= name ;  (* A name referring to an interface or module *)
 
-Questions
----------
-* Is it legal to have two using statements for the same concrete module?
-* Is it legal to import the same entity multiple times under the same name?
-* Is it legal to import the same entity multiple times under different names?
-* Is it required to import an entity that is not explicitly referred to by
-  name? For example, a type returned by a function you call and consumed by
-  another function you call.
+  expr ::= ... (* as in fblc, with qname in place of tname *)
+  proc ::= ... (* as in fblc, with qname in place of tname *)
+
+  polarity ::= ... (* as in fblc *)
+  fname ::= ... (* as in fblc *)
+  pname ::= ... (* as in fblc *)
+  tname ::= ... (* as in fblc *)
+  vname ::= ... (* as in fblc *)

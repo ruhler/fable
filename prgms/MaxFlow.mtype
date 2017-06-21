@@ -1,7 +1,7 @@
 
-mtype MaxFlow(Node) {
-  using List(Edge) { EdgeS = S; };
-  using UBNat() { Nat; };
+mtype MaxFlow<Node> {
+  using List<Edge;> { EdgeS = S; };
+  using UBNat<;> { Nat; };
 
   struct Edge(Node src, Node dst);
 

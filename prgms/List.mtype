@@ -1,5 +1,5 @@
-mtype List(T) {
-  using Unit() { Unit; };
+mtype List<T> {
+  using Unit<;> { Unit; };
 
   # P - A list of 1 or more elements: T+
   struct P(T head, S tail);

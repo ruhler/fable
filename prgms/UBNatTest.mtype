@@ -1,7 +1,7 @@
-mtype UBNatTest() {
-  using Unit() { Unit; };
-  using UBNat() { Nat; };
-  using List(TestFailure) { TestFailureS = S; };
+mtype UBNatTest<> {
+  using Unit<;> { Unit; };
+  using UBNat<;> { Nat; };
+  using List<TestFailure;> { TestFailureS = S; };
  
   union TestName(
     Unit Eq_0_0, Unit Eq_0_1, Unit Eq_1_1,

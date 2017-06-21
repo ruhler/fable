@@ -1,7 +1,7 @@
 # A struct can be declared that contains one field.
 set prg {
   Main.mdecl {
-    mdecl Main() {
+    mdecl Main<> {
       struct Unit();
       struct OneField(Unit x);
       func main( ; OneField);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
       struct OneField(Unit x);
 
@@ -20,4 +20,4 @@ set prg {
   }
 }
 
-fbld-test $prg main@Main {} "return OneField@Main(Unit@Main())"
+fbld-test $prg "main@Main<;>" {} "return OneField@Main<;>(Unit@Main<;>())"

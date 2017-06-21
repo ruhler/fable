@@ -137,7 +137,7 @@ proc fbld-check-error { program module loc } {
 }
 
 # See langs/fbld/README.txt for the description of this function.
-proc fbld-test { program Main main args script } {
+proc fbld-test { program entry args script } {
   set loc [info frame -1]
   set line [dict get $loc line]
   set file [dict get $loc file]
@@ -159,7 +159,7 @@ proc fbld-test { program Main main args script } {
   }
 
   try {
-    exec $::fbldtest $fscript $dir $Main $main {*}$args
+    exec $::fbldtest $fscript $dir $entry {*}$args
   } on error {results options} {
     error "$file:$line: error: \n$results"
   }
