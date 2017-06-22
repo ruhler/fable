@@ -36,44 +36,97 @@ typedef struct {
 //   Prints an error message to stderr with error location.
 void FbldReportError(const char* format, FbldLoc* loc, ...);
 
-// FbldName --
-//   A type used for unqualified names in fbld programs.
-typedef const char* FbldName;
+// Forward declarations. See below for descriptions of these types.
+typedef struct FbldQNameV FbldQNameV;
+typedef struct FbldMRefV FbldMRefV;
 
-// FbldNameL -- 
+// FbldName -- 
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
 typedef struct {
-  FbldName name;
+  const char* name;
   FbldLoc* loc;
-} FbldNameL;
-
-// FbldQualifiedName --
-//   A qualified fbld name of the form 'bar@Foo'. The module->name component
-//   of the name may be NULL to indicate the name is not explicitly qualified.
-typedef struct {
-  FbldNameL* name;
-  FbldNameL* module;
-} FbldQualifiedName;
-
-// FbldTypedName --
-//   An fbld name with associated (possibly qualified) type.
-typedef struct {
-  FbldQualifiedName* type;
-  FbldNameL* name;
-} FbldTypedName;
-
-typedef struct {
-  size_t size;
-  FbldTypedName** xs;
-} FbldTypedNameV;
+} FbldName;
 
 // FbldNameV --
 //   A vector of fbld names.
 typedef struct {
   size_t size;
-  FbldNameL** xs;
+  FbldName** xs;
 } FbldNameV;
+
+// FbldIRef --
+//   A reference to a concrete interface, such as:
+//    Map<Int, String@String<;>>
+//
+// Fields:
+//   name - The name of the interface.
+//   targs - The type arguments to the interface.
+typedef struct {
+  FbldName* name;
+  FbldQNameV* targs;
+} FbldIRef;
+
+// FbldMRef --
+//   A reference to a concrete module, such as:
+//    HashMap<Int, String@String<;>; HashInt<;>>
+//
+// Fields:
+//   name - The name of the module.
+//   targs - The type arguments to the module.
+//   margs - The module arguments to the module.
+//
+// In the case of modules passed as parameters, FbldMRef is still used, but
+// with empty targs and margs. It should be clear from the context that these
+// names refer to module parameters rather than global modules of the same
+// name.
+typedef struct {
+  FbldName* name;
+  FbldQNameV* targs;
+  FbldMRefV* margs;
+} FbldMRef;
+
+// FbldMRefV --
+//   A vector of module references.
+struct FbldMRefV {
+  size_t size;
+  FbldMRef** xs;
+}; 
+
+// FbldQName --
+//   A reference to an entity in some module, such as:
+//    contains@HashMap<Int, String@String<;>; HashInt<;>>
+//
+// Fields:
+//   name - The name of the entity.
+//   mref - The module the entity is from. May be NULL to indicate the module
+//          should be determined based on context.
+typedef struct {
+  FbldName* name;
+  FbldMRef* mref;
+} FbldQName;
+
+// FbldQNameV --
+//   A vector of qualified names.
+struct FbldQNameV {
+  size_t size;
+  FbldQName** xs;
+}; 
+
+// FbldArg --
+//   An fbld name with associated (possibly qualified) type. Used for
+//   declaring fields of structures and arguments to functions.
+typedef struct {
+  FbldQName* type;
+  FbldName* name;
+} FbldArg;
+
+// FbldArgV --
+//   A vector of fbld fields.
+typedef struct {
+  size_t size;
+  FbldArg** xs;
+} FbldArgV;
 
 // FbldNamesEqual --
 //   Test whether two names are equal.
@@ -87,7 +140,7 @@ typedef struct {
 //
 // Side effects:
 //   None.
-bool FbldNamesEqual(FbldName a, FbldName b);
+bool FbldNamesEqual(const char* a, const char* b);
 
 // FbldExpr --
 //   Common base type for the following fbld expr types. The tag can be used
@@ -116,7 +169,7 @@ typedef struct {
 //        checked.
 typedef struct {
   FbldExpr _base;
-  FbldNameL* var;
+  FbldName* var;
   FblcVarId id;
 } FbldVarExpr;
 
@@ -125,7 +178,7 @@ typedef struct {
 //   refer to a function or a struct type.
 typedef struct {
   FbldExpr _base;
-  FbldQualifiedName* func;
+  FbldQName* func;
   FbldExprV* argv;
 } FbldAppExpr;
 
@@ -137,7 +190,7 @@ typedef struct {
 //   id - The fblc id of the field. This is set to FBLC_NULL_ID by the parser,
 //        then later filled in during type check.
 typedef struct {
-  FbldNameL* name;
+  FbldName* name;
   FblcFieldId id;
 } FbldField;
 
@@ -146,7 +199,7 @@ typedef struct {
 //   union value.
 typedef struct {
   FbldExpr _base;
-  FbldQualifiedName* type;
+  FbldQName* type;
   FbldField field;
   FbldExpr* arg;
 } FbldUnionExpr;
@@ -173,8 +226,8 @@ typedef struct {
 //   A let expression of the form '{ type var = def; body }'.
 typedef struct {
   FbldExpr _base;
-  FbldQualifiedName* type;
-  FbldNameL* var;
+  FbldQName* type;
+  FbldName* var;
   FbldExpr* def;
   FbldExpr* body;
 } FbldLetExpr;
@@ -182,7 +235,7 @@ typedef struct {
 // FbldDeclTag --
 //   Tag used to distinguish amongs different kinds of fbld declarations.
 typedef enum {
-  FBLD_IMPORT_DECL,
+  FBLD_USING_DECL,
   FBLD_ABSTRACT_TYPE_DECL,
   FBLD_UNION_DECL,
   FBLD_STRUCT_DECL,
@@ -197,15 +250,41 @@ typedef enum {
 //   to that specific type.
 typedef struct {
   FbldDeclTag tag;
-  FbldNameL* name;
+  FbldName* name;
 } FbldDecl;
 
-// FbldImportDecl --
-//   An import declaration of the form 'import <module>(<name1>, <name2>, ...)'
+// FbldUsingItem --
+//   Specification for a single item in a using declaration of the form
+//   <name>[=<name>].
+//
+// Fields:
+//   source - The name of the entity in the original module.
+//   dest - The name under which the entity is referred to in the importing
+//          module.
+//
+// It is not uncommon to have the source and destination names be the same, in
+// which case the source and dest fields should be identical, rather than
+// setting one or the other to NULL.
+typedef struct {
+  FbldName* source;
+  FbldName* dest;
+} FbldUsingItem;
+
+// FbldUsingItemV --
+//   A vector of fbld using items.
+typedef struct {
+  size_t size;
+  FbldUsingItem** xs;
+} FbldUsingItemV;
+
+// FbldUsingDecl --
+//   A using declaration of the form:
+//    using <mref>{<name>[=<name>]; <name>[=<name>]; ...; }
 typedef struct {
   FbldDecl _base;
-  FbldNameV* namev;
-} FbldImportDecl;
+  FbldMRef* mref;
+  FbldUsingItemV* items;
+} FbldUsingDecl;
 
 // FbldAbstractTypeDecl --
 //   A declaration of an abstract type.
@@ -215,7 +294,7 @@ typedef FbldDecl FbldAbstractTypeDecl;
 //   A declaration of a struct or union type.
 typedef struct {
   FbldDecl _base;
-  FbldTypedNameV* fieldv;
+  FbldArgV* fieldv;
 } FbldConcreteTypeDecl;
 
 // FbldStructDecl --
@@ -232,8 +311,8 @@ typedef FbldConcreteTypeDecl FbldUnionDecl;
 //   declarations.
 typedef struct {
   FbldDecl _base;
-  FbldTypedNameV* argv;
-  FbldQualifiedName* return_type;
+  FbldArgV* argv;
+  FbldQName* return_type;
   FbldExpr* body;
 } FbldFuncDecl;
 
@@ -244,40 +323,75 @@ typedef struct {
   FbldDecl** xs;
 } FbldDeclV;
 
-// FbldModule --
-//   An fbld module declaration or definition.
+// FbldMType --
+//   An fbld mtype declaration.
 typedef struct {
-  FbldNameL* name;
-  FbldNameV* deps;
+  FbldName* mname;
+  FbldNameV* targs;
   FbldDeclV* declv;
-} FbldModule;
+} FbldMType;
 
-// FbldModuleV --
-//   A vector of fbld module declarations or definitions.
+// FbldMTypeV --
+//   A vector of fbld mtypes.
 typedef struct {
   size_t size;
-  FbldModule** xs;
-} FbldModuleV;
+  FbldMType** xs;
+} FbldMTypeV;
 
-// FbldMDecl --
-//   An fbld module declaration.
-//   FbldMDecls may contain abstract type declarations and have the bodies of
-//   function and process declarations set to NULL.
-typedef FbldModule FbldMDecl;
+// FbldMArg --
+//   A module argument, such as: Map<Int, String> M
+//
+// Fields:
+//   iref - The interface of the module argument.
+//   name - The name of the module argument.
+typedef struct {
+  FbldIRef* iref;
+  FbldName* name;
+} FbldMArg;
 
-// FbldModuleV --
-//   A vector of fbld module declarations.
-typedef FbldModuleV FbldMDeclV;
+// FbldMArgV --
+//   A vector of module arguments.
+typedef struct {
+  size_t size;
+  FbldMArg** xs;
+} FbldMArgV;
 
 // FbldMDefn --
-//   An fbld module definition.
-//   FbldMDefns do not contain abstract type declarations and have non-NULL
-//   bodies of functions and processes.
-typedef FbldModule FbldMDefn;
+//   An fbld mdefn declaration.
+//
+// Fields:
+//   mname - The name of the module being defined.
+//   targs - The type parameters of the module.
+//   margs - The module parameters of the module.
+//   iref - The interface the module implements.
+//   declv - The declarations within the module definition.
+typedef struct {
+  FbldName* mname;
+  FbldNameV* targs;
+  FbldMArgV* margs;
+  FbldIRef* iref;
+  FbldDeclV* declv;
+} FbldMDefn;
 
 // FbldMDefnV --
-//   A vector of FbldMDefns.
-typedef FbldModuleV FbldMDefnV;
+//   A vector of fbld mdefns.
+typedef struct {
+  size_t size;
+  FbldMDefn** xs;
+} FbldMDefnV;
+
+// FbldProgram --
+//   A collection of mtypes, mdecls, and mdefns representing a program.
+//
+//   An mdecl is an mdefn whose body has not necessaraly been checked for
+//   validity. This makes it possible to check the validity of a module
+//   without the need for the implementations of the other modules it depends
+//   on.
+typedef struct {
+  FbldMTypeV* mtypes;
+  FbldMDefnV* mdecls;
+  FbldMDefnV* mdefns;
+} FbldProgram;
 
 // FbldLookupDecl --
 //   Look up the qualified declaration with the given name in the given program.
@@ -294,7 +408,7 @@ typedef FbldModuleV FbldMDefnV;
 // Side effects:
 //   Behavior is undefined if the module name of the entity has not been
 //   resolved.
-FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQualifiedName* entity);
+FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQName* entity);
 
 // FbldKind --
 //   An enum used to distinguish between struct and union values.
@@ -317,8 +431,8 @@ typedef struct {
 //   fbld representation of an value object.
 struct FbldValue {
   FbldKind kind;
-  FbldQualifiedName* type;
-  FbldNameL* tag;
+  FbldQName* type;
+  FbldName* tag;
   FbldValueV* fieldv;
 };
 
@@ -416,7 +530,7 @@ typedef struct {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations if there is no error.
-FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv);
+FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
 
 // FbldLoadMDefn --
 //   Load the module definition for the module with the given name.
@@ -450,7 +564,7 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the definition and all loaded declarations if there is no error.
-FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv);
+FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
 
 // FbldLoadModules --
 //   Load all module definitions and declarations required to compile the
@@ -482,7 +596,7 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, Fbl
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations and definitions if there is no error.
-bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
+bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
 
 // FbldCheckMDecl --
 //   Check that the given module declaration is well formed and well typed.
@@ -554,7 +668,7 @@ typedef struct {
 //   Updates accessv with the location of compiled access expressions.
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program.
-FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mdefnv, FbldQualifiedName* entity);
+FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mdefnv, FbldQName* entity);
 
 // FbldCompileValue --
 //   Compile an fbld value to an fblc value.

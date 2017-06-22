@@ -231,7 +231,7 @@ Syntax Reference
                 [mtype_decl [mtype_decl [...]]] '}' ';' ;
 
   mdefn ::= 'mdefn' mname '<' [tname [',' tname [...]]] ';'
-                              [mref [',' mref [...]]] ';'
+                              [iref mname [',' iref mname [...]]] ';'
                               iref '>' {
                 [mdefn_decl [mdefn_decl [...]]] '}' ';' ;
 
