@@ -13,15 +13,16 @@ set FLAGS [list -I fblc -I fbld -std=c99 -pedantic -Wall -Werror -O0 -fprofile-a
 # the out directory so that the profile information generated when running
 # code from the objects is placed in a subdirectory of the out directory.
 exec mkdir -p out/obj/fblc out/obj/fbld
-foreach {x} [glob fblc/*.c fbld/loc.c fbld/name.c] {
+#foreach {x} [glob fblc/*.c fbld/*.c] {
+foreach {x} [glob fblc/*.c] {
   set obj out/obj/[string map {.c .o} $x]
   run gcc {*}$FLAGS -c -o $obj $x
 }
 
-# Generate and compile the fbld parser.
-exec mkdir -p out/src/fbld
-run bison -o out/src/fbld/parse.tab.c fbld/parse.y 
-run gcc {*}$FLAGS -c -o out/obj/fbld/parse.tab.o out/src/fbld/parse.tab.c
+## Generate and compile the fbld parser.
+#exec mkdir -p out/src/fbld
+#run bison -o out/src/fbld/parse.tab.c fbld/parse.y 
+#run gcc {*}$FLAGS -c -o out/obj/fbld/parse.tab.o out/src/fbld/parse.tab.c
 
 # Generate libfblc.a
 set fblc_objs [list]
@@ -30,25 +31,24 @@ foreach {x} [list check exec fblcs load malloc parse resolve value vector] {
 }
 run ar rcs out/libfblc.a {*}$fblc_objs
 
-# Generate libfbld.a
-set fbld_objs [list]
-#foreach {x} [list check compile decl load loc name parse.tab]
-foreach {x} [list loc name parse.tab] {
-  lappend fbld_objs out/obj/fbld/$x.o
-}
-run ar rcs out/libfbld.a {*}$fbld_objs
+## Generate libfbld.a
+#set fbld_objs [list]
+#foreach {x} [list check compile decl load loc name parse.tab] {
+#  lappend fbld_objs out/obj/fbld/$x.o
+#}
+#run ar rcs out/libfbld.a {*}$fbld_objs
 
 # Compile the executables
 set ::fblc ./out/fblc
 set ::fblccheck ./out/fblc-check
 set ::fblctest ./out/fblc-test
-set ::fbldcheck ./out/fbld-check
-set ::fbldtest ./out/fbld-test
+#set ::fbldcheck ./out/fbld-check
+#set ::fbldtest ./out/fbld-test
 run gcc {*}$FLAGS -o $::fblc out/obj/fblc/fblc.o -L out -lfblc
 run gcc {*}$FLAGS -o $::fblccheck out/obj/fblc/fblc-check.o -L out -lfblc
 run gcc {*}$FLAGS -o $::fblctest out/obj/fblc/fblc-test.o -L out -lfblc
-run gcc {*}$FLAGS -o $::fbldcheck out/obj/fbld/fbld-check.o -L out -lfbld -lfblc
-run gcc {*}$FLAGS -o $::fbldtest out/obj/fbld/fbld-test.o -L out -lfbld -lfblc
+#run gcc {*}$FLAGS -o $::fbldcheck out/obj/fbld/fbld-check.o -L out -lfbld -lfblc
+#run gcc {*}$FLAGS -o $::fbldtest out/obj/fbld/fbld-test.o -L out -lfbld -lfblc
 run gcc {*}$FLAGS -o out/fblc-snake out/obj/fblc/fblc-snake.o -L out -lfblc -lncurses
 run gcc {*}$FLAGS -o out/fblc-tictactoe out/obj/fblc/fblc-tictactoe.o -L out -lfblc
 
@@ -184,14 +184,14 @@ exec mkdir -p out/cov/fblc/spec
 run gcov {*}$::fblc_objs > out/cov/fblc/spec/fblc.gcov
 exec mv {*}[glob *.gcov] out/cov/fblc/spec
 
-foreach {x} [lsort [glob langs/fbld/*.tcl]]  {
-  puts "test $x"
-  source $x
-}
-
-exec mkdir -p out/cov/fbld/spec
-run gcov {*}$::fbld_objs > out/cov/fbld/spec/fbld.gcov
-exec mv {*}[glob *.gcov] out/cov/fbld/spec
+#foreach {x} [lsort [glob langs/fbld/*.tcl]]  {
+#  puts "test $x"
+#  source $x
+#}
+#
+#exec mkdir -p out/cov/fbld/spec
+#run gcov {*}$::fbld_objs > out/cov/fbld/spec/fbld.gcov
+#exec mv {*}[glob *.gcov] out/cov/fbld/spec
 
 # Additional Tests.
 
@@ -232,14 +232,14 @@ run $::fblctest out/tictactoe.TestChooseBestMoveWin.wnt prgms/tictactoe.fblc Tes
 run $::fblctest prgms/boolcalc.wnt prgms/boolcalc.fblc Test
 run $::fblctest prgms/ints.wnt prgms/ints.fblc Test
 run $::fblccheck prgms/snake.fblc
-run $::fbldtest prgms/UBNatTest.wnt prgms Test@UBNatTest
-run $::fbldtest prgms/PrimesTest.wnt prgms Test@PrimesTest
+#run $::fbldtest prgms/UBNatTest.wnt prgms Test@UBNatTest
+#run $::fbldtest prgms/PrimesTest.wnt prgms Test@PrimesTest
 
 exec mkdir -p out/cov/fblc/all out/cov/fbld/all
 run gcov {*}$::fblc_objs > out/cov/fblc/all/fblc.gcov
 exec mv {*}[glob *.gcov] out/cov/fblc/all
-run gcov {*}$::fbld_objs > out/cov/fbld/all/fbld.gcov
-exec mv {*}[glob *.gcov] out/cov/fbld/all
+#run gcov {*}$::fbld_objs > out/cov/fbld/all/fbld.gcov
+#exec mv {*}[glob *.gcov] out/cov/fbld/all
 
 # Report summary results
 puts "Skipped Tests:"
@@ -249,7 +249,7 @@ foreach test $::skipped {
 puts "fblc Coverage: "
 puts "  Spec: [exec tail -n 1 out/cov/fblc/spec/fblc.gcov]"
 puts "  All : [exec tail -n 1 out/cov/fblc/all/fblc.gcov]"
-puts "fbld Coverage: "
-puts "  Spec: [exec tail -n 1 out/cov/fbld/spec/fbld.gcov]"
-puts "  All : [exec tail -n 1 out/cov/fbld/all/fbld.gcov]"
+#puts "fbld Coverage: "
+#puts "  Spec: [exec tail -n 1 out/cov/fbld/spec/fbld.gcov]"
+#puts "  All : [exec tail -n 1 out/cov/fbld/all/fbld.gcov]"
 

@@ -161,18 +161,12 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDecl* decl = FblcsLookupDecl(sprog, entry);
-  if (decl == NULL) {
+  FblcProc* proc = FblcsLookupProc(sprog, entry);
+  if (proc == NULL) {
     fprintf(stderr, "entry %s not found.\n", entry);
     return 1;
   }
 
-  if (decl->tag != FBLC_PROC_DECL) {
-    fprintf(stderr, "entry %s is not a process.\n", entry);
-    return 1;
-  }
-
-  FblcProcDecl* proc = (FblcProcDecl*)decl;
   if (proc->argv.size != argc) {
     fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
     return 1;

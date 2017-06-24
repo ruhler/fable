@@ -188,15 +188,16 @@ typedef size_t FblcActnId;
 #define FBLC_NULL_ID (-1)
 
 // Forward declarations. See below for descriptions of these types.
-typedef struct FblcDecl FblcDecl;
-typedef struct FblcTypeDecl FblcTypeDecl;
-typedef struct FblcProcDecl FblcProcDecl;
+typedef struct FblcType FblcType;
+typedef struct FblcFunc FblcFunc;
+typedef struct FblcProc FblcProc;
 
 // FblcExprTag --
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
   FBLC_VAR_EXPR,
   FBLC_APP_EXPR,
+  FBLC_STRUCT_EXPR,
   FBLC_UNION_EXPR,
   FBLC_ACCESS_EXPR,
   FBLC_COND_EXPR,
@@ -229,20 +230,27 @@ typedef struct {
 } FblcExprV;
 
 // FblcAppExpr --
-//   An application expression of the form 'func(arg0, arg1, ...)'. func may
-//   refer to a function or a struct type.
+//   An application expression of the form 'func(arg0, arg1, ...)'.
 typedef struct {
   FblcExpr _base;
-  FblcDecl* func;
+  FblcFunc* func;
   FblcExprV argv;
 } FblcAppExpr;
+
+// FblcStructExpr --
+//   A struct expression of the form 'type(arg0, arg1, ...)'.
+typedef struct {
+  FblcExpr _base;
+  FblcType* type;
+  FblcExprV argv;
+} FblcStructExpr;
 
 // FblcUnionExpr --
 //   A union expression of the form 'type:field(arg)', used to construct a
 //   union value.
 typedef struct {
   FblcExpr _base;
-  FblcTypeDecl* type;
+  FblcType* type;
   FblcFieldId field;
   FblcExpr* arg;
 } FblcUnionExpr;
@@ -271,7 +279,7 @@ typedef struct {
 //   variable is accessed.
 typedef struct {
   FblcExpr _base;
-  FblcTypeDecl* type;
+  FblcType* type;
   FblcExpr* def;
   FblcExpr* body;
 } FblcLetExpr;
@@ -349,7 +357,7 @@ typedef struct {
 //   which calls a process with the given port and value arguments.
 typedef struct {
   FblcActn _base;
-  FblcProcDecl* proc;
+  FblcProc* proc;
   FblcPortIdV portv;
   FblcExprV argv;
 } FblcCallActn;
@@ -360,14 +368,14 @@ typedef struct {
 //   are accessed.
 typedef struct {
   FblcActn _base;
-  FblcTypeDecl* type;
+  FblcType* type;
   FblcActn* body;
 } FblcLinkActn;
 
 // FblcExec --
 //   Pair of type and action used in the FblcExecActn.
 typedef struct {
-  FblcTypeDecl* type;
+  FblcType* type;
   FblcActn* actn;
 } FblcExec;
 
@@ -388,57 +396,45 @@ typedef struct {
   FblcActn* body;
 } FblcExecActn;
 
-// FblcDeclTag --
-//   A tag used to distinguish among different kinds of declarations.
+// FblcKind --
+//   An enum used to distinguish between struct and union types or values.
 typedef enum {
-  FBLC_STRUCT_DECL,
-  FBLC_UNION_DECL,
-  FBLC_FUNC_DECL,
-  FBLC_PROC_DECL
-} FblcDeclTag;
+  FBLC_STRUCT_KIND,
+  FBLC_UNION_KIND
+} FblcKind;
 
-// FblcDecl --
-//   A tagged union of declaration types. All declarations have the same
-//   initial layout as FblcDecl. The tag can be used to determine what kind of
-//   declaration this is to get access to additional fields of the declaration
-//   by first casting to that specific type of declaration.
-struct FblcDecl {
-  FblcDeclTag tag;
-  size_t id;
-};
-
-// FblcTypeDeclV -- 
-//   A vector of FblcTypeDecls.
+// FblcTypeV -- 
+//   A vector of FblcTypes
 typedef struct {
   size_t size;
-  FblcTypeDecl** xs;
-} FblcTypeDeclV;
+  FblcType** xs;
+} FblcTypeV;
 
-// FblcTypeDecl --
+// FblcType --
 //   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
 //   This is a common structure used for both struct and union declarations.
-struct FblcTypeDecl {
-  FblcDecl _base;
-  FblcTypeDeclV fieldv;
+struct FblcType {
+  size_t id;        // TODO: Remove this field once fblcs is refactored.
+  FblcKind kind;
+  FblcTypeV fieldv;
 };
 
-// FblcStructDecl --
-//   Declaration of a struct type.
-typedef FblcTypeDecl FblcStructDecl;
-
-// FblcUnionDecl --
-//   Declaration of a union type.
-typedef FblcTypeDecl FblcUnionDecl;
-
-// FblcFuncDecl --
+// FblcFunc --
 //   Declaration of a function of the form:
 //     'name(arg0 name0, arg1 name1, ...; return_type) body'
-typedef struct {
-  FblcDecl _base;
-  FblcTypeDeclV argv;
-  FblcTypeDecl* return_type;
+struct FblcFunc {
+  size_t id;        // TODO: Remove this field once fblcs is refactored.
+  FblcTypeV argv;
+  FblcType* return_type;
   FblcExpr* body;
-} FblcFuncDecl;
+};
+
+// FblcFuncV --
+//   A vector of fblc functions.
+typedef struct {
+  size_t size;
+  FblcFunc** xs;
+} FblcFuncV;
 
 // FblcPolarity --
 //   The polarity of a port.
@@ -450,7 +446,7 @@ typedef enum {
 // FblcPort --
 //   The type and polarity of a port.
 typedef struct {
-  FblcTypeDecl* type;
+  FblcType* type;
   FblcPolarity polarity;
 } FblcPort;
 
@@ -461,38 +457,33 @@ typedef struct {
   FblcPort* xs;
 } FblcPortV;
 
-// FblcProcDecl --
+// FblcProc --
 //   Declaration of a process of the form:
 //     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
 //           arg0 name0, arg1, name1, ... ; return_type) body'
-struct FblcProcDecl {
-  FblcDecl _base;
+struct FblcProc {
+  size_t id;        // TODO: Remove this field once fblcs is refactored.
   FblcPortV portv;
-  FblcTypeDeclV argv;
-  FblcTypeDecl* return_type;
+  FblcTypeV argv;
+  FblcType* return_type;
   FblcActn* body;
 };
 
-// FblcDeclV --
-//   An array of fblc decls.
+// FblcProcV --
+//   A vector of fblc procs.
 typedef struct {
   size_t size;
-  FblcDecl** xs;
-} FblcDeclV;
+  FblcProc** xs;
+} FblcProcV;
 
 // FblcProgram --
 //   A collection of declarations that make up a program.
 typedef struct {
-  FblcDeclV declv;
+  FblcTypeV typev;
+  FblcFuncV funcv;
+  FblcProcV procv;
 } FblcProgram;
 
-// FblcKind --
-//   An enum used to distinguish between struct and union values.
-typedef enum {
-  FBLC_STRUCT_KIND,
-  FBLC_UNION_KIND
-} FblcKind;
-
 // FblcValue --
 //   An fblc struct or union value.
 //
@@ -664,5 +655,5 @@ typedef struct FblcInstr {
 //   external ports.
 //   Calls the instrumentation functions as appropriate during the course of
 //   execution.
-FblcValue* FblcExecute(FblcArena* arena, FblcInstr* instr, FblcProcDecl* proc, FblcValue** args, FblcIO* io);
+FblcValue* FblcExecute(FblcArena* arena, FblcInstr* instr, FblcProc* proc, FblcValue** args, FblcIO* io);
 #endif // FBLC_H_

@@ -35,7 +35,7 @@ typedef struct {
 //   cmd - The next command to execute, if cmd_ready is true.
 typedef struct {
   FblcsProgram* sprog;
-  FblcProcDecl* proc;
+  FblcProc* proc;
   const char* file;
   size_t line;
   FILE* stream;
@@ -47,7 +47,7 @@ static void PrintUsage(FILE* stream);
 static void ReportError(IOUser* user, const char* msg);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FblcTypeDecl* type, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FblcType* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -122,7 +122,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     }
     user->line++;
 
-    FblcTypeDecl* type = NULL;
+    FblcType* type = NULL;
     char port[len+1];
     char value[len+1];
     if (sscanf(line, "get %s %s", port, value) == 2) {
@@ -228,7 +228,7 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FblcTypeDecl* type, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(IOUser* user, FblcType* type, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
@@ -320,31 +320,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDecl* decl = FblcsLookupDecl(sprog, entry);
-  if (decl == NULL) {
-    fprintf(stderr, "entry %s not found.\n", entry);
-    return 1;
-  }
-
-  FblcProcDecl* proc = NULL;
-  if (decl->tag == FBLC_PROC_DECL) {
-    proc = (FblcProcDecl*)decl;
-  } else if (decl->tag == FBLC_FUNC_DECL) {
-    // Make a proc wrapper for the function.
-    FblcFuncDecl* func = (FblcFuncDecl*)decl;
-    FblcEvalActn* body = arena->alloc(arena, sizeof(FblcEvalActn));
-    body->_base.tag = FBLC_EVAL_ACTN;
-    body->arg = func->body;
-
-    proc = arena->alloc(arena, sizeof(FblcProcDecl));
-    proc->_base.tag = FBLC_PROC_DECL;
-    proc->portv.size = 0;
-    proc->portv.xs = NULL;
-    proc->argv.size = func->argv.size;
-    proc->argv.xs = func->argv.xs;
-    proc->return_type = func->return_type;
-    proc->body = &body->_base;
-  } else {
+  FblcProc* proc = FblcsLookupEntry(arena, sprog, entry);
+  if (proc == NULL) {
     fprintf(stderr, "entry %s is not a function or process.\n", entry);
     return 1;
   }

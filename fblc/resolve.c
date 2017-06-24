@@ -9,19 +9,18 @@
 #define UNREACHABLE(x) assert(false && x)
 
 typedef struct Vars {
-  FblcTypeDecl* type;
+  FblcType* type;
   FblcsName name;
   struct Vars* next;
 } Vars;
 
-static Vars* AddVar(Vars* vars, FblcTypeDecl* type, FblcsName name, Vars* next);
-static FblcTypeDecl* LookupType(FblcsProgram* sprog, FblcsNameL* type);
-static FblcProcDecl* LookupProc(FblcsProgram* sprog, FblcsNameL* proc);
-static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeDecl* type, FblcsNameL* field);
-static FblcTypeDecl* FieldType(FblcsProgram* sprog, FblcTypeDecl* type, FblcFieldId field_id);
-static FblcTypeDecl* ReturnType(FblcsProgram* sprog, FblcDecl* decl);
-static FblcTypeDecl* ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr);
-static FblcTypeDecl* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Vars* ports, FblcActn* actn);
+static Vars* AddVar(Vars* vars, FblcType* type, FblcsName name, Vars* next);
+static FblcType* LookupType(FblcsProgram* sprog, FblcsNameL* type);
+static FblcProc* LookupProc(FblcsProgram* sprog, FblcsNameL* proc);
+static FblcFieldId LookupField(FblcsProgram* sprog, FblcType* type, FblcsNameL* field);
+static FblcType* FieldType(FblcsProgram* sprog, FblcType* type, FblcFieldId field_id);
+static FblcType* ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr);
+static FblcType* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Vars* ports, FblcActn* actn);
 
 // AddVar --
 //   Add a variable to the given scope.
@@ -36,7 +35,7 @@ static FblcTypeDecl* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsEx
 //
 // Side effects:
 //   Sets vars to a scope including the given variable and next scope.
-static Vars* AddVar(Vars* vars, FblcTypeDecl* type, FblcsName name, Vars* next)
+static Vars* AddVar(Vars* vars, FblcType* type, FblcsName name, Vars* next)
 {
   vars->type = type;
   vars->name = name;
@@ -57,18 +56,14 @@ static Vars* AddVar(Vars* vars, FblcTypeDecl* type, FblcsName name, Vars* next)
 //
 // Side effects:
 //   Prints an error message to stderr in the case of an error.
-static FblcTypeDecl* LookupType(FblcsProgram* sprog, FblcsNameL* type)
+static FblcType* LookupType(FblcsProgram* sprog, FblcsNameL* type)
 {
-  FblcDecl* decl = FblcsLookupDecl(sprog, type->name);
+  FblcType* decl = FblcsLookupType(sprog, type->name);
   if (decl == NULL) {
     FblcsReportError("Type %s not declared.\n", type->loc, type->name);
     return NULL;
   }
-  if (decl->tag == FBLC_STRUCT_DECL || decl->tag == FBLC_UNION_DECL) {
-    return (FblcTypeDecl*)decl;
-  }
-  FblcsReportError("%s does not refer to a type.\n", type->loc, type->name);
-  return NULL;
+  return decl;
 }
 
 // LookupProc --
@@ -84,18 +79,14 @@ static FblcTypeDecl* LookupType(FblcsProgram* sprog, FblcsNameL* type)
 //
 // Side effects:
 //   Prints an error message to stderr in the case of an error.
-static FblcProcDecl* LookupProc(FblcsProgram* sprog, FblcsNameL* proc)
+static FblcProc* LookupProc(FblcsProgram* sprog, FblcsNameL* proc)
 {
-  FblcDecl* decl = FblcsLookupDecl(sprog, proc->name);
+  FblcProc* decl = FblcsLookupProc(sprog, proc->name);
   if (decl == NULL) {
     FblcsReportError("Process %s not declared.\n", proc->loc, proc->name);
     return NULL;
   }
-  if (decl->tag == FBLC_PROC_DECL) {
-    return (FblcProcDecl*)decl;
-  }
-  FblcsReportError("%s does not refer to a process.\n", proc->loc, proc->name);
-  return NULL;
+  return decl;
 }
 
 // LookupField --
@@ -113,11 +104,11 @@ static FblcProcDecl* LookupProc(FblcsProgram* sprog, FblcsNameL* proc)
 // Side effects:
 //   Prints an error message to stderr in the case of an error.
 
-static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeDecl* type, FblcsNameL* field)
+static FblcFieldId LookupField(FblcsProgram* sprog, FblcType* type, FblcsNameL* field)
 {
   FblcFieldId id = FblcsLookupField(sprog, type, field->name);
   if (id == FBLC_NULL_ID) {
-    FblcsReportError("'%s' is not a field of the type '%s'.\n", field->loc, field->name, FblcsDeclName(sprog, &type->_base));
+    FblcsReportError("'%s' is not a field of the type '%s'.\n", field->loc, field->name, FblcsTypeName(sprog, type));
     return FBLC_NULL_ID;
   }
   return id;
@@ -137,54 +128,11 @@ static FblcFieldId LookupField(FblcsProgram* sprog, FblcTypeDecl* type, FblcsNam
 //
 // Side effects:
 //   Prints an error message to stderr in the case of an error.
-static FblcTypeDecl* FieldType(FblcsProgram* sprog, FblcTypeDecl* type, FblcFieldId field_id)
+static FblcType* FieldType(FblcsProgram* sprog, FblcType* type, FblcFieldId field_id)
 {
   assert(field_id < type->fieldv.size);
-  FblcsTypeDecl* stype = (FblcsTypeDecl*)sprog->sdeclv.xs[type->_base.id];
+  FblcsType* stype = sprog->stypev.xs[type->id];
   return LookupType(sprog, &stype->fieldv.xs[field_id].type);
-}
-
-// ReturnType --
-//   Look up the id of the return type for a declaration.
-//
-// Inputs:
-//   sprog - The program environment.
-//   decl - The declaration to get the return type for.
-//
-// Results:
-//   The return type for the given declaration. For struct and union
-//   declarations, this returns the declaration itself. For func and proc
-//   declarations, this returns the the return type of the func or proc.
-//   Returns NULL on error.
-//
-// Side effects:
-//   Prints an error message to stderr in the case of an error.
-static FblcTypeDecl* ReturnType(FblcsProgram* sprog, FblcDecl* decl)
-{
-  switch (decl->tag) {
-    case FBLC_STRUCT_DECL: {
-      return (FblcTypeDecl*)decl;
-    }
-
-    case FBLC_UNION_DECL: {
-      return (FblcTypeDecl*)decl;
-    }
-
-    case FBLC_FUNC_DECL: {
-      FblcsFuncDecl* sfunc = (FblcsFuncDecl*)sprog->sdeclv.xs[decl->id];
-      return LookupType(sprog, &sfunc->return_type);
-    }
-
-    case FBLC_PROC_DECL: {
-      FblcsProcDecl* sproc = (FblcsProcDecl*)sprog->sdeclv.xs[decl->id];
-      return LookupType(sprog, &sproc->return_type);
-    }
-
-    default: {
-      UNREACHABLE("Invalid Case");
-      return NULL;
-    }
-  }
 }
 
 // ResolveExpr --
@@ -203,7 +151,7 @@ static FblcTypeDecl* ReturnType(FblcsProgram* sprog, FblcDecl* decl)
 // Side effects:
 //   IDs in the expression are resolved.
 //   Prints error messages to stderr in case of error.
-static FblcTypeDecl* ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr)
+static FblcType* ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* vars, FblcExpr* expr)
 {
   FblcsExpr* sexpr = exprv->xs[expr->id];
   switch (expr->tag) {
@@ -224,25 +172,38 @@ static FblcTypeDecl* ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* v
     case FBLC_APP_EXPR: {
       FblcAppExpr* app_expr = (FblcAppExpr*)expr;
       FblcsAppExpr* sapp_expr = (FblcsAppExpr*)sexpr;
-      app_expr->func = FblcsLookupDecl(sprog, sapp_expr->func.name); 
-      if (app_expr->func == NULL) {
-        FblcsReportError("'%s' not defined.\n", sapp_expr->func.loc, sapp_expr->func.name);
-        return NULL;
-      }
 
       for (size_t i = 0; i < app_expr->argv.size; ++i) {
         if (ResolveExpr(sprog, exprv, vars, app_expr->argv.xs[i]) == NULL) {
           return NULL;
         }
       }
-      return ReturnType(sprog, app_expr->func);
+
+      FblcFunc* func = FblcsLookupFunc(sprog, sapp_expr->func.name); 
+      if (func != NULL) {
+        app_expr->func = func;
+        FblcsFunc* sfunc = sprog->sfuncv.xs[func->id];
+        return LookupType(sprog, &sfunc->return_type);
+      }
+
+      FblcType* type = FblcsLookupType(sprog, sapp_expr->func.name);
+      if (type != NULL) {
+        // This is a struct expression. Treat it as such.
+        expr->tag = FBLC_STRUCT_EXPR;
+        FblcStructExpr* struct_expr = (FblcStructExpr*)expr;
+        struct_expr->type = type;
+        return type;
+      }
+
+      FblcsReportError("'%s' not defined.\n", sapp_expr->func.loc, sapp_expr->func.name);
+      return NULL;
     }
 
     case FBLC_ACCESS_EXPR: {
       FblcAccessExpr* access_expr = (FblcAccessExpr*)expr;
       FblcsAccessExpr* saccess_expr = (FblcsAccessExpr*)sexpr;
 
-      FblcTypeDecl* type = ResolveExpr(sprog, exprv, vars, access_expr->obj);
+      FblcType* type = ResolveExpr(sprog, exprv, vars, access_expr->obj);
       if (type == NULL) {
         return NULL;
       }
@@ -305,7 +266,7 @@ static FblcTypeDecl* ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* v
         return NULL;
       }
 
-      FblcTypeDecl* result_type = NULL;
+      FblcType* result_type = NULL;
       assert(cond_expr->argv.size > 0);
       for (size_t i = 0; i < cond_expr->argv.size; ++i) {
         result_type = ResolveExpr(sprog, exprv, vars, cond_expr->argv.xs[i]);
@@ -341,7 +302,7 @@ static FblcTypeDecl* ResolveExpr(FblcsProgram* sprog, FblcsExprV* exprv, Vars* v
 // Side effects:
 //   IDs in the action are resolved.
 //   Prints error messages to stderr in case of error.
-static FblcTypeDecl* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Vars* ports, FblcActn* actn)
+static FblcType* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsExprV* exprv, Vars* vars, Vars* ports, FblcActn* actn)
 {
   FblcsActn* sactn = actnv->xs[actn->id];
   switch (actn->tag) {
@@ -416,7 +377,8 @@ static FblcTypeDecl* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsEx
         }
       }
 
-      return ReturnType(sprog, &call_actn->proc->_base);
+      FblcsProc* sproc = sprog->sprocv.xs[call_actn->proc->id];
+      return LookupType(sprog, &sproc->return_type);
     }
 
     case FBLC_LINK_ACTN: {
@@ -469,7 +431,7 @@ static FblcTypeDecl* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsEx
         return NULL;
       }
 
-      FblcTypeDecl* result_type = NULL;
+      FblcType* result_type = NULL;
       assert(cond_actn->argv.size > 0);
       for (size_t i = 0; i < cond_actn->argv.size; ++i) {
         result_type = ResolveActn(sprog, actnv, exprv, vars, ports, cond_actn->argv.xs[i]);
@@ -490,121 +452,121 @@ static FblcTypeDecl* ResolveActn(FblcsProgram* sprog, FblcsActnV* actnv, FblcsEx
 // FblcsResolveProgram -- see fblcs.h for documentation.
 bool FblcsResolveProgram(FblcsProgram* sprog)
 {
-  for (size_t decl_id = 0; decl_id < sprog->program->declv.size; ++decl_id) {
-    FblcDecl* decl = sprog->program->declv.xs[decl_id];
-    FblcsDecl* sdecl = sprog->sdeclv.xs[decl_id];
+  // Resolve type declarations.
+  for (size_t type_id = 0; type_id < sprog->program->typev.size; ++type_id) {
+    FblcType* type = sprog->program->typev.xs[type_id];
+    FblcsType* stype = sprog->stypev.xs[type_id];
 
-    FblcsDecl* other_decl = sprog->sdeclv.xs[decl_id];
-    if (FblcsLookupDecl(sprog, other_decl->name.name) != decl) {
-      FblcsReportError("Redefinition of %s\n", other_decl->name.loc, other_decl->name.name);
+    if (FblcsLookupType(sprog, stype->name.name) != type) {
+      FblcsReportError("Redefinition of %s\n", stype->name.loc, stype->name.name);
       return false;
     }
 
-    switch (decl->tag) {
-      case FBLC_STRUCT_DECL:
-      case FBLC_UNION_DECL: {
-        FblcTypeDecl* type = (FblcTypeDecl*)decl;
-        FblcsTypeDecl* stype = (FblcsTypeDecl*)sdecl;
-        for (FblcFieldId field_id = 0; field_id < type->fieldv.size; ++field_id) {
-          FblcsNameL* field = &stype->fieldv.xs[field_id].name;
-          for (FblcFieldId i = 0; i < field_id; ++i) {
-            if (FblcsNamesEqual(field->name, stype->fieldv.xs[i].name.name)) {
-              FblcsReportError("Redefinition of field %s\n", field->loc, field->name);
-              return false;
-            }
-          }
-
-          type->fieldv.xs[field_id] = FieldType(sprog, type, field_id);
-          if (type->fieldv.xs[field_id] == NULL) {
-            return false;
-          }
+    for (FblcFieldId field_id = 0; field_id < type->fieldv.size; ++field_id) {
+      FblcsNameL* field = &stype->fieldv.xs[field_id].name;
+      for (FblcFieldId i = 0; i < field_id; ++i) {
+        if (FblcsNamesEqual(field->name, stype->fieldv.xs[i].name.name)) {
+          FblcsReportError("Redefinition of field %s\n", field->loc, field->name);
+          return false;
         }
-        break;
       }
 
-      case FBLC_FUNC_DECL: {
-        FblcFuncDecl* func = (FblcFuncDecl*)decl;
-        FblcsFuncDecl* sfunc = (FblcsFuncDecl*)sdecl;
-        Vars nvars[func->argv.size];
-        Vars* vars = NULL;
-        for (size_t i = 0; i < func->argv.size; ++i) {
-          FblcsTypedName* var = sfunc->argv.xs + i;
-          func->argv.xs[i] = LookupType(sprog, &var->type);
-          if (func->argv.xs[i] == NULL) {
-            return false;
-          }
-          for (Vars* curr = vars; curr != NULL; curr = curr->next) {
-            if (FblcsNamesEqual(curr->name, var->name.name)) {
-              FblcsReportError("Redefinition of argument '%s'\n", var->name.loc, var->name.name);
-              return false;
-            }
-          }
-          vars = AddVar(nvars+i, func->argv.xs[i], var->name.name, vars);
-        }
-
-        func->return_type = LookupType(sprog, &sfunc->return_type);
-        if (func->return_type == NULL) {
-          return false;
-        }
-
-        if (ResolveExpr(sprog, &sfunc->exprv, vars, func->body) == NULL) {
-          return false;
-        }
-        break;
-      }
-
-      case FBLC_PROC_DECL: {
-        FblcProcDecl* proc = (FblcProcDecl*)decl;
-        FblcsProcDecl* sproc = (FblcsProcDecl*)sdecl;
-        Vars nports[proc->portv.size];
-        Vars* ports = NULL;
-        for (size_t i = 0; i < proc->portv.size; ++i) {
-          FblcsTypedName* port = sproc->portv.xs + i;
-          proc->portv.xs[i].type = LookupType(sprog, &port->type);
-          if (proc->portv.xs[i].type == NULL) {
-            return false;
-          }
-          for (Vars* curr = ports; curr != NULL; curr = curr->next) {
-            if (FblcsNamesEqual(curr->name, port->name.name)) {
-              FblcsReportError("Redefinition of port '%s'\n", port->name.loc, port->name.name);
-              return false;
-            }
-          }
-          ports = AddVar(nports+i, proc->portv.xs[i].type, port->name.name, ports);
-        }
-
-        Vars nvars[proc->argv.size];
-        Vars* vars = NULL;
-        for (size_t i = 0; i < proc->argv.size; ++i) {
-          FblcsTypedName* var = sproc->argv.xs + i;
-          proc->argv.xs[i] = LookupType(sprog, &var->type);
-          if (proc->argv.xs[i] == NULL) {
-            return false;
-          }
-          for (Vars* curr = vars; curr != NULL; curr = curr->next) {
-            if (FblcsNamesEqual(curr->name, var->name.name)) {
-              FblcsReportError("Redefinition of argument '%s'\n", var->name.loc, var->name.name);
-              return false;
-            }
-          }
-          vars = AddVar(nvars+i, proc->argv.xs[i], var->name.name, vars);
-        }
-
-        proc->return_type = LookupType(sprog, &sproc->return_type);
-        if (proc->return_type == NULL) {
-          return false;
-        }
-
-        if (ResolveActn(sprog, &sproc->actnv, &sproc->exprv, vars, ports, proc->body) == NULL) {
-          return false;
-        }
-        break;
-      }
-
-      default: {
-        UNREACHABLE("Invalid Case");
+      type->fieldv.xs[field_id] = FieldType(sprog, type, field_id);
+      if (type->fieldv.xs[field_id] == NULL) {
         return false;
       }
+    }
+  }
+
+  for (size_t func_id = 0; func_id < sprog->program->funcv.size; ++func_id) {
+    FblcFunc* func = sprog->program->funcv.xs[func_id];
+    FblcsFunc* sfunc = sprog->sfuncv.xs[func_id];
+
+    if (FblcsLookupType(sprog, sfunc->name.name) != NULL ||
+        FblcsLookupFunc(sprog, sfunc->name.name) != func) {
+      FblcsReportError("Redefinition of %s\n", sfunc->name.loc, sfunc->name.name);
+      return false;
+    }
+
+    Vars nvars[func->argv.size];
+    Vars* vars = NULL;
+    for (size_t i = 0; i < func->argv.size; ++i) {
+      FblcsTypedName* var = sfunc->argv.xs + i;
+      func->argv.xs[i] = LookupType(sprog, &var->type);
+      if (func->argv.xs[i] == NULL) {
+        return false;
+      }
+      for (Vars* curr = vars; curr != NULL; curr = curr->next) {
+        if (FblcsNamesEqual(curr->name, var->name.name)) {
+          FblcsReportError("Redefinition of argument '%s'\n", var->name.loc, var->name.name);
+          return false;
+        }
+      }
+      vars = AddVar(nvars+i, func->argv.xs[i], var->name.name, vars);
+    }
+
+    func->return_type = LookupType(sprog, &sfunc->return_type);
+    if (func->return_type == NULL) {
+      return false;
+    }
+
+    if (ResolveExpr(sprog, &sfunc->exprv, vars, func->body) == NULL) {
+      return false;
+    }
+  }
+
+  for (size_t proc_id = 0; proc_id < sprog->program->procv.size; ++proc_id) {
+    FblcProc* proc = sprog->program->procv.xs[proc_id];
+    FblcsProc* sproc = sprog->sprocv.xs[proc_id];
+
+    if (FblcsLookupType(sprog, sproc->name.name) != NULL ||
+        FblcsLookupFunc(sprog, sproc->name.name) != NULL ||
+        FblcsLookupProc(sprog, sproc->name.name) != proc) {
+      FblcsReportError("Redefinition of %s\n", sproc->name.loc, sproc->name.name);
+      return false;
+    }
+
+    Vars nports[proc->portv.size];
+    Vars* ports = NULL;
+    for (size_t i = 0; i < proc->portv.size; ++i) {
+      FblcsTypedName* port = sproc->portv.xs + i;
+      proc->portv.xs[i].type = LookupType(sprog, &port->type);
+      if (proc->portv.xs[i].type == NULL) {
+        return false;
+      }
+      for (Vars* curr = ports; curr != NULL; curr = curr->next) {
+        if (FblcsNamesEqual(curr->name, port->name.name)) {
+          FblcsReportError("Redefinition of port '%s'\n", port->name.loc, port->name.name);
+          return false;
+        }
+      }
+      ports = AddVar(nports+i, proc->portv.xs[i].type, port->name.name, ports);
+    }
+
+    Vars nvars[proc->argv.size];
+    Vars* vars = NULL;
+    for (size_t i = 0; i < proc->argv.size; ++i) {
+      FblcsTypedName* var = sproc->argv.xs + i;
+      proc->argv.xs[i] = LookupType(sprog, &var->type);
+      if (proc->argv.xs[i] == NULL) {
+        return false;
+      }
+      for (Vars* curr = vars; curr != NULL; curr = curr->next) {
+        if (FblcsNamesEqual(curr->name, var->name.name)) {
+          FblcsReportError("Redefinition of argument '%s'\n", var->name.loc, var->name.name);
+          return false;
+        }
+      }
+      vars = AddVar(nvars+i, proc->argv.xs[i], var->name.name, vars);
+    }
+
+    proc->return_type = LookupType(sprog, &sproc->return_type);
+    if (proc->return_type == NULL) {
+      return false;
+    }
+
+    if (ResolveActn(sprog, &sproc->actnv, &sproc->exprv, vars, ports, proc->body) == NULL) {
+      return false;
     }
   }
   return true;

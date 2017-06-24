@@ -15,7 +15,7 @@
 //   User data for FblcIO.
 typedef struct {
   FblcsProgram* sprog;
-  FblcProcDecl* proc;
+  FblcProc* proc;
 } IOUser;
 
 static void PrintUsage(FILE* stream);
@@ -152,32 +152,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcDecl* decl = FblcsLookupDecl(sprog, entry);
-  if (decl == NULL) {
+  FblcProc* proc = FblcsLookupEntry(arena, sprog, entry);
+  if (proc == NULL) {
     fprintf(stderr, "entry %s not found.\n", entry);
-    return 1;
-  }
-
-  FblcProcDecl* proc = NULL;
-  if (decl->tag == FBLC_PROC_DECL) {
-    proc = (FblcProcDecl*)decl;
-  } else if (decl->tag == FBLC_FUNC_DECL) {
-    // Make a proc wrapper for the function.
-    FblcFuncDecl* func = (FblcFuncDecl*)decl;
-    FblcEvalActn* body = arena->alloc(arena, sizeof(FblcEvalActn));
-    body->_base.tag = FBLC_EVAL_ACTN;
-    body->arg = func->body;
-
-    proc = arena->alloc(arena, sizeof(FblcProcDecl));
-    proc->_base.tag = FBLC_PROC_DECL;
-    proc->portv.size = 0;
-    proc->portv.xs = NULL;
-    proc->argv.size = func->argv.size;
-    proc->argv.xs = func->argv.xs;
-    proc->return_type = func->return_type;
-    proc->body = &body->_base;
-  } else {
-    fprintf(stderr, "entry %s is not a function or process.\n", entry);
     return 1;
   }
 

@@ -828,43 +828,40 @@ static void Run(FblcArena* arena, FblcInstr* instr, Threads* threads, Thread* th
           }
 
           case FBLC_APP_EXPR: {
+            // Add to the top of the command list:
+            //  arg -> ... -> arg -> push scope -> body -> pop scope -> next 
+            // The results of the arg evaluations will be stored directly in
+            // the vars for the first scope command.
+            // TODO: Avoid memory leaks in the case of tail calls.
             FblcAppExpr* app_expr = (FblcAppExpr*)expr;
-            FblcDecl* decl = app_expr->func;
-            if (decl->tag == FBLC_STRUCT_DECL) {
-              // Create the struct value now, then add commands to evaluate
-              // the arguments to fill in the fields with the proper results.
-              FblcTypeDecl* struct_decl = (FblcTypeDecl*)decl;
-              size_t fieldc = struct_decl->fieldv.size;
-              FblcValue* value = FblcNewStruct(arena, fieldc);
-              *target = value;
-              for (size_t i = 0; i < fieldc; ++i) {
-                next = MkExprCmd(arena, app_expr->argv.xs[i], value->fields + i, next);
-              }
-              break;
+            FblcFunc* func = app_expr->func;
+
+            next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
+            next = MkExprCmd(arena, func->body, target, next);
+            next = MkPushScopeCmd(arena, NULL, thread->ports, next);
+
+            ScopeCmd* scmd = (ScopeCmd*)next;
+            Vars* nvars = NULL;
+            for (size_t i = 0; i < func->argv.size; ++i) {
+              nvars = AddVar(arena, nvars);
+              next = MkExprCmd(arena, app_expr->argv.xs[i], LookupRef(nvars, 0), next);
             }
+            scmd->vars = nvars;
+            break;
+          }
 
-            if (decl->tag == FBLC_FUNC_DECL) {
-              // Add to the top of the command list:
-              //  arg -> ... -> arg -> push scope -> body -> pop scope -> next 
-              // The results of the arg evaluations will be stored directly in
-              // the vars for the first scope command.
-              // TODO: Avoid memory leaks in the case of tail calls.
-
-              FblcFuncDecl* func = (FblcFuncDecl*)decl;
-              next = MkPopScopeCmd(arena, thread->vars, thread->ports, next);
-              next = MkExprCmd(arena, func->body, target, next);
-              next = MkPushScopeCmd(arena, NULL, thread->ports, next);
-
-              ScopeCmd* scmd = (ScopeCmd*)next;
-              Vars* nvars = NULL;
-              for (size_t i = 0; i < func->argv.size; ++i) {
-                nvars = AddVar(arena, nvars);
-                next = MkExprCmd(arena, app_expr->argv.xs[i], LookupRef(nvars, 0), next);
-              }
-              scmd->vars = nvars;
-              break;
+          case FBLC_STRUCT_EXPR: {
+            // Create the struct value now, then add commands to evaluate
+            // the arguments to fill in the fields with the proper results.
+            FblcStructExpr* struct_expr = (FblcStructExpr*)expr;
+            assert(struct_expr->type->kind == FBLC_STRUCT_KIND);
+            size_t fieldc = struct_expr->type->fieldv.size;
+            FblcValue* value = FblcNewStruct(arena, fieldc);
+            *target = value;
+            for (size_t i = 0; i < fieldc; ++i) {
+              next = MkExprCmd(arena, struct_expr->argv.xs[i], value->fields + i, next);
             }
-            UNREACHABLE("No such struct type or function found");
+            break;
           }
 
           case FBLC_ACCESS_EXPR: {
@@ -948,7 +945,7 @@ static void Run(FblcArena* arena, FblcInstr* instr, Threads* threads, Thread* th
 
           case FBLC_CALL_ACTN: {
             FblcCallActn* call_actn = (FblcCallActn*)actn;
-            FblcProcDecl* proc = call_actn->proc;
+            FblcProc* proc = call_actn->proc;
             assert(proc->portv.size == call_actn->portv.size);
             assert(proc->argv.size == call_actn->argv.size);
 
@@ -1145,7 +1142,7 @@ static void Run(FblcArena* arena, FblcInstr* instr, Threads* threads, Thread* th
 }
 
 // FblcExecute -- see documentationin fblc.h.
-FblcValue* FblcExecute(FblcArena* arena, FblcInstr* instr, FblcProcDecl* proc, FblcValue** args, FblcIO* io)
+FblcValue* FblcExecute(FblcArena* arena, FblcInstr* instr, FblcProc* proc, FblcValue** args, FblcIO* io)
 {
   Vars* vars = NULL;
   for (size_t i = 0; i < proc->argv.size; ++i) {
