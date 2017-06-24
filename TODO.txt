@@ -1,6 +1,8 @@
 Fbld M2 Kickoff:
-* Figure out how to adapt fbld for new syntax and polymorphism support.
-
+* Decide whether using decls should be kept separate from the rest.
+* Re-organize parse.y to match order in fbld.h, and finish it out.
+* Continue adapting fbld to new polymorphism and syntax from there.
+ 
 Fbld Test:
 * Test case when struct or union type is not redeclared in mdefn from mdecl.
 * Test case when an mdefn decl doesn't match its corresponding mdecl decl.

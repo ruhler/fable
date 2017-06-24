@@ -29,36 +29,34 @@
   //   Used to store the final parsed object depending on what kind of object
   //   is parsed.
   typedef union {
-    FbldMDecl* mdecl;
+    FbldMType* mtype;
     FbldMDefn* mdefn;
     FbldValue* value;
+    FbldQName* qname;
   } ParseResult;
 
   #define YYLTYPE FbldLoc*
 
   #define YYLLOC_DEFAULT(Cur, Rhs, N)  \
-  do                                    \
-    if (N)                              \
-      {                                 \
-        (Cur) = YYRHSLOC(Rhs, 1);       \
-      }                                 \
-    else                                \
-      {                                 \
-        (Cur) = YYRHSLOC(Rhs, 0);       \
-      }                                 \
+  do                                   \
+    if (N) (Cur) = YYRHSLOC(Rhs, 1);   \
+    else   (Cur) = YYRHSLOC(Rhs, 0);   \
   while (0)
 %}
 
 %union {
-  FbldNameL* name;
-  FbldQualifiedName* qname;
-  FbldModule* module;
+  FbldName* name;
+  FbldQName* qname;
+  FbldIRef* iref;
+  FbldMRef* mref;
+  FbldMType* mtype;
+  FbldMDefn* mdefn;
   FbldDecl* decl;
   FbldFuncDecl* func_decl;
   FbldDeclV* declv;
   FbldExpr* expr;
   FbldNameV* namev;
-  FbldTypedNameV* tnamev;
+  FbldArgV* argv;
   FbldExprV* exprv;
   FbldValue* value;
   FbldValueV* valuev;
@@ -86,66 +84,75 @@
 // single-character non-whitespace, non-name indicator token at the beginning
 // of the input stream to indicate the start symbol to use depending on what
 // we want to parse.
-%token START_MDECL 1 "mdecl parse start indicator"
+%token START_MTYPE 1 "mtype parse start indicator"
 %token START_MDEFN 2 "mdefn parse start indicator"
 %token START_VALUE 3 "value parse start indicator"
+%token START_QNAME 4 "qname parse start indicator"
 
 %token <name> NAME
 
 // Keywords. These have type 'name' because in many contexts they are treated
 // as normal names rather than keywords.
-%token <name> MDECL "mdecl"
+%token <name> MTYPE "mtype"
 %token <name> MDEFN "mdefn"
 %token <name> TYPE "type"
 %token <name> STRUCT "struct"
 %token <name> UNION "union"
 %token <name> FUNC "func"
 %token <name> PROC "proc"
-%token <name> IMPORT "import"
+%token <name> USING "using"
 
 %type <name> keyword name
-%type <qname> qualified_name
-%type <module> mdecl mdefn
-%type <decl> decl defn import_decl struct_decl union_decl
+%type <qname> qname
+%type <iref> iref
+%type <mref> mref
+%type <mtype> mtype
+%type <mdefn> mdefn
+%type <decl> decl defn using_decl struct_decl union_decl
 %type <func_decl> func_decl
 %type <declv> decl_list defn_list
 %type <expr> expr stmt
 %type <namev> name_list
-%type <tnamev> field_list non_empty_field_list
+%type <qnamev> qname_list
+%type <mrefv> mref_list
+%type <argv> arg_list non_empty_arg_list
 %type <exprv> expr_list non_empty_expr_list
 %type <value> value
 %type <valuev> value_list non_empty_value_list
 
 %%
 
-// This grammar is used for parsing both module declarations and
-// definitions.  We insert an arbitrary, artificial single-character token
-// to indicate which we want to parse.
+// This grammar is used for parsing starting from multiple different start
+// tokens. We insert an arbitrary, artificial single-character token to
+// indicate which start token we actually want to use.
 start:
-     START_MDECL mdecl { result->mdecl = $2; }
+     START_MTYPE mtype { result->mtype = $2; }
    | START_MDEFN mdefn { result->mdefn = $2; }
    | START_VALUE value { result->value = $2; }
+   | START_QNAME qname { result->qname = $2; }
    ;
  
-mdecl: "mdecl" name '(' name_list ')' '{' decl_list '}' ';' {
-          $$ = arena->alloc(arena, sizeof(FbldMDecl));
+mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
+          $$ = arena->alloc(arena, sizeof(FbldMType));
           $$->name = $2;
-          $$->deps = $4;
+          $$->targs = $4;
           $$->declv = $7;
         }
      ;
 
-mdefn: "mdefn" name '(' name_list ')' '{' defn_list '}' ';' {
+mdefn: "mdefn" name '<' name_list ';' marg_list ';' iref '>' '{' defn_list '}' ';' {
           $$ = arena->alloc(arena, sizeof(FbldMDefn));
           $$->name = $2;
-          $$->deps = $4;
-          $$->declv = $7;
+          $$->targs = $4;
+          $$->margs = $6;
+          $$->iref = $8;
+          $$->declv = $11;
         }
      ;
 
 name: NAME | keyword ;
 
-keyword: "mdecl" | "mdefn" | "type" | "struct" | "union" | "func" | "proc" | "import" ;
+keyword: "mtype" | "mdefn" | "type" | "struct" | "union" | "func" | "proc" | "using" ;
 
 decl_list:
     %empty {
@@ -178,16 +185,17 @@ non_empty_expr_list:
     }
   ;
 
-import_decl: "import" name '(' name_list ')' {
-      FbldImportDecl* decl = arena->alloc(arena, sizeof(FbldImportDecl));
-      decl->_base.tag = FBLD_IMPORT_DECL;
-      decl->_base.name = $2;
-      decl->namev = $4;
+using_decl: "using" mref '{' using_item_list '}' {
+      FbldUsingDecl* decl = arena->alloc(arena, sizeof(FbldUsingDecl));
+      decl->_base.tag = FBLD_USING_DECL;
+      decl->_base.name = NULL;  // TODO: What to put here?
+      decl->mref = $2;
+      decl->itemv = $4;
       $$ = &decl->_base;
     }
     ;
 
-struct_decl: "struct" name '(' field_list ')' {
+struct_decl: "struct" name '(' arg_list ')' {
       FbldStructDecl* decl = arena->alloc(arena, sizeof(FbldStructDecl));
       decl->_base.tag = FBLD_STRUCT_DECL;
       decl->_base.name = $2;
@@ -196,7 +204,7 @@ struct_decl: "struct" name '(' field_list ')' {
     }
     ;
 
-union_decl: "union" name '(' non_empty_field_list ')' {
+union_decl: "union" name '(' non_empty_arg_list ')' {
       FbldUnionDecl* decl = arena->alloc(arena, sizeof(FbldUnionDecl));
       decl->_base.tag = FBLD_UNION_DECL;
       decl->_base.name = $2;
@@ -205,7 +213,7 @@ union_decl: "union" name '(' non_empty_field_list ')' {
     }
     ;
 
-func_decl: "func" name '(' field_list ';' qualified_name ')' {
+func_decl: "func" name '(' arg_list ';' qname ')' {
       $$ = arena->alloc(arena, sizeof(FbldFuncDecl));
       $$->_base.tag = FBLD_FUNC_DECL;
       $$->_base.name = $2;
@@ -215,7 +223,7 @@ func_decl: "func" name '(' field_list ';' qualified_name ')' {
     }
 
 decl:
-    import_decl ';'
+    using_decl ';'
   | "type" name ';' {
       $$ = arena->alloc(arena, sizeof(FbldAbstractTypeDecl));
       $$->tag = FBLD_ABSTRACT_TYPE_DECL;
@@ -226,7 +234,7 @@ decl:
   | func_decl ';' {
       $$ = &$1->_base;
     }
-  | "proc" name '(' name_list ';' field_list ';' qualified_name ')' ';' {
+  | "proc" name '(' name_list ';' arg_list ';' qname ')' ';' {
       assert(false && "TODO: proc");
     }
   ;
@@ -242,7 +250,7 @@ defn:
   ;
 
 stmt: expr ';' { $$ = $1; }
-    | qualified_name name '=' expr ';' stmt {
+    | qname name '=' expr ';' stmt {
         FbldLetExpr* let_expr = arena->alloc(arena, sizeof(FbldLetExpr));
         let_expr->_base.tag = FBLC_LET_EXPR;
         let_expr->_base.loc = @$;
@@ -266,7 +274,7 @@ expr:
       var_expr->id = FBLC_NULL_ID;
       $$ = &var_expr->_base;
     }
-  | qualified_name '(' expr_list ')' {
+  | qname '(' expr_list ')' {
       FbldAppExpr* app_expr = arena->alloc(arena, sizeof(FbldAppExpr));
       app_expr->_base.tag = FBLC_APP_EXPR;
       app_expr->_base.loc = @$;
@@ -274,7 +282,7 @@ expr:
       app_expr->argv = $3;
       $$ = &app_expr->_base;
     }
-  | qualified_name ':' name '(' expr ')' {
+  | qname ':' name '(' expr ')' {
       FbldUnionExpr* union_expr = arena->alloc(arena, sizeof(FbldUnionExpr));
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->_base.loc = @$;
@@ -330,15 +338,47 @@ name_list:
     }
   ;
 
-field_list:
+qname_list:
+    %empty {
+      $$ = arena->alloc(arena, sizeof(FbldQNameV));
+      FblcVectorInit(arena, *$$);
+    }
+  | qname {
+      $$ = arena->alloc(arena, sizeof(FbldQNameV));
+      FblcVectorInit(arena, *$$);
+      FblcVectorAppend(arena, *$$, $1);
+    }
+  | qname_list ',' qname {
+      FblcVectorAppend(arena, *$1, $3);
+      $$ = $1;
+    }
+  ;
+
+mref_list:
+    %empty {
+      $$ = arena->alloc(arena, sizeof(FbldMRefV));
+      FblcVectorInit(arena, *$$);
+    }
+  | mref {
+      $$ = arena->alloc(arena, sizeof(FbldMRefV));
+      FblcVectorInit(arena, *$$);
+      FblcVectorAppend(arena, *$$, $1);
+    }
+  | mref_list ',' mref {
+      FblcVectorAppend(arena, *$1, $3);
+      $$ = $1;
+    }
+  ;
+
+arg_list:
     %empty {
       $$ = arena->alloc(arena, sizeof(FbldTypedNameV));
       FblcVectorInit(arena, *$$);
     }
-  | non_empty_field_list ;
+  | non_empty_arg_list ;
 
-non_empty_field_list:
-    qualified_name name {
+non_empty_arg_list:
+    qname name {
       $$ = arena->alloc(arena, sizeof(FbldTypedNameV));
       FblcVectorInit(arena, *$$);
       FbldTypedName* tname = arena->alloc(arena, sizeof(FbldTypedName));
@@ -346,7 +386,7 @@ non_empty_field_list:
       tname->name = $2;
       FblcVectorAppend(arena, *$$, tname);
     }
-  | non_empty_field_list ',' qualified_name name {
+  | non_empty_arg_list ',' qname name {
       FbldTypedName* tname = arena->alloc(arena, sizeof(FbldTypedName));
       tname->type = $3;
       tname->name = $4;
@@ -355,30 +395,43 @@ non_empty_field_list:
     }
   ;
 
-qualified_name:
+qname:
     name {
-      $$ = arena->alloc(arena, sizeof(FbldQualifiedName));
+      $$ = arena->alloc(arena, sizeof(FbldQName));
       $$->name = $1;
-      $$->module = arena->alloc(arena, sizeof(FbldNameL));
-      $$->module->name = NULL;
-      $$->module->loc = $1->loc;
+      $$->mref = NULL;
     }
-  | name '@' name {
-      $$ = arena->alloc(arena, sizeof(FbldQualifiedName));
+  | name '@' mref {
+      $$ = arena->alloc(arena, sizeof(FbldQName));
       $$->name = $1;
-      $$->module = $3;
+      $$->mref = $3;
+    }
+  ;
+
+iref: name '<' qname_list '>' {
+      $$ = arena->alloc(arena, sizeof(FbldIRef));
+      $$->name = $1;
+      $$->targs = $3;
+    }
+  ;
+
+mref: name '<' qname_list ';' mref_list '>' {
+      $$ = arena->alloc(arena, sizeof(FbldMRef));
+      $$->name = $1;
+      $$->targs = $3;
+      $$->margs = $5;
     }
   ;
 
 value:
-    qualified_name '(' value_list ')' {
+    qname '(' value_list ')' {
       $$ = arena->alloc(arena, sizeof(FbldValue));
       $$->kind = FBLD_STRUCT_KIND;
       $$->type = $1;
       $$->tag = NULL;
       $$->fieldv = $3;
     }
-  | qualified_name ':' name '(' value ')' {
+  | qname ':' name '(' value ')' {
       $$ = arena->alloc(arena, sizeof(FbldValue));
       $$->kind = FBLD_UNION_KIND;
       $$->type = $1;
@@ -551,7 +604,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
   lvalp->name->loc = loc;
 
   struct { char* keyword; int symbol; } keywords[] = {
-    {.keyword = "mdecl", .symbol = MDECL},
+    {.keyword = "mtype", .symbol = MTYPE},
     {.keyword = "mdefn", .symbol = MDEFN},
     {.keyword = "type", .symbol = TYPE},
     {.keyword = "struct", .symbol = STRUCT},
@@ -590,8 +643,8 @@ static void yyerror(YYLTYPE* llocp, FblcArena* arena, Lex* lex, ParseResult* res
   FbldReportError("%s\n", *llocp, msg);
 }
 
-// FbldParseMDecl -- see documentation in fbld.h
-FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
+// FbldParseMType -- see documentation in fbld.h
+FbldMDecl* FbldParseMType(FblcArena* arena, const char* filename)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -600,15 +653,15 @@ FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename)
   }
 
   Lex lex = {
-    .c = START_MDECL,
+    .c = START_MTYPE,
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
   };
   ParseResult result;
-  result.mdecl = NULL;
+  result.mtype = NULL;
   yyparse(arena, &lex, &result);
-  return result.mdecl;
+  return result.mtype;
 }
 
 // FbldParseMDefn -- see documentation in fbld.h
@@ -632,6 +685,7 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
   return result.mdefn;
 }
 
+// FbldParseValueFromString -- see documentation in fbld.h
 FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string)
 {
   Lex lex = {
@@ -644,4 +698,19 @@ FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string)
   result.value = NULL;
   yyparse(arena, &lex, &result);
   return result.value;
+}
+
+// FbldParseQNameFromString -- see documentation in fbld.h
+FbldQName* FbldParseValueFromString(FblcArena* arena, const char* string)
+{
+  Lex lex = {
+    .c = START_QNAME,
+    .loc = { .source = string, .line = 1, .col = 0 },
+    .fin = NULL,
+    .sin = string
+  };
+  ParseResult result;
+  result.qname = NULL;
+  yyparse(arena, &lex, &result);
+  return result.qname;
 }

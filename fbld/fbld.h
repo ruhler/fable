@@ -77,9 +77,8 @@ typedef struct {
 //   margs - The module arguments to the module.
 //
 // In the case of modules passed as parameters, FbldMRef is still used, but
-// with empty targs and margs. It should be clear from the context that these
-// names refer to module parameters rather than global modules of the same
-// name.
+// with NULL targs and margs. This is in contrast to a global module with no
+// type or module arguments, which will have non-NULL, empty targs and margs.
 typedef struct {
   FbldName* name;
   FbldQNameV* targs;
@@ -283,7 +282,7 @@ typedef struct {
 typedef struct {
   FbldDecl _base;
   FbldMRef* mref;
-  FbldUsingItemV* items;
+  FbldUsingItemV* itemv;
 } FbldUsingDecl;
 
 // FbldAbstractTypeDecl --
@@ -326,7 +325,7 @@ typedef struct {
 // FbldMType --
 //   An fbld mtype declaration.
 typedef struct {
-  FbldName* mname;
+  FbldName* name;
   FbldNameV* targs;
   FbldDeclV* declv;
 } FbldMType;
@@ -360,13 +359,13 @@ typedef struct {
 //   An fbld mdefn declaration.
 //
 // Fields:
-//   mname - The name of the module being defined.
+//   name - The name of the module being defined.
 //   targs - The type parameters of the module.
 //   margs - The module parameters of the module.
 //   iref - The interface the module implements.
 //   declv - The declarations within the module definition.
 typedef struct {
-  FbldName* mname;
+  FbldName* name;
   FbldNameV* targs;
   FbldMArgV* margs;
   FbldIRef* iref;
@@ -408,7 +407,7 @@ typedef struct {
 // Side effects:
 //   Behavior is undefined if the module name of the entity has not been
 //   resolved.
-FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQName* entity);
+// FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQName* entity);
 
 // FbldKind --
 //   An enum used to distinguish between struct and union values.
@@ -436,8 +435,8 @@ struct FbldValue {
   FbldValueV* fieldv;
 };
 
-// FbldParseMDecl --
-//   Parse the module declaration from the file with the given filename.
+// FbldParseMType --
+//   Parse the mtype declaration from the file with the given filename.
 //
 // Inputs:
 //   arena - The arena to use for allocating the parsed declaration.
@@ -453,7 +452,7 @@ struct FbldValue {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned declaration if there is no error.
-FbldMDecl* FbldParseMDecl(FblcArena* arena, const char* filename);
+FbldMType* FbldParseMDecl(FblcArena* arena, const char* filename);
 
 // FbldParseMDefn --
 //   Parse the module definition from the file with the given filename.
@@ -492,6 +491,25 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename);
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned value if there is no error.
 FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string);
+
+// FbldParseQNameFromString --
+//   Parse an FbldQName from the given string.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed definition.
+//   string - The string to parse the value from.
+//
+// Results:
+//   The parsed value, or NULL if the value could not be parsed.
+//
+// Side effects:
+//   Prints an error message to stderr if the value cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned value if there is no error.
+FbldQName* FbldParseQNameFromString(FblcArena* arena, const char* string);
 
 // FbldStringV --
 //   A vector of char* used for describing fbld search paths.
@@ -530,7 +548,7 @@ typedef struct {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations if there is no error.
-FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
+// FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
 
 // FbldLoadMDefn --
 //   Load the module definition for the module with the given name.
@@ -564,7 +582,7 @@ FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the definition and all loaded declarations if there is no error.
-FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
+// FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
 
 // FbldLoadModules --
 //   Load all module definitions and declarations required to compile the
@@ -596,7 +614,7 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, 
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations and definitions if there is no error.
-bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
+// bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
 
 // FbldCheckMDecl --
 //   Check that the given module declaration is well formed and well typed.
@@ -613,7 +631,7 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, Fbld
 // Side effects:
 //   If the module declaration is not well formed, an error message is
 //   printed to stderr describing the problem with the module declaration.
-bool FbldCheckMDecl(FbldMDeclV* mdeclv, FbldMDecl* mdecl);
+// bool FbldCheckMDecl(FbldMDeclV* mdeclv, FbldMDecl* mdecl);
 
 // FbldCheckMDefn --
 //   Check that the given module definition is well formed, well typed, and
@@ -631,7 +649,7 @@ bool FbldCheckMDecl(FbldMDeclV* mdeclv, FbldMDecl* mdecl);
 // Side effects:
 //   If the module definition is not well formed, an error message is
 //   printed to stderr describing the problem with the module definition.
-bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn);
+// bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn);
 
 // FbldAccessLoc --
 //   The location of an access expression, for aid in debugging undefined
@@ -668,7 +686,7 @@ typedef struct {
 //   Updates accessv with the location of compiled access expressions.
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program.
-FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mdefnv, FbldQName* entity);
+// FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mdefnv, FbldQName* entity);
 
 // FbldCompileValue --
 //   Compile an fbld value to an fblc value.
@@ -684,5 +702,5 @@ FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mde
 // Side effects:
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program or the fbld value is not well typed.
-FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value);
+// FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value);
 #endif // FBLD_H_

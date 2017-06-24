@@ -7,7 +7,7 @@
 
 
 // FbldNamesEqual -- see documentation in fbld.h
-bool FbldNamesEqual(FbldName a, FbldName b)
+bool FbldNamesEqual(const char* a, const char* b)
 {
   return strcmp(a, b) == 0;
 }

@@ -13,7 +13,7 @@ set FLAGS [list -I fblc -I fbld -std=c99 -pedantic -Wall -Werror -O0 -fprofile-a
 # the out directory so that the profile information generated when running
 # code from the objects is placed in a subdirectory of the out directory.
 exec mkdir -p out/obj/fblc out/obj/fbld
-foreach {x} [glob fblc/*.c fbld/*.c] {
+foreach {x} [glob fblc/*.c fbld/loc.c fbld/name.c] {
   set obj out/obj/[string map {.c .o} $x]
   run gcc {*}$FLAGS -c -o $obj $x
 }
@@ -32,7 +32,8 @@ run ar rcs out/libfblc.a {*}$fblc_objs
 
 # Generate libfbld.a
 set fbld_objs [list]
-foreach {x} [list check compile decl load loc name parse.tab] {
+#foreach {x} [list check compile decl load loc name parse.tab]
+foreach {x} [list loc name parse.tab] {
   lappend fbld_objs out/obj/fbld/$x.o
 }
 run ar rcs out/libfbld.a {*}$fbld_objs
