@@ -79,11 +79,6 @@ Miscellanous:
 * Test that tail recursive functions and procedures don't smash the stack.
   - And document the performance model which says tail recursive functions
     should not smash the stack.
-* Test that a link's type is valid.
-* Test that a link action's ports can't shadow ports already in scope.
-* Test that a link can't use the same name for the get and put ports.
-* Test that a proc can't have multiple ports of the same name, with or without
-  the same polarity.
 * Test what happens when we try to access the wrong field of a union.
 
 * Better document that for binary encodings of values, the top level value is

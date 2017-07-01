@@ -413,15 +413,16 @@ static FblcsType* CheckActn(FblcsProgram* prog, Vars* vars, Ports* ports, FblcsA
       FblcsLinkActn* link_actn = (FblcsLinkActn*)actn;
       FblcsType* type = CheckType(prog, &link_actn->type, error);
 
-      // TODO: write a test case and verify that we check the get name and put
-      // names are distinct.
-
       for (Ports* curr = ports; curr != NULL; curr = curr->next) {
         if (FblcsNamesEqual(curr->name, link_actn->get.name)) {
           ReportError("Redefinition of port '%s'\n", error, link_actn->get.loc, link_actn->get.name);
         } else if (FblcsNamesEqual(curr->name, link_actn->put.name)) {
           ReportError("Redefinition of port '%s'\n", error, link_actn->put.loc, link_actn->put.name);
         }
+      }
+
+      if (FblcsNamesEqual(link_actn->get.name, link_actn->put.name)) {
+        ReportError("Redefinition of port '%s'\n", error, link_actn->put.loc, link_actn->put.name);
       }
 
       Ports getport = {
