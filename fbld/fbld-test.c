@@ -479,11 +479,11 @@ int main(int argc, char* argv[])
   } else if (decl->tag == FBLC_FUNC_DECL) {
     // Make a proc wrapper for the function.
     FblcFuncDecl* func = (FblcFuncDecl*)decl;
-    FblcEvalActn* body = arena->alloc(arena, sizeof(FblcEvalActn));
+    FblcEvalActn* body = FBLC_ALLOC(arena, FblcEvalActn);
     body->_base.tag = FBLC_EVAL_ACTN;
     body->arg = func->body;
 
-    proc = arena->alloc(arena, sizeof(FblcProcDecl));
+    proc = FBLC_ALLOC(arena, FblcProcDecl);
     proc->_base.tag = FBLC_PROC_DECL;
     proc->portv.size = 0;
     proc->portv.xs = NULL;

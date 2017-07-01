@@ -133,7 +133,7 @@ start:
    ;
  
 mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
-          $$ = arena->alloc(arena, sizeof(FbldMType));
+          $$ = FBLC_ALLOC(arena, FbldMType);
           $$->name = $2;
           $$->targs = $4;
           $$->declv = $7;
@@ -141,7 +141,7 @@ mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
      ;
 
 mdefn: "mdefn" name '<' name_list ';' marg_list ';' iref '>' '{' defn_list '}' ';' {
-          $$ = arena->alloc(arena, sizeof(FbldMDefn));
+          $$ = FBLC_ALLOC(arena, FbldMDefn);
           $$->name = $2;
           $$->targs = $4;
           $$->margs = $6;
@@ -156,7 +156,7 @@ keyword: "mtype" | "mdefn" | "type" | "struct" | "union" | "func" | "proc" | "us
 
 decl_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldDeclV));
+      $$ = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *$$);
     }
   | decl_list decl {
@@ -167,7 +167,7 @@ decl_list:
 
 expr_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldExprV));
+      $$ = FBLC_ALLOC(arena, FbldExprV);
       FblcVectorInit(arena, *$$);
     }
   | non_empty_expr_list
@@ -175,7 +175,7 @@ expr_list:
 
 non_empty_expr_list:
   expr {
-      $$ = arena->alloc(arena, sizeof(FbldExprV));
+      $$ = FBLC_ALLOC(arena, FbldExprV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
@@ -186,7 +186,7 @@ non_empty_expr_list:
   ;
 
 using_decl: "using" mref '{' using_item_list '}' {
-      FbldUsingDecl* decl = arena->alloc(arena, sizeof(FbldUsingDecl));
+      FbldUsingDecl* decl = FBLC_ALLOC(arena, FbldUsingDecl);
       decl->_base.tag = FBLD_USING_DECL;
       decl->_base.name = NULL;  // TODO: What to put here?
       decl->mref = $2;
@@ -196,7 +196,7 @@ using_decl: "using" mref '{' using_item_list '}' {
     ;
 
 struct_decl: "struct" name '(' arg_list ')' {
-      FbldStructDecl* decl = arena->alloc(arena, sizeof(FbldStructDecl));
+      FbldStructDecl* decl = FBLC_ALLOC(arena, FbldStructDecl);
       decl->_base.tag = FBLD_STRUCT_DECL;
       decl->_base.name = $2;
       decl->fieldv = $4;
@@ -205,7 +205,7 @@ struct_decl: "struct" name '(' arg_list ')' {
     ;
 
 union_decl: "union" name '(' non_empty_arg_list ')' {
-      FbldUnionDecl* decl = arena->alloc(arena, sizeof(FbldUnionDecl));
+      FbldUnionDecl* decl = FBLC_ALLOC(arena, FbldUnionDecl);
       decl->_base.tag = FBLD_UNION_DECL;
       decl->_base.name = $2;
       decl->fieldv = $4;
@@ -214,7 +214,7 @@ union_decl: "union" name '(' non_empty_arg_list ')' {
     ;
 
 func_decl: "func" name '(' arg_list ';' qname ')' {
-      $$ = arena->alloc(arena, sizeof(FbldFuncDecl));
+      $$ = FBLC_ALLOC(arena, FbldFuncDecl);
       $$->_base.tag = FBLD_FUNC_DECL;
       $$->_base.name = $2;
       $$->argv = $4;
@@ -225,7 +225,7 @@ func_decl: "func" name '(' arg_list ';' qname ')' {
 decl:
     using_decl ';'
   | "type" name ';' {
-      $$ = arena->alloc(arena, sizeof(FbldAbstractTypeDecl));
+      $$ = FBLC_ALLOC(arena, FbldAbstractTypeDecl);
       $$->tag = FBLD_ABSTRACT_TYPE_DECL;
       $$->name = $2;
     }
@@ -251,7 +251,7 @@ defn:
 
 stmt: expr ';' { $$ = $1; }
     | qname name '=' expr ';' stmt {
-        FbldLetExpr* let_expr = arena->alloc(arena, sizeof(FbldLetExpr));
+        FbldLetExpr* let_expr = FBLC_ALLOC(arena, FbldLetExpr);
         let_expr->_base.tag = FBLC_LET_EXPR;
         let_expr->_base.loc = @$;
         let_expr->type = $1;
@@ -267,7 +267,7 @@ expr:
        $$ = $2;
     }
   | name {
-      FbldVarExpr* var_expr = arena->alloc(arena, sizeof(FbldVarExpr));
+      FbldVarExpr* var_expr = FBLC_ALLOC(arena, FbldVarExpr);
       var_expr->_base.tag = FBLC_VAR_EXPR;
       var_expr->_base.loc = @$;
       var_expr->var = $1;
@@ -275,7 +275,7 @@ expr:
       $$ = &var_expr->_base;
     }
   | qname '(' expr_list ')' {
-      FbldAppExpr* app_expr = arena->alloc(arena, sizeof(FbldAppExpr));
+      FbldAppExpr* app_expr = FBLC_ALLOC(arena, FbldAppExpr);
       app_expr->_base.tag = FBLC_APP_EXPR;
       app_expr->_base.loc = @$;
       app_expr->func = $1;
@@ -283,7 +283,7 @@ expr:
       $$ = &app_expr->_base;
     }
   | qname ':' name '(' expr ')' {
-      FbldUnionExpr* union_expr = arena->alloc(arena, sizeof(FbldUnionExpr));
+      FbldUnionExpr* union_expr = FBLC_ALLOC(arena, FbldUnionExpr);
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->_base.loc = @$;
       union_expr->type = $1;
@@ -293,7 +293,7 @@ expr:
       $$ = &union_expr->_base;
     }
   | expr '.' name {
-      FbldAccessExpr* access_expr = arena->alloc(arena, sizeof(FbldAccessExpr));
+      FbldAccessExpr* access_expr = FBLC_ALLOC(arena, FbldAccessExpr);
       access_expr->_base.tag = FBLC_ACCESS_EXPR;
       access_expr->_base.loc = @$;
       access_expr->obj = $1;
@@ -302,7 +302,7 @@ expr:
       $$ = &access_expr->_base;
     }
   | '?' '(' expr ';' non_empty_expr_list ')' {
-      FbldCondExpr* cond_expr = arena->alloc(arena, sizeof(FbldCondExpr));
+      FbldCondExpr* cond_expr = FBLC_ALLOC(arena, FbldCondExpr);
       cond_expr->_base.tag = FBLC_COND_EXPR;
       cond_expr->_base.loc = @$;
       cond_expr->select = $3;
@@ -313,7 +313,7 @@ expr:
     
 defn_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldDeclV));
+      $$ = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *$$);
     }
   | defn_list defn {
@@ -324,11 +324,11 @@ defn_list:
 
 name_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldNameV));
+      $$ = FBLC_ALLOC(arena, FbldNameV);
       FblcVectorInit(arena, *$$);
     }
   | name {
-      $$ = arena->alloc(arena, sizeof(FbldNameV));
+      $$ = FBLC_ALLOC(arena, FbldNameV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
@@ -340,11 +340,11 @@ name_list:
 
 qname_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldQNameV));
+      $$ = FBLC_ALLOC(arena, FbldQNameV);
       FblcVectorInit(arena, *$$);
     }
   | qname {
-      $$ = arena->alloc(arena, sizeof(FbldQNameV));
+      $$ = FBLC_ALLOC(arena, FbldQNameV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
@@ -356,11 +356,11 @@ qname_list:
 
 mref_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldMRefV));
+      $$ = FBLC_ALLOC(arena, FbldMRefV);
       FblcVectorInit(arena, *$$);
     }
   | mref {
-      $$ = arena->alloc(arena, sizeof(FbldMRefV));
+      $$ = FBLC_ALLOC(arena, FbldMRefV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
@@ -372,22 +372,22 @@ mref_list:
 
 arg_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldTypedNameV));
+      $$ = FBLC_ALLOC(arena, FbldTypedNameV);
       FblcVectorInit(arena, *$$);
     }
   | non_empty_arg_list ;
 
 non_empty_arg_list:
     qname name {
-      $$ = arena->alloc(arena, sizeof(FbldTypedNameV));
+      $$ = FBLC_ALLOC(arena, FbldTypedNameV);
       FblcVectorInit(arena, *$$);
-      FbldTypedName* tname = arena->alloc(arena, sizeof(FbldTypedName));
+      FbldTypedName* tname = FBLC_ALLOC(arena, FbldTypedName);
       tname->type = $1;
       tname->name = $2;
       FblcVectorAppend(arena, *$$, tname);
     }
   | non_empty_arg_list ',' qname name {
-      FbldTypedName* tname = arena->alloc(arena, sizeof(FbldTypedName));
+      FbldTypedName* tname = FBLC_ALLOC(arena, FbldTypedName);
       tname->type = $3;
       tname->name = $4;
       FblcVectorAppend(arena, *$1, tname);
@@ -397,26 +397,26 @@ non_empty_arg_list:
 
 qname:
     name {
-      $$ = arena->alloc(arena, sizeof(FbldQName));
+      $$ = FBLC_ALLOC(arena, FbldQName);
       $$->name = $1;
       $$->mref = NULL;
     }
   | name '@' mref {
-      $$ = arena->alloc(arena, sizeof(FbldQName));
+      $$ = FBLC_ALLOC(arena, FbldQName);
       $$->name = $1;
       $$->mref = $3;
     }
   ;
 
 iref: name '<' qname_list '>' {
-      $$ = arena->alloc(arena, sizeof(FbldIRef));
+      $$ = FBLC_ALLOC(arena, FbldIRef);
       $$->name = $1;
       $$->targs = $3;
     }
   ;
 
 mref: name '<' qname_list ';' mref_list '>' {
-      $$ = arena->alloc(arena, sizeof(FbldMRef));
+      $$ = FBLC_ALLOC(arena, FbldMRef);
       $$->name = $1;
       $$->targs = $3;
       $$->margs = $5;
@@ -425,18 +425,18 @@ mref: name '<' qname_list ';' mref_list '>' {
 
 value:
     qname '(' value_list ')' {
-      $$ = arena->alloc(arena, sizeof(FbldValue));
+      $$ = FBLC_ALLOC(arena, FbldValue);
       $$->kind = FBLD_STRUCT_KIND;
       $$->type = $1;
       $$->tag = NULL;
       $$->fieldv = $3;
     }
   | qname ':' name '(' value ')' {
-      $$ = arena->alloc(arena, sizeof(FbldValue));
+      $$ = FBLC_ALLOC(arena, FbldValue);
       $$->kind = FBLD_UNION_KIND;
       $$->type = $1;
       $$->tag = $3;
-      $$->fieldv = arena->alloc(arena, sizeof(FbldValueV));
+      $$->fieldv = FBLC_ALLOC(arena, FbldValueV);
       FblcVectorInit(arena, *$$->fieldv);
       FblcVectorAppend(arena, *$$->fieldv, $5);
     }
@@ -444,7 +444,7 @@ value:
 
 value_list:
     %empty {
-      $$ = arena->alloc(arena, sizeof(FbldValueV));
+      $$ = FBLC_ALLOC(arena, FbldValueV);
       FblcVectorInit(arena, *$$);
     }
   | non_empty_value_list
@@ -452,7 +452,7 @@ value_list:
 
 non_empty_value_list:
     value {
-      $$ = arena->alloc(arena, sizeof(FbldValueV));
+      $$ = FBLC_ALLOC(arena, FbldValueV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
@@ -569,7 +569,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
     is_comment_start = (lex->c == '#');
   }
 
-  FbldLoc* loc = arena->alloc(arena, sizeof(FbldLoc));
+  FbldLoc* loc = FBLC_ALLOC(arena, FbldLoc);
   loc->source = lex->loc.source;
   loc->line = lex->loc.line;
   loc->col = lex->loc.col;
@@ -599,7 +599,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
     ReadNextChar(lex);
   }
   FblcVectorAppend(arena, namev, '\0');
-  lvalp->name = arena->alloc(arena, sizeof(FbldNameL));
+  lvalp->name = FBLC_ALLOC(arena, FbldNameL);
   lvalp->name->name = namev.xs;
   lvalp->name->loc = loc;
 

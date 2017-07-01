@@ -225,7 +225,7 @@ static void Run(FblcArena* arena, FblcInstr* instr, Threads* threads, Thread* th
 //   calling FreeThread when the object is no longer needed.
 static Thread* NewThread(FblcArena* arena, Vars* vars, Ports* ports, Cmd* cmd)
 {
-  Thread* thread = arena->alloc(arena, sizeof(Thread));
+  Thread* thread = FBLC_ALLOC(arena, Thread);
   thread->vars = vars;
   thread->ports = ports;
   thread->cmd = cmd;
@@ -315,7 +315,7 @@ static Thread* GetThread(Threads* threads)
 //   should be freed by calling FreeLink.
 static Link* NewLink(FblcArena* arena)
 {
-  Link* link = arena->alloc(arena, sizeof(Link));
+  Link* link = FBLC_ALLOC(arena, Link);
   link->head = NULL;
   link->tail = NULL;
   link->waiting.head = NULL;
@@ -369,7 +369,7 @@ void FreeLink(FblcArena* arena, Link* link)
 //   Places the given value on the link.
 static void PutValue(FblcArena* arena, Link* link, FblcValue* value)
 {
-  Values* ntail = arena->alloc(arena, sizeof(Values));
+  Values* ntail = FBLC_ALLOC(arena, Values);
   ntail->value = value;
   ntail->next = NULL;
   if (link->head == NULL) {
@@ -464,7 +464,7 @@ static FblcValue* LookupVal(Vars* vars, FblcVarId id)
 //   Performs arena allocations.
 static Vars* AddVar(FblcArena* arena, Vars* vars)
 {
-  Vars* newvars = arena->alloc(arena, sizeof(Vars));
+  Vars* newvars = FBLC_ALLOC(arena, Vars);
   newvars->value = NULL;
   newvars->next = vars;
   return newvars;
@@ -507,7 +507,7 @@ static Link* LookupPort(Ports* ports, FblcPortId id)
 //   Performs arena allocations.
 static Ports* AddPort(FblcArena* arena, Ports* ports, Link* link)
 {
-  Ports* nports = arena->alloc(arena, sizeof(Ports));
+  Ports* nports = FBLC_ALLOC(arena, Ports);
   nports->link = link;
   nports->next = ports;
   return nports;
@@ -534,7 +534,7 @@ static Cmd* MkExprCmd(FblcArena* arena, FblcExpr* expr, FblcValue** target, Cmd*
   assert(expr != NULL);
   assert(target != NULL);
 
-  ExprCmd* cmd = arena->alloc(arena, sizeof(ExprCmd));
+  ExprCmd* cmd = FBLC_ALLOC(arena, ExprCmd);
   cmd->_base.tag = CMD_EXPR;
   cmd->_base.next = next;
   cmd->expr = expr;
@@ -563,7 +563,7 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
   assert(actn != NULL);
   assert(target != NULL);
 
-  ActnCmd* cmd = arena->alloc(arena, sizeof(ActnCmd));
+  ActnCmd* cmd = FBLC_ALLOC(arena, ActnCmd);
   cmd->_base.tag = CMD_ACTN;
   cmd->_base.next = next;
   cmd->actn = actn;
@@ -590,7 +590,7 @@ static Cmd* MkActnCmd(FblcArena* arena, FblcActn* actn, FblcValue** target, Cmd*
 //   Performs arena allocations.
 static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcValue** target, FblcExpr* source, Cmd* next)
 {
-  AccessCmd* cmd = arena->alloc(arena, sizeof(AccessCmd));
+  AccessCmd* cmd = FBLC_ALLOC(arena, AccessCmd);
   cmd->_base.tag = CMD_ACCESS;
   cmd->_base.next = next;
   cmd->value = value;
@@ -618,7 +618,7 @@ static Cmd* MkAccessCmd(FblcArena* arena, FblcValue* value, size_t field, FblcVa
 //   Performs arena allocations.
 static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices, FblcValue** target, Cmd* next)
 {
-  CondExprCmd* cmd = arena->alloc(arena, sizeof(CondExprCmd));
+  CondExprCmd* cmd = FBLC_ALLOC(arena, CondExprCmd);
   cmd->_base.tag = CMD_COND_EXPR;
   cmd->_base.next = next;
   cmd->value = value;
@@ -645,7 +645,7 @@ static Cmd* MkCondExprCmd(FblcArena* arena, FblcValue* value, FblcExpr** choices
 //   Performs arena allocations.
 static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices, FblcValue** target, Cmd* next)
 {
-  CondActnCmd* cmd = arena->alloc(arena, sizeof(CondActnCmd));
+  CondActnCmd* cmd = FBLC_ALLOC(arena, CondActnCmd);
   cmd->_base.tag = CMD_COND_ACTN;
   cmd->_base.next = next;
   cmd->value = value;
@@ -671,7 +671,7 @@ static Cmd* MkCondActnCmd(FblcArena* arena, FblcValue* value, FblcActn** choices
 //   Performs arena allocations.
 static Cmd* MkScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, bool is_pop, Cmd* next)
 {
-  ScopeCmd* cmd = arena->alloc(arena, sizeof(ScopeCmd));
+  ScopeCmd* cmd = FBLC_ALLOC(arena, ScopeCmd);
   cmd->_base.tag = CMD_SCOPE;
   cmd->_base.next = next;
   cmd->vars = vars;
@@ -735,7 +735,7 @@ static Cmd* MkPopScopeCmd(FblcArena* arena, Vars* vars, Ports* ports, Cmd* next)
 //   Performs arena allocations.
 static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 {
-  JoinCmd* cmd = arena->alloc(arena, sizeof(JoinCmd));
+  JoinCmd* cmd = FBLC_ALLOC(arena, JoinCmd);
   cmd->_base.tag = CMD_JOIN;
   cmd->_base.next = next;
   cmd->count = count;
@@ -759,7 +759,7 @@ static Cmd* MkJoinCmd(FblcArena* arena, size_t count, Cmd* next)
 static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next)
 {
   assert(target != NULL);
-  PutCmd* cmd = arena->alloc(arena, sizeof(PutCmd));
+  PutCmd* cmd = FBLC_ALLOC(arena, PutCmd);
   cmd->_base.tag = CMD_PUT;
   cmd->_base.next = next;
   cmd->target = target;
@@ -783,7 +783,7 @@ static Cmd* MkPutCmd(FblcArena* arena, FblcValue** target, Link* link, Cmd* next
 //   Performs arena allocations.
 static Cmd* MkFreeLinkCmd(FblcArena* arena, Link* link, Cmd* next)
 {
-  FreeLinkCmd* cmd = arena->alloc(arena, sizeof(FreeLinkCmd));
+  FreeLinkCmd* cmd = FBLC_ALLOC(arena, FreeLinkCmd);
   cmd->_base.tag = CMD_FREE_LINK;
   cmd->_base.next = next;
   cmd->link = link;

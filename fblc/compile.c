@@ -107,7 +107,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
   switch (expr->tag) {
     case FBLCS_VAR_EXPR: {
       FblcsVarExpr* svar_expr = (FblcsVarExpr*)expr;
-      FblcVarExpr* var_expr = arena->alloc(arena, sizeof(FblcVarExpr));
+      FblcVarExpr* var_expr = FBLC_ALLOC(arena, FblcVarExpr);
       var_expr->_base.tag = FBLC_VAR_EXPR;
       var_expr->var = svar_expr->var.id;
       return &var_expr->_base;
@@ -117,7 +117,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
       FblcsAppExpr* sapp_expr = (FblcsAppExpr*)expr;
       FblcFunc* func = LookupFunc(sprog, prog, sapp_expr->func.name);
       if (func != NULL) {
-        FblcAppExpr* app_expr = arena->alloc(arena, sizeof(FblcAppExpr));
+        FblcAppExpr* app_expr = FBLC_ALLOC(arena, FblcAppExpr);
         FblcVectorInit(arena, app_expr->argv);
         app_expr->_base.tag = FBLC_APP_EXPR;
         app_expr->func = func;
@@ -127,7 +127,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
         }
         return &app_expr->_base;
       } else {
-        FblcStructExpr* struct_expr = arena->alloc(arena, sizeof(FblcStructExpr));
+        FblcStructExpr* struct_expr = FBLC_ALLOC(arena, FblcStructExpr);
         FblcVectorInit(arena, struct_expr->argv);
         struct_expr->_base.tag = FBLC_STRUCT_EXPR;
         struct_expr->type = LookupType(sprog, prog, sapp_expr->func.name);
@@ -141,7 +141,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_ACCESS_EXPR: {
       FblcsAccessExpr* saccess_expr = (FblcsAccessExpr*)expr;
-      FblcAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcAccessExpr));
+      FblcAccessExpr* access_expr = FBLC_ALLOC(arena, FblcAccessExpr);
       access_expr->_base.tag = FBLC_ACCESS_EXPR;
       access_expr->obj = CompileExpr(arena, sprog, prog, saccess_expr->obj);
       access_expr->field = saccess_expr->field.id;
@@ -150,7 +150,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_UNION_EXPR: {
       FblcsUnionExpr* sunion_expr = (FblcsUnionExpr*)expr;
-      FblcUnionExpr* union_expr = arena->alloc(arena, sizeof(FblcUnionExpr));
+      FblcUnionExpr* union_expr = FBLC_ALLOC(arena, FblcUnionExpr);
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->type = LookupType(sprog, prog, sunion_expr->type.name);
       union_expr->field = sunion_expr->field.id;
@@ -160,7 +160,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_LET_EXPR: {
       FblcsLetExpr* slet_expr = (FblcsLetExpr*)expr;
-      FblcLetExpr* let_expr = arena->alloc(arena, sizeof(FblcLetExpr));
+      FblcLetExpr* let_expr = FBLC_ALLOC(arena, FblcLetExpr);
       let_expr->_base.tag = FBLC_LET_EXPR;
       let_expr->type = LookupType(sprog, prog, slet_expr->type.name);
       let_expr->def = CompileExpr(arena, sprog, prog, slet_expr->def);
@@ -170,7 +170,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_COND_EXPR: {
       FblcsCondExpr* scond_expr = (FblcsCondExpr*)expr;
-      FblcCondExpr* cond_expr = arena->alloc(arena, sizeof(FblcCondExpr));
+      FblcCondExpr* cond_expr = FBLC_ALLOC(arena, FblcCondExpr);
       cond_expr->_base.tag = FBLC_COND_EXPR;
       cond_expr->select = CompileExpr(arena, sprog, prog, scond_expr->select);
       FblcVectorInit(arena, cond_expr->argv);
@@ -208,7 +208,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
   switch (actn->tag) {
     case FBLCS_EVAL_ACTN: {
       FblcsEvalActn* seval_actn = (FblcsEvalActn*)actn;
-      FblcEvalActn* eval_actn = arena->alloc(arena, sizeof(FblcEvalActn));
+      FblcEvalActn* eval_actn = FBLC_ALLOC(arena, FblcEvalActn);
       eval_actn->_base.tag = FBLC_EVAL_ACTN;
       eval_actn->arg = CompileExpr(arena, sprog, prog, seval_actn->arg);
       return &eval_actn->_base;
@@ -216,7 +216,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_GET_ACTN: {
       FblcsGetActn* sget_actn = (FblcsGetActn*)actn;
-      FblcGetActn* get_actn = arena->alloc(arena, sizeof(FblcGetActn));
+      FblcGetActn* get_actn = FBLC_ALLOC(arena, FblcGetActn);
       get_actn->_base.tag = FBLC_GET_ACTN;
       get_actn->port = sget_actn->port.id;
       return &get_actn->_base;
@@ -224,7 +224,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_PUT_ACTN: {
       FblcsPutActn* sput_actn = (FblcsPutActn*)actn;
-      FblcPutActn* put_actn = arena->alloc(arena, sizeof(FblcPutActn));
+      FblcPutActn* put_actn = FBLC_ALLOC(arena, FblcPutActn);
       put_actn->_base.tag = FBLC_PUT_ACTN;
       put_actn->port = sput_actn->port.id;
       put_actn->arg = CompileExpr(arena, sprog, prog, sput_actn->arg);
@@ -233,7 +233,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_CALL_ACTN: {
       FblcsCallActn* scall_actn = (FblcsCallActn*)actn;
-      FblcCallActn* call_actn = arena->alloc(arena, sizeof(FblcCallActn));
+      FblcCallActn* call_actn = FBLC_ALLOC(arena, FblcCallActn);
       call_actn->_base.tag = FBLC_CALL_ACTN;
       call_actn->proc = LookupProc(sprog, prog, scall_actn->proc.name);
       FblcVectorInit(arena, call_actn->portv);
@@ -251,7 +251,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_LINK_ACTN: {
       FblcsLinkActn* slink_actn = (FblcsLinkActn*)actn;
-      FblcLinkActn* link_actn = arena->alloc(arena, sizeof(FblcLinkActn));
+      FblcLinkActn* link_actn = FBLC_ALLOC(arena, FblcLinkActn);
       link_actn->_base.tag = FBLC_LINK_ACTN;
       link_actn->type = LookupType(sprog, prog, slink_actn->type.name);
       link_actn->body = CompileActn(arena, sprog, prog, slink_actn->body);
@@ -260,7 +260,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_EXEC_ACTN: {
       FblcsExecActn* sexec_actn = (FblcsExecActn*)actn;
-      FblcExecActn* exec_actn = arena->alloc(arena, sizeof(FblcExecActn));
+      FblcExecActn* exec_actn = FBLC_ALLOC(arena, FblcExecActn);
       exec_actn->_base.tag = FBLC_EXEC_ACTN;
       FblcVectorInit(arena, exec_actn->execv);
       for (size_t i = 0; i < sexec_actn->execv.size; ++i) {
@@ -274,7 +274,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 
     case FBLCS_COND_ACTN: {
       FblcsCondActn* scond_actn = (FblcsCondActn*)actn;
-      FblcCondActn* cond_actn = arena->alloc(arena, sizeof(FblcCondActn));
+      FblcCondActn* cond_actn = FBLC_ALLOC(arena, FblcCondActn);
       cond_actn->_base.tag = FBLC_COND_ACTN;
       cond_actn->select = CompileExpr(arena, sprog, prog, scond_actn->select);
       FblcVectorInit(arena, cond_actn->argv);
@@ -304,12 +304,12 @@ FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* sprog, FblcsNam
 
     // The main entry is a function, not a process. Add a wrapper process to
     // the program to use as the main entry process.
-    FblcsProc* proc = arena->alloc(arena, sizeof(FblcsProc));
+    FblcsProc* proc = FBLC_ALLOC(arena, FblcsProc);
     proc->name = func->name;
     FblcVectorInit(arena, proc->portv);
     proc->argv = func->argv;
     proc->return_type = func->return_type;
-    FblcsEvalActn* body = arena->alloc(arena, sizeof(FblcsEvalActn));
+    FblcsEvalActn* body = FBLC_ALLOC(arena, FblcsEvalActn);
     body->_base.tag = FBLCS_EVAL_ACTN;
     body->_base.loc = func->body->loc;
     body->arg = func->body;
@@ -320,7 +320,7 @@ FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* sprog, FblcsNam
   // We store compiled types, functions, and processes in an FblcProgram that
   // parallels the given FblcsProgram. e.g. prog->funcv[i] is where the
   // compiled version of sprog->funcv[i] will be stored.
-  FblcProgram* prog = arena->alloc(arena, sizeof(FblcProgram));
+  FblcProgram* prog = FBLC_ALLOC(arena, FblcProgram);
   FblcVectorInit(arena, prog->typev);
   FblcVectorInit(arena, prog->funcv);
   FblcVectorInit(arena, prog->procv);
@@ -328,15 +328,15 @@ FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* sprog, FblcsNam
   // Pass 1: Pre-allocate all of the compiled entities so they can be referenced
   // when compiling other entities.
   for (size_t i = 0; i < sprog->typev.size; ++i) {
-    FblcType* type = arena->alloc(arena, sizeof(FblcType));
+    FblcType* type = FBLC_ALLOC(arena, FblcType);
     FblcVectorAppend(arena, prog->typev, type);
   }
   for (size_t i = 0; i < sprog->funcv.size; ++i) {
-    FblcFunc* func = arena->alloc(arena, sizeof(FblcFunc));
+    FblcFunc* func = FBLC_ALLOC(arena, FblcFunc);
     FblcVectorAppend(arena, prog->funcv, func);
   }
   for (size_t i = 0; i < sprog->procv.size; ++i) {
-    FblcProc* proc = arena->alloc(arena, sizeof(FblcProc));
+    FblcProc* proc = FBLC_ALLOC(arena, FblcProc);
     FblcVectorAppend(arena, prog->procv, proc);
   }
 
@@ -394,7 +394,7 @@ FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* sprog, FblcsNam
     proc->body = CompileActn(arena, sprog, prog, sproc->body);
   }
 
-  FblcsLoaded* loaded = arena->alloc(arena, sizeof(FblcsLoaded));
+  FblcsLoaded* loaded = FBLC_ALLOC(arena, FblcsLoaded);
   loaded->prog = sprog;
   loaded->sproc = FblcsLookupProc(sprog, entry);
   assert(loaded->sproc != NULL);

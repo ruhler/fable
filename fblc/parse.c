@@ -294,7 +294,7 @@ static bool OpenStringTokenStream(TokenStream* toks, const char* source, const c
 static FblcsLoc* GetCurrentLoc(FblcArena* arena, TokenStream* toks)
 {
   SkipToToken(toks);
-  FblcsLoc* loc = arena->alloc(arena, sizeof(FblcsLoc));
+  FblcsLoc* loc = FBLC_ALLOC(arena, FblcsLoc);
   loc->source = toks->loc.source;
   loc->line = toks->loc.line;
   loc->col = toks->loc.col;
@@ -577,7 +577,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     GetNameToken(arena, toks, "start of expression", &start);
     if (IsToken(toks, '(')) {
       // This is an application expression of the form: start(<args>)
-      FblcsAppExpr* app_expr = arena->alloc(arena, sizeof(FblcsAppExpr));
+      FblcsAppExpr* app_expr = FBLC_ALLOC(arena, FblcsAppExpr);
       app_expr->_base.tag = FBLC_APP_EXPR;
       app_expr->_base.loc = loc;
       app_expr->func.loc = start.loc;
@@ -590,7 +590,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else if (IsToken(toks, ':')) {
       // This is a union expression of the form: start:field(<expr>)
       GetToken(toks, ':');
-      FblcsUnionExpr* union_expr = arena->alloc(arena, sizeof(FblcsUnionExpr));
+      FblcsUnionExpr* union_expr = FBLC_ALLOC(arena, FblcsUnionExpr);
       union_expr->_base.tag = FBLC_UNION_EXPR;
       union_expr->_base.loc = loc;
       union_expr->type.loc = start.loc;
@@ -613,7 +613,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       expr = &union_expr->_base;
     } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
-      FblcsLetExpr* let_expr = arena->alloc(arena, sizeof(FblcsLetExpr));
+      FblcsLetExpr* let_expr = FBLC_ALLOC(arena, FblcsLetExpr);
       let_expr->_base.tag = FBLC_LET_EXPR;
       let_expr->_base.loc = loc;
       let_expr->type.loc = start.loc;
@@ -636,7 +636,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return &let_expr->_base;
     } else {
       // This is the variable expression: start
-      FblcsVarExpr* var_expr = arena->alloc(arena, sizeof(FblcsVarExpr));
+      FblcsVarExpr* var_expr = FBLC_ALLOC(arena, FblcsVarExpr);
       var_expr->_base.tag = FBLC_VAR_EXPR;
       var_expr->_base.loc = loc;
       var_expr->var.name.loc = start.loc;
@@ -646,7 +646,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
   } else if (IsToken(toks, '?')) {
     // This is a conditional expression of the form: ?(<expr> ; <args>)
-    FblcsCondExpr* cond_expr = arena->alloc(arena, sizeof(FblcsCondExpr));
+    FblcsCondExpr* cond_expr = FBLC_ALLOC(arena, FblcsCondExpr);
     cond_expr->_base.tag = FBLC_COND_EXPR;
     cond_expr->_base.loc = loc;
     GetToken(toks, '?');
@@ -671,7 +671,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
 
   while (IsToken(toks, '.')) {
     // This is an access expression of the form: <obj>.<field>
-    FblcsAccessExpr* access_expr = arena->alloc(arena, sizeof(FblcsAccessExpr));
+    FblcsAccessExpr* access_expr = FBLC_ALLOC(arena, FblcsAccessExpr);
     access_expr->_base.tag = FBLC_ACCESS_EXPR;
     access_expr->_base.loc = loc;
     access_expr->obj = expr;
@@ -721,7 +721,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     return actn;
   } else if (IsToken(toks, '$')) {
     // This is an eval action of the form: $(<arg>)
-    FblcsEvalActn* eval_actn = arena->alloc(arena, sizeof(FblcsEvalActn));
+    FblcsEvalActn* eval_actn = FBLC_ALLOC(arena, FblcsEvalActn);
     eval_actn->_base.tag = FBLCS_EVAL_ACTN;
     eval_actn->_base.loc = loc;
 
@@ -749,7 +749,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
 
     if (IsToken(toks, ')')) {
-      FblcsGetActn* get_actn = arena->alloc(arena, sizeof(FblcsGetActn));
+      FblcsGetActn* get_actn = FBLC_ALLOC(arena, FblcsGetActn);
       get_actn->_base.tag = FBLCS_GET_ACTN;
       get_actn->_base.loc = loc;
       get_actn->port.name.loc = port.loc;
@@ -758,7 +758,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       GetToken(toks, ')');
       return &get_actn->_base;
     } else {
-      FblcsPutActn* put_actn = arena->alloc(arena, sizeof(FblcsPutActn));
+      FblcsPutActn* put_actn = FBLC_ALLOC(arena, FblcsPutActn);
       put_actn->_base.tag = FBLC_PUT_ACTN;
       put_actn->_base.loc = loc;
       put_actn->port.name.loc = port.loc;
@@ -779,7 +779,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
 
     if (IsToken(toks, '(')) {
       // This is a call action of the form: start(ports, args)
-      FblcsCallActn* call_actn = arena->alloc(arena, sizeof(FblcsCallActn));
+      FblcsCallActn* call_actn = FBLC_ALLOC(arena, FblcsCallActn);
       call_actn->_base.tag = FBLC_CALL_ACTN;
       call_actn->_base.loc = loc;
       GetToken(toks, '(');
@@ -804,7 +804,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return &call_actn->_base;
     } else if (in_stmt && IsToken(toks, '<')) {
       // This is a link expression of the form: start <~> get, put; body
-      FblcsLinkActn* link_actn = arena->alloc(arena, sizeof(FblcsLinkActn));
+      FblcsLinkActn* link_actn = FBLC_ALLOC(arena, FblcsLinkActn);
       link_actn->_base.tag = FBLC_LINK_ACTN;
       link_actn->_base.loc = loc;
       link_actn->type.name = start.name;
@@ -836,7 +836,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else if (in_stmt && IsNameToken(toks)) {
       // This is an exec action of the form:
       //   start var0 = actn0, type1 var1 = actn1, ... ; body
-      FblcsExecActn* exec_actn = arena->alloc(arena, sizeof(FblcsExecActn));
+      FblcsExecActn* exec_actn = FBLC_ALLOC(arena, FblcsExecActn);
       exec_actn->_base.tag = FBLC_EXEC_ACTN;
       exec_actn->_base.loc = loc;
       FblcVectorInit(arena, exec_actn->execv);
@@ -880,7 +880,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
   } else if (IsToken(toks, '?')) {
     // This is a conditional action of the form: ?(<expr> ; <proc>, ...)
-    FblcsCondActn* cond_actn = arena->alloc(arena, sizeof(FblcsCondActn));
+    FblcsCondActn* cond_actn = FBLC_ALLOC(arena, FblcsCondActn);
     cond_actn->_base.tag = FBLC_COND_ACTN;
     cond_actn->_base.loc = loc;
     GetToken(toks, '?');
@@ -929,7 +929,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
     return NULL;
   }
 
-  FblcsProgram* prog = arena->alloc(arena, sizeof(FblcsProgram));
+  FblcsProgram* prog = FBLC_ALLOC(arena, FblcsProgram);
   FblcVectorInit(arena, prog->typev);
   FblcVectorInit(arena, prog->funcv);
   FblcVectorInit(arena, prog->procv);
@@ -946,7 +946,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
     if (FblcsNamesEqual("struct", keyword.name)) {
       // This is a struct declaration of the form: struct name(
       //   type0 field0, type1 field1, ...)
-      FblcsType* type = arena->alloc(arena, sizeof(FblcsType));
+      FblcsType* type = FBLC_ALLOC(arena, FblcsType);
       type->kind = FBLCS_STRUCT_KIND;
       if (!GetNameToken(arena, &toks, "declaration name", &type->name)) {
         return NULL;
@@ -973,7 +973,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
     } else if (FblcsNamesEqual("union", keyword.name)) {
       // This is a union declaration of the form: union name(
       //   type0 field0, type1 field1, ...)
-      FblcsType* type = arena->alloc(arena, sizeof(FblcsType));
+      FblcsType* type = FBLC_ALLOC(arena, FblcsType);
       type->kind = FBLCS_UNION_KIND;
       if (!GetNameToken(arena, &toks, "declaration name", &type->name)) {
         return NULL;
@@ -998,7 +998,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
     } else if (FblcsNamesEqual("func", keyword.name)) {
       // This is a function declaration of the form: func name(
       //   type0 var0, type1 var1, ...; return_type) body
-      FblcsFunc* func = arena->alloc(arena, sizeof(FblcsFunc));
+      FblcsFunc* func = FBLC_ALLOC(arena, FblcsFunc);
       if (!GetNameToken(arena, &toks, "declaration name", &func->name)) {
         return NULL;
       }
@@ -1036,7 +1036,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
       // This is a process declaration of the form: proc name(
       //   type0 polarity0 port0, type1 polarity1, port1, ... ;
       //   type0 var0, type1 var1, ... ; return_type) body
-      FblcsProc* proc = arena->alloc(arena, sizeof(FblcsProc));
+      FblcsProc* proc = FBLC_ALLOC(arena, FblcsProc);
       if (!GetNameToken(arena, &toks, "declaration name", &proc->name)) {
         return NULL;
       }

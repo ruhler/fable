@@ -48,6 +48,20 @@ typedef struct FblcArena {
   void (*free)(struct FblcArena* this, void* ptr);
 } FblcArena;
 
+// FBLC_ALLOC --
+//   A type safer way of allocating objects from an arena.
+//
+// Inputs:
+//   arena - The arena to use for allocation.
+//   T - The type of object to allocate.
+//
+// Results:
+//   A pointer to a newly allocated object of the given type.
+//
+// Side effects:
+//   Uses the arena to allocation the object.
+#define FBLC_ALLOC(arena, T) ((T*) (arena)->alloc((arena), sizeof(T)))
+
 // FblcMallocArena --
 //   A stateless FblcArena that uses malloc and free to implement its alloc
 //   and free functions respectively.

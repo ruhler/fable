@@ -45,7 +45,6 @@ Fbld Application:
  - Rename FblcsTypedName FblcsArg
  - Now that types, func, and processes are separated, store vectors of raw
    types, funcs, and processes rather than vectors of pointers?
- - Create a macro for ALLOC(arena, FblcFoo), that has type safety built in?
  - Put vector type definitions after their corresponding element definitions.
  - Use consistent ordering of definitions in fblc.h, fblcs.h, and all the
    switch statements.
