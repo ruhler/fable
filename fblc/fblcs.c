@@ -12,7 +12,7 @@
 
 
 // FblcsNamesEqual -- see documentation in fblcs.h
-bool FblcsNamesEqual(FblcsName a, FblcsName b)
+bool FblcsNamesEqual(const char* a, const char* b)
 {
   return strcmp(a, b) == 0;
 }
@@ -28,7 +28,7 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...)
 }
 
 // FblcsLookupType -- see documentation in fblcs.h
-FblcsType* FblcsLookupType(FblcsProgram* prog, FblcsName name)
+FblcsType* FblcsLookupType(FblcsProgram* prog, const char* name)
 {
   for (size_t i = 0; i < prog->typev.size; ++i) {
     if (FblcsNamesEqual(prog->typev.xs[i]->name.name, name)) {
@@ -39,7 +39,7 @@ FblcsType* FblcsLookupType(FblcsProgram* prog, FblcsName name)
 }
 
 // FblcsLookupFunc -- see documentation in fblcs.h
-FblcsFunc* FblcsLookupFunc(FblcsProgram* prog, FblcsName name)
+FblcsFunc* FblcsLookupFunc(FblcsProgram* prog, const char* name)
 {
   for (size_t i = 0; i < prog->funcv.size; ++i) {
     if (FblcsNamesEqual(prog->funcv.xs[i]->name.name, name)) {
@@ -50,7 +50,7 @@ FblcsFunc* FblcsLookupFunc(FblcsProgram* prog, FblcsName name)
 }
 
 // FblcsLookupProc -- see documentation in fblcs.h
-FblcsProc* FblcsLookupProc(FblcsProgram* prog, FblcsName name)
+FblcsProc* FblcsLookupProc(FblcsProgram* prog, const char* name)
 {
   for (size_t i = 0; i < prog->procv.size; ++i) {
     if (FblcsNamesEqual(prog->procv.xs[i]->name.name, name)) {

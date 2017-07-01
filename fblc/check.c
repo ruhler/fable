@@ -14,7 +14,7 @@
 //   A mapping from variable name to type.
 typedef struct Vars {
   FblcsType* type;
-  FblcsName name;
+  const char* name;
   struct Vars* next;
 } Vars;
 
@@ -22,7 +22,7 @@ typedef struct Vars {
 //   A mapping from port name to port type and polarity.
 typedef struct Ports {
   FblcsType* type;
-  FblcsName name;
+  const char* name;
   FblcsPolarity polarity;
   struct Ports* next;
 } Ports;

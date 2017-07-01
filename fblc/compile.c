@@ -8,9 +8,9 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static FblcType* LookupType(FblcsProgram* sprog, FblcProgram* prog, FblcsName name);
-static FblcFunc* LookupFunc(FblcsProgram* sprog, FblcProgram* prog, FblcsName name);
-static FblcProc* LookupProc(FblcsProgram* sprog, FblcProgram* prog, FblcsName name);
+static FblcType* LookupType(FblcsProgram* sprog, FblcProgram* prog, const char* name);
+static FblcFunc* LookupFunc(FblcsProgram* sprog, FblcProgram* prog, const char* name);
+static FblcProc* LookupProc(FblcsProgram* sprog, FblcProgram* prog, const char* name);
 static FblcExpr* CompileExpr(FblcArena* arena, FblcsProgram* sprog, FblcProgram* prog, FblcsExpr* expr);
 static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram* prog, FblcsActn* actn);
 
@@ -28,7 +28,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 //
 // Side effects:
 //   None.
-FblcType* LookupType(FblcsProgram* sprog, FblcProgram* prog, FblcsName name)
+FblcType* LookupType(FblcsProgram* sprog, FblcProgram* prog, const char* name)
 {
   for (size_t i = 0; i < sprog->typev.size; ++i) {
     if (FblcsNamesEqual(sprog->typev.xs[i]->name.name, name)) {
@@ -52,7 +52,7 @@ FblcType* LookupType(FblcsProgram* sprog, FblcProgram* prog, FblcsName name)
 //
 // Side effects:
 //   None.
-FblcFunc* LookupFunc(FblcsProgram* sprog, FblcProgram* prog, FblcsName name)
+FblcFunc* LookupFunc(FblcsProgram* sprog, FblcProgram* prog, const char* name)
 {
   for (size_t i = 0; i < sprog->funcv.size; ++i) {
     if (FblcsNamesEqual(sprog->funcv.xs[i]->name.name, name)) {
@@ -76,7 +76,7 @@ FblcFunc* LookupFunc(FblcsProgram* sprog, FblcProgram* prog, FblcsName name)
 //
 // Side effects:
 //   None.
-FblcProc* LookupProc(FblcsProgram* sprog, FblcProgram* prog, FblcsName name)
+FblcProc* LookupProc(FblcsProgram* sprog, FblcProgram* prog, const char* name)
 {
   for (size_t i = 0; i < sprog->procv.size; ++i) {
     if (FblcsNamesEqual(sprog->procv.xs[i]->name.name, name)) {
@@ -293,7 +293,7 @@ static FblcActn* CompileActn(FblcArena* arena, FblcsProgram* sprog, FblcProgram*
 }
 
 // FblcsCompileProgram -- see fblcs.h for documentation.
-FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* sprog, FblcsName entry)
+FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* sprog, const char* entry)
 {
   if (!FblcsLookupProc(sprog, entry)) {
     FblcsFunc* func = FblcsLookupFunc(sprog, entry);

@@ -9,11 +9,6 @@
 
 #include "fblc.h"
 
-// FblcsName --
-//   Represents a name used in an fblcs source file, such as of a type, field,
-//   variable, port, function, or process.
-typedef const char* FblcsName;
-
 // FblcsNamesEqual --
 //   Test if two names are equal.
 //
@@ -26,7 +21,7 @@ typedef const char* FblcsName;
 //
 // Side effects:
 //   None.
-bool FblcsNamesEqual(FblcsName a, FblcsName b);
+bool FblcsNamesEqual(const char* a, const char* b);
 
 // FblcsLoc --
 //   Represents a location in a source file.
@@ -61,7 +56,7 @@ void FblcsReportError(const char* format, FblcsLoc* loc, ...);
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
 typedef struct {
-  FblcsName name;
+  const char* name;
   FblcsLoc* loc;
 } FblcsNameL;
 
@@ -471,7 +466,7 @@ typedef struct {
 //
 // Side effects:
 //   The behavior is undefined if the program environment is not well formed.
-FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* prog, FblcsName entry);
+FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* prog, const char* entry);
 
 // FblcsLoadProgram --
 //   Load a text fblc program from the given file using the given arena for
@@ -505,7 +500,7 @@ FblcsLoaded* FblcsLoadProgram(FblcArena* arena, const char* filename, const char
 //
 // Side effects:
 //   None.
-FblcsType* FblcsLookupType(FblcsProgram* prog, FblcsName name);
+FblcsType* FblcsLookupType(FblcsProgram* prog, const char* name);
 
 // FblcsLookupFunc --
 //   Look up the func declaration with the given name in the given program.
@@ -520,7 +515,7 @@ FblcsType* FblcsLookupType(FblcsProgram* prog, FblcsName name);
 //
 // Side effects:
 //   None.
-FblcsFunc* FblcsLookupFunc(FblcsProgram* prog, FblcsName name);
+FblcsFunc* FblcsLookupFunc(FblcsProgram* prog, const char* name);
 
 // FblcsLookupProc --
 //   Look up the proc declaration with the given name in the given program.
@@ -535,7 +530,7 @@ FblcsFunc* FblcsLookupFunc(FblcsProgram* prog, FblcsName name);
 //
 // Side effects:
 //   None.
-FblcsProc* FblcsLookupProc(FblcsProgram* prog, FblcsName name);
+FblcsProc* FblcsLookupProc(FblcsProgram* prog, const char* name);
 
 // FblcsPrintValue --
 //   Print a value in standard format to the given FILE stream.
