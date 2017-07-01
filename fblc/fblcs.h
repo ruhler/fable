@@ -65,20 +65,20 @@ typedef struct {
   FblcsLoc* loc;
 } FblcsNameL;
 
-// FblcsTypedName --
-//   A pair of type and name, each with location, commonly used for
-//   representing symbol information in fblcs programs.
+// FblcsArg --
+//   An fblcs name with associated type. Used for declaring fields of
+//   types and arguments to functions and processes.
 typedef struct {
   FblcsNameL type;
   FblcsNameL name;
-} FblcsTypedName;
+} FblcsArg;
 
-// FblcsTypedNameV --
-//   A vector of typed names.
+// FblcsArgV --
+//   A vector of fblcs args
 typedef struct {
   size_t size;
-  FblcsTypedName* xs;
-} FblcsTypedNameV;
+  FblcsArg* xs;
+} FblcsArgV;
 
 // FblcsId --
 //   A reference to a variable, field, or port.
@@ -305,7 +305,7 @@ typedef enum {
 typedef struct {
   FblcsKind kind;
   FblcsNameL name;
-  FblcsTypedNameV fieldv;
+  FblcsArgV fieldv;
 } FblcsType;
 
 // FblcsTypeV --
@@ -320,7 +320,7 @@ typedef struct {
 //     'name(arg0 name0, arg1 name1, ...; return_type) body'
 typedef struct {
   FblcsNameL name;
-  FblcsTypedNameV argv;
+  FblcsArgV argv;
   FblcsNameL return_type;
   FblcsExpr* body;
 } FblcsFunc;
@@ -361,7 +361,7 @@ typedef struct {
 typedef struct {
   FblcsNameL name;
   FblcsPortV portv;
-  FblcsTypedNameV argv;
+  FblcsArgV argv;
   FblcsNameL return_type;
   FblcsActn* body;
 } FblcsProc;

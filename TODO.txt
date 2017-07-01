@@ -42,9 +42,6 @@ Fbld Application:
 * Fblc Cleanup
  - Remove FblcName typedef.
  - Rename FblcsNameL FblcsName
- - Rename FblcsTypedName FblcsArg
- - Now that types, func, and processes are separated, store vectors of raw
-   types, funcs, and processes rather than vectors of pointers?
  - Put vector type definitions after their corresponding element definitions.
  - Use consistent ordering of definitions in fblc.h, fblcs.h, and all the
    switch statements.

@@ -158,7 +158,7 @@ static FblcsType* CheckExpr(FblcsProgram* prog, Vars* vars, FblcsExpr* expr, boo
       }
 
       FblcsType* return_type = NULL;
-      FblcsTypedNameV* argv = NULL;
+      FblcsArgV* argv = NULL;
 
       FblcsFunc* func = FblcsLookupFunc(prog, app_expr->func.name);
       if (func != NULL) {
@@ -504,7 +504,7 @@ bool FblcsCheckProgram(FblcsProgram* prog)
     }
 
     for (FblcFieldId field_id = 0; field_id < type->fieldv.size; ++field_id) {
-      FblcsTypedName* field = type->fieldv.xs + field_id;
+      FblcsArg* field = type->fieldv.xs + field_id;
 
       // Check whether a field has already been declared with the same name.
       for (FblcFieldId i = 0; i < field_id; ++i) {
@@ -530,7 +530,7 @@ bool FblcsCheckProgram(FblcsProgram* prog)
     Vars nvars[func->argv.size];
     Vars* vars = NULL;
     for (size_t i = 0; i < func->argv.size; ++i) {
-      FblcsTypedName* var = func->argv.xs + i;
+      FblcsArg* var = func->argv.xs + i;
       for (Vars* curr = vars; curr != NULL; curr = curr->next) {
         if (FblcsNamesEqual(curr->name, var->name.name)) {
           ReportError("Redefinition of argument '%s'\n", &error, var->name.loc, var->name.name);
@@ -579,7 +579,7 @@ bool FblcsCheckProgram(FblcsProgram* prog)
     Vars nvars[proc->argv.size];
     Vars* vars = NULL;
     for (size_t i = 0; i < proc->argv.size; ++i) {
-      FblcsTypedName* var = proc->argv.xs + i;
+      FblcsArg* var = proc->argv.xs + i;
       for (Vars* curr = vars; curr != NULL; curr = curr->next) {
         if (FblcsNamesEqual(curr->name, var->name.name)) {
           ReportError("Redefinition of argument '%s'\n", &error, var->name.loc, var->name.name);

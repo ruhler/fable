@@ -54,7 +54,7 @@ static bool IsNameToken(TokenStream* toks);
 static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* name);
 static void UnexpectedToken(TokenStream* toks, const char* expected);
 
-static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsTypedName* name);
+static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsArg* name);
 static bool ParseNonZeroArgs(FblcArena* arena, TokenStream* toks, FblcsExprV* argv);
 static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcsExprV* argv);
 static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt);
@@ -464,7 +464,7 @@ static void UnexpectedToken(TokenStream* toks, const char* expected)
 //   Parses two ids from the token stream, advancing the stream past the ids.
 //   Updates name with the parsed ids.
 //   In case of an error, an error message is printed to stderr.
-static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsTypedName* name)
+static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsArg* name)
 {
   return GetNameToken(arena, toks, "type name", &name->type)
       && GetNameToken(arena, toks, expected, &name->name);
@@ -960,7 +960,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (type->fieldv.size > 0) {
             GetToken(&toks, ',');
           }
-          FblcsTypedName* field = FblcVectorExtend(arena, type->fieldv);
+          FblcsArg* field = FblcVectorExtend(arena, type->fieldv);
           if (!ParseTypedId(arena, &toks, "field name", field)) {
             return NULL;
           }
@@ -986,7 +986,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
         if (type->fieldv.size > 0) {
           GetToken(&toks, ',');
         }
-        FblcsTypedName* field = FblcVectorExtend(arena, type->fieldv);
+        FblcsArg* field = FblcVectorExtend(arena, type->fieldv);
         if (!ParseTypedId(arena, &toks, "field name", field)) {
           return NULL;
         }
@@ -1011,7 +1011,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (func->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          FblcsTypedName* arg = FblcVectorExtend(arena, func->argv);
+          FblcsArg* arg = FblcVectorExtend(arena, func->argv);
           if (!ParseTypedId(arena, &toks, "variable name", arg)) {
             return NULL;
           }
@@ -1086,7 +1086,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
           if (proc->argv.size > 0) {
             GetToken(&toks, ',');
           }
-          FblcsTypedName* var = FblcVectorExtend(arena, proc->argv);
+          FblcsArg* var = FblcVectorExtend(arena, proc->argv);
           if (!ParseTypedId(arena, &toks, "variable name", var)) {
             return NULL;
           }
