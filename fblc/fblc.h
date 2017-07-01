@@ -83,7 +83,7 @@ extern FblcArena FblcMallocArena;
 //   Often these vectors are constructed without knowing the size ahead of
 //   time. The following macros are used to help construct these vectors,
 //   regardless of the element type.
-//
+
 // FblcVectorInit --
 //   Initialize a vector for construction.
 //

@@ -39,16 +39,12 @@ Fbld Application:
  - Implement libsdl graphics interface so program is actually rendered to
    screen.
 
-* Fblc Cleanup
- - Put vector type definitions after their corresponding element definitions.
- - Use consistent ordering of definitions in fblc.h, fblcs.h, and all the
-   switch statements.
- 
 General Cleanup:
  - Verify all document comments are present and up to date.
  - Document allocations for every function that takes an FblcArena,
    specifically, what the caller should do to free all allocations.
  - Increase test code coverage as much as reasonably possible.
+ - Put vector type definitions after their corresponding element definitions.
 
 MiniGolf Arc:
 * Design 2D minigolf game and implement.
