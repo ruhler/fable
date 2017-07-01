@@ -92,5 +92,6 @@ int main(int argc, char* argv[])
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
   // program, so we should be okay.
-  return FblcsLoadProgram(&FblcMallocArena, filename) ? exit_success : exit_fail;
+  FblcsProgram* prog = FblcsParseProgram(&FblcMallocArena, filename);
+  return (prog != NULL && FblcsCheckProgram(prog)) ? exit_success : exit_fail;
 }

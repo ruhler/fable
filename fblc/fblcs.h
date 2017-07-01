@@ -72,115 +72,6 @@ typedef struct {
   FblcsNameL type;
   FblcsNameL name;
 } FblcsTypedName;
-
-// FblcsExpr --
-//   Common base type for the following fblcs expr types. It should be clear
-//   from the context based on the tag of the corresponding FblcExpr which
-//   specific type an instance of FblcsExpr refers to.
-typedef struct {
-  FblcsLoc* loc;
-} FblcsExpr;
-
-// FblcsVarExpr --
-//   Symbol information associated with a variable expression.
-typedef struct {
-  FblcsExpr _base;
-  FblcsNameL var;
-} FblcsVarExpr;
-
-// FblcsAppExpr --
-//   Symbol information associated with an application expression.
-typedef struct {
-  FblcsExpr _base;
-  FblcsNameL func;
-} FblcsAppExpr;
-
-// FblcsUnionExpr --
-//   Symbol information associated with a union expression.
-typedef struct {
-  FblcsExpr _base;
-  FblcsNameL type;
-  FblcsNameL field;
-} FblcsUnionExpr;
-
-// FblcsAccessExpr --
-//   Symbol information associated with an access expression.
-typedef struct {
-  FblcsExpr _base;
-  FblcsNameL field;
-} FblcsAccessExpr;
-
-// FblcsCondExpr --
-//   Symbol information associated with a conditional expression.
-typedef struct {
-  FblcsExpr _base;
-} FblcsCondExpr;
-
-// FblcsLetExpr --
-//   Symbol information associated with a let expression.
-typedef struct {
-  FblcsExpr _base;
-  FblcsNameL type;
-  FblcsNameL name;
-} FblcsLetExpr;
-
-// FblcsActn --
-//   Common base type for the following fblcs actn types. It should be clear
-//   from the context based on the tag of the corresponding FblcActn which
-//   specific type an instance of FblcsActn refers to.
-typedef struct {
-  FblcsLoc* loc;
-} FblcsActn;
-
-// FblcsEvalActn --
-//   Symbol information associated with an eval action.
-typedef struct {
-  FblcsActn _base;
-} FblcsEvalActn;
-
-// FblcsGetActn --
-//   Symbol information associated with a get action.
-typedef struct {
-  FblcsActn _base;
-  FblcsNameL port;
-} FblcsGetActn;
-
-// FblcsPutActn --
-//   Symbol information associated with a put action.
-typedef struct {
-  FblcsActn _base;
-  FblcsNameL port;
-} FblcsPutActn;
-
-// FblcsCondActn --
-//   Symbol information associated with a conditional action.
-typedef struct {
-  FblcsActn _base;
-} FblcsCondActn;
-
-// FblcsNameLV --
-//   A vector of FblcsNameLs.
-typedef struct {
-  size_t size;
-  FblcsNameL* xs;
-} FblcsNameLV;
-
-// FblcsCallActn --
-//   Symbol information associated with a call action.
-typedef struct {
-  FblcsActn _base;
-  FblcsNameL proc;
-  FblcsNameLV portv;
-} FblcsCallActn;
-
-// FblcsLinkActn --
-//   Symbol information associated with a link action.
-typedef struct {
-  FblcsActn _base;
-  FblcsNameL type;
-  FblcsNameL get;
-  FblcsNameL put;
-} FblcsLinkActn;
 
 // FblcsTypedNameV --
 //   A vector of typed names.
@@ -189,16 +80,230 @@ typedef struct {
   FblcsTypedName* xs;
 } FblcsTypedNameV;
 
-// FblcsExecActn --
-//   Symbol information associated with an exec action.
+// FblcsId --
+//   A reference to a variable, field, or port.
+//
+// Fields:
+//   name - The name of the field.
+//   id - The fblc id of the field. This is set to FBLC_NULL_ID by the parser,
+//        then later filled in during type check and used by the compiler.
+typedef struct {
+  FblcsNameL name;
+  size_t id;
+} FblcsId;
+
+// FblcsIdV --
+//   A vector of FblcsIds.
+typedef struct {
+  size_t size;
+  FblcsId* xs;
+} FblcsIdV;
+
+
+// FblcsExprTag --
+//   A tag used to distinguish among different kinds of expressions.
+typedef enum {
+  FBLCS_VAR_EXPR,
+  FBLCS_APP_EXPR,
+  FBLCS_STRUCT_EXPR,
+  FBLCS_UNION_EXPR,
+  FBLCS_ACCESS_EXPR,
+  FBLCS_COND_EXPR,
+  FBLCS_LET_EXPR
+} FblcsExprTag;
+
+// FblcsExpr --
+//   A tagged union of expression types. All expressions have the same initial
+//   layout as FblcExpr. The tag can be used to determine what kind of
+//   expression this is to get access to additional fields of the expression
+//   by first casting to that specific type of expression.
+typedef struct {
+  FblcsExprTag tag;
+  FblcsLoc* loc;
+} FblcsExpr;
+
+// FblcExprV --
+//   A vector of fblc expressions.
+typedef struct {
+  size_t size;
+  FblcsExpr** xs;
+} FblcsExprV;
+
+// FblcsVarExpr --
+//   A variable expression of the form 'var' whose value is the value of the
+//   corresponding variable in scope.
+typedef struct {
+  FblcsExpr _base;
+  FblcsId var;
+} FblcsVarExpr;
+
+// FblcsAppExpr --
+//   An application or struct expression of the form 'func(arg0, arg1, ...)'.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL func;
+  FblcsExprV argv;
+} FblcsAppExpr;
+
+// FblcsUnionExpr --
+//   A union expression of the form 'type:field(arg)', used to construct a
+//   union value.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL type;
+  FblcsId field;
+  FblcsExpr* arg;
+} FblcsUnionExpr;
+
+// FblcsAccessExpr --
+//   An access expression of the form 'obj.field' used to access a field of
+//   a struct or union value.
+typedef struct {
+  FblcsExpr _base;
+  FblcsExpr* obj;
+  FblcsId field;
+} FblcsAccessExpr;
+
+// FblcsCondExpr --
+//   A conditional expression of the form '?(select; arg0, arg1, ...)', which
+//   conditionally selects an argument based on the tag of the select value.
+typedef struct {
+  FblcsExpr _base;
+  FblcsExpr* select;
+  FblcsExprV argv;
+} FblcsCondExpr;
+
+// FblcsLetExpr --
+//   A let expression of the form '{ type var = def; body }', where the name
+//   of the variable is a De Bruijn index based on the context where the
+//   variable is accessed.
+typedef struct {
+  FblcsExpr _base;
+  FblcsNameL type;
+  FblcsNameL name;
+  FblcsExpr* def;
+  FblcsExpr* body;
+} FblcsLetExpr;
+
+// FblcsActnTag --
+//   A tag used to distinguish among different kinds of actions.
+typedef enum {
+  FBLCS_EVAL_ACTN,
+  FBLCS_GET_ACTN,
+  FBLCS_PUT_ACTN,
+  FBLCS_COND_ACTN,
+  FBLCS_CALL_ACTN,
+  FBLCS_LINK_ACTN,
+  FBLCS_EXEC_ACTN
+} FblcsActnTag;
+
+// FblcsActn --
+//   A tagged union of action types. All actions have the same initial
+//   layout as FblcExpr. The tag can be used to determine what kind of
+//   action this is to get access to additional fields of the action
+//   by first casting to that specific type of action.
+typedef struct {
+  FblcsActnTag tag;
+  FblcsLoc* loc;
+} FblcsActn;
+
+// FblcsActnV --
+//   A vector of fblcs actions.
+typedef struct {
+  size_t size;
+  FblcsActn** xs;
+} FblcsActnV;
+
+// FblcsEvalActn --
+//   An evaluation action of the form '$(arg)' which evaluates the given
+//   expression without side effects.
 typedef struct {
   FblcsActn _base;
-  FblcsTypedNameV execv;
+  FblcsExpr* arg;
+} FblcsEvalActn;
+
+// FblcsGetActn --
+//   A get action of the form '~port()' used to get a value from a port.
+typedef struct {
+  FblcsActn _base;
+  FblcsId port;
+} FblcsGetActn;
+
+// FblcsPutActn --
+//   A put action of the form '~port(arg)' used to put a value onto a port.
+typedef struct {
+  FblcsActn _base;
+  FblcsId port;
+  FblcsExpr* arg;
+} FblcsPutActn;
+
+// FblcsCondActn --
+//   A conditional action of the form '?(select; arg0, arg1, ...)', which
+//   conditionally selects an argument based on the tag of the select value.
+typedef struct {
+  FblcsActn _base;
+  FblcsExpr* select;
+  FblcsActnV argv;
+} FblcsCondActn;
+
+// FblcsCallActn --
+//   A call action of the form 'proc(port0, port1, ... ; arg0, arg1, ...)',
+//   which calls a process with the given port and value arguments.
+typedef struct {
+  FblcsActn _base;
+  FblcsNameL proc;
+  FblcsIdV portv;
+  FblcsExprV argv;
+} FblcsCallActn;
+
+// FblcsLinkActn --
+//   A link action of the form 'type <~> get, put; body'. The names of the get
+//   and put ports are De Bruijn indices based on the context where the ports
+//   are accessed.
+typedef struct {
+  FblcsActn _base;
+  FblcsNameL type;
+  FblcsNameL get;
+  FblcsNameL put;
+  FblcsActn* body;
+} FblcsLinkActn;
+
+// FblcsExec --
+//   Trip of type, name, and action used in the FblcsExecActn.
+typedef struct {
+  FblcsNameL type;
+  FblcsNameL name;
+  FblcsActn* actn;
+} FblcsExec;
+
+// FblcsExecV --
+//   Vector of FblcsExec.
+typedef struct {
+  size_t size;
+  FblcsExec* xs;
+} FblcsExecV;
+
+// FblcsExecActn --
+//   An exec action of the form 'type0 var0 = exec0, type1 var1 = exec1, ...; body',
+//   which executes processes in parallel.
+typedef struct {
+  FblcsActn _base;
+  FblcsExecV execv;
+  FblcsActn* body;
 } FblcsExecActn;
 
+// FblcsKind --
+//   An enum used to distinguish between struct and union types or values.
+typedef enum {
+  FBLCS_STRUCT_KIND,
+  FBLCS_UNION_KIND
+} FblcsKind;
+
 // FblcsType --
-//   Symbol information associated with a type declaration.
+//   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
+//   This is a common structure used for both struct and union declarations.
 typedef struct {
+  FblcsKind kind;
   FblcsNameL name;
   FblcsTypedNameV fieldv;
 } FblcsType;
@@ -210,20 +315,14 @@ typedef struct {
   FblcsType** xs;
 } FblcsTypeV;
 
-// FblcsExprV --
-//   A vector of fblcs exprs.
-typedef struct {
-  size_t size;
-  FblcsExpr** xs;
-} FblcsExprV;
-
 // FblcsFunc --
-//   Symbol information associated with a function declaration.
+//   Declaration of a function of the form:
+//     'name(arg0 name0, arg1 name1, ...; return_type) body'
 typedef struct {
   FblcsNameL name;
   FblcsTypedNameV argv;
   FblcsNameL return_type;
-  FblcsExprV exprv;
+  FblcsExpr* body;
 } FblcsFunc;
 
 // FblcsFuncV --
@@ -233,22 +332,38 @@ typedef struct {
   FblcsFunc** xs;
 } FblcsFuncV;
 
-// FblcsActnV --
-//   A vector of fblcs actns.
+// FblcsPolarity --
+//   The polarity of a port.
+typedef enum {
+  FBLCS_GET_POLARITY,
+  FBLCS_PUT_POLARITY
+} FblcsPolarity;
+
+// FblcsPort --
+//   The type, name, and polarity of a port.
+typedef struct {
+  FblcsNameL type;
+  FblcsNameL name;
+  FblcsPolarity polarity;
+} FblcsPort;
+
+// FblcsPortV --
+//   A vector of fblcs ports.
 typedef struct {
   size_t size;
-  FblcsActn** xs;
-} FblcsActnV;
+  FblcsPort* xs;
+} FblcsPortV;
 
 // FblcsProc --
-//   Symbol information associated with a process declaration.
+//   Declaration of a process of the form:
+//     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
+//           arg0 name0, arg1, name1, ... ; return_type) body'
 typedef struct {
   FblcsNameL name;
-  FblcsTypedNameV portv;
+  FblcsPortV portv;
   FblcsTypedNameV argv;
   FblcsNameL return_type;
-  FblcsExprV exprv;
-  FblcsActnV actnv;
+  FblcsActn* body;
 } FblcsProc;
 
 // FblcsProcV --
@@ -259,12 +374,11 @@ typedef struct {
 } FblcsProcV;
 
 // FblcsProgram --
-//   An FblcProgram augmented with symbols information.
+//   A collection of declarations that make up a program.
 typedef struct {
-  FblcProgram* program;
-  FblcsTypeV stypev;
-  FblcsFuncV sfuncv;
-  FblcsProcV sprocv;
+  FblcsTypeV typev;
+  FblcsFuncV funcv;
+  FblcsProcV procv;
 } FblcsProgram;
 
 // FblcsParseProgram --
@@ -276,8 +390,8 @@ typedef struct {
 //
 // Result:
 //   The parsed program environment, or NULL on error.
-//   Name resolution is not performed; ids throughout the parsed program will
-//   be set to FBLC_NULL_ID in the returned result.
+//   Name resolution is not performed; FblcsIds throughout the parsed program
+//   will have their id field set to FBLC_NULL_ID in the returned result.
 //
 // Side effects:
 //   A program environment is allocated. In the case of an error, an error
@@ -290,7 +404,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename);
 //
 // Inputs:
 //   sprog - The program environment.
-//   type - The type id of value to parse.
+//   typename - The name of the type of value to parse.
 //   fd - A file descriptor of a file open for reading.
 //
 // Result:
@@ -299,14 +413,14 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename);
 // Side effects:
 //   The value is read from the given file descriptor. In the case of an
 //   error, an error message is printed to stderr
-FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcType* type, int fd);
+FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcsNameL* typename, int fd);
 
 // FblcsParseValueFromString --
 //   Parse an fblc value from a string.
 //
 // Inputs:
 //   sprog - The program environment.
-//   type - The type id of value to parse.
+//   typename - The name of the type of value to parse.
 //   string - The string to parse the value from.
 //
 // Result:
@@ -314,13 +428,122 @@ FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcType* type
 //
 // Side effects:
 //   In the case of an error, an error message is printed to standard error.
-FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcType* type, const char* string);
+FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcsNameL* typename, const char* string);
+
+// FblcsCheckProgram --
+//   Check that the given program environment describes a well formed and well
+//   typed program. Performs name resolution, updating FblcsId id fields
+//   throughout the program.
+//
+// Inputs:
+//   prog - The program environment to check.
+//
+// Results:
+//   true if the program environment is well formed and well typed,
+//   false otherwise.
+//
+// Side effects:
+//   Update FblcsId id fields in the program to their resolved values.
+//   If the program environment is not well formed, an error message is
+//   printed to stderr describing the problem with the program environment.
+bool FblcsCheckProgram(FblcsProgram* prog);
+
+// FblcsLoaded --
+//   The fblcs program, fblcs proc, and fblc procs corresponding to a compiled
+//   entry point of a loaded program.
+typedef struct {
+  FblcsProgram* prog;
+  FblcsProc* sproc;
+  FblcProc* proc;
+} FblcsLoaded;
+
+// FblcsCompileProgram --
+//   Compile an fblc program from an already checked fblcs program.
+//
+// Inputs:
+//   prog - The fblcs program environment.
+//   entry - The main entry point of the program to compile. This must refer
+//           to either a function or process. If it refers to a function, the
+//           function will be wrapped as a process.
+//
+// Results:
+//   The loaded program and entry points, or NULL if the entry could not be found.
+//
+// Side effects:
+//   The behavior is undefined if the program environment is not well formed.
+FblcsLoaded* FblcsCompileProgram(FblcArena* arena, FblcsProgram* prog, FblcsName entry);
+
+// FblcsLoadProgram --
+//   Load a text fblc program from the given file using the given arena for
+//   allocations. Performs parsing, type check, and compilation of the
+//   given entry point of the program.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   filename - Name of the file to load the program from.
+//   entry - The name of the main entry point, which should be a function or
+//           process in the program.
+//
+// Results:
+//   The loaded program and entry points or NULL on error.
+//
+// Side effects:
+//   Arena allocations are made in order to load the program. If the program
+//   cannot be loaded, an error message is printed to stderr.
+FblcsLoaded* FblcsLoadProgram(FblcArena* arena, const char* filename, const char* entry);
+
+// FblcsLookupType --
+//   Look up the type declaration with the given name in the given program.
+//
+// Inputs:
+//   prog - The program environment.
+//   name - The name of the type to look up.
+//
+// Results:
+//   The type declaration in prog with the given name, or NULL if no such type
+//   is found.
+//
+// Side effects:
+//   None.
+FblcsType* FblcsLookupType(FblcsProgram* prog, FblcsName name);
+
+// FblcsLookupFunc --
+//   Look up the func declaration with the given name in the given program.
+//
+// Inputs:
+//   prog - The program environment.
+//   name - The name of the func to look up.
+//
+// Results:
+//   The func declaration in prog with the given name, or NULL if no such func
+//   is found.
+//
+// Side effects:
+//   None.
+FblcsFunc* FblcsLookupFunc(FblcsProgram* prog, FblcsName name);
+
+// FblcsLookupProc --
+//   Look up the proc declaration with the given name in the given program.
+//
+// Inputs:
+//   prog - The program environment.
+//   name - The name of the proc to look up.
+//
+// Results:
+//   The proc declaration in prog with the given name, or NULL if no such proc
+//   is found.
+//
+// Side effects:
+//   None.
+FblcsProc* FblcsLookupProc(FblcsProgram* prog, FblcsName name);
 
 // FblcsPrintValue --
 //   Print a value in standard format to the given FILE stream.
 //
 // Inputs:
 //   stream - The stream to print the value to.
+//   sprog - The fblc program environment.
+//   typename - The name of the type of value to print.
 //   value - The value to print.
 //
 // Result:
@@ -328,203 +551,6 @@ FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, Fblc
 //
 // Side effects:
 //   The value is printed to the given file stream.
-void FblcsPrintValue(FILE* stream, FblcsProgram* sprog, FblcType* type, FblcValue* value);
-
-// FblcsResolveProgram --
-//   Perform id/name resolution for references to variables, ports,
-//   declarations, and fields in the given program.
-//
-// Inputs:
-//   sprog - A program whose ids need to be resolved.
-//
-// Results:
-//   true if name resolution succeeded, false otherwise.
-//
-// Side effects:
-//   IDs in the program are resolved.
-//   Prints error messages to stderr in case of error.
-bool FblcsResolveProgram(FblcsProgram* sprog);
-
-// FblcsCheckProgram --
-//   Check that the given program environment describes a well formed and well
-//   typed program.
-//
-// Inputs:
-//   sprog - The program environment to check.
-//
-// Results:
-//   true if the program environment is well formed and well typed,
-//   false otherwise.
-//
-// Side effects:
-//   If the program environment is not well formed, an error message is
-//   printed to stderr describing the problem with the program environment.
-bool FblcsCheckProgram(FblcsProgram* sprog);
-
-// FblcsLoadProgram --
-//   Load a text fblc program from the given file using the given arena for
-//   allocations. Performs parsing, name resolution, and type checking of the
-//   program.
-//
-// Inputs:
-//   arena - Arena to use for allocations.
-//   filename - Name of the file to load the program from.
-//
-// Results:
-//   The fully parsed, name-resolved and type-checked loaded program, or NULL
-//   if the program could not be parsed, resolved, or failed to type check.
-//
-// Side effects:
-//   Arena allocations are made in order to load the program. If the program
-//   cannot be loaded, an error message is printed to stderr.
-FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename);
-
-// FblcsLookupType --
-//   Look up the type declaration with the given name.
-//
-// Inputs:
-//   sprog - The program to look up the declaration in.
-//   name - The name of the type declaration to look up.
-//
-// Results:
-//   The type declaration in the program with the given name, or
-//   NULL if no such declaration was found.
-//
-// Side effects:
-//   None.
-FblcType* FblcsLookupType(FblcsProgram* sprog, FblcsName name);
-
-// FblcsLookupFunc --
-//   Look up the function declaration with the given name.
-//
-// Inputs:
-//   sprog - The program to look up the declaration in.
-//   name - The name of the function declaration to look up.
-//
-// Results:
-//   The function declaration in the program with the given name, or
-//   NULL if no such declaration was found.
-//
-// Side effects:
-//   None.
-FblcFunc* FblcsLookupFunc(FblcsProgram* sprog, FblcsName name);
-
-// FblcsLookupProc --
-//   Look up the process declaration with the given name.
-//
-// Inputs:
-//   sprog - The program to look up the declaration in.
-//   name - The name of the process declaration to look up.
-//
-// Results:
-//   The process declaration in the program with the given name, or
-//   NULL if no such declaration was found.
-//
-// Side effects:
-//   None.
-FblcProc* FblcsLookupProc(FblcsProgram* sprog, FblcsName name);
-
-// FblcsLookupEntry --
-//   Look up the function or process declaration with the given name.
-//   If the entry is a function, wraps the function in a newly allocated
-//   process declaration.
-//
-// Inputs:
-//   arena - Arena to use for allocating the wraper process if necessary.
-//   sprog - The program to look up the declaration in.
-//   name - The name of the declaration to look up.
-//
-// Results:
-//   The process declaration in the program with the given name, a newly
-//   allocated process declaration wrapping the function declaration in the
-//   program with the given name, or NULL if no such declaration was found.
-//
-// Side effects:
-//   Allocations a wrapper process if a function declaration is found to match
-//   the entry name.
-FblcProc* FblcsLookupEntry(FblcArena* arena, FblcsProgram* sprog, FblcsName name);
-
-// FblcsLookupField --
-//   Look up the id of a field with the given name.
-//
-// Inputs:
-//   sprog - The program to look up the field in.
-//   type - The type to look the field up in.
-//   field - The name of the field to look up.
-//
-// Results:
-//   The field id of the declared field in the type with the given name, or
-//   FBLC_NULL_ID if no such field was found.
-//
-// Side effects:
-//   None.
-FblcFieldId FblcsLookupField(FblcsProgram* sprog, FblcType* type, FblcsName field);
-
-// FblcsLookupPort --
-//   Look up the id of a port argument with the given name.
-//
-// Inputs:
-//   sprog - The program to look up the port in.
-//   proc - The process declaration to look the port up in.
-//   port - The name of the port to look up.
-//
-// Results:
-//   The (field) id of the declared port in the process with the given name, or
-//   FBLC_NULL_ID if no such port was found. For example, if name refers to
-//   the third port argument to the process, the id '2' is returned.
-//
-// Side effects:
-//   None.
-FblcFieldId FblcsLookupPort(FblcsProgram* sprog, FblcProc* proc, FblcsName port);
-
-// FblcsTypeName --
-//   Return the name of a type declaration.
-//
-// Inputs:
-//   sprog - The program to get the declaration name in.
-//   decl - The declaration to get the name of.
-//
-// Results:
-//   The name of the declaration in the program.
-FblcsName FblcsTypeName(FblcsProgram* sprog, FblcType* decl);
-
-// FblcsFuncName --
-//   Return the name of a function declaration.
-//
-// Inputs:
-//   sprog - The program to get the declaration name in.
-//   decl - The declaration to get the name of.
-//
-// Results:
-//   The name of the declaration in the program.
-FblcsName FblcsFuncName(FblcsProgram* sprog, FblcFunc* decl);
-
-// FblcsProcName --
-//   Return the name of a process declaration.
-//
-// Inputs:
-//   sprog - The program to get the declaration name in.
-//   decl - The declaration to get the name of.
-//
-// Results:
-//   The name of the declaration in the program.
-FblcsName FblcsProcName(FblcsProgram* sprog, FblcProc* decl);
-
-// FblcsFieldName --
-//   Return the name of a field with the given id.
-//
-// Inputs:
-//   sprog - The program to get the field name from.
-//   type - The type to get the field name from.
-//   field_id - The id of the field within the type to get the name of.
-//
-// Results:
-//   The name of the field with given field_id in the type declaration with
-//   given type_id.
-//
-// Side effects:
-//   The behavior is undefined if type_id does not refer to a type declaring a
-//   field with field_id.
-FblcsName FblcsFieldName(FblcsProgram* sprog, FblcType* type, FblcFieldId field_id);
+void FblcsPrintValue(FILE* stream, FblcsProgram* prog, FblcsNameL* typename, FblcValue* value);
 
 #endif  // FBLCS_H_

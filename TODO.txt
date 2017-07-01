@@ -1,5 +1,5 @@
 Fbld M2 Kickoff:
-* Decide whether using decls should be kept separate from the rest.
+* Separate Using, Type, Func, and Proc decls.
 * Re-organize parse.y to match order in fbld.h, and finish it out.
 * Continue adapting fbld to new polymorphism and syntax from there.
  
@@ -39,13 +39,17 @@ Fbld Application:
  - Implement libsdl graphics interface so program is actually rendered to
    screen.
 
-Fblc Front End Cleanup:
-* Make fblcs structure standalone rather than tied to fblc structure.
- - Parser should create fblcs structure only.
- - Perform check entirely on fblcs structure before resolution.
- - Resolution to convert fblcs structure to (correct by construction) fblc
-   structure.
-
+* Fblc Cleanup
+ - Remove FblcName typedef.
+ - Rename FblcsNameL FblcsName
+ - Rename FblcsTypedName FblcsArg
+ - Now that types, func, and processes are separated, store vectors of raw
+   types, funcs, and processes rather than vectors of pointers?
+ - Create a macro for ALLOC(arena, FblcFoo), that has type safety built in?
+ - Put vector type definitions after their corresponding element definitions.
+ - Use consistent ordering of definitions in fblc.h, fblcs.h, and all the
+   switch statements.
+ 
 General Cleanup:
  - Verify all document comments are present and up to date.
  - Document allocations for every function that takes an FblcArena,

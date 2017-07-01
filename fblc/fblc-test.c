@@ -34,8 +34,8 @@ typedef struct {
 //   stream - The stream with the commands to be executed.
 //   cmd - The next command to execute, if cmd_ready is true.
 typedef struct {
-  FblcsProgram* sprog;
-  FblcProc* proc;
+  FblcsProgram* prog;
+  FblcsProc* proc;
   const char* file;
   size_t line;
   FILE* stream;
@@ -47,7 +47,7 @@ static void PrintUsage(FILE* stream);
 static void ReportError(IOUser* user, const char* msg);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FblcType* type, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FblcsNameL* typename, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -122,47 +122,59 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     }
     user->line++;
 
-    FblcType* type = NULL;
+    FblcsNameL* type = NULL;
     char port[len+1];
     char value[len+1];
     if (sscanf(line, "get %s %s", port, value) == 2) {
       user->cmd.tag = CMD_GET;
-      user->cmd.port = FblcsLookupPort(user->sprog, user->proc, port);
+      user->cmd.port = FBLC_NULL_ID;
+      for (size_t i = 0; i < user->proc->portv.size; ++i) {
+        if (FblcsNamesEqual(port, user->proc->portv.xs[i].name.name)) {
+          if (user->proc->portv.xs[i].polarity != FBLCS_PUT_POLARITY) {
+            ReportError(user, "expected put polarity for port ");
+            fprintf(stderr, "'%s'\n", port);
+            abort();
+          }
+          user->cmd.port = i;
+          type = &user->proc->portv.xs[i].type;
+          break;
+        }
+      }
       if (user->cmd.port == FBLC_NULL_ID) {
         ReportError(user, "port not defined: ");
         fprintf(stderr, "'%s'\n", port);
         abort();
       }
-      if (user->proc->portv.xs[user->cmd.port].polarity != FBLC_PUT_POLARITY) {
-        ReportError(user, "expected put polarity for port ");
-        fprintf(stderr, "'%s'\n", port);
-        abort();
-      }
-      type = user->proc->portv.xs[user->cmd.port].type;
     } else if (sscanf(line, "put %s %s", port, value) == 2) {
       user->cmd.tag = CMD_PUT;
-      user->cmd.port = FblcsLookupPort(user->sprog, user->proc, port);
+      user->cmd.port = FBLC_NULL_ID;
+      for (size_t i = 0; i < user->proc->portv.size; ++i) {
+        if (FblcsNamesEqual(port, user->proc->portv.xs[i].name.name)) {
+          if (user->proc->portv.xs[i].polarity != FBLCS_GET_POLARITY) {
+            ReportError(user, "expected get polarity for port ");
+            fprintf(stderr, "'%s'\n", port);
+            abort();
+          }
+          user->cmd.port = i;
+          type = &user->proc->portv.xs[i].type;
+          break;
+        }
+      }
       if (user->cmd.port == FBLC_NULL_ID) {
         ReportError(user, "port not defined: ");
         fprintf(stderr, "'%s'\n", port);
         abort();
       }
-      if (user->proc->portv.xs[user->cmd.port].polarity != FBLC_GET_POLARITY) {
-        ReportError(user, "expected get polarity for port ");
-        fprintf(stderr, "'%s'\n", port);
-        abort();
-      }
-      type = user->proc->portv.xs[user->cmd.port].type;
     } else if (sscanf(line, "return %s", value) == 1) {
       user->cmd.tag = CMD_RETURN;
-      type = user->proc->return_type;
+      type = &user->proc->return_type;
     } else {
       ReportError(user, "malformed command line: ");
       fprintf(stderr, "'%s'\n", line);
       abort();
     }
 
-    user->cmd.value = FblcsParseValueFromString(arena, user->sprog, type, value);
+    user->cmd.value = FblcsParseValueFromString(arena, user->prog, type, value);
     if (user->cmd.value == NULL) {
       ReportError(user, "error parsing value\n");
       abort();
@@ -218,7 +230,7 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 //
 // Input:
 //   user - Used for error reporting purposes.
-//   type - The type of value being compared.
+//   typename - The name of the type of value being compared.
 //   a - The first value.
 //   b - The second value.
 //
@@ -228,14 +240,14 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FblcType* type, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(IOUser* user, FblcsNameL* typename, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
     fprintf(stderr, "\nexpected: ");
-    FblcsPrintValue(stderr, user->sprog, type, a);
+    FblcsPrintValue(stderr, user->prog, typename, a);
     fprintf(stderr, "\nactual  : ");
-    FblcsPrintValue(stderr, user->sprog, type, b);
+    FblcsPrintValue(stderr, user->prog, typename, b);
     fprintf(stderr, "\n");
     abort();
   }
@@ -249,7 +261,7 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
   IOUser* io_user = (IOUser*)user;
   EnsureCommandReady(io_user, arena);
   if (io_user->cmd.tag == CMD_GET && ports[io_user->cmd.port] != NULL) {
-    AssertValuesEqual(io_user, io_user->proc->portv.xs[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
+    AssertValuesEqual(io_user, &io_user->proc->portv.xs[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
     io_user->cmd_ready = false;
     FblcRelease(arena, ports[io_user->cmd.port]);
     ports[io_user->cmd.port] = NULL;
@@ -315,30 +327,24 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FblcsProgram* sprog = FblcsLoadProgram(arena, filename);
-  if (sprog == NULL) {
+  FblcsLoaded* loaded = FblcsLoadProgram(arena, filename, entry);
+  if (loaded == NULL) {
     return 1;
   }
 
-  FblcProc* proc = FblcsLookupEntry(arena, sprog, entry);
-  if (proc == NULL) {
-    fprintf(stderr, "entry %s is not a function or process.\n", entry);
-    return 1;
-  }
-
-  if (proc->argv.size != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
+  if (loaded->sproc->argv.size != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", loaded->sproc->argv.size, argc);
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(arena, sprog, proc->argv.xs[i], argv[i]);
+    args[i] = FblcsParseValueFromString(arena, loaded->prog, &loaded->sproc->argv.xs[i].type, argv[i]);
   }
 
   IOUser user;
-  user.sprog = sprog;
-  user.proc = proc;
+  user.prog = loaded->prog;
+  user.proc = loaded->sproc;
   user.file = script;
   user.line = 0;
   user.stream = fopen(script, "r");
@@ -350,7 +356,7 @@ int main(int argc, char* argv[])
   FblcIO io = { .io = &IO, .user = &user };
   FblcInstr instr = { .on_undefined_access = NULL };
 
-  FblcValue* value = FblcExecute(arena, &instr, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr, loaded->proc, args, &io);
   assert(value != NULL);
 
   EnsureCommandReady(&user, arena);
@@ -358,7 +364,7 @@ int main(int argc, char* argv[])
     ReportError(&user, "premature program termination.\n");
     abort();
   }
-  AssertValuesEqual(&user, proc->return_type, user.cmd.value, value);
+  AssertValuesEqual(&user, &loaded->sproc->return_type, user.cmd.value, value);
   FblcRelease(arena, user.cmd.value);
   FblcRelease(arena, value);
   return 0;

@@ -236,25 +236,19 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FblcsProgram* sprog = FblcsLoadProgram(arena, filename);
-  if (sprog == NULL) {
+  FblcsLoaded* loaded = FblcsLoadProgram(arena, filename, entry);
+  if (loaded == NULL) {
     return 1;
   }
 
-  FblcProc* proc = FblcsLookupProc(sprog, entry);
-  if (proc == NULL) {
-    fprintf(stderr, "entry %s not found.\n", entry);
-    return 1;
-  }
-
-  if (proc->argv.size != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
+  if (loaded->sproc->argv.size != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", loaded->sproc->argv.size, argc);
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(arena, sprog, proc->argv.xs[i], argv[i]);
+    args[i] = FblcsParseValueFromString(arena, loaded->prog, &loaded->sproc->argv.xs[i].type, argv[i]);
   }
   
   initscr();
@@ -279,7 +273,7 @@ int main(int argc, char* argv[])
   FblcIO io = { .io = &IO, .user = &user };
   FblcInstr instr = { .on_undefined_access = NULL };
 
-  FblcValue* value = FblcExecute(arena, &instr, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr, loaded->proc, args, &io);
   FblcRelease(arena, value);
 
   mvaddstr(MAX_ROW + 3, 3, "GAME OVER");

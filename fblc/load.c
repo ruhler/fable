@@ -6,19 +6,15 @@
 #include "fblcs.h"
 
 // FblcsLoadProgram -- see documentation in fblcs.h
-FblcsProgram* FblcsLoadProgram(FblcArena* arena, const char* filename)
+FblcsLoaded* FblcsLoadProgram(FblcArena* arena, const char* filename, const char* entry)
 {
   FblcsProgram* sprog = FblcsParseProgram(arena, filename);
   if (sprog == NULL) {
     return NULL;
   }
 
-  if (!FblcsResolveProgram(sprog)) {
-    return NULL;
-  }
-
   if (!FblcsCheckProgram(sprog)) {
     return NULL;
   }
-  return sprog;
+  return FblcsCompileProgram(arena, sprog, entry);
 }

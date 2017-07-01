@@ -14,8 +14,8 @@
 // IOUser --
 //   User data for FblcIO.
 typedef struct {
-  FblcsProgram* sprog;
-  FblcProc* proc;
+  FblcsProgram* prog;
+  FblcsProc* proc;
 } IOUser;
 
 static void PrintUsage(FILE* stream);
@@ -62,10 +62,10 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
     fds[i].events = POLLIN;
     fds[i].revents = 0;
 
-    if (io_user->proc->portv.xs[i].polarity == FBLC_PUT_POLARITY) {
+    if (io_user->proc->portv.xs[i].polarity == FBLCS_PUT_POLARITY) {
       if (ports[i] != NULL) {
         FILE* fout = fdopen(fds[i].fd, "w");
-        FblcsPrintValue(fout, io_user->sprog, io_user->proc->portv.xs[i].type, ports[i]);
+        FblcsPrintValue(fout, io_user->prog, &io_user->proc->portv.xs[i].type, ports[i]);
         fprintf(fout, "\n");
         fflush(fout);
         FblcRelease(arena, ports[i]);
@@ -83,10 +83,10 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 
   for (size_t i = 0; i < io_user->proc->portv.size; ++i) {
     if (fds[i].revents & POLLIN) {
-      assert(io_user->proc->portv.xs[i].polarity == FBLC_GET_POLARITY);
+      assert(io_user->proc->portv.xs[i].polarity == FBLCS_GET_POLARITY);
       assert(ports[i] == NULL);
       assert(fds[i].fd >= 0);
-      ports[i] = FblcsParseValue(arena, io_user->sprog, io_user->proc->portv.xs[i].type, fds[i].fd);
+      ports[i] = FblcsParseValue(arena, io_user->prog, &io_user->proc->portv.xs[i].type, fds[i].fd);
 
       // Parse the trailing newline.
       char newline;
@@ -147,35 +147,29 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FblcsProgram* sprog = FblcsLoadProgram(arena, filename);
-  if (sprog == NULL) {
+  FblcsLoaded* loaded = FblcsLoadProgram(arena, filename, entry);
+  if (loaded == NULL) {
     return 1;
   }
 
-  FblcProc* proc = FblcsLookupEntry(arena, sprog, entry);
-  if (proc == NULL) {
-    fprintf(stderr, "entry %s not found.\n", entry);
-    return 1;
-  }
-
-  if (proc->argv.size != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
+  if (loaded->sproc->argv.size != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", loaded->sproc->argv.size, argc);
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(arena, sprog, proc->argv.xs[i], argv[i]);
+    args[i] = FblcsParseValueFromString(arena, loaded->prog, &loaded->sproc->argv.xs[i].type, argv[i]);
   }
 
-  IOUser user = { .sprog = sprog, .proc = proc };
+  IOUser user = { .prog = loaded->prog, .proc = loaded->sproc };
   FblcIO io = { .io = &IO, .user = &user };
   FblcInstr instr = { .on_undefined_access = NULL };
 
-  FblcValue* value = FblcExecute(arena, &instr, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr, loaded->proc, args, &io);
   assert(value != NULL);
 
-  FblcsPrintValue(stdout, sprog, proc->return_type, value);
+  FblcsPrintValue(stdout, loaded->prog, &loaded->sproc->return_type, value);
   fprintf(stdout, "\n");
   fflush(stdout);
   FblcRelease(arena, value);

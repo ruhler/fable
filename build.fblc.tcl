@@ -14,7 +14,7 @@ foreach {x} [glob fblc/*.c] {
 
 # Generate libfblc.a
 set fblc_objs [list]
-foreach {x} [list check exec fblcs load malloc parse resolve value vector] {
+foreach {x} [list check compile exec fblcs load malloc parse value vector] {
   lappend fblc_objs out/fblc/obj/$x.o
 }
 run ar rcs out/fblc/libfblc.a {*}$fblc_objs

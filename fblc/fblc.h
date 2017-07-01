@@ -211,8 +211,14 @@ typedef enum {
 //   by first casting to that specific type of expression.
 typedef struct {
   FblcExprTag tag;
-  FblcExprId id;
 } FblcExpr;
+
+// FblcExprV --
+//   A vector of fblc expressions.
+typedef struct {
+  size_t size;
+  FblcExpr** xs;
+} FblcExprV;
 
 // FblcVarExpr --
 //   A variable expression of the form 'var' whose value is the value of the
@@ -221,13 +227,6 @@ typedef struct {
   FblcExpr _base;
   FblcVarId var;
 } FblcVarExpr;
-
-// FblcExprV --
-//   A vector of fblc expressions.
-typedef struct {
-  size_t size;
-  FblcExpr** xs;
-} FblcExprV;
 
 // FblcAppExpr --
 //   An application expression of the form 'func(arg0, arg1, ...)'.
@@ -303,8 +302,15 @@ typedef enum {
 //   by first casting to that specific type of action.
 typedef struct {
   FblcActnTag tag;
-  FblcActnId id;
 } FblcActn;
+
+// FblcActnV --
+//   A vector of fblc actions.
+typedef struct {
+  size_t size;
+  FblcActn** xs;
+} FblcActnV;
+
 
 // FblcEvalActn --
 //   An evaluation action of the form '$(arg)' which evaluates the given
@@ -328,13 +334,6 @@ typedef struct {
   FblcPortId port;
   FblcExpr* arg;
 } FblcPutActn;
-
-// FblcActnV --
-//   A vector of fblc actions.
-typedef struct {
-  size_t size;
-  FblcActn** xs;
-} FblcActnV;
 
 // FblcCondActn --
 //   A conditional action of the form '?(select; arg0, arg1, ...)', which
@@ -414,7 +413,6 @@ typedef struct {
 //   A type declaration of the form 'name(field0 name0, field1 name1, ...)'.
 //   This is a common structure used for both struct and union declarations.
 struct FblcType {
-  size_t id;        // TODO: Remove this field once fblcs is refactored.
   FblcKind kind;
   FblcTypeV fieldv;
 };
@@ -423,7 +421,6 @@ struct FblcType {
 //   Declaration of a function of the form:
 //     'name(arg0 name0, arg1 name1, ...; return_type) body'
 struct FblcFunc {
-  size_t id;        // TODO: Remove this field once fblcs is refactored.
   FblcTypeV argv;
   FblcType* return_type;
   FblcExpr* body;
@@ -462,7 +459,6 @@ typedef struct {
 //     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
 //           arg0 name0, arg1, name1, ... ; return_type) body'
 struct FblcProc {
-  size_t id;        // TODO: Remove this field once fblcs is refactored.
   FblcPortV portv;
   FblcTypeV argv;
   FblcType* return_type;
