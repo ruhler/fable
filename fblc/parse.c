@@ -51,7 +51,7 @@ static bool IsEOFToken(TokenStream* toks);
 static bool IsToken(TokenStream* toks, char which);
 static bool GetToken(TokenStream* toks, char which);
 static bool IsNameToken(TokenStream* toks);
-static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* name);
+static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, FblcsName* name);
 static void UnexpectedToken(TokenStream* toks, const char* expected);
 
 static bool ParseTypedId(FblcArena* arena, TokenStream* toks, const char* expected, FblcsArg* name);
@@ -60,7 +60,7 @@ static bool ParseArgs(FblcArena* arena, TokenStream* toks, FblcsExprV* argv);
 static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt);
 static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt);
 
-static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* prog, FblcsNameL* typename, TokenStream* toks);
+static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* prog, FblcsName* typename, TokenStream* toks);
 
 // CurrChar --
 //   Look at the character at the front of the token stream's file.
@@ -394,7 +394,7 @@ static bool IsNameToken(TokenStream* toks)
 //   toks - The token stream to retrieve the name token from.
 //   expected - A short description of the expected name token, for use in
 //              error messages e.g. "a field name" or "a type name".
-//   name - A pointer to an FblcsNameL that will be filled in with the
+//   name - A pointer to an FblcsName that will be filled in with the
 //          token's value and location.
 //
 // Returns:
@@ -405,7 +405,7 @@ static bool IsNameToken(TokenStream* toks)
 //   the value and location of the name token, and the name token is removed
 //   from the front of the token stream. Otherwise an error message is printed
 //   to standard error.
-static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, FblcsNameL* name)
+static bool GetNameToken(FblcArena* arena, TokenStream* toks, const char* expected, FblcsName* name)
 {
   SkipToToken(toks);
   if (IsNameChar(CurrChar(toks))) {
@@ -573,7 +573,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return NULL;
     }
   } else if (IsNameToken(toks)) {
-    FblcsNameL start;
+    FblcsName start;
     GetNameToken(arena, toks, "start of expression", &start);
     if (IsToken(toks, '(')) {
       // This is an application expression of the form: start(<args>)
@@ -740,7 +740,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
   } else if (IsToken(toks, '~')) {
     // This is a get action or put action of the form: ~name() or ~name(<arg>)
     GetToken(toks, '~');
-    FblcsNameL port;
+    FblcsName port;
     if (!GetNameToken(arena, toks, "port", &port)) {
       return NULL;
     }
@@ -774,7 +774,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return &put_actn->_base;
     }
   } else if (IsNameToken(toks)) {
-    FblcsNameL start;
+    FblcsName start;
     GetNameToken(arena, toks, "process or type name", &start);
 
     if (IsToken(toks, '(')) {
@@ -936,7 +936,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
   while (!IsEOFToken(&toks)) {
     // All declarations start with the form: <keyword> <name> (...
     static const char* keywords = "'struct', 'union', 'func', or 'proc'";
-    FblcsNameL keyword;
+    FblcsName keyword;
     if (!GetNameToken(arena, &toks, keywords, &keyword)) {
       return NULL;
     }
@@ -1132,9 +1132,9 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
 // Side effects:
 //   The token stream is advanced to the end of the value. In the case of an
 //   error, an error message is printed to standard error.
-static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* prog, FblcsNameL* typename, TokenStream* toks)
+static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* prog, FblcsName* typename, TokenStream* toks)
 {
-  FblcsNameL name;
+  FblcsName name;
   if (!GetNameToken(arena, toks, "type name", &name)) {
     return NULL;
   }
@@ -1226,7 +1226,7 @@ static FblcValue* ParseValueFromToks(FblcArena* arena, FblcsProgram* prog, Fblcs
 }
 
 // FblcsParseValue -- see documentation in fblcs.h
-FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* prog, FblcsNameL* typename, int fd)
+FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* prog, FblcsName* typename, int fd)
 {
   TokenStream toks;
   OpenFdTokenStream(&toks, fd, "file descriptor");
@@ -1234,7 +1234,7 @@ FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* prog, FblcsNameL* typ
 }
 
 // ParseValueFromString -- see documentation in fblcs.h
-FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* prog, FblcsNameL* typename, const char* string)
+FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* prog, FblcsName* typename, const char* string)
 {
   TokenStream toks;
   OpenStringTokenStream(&toks, string, string);

@@ -47,7 +47,7 @@ static void PrintUsage(FILE* stream);
 static void ReportError(IOUser* user, const char* msg);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FblcsNameL* typename, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FblcsName* typename, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -122,7 +122,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     }
     user->line++;
 
-    FblcsNameL* type = NULL;
+    FblcsName* type = NULL;
     char port[len+1];
     char value[len+1];
     if (sscanf(line, "get %s %s", port, value) == 2) {
@@ -240,7 +240,7 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FblcsNameL* typename, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(IOUser* user, FblcsName* typename, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");

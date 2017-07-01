@@ -40,8 +40,6 @@ Fbld Application:
    screen.
 
 * Fblc Cleanup
- - Remove FblcName typedef.
- - Rename FblcsNameL FblcsName
  - Put vector type definitions after their corresponding element definitions.
  - Use consistent ordering of definitions in fblc.h, fblcs.h, and all the
    switch statements.

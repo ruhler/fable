@@ -52,20 +52,20 @@ typedef struct {
 //   Prints an error message to stderr with error location.
 void FblcsReportError(const char* format, FblcsLoc* loc, ...);
 
-// FblcsNameL -- 
+// FblcsName -- 
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
 typedef struct {
   const char* name;
   FblcsLoc* loc;
-} FblcsNameL;
+} FblcsName;
 
 // FblcsArg --
 //   An fblcs name with associated type. Used for declaring fields of
 //   types and arguments to functions and processes.
 typedef struct {
-  FblcsNameL type;
-  FblcsNameL name;
+  FblcsName type;
+  FblcsName name;
 } FblcsArg;
 
 // FblcsArgV --
@@ -83,7 +83,7 @@ typedef struct {
 //   id - The fblc id of the field. This is set to FBLC_NULL_ID by the parser,
 //        then later filled in during type check and used by the compiler.
 typedef struct {
-  FblcsNameL name;
+  FblcsName name;
   size_t id;
 } FblcsId;
 
@@ -136,7 +136,7 @@ typedef struct {
 //   An application or struct expression of the form 'func(arg0, arg1, ...)'.
 typedef struct {
   FblcsExpr _base;
-  FblcsNameL func;
+  FblcsName func;
   FblcsExprV argv;
 } FblcsAppExpr;
 
@@ -145,7 +145,7 @@ typedef struct {
 //   union value.
 typedef struct {
   FblcsExpr _base;
-  FblcsNameL type;
+  FblcsName type;
   FblcsId field;
   FblcsExpr* arg;
 } FblcsUnionExpr;
@@ -174,8 +174,8 @@ typedef struct {
 //   variable is accessed.
 typedef struct {
   FblcsExpr _base;
-  FblcsNameL type;
-  FblcsNameL name;
+  FblcsName type;
+  FblcsName name;
   FblcsExpr* def;
   FblcsExpr* body;
 } FblcsLetExpr;
@@ -246,7 +246,7 @@ typedef struct {
 //   which calls a process with the given port and value arguments.
 typedef struct {
   FblcsActn _base;
-  FblcsNameL proc;
+  FblcsName proc;
   FblcsIdV portv;
   FblcsExprV argv;
 } FblcsCallActn;
@@ -257,17 +257,17 @@ typedef struct {
 //   are accessed.
 typedef struct {
   FblcsActn _base;
-  FblcsNameL type;
-  FblcsNameL get;
-  FblcsNameL put;
+  FblcsName type;
+  FblcsName get;
+  FblcsName put;
   FblcsActn* body;
 } FblcsLinkActn;
 
 // FblcsExec --
 //   Trip of type, name, and action used in the FblcsExecActn.
 typedef struct {
-  FblcsNameL type;
-  FblcsNameL name;
+  FblcsName type;
+  FblcsName name;
   FblcsActn* actn;
 } FblcsExec;
 
@@ -299,7 +299,7 @@ typedef enum {
 //   This is a common structure used for both struct and union declarations.
 typedef struct {
   FblcsKind kind;
-  FblcsNameL name;
+  FblcsName name;
   FblcsArgV fieldv;
 } FblcsType;
 
@@ -314,9 +314,9 @@ typedef struct {
 //   Declaration of a function of the form:
 //     'name(arg0 name0, arg1 name1, ...; return_type) body'
 typedef struct {
-  FblcsNameL name;
+  FblcsName name;
   FblcsArgV argv;
-  FblcsNameL return_type;
+  FblcsName return_type;
   FblcsExpr* body;
 } FblcsFunc;
 
@@ -337,8 +337,8 @@ typedef enum {
 // FblcsPort --
 //   The type, name, and polarity of a port.
 typedef struct {
-  FblcsNameL type;
-  FblcsNameL name;
+  FblcsName type;
+  FblcsName name;
   FblcsPolarity polarity;
 } FblcsPort;
 
@@ -354,10 +354,10 @@ typedef struct {
 //     'name(p0type p0polarity p0name, p1type p1polarity p1name, ... ;
 //           arg0 name0, arg1, name1, ... ; return_type) body'
 typedef struct {
-  FblcsNameL name;
+  FblcsName name;
   FblcsPortV portv;
   FblcsArgV argv;
-  FblcsNameL return_type;
+  FblcsName return_type;
   FblcsActn* body;
 } FblcsProc;
 
@@ -408,7 +408,7 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename);
 // Side effects:
 //   The value is read from the given file descriptor. In the case of an
 //   error, an error message is printed to stderr
-FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcsNameL* typename, int fd);
+FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcsName* typename, int fd);
 
 // FblcsParseValueFromString --
 //   Parse an fblc value from a string.
@@ -423,7 +423,7 @@ FblcValue* FblcsParseValue(FblcArena* arena, FblcsProgram* sprog, FblcsNameL* ty
 //
 // Side effects:
 //   In the case of an error, an error message is printed to standard error.
-FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcsNameL* typename, const char* string);
+FblcValue* FblcsParseValueFromString(FblcArena* arena, FblcsProgram* sprog, FblcsName* typename, const char* string);
 
 // FblcsCheckProgram --
 //   Check that the given program environment describes a well formed and well
@@ -546,6 +546,6 @@ FblcsProc* FblcsLookupProc(FblcsProgram* prog, const char* name);
 //
 // Side effects:
 //   The value is printed to the given file stream.
-void FblcsPrintValue(FILE* stream, FblcsProgram* prog, FblcsNameL* typename, FblcValue* value);
+void FblcsPrintValue(FILE* stream, FblcsProgram* prog, FblcsName* typename, FblcValue* value);
 
 #endif  // FBLCS_H_

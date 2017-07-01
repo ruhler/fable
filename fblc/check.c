@@ -28,7 +28,7 @@ typedef struct Ports {
 } Ports;
 
 void ReportError(const char* format, bool* error, FblcsLoc* loc, ...);
-static FblcsType* CheckType(FblcsProgram* prog, FblcsNameL* name, bool* error);
+static FblcsType* CheckType(FblcsProgram* prog, FblcsName* name, bool* error);
 static void CheckTypesMatch(FblcsLoc* loc, FblcsType* expected, FblcsType* actual, bool* error);
 static FblcsType* CheckExpr(FblcsProgram* prog, Vars* vars, FblcsExpr* expr, bool* error);
 static FblcsType* CheckActn(FblcsProgram* prog, Vars* vars, Ports* ports, FblcsActn* actn, bool* error);
@@ -76,7 +76,7 @@ void ReportError(const char* format, bool* error, FblcsLoc* loc, ...)
 // Side effects:
 //   Prints an error message to stderr and sets error to false if the type
 //   name is not valid.
-static FblcsType* CheckType(FblcsProgram* prog, FblcsNameL* name, bool* error)
+static FblcsType* CheckType(FblcsProgram* prog, FblcsName* name, bool* error)
 {
   FblcsType* type = FblcsLookupType(prog, name->name);
   if (type == NULL) {

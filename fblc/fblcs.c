@@ -61,7 +61,7 @@ FblcsProc* FblcsLookupProc(FblcsProgram* prog, const char* name)
 }
 
 // FblcsPrintValue -- see documentation in fblcs.h
-void FblcsPrintValue(FILE* stream, FblcsProgram* prog, FblcsNameL* typename, FblcValue* value)
+void FblcsPrintValue(FILE* stream, FblcsProgram* prog, FblcsName* typename, FblcValue* value)
 {
   FblcsType* type = FblcsLookupType(prog, typename->name);
   assert(type != NULL && "Could not find type");
