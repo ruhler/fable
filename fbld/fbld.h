@@ -121,7 +121,7 @@ typedef struct {
 } FbldArg;
 
 // FbldArgV --
-//   A vector of fbld fields.
+//   A vector of fbld args.
 typedef struct {
   size_t size;
   FbldArg** xs;
@@ -231,27 +231,6 @@ typedef struct {
   FbldExpr* body;
 } FbldLetExpr;
 
-// FbldDeclTag --
-//   Tag used to distinguish amongs different kinds of fbld declarations.
-typedef enum {
-  FBLD_USING_DECL,
-  FBLD_ABSTRACT_TYPE_DECL,
-  FBLD_UNION_DECL,
-  FBLD_STRUCT_DECL,
-  FBLD_FUNC_DECL,
-  FBLD_PROC_DECL
-} FbldDeclTag;
-
-// FbldDecl --
-//   A tagged union of fbld declarations. All decls have the same initial
-//   layout as FbldDecl. The tag can be used to determine what kind of decl
-//   this is to get access to additional fields of the decl by first casting
-//   to that specific type.
-typedef struct {
-  FbldDeclTag tag;
-  FbldName* name;
-} FbldDecl;
-
 // FbldUsingItem --
 //   Specification for a single item in a using declaration of the form
 //   <name>[=<name>].
@@ -276,58 +255,72 @@ typedef struct {
   FbldUsingItem** xs;
 } FbldUsingItemV;
 
-// FbldUsingDecl --
+// FbldUsing --
 //   A using declaration of the form:
 //    using <mref>{<name>[=<name>]; <name>[=<name>]; ...; }
 typedef struct {
-  FbldDecl _base;
   FbldMRef* mref;
   FbldUsingItemV* itemv;
-} FbldUsingDecl;
+} FbldUsing;
 
-// FbldAbstractTypeDecl --
-//   A declaration of an abstract type.
-typedef FbldDecl FbldAbstractTypeDecl;
-
-// FbldConcreteTypeDecl --
-//   A declaration of a struct or union type.
+// FbldUsingV --
+//   A vector of FbldUsings.
 typedef struct {
-  FbldDecl _base;
+  size_t size;
+  FbldUsing** xs;
+} FbldUsingV;
+
+
+// FbldKind --
+//   An enum used to distinguish between struct, union, and abstract types.
+typedef enum {
+  FBLD_STRUCT_KIND,
+  FBLD_UNION_KIND,
+  FBLD_ABSTRACT_KIND
+} FbldKind;
+
+// FbldType --
+//   An fbld type declaration.
+//   fieldv is NULL for abstract type declarations.
+typedef struct {
+  FbldName* name;
+  FbldKind kind;
   FbldArgV* fieldv;
-} FbldConcreteTypeDecl;
+} FbldType;
 
-// FbldStructDecl --
-//   A declaration of a struct type.
-typedef FbldConcreteTypeDecl FbldStructDecl;
+// FbldTypeV --
+//   A vector of FbldTypes.
+typedef struct {
+  size_t size;
+  FbldType** xs;
+} FbldTypeV;
 
-// FbldUnionDecl --
-//   A declaration of a union type.
-typedef FbldConcreteTypeDecl FbldUnionDecl;
-
-// FbldFuncDecl --
+// FbldFunc--
 //   A declaration of a function.
 //   The body is NULL for function prototypes specified in module
 //   declarations.
 typedef struct {
-  FbldDecl _base;
+  FbldName* name;
   FbldArgV* argv;
   FbldQName* return_type;
   FbldExpr* body;
-} FbldFuncDecl;
+} FbldFunc;
 
-// FbldDeclV --
-//   A vector of FbldDecls.
+// FbldFuncV --
+//   A vector of FbldFuncs.
 typedef struct {
   size_t size;
-  FbldDecl** xs;
-} FbldDeclV;
+  FbldFunc** xs;
+} FbldFuncV;
 
 // FbldMType --
 //   An fbld mtype declaration.
 typedef struct {
   FbldName* name;
   FbldNameV* targs;
-  FbldDeclV* declv;
+  FbldUsingV* usingv;
+  FbldTypeV* typev;
+  FbldFuncV* funcv;
 } FbldMType;
 
 // FbldMTypeV --
@@ -363,13 +356,17 @@ typedef struct {
 //   targs - The type parameters of the module.
 //   margs - The module parameters of the module.
 //   iref - The interface the module implements.
-//   declv - The declarations within the module definition.
+//   usingv - The using declarations within the module definition.
+//   typev - The type declarations within the module definition.
+//   funcv - The func declarations within the module definition.
 typedef struct {
   FbldName* name;
   FbldNameV* targs;
   FbldMArgV* margs;
   FbldIRef* iref;
-  FbldDeclV* declv;
+  FbldUsingV* usingv;
+  FbldTypeV* typev;
+  FbldFuncV* funcv;
 } FbldMDefn;
 
 // FbldMDefnV --
@@ -382,7 +379,7 @@ typedef struct {
 // FbldProgram --
 //   A collection of mtypes, mdecls, and mdefns representing a program.
 //
-//   An mdecl is an mdefn whose body has not necessaraly been checked for
+//   An mdecl is an mdefn whose body has not necessarily been checked for
 //   validity. This makes it possible to check the validity of a module
 //   without the need for the implementations of the other modules it depends
 //   on.
@@ -409,12 +406,6 @@ typedef struct {
 //   resolved.
 // FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQName* entity);
 
-// FbldKind --
-//   An enum used to distinguish between struct and union values.
-typedef enum {
-  FBLD_STRUCT_KIND,
-  FBLD_UNION_KIND
-} FbldKind;
 
 // Forward declaration of FbldValue type.
 typedef struct FbldValue FbldValue;

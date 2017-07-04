@@ -1,5 +1,7 @@
 Fbld M2 Kickoff:
 * Separate Using, Type, Func, and Proc decls.
+* Rename FbldField to FbldId and use it for var_expr as well.
+* Rename targs and margs targv and margv
 * Re-organize parse.y to match order in fbld.h, and finish it out.
 * Continue adapting fbld to new polymorphism and syntax from there.
  
@@ -40,6 +42,7 @@ Fbld Application:
    screen.
 
 General Cleanup:
+ - Rename FBLC_ALLOC FblcAlloc to be more consistent?
  - Verify all document comments are present and up to date.
  - Document allocations for every function that takes an FblcArena,
    specifically, what the caller should do to free all allocations.

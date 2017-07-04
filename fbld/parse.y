@@ -35,6 +35,14 @@
     FbldQName* qname;
   } ParseResult;
 
+  // Decls --
+  //   Structure to store a list of declarations of various kind.
+  typedef struct {
+    FbldUsingV* usingv;
+    FbldTypeV* typev;
+    FbldFuncV* funcv;
+  } Decls;
+
   #define YYLTYPE FbldLoc*
 
   #define YYLLOC_DEFAULT(Cur, Rhs, N)  \
@@ -47,15 +55,20 @@
 %union {
   FbldName* name;
   FbldQName* qname;
+  FbldQNameV* qnamev;
   FbldIRef* iref;
   FbldMRef* mref;
+  FbldMRefV* mrefv;
   FbldMType* mtype;
   FbldMDefn* mdefn;
-  FbldDecl* decl;
-  FbldFuncDecl* func_decl;
-  FbldDeclV* declv;
+  Decls* decls;
+  FbldUsingItemV* uitemv;
+  FbldUsing* using;
+  FbldType* type;
+  FbldFunc* func;
   FbldExpr* expr;
   FbldNameV* namev;
+  FbldMArgV* margv;
   FbldArgV* argv;
   FbldExprV* exprv;
   FbldValue* value;
@@ -108,13 +121,16 @@
 %type <mref> mref
 %type <mtype> mtype
 %type <mdefn> mdefn
-%type <decl> decl defn using_decl struct_decl union_decl
-%type <func_decl> func_decl
-%type <declv> decl_list defn_list
+%type <decls> decl_list defn_list
+%type <uitemv> using_item_list
+%type <using> using
+%type <type> type_decl type_defn abstract_type_decl struct_decl union_decl
+%type <func> func_decl func_defn
 %type <expr> expr stmt
 %type <namev> name_list
 %type <qnamev> qname_list
 %type <mrefv> mref_list
+%type <margv> marg_list
 %type <argv> arg_list non_empty_arg_list
 %type <exprv> expr_list non_empty_expr_list
 %type <value> value
@@ -136,7 +152,10 @@ mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldMType);
           $$->name = $2;
           $$->targs = $4;
-          $$->declv = $7;
+          $$->usingv = $7->usingv;
+          $$->typev = $7->typev;
+          $$->funcv = $7->funcv;
+          // TODO: Don't leak the allocated Decls object?
         }
      ;
 
@@ -146,9 +165,34 @@ mdefn: "mdefn" name '<' name_list ';' marg_list ';' iref '>' '{' defn_list '}' '
           $$->targs = $4;
           $$->margs = $6;
           $$->iref = $8;
-          $$->declv = $11;
+          $$->usingv = $11->usingv;
+          $$->typev = $11->typev;
+          $$->funcv = $11->funcv;
+          // TODO: Don't leak the allocated Decls object?
         }
      ;
+
+marg_list:
+    %empty {
+       $$ = FBLC_ALLOC(arena, FbldMArgV);
+       FblcVectorInit(arena, *$$);
+    } 
+  | iref name {
+       $$ = FBLC_ALLOC(arena, FbldMArgV);
+       FblcVectorInit(arena, *$$);
+       FbldMArg* marg = FBLC_ALLOC(arena, FbldMArg);
+       marg->iref = $1;
+       marg->name = $2;
+       FblcVectorAppend(arena, *$$, marg);
+    }
+  | marg_list ',' iref name {
+       $$ = $1;
+       FbldMArg* marg = FBLC_ALLOC(arena, FbldMArg);
+       marg->iref = $3;
+       marg->name = $4;
+       FblcVectorAppend(arena, *$$, marg);
+    }
+  ;
 
 name: NAME | keyword ;
 
@@ -156,11 +200,24 @@ keyword: "mtype" | "mdefn" | "type" | "struct" | "union" | "func" | "proc" | "us
 
 decl_list:
     %empty {
-      $$ = FBLC_ALLOC(arena, FbldDeclV);
-      FblcVectorInit(arena, *$$);
+      $$ = FBLC_ALLOC(arena, Decls);
+      $$->usingv = FBLC_ALLOC(arena, FbldUsingV);
+      $$->typev = FBLC_ALLOC(arena, FbldTypeV);
+      $$->funcv = FBLC_ALLOC(arena, FbldFuncV);
+      FblcVectorInit(arena, *($$->usingv));
+      FblcVectorInit(arena, *($$->typev));
+      FblcVectorInit(arena, *($$->funcv));
     }
-  | decl_list decl {
-      FblcVectorAppend(arena, *$1, $2);
+  | decl_list using ';' {
+      FblcVectorAppend(arena, *($1->usingv), $2);
+      $$ = $1;
+    }
+  | decl_list type_decl ';' {
+      FblcVectorAppend(arena, *($1->typev), $2);
+      $$ = $1;
+    }
+  | decl_list func_decl ';' {
+      FblcVectorAppend(arena, *($1->funcv), $2);
       $$ = $1;
     }
   ;
@@ -185,69 +242,74 @@ non_empty_expr_list:
     }
   ;
 
-using_decl: "using" mref '{' using_item_list '}' {
-      FbldUsingDecl* decl = FBLC_ALLOC(arena, FbldUsingDecl);
-      decl->_base.tag = FBLD_USING_DECL;
-      decl->_base.name = NULL;  // TODO: What to put here?
-      decl->mref = $2;
-      decl->itemv = $4;
-      $$ = &decl->_base;
+using_item_list:
+    %empty {
+      $$ = FBLC_ALLOC(arena, FbldUsingItemV);
+    }
+  | using_item_list name ';' {
+      FbldUsingItem* item = FBLC_ALLOC(arena, FbldUsingItem);
+      item->source = $2;
+      item->dest = $2;
+      FblcVectorAppend(arena, *$1, item);
+      $$ = $1;
+    }
+  | using_item_list name '=' name ';' {
+      FbldUsingItem* item = FBLC_ALLOC(arena, FbldUsingItem);
+      item->source = $4;
+      item->dest = $2;
+      FblcVectorAppend(arena, *$1, item);
+      $$ = $1;
+    }
+    ;
+
+using: "using" mref '{' using_item_list '}' {
+      $$ = FBLC_ALLOC(arena, FbldUsing);
+      $$->mref = $2;
+      $$->itemv = $4;
+    }
+    ;
+
+abstract_type_decl: "type" name {
+      $$ = FBLC_ALLOC(arena, FbldType);
+      $$->name = $2;
+      $$->kind = FBLD_ABSTRACT_KIND;
+      $$->fieldv = NULL;
     }
     ;
 
 struct_decl: "struct" name '(' arg_list ')' {
-      FbldStructDecl* decl = FBLC_ALLOC(arena, FbldStructDecl);
-      decl->_base.tag = FBLD_STRUCT_DECL;
-      decl->_base.name = $2;
-      decl->fieldv = $4;
-      $$ = &decl->_base;
+      $$ = FBLC_ALLOC(arena, FbldType);
+      $$->name = $2;
+      $$->kind = FBLD_STRUCT_KIND;
+      $$->fieldv = $4;
     }
     ;
 
 union_decl: "union" name '(' non_empty_arg_list ')' {
-      FbldUnionDecl* decl = FBLC_ALLOC(arena, FbldUnionDecl);
-      decl->_base.tag = FBLD_UNION_DECL;
-      decl->_base.name = $2;
-      decl->fieldv = $4;
-      $$ = &decl->_base;
+      $$ = FBLC_ALLOC(arena, FbldType);
+      $$->name = $2;
+      $$->kind = FBLD_UNION_KIND;
+      $$->fieldv = $4;
     }
     ;
 
+type_decl: abstract_type_decl | struct_decl | union_decl ;
+type_defn: struct_decl | union_decl ;
+
 func_decl: "func" name '(' arg_list ';' qname ')' {
-      $$ = FBLC_ALLOC(arena, FbldFuncDecl);
-      $$->_base.tag = FBLD_FUNC_DECL;
-      $$->_base.name = $2;
+      $$ = FBLC_ALLOC(arena, FbldFunc);
+      $$->name = $2;
       $$->argv = $4;
       $$->return_type = $6;
       $$->body = NULL;
     }
+    ;
 
-decl:
-    using_decl ';'
-  | "type" name ';' {
-      $$ = FBLC_ALLOC(arena, FbldAbstractTypeDecl);
-      $$->tag = FBLD_ABSTRACT_TYPE_DECL;
-      $$->name = $2;
+func_defn: func_decl expr {
+      $$ = $1;
+      $$->body = $2;
     }
-  | struct_decl ';'
-  | union_decl ';'
-  | func_decl ';' {
-      $$ = &$1->_base;
-    }
-  | "proc" name '(' name_list ';' arg_list ';' qname ')' ';' {
-      assert(false && "TODO: proc");
-    }
-  ;
-
-defn:
-    import_decl ';'
-  | struct_decl ';'
-  | union_decl ';'
-  | func_decl expr ';' {
-      $1->body = $2;
-      $$ = &$1->_base;
-    }
-  ;
+    ;
 
 stmt: expr ';' { $$ = $1; }
     | qname name '=' expr ';' stmt {
@@ -313,11 +375,24 @@ expr:
     
 defn_list:
     %empty {
-      $$ = FBLC_ALLOC(arena, FbldDeclV);
-      FblcVectorInit(arena, *$$);
+      $$ = FBLC_ALLOC(arena, Decls);
+      $$->usingv = FBLC_ALLOC(arena, FbldUsingV);
+      $$->typev = FBLC_ALLOC(arena, FbldTypeV);
+      $$->funcv = FBLC_ALLOC(arena, FbldFuncV);
+      FblcVectorInit(arena, *($$->usingv));
+      FblcVectorInit(arena, *($$->typev));
+      FblcVectorInit(arena, *($$->funcv));
     }
-  | defn_list defn {
-      FblcVectorAppend(arena, *$1, $2);
+  | defn_list using ';' {
+      FblcVectorAppend(arena, *($1->usingv), $2);
+      $$ = $1;
+    }
+  | defn_list type_defn ';' {
+      FblcVectorAppend(arena, *($1->typev), $2);
+      $$ = $1;
+    }
+  | defn_list func_defn ';' {
+      FblcVectorAppend(arena, *($1->funcv), $2);
       $$ = $1;
     }
   ;
@@ -372,22 +447,22 @@ mref_list:
 
 arg_list:
     %empty {
-      $$ = FBLC_ALLOC(arena, FbldTypedNameV);
+      $$ = FBLC_ALLOC(arena, FbldArgV);
       FblcVectorInit(arena, *$$);
     }
   | non_empty_arg_list ;
 
 non_empty_arg_list:
     qname name {
-      $$ = FBLC_ALLOC(arena, FbldTypedNameV);
+      $$ = FBLC_ALLOC(arena, FbldArgV);
       FblcVectorInit(arena, *$$);
-      FbldTypedName* tname = FBLC_ALLOC(arena, FbldTypedName);
+      FbldArg* tname = FBLC_ALLOC(arena, FbldArg);
       tname->type = $1;
       tname->name = $2;
       FblcVectorAppend(arena, *$$, tname);
     }
   | non_empty_arg_list ',' qname name {
-      FbldTypedName* tname = FBLC_ALLOC(arena, FbldTypedName);
+      FbldArg* tname = FBLC_ALLOC(arena, FbldArg);
       tname->type = $3;
       tname->name = $4;
       FblcVectorAppend(arena, *$1, tname);
@@ -500,9 +575,10 @@ static bool IsNameChar(int c)
 static bool IsSingleChar(int c)
 {
   return strchr("(){};,@:?=.", c) != NULL
-    || c == START_MDECL
+    || c == START_MTYPE
     || c == START_MDEFN
-    || c == START_VALUE;
+    || c == START_VALUE
+    || c == START_QNAME;
 }
 
 // ReadNextChar --
@@ -599,7 +675,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
     ReadNextChar(lex);
   }
   FblcVectorAppend(arena, namev, '\0');
-  lvalp->name = FBLC_ALLOC(arena, FbldNameL);
+  lvalp->name = FBLC_ALLOC(arena, FbldName);
   lvalp->name->name = namev.xs;
   lvalp->name->loc = loc;
 
@@ -611,7 +687,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
     {.keyword = "union", .symbol = UNION},
     {.keyword = "func", .symbol = FUNC},
     {.keyword = "proc", .symbol = PROC},
-    {.keyword = "import", .symbol = IMPORT}
+    {.keyword = "using", .symbol = USING}
   };
   size_t num_keywords = sizeof(keywords)/(sizeof(keywords[0]));
   for (size_t i = 0; i < num_keywords; ++i) {
@@ -644,7 +720,7 @@ static void yyerror(YYLTYPE* llocp, FblcArena* arena, Lex* lex, ParseResult* res
 }
 
 // FbldParseMType -- see documentation in fbld.h
-FbldMDecl* FbldParseMType(FblcArena* arena, const char* filename)
+FbldMType* FbldParseMType(FblcArena* arena, const char* filename)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -701,7 +777,7 @@ FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string)
 }
 
 // FbldParseQNameFromString -- see documentation in fbld.h
-FbldQName* FbldParseValueFromString(FblcArena* arena, const char* string)
+FbldQName* FbldParseQNameFromString(FblcArena* arena, const char* string)
 {
   Lex lex = {
     .c = START_QNAME,
