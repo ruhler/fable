@@ -105,13 +105,12 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, search_path);
   FblcVectorAppend(arena, search_path, path);
 
-  FbldMDeclV mdeclv;
-  FblcVectorInit(arena, mdeclv);
+  FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
+  FblcVectorInit(arena, prgm->mtypev);
+  FblcVectorInit(arena, prgm->mdeclv);
+  FblcVectorInit(arena, prgm->mdefnv);
 
-  FbldMDefnV mdefnv;
-  FblcVectorInit(arena, mdefnv);
-
-  if (FbldLoadModules(arena, &search_path, main_module, &mdeclv, &mdefnv)) {
+  if (FbldLoadMDefns(arena, &search_path, main_module, prgm)) {
     if (expect_error) {
       fprintf(old_stderr, "expected error, but no error encountered.\n");
       return EX_FAIL;

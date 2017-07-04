@@ -384,9 +384,9 @@ typedef struct {
 //   without the need for the implementations of the other modules it depends
 //   on.
 typedef struct {
-  FbldMTypeV* mtypes;
-  FbldMDefnV* mdecls;
-  FbldMDefnV* mdefns;
+  FbldMTypeV mtypev;
+  FbldMDefnV mdeclv;
+  FbldMDefnV mdefnv;
 } FbldProgram;
 
 // FbldLookupDecl --
@@ -443,7 +443,7 @@ struct FbldValue {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned declaration if there is no error.
-FbldMType* FbldParseMDecl(FblcArena* arena, const char* filename);
+FbldMType* FbldParseMType(FblcArena* arena, const char* filename);
 
 // FbldParseMDefn --
 //   Parse the module definition from the file with the given filename.
@@ -509,45 +509,43 @@ typedef struct {
   const char** xs;
 } FbldStringV;
 
-// FbldLoadMDecl --
-//   Load the module declaration for the module with the given name.
-//   If the module declaration has already been loaded, it is returned as is.
-//   Otherwise the module declaration and all of its dependencies are located
+// FbldLoadMType --
+//   Load the mtype declaration for the module with the given name.
+//   If the mtype declaration has already been loaded, it is returned as is.
+//   Otherwise the mtype declaration and all of its dependencies are located
 //   according to the given search path, parsed, checked, and added to the
 //   collection of loaded modules before the requested module declaration is
 //   returned.
 //
 // Inputs:
 //   arena - The arena to use for allocating the parsed declaration.
-//   path - A search path used to find the module declaration on disk.
+//   path - A search path used to find the mtype declaration on disk.
 //   name - The name of the module whose declaration to load.
-//   mdeclv - A vector of module declarations that have already been
-//            loaded using FbldLoadMDecl.
+//   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
-//   The loaded module declaration, or NULL if the module declaration could
+//   The loaded mtype declaration, or NULL if the mtype declaration could
 //   not be loaded.
 //
 // Side effects:
-//   Read the module delacaration and any other required module delacarations
-//   from disk and add them to the mdeclv vector.
-//   Prints an error message to stderr if the module declaration or any other
-//   required module declarations cannot be loaded, either because they cannot
+//   Read the mtype delacaration and any other required mtype delacarations
+//   from disk and add them to the prgm.
+//   Prints an error message to stderr if the mtype declaration or any other
+//   required mtype declarations cannot be loaded, either because they cannot
 //   be found on the path, fail to parse, or fail to check.
 //
 // Allocations:
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations if there is no error.
-// FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
+FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
 // FbldLoadMDefn --
-//   Load the module definition for the module with the given name.
-//   The module definition, its corresponding module declaration, and all of
-//   the module declarations they depend on are located according to the given
-//   search path, parsed, checked, and for the module declarations added to
-//   the collection of loaded module declarations before the loaded module
-//   definition is returned.
+//   Load the mdefn declaration for the module with the given name.
+//   The module definition, its corresponding module type, and all of
+//   the module types and declarations they depend on are located according to
+//   the given search path, parsed, checked, and to the program before the
+//   loaded module definition is returned.
 //
 // Inputs:
 //   arena - The arena to use for allocating the loaded definition and
@@ -555,8 +553,7 @@ typedef struct {
 //   path - A search path used to find the module definitions and declaration
 //          on disk.
 //   name - The name of the module whose definition to load.
-//   mdeclv - A vector of module declarations that have already been
-//            loaded using FbldLoadMDecl or FbldLoadMDefn.
+//   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
 //   The loaded module definition, or NULL if the module definition could
@@ -564,7 +561,7 @@ typedef struct {
 //
 // Side effects:
 //   Read the module definition and any other required module delacarations
-//   from disk and add the module declarations to the mdeclv vector.
+//   from disk and add the module declarations to the prgm.
 //   Prints an error message to stderr if the module definition or any other
 //   required module declarations cannot be loaded, either because they cannot
 //   be found on the path, fail to parse, or fail to check.
@@ -573,9 +570,9 @@ typedef struct {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the definition and all loaded declarations if there is no error.
-// FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv);
+FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
-// FbldLoadModules --
+// FbldLoadMDefns --
 //   Load all module definitions and declarations required to compile the
 //   named module.
 //   All of the module declarations and definitions the named module depends
@@ -588,24 +585,21 @@ typedef struct {
 //   path - A search path used to find the module definitions and declaration
 //          on disk.
 //   name - The name of a module whose self and dependencies to load.
-//   mdeclv - A vector of module declarations that have already been
-//            loaded using FbldLoadMDecl or FbldLoadMDefn or FbldLoadModule.
-//   mdefnv - A vector of module definitions that have already been
-//            loaded using FbldLoadMDecl or FbldLoadMDefn or FbldLoadModule.
+//   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
 //   True on success, false on error.
 //
 // Side effects:
 //   Reads required module delacarations and definitions from disk and adds
-//   them to the mdeclv and mdefnv vectors.
+//   them to the prgm.
 //   Prints an error message to stderr if there is an error.
 //
 // Allocations:
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations and definitions if there is no error.
-// bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv);
+bool FbldLoadMDefns(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
 // FbldCheckMDecl --
 //   Check that the given module declaration is well formed and well typed.

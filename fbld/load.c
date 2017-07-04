@@ -10,7 +10,7 @@
 #include "fblc.h"
 #include "fbld.h"
 
-static char* FindModuleFile(FblcArena* arena, FbldStringV* path, FbldName name, const char* extension);
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension);
 
 
 // FindModuleFile --
@@ -32,7 +32,7 @@ static char* FindModuleFile(FblcArena* arena, FbldStringV* path, FbldName name, 
 // Allocations:
 //   The user is responsible for freeing the returned filename if not null
 //   using the arena passed to this function.
-static char* FindModuleFile(FblcArena* arena, FbldStringV* path, FbldName name, const char* extension)
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension)
 {
   for (size_t i = 0; i < path->size; ++i) {
     size_t length = strlen(path->xs[i]) + 1 + strlen(name) + strlen(extension) + 1;
@@ -46,104 +46,102 @@ static char* FindModuleFile(FblcArena* arena, FbldStringV* path, FbldName name, 
   return NULL;
 }
 
-// FbldLoadMDecl -- see documentation in fbld.h
-FbldMDecl* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv)
+// FbldLoadMType -- see documentation in fbld.h
+FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
 {
-  // Return the existing module declaration if it has already been loaded.
-  for (size_t i = 0; i < mdeclv->size; ++i) {
-    if (FbldNamesEqual(mdeclv->xs[i]->name->name, name)) {
-      return mdeclv->xs[i];
+  // Return the existing mtype declaration if it has already been loaded.
+  for (size_t i = 0; i < prgm->mtypev.size; ++i) {
+    if (FbldNamesEqual(name, prgm->mtypev.xs[i]->name->name)) {
+      return prgm->mtypev.xs[i];
     }
   }
 
-  char* filename = FindModuleFile(arena, path, name, ".mdecl");
+  char* filename = FindModuleFile(arena, path, name, ".mtype");
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.mdecl on search path\n", name);
+    fprintf(stderr, "unable to locate %s.mtype on search path\n", name);
     return NULL;
   }
 
   // Parse the module.
-  FbldMDecl* mdecl = FbldParseMDecl(arena, filename);
-  if (mdecl == NULL) {
+  FbldMType* mtype = FbldParseMType(arena, filename);
+  if (mtype == NULL) {
     fprintf(stderr, "failed to parse module from %s\n", filename);
     return NULL;
   }
 
-  assert(FbldNamesEqual(mdecl->name->name, name));
-  FblcVectorAppend(arena, *mdeclv, mdecl);
-
-  // Load all modules that this one depends on.
-  // TODO: detect and abort if the module module recursively depends on itself.
-  for (size_t i = 0; i < mdecl->deps->size; ++i) {
-    if (!FbldLoadMDecl(arena, path, mdecl->deps->xs[i]->name, mdeclv)) {
-      fprintf(stderr, "failed to load module required by %s\n", name);
-      return NULL;
-    }
-  }
+  assert(FbldNamesEqual(mtype->name->name, name));
+  FblcVectorAppend(arena, prgm->mtypev, mtype);
 
   // Check that this declaration is valid.
-  if (!FbldCheckMDecl(mdeclv, mdecl)) {
+  // TODO: detect and abort if the module module recursively depends on itself.
+  if (!FbldCheckMType(arena, mtype, prgm)) {
     return NULL;
   }
 
-  return mdecl;
+  return mtype;
 }
 
 // FbldLoadMDefn -- see documentation in fbld.h
-FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv)
+FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
 {
-  // Load the module's declaration first.
-  if (!FbldLoadMDecl(arena, path, name, mdeclv)) {
-    return NULL;
-  }
-
-  char* filename = FindModuleFile(arena, path, name, ".mdefn");
-  if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.mdefn on search path\n", name);
-    return NULL;
-  }
-
-  // Parse the module.
-  FbldMDefn* mdefn = FbldParseMDefn(arena, filename);
-  if (mdefn == NULL) {
-    fprintf(stderr, "failed to parse module from %s\n", filename);
-    return NULL;
-  }
-
-  assert(FbldNamesEqual(mdefn->name->name, name));
-
-  // Load all modules that this one depends on.
-  // TODO: detect and abort if the module recursively depends on itself.
-  for (size_t i = 0; i < mdefn->deps->size; ++i) {
-    if (!FbldLoadMDecl(arena, path, mdefn->deps->xs[i]->name, mdeclv)) {
-      fprintf(stderr, "failed to load module required by %s\n", name);
-      return NULL;
+  // Return the existing mdefn declaration if it has already been loaded.
+  for (size_t i = 0; i < prgm->mdefnv.size; ++i) {
+    if (FbldNamesEqual(name, prgm->mdefnv.xs[i]->name->name)) {
+      return prgm->mdefnv.xs[i];
     }
   }
 
+  // Check if we have already parsed the mdefn for its mdecl.
+  FbldMDefn* mdefn = NULL;
+  for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
+    if (FbldNamesEqual(name, prgm->mdeclv.xs[i]->name->name)) {
+      mdefn = prgm->mdeclv.xs[i];
+      break;
+    }
+  }
+
+  // Parse the mdefn if we haven't already.
+  if (mdefn == NULL) {
+    char* filename = FindModuleFile(arena, path, name, ".mdefn");
+    if (filename == NULL) {
+      fprintf(stderr, "unable to locate %s.mdefn on search path\n", name);
+      return NULL;
+    }
+
+    mdefn = FbldParseMDefn(arena, filename);
+    if (mdefn == NULL) {
+      fprintf(stderr, "failed to parse module from %s\n", filename);
+      return NULL;
+    }
+    FblcVectorAppend(arena, prgm->mdeclv, mdefn);
+  }
+
+  assert(FbldNamesEqual(mdefn->name->name, name));
+  FblcVectorAppend(arena, prgm->mdefnv, mdefn);
+
   // Check that this definition is valid.
-  if (!FbldCheckMDefn(mdeclv, mdefn)) {
+  // TODO: detect and abort if the module recursively depends on itself.
+  if (!FbldCheckMDefn(arena, mdefn, prgm)) {
     return NULL;
   }
 
   return mdefn;
 }
 
-// FbldLoadModules -- see documentation in fbld.h
-bool FbldLoadModules(FblcArena* arena, FbldStringV* path, FbldName name, FbldMDeclV* mdeclv, FbldMDefnV* mdefnv)
+// FbldLoadMDefns -- see documentation in fbld.h
+bool FbldLoadMDefns(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
 {
-  FbldMDefn* mdefn = FbldLoadMDefn(arena, path, name, mdeclv);
-  if (mdefn == NULL) {
+  if (!FbldLoadMDefn(arena, path, name, prgm)) {
     return false;
   }
 
-  FblcVectorAppend(arena, *mdefnv, mdefn);
-
-  // Load all modules that this one depends on.
+  // Load all the mdefns still left to load.
+  // Note: More mdeclvs will be added as modules are loaded, which means that
+  // prgm->mdeclv->size will often increase during the body of the loop.
+  // Because elements are only ever appended to mdeclv, this should be okay.
   // TODO: detect and abort if the module recursively depends on itself.
-  for (size_t i = 0; i < mdefn->deps->size; ++i) {
-    if (!FbldLoadModules(arena, path, mdefn->deps->xs[i]->name, mdeclv, mdefnv)) {
-      FbldReportError("failed to load %s\n", mdefn->deps->xs[i]->loc, mdefn->deps->xs[i]->name);
+  for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
+    if (!FbldLoadMDefn(arena, path, prgm->mdeclv.xs[i]->name->name, prgm)) {
       return false;
     }
   }
