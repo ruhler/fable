@@ -35,8 +35,8 @@ typedef struct {
 //   stream - The stream with the commands to be executed.
 //   cmd - The next command to execute, if cmd_ready is true.
 typedef struct {
-  FbldMDefnV* prog;
-  FbldQualifiedName* return_type;
+  FbldProgram* prog;
+  FbldQName* return_type;
   const char* file;
   size_t line;
   FILE* stream;
@@ -54,11 +54,11 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static void ReportError(IOUser* user, const char* msg);
 static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
-static FblcValue* ParseValueFromString(FblcArena* arena, FbldMDefnV* mdefnv, const char* string);
+static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
-static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQualifiedName* type_name, FblcValue* value);
+static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FbldQualifiedName* type, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FbldQName* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -91,7 +91,7 @@ static void PrintUsage(FILE* stream)
       "that the resultinv value matches the given value.\n"
       "PATH should be a colon separated list of directories to search for fbld\n"
       "modules.\n"
-      "MAIN should be a qualified entry, such as main@Foo.\n"
+      "MAIN should be a qualified entry, such as main@Foo<;>.\n"
       "VALUEs should be specified using qualified names.\n"
   );
 }
@@ -150,7 +150,7 @@ static void OnUndefinedAccess(FblcInstr* this, FblcExpr* expr)
 //
 // Side effects:
 //   Reports a message to stderr if the value cannot be parsed.
-static FblcValue* ParseValueFromString(FblcArena* arena, FbldMDefnV* mdefnv, const char* string)
+static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, const char* string)
 {
   FbldValue* fbld_value = FbldParseValueFromString(arena, string);
   if (fbld_value == NULL) {
@@ -159,7 +159,7 @@ static FblcValue* ParseValueFromString(FblcArena* arena, FbldMDefnV* mdefnv, con
   }
 
   // TODO: Check that the value is well formed and of the right type.
-  return FbldCompileValue(arena, mdefnv, fbld_value);
+  return FbldCompileValue(arena, prgm, fbld_value);
 }
 
 // EnsureCommandReady --
@@ -186,7 +186,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     }
     user->line++;
 
-//    FbldQualifiedName* type = NULL;
+//    FbldQName* type = NULL;
 //    char port[len+1];
     char value[len+1];
 //    if (sscanf(line, "get %s %s", port, value) == 2) {
@@ -252,7 +252,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
 //
 // Side effects:
 //   Prints the value to the stream in fbld format.
-static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQualifiedName* type_name, FblcValue* value)
+static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value)
 {
   FbldConcreteTypeDecl* type = (FbldConcreteTypeDecl*)FbldLookupDecl(env, NULL, type_name);
   assert(type != NULL);
@@ -331,7 +331,7 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FbldQualifiedName* type, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(IOUser* user, FbldQName* type, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
@@ -423,76 +423,27 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, search_path);
   FblcVectorAppend(arena, search_path, path);
 
-  // Parse the entry.
-  const char* entry_at = strchr(entry, '@');
-  if (entry_at == NULL) {
-    fprintf(stderr, "entry should be a qualified name of the form 'process@module', but got '%s'\n", entry);
+  FbldQName* qentry = FbldParseQNameFromString(arena, entry);
+  if (qentry == NULL) {
+    fprintf(stderr, "failed to parse entry\n");
     return 1;
   }
-  char entry_name_name[entry_at - entry + 1];
-  strncpy(entry_name_name, entry, entry_at - entry);
-  entry_name_name[entry_at - entry] = '\0';
-  FbldLoc entry_name_loc = {
-    .source = entry,
-    .line = 1,
-    .col = entry_at - entry + 2
-  };
-  FbldNameL entry_name = {
-    .name = entry_name_name,
-    .loc = &entry_name_loc
-  };
-  FbldLoc entry_module_loc = {
-    .source = entry,
-    .line = 1,
-    .col = 1
-  };
-  FbldNameL entry_module = {
-    .name = entry_at + 1,
-    .loc = &entry_module_loc
-  };
-  FbldQualifiedName entry_entity = {
-    .module = &entry_module,
-    .name = &entry_name
-  };
 
-  FbldMDeclV mdeclv;
-  FblcVectorInit(arena, mdeclv);
+  FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
+  FblcVectorInit(arena, prgm->mtypev);
+  FblcVectorInit(arena, prgm->mdeclv);
+  FblcVectorInit(arena, prgm->mdefnv);
 
-  FbldMDefnV mdefnv;
-  FblcVectorInit(arena, mdefnv);
-
-  if (!FbldLoadModules(arena, &search_path, entry_module.name, &mdeclv, &mdefnv)) {
+  if (FbldLoadMDefns(arena, &search_path, qentry->mref->name->name, prgm)) {
+    fprintf(stderr, "failed to load\n");
     return 1;
   }
 
   FbldAccessLocV accessv;
   FblcVectorInit(arena, accessv);
-  FblcDecl* decl = FbldCompile(arena, &accessv, &mdefnv, &entry_entity);
-  if (decl == NULL) {
-    fprintf(stderr, "failed to compile");
-    return 1;
-  }
-
-  FblcProcDecl* proc = NULL;
-  if (decl->tag == FBLC_PROC_DECL) {
-    proc = (FblcProcDecl*)decl;
-  } else if (decl->tag == FBLC_FUNC_DECL) {
-    // Make a proc wrapper for the function.
-    FblcFuncDecl* func = (FblcFuncDecl*)decl;
-    FblcEvalActn* body = FBLC_ALLOC(arena, FblcEvalActn);
-    body->_base.tag = FBLC_EVAL_ACTN;
-    body->arg = func->body;
-
-    proc = FBLC_ALLOC(arena, FblcProcDecl);
-    proc->_base.tag = FBLC_PROC_DECL;
-    proc->portv.size = 0;
-    proc->portv.xs = NULL;
-    proc->argv.size = func->argv.size;
-    proc->argv.xs = func->argv.xs;
-    proc->return_type = func->return_type;
-    proc->body = &body->_base;
-  } else {
-    fprintf(stderr, "entry %s is not a function or process.\n", entry);
+  FblcProc* proc = FbldCompile(arena, &accessv, prgm, qentry);
+  if (proc == NULL) {
+    fprintf(stderr, "failed to compile\n");
     return 1;
   }
 
@@ -503,7 +454,7 @@ int main(int argc, char* argv[])
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = ParseValueFromString(arena, &mdefnv, argv[i]);
+    args[i] = ParseValueFromString(arena, &prgm, argv[i]);
   }
 
   FbldFuncDecl* entry_decl = (FbldFuncDecl*)FbldLookupDecl(&mdefnv, NULL, &entry_entity);

@@ -11,3 +11,7 @@ clean:
 checkerr: all
 	cat out/test/*.err
 
+.PHONY: foo
+foo:
+	./out/fbld/fbld-check prgms UBNatTest
+

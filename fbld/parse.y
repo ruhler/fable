@@ -574,7 +574,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,@:?=.", c) != NULL
+  return strchr("(){};,@:?=.<>", c) != NULL
     || c == START_MTYPE
     || c == START_MDEFN
     || c == START_VALUE

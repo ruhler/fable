@@ -269,3 +269,17 @@ Syntax Reference
   pname ::= ... (* as in fblc *)
   tname ::= ... (* as in fblc *)
   vname ::= ... (* as in fblc *)
+
+Open Questions
+--------------
+* Can you import the same entity multiple times under a different name in the
+  same using statement?
+* Can you have multiple using statements for the same module?
+* Can you import the same entity multiple times under a different name in
+  different using statements?
+* Can you import public entities from your own module in using statements?
+* Can you import private entities from your own module in using statements?
+* Can you import in funcs or procs in an mtype's using statement, or only
+  types?
+* Can you use an imported type in the import's module parameter?
+  For example, something like: using Maybe(T) { T=Maybe };

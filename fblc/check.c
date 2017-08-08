@@ -3,8 +3,8 @@
 //   well typed.
 
 #include <assert.h>     // for assert
-#include <stdarg.h>     // For va_start
-#include <stdio.h>      // For fprintf
+#include <stdarg.h>     // for va_start
+#include <stdio.h>      // for fprintf
 
 #include "fblcs.h"
 
@@ -36,11 +36,11 @@ static FblcsType* CheckActn(FblcsProgram* prog, Vars* vars, Ports* ports, FblcsA
 // ReportError --
 //   Report an error message associated with a location in a source file.
 //   Used instead of FblcsReportError to make it easier to remember to set the
-//   global error variable to false if any error is reported.
+//   global error variable to true if any error is reported.
 //
 // Inputs:
 //   format - A printf format string for the error message.
-//   error - A boolean variable to set to false.
+//   error - A boolean variable to set to true.
 //   loc - The location of the error message to report.
 //   ... - printf arguments as specified by the format string.
 //
@@ -49,7 +49,7 @@ static FblcsType* CheckActn(FblcsProgram* prog, Vars* vars, Ports* ports, FblcsA
 //
 // Side effects:
 //   Prints an error message to stderr with error location.
-//   Sets 'error' to false.
+//   Sets 'error' to true.
 void ReportError(const char* format, bool* error, FblcsLoc* loc, ...)
 {
   *error = true;
@@ -92,7 +92,7 @@ static FblcsType* CheckType(FblcsProgram* prog, FblcsName* name, bool* error)
 //   loc - The location of the reference to this declaration.
 //   expected - The expected type.
 //   actual - The actual type.
-//   error - Out parameter set to false on error.
+//   error - Out parameter set to true on error.
 //
 // Results:
 //   None.

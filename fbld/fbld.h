@@ -540,6 +540,39 @@ typedef struct {
 //   size of all loaded declarations if there is no error.
 FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
+// FbldLoadMDecl --
+//   Load the declaration part of an mdefn declaration for the module with the
+//   given name. The module definition, its corresponding module type, and all
+//   of the module types and declarations that the mdecl part depends on are
+//   located according to the given search path, parsed, checked, and to the
+//   program before the loaded module definition is returned. The contents of
+//   the returned mdefn are not yet checked.
+//
+// Inputs:
+//   arena - The arena to use for allocating the loaded definition and
+//           declarations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   name - The name of the module whose definition to load.
+//   prgm - The collection of declarations loaded for the program so far.
+//
+// Results:
+//   The loaded module definition, or NULL if the module definition could
+//   not be loaded.
+//
+// Side effects:
+//   Read the module definition and any other required module delacarations
+//   from disk and add the module declarations to the prgm.
+//   Prints an error message to stderr if the module definition or any other
+//   required module declarations cannot be loaded, either because they cannot
+//   be found on the path, fail to parse, or fail to check.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the definition and all loaded declarations if there is no error.
+FbldMDefn* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
+
 // FbldLoadMDefn --
 //   Load the mdefn declaration for the module with the given name.
 //   The module definition, its corresponding module type, and all of
@@ -601,40 +634,70 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, 
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadMDefns(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
-// FbldCheckMDecl --
-//   Check that the given module declaration is well formed and well typed.
+// FbldCheckMType --
+//   Check that the given mtype declaration is well formed and well typed.
 //
 // Inputs:
-//   mdeclv - Already loaded and checked module declarations required by the
-//            module declaration.
-//   mdefn - The module declaration to check.
+//   arena - Arena used for allocations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   mtype - The mtype declaration to check.
+//   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
-//   true if the module declaration is well formed and well typed in the
-//   environment of the given module declarations, false otherwise.
+//   true if the mtype declaration is well formed and well typed, false
+//   otherwise.
 //
 // Side effects:
-//   If the module declaration is not well formed, an error message is
-//   printed to stderr describing the problem with the module declaration.
-// bool FbldCheckMDecl(FbldMDeclV* mdeclv, FbldMDecl* mdecl);
+//   Loads and checks required mtype and mdecls (not mdefns), adding them to
+//   prgm.
+//   If this declaration or any of the required declarations are not well
+//   formed, error messages are printed to stderr describing the problems.
+bool FbldCheckMType(FblcArena* arena, FbldStringV* path, FbldMType* mtype, FbldProgram* prgm);
+
+// FbldCheckMDecl --
+//   Check that the declaration part of the given module definition is well
+//   formed, well typed, and consistent with its own module declaration.
+//
+// Inputs:
+//   arena - Arena used for allocations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   mdefn - The mdefn declaration part to check.
+//   prgm - The collection of declarations loaded for the program so far.
+//
+// Results:
+//   true if the mdecl part of the mdefn declaration is well formed and well
+//   typed, false otherwise.
+//
+// Side effects:
+//   Loads and checks required mtype and mdecls (not mdefns), adding them to
+//   prgm.
+//   If this declaration or any of the required declarations are not well
+//   formed, error messages are printed to stderr describing the problems.
+bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm);
 
 // FbldCheckMDefn --
 //   Check that the given module definition is well formed, well typed, and
 //   consistent with its own module declaration.
 //
 // Inputs:
-//   mdeclv - Already loaded and checked module declarations required by the
-//            module definition, including its own module declaration.
-//   mdefn - The module definition to check.
+//   arena - Arena used for allocations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   mdefn - The mdefn declaration to check.
+//   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
-//   true if the module definition is well formed and well typed in the
-//   environment of the given module declarations, false otherwise.
+//   true if the mdefn declaration is well formed and well typed, false
+//   otherwise.
 //
 // Side effects:
-//   If the module definition is not well formed, an error message is
-//   printed to stderr describing the problem with the module definition.
-// bool FbldCheckMDefn(FbldMDeclV* mdeclv, FbldMDefn* mdefn);
+//   Loads and checks required mtype and mdecls (not mdefns), adding them to
+//   prgm.
+//   If this declaration or any of the required declarations are not well
+//   formed, error messages are printed to stderr describing the problems.
+bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm);
 
 // FbldAccessLoc --
 //   The location of an access expression, for aid in debugging undefined
@@ -671,7 +734,7 @@ typedef struct {
 //   Updates accessv with the location of compiled access expressions.
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program.
-// FblcDecl* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldMDefnV* mdefnv, FbldQName* entity);
+FblcProc* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity);
 
 // FbldCompileValue --
 //   Compile an fbld value to an fblc value.
@@ -687,5 +750,5 @@ typedef struct {
 // Side effects:
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program or the fbld value is not well typed.
-// FblcValue* FbldCompileValue(FblcArena* arena, FbldMDefnV* mdefnv, FbldValue* value);
+FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value);
 #endif // FBLD_H_

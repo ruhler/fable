@@ -20,4 +20,4 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} "return OneField@Main<;>(Unit@Main<;>())"
+skip fbld-test $prg "main@Main<;>" {} "return OneField@Main<;>(Unit@Main<;>())"

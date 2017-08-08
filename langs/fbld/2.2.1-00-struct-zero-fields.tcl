@@ -18,6 +18,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" main {} {
+skip fbld-test $prg "main@Main<;>" {} {
   return NoFields@Main<;>()
 }
