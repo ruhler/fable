@@ -19,7 +19,6 @@ run gcc {*}$FLAGS -c -o out/fbld/obj/parse.tab.o out/fbld/src/parse.tab.c
 
 # Generate libfbld.a
 set fbld_objs [list]
-#foreach {x} [list decl] {
 foreach {x} [list check compile load loc name parse.tab] {
   lappend fbld_objs out/fbld/obj/$x.o
 }

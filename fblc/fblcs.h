@@ -456,6 +456,7 @@ typedef struct {
 //   Compile an fblc program from an already checked fblcs program.
 //
 // Inputs:
+//   arena - Arena to use for allocating the fblc program.
 //   prog - The fblcs program environment.
 //   entry - The main entry point of the program to compile. This must refer
 //           to either a function or process. If it refers to a function, the

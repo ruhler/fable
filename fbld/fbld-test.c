@@ -56,7 +56,7 @@ static void ReportError(IOUser* user, const char* msg);
 static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
 static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
-static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value);
+// static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
 static void AssertValuesEqual(IOUser* user, FbldQName* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
@@ -252,28 +252,28 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
 //
 // Side effects:
 //   Prints the value to the stream in fbld format.
-static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value)
-{
-  FbldConcreteTypeDecl* type = (FbldConcreteTypeDecl*)FbldLookupDecl(env, NULL, type_name);
-  assert(type != NULL);
-  if (type->_base.tag == FBLD_STRUCT_DECL) {
-    fprintf(stream, "%s@%s(", type_name->name->name, type_name->module->name);
-    for (size_t i = 0; i < type->fieldv->size; ++i) {
-      if (i > 0) {
-        fprintf(stream, ",");
-      }
-      PrintValue(stream, env, type->fieldv->xs[i]->type, value->fields[i]);
-    }
-    fprintf(stream, ")");
-  } else if (type->_base.tag == FBLD_UNION_DECL) {
-    fprintf(stream, "%s@%s:%s(", type_name->name->name, type_name->module->name,
-        type->fieldv->xs[value->tag]->name->name);
-    PrintValue(stream, env, type->fieldv->xs[value->tag]->type, value->fields[0]);
-    fprintf(stream, ")");
-  } else {
-    assert(false && "Invalid Kind");
-  }
-}
+//static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value)
+//{
+//  FbldType* type = FbldLookupDecl(env, NULL, type_name);
+//  assert(type != NULL);
+//  if (type->_base.tag == FBLD_STRUCT_DECL) {
+//    fprintf(stream, "%s@%s(", type_name->name->name, type_name->module->name);
+//    for (size_t i = 0; i < type->fieldv->size; ++i) {
+//      if (i > 0) {
+//        fprintf(stream, ",");
+//      }
+//      PrintValue(stream, env, type->fieldv->xs[i]->type, value->fields[i]);
+//    }
+//    fprintf(stream, ")");
+//  } else if (type->_base.tag == FBLD_UNION_DECL) {
+//    fprintf(stream, "%s@%s:%s(", type_name->name->name, type_name->module->name,
+//        type->fieldv->xs[value->tag]->name->name);
+//    PrintValue(stream, env, type->fieldv->xs[value->tag]->type, value->fields[0]);
+//    fprintf(stream, ")");
+//  } else {
+//    assert(false && "Invalid Kind");
+//  }
+//}
 
 // ValuesEqual --
 //   Check whether two values are structurally equal.
@@ -335,10 +335,10 @@ static void AssertValuesEqual(IOUser* user, FbldQName* type, FblcValue* a, FblcV
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
-    fprintf(stderr, "\nexpected: ");
-    PrintValue(stderr, user->prog, type, a);
-    fprintf(stderr, "\nactual:   ");
-    PrintValue(stderr, user->prog, type, b);
+    fprintf(stderr, "\nexpected: ???");
+    //PrintValue(stderr, user->prog, type, a);
+    fprintf(stderr, "\nactual:   ???");
+    //PrintValue(stderr, user->prog, type, b);
     fprintf(stderr, "\n");
     abort();
   }
@@ -441,29 +441,25 @@ int main(int argc, char* argv[])
 
   FbldAccessLocV accessv;
   FblcVectorInit(arena, accessv);
-  FblcProc* proc = FbldCompile(arena, &accessv, prgm, qentry);
-  if (proc == NULL) {
+  FbldLoaded* loaded = FbldCompileProgram(arena, &accessv, prgm, qentry);
+  if (loaded == NULL) {
     fprintf(stderr, "failed to compile\n");
     return 1;
   }
 
-  if (proc->argv.size != argc) {
-    fprintf(stderr, "expected %zi args, but %i were provided.\n", proc->argv.size, argc);
+  if (loaded->proc_d->argv->size != argc) {
+    fprintf(stderr, "expected %zi args, but %i were provided.\n", loaded->proc_d->argv->size, argc);
     return 1;
   }
 
   FblcValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = ParseValueFromString(arena, &prgm, argv[i]);
+    args[i] = ParseValueFromString(arena, loaded->prog, argv[i]);
   }
 
-  FbldFuncDecl* entry_decl = (FbldFuncDecl*)FbldLookupDecl(&mdefnv, NULL, &entry_entity);
-  assert(entry_decl != NULL);
-  assert(entry_decl->_base.tag == FBLD_FUNC_DECL);
-
   IOUser user;
-  user.prog = &mdefnv;
-  user.return_type = entry_decl->return_type;
+  user.prog = loaded->prog;
+  user.return_type = loaded->proc_d->return_type;
   user.file = script;
   user.line = 0;
   user.stream = fopen(script, "r");
@@ -478,7 +474,7 @@ int main(int argc, char* argv[])
     .accessv = &accessv
   };
 
-  FblcValue* value = FblcExecute(arena, &instr._base, proc, args, &io);
+  FblcValue* value = FblcExecute(arena, &instr._base, loaded->proc_c, args, &io);
   assert(value != NULL);
 
   EnsureCommandReady(&user, arena);

@@ -718,23 +718,33 @@ typedef struct {
   FbldAccessLoc* xs;
 } FbldAccessLocV;
 
-// FbldCompile --
-//   Compile an fbld program to fblc.
+// FbldLoaded --
+//   The fbld program, fbld proc, and fblc proc corresponding to a compiled
+//   entry point of a loaded program.
+typedef struct {
+  FbldProgram* prog;
+  FbldFunc* proc_d;   // TODO: Change this to FbldProc once we support those.
+  FblcProc* proc_c;
+} FbldLoaded;
+
+
+// FbldCompileProgram --
+//   Compile an fbld program from an already checked fbld program.
 //
 // Inputs:
-//   arena - Arena to use for allocating the fblc program.
+//   arena - arena to use for allocating the fblc program.
 //   accessv - collection of access expression locations.
-//   mdefnv - Modules describing a valid fbld program.
+//   prgm - The fbld program environment.
 //   entity - The name of the main entry to compile the program for.
 //
 // Result:
-//   A complete fblc program for running the named entity.
+//   The loaded program and entry points, or NULL if the entry could not be
+//   found.
 //
 // Side effects:
 //   Updates accessv with the location of compiled access expressions.
-//   The behavior is undefined if the fbld program is not a valid fbld
-//   program.
-FblcProc* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity);
+//   The behavior is undefined if the program environment is not well formed.
+FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity);
 
 // FbldCompileValue --
 //   Compile an fbld value to an fblc value.

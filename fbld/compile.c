@@ -9,8 +9,8 @@
 #include "fbld.h"
 
 
-// FbldCompile -- see documentation in fbld.h
-FblcProc* FbldCompile(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity)
+// FbldCompileProgram -- see documentation in fbld.h
+FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity)
 {
   assert(false && "TODO: FbldCompile");
   return NULL;
