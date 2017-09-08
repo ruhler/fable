@@ -659,6 +659,7 @@ static IRef* CheckIRef(Context* ctx, FbldIRef* iref)
   // TODO: Don't leak this allocated memory.
   IRef* resolved = FBLC_ALLOC(ctx->arena, IRef);
   resolved->name = iref->name;
+  resolved->targs = FBLC_ALLOC(ctx->arena, FbldQNameV);
   FblcVectorInit(ctx->arena, *resolved->targs);
   for (size_t i = 0; i < iref->targs->size; ++i) {
     Type* targ = CheckType(ctx, iref->targs->xs[i]);
