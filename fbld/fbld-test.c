@@ -434,7 +434,7 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, prgm->mdeclv);
   FblcVectorInit(arena, prgm->mdefnv);
 
-  if (FbldLoadMDefns(arena, &search_path, qentry->mref->name->name, prgm)) {
+  if (!FbldLoadMDefns(arena, &search_path, qentry->mref->name->name, prgm)) {
     fprintf(stderr, "failed to load\n");
     return 1;
   }

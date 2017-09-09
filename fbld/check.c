@@ -92,7 +92,7 @@ static Type* CheckForeignType(Context* ctx, MRef* mref, FbldName* name);
 static MRef* CheckMRef(Context* ctx, FbldMRef* mref);
 static IRef* CheckIRef(Context* ctx, FbldIRef* iref);
 static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
-void CheckArgV(Context* ctx, FbldArgV* argv);
+static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 static void CheckDecls(Context* ctx);
 
 // ReportError --
@@ -866,15 +866,18 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
 // Inputs:
 //   ctx - The context for type checking.
 //   argv - The vector of args to check.
+//   vars - Space for argv->size vars to fill in based on the given args.
 //
 // Result:
-//   None.
+//   A pointer into vars with the variable scope implied by the arguments.
 //
 // Side effects:
+//   Fills in elements of vars.
 //   Loads program modules as needed to check the arguments. In case
 //   there is a problem, reports errors to stderr and sets error to true.
-void CheckArgV(Context* ctx, FbldArgV* argv)
+static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars)
 {
+  Vars* next = NULL;
   for (size_t arg_id = 0; arg_id < argv->size; ++arg_id) {
     FbldArg* arg = argv->xs[arg_id];
 
@@ -886,8 +889,12 @@ void CheckArgV(Context* ctx, FbldArgV* argv)
       }
     }
 
-    CheckType(ctx, arg->type);
+    vars[arg_id].name = arg->name->name;
+    vars[arg_id].type = CheckType(ctx, arg->type);
+    vars[arg_id].next = next;
+    next = vars + arg_id;
   }
+  return next;
 }
 
 // CheckDecls --
@@ -969,18 +976,19 @@ static void CheckDecls(Context* ctx)
     assert(type->kind != FBLD_ABSTRACT_KIND || type->fieldv == NULL);
 
     if (type->fieldv != NULL) {
-      CheckArgV(ctx, type->fieldv);
+      Vars unused[type->fieldv->size];
+      CheckArgV(ctx, type->fieldv, unused);
     }
   }
 
   // Check func declarations
   for (size_t func_id = 0; func_id < ctx->env->funcv->size; ++func_id) {
     FbldFunc* func = ctx->env->funcv->xs[func_id];
-    CheckArgV(ctx, func->argv);
+    Vars vars_data[func->argv->size];
+    Vars* vars = CheckArgV(ctx, func->argv, vars_data);
     Type* return_type = CheckType(ctx, func->return_type);
     if (func->body != NULL) {
-      assert(false && "TODO: Collect real vars to function (don't pass NULL)");
-      Type* body_type = CheckExpr(ctx, NULL, func->body);
+      Type* body_type = CheckExpr(ctx, vars, func->body);
       CheckTypesMatch(func->body->loc, return_type, body_type, &ctx->error);
     }
   }
