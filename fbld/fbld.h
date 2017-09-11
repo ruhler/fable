@@ -388,23 +388,6 @@ typedef struct {
   FbldMDefnV mdeclv;
   FbldMDefnV mdefnv;
 } FbldProgram;
-
-// FbldLookupDecl --
-//   Look up the qualified declaration with the given name in the given program.
-//
-// Inputs:
-//   env - The collection of modules to look up the declaration in.
-//   mdefn - An optional module to look the declaration up in before env.
-//   entity - The name of the entity to look up.
-//
-// Returns:
-//   The declaration with the given name, or NULL if no such declaration
-//   could be found.
-//
-// Side effects:
-//   Behavior is undefined if the module name of the entity has not been
-//   resolved.
-// FbldDecl* FbldLookupDecl(FbldModuleV* env, FbldMDefn* mdefn, FbldQName* entity);
 
 
 // Forward declaration of FbldValue type.
