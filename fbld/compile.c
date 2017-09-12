@@ -8,9 +8,28 @@
 #include "fblc.h"
 #include "fbld.h"
 
+// CompiledFunc
+//   The compiled function for a named entity.
+typedef struct {
+  FbldQName* entity;
+  FblcFunc* compiled;
+} CompiledFunc;
+
+// CompiledFuncV
+//   A vector of compiled functions.
+typedef struct {
+  size_t size;
+  CompiledFunc* xs;
+} CompiledFuncV;
+
+// Compiled
+//   A collection of already compiled entities.
+typedef struct {
+  CompiledFuncV funcv;
+} Compiled;
 
 static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity);
-static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity);
+static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
 
 // LookupFunc --
 //   Look up a function entity in the program.
@@ -48,42 +67,59 @@ static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity)
 //   accessv - Collection of access expression debug info to return.
 //   prgm - The program environment.
 //   entity - The function to compile.
+//   compiled - The collection of already compiled entities.
 //
 // Returns:
 //   A compiled fblc func, or NULL in case of error.
 //
 // Side effects:
-//   Outputs an error message to stderr in case of error.
-static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity)
+//   Adds information about access expressions to accessv.
+//   Adds the compiled function to 'compiled' if it is newly compiled.
+static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled)
 {
-  assert(false && "TODO: CompileFunc");
+  // TODO: Check to see if we have already compiled the entity first.
+  FbldFunc* func_d = LookupFunc(prgm, entity);
+  assert(func_d != NULL);
+
+  FblcFunc* func_c = FBLC_ALLOC(arena, FblcFunc);
+  FblcVectorInit(arena, func_c->argv);
+  for (size_t arg_id = 0; arg_id < func_d->argv->size; ++arg_id) {
+    assert(false && "TODO");
+  }
+  assert(false && "TODO");
+
 }
 
 // FbldCompileProgram -- see documentation in fbld.h
 FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity)
 {
-  FblcFunc* func = CompileFunc(arena, accessv, prgm, entity);
-  if (func == NULL) {
+  FbldFunc* func_d = LookupFunc(prgm, entity);
+  if (func_d == NULL) {
+    fprintf(stderr, "main entry not found\n");
     return NULL;
   }
+
+  Compiled compiled;
+  FblcVectorInit(arena, compiled.funcv);
+  FblcFunc* func_c = CompileFunc(arena, accessv, prgm, entity, &compiled);
 
   // Create an FblcProc wrapper for the compiled function.
   // TODO: Once we support procs in fbld, move the wrapper to the fbld side of
   // compilation.
   FblcEvalActn* body = FBLC_ALLOC(arena, FblcEvalActn);
   body->_base.tag = FBLC_EVAL_ACTN;
-  body->arg = func->body;
+  body->arg = func_c->body;
 
   FblcProc* proc = FBLC_ALLOC(arena, FblcProc);
   FblcVectorInit(arena, proc->portv);
-  proc->argv.size = func->argv.size;
-  proc->argv.xs = func->argv.xs;
-  proc->return_type = func->return_type;
+  proc->argv.size = func_c->argv.size;
+  proc->argv.xs = func_c->argv.xs;
+  proc->return_type = func_c->return_type;
   proc->body = &body->_base;
 
   FbldLoaded* loaded = FBLC_ALLOC(arena, FbldLoaded);
   loaded->prog = prgm;
-  loaded->proc_d = LookupFunc(prgm, entity);
+  loaded->proc_d = func_d;
   loaded->proc_c = proc;
   return loaded;
 }
