@@ -8,6 +8,20 @@
 #include "fblc.h"
 #include "fbld.h"
 
+// CompiledType
+//   The compiled type for a named entity.
+typedef struct {
+  FbldQName* entity;
+  FblcType* compiled;
+} CompiledType;
+
+// CompiledTypeV
+//   A vector of compiled types.
+typedef struct {
+  size_t size;
+  CompiledType* xs;
+} CompiledTypeV;
+
 // CompiledFunc
 //   The compiled function for a named entity.
 typedef struct {
@@ -25,11 +39,15 @@ typedef struct {
 // Compiled
 //   A collection of already compiled entities.
 typedef struct {
+  CompiledTypeV typev;
   CompiledFuncV funcv;
 } Compiled;
 
 static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity);
+static FbldQName* ResolveEntity(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity);
+static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
 static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
+static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity, Compiled* compiled);
 
 // LookupFunc --
 //   Look up a function entity in the program.
@@ -56,6 +74,65 @@ static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity)
       }
     }
   }
+  return NULL;
+}
+
+// ResolveEntity --
+//   Resolve all type and module arguments in the given entity specification.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   prgm - The program context.
+//   mref - The context the entity is being referred to from.
+//   entity - The entity to resolve.
+//
+// Results:
+//   A resolved form of the entity, with type and module variables replaced
+//   based on the provided mref context.
+//
+// Side effects:
+//   Allocates a new entity that somebody should probably clean up somehow.
+static FbldQName* ResolveEntity(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity)
+{
+  FbldQName* resolved = FBLC_ALLOC(arena, FbldQName);
+  resolved->name = entity->name;
+
+  if (entity->mref == NULL) {
+    resolved->mref = mref;
+    return resolved;
+  }
+
+  // TODO: Substitute type and module parameters in entity->mref based on the
+  // substitution map derived from mref and the module for entity->mref->name
+  // (or something like that).
+  assert(false && "TODO: ResolveEntity");
+  return NULL;
+}
+
+// CompileType --
+//   Return a compiled fblc type for the named type.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   prgm - The program environment.
+//   entity - The type to compile.
+//   compiled - The collection of already compiled entities.
+//
+// Returns:
+//   A compiled fblc type, or NULL in case of error.
+//
+// Side effects:
+//   Adds the compiled type to 'compiled' if it is newly compiled.
+static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* entity, Compiled* compiled)
+{
+  // Check to see if we have already compiled the entity.
+  for (size_t i = 0; i < compiled->typev.size; ++i) {
+    if (FbldQNamesEqual(compiled->typev.xs[i].entity, entity)) {
+      return compiled->typev.xs[i].compiled;
+    }
+  }
+
+  assert(false && "TODO: CompileType");
   return NULL;
 }
 
@@ -90,10 +167,27 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
   FblcFunc* func_c = FBLC_ALLOC(arena, FblcFunc);
   FblcVectorInit(arena, func_c->argv);
   for (size_t arg_id = 0; arg_id < func_d->argv->size; ++arg_id) {
-    assert(false && "TODO");
+    FblcType* arg_type = CompileForeignType(arena, prgm, entity->mref, func_d->argv->xs[arg_id]->type, compiled);
+    FblcVectorAppend(arena, func_c->argv, arg_type);
   }
-  assert(false && "TODO");
 
+  assert(false && "TODO");
+  return NULL;
+}
+
+// CompileForeignType --
+//   Compile a type referred to from another context.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   prgm - The program environment.
+//   mref - The context from which the type is referred to.
+//   entity - The type to compile.
+//   compiled - The collection of compiled entities.
+static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity, Compiled* compiled)
+{
+  FbldQName* resolved = ResolveEntity(arena, prgm, mref, entity);
+  return CompileType(arena, prgm, resolved, compiled);
 }
 
 // FbldCompileProgram -- see documentation in fbld.h
