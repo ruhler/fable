@@ -140,6 +140,20 @@ typedef struct {
 // Side effects:
 //   None.
 bool FbldNamesEqual(const char* a, const char* b);
+
+// FbldQNamesEqual --
+//   Test whether two qnames are structurally equal.
+//
+// Inputs:
+//   a - The first name.
+//   b - The second name.
+//
+// Results:
+//   true if the first name structurally equals the second, false otherwise.
+//
+// Side effects:
+//   None.
+bool FbldQNamesEqual(FbldQName* a, FbldQName* b);
 
 // FbldExpr --
 //   Common base type for the following fbld expr types. The tag can be used

@@ -77,7 +77,13 @@ static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity)
 //   Adds the compiled function to 'compiled' if it is newly compiled.
 static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled)
 {
-  // TODO: Check to see if we have already compiled the entity first.
+  // Check to see if we have already compiled the entity.
+  for (size_t i = 0; i < compiled->funcv.size; ++i) {
+    if (FbldQNamesEqual(compiled->funcv.xs[i].entity, entity)) {
+      return compiled->funcv.xs[i].compiled;
+    }
+  }
+
   FbldFunc* func_d = LookupFunc(prgm, entity);
   assert(func_d != NULL);
 

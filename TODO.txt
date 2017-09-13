@@ -1,5 +1,4 @@
 Fbld M2 Kickoff:
-* Factor out common code for checking if entities are equal.
 * Rewrite compiler, under the assumption that all entities and mrefs and such
   have been resolved. At this point, simple test cases should work.
 * Rethink how to translate fblc test cases to fbld.

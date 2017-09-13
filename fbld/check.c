@@ -80,7 +80,6 @@ static void PrintType(FILE* stream, Type* type);
 static void PrintMRef(FILE* stream, MRef* mref);
 
 static bool TypesEqual(Type* a, Type* b);
-static bool MRefsEqual(MRef* a, MRef* b);
 static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* error);
 
 static FbldType* LookupType(Context* ctx, Entity* entity);
@@ -192,58 +191,7 @@ static void PrintMRef(FILE* stream, MRef* mref)
 //   None.
 static bool TypesEqual(Type* a, Type* b)
 {
-  return FbldNamesEqual(a->name->name, b->name->name) && MRefsEqual(a->mref, b->mref);
-}
-
-// MRefsEqual --
-//   Return true if two resolved mrefs are the same.
-//
-// Inputs:
-//   a - The first mref, may be null.
-//   b - The second mref, may be null.
-//
-// Result:
-//   true if the two mrefs are the same, false otherwise. An mref is equal to
-//   the null mref only if it is itself null.
-//
-// Side effects:
-//   None.
-static bool MRefsEqual(MRef* a, MRef* b)
-{
-  if (a == NULL || b == NULL) {
-    return a == NULL && b == NULL;
-  }
-
-  if (!FbldNamesEqual(a->name->name, b->name->name)) {
-    return false;
-  }
-
-  if (a->targs == NULL || b->targs == NULL) {
-    return a->targs == NULL && b->targs == NULL;
-  }
-  assert(a->margs != NULL && b->margs != NULL);
-
-  if (a->targs->size != b->targs->size) {
-    return false;
-  }
-
-  for (size_t i = 0; i < a->targs->size; ++i) {
-    if (!TypesEqual(a->targs->xs[i], b->targs->xs[i])) {
-      return false;
-    }
-  }
-
-  if (a->margs->size != b->margs->size) {
-    return false;
-  }
-
-  for (size_t i = 0; i < a->margs->size; ++i) {
-    if (!MRefsEqual(a->margs->xs[i], b->margs->xs[i])) {
-      return false;
-    }
-  }
-
-  return true;
+  return FbldQNamesEqual(a, b);
 }
 
 // CheckTypesMatch --
