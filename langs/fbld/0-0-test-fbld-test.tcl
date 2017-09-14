@@ -19,5 +19,5 @@ set prg {
 }
 
 fbld-test $prg "main@Main<;>" {} {
-  return Unit@Main<;>();
+  return Unit@Main<;>()
 }

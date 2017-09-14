@@ -8,6 +8,8 @@
 #include "fblc.h"
 #include "fbld.h"
 
+#define UNREACHABLE(x) assert(false && x)
+
 // CompiledType
 //   The compiled type for a named entity.
 typedef struct {
@@ -43,11 +45,41 @@ typedef struct {
   CompiledFuncV funcv;
 } Compiled;
 
+static FbldType* LookupType(FbldProgram* prgm, FbldQName* entity);
 static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity);
 static FbldQName* ResolveEntity(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity);
+static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled);
 static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
 static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
 static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity, Compiled* compiled);
+
+// LookupType --
+//   Look up a type entity in the program.
+//
+// Inputs:
+//   prgm - The program to look in.
+//   entity - The entity to look up.
+//
+// Results:
+//   The type entity or NULL if no such function was found.
+//
+// Side effects:
+//   None
+static FbldType* LookupType(FbldProgram* prgm, FbldQName* entity)
+{
+  for (size_t i = 0; i < prgm->mdefnv.size; ++i) {
+    FbldMDefn* mdefn = prgm->mdefnv.xs[i];
+    if (FbldNamesEqual(entity->mref->name->name, mdefn->name->name)) {
+      for (size_t j = 0; j < mdefn->typev->size; ++j) {
+        FbldType* type = mdefn->typev->xs[j];
+        if (FbldNamesEqual(entity->name->name, type->name->name)) {
+          return type;
+        }
+      }
+    }
+  }
+  return NULL;
+}
 
 // LookupFunc --
 //   Look up a function entity in the program.
@@ -109,6 +141,87 @@ static FbldQName* ResolveEntity(FblcArena* arena, FbldProgram* prgm, FbldMRef* m
   return NULL;
 }
 
+// CompileExpr --
+//   Return a compiled fblc expr for the given expression.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   accessv - Collection of access expression debug info to return.
+//   prgm - The program environment.
+//   mref - The current module context.
+//   expr - The expression to compile.
+//   compiled - The collection of already compiled entities.
+//
+// Returns:
+//   A compiled fblc expr.
+//
+// Side effects:
+//   Adds information about access expressions to accessv.
+//   Adds additional compiled types and functions to 'compiled' as needed.
+static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled)
+{
+  switch (expr->tag) {
+    case FBLC_VAR_EXPR: {
+      assert(false && "TODO: VarExpr");
+      return NULL;
+    }
+
+    case FBLC_APP_EXPR: {
+      FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
+      FbldQName* entity = ResolveEntity(arena, prgm, mref, app_expr_d->func);
+      FbldFunc* func = LookupFunc(prgm, entity);
+      if (func != NULL) {
+        assert(false && "TODO: Compile app expr with func");
+      } else {
+        FblcStructExpr* struct_expr = FBLC_ALLOC(arena, FblcStructExpr);
+        struct_expr->_base.tag = FBLC_STRUCT_EXPR;
+        struct_expr->type = CompileType(arena, prgm, entity, compiled);
+        FblcVectorInit(arena, struct_expr->argv);
+        for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
+          FblcExpr* arg = CompileExpr(arena, accessv, prgm, mref, app_expr_d->argv->xs[i], compiled);
+          FblcVectorAppend(arena, struct_expr->argv, arg);
+        }
+        return &struct_expr->_base;
+      }
+      return NULL;
+    }
+
+    case FBLC_STRUCT_EXPR: {
+      // It's the compiler's job to mark an app expression as a struct
+      // expression when appropriate, which means nobody else should have been
+      // making struct expressions yet. TODO: Why not define a separate
+      // FBLD_*_EXPR enum that doesn't have the STRUCT expr option?
+      UNREACHABLE("Unexpected STRUCT expression");
+      return NULL;
+    }
+
+    case FBLC_UNION_EXPR: {
+      assert(false && "TODO: UnionExpr");
+      return NULL;
+    }
+
+    case FBLC_ACCESS_EXPR: {
+      assert(false && "TODO: AccessExpr");
+      return NULL;
+    }
+
+    case FBLC_COND_EXPR: {
+      assert(false && "TODO: CondExpr");
+      return NULL;
+    }
+
+    case FBLC_LET_EXPR: {
+      assert(false && "TODO: LetExpr");
+      return NULL;
+    }
+
+    default: {
+      UNREACHABLE("invalid fbld expression tag");
+      return NULL;
+    }
+  }
+}
+
 // CompileType --
 //   Return a compiled fblc type for the named type.
 //
@@ -132,8 +245,25 @@ static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* ent
     }
   }
 
-  assert(false && "TODO: CompileType");
-  return NULL;
+  FbldType* type_d = LookupType(prgm, entity);
+  assert(type_d != NULL);
+
+  FblcType* type_c = FBLC_ALLOC(arena, FblcType);
+  switch (type_d->kind) {
+    case FBLD_STRUCT_KIND: type_c->kind = FBLC_STRUCT_KIND; break;
+    case FBLD_UNION_KIND: type_c->kind = FBLC_UNION_KIND; break;
+    case FBLD_ABSTRACT_KIND: UNREACHABLE("abstract kind encountered in compiler"); break;
+  }
+
+  FblcVectorInit(arena, type_c->fieldv);
+  for (size_t i = 0; i < type_d->fieldv->size; ++i) {
+    FbldArg* arg_d = type_d->fieldv->xs[i];
+    FblcType* arg_c = CompileForeignType(arena, prgm, entity->mref, arg_d->type, compiled);
+    FblcVectorAppend(arena, type_c->fieldv, arg_c);
+  }
+
+  // TODO: Add type to compiled!
+  return type_c;
 }
 
 // CompileFunc --
@@ -170,9 +300,11 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     FblcType* arg_type = CompileForeignType(arena, prgm, entity->mref, func_d->argv->xs[arg_id]->type, compiled);
     FblcVectorAppend(arena, func_c->argv, arg_type);
   }
+  func_c->return_type = CompileForeignType(arena, prgm, entity->mref, func_d->return_type, compiled);
+  func_c->body = CompileExpr(arena, accessv, prgm, entity->mref, func_d->body, compiled);
 
-  assert(false && "TODO");
-  return NULL;
+  // TODO: Add func to compiled!
+  return func_c;
 }
 
 // CompileForeignType --
@@ -200,6 +332,7 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
   }
 
   Compiled compiled;
+  FblcVectorInit(arena, compiled.typev);
   FblcVectorInit(arena, compiled.funcv);
   FblcFunc* func_c = CompileFunc(arena, accessv, prgm, entity, &compiled);
 
@@ -227,6 +360,31 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 // FbldCompileValue -- see documentation in fbld.h
 FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 {
-  assert(false && "TODO: FbldCompileValue");
-  return NULL;
+  switch (value->kind) {
+    case FBLD_STRUCT_KIND: {
+      FbldType* type = LookupType(prgm, value->type);
+      assert(type != NULL);
+
+      FblcValue* value_c = FblcNewStruct(arena, type->fieldv->size);
+      for (size_t i = 0; i < type->fieldv->size; ++i) {
+        value_c->fields[i] = FbldCompileValue(arena, prgm, value->fieldv->xs[i]);
+      }
+      return value_c;
+    }
+
+    case FBLD_UNION_KIND: {
+      assert(false && "TODO: Compile union value");
+      return NULL;
+    }
+
+    case FBLD_ABSTRACT_KIND: {
+      UNREACHABLE("attempt to compile type with abstract kind");
+      return NULL;
+    }
+
+    default: {
+      UNREACHABLE("invalid value kind");
+      return NULL;
+    }
+  }
 }
