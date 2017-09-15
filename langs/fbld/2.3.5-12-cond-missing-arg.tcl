@@ -1,6 +1,6 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       union EnumABC(Unit A, Unit B, Unit C);
       union EnumXYZ(Unit X, Unit Y, Unit Z);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
       union EnumABC(Unit A, Unit B, Unit C);
       union EnumXYZ(Unit X, Unit Y, Unit Z);
