@@ -196,8 +196,13 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLC_UNION_EXPR: {
-      assert(false && "TODO: UnionExpr");
-      return NULL;
+      FbldUnionExpr* union_expr_d = (FbldUnionExpr*)expr;
+      FblcUnionExpr* union_expr_c = FBLC_ALLOC(arena, FblcUnionExpr);
+      union_expr_c->_base.tag = FBLC_UNION_EXPR;
+      union_expr_c->type = CompileForeignType(arena, prgm, mref, union_expr_d->type, compiled);
+      union_expr_c->field = union_expr_d->field.id;
+      union_expr_c->arg = CompileExpr(arena, accessv, prgm, mref, union_expr_d->arg, compiled);
+      return &union_expr_c->_base;
     }
 
     case FBLC_ACCESS_EXPR: {
@@ -363,11 +368,11 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 // FbldCompileValue -- see documentation in fbld.h
 FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 {
+  FbldType* type = LookupType(prgm, value->type);
+  assert(type != NULL);
+
   switch (value->kind) {
     case FBLD_STRUCT_KIND: {
-      FbldType* type = LookupType(prgm, value->type);
-      assert(type != NULL);
-
       FblcValue* value_c = FblcNewStruct(arena, type->fieldv->size);
       for (size_t i = 0; i < type->fieldv->size; ++i) {
         value_c->fields[i] = FbldCompileValue(arena, prgm, value->fieldv->xs[i]);
@@ -376,7 +381,13 @@ FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* valu
     }
 
     case FBLD_UNION_KIND: {
-      assert(false && "TODO: Compile union value");
+      FblcValue* arg = FbldCompileValue(arena, prgm, value->fieldv->xs[0]);
+      for (size_t i = 0; i < type->fieldv->size; ++i) {
+        if (FbldNamesEqual(value->tag->name, type->fieldv->xs[i]->name->name)) {
+          return FblcNewUnion(arena, type->fieldv->size, i, arg);
+        }
+      }
+      assert(false && "Invalid union tag");
       return NULL;
     }
 

@@ -6,8 +6,8 @@ set prg {
     };
   }
 
-  Main.mtype {
-    mtype Main< ; ; Main<>> {
+  Main.mdefn {
+    mdefn Main< ; ; Main<>> {
       # Accessing the first component of a struct.
       struct Unit();
       struct Donut();
