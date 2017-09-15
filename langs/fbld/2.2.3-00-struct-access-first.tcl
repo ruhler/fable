@@ -1,13 +1,13 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       func main( ; Unit);
     };
   }
 
-  Main.mdefn {
-    mdefn Main() {
+  Main.mtype {
+    mtype Main< ; ; Main<>> {
       # Accessing the first component of a struct.
       struct Unit();
       struct Donut();
@@ -20,4 +20,6 @@ set prg {
   }
 }
 
-fbld-test $prg main@Main {} "return Unit@Main()"
+fbld-test $prg "main@Main<;>" {} {
+  return Unit@Main<;>()
+}

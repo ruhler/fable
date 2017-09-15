@@ -1,8 +1,8 @@
 # Two structs with different names are considered different types, even if
 # they have the same fields.
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       struct Donut();
       func main( ; Unit);
@@ -10,7 +10,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
       struct Donut();
 
@@ -24,8 +24,8 @@ set prg {
 fbld-check-error $prg Main Main.mdefn:7:9
 
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       struct A(Unit x, Unit y);
       struct B(Unit x, Unit y);
@@ -34,7 +34,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
 
       struct A(Unit x, Unit y);

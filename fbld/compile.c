@@ -249,6 +249,10 @@ static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* ent
   assert(type_d != NULL);
 
   FblcType* type_c = FBLC_ALLOC(arena, FblcType);
+  CompiledType* compiled_type = FblcVectorExtend(arena, compiled->typev);
+  compiled_type->entity = entity;
+  compiled_type->compiled = type_c;
+
   switch (type_d->kind) {
     case FBLD_STRUCT_KIND: type_c->kind = FBLC_STRUCT_KIND; break;
     case FBLD_UNION_KIND: type_c->kind = FBLC_UNION_KIND; break;
@@ -262,7 +266,6 @@ static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* ent
     FblcVectorAppend(arena, type_c->fieldv, arg_c);
   }
 
-  // TODO: Add type to compiled!
   return type_c;
 }
 
