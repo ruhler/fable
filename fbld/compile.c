@@ -206,8 +206,16 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLC_ACCESS_EXPR: {
-      assert(false && "TODO: AccessExpr");
-      return NULL;
+      FbldAccessExpr* access_expr_d = (FbldAccessExpr*)expr;
+      FblcAccessExpr* access_expr_c = FBLC_ALLOC(arena, FblcAccessExpr);
+      access_expr_c->_base.tag = FBLC_ACCESS_EXPR;
+      access_expr_c->obj = CompileExpr(arena, accessv, prgm, mref, access_expr_d->obj, compiled);
+      access_expr_c->field = access_expr_d->field.id;
+
+      FbldAccessLoc* loc = FblcVectorExtend(arena, *accessv);
+      loc->expr = &access_expr_c->_base;
+      loc->loc = access_expr_d->_base.loc;
+      return &access_expr_c->_base;
     }
 
     case FBLC_COND_EXPR: {
