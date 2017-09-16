@@ -245,6 +245,7 @@ non_empty_expr_list:
 using_item_list:
     %empty {
       $$ = FBLC_ALLOC(arena, FbldUsingItemV);
+      FblcVectorInit(arena, *$$);
     }
   | using_item_list name ';' {
       FbldUsingItem* item = FBLC_ALLOC(arena, FbldUsingItem);

@@ -582,7 +582,7 @@ static MRef* CheckMRef(Context* ctx, FbldMRef* mref)
 
   if (mdecl->margs->size == mref->margs->size) {
     for (size_t i = 0; i < mdecl->margs->size; ++i) {
-      // TODO: Check that the module arguments are of correct mtype.
+      assert(false && "TODO: Check module args are of correct mtype");
     }
   } else {
     ReportError("expected %i module arguments to %s, but found %i\n", &ctx->error,
