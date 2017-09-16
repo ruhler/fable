@@ -913,9 +913,11 @@ static void CheckDecls(Context* ctx)
     FbldUsing* using = ctx->env->usingv->xs[using_id];
     using->mref = CheckMRef(ctx, using->mref);
     for (size_t i = 0; i < using->itemv->size; ++i) {
-      Entity* entity = ResolveForeignEntity(ctx, using->mref, using->itemv->xs[i]->source);
-      if (entity == NULL || (LookupType(ctx, entity) == NULL
-                          && LookupFunc(ctx, entity) == NULL)) {
+      // TODO: Don't leak this allocation.
+      Entity* entity = FBLC_ALLOC(ctx->arena, Entity);
+      entity->name = using->itemv->xs[i]->source;
+      entity->mref = using->mref;
+      if ((LookupType(ctx, entity) == NULL && LookupFunc(ctx, entity) == NULL)) {
         ReportError("%s is not exported by %s\n", &ctx->error,
             using->itemv->xs[i]->source->loc, using->itemv->xs[i]->source->name,
             using->mref->name->name);

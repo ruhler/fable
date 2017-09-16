@@ -151,9 +151,9 @@ mdefn UBNat< ; ; UBNat<>> {
   func Lt(Nat a, Nat b; Bool) {
     ?(a;
        ?(b; False(), True(), True(), True()),
-       ?(b; False@Bool(;)(), False(), True(), True()),
-       ?(b; False@Bool<;>(), False(), Lt(a.2p0, b.2p0), Le(a.2p0, b.2p1)),
-       ?(b; False@Bool<List<Int;>;>(), False(), Lt(a.2p1, b.2p0), Lt(a.2p1, b.2p1)));
+       ?(b; False(), False(), True(), True()),
+       ?(b; False(), False(), Lt(a.2p0, b.2p0), Le(a.2p0, b.2p1)),
+       ?(b; False(), False(), Lt(a.2p1, b.2p0), Lt(a.2p1, b.2p1)));
   };
 
   func Le(Nat a, Nat b; Bool) {
