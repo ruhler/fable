@@ -548,6 +548,9 @@ static MRef* CheckMRef(Context* ctx, FbldMRef* mref)
   // TODO: Don't leak this allocated memory.
   MRef* resolved = FBLC_ALLOC(ctx->arena, MRef);
   resolved->name = mref->name;
+  resolved->targs = FBLC_ALLOC(ctx->arena, FbldQNameV);
+  resolved->margs = FBLC_ALLOC(ctx->arena, FbldMRefV);
+
   FblcVectorInit(ctx->arena, *resolved->targs);
   for (size_t i = 0; i < mref->targs->size; ++i) {
     Type* targ = CheckType(ctx, mref->targs->xs[i]);

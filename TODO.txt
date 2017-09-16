@@ -6,6 +6,8 @@ Fbld M2 Cleanup:
 * CheckTypesMatch put error then loc to match ReportError.
 * Rename targs and margs targv and margv
 * Re-organize parse.y to match order in fbld.h, and finish it out.
+* Figure out how to deal with allocations in fbld check and compile, and maybe
+  how to reuse allocations rather than allocating duplicates of things.
  
 Fbld Test:
 * Test case when struct or union type is not redeclared in mdefn from mdecl.
