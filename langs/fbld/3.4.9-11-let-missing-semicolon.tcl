@@ -1,6 +1,6 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       struct A(Unit x, Unit y);
       func main( ; A);
@@ -8,7 +8,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
       struct A(Unit x, Unit y);
 

@@ -1,6 +1,6 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       struct Pair(Unit a, Unit b);
       func foo(Unit a, Unit b ; Pair);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
       struct Pair(Unit a, Unit b);
 
@@ -25,6 +25,6 @@ set prg {
   }
 }
 
-fbld-test $prg main@Main {} {
-  return Pair@Main(Unit@Main(),Unit@Main())
+fbld-test $prg "main@Main<;>" {} {
+  return Pair@Main<;>(Unit@Main<;>(),Unit@Main<;>())
 }

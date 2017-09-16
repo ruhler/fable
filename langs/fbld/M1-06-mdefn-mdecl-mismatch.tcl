@@ -1,6 +1,6 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       struct A(Unit x, Unit y);
       func main( ; A);
@@ -8,11 +8,11 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
 
       # The declaration of 'A' here doesn't match the declaration in
-      # Main.mdecl.
+      # Main.mtype.
       struct A(Unit x);
 
       func main( ; A) {
@@ -22,4 +22,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:7:14
+skip fbld-check-error $prg Main Main.mdefn:7:14

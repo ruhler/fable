@@ -1,14 +1,14 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
-      # Unit is not declared in the mdecl, even though it is properly declared
+  Main.mtype {
+    mtype Main<> {
+      # Unit is not declared in the mtype, even though it is properly declared
       # in the mdefn.
       func main( ; Unit);
     };
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
 
       func main( ; Unit) {
@@ -18,4 +18,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdecl:5:20
+fbld-check-error $prg Main Main.mtype:5:20

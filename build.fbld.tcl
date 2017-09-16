@@ -91,12 +91,12 @@ foreach {x} [lsort [glob langs/fbld/*.tcl]]  {
   source $x
 }
 
-exec mkdir -p out/fbld/spec
+exec mkdir -p out/fbld/cov/spec
 run gcov {*}$::fbld_objs > out/fbld/cov/spec/fbld.gcov
 exec mv {*}[glob *.gcov] out/fbld/cov/spec
 
-run $::fbldtest prgms/UBNatTest.wnt prgms Test@UBNatTest
-run $::fbldtest prgms/PrimesTest.wnt prgms Test@PrimesTest
+skip run $::fbldtest prgms/UBNatTest.wnt prgms "Test@UBNatTest<;>"
+skip run $::fbldtest prgms/PrimesTest.wnt prgms "Test@PrimesTest<;>"
 
 exec mkdir -p out/fbld/cov/all
 run gcov {*}$::fbld_objs > out/fbld/cov/all/fbld.gcov

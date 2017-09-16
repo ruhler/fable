@@ -1,6 +1,6 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
       struct Donut();
       struct A(Unit x, Donut y);
@@ -11,7 +11,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       # Test that we can still refer to variables in scope after a function call.
       struct Unit();
       struct Donut();
@@ -30,6 +30,6 @@ set prg {
   }
 }
 
-fbld-test $prg main@Main {} {
-  return B@Main(Unit@Main(),A@Main(Unit@Main(),Donut@Main()),Unit@Main())
+fbld-test $prg "main@Main<;>" {} {
+  return B@Main<;>(Unit@Main<;>(),A@Main<;>(Unit@Main<;>(),Donut@Main<;>()),Unit@Main<;>())
 }

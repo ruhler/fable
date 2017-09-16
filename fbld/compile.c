@@ -162,8 +162,11 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
-      assert(false && "TODO: VarExpr");
-      return NULL;
+      FbldVarExpr* var_expr_d = (FbldVarExpr*)expr;
+      FblcVarExpr* var_expr_c = FBLC_ALLOC(arena, FblcVarExpr);
+      var_expr_c->_base.tag = FBLC_VAR_EXPR;
+      var_expr_c->var = var_expr_d->id;
+      return &var_expr_c->_base;
     }
 
     case FBLC_APP_EXPR: {
@@ -171,7 +174,15 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
       FbldQName* entity = ResolveEntity(arena, prgm, mref, app_expr_d->func);
       FbldFunc* func = LookupFunc(prgm, entity);
       if (func != NULL) {
-        assert(false && "TODO: Compile app expr with func");
+        FblcAppExpr* app_expr_c = FBLC_ALLOC(arena, FblcAppExpr);
+        app_expr_c->_base.tag = FBLC_APP_EXPR;
+        app_expr_c->func = CompileFunc(arena, accessv, prgm, entity, compiled);
+        FblcVectorInit(arena, app_expr_c->argv);
+        for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
+          FblcExpr* arg = CompileExpr(arena, accessv, prgm, mref, app_expr_d->argv->xs[i], compiled);
+          FblcVectorAppend(arena, app_expr_c->argv, arg);
+        }
+        return &app_expr_c->_base;
       } else {
         FblcStructExpr* struct_expr = FBLC_ALLOC(arena, FblcStructExpr);
         struct_expr->_base.tag = FBLC_STRUCT_EXPR;
@@ -183,7 +194,6 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
         }
         return &struct_expr->_base;
       }
-      return NULL;
     }
 
     case FBLC_STRUCT_EXPR: {
@@ -232,8 +242,13 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLC_LET_EXPR: {
-      assert(false && "TODO: LetExpr");
-      return NULL;
+      FbldLetExpr* let_expr_d = (FbldLetExpr*)expr;
+      FblcLetExpr* let_expr_c = FBLC_ALLOC(arena, FblcLetExpr);
+      let_expr_c->_base.tag = FBLC_LET_EXPR;
+      let_expr_c->type = CompileForeignType(arena, prgm, mref, let_expr_d->type, compiled);
+      let_expr_c->def = CompileExpr(arena, accessv, prgm, mref, let_expr_d->def, compiled);
+      let_expr_c->body = CompileExpr(arena, accessv, prgm, mref, let_expr_d->body, compiled);
+      return &let_expr_c->_base;
     }
 
     default: {

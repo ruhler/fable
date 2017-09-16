@@ -1,23 +1,23 @@
 set prg {
-  Main.mdecl {
-    mdecl Main() {
+  Main.mtype {
+    mtype Main<> {
       struct Unit();
-      func f(Unit x, Unit y; Unit);
+      func f(Unit x; Unit);
       func main( ; Unit);
     };
   }
 
   Main.mdefn {
-    mdefn Main() {
+    mdefn Main< ; ; Main<>> {
       # Function declarations must have a final semicolon.
       struct Unit();
 
-      func f(Unit x, Unit y; Unit) {
+      func f(Unit x; Unit) {
         x;
       }
 
       func main( ; Unit) {
-        Unit();
+        f();
       };
     };
   }
