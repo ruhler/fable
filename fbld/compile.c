@@ -334,6 +334,10 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
   assert(func_d != NULL);
 
   FblcFunc* func_c = FBLC_ALLOC(arena, FblcFunc);
+  CompiledFunc* compiled_func = FblcVectorExtend(arena, compiled->funcv);
+  compiled_func->entity = entity;
+  compiled_func->compiled = func_c;
+
   FblcVectorInit(arena, func_c->argv);
   for (size_t arg_id = 0; arg_id < func_d->argv->size; ++arg_id) {
     FblcType* arg_type = CompileForeignType(arena, prgm, entity->mref, func_d->argv->xs[arg_id]->type, compiled);
@@ -342,7 +346,6 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
   func_c->return_type = CompileForeignType(arena, prgm, entity->mref, func_d->return_type, compiled);
   func_c->body = CompileExpr(arena, accessv, prgm, entity->mref, func_d->body, compiled);
 
-  // TODO: Add func to compiled!
   return func_c;
 }
 
