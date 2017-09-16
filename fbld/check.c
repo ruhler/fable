@@ -651,13 +651,13 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
     case FBLC_VAR_EXPR: {
       FbldVarExpr* var_expr = (FbldVarExpr*)expr;
       for (size_t i = 0; vars != NULL; ++i) {
-        if (FbldNamesEqual(vars->name, var_expr->var->name)) {
-          var_expr->id = i;
+        if (FbldNamesEqual(vars->name, var_expr->var.name->name)) {
+          var_expr->var.id = i;
           return vars->type;
         }
         vars = vars->next;
       }
-      ReportError("variable '%s' not defined\n", &ctx->error, var_expr->var->loc, var_expr->var->name);
+      ReportError("variable '%s' not defined\n", &ctx->error, var_expr->var.name->loc, var_expr->var.name->name);
       return NULL;
     }
 

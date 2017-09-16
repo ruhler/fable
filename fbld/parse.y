@@ -332,8 +332,8 @@ expr:
       FbldVarExpr* var_expr = FBLC_ALLOC(arena, FbldVarExpr);
       var_expr->_base.tag = FBLC_VAR_EXPR;
       var_expr->_base.loc = @$;
-      var_expr->var = $1;
-      var_expr->id = FBLC_NULL_ID;
+      var_expr->var.name = $1;
+      var_expr->var.id = FBLC_NULL_ID;
       $$ = &var_expr->_base;
     }
   | qname '(' expr_list ')' {

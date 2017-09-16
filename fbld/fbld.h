@@ -127,6 +127,19 @@ typedef struct {
   FbldArg** xs;
 } FbldArgV;
 
+// FbldId --
+//   A reference to a variable, field, or port.
+//
+// Fields:
+//   name - The name of the field.
+//   id - The fblc id of the field. This is set to FBLC_NULL_ID by the parser,
+//        then later filled in during type check and used by the compiler.
+typedef struct {
+  FbldName* name;
+  size_t id;
+} FbldId;
+
+
 // FbldNamesEqual --
 //   Test whether two names are equal.
 //
@@ -182,8 +195,7 @@ typedef struct {
 //        checked.
 typedef struct {
   FbldExpr _base;
-  FbldName* var;
-  FblcVarId id;
+  FbldId var;
 } FbldVarExpr;
 
 // FbldAppExpr --
@@ -195,25 +207,13 @@ typedef struct {
   FbldExprV* argv;
 } FbldAppExpr;
 
-// FbldField --
-//   A reference to a field.
-//
-// Fields:
-//   name - The name of the field.
-//   id - The fblc id of the field. This is set to FBLC_NULL_ID by the parser,
-//        then later filled in during type check.
-typedef struct {
-  FbldName* name;
-  FblcFieldId id;
-} FbldField;
-
 // FbldUnionExpr --
 //   A union expression of the form 'type:field(arg)', used to construct a
 //   union value.
 typedef struct {
   FbldExpr _base;
   FbldQName* type;
-  FbldField field;
+  FbldId field;
   FbldExpr* arg;
 } FbldUnionExpr;
 
@@ -223,7 +223,7 @@ typedef struct {
 typedef struct {
   FbldExpr _base;
   FbldExpr* obj;
-  FbldField field;
+  FbldId field;
 } FbldAccessExpr;
 
 // FbldCondExpr --

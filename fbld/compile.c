@@ -165,7 +165,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
       FbldVarExpr* var_expr_d = (FbldVarExpr*)expr;
       FblcVarExpr* var_expr_c = FBLC_ALLOC(arena, FblcVarExpr);
       var_expr_c->_base.tag = FBLC_VAR_EXPR;
-      var_expr_c->var = var_expr_d->id;
+      var_expr_c->var = var_expr_d->var.id;
       return &var_expr_c->_base;
     }
 

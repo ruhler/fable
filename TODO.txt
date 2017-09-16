@@ -1,12 +1,9 @@
 Fbld M2 Kickoff:
-* Rewrite compiler, under the assumption that all entities and mrefs and such
-  have been resolved. At this point, simple test cases should work.
-* Rethink how to translate fblc test cases to fbld.
-* Update check to resolve entities in place.
+* Add and fix tests until they all pass
+ - will include updating check to resolve entities in place.
 
 Fbld M2 Cleanup:
 * CheckTypesMatch put error then loc to match ReportError.
-* Rename FbldField to FbldId and use it for var_expr as well.
 * Rename targs and margs targv and margv
 * Re-organize parse.y to match order in fbld.h, and finish it out.
  
