@@ -8,8 +8,8 @@ set prg {
     };
   }
 
-  Main.mtype {
-    mtype Main< ; ; Main<>> {
+  Main.mdefn {
+    mdefn Main< ; ; Main<>> {
       struct Unit();
       struct StructABC(Unit A, Unit B, Unit C);
       union EnumXYZ(Unit X, Unit Y, Unit Z);

@@ -219,8 +219,16 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLC_COND_EXPR: {
-      assert(false && "TODO: CondExpr");
-      return NULL;
+      FbldCondExpr* cond_expr_d = (FbldCondExpr*)expr;
+      FblcCondExpr* cond_expr_c = FBLC_ALLOC(arena, FblcCondExpr);
+      cond_expr_c->_base.tag = FBLC_COND_EXPR;
+      cond_expr_c->select = CompileExpr(arena, accessv, prgm, mref, cond_expr_d->select, compiled);
+      FblcVectorInit(arena, cond_expr_c->argv);
+      for (size_t i = 0; i < cond_expr_d->argv->size; ++i) {
+        FblcExpr* arg = CompileExpr(arena, accessv, prgm, mref, cond_expr_d->argv->xs[i], compiled);
+        FblcVectorAppend(arena, cond_expr_c->argv, arg);
+      }
+      return &cond_expr_c->_base;
     }
 
     case FBLC_LET_EXPR: {
