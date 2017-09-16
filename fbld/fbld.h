@@ -190,9 +190,6 @@ typedef struct {
 //
 // Fields:
 //   var - The name of the variable.
-//   id - The id of the variable. This will be set to FBLC_NULL_ID by the
-//        parser, and filled in with the actual id when the expression is type
-//        checked.
 typedef struct {
   FbldExpr _base;
   FbldId var;

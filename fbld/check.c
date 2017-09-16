@@ -387,14 +387,14 @@ static Entity* ResolveEntity(Context* ctx, FbldQName* qname)
       FbldUsing* using = ctx->env->usingv->xs[i];
       for (size_t j = 0; j < using->itemv->size; ++j) {
         if (FbldNamesEqual(qname->name->name, using->itemv->xs[j]->dest->name)) {
-          MRef* mref = CheckMRef(ctx, using->mref);
-          if (mref == NULL) {
+          using->mref = CheckMRef(ctx, using->mref);
+          if (using->mref == NULL) {
             return NULL;
           }
 
           // TODO: Don't leak this allocated memory.
           Entity* entity = FBLC_ALLOC(ctx->arena, Entity);
-          entity->mref = mref;
+          entity->mref = using->mref;
           entity->name = using->itemv->xs[j]->source;
           return entity;
         }
@@ -679,6 +679,7 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       if (entity == NULL) {
         return NULL;
       }
+      app_expr->func = entity;
 
       FbldFunc* func = LookupFunc(ctx, entity);
       if (func != NULL) {
@@ -736,6 +737,7 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       if (type == NULL) {
         return NULL;
       }
+      union_expr->type = type;
 
       FbldType* type_def = LookupType(ctx, type);
       assert(type_def != NULL);
@@ -765,12 +767,12 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
         }
       }
 
-      Type* var_type = CheckType(ctx, let_expr->type);
+      let_expr->type = CheckType(ctx, let_expr->type);
       Type* def_type = CheckExpr(ctx, vars, let_expr->def);
-      CheckTypesMatch(let_expr->def->loc, var_type, def_type, &ctx->error);
+      CheckTypesMatch(let_expr->def->loc, let_expr->type, def_type, &ctx->error);
 
       Vars nvars = {
-        .type = var_type,
+        .type = let_expr->type,
         .name = let_expr->var->name,
         .next = vars
       };
@@ -843,6 +845,7 @@ static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars)
     vars[arg_id].name = arg->name->name;
     vars[arg_id].type = CheckType(ctx, arg->type);
     vars[arg_id].next = next;
+    arg->type = vars[arg_id].type;
     next = vars + arg_id;
   }
   return next;
@@ -908,7 +911,7 @@ static void CheckDecls(Context* ctx)
   // Check using declarations.
   for (size_t using_id = 0; using_id < ctx->env->usingv->size; ++using_id) {
     FbldUsing* using = ctx->env->usingv->xs[using_id];
-    CheckMRef(ctx, using->mref);
+    using->mref = CheckMRef(ctx, using->mref);
     for (size_t i = 0; i < using->itemv->size; ++i) {
       Entity* entity = ResolveForeignEntity(ctx, using->mref, using->itemv->xs[i]->source);
       if (entity == NULL || (LookupType(ctx, entity) == NULL
@@ -937,10 +940,11 @@ static void CheckDecls(Context* ctx)
     FbldFunc* func = ctx->env->funcv->xs[func_id];
     Vars vars_data[func->argv->size];
     Vars* vars = CheckArgV(ctx, func->argv, vars_data);
-    Type* return_type = CheckType(ctx, func->return_type);
+    func->return_type = CheckType(ctx, func->return_type);
+
     if (func->body != NULL) {
       Type* body_type = CheckExpr(ctx, vars, func->body);
-      CheckTypesMatch(func->body->loc, return_type, body_type, &ctx->error);
+      CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
     }
   }
 }
