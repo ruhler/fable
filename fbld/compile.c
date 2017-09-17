@@ -48,8 +48,7 @@ typedef struct {
 static FbldMDefn* LookupMDefn(FbldProgram* prgm, FbldName* name);
 static FbldType* LookupType(FbldProgram* prgm, FbldQName* entity);
 static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity);
-static FbldQName* ResolveEntity(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQName* entity);
-static FbldMRef* ResolveMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldMRef* mref);
+
 static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled);
 static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
 static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
@@ -66,11 +65,11 @@ static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRe
 //   The module definition.
 //
 // Side effects:
-//   Behavior is undefined if the module definition is not found.
+//   Behavior is undefined if the module declaration is not found.
 static FbldMDefn* LookupMDefn(FbldProgram* prgm, FbldName* name)
 {
-  for (size_t i = 0; i < prgm->mdefnv.size; ++i) {
-    FbldMDefn* mdefn = prgm->mdefnv.xs[i];
+  for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
+    FbldMDefn* mdefn = prgm->mdeclv.xs[i];
     if (FbldNamesEqual(name->name, mdefn->name->name)) {
       return mdefn;
     }
@@ -130,94 +129,6 @@ static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity)
   return NULL;
 }
 
-// ResolveEntity --
-//   Resolve all type and module arguments in the given entity specification.
-//
-// Inputs:
-//   arena - Arena to use for allocations.
-//   prgm - The program context.
-//   ctx - The context the entity is being referred to from.
-//   entity - The entity to resolve.
-//
-// Results:
-//   A resolved form of the entity, with type and module variables replaced
-//   based on the provided mref context.
-//
-// Side effects:
-//   Allocates a new entity that somebody should probably clean up somehow.
-static FbldQName* ResolveEntity(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQName* entity)
-{
-  FbldMDefn* mdefn = LookupMDefn(prgm, ctx->name);
-
-  if (entity->mref == NULL) {
-    // Check to see if this is a type parameter.
-    for (size_t i = 0; i < mdefn->targs->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, mdefn->targs->xs[i]->name)) {
-        return ctx->targs->xs[i];
-      }
-    }
-  }
-
-  FbldQName* resolved = FBLC_ALLOC(arena, FbldQName);
-  resolved->name = entity->name;
-  resolved->mref = ResolveMRef(arena, prgm, ctx, entity->mref);
-  return resolved;
-}
-
-// ResolveMRef --
-//   Resolve all type and module arguments in the given mref specification.
-//
-// Inputs:
-//   arena - Arena to use for allocations.
-//   prgm - The program context.
-//   ctx - The context the entity is being referred to from.
-//   mref - The mref specification to resolve
-//
-// Results:
-//   A resolved form of the mref, with type and module variables replaced
-//   based on the provided context.
-//
-// Side effects:
-//   Allocates a new mref that somebody should probably clean up somehow.
-static FbldMRef* ResolveMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldMRef* mref)
-{
-  if (mref == NULL) {
-    // This must be a locally defined entity.
-    return ctx;
-  }
-
-  if (mref->targs == NULL) {
-    assert(mref->margs == NULL);
-
-    // This must be a module parameter.
-    FbldMDefn* mdefn = LookupMDefn(prgm, ctx->name);
-    for (size_t i = 0; i < mdefn->margs->size; ++i) {
-      if (FbldNamesEqual(mref->name->name, mdefn->margs->xs[i]->name->name)) {
-        return ctx->margs->xs[i];
-      }
-    }
-    UNREACHABLE("Invalid module parameter");
-    return NULL;
-  }
-
-  FbldMRef* resolved = FBLC_ALLOC(arena, FbldMRef);
-  resolved->name = mref->name;
-  resolved->targs = FBLC_ALLOC(arena, FbldQNameV);
-  FblcVectorInit(arena, *resolved->targs);
-  for (size_t i = 0; i < mref->targs->size; ++i) {
-    FbldQName* targ = ResolveEntity(arena, prgm, ctx, mref->targs->xs[i]);
-    FblcVectorAppend(arena, *resolved->targs, targ);
-  }
-
-  resolved->margs = FBLC_ALLOC(arena, FbldMRefV);
-  FblcVectorInit(arena, *resolved->margs);
-  for (size_t i = 0; i < mref->margs->size; ++i) {
-    FbldMRef* marg = ResolveMRef(arena, prgm, ctx, mref->margs->xs[i]);
-    FblcVectorAppend(arena, *resolved->margs, marg);
-  }
-  return resolved;
-}
-
 // CompileExpr --
 //   Return a compiled fblc expr for the given expression.
 //
@@ -248,7 +159,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 
     case FBLC_APP_EXPR: {
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
-      FbldQName* entity = ResolveEntity(arena, prgm, mref, app_expr_d->func);
+      FbldQName* entity = FbldImportQName(arena, prgm, mref, app_expr_d->func);
       FbldFunc* func = LookupFunc(prgm, entity);
       if (func != NULL) {
         FblcAppExpr* app_expr_c = FBLC_ALLOC(arena, FblcAppExpr);
@@ -437,7 +348,7 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 //   compiled - The collection of compiled entities.
 static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity, Compiled* compiled)
 {
-  FbldQName* resolved = ResolveEntity(arena, prgm, mref, entity);
+  FbldQName* resolved = FbldImportQName(arena, prgm, mref, entity);
   return CompileType(arena, prgm, resolved, compiled);
 }
 
@@ -512,4 +423,64 @@ FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* valu
       return NULL;
     }
   }
+}
+
+// FbldImportQName -- See documentation in fbld.h.
+FbldQName* FbldImportQName(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQName* entity)
+{
+  FbldMDefn* mdefn = LookupMDefn(prgm, ctx->name);
+
+  if (entity->mref == NULL) {
+    // Check to see if this is a type parameter.
+    for (size_t i = 0; i < mdefn->targs->size; ++i) {
+      if (FbldNamesEqual(entity->name->name, mdefn->targs->xs[i]->name)) {
+        return ctx->targs->xs[i];
+      }
+    }
+  }
+
+  FbldQName* resolved = FBLC_ALLOC(arena, FbldQName);
+  resolved->name = entity->name;
+  resolved->mref = FbldImportMRef(arena, prgm, ctx, entity->mref);
+  return resolved;
+}
+
+// FbldImportMRef -- See documentation in fbld.h
+FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldMRef* mref)
+{
+  if (mref == NULL) {
+    // This must be a locally defined entity.
+    return ctx;
+  }
+
+  if (mref->targs == NULL) {
+    assert(mref->margs == NULL);
+
+    // This must be a module parameter.
+    FbldMDefn* mdefn = LookupMDefn(prgm, ctx->name);
+    for (size_t i = 0; i < mdefn->margs->size; ++i) {
+      if (FbldNamesEqual(mref->name->name, mdefn->margs->xs[i]->name->name)) {
+        return ctx->margs->xs[i];
+      }
+    }
+    UNREACHABLE("Invalid module parameter");
+    return NULL;
+  }
+
+  FbldMRef* resolved = FBLC_ALLOC(arena, FbldMRef);
+  resolved->name = mref->name;
+  resolved->targs = FBLC_ALLOC(arena, FbldQNameV);
+  FblcVectorInit(arena, *resolved->targs);
+  for (size_t i = 0; i < mref->targs->size; ++i) {
+    FbldQName* targ = FbldImportQName(arena, prgm, ctx, mref->targs->xs[i]);
+    FblcVectorAppend(arena, *resolved->targs, targ);
+  }
+
+  resolved->margs = FBLC_ALLOC(arena, FbldMRefV);
+  FblcVectorInit(arena, *resolved->margs);
+  for (size_t i = 0; i < mref->margs->size; ++i) {
+    FbldMRef* marg = FbldImportMRef(arena, prgm, ctx, mref->margs->xs[i]);
+    FblcVectorAppend(arena, *resolved->margs, marg);
+  }
+  return resolved;
 }

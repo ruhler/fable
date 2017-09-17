@@ -604,7 +604,7 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, 
 //   named module.
 //   All of the module declarations and definitions the named module depends
 //   on are located according to the given search path, parsed, checked, and
-//   fadded to the collections of loaded module declarations and definitions.
+//   added to the collections of loaded module declarations and definitions.
 //
 // Inputs:
 //   arena - The arena to use for allocating the loaded definition and
@@ -692,6 +692,44 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 //   If this declaration or any of the required declarations are not well
 //   formed, error messages are printed to stderr describing the problems.
 bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm);
+
+// FbldImportQName --
+//   Import an already resolved qualified name from another module.
+//   Substitutes all references to local type parameters and module parameters
+//   with the arguments supplied in the given module reference context.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   prgm - The program context.
+//   ctx - The context the entity is being referred to from.
+//   entity - The entity to import.
+//
+// Results:
+//   The entity imported into the given context.
+//
+// Side effects:
+//   Behavior is undefined if the entity has not already been resolved.
+//   TODO: Allocates a new entity that somebody should probably clean up somehow.
+FbldQName* FbldImportQName(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity);
+
+// FbldImportMRef --
+//   Import an already resolved module reference from another module.
+//   Substitutes all references to local type parameters and module parameters
+//   with the arguments supplied in the given module reference context.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   prgm - The program context.
+//   ctx - The context the module reference is being referred to from.
+//   mref - The module reference to import.
+//
+// Results:
+//   The module reference imported into the given context.
+//
+// Side effects:
+//   Behavior is undefined if the module reference has not already been resolved.
+//   TODO: Allocates a new mref that somebody should probably clean up somehow.
+FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldMRef* mref);
 
 // FbldAccessLoc --
 //   The location of an access expression, for aid in debugging undefined

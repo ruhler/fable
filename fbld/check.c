@@ -85,11 +85,9 @@ static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* er
 static FbldType* LookupType(Context* ctx, Entity* entity);
 static FbldFunc* LookupFunc(Context* ctx, Entity* entity);
 static FbldMType* LookupMType(Context* ctx, FbldMRef* mref);
-
 static Entity* ResolveEntity(Context* ctx, FbldQName* qname);
-static Entity* ResolveForeignEntity(Context* ctx, MRef* mref, FbldName* name);
+static Entity* ImportEntity(Context* ctx, MRef* mref, FbldQName* qname);
 static Type* CheckType(Context* ctx, FbldQName* qname);
-static Type* CheckForeignType(Context* ctx, MRef* mref, FbldName* name);
 static MRef* CheckMRef(Context* ctx, FbldMRef* mref);
 static IRef* CheckIRef(Context* ctx, FbldIRef* iref);
 static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
@@ -366,6 +364,9 @@ static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
 
 // ResolveEntity --
 //   Resolve the entity for the given qualified name.
+//   This includes checking and resolving the entities module reference, if
+//   any, and inlining all references to local names brought in to the module
+//   context with 'using' declarations.
 //
 // Inputs:
 //   ctx - The context for type checking.
@@ -375,20 +376,22 @@ static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
 //   The resolved entity, or NULL if the entity could not be resolved.
 //
 // Side effects:
-//   Loads program modules as needed to check the type. Sets error
-//   to true and reports errors to stderr if the entity could not be resolved.
-//   Note: it is not an error if the entity doesn't refer to an actual
-//   type/func/proc declaration. It's only an error if the module the entity
-//   belongs to could not be determined or loaded with error.
+//   Loads program modules as needed to check module references.
+//   Prints an error message to stderr and sets error to true if the entity's
+//   module reference is not well formed.
+//   This function does not check whether the resolved entity actually exists.
 static Entity* ResolveEntity(Context* ctx, FbldQName* qname)
 {
   if (qname->mref == NULL) {
     // Check if the entity has a local name but is imported from a foreign
-    // module.
+    // module with a 'using' declaration.
     for (size_t i = 0; i < ctx->env->usingv->size; ++i) {
       FbldUsing* using = ctx->env->usingv->xs[i];
       for (size_t j = 0; j < using->itemv->size; ++j) {
         if (FbldNamesEqual(qname->name->name, using->itemv->xs[j]->dest->name)) {
+          // TODO: Cache the results of CheckMRef for using statements so we
+          // don't have to repeatedly check them, allocating and leaking more
+          // memory each time?
           using->mref = CheckMRef(ctx, using->mref);
           if (using->mref == NULL) {
             return NULL;
@@ -419,42 +422,28 @@ static Entity* ResolveEntity(Context* ctx, FbldQName* qname)
   return entity;
 }
 
-// ResolveForeignEntity --
-//   Resolve the entity for the given name in the context of a foreign module.
+// ImportEntity --
+//   Import a resolved entity from another module.
+//   Substitutes all references to local type parameters and module parameters
+//   with the arguments supplied in the given module reference context.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   mref - The foreign module context.
-//   name - The entity to resolve.
+//   mref - The context the entity is being referred to from.
+//   entity - The entity to import.
 //
-// Result:
-//   The entity resolved with respect to the local context, or NULL if the
-//   entity could not be resolved.
+// Results:
+//   The entity imported into the given context.
 //
 // Side effects:
-//   Loads program modules as needed to check the type. Sets error
-//   to true and reports errors to stderr if the entity could not be resolved.
-//   Note: it is not an error if the entity doesn't refer to an actual
-//   type/func/proc declaration. It's only an error if the module the entity
-//   belongs to could not be determined or loaded with error.
-static Entity* ResolveForeignEntity(Context* ctx, MRef* mref, FbldName* name)
+//   Behavior is undefined if the entity has not already been resolved.
+//   TODO: Allocates a new entity that somebody should probably clean up somehow.
+static Entity* ImportEntity(Context* ctx, MRef* mref, FbldQName* entity)
 {
-  // TODO: Don't leak this allocated memory.
-  Entity* qname = FBLC_ALLOC(ctx->arena, Entity);
-
   if (mref == NULL) {
-    qname->name = name;
-    qname->mref = NULL;
-    return ResolveEntity(ctx, qname);
-  } 
-
-  // If the name is defined in the mtype for the foreign entity, return mref +
-  // name. If the name is a type parameter of the foreign entity, look up its
-  // value in the mref. If name is imported with 'using' in the foreign
-  // entity, then recursively resolve the 'using' statement with a foreign
-  // resolve?
-  assert(false && "TODO: ResolveForeignEntity");
-  return NULL;
+    return ResolveEntity(ctx, entity);
+  }
+  return FbldImportQName(ctx->arena, ctx->prgm, mref, entity);
 }
 
 // CheckType --
@@ -482,37 +471,6 @@ static Type* CheckType(Context* ctx, FbldQName* qname)
   FbldType* type = LookupType(ctx, entity);
   if (type == NULL) {
     ReportError("type %s not defined\n", &ctx->error, qname->name->loc, qname->name->name);
-    return NULL;
-  }
-  return entity;
-}
-
-// CheckForeignType --
-//   Check a type from a foreign module.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   mref - The foreign module, may be null to indicate the local module.
-//   name - The name of the type in the foreign module.
-//
-// Result:
-//   The type resolved in the local context (not the foreign context). NULL if
-//   the type could not be resolved or does not refer to a type.
-//
-// Side effects:
-//   Loads program modules as needed to check the type. Sets error
-//   to true and reports errors to stderr if the entity could not be resolved
-//   or does not refer to a type.
-static Type* CheckForeignType(Context* ctx, MRef* mref, FbldName* name)
-{
-  Entity* entity = ResolveForeignEntity(ctx, mref, name);
-  if (entity == NULL) {
-    return NULL;
-  }
-
-  FbldType* type = LookupType(ctx, entity);
-  if (type == NULL) {
-    ReportError("type %s not defined\n", &ctx->error, name->loc, name->name);
     return NULL;
   }
   return entity;
@@ -686,7 +644,7 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       FbldFunc* func = LookupFunc(ctx, entity);
       if (func != NULL) {
         argv = func->argv;
-        return_type = CheckForeignType(ctx, entity->mref, func->return_type->name);
+        return_type = ImportEntity(ctx, entity->mref, func->return_type);
       } else {
         FbldType* type = LookupType(ctx, entity);
         if (type != NULL) {
@@ -704,7 +662,7 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
 
       if (argv->size == app_expr->argv->size) {
         for (size_t i = 0; i < argv->size; ++i) {
-          Type* expected = CheckForeignType(ctx, entity->mref, argv->xs[i]->type->name);
+          Type* expected = ImportEntity(ctx, entity->mref, argv->xs[i]->type);
           CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
         }
       } else {
@@ -725,7 +683,7 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       for (size_t i = 0; i < type->fieldv->size; ++i) {
         if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
           access_expr->field.id = i;
-          return ResolveForeignEntity(ctx, entity->mref, type->fieldv->xs[i]->type->name);
+          return ImportEntity(ctx, entity->mref, type->fieldv->xs[i]->type);
         }
       }
       ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->name->name);
@@ -751,7 +709,7 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       for (size_t i = 0; i < type_def->fieldv->size; ++i) {
         if (FbldNamesEqual(union_expr->field.name->name, type_def->fieldv->xs[i]->name->name)) {
           union_expr->field.id = i;
-          Type* expected = ResolveForeignEntity(ctx, type->mref, type_def->fieldv->xs[i]->type->name);
+          Type* expected = ImportEntity(ctx, type->mref, type_def->fieldv->xs[i]->type);
           CheckTypesMatch(union_expr->arg->loc, expected, arg_type, &ctx->error);
           return type;
         }

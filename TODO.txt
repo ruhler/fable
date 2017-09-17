@@ -3,6 +3,8 @@ Fbld M2 Kickoff:
  - will include updating check to resolve entities in place.
 
 Fbld M2 Cleanup:
+* Untangle the recursive knot that is check/compile/load.
+ - For example, consider moving FbldImportQName and friends to another file.
 * CheckTypesMatch put error then loc to match ReportError.
 * Add comments to check indicating what entities and mrefs are resolved.
 * General code cleanup of check.
