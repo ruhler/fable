@@ -45,89 +45,10 @@ typedef struct {
   CompiledFuncV funcv;
 } Compiled;
 
-static FbldMDefn* LookupMDefn(FbldProgram* prgm, FbldName* name);
-static FbldType* LookupType(FbldProgram* prgm, FbldQName* entity);
-static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity);
-
 static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled);
 static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
 static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
 static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity, Compiled* compiled);
-
-// LookupMDefn --
-//   Look up a module definition in the program.
-//
-// Inputs:
-//   prgm - The program to look in.
-//   name - The name of the module to look up.
-//
-// Results:
-//   The module definition.
-//
-// Side effects:
-//   Behavior is undefined if the module declaration is not found.
-static FbldMDefn* LookupMDefn(FbldProgram* prgm, FbldName* name)
-{
-  for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
-    FbldMDefn* mdefn = prgm->mdeclv.xs[i];
-    if (FbldNamesEqual(name->name, mdefn->name->name)) {
-      return mdefn;
-    }
-  }
-
-  // Type checking should have gauranteed we don't have any references to
-  // unloaded modules.
-  UNREACHABLE("module definition not found.");
-  return NULL;
-}
-
-// LookupType --
-//   Look up a type entity in the program.
-//
-// Inputs:
-//   prgm - The program to look in.
-//   entity - The entity to look up.
-//
-// Results:
-//   The type entity or NULL if no such function was found.
-//
-// Side effects:
-//   None
-static FbldType* LookupType(FbldProgram* prgm, FbldQName* entity)
-{
-  FbldMDefn* mdefn = LookupMDefn(prgm, entity->mref->name);
-  for (size_t j = 0; j < mdefn->typev->size; ++j) {
-    FbldType* type = mdefn->typev->xs[j];
-    if (FbldNamesEqual(entity->name->name, type->name->name)) {
-      return type;
-    }
-  }
-  return NULL;
-}
-
-// LookupFunc --
-//   Look up a function entity in the program.
-//
-// Inputs:
-//   prgm - The program to look in.
-//   entity - The entity to look up.
-//
-// Results:
-//   The function entity or NULL if no such function was found.
-//
-// Side effects:
-//   None
-static FbldFunc* LookupFunc(FbldProgram* prgm, FbldQName* entity)
-{
-  FbldMDefn* mdefn = LookupMDefn(prgm, entity->mref->name);
-  for (size_t j = 0; j < mdefn->funcv->size; ++j) {
-    FbldFunc* func = mdefn->funcv->xs[j];
-    if (FbldNamesEqual(entity->name->name, func->name->name)) {
-      return func;
-    }
-  }
-  return NULL;
-}
 
 // CompileExpr --
 //   Return a compiled fblc expr for the given expression.
@@ -160,7 +81,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     case FBLC_APP_EXPR: {
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
       FbldQName* entity = FbldImportQName(arena, prgm, mref, app_expr_d->func);
-      FbldFunc* func = LookupFunc(prgm, entity);
+      FbldFunc* func = FbldLookupFunc(prgm, entity);
       if (func != NULL) {
         FblcAppExpr* app_expr_c = FBLC_ALLOC(arena, FblcAppExpr);
         app_expr_c->_base.tag = FBLC_APP_EXPR;
@@ -269,7 +190,7 @@ static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* ent
     }
   }
 
-  FbldType* type_d = LookupType(prgm, entity);
+  FbldType* type_d = FbldLookupType(prgm, entity);
   assert(type_d != NULL);
 
   FblcType* type_c = FBLC_ALLOC(arena, FblcType);
@@ -318,7 +239,7 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
   }
 
-  FbldFunc* func_d = LookupFunc(prgm, entity);
+  FbldFunc* func_d = FbldLookupFunc(prgm, entity);
   assert(func_d != NULL);
 
   FblcFunc* func_c = FBLC_ALLOC(arena, FblcFunc);
@@ -355,7 +276,7 @@ static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRe
 // FbldCompileProgram -- see documentation in fbld.h
 FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity)
 {
-  FbldFunc* func_d = LookupFunc(prgm, entity);
+  FbldFunc* func_d = FbldLookupFunc(prgm, entity);
   if (func_d == NULL) {
     fprintf(stderr, "main entry not found\n");
     return NULL;
@@ -390,7 +311,7 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 // FbldCompileValue -- see documentation in fbld.h
 FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 {
-  FbldType* type = LookupType(prgm, value->type);
+  FbldType* type = FbldLookupType(prgm, value->type);
   assert(type != NULL);
 
   switch (value->kind) {
@@ -423,64 +344,4 @@ FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* valu
       return NULL;
     }
   }
-}
-
-// FbldImportQName -- See documentation in fbld.h.
-FbldQName* FbldImportQName(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQName* entity)
-{
-  FbldMDefn* mdefn = LookupMDefn(prgm, ctx->name);
-
-  if (entity->mref == NULL) {
-    // Check to see if this is a type parameter.
-    for (size_t i = 0; i < mdefn->targs->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, mdefn->targs->xs[i]->name)) {
-        return ctx->targs->xs[i];
-      }
-    }
-  }
-
-  FbldQName* resolved = FBLC_ALLOC(arena, FbldQName);
-  resolved->name = entity->name;
-  resolved->mref = FbldImportMRef(arena, prgm, ctx, entity->mref);
-  return resolved;
-}
-
-// FbldImportMRef -- See documentation in fbld.h
-FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldMRef* mref)
-{
-  if (mref == NULL) {
-    // This must be a locally defined entity.
-    return ctx;
-  }
-
-  if (mref->targs == NULL) {
-    assert(mref->margs == NULL);
-
-    // This must be a module parameter.
-    FbldMDefn* mdefn = LookupMDefn(prgm, ctx->name);
-    for (size_t i = 0; i < mdefn->margs->size; ++i) {
-      if (FbldNamesEqual(mref->name->name, mdefn->margs->xs[i]->name->name)) {
-        return ctx->margs->xs[i];
-      }
-    }
-    UNREACHABLE("Invalid module parameter");
-    return NULL;
-  }
-
-  FbldMRef* resolved = FBLC_ALLOC(arena, FbldMRef);
-  resolved->name = mref->name;
-  resolved->targs = FBLC_ALLOC(arena, FbldQNameV);
-  FblcVectorInit(arena, *resolved->targs);
-  for (size_t i = 0; i < mref->targs->size; ++i) {
-    FbldQName* targ = FbldImportQName(arena, prgm, ctx, mref->targs->xs[i]);
-    FblcVectorAppend(arena, *resolved->targs, targ);
-  }
-
-  resolved->margs = FBLC_ALLOC(arena, FbldMRefV);
-  FblcVectorInit(arena, *resolved->margs);
-  for (size_t i = 0; i < mref->margs->size; ++i) {
-    FbldMRef* marg = FbldImportMRef(arena, prgm, ctx, mref->margs->xs[i]);
-    FblcVectorAppend(arena, *resolved->margs, marg);
-  }
-  return resolved;
 }

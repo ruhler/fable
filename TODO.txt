@@ -4,7 +4,6 @@ Fbld M2 Kickoff:
 
 Fbld M2 Cleanup:
 * Untangle the recursive knot that is check/compile/load.
- - For example, consider moving FbldImportQName and friends to another file.
 * Avoid printing duplicate error messages - only check each thing once.
 * CheckTypesMatch put error then loc to match ReportError.
 * Add comments to check indicating what entities and mrefs are resolved.

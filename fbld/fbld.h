@@ -692,6 +692,49 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 //   If this declaration or any of the required declarations are not well
 //   formed, error messages are printed to stderr describing the problems.
 bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm);
+
+// FbldLookupMDefn --
+//   Look up a module definition in the program.
+//
+// Inputs:
+//   prgm - The program to look in.
+//   name - The name of the module to look up.
+//
+// Results:
+//   The module definition, or NULL if no such module definition could be
+//   found.
+//
+// Side effects:
+//   none.
+FbldMDefn* FbldLookupMDefn(FbldProgram* prgm, FbldName* name);
+
+// FbldLookupType --
+//   Look up a type declaration in the program.
+//
+// Inputs:
+//   prgm - The program to look in.
+//   entity - The entity to look up.
+//
+// Results:
+//   The type declaration or NULL if no such type could be found.
+//
+// Side effects:
+//   None.
+FbldType* FbldLookupType(FbldProgram* prgm, FbldQName* entity);
+
+// FbldLookupFunc --
+//   Look up a function declaration in the program.
+//
+// Inputs:
+//   prgm - The program to look in.
+//   entity - The entity to look up.
+//
+// Results:
+//   The function declaration or NULL if no such function could be found.
+//
+// Side effects:
+//   None.
+FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQName* entity);
 
 // FbldImportQName --
 //   Import an already resolved qualified name from another module.
