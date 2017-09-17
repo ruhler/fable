@@ -84,6 +84,8 @@ static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* er
 
 static FbldType* LookupType(Context* ctx, Entity* entity);
 static FbldFunc* LookupFunc(Context* ctx, Entity* entity);
+static FbldMType* LookupMType(Context* ctx, FbldMRef* mref);
+
 static Entity* ResolveEntity(Context* ctx, FbldQName* qname);
 static Entity* ResolveForeignEntity(Context* ctx, MRef* mref, FbldName* name);
 static Type* CheckType(Context* ctx, FbldQName* qname);
@@ -239,10 +241,10 @@ static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* er
 //   be found.
 //
 // Side effects:
-//   Loads program modules as needed to check the type. Sets error to true if
-//   the necessary module declarations and types cannot be loaded that are
-//   needed to look up the type. It is not considered an error if the type
-//   cannot be found.
+//   Loads program modules as needed to find the type definition.
+//   Prints a message to stderr and sets error to true if the program modules
+//   needed to find the type definition could not be loaded.
+//   It is not considered an error if the type cannot be found.
 static FbldType* LookupType(Context* ctx, Entity* entity)
 {
   if (entity->mref == NULL) {
@@ -271,25 +273,7 @@ static FbldType* LookupType(Context* ctx, Entity* entity)
 
   // The entity is in a foreign module. Load the mtype for that module and
   // check for the type declaration in there.
-  FbldMType* mtype = NULL;
-  if (entity->mref->targs == NULL) {
-    // This is a module parameter.
-    for (size_t i = 0; i < ctx->env->margs->size; ++i) {
-      if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, entity->mref->name->name)) {
-        mtype = FbldLoadMType(ctx->arena, ctx->path, ctx->env->margs->xs[i]->iref->name->name, ctx->prgm);
-        break;
-      }
-    }
-
-    // We should never have managed to resolve the entity in the first place
-    // if the module is not defined.
-    assert(mtype != NULL);
-  } else {
-    // This is a global module.
-    FbldMDefn* decl = FbldLoadMDecl(ctx->arena, ctx->path, entity->mref->name->name, ctx->prgm);
-    mtype = FbldLoadMType(ctx->arena, ctx->path, decl->iref->name->name, ctx->prgm);
-  }
-
+  FbldMType* mtype = LookupMType(ctx, entity->mref);
   if (mtype != NULL) {
     for (size_t i = 0; i < mtype->typev->size; ++i) {
       if (FbldNamesEqual(entity->name->name, mtype->typev->xs[i]->name->name)) {
@@ -312,10 +296,10 @@ static FbldType* LookupType(Context* ctx, Entity* entity)
 //   function could be found.
 //
 // Side effects:
-//   Loads program modules as needed to look up the function. Sets error to
-//   true if the necessary module declarations and types cannot be loaded that
-//   are needed to look up the function. It is not considered an error if the
-//   function cannot be found.
+//   Loads program modules as needed to find function definition.
+//   Prints a message to stderr and sets error to true if the program modules
+//   needed to find the function definition could not be loaded.
+//   It is not considered an error if the function cannot be found.
 static FbldFunc* LookupFunc(Context* ctx, Entity* entity)
 {
   if (entity->mref == NULL) {
@@ -331,27 +315,7 @@ static FbldFunc* LookupFunc(Context* ctx, Entity* entity)
 
   // The entity is in a foreign module. Load the mtype for that module and
   // check for the func declaration in there.
-  // TODO: Factor out this common code for getting the mtype corresponding to
-  // an mref? It's used here and in LookupType at least.
-  FbldMType* mtype = NULL;
-  if (entity->mref->targs == NULL) {
-    // This is a module parameter.
-    for (size_t i = 0; i < ctx->env->margs->size; ++i) {
-      if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, entity->mref->name->name)) {
-        mtype = FbldLoadMType(ctx->arena, ctx->path, ctx->env->margs->xs[i]->iref->name->name, ctx->prgm);
-        break;
-      }
-    }
-
-    // We should never have managed to resolve the entity in the first place
-    // if the module is not defined.
-    assert(mtype != NULL);
-  } else {
-    // This is a global module.
-    FbldMDefn* decl = FbldLoadMDecl(ctx->arena, ctx->path, entity->mref->name->name, ctx->prgm);
-    mtype = FbldLoadMType(ctx->arena, ctx->path, decl->iref->name->name, ctx->prgm);
-  }
-
+  FbldMType* mtype = LookupMType(ctx, entity->mref);
   if (mtype != NULL) {
     for (size_t i = 0; i < mtype->funcv->size; ++i) {
       if (FbldNamesEqual(entity->name->name, mtype->funcv->xs[i]->name->name)) {
@@ -361,6 +325,44 @@ static FbldFunc* LookupFunc(Context* ctx, Entity* entity)
   }
   return NULL;
 }
+
+// LookupMType --
+//   Look up the FbldMType* for the given resolved mref.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   mref - A reference to the mtype to look up.
+//
+// Results:
+//   The FbldMType* for the given resolved mref, or NULL if no such mtype
+//   could be found.
+//
+// Side effects:
+//   Loads the referenced mtype declaration if it has not already been loaded.
+//   Sets error to true and prints a message to stderr if the mtype
+//   declaration can not be loaded.
+static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
+{
+  if (mref->targs == NULL) {
+    // This is a module parameter.
+    for (size_t i = 0; i < ctx->env->margs->size; ++i) {
+      if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, mref->name->name)) {
+        return FbldLoadMType(ctx->arena, ctx->path, ctx->env->margs->xs[i]->iref->name->name, ctx->prgm);
+      }
+    }
+
+    ReportError("module %s not defined\n", &ctx->error, mref->name->loc, mref->name->name);
+    return NULL;
+  }
+
+  // This is a global module.
+  FbldMDefn* decl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
+  if (decl == NULL) {
+    return NULL;
+  }
+  return FbldLoadMType(ctx->arena, ctx->path, decl->iref->name->name, ctx->prgm);
+}
+
 
 // ResolveEntity --
 //   Resolve the entity for the given qualified name.
