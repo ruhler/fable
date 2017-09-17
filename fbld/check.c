@@ -34,63 +34,28 @@ typedef struct {
   bool error;
 } Context;
 
-// Entity --
-//   A resolved entity (type, func, or proc).
-//
-// A resolved entity is an entity in the context of a module after the using
-// declarations have been inlined. It can be one of:
-//  - A type parameter: mref is NULL.
-//  - An entity defined in this module: mref is NULL.
-//  - An entity from a module parameter: mref.targs and mref.margs are NULL.
-//  - An entity from a global module: mref.targs and mref.margs contain only
-//    resolved types.
-// Other notes:
-//  * The entity is called a "foreign" entity if mref is non-NULL.
-//  * There is a 1-to-1 mapping between equal values of Entity and equal
-//    concrete type/func/procs.
-//  * A resolved entity is not guaranteed to exist.
-typedef FbldQName Entity;
-
-// MRef --
-//   A module reference for a resolved entity in the context of a module after
-//   the using declarations have been inlined. It can be one of:
-//  - The local module: mref is NULL.
-//  - A module parameter: mref.targs and mref.margs are NULL.
-//  - A global module: mref.targs and mref.margs contain only resolved types.
-typedef FbldMRef MRef;
-
-// IRef --
-//   An interface reference with resolved arguments.
-typedef FbldIRef IRef;
-
-// Type --
-//   Alias for Entity where the entity is supposed to refer to a type.
-typedef Entity Type;
-
 // Vars --
 //   List of variables in scope.
 typedef struct Vars {
-  Type* type;
+  FbldQRef* type;
   const char* name;
   struct Vars* next;
 } Vars;
 
 static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
-static void PrintType(FILE* stream, Type* type);
-static void PrintMRef(FILE* stream, MRef* mref);
+static void PrintType(FILE* stream, FbldQRef* type);
+static void PrintMRef(FILE* stream, FbldMRef* mref);
 
-static bool TypesEqual(Type* a, Type* b);
-static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* error);
+static FbldType* LookupType(Context* ctx, FbldQRef* entity);
+static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
 
-static FbldType* LookupType(Context* ctx, Entity* entity);
-static FbldFunc* LookupFunc(Context* ctx, Entity* entity);
-static FbldMType* LookupMType(Context* ctx, FbldMRef* mref);
-static Entity* ResolveEntity(Context* ctx, FbldQName* qname);
-static Entity* ImportEntity(Context* ctx, MRef* mref, FbldQName* qname);
-static Type* CheckType(Context* ctx, FbldQName* qname);
-static MRef* CheckMRef(Context* ctx, FbldMRef* mref);
-static IRef* CheckIRef(Context* ctx, FbldIRef* iref);
-static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
+static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
+static bool ResolveQRef(Context* ctx, FbldQRef* qref);
+static FbldQRef* ImportQRef(Context* ctx, FbldMRef* mref, FbldQRef* qref);
+static bool CheckType(Context* ctx, FbldQRef* qref);
+static bool CheckMRef(Context* ctx, FbldMRef* mref);
+static bool CheckIRef(Context* ctx, FbldIRef* iref);
+static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
 static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 static void CheckDecls(Context* ctx);
 
@@ -132,12 +97,12 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
 //
 // Side effects:
 //   Prints the type to the stream.
-static void PrintType(FILE* stream, Type* type)
+static void PrintType(FILE* stream, FbldQRef* type)
 {
-  fprintf(stream, "%s", type->name->name);
-  if (type->mref != NULL) {
+  fprintf(stream, "%s", type->uname->name);
+  if (type->umref != NULL) {
     fprintf(stream, "@");
-    PrintMRef(stream, type->mref);
+    PrintMRef(stream, type->umref);
   }
 }
 
@@ -153,7 +118,7 @@ static void PrintType(FILE* stream, Type* type)
 //
 // Side effects:
 //   Prints the mref to the stream.
-static void PrintMRef(FILE* stream, MRef* mref)
+static void PrintMRef(FILE* stream, FbldMRef* mref)
 {
   assert(mref != NULL);
   fprintf(stream, "%s<", mref->name->name);
@@ -177,23 +142,6 @@ static void PrintMRef(FILE* stream, MRef* mref)
   fprintf(stream, ">");
 }
 
-// TypesEqual --
-//   Return true if two types are the same.
-//
-// Inputs:
-//   a - The first type.
-//   b - The second type.
-//
-// Result:
-//   true if the two types are the same, false otherwise.
-//
-// Side effects:
-//   None.
-static bool TypesEqual(Type* a, Type* b)
-{
-  return FbldQNamesEqual(a, b);
-}
-
 // CheckTypesMatch --
 //   Check whether the given types match.
 //
@@ -210,7 +158,7 @@ static bool TypesEqual(Type* a, Type* b)
 //   Prints an error message to stderr and sets error to true if the types
 //   don't match. If either type is null, it is assumed an error has already
 //   been printed, in which case no additional error message will be reported.
-static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* error)
+static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error)
 {
   if (expected == NULL || actual == NULL) {
     // Assume a type error has already been reported or will be reported in
@@ -218,7 +166,7 @@ static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* er
     return;
   }
 
-  if (!TypesEqual(expected, actual)) {
+  if (!FbldQRefsEqual(expected, actual)) {
     ReportError("Expected type ", error, loc);
     PrintType(stderr, expected);
     fprintf(stderr, ", but found type ");
@@ -243,15 +191,15 @@ static void CheckTypesMatch(FbldLoc* loc, Type* expected, Type* actual, bool* er
 //   Prints a message to stderr and sets error to true if the program modules
 //   needed to find the type definition could not be loaded.
 //   It is not considered an error if the type cannot be found.
-static FbldType* LookupType(Context* ctx, Entity* entity)
+static FbldType* LookupType(Context* ctx, FbldQRef* entity)
 {
-  if (entity->mref == NULL) {
+  if (entity->rmref == NULL) {
     // Check if this is a type parameter.
     for (size_t i = 0; i < ctx->env->targs->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, ctx->env->targs->xs[i]->name)) {
+      if (FbldNamesEqual(entity->rname->name, ctx->env->targs->xs[i]->name)) {
         // TODO: Don't leak this allocated memory.
         FbldType* type = FBLC_ALLOC(ctx->arena, FbldType);
-        type->name = entity->name;
+        type->name = entity->rname;
         type->kind = FBLD_ABSTRACT_KIND;
         type->fieldv = NULL;
         return type;
@@ -260,7 +208,7 @@ static FbldType* LookupType(Context* ctx, Entity* entity)
 
     // Check if this is a locally defined type.
     for (size_t i = 0; i < ctx->env->typev->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, ctx->env->typev->xs[i]->name->name)) {
+      if (FbldNamesEqual(entity->rname->name, ctx->env->typev->xs[i]->name->name)) {
         return ctx->env->typev->xs[i];
       }
     }
@@ -269,17 +217,8 @@ static FbldType* LookupType(Context* ctx, Entity* entity)
     return NULL;
   }
 
-  // The entity is in a foreign module. Load the mtype for that module and
-  // check for the type declaration in there.
-  FbldMType* mtype = LookupMType(ctx, entity->mref);
-  if (mtype != NULL) {
-    for (size_t i = 0; i < mtype->typev->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, mtype->typev->xs[i]->name->name)) {
-        return mtype->typev->xs[i];
-      }
-    }
-  }
-  return NULL;
+  // The entity is in a foreign module.
+  return FbldLookupType(ctx->prgm, entity);
 }
 
 // LookupFunc --
@@ -298,11 +237,11 @@ static FbldType* LookupType(Context* ctx, Entity* entity)
 //   Prints a message to stderr and sets error to true if the program modules
 //   needed to find the function definition could not be loaded.
 //   It is not considered an error if the function cannot be found.
-static FbldFunc* LookupFunc(Context* ctx, Entity* entity)
+static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity)
 {
-  if (entity->mref == NULL) {
+  if (entity->rmref == NULL) {
     for (size_t i = 0; i < ctx->env->funcv->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, ctx->env->funcv->xs[i]->name->name)) {
+      if (FbldNamesEqual(entity->rname->name, ctx->env->funcv->xs[i]->name->name)) {
         return ctx->env->funcv->xs[i];
       }
     }
@@ -311,233 +250,176 @@ static FbldFunc* LookupFunc(Context* ctx, Entity* entity)
     return NULL;
   }
 
-  // The entity is in a foreign module. Load the mtype for that module and
-  // check for the func declaration in there.
-  FbldMType* mtype = LookupMType(ctx, entity->mref);
-  if (mtype != NULL) {
-    for (size_t i = 0; i < mtype->funcv->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, mtype->funcv->xs[i]->name->name)) {
-        return mtype->funcv->xs[i];
-      }
-    }
-  }
-  return NULL;
+  // The entity is in a foreign module.
+  return FbldLookupFunc(ctx->prgm, entity);
 }
 
-// LookupMType --
-//   Look up the FbldMType* for the given resolved mref.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   mref - A reference to the mtype to look up.
-//
-// Results:
-//   The FbldMType* for the given resolved mref, or NULL if no such mtype
-//   could be found.
-//
-// Side effects:
-//   Loads the referenced mtype declaration if it has not already been loaded.
-//   Sets error to true and prints a message to stderr if the mtype
-//   declaration can not be loaded.
-static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
-{
-  if (mref->targs == NULL) {
-    // This is a module parameter.
-    for (size_t i = 0; i < ctx->env->margs->size; ++i) {
-      if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, mref->name->name)) {
-        return FbldLoadMType(ctx->arena, ctx->path, ctx->env->margs->xs[i]->iref->name->name, ctx->prgm);
-      }
-    }
-
-    ReportError("module %s not defined\n", &ctx->error, mref->name->loc, mref->name->name);
-    return NULL;
-  }
-
-  // This is a global module.
-  FbldMDefn* decl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
-  if (decl == NULL) {
-    return NULL;
-  }
-  return FbldLoadMType(ctx->arena, ctx->path, decl->iref->name->name, ctx->prgm);
-}
-
-
-// ResolveEntity --
-//   Resolve the entity for the given qualified name.
-//   This includes checking and resolving the entities module reference, if
+// ResolveQRef --
+//   Resolve the given qref if necessary.
+//   This includes checking and resolving the qref's module reference, if
 //   any, and inlining all references to local names brought in to the module
 //   context with 'using' declarations.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   qname - The entity to resolve.
+//   qref - The qref to resolve.
 //
 // Result:
-//   The resolved entity, or NULL if the entity could not be resolved.
+//   true if the entity could be resolved, false otherwise.
 //
 // Side effects:
 //   Loads program modules as needed to check module references.
+//   Update qref->rmref and qref->rname as appropriate.
 //   Prints an error message to stderr and sets error to true if the entity's
 //   module reference is not well formed.
 //   This function does not check whether the resolved entity actually exists.
-static Entity* ResolveEntity(Context* ctx, FbldQName* qname)
+static bool ResolveQRef(Context* ctx, FbldQRef* qref)
 {
-  if (qname->mref == NULL) {
+  if (qref->rname != NULL) {
+    return true;
+  }
+
+  // TODO: Have some way to know if we already attempted and failed to resolve
+  // the module, and avoid trying to re-resolve it?
+
+  if (qref->umref == NULL) {
     // Check if the entity has a local name but is imported from a foreign
     // module with a 'using' declaration.
     for (size_t i = 0; i < ctx->env->usingv->size; ++i) {
       FbldUsing* using = ctx->env->usingv->xs[i];
       for (size_t j = 0; j < using->itemv->size; ++j) {
-        if (FbldNamesEqual(qname->name->name, using->itemv->xs[j]->dest->name)) {
-          // TODO: Cache the results of CheckMRef for using statements so we
-          // don't have to repeatedly check them, allocating and leaking more
-          // memory each time?
-          using->mref = CheckMRef(ctx, using->mref);
-          if (using->mref == NULL) {
-            return NULL;
+        if (FbldNamesEqual(qref->uname->name, using->itemv->xs[j]->dest->name)) {
+          if (!CheckMRef(ctx, using->mref)) {
+            return false;
           }
-
-          // TODO: Don't leak this allocated memory.
-          Entity* entity = FBLC_ALLOC(ctx->arena, Entity);
-          entity->mref = using->mref;
-          entity->name = using->itemv->xs[j]->source;
-          return entity;
+          qref->rmref = using->mref;
+          qref->rname = using->itemv->xs[j]->source;
+          return true;
         }
       }
     }
 
     // Otherwise this is a local entity.
-    return qname;
+    qref->rname = qref->uname;
+    return true;
   }
 
-  MRef* mref = CheckMRef(ctx, qname->mref);
-  if (mref == NULL) {
-    return NULL;
+  if (!CheckMRef(ctx, qref->umref)) {
+    return false;
   }
-
-  // TODO: Don't leak this allocated memory.
-  Entity* entity = FBLC_ALLOC(ctx->arena, Entity);
-  entity->mref = mref;
-  entity->name = qname->name;
-  return entity;
+  qref->rmref = qref->umref;
+  qref->rname = qref->uname;
+  return true;
 }
 
-// ImportEntity --
-//   Import a resolved entity from another module.
+// ImportQRef --
+//   Import a qref into this module. If the qref is local to this module, it
+//   is resolved. Otherwise the qref is expected to already be resolved and
+//   local to some other module.
 //   Substitutes all references to local type parameters and module parameters
 //   with the arguments supplied in the given module reference context.
 //
 // Inputs:
 //   ctx - The context for type checking.
 //   mref - The context the entity is being referred to from.
-//   entity - The entity to import.
+//   qref - The qref to import.
 //
 // Results:
-//   The entity imported into the given context.
+//   The qref imported into the given context.
 //
 // Side effects:
-//   Behavior is undefined if the entity has not already been resolved.
-//   TODO: Allocates a new entity that somebody should probably clean up somehow.
-static Entity* ImportEntity(Context* ctx, MRef* mref, FbldQName* entity)
+//   Resolves the qref if it is local.
+static FbldQRef* ImportQRef(Context* ctx, FbldMRef* mref, FbldQRef* qref)
 {
   if (mref == NULL) {
-    return ResolveEntity(ctx, entity);
+    return ResolveQRef(ctx, qref) ? qref : NULL;
   }
-  return FbldImportQName(ctx->arena, ctx->prgm, mref, entity);
+  assert(qref->rname != NULL && "foreign qref not already resolved");
+  return FbldImportQRef(ctx->arena, ctx->prgm, mref, qref);
 }
 
 // CheckType --
-//   Check that the given entity refers to a type.
+//   Check that the given qref refers to a type.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   qname - The entity to check.
+//   qref - The qref to check.
 //
 // Result:
-//   The resolved type if the entity refers to a type. NULL if the entity
-//   could not be resolved or does not refer to a type.
+//   true if the qref resolves and refers to a type, false otherwise.
 //
 // Side effects:
-//   Loads program modules as needed to check the type. Sets error
-//   to true and reports errors to stderr if the entity could not be resolved
-//   or does not refer to a type.
-static Type* CheckType(Context* ctx, FbldQName* qname)
+//   Loads program modules as needed to check the type.
+//   Resolves qref if necessary.
+//   Sets error to true and reports errors to stderr if the entity could not
+//   be resolved or does not refer to a type.
+static bool CheckType(Context* ctx, FbldQRef* qref)
 {
-  Entity* entity = ResolveEntity(ctx, qname);
-  if (entity == NULL) {
-    return NULL;
+  if (!ResolveQRef(ctx, qref)) {
+    return false;
   }
 
-  FbldType* type = LookupType(ctx, entity);
+  FbldType* type = LookupType(ctx, qref);
   if (type == NULL) {
-    ReportError("type %s not defined\n", &ctx->error, qname->name->loc, qname->name->name);
-    return NULL;
+    ReportError("type %s not defined\n", &ctx->error, qref->uname->loc, qref->uname->name);
+    return false;
   }
-  return entity;
+  return true;
 }
 
 // CheckMRef --
-//   Verify that the given module reference makes sense.
+//   Verify that the given mref is well formed.
 //
 // Inputs:
 //   ctx - The context for type checking.
 //   mref - The module reference to check.
 //
 // Result:
-//   The resolved module reference, or NULL if the module reference could not
+//   True if the mref is well formed, false otherwise.
 //   be resolved.
 //
 // Side effects:
-//   Loads program modules as needed to check the module reference. In case
-//   there is a problem, reports errors to stderr and sets ctx->error to true.
-static MRef* CheckMRef(Context* ctx, FbldMRef* mref)
+//   Loads program modules as needed to check the module reference.
+//   Sets mref->resolved to the resolved mref.
+//   In case there is a problem, reports errors to stderr and sets ctx->error
+//   to true.
+static bool CheckMRef(Context* ctx, FbldMRef* mref)
 {
   // Check if this refers to a module parameter.
   if (ctx->env->margs != NULL) {
     for (size_t i = 0; i < ctx->env->margs->size; ++i) {
       if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, mref->name->name)) {
         if (mref->targs == NULL && mref->margs == NULL) {
-          return mref;
+          return true;
         }
         ReportError("arguments to '%s' not allowed\n", &ctx->error, mref->name->loc, mref->name->name);
-        return NULL;
+        return false;
       }
     }
   }
 
-  // TODO: Don't leak this allocated memory.
-  MRef* resolved = FBLC_ALLOC(ctx->arena, MRef);
-  resolved->name = mref->name;
-  resolved->targs = FBLC_ALLOC(ctx->arena, FbldQNameV);
-  resolved->margs = FBLC_ALLOC(ctx->arena, FbldMRefV);
-
-  FblcVectorInit(ctx->arena, *resolved->targs);
   for (size_t i = 0; i < mref->targs->size; ++i) {
-    Type* targ = CheckType(ctx, mref->targs->xs[i]);
-    if (targ == NULL) {
-      return NULL;
+    if (!CheckType(ctx, mref->targs->xs[i])) {
+      return false;
     }
-    FblcVectorAppend(ctx->arena, *resolved->targs, targ);
   }
 
-  FblcVectorInit(ctx->arena, *resolved->margs);
   for (size_t i = 0; i < mref->margs->size; ++i) {
-    MRef* marg = CheckMRef(ctx, mref->margs->xs[i]);
-    if (marg == NULL) {
-      return NULL;
+    if (!CheckMRef(ctx, mref->margs->xs[i])) {
+      return false;
     }
-    FblcVectorAppend(ctx->arena, *resolved->margs, marg);
   }
 
   FbldMDefn* mdecl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
   if (mdecl == NULL) {
     ReportError("Unable to load declaration of module %s\n", &ctx->error, mref->name->loc, mref->name->name);
-    return NULL;
+    return false;
   }
 
   if (mdecl->targs->size != mref->targs->size) {
     ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
         mref->name->loc, mdecl->targs->size, mref->name->name, mref->targs->size);
+    return false;
   }
 
   if (mdecl->margs->size == mref->margs->size) {
@@ -547,8 +429,9 @@ static MRef* CheckMRef(Context* ctx, FbldMRef* mref)
   } else {
     ReportError("expected %i module arguments to %s, but found %i\n", &ctx->error,
         mref->name->loc, mdecl->margs->size, mref->name->name, mref->margs->size);
+    return false;
   }
-  return resolved;
+  return true;
 }
 
 // CheckIRef --
@@ -559,39 +442,33 @@ static MRef* CheckMRef(Context* ctx, FbldMRef* mref)
 //   iref - The interface reference to check.
 //
 // Result:
-//   The resolved interface reference, or NULL if the interface reference was
-//   not valid.
+//   true if the interface reference was valid, false otherwise.
 //
 // Side effects:
-//   Loads program modules as needed to check the interface reference. In case
-//   there is a problem, reports errors to stderr and sets error to true.
-static IRef* CheckIRef(Context* ctx, FbldIRef* iref)
+//   Loads program modules as needed to check the interface reference.
+//   Resolves the interface reference.
+//   In case there is a problem, reports errors to stderr and sets error to
+//   true.
+static bool CheckIRef(Context* ctx, FbldIRef* iref)
 {
-  // TODO: Don't leak this allocated memory.
-  IRef* resolved = FBLC_ALLOC(ctx->arena, IRef);
-  resolved->name = iref->name;
-  resolved->targs = FBLC_ALLOC(ctx->arena, FbldQNameV);
-  FblcVectorInit(ctx->arena, *resolved->targs);
   for (size_t i = 0; i < iref->targs->size; ++i) {
-    Type* targ = CheckType(ctx, iref->targs->xs[i]);
-    if (targ == NULL) {
-      return NULL;
+    if (!CheckType(ctx, iref->targs->xs[i])) {
+      return false;
     }
-    FblcVectorAppend(ctx->arena, *resolved->targs, targ);
   }
 
   FbldMType* mtype = FbldLoadMType(ctx->arena, ctx->path, iref->name->name, ctx->prgm);
   if (mtype == NULL) {
     ReportError("Unable to load mtype declaration for %s\n", &ctx->error, iref->name->loc, iref->name->name);
-    return NULL;
+    return false;
   }
 
   if (mtype->targs->size != iref->targs->size) {
     ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
         iref->name->loc, mtype->targs->size, iref->name->name, iref->targs->size);
-    return NULL;
+    return false;
   }
-  return resolved;
+  return true;
 }
 
 // CheckExpr --
@@ -608,7 +485,7 @@ static IRef* CheckIRef(Context* ctx, FbldIRef* iref)
 // Side effects:
 //   Prints a message to stderr if the expression is not well typed and
 //   ctx->error is set to true.
-static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
+static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
 {
   switch (expr->tag) {
     case FBLC_VAR_EXPR: {
@@ -627,63 +504,61 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
     case FBLC_APP_EXPR: {
       FbldAppExpr* app_expr = (FbldAppExpr*)expr;
 
-      Type* arg_types[app_expr->argv->size];
+      FbldQRef* arg_types[app_expr->argv->size];
       for (size_t i = 0; i < app_expr->argv->size; ++i) {
         arg_types[i] = CheckExpr(ctx, vars, app_expr->argv->xs[i]);
       }
 
-      Type* return_type = NULL;
+      FbldQRef* return_type = NULL;
       FbldArgV* argv = NULL;
 
-      Entity* entity = ResolveEntity(ctx, app_expr->func);
-      if (entity == NULL) {
+      if (!ResolveQRef(ctx, app_expr->func)) {
         return NULL;
       }
-      app_expr->func = entity;
 
-      FbldFunc* func = LookupFunc(ctx, entity);
+      FbldFunc* func = LookupFunc(ctx, app_expr->func);
       if (func != NULL) {
         argv = func->argv;
-        return_type = ImportEntity(ctx, entity->mref, func->return_type);
+        return_type = ImportQRef(ctx, app_expr->func->rmref, func->return_type);
       } else {
-        FbldType* type = LookupType(ctx, entity);
+        FbldType* type = LookupType(ctx, app_expr->func);
         if (type != NULL) {
           if (type->kind != FBLD_STRUCT_KIND) {
-            ReportError("Cannot do application on type %s.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
+            ReportError("Cannot do application on type %s.\n", &ctx->error, app_expr->func->uname->loc, app_expr->func->uname->name);
             return NULL;
           }
           argv = type->fieldv;
-          return_type = entity;
+          return_type = app_expr->func;
         } else {
-          ReportError("'%s' not defined.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
+          ReportError("'%s' not defined.\n", &ctx->error, app_expr->func->uname->loc, app_expr->func->uname->name);
           return NULL;
         }
       }
 
       if (argv->size == app_expr->argv->size) {
         for (size_t i = 0; i < argv->size; ++i) {
-          Type* expected = ImportEntity(ctx, entity->mref, argv->xs[i]->type);
+          FbldQRef* expected = ImportQRef(ctx, app_expr->func->rmref, argv->xs[i]->type);
           CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
         }
       } else {
-        ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, app_expr->func->name->loc, argv->size, app_expr->func->name, app_expr->argv->size);
+        ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, app_expr->func->uname->loc, argv->size, app_expr->func->uname->name, app_expr->argv->size);
       }
       return return_type;
     }
 
     case FBLC_ACCESS_EXPR: {
       FbldAccessExpr* access_expr = (FbldAccessExpr*)expr;
-      Type* entity = CheckExpr(ctx, vars, access_expr->obj);
-      if (entity == NULL) {
+      FbldQRef* qref = CheckExpr(ctx, vars, access_expr->obj);
+      if (qref == NULL) {
         return NULL;
       }
 
-      FbldType* type = LookupType(ctx, entity);
+      FbldType* type = LookupType(ctx, qref);
       assert(type != NULL);
       for (size_t i = 0; i < type->fieldv->size; ++i) {
         if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
           access_expr->field.id = i;
-          return ImportEntity(ctx, entity->mref, type->fieldv->xs[i]->type);
+          return ImportQRef(ctx, qref->rmref, type->fieldv->xs[i]->type);
         }
       }
       ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->name->name);
@@ -692,29 +567,27 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
 
     case FBLC_UNION_EXPR: {
       FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
-      Type* arg_type = CheckExpr(ctx, vars, union_expr->arg);
-      Type* type = CheckType(ctx, union_expr->type);
-      if (type == NULL) {
+      FbldQRef* arg_type = CheckExpr(ctx, vars, union_expr->arg);
+      if (!CheckType(ctx, union_expr->type)) {
         return NULL;
       }
-      union_expr->type = type;
 
-      FbldType* type_def = LookupType(ctx, type);
+      FbldType* type_def = LookupType(ctx, union_expr->type);
       assert(type_def != NULL);
       if (type_def->kind != FBLD_UNION_KIND) {
-        ReportError("%s does not refer to a union type.\n", &ctx->error, union_expr->type->name->loc, union_expr->type->name->name);
+        ReportError("%s does not refer to a union type.\n", &ctx->error, union_expr->type->uname->loc, union_expr->type->uname->name);
         return NULL;
       }
 
       for (size_t i = 0; i < type_def->fieldv->size; ++i) {
         if (FbldNamesEqual(union_expr->field.name->name, type_def->fieldv->xs[i]->name->name)) {
           union_expr->field.id = i;
-          Type* expected = ImportEntity(ctx, type->mref, type_def->fieldv->xs[i]->type);
+          FbldQRef* expected = ImportQRef(ctx, union_expr->type->rmref, type_def->fieldv->xs[i]->type);
           CheckTypesMatch(union_expr->arg->loc, expected, arg_type, &ctx->error);
-          return type;
+          return union_expr->type;
         }
       }
-      ReportError("%s is not a field of type %s\n", &ctx->error, union_expr->field.name->loc, union_expr->field.name->name, type->name->name);
+      ReportError("%s is not a field of type %s\n", &ctx->error, union_expr->field.name->loc, union_expr->field.name->name, union_expr->type->uname->name);
       return NULL;
     }
 
@@ -727,8 +600,8 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
         }
       }
 
-      let_expr->type = CheckType(ctx, let_expr->type);
-      Type* def_type = CheckExpr(ctx, vars, let_expr->def);
+      CheckType(ctx, let_expr->type);
+      FbldQRef* def_type = CheckExpr(ctx, vars, let_expr->def);
       CheckTypesMatch(let_expr->def->loc, let_expr->type, def_type, &ctx->error);
 
       Vars nvars = {
@@ -741,7 +614,7 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
 
     case FBLC_COND_EXPR: {
       FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
-      Type* type = CheckExpr(ctx, vars, cond_expr->select);
+      FbldQRef* type = CheckExpr(ctx, vars, cond_expr->select);
       if (type != NULL) {
         FbldType* type_def = LookupType(ctx, type);
         assert(type_def != NULL);
@@ -754,10 +627,10 @@ static Type* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
         }
       }
 
-      Type* result_type = NULL;
+      FbldQRef* result_type = NULL;
       assert(cond_expr->argv->size > 0);
       for (size_t i = 0; i < cond_expr->argv->size; ++i) {
-        Type* arg_type = CheckExpr(ctx, vars, cond_expr->argv->xs[i]);
+        FbldQRef* arg_type = CheckExpr(ctx, vars, cond_expr->argv->xs[i]);
         CheckTypesMatch(cond_expr->argv->xs[i]->loc, result_type, arg_type, &ctx->error);
         result_type = (result_type == NULL) ? arg_type : result_type;
       }
@@ -801,9 +674,10 @@ static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars)
         break;
       }
     }
+    CheckType(ctx, arg->type);
 
     vars[arg_id].name = arg->name->name;
-    vars[arg_id].type = CheckType(ctx, arg->type);
+    vars[arg_id].type = CheckType(ctx, arg->type) ? arg->type : NULL;
     vars[arg_id].next = next;
     arg->type = vars[arg_id].type;
     next = vars + arg_id;
@@ -871,16 +745,19 @@ static void CheckDecls(Context* ctx)
   // Check using declarations.
   for (size_t using_id = 0; using_id < ctx->env->usingv->size; ++using_id) {
     FbldUsing* using = ctx->env->usingv->xs[using_id];
-    using->mref = CheckMRef(ctx, using->mref);
-    for (size_t i = 0; i < using->itemv->size; ++i) {
-      // TODO: Don't leak this allocation.
-      Entity* entity = FBLC_ALLOC(ctx->arena, Entity);
-      entity->name = using->itemv->xs[i]->source;
-      entity->mref = using->mref;
-      if ((LookupType(ctx, entity) == NULL && LookupFunc(ctx, entity) == NULL)) {
-        ReportError("%s is not exported by %s\n", &ctx->error,
-            using->itemv->xs[i]->source->loc, using->itemv->xs[i]->source->name,
-            using->mref->name->name);
+    if (CheckMRef(ctx, using->mref)) {
+      for (size_t i = 0; i < using->itemv->size; ++i) {
+        // TODO: Don't leak this allocation.
+        FbldQRef* entity = FBLC_ALLOC(ctx->arena, FbldQRef);
+        entity->uname = using->itemv->xs[i]->source;
+        entity->umref = using->mref;
+        entity->rname = entity->uname;
+        entity->rmref = entity->umref;
+        if ((LookupType(ctx, entity) == NULL && LookupFunc(ctx, entity) == NULL)) {
+          ReportError("%s is not exported by %s\n", &ctx->error,
+              using->itemv->xs[i]->source->loc, using->itemv->xs[i]->source->name,
+              using->mref->name->name);
+        }
       }
     }
   }
@@ -902,10 +779,10 @@ static void CheckDecls(Context* ctx)
     FbldFunc* func = ctx->env->funcv->xs[func_id];
     Vars vars_data[func->argv->size];
     Vars* vars = CheckArgV(ctx, func->argv, vars_data);
-    func->return_type = CheckType(ctx, func->return_type);
+    CheckType(ctx, func->return_type);
 
     if (func->body != NULL) {
-      Type* body_type = CheckExpr(ctx, vars, func->body);
+      FbldQRef* body_type = CheckExpr(ctx, vars, func->body);
       CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
     }
   }

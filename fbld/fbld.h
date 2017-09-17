@@ -37,7 +37,7 @@ typedef struct {
 void FbldReportError(const char* format, FbldLoc* loc, ...);
 
 // Forward declarations. See below for descriptions of these types.
-typedef struct FbldQNameV FbldQNameV;
+typedef struct FbldQRefV FbldQRefV;
 typedef struct FbldMRefV FbldMRefV;
 
 // FbldName -- 
@@ -64,7 +64,7 @@ typedef struct {
 //   targs - The type arguments to the interface.
 typedef struct {
   FbldName* name;
-  FbldQNameV* targs;
+  FbldQRefV* targs;
 } FbldIRef;
 
 // FbldMRef --
@@ -81,7 +81,7 @@ typedef struct {
 // type or module arguments, which will have non-NULL, empty targs and margs.
 typedef struct {
   FbldName* name;
-  FbldQNameV* targs;
+  FbldQRefV* targs;
   FbldMRefV* margs;
 } FbldMRef;
 
@@ -92,40 +92,40 @@ struct FbldMRefV {
   FbldMRef** xs;
 }; 
 
-// FbldQName --
-//   A reference to an entity in some module, such as:
+// FbldQRef --
+//   A reference to a qualified type, function, or process, such as:
 //    contains@HashMap<Int, String@String<;>; HashInt<;>>
 //
+// FbldQRef stores both unresolved and resolved versions of the qualified
+// reference. The unresolved version is as the reference appears in the source
+// code, the resolved version inlines references according to using
+// declarations.
+//
 // Fields:
-//   name - The name of the entity.
-//   mref - The module the entity is from. May be NULL to indicate the module
-//          should be determined based on context.
+//   uname - The unresolved name of the entity.
+//   umref - The unresolved module the entity is from. May be NULL to indicate
+//           the module should be determined based on context.
+//   rname - The resolved name of the entity. Initialized to NULL by the
+//           parser to indicate the reference hasn't been resolved yet.
+//           Resolved to a non-NULL value in the type checker and used in the
+//           compiler.
+//   rmref - The resolved module reference. May be NULL if the reference
+//           hasn't been resolved yet or to indicate the module should be
+//           determined based on context.
+// Invariant: if umref and rmref are both non-NULL, then umref == rmref.
 typedef struct {
-  FbldName* name;
-  FbldMRef* mref;
-} FbldQName;
+  FbldName* uname;
+  FbldMRef* umref;
+  FbldName* rname;
+  FbldMRef* rmref;
+} FbldQRef;
 
-// FbldQNameV --
-//   A vector of qualified names.
-struct FbldQNameV {
+// FbldQRefV --
+//   A vector of qrefs.
+struct FbldQRefV {
   size_t size;
-  FbldQName** xs;
+  FbldQRef** xs;
 }; 
-
-// FbldArg --
-//   An fbld name with associated (possibly qualified) type. Used for
-//   declaring fields of structures and arguments to functions.
-typedef struct {
-  FbldQName* type;
-  FbldName* name;
-} FbldArg;
-
-// FbldArgV --
-//   A vector of fbld args.
-typedef struct {
-  size_t size;
-  FbldArg** xs;
-} FbldArgV;
 
 // FbldId --
 //   A reference to a variable, field, or port.
@@ -139,6 +139,20 @@ typedef struct {
   size_t id;
 } FbldId;
 
+// FbldArg --
+//   An fbld name with associated (possibly qualified) type. Used for
+//   declaring fields of structures and arguments to functions.
+typedef struct {
+  FbldQRef* type;
+  FbldName* name;
+} FbldArg;
+
+// FbldArgV --
+//   A vector of fbld args.
+typedef struct {
+  size_t size;
+  FbldArg** xs;
+} FbldArgV;
 
 // FbldNamesEqual --
 //   Test whether two names are equal.
@@ -154,19 +168,19 @@ typedef struct {
 //   None.
 bool FbldNamesEqual(const char* a, const char* b);
 
-// FbldQNamesEqual --
-//   Test whether two qnames are structurally equal.
+// FbldQRefsEqual --
+//   Test whether two qrefs are structurally equal.
 //
 // Inputs:
-//   a - The first name.
-//   b - The second name.
+//   a - The first qref.
+//   b - The second qref.
 //
 // Results:
-//   true if the first name structurally equals the second, false otherwise.
+//   true if the first qref structurally equals the second, false otherwise.
 //
 // Side effects:
 //   None.
-bool FbldQNamesEqual(FbldQName* a, FbldQName* b);
+bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b);
 
 // FbldExpr --
 //   Common base type for the following fbld expr types. The tag can be used
@@ -200,7 +214,7 @@ typedef struct {
 //   refer to a function or a struct type.
 typedef struct {
   FbldExpr _base;
-  FbldQName* func;
+  FbldQRef* func;
   FbldExprV* argv;
 } FbldAppExpr;
 
@@ -209,7 +223,7 @@ typedef struct {
 //   union value.
 typedef struct {
   FbldExpr _base;
-  FbldQName* type;
+  FbldQRef* type;
   FbldId field;
   FbldExpr* arg;
 } FbldUnionExpr;
@@ -236,7 +250,7 @@ typedef struct {
 //   A let expression of the form '{ type var = def; body }'.
 typedef struct {
   FbldExpr _base;
-  FbldQName* type;
+  FbldQRef* type;
   FbldName* var;
   FbldExpr* def;
   FbldExpr* body;
@@ -244,7 +258,7 @@ typedef struct {
 
 // FbldUsingItem --
 //   Specification for a single item in a using declaration of the form
-//   <name>[=<name>].
+//   <dest>[=<source>].
 //
 // Fields:
 //   source - The name of the entity in the original module.
@@ -313,7 +327,7 @@ typedef struct {
 typedef struct {
   FbldName* name;
   FbldArgV* argv;
-  FbldQName* return_type;
+  FbldQRef* return_type;
   FbldExpr* body;
 } FbldFunc;
 
@@ -415,7 +429,7 @@ typedef struct {
 //   fbld representation of an value object.
 struct FbldValue {
   FbldKind kind;
-  FbldQName* type;
+  FbldQRef* type;
   FbldName* tag;
   FbldValueV* fieldv;
 };
@@ -477,24 +491,23 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename);
 //   size of the returned value if there is no error.
 FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string);
 
-// FbldParseQNameFromString --
-//   Parse an FbldQName from the given string.
+// FbldParseQRefFromString --
+//   Parse an FbldQRef from the given string.
 //
 // Inputs:
 //   arena - The arena to use for allocating the parsed definition.
 //   string - The string to parse the value from.
 //
 // Results:
-//   The parsed value, or NULL if the value could not be parsed.
+//   The parsed qref, or NULL if the qref could not be parsed.
 //
 // Side effects:
-//   Prints an error message to stderr if the value cannot be parsed.
+//   Prints an error message to stderr if the qref cannot be parsed.
 //
 // Allocations:
 //   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the returned value if there is no error.
-FbldQName* FbldParseQNameFromString(FblcArena* arena, const char* string);
+//   this function.
+FbldQRef* FbldParseQRefFromString(FblcArena* arena, const char* string);
 
 // FbldStringV --
 //   A vector of char* used for describing fbld search paths.
@@ -692,6 +705,21 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 //   If this declaration or any of the required declarations are not well
 //   formed, error messages are printed to stderr describing the problems.
 bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm);
+
+// FbldCheckValue --
+//   Check that the value is well formed in a global context.
+//
+// Inputs:
+//   prgm - The program environment.
+//   value - The value to check.
+//
+// Results:
+//   true if the value is well formed, false otherwise.
+//
+// Side effects:
+//   Resolves references in the value.
+//   Prints a message to stderr if the value is not well formed.
+bool FbldCheckValue(FbldProgram* prgm, FbldValue* value);
 
 // FbldLookupMDefn --
 //   Look up a module definition in the program.
@@ -709,7 +737,7 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 FbldMDefn* FbldLookupMDefn(FbldProgram* prgm, FbldName* name);
 
 // FbldLookupType --
-//   Look up a type declaration in the program.
+//   Look up a resolved type declaration in the program.
 //
 // Inputs:
 //   prgm - The program to look in.
@@ -720,7 +748,7 @@ FbldMDefn* FbldLookupMDefn(FbldProgram* prgm, FbldName* name);
 //
 // Side effects:
 //   None.
-FbldType* FbldLookupType(FbldProgram* prgm, FbldQName* entity);
+FbldType* FbldLookupType(FbldProgram* prgm, FbldQRef* entity);
 
 // FbldLookupFunc --
 //   Look up a function declaration in the program.
@@ -734,10 +762,10 @@ FbldType* FbldLookupType(FbldProgram* prgm, FbldQName* entity);
 //
 // Side effects:
 //   None.
-FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQName* entity);
+FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQRef* entity);
 
-// FbldImportQName --
-//   Import an already resolved qualified name from another module.
+// FbldImportQRef --
+//   Import an already resolved qref from another module.
 //   Substitutes all references to local type parameters and module parameters
 //   with the arguments supplied in the given module reference context.
 //
@@ -753,7 +781,7 @@ FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQName* entity);
 // Side effects:
 //   Behavior is undefined if the entity has not already been resolved.
 //   TODO: Allocates a new entity that somebody should probably clean up somehow.
-FbldQName* FbldImportQName(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity);
+FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQRef* qref);
 
 // FbldImportMRef --
 //   Import an already resolved module reference from another module.
@@ -802,7 +830,6 @@ typedef struct {
   FblcProc* proc_c;
 } FbldLoaded;
 
-
 // FbldCompileProgram --
 //   Compile an fbld program from an already checked fbld program.
 //
@@ -819,7 +846,7 @@ typedef struct {
 // Side effects:
 //   Updates accessv with the location of compiled access expressions.
 //   The behavior is undefined if the program environment is not well formed.
-FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity);
+FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity);
 
 // FbldCompileValue --
 //   Compile an fbld value to an fblc value.

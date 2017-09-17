@@ -32,7 +32,7 @@
     FbldMType* mtype;
     FbldMDefn* mdefn;
     FbldValue* value;
-    FbldQName* qname;
+    FbldQRef* qname;
   } ParseResult;
 
   // Decls --
@@ -54,8 +54,8 @@
 
 %union {
   FbldName* name;
-  FbldQName* qname;
-  FbldQNameV* qnamev;
+  FbldQRef* qname;
+  FbldQRefV* qnamev;
   FbldIRef* iref;
   FbldMRef* mref;
   FbldMRefV* mrefv;
@@ -416,11 +416,11 @@ name_list:
 
 qname_list:
     %empty {
-      $$ = FBLC_ALLOC(arena, FbldQNameV);
+      $$ = FBLC_ALLOC(arena, FbldQRefV);
       FblcVectorInit(arena, *$$);
     }
   | qname {
-      $$ = FBLC_ALLOC(arena, FbldQNameV);
+      $$ = FBLC_ALLOC(arena, FbldQRefV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
@@ -473,14 +473,18 @@ non_empty_arg_list:
 
 qname:
     name {
-      $$ = FBLC_ALLOC(arena, FbldQName);
-      $$->name = $1;
-      $$->mref = NULL;
+      $$ = FBLC_ALLOC(arena, FbldQRef);
+      $$->uname = $1;
+      $$->umref = NULL;
+      $$->rname = NULL;
+      $$->rmref = NULL;
     }
   | name '@' mref {
-      $$ = FBLC_ALLOC(arena, FbldQName);
-      $$->name = $1;
-      $$->mref = $3;
+      $$ = FBLC_ALLOC(arena, FbldQRef);
+      $$->uname = $1;
+      $$->umref = $3;
+      $$->rname = NULL;
+      $$->rmref = NULL;
     }
   ;
 
@@ -777,8 +781,8 @@ FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string)
   return result.value;
 }
 
-// FbldParseQNameFromString -- see documentation in fbld.h
-FbldQName* FbldParseQNameFromString(FblcArena* arena, const char* string)
+// FbldParseQRefFromString -- see documentation in fbld.h
+FbldQRef* FbldParseQRefFromString(FblcArena* arena, const char* string)
 {
   Lex lex = {
     .c = START_QNAME,

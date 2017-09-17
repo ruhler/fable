@@ -36,7 +36,7 @@ typedef struct {
 //   cmd - The next command to execute, if cmd_ready is true.
 typedef struct {
   FbldProgram* prog;
-  FbldQName* return_type;
+  FbldQRef* return_type;
   const char* file;
   size_t line;
   FILE* stream;
@@ -56,9 +56,9 @@ static void ReportError(IOUser* user, const char* msg);
 static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
 static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
-// static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value);
+// static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQRef* type_name, FblcValue* value);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FbldQName* type, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -158,7 +158,7 @@ static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, cons
     return NULL;
   }
 
-  // TODO: Check that the value is well formed and of the right type.
+  // TODO: Check the value is properly formed.
   return FbldCompileValue(arena, prgm, fbld_value);
 }
 
@@ -186,7 +186,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     }
     user->line++;
 
-//    FbldQName* type = NULL;
+//    FbldQRef* type = NULL;
 //    char port[len+1];
     char value[len+1];
 //    if (sscanf(line, "get %s %s", port, value) == 2) {
@@ -252,7 +252,7 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
 //
 // Side effects:
 //   Prints the value to the stream in fbld format.
-//static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQName* type_name, FblcValue* value)
+//static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQRef* type_name, FblcValue* value)
 //{
 //  FbldType* type = FbldLookupDecl(env, NULL, type_name);
 //  assert(type != NULL);
@@ -331,7 +331,7 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FbldQName* type, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
@@ -423,7 +423,9 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, search_path);
   FblcVectorAppend(arena, search_path, path);
 
-  FbldQName* qentry = FbldParseQNameFromString(arena, entry);
+  FbldQRef* qentry = FbldParseQRefFromString(arena, entry);
+  qentry->rmref = qentry->umref;
+  qentry->rname = qentry->uname;
   if (qentry == NULL) {
     fprintf(stderr, "failed to parse entry\n");
     return 1;
@@ -434,7 +436,7 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, prgm->mdeclv);
   FblcVectorInit(arena, prgm->mdefnv);
 
-  if (!FbldLoadMDefns(arena, &search_path, qentry->mref->name->name, prgm)) {
+  if (!FbldLoadMDefns(arena, &search_path, qentry->umref->name->name, prgm)) {
     fprintf(stderr, "failed to load\n");
     return 1;
   }

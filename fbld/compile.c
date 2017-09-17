@@ -13,7 +13,7 @@
 // CompiledType
 //   The compiled type for a named entity.
 typedef struct {
-  FbldQName* entity;
+  FbldQRef* entity;
   FblcType* compiled;
 } CompiledType;
 
@@ -27,7 +27,7 @@ typedef struct {
 // CompiledFunc
 //   The compiled function for a named entity.
 typedef struct {
-  FbldQName* entity;
+  FbldQRef* entity;
   FblcFunc* compiled;
 } CompiledFunc;
 
@@ -46,9 +46,9 @@ typedef struct {
 } Compiled;
 
 static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled);
-static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
-static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled);
-static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity, Compiled* compiled);
+static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
+static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
+static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQRef* entity, Compiled* compiled);
 
 // CompileExpr --
 //   Return a compiled fblc expr for the given expression.
@@ -80,7 +80,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 
     case FBLC_APP_EXPR: {
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
-      FbldQName* entity = FbldImportQName(arena, prgm, mref, app_expr_d->func);
+      FbldQRef* entity = FbldImportQRef(arena, prgm, mref, app_expr_d->func);
       FbldFunc* func = FbldLookupFunc(prgm, entity);
       if (func != NULL) {
         FblcAppExpr* app_expr_c = FBLC_ALLOC(arena, FblcAppExpr);
@@ -181,11 +181,11 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 //
 // Side effects:
 //   Adds the compiled type to 'compiled' if it is newly compiled.
-static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* entity, Compiled* compiled)
+static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled)
 {
   // Check to see if we have already compiled the entity.
   for (size_t i = 0; i < compiled->typev.size; ++i) {
-    if (FbldQNamesEqual(compiled->typev.xs[i].entity, entity)) {
+    if (FbldQRefsEqual(compiled->typev.xs[i].entity, entity)) {
       return compiled->typev.xs[i].compiled;
     }
   }
@@ -207,7 +207,7 @@ static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* ent
   FblcVectorInit(arena, type_c->fieldv);
   for (size_t i = 0; i < type_d->fieldv->size; ++i) {
     FbldArg* arg_d = type_d->fieldv->xs[i];
-    FblcType* arg_c = CompileForeignType(arena, prgm, entity->mref, arg_d->type, compiled);
+    FblcType* arg_c = CompileForeignType(arena, prgm, entity->rmref, arg_d->type, compiled);
     FblcVectorAppend(arena, type_c->fieldv, arg_c);
   }
 
@@ -230,11 +230,11 @@ static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQName* ent
 // Side effects:
 //   Adds information about access expressions to accessv.
 //   Adds the compiled function to 'compiled' if it is newly compiled.
-static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity, Compiled* compiled)
+static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled)
 {
   // Check to see if we have already compiled the entity.
   for (size_t i = 0; i < compiled->funcv.size; ++i) {
-    if (FbldQNamesEqual(compiled->funcv.xs[i].entity, entity)) {
+    if (FbldQRefsEqual(compiled->funcv.xs[i].entity, entity)) {
       return compiled->funcv.xs[i].compiled;
     }
   }
@@ -249,11 +249,11 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 
   FblcVectorInit(arena, func_c->argv);
   for (size_t arg_id = 0; arg_id < func_d->argv->size; ++arg_id) {
-    FblcType* arg_type = CompileForeignType(arena, prgm, entity->mref, func_d->argv->xs[arg_id]->type, compiled);
+    FblcType* arg_type = CompileForeignType(arena, prgm, entity->rmref, func_d->argv->xs[arg_id]->type, compiled);
     FblcVectorAppend(arena, func_c->argv, arg_type);
   }
-  func_c->return_type = CompileForeignType(arena, prgm, entity->mref, func_d->return_type, compiled);
-  func_c->body = CompileExpr(arena, accessv, prgm, entity->mref, func_d->body, compiled);
+  func_c->return_type = CompileForeignType(arena, prgm, entity->rmref, func_d->return_type, compiled);
+  func_c->body = CompileExpr(arena, accessv, prgm, entity->rmref, func_d->body, compiled);
 
   return func_c;
 }
@@ -267,14 +267,14 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 //   mref - The context from which the type is referred to.
 //   entity - The type to compile.
 //   compiled - The collection of compiled entities.
-static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQName* entity, Compiled* compiled)
+static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQRef* entity, Compiled* compiled)
 {
-  FbldQName* resolved = FbldImportQName(arena, prgm, mref, entity);
+  FbldQRef* resolved = FbldImportQRef(arena, prgm, mref, entity);
   return CompileType(arena, prgm, resolved, compiled);
 }
 
 // FbldCompileProgram -- see documentation in fbld.h
-FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQName* entity)
+FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity)
 {
   FbldFunc* func_d = FbldLookupFunc(prgm, entity);
   if (func_d == NULL) {

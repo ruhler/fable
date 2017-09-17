@@ -19,16 +19,16 @@ FbldMDefn* FbldLookupMDefn(FbldProgram* prgm, FbldName* name)
 }
 
 // FbldLookupType -- see documentation in fbld.h
-FbldType* FbldLookupType(FbldProgram* prgm, FbldQName* entity)
+FbldType* FbldLookupType(FbldProgram* prgm, FbldQRef* entity)
 {
-  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->mref->name);
+  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
   if (mdefn == NULL) {
     return NULL;
   }
 
   for (size_t j = 0; j < mdefn->typev->size; ++j) {
     FbldType* type = mdefn->typev->xs[j];
-    if (FbldNamesEqual(entity->name->name, type->name->name)) {
+    if (FbldNamesEqual(entity->rname->name, type->name->name)) {
       return type;
     }
   }
@@ -36,39 +36,41 @@ FbldType* FbldLookupType(FbldProgram* prgm, FbldQName* entity)
 }
 
 // FbldLookupFunc -- see documentation in fbld.h
-FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQName* entity)
+FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQRef* entity)
 {
-  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->mref->name);
+  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
   if (mdefn == NULL) {
     return NULL;
   }
 
   for (size_t j = 0; j < mdefn->funcv->size; ++j) {
     FbldFunc* func = mdefn->funcv->xs[j];
-    if (FbldNamesEqual(entity->name->name, func->name->name)) {
+    if (FbldNamesEqual(entity->rname->name, func->name->name)) {
       return func;
     }
   }
   return NULL;
 }
 
-// FbldImportQName -- See documentation in fbld.h.
-FbldQName* FbldImportQName(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQName* entity)
+// FbldImportQRef -- See documentation in fbld.h.
+FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQRef* entity)
 {
   FbldMDefn* mdefn = FbldLookupMDefn(prgm, ctx->name);
 
-  if (entity->mref == NULL) {
+  if (entity->rmref == NULL) {
     // Check to see if this is a type parameter.
     for (size_t i = 0; i < mdefn->targs->size; ++i) {
-      if (FbldNamesEqual(entity->name->name, mdefn->targs->xs[i]->name)) {
+      if (FbldNamesEqual(entity->rname->name, mdefn->targs->xs[i]->name)) {
         return ctx->targs->xs[i];
       }
     }
   }
 
-  FbldQName* resolved = FBLC_ALLOC(arena, FbldQName);
-  resolved->name = entity->name;
-  resolved->mref = FbldImportMRef(arena, prgm, ctx, entity->mref);
+  FbldQRef* resolved = FBLC_ALLOC(arena, FbldQRef);
+  resolved->uname = entity->rname;
+  resolved->umref = FbldImportMRef(arena, prgm, ctx, entity->rmref);
+  resolved->rname = resolved->uname;
+  resolved->rmref = resolved->umref;
   return resolved;
 }
 
@@ -93,10 +95,10 @@ FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, Fbl
 
   FbldMRef* resolved = FBLC_ALLOC(arena, FbldMRef);
   resolved->name = mref->name;
-  resolved->targs = FBLC_ALLOC(arena, FbldQNameV);
+  resolved->targs = FBLC_ALLOC(arena, FbldQRefV);
   FblcVectorInit(arena, *resolved->targs);
   for (size_t i = 0; i < mref->targs->size; ++i) {
-    FbldQName* targ = FbldImportQName(arena, prgm, ctx, mref->targs->xs[i]);
+    FbldQRef* targ = FbldImportQRef(arena, prgm, ctx, mref->targs->xs[i]);
     FblcVectorAppend(arena, *resolved->targs, targ);
   }
 

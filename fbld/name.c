@@ -41,7 +41,7 @@ static bool MRefsEqual(FbldMRef* a, FbldMRef* b)
   }
 
   for (size_t i = 0; i < a->targs->size; ++i) {
-    if (!FbldQNamesEqual(a->targs->xs[i], b->targs->xs[i])) {
+    if (!FbldQRefsEqual(a->targs->xs[i], b->targs->xs[i])) {
       return false;
     }
   }
@@ -65,8 +65,8 @@ bool FbldNamesEqual(const char* a, const char* b)
   return strcmp(a, b) == 0;
 }
 
-// FbldQNamesEqual -- see documentation in fbld.h
-bool FbldQNamesEqual(FbldQName* a, FbldQName* b)
+// FbldQRefsEqual -- see documentation in fbld.h
+bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b)
 {
-  return FbldNamesEqual(a->name->name, b->name->name) && MRefsEqual(a->mref, b->mref);
+  return FbldNamesEqual(a->rname->name, b->rname->name) && MRefsEqual(a->rmref, b->rmref);
 }
