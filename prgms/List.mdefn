@@ -2,5 +2,5 @@ mdefn List<T ; ; List<T>> {
   using Unit<;> { Unit; };
 
   struct P(T head, S tail);
-  struct S(Unit nil, P cons); 
+  union S(Unit nil, P cons); 
 };

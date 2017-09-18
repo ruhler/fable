@@ -95,8 +95,8 @@ exec mkdir -p out/fbld/cov/spec
 run gcov {*}$::fbld_objs > out/fbld/cov/spec/fbld.gcov
 exec mv {*}[glob *.gcov] out/fbld/cov/spec
 
-skip run $::fbldtest prgms/UBNatTest.wnt prgms "Test@UBNatTest<;>"
-skip run $::fbldtest prgms/PrimesTest.wnt prgms "Test@PrimesTest<;>"
+run $::fbldtest prgms/UBNatTest.wnt prgms "Test@UBNatTest<;>"
+run $::fbldtest prgms/PrimesTest.wnt prgms "Test@PrimesTest<;>"
 
 exec mkdir -p out/fbld/cov/all
 run gcov {*}$::fbld_objs > out/fbld/cov/all/fbld.gcov

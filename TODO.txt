@@ -1,7 +1,3 @@
-Fbld M2 Kickoff:
-* Add and fix tests until they all pass
- - will include updating check to resolve entities in place.
-
 Fbld M2 Cleanup:
 * Untangle the recursive knot that is check/compile/load.
 * Avoid printing duplicate error messages - only check each thing once.
@@ -15,6 +11,7 @@ Fbld M2 Cleanup:
 * Review all documentation and other things for consistency.
  
 Fbld Test:
+* Test mismatch: struct Foo in mtype vs. union Foo in mdefn.
 * Test case when struct or union type is not redeclared in mdefn from mdecl.
 * Test case when an mdefn decl doesn't match its corresponding mdecl decl.
 * Test case when abstract type is used as select for conditional.

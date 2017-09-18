@@ -5,5 +5,5 @@ mtype List<T> {
   struct P(T head, S tail);
 
   # S - A list of 0 or more elements: T*
-  struct S(Unit nil, P cons); 
+  union S(Unit nil, P cons); 
 };

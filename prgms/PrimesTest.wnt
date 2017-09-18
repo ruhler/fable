@@ -1,1 +1,1 @@
-return TestFailureS@PrimesTest:nil(Unit@Unit())
+return S@List<TestFailure@PrimesTest<;>;>:nil(Unit@Unit<;>())
