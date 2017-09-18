@@ -158,7 +158,10 @@ static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, cons
     return NULL;
   }
 
-  // TODO: Check the value is properly formed.
+  if (!FbldCheckValue(arena, prgm, fbld_value)) {
+    fprintf(stderr, "Invalid value '%s'\n", string);
+    return NULL;
+  }
   return FbldCompileValue(arena, prgm, fbld_value);
 }
 

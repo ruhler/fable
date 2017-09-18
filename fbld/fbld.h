@@ -710,6 +710,7 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 //   Check that the value is well formed in a global context.
 //
 // Inputs:
+//   arena - Arena to use for any necessary internal allocations.
 //   prgm - The program environment.
 //   value - The value to check.
 //
@@ -719,7 +720,7 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 // Side effects:
 //   Resolves references in the value.
 //   Prints a message to stderr if the value is not well formed.
-bool FbldCheckValue(FbldProgram* prgm, FbldValue* value);
+bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value);
 
 // FbldLookupMDefn --
 //   Look up a module definition in the program.

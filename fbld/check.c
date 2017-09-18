@@ -48,6 +48,7 @@ static void PrintMRef(FILE* stream, FbldMRef* mref);
 
 static FbldType* LookupType(Context* ctx, FbldQRef* entity);
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
+static FbldMType* LookupMType(Context* ctx, FbldMRef* mref);
 
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 static bool ResolveQRef(Context* ctx, FbldQRef* qref);
@@ -58,6 +59,7 @@ static bool CheckIRef(Context* ctx, FbldIRef* iref);
 static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
 static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 static void CheckDecls(Context* ctx);
+static bool CheckValue(Context* ctx, FbldValue* value);
 
 // ReportError --
 //   Report an error message associated with a location in a source file.
@@ -217,8 +219,17 @@ static FbldType* LookupType(Context* ctx, FbldQRef* entity)
     return NULL;
   }
 
-  // The entity is in a foreign module.
-  return FbldLookupType(ctx->prgm, entity);
+  // The entity is in a foreign module. Load the mtype for that module and
+  // check for the type declaration in there.
+  FbldMType* mtype = LookupMType(ctx, entity->rmref);
+  if (mtype != NULL) {
+    for (size_t i = 0; i < mtype->typev->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, mtype->typev->xs[i]->name->name)) {
+        return mtype->typev->xs[i];
+      }
+    }
+  }
+  return NULL;
 }
 
 // LookupFunc --
@@ -250,8 +261,54 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity)
     return NULL;
   }
 
-  // The entity is in a foreign module.
-  return FbldLookupFunc(ctx->prgm, entity);
+  // The entity is in a foreign module. Load the mtype for that module and
+  // check for the func declaration in there.
+  FbldMType* mtype = LookupMType(ctx, entity->rmref);
+  if (mtype != NULL) {
+    for (size_t i = 0; i < mtype->funcv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, mtype->funcv->xs[i]->name->name)) {
+        return mtype->funcv->xs[i];
+      }
+    }
+  }
+  return NULL;
+}
+
+// LookupMType --
+//   Look up the FbldMType* for the given resolved mref.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   mref - A reference to the mtype to look up.
+//
+// Results:
+//   The FbldMType* for the given resolved mref, or NULL if no such mtype
+//   could be found.
+//
+// Side effects:
+//   Loads the referenced mtype declaration if it has not already been loaded.
+//   Sets error to true and prints a message to stderr if the mtype
+//   declaration can not be loaded.
+static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
+{
+  if (mref->targs == NULL) {
+    // This is a module parameter.
+    for (size_t i = 0; i < ctx->env->margs->size; ++i) {
+      if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, mref->name->name)) {
+        return FbldLoadMType(ctx->arena, ctx->path, ctx->env->margs->xs[i]->iref->name->name, ctx->prgm);
+      }
+    }
+
+    ReportError("module %s not defined\n", &ctx->error, mref->name->loc, mref->name->name);
+    return NULL;
+  }
+
+  // This is a global module.
+  FbldMDefn* decl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
+  if (decl == NULL) {
+    return NULL;
+  }
+  return FbldLoadMType(ctx->arena, ctx->path, decl->iref->name->name, ctx->prgm);
 }
 
 // ResolveQRef --
@@ -787,6 +844,7 @@ static void CheckDecls(Context* ctx)
     }
   }
 }
+
 // FbldCheckMType -- see fblcs.h for documentation.
 bool FbldCheckMType(FblcArena* arena, FbldStringV* path, FbldMType* mtype, FbldProgram* prgm)
 {
@@ -857,4 +915,95 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 
   // TODO: Verify the mdefn has everything it should according to its interface.
   return true;
+}
+
+// CheckValue --
+//   Check that the value is well formed in the given context.
+//
+// Inputs:
+//   ctx - The type checking context.
+//   value - The value to check.
+//
+// Results:
+//   true if the value is well formed, false otherwise.
+//
+// Side effects:
+//   Resolves references in the value.
+//   Prints a message to stderr if the value is not well formed.
+static bool CheckValue(Context* ctx, FbldValue* value)
+{
+  if (!ResolveQRef(ctx, value->type)) {
+    return false;
+  }
+  FbldType* type = LookupType(ctx, value->type);
+  if (type == NULL) {
+    ReportError("type %s not defined\n", &ctx->error, value->type->uname->loc, value->type->uname->name);
+    return false;
+  }
+
+  switch (value->kind) {
+    case FBLD_STRUCT_KIND: {
+      for (size_t i = 0; i < type->fieldv->size; ++i) {
+        if (!CheckValue(ctx, value->fieldv->xs[i])) {
+          return false;
+        }
+      }
+
+      // TODO: check that the types of the fields match what is expected.
+      return true;
+    }
+
+    case FBLD_UNION_KIND: {
+      if (!CheckValue(ctx, value->fieldv->xs[0])) {
+        return false;
+      }
+
+      // TODO: check that the type of the argument matches what is expected.
+      return true;
+    }
+
+    case FBLD_ABSTRACT_KIND: {
+      ReportError("type %s is abstract\n", &ctx->error, value->type->uname->loc, value->type->uname->name);
+      return false;
+    }
+
+    default: {
+      UNREACHABLE("invalid value kind");
+      return false;
+    }
+  }
+}
+
+// FblcCheckValue -- see documentation in fbld.h
+bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
+{
+  FbldStringV path = { .size = 0, .xs = NULL };
+
+  // Context an empty context representing the global context.
+  FbldName name = {
+    .name = "(global)",
+    .loc = value->type->uname->loc
+  };
+  FbldNameV targs = { .size = 0, .xs = NULL };
+  FbldUsingV usingv = { .size = 0, .xs = NULL };
+  FbldTypeV typev = { .size = 0, .xs = NULL };
+  FbldFuncV funcv = { .size = 0, .xs = NULL };
+  FbldMDefn mdefn = {
+    .name = &name,
+    .targs = &targs,
+    .margs = NULL,
+    .iref = NULL,
+    .usingv = &usingv,
+    .typev = &typev,
+    .funcv = &funcv
+  };
+
+  Context ctx = {
+    .arena = arena,
+    .prgm = prgm,
+    .path = &path,
+    .env = &mdefn,
+    .error = false
+  };
+  return CheckValue(&ctx, value);
 }
