@@ -1,4 +1,13 @@
-Fbld M2 Cleanup:
+Fbld Test:
+* Port tests 2.2.1-06* through 2.2.1-17*, less 2.2.1-16*
+* Write code to check that all mtype declarations have a corresponding proper
+  mdefn implementation.
+* Test all ways an mtype decl can mismatch against an mdefn decl.
+* Test case when abstract type is used as select for conditional.
+* Test that all imported names exist in the module they are imported from.
+* Port remainder of fblc tests to fbld.
+
+Fbld Cleanup:
 * Untangle the recursive knot that is check/compile/load.
 * Avoid printing duplicate error messages - only check each thing once.
 * CheckTypesMatch put error then loc to match ReportError.
@@ -9,24 +18,8 @@ Fbld M2 Cleanup:
 * Figure out how to deal with allocations in fbld check and compile, and maybe
   how to reuse allocations rather than allocating duplicates of things.
 * Review all documentation and other things for consistency.
- 
-Fbld Test:
-* Port tests 2.2.1-06* through 2.2.1-17*, less 2.2.1-16*
-* Test mismatch: struct Foo in mtype vs. union Foo in mdefn.
-* Test case when struct or union type is not redeclared in mdefn from mdecl.
-* Test case when an mdefn decl doesn't match its corresponding mdecl decl.
-* Test case when abstract type is used as select for conditional.
-* Test case when type from module not listed as a dependency is used as select
-  for conditional.
-* Test that all imported names exist in the module they are imported from.
-* Test case when type from module not listed as a dependency is used as obj
-  for field access.
-* Test all ways an mdefn decl can mismatch against an mdecl decl.
-* Port remainder of fblc tests to fbld.
-
-Fbld Cleanup:
 * Document that parse returns FBLC_NULL_ID for field ids and check fills in
-  field ids. Ditto for var ids.
+  field ids.
 * Update comments on FbldCompile functions to clarify assumptions about the
   input program, namely that entity modules have already been resolved.
 * Update comments on FbldCheck functions to clarify that module names are
