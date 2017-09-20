@@ -59,6 +59,7 @@ static bool CheckIRef(Context* ctx, FbldIRef* iref);
 static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
 static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 static void CheckDecls(Context* ctx);
+static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* mdefn_type);
 static bool CheckValue(Context* ctx, FbldValue* value);
 
 // ReportError --
@@ -897,6 +898,63 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
   return !ctx.error;
 }
 
+// CheckTypeDeclsMatch --
+//   Check that a type declared in an mdefn matches its declaration in the
+//   mtype.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   mtype_type - The type as declared in the mtype.
+//   mdefn_type - The type as declared in the mdefn.
+//
+// Returns:
+//   true if the mdefn type matches the mtype type, false otherwise.
+//
+// Side effects:
+//   Prints a message to stderr if the types don't match.
+static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* mdefn_type)
+{
+  switch (mtype_type->kind) {
+    case FBLD_STRUCT_KIND: {
+      if (mdefn_type->kind != FBLD_STRUCT_KIND) {
+        ReportError("%s previously declared as a struct\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+        return false;
+      }
+    } break;
+
+    case FBLD_UNION_KIND: {
+      if (mdefn_type->kind != FBLD_UNION_KIND) {
+        ReportError("%s previously declared as a union\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+        return false;
+      }
+    } break;
+
+    case FBLD_ABSTRACT_KIND: {
+      // Nothing to check.
+    } break;
+  }
+
+  if (mtype_type->kind != FBLD_ABSTRACT_KIND) {
+    if (mtype_type->fieldv->size != mdefn_type->fieldv->size) {
+      ReportError("Type %s does not match its interface declaration\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+      return false;
+    }
+
+    for (size_t i = 0; i < mtype_type->fieldv->size; ++i) {
+      if (!FbldQRefsEqual(mtype_type->fieldv->xs[i]->type, mdefn_type->fieldv->xs[i]->type)) {
+        ReportError("Type %s does not match its interface declaration\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+        return false;
+      }
+
+      if (!FbldNamesEqual(mtype_type->fieldv->xs[i]->name->name, mdefn_type->fieldv->xs[i]->name->name)) {
+        ReportError("Type %s does not match its interface declaration\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 // FbldCheckMDefn -- see documentation in fbld.h
 bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm)
 {
@@ -913,8 +971,33 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     return false;
   }
 
-  // TODO: Verify the mdefn has everything it should according to its interface.
-  return true;
+  // Verify the mdefn has everything it should according to its interface.
+  FbldMType* mtype = FbldLoadMType(arena, path, mdefn->iref->name->name, prgm);
+  if (mtype == NULL) {
+    return false;
+  }
+
+  for (size_t mtype_type_id = 0; mtype_type_id < mtype->typev->size; ++mtype_type_id) {
+    FbldType* mtype_type = mtype->typev->xs[mtype_type_id];
+    for (size_t mdefn_type_id = 0; mdefn_type_id < mdefn->typev->size; ++mdefn_type_id) {
+      FbldType* mdefn_type = mdefn->typev->xs[mdefn_type_id];
+      if (FbldNamesEqual(mtype_type->name->name, mdefn_type->name->name)) {
+        CheckTypeDeclsMatch(&ctx, mtype_type, mdefn_type);
+
+        // Set mtype_type to NULL to indicate we found the matching type.
+        mtype_type = NULL;
+        break;
+      }
+    }
+
+    if (mtype_type != NULL) {
+      ReportError("No implementation found for type %s from the interface\n", &ctx.error, mdefn->name->loc, mtype_type->name->name);
+    }
+  }
+
+  // TODO: Verify function declarations match from the interface.
+
+  return !ctx.error;
 }
 
 // CheckValue --

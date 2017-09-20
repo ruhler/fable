@@ -21,4 +21,4 @@ set prg {
   }
 }
 
-skip fbld-check-error $prg Main Main.mdefn:5:13
+fbld-check-error $prg Main Main.mdefn:5:13

@@ -18,5 +18,4 @@ set prg {
   }
 }
 
-# TODO: Where should the error be reported?
-skip fbld-check-error $prg Main Main:2:11
+fbld-check-error $prg Main Main.mdefn:2:11
