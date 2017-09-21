@@ -59,7 +59,9 @@ static bool CheckIRef(Context* ctx, FbldIRef* iref);
 static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
 static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 static void CheckDecls(Context* ctx);
+static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
 static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* mdefn_type);
+static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* mtype_type, FbldFunc* mdefn_type);
 static bool CheckValue(Context* ctx, FbldValue* value);
 
 // ReportError --
@@ -898,6 +900,33 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
   return !ctx.error;
 }
 
+// ArgsEqual --
+//   Test whether two arg vectors are the same.
+//
+// Result:
+//   true if the two argument vectors have the same number, resolved type, and
+//   names of arguments, false otherwise.
+//
+// Side effects:
+//   None.
+static bool ArgsEqual(FbldArgV* a, FbldArgV* b)
+{
+  if (a->size != b->size) {
+    return false;
+  }
+
+  for (size_t i = 0; i < a->size; ++i) {
+    if (!FbldQRefsEqual(a->xs[i]->type, b->xs[i]->type)) {
+      return false;
+    }
+
+    if (!FbldNamesEqual(a->xs[i]->name->name, b->xs[i]->name->name)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // CheckTypeDeclsMatch --
 //   Check that a type declared in an mdefn matches its declaration in the
 //   mtype.
@@ -935,22 +964,38 @@ static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* md
   }
 
   if (mtype_type->kind != FBLD_ABSTRACT_KIND) {
-    if (mtype_type->fieldv->size != mdefn_type->fieldv->size) {
+    if (!ArgsEqual(mtype_type->fieldv, mdefn_type->fieldv)) {
       ReportError("Type %s does not match its interface declaration\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
       return false;
     }
+  }
+  return true;
+}
+
+// CheckFuncDeclsMatch --
+//   Check that a function declared in an mdefn matches its declaration in the
+//   mtype.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   mtype_func - The func as declared in the mtype.
+//   mdefn_func - The func as declared in the mdefn.
+//
+// Returns:
+//   true if the mdefn func matches the mtype func, false otherwise.
+//
+// Side effects:
+//   Prints a message to stderr if the functions don't match.
+static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* mtype_func, FbldFunc* mdefn_func)
+{
+  if (!ArgsEqual(mtype_func->argv, mdefn_func->argv)) {
+    ReportError("Function %s does not match its interface declaration\n", &ctx->error, mdefn_func->name->loc, mdefn_func->name->name);
+    return false;
+  }
 
-    for (size_t i = 0; i < mtype_type->fieldv->size; ++i) {
-      if (!FbldQRefsEqual(mtype_type->fieldv->xs[i]->type, mdefn_type->fieldv->xs[i]->type)) {
-        ReportError("Type %s does not match its interface declaration\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
-        return false;
-      }
-
-      if (!FbldNamesEqual(mtype_type->fieldv->xs[i]->name->name, mdefn_type->fieldv->xs[i]->name->name)) {
-        ReportError("Type %s does not match its interface declaration\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
-        return false;
-      }
-    }
+  if (!FbldQRefsEqual(mtype_func->return_type, mdefn_func->return_type)) {
+    ReportError("Function %s does not match its interface declaration\n", &ctx->error, mdefn_func->name->loc, mdefn_func->name->name);
+    return false;
   }
   return true;
 }
@@ -995,7 +1040,23 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     }
   }
 
-  // TODO: Verify function declarations match from the interface.
+  for (size_t mtype_func_id = 0; mtype_func_id < mtype->funcv->size; ++mtype_func_id) {
+    FbldFunc* mtype_func = mtype->funcv->xs[mtype_func_id];
+    for (size_t mdefn_func_id = 0; mdefn_func_id < mdefn->funcv->size; ++mdefn_func_id) {
+      FbldFunc* mdefn_func = mdefn->funcv->xs[mdefn_func_id];
+      if (FbldNamesEqual(mtype_func->name->name, mdefn_func->name->name)) {
+        CheckFuncDeclsMatch(&ctx, mtype_func, mdefn_func);
+
+        // Set mtype_func to NULL to indicate we found the matching type.
+        mtype_func = NULL;
+        break;
+      }
+    }
+
+    if (mtype_func != NULL) {
+      ReportError("No implementation found for func %s from the interface\n", &ctx.error, mdefn->name->loc, mtype_func->name->name);
+    }
+  }
 
   return !ctx.error;
 }
