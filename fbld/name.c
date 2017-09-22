@@ -31,27 +31,27 @@ static bool MRefsEqual(FbldMRef* a, FbldMRef* b)
     return false;
   }
 
-  if (a->targs == NULL || b->targs == NULL) {
-    return a->targs == NULL && b->targs == NULL;
+  if (a->targv == NULL || b->targv == NULL) {
+    return a->targv == NULL && b->targv == NULL;
   }
-  assert(a->margs != NULL && b->margs != NULL);
+  assert(a->margv != NULL && b->margv != NULL);
 
-  if (a->targs->size != b->targs->size) {
+  if (a->targv->size != b->targv->size) {
     return false;
   }
 
-  for (size_t i = 0; i < a->targs->size; ++i) {
-    if (!FbldQRefsEqual(a->targs->xs[i], b->targs->xs[i])) {
+  for (size_t i = 0; i < a->targv->size; ++i) {
+    if (!FbldQRefsEqual(a->targv->xs[i], b->targv->xs[i])) {
       return false;
     }
   }
 
-  if (a->margs->size != b->margs->size) {
+  if (a->margv->size != b->margv->size) {
     return false;
   }
 
-  for (size_t i = 0; i < a->margs->size; ++i) {
-    if (!MRefsEqual(a->margs->xs[i], b->margs->xs[i])) {
+  for (size_t i = 0; i < a->margv->size; ++i) {
+    if (!MRefsEqual(a->margv->xs[i], b->margv->xs[i])) {
       return false;
     }
   }

@@ -59,9 +59,9 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, Fbl
 
   if (entity->rmref == NULL) {
     // Check to see if this is a type parameter.
-    for (size_t i = 0; i < mdefn->targs->size; ++i) {
-      if (FbldNamesEqual(entity->rname->name, mdefn->targs->xs[i]->name)) {
-        return ctx->targs->xs[i];
+    for (size_t i = 0; i < mdefn->targv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, mdefn->targv->xs[i]->name)) {
+        return ctx->targv->xs[i];
       }
     }
   }
@@ -82,12 +82,12 @@ FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, Fbl
     return ctx;
   }
 
-  if (mref->targs == NULL) {
+  if (mref->targv == NULL) {
     // This must be a module parameter.
     FbldMDefn* mdefn = FbldLookupMDefn(prgm, ctx->name);
-    for (size_t i = 0; i < mdefn->margs->size; ++i) {
-      if (FbldNamesEqual(mref->name->name, mdefn->margs->xs[i]->name->name)) {
-        return ctx->margs->xs[i];
+    for (size_t i = 0; i < mdefn->margv->size; ++i) {
+      if (FbldNamesEqual(mref->name->name, mdefn->margv->xs[i]->name->name)) {
+        return ctx->margv->xs[i];
       }
     }
     return NULL;
@@ -95,18 +95,18 @@ FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, Fbl
 
   FbldMRef* resolved = FBLC_ALLOC(arena, FbldMRef);
   resolved->name = mref->name;
-  resolved->targs = FBLC_ALLOC(arena, FbldQRefV);
-  FblcVectorInit(arena, *resolved->targs);
-  for (size_t i = 0; i < mref->targs->size; ++i) {
-    FbldQRef* targ = FbldImportQRef(arena, prgm, ctx, mref->targs->xs[i]);
-    FblcVectorAppend(arena, *resolved->targs, targ);
+  resolved->targv = FBLC_ALLOC(arena, FbldQRefV);
+  FblcVectorInit(arena, *resolved->targv);
+  for (size_t i = 0; i < mref->targv->size; ++i) {
+    FbldQRef* targ = FbldImportQRef(arena, prgm, ctx, mref->targv->xs[i]);
+    FblcVectorAppend(arena, *resolved->targv, targ);
   }
 
-  resolved->margs = FBLC_ALLOC(arena, FbldMRefV);
-  FblcVectorInit(arena, *resolved->margs);
-  for (size_t i = 0; i < mref->margs->size; ++i) {
-    FbldMRef* marg = FbldImportMRef(arena, prgm, ctx, mref->margs->xs[i]);
-    FblcVectorAppend(arena, *resolved->margs, marg);
+  resolved->margv = FBLC_ALLOC(arena, FbldMRefV);
+  FblcVectorInit(arena, *resolved->margv);
+  for (size_t i = 0; i < mref->margv->size; ++i) {
+    FbldMRef* marg = FbldImportMRef(arena, prgm, ctx, mref->margv->xs[i]);
+    FblcVectorAppend(arena, *resolved->margv, marg);
   }
   return resolved;
 }

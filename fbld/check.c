@@ -14,7 +14,7 @@
 // Env --
 //   The environment of types and declarations.
 //   This is used as a union type for mtype + mdefn.
-//   In the case of mtype, the margs and iref fields are set to NULL.
+//   In the case of mtype, the margv and iref fields are set to NULL.
 typedef FbldMDefn Env;
 
 // Context --
@@ -128,20 +128,20 @@ static void PrintMRef(FILE* stream, FbldMRef* mref)
   assert(mref != NULL);
   fprintf(stream, "%s<", mref->name->name);
 
-  if (mref->targs != NULL) {
-    for (size_t i = 0; i < mref->targs->size; ++i) {
+  if (mref->targv != NULL) {
+    for (size_t i = 0; i < mref->targv->size; ++i) {
       if (i > 0) {
         fprintf(stream, ",");
       }
-      PrintType(stream, mref->targs->xs[i]);
+      PrintType(stream, mref->targv->xs[i]);
     }
     fprintf(stream, ";");
 
-    for (size_t i = 0; i < mref->margs->size; ++i) {
+    for (size_t i = 0; i < mref->margv->size; ++i) {
       if (i > 0) {
         fprintf(stream, ",");
       }
-      PrintMRef(stream, mref->margs->xs[i]);
+      PrintMRef(stream, mref->margv->xs[i]);
     }
   }
   fprintf(stream, ">");
@@ -200,8 +200,8 @@ static FbldType* LookupType(Context* ctx, FbldQRef* entity)
 {
   if (entity->rmref == NULL) {
     // Check if this is a type parameter.
-    for (size_t i = 0; i < ctx->env->targs->size; ++i) {
-      if (FbldNamesEqual(entity->rname->name, ctx->env->targs->xs[i]->name)) {
+    for (size_t i = 0; i < ctx->env->targv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, ctx->env->targv->xs[i]->name)) {
         // TODO: Don't leak this allocated memory.
         FbldType* type = FBLC_ALLOC(ctx->arena, FbldType);
         type->name = entity->rname;
@@ -294,11 +294,11 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity)
 //   declaration can not be loaded.
 static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
 {
-  if (mref->targs == NULL) {
+  if (mref->targv == NULL) {
     // This is a module parameter.
-    for (size_t i = 0; i < ctx->env->margs->size; ++i) {
-      if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, mref->name->name)) {
-        return FbldLoadMType(ctx->arena, ctx->path, ctx->env->margs->xs[i]->iref->name->name, ctx->prgm);
+    for (size_t i = 0; i < ctx->env->margv->size; ++i) {
+      if (FbldNamesEqual(ctx->env->margv->xs[i]->name->name, mref->name->name)) {
+        return FbldLoadMType(ctx->arena, ctx->path, ctx->env->margv->xs[i]->iref->name->name, ctx->prgm);
       }
     }
 
@@ -446,10 +446,10 @@ static bool CheckType(Context* ctx, FbldQRef* qref)
 static bool CheckMRef(Context* ctx, FbldMRef* mref)
 {
   // Check if this refers to a module parameter.
-  if (ctx->env->margs != NULL) {
-    for (size_t i = 0; i < ctx->env->margs->size; ++i) {
-      if (FbldNamesEqual(ctx->env->margs->xs[i]->name->name, mref->name->name)) {
-        if (mref->targs == NULL && mref->margs == NULL) {
+  if (ctx->env->margv != NULL) {
+    for (size_t i = 0; i < ctx->env->margv->size; ++i) {
+      if (FbldNamesEqual(ctx->env->margv->xs[i]->name->name, mref->name->name)) {
+        if (mref->targv == NULL && mref->margv == NULL) {
           return true;
         }
         ReportError("arguments to '%s' not allowed\n", &ctx->error, mref->name->loc, mref->name->name);
@@ -458,14 +458,14 @@ static bool CheckMRef(Context* ctx, FbldMRef* mref)
     }
   }
 
-  for (size_t i = 0; i < mref->targs->size; ++i) {
-    if (!CheckType(ctx, mref->targs->xs[i])) {
+  for (size_t i = 0; i < mref->targv->size; ++i) {
+    if (!CheckType(ctx, mref->targv->xs[i])) {
       return false;
     }
   }
 
-  for (size_t i = 0; i < mref->margs->size; ++i) {
-    if (!CheckMRef(ctx, mref->margs->xs[i])) {
+  for (size_t i = 0; i < mref->margv->size; ++i) {
+    if (!CheckMRef(ctx, mref->margv->xs[i])) {
       return false;
     }
   }
@@ -476,19 +476,19 @@ static bool CheckMRef(Context* ctx, FbldMRef* mref)
     return false;
   }
 
-  if (mdecl->targs->size != mref->targs->size) {
+  if (mdecl->targv->size != mref->targv->size) {
     ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
-        mref->name->loc, mdecl->targs->size, mref->name->name, mref->targs->size);
+        mref->name->loc, mdecl->targv->size, mref->name->name, mref->targv->size);
     return false;
   }
 
-  if (mdecl->margs->size == mref->margs->size) {
-    for (size_t i = 0; i < mdecl->margs->size; ++i) {
+  if (mdecl->margv->size == mref->margv->size) {
+    for (size_t i = 0; i < mdecl->margv->size; ++i) {
       assert(false && "TODO: Check module args are of correct mtype");
     }
   } else {
     ReportError("expected %i module arguments to %s, but found %i\n", &ctx->error,
-        mref->name->loc, mdecl->margs->size, mref->name->name, mref->margs->size);
+        mref->name->loc, mdecl->margv->size, mref->name->name, mref->margv->size);
     return false;
   }
   return true;
@@ -511,8 +511,8 @@ static bool CheckMRef(Context* ctx, FbldMRef* mref)
 //   true.
 static bool CheckIRef(Context* ctx, FbldIRef* iref)
 {
-  for (size_t i = 0; i < iref->targs->size; ++i) {
-    if (!CheckType(ctx, iref->targs->xs[i])) {
+  for (size_t i = 0; i < iref->targv->size; ++i) {
+    if (!CheckType(ctx, iref->targv->xs[i])) {
       return false;
     }
   }
@@ -523,9 +523,9 @@ static bool CheckIRef(Context* ctx, FbldIRef* iref)
     return false;
   }
 
-  if (mtype->targs->size != iref->targs->size) {
+  if (mtype->targv->size != iref->targv->size) {
     ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
-        iref->name->loc, mtype->targs->size, iref->name->name, iref->targs->size);
+        iref->name->loc, mtype->targv->size, iref->name->name, iref->targv->size);
     return false;
   }
   return true;
@@ -770,8 +770,8 @@ static void CheckDecls(Context* ctx)
   FblcVectorInit(ctx->arena, localv);
 
   // Add type parameters to localv.
-  for (size_t i = 0; i < ctx->env->targs->size; ++i) {
-    FblcVectorAppend(ctx->arena, localv, ctx->env->targs->xs[i]);
+  for (size_t i = 0; i < ctx->env->targv->size; ++i) {
+    FblcVectorAppend(ctx->arena, localv, ctx->env->targv->xs[i]);
   }
 
   // Add imported entities to localv.
@@ -853,8 +853,8 @@ bool FbldCheckMType(FblcArena* arena, FbldStringV* path, FbldMType* mtype, FbldP
 {
   Env env = {
     .name = mtype->name,
-    .targs = mtype->targs,
-    .margs = NULL,
+    .targv = mtype->targv,
+    .margv = NULL,
     .iref = NULL,
     .usingv = mtype->usingv,
     .typev = mtype->typev,
@@ -881,8 +881,8 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 
   Env env = {
     .name = mdefn->name,
-    .targs = mdefn->targs,
-    .margs = mdefn->margs,
+    .targv = mdefn->targv,
+    .margv = mdefn->margv,
     .usingv = &usingv,
     .typev = &typev,
     .funcv = &funcv
@@ -1128,14 +1128,14 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
     .name = "(global)",
     .loc = value->type->uname->loc
   };
-  FbldNameV targs = { .size = 0, .xs = NULL };
+  FbldNameV targv = { .size = 0, .xs = NULL };
   FbldUsingV usingv = { .size = 0, .xs = NULL };
   FbldTypeV typev = { .size = 0, .xs = NULL };
   FbldFuncV funcv = { .size = 0, .xs = NULL };
   FbldMDefn mdefn = {
     .name = &name,
-    .targs = &targs,
-    .margs = NULL,
+    .targv = &targv,
+    .margv = NULL,
     .iref = NULL,
     .usingv = &usingv,
     .typev = &typev,

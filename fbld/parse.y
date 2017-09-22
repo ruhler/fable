@@ -151,7 +151,7 @@ start:
 mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldMType);
           $$->name = $2;
-          $$->targs = $4;
+          $$->targv = $4;
           $$->usingv = $7->usingv;
           $$->typev = $7->typev;
           $$->funcv = $7->funcv;
@@ -162,8 +162,8 @@ mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
 mdefn: "mdefn" name '<' name_list ';' marg_list ';' iref '>' '{' defn_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldMDefn);
           $$->name = $2;
-          $$->targs = $4;
-          $$->margs = $6;
+          $$->targv = $4;
+          $$->margv = $6;
           $$->iref = $8;
           $$->usingv = $11->usingv;
           $$->typev = $11->typev;
@@ -491,15 +491,15 @@ qname:
 iref: name '<' qname_list '>' {
       $$ = FBLC_ALLOC(arena, FbldIRef);
       $$->name = $1;
-      $$->targs = $3;
+      $$->targv = $3;
     }
   ;
 
 mref: name '<' qname_list ';' mref_list '>' {
       $$ = FBLC_ALLOC(arena, FbldMRef);
       $$->name = $1;
-      $$->targs = $3;
-      $$->margs = $5;
+      $$->targv = $3;
+      $$->margv = $5;
     }
   ;
 

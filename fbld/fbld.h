@@ -61,10 +61,10 @@ typedef struct {
 //
 // Fields:
 //   name - The name of the interface.
-//   targs - The type arguments to the interface.
+//   targv - The type arguments to the interface.
 typedef struct {
   FbldName* name;
-  FbldQRefV* targs;
+  FbldQRefV* targv;
 } FbldIRef;
 
 // FbldMRef --
@@ -73,16 +73,16 @@ typedef struct {
 //
 // Fields:
 //   name - The name of the module.
-//   targs - The type arguments to the module.
-//   margs - The module arguments to the module.
+//   targv - The type arguments to the module.
+//   margv - The module arguments to the module.
 //
 // In the case of modules passed as parameters, FbldMRef is still used, but
-// with NULL targs and margs. This is in contrast to a global module with no
-// type or module arguments, which will have non-NULL, empty targs and margs.
+// with NULL targv and margv. This is in contrast to a global module with no
+// type or module arguments, which will have non-NULL, empty targv and margv.
 typedef struct {
   FbldName* name;
-  FbldQRefV* targs;
-  FbldMRefV* margs;
+  FbldQRefV* targv;
+  FbldMRefV* margv;
 } FbldMRef;
 
 // FbldMRefV --
@@ -342,7 +342,7 @@ typedef struct {
 //   An fbld mtype declaration.
 typedef struct {
   FbldName* name;
-  FbldNameV* targs;
+  FbldNameV* targv;
   FbldUsingV* usingv;
   FbldTypeV* typev;
   FbldFuncV* funcv;
@@ -378,16 +378,16 @@ typedef struct {
 //
 // Fields:
 //   name - The name of the module being defined.
-//   targs - The type parameters of the module.
-//   margs - The module parameters of the module.
+//   targv - The type parameters of the module.
+//   margv - The module parameters of the module.
 //   iref - The interface the module implements.
 //   usingv - The using declarations within the module definition.
 //   typev - The type declarations within the module definition.
 //   funcv - The func declarations within the module definition.
 typedef struct {
   FbldName* name;
-  FbldNameV* targs;
-  FbldMArgV* margs;
+  FbldNameV* targv;
+  FbldMArgV* margv;
   FbldIRef* iref;
   FbldUsingV* usingv;
   FbldTypeV* typev;

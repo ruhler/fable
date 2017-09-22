@@ -11,7 +11,6 @@ Fbld Cleanup:
 * CheckTypesMatch put error then loc to match ReportError.
 * Add comments to check indicating what entities and mrefs are resolved.
 * General code cleanup of check.
-* Rename targs and margs targv and margv
 * Re-organize parse.y to match order in fbld.h, and finish it out.
 * Figure out how to deal with allocations in fbld check and compile, and maybe
   how to reuse allocations rather than allocating duplicates of things.
