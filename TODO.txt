@@ -1,5 +1,4 @@
 Fbld Test:
-* Port tests 2.2.1-06* through 2.2.1-17*, less 2.2.1-16*
 * Test all ways an mtype decl can mismatch against an mdefn decl.
   - for both type and function declarations.
 * Test case when abstract type is used as select for conditional.
@@ -38,6 +37,7 @@ Fbld Application:
    command.
  - Implement libsdl graphics interface so program is actually rendered to
    screen.
+* Develop "Scrabble Crush" game?
 
 General Cleanup:
  - Rename FBLC_ALLOC FblcAlloc to be more consistent?
