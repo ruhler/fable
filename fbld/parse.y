@@ -315,7 +315,7 @@ func_defn: func_decl expr {
 stmt: expr ';' { $$ = $1; }
     | qname name '=' expr ';' stmt {
         FbldLetExpr* let_expr = FBLC_ALLOC(arena, FbldLetExpr);
-        let_expr->_base.tag = FBLC_LET_EXPR;
+        let_expr->_base.tag = FBLD_LET_EXPR;
         let_expr->_base.loc = @$;
         let_expr->type = $1;
         let_expr->var = $2;
@@ -331,7 +331,7 @@ expr:
     }
   | name {
       FbldVarExpr* var_expr = FBLC_ALLOC(arena, FbldVarExpr);
-      var_expr->_base.tag = FBLC_VAR_EXPR;
+      var_expr->_base.tag = FBLD_VAR_EXPR;
       var_expr->_base.loc = @$;
       var_expr->var.name = $1;
       var_expr->var.id = FBLC_NULL_ID;
@@ -339,7 +339,7 @@ expr:
     }
   | qname '(' expr_list ')' {
       FbldAppExpr* app_expr = FBLC_ALLOC(arena, FbldAppExpr);
-      app_expr->_base.tag = FBLC_APP_EXPR;
+      app_expr->_base.tag = FBLD_APP_EXPR;
       app_expr->_base.loc = @$;
       app_expr->func = $1;
       app_expr->argv = $3;
@@ -347,7 +347,7 @@ expr:
     }
   | qname ':' name '(' expr ')' {
       FbldUnionExpr* union_expr = FBLC_ALLOC(arena, FbldUnionExpr);
-      union_expr->_base.tag = FBLC_UNION_EXPR;
+      union_expr->_base.tag = FBLD_UNION_EXPR;
       union_expr->_base.loc = @$;
       union_expr->type = $1;
       union_expr->field.name = $3;
@@ -357,7 +357,7 @@ expr:
     }
   | expr '.' name {
       FbldAccessExpr* access_expr = FBLC_ALLOC(arena, FbldAccessExpr);
-      access_expr->_base.tag = FBLC_ACCESS_EXPR;
+      access_expr->_base.tag = FBLD_ACCESS_EXPR;
       access_expr->_base.loc = @$;
       access_expr->obj = $1;
       access_expr->field.name = $3;
@@ -366,7 +366,7 @@ expr:
     }
   | '?' '(' expr ';' non_empty_expr_list ')' {
       FbldCondExpr* cond_expr = FBLC_ALLOC(arena, FbldCondExpr);
-      cond_expr->_base.tag = FBLC_COND_EXPR;
+      cond_expr->_base.tag = FBLD_COND_EXPR;
       cond_expr->_base.loc = @$;
       cond_expr->select = $3;
       cond_expr->argv = $5;

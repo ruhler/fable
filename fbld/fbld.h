@@ -182,12 +182,23 @@ bool FbldNamesEqual(const char* a, const char* b);
 //   None.
 bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b);
 
+// FbldExprTag --
+//   A tag used to distinguish among different kinds of expressions.
+typedef enum {
+  FBLD_VAR_EXPR,
+  FBLD_APP_EXPR,
+  FBLD_UNION_EXPR,
+  FBLD_ACCESS_EXPR,
+  FBLD_COND_EXPR,
+  FBLD_LET_EXPR
+} FbldExprTag;
+
 // FbldExpr --
 //   Common base type for the following fbld expr types. The tag can be used
 //   to determine what kind of expr this is to get access to additional fields
 //   of the expr by first casting to that specific type.
 typedef struct {
-  FblcExprTag tag;
+  FbldExprTag tag;
   FbldLoc* loc;
 } FbldExpr;
 

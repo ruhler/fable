@@ -70,7 +70,7 @@ static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRe
 static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled)
 {
   switch (expr->tag) {
-    case FBLC_VAR_EXPR: {
+    case FBLD_VAR_EXPR: {
       FbldVarExpr* var_expr_d = (FbldVarExpr*)expr;
       FblcVarExpr* var_expr_c = FBLC_ALLOC(arena, FblcVarExpr);
       var_expr_c->_base.tag = FBLC_VAR_EXPR;
@@ -78,7 +78,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
       return &var_expr_c->_base;
     }
 
-    case FBLC_APP_EXPR: {
+    case FBLD_APP_EXPR: {
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
       FbldQRef* entity = FbldImportQRef(arena, prgm, mref, app_expr_d->func);
       FbldFunc* func = FbldLookupFunc(prgm, entity);
@@ -105,16 +105,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
       }
     }
 
-    case FBLC_STRUCT_EXPR: {
-      // It's the compiler's job to mark an app expression as a struct
-      // expression when appropriate, which means nobody else should have been
-      // making struct expressions yet. TODO: Why not define a separate
-      // FBLD_*_EXPR enum that doesn't have the STRUCT expr option?
-      UNREACHABLE("Unexpected STRUCT expression");
-      return NULL;
-    }
-
-    case FBLC_UNION_EXPR: {
+    case FBLD_UNION_EXPR: {
       FbldUnionExpr* union_expr_d = (FbldUnionExpr*)expr;
       FblcUnionExpr* union_expr_c = FBLC_ALLOC(arena, FblcUnionExpr);
       union_expr_c->_base.tag = FBLC_UNION_EXPR;
@@ -124,7 +115,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
       return &union_expr_c->_base;
     }
 
-    case FBLC_ACCESS_EXPR: {
+    case FBLD_ACCESS_EXPR: {
       FbldAccessExpr* access_expr_d = (FbldAccessExpr*)expr;
       FblcAccessExpr* access_expr_c = FBLC_ALLOC(arena, FblcAccessExpr);
       access_expr_c->_base.tag = FBLC_ACCESS_EXPR;
@@ -137,7 +128,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
       return &access_expr_c->_base;
     }
 
-    case FBLC_COND_EXPR: {
+    case FBLD_COND_EXPR: {
       FbldCondExpr* cond_expr_d = (FbldCondExpr*)expr;
       FblcCondExpr* cond_expr_c = FBLC_ALLOC(arena, FblcCondExpr);
       cond_expr_c->_base.tag = FBLC_COND_EXPR;
@@ -150,7 +141,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
       return &cond_expr_c->_base;
     }
 
-    case FBLC_LET_EXPR: {
+    case FBLD_LET_EXPR: {
       FbldLetExpr* let_expr_d = (FbldLetExpr*)expr;
       FblcLetExpr* let_expr_c = FBLC_ALLOC(arena, FblcLetExpr);
       let_expr_c->_base.tag = FBLC_LET_EXPR;

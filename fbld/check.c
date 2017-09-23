@@ -548,7 +548,7 @@ static bool CheckIRef(Context* ctx, FbldIRef* iref)
 static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
 {
   switch (expr->tag) {
-    case FBLC_VAR_EXPR: {
+    case FBLD_VAR_EXPR: {
       FbldVarExpr* var_expr = (FbldVarExpr*)expr;
       for (size_t i = 0; vars != NULL; ++i) {
         if (FbldNamesEqual(vars->name, var_expr->var.name->name)) {
@@ -561,7 +561,7 @@ static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       return NULL;
     }
 
-    case FBLC_APP_EXPR: {
+    case FBLD_APP_EXPR: {
       FbldAppExpr* app_expr = (FbldAppExpr*)expr;
 
       FbldQRef* arg_types[app_expr->argv->size];
@@ -606,7 +606,7 @@ static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       return return_type;
     }
 
-    case FBLC_ACCESS_EXPR: {
+    case FBLD_ACCESS_EXPR: {
       FbldAccessExpr* access_expr = (FbldAccessExpr*)expr;
       FbldQRef* qref = CheckExpr(ctx, vars, access_expr->obj);
       if (qref == NULL) {
@@ -625,7 +625,7 @@ static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       return NULL;
     }
 
-    case FBLC_UNION_EXPR: {
+    case FBLD_UNION_EXPR: {
       FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
       FbldQRef* arg_type = CheckExpr(ctx, vars, union_expr->arg);
       if (!CheckType(ctx, union_expr->type)) {
@@ -651,7 +651,7 @@ static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       return NULL;
     }
 
-    case FBLC_LET_EXPR: {
+    case FBLD_LET_EXPR: {
       FbldLetExpr* let_expr = (FbldLetExpr*)expr;
       for (Vars* curr = vars; curr != NULL; curr = curr->next) {
         if (FbldNamesEqual(curr->name, let_expr->var->name)) {
@@ -672,7 +672,7 @@ static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       return CheckExpr(ctx, &nvars, let_expr->body);
     }
 
-    case FBLC_COND_EXPR: {
+    case FBLD_COND_EXPR: {
       FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
       FbldQRef* type = CheckExpr(ctx, vars, cond_expr->select);
       if (type != NULL) {
