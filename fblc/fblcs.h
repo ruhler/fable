@@ -193,7 +193,7 @@ typedef enum {
 
 // FblcsActn --
 //   A tagged union of action types. All actions have the same initial
-//   layout as FblcExpr. The tag can be used to determine what kind of
+//   layout as FblcsActn. The tag can be used to determine what kind of
 //   action this is to get access to additional fields of the action
 //   by first casting to that specific type of action.
 typedef struct {

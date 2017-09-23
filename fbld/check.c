@@ -42,12 +42,22 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
+// Ports --
+//   A mapping from port name to port type and polarity.
+typedef struct Ports {
+  FbldQRef* type;
+  const char* name;
+  FbldPolarity polarity;
+  struct Ports* next;
+} Ports;
+
 static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 static void PrintType(FILE* stream, FbldQRef* type);
 static void PrintMRef(FILE* stream, FbldMRef* mref);
 
 static FbldType* LookupType(Context* ctx, FbldQRef* entity);
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
+// static FbldProc* LookupProc(Context* ctx, FbldQRef* entity);
 static FbldMType* LookupMType(Context* ctx, FbldMRef* mref);
 
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
@@ -57,6 +67,7 @@ static bool CheckType(Context* ctx, FbldQRef* qref);
 static bool CheckMRef(Context* ctx, FbldMRef* mref);
 static bool CheckIRef(Context* ctx, FbldIRef* iref);
 static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
+static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* actn);
 static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 static void CheckDecls(Context* ctx);
 static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
@@ -276,6 +287,48 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity)
   }
   return NULL;
 }
+
+// LookupProc --
+//   Look up the FbldProc* for the given resolved entity.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   entity - The process to look up.
+//
+// Results:
+//   The FbldProc* for the given resolved process, or NULL if no such
+//   process could be found.
+//
+// Side effects:
+//   Loads program modules as needed to find process definition.
+//   Prints a message to stderr and sets error to true if the program modules
+//   needed to find the process definition could not be loaded.
+//   It is not considered an error if the process cannot be found.
+//static FbldProc* LookupProc(Context* ctx, FbldQRef* entity)
+//{
+//  if (entity->rmref == NULL) {
+//    for (size_t i = 0; i < ctx->env->procv->size; ++i) {
+//      if (FbldNamesEqual(entity->rname->name, ctx->env->procv->xs[i]->name->name)) {
+//        return ctx->env->procv->xs[i];
+//      }
+//    }
+//
+//    // We couldn't find the definition for the local process.
+//    return NULL;
+//  }
+//
+//  // The entity is in a foreign module. Load the mtype for that module and
+//  // check for the proc declaration in there.
+//  FbldMType* mtype = LookupMType(ctx, entity->rmref);
+//  if (mtype != NULL) {
+//    for (size_t i = 0; i < mtype->procv->size; ++i) {
+//      if (FbldNamesEqual(entity->rname->name, mtype->procv->xs[i]->name->name)) {
+//        return mtype->procv->xs[i];
+//      }
+//    }
+//  }
+//  return NULL;
+//}
 
 // LookupMType --
 //   Look up the FbldMType* for the given resolved mref.
@@ -702,7 +755,66 @@ static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
       return NULL;
     }
   }
+}
+
+// CheckActn --
+//   Check that the given action is well formed.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   vars - The list of variables currently in scope.
+//   ports - The list of ports currently in scope.
+//   actn - The action to check.
+//
+// Results:
+//   The type of the action, or NULL if the action is not well typed.
+//
+// Side effects:
+//   Prints a message to stderr if the action is not well typed and
+//   ctx->error is set to true.
+static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* actn)
+{
+  switch (actn->tag) {
+    case FBLD_EVAL_ACTN: {
+      FbldEvalActn* eval_actn = (FbldEvalActn*)actn;
+      return CheckExpr(ctx, vars, eval_actn->arg);
+    }
 
+    case FBLD_GET_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_PUT_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_COND_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_CALL_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_LINK_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_EXEC_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    default: {
+      UNREACHABLE("invalid fbld action tag");
+      return NULL;
+    }
+  }
 }
 
 // CheckArgV --
@@ -792,6 +904,11 @@ static void CheckDecls(Context* ctx)
     FblcVectorAppend(ctx->arena, localv, ctx->env->funcv->xs[i]->name);
   }
 
+  // Add locally declared procs to localv.
+  for (size_t i = 0; i < ctx->env->procv->size; ++i) {
+    FblcVectorAppend(ctx->arena, localv, ctx->env->procv->xs[i]->name);
+  }
+
   // Check that the local names are unique.
   for (size_t i = 0; i < localv.size; ++i) {
     for (size_t j = 0; j < i; ++j) {
@@ -846,6 +963,36 @@ static void CheckDecls(Context* ctx)
       CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
     }
   }
+
+  // Check proc declarations
+  for (size_t proc_id = 0; proc_id < ctx->env->procv->size; ++proc_id) {
+    FbldProc* proc = ctx->env->procv->xs[proc_id];
+    Ports ports_data[proc->portv->size];
+    Ports* ports = NULL;
+    for (size_t port_id = 0; port_id < proc->portv->size; ++port_id) {
+      FbldPort* port = proc->portv->xs + port_id;
+      for (Ports* curr = ports; curr != NULL; curr = curr->next) {
+        if (FbldNamesEqual(curr->name, port->name->name)) {
+          ReportError("Redefinition of port '%s'\n", &ctx->error, port->name->loc, port->name->name);
+        }
+      }
+
+      ports_data[port_id].name = port->name->name;
+      ports_data[port_id].type = CheckType(ctx, port->type) ? port->type : NULL;
+      ports_data[port_id].polarity = port->polarity;
+      ports_data[port_id].next = ports;
+      ports = ports_data + port_id;
+    }
+
+    Vars vars_data[proc->argv->size];
+    Vars* vars = CheckArgV(ctx, proc->argv, vars_data);
+    CheckType(ctx, proc->return_type);
+
+    if (proc->body != NULL) {
+      FbldQRef* body_type = CheckActn(ctx, vars, ports, proc->body);
+      CheckTypesMatch(proc->body->loc, proc->return_type, body_type, &ctx->error);
+    }
+  }
 }
 
 // FbldCheckMType -- see fblcs.h for documentation.
@@ -858,7 +1005,8 @@ bool FbldCheckMType(FblcArena* arena, FbldStringV* path, FbldMType* mtype, FbldP
     .iref = NULL,
     .usingv = mtype->usingv,
     .typev = mtype->typev,
-    .funcv = mtype->funcv
+    .funcv = mtype->funcv,
+    .procv = mtype->procv
   };
 
   Context ctx = {
@@ -878,6 +1026,7 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
   FbldUsingV usingv = { .xs = NULL, .size = 0};
   FbldTypeV typev = { .xs = NULL, .size = 0};
   FbldFuncV funcv = { .xs = NULL, .size = 0};
+  FbldProcV procv = { .xs = NULL, .size = 0};
 
   Env env = {
     .name = mdefn->name,
@@ -885,7 +1034,8 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     .margv = mdefn->margv,
     .usingv = &usingv,
     .typev = &typev,
-    .funcv = &funcv
+    .funcv = &funcv,
+    .procv = &procv
   };
 
   Context ctx = {
@@ -1058,6 +1208,8 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     }
   }
 
+  // TODO: Check proc decls match.
+
   return !ctx.error;
 }
 
@@ -1132,6 +1284,7 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
   FbldUsingV usingv = { .size = 0, .xs = NULL };
   FbldTypeV typev = { .size = 0, .xs = NULL };
   FbldFuncV funcv = { .size = 0, .xs = NULL };
+  FbldProcV procv = { .size = 0, .xs = NULL };
   FbldMDefn mdefn = {
     .name = &name,
     .targv = &targv,
@@ -1139,7 +1292,8 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
     .iref = NULL,
     .usingv = &usingv,
     .typev = &typev,
-    .funcv = &funcv
+    .funcv = &funcv,
+    .procv = &procv
   };
 
   Context ctx = {

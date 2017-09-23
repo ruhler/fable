@@ -139,6 +139,12 @@ typedef struct {
   size_t id;
 } FbldId;
 
+// FbldIdV -- A vector of fbld ids.
+typedef struct {
+  size_t size;
+  FbldId** xs;
+} FbldIdV;
+
 // FbldArg --
 //   An fbld name with associated (possibly qualified) type. Used for
 //   declaring fields of structures and arguments to functions.
@@ -267,6 +273,114 @@ typedef struct {
   FbldExpr* body;
 } FbldLetExpr;
 
+// FbldActnTag --
+//   A tag used to distinguish among different kinds of actions.
+typedef enum {
+  FBLD_EVAL_ACTN,
+  FBLD_GET_ACTN,
+  FBLD_PUT_ACTN,
+  FBLD_COND_ACTN,
+  FBLD_CALL_ACTN,
+  FBLD_LINK_ACTN,
+  FBLD_EXEC_ACTN
+} FbldActnTag;
+
+// FbldActn --
+//   A tagged union of action types. All actions have the same initial
+//   layout as FbldActn. The tag can be used to determine what kind of
+//   action this is to get access to additional fields of the action
+//   by first casting to that specific type of action.
+typedef struct {
+  FbldActnTag tag;
+  FbldLoc* loc;
+} FbldActn;
+
+// FbldActnV --
+//   A vector of fblcs actions.
+typedef struct {
+  size_t size;
+  FbldActn** xs;
+} FbldActnV;
+
+// FbldEvalActn --
+//   An evaluation action of the form '$(arg)' which evaluates the given
+//   expression without side effects.
+typedef struct {
+  FbldActn _base;
+  FbldExpr* arg;
+} FbldEvalActn;
+
+// FbldGetActn --
+//   A get action of the form '~port()' used to get a value from a port.
+typedef struct {
+  FbldActn _base;
+  FbldId port;
+} FbldGetActn;
+
+// FbldPutActn --
+//   A put action of the form '~port(arg)' used to put a value onto a port.
+typedef struct {
+  FbldActn _base;
+  FbldId port;
+  FbldExpr* arg;
+} FbldPutActn;
+
+// FbldCondActn --
+//   A conditional action of the form '?(select; arg0, arg1, ...)', which
+//   conditionally selects an argument based on the tag of the select value.
+typedef struct {
+  FbldActn _base;
+  FbldExpr* select;
+  FbldActnV* argv;
+} FbldCondActn;
+
+// FbldCallActn --
+//   A call action of the form 'proc(port0, port1, ... ; arg0, arg1, ...)',
+//   which calls a process with the given port and value arguments.
+typedef struct {
+  FbldActn _base;
+  FbldQRef* proc;
+  FbldIdV* portv;
+  FbldExprV* argv;
+} FbldCallActn;
+
+// FbldLinkActn --
+//   A link action of the form 'type <~> get, put; body'. The names of the get
+//   and put ports are De Bruijn indices based on the context where the ports
+//   are accessed.
+typedef struct {
+  FbldActn _base;
+  FbldQRef* type;
+  FbldName* get;
+  FbldName* put;
+  FbldActn* body;
+} FbldLinkActn;
+
+// FbldExec --
+//   Trip of type, name, and action used in the FbldExecActn.
+typedef struct {
+  FbldQRef* type;
+  FbldName* name;
+  FbldActn* actn;
+} FbldExec;
+
+// FbldExecV --
+//   Vector of FbldExec.
+typedef struct {
+  size_t size;
+  FbldExec* xs;
+} FbldExecV;
+
+// FbldExecActn --
+//   An exec action of the form 'type0 var0 = exec0, type1 var1 = exec1, ...; body',
+//   which executes processes in parallel.
+typedef struct {
+  FbldActn _base;
+  FbldExecV* execv;
+  FbldActn* body;
+} FbldExecActn;
+
+
 // FbldUsingItem --
 //   Specification for a single item in a using declaration of the form
 //   <dest>[=<source>].
@@ -349,6 +463,47 @@ typedef struct {
   FbldFunc** xs;
 } FbldFuncV;
 
+// FbldPolarity --
+//   The polarity of a port.
+typedef enum {
+  FBLD_GET_POLARITY,
+  FBLD_PUT_POLARITY
+} FbldPolarity;
+
+// FbldPort --
+//   The type, name, and polarity of a port.
+typedef struct {
+  FbldQRef* type;
+  FbldName* name;
+  FbldPolarity polarity;
+} FbldPort;
+
+// FbldPortV --
+//   A vector of fbld ports.
+typedef struct {
+  size_t size;
+  FbldPort* xs;
+} FbldPortV;
+
+// FbldProc --
+//   A declaration of a process.
+//   The body is NULL for process prototypes specified in module
+//   declarations.
+typedef struct {
+  FbldName* name;
+  FbldPortV* portv;
+  FbldArgV* argv;
+  FbldQRef* return_type;
+  FbldActn* body;
+} FbldProc;
+
+// FbldProcV --
+//   A vector of FbldProcs.
+typedef struct {
+  size_t size;
+  FbldProc** xs;
+} FbldProcV;
+
 // FbldMType --
 //   An fbld mtype declaration.
 typedef struct {
@@ -357,6 +512,7 @@ typedef struct {
   FbldUsingV* usingv;
   FbldTypeV* typev;
   FbldFuncV* funcv;
+  FbldProcV* procv;
 } FbldMType;
 
 // FbldMTypeV --
@@ -403,6 +559,7 @@ typedef struct {
   FbldUsingV* usingv;
   FbldTypeV* typev;
   FbldFuncV* funcv;
+  FbldProcV* procv;
 } FbldMDefn;
 
 // FbldMDefnV --
@@ -776,6 +933,20 @@ FbldType* FbldLookupType(FbldProgram* prgm, FbldQRef* entity);
 //   None.
 FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQRef* entity);
 
+// FbldLookupProc --
+//   Look up a process declaration in the program.
+//
+// Inputs:
+//   prgm - The program to look in.
+//   entity - The entity to look up.
+//
+// Results:
+//   The process declaration or NULL if no such process could be found.
+//
+// Side effects:
+//   None.
+FbldProc* FbldLookupProc(FbldProgram* prgm, FbldQRef* entity);
+
 // FbldImportQRef --
 //   Import an already resolved qref from another module.
 //   Substitutes all references to local type parameters and module parameters
@@ -838,7 +1009,7 @@ typedef struct {
 //   entry point of a loaded program.
 typedef struct {
   FbldProgram* prog;
-  FbldFunc* proc_d;   // TODO: Change this to FbldProc once we support those.
+  FbldProc* proc_d;
   FblcProc* proc_c;
 } FbldLoaded;
 

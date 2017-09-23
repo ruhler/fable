@@ -41,6 +41,7 @@
     FbldUsingV* usingv;
     FbldTypeV* typev;
     FbldFuncV* funcv;
+    FbldProcV* procv;
   } Decls;
 
   #define YYLTYPE FbldLoc*
@@ -66,10 +67,14 @@
   FbldUsing* using;
   FbldType* type;
   FbldFunc* func;
+  FbldProc* proc;
   FbldExpr* expr;
+  FbldActn* actn;
   FbldNameV* namev;
   FbldMArgV* margv;
   FbldArgV* argv;
+  FbldPolarity polarity;
+  FbldPortV* portv;
   FbldExprV* exprv;
   FbldValue* value;
   FbldValueV* valuev;
@@ -126,12 +131,16 @@
 %type <using> using
 %type <type> type_decl type_defn abstract_type_decl struct_decl union_decl
 %type <func> func_decl func_defn
+%type <proc> proc_decl proc_defn
 %type <expr> expr stmt
+%type <actn> actn pstmt
 %type <namev> name_list
 %type <qnamev> qname_list
 %type <mrefv> mref_list
 %type <margv> marg_list
 %type <argv> arg_list non_empty_arg_list
+%type <polarity> polarity
+%type <portv> port_list non_empty_port_list
 %type <exprv> expr_list non_empty_expr_list
 %type <value> value
 %type <valuev> value_list non_empty_value_list
@@ -155,6 +164,7 @@ mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
           $$->usingv = $7->usingv;
           $$->typev = $7->typev;
           $$->funcv = $7->funcv;
+          $$->procv = $7->procv;
           // TODO: Don't leak the allocated Decls object?
         }
      ;
@@ -168,6 +178,7 @@ mdefn: "mdefn" name '<' name_list ';' marg_list ';' iref '>' '{' defn_list '}' '
           $$->usingv = $11->usingv;
           $$->typev = $11->typev;
           $$->funcv = $11->funcv;
+          $$->procv = $11->procv;
           // TODO: Don't leak the allocated Decls object?
         }
      ;
@@ -204,9 +215,11 @@ decl_list:
       $$->usingv = FBLC_ALLOC(arena, FbldUsingV);
       $$->typev = FBLC_ALLOC(arena, FbldTypeV);
       $$->funcv = FBLC_ALLOC(arena, FbldFuncV);
+      $$->procv = FBLC_ALLOC(arena, FbldProcV);
       FblcVectorInit(arena, *($$->usingv));
       FblcVectorInit(arena, *($$->typev));
       FblcVectorInit(arena, *($$->funcv));
+      FblcVectorInit(arena, *($$->procv));
     }
   | decl_list using ';' {
       FblcVectorAppend(arena, *($1->usingv), $2);
@@ -218,6 +231,10 @@ decl_list:
     }
   | decl_list func_decl ';' {
       FblcVectorAppend(arena, *($1->funcv), $2);
+      $$ = $1;
+    }
+  | decl_list proc_decl ';' {
+      FblcVectorAppend(arena, *($1->procv), $2);
       $$ = $1;
     }
   ;
@@ -312,6 +329,22 @@ func_defn: func_decl expr {
     }
     ;
 
+proc_decl: "proc" name '(' port_list ';' arg_list ';' qname ')' {
+      $$ = FBLC_ALLOC(arena, FbldProc);
+      $$->name = $2;
+      $$->portv = $4;
+      $$->argv = $6;
+      $$->return_type = $8;
+      $$->body = NULL;
+    }
+    ;
+
+proc_defn: proc_decl actn {
+      $$ = $1;
+      $$->body = $2;
+    }
+    ;
+
 stmt: expr ';' { $$ = $1; }
     | qname name '=' expr ';' stmt {
         FbldLetExpr* let_expr = FBLC_ALLOC(arena, FbldLetExpr);
@@ -373,6 +406,23 @@ expr:
       $$ = &cond_expr->_base;
   }
    ;
+
+pstmt: actn ';' { $$ = $1; }
+     ;
+
+actn:
+    '{' pstmt '}' {
+        $$ = $2;
+    }
+  | '$' '(' expr ')' {
+      FbldEvalActn* eval_actn = FBLC_ALLOC(arena, FbldEvalActn);
+      eval_actn->_base.tag = FBLD_EVAL_ACTN;
+      eval_actn->_base.loc = @$;
+      eval_actn->arg = $3;
+      $$ = &eval_actn->_base;
+    }
+  ;
+  
     
 defn_list:
     %empty {
@@ -380,9 +430,11 @@ defn_list:
       $$->usingv = FBLC_ALLOC(arena, FbldUsingV);
       $$->typev = FBLC_ALLOC(arena, FbldTypeV);
       $$->funcv = FBLC_ALLOC(arena, FbldFuncV);
+      $$->procv = FBLC_ALLOC(arena, FbldProcV);
       FblcVectorInit(arena, *($$->usingv));
       FblcVectorInit(arena, *($$->typev));
       FblcVectorInit(arena, *($$->funcv));
+      FblcVectorInit(arena, *($$->procv));
     }
   | defn_list using ';' {
       FblcVectorAppend(arena, *($1->usingv), $2);
@@ -394,6 +446,10 @@ defn_list:
     }
   | defn_list func_defn ';' {
       FblcVectorAppend(arena, *($1->funcv), $2);
+      $$ = $1;
+    }
+  | defn_list proc_defn ';' {
+      FblcVectorAppend(arena, *($1->procv), $2);
       $$ = $1;
     }
   ;
@@ -468,6 +524,35 @@ non_empty_arg_list:
       tname->name = $4;
       FblcVectorAppend(arena, *$1, tname);
       $$ = $1;
+    }
+  ;
+
+polarity: '<' '~' { $$ = FBLD_GET_POLARITY; }
+        | '~' '>' { $$ = FBLD_PUT_POLARITY; }
+        ;
+
+port_list:
+    %empty {
+      $$ = FBLC_ALLOC(arena, FbldPortV);
+      FblcVectorInit(arena, *$$);
+    }
+  | non_empty_port_list ;
+
+non_empty_port_list:
+    qname polarity name {
+      $$ = FBLC_ALLOC(arena, FbldPortV);
+      FblcVectorInit(arena, *$$);
+      FbldPort* port = FblcVectorExtend(arena, *$$);
+      port->type = $1;
+      port->name = $3;
+      port->polarity = $2;
+    }
+  | non_empty_port_list ',' qname polarity name {
+      $$ = $1;
+      FbldPort* port = FblcVectorExtend(arena, *$$);
+      port->type = $3;
+      port->name = $5;
+      port->polarity = $4;
     }
   ;
 
@@ -579,7 +664,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,@:?=.<>", c) != NULL
+  return strchr("(){};,@:?=.<>~$", c) != NULL
     || c == START_MTYPE
     || c == START_MDEFN
     || c == START_VALUE

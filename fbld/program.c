@@ -52,6 +52,23 @@ FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQRef* entity)
   return NULL;
 }
 
+// FbldLookupProc -- see documentation in fbld.h
+FbldProc* FbldLookupProc(FbldProgram* prgm, FbldQRef* entity)
+{
+  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
+  if (mdefn == NULL) {
+    return NULL;
+  }
+
+  for (size_t j = 0; j < mdefn->procv->size; ++j) {
+    FbldProc* proc = mdefn->procv->xs[j];
+    if (FbldNamesEqual(entity->rname->name, proc->name->name)) {
+      return proc;
+    }
+  }
+  return NULL;
+}
+
 // FbldImportQRef -- See documentation in fbld.h.
 FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQRef* entity)
 {

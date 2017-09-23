@@ -4,6 +4,7 @@
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf
+#include <stdlib.h>   // for abort
 
 #include "fblc.h"
 #include "fbld.h"
@@ -32,22 +33,39 @@ typedef struct {
 } CompiledFunc;
 
 // CompiledFuncV
-//   A vector of compiled functions.
+//   A vector of compiled processes.
 typedef struct {
   size_t size;
   CompiledFunc* xs;
 } CompiledFuncV;
+
+// CompiledProc
+//   The compiled process for a named entity.
+typedef struct {
+  FbldQRef* entity;
+  FblcProc* compiled;
+} CompiledProc;
+
+// CompiledProcV
+//   A vector of compiled processes.
+typedef struct {
+  size_t size;
+  CompiledProc* xs;
+} CompiledProcV;
 
 // Compiled
 //   A collection of already compiled entities.
 typedef struct {
   CompiledTypeV typev;
   CompiledFuncV funcv;
+  CompiledProcV procv;
 } Compiled;
 
 static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled);
+static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldActn* actn, Compiled* compiled);
 static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
 static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
+static FblcProc* CompileProc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
 static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQRef* entity, Compiled* compiled);
 
 // CompileExpr --
@@ -158,6 +176,71 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
   }
 }
 
+// CompileActn --
+//   Return a compiled fblc actn for the given action.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   accessv - Collection of access expression debug info to return.
+//   prgm - The program environment.
+//   mref - The current module context.
+//   actn - The action to compile.
+//   compiled - The collection of already compiled entities.
+//
+// Returns:
+//   A compiled fblc actn.
+//
+// Side effects:
+//   Adds information about access expressions to accessv.
+//   Adds additional compiled types, functions, and processes to 'compiled' as needed.
+static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldActn* actn, Compiled* compiled)
+{
+  switch (actn->tag) {
+    case FBLD_EVAL_ACTN: {
+      FbldEvalActn* eval_actn_d = (FbldEvalActn*)actn;
+      FblcEvalActn* eval_actn_c = FBLC_ALLOC(arena, FblcEvalActn);
+      eval_actn_c->_base.tag = FBLC_EVAL_ACTN;
+      eval_actn_c->arg = CompileExpr(arena, accessv, prgm, mref, eval_actn_d->arg, compiled);
+      return &eval_actn_c->_base;
+    }
+
+    case FBLD_GET_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_PUT_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_COND_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_CALL_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_LINK_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    case FBLD_EXEC_ACTN: {
+      assert(false && "TODO");
+      return NULL;
+    }
+
+    default: {
+      UNREACHABLE("invalid fbld action tag");
+      return NULL;
+    }
+  }
+}
+
 // CompileType --
 //   Return a compiled fblc type for the named type.
 //
@@ -249,6 +332,68 @@ static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
   return func_c;
 }
 
+// CompileProc --
+//   Return a compiled fblc proc for the named process.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   accessv - Collection of access expression debug info to return.
+//   prgm - The program environment.
+//   entity - The process to compile.
+//   compiled - The collection of already compiled entities.
+//
+// Returns:
+//   A compiled fblc proc, or NULL in case of error.
+//
+// Side effects:
+//   Adds information about access expressions to accessv.
+//   Adds the compiled process to 'compiled' if it is newly compiled.
+static FblcProc* CompileProc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled)
+{
+  // Check to see if we have already compiled the entity.
+  for (size_t i = 0; i < compiled->procv.size; ++i) {
+    if (FbldQRefsEqual(compiled->procv.xs[i].entity, entity)) {
+      return compiled->procv.xs[i].compiled;
+    }
+  }
+
+  FbldProc* proc_d = FbldLookupProc(prgm, entity);
+  assert(proc_d != NULL);
+
+  FblcProc* proc_c = FBLC_ALLOC(arena, FblcProc);
+  CompiledProc* compiled_proc = FblcVectorExtend(arena, compiled->procv);
+  compiled_proc->entity = entity;
+  compiled_proc->compiled = proc_c;
+
+  FblcVectorInit(arena, proc_c->portv);
+  for (size_t i = 0; i < proc_d->portv->size; ++i) {
+    FblcPort* port = FblcVectorExtend(arena, proc_c->portv);
+    port->type = CompileForeignType(arena, prgm, entity->rmref, proc_d->portv->xs[i].type, compiled);
+    switch (proc_d->portv->xs[i].polarity) {
+      case FBLD_GET_POLARITY:
+        port->polarity = FBLC_GET_POLARITY;
+        break;
+
+      case FBLD_PUT_POLARITY:
+        port->polarity = FBLC_PUT_POLARITY;
+        break;
+
+      default:
+        UNREACHABLE("Invalid port polarity");
+        abort();
+    }
+  }
+
+  FblcVectorInit(arena, proc_c->argv);
+  for (size_t arg_id = 0; arg_id < proc_d->argv->size; ++arg_id) {
+    FblcType* arg_type = CompileForeignType(arena, prgm, entity->rmref, proc_d->argv->xs[arg_id]->type, compiled);
+    FblcVectorAppend(arena, proc_c->argv, arg_type);
+  }
+  proc_c->return_type = CompileForeignType(arena, prgm, entity->rmref, proc_d->return_type, compiled);
+  proc_c->body = CompileActn(arena, accessv, prgm, entity->rmref, proc_d->body, compiled);
+  return proc_c;
+}
+
 // CompileForeignType --
 //   Compile a type referred to from another context.
 //
@@ -267,35 +412,42 @@ static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRe
 // FbldCompileProgram -- see documentation in fbld.h
 FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity)
 {
-  FbldFunc* func_d = FbldLookupFunc(prgm, entity);
-  if (func_d == NULL) {
-    fprintf(stderr, "main entry not found\n");
-    return NULL;
+  FbldProc* proc_d = FbldLookupProc(prgm, entity);
+  if (proc_d == NULL) {
+    FbldFunc* func_d = FbldLookupFunc(prgm, entity);
+    if (func_d == NULL) {
+      fprintf(stderr, "main entry not found\n");
+      return NULL;
+    }
+
+    // The main entry is a function, not a process. Add a wrapper process to
+    // the program to use as the main entry process.
+    proc_d = FBLC_ALLOC(arena, FbldProc);
+    proc_d->name = func_d->name;
+    proc_d->portv = FBLC_ALLOC(arena, FbldPortV);
+    FblcVectorInit(arena, *proc_d->portv);
+    proc_d->argv = func_d->argv;
+    proc_d->return_type = func_d->return_type;
+    FbldEvalActn* body = FBLC_ALLOC(arena, FbldEvalActn);
+    body->_base.tag = FBLD_EVAL_ACTN;
+    body->_base.loc = func_d->body->loc;
+    body->arg = func_d->body;
+    proc_d->body = &body->_base;
+
+    FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
+    FblcVectorAppend(arena, *mdefn->procv, proc_d);
   }
 
   Compiled compiled;
   FblcVectorInit(arena, compiled.typev);
   FblcVectorInit(arena, compiled.funcv);
-  FblcFunc* func_c = CompileFunc(arena, accessv, prgm, entity, &compiled);
-
-  // Create an FblcProc wrapper for the compiled function.
-  // TODO: Once we support procs in fbld, move the wrapper to the fbld side of
-  // compilation.
-  FblcEvalActn* body = FBLC_ALLOC(arena, FblcEvalActn);
-  body->_base.tag = FBLC_EVAL_ACTN;
-  body->arg = func_c->body;
-
-  FblcProc* proc = FBLC_ALLOC(arena, FblcProc);
-  FblcVectorInit(arena, proc->portv);
-  proc->argv.size = func_c->argv.size;
-  proc->argv.xs = func_c->argv.xs;
-  proc->return_type = func_c->return_type;
-  proc->body = &body->_base;
+  FblcVectorInit(arena, compiled.procv);
+  FblcProc* proc_c = CompileProc(arena, accessv, prgm, entity, &compiled);
 
   FbldLoaded* loaded = FBLC_ALLOC(arena, FbldLoaded);
   loaded->prog = prgm;
-  loaded->proc_d = func_d;
-  loaded->proc_c = proc;
+  loaded->proc_d = proc_d;
+  loaded->proc_c = proc_c;
   return loaded;
 }
 
