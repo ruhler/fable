@@ -254,13 +254,28 @@ static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLD_LINK_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldLinkActn* link_actn_d = (FbldLinkActn*)actn;
+      FblcLinkActn* link_actn_c = FBLC_ALLOC(arena, FblcLinkActn);
+      link_actn_c->_base.tag = FBLC_LINK_ACTN;
+      FbldQRef* entity = FbldImportQRef(arena, prgm, mref, link_actn_d->type);
+      link_actn_c->type = CompileType(arena, prgm, entity, compiled);
+      link_actn_c->body = CompileActn(arena, accessv, prgm, mref, link_actn_d->body, compiled);
+      return &link_actn_c->_base;
     }
 
     case FBLD_EXEC_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldExecActn* exec_actn_d = (FbldExecActn*)actn;
+      FblcExecActn* exec_actn_c = FBLC_ALLOC(arena, FblcExecActn);
+      exec_actn_c->_base.tag = FBLC_EXEC_ACTN;
+      FblcVectorInit(arena, exec_actn_c->execv);
+      for (size_t i = 0; i < exec_actn_d->execv->size; ++i) {
+        FblcExec* exec = FblcVectorExtend(arena, exec_actn_c->execv);
+        FbldQRef* entity = FbldImportQRef(arena, prgm, mref, exec_actn_d->execv->xs[i].type);
+        exec->type = CompileType(arena, prgm, entity, compiled);
+        exec->actn = CompileActn(arena, accessv, prgm, mref, exec_actn_d->execv->xs[i].actn, compiled);
+      }
+      exec_actn_c->body = CompileActn(arena, accessv, prgm, mref, exec_actn_d->body, compiled);
+      return &exec_actn_c->_base;
     }
 
     default: {

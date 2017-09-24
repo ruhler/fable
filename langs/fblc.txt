@@ -793,7 +793,7 @@ progress.
 
   pstmt ::= proc ';'                                                          (* proc *)
          |  tname '<~>' pname ',' pname ';' pstmt                             (* link *)
-         |  tname vname = pstmt [',' tname vname = pstmt [...]]] ';' pstmt    (* execution *)
+         |  tname vname = proc [',' tname vname = proc [...]]] ';' pstmt    (* execution *)
          ;
      
 

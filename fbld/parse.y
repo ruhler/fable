@@ -78,6 +78,7 @@
   FbldExprV* exprv;
   FbldIdV* idv;
   FbldActnV* actnv;
+  FbldExecV* execv;
   FbldValue* value;
   FbldValueV* valuev;
 }
@@ -145,6 +146,7 @@
 %type <portv> port_list non_empty_port_list
 %type <exprv> expr_list non_empty_expr_list
 %type <actnv> non_empty_actn_list
+%type <execv> non_empty_exec_list
 %type <idv> id_list non_empty_id_list
 %type <value> value
 %type <valuev> value_list non_empty_value_list
@@ -260,6 +262,24 @@ non_empty_expr_list:
   | non_empty_expr_list ',' expr {
       FblcVectorAppend(arena, *$1, $3);
       $$ = $1;
+    }
+  ;
+
+non_empty_exec_list:
+  qref name '=' actn {
+      $$ = FBLC_ALLOC(arena, FbldExecV);
+      FblcVectorInit(arena, *$$);
+      FbldExec* exec = FblcVectorExtend(arena, *$$);
+      exec->type = $1;
+      exec->name = $2;
+      exec->actn = $4;
+    }
+  | non_empty_exec_list ',' qref name '=' actn {
+      $$ = $1;
+      FbldExec* exec = FblcVectorExtend(arena, *$$);
+      exec->type = $3;
+      exec->name = $4;
+      exec->actn = $6;
     }
   ;
 
@@ -449,6 +469,24 @@ expr:
    ;
 
 pstmt: actn ';' { $$ = $1; }
+     | qref '<' '~' '>' name ',' name ';' pstmt {
+         FbldLinkActn* link_actn = FBLC_ALLOC(arena, FbldLinkActn);
+         link_actn->_base.tag = FBLD_LINK_ACTN;
+         link_actn->_base.loc = @$;
+         link_actn->type = $1;
+         link_actn->get = $5;
+         link_actn->put = $7;
+         link_actn->body = $9;
+         $$ = &link_actn->_base;
+       }
+     | non_empty_exec_list ';' pstmt {
+         FbldExecActn* exec_actn = FBLC_ALLOC(arena, FbldExecActn);
+         exec_actn->_base.tag = FBLD_EXEC_ACTN;
+         exec_actn->_base.loc = @$;
+         exec_actn->execv = $1;
+         exec_actn->body = $3;
+         $$ = &exec_actn->_base;
+       }
      ;
 
 actn:

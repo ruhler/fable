@@ -908,13 +908,52 @@ static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* act
     }
 
     case FBLD_LINK_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldLinkActn* link_actn = (FbldLinkActn*)actn;
+      CheckType(ctx, link_actn->type);
+      for (Ports* curr = ports; curr != NULL; curr = curr->next) {
+        if (FbldNamesEqual(curr->name, link_actn->get->name)) {
+          ReportError("Redefinition of port '%s'\n", &ctx->error, link_actn->get->loc, link_actn->get->name);
+        } else if (FbldNamesEqual(curr->name, link_actn->put->name)) {
+          ReportError("Redefinition of port '%s'\n", &ctx->error, link_actn->put->loc, link_actn->put->name);
+        }
+      }
+
+      if (FbldNamesEqual(link_actn->get->name, link_actn->put->name)) {
+        ReportError("Redefinition of port '%s'\n", &ctx->error, link_actn->put->loc, link_actn->put->name);
+      }
+
+      Ports getport = {
+        .type = link_actn->type,
+        .polarity = FBLD_GET_POLARITY,
+        .name = link_actn->get->name,
+        .next = ports
+      };
+      Ports putport = {
+        .type = link_actn->type,
+        .polarity = FBLD_PUT_POLARITY,
+        .name = link_actn->put->name,
+        .next = &getport
+      };
+
+      return CheckActn(ctx, vars, &putport, link_actn->body);
     }
 
     case FBLD_EXEC_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldExecActn* exec_actn = (FbldExecActn*)actn;
+
+      Vars vars_data[exec_actn->execv->size];
+      Vars* nvars = vars;
+      for (size_t i = 0; i < exec_actn->execv->size; ++i) {
+        FbldExec* exec = exec_actn->execv->xs + i;
+        CheckType(ctx, exec->type);
+        FbldQRef* def_type = CheckActn(ctx, vars, ports, exec->actn);
+        CheckTypesMatch(exec->actn->loc, exec->type, def_type, &ctx->error);
+        vars_data[i].type = exec->type;
+        vars_data[i].name = exec->name->name;
+        vars_data[i].next = nvars;
+        nvars = vars_data + i;
+      }
+      return CheckActn(ctx, nvars, ports, exec_actn->body);
     }
 
     default: {
