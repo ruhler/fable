@@ -57,7 +57,7 @@ static void PrintMRef(FILE* stream, FbldMRef* mref);
 
 static FbldType* LookupType(Context* ctx, FbldQRef* entity);
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
-// static FbldProc* LookupProc(Context* ctx, FbldQRef* entity);
+static FbldProc* LookupProc(Context* ctx, FbldQRef* entity);
 static FbldMType* LookupMType(Context* ctx, FbldMRef* mref);
 
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
@@ -304,31 +304,31 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity)
 //   Prints a message to stderr and sets error to true if the program modules
 //   needed to find the process definition could not be loaded.
 //   It is not considered an error if the process cannot be found.
-//static FbldProc* LookupProc(Context* ctx, FbldQRef* entity)
-//{
-//  if (entity->rmref == NULL) {
-//    for (size_t i = 0; i < ctx->env->procv->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, ctx->env->procv->xs[i]->name->name)) {
-//        return ctx->env->procv->xs[i];
-//      }
-//    }
-//
-//    // We couldn't find the definition for the local process.
-//    return NULL;
-//  }
-//
-//  // The entity is in a foreign module. Load the mtype for that module and
-//  // check for the proc declaration in there.
-//  FbldMType* mtype = LookupMType(ctx, entity->rmref);
-//  if (mtype != NULL) {
-//    for (size_t i = 0; i < mtype->procv->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, mtype->procv->xs[i]->name->name)) {
-//        return mtype->procv->xs[i];
-//      }
-//    }
-//  }
-//  return NULL;
-//}
+static FbldProc* LookupProc(Context* ctx, FbldQRef* entity)
+{
+  if (entity->rmref == NULL) {
+    for (size_t i = 0; i < ctx->env->procv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, ctx->env->procv->xs[i]->name->name)) {
+        return ctx->env->procv->xs[i];
+      }
+    }
+
+    // We couldn't find the definition for the local process.
+    return NULL;
+  }
+
+  // The entity is in a foreign module. Load the mtype for that module and
+  // check for the proc declaration in there.
+  FbldMType* mtype = LookupMType(ctx, entity->rmref);
+  if (mtype != NULL) {
+    for (size_t i = 0; i < mtype->procv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, mtype->procv->xs[i]->name->name)) {
+        return mtype->procv->xs[i];
+      }
+    }
+  }
+  return NULL;
+}
 
 // LookupMType --
 //   Look up the FbldMType* for the given resolved mref.
@@ -845,8 +845,66 @@ static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* act
     }
 
     case FBLD_CALL_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldCallActn* call_actn = (FbldCallActn*)actn;
+
+      Ports* port_types[call_actn->portv->size];
+      for (size_t i = 0; i < call_actn->portv->size; ++i) {
+        port_types[i] = NULL;
+        Ports* curr = ports;
+        for (size_t id = 0; curr != NULL; ++id) {
+          if (FbldNamesEqual(curr->name, call_actn->portv->xs[i].name->name)) {
+            call_actn->portv->xs[i].id = id;
+            port_types[i] = curr;
+            break;
+          }
+          curr = curr->next;
+        }
+        if (port_types[i] == NULL) {
+          ReportError("Port '%s' not defined.\n", &ctx->error, call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name);
+        }
+      }
+
+      FbldQRef* arg_types[call_actn->argv->size];
+      for (size_t i = 0; i < call_actn->argv->size; ++i) {
+        arg_types[i] = CheckExpr(ctx, vars, call_actn->argv->xs[i]);
+      }
+
+      if (!ResolveQRef(ctx, call_actn->proc)) {
+        return NULL;
+      }
+
+      FbldProc* proc = LookupProc(ctx, call_actn->proc);
+      if (proc == NULL) {
+        ReportError("%s does not refer to a proc.\n", &ctx->error, call_actn->proc->uname->loc, call_actn->proc->uname->name);
+        return NULL;
+      }
+
+      if (proc->portv->size == call_actn->portv->size) {
+        for (size_t i = 0; i < proc->portv->size; ++i) {
+          if (port_types[i] != NULL) {
+            if (port_types[i]->polarity != proc->portv->xs[i].polarity) {
+                ReportError("Port '%s' has wrong polarity. Expected '%s', but found '%s'.\n", &ctx->error,
+                    call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name,
+                    proc->portv->xs[i].polarity == FBLD_PUT_POLARITY ? "put" : "get",
+                    port_types[i]->polarity == FBLD_PUT_POLARITY ? "put" : "get");
+            }
+            FbldQRef* expected = ImportQRef(ctx, call_actn->proc->rmref, proc->portv->xs[i].type);
+            CheckTypesMatch(call_actn->portv->xs[i].name->loc, expected, port_types[i]->type, &ctx->error);
+          }
+        }
+      } else {
+        ReportError("Expected %d port arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->uname->loc, proc->portv->size, call_actn->proc->uname->name, call_actn->portv->size);
+      }
+
+      if (proc->argv->size == call_actn->argv->size) {
+        for (size_t i = 0; i < call_actn->argv->size; ++i) {
+          FbldQRef* expected = ImportQRef(ctx, call_actn->proc->rmref, proc->argv->xs[i]->type);
+          CheckTypesMatch(call_actn->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
+        }
+      } else {
+        ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->uname->loc, proc->argv->size, call_actn->proc->uname->name, call_actn->argv->size);
+      }
+      return ImportQRef(ctx, call_actn->proc->rmref, proc->return_type);
     }
 
     case FBLD_LINK_ACTN: {

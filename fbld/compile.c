@@ -235,8 +235,22 @@ static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLD_CALL_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldCallActn* call_actn_d = (FbldCallActn*)actn;
+      FblcCallActn* call_actn_c = FBLC_ALLOC(arena, FblcCallActn);
+      call_actn_c->_base.tag = FBLC_CALL_ACTN;
+      FbldQRef* entity = FbldImportQRef(arena, prgm, mref, call_actn_d->proc);
+      call_actn_c->proc = CompileProc(arena, accessv, prgm, entity, compiled);
+      FblcVectorInit(arena, call_actn_c->portv);
+      for (size_t i = 0; i < call_actn_d->portv->size; ++i) {
+        FblcPortId port = call_actn_d->portv->xs[i].id;
+        FblcVectorAppend(arena, call_actn_c->portv, port);
+      }
+      FblcVectorInit(arena, call_actn_c->argv);
+      for (size_t i = 0; i < call_actn_d->argv->size; ++i) {
+        FblcExpr* arg = CompileExpr(arena, accessv, prgm, mref, call_actn_d->argv->xs[i], compiled);
+        FblcVectorAppend(arena, call_actn_c->argv, arg);
+      }
+      return &call_actn_c->_base;
     }
 
     case FBLD_LINK_ACTN: {
