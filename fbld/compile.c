@@ -205,13 +205,20 @@ static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLD_GET_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldGetActn* get_actn_d = (FbldGetActn*)actn;
+      FblcGetActn* get_actn_c = FBLC_ALLOC(arena, FblcGetActn);
+      get_actn_c->_base.tag = FBLC_GET_ACTN;
+      get_actn_c->port = get_actn_d->port.id;
+      return &get_actn_c->_base;
     }
 
     case FBLD_PUT_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldPutActn* put_actn_d = (FbldPutActn*)actn;
+      FblcPutActn* put_actn_c = FBLC_ALLOC(arena, FblcPutActn);
+      put_actn_c->_base.tag = FBLC_PUT_ACTN;
+      put_actn_c->port = put_actn_d->port.id;
+      put_actn_c->arg = CompileExpr(arena, accessv, prgm, mref, put_actn_d->arg, compiled);
+      return &put_actn_c->_base;
     }
 
     case FBLD_COND_ACTN: {

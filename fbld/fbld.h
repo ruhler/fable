@@ -142,7 +142,7 @@ typedef struct {
 // FbldIdV -- A vector of fbld ids.
 typedef struct {
   size_t size;
-  FbldId** xs;
+  FbldId* xs;
 } FbldIdV;
 
 // FbldArg --

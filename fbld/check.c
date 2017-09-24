@@ -781,18 +781,67 @@ static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* act
     }
 
     case FBLD_GET_ACTN: {
-      assert(false && "TODO");
+      FbldGetActn* get_actn = (FbldGetActn*)actn;
+      for (size_t i = 0; ports != NULL; ++i) {
+        if (FbldNamesEqual(ports->name, get_actn->port.name->name)) {
+          if (ports->polarity == FBLD_GET_POLARITY) {
+            get_actn->port.id = i;
+            return ports->type;
+          } else {
+            ReportError("Port '%s' should have get polarity, but has put polarity.\n", &ctx->error, get_actn->port.name->loc, get_actn->port.name->name);
+            return NULL;
+          }
+        }
+        ports = ports->next;
+      }
+      ReportError("port '%s' not defined.\n", &ctx->error, get_actn->port.name->loc, get_actn->port.name->name);
       return NULL;
     }
 
     case FBLD_PUT_ACTN: {
-      assert(false && "TODO");
+      FbldPutActn* put_actn = (FbldPutActn*)actn;
+      FbldQRef* arg_type = CheckExpr(ctx, vars, put_actn->arg);
+
+      for (size_t i = 0; ports != NULL; ++i) {
+        if (FbldNamesEqual(ports->name, put_actn->port.name->name)) {
+          if (ports->polarity == FBLD_PUT_POLARITY) {
+            put_actn->port.id = i;
+            CheckTypesMatch(put_actn->arg->loc, ports->type, arg_type, &ctx->error);
+            return ports->type;
+          } else {
+            ReportError("Port '%s' should have put polarity, but has get polarity.\n", &ctx->error, put_actn->port.name->loc, put_actn->port.name->name);
+            return NULL;
+          }
+        }
+        ports = ports->next;
+      }
+      ReportError("port '%s' not defined.\n", &ctx->error, put_actn->port.name->loc, put_actn->port.name->name);
       return NULL;
     }
 
     case FBLD_COND_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldCondActn* cond_actn = (FbldCondActn*)actn;
+      FbldQRef* type = CheckExpr(ctx, vars, cond_actn->select);
+      if (type != NULL) {
+        FbldType* type_def = LookupType(ctx, type);
+        assert(type_def != NULL);
+        if (type_def->kind == FBLD_UNION_KIND) {
+          if (type_def->fieldv->size != cond_actn->argv->size) {
+            ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
+          }
+        } else {
+          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type_def->name->name);
+        }
+      }
+
+      FbldQRef* result_type = NULL;
+      assert(cond_actn->argv->size > 0);
+      for (size_t i = 0; i < cond_actn->argv->size; ++i) {
+        FbldQRef* arg_type = CheckActn(ctx, vars, ports, cond_actn->argv->xs[i]);
+        CheckTypesMatch(cond_actn->argv->xs[i]->loc, result_type, arg_type, &ctx->error);
+        result_type = (result_type == NULL) ? arg_type : result_type;
+      }
+      return result_type;
     }
 
     case FBLD_CALL_ACTN: {

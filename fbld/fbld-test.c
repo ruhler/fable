@@ -29,14 +29,14 @@ typedef struct {
 //
 // Fields:
 //   prog - The program environment.
-//   return_type - The return type of the program.
+//   proc - The main entry process.
 //   file - The name of the file containing the commands to execute.
 //   line - The line number of the current command being executed.
 //   stream - The stream with the commands to be executed.
 //   cmd - The next command to execute, if cmd_ready is true.
 typedef struct {
   FbldProgram* prog;
-  FbldQRef* return_type;
+  FbldProc* proc;
   const char* file;
   size_t line;
   FILE* stream;
@@ -56,6 +56,7 @@ static void ReportError(IOUser* user, const char* msg);
 static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
 static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
+static FblcFieldId LookupPort(FbldProc* proc, const char* name);
 // static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQRef* type_name, FblcValue* value);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
 static void AssertValuesEqual(IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b);
@@ -189,41 +190,35 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     }
     user->line++;
 
-//    FbldQRef* type = NULL;
-//    char port[len+1];
+    char port[len+1];
     char value[len+1];
-//    if (sscanf(line, "get %s %s", port, value) == 2) {
-//      user->cmd.tag = CMD_GET;
-//      // user->cmd.port = FbldLookupPort(user->sprog, user->proc, port);
-//      assert(false && "TODO: FbldLookupPort");
-//      if (user->cmd.port == FBLC_NULL_ID) {
-//        ReportError(user, "port not defined: ");
-//        fprintf(stderr, "'%s'\n", port);
-//        abort();
-//      }
-//      if (user->proc->portv.xs[user->cmd.port].polarity != FBLC_PUT_POLARITY) {
-//        ReportError(user, "expected put polarity for port ");
-//        fprintf(stderr, "'%s'\n", port);
-//        abort();
-//      }
-//      type = user->proc->portv.xs[user->cmd.port].type;
-//    } else if (sscanf(line, "put %s %s", port, value) == 2) {
-//      user->cmd.tag = CMD_PUT;
-//      // user->cmd.port = FbldLookupPort(user->sprog, user->proc, port);
-//      assert(false && "FbldLookupPort");
-//      if (user->cmd.port == FBLC_NULL_ID) {
-//        ReportError(user, "port not defined: ");
-//        fprintf(stderr, "'%s'\n", port);
-//        abort();
-//      }
-//      if (user->proc->portv.xs[user->cmd.port].polarity != FBLC_GET_POLARITY) {
-//        ReportError(user, "expected get polarity for port ");
-//        fprintf(stderr, "'%s'\n", port);
-//        abort();
-//      }
-//      type = user->proc->portv.xs[user->cmd.port].type;
-//    } else if (sscanf(line, "return %s", value) == 1) {
-    if (sscanf(line, "return %s", value) == 1) {
+    if (sscanf(line, "get %s %s", port, value) == 2) {
+      user->cmd.tag = CMD_GET;
+      user->cmd.port = LookupPort(user->proc, port);
+      if (user->cmd.port == FBLC_NULL_ID) {
+        ReportError(user, "port not defined: ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+      if (user->proc->portv->xs[user->cmd.port].polarity != FBLD_PUT_POLARITY) {
+        ReportError(user, "expected put polarity for port ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+    } else if (sscanf(line, "put %s %s", port, value) == 2) {
+      user->cmd.tag = CMD_PUT;
+      user->cmd.port = LookupPort(user->proc, port);
+      if (user->cmd.port == FBLC_NULL_ID) {
+        ReportError(user, "port not defined: ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+      if (user->proc->portv->xs[user->cmd.port].polarity != FBLD_GET_POLARITY) {
+        ReportError(user, "expected get polarity for port ");
+        fprintf(stderr, "'%s'\n", port);
+        abort();
+      }
+    } else if (sscanf(line, "return %s", value) == 1) {
       user->cmd.tag = CMD_RETURN;
     } else {
       ReportError(user, "malformed command line: ");
@@ -239,6 +234,28 @@ static void EnsureCommandReady(IOUser* user, FblcArena* arena)
     user->cmd_ready = true;
     free(line);
   }
+}
+
+// LookupPort --
+//   Look up the id of a given port.
+//
+// Inputs:
+//   proc - The process to look up the port for.
+//   name - The name of the port.
+//
+// Returns:
+//   The id of the named port, or FBLC_NULL_ID if no such port is found.
+//
+// Side effects:
+//   None.
+static FblcFieldId LookupPort(FbldProc* proc, const char* name)
+{
+  for (size_t i = 0; i < proc->portv->size; ++i) {
+    if (FbldNamesEqual(proc->portv->xs[i].name->name, name)) {
+      return i;
+    }
+  }
+  return FBLC_NULL_ID;
 }
 
 // PrintValue --
@@ -354,16 +371,15 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 {
   IOUser* io_user = (IOUser*)user;
   EnsureCommandReady(io_user, arena);
-//  if (io_user->cmd.tag == CMD_GET && ports[io_user->cmd.port] != NULL) {
-//    AssertValuesEqual(io_user, io_user->proc->portv.xs[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
-//    io_user->cmd_ready = false;
-//    FblcRelease(arena, ports[io_user->cmd.port]);
-//    ports[io_user->cmd.port] = NULL;
-//  } else if (io_user->cmd.tag == CMD_PUT && ports[io_user->cmd.port] == NULL) {
-//    io_user->cmd_ready = false;
-//    ports[io_user->cmd.port] = io_user->cmd.value;
-//  } else if (block) {
-  if (block) {
+  if (io_user->cmd.tag == CMD_GET && ports[io_user->cmd.port] != NULL) {
+    AssertValuesEqual(io_user, io_user->proc->portv->xs[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
+    io_user->cmd_ready = false;
+    FblcRelease(arena, ports[io_user->cmd.port]);
+    ports[io_user->cmd.port] = NULL;
+  } else if (io_user->cmd.tag == CMD_PUT && ports[io_user->cmd.port] == NULL) {
+    io_user->cmd_ready = false;
+    ports[io_user->cmd.port] = io_user->cmd.value;
+  } else if (block) {
     ReportError(io_user, "process blocked\n");
     abort();
   }
@@ -464,7 +480,7 @@ int main(int argc, char* argv[])
 
   IOUser user;
   user.prog = loaded->prog;
-  user.return_type = loaded->proc_d->return_type;
+  user.proc = loaded->proc_d;
   user.file = script;
   user.line = 0;
   user.stream = fopen(script, "r");
@@ -487,7 +503,7 @@ int main(int argc, char* argv[])
     ReportError(&user, "premature program termination.\n");
     abort();
   }
-  AssertValuesEqual(&user, user.return_type, user.cmd.value, value);
+  AssertValuesEqual(&user, user.proc->return_type, user.cmd.value, value);
   FblcRelease(arena, user.cmd.value);
   FblcRelease(arena, value);
   return 0;

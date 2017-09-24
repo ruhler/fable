@@ -76,6 +76,8 @@
   FbldPolarity polarity;
   FbldPortV* portv;
   FbldExprV* exprv;
+  FbldIdV* idv;
+  FbldActnV* actnv;
   FbldValue* value;
   FbldValueV* valuev;
 }
@@ -142,6 +144,8 @@
 %type <polarity> polarity
 %type <portv> port_list non_empty_port_list
 %type <exprv> expr_list non_empty_expr_list
+%type <actnv> non_empty_actn_list
+%type <idv> id_list non_empty_id_list
 %type <value> value
 %type <valuev> value_list non_empty_value_list
 
@@ -254,6 +258,43 @@ non_empty_expr_list:
       FblcVectorAppend(arena, *$$, $1);
     }
   | non_empty_expr_list ',' expr {
+      FblcVectorAppend(arena, *$1, $3);
+      $$ = $1;
+    }
+  ;
+
+id_list:
+    %empty {
+      $$ = FBLC_ALLOC(arena, FbldIdV);
+      FblcVectorInit(arena, *$$);
+    }
+  | non_empty_id_list
+  ;
+
+non_empty_id_list:
+  name {
+      $$ = FBLC_ALLOC(arena, FbldIdV);
+      FblcVectorInit(arena, *$$);
+      FbldId* id = FblcVectorExtend(arena, *$$);
+      id->name = $1;
+      id->id = FBLC_NULL_ID;
+    }
+  | non_empty_id_list ',' name {
+      $$ = $1;
+      FblcVectorInit(arena, *$$);
+      FbldId* id = FblcVectorExtend(arena, *$$);
+      id->name = $3;
+      id->id = FBLC_NULL_ID;
+    }
+  ;
+
+non_empty_actn_list:
+  actn {
+      $$ = FBLC_ALLOC(arena, FbldActnV);
+      FblcVectorInit(arena, *$$);
+      FblcVectorAppend(arena, *$$, $1);
+    }
+  | non_empty_actn_list ',' actn {
       FblcVectorAppend(arena, *$1, $3);
       $$ = $1;
     }
@@ -420,6 +461,40 @@ actn:
       eval_actn->_base.loc = @$;
       eval_actn->arg = $3;
       $$ = &eval_actn->_base;
+    }
+  | '~' name '(' ')' {
+      FbldGetActn* get_actn = FBLC_ALLOC(arena, FbldGetActn);
+      get_actn->_base.tag = FBLD_GET_ACTN;
+      get_actn->_base.loc = @$;
+      get_actn->port.name = $2;
+      get_actn->port.id = FBLC_NULL_ID;
+      $$ = &get_actn->_base;
+    }
+  | '~' name '(' expr ')' {
+      FbldPutActn* put_actn = FBLC_ALLOC(arena, FbldPutActn);
+      put_actn->_base.tag = FBLD_PUT_ACTN;
+      put_actn->_base.loc = @$;
+      put_actn->port.name = $2;
+      put_actn->port.id = FBLC_NULL_ID;
+      put_actn->arg = $4;
+      $$ = &put_actn->_base;
+    }
+  | '?' '(' expr ';' non_empty_actn_list ')' {
+      FbldCondActn* cond_actn = FBLC_ALLOC(arena, FbldCondActn);
+      cond_actn->_base.tag = FBLD_COND_ACTN;
+      cond_actn->_base.loc = @$;
+      cond_actn->select = $3;
+      cond_actn->argv = $5;
+      $$ = &cond_actn->_base;
+  }
+  | qname '(' id_list ';' expr_list ')' {
+      FbldCallActn* call_actn = FBLC_ALLOC(arena, FbldCallActn);
+      call_actn->_base.tag = FBLD_CALL_ACTN;
+      call_actn->_base.loc = @$;
+      call_actn->proc = $1;
+      call_actn->portv = $3;
+      call_actn->argv = $5;
+      $$ = &call_actn->_base;
     }
   ;
   
