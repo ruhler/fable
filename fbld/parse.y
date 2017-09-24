@@ -32,7 +32,7 @@
     FbldMType* mtype;
     FbldMDefn* mdefn;
     FbldValue* value;
-    FbldQRef* qname;
+    FbldQRef* qref;
   } ParseResult;
 
   // Decls --
@@ -55,8 +55,8 @@
 
 %union {
   FbldName* name;
-  FbldQRef* qname;
-  FbldQRefV* qnamev;
+  FbldQRef* qref;
+  FbldQRefV* qrefv;
   FbldIRef* iref;
   FbldMRef* mref;
   FbldMRefV* mrefv;
@@ -107,7 +107,7 @@
 %token START_MTYPE 1 "mtype parse start indicator"
 %token START_MDEFN 2 "mdefn parse start indicator"
 %token START_VALUE 3 "value parse start indicator"
-%token START_QNAME 4 "qname parse start indicator"
+%token START_QNAME 4 "qref parse start indicator"
 
 %token <name> NAME
 
@@ -123,7 +123,7 @@
 %token <name> USING "using"
 
 %type <name> keyword name
-%type <qname> qname
+%type <qref> qref
 %type <iref> iref
 %type <mref> mref
 %type <mtype> mtype
@@ -137,7 +137,7 @@
 %type <expr> expr stmt
 %type <actn> actn pstmt
 %type <namev> name_list
-%type <qnamev> qname_list
+%type <qrefv> qref_list
 %type <mrefv> mref_list
 %type <margv> marg_list
 %type <argv> arg_list non_empty_arg_list
@@ -158,7 +158,7 @@ start:
      START_MTYPE mtype { result->mtype = $2; }
    | START_MDEFN mdefn { result->mdefn = $2; }
    | START_VALUE value { result->value = $2; }
-   | START_QNAME qname { result->qname = $2; }
+   | START_QNAME qref { result->qref = $2; }
    ;
  
 mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
@@ -355,7 +355,7 @@ union_decl: "union" name '(' non_empty_arg_list ')' {
 type_decl: abstract_type_decl | struct_decl | union_decl ;
 type_defn: struct_decl | union_decl ;
 
-func_decl: "func" name '(' arg_list ';' qname ')' {
+func_decl: "func" name '(' arg_list ';' qref ')' {
       $$ = FBLC_ALLOC(arena, FbldFunc);
       $$->name = $2;
       $$->argv = $4;
@@ -370,7 +370,7 @@ func_defn: func_decl expr {
     }
     ;
 
-proc_decl: "proc" name '(' port_list ';' arg_list ';' qname ')' {
+proc_decl: "proc" name '(' port_list ';' arg_list ';' qref ')' {
       $$ = FBLC_ALLOC(arena, FbldProc);
       $$->name = $2;
       $$->portv = $4;
@@ -387,7 +387,7 @@ proc_defn: proc_decl actn {
     ;
 
 stmt: expr ';' { $$ = $1; }
-    | qname name '=' expr ';' stmt {
+    | qref name '=' expr ';' stmt {
         FbldLetExpr* let_expr = FBLC_ALLOC(arena, FbldLetExpr);
         let_expr->_base.tag = FBLD_LET_EXPR;
         let_expr->_base.loc = @$;
@@ -411,7 +411,7 @@ expr:
       var_expr->var.id = FBLC_NULL_ID;
       $$ = &var_expr->_base;
     }
-  | qname '(' expr_list ')' {
+  | qref '(' expr_list ')' {
       FbldAppExpr* app_expr = FBLC_ALLOC(arena, FbldAppExpr);
       app_expr->_base.tag = FBLD_APP_EXPR;
       app_expr->_base.loc = @$;
@@ -419,7 +419,7 @@ expr:
       app_expr->argv = $3;
       $$ = &app_expr->_base;
     }
-  | qname ':' name '(' expr ')' {
+  | qref ':' name '(' expr ')' {
       FbldUnionExpr* union_expr = FBLC_ALLOC(arena, FbldUnionExpr);
       union_expr->_base.tag = FBLD_UNION_EXPR;
       union_expr->_base.loc = @$;
@@ -487,7 +487,7 @@ actn:
       cond_actn->argv = $5;
       $$ = &cond_actn->_base;
   }
-  | qname '(' id_list ';' expr_list ')' {
+  | qref '(' id_list ';' expr_list ')' {
       FbldCallActn* call_actn = FBLC_ALLOC(arena, FbldCallActn);
       call_actn->_base.tag = FBLD_CALL_ACTN;
       call_actn->_base.loc = @$;
@@ -545,17 +545,17 @@ name_list:
     }
   ;
 
-qname_list:
+qref_list:
     %empty {
       $$ = FBLC_ALLOC(arena, FbldQRefV);
       FblcVectorInit(arena, *$$);
     }
-  | qname {
+  | qref {
       $$ = FBLC_ALLOC(arena, FbldQRefV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
-  | qname_list ',' qname {
+  | qref_list ',' qref {
       FblcVectorAppend(arena, *$1, $3);
       $$ = $1;
     }
@@ -585,7 +585,7 @@ arg_list:
   | non_empty_arg_list ;
 
 non_empty_arg_list:
-    qname name {
+    qref name {
       $$ = FBLC_ALLOC(arena, FbldArgV);
       FblcVectorInit(arena, *$$);
       FbldArg* tname = FBLC_ALLOC(arena, FbldArg);
@@ -593,7 +593,7 @@ non_empty_arg_list:
       tname->name = $2;
       FblcVectorAppend(arena, *$$, tname);
     }
-  | non_empty_arg_list ',' qname name {
+  | non_empty_arg_list ',' qref name {
       FbldArg* tname = FBLC_ALLOC(arena, FbldArg);
       tname->type = $3;
       tname->name = $4;
@@ -614,7 +614,7 @@ port_list:
   | non_empty_port_list ;
 
 non_empty_port_list:
-    qname polarity name {
+    qref polarity name {
       $$ = FBLC_ALLOC(arena, FbldPortV);
       FblcVectorInit(arena, *$$);
       FbldPort* port = FblcVectorExtend(arena, *$$);
@@ -622,7 +622,7 @@ non_empty_port_list:
       port->name = $3;
       port->polarity = $2;
     }
-  | non_empty_port_list ',' qname polarity name {
+  | non_empty_port_list ',' qref polarity name {
       $$ = $1;
       FbldPort* port = FblcVectorExtend(arena, *$$);
       port->type = $3;
@@ -631,7 +631,7 @@ non_empty_port_list:
     }
   ;
 
-qname:
+qref:
     name {
       $$ = FBLC_ALLOC(arena, FbldQRef);
       $$->uname = $1;
@@ -648,14 +648,14 @@ qname:
     }
   ;
 
-iref: name '<' qname_list '>' {
+iref: name '<' qref_list '>' {
       $$ = FBLC_ALLOC(arena, FbldIRef);
       $$->name = $1;
       $$->targv = $3;
     }
   ;
 
-mref: name '<' qname_list ';' mref_list '>' {
+mref: name '<' qref_list ';' mref_list '>' {
       $$ = FBLC_ALLOC(arena, FbldMRef);
       $$->name = $1;
       $$->targv = $3;
@@ -664,14 +664,14 @@ mref: name '<' qname_list ';' mref_list '>' {
   ;
 
 value:
-    qname '(' value_list ')' {
+    qref '(' value_list ')' {
       $$ = FBLC_ALLOC(arena, FbldValue);
       $$->kind = FBLD_STRUCT_KIND;
       $$->type = $1;
       $$->tag = NULL;
       $$->fieldv = $3;
     }
-  | qname ':' name '(' value ')' {
+  | qref ':' name '(' value ')' {
       $$ = FBLC_ALLOC(arena, FbldValue);
       $$->kind = FBLD_UNION_KIND;
       $$->type = $1;
@@ -951,7 +951,7 @@ FbldQRef* FbldParseQRefFromString(FblcArena* arena, const char* string)
     .sin = string
   };
   ParseResult result;
-  result.qname = NULL;
+  result.qref = NULL;
   yyparse(arena, &lex, &result);
-  return result.qname;
+  return result.qref;
 }
