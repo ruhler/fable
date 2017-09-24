@@ -1,6 +1,6 @@
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.
-  - for both type and function declarations.
+  - for type, func, and proc declarations.
 * Test case when abstract type is used as select for conditional.
 * Test that all imported names exist in the module they are imported from.
 * Port remainder of fblc tests to fbld.

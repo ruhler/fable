@@ -222,8 +222,16 @@ static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
     }
 
     case FBLD_COND_ACTN: {
-      assert(false && "TODO");
-      return NULL;
+      FbldCondActn* cond_actn_d = (FbldCondActn*)actn;
+      FblcCondActn* cond_actn_c = FBLC_ALLOC(arena, FblcCondActn);
+      cond_actn_c->_base.tag = FBLC_COND_ACTN;
+      cond_actn_c->select = CompileExpr(arena, accessv, prgm, mref, cond_actn_d->select, compiled);
+      FblcVectorInit(arena, cond_actn_c->argv);
+      for (size_t i = 0; i < cond_actn_d->argv->size; ++i) {
+        FblcActn* arg = CompileActn(arena, accessv, prgm, mref, cond_actn_d->argv->xs[i], compiled);
+        FblcVectorAppend(arena, cond_actn_c->argv, arg);
+      }
+      return &cond_actn_c->_base;
     }
 
     case FBLD_CALL_ACTN: {
