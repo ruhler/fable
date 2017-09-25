@@ -73,6 +73,7 @@ static void CheckDecls(Context* ctx);
 static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
 static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* mdefn_type);
 static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* mtype_type, FbldFunc* mdefn_type);
+static bool CheckProcDeclsMatch(Context* ctx, FbldProc* mtype_type, FbldProc* mdefn_type);
 static bool CheckValue(Context* ctx, FbldValue* value);
 
 // ReportError --
@@ -1296,6 +1297,58 @@ static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* mtype_func, FbldFunc* md
   return true;
 }
 
+// CheckProcDeclsMatch --
+//   Check that a process declared in an mdefn matches its declaration in the
+//   mtype.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   mtype_proc - The proc as declared in the mtype.
+//   mdefn_proc - The proc as declared in the mdefn.
+//
+// Returns:
+//   true if the mdefn proc matches the mtype proc, false otherwise.
+//
+// Side effects:
+//   Prints a message to stderr if the processes don't match.
+static bool CheckProcDeclsMatch(Context* ctx, FbldProc* mtype_proc, FbldProc* mdefn_proc)
+{
+  if (mtype_proc->portv->size != mdefn_proc->portv->size) {
+    ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+    return false;
+  }
+
+  for (size_t i = 0; i < mtype_proc->portv->size; ++i) {
+    FbldPort* mtype_port = mtype_proc->portv->xs + i;
+    FbldPort* mdefn_port = mtype_proc->portv->xs + i;
+    if (!FbldQRefsEqual(mtype_port->type, mdefn_port->type)) {
+      ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+      return false;
+    }
+
+    if (!FbldNamesEqual(mtype_port->name->name, mdefn_port->name->name)) {
+      ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+      return false;
+    }
+
+    if (mtype_port->polarity != mdefn_port->polarity) {
+      ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+      return false;
+    }
+  }
+
+  if (!ArgsEqual(mtype_proc->argv, mdefn_proc->argv)) {
+    ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+    return false;
+  }
+
+  if (!FbldQRefsEqual(mtype_proc->return_type, mdefn_proc->return_type)) {
+    ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+    return false;
+  }
+  return true;
+}
+
 // FbldCheckMDefn -- see documentation in fbld.h
 bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm)
 {
@@ -1343,7 +1396,7 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
       if (FbldNamesEqual(mtype_func->name->name, mdefn_func->name->name)) {
         CheckFuncDeclsMatch(&ctx, mtype_func, mdefn_func);
 
-        // Set mtype_func to NULL to indicate we found the matching type.
+        // Set mtype_func to NULL to indicate we found the matching func.
         mtype_func = NULL;
         break;
       }
@@ -1354,7 +1407,23 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     }
   }
 
-  // TODO: Check proc decls match.
+  for (size_t mtype_proc_id = 0; mtype_proc_id < mtype->procv->size; ++mtype_proc_id) {
+    FbldProc* mtype_proc = mtype->procv->xs[mtype_proc_id];
+    for (size_t mdefn_proc_id = 0; mdefn_proc_id < mdefn->procv->size; ++mdefn_proc_id) {
+      FbldProc* mdefn_proc = mdefn->procv->xs[mdefn_proc_id];
+      if (FbldNamesEqual(mtype_proc->name->name, mdefn_proc->name->name)) {
+        CheckProcDeclsMatch(&ctx, mtype_proc, mdefn_proc);
+
+        // Set mtype_proc to NULL to indicate we found the matching proc.
+        mtype_proc = NULL;
+        break;
+      }
+    }
+
+    if (mtype_proc != NULL) {
+      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, mdefn->name->loc, mtype_proc->name->name);
+    }
+  }
 
   return !ctx.error;
 }
