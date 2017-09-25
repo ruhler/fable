@@ -10,4 +10,6 @@ set prg {
   };
 }
 
-fblc-test $prg main {} "return BoolList:nonempty(NonEmptyBoolList(Bool:true(Unit()),BoolList:empty(Unit())))"
+fblc-test $prg main {} {
+  return BoolList:nonempty(NonEmptyBoolList(Bool:true(Unit()),BoolList:empty(Unit())))
+}

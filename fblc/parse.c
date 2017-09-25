@@ -578,7 +578,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     if (IsToken(toks, '(')) {
       // This is an application expression of the form: start(<args>)
       FblcsAppExpr* app_expr = FBLC_ALLOC(arena, FblcsAppExpr);
-      app_expr->_base.tag = FBLC_APP_EXPR;
+      app_expr->_base.tag = FBLCS_APP_EXPR;
       app_expr->_base.loc = loc;
       app_expr->func.loc = start.loc;
       app_expr->func.name = start.name;
@@ -591,7 +591,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       // This is a union expression of the form: start:field(<expr>)
       GetToken(toks, ':');
       FblcsUnionExpr* union_expr = FBLC_ALLOC(arena, FblcsUnionExpr);
-      union_expr->_base.tag = FBLC_UNION_EXPR;
+      union_expr->_base.tag = FBLCS_UNION_EXPR;
       union_expr->_base.loc = loc;
       union_expr->type.loc = start.loc;
       union_expr->type.name = start.name;
@@ -614,7 +614,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else if (in_stmt && IsNameToken(toks)) {
       // This is a let statement of the form: <type> <name> = <expr>; <stmt>
       FblcsLetExpr* let_expr = FBLC_ALLOC(arena, FblcsLetExpr);
-      let_expr->_base.tag = FBLC_LET_EXPR;
+      let_expr->_base.tag = FBLCS_LET_EXPR;
       let_expr->_base.loc = loc;
       let_expr->type.loc = start.loc;
       let_expr->type.name = start.name;
@@ -637,7 +637,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     } else {
       // This is the variable expression: start
       FblcsVarExpr* var_expr = FBLC_ALLOC(arena, FblcsVarExpr);
-      var_expr->_base.tag = FBLC_VAR_EXPR;
+      var_expr->_base.tag = FBLCS_VAR_EXPR;
       var_expr->_base.loc = loc;
       var_expr->var.name.loc = start.loc;
       var_expr->var.name.name = start.name;
@@ -647,7 +647,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
   } else if (IsToken(toks, '?')) {
     // This is a conditional expression of the form: ?(<expr> ; <args>)
     FblcsCondExpr* cond_expr = FBLC_ALLOC(arena, FblcsCondExpr);
-    cond_expr->_base.tag = FBLC_COND_EXPR;
+    cond_expr->_base.tag = FBLCS_COND_EXPR;
     cond_expr->_base.loc = loc;
     GetToken(toks, '?');
     if (!GetToken(toks, '(')) {
@@ -672,7 +672,7 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
   while (IsToken(toks, '.')) {
     // This is an access expression of the form: <obj>.<field>
     FblcsAccessExpr* access_expr = FBLC_ALLOC(arena, FblcsAccessExpr);
-    access_expr->_base.tag = FBLC_ACCESS_EXPR;
+    access_expr->_base.tag = FBLCS_ACCESS_EXPR;
     access_expr->_base.loc = loc;
     access_expr->obj = expr;
     access_expr->field.id = FBLC_NULL_ID;
