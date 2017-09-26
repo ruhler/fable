@@ -1,3 +1,8 @@
+Priority:
+* Port snake to fbld
+* Continue porting fblc tests to fbld
+* Continue fbld cleanup
+
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.
   - for type, func, and proc declarations.
@@ -7,11 +12,10 @@ Fbld Test:
 
 Fbld Cleanup:
 * Untangle the recursive knot that is check/compile/load.
-* Avoid printing duplicate error messages - only check each thing once.
 * CheckTypesMatch put error then loc to match ReportError.
 * Add comments to check indicating what entities and mrefs are resolved.
 * General code cleanup of check.
-* Re-organize parse.y to match order in fbld.h, and finish it out.
+* Re-organize parse.y to match order in fbld.h.
 * Figure out how to deal with allocations in fbld check and compile, and maybe
   how to reuse allocations rather than allocating duplicates of things.
 * Review all documentation and other things for consistency.
@@ -22,20 +26,20 @@ Fbld Cleanup:
 * Update comments on FbldCheck functions to clarify that module names are
   resolved as a side effect.
 * Don't allocate and leak FbldLocs like crazy in the lexer/parser.
-* Better organize the contents of parse.y.
 * Cleanup fbld types to have less pointers - don't include an indirection just
   because it makes parsing easier. Copy values in parser as needed instead.
 * Use consistent style for error messages. Capitalize? Punctuate?
 
 Fbld Application:
-* Set up vector graphics interface.
- - Define a basic vector-graphics interface suitable for drawing colored
-   squares.
- - Write program to draw fixed set of colored squares on screen and quit on
-   command.
- - Implement libsdl graphics interface so program is actually rendered to
-   screen.
-* Develop "Scrabble Crush" game?
+* Port snake to fbld
+
+App Ideas:
+* snake - text based and graphics
+* tictactoe - text based and graphics
+* boxer - to test graphics
+* space invaders
+* scrabble crush
+* 2d minigolf
 
 General Cleanup:
  - Rename FBLC_ALLOC FblcAlloc to be more consistent?
@@ -45,18 +49,12 @@ General Cleanup:
  - Increase test code coverage as much as reasonably possible.
  - Put vector type definitions after their corresponding element definitions.
 
-MiniGolf Arc:
-* Design 2D minigolf game and implement.
-
 Snake Arc:
 * Make food appear randomly instead of at the tail.
 * Speed up the snake every time it eats something.
 * Test and fix bug when snake eats its tail.
 * Ignore moves that aren't orthoginal to current snake direction.
 * Keep track of and report score.
-
-Space Invaders Arc:
-* Implement space invaders game in fbld.
 
 Miscellanous:
 * Add test to fblc-test that we don't leak memory in FblcExecute.
