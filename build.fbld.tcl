@@ -97,6 +97,7 @@ exec mv {*}[glob *.gcov] out/fbld/cov/spec
 
 run $::fbldtest prgms/UBNatTest.wnt prgms "Test@UBNatTest<;>"
 run $::fbldtest prgms/PrimesTest.wnt prgms "Test@PrimesTest<;>"
+run $::fbldcheck prgms/ Snake
 
 exec mkdir -p out/fbld/cov/all
 run gcov {*}$::fbld_objs > out/fbld/cov/all/fbld.gcov

@@ -301,7 +301,6 @@ non_empty_id_list:
     }
   | non_empty_id_list ',' name {
       $$ = $1;
-      FblcVectorInit(arena, *$$);
       FbldId* id = FblcVectorExtend(arena, *$$);
       id->name = $3;
       id->id = FBLC_NULL_ID;

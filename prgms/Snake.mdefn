@@ -1,0 +1,155 @@
+mdefn Snake< ; ; Snake<>> {
+  using Unit<;> { Unit; };
+  using Bool<;> { Bool; True; False; And; };
+  using UBNat<;> { Nat; 0; 2; 6; Lit2; Eq; Inc; Dec; };
+  using List<Draw;> { DrawP = P; DrawS = S; };
+  using List<Pos;> { PosP = P; PosS = S; };
+
+  func MinRow( ; Nat) 0();
+  func MaxRow( ; Nat) Lit2(2(), 0());
+  func MinCol( ; Nat) 0();
+  func MaxCol( ; Nat) Lit2(6(), 0());
+
+  struct Pos(Nat row, Nat col);
+
+  func EqPos(Pos a, Pos b; Bool) {
+    And(Eq(a.row, b.row), Eq(a.col, b.col));
+  };
+
+  union Direction(Unit up, Unit down, Unit left, Unit right);
+  union Input(Direction dir, Unit tick);
+
+  union Cell(Unit empty, Unit snake, Unit food);
+  struct Draw(Pos pos, Cell cell);
+
+  # State --
+  #   The state of the game.
+  # 
+  # Fields:
+  #   dir - The current direction of the snake.
+  #   food - The current position of the food.
+  #   nfood - The position of the next food.
+  #   snake - The positions of the snake, in order from head to tail.
+  struct State(Direction dir, Pos food, Pos nfood, PosP snake);
+
+  func DrawSnakeS(PosS s ; DrawS) {
+    ?(s; DrawS:nil(Unit()), DrawS:cons(DrawSnakeP(s.cons)));
+  };
+
+  func DrawSnakeP(PosP s ; DrawP) {
+    DrawP(Draw(s.head, Cell:snake(Unit())), DrawSnakeS(s.tail));
+  };
+
+  func DrawState(State s ; DrawS) {
+    DrawS:cons(DrawP(Draw(s.food, Cell:food(Unit())),
+    DrawS:cons(DrawSnakeP(s.snake))));
+  };
+
+  func InitialState( ; State) {
+    Nat c0 = MinCol();
+    Nat c1 = Inc(c0); Nat c2 = Inc(c1);
+    Nat c3 = Inc(c2); Nat c4 = Inc(c3);
+    Nat r0 = MinRow();
+    Nat r1 = Inc(r0); Nat r2 = Inc(r1);
+    Nat r3 = Inc(r2); Nat r4 = Inc(r3);
+    State(
+        Direction:right(Unit()),
+        Pos(r4, c1),
+        Pos(r1, c0),
+        PosP(Pos(r1, c4), PosS:cons(PosP(
+             Pos(r1, c3), PosS:cons(PosP(
+             Pos(r1, c2), PosS:cons(PosP(
+             Pos(r1, c1), PosS:nil(Unit())))))))));
+  };
+
+  struct MoveResult(State state, DrawS draw);
+  union MoveResultM(Unit dead, MoveResult mr);
+
+  union PosM(Unit dead, Pos pos);
+
+  # Return true if the given position is found in the list of positions.
+  func InPosS(PosS s, Pos p ; Bool) {
+    ?(s ; False(), InPosP(s.cons, p));
+  };
+
+  # Return true if the given position is found in the list of positions.
+  func InPosP(PosP s, Pos p ; Bool) {
+    ?(EqPos(s.head, p); True(), InPosS(s.tail, p));
+  };
+
+  # Return all but the last element in l.
+  # TODO: Make this a generic List operatrion.
+  func InitPosP(PosP l ; PosS) {
+    ?(l.tail; PosS:nil(Unit()), PosS:cons(PosP(l.head, InitPosP(l.tail.cons))));
+  };
+
+  # Return the last element in l.
+  # TODO: Make this a generic List operatrion.
+  func LastPosP(PosP l ; Pos) {
+    ?(l.tail; l.head, LastPosP(l.tail.cons));
+  };
+
+  func Move(State s; MoveResultM) {
+    PosM pm = ?(s.dir;
+      ?(Eq(s.snake.head.row, MaxRow()); PosM:dead(Unit()), 
+          PosM:pos(Pos(Inc(s.snake.head.row), s.snake.head.col))),
+      ?(Eq(s.snake.head.row, MinRow()); PosM:dead(Unit()), 
+          PosM:pos(Pos(Dec(s.snake.head.row), s.snake.head.col))),
+      ?(Eq(s.snake.head.col, MinCol()); PosM:dead(Unit()), 
+          PosM:pos(Pos(s.snake.head.row, Dec(s.snake.head.col)))),
+      ?(Eq(s.snake.head.col, MaxCol()); PosM:dead(Unit()), 
+          PosM:pos(Pos(s.snake.head.row, Inc(s.snake.head.col)))));
+    ?(pm; MoveResultM:dead(Unit()),
+        ?(EqPos(pm.pos, s.food);
+            {
+              # TODO: Properly handle the case where the snake eats food at its
+              # tail.
+              PosP nsnake = PosP(s.food, PosS:cons(s.snake));
+              State ns = State(s.dir, s.nfood, s.nfood, nsnake);
+              DrawS draw = DrawS:cons(DrawP(Draw(s.food, Cell:snake(Unit())),
+                           DrawS:cons(DrawP(Draw(s.nfood, Cell:food(Unit())),
+                           DrawS:nil(Unit())))));
+              MoveResultM:mr(MoveResult(ns, draw));
+            },
+            ?(InPosP(s.snake, pm.pos); MoveResultM:dead(Unit()),
+              {
+                # TODO: Combine calls to Init and Last so we only have to
+                # iterate over the list of elements once instead of twice?
+                PosP nsnake = PosP(pm.pos, InitPosP(s.snake));
+                Pos nfood = LastPosP(s.snake);
+                State ns = State(s.dir, s.food, nfood, nsnake);
+                DrawS draw = DrawS:cons(DrawP(Draw(pm.pos, Cell:snake(Unit())),
+                             DrawS:cons(DrawP(Draw(nfood, Cell:empty(Unit())),
+                             DrawS:nil(Unit())))));
+                MoveResultM:mr(MoveResult(ns, draw));
+              })));
+  };
+
+  proc DrawAll(Draw ~> out; DrawS draw ; Unit) {
+    ?(draw ; $(Unit()),
+        {
+           Draw x = ~out(draw.cons.head);
+           DrawAll(out; draw.cons.tail);
+        });
+  };
+
+  proc Snake(Input <~ in, Draw ~> out; State s ; Unit) {
+    Input x = ~in();
+    ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
+         {
+             MoveResultM m = $(Move(s));
+             ?(m;
+                $(Unit()),
+                {
+                   Unit u = DrawAll(out; m.mr.draw);
+                   Snake(in, out; m.mr.state);
+                });
+         });
+  };
+
+  proc Main(Input <~ in, Draw ~> out; ; Unit) {
+    State s = $(InitialState());
+    Unit u = DrawAll(out ; DrawState(s));
+    Snake(in, out; s);
+  };
+};
