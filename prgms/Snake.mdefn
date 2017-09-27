@@ -3,7 +3,7 @@ mdefn Snake< ; ; Snake<>> {
   using Bool<;> { Bool; True; False; And; };
   using UBNat<;> { Nat; 0; 2; 6; Lit2; Eq; Inc; Dec; };
   using List<Draw;> { DrawP = P; DrawS = S; };
-  using List<Pos;> { PosP = P; PosS = S; };
+  using List<Pos;> { PosP = P; PosS = S; InitPosP = InitP; LastPosP = LastP; };
 
   func MinRow( ; Nat) 0();
   func MaxRow( ; Nat) Lit2(2(), 0());
@@ -75,18 +75,6 @@ mdefn Snake< ; ; Snake<>> {
   # Return true if the given position is found in the list of positions.
   func InPosP(PosP s, Pos p ; Bool) {
     ?(EqPos(s.head, p); True(), InPosS(s.tail, p));
-  };
-
-  # Return all but the last element in l.
-  # TODO: Make this a generic List operatrion.
-  func InitPosP(PosP l ; PosS) {
-    ?(l.tail; PosS:nil(Unit()), PosS:cons(PosP(l.head, InitPosP(l.tail.cons))));
-  };
-
-  # Return the last element in l.
-  # TODO: Make this a generic List operatrion.
-  func LastPosP(PosP l ; Pos) {
-    ?(l.tail; l.head, LastPosP(l.tail.cons));
   };
 
   func Move(State s; MoveResultM) {

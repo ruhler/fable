@@ -3,4 +3,14 @@ mdefn List<T ; ; List<T>> {
 
   struct P(T head, S tail);
   union S(Unit nil, P cons); 
+
+  # InitP - Return all but the last element in 'list'.
+  func InitP(P list; S) {
+    ?(list.tail; S:nil(Unit()), S:cons(P(list.head, InitP(list.tail.cons))));
+  };
+
+  # LastP - Return the last element in 'list'.
+  func LastP(P list; T) {
+    ?(list.tail; list.head, LastP(list.tail.cons));
+  };
 };

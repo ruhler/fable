@@ -235,34 +235,34 @@ Syntax Reference
                               iref '>' {
                 [mdefn_decl [mdefn_decl [...]]] '}' ';' ;
 
-  iref ::= mname '<' [qname [',' qname [...]]] ')' ;
-  mref ::= mname '<' [qname [',' qname [...]]] '; [mref [',' mref [...]]] ')' ;
+  iref ::= mname '<' [qref [',' qref [...]]] ')' ;
+  mref ::= mname '<' [qref [',' qref [...]]] '; [mref [',' mref [...]]] ')' ;
 
-  qname ::= tname ['@' mref] ;
+  qref ::= tname ['@' mref] ;
   
   mtype_decl ::= 'type' tname ';'
               |  'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-              |  'struct' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
-              |  'union' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
-              |  'func' tname '(' [qname vname [',' qname vname [...]]] ';' qname ')' ';'
+              |  'struct' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
+              |  'union' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
+              |  'func' tname '(' [qref vname [',' qref vname [...]]] ';' qref ')' ';'
               |  'proc' tname '('
-                    [qname polarity pname [',' qname polarity pname [...]]] ';'
-                    [qname vname [',' qname vname [...]]] ';' qname ')' ';'
+                    [qref polarity pname [',' qref polarity pname [...]]] ';'
+                    [qref vname [',' qref vname [...]]] ';' qref ')' ';'
               ;
 
   mdefn_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-              |  'struct' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
-              |  'union' tname '(' [qname fname [',' qname fname [...]]] ')' ';'
-              |  'func' tname '(' [qname vname [',' qname vname [...]]] ';' qname ')' expr ';'
+              |  'struct' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
+              |  'union' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
+              |  'func' tname '(' [qref vname [',' qref vname [...]]] ';' qref ')' expr ';'
               |  'proc' tname '('
-                    [qname polarity pname [',' qname polarity pname [...]]] ';'
-                    [qname vname [',' qname vname [...]]] ';' qname ')' proc ';'
+                    [qref polarity pname [',' qref polarity pname [...]]] ';'
+                    [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
               ;
 
   mname ::= name ;  (* A name referring to an interface or module *)
 
-  expr ::= ... (* as in fblc, with qname in place of tname *)
-  proc ::= ... (* as in fblc, with qname in place of tname *)
+  expr ::= ... (* as in fblc, with qref in place of tname *)
+  proc ::= ... (* as in fblc, with qref in place of tname *)
 
   polarity ::= ... (* as in fblc *)
   fname ::= ... (* as in fblc *)
@@ -274,12 +274,31 @@ Open Questions
 --------------
 * Can you import the same entity multiple times under a different name in the
   same using statement?
-* Can you have multiple using statements for the same module?
+* Can you have multiple using statements for the same (concrete) module?
 * Can you import the same entity multiple times under a different name in
   different using statements?
 * Can you import public entities from your own module in using statements?
 * Can you import private entities from your own module in using statements?
-* Can you import in funcs or procs in an mtype's using statement, or only
+* Can you import funcs or procs in an mtype's using statement, or only
   types?
 * Can you use an imported type in the import's module parameter?
   For example, something like: using Maybe(T) { T=Maybe };
+
+Wish List
+---------
+* Some way to create a variable sized object that doesn't require O(N) 
+  open-paren/close-paren pairs. For example, have a 'list' literal or varargs
+  function. This would be useful when defining a list of test cases, for
+  example.
+
+* Builtin support for arrays? For example, it's pretty daunting to think about
+  how to define a large 2D array. Or how to define an array for a HashTable
+  implementation. Use case and alternatives not fully explored yet.
+
+* There's no way currently to define a private module. This means it is not
+  possible to re-use polymorphic code on private data types. For example:
+  Snake defines a private data type Pos with associated PosEq function. It
+  would be great if it could reuse a polymorphic List find function, but it
+  can't define the Eq instance for Pos without making Pos a public data type.
+
+  This is clearly a flaw in the language that should be addressed.

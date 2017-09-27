@@ -6,4 +6,10 @@ mtype List<T> {
 
   # S - A list of 0 or more elements: T*
   union S(Unit nil, P cons); 
+
+  # InitP - Return all but the last element in 'list'.
+  func InitP(P list; S);
+
+  # LastP - Return the last element in 'list'.
+  func LastP(P list; T);
 };
