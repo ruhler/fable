@@ -7,7 +7,7 @@ set FLAGS [list -I fblc -I fbld -std=c99 -pedantic -Wall -Werror -O0 -fprofile-a
 # the out directory so that the profile information generated when running
 # code from the objects is placed in a subdirectory of the out directory.
 exec mkdir -p out/fbld/obj
-foreach {x} [glob fbld/{fbld-check,fbld-test,check,compile,load,loc,name,program}.c] {
+foreach {x} [glob fbld/{fbld-check,fbld-snake,fbld-test,check,compile,load,loc,name,program}.c] {
   set obj out/fbld/obj/[string map {.c .o} [file tail $x]]
   run gcc {*}$FLAGS -c -o $obj $x
 }
@@ -29,6 +29,7 @@ set ::fbldcheck ./out/fbld/fbld-check
 set ::fbldtest ./out/fbld/fbld-test
 run gcc {*}$FLAGS -o $::fbldcheck out/fbld/obj/fbld-check.o -L out/fbld -lfbld -L out/fblc -lfblc
 run gcc {*}$FLAGS -o $::fbldtest out/fbld/obj/fbld-test.o -L out/fbld -lfbld -L out/fblc -lfblc
+run gcc {*}$FLAGS -o out/fbld/fbld-snake out/fbld/obj/fbld-snake.o -L out/fbld -lfbld -L out/fblc -lfblc -lncurses
 
 # See langs/fbld/README.txt for the description of this function
 proc fbld-check-error { program module loc } {
