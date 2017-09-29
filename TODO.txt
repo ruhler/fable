@@ -1,6 +1,6 @@
 Priority:
 * Generalize snake's graphics API
-  - Change 'Cell' to Color, and render the snake in color.
+  - Update fbld-snake to use real color instead of characters.
   - Pull Coord, Color, and Draw into separate Draw module.
 * Continue porting fblc tests to fbld
 * Continue fbld cleanup

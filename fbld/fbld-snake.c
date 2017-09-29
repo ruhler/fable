@@ -185,12 +185,17 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
       int y = MAX_ROW + 1 - row;
       int x = col + 1;
 
-      FblcValue* cell = draw->fields[1];
+      FblcValue* color = draw->fields[1];
       char c = '?';
-      switch (cell->tag) {
+      switch (color->tag) {
         case 0: c = ' '; break;
-        case 1: c = 'S'; break;
-        case 2: c = '$'; break;
+        case 1: c = 'R'; break;
+        case 2: c = 'G'; break;
+        case 3: c = 'Y'; break;
+        case 4: c = 'B'; break;
+        case 5: c = 'M'; break;
+        case 6: c = 'C'; break;
+        case 7: c = 'W'; break;
       }
       mvaddch(y, x, c);
     }

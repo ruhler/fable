@@ -19,8 +19,22 @@ mdefn Snake< ; ; Snake<>> {
   union Direction(Unit up, Unit down, Unit left, Unit right);
   union Input(Direction dir, Unit tick);
 
-  union Cell(Unit empty, Unit snake, Unit food);
-  struct Draw(Pos pos, Cell cell);
+  union Color(
+    Unit black,
+    Unit red,
+    Unit green,
+    Unit yellow,
+    Unit blue,
+    Unit magenta,
+    Unit cyan,
+    Unit white
+  );
+
+  func FoodColor( ; Color) Color:green(Unit());
+  func SnakeColor( ; Color) Color:blue(Unit());
+  func EmptyColor( ; Color) Color:black(Unit());
+
+  struct Draw(Pos pos, Color color);
 
   # State --
   #   The state of the game.
@@ -37,11 +51,11 @@ mdefn Snake< ; ; Snake<>> {
   };
 
   func DrawSnakeP(PosP s ; DrawP) {
-    DrawP(Draw(s.head, Cell:snake(Unit())), DrawSnakeS(s.tail));
+    DrawP(Draw(s.head, SnakeColor()), DrawSnakeS(s.tail));
   };
 
   func DrawState(State s ; DrawS) {
-    DrawS:cons(DrawP(Draw(s.food, Cell:food(Unit())),
+    DrawS:cons(DrawP(Draw(s.food, FoodColor()),
     DrawS:cons(DrawSnakeP(s.snake))));
   };
 
@@ -94,8 +108,8 @@ mdefn Snake< ; ; Snake<>> {
               # tail.
               PosP nsnake = PosP(s.food, PosS:cons(s.snake));
               State ns = State(s.dir, s.nfood, s.nfood, nsnake);
-              DrawS draw = DrawS:cons(DrawP(Draw(s.food, Cell:snake(Unit())),
-                           DrawS:cons(DrawP(Draw(s.nfood, Cell:food(Unit())),
+              DrawS draw = DrawS:cons(DrawP(Draw(s.food, SnakeColor()),
+                           DrawS:cons(DrawP(Draw(s.nfood, FoodColor()),
                            DrawS:nil(Unit())))));
               MoveResultM:mr(MoveResult(ns, draw));
             },
@@ -106,8 +120,8 @@ mdefn Snake< ; ; Snake<>> {
                 PosP nsnake = PosP(pm.pos, InitPosP(s.snake));
                 Pos nfood = LastPosP(s.snake);
                 State ns = State(s.dir, s.food, nfood, nsnake);
-                DrawS draw = DrawS:cons(DrawP(Draw(pm.pos, Cell:snake(Unit())),
-                             DrawS:cons(DrawP(Draw(nfood, Cell:empty(Unit())),
+                DrawS draw = DrawS:cons(DrawP(Draw(pm.pos, SnakeColor()),
+                             DrawS:cons(DrawP(Draw(nfood, EmptyColor()),
                              DrawS:nil(Unit())))));
                 MoveResultM:mr(MoveResult(ns, draw));
               })));
