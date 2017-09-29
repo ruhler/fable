@@ -172,22 +172,29 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
   IOUser* io_user = (IOUser*)user;
 
   if (ports[1] != NULL) {
-    FblcValue* draw = ports[1];
-    FblcValue* pos = draw->fields[0];
-    int row = ReadUBNat(pos->fields[0]);
-    int col = ReadUBNat(pos->fields[1]);
+    FblcValue* drawS = ports[1];
+    while (drawS->tag) {
+      FblcValue* drawP = drawS->fields[0];
+      FblcValue* draw = drawP->fields[0];
+      drawS = drawP->fields[1];
 
-    int y = MAX_ROW + 1 - row;
-    int x = col + 1;
+      FblcValue* pos = draw->fields[0];
+      int row = ReadUBNat(pos->fields[0]);
+      int col = ReadUBNat(pos->fields[1]);
 
-    FblcValue* cell = draw->fields[1];
-    char c = '?';
-    switch (cell->tag) {
-      case 0: c = ' '; break;
-      case 1: c = 'S'; break;
-      case 2: c = '$'; break;
+      int y = MAX_ROW + 1 - row;
+      int x = col + 1;
+
+      FblcValue* cell = draw->fields[1];
+      char c = '?';
+      switch (cell->tag) {
+        case 0: c = ' '; break;
+        case 1: c = 'S'; break;
+        case 2: c = '$'; break;
+      }
+      mvaddch(y, x, c);
     }
-    mvaddch(y, x, c);
+
     FblcRelease(arena, ports[1]);
     ports[1] = NULL;
   }

@@ -113,15 +113,7 @@ mdefn Snake< ; ; Snake<>> {
               })));
   };
 
-  proc DrawAll(Draw ~> out; DrawS draw ; Unit) {
-    ?(draw ; $(Unit()),
-        {
-           Draw x = ~out(draw.cons.head);
-           DrawAll(out; draw.cons.tail);
-        });
-  };
-
-  proc Snake(Input <~ in, Draw ~> out; State s ; Unit) {
+  proc Snake(Input <~ in, DrawS ~> out; State s ; Unit) {
     Input x = ~in();
     ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
          {
@@ -129,15 +121,15 @@ mdefn Snake< ; ; Snake<>> {
              ?(m;
                 $(Unit()),
                 {
-                   Unit u = DrawAll(out; m.mr.draw);
+                   DrawS drawn = ~out(m.mr.draw);
                    Snake(in, out; m.mr.state);
                 });
          });
   };
 
-  proc Main(Input <~ in, Draw ~> out; ; Unit) {
+  proc Main(Input <~ in, DrawS ~> out; ; Unit) {
     State s = $(InitialState());
-    Unit u = DrawAll(out ; DrawState(s));
+    DrawS drawn = ~out(DrawState(s));
     Snake(in, out; s);
   };
 };
