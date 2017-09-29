@@ -11,11 +11,11 @@ set prg {
       union Foo(Unit bar, A sludge);
 
       func main( ; Foo) {
-        # Foo has no field called "blah".
-        Foo:blah(Unit());
+        # The close paren is missing.
+        Foo:bar(Unit();
       };
     };
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:9:13
+fbld-check-error $prg Main Main.mdefn:9:23

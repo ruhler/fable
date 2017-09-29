@@ -11,8 +11,8 @@ set prg {
       union Foo(Unit bar, A sludge);
 
       func main( ; Foo) {
-        # Foo has no field called "blah".
-        Foo:blah(Unit());
+        # No field is provided for the constructor.
+        Foo:(Unit());
       };
     };
   }

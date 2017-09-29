@@ -11,11 +11,11 @@ set prg {
       union Foo(Unit bar, A sludge);
 
       func main( ; Foo) {
-        # Foo has no field called "blah".
-        Foo:blah(Unit());
+        # The open parenthesis before the argument is missing.
+        Foo:bar ?(Foo:bar(Unit()) ; Unit(), Unit()));
       };
     };
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:9:13
+fbld-check-error $prg Main Main.mdefn:9:17

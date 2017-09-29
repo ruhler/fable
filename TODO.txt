@@ -1,5 +1,8 @@
 Priority:
-* Port snake to fbld
+* Generalize snake's graphics API
+  - Output list of Draw command rather than single draw commands.
+  - Change 'Cell' to Color, and render the snake in color.
+  - Pull Coord, Color, and Draw into separate Draw module.
 * Continue porting fblc tests to fbld
 * Continue fbld cleanup
 
@@ -30,13 +33,9 @@ Fbld Cleanup:
   because it makes parsing easier. Copy values in parser as needed instead.
 * Use consistent style for error messages. Capitalize? Punctuate?
 
-Fbld Application:
-* Port snake to fbld
-
 App Ideas:
 * snake - text based and graphics
 * tictactoe - text based and graphics
-* boxer - to test graphics
 * space invaders
 * scrabble crush
 * 2d minigolf
