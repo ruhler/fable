@@ -13,4 +13,9 @@ mdefn List<T ; ; List<T>> {
   func LastP(P list; T) {
     ?(list.tail; list.head, LastP(list.tail.cons));
   };
+
+  # Append list b to the end of list a.
+  func Append(S a, S b ; S) {
+    ?(a; b, S:cons(P(a.cons.head, Append(a.cons.tail, b))));
+  };
 };

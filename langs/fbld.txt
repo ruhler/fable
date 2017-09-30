@@ -301,4 +301,8 @@ Wish List
   would be great if it could reuse a polymorphic List find function, but it
   can't define the Eq instance for Pos without making Pos a public data type.
 
+  Example: I want to implement a generic List map function, but that requires
+  defining a separate module for the function argument any time I want to use
+  the map function, which is prohibitively ridiculous.
+
   This is clearly a flaw in the language that should be addressed.

@@ -5,6 +5,8 @@
 #ifndef FBLD_H_
 #define FBLD_H_
 
+#include <stdio.h>  // for FILE
+
 #include "fblc.h"   // for FblcArena
 
 // FbldLoc --
@@ -984,6 +986,34 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, Fbl
 //   Behavior is undefined if the module reference has not already been resolved.
 //   TODO: Allocates a new mref that somebody should probably clean up somehow.
 FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldMRef* mref);
+
+// FbldPrintType --
+//   Print a resolved type in human readable format to the given stream.
+//
+// Inputs:
+//   stream - Stream to print the type to.
+//   type - The type to print.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints the type to the stream.
+void FbldPrintType(FILE* stream, FbldQRef* type);
+
+// FbldPrintMRef --
+//   Print a resolved mref in human readable format to the given stream.
+//
+// Inputs:
+//   stream - Stream to print the type to.
+//   mref - The mref to print. Must not be null.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints the mref to the stream.
+void FbldPrintMRef(FILE* stream, FbldMRef* mref);
 
 // FbldAccessLoc --
 //   The location of an access expression, for aid in debugging undefined

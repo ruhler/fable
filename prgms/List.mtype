@@ -12,4 +12,7 @@ mtype List<T> {
 
   # LastP - Return the last element in 'list'.
   func LastP(P list; T);
+
+  # Append list b to the end of list a.
+  func Append(S a, S b ; S);
 };

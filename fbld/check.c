@@ -52,8 +52,6 @@ typedef struct Ports {
 } Ports;
 
 static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
-static void PrintType(FILE* stream, FbldQRef* type);
-static void PrintMRef(FILE* stream, FbldMRef* mref);
 
 static FbldType* LookupType(Context* ctx, FbldQRef* entity);
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
@@ -102,63 +100,6 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
   va_end(ap);
 }
 
-// PrintType --
-//   Print a type in human readable format to the given stream.
-//
-// Inputs:
-//   stream - Stream to print the type to.
-//   type - The type to print.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints the type to the stream.
-static void PrintType(FILE* stream, FbldQRef* type)
-{
-  fprintf(stream, "%s", type->uname->name);
-  if (type->umref != NULL) {
-    fprintf(stream, "@");
-    PrintMRef(stream, type->umref);
-  }
-}
-
-// PrintMRef --
-//   Print an mref in human readable format to the given stream.
-//
-// Inputs:
-//   stream - Stream to print the type to.
-//   mref - The mref to print. Must not be null.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints the mref to the stream.
-static void PrintMRef(FILE* stream, FbldMRef* mref)
-{
-  assert(mref != NULL);
-  fprintf(stream, "%s<", mref->name->name);
-
-  if (mref->targv != NULL) {
-    for (size_t i = 0; i < mref->targv->size; ++i) {
-      if (i > 0) {
-        fprintf(stream, ",");
-      }
-      PrintType(stream, mref->targv->xs[i]);
-    }
-    fprintf(stream, ";");
-
-    for (size_t i = 0; i < mref->margv->size; ++i) {
-      if (i > 0) {
-        fprintf(stream, ",");
-      }
-      PrintMRef(stream, mref->margv->xs[i]);
-    }
-  }
-  fprintf(stream, ">");
-}
-
 // CheckTypesMatch --
 //   Check whether the given types match.
 //
@@ -185,9 +126,9 @@ static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, 
 
   if (!FbldQRefsEqual(expected, actual)) {
     ReportError("Expected type ", error, loc);
-    PrintType(stderr, expected);
+    FbldPrintType(stderr, expected);
     fprintf(stderr, ", but found type ");
-    PrintType(stderr, actual);
+    FbldPrintType(stderr, actual);
     fprintf(stderr, "\n");
   }
 }

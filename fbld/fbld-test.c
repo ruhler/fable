@@ -57,9 +57,9 @@ static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
 static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
 static FblcFieldId LookupPort(FbldProc* proc, const char* name);
-// static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQRef* type_name, FblcValue* value);
+static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
-static void AssertValuesEqual(IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b);
+static void AssertValuesEqual(FblcArena* arena, IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -263,7 +263,7 @@ static FblcFieldId LookupPort(FbldProc* proc, const char* name)
 //
 // Inputs:
 //   stream - The stream to print the value to.
-//   env - The program environment.
+//   prgm - The program environment.
 //   type_name - The name of the type of the value to print.
 //   value - The value to print.
 //
@@ -272,28 +272,30 @@ static FblcFieldId LookupPort(FbldProc* proc, const char* name)
 //
 // Side effects:
 //   Prints the value to the stream in fbld format.
-//static void PrintValue(FILE* stream, FbldMDefnV* env, FbldQRef* type_name, FblcValue* value)
-//{
-//  FbldType* type = FbldLookupDecl(env, NULL, type_name);
-//  assert(type != NULL);
-//  if (type->_base.tag == FBLD_STRUCT_DECL) {
-//    fprintf(stream, "%s@%s(", type_name->name->name, type_name->module->name);
-//    for (size_t i = 0; i < type->fieldv->size; ++i) {
-//      if (i > 0) {
-//        fprintf(stream, ",");
-//      }
-//      PrintValue(stream, env, type->fieldv->xs[i]->type, value->fields[i]);
-//    }
-//    fprintf(stream, ")");
-//  } else if (type->_base.tag == FBLD_UNION_DECL) {
-//    fprintf(stream, "%s@%s:%s(", type_name->name->name, type_name->module->name,
-//        type->fieldv->xs[value->tag]->name->name);
-//    PrintValue(stream, env, type->fieldv->xs[value->tag]->type, value->fields[0]);
-//    fprintf(stream, ")");
-//  } else {
-//    assert(false && "Invalid Kind");
-//  }
-//}
+static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value)
+{
+  FbldType* type = FbldLookupType(prgm, type_name);
+  assert(type != NULL);
+  FbldPrintType(stream, type_name);
+  if (type->kind == FBLD_STRUCT_KIND) {
+    fprintf(stream, "(");
+    for (size_t i = 0; i < type->fieldv->size; ++i) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      FbldQRef* field_type = FbldImportQRef(arena, prgm, type_name->rmref, type->fieldv->xs[i]->type);
+      PrintValue(arena, stream, prgm, field_type, value->fields[i]);
+    }
+    fprintf(stream, ")");
+  } else if (type->kind == FBLD_UNION_KIND) {
+    fprintf(stream, ":%s(", type->fieldv->xs[value->tag]->name->name);
+    FbldQRef* field_type = FbldImportQRef(arena, prgm, type_name->rmref, type->fieldv->xs[value->tag]->type);
+    PrintValue(arena, stream, prgm, field_type, value->fields[0]);
+    fprintf(stream, ")");
+  } else {
+    assert(false && "Invalid Kind");
+  }
+}
 
 // ValuesEqual --
 //   Check whether two values are structurally equal.
@@ -340,6 +342,7 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 //   Assert that the two given values are equal.
 //
 // Input:
+//   arena- Arena used for internal allocations.
 //   user - Used for error reporting purposes.
 //   type - The type of value being compared.
 //   a - The first value.
@@ -351,14 +354,14 @@ static bool ValuesEqual(FblcValue* a, FblcValue* b)
 // Side effects:
 //   Reports an error message to stderr and aborts if the two values are not
 //   structurally equivalent.
-static void AssertValuesEqual(IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b)
+static void AssertValuesEqual(FblcArena* arena, IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b)
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
-    fprintf(stderr, "\nexpected: ???");
-    //PrintValue(stderr, user->prog, type, a);
-    fprintf(stderr, "\nactual:   ???");
-    //PrintValue(stderr, user->prog, type, b);
+    fprintf(stderr, "\nexpected: ");
+    PrintValue(arena, stderr, user->prog, type, a);
+    fprintf(stderr, "\nactual:   ");
+    PrintValue(arena, stderr, user->prog, type, b);
     fprintf(stderr, "\n");
     abort();
   }
@@ -372,7 +375,8 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
   IOUser* io_user = (IOUser*)user;
   EnsureCommandReady(io_user, arena);
   if (io_user->cmd.tag == CMD_GET && ports[io_user->cmd.port] != NULL) {
-    AssertValuesEqual(io_user, io_user->proc->portv->xs[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
+    // TODO: Import the port type from the context of entry point!
+    AssertValuesEqual(arena, io_user, io_user->proc->portv->xs[io_user->cmd.port].type, io_user->cmd.value, ports[io_user->cmd.port]);
     io_user->cmd_ready = false;
     FblcRelease(arena, ports[io_user->cmd.port]);
     ports[io_user->cmd.port] = NULL;
@@ -503,7 +507,8 @@ int main(int argc, char* argv[])
     ReportError(&user, "premature program termination.\n");
     abort();
   }
-  AssertValuesEqual(&user, user.proc->return_type, user.cmd.value, value);
+  FbldQRef* return_type = FbldImportQRef(arena, user.prog, qentry->rmref, user.proc->return_type);
+  AssertValuesEqual(arena, &user, return_type, user.cmd.value, value);
   FblcRelease(arena, user.cmd.value);
   FblcRelease(arena, value);
   return 0;

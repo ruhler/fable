@@ -127,3 +127,37 @@ FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, Fbl
   }
   return resolved;
 }
+
+// FbldPrintType -- see documentation in fbld.h
+void FbldPrintType(FILE* stream, FbldQRef* type)
+{
+  fprintf(stream, "%s", type->rname->name);
+  if (type->rmref != NULL) {
+    fprintf(stream, "@");
+    FbldPrintMRef(stream, type->rmref);
+  }
+}
+
+// FbldPrintMRef -- see documentation in fbld.h
+void FbldPrintMRef(FILE* stream, FbldMRef* mref)
+{
+  fprintf(stream, "%s<", mref->name->name);
+
+  if (mref->targv != NULL) {
+    for (size_t i = 0; i < mref->targv->size; ++i) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      FbldPrintType(stream, mref->targv->xs[i]);
+    }
+    fprintf(stream, ";");
+
+    for (size_t i = 0; i < mref->margv->size; ++i) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      FbldPrintMRef(stream, mref->margv->xs[i]);
+    }
+  }
+  fprintf(stream, ">");
+}
