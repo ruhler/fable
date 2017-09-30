@@ -178,14 +178,12 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
       FblcValue* draw = drawP->fields[0];
       drawS = drawP->fields[1];
 
-      FblcValue* pos = draw->fields[0];
-      int row = ReadUBNat(pos->fields[0]);
-      int col = ReadUBNat(pos->fields[1]);
+      int ux = ReadUBNat(draw->fields[0]);
+      int uy = ReadUBNat(draw->fields[1]);
+      int w = ReadUBNat(draw->fields[2]);
+      int h = ReadUBNat(draw->fields[3]);
 
-      int y = MAX_ROW + 1 - row;
-      int x = col + 1;
-
-      FblcValue* color = draw->fields[1];
+      FblcValue* color = draw->fields[4];
       char c = '?';
       switch (color->tag) {
         case 0: c = ' '; break;
@@ -197,7 +195,14 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
         case 6: c = 'C'; break;
         case 7: c = 'W'; break;
       }
-      mvaddch(y, x, c);
+
+      for (int i = ux; i < ux + w; ++i) {
+        for (int j = uy; j < uy + h; ++j) {
+          int x = i + 1;
+          int y = MAX_ROW + 1 - j;
+          mvaddch(y, x, c);
+        }
+      }
     }
 
     FblcRelease(arena, ports[1]);
