@@ -1,0 +1,17 @@
+mdefn Draw< ; ; Draw<>> {
+  using Unit<;> { Unit; };
+  using UBNat<;> { Nat; };
+
+  union Color(
+    Unit black,
+    Unit red,
+    Unit green,
+    Unit yellow,
+    Unit blue,
+    Unit magenta,
+    Unit cyan,
+    Unit white
+  );
+
+  struct Draw(Nat x, Nat y, Nat w, Nat h, Color color);
+};

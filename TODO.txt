@@ -1,6 +1,5 @@
 Priority:
 * Generalize snake's graphics API
-  - Pull Coord, Color, and Draw into separate Draw module.
   - Update fbld-snake to use real color instead of characters.
 * Continue porting fblc tests to fbld
 * Continue fbld cleanup
@@ -13,6 +12,8 @@ Fbld Test:
 * Port remainder of fblc tests to fbld.
 
 Fbld Cleanup:
+* Figure out a better way to avoid duplicate error messages when CheckType
+  fails.
 * Untangle the recursive knot that is check/compile/load.
 * CheckTypesMatch put error then loc to match ReportError.
 * Add comments to check indicating what entities and mrefs are resolved.

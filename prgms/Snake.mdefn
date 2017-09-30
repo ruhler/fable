@@ -2,6 +2,7 @@ mdefn Snake< ; ; Snake<>> {
   using Unit<;> { Unit; };
   using Bool<;> { Bool; True; False; And; };
   using UBNat<;> { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
+  using Draw<;> { Color; Draw; };
   using List<Draw;> { DrawP = P; DrawS = S; };
   using List<Pos;> { PosP = P; PosS = S; InitPosP = InitP; LastPosP = LastP; };
 
@@ -19,18 +20,6 @@ mdefn Snake< ; ; Snake<>> {
   union Direction(Unit up, Unit down, Unit left, Unit right);
   union Input(Direction dir, Unit tick);
 
-  union Color(
-    Unit black,
-    Unit red,
-    Unit green,
-    Unit yellow,
-    Unit blue,
-    Unit magenta,
-    Unit cyan,
-    Unit white
-  );
-
-  struct Draw(Nat x, Nat y, Nat w, Nat h, Color color);
 
   union Cell(Unit empty, Unit snake, Unit food);
 
