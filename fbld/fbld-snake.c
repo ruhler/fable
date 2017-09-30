@@ -15,6 +15,14 @@
 #define MAX_COL 60
 #define TICK_INTERVAL 200
 
+//static char* DRAW_COLOR_CHARS = " RGYBMCW";
+static char* DRAW_COLOR_CHARS = "        ";
+static short DRAW_COLORS[] = {
+  COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
+  COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE
+};
+static short DRAW_COLOR_PAIRS[8];
+
 // Time --
 //   Opaque representation of a point in time.
 typedef int Time;
@@ -184,18 +192,8 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
       int h = ReadUBNat(draw->fields[3]);
 
       FblcValue* color = draw->fields[4];
-      char c = '?';
-      switch (color->tag) {
-        case 0: c = ' '; break;
-        case 1: c = 'R'; break;
-        case 2: c = 'G'; break;
-        case 3: c = 'Y'; break;
-        case 4: c = 'B'; break;
-        case 5: c = 'M'; break;
-        case 6: c = 'C'; break;
-        case 7: c = 'W'; break;
-      }
-
+      char c = DRAW_COLOR_CHARS[color->tag];
+      color_set(DRAW_COLOR_PAIRS[color->tag], NULL);
       for (int i = ux; i < ux + w; ++i) {
         for (int j = uy; j < uy + h; ++j) {
           int x = i + 1;
@@ -203,6 +201,7 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
           mvaddch(y, x, c);
         }
       }
+      color_set(0, NULL);
     }
 
     FblcRelease(arena, ports[1]);
@@ -332,15 +331,25 @@ int main(int argc, char* argv[])
   noecho();
   curs_set(0);
 
+  // Set up the color pairs.
+  start_color();
+  assert(COLOR_PAIRS > 8);
+  for (int i = 0; i < 8; ++i) {
+    init_pair(i+1, COLOR_WHITE, DRAW_COLORS[i]);
+    DRAW_COLOR_PAIRS[i] = i+1;
+  }
+
+  color_set(8, NULL);
   for (int c = 0; c <= MAX_COL + 2; ++c) {
-    mvaddch(0, c, '#');
-    mvaddch(MAX_ROW + 2, c, '#');
+    mvaddch(0, c, ' ');
+    mvaddch(MAX_ROW + 2, c, ' ');
   }
 
   for (int r = 1; r <= MAX_ROW + 1; ++r) {
-    mvaddch(r, 0, '#');
-    mvaddch(r, MAX_COL + 2, '#');
+    mvaddch(r, 0, ' ');
+    mvaddch(r, MAX_COL + 2, ' ');
   }
+  color_set(0, NULL);
   refresh();
 
   IOUser user;

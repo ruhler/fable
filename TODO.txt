@@ -1,6 +1,5 @@
 Priority:
-* Generalize snake's graphics API
-  - Update fbld-snake to use real color instead of characters.
+* Figure out next steps for graphics.
 * Continue porting fblc tests to fbld
 * Continue fbld cleanup
 
