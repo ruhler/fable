@@ -6,6 +6,12 @@ mdefn AllTests< ; ; AllTests<>> {
       TestFailure@UBNatTest<;> UBNatTest,
       TestFailure@PrimesTest<;> PrimesTest
   );
+  
+  class UBNatTestFailureF Func<TestFailure@UBNatTest, TestFailure> {
+    func f(TestFailure@UBNatTest x ; TestFailure) {
+      TestFailure:UBNatTest(x);
+    };
+  }
 
   func UBNatTestFailureS(S@List<TestFailure@UBNatTest<;>;> l ; TestFailureS) {
     ?(l ; TestFailureS:nil(Unit()),

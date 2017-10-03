@@ -1,12 +1,12 @@
-mdefn List<T ; ; List<T>> {
+mdefn List {
   using Unit<;> { Unit; };
 
   struct P(T head, S tail);
   union S(Unit nil, P cons); 
 
   # InitP - Return all but the last element in 'list'.
-  func InitP(P list; S) {
-    ?(list.tail; S:nil(Unit()), S:cons(P(list.head, InitP(list.tail.cons))));
+  func InitP<T>(P<T> list; S<T>) {
+    ?(list.tail; S<T>:nil(Unit()), S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons))));
   };
 
   # LastP - Return the last element in 'list'.
@@ -17,5 +17,13 @@ mdefn List<T ; ; List<T>> {
   # Append list b to the end of list a.
   func Append(S a, S b ; S) {
     ?(a; b, S:cons(P(a.cons.head, Append(a.cons.tail, b))));
+  };
+
+  func MapS<A, B; func(A;B) f>(S<A> a; S<B>) {
+    ?(a; S<B>:nil(Unit()), S<B>:cons(MapP<A, B; f>(a.cons)));
+  };
+
+  func MapP<A, B; Func<A,B> f>(P<A> a; P<B>) {
+    P<B>(f@f(a.head), MapS<A, B;f>(a.tail));
   };
 };

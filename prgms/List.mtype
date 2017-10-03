@@ -1,18 +1,21 @@
-mtype List<T> {
+mtype List {
   using Unit<;> { Unit; };
 
   # P - A list of 1 or more elements: T+
-  struct P(T head, S tail);
+  struct P<T>(T head, S tail);
 
   # S - A list of 0 or more elements: T*
-  union S(Unit nil, P cons); 
+  union S<T>(Unit nil, P<T> cons); 
 
   # InitP - Return all but the last element in 'list'.
-  func InitP(P list; S);
+  func InitP<T>(P<T> list; S<T>);
 
   # LastP - Return the last element in 'list'.
-  func LastP(P list; T);
+  func LastP<T>(P<T> list; T);
 
   # Append list b to the end of list a.
-  func Append(S a, S b ; S);
+  func Append<T>(S<T> a, S<T> b ; S);
+
+  func MapS<A, B; func(A;B) f>(S<A> a; S<B>);
+  func MapP<A, B; func(A;B) f>(P<A> a; S<B>);
 };
