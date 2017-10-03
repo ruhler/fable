@@ -1,22 +1,23 @@
 set prg {
   Main.mtype {
     mtype Main<> {
+      struct Unit();
+      func main( ; Unit);
     };
   }
 
   Main.mdefn {
     mdefn Main< ; ; Main<>> {
-      # Function declarations must have a final semicolon.
       struct Unit();
 
-      func f(Unit x; Unit) {
-        x;
-      }
-
+      # Function with no input arguments.
       func main( ; Unit) {
-        f();
+        Unit();
       };
     };
   }
 }
-fbld-check-error $prg Main Main.mdefn:10:7
+
+fbld-test $prg "main@Main<;>" {} {
+  return Unit@Main<;>()
+}

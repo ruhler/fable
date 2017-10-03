@@ -6,17 +6,14 @@ set prg {
 
   Main.mdefn {
     mdefn Main< ; ; Main<>> {
-      # Function declarations must have a final semicolon.
+      # The return type of the function must match the type of the body.
       struct Unit();
-
-      func f(Unit x; Unit) {
-        x;
-      }
+      struct Donut();
 
       func main( ; Unit) {
-        f();
+        Donut();
       };
     };
   }
 }
-fbld-check-error $prg Main Main.mdefn:10:7
+fbld-check-error $prg Main Main.mdefn:8:9

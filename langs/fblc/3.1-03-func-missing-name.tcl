@@ -5,9 +5,5 @@ set prg {
   func (Unit x, Unit y; Unit) {
     x;
   };
-
-  func main( ; Unit) {
-    Unit();
-  };
 }
 fblc-check-error $prg 5:8
