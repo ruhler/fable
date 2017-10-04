@@ -6,9 +6,5 @@ set prg {
   proc A( ; Unit a, Unit b ; Unit) {
     $(Unit());
   };
-
-  proc main( ; ; Unit) {
-    $(Unit());
-  };
 }
 fblc-check-error $prg 6:8

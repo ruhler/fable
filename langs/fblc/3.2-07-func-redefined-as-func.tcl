@@ -9,9 +9,5 @@ set prg {
   func foo(Unit x, Unit y; Unit) {
     y;
   };
-
-  proc main( ; ; Unit) {
-    $(Unit());
-  };
 }
 fblc-check-error $prg 9:8
