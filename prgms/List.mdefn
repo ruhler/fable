@@ -1,8 +1,8 @@
-mdefn List {
-  using Unit<;> { Unit; };
+mdefn List(List) {
+  using Unit { Unit; };
 
-  struct P(T head, S tail);
-  union S(Unit nil, P cons); 
+  struct P<T>(T head, S<T> tail);
+  union S<T>(Unit nil, P<T> cons); 
 
   # InitP - Return all but the last element in 'list'.
   func InitP<T>(P<T> list; S<T>) {
@@ -10,20 +10,20 @@ mdefn List {
   };
 
   # LastP - Return the last element in 'list'.
-  func LastP(P list; T) {
-    ?(list.tail; list.head, LastP(list.tail.cons));
+  func LastP<T>(P<T> list; T) {
+    ?(list.tail; list.head, LastP<T>(list.tail.cons));
   };
 
   # Append list b to the end of list a.
-  func Append(S a, S b ; S) {
-    ?(a; b, S:cons(P(a.cons.head, Append(a.cons.tail, b))));
+  func Append<T>(S<T> a, S<T> b ; S<T>) {
+    ?(a; b, S<T>:cons(P<T>(a.cons.head, Append<T>(a.cons.tail, b))));
   };
 
-  func MapS<A, B; func(A;B) f>(S<A> a; S<B>) {
-    ?(a; S<B>:nil(Unit()), S<B>:cons(MapP<A, B; f>(a.cons)));
+  func MapS<A, B; Function<A, B> F>(S<A> a; S<B>) {
+    ?(a; S<B>:nil(Unit()), S<B>:cons(MapP<A, B; F>(a.cons)));
   };
 
-  func MapP<A, B; Func<A,B> f>(P<A> a; P<B>) {
-    P<B>(f@f(a.head), MapS<A, B;f>(a.tail));
+  func MapP<A, B; Function<A, B> F>(P<A> a; P<B>) {
+    P<B>(f@F(a.head), MapS<A, B; F>(a.tail));
   };
 };

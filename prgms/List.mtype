@@ -1,5 +1,5 @@
 mtype List {
-  using Unit<;> { Unit; };
+  using Unit { Unit; };
 
   # P - A list of 1 or more elements: T+
   struct P<T>(T head, S tail);
@@ -14,8 +14,8 @@ mtype List {
   func LastP<T>(P<T> list; T);
 
   # Append list b to the end of list a.
-  func Append<T>(S<T> a, S<T> b ; S);
+  func Append<T>(S<T> a, S<T> b ; S<T>);
 
-  func MapS<A, B; func(A;B) f>(S<A> a; S<B>);
-  func MapP<A, B; func(A;B) f>(P<A> a; S<B>);
+  func MapS<A, B; Function<A, B> F>(S<A> a; S<B>);
+  func MapP<A, B; Function<A, B> F>(P<A> a; S<B>);
 };

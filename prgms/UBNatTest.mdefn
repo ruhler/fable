@@ -1,9 +1,9 @@
 
-mdefn UBNatTest< ; ; UBNatTest<>> {
-  using Unit<;> { Unit; };
-  using Bool<;> { Bool; Not; };
-  using List<TestFailure;> { TestFailureP = P; TestFailureS = S; };
-  using UBNat<;> {
+mdefn UBNatTest(UBNatTest) {
+  using Unit { Unit; };
+  using Bool { Bool; Not; };
+  using List { P; S; };
+  using UBNat {
     Nat;
     0; 1; 2; 3; 4; 5; 6; 7; Lit2;
     Eq; Ne; Lt; Le; Gt; Ge;
@@ -28,18 +28,18 @@ mdefn UBNatTest< ; ; UBNatTest<>> {
 
   struct TestFailure(TestName name, Nat a, Nat b);
 
-  func T(TestName name, Bool p, TestFailureS rest; TestFailureS) {
+  func T(TestName name, Bool p, S<TestFailure> rest; S<TestFailure>) {
     # Just use 0 for the context arguments for now to avoid introducing
     # a union for the test failure type.
-    ?(p; rest, TestFailureS:cons(TestFailureP(TestFailure(name, 0(), 0()), rest)));
+    ?(p; rest, S<TestFailure>:cons(P<TestFailure>(TestFailure(name, 0(), 0()), rest)));
   };
 
-  func TEq(TestName name, Nat a, Nat b, TestFailureS rest; TestFailureS) {
+  func TEq(TestName name, Nat a, Nat b, S<TestFailure> rest; S<TestFailure>) {
     ?(Eq(a, b); rest,
-      TestFailureS:cons(TestFailureP(TestFailure(name, a, b), rest)));
+      S<TestFailure>:cons(P<TestFailure>(TestFailure(name, a, b), rest)));
   };
 
-  func Test( ; TestFailureS) {
+  func Test( ; S<TestFailure>) {
     T(TestName:Eq_0_0(Unit()), Eq(0(), 0()),
     T(TestName:Eq_0_1(Unit()), Not(Eq(0(), 1())),
     T(TestName:Eq_1_1(Unit()), Eq(1(), 1()),
@@ -67,6 +67,6 @@ mdefn UBNatTest< ; ; UBNatTest<>> {
     TEq(TestName:Div_10_3(Unit()), 3(), Div(Lit2(1(), 0()), 3()),
     TEq(TestName:Mod_6_3(Unit()), 0(), Mod(6(), 3()),
     TEq(TestName:Mod_10_3(Unit()), 1(), Mod(Lit2(1(), 0()), 3()),
-    TestFailureS:nil(Unit()))))))))))))))))))))))))))));
+    S<TestFailure>:nil(Unit()))))))))))))))))))))))))))));
   };
 };

@@ -1,6 +1,6 @@
-mdefn Draw< ; ; Draw<>> {
-  using Unit<;> { Unit; };
-  using UBNat<;> { Nat; };
+mdefn Draw(Draw) {
+  using Unit { Unit; };
+  using UBNat { Nat; };
 
   union Color(
     Unit black,

@@ -1,6 +1,6 @@
 
-mdefn Bool< ; ; Bool<>> {
-  using Unit<;> { Unit; };
+mdefn Bool(Bool) {
+  using Unit { Unit; };
 
   union Bool(Unit true, Unit false);
 

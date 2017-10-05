@@ -1,10 +1,9 @@
-mdefn Snake< ; ; Snake<>> {
-  using Unit<;> { Unit; };
-  using Bool<;> { Bool; True; False; And; };
-  using UBNat<;> { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
-  using Draw<;> { Color; Draw; };
-  using List<Draw;> { DrawP = P; DrawS = S; };
-  using List<Pos;> { PosP = P; PosS = S; InitPosP = InitP; LastPosP = LastP; };
+mdefn Snake(Snake) {
+  using Unit { Unit; };
+  using Bool { Bool; True; False; And; };
+  using UBNat { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
+  using Draw { Color; Draw; };
+  using List { P; S; InitP; LastP; };
 
   func MinRow( ; Nat) 0();
   func MaxRow( ; Nat) Lit2(2(), 0());
@@ -39,19 +38,19 @@ mdefn Snake< ; ; Snake<>> {
   #   food - The current position of the food.
   #   nfood - The position of the next food.
   #   snake - The positions of the snake, in order from head to tail.
-  struct State(Direction dir, Pos food, Pos nfood, PosP snake);
+  struct State(Direction dir, Pos food, Pos nfood, P<Pos> snake);
 
-  func DrawSnakeS(PosS s ; DrawS) {
-    ?(s; DrawS:nil(Unit()), DrawS:cons(DrawSnakeP(s.cons)));
+  func DrawSnakeS(S<Pos> s ; S<Draw>) {
+    ?(s; S<Draw>:nil(Unit()), S<Draw>:cons(DrawSnakeP(s.cons)));
   };
 
-  func DrawSnakeP(PosP s ; DrawP) {
-    DrawP(DrawCell(s.head, Cell:snake(Unit())), DrawSnakeS(s.tail));
+  func DrawSnakeP(P<Pos> s ; P<Draw>) {
+    P<Draw>(DrawCell(s.head, Cell:snake(Unit())), DrawSnakeS(s.tail));
   };
 
-  func DrawState(State s ; DrawS) {
-    DrawS:cons(DrawP(DrawCell(s.food, Cell:food(Unit())),
-    DrawS:cons(DrawSnakeP(s.snake))));
+  func DrawState(State s ; S<Draw>) {
+    S<Draw>:cons(P<Draw>(DrawCell(s.food, Cell:food(Unit())),
+    S<Draw>:cons(DrawSnakeP(s.snake))));
   };
 
   func InitialState( ; State) {
@@ -65,24 +64,24 @@ mdefn Snake< ; ; Snake<>> {
         Direction:right(Unit()),
         Pos(r4, c1),
         Pos(r1, c0),
-        PosP(Pos(r1, c4), PosS:cons(PosP(
-             Pos(r1, c3), PosS:cons(PosP(
-             Pos(r1, c2), PosS:cons(PosP(
-             Pos(r1, c1), PosS:nil(Unit())))))))));
+        P<Pos>(Pos(r1, c4), S<Pos>:cons(P<Pos>(
+             Pos(r1, c3), S<Pos>:cons(P<Pos>(
+             Pos(r1, c2), S<Pos>:cons(P<Pos>(
+             Pos(r1, c1), S<Pos>:nil(Unit())))))))));
   };
 
-  struct MoveResult(State state, DrawS draw);
+  struct MoveResult(State state, S<Draw> draw);
   union MoveResultM(Unit dead, MoveResult mr);
 
   union PosM(Unit dead, Pos pos);
 
   # Return true if the given position is found in the list of positions.
-  func InPosS(PosS s, Pos p ; Bool) {
+  func InPosS(S<Pos> s, Pos p ; Bool) {
     ?(s ; False(), InPosP(s.cons, p));
   };
 
   # Return true if the given position is found in the list of positions.
-  func InPosP(PosP s, Pos p ; Bool) {
+  func InPosP(P<Pos> s, Pos p ; Bool) {
     ?(EqPos(s.head, p); True(), InPosS(s.tail, p));
   };
 
@@ -101,28 +100,28 @@ mdefn Snake< ; ; Snake<>> {
             {
               # TODO: Properly handle the case where the snake eats food at its
               # tail.
-              PosP nsnake = PosP(s.food, PosS:cons(s.snake));
+              P<Pos> nsnake = P<Pos>(s.food, S<Pos>:cons(s.snake));
               State ns = State(s.dir, s.nfood, s.nfood, nsnake);
-              DrawS draw = DrawS:cons(DrawP(DrawCell(s.food, Cell:snake(Unit())),
-                           DrawS:cons(DrawP(DrawCell(s.nfood, Cell:food(Unit())),
-                           DrawS:nil(Unit())))));
+              S<Draw> draw = S<Draw>:cons(P<Draw>(DrawCell(s.food, Cell:snake(Unit())),
+                           S<Draw>:cons(P<Draw>(DrawCell(s.nfood, Cell:food(Unit())),
+                           S<Draw>:nil(Unit())))));
               MoveResultM:mr(MoveResult(ns, draw));
             },
             ?(InPosP(s.snake, pm.pos); MoveResultM:dead(Unit()),
               {
                 # TODO: Combine calls to Init and Last so we only have to
                 # iterate over the list of elements once instead of twice?
-                PosP nsnake = PosP(pm.pos, InitPosP(s.snake));
-                Pos nfood = LastPosP(s.snake);
+                P<Pos> nsnake = P<Pos>(pm.pos, InitP<Pos>(s.snake));
+                Pos nfood = LastP<Pos>(s.snake);
                 State ns = State(s.dir, s.food, nfood, nsnake);
-                DrawS draw = DrawS:cons(DrawP(DrawCell(pm.pos, Cell:snake(Unit())),
-                             DrawS:cons(DrawP(DrawCell(nfood, Cell:empty(Unit())),
-                             DrawS:nil(Unit())))));
+                S<Draw> draw = S<Draw>:cons(P<Draw>(DrawCell(pm.pos, Cell:snake(Unit())),
+                             S<Draw>:cons(P<Draw>(DrawCell(nfood, Cell:empty(Unit())),
+                             S<Draw>:nil(Unit())))));
                 MoveResultM:mr(MoveResult(ns, draw));
               })));
   };
 
-  proc Snake(Input <~ in, DrawS ~> out; State s ; Unit) {
+  proc Snake(Input <~ in, S<Draw> ~> out; State s ; Unit) {
     Input x = ~in();
     ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
          {
@@ -130,15 +129,15 @@ mdefn Snake< ; ; Snake<>> {
              ?(m;
                 $(Unit()),
                 {
-                   DrawS drawn = ~out(m.mr.draw);
+                   S<Draw> drawn = ~out(m.mr.draw);
                    Snake(in, out; m.mr.state);
                 });
          });
   };
 
-  proc Main(Input <~ in, DrawS ~> out; ; Unit) {
+  proc Main(Input <~ in, S<Draw> ~> out; ; Unit) {
     State s = $(InitialState());
-    DrawS drawn = ~out(DrawState(s));
+    S<Draw> drawn = ~out(DrawState(s));
     Snake(in, out; s);
   };
 };

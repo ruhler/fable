@@ -1,6 +1,6 @@
-mdefn UBNat< ; ; UBNat<>> {
-  using Unit<;> { Unit; };
-  using Bool<;> { Bool; True; False; };
+mdefn UBNat(UBNat) {
+  using Unit { Unit; };
+  using Bool { Bool; True; False; };
 
   union Nat(
     Unit 0,

@@ -1,7 +1,10 @@
 Priority:
-* Figure out next steps for graphics.
-* Continue porting fblc tests to fbld
-* Continue fbld cleanup
+* Fbld 3
+
+Fbld 3:
+* Rewrite lang/fbld.txt for new proposed language.
+* Update all test cases to use new syntax.
+* Rewrite the fbld front end to support the new language.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

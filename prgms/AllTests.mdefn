@@ -1,38 +1,29 @@
-mdefn AllTests< ; ; AllTests<>> {
-  using Unit<;> { Unit; };
-  using List<TestFailure;> { TestFailureS = S; TestFailureP = P; Append; };
+mdefn AllTests(AllTests) {
+  using Unit { Unit; };
+  using List { S; P; Append; };
+  using UBNatTest { UBNatTestFailure = TestFailure };
+  using PrimesTest { PrimesTestFailure = TestFailure };
 
   union TestFailure(
-      TestFailure@UBNatTest<;> UBNatTest,
-      TestFailure@PrimesTest<;> PrimesTest
+      UBNatTestFailure UBNatTest,
+      PrimesTestFailure PrimesTest
   );
   
-  class UBNatTestFailureF Func<TestFailure@UBNatTest, TestFailure> {
-    func f(TestFailure@UBNatTest x ; TestFailure) {
+  mdefn UBNatTestFailureF(Function<UBNatTestFailure, TestFailure>) {
+    func f(UBNatTestFailure x ; TestFailure) {
       TestFailure:UBNatTest(x);
     };
   }
 
-  func UBNatTestFailureS(S@List<TestFailure@UBNatTest<;>;> l ; TestFailureS) {
-    ?(l ; TestFailureS:nil(Unit()),
-          TestFailureS:cons(UBNatTestFailureP(l.cons)));
-  };
+  mdefn PrimesTestFailureF(Function<PrimesTestFailure, TestFailure>) {
+    func f(PrimesTestFailure x ; TestFailure) {
+      TestFailure:PrimesTest(x);
+    };
+  }
 
-  func UBNatTestFailureP(P@List<TestFailure@UBNatTest<;>;> l ; TestFailureP) {
-    TestFailureP(TestFailure:UBNatTest(l.head), UBNatTestFailureS(l.tail));
-  };
-
-  func PrimesTestFailureS(S@List<TestFailure@PrimesTest<;>;> l ; TestFailureS) {
-    ?(l ; TestFailureS:nil(Unit()),
-          TestFailureS:cons(PrimesTestFailureP(l.cons)));
-  };
-
-  func PrimesTestFailureP(P@List<TestFailure@PrimesTest<;>;> l ; TestFailureP) {
-    TestFailureP(TestFailure:PrimesTest(l.head), PrimesTestFailureS(l.tail));
-  };
-
-  func Test( ; TestFailureS) {
-    Append(UBNatTestFailureS(Test@UBNatTest<;>()),
-           PrimesTestFailureS(Test@PrimesTest<;>()));
+  func Test( ; S<TestFailure>) {
+    Append<TestFailure>(
+        MapS<UBNatTestFailure, TestFailure; UBNatTestFailiureF>(Test@UBNatTest()),
+        MapS<PrimesTestFailure, TestFailure; PrimesTestFailureF>(Test@PrimesTest()));
   };
 };

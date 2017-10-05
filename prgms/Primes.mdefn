@@ -1,6 +1,6 @@
-mdefn Primes< ; ; Primes<>> {
-  using Bool<;> { Bool; True; False; };
-  using UBNat<;> { Nat; 2; IsZero; Eq; Lt; Gt; Inc; Dec; Mul; Mod; };
+mdefn Primes(Primes) {
+  using Bool { Bool; True; False; };
+  using UBNat { Nat; 2; IsZero; Eq; Lt; Gt; Inc; Dec; Mul; Mod; };
 
   # Returns true if f evenly divides x.
   func Divides(Nat x, Nat f; Bool) {

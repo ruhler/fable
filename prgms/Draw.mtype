@@ -1,6 +1,6 @@
-mtype Draw<> {
-  using Unit<;> { Unit; };
-  using UBNat<;> { Nat; };
+mtype Draw {
+  using Unit { Unit; };
+  using UBNat { Nat; };
 
   union Color(
     Unit black,

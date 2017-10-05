@@ -1,6 +1,6 @@
 # Unbounded Binary Natural Number
-mtype UBNat<> {
-  using Bool<;> { Bool; };
+mtype UBNat {
+  using Bool { Bool; };
 
   type Nat;
 

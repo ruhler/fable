@@ -1,7 +1,7 @@
-mtype UBNatTest<> {
-  using Unit<;> { Unit; };
-  using UBNat<;> { Nat; };
-  using List<TestFailure;> { TestFailureS = S; };
+mtype UBNatTest {
+  using Unit { Unit; };
+  using UBNat { Nat; };
+  using List { S; };
  
   union TestName(
     Unit Eq_0_0, Unit Eq_0_1, Unit Eq_1_1,
@@ -21,5 +21,5 @@ mtype UBNatTest<> {
 
   struct TestFailure(TestName name, Nat a, Nat b);
 
-  func Test( ; TestFailureS);
+  func Test( ; S<TestFailure>);
 };

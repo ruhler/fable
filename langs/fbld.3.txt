@@ -1,0 +1,243 @@
+FBLD Version 3
+==============
+There are some problems with fbld language version 2. This document attempts
+to understand the problems and propose an update to the language to address
+them.
+
+Use Cases
+---------
+1. UBNat - be able to define abstract interface with private implementation.
+Works perfectly in fbld 2.
+
+2. Generic List type with 'map' function.
+The List module is parameterized by type T, because type parameters can only
+be introduced at the module level. The map function
+(map :: (a->b) -> [a] -> [b]) needs 2 type parameters.  This means it would
+have to be defined in a separate module, which is very tedious.
+
+3. Applying List map to map lists of internal types.
+Assume a module has some internal data type Foo and a list of Foo, and wants
+to map it to a list of another internal data type Bar. To invoke the map
+function requires an mdefn with the function mapping Foo to Bar, which
+requires the Foo and Bar functions be exposed publicly.
+
+4. Generic List type with 'find' function.
+The find function depends on the list type T and a module instance of Eq,
+which means it would have to be defined in a separate module from the rest of
+List, which is very tedious.
+
+5. Applying List find to internal types.
+Assume a module has some internal data type Foo and a list of Foo and wants to
+call find. This requires defining an mdefn of mtype Eq for Foo, which requires
+Foo be public.
+
+Separation of Concerns
+----------------------
+The source of the problems with fbld 2 is the overloading of modules for both
+type parameters and public/private abstractions. But as we have seen, it is
+often the case we want to use type parameters in private, and we want to group
+declarations with different parameterization in the same public/private
+abstraction.
+
+To better understand the needs of polymorphism and public/private abstraction,
+let us imagine how they would look if they were done entirely separately.
+
+Polymorphism
+^^^^^^^^^^^^
+Fblc has types, funcs, and procs. Polymorphism means we should be able to
+parameterize types by types, funcs by types and funcs, and procs by types
+funcs and procs.
+
+Proposal: generalize all declarations to support static parameters.
+
+struct Foo<T1, T2, ...>(...);
+union Foo<T1, T2, ...>(...);
+func Foo<T1, T2, ...; FT1 f1, FT2 f2, ...>(...) ...;
+proc Foo<T1, T2, ...; FT1 f1, FT2 f2, ..., PT1 p1, PT2 p2, ...>(...) ...;
+
+To use a type, function, or process requires supplying all static parameters.
+
+This is simple and straight forward conceptually. Some questions to resolve:
+1. How best to specify func and proc arguments syntactically?
+Option: func(T1 a1, T2 a2, ... ; TR) f1
+
+It is inconsistent to pull the function name out from between 'func' and the
+argument types, which is annoying. Perhaps we could make the rest of the
+language consistent to match: func(...) f { ... };
+
+We've already seen from fbld 2 that it's nice to be able to specify iref and
+mref. We could introduce a grouping construct:
+
+mtype<T1, T2,...> IName {
+  func f1(...);
+  func f2(...);
+};
+
+mdefn<T1, T2, ...; I1 m1, I2 m2, ...; IName<T1, T2, ...> MName {
+  func f1(...) ...;
+  func f2(...) ...;
+};
+
+Then you could pass modules. For the case of passing a single function, you
+would need to define a wrapper mtype. Slightly tedious for passing simple
+functions, but works great for passing more complex types. Lets us have
+consistent syntax for distinguishing between different functions.
+
+Presumably we would want to support nested type declarations in general. This
+can be achieved by allowing abstract mdefns to be declared as part of an
+mtype. For example:
+
+mtype NumericEnum {
+  mdefn Numeric< ; ; Numeric>;
+  mdefn Enum< ; ; Enum> enum;
+};
+
+There may be some details to work out, such as how to bundle existing groups
+together without having to define copies of all the methods, and whether
+that's possible to do for groups that define types.
+
+When constructing a value of an mtype, you want the mdefn body to have direct
+access to local type, func, and proc declarations.
+
+2. Are the static parameters being passed generalized declarations that can
+themselves be provided with static parameters, or do they have all static
+parameters fully applied already?
+
+Having static parameters fully applied makes things simple, but why be
+restrictive? There shouldn't be anything difficult (other than possibly
+syntactically) to support more general things. This might let us do monadic
+kinds of computations for example.
+
+bind :: (a -> m b) -> m a -> m b
+bind<M<T>, A, B; Function<A, M<B>> f>(M<A> ma ; M<B>) ...
+
+I don't think you could do this kind of thing otherwise. Maybe it's not so
+important. Maybe it's a use case not to worry about to start. If it turns out
+to be important in practice, it will make itself known.
+
+3. It can be tedious to list a lot of parameters. Should we provide a
+mechanism for grouping together collections of parameters?
+
+For things like "Numeric", there are lots of functions. We definitely want a
+way to group them together. See also the answer to (1).
+
+4. Do we have to worry about any issues with multiparameter type classes with
+functional dependencies?
+No. This is a side effect of Haskell trying to infer the type class
+automatically. As long as we explicitly specify the type class, there is not
+issue at all with this kind of thing.
+
+Public/Private
+^^^^^^^^^^^^^^
+Group declarations into abstract modules. Each module has an interface and an
+implementation. Users of the module know only about its interface. The
+implementation may define extra declarations not externally visible.
+
+For example, we introduce the following concepts:
+
+mtype - A module interface. The module interface contains abstract type,
+function, and process declarations.
+
+mtype Foo {
+  type X;   # abstract type declared in module implementation.
+  struct Foo(...);    # normal type, forming part of the interface.
+  func Bar(...);      # function without body
+  proc Sludge(...);   # process without body.
+  ...
+};
+
+mdefn - A module definition.
+
+mdefn Bar implements Foo {
+  ...
+};
+
+An entity is referred to based on the module it belongs to. For example: X@Foo
+is the type X defined in module Foo.
+
+Benefits of public/private abstraction:
+ - Gives some form of namespace, so multiple declarations can have same name.
+ - Reduces namespace clutter by allowing private declarations.
+ - Provides clear interfaces for users to use.
+ - Allows implementation to be changed without fear of breaking users.
+
+Points of interest:
+* Preference is to have non-recursive modules: a module cannot depend on
+  another module that depends on the module itself. Otherwise it gets really
+  hard to figure out what's going on.
+
+* You can have multiple different implementations of the same interface. For
+  example, multiple kinds of Map implementations: ListMap, TreeMap, HashMap.
+
+* Can module interfaces be nested? Or, related, does each module have a single
+  interface, or can it have multiple interfaces?
+
+* Can modules have nested module definitions? How would these interact with
+  local type, func, and proc declarations?
+
+  In practice we could do like Java and Haskell - have support for
+  hierarchical module names, but otherwise don't have any support for nested
+  modules. This satisfies most use cases just fine, even if it doesn't give
+  compiler gaurentee that nobody is peeking into what you want to be internal
+  module definitions.
+  
+Random Note
+^^^^^^^^^^^
+Functions can always be redefined in terms of other functions. This lets you
+have two names for the same function. This is no problem at all.
+
+Types can't be redefined as duplicates of other types, because for the case of
+types, we need to check if two types are the same or not. This is why we have
+a difference between a type parameter and an abstract type. The abstract type
+acts as the types definition. A type parameter lets you use a type defined
+elsewhere.
+
+Proposed Unification
+--------------------
+It makes sense to use the same notion of mtype/mdefn for both polymorphic
+bundles and public/private modules. Having two so closely related concepts
+with different semantics would be too confusing. It makes sense to support
+nested modules. The one point that needs to be reconciled between the two is
+the question of recursive modules.
+
+For polymorphic modules, we expect the definitions to be in scope of other
+local definitions, which suggests they are in scope of other module
+definitions in a recursive way. For public/private modules, we really would
+rather not allow recursive module hierarchies (module A depends on B, B
+depends on A), because it makes it impossible to reason about a module from
+the ground up, one module at a time.
+
+What does it look like to disallow recursive modules used in the polymorphic
+way? It feels really weird to allow modules to interact recursively with other
+declarations, but not other module declarations.
+
+I propose we have two slightly different notions.
+1. The notion of mtype, mdefn interface and implementation.
+Interface and implementation of a collection of type, func, proc, mtype, and
+mdefn declarations. Used for grouping declarations together.
+
+2. The notion of a module or code unit.
+A peice of code that can be understood in isolation, subject to the
+understanding of non-recursively dependent code units that themselves can be
+understood in isolation. A module is defined as having an mtype interface and
+mdefn definition, but it may also have mtypes and mdefns inside it that are
+not themselves considered distinct modules.
+
+We can think of the language in tiers:
+1. fblc let you define a collection of mutually recursive declarations. The
+entire program had to be understood as a single unit all at once.
+2. fbld lets you define multiple modules, each of which is its own collection
+of mutually recursive declarations. Each module has to be understood as a
+single unit all at once, but modules can be composed in a non-recursive
+fashion to allow for larger programs that cannot be understood in isolation.
+3. Some future extension of fbld will be needed to allow multiple modules to
+be collected together into libraries. No need to worry about this until I
+reach that scale of programming and better understand the needs.
+
+More details on proposed unification:
+* Pass fun and proc static args only through mtype/mdefn.
+* mtype/mdefn within a module may be mutually recursive.
+* Modules may not be mutually recursive.
+* Optional <type> args to struct, union, mtype
+* Optional <type;mref> args to func, proc, mdefn
+
