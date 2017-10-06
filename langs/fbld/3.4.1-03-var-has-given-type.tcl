@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Bool(Unit True, Unit False);
       func foo(Bool x ; Unit);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Bool(Unit True, Unit False);
 

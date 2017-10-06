@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
 
       # structs can be mutually recursive.
@@ -12,7 +12,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       struct Foo(Bar x);
       struct Bar(Foo y);
@@ -24,6 +24,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Unit@Main<;>()
+fbld-test $prg "main@Main" {} {
+  return Unit@Main()
 }

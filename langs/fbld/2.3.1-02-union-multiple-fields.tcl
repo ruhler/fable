@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       struct Donut();
       union MultiField(Unit x, Donut y);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       struct Donut();
       union MultiField(Unit x, Donut y);
@@ -20,6 +20,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return MultiField@Main<;>:x(Unit@Main<;>())
+fbld-test $prg "main@Main" {} {
+  return MultiField@Main:x(Unit@Main())
 }

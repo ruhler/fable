@@ -1,12 +1,12 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       type Foo;
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
 
       # The final semicolon is missing.

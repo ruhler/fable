@@ -1,7 +1,7 @@
 # Test a basic conditional process.
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
       proc main( ; ; Fruit);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
       proc main( ; ; Fruit) {
@@ -20,6 +20,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Fruit@Main<;>:banana(Unit@Main<;>())
+fbld-test $prg "main@Main" {} {
+  return Fruit@Main:banana(Unit@Main())
 }

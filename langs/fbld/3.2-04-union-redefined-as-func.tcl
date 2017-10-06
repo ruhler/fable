@@ -1,11 +1,11 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       # A union and a function can't have the same name.
       struct Unit();
       union A(Unit x, Unit y);

@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       struct Donut();
       struct MultiField(Unit x, Donut y);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       struct Donut();
       union MultiField(Unit x, Donut y);   # Should be 'struct', not 'union'.

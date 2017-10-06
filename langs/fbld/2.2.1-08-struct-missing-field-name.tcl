@@ -1,12 +1,12 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       type Foo;
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       struct Foo(Unit x, Unit, Unit z);    # The second field is missing a name
     };

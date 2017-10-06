@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       struct Donut();
       func main( ; Donut);
@@ -8,7 +8,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       # Accessing the second component of a struct.
       struct Unit();
       struct Donut();
@@ -21,6 +21,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Donut@Main<;>()
+fbld-test $prg "main@Main" {} {
+  return Donut@Main()
 }

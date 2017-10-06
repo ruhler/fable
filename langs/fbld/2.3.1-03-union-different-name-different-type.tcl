@@ -1,11 +1,11 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       # Two unions with different names are considered different types, even
       # if they have the same fields.
       struct Unit();

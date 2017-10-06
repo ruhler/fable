@@ -1,11 +1,11 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union NoFields();   # A union must have at least one field.
     };

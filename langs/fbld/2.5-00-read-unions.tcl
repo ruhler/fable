@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Bool(Unit True, Unit False);
       proc main(Bool <~ in ; ; Bool);
@@ -8,7 +8,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Bool(Unit True, Unit False);
 
@@ -21,8 +21,8 @@ set prg {
 }
 
 # Verify we can read two union values in a row.
-fbld-test $prg "main@Main<;>" {} {
-  put in Bool@Main<;>:False(Unit@Main<;>())
-  put in Bool@Main<;>:True(Unit@Main<;>())
-  return Bool@Main<;>:True(Unit@Main<;>())
+fbld-test $prg "main@Main" {} {
+  put in Bool@Main:False(Unit@Main())
+  put in Bool@Main:True(Unit@Main())
+  return Bool@Main:True(Unit@Main())
 }

@@ -1,11 +1,11 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
       union Maybe(Unit nothing, Fruit just);

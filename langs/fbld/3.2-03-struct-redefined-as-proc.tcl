@@ -1,11 +1,11 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       # A struct and a process can't have the same name.
       struct Unit();
       struct A(Unit x, Unit y);

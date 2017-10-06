@@ -1,7 +1,7 @@
 # A struct expression can't be used for a union type.
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Bool(Unit True, Unit False);
       func main( ; Bool);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Bool(Unit True, Unit False);
 

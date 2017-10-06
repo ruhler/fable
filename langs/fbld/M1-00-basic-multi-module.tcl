@@ -1,32 +1,32 @@
 # A basic test case using multiple modules.
 set prg {
   UnitM.mtype {
-    mtype UnitM<> {
+    mtype UnitM {
       struct Unit();
     };
   }
 
   UnitM.mdefn {
-    mdefn UnitM< ; ; UnitM<>> {
+    mdefn UnitM(UnitM) {
       struct Unit();
     };
   }
 
   Main.mtype {
-    mtype Main<> {
-      func main( ; Unit@UnitM<;>);
+    mtype Main {
+      func main( ; Unit@UnitM);
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
-      func main( ; Unit@UnitM<;>) {
-        Unit@UnitM<;>();
+    mdefn Main(Main) {
+      func main( ; Unit@UnitM) {
+        Unit@UnitM();
       };
     };
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Unit@UnitM<;>()
+fbld-test $prg "main@Main" {} {
+  return Unit@UnitM()
 }

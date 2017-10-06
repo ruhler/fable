@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Int(Unit 0, Unit 1, Unit 2);
       func main( ; Int);
@@ -8,7 +8,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Int(Unit 0, Unit 1, Unit 2);
 
@@ -24,6 +24,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Int@Main<;>:0(Unit@Main<;>())
+fbld-test $prg "main@Main" {} {
+  return Int@Main:0(Unit@Main())
 }

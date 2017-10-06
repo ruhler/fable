@@ -1,7 +1,7 @@
 # A struct can be declared that contains multiple fields.
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       struct Donut();
       struct MultiField(Unit x, Donut y);
@@ -10,7 +10,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       struct Donut();
       struct MultiField(Unit x, Donut y);
@@ -22,6 +22,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return MultiField@Main<;>(Unit@Main<;>(),Donut@Main<;>())
+fbld-test $prg "main@Main" {} {
+  return MultiField@Main(Unit@Main(),Donut@Main())
 }

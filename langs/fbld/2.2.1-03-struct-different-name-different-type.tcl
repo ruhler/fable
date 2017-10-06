@@ -2,7 +2,7 @@
 # they have the same fields.
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       struct Donut();
       func main( ; Unit);
@@ -10,7 +10,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       struct Donut();
 
@@ -25,7 +25,7 @@ fbld-check-error $prg Main Main.mdefn:7:9
 
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       struct A(Unit x, Unit y);
       struct B(Unit x, Unit y);
@@ -34,7 +34,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
 
       struct A(Unit x, Unit y);

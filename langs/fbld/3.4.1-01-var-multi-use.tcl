@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Bool(Unit True, Unit False);
       struct Pair(Bool a, Bool b);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Bool(Unit True, Unit False);
       struct Pair(Bool a, Bool b);
@@ -22,6 +22,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" { Bool@Main<;>:True(Unit@Main<;>()) } {
-  return Pair@Main<;>(Bool@Main<;>:True(Unit@Main<;>()),Bool@Main<;>:True(Unit@Main<;>()))
+fbld-test $prg "main@Main" { Bool@Main:True(Unit@Main()) } {
+  return Pair@Main(Bool@Main:True(Unit@Main()),Bool@Main:True(Unit@Main()))
 }

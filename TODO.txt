@@ -1,9 +1,9 @@
 Priority:
-* Fbld 3
+* Rewrite lang/fbld.txt for new proposed language.
+* Rewrite the fbld front end to support the new language.
 
 Fbld 3:
 * Rewrite lang/fbld.txt for new proposed language.
-* Update all test cases to use new syntax.
 * Rewrite the fbld front end to support the new language.
 
 Fbld Test:

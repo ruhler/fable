@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       type Recursive;
       func main( ; Unit);
@@ -8,7 +8,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
 
       # In theory a struct can have a field with its same type, though it's not
@@ -22,6 +22,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Unit@Main<;>()
+fbld-test $prg "main@Main" {} {
+  return Unit@Main()
 }

@@ -1,14 +1,14 @@
 # Test that we can call a foreign function.
 set prg {
   UnitM.mtype {
-    mtype UnitM<> {
+    mtype UnitM {
       struct Unit();
       func f( ; Unit);
     };
   }
 
   UnitM.mdefn {
-    mdefn UnitM< ; ; UnitM<>> {
+    mdefn UnitM(UnitM) {
       struct Unit();
       func f( ; Unit) {
         Unit();
@@ -17,15 +17,15 @@ set prg {
   }
 
   Main.mtype {
-    mtype Main<> {
-      using UnitM<;> { Unit; };
+    mtype Main {
+      using UnitM { Unit; };
       func main( ; Unit);
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
-      using UnitM<;> { Unit; f; };
+    mdefn Main(Main) {
+      using UnitM { Unit; f; };
       func main( ; Unit) {
         f();
       };
@@ -33,6 +33,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Unit@UnitM<;>()
+fbld-test $prg "main@Main" {} {
+  return Unit@UnitM()
 }

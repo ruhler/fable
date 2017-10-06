@@ -1,14 +1,14 @@
 # Access a component of a union.
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
     };
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
       union Maybe(Unit nothing, Fruit just);
@@ -20,6 +20,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Fruit@Main<;>:pear(Unit@Main<;>())
+fbld-test $prg "main@Main" {} {
+  return Fruit@Main:pear(Unit@Main())
 }

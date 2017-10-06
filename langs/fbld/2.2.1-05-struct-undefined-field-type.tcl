@@ -3,7 +3,7 @@
 # Which means it cannot have a type that is not defined.
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       struct A(Unit x, Donut y);    # Type Donut not defined.
       func main( ; Unit);
@@ -11,7 +11,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       struct A(Unit x, Donut y);
 

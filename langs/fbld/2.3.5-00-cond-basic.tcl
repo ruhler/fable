@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union EnumABC(Unit A, Unit B, Unit C);
       union EnumXYZ(Unit X, Unit Y, Unit Z);
@@ -9,7 +9,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       # Access a component of a union.
       struct Unit();
       union EnumABC(Unit A, Unit B, Unit C);
@@ -23,6 +23,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return EnumXYZ@Main<;>:Z(Unit@Main<;>())
+fbld-test $prg "main@Main" {} {
+  return EnumXYZ@Main:Z(Unit@Main())
 }

@@ -1,6 +1,6 @@
 set prg {
   Main.mtype {
-    mtype Main<> {
+    mtype Main {
       struct Unit();
       union Recursive(Unit x, Recursive y);  # Self recursive union
       func main( ; Recursive);
@@ -8,7 +8,7 @@ set prg {
   }
 
   Main.mdefn {
-    mdefn Main< ; ; Main<>> {
+    mdefn Main(Main) {
       struct Unit();
       union Recursive(Unit x, Recursive y);
 
@@ -19,6 +19,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main<;>" {} {
-  return Recursive@Main<;>:y(Recursive@Main<;>:x(Unit@Main<;>()))
+fbld-test $prg "main@Main" {} {
+  return Recursive@Main:y(Recursive@Main:x(Unit@Main()))
 }
