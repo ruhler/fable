@@ -227,27 +227,36 @@ references to external entities.
 
 Syntax Reference
 ----------------
-  mtype ::= 'mtype' mname '<' [tname [',' tname [...]]] '>' '{'
+  mtype ::= 'mtype' iname ['<' [tname [',' tname [...]]] '>'] '{'
                 [mtype_decl [mtype_decl [...]]] '}' ';' ;
 
-  mdefn ::= 'mdefn' mname '<' [tname [',' tname [...]]] ';'
-                              [iref mname [',' iref mname [...]]] ';'
-                              iref '>' {
+  mdefn ::= 'mdefn' mname ['<'[tname [',' tname [...]]] ';'
+                              [iref mname [',' iref mname [...]]] '>']
+                          '(' iref ')' '{'
                 [mdefn_decl [mdefn_decl [...]]] '}' ';' ;
 
-  iref ::= mname '<' [qref [',' qref [...]]] ')' ;
-  mref ::= mname '<' [qref [',' qref [...]]] '; [mref [',' mref [...]]] ')' ;
+  iref ::= iname ['<' [qref [',' qref [...]]] '>'] ;
+         | iref '@' mref
+
+  mref ::= mname ['<' [qref [',' qref [...]]] '; [mref [',' mref [...]]] '>']
+         | mref '@' mref
+         ;
+          
 
   qref ::= tname ['@' mref] ;
   
-  mtype_decl ::= 'type' tname ';'
-              |  'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+  mtype_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+              |  'type' tname ';'
               |  'struct' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
               |  'union' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
               |  'func' tname '(' [qref vname [',' qref vname [...]]] ';' qref ')' ';'
               |  'proc' tname '('
                     [qref polarity pname [',' qref polarity pname [...]]] ';'
                     [qref vname [',' qref vname [...]]] ';' qref ')' ';'
+              |  mtype
+              |  'mdefn' mname ['<'[tname [',' tname [...]]] ';'
+                                   [iref mname [',' iref mname [...]]] '>']
+                              '(' iref ')' ';'
               ;
 
   mdefn_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
@@ -257,9 +266,12 @@ Syntax Reference
               |  'proc' tname '('
                     [qref polarity pname [',' qref polarity pname [...]]] ';'
                     [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
+              |  mtype
+              |  mdefn
               ;
 
-  mname ::= name ;  (* A name referring to an interface or module *)
+  iname ::= name ;  (* A name referring to an interface *)
+  mname ::= name ;  (* A name referring to a module *)
 
   expr ::= ... (* as in fblc, with qref in place of tname *)
   proc ::= ... (* as in fblc, with qref in place of tname *)
