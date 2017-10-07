@@ -17,7 +17,8 @@ developed.
 
 Fbld shifts a focus on implementing programs that exists in fblc to a focus on
 implementing reusable pieces of programs. These pieces of programs are called
-modules and include type, function, and process definitions.
+modules. A module is a collection of types, functions, processes and other
+modules.
 
 For example, many programs make use of some form of integer arithmetic. Rather
 than re-implement and re-test integer arithmetic for each program, a single
@@ -27,10 +28,11 @@ values.
 
 To effectively reuse a piece of code, it must be very easy to understand what
 that code does at a high level and how it should be used; it should not be
-import to understand implementation details of the code. Fbld has the notion
-of a module interface, which provides an abstract view of the code provided by
-a module to make it easy to understand what the code does at a high level and
-how to use it without having to understand excess implementation details.
+important to understand implementation details of the code. Fbld has the
+notion of a module interface, which provides an abstract view of the code
+provided by a module to make it easy to understand what the code does at a
+high level and how to use it without having to understand extraneous
+implementation details.
 
 For example, the integer arithmetic module could be used knowing there is some
 type Int with operations to add two Ints together, but the user need not know
@@ -44,19 +46,19 @@ complex and costly to develop.
 
 Interfaces make it possible to write code that is agnostic to the details of
 how types, functions, and processes are defined and implemented. To take full
-advantage of this, fbld supports polymorphic interfaces and modules, which
-allows the code to be reused in multiple different contexts with different
+advantage of this, fbld adds support for polymorphic declarations, which
+allow code to be reused in multiple different contexts with different
 definitions of the types, functions, and processes it interfaces with within
-the same program. Polymorphism is supported by having interfaces be
-parameterized by types and having modules parameters by types and other
-modules.
+the same program. Polymorphism is supported by allowing types and interfaces
+to be parameterized by types and allowing funcs, procs, and modules to be
+parameterized by by types and other modules.
 
 For example, there are common data structures, such as lists, which can be
-used with many different element types. Fbld's polymorphism allows an
-interface to be defined that is a function of a given type parameter. For
-example, a single List interface can be defined that is used for lists of
-Ints, Lists of booleans, Lists of Lists, or any other type. This is a form of
-parametric polymorphism.
+used with many different element types. Fbld's polymorphism allows a
+list type to be defined that is a function of a given type parameter.
+Basic list functions can be defined that can be reused for lists of Ints,
+lists of booleans, lists of lists, or lists of any other type. This is a form
+of parametric polymorphism.
 
 As another example, some computation involving numbers can be defined that
 works on any type of number satisfying a required set of operations. A module
@@ -65,67 +67,54 @@ integers, real numbers, or booleans. This is a form of ad-hoc polymorphism.
 
 Concepts
 --------
-Fbld adds two new top level constructs to fblc: modules and interfaces. All
-type, function, and process declarations occur within modules.
+Fbld adds two new top level constructs to fblc: modules and interfaces.
 
-A module defines a collection of types, functions, and processes that are
-parameterized by any number of types and any number of other modules. Each
-implements some interface.
+A module defines a collection of types, functions, processes and submodules.
+Each module implements some interface.
 
 An interface is an abstraction of a module that includes only type, function,
-and process declarations, without their implementations. For a module to
-properly implement an interface, every type, function, and process declared in
-the interface must have a corresponding implementation supplied by the module.
+process and submodule declarations, without their implementations. For a
+module to properly implement an interface, every type, function, and process
+declared in the interface must have a corresponding implementation supplied by
+the module.
 
 Interfaces
 ----------
-mtype <interface_name> '<' <type_parameters> '>' {
+mtype <interface_name> ['<' <type_parameters> '>'] {
   <interface_declarations>
 };
 
 Interfaces are named. They take zero or more type parameters, and contain zero
-or more interface_declaration elements. Type parameters are specified using a
-comma-separated list of simple names. These names can be used within the
-interface_declarations to refer to the types passed to the interface when the
-interface is instantiated.
+or more interface_declaration elements. Type parameters, if present, are
+specified using a comma-separated list of simple names. These names can be
+used within the interface_declarations to refer to the types passed to the
+interface when the interface is instantiated.
 
-Angle brackets are used to denote interface and module parameters, analgous to
-how parentheses are used to denote function patameters.
+Angle brackets are used to denote interface and module parameters, analogous to
+how parentheses are used to denote function parameters.
 
-There are 6 kinds of interface_declaration items: using, type, struct, union,
-func, and proc.
+There are 8 kinds of interface_declaration items: using, type, struct, union,
+func, proc, mtype, and mdefn.
 
 Qualified References
--^^^^^^^^^^^^^^^^^^^
-The struct, union, func, and proc declarations are as in fblc, except that
-references to types, functions, and processes can be qualified using the
-syntax <name>@<mref>. For example, to refer to a function 'True' in a module
-named Bool that takes no type or module parameters:
-   True@Bool<;>
+^^^^^^^^^^^^^^^^^^^^
+A module serves as a namespaces. Entities defined in different modules can
+have the same name. In order to reference an entity from an external module,
+both the name of the entity and the name of the external module must be
+supplied using a qualified reference taking the form <name>@<mref>. For
+example, to refer to a function 'True' in a module named Bool that takes no
+type or module parameters:
+   True@Bool
 
-If the module takes type or module parameters, those can be specified as well.
-For example, the following references the contains function for a hash map
-from Ints to Strings that uses the IntHash module to compute the hash.
-   contains@HashMap<Int@Int<;>, String@String<;> ; IntHash<;>>
-
-The 'using' declaration described later can greatly reduce the quantity of
-syntax needed to describe references to external entities.
+The 'using' declaration described later allows external entities to be
+imported under local names, which can greatly reduce the quantity of syntax
+needed to describe references to external entities.
 
 Interfaces and modules must not recursively reference any other modules. In
 other words, the graph of interface and module dependencies should be a
 directed acyclic graph. The reason for this is to avoid complex and confusing
-module dependencies.
-
-Abstract Type Declarations
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-The 'type' declaration is used to declare an abstract type that is defined
-internally by modules implementing the interface. For example:
-
-   type Int;
-
-Defines an abstract Int type. The 'Int' type can be used anywhere a type is
-expected. Values of abstract types cannot be used as objects of member access
-or arguments to conditional expressions or processes.
+module dependencies that would make it difficult to reason about or understand
+a module in isolation.
 
 Using Declarations
 ^^^^^^^^^^^^^^^^^^
@@ -138,7 +127,7 @@ but it is possible to specify an alternate name when importing an entity in
 order to avoid name conflicts.
 
 For example:
-  using Bool<;> { Bool; true=True; false=False; };
+  using Bool { Bool; true=True; false=False; };
 
 The above statement imports three entities from the Bool module. In this case
 the Bool module does not have any type parameters, so no type arguments are
@@ -154,19 +143,12 @@ the form 'name' = 'name', where the first name is the name the entity is
 imported under, and the second name is the name of the entity as declared in
 the module it is being imported from.
 
-As a more complex example, consider a polymorphic List implementation, which
-is reused both as an integer list and a boolean list. This entities from the
-List implementation would need to be imported using multiple 'using'
-declarations, with different names chosen to avoid name conflict:
-  using List<Int;> { IntList=List; IntHead = head; IntTail = tail; };
-  using List<Bool;> { BoolList=List; BoolHead = head; BoolTail = tail; };
-
-The result is as if two types IntList and BoolList have been defined and four
-functions, IntHead, IntTail, BoolHead, and BooLTail have been defined and can
-be referenced from elsewhere in the interface.
-
-Here is an example of of importing from a module with module parameters:
-  using HashMap<Int, String ; IntHash<;>> { Map; };
+Type and module parameters do not need to be supplied in the using statement
+for imported polymorphic entities. The locally imported names will refer to
+polymorphic entities that can be used with different type and module
+parameters within the local name space. For example, a List type could be
+imported once from the List module, then used locally as List<Int>,
+List<Bool>, or any other kind of list.
 
 It is legal to have multiple using statements for the same concrete module and
 to import the same external entity multiple times under the same or different
@@ -174,15 +156,34 @@ names, either within a single using statement or spanning across multiple
 using statements for the same concrete module. It is not required to have a
 using statement for all references to external entities.
 
+TODO: What if a module declares a function, mtype, and mdefn all with the same
+name and you import that name with a using statement. Do you get all three
+entities imported?
+
+Abstract Type Declarations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+The 'type' declaration is used to declare an abstract type that is defined
+internally by modules implementing the interface. For example:
+
+   type Int;
+
+Defines an abstract Int type. The 'Int' type can be used anywhere a type is
+expected. Values of abstract types cannot be used as objects of member access
+or arguments to conditional expressions or processes.
+
+Abstract types may be parameterized by types. For example, an abstract
+implementation of a list type could be declared as:
+   type List<T>;
+
 Modules
 --------
-mdefn <module_name> '<' <type_parameters> ; <module_parameters> ; <interface> '>' {
+mdefn <module_name> ['<' <type_parameters> ; <module_parameters> '>'] '(' <interface> ')' {
   <module_declarations>
 };
 
-Module are named. Modules have type parameters and module parameters. The type
-paramaters are as in interfaces, a comma separate list of simple names of
-types that can be referred to from within the module.
+Module are named. Modules have zero or more type parameters and module
+parameters. The type parameters are as in interfaces, a comma separate list of
+simple names of types that can be referred to from within the module.
 
 Module names belong to a different namespace than interface names. It is
 acceptable to have a module with the same name as an interface. This is common
@@ -193,37 +194,18 @@ name. The module parameter can be used by providing any concrete module that
 implements the given interface. Module parameters may refer to the type
 parameters of the module.
 
-Each module has a single interface type.
-
 Every module implements a specific interface. This means the module will
 provide definitions for all components declared in the interface. The
 concrete interface specification can refer to type parameters and module
 parameter types.
 
-Here are some examples of the initial parts of module definitions, called
-module declarations:
-
-A Bool module implementing a Bool interface with no parameters:
-  mdefn Bool< ; ; Bool<>>;
-
-A Maybe module implementing the Maybe interface with type parameter T:
-  mdefn Maybe<T ; ; Maybe<T>);
-
-HashMap and TreeMap modules, parameters by the key and value type, and with
-module parameters to compute the hash value or compare key values as
-appropriate. Both of these modules implement the same Map interface:
-  mdefn HashMap<K, V; Hash<K;> hash; Map<K, V>>;
-  mdefn TreeMap<K, V; Ord<K;> ord; Map<K, V>>;
-
-A module that implements a specific kind of interface without being fully
-polymorphic:
-  mdefn BoolHashMap<V; ; Map<Bool@Bool<;>, V>>;
+TODO: Give a range of interesting concrete examples here.
 
 Following the module declaration is a list of module declaration items. These
-include 'using', 'struct', 'union', 'func', and 'proc' declarations. The
-'using' declaration is as for module interfaces. The 'union', 'func', and
-'proc' declarations are as for fblc with additional support for qualified
-references to external entities.
+include 'using', 'struct', 'union', 'func', 'proc' , 'mtype' and 'mdefn'
+declarations. The 'using' declaration is as for module interfaces. The
+'union', 'func', and 'proc' declarations are as for fblc with additional
+support for qualified references to external entities.
 
 Syntax Reference
 ----------------
@@ -281,6 +263,15 @@ Syntax Reference
   pname ::= ... (* as in fblc *)
   tname ::= ... (* as in fblc *)
   vname ::= ... (* as in fblc *)
+
+TODO
+----
+* Finish this spec!
+ - Talk about how polymorphism works for types, funcs, processes
+ - Talk about what it means to have submodules, what the restrictions are on
+   recursion, and what entities are visible.
+ - Give interesting examples for polymorphic and submodules.
+
 
 Open Questions
 --------------
