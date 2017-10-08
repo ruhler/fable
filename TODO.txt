@@ -5,6 +5,8 @@ Priority:
 Fbld 3:
 * Rewrite lang/fbld.txt for new proposed language.
 * Rewrite the fbld front end to support the new language.
+  - Figure out how to deal with parse conflict between '<' '>' used for
+    polymorphism and '<' '~' used for links.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

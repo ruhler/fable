@@ -21,18 +21,17 @@ modules. A module is a collection of types, functions, processes and other
 modules.
 
 For example, many programs make use of some form of integer arithmetic. Rather
-than re-implement and re-test integer arithmetic for each program, a single
+than reimplementing and retesting integer arithmetic for each program, a single
 integer arithmetic module can be developed and reused. The integer arithmetic
 module will define an integer type and functions that operate on integer
 values.
 
-To effectively reuse a piece of code, it must be very easy to understand what
+To effectively reuse a piece of code, it must be easy to understand what
 that code does at a high level and how it should be used; it should not be
 important to understand implementation details of the code. Fbld has the
 notion of a module interface, which provides an abstract view of the code
-provided by a module to make it easy to understand what the code does at a
-high level and how to use it without having to understand extraneous
-implementation details.
+provided by a module to make it easy for users to make use of the module
+without having to understand extraneous implementation details.
 
 For example, the integer arithmetic module could be used knowing there is some
 type Int with operations to add two Ints together, but the user need not know
@@ -67,7 +66,7 @@ integers, real numbers, or booleans. This is a form of ad-hoc polymorphism.
 
 Concepts
 --------
-Fbld adds two new top level constructs to fblc: modules and interfaces.
+Fbld adds two new constructs to fblc: modules and interfaces.
 
 A module defines a collection of types, functions, processes and submodules.
 Each module implements some interface.
@@ -84,7 +83,7 @@ mtype <interface_name> ['<' <type_parameters> '>'] {
   <interface_declarations>
 };
 
-Interfaces are named. They take zero or more type parameters, and contain zero
+Interfaces are named. They take zero or more type parameters and contain zero
 or more interface_declaration elements. Type parameters, if present, are
 specified using a comma-separated list of simple names. These names can be
 used within the interface_declarations to refer to the types passed to the
@@ -159,6 +158,43 @@ using statement for all references to external entities.
 TODO: What if a module declares a function, mtype, and mdefn all with the same
 name and you import that name with a using statement. Do you get all three
 entities imported?
+
+Struct and Union Declarations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Struct and union declarations are as in fblc, except that they now support
+polymorphic type parameters and can reference qualified types from other
+modules.
+
+For example, a generic Maybe type can be declared using a polymorphic struct
+declaration:
+
+   struct Maybe<T>(T just, Unit nothing);
+
+To refer to a concrete instance of the Maybe type, a type argument must be
+supplied. For example, Maybe<Bool> could be used for an optional Bool and
+Maybe<Int> could be used for an optional Int.
+
+Struct and union declarations may refer to types from other modules. For
+example, if the Int type is declared in a separate Integer module, a
+Coord type could be defined:
+   
+   struct Coord(Int@Integer x, Int@Integer y); 
+
+Struct and union declarations can appear in both module interfaces and module
+definitions. If a struct or union declaration appears in a module interface,
+it must appear verbatim in any module definition that implements that
+interface. This can be interpreted as saying the struct declaration in the
+interface specifies the interface for constructing and deconstructing the
+type, while the corresponding declaration in the module definition is a
+unique definition of the type. If two different modules ModuleA and ModuleB
+implement the same interface Interface, and that interface includes a struct
+or union declaration Foo, then Foo@ModuleA is considered a different type from
+Foo@ModuleB.
+
+An abstract type declaration can be used in an interface rather than a struct
+or type declaration to represent an abstract type without providing module
+users with an interface to construct or deconstruct the type. See the section
+on abstract type declarations for more information.
 
 Abstract Type Declarations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

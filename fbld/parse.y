@@ -44,6 +44,13 @@
     FbldProcV* procv;
   } Decls;
 
+  // TMParams --
+  //   Represents both type and module parameters of a polymorphic entity.
+  typedef struct {
+    FbldNameV* targv;
+    FbldMArgV* margv;
+  } TMParams;
+
   #define YYLTYPE FbldLoc*
 
   #define YYLLOC_DEFAULT(Cur, Rhs, N)  \
@@ -81,6 +88,7 @@
   FbldExecV* execv;
   FbldValue* value;
   FbldValueV* valuev;
+  TMParams* tmparams;
 }
 
 %{
@@ -137,8 +145,9 @@
 %type <proc> proc_decl proc_defn
 %type <expr> expr stmt
 %type <actn> actn pstmt
-%type <namev> name_list
-%type <qrefv> qref_list
+%type <namev> name_list tparam_list
+%type <qrefv> qref_list targ_list
+%type <tmparams> tmparams
 %type <mrefv> mref_list
 %type <margv> marg_list
 %type <argv> arg_list non_empty_arg_list
@@ -162,30 +171,53 @@ start:
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
    ;
- 
-mtype: "mtype" name '<' name_list '>' '{' decl_list '}' ';' {
+
+tparam_list:
+    %empty {
+      $$ = FBLC_ALLOC(arena, FbldNameV);
+      FblcVectorInit(arena, *$$);
+    }
+  | '<' name_list '>' {
+      $$ = $2;
+    }
+  ;
+
+mtype: "mtype" name tparam_list '{' decl_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldMType);
           $$->name = $2;
-          $$->targv = $4;
-          $$->usingv = $7->usingv;
-          $$->typev = $7->typev;
-          $$->funcv = $7->funcv;
-          $$->procv = $7->procv;
+          $$->targv = $3;
+          $$->usingv = $5->usingv;
+          $$->typev = $5->typev;
+          $$->funcv = $5->funcv;
+          $$->procv = $5->procv;
           // TODO: Don't leak the allocated Decls object?
         }
      ;
 
-mdefn: "mdefn" name '<' name_list ';' marg_list ';' iref '>' '{' defn_list '}' ';' {
+tmparams:
+    %empty {
+      $$ = FBLC_ALLOC(arena, TMParams);
+      FblcVectorInit(arena, *$$->targv);
+      FblcVectorInit(arena, *$$->margv);
+    }
+  | '<' name_list ';' marg_list '>' {
+      $$ = FBLC_ALLOC(arena, TMParams);
+      $$->targv = $2;
+      $$->margv = $4;
+    }
+  ;
+
+mdefn: "mdefn" name tmparams '(' iref ')' '{' defn_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldMDefn);
           $$->name = $2;
-          $$->targv = $4;
-          $$->margv = $6;
-          $$->iref = $8;
-          $$->usingv = $11->usingv;
-          $$->typev = $11->typev;
-          $$->funcv = $11->funcv;
-          $$->procv = $11->procv;
-          // TODO: Don't leak the allocated Decls object?
+          $$->targv = $3->targv;
+          $$->margv = $3->margv;
+          $$->iref = $5;
+          $$->usingv = $8->usingv;
+          $$->typev = $8->typev;
+          $$->funcv = $8->funcv;
+          $$->procv = $8->procv;
+          // TODO: Don't leak the allocated Decls and TMParams objects?
         }
      ;
 
@@ -685,14 +717,30 @@ qref:
     }
   ;
 
-iref: name '<' qref_list '>' {
-      $$ = FBLC_ALLOC(arena, FbldIRef);
-      $$->name = $1;
-      $$->targv = $3;
+targ_list:
+    %empty {
+      $$ = FBLC_ALLOC(arena, FbldQRefV);
+      FblcVectorInit(arena, *$$);
+    }
+  | '<' qref_list '>' {
+      $$ = $2;
     }
   ;
 
-mref: name '<' qref_list ';' mref_list '>' {
+iref: name targ_list {
+      $$ = FBLC_ALLOC(arena, FbldIRef);
+      $$->name = $1;
+      $$->targv = $2;
+    }
+  ;
+
+mref: name {
+      $$ = FBLC_ALLOC(arena, FbldMRef);
+      $$->name = $1;
+      FblcVectorInit(arena, *$$->targv);
+      FblcVectorInit(arena, *$$->margv);
+    }
+  | name '<' qref_list ';' mref_list '>' {
       $$ = FBLC_ALLOC(arena, FbldMRef);
       $$->name = $1;
       $$->targv = $3;
