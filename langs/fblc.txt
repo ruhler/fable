@@ -546,13 +546,13 @@
 
  @section 4.1. Get Port
   There are two kinds of ports, a 'get' port is used to read data from outside the process.
-  A get port, denoted with polarity '<~', as in 'Foo <~ x', can be used repeatedly to get subsequent data of the given type -- in this case 'Foo' -- from the port -- in this case 'x'.
+  A get port, denoted with polarity '-', as in 'Foo- x', can be used repeatedly to get subsequent data of the given type -- in this case 'Foo' -- from the port -- in this case 'x'.
   When a process gets data from a get port, it will block until data is available on the port.
  @end
 
  @section 4.2. Put Port
   A process can communicate data outside of itself using a 'put' port.
-  A put port has polarity '~>', as in 'Foo ~> x', and can be used to repeatedly put data of the given type onto the port.
+  A put port has polarity '+', as in 'Foo+ x', and can be used to repeatedly put data of the given type onto the port.
   The put operation does not block.
  @end
 
@@ -592,10 +592,7 @@ progress.
   A process declaration defines the name, ports, input arguments, return type, and body of a process.
 
   Each port has a type and polarity.
-  The polarity '<~' is used for get ports, and '~>' is used for put ports.
-  To remember this, consider a port 'Foo <~ x'.
-  This is a get port because the '<~' points from the port to the type, meaning the port can be used to get a value of type 'Foo'.
-  A port 'Foo ~> x' puts a value of type 'Foo' onto the port x, so is a put port. 
+  The polarity '-' is used for get ports, and '+' is used for put ports.
  @end
 
  @section 4.7. Processes
@@ -620,7 +617,7 @@ progress.
   @end
 
   @section 4.7.2. Get Process
-   Syntax: '~' pname '(' ')'
+   Syntax: '-' pname '(' ')'
 
    The get process performs a get operation on the named port, returning the value gotten from the port.
 
@@ -634,7 +631,7 @@ progress.
   @end
 
   @section 4.7.3. Put Process
-   Syntax: '~' pname '(' expr ')'
+   Syntax: '+' pname '(' expr ')'
 
    The put process performs a put operation on the named port, returning the value put on the port.
 
@@ -706,10 +703,10 @@ progress.
   @end
 
   @section 4.7.7. Link Process Statement
-   Syntax: tname '<~>' pname ',' pname ';' pstmt
+   Syntax: tname '+-' pname ',' pname ';' pstmt
 
    The link process statement instantiates a link with joined put and get ports that can be used in subsequent process statements.
-   It adds to the port scope a get port with the first name and a put port with the second name.
+   It adds to the port scope a put port with the first name and a get port with the second name.
    Gets to the get port will read data values that were put to the put port, in the order they were put.
    The body of the process statement is executed in a scope with the new put and get ports.
 
@@ -778,21 +775,21 @@ progress.
         |  tname vname '=' expr ';' stmt                (* let *)
         ;
 
-  polarity ::= '<~'                                      (* get *)
-            |  '~>'                                      (* put *)
+  polarity ::= '-'                                      (* get *)
+            |  '+'                                      (* put *)
             ;
 
   proc ::= '$' '(' expr ')'                             (* eval *)
-        |  '~' pname '(' ')'                            (* get *)
-        |  '~' pname '(' expr ')'                       (* put *)
+        |  '-' pname '(' ')'                            (* get *)
+        |  '+' pname '(' expr ')'                       (* put *)
         |  '?'(expr ';' proc [',' proc [...]] ')'       (* conditional *)
         |  tname '(' [pname [',' pname [...]]] ';'      (* call *) 
                      [expr [',' expr [...]]] ')'        
         |  '{ pstmt '}'                                 (* process statment *)
         ;
 
-  pstmt ::= proc ';'                                                          (* proc *)
-         |  tname '<~>' pname ',' pname ';' pstmt                             (* link *)
+  pstmt ::= proc ';'                                                        (* proc *)
+         |  tname '+-' pname ',' pname ';' pstm                             (* link *)
          |  tname vname = proc [',' tname vname = proc [...]]] ';' pstmt    (* execution *)
          ;
      
@@ -840,6 +837,5 @@ progress.
    I worry it is easy to get the order of conditional arguments wrong.
    Would it not make more sense to explicitly specify the tag corresponding to each conditional argument, so that the compiler can verify it for you?
   @end
-  @li Do we allow whitespace in tokens <~, ~>, and <~>?
  @end
 @end

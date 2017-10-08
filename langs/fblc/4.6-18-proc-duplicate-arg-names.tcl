@@ -2,7 +2,7 @@ set prg {
   # Process arg names must be unique.
   struct Unit();
 
-  proc p(Unit <~ px, Unit ~> py ; Unit x, Unit x ; Unit) {
+  proc p(Unit- px, Unit+ py ; Unit x, Unit x ; Unit) {
     $(Unit());
   };
 
@@ -10,4 +10,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg 5:48
+fblc-check-error $prg 5:44

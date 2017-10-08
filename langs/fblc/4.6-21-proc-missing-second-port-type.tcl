@@ -3,7 +3,7 @@ set prg {
   struct Unit();
 
   # The second port argument is missing its type.
-  proc p(Unit <~ px, ~> py ; Unit x, Unit y; Unit) {
+  proc p(Unit- px, + py ; Unit x, Unit y; Unit) {
     $(Unit());
   };
 
@@ -11,4 +11,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg 6:22
+fblc-check-error $prg 6:20

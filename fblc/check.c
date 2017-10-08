@@ -422,7 +422,7 @@ static FblcsType* CheckActn(FblcsProgram* prog, Vars* vars, Ports* ports, FblcsA
       }
 
       if (FblcsNamesEqual(link_actn->get.name, link_actn->put.name)) {
-        ReportError("Redefinition of port '%s'\n", error, link_actn->put.loc, link_actn->put.name);
+        ReportError("Redefinition of port '%s'\n", error, link_actn->get.loc, link_actn->get.name);
       }
 
       Ports getport = {

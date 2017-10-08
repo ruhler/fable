@@ -2,8 +2,8 @@ set prg {
   struct Unit();
   union Bool(Unit true, Unit false);
 
-  proc sub(Bool <~ get ; ; Bool) {
-    ~get();
+  proc sub(Bool- get ; ; Bool) {
+    -get();
   };
 
   proc main( ; ; Bool) {

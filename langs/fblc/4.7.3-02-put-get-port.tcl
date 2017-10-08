@@ -1,9 +1,9 @@
 set prg {
   struct Unit();
 
-  proc f(Unit <~ myput ; ; Unit) {
+  proc f(Unit- myput ; ; Unit) {
     # myput port has the wrong polarity.
-    ~myput(Unit());
+    +myput(Unit());
   };
 
   proc main( ; ; Unit) {

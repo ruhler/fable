@@ -121,23 +121,23 @@ mdefn Snake(Snake) {
               })));
   };
 
-  proc Snake(Input <~ in, S<Draw> ~> out; State s ; Unit) {
-    Input x = ~in();
+  proc Snake(Input- in, S<Draw>+ out; State s ; Unit) {
+    Input x = -in();
     ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
          {
              MoveResultM m = $(Move(s));
              ?(m;
                 $(Unit()),
                 {
-                   S<Draw> drawn = ~out(m.mr.draw);
+                   S<Draw> drawn = +out(m.mr.draw);
                    Snake(in, out; m.mr.state);
                 });
          });
   };
 
-  proc Main(Input <~ in, S<Draw> ~> out; ; Unit) {
+  proc Main(Input- in, S<Draw>+ out; ; Unit) {
     State s = $(InitialState());
-    S<Draw> drawn = ~out(DrawState(s));
+    S<Draw> drawn = +out(DrawState(s));
     Snake(in, out; s);
   };
 };

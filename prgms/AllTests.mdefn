@@ -1,8 +1,8 @@
 mdefn AllTests(AllTests) {
   using Unit { Unit; };
   using List { S; P; Append; };
-  using UBNatTest { UBNatTestFailure = TestFailure };
-  using PrimesTest { PrimesTestFailure = TestFailure };
+  using UBNatTest { UBNatTestFailure = TestFailure; };
+  using PrimesTest { PrimesTestFailure = TestFailure; };
 
   union TestFailure(
       UBNatTestFailure UBNatTest,

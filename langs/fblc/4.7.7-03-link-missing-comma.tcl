@@ -4,9 +4,9 @@ set prg {
 
   proc main( ; ; Bool) {
     # The comma separating get and put is missing.
-    Bool <~> get put;
-    Bool putted = ~put(Bool:true(Unit()));
-    ~get();
+    Bool +- put get;
+    Bool putted = +put(Bool:true(Unit()));
+    -get();
   };
 }
-fblc-check-error $prg 7:18
+fblc-check-error $prg 7:17

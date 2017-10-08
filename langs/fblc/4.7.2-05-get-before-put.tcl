@@ -6,9 +6,9 @@ set prg {
   union Fruit(Unit apple, Unit banana, Unit pear);
 
   proc main( ; ; Fruit) {
-    Fruit <~> get, put;
-    Fruit p1 = ~put(Fruit:pear(Unit())), Fruit g1 = ~get();
-    Fruit g2 = ~get(), Fruit p2 = ~put(p1);
+    Fruit +- put, get;
+    Fruit p1 = +put(Fruit:pear(Unit())), Fruit g1 = -get();
+    Fruit g2 = -get(), Fruit p2 = +put(p1);
     $(g2);
   };
 }

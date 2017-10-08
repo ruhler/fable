@@ -198,18 +198,18 @@ func InputIsPosition(Input input; Bool) {
   ?(input; Bool:True(Unit()), Bool:False(Unit()), Bool:False(Unit()));
 };
 
-proc NewGame(Input <~ input, Output ~> output; ; Unit) {
+proc NewGame(Input- input, Output+ output; ; Unit) {
   PlayGame(input, output; EmptyBoard(), Player:X(Unit()));
 };
 
-proc PlayGame(Input <~ input, Output ~> output; Board board, Player x; Unit) {
+proc PlayGame(Input- input, Output+ output; Board board, Player x; Unit) {
   GameStatus status = $(?(BoardStatus(board);
                           GameStatus:Win(Player:X(Unit())),
                           GameStatus:Win(Player:O(Unit())),
                           GameStatus:Draw(Unit()),
                           GameStatus:Move(x)));
-  Output ignored = ~output(Output(board, status));
-  Input in = ~input();
+  Output ignored = +output(Output(board, status));
+  Input in = -input();
   ?(GameIsOver(status) ; 
       ?(in ; PlayGame(input, output; board, x),
              PlayGame(input, output; board, x),

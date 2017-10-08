@@ -3,7 +3,7 @@ set prg {
 
   proc f( ; ; Unit) {
     # myput port is not in scope.
-    ~myput(Unit());
+    +myput(Unit());
   };
 
   proc main( ; ; Unit) {

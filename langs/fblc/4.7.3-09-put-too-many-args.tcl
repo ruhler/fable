@@ -1,9 +1,9 @@
 set prg {
   struct Unit();
 
-  proc f(Unit ~> myput ; ; Unit) {
+  proc f(Unit+ myput ; ; Unit) {
     # Too many arguments to put.
-    ~myput(Unit(), Unit());
+    +myput(Unit(), Unit());
   };
 
   proc main( ; ; Unit) {

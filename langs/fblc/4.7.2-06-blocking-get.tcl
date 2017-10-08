@@ -10,9 +10,9 @@ set prg {
   # that if the implementation fails to block on the get, it will fail before
   # the test driver has time to read the last value put to it and put the
   # value to get.
-  proc main(Unit <~ g, Unit ~> p; ; Unit) {
-    Unit x = ~g(),
-    Unit y = { Unit a = ~p(Unit()); Unit b = ~p(Unit()); ~p(Unit()); };
+  proc main(Unit- g, Unit+ p; ; Unit) {
+    Unit x = -g(),
+    Unit y = { Unit a = +p(Unit()); Unit b = +p(Unit()); +p(Unit()); };
     $(x);
   };
 }

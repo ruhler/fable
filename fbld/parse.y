@@ -146,7 +146,7 @@
 %type <expr> expr stmt
 %type <actn> actn pstmt
 %type <namev> name_list tparam_list
-%type <qrefv> qref_list targ_list
+%type <qrefv> qref_list
 %type <tmparams> tmparams
 %type <mrefv> mref_list
 %type <margv> marg_list
@@ -197,6 +197,8 @@ mtype: "mtype" name tparam_list '{' decl_list '}' ';' {
 tmparams:
     %empty {
       $$ = FBLC_ALLOC(arena, TMParams);
+      $$->targv = FBLC_ALLOC(arena, FbldNameV);
+      $$->margv = FBLC_ALLOC(arena, FbldMArgV);
       FblcVectorInit(arena, *$$->targv);
       FblcVectorInit(arena, *$$->margv);
     }
@@ -500,14 +502,14 @@ expr:
    ;
 
 pstmt: actn ';' { $$ = $1; }
-     | qref '<' '~' '>' name ',' name ';' pstmt {
+     | qref '+' '-' name ',' name ';' pstmt {
          FbldLinkActn* link_actn = FBLC_ALLOC(arena, FbldLinkActn);
          link_actn->_base.tag = FBLD_LINK_ACTN;
          link_actn->_base.loc = @$;
          link_actn->type = $1;
-         link_actn->get = $5;
-         link_actn->put = $7;
-         link_actn->body = $9;
+         link_actn->put = $4;
+         link_actn->get = $6;
+         link_actn->body = $8;
          $$ = &link_actn->_base;
        }
      | non_empty_exec_list ';' pstmt {
@@ -531,7 +533,7 @@ actn:
       eval_actn->arg = $3;
       $$ = &eval_actn->_base;
     }
-  | '~' name '(' ')' {
+  | '-' name '(' ')' {
       FbldGetActn* get_actn = FBLC_ALLOC(arena, FbldGetActn);
       get_actn->_base.tag = FBLD_GET_ACTN;
       get_actn->_base.loc = @$;
@@ -539,7 +541,7 @@ actn:
       get_actn->port.id = FBLC_NULL_ID;
       $$ = &get_actn->_base;
     }
-  | '~' name '(' expr ')' {
+  | '+' name '(' expr ')' {
       FbldPutActn* put_actn = FBLC_ALLOC(arena, FbldPutActn);
       put_actn->_base.tag = FBLD_PUT_ACTN;
       put_actn->_base.loc = @$;
@@ -671,8 +673,8 @@ non_empty_arg_list:
     }
   ;
 
-polarity: '<' '~' { $$ = FBLD_GET_POLARITY; }
-        | '~' '>' { $$ = FBLD_PUT_POLARITY; }
+polarity: '-' { $$ = FBLD_GET_POLARITY; }
+        | '+' { $$ = FBLD_PUT_POLARITY; }
         ;
 
 port_list:
@@ -717,26 +719,24 @@ qref:
     }
   ;
 
-targ_list:
-    %empty {
-      $$ = FBLC_ALLOC(arena, FbldQRefV);
-      FblcVectorInit(arena, *$$);
-    }
-  | '<' qref_list '>' {
-      $$ = $2;
-    }
-  ;
-
-iref: name targ_list {
+iref: name {
       $$ = FBLC_ALLOC(arena, FbldIRef);
       $$->name = $1;
-      $$->targv = $2;
+      $$->targv = FBLC_ALLOC(arena, FbldQRefV);
+      FblcVectorInit(arena, *$$->targv);
+    }
+  | name '<' qref_list '>' {
+      $$ = FBLC_ALLOC(arena, FbldIRef);
+      $$->name = $1;
+      $$->targv = $3;
     }
   ;
 
 mref: name {
       $$ = FBLC_ALLOC(arena, FbldMRef);
       $$->name = $1;
+      $$->targv = FBLC_ALLOC(arena, FbldQRefV);
+      $$->margv = FBLC_ALLOC(arena, FbldMRefV);
       FblcVectorInit(arena, *$$->targv);
       FblcVectorInit(arena, *$$->margv);
     }
@@ -824,7 +824,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,@:?=.<>~$", c) != NULL
+  return strchr("(){};,@:?=.<>+-$", c) != NULL
     || c == START_MTYPE
     || c == START_MDEFN
     || c == START_VALUE

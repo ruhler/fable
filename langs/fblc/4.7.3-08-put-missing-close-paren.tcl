@@ -1,9 +1,9 @@
 set prg {
   struct Unit();
 
-  proc f(Unit ~> myput ; ; Unit) {
+  proc f(Unit+ myput ; ; Unit) {
     # The close parenthesis is missing.
-    ~myput(Unit();
+    +myput(Unit();
   };
 
   proc main( ; ; Unit) {

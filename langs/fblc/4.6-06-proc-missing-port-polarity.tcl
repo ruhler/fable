@@ -2,7 +2,7 @@ set prg {
   # Process port arguments must have a polarity.
   struct Unit();
 
-  proc p(Unit px, Unit ~> py ; Unit x, Unit y; Unit) {
+  proc p(Unit px, Unit+ py ; Unit x, Unit y; Unit) {
     $(Unit());
   };
 

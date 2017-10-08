@@ -2,7 +2,7 @@ set prg {
   # Process declarations must have a close parenthesis.
   struct Unit();
 
-  proc p(Unit <~ px, Unit ~> py ; Unit x, Unit y ; Unit {
+  proc p(Unit- px, Unit+ py ; Unit x, Unit y ; Unit {
     $(Unit());
   };
 
@@ -10,4 +10,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg 5:57
+fblc-check-error $prg 5:53

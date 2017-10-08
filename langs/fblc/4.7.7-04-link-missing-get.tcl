@@ -4,9 +4,9 @@ set prg {
 
   proc main( ; ; Bool) {
     # The name of the get port is missing.
-    Bool <~> , put;
-    Bool putted = ~put(Bool:true(Unit()));
-    ~get();
+    Bool +- put, ;
+    Bool putted = +put(Bool:true(Unit()));
+    -get();
   };
 }
-fblc-check-error $prg 7:14
+fblc-check-error $prg 7:18

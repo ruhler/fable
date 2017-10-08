@@ -2,9 +2,9 @@ set prg {
   struct Unit();
   union Bool(Unit True, Unit False);
 
-  proc main(Bool <~ in ; ; Bool) {
-    Bool x = ~in();
-    ~in();
+  proc main(Bool- in ; ; Bool) {
+    Bool x = -in();
+    -in();
   };
 }
 

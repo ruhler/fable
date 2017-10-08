@@ -2,7 +2,7 @@ set prg {
   Main.mtype {
     mtype Main {
       struct Unit();
-      proc main( Unit <~ in ; ; Unit);
+      proc main( Unit- in ; ; Unit);
     };
   }
 
@@ -10,8 +10,8 @@ set prg {
     mdefn Main(Main) {
       struct Unit();
 
-      proc main( Unit <~ in ; ; Unit) {
-        ~in();
+      proc main( Unit- in ; ; Unit) {
+        -in();
       };
     };
   }

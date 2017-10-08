@@ -3,14 +3,14 @@ set prg {
   struct Unit();
   union Bool(Unit true, Unit false);
 
-  proc sub(Bool <~ get, Bool ~> put ; ; Bool) {
-    Bool b = ~get();
-    ~put(b);
+  proc sub(Bool- get, Bool+ put ; ; Bool) {
+    Bool b = -get();
+    +put(b);
   };
 
   proc main( ; ; Bool) {
-    Bool <~> myget, myput;
-    Bool putted = ~myput(Bool:true(Unit()));
+    Bool +- myput, myget;
+    Bool putted = +myput(Bool:true(Unit()));
     sub(myget, myput; );
   };
 }

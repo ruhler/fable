@@ -3,15 +3,15 @@ set prg {
   struct Unit();
   union Bool(Unit true, Unit false);
 
-  proc sub(Bool ~> put, Bool <~ get; ; Bool) {
-    ~get();
+  proc sub(Bool+ put, Bool- get; ; Bool) {
+    -get();
   };
 
   proc main( ; ; Bool) {
-    Bool <~> g1, p1;
-    Bool <~> g2, p2;
-    Bool x1 = ~p1(Bool:true(Unit()));
-    Bool x2 = ~p2(Bool:false(Unit()));
+    Bool +- p1, g1;
+    Bool +- p2, g2;
+    Bool x1 = +p1(Bool:true(Unit()));
+    Bool x2 = +p2(Bool:false(Unit()));
     sub(p1, g2 ; ); 
   };
 }

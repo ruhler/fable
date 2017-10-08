@@ -2,9 +2,9 @@ set prg {
   struct Unit();
   struct Donut();
 
-  proc f(Donut ~> myput ; ; Unit) {
+  proc f(Donut+ myput ; ; Unit) {
     # myput port has the wrong type.
-    ~myput(Donut());
+    +myput(Donut());
   };
 
   proc main( ; ; Unit) {

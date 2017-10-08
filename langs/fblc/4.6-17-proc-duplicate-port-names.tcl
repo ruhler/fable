@@ -2,7 +2,7 @@ set prg {
   # Process port names must be unique.
   struct Unit();
 
-  proc p(Unit <~ px, Unit ~> px ; Unit x, Unit y ; Unit) {
+  proc p(Unit- px, Unit+ px ; Unit x, Unit y ; Unit) {
     $(Unit());
   };
 
@@ -10,4 +10,4 @@ set prg {
     $(Unit());
   };
 }
-fblc-check-error $prg 5:30
+fblc-check-error $prg 5:26

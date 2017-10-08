@@ -737,42 +737,46 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return NULL;
     }
     return &eval_actn->_base;
-  } else if (IsToken(toks, '~')) {
-    // This is a get action or put action of the form: ~name() or ~name(<arg>)
-    GetToken(toks, '~');
-    FblcsName port;
-    if (!GetNameToken(arena, toks, "port", &port)) {
+  } else if (IsToken(toks, '-')) {
+    // This is a get action of the form: -name()
+    FblcsGetActn* get_actn = FBLC_ALLOC(arena, FblcsGetActn);
+    get_actn->_base.tag = FBLCS_GET_ACTN;
+    get_actn->_base.loc = loc;
+    get_actn->port.id = FBLC_NULL_ID;
+
+    GetToken(toks, '-');
+    if (!GetNameToken(arena, toks, "port", &get_actn->port.name)) {
       return NULL;
     }
     if (!GetToken(toks, '(')) {
       return NULL;
     }
-
-    if (IsToken(toks, ')')) {
-      FblcsGetActn* get_actn = FBLC_ALLOC(arena, FblcsGetActn);
-      get_actn->_base.tag = FBLCS_GET_ACTN;
-      get_actn->_base.loc = loc;
-      get_actn->port.name.loc = port.loc;
-      get_actn->port.name.name = port.name;
-      get_actn->port.id = FBLC_NULL_ID;
-      GetToken(toks, ')');
-      return &get_actn->_base;
-    } else {
-      FblcsPutActn* put_actn = FBLC_ALLOC(arena, FblcsPutActn);
-      put_actn->_base.tag = FBLC_PUT_ACTN;
-      put_actn->_base.loc = loc;
-      put_actn->port.name.loc = port.loc;
-      put_actn->port.name.name = port.name;
-      put_actn->port.id = FBLC_NULL_ID;
-      put_actn->arg = ParseExpr(arena, toks, false);
-      if (put_actn->arg == NULL) {
-        return NULL;
-      }
-      if (!GetToken(toks, ')')) {
-        return NULL;
-      }
-      return &put_actn->_base;
+    if (!GetToken(toks, ')')) {
+      return NULL;
     }
+    return &get_actn->_base;
+  } else if (IsToken(toks, '+')) {
+    // This is a put action of the form: +name(<arg>)
+    FblcsPutActn* put_actn = FBLC_ALLOC(arena, FblcsPutActn);
+    put_actn->_base.tag = FBLC_PUT_ACTN;
+    put_actn->_base.loc = loc;
+    put_actn->port.id = FBLC_NULL_ID;
+
+    GetToken(toks, '+');
+    if (!GetNameToken(arena, toks, "port", &put_actn->port.name)) {
+      return NULL;
+    }
+    if (!GetToken(toks, '(')) {
+      return NULL;
+    }
+    put_actn->arg = ParseExpr(arena, toks, false);
+    if (put_actn->arg == NULL) {
+      return NULL;
+    }
+    if (!GetToken(toks, ')')) {
+      return NULL;
+    }
+    return &put_actn->_base;
   } else if (IsNameToken(toks)) {
     FblcsName start;
     GetNameToken(arena, toks, "process or type name", &start);
@@ -802,27 +806,24 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
         return NULL;
       }
       return &call_actn->_base;
-    } else if (in_stmt && IsToken(toks, '<')) {
-      // This is a link expression of the form: start <~> get, put; body
+    } else if (in_stmt && IsToken(toks, '+')) {
+      // This is a link expression of the form: start +- put, get; body
       FblcsLinkActn* link_actn = FBLC_ALLOC(arena, FblcsLinkActn);
       link_actn->_base.tag = FBLC_LINK_ACTN;
       link_actn->_base.loc = loc;
       link_actn->type.name = start.name;
       link_actn->type.loc = start.loc;
-      GetToken(toks, '<');
-      if (!GetToken(toks, '~')) {
+      GetToken(toks, '+');
+      if (!GetToken(toks, '-')) {
         return NULL;
       }
-      if (!GetToken(toks, '>')) {
-        return NULL;
-      }
-      if (!GetNameToken(arena, toks, "port name", &link_actn->get)) {
+      if (!GetNameToken(arena, toks, "port name", &link_actn->put)) {
         return NULL;
       }
       if (!GetToken(toks, ',')) {
         return NULL;
       }
-      if (!GetNameToken(arena, toks, "port name", &link_actn->put)) {
+      if (!GetNameToken(arena, toks, "port name", &link_actn->get)) {
         return NULL;
       }
       if (!GetToken(toks, ';')) {
@@ -1055,20 +1056,14 @@ FblcsProgram* FblcsParseProgram(FblcArena* arena, const char* filename)
             return NULL;
           }
 
-          if (IsToken(&toks, '<')) {
-            GetToken(&toks, '<');
-            if (!GetToken(&toks, '~')) {
-              return NULL;
-            }
+          if (IsToken(&toks, '-')) {
+            GetToken(&toks, '-');
             port->polarity = FBLCS_GET_POLARITY;
-          } else if (IsToken(&toks, '~')) {
-            GetToken(&toks, '~');
-            if (!GetToken(&toks, '>')) {
-              return NULL;
-            }
+          } else if (IsToken(&toks, '+')) {
+            GetToken(&toks, '+');
             port->polarity = FBLCS_PUT_POLARITY;
           } else {
-            UnexpectedToken(&toks, "'<~' or '~>'");
+            UnexpectedToken(&toks, "'-' or '+'");
             return NULL;
           }
 

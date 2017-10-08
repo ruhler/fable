@@ -4,8 +4,8 @@ set prg {
   union Bool(Unit true, Unit false);
 
   proc main( ; ; Bool) {
-    Bool <~> get, put;
-    ~put(Bool:true(Unit()));
+    Bool +- put, get;
+    +put(Bool:true(Unit()));
   };
 }
 

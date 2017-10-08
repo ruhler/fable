@@ -196,16 +196,16 @@ func Move(State s; MoveResultM) {
             })));
 };
 
-proc DrawAll(Draw ~> out; DrawS draw ; Unit) {
+proc DrawAll(Draw+ out; DrawS draw ; Unit) {
   ?(draw ; $(Unit()),
       {
-         Draw x = ~out(draw.cons.head);
+         Draw x = +out(draw.cons.head);
          DrawAll(out; draw.cons.tail);
       });
 };
 
-proc Snake(Input <~ in, Draw ~> out; State s ; Unit) {
-  Input x = ~in();
+proc Snake(Input- in, Draw+ out; State s ; Unit) {
+  Input x = -in();
   ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
        {
            MoveResultM m = $(Move(s));
@@ -218,7 +218,7 @@ proc Snake(Input <~ in, Draw ~> out; State s ; Unit) {
        });
 };
 
-proc Main(Input <~ in, Draw ~> out; ; Unit) {
+proc Main(Input- in, Draw+ out; ; Unit) {
   State s = $(InitialState());
   Unit u = DrawAll(out ; DrawState(s));
   Snake(in, out; s);
