@@ -381,27 +381,30 @@ using: "using" mref '{' using_item_list '}' {
     }
     ;
 
-abstract_type_decl: "type" name {
+abstract_type_decl: "type" name tparam_list {
       $$ = FBLC_ALLOC(arena, FbldType);
       $$->name = $2;
       $$->kind = FBLD_ABSTRACT_KIND;
+      $$->targv = $3;
       $$->fieldv = NULL;
     }
     ;
 
-struct_decl: "struct" name '(' arg_list ')' {
+struct_decl: "struct" name tparam_list '(' arg_list ')' {
       $$ = FBLC_ALLOC(arena, FbldType);
       $$->name = $2;
       $$->kind = FBLD_STRUCT_KIND;
-      $$->fieldv = $4;
+      $$->targv = $3;
+      $$->fieldv = $5;
     }
     ;
 
-union_decl: "union" name '(' non_empty_arg_list ')' {
+union_decl: "union" name tparam_list '(' non_empty_arg_list ')' {
       $$ = FBLC_ALLOC(arena, FbldType);
       $$->name = $2;
       $$->kind = FBLD_UNION_KIND;
-      $$->fieldv = $4;
+      $$->targv = $3;
+      $$->fieldv = $5;
     }
     ;
 

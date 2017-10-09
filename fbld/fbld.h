@@ -437,6 +437,7 @@ typedef enum {
 typedef struct {
   FbldName* name;
   FbldKind kind;
+  FbldNameV* targv;
   FbldArgV* fieldv;
 } FbldType;
 

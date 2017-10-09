@@ -4,6 +4,8 @@ Priority:
 
 Fbld 3:
 * Revise lang/fbld.txt a few more times until it makes sense.
+ - Q: how to distinguish between struct expr and app expr in front end, given
+   we want <A, B, C> in one case and <A, B, C; D d, E e, F f> in another?
 * Rewrite the fbld front end to support the new language.
 
 Fbld Test:
