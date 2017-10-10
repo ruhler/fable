@@ -38,6 +38,26 @@ type Int with operations to add two Ints together, but the user need not know
 whether the Int type is implemented using a unary, binary, 2s-complement or
 other representation.
 
+Interfaces in fbld are defined using the 'mtype' keyword, short for "module
+type". Modules are defined using the 'mdefn' keyword, short for "module
+definition". To get a flavor of what mtype and mdefn declarations look like,
+here's what the interface and implementation of an integer arithmetic module
+might look like:
+
+mtype IntegerI {
+  type Int;
+  func Add(Int a, Int b; Int);
+};
+
+mdefn IntegerM(IntegerI) {
+  struct Unit();
+  union Int(Unit 0, Int S);
+
+  func Add(Int a, Int b; Int) {
+    ?(a; b, Int:S(Add(a.S, b)));
+  };
+};
+
 Interfaces allow modules to be developed independent of their use and reused
 independent of their development. Modules can be understood and developed in
 isolation then combined to form large programs that would otherwise be too
@@ -48,21 +68,53 @@ how types, functions, and processes are defined and implemented. To take full
 advantage of this, fbld adds support for polymorphic declarations, which
 allow code to be reused in multiple different contexts with different
 definitions of the types, functions, and processes it interfaces with within
-the same program. Polymorphism is supported by allowing types and interfaces
-to be parameterized by types and allowing funcs, procs, and modules to be
-parameterized by by types and other modules.
+the same program. Polymorphism is supported by allowing types, funcs, procs,
+interfaces, and modules to be parameterized by types and other modules.
 
 For example, there are common data structures, such as lists, which can be
 used with many different element types. Fbld's polymorphism allows a
 list type to be defined that is a function of a given type parameter.
 Basic list functions can be defined that can be reused for lists of Ints,
 lists of booleans, lists of lists, or lists of any other type. This is a form
-of parametric polymorphism.
+of parametric polymorphism. The following example gives a flavor for the
+syntax of polymorphism in fbld:
+
+struct ListP<T>(T head, ListS<T> tail);
+union ListS<T>(Unit nil, ListP<T> cons);
+
+func Last<T>(ListP<T> x; T) {
+  ?(x.tail; x.head, Last<T>(x.tail.cons));
+};
 
 As another example, some computation involving numbers can be defined that
-works on any type of number satisfying a required set of operations. A module
-involving polynomials, for example, could be reused with natural numbers,
-integers, real numbers, or booleans. This is a form of ad-hoc polymorphism.
+works on any type of number satisfying a required set of operations. A
+function for summing up the numbers on a list could be reused with natural
+numbers, integers, real numbers, or booleans. This is a form of ad-hoc
+polymorphism:
+
+mtype Number<T> {
+  func Zero( ; T);
+  func Add(T a, T b; T);
+};
+
+mdefn IntNumber(Number<Int>) {
+  func Zero( ; Int) {
+    Int:0(Unit());
+  };
+
+  func Add(Int a, Int b; Int) {
+    Add@Int(a, b);
+  };
+};
+
+func SumS<T; Number<T> N>(ListS<T> l; T) {
+  ?(l; Zero@N(), SumS<T, N>(l.cons));
+};
+
+func SumP<T; Number<T> N>(ListP<T> l; T) {
+  Add@N(l.head, SumS<T, N>(l.tail));
+};
+
 
 Concepts
 --------
@@ -114,6 +166,23 @@ other words, the graph of interface and module dependencies should be a
 directed acyclic graph. The reason for this is to avoid complex and confusing
 module dependencies that would make it difficult to reason about or understand
 a module in isolation.
+
+Polymorphism
+^^^^^^^^^^^^
+Declarations can be parameterized by zero or more type and module parameters.
+The general syntax for defining a polymorphic entity is to use angle brackets
+after the entities name with the syntax:
+  ['<' [tname [',' tname [...]]] [';' [iref mname [',' iref mname [...]]]] '>']
+
+If nothing is given after the entity name, the entity is assumed to take no
+type or module parameters. If the angle brackets do not include a semicolon
+followed by type parameters, the entity is assumed to take no module
+parameters. In any case, it is acceptable to use the explicit syntax with zero
+or more type and module parameters.
+
+TODO: Are type parameters always for simple types? Any way to specify a higher
+kinded type parameter, such as M<T> for a monadic type? Same question for
+modules. Any way to pass a generic module? What would that even mean?
 
 Using Declarations
 ^^^^^^^^^^^^^^^^^^
