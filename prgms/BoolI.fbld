@@ -1,6 +1,5 @@
-
-mtype Bool {
-  using Unit { Unit; };
+mtype BoolI {
+  using UnitM { Unit; };
 
   union Bool(Unit true, Unit false);
 

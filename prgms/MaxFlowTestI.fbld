@@ -1,7 +1,7 @@
-mtype MaxFlowTest {
-  using Unit { Unit; };
-  using UBNat { Nat; };
-  using List { S; };
+mtype MaxFlowTestI {
+  using UnitM { Unit; };
+  using UBNatM { Nat; };
+  using ListM { S; };
  
   union TestName(Unit Basic);
   struct TestFailure(TestName name, Nat a, Nat b);

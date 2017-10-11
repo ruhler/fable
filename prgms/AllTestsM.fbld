@@ -1,8 +1,8 @@
-mdefn AllTests(AllTests) {
-  using Unit { Unit; };
-  using List { S; P; Append; };
-  using UBNatTest { UBNatTestFailure = TestFailure; };
-  using PrimesTest { PrimesTestFailure = TestFailure; };
+mdefn AllTestsM(AllTestsI) {
+  using UnitM { Unit; };
+  using List M{ S; P; Append; };
+  using UBNatTestM { UBNatTestFailure = TestFailure; };
+  using PrimesTestM { PrimesTestFailure = TestFailure; };
 
   union TestFailure(
       UBNatTestFailure UBNatTest,
@@ -23,7 +23,7 @@ mdefn AllTests(AllTests) {
 
   func Test( ; S<TestFailure>) {
     Append<TestFailure>(
-        MapS<UBNatTestFailure, TestFailure; UBNatTestFailiureF>(Test@UBNatTest()),
-        MapS<PrimesTestFailure, TestFailure; PrimesTestFailureF>(Test@PrimesTest()));
+        MapS<UBNatTestFailure, TestFailure; UBNatTestFailiureF>(Test@UBNatTestM()),
+        MapS<PrimesTestFailure, TestFailure; PrimesTestFailureF>(Test@PrimesTestM()));
   };
 };

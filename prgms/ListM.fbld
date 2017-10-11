@@ -1,5 +1,5 @@
-mdefn List(List) {
-  using Unit { Unit; };
+mdefn ListM(ListI) {
+  using UnitM { Unit; };
 
   struct P<T>(T head, S<T> tail);
   union S<T>(Unit nil, P<T> cons); 

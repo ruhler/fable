@@ -1,6 +1,6 @@
-mtype Primes {
-  using Bool { Bool; };
-  using UBNat { Nat; };
+mtype PrimesI {
+  using BoolM { Bool; };
+  using UBNatM { Nat; };
  
   func IsPrime(Nat x ; Bool);
 

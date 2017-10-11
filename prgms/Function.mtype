@@ -1,3 +1,0 @@
-mtype Function<A, B> {
-  func f(A ; B);
-};

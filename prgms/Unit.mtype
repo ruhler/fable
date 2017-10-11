@@ -1,3 +1,0 @@
-mtype Unit {
-  struct Unit();
-};

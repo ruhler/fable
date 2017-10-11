@@ -1,7 +1,7 @@
-mtype UBNatTest {
-  using Unit { Unit; };
-  using UBNat { Nat; };
-  using List { S; };
+mtype UBNatTestI {
+  using UnitM { Unit; };
+  using UBNatM { Nat; };
+  using ListM { S; };
  
   union TestName(
     Unit Eq_0_0, Unit Eq_0_1, Unit Eq_1_1,

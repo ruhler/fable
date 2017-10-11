@@ -1,7 +1,7 @@
-mtype PrimesTest {
-  using Unit { Unit; };
-  using UBNat { Nat; };
-  using List { S; };
+mtype PrimesTestI {
+  using UnitM { Unit; };
+  using UBNatM { Nat; };
+  using ListM { S; };
 
   union TestName(
       Unit NthPrime_1_10

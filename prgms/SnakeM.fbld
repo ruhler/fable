@@ -1,9 +1,9 @@
-mdefn Snake(Snake) {
-  using Unit { Unit; };
-  using Bool { Bool; True; False; And; };
-  using UBNat { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
-  using Draw { Color; Draw; };
-  using List { P; S; InitP; LastP; };
+mdefn SnakeM(SnakeI) {
+  using UnitM { Unit; };
+  using BoolM { Bool; True; False; And; };
+  using UBNatM { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
+  using DrawM { Color; Draw; };
+  using ListM { P; S; InitP; LastP; };
 
   func MinRow( ; Nat) 0();
   func MaxRow( ; Nat) Lit2(2(), 0());

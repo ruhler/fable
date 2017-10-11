@@ -172,7 +172,10 @@ Polymorphism
 Declarations can be parameterized by zero or more type and module parameters.
 The general syntax for defining a polymorphic entity is to use angle brackets
 after the entities name with the syntax:
-  ['<' [tname [',' tname [...]]] [';' [iref mname [',' iref mname [...]]]] '>']
+
+params ::= ['<' [tparam [',' tparam [...]]] [';' [mparam [',' mparam [...]]]] '>'] ;
+mparam ::= iref params mname ;
+tparam ::= tname params ;
 
 If nothing is given after the entity name, the entity is assumed to take no
 type or module parameters. If the angle brackets do not include a semicolon
@@ -180,9 +183,41 @@ followed by type parameters, the entity is assumed to take no module
 parameters. In any case, it is acceptable to use the explicit syntax with zero
 or more type and module parameters.
 
-TODO: Are type parameters always for simple types? Any way to specify a higher
-kinded type parameter, such as M<T> for a monadic type? Same question for
-modules. Any way to pass a generic module? What would that even mean?
+Type parameters introduce abstract type declarations of the corresponding name
+into the context of the entity being declared. Type parameters can themselves
+be parameterized to indicate a higher kinded type. For example, a monadic list
+function could be defined by using a type parameter M that itself is
+parameterized by element type T:
+
+   func mapM<M<T>; Function<A, B> function, Monad<M> monad>(List<M<A>> list; List<M<B>>);
+
+In this case the type variable T is not visible outside the declaration M<T>.
+In more complex cases, the type variable can be referenced in additional
+module parameters.
+
+Top Level Declarations
+^^^^^^^^^^^^^^^^^^^^^^
+The fbld language as proposed is incomplete. It does not have a good story for
+composing modules together into higher level libraries that can themselves be
+composed together into much larger programs. This is a work in progress that
+will develop as more experience is gained developing complex fbld programs.
+
+In the mean time, the following is advised:
+
+Code is organized into top level mtype and mdefn declarations. These
+declarations belong to a single global namespace. The dependency graph between
+top level declarations must form a directed acyclic graph, which implies a
+module can be understood by first understanding its dependencies, then
+understanding the module itself in isolation.
+
+An fbld program is made up of the module containing its main entry point and
+all other modules and interfaces that the main module depends on directly or
+indirectly.
+
+To avoid the need to parse a large number of top level declarations unused in
+most programs, it is suggested to organize top level declarations by putting
+each declaration in its own file called Foo.fbld, where Foo is the name of the
+top level declaration.
 
 Using Declarations
 ^^^^^^^^^^^^^^^^^^

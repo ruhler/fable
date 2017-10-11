@@ -1,0 +1,10 @@
+mtype AllTestsI {
+  using ListM { S; };
+
+  union TestFailure(
+      TestFailure@UBNatTestM UBNatTest,
+      TestFailure@PrimesTestM PrimesTest
+  );
+
+  func Test( ; S<TestFailure>);
+};

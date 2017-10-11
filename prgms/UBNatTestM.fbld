@@ -1,9 +1,8 @@
-
-mdefn UBNatTest(UBNatTest) {
-  using Unit { Unit; };
-  using Bool { Bool; Not; };
-  using List { P; S; };
-  using UBNat {
+mdefn UBNatTestM(UBNatTestI) {
+  using UnitM { Unit; };
+  using BoolM { Bool; Not; };
+  using ListM { P; S; };
+  using UBNatM {
     Nat;
     0; 1; 2; 3; 4; 5; 6; 7; Lit2;
     Eq; Ne; Lt; Le; Gt; Ge;

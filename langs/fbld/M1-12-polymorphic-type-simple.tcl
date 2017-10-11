@@ -20,6 +20,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
+skip fbld-test $prg "main@Main" {} {
   return Bool@Main:true(Unit@Main())
 }

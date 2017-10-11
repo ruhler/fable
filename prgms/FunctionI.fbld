@@ -1,0 +1,3 @@
+mtype FunctionI<A, B> {
+  func f(A ; B);
+};
