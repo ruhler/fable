@@ -34,7 +34,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(Main) {
+    mdefn MainM(MainI) {
       struct Unit();
 
       struct A(Unit x, Unit y);

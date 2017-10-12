@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype Main {
+    mtype MainI {
       struct Unit();
       struct Donut();
       struct BadStruct(Unit x, Donut x);  # duplicate fields named 'x'
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn Main(Main) {
+    mdefn MainM(MainI) {
       struct Unit();
       struct Donut();
       struct BadStruct(Unit x, Donut x);
@@ -21,12 +21,12 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main MainI.fbld:5:38
+fbld-check-error $prg MainM MainI.fbld:5:38
 
 
 # Even if the types are the same.
 set prg {
-  Main.mtype {
+  MainI.fbld {
     mtype MainI {
       struct Unit();
       struct BadStruct(Unit x, Unit x);  # duplicate fields named 'x'
@@ -46,4 +46,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg MainM Main.mtype:4:37
+fbld-check-error $prg MainM MainI.fbld:4:37

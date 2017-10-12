@@ -1,6 +1,6 @@
 set prg {
   TypesI.fbld {
-    mtype TypeI {
+    mtype TypesI {
       struct Unit();
       struct Foo(Unit bar);
     };

@@ -10,7 +10,7 @@
 #include "fblc.h"
 #include "fbld.h"
 
-static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension);
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name);
 
 
 // FindModuleFile --
@@ -20,7 +20,6 @@ static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* nam
 //   arena - Arena to use for allocating the returned filename.
 //   path - The module search path.
 //   name - The name of the module.
-//   extension - The extension of the module file: ".mdecl" or ".mdefn".
 //
 // Result:
 //   The filename of the requested module file or NULL if no such file could
@@ -32,12 +31,12 @@ static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* nam
 // Allocations:
 //   The user is responsible for freeing the returned filename if not null
 //   using the arena passed to this function.
-static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name, const char* extension)
+static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* name)
 {
   for (size_t i = 0; i < path->size; ++i) {
-    size_t length = strlen(path->xs[i]) + 1 + strlen(name) + strlen(extension) + 1;
+    size_t length = strlen(path->xs[i]) + 1 + strlen(name) + strlen(".fbld") + 1;
     char* filename = arena->alloc(arena, sizeof(char) * length);
-    sprintf(filename, "%s/%s%s", path->xs[i], name, extension);
+    sprintf(filename, "%s/%s%s", path->xs[i], name, ".fbld");
     if (access(filename, F_OK) == 0) {
       return filename;
     }
@@ -56,9 +55,9 @@ FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, 
     }
   }
 
-  char* filename = FindModuleFile(arena, path, name, ".mtype");
+  char* filename = FindModuleFile(arena, path, name);
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.mtype on search path\n", name);
+    fprintf(stderr, "unable to locate %s.fbld on search path\n", name);
     return NULL;
   }
 
@@ -69,7 +68,10 @@ FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, 
     return NULL;
   }
 
-  assert(FbldNamesEqual(mtype->name->name, name));
+  if (!FbldNamesEqual(mtype->name->name, name)) {
+    FbldReportError("Expected '%s', but found '%s'\n", mtype->name->loc, name, mtype->name->name);
+    return NULL;
+  }
   FblcVectorAppend(arena, prgm->mtypev, mtype);
 
   // Check that this declaration is valid.
@@ -92,9 +94,9 @@ FbldMDefn* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
   }
 
   // Parse the module declaration if we haven't already.
-  char* filename = FindModuleFile(arena, path, name, ".mdefn");
+  char* filename = FindModuleFile(arena, path, name);
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.mdefn on search path\n", name);
+    fprintf(stderr, "unable to locate %s.fbld on search path\n", name);
     return NULL;
   }
 
@@ -103,7 +105,12 @@ FbldMDefn* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, 
     fprintf(stderr, "failed to parse module from %s\n", filename);
     return NULL;
   }
-  assert(FbldNamesEqual(mdecl->name->name, name));
+
+  if (!FbldNamesEqual(mdecl->name->name, name)) {
+    FbldReportError("Expected '%s', but found '%s'\n", mdecl->name->loc, name, mdecl->name->name);
+    return NULL;
+  }
+
   FblcVectorAppend(arena, prgm->mdeclv, mdecl);
 
   // Check that this definition is valid.

@@ -18,4 +18,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg MainM Main.mtype:5:20
+fbld-check-error $prg MainM MainI.fbld:5:20
