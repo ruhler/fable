@@ -1,13 +1,13 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       proc main( Unit+ out ; ; Unit);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       proc main( Unit+ out ; ; Unit) {
         +out(Unit());
@@ -16,7 +16,7 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  get out Unit@Main()
-  return Unit@Main()
+fbld-test $prg "main@MainM" {} {
+  get out Unit@MainM()
+  return Unit@MainM()
 }

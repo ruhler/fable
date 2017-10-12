@@ -1,6 +1,6 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
       struct Maybe<T>(T just, Unit nothing);
@@ -8,8 +8,8 @@ set prg {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union Bool(Unit true, Unit false);
       struct Maybe<T>(T just, Unit nothing);
@@ -20,6 +20,6 @@ set prg {
   }
 }
 
-skip fbld-test $prg "main@Main" {} {
-  return Bool@Main:true(Unit@Main())
+skip fbld-test $prg "main@MainM" {} {
+  return Bool@MainM:true(Unit@MainM())
 }

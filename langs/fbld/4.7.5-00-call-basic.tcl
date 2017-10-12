@@ -1,15 +1,15 @@
 # Test a basic process call.
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
       proc sub( ; ; Bool);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union Bool(Unit true, Unit false);
       proc sub( ; ; Bool) {
@@ -23,6 +23,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return Bool@Main:true(Unit@Main())
+fbld-test $prg "main@MainM" {} {
+  return Bool@MainM:true(Unit@MainM())
 }

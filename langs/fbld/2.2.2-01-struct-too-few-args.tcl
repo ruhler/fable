@@ -1,6 +1,6 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       struct Donut();
       struct A(Unit x, Donut y);
@@ -8,8 +8,8 @@ set prg {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       struct Donut();
       struct A(Unit x, Donut y);
@@ -22,4 +22,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main 9:9
+fbld-check-error $prg MainM 9:9

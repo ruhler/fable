@@ -1,15 +1,15 @@
 # Test calling a process with multiple ports.
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
       proc main( ; ; Bool);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union Bool(Unit true, Unit false);
 
@@ -27,6 +27,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return Bool@Main:true(Unit@Main())
+fbld-test $prg "main@MainM" {} {
+  return Bool@MainM:true(Unit@MainM())
 }

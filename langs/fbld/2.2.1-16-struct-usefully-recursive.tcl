@@ -1,6 +1,6 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
       struct NonEmptyBoolList(Bool head, BoolList tail);
@@ -9,8 +9,8 @@ set prg {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       # structs can be mutually recursive with unions.
       struct Unit();
       union Bool(Unit true, Unit false);
@@ -24,6 +24,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return BoolList@Main:nonempty(NonEmptyBoolList@Main(Bool@Main:true(Unit@Main()),BoolList@Main:empty(Unit@Main())))
+fbld-test $prg "main@MainM" {} {
+  return BoolList@MainM:nonempty(NonEmptyBoolList@MainM(Bool@MainM:true(Unit@MainM()),BoolList@MainM:empty(Unit@MainM())))
 }

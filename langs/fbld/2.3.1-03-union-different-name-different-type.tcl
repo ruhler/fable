@@ -1,11 +1,11 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       # Two unions with different names are considered different types, even
       # if they have the same fields.
       struct Unit();
@@ -20,4 +20,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:11:9
+fbld-check-error $prg MainM MainM.fbld:11:9

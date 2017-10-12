@@ -1,13 +1,13 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType();
       func main( ; ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType();
 
       func main( ; ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType) {
@@ -17,6 +17,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType@Main()
+fbld-test $prg "main@MainM" {} {
+  return ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType@MainM()
 }

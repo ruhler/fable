@@ -1,6 +1,6 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       struct Donut();
       struct MultiField(Unit x, Donut y);
@@ -8,8 +8,8 @@ set prg {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       struct Donut();
       union MultiField(Unit x, Donut y);   # Should be 'struct', not 'union'.
@@ -21,4 +21,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:5:13
+fbld-check-error $prg MainM MainM.fbld:5:13

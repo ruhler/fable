@@ -1,28 +1,28 @@
 set prg {
-  Types.mtype {
-    mtype Types {
+  TypesI.fbld {
+    mtype TypeI {
       struct Unit();
       struct Foo(Unit bar);
     };
   }
 
-  Types.mdefn {
-    mdefn Types(Types) {
+  TypesM.fbld {
+    mdefn TypesM(TypesI) {
       struct Unit();
       struct Foo(Unit bar);
     };
   }
 
-  Main.mtype {
-    mtype Main {
-      using Types { Foo; };
+  MainI.fbld {
+    mtype MainI {
+      using TypesM { Foo; };
       func main( ; Foo);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
-      using Types { Unit; Foo; };
+  MainM.fbld {
+    mdefn MainM(MainI) {
+      using TypesM { Unit; Foo; };
       func main( ; Foo) {
         # Foo is a struct type, not a union type.
         Foo:bar(Unit());
@@ -31,4 +31,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:6:9
+fbld-check-error $prg MainM MainM.fbld:6:9

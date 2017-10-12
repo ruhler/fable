@@ -1,14 +1,14 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union OneField(Unit x);
       func main( ; OneField);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union OneField(Unit x);
 
@@ -19,6 +19,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return OneField@Main:x(Unit@Main())
+fbld-test $prg "main@MainM" {} {
+  return OneField@MainM:x(Unit@MainM())
 }

@@ -1,11 +1,11 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       # A function must not be declared multiple times.
       struct Unit();
 
@@ -19,4 +19,4 @@ set prg {
     };
   }
 }
-fbld-check-error $prg Main Main.mdefn:10:12
+fbld-check-error $prg MainM MainM.fbld:10:12

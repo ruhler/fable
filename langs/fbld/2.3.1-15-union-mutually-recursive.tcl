@@ -1,6 +1,6 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union Foo(Unit x, Bar y);   # mutually recursive with Bar
       union Bar(Unit x, Foo y);   # mutually recursive with Foo
@@ -8,8 +8,8 @@ set prg {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union Foo(Unit x, Bar y);
       union Bar(Unit x, Foo y);
@@ -21,6 +21,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return Foo@Main:y(Bar@Main:y(Foo@Main:x(Unit@Main())))
+fbld-test $prg "main@MainM" {} {
+  return Foo@MainM:y(Bar@MainM:y(Foo@MainM:x(Unit@MainM())))
 }

@@ -1,11 +1,11 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
 
       # Missing entire argument from argument list.
@@ -15,4 +15,4 @@ set prg {
     };
   }
 }
-fbld-check-error $prg Main Main.mdefn:6:22
+fbld-check-error $prg MainM MainM.fbld:6:22

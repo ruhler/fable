@@ -1,18 +1,18 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       struct (Unit x, Unit y);    # The struct name is missing.
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       struct (Unit x, Unit y);    # The struct name is missing.
     };
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:4:14
+fbld-check-error $prg MainM MainM.fbld:4:14
 

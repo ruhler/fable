@@ -1,17 +1,17 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       type Foo;
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       struct Foo(Unit x, Unit y;    # Missing the close paren
     };
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:4:32
+fbld-check-error $prg MainM MainM.fbld:4:32
 

@@ -1,13 +1,13 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       proc f( ; Unit x, Unit y; Unit);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
 
       # The declaration of 'f' here doesn't match the declaration in
@@ -19,4 +19,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:7:12
+fbld-check-error $prg MainM MainM.fbld:7:12

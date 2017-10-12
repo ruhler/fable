@@ -1,11 +1,11 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       # The return type of the function must match the type of the body.
       struct Unit();
       struct Donut();
@@ -16,4 +16,4 @@ set prg {
     };
   }
 }
-fbld-check-error $prg Main Main.mdefn:8:9
+fbld-check-error $prg MainM MainM.fbld:8:9

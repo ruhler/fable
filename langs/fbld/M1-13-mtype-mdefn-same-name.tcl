@@ -1,14 +1,14 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       func main( ; Unit);
     };
   }
 
-  Main.mdefn {
+  MainM.fbld {
     # The mdefn name cannot be the same as the mtype name.
-    mdefn Main(Main) {
+    mdefn MainM(MainI) {
       struct Unit();
 
       func main( ; Unit) {
@@ -18,4 +18,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:3:11
+fbld-check-error $prg MainM MainM.fbld:3:11

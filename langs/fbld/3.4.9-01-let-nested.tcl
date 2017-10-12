@@ -1,6 +1,6 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       struct A(Unit x, Unit y);
       struct A2(A x, A y);
@@ -9,8 +9,8 @@ set prg {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       struct A(Unit x, Unit y);
       struct A2(A x, A y);
@@ -24,6 +24,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return B@Main(Unit@Main(),A2@Main(A@Main(Unit@Main(),Unit@Main()),A@Main(Unit@Main(),Unit@Main())),Unit@Main())
+fbld-test $prg "main@MainM" {} {
+  return B@MainM(Unit@MainM(),A2@MainM(A@MainM(Unit@MainM(),Unit@MainM()),A@MainM(Unit@MainM(),Unit@MainM())),Unit@MainM())
 }

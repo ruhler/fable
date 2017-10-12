@@ -1,14 +1,14 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union Bool(Unit True, Unit False);
       func main(Bool x ; Bool);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union Bool(Unit True, Unit False);
 
@@ -19,10 +19,10 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" { Bool@Main:True(Unit@Main()) } {
-  return Bool@Main:True(Unit@Main())
+fbld-test $prg "main@MainM" { Bool@MainM:True(Unit@MainM()) } {
+  return Bool@MainM:True(Unit@MainM())
 }
 
-fbld-test $prg "main@Main" { Bool@Main:False(Unit@Main()) } {
-  return Bool@Main:False(Unit@Main())
+fbld-test $prg "main@MainM" { Bool@MainM:False(Unit@MainM()) } {
+  return Bool@MainM:False(Unit@MainM())
 }

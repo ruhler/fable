@@ -1,14 +1,14 @@
 # Test a simple process.
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       proc main( ; ; Unit);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
 
       proc main( ; ; Unit) {
@@ -18,6 +18,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
-  return Unit@Main()
+fbld-test $prg "main@MainM" {} {
+  return Unit@MainM()
 }

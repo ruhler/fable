@@ -1,15 +1,15 @@
 # A struct expression can't be used for a union type.
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union Bool(Unit True, Unit False);
       func main( ; Bool);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union Bool(Unit True, Unit False);
 
@@ -20,4 +20,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:7:9
+fbld-check-error $prg MainM MainM.fbld:7:9

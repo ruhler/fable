@@ -1,15 +1,15 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union NoFields();   # A union must have at least one field.
     };
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:4:22
+fbld-check-error $prg MainM MainM.fbld:4:22

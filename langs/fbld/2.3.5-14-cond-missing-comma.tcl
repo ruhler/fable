@@ -1,6 +1,6 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       struct Unit();
       union EnumABC(Unit A, Unit B, Unit C);
       union EnumXYZ(Unit X, Unit Y, Unit Z);
@@ -8,8 +8,8 @@ set prg {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union EnumABC(Unit A, Unit B, Unit C);
       union EnumXYZ(Unit X, Unit Y, Unit Z);
@@ -23,4 +23,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:10:27
+fbld-check-error $prg MainM MainM.fbld:10:27

@@ -1,11 +1,11 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       struct Unit();
       union Foo(Unit bar);
 
@@ -17,4 +17,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:8:17
+fbld-check-error $prg MainM MainM.fbld:8:17

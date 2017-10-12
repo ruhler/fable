@@ -1,26 +1,26 @@
 # Test that we can use a 'using' statement to refer to foreign entities.
 set prg {
-  UnitM.mtype {
-    mtype UnitM {
+  UnitI.fbld {
+    mtype UnitI {
       struct Unit();
     };
   }
 
-  UnitM.mdefn {
-    mdefn UnitM(UnitM) {
+  UnitM.fbld {
+    mdefn UnitM(UnitI) {
       struct Unit();
     };
   }
 
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       using UnitM { Unit; };
       func main( ; Unit);
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       using UnitM { Unit; };
       func main( ; Unit) {
         Unit();
@@ -29,6 +29,6 @@ set prg {
   }
 }
 
-fbld-test $prg "main@Main" {} {
+fbld-test $prg "main@MainM" {} {
   return Unit@UnitM()
 }

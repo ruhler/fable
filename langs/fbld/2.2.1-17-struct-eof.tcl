@@ -1,12 +1,12 @@
 set prg {
-  Main.mtype {
-    mtype Main {
+  MainI.fbld {
+    mtype MainI {
       type Foo;
     };
   }
 
-  Main.mdefn {
-    mdefn Main(Main) {
+  MainM.fbld {
+    mdefn MainM(MainI) {
       # A struct declaration should not contain an end of file.
       struct Unit();
       struct Foo(Unit x,
@@ -14,4 +14,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg Main Main.mdefn:8:1
+fbld-check-error $prg MainM MainM.fbld:8:1
