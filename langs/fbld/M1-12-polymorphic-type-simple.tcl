@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
       struct Maybe<T>(T just, Unit nothing);
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       union Bool(Unit true, Unit false);
       struct Maybe<T>(T just, Unit nothing);

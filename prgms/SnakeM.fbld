@@ -1,4 +1,4 @@
-mdefn SnakeM(SnakeI) {
+module SnakeM(SnakeI) {
   using UnitM { Unit; };
   using BoolM { Bool; True; False; And; };
   using UBNatM { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };

@@ -1,4 +1,4 @@
-mtype UBNatTestI {
+interf UBNatTestI {
   using UnitM { Unit; };
   using UBNatM { Nat; };
   using ListM { S; };

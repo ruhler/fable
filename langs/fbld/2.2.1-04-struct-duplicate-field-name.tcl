@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct Donut();
       struct BadStruct(Unit x, Donut x);  # duplicate fields named 'x'
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct Donut();
       struct BadStruct(Unit x, Donut x);
@@ -27,7 +27,7 @@ fbld-check-error $prg MainM MainI.fbld:5:38
 # Even if the types are the same.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct BadStruct(Unit x, Unit x);  # duplicate fields named 'x'
       func main( ; BadStruct);
@@ -35,7 +35,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct BadStruct(Unit x, Unit x);
 

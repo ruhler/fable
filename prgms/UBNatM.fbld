@@ -1,4 +1,4 @@
-mdefn UBNatM(UBNatI) {
+module UBNatM(UBNatI) {
   using UnitM { Unit; };
   using BoolM { Bool; True; False; };
 

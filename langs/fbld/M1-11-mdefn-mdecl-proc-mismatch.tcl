@@ -1,17 +1,17 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       proc f( ; Unit x, Unit y; Unit);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
 
       # The declaration of 'f' here doesn't match the declaration in
-      # Main.mtype.
+      # Main.interf.
       proc f( ; Unit x ; Unit) {
         $(Unit());
       };

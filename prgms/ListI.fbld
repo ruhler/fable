@@ -1,4 +1,4 @@
-mtype ListI {
+interf ListI {
   using UnitM { Unit; };
 
   # P - A list of 1 or more elements: T+

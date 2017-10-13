@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct Pair(Unit a, Unit b);
       func foo(Unit a, Unit b ; Pair);
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct Pair(Unit a, Unit b);
 

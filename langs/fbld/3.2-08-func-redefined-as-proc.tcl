@@ -1,11 +1,11 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # A function and process can't have the same name.
       struct Unit();
 

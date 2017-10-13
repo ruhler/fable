@@ -1,4 +1,4 @@
-mdefn ListM(ListI) {
+module ListM(ListI) {
   using UnitM { Unit; };
 
   struct P<T>(T head, S<T> tail);

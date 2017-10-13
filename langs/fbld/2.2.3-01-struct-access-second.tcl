@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct Donut();
       func main( ; Donut);
@@ -8,7 +8,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # Accessing the second component of a struct.
       struct Unit();
       struct Donut();

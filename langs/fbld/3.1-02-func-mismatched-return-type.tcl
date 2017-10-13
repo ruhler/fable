@@ -1,11 +1,11 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # The return type of the function must match the type of the body.
       struct Unit();
       struct Donut();

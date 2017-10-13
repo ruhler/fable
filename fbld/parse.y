@@ -122,8 +122,8 @@
 
 // Keywords. These have type 'name' because in many contexts they are treated
 // as normal names rather than keywords.
-%token <name> MTYPE "mtype"
-%token <name> MDEFN "mdefn"
+%token <name> MTYPE "interf"
+%token <name> MDEFN "module"
 %token <name> TYPE "type"
 %token <name> STRUCT "struct"
 %token <name> UNION "union"
@@ -182,7 +182,7 @@ tparam_list:
     }
   ;
 
-mtype: "mtype" name tparam_list '{' decl_list '}' ';' {
+mtype: "interf" name tparam_list '{' decl_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldMType);
           $$->name = $2;
           $$->targv = $3;
@@ -209,7 +209,7 @@ tmparams:
     }
   ;
 
-mdefn: "mdefn" name tmparams '(' iref ')' '{' defn_list '}' ';' {
+mdefn: "module" name tmparams '(' iref ')' '{' defn_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldMDefn);
           $$->name = $2;
           $$->targv = $3->targv;
@@ -247,7 +247,7 @@ marg_list:
 
 name: NAME | keyword ;
 
-keyword: "mtype" | "mdefn" | "type" | "struct" | "union" | "func" | "proc" | "using" ;
+keyword: "interf" | "module" | "type" | "struct" | "union" | "func" | "proc" | "using" ;
 
 decl_list:
     %empty {
@@ -933,8 +933,8 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
   lvalp->name->loc = loc;
 
   struct { char* keyword; int symbol; } keywords[] = {
-    {.keyword = "mtype", .symbol = MTYPE},
-    {.keyword = "mdefn", .symbol = MDEFN},
+    {.keyword = "interf", .symbol = MTYPE},
+    {.keyword = "module", .symbol = MDEFN},
     {.keyword = "type", .symbol = TYPE},
     {.keyword = "struct", .symbol = STRUCT},
     {.keyword = "union", .symbol = UNION},

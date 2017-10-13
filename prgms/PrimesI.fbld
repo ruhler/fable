@@ -1,4 +1,4 @@
-mtype PrimesI {
+interf PrimesI {
   using BoolM { Bool; };
   using UBNatM { Nat; };
  

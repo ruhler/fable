@@ -1,11 +1,11 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
 
       # Function declarations must have an open parenthesis.

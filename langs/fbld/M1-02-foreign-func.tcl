@@ -1,14 +1,14 @@
 # Test that we can call a foreign function.
 set prg {
   UnitI.fbld {
-    mtype UnitI {
+    interf UnitI {
       struct Unit();
       func f( ; Unit);
     };
   }
 
   UnitM.fbld {
-    mdefn UnitM(UnitI) {
+    module UnitM(UnitI) {
       struct Unit();
       func f( ; Unit) {
         Unit();
@@ -17,14 +17,14 @@ set prg {
   }
 
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       using UnitM { Unit; };
       func main( ; Unit);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       using UnitM { Unit; f; };
       func main( ; Unit) {
         f();

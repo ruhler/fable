@@ -3,7 +3,7 @@
 # Which means it cannot have a type that is not defined.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct A(Unit x, Donut y);    # Type Donut not defined.
       func main( ; Unit);
@@ -11,7 +11,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct A(Unit x, Donut y);
 

@@ -1,7 +1,7 @@
 # Test a simple exec process.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
       proc main( ; ; Bool);
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       union Bool(Unit true, Unit false);
       proc main( ; ; Bool) {

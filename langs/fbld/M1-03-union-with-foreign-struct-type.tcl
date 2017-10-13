@@ -1,27 +1,27 @@
 set prg {
   TypesI.fbld {
-    mtype TypesI {
+    interf TypesI {
       struct Unit();
       struct Foo(Unit bar);
     };
   }
 
   TypesM.fbld {
-    mdefn TypesM(TypesI) {
+    module TypesM(TypesI) {
       struct Unit();
       struct Foo(Unit bar);
     };
   }
 
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       using TypesM { Foo; };
       func main( ; Foo);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       using TypesM { Unit; Foo; };
       func main( ; Foo) {
         # Foo is a struct type, not a union type.

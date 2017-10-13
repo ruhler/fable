@@ -1,17 +1,17 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       func f(Unit x ; Unit);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # The function f is not declared locally.
       struct Unit();
     };
   }
 }
 
-fbld-check-error $prg MainM MainM.fbld:2:11
+fbld-check-error $prg MainM MainM.fbld:2:12

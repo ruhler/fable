@@ -1,4 +1,4 @@
-mtype MaxFlowI<Node> {
+interf MaxFlowI<Node> {
   using ListM { S; };
   using UBNatM { Nat; };
 

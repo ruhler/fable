@@ -1,11 +1,11 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # Each field of a union type must have a different name.
       struct Unit();
       struct Donut();

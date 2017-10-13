@@ -1,3 +1,3 @@
-mdefn UnitM(UnitI) {
+module UnitM(UnitI) {
   struct Unit();
 };

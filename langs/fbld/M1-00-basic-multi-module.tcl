@@ -1,25 +1,25 @@
 # A basic test case using multiple modules.
 set prg {
   UnitI.fbld {
-    mtype UnitI {
+    interf UnitI {
       struct Unit();
     };
   }
 
   UnitM.fbld {
-    mdefn UnitM(UnitI) {
+    module UnitM(UnitI) {
       struct Unit();
     };
   }
 
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       func main( ; Unit@UnitM);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       func main( ; Unit@UnitM) {
         Unit@UnitM();
       };

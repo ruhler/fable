@@ -1,4 +1,4 @@
-mtype PrimesTestI {
+interf PrimesTestI {
   using UnitM { Unit; };
   using UBNatM { Nat; };
   using ListM { S; };

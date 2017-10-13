@@ -1,14 +1,14 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
-      # Unit is not declared in the mtype, even though it is properly declared
-      # in the mdefn.
+    interf MainI {
+      # Unit is not declared in the interf, even though it is properly declared
+      # in the module.
       func main( ; Unit);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
 
       func main( ; Unit) {

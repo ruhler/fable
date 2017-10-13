@@ -1,26 +1,26 @@
 # Test that we can use a 'using' statement to refer to foreign entities.
 set prg {
   UnitI.fbld {
-    mtype UnitI {
+    interf UnitI {
       struct Unit();
     };
   }
 
   UnitM.fbld {
-    mdefn UnitM(UnitI) {
+    module UnitM(UnitI) {
       struct Unit();
     };
   }
 
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       using UnitM { Unit; };
       func main( ; Unit);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       using UnitM { Unit; };
       func main( ; Unit) {
         Unit();

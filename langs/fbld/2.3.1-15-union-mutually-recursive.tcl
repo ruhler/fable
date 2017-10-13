@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Foo(Unit x, Bar y);   # mutually recursive with Bar
       union Bar(Unit x, Foo y);   # mutually recursive with Foo
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       union Foo(Unit x, Bar y);
       union Bar(Unit x, Foo y);

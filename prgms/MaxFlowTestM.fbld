@@ -1,4 +1,4 @@
-mdefn MaxFlowTestM(MaxFlowTestI) {
+module MaxFlowTestM(MaxFlowTestI) {
   using UnitM { Unit; };
   using BoolM { Bool; };
   using UBNatM { Nat; Eq; };

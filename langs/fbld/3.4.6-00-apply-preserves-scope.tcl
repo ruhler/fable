@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct Donut();
       struct A(Unit x, Donut y);
@@ -11,7 +11,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # Test that we can still refer to variables in scope after a function call.
       struct Unit();
       struct Donut();

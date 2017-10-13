@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct A(Unit x, Unit y);
       union Foo(Unit bar, A sludge);
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct A(Unit x, Unit y);
       union Foo(Unit bar, A sludge);

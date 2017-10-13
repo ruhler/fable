@@ -1,13 +1,13 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType();
       func main( ; ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType();
 
       func main( ; ThisIsAStructTypeThatHasAVeryLongNameForTheNameOfTheStructType) {

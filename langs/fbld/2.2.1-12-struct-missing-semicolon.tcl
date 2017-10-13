@@ -1,12 +1,12 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       type Foo;
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
 
       # The final semicolon is missing.

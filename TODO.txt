@@ -14,6 +14,8 @@ Fbld Test:
 * Port remainder of fblc tests to fbld.
 
 Fbld Cleanup:
+* Update references to mtype to reference interf instead.
+* Update references to mdefn to reference module instead.
 * Figure out a better way to avoid duplicate error messages when CheckType
   fails.
 * Untangle the recursive knot that is check/compile/load.

@@ -1,4 +1,4 @@
-mdefn BoolM(BoolI) {
+module BoolM(BoolI) {
   using UnitM { Unit; };
 
   union Bool(Unit true, Unit false);

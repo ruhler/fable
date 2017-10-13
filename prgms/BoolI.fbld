@@ -1,4 +1,4 @@
-mtype BoolI {
+interf BoolI {
   using UnitM { Unit; };
 
   union Bool(Unit true, Unit false);

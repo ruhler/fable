@@ -1,7 +1,7 @@
 # A struct expression can't be used for a union type.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Bool(Unit True, Unit False);
       func main( ; Bool);
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       union Bool(Unit True, Unit False);
 

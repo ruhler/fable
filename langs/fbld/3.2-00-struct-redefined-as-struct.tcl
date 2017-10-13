@@ -1,11 +1,11 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # A struct must not be declared multiple times.
       struct Unit();
       struct A(Unit x, Unit y);

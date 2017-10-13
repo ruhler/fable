@@ -1,4 +1,4 @@
-mdefn UBNatTestM(UBNatTestI) {
+module UBNatTestM(UBNatTestI) {
   using UnitM { Unit; };
   using BoolM { Bool; Not; };
   using ListM { P; S; };

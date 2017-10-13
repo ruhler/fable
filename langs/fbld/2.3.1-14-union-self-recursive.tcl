@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Recursive(Unit x, Recursive y);  # Self recursive union
       func main( ; Recursive);
@@ -8,7 +8,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       union Recursive(Unit x, Recursive y);
 

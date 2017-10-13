@@ -1,12 +1,12 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       type Foo;
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct Foo  Unit x, Unit y);    # The open paren is missing.
     };

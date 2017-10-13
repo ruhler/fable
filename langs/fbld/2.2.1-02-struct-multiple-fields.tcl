@@ -1,7 +1,7 @@
 # A struct can be declared that contains multiple fields.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct Donut();
       struct MultiField(Unit x, Donut y);
@@ -10,7 +10,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct Donut();
       struct MultiField(Unit x, Donut y);

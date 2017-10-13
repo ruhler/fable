@@ -1,12 +1,12 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       type Foo;
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # A struct declaration should not contain an end of file.
       struct Unit();
       struct Foo(Unit x,

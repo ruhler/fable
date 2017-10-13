@@ -1,4 +1,4 @@
-mdefn PrimesTestM(PrimesTestI) {
+module PrimesTestM(PrimesTestI) {
   using UnitM { Unit; };
   using BoolM { Bool; };
   using UBNatM { Nat; 1; 3; 10; Lit2; Eq; };

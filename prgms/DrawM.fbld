@@ -1,4 +1,4 @@
-mdefn DrawM(DrawI) {
+module DrawM(DrawI) {
   using UnitM { Unit; };
   using UBNatM { Nat; };
 

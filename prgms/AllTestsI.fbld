@@ -1,4 +1,4 @@
-mtype AllTestsI {
+interf AllTestsI {
   using ListM { S; };
 
   union TestFailure(

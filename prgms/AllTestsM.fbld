@@ -1,4 +1,4 @@
-mdefn AllTestsM(AllTestsI) {
+module AllTestsM(AllTestsI) {
   using UnitM { Unit; };
   using List M{ S; P; Append; };
   using UBNatTestM { UBNatTestFailure = TestFailure; };
@@ -9,13 +9,13 @@ mdefn AllTestsM(AllTestsI) {
       PrimesTestFailure PrimesTest
   );
   
-  mdefn UBNatTestFailureF(Function<UBNatTestFailure, TestFailure>) {
+  module UBNatTestFailureF(Function<UBNatTestFailure, TestFailure>) {
     func f(UBNatTestFailure x ; TestFailure) {
       TestFailure:UBNatTest(x);
     };
   }
 
-  mdefn PrimesTestFailureF(Function<PrimesTestFailure, TestFailure>) {
+  module PrimesTestFailureF(Function<PrimesTestFailure, TestFailure>) {
     func f(PrimesTestFailure x ; TestFailure) {
       TestFailure:PrimesTest(x);
     };

@@ -38,18 +38,17 @@ type Int with operations to add two Ints together, but the user need not know
 whether the Int type is implemented using a unary, binary, 2s-complement or
 other representation.
 
-Interfaces in fbld are defined using the 'mtype' keyword, short for "module
-type". Modules are defined using the 'mdefn' keyword, short for "module
-definition". To get a flavor of what mtype and mdefn declarations look like,
-here's what the interface and implementation of an integer arithmetic module
-might look like:
+Interfaces in fbld are defined using the 'interf' keyword. Modules are defined
+using the 'module' keyword. To get a flavor of what interface and module
+declarations look like, here's what the interface and implementation of an
+integer arithmetic module might look like:
 
-mtype IntegerI {
+interf IntegerI {
   type Int;
   func Add(Int a, Int b; Int);
 };
 
-mdefn IntegerM(IntegerI) {
+module IntegerM(IntegerI) {
   struct Unit();
   union Int(Unit 0, Int S);
 
@@ -92,12 +91,12 @@ function for summing up the numbers on a list could be reused with natural
 numbers, integers, real numbers, or booleans. This is a form of ad-hoc
 polymorphism:
 
-mtype Number<T> {
+interf Number<T> {
   func Zero( ; T);
   func Add(T a, T b; T);
 };
 
-mdefn IntNumber(Number<Int>) {
+module IntNumber(Number<Int>) {
   func Zero( ; Int) {
     Int:0(Unit());
   };
@@ -131,7 +130,7 @@ the module.
 
 Interfaces
 ----------
-mtype <interface_name> ['<' <type_parameters> '>'] {
+interf <interface_name> ['<' <type_parameters> '>'] {
   <interface_declarations>
 };
 
@@ -145,7 +144,7 @@ Angle brackets are used to denote interface and module parameters, analogous to
 how parentheses are used to denote function parameters.
 
 There are 8 kinds of interface_declaration items: using, type, struct, union,
-func, proc, mtype, and mdefn.
+func, proc, interf, and module.
 
 Qualified References
 ^^^^^^^^^^^^^^^^^^^^
@@ -204,7 +203,7 @@ will develop as more experience is gained developing complex fbld programs.
 
 In the mean time, the following is advised:
 
-Code is organized into top level mtype and mdefn declarations. These
+Code is organized into top level interf and module declarations. These
 declarations belong to a single global namespace. The dependency graph between
 top level declarations must form a directed acyclic graph, which implies a
 module can be understood by first understanding its dependencies, then
@@ -259,7 +258,7 @@ names, either within a single using statement or spanning across multiple
 using statements for the same concrete module. It is not required to have a
 using statement for all references to external entities.
 
-TODO: What if a module declares a function, mtype, and mdefn all with the same
+TODO: What if a module declares a function, interf, and module all with the same
 name and you import that name with a using statement. Do you get all three
 entities imported?
 
@@ -317,7 +316,7 @@ implementation of a list type could be declared as:
 
 Modules
 --------
-mdefn <module_name> ['<' <type_parameters> ; <module_parameters> '>'] '(' <interface> ')' {
+module <module_name> ['<' <type_parameters> ; <module_parameters> '>'] '(' <interface> ')' {
   <module_declarations>
 };
 
@@ -342,20 +341,20 @@ parameter types.
 TODO: Give a range of interesting concrete examples here.
 
 Following the module declaration is a list of module declaration items. These
-include 'using', 'struct', 'union', 'func', 'proc' , 'mtype' and 'mdefn'
+include 'using', 'struct', 'union', 'func', 'proc' , 'interf' and 'module'
 declarations. The 'using' declaration is as for module interfaces. The
 'union', 'func', and 'proc' declarations are as for fblc with additional
 support for qualified references to external entities.
 
 Syntax Reference
 ----------------
-  mtype ::= 'mtype' iname ['<' [tname [',' tname [...]]] '>'] '{'
-                [mtype_decl [mtype_decl [...]]] '}' ';' ;
+  interf ::= 'interf' iname ['<' [tname [',' tname [...]]] '>'] '{'
+                [interf_decl [interf_decl [...]]] '}' ';' ;
 
-  mdefn ::= 'mdefn' mname ['<'[tname [',' tname [...]]] ';'
+  module ::= 'module' mname ['<'[tname [',' tname [...]]] ';'
                               [iref mname [',' iref mname [...]]] '>']
                           '(' iref ')' '{'
-                [mdefn_decl [mdefn_decl [...]]] '}' ';' ;
+                [module_decl [module_decl [...]]] '}' ';' ;
 
   iref ::= iname ['<' [qref [',' qref [...]]] '>'] ;
          | iref '@' mref
@@ -367,7 +366,7 @@ Syntax Reference
 
   qref ::= tname ['@' mref] ;
   
-  mtype_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+  interf_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
               |  'type' tname ';'
               |  'struct' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
               |  'union' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
@@ -375,21 +374,21 @@ Syntax Reference
               |  'proc' tname '('
                     [qref polarity pname [',' qref polarity pname [...]]] ';'
                     [qref vname [',' qref vname [...]]] ';' qref ')' ';'
-              |  mtype
-              |  'mdefn' mname ['<'[tname [',' tname [...]]] ';'
+              |  interf
+              |  'module' mname ['<'[tname [',' tname [...]]] ';'
                                    [iref mname [',' iref mname [...]]] '>']
                               '(' iref ')' ';'
               ;
 
-  mdefn_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+  module_decl ::= 'using' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
               |  'struct' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
               |  'union' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
               |  'func' tname '(' [qref vname [',' qref vname [...]]] ';' qref ')' expr ';'
               |  'proc' tname '('
                     [qref polarity pname [',' qref polarity pname [...]]] ';'
                     [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
-              |  mtype
-              |  mdefn
+              |  interf
+              |  module
               ;
 
   iname ::= name ;  (* A name referring to an interface *)
@@ -422,7 +421,7 @@ Open Questions
   different using statements?
 * Can you import public entities from your own module in using statements?
 * Can you import private entities from your own module in using statements?
-* Can you import funcs or procs in an mtype's using statement, or only
+* Can you import funcs or procs in an interf's using statement, or only
   types?
 * Can you use an imported type in the import's module parameter?
   For example, something like: using Maybe(T) { T=Maybe };

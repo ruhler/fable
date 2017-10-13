@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct Donut();
       func main( ; Unit);
@@ -8,7 +8,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # The Donut type is not declared locally.
       struct Unit();
       func main( ; Unit) {
@@ -18,4 +18,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg MainM MainM.fbld:2:11
+fbld-check-error $prg MainM MainM.fbld:2:12

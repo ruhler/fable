@@ -1,7 +1,7 @@
 # Test a basic conditional process.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
       proc main( ; ; Fruit);
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
       proc main( ; ; Fruit) {

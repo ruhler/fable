@@ -1,6 +1,6 @@
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
       struct NonEmptyBoolList(Bool head, BoolList tail);
@@ -10,7 +10,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       # structs can be mutually recursive with unions.
       struct Unit();
       union Bool(Unit true, Unit false);

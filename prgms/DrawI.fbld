@@ -1,4 +1,4 @@
-mtype DrawI {
+interf DrawI {
   using UnitM { Unit; };
   using UBNatM { Nat; };
 

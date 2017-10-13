@@ -1,5 +1,5 @@
 # Unbounded Binary Natural Number
-mtype UBNatI {
+interf UBNatI {
   using BoolM { Bool; };
 
   type Nat;

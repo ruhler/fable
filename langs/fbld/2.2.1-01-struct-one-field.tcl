@@ -1,7 +1,7 @@
 # A struct can be declared that contains one field.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       struct OneField(Unit x);
       func main( ; OneField);
@@ -9,7 +9,7 @@ set prg {
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       struct OneField(Unit x);
 

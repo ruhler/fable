@@ -1,14 +1,14 @@
 # Access a component of a union.
 set prg {
   MainI.fbld {
-    mtype MainI {
+    interf MainI {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
     };
   }
 
   MainM.fbld {
-    mdefn MainM(MainI) {
+    module MainM(MainI) {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
       union Maybe(Unit nothing, Fruit just);
