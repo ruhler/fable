@@ -8,13 +8,13 @@ sense that they will have no overhead at runtime after compiling the program
 down to Androcles/Bathylus/Calvisus. The developer should not have to make a
 tradeoff between modularity/abstraction and runtime performance.
 
-Overview
---------
 Damocrates adds support for modularity and polymorphism on top of the
 Calvisus language. The purpose of these features is to facilitate reuse of
 code across multiple programs, expanding the scale of programs that can be
 developed.
 
+Overview of Modules
+-------------------
 Fbld shifts a focus on implementing programs that exists in fblc to a focus on
 implementing reusable pieces of programs. These pieces of programs are called
 modules. A module is a collection of types, functions, processes and other
@@ -62,6 +62,83 @@ independent of their development. Modules can be understood and developed in
 isolation then combined to form large programs that would otherwise be too
 complex and costly to develop.
 
+Top Level Declarations
+----------------------
+The fbld language as proposed is incomplete. It does not have a good story for
+composing modules together into higher level libraries that can themselves be
+composed together into much larger programs. This is a work in progress that
+will develop as more experience is gained developing complex fbld programs.
+
+In the mean time, the following is advised:
+
+Code is organized into top level interf and module declarations. These
+declarations belong to a single global namespace. The dependency graph between
+top level declarations must form a directed acyclic graph, which implies a
+module can be understood by first understanding its dependencies, then
+understanding the module itself in isolation.
+
+An fbld program is made up of the module containing its main entry point and
+all other modules and interfaces that the main module depends on directly or
+indirectly.
+
+To avoid the need to parse a large number of top level declarations unused in
+most programs, it is suggested to organize top level declarations by putting
+each declaration in its own file called Foo.fbld, where Foo is the name of the
+top level declaration.
+
+Interfaces and modules must not recursively reference any other modules. In
+other words, the graph of interface and module dependencies should be a
+directed acyclic graph. The reason for this is to avoid complex and confusing
+module dependencies that would make it difficult to reason about or understand
+a module in isolation.
+
+Qualified References
+--------------------
+A module serves as a namespace. Entities defined in different modules can
+have the same name. In order to reference an entity from an external module,
+both the name of the entity and the name of the external module must be
+supplied using a qualified reference taking the form <name>@<mref>. For
+example, to refer to a function 'True' in a module named BoolM:
+   True@BoolM
+
+Using Declarations
+^^^^^^^^^^^^^^^^^^
+The 'using' declaration provides a syntactic sugar to make it easier to refer
+to entities declared within another module. Each 'using' declaration creates
+a simple local alias for one or more entities from an another module.
+
+By default entities are imported using the same name they are declared with,
+but it is possible to specify an alternate name when importing an entity in
+order to avoid name conflicts.
+
+For example:
+  using BoolM { Bool; true=True; false=False; };
+
+The above statement imports three entities from the BoolM module.
+
+Following the module is a list of entities to give local names to, each entity
+terminated with a semicolon. The entity can either be a single name,
+indicating that entity from the module is being imported under its same name,
+and can be referred to elsewhere by that simple name. Or the entity can have
+the form 'name' = 'name', where the first name is the name the entity is
+imported under, and the second name is the name of the entity as declared in
+the module it is being imported from.
+
+Type and module parameters do not need to be supplied in the using statement
+for imported polymorphic entities. The locally imported names will refer to
+polymorphic entities that can be used with different type and module
+parameters within the local name space. For example, a List type could be
+imported once from the List module, then used locally as List<Int>,
+List<Bool>, or any other kind of list.
+
+It is legal to have multiple using statements for the same concrete module and
+to import the same external entity multiple times under the same or different
+names, either within a single using statement or spanning across multiple
+using statements for the same concrete module. It is not required to have a
+using statement for all references to external entities.
+
+Polymorphism
+------------
 Interfaces make it possible to write code that is agnostic to the details of
 how types, functions, and processes are defined and implemented. To take full
 advantage of this, fbld adds support for polymorphic declarations, which
@@ -114,60 +191,6 @@ func SumP<T; Number<T> N>(ListP<T> l; T) {
   Add@N(l.head, SumS<T, N>(l.tail));
 };
 
-
-Concepts
---------
-Fbld adds two new constructs to fblc: modules and interfaces.
-
-A module defines a collection of types, functions, processes and submodules.
-Each module implements some interface.
-
-An interface is an abstraction of a module that includes only type, function,
-process and submodule declarations, without their implementations. For a
-module to properly implement an interface, every type, function, and process
-declared in the interface must have a corresponding implementation supplied by
-the module.
-
-Interfaces
-----------
-interf <interface_name> ['<' <type_parameters> '>'] {
-  <interface_declarations>
-};
-
-Interfaces are named. They take zero or more type parameters and contain zero
-or more interface_declaration elements. Type parameters, if present, are
-specified using a comma-separated list of simple names. These names can be
-used within the interface_declarations to refer to the types passed to the
-interface when the interface is instantiated.
-
-Angle brackets are used to denote interface and module parameters, analogous to
-how parentheses are used to denote function parameters.
-
-There are 8 kinds of interface_declaration items: using, type, struct, union,
-func, proc, interf, and module.
-
-Qualified References
-^^^^^^^^^^^^^^^^^^^^
-A module serves as a namespaces. Entities defined in different modules can
-have the same name. In order to reference an entity from an external module,
-both the name of the entity and the name of the external module must be
-supplied using a qualified reference taking the form <name>@<mref>. For
-example, to refer to a function 'True' in a module named Bool that takes no
-type or module parameters:
-   True@Bool
-
-The 'using' declaration described later allows external entities to be
-imported under local names, which can greatly reduce the quantity of syntax
-needed to describe references to external entities.
-
-Interfaces and modules must not recursively reference any other modules. In
-other words, the graph of interface and module dependencies should be a
-directed acyclic graph. The reason for this is to avoid complex and confusing
-module dependencies that would make it difficult to reason about or understand
-a module in isolation.
-
-Polymorphism
-^^^^^^^^^^^^
 Declarations can be parameterized by zero or more type and module parameters.
 The general syntax for defining a polymorphic entity is to use angle brackets
 after the entities name with the syntax:
@@ -194,73 +217,29 @@ In this case the type variable T is not visible outside the declaration M<T>.
 In more complex cases, the type variable can be referenced in additional
 module parameters.
 
-Top Level Declarations
-^^^^^^^^^^^^^^^^^^^^^^
-The fbld language as proposed is incomplete. It does not have a good story for
-composing modules together into higher level libraries that can themselves be
-composed together into much larger programs. This is a work in progress that
-will develop as more experience is gained developing complex fbld programs.
+Interface Specification
+-----------------------
+interf <interface_name> ['<' <type_parameters> '>'] {
+  <interface_declarations>
+};
 
-In the mean time, the following is advised:
+An interface is an abstraction of a module that includes only type, function,
+process and submodule declarations, without their implementations. For a
+module to properly implement an interface, every type, function, and process
+declared in the interface must have a corresponding implementation supplied by
+the module.
 
-Code is organized into top level interf and module declarations. These
-declarations belong to a single global namespace. The dependency graph between
-top level declarations must form a directed acyclic graph, which implies a
-module can be understood by first understanding its dependencies, then
-understanding the module itself in isolation.
+Interfaces are named. They take zero or more type parameters and contain zero
+or more interface_declaration elements. Type parameters, if present, are
+specified using a comma-separated list of simple names. These names can be
+used within the interface_declarations to refer to the types passed to the
+interface when the interface is instantiated.
 
-An fbld program is made up of the module containing its main entry point and
-all other modules and interfaces that the main module depends on directly or
-indirectly.
+Angle brackets are used to denote interface and module parameters, analogous to
+how parentheses are used to denote function parameters.
 
-To avoid the need to parse a large number of top level declarations unused in
-most programs, it is suggested to organize top level declarations by putting
-each declaration in its own file called Foo.fbld, where Foo is the name of the
-top level declaration.
-
-Using Declarations
-^^^^^^^^^^^^^^^^^^
-The 'using' declaration provides a syntactic sugar to make it easier to refer
-to entities declared within another module. Each 'using' declaration creates
-a simple local alias for one or more entities from an another module.
-
-By default entities are imported using the same name they are declared with,
-but it is possible to specify an alternate name when importing an entity in
-order to avoid name conflicts.
-
-For example:
-  using Bool { Bool; true=True; false=False; };
-
-The above statement imports three entities from the Bool module. In this case
-the Bool module does not have any type parameters, so no type arguments are
-provided. If the module has type parameters, then type arguments must be
-specified for every type parameter. The entities that are imported are
-specific to the type arguments provided.
-
-Following the module is a list of entities to give local names to, each entity
-terminated with a semicolon. The entity can either be a single name,
-indicating that entity from the module is being imported under its same name,
-and can be referred to elsewhere by that simple name. Or the entity can have
-the form 'name' = 'name', where the first name is the name the entity is
-imported under, and the second name is the name of the entity as declared in
-the module it is being imported from.
-
-Type and module parameters do not need to be supplied in the using statement
-for imported polymorphic entities. The locally imported names will refer to
-polymorphic entities that can be used with different type and module
-parameters within the local name space. For example, a List type could be
-imported once from the List module, then used locally as List<Int>,
-List<Bool>, or any other kind of list.
-
-It is legal to have multiple using statements for the same concrete module and
-to import the same external entity multiple times under the same or different
-names, either within a single using statement or spanning across multiple
-using statements for the same concrete module. It is not required to have a
-using statement for all references to external entities.
-
-TODO: What if a module declares a function, interf, and module all with the same
-name and you import that name with a using statement. Do you get all three
-entities imported?
+There are 8 kinds of interface_declaration items: using, type, struct, union,
+func, proc, interf, and module.
 
 Struct and Union Declarations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -314,8 +293,8 @@ Abstract types may be parameterized by types. For example, an abstract
 implementation of a list type could be declared as:
    type List<T>;
 
-Modules
---------
+Module Specification
+--------------------
 module <module_name> ['<' <type_parameters> ; <module_parameters> '>'] '(' <interface> ')' {
   <module_declarations>
 };
@@ -411,7 +390,6 @@ TODO
    recursion, and what entities are visible.
  - Give interesting examples for polymorphic and submodules.
 
-
 Open Questions
 --------------
 * Can you import the same entity multiple times under a different name in the
@@ -425,6 +403,14 @@ Open Questions
   types?
 * Can you use an imported type in the import's module parameter?
   For example, something like: using Maybe(T) { T=Maybe };
+* There's no good way to partially apply or reorder type arguments to a type.
+  If fear this will cause problems once we start doing advanced use of
+  different kinded type parameters. I think we need either a way to have a
+  polymorphic typedef, or type lambdas of some kind. Note that this is a
+  problem particular to types, modules and interfaces, because those we need
+  to compare against other types, modules, and interfaces for equality.
+  For functions and processes you can just define a wrapper - the compiler
+  doesn't care if they're the same or not.
 
 Wish List
 ---------
@@ -436,15 +422,3 @@ Wish List
 * Builtin support for arrays? For example, it's pretty daunting to think about
   how to define a large 2D array. Or how to define an array for a HashTable
   implementation. Use case and alternatives not fully explored yet.
-
-* There's no way currently to define a private module. This means it is not
-  possible to re-use polymorphic code on private data types. For example:
-  Snake defines a private data type Pos with associated PosEq function. It
-  would be great if it could reuse a polymorphic List find function, but it
-  can't define the Eq instance for Pos without making Pos a public data type.
-
-  Example: I want to implement a generic List map function, but that requires
-  defining a separate module for the function argument any time I want to use
-  the map function, which is prohibitively ridiculous.
-
-  This is clearly a flaw in the language that should be addressed.
