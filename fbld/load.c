@@ -45,13 +45,13 @@ static char* FindModuleFile(FblcArena* arena, FbldStringV* path, const char* nam
   return NULL;
 }
 
-// FbldLoadMType -- see documentation in fbld.h
-FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
+// FbldLoadInterf -- see documentation in fbld.h
+FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
 {
-  // Return the existing mtype declaration if it has already been loaded.
-  for (size_t i = 0; i < prgm->mtypev.size; ++i) {
-    if (FbldNamesEqual(name, prgm->mtypev.xs[i]->name->name)) {
-      return prgm->mtypev.xs[i];
+  // Return the existing interface declaration if it has already been loaded.
+  for (size_t i = 0; i < prgm->interfv.size; ++i) {
+    if (FbldNamesEqual(name, prgm->interfv.xs[i]->name->name)) {
+      return prgm->interfv.xs[i];
     }
   }
 
@@ -62,25 +62,25 @@ FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, 
   }
 
   // Parse the module.
-  FbldMType* mtype = FbldParseMType(arena, filename);
-  if (mtype == NULL) {
+  FbldInterf* interf = FbldParseInterf(arena, filename);
+  if (interf == NULL) {
     fprintf(stderr, "failed to parse module from %s\n", filename);
     return NULL;
   }
 
-  if (!FbldNamesEqual(mtype->name->name, name)) {
-    FbldReportError("Expected '%s', but found '%s'\n", mtype->name->loc, name, mtype->name->name);
+  if (!FbldNamesEqual(interf->name->name, name)) {
+    FbldReportError("Expected '%s', but found '%s'\n", interf->name->loc, name, interf->name->name);
     return NULL;
   }
-  FblcVectorAppend(arena, prgm->mtypev, mtype);
+  FblcVectorAppend(arena, prgm->interfv, interf);
 
   // Check that this declaration is valid.
   // TODO: detect and abort if the module module recursively depends on itself.
-  if (!FbldCheckMType(arena, path, mtype, prgm)) {
+  if (!FbldCheckInterf(arena, path, interf, prgm)) {
     return NULL;
   }
 
-  return mtype;
+  return interf;
 }
 
 // FbldLoadMDecl -- see documentation in fbld.h

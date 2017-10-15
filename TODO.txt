@@ -1,6 +1,18 @@
 Priority:
 * Revise lang/fbld.txt a few more times until it makes sense.
 * Rewrite the fbld front end to support the new language.
+ - merge QRef and MRef into a single Ref type.
+ - create an FbldStaticArgs type, a vector of type args and module args.
+   or call it FbldTMArgs, or FbldSArgs.
+ - Rename:
+    FbldMDefn => FbldModule
+    ParseMDefn => ParseModule
+    LoadMDecl => LoadModuleHeader
+    LoadMDefn => LoadModule
+    LoadMDefns => LoadModules
+    CheckMDecl => CheckModuleHeader
+    CheckMDefn => CheckModule
+    LookupMDefn => LookupModule
 
 Fbld 3:
 * Revise lang/fbld.txt a few more times until it makes sense.

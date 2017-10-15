@@ -507,8 +507,8 @@ typedef struct {
   FbldProc** xs;
 } FbldProcV;
 
-// FbldMType --
-//   An fbld mtype declaration.
+// FbldInterf --
+//   An fbld interface declaration.
 typedef struct {
   FbldName* name;
   FbldNameV* targv;
@@ -516,14 +516,14 @@ typedef struct {
   FbldTypeV* typev;
   FbldFuncV* funcv;
   FbldProcV* procv;
-} FbldMType;
+} FbldInterf;
 
-// FbldMTypeV --
-//   A vector of fbld mtypes.
+// FbldInterfV --
+//   A vector of fbld interface declarations.
 typedef struct {
   size_t size;
-  FbldMType** xs;
-} FbldMTypeV;
+  FbldInterf** xs;
+} FbldInterfV;
 
 // FbldMArg --
 //   A module argument, such as: Map<Int, String> M
@@ -573,14 +573,14 @@ typedef struct {
 } FbldMDefnV;
 
 // FbldProgram --
-//   A collection of mtypes, mdecls, and mdefns representing a program.
+//   A collection of interfaces, mdecls, and mdefns representing a program.
 //
 //   An mdecl is an mdefn whose body has not necessarily been checked for
 //   validity. This makes it possible to check the validity of a module
 //   without the need for the implementations of the other modules it depends
 //   on.
 typedef struct {
-  FbldMTypeV mtypev;
+  FbldInterfV interfv;
   FbldMDefnV mdeclv;
   FbldMDefnV mdefnv;
 } FbldProgram;
@@ -605,8 +605,8 @@ struct FbldValue {
   FbldValueV* fieldv;
 };
 
-// FbldParseMType --
-//   Parse the mtype declaration from the file with the given filename.
+// FbldParseInterf --
+//   Parse the interface declaration from the file with the given filename.
 //
 // Inputs:
 //   arena - The arena to use for allocating the parsed declaration.
@@ -622,7 +622,7 @@ struct FbldValue {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned declaration if there is no error.
-FbldMType* FbldParseMType(FblcArena* arena, const char* filename);
+FbldInterf* FbldParseInterf(FblcArena* arena, const char* filename);
 
 // FbldParseMDefn --
 //   Parse the module definition from the file with the given filename.
@@ -687,36 +687,36 @@ typedef struct {
   const char** xs;
 } FbldStringV;
 
-// FbldLoadMType --
-//   Load the mtype declaration for the module with the given name.
-//   If the mtype declaration has already been loaded, it is returned as is.
-//   Otherwise the mtype declaration and all of its dependencies are located
-//   according to the given search path, parsed, checked, and added to the
-//   collection of loaded modules before the requested module declaration is
+// FbldLoadInterf --
+//   Load the interface declaration for the module with the given name.
+//   If the interface declaration has already been loaded, it is returned as
+//   is. Otherwise the interface declaration and all of its dependencies are
+//   located according to the given search path, parsed, checked, and added to
+//   the collection of loaded modules before the requested interface is
 //   returned.
 //
 // Inputs:
 //   arena - The arena to use for allocating the parsed declaration.
-//   path - A search path used to find the mtype declaration on disk.
-//   name - The name of the module whose declaration to load.
+//   path - A search path used to find the interface declaration on disk.
+//   name - The name of the interface whose declaration to load.
 //   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
-//   The loaded mtype declaration, or NULL if the mtype declaration could
-//   not be loaded.
+//   The loaded interface declaration, or NULL if the interface declaration
+//   could not be loaded.
 //
 // Side effects:
-//   Read the mtype delacaration and any other required mtype delacarations
-//   from disk and add them to the prgm.
-//   Prints an error message to stderr if the mtype declaration or any other
-//   required mtype declarations cannot be loaded, either because they cannot
-//   be found on the path, fail to parse, or fail to check.
+//   Read the interface delacaration and any other required interface
+//   delacarations from disk and add them to the prgm.
+//   Prints an error message to stderr if the interface declaration or any
+//   other required interface declarations cannot be loaded, either because
+//   they cannot be found on the path, fail to parse, or fail to check.
 //
 // Allocations:
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of all loaded declarations if there is no error.
-FbldMType* FbldLoadMType(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
+FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
 // FbldLoadMDecl --
 //   Load the declaration part of an mdefn declaration for the module with the
@@ -812,26 +812,26 @@ FbldMDefn* FbldLoadMDefn(FblcArena* arena, FbldStringV* path, const char* name, 
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadMDefns(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
-// FbldCheckMType --
-//   Check that the given mtype declaration is well formed and well typed.
+// FbldCheckInterf --
+//   Check that the given interface declaration is well formed and well typed.
 //
 // Inputs:
 //   arena - Arena used for allocations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   mtype - The mtype declaration to check.
+//   path - A search path used to find interface and module declaration on
+//          disk.
+//   interf - The interface declaration to check.
 //   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
-//   true if the mtype declaration is well formed and well typed, false
+//   true if the interface declaration is well formed and well typed, false
 //   otherwise.
 //
 // Side effects:
-//   Loads and checks required mtype and mdecls (not mdefns), adding them to
-//   prgm.
+//   Loads and checks required interfaces and module headers (not modules),
+//   adding them to prgm.
 //   If this declaration or any of the required declarations are not well
 //   formed, error messages are printed to stderr describing the problems.
-bool FbldCheckMType(FblcArena* arena, FbldStringV* path, FbldMType* mtype, FbldProgram* prgm);
+bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, FbldProgram* prgm);
 
 // FbldCheckMDecl --
 //   Check that the declaration part of the given module definition is well
@@ -849,8 +849,8 @@ bool FbldCheckMType(FblcArena* arena, FbldStringV* path, FbldMType* mtype, FbldP
 //   typed, false otherwise.
 //
 // Side effects:
-//   Loads and checks required mtype and mdecls (not mdefns), adding them to
-//   prgm.
+//   Loads and checks required interface declarations and module headers (not
+//   module definitions), adding them to prgm.
 //   If this declaration or any of the required declarations are not well
 //   formed, error messages are printed to stderr describing the problems.
 bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm);
@@ -871,8 +871,8 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
 //   otherwise.
 //
 // Side effects:
-//   Loads and checks required mtype and mdecls (not mdefns), adding them to
-//   prgm.
+//   Loads and checks required interface declarations and module headers (not
+//   module definitions), adding them to prgm.
 //   If this declaration or any of the required declarations are not well
 //   formed, error messages are printed to stderr describing the problems.
 bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm);

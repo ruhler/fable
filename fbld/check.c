@@ -13,8 +13,8 @@
 
 // Env --
 //   The environment of types and declarations.
-//   This is used as a union type for mtype + mdefn.
-//   In the case of mtype, the margv and iref fields are set to NULL.
+//   This is used as a union type for interf + module.
+//   In the case of interf, the iref field is set to NULL.
 typedef FbldMDefn Env;
 
 // Context --
@@ -56,7 +56,7 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 static FbldType* LookupType(Context* ctx, FbldQRef* entity);
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
 static FbldProc* LookupProc(Context* ctx, FbldQRef* entity);
-static FbldMType* LookupMType(Context* ctx, FbldMRef* mref);
+static FbldInterf* LookupInterf(Context* ctx, FbldMRef* mref);
 
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 static bool ResolveQRef(Context* ctx, FbldQRef* qref);
@@ -69,9 +69,9 @@ static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* act
 static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 static void CheckDecls(Context* ctx);
 static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
-static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* mdefn_type);
-static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* mtype_type, FbldFunc* mdefn_type);
-static bool CheckProcDeclsMatch(Context* ctx, FbldProc* mtype_type, FbldProc* mdefn_type);
+static bool CheckTypeDeclsMatch(Context* ctx, FbldType* type_i, FbldType* type_m);
+static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* type_i, FbldFunc* type_m);
+static bool CheckProcDeclsMatch(Context* ctx, FbldProc* type_i, FbldProc* type_m);
 static bool CheckValue(Context* ctx, FbldValue* value);
 
 // ReportError --
@@ -175,13 +175,13 @@ static FbldType* LookupType(Context* ctx, FbldQRef* entity)
     return NULL;
   }
 
-  // The entity is in a foreign module. Load the mtype for that module and
+  // The entity is in a foreign module. Load the interface for that module and
   // check for the type declaration in there.
-  FbldMType* mtype = LookupMType(ctx, entity->rmref);
-  if (mtype != NULL) {
-    for (size_t i = 0; i < mtype->typev->size; ++i) {
-      if (FbldNamesEqual(entity->rname->name, mtype->typev->xs[i]->name->name)) {
-        return mtype->typev->xs[i];
+  FbldInterf* interf = LookupInterf(ctx, entity->rmref);
+  if (interf != NULL) {
+    for (size_t i = 0; i < interf->typev->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, interf->typev->xs[i]->name->name)) {
+        return interf->typev->xs[i];
       }
     }
   }
@@ -217,13 +217,13 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity)
     return NULL;
   }
 
-  // The entity is in a foreign module. Load the mtype for that module and
+  // The entity is in a foreign module. Load the interface for that module and
   // check for the func declaration in there.
-  FbldMType* mtype = LookupMType(ctx, entity->rmref);
-  if (mtype != NULL) {
-    for (size_t i = 0; i < mtype->funcv->size; ++i) {
-      if (FbldNamesEqual(entity->rname->name, mtype->funcv->xs[i]->name->name)) {
-        return mtype->funcv->xs[i];
+  FbldInterf* interf = LookupInterf(ctx, entity->rmref);
+  if (interf != NULL) {
+    for (size_t i = 0; i < interf->funcv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, interf->funcv->xs[i]->name->name)) {
+        return interf->funcv->xs[i];
       }
     }
   }
@@ -259,41 +259,41 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* entity)
     return NULL;
   }
 
-  // The entity is in a foreign module. Load the mtype for that module and
+  // The entity is in a foreign module. Load the interface for that module and
   // check for the proc declaration in there.
-  FbldMType* mtype = LookupMType(ctx, entity->rmref);
-  if (mtype != NULL) {
-    for (size_t i = 0; i < mtype->procv->size; ++i) {
-      if (FbldNamesEqual(entity->rname->name, mtype->procv->xs[i]->name->name)) {
-        return mtype->procv->xs[i];
+  FbldInterf* interf = LookupInterf(ctx, entity->rmref);
+  if (interf != NULL) {
+    for (size_t i = 0; i < interf->procv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, interf->procv->xs[i]->name->name)) {
+        return interf->procv->xs[i];
       }
     }
   }
   return NULL;
 }
 
-// LookupMType --
-//   Look up the FbldMType* for the given resolved mref.
+// LookupInterf --
+//   Look up the FbldInterf* for the given resolved mref.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   mref - A reference to the mtype to look up.
+//   mref - A reference to the interface to look up.
 //
 // Results:
-//   The FbldMType* for the given resolved mref, or NULL if no such mtype
+//   The FbldInterf* for the given resolved mref, or NULL if no such interface
 //   could be found.
 //
 // Side effects:
-//   Loads the referenced mtype declaration if it has not already been loaded.
-//   Sets error to true and prints a message to stderr if the mtype
-//   declaration can not be loaded.
-static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
+//   Loads the referenced interface declaration if it has not already been
+//   loaded. Sets error to true and prints a message to stderr if the
+//   interface declaration can not be loaded.
+static FbldInterf* LookupInterf(Context* ctx, FbldMRef* mref)
 {
   if (mref->targv == NULL) {
     // This is a module parameter.
     for (size_t i = 0; i < ctx->env->margv->size; ++i) {
       if (FbldNamesEqual(ctx->env->margv->xs[i]->name->name, mref->name->name)) {
-        return FbldLoadMType(ctx->arena, ctx->path, ctx->env->margv->xs[i]->iref->name->name, ctx->prgm);
+        return FbldLoadInterf(ctx->arena, ctx->path, ctx->env->margv->xs[i]->iref->name->name, ctx->prgm);
       }
     }
 
@@ -306,7 +306,7 @@ static FbldMType* LookupMType(Context* ctx, FbldMRef* mref)
   if (decl == NULL) {
     return NULL;
   }
-  return FbldLoadMType(ctx->arena, ctx->path, decl->iref->name->name, ctx->prgm);
+  return FbldLoadInterf(ctx->arena, ctx->path, decl->iref->name->name, ctx->prgm);
 }
 
 // ResolveQRef --
@@ -479,7 +479,7 @@ static bool CheckMRef(Context* ctx, FbldMRef* mref)
 
   if (mdecl->margv->size == mref->margv->size) {
     for (size_t i = 0; i < mdecl->margv->size; ++i) {
-      assert(false && "TODO: Check module args are of correct mtype");
+      assert(false && "TODO: Check module args implement the correct interface");
     }
   } else {
     ReportError("expected %i module arguments to %s, but found %i\n", &ctx->error,
@@ -512,15 +512,15 @@ static bool CheckIRef(Context* ctx, FbldIRef* iref)
     }
   }
 
-  FbldMType* mtype = FbldLoadMType(ctx->arena, ctx->path, iref->name->name, ctx->prgm);
-  if (mtype == NULL) {
-    ReportError("Unable to load mtype declaration for %s\n", &ctx->error, iref->name->loc, iref->name->name);
+  FbldInterf* interf = FbldLoadInterf(ctx->arena, ctx->path, iref->name->name, ctx->prgm);
+  if (interf == NULL) {
+    ReportError("Unable to load interface declaration for %s\n", &ctx->error, iref->name->loc, iref->name->name);
     return false;
   }
 
-  if (mtype->targv->size != iref->targv->size) {
+  if (interf->targv->size != iref->targv->size) {
     ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
-        iref->name->loc, mtype->targv->size, iref->name->name, iref->targv->size);
+        iref->name->loc, interf->targv->size, iref->name->name, iref->targv->size);
     return false;
   }
   return true;
@@ -958,10 +958,10 @@ static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars)
 // Side effects:
 //   Prints error messages to stderr and sets error to true if there are any
 //   problems. Function and process declarations may be NULL to indicate these
-//   declarations belong to an mtype declaration; this is not considered an
-//   error.
-//   Loads and checks required mtype and mdecls (not mdefns), adding them to
-//   the context.
+//   declarations belong to an interface declaration; this is not considered
+//   an error.
+//   Loads and checks required interface declarations and module headers
+//   (not module definitions), adding them to the context.
 static void CheckDecls(Context* ctx)
 {
   // localv is a list of all local names for types, funcs, and procs.
@@ -1083,18 +1083,18 @@ static void CheckDecls(Context* ctx)
   }
 }
 
-// FbldCheckMType -- see fblcs.h for documentation.
-bool FbldCheckMType(FblcArena* arena, FbldStringV* path, FbldMType* mtype, FbldProgram* prgm)
+// FbldCheckInterf -- see fblcs.h for documentation.
+bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, FbldProgram* prgm)
 {
   Env env = {
-    .name = mtype->name,
-    .targv = mtype->targv,
+    .name = interf->name,
+    .targv = interf->targv,
     .margv = NULL,
     .iref = NULL,
-    .usingv = mtype->usingv,
-    .typev = mtype->typev,
-    .funcv = mtype->funcv,
-    .procv = mtype->procv
+    .usingv = interf->usingv,
+    .typev = interf->typev,
+    .funcv = interf->funcv,
+    .procv = interf->procv
   };
 
   Context ctx = {
@@ -1166,32 +1166,32 @@ static bool ArgsEqual(FbldArgV* a, FbldArgV* b)
 }
 
 // CheckTypeDeclsMatch --
-//   Check that a type declared in an mdefn matches its declaration in the
-//   mtype.
+//   Check that a type declared in a module matches its declaration in the
+//   interface.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   mtype_type - The type as declared in the mtype.
-//   mdefn_type - The type as declared in the mdefn.
+//   type_i - The type as declared in the interface.
+//   type_m - The type as declared in the module.
 //
 // Returns:
-//   true if the mdefn type matches the mtype type, false otherwise.
+//   true if type_m matches type_i, false otherwise.
 //
 // Side effects:
 //   Prints a message to stderr if the types don't match.
-static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* mdefn_type)
+static bool CheckTypeDeclsMatch(Context* ctx, FbldType* type_i, FbldType* type_m)
 {
-  switch (mtype_type->kind) {
+  switch (type_i->kind) {
     case FBLD_STRUCT_KIND: {
-      if (mdefn_type->kind != FBLD_STRUCT_KIND) {
-        ReportError("%s previously declared as a struct\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+      if (type_m->kind != FBLD_STRUCT_KIND) {
+        ReportError("%s previously declared as a struct\n", &ctx->error, type_m->name->loc, type_m->name->name);
         return false;
       }
     } break;
 
     case FBLD_UNION_KIND: {
-      if (mdefn_type->kind != FBLD_UNION_KIND) {
-        ReportError("%s previously declared as a union\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+      if (type_m->kind != FBLD_UNION_KIND) {
+        ReportError("%s previously declared as a union\n", &ctx->error, type_m->name->loc, type_m->name->name);
         return false;
       }
     } break;
@@ -1201,9 +1201,9 @@ static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* md
     } break;
   }
 
-  if (mtype_type->kind != FBLD_ABSTRACT_KIND) {
-    if (!ArgsEqual(mtype_type->fieldv, mdefn_type->fieldv)) {
-      ReportError("Type %s does not match its interface declaration\n", &ctx->error, mdefn_type->name->loc, mdefn_type->name->name);
+  if (type_i->kind != FBLD_ABSTRACT_KIND) {
+    if (!ArgsEqual(type_i->fieldv, type_m->fieldv)) {
+      ReportError("Type %s does not match its interface declaration\n", &ctx->error, type_m->name->loc, type_m->name->name);
       return false;
     }
   }
@@ -1211,80 +1211,80 @@ static bool CheckTypeDeclsMatch(Context* ctx, FbldType* mtype_type, FbldType* md
 }
 
 // CheckFuncDeclsMatch --
-//   Check that a function declared in an mdefn matches its declaration in the
-//   mtype.
+//   Check that a function declared in an module matches its declaration in
+//   the interface.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   mtype_func - The func as declared in the mtype.
-//   mdefn_func - The func as declared in the mdefn.
+//   func_i - The func as declared in the interface.
+//   func_m - The func as declared in the module.
 //
 // Returns:
-//   true if the mdefn func matches the mtype func, false otherwise.
+//   true if func_m matches func_i, false otherwise.
 //
 // Side effects:
 //   Prints a message to stderr if the functions don't match.
-static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* mtype_func, FbldFunc* mdefn_func)
+static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* func_i, FbldFunc* func_m)
 {
-  if (!ArgsEqual(mtype_func->argv, mdefn_func->argv)) {
-    ReportError("Function %s does not match its interface declaration\n", &ctx->error, mdefn_func->name->loc, mdefn_func->name->name);
+  if (!ArgsEqual(func_i->argv, func_m->argv)) {
+    ReportError("Function %s does not match its interface declaration\n", &ctx->error, func_m->name->loc, func_m->name->name);
     return false;
   }
 
-  if (!FbldQRefsEqual(mtype_func->return_type, mdefn_func->return_type)) {
-    ReportError("Function %s does not match its interface declaration\n", &ctx->error, mdefn_func->name->loc, mdefn_func->name->name);
+  if (!FbldQRefsEqual(func_i->return_type, func_m->return_type)) {
+    ReportError("Function %s does not match its interface declaration\n", &ctx->error, func_m->name->loc, func_m->name->name);
     return false;
   }
   return true;
 }
 
 // CheckProcDeclsMatch --
-//   Check that a process declared in an mdefn matches its declaration in the
-//   mtype.
+//   Check that a process declared in a module matches its declaration in the
+//   interface.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   mtype_proc - The proc as declared in the mtype.
-//   mdefn_proc - The proc as declared in the mdefn.
+//   proc_i - The proc as declared in the interface.
+//   proc_m - The proc as declared in the module.
 //
 // Returns:
-//   true if the mdefn proc matches the mtype proc, false otherwise.
+//   true if proc_m matches the proc_i, false otherwise.
 //
 // Side effects:
 //   Prints a message to stderr if the processes don't match.
-static bool CheckProcDeclsMatch(Context* ctx, FbldProc* mtype_proc, FbldProc* mdefn_proc)
+static bool CheckProcDeclsMatch(Context* ctx, FbldProc* proc_i, FbldProc* proc_m)
 {
-  if (mtype_proc->portv->size != mdefn_proc->portv->size) {
-    ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+  if (proc_i->portv->size != proc_m->portv->size) {
+    ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
     return false;
   }
 
-  for (size_t i = 0; i < mtype_proc->portv->size; ++i) {
-    FbldPort* mtype_port = mtype_proc->portv->xs + i;
-    FbldPort* mdefn_port = mtype_proc->portv->xs + i;
-    if (!FbldQRefsEqual(mtype_port->type, mdefn_port->type)) {
-      ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+  for (size_t i = 0; i < proc_i->portv->size; ++i) {
+    FbldPort* port_i = proc_i->portv->xs + i;
+    FbldPort* port_m = proc_i->portv->xs + i;
+    if (!FbldQRefsEqual(port_i->type, port_m->type)) {
+      ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
       return false;
     }
 
-    if (!FbldNamesEqual(mtype_port->name->name, mdefn_port->name->name)) {
-      ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+    if (!FbldNamesEqual(port_i->name->name, port_m->name->name)) {
+      ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
       return false;
     }
 
-    if (mtype_port->polarity != mdefn_port->polarity) {
-      ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+    if (port_i->polarity != port_m->polarity) {
+      ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
       return false;
     }
   }
 
-  if (!ArgsEqual(mtype_proc->argv, mdefn_proc->argv)) {
-    ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+  if (!ArgsEqual(proc_i->argv, proc_m->argv)) {
+    ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
     return false;
   }
 
-  if (!FbldQRefsEqual(mtype_proc->return_type, mdefn_proc->return_type)) {
-    ReportError("Process %s does not match its interface declaration\n", &ctx->error, mdefn_proc->name->loc, mdefn_proc->name->name);
+  if (!FbldQRefsEqual(proc_i->return_type, proc_m->return_type)) {
+    ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
     return false;
   }
   return true;
@@ -1307,62 +1307,62 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
   }
 
   // Verify the mdefn has everything it should according to its interface.
-  FbldMType* mtype = FbldLoadMType(arena, path, mdefn->iref->name->name, prgm);
-  if (mtype == NULL) {
+  FbldInterf* interf = FbldLoadInterf(arena, path, mdefn->iref->name->name, prgm);
+  if (interf == NULL) {
     return false;
   }
 
-  for (size_t mtype_type_id = 0; mtype_type_id < mtype->typev->size; ++mtype_type_id) {
-    FbldType* mtype_type = mtype->typev->xs[mtype_type_id];
-    for (size_t mdefn_type_id = 0; mdefn_type_id < mdefn->typev->size; ++mdefn_type_id) {
-      FbldType* mdefn_type = mdefn->typev->xs[mdefn_type_id];
-      if (FbldNamesEqual(mtype_type->name->name, mdefn_type->name->name)) {
-        CheckTypeDeclsMatch(&ctx, mtype_type, mdefn_type);
+  for (size_t i = 0; i < interf->typev->size; ++i) {
+    FbldType* type_i = interf->typev->xs[i];
+    for (size_t m = 0; m < mdefn->typev->size; ++m) {
+      FbldType* type_m = mdefn->typev->xs[m];
+      if (FbldNamesEqual(type_i->name->name, type_m->name->name)) {
+        CheckTypeDeclsMatch(&ctx, type_i, type_m);
 
-        // Set mtype_type to NULL to indicate we found the matching type.
-        mtype_type = NULL;
+        // Set type_i to NULL to indicate we found the matching type.
+        type_i = NULL;
         break;
       }
     }
 
-    if (mtype_type != NULL) {
-      ReportError("No implementation found for type %s from the interface\n", &ctx.error, mdefn->name->loc, mtype_type->name->name);
+    if (type_i != NULL) {
+      ReportError("No implementation found for type %s from the interface\n", &ctx.error, mdefn->name->loc, type_i->name->name);
     }
   }
 
-  for (size_t mtype_func_id = 0; mtype_func_id < mtype->funcv->size; ++mtype_func_id) {
-    FbldFunc* mtype_func = mtype->funcv->xs[mtype_func_id];
-    for (size_t mdefn_func_id = 0; mdefn_func_id < mdefn->funcv->size; ++mdefn_func_id) {
-      FbldFunc* mdefn_func = mdefn->funcv->xs[mdefn_func_id];
-      if (FbldNamesEqual(mtype_func->name->name, mdefn_func->name->name)) {
-        CheckFuncDeclsMatch(&ctx, mtype_func, mdefn_func);
+  for (size_t i = 0; i < interf->funcv->size; ++i) {
+    FbldFunc* func_i = interf->funcv->xs[i];
+    for (size_t m = 0; m < mdefn->funcv->size; ++m) {
+      FbldFunc* func_m = mdefn->funcv->xs[m];
+      if (FbldNamesEqual(func_i->name->name, func_m->name->name)) {
+        CheckFuncDeclsMatch(&ctx, func_i, func_m);
 
-        // Set mtype_func to NULL to indicate we found the matching func.
-        mtype_func = NULL;
+        // Set func_i to NULL to indicate we found the matching func.
+        func_i = NULL;
         break;
       }
     }
 
-    if (mtype_func != NULL) {
-      ReportError("No implementation found for func %s from the interface\n", &ctx.error, mdefn->name->loc, mtype_func->name->name);
+    if (func_i != NULL) {
+      ReportError("No implementation found for func %s from the interface\n", &ctx.error, mdefn->name->loc, func_i->name->name);
     }
   }
 
-  for (size_t mtype_proc_id = 0; mtype_proc_id < mtype->procv->size; ++mtype_proc_id) {
-    FbldProc* mtype_proc = mtype->procv->xs[mtype_proc_id];
-    for (size_t mdefn_proc_id = 0; mdefn_proc_id < mdefn->procv->size; ++mdefn_proc_id) {
-      FbldProc* mdefn_proc = mdefn->procv->xs[mdefn_proc_id];
-      if (FbldNamesEqual(mtype_proc->name->name, mdefn_proc->name->name)) {
-        CheckProcDeclsMatch(&ctx, mtype_proc, mdefn_proc);
+  for (size_t i = 0; i < interf->procv->size; ++i) {
+    FbldProc* proc_i = interf->procv->xs[i];
+    for (size_t m = 0; m < mdefn->procv->size; ++m) {
+      FbldProc* proc_m = mdefn->procv->xs[m];
+      if (FbldNamesEqual(proc_i->name->name, proc_m->name->name)) {
+        CheckProcDeclsMatch(&ctx, proc_i, proc_m);
 
-        // Set mtype_proc to NULL to indicate we found the matching proc.
-        mtype_proc = NULL;
+        // Set proc_i to NULL to indicate we found the matching proc.
+        proc_i = NULL;
         break;
       }
     }
 
-    if (mtype_proc != NULL) {
-      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, mdefn->name->loc, mtype_proc->name->name);
+    if (proc_i != NULL) {
+      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, mdefn->name->loc, proc_i->name->name);
     }
   }
 

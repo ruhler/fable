@@ -299,7 +299,7 @@ int main(int argc, char* argv[])
   }
 
   FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
-  FblcVectorInit(arena, prgm->mtypev);
+  FblcVectorInit(arena, prgm->interfv);
   FblcVectorInit(arena, prgm->mdeclv);
   FblcVectorInit(arena, prgm->mdefnv);
 
