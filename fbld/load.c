@@ -83,13 +83,13 @@ FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name
   return interf;
 }
 
-// FbldLoadMDecl -- see documentation in fbld.h
-FbldModule* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
+// FbldLoadModuleHeader -- see documentation in fbld.h
+FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
 {
   // Return the existing declaration if it has already been loaded.
-  for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
-    if (FbldNamesEqual(name, prgm->mdeclv.xs[i]->name->name)) {
-      return prgm->mdeclv.xs[i];
+  for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
+    if (FbldNamesEqual(name, prgm->mheaderv.xs[i]->name->name)) {
+      return prgm->mheaderv.xs[i];
     }
   }
 
@@ -111,11 +111,11 @@ FbldModule* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name,
     return NULL;
   }
 
-  FblcVectorAppend(arena, prgm->mdeclv, mdecl);
+  FblcVectorAppend(arena, prgm->mheaderv, mdecl);
 
   // Check that this definition is valid.
   // TODO: detect and abort if the mdecl recursively depends on itself.
-  if (!FbldCheckMDecl(arena, path, mdecl, prgm)) {
+  if (!FbldCheckModuleHeader(arena, path, mdecl, prgm)) {
     return NULL;
   }
   return mdecl;
@@ -131,7 +131,7 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
     }
   }
 
-  FbldModule* module = FbldLoadMDecl(arena, path, name, prgm);
+  FbldModule* module = FbldLoadModuleHeader(arena, path, name, prgm);
   if  (module == NULL) {
     return NULL;
   }
@@ -156,12 +156,13 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, Fbld
   }
 
   // Load all the modules still left to load.
-  // Note: More mdeclvs will be added as modules are loaded, which means that
-  // prgm->mdeclv->size will often increase during the body of the loop.
-  // Because elements are only ever appended to mdeclv, this should be okay.
-  // TODO: detect and abort if the module recursively depends on itself.
-  for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
-    if (!FbldLoadModule(arena, path, prgm->mdeclv.xs[i]->name->name, prgm)) {
+  // Note: More module headers will be added as modules are loaded, which
+  // means that prgm->mheaderv->size will often increase during the body of
+  // the loop. Because elements are only ever appended to mheaderv, this
+  // should be okay. TODO: detect and abort if the module recursively depends
+  // on itself.
+  for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
+    if (!FbldLoadModule(arena, path, prgm->mheaderv.xs[i]->name->name, prgm)) {
       return false;
     }
   }

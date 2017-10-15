@@ -302,7 +302,7 @@ static FbldInterf* LookupInterf(Context* ctx, FbldMRef* mref)
   }
 
   // This is a global module.
-  FbldModule* decl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
+  FbldModule* decl = FbldLoadModuleHeader(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
   if (decl == NULL) {
     return NULL;
   }
@@ -465,25 +465,25 @@ static bool CheckMRef(Context* ctx, FbldMRef* mref)
     }
   }
 
-  FbldModule* mdecl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
-  if (mdecl == NULL) {
+  FbldModule* module = FbldLoadModuleHeader(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
+  if (module == NULL) {
     ReportError("Unable to load declaration of module %s\n", &ctx->error, mref->name->loc, mref->name->name);
     return false;
   }
 
-  if (mdecl->targv->size != mref->targv->size) {
+  if (module->targv->size != mref->targv->size) {
     ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
-        mref->name->loc, mdecl->targv->size, mref->name->name, mref->targv->size);
+        mref->name->loc, module->targv->size, mref->name->name, mref->targv->size);
     return false;
   }
 
-  if (mdecl->margv->size == mref->margv->size) {
-    for (size_t i = 0; i < mdecl->margv->size; ++i) {
+  if (module->margv->size == mref->margv->size) {
+    for (size_t i = 0; i < module->margv->size; ++i) {
       assert(false && "TODO: Check module args implement the correct interface");
     }
   } else {
     ReportError("expected %i module arguments to %s, but found %i\n", &ctx->error,
-        mref->name->loc, mdecl->margv->size, mref->name->name, mref->margv->size);
+        mref->name->loc, module->margv->size, mref->name->name, mref->margv->size);
     return false;
   }
   return true;
@@ -1108,8 +1108,8 @@ bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, Fb
   return !ctx.error;
 }
 
-// FbldCheckMDecl -- see documentation in fbld.h
-bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
+// FbldCheckModuleHeader -- see documentation in fbld.h
+bool FbldCheckModuleHeader(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
 {
   FbldUsingV usingv = { .xs = NULL, .size = 0};
   FbldTypeV typev = { .xs = NULL, .size = 0};

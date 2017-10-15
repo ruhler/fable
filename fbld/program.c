@@ -9,8 +9,8 @@
 // FbldLookupModule -- see documentation in fbld.h
 FbldModule* FbldLookupModule(FbldProgram* prgm, FbldName* name)
 {
-  for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
-    FbldModule* module = prgm->mdeclv.xs[i];
+  for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
+    FbldModule* module = prgm->mheaderv.xs[i];
     if (FbldNamesEqual(name->name, module->name->name)) {
       return module;
     }

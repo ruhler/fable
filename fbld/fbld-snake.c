@@ -300,7 +300,7 @@ int main(int argc, char* argv[])
 
   FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
   FblcVectorInit(arena, prgm->interfv);
-  FblcVectorInit(arena, prgm->mdeclv);
+  FblcVectorInit(arena, prgm->mheaderv);
   FblcVectorInit(arena, prgm->modulev);
 
   if (!FbldLoadModules(arena, &search_path, qentry->umref->name->name, prgm)) {

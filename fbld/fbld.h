@@ -573,15 +573,16 @@ typedef struct {
 } FbldModuleV;
 
 // FbldProgram --
-//   A collection of interfaces, mdecls, and modules representing a program.
+//   A collection of interfaces, module headers, and modules representing a
+//   program.
 //
-//   An mdecl is an module whose body has not necessarily been checked for
-//   validity. This makes it possible to check the validity of a module
+//   A module header is an module whose body has not necessarily been checked
+//   for validity. This makes it possible to check the validity of a module
 //   without the need for the implementations of the other modules it depends
 //   on.
 typedef struct {
   FbldInterfV interfv;
-  FbldModuleV mdeclv;
+  FbldModuleV mheaderv;
   FbldModuleV modulev;
 } FbldProgram;
 
@@ -718,10 +719,10 @@ typedef struct {
 //   size of all loaded declarations if there is no error.
 FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
-// FbldLoadMDecl --
+// FbldLoadModuleHeader --
 //   Load the module header for the module with the
 //   given name. The module definition, its corresponding module type, and all
-//   of the module types and declarations that the mdecl part depends on are
+//   of the module types and declarations that the module header depends on are
 //   located according to the given search path, parsed, checked, and to the
 //   program before the loaded module definition is returned. The contents of
 //   the body of the returned module are not yet checked.
@@ -749,7 +750,7 @@ FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the definition and all loaded declarations if there is no error.
-FbldModule* FbldLoadMDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
+FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
 // FbldLoadModule --
 //   Load the module declaration for the module with the given name.
@@ -833,7 +834,7 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, Fbld
 //   formed, error messages are printed to stderr describing the problems.
 bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, FbldProgram* prgm);
 
-// FbldCheckMDecl --
+// FbldCheckModuleHeader --
 //   Check that the declaration part of the given module definition is well
 //   formed, well typed, and consistent with its own module declaration.
 //
@@ -852,7 +853,7 @@ bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, Fb
 //   module definitions), adding them to prgm.
 //   If this declaration or any of the required declarations are not well
 //   formed, error messages are printed to stderr describing the problems.
-bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm);
+bool FbldCheckModuleHeader(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm);
 
 // FbldCheckModule --
 //   Check that the given module definition is well formed, well typed, and
