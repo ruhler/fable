@@ -108,9 +108,9 @@ int main(int argc, char* argv[])
   FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
   FblcVectorInit(arena, prgm->interfv);
   FblcVectorInit(arena, prgm->mdeclv);
-  FblcVectorInit(arena, prgm->mdefnv);
+  FblcVectorInit(arena, prgm->modulev);
 
-  if (FbldLoadMDefns(arena, &search_path, main_module, prgm)) {
+  if (FbldLoadModules(arena, &search_path, main_module, prgm)) {
     if (expect_error) {
       fprintf(old_stderr, "expected error, but no error encountered.\n");
       return EX_FAIL;

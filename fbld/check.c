@@ -15,7 +15,7 @@
 //   The environment of types and declarations.
 //   This is used as a union type for interf + module.
 //   In the case of interf, the iref field is set to NULL.
-typedef FbldMDefn Env;
+typedef FbldModule Env;
 
 // Context --
 //   A context for type checking.
@@ -302,7 +302,7 @@ static FbldInterf* LookupInterf(Context* ctx, FbldMRef* mref)
   }
 
   // This is a global module.
-  FbldMDefn* decl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
+  FbldModule* decl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
   if (decl == NULL) {
     return NULL;
   }
@@ -465,7 +465,7 @@ static bool CheckMRef(Context* ctx, FbldMRef* mref)
     }
   }
 
-  FbldMDefn* mdecl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
+  FbldModule* mdecl = FbldLoadMDecl(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
   if (mdecl == NULL) {
     ReportError("Unable to load declaration of module %s\n", &ctx->error, mref->name->loc, mref->name->name);
     return false;
@@ -1109,7 +1109,7 @@ bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, Fb
 }
 
 // FbldCheckMDecl -- see documentation in fbld.h
-bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm)
+bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
 {
   FbldUsingV usingv = { .xs = NULL, .size = 0};
   FbldTypeV typev = { .xs = NULL, .size = 0};
@@ -1117,9 +1117,9 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
   FbldProcV procv = { .xs = NULL, .size = 0};
 
   Env env = {
-    .name = mdefn->name,
-    .targv = mdefn->targv,
-    .margv = mdefn->margv,
+    .name = module->name,
+    .targv = module->targv,
+    .margv = module->margv,
     .usingv = &usingv,
     .typev = &typev,
     .funcv = &funcv,
@@ -1134,7 +1134,7 @@ bool FbldCheckMDecl(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     .error = false
   };
 
-  CheckIRef(&ctx, mdefn->iref);
+  CheckIRef(&ctx, module->iref);
   return !ctx.error;
 }
 
@@ -1290,14 +1290,14 @@ static bool CheckProcDeclsMatch(Context* ctx, FbldProc* proc_i, FbldProc* proc_m
   return true;
 }
 
-// FbldCheckMDefn -- see documentation in fbld.h
-bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldProgram* prgm)
+// FbldCheckModule -- see documentation in fbld.h
+bool FbldCheckModule(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
 {
   Context ctx = {
     .arena = arena,
     .prgm = prgm,
     .path = path,
-    .env = mdefn,
+    .env = module,
     .error = false
   };
   CheckDecls(&ctx);
@@ -1306,16 +1306,16 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     return false;
   }
 
-  // Verify the mdefn has everything it should according to its interface.
-  FbldInterf* interf = FbldLoadInterf(arena, path, mdefn->iref->name->name, prgm);
+  // Verify the module has everything it should according to its interface.
+  FbldInterf* interf = FbldLoadInterf(arena, path, module->iref->name->name, prgm);
   if (interf == NULL) {
     return false;
   }
 
   for (size_t i = 0; i < interf->typev->size; ++i) {
     FbldType* type_i = interf->typev->xs[i];
-    for (size_t m = 0; m < mdefn->typev->size; ++m) {
-      FbldType* type_m = mdefn->typev->xs[m];
+    for (size_t m = 0; m < module->typev->size; ++m) {
+      FbldType* type_m = module->typev->xs[m];
       if (FbldNamesEqual(type_i->name->name, type_m->name->name)) {
         CheckTypeDeclsMatch(&ctx, type_i, type_m);
 
@@ -1326,14 +1326,14 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     }
 
     if (type_i != NULL) {
-      ReportError("No implementation found for type %s from the interface\n", &ctx.error, mdefn->name->loc, type_i->name->name);
+      ReportError("No implementation found for type %s from the interface\n", &ctx.error, module->name->loc, type_i->name->name);
     }
   }
 
   for (size_t i = 0; i < interf->funcv->size; ++i) {
     FbldFunc* func_i = interf->funcv->xs[i];
-    for (size_t m = 0; m < mdefn->funcv->size; ++m) {
-      FbldFunc* func_m = mdefn->funcv->xs[m];
+    for (size_t m = 0; m < module->funcv->size; ++m) {
+      FbldFunc* func_m = module->funcv->xs[m];
       if (FbldNamesEqual(func_i->name->name, func_m->name->name)) {
         CheckFuncDeclsMatch(&ctx, func_i, func_m);
 
@@ -1344,14 +1344,14 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     }
 
     if (func_i != NULL) {
-      ReportError("No implementation found for func %s from the interface\n", &ctx.error, mdefn->name->loc, func_i->name->name);
+      ReportError("No implementation found for func %s from the interface\n", &ctx.error, module->name->loc, func_i->name->name);
     }
   }
 
   for (size_t i = 0; i < interf->procv->size; ++i) {
     FbldProc* proc_i = interf->procv->xs[i];
-    for (size_t m = 0; m < mdefn->procv->size; ++m) {
-      FbldProc* proc_m = mdefn->procv->xs[m];
+    for (size_t m = 0; m < module->procv->size; ++m) {
+      FbldProc* proc_m = module->procv->xs[m];
       if (FbldNamesEqual(proc_i->name->name, proc_m->name->name)) {
         CheckProcDeclsMatch(&ctx, proc_i, proc_m);
 
@@ -1362,7 +1362,7 @@ bool FbldCheckMDefn(FblcArena* arena, FbldStringV* path, FbldMDefn* mdefn, FbldP
     }
 
     if (proc_i != NULL) {
-      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, mdefn->name->loc, proc_i->name->name);
+      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, module->name->loc, proc_i->name->name);
     }
   }
 
@@ -1441,7 +1441,7 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
   FbldTypeV typev = { .size = 0, .xs = NULL };
   FbldFuncV funcv = { .size = 0, .xs = NULL };
   FbldProcV procv = { .size = 0, .xs = NULL };
-  FbldMDefn mdefn = {
+  FbldModule module = {
     .name = &name,
     .targv = &targv,
     .margv = NULL,
@@ -1456,7 +1456,7 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
     .arena = arena,
     .prgm = prgm,
     .path = &path,
-    .env = &mdefn,
+    .env = &module,
     .error = false
   };
   return CheckValue(&ctx, value);

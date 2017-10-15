@@ -478,8 +478,8 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
     body->arg = func_d->body;
     proc_d->body = &body->_base;
 
-    FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
-    FblcVectorAppend(arena, *mdefn->procv, proc_d);
+    FbldModule* module = FbldLookupModule(prgm, entity->rmref->name);
+    FblcVectorAppend(arena, *module->procv, proc_d);
   }
 
   Compiled compiled;

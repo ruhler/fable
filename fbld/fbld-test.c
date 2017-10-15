@@ -143,7 +143,7 @@ static void OnUndefinedAccess(FblcInstr* this, FblcExpr* expr)
 //
 // Inputs:
 //   arena - Arena to use for allocating the parsed value.
-//   mdefnv - The program environment.
+//   modulev - The program environment.
 //   string - The string to parse the value from.
 //
 // Results:
@@ -457,9 +457,9 @@ int main(int argc, char* argv[])
   FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
   FblcVectorInit(arena, prgm->interfv);
   FblcVectorInit(arena, prgm->mdeclv);
-  FblcVectorInit(arena, prgm->mdefnv);
+  FblcVectorInit(arena, prgm->modulev);
 
-  if (!FbldLoadMDefns(arena, &search_path, qentry->umref->name->name, prgm)) {
+  if (!FbldLoadModules(arena, &search_path, qentry->umref->name->name, prgm)) {
     fprintf(stderr, "failed to load\n");
     return 1;
   }

@@ -30,7 +30,7 @@
   //   is parsed.
   typedef union {
     FbldInterf* interf;
-    FbldMDefn* mdefn;
+    FbldModule* module;
     FbldValue* value;
     FbldQRef* qref;
   } ParseResult;
@@ -68,7 +68,7 @@
   FbldMRef* mref;
   FbldMRefV* mrefv;
   FbldInterf* interf;
-  FbldMDefn* mdefn;
+  FbldModule* module;
   Decls* decls;
   FbldUsingItemV* uitemv;
   FbldUsing* using;
@@ -114,7 +114,7 @@
 // of the input stream to indicate the start symbol to use depending on what
 // we want to parse.
 %token START_INTERF 1 "interf parse start indicator"
-%token START_MDEFN 2 "mdefn parse start indicator"
+%token START_MODULE 2 "module parse start indicator"
 %token START_VALUE 3 "value parse start indicator"
 %token START_QNAME 4 "qref parse start indicator"
 
@@ -123,7 +123,7 @@
 // Keywords. These have type 'name' because in many contexts they are treated
 // as normal names rather than keywords.
 %token <name> INTERF "interf"
-%token <name> MDEFN "module"
+%token <name> MODULE "module"
 %token <name> TYPE "type"
 %token <name> STRUCT "struct"
 %token <name> UNION "union"
@@ -136,7 +136,7 @@
 %type <iref> iref
 %type <mref> mref
 %type <interf> interf
-%type <mdefn> mdefn
+%type <module> module
 %type <decls> decl_list defn_list
 %type <uitemv> using_item_list
 %type <using> using
@@ -167,7 +167,7 @@
 // indicate which start token we actually want to use.
 start:
      START_INTERF interf { result->interf = $2; }
-   | START_MDEFN mdefn { result->mdefn = $2; }
+   | START_MODULE module { result->module = $2; }
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
    ;
@@ -209,8 +209,8 @@ tmparams:
     }
   ;
 
-mdefn: "module" name tmparams '(' iref ')' '{' defn_list '}' ';' {
-          $$ = FBLC_ALLOC(arena, FbldMDefn);
+module: "module" name tmparams '(' iref ')' '{' defn_list '}' ';' {
+          $$ = FBLC_ALLOC(arena, FbldModule);
           $$->name = $2;
           $$->targv = $3->targv;
           $$->margv = $3->margv;
@@ -829,7 +829,7 @@ static bool IsSingleChar(int c)
 {
   return strchr("(){};,@:?=.<>+-$", c) != NULL
     || c == START_INTERF
-    || c == START_MDEFN
+    || c == START_MODULE
     || c == START_VALUE
     || c == START_QNAME;
 }
@@ -934,7 +934,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
 
   struct { char* keyword; int symbol; } keywords[] = {
     {.keyword = "interf", .symbol = INTERF},
-    {.keyword = "module", .symbol = MDEFN},
+    {.keyword = "module", .symbol = MODULE},
     {.keyword = "type", .symbol = TYPE},
     {.keyword = "struct", .symbol = STRUCT},
     {.keyword = "union", .symbol = UNION},
@@ -993,8 +993,8 @@ FbldInterf* FbldParseInterf(FblcArena* arena, const char* filename)
   return result.interf;
 }
 
-// FbldParseMDefn -- see documentation in fbld.h
-FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
+// FbldParseModule -- see documentation in fbld.h
+FbldModule* FbldParseModule(FblcArena* arena, const char* filename)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -1003,15 +1003,15 @@ FbldMDefn* FbldParseMDefn(FblcArena* arena, const char* filename)
   }
 
   Lex lex = {
-    .c = START_MDEFN,
+    .c = START_MODULE,
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
   };
   ParseResult result;
-  result.mdefn = NULL;
+  result.module = NULL;
   yyparse(arena, &lex, &result);
-  return result.mdefn;
+  return result.module;
 }
 
 // FbldParseValueFromString -- see documentation in fbld.h

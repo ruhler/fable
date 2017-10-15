@@ -6,13 +6,13 @@
 #include "fblc.h"
 #include "fbld.h"
 
-// FbldLookupMDefn -- see documentation in fbld.h
-FbldMDefn* FbldLookupMDefn(FbldProgram* prgm, FbldName* name)
+// FbldLookupModule -- see documentation in fbld.h
+FbldModule* FbldLookupModule(FbldProgram* prgm, FbldName* name)
 {
   for (size_t i = 0; i < prgm->mdeclv.size; ++i) {
-    FbldMDefn* mdefn = prgm->mdeclv.xs[i];
-    if (FbldNamesEqual(name->name, mdefn->name->name)) {
-      return mdefn;
+    FbldModule* module = prgm->mdeclv.xs[i];
+    if (FbldNamesEqual(name->name, module->name->name)) {
+      return module;
     }
   }
   return NULL;
@@ -21,13 +21,13 @@ FbldMDefn* FbldLookupMDefn(FbldProgram* prgm, FbldName* name)
 // FbldLookupType -- see documentation in fbld.h
 FbldType* FbldLookupType(FbldProgram* prgm, FbldQRef* entity)
 {
-  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
-  if (mdefn == NULL) {
+  FbldModule* module = FbldLookupModule(prgm, entity->rmref->name);
+  if (module == NULL) {
     return NULL;
   }
 
-  for (size_t j = 0; j < mdefn->typev->size; ++j) {
-    FbldType* type = mdefn->typev->xs[j];
+  for (size_t j = 0; j < module->typev->size; ++j) {
+    FbldType* type = module->typev->xs[j];
     if (FbldNamesEqual(entity->rname->name, type->name->name)) {
       return type;
     }
@@ -38,13 +38,13 @@ FbldType* FbldLookupType(FbldProgram* prgm, FbldQRef* entity)
 // FbldLookupFunc -- see documentation in fbld.h
 FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQRef* entity)
 {
-  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
-  if (mdefn == NULL) {
+  FbldModule* module = FbldLookupModule(prgm, entity->rmref->name);
+  if (module == NULL) {
     return NULL;
   }
 
-  for (size_t j = 0; j < mdefn->funcv->size; ++j) {
-    FbldFunc* func = mdefn->funcv->xs[j];
+  for (size_t j = 0; j < module->funcv->size; ++j) {
+    FbldFunc* func = module->funcv->xs[j];
     if (FbldNamesEqual(entity->rname->name, func->name->name)) {
       return func;
     }
@@ -55,13 +55,13 @@ FbldFunc* FbldLookupFunc(FbldProgram* prgm, FbldQRef* entity)
 // FbldLookupProc -- see documentation in fbld.h
 FbldProc* FbldLookupProc(FbldProgram* prgm, FbldQRef* entity)
 {
-  FbldMDefn* mdefn = FbldLookupMDefn(prgm, entity->rmref->name);
-  if (mdefn == NULL) {
+  FbldModule* module = FbldLookupModule(prgm, entity->rmref->name);
+  if (module == NULL) {
     return NULL;
   }
 
-  for (size_t j = 0; j < mdefn->procv->size; ++j) {
-    FbldProc* proc = mdefn->procv->xs[j];
+  for (size_t j = 0; j < module->procv->size; ++j) {
+    FbldProc* proc = module->procv->xs[j];
     if (FbldNamesEqual(entity->rname->name, proc->name->name)) {
       return proc;
     }
@@ -72,12 +72,12 @@ FbldProc* FbldLookupProc(FbldProgram* prgm, FbldQRef* entity)
 // FbldImportQRef -- See documentation in fbld.h.
 FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQRef* entity)
 {
-  FbldMDefn* mdefn = FbldLookupMDefn(prgm, ctx->name);
+  FbldModule* module = FbldLookupModule(prgm, ctx->name);
 
   if (entity->rmref == NULL) {
     // Check to see if this is a type parameter.
-    for (size_t i = 0; i < mdefn->targv->size; ++i) {
-      if (FbldNamesEqual(entity->rname->name, mdefn->targv->xs[i]->name)) {
+    for (size_t i = 0; i < module->targv->size; ++i) {
+      if (FbldNamesEqual(entity->rname->name, module->targv->xs[i]->name)) {
         return ctx->targv->xs[i];
       }
     }
@@ -101,9 +101,9 @@ FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, Fbl
 
   if (mref->targv == NULL) {
     // This must be a module parameter.
-    FbldMDefn* mdefn = FbldLookupMDefn(prgm, ctx->name);
-    for (size_t i = 0; i < mdefn->margv->size; ++i) {
-      if (FbldNamesEqual(mref->name->name, mdefn->margv->xs[i]->name->name)) {
+    FbldModule* module = FbldLookupModule(prgm, ctx->name);
+    for (size_t i = 0; i < module->margv->size; ++i) {
+      if (FbldNamesEqual(mref->name->name, module->margv->xs[i]->name->name)) {
         return ctx->margv->xs[i];
       }
     }
