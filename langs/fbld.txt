@@ -1,67 +1,104 @@
 Damocrates is a meta-language built on top of Androcles, Bathylus, and Calvisus
 designed to be programmed by human, with features for modularity and
-development.
+development. These features facilitate reuse of code across multiple programs,
+expanding the scale of programs that can be developed by individuals and
+larger organizations in practice.
 
-Damocrates should be statically compilable into Androcles/Bathylus/Calvisus.
-Abstractions introduced by the Damocrates language should be zero-cost in the
-sense that they will have no overhead at runtime after compiling the program
-down to Androcles/Bathylus/Calvisus. The developer should not have to make a
-tradeoff between modularity/abstraction and runtime performance.
+A core philosophy of Damocrates is that it can be statically compiled into
+Androcles/Bathylus/Calvisus. The abstractions introduced by the Damocrates
+language are zero-cost in the sense that they have no overhead at runtime
+after compiling the program down to Androcles/Bathylus/Calvisus. The developer
+need not have to make a tradeoff between modularity/abstraction and runtime
+performance.
 
+Overview of Damocrates
+----------------------
 Damocrates adds support for modularity and polymorphism on top of the
-Calvisus language. The purpose of these features is to facilitate reuse of
-code across multiple programs, expanding the scale of programs that can be
-developed.
+Calvisus language.
 
-Overview of Modules
--------------------
-Fbld shifts a focus on implementing programs that exists in fblc to a focus on
-implementing reusable pieces of programs. These pieces of programs are called
-modules. A module is a collection of types, functions, processes and other
-modules.
+Modularity
+^^^^^^^^^^
+A module is a collection of declarations with an abstract interface. The
+benefits of modules are:
+* They allow common functionality to be reused across many different programs.
+* That common functionality can be understood and used solely based on its
+  abstract interface, separate from any complex implementation details.
+* Modules act as namespaces for declarations, which helps to avoid name
+  conflicts when assembling programs using code from different developers.
 
 For example, many programs make use of some form of integer arithmetic. Rather
-than reimplementing and retesting integer arithmetic for each program, a single
+than reimplement and retest integer arithmetic for each program, a single
 integer arithmetic module can be developed and reused. The integer arithmetic
-module will define an integer type and functions that operate on integer
-values.
+module can be defined with an abstract interface so that users need only know
+there is some type Int and an operation to add two Ints together, without
+having to worry about whether the Int type is implemented using a unary,
+binary, 2s-complement or other representation. Here is what the interface
+definition and an implementation based on a unary representation might look
+like in Damocrates:
 
-To effectively reuse a piece of code, it must be easy to understand what
-that code does at a high level and how it should be used; it should not be
-important to understand implementation details of the code. Fbld has the
-notion of a module interface, which provides an abstract view of the code
-provided by a module to make it easy for users to make use of the module
-without having to understand extraneous implementation details.
-
-For example, the integer arithmetic module could be used knowing there is some
-type Int with operations to add two Ints together, but the user need not know
-whether the Int type is implemented using a unary, binary, 2s-complement or
-other representation.
-
-Interfaces in fbld are defined using the 'interf' keyword. Modules are defined
-using the 'module' keyword. To get a flavor of what interface and module
-declarations look like, here's what the interface and implementation of an
-integer arithmetic module might look like:
-
-interf IntegerI {
-  type Int;
-  func Add(Int a, Int b; Int);
-};
-
-module IntegerM(IntegerI) {
-  struct Unit();
-  union Int(Unit 0, Int S);
-
-  func Add(Int a, Int b; Int) {
-    ?(a; b, Int:S(Add(a.S, b)));
+  interf IntegerI {
+    type Int;
+    func Add(Int a, Int b; Int);
   };
-};
 
-Interfaces allow modules to be developed independent of their use and reused
-independent of their development. Modules can be understood and developed in
-isolation then combined to form large programs that would otherwise be too
-complex and costly to develop.
+  module IntegerM(IntegerI) {
+    struct Unit();
+    union Int(Unit 0, Int S);
 
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+The Int type and Add function can then be referenced from other modules using
+qualified references Int@IntegerM and Add@IntegerM, or they can be imported
+and referred to under local names with the 'using' statement. Both of these
+appropaches are demonstrated in this contrived main module that defines
+operations on pairs of integers:
+
+  module MainM(MainI) {
+    using IntegerM { Int; };
+
+    struct IntPair(Int a, Int b);
+    func AddPair(IntPair x ; Int) {
+      Add@IntegerM(x.a, x.b);
+    };
+  };
+
+Polymorphism 
+^^^^^^^^^^^^
+Polymorphism makes it possible to reuse the same code in different type and
+behavioral contexts. For example, with polymorphism it is possible to provide
+one implementation of a list type and associated functions that work for lists
+of any arbitrary type of element. Polymorphism is introduced in Damocrates by
+allowing declarations to be parameterized by type and module.
+
+A generic list type and 'Last' function could be defined by introducing a type
+parameter T as follows:
+
+  struct ListP<T>(T head, ListS<T> tail);
+  union ListS<T>(Unit nil, ListP<T> cons);
+
+  func Last<T>(ListP<T> list ; T) {
+    ?(list.tail; list.head, Last<T>(list.tail.cons));
+  };
+
+We can also define a generic 'Contains' function to check if a list contains a
+specific element, but only if we also provide a module parameter to define
+what it means for two elements to be equal:
+  
+  interf Eq<T> {
+    func Equals(T a, T b; Bool);
+  };
+
+  func Contains<T; Eq<T> eq>(ListS<T> list, T elem; Bool) {
+    ?(list;
+        False(),                                    # The list is empty.
+        ?(eq.Equals(elem, list.cons.head);
+          True(),                                   # head matches.
+          Contains<T, eq>(list.cons.tail, elem)));  # check the tail.
+  };
+ 
 Top Level Declarations
 ----------------------
 The fbld language as proposed is incomplete. It does not have a good story for
@@ -139,58 +176,6 @@ using statement for all references to external entities.
 
 Polymorphism
 ------------
-Interfaces make it possible to write code that is agnostic to the details of
-how types, functions, and processes are defined and implemented. To take full
-advantage of this, fbld adds support for polymorphic declarations, which
-allow code to be reused in multiple different contexts with different
-definitions of the types, functions, and processes it interfaces with within
-the same program. Polymorphism is supported by allowing types, funcs, procs,
-interfaces, and modules to be parameterized by types and other modules.
-
-For example, there are common data structures, such as lists, which can be
-used with many different element types. Fbld's polymorphism allows a
-list type to be defined that is a function of a given type parameter.
-Basic list functions can be defined that can be reused for lists of Ints,
-lists of booleans, lists of lists, or lists of any other type. This is a form
-of parametric polymorphism. The following example gives a flavor for the
-syntax of polymorphism in fbld:
-
-struct ListP<T>(T head, ListS<T> tail);
-union ListS<T>(Unit nil, ListP<T> cons);
-
-func Last<T>(ListP<T> x; T) {
-  ?(x.tail; x.head, Last<T>(x.tail.cons));
-};
-
-As another example, some computation involving numbers can be defined that
-works on any type of number satisfying a required set of operations. A
-function for summing up the numbers on a list could be reused with natural
-numbers, integers, real numbers, or booleans. This is a form of ad-hoc
-polymorphism:
-
-interf Number<T> {
-  func Zero( ; T);
-  func Add(T a, T b; T);
-};
-
-module IntNumber(Number<Int>) {
-  func Zero( ; Int) {
-    Int:0(Unit());
-  };
-
-  func Add(Int a, Int b; Int) {
-    Add@Int(a, b);
-  };
-};
-
-func SumS<T; Number<T> N>(ListS<T> l; T) {
-  ?(l; Zero@N(), SumS<T, N>(l.cons));
-};
-
-func SumP<T; Number<T> N>(ListP<T> l; T) {
-  Add@N(l.head, SumS<T, N>(l.tail));
-};
-
 Declarations can be parameterized by zero or more type and module parameters.
 The general syntax for defining a polymorphic entity is to use angle brackets
 after the entities name with the syntax:
