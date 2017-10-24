@@ -1,8 +1,10 @@
 module AllTestsM(AllTestsI) {
-  using UnitM { Unit; };
-  using List M{ S; P; Append; };
-  using UBNatTestM { UBNatTestFailure = TestFailure; };
-  using PrimesTestM { PrimesTestFailure = TestFailure; };
+  import @ { UnitM, ListM, UBNatTestM, PrimesTestM };
+
+  import UnitM { Unit; };
+  import ListM { S; P; Append; };
+  import UBNatTestM { UBNatTestFailure = TestFailure; };
+  import PrimesTestM { PrimesTestFailure = TestFailure; };
 
   union TestFailure(
       UBNatTestFailure UBNatTest,

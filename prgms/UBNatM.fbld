@@ -1,6 +1,7 @@
 module UBNatM(UBNatI) {
-  using UnitM { Unit; };
-  using BoolM { Bool; True; False; };
+  import @ { UnitM; BoolM; };
+  import UnitM { Unit; };
+  import BoolM { Bool; True; False; };
 
   union Nat(
     Unit 0,

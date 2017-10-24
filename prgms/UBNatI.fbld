@@ -1,6 +1,7 @@
 # Unbounded Binary Natural Number
 interf UBNatI {
-  using BoolM { Bool; };
+  import @ { BoolM; };
+  import BoolM { Bool; };
 
   type Nat;
 

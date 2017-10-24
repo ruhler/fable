@@ -1,8 +1,9 @@
 module UBNatTestM(UBNatTestI) {
-  using UnitM { Unit; };
-  using BoolM { Bool; Not; };
-  using ListM { P; S; };
-  using UBNatM {
+  import @ { UnitM; BoolM; ListM; UBNatM; };
+  import UnitM { Unit; };
+  import BoolM { Bool; Not; };
+  import ListM { P; S; };
+  import UBNatM {
     Nat;
     0; 1; 2; 3; 4; 5; 6; 7; Lit2;
     Eq; Ne; Lt; Le; Gt; Ge;

@@ -1,9 +1,10 @@
 module PrimesTestM(PrimesTestI) {
-  using UnitM { Unit; };
-  using BoolM { Bool; };
-  using UBNatM { Nat; 1; 3; 10; Lit2; Eq; };
-  using PrimesM { NthPrime; };
-  using ListM { S; P; };
+  import @ { UnitM; BoolM; UBNatM; PrimesM; ListM; };
+  import UnitM { Unit; };
+  import BoolM { Bool; };
+  import UBNatM { Nat; 1; 3; 10; Lit2; Eq; };
+  import PrimesM { NthPrime; };
+  import ListM { S; P; };
 
   union TestName(
       Unit NthPrime_1_10

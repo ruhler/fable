@@ -241,3 +241,112 @@ More details on proposed unification:
 * Optional <type> args to struct, union, mtype
 * Optional <type;mref> args to func, proc, mdefn
 
+
+Notes from three big issues with the proposed fbld version 3.
+
+Namespaces for Hierarchical Modules
+-----------------------------------
+If modules can recursively define other modules, then what belongs to the
+namespace of a module? What names can you refer to from the module?
+
+The tension comes from two ends.
+1. Local submodules want access to parent namespace.
+For example, defining an instance of Eq for a locally defined type:
+
+  struct MyPair(Int a, Int b);
+
+  module EqMyPair(Eq<MyPair>) {
+    # Local access to 'MyPair'
+    func Equals(MyPair a, MyPair b) ...
+  };
+
+2. Don't want name polution from global scope.
+The top level global scope is unboundedly large. Anyone could potentially add
+a new thing to the top level global scope at any time under any name. Whatever
+name they choose would lead to a name conflict for any module that has access
+to the global scope.
+
+Straw man proposal for name access:
+A.
+* A module can access anything it defines locally.
+* To access things defined in children, used qualified names.
+* A module can access anything defined locally in any parent module.
+
+This suffers from problem (2).
+
+B.
+* Same as (A), except that local definitions shadow definitions from parent
+  modules.
+
+This addresses problem (2), but introduces a new problem. Imagine three
+nested modules: A is a parent of B is a parent of C. C refers to modules of A
+internally. Now, if B introduces any local definitions that shadow the
+declarations C refers to in A, then those changes to B break A. That seems
+like a bad thing, because B doesn't know what references C has to things in A.
+
+C.
+* A module must explicitly import anything it needs from its immediate parent
+  module's namespace.
+
+If a nested sub-module wants to reference a global entity, it is only allowed
+to do so if its container module imports that global entity. Using the example
+from before, if C wants to reference something in A, then B must first import
+that entity from A and C then import that from B.
+
+Rationalle:
+* In order to make use of sub modules, you have to know what their
+dependencies are. You have to construct the required environment for the
+submodule to be used. Thus it makes sense to require a module to understand
+all of its submodule's external dependencies.
+* To have full control over its own name space, a module should explicitly
+import anything external that it needs, under whatever name it chooses. This
+makes perfect sense.
+
+The slight difference from the shadowing case (B) is that you must explicitly
+list imports all the way up the module chain. I claim that is the key,
+important distinction.
+
+Complex Polymorphic Kinds
+-------------------------
+Polymorphism allows declarations to be parameterized by types. The question
+is, are these just simple types, or can a declaration be parameterized by a
+parameterized type?
+
+The canonical example is a generic monadic function that wants to be
+paramterized by some monadic type M, where M is itself parameterized by simple
+type T.
+
+The problem is, if you can support passing parameterized types as arguments,
+then parameterized types (and other things in general) really ought to be
+first class citizens. It should be easy to describe any kind of parameterized
+type. You run into questions of: How to do partial application of a
+parameterized type? How to reorder the type arguments of a parameterized type?
+Can you make a parameterized parameterized type?
+
+For example, how could you define a monadic instance for Tuple, parameterized
+by the type of the second element of the tuple?
+
+You would need some form of type lambda or partial application:
+
+module TupleMonad<T> (Monad<\B -> Tuple<B, T>>) { ... }
+
+Or complex alias:
+
+alias TupleX<A><B> = Tuple<A, B>
+
+Until we can figure out a simple way to cover all these cases, let's leave out
+this complexity from the language and only allow simple kinded type
+parameters.
+
+Proposal for simple-ish way to cover all cases:
+1. Allow partial application of type parameters.
+2. Have 'alias' declarations for all kinds of declarations.
+Note: no need to have anonymous type lambdas. We would only need those if we
+wanted to bind local arguments. But that case is not relevant to us. Defining
+separate static names via 'alias' works just fine.
+
+Example:
+
+struct Tuple<A, B>(A first, B second);
+alias ReverseTuple<A, B> Tuple<B, A>;
+module ReverseTupleMonad<T>(Monad<ReverseTuple<T>>) { ... };

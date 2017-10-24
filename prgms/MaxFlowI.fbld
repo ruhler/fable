@@ -1,6 +1,7 @@
 interf MaxFlowI<Node> {
-  using ListM { S; };
-  using UBNatM { Nat; };
+  import @ { ListM; UBNatM; };
+  import ListM { S; };
+  import UBNatM { Nat; };
 
   struct Edge(Node src, Node dst);
 

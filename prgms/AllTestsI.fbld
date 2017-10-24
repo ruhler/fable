@@ -1,5 +1,6 @@
 interf AllTestsI {
-  using ListM { S; };
+  import @ { ListM; UBNatTestM; PrimesTestM; };
+  import ListM { S; };
 
   union TestFailure(
       TestFailure@UBNatTestM UBNatTest,

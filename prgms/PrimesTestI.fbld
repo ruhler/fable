@@ -1,7 +1,8 @@
 interf PrimesTestI {
-  using UnitM { Unit; };
-  using UBNatM { Nat; };
-  using ListM { S; };
+  import @ { UnitM; UBNatM; ListM; };
+  import UnitM { Unit; };
+  import UBNatM { Nat; };
+  import ListM { S; };
 
   union TestName(
       Unit NthPrime_1_10

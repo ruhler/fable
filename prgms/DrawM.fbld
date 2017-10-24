@@ -1,6 +1,7 @@
 module DrawM(DrawI) {
-  using UnitM { Unit; };
-  using UBNatM { Nat; };
+  import @ { UnitM; UBNatM; };
+  import UnitM { Unit; };
+  import UBNatM { Nat; };
 
   union Color(
     Unit black,

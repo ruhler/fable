@@ -1,7 +1,8 @@
 interf UBNatTestI {
-  using UnitM { Unit; };
-  using UBNatM { Nat; };
-  using ListM { S; };
+  import @ { UnitM; UBNatM; ListM; };
+  import UnitM { Unit; };
+  import UBNatM { Nat; };
+  import ListM { S; };
  
   union TestName(
     Unit Eq_0_0, Unit Eq_0_1, Unit Eq_1_1,

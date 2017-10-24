@@ -1,5 +1,6 @@
 module ListM(ListI) {
-  using UnitM { Unit; };
+  import @ { UnitM; Function; };
+  import UnitM { Unit; };
 
   struct P<T>(T head, S<T> tail);
   union S<T>(Unit nil, P<T> cons); 

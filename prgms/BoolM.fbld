@@ -1,5 +1,6 @@
 module BoolM(BoolI) {
-  using UnitM { Unit; };
+  import @ { UnitM; }
+  import UnitM { Unit; };
 
   union Bool(Unit true, Unit false);
 

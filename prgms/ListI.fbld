@@ -1,5 +1,6 @@
 interf ListI {
-  using UnitM { Unit; };
+  import @ { UnitM; };
+  import UnitM { Unit; };
 
   # P - A list of 1 or more elements: T+
   struct P<T>(T head, S tail);

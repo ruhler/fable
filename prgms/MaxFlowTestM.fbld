@@ -1,9 +1,10 @@
 module MaxFlowTestM(MaxFlowTestI) {
-  using UnitM { Unit; };
-  using BoolM { Bool; };
-  using UBNatM { Nat; Eq; };
-  using ListM { S; P; };
-  using MaxFlowM<Node;> { Edge; MaxFlow; };
+  import @ { UnitM; BoolM; UBNatM; ListM; MaxFlowM; };
+  import UnitM { Unit; };
+  import BoolM { Bool; };
+  import UBNatM { Nat; Eq; };
+  import ListM { S; P; };
+  import MaxFlowM<Node;> { Edge; MaxFlow; };
 
   union TestName(Unit Basic);
   struct TestFailure(TestName name, Nat a, Nat b);

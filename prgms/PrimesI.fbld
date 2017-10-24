@@ -1,6 +1,7 @@
 interf PrimesI {
-  using BoolM { Bool; };
-  using UBNatM { Nat; };
+  import @ { BoolM; UBNatM; };
+  import BoolM { Bool; };
+  import UBNatM { Nat; };
  
   func IsPrime(Nat x ; Bool);
 
