@@ -100,45 +100,44 @@ what it means for two elements to be equal:
           True(),                                   # head matches.
           Contains<T, eq>(list.cons.tail, elem)));  # check the tail.
   };
- 
+
 Top Level Declarations
 ----------------------
-The fbld language as proposed is incomplete. It does not have a good story for
-composing modules together into higher level libraries that can themselves be
-composed together into much larger programs. This is a work in progress that
-will develop as more experience is gained developing complex fbld programs.
-
-In the mean time, the following is advised:
-
-Code is organized into top level interf and module declarations. These
-declarations belong to a single global namespace. The dependency graph between
-top level declarations must form a directed acyclic graph, which implies a
-module can be understood by first understanding its dependencies, then
-understanding the module itself in isolation.
-
-An fbld program is made up of the module containing its main entry point and
-all other modules and interfaces that the main module depends on directly or
-indirectly.
+Fbld code is organized into a collection of top level interface and module
+declarations that form the global name space. An fbld program is made up of
+the module containing its main entry point and all other top level
+declarations the main module depends on directly or indirectly.
 
 To avoid the need to parse a large number of top level declarations unused in
 most programs, it is suggested to organize top level declarations by putting
 each declaration in its own file called Foo.fbld, where Foo is the name of the
 top level declaration.
 
-Interfaces and modules must not recursively reference any other modules. In
-other words, the graph of interface and module dependencies should be a
-directed acyclic graph. The reason for this is to avoid complex and confusing
-module dependencies that would make it difficult to reason about or understand
-a module in isolation.
+Top level declarations must not recursively reference other top level
+declarations; the graph of top level interface and module dependencies
+should be a directed acyclic graph. The reason for this is to avoid complex
+and confusing module dependencies that would make it difficult to reason about
+or understand a module in isolation.
 
-Qualified References
---------------------
-A module serves as a namespace. Entities defined in different modules can
-have the same name. In order to reference an entity from an external module,
-both the name of the entity and the name of the external module must be
-supplied using a qualified reference taking the form <name>@<mref>. For
-example, to refer to a function 'True' in a module named BoolM:
-   True@BoolM
+Note that the prescribed file system layout for top level declarations is
+intended solely for practical purposes when developing on a posix-like system.
+It should not be considered a fundamental part of the language specification.
+In particular, these guidelines are not applicable to non-posix systems.
+
+Name Spaces
+-----------
+Every entity is defined in the context of a name space. In addition to the
+global name space of top level declarations, each interface and module
+definition introduces its own name space.
+
+An entity may refer to any other entity defined in the same name space context
+directly using that other entity's name. In order to refer to entities defined
+in other name spaces, they must either be imported into the name space or
+referred to using a qualified reference from an entity already accessible from
+the name space.
+
+Entities can be defined with the same name as long as they belong to different
+name spaces.
 
 Import Declarations
 ^^^^^^^^^^^^^^^^^^^
@@ -186,6 +185,15 @@ import statements for the same module. It is not required to import entities
 from locally available modules; qualified references can be used to refer to
 those entities instead. In order to refer to entities from the parent name
 space, they must be imported.
+
+Qualified References
+^^^^^^^^^^^^^^^^^^^^
+A module serves as a namespace. Entities defined in different modules can
+have the same name. In order to reference an entity from an external module,
+both the name of the entity and the name of the external module must be
+supplied using a qualified reference taking the form <name>@<mref>. For
+example, to refer to a function 'True' in a module named BoolM:
+   True@BoolM
 
 Polymorphism
 ------------
@@ -441,15 +449,6 @@ Syntax Reference
   tname ::= ... (* as in fblc *)
   vname ::= ... (* as in fblc *)
 
-TODO
-----
-* Finish this spec!
- - Talk about how polymorphism works for types, funcs, processes
- - Talk about what it means to have submodules, what the restrictions are on
-   recursion, and what entities are visible.
- - Give interesting examples for polymorphic and submodules.
-* Update to disallow kinded polymorphic types and modules.
-* Note TODO for type and module aliases.
 
 Open Questions
 --------------
