@@ -52,13 +52,13 @@ like in Damocrates:
 
 The Int type and Add function can then be referenced from other modules using
 qualified references Int@IntegerM and Add@IntegerM. Alternatively, the Int and
-Add functions can be imported into the local name space from the IntegerM
+Add functions can be imported into the local namespace from the IntegerM
 module. Both of these appropaches are demonstrated in this contrived main
 module that defines operations on pairs of integers:
 
   module MainM(MainI) {
-    import @ { IntegerM; };    # import IntegerM from parent module name space
-    import IntegerM { Int; };  # import Int from IntegerM name space
+    import @ { IntegerM; };    # import IntegerM from parent module namespace
+    import IntegerM { Int; };  # import Int from IntegerM namespace
 
     struct IntPair(Int a, Int b);
     func AddPair(IntPair x ; Int) {
@@ -104,7 +104,7 @@ what it means for two elements to be equal:
 Top Level Declarations
 ----------------------
 Fbld code is organized into a collection of top level interface and module
-declarations that form the global name space. An fbld program is made up of
+declarations that form the global namespace. An fbld program is made up of
 the module containing its main entry point and all other top level
 declarations the main module depends on directly or indirectly.
 
@@ -116,40 +116,40 @@ top level declaration.
 Top level declarations must not recursively reference other top level
 declarations; the graph of top level interface and module dependencies
 should be a directed acyclic graph. The reason for this is to avoid complex
-and confusing module dependencies that would make it difficult to reason about
-or understand a module in isolation.
+module dependencies that would make it difficult to reason about or understand
+a module in isolation.
 
 Note that the prescribed file system layout for top level declarations is
 intended solely for practical purposes when developing on a posix-like system.
 It should not be considered a fundamental part of the language specification.
 In particular, these guidelines are not applicable to non-posix systems.
 
-Name Spaces
------------
-Every entity is defined in the context of a name space. In addition to the
-global name space of top level declarations, each interface and module
-definition introduces its own name space.
+Namespaces
+----------
+Every entity is defined in the context of a namespace. In addition to the
+global namespace of top level declarations, each interface and module
+definition introduces its own namespace.
 
-An entity may refer to any other entity defined in the same name space context
+An entity may refer to any other entity defined in the same namespace context
 directly using that other entity's name. In order to refer to entities defined
-in other name spaces, they must either be imported into the name space or
-referred to using a qualified reference from an entity already accessible from
-the name space.
+in other namespaces, those entities must either be imported into the namespace
+or referred to using a qualified reference from an entity already accessible
+from the namespace.
 
 Entities can be defined with the same name as long as they belong to different
-name spaces.
+namespaces.
 
 Import Declarations
 ^^^^^^^^^^^^^^^^^^^
 The 'import' declaration is used to import external entities into a module or
-interface's local name space. There are two forms of import declaration:
+interface's local namespace. There are two forms of import declaration:
 
   'import' '@' '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
   'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
 
 If the '@' symbol follows the 'import' keyword, then entities are imported
-from the parent name space. Otherwise the entities are imported from a module
-already in the local name space refered to by mref.
+from the parent namespace. Otherwise the entities are imported from a module
+already in the local namespace refered to by mref.
 
 By default entities are imported using the same name they are declared with,
 but it is possible to specify an alternate name when importing an entity in
@@ -174,7 +174,7 @@ the module it is being imported from.
 Type and module parameters should not be supplied in the import statement
 for imported polymorphic entities. The locally imported names will refer to
 polymorphic entities that can be used with different type and module
-parameters within the local name space. For example, a List type could be
+parameters within the local namespace. For example, a List type could be
 imported once from the List module, then used locally as List<Int>,
 List<Bool>, or any other kind of list.
 
@@ -189,11 +189,13 @@ space, they must be imported.
 Qualified References
 ^^^^^^^^^^^^^^^^^^^^
 A module serves as a namespace. Entities defined in different modules can
-have the same name. In order to reference an entity from an external module,
-both the name of the entity and the name of the external module must be
-supplied using a qualified reference taking the form <name>@<mref>. For
-example, to refer to a function 'True' in a module named BoolM:
-   True@BoolM
+have the same name. To reference an entity from an external module that has
+not been imported locally, the name of the entity and the name of the
+module where it resides must be supplied using a qualified reference taking
+the form <name>@<mref>. For example, to refer to a function 'True' in a
+locally accessible module named BoolM:
+    
+    True@BoolM
 
 Polymorphism
 ------------
@@ -202,7 +204,7 @@ The general syntax for defining a polymorphic entity is to use angle brackets
 after the entities name with the syntax:
 
 params ::= ['<' [tparam [',' tparam [...]]] [';' [mparam [',' mparam [...]]]] '>'] ;
-mparam ::= iref params mname ;
+mparam ::= iref params tname ;
 tparam ::= tname ;
 
 If nothing is given after the entity name, the entity is assumed to take no
@@ -232,7 +234,7 @@ details. Interfaces are named and may be polymorphic in types or modules as
 described by 'params'.
 
 The body of the interface specification consists of a list of zero or more
-interface_declaration items and introduces a new name space. Interface
+interface_declaration items and introduces a new namespace. Interface
 declaration items declared in the body of the interface can only access
 external named entities through an import declaration in the body of the
 interface.
@@ -346,99 +348,140 @@ Module Specification
   <module_declarations>
 '};'
 
-Module are named. Modules have zero or more type parameters and module
-parameters. The type parameters are as in interfaces, a comma separate list of
-simple names of types that can be referred to from within the module.
+Modules are named and may be polymorphic in tyeps or modules as described by
+'params'. Each module implements a single interface. For a module to properly
+implement an interface, every entity declared in the interface must have a
+corresponding implementation supplied by the module.
 
-For a module to properly implement an interface, every type, function, and
-process declared in the interface must have a corresponding implementation
-supplied by the module.
+There are 7 kinds of module_declaration items: import, struct, union, func,
+proc, interf, and module. These correspond to the interface declarations,
+except that abstract type declarations are not allowed within modules.
 
-Module names belong to a different namespace than interface names. It is
-acceptable to have a module with the same name as an interface. This is common
-practice for interfaces that are expected to have a single implementation.
+Import Declaration
+^^^^^^^^^^^^^^^^^^
+  'import' '@' '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
 
-Each module parameter is specified as an interface and a module parameter
-name. The module parameter can be used by providing any concrete module that
-implements the given interface. Module parameters may refer to the type
-parameters of the module.
+Import declarations are supported within module declarations. They behave
+as already discussed.
 
-Every module implements a specific interface. This means the module will
-provide definitions for all components declared in the interface. The
-concrete interface specification can refer to type parameters and module
-parameter types.
+Struct Declarations
+^^^^^^^^^^^^^^^^^^^
+  'struct' tname param '(' [qref fname [',' qref fname [...]]] ')' ';'
 
-TODO: Give a range of interesting concrete examples here.
+Struct declarations are as in fblc, except that they now support
+polymorphic type and module parameters as described by 'params', and they can
+reference qualified types from other modules.
 
-Following the module declaration is a list of module declaration items. These
-include 'import', 'struct', 'union', 'func', 'proc' , 'interf' and 'module'
-declarations. The 'import' declaration is as for module interfaces. The
-'union', 'func', and 'proc' declarations are as for fblc with additional
-support for qualified references to external entities.
+Union Declarations
+^^^^^^^^^^^^^^^^^^
+  'union' tname param '(' [qref fname [',' qref fname [...]]] ')' ';'
 
-Struct and union declarations can appear in both module interfaces and module
-definitions. If a struct or union declaration appears in a module interface,
-it must appear verbatim in any module definition that implements that
-interface. This can be interpreted as saying the struct declaration in the
-interface specifies the interface for constructing and deconstructing the
-type, while the corresponding declaration in the module definition is a
-unique definition of the type. If two different modules ModuleA and ModuleB
-implement the same interface Interface, and that interface includes a struct
-or union declaration Foo, then Foo@ModuleA is considered a different type from
-Foo@ModuleB.
+Union declarations are as in fblc, except that they now support
+polymorphic type and module parameters as described by 'params', and they can
+reference qualified types from other modules.
 
-An abstract type declaration can be used in an interface rather than a struct
-or type declaration to represent an abstract type without providing module
-users with an interface to construct or deconstruct the type. See the section
-on abstract type declarations for more information.
+Function Declarations
+^^^^^^^^^^^^^^^^^^^^^
+  'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' expr ';'
+
+Function declarations are as in fblc, except that they now support
+polymorphic type and module parameters as described by 'params', and they can
+reference qualified types from other modules.
+
+Process Declarations
+^^^^^^^^^^^^^^^^^^^^
+  'proc' tname params '('
+     [qref polarity pname [',' qref polarity pname [...]]] ';'
+     [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
+
+Process declarations are as in fblc, except that they now support
+polymorphic type and module parameters as described by 'params', and they can
+reference qualified types from other modules.
+
+Sub-Interface Declarations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+'interf' <interface_name> params '{'
+  <interface_declarations>
+'};'
+
+Modules can contain interface declarations.
+
+Sub-Module Declarations
+^^^^^^^^^^^^^^^^^^^^^^^
+  'module' <module_name> params '(' iref ')' ';'
+
+Modules can contain sub-module declarations.
+
+Interface Requirements
+^^^^^^^^^^^^^^^^^^^^^^
+For a module to correctly implement its interface, every entity declared in
+the interface must have a corresponding implementation supplied by the module.
+
+An abstract type declared in an interface can be implemented using either a
+struct or union type declaration with matching name in the module.
+
+Any struct/union type in the interface must be implemented with a matching
+struct/union declaration in the module. This can be interpreted as saying the
+type declaration in the interface specifies the interface for constructing
+and deconstructing the type, while the corresponding declaration in the module
+definition is a unique definition of the type. If two different modules
+ModuleA and ModuleB implement the same interface Interface, and that interface
+includes a struct or union declaration Foo, then Foo@ModuleA is considered a
+different type from Foo@ModuleB.
+
+Any sub-interface declared in the interface must have a matching sub-interface
+defined in the module.
+
+Any func, proc, or sub-module declared in the interface must have a matching func,
+proc, or sub-module declaration in the module where the body of the
+declaration has been supplied.
+
+For declarations to be considered matching, they must have the same type and
+name of arguments. Whether a type is referred to under a local name or using a
+qualified reference does not matter.
 
 Syntax Reference
 ----------------
-  interf ::= 'interf' iname ['<' [tname [',' tname [...]]] '>'] '{'
+  interf ::= 'interf' tname params '{'
                 [interf_decl [interf_decl [...]]] '}' ';' ;
 
-  module ::= 'module' mname ['<'[tname [',' tname [...]]] ';'
-                              [iref mname [',' iref mname [...]]] '>']
-                          '(' iref ')' '{'
+  module ::= 'module' tname  params '(' iref ')' '{'
                 [module_decl [module_decl [...]]] '}' ';' ;
 
-  iref ::= iname ['<' [qref [',' qref [...]]] '>'] ;
-         | iref '@' mref
+  params ::= ['<'[tname [',' tname [...]]] [';'
+                 [iref tname [',' iref tname [...]]]] '>'] ;
 
-  mref ::= mname ['<' [qref [',' qref [...]]] '; [mref [',' mref [...]]] '>']
-         | mref '@' mref
-         ;
-          
+  qref ::= tname ['<' [qref [',' qref [...]]] [';'
+                 [mref [',' mref [...]]]] '>']
+                 ['@' qref] ;
+  iref ::= qref ;
+  mref ::= qref ;
 
-  qref ::= tname ['@' mref] ;
-  
-  interf_decl ::= 'import' (mref | '@') '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-              |  'type' tname ';'
-              |  'struct' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
-              |  'union' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
-              |  'func' tname '(' [qref vname [',' qref vname [...]]] ';' qref ')' ';'
-              |  'proc' tname '('
-                    [qref polarity pname [',' qref polarity pname [...]]] ';'
-                    [qref vname [',' qref vname [...]]] ';' qref ')' ';'
-              |  interf
-              |  'module' mname ['<'[tname [',' tname [...]]] ';'
-                                   [iref mname [',' iref mname [...]]] '>']
-                              '(' iref ')' ';'
-              ;
+  interf_decl ::= 'import' '@'  '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+                  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+               |  'type' tname params ';'
+               |  'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
+               |  'union' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
+               |  'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' ';'
+               |  'proc' tname params '('
+                     [qref polarity pname [',' qref polarity pname [...]]] ';'
+                     [qref vname [',' qref vname [...]]] ';' qref ')' ';'
+               |  interf
+               |  'module' tname params '(' iref ')' ';'
+               ;
 
-  module_decl ::= 'import' (mref | '@') '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-              |  'struct' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
-              |  'union' tname '(' [qref fname [',' qref fname [...]]] ')' ';'
-              |  'func' tname '(' [qref vname [',' qref vname [...]]] ';' qref ')' expr ';'
-              |  'proc' tname '('
-                    [qref polarity pname [',' qref polarity pname [...]]] ';'
-                    [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
-              |  interf
-              |  module
-              ;
-
-  iname ::= name ;  (* A name referring to an interface *)
-  mname ::= name ;  (* A name referring to a module *)
+  module_decl ::= 'import' '@' '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+               |  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+               |  'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
+               |  'union' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
+               |  'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' expr ';'
+               |  'proc' tname params '('
+                     [qref polarity pname [',' qref polarity pname [...]]] ';'
+                     [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
+               |  interf
+               |  module
+               ;
 
   expr ::= ... (* as in fblc, with qref in place of tname *)
   proc ::= ... (* as in fblc, with qref in place of tname *)
@@ -449,28 +492,40 @@ Syntax Reference
   tname ::= ... (* as in fblc *)
   vname ::= ... (* as in fblc *)
 
-
 Open Questions
 --------------
 * Can you import the same entity multiple times under a different name in the
   same import statement?
-* Can you have multiple import statements for the same (concrete) module?
+  I recommend no, for the purpose of error checking. For this rare legitimate
+  use case, use a separate import statement to achieve the same thing.
+
 * Can you import the same entity multiple times under a different name in
   different import statements?
+  Yes.
+
+* Can you have multiple import statements for the same (concrete) module?
+  Yes.
+
 * Can you import public entities from your own module in import statements?
+  No. Your own module name is not in scope, and to import your module name
+  from your parent would be a recursive module definition which is not
+  allowed.
+
 * Can you import private entities from your own module in import statements?
+  No. Your own module name is not in scope, and to import your module name
+  from your parent would be a recursive module definition which is not
+  allowed.
+
 * Can you import funcs or procs in an interf's import statement, or only
   types?
+  If you import something that is not referenced, it should be flagged as not
+  referenced. In other words: no you may not, but the error isn't that you are
+  trying to import them from an interf's import statement, but rather that
+  they are imported without being referenced.
+
 * Can you use an imported type in the import's module parameter?
   For example, something like: import Maybe(T) { T=Maybe };
-* There's no good way to partially apply or reorder type arguments to a type.
-  If fear this will cause problems once we start doing advanced use of
-  different kinded type parameters. I think we need either a way to have a
-  polymorphic typedef, or type lambdas of some kind. Note that this is a
-  problem particular to types, modules and interfaces, because those we need
-  to compare against other types, modules, and interfaces for equality.
-  For functions and processes you can just define a wrapper - the compiler
-  doesn't care if they're the same or not.
+  Not sure.
 
 Wish List
 ---------
