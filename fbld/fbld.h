@@ -39,8 +39,10 @@ typedef struct {
 void FbldReportError(const char* format, FbldLoc* loc, ...);
 
 // Forward declarations. See below for descriptions of these types.
+typedef struct FbldQRef FbldQRef;
 typedef struct FbldQRefV FbldQRefV;
-typedef struct FbldMRefV FbldMRefV;
+typedef struct FbldInterfV FbldInterfV;
+typedef struct FbldModuleV FbldModuleV;
 
 // FbldName -- 
 //   A name along with its associated location in a source file. The location
@@ -56,78 +58,6 @@ typedef struct {
   size_t size;
   FbldName** xs;
 } FbldNameV;
-
-// FbldIRef --
-//   A reference to a concrete interface, such as:
-//    Map<Int, String@String<;>>
-//
-// Fields:
-//   name - The name of the interface.
-//   targv - The type arguments to the interface.
-typedef struct {
-  FbldName* name;
-  FbldQRefV* targv;
-} FbldIRef;
-
-// FbldMRef --
-//   A reference to a concrete module, such as:
-//    HashMap<Int, String@String<;>; HashInt<;>>
-//
-// Fields:
-//   name - The name of the module.
-//   targv - The type arguments to the module.
-//   margv - The module arguments to the module.
-//
-// In the case of modules passed as parameters, FbldMRef is still used, but
-// with NULL targv and margv. This is in contrast to a global module with no
-// type or module arguments, which will have non-NULL, empty targv and margv.
-typedef struct {
-  FbldName* name;
-  FbldQRefV* targv;
-  FbldMRefV* margv;
-} FbldMRef;
-
-// FbldMRefV --
-//   A vector of module references.
-struct FbldMRefV {
-  size_t size;
-  FbldMRef** xs;
-}; 
-
-// FbldQRef --
-//   A reference to a qualified type, function, or process, such as:
-//    contains@HashMap<Int, String@String<;>; HashInt<;>>
-//
-// FbldQRef stores both unresolved and resolved versions of the qualified
-// reference. The unresolved version is as the reference appears in the source
-// code, the resolved version inlines references according to using
-// declarations.
-//
-// Fields:
-//   uname - The unresolved name of the entity.
-//   umref - The unresolved module the entity is from. May be NULL to indicate
-//           the module should be determined based on context.
-//   rname - The resolved name of the entity. Initialized to NULL by the
-//           parser to indicate the reference hasn't been resolved yet.
-//           Resolved to a non-NULL value in the type checker and used in the
-//           compiler.
-//   rmref - The resolved module reference. May be NULL if the reference
-//           hasn't been resolved yet or to indicate the module should be
-//           determined based on context.
-// Invariant: if umref and rmref are both non-NULL, then umref == rmref.
-typedef struct {
-  FbldName* uname;
-  FbldMRef* umref;
-  FbldName* rname;
-  FbldMRef* rmref;
-} FbldQRef;
-
-// FbldQRefV --
-//   A vector of qrefs.
-struct FbldQRefV {
-  size_t size;
-  FbldQRef** xs;
-}; 
 
 // FbldId --
 //   A reference to a variable, field, or port.
@@ -146,6 +76,46 @@ typedef struct {
   size_t size;
   FbldId* xs;
 } FbldIdV;
+
+// FbldQRef --
+//   A reference to a qualified interface, module, type, function or process,
+//   such as:
+//    find<Nat; Eq<Nat> eqNat>@ListM
+//
+// FbldQRef stores both unresolved and resolved versions of the qualified
+// reference. The unresolved version is as the reference appears in the source
+// code, the resolved version inlines references according to import
+// declarations.
+//
+// Fields:
+//   uname - The unresolved name of the entity. Also know as the "user" name.
+//   rname - The resolved name of the entity. Initialized to NULL by the
+//           parser to indicate the reference hasn't been resolved yet.
+//           Resolved to a non-NULL value in the type checker and used in the
+//           compiler.
+//   targv - The type arguments to the entity.
+//   margv - The module arguments to the entity.
+//   umref - The unresolved module the entity is from. May be NULL to indicate
+//           the module should be determined based on context.
+//   rmref - The resolved module reference. May be NULL if the reference
+//           hasn't been resolved yet or to indicate the module should be
+//           determined based on context.
+// Invariant: if umref and rmref are both non-NULL, then umref == rmref.
+struct FbldQRef {
+  FbldName* uname;
+  FbldName* rname;
+  FbldQRefV* targv;
+  FbldQRefV* margv;
+  FbldQRef* umref;
+  FbldQRef* rmref;
+};
+
+// FbldQRefV --
+//   A vector of qrefs.
+struct FbldQRefV {
+  size_t size;
+  FbldQRef** xs;
+}; 
 
 // FbldArg --
 //   An fbld name with associated (possibly qualified) type. Used for
@@ -381,10 +351,9 @@ typedef struct {
   FbldExecV* execv;
   FbldActn* body;
 } FbldExecActn;
-
 
-// FbldUsingItem --
-//   Specification for a single item in a using declaration of the form
+// FbldImportItem --
+//   Specification for a single item in an import declaration of the form
 //   <dest>[=<source>].
 //
 // Fields:
@@ -398,30 +367,57 @@ typedef struct {
 typedef struct {
   FbldName* source;
   FbldName* dest;
-} FbldUsingItem;
+} FbldImportItem;
 
-// FbldUsingItemV --
-//   A vector of fbld using items.
+// FbldImportItemV --
+//   A vector of fbld import items.
 typedef struct {
   size_t size;
-  FbldUsingItem** xs;
-} FbldUsingItemV;
+  FbldImportItem** xs;
+} FbldImportItemV;
 
-// FbldUsing --
-//   A using declaration of the form:
-//    using <mref>{<name>[=<name>]; <name>[=<name>]; ...; }
+// FbldImport --
+//   An import declaration of the form:
+//    using <mref> {<name>[=<name>]; <name>[=<name>]; ...; }
+//
+//   mref is set to NULL to indicate we are importing from the parent
+//   namespace '@'.
 typedef struct {
-  FbldMRef* mref;
-  FbldUsingItemV* itemv;
-} FbldUsing;
+  FbldQRef* mref;
+  FbldImportItemV* itemv;
+} FbldImport;
 
-// FbldUsingV --
-//   A vector of FbldUsings.
+// FbldImportV --
+//   A vector of FbldImports.
 typedef struct {
   size_t size;
-  FbldUsing** xs;
-} FbldUsingV;
+  FbldImport** xs;
+} FbldImportV;
 
+// FbldMArg --
+//   A module argument, such as: Map<Int, String> M
+//
+// Fields:
+//   iref - The interface of the module argument.
+//   name - The name of the module argument.
+typedef struct {
+  FbldQRef* iref;
+  FbldName* name;
+} FbldMArg;
+
+// FbldMArgV --
+//   A vector of module arguments.
+typedef struct {
+  size_t size;
+  FbldMArg** xs;
+} FbldMArgV;
+
+// FbldParams --
+//   The polymorphic type and module parameters of a declaration.
+typedef struct {
+  FbldNameV* targv;
+  FbldMArgV* margv;
+} FbldParams;
 
 // FbldKind --
 //   An enum used to distinguish between struct, union, and abstract types.
@@ -437,7 +433,7 @@ typedef enum {
 typedef struct {
   FbldName* name;
   FbldKind kind;
-  FbldNameV* targv;
+  FbldParams* params;
   FbldArgV* fieldv;
 } FbldType;
 
@@ -454,6 +450,7 @@ typedef struct {
 //   declarations.
 typedef struct {
   FbldName* name;
+  FbldParams* params;
   FbldArgV* argv;
   FbldQRef* return_type;
   FbldExpr* body;
@@ -494,6 +491,7 @@ typedef struct {
 //   declarations.
 typedef struct {
   FbldName* name;
+  FbldParams* params;
   FbldPortV* portv;
   FbldArgV* argv;
   FbldQRef* return_type;
@@ -511,70 +509,57 @@ typedef struct {
 //   An fbld interface declaration.
 typedef struct {
   FbldName* name;
-  FbldNameV* targv;
-  FbldUsingV* usingv;
+  FbldParams* params;
+  FbldImportV* importv;
   FbldTypeV* typev;
   FbldFuncV* funcv;
   FbldProcV* procv;
+  FbldInterfV* interfv;
+  FbldModuleV* modulev;
 } FbldInterf;
 
 // FbldInterfV --
 //   A vector of fbld interface declarations.
-typedef struct {
+struct FbldInterfV {
   size_t size;
   FbldInterf** xs;
-} FbldInterfV;
-
-// FbldMArg --
-//   A module argument, such as: Map<Int, String> M
-//
-// Fields:
-//   iref - The interface of the module argument.
-//   name - The name of the module argument.
-typedef struct {
-  FbldIRef* iref;
-  FbldName* name;
-} FbldMArg;
-
-// FbldMArgV --
-//   A vector of module arguments.
-typedef struct {
-  size_t size;
-  FbldMArg** xs;
-} FbldMArgV;
+};
 
 // FbldModule --
 //   An fbld module declaration.
 //
 // Fields:
 //   name - The name of the module being defined.
-//   targv - The type parameters of the module.
-//   margv - The module parameters of the module.
+//   params - The polymorphic type and module parameters of the module.
 //   iref - The interface the module implements.
-//   usingv - The using declarations within the module definition.
+//   importv - The using declarations within the module definition.
 //   typev - The type declarations within the module definition.
 //   funcv - The func declarations within the module definition.
+//   procv - The proc declarations within the module definition.
+//   interfv - The interface declarations within the module definition.
+//   modulev - The module declarations within the module definition.
 typedef struct {
   FbldName* name;
-  FbldNameV* targv;
-  FbldMArgV* margv;
-  FbldIRef* iref;
-  FbldUsingV* usingv;
+  FbldParams* params;
+  FbldQRef* iref;
+  FbldImportV* importv;
   FbldTypeV* typev;
   FbldFuncV* funcv;
   FbldProcV* procv;
+  FbldInterfV* interfv;
+  FbldModuleV* modulev;
 } FbldModule;
 
 // FbldModuleV --
 //   A vector of fbld modules.
-typedef struct {
+struct FbldModuleV {
   size_t size;
   FbldModule** xs;
-} FbldModuleV;
+};
 
 // FbldProgram --
-//   A collection of interfaces, module headers, and modules representing a
-//   program.
+//   A collection of top level interfaces, module headers, and modules
+//   representing a program.
 //
 //   A module header is an module whose body has not necessarily been checked
 //   for validity. This makes it possible to check the validity of a module
@@ -586,7 +571,6 @@ typedef struct {
   FbldModuleV modulev;
 } FbldProgram;
 
-
 // Forward declaration of FbldValue type.
 typedef struct FbldValue FbldValue;
 
@@ -967,54 +951,21 @@ FbldProc* FbldLookupProc(FbldProgram* prgm, FbldQRef* entity);
 // Side effects:
 //   Behavior is undefined if the entity has not already been resolved.
 //   TODO: Allocates a new entity that somebody should probably clean up somehow.
-FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldQRef* qref);
+FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* ctx, FbldQRef* qref);
 
-// FbldImportMRef --
-//   Import an already resolved module reference from another module.
-//   Substitutes all references to local type parameters and module parameters
-//   with the arguments supplied in the given module reference context.
-//
-// Inputs:
-//   arena - Arena to use for allocations.
-//   prgm - The program context.
-//   ctx - The context the module reference is being referred to from.
-//   mref - The module reference to import.
-//
-// Results:
-//   The module reference imported into the given context.
-//
-// Side effects:
-//   Behavior is undefined if the module reference has not already been resolved.
-//   TODO: Allocates a new mref that somebody should probably clean up somehow.
-FbldMRef* FbldImportMRef(FblcArena* arena, FbldProgram* prgm, FbldMRef* ctx, FbldMRef* mref);
-
-// FbldPrintType --
-//   Print a resolved type in human readable format to the given stream.
+// FbldPrintQRef --
+//   Print a resolved qref in human readable format to the given stream.
 //
 // Inputs:
 //   stream - Stream to print the type to.
-//   type - The type to print.
+//   qref - The qref to print.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   Prints the type to the stream.
-void FbldPrintType(FILE* stream, FbldQRef* type);
-
-// FbldPrintMRef --
-//   Print a resolved mref in human readable format to the given stream.
-//
-// Inputs:
-//   stream - Stream to print the type to.
-//   mref - The mref to print. Must not be null.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints the mref to the stream.
-void FbldPrintMRef(FILE* stream, FbldMRef* mref);
+//   Prints the qref to the stream.
+void FbldPrintQRef(FILE* stream, FbldQRef* qref);
 
 // FbldAccessLoc --
 //   The location of an access expression, for aid in debugging undefined

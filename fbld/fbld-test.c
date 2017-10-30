@@ -276,7 +276,7 @@ static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQR
 {
   FbldType* type = FbldLookupType(prgm, type_name);
   assert(type != NULL);
-  FbldPrintType(stream, type_name);
+  FbldPrintQRef(stream, type_name);
   if (type->kind == FBLD_STRUCT_KIND) {
     fprintf(stream, "(");
     for (size_t i = 0; i < type->fieldv->size; ++i) {
@@ -446,9 +446,13 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, search_path);
   FblcVectorAppend(arena, search_path, path);
 
+  // TODO: Properly resolve the names in the qref
+  // // TODO: Properly resolve the names in the qref
   FbldQRef* qentry = FbldParseQRefFromString(arena, entry);
-  qentry->rmref = qentry->umref;
-  qentry->rname = qentry->uname;
+  for (FbldQRef* qref = qentry; qref != NULL; qref = qref->umref) {
+    qref->rname = qref->uname;
+    qref->rmref = qref->umref;
+  }
   if (qentry == NULL) {
     fprintf(stderr, "failed to parse entry\n");
     return 1;
@@ -459,7 +463,7 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, prgm->mheaderv);
   FblcVectorInit(arena, prgm->modulev);
 
-  if (!FbldLoadModules(arena, &search_path, qentry->umref->name->name, prgm)) {
+  if (!FbldLoadModules(arena, &search_path, qentry->rmref->rname->name, prgm)) {
     fprintf(stderr, "failed to load\n");
     return 1;
   }

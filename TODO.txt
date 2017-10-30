@@ -1,13 +1,13 @@
 Priority:
-* Revise lang/fbld.txt a few more times until it makes sense.
-* Rewrite the fbld front end to support the new language.
- - merge QRef and MRef into a single Ref type.
- - create an FbldStaticArgs type, a vector of type args and module args.
-   or call it FbldTMArgs, or FbldSArgs.
+* Fbld 3
 
 Fbld 3:
-* Revise lang/fbld.txt a few more times until it makes sense.
 * Rewrite the fbld front end to support the new language.
+ - Revise fbld.h to match desired structure.
+ - Stub out all code until something compiles.
+ - Revise the parser.
+ - Revise the checker.
+ - Revise the compiler.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

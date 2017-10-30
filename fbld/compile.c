@@ -61,12 +61,12 @@ typedef struct {
   CompiledProcV procv;
 } Compiled;
 
-static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled);
-static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldActn* actn, Compiled* compiled);
+static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* mref, FbldExpr* expr, Compiled* compiled);
+static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* mref, FbldActn* actn, Compiled* compiled);
 static FblcType* CompileType(FblcArena* arena, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
 static FblcFunc* CompileFunc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
 static FblcProc* CompileProc(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity, Compiled* compiled);
-static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQRef* entity, Compiled* compiled);
+static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldQRef* mref, FbldQRef* entity, Compiled* compiled);
 
 // CompileExpr --
 //   Return a compiled fblc expr for the given expression.
@@ -85,7 +85,7 @@ static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRe
 // Side effects:
 //   Adds information about access expressions to accessv.
 //   Adds additional compiled types and functions to 'compiled' as needed.
-static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldExpr* expr, Compiled* compiled)
+static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* mref, FbldExpr* expr, Compiled* compiled)
 {
   switch (expr->tag) {
     case FBLD_VAR_EXPR: {
@@ -193,7 +193,7 @@ static FblcExpr* CompileExpr(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 // Side effects:
 //   Adds information about access expressions to accessv.
 //   Adds additional compiled types, functions, and processes to 'compiled' as needed.
-static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldMRef* mref, FbldActn* actn, Compiled* compiled)
+static FblcActn* CompileActn(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* mref, FbldActn* actn, Compiled* compiled)
 {
   switch (actn->tag) {
     case FBLD_EVAL_ACTN: {
@@ -447,7 +447,7 @@ static FblcProc* CompileProc(FblcArena* arena, FbldAccessLocV* accessv, FbldProg
 //   mref - The context from which the type is referred to.
 //   entity - The type to compile.
 //   compiled - The collection of compiled entities.
-static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldMRef* mref, FbldQRef* entity, Compiled* compiled)
+static FblcType* CompileForeignType(FblcArena* arena, FbldProgram* prgm, FbldQRef* mref, FbldQRef* entity, Compiled* compiled)
 {
   FbldQRef* resolved = FbldImportQRef(arena, prgm, mref, entity);
   return CompileType(arena, prgm, resolved, compiled);

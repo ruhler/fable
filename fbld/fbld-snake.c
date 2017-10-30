@@ -290,9 +290,12 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, search_path);
   FblcVectorAppend(arena, search_path, path);
 
+  // TODO: Properly resolve the qref.
   FbldQRef* qentry = FbldParseQRefFromString(arena, entry);
-  qentry->rmref = qentry->umref;
-  qentry->rname = qentry->uname;
+  for (FbldQRef* qref = qentry; qref != NULL; qref = qref->umref) {
+    qref->rname = qref->uname;
+    qref->rmref = qref->umref;
+  }
   if (qentry == NULL) {
     fprintf(stderr, "failed to parse entry\n");
     return 1;
@@ -303,7 +306,7 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, prgm->mheaderv);
   FblcVectorInit(arena, prgm->modulev);
 
-  if (!FbldLoadModules(arena, &search_path, qentry->umref->name->name, prgm)) {
+  if (!FbldLoadModules(arena, &search_path, qentry->rmref->rname->name, prgm)) {
     fprintf(stderr, "failed to load\n");
     return 1;
   }
