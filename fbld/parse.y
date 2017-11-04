@@ -672,7 +672,7 @@ decl_list:
       FblcVectorAppend(arena, *($1->procv), $2);
       $$ = $1;
     }
-  | decl_list interf ';' {
+  | decl_list interf {
       FblcVectorAppend(arena, *($1->interfv), $2);
       $$ = $1;
     }
@@ -728,17 +728,17 @@ defn_list:
       FblcVectorAppend(arena, *($1->procv), $2);
       $$ = $1;
     }
-  | defn_list interf ';' {
+  | defn_list interf {
       FblcVectorAppend(arena, *($1->interfv), $2);
       $$ = $1;
     }
-  | defn_list module_defn ';' {
+  | defn_list module_defn {
       FblcVectorAppend(arena, *($1->modulev), $2);
       $$ = $1;
     }
   ;
 
-module_decl: "module" name params '(' qref ')' ';' {
+module_decl: "module" name params '(' qref ')' {
           $$ = FBLC_ALLOC(arena, FbldModule);
           $$->name = $2;
           $$->params = $3;
@@ -752,7 +752,7 @@ module_decl: "module" name params '(' qref ')' ';' {
         }
      ;
 
-module_defn: module_decl '{' defn_list '}' {
+module_defn: module_decl '{' defn_list '}' ';' {
       $$ = $1;
       $$->importv = $3->importv;
       $$->typev = $3->typev;
