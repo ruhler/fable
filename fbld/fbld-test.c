@@ -274,27 +274,28 @@ static FblcFieldId LookupPort(FbldProc* proc, const char* name)
 //   Prints the value to the stream in fbld format.
 static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value)
 {
-  FbldType* type = FbldLookupType(prgm, type_name);
-  assert(type != NULL);
-  FbldPrintQRef(stream, type_name);
-  if (type->kind == FBLD_STRUCT_KIND) {
-    fprintf(stream, "(");
-    for (size_t i = 0; i < type->fieldv->size; ++i) {
-      if (i > 0) {
-        fprintf(stream, ",");
-      }
-      FbldQRef* field_type = FbldImportQRef(arena, prgm, type_name->rmref, type->fieldv->xs[i]->type);
-      PrintValue(arena, stream, prgm, field_type, value->fields[i]);
-    }
-    fprintf(stream, ")");
-  } else if (type->kind == FBLD_UNION_KIND) {
-    fprintf(stream, ":%s(", type->fieldv->xs[value->tag]->name->name);
-    FbldQRef* field_type = FbldImportQRef(arena, prgm, type_name->rmref, type->fieldv->xs[value->tag]->type);
-    PrintValue(arena, stream, prgm, field_type, value->fields[0]);
-    fprintf(stream, ")");
-  } else {
-    assert(false && "Invalid Kind");
-  }
+  assert(false && "TODO");
+//  FbldType* type = FbldLookupType(prgm, type_name);
+//  assert(type != NULL);
+//  FbldPrintQRef(stream, type_name);
+//  if (type->kind == FBLD_STRUCT_KIND) {
+//    fprintf(stream, "(");
+//    for (size_t i = 0; i < type->fieldv->size; ++i) {
+//      if (i > 0) {
+//        fprintf(stream, ",");
+//      }
+//      FbldQRef* field_type = FbldImportQRef(arena, prgm, type_name->rmref, type->fieldv->xs[i]->type);
+//      PrintValue(arena, stream, prgm, field_type, value->fields[i]);
+//    }
+//    fprintf(stream, ")");
+//  } else if (type->kind == FBLD_UNION_KIND) {
+//    fprintf(stream, ":%s(", type->fieldv->xs[value->tag]->name->name);
+//    FbldQRef* field_type = FbldImportQRef(arena, prgm, type_name->rmref, type->fieldv->xs[value->tag]->type);
+//    PrintValue(arena, stream, prgm, field_type, value->fields[0]);
+//    fprintf(stream, ")");
+//  } else {
+//    assert(false && "Invalid Kind");
+//  }
 }
 
 // ValuesEqual --
@@ -446,13 +447,7 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, search_path);
   FblcVectorAppend(arena, search_path, path);
 
-  // TODO: Properly resolve the names in the qref
-  // // TODO: Properly resolve the names in the qref
   FbldQRef* qentry = FbldParseQRefFromString(arena, entry);
-  for (FbldQRef* qref = qentry; qref != NULL; qref = qref->umref) {
-    qref->rname = qref->uname;
-    qref->rmref = qref->umref;
-  }
   if (qentry == NULL) {
     fprintf(stderr, "failed to parse entry\n");
     return 1;
@@ -463,7 +458,7 @@ int main(int argc, char* argv[])
   FblcVectorInit(arena, prgm->mheaderv);
   FblcVectorInit(arena, prgm->modulev);
 
-  if (!FbldLoadModules(arena, &search_path, qentry->rmref->rname->name, prgm)) {
+  if (!FbldLoadEntry(arena, &search_path, qentry, prgm)) {
     fprintf(stderr, "failed to load\n");
     return 1;
   }
@@ -511,9 +506,10 @@ int main(int argc, char* argv[])
     ReportError(&user, "premature program termination.\n");
     abort();
   }
-  FbldQRef* return_type = FbldImportQRef(arena, user.prog, qentry->rmref, user.proc->return_type);
-  AssertValuesEqual(arena, &user, return_type, user.cmd.value, value);
-  FblcRelease(arena, user.cmd.value);
-  FblcRelease(arena, value);
+  assert(false && "TODO");
+//  FbldQRef* return_type = FbldImportQRef(arena, user.prog, qentry->rmref, user.proc->return_type);
+//  AssertValuesEqual(arena, &user, return_type, user.cmd.value, value);
+//  FblcRelease(arena, user.cmd.value);
+//  FblcRelease(arena, value);
   return 0;
 }

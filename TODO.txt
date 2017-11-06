@@ -3,9 +3,6 @@ Priority:
 
 Fbld 3:
 * Rewrite the fbld front end to support the new language.
- - Revise fbld.h to match desired structure.
- - Stub out all code until something compiles.
- - Revise the parser.
  - Revise the checker.
  - Revise the compiler.
 

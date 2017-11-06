@@ -77,6 +77,15 @@ typedef struct {
   FbldId* xs;
 } FbldIdV;
 
+// FbldRState --
+//   The resolution states for a qref.
+typedef enum {
+  FBLD_RSTATE_UNRESOLVED, // The qref has not yet been resolved.
+  FBLD_RSTATE_FAILED,     // The qref failed resolution.
+  FBLD_RSTATE_RESOLVED,   // The qref resolved to a normal entity.
+  FBLD_RSTATE_PARAM       // The qref resolved to a parameter.
+} FbldRState;
+
 // FbldQRef --
 //   A reference to a qualified interface, module, type, function or process,
 //   such as:
@@ -84,30 +93,34 @@ typedef struct {
 //
 // FbldQRef stores both unresolved and resolved versions of the qualified
 // reference. The unresolved version is as the reference appears in the source
-// code, the resolved version inlines references according to import
-// declarations.
+// code, the resolved version is the canonical global path to the relevant
+// entity or type parameter. The parser leaves the qref unresolved. The type
+// checker resolves all entities, updating r.state, r.name, and r.mref as
+// appropriate. TODO: Is r.name enough to distinguish which parameter is being
+// referred to in the case of parameters?
 //
 // Fields:
-//   uname - The unresolved name of the entity. Also know as the "user" name.
-//   rname - The resolved name of the entity. Initialized to NULL by the
-//           parser to indicate the reference hasn't been resolved yet.
-//           Resolved to a non-NULL value in the type checker and used in the
-//           compiler.
+//   name - The unresolved name of the entity.
 //   targv - The type arguments to the entity.
 //   margv - The module arguments to the entity.
-//   umref - The unresolved module the entity is from. May be NULL to indicate
-//           the module should be determined based on context.
-//   rmref - The resolved module reference. May be NULL if the reference
-//           hasn't been resolved yet or to indicate the module should be
-//           determined based on context.
-// Invariant: if umref and rmref are both non-NULL, then umref == rmref.
+//   mref - The unresolved module the entity is from. NULL for references that
+//          are not explicitly qualified.
+//
+//   r.state - The resolution state of the qref.
+//   r.name - The resolved name of the entity.
+//   r.mref - The resolved module reference. NULL for references to parameters
+//            or top level declarations.
 struct FbldQRef {
-  FbldName* uname;
-  FbldName* rname;
+  FbldName* name;
   FbldQRefV* targv;
   FbldQRefV* margv;
-  FbldQRef* umref;
-  FbldQRef* rmref;
+  FbldQRef* mref;
+
+  struct {
+    FbldRState state;
+    FbldName* name;
+    FbldQRef* mref;
+  } r;
 };
 
 // FbldQRefV --
@@ -769,9 +782,9 @@ FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char
 FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
 // FbldLoadModules --
-//   Load all module definitions and declarations required to compile the
+//   Load all module definitions and declarations required by the
 //   named module.
-//   All of the module declarations and definitions the named module depends
+//   All of the module declarations and definitions the module depends
 //   on are located according to the given search path, parsed, checked, and
 //   added to the collections of loaded module declarations and definitions.
 //
@@ -780,7 +793,7 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
 //           declarations.
 //   path - A search path used to find the module definitions and declaration
 //          on disk.
-//   name - The name of a module whose self and dependencies to load.
+//   name - The name of the module for which to load dependencies.
 //   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
@@ -797,6 +810,58 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
 //   size of all loaded declarations and definitions if there is no error.
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
+// FbldLoadEntry --
+//   Load all module definitions and declarations required to compile the
+//   named entity.
+//   All of the module declarations and definitions the named entity depends
+//   on are located according to the given search path, parsed, checked, and
+//   added to the collections of loaded module declarations and definitions.
+//
+// Inputs:
+//   arena - The arena to use for allocating the loaded definition and
+//           declarations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   entry - The entity for which to load dependencies.
+//   prgm - The collection of declarations loaded for the program so far.
+//
+// Results:
+//   True on success, false on error.
+//
+// Side effects:
+//   Reads required module delacarations and definitions from disk and adds
+//   them to the prgm. Resolves qentry.
+//   Prints an error message to stderr if there is an error.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of all loaded declarations and definitions if there is no error.
+bool FbldLoadEntry(FblcArena* arena, FbldStringV* path, FbldQRef* entry, FbldProgram* prgm);
+
+// FbldCheckQRef --
+//   Check that the given qualified reference is well formed and well typed in
+//   the global context.
+//
+// Inputs:
+//   arena - Arena used for allocations.
+//   path - A search path used to find interface and module declaration on
+//          disk.
+//   qref - The qualified reference to check.
+//   prgm - The collection of declarations loaded for the program so far.
+//
+// Results:
+//   true if the qualified reference is well formed and well typed, false
+//   otherwise.
+//
+// Side effects:
+//   Loads and checks required interfaces and module headers (not modules),
+//   adding them to prgm.
+//   If this qualified reference or any of the required declarations are not
+//   well formed, error messages are printed to stderr describing the
+//   problems.
+bool FbldCheckQRef(FblcArena* arena, FbldStringV* path, FbldQRef* qref, FbldProgram* prgm);
+
 // FbldCheckInterf --
 //   Check that the given interface declaration is well formed and well typed.
 //

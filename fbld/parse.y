@@ -237,21 +237,23 @@ tmargs:
 qref:
     name tmargs {
       $$ = FBLC_ALLOC(arena, FbldQRef);
-      $$->uname = $1;
-      $$->rname = NULL;
+      $$->name = $1;
       $$->targv = $2->targv;
       $$->margv = $2->margv;
-      $$->umref = NULL;
-      $$->rmref = NULL;
+      $$->mref = NULL;
+      $$->r.state = FBLD_RSTATE_UNRESOLVED;
+      $$->r.name = NULL;
+      $$->r.mref = NULL;
     }
   | name tmargs '@' qref {
       $$ = FBLC_ALLOC(arena, FbldQRef);
-      $$->uname = $1;
-      $$->rname = NULL;
+      $$->name = $1;
       $$->targv = $2->targv;
       $$->margv = $2->margv;
-      $$->umref = $4;
-      $$->rmref = NULL;
+      $$->mref = $4;
+      $$->r.state = FBLD_RSTATE_UNRESOLVED;
+      $$->r.name = NULL;
+      $$->r.mref = NULL;
     }
   ;
 

@@ -1079,6 +1079,13 @@ static void CheckDecls(Context* ctx)
 //  }
 }
 
+// FbldCheckQRef -- see fblcs.h for documentation.
+bool FbldCheckQRef(FblcArena* arena, FbldStringV* path, FbldQRef* qref, FbldProgram* prgm)
+{
+  assert(false && "TODO");
+  return false;
+}
+
 // FbldCheckInterf -- see fblcs.h for documentation.
 bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, FbldProgram* prgm)
 {

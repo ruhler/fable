@@ -168,3 +168,26 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, Fbld
   }
   return true;
 }
+
+// FbldLoadEntry -- see documentation in fbld.h
+bool FbldLoadEntry(FblcArena* arena, FbldStringV* path, FbldQRef* entry, FbldProgram* prgm)
+{
+  if (!FbldCheckQRef(arena, path, entry, prgm)) {
+    return false;
+  }
+
+  // Load all the modules still left to load.
+  // Note: More module headers will be added as modules are loaded, which
+  // means that prgm->mheaderv->size will often increase during the body of
+  // the loop. Because elements are only ever appended to mheaderv, this
+  // should be okay. TODO: detect and abort if the module recursively depends
+  // on itself.
+  // TODO: Factor out this common code rather than duplicating with
+  // FbldLoadModules?
+  for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
+    if (!FbldLoadModule(arena, path, prgm->mheaderv.xs[i]->name->name, prgm)) {
+      return false;
+    }
+  }
+  return true;
+}
