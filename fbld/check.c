@@ -51,12 +51,14 @@ typedef struct Ports {
   struct Ports* next;
 } Ports;
 
-// static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
+static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 
 // static FbldType* LookupType(Context* ctx, FbldQRef* entity);
 // static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
 // static FbldProc* LookupProc(Context* ctx, FbldQRef* entity);
-// static FbldInterf* LookupInterf(Context* ctx, FbldQRef* mref);
+static FbldInterf* LookupModuleInterf(Context* ctx, FbldQRef* mref);
+
+static bool CheckQRef(Context* ctx, FbldQRef* qref);
 
 // static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 // static bool ResolveQRef(Context* ctx, FbldQRef* qref);
@@ -89,24 +91,165 @@ static void CheckDecls(Context* ctx);
 // Side effects:
 //   Prints an error message to stderr with error location.
 //   Sets 'error' to true.
-//static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
-//{
-//  *error = true;
+static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
+{
+  *error = true;
+
+  va_list ap;
+  va_start(ap, loc);
+  fprintf(stderr, "%s:%d:%d: error: ", loc->source, loc->line, loc->col);
+  vfprintf(stderr, format, ap);
+  va_end(ap);
+}
+
+// CheckQRef --
+//   Check that the given qref is well formed.
 //
-//  va_list ap;
-//  va_start(ap, loc);
-//  fprintf(stderr, "%s:%d:%d: error: ", loc->source, loc->line, loc->col);
-//  vfprintf(stderr, format, ap);
-//  va_end(ap);
-//}
+// Inputs:
+//   ctx - The context to check the qref in.
+//   qref - The qref to check.
+//
+// Returns:
+//   true if the qref is well formed, false otherwise.
+//
+// Side effects:
+//   Loads and checks top-level module declarations and interfaces as needed
+//   to check the qref.
+//   Updates qref.r.* fields based on the result of qref resolution.
+//   Prints a message to stderr if the qref is not well formed and has not
+//   already been reported as being bad.
+static bool CheckQRef(Context* ctx, FbldQRef* qref)
+{
+  if (qref->r.state != FBLD_RSTATE_UNRESOLVED) {
+    return qref->r.state != FBLD_RSTATE_FAILED;
+  }
+
+  qref->r.state = FBLD_RSTATE_FAILED;
+  if (qref->mref != NULL) {
+    // The entity is of the form foo@bar, and comes from a module bar in the
+    // local scope. First resolve the module bar.
+    if (!CheckQRef(ctx, qref->mref)) {
+      return false;
+    }
+
+    if (qref->mref->r.kind != FBLD_DECL_MODULE) {
+      ReportError("%s does not refer to a module.\n", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
+      return false;
+    }
+
+    // Look up the interface of the module.
+    FbldInterf* interf = LookupModuleInterf(ctx, qref->mref);
+    if (interf == NULL) {
+      return false;
+    }
+
+    // Look for the entity declaration in the interface.
+    for (size_t i = 0; i < interf->typev->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, interf->typev->xs[i]->name->name)) {
+        qref->r.state = FBLD_RSTATE_RESOLVED;
+        qref->r.name = qref->name;
+        qref->r.mref = qref->mref;
+        qref->r.kind = FBLD_DECL_TYPE;
+        qref->r.decl = interf->typev->xs[i];
+        return true;
+      }
+    }
+
+    for (size_t i = 0; i < interf->funcv->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, interf->funcv->xs[i]->name->name)) {
+        qref->r.state = FBLD_RSTATE_RESOLVED;
+        qref->r.name = qref->name;
+        qref->r.mref = qref->mref;
+        qref->r.kind = FBLD_DECL_FUNC;
+        qref->r.decl = interf->funcv->xs[i];
+        return true;
+      }
+    }
+
+    for (size_t i = 0; i < interf->procv->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, interf->procv->xs[i]->name->name)) {
+        qref->r.state = FBLD_RSTATE_RESOLVED;
+        qref->r.name = qref->name;
+        qref->r.mref = qref->mref;
+        qref->r.kind = FBLD_DECL_PROC;
+        qref->r.decl = interf->procv->xs[i];
+        return true;
+      }
+    }
+
+    for (size_t i = 0; i < interf->interfv->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, interf->interfv->xs[i]->name->name)) {
+        qref->r.state = FBLD_RSTATE_RESOLVED;
+        qref->r.name = qref->name;
+        qref->r.mref = qref->mref;
+        qref->r.kind = FBLD_DECL_INTERF;
+        qref->r.decl = interf->interfv->xs[i];
+        return true;
+      }
+    }
+
+    for (size_t i = 0; i < interf->modulev->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, interf->modulev->xs[i]->name->name)) {
+        qref->r.state = FBLD_RSTATE_RESOLVED;
+        qref->r.name = qref->name;
+        qref->r.mref = qref->mref;
+        qref->r.kind = FBLD_DECL_MODULE;
+        qref->r.decl = interf->modulev->xs[i];
+        return true;
+      }
+    }
+
+    ReportError("%s not found in interface for %s\n", &ctx->error,
+        qref->name->loc, qref->name->name, qref->mref->name->name);
+    return false;
+  }
+
+  // The entity is not explicitly qualified. Look it up in the current
+  // environment.
+  if (ctx->env == NULL) {
+    // This is the global environment. Look for a matching top level
+    // declaration.
+    FbldInterf* interf = NULL;
+    FbldModule* module = NULL;
+    if (!FbldLoadTopDecl(ctx->arena, ctx->path, qref->name->name, ctx->prgm, &interf, &module)) {
+      return false;
+    }
+
+    if (interf != NULL) {
+      assert(module == NULL);
+
+      qref->r.state = FBLD_RSTATE_RESOLVED;
+      qref->r.name = qref->name;
+      qref->r.mref = NULL;
+      qref->r.kind = FBLD_DECL_INTERF;
+      qref->r.decl = interf;
+      return true;
+    }
+
+    if (module != NULL) {
+      assert(interf == NULL);
+
+      qref->r.state = FBLD_RSTATE_RESOLVED;
+      qref->r.name = qref->name;
+      qref->r.mref = NULL;
+      qref->r.kind = FBLD_DECL_MODULE;
+      qref->r.decl = module;
+      return true;
+    }
+
+    assert(false && "UNREACHABLE");
+  }
+
+  assert(false && "TODO");
+  return NULL;
+}
 
 // CheckTypesMatch --
 //   Check whether the given types match.
 //
 // Inputs:
 //   loc - location to use for error reporting.
-//   expected - the expected type.
-//   actual - the actual type.
+//   expected - the expected type.  //   actual - the actual type.
 //   error - out parameter set to true on error.
 //
 // Results:
@@ -265,24 +408,27 @@ static void CheckDecls(Context* ctx);
 //  return NULL;
 //}
 
-// LookupInterf --
-//   Look up the FbldInterf* for the given resolved mref.
-//   TODO: Is mref the name of a module or of an interface?
+// LookupModuleInterf --
+//   Look up the FbldInterf* for the module referred to by the given resolved
+//   mref.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   mref - A reference to the interface to look up.
+//   mref - A reference to the module whose interface to look up.
 //
 // Results:
-//   The FbldInterf* for the given resolved mref, or NULL if no such interface
-//   could be found.
+//   The FbldInterf* for the module of the given resolved mref, or NULL if no
+//   such interface could be found.
 //
 // Side effects:
 //   Behavior is undefined if the entity has not already been resolved.
-//static FbldInterf* LookupInterf(Context* ctx, FbldQRef* mref)
-//{
-//  assert(mref->rname != NULL);
-//  if (mref->rmref == NULL) {
+static FbldInterf* LookupModuleInterf(Context* ctx, FbldQRef* mref)
+{
+  assert(mref->r.state == FBLD_RSTATE_RESOLVED);
+  assert(false && "TODO");
+  return NULL;
+//  if (mref->r.mref == NULL) {
+//    assert(false && "TODO");
 //    // Check if this is a module parameter.
 //    for (size_t i = 0; i < ctx->env->margv->size; ++i) {
 //      if (FbldNamesEqual(ctx->env->margv->xs[i]->name->name, mref->rname->name)) {
@@ -295,13 +441,19 @@ static void CheckDecls(Context* ctx);
 //    return NULL;
 //  }
 //
+//  // TODO: Look up the module declaration in the 
+//  assert(false && "TODO");
+//  return NULL;
+//
+//  // TODO: Distinguish between global context and 
+//
 //  // This is a global module.
 //  FbldModule* decl = FbldLoadModuleHeader(ctx->arena, ctx->path, mref->rname->name, ctx->prgm);
 //  if (decl == NULL) {
 //    return NULL;
 //  }
 //  return FbldLoadInterf(ctx->arena, ctx->path, decl->iref->rname->name, ctx->prgm);
-// }
+}
 
 // ResolveQRef --
 //   Resolve the given qref if necessary.
@@ -1082,8 +1234,15 @@ static void CheckDecls(Context* ctx)
 // FbldCheckQRef -- see fblcs.h for documentation.
 bool FbldCheckQRef(FblcArena* arena, FbldStringV* path, FbldQRef* qref, FbldProgram* prgm)
 {
-  assert(false && "TODO");
-  return false;
+  Context ctx = {
+    .arena = arena,
+    .prgm = prgm,
+    .path = path,
+    .env = NULL,
+    .error = false
+  };
+  CheckQRef(&ctx, qref);
+  return !ctx.error;
 }
 
 // FbldCheckInterf -- see fblcs.h for documentation.

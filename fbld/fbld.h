@@ -86,6 +86,14 @@ typedef enum {
   FBLD_RSTATE_PARAM       // The qref resolved to a parameter.
 } FbldRState;
 
+typedef enum {
+  FBLD_DECL_TYPE,
+  FBLD_DECL_FUNC,
+  FBLD_DECL_PROC,
+  FBLD_DECL_INTERF,
+  FBLD_DECL_MODULE
+} FbldDeclKind;
+
 // FbldQRef --
 //   A reference to a qualified interface, module, type, function or process,
 //   such as:
@@ -110,6 +118,9 @@ typedef enum {
 //   r.name - The resolved name of the entity.
 //   r.mref - The resolved module reference. NULL for references to parameters
 //            or top level declarations.
+//   r.kind - The declaration kind of the resolved entity.
+//   r.decl - A pointer to the declaration of the resolved entity (only valid
+//            in type checking code).
 struct FbldQRef {
   FbldName* name;
   FbldQRefV* targv;
@@ -120,6 +131,8 @@ struct FbldQRef {
     FbldRState state;
     FbldName* name;
     FbldQRef* mref;
+    FbldDeclKind kind;
+    void* decl;
   } r;
 };
 
@@ -641,6 +654,30 @@ FbldInterf* FbldParseInterf(FblcArena* arena, const char* filename);
 //   size of the returned definition if there is no error.
 FbldModule* FbldParseModule(FblcArena* arena, const char* filename);
 
+// FbldParseTopDecl --
+//   Parse a top level interface or module declaration from the file with the
+//   given filename.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed definition.
+//   filename - The name of the file to parse the definition from.
+//   interf - Out parameter set to parsed interface if the top level
+//            declaration is an interface.
+//   module - Out parameter set to parsed module if the top level
+//            declaration is an module.
+//
+// Results:
+//   True on success, false if the declaration could not be parsed.
+//
+// Side effects:
+//   Prints an error message to stderr if the declaration cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned definition if there is no error.
+bool FbldParseTopDecl(FblcArena* arena, const char* filename, FbldInterf** interf, FbldModule** module);
+
 // FbldParseValueFromString --
 //   Parse an fbld value from the given string.
 //
@@ -780,6 +817,42 @@ FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char
 //   this function. The total number of allocations made will be linear in the
 //   size of the definition and all loaded declarations if there is no error.
 FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
+
+// FbldLoadTopDecl --
+//   Load the top level declaration for the entity with the given name.
+//   The declaration and all of the module types and declarations they depend
+//   on are located according to the given search path, parsed, checked, and
+//   to the program before the loaded declaration is returned. The declaration
+//   may be either an interface or module declaration.
+//
+// Inputs:
+//   arena - The arena to use for allocating the loaded definition and
+//           declarations.
+//   path - A search path used to find the module definitions and declaration
+//          on disk.
+//   name - The name of the module whose definition to load.
+//   prgm - The collection of declarations loaded for the program so far.
+//   interf - Out parameter in case of a loaded interface declaration.
+//   module - Out parameter in case of a loaded module declaration.
+//
+// Results:
+//   True if a declaratio was successfully loaded, false otherwise.
+//
+// Side effects:
+//   Sets interf to point to the loaded interface declaration, if the top
+//   level declaration is an interface. Sets module to point to the loaded
+//   module declaration, if the top level declaration is a module.
+//   Read the module definition and any other required module declarations
+//   from disk and add the module declarations to the prgm.
+//   Prints an error message to stderr if the module definition or any other
+//   required module declarations cannot be loaded, either because they cannot
+//   be found on the path, fail to parse, or fail to check.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the definition and all loaded declarations if there is no error.
+bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm, FbldInterf** interf, FbldModule** module);
 
 // FbldLoadModules --
 //   Load all module definitions and declarations required by the

@@ -113,8 +113,9 @@
 // we want to parse.
 %token START_INTERF 1 "interf parse start indicator"
 %token START_MODULE 2 "module parse start indicator"
-%token START_VALUE 3 "value parse start indicator"
-%token START_QNAME 4 "qref parse start indicator"
+%token START_TOP_DECL 3 "top decl parse start indicator"
+%token START_VALUE 4 "value parse start indicator"
+%token START_QNAME 5 "qref parse start indicator"
 
 %token <name> NAME
 
@@ -164,6 +165,8 @@
 start:
      START_INTERF interf { result->interf = $2; }
    | START_MODULE module_defn { result->module = $2; }
+   | START_TOP_DECL interf { result->interf = $2; }
+   | START_TOP_DECL module_defn { result->module = $2; }
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
    ;
@@ -844,6 +847,7 @@ static bool IsSingleChar(int c)
   return strchr("(){};,@:?=.<>+-$", c) != NULL
     || c == START_INTERF
     || c == START_MODULE
+    || c == START_TOP_DECL
     || c == START_VALUE
     || c == START_QNAME;
 }
@@ -1026,6 +1030,36 @@ FbldModule* FbldParseModule(FblcArena* arena, const char* filename)
   result.module = NULL;
   yyparse(arena, &lex, &result);
   return result.module;
+}
+
+// FbldParseTopDecl -- see documentation in fbld.h
+bool FbldParseTopDecl(FblcArena* arena, const char* filename, FbldInterf** interf, FbldModule** module)
+{
+  FILE* fin = fopen(filename, "r");
+  if (fin == NULL) {
+    fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
+    return NULL;
+  }
+
+  Lex lex = {
+    .c = START_TOP_DECL,
+    .loc = { .source = filename, .line = 1, .col = 0 },
+    .fin = fin,
+    .sin = NULL
+  };
+  ParseResult result;
+  result.interf = NULL;
+  result.module = NULL;
+  yyparse(arena, &lex, &result);
+  if (result.interf != NULL) {
+    *interf = result.interf;
+    return true;
+  }
+  if (result.module != NULL) {
+    *module = result.module;
+    return true;
+  }
+  return false;
 }
 
 // FbldParseValueFromString -- see documentation in fbld.h

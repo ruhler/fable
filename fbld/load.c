@@ -147,6 +147,66 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
 
   return module;
 }
+// FbldLoadTopDecl -- see documentation in fbld.h
+bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm, FbldInterf** interf, FbldModule** module)
+{
+  // Return an existing interface declaration if it has already been loaded.
+  for (size_t i = 0; i < prgm->interfv.size; ++i) {
+    if (FbldNamesEqual(name, prgm->interfv.xs[i]->name->name)) {
+      *interf = prgm->interfv.xs[i];
+      return true;
+    }
+  }
+
+  // Return an existing module declaration if it has already been loaded.
+  for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
+    if (FbldNamesEqual(name, prgm->mheaderv.xs[i]->name->name)) {
+      *module = prgm->mheaderv.xs[i];
+      return true;
+    }
+  }
+
+  // Parse the declaration if we haven't already.
+  char* filename = FindModuleFile(arena, path, name);
+  if (filename == NULL) {
+    fprintf(stderr, "unable to locate %s.fbld on search path\n", name);
+    return NULL;
+  }
+
+  if (!FbldParseTopDecl(arena, filename, interf, module)) {
+    fprintf(stderr, "failed to parse module from %s\n", filename);
+    return false;
+  }
+
+  if (*interf != NULL) {
+    assert(*module == NULL);
+    if (!FbldNamesEqual((*interf)->name->name, name)) {
+      FbldReportError("Expected '%s', but found '%s'\n", (*interf)->name->loc, name, (*interf)->name->name);
+      return NULL;
+    }
+    FblcVectorAppend(arena, prgm->interfv, *interf);
+
+    // Check that this declaration is valid.
+    // TODO: detect and abort if the module module recursively depends on itself.
+    return FbldCheckInterf(arena, path, *interf, prgm);
+  }
+  
+  if (*module != NULL) {
+    assert(*interf == NULL);
+    if (!FbldNamesEqual((*module)->name->name, name)) {
+      FbldReportError("Expected '%s', but found '%s'\n", (*module)->name->loc, name, (*module)->name->name);
+      return NULL;
+    }
+    FblcVectorAppend(arena, prgm->mheaderv, *module);
+
+    // Check that this declaration is valid.
+    // TODO: detect and abort if the module module recursively depends on itself.
+    return FbldCheckModuleHeader(arena, path, *module, prgm);
+  }
+
+  assert(false && "UNREACHABLE");
+  return false;
+}
 
 // FbldLoadModules -- see documentation in fbld.h
 bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
