@@ -28,7 +28,7 @@
   // ParseResult --
   //   Used to store the final parsed object depending on what kind of object
   //   is parsed.
-  typedef union {
+  typedef struct {
     FbldInterf* interf;
     FbldModule* module;
     FbldValue* value;
@@ -1052,10 +1052,12 @@ bool FbldParseTopDecl(FblcArena* arena, const char* filename, FbldInterf** inter
   result.module = NULL;
   yyparse(arena, &lex, &result);
   if (result.interf != NULL) {
+    assert(result.module == NULL);
     *interf = result.interf;
     return true;
   }
   if (result.module != NULL) {
+    assert(result.interf == NULL);
     *module = result.module;
     return true;
   }

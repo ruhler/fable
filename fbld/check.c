@@ -12,25 +12,27 @@
 #define UNREACHABLE(x) assert(false && x)
 
 // Env --
-//   The environment of types and declarations.
-//   This is used as a union type for interf + module.
-//   In the case of interf, the iref field is set to NULL.
-typedef FbldModule Env;
+//   An environment of declarations.
+//
+// Conventionally this is passed as a NULL pointer to indicate the global
+// namespace.
+// TODO: Add the declarations to be checked.
+typedef struct Env {
+  struct Env* parent;
+} Env;
 
 // Context --
-//   A context for type checking.
+//   A global context for type checking.
 //
 // Fields:
 //   arena - Arena to use for allocations.
 //   prgm - Program to add any loaded modules to.
 //   path - The module search path.
-//   env - The local environment.
 //   error - Flag tracking whether any type errors have been encountered.
 typedef struct {
   FblcArena* arena;
   FbldProgram* prgm;
   FbldStringV* path;
-  Env* env;
   bool error;
 } Context;
 
@@ -56,20 +58,21 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 // static FbldType* LookupType(Context* ctx, FbldQRef* entity);
 // static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
 // static FbldProc* LookupProc(Context* ctx, FbldQRef* entity);
-static FbldInterf* LookupModuleInterf(Context* ctx, FbldQRef* mref);
 
-static bool CheckQRef(Context* ctx, FbldQRef* qref);
+static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
+static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
+static bool CheckModule(Context* ctx, Env* env, FbldModule* module);
+static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module);
+static void CheckEnv(Context* ctx, Env* env);
 
 // static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 // static bool ResolveQRef(Context* ctx, FbldQRef* qref);
 // static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref);
 // static bool CheckType(Context* ctx, FbldQRef* qref);
 // static bool CheckMRef(Context* ctx, FbldQRef* mref);
-static bool CheckIRef(Context* ctx, FbldQRef* iref);
 // static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
 // static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* actn);
 // static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
-static void CheckDecls(Context* ctx);
 // static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
 // static bool CheckTypeDeclsMatch(Context* ctx, FbldType* type_i, FbldType* type_m);
 // static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* type_i, FbldFunc* type_m);
@@ -118,7 +121,7 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
 //   Updates qref.r.* fields based on the result of qref resolution.
 //   Prints a message to stderr if the qref is not well formed and has not
 //   already been reported as being bad.
-static bool CheckQRef(Context* ctx, FbldQRef* qref)
+static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 {
   if (qref->r.state != FBLD_RSTATE_UNRESOLVED) {
     return qref->r.state != FBLD_RSTATE_FAILED;
@@ -128,20 +131,31 @@ static bool CheckQRef(Context* ctx, FbldQRef* qref)
   if (qref->mref != NULL) {
     // The entity is of the form foo@bar, and comes from a module bar in the
     // local scope. First resolve the module bar.
-    if (!CheckQRef(ctx, qref->mref)) {
+    if (!CheckQRef(ctx, env, qref->mref)) {
       return false;
     }
 
     if (qref->mref->r.kind != FBLD_DECL_MODULE) {
-      ReportError("%s does not refer to a module.\n", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
+      ReportError("Expected module, but %s refers to a ", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
+      switch (qref->mref->r.kind) {
+        case FBLD_DECL_TYPE: fprintf(stderr, "type.\n"); break;
+        case FBLD_DECL_FUNC: fprintf(stderr, "func.\n"); break;
+        case FBLD_DECL_PROC: fprintf(stderr, "proc.\n"); break;
+        case FBLD_DECL_INTERF: fprintf(stderr, "interf.\n"); break;
+        case FBLD_DECL_MODULE: fprintf(stderr, "module.\n"); break;
+        default: fprintf(stderr, "???.\n"); break;
+      }
       return false;
     }
 
     // Look up the interface of the module.
-    FbldInterf* interf = LookupModuleInterf(ctx, qref->mref);
-    if (interf == NULL) {
+    FbldModule* module = (FbldModule*)qref->mref->r.decl;
+    if (module->iref->r.state == FBLD_RSTATE_FAILED) {
       return false;
     }
+    assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
+    assert(module->iref->r.kind == FBLD_DECL_INTERF);
+    FbldInterf* interf = (FbldInterf*)module->iref->r.decl;
 
     // Look for the entity declaration in the interface.
     for (size_t i = 0; i < interf->typev->size; ++i) {
@@ -206,7 +220,7 @@ static bool CheckQRef(Context* ctx, FbldQRef* qref)
 
   // The entity is not explicitly qualified. Look it up in the current
   // environment.
-  if (ctx->env == NULL) {
+  if (env == NULL) {
     // This is the global environment. Look for a matching top level
     // declaration.
     FbldInterf* interf = NULL;
@@ -242,6 +256,156 @@ static bool CheckQRef(Context* ctx, FbldQRef* qref)
 
   assert(false && "TODO");
   return NULL;
+}
+
+// CheckInterf --
+//   Check that the given interf declaration is well formed.
+//
+// Inputs:
+//   ctx - The context to check the declaration in.
+//   interf - The interface declaration to check.
+//
+// Result:
+//   none.
+//
+// Side effects:
+//   Loads and checks top-level module declarations and interfaces as needed
+//   to check the interface declaration.
+//   Resolves qrefs.
+//   Prints a message to stderr if the interface declaration is not well
+//   formed.
+static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
+{
+  // TODO: CheckParams(ctx, interf->params);
+  assert(interf->params->targv->size == 0 && "TODO");
+  assert(interf->params->margv->size == 0 && "TODO");
+
+  Env interf_env = {
+    .parent = env
+  };
+  CheckEnv(ctx, &interf_env);
+}
+
+// CheckModule --
+//   Check that the given module definition is well formed.
+//
+// Inputs:
+//   ctx - The context to check the declaration in.
+//   module - The module definition to check.
+//
+// Result:
+//   true if the module is well formed, false otherwise.
+//
+// Side effects:
+//   Loads and checks top-level module declarations and interfaces as needed
+//   to check the interface declaration.
+//   Resolves qrefs.
+//   Prints a message to stderr if the module definition is not well
+//   formed.
+static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
+{
+  if (!CheckModuleHeader(ctx, env, module)) {
+    return false;
+  }
+  // TODO:
+//  CheckEnv(&ctx, NULL);
+//
+//  // Verify the module has everything it should according to its interface.
+//  FbldInterf* interf = FbldLoadInterf(arena, path, module->iref->name->name, prgm);
+//  if (interf == NULL) {
+//    return false;
+//  }
+//
+//  for (size_t i = 0; i < interf->typev->size; ++i) {
+//    FbldType* type_i = interf->typev->xs[i];
+//    for (size_t m = 0; m < module->typev->size; ++m) {
+//      FbldType* type_m = module->typev->xs[m];
+//      if (FbldNamesEqual(type_i->name->name, type_m->name->name)) {
+//        CheckTypeDeclsMatch(&ctx, type_i, type_m);
+//
+//        // Set type_i to NULL to indicate we found the matching type.
+//        type_i = NULL;
+//        break;
+//      }
+//    }
+//
+//    if (type_i != NULL) {
+//      ReportError("No implementation found for type %s from the interface\n", &ctx.error, module->name->loc, type_i->name->name);
+//    }
+//  }
+//
+//  for (size_t i = 0; i < interf->funcv->size; ++i) {
+//    FbldFunc* func_i = interf->funcv->xs[i];
+//    for (size_t m = 0; m < module->funcv->size; ++m) {
+//      FbldFunc* func_m = module->funcv->xs[m];
+//      if (FbldNamesEqual(func_i->name->name, func_m->name->name)) {
+//        CheckFuncDeclsMatch(&ctx, func_i, func_m);
+//
+//        // Set func_i to NULL to indicate we found the matching func.
+//        func_i = NULL;
+//        break;
+//      }
+//    }
+//
+//    if (func_i != NULL) {
+//      ReportError("No implementation found for func %s from the interface\n", &ctx.error, module->name->loc, func_i->name->name);
+//    }
+//  }
+//
+//  for (size_t i = 0; i < interf->procv->size; ++i) {
+//    FbldProc* proc_i = interf->procv->xs[i];
+//    for (size_t m = 0; m < module->procv->size; ++m) {
+//      FbldProc* proc_m = module->procv->xs[m];
+//      if (FbldNamesEqual(proc_i->name->name, proc_m->name->name)) {
+//        CheckProcDeclsMatch(&ctx, proc_i, proc_m);
+//
+//        // Set proc_i to NULL to indicate we found the matching proc.
+//        proc_i = NULL;
+//        break;
+//      }
+//    }
+//
+//    if (proc_i != NULL) {
+//      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, module->name->loc, proc_i->name->name);
+//    }
+//  }
+//
+//  return !ctx.error;
+  return true;
+}
+
+// CheckModuleHeader --
+//   Check that the given module header is well formed.
+//
+// Inputs:
+//   ctx - The context to check the declaration in.
+//   module - The module header to check.
+//
+// Result:
+//   true if the module header is well formed, false otherwise.
+//
+// Side effects:
+//   Loads and checks top-level module declarations and interfaces as needed
+//   to check the interface declaration.
+//   Resolves qrefs.
+//   Prints a message to stderr if the module definition is not well
+//   formed.
+static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
+{
+  // TODO: CheckParams(ctx, module->params);
+  assert(module->params->targv->size == 0 && "TODO");
+  assert(module->params->margv->size == 0 && "TODO");
+
+  if (!CheckQRef(ctx, env, module->iref)) {
+    return false;
+  }
+
+  assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
+  if (module->iref->r.kind != FBLD_DECL_INTERF) {
+    ReportError("%s does not refer to an interface\n", &ctx->error, module->iref->name->loc, module->iref->name->name);
+    return false;
+  }
+  return true;
 }
 
 // CheckTypesMatch --
@@ -407,53 +571,6 @@ static bool CheckQRef(Context* ctx, FbldQRef* qref)
 //  }
 //  return NULL;
 //}
-
-// LookupModuleInterf --
-//   Look up the FbldInterf* for the module referred to by the given resolved
-//   mref.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   mref - A reference to the module whose interface to look up.
-//
-// Results:
-//   The FbldInterf* for the module of the given resolved mref, or NULL if no
-//   such interface could be found.
-//
-// Side effects:
-//   Behavior is undefined if the entity has not already been resolved.
-static FbldInterf* LookupModuleInterf(Context* ctx, FbldQRef* mref)
-{
-  assert(mref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(false && "TODO");
-  return NULL;
-//  if (mref->r.mref == NULL) {
-//    assert(false && "TODO");
-//    // Check if this is a module parameter.
-//    for (size_t i = 0; i < ctx->env->margv->size; ++i) {
-//      if (FbldNamesEqual(ctx->env->margv->xs[i]->name->name, mref->rname->name)) {
-//        return FbldLoadInterf(ctx->arena, ctx->path, ctx->env->margv->xs[i]->iref->rname->name, ctx->prgm);
-//      }
-//    }
-//
-//    // TODO: Check if this is a locally defined module?
-//    ReportError("module %s not defined\n", &ctx->error, mref->uname->loc, mref->uname->name);
-//    return NULL;
-//  }
-//
-//  // TODO: Look up the module declaration in the 
-//  assert(false && "TODO");
-//  return NULL;
-//
-//  // TODO: Distinguish between global context and 
-//
-//  // This is a global module.
-//  FbldModule* decl = FbldLoadModuleHeader(ctx->arena, ctx->path, mref->rname->name, ctx->prgm);
-//  if (decl == NULL) {
-//    return NULL;
-//  }
-//  return FbldLoadInterf(ctx->arena, ctx->path, decl->iref->rname->name, ctx->prgm);
-}
 
 // ResolveQRef --
 //   Resolve the given qref if necessary.
@@ -634,44 +751,6 @@ static FbldInterf* LookupModuleInterf(Context* ctx, FbldQRef* mref)
 //  }
 //  return true;
 //}
-
-// CheckIRef --
-//   Check and resolve the give interface reference.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   iref - The interface reference to check.
-//
-// Result:
-//   true if the interface reference was valid, false otherwise.
-//
-// Side effects:
-//   Loads program modules as needed to check the interface reference.
-//   Resolves the interface reference.
-//   In case there is a problem, reports errors to stderr and sets error to
-//   true.
-static bool CheckIRef(Context* ctx, FbldQRef* iref)
-{
-  assert(false && "TODO");
-//  for (size_t i = 0; i < iref->targv->size; ++i) {
-//    if (!CheckType(ctx, iref->targv->xs[i])) {
-//      return false;
-//    }
-//  }
-//
-//  FbldInterf* interf = FbldLoadInterf(ctx->arena, ctx->path, iref->name->name, ctx->prgm);
-//  if (interf == NULL) {
-//    ReportError("Unable to load interface declaration for %s\n", &ctx->error, iref->name->loc, iref->name->name);
-//    return false;
-//  }
-//
-//  if (interf->targv->size != iref->targv->size) {
-//    ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
-//        iref->name->loc, interf->targv->size, iref->name->name, iref->targv->size);
-//    return false;
-//  }
-//  return true;
-}
 
 // CheckExpr --
 //   Check that the given expression is well formed.
@@ -1092,12 +1171,13 @@ static bool CheckIRef(Context* ctx, FbldQRef* iref)
 //  return next;
 //}
 
-// CheckDecls --
-//   Check that the declarations in the environment of the context are well
-//   formed and well typed.
+// CheckEnv --
+//   Check that the declarations in the environment are well formed and well
+//   typed.
 //
 // Inputs:
-//   ctx - The context for type declaration with the environment to check.
+//   ctx - The context for type checking.
+//   env - The environment of declarations to check.
 //
 // Results:
 //   None.
@@ -1107,11 +1187,10 @@ static bool CheckIRef(Context* ctx, FbldQRef* iref)
 //   problems. Function and process declarations may be NULL to indicate these
 //   declarations belong to an interface declaration; this is not considered
 //   an error.
-//   Loads and checks required interface declarations and module headers
-//   (not module definitions), adding them to the context.
-static void CheckDecls(Context* ctx)
+//   Loads and checks required top-level interface declarations and module
+//   headers (not module definitions), adding them to the context.
+static void CheckEnv(Context* ctx, Env* env)
 {
-  assert(false && "TODO");
 //  // localv is a list of all local names for types, funcs, and procs.
 //  // TODO: Don't leak this allocated vector.
 //  FbldNameV localv;
@@ -1238,70 +1317,35 @@ bool FbldCheckQRef(FblcArena* arena, FbldStringV* path, FbldQRef* qref, FbldProg
     .arena = arena,
     .prgm = prgm,
     .path = path,
-    .env = NULL,
     .error = false
   };
-  CheckQRef(&ctx, qref);
+  CheckQRef(&ctx, NULL, qref);
   return !ctx.error;
 }
 
 // FbldCheckInterf -- see fblcs.h for documentation.
 bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, FbldProgram* prgm)
 {
-  assert(false && "TODO");
-  Env env = {
-    .name = interf->name,
-    .params = interf->params,
-    .iref = NULL,
-    .importv = interf->importv,
-    .typev = interf->typev,
-    .funcv = interf->funcv,
-    .procv = interf->procv,
-    .interfv = interf->interfv,
-    .modulev = interf->modulev
-  };
-
   Context ctx = {
     .arena = arena,
     .prgm = prgm,
     .path = path,
-    .env = &env,
     .error = false
   };
-  CheckDecls(&ctx);
+  CheckInterf(&ctx, NULL, interf);
   return !ctx.error;
 }
 
 // FbldCheckModuleHeader -- see documentation in fbld.h
 bool FbldCheckModuleHeader(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
 {
-  FbldImportV importv = { .xs = NULL, .size = 0};
-  FbldTypeV typev = { .xs = NULL, .size = 0};
-  FbldFuncV funcv = { .xs = NULL, .size = 0};
-  FbldProcV procv = { .xs = NULL, .size = 0};
-  FbldInterfV interfv = { .xs = NULL, .size = 0};
-  FbldModuleV modulev = { .xs = NULL, .size = 0};
-
-  Env env = {
-    .name = module->name,
-    .params = module->params,
-    .importv = &importv,
-    .typev = &typev,
-    .funcv = &funcv,
-    .procv = &procv,
-    .interfv = &interfv,
-    .modulev = &modulev
-  };
-
   Context ctx = {
     .arena = arena,
     .prgm = prgm,
     .path = path,
-    .env = &env,
     .error = false
   };
-
-  CheckIRef(&ctx, module->iref);
+  CheckModuleHeader(&ctx, NULL, module);
   return !ctx.error;
 }
 
@@ -1464,78 +1508,10 @@ bool FbldCheckModule(FblcArena* arena, FbldStringV* path, FbldModule* module, Fb
     .arena = arena,
     .prgm = prgm,
     .path = path,
-    .env = module,
     .error = false
   };
-  CheckDecls(&ctx);
-
-  if (ctx.error) {
-    return false;
-  }
-
-  assert(false && "TODO");
-//
-//  // Verify the module has everything it should according to its interface.
-//  FbldInterf* interf = FbldLoadInterf(arena, path, module->iref->name->name, prgm);
-//  if (interf == NULL) {
-//    return false;
-//  }
-//
-//  for (size_t i = 0; i < interf->typev->size; ++i) {
-//    FbldType* type_i = interf->typev->xs[i];
-//    for (size_t m = 0; m < module->typev->size; ++m) {
-//      FbldType* type_m = module->typev->xs[m];
-//      if (FbldNamesEqual(type_i->name->name, type_m->name->name)) {
-//        CheckTypeDeclsMatch(&ctx, type_i, type_m);
-//
-//        // Set type_i to NULL to indicate we found the matching type.
-//        type_i = NULL;
-//        break;
-//      }
-//    }
-//
-//    if (type_i != NULL) {
-//      ReportError("No implementation found for type %s from the interface\n", &ctx.error, module->name->loc, type_i->name->name);
-//    }
-//  }
-//
-//  for (size_t i = 0; i < interf->funcv->size; ++i) {
-//    FbldFunc* func_i = interf->funcv->xs[i];
-//    for (size_t m = 0; m < module->funcv->size; ++m) {
-//      FbldFunc* func_m = module->funcv->xs[m];
-//      if (FbldNamesEqual(func_i->name->name, func_m->name->name)) {
-//        CheckFuncDeclsMatch(&ctx, func_i, func_m);
-//
-//        // Set func_i to NULL to indicate we found the matching func.
-//        func_i = NULL;
-//        break;
-//      }
-//    }
-//
-//    if (func_i != NULL) {
-//      ReportError("No implementation found for func %s from the interface\n", &ctx.error, module->name->loc, func_i->name->name);
-//    }
-//  }
-//
-//  for (size_t i = 0; i < interf->procv->size; ++i) {
-//    FbldProc* proc_i = interf->procv->xs[i];
-//    for (size_t m = 0; m < module->procv->size; ++m) {
-//      FbldProc* proc_m = module->procv->xs[m];
-//      if (FbldNamesEqual(proc_i->name->name, proc_m->name->name)) {
-//        CheckProcDeclsMatch(&ctx, proc_i, proc_m);
-//
-//        // Set proc_i to NULL to indicate we found the matching proc.
-//        proc_i = NULL;
-//        break;
-//      }
-//    }
-//
-//    if (proc_i != NULL) {
-//      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, module->name->loc, proc_i->name->name);
-//    }
-//  }
-//
-//  return !ctx.error;
+  CheckModule(&ctx, NULL, module);
+  return !ctx.error;
 }
 
 // CheckValue --
