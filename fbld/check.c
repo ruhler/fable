@@ -19,6 +19,9 @@
 // TODO: Add the declarations to be checked.
 typedef struct Env {
   struct Env* parent;
+  FbldQRef* mref;
+  FbldTypeV* typev;
+  FbldFuncV* funcv;
 } Env;
 
 // Context --
@@ -64,20 +67,20 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
 static bool CheckModule(Context* ctx, Env* env, FbldModule* module);
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module);
 static void CheckEnv(Context* ctx, Env* env);
+static bool CheckType(Context* ctx, Env* env, FbldQRef* qref);
+static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars);
+static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr);
+static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
+static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 
-// static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 // static bool ResolveQRef(Context* ctx, FbldQRef* qref);
 // static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref);
-// static bool CheckType(Context* ctx, FbldQRef* qref);
 // static bool CheckMRef(Context* ctx, FbldQRef* mref);
-// static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr);
 // static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* actn);
-// static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars);
 // static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
 // static bool CheckTypeDeclsMatch(Context* ctx, FbldType* type_i, FbldType* type_m);
 // static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* type_i, FbldFunc* type_m);
 // static bool CheckProcDeclsMatch(Context* ctx, FbldProc* type_i, FbldProc* type_m);
-// static bool CheckValue(Context* ctx, FbldValue* value);
 
 // ReportError --
 //   Report an error message associated with a location in a source file.
@@ -254,6 +257,29 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     assert(false && "UNREACHABLE");
   }
 
+  // TODO: Check if it is declared locally in this non-global environment.
+  for (size_t i = 0; i < env->typev->size; ++i) {
+    if (FbldNamesEqual(qref->name->name, env->typev->xs[i]->name->name)) {
+      qref->r.state = FBLD_RSTATE_RESOLVED;
+      qref->r.name = qref->name;
+      qref->r.mref = env->mref;
+      qref->r.kind = FBLD_DECL_TYPE;
+      qref->r.decl = env->typev->xs[i];
+      return true;
+    }
+  }
+
+  for (size_t i = 0; i < env->funcv->size; ++i) {
+    if (FbldNamesEqual(qref->name->name, env->funcv->xs[i]->name->name)) {
+      qref->r.state = FBLD_RSTATE_RESOLVED;
+      qref->r.name = qref->name;
+      qref->r.mref = env->mref;
+      qref->r.kind = FBLD_DECL_FUNC;
+      qref->r.decl = env->funcv->xs[i];
+      return true;
+    }
+  }
+
   assert(false && "TODO");
   return NULL;
 }
@@ -280,8 +306,24 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   assert(interf->params->targv->size == 0 && "TODO");
   assert(interf->params->margv->size == 0 && "TODO");
 
+  FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
+  mref->name = interf->name;
+  mref->targv = FBLC_ALLOC(ctx->arena, FbldQRefV);
+  FblcVectorInit(ctx->arena, *mref->targv);
+  mref->margv = FBLC_ALLOC(ctx->arena, FbldQRefV);
+  FblcVectorInit(ctx->arena, *mref->margv);
+  mref->mref = env == NULL ? NULL : env->mref;
+  mref->r.state = FBLD_RSTATE_RESOLVED;
+  mref->r.name = mref->name;
+  mref->r.mref = mref->mref;
+  mref->r.kind = FBLD_DECL_INTERF;
+  mref->r.decl = interf;
+
   Env interf_env = {
-    .parent = env
+    .parent = env,
+    .mref = mref,
+    .typev = interf->typev,
+    .funcv = interf->funcv,
   };
   CheckEnv(ctx, &interf_env);
 }
@@ -307,9 +349,29 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   if (!CheckModuleHeader(ctx, env, module)) {
     return false;
   }
+
+  FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
+  mref->name = module->name;
+  mref->targv = FBLC_ALLOC(ctx->arena, FbldQRefV);
+  FblcVectorInit(ctx->arena, *mref->targv);
+  mref->margv = FBLC_ALLOC(ctx->arena, FbldQRefV);
+  FblcVectorInit(ctx->arena, *mref->margv);
+  mref->mref = env == NULL ? NULL : env->mref;
+  mref->r.state = FBLD_RSTATE_RESOLVED;
+  mref->r.name = mref->name;
+  mref->r.mref = mref->mref;
+  mref->r.kind = FBLD_DECL_MODULE;
+  mref->r.decl = module;
+
+  Env module_env = {
+    .parent = env,
+    .mref = mref,
+    .typev = module->typev,
+    .funcv = module->funcv,
+  };
+  CheckEnv(ctx, &module_env);
+
   // TODO:
-//  CheckEnv(&ctx, NULL);
-//
 //  // Verify the module has everything it should according to its interface.
 //  FbldInterf* interf = FbldLoadInterf(arena, path, module->iref->name->name, prgm);
 //  if (interf == NULL) {
@@ -413,7 +475,8 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //
 // Inputs:
 //   loc - location to use for error reporting.
-//   expected - the expected type.  //   actual - the actual type.
+//   expected - the expected type.
+//   actual - the actual type.
 //   error - out parameter set to true on error.
 //
 // Results:
@@ -423,22 +486,22 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //   Prints an error message to stderr and sets error to true if the types
 //   don't match. If either type is null, it is assumed an error has already
 //   been printed, in which case no additional error message will be reported.
-//static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error)
-//{
-//  if (expected == NULL || actual == NULL) {
-//    // Assume a type error has already been reported or will be reported in
-//    // this case and that additional error messages would not be helpful.
-//    return;
-//  }
-//
-//  if (!FbldQRefsEqual(expected, actual)) {
-//    ReportError("Expected type ", error, loc);
-//    FbldPrintQRef(stderr, expected);
-//    fprintf(stderr, ", but found type ");
-//    FbldPrintQRef(stderr, actual);
-//    fprintf(stderr, "\n");
-//  }
-//}
+static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error)
+{
+  if (expected == NULL || actual == NULL) {
+    // Assume a type error has already been reported or will be reported in
+    // this case and that additional error messages would not be helpful.
+    return;
+  }
+
+  if (!FbldQRefsEqual(expected, actual)) {
+    ReportError("Expected type ", error, loc);
+    FbldPrintQRef(stderr, expected);
+    fprintf(stderr, ", but found type ");
+    FbldPrintQRef(stderr, actual);
+    fprintf(stderr, "\n");
+  }
+}
 
 // LookupType --
 //   Look up the FbldType* for the given resolved entity.
@@ -661,6 +724,7 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //
 // Inputs:
 //   ctx - The context for type checking.
+//   env - The environment for type checking.
 //   qref - The qref to check.
 //
 // Result:
@@ -671,19 +735,18 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //   Resolves qref if necessary.
 //   Sets error to true and reports errors to stderr if the entity could not
 //   be resolved or does not refer to a type.
-//static bool CheckType(Context* ctx, FbldQRef* qref)
-//{
-//  if (!ResolveQRef(ctx, qref)) {
-//    return false;
-//  }
-//
-//  FbldType* type = LookupType(ctx, qref);
-//  if (type == NULL) {
-//    ReportError("type %s not defined\n", &ctx->error, qref->uname->loc, qref->uname->name);
-//    return false;
-//  }
-//  return true;
-//}
+static bool CheckType(Context* ctx, Env* env, FbldQRef* qref)
+{
+  if (!CheckQRef(ctx, env, qref)) {
+    return false;
+  }
+
+  if (qref->r.kind != FBLD_DECL_TYPE) {
+    ReportError("%s does not refer to a type\n", &ctx->error, qref->name->loc, qref->name->name);
+    return false;
+  }
+  return true;
+}
 
 // CheckMRef --
 //   Verify that the given mref is well formed.
@@ -757,6 +820,7 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //
 // Inputs:
 //   ctx - The context for type checking.
+//   env - The environment for type checking.
 //   vars - The list of variables currently in scope.
 //   expr - The expression to check.
 //
@@ -766,9 +830,10 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 // Side effects:
 //   Prints a message to stderr if the expression is not well typed and
 //   ctx->error is set to true.
-//static FbldQRef* CheckExpr(Context* ctx, Vars* vars, FbldExpr* expr)
-//{
-//  switch (expr->tag) {
+static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
+{
+  switch (expr->tag) {
+    case FBLD_VAR_EXPR: assert(false && "TODO"); return NULL;
 //    case FBLD_VAR_EXPR: {
 //      FbldVarExpr* var_expr = (FbldVarExpr*)expr;
 //      for (size_t i = 0; vars != NULL; ++i) {
@@ -782,51 +847,55 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //      return NULL;
 //    }
 //
-//    case FBLD_APP_EXPR: {
-//      FbldAppExpr* app_expr = (FbldAppExpr*)expr;
-//
+    case FBLD_APP_EXPR: {
+      FbldAppExpr* app_expr = (FbldAppExpr*)expr;
+
 //      FbldQRef* arg_types[app_expr->argv->size];
 //      for (size_t i = 0; i < app_expr->argv->size; ++i) {
 //        arg_types[i] = CheckExpr(ctx, vars, app_expr->argv->xs[i]);
 //      }
-//
-//      FbldQRef* return_type = NULL;
-//      FbldArgV* argv = NULL;
-//
-//      if (!ResolveQRef(ctx, app_expr->func)) {
-//        return NULL;
-//      }
-//
-//      FbldFunc* func = LookupFunc(ctx, app_expr->func);
-//      if (func != NULL) {
-//        argv = func->argv;
-//        return_type = ImportQRef(ctx, app_expr->func->rmref, func->return_type);
-//      } else {
-//        FbldType* type = LookupType(ctx, app_expr->func);
-//        if (type != NULL) {
-//          if (type->kind != FBLD_STRUCT_KIND) {
-//            ReportError("Cannot do application on type %s.\n", &ctx->error, app_expr->func->uname->loc, app_expr->func->uname->name);
-//            return NULL;
-//          }
-//          argv = type->fieldv;
-//          return_type = app_expr->func;
-//        } else {
-//          ReportError("'%s' not defined.\n", &ctx->error, app_expr->func->uname->loc, app_expr->func->uname->name);
-//          return NULL;
-//        }
-//      }
-//
-//      if (argv->size == app_expr->argv->size) {
-//        for (size_t i = 0; i < argv->size; ++i) {
-//          FbldQRef* expected = ImportQRef(ctx, app_expr->func->rmref, argv->xs[i]->type);
-//          CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
-//        }
-//      } else {
-//        ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, app_expr->func->uname->loc, argv->size, app_expr->func->uname->name, app_expr->argv->size);
-//      }
-//      return return_type;
-//    }
-//
+
+      if (!CheckQRef(ctx, env, app_expr->func)) {
+        return NULL;
+      }
+
+      FbldQRef* return_type = NULL;
+      FbldArgV* argv = NULL;
+      if (app_expr->func->r.kind == FBLD_DECL_FUNC) {
+        FbldFunc* func = (FbldFunc*)app_expr->func->r.decl;
+        argv = func->argv;
+        return_type = func->return_type;
+        // TODO: Why is it right to check in this context and not the context
+        // of the function being defined?
+        if (!CheckType(ctx, env, return_type)) {
+          return NULL;
+        }
+      } else if (app_expr->func->r.kind == FBLD_DECL_TYPE) {
+        FbldType* type = (FbldType*)app_expr->func->r.decl;
+        if (type->kind != FBLD_STRUCT_KIND) {
+          ReportError("Cannot do application on type %s.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
+          return NULL;
+        }
+        argv = type->fieldv;
+        return_type = app_expr->func;
+      } else {
+        ReportError("'%s' does not refer to a type or function.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
+        return NULL;
+      }
+
+      if (argv->size == app_expr->argv->size) {
+        for (size_t i = 0; i < argv->size; ++i) {
+          assert(false && "TODO");
+          // FbldQRef* expected = ImportQRef(ctx, app_expr->func->rmref, argv->xs[i]->type);
+          // CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
+        }
+      } else {
+        ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, app_expr->func->name->loc, argv->size, app_expr->func->name->name, app_expr->argv->size);
+      }
+      return return_type;
+    }
+
+    case FBLD_ACCESS_EXPR: assert(false && "TODO"); return NULL;
 //    case FBLD_ACCESS_EXPR: {
 //      FbldAccessExpr* access_expr = (FbldAccessExpr*)expr;
 //      FbldQRef* qref = CheckExpr(ctx, vars, access_expr->obj);
@@ -846,6 +915,7 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //      return NULL;
 //    }
 //
+    case FBLD_UNION_EXPR: assert(false && "TODO"); return NULL;
 //    case FBLD_UNION_EXPR: {
 //      FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
 //      FbldQRef* arg_type = CheckExpr(ctx, vars, union_expr->arg);
@@ -872,6 +942,7 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //      return NULL;
 //    }
 //
+    case FBLD_LET_EXPR: assert(false && "TODO"); return NULL;
 //    case FBLD_LET_EXPR: {
 //      FbldLetExpr* let_expr = (FbldLetExpr*)expr;
 //      for (Vars* curr = vars; curr != NULL; curr = curr->next) {
@@ -893,6 +964,7 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //      return CheckExpr(ctx, &nvars, let_expr->body);
 //    }
 //
+    case FBLD_COND_EXPR: assert(false && "TODO"); return NULL;
 //    case FBLD_COND_EXPR: {
 //      FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
 //      FbldQRef* type = CheckExpr(ctx, vars, cond_expr->select);
@@ -917,13 +989,13 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //      }
 //      return result_type;
 //    }
-//
-//    default: {
-//      UNREACHABLE("invalid fbld expression tag");
-//      return NULL;
-//    }
-//  }
-//}
+
+    default: {
+      UNREACHABLE("invalid fbld expression tag");
+      return NULL;
+    }
+  }
+}
 
 // CheckActn --
 //   Check that the given action is well formed.
@@ -1137,6 +1209,7 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //
 // Inputs:
 //   ctx - The context for type checking.
+//   ctx - The environment for type checking.
 //   argv - The vector of args to check.
 //   vars - Space for argv->size vars to fill in based on the given args.
 //
@@ -1147,29 +1220,29 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //   Fills in elements of vars.
 //   Loads program modules as needed to check the arguments. In case
 //   there is a problem, reports errors to stderr and sets error to true.
-//static Vars* CheckArgV(Context* ctx, FbldArgV* argv, Vars* vars)
-//{
-//  Vars* next = NULL;
-//  for (size_t arg_id = 0; arg_id < argv->size; ++arg_id) {
-//    FbldArg* arg = argv->xs[arg_id];
-//
-//    // Check whether an argument has already been declared with the same name.
-//    for (size_t i = 0; i < arg_id; ++i) {
-//      if (FbldNamesEqual(arg->name->name, argv->xs[i]->name->name)) {
-//        ReportError("Redefinition of %s\n", &ctx->error, arg->name->loc, arg->name->name);
-//        break;
-//      }
-//    }
-//    CheckType(ctx, arg->type);
-//
-//    vars[arg_id].name = arg->name->name;
-//    vars[arg_id].type = CheckType(ctx, arg->type) ? arg->type : NULL;
-//    vars[arg_id].next = next;
-//    arg->type = vars[arg_id].type;
-//    next = vars + arg_id;
-//  }
-//  return next;
-//}
+static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars)
+{
+  Vars* next = NULL;
+  for (size_t arg_id = 0; arg_id < argv->size; ++arg_id) {
+    FbldArg* arg = argv->xs[arg_id];
+
+    // Check whether an argument has already been declared with the same name.
+    for (size_t i = 0; i < arg_id; ++i) {
+      if (FbldNamesEqual(arg->name->name, argv->xs[i]->name->name)) {
+        ReportError("Redefinition of %s\n", &ctx->error, arg->name->loc, arg->name->name);
+        break;
+      }
+    }
+    CheckType(ctx, env, arg->type);
+
+    vars[arg_id].name = arg->name->name;
+    vars[arg_id].type = CheckType(ctx, env, arg->type) ? arg->type : NULL;
+    vars[arg_id].next = next;
+    arg->type = vars[arg_id].type;
+    next = vars + arg_id;
+  }
+  return next;
+}
 
 // CheckEnv --
 //   Check that the declarations in the environment are well formed and well
@@ -1191,49 +1264,6 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //   headers (not module definitions), adding them to the context.
 static void CheckEnv(Context* ctx, Env* env)
 {
-//  // localv is a list of all local names for types, funcs, and procs.
-//  // TODO: Don't leak this allocated vector.
-//  FbldNameV localv;
-//  FblcVectorInit(ctx->arena, localv);
-//
-//  // Add type parameters to localv.
-//  for (size_t i = 0; i < ctx->env->targv->size; ++i) {
-//    FblcVectorAppend(ctx->arena, localv, ctx->env->targv->xs[i]);
-//  }
-//
-//  // Add imported entities to localv.
-//  for (size_t i = 0; i < ctx->env->usingv->size; ++i) {
-//    FbldUsing* using = ctx->env->usingv->xs[i];
-//    for (size_t j = 0; j < using->itemv->size; ++j) {
-//      FblcVectorAppend(ctx->arena, localv, using->itemv->xs[j]->dest);
-//    }
-//  }
-//
-//  // Add locally declared types to localv.
-//  for (size_t i = 0; i < ctx->env->typev->size; ++i) {
-//    FblcVectorAppend(ctx->arena, localv, ctx->env->typev->xs[i]->name);
-//  }
-//
-//  // Add locally declared funcs to localv.
-//  for (size_t i = 0; i < ctx->env->funcv->size; ++i) {
-//    FblcVectorAppend(ctx->arena, localv, ctx->env->funcv->xs[i]->name);
-//  }
-//
-//  // Add locally declared procs to localv.
-//  for (size_t i = 0; i < ctx->env->procv->size; ++i) {
-//    FblcVectorAppend(ctx->arena, localv, ctx->env->procv->xs[i]->name);
-//  }
-//
-//  // Check that the local names are unique.
-//  for (size_t i = 0; i < localv.size; ++i) {
-//    for (size_t j = 0; j < i; ++j) {
-//      if (FbldNamesEqual(localv.xs[i]->name, localv.xs[j]->name)) {
-//        ReportError("Redefinition of %s\n", &ctx->error, localv.xs[i]->loc, localv.xs[i]->name);
-//        break;
-//      }
-//    }
-//  }
-//
 //  // Check using declarations.
 //  for (size_t using_id = 0; using_id < ctx->env->usingv->size; ++using_id) {
 //    FbldUsing* using = ctx->env->usingv->xs[using_id];
@@ -1266,18 +1296,18 @@ static void CheckEnv(Context* ctx, Env* env)
 //    }
 //  }
 //
-//  // Check func declarations
-//  for (size_t func_id = 0; func_id < ctx->env->funcv->size; ++func_id) {
-//    FbldFunc* func = ctx->env->funcv->xs[func_id];
-//    Vars vars_data[func->argv->size];
-//    Vars* vars = CheckArgV(ctx, func->argv, vars_data);
-//    CheckType(ctx, func->return_type);
-//
-//    if (func->body != NULL) {
-//      FbldQRef* body_type = CheckExpr(ctx, vars, func->body);
-//      CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
-//    }
-//  }
+  // Check func declarations
+  for (size_t func_id = 0; func_id < env->funcv->size; ++func_id) {
+    FbldFunc* func = env->funcv->xs[func_id];
+    Vars vars_data[func->argv->size];
+    Vars* vars = CheckArgV(ctx, env, func->argv, vars_data);
+    CheckType(ctx, env, func->return_type);
+
+    if (func->body != NULL) {
+      FbldQRef* body_type = CheckExpr(ctx, env, vars, func->body);
+      CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
+    }
+  }
 //
 //  // Check proc declarations
 //  for (size_t proc_id = 0; proc_id < ctx->env->procv->size; ++proc_id) {
@@ -1527,83 +1557,56 @@ bool FbldCheckModule(FblcArena* arena, FbldStringV* path, FbldModule* module, Fb
 // Side effects:
 //   Resolves references in the value.
 //   Prints a message to stderr if the value is not well formed.
-//static bool CheckValue(Context* ctx, FbldValue* value)
-//{
-//  if (!ResolveQRef(ctx, value->type)) {
-//    return false;
-//  }
-//  FbldType* type = LookupType(ctx, value->type);
-//  if (type == NULL) {
-//    ReportError("type %s not defined\n", &ctx->error, value->type->uname->loc, value->type->uname->name);
-//    return false;
-//  }
-//
-//  switch (value->kind) {
-//    case FBLD_STRUCT_KIND: {
-//      for (size_t i = 0; i < type->fieldv->size; ++i) {
-//        if (!CheckValue(ctx, value->fieldv->xs[i])) {
-//          return false;
-//        }
-//      }
-//
-//      // TODO: check that the types of the fields match what is expected.
-//      return true;
-//    }
-//
-//    case FBLD_UNION_KIND: {
-//      if (!CheckValue(ctx, value->fieldv->xs[0])) {
-//        return false;
-//      }
-//
-//      // TODO: check that the type of the argument matches what is expected.
-//      return true;
-//    }
-//
-//    case FBLD_ABSTRACT_KIND: {
-//      ReportError("type %s is abstract\n", &ctx->error, value->type->uname->loc, value->type->uname->name);
-//      return false;
-//    }
-//
-//    default: {
-//      UNREACHABLE("invalid value kind");
-//      return false;
-//    }
-//  }
-//}
+static bool CheckValue(Context* ctx, Env* env, FbldValue* value)
+{
+  if (!CheckType(ctx, env, value->type)) {
+    return false;
+  }
+  FbldType* type = (FbldType*)value->type->r.decl;
+
+  switch (value->kind) {
+    case FBLD_STRUCT_KIND: {
+      for (size_t i = 0; i < type->fieldv->size; ++i) {
+        if (!CheckValue(ctx, env, value->fieldv->xs[i])) {
+          return false;
+        }
+      }
+
+      // TODO: check that the types of the fields match what is expected.
+      return true;
+    }
+
+    case FBLD_UNION_KIND: {
+      if (!CheckValue(ctx, env, value->fieldv->xs[0])) {
+        return false;
+      }
+
+      // TODO: check that the type of the argument matches what is expected.
+      return true;
+    }
+
+    case FBLD_ABSTRACT_KIND: {
+      ReportError("type %s is abstract\n", &ctx->error, value->type->name->loc, value->type->name->name);
+      return false;
+    }
+
+    default: {
+      UNREACHABLE("invalid value kind");
+      return false;
+    }
+  }
+}
 
 // FblcCheckValue -- see documentation in fbld.h
 bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 {
-  assert(false && "TODO");
-//  FbldStringV path = { .size = 0, .xs = NULL };
-//
-//  // Context an empty context representing the global context.
-//  FbldName name = {
-//    .name = "(global)",
-//    .loc = value->type->uname->loc
-//  };
-//  FbldNameV targv = { .size = 0, .xs = NULL };
-//  FbldImportV usingv = { .size = 0, .xs = NULL };
-//  FbldTypeV typev = { .size = 0, .xs = NULL };
-//  FbldFuncV funcv = { .size = 0, .xs = NULL };
-//  FbldProcV procv = { .size = 0, .xs = NULL };
-//  FbldModule module = {
-//    .name = &name,
-//    .targv = &targv,
-//    .margv = NULL,
-//    .iref = NULL,
-//    .usingv = &usingv,
-//    .typev = &typev,
-//    .funcv = &funcv,
-//    .procv = &procv
-//  };
-//
-//  Context ctx = {
-//    .arena = arena,
-//    .prgm = prgm,
-//    .path = &path,
-//    .env = &module,
-//    .error = false
-//  };
-//  return CheckValue(&ctx, value);
+  FbldStringV path = { .size = 0, .xs = NULL };
+  Context ctx = {
+    .arena = arena,
+    .prgm = prgm,
+    .path = &path,
+    .error = false
+  };
+  CheckValue(&ctx, NULL, value);
+  return !ctx.error;
 }

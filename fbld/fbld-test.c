@@ -506,10 +506,8 @@ int main(int argc, char* argv[])
     ReportError(&user, "premature program termination.\n");
     abort();
   }
-  assert(false && "TODO");
-//  FbldQRef* return_type = FbldImportQRef(arena, user.prog, qentry->rmref, user.proc->return_type);
-//  AssertValuesEqual(arena, &user, return_type, user.cmd.value, value);
-//  FblcRelease(arena, user.cmd.value);
-//  FblcRelease(arena, value);
+  AssertValuesEqual(arena, &user, user.proc->return_type, user.cmd.value, value);
+  FblcRelease(arena, user.cmd.value);
+  FblcRelease(arena, value);
   return 0;
 }
