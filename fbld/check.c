@@ -850,10 +850,10 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
     case FBLD_APP_EXPR: {
       FbldAppExpr* app_expr = (FbldAppExpr*)expr;
 
-//      FbldQRef* arg_types[app_expr->argv->size];
-//      for (size_t i = 0; i < app_expr->argv->size; ++i) {
-//        arg_types[i] = CheckExpr(ctx, vars, app_expr->argv->xs[i]);
-//      }
+      FbldQRef* arg_types[app_expr->argv->size];
+      for (size_t i = 0; i < app_expr->argv->size; ++i) {
+        arg_types[i] = CheckExpr(ctx, env, vars, app_expr->argv->xs[i]);
+      }
 
       if (!CheckQRef(ctx, env, app_expr->func)) {
         return NULL;
@@ -865,8 +865,11 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
         FbldFunc* func = (FbldFunc*)app_expr->func->r.decl;
         argv = func->argv;
         return_type = func->return_type;
+
         // TODO: Why is it right to check in this context and not the context
-        // of the function being defined?
+        // of the function being defined? Because external contexts will
+        // already have been resolved, so this only actually does resolution
+        // for functions defined locally?
         if (!CheckType(ctx, env, return_type)) {
           return NULL;
         }
@@ -885,9 +888,12 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 
       if (argv->size == app_expr->argv->size) {
         for (size_t i = 0; i < argv->size; ++i) {
-          assert(false && "TODO");
-          // FbldQRef* expected = ImportQRef(ctx, app_expr->func->rmref, argv->xs[i]->type);
-          // CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
+          // TODO: Why is it right to check in this context and not the context
+          // of the function being defined? Because external contexts will
+          // already have been resolved, so this only actually does resolution
+          // for functions defined locally?
+          CheckType(ctx, env, argv->xs[i]->type);
+          CheckTypesMatch(app_expr->argv->xs[i]->loc, argv->xs[i]->type, arg_types[i], &ctx->error);
         }
       } else {
         ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, app_expr->func->name->loc, argv->size, app_expr->func->name->name, app_expr->argv->size);
