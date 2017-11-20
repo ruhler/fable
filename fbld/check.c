@@ -229,6 +229,7 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     FbldInterf* interf = NULL;
     FbldModule* module = NULL;
     if (!FbldLoadTopDecl(ctx->arena, ctx->path, qref->name->name, ctx->prgm, &interf, &module)) {
+      ctx->error = true;
       return false;
     }
 
@@ -1289,19 +1290,19 @@ static void CheckEnv(Context* ctx, Env* env)
 //      }
 //    }
 //  }
-//
-//  // Check type declarations.
-//  for (size_t type_id = 0; type_id < ctx->env->typev->size; ++type_id) {
-//    FbldType* type = ctx->env->typev->xs[type_id];
-//    assert(type->kind != FBLD_UNION_KIND || type->fieldv->size > 0);
-//    assert(type->kind != FBLD_ABSTRACT_KIND || type->fieldv == NULL);
-//
-//    if (type->fieldv != NULL) {
-//      Vars unused[type->fieldv->size];
-//      CheckArgV(ctx, type->fieldv, unused);
-//    }
-//  }
-//
+
+  // Check type declarations.
+  for (size_t type_id = 0; type_id < env->typev->size; ++type_id) {
+    FbldType* type = env->typev->xs[type_id];
+    assert(type->kind != FBLD_UNION_KIND || type->fieldv->size > 0);
+    assert(type->kind != FBLD_ABSTRACT_KIND || type->fieldv == NULL);
+
+    if (type->fieldv != NULL) {
+      Vars unused[type->fieldv->size];
+      CheckArgV(ctx, env, type->fieldv, unused);
+    }
+  }
+
   // Check func declarations
   for (size_t func_id = 0; func_id < env->funcv->size; ++func_id) {
     FbldFunc* func = env->funcv->xs[func_id];

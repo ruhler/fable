@@ -132,7 +132,7 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
   }
 
   FbldModule* module = FbldLoadModuleHeader(arena, path, name, prgm);
-  if  (module == NULL) {
+  if (module == NULL) {
     return NULL;
   }
 
