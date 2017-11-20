@@ -138,34 +138,31 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* ctx, Fbl
 // FbldPrintQRef -- see documentation in fbld.h
 void FbldPrintQRef(FILE* stream, FbldQRef* qref)
 {
-  assert(false && "TODO");
-//  fprintf(stream, "%s", type->rname->name);
-//  if (type->rmref != NULL) {
-//    fprintf(stream, "@");
-//    FbldPrintMRef(stream, type->rmref);
-//  }
+  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
+  fprintf(stream, "%s", qref->r.name->name);
+  if (qref->targv->size > 0 || qref->margv->size > 0) {
+    fprintf(stream, "<");
+    for (size_t i = 0; i < qref->targv->size; ++i) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      FbldPrintQRef(stream, qref->targv->xs[i]);
+    }
+
+    if (qref->margv->size > 0) {
+      fprintf(stream, ";");
+
+      for (size_t i = 0; i < qref->margv->size; ++i) {
+        if (i > 0) {
+          fprintf(stream, ",");
+        }
+        FbldPrintQRef(stream, qref->margv->xs[i]);
+      }
+    }
+    fprintf(stream, ">");
+  }
+  if (qref->r.mref != NULL) {
+    fprintf(stream, "@");
+    FbldPrintQRef(stream, qref->r.mref);
+  }
 }
-
-//// FbldPrintMRef -- see documentation in fbld.h
-//void FbldPrintMRef(FILE* stream, FbldMRef* mref)
-//{
-//  fprintf(stream, "%s<", mref->name->name);
-//
-//  if (mref->targv != NULL) {
-//    for (size_t i = 0; i < mref->targv->size; ++i) {
-//      if (i > 0) {
-//        fprintf(stream, ",");
-//      }
-//      FbldPrintType(stream, mref->targv->xs[i]);
-//    }
-//    fprintf(stream, ";");
-//
-//    for (size_t i = 0; i < mref->margv->size; ++i) {
-//      if (i > 0) {
-//        fprintf(stream, ",");
-//      }
-//      FbldPrintMRef(stream, mref->margv->xs[i]);
-//    }
-//  }
-//  fprintf(stream, ">");
-//}
