@@ -73,6 +73,8 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr);
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 
+static FbldQRef* ForeignType(Context* ctx, Env* env, FbldQRef* qref);
+
 // static bool ResolveQRef(Context* ctx, FbldQRef* qref);
 // static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref);
 // static bool CheckMRef(Context* ctx, FbldQRef* mref);
@@ -281,7 +283,13 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     }
   }
 
-  assert(false && "TODO");
+  // TODO: Check for the name in:
+  //  * local import declarations
+  //  * as local proc declaration
+  //  * as local interf declaration
+  //  * as local module declaration
+  //  * as a type or module parameter
+  ReportError("%s not defined\n", &ctx->error, qref->name->loc, qref->name->name);
   return NULL;
 }
 
@@ -865,15 +873,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       if (app_expr->func->r.kind == FBLD_DECL_FUNC) {
         FbldFunc* func = (FbldFunc*)app_expr->func->r.decl;
         argv = func->argv;
-        return_type = func->return_type;
-
-        // TODO: Why is it right to check in this context and not the context
-        // of the function being defined? Because external contexts will
-        // already have been resolved, so this only actually does resolution
-        // for functions defined locally?
-        if (!CheckType(ctx, env, return_type)) {
-          return NULL;
-        }
+        return_type = ForeignType(ctx, env, func->return_type);
       } else if (app_expr->func->r.kind == FBLD_DECL_TYPE) {
         FbldType* type = (FbldType*)app_expr->func->r.decl;
         if (type->kind != FBLD_STRUCT_KIND) {
@@ -889,12 +889,8 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 
       if (argv->size == app_expr->argv->size) {
         for (size_t i = 0; i < argv->size; ++i) {
-          // TODO: Why is it right to check in this context and not the context
-          // of the function being defined? Because external contexts will
-          // already have been resolved, so this only actually does resolution
-          // for functions defined locally?
-          CheckType(ctx, env, argv->xs[i]->type);
-          CheckTypesMatch(app_expr->argv->xs[i]->loc, argv->xs[i]->type, arg_types[i], &ctx->error);
+          FbldQRef* expected = ForeignType(ctx, env, argv->xs[i]->type);
+          CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
         }
       } else {
         ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, app_expr->func->name->loc, argv->size, app_expr->func->name->name, app_expr->argv->size);
@@ -921,34 +917,32 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 //      ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->name->name);
 //      return NULL;
 //    }
-//
-    case FBLD_UNION_EXPR: assert(false && "TODO"); return NULL;
-//    case FBLD_UNION_EXPR: {
-//      FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
-//      FbldQRef* arg_type = CheckExpr(ctx, vars, union_expr->arg);
-//      if (!CheckType(ctx, union_expr->type)) {
-//        return NULL;
-//      }
-//
-//      FbldType* type_def = LookupType(ctx, union_expr->type);
-//      assert(type_def != NULL);
-//      if (type_def->kind != FBLD_UNION_KIND) {
-//        ReportError("%s does not refer to a union type.\n", &ctx->error, union_expr->type->uname->loc, union_expr->type->uname->name);
-//        return NULL;
-//      }
-//
-//      for (size_t i = 0; i < type_def->fieldv->size; ++i) {
-//        if (FbldNamesEqual(union_expr->field.name->name, type_def->fieldv->xs[i]->name->name)) {
-//          union_expr->field.id = i;
-//          FbldQRef* expected = ImportQRef(ctx, union_expr->type->rmref, type_def->fieldv->xs[i]->type);
-//          CheckTypesMatch(union_expr->arg->loc, expected, arg_type, &ctx->error);
-//          return union_expr->type;
-//        }
-//      }
-//      ReportError("%s is not a field of type %s\n", &ctx->error, union_expr->field.name->loc, union_expr->field.name->name, union_expr->type->uname->name);
-//      return NULL;
-//    }
-//
+
+    case FBLD_UNION_EXPR: {
+      FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
+      FbldQRef* arg_type = CheckExpr(ctx, env, vars, union_expr->arg);
+      if (!CheckType(ctx, env, union_expr->type)) {
+        return NULL;
+      }
+
+      FbldType* type_def = (FbldType*)union_expr->type->r.decl;
+      if (type_def->kind != FBLD_UNION_KIND) {
+        ReportError("%s does not refer to a union type.\n", &ctx->error, union_expr->type->name->loc, union_expr->type->name->name);
+        return NULL;
+      }
+
+      for (size_t i = 0; i < type_def->fieldv->size; ++i) {
+        if (FbldNamesEqual(union_expr->field.name->name, type_def->fieldv->xs[i]->name->name)) {
+          union_expr->field.id = i;
+          FbldQRef* expected = ForeignType(ctx, env, type_def->fieldv->xs[i]->type);
+          CheckTypesMatch(union_expr->arg->loc, expected, arg_type, &ctx->error);
+          return union_expr->type;
+        }
+      }
+      ReportError("%s is not a field of type %s\n", &ctx->error, union_expr->field.name->loc, union_expr->field.name->name, union_expr->type->name->name);
+      return NULL;
+    }
+
     case FBLD_LET_EXPR: assert(false && "TODO"); return NULL;
 //    case FBLD_LET_EXPR: {
 //      FbldLetExpr* let_expr = (FbldLetExpr*)expr;
@@ -1616,4 +1610,29 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
   };
   CheckValue(&ctx, NULL, value);
   return !ctx.error;
+}
+
+// ForeignType --
+//   Reference a potentially foreign type.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   env - The environment from which the qref was referenced.
+//   qref - The type being referenced.
+//
+// Results:
+//   The qref, or NULL if it is not well formed.
+//
+// Side effects:
+//   Resolves the qref if necessary.
+static FbldQRef* ForeignType(Context* ctx, Env* env, FbldQRef* qref)
+{
+  // TODO: Why is it right to check in this context and not the context
+  // where the qref was defined? Because external contexts will already have
+  // been resolved, so this only actually does resolution for qrefs
+  // defined locally?
+  if (!CheckType(ctx, env, qref)) {
+    return NULL;
+  }
+  return qref;
 }

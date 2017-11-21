@@ -303,17 +303,16 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       }
     }
 
-    case FBLD_UNION_EXPR: assert(false && "TODO"); return false;
-//    case FBLD_UNION_EXPR: {
-//      FbldUnionExpr* union_expr_d = (FbldUnionExpr*)expr;
-//      FblcUnionExpr* union_expr_c = FBLC_ALLOC(arena, FblcUnionExpr);
-//      union_expr_c->_base.tag = FBLC_UNION_EXPR;
-//      union_expr_c->type = CompileForeignType(arena, prgm, mref, union_expr_d->type, compiled);
-//      union_expr_c->field = union_expr_d->field.id;
-//      union_expr_c->arg = CompileExpr(arena, accessv, prgm, mref, union_expr_d->arg, compiled);
-//      return &union_expr_c->_base;
-//    }
-//
+    case FBLD_UNION_EXPR: {
+      FbldUnionExpr* union_expr_d = (FbldUnionExpr*)expr;
+      FblcUnionExpr* union_expr_c = FBLC_ALLOC(ctx->arena, FblcUnionExpr);
+      union_expr_c->_base.tag = FBLC_UNION_EXPR;
+      union_expr_c->type = CompileForeignType(ctx, mref, union_expr_d->type);
+      union_expr_c->field = union_expr_d->field.id;
+      union_expr_c->arg = CompileExpr(ctx, mref, union_expr_d->arg);
+      return &union_expr_c->_base;
+    }
+
     case FBLD_ACCESS_EXPR: assert(false && "TODO"); return false;
 //    case FBLD_ACCESS_EXPR: {
 //      FbldAccessExpr* access_expr_d = (FbldAccessExpr*)expr;
