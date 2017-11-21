@@ -965,31 +965,31 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 //      return CheckExpr(ctx, &nvars, let_expr->body);
 //    }
 //
-    case FBLD_COND_EXPR: assert(false && "TODO"); return NULL;
-//    case FBLD_COND_EXPR: {
-//      FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
-//      FbldQRef* type = CheckExpr(ctx, vars, cond_expr->select);
-//      if (type != NULL) {
-//        FbldType* type_def = LookupType(ctx, type);
-//        assert(type_def != NULL);
-//        if (type_def->kind == FBLD_UNION_KIND) {
-//          if (type_def->fieldv->size != cond_expr->argv->size) {
-//            ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_expr->_base.loc, type_def->fieldv->size, cond_expr->argv->size);
-//          }
-//        } else {
-//          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_expr->select->loc, type_def->name->name);
-//        }
-//      }
-//
-//      FbldQRef* result_type = NULL;
-//      assert(cond_expr->argv->size > 0);
-//      for (size_t i = 0; i < cond_expr->argv->size; ++i) {
-//        FbldQRef* arg_type = CheckExpr(ctx, vars, cond_expr->argv->xs[i]);
-//        CheckTypesMatch(cond_expr->argv->xs[i]->loc, result_type, arg_type, &ctx->error);
-//        result_type = (result_type == NULL) ? arg_type : result_type;
-//      }
-//      return result_type;
-//    }
+    case FBLD_COND_EXPR: {
+      FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
+      FbldQRef* type = CheckExpr(ctx, env, vars, cond_expr->select);
+      if (type != NULL) {
+        assert(type->r.state == FBLD_RSTATE_RESOLVED);
+        assert(type->r.kind == FBLD_DECL_TYPE);
+        FbldType* type_def = (FbldType*)type->r.decl;
+        if (type_def->kind == FBLD_UNION_KIND) {
+          if (type_def->fieldv->size != cond_expr->argv->size) {
+            ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_expr->_base.loc, type_def->fieldv->size, cond_expr->argv->size);
+          }
+        } else {
+          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_expr->select->loc, type_def->name->name);
+        }
+      }
+
+      FbldQRef* result_type = NULL;
+      assert(cond_expr->argv->size > 0);
+      for (size_t i = 0; i < cond_expr->argv->size; ++i) {
+        FbldQRef* arg_type = CheckExpr(ctx, env, vars, cond_expr->argv->xs[i]);
+        CheckTypesMatch(cond_expr->argv->xs[i]->loc, result_type, arg_type, &ctx->error);
+        result_type = (result_type == NULL) ? arg_type : result_type;
+      }
+      return result_type;
+    }
 
     default: {
       UNREACHABLE("invalid fbld expression tag");
