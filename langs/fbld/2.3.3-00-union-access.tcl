@@ -4,6 +4,7 @@ set prg {
     interf MainI {
       struct Unit();
       union Fruit(Unit apple, Unit banana, Unit pear);
+      func main( ; Fruit);
     };
   }
 

@@ -898,25 +898,25 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       return return_type;
     }
 
-    case FBLD_ACCESS_EXPR: assert(false && "TODO"); return NULL;
-//    case FBLD_ACCESS_EXPR: {
-//      FbldAccessExpr* access_expr = (FbldAccessExpr*)expr;
-//      FbldQRef* qref = CheckExpr(ctx, vars, access_expr->obj);
-//      if (qref == NULL) {
-//        return NULL;
-//      }
-//
-//      FbldType* type = LookupType(ctx, qref);
-//      assert(type != NULL);
-//      for (size_t i = 0; i < type->fieldv->size; ++i) {
-//        if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
-//          access_expr->field.id = i;
-//          return ImportQRef(ctx, qref->rmref, type->fieldv->xs[i]->type);
-//        }
-//      }
-//      ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->name->name);
-//      return NULL;
-//    }
+    case FBLD_ACCESS_EXPR: {
+      FbldAccessExpr* access_expr = (FbldAccessExpr*)expr;
+      FbldQRef* qref = CheckExpr(ctx, env, vars, access_expr->obj);
+      if (qref == NULL) {
+        return NULL;
+      }
+
+      assert(qref->r.state == FBLD_RSTATE_RESOLVED);
+      assert(qref->r.kind == FBLD_DECL_TYPE);
+      FbldType* type = (FbldType*)qref->r.decl;
+      for (size_t i = 0; i < type->fieldv->size; ++i) {
+        if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
+          access_expr->field.id = i;
+          return ForeignType(ctx, env, type->fieldv->xs[i]->type);
+        }
+      }
+      ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->name->name);
+      return NULL;
+    }
 
     case FBLD_UNION_EXPR: {
       FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;

@@ -313,20 +313,19 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       return &union_expr_c->_base;
     }
 
-    case FBLD_ACCESS_EXPR: assert(false && "TODO"); return false;
-//    case FBLD_ACCESS_EXPR: {
-//      FbldAccessExpr* access_expr_d = (FbldAccessExpr*)expr;
-//      FblcAccessExpr* access_expr_c = FBLC_ALLOC(arena, FblcAccessExpr);
-//      access_expr_c->_base.tag = FBLC_ACCESS_EXPR;
-//      access_expr_c->obj = CompileExpr(arena, accessv, prgm, mref, access_expr_d->obj, compiled);
-//      access_expr_c->field = access_expr_d->field.id;
-//
-//      FbldAccessLoc* loc = FblcVectorExtend(arena, *accessv);
-//      loc->expr = &access_expr_c->_base;
-//      loc->loc = access_expr_d->_base.loc;
-//      return &access_expr_c->_base;
-//    }
-//
+    case FBLD_ACCESS_EXPR: {
+      FbldAccessExpr* access_expr_d = (FbldAccessExpr*)expr;
+      FblcAccessExpr* access_expr_c = FBLC_ALLOC(ctx->arena, FblcAccessExpr);
+      access_expr_c->_base.tag = FBLC_ACCESS_EXPR;
+      access_expr_c->obj = CompileExpr(ctx, mref, access_expr_d->obj);
+      access_expr_c->field = access_expr_d->field.id;
+
+      FbldAccessLoc* loc = FblcVectorExtend(ctx->arena, *ctx->accessv);
+      loc->expr = &access_expr_c->_base;
+      loc->loc = access_expr_d->_base.loc;
+      return &access_expr_c->_base;
+    }
+
     case FBLD_COND_EXPR: assert(false && "TODO"); return false;
 //    case FBLD_COND_EXPR: {
 //      FbldCondExpr* cond_expr_d = (FbldCondExpr*)expr;
