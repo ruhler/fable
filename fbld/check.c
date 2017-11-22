@@ -22,6 +22,7 @@ typedef struct Env {
   FbldQRef* mref;
   FbldTypeV* typev;
   FbldFuncV* funcv;
+  FbldProcV* procv;
 } Env;
 
 // Context --
@@ -70,6 +71,7 @@ static void CheckEnv(Context* ctx, Env* env);
 static bool CheckType(Context* ctx, Env* env, FbldQRef* qref);
 static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars);
 static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr);
+static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, FbldActn* actn);
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 
@@ -78,7 +80,6 @@ static FbldQRef* ForeignType(Context* ctx, Env* env, FbldQRef* qref);
 // static bool ResolveQRef(Context* ctx, FbldQRef* qref);
 // static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref);
 // static bool CheckMRef(Context* ctx, FbldQRef* mref);
-// static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* actn);
 // static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
 // static bool CheckTypeDeclsMatch(Context* ctx, FbldType* type_i, FbldType* type_m);
 // static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* type_i, FbldFunc* type_m);
@@ -333,6 +334,7 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
     .mref = mref,
     .typev = interf->typev,
     .funcv = interf->funcv,
+    .procv = interf->procv,
   };
   CheckEnv(ctx, &interf_env);
 }
@@ -377,6 +379,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     .mref = mref,
     .typev = module->typev,
     .funcv = module->funcv,
+    .procv = module->procv,
   };
   CheckEnv(ctx, &module_env);
 
@@ -842,20 +845,19 @@ static bool CheckType(Context* ctx, Env* env, FbldQRef* qref)
 static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 {
   switch (expr->tag) {
-    case FBLD_VAR_EXPR: assert(false && "TODO"); return NULL;
-//    case FBLD_VAR_EXPR: {
-//      FbldVarExpr* var_expr = (FbldVarExpr*)expr;
-//      for (size_t i = 0; vars != NULL; ++i) {
-//        if (FbldNamesEqual(vars->name, var_expr->var.name->name)) {
-//          var_expr->var.id = i;
-//          return vars->type;
-//        }
-//        vars = vars->next;
-//      }
-//      ReportError("variable '%s' not defined\n", &ctx->error, var_expr->var.name->loc, var_expr->var.name->name);
-//      return NULL;
-//    }
-//
+    case FBLD_VAR_EXPR: {
+      FbldVarExpr* var_expr = (FbldVarExpr*)expr;
+      for (size_t i = 0; vars != NULL; ++i) {
+        if (FbldNamesEqual(vars->name, var_expr->var.name->name)) {
+          var_expr->var.id = i;
+          return vars->type;
+        }
+        vars = vars->next;
+      }
+      ReportError("variable '%s' not defined\n", &ctx->error, var_expr->var.name->loc, var_expr->var.name->name);
+      return NULL;
+    }
+
     case FBLD_APP_EXPR: {
       FbldAppExpr* app_expr = (FbldAppExpr*)expr;
 
@@ -1003,6 +1005,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 //
 // Inputs:
 //   ctx - The context for type checking.
+//   env - The environment for type checking.
 //   vars - The list of variables currently in scope.
 //   ports - The list of ports currently in scope.
 //   actn - The action to check.
@@ -1013,32 +1016,34 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 // Side effects:
 //   Prints a message to stderr if the action is not well typed and
 //   ctx->error is set to true.
-//static FbldQRef* CheckActn(Context* ctx, Vars* vars, Ports* ports, FbldActn* actn)
-//{
-//  switch (actn->tag) {
+static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, FbldActn* actn)
+{
+  switch (actn->tag) {
+    case FBLD_EVAL_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_EVAL_ACTN: {
 //      FbldEvalActn* eval_actn = (FbldEvalActn*)actn;
 //      return CheckExpr(ctx, vars, eval_actn->arg);
 //    }
 //
-//    case FBLD_GET_ACTN: {
-//      FbldGetActn* get_actn = (FbldGetActn*)actn;
-//      for (size_t i = 0; ports != NULL; ++i) {
-//        if (FbldNamesEqual(ports->name, get_actn->port.name->name)) {
-//          if (ports->polarity == FBLD_GET_POLARITY) {
-//            get_actn->port.id = i;
-//            return ports->type;
-//          } else {
-//            ReportError("Port '%s' should have get polarity, but has put polarity.\n", &ctx->error, get_actn->port.name->loc, get_actn->port.name->name);
-//            return NULL;
-//          }
-//        }
-//        ports = ports->next;
-//      }
-//      ReportError("port '%s' not defined.\n", &ctx->error, get_actn->port.name->loc, get_actn->port.name->name);
-//      return NULL;
-//    }
-//
+    case FBLD_GET_ACTN: {
+      FbldGetActn* get_actn = (FbldGetActn*)actn;
+      for (size_t i = 0; ports != NULL; ++i) {
+        if (FbldNamesEqual(ports->name, get_actn->port.name->name)) {
+          if (ports->polarity == FBLD_GET_POLARITY) {
+            get_actn->port.id = i;
+            return ports->type;
+          } else {
+            ReportError("Port '%s' should have get polarity, but has put polarity.\n", &ctx->error, get_actn->port.name->loc, get_actn->port.name->name);
+            return NULL;
+          }
+        }
+        ports = ports->next;
+      }
+      ReportError("port '%s' not defined.\n", &ctx->error, get_actn->port.name->loc, get_actn->port.name->name);
+      return NULL;
+    }
+
+    case FBLD_PUT_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_PUT_ACTN: {
 //      FbldPutActn* put_actn = (FbldPutActn*)actn;
 //      FbldQRef* arg_type = CheckExpr(ctx, vars, put_actn->arg);
@@ -1060,6 +1065,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 //      return NULL;
 //    }
 //
+    case FBLD_COND_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_COND_ACTN: {
 //      FbldCondActn* cond_actn = (FbldCondActn*)actn;
 //      FbldQRef* type = CheckExpr(ctx, vars, cond_actn->select);
@@ -1085,6 +1091,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 //      return result_type;
 //    }
 //
+    case FBLD_CALL_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_CALL_ACTN: {
 //      FbldCallActn* call_actn = (FbldCallActn*)actn;
 //
@@ -1148,6 +1155,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 //      return ImportQRef(ctx, call_actn->proc->rmref, proc->return_type);
 //    }
 //
+    case FBLD_LINK_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_LINK_ACTN: {
 //      FbldLinkActn* link_actn = (FbldLinkActn*)actn;
 //      CheckType(ctx, link_actn->type);
@@ -1179,30 +1187,30 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 //      return CheckActn(ctx, vars, &putport, link_actn->body);
 //    }
 //
-//    case FBLD_EXEC_ACTN: {
-//      FbldExecActn* exec_actn = (FbldExecActn*)actn;
-//
-//      Vars vars_data[exec_actn->execv->size];
-//      Vars* nvars = vars;
-//      for (size_t i = 0; i < exec_actn->execv->size; ++i) {
-//        FbldExec* exec = exec_actn->execv->xs + i;
-//        CheckType(ctx, exec->type);
-//        FbldQRef* def_type = CheckActn(ctx, vars, ports, exec->actn);
-//        CheckTypesMatch(exec->actn->loc, exec->type, def_type, &ctx->error);
-//        vars_data[i].type = exec->type;
-//        vars_data[i].name = exec->name->name;
-//        vars_data[i].next = nvars;
-//        nvars = vars_data + i;
-//      }
-//      return CheckActn(ctx, nvars, ports, exec_actn->body);
-//    }
-//
-//    default: {
-//      UNREACHABLE("invalid fbld action tag");
-//      return NULL;
-//    }
-//  }
-//}
+    case FBLD_EXEC_ACTN: {
+      FbldExecActn* exec_actn = (FbldExecActn*)actn;
+
+      Vars vars_data[exec_actn->execv->size];
+      Vars* nvars = vars;
+      for (size_t i = 0; i < exec_actn->execv->size; ++i) {
+        FbldExec* exec = exec_actn->execv->xs + i;
+        CheckType(ctx, env, exec->type);
+        FbldQRef* def_type = CheckActn(ctx, env, vars, ports, exec->actn);
+        CheckTypesMatch(exec->actn->loc, exec->type, def_type, &ctx->error);
+        vars_data[i].type = exec->type;
+        vars_data[i].name = exec->name->name;
+        vars_data[i].next = nvars;
+        nvars = vars_data + i;
+      }
+      return CheckActn(ctx, env, nvars, ports, exec_actn->body);
+    }
+
+    default: {
+      UNREACHABLE("invalid fbld action tag");
+      return NULL;
+    }
+  }
+}
 
 // CheckArgV --
 //   Check that the given vector of arguments is well typed and does not
@@ -1309,36 +1317,36 @@ static void CheckEnv(Context* ctx, Env* env)
       CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
     }
   }
-//
-//  // Check proc declarations
-//  for (size_t proc_id = 0; proc_id < ctx->env->procv->size; ++proc_id) {
-//    FbldProc* proc = ctx->env->procv->xs[proc_id];
-//    Ports ports_data[proc->portv->size];
-//    Ports* ports = NULL;
-//    for (size_t port_id = 0; port_id < proc->portv->size; ++port_id) {
-//      FbldPort* port = proc->portv->xs + port_id;
-//      for (Ports* curr = ports; curr != NULL; curr = curr->next) {
-//        if (FbldNamesEqual(curr->name, port->name->name)) {
-//          ReportError("Redefinition of port '%s'\n", &ctx->error, port->name->loc, port->name->name);
-//        }
-//      }
-//
-//      ports_data[port_id].name = port->name->name;
-//      ports_data[port_id].type = CheckType(ctx, port->type) ? port->type : NULL;
-//      ports_data[port_id].polarity = port->polarity;
-//      ports_data[port_id].next = ports;
-//      ports = ports_data + port_id;
-//    }
-//
-//    Vars vars_data[proc->argv->size];
-//    Vars* vars = CheckArgV(ctx, proc->argv, vars_data);
-//    CheckType(ctx, proc->return_type);
-//
-//    if (proc->body != NULL) {
-//      FbldQRef* body_type = CheckActn(ctx, vars, ports, proc->body);
-//      CheckTypesMatch(proc->body->loc, proc->return_type, body_type, &ctx->error);
-//    }
-//  }
+
+  // Check proc declarations
+  for (size_t proc_id = 0; proc_id < env->procv->size; ++proc_id) {
+    FbldProc* proc = env->procv->xs[proc_id];
+    Ports ports_data[proc->portv->size];
+    Ports* ports = NULL;
+    for (size_t port_id = 0; port_id < proc->portv->size; ++port_id) {
+      FbldPort* port = proc->portv->xs + port_id;
+      for (Ports* curr = ports; curr != NULL; curr = curr->next) {
+        if (FbldNamesEqual(curr->name, port->name->name)) {
+          ReportError("Redefinition of port '%s'\n", &ctx->error, port->name->loc, port->name->name);
+        }
+      }
+
+      ports_data[port_id].name = port->name->name;
+      ports_data[port_id].type = CheckType(ctx, env, port->type) ? port->type : NULL;
+      ports_data[port_id].polarity = port->polarity;
+      ports_data[port_id].next = ports;
+      ports = ports_data + port_id;
+    }
+
+    Vars vars_data[proc->argv->size];
+    Vars* vars = CheckArgV(ctx, env, proc->argv, vars_data);
+    CheckType(ctx, env, proc->return_type);
+
+    if (proc->body != NULL) {
+      FbldQRef* body_type = CheckActn(ctx, env, vars, ports, proc->body);
+      CheckTypesMatch(proc->body->loc, proc->return_type, body_type, &ctx->error);
+    }
+  }
 }
 
 // FbldCheckQRef -- see fblcs.h for documentation.
@@ -1631,6 +1639,10 @@ static FbldQRef* ForeignType(Context* ctx, Env* env, FbldQRef* qref)
   // where the qref was defined? Because external contexts will already have
   // been resolved, so this only actually does resolution for qrefs
   // defined locally?
+  //
+  // For example, isn't this wrong if the entity is defined in a sub-module of
+  // the current environment? Because then it will not have been checked yet
+  // and the current environment isn't the right one to use here.
   if (!CheckType(ctx, env, qref)) {
     return NULL;
   }

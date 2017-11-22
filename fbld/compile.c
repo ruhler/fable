@@ -267,15 +267,14 @@ static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc)
 static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
 {
   switch (expr->tag) {
-    case FBLD_VAR_EXPR: assert(false && "TODO"); return NULL;
-//    case FBLD_VAR_EXPR: {
-//      FbldVarExpr* var_expr_d = (FbldVarExpr*)expr;
-//      FblcVarExpr* var_expr_c = FBLC_ALLOC(arena, FblcVarExpr);
-//      var_expr_c->_base.tag = FBLC_VAR_EXPR;
-//      var_expr_c->var = var_expr_d->var.id;
-//      return &var_expr_c->_base;
-//    }
-//
+    case FBLD_VAR_EXPR: {
+      FbldVarExpr* var_expr_d = (FbldVarExpr*)expr;
+      FblcVarExpr* var_expr_c = FBLC_ALLOC(ctx->arena, FblcVarExpr);
+      var_expr_c->_base.tag = FBLC_VAR_EXPR;
+      var_expr_c->var = var_expr_d->var.id;
+      return &var_expr_c->_base;
+    }
+
     case FBLD_APP_EXPR: {
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
       FbldQRef* entity = app_expr_d->func;
@@ -382,15 +381,14 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
       return &eval_actn_c->_base;
     }
 
-    case FBLD_GET_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_GET_ACTN: {
-//      FbldGetActn* get_actn_d = (FbldGetActn*)actn;
-//      FblcGetActn* get_actn_c = FBLC_ALLOC(arena, FblcGetActn);
-//      get_actn_c->_base.tag = FBLC_GET_ACTN;
-//      get_actn_c->port = get_actn_d->port.id;
-//      return &get_actn_c->_base;
-//    }
-//
+    case FBLD_GET_ACTN: {
+      FbldGetActn* get_actn_d = (FbldGetActn*)actn;
+      FblcGetActn* get_actn_c = FBLC_ALLOC(ctx->arena, FblcGetActn);
+      get_actn_c->_base.tag = FBLC_GET_ACTN;
+      get_actn_c->port = get_actn_d->port.id;
+      return &get_actn_c->_base;
+    }
+
     case FBLD_PUT_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_PUT_ACTN: {
 //      FbldPutActn* put_actn_d = (FbldPutActn*)actn;
@@ -446,22 +444,20 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
 //      return &link_actn_c->_base;
 //    }
 //
-    case FBLD_EXEC_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_EXEC_ACTN: {
-//      FbldExecActn* exec_actn_d = (FbldExecActn*)actn;
-//      FblcExecActn* exec_actn_c = FBLC_ALLOC(arena, FblcExecActn);
-//      exec_actn_c->_base.tag = FBLC_EXEC_ACTN;
-//      FblcVectorInit(arena, exec_actn_c->execv);
-//      for (size_t i = 0; i < exec_actn_d->execv->size; ++i) {
-//        FblcExec* exec = FblcVectorExtend(arena, exec_actn_c->execv);
-//        FbldQRef* entity = FbldImportQRef(arena, prgm, mref, exec_actn_d->execv->xs[i].type);
-//        exec->type = CompileType(arena, prgm, entity, compiled);
-//        exec->actn = CompileActn(arena, accessv, prgm, mref, exec_actn_d->execv->xs[i].actn, compiled);
-//      }
-//      exec_actn_c->body = CompileActn(arena, accessv, prgm, mref, exec_actn_d->body, compiled);
-//      return &exec_actn_c->_base;
-//    }
-//
+    case FBLD_EXEC_ACTN: {
+      FbldExecActn* exec_actn_d = (FbldExecActn*)actn;
+      FblcExecActn* exec_actn_c = FBLC_ALLOC(ctx->arena, FblcExecActn);
+      exec_actn_c->_base.tag = FBLC_EXEC_ACTN;
+      FblcVectorInit(ctx->arena, exec_actn_c->execv);
+      for (size_t i = 0; i < exec_actn_d->execv->size; ++i) {
+        FblcExec* exec = FblcVectorExtend(ctx->arena, exec_actn_c->execv);
+        exec->type = CompileForeignType(ctx, mref, exec_actn_d->execv->xs[i].type);
+        exec->actn = CompileActn(ctx, mref, exec_actn_d->execv->xs[i].actn);
+      }
+      exec_actn_c->body = CompileActn(ctx, mref, exec_actn_d->body);
+      return &exec_actn_c->_base;
+    }
+
     default: {
       UNREACHABLE("invalid fbld action tag");
       return NULL;
