@@ -338,17 +338,16 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       return &cond_expr_c->_base;
     }
 
-    case FBLD_LET_EXPR: assert(false && "TODO"); return false;
-//    case FBLD_LET_EXPR: {
-//      FbldLetExpr* let_expr_d = (FbldLetExpr*)expr;
-//      FblcLetExpr* let_expr_c = FBLC_ALLOC(arena, FblcLetExpr);
-//      let_expr_c->_base.tag = FBLC_LET_EXPR;
-//      let_expr_c->type = CompileForeignType(arena, prgm, mref, let_expr_d->type, compiled);
-//      let_expr_c->def = CompileExpr(arena, accessv, prgm, mref, let_expr_d->def, compiled);
-//      let_expr_c->body = CompileExpr(arena, accessv, prgm, mref, let_expr_d->body, compiled);
-//      return &let_expr_c->_base;
-//    }
-//
+    case FBLD_LET_EXPR: {
+      FbldLetExpr* let_expr_d = (FbldLetExpr*)expr;
+      FblcLetExpr* let_expr_c = FBLC_ALLOC(ctx->arena, FblcLetExpr);
+      let_expr_c->_base.tag = FBLC_LET_EXPR;
+      let_expr_c->type = CompileForeignType(ctx, mref, let_expr_d->type);
+      let_expr_c->def = CompileExpr(ctx, mref, let_expr_d->def);
+      let_expr_c->body = CompileExpr(ctx, mref, let_expr_d->body);
+      return &let_expr_c->_base;
+    }
+
     default: {
       UNREACHABLE("invalid fbld expression tag");
       return NULL;

@@ -67,6 +67,7 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
 static bool CheckModule(Context* ctx, Env* env, FbldModule* module);
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module);
+static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined);
 static void CheckEnv(Context* ctx, Env* env);
 static bool CheckType(Context* ctx, Env* env, FbldQRef* qref);
 static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars);
@@ -945,28 +946,27 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       return NULL;
     }
 
-    case FBLD_LET_EXPR: assert(false && "TODO"); return NULL;
-//    case FBLD_LET_EXPR: {
-//      FbldLetExpr* let_expr = (FbldLetExpr*)expr;
-//      for (Vars* curr = vars; curr != NULL; curr = curr->next) {
-//        if (FbldNamesEqual(curr->name, let_expr->var->name)) {
-//          ReportError("Redefinition of variable '%s'\n", &ctx->error, let_expr->var->loc, let_expr->var->name);
-//          return NULL;
-//        }
-//      }
-//
-//      CheckType(ctx, let_expr->type);
-//      FbldQRef* def_type = CheckExpr(ctx, vars, let_expr->def);
-//      CheckTypesMatch(let_expr->def->loc, let_expr->type, def_type, &ctx->error);
-//
-//      Vars nvars = {
-//        .type = let_expr->type,
-//        .name = let_expr->var->name,
-//        .next = vars
-//      };
-//      return CheckExpr(ctx, &nvars, let_expr->body);
-//    }
-//
+    case FBLD_LET_EXPR: {
+      FbldLetExpr* let_expr = (FbldLetExpr*)expr;
+      for (Vars* curr = vars; curr != NULL; curr = curr->next) {
+        if (FbldNamesEqual(curr->name, let_expr->var->name)) {
+          ReportError("Redefinition of variable '%s'\n", &ctx->error, let_expr->var->loc, let_expr->var->name);
+          return NULL;
+        }
+      }
+
+      CheckType(ctx, env, let_expr->type);
+      FbldQRef* def_type = CheckExpr(ctx, env, vars, let_expr->def);
+      CheckTypesMatch(let_expr->def->loc, let_expr->type, def_type, &ctx->error);
+
+      Vars nvars = {
+        .type = let_expr->type,
+        .name = let_expr->var->name,
+        .next = vars
+      };
+      return CheckExpr(ctx, env, &nvars, let_expr->body);
+    }
+
     case FBLD_COND_EXPR: {
       FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
       FbldQRef* type = CheckExpr(ctx, env, vars, cond_expr->select);
@@ -1019,12 +1019,11 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, FbldActn* actn)
 {
   switch (actn->tag) {
-    case FBLD_EVAL_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_EVAL_ACTN: {
-//      FbldEvalActn* eval_actn = (FbldEvalActn*)actn;
-//      return CheckExpr(ctx, vars, eval_actn->arg);
-//    }
-//
+    case FBLD_EVAL_ACTN: {
+      FbldEvalActn* eval_actn = (FbldEvalActn*)actn;
+      return CheckExpr(ctx, env, vars, eval_actn->arg);
+    }
+
     case FBLD_GET_ACTN: {
       FbldGetActn* get_actn = (FbldGetActn*)actn;
       for (size_t i = 0; ports != NULL; ++i) {
@@ -1253,6 +1252,32 @@ static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars)
   return next;
 }
 
+// DefineName --
+//   Check if a given name has already been defined, and add it to the list of
+//   defined names.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   name - The name to define.
+//   defined - The list of already defined names to check and update.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Reports an error if the name is already defined and adds the name to the
+//   list of defined names.
+static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined)
+{
+  for (size_t i = 0; i < defined->size; ++i) {
+    if (FbldNamesEqual(name->name, defined->xs[i]->name)) {
+      ReportError("redefinition of %s\n", &ctx->error, name->loc, name->name);
+      ReportError("previous definition was here\n", &ctx->error, defined->xs[i]->loc);
+    }
+  }
+  FblcVectorAppend(ctx->arena, *defined, name);
+}
+
 // CheckEnv --
 //   Check that the declarations in the environment are well formed and well
 //   typed.
@@ -1273,6 +1298,8 @@ static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars)
 //   headers (not module definitions), adding them to the context.
 static void CheckEnv(Context* ctx, Env* env)
 {
+  FbldNameV defined;
+  FblcVectorInit(ctx->arena, defined);
 //  // Check using declarations.
 //  for (size_t using_id = 0; using_id < ctx->env->usingv->size; ++using_id) {
 //    FbldUsing* using = ctx->env->usingv->xs[using_id];
@@ -1296,6 +1323,7 @@ static void CheckEnv(Context* ctx, Env* env)
   // Check type declarations.
   for (size_t type_id = 0; type_id < env->typev->size; ++type_id) {
     FbldType* type = env->typev->xs[type_id];
+    DefineName(ctx, type->name, &defined);
     assert(type->kind != FBLD_UNION_KIND || type->fieldv->size > 0);
     assert(type->kind != FBLD_ABSTRACT_KIND || type->fieldv == NULL);
 
@@ -1308,6 +1336,7 @@ static void CheckEnv(Context* ctx, Env* env)
   // Check func declarations
   for (size_t func_id = 0; func_id < env->funcv->size; ++func_id) {
     FbldFunc* func = env->funcv->xs[func_id];
+    DefineName(ctx, func->name, &defined);
     Vars vars_data[func->argv->size];
     Vars* vars = CheckArgV(ctx, env, func->argv, vars_data);
     CheckType(ctx, env, func->return_type);
@@ -1321,6 +1350,7 @@ static void CheckEnv(Context* ctx, Env* env)
   // Check proc declarations
   for (size_t proc_id = 0; proc_id < env->procv->size; ++proc_id) {
     FbldProc* proc = env->procv->xs[proc_id];
+    DefineName(ctx, proc->name, &defined);
     Ports ports_data[proc->portv->size];
     Ports* ports = NULL;
     for (size_t port_id = 0; port_id < proc->portv->size; ++port_id) {
