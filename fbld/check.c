@@ -499,13 +499,20 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 //   Prints an error message to stderr and sets error to true if the types
 //   don't match. If either type is null, it is assumed an error has already
 //   been printed, in which case no additional error message will be reported.
+//
+// TODO: Is it acceptable for expected and/or actual to be non-NULL failed
+// resolved names? Should we require they be one or the other?
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error)
 {
-  if (expected == NULL || actual == NULL) {
+  if (expected == NULL || expected->r.state == FBLD_RSTATE_FAILED
+      || actual == NULL || actual->r.state == FBLD_RSTATE_FAILED) {
     // Assume a type error has already been reported or will be reported in
     // this case and that additional error messages would not be helpful.
     return;
   }
+
+  assert(expected->r.state == FBLD_RSTATE_RESOLVED);
+  assert(actual->r.state == FBLD_RSTATE_RESOLVED);
 
   if (!FbldQRefsEqual(expected, actual)) {
     ReportError("Expected type ", error, loc);
@@ -1042,118 +1049,114 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
       return NULL;
     }
 
-    case FBLD_PUT_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_PUT_ACTN: {
-//      FbldPutActn* put_actn = (FbldPutActn*)actn;
-//      FbldQRef* arg_type = CheckExpr(ctx, vars, put_actn->arg);
-//
-//      for (size_t i = 0; ports != NULL; ++i) {
-//        if (FbldNamesEqual(ports->name, put_actn->port.name->name)) {
-//          if (ports->polarity == FBLD_PUT_POLARITY) {
-//            put_actn->port.id = i;
-//            CheckTypesMatch(put_actn->arg->loc, ports->type, arg_type, &ctx->error);
-//            return ports->type;
-//          } else {
-//            ReportError("Port '%s' should have put polarity, but has get polarity.\n", &ctx->error, put_actn->port.name->loc, put_actn->port.name->name);
-//            return NULL;
-//          }
-//        }
-//        ports = ports->next;
-//      }
-//      ReportError("port '%s' not defined.\n", &ctx->error, put_actn->port.name->loc, put_actn->port.name->name);
-//      return NULL;
-//    }
-//
-    case FBLD_COND_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_COND_ACTN: {
-//      FbldCondActn* cond_actn = (FbldCondActn*)actn;
-//      FbldQRef* type = CheckExpr(ctx, vars, cond_actn->select);
-//      if (type != NULL) {
-//        FbldType* type_def = LookupType(ctx, type);
-//        assert(type_def != NULL);
-//        if (type_def->kind == FBLD_UNION_KIND) {
-//          if (type_def->fieldv->size != cond_actn->argv->size) {
-//            ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
-//          }
-//        } else {
-//          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type_def->name->name);
-//        }
-//      }
-//
-//      FbldQRef* result_type = NULL;
-//      assert(cond_actn->argv->size > 0);
-//      for (size_t i = 0; i < cond_actn->argv->size; ++i) {
-//        FbldQRef* arg_type = CheckActn(ctx, vars, ports, cond_actn->argv->xs[i]);
-//        CheckTypesMatch(cond_actn->argv->xs[i]->loc, result_type, arg_type, &ctx->error);
-//        result_type = (result_type == NULL) ? arg_type : result_type;
-//      }
-//      return result_type;
-//    }
-//
-    case FBLD_CALL_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_CALL_ACTN: {
-//      FbldCallActn* call_actn = (FbldCallActn*)actn;
-//
-//      Ports* port_types[call_actn->portv->size];
-//      for (size_t i = 0; i < call_actn->portv->size; ++i) {
-//        port_types[i] = NULL;
-//        Ports* curr = ports;
-//        for (size_t id = 0; curr != NULL; ++id) {
-//          if (FbldNamesEqual(curr->name, call_actn->portv->xs[i].name->name)) {
-//            call_actn->portv->xs[i].id = id;
-//            port_types[i] = curr;
-//            break;
-//          }
-//          curr = curr->next;
-//        }
-//        if (port_types[i] == NULL) {
-//          ReportError("Port '%s' not defined.\n", &ctx->error, call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name);
-//        }
-//      }
-//
-//      FbldQRef* arg_types[call_actn->argv->size];
-//      for (size_t i = 0; i < call_actn->argv->size; ++i) {
-//        arg_types[i] = CheckExpr(ctx, vars, call_actn->argv->xs[i]);
-//      }
-//
-//      if (!ResolveQRef(ctx, call_actn->proc)) {
-//        return NULL;
-//      }
-//
-//      FbldProc* proc = LookupProc(ctx, call_actn->proc);
-//      if (proc == NULL) {
-//        ReportError("%s does not refer to a proc.\n", &ctx->error, call_actn->proc->uname->loc, call_actn->proc->uname->name);
-//        return NULL;
-//      }
-//
-//      if (proc->portv->size == call_actn->portv->size) {
-//        for (size_t i = 0; i < proc->portv->size; ++i) {
-//          if (port_types[i] != NULL) {
-//            if (port_types[i]->polarity != proc->portv->xs[i].polarity) {
-//                ReportError("Port '%s' has wrong polarity. Expected '%s', but found '%s'.\n", &ctx->error,
-//                    call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name,
-//                    proc->portv->xs[i].polarity == FBLD_PUT_POLARITY ? "put" : "get",
-//                    port_types[i]->polarity == FBLD_PUT_POLARITY ? "put" : "get");
-//            }
-//            FbldQRef* expected = ImportQRef(ctx, call_actn->proc->rmref, proc->portv->xs[i].type);
-//            CheckTypesMatch(call_actn->portv->xs[i].name->loc, expected, port_types[i]->type, &ctx->error);
-//          }
-//        }
-//      } else {
-//        ReportError("Expected %d port arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->uname->loc, proc->portv->size, call_actn->proc->uname->name, call_actn->portv->size);
-//      }
-//
-//      if (proc->argv->size == call_actn->argv->size) {
-//        for (size_t i = 0; i < call_actn->argv->size; ++i) {
-//          FbldQRef* expected = ImportQRef(ctx, call_actn->proc->rmref, proc->argv->xs[i]->type);
-//          CheckTypesMatch(call_actn->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
-//        }
-//      } else {
-//        ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->uname->loc, proc->argv->size, call_actn->proc->uname->name, call_actn->argv->size);
-//      }
-//      return ImportQRef(ctx, call_actn->proc->rmref, proc->return_type);
-//    }
-//
+    case FBLD_PUT_ACTN: {
+      FbldPutActn* put_actn = (FbldPutActn*)actn;
+      FbldQRef* arg_type = CheckExpr(ctx, env, vars, put_actn->arg);
+
+      for (size_t i = 0; ports != NULL; ++i) {
+        if (FbldNamesEqual(ports->name, put_actn->port.name->name)) {
+          if (ports->polarity == FBLD_PUT_POLARITY) {
+            put_actn->port.id = i;
+            CheckTypesMatch(put_actn->arg->loc, ports->type, arg_type, &ctx->error);
+            return ports->type;
+          } else {
+            ReportError("Port '%s' should have put polarity, but has get polarity.\n", &ctx->error, put_actn->port.name->loc, put_actn->port.name->name);
+            return NULL;
+          }
+        }
+        ports = ports->next;
+      }
+      ReportError("port '%s' not defined.\n", &ctx->error, put_actn->port.name->loc, put_actn->port.name->name);
+      return NULL;
+    }
+
+    case FBLD_COND_ACTN: {
+      FbldCondActn* cond_actn = (FbldCondActn*)actn;
+      FbldQRef* type = CheckExpr(ctx, env, vars, cond_actn->select);
+      if (type != NULL) {
+        FbldType* type_def = (FbldType*)type->r.decl;
+        if (type_def->kind == FBLD_UNION_KIND) {
+          if (type_def->fieldv->size != cond_actn->argv->size) {
+            ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
+          }
+        } else {
+          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type_def->name->name);
+        }
+      }
+
+      FbldQRef* result_type = NULL;
+      assert(cond_actn->argv->size > 0);
+      for (size_t i = 0; i < cond_actn->argv->size; ++i) {
+        FbldQRef* arg_type = CheckActn(ctx, env, vars, ports, cond_actn->argv->xs[i]);
+        CheckTypesMatch(cond_actn->argv->xs[i]->loc, result_type, arg_type, &ctx->error);
+        result_type = (result_type == NULL) ? arg_type : result_type;
+      }
+      return result_type;
+    }
+
+    case FBLD_CALL_ACTN: {
+      FbldCallActn* call_actn = (FbldCallActn*)actn;
+
+      Ports* port_types[call_actn->portv->size];
+      for (size_t i = 0; i < call_actn->portv->size; ++i) {
+        port_types[i] = NULL;
+        Ports* curr = ports;
+        for (size_t id = 0; curr != NULL; ++id) {
+          if (FbldNamesEqual(curr->name, call_actn->portv->xs[i].name->name)) {
+            call_actn->portv->xs[i].id = id;
+            port_types[i] = curr;
+            break;
+          }
+          curr = curr->next;
+        }
+        if (port_types[i] == NULL) {
+          ReportError("Port '%s' not defined.\n", &ctx->error, call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name);
+        }
+      }
+
+      FbldQRef* arg_types[call_actn->argv->size];
+      for (size_t i = 0; i < call_actn->argv->size; ++i) {
+        arg_types[i] = CheckExpr(ctx, env, vars, call_actn->argv->xs[i]);
+      }
+
+      if (!CheckQRef(ctx, env, call_actn->proc)) {
+        return NULL;
+      }
+
+      if (call_actn->proc->r.kind != FBLD_DECL_PROC) {
+        ReportError("%s does not refer to a proc.\n", &ctx->error, call_actn->proc->name->loc, call_actn->proc->name->name);
+        return NULL;
+      }
+
+      FbldProc* proc = (FbldProc*)call_actn->proc->r.decl;
+      if (proc->portv->size == call_actn->portv->size) {
+        for (size_t i = 0; i < proc->portv->size; ++i) {
+          if (port_types[i] != NULL) {
+            if (port_types[i]->polarity != proc->portv->xs[i].polarity) {
+                ReportError("Port '%s' has wrong polarity. Expected '%s', but found '%s'.\n", &ctx->error,
+                    call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name,
+                    proc->portv->xs[i].polarity == FBLD_PUT_POLARITY ? "put" : "get",
+                    port_types[i]->polarity == FBLD_PUT_POLARITY ? "put" : "get");
+            }
+            FbldQRef* expected = ForeignType(ctx, env, proc->portv->xs[i].type);
+            CheckTypesMatch(call_actn->portv->xs[i].name->loc, expected, port_types[i]->type, &ctx->error);
+          }
+        }
+      } else {
+        ReportError("Expected %d port arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->name->loc, proc->portv->size, call_actn->proc->name->name, call_actn->portv->size);
+      }
+
+      if (proc->argv->size == call_actn->argv->size) {
+        for (size_t i = 0; i < call_actn->argv->size; ++i) {
+          FbldQRef* expected = ForeignType(ctx, env, proc->argv->xs[i]->type);
+          CheckTypesMatch(call_actn->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
+        }
+      } else {
+        ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->name->loc, proc->argv->size, call_actn->proc->name->name, call_actn->argv->size);
+      }
+      return ForeignType(ctx, env, proc->return_type);
+    }
+
     case FBLD_LINK_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_LINK_ACTN: {
 //      FbldLinkActn* link_actn = (FbldLinkActn*)actn;

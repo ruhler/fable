@@ -4,7 +4,7 @@ set prg {
     interf MainI {
       struct Unit();
       union Bool(Unit true, Unit false);
-      proc sub( ; ; Bool);
+      proc main( ; ; Bool);
     };
   }
 

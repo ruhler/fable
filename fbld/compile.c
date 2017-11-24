@@ -388,30 +388,28 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
       return &get_actn_c->_base;
     }
 
-    case FBLD_PUT_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_PUT_ACTN: {
-//      FbldPutActn* put_actn_d = (FbldPutActn*)actn;
-//      FblcPutActn* put_actn_c = FBLC_ALLOC(arena, FblcPutActn);
-//      put_actn_c->_base.tag = FBLC_PUT_ACTN;
-//      put_actn_c->port = put_actn_d->port.id;
-//      put_actn_c->arg = CompileExpr(arena, accessv, prgm, mref, put_actn_d->arg, compiled);
-//      return &put_actn_c->_base;
-//    }
-//
-    case FBLD_COND_ACTN: assert(false && "TODO"); return NULL;
-//    case FBLD_COND_ACTN: {
-//      FbldCondActn* cond_actn_d = (FbldCondActn*)actn;
-//      FblcCondActn* cond_actn_c = FBLC_ALLOC(arena, FblcCondActn);
-//      cond_actn_c->_base.tag = FBLC_COND_ACTN;
-//      cond_actn_c->select = CompileExpr(arena, accessv, prgm, mref, cond_actn_d->select, compiled);
-//      FblcVectorInit(arena, cond_actn_c->argv);
-//      for (size_t i = 0; i < cond_actn_d->argv->size; ++i) {
-//        FblcActn* arg = CompileActn(arena, accessv, prgm, mref, cond_actn_d->argv->xs[i], compiled);
-//        FblcVectorAppend(arena, cond_actn_c->argv, arg);
-//      }
-//      return &cond_actn_c->_base;
-//    }
-//
+    case FBLD_PUT_ACTN: {
+      FbldPutActn* put_actn_d = (FbldPutActn*)actn;
+      FblcPutActn* put_actn_c = FBLC_ALLOC(ctx->arena, FblcPutActn);
+      put_actn_c->_base.tag = FBLC_PUT_ACTN;
+      put_actn_c->port = put_actn_d->port.id;
+      put_actn_c->arg = CompileExpr(ctx, mref, put_actn_d->arg);
+      return &put_actn_c->_base;
+    }
+
+    case FBLD_COND_ACTN: {
+      FbldCondActn* cond_actn_d = (FbldCondActn*)actn;
+      FblcCondActn* cond_actn_c = FBLC_ALLOC(ctx->arena, FblcCondActn);
+      cond_actn_c->_base.tag = FBLC_COND_ACTN;
+      cond_actn_c->select = CompileExpr(ctx, mref, cond_actn_d->select);
+      FblcVectorInit(ctx->arena, cond_actn_c->argv);
+      for (size_t i = 0; i < cond_actn_d->argv->size; ++i) {
+        FblcActn* arg = CompileActn(ctx, mref, cond_actn_d->argv->xs[i]);
+        FblcVectorAppend(ctx->arena, cond_actn_c->argv, arg);
+      }
+      return &cond_actn_c->_base;
+    }
+
     case FBLD_CALL_ACTN: assert(false && "TODO"); return NULL;
 //    case FBLD_CALL_ACTN: {
 //      FbldCallActn* call_actn_d = (FbldCallActn*)actn;
