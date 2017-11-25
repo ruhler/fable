@@ -507,6 +507,11 @@ import: "import" qref '{' import_item_list '}' {
       $$->mref = $2;
       $$->itemv = $4;
     }
+  | "import" '@' '{' import_item_list '}' {
+      $$ = FBLC_ALLOC(arena, FbldImport);
+      $$->mref = NULL;
+      $$->itemv = $4;
+    }
   ;
 
 marg_list:

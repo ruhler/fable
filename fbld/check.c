@@ -20,6 +20,7 @@
 typedef struct Env {
   struct Env* parent;
   FbldQRef* mref;
+  FbldImportV* importv;
   FbldTypeV* typev;
   FbldFuncV* funcv;
   FbldProcV* procv;
@@ -262,7 +263,34 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     assert(false && "UNREACHABLE");
   }
 
-  // TODO: Check if it is declared locally in this non-global environment.
+  // Check if it is declared locally in this non-global environment.
+  for (size_t i = 0; i < env->importv->size; ++i) {
+    FbldImport* import = env->importv->xs[i];
+    for (size_t j = 0; j < import->itemv->size; ++j) {
+      if (FbldNamesEqual(qref->name->name, import->itemv->xs[j]->dest->name)) {
+        FbldQRef imported_qref = {
+          .name = import->itemv->xs[j]->source,
+          .targv = qref->targv,
+          .margv = qref->margv,
+          .mref = import->mref,
+          .r = { .state = FBLD_RSTATE_UNRESOLVED }
+        };
+
+        Env* import_env = import->mref == NULL ? env->parent : env;
+        if (!CheckQRef(ctx, import_env, &imported_qref)) {
+          return false;
+        }
+
+        qref->r.state = imported_qref.r.state;
+        qref->r.name = imported_qref.r.name;
+        qref->r.mref = imported_qref.r.mref;
+        qref->r.kind = imported_qref.r.kind;
+        qref->r.decl = imported_qref.r.decl;
+        return true;
+      } 
+    }
+  }
+
   for (size_t i = 0; i < env->typev->size; ++i) {
     if (FbldNamesEqual(qref->name->name, env->typev->xs[i]->name->name)) {
       qref->r.state = FBLD_RSTATE_RESOLVED;
@@ -344,6 +372,7 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   Env interf_env = {
     .parent = env,
     .mref = mref,
+    .importv = interf->importv,
     .typev = interf->typev,
     .funcv = interf->funcv,
     .procv = interf->procv,
@@ -389,6 +418,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   Env module_env = {
     .parent = env,
     .mref = mref,
+    .importv = module->importv,
     .typev = module->typev,
     .funcv = module->funcv,
     .procv = module->procv,

@@ -18,14 +18,16 @@ set prg {
 
   MainI.fbld {
     interf MainI {
-      using UnitM { Unit; };
+      import @ { UnitM; };
+      import UnitM { Unit; };
       func main( ; Unit);
     };
   }
 
   MainM.fbld {
     module MainM(MainI) {
-      using UnitM { Unit; f; };
+      import @ { UnitM; };
+      import UnitM { Unit; f; };
       func main( ; Unit) {
         f();
       };

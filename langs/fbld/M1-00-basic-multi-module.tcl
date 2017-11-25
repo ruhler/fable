@@ -14,12 +14,14 @@ set prg {
 
   MainI.fbld {
     interf MainI {
+      import @ { UnitM; };
       func main( ; Unit@UnitM);
     };
   }
 
   MainM.fbld {
     module MainM(MainI) {
+      import @ { UnitM; };
       func main( ; Unit@UnitM) {
         Unit@UnitM();
       };
