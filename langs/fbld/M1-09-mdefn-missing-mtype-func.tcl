@@ -14,4 +14,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg MainM MainM.fbld:2:12
+skip fbld-check-error $prg MainM MainM.fbld:2:12

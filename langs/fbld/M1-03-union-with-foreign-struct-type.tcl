@@ -15,14 +15,16 @@ set prg {
 
   MainI.fbld {
     interf MainI {
-      using TypesM { Foo; };
+      import @ { TypesM; };
+      import TypesM { Foo; };
       func main( ; Foo);
     };
   }
 
   MainM.fbld {
     module MainM(MainI) {
-      using TypesM { Unit; Foo; };
+      import @ { TypesM; };
+      import TypesM { Unit; Foo; };
       func main( ; Foo) {
         # Foo is a struct type, not a union type.
         Foo:bar(Unit());
@@ -31,4 +33,4 @@ set prg {
   }
 }
 
-fbld-check-error $prg MainM MainM.fbld:6:9
+fbld-check-error $prg MainM MainM.fbld:7:9

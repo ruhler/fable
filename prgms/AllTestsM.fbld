@@ -1,5 +1,5 @@
 module AllTestsM(AllTestsI) {
-  import @ { UnitM, ListM, UBNatTestM, PrimesTestM };
+  import @ { UnitM; ListM; UBNatTestM; PrimesTestM; };
 
   import UnitM { Unit; };
   import ListM { S; P; Append; };
@@ -15,13 +15,13 @@ module AllTestsM(AllTestsI) {
     func f(UBNatTestFailure x ; TestFailure) {
       TestFailure:UBNatTest(x);
     };
-  }
+  };
 
   module PrimesTestFailureF(Function<PrimesTestFailure, TestFailure>) {
     func f(PrimesTestFailure x ; TestFailure) {
       TestFailure:PrimesTest(x);
     };
-  }
+  };
 
   func Test( ; S<TestFailure>) {
     Append<TestFailure>(
