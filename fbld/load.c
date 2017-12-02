@@ -50,7 +50,7 @@ FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name
 {
   // Return the existing interface declaration if it has already been loaded.
   for (size_t i = 0; i < prgm->interfv.size; ++i) {
-    if (FbldNamesEqual(name, prgm->interfv.xs[i]->name->name)) {
+    if (FbldNamesEqual(name, prgm->interfv.xs[i]->_base.name->name)) {
       return prgm->interfv.xs[i];
     }
   }
@@ -68,8 +68,8 @@ FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name
     return NULL;
   }
 
-  if (!FbldNamesEqual(interf->name->name, name)) {
-    FbldReportError("Expected '%s', but found '%s'\n", interf->name->loc, name, interf->name->name);
+  if (!FbldNamesEqual(interf->_base.name->name, name)) {
+    FbldReportError("Expected '%s', but found '%s'\n", interf->_base.name->loc, name, interf->_base.name->name);
     return NULL;
   }
   FblcVectorAppend(arena, prgm->interfv, interf);
@@ -88,7 +88,7 @@ FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char
 {
   // Return the existing declaration if it has already been loaded.
   for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
-    if (FbldNamesEqual(name, prgm->mheaderv.xs[i]->name->name)) {
+    if (FbldNamesEqual(name, prgm->mheaderv.xs[i]->_base.name->name)) {
       return prgm->mheaderv.xs[i];
     }
   }
@@ -106,8 +106,8 @@ FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char
     return NULL;
   }
 
-  if (!FbldNamesEqual(mdecl->name->name, name)) {
-    FbldReportError("Expected '%s', but found '%s'\n", mdecl->name->loc, name, mdecl->name->name);
+  if (!FbldNamesEqual(mdecl->_base.name->name, name)) {
+    FbldReportError("Expected '%s', but found '%s'\n", mdecl->_base.name->loc, name, mdecl->_base.name->name);
     return NULL;
   }
 
@@ -126,7 +126,7 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
 {
   // Return the existing module declaration if it has already been loaded.
   for (size_t i = 0; i < prgm->modulev.size; ++i) {
-    if (FbldNamesEqual(name, prgm->modulev.xs[i]->name->name)) {
+    if (FbldNamesEqual(name, prgm->modulev.xs[i]->_base.name->name)) {
       return prgm->modulev.xs[i];
     }
   }
@@ -136,7 +136,7 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
     return NULL;
   }
 
-  assert(FbldNamesEqual(module->name->name, name));
+  assert(FbldNamesEqual(module->_base.name->name, name));
   FblcVectorAppend(arena, prgm->modulev, module);
 
   // Check that this definition is valid.
@@ -152,7 +152,7 @@ bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, Fbld
 {
   // Return an existing interface declaration if it has already been loaded.
   for (size_t i = 0; i < prgm->interfv.size; ++i) {
-    if (FbldNamesEqual(name, prgm->interfv.xs[i]->name->name)) {
+    if (FbldNamesEqual(name, prgm->interfv.xs[i]->_base.name->name)) {
       *interf = prgm->interfv.xs[i];
       return true;
     }
@@ -160,7 +160,7 @@ bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, Fbld
 
   // Return an existing module declaration if it has already been loaded.
   for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
-    if (FbldNamesEqual(name, prgm->mheaderv.xs[i]->name->name)) {
+    if (FbldNamesEqual(name, prgm->mheaderv.xs[i]->_base.name->name)) {
       *module = prgm->mheaderv.xs[i];
       return true;
     }
@@ -180,8 +180,8 @@ bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, Fbld
 
   if (*interf != NULL) {
     assert(*module == NULL);
-    if (!FbldNamesEqual((*interf)->name->name, name)) {
-      FbldReportError("Expected '%s', but found '%s'\n", (*interf)->name->loc, name, (*interf)->name->name);
+    if (!FbldNamesEqual((*interf)->_base.name->name, name)) {
+      FbldReportError("Expected '%s', but found '%s'\n", (*interf)->_base.name->loc, name, (*interf)->_base.name->name);
       return NULL;
     }
     FblcVectorAppend(arena, prgm->interfv, *interf);
@@ -193,8 +193,8 @@ bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, Fbld
   
   if (*module != NULL) {
     assert(*interf == NULL);
-    if (!FbldNamesEqual((*module)->name->name, name)) {
-      FbldReportError("Expected '%s', but found '%s'\n", (*module)->name->loc, name, (*module)->name->name);
+    if (!FbldNamesEqual((*module)->_base.name->name, name)) {
+      FbldReportError("Expected '%s', but found '%s'\n", (*module)->_base.name->loc, name, (*module)->_base.name->name);
       return NULL;
     }
     FblcVectorAppend(arena, prgm->mheaderv, *module);
@@ -222,7 +222,7 @@ bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, Fbld
   // should be okay. TODO: detect and abort if the module recursively depends
   // on itself.
   for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
-    if (!FbldLoadModule(arena, path, prgm->mheaderv.xs[i]->name->name, prgm)) {
+    if (!FbldLoadModule(arena, path, prgm->mheaderv.xs[i]->_base.name->name, prgm)) {
       return false;
     }
   }
@@ -245,7 +245,7 @@ bool FbldLoadEntry(FblcArena* arena, FbldStringV* path, FbldQRef* entry, FbldPro
   // TODO: Factor out this common code rather than duplicating with
   // FbldLoadModules?
   for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
-    if (!FbldLoadModule(arena, path, prgm->mheaderv.xs[i]->name->name, prgm)) {
+    if (!FbldLoadModule(arena, path, prgm->mheaderv.xs[i]->_base.name->name, prgm)) {
       return false;
     }
   }

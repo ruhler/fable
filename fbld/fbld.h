@@ -39,6 +39,7 @@ typedef struct {
 void FbldReportError(const char* format, FbldLoc* loc, ...);
 
 // Forward declarations. See below for descriptions of these types.
+typedef struct FbldDecl FbldDecl;
 typedef struct FbldQRef FbldQRef;
 typedef struct FbldQRefV FbldQRefV;
 typedef struct FbldInterfV FbldInterfV;
@@ -86,14 +87,6 @@ typedef enum {
   FBLD_RSTATE_PARAM       // The qref resolved to a parameter.
 } FbldRState;
 
-typedef enum {
-  FBLD_DECL_TYPE,
-  FBLD_DECL_FUNC,
-  FBLD_DECL_PROC,
-  FBLD_DECL_INTERF,
-  FBLD_DECL_MODULE
-} FbldDeclKind;
-
 // FbldQRef --
 //   A reference to a qualified interface, module, type, function or process,
 //   such as:
@@ -116,9 +109,7 @@ typedef enum {
 //   r.state - The resolution state of the qref.
 //   r.mref - The resolved module reference. NULL for references to parameters
 //            or top level declarations.
-//   r.kind - The declaration kind of the resolved entity.
-//   r.decl - A pointer to the declaration of the resolved entity (only valid
-//            in type checking code).
+//   r.decl - A pointer to the declaration of the resolved entity.
 struct FbldQRef {
   FbldName* name;
   FbldQRefV* targv;
@@ -128,8 +119,7 @@ struct FbldQRef {
   struct {
     FbldRState state;
     FbldQRef* mref;
-    FbldDeclKind kind;
-    void* decl;
+    FbldDecl* decl;
   } r;
 };
 
@@ -435,12 +425,26 @@ typedef struct {
   FbldMArg** xs;
 } FbldMArgV;
 
-// FbldParams --
-//   The polymorphic type and module parameters of a declaration.
-typedef struct {
+// FbldDeclTag --
+//   A tag used to distinguish among different kinds of declarations.
+typedef enum {
+  FBLD_TYPE_DECL,
+  FBLD_FUNC_DECL,
+  FBLD_PROC_DECL,
+  FBLD_INTERF_DECL,
+  FBLD_MODULE_DECL
+} FbldDeclTag;
+
+// FbldDecl --
+//   Common base type for the following fbld decl types. The tag can be
+//   used to determine what kind of decl this is to get access to additional
+//   fields of the decl by first casting to that specific type.
+struct FbldDecl {
+  FbldDeclTag tag;
+  FbldName* name;
   FbldNameV* targv;
   FbldMArgV* margv;
-} FbldParams;
+};
 
 // FbldKind --
 //   An enum used to distinguish between struct, union, and abstract types.
@@ -454,9 +458,8 @@ typedef enum {
 //   An fbld type declaration.
 //   fieldv is NULL for abstract type declarations.
 typedef struct {
-  FbldName* name;
+  FbldDecl _base;
   FbldKind kind;
-  FbldParams* params;
   FbldArgV* fieldv;
 } FbldType;
 
@@ -472,8 +475,7 @@ typedef struct {
 //   The body is NULL for function prototypes specified in module
 //   declarations.
 typedef struct {
-  FbldName* name;
-  FbldParams* params;
+  FbldDecl _base;
   FbldArgV* argv;
   FbldQRef* return_type;
   FbldExpr* body;
@@ -513,8 +515,7 @@ typedef struct {
 //   The body is NULL for process prototypes specified in module
 //   declarations.
 typedef struct {
-  FbldName* name;
-  FbldParams* params;
+  FbldDecl _base;
   FbldPortV* portv;
   FbldArgV* argv;
   FbldQRef* return_type;
@@ -531,8 +532,7 @@ typedef struct {
 // FbldInterf --
 //   An fbld interface declaration.
 typedef struct {
-  FbldName* name;
-  FbldParams* params;
+  FbldDecl _base;
   FbldImportV* importv;
   FbldTypeV* typev;
   FbldFuncV* funcv;
@@ -562,8 +562,7 @@ struct FbldInterfV {
 //   interfv - The interface declarations within the module definition.
 //   modulev - The module declarations within the module definition.
 typedef struct {
-  FbldName* name;
-  FbldParams* params;
+  FbldDecl _base;
   FbldQRef* iref;
   FbldImportV* importv;
   FbldTypeV* typev;

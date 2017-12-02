@@ -101,11 +101,11 @@ static FbldType* LookupType(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
   assert(qref->r.mref != NULL && "type is not a valid top-level declaration");
-  assert(qref->r.kind == FBLD_DECL_TYPE);
-  FbldName* name = ((FbldType*)qref->r.decl)->name;
+  assert(qref->r.decl->tag == FBLD_TYPE_DECL);
+  FbldName* name = qref->r.decl->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->typev->size; ++i) {
-    if (FbldNamesEqual(module->typev->xs[i]->name->name, name->name)) {
+    if (FbldNamesEqual(module->typev->xs[i]->_base.name->name, name->name)) {
       return module->typev->xs[i];
     }
   }
@@ -129,11 +129,11 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
   assert(qref->r.mref != NULL && "func is not a valid top-level declaration");
-  assert(qref->r.kind == FBLD_DECL_FUNC);
-  FbldName* name = ((FbldFunc*)qref->r.decl)->name;
+  assert(qref->r.decl->tag == FBLD_FUNC_DECL);
+  FbldName* name = qref->r.decl->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->funcv->size; ++i) {
-    if (FbldNamesEqual(module->funcv->xs[i]->name->name, name->name)) {
+    if (FbldNamesEqual(module->funcv->xs[i]->_base.name->name, name->name)) {
       return module->funcv->xs[i];
     }
   }
@@ -157,11 +157,11 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
   assert(qref->r.mref != NULL && "proc is not a valid top-level declaration");
-  assert(qref->r.kind == FBLD_DECL_PROC);
-  FbldName* name = ((FbldProc*)qref->r.decl)->name;
+  assert(qref->r.decl->tag == FBLD_PROC_DECL);
+  FbldName* name = qref->r.decl->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->procv->size; ++i) {
-    if (FbldNamesEqual(module->procv->xs[i]->name->name, name->name)) {
+    if (FbldNamesEqual(module->procv->xs[i]->_base.name->name, name->name)) {
       return module->procv->xs[i];
     }
   }
@@ -184,12 +184,12 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(qref->r.kind == FBLD_DECL_MODULE);
-  FbldName* name = ((FbldModule*)qref->r.decl)->name;
+  assert(qref->r.decl->tag == FBLD_MODULE_DECL);
+  FbldName* name = qref->r.decl->name;
   if (qref->r.mref == NULL) {
     // We are looking for a top-level module declaration.
     for (size_t i = 0; i < ctx->prgm->modulev.size; ++i) {
-      if (FbldNamesEqual(ctx->prgm->modulev.xs[i]->name->name, name->name)) {
+      if (FbldNamesEqual(ctx->prgm->modulev.xs[i]->_base.name->name, name->name)) {
         return ctx->prgm->modulev.xs[i];
       }
     }
@@ -199,7 +199,7 @@ static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
 
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->modulev->size; ++i) {
-    if (FbldNamesEqual(module->modulev->xs[i]->name->name, name->name)) {
+    if (FbldNamesEqual(module->modulev->xs[i]->_base.name->name, name->name)) {
       return module->modulev->xs[i];
     }
   }
@@ -287,7 +287,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
       FbldQRef* entity = app_expr_d->func;
       assert(entity->r.state == FBLD_RSTATE_RESOLVED);
-      if (entity->r.kind == FBLD_DECL_FUNC) {
+      if (entity->r.decl->tag == FBLD_FUNC_DECL) {
         FblcAppExpr* app_expr_c = FBLC_ALLOC(ctx->arena, FblcAppExpr);
         app_expr_c->_base.tag = FBLC_APP_EXPR;
         app_expr_c->func = CompileFunc(ctx, entity);
@@ -587,18 +587,19 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 
   FbldProc* proc_d = NULL;
   assert(entity->r.state == FBLD_RSTATE_RESOLVED);
-  switch (entity->r.kind) {
-    case FBLD_DECL_PROC:
+  switch (entity->r.decl->tag) {
+    case FBLD_PROC_DECL:
       proc_d = LookupProc(&ctx, entity);
       break;
 
-    case FBLD_DECL_FUNC: {
+    case FBLD_FUNC_DECL: {
       FbldFunc* func_d = LookupFunc(&ctx, entity);
       proc_d = FBLC_ALLOC(arena, FbldProc);
-      proc_d->name = func_d->name;
+      proc_d->_base.name = func_d->_base.name;
       proc_d->portv = FBLC_ALLOC(arena, FbldPortV);
       FblcVectorInit(arena, *proc_d->portv);
-      proc_d->params = func_d->params;
+      proc_d->_base.targv = func_d->_base.targv;
+      proc_d->_base.margv = func_d->_base.margv;
       proc_d->argv = func_d->argv;
       proc_d->return_type = func_d->return_type;
       FbldEvalActn* body = FBLC_ALLOC(arena, FbldEvalActn);

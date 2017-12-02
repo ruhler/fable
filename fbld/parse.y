@@ -40,6 +40,11 @@
     FbldQRefV* margv;
   } TMArgs;
 
+  typedef struct {
+    FbldNameV* targv;
+    FbldMArgV* margv;
+  } TMParams;
+
   // Decls --
   //   Structure to store a list of declarations of various kind.
   typedef struct {
@@ -76,7 +81,7 @@
   FbldImportItemV* iitemv;
   FbldImport* import;
   FbldMArgV* margv;
-  FbldParams* params;
+  TMParams* params;
   FbldType* type;
   FbldFunc* func;
   FbldPolarity polarity;
@@ -536,20 +541,20 @@ marg_list:
 
 params: 
     %empty {
-      $$ = FBLC_ALLOC(arena, FbldParams);
+      $$ = FBLC_ALLOC(arena, TMParams);
       $$->targv = FBLC_ALLOC(arena, FbldNameV);
       $$->margv = FBLC_ALLOC(arena, FbldMArgV);
       FblcVectorInit(arena, *($$->targv));
       FblcVectorInit(arena, *($$->margv));
     }
   | '<' name_list '>' {
-      $$ = FBLC_ALLOC(arena, FbldParams);
+      $$ = FBLC_ALLOC(arena, TMParams);
       $$->targv = $2;
       $$->margv = FBLC_ALLOC(arena, FbldMArgV);
       FblcVectorInit(arena, *($$->margv));
     }
   | '<' name_list ';' marg_list '>' {
-      $$ = FBLC_ALLOC(arena, FbldParams);
+      $$ = FBLC_ALLOC(arena, TMParams);
       $$->targv = $2;
       $$->margv = $4;
     }
@@ -557,27 +562,33 @@ params:
 
 abstract_type_decl: "type" name params {
       $$ = FBLC_ALLOC(arena, FbldType);
-      $$->name = $2;
+      $$->_base.tag = FBLD_TYPE_DECL;
+      $$->_base.name = $2;
+      $$->_base.targv = $3->targv;
+      $$->_base.margv = $3->margv;
       $$->kind = FBLD_ABSTRACT_KIND;
-      $$->params = $3;
       $$->fieldv = NULL;
     }
   ;
 
 struct_decl: "struct" name params '(' arg_list ')' {
       $$ = FBLC_ALLOC(arena, FbldType);
-      $$->name = $2;
+      $$->_base.tag = FBLD_TYPE_DECL;
+      $$->_base.name = $2;
+      $$->_base.targv = $3->targv;
+      $$->_base.margv = $3->margv;
       $$->kind = FBLD_STRUCT_KIND;
-      $$->params = $3;
       $$->fieldv = $5;
     }
   ;
 
 union_decl: "union" name params '(' non_empty_arg_list ')' {
       $$ = FBLC_ALLOC(arena, FbldType);
-      $$->name = $2;
+      $$->_base.tag = FBLD_TYPE_DECL;
+      $$->_base.name = $2;
+      $$->_base.targv = $3->targv;
+      $$->_base.margv = $3->margv;
       $$->kind = FBLD_UNION_KIND;
-      $$->params = $3;
       $$->fieldv = $5;
     }
   ;
@@ -588,8 +599,10 @@ type_defn: struct_decl | union_decl ;
 
 func_decl: "func" name params '(' arg_list ';' qref ')' {
       $$ = FBLC_ALLOC(arena, FbldFunc);
-      $$->name = $2;
-      $$->params = $3;
+      $$->_base.tag = FBLD_FUNC_DECL;
+      $$->_base.name = $2;
+      $$->_base.targv = $3->targv;
+      $$->_base.margv = $3->margv;
       $$->argv = $5;
       $$->return_type = $7;
       $$->body = NULL;
@@ -633,8 +646,10 @@ non_empty_port_list:
 
 proc_decl: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
       $$ = FBLC_ALLOC(arena, FbldProc);
-      $$->name = $2;
-      $$->params = $3;
+      $$->_base.tag = FBLD_PROC_DECL;
+      $$->_base.name = $2;
+      $$->_base.targv = $3->targv;
+      $$->_base.margv = $3->margv;
       $$->portv = $5;
       $$->argv = $7;
       $$->return_type = $9;
@@ -692,8 +707,10 @@ decl_list:
 
 interf: "interf" name params '{' decl_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldInterf);
-          $$->name = $2;
-          $$->params = $3;
+          $$->_base.tag = FBLD_INTERF_DECL;
+          $$->_base.name = $2;
+          $$->_base.targv = $3->targv;
+          $$->_base.margv = $3->margv;
           $$->importv = $5->importv;
           $$->typev = $5->typev;
           $$->funcv = $5->funcv;
@@ -748,8 +765,10 @@ defn_list:
 
 module_decl: "module" name params '(' qref ')' {
           $$ = FBLC_ALLOC(arena, FbldModule);
-          $$->name = $2;
-          $$->params = $3;
+          $$->_base.tag = FBLD_MODULE_DECL;
+          $$->_base.name = $2;
+          $$->_base.targv = $3->targv;
+          $$->_base.margv = $3->margv;
           $$->iref = $5;
           $$->importv = NULL;
           $$->typev = NULL;

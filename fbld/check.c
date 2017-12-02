@@ -143,14 +143,14 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
       return false;
     }
 
-    if (qref->mref->r.kind != FBLD_DECL_MODULE) {
+    if (qref->mref->r.decl->tag != FBLD_MODULE_DECL) {
       ReportError("Expected module, but %s refers to a ", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
-      switch (qref->mref->r.kind) {
-        case FBLD_DECL_TYPE: fprintf(stderr, "type.\n"); break;
-        case FBLD_DECL_FUNC: fprintf(stderr, "func.\n"); break;
-        case FBLD_DECL_PROC: fprintf(stderr, "proc.\n"); break;
-        case FBLD_DECL_INTERF: fprintf(stderr, "interf.\n"); break;
-        case FBLD_DECL_MODULE: fprintf(stderr, "module.\n"); break;
+      switch (qref->mref->r.decl->tag) {
+        case FBLD_TYPE_DECL: fprintf(stderr, "type.\n"); break;
+        case FBLD_FUNC_DECL: fprintf(stderr, "func.\n"); break;
+        case FBLD_PROC_DECL: fprintf(stderr, "proc.\n"); break;
+        case FBLD_INTERF_DECL: fprintf(stderr, "interf.\n"); break;
+        case FBLD_MODULE_DECL: fprintf(stderr, "module.\n"); break;
         default: fprintf(stderr, "???.\n"); break;
       }
       return false;
@@ -162,56 +162,51 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
       return false;
     }
     assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
-    assert(module->iref->r.kind == FBLD_DECL_INTERF);
+    assert(module->iref->r.decl->tag == FBLD_INTERF_DECL);
     FbldInterf* interf = (FbldInterf*)module->iref->r.decl;
 
     // Look for the entity declaration in the interface.
     for (size_t i = 0; i < interf->typev->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, interf->typev->xs[i]->name->name)) {
+      if (FbldNamesEqual(qref->name->name, interf->typev->xs[i]->_base.name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
         qref->r.mref = qref->mref;
-        qref->r.kind = FBLD_DECL_TYPE;
-        qref->r.decl = interf->typev->xs[i];
+        qref->r.decl = &interf->typev->xs[i]->_base;
         return true;
       }
     }
 
     for (size_t i = 0; i < interf->funcv->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, interf->funcv->xs[i]->name->name)) {
+      if (FbldNamesEqual(qref->name->name, interf->funcv->xs[i]->_base.name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
         qref->r.mref = qref->mref;
-        qref->r.kind = FBLD_DECL_FUNC;
-        qref->r.decl = interf->funcv->xs[i];
+        qref->r.decl = &interf->funcv->xs[i]->_base;
         return true;
       }
     }
 
     for (size_t i = 0; i < interf->procv->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, interf->procv->xs[i]->name->name)) {
+      if (FbldNamesEqual(qref->name->name, interf->procv->xs[i]->_base.name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
         qref->r.mref = qref->mref;
-        qref->r.kind = FBLD_DECL_PROC;
-        qref->r.decl = interf->procv->xs[i];
+        qref->r.decl = &interf->procv->xs[i]->_base;
         return true;
       }
     }
 
     for (size_t i = 0; i < interf->interfv->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, interf->interfv->xs[i]->name->name)) {
+      if (FbldNamesEqual(qref->name->name, interf->interfv->xs[i]->_base.name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
         qref->r.mref = qref->mref;
-        qref->r.kind = FBLD_DECL_INTERF;
-        qref->r.decl = interf->interfv->xs[i];
+        qref->r.decl = &interf->interfv->xs[i]->_base;
         return true;
       }
     }
 
     for (size_t i = 0; i < interf->modulev->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, interf->modulev->xs[i]->name->name)) {
+      if (FbldNamesEqual(qref->name->name, interf->modulev->xs[i]->_base.name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
         qref->r.mref = qref->mref;
-        qref->r.kind = FBLD_DECL_MODULE;
-        qref->r.decl = interf->modulev->xs[i];
+        qref->r.decl = &interf->modulev->xs[i]->_base;
         return true;
       }
     }
@@ -238,8 +233,7 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 
       qref->r.state = FBLD_RSTATE_RESOLVED;
       qref->r.mref = NULL;
-      qref->r.kind = FBLD_DECL_INTERF;
-      qref->r.decl = interf;
+      qref->r.decl = &interf->_base;
       return true;
     }
 
@@ -248,8 +242,7 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 
       qref->r.state = FBLD_RSTATE_RESOLVED;
       qref->r.mref = NULL;
-      qref->r.kind = FBLD_DECL_MODULE;
-      qref->r.decl = module;
+      qref->r.decl = &module->_base;
       return true;
     }
 
@@ -276,7 +269,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 
         qref->r.state = imported_qref.r.state;
         qref->r.mref = imported_qref.r.mref;
-        qref->r.kind = imported_qref.r.kind;
         qref->r.decl = imported_qref.r.decl;
         return true;
       } 
@@ -284,31 +276,28 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   }
 
   for (size_t i = 0; i < env->typev->size; ++i) {
-    if (FbldNamesEqual(qref->name->name, env->typev->xs[i]->name->name)) {
+    if (FbldNamesEqual(qref->name->name, env->typev->xs[i]->_base.name->name)) {
       qref->r.state = FBLD_RSTATE_RESOLVED;
       qref->r.mref = env->mref;
-      qref->r.kind = FBLD_DECL_TYPE;
-      qref->r.decl = env->typev->xs[i];
+      qref->r.decl = &env->typev->xs[i]->_base;
       return true;
     }
   }
 
   for (size_t i = 0; i < env->funcv->size; ++i) {
-    if (FbldNamesEqual(qref->name->name, env->funcv->xs[i]->name->name)) {
+    if (FbldNamesEqual(qref->name->name, env->funcv->xs[i]->_base.name->name)) {
       qref->r.state = FBLD_RSTATE_RESOLVED;
       qref->r.mref = env->mref;
-      qref->r.kind = FBLD_DECL_FUNC;
-      qref->r.decl = env->funcv->xs[i];
+      qref->r.decl = &env->funcv->xs[i]->_base;
       return true;
     }
   }
 
   for (size_t i = 0; i < env->procv->size; ++i) {
-    if (FbldNamesEqual(qref->name->name, env->procv->xs[i]->name->name)) {
+    if (FbldNamesEqual(qref->name->name, env->procv->xs[i]->_base.name->name)) {
       qref->r.state = FBLD_RSTATE_RESOLVED;
       qref->r.mref = env->mref;
-      qref->r.kind = FBLD_DECL_PROC;
-      qref->r.decl = env->procv->xs[i];
+      qref->r.decl = &env->procv->xs[i]->_base;
       return true;
     }
   }
@@ -342,11 +331,11 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
 {
   // TODO: CheckParams(ctx, interf->params);
-  assert(interf->params->targv->size == 0 && "TODO");
-  assert(interf->params->margv->size == 0 && "TODO");
+  assert(interf->_base.targv->size == 0 && "TODO");
+  assert(interf->_base.margv->size == 0 && "TODO");
 
   FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
-  mref->name = interf->name;
+  mref->name = interf->_base.name;
   mref->targv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *mref->targv);
   mref->margv = FBLC_ALLOC(ctx->arena, FbldQRefV);
@@ -354,8 +343,7 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   mref->mref = env == NULL ? NULL : env->mref;
   mref->r.state = FBLD_RSTATE_RESOLVED;
   mref->r.mref = mref->mref;
-  mref->r.kind = FBLD_DECL_INTERF;
-  mref->r.decl = interf;
+  mref->r.decl = &interf->_base;
 
   Env interf_env = {
     .parent = env,
@@ -391,7 +379,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   }
 
   FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
-  mref->name = module->name;
+  mref->name = module->_base.name;
   mref->targv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *mref->targv);
   mref->margv = FBLC_ALLOC(ctx->arena, FbldQRefV);
@@ -399,8 +387,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   mref->mref = env == NULL ? NULL : env->mref;
   mref->r.state = FBLD_RSTATE_RESOLVED;
   mref->r.mref = mref->mref;
-  mref->r.kind = FBLD_DECL_MODULE;
-  mref->r.decl = module;
+  mref->r.decl = &module->_base;
 
   Env module_env = {
     .parent = env,
@@ -496,15 +483,15 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 {
   // TODO: CheckParams(ctx, module->params);
-  assert(module->params->targv->size == 0 && "TODO");
-  assert(module->params->margv->size == 0 && "TODO");
+  assert(module->_base.targv->size == 0 && "TODO");
+  assert(module->_base.margv->size == 0 && "TODO");
 
   if (!CheckQRef(ctx, env, module->iref)) {
     return false;
   }
 
   assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
-  if (module->iref->r.kind != FBLD_DECL_INTERF) {
+  if (module->iref->r.decl->tag != FBLD_INTERF_DECL) {
     ReportError("%s does not refer to an interface\n", &ctx->error, module->iref->name->loc, module->iref->name->name);
     return false;
   }
@@ -789,7 +776,7 @@ static bool CheckType(Context* ctx, Env* env, FbldQRef* qref)
     return false;
   }
 
-  if (qref->r.kind != FBLD_DECL_TYPE) {
+  if (qref->r.decl->tag != FBLD_TYPE_DECL) {
     ReportError("%s does not refer to a type\n", &ctx->error, qref->name->loc, qref->name->name);
     return false;
   }
@@ -908,11 +895,11 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 
       FbldQRef* return_type = NULL;
       FbldArgV* argv = NULL;
-      if (app_expr->func->r.kind == FBLD_DECL_FUNC) {
+      if (app_expr->func->r.decl->tag == FBLD_FUNC_DECL) {
         FbldFunc* func = (FbldFunc*)app_expr->func->r.decl;
         argv = func->argv;
         return_type = ForeignType(ctx, env, func->return_type);
-      } else if (app_expr->func->r.kind == FBLD_DECL_TYPE) {
+      } else if (app_expr->func->r.decl->tag == FBLD_TYPE_DECL) {
         FbldType* type = (FbldType*)app_expr->func->r.decl;
         if (type->kind != FBLD_STRUCT_KIND) {
           ReportError("Cannot do application on type %s.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
@@ -944,7 +931,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       }
 
       assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-      assert(qref->r.kind == FBLD_DECL_TYPE);
+      assert(qref->r.decl->tag == FBLD_TYPE_DECL);
       FbldType* type = (FbldType*)qref->r.decl;
       for (size_t i = 0; i < type->fieldv->size; ++i) {
         if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
@@ -952,7 +939,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
           return ForeignType(ctx, env, type->fieldv->xs[i]->type);
         }
       }
-      ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->name->name);
+      ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->_base.name->name);
       return NULL;
     }
 
@@ -1007,14 +994,14 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       FbldQRef* type = CheckExpr(ctx, env, vars, cond_expr->select);
       if (type != NULL) {
         assert(type->r.state == FBLD_RSTATE_RESOLVED);
-        assert(type->r.kind == FBLD_DECL_TYPE);
+        assert(type->r.decl->tag == FBLD_TYPE_DECL);
         FbldType* type_def = (FbldType*)type->r.decl;
         if (type_def->kind == FBLD_UNION_KIND) {
           if (type_def->fieldv->size != cond_expr->argv->size) {
             ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_expr->_base.loc, type_def->fieldv->size, cond_expr->argv->size);
           }
         } else {
-          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_expr->select->loc, type_def->name->name);
+          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_expr->select->loc, type_def->_base.name->name);
         }
       }
 
@@ -1108,7 +1095,7 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
             ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
           }
         } else {
-          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type_def->name->name);
+          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type_def->_base.name->name);
         }
       }
 
@@ -1151,7 +1138,7 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
         return NULL;
       }
 
-      if (call_actn->proc->r.kind != FBLD_DECL_PROC) {
+      if (call_actn->proc->r.decl->tag != FBLD_PROC_DECL) {
         ReportError("%s does not refer to a proc.\n", &ctx->error, call_actn->proc->name->loc, call_actn->proc->name->name);
         return NULL;
       }
@@ -1353,7 +1340,7 @@ static void CheckEnv(Context* ctx, Env* env)
   // Check type declarations.
   for (size_t type_id = 0; type_id < env->typev->size; ++type_id) {
     FbldType* type = env->typev->xs[type_id];
-    DefineName(ctx, type->name, &defined);
+    DefineName(ctx, type->_base.name, &defined);
     assert(type->kind != FBLD_UNION_KIND || type->fieldv->size > 0);
     assert(type->kind != FBLD_ABSTRACT_KIND || type->fieldv == NULL);
 
@@ -1366,7 +1353,7 @@ static void CheckEnv(Context* ctx, Env* env)
   // Check func declarations
   for (size_t func_id = 0; func_id < env->funcv->size; ++func_id) {
     FbldFunc* func = env->funcv->xs[func_id];
-    DefineName(ctx, func->name, &defined);
+    DefineName(ctx, func->_base.name, &defined);
     Vars vars_data[func->argv->size];
     Vars* vars = CheckArgV(ctx, env, func->argv, vars_data);
     CheckType(ctx, env, func->return_type);
@@ -1380,7 +1367,7 @@ static void CheckEnv(Context* ctx, Env* env)
   // Check proc declarations
   for (size_t proc_id = 0; proc_id < env->procv->size; ++proc_id) {
     FbldProc* proc = env->procv->xs[proc_id];
-    DefineName(ctx, proc->name, &defined);
+    DefineName(ctx, proc->_base.name, &defined);
     Ports ports_data[proc->portv->size];
     Ports* ports = NULL;
     for (size_t port_id = 0; port_id < proc->portv->size; ++port_id) {
