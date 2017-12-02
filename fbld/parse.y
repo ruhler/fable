@@ -28,9 +28,8 @@
   // ParseResult --
   //   Used to store the final parsed object depending on what kind of object
   //   is parsed.
-  typedef struct {
-    FbldInterf* interf;
-    FbldModule* module;
+  typedef union {
+    FbldDecl* decl;
     FbldValue* value;
     FbldQRef* qref;
   } ParseResult;
@@ -168,10 +167,10 @@
 // tokens. We insert an arbitrary, artificial single-character token to
 // indicate which start token we actually want to use.
 start:
-     START_INTERF interf { result->interf = $2; }
-   | START_MODULE module_defn { result->module = $2; }
-   | START_TOP_DECL interf { result->interf = $2; }
-   | START_TOP_DECL module_defn { result->module = $2; }
+     START_INTERF interf { result->decl = &$2->_base; }
+   | START_MODULE module_defn { result->decl = &$2->_base; }
+   | START_TOP_DECL interf { result->decl = &$2->_base; }
+   | START_TOP_DECL module_defn { result->decl = &$2->_base; }
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
    ;
@@ -1028,9 +1027,10 @@ FbldInterf* FbldParseInterf(FblcArena* arena, const char* filename)
     .sin = NULL
   };
   ParseResult result;
-  result.interf = NULL;
+  result.decl = NULL;
   yyparse(arena, &lex, &result);
-  return result.interf;
+  assert(result.decl == NULL || result.decl->tag == FBLD_INTERF_DECL);
+  return (FbldInterf*)result.decl;
 }
 
 // FbldParseModule -- see documentation in fbld.h
@@ -1049,13 +1049,14 @@ FbldModule* FbldParseModule(FblcArena* arena, const char* filename)
     .sin = NULL
   };
   ParseResult result;
-  result.module = NULL;
+  result.decl = NULL;
   yyparse(arena, &lex, &result);
-  return result.module;
+  assert(result.decl == NULL || result.decl->tag == FBLD_MODULE_DECL);
+  return (FbldModule*)result.decl;
 }
 
 // FbldParseTopDecl -- see documentation in fbld.h
-bool FbldParseTopDecl(FblcArena* arena, const char* filename, FbldInterf** interf, FbldModule** module)
+FbldDecl* FbldParseTopDecl(FblcArena* arena, const char* filename)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -1070,20 +1071,12 @@ bool FbldParseTopDecl(FblcArena* arena, const char* filename, FbldInterf** inter
     .sin = NULL
   };
   ParseResult result;
-  result.interf = NULL;
-  result.module = NULL;
+  result.decl = NULL;
   yyparse(arena, &lex, &result);
-  if (result.interf != NULL) {
-    assert(result.module == NULL);
-    *interf = result.interf;
-    return true;
-  }
-  if (result.module != NULL) {
-    assert(result.interf == NULL);
-    *module = result.module;
-    return true;
-  }
-  return false;
+  assert(result.decl == NULL
+      || result.decl->tag == FBLD_INTERF_DECL
+      || result.decl->tag == FBLD_MODULE_DECL);
+  return result.decl;
 }
 
 // FbldParseValueFromString -- see documentation in fbld.h

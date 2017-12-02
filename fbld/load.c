@@ -148,21 +148,19 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
   return module;
 }
 // FbldLoadTopDecl -- see documentation in fbld.h
-bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm, FbldInterf** interf, FbldModule** module)
+FbldDecl* FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm)
 {
   // Return an existing interface declaration if it has already been loaded.
   for (size_t i = 0; i < prgm->interfv.size; ++i) {
     if (FbldNamesEqual(name, prgm->interfv.xs[i]->_base.name->name)) {
-      *interf = prgm->interfv.xs[i];
-      return true;
+      return &prgm->interfv.xs[i]->_base;
     }
   }
 
   // Return an existing module declaration if it has already been loaded.
   for (size_t i = 0; i < prgm->mheaderv.size; ++i) {
     if (FbldNamesEqual(name, prgm->mheaderv.xs[i]->_base.name->name)) {
-      *module = prgm->mheaderv.xs[i];
-      return true;
+      return &prgm->mheaderv.xs[i]->_base;
     }
   }
 
@@ -173,39 +171,35 @@ bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, Fbld
     return NULL;
   }
 
-  if (!FbldParseTopDecl(arena, filename, interf, module)) {
-    fprintf(stderr, "failed to parse module from %s\n", filename);
-    return false;
+  FbldDecl* decl = FbldParseTopDecl(arena, filename);
+  if (decl == NULL) {
+    fprintf(stderr, "failed to parse top level declaration from %s\n", filename);
+    return NULL;
   }
 
-  if (*interf != NULL) {
-    assert(*module == NULL);
-    if (!FbldNamesEqual((*interf)->_base.name->name, name)) {
-      FbldReportError("Expected '%s', but found '%s'\n", (*interf)->_base.name->loc, name, (*interf)->_base.name->name);
-      return NULL;
-    }
-    FblcVectorAppend(arena, prgm->interfv, *interf);
-
-    // Check that this declaration is valid.
-    // TODO: detect and abort if the module module recursively depends on itself.
-    return FbldCheckInterf(arena, path, *interf, prgm);
+  if (!FbldNamesEqual(decl->name->name, name)) {
+    FbldReportError("Expected '%s', but found '%s'\n", decl->name->loc, name, decl->name->name);
+    return NULL;
   }
-  
-  if (*module != NULL) {
-    assert(*interf == NULL);
-    if (!FbldNamesEqual((*module)->_base.name->name, name)) {
-      FbldReportError("Expected '%s', but found '%s'\n", (*module)->_base.name->loc, name, (*module)->_base.name->name);
+
+  if (decl->tag == FBLD_INTERF_DECL) {
+    if (!FbldCheckInterf(arena, path, (FbldInterf*)decl, prgm)) {
       return NULL;
     }
-    FblcVectorAppend(arena, prgm->mheaderv, *module);
+    FblcVectorAppend(arena, prgm->interfv, (FbldInterf*)decl);
+    return decl;
+  }
 
-    // Check that this declaration is valid.
-    // TODO: detect and abort if the module module recursively depends on itself.
-    return FbldCheckModuleHeader(arena, path, *module, prgm);
+  if (decl->tag == FBLD_MODULE_DECL) {
+    if (!FbldCheckModuleHeader(arena, path, (FbldModule*)decl, prgm)) {
+      return NULL;
+    }
+    FblcVectorAppend(arena, prgm->mheaderv, (FbldModule*)decl);
+    return decl;
   }
 
   assert(false && "UNREACHABLE");
-  return false;
+  return NULL;
 }
 
 // FbldLoadModules -- see documentation in fbld.h

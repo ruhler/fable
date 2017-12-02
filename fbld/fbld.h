@@ -657,13 +657,9 @@ FbldModule* FbldParseModule(FblcArena* arena, const char* filename);
 // Inputs:
 //   arena - The arena to use for allocating the parsed definition.
 //   filename - The name of the file to parse the definition from.
-//   interf - Out parameter set to parsed interface if the top level
-//            declaration is an interface.
-//   module - Out parameter set to parsed module if the top level
-//            declaration is an module.
 //
 // Results:
-//   True on success, false if the declaration could not be parsed.
+//   The parsed declaration, or NULL in case of error.
 //
 // Side effects:
 //   Prints an error message to stderr if the declaration cannot be parsed.
@@ -672,7 +668,7 @@ FbldModule* FbldParseModule(FblcArena* arena, const char* filename);
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned definition if there is no error.
-bool FbldParseTopDecl(FblcArena* arena, const char* filename, FbldInterf** interf, FbldModule** module);
+FbldDecl* FbldParseTopDecl(FblcArena* arena, const char* filename);
 
 // FbldParseValueFromString --
 //   Parse an fbld value from the given string.
@@ -828,16 +824,11 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
 //          on disk.
 //   name - The name of the module whose definition to load.
 //   prgm - The collection of declarations loaded for the program so far.
-//   interf - Out parameter in case of a loaded interface declaration.
-//   module - Out parameter in case of a loaded module declaration.
 //
 // Results:
-//   True if a declaratio was successfully loaded, false otherwise.
+//   The loaded declaration, or NULL if the declaration could not be loaded.
 //
 // Side effects:
-//   Sets interf to point to the loaded interface declaration, if the top
-//   level declaration is an interface. Sets module to point to the loaded
-//   module declaration, if the top level declaration is a module.
 //   Read the module definition and any other required module declarations
 //   from disk and add the module declarations to the prgm.
 //   Prints an error message to stderr if the module definition or any other
@@ -848,7 +839,7 @@ FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the definition and all loaded declarations if there is no error.
-bool FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm, FbldInterf** interf, FbldModule** module);
+FbldDecl* FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
 
 // FbldLoadModules --
 //   Load all module definitions and declarations required by the

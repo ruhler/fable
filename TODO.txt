@@ -10,7 +10,6 @@ Fbld 3:
  - Get added spec test to pass
 * Get AllTest and Snake to pass
  - Adding spec tests as needed to reproduce errors.
-* Consider making an FbldDecl* base class with name and params.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

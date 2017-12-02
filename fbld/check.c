@@ -221,32 +221,16 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   if (env == NULL) {
     // This is the global environment. Look for a matching top level
     // declaration.
-    FbldInterf* interf = NULL;
-    FbldModule* module = NULL;
-    if (!FbldLoadTopDecl(ctx->arena, ctx->path, qref->name->name, ctx->prgm, &interf, &module)) {
+    FbldDecl* decl = FbldLoadTopDecl(ctx->arena, ctx->path, qref->name->name, ctx->prgm);
+    if (decl == NULL) {
       ctx->error = true;
       return false;
     }
 
-    if (interf != NULL) {
-      assert(module == NULL);
-
-      qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.mref = NULL;
-      qref->r.decl = &interf->_base;
-      return true;
-    }
-
-    if (module != NULL) {
-      assert(interf == NULL);
-
-      qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.mref = NULL;
-      qref->r.decl = &module->_base;
-      return true;
-    }
-
-    assert(false && "UNREACHABLE");
+    qref->r.state = FBLD_RSTATE_RESOLVED;
+    qref->r.mref = NULL;
+    qref->r.decl = decl;
+    return true;
   }
 
   // Check if it is declared locally in this non-global environment.
