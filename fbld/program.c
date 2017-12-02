@@ -139,7 +139,20 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* ctx, Fbl
 void FbldPrintQRef(FILE* stream, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  fprintf(stream, "%s", qref->r.name->name);
+
+  // TODO: Factor out this function to get the resolved name associated with a
+  // qref.
+  FbldName* name = NULL;
+  switch (qref->r.kind) {
+    case FBLD_DECL_TYPE: name = ((FbldType*)qref->r.decl)->name; break;
+    case FBLD_DECL_FUNC: name = ((FbldFunc*)qref->r.decl)->name; break;
+    case FBLD_DECL_PROC: name = ((FbldProc*)qref->r.decl)->name; break;
+    case FBLD_DECL_INTERF: name = ((FbldInterf*)qref->r.decl)->name; break;
+    case FBLD_DECL_MODULE: name = ((FbldModule*)qref->r.decl)->name; break;
+    default: assert(false && "Invalid decl kind");
+  }
+
+  fprintf(stream, "%s", name->name);
   if (qref->targv->size > 0 || qref->margv->size > 0) {
     fprintf(stream, "<");
     for (size_t i = 0; i < qref->targv->size; ++i) {

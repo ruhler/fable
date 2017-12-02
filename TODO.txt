@@ -2,12 +2,15 @@ Priority:
 * Fbld 3
 
 Fbld 3:
-* Rewrite the fbld front end to support the new language.
- - Move params into Env, check them in CheckEnv.
- - Add Env argument to LookupModuleInterf
- - Implement LookupModuleInterf
- - Revise the checker.
- - Revise the compiler.
+* Change interface to set QRef.r to a module parameter.
+ - Get M1-02 test to pass
+* Add checks to get M1-04 to M1-12 to pass
+* Add spec test for parameterized function
+* Add support for parameters.
+ - Get added spec test to pass
+* Get AllTest and Snake to pass
+ - Adding spec tests as needed to reproduce errors.
+* Consider making an FbldDecl* base class with name and params.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

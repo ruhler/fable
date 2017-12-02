@@ -245,7 +245,6 @@ qref:
       $$->margv = $2->margv;
       $$->mref = NULL;
       $$->r.state = FBLD_RSTATE_UNRESOLVED;
-      $$->r.name = NULL;
       $$->r.mref = NULL;
     }
   | name tmargs '@' qref {
@@ -255,7 +254,6 @@ qref:
       $$->margv = $2->margv;
       $$->mref = $4;
       $$->r.state = FBLD_RSTATE_UNRESOLVED;
-      $$->r.name = NULL;
       $$->r.mref = NULL;
     }
   ;

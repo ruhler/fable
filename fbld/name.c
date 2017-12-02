@@ -78,7 +78,7 @@ bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b)
 
   assert(a->r.state == FBLD_RSTATE_RESOLVED);
   assert(b->r.state == FBLD_RSTATE_RESOLVED);
-  if (!FbldNamesEqual(a->r.name->name, b->r.name->name)) {
+  if (a->r.decl != b->r.decl) {
     return false;
   }
 

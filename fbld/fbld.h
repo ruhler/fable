@@ -103,9 +103,8 @@ typedef enum {
 // reference. The unresolved version is as the reference appears in the source
 // code, the resolved version is the canonical global path to the relevant
 // entity or type parameter. The parser leaves the qref unresolved. The type
-// checker resolves all entities, updating r.state, r.name, and r.mref as
-// appropriate. TODO: Is r.name enough to distinguish which parameter is being
-// referred to in the case of parameters?
+// checker resolves all entities, updating r.state, and r.mref as
+// appropriate.
 //
 // Fields:
 //   name - The unresolved name of the entity.
@@ -115,7 +114,6 @@ typedef enum {
 //          are not explicitly qualified.
 //
 //   r.state - The resolution state of the qref.
-//   r.name - The resolved name of the entity.
 //   r.mref - The resolved module reference. NULL for references to parameters
 //            or top level declarations.
 //   r.kind - The declaration kind of the resolved entity.
@@ -129,7 +127,6 @@ struct FbldQRef {
 
   struct {
     FbldRState state;
-    FbldName* name;
     FbldQRef* mref;
     FbldDeclKind kind;
     void* decl;

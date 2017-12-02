@@ -169,7 +169,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     for (size_t i = 0; i < interf->typev->size; ++i) {
       if (FbldNamesEqual(qref->name->name, interf->typev->xs[i]->name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
-        qref->r.name = qref->name;
         qref->r.mref = qref->mref;
         qref->r.kind = FBLD_DECL_TYPE;
         qref->r.decl = interf->typev->xs[i];
@@ -180,7 +179,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     for (size_t i = 0; i < interf->funcv->size; ++i) {
       if (FbldNamesEqual(qref->name->name, interf->funcv->xs[i]->name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
-        qref->r.name = qref->name;
         qref->r.mref = qref->mref;
         qref->r.kind = FBLD_DECL_FUNC;
         qref->r.decl = interf->funcv->xs[i];
@@ -191,7 +189,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     for (size_t i = 0; i < interf->procv->size; ++i) {
       if (FbldNamesEqual(qref->name->name, interf->procv->xs[i]->name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
-        qref->r.name = qref->name;
         qref->r.mref = qref->mref;
         qref->r.kind = FBLD_DECL_PROC;
         qref->r.decl = interf->procv->xs[i];
@@ -202,7 +199,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     for (size_t i = 0; i < interf->interfv->size; ++i) {
       if (FbldNamesEqual(qref->name->name, interf->interfv->xs[i]->name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
-        qref->r.name = qref->name;
         qref->r.mref = qref->mref;
         qref->r.kind = FBLD_DECL_INTERF;
         qref->r.decl = interf->interfv->xs[i];
@@ -213,7 +209,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     for (size_t i = 0; i < interf->modulev->size; ++i) {
       if (FbldNamesEqual(qref->name->name, interf->modulev->xs[i]->name->name)) {
         qref->r.state = FBLD_RSTATE_RESOLVED;
-        qref->r.name = qref->name;
         qref->r.mref = qref->mref;
         qref->r.kind = FBLD_DECL_MODULE;
         qref->r.decl = interf->modulev->xs[i];
@@ -242,7 +237,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
       assert(module == NULL);
 
       qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.name = qref->name;
       qref->r.mref = NULL;
       qref->r.kind = FBLD_DECL_INTERF;
       qref->r.decl = interf;
@@ -253,7 +247,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
       assert(interf == NULL);
 
       qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.name = qref->name;
       qref->r.mref = NULL;
       qref->r.kind = FBLD_DECL_MODULE;
       qref->r.decl = module;
@@ -282,7 +275,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
         }
 
         qref->r.state = imported_qref.r.state;
-        qref->r.name = imported_qref.r.name;
         qref->r.mref = imported_qref.r.mref;
         qref->r.kind = imported_qref.r.kind;
         qref->r.decl = imported_qref.r.decl;
@@ -294,7 +286,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   for (size_t i = 0; i < env->typev->size; ++i) {
     if (FbldNamesEqual(qref->name->name, env->typev->xs[i]->name->name)) {
       qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.name = qref->name;
       qref->r.mref = env->mref;
       qref->r.kind = FBLD_DECL_TYPE;
       qref->r.decl = env->typev->xs[i];
@@ -305,7 +296,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   for (size_t i = 0; i < env->funcv->size; ++i) {
     if (FbldNamesEqual(qref->name->name, env->funcv->xs[i]->name->name)) {
       qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.name = qref->name;
       qref->r.mref = env->mref;
       qref->r.kind = FBLD_DECL_FUNC;
       qref->r.decl = env->funcv->xs[i];
@@ -316,7 +306,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   for (size_t i = 0; i < env->procv->size; ++i) {
     if (FbldNamesEqual(qref->name->name, env->procv->xs[i]->name->name)) {
       qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.name = qref->name;
       qref->r.mref = env->mref;
       qref->r.kind = FBLD_DECL_PROC;
       qref->r.decl = env->procv->xs[i];
@@ -364,7 +353,6 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   FblcVectorInit(ctx->arena, *mref->margv);
   mref->mref = env == NULL ? NULL : env->mref;
   mref->r.state = FBLD_RSTATE_RESOLVED;
-  mref->r.name = mref->name;
   mref->r.mref = mref->mref;
   mref->r.kind = FBLD_DECL_INTERF;
   mref->r.decl = interf;
@@ -410,7 +398,6 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   FblcVectorInit(ctx->arena, *mref->margv);
   mref->mref = env == NULL ? NULL : env->mref;
   mref->r.state = FBLD_RSTATE_RESOLVED;
-  mref->r.name = mref->name;
   mref->r.mref = mref->mref;
   mref->r.kind = FBLD_DECL_MODULE;
   mref->r.decl = module;

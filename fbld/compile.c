@@ -101,9 +101,11 @@ static FbldType* LookupType(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
   assert(qref->r.mref != NULL && "type is not a valid top-level declaration");
+  assert(qref->r.kind == FBLD_DECL_TYPE);
+  FbldName* name = ((FbldType*)qref->r.decl)->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->typev->size; ++i) {
-    if (FbldNamesEqual(module->typev->xs[i]->name->name, qref->r.name->name)) {
+    if (FbldNamesEqual(module->typev->xs[i]->name->name, name->name)) {
       return module->typev->xs[i];
     }
   }
@@ -127,9 +129,11 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
   assert(qref->r.mref != NULL && "func is not a valid top-level declaration");
+  assert(qref->r.kind == FBLD_DECL_FUNC);
+  FbldName* name = ((FbldFunc*)qref->r.decl)->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->funcv->size; ++i) {
-    if (FbldNamesEqual(module->funcv->xs[i]->name->name, qref->r.name->name)) {
+    if (FbldNamesEqual(module->funcv->xs[i]->name->name, name->name)) {
       return module->funcv->xs[i];
     }
   }
@@ -153,9 +157,11 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
   assert(qref->r.mref != NULL && "proc is not a valid top-level declaration");
+  assert(qref->r.kind == FBLD_DECL_PROC);
+  FbldName* name = ((FbldProc*)qref->r.decl)->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->procv->size; ++i) {
-    if (FbldNamesEqual(module->procv->xs[i]->name->name, qref->r.name->name)) {
+    if (FbldNamesEqual(module->procv->xs[i]->name->name, name->name)) {
       return module->procv->xs[i];
     }
   }
@@ -178,10 +184,12 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
 {
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
+  assert(qref->r.kind == FBLD_DECL_MODULE);
+  FbldName* name = ((FbldModule*)qref->r.decl)->name;
   if (qref->r.mref == NULL) {
     // We are looking for a top-level module declaration.
     for (size_t i = 0; i < ctx->prgm->modulev.size; ++i) {
-      if (FbldNamesEqual(ctx->prgm->modulev.xs[i]->name->name, qref->r.name->name)) {
+      if (FbldNamesEqual(ctx->prgm->modulev.xs[i]->name->name, name->name)) {
         return ctx->prgm->modulev.xs[i];
       }
     }
@@ -191,7 +199,7 @@ static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
 
   FbldModule* module = LookupModule(ctx, qref->r.mref);
   for (size_t i = 0; i < module->modulev->size; ++i) {
-    if (FbldNamesEqual(module->modulev->xs[i]->name->name, qref->r.name->name)) {
+    if (FbldNamesEqual(module->modulev->xs[i]->name->name, name->name)) {
       return module->modulev->xs[i];
     }
   }
