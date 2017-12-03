@@ -2,6 +2,7 @@ Priority:
 * Fbld 3
 
 Fbld 3:
+* Change FbldInterf* and FbldModule* to take vector of FbldDecl*.
 * Change interface to set QRef.r to a module parameter.
  - Get M1-02 test to pass
 * Add checks to get M1-04 to M1-12 to pass

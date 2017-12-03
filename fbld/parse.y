@@ -42,7 +42,7 @@
   typedef struct {
     FbldNameV* targv;
     FbldMArgV* margv;
-  } TMParams;
+  } Params;
 
   // Decls --
   //   Structure to store a list of declarations of various kind.
@@ -68,7 +68,7 @@
   FbldName* name;
   FbldNameV* namev;
   FbldIdV* idv;
-  TMArgs* tmargs;
+  TMArgs tmargs;
   FbldQRef* qref;
   FbldQRefV* qrefv;
   FbldArgV* argv;
@@ -80,13 +80,13 @@
   FbldImportItemV* iitemv;
   FbldImport* import;
   FbldMArgV* margv;
-  TMParams* params;
+  Params params;
   FbldType* type;
   FbldFunc* func;
   FbldPolarity polarity;
   FbldPortV* portv;
   FbldProc* proc;
-  Decls* decls;
+  Decls decls;
   FbldInterf* interf;
   FbldModule* module;
   FbldValue* value;
@@ -219,25 +219,21 @@ non_empty_id_list:
     }
   ;
 
-// TODO: Don't leak the memory allocated by tmargs.
 tmargs: 
     %empty {
-      $$ = FBLC_ALLOC(arena, TMArgs);
-      $$->targv = FBLC_ALLOC(arena, FbldQRefV);
-      $$->margv = FBLC_ALLOC(arena, FbldQRefV);
-      FblcVectorInit(arena, *($$->targv));
-      FblcVectorInit(arena, *($$->margv));
+      $$.targv = FBLC_ALLOC(arena, FbldQRefV);
+      $$.margv = FBLC_ALLOC(arena, FbldQRefV);
+      FblcVectorInit(arena, *($$.targv));
+      FblcVectorInit(arena, *($$.margv));
     }
   | '<' qref_list '>' {
-      $$ = FBLC_ALLOC(arena, TMArgs);
-      $$->targv = $2;
-      $$->margv = FBLC_ALLOC(arena, FbldQRefV);
-      FblcVectorInit(arena, *($$->margv));
+      $$.targv = $2;
+      $$.margv = FBLC_ALLOC(arena, FbldQRefV);
+      FblcVectorInit(arena, *($$.margv));
     }
   | '<' qref_list ';' qref_list '>' {
-      $$ = FBLC_ALLOC(arena, TMArgs);
-      $$->targv = $2;
-      $$->margv = $4;
+      $$.targv = $2;
+      $$.margv = $4;
     }
   ;
 
@@ -245,8 +241,8 @@ qref:
     name tmargs {
       $$ = FBLC_ALLOC(arena, FbldQRef);
       $$->name = $1;
-      $$->targv = $2->targv;
-      $$->margv = $2->margv;
+      $$->targv = $2.targv;
+      $$->margv = $2.margv;
       $$->mref = NULL;
       $$->r.state = FBLD_RSTATE_UNRESOLVED;
       $$->r.mref = NULL;
@@ -254,8 +250,8 @@ qref:
   | name tmargs '@' qref {
       $$ = FBLC_ALLOC(arena, FbldQRef);
       $$->name = $1;
-      $$->targv = $2->targv;
-      $$->margv = $2->margv;
+      $$->targv = $2.targv;
+      $$->margv = $2.margv;
       $$->mref = $4;
       $$->r.state = FBLD_RSTATE_UNRESOLVED;
       $$->r.mref = NULL;
@@ -540,22 +536,19 @@ marg_list:
 
 params: 
     %empty {
-      $$ = FBLC_ALLOC(arena, TMParams);
-      $$->targv = FBLC_ALLOC(arena, FbldNameV);
-      $$->margv = FBLC_ALLOC(arena, FbldMArgV);
-      FblcVectorInit(arena, *($$->targv));
-      FblcVectorInit(arena, *($$->margv));
+      $$.targv = FBLC_ALLOC(arena, FbldNameV);
+      $$.margv = FBLC_ALLOC(arena, FbldMArgV);
+      FblcVectorInit(arena, *($$.targv));
+      FblcVectorInit(arena, *($$.margv));
     }
   | '<' name_list '>' {
-      $$ = FBLC_ALLOC(arena, TMParams);
-      $$->targv = $2;
-      $$->margv = FBLC_ALLOC(arena, FbldMArgV);
-      FblcVectorInit(arena, *($$->margv));
+      $$.targv = $2;
+      $$.margv = FBLC_ALLOC(arena, FbldMArgV);
+      FblcVectorInit(arena, *($$.margv));
     }
   | '<' name_list ';' marg_list '>' {
-      $$ = FBLC_ALLOC(arena, TMParams);
-      $$->targv = $2;
-      $$->margv = $4;
+      $$.targv = $2;
+      $$.margv = $4;
     }
   ;
 
@@ -563,8 +556,8 @@ abstract_type_decl: "type" name params {
       $$ = FBLC_ALLOC(arena, FbldType);
       $$->_base.tag = FBLD_TYPE_DECL;
       $$->_base.name = $2;
-      $$->_base.targv = $3->targv;
-      $$->_base.margv = $3->margv;
+      $$->_base.targv = $3.targv;
+      $$->_base.margv = $3.margv;
       $$->kind = FBLD_ABSTRACT_KIND;
       $$->fieldv = NULL;
     }
@@ -574,8 +567,8 @@ struct_decl: "struct" name params '(' arg_list ')' {
       $$ = FBLC_ALLOC(arena, FbldType);
       $$->_base.tag = FBLD_TYPE_DECL;
       $$->_base.name = $2;
-      $$->_base.targv = $3->targv;
-      $$->_base.margv = $3->margv;
+      $$->_base.targv = $3.targv;
+      $$->_base.margv = $3.margv;
       $$->kind = FBLD_STRUCT_KIND;
       $$->fieldv = $5;
     }
@@ -585,8 +578,8 @@ union_decl: "union" name params '(' non_empty_arg_list ')' {
       $$ = FBLC_ALLOC(arena, FbldType);
       $$->_base.tag = FBLD_TYPE_DECL;
       $$->_base.name = $2;
-      $$->_base.targv = $3->targv;
-      $$->_base.margv = $3->margv;
+      $$->_base.targv = $3.targv;
+      $$->_base.margv = $3.margv;
       $$->kind = FBLD_UNION_KIND;
       $$->fieldv = $5;
     }
@@ -600,8 +593,8 @@ func_decl: "func" name params '(' arg_list ';' qref ')' {
       $$ = FBLC_ALLOC(arena, FbldFunc);
       $$->_base.tag = FBLD_FUNC_DECL;
       $$->_base.name = $2;
-      $$->_base.targv = $3->targv;
-      $$->_base.margv = $3->margv;
+      $$->_base.targv = $3.targv;
+      $$->_base.margv = $3.margv;
       $$->argv = $5;
       $$->return_type = $7;
       $$->body = NULL;
@@ -647,8 +640,8 @@ proc_decl: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
       $$ = FBLC_ALLOC(arena, FbldProc);
       $$->_base.tag = FBLD_PROC_DECL;
       $$->_base.name = $2;
-      $$->_base.targv = $3->targv;
-      $$->_base.margv = $3->margv;
+      $$->_base.targv = $3.targv;
+      $$->_base.margv = $3.margv;
       $$->portv = $5;
       $$->argv = $7;
       $$->return_type = $9;
@@ -664,42 +657,41 @@ proc_defn: proc_decl actn {
 
 decl_list:
     %empty {
-      $$ = FBLC_ALLOC(arena, Decls);
-      $$->importv = FBLC_ALLOC(arena, FbldImportV);
-      $$->typev = FBLC_ALLOC(arena, FbldTypeV);
-      $$->funcv = FBLC_ALLOC(arena, FbldFuncV);
-      $$->procv = FBLC_ALLOC(arena, FbldProcV);
-      $$->interfv = FBLC_ALLOC(arena, FbldInterfV);
-      $$->modulev = FBLC_ALLOC(arena, FbldModuleV);
-      FblcVectorInit(arena, *($$->importv));
-      FblcVectorInit(arena, *($$->typev));
-      FblcVectorInit(arena, *($$->funcv));
-      FblcVectorInit(arena, *($$->procv));
-      FblcVectorInit(arena, *($$->interfv));
-      FblcVectorInit(arena, *($$->modulev));
+      $$.importv = FBLC_ALLOC(arena, FbldImportV);
+      $$.typev = FBLC_ALLOC(arena, FbldTypeV);
+      $$.funcv = FBLC_ALLOC(arena, FbldFuncV);
+      $$.procv = FBLC_ALLOC(arena, FbldProcV);
+      $$.interfv = FBLC_ALLOC(arena, FbldInterfV);
+      $$.modulev = FBLC_ALLOC(arena, FbldModuleV);
+      FblcVectorInit(arena, *($$.importv));
+      FblcVectorInit(arena, *($$.typev));
+      FblcVectorInit(arena, *($$.funcv));
+      FblcVectorInit(arena, *($$.procv));
+      FblcVectorInit(arena, *($$.interfv));
+      FblcVectorInit(arena, *($$.modulev));
     }
   | decl_list import ';' {
-      FblcVectorAppend(arena, *($1->importv), $2);
+      FblcVectorAppend(arena, *($1.importv), $2);
       $$ = $1;
     }
   | decl_list type_decl ';' {
-      FblcVectorAppend(arena, *($1->typev), $2);
+      FblcVectorAppend(arena, *($1.typev), $2);
       $$ = $1;
     }
   | decl_list func_decl ';' {
-      FblcVectorAppend(arena, *($1->funcv), $2);
+      FblcVectorAppend(arena, *($1.funcv), $2);
       $$ = $1;
     }
   | decl_list proc_decl ';' {
-      FblcVectorAppend(arena, *($1->procv), $2);
+      FblcVectorAppend(arena, *($1.procv), $2);
       $$ = $1;
     }
   | decl_list interf {
-      FblcVectorAppend(arena, *($1->interfv), $2);
+      FblcVectorAppend(arena, *($1.interfv), $2);
       $$ = $1;
     }
   | decl_list module_decl ';' {
-      FblcVectorAppend(arena, *($1->modulev), $2);
+      FblcVectorAppend(arena, *($1.modulev), $2);
       $$ = $1;
     }
   ;
@@ -708,56 +700,54 @@ interf: "interf" name params '{' decl_list '}' ';' {
           $$ = FBLC_ALLOC(arena, FbldInterf);
           $$->_base.tag = FBLD_INTERF_DECL;
           $$->_base.name = $2;
-          $$->_base.targv = $3->targv;
-          $$->_base.margv = $3->margv;
-          $$->importv = $5->importv;
-          $$->typev = $5->typev;
-          $$->funcv = $5->funcv;
-          $$->procv = $5->procv;
-          $$->interfv = $5->interfv;
-          $$->modulev = $5->modulev;
-          // TODO: Don't leak the allocated Decls object?
+          $$->_base.targv = $3.targv;
+          $$->_base.margv = $3.margv;
+          $$->importv = $5.importv;
+          $$->typev = $5.typev;
+          $$->funcv = $5.funcv;
+          $$->procv = $5.procv;
+          $$->interfv = $5.interfv;
+          $$->modulev = $5.modulev;
         }
      ;
 
 defn_list:
     %empty {
-      $$ = FBLC_ALLOC(arena, Decls);
-      $$->importv = FBLC_ALLOC(arena, FbldImportV);
-      $$->typev = FBLC_ALLOC(arena, FbldTypeV);
-      $$->funcv = FBLC_ALLOC(arena, FbldFuncV);
-      $$->procv = FBLC_ALLOC(arena, FbldProcV);
-      $$->interfv = FBLC_ALLOC(arena, FbldInterfV);
-      $$->modulev = FBLC_ALLOC(arena, FbldModuleV);
-      FblcVectorInit(arena, *($$->importv));
-      FblcVectorInit(arena, *($$->typev));
-      FblcVectorInit(arena, *($$->funcv));
-      FblcVectorInit(arena, *($$->procv));
-      FblcVectorInit(arena, *($$->interfv));
-      FblcVectorInit(arena, *($$->modulev));
+      $$.importv = FBLC_ALLOC(arena, FbldImportV);
+      $$.typev = FBLC_ALLOC(arena, FbldTypeV);
+      $$.funcv = FBLC_ALLOC(arena, FbldFuncV);
+      $$.procv = FBLC_ALLOC(arena, FbldProcV);
+      $$.interfv = FBLC_ALLOC(arena, FbldInterfV);
+      $$.modulev = FBLC_ALLOC(arena, FbldModuleV);
+      FblcVectorInit(arena, *($$.importv));
+      FblcVectorInit(arena, *($$.typev));
+      FblcVectorInit(arena, *($$.funcv));
+      FblcVectorInit(arena, *($$.procv));
+      FblcVectorInit(arena, *($$.interfv));
+      FblcVectorInit(arena, *($$.modulev));
     }
   | defn_list import ';' {
-      FblcVectorAppend(arena, *($1->importv), $2);
+      FblcVectorAppend(arena, *($1.importv), $2);
       $$ = $1;
     }
   | defn_list type_defn ';' {
-      FblcVectorAppend(arena, *($1->typev), $2);
+      FblcVectorAppend(arena, *($1.typev), $2);
       $$ = $1;
     }
   | defn_list func_defn ';' {
-      FblcVectorAppend(arena, *($1->funcv), $2);
+      FblcVectorAppend(arena, *($1.funcv), $2);
       $$ = $1;
     }
   | defn_list proc_defn ';' {
-      FblcVectorAppend(arena, *($1->procv), $2);
+      FblcVectorAppend(arena, *($1.procv), $2);
       $$ = $1;
     }
   | defn_list interf {
-      FblcVectorAppend(arena, *($1->interfv), $2);
+      FblcVectorAppend(arena, *($1.interfv), $2);
       $$ = $1;
     }
   | defn_list module_defn {
-      FblcVectorAppend(arena, *($1->modulev), $2);
+      FblcVectorAppend(arena, *($1.modulev), $2);
       $$ = $1;
     }
   ;
@@ -766,8 +756,8 @@ module_decl: "module" name params '(' qref ')' {
           $$ = FBLC_ALLOC(arena, FbldModule);
           $$->_base.tag = FBLD_MODULE_DECL;
           $$->_base.name = $2;
-          $$->_base.targv = $3->targv;
-          $$->_base.margv = $3->margv;
+          $$->_base.targv = $3.targv;
+          $$->_base.margv = $3.margv;
           $$->iref = $5;
           $$->importv = NULL;
           $$->typev = NULL;
@@ -780,12 +770,12 @@ module_decl: "module" name params '(' qref ')' {
 
 module_defn: module_decl '{' defn_list '}' ';' {
       $$ = $1;
-      $$->importv = $3->importv;
-      $$->typev = $3->typev;
-      $$->funcv = $3->funcv;
-      $$->procv = $3->procv;
-      $$->interfv = $3->interfv;
-      $$->modulev = $3->modulev;
+      $$->importv = $3.importv;
+      $$->typev = $3.typev;
+      $$->funcv = $3.funcv;
+      $$->procv = $3.procv;
+      $$->interfv = $3.interfv;
+      $$->modulev = $3.modulev;
     }
   ;
 
