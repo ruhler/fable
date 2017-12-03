@@ -104,9 +104,10 @@ static FbldType* LookupType(Context* ctx, FbldQRef* qref)
   assert(qref->r.decl->tag == FBLD_TYPE_DECL);
   FbldName* name = qref->r.decl->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
-  for (size_t i = 0; i < module->typev->size; ++i) {
-    if (FbldNamesEqual(module->typev->xs[i]->_base.name->name, name->name)) {
-      return module->typev->xs[i];
+  for (size_t i = 0; i < module->declv->size; ++i) {
+    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
+      assert(module->declv->xs[i]->tag == FBLD_TYPE_DECL);
+      return (FbldType*)module->declv->xs[i];
     }
   }
   assert(false && "LookupType failed");
@@ -132,9 +133,10 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
   assert(qref->r.decl->tag == FBLD_FUNC_DECL);
   FbldName* name = qref->r.decl->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
-  for (size_t i = 0; i < module->funcv->size; ++i) {
-    if (FbldNamesEqual(module->funcv->xs[i]->_base.name->name, name->name)) {
-      return module->funcv->xs[i];
+  for (size_t i = 0; i < module->declv->size; ++i) {
+    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
+      assert(module->declv->xs[i]->tag == FBLD_FUNC_DECL);
+      return (FbldFunc*)module->declv->xs[i];
     }
   }
   assert(false && "LookupFunc failed");
@@ -160,9 +162,10 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
   assert(qref->r.decl->tag == FBLD_PROC_DECL);
   FbldName* name = qref->r.decl->name;
   FbldModule* module = LookupModule(ctx, qref->r.mref);
-  for (size_t i = 0; i < module->procv->size; ++i) {
-    if (FbldNamesEqual(module->procv->xs[i]->_base.name->name, name->name)) {
-      return module->procv->xs[i];
+  for (size_t i = 0; i < module->declv->size; ++i) {
+    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
+      assert(module->declv->xs[i]->tag == FBLD_PROC_DECL);
+      return (FbldProc*)module->declv->xs[i];
     }
   }
   assert(false && "LookupProc failed");
@@ -198,9 +201,10 @@ static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
   }
 
   FbldModule* module = LookupModule(ctx, qref->r.mref);
-  for (size_t i = 0; i < module->modulev->size; ++i) {
-    if (FbldNamesEqual(module->modulev->xs[i]->_base.name->name, name->name)) {
-      return module->modulev->xs[i];
+  for (size_t i = 0; i < module->declv->size; ++i) {
+    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
+      assert(module->declv->xs[i]->tag == FBLD_MODULE_DECL);
+      return (FbldModule*)module->declv->xs[i];
     }
   }
   assert(false && "LookupModule failed");

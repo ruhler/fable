@@ -446,6 +446,13 @@ struct FbldDecl {
   FbldMArgV* margv;
 };
 
+// FbldDeclV --
+//   A vector of FbldDecls.
+typedef struct {
+  size_t size;
+  FbldDecl** xs;
+} FbldDeclV;
+
 // FbldKind --
 //   An enum used to distinguish between struct, union, and abstract types.
 typedef enum {
@@ -463,13 +470,6 @@ typedef struct {
   FbldArgV* fieldv;
 } FbldType;
 
-// FbldTypeV --
-//   A vector of FbldTypes.
-typedef struct {
-  size_t size;
-  FbldType** xs;
-} FbldTypeV;
-
 // FbldFunc--
 //   A declaration of a function.
 //   The body is NULL for function prototypes specified in module
@@ -480,13 +480,6 @@ typedef struct {
   FbldQRef* return_type;
   FbldExpr* body;
 } FbldFunc;
-
-// FbldFuncV --
-//   A vector of FbldFuncs.
-typedef struct {
-  size_t size;
-  FbldFunc** xs;
-} FbldFuncV;
 
 // FbldPolarity --
 //   The polarity of a port.
@@ -522,23 +515,12 @@ typedef struct {
   FbldActn* body;
 } FbldProc;
 
-// FbldProcV --
-//   A vector of FbldProcs.
-typedef struct {
-  size_t size;
-  FbldProc** xs;
-} FbldProcV;
-
 // FbldInterf --
 //   An fbld interface declaration.
 typedef struct {
   FbldDecl _base;
   FbldImportV* importv;
-  FbldTypeV* typev;
-  FbldFuncV* funcv;
-  FbldProcV* procv;
-  FbldInterfV* interfv;
-  FbldModuleV* modulev;
+  FbldDeclV* declv;
 } FbldInterf;
 
 // FbldInterfV --
@@ -555,21 +537,13 @@ struct FbldInterfV {
 //   name - The name of the module being defined.
 //   params - The polymorphic type and module parameters of the module.
 //   iref - The interface the module implements.
-//   importv - The using declarations within the module definition.
-//   typev - The type declarations within the module definition.
-//   funcv - The func declarations within the module definition.
-//   procv - The proc declarations within the module definition.
-//   interfv - The interface declarations within the module definition.
-//   modulev - The module declarations within the module definition.
+//   importv - The import statements within the module definition.
+//   declv - The declarations within the module definition.
 typedef struct {
   FbldDecl _base;
   FbldQRef* iref;
   FbldImportV* importv;
-  FbldTypeV* typev;
-  FbldFuncV* funcv;
-  FbldProcV* procv;
-  FbldInterfV* interfv;
-  FbldModuleV* modulev;
+  FbldDeclV* declv;
 } FbldModule;
 
 // FbldModuleV --
