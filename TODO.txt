@@ -2,14 +2,13 @@ Priority:
 * Fbld 3
 
 Fbld 3:
-* Change interface to set QRef.r to a module parameter.
- - Get M1-02 test to pass
 * Add checks to get M1-04 to M1-12 to pass
 * Add spec test for parameterized function
 * Add support for parameters.
  - Get added spec test to pass
 * Get AllTest and Snake to pass
  - Adding spec tests as needed to reproduce errors.
+* Add a test for inner module definition with following declaration.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

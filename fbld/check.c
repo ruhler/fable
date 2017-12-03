@@ -259,15 +259,16 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   assert(interf->_base.targv->size == 0 && "TODO");
   assert(interf->_base.margv->size == 0 && "TODO");
 
+  // TODO: Mark mref as a parameter?
   FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
   mref->name = interf->_base.name;
   mref->targv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *mref->targv);
   mref->margv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *mref->margv);
-  mref->mref = env == NULL ? NULL : env->mref;
+  mref->mref = NULL;
   mref->r.state = FBLD_RSTATE_RESOLVED;
-  mref->r.mref = mref->mref;
+  mref->r.mref = NULL;
   mref->r.decl = &interf->_base;
 
   Env interf_env = {
@@ -1772,9 +1773,10 @@ static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref)
   // The qref should already have been resolved by this point, otherwise
   // something has gone wrong.
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(qref->r.decl->tag == FBLD_MODULE_DECL);
 
   if (qref->r.mref != NULL) {
+    assert(qref->r.decl->tag == FBLD_MODULE_DECL);
+
     // TODO: Avoid allocation if the foreign module is the same?
     FbldQRef* imported = FBLC_ALLOC(ctx->arena, FbldQRef);
     imported->name = qref->name;
@@ -1787,6 +1789,24 @@ static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref)
     imported->r.mref = imported->mref;
     imported->r.decl = qref->r.decl;
     return imported;
+  }
+
+  if (qref->r.decl->tag == FBLD_INTERF_DECL) {
+    // This is an interface parameter.
+    // Find the module from src to substitute in its place.
+    for (FbldQRef* m = src; m != NULL; m = m->r.mref) {
+      assert(m->r.state == FBLD_RSTATE_RESOLVED);
+      if (m->r.decl->tag == FBLD_MODULE_DECL) {
+        FbldModule* module = (FbldModule*)m->r.decl;
+        assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
+        if (module->iref->r.decl == qref->r.decl) {
+          // TODO: Do something with the interface parameters?
+          return m;
+        }
+      }
+    }
+    assert(false && "foreign module import failed.");
+    return NULL;
   }
 
   // TODO: Check whether this is a module parameter somewhere from src.

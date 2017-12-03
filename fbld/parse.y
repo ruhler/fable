@@ -158,9 +158,9 @@
 // indicate which start token we actually want to use.
 start:
      START_INTERF interf { result->decl = $2; }
-   | START_MODULE module_defn { result->decl = $2; }
+   | START_MODULE module_defn ';' { result->decl = $2; }
    | START_TOP_DECL interf { result->decl = $2; }
-   | START_TOP_DECL module_defn { result->decl = $2; }
+   | START_TOP_DECL module_defn ';' { result->decl = $2; }
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
    ;
@@ -715,7 +715,7 @@ module_decl: "module" name params '(' qref ')' {
         }
      ;
 
-module_defn: module_decl '{' defn_list '}' ';' {
+module_defn: module_decl '{' defn_list '}' {
       FbldModule* module = (FbldModule*)$1;
       module->importv = $3.importv;
       module->declv = $3.declv;

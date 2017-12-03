@@ -35,6 +35,6 @@ set prg {
   }
 }
 
-skip fbld-test $prg "main@MainM" {} {
+fbld-test $prg "main@MainM" {} {
   return Unit@UnitM()
 }
