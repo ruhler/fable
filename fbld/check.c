@@ -66,7 +66,8 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
 static bool CheckModule(Context* ctx, Env* env, FbldModule* module);
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module);
 static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined);
-static void CheckEnv(Context* ctx, Env* env);
+static void CheckProtos(Context* ctx, Env* env);
+static void CheckBodies(Context* ctx, Env* env);
 static bool CheckType(Context* ctx, Env* env, FbldQRef* qref);
 static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars);
 static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr);
@@ -274,7 +275,7 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
     .importv = interf->importv,
     .declv = interf->declv,
   };
-  CheckEnv(ctx, &interf_env);
+  CheckProtos(ctx, &interf_env);
 }
 
 // CheckModule --
@@ -316,7 +317,10 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     .importv = module->importv,
     .declv = module->declv,
   };
-  CheckEnv(ctx, &module_env);
+  CheckProtos(ctx, &module_env);
+  if (!ctx->error) {
+    CheckBodies(ctx, &module_env);
+  }
 
   // TODO:
 //  // Verify the module has everything it should according to its interface.
@@ -1214,9 +1218,10 @@ static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined)
   FblcVectorAppend(ctx->arena, *defined, name);
 }
 
-// CheckEnv --
+// CheckProto --
 //   Check that the declarations in the environment are well formed and well
-//   typed.
+//   typed. Only the prototypes of the declarations are checked, not the
+//   bodies.
 //
 // Inputs:
 //   ctx - The context for type checking.
@@ -1232,7 +1237,7 @@ static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined)
 //   an error.
 //   Loads and checks required top-level interface declarations and module
 //   headers (not module definitions), adding them to the context.
-static void CheckEnv(Context* ctx, Env* env)
+static void CheckProtos(Context* ctx, Env* env)
 {
   FbldNameV defined;
   FblcVectorInit(ctx->arena, defined);
@@ -1256,7 +1261,6 @@ static void CheckEnv(Context* ctx, Env* env)
 //    }
 //  }
 
-  // Check declarations.
   for (size_t decl_id = 0; decl_id < env->declv->size; ++decl_id) {
     FbldDecl* decl = env->declv->xs[decl_id];
     DefineName(ctx, decl->name, &defined);
@@ -1276,13 +1280,8 @@ static void CheckEnv(Context* ctx, Env* env)
       case FBLD_FUNC_DECL: {
         FbldFunc* func = (FbldFunc*)decl;
         Vars vars_data[func->argv->size];
-        Vars* vars = CheckArgV(ctx, env, func->argv, vars_data);
+        CheckArgV(ctx, env, func->argv, vars_data);
         CheckType(ctx, env, func->return_type);
-
-        if (func->body != NULL) {
-          FbldQRef* body_type = CheckExpr(ctx, env, vars, func->body);
-          CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
-        }
         break;
       }
 
@@ -1306,14 +1305,104 @@ static void CheckEnv(Context* ctx, Env* env)
         }
 
         Vars vars_data[proc->argv->size];
-        Vars* vars = CheckArgV(ctx, env, proc->argv, vars_data);
+        // TODO: Split CheckArgV into two functions, one for checking
+        // prototypes (no vars needed) and one for checking bodies (not
+        // redefinition or other checks needed)?
+        CheckArgV(ctx, env, proc->argv, vars_data);
         CheckType(ctx, env, proc->return_type);
+        break;
+      }
 
-        if (proc->body != NULL) {
-          FbldQRef* body_type = CheckActn(ctx, env, vars, ports, proc->body);
-          CheckTypesMatch(proc->body->loc, proc->return_type, body_type, &ctx->error);
+      case FBLD_INTERF_DECL: {
+        // TODO: check interface declarations.
+      }
+
+      case FBLD_MODULE_DECL: {
+        // TODO: check module declarations.
+      }
+
+      default:
+        UNREACHABLE("Invalid decl tag");
+    }
+  }
+}
+
+// CheckBodies --
+//   Check that the declarations in the environment are well formed and well
+//   typed. Only the declaration bodies are checked.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   env - The environment of declarations to check.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Behavior is undefined if the declaration prototypes have not already been
+//   determined to be well formed.
+//   Prints error messages to stderr and sets error to true if there are any
+//   problems. Function and process declarations may be NULL to indicate these
+//   declarations belong to an interface declaration; this is not considered
+//   an error.
+//   Loads and checks required top-level interface declarations and module
+//   headers (not module definitions), adding them to the context.
+static void CheckBodies(Context* ctx, Env* env)
+{
+//  // Check using declarations.
+//  for (size_t using_id = 0; using_id < ctx->env->usingv->size; ++using_id) {
+//    FbldUsing* using = ctx->env->usingv->xs[using_id];
+//    if (CheckMRef(ctx, using->mref)) {
+//      for (size_t i = 0; i < using->itemv->size; ++i) {
+//        // TODO: Don't leak this allocation.
+//        FbldQRef* entity = FBLC_ALLOC(ctx->arena, FbldQRef);
+//        entity->uname = using->itemv->xs[i]->source;
+//        entity->umref = using->mref;
+//        entity->rname = entity->uname;
+//        entity->rmref = entity->umref;
+//        if ((LookupType(ctx, entity) == NULL && LookupFunc(ctx, entity) == NULL)) {
+//          ReportError("%s is not exported by %s\n", &ctx->error,
+//              using->itemv->xs[i]->source->loc, using->itemv->xs[i]->source->name,
+//              using->mref->name->name);
+//        }
+//      }
+//    }
+//  }
+
+  for (size_t decl_id = 0; decl_id < env->declv->size; ++decl_id) {
+    FbldDecl* decl = env->declv->xs[decl_id];
+    switch (decl->tag) {
+      case FBLD_TYPE_DECL: {
+        // Types do not have any bodies to check.
+        break;
+      }
+
+      case FBLD_FUNC_DECL: {
+        FbldFunc* func = (FbldFunc*)decl;
+        Vars vars_data[func->argv->size];
+        Vars* vars = CheckArgV(ctx, env, func->argv, vars_data);
+        FbldQRef* body_type = CheckExpr(ctx, env, vars, func->body);
+        CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
+        break;
+      }
+
+      case FBLD_PROC_DECL: {
+        FbldProc* proc = (FbldProc*)decl;
+        Ports ports_data[proc->portv->size];
+        Ports* ports = NULL;
+        for (size_t port_id = 0; port_id < proc->portv->size; ++port_id) {
+          FbldPort* port = proc->portv->xs + port_id;
+          ports_data[port_id].name = port->name->name;
+          ports_data[port_id].type = CheckType(ctx, env, port->type) ? port->type : NULL;
+          ports_data[port_id].polarity = port->polarity;
+          ports_data[port_id].next = ports;
+          ports = ports_data + port_id;
         }
 
+        Vars vars_data[proc->argv->size];
+        Vars* vars = CheckArgV(ctx, env, proc->argv, vars_data);
+        FbldQRef* body_type = CheckActn(ctx, env, vars, ports, proc->body);
+        CheckTypesMatch(proc->body->loc, proc->return_type, body_type, &ctx->error);
         break;
       }
 
@@ -1603,7 +1692,7 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 }
 
 // ForeignType --
-//   Reference a potentially foreign type.
+//   Reference a foreign type.
 //
 // Inputs:
 //   ctx - The context for type checking.
@@ -1617,16 +1706,8 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 //   Resolves the qref if necessary.
 static FbldQRef* ForeignType(Context* ctx, Env* env, FbldQRef* qref)
 {
-  // TODO: Why is it right to check in this context and not the context
-  // where the qref was defined? Because external contexts will already have
-  // been resolved, so this only actually does resolution for qrefs
-  // defined locally?
-  //
-  // For example, isn't this wrong if the entity is defined in a sub-module of
-  // the current environment? Because then it will not have been checked yet
-  // and the current environment isn't the right one to use here.
-  if (!CheckType(ctx, env, qref)) {
-    return NULL;
-  }
+  // The qref should already have been resolved by this point, otherwise
+  // something has gone wrong.
+  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
   return qref;
 }
