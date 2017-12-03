@@ -75,7 +75,8 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 
-static FbldQRef* ForeignType(Context* ctx, Env* env, FbldQRef* qref);
+static FbldQRef* ForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref);
+static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref);
 
 // static bool ResolveQRef(Context* ctx, FbldQRef* qref);
 // static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref);
@@ -821,7 +822,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       if (app_expr->func->r.decl->tag == FBLD_FUNC_DECL) {
         FbldFunc* func = (FbldFunc*)app_expr->func->r.decl;
         argv = func->argv;
-        return_type = ForeignType(ctx, env, func->return_type);
+        return_type = ForeignType(ctx, app_expr->func, func->return_type);
       } else if (app_expr->func->r.decl->tag == FBLD_TYPE_DECL) {
         FbldType* type = (FbldType*)app_expr->func->r.decl;
         if (type->kind != FBLD_STRUCT_KIND) {
@@ -837,7 +838,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
 
       if (argv->size == app_expr->argv->size) {
         for (size_t i = 0; i < argv->size; ++i) {
-          FbldQRef* expected = ForeignType(ctx, env, argv->xs[i]->type);
+          FbldQRef* expected = ForeignType(ctx, app_expr->func, argv->xs[i]->type);
           CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
         }
       } else {
@@ -859,7 +860,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       for (size_t i = 0; i < type->fieldv->size; ++i) {
         if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
           access_expr->field.id = i;
-          return ForeignType(ctx, env, type->fieldv->xs[i]->type);
+          return ForeignType(ctx, qref, type->fieldv->xs[i]->type);
         }
       }
       ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->_base.name->name);
@@ -882,7 +883,7 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       for (size_t i = 0; i < type_def->fieldv->size; ++i) {
         if (FbldNamesEqual(union_expr->field.name->name, type_def->fieldv->xs[i]->name->name)) {
           union_expr->field.id = i;
-          FbldQRef* expected = ForeignType(ctx, env, type_def->fieldv->xs[i]->type);
+          FbldQRef* expected = ForeignType(ctx, union_expr->type, type_def->fieldv->xs[i]->type);
           CheckTypesMatch(union_expr->arg->loc, expected, arg_type, &ctx->error);
           return union_expr->type;
         }
@@ -1076,7 +1077,7 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
                     proc->portv->xs[i].polarity == FBLD_PUT_POLARITY ? "put" : "get",
                     port_types[i]->polarity == FBLD_PUT_POLARITY ? "put" : "get");
             }
-            FbldQRef* expected = ForeignType(ctx, env, proc->portv->xs[i].type);
+            FbldQRef* expected = ForeignType(ctx, call_actn->proc, proc->portv->xs[i].type);
             CheckTypesMatch(call_actn->portv->xs[i].name->loc, expected, port_types[i]->type, &ctx->error);
           }
         }
@@ -1086,13 +1087,13 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
 
       if (proc->argv->size == call_actn->argv->size) {
         for (size_t i = 0; i < call_actn->argv->size; ++i) {
-          FbldQRef* expected = ForeignType(ctx, env, proc->argv->xs[i]->type);
+          FbldQRef* expected = ForeignType(ctx, call_actn->proc, proc->argv->xs[i]->type);
           CheckTypesMatch(call_actn->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
         }
       } else {
         ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->name->loc, proc->argv->size, call_actn->proc->name->name, call_actn->argv->size);
       }
-      return ForeignType(ctx, env, proc->return_type);
+      return ForeignType(ctx, call_actn->proc, proc->return_type);
     }
 
     case FBLD_LINK_ACTN: {
@@ -1692,22 +1693,102 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 }
 
 // ForeignType --
-//   Reference a foreign type.
+//   Reference a foreign type. A foreign type is a field, argument, port, or
+//   return type of some type, func, or proc declaration. The foreign type
+//   will have been resolved in the context of the possibly parameterized
+//   type, func, or proc declaration. It is now being used with concrete type
+//   arguments. This function substitutes the proper concrete type arguments
+//   given the src of the foreign type.
+//
+//   For example, if the source of the foreign type is Maybe<Int>, and the
+//   foreign type is the parameter T in the context of the definition of
+//   Maybe<T>, then this returns Int.
+//
+//   Substitutions are performed for type arguments, module arguments, and
+//   interfaces.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   env - The environment from which the qref was referenced.
-//   qref - The type being referenced.
+//   src - The src reference in the current environment used to supply
+//         parameter arguments.
+//   qref - The foreign type that has been resolved in the context of its
+//          definition.
 //
 // Results:
-//   The qref, or NULL if it is not well formed.
+//   The foreign type imported into the current environment by substituting
+//   parameter arguments as appropriate given the src.
 //
 // Side effects:
-//   Resolves the qref if necessary.
-static FbldQRef* ForeignType(Context* ctx, Env* env, FbldQRef* qref)
+//   May allocate a new qref used for the return value.
+static FbldQRef* ForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
   // The qref should already have been resolved by this point, otherwise
   // something has gone wrong.
   assert(qref->r.state == FBLD_RSTATE_RESOLVED);
+  assert(qref->r.decl->tag == FBLD_TYPE_DECL);
+
+  if (qref->r.mref != NULL) {
+    // TODO: Avoid allocation if the foreign module is the same?
+    FbldQRef* imported = FBLC_ALLOC(ctx->arena, FbldQRef);
+    imported->name = qref->name;
+    assert(qref->targv->size == 0 && "TODO");
+    assert(qref->margv->size == 0 && "TODO");
+    imported->targv = qref->targv;
+    imported->margv = qref->margv;
+    imported->mref = ForeignModule(ctx, src, qref->r.mref);
+    imported->r.state = FBLD_RSTATE_RESOLVED;
+    imported->r.mref = imported->mref;
+    imported->r.decl = qref->r.decl;
+    return imported;
+  }
+
+  // TODO: Check whether this is a type parameter somewhere from src.
+  return qref;
+}
+
+// ForeignModule --
+//   Reference a foreign module. A foreign is a module referred to from a
+//   field, argument, port, or return type of some type, func, or proc
+//   declaration. The foreign module will have been resolved in the context of
+//   the possibly parameterized type, func, or proc declaration. It is now
+//   being used with concrete parameter arguments. This function substitutes
+//   the proper concrete arguments given by the src of the foreign type.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   src - The src reference in the current environment used to supply
+//         parameter arguments.
+//   qref - The foreign module that has been resolved in the context of its
+//          definition.
+//
+// Results:
+//   The foreign module imported into the current environment by substituting
+//   parameter arguments as appropriate given the src.
+//
+// Side effects:
+//   May allocate a new qref used for the return value.
+static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref)
+{
+  // The qref should already have been resolved by this point, otherwise
+  // something has gone wrong.
+  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
+  assert(qref->r.decl->tag == FBLD_MODULE_DECL);
+
+  if (qref->r.mref != NULL) {
+    // TODO: Avoid allocation if the foreign module is the same?
+    FbldQRef* imported = FBLC_ALLOC(ctx->arena, FbldQRef);
+    imported->name = qref->name;
+    assert(qref->targv->size == 0 && "TODO");
+    assert(qref->margv->size == 0 && "TODO");
+    imported->targv = qref->targv;
+    imported->margv = qref->margv;
+    imported->mref = ForeignModule(ctx, src, qref->r.mref);
+    imported->r.state = FBLD_RSTATE_RESOLVED;
+    imported->r.mref = imported->mref;
+    imported->r.decl = qref->r.decl;
+    return imported;
+  }
+
+  // TODO: Check whether this is a module parameter somewhere from src.
   return qref;
 }
