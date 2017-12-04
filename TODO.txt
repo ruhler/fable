@@ -2,7 +2,6 @@ Priority:
 * Fbld 3
 
 Fbld 3:
-* Add checks to get M1-04 to M1-12 to pass
 * Add spec test for parameterized function
 * Add support for parameters.
  - Get added spec test to pass

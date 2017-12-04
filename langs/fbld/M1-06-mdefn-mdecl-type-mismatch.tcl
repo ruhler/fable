@@ -22,4 +22,4 @@ set prg {
   }
 }
 
-skip fbld-check-error $prg MainM MainM.fbld:7:14
+fbld-check-error $prg MainM MainM.fbld:7:14

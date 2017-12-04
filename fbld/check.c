@@ -81,10 +81,8 @@ static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref);
 // static bool ResolveQRef(Context* ctx, FbldQRef* qref);
 // static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref);
 // static bool CheckMRef(Context* ctx, FbldQRef* mref);
-// static bool ArgsEqual(FbldArgV* a, FbldArgV* b);
-// static bool CheckTypeDeclsMatch(Context* ctx, FbldType* type_i, FbldType* type_m);
-// static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* type_i, FbldFunc* type_m);
-// static bool CheckProcDeclsMatch(Context* ctx, FbldProc* type_i, FbldProc* type_m);
+static bool ArgsEqual(Context* ctx, FbldQRef* src, FbldArgV* i, FbldArgV* m);
+static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
 
 // ReportError --
 //   Report an error message associated with a location in a source file.
@@ -319,74 +317,54 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     .importv = module->importv,
     .declv = module->declv,
   };
+
   CheckProtos(ctx, &module_env);
+
+  // Verify the module has everything it should according to its interface.
+  FbldInterf* interf = FbldLoadInterf(ctx->arena, ctx->path, module->iref->name->name, ctx->prgm);
+  if (interf == NULL) {
+    return false;
+  }
+
+  FbldQRef src = {
+    .name = NULL,
+    .targv = FBLC_ALLOC(ctx->arena, FbldQRefV),
+    .margv = FBLC_ALLOC(ctx->arena, FbldQRefV),
+    .mref = mref,
+    .r = {
+      .state = FBLD_RSTATE_RESOLVED,
+      .mref = mref,
+      .decl = NULL
+    },
+  };
+  FblcVectorInit(ctx->arena, *(src.targv));
+  FblcVectorInit(ctx->arena, *(src.margv));
+
+  for (size_t i = 0; i < interf->declv->size; ++i) {
+    FbldDecl* decl_i = interf->declv->xs[i];
+    for (size_t m = 0; m < module->declv->size; ++m) {
+      FbldDecl* decl_m = module->declv->xs[m];
+      if (FbldNamesEqual(decl_i->name->name, decl_m->name->name)) {
+        src.name = decl_m->name;
+        src.r.decl = decl_m;
+        CheckDeclsMatch(ctx, &src, decl_i, decl_m);
+
+        // Set type_i to NULL to indicate we found the matching type.
+        decl_i = NULL;
+        break;
+      }
+    }
+
+    if (decl_i != NULL) {
+      ReportError("No implementation found for %s from the interface\n", &ctx->error, module->_base.name->loc, decl_i->name->name);
+    }
+  }
+
   if (!ctx->error) {
     CheckBodies(ctx, &module_env);
   }
 
-  // TODO:
-//  // Verify the module has everything it should according to its interface.
-//  FbldInterf* interf = FbldLoadInterf(arena, path, module->iref->name->name, prgm);
-//  if (interf == NULL) {
-//    return false;
-//  }
-//
-//  for (size_t i = 0; i < interf->typev->size; ++i) {
-//    FbldType* type_i = interf->typev->xs[i];
-//    for (size_t m = 0; m < module->typev->size; ++m) {
-//      FbldType* type_m = module->typev->xs[m];
-//      if (FbldNamesEqual(type_i->name->name, type_m->name->name)) {
-//        CheckTypeDeclsMatch(&ctx, type_i, type_m);
-//
-//        // Set type_i to NULL to indicate we found the matching type.
-//        type_i = NULL;
-//        break;
-//      }
-//    }
-//
-//    if (type_i != NULL) {
-//      ReportError("No implementation found for type %s from the interface\n", &ctx.error, module->name->loc, type_i->name->name);
-//    }
-//  }
-//
-//  for (size_t i = 0; i < interf->funcv->size; ++i) {
-//    FbldFunc* func_i = interf->funcv->xs[i];
-//    for (size_t m = 0; m < module->funcv->size; ++m) {
-//      FbldFunc* func_m = module->funcv->xs[m];
-//      if (FbldNamesEqual(func_i->name->name, func_m->name->name)) {
-//        CheckFuncDeclsMatch(&ctx, func_i, func_m);
-//
-//        // Set func_i to NULL to indicate we found the matching func.
-//        func_i = NULL;
-//        break;
-//      }
-//    }
-//
-//    if (func_i != NULL) {
-//      ReportError("No implementation found for func %s from the interface\n", &ctx.error, module->name->loc, func_i->name->name);
-//    }
-//  }
-//
-//  for (size_t i = 0; i < interf->procv->size; ++i) {
-//    FbldProc* proc_i = interf->procv->xs[i];
-//    for (size_t m = 0; m < module->procv->size; ++m) {
-//      FbldProc* proc_m = module->procv->xs[m];
-//      if (FbldNamesEqual(proc_i->name->name, proc_m->name->name)) {
-//        CheckProcDeclsMatch(&ctx, proc_i, proc_m);
-//
-//        // Set proc_i to NULL to indicate we found the matching proc.
-//        proc_i = NULL;
-//        break;
-//      }
-//    }
-//
-//    if (proc_i != NULL) {
-//      ReportError("No implementation found for proc %s from the interface\n", &ctx.error, module->name->loc, proc_i->name->name);
-//    }
-//  }
-//
-//  return !ctx.error;
-  return true;
+  return !ctx->error;
 }
 
 // CheckModuleHeader --
@@ -425,6 +403,7 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 
 // CheckTypesMatch --
 //   Check whether the given types match.
+//   TODO: Change this function to take a context as input.
 //
 // Inputs:
 //   loc - location to use for error reporting.
@@ -1464,74 +1443,137 @@ bool FbldCheckModuleHeader(FblcArena* arena, FbldStringV* path, FbldModule* modu
 // ArgsEqual --
 //   Test whether two arg vectors are the same.
 //
+// Inputs:
+//   ctx - The context for type checking.
+//   src - The source qref used to import the foreign args for vector 'i'
+//   i - The interface arg vector.
+//   m - The module arg vector.
+//
 // Result:
 //   true if the two argument vectors have the same number, resolved type, and
 //   names of arguments, false otherwise.
 //
 // Side effects:
 //   None.
-//static bool ArgsEqual(FbldArgV* a, FbldArgV* b)
-//{
-//  if (a->size != b->size) {
-//    return false;
-//  }
-//
-//  for (size_t i = 0; i < a->size; ++i) {
-//    if (!FbldQRefsEqual(a->xs[i]->type, b->xs[i]->type)) {
-//      return false;
-//    }
-//
-//    if (!FbldNamesEqual(a->xs[i]->name->name, b->xs[i]->name->name)) {
-//      return false;
-//    }
-//  }
-//  return true;
-//}
+static bool ArgsEqual(Context* ctx, FbldQRef* src, FbldArgV* i, FbldArgV* m)
+{
+  if (i->size != m->size) {
+    return false;
+  }
+
+  for (size_t j = 0; j < i->size; ++j) {
+    CheckTypesMatch(m->xs[j]->type->name->loc, ForeignType(ctx, src, i->xs[j]->type), m->xs[j]->type, &ctx->error);
+    if (!FbldNamesEqual(i->xs[j]->name->name, m->xs[j]->name->name)) {
+      ReportError("Module name %s does not match interface name %s\n",
+          &ctx->error, m->xs[j]->name->loc, m->xs[j]->name->name,
+          i->xs[j]->name->name);
+      return false;
+    }
+  }
+  return true;
+}
 
-// CheckTypeDeclsMatch --
-//   Check that a type declared in a module matches its declaration in the
-//   interface.
+// CheckDeclsMatch --
+//   Check that a module declaration matches its corresponding interface
+//   declaration.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   type_i - The type as declared in the interface.
-//   type_m - The type as declared in the module.
+//   src - The qref referring to decl_m in the current context.
+//   decl_i - The declared in the interface.
+//   decl_m - The declared in the module.
 //
-// Returns:
-//   true if type_m matches type_i, false otherwise.
+// Results:
+//   None.
 //
 // Side effects:
-//   Prints a message to stderr if the types don't match.
-//static bool CheckTypeDeclsMatch(Context* ctx, FbldType* type_i, FbldType* type_m)
-//{
-//  switch (type_i->kind) {
-//    case FBLD_STRUCT_KIND: {
-//      if (type_m->kind != FBLD_STRUCT_KIND) {
-//        ReportError("%s previously declared as a struct\n", &ctx->error, type_m->name->loc, type_m->name->name);
-//        return false;
-//      }
-//    } break;
-//
-//    case FBLD_UNION_KIND: {
-//      if (type_m->kind != FBLD_UNION_KIND) {
-//        ReportError("%s previously declared as a union\n", &ctx->error, type_m->name->loc, type_m->name->name);
-//        return false;
-//      }
-//    } break;
-//
-//    case FBLD_ABSTRACT_KIND: {
-//      // Nothing to check.
-//    } break;
-//  }
-//
-//  if (type_i->kind != FBLD_ABSTRACT_KIND) {
-//    if (!ArgsEqual(type_i->fieldv, type_m->fieldv)) {
-//      ReportError("Type %s does not match its interface declaration\n", &ctx->error, type_m->name->loc, type_m->name->name);
-//      return false;
-//    }
-//  }
-//  return true;
-//}
+//   Prints a message to stderr if the declarations don't match.
+static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m)
+{
+  if (decl_i->tag != decl_m->tag) {
+    ReportError("%s does not match interface declaration\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
+    return;
+  }
+
+  switch (decl_i->tag) {
+    case FBLD_TYPE_DECL: {
+      FbldType* type_i = (FbldType*)decl_i;
+      FbldType* type_m = (FbldType*)decl_m;
+      switch (type_i->kind) {
+        case FBLD_STRUCT_KIND: {
+          if (type_m->kind != FBLD_STRUCT_KIND) {
+            ReportError("%s previously declared as a struct\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
+          }
+        } break;
+
+        case FBLD_UNION_KIND: {
+          if (type_m->kind != FBLD_UNION_KIND) {
+            ReportError("%s previously declared as a union\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
+          }
+        } break;
+
+        case FBLD_ABSTRACT_KIND: {
+          // Nothing to check.
+        } break;
+      }
+
+      if (type_i->kind != FBLD_ABSTRACT_KIND) {
+        // TODO: Change ArgsEqual to CheckArgsEqual and don't return a result.
+        if (!ArgsEqual(ctx, src, type_i->fieldv, type_m->fieldv)) {
+          ReportError("Type %s does not match its interface declaration\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
+        }
+      }
+    } break;
+
+    case FBLD_FUNC_DECL: {
+      FbldFunc* func_i = (FbldFunc*)decl_i;
+      FbldFunc* func_m = (FbldFunc*)decl_m;
+      if (!ArgsEqual(ctx, src, func_i->argv, func_m->argv)) {
+        ReportError("Function %s does not match its interface declaration\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
+      }
+
+      CheckTypesMatch(func_m->return_type->name->loc, ForeignType(ctx, src, func_i->return_type), func_m->return_type, &ctx->error);
+    } break;
+
+    case FBLD_PROC_DECL: {
+      FbldProc* proc_i = (FbldProc*)decl_i;
+      FbldProc* proc_m = (FbldProc*)decl_m;
+      if (proc_i->portv->size != proc_m->portv->size) {
+        ReportError("Process %s does not match its interface declaration: expectd %i ports but found %i\n", &ctx->error, decl_m->name->loc, decl_m->name->name,
+            proc_i->portv->size, proc_m->portv->size);
+      }
+    
+      for (size_t i = 0; i < proc_i->portv->size && i < proc_m->portv->size; ++i) {
+        FbldPort* port_i = proc_i->portv->xs + i;
+        FbldPort* port_m = proc_m->portv->xs + i;
+        CheckTypesMatch(port_m->type->name->loc, ForeignType(ctx, src, port_i->type), port_m->type, &ctx->error);
+    
+        if (!FbldNamesEqual(port_i->name->name, port_m->name->name)) {
+          ReportError("Expected name %s, but found name %s\n", &ctx->error, decl_m->name->loc,
+              port_i->name->name, port_m->name->name);
+        }
+    
+        if (port_i->polarity != port_m->polarity) {
+          ReportError("Expected opposite polarity", &ctx->error, port_m->name->loc);
+        }
+      }
+    
+      if (!ArgsEqual(ctx, src, proc_i->argv, proc_m->argv)) {
+        ReportError("Process %s does not match its interface declaration\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
+      }
+    
+      CheckTypesMatch(proc_m->return_type->name->loc, ForeignType(ctx, src, proc_i->return_type), proc_m->return_type, &ctx->error);
+    }
+
+    case FBLD_INTERF_DECL: {
+      // TODO: Check interface declarations match.
+    }
+
+    case FBLD_MODULE_DECL: {
+      // TODO: Check module declarations match.
+    }
+  }
+}
 
 // CheckFuncDeclsMatch --
 //   Check that a function declared in an module matches its declaration in
