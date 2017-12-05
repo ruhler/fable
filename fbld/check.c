@@ -932,25 +932,28 @@ static void CheckProtos(Context* ctx, Env* env)
 {
   FbldNameV defined;
   FblcVectorInit(ctx->arena, defined);
-//  // Check using declarations.
-//  for (size_t using_id = 0; using_id < ctx->env->usingv->size; ++using_id) {
-//    FbldUsing* using = ctx->env->usingv->xs[using_id];
-//    if (CheckMRef(ctx, using->mref)) {
-//      for (size_t i = 0; i < using->itemv->size; ++i) {
-//        // TODO: Don't leak this allocation.
-//        FbldQRef* entity = FBLC_ALLOC(ctx->arena, FbldQRef);
-//        entity->uname = using->itemv->xs[i]->source;
-//        entity->umref = using->mref;
-//        entity->rname = entity->uname;
-//        entity->rmref = entity->umref;
-//        if ((LookupType(ctx, entity) == NULL && LookupFunc(ctx, entity) == NULL)) {
-//          ReportError("%s is not exported by %s\n", &ctx->error,
-//              using->itemv->xs[i]->source->loc, using->itemv->xs[i]->source->name,
-//              using->mref->name->name);
-//        }
-//      }
-//    }
-//  }
+
+  // Check import statements.
+  for (size_t import_id = 0; import_id < env->importv->size; ++import_id) {
+    FbldImport* import = env->importv->xs[import_id];
+    for (size_t i = 0; i < import->itemv->size; ++i) {
+      DefineName(ctx, import->itemv->xs[i]->dest, &defined);
+
+      // TODO: What to use with targv and margv?
+      FbldQRef entity = {
+        .name = import->itemv->xs[i]->source,
+        .targv = FBLC_ALLOC(ctx->arena, FbldQRefV),
+        .margv = FBLC_ALLOC(ctx->arena, FbldQRefV),
+        .mref = import->mref,
+        .r = { .state = FBLD_RSTATE_UNRESOLVED }
+      };
+      FblcVectorInit(ctx->arena, *(entity.targv));
+      FblcVectorInit(ctx->arena, *(entity.margv));
+
+      Env* import_env = import->mref == NULL ? env->parent : env;
+      CheckQRef(ctx, import_env, &entity);
+    }
+  }
 
   for (size_t decl_id = 0; decl_id < env->declv->size; ++decl_id) {
     FbldDecl* decl = env->declv->xs[decl_id];

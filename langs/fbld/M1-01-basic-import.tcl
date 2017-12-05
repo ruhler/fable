@@ -1,4 +1,4 @@
-# Test that we can use a 'using' statement to refer to foreign entities.
+# Test that we can use an import statement to refer to foreign entities.
 set prg {
   UnitI.fbld {
     interf UnitI {
