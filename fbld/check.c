@@ -57,10 +57,6 @@ typedef struct Ports {
 
 static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 
-// static FbldType* LookupType(Context* ctx, FbldQRef* entity);
-// static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity);
-// static FbldProc* LookupProc(Context* ctx, FbldQRef* entity);
-
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
 static bool CheckModule(Context* ctx, Env* env, FbldModule* module);
@@ -78,9 +74,6 @@ static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 static FbldQRef* ForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref);
 static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref);
 
-// static bool ResolveQRef(Context* ctx, FbldQRef* qref);
-// static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref);
-// static bool CheckMRef(Context* ctx, FbldQRef* mref);
 static bool ArgsEqual(Context* ctx, FbldQRef* src, FbldArgV* i, FbldArgV* m);
 static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
 
@@ -442,222 +435,6 @@ static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, 
   }
 }
 
-// LookupType --
-//   Look up the FbldType* for the given resolved entity.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   entity - The type to look up.
-//
-// Results:
-//   The FbldType* for the given resolved type, or NULL if no such type could
-//   be found.
-//
-// Side effects:
-//   Behavior is undefined if the entity has not already been resolved.
-// static FbldType* LookupType(Context* ctx, FbldQRef* entity)
-// {
-//  assert(entity->rname != NULL);
-//  if (entity->rmref == NULL) {
-//    // Check if this is a type parameter.
-//    for (size_t i = 0; i < ctx->env->targv->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, ctx->env->targv->xs[i]->name)) {
-//        // TODO: Don't leak this allocated memory.
-//        FbldType* type = FBLC_ALLOC(ctx->arena, FbldType);
-//        type->name = entity->rname;
-//        type->kind = FBLD_ABSTRACT_KIND;
-//        type->fieldv = NULL;
-//        return type;
-//      }
-//    }
-//
-//    // Check if this is a locally defined type.
-//    for (size_t i = 0; i < ctx->env->typev->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, ctx->env->typev->xs[i]->name->name)) {
-//        return ctx->env->typev->xs[i];
-//      }
-//    }
-//
-//    // We couldn't find the definition for the local type.
-//    return NULL;
-//  }
-//
-//  // The entity is in a foreign module.
-//  FbldInterf* interf = LookupInterf(ctx, entity->rmref);
-//  if (interf != NULL) {
-//    for (size_t i = 0; i < interf->typev->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, interf->typev->xs[i]->name->name)) {
-//        return interf->typev->xs[i];
-//      }
-//    }
-//  }
-//  return NULL;
-// }
-
-// LookupFunc --
-//   Look up the FbldFunc* for the given resolved entity.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   entity - The function to look up.
-//
-// Results:
-//   The FbldFunc* for the given resolved function, or NULL if no such
-//   function could be found.
-//
-// Side effects:
-//   Behavior is undefined if the entity has not already been resolved.
-//static FbldFunc* LookupFunc(Context* ctx, FbldQRef* entity)
-//{
-//  assert(entity->rname != NULL);
-//  if (entity->rmref == NULL) {
-//    for (size_t i = 0; i < ctx->env->funcv->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, ctx->env->funcv->xs[i]->name->name)) {
-//        return ctx->env->funcv->xs[i];
-//      }
-//    }
-//
-//    // We couldn't find the definition for the local function.
-//    return NULL;
-//  }
-//
-//  // The entity is in a foreign module. Load the interface for that module and
-//  // check for the func declaration in there.
-//  FbldInterf* interf = LookupInterf(ctx, entity->rmref);
-//  if (interf != NULL) {
-//    for (size_t i = 0; i < interf->funcv->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, interf->funcv->xs[i]->name->name)) {
-//        return interf->funcv->xs[i];
-//      }
-//    }
-//  }
-//  return NULL;
-//}
-
-// LookupProc --
-//   Look up the FbldProc* for the given resolved entity.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   entity - The process to look up.
-//
-// Results:
-//   The FbldProc* for the given resolved process, or NULL if no such
-//   process could be found.
-//
-// Side effects:
-//   Behavior is undefined if the entity has not already been resolved.
-//static FbldProc* LookupProc(Context* ctx, FbldQRef* entity)
-//{
-//  assert(entity->rname != NULL);
-//  if (entity->rmref == NULL) {
-//    for (size_t i = 0; i < ctx->env->procv->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, ctx->env->procv->xs[i]->name->name)) {
-//        return ctx->env->procv->xs[i];
-//      }
-//    }
-//
-//    // We couldn't find the definition for the local process.
-//    return NULL;
-//  }
-//
-//  // The entity is in a foreign module. Load the interface for that module and
-//  // check for the proc declaration in there.
-//  FbldInterf* interf = LookupInterf(ctx, entity->rmref);
-//  if (interf != NULL) {
-//    for (size_t i = 0; i < interf->procv->size; ++i) {
-//      if (FbldNamesEqual(entity->rname->name, interf->procv->xs[i]->name->name)) {
-//        return interf->procv->xs[i];
-//      }
-//    }
-//  }
-//  return NULL;
-//}
-
-// ResolveQRef --
-//   Resolve the given qref if necessary.
-//   This includes checking and resolving the qref's module reference, if
-//   any, and inlining all references to local names brought in to the module
-//   context with 'using' declarations.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   qref - The qref to resolve.
-//
-// Result:
-//   true if the entity could be resolved, false otherwise.
-//
-// Side effects:
-//   Loads program modules as needed to check module references.
-//   Update qref->mref and qref->rname as appropriate.
-//   Prints an error message to stderr and sets error to true if the entity's
-//   module reference is not well formed.
-//   This function does not check whether the resolved entity actually exists.
-// static bool ResolveQRef(Context* ctx, FbldQRef* qref)
-// {
-//  if (qref->rname != NULL) {
-//    return true;
-//  }
-//
-//  // TODO: Have some way to know if we already attempted and failed to resolve
-//  // the module, and avoid trying to re-resolve it?
-//
-//  if (qref->umref == NULL) {
-//    // Check if the entity has a local name but is imported from a foreign
-//    // module with a 'using' declaration.
-//    for (size_t i = 0; i < ctx->env->usingv->size; ++i) {
-//      FbldUsing* using = ctx->env->usingv->xs[i];
-//      for (size_t j = 0; j < using->itemv->size; ++j) {
-//        if (FbldNamesEqual(qref->uname->name, using->itemv->xs[j]->dest->name)) {
-//          if (!CheckMRef(ctx, using->mref)) {
-//            return false;
-//          }
-//          qref->rmref = using->mref;
-//          qref->rname = using->itemv->xs[j]->source;
-//          return true;
-//        }
-//      }
-//    }
-//
-//    // Otherwise this is a local entity.
-//    qref->rname = qref->uname;
-//    return true;
-//  }
-//
-//  if (!CheckMRef(ctx, qref->umref)) {
-//    return false;
-//  }
-//  qref->rmref = qref->umref;
-//  qref->rname = qref->uname;
-//  return true;
-// }
-
-// ImportQRef --
-//   Import a qref into this module. If the qref is local to this module, it
-//   is resolved. Otherwise the qref is expected to already be resolved and
-//   local to some other module.
-//   Substitutes all references to local type parameters and module parameters
-//   with the arguments supplied in the given module reference context.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   mref - The context the entity is being referred to from.
-//   qref - The qref to import.
-//
-// Results:
-//   The qref imported into the given context.
-//
-// Side effects:
-//   Resolves the qref if it is local.
-//static FbldQRef* ImportQRef(Context* ctx, FbldQRef* mref, FbldQRef* qref)
-//{
-//  if (mref == NULL) {
-//    return ResolveQRef(ctx, qref) ? qref : NULL;
-//  }
-//  assert(qref->rname != NULL && "foreign qref not already resolved");
-//  return FbldImportQRef(ctx->arena, ctx->prgm, mref, qref);
-//}
-
 // CheckType --
 //   Check that the given qref refers to a type.
 //
@@ -686,73 +463,6 @@ static bool CheckType(Context* ctx, Env* env, FbldQRef* qref)
   }
   return true;
 }
-
-// CheckMRef --
-//   Verify that the given mref is well formed.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   mref - The module reference to check.
-//
-// Result:
-//   True if the mref is well formed, false otherwise.
-//   be resolved.
-//
-// Side effects:
-//   Loads program modules as needed to check the module reference.
-//   Sets mref->resolved to the resolved mref.
-//   In case there is a problem, reports errors to stderr and sets ctx->error
-//   to true.
-//static bool CheckMRef(Context* ctx, FbldQRef* mref)
-//{
-//  // Check if this refers to a module parameter.
-//  if (ctx->env->margv != NULL) {
-//    for (size_t i = 0; i < ctx->env->margv->size; ++i) {
-//      if (FbldNamesEqual(ctx->env->margv->xs[i]->name->name, mref->name->name)) {
-//        if (mref->targv == NULL && mref->margv == NULL) {
-//          return true;
-//        }
-//        ReportError("arguments to '%s' not allowed\n", &ctx->error, mref->name->loc, mref->name->name);
-//        return false;
-//      }
-//    }
-//  }
-//
-//  for (size_t i = 0; i < mref->targv->size; ++i) {
-//    if (!CheckType(ctx, mref->targv->xs[i])) {
-//      return false;
-//    }
-//  }
-//
-//  for (size_t i = 0; i < mref->margv->size; ++i) {
-//    if (!CheckMRef(ctx, mref->margv->xs[i])) {
-//      return false;
-//    }
-//  }
-//
-//  FbldModule* module = FbldLoadModuleHeader(ctx->arena, ctx->path, mref->name->name, ctx->prgm);
-//  if (module == NULL) {
-//    ReportError("Unable to load declaration of module %s\n", &ctx->error, mref->name->loc, mref->name->name);
-//    return false;
-//  }
-//
-//  if (module->targv->size != mref->targv->size) {
-//    ReportError("expected %i type arguments to %s, but found %i\n", &ctx->error,
-//        mref->name->loc, module->targv->size, mref->name->name, mref->targv->size);
-//    return false;
-//  }
-//
-//  if (module->margv->size == mref->margv->size) {
-//    for (size_t i = 0; i < module->margv->size; ++i) {
-//      assert(false && "TODO: Check module args implement the correct interface");
-//    }
-//  } else {
-//    ReportError("expected %i module arguments to %s, but found %i\n", &ctx->error,
-//        mref->name->loc, module->margv->size, mref->name->name, mref->margv->size);
-//    return false;
-//  }
-//  return true;
-//}
 
 // CheckExpr --
 //   Check that the given expression is well formed.
@@ -1330,26 +1040,6 @@ static void CheckProtos(Context* ctx, Env* env)
 //   headers (not module definitions), adding them to the context.
 static void CheckBodies(Context* ctx, Env* env)
 {
-//  // Check using declarations.
-//  for (size_t using_id = 0; using_id < ctx->env->usingv->size; ++using_id) {
-//    FbldUsing* using = ctx->env->usingv->xs[using_id];
-//    if (CheckMRef(ctx, using->mref)) {
-//      for (size_t i = 0; i < using->itemv->size; ++i) {
-//        // TODO: Don't leak this allocation.
-//        FbldQRef* entity = FBLC_ALLOC(ctx->arena, FbldQRef);
-//        entity->uname = using->itemv->xs[i]->source;
-//        entity->umref = using->mref;
-//        entity->rname = entity->uname;
-//        entity->rmref = entity->umref;
-//        if ((LookupType(ctx, entity) == NULL && LookupFunc(ctx, entity) == NULL)) {
-//          ReportError("%s is not exported by %s\n", &ctx->error,
-//              using->itemv->xs[i]->source->loc, using->itemv->xs[i]->source->name,
-//              using->mref->name->name);
-//        }
-//      }
-//    }
-//  }
-
   for (size_t decl_id = 0; decl_id < env->declv->size; ++decl_id) {
     FbldDecl* decl = env->declv->xs[decl_id];
     switch (decl->tag) {
@@ -1574,86 +1264,6 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
     }
   }
 }
-
-// CheckFuncDeclsMatch --
-//   Check that a function declared in an module matches its declaration in
-//   the interface.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   func_i - The func as declared in the interface.
-//   func_m - The func as declared in the module.
-//
-// Returns:
-//   true if func_m matches func_i, false otherwise.
-//
-// Side effects:
-//   Prints a message to stderr if the functions don't match.
-//static bool CheckFuncDeclsMatch(Context* ctx, FbldFunc* func_i, FbldFunc* func_m)
-//{
-//  if (!ArgsEqual(func_i->argv, func_m->argv)) {
-//    ReportError("Function %s does not match its interface declaration\n", &ctx->error, func_m->name->loc, func_m->name->name);
-//    return false;
-//  }
-//
-//  if (!FbldQRefsEqual(func_i->return_type, func_m->return_type)) {
-//    ReportError("Function %s does not match its interface declaration\n", &ctx->error, func_m->name->loc, func_m->name->name);
-//    return false;
-//  }
-//  return true;
-//}
-
-// CheckProcDeclsMatch --
-//   Check that a process declared in a module matches its declaration in the
-//   interface.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   proc_i - The proc as declared in the interface.
-//   proc_m - The proc as declared in the module.
-//
-// Returns:
-//   true if proc_m matches the proc_i, false otherwise.
-//
-// Side effects:
-//   Prints a message to stderr if the processes don't match.
-//static bool CheckProcDeclsMatch(Context* ctx, FbldProc* proc_i, FbldProc* proc_m)
-//{
-//  if (proc_i->portv->size != proc_m->portv->size) {
-//    ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
-//    return false;
-//  }
-//
-//  for (size_t i = 0; i < proc_i->portv->size; ++i) {
-//    FbldPort* port_i = proc_i->portv->xs + i;
-//    FbldPort* port_m = proc_i->portv->xs + i;
-//    if (!FbldQRefsEqual(port_i->type, port_m->type)) {
-//      ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
-//      return false;
-//    }
-//
-//    if (!FbldNamesEqual(port_i->name->name, port_m->name->name)) {
-//      ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
-//      return false;
-//    }
-//
-//    if (port_i->polarity != port_m->polarity) {
-//      ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
-//      return false;
-//    }
-//  }
-//
-//  if (!ArgsEqual(proc_i->argv, proc_m->argv)) {
-//    ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
-//    return false;
-//  }
-//
-//  if (!FbldQRefsEqual(proc_i->return_type, proc_m->return_type)) {
-//    ReportError("Process %s does not match its interface declaration\n", &ctx->error, proc_m->name->loc, proc_m->name->name);
-//    return false;
-//  }
-//  return true;
-//}
 
 // FbldCheckModule -- see documentation in fbld.h
 bool FbldCheckModule(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
