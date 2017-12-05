@@ -74,7 +74,7 @@ static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 static FbldQRef* ForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref);
 static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref);
 
-static bool ArgsEqual(Context* ctx, FbldQRef* src, FbldArgV* i, FbldArgV* m);
+static void CheckArgsMatch(Context* ctx, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
 static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
 
 // ReportError --
@@ -1130,37 +1130,37 @@ bool FbldCheckModuleHeader(FblcArena* arena, FbldStringV* path, FbldModule* modu
   return !ctx.error;
 }
 
-// ArgsEqual --
-//   Test whether two arg vectors are the same.
+// CheckArgsMatch --
+//   Check whether args from a module prototype match the interface prototype.
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   src - The source qref used to import the foreign args for vector 'i'
-//   i - The interface arg vector.
-//   m - The module arg vector.
+//   src - The source qref used to import the foreign args from args_i
+//   args_i - The interface arg vector.
+//   args_m - The module arg vector.
 //
 // Result:
-//   true if the two argument vectors have the same number, resolved type, and
-//   names of arguments, false otherwise.
+//   None.
 //
 // Side effects:
-//   None.
-static bool ArgsEqual(Context* ctx, FbldQRef* src, FbldArgV* i, FbldArgV* m)
+//   Prints an error message and sets ctx->error if the module arguments don't
+//   match the interface arguments.
+static void CheckArgsMatch(Context* ctx, FbldQRef* src, FbldArgV* args_i,
+    FbldArgV* args_m)
 {
-  if (i->size != m->size) {
-    return false;
+  if (args_i->size != args_m->size) {
+    ReportError("Wrong number of args, expected %i but found %i\n",
+        &ctx->error, src->name->loc, args_i->size, args_m->size);
   }
 
-  for (size_t j = 0; j < i->size; ++j) {
-    CheckTypesMatch(m->xs[j]->type->name->loc, ForeignType(ctx, src, i->xs[j]->type), m->xs[j]->type, &ctx->error);
-    if (!FbldNamesEqual(i->xs[j]->name->name, m->xs[j]->name->name)) {
+  for (size_t i = 0; i < args_i->size && i < args_m->size; ++i) {
+    CheckTypesMatch(args_m->xs[i]->type->name->loc, ForeignType(ctx, src, args_i->xs[i]->type), args_m->xs[i]->type, &ctx->error);
+    if (!FbldNamesEqual(args_i->xs[i]->name->name, args_m->xs[i]->name->name)) {
       ReportError("Module name %s does not match interface name %s\n",
-          &ctx->error, m->xs[j]->name->loc, m->xs[j]->name->name,
-          i->xs[j]->name->name);
-      return false;
+          &ctx->error, args_m->xs[i]->name->loc, args_m->xs[i]->name->name,
+          args_i->xs[i]->name->name);
     }
   }
-  return true;
 }
 
 // CheckDeclsMatch --
@@ -1208,20 +1208,14 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
       }
 
       if (type_i->kind != FBLD_ABSTRACT_KIND) {
-        // TODO: Change ArgsEqual to CheckArgsEqual and don't return a result.
-        if (!ArgsEqual(ctx, src, type_i->fieldv, type_m->fieldv)) {
-          ReportError("Type %s does not match its interface declaration\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
-        }
+        CheckArgsMatch(ctx, src, type_i->fieldv, type_m->fieldv);
       }
     } break;
 
     case FBLD_FUNC_DECL: {
       FbldFunc* func_i = (FbldFunc*)decl_i;
       FbldFunc* func_m = (FbldFunc*)decl_m;
-      if (!ArgsEqual(ctx, src, func_i->argv, func_m->argv)) {
-        ReportError("Function %s does not match its interface declaration\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
-      }
-
+      CheckArgsMatch(ctx, src, func_i->argv, func_m->argv);
       CheckTypesMatch(func_m->return_type->name->loc, ForeignType(ctx, src, func_i->return_type), func_m->return_type, &ctx->error);
     } break;
 
@@ -1248,10 +1242,7 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
         }
       }
     
-      if (!ArgsEqual(ctx, src, proc_i->argv, proc_m->argv)) {
-        ReportError("Process %s does not match its interface declaration\n", &ctx->error, decl_m->name->loc, decl_m->name->name);
-      }
-    
+      CheckArgsMatch(ctx, src, proc_i->argv, proc_m->argv);
       CheckTypesMatch(proc_m->return_type->name->loc, ForeignType(ctx, src, proc_i->return_type), proc_m->return_type, &ctx->error);
     }
 
