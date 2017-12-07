@@ -19,6 +19,7 @@
 typedef struct Env {
   struct Env* parent;
   FbldQRef* mref;
+  FbldEntitySource source;
   FbldImportV* importv;
   FbldDeclV* declv;
 } Env;
@@ -55,6 +56,12 @@ typedef struct Ports {
   struct Ports* next;
 } Ports;
 
+// FailedR --
+//   A static instance of FbldR that can be reused for all failed qrefs.
+static FbldR FailedR = {
+  .tag = FBLD_FAILED_R
+};
+
 static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
@@ -71,8 +78,7 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 
-static FbldQRef* ForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref);
-static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref);
+static FbldQRef* Foreign(Context* ctx, FbldQRef* src, FbldQRef* qref);
 
 static void CheckArgsMatch(Context* ctx, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
 static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
@@ -121,46 +127,69 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
 //   already been reported as being bad.
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 {
-  if (qref->r.state != FBLD_RSTATE_UNRESOLVED) {
-    return qref->r.state != FBLD_RSTATE_FAILED;
+  if (qref->r != NULL) {
+    return qref->r->tag != FBLD_FAILED_R;
   }
 
-  qref->r.state = FBLD_RSTATE_FAILED;
+  // By default assume the qref fails to resolve. We will overwrite this with
+  // something more meaningful once we have successfully resolved the reference.
+  qref->r = &FailedR;
+
   if (qref->mref != NULL) {
     // The entity is of the form foo@bar, and comes from a module bar in the
-    // local scope. First resolve the module bar.
-    if (!CheckQRef(ctx, env, qref->mref)) {
-      return false;
-    }
+    // local scope. Resolve the module bar and find its interface.
+    CheckQRef(ctx, env, qref->mref);
 
-    if (qref->mref->r.decl->tag != FBLD_MODULE_DECL) {
-      ReportError("Expected module, but %s refers to a ", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
-      switch (qref->mref->r.decl->tag) {
-        case FBLD_TYPE_DECL: fprintf(stderr, "type.\n"); break;
-        case FBLD_FUNC_DECL: fprintf(stderr, "func.\n"); break;
-        case FBLD_PROC_DECL: fprintf(stderr, "proc.\n"); break;
-        case FBLD_INTERF_DECL: fprintf(stderr, "interf.\n"); break;
-        case FBLD_MODULE_DECL: fprintf(stderr, "module.\n"); break;
-        default: fprintf(stderr, "???.\n"); break;
+    FbldInterf* interf = NULL;
+    switch (qref->mref->r->tag) {
+      case FBLD_FAILED_R: {
+        // The failure will already have been reported.
+        return false;
       }
-      return false;
-    }
 
-    // Look up the interface of the module.
-    FbldModule* module = (FbldModule*)qref->mref->r.decl;
-    if (module->iref->r.state == FBLD_RSTATE_FAILED) {
-      return false;
+      case FBLD_ENTITY_R: {
+        FbldEntityR* entity = (FbldEntityR*)qref->mref->r;
+        if (entity->decl->tag != FBLD_MODULE_DECL) {
+          ReportError("%s does not refer to a module\n", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
+          return false;
+        }
+
+        // We should have already checked the module interface is correct,
+        // right?
+        FbldModule* module = (FbldModule*)entity->decl;
+        assert(module->iref->r != NULL);
+        assert(module->iref->r->tag == FBLD_ENTITY_R);
+        FbldEntityR* ient = (FbldEntityR*)module->iref->r;
+        assert(ient->decl->tag == FBLD_INTERF_DECL);
+        interf = (FbldInterf*)ient->decl;
+        break;
+      }
+
+      case FBLD_PARAM_R: {
+        FbldParamR* param = (FbldParamR*)qref->mref->r;
+        if (param->interf == NULL) {
+          ReportError("%s does not refer to a module\n", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
+          return false;
+        }
+        interf = param->interf;
+        break;
+      }
+
+      default: {
+        UNREACHABLE("Invalid R tag");
+        return false;
+      }
     }
-    assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
-    assert(module->iref->r.decl->tag == FBLD_INTERF_DECL);
-    FbldInterf* interf = (FbldInterf*)module->iref->r.decl;
 
     // Look for the entity declaration in the interface.
     for (size_t i = 0; i < interf->declv->size; ++i) {
       if (FbldNamesEqual(qref->name->name, interf->declv->xs[i]->name->name)) {
-        qref->r.state = FBLD_RSTATE_RESOLVED;
-        qref->r.mref = qref->mref;
-        qref->r.decl = interf->declv->xs[i];
+        FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
+        entity->_base.tag = FBLD_ENTITY_R;
+        entity->decl = interf->declv->xs[i];
+        entity->mref = qref->mref;
+        entity->source = FBLD_INTERF_SOURCE;
+        qref->r = &entity->_base;
         return true;
       }
     }
@@ -177,13 +206,17 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     // declaration.
     FbldDecl* decl = FbldLoadTopDecl(ctx->arena, ctx->path, qref->name->name, ctx->prgm);
     if (decl == NULL) {
-      ctx->error = true;
+      ReportError("top level declaration for %s not found.\n",
+          &ctx->error, qref->name->loc, qref->name->name);
       return false;
     }
 
-    qref->r.state = FBLD_RSTATE_RESOLVED;
-    qref->r.mref = NULL;
-    qref->r.decl = decl;
+    FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
+    entity->_base.tag = FBLD_ENTITY_R;
+    entity->decl = decl;
+    entity->mref = NULL;
+    entity->source = FBLD_MODULE_SOURCE;
+    qref->r = &entity->_base;
     return true;
   }
 
@@ -197,7 +230,7 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
           .targv = qref->targv,
           .margv = qref->margv,
           .mref = import->mref,
-          .r = { .state = FBLD_RSTATE_UNRESOLVED }
+          .r = NULL,
         };
 
         Env* import_env = import->mref == NULL ? env->parent : env;
@@ -205,9 +238,7 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
           return false;
         }
 
-        qref->r.state = imported_qref.r.state;
-        qref->r.mref = imported_qref.r.mref;
-        qref->r.decl = imported_qref.r.decl;
+        qref->r = imported_qref.r;
         return true;
       } 
     }
@@ -215,15 +246,17 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 
   for (size_t i = 0; i < env->declv->size; ++i) {
     if (FbldNamesEqual(qref->name->name, env->declv->xs[i]->name->name)) {
-      qref->r.state = FBLD_RSTATE_RESOLVED;
-      qref->r.mref = env->mref;
-      qref->r.decl = env->declv->xs[i];
+      FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
+      entity->_base.tag = FBLD_ENTITY_R;
+      entity->decl = env->declv->xs[i];
+      entity->mref = env->mref;
+      entity->source = env->source;
+      qref->r = &entity->_base;
       return true;
     }
   }
 
-  // TODO: Check for the name in:
-  //  * as a type or module parameter
+  // TODO: Check for the name as a type or module parameter.
   ReportError("%s not defined\n", &ctx->error, qref->name->loc, qref->name->name);
   return NULL;
 }
@@ -250,7 +283,12 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   assert(interf->_base.targv->size == 0 && "TODO");
   assert(interf->_base.margv->size == 0 && "TODO");
 
-  // TODO: Mark mref as a parameter?
+  FbldParamR* param = FBLC_ALLOC(ctx->arena, FbldParamR);
+  param->_base.tag = FBLD_PARAM_R;
+  param->interf = interf;
+  param->decl = &interf->_base;
+  param->index = FBLD_INTERF_PARAM_INDEX;
+
   FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
   mref->name = interf->_base.name;
   mref->targv = FBLC_ALLOC(ctx->arena, FbldQRefV);
@@ -258,13 +296,12 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   mref->margv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *mref->margv);
   mref->mref = NULL;
-  mref->r.state = FBLD_RSTATE_RESOLVED;
-  mref->r.mref = NULL;
-  mref->r.decl = &interf->_base;
+  mref->r = &param->_base;
 
   Env interf_env = {
     .parent = env,
     .mref = mref,
+    .source = FBLD_INTERF_SOURCE,
     .importv = interf->importv,
     .declv = interf->declv,
   };
@@ -293,20 +330,25 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     return false;
   }
 
+  FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
+  entity->_base.tag = FBLD_ENTITY_R;
+  entity->decl = &module->_base;
+  entity->mref = env == NULL ? NULL : env->mref;
+  entity->source = env == NULL ? FBLD_MODULE_SOURCE : env->source;
+
   FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
   mref->name = module->_base.name;
   mref->targv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *mref->targv);
   mref->margv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *mref->margv);
-  mref->mref = env == NULL ? NULL : env->mref;
-  mref->r.state = FBLD_RSTATE_RESOLVED;
-  mref->r.mref = mref->mref;
-  mref->r.decl = &module->_base;
+  mref->mref = entity->mref;
+  mref->r = &entity->_base;
 
   Env module_env = {
     .parent = env,
     .mref = mref,
+    .source = FBLD_MODULE_SOURCE,
     .importv = module->importv,
     .declv = module->declv,
   };
@@ -319,16 +361,18 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     return false;
   }
 
+  FbldEntityR* dent = FBLC_ALLOC(ctx->arena, FbldEntityR);
+  dent->_base.tag = FBLD_ENTITY_R;
+  dent->decl = NULL;
+  dent->mref = mref;
+  dent->source = FBLD_MODULE_SOURCE;
+
   FbldQRef src = {
     .name = NULL,
     .targv = FBLC_ALLOC(ctx->arena, FbldQRefV),
     .margv = FBLC_ALLOC(ctx->arena, FbldQRefV),
     .mref = mref,
-    .r = {
-      .state = FBLD_RSTATE_RESOLVED,
-      .mref = mref,
-      .decl = NULL
-    },
+    .r = &dent->_base,
   };
   FblcVectorInit(ctx->arena, *(src.targv));
   FblcVectorInit(ctx->arena, *(src.margv));
@@ -339,7 +383,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
       FbldDecl* decl_m = module->declv->xs[m];
       if (FbldNamesEqual(decl_i->name->name, decl_m->name->name)) {
         src.name = decl_m->name;
-        src.r.decl = decl_m;
+        dent->decl = decl_m;
         CheckDeclsMatch(ctx, &src, decl_i, decl_m);
 
         // Set type_i to NULL to indicate we found the matching type.
@@ -386,8 +430,9 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
     return false;
   }
 
-  assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
-  if (module->iref->r.decl->tag != FBLD_INTERF_DECL) {
+  assert(module->iref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)module->iref->r;
+  if (entity->decl->tag != FBLD_INTERF_DECL) {
     ReportError("%s does not refer to an interface\n", &ctx->error, module->iref->name->loc, module->iref->name->name);
     return false;
   }
@@ -416,15 +461,20 @@ static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 // resolved names? Should we require they be one or the other?
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error)
 {
-  if (expected == NULL || expected->r.state == FBLD_RSTATE_FAILED
-      || actual == NULL || actual->r.state == FBLD_RSTATE_FAILED) {
+  if (expected == NULL || actual == NULL) {
     // Assume a type error has already been reported or will be reported in
     // this case and that additional error messages would not be helpful.
     return;
   }
 
-  assert(expected->r.state == FBLD_RSTATE_RESOLVED);
-  assert(actual->r.state == FBLD_RSTATE_RESOLVED);
+  assert(expected->r != NULL);
+  assert(actual->r != NULL);
+
+  if (expected->r->tag == FBLD_FAILED_R || actual->r->tag == FBLD_FAILED_R) {
+    // Assume a type error has already been reported or will be reported in
+    // this case and that additional error messages would not be helpful.
+    return;
+  }
 
   if (!FbldQRefsEqual(expected, actual)) {
     ReportError("Expected type ", error, loc);
@@ -453,15 +503,35 @@ static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, 
 //   be resolved or does not refer to a type.
 static bool CheckType(Context* ctx, Env* env, FbldQRef* qref)
 {
-  if (!CheckQRef(ctx, env, qref)) {
-    return false;
-  }
+  CheckQRef(ctx, env, qref);
+  switch (qref->r->tag) {
+    case FBLD_FAILED_R:
+      // An error message will already have been reported.
+      return false;
 
-  if (qref->r.decl->tag != FBLD_TYPE_DECL) {
-    ReportError("%s does not refer to a type\n", &ctx->error, qref->name->loc, qref->name->name);
-    return false;
+    case FBLD_ENTITY_R: {
+      FbldEntityR* entity = (FbldEntityR*)qref->r;
+      if (entity->decl->tag != FBLD_TYPE_DECL) {
+        ReportError("%s does not refer to a type\n", &ctx->error, qref->name->loc, qref->name->name);
+        return false;
+      }
+      return true;
+    }
+
+    case FBLD_PARAM_R: {
+      FbldParamR* param = (FbldParamR*)qref->r;
+      if (param->interf != NULL) {
+        ReportError("%s does not refer to a type\n", &ctx->error, qref->name->loc, qref->name->name);
+        return false;
+      }
+      return true;
+    }
+
+    default: {
+      UNREACHABLE("Invalid R tag");
+      return false;
+    }
   }
-  return true;
 }
 
 // CheckExpr --
@@ -503,32 +573,51 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
         arg_types[i] = CheckExpr(ctx, env, vars, app_expr->argv->xs[i]);
       }
 
-      if (!CheckQRef(ctx, env, app_expr->func)) {
-        return NULL;
-      }
+      CheckQRef(ctx, env, app_expr->func);
 
       FbldQRef* return_type = NULL;
       FbldArgV* argv = NULL;
-      if (app_expr->func->r.decl->tag == FBLD_FUNC_DECL) {
-        FbldFunc* func = (FbldFunc*)app_expr->func->r.decl;
-        argv = func->argv;
-        return_type = ForeignType(ctx, app_expr->func, func->return_type);
-      } else if (app_expr->func->r.decl->tag == FBLD_TYPE_DECL) {
-        FbldType* type = (FbldType*)app_expr->func->r.decl;
-        if (type->kind != FBLD_STRUCT_KIND) {
-          ReportError("Cannot do application on type %s.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
+      switch (app_expr->func->r->tag) {
+        case FBLD_FAILED_R: {
           return NULL;
         }
-        argv = type->fieldv;
-        return_type = app_expr->func;
-      } else {
-        ReportError("'%s' does not refer to a type or function.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
-        return NULL;
+
+        case FBLD_PARAM_R: {
+          ReportError("Cannot do application on %s.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name);
+          return NULL;
+        }
+
+        case FBLD_ENTITY_R: {
+          FbldEntityR* entity = (FbldEntityR*)app_expr->func->r;
+          if (entity->decl->tag == FBLD_FUNC_DECL) {
+            FbldFunc* func = (FbldFunc*)entity->decl;
+            argv = func->argv;
+            return_type = Foreign(ctx, app_expr->func, func->return_type);
+          } else if (entity->decl->tag == FBLD_TYPE_DECL) {
+            FbldType* type = (FbldType*)entity->decl;
+            if (type->kind != FBLD_STRUCT_KIND) {
+              ReportError("Cannot do application on type %s.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
+              return NULL;
+            }
+            argv = type->fieldv;
+            return_type = app_expr->func;
+          } else {
+            ReportError("'%s' does not refer to a type or function.\n", &ctx->error, app_expr->func->name->loc, app_expr->func->name->name);
+            return NULL;
+          }
+          break;
+        }
+
+        default: {
+          UNREACHABLE("Invalid R tag");
+          return NULL;
+        }
       }
+
 
       if (argv->size == app_expr->argv->size) {
         for (size_t i = 0; i < argv->size; ++i) {
-          FbldQRef* expected = ForeignType(ctx, app_expr->func, argv->xs[i]->type);
+          FbldQRef* expected = Foreign(ctx, app_expr->func, argv->xs[i]->type);
           CheckTypesMatch(app_expr->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
         }
       } else {
@@ -540,17 +629,23 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
     case FBLD_ACCESS_EXPR: {
       FbldAccessExpr* access_expr = (FbldAccessExpr*)expr;
       FbldQRef* qref = CheckExpr(ctx, env, vars, access_expr->obj);
-      if (qref == NULL) {
+      if (qref == NULL || qref->r->tag == FBLD_FAILED_R) {
         return NULL;
       }
 
-      assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-      assert(qref->r.decl->tag == FBLD_TYPE_DECL);
-      FbldType* type = (FbldType*)qref->r.decl;
+      if (qref->r->tag != FBLD_ENTITY_R) {
+        ReportError("Cannot perform access on %s\n", &ctx->error, expr->loc, qref->name->name);
+        return NULL;
+      }
+
+      FbldEntityR* entity = (FbldEntityR*)qref->r;
+
+      assert(entity->decl->tag == FBLD_TYPE_DECL);
+      FbldType* type = (FbldType*)entity->decl;
       for (size_t i = 0; i < type->fieldv->size; ++i) {
         if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
           access_expr->field.id = i;
-          return ForeignType(ctx, qref, type->fieldv->xs[i]->type);
+          return Foreign(ctx, qref, type->fieldv->xs[i]->type);
         }
       }
       ReportError("%s is not a field of type %s\n", &ctx->error, access_expr->field.name->loc, access_expr->field.name->name, type->_base.name->name);
@@ -564,16 +659,24 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
         return NULL;
       }
 
-      FbldType* type_def = (FbldType*)union_expr->type->r.decl;
+      if (union_expr->type->r->tag != FBLD_ENTITY_R) {
+        ReportError("%s does not refer to a union type.\n", &ctx->error, union_expr->type->name->loc, union_expr->type->name->name);
+        return NULL;
+      }
+
+      FbldEntityR* entity = (FbldEntityR*)union_expr->type->r;
+      assert(entity->decl->tag == FBLD_TYPE_DECL);
+      FbldType* type_def = (FbldType*)entity->decl;
       if (type_def->kind != FBLD_UNION_KIND) {
         ReportError("%s does not refer to a union type.\n", &ctx->error, union_expr->type->name->loc, union_expr->type->name->name);
         return NULL;
       }
 
+
       for (size_t i = 0; i < type_def->fieldv->size; ++i) {
         if (FbldNamesEqual(union_expr->field.name->name, type_def->fieldv->xs[i]->name->name)) {
           union_expr->field.id = i;
-          FbldQRef* expected = ForeignType(ctx, union_expr->type, type_def->fieldv->xs[i]->type);
+          FbldQRef* expected = Foreign(ctx, union_expr->type, type_def->fieldv->xs[i]->type);
           CheckTypesMatch(union_expr->arg->loc, expected, arg_type, &ctx->error);
           return union_expr->type;
         }
@@ -607,15 +710,19 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       FbldCondExpr* cond_expr = (FbldCondExpr*)expr;
       FbldQRef* type = CheckExpr(ctx, env, vars, cond_expr->select);
       if (type != NULL) {
-        assert(type->r.state == FBLD_RSTATE_RESOLVED);
-        assert(type->r.decl->tag == FBLD_TYPE_DECL);
-        FbldType* type_def = (FbldType*)type->r.decl;
-        if (type_def->kind == FBLD_UNION_KIND) {
-          if (type_def->fieldv->size != cond_expr->argv->size) {
-            ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_expr->_base.loc, type_def->fieldv->size, cond_expr->argv->size);
-          }
+        if (type->r->tag != FBLD_ENTITY_R) {
+          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_expr->select->loc, type->name->name);
         } else {
-          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_expr->select->loc, type_def->_base.name->name);
+          FbldEntityR* entity = (FbldEntityR*)type->r;
+          assert(entity->decl->tag == FBLD_TYPE_DECL);
+          FbldType* type_def = (FbldType*)entity->decl;
+          if (type_def->kind == FBLD_UNION_KIND) {
+            if (type_def->fieldv->size != cond_expr->argv->size) {
+              ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_expr->_base.loc, type_def->fieldv->size, cond_expr->argv->size);
+            }
+          } else {
+            ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_expr->select->loc, type_def->_base.name->name);
+          }
         }
       }
 
@@ -703,13 +810,19 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
       FbldCondActn* cond_actn = (FbldCondActn*)actn;
       FbldQRef* type = CheckExpr(ctx, env, vars, cond_actn->select);
       if (type != NULL) {
-        FbldType* type_def = (FbldType*)type->r.decl;
-        if (type_def->kind == FBLD_UNION_KIND) {
-          if (type_def->fieldv->size != cond_actn->argv->size) {
-            ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
-          }
+        if (type->r->tag != FBLD_ENTITY_R) {
+          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type->name->name);
         } else {
-          ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type_def->_base.name->name);
+          FbldEntityR* entity = (FbldEntityR*)type->r;
+          assert(entity->decl->tag == FBLD_TYPE_DECL);
+          FbldType* type_def = (FbldType*)entity->decl;
+          if (type_def->kind == FBLD_UNION_KIND) {
+            if (type_def->fieldv->size != cond_actn->argv->size) {
+              ReportError("Expected %d arguments, but %d were provided.\n", &ctx->error, cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
+            }
+          } else {
+            ReportError("The condition has type %s, which is not a union type.\n", &ctx->error, cond_actn->select->loc, type_def->_base.name->name);
+          }
         }
       }
 
@@ -752,12 +865,18 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
         return NULL;
       }
 
-      if (call_actn->proc->r.decl->tag != FBLD_PROC_DECL) {
+      if (call_actn->proc->r->tag != FBLD_ENTITY_R) {
         ReportError("%s does not refer to a proc.\n", &ctx->error, call_actn->proc->name->loc, call_actn->proc->name->name);
         return NULL;
       }
 
-      FbldProc* proc = (FbldProc*)call_actn->proc->r.decl;
+      FbldEntityR* entity = (FbldEntityR*)call_actn->proc->r;
+      if (entity->decl->tag != FBLD_PROC_DECL) {
+        ReportError("%s does not refer to a proc.\n", &ctx->error, call_actn->proc->name->loc, call_actn->proc->name->name);
+        return NULL;
+      }
+
+      FbldProc* proc = (FbldProc*)entity->decl;
       if (proc->portv->size == call_actn->portv->size) {
         for (size_t i = 0; i < proc->portv->size; ++i) {
           if (port_types[i] != NULL) {
@@ -767,7 +886,7 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
                     proc->portv->xs[i].polarity == FBLD_PUT_POLARITY ? "put" : "get",
                     port_types[i]->polarity == FBLD_PUT_POLARITY ? "put" : "get");
             }
-            FbldQRef* expected = ForeignType(ctx, call_actn->proc, proc->portv->xs[i].type);
+            FbldQRef* expected = Foreign(ctx, call_actn->proc, proc->portv->xs[i].type);
             CheckTypesMatch(call_actn->portv->xs[i].name->loc, expected, port_types[i]->type, &ctx->error);
           }
         }
@@ -777,13 +896,13 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
 
       if (proc->argv->size == call_actn->argv->size) {
         for (size_t i = 0; i < call_actn->argv->size; ++i) {
-          FbldQRef* expected = ForeignType(ctx, call_actn->proc, proc->argv->xs[i]->type);
+          FbldQRef* expected = Foreign(ctx, call_actn->proc, proc->argv->xs[i]->type);
           CheckTypesMatch(call_actn->argv->xs[i]->loc, expected, arg_types[i], &ctx->error);
         }
       } else {
         ReportError("Expected %d arguments to %s, but %d were provided.\n", &ctx->error, call_actn->proc->name->loc, proc->argv->size, call_actn->proc->name->name, call_actn->argv->size);
       }
-      return ForeignType(ctx, call_actn->proc, proc->return_type);
+      return Foreign(ctx, call_actn->proc, proc->return_type);
     }
 
     case FBLD_LINK_ACTN: {
@@ -945,7 +1064,7 @@ static void CheckProtos(Context* ctx, Env* env)
         .targv = FBLC_ALLOC(ctx->arena, FbldQRefV),
         .margv = FBLC_ALLOC(ctx->arena, FbldQRefV),
         .mref = import->mref,
-        .r = { .state = FBLD_RSTATE_UNRESOLVED }
+        .r = NULL
       };
       FblcVectorInit(ctx->arena, *(entity.targv));
       FblcVectorInit(ctx->arena, *(entity.margv));
@@ -1157,7 +1276,7 @@ static void CheckArgsMatch(Context* ctx, FbldQRef* src, FbldArgV* args_i,
   }
 
   for (size_t i = 0; i < args_i->size && i < args_m->size; ++i) {
-    CheckTypesMatch(args_m->xs[i]->type->name->loc, ForeignType(ctx, src, args_i->xs[i]->type), args_m->xs[i]->type, &ctx->error);
+    CheckTypesMatch(args_m->xs[i]->type->name->loc, Foreign(ctx, src, args_i->xs[i]->type), args_m->xs[i]->type, &ctx->error);
     if (!FbldNamesEqual(args_i->xs[i]->name->name, args_m->xs[i]->name->name)) {
       ReportError("Module name %s does not match interface name %s\n",
           &ctx->error, args_m->xs[i]->name->loc, args_m->xs[i]->name->name,
@@ -1219,7 +1338,7 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
       FbldFunc* func_i = (FbldFunc*)decl_i;
       FbldFunc* func_m = (FbldFunc*)decl_m;
       CheckArgsMatch(ctx, src, func_i->argv, func_m->argv);
-      CheckTypesMatch(func_m->return_type->name->loc, ForeignType(ctx, src, func_i->return_type), func_m->return_type, &ctx->error);
+      CheckTypesMatch(func_m->return_type->name->loc, Foreign(ctx, src, func_i->return_type), func_m->return_type, &ctx->error);
     } break;
 
     case FBLD_PROC_DECL: {
@@ -1233,7 +1352,7 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
       for (size_t i = 0; i < proc_i->portv->size && i < proc_m->portv->size; ++i) {
         FbldPort* port_i = proc_i->portv->xs + i;
         FbldPort* port_m = proc_m->portv->xs + i;
-        CheckTypesMatch(port_m->type->name->loc, ForeignType(ctx, src, port_i->type), port_m->type, &ctx->error);
+        CheckTypesMatch(port_m->type->name->loc, Foreign(ctx, src, port_i->type), port_m->type, &ctx->error);
     
         if (!FbldNamesEqual(port_i->name->name, port_m->name->name)) {
           ReportError("Expected name %s, but found name %s\n", &ctx->error, decl_m->name->loc,
@@ -1246,7 +1365,7 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
       }
     
       CheckArgsMatch(ctx, src, proc_i->argv, proc_m->argv);
-      CheckTypesMatch(proc_m->return_type->name->loc, ForeignType(ctx, src, proc_i->return_type), proc_m->return_type, &ctx->error);
+      CheckTypesMatch(proc_m->return_type->name->loc, Foreign(ctx, src, proc_i->return_type), proc_m->return_type, &ctx->error);
     }
 
     case FBLD_INTERF_DECL: {
@@ -1290,7 +1409,15 @@ static bool CheckValue(Context* ctx, Env* env, FbldValue* value)
   if (!CheckType(ctx, env, value->type)) {
     return false;
   }
-  FbldType* type = (FbldType*)value->type->r.decl;
+
+  if (value->type->r->tag != FBLD_ENTITY_R) {
+    ReportError("type %s is abstract\n", &ctx->error, value->type->name->loc, value->type->name->name);
+    return false;
+  }
+
+  FbldEntityR* entity = (FbldEntityR*)value->type->r;
+  assert(entity->decl->tag == FBLD_TYPE_DECL);
+  FbldType* type = (FbldType*)entity->decl;
 
   switch (value->kind) {
     case FBLD_STRUCT_KIND: {
@@ -1339,13 +1466,13 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
   return !ctx.error;
 }
 
-// ForeignType --
-//   Reference a foreign type. A foreign type is a field, argument, port, or
-//   return type of some type, func, or proc declaration. The foreign type
+// Foreign --
+//   Reference a foreign type or module. A foreign qref is a type or module
+//   referred to from a type, func, or proc declaration. The foreign qref
 //   will have been resolved in the context of the possibly parameterized
-//   type, func, or proc declaration. It is now being used with concrete type
-//   arguments. This function substitutes the proper concrete type arguments
-//   given the src of the foreign type.
+//   type, func, or proc declaration. It is now being used with concrete
+//   parameter arguments. This function substitutes the proper concrete
+//   concrete arguments given by the src of the foreign qref.
 //
 //   For example, if the source of the foreign type is Maybe<Int>, and the
 //   foreign type is the parameter T in the context of the definition of
@@ -1358,7 +1485,7 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 //   ctx - The context for type checking.
 //   src - The src reference in the current environment used to supply
 //         parameter arguments.
-//   qref - The foreign type that has been resolved in the context of its
+//   qref - The foreign qref that has been resolved in the context of its
 //          definition.
 //
 // Results:
@@ -1367,94 +1494,80 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 //
 // Side effects:
 //   May allocate a new qref used for the return value.
-static FbldQRef* ForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref)
+static FbldQRef* Foreign(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
   // The qref should already have been resolved by this point, otherwise
   // something has gone wrong.
-  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(qref->r.decl->tag == FBLD_TYPE_DECL);
+  assert(qref->r != NULL);
+  switch (qref->r->tag) {
+    case FBLD_FAILED_R: {
+      UNREACHABLE("ForeignType with failed src?");
+      return NULL;
+    }
 
-  if (qref->r.mref != NULL) {
-    // TODO: Avoid allocation if the foreign module is the same?
-    FbldQRef* imported = FBLC_ALLOC(ctx->arena, FbldQRef);
-    imported->name = qref->name;
-    assert(qref->targv->size == 0 && "TODO");
-    assert(qref->margv->size == 0 && "TODO");
-    imported->targv = qref->targv;
-    imported->margv = qref->margv;
-    imported->mref = ForeignModule(ctx, src, qref->r.mref);
-    imported->r.state = FBLD_RSTATE_RESOLVED;
-    imported->r.mref = imported->mref;
-    imported->r.decl = qref->r.decl;
-    return imported;
-  }
+    case FBLD_ENTITY_R: {
+      FbldEntityR* entity = (FbldEntityR*)qref->r;
+      if (entity->mref == NULL) {
+        // This is a top level declaration.
+        return qref;
+      }
 
-  // TODO: Check whether this is a type parameter somewhere from src.
-  return qref;
-}
-
-// ForeignModule --
-//   Reference a foreign module. A foreign is a module referred to from a
-//   field, argument, port, or return type of some type, func, or proc
-//   declaration. The foreign module will have been resolved in the context of
-//   the possibly parameterized type, func, or proc declaration. It is now
-//   being used with concrete parameter arguments. This function substitutes
-//   the proper concrete arguments given by the src of the foreign type.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   src - The src reference in the current environment used to supply
-//         parameter arguments.
-//   qref - The foreign module that has been resolved in the context of its
-//          definition.
-//
-// Results:
-//   The foreign module imported into the current environment by substituting
-//   parameter arguments as appropriate given the src.
-//
-// Side effects:
-//   May allocate a new qref used for the return value.
-static FbldQRef* ForeignModule(Context* ctx, FbldQRef* src, FbldQRef* qref)
-{
-  // The qref should already have been resolved by this point, otherwise
-  // something has gone wrong.
-  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
+      // TODO: Avoid allocation if the foreign module is the same?
+      FbldEntityR* ient = FBLC_ALLOC(ctx->arena, FbldEntityR);
+      ient->_base.tag = FBLD_ENTITY_R;
+      ient->decl = entity->decl;
+      ient->mref = Foreign(ctx, src, entity->mref);
+      ient->source = entity->source;
 
-  if (qref->r.mref != NULL) {
-    assert(qref->r.decl->tag == FBLD_MODULE_DECL);
+      FbldQRef* imported = FBLC_ALLOC(ctx->arena, FbldQRef);
+      imported->name = qref->name;
+      assert(qref->targv->size == 0 && "TODO");
+      assert(qref->margv->size == 0 && "TODO");
+      imported->targv = qref->targv;
+      imported->margv = qref->margv;
+      imported->mref = ient->mref;
+      imported->r = &ient->_base;
+      return imported;
+    }
 
-    // TODO: Avoid allocation if the foreign module is the same?
-    FbldQRef* imported = FBLC_ALLOC(ctx->arena, FbldQRef);
-    imported->name = qref->name;
-    assert(qref->targv->size == 0 && "TODO");
-    assert(qref->margv->size == 0 && "TODO");
-    imported->targv = qref->targv;
-    imported->margv = qref->margv;
-    imported->mref = ForeignModule(ctx, src, qref->r.mref);
-    imported->r.state = FBLD_RSTATE_RESOLVED;
-    imported->r.mref = imported->mref;
-    imported->r.decl = qref->r.decl;
-    return imported;
-  }
+    case FBLD_PARAM_R: {
+      FbldParamR* param = (FbldParamR*)qref->r;
 
-  if (qref->r.decl->tag == FBLD_INTERF_DECL) {
-    // This is an interface parameter.
-    // Find the module from src to substitute in its place.
-    for (FbldQRef* m = src; m != NULL; m = m->r.mref) {
-      assert(m->r.state == FBLD_RSTATE_RESOLVED);
-      if (m->r.decl->tag == FBLD_MODULE_DECL) {
-        FbldModule* module = (FbldModule*)m->r.decl;
-        assert(module->iref->r.state == FBLD_RSTATE_RESOLVED);
-        if (module->iref->r.decl == qref->r.decl) {
-          // TODO: Do something with the interface parameters?
-          return m;
+      // Find the declaration matching the parameter.
+      FbldQRef* qdecl = src;
+      assert(qdecl->r->tag == FBLD_ENTITY_R);
+      FbldEntityR* qent = (FbldEntityR*)qdecl->r;
+      FbldQRef* mod = NULL;
+      while (param->decl != qent->decl) {
+        FbldEntitySource source = qent->source;
+        qdecl = qent->mref;
+        assert(qdecl->r->tag == FBLD_ENTITY_R);
+        qent = (FbldEntityR*)qdecl->r;
+        if (source == FBLD_INTERF_SOURCE) {
+          assert(qent->decl->tag == FBLD_MODULE_DECL);
+          FbldModule* mmod = (FbldModule*)qent->decl;
+          mod = qdecl;
+          qdecl = mmod->iref;
+          assert(qdecl->r->tag == FBLD_ENTITY_R);
+          qent = (FbldEntityR*)qdecl->r;
         }
       }
-    }
-    assert(false && "foreign module import failed.");
-    return NULL;
-  }
 
-  // TODO: Check whether this is a module parameter somewhere from src.
-  return qref;
+      if (param->index == FBLD_INTERF_PARAM_INDEX) {
+        return mod;
+      }
+
+      if (param->interf == NULL) {
+        assert(param->index < qdecl->targv->size);
+        return qdecl->targv->xs[param->index];
+      }
+      assert(param->index < qdecl->margv->size);
+      return qdecl->margv->xs[param->index];
+    }
+
+    default: {
+      UNREACHABLE("Invalid R tag");
+      return NULL;
+    }
+  }
 }

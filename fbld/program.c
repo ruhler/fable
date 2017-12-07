@@ -10,8 +10,7 @@
 // FbldPrintQRef -- see documentation in fbld.h
 void FbldPrintQRef(FILE* stream, FbldQRef* qref)
 {
-  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  fprintf(stream, "%s", qref->r.decl->name->name);
+  fprintf(stream, "%s", qref->name->name);
   if (qref->targv->size > 0 || qref->margv->size > 0) {
     fprintf(stream, "<");
     for (size_t i = 0; i < qref->targv->size; ++i) {
@@ -33,8 +32,8 @@ void FbldPrintQRef(FILE* stream, FbldQRef* qref)
     }
     fprintf(stream, ">");
   }
-  if (qref->r.mref != NULL) {
+  if (qref->mref != NULL) {
     fprintf(stream, "@");
-    FbldPrintQRef(stream, qref->r.mref);
+    FbldPrintQRef(stream, qref->mref);
   }
 }

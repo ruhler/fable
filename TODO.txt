@@ -8,6 +8,7 @@ Fbld 3:
 * Get AllTest and Snake to pass
  - Adding spec tests as needed to reproduce errors.
 * Add a test for inner module definition with following declaration.
+* Add test for importing a polymorphic declaration.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

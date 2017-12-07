@@ -24,14 +24,46 @@ bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b)
     return false;
   }
 
-  assert(a->r.state == FBLD_RSTATE_RESOLVED);
-  assert(b->r.state == FBLD_RSTATE_RESOLVED);
-  if (!FbldNamesEqual(a->r.decl->name->name, b->r.decl->name->name)) {
+  assert(a->r != NULL);
+  assert(b->r != NULL);
+  if (a->r->tag != b->r->tag) {
     return false;
   }
 
-  if (!FbldQRefsEqual(a->r.mref, b->r.mref)) {
-    return false;
+  switch (a->r->tag) {
+    case FBLD_FAILED_R:
+      assert(false);
+      return false;
+
+    case FBLD_ENTITY_R: {
+      FbldEntityR* aent = (FbldEntityR*)a->r;
+      FbldEntityR* bent = (FbldEntityR*)b->r;
+      if (!FbldNamesEqual(aent->decl->name->name, bent->decl->name->name)) {
+        return false;
+      }
+
+      if (!FbldQRefsEqual(aent->mref, bent->mref)) {
+        return false;
+      }
+      return true;
+    }
+
+    case FBLD_PARAM_R: {
+      FbldParamR* apar = (FbldParamR*)a->r;
+      FbldParamR* bpar = (FbldParamR*)b->r;
+
+      if (!FbldNamesEqual(apar->decl->name->name, bpar->decl->name->name)) {
+        return false;
+      }
+
+      if (apar->index != bpar->index) {
+        return false;
+      }
+      return true;
+    }
+
+    default:
+      assert(false && "Invalid R tag");
+      return false;
   }
-  return true;
 }

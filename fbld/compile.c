@@ -99,11 +99,13 @@ static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 //   Behavior is undefined if the type could not be found.
 static FbldType* LookupType(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(qref->r.mref != NULL && "type is not a valid top-level declaration");
-  assert(qref->r.decl->tag == FBLD_TYPE_DECL);
-  FbldName* name = qref->r.decl->name;
-  FbldModule* module = LookupModule(ctx, qref->r.mref);
+  assert(qref->r != NULL);
+  assert(qref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)qref->r;
+  assert(entity->mref != NULL && "type is not a valid top-level declaration");
+  assert(entity->decl->tag == FBLD_TYPE_DECL);
+  FbldName* name = entity->decl->name;
+  FbldModule* module = LookupModule(ctx, entity->mref);
   for (size_t i = 0; i < module->declv->size; ++i) {
     if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
       assert(module->declv->xs[i]->tag == FBLD_TYPE_DECL);
@@ -128,11 +130,13 @@ static FbldType* LookupType(Context* ctx, FbldQRef* qref)
 //   Behavior is undefined if the function could not be found.
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(qref->r.mref != NULL && "func is not a valid top-level declaration");
-  assert(qref->r.decl->tag == FBLD_FUNC_DECL);
-  FbldName* name = qref->r.decl->name;
-  FbldModule* module = LookupModule(ctx, qref->r.mref);
+  assert(qref->r != NULL);
+  assert(qref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)qref->r;
+  assert(entity->mref != NULL && "func is not a valid top-level declaration");
+  assert(entity->decl->tag == FBLD_FUNC_DECL);
+  FbldName* name = entity->decl->name;
+  FbldModule* module = LookupModule(ctx, entity->mref);
   for (size_t i = 0; i < module->declv->size; ++i) {
     if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
       assert(module->declv->xs[i]->tag == FBLD_FUNC_DECL);
@@ -157,11 +161,13 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
 //   Behavior is undefined if the process could not be found.
 static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(qref->r.mref != NULL && "proc is not a valid top-level declaration");
-  assert(qref->r.decl->tag == FBLD_PROC_DECL);
-  FbldName* name = qref->r.decl->name;
-  FbldModule* module = LookupModule(ctx, qref->r.mref);
+  assert(qref->r != NULL);
+  assert(qref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)qref->r;
+  assert(entity->mref != NULL && "proc is not a valid top-level declaration");
+  assert(entity->decl->tag == FBLD_PROC_DECL);
+  FbldName* name = entity->decl->name;
+  FbldModule* module = LookupModule(ctx, entity->mref);
   for (size_t i = 0; i < module->declv->size; ++i) {
     if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
       assert(module->declv->xs[i]->tag == FBLD_PROC_DECL);
@@ -186,10 +192,12 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 //   Behavior is undefined if the module could not be found.
 static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r.state == FBLD_RSTATE_RESOLVED);
-  assert(qref->r.decl->tag == FBLD_MODULE_DECL);
-  FbldName* name = qref->r.decl->name;
-  if (qref->r.mref == NULL) {
+  assert(qref->r != NULL);
+  assert(qref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)qref->r;
+  assert(entity->decl->tag == FBLD_MODULE_DECL);
+  FbldName* name = entity->decl->name;
+  if (entity->mref == NULL) {
     // We are looking for a top-level module declaration.
     for (size_t i = 0; i < ctx->prgm->modulev.size; ++i) {
       if (FbldNamesEqual(ctx->prgm->modulev.xs[i]->_base.name->name, name->name)) {
@@ -200,7 +208,7 @@ static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
     return NULL;
   }
 
-  FbldModule* module = LookupModule(ctx, qref->r.mref);
+  FbldModule* module = LookupModule(ctx, entity->mref);
   for (size_t i = 0; i < module->declv->size; ++i) {
     if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
       assert(module->declv->xs[i]->tag == FBLD_MODULE_DECL);
@@ -289,12 +297,14 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
 
     case FBLD_APP_EXPR: {
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
-      FbldQRef* entity = app_expr_d->func;
-      assert(entity->r.state == FBLD_RSTATE_RESOLVED);
-      if (entity->r.decl->tag == FBLD_FUNC_DECL) {
+      FbldQRef* qref = app_expr_d->func;
+      assert(qref->r != NULL);
+      assert(qref->r->tag == FBLD_ENTITY_R);
+      FbldEntityR* entity = (FbldEntityR*)qref->r;
+      if (entity->decl->tag == FBLD_FUNC_DECL) {
         FblcAppExpr* app_expr_c = FBLC_ALLOC(ctx->arena, FblcAppExpr);
         app_expr_c->_base.tag = FBLC_APP_EXPR;
-        app_expr_c->func = CompileFunc(ctx, entity);
+        app_expr_c->func = CompileFunc(ctx, qref);
         FblcVectorInit(ctx->arena, app_expr_c->argv);
         for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
           FblcExpr* arg = CompileExpr(ctx, mref, app_expr_d->argv->xs[i]);
@@ -304,7 +314,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       } else {
         FblcStructExpr* struct_expr = FBLC_ALLOC(ctx->arena, FblcStructExpr);
         struct_expr->_base.tag = FBLC_STRUCT_EXPR;
-        struct_expr->type = CompileType(ctx, entity);
+        struct_expr->type = CompileType(ctx, qref);
         FblcVectorInit(ctx->arena, struct_expr->argv);
         for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
           FblcExpr* arg = CompileExpr(ctx, mref, app_expr_d->argv->xs[i]);
@@ -501,13 +511,17 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref)
   compiled_func->entity = qref;
   compiled_func->compiled = func_c;
 
+  assert(qref->r != NULL);
+  assert(qref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)qref->r;
+
   FblcVectorInit(ctx->arena, func_c->argv);
   for (size_t arg_id = 0; arg_id < func_d->argv->size; ++arg_id) {
-    FblcType* arg_type = CompileForeignType(ctx, qref->r.mref, func_d->argv->xs[arg_id]->type);
+    FblcType* arg_type = CompileForeignType(ctx, entity->mref, func_d->argv->xs[arg_id]->type);
     FblcVectorAppend(ctx->arena, func_c->argv, arg_type);
   }
-  func_c->return_type = CompileForeignType(ctx, qref->r.mref, func_d->return_type);
-  func_c->body = CompileExpr(ctx, qref->r.mref, func_d->body);
+  func_c->return_type = CompileForeignType(ctx, entity->mref, func_d->return_type);
+  func_c->body = CompileExpr(ctx, entity->mref, func_d->body);
 
   return func_c;
 }
@@ -578,7 +592,7 @@ static FblcType* CompileType(Context* ctx, FbldQRef* qref)
 }
 
 // FbldCompileProgram -- see documentation in fbld.h
-FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* entity)
+FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldProgram* prgm, FbldQRef* qref)
 {
   Context ctx = {
     .arena = arena,
@@ -590,14 +604,16 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
   FblcVectorInit(arena, ctx.procv);
 
   FbldProc* proc_d = NULL;
-  assert(entity->r.state == FBLD_RSTATE_RESOLVED);
-  switch (entity->r.decl->tag) {
+  assert(qref->r != NULL);
+  assert(qref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)qref->r;
+  switch (entity->decl->tag) {
     case FBLD_PROC_DECL:
-      proc_d = LookupProc(&ctx, entity);
+      proc_d = LookupProc(&ctx, qref);
       break;
 
     case FBLD_FUNC_DECL: {
-      FbldFunc* func_d = LookupFunc(&ctx, entity);
+      FbldFunc* func_d = LookupFunc(&ctx, qref);
       proc_d = FBLC_ALLOC(arena, FbldProc);
       proc_d->_base.name = func_d->_base.name;
       proc_d->portv = FBLC_ALLOC(arena, FbldPortV);
@@ -615,11 +631,11 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
     }
 
     default:
-      fprintf(stderr, "Entry '%s' does not refer to a proc or func\n", entity->name->name);
+      fprintf(stderr, "Entry '%s' does not refer to a proc or func\n", qref->name->name);
       return NULL;
   }
 
-  FblcProc* proc_c = CompileGivenProc(&ctx, entity, proc_d);
+  FblcProc* proc_c = CompileGivenProc(&ctx, qref, proc_d);
   FbldLoaded* loaded = FBLC_ALLOC(arena, FbldLoaded);
   loaded->prog = prgm;
   loaded->proc_d = proc_d;

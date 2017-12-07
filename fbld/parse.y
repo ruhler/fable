@@ -234,8 +234,7 @@ qref:
       $$->targv = $2.targv;
       $$->margv = $2.margv;
       $$->mref = NULL;
-      $$->r.state = FBLD_RSTATE_UNRESOLVED;
-      $$->r.mref = NULL;
+      $$->r = NULL;
     }
   | name tmargs '@' qref {
       $$ = FBLC_ALLOC(arena, FbldQRef);
@@ -243,8 +242,7 @@ qref:
       $$->targv = $2.targv;
       $$->margv = $2.margv;
       $$->mref = $4;
-      $$->r.state = FBLD_RSTATE_UNRESOLVED;
-      $$->r.mref = NULL;
+      $$->r = NULL;
     }
   ;
 

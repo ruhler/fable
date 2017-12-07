@@ -39,6 +39,7 @@ typedef struct {
 void FbldReportError(const char* format, FbldLoc* loc, ...);
 
 // Forward declarations. See below for descriptions of these types.
+typedef struct FbldInterf FbldInterf;
 typedef struct FbldDecl FbldDecl;
 typedef struct FbldQRef FbldQRef;
 typedef struct FbldQRefV FbldQRefV;
@@ -78,14 +79,68 @@ typedef struct {
   FbldId* xs;
 } FbldIdV;
 
-// FbldRState --
-//   The resolution states for a qref.
+// FbldRTag --
+//   A tag used to distinguish among different kinds of resolved qrefs.
 typedef enum {
-  FBLD_RSTATE_UNRESOLVED, // The qref has not yet been resolved.
-  FBLD_RSTATE_FAILED,     // The qref failed resolution.
-  FBLD_RSTATE_RESOLVED,   // The qref resolved to a normal entity.
-  FBLD_RSTATE_PARAM       // The qref resolved to a parameter.
-} FbldRState;
+  FBLD_FAILED_R,          // The qref failed resolution.
+  FBLD_ENTITY_R,          // The qref resolved to a normal entity.
+  FBLD_PARAM_R,           // The qref resolved to a type or module parameter.
+} FbldRTag;
+
+// FbldR --
+//   Common base type for the following fbld r types. The tag can be used to
+//   determine what kind of r this is to get access to additional fields of
+//   the r by first casting to that specific type.
+typedef struct {
+  FbldRTag tag;
+} FbldR;
+
+// FbldEntitySource --
+//   Enumeration used to distinguish the source of a resolved entity.
+typedef enum {
+  FBLD_INTERF_SOURCE,
+  FBLD_MODULE_SOURCE
+} FbldEntitySource;
+
+// FbldEntityR --
+//   Used when a qref resolves to an entity from a module or interface.
+//
+// Fields:
+//   decl - The declaration of the resolved entity.
+//   mref - The module or interface the entity belongs to.
+//   source - Whether the module was resolved from an interface or module.
+typedef struct {
+  FbldR _base;
+  FbldDecl* decl;
+  FbldQRef* mref;
+  FbldEntitySource source;
+} FbldEntityR;
+
+// FbldParamR --
+//   Used when a qref resolve to a type or module parameter.
+//
+// Fields:
+//   decl - The declaration introducing this parameter.
+//   interf - The interface of this parameter if it is a module parameter.
+//            NULL if the parameter is a type parameter.
+//   index - The index into targv or margv of decl identifying this parameter.
+//
+// Type parameters can be found at decl->targv[index].
+// Module parameters can be found at decl->margv[index], except in the case
+// where the module parameter is used when checking an interface, in which
+// case index will be set to FBLD_INTERF_PARAM_INDEX and the module in
+// question is the module that implements the interface whose declaration is
+// decl.
+typedef struct {
+  FbldR _base;
+  FbldInterf* interf;
+  FbldDecl* decl;
+  int index;
+} FbldParamR;
+
+// FBLD_INTERF_PARAM_INDEX --
+//   The special index used in the FbldParamR for an interface.
+#define FBLD_INTERF_PARAM_INDEX (-1)
 
 // FbldQRef --
 //   A reference to a qualified interface, module, type, function or process,
@@ -96,8 +151,7 @@ typedef enum {
 // reference. The unresolved version is as the reference appears in the source
 // code, the resolved version is the canonical global path to the relevant
 // entity or type parameter. The parser leaves the qref unresolved. The type
-// checker resolves all entities, updating r.state, and r.mref as
-// appropriate.
+// checker resolves all entities, updating r as appropriate.
 //
 // Fields:
 //   name - The unresolved name of the entity.
@@ -105,22 +159,14 @@ typedef enum {
 //   margv - The module arguments to the entity.
 //   mref - The unresolved module the entity is from. NULL for references that
 //          are not explicitly qualified.
-//
-//   r.state - The resolution state of the qref.
-//   r.mref - The resolved module reference. NULL for references to parameters
-//            or top level declarations.
-//   r.decl - A pointer to the declaration of the resolved entity.
+//   r - The resolved reference, or NULL if the reference has not yet been
+//       resolved.
 struct FbldQRef {
   FbldName* name;
   FbldQRefV* targv;
   FbldQRefV* margv;
   FbldQRef* mref;
-
-  struct {
-    FbldRState state;
-    FbldQRef* mref;
-    FbldDecl* decl;
-  } r;
+  FbldR* r;
 };
 
 // FbldQRefV --
@@ -517,11 +563,11 @@ typedef struct {
 
 // FbldInterf --
 //   An fbld interface declaration.
-typedef struct {
+struct FbldInterf {
   FbldDecl _base;
   FbldImportV* importv;
   FbldDeclV* declv;
-} FbldInterf;
+};
 
 // FbldInterfV --
 //   A vector of fbld interface declarations.
