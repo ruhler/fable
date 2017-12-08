@@ -1533,12 +1533,32 @@ static FbldQRef* Foreign(Context* ctx, FbldQRef* src, FbldQRef* qref)
     case FBLD_PARAM_R: {
       FbldParamR* param = (FbldParamR*)qref->r;
 
-      // Find the declaration matching the parameter.
       FbldQRef* qdecl = src;
       assert(qdecl->r->tag == FBLD_ENTITY_R);
       FbldEntityR* qent = (FbldEntityR*)qdecl->r;
-      FbldQRef* mod = NULL;
-      while (param->decl != qent->decl) {
+      while (true) {
+        if (param->index == FBLD_INTERF_PARAM_INDEX) {
+          if (qent->decl->tag == FBLD_MODULE_DECL) {
+            FbldModule* module = (FbldModule*)qent->decl;
+            assert(module->iref->r->tag == FBLD_ENTITY_R);
+            FbldEntityR* ient = (FbldEntityR*)module->iref->r;
+            assert(ient->decl->tag == FBLD_INTERF_DECL);
+            if (ient->decl == param->decl) {
+              return qdecl;
+            }
+          }
+        } else {
+          if (qent->decl == param->decl) {
+            if (param->interf == NULL) {
+              assert(param->index < qdecl->targv->size);
+              return qdecl->targv->xs[param->index];
+            }
+            assert(param->index < qdecl->margv->size);
+            return qdecl->margv->xs[param->index];
+          }
+        }
+
+        // We didn't find a match. Continue up the hierarchy.
         FbldEntitySource source = qent->source;
         qdecl = qent->mref;
         assert(qdecl->r->tag == FBLD_ENTITY_R);
@@ -1546,23 +1566,12 @@ static FbldQRef* Foreign(Context* ctx, FbldQRef* src, FbldQRef* qref)
         if (source == FBLD_INTERF_SOURCE) {
           assert(qent->decl->tag == FBLD_MODULE_DECL);
           FbldModule* mmod = (FbldModule*)qent->decl;
-          mod = qdecl;
           qdecl = mmod->iref;
           assert(qdecl->r->tag == FBLD_ENTITY_R);
           qent = (FbldEntityR*)qdecl->r;
         }
       }
-
-      if (param->index == FBLD_INTERF_PARAM_INDEX) {
-        return mod;
-      }
-
-      if (param->interf == NULL) {
-        assert(param->index < qdecl->targv->size);
-        return qdecl->targv->xs[param->index];
-      }
-      assert(param->index < qdecl->margv->size);
-      return qdecl->margv->xs[param->index];
+      UNREACHABLE("Infinite loop terminated?");
     }
 
     default: {
