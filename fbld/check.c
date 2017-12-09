@@ -1563,7 +1563,7 @@ static FbldQRef* Foreign(Context* ctx, FbldQRef* src, FbldQRef* qref)
         qdecl = qent->mref;
         assert(qdecl->r->tag == FBLD_ENTITY_R);
         qent = (FbldEntityR*)qdecl->r;
-        if (source == FBLD_INTERF_SOURCE) {
+        if (param->index != FBLD_INTERF_PARAM_INDEX && source == FBLD_INTERF_SOURCE) {
           assert(qent->decl->tag == FBLD_MODULE_DECL);
           FbldModule* mmod = (FbldModule*)qent->decl;
           qdecl = mmod->iref;
