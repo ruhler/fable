@@ -218,6 +218,36 @@ bool FbldNamesEqual(const char* a, const char* b);
 // Side effects:
 //   None.
 bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b);
+
+// FbldImportQRef --
+//   Reference a foreign type or module. A foreign qref is a type or module
+//   referred to from a type, func, or proc declaration. The foreign qref
+//   will have been resolved in the context of the possibly parameterized
+//   type, func, or proc declaration. It is now being used with concrete
+//   parameter arguments. This function substitutes the proper concrete
+//   concrete arguments given by the src of the foreign qref.
+//
+//   For example, if the source of the foreign type is Maybe<Int>, and the
+//   foreign type is the parameter T in the context of the definition of
+//   Maybe<T>, then this returns Int.
+//
+//   Substitutions are performed for type arguments, module arguments, and
+//   interfaces.
+//
+// Inputs:
+//   arena - An arena to use for allocations.
+//   src - The src reference in the current environment used to supply
+//         parameter arguments.
+//   qref - The foreign qref that has been resolved in the context of its
+//          definition.
+//
+// Results:
+//   The foreign type imported into the current environment by substituting
+//   parameter arguments as appropriate given the src.
+//
+// Side effects:
+//   May allocate a new qref used for the return value.
+FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref);
 
 // FbldExprTag --
 //   A tag used to distinguish among different kinds of expressions.

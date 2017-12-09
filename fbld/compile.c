@@ -517,10 +517,10 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref)
 
   FblcVectorInit(ctx->arena, func_c->argv);
   for (size_t arg_id = 0; arg_id < func_d->argv->size; ++arg_id) {
-    FblcType* arg_type = CompileForeignType(ctx, entity->mref, func_d->argv->xs[arg_id]->type);
+    FblcType* arg_type = CompileForeignType(ctx, qref, func_d->argv->xs[arg_id]->type);
     FblcVectorAppend(ctx->arena, func_c->argv, arg_type);
   }
-  func_c->return_type = CompileForeignType(ctx, entity->mref, func_d->return_type);
+  func_c->return_type = CompileForeignType(ctx, qref, func_d->return_type);
   func_c->body = CompileExpr(ctx, entity->mref, func_d->body);
 
   return func_c;
@@ -531,7 +531,7 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref)
 //
 // Inputs:
 //   ctx - The compilation context.
-//   mref - The context from which the type is referred to.
+//   src - The context from which the type is referred to.
 //   qref - The type to compile.
 //
 // Results:
@@ -539,11 +539,9 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref)
 //
 // Side effects:
 //   Adds the compiled type to the context if it is newly compiled.
-static FblcType* CompileForeignType(Context* ctx, FbldQRef* mref, FbldQRef* qref)
+static FblcType* CompileForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
-  // TODO: Use mref to resolve parameters in qref.
-  // For now we assume qref has no parameters.
-  return CompileType(ctx, qref);
+  return CompileType(ctx, FbldImportQRef(ctx->arena, src, qref));
 }
 
 // CompileType --
@@ -584,7 +582,7 @@ static FblcType* CompileType(Context* ctx, FbldQRef* qref)
   FblcVectorInit(ctx->arena, type_c->fieldv);
   for (size_t i = 0; i < type_d->fieldv->size; ++i) {
     FbldArg* arg_d = type_d->fieldv->xs[i];
-    FblcType* arg_c = CompileForeignType(ctx, qref->mref, arg_d->type);
+    FblcType* arg_c = CompileForeignType(ctx, qref, arg_d->type);
     FblcVectorAppend(ctx->arena, type_c->fieldv, arg_c);
   }
 

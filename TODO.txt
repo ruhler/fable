@@ -15,7 +15,6 @@ Fbld Test:
   - for type, func, and proc declarations.
 * Test case when abstract type is used as select for conditional.
 * Test that all imported names exist in the module they are imported from.
-* Port remainder of fblc tests to fbld.
 
 Fbld Cleanup:
 * Update references to mtype to reference interf instead.
