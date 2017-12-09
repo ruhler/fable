@@ -342,10 +342,7 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 //   formed.
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
 {
-  // TODO: CheckParams(ctx, interf->params);
-  assert(interf->_base.targv->size == 0 && "TODO");
-  assert(interf->_base.margv->size == 0 && "TODO");
-
+  // TODO: Check the interface parameters somewhere.
   FbldParamR* param = FBLC_ALLOC(ctx->arena, FbldParamR);
   param->_base.tag = FBLD_PARAM_R;
   param->interf = interf;
@@ -431,16 +428,16 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   CheckProtos(ctx, &module_env);
 
   // Verify the module has everything it should according to its interface.
-  FbldInterf* interf = FbldLoadInterf(ctx->arena, ctx->path, module->iref->name->name, ctx->prgm);
-  if (interf == NULL) {
-    return false;
-  }
+  assert(module->iref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* ient = (FbldEntityR*)module->iref->r;
+  assert(ient->decl->tag == FBLD_INTERF_DECL);
+  FbldInterf* interf = (FbldInterf*)ient->decl;
 
   FbldEntityR* dent = FBLC_ALLOC(ctx->arena, FbldEntityR);
   dent->_base.tag = FBLD_ENTITY_R;
   dent->decl = NULL;
   dent->mref = mref;
-  dent->source = FBLD_MODULE_SOURCE;
+  dent->source = FBLD_INTERF_SOURCE;
 
   FbldQRef src = {
     .name = NULL,
@@ -541,10 +538,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
 //   formed.
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 {
-  // TODO: CheckParams(ctx, module->params);
-  assert(module->_base.targv->size == 0 && "TODO");
-  assert(module->_base.margv->size == 0 && "TODO");
-
+  // TODO: Check the module parameters somewhere.
   if (!CheckQRef(ctx, env, module->iref)) {
     return false;
   }
@@ -1253,11 +1247,15 @@ static void CheckProtos(Context* ctx, Env* env)
       }
 
       case FBLD_INTERF_DECL: {
-        // TODO: check interface declarations.
+        FbldInterf* interf = (FbldInterf*)decl;
+        CheckInterf(ctx, env, interf);
+        break;
       }
 
       case FBLD_MODULE_DECL: {
-        // TODO: check module declarations.
+        FbldModule* module = (FbldModule*)decl;
+        CheckModuleHeader(ctx, env, module);
+        break;
       }
 
       default:
@@ -1335,11 +1333,15 @@ static void CheckBodies(Context* ctx, Env* env)
       }
 
       case FBLD_INTERF_DECL: {
-        // TODO: check interface declarations.
+        FbldInterf* interf = (FbldInterf*)decl;
+        CheckInterf(ctx, env, interf);
+        break;
       }
 
       case FBLD_MODULE_DECL: {
-        // TODO: check module declarations.
+        FbldModule* module = (FbldModule*)decl;
+        CheckModule(ctx, env, module);
+        break;
       }
 
       default:

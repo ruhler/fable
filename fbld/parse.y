@@ -157,9 +157,9 @@
 // tokens. We insert an arbitrary, artificial single-character token to
 // indicate which start token we actually want to use.
 start:
-     START_INTERF interf { result->decl = $2; }
+     START_INTERF interf ';' { result->decl = $2; }
    | START_MODULE module_defn ';' { result->decl = $2; }
-   | START_TOP_DECL interf { result->decl = $2; }
+   | START_TOP_DECL interf ';' { result->decl = $2; }
    | START_TOP_DECL module_defn ';' { result->decl = $2; }
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
@@ -669,7 +669,7 @@ decl_list:
     }
   ;
 
-interf: "interf" name params '{' decl_list '}' ';' {
+interf: "interf" name params '{' decl_list '}' {
           FbldInterf* interf = FBLC_ALLOC(arena, FbldInterf);
           interf->_base.tag = FBLD_INTERF_DECL;
           interf->_base.name = $2;

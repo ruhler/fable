@@ -57,7 +57,7 @@ FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name
 
   char* filename = FindModuleFile(arena, path, name);
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.fbld on search path\n", name);
+    fprintf(stderr, "unable to locate interf %s.fbld on search path\n", name);
     return NULL;
   }
 
@@ -96,7 +96,7 @@ FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char
   // Parse the module declaration if we haven't already.
   char* filename = FindModuleFile(arena, path, name);
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.fbld on search path\n", name);
+    fprintf(stderr, "unable to locate mdecl %s.fbld on search path\n", name);
     return NULL;
   }
 
@@ -167,7 +167,7 @@ FbldDecl* FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name,
   // Parse the declaration if we haven't already.
   char* filename = FindModuleFile(arena, path, name);
   if (filename == NULL) {
-    fprintf(stderr, "unable to locate %s.fbld on search path\n", name);
+    fprintf(stderr, "unable to locate top %s.fbld on search path\n", name);
     return NULL;
   }
 

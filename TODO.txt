@@ -2,9 +2,6 @@ Priority:
 * Fbld 3
 
 Fbld 3:
-* Add spec test for parameterized function
-* Add support for parameters.
- - Get added spec test to pass
 * Get AllTest and Snake to pass
  - Adding spec tests as needed to reproduce errors.
 * Add a test for inner module definition with following declaration.

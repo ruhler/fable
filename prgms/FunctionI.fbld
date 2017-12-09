@@ -1,3 +1,3 @@
 interf FunctionI<A, B> {
-  func f(A ; B);
+  func f(A a; B);
 };
