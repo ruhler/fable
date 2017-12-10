@@ -10,9 +10,13 @@ set prg {
     module MainM(MainI) {
       struct Unit();
 
-      # Test that we can declare and use a parameterized interface.
       interf Make<T> {
         func make( ; T);
+      };
+
+      # Test that we can declare and use a parameterized module parameter.
+      func foo<A ; Make<A> M>( ; A) {
+        make@M();
       };
 
       module MakeUnit(Make<Unit>) {
@@ -24,7 +28,7 @@ set prg {
       };
 
       func main( ; Unit) {
-        make@MakeUnit();
+        foo<Unit ; MakeUnit>();
       };
     };
   }

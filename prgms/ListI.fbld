@@ -1,5 +1,5 @@
 interf ListI {
-  import @ { UnitM; };
+  import @ { UnitM; FunctionI; };
   import UnitM { Unit; };
 
   # P - A list of 1 or more elements: T+
@@ -17,6 +17,6 @@ interf ListI {
   # Append list b to the end of list a.
   func Append<T>(S<T> a, S<T> b ; S<T>);
 
-  func MapS<A, B; Function<A, B> F>(S<A> a; S<B>);
-  func MapP<A, B; Function<A, B> F>(P<A> a; S<B>);
+  func MapS<A, B; FunctionI<A, B> F>(S<A> a; S<B>);
+  func MapP<A, B; FunctionI<A, B> F>(P<A> a; P<B>);
 };

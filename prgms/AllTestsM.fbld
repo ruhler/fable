@@ -1,8 +1,8 @@
 module AllTestsM(AllTestsI) {
-  import @ { UnitM; ListM; UBNatTestM; PrimesTestM; };
+  import @ { UnitM; ListM; UBNatTestM; PrimesTestM; FunctionI; };
 
   import UnitM { Unit; };
-  import ListM { S; P; Append; };
+  import ListM { S; P; Append; MapS; };
   import UBNatTestM { UBNatTestFailure = TestFailure; };
   import PrimesTestM { PrimesTestFailure = TestFailure; };
 
@@ -11,21 +11,25 @@ module AllTestsM(AllTestsI) {
       PrimesTestFailure PrimesTest
   );
   
-  module UBNatTestFailureF(Function<UBNatTestFailure, TestFailure>) {
-    func f(UBNatTestFailure x ; TestFailure) {
-      TestFailure:UBNatTest(x);
+  module UBNatTestFailureF(FunctionI<UBNatTestFailure, TestFailure>) {
+    import @ { UBNatTestFailure; TestFailure; };
+
+    func f(UBNatTestFailure a ; TestFailure) {
+      TestFailure:UBNatTest(a);
     };
   };
 
-  module PrimesTestFailureF(Function<PrimesTestFailure, TestFailure>) {
-    func f(PrimesTestFailure x ; TestFailure) {
-      TestFailure:PrimesTest(x);
+  module PrimesTestFailureF(FunctionI<PrimesTestFailure, TestFailure>) {
+    import @ { PrimesTestFailure; TestFailure; };
+
+    func f(PrimesTestFailure a ; TestFailure) {
+      TestFailure:PrimesTest(a);
     };
   };
 
   func Test( ; S<TestFailure>) {
     Append<TestFailure>(
-        MapS<UBNatTestFailure, TestFailure; UBNatTestFailiureF>(Test@UBNatTestM()),
+        MapS<UBNatTestFailure, TestFailure; UBNatTestFailureF>(Test@UBNatTestM()),
         MapS<PrimesTestFailure, TestFailure; PrimesTestFailureF>(Test@PrimesTestM()));
   };
 };

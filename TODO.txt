@@ -6,6 +6,8 @@ Fbld 3:
  - Adding spec tests as needed to reproduce errors.
 * Add a test for inner module definition with following declaration.
 * Add test for importing a polymorphic declaration.
+* Make it more clear in error messages when a module decl doesn't match its
+  interf decl that that's why we expected something different.
 
 Fbld Test:
 * Test all ways an mtype decl can mismatch against an mdefn decl.

@@ -121,8 +121,8 @@ typedef struct {
 //
 // Fields:
 //   decl - The declaration introducing this parameter.
-//   interf - The interface of this parameter if it is a module parameter.
-//            NULL if the parameter is a type parameter.
+//   iref - The interface of this parameter if it is a module parameter.
+//          NULL if the parameter is a type parameter.
 //   index - The index into targv or margv of decl identifying this parameter.
 //
 // Type parameters can be found at decl->targv[index].
@@ -133,7 +133,7 @@ typedef struct {
 // decl.
 typedef struct {
   FbldR _base;
-  FbldInterf* interf;
+  FbldQRef* iref;
   FbldDecl* decl;
   int index;
 } FbldParamR;

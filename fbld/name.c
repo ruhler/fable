@@ -119,48 +119,66 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
       FbldParamR* param = (FbldParamR*)qref->r;
 
       FbldQRef* qdecl = src;
-      assert(qdecl->r->tag == FBLD_ENTITY_R);
-      FbldEntityR* qent = (FbldEntityR*)qdecl->r;
-      while (true) {
-        if (param->index == FBLD_INTERF_PARAM_INDEX) {
-          if (qent->decl->tag == FBLD_MODULE_DECL) {
-            FbldModule* module = (FbldModule*)qent->decl;
-            assert(module->iref->r->tag == FBLD_ENTITY_R);
-            FbldEntityR* ient = (FbldEntityR*)module->iref->r;
-            assert(ient->decl->tag == FBLD_INTERF_DECL);
-            if (ient->decl == param->decl) {
-              return qdecl;
-            }
+
+      do {
+        assert(qdecl->r->tag == FBLD_ENTITY_R);
+        FbldEntityR* entity = (FbldEntityR*)qdecl->r;
+        FbldDecl* decl = entity->decl;
+
+        // Check for a matching type or module parameter on this declaration.
+        // TODO: Is it safe to match by name here instead of decl?
+        // Using decl has the problem of considering the interf and module
+        // versions of the same declaration as different.
+        if (FbldNamesEqual(decl->name->name, param->decl->name->name)) {
+          if (param->iref == NULL) {
+            assert(param->index < qdecl->targv->size);
+            return qdecl->targv->xs[param->index];
           }
-        } else {
-          // TODO: Is it safe to match by name here instead of decl?
-          // Using decl has the problem of considering the interf and module
-          // versions of the same declaration as different.
-          if (FbldNamesEqual(qent->decl->name->name, param->decl->name->name)) {
-            if (param->interf == NULL) {
-              assert(param->index < qdecl->targv->size);
-              return qdecl->targv->xs[param->index];
-            }
-            assert(param->index < qdecl->margv->size);
-            return qdecl->margv->xs[param->index];
+          assert(param->index < qdecl->margv->size);
+          return qdecl->margv->xs[param->index];
+        }
+
+        // Get the module that the declaration belongs to.
+        FbldQRef* mref = entity->mref;
+
+        // Get the interface of that module.
+        FbldQRef* iref = NULL;
+        switch (mref->r->tag) {
+          case FBLD_FAILED_R: {
+            assert(false && "invalid state");
+            return NULL;
+          }
+
+          case FBLD_ENTITY_R: {
+            FbldEntityR* ment = (FbldEntityR*)mref->r;
+            assert(ment->decl->tag == FBLD_MODULE_DECL);
+            FbldModule* module = (FbldModule*)ment->decl;
+            iref = module->iref;
+            break;
+          }
+
+          case FBLD_PARAM_R: {
+            FbldParamR* mpar = (FbldParamR*)mref->r;
+            assert(mpar->iref != NULL);
+            iref = mpar->iref;
+            break;
           }
         }
 
-        // We didn't find a match. Continue up the hierarchy.
-        FbldEntitySource source = qent->source;
-        qdecl = qent->mref;
-        assert(qdecl != NULL && "Failed to match param");
-        assert(qdecl->r->tag == FBLD_ENTITY_R);
-        qent = (FbldEntityR*)qdecl->r;
-        if (param->index != FBLD_INTERF_PARAM_INDEX && source == FBLD_INTERF_SOURCE) {
-          assert(qent->decl->tag == FBLD_MODULE_DECL);
-          FbldModule* mmod = (FbldModule*)qent->decl;
-          qdecl = mmod->iref;
-          assert(qdecl->r->tag == FBLD_ENTITY_R);
-          qent = (FbldEntityR*)qdecl->r;
+        if (param->index == FBLD_INTERF_PARAM_INDEX) {
+          assert(iref->r->tag == FBLD_ENTITY_R);
+          FbldEntityR* ient = (FbldEntityR*)iref->r;
+          assert(ient->decl->tag == FBLD_INTERF_DECL);
+          if (ient->decl == param->decl) {
+            return mref;
+          }
         }
-      }
-      assert(false && "Infinite loop terminated?");
+
+        qdecl = (entity->source == FBLD_INTERF_SOURCE) ? iref : mref;
+      } while (qdecl != NULL);
+
+      assert(false && "No match found for parameter");
+      return NULL;
     }
 
     default: {
