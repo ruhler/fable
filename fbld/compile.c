@@ -77,9 +77,8 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref);
 static FbldProc* LookupProc(Context* ctx, FbldQRef* qref);
 static FbldModule* LookupModule(Context* ctx, FbldQRef* qref);
 static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc);
-static FblcType* CompileForeignType(Context* ctx, FbldQRef* mref, FbldQRef* qref);
-static FblcType* CompileType(Context* ctx, FbldQRef* qref);
-static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref);
+static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref);
+static FblcFunc* CompileFunc(Context* ctx, FbldQRef* src, FbldQRef* qref);
 static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn);
 static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr);
 static FblcValue* CompileValue(Context* ctx, FbldValue* value);
@@ -244,7 +243,7 @@ static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc)
   FblcVectorInit(ctx->arena, proc_c->portv);
   for (size_t i = 0; i < proc_d->portv->size; ++i) {
     FblcPort* port = FblcVectorExtend(ctx->arena, proc_c->portv);
-    port->type = CompileForeignType(ctx, qref, proc_d->portv->xs[i].type);
+    port->type = CompileType(ctx, qref, proc_d->portv->xs[i].type);
     switch (proc_d->portv->xs[i].polarity) {
       case FBLD_GET_POLARITY:
         port->polarity = FBLC_GET_POLARITY;
@@ -262,10 +261,10 @@ static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc)
 
   FblcVectorInit(ctx->arena, proc_c->argv);
   for (size_t arg_id = 0; arg_id < proc_d->argv->size; ++arg_id) {
-    FblcType* arg_type = CompileForeignType(ctx, qref, proc_d->argv->xs[arg_id]->type);
+    FblcType* arg_type = CompileType(ctx, qref, proc_d->argv->xs[arg_id]->type);
     FblcVectorAppend(ctx->arena, proc_c->argv, arg_type);
   }
-  proc_c->return_type = CompileForeignType(ctx, qref, proc_d->return_type);
+  proc_c->return_type = CompileType(ctx, qref, proc_d->return_type);
   proc_c->body = CompileActn(ctx, qref, proc_d->body);
   return proc_c;
 }
@@ -304,7 +303,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr)
       if (entity->decl->tag == FBLD_FUNC_DECL) {
         FblcAppExpr* app_expr_c = FBLC_ALLOC(ctx->arena, FblcAppExpr);
         app_expr_c->_base.tag = FBLC_APP_EXPR;
-        app_expr_c->func = CompileFunc(ctx, qref);
+        app_expr_c->func = CompileFunc(ctx, src, qref);
         FblcVectorInit(ctx->arena, app_expr_c->argv);
         for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
           FblcExpr* arg = CompileExpr(ctx, src, app_expr_d->argv->xs[i]);
@@ -314,7 +313,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr)
       } else {
         FblcStructExpr* struct_expr = FBLC_ALLOC(ctx->arena, FblcStructExpr);
         struct_expr->_base.tag = FBLC_STRUCT_EXPR;
-        struct_expr->type = CompileType(ctx, qref);
+        struct_expr->type = CompileType(ctx, src, qref);
         FblcVectorInit(ctx->arena, struct_expr->argv);
         for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
           FblcExpr* arg = CompileExpr(ctx, src, app_expr_d->argv->xs[i]);
@@ -328,7 +327,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr)
       FbldUnionExpr* union_expr_d = (FbldUnionExpr*)expr;
       FblcUnionExpr* union_expr_c = FBLC_ALLOC(ctx->arena, FblcUnionExpr);
       union_expr_c->_base.tag = FBLC_UNION_EXPR;
-      union_expr_c->type = CompileForeignType(ctx, src, union_expr_d->type);
+      union_expr_c->type = CompileType(ctx, src, union_expr_d->type);
       union_expr_c->field = union_expr_d->field.id;
       union_expr_c->arg = CompileExpr(ctx, src, union_expr_d->arg);
       return &union_expr_c->_base;
@@ -364,7 +363,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr)
       FbldLetExpr* let_expr_d = (FbldLetExpr*)expr;
       FblcLetExpr* let_expr_c = FBLC_ALLOC(ctx->arena, FblcLetExpr);
       let_expr_c->_base.tag = FBLC_LET_EXPR;
-      let_expr_c->type = CompileForeignType(ctx, src, let_expr_d->type);
+      let_expr_c->type = CompileType(ctx, src, let_expr_d->type);
       let_expr_c->def = CompileExpr(ctx, src, let_expr_d->def);
       let_expr_c->body = CompileExpr(ctx, src, let_expr_d->body);
       return &let_expr_c->_base;
@@ -455,7 +454,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
       FbldLinkActn* link_actn_d = (FbldLinkActn*)actn;
       FblcLinkActn* link_actn_c = FBLC_ALLOC(ctx->arena, FblcLinkActn);
       link_actn_c->_base.tag = FBLC_LINK_ACTN;
-      link_actn_c->type = CompileType(ctx, link_actn_d->type);
+      link_actn_c->type = CompileType(ctx, src, link_actn_d->type);
       link_actn_c->body = CompileActn(ctx, src, link_actn_d->body);
       return &link_actn_c->_base;
     }
@@ -467,7 +466,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
       FblcVectorInit(ctx->arena, exec_actn_c->execv);
       for (size_t i = 0; i < exec_actn_d->execv->size; ++i) {
         FblcExec* exec = FblcVectorExtend(ctx->arena, exec_actn_c->execv);
-        exec->type = CompileForeignType(ctx, src, exec_actn_d->execv->xs[i].type);
+        exec->type = CompileType(ctx, src, exec_actn_d->execv->xs[i].type);
         exec->actn = CompileActn(ctx, src, exec_actn_d->execv->xs[i].actn);
       }
       exec_actn_c->body = CompileActn(ctx, src, exec_actn_d->body);
@@ -486,6 +485,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
 //
 // Inputs:
 //   ctx - The context to use for compilation.
+//   src - The context from which the type is referred to.
 //   qref - The function to compile.
 //
 // Returns:
@@ -494,8 +494,10 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
 // Side effects:
 //   Adds information about access expressions to accessv.
 //   Adds the compiled function to 'compiled' if it is newly compiled.
-static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref)
+static FblcFunc* CompileFunc(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
+  qref = FbldImportQRef(ctx->arena, src, qref);
+
   // Check to see if we have already compiled the entity.
   for (size_t i = 0; i < ctx->funcv.size; ++i) {
     if (FbldQRefsEqual(ctx->funcv.xs[i].entity, qref)) {
@@ -511,23 +513,19 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref)
   compiled_func->entity = qref;
   compiled_func->compiled = func_c;
 
-  assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-
   FblcVectorInit(ctx->arena, func_c->argv);
   for (size_t arg_id = 0; arg_id < func_d->argv->size; ++arg_id) {
-    FblcType* arg_type = CompileForeignType(ctx, qref, func_d->argv->xs[arg_id]->type);
+    FblcType* arg_type = CompileType(ctx, qref, func_d->argv->xs[arg_id]->type);
     FblcVectorAppend(ctx->arena, func_c->argv, arg_type);
   }
-  func_c->return_type = CompileForeignType(ctx, qref, func_d->return_type);
-  func_c->body = CompileExpr(ctx, entity->mref, func_d->body);
+  func_c->return_type = CompileType(ctx, qref, func_d->return_type);
+  func_c->body = CompileExpr(ctx, qref, func_d->body);
 
   return func_c;
 }
-//
-// CompileForeignType --
-//   Compile a type referred to from another context.
+
+// CompileType --
+//   Compile a type.
 //
 // Inputs:
 //   ctx - The compilation context.
@@ -539,25 +537,10 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref)
 //
 // Side effects:
 //   Adds the compiled type to the context if it is newly compiled.
-static FblcType* CompileForeignType(Context* ctx, FbldQRef* src, FbldQRef* qref)
+static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
-  return CompileType(ctx, FbldImportQRef(ctx->arena, src, qref));
-}
-
-// CompileType --
-//   Compile a type.
-//
-// Inputs:
-//   ctx - The compilation context.
-//   qref - The type to compile.
-//
-// Results:
-//   The compiled fblc type.
-//
-// Side effects:
-//   Adds the compiled type to the context if it is newly compiled.
-static FblcType* CompileType(Context* ctx, FbldQRef* qref)
-{
+  qref = FbldImportQRef(ctx->arena, src, qref);
+
   // Check to see if we have already compiled the entity.
   for (size_t i = 0; i < ctx->typev.size; ++i) {
     if (FbldQRefsEqual(ctx->typev.xs[i].entity, qref)) {
@@ -582,7 +565,7 @@ static FblcType* CompileType(Context* ctx, FbldQRef* qref)
   FblcVectorInit(ctx->arena, type_c->fieldv);
   for (size_t i = 0; i < type_d->fieldv->size; ++i) {
     FbldArg* arg_d = type_d->fieldv->xs[i];
-    FblcType* arg_c = CompileForeignType(ctx, qref, arg_d->type);
+    FblcType* arg_c = CompileType(ctx, qref, arg_d->type);
     FblcVectorAppend(ctx->arena, type_c->fieldv, arg_c);
   }
 
