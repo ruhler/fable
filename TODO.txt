@@ -1,29 +1,18 @@
-Priority:
-* Fbld 3
-
-Fbld 3:
-* Get AllTest and Snake to pass
- - Adding spec tests as needed to reproduce errors.
+Fbld Test:
 * Add a test for inner module definition with following declaration.
 * Add test for importing a polymorphic declaration.
-* Make it more clear in error messages when a module decl doesn't match its
-  interf decl that that's why we expected something different.
-
-Fbld Test:
-* Test all ways an mtype decl can mismatch against an mdefn decl.
-  - for type, func, and proc declarations.
 * Test case when abstract type is used as select for conditional.
 * Test that all imported names exist in the module they are imported from.
+* Reach full test coverage.
 
 Fbld Cleanup:
-* Update references to mtype to reference interf instead.
-* Update references to mdefn to reference module instead.
-* Figure out a better way to avoid duplicate error messages when CheckType
-  fails.
-* Untangle the recursive knot that is check/compile/load.
-* CheckTypesMatch put error then loc to match ReportError.
-* Add comments to check indicating what entities and mrefs are resolved.
-* General code cleanup of check.
+* Make it more clear in error messages when a module decl doesn't match its
+  interf decl that that's why we expected something different.
+* Change check's ReportError to take a context.
+* Change CheckTypesMatch to take a context.
+* Make sure the Side Effects description of the Check functions say that r
+  states are resolved.
+* General code cleanup.
 * Re-organize parse.y to match order in fbld.h.
 * Figure out how to deal with allocations in fbld check and compile, and maybe
   how to reuse allocations rather than allocating duplicates of things.
@@ -40,6 +29,7 @@ Fbld Cleanup:
 * Use consistent style for error messages. Capitalize? Punctuate?
 
 App Ideas:
+* compress/deflate
 * snake - text based and graphics
 * tictactoe - text based and graphics
 * space invaders
