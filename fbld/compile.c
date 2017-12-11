@@ -80,8 +80,8 @@ static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc);
 static FblcType* CompileForeignType(Context* ctx, FbldQRef* mref, FbldQRef* qref);
 static FblcType* CompileType(Context* ctx, FbldQRef* qref);
 static FblcFunc* CompileFunc(Context* ctx, FbldQRef* qref);
-static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn);
-static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr);
+static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn);
+static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr);
 static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 
 
@@ -275,7 +275,7 @@ static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc)
 //
 // Inputs:
 //   ctx - The compilation context.
-//   mref - The current module context.
+//   src - A reference to the concrete proc or func that the expression belongs to.
 //   expr - The expression to compile.
 //
 // Returns:
@@ -284,7 +284,7 @@ static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc)
 // Side effects:
 //   Adds information about access expressions to accessv.
 //   Adds additional compiled types and functions to 'compiled' as needed.
-static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
+static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr)
 {
   switch (expr->tag) {
     case FBLD_VAR_EXPR: {
@@ -307,7 +307,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
         app_expr_c->func = CompileFunc(ctx, qref);
         FblcVectorInit(ctx->arena, app_expr_c->argv);
         for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
-          FblcExpr* arg = CompileExpr(ctx, mref, app_expr_d->argv->xs[i]);
+          FblcExpr* arg = CompileExpr(ctx, src, app_expr_d->argv->xs[i]);
           FblcVectorAppend(ctx->arena, app_expr_c->argv, arg);
         }
         return &app_expr_c->_base;
@@ -317,7 +317,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
         struct_expr->type = CompileType(ctx, qref);
         FblcVectorInit(ctx->arena, struct_expr->argv);
         for (size_t i = 0; i < app_expr_d->argv->size; ++i) {
-          FblcExpr* arg = CompileExpr(ctx, mref, app_expr_d->argv->xs[i]);
+          FblcExpr* arg = CompileExpr(ctx, src, app_expr_d->argv->xs[i]);
           FblcVectorAppend(ctx->arena, struct_expr->argv, arg);
         }
         return &struct_expr->_base;
@@ -328,9 +328,9 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       FbldUnionExpr* union_expr_d = (FbldUnionExpr*)expr;
       FblcUnionExpr* union_expr_c = FBLC_ALLOC(ctx->arena, FblcUnionExpr);
       union_expr_c->_base.tag = FBLC_UNION_EXPR;
-      union_expr_c->type = CompileForeignType(ctx, mref, union_expr_d->type);
+      union_expr_c->type = CompileForeignType(ctx, src, union_expr_d->type);
       union_expr_c->field = union_expr_d->field.id;
-      union_expr_c->arg = CompileExpr(ctx, mref, union_expr_d->arg);
+      union_expr_c->arg = CompileExpr(ctx, src, union_expr_d->arg);
       return &union_expr_c->_base;
     }
 
@@ -338,7 +338,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       FbldAccessExpr* access_expr_d = (FbldAccessExpr*)expr;
       FblcAccessExpr* access_expr_c = FBLC_ALLOC(ctx->arena, FblcAccessExpr);
       access_expr_c->_base.tag = FBLC_ACCESS_EXPR;
-      access_expr_c->obj = CompileExpr(ctx, mref, access_expr_d->obj);
+      access_expr_c->obj = CompileExpr(ctx, src, access_expr_d->obj);
       access_expr_c->field = access_expr_d->field.id;
 
       FbldAccessLoc* loc = FblcVectorExtend(ctx->arena, *ctx->accessv);
@@ -351,10 +351,10 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       FbldCondExpr* cond_expr_d = (FbldCondExpr*)expr;
       FblcCondExpr* cond_expr_c = FBLC_ALLOC(ctx->arena, FblcCondExpr);
       cond_expr_c->_base.tag = FBLC_COND_EXPR;
-      cond_expr_c->select = CompileExpr(ctx, mref, cond_expr_d->select);
+      cond_expr_c->select = CompileExpr(ctx, src, cond_expr_d->select);
       FblcVectorInit(ctx->arena, cond_expr_c->argv);
       for (size_t i = 0; i < cond_expr_d->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(ctx, mref, cond_expr_d->argv->xs[i]);
+        FblcExpr* arg = CompileExpr(ctx, src, cond_expr_d->argv->xs[i]);
         FblcVectorAppend(ctx->arena, cond_expr_c->argv, arg);
       }
       return &cond_expr_c->_base;
@@ -364,9 +364,9 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
       FbldLetExpr* let_expr_d = (FbldLetExpr*)expr;
       FblcLetExpr* let_expr_c = FBLC_ALLOC(ctx->arena, FblcLetExpr);
       let_expr_c->_base.tag = FBLC_LET_EXPR;
-      let_expr_c->type = CompileForeignType(ctx, mref, let_expr_d->type);
-      let_expr_c->def = CompileExpr(ctx, mref, let_expr_d->def);
-      let_expr_c->body = CompileExpr(ctx, mref, let_expr_d->body);
+      let_expr_c->type = CompileForeignType(ctx, src, let_expr_d->type);
+      let_expr_c->def = CompileExpr(ctx, src, let_expr_d->def);
+      let_expr_c->body = CompileExpr(ctx, src, let_expr_d->body);
       return &let_expr_c->_base;
     }
 
@@ -382,7 +382,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
 //
 // Inputs:
 //   ctx - The compilation context.
-//   mref - The current module context.
+//   src - A reference to the concrete proc the action belongs to.
 //   actn - The action to compile.
 //
 // Returns:
@@ -391,14 +391,14 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* mref, FbldExpr* expr)
 // Side effects:
 //   Adds information about access expressions to accessv.
 //   Adds additional compiled types, functions, and processes to 'compiled' as needed.
-static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
+static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
 {
   switch (actn->tag) {
     case FBLD_EVAL_ACTN: {
       FbldEvalActn* eval_actn_d = (FbldEvalActn*)actn;
       FblcEvalActn* eval_actn_c = FBLC_ALLOC(ctx->arena, FblcEvalActn);
       eval_actn_c->_base.tag = FBLC_EVAL_ACTN;
-      eval_actn_c->arg = CompileExpr(ctx, mref, eval_actn_d->arg);
+      eval_actn_c->arg = CompileExpr(ctx, src, eval_actn_d->arg);
       return &eval_actn_c->_base;
     }
 
@@ -415,7 +415,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
       FblcPutActn* put_actn_c = FBLC_ALLOC(ctx->arena, FblcPutActn);
       put_actn_c->_base.tag = FBLC_PUT_ACTN;
       put_actn_c->port = put_actn_d->port.id;
-      put_actn_c->arg = CompileExpr(ctx, mref, put_actn_d->arg);
+      put_actn_c->arg = CompileExpr(ctx, src, put_actn_d->arg);
       return &put_actn_c->_base;
     }
 
@@ -423,10 +423,10 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
       FbldCondActn* cond_actn_d = (FbldCondActn*)actn;
       FblcCondActn* cond_actn_c = FBLC_ALLOC(ctx->arena, FblcCondActn);
       cond_actn_c->_base.tag = FBLC_COND_ACTN;
-      cond_actn_c->select = CompileExpr(ctx, mref, cond_actn_d->select);
+      cond_actn_c->select = CompileExpr(ctx, src, cond_actn_d->select);
       FblcVectorInit(ctx->arena, cond_actn_c->argv);
       for (size_t i = 0; i < cond_actn_d->argv->size; ++i) {
-        FblcActn* arg = CompileActn(ctx, mref, cond_actn_d->argv->xs[i]);
+        FblcActn* arg = CompileActn(ctx, src, cond_actn_d->argv->xs[i]);
         FblcVectorAppend(ctx->arena, cond_actn_c->argv, arg);
       }
       return &cond_actn_c->_base;
@@ -445,7 +445,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
       }
       FblcVectorInit(ctx->arena, call_actn_c->argv);
       for (size_t i = 0; i < call_actn_d->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(ctx, mref, call_actn_d->argv->xs[i]);
+        FblcExpr* arg = CompileExpr(ctx, src, call_actn_d->argv->xs[i]);
         FblcVectorAppend(ctx->arena, call_actn_c->argv, arg);
       }
       return &call_actn_c->_base;
@@ -456,7 +456,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
       FblcLinkActn* link_actn_c = FBLC_ALLOC(ctx->arena, FblcLinkActn);
       link_actn_c->_base.tag = FBLC_LINK_ACTN;
       link_actn_c->type = CompileType(ctx, link_actn_d->type);
-      link_actn_c->body = CompileActn(ctx, mref, link_actn_d->body);
+      link_actn_c->body = CompileActn(ctx, src, link_actn_d->body);
       return &link_actn_c->_base;
     }
 
@@ -467,10 +467,10 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* mref, FbldActn* actn)
       FblcVectorInit(ctx->arena, exec_actn_c->execv);
       for (size_t i = 0; i < exec_actn_d->execv->size; ++i) {
         FblcExec* exec = FblcVectorExtend(ctx->arena, exec_actn_c->execv);
-        exec->type = CompileForeignType(ctx, mref, exec_actn_d->execv->xs[i].type);
-        exec->actn = CompileActn(ctx, mref, exec_actn_d->execv->xs[i].actn);
+        exec->type = CompileForeignType(ctx, src, exec_actn_d->execv->xs[i].type);
+        exec->actn = CompileActn(ctx, src, exec_actn_d->execv->xs[i].actn);
       }
-      exec_actn_c->body = CompileActn(ctx, mref, exec_actn_d->body);
+      exec_actn_c->body = CompileActn(ctx, src, exec_actn_d->body);
       return &exec_actn_c->_base;
     }
 
