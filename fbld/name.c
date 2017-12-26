@@ -82,16 +82,12 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
 
     case FBLD_ENTITY_R: {
       FbldEntityR* entity = (FbldEntityR*)qref->r;
-      if (entity->mref == NULL) {
-        // This is a top level declaration.
-        return qref;
-      }
 
       // TODO: Avoid allocation if the foreign module is the same?
       FbldEntityR* ient = FBLC_ALLOC(arena, FbldEntityR);
       ient->_base.tag = FBLD_ENTITY_R;
       ient->decl = entity->decl;
-      ient->mref = FbldImportQRef(arena, src, entity->mref);
+      ient->mref = entity->mref == NULL ? NULL : FbldImportQRef(arena, src, entity->mref);
       ient->source = entity->source;
 
       FbldQRef* imported = FBLC_ALLOC(arena, FbldQRef);
@@ -153,7 +149,7 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
             FbldEntityR* ment = (FbldEntityR*)mref->r;
             assert(ment->decl->tag == FBLD_MODULE_DECL);
             FbldModule* module = (FbldModule*)ment->decl;
-            iref = module->iref;
+            iref = FbldImportQRef(arena, mref, module->iref);
             break;
           }
 

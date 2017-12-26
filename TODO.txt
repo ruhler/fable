@@ -8,7 +8,10 @@ Fbld Test:
 * Test that all imported names exist in the module they are imported from.
 * Test that we don't print error messages for "failed to load top level
   declaration Blah" multiple times.
+* Test that we don't print error messages for "Foo not defined" multiple
+  times, even if we use Foo multiple times without it being defined?
 * Reach full test coverage.
+* Warn for unused imports?
 
 Fbld Cleanup:
 * Move contents of program.c into name.c. Maybe call it qref.c?
