@@ -1,5 +1,6 @@
-Deflate:
-* Figure out how to decompress a large text file by hand.
+MD5:
+* Add test for recursive proc call, and fix that bug.
+* Get test to compile and pass.
 
 Fbld Test:
 * Add a test for inner module definition with following declaration.

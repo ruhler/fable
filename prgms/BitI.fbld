@@ -1,0 +1,6 @@
+interf BitI {
+  import @ { UnitM; };
+  import UnitM { Unit; };
+
+  union Bit(Unit 0, Unit 1);
+}; 

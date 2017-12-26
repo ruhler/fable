@@ -1,14 +1,16 @@
 module AllTestsM(AllTestsI) {
-  import @ { UnitM; ListM; UBNatTestM; PrimesTestM; FunctionI; };
+  import @ { UnitM; ListM; UBNatTestM; PrimesTestM; Md5TestM; FunctionI; };
 
   import UnitM { Unit; };
   import ListM { S; P; Append; MapS; };
   import UBNatTestM { UBNatTestFailure = TestFailure; };
   import PrimesTestM { PrimesTestFailure = TestFailure; };
+  import Md5TestM { Md5TestFailure = TestFailure; };
 
   union TestFailure(
       UBNatTestFailure UBNatTest,
-      PrimesTestFailure PrimesTest
+      PrimesTestFailure PrimesTest,
+      Md5TestFailure Md5Test
   );
   
   module UBNatTestFailureF(FunctionI<UBNatTestFailure, TestFailure>) {
@@ -27,9 +29,20 @@ module AllTestsM(AllTestsI) {
     };
   };
 
-  func Test( ; S<TestFailure>) {
-    Append<TestFailure>(
-        MapS<UBNatTestFailure, TestFailure; UBNatTestFailureF>(Test@UBNatTestM()),
-        MapS<PrimesTestFailure, TestFailure; PrimesTestFailureF>(Test@PrimesTestM()));
+  module Md5TestFailureF(FunctionI<Md5TestFailure, TestFailure>) {
+    import @ { Md5TestFailure; TestFailure; };
+
+    func f(Md5TestFailure a ; TestFailure) {
+      TestFailure:Md5Test(a);
+    };
+  };
+
+  proc Test( ; ; S<TestFailure>) {
+    S<Md5TestFailure> md5 = Test@Md5TestM(;);
+    $(Append<TestFailure>(
+        Append<TestFailure>(
+          MapS<UBNatTestFailure, TestFailure; UBNatTestFailureF>(Test@UBNatTestM()),
+          MapS<PrimesTestFailure, TestFailure; PrimesTestFailureF>(Test@PrimesTestM())),
+        MapS<Md5TestFailure, TestFailure; Md5TestFailureF>(md5)));
   };
 };

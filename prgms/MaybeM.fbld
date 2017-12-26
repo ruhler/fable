@@ -1,0 +1,6 @@
+module MaybeM(MaybeI) {
+  import @ { UnitM; };
+  import UnitM { Unit; };
+
+  union Maybe<T>(T just, Unit nothing);
+};

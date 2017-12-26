@@ -1,0 +1,26 @@
+interf HexI {
+  import @ { UnitM; };
+  import UnitM { Unit; };
+
+  union Hex(Unit 0, Unit 1, Unit 2, Unit 3,
+            Unit 4, Unit 5, Unit 6, Unit 7,
+            Unit 8, Unit 9, Unit A, Unit B,
+            Unit C, Unit D, Unit E, Unit F);
+
+  func 0( ; Hex);
+  func 1( ; Hex);
+  func 2( ; Hex);
+  func 3( ; Hex);
+  func 4( ; Hex);
+  func 5( ; Hex);
+  func 6( ; Hex);
+  func 7( ; Hex);
+  func 8( ; Hex);
+  func 9( ; Hex);
+  func a( ; Hex);
+  func b( ; Hex);
+  func c( ; Hex);
+  func d( ; Hex);
+  func e( ; Hex);
+  func f( ; Hex);
+};

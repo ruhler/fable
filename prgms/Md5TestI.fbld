@@ -1,0 +1,13 @@
+interf Md5TestI {
+  import @ { UnitM; ListM; Md5M; };
+  import UnitM { Unit; };
+  import ListM { S; };
+  import Md5M { ABCD; };
+
+  union TestName(
+      Unit Md5_empty
+  );
+
+  struct TestFailure(TestName name, ABCD a, ABCD b);
+  proc Test( ; ; S<TestFailure>);
+};

@@ -1,0 +1,10 @@
+interf Bit8I {
+  import @ { BitM; BitNI; };
+  import BitM { Bit; };
+ 
+  # Bit 7 is the most significant bit.
+  # Bit 0 is the least significant bit.
+  struct Bit8(Bit 7, Bit 6, Bit 5, Bit 4, Bit 3, Bit 2, Bit 1, Bit 0);
+
+  module BitN(BitNI<Bit8>);
+};

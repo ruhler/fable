@@ -1,0 +1,30 @@
+
+interf Md5I {
+  import @ { Bit8M; Bit32M; HexM; MaybeM; BoolM; };
+  import Bit8M { Bit8; };
+  import Bit32M { Bit32; };
+  import BoolM { Bool; };
+  import HexM { Hex; };
+  import MaybeM { Maybe; };
+
+  struct ABCD(Bit32 a, Bit32 b, Bit32 c, Bit32 d);
+
+  # Md5 -- Compute an md5sum on a stream of bytes.
+  # Ports:
+  #   input - Stream of bytes to compute the md5sum of.
+  #
+  # Result:
+  #   The computed md5 sum.
+  proc Md5(Maybe<Bit8>- input; ; ABCD);
+
+  # Construct an ABCD from a sequence of hex digits.
+  # Argument 0 corresponds to the left-most hex digit of the sequence.
+  func H32(Hex  0, Hex  1, Hex  2, Hex  3, Hex  4, Hex  5, Hex  6, Hex  7,
+           Hex  8, Hex  9, Hex 10, Hex 11, Hex 12, Hex 13, Hex 14, Hex 15,
+           Hex 16, Hex 17, Hex 18, Hex 19, Hex 20, Hex 21, Hex 22, Hex 23,
+           Hex 24, Hex 25, Hex 26, Hex 27, Hex 28, Hex 29, Hex 30, Hex 31;
+           ABCD);
+
+  func Eq(ABCD a, ABCD b; Bool);
+
+};

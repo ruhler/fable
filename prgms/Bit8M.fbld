@@ -1,0 +1,79 @@
+module Bit8M(Bit8I) {
+  import @ { BitM; Bit1M; BitNI; BoolM; };
+  import BitM { Bit; };
+
+  struct Bit8(Bit 7, Bit 6, Bit 5, Bit 4, Bit 3, Bit 2, Bit 1, Bit 0);
+
+  module BitN(BitNI<Bit8>) {
+    import @ { Bit8; B = Bit1M; Bit; BoolM; };
+    import BoolM { And; Bool; };
+
+    func not(Bit8 a ; Bit8) {
+      Bit8(not@B(a.7), not@B(a.6), not@B(a.5), not@B(a.4),
+           not@B(a.3), not@B(a.2), not@B(a.1), not@B(a.0));
+    };
+
+    func and(Bit8 a, Bit8 b; Bit8) {
+      Bit8(and@B(a.7, b.7), and@B(a.6, b.6), and@B(a.5, b.5),
+           and@B(a.4, b.4), and@B(a.3, b.3), and@B(a.2, b.2),
+           and@B(a.1, b.1), and@B(a.0, b.0));
+    };
+
+    func or(Bit8 a, Bit8 b; Bit8) {
+      Bit8(or@B(a.7, b.7), or@B(a.6, b.6), or@B(a.5, b.5),
+           or@B(a.4, b.4), or@B(a.3, b.3), or@B(a.2, b.2),
+           or@B(a.1, b.1), or@B(a.0, b.0));
+    };
+
+    func xor(Bit8 a, Bit8 b; Bit8) {
+      Bit8(xor@B(a.7, b.7), xor@B(a.6, b.6), xor@B(a.5, b.5),
+           xor@B(a.4, b.4), xor@B(a.3, b.3), xor@B(a.2, b.2),
+           xor@B(a.1, b.1), xor@B(a.0, b.0));
+    };
+
+    func add(Bit8 a, Bit8 b; Bit8) fulladd(a, b, zero@B()).z;
+
+    func zero(; Bit8) {
+      Bit8(zero@B(), zero@B(), zero@B(), zero@B(),
+           zero@B(), zero@B(), zero@B(), zero@B());
+    };
+
+    func iszero(Bit8 a; Bool) {
+      And(
+       And(And(iszero@B(a.7), iszero@B(a.6)),
+           And(iszero@B(a.5), iszero@B(a.4))),
+       And(And(iszero@B(a.3), iszero@B(a.2)),
+           And(iszero@B(a.1), iszero@B(a.0))));
+    };
+
+    func eq(Bit8 a, Bit8 b; Bool) {
+      And(
+       And(And(eq@B(a.7, b.7), eq@B(a.6, b.6)),
+           And(eq@B(a.5, b.5), eq@B(a.4, b.4))),
+       And(And(eq@B(a.3, b.3), eq@B(a.2, b.2)),
+           And(eq@B(a.1, b.1), eq@B(a.0, b.0))));
+    };
+
+    func clshift(Bit8 a; Bit8) {
+      Bit8(a.6, a.5, a.4, a.3, a.2, a.1, a.0, a.7);
+    };
+
+    struct Result(Bit8 z, Bit cout);
+
+    func fulladd(Bit8 a, Bit8 b, Bit cin; Result) {
+      Result@B r0 = fulladd@B(a.0, b.0, cin);
+      Result@B r1 = fulladd@B(a.1, b.1, r0.cout);
+      Result@B r2 = fulladd@B(a.2, b.2, r1.cout);
+      Result@B r3 = fulladd@B(a.3, b.3, r2.cout);
+      Result@B r4 = fulladd@B(a.4, b.4, r3.cout);
+      Result@B r5 = fulladd@B(a.5, b.5, r4.cout);
+      Result@B r6 = fulladd@B(a.6, b.6, r5.cout);
+      Result@B r7 = fulladd@B(a.7, b.7, r6.cout);
+      Result(Bit8(r7.z, r6.z, r5.z, r4.z, r3.z, r2.z, r1.z, r0.z), r7.cout);
+    };
+
+    func lshift(Bit8 a, Bit cin; Result) {
+      Result(Bit8(a.6, a.5, a.4, a.3, a.2, a.1, a.0, cin), a.7);
+    };
+  };
+};
