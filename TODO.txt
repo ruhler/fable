@@ -1,11 +1,18 @@
+Deflate:
+* Figure out how to decompress a large text file by hand.
+
 Fbld Test:
 * Add a test for inner module definition with following declaration.
 * Add test for importing a polymorphic declaration.
 * Test case when abstract type is used as select for conditional.
 * Test that all imported names exist in the module they are imported from.
+* Test that we don't print error messages for "failed to load top level
+  declaration Blah" multiple times.
 * Reach full test coverage.
 
 Fbld Cleanup:
+* Move contents of program.c into name.c. Maybe call it qref.c?
+* Define and use UNREACHABLE everywhere appropriate.
 * Make it more clear in error messages when a module decl doesn't match its
   interf decl that that's why we expected something different.
 * Change check's ReportError to take a context.

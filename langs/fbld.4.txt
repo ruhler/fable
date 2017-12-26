@@ -1,0 +1,66 @@
+
+Module System
+-------------
+
+
+Syntax Reference
+----------------
+  type_kind ::= 'type' tname params ;
+  struct_kind ::= 'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ;
+  union_kind ::= 'union' tname params '(' qref fname [',' qref fname [...]] ')' ;
+  func_kind ::= 'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' ;
+  proc_kind ::= 'proc' tname params '('
+                     [qref polarity pname [',' qref polarity pname [...]]] ';'
+                     [qref vname [',' qref vname [...]]] ';' qref ')' ;
+  interf_kind ::= 'interf' tname params '{' [decl [decl [...]]] '}' ;
+  module_kind ::= 'module' tname params '(' qref ')' ;
+
+  kind ::= type_kind
+         | struct_kind
+         | union_kind
+         | func_kind
+         | proc_kind
+         | interf_kind
+         | module_kind
+         ;
+
+  import ::= 
+     'import' '@'  '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}'
+   | 'import' qref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}'
+   ;
+
+  decl ::= kind ';'       (* TODO: allow kind '=' qref ';' too? *)
+         | import ';'
+         ;
+
+  defn ::= struct_kind ';'
+        |  union_kind ';'
+        |  func_kind expr ';'
+        |  proc_kind proc ';'
+        |  interf_kind ';'
+        |  module_kind '{' [defn [defn [...]]] '}' ';'
+        |  kind '=' qref ';'
+        |  import ';'
+        ;
+  
+  prgm ::= (* collection of defn, organized into file by defn <name>.fbld *)
+ 
+  params ::= ['<' [kind [',' kind [...]]] '>'] ;
+
+  qref ::= tname ['<' [qref [',' qref [...]]] '>'] ['@' qref] ;
+
+  expr ::= ... (* as in fblc, with qref in place of tname *)
+  proc ::= ... (* as in fblc, with qref in place of tname *)
+
+  polarity ::= ... (* as in fblc *)
+  pname ::= ... (* as in fblc *)
+  tname ::= ... (* as in fblc *)
+  vname ::= ... (* as in fblc *)
+
+Style Suggestions
+-----------------
+* Capitalize entities, including types, functions, procs, interfaces, and
+  modules.
+* Lowercase field names, including for structs, unions, function and proc
+  arguments.
+* Lowercase variable names.

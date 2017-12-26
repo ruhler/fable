@@ -536,8 +536,25 @@ Wish List
 
 * Builtin support for arrays? For example, it's pretty daunting to think about
   how to define a large 2D array. Or how to define an array for a HashTable
-  implementation. Use case and alternatives not fully explored yet.
+  implementation. Use case and alternatives not fully explored yet. You can
+  think of an array as a natural progression of the types though: if union is
+  sum, struct is times, then array is power.
 
 * Higher kinded type and module parameters.
 
 * Type and module aliases.
+
+* How to know when to make an interface that takes some type T as an argument,
+  and when to have an interface that defines some type T?
+
+* Anything akin to default methods for interfaces?
+  For example, an instance of N-bit numbers could implement a generic
+  add(T a, T b; T) method given a fulladd(T a, T b, Bit cin; Result)
+  implementation. It would be nice if implementations of N-bit numbers could
+  inherit that implementation. Where would that implementation go though?
+
+* When does it make sense to group a bunch of things into a single module?
+  For example, should Bit, BitN, Bit1, Bit8, Bit32, and helper functions be
+  defined all in separate modules, each with a separate interface? Or would it
+  be easier to have them all in one place, with a single top level interface
+  and implementation?

@@ -497,6 +497,12 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
 
   CheckProtos(ctx, &module_env);
 
+  // TODO: bail out here if the prototypes failed to check properly, because
+  // we assume from here on out that the prototypes are well formed.
+  if (ctx->error) {
+    return false;
+  }
+
   // Verify the module has everything it should according to its interface.
   assert(module->iref->r->tag == FBLD_ENTITY_R);
   FbldEntityR* ient = (FbldEntityR*)module->iref->r;
