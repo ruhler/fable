@@ -1,5 +1,7 @@
 MD5:
-* CheckValue doesn't check type parameters. Fix that.
+* Change CheckQRef to check type and module arguments.
+  - perhaps distinguish between 'ResolveQRef' and 'CheckQRef'?
+* Port rest of fblc tests to fbld.
 * Figure out why the type of AllTests return seems not to match the value.
 * Get test to pass.
 
