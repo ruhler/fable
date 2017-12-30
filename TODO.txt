@@ -1,4 +1,6 @@
 MD5:
+* CheckValue doesn't check type parameters. Fix that.
+* Figure out why the type of AllTests return seems not to match the value.
 * Get test to pass.
 
 Fbld Test:
