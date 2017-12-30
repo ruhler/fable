@@ -79,6 +79,7 @@ static FbldModule* LookupModule(Context* ctx, FbldQRef* qref);
 static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc);
 static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref);
 static FblcFunc* CompileFunc(Context* ctx, FbldQRef* src, FbldQRef* qref);
+static FblcProc* CompileProc(Context* ctx, FbldQRef* src, FbldQRef* qref);
 static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn);
 static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr);
 static FblcValue* CompileValue(Context* ctx, FbldValue* value);
@@ -435,8 +436,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
       FbldCallActn* call_actn_d = (FbldCallActn*)actn;
       FblcCallActn* call_actn_c = FBLC_ALLOC(ctx->arena, FblcCallActn);
       call_actn_c->_base.tag = FBLC_CALL_ACTN;
-      FbldProc* proc = LookupProc(ctx, call_actn_d->proc);
-      call_actn_c->proc = CompileGivenProc(ctx, call_actn_d->proc, proc);
+      call_actn_c->proc = CompileProc(ctx, src, call_actn_d->proc);
       FblcVectorInit(ctx->arena, call_actn_c->portv);
       for (size_t i = 0; i < call_actn_d->portv->size; ++i) {
         FblcPortId port = call_actn_d->portv->xs[i].id;
@@ -570,6 +570,37 @@ static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref)
   }
 
   return type_c;
+}
+
+// CompileProc --
+//   Return a compiled fblc proc for the named process.
+//
+// Inputs:
+//   ctx - The context to use for compilation.
+//   src - The context from which the proc is referred to.
+//   qref - The process to compile.
+//
+// Returns:
+//   A compiled fblc proc.
+//
+// Side effects:
+//   Adds information about access expressions to accessv.
+//   Adds the compiled process to 'compiled' if it is newly compiled.
+static FblcProc* CompileProc(Context* ctx, FbldQRef* src, FbldQRef* qref)
+{
+  qref = FbldImportQRef(ctx->arena, src, qref);
+
+  // Check to see if we have already compiled the entity.
+  for (size_t i = 0; i < ctx->procv.size; ++i) {
+    if (FbldQRefsEqual(ctx->procv.xs[i].entity, qref)) {
+      return ctx->procv.xs[i].compiled;
+    }
+  }
+
+
+  FbldProc* proc_d = LookupProc(ctx, qref);
+  assert(proc_d != NULL);
+  return CompileGivenProc(ctx, qref, proc_d);
 }
 
 // FbldCompileProgram -- see documentation in fbld.h

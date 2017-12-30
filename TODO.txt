@@ -1,6 +1,5 @@
 MD5:
-* Add test for recursive proc call, and fix that bug.
-* Get test to compile and pass.
+* Get test to pass.
 
 Fbld Test:
 * Add a test for inner module definition with following declaration.
