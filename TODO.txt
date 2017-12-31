@@ -1,6 +1,4 @@
 MD5:
-* Change CheckQRef to check type and module arguments.
-  - perhaps distinguish between 'ResolveQRef' and 'CheckQRef'?
 * Port 4.7.3-* tests to fbld
 * Port 4.7.4-* tests to fbld
 * Port 4.7.5-* tests to fbld
@@ -12,6 +10,12 @@ MD5:
 * Get test to pass.
 
 Fbld Test:
+* Add a test that you can't use a func, proc, interf, or module as a type
+  parameter argument.
+* Add a test that you can't use a type, func, proc, interf as a module
+  parameter argument.
+* Add a test that you can't use a module parameter argument of the wrong
+  interface type.
 * Add a test for inner module definition with following declaration.
 * Add test for importing a polymorphic declaration.
 * Test case when abstract type is used as select for conditional.

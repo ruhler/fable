@@ -3,7 +3,7 @@ interf ListI {
   import UnitM { Unit; };
 
   # P - A list of 1 or more elements: T+
-  struct P<T>(T head, S tail);
+  struct P<T>(T head, S<T> tail);
 
   # S - A list of 0 or more elements: T*
   union S<T>(Unit nil, P<T> cons); 

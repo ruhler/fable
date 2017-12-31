@@ -91,6 +91,7 @@ static void CheckProtos(Context* ctx, Env* env);
 static void CheckBodies(Context* ctx, Env* env);
 static bool CheckType(Context* ctx, Env* env, FbldQRef* qref);
 static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars);
+static bool CheckParams(Context* ctx, Env* env, FbldQRef* qref, FbldDecl* decl);
 static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr);
 static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, FbldActn* actn);
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
@@ -214,23 +215,6 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   // something more meaningful once we have successfully resolved the reference.
   qref->r = &FailedR;
 
-  // Check the type parameter arguments.
-  for (size_t i = 0; i < qref->targv->size; ++i) {
-    if (!CheckQRef(ctx, env, qref->targv->xs[i])) {
-      return false;
-    }
-  }
-
-  // Check the module parameter arguments.
-  for (size_t i = 0; i < qref->margv->size; ++i) {
-    if (!CheckQRef(ctx, env, qref->margv->xs[i])) {
-      return false;
-    }
-  }
-
-  // TODO: Some where here, check that the module parameter arguments
-  // implement the correct interface.
-
   if (qref->mref != NULL) {
     // The entity is of the form foo@bar, and comes from a module bar in the
     // local scope. Resolve the module bar and find its interface.
@@ -287,6 +271,11 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
         entity->decl = interf->declv->xs[i];
         entity->mref = qref->mref;
         entity->source = FBLD_INTERF_SOURCE;
+
+        if (!CheckParams(ctx, env, qref, entity->decl)) {
+          return false;
+        }
+
         qref->r = &entity->_base;
         return true;
       }
@@ -314,6 +303,11 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     entity->decl = decl;
     entity->mref = NULL;
     entity->source = FBLD_MODULE_SOURCE;
+
+    if (!CheckParams(ctx, env, qref, entity->decl)) {
+      return false;
+    }
+
     qref->r = &entity->_base;
     return true;
   }
@@ -325,8 +319,8 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
       if (FbldNamesEqual(qref->name->name, import->itemv->xs[j]->dest->name)) {
         FbldQRef imported_qref = {
           .name = import->itemv->xs[j]->source,
-          .targv = qref->targv,
-          .margv = qref->margv,
+          .targv = NULL,
+          .margv = NULL,
           .mref = import->mref,
           .r = NULL,
         };
@@ -334,6 +328,40 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
         Env* import_env = import->mref == NULL ? env->parent : env;
         if (!CheckQRef(ctx, import_env, &imported_qref)) {
           return false;
+        }
+
+        switch (imported_qref.r->tag) {
+          case FBLD_FAILED_R:
+            assert(false);
+            return false;
+
+          case FBLD_ENTITY_R: {
+            FbldEntityR* entity = (FbldEntityR*)imported_qref.r;
+            if (!CheckParams(ctx, env, qref, entity->decl)) {
+              return false;
+            }
+            break;
+          }
+
+          case FBLD_PARAM_R: {
+            if (qref->targv != NULL && qref->targv->size != 0) {
+              ReportError("Expected 0 type arguments to %s, but found %i\n",
+                  &ctx->error, qref->name->loc, qref->name->name, qref->targv->size);
+              return false;
+
+            }
+            if (qref->margv != NULL && qref->margv->size != 0) {
+              ReportError("Expected 0 module arguments to %s, but found %i\n",
+                  &ctx->error, qref->name->loc, qref->name->name, qref->margv->size);
+              return false;
+
+            }
+            break;
+          }
+
+          default:
+            assert(false && "Invalid R tag");
+            return false;
         }
 
         qref->r = imported_qref.r;
@@ -349,6 +377,9 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
       entity->decl = env->declv->xs[i];
       entity->mref = env->mref;
       entity->source = env->source;
+      if (!CheckParams(ctx, env, qref, entity->decl)) {
+        return false;
+      }
       qref->r = &entity->_base;
       return true;
     }
@@ -363,6 +394,18 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
         param->iref = NULL;
         param->decl = dl->decl;
         param->index = i;
+        if (qref->targv != NULL && qref->targv->size != 0) {
+          ReportError("Expected 0 type arguments to %s, but found %i\n",
+              &ctx->error, qref->name->loc, qref->name->name, qref->targv->size);
+          return false;
+
+        }
+        if (qref->margv != NULL && qref->margv->size != 0) {
+          ReportError("Expected 0 module arguments to %s, but found %i\n",
+              &ctx->error, qref->name->loc, qref->name->name, qref->margv->size);
+          return false;
+
+        }
         qref->r = &param->_base;
         return true;
       }
@@ -375,6 +418,18 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
         param->iref = dl->decl->margv->xs[i]->iref;
         param->decl = dl->decl;
         param->index = i;
+        if (qref->targv != NULL && qref->targv->size != 0) {
+          ReportError("Expected 0 type arguments to %s, but found %i\n",
+              &ctx->error, qref->name->loc, qref->name->name, qref->targv->size);
+          return false;
+
+        }
+        if (qref->margv != NULL && qref->margv->size != 0) {
+          ReportError("Expected 0 module arguments to %s, but found %i\n",
+              &ctx->error, qref->name->loc, qref->name->name, qref->margv->size);
+          return false;
+
+        }
         qref->r = &param->_base;
         return true;
       }
@@ -561,7 +616,6 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
 //   formed.
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 {
-  // TODO: Check the module parameters somewhere.
   if (!CheckQRef(ctx, env, module->iref)) {
     return false;
   }
@@ -1103,7 +1157,7 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   ctx - The environment for type checking.
+//   env - The environment for type checking.
 //   argv - The vector of args to check.
 //   vars - Space for argv->size vars to fill in based on the given args.
 //
@@ -1136,6 +1190,58 @@ static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars)
     next = vars + arg_id;
   }
   return next;
+}
+
+// CheckParams --
+//   Check that the static type and module parameters provided to a qref match
+//   what is expected for the declaration.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   env - The environment for type checking.
+//   qref - The qref to check.
+//   decl - The declaration to check against.
+//
+// Results:
+//   true if the parameters check out, false otherwise.
+//
+// Side effects:
+//   Reports an error message and sets ctx->error in case of error.
+static bool CheckParams(Context* ctx, Env* env, FbldQRef* qref, FbldDecl* decl)
+{
+  if (qref->targv == NULL || qref->margv == NULL) {
+    // As a special case, if targv or margv is NULL, don't check the
+    // parameters. This is to help checking imported declarations, where you
+    // import the declaration without providing arguments.
+    return true;
+  }
+
+  if (qref->targv->size != decl->targv->size) {
+    ReportError("Expected %i type arguments to %s, but found %i.\n",
+        &ctx->error, qref->name->loc, decl->targv->size, qref->name->name, qref->targv->size);
+    return false;
+  }
+
+  for (size_t i = 0; i < qref->targv->size; ++i) {
+    if (!CheckType(ctx, env, qref->targv->xs[i])) {
+      return false;
+    }
+  }
+
+  if (qref->margv->size != decl->margv->size) {
+    ReportError("Expected %i module arguments to %s, but found %i.\n",
+        &ctx->error, qref->name->loc, decl->margv->size, qref->name->name, qref->margv->size);
+    return false;
+  }
+
+  for (size_t i = 0; i < qref->margv->size; ++i) {
+    // TODO: Check that the argument refers to a module that has the same
+    // interface as required by the declaration.
+    if (!CheckQRef(ctx, env, qref->margv->xs[i])) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // DefineName --
@@ -1194,16 +1300,13 @@ static void CheckProtos(Context* ctx, Env* env)
     for (size_t i = 0; i < import->itemv->size; ++i) {
       DefineName(ctx, import->itemv->xs[i]->dest, &defined);
 
-      // TODO: What to use with targv and margv?
       FbldQRef entity = {
         .name = import->itemv->xs[i]->source,
-        .targv = FBLC_ALLOC(ctx->arena, FbldQRefV),
-        .margv = FBLC_ALLOC(ctx->arena, FbldQRefV),
+        .targv = NULL,  // special case to avoid checking parameters.
+        .margv = NULL,  // special case to avoid checking parameters.
         .mref = import->mref,
         .r = NULL
       };
-      FblcVectorInit(ctx->arena, *(entity.targv));
-      FblcVectorInit(ctx->arena, *(entity.margv));
 
       Env* import_env = import->mref == NULL ? env->parent : env;
       CheckQRef(ctx, import_env, &entity);
