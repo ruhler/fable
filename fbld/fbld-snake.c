@@ -118,7 +118,7 @@ static void PrintUsage(FILE* stream)
       "ARG is a value text representation of the argument value.\n"
       "The number of arguments must match the expected types for the MAIN\n"
       "process.\n"
-      "Example: fbld-snake prgms \"Main@Snake<;>\"\n"
+      "Example: fbld-snake prgms Main@SnakeM\n"
   );
 }
 

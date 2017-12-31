@@ -1,2 +1,11 @@
 interf SnakeI {
+  import @ { DrawM; ListM; UnitM; };
+  import DrawM { Draw; };
+  import ListM { S; };
+  import UnitM { Unit; };
+  
+
+  union Direction(Unit up, Unit down, Unit left, Unit right);
+  union Input(Direction dir, Unit tick);
+  proc Main(Input- in, S<Draw>+ out; ; Unit);
 };
