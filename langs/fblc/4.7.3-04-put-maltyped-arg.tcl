@@ -6,9 +6,5 @@ set prg {
     # The argument to myput has the wrong type.
     +myput(Donut());
   };
-
-  proc main( ; ; Unit) {
-    $(Unit());
-  };
 }
 fblc-check-error $prg 7:12

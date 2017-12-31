@@ -5,10 +5,6 @@ set prg {
     # myput port has the wrong polarity.
     +myput(Unit());
   };
-
-  proc main( ; ; Unit) {
-    $(Unit());
-  };
 }
 
 # TODO: Is this the best error location to use?

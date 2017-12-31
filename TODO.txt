@@ -1,5 +1,4 @@
 MD5:
-* Port 4.7.3-* tests to fbld
 * Port 4.7.4-* tests to fbld
 * Port 4.7.5-* tests to fbld
 * Port 4.7.6-* tests to fbld
