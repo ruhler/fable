@@ -5,10 +5,6 @@ set prg {
     # myget port is a put port, not a get port.
     -myget();
   };
-
-  proc main( ; ; Unit) {
-    $(Unit());
-  };
 }
 
 fblc-check-error $prg 6:6

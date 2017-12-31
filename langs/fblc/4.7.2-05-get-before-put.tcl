@@ -1,6 +1,6 @@
 set prg {
   # Test that a get will block for something to be put.
-  # We can't gaurentee this test will exercise the desired case, because it
+  # We can't guarantee this test will exercise the desired case, because it
   # depends on how things are scheduled, but hopefully it will test it.
   struct Unit();
   union Fruit(Unit apple, Unit banana, Unit pear);

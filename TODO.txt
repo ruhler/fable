@@ -1,7 +1,13 @@
 MD5:
 * Change CheckQRef to check type and module arguments.
   - perhaps distinguish between 'ResolveQRef' and 'CheckQRef'?
-* Port rest of fblc tests to fbld.
+* Port 4.7.3-* tests to fbld
+* Port 4.7.4-* tests to fbld
+* Port 4.7.5-* tests to fbld
+* Port 4.7.6-* tests to fbld
+* Port 4.7.7-* tests to fbld
+* Port 4.7.8-* tests to fbld
+* Port 5-* test to fbld
 * Figure out why the type of AllTests return seems not to match the value.
 * Get test to pass.
 
