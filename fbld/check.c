@@ -467,7 +467,6 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   FbldQRef* iref = DeclQRef(ctx, ient->mref, &interf->_base);
   iref->r = &ient->_base;
 
-  // TODO: Check the interface parameters somewhere.
   FbldParamR* param = FBLC_ALLOC(ctx->arena, FbldParamR);
   param->_base.tag = FBLD_PARAM_R;
   param->iref = iref;
@@ -552,7 +551,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
 
   CheckProtos(ctx, &module_env);
 
-  // TODO: bail out here if the prototypes failed to check properly, because
+  // Bail out here if the prototypes failed to check properly, because
   // we assume from here on out that the prototypes are well formed.
   if (ctx->error) {
     return false;
