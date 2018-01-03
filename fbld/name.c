@@ -24,6 +24,26 @@ bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b)
     return false;
   }
 
+  if (a->targv->size != b->targv->size) {
+    return false;
+  }
+
+  for (size_t i = 0; i < a->targv->size; ++i) {
+    if (!FbldQRefsEqual(a->targv->xs[i], b->targv->xs[i])) {
+      return false;
+    }
+  }
+
+  if (a->margv->size != b->margv->size) {
+    return false;
+  }
+
+  for (size_t i = 0; i < a->margv->size; ++i) {
+    if (!FbldQRefsEqual(a->margv->xs[i], b->margv->xs[i])) {
+      return false;
+    }
+  }
+
   assert(a->r != NULL);
   assert(b->r != NULL);
   if (a->r->tag != b->r->tag) {
