@@ -383,9 +383,4 @@ module Md5M(Md5I) {
   func Eq(ABCD a, ABCD b; Bool) {
     And(And(eq(a.a, b.a), eq(a.b, b.b)), And(eq(a.c, b.c), eq(a.d, b.d)));
   };
-
-  # TODO:
-  #  - Bit32 literals for tXX and initial ABCD value.
-  #  - Convert ABCD to Bit128?
-  #  - Write tests (using those provided in rfc)
 };

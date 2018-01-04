@@ -4,8 +4,6 @@ MD5:
 * Port 4.7.7-* tests to fbld
 * Port 4.7.8-* tests to fbld
 * Port 5-* test to fbld
-* Add tests for all the TODOs in the fbld code.
-* Figure out why the type of AllTests return seems not to match the value.
 * Get test to pass.
 
 Fbld Test:
