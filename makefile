@@ -13,5 +13,6 @@ checkerr: all
 
 .PHONY: foo
 foo:
-	./out/fbld/fbld-test prgms/AllTests.wnt prgms/ Test@AllTestsM
+	#./out/fbld/fbld-test prgms/AllTests.wnt prgms/ Test@AllTestsM
+	./out/fbld/fbld-test prgms/Md5Debug.wnt prgms/ Debug@Md5M
 
