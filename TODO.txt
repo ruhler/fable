@@ -1,6 +1,5 @@
 MD5:
-* Fix padding length.
-* Get test to pass.
+* Write c-wrapper to compute md5 on files.
 
 Fbld Test:
 * Port 4.7.5-* tests to fbld

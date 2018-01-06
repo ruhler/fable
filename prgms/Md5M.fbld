@@ -224,7 +224,7 @@ module Md5M(Md5I) {
            Pad(input, output; Inc64(length));
          }, {
            Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(8(), 0()), False()));
-           PadZ(output; Inc64(length));
+           PadZ(output; length, Inc64(length));
          });
   };
 
@@ -242,11 +242,11 @@ module Md5M(Md5I) {
   };
 
   # Add zeros as needed, then the final length to the output message.
-  proc PadZ(Streamed<Bit8>+ output; Bit64 length; Unit) {
+  proc PadZ(Streamed<Bit8>+ output; Bit64 msglen, Bit64 length; Unit) {
     ?(iszero@BitN@Bit64M(
         and@BitN@Bit64M(H2_64(3(), f()),
                         add@BitN@Bit64M(H2_64(0(), 8()), length))); {
-         Bit64 bits = $(shl64(shl64(shl64(length))));
+         Bit64 bits = $(shl64(shl64(shl64(msglen))));
          Streamed<Bit8> _0 = +output(Streamed<Bit8>(bits.0, False()));
          Streamed<Bit8> _1 = +output(Streamed<Bit8>(bits.1, False()));
          Streamed<Bit8> _2 = +output(Streamed<Bit8>(bits.2, False()));
@@ -258,9 +258,7 @@ module Md5M(Md5I) {
          $(Unit());
        }, {
          Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(0(), 0()), False()));
-         # TODO: Can't increment length here! We need to preserve the original
-         # length.
-         PadZ(output; Inc64(length));
+         PadZ(output; msglen, Inc64(length));
        });
   };
 
