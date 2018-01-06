@@ -258,15 +258,19 @@ module Md5M(Md5I) {
          $(Unit());
        }, {
          Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(0(), 0()), False()));
+         # TODO: Can't increment length here! We need to preserve the original
+         # length.
          PadZ(output; Inc64(length));
        });
   };
 
   func ABCD0( ; ABCD) ABCD(
-      H8(0(), 1(), 2(), 3(), 4(), 5(), 6(), 7()),
-      H8(8(), 9(), a(), b(), c(), d(), e(), f()),
-      H8(f(), e(), d(), c(), b(), a(), 9(), 8()),
-      H8(7(), 6(), 5(), 4(), 3(), 2(), 1(), 0()));
+      # Note: the spec lists these low-order byte first, but H8 takes high
+      # order byte first.
+      H8(6(), 7(), 4(), 5(), 2(), 3(), 0(), 1()),
+      H8(e(), f(), c(), d(), a(), b(), 8(), 9()),
+      H8(9(), 8(), b(), a(), d(), c(), f(), e()),
+      H8(1(), 0(), 3(), 2(), 5(), 4(), 7(), 6()));
 
   proc Md5(Maybe<Bit8>- input; ; ABCD) {
     Streamed<Bit8> +- put_padded, get_padded;
@@ -303,6 +307,7 @@ module Md5M(Md5I) {
     Bit8(h.3, h.2, h.1, h.0, l.3, l.2, l.1, l.0);
   };
 
+  # Construct a Bit32 in hex, with high-order byte first.
   func H8(Hex 7, Hex 6, Hex 5, Hex 4, Hex 3, Hex 2, Hex 1, Hex 0; Bit32) {
     Bit32(H2(7, 6), H2(5, 4), H2(3, 2), H2(1, 0));
   };
@@ -377,17 +382,17 @@ module Md5M(Md5I) {
            Hex 16, Hex 17, Hex 18, Hex 19, Hex 20, Hex 21, Hex 22, Hex 23,
            Hex 24, Hex 25, Hex 26, Hex 27, Hex 28, Hex 29, Hex 30, Hex 31;
            ABCD) {
-    ABCD(H8(7, 6, 5, 4, 3, 2, 1, 0),
-         H8(15, 14, 13, 12, 11, 10, 9, 8),
-         H8(23, 22, 21, 20, 19, 18, 17, 16),
-         H8(31, 30, 29, 28, 27, 26, 25, 24));
+    ABCD(H8(6, 7, 4, 5, 2, 3, 0, 1),
+         H8(14, 15, 12, 13, 10, 11, 8, 9),
+         H8(22, 23, 20, 21, 18, 19, 16, 17),
+         H8(30, 31, 28, 29, 26, 27, 24, 25));
   };
 
   func Eq(ABCD a, ABCD b; Bool) {
     And(And(eq(a.a, b.a), eq(a.b, b.b)), And(eq(a.c, b.c), eq(a.d, b.d)));
   };
 
-  union BugName(Unit Bug_DoBlock, Unit Bug_Round1);
+  union BugName(Unit Bug_DoBlock, Unit Bug_Round1, Unit Bug_FF);
   struct Bug(BugName name, ABCD wnt, ABCD got);
 
   func T_(Maybe<Bug> b, SL<Bug> l; SL<Bug>) {
@@ -396,6 +401,32 @@ module Md5M(Md5I) {
 
   func Debug( ; SL<Bug>) {
     T_({
+        Bit32 got32 = FF(H8(6(), 7(), 4(), 5(), 2(), 3(), 0(), 1()),
+                         H8(e(), f(), c(), d(), a(), b(), 8(), 9()),
+                         H8(9(), 8(), b(), a(), d(), c(), f(), e()),
+                         H8(1(), 0(), 3(), 2(), 5(), 4(), 7(), 6()),
+                         H8(0(), 0(), 0(), 0(), 0(), 0(), 8(), 0()),
+                         S:7(Unit()),
+                         H8(d(), 7(), 6(), a(), a(), 4(), 7(), 8()));
+        Bit32 wnt32 = H8(a(), 5(), 2(), 0(), 2(), 7(), 7(), 4());
+        ABCD got = ABCD(got32, got32, got32, got32);
+        ABCD wnt = ABCD(wnt32, wnt32, wnt32, wnt32);
+        ?(eq(wnt32, got32);
+            Maybe<Bug>:nothing(Unit()),
+            Maybe<Bug>:just(Bug(BugName:Bug_FF(Unit()), wnt, got)));
+      }, T_({
+        Bit32 z = zero@BitN@Bit32M();
+        ABCD wnt = ABCD(H8(f(), 5(), 6(), c(), 7(), c(), f(), 1()),
+                        H8(d(), 6(), 8(), 1(), 9(), c(), 6(), a()),
+                        H8(5(), a(), a(), 5(), 3(), f(), 7(), 5()),
+                        H8(3(), 7(), 4(), 9(), 4(), 3(), a(), 7()));
+        ABCD got = Round1(ABCD0().a, ABCD0().b, ABCD0().c, ABCD0().d, Block(
+          H8(0(), 0(), 0(), 0(), 0(), 0(), 8(), 0()),
+          z, z, z, z, z, z, z, z, z, z, z, z, z, z, z));
+        ?(Eq(wnt, got);
+            Maybe<Bug>:nothing(Unit()),
+            Maybe<Bug>:just(Bug(BugName:Bug_Round1(Unit()), wnt, got)));
+      }, T_({
         Bit32 z = zero@BitN@Bit32M();
         ABCD wnt = H32(d(), 4(), 1(), d(), 8(), c(), d(), 9(),
                        8(), f(), 0(), 0(), b(), 2(), 0(), 4(),
@@ -407,20 +438,7 @@ module Md5M(Md5I) {
         ?(Eq(wnt, got);
             Maybe<Bug>:nothing(Unit()),
             Maybe<Bug>:just(Bug(BugName:Bug_DoBlock(Unit()), wnt, got)));
-      }, T_({
-        Bit32 z = zero@BitN@Bit32M();
-        ABCD wnt = ABCD(H8(f(), 1(), 7(), c(), 6(), c(), f(), 5()),
-                        H8(6(), a(), 9(), c(), 8(), 1(), d(), 6()),
-                        H8(7(), 5(), 3(), f(), a(), 5(), 5(), a()),
-                        H8(a(), 7(), 4(), 3(), 4(), 9(), 3(), 7()));
-        ABCD got = Round1(ABCD0().a, ABCD0().b, ABCD0().c, ABCD0().d, Block(
-          H8(0(), 0(), 0(), 0(), 0(), 0(), 8(), 0()),
-          z, z, z, z, z, z, z, z, z, z, z, z, z, z, z));
-        ?(Eq(wnt, got);
-            Maybe<Bug>:nothing(Unit()),
-            Maybe<Bug>:just(Bug(BugName:Bug_Round1(Unit()), wnt, got)));
       },
-      SL<Bug>:nil(Unit())));
+      SL<Bug>:nil(Unit()))));
   };
-
 };

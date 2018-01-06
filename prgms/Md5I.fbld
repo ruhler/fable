@@ -29,7 +29,7 @@ interf Md5I {
 
   func Eq(ABCD a, ABCD b; Bool);
 
-  union BugName(Unit Bug_DoBlock, Unit Bug_Round1);
+  union BugName(Unit Bug_DoBlock, Unit Bug_Round1, Unit Bug_FF);
   struct Bug(BugName name, ABCD wnt, ABCD got);
   func Debug( ; S<Bug>);
 };

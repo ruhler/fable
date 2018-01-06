@@ -1,12 +1,13 @@
 MD5:
+* Fix padding length.
+* Get test to pass.
+
+Fbld Test:
 * Port 4.7.5-* tests to fbld
 * Port 4.7.6-* tests to fbld
 * Port 4.7.7-* tests to fbld
 * Port 4.7.8-* tests to fbld
 * Port 5-* test to fbld
-* Get test to pass.
-
-Fbld Test:
 * Add a test that you can't use a func, proc, interf, or module as a type
   parameter argument.
 * Add a test that you can't use a type, func, proc, interf as a module
