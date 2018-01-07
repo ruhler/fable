@@ -1,5 +1,4 @@
 MD5:
-* Add the longer md5 test from the rfc to Md5Test.
 * Write c-wrapper to compute md5 on files.
 
 Fbld Test:

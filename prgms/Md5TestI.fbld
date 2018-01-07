@@ -7,7 +7,11 @@ interf Md5TestI {
   union TestName(
       Unit Md5_empty,
       Unit Md5_a,
-      Unit Md5_abc
+      Unit Md5_abc,
+      Unit Md5_message,
+      Unit Md5_a_to_z,
+      Unit Md5_A_to_9,
+      Unit Md5_1_to_0
   );
 
   struct TestFailure(TestName name, Md5Hash wnt, Md5Hash got);
