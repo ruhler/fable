@@ -1,21 +1,24 @@
 module Md5TestM(Md5TestI) {
   import @ { UnitM; BoolM; Bit8M; HexM; ListM; MaybeM; Md5M; };
   import UnitM { Unit; };
-  import Bit8M { Bit8; };
+  import Bit8M { Bit8; H2; };
   import HexM { 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; a; b; c; d; e; f; };
   import ListM { P; S; };
   import MaybeM { Maybe; };
   import Md5M { Md5Hash; Md5; Eq; };
 
   union TestName(
-      Unit Md5_empty
+      Unit Md5_empty,
+      Unit Md5_a,
+      Unit Md5_abc
   );
 
   struct TestFailure(TestName name, Md5Hash wnt, Md5Hash got);
 
   proc Test_empty( ; ; TestFailure) {
     Maybe<Bit8> +- put, get;
-    Md5Hash wnt = $(Md5Hash(d(), 4(), 1(), d(), 8(), c(), d(), 9(),
+    Md5Hash wnt = $(Md5Hash(
+          d(), 4(), 1(), d(), 8(), c(), d(), 9(),
           8(), f(), 0(), 0(), b(), 2(), 0(), 4(),
           e(), 9(), 8(), 0(), 0(), 9(), 9(), 8(),
           e(), c(), f(), 8(), 4(), 2(), 7(), e()));
@@ -26,6 +29,37 @@ module Md5TestM(Md5TestI) {
     $(TestFailure(TestName:Md5_empty(Unit()), wnt, got));
   };
 
+  proc Test_a( ; ; TestFailure) {
+    Maybe<Bit8> +- put, get;
+    Md5Hash wnt = $(Md5Hash(
+          0(), c(), c(), 1(), 7(), 5(), b(), 9(),
+          c(), 0(), f(), 1(), b(), 6(), a(), 8(),
+          3(), 1(), c(), 3(), 9(), 9(), e(), 2(),
+          6(), 9(), 7(), 7(), 2(), 6(), 6(), 1()));
+    Md5Hash got = Md5(get; ), Unit ignored = {
+      Maybe<Bit8> 0_ = +put(Maybe<Bit8>:just(H2(6(), 1())));  # 'a'
+      Maybe<Bit8> 1_ = +put(Maybe<Bit8>:nothing(Unit()));
+      $(Unit());
+    };
+    $(TestFailure(TestName:Md5_a(Unit()), wnt, got));
+  };
+
+  proc Test_abc( ; ; TestFailure) {
+    Maybe<Bit8> +- put, get;
+    Md5Hash wnt = $(Md5Hash(
+      9(), 0(), 0(), 1(), 5(), 0(), 9(), 8(),
+      3(), c(), d(), 2(), 4(), f(), b(), 0(),
+      d(), 6(), 9(), 6(), 3(), f(), 7(), d(),
+      2(), 8(), e(), 1(), 7(), f(), 7(), 2()));
+    Md5Hash got = Md5(get; ), Unit ignored = {
+      Maybe<Bit8> 0_ = +put(Maybe<Bit8>:just(H2(6(), 1())));  # 'a'
+      Maybe<Bit8> 1_ = +put(Maybe<Bit8>:just(H2(6(), 2())));  # 'b'
+      Maybe<Bit8> 2_ = +put(Maybe<Bit8>:just(H2(6(), 3())));  # 'c'
+      Maybe<Bit8> 3_ = +put(Maybe<Bit8>:nothing(Unit()));
+      $(Unit());
+    };
+    $(TestFailure(TestName:Md5_abc(Unit()), wnt, got));
+  };
 
   func T(TestFailure x, S<TestFailure> l; S<TestFailure>) {
     ?(Eq(x.wnt, x.got); l, S<TestFailure>:cons(P<TestFailure>(x, l)));
@@ -33,6 +67,11 @@ module Md5TestM(Md5TestI) {
 
   proc Test( ; ; S<TestFailure>) {
     TestFailure empty = Test_empty( ; );
-    $(T(empty, S<TestFailure>:nil(Unit())));
+    TestFailure a = Test_a( ; );
+    TestFailure abc = Test_abc( ; );
+    $(T(empty,
+      T(a,
+      T(abc,
+        S<TestFailure>:nil(Unit())))));
   };
 };

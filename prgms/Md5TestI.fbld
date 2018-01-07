@@ -5,7 +5,9 @@ interf Md5TestI {
   import Md5M { Md5Hash; };
 
   union TestName(
-      Unit Md5_empty
+      Unit Md5_empty,
+      Unit Md5_a,
+      Unit Md5_abc
   );
 
   struct TestFailure(TestName name, Md5Hash wnt, Md5Hash got);

@@ -1,6 +1,8 @@
 module Bit8M(Bit8I) {
-  import @ { BitM; Bit1M; BitNI; BoolM; };
+  import @ { BitM; Bit1M; BitNI; BoolM; HexM; UnitM; };
   import BitM { Bit; };
+  import HexM { Hex; };
+  import UnitM { Unit; };
 
   struct Bit8(Bit 7, Bit 6, Bit 5, Bit 4, Bit 3, Bit 2, Bit 1, Bit 0);
 
@@ -76,4 +78,33 @@ module Bit8M(Bit8I) {
       Result(Bit8(a.6, a.5, a.4, a.3, a.2, a.1, a.0, cin), a.7);
     };
   };
+
+  func H1(Hex x; Bit8) {
+    Bit 0 = Bit:0(Unit());
+    Bit 1 = Bit:1(Unit());
+    ?(x; Bit8(0, 0, 0, 0, 0, 0, 0, 0),
+         Bit8(0, 0, 0, 0, 0, 0, 0, 1),
+         Bit8(0, 0, 0, 0, 0, 0, 1, 0),
+         Bit8(0, 0, 0, 0, 0, 0, 1, 1),
+         Bit8(0, 0, 0, 0, 0, 1, 0, 0),
+         Bit8(0, 0, 0, 0, 0, 1, 0, 1),
+         Bit8(0, 0, 0, 0, 0, 1, 1, 0),
+         Bit8(0, 0, 0, 0, 0, 1, 1, 1),
+         Bit8(0, 0, 0, 0, 1, 0, 0, 0),
+         Bit8(0, 0, 0, 0, 1, 0, 0, 1),
+         Bit8(0, 0, 0, 0, 1, 0, 1, 0),
+         Bit8(0, 0, 0, 0, 1, 0, 1, 1),
+         Bit8(0, 0, 0, 0, 1, 1, 0, 0),
+         Bit8(0, 0, 0, 0, 1, 1, 0, 1),
+         Bit8(0, 0, 0, 0, 1, 1, 1, 0),
+         Bit8(0, 0, 0, 0, 1, 1, 1, 1));
+  };
+
+
+  func H2(Hex hi, Hex lo; Bit8) {
+    Bit8 h = H1(hi);
+    Bit8 l = H1(lo);
+    Bit8(h.3, h.2, h.1, h.0, l.3, l.2, l.1, l.0);
+  };
+
 };
