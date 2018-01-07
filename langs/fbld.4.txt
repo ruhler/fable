@@ -64,3 +64,8 @@ Style Suggestions
 * Lowercase field names, including for structs, unions, function and proc
   arguments.
 * Lowercase variable names.
+* "true/something/cons" before "false/nothing/empty/error" when ordering
+  fields of that kind of union declaration, so that ?(x; a, b) is
+  consistent with (x ? a : b) behavior.
+
+  But "0" before "1" for bit, decimal, byte, hex, etc?
