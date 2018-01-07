@@ -8,6 +8,6 @@ interf Md5TestI {
       Unit Md5_empty
   );
 
-  struct TestFailure(TestName name, Md5Hash a, Md5Hash b);
+  struct TestFailure(TestName name, Md5Hash wnt, Md5Hash got);
   proc Test( ; ; S<TestFailure>);
 };
