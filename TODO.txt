@@ -1,6 +1,3 @@
-MD5:
-* Write c-wrapper to compute md5 on files.
-
 Fbld Test:
 * Port 4.7.5-* tests to fbld
 * Port 4.7.6-* tests to fbld
@@ -74,6 +71,8 @@ Snake Arc:
 
 Miscellanous:
 * Add test to fblc-test that we don't leak memory in FblcExecute.
+  - See for example, fbld-md5 which clearly shows we do leak memory in
+    FblcExecute.
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
   - Something that cannot be typed, such as x, when x is not defined.  "maltyped"

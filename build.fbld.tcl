@@ -7,7 +7,7 @@ set FLAGS [list -I fblc -I fbld -std=c99 -pedantic -Wall -Werror -O0 -fprofile-a
 # the out directory so that the profile information generated when running
 # code from the objects is placed in a subdirectory of the out directory.
 exec mkdir -p out/fbld/obj
-foreach {x} [glob fbld/{fbld-check,fbld-snake,fbld-test,check,compile,load,loc,name,program}.c] {
+foreach {x} [glob fbld/{fbld-check,fbld-md5,fbld-snake,fbld-test,check,compile,load,loc,name,program}.c] {
   set obj out/fbld/obj/[string map {.c .o} [file tail $x]]
   run gcc {*}$FLAGS -c -o $obj $x
 }
@@ -27,8 +27,10 @@ run ar rcs out/fbld/libfbld.a {*}$fbld_objs
 # Compile the executables
 set ::fbldcheck ./out/fbld/fbld-check
 set ::fbldtest ./out/fbld/fbld-test
+set ::fbldmd5 ./out/fbld/fbld-md5
 run gcc {*}$FLAGS -o $::fbldcheck out/fbld/obj/fbld-check.o -L out/fbld -lfbld -L out/fblc -lfblc
 run gcc {*}$FLAGS -o $::fbldtest out/fbld/obj/fbld-test.o -L out/fbld -lfbld -L out/fblc -lfblc
+run gcc {*}$FLAGS -o out/fbld/fbld-md5 out/fbld/obj/fbld-md5.o -L out/fbld -lfbld -L out/fblc -lfblc
 run gcc {*}$FLAGS -o out/fbld/fbld-snake out/fbld/obj/fbld-snake.o -L out/fbld -lfbld -L out/fblc -lfblc -lncurses
 
 # See langs/fbld/README.txt for the description of this function
@@ -98,6 +100,7 @@ exec mv {*}[glob *.gcov] out/fbld/cov/spec
 
 run $::fbldtest prgms/AllTests.wnt prgms "Test@AllTestsM"
 run $::fbldcheck prgms/ SnakeM
+run $::fbldmd5 prgms/ Md5@Md5M /dev/null | grep d41d8cd98f00b204e9800998ecf8427e
 
 exec mkdir -p out/fbld/cov/all
 run gcov {*}$::fbld_objs > out/fbld/cov/all/fbld.gcov
