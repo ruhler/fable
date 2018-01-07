@@ -2,12 +2,12 @@ interf Md5TestI {
   import @ { UnitM; ListM; Md5M; };
   import UnitM { Unit; };
   import ListM { S; };
-  import Md5M { ABCD; };
+  import Md5M { Md5Hash; };
 
   union TestName(
       Unit Md5_empty
   );
 
-  struct TestFailure(TestName name, ABCD a, ABCD b);
+  struct TestFailure(TestName name, Md5Hash a, Md5Hash b);
   proc Test( ; ; S<TestFailure>);
 };

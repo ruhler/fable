@@ -12,6 +12,13 @@ module Md5M(Md5I) {
   import MaybeM { Maybe; };
   import UnitM { Unit; };
 
+  struct Md5Hash(
+    Hex  0, Hex  1, Hex  2, Hex  3, Hex  4, Hex  5, Hex  6, Hex  7,
+    Hex  8, Hex  9, Hex 10, Hex 11, Hex 12, Hex 13, Hex 14, Hex 15,
+    Hex 16, Hex 17, Hex 18, Hex 19, Hex 20, Hex 21, Hex 22, Hex 23,
+    Hex 24, Hex 25, Hex 26, Hex 27, Hex 28, Hex 29, Hex 30, Hex 31
+  );
+
   struct ABCD(Bit32 a, Bit32 b, Bit32 c, Bit32 d);
 
   struct Block(
@@ -270,11 +277,11 @@ module Md5M(Md5I) {
       H8(9(), 8(), b(), a(), d(), c(), f(), e()),
       H8(1(), 0(), 3(), 2(), 5(), 4(), 7(), 6()));
 
-  proc Md5(Maybe<Bit8>- input; ; ABCD) {
+  proc Md5(Maybe<Bit8>- input; ; Md5Hash) {
     Streamed<Bit8> +- put_padded, get_padded;
     Unit _ = Pad(input, put_padded; zero@BitN@Bit64M()),
     ABCD md5 = PaddedMd5(get_padded; ABCD0());
-    $(md5);
+    $(HexFromABCD(md5));
   };
 
 
@@ -375,68 +382,55 @@ module Md5M(Md5I) {
   func t63( ; Bit32) H8(2(), a(), d(), 7(), d(), 2(), b(), b());
   func t64( ; Bit32) H8(e(), b(), 8(), 6(), d(), 3(), 9(), 1());
 
-  func H32(Hex  0, Hex  1, Hex  2, Hex  3, Hex  4, Hex  5, Hex  6, Hex  7,
-           Hex  8, Hex  9, Hex 10, Hex 11, Hex 12, Hex 13, Hex 14, Hex 15,
-           Hex 16, Hex 17, Hex 18, Hex 19, Hex 20, Hex 21, Hex 22, Hex 23,
-           Hex 24, Hex 25, Hex 26, Hex 27, Hex 28, Hex 29, Hex 30, Hex 31;
-           ABCD) {
-    ABCD(H8(6, 7, 4, 5, 2, 3, 0, 1),
-         H8(14, 15, 12, 13, 10, 11, 8, 9),
-         H8(22, 23, 20, 21, 18, 19, 16, 17),
-         H8(30, 31, 28, 29, 26, 27, 24, 25));
+  func HexFromBits(Bit 3, Bit 2, Bit 1, Bit 0; Hex) {
+    ?(3; ?(2; ?(1; ?(0; 0(), 1()), ?(0; 2(), 3())),
+              ?(1; ?(0; 4(), 5()), ?(0; 6(), 7()))),
+         ?(2; ?(1; ?(0; 8(), 9()), ?(0; a(), b())),
+              ?(1; ?(0; c(), d()), ?(0; e(), f()))));
   };
 
-  func Eq(ABCD a, ABCD b; Bool) {
-    And(And(eq(a.a, b.a), eq(a.b, b.b)), And(eq(a.c, b.c), eq(a.d, b.d)));
+  struct HexPair(Hex hi, Hex lo);
+
+  func HexFromByte(Bit8 byte; HexPair) {
+    HexPair(HexFromBits(byte.7, byte.6, byte.5, byte.4),
+            HexFromBits(byte.3, byte.2, byte.1, byte.0));
   };
 
-  union BugName(Unit Bug_DoBlock, Unit Bug_Round1, Unit Bug_FF);
-  struct Bug(BugName name, ABCD wnt, ABCD got);
-
-  func T_(Maybe<Bug> b, SL<Bug> l; SL<Bug>) {
-    ?(b; SL<Bug>:cons(PL<Bug>(b.just, l)), l);
+  func HexFromABCD(ABCD x; Md5Hash) {
+    HexPair a0 = HexFromByte(x.a.0); HexPair a1 = HexFromByte(x.a.1);
+    HexPair a2 = HexFromByte(x.a.2); HexPair a3 = HexFromByte(x.a.3);
+    HexPair b0 = HexFromByte(x.b.0); HexPair b1 = HexFromByte(x.b.1);
+    HexPair b2 = HexFromByte(x.b.2); HexPair b3 = HexFromByte(x.b.3);
+    HexPair c0 = HexFromByte(x.c.0); HexPair c1 = HexFromByte(x.c.1);
+    HexPair c2 = HexFromByte(x.c.2); HexPair c3 = HexFromByte(x.c.3);
+    HexPair d0 = HexFromByte(x.d.0); HexPair d1 = HexFromByte(x.d.1);
+    HexPair d2 = HexFromByte(x.d.2); HexPair d3 = HexFromByte(x.d.3);
+    Md5Hash(a0.hi, a0.lo, a1.hi, a1.lo, a2.hi, a2.lo, a3.hi, a3.lo,
+            b0.hi, b0.lo, b1.hi, b1.lo, b2.hi, b2.lo, b3.hi, b3.lo,
+            c0.hi, c0.lo, c1.hi, c1.lo, c2.hi, c2.lo, c3.hi, c3.lo,
+            d0.hi, d0.lo, d1.hi, d1.lo, d2.hi, d2.lo, d3.hi, d3.lo);
   };
 
-  func Debug( ; SL<Bug>) {
-    T_({
-        Bit32 got32 = FF(H8(6(), 7(), 4(), 5(), 2(), 3(), 0(), 1()),
-                         H8(e(), f(), c(), d(), a(), b(), 8(), 9()),
-                         H8(9(), 8(), b(), a(), d(), c(), f(), e()),
-                         H8(1(), 0(), 3(), 2(), 5(), 4(), 7(), 6()),
-                         H8(0(), 0(), 0(), 0(), 0(), 0(), 8(), 0()),
-                         S:7(Unit()),
-                         H8(d(), 7(), 6(), a(), a(), 4(), 7(), 8()));
-        Bit32 wnt32 = H8(a(), 5(), 2(), 0(), 2(), 7(), 7(), 4());
-        ABCD got = ABCD(got32, got32, got32, got32);
-        ABCD wnt = ABCD(wnt32, wnt32, wnt32, wnt32);
-        ?(eq(wnt32, got32);
-            Maybe<Bug>:nothing(Unit()),
-            Maybe<Bug>:just(Bug(BugName:Bug_FF(Unit()), wnt, got)));
-      }, T_({
-        Bit32 z = zero@BitN@Bit32M();
-        ABCD wnt = ABCD(H8(f(), 5(), 6(), c(), 7(), c(), f(), 1()),
-                        H8(d(), 6(), 8(), 1(), 9(), c(), 6(), a()),
-                        H8(5(), a(), a(), 5(), 3(), f(), 7(), 5()),
-                        H8(3(), 7(), 4(), 9(), 4(), 3(), a(), 7()));
-        ABCD got = Round1(ABCD0().a, ABCD0().b, ABCD0().c, ABCD0().d, Block(
-          H8(0(), 0(), 0(), 0(), 0(), 0(), 8(), 0()),
-          z, z, z, z, z, z, z, z, z, z, z, z, z, z, z));
-        ?(Eq(wnt, got);
-            Maybe<Bug>:nothing(Unit()),
-            Maybe<Bug>:just(Bug(BugName:Bug_Round1(Unit()), wnt, got)));
-      }, T_({
-        Bit32 z = zero@BitN@Bit32M();
-        ABCD wnt = H32(d(), 4(), 1(), d(), 8(), c(), d(), 9(),
-                       8(), f(), 0(), 0(), b(), 2(), 0(), 4(),
-                       e(), 9(), 8(), 0(), 0(), 9(), 9(), 8(),
-                       e(), c(), f(), 8(), 4(), 2(), 7(), e());
-        ABCD got = DoBlock(ABCD0(), Block(
-          H8(0(), 0(), 0(), 0(), 0(), 0(), 8(), 0()),
-          z, z, z, z, z, z, z, z, z, z, z, z, z, z, z));
-        ?(Eq(wnt, got);
-            Maybe<Bug>:nothing(Unit()),
-            Maybe<Bug>:just(Bug(BugName:Bug_DoBlock(Unit()), wnt, got)));
-      },
-      SL<Bug>:nil(Unit()))));
+  func EqHex(Hex a, Hex b; Bool) {
+    eq@BitN@Bit8M(H1(a), H1(b));
+  };
+
+  func Eq(Md5Hash a, Md5Hash b; Bool) {
+    And(And(And(And(And(EqHex(a.0, b.0), EqHex(a.1, b.1)),
+                    And(EqHex(a.2, b.2), EqHex(a.3, b.3))),
+                And(And(EqHex(a.4, b.4), EqHex(a.5, b.5)),
+                    And(EqHex(a.6, b.6), EqHex(a.7, b.7)))),
+            And(And(And(EqHex(a.8, b.8), EqHex(a.9, b.9)),
+                    And(EqHex(a.10, b.10), EqHex(a.11, b.11))),
+                And(And(EqHex(a.12, b.12), EqHex(a.13, b.13)),
+                    And(EqHex(a.14, b.14), EqHex(a.15, b.15))))),
+        And(And(And(And(EqHex(a.16, b.16), EqHex(a.17, b.17)),
+                    And(EqHex(a.18, b.18), EqHex(a.19, b.19))),
+                And(And(EqHex(a.20, b.20), EqHex(a.21, b.21)),
+                    And(EqHex(a.22, b.22), EqHex(a.23, b.23)))),
+            And(And(And(EqHex(a.24, b.24), EqHex(a.25, b.25)),
+                    And(EqHex(a.26, b.26), EqHex(a.27, b.27))),
+                And(And(EqHex(a.28, b.28), EqHex(a.29, b.29)),
+                    And(EqHex(a.30, b.30), EqHex(a.31, b.31))))));
   };
 };
