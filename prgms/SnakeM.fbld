@@ -42,10 +42,12 @@ module SnakeM(SnakeI) {
   struct State(Direction dir, Pos food, Pos nfood, P<Pos> snake);
 
   func DrawSnakeS(S<Pos> s ; S<Draw>) {
-    ?(s; S<Draw>:nil(Unit()), S<Draw>:cons(DrawSnakeP(s.cons)));
+    # TODO: Use MapS for this.
+    ?(s; S<Draw>:cons(DrawSnakeP(s.cons)), S<Draw>:nil(Unit()));
   };
 
   func DrawSnakeP(P<Pos> s ; P<Draw>) {
+    # TODO: Use MapP for this.
     P<Draw>(DrawCell(s.head, Cell:snake(Unit())), DrawSnakeS(s.tail));
   };
 
@@ -78,7 +80,7 @@ module SnakeM(SnakeI) {
 
   # Return true if the given position is found in the list of positions.
   func InPosS(S<Pos> s, Pos p ; Bool) {
-    ?(s ; False(), InPosP(s.cons, p));
+    ?(s ; InPosP(s.cons, p), False());
   };
 
   # Return true if the given position is found in the list of positions.

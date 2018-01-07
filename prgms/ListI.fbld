@@ -6,7 +6,7 @@ interf ListI {
   struct P<T>(T head, S<T> tail);
 
   # S - A list of 0 or more elements: T*
-  union S<T>(Unit nil, P<T> cons); 
+  union S<T>(P<T> cons, Unit nil); 
 
   # InitP - Return all but the last element in 'list'.
   func InitP<T>(P<T> list; S<T>);
