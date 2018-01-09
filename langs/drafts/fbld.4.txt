@@ -1,40 +1,30 @@
-Intro
-* fbld to reduce cost of producing large programs (compared to fblc).
-* philosophy to statically compile down to fblc with zero-cost abstraction.
-* modules - allow you to reuse entities in different programs.
-* polymorphism - allow you to reuse entities in different contexts within a program.
+1. Develop re-usable parts, not programs.
+* Basic feature:
+Separate programs into parts distributed separately. For posix based systems,
+these separate parts could, for example, be different files.
 
-Modules
-* Intro
-  - module is a collection of entities.
-  - module introduces its own namespace to avoid name conflicts.
-  - module has an interface, to make it easier to use and restrict external
-    access to internal implementation details. Interface defined separately
-    from module, and can be shared by multiple modules.
-  - modules and interfaces can be defined hierarchically, to allow the
-    benefits of modules to scale to much larger programs.
-* Module declaration syntax
-* Namespaces
-  - braces introduce new name space
-  - import @ { ... } statement to access parent name space.
-  - qualified references: foo@bar to access entity in module bar.
-  - import bar { ... } shorthand
-* Interfaces
-  - interface declaration syntax.
-  - kinds - type, struct, decl, func, proc, module, interf.
-  - requirements for a module to implement an interface.
-* Hierarchical modules and interfaces.
-* Top level name space and programs.
+* To avoid impossible to coordinate against name conflicts:
+Each module has its own namespace. We explicitly import named entities from
+other modules under our own desired name.
+This gives us 'module' and 'import'.
 
-Polymorphism
-* Intro
-  - Motivating example.
-* Declaring polymorphic entities ("meta abstraction")
-* Supplying static arguments to qrefs ("meta application")
-* Partial application of static arguments.
-  - Monad example.
-* Entity aliases ("meta let")
-  - kind = 'qref';
+* To make it easy to figure out how to reuse and easy to develop without fear
+  of mis re-use:
+Modules have public and private entities defined with a separate interface.
+This gives us the 'interf' declaration.
+
+* To allow the benefits of modules to scale to much larger programs:
+Hierarchical modules and interfaces are supported.
+
+2. Re-use code in different type and behavior contexts.
+* Basic feature:
+Polymorphism. Declarations can be parameterized by other declarations.
+Gives params: a kind of meta-abstraction of declarations.
+
+For full generality:
+* Kinds can also be parameterized. Monads are supported, for example.
+* Partial meta-application is supported.
+* kind = 'qref', and referential transparency of that application is supported.
 
 Syntax Reference
 ----------------

@@ -836,6 +836,12 @@ progress.
   @bi
    I worry it is easy to get the order of conditional arguments wrong.
    Would it not make more sense to explicitly specify the tag corresponding to each conditional argument, so that the compiler can verify it for you?
+   In particular, imagine switching the order of a Bool/Bit/Maybe/List type.
+   The compiler will give you no help to track down all the places that need to change.
   @end
+  @bi
+   Handling of port arguments feels suspect to me.
+   Don't separate port arguments from normal arguments?
+   Add support for "port structs"?
  @end
 @end
