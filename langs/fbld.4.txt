@@ -1,10 +1,30 @@
-Intro
-* fbld to reduce cost of producing large programs (compared to fblc).
-* philosophy to statically compile down to fblc with zero-cost abstraction.
-* modules - allow you to reuse entities in different programs.
-* polymorphism - allow you to reuse entities in different contexts within a program.
+The Fable of Damocrates 
+=======================
+Richard Uhler <ruhler@degralder.com>
+
+Introduction
+------------
+Damocrates is a computer programming language from the Fable collection. It
+builds on top of the Calvisus language, providing compile-time developer
+features for modularity and abstraction geared at reducing the cost of
+producing large fblc programs.
+
+A core philosophy of fbld is that it can be statically compiled to fblc.
+The abstractions introduced by fbld are zero-cost in the sense that they have
+no overhead at runtime after compiling the program down to fblc. The developer
+need not have to make a tradeoff between modularity/abstraction and runtime
+performance.
+
+Damocrates facilitates development of large scale programs by introducing two
+broad features on top of the existing fblc language: modules and polymorphism.
+Modules allow the same peice of code to be reused in many different programs,
+and polymorphism allows the same peice of code to be reused in many different
+contexts within a single program. These features allow a developer to easily
+leverage the existing work of others to assemble and reuse large scale
+programs.
 
 Modules
+-------
 * Intro
   - module is a collection of entities.
   - module introduces its own namespace to avoid name conflicts.
