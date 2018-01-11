@@ -25,18 +25,110 @@ programs.
 
 Modules
 -------
-* Intro
-  - module is a collection of entities.
-  - module introduces its own namespace to avoid name conflicts.
-  - module has an interface, to make it easier to use and restrict external
-    access to internal implementation details. Interface defined separately
-    from module, and can be shared by multiple modules.
-  - modules and interfaces can be defined hierarchically, to allow the
-    benefits of modules to scale to much larger programs.
-* Module declaration syntax
+A module is a collection of type, func, and proc entities that can be reused
+in different programs. The entities defined in a module exist in their own
+namespace to avoid name conflicts when combining modules together to form
+programs. To make it simpler to use a module without having to understand its
+implementation details, a module has a separate interface describing what
+entities it makes publicly available for use. To allow the benefits of modules
+to scale to much larger programs, modules and their interfaces can be defined
+hierarchically; a module can define its own sub-interfaces and sub-modules in
+addition to defining types, funcs, and procs.
+
+Module Declaration
+~~~~~~~~~~~~~~~~~~
+The following shows an example of a module declaring a unary integer type and
+operations:
+
+  module IntegerM(IntegerI) {
+    struct Unit();
+    union Int(Unit 0, Int S);
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+The module declaration provides the name of the module, "IntegerM", the name
+of the module's interface "IntegerI", and the collection of entities defined
+by the module: types "Unit" and "Int" and function "Add" in this case.
+
+Module Namespaces
+~~~~~~~~~~~~~~~~~
+The braces of a module declaration introduce a new name space. Entities
+declared in a different namespace cannot be directly referred to. For example,
+the following program is incorrect, because the Unit type is not available
+in the namespace where Int is defined, and the Int type is not available in
+the namespace where IntPair is defined:
+
+  struct Unit();
+
+  module IntegerM(IntegerI) {
+    union Int(Unit 0, Int S);               # ERROR: 'Unit' not defined
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+  struct IntPair(Int first, Int second);    # ERROR: 'Int' not defined.
+
+There are three ways to refer to entities declared in another name space.
+
+Import from Parent
+^^^^^^^^^^^^^^^^^^
+A module can explicitly import entities into its own namespace from the
+namespace in which the module itself is defined. For example, this can be used
+to improt the Unit type in the previous example into the IntegerM namespace so
+that it can be referred to when defining the Int type. To import an entity
+from a parent module, an "import @" statement is used:
+
+  struct Unit();
+
+  module IntegerM(IntegerI) {
+    import @ { Unit; };               # Unit imported from parent namespace.
+    union Int(Unit 0, Int S);         # OK: 'Unit' is now in scope.
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+The basic form of the import @ statement is to list entities in the parent
+namespace to import under the same name in the module namespace. Multiple
+entities can be imported with a single import @ statement, separated by
+semicolons. For example, to import entities Apple, Bannana, and Pair from a
+parent namespace, you could write:
+
+  import @ { Apple; Bannana; Pair; };
+
+More generally, an entity can be imported from the parent namespace to the
+module namespace under a different name. This allows a module to have full
+control over its own namespace. For example, to import the Unit type under the
+name MyParentsUnit:
+
+  struct Unit();
+
+  module IntegerM(IntegerI) {
+    import @ { MyParentsUnit=Unit; };
+    union Int(MyParentsUnit 0, Int S); # OK: 'MyParentsUnit' is now in scope.
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+The general syntax for the parent import statement is:
+
+   'import' '@'  '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}'
+
+Only entities available in the module's immediate parent namespace may be
+imported this way. An entity declared in the parent's parent namespace cannot
+be imported unless it has first been imported into the parent namespace.
+
+2.
+
 * Namespaces
-  - braces introduce new name space
-  - import @ { ... } statement to access parent name space.
   - qualified references: foo@bar to access entity in module bar.
   - import bar { ... } shorthand
 * Interfaces
