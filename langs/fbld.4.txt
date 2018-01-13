@@ -73,7 +73,8 @@ the namespace where IntPair is defined:
 
   struct IntPair(Int first, Int second);    # ERROR: 'Int' not defined.
 
-There are three ways to refer to entities declared in another name space.
+There are three ways to refer to entities declared in another name space:
+import from parent, qualified references, and import from module.
 
 Import from Parent
 ^^^^^^^^^^^^^^^^^^
@@ -120,25 +121,203 @@ name MyParentsUnit:
 
 The general syntax for the parent import statement is:
 
-   'import' '@'  '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}'
+   'import' '@'  '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
 
 Only entities available in the module's immediate parent namespace may be
 imported this way. An entity declared in the parent's parent namespace cannot
 be imported unless it has first been imported into the parent namespace.
 
-2.
+Entities imported this way must not recursively depend on the definition of
+this module.
 
-* Namespaces
-  - qualified references: foo@bar to access entity in module bar.
-  - import bar { ... } shorthand
-* Interfaces
-  - interface declaration syntax.
-  - kinds - type, struct, decl, func, proc, module, interf.
-  - requirements for a module to implement an interface.
-* Hierarchical modules and interfaces.
-* Top level name space and programs.
+Qualified References
+^^^^^^^^^^^^^^^^^^^^
+A second way to reference entities from another namespace is to use qualified
+references. Qualified references allow you to access an entity declared within
+a module in your current namespace. The syntax is to put the name of the
+entity, followed by '@' and the name of the module it belongs to.
+
+For example, we can use the qualified reference Int@IntegerM to refer to the
+Int type from the parent module when defining IntPair:
+
+  struct Unit();
+
+  module IntegerM(IntegerI) {
+    import @ { Unit; };
+    union Int(Unit 0, Int S);
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+  struct IntPair(Int@IntegerM first, Int@IntegerM second);
+
+Import from Module
+^^^^^^^^^^^^^^^^^^
+Because it can be tedious to always be using qualified references to access
+entities from other modules, we also provide a way to import those entities
+directly into your namespace using an import statement. The import statement
+behaves the same as an import '@' statement, but in place of the '@' specifies
+a module currently in scope to import entities from. Using this approach, our
+example becomes:
+
+
+  struct Unit();
+
+  module IntegerM(IntegerI) {
+    import @ { Unit; };
+    union Int(Unit 0, Int S);
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+  import IntegerM { Int; };
+  struct IntPair(Int first, Int second);
+
+As with the import '@' statement, entities can be renamed upon import:
+
+  import IntegerM { MyInt=Int; };
+  struct IntPair(MyInt first, MyInt second);
+
+Interfaces
+~~~~~~~~~~
+Every module has an interface that describes what entities the module makes
+publicly available. Only entities listed in the module interface are visible
+to other modules.
+
+Here as an example of an IntegerI interface that exposes all the entities
+defined in the IntegerM module:
+
+  interf IntegerI {
+    import @ { Unit; };
+
+    union Int(Unit 0, Int S);
+    func Add(Int a, Int b; Int);
+  };
+
+An interface can be thought of as a module declaration with all the
+implementation details left out. As with a module declaration, entities
+declared in an interface belong to their own namespace. Use of import
+statements and qualified references is required to access entities from other
+namespaces.
+
+Import statements in the interface are not considered part of the interface.
+The import of the Unit type in the above example does not make the Unit type
+visible as an entity made available by the module, and does not imply that a
+module implementation of the interface reference the Unit type using the same
+mechanism or name.
+
+Prototypes
+^^^^^^^^^^
+In place of type, func, proc, module, and interf definitions in a module, the
+interface contains only prototypes of those things. The prototypes provide
+enough information to use the entity without any other implementation details.
+The following forms of prototypes can be used in an interface.
+
+Abstract Type
+.............
+The prototype for an abstract type is declared using the 'type' keyword. For
+example:
+  type Int;
+
+This prototype says that Int is a type, but does not indicate whether it is a
+union or field type, or what the fields of the type are. The user of this Int
+type cannot directly construct values of the type, access any fields of the
+type, or condition based on the type.
+
+An abstract type can be implemented in a module by any kind of struct or union
+type.
+
+Struct Type
+...........
+The prototype for a struct type is a full struct type definition, because the
+fields of the struct type are part of its interface. Users of a struct type
+can use the constructor to construct values of the type and field access to
+access members of the type.
+
+  struct IntPair(Int first, Int second);
+
+A struct type can be implemented in a module with a matching struct
+definition. Both the type and field names must match.
+
+Union Type
+..........
+The prototype for a union type is a full union type definition, because the
+fields of the union type are part of its interface. Users of a union type
+can use the constructor to construct values of the type, field access to
+access members of the type, and conditionals to select based on the tag of the
+type.
+
+  union Fruit(Unit Apple, Unit Banana, Unit Pair);
+
+A union type can be implemented in a module with a matching union
+definition. Both the type and field names must match.
+
+Function
+........
+The prototype for a function is the same as the function defininition, but
+without the body of the function.
+
+  func Add(Int a, Int b; Int);
+
+A user can apply the function given the prototype.
+
+Process
+.......
+The prototype for a process is the same as the process definition, but without
+the body of the process.
+
+  proc Put(Data+ out; Data value; Unit);
+
+A user can call the process given the prototype.
+
+Interface
+.........
+The prototype for an interface is a full interface declaration.
+
+  interf IntegerI {
+    import @ { Unit; };
+
+    union Int(Unit 0, Int S);
+    func Add(Int a, Int b; Int);
+  };
+
+A user can implement the interface or access entities in a module through the
+interface.
+
+Module
+......
+The prototype for a module is the module header.
+
+  module IntegerM(IntegerI);
+
+A user can access entities in the module through its interface.
+
+Requirements for Satisfying an Interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A module satisfies an interface if it defines an entity to match every
+prototype in the interface. It is acceptable for a module to define additional
+entities; these additional entities will not be visible to users outside of
+the module itself.
+
+A module cannot use an import statement to define an interface entity. Instead
+the entity should be imported under a different name and use the proto = qref;
+declaration form to define it in the module. This ensure the prototype of the
+entity is explicitly included in the module.
+
+A module cannot rely on the interface for the definition of any entities.
+Because the interface prototypes will match the module definition, there will
+be duplication of prototypes between the interface and module. For struct,
+union, and inter entities, the entire definition must be duplicated. As with
+all other entities, struct and union types from different modules are
+considered different types, even if they both have the same interface
+prototype. 
 
 Polymorphism
+------------
 * Intro
   - Motivating example.
 * Declaring polymorphic entities ("meta abstraction")
@@ -146,53 +325,124 @@ Polymorphism
 * Partial application of static arguments.
   - Monad example.
 * Entity aliases ("meta let")
-  - kind = 'qref';
+  - proto = 'qref';
+
+Organization of Source Code
+---------------------------
+To practically facilitiate reuse of code developed by different developers and
+used in different programs, it is convenient to be able to split a single
+program across multiple files. To allow this, we introduce a 'source'
+statement that can be used in place of an entity declaration or prototype:
+
+  'source' uri ';'
+
+The source statement directs the compile to retreive and parse the entity
+definition identified by the given uri as if the entity were declared in place
+of the source statement. The context for the uri is uri for the file that
+contains the source statement.
+
+Any ';' character within the uri must be encoded as described by the URI
+specification, because it is considered an unsafe character in this context.
+
+For example, instead of having a single program stored in the file
+Example.fbld:
+
+  struct Unit();
+
+  interf IntegerI {
+    import '@' { Unit; };
+    union Int(Unit 0, Int S);
+    func Add(Int a, Int b; Int);
+  };
+
+  module IntegerM(IntegerI) {
+    import '@' { Unit; };
+    union Int(Unit 0, Int S);
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+  import IntegerM { Int; };
+  struct IntPair(Int first, Int second);
+
+The program could be split into multiple separate files, Example.fbld,
+IntegerI.fbld, and IntegerM.fbld:
+
+Example.fbld:
+  struct Unit();
+
+  source IntegerI.fbld;
+  source IntegerM.fbld;
+
+  import IntegerM { Int; };
+  struct IntPair(Int first, Int second);
+
+IntegerI.fbld:
+  interf IntegerI {
+    import '@' { Unit; };
+    union Int(Unit 0, Int S);
+    func Add(Int a, Int b; Int);
+  };
+
+IntegerM.fbld:
+  module IntegerM(IntegerI) {
+    import '@' { Unit; };
+    union Int(Unit 0, Int S);
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+A sourced file must define exactly one top level declaration. By convention,
+the ".fbld" extension is used for files containin fbld programs or sourced
+entity definitions.
 
 Syntax Reference
 ----------------
-  type_kind ::= 'type' tname params ;
-  struct_kind ::= 'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ;
-  union_kind ::= 'union' tname params '(' qref fname [',' qref fname [...]] ')' ;
-  func_kind ::= 'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' ;
-  proc_kind ::= 'proc' tname params '('
+  type_proto ::= 'type' tname params ;
+  struct_proto ::= 'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ;
+  union_proto ::= 'union' tname params '(' qref fname [',' qref fname [...]] ')' ;
+  func_proto ::= 'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' ;
+  proc_proto ::= 'proc' tname params '('
                      [qref polarity pname [',' qref polarity pname [...]]] ';'
                      [qref vname [',' qref vname [...]]] ';' qref ')' ;
-  interf_kind ::= 'interf' tname params '{' [decl [decl [...]]] '}' ;
-  module_kind ::= 'module' tname params '(' qref ')' ;
+  interf_proto ::= 'interf' tname params '{' [decl [decl [...]]] '}' ;
+  module_proto ::= 'module' tname params '(' qref ')' ;
 
-  kind ::= type_kind
-         | struct_kind
-         | union_kind
-         | func_kind
-         | proc_kind
-         | interf_kind
-         | module_kind
+  proto ::= type_proto
+         | struct_proto
+         | union_proto
+         | func_proto
+         | proc_proto
+         | interf_proto
+         | module_proto
          ;
 
   import ::= 
-      (* TODO: ['=' qref] instead of ['=' tname]? *)
-
-     'import' '@'  '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}'
-   | 'import' qref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}'
+     'import' '@'  '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
+   | 'import' qref '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
    ;
 
-  decl ::= kind ';'       (* TODO: allow kind '=' qref ';' too? *)
+  decl ::= proto ';'
          | import ';'
          ;
 
-  defn ::= struct_kind ';'
-        |  union_kind ';'
-        |  func_kind expr ';'
-        |  proc_kind proc ';'
-        |  interf_kind ';'
-        |  module_kind '{' [defn [defn [...]]] '}' ';'
-        |  kind '=' qref ';'
+  defn ::= struct_proto ';'
+        |  union_proto ';'
+        |  func_proto expr ';'
+        |  proc_proto proc ';'
+        |  interf_proto ';'
+        |  module_proto '{' [defn [defn [...]]] '}' ';'
+        |  proto '=' qref ';'
         |  import ';'
         ;
   
   prgm ::= (* collection of defn, organized into file by defn <name>.fbld *)
  
-  params ::= ['<' [kind [',' kind [...]]] '>'] ;
+  params ::= ['<' [proto [',' proto [...]]] '>'] ;
 
   qref ::= tname ['<' [qref [',' qref [...]]] '>'] ['@' qref] ;
 
@@ -219,22 +469,32 @@ Style Suggestions
 
 Changes from Fbld 3
 -------------------
-* Instead of <[type...] ; [module...]> for params, we have <[kind...]>.
+* Instead of <[type...] ; [module...]> for params, we have <[proto...]>.
 Which is surely an improvement in simplicity and generality.
 
 * Kinds can themselves be parameterized.
 Which avoids an artificial arbitrary limitation by allowing full generality.
 
 * Partial application of qrefs.
-Needed once kinds are parameterized.
+Needed once protos are parameterized.
 Also generalizes import statements, which implicitly import parameterized
 things, not fully applied things.
 
-* kind = 'qref'
+* protos = 'qref'
 Which really is needed for full generality.
 
+* Introduction of the 'source' statement.
+
+* Top level fbld programs do not belong to any module. This means an fblc
+  program is a valid fbld program.
+
 I approve these changes as improving the overall simplicity and generality of
-the language. Parameterized kinds, partial application, and kind = 'qref' do
-add complexity, but they do so in a simple way and provide important
+the language. Parameterized protos, partial application, and protos = 'qref'
+do add complexity, but they do so in a simple way and provide important
 capabilities.
+
+TODO
+----
+* Better integrate the idea of the 'source' statement and fbld as a superset of
+  fblc into the specification.
 
