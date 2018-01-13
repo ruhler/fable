@@ -15,13 +15,14 @@ no overhead at runtime after compiling the program down to fblc. The developer
 need not have to make a tradeoff between modularity/abstraction and runtime
 performance.
 
-Damocrates facilitates development of large scale programs by introducing two
-broad features on top of the existing fblc language: modules and polymorphism.
-Modules allow the same peice of code to be reused in many different programs,
-and polymorphism allows the same peice of code to be reused in many different
-contexts within a single program. These features allow a developer to easily
-leverage the existing work of others to assemble and reuse large scale
-programs.
+Damocrates facilitates development of large scale programs by introducing
+three broad features extending the existing fblc language: modules,
+polymorphism, and source statements. Modules allow the same peice of code to
+be reused in many different programs, polymorphism allows the same peice
+of code to be reused in many different contexts within a single program, and
+source statements allow the source code for a program to be split across
+multiple files. These features allow a developer to easily leverage the
+existing work of others to assemble and reuse large scale programs.
 
 Modules
 -------
@@ -327,22 +328,23 @@ Polymorphism
 * Entity aliases ("meta let")
   - proto = 'qref';
 
-Organization of Source Code
----------------------------
+Source Statements
+-----------------
 To practically facilitiate reuse of code developed by different developers and
 used in different programs, it is convenient to be able to split a single
 program across multiple files. To allow this, we introduce a 'source'
 statement that can be used in place of an entity declaration or prototype:
 
-  'source' uri ';'
+  'source' tname uri ';'
 
-The source statement directs the compile to retreive and parse the entity
+The source statement directs the parser to retreive and parse an entity
 definition identified by the given uri as if the entity were declared in place
-of the source statement. The context for the uri is uri for the file that
-contains the source statement.
+of the source statement.
 
-Any ';' character within the uri must be encoded as described by the URI
-specification, because it is considered an unsafe character in this context.
+The context for the uri is uri for the file that contains the source
+statement. Any ';' character within the uri must be encoded as described by
+the URI specification, because it is considered an unsafe character in this
+context.
 
 For example, instead of having a single program stored in the file
 Example.fbld:
@@ -367,14 +369,14 @@ Example.fbld:
   import IntegerM { Int; };
   struct IntPair(Int first, Int second);
 
-The program could be split into multiple separate files, Example.fbld,
-IntegerI.fbld, and IntegerM.fbld:
+The program could be split into separate files Example.fbld, IntegerI.fbld,
+and IntegerM.fbld:
 
 Example.fbld:
   struct Unit();
 
-  source IntegerI.fbld;
-  source IntegerM.fbld;
+  source IntegerI IntegerI.fbld;
+  source IntegerM IntegerM.fbld;
 
   import IntegerM { Int; };
   struct IntPair(Int first, Int second);
@@ -396,9 +398,18 @@ IntegerM.fbld:
     };
   };
 
-A sourced file must define exactly one top level declaration. By convention,
-the ".fbld" extension is used for files containin fbld programs or sourced
-entity definitions.
+A sourced file must define exactly one top level declaration with the same
+name as provided in the source statement. This allows tools to identify which
+uri to follow to find the definition of an entity. By convention, the ".fbld"
+extension is used for files containing fbld programs or sourced entity
+definitions.
+
+This specification does not say whether a sourced declaration must be
+eagerly parsed and type checked or whether parsing and checking the entity
+can be deferred, possibly indefinately, until it is referenced. Different
+tools for different use cases will wish to choose different alternatives. For
+example, an interpreter may choose not to parse the entity if it is never
+referenced, while a static analyzer may choose to parse all entities.
 
 Syntax Reference
 ----------------
@@ -426,8 +437,11 @@ Syntax Reference
    | 'import' qref '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
    ;
 
+  source ::= 'source' tname uri ;
+
   decl ::= proto ';'
          | import ';'
+         | source ';'
          ;
 
   defn ::= struct_proto ';'
@@ -438,9 +452,10 @@ Syntax Reference
         |  module_proto '{' [defn [defn [...]]] '}' ';'
         |  proto '=' qref ';'
         |  import ';'
+        |  source ';'
         ;
   
-  prgm ::= (* collection of defn, organized into file by defn <name>.fbld *)
+  prgm ::= defn [defn [...]] ;
  
   params ::= ['<' [proto [',' proto [...]]] '>'] ;
 
@@ -491,10 +506,14 @@ Which really is needed for full generality.
 I approve these changes as improving the overall simplicity and generality of
 the language. Parameterized protos, partial application, and protos = 'qref'
 do add complexity, but they do so in a simple way and provide important
-capabilities.
+capabilities. The need for uri's are unfortunate, but this what they were
+designed for: an ascii representation for locating an object in some abstract
+way, and there is no way to be completely abstract while providing a practical
+implementation on a real existing platform.
 
 TODO
 ----
-* Better integrate the idea of the 'source' statement and fbld as a superset of
-  fblc into the specification.
+* Don't use 'decl' an fblc for the same thing 'defn' is used in fbld.4? It's
+  confusing that that non-terminal changes meaning when fbld is a superset of
+  fblc.
 
