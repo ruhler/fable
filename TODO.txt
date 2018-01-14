@@ -1,17 +1,15 @@
 Fbld 4:
-* Write clean spec
- - flesh out text
 * Experimentally port all existing programs and tests to new spec.
 * Implement new spec.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program taking advantage of the new features.
 
 Fbld Test:
-* Port 4.7.5-* tests to fbld
-* Port 4.7.6-* tests to fbld
-* Port 4.7.7-* tests to fbld
-* Port 4.7.8-* tests to fbld
-* Port 5-* test to fbld
+* Port 4.7.5-* tests to fbld  - on hold pending Fbld 4
+* Port 4.7.6-* tests to fbld  - on hold pending Fbld 4
+* Port 4.7.7-* tests to fbld  - on hold pending Fbld 4
+* Port 4.7.8-* tests to fbld  - on hold pending Fbld 4
+* Port 5-* test to fbld       - on hold pending Fbld 4
 * Add a test that you can't use a func, proc, interf, or module as a type
   parameter argument.
 * Add a test that you can't use a type, func, proc, interf as a module

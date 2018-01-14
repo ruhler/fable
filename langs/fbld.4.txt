@@ -266,6 +266,10 @@ without the body of the function.
 
 A user can apply the function given the prototype.
 
+Because a user does not need to know the argument names to call a function,
+the argument names need not match between a prototype and implementation for
+the prototype to be considered matching.
+
 Process
 .......
 The prototype for a process is the same as the process definition, but without
@@ -274,6 +278,10 @@ the body of the process.
   proc Put(Data+ out; Data value; Unit);
 
 A user can call the process given the prototype.
+
+Because a user does not need to know the port and argument names to call a
+process, the port and argument names need not match between a prototype and
+implementation for the prototype to be considered matching.
 
 Interface
 .........
@@ -319,14 +327,97 @@ prototype.
 
 Polymorphism
 ------------
-* Intro
-  - Motivating example.
-* Declaring polymorphic entities ("meta abstraction")
-* Supplying static arguments to qrefs ("meta application")
-* Partial application of static arguments.
-  - Monad example.
-* Entity aliases ("meta let")
-  - proto = 'qref';
+Polymorphism makes it possible to reuse the same code in multiple different
+contexts in the same program. For example, with polymorphism it is possible to
+provide one implementation of a list type and associated functions that work
+for lists of any arbitrary type of element. Polymorphism is introduced in
+Damocrates by allowing entity declarations to be parameterized by other
+entities.
+
+A generic list type and 'Last' function could be defined by introducing a type
+parameter T as follows:
+
+  struct ListP<type T>(T head, ListS<T> tail);
+  union ListS<type T>(Unit nil, ListP<T> cons);
+
+  func Last<type T>(ListP<T> list ; T) {
+    ?(list.tail; list.head, Last<T>(list.tail.cons));
+  };
+
+We could also define a generic 'Contains' function to check if a list contains
+a specific element, but only if we also provide a func parameter to define
+what it means for two elements to be equal:
+  
+  func Contains<type T; func Eq(T a, T b; Bool)>(ListS<T> list, T elem; Bool) {
+    ?(list;
+        False(),                                    # The list is empty.
+        ?(Eq(elem, list.cons.head);
+          True(),                                   # head matches.
+          Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
+  };
+
+Declaring Polymorphic Entities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  params ::= ['<' [proto [',' proto [...]]] '>'] ;
+
+To declare a polymorphic entity, supply a list of zero or more static
+parameters after the entity name surrounded by angle brackets. A static
+parameter is described using a prototype, as defined previously in the context
+of interfaces. All kinds of prototypes are allowed, including abstract type,
+struct, union, func, proc, interf, and module, though union, and interf
+prototypes may not be as useful in practice.
+
+The prototype introduces an entity into scope, visible to all later static
+parameter prototypes and the body of the entity declaration.
+
+TODO: Are static parameters visible across module namespace boundaries, or do
+they need to be imported explicitly like all other entities into module
+namespaces?
+
+Note that the prototypes of arguments can themselves be prototypes for
+parameterized entities.
+
+Supplying Static Parameter Values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+['<' [qref [',' qref [...]]] '>']
+
+To use a parameterized entity, static parameter values must be provided. These
+are provided as a list of qualified references in angle brackets. Each qref
+must have a prototype matching that of the prototype specified when the entity
+was declared.
+
+The number of qref's supplied may be less than the number of static parameters
+required by the entity, in which case we say partial application of static
+parameters has occured. This is useful for supplying parameterized arguments
+to another entity. For example, consider a monadic function:
+
+  bind<type A, type B, type M<T>, func F(A x; M<B>)>(M<A> x; M<B>);
+
+  This could be used with an Either monad by supplying a partial application of
+  the Either type constructor:
+
+    struct Either<type A, type B>(A left, B right);
+
+    ... bind<Int, Bool, Either<String>, IsZero>(x) ...
+
+Entity Aliases
+~~~~~~~~~~~~~~
+Reuse of parameterized entities provides another way to define an entity: by
+static application of parameters to some other polymorphic entity. To support
+this, we introduce another form of entity definition:
+
+  proto '=' qref ';' ;
+
+This form can be used in place of a standard entity declaration. For example,
+we could provide a generic BitXY type for composing bit types together, then
+define a Bit8 type in terms of that generic type:
+
+  struct BitXY<type A, type B>(A hi, B lo);
+
+  type Bit8 = BitXY<Bit4, Bit4>;
+
+TODO: clarify the details here. Who gets to know that Bit8 is a BitXY under
+the covers?
 
 Source Statements
 -----------------
@@ -459,7 +550,10 @@ Syntax Reference
  
   params ::= ['<' [proto [',' proto [...]]] '>'] ;
 
-  qref ::= tname ['<' [qref [',' qref [...]]] '>'] ['@' qref] ;
+  qref ::= tname
+        |  qref '<' [qref [',' qref [...]]] '>'
+        |  qref '@' qref
+        ;
 
   expr ::= ... (* as in fblc, with qref in place of tname *)
   proc ::= ... (* as in fblc, with qref in place of tname *)
