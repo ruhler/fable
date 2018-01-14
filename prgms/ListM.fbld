@@ -2,29 +2,29 @@ module ListM(ListI) {
   import @ { UnitM; FunctionI; };
   import UnitM { Unit; };
 
-  struct P<T>(T head, S<T> tail);
-  union S<T>(P<T> cons, Unit nil); 
+  struct P<type T>(T head, S<T> tail);
+  union S<type T>(P<T> cons, Unit nil); 
 
   # InitP - Return all but the last element in 'list'.
-  func InitP<T>(P<T> list; S<T>) {
+  func InitP<type T>(P<T> list; S<T>) {
     ?(list.tail; S<T>:nil(Unit()), S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons))));
   };
 
   # LastP - Return the last element in 'list'.
-  func LastP<T>(P<T> list; T) {
+  func LastP<type T>(P<T> list; T) {
     ?(list.tail; LastP<T>(list.tail.cons), list.head);
   };
 
   # Append list b to the end of list a.
-  func Append<T>(S<T> a, S<T> b ; S<T>) {
+  func Append<type T>(S<T> a, S<T> b ; S<T>) {
     ?(a; S<T>:cons(P<T>(a.cons.head, Append<T>(a.cons.tail, b))), b);
   };
 
-  func MapS<A, B; FunctionI<A, B> F>(S<A> a; S<B>) {
-    ?(a; S<B>:cons(MapP<A, B; F>(a.cons)), S<B>:nil(Unit()));
+  func MapS<type A, type B, func F(A x; B)>(S<A> a; S<B>) {
+    ?(a; S<B>:cons(MapP<A, B, F>(a.cons)), S<B>:nil(Unit()));
   };
 
-  func MapP<A, B; FunctionI<A, B> F>(P<A> a; P<B>) {
-    P<B>(f@F(a.head), MapS<A, B; F>(a.tail));
+  func MapP<type A, type B, func F(A x; B)>(P<A> a; P<B>) {
+    P<B>(f@F(a.head), MapS<A, B, F>(a.tail));
   };
 };

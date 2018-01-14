@@ -1,17 +1,13 @@
 set prg {
-  MainI.fbld {
-    interf MainI {
-      struct Unit();
-      func f(Unit x ; Unit);
-    };
-  }
+  interf MainI {
+    struct Unit();
+    func f(Unit x ; Unit);
+  };
 
-  MainM.fbld {
-    module MainM(MainI) {
-      # The function f is not declared locally.
-      struct Unit();
-    };
-  }
+  module MainM(MainI) {
+    # The function f is not declared locally.
+    struct Unit();
+  };
 }
 
-fbld-check-error $prg MainM MainM.fbld:2:12
+fbld-check-error $prg 7:10

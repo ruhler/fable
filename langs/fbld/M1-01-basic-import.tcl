@@ -1,34 +1,26 @@
-# Test that we can use an import statement to refer to foreign entities.
 set prg {
-  UnitI.fbld {
-    interf UnitI {
-      struct Unit();
-    };
-  }
+  # Test that we can use an import statement to refer to foreign entities.
+  interf UnitI {
+    struct Unit();
+  };
 
-  UnitM.fbld {
-    module UnitM(UnitI) {
-      struct Unit();
-    };
-  }
+  module UnitM(UnitI) {
+    struct Unit();
+  };
 
-  MainI.fbld {
-    interf MainI {
-      import @ { UnitM; };
-      import UnitM { Unit; };
-      func main( ; Unit);
-    };
-  }
+  interf MainI {
+    import @ { UnitM; };
+    import UnitM { Unit; };
+    func main( ; Unit);
+  };
 
-  MainM.fbld {
-    module MainM(MainI) {
-      import @ { UnitM; };
-      import UnitM { Unit; };
-      func main( ; Unit) {
-        Unit();
-      };
+  module MainM(MainI) {
+    import @ { UnitM; };
+    import UnitM { Unit; };
+    func main( ; Unit) {
+      Unit();
     };
-  }
+  };
 }
 
 fbld-test $prg "main@MainM" {} {

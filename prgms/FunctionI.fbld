@@ -1,3 +1,0 @@
-interf FunctionI<A, B> {
-  func f(A a; B);
-};

@@ -4,7 +4,7 @@ module MaxFlowTestM(MaxFlowTestI) {
   import BoolM { Bool; };
   import UBNatM { Nat; Eq; };
   import ListM { S; P; };
-  import MaxFlowM<Node;> { Edge; MaxFlow; };
+  import MaxFlowM<Node> { Edge; MaxFlow; };
 
   union TestName(Unit Basic);
   struct TestFailure(TestName name, Nat a, Nat b);

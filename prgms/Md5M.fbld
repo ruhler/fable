@@ -179,7 +179,7 @@ module Md5M(Md5I) {
     ABCD(add(abcd.a, r4.a), add(abcd.b, r4.b), add(abcd.c, r4.c), add(abcd.d, r4.d));
   };
 
-  struct Streamed<T>(T data, Bool last);
+  struct Streamed<type T>(T data, Bool last);
 
   # Gets the next word from a pre-padded input
   proc GetWord(Streamed<Bit8>- padded; ; Streamed<Bit32>) {

@@ -1,4 +1,4 @@
-interf BitNI<T> {
+interf BitNI<type T> {
   import @ { BitM; BoolM; };
   import BitM { Bit; };
   import BoolM { Bool; };

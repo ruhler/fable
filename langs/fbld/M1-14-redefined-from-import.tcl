@@ -1,43 +1,34 @@
-# Test that we can call a foreign function.
 set prg {
-  UnitI.fbld {
-    interf UnitI {
-      struct Unit();
-      func f( ; Unit);
-    };
-  }
+  interf UnitI {
+    struct Unit();
+    func f( ; Unit);
+  };
 
-  UnitM.fbld {
-    module UnitM(UnitI) {
-      struct Unit();
-      func f( ; Unit) {
-        Unit();
-      };
+  module UnitM(UnitI) {
+    struct Unit();
+    func f( ; Unit) {
+      Unit();
     };
-  }
+  };
 
-  MainI.fbld {
-    interf MainI {
-      import @ { UnitM; };
-      import UnitM { Unit; };
-      func main( ; Unit);
+  interf MainI {
+    import @ { UnitM; };
+    import UnitM { Unit; };
+    func main( ; Unit);
+  };
+
+  module MainM(MainI) {
+    import @ { UnitM; };
+    import UnitM { Unit; f; };
+    func main( ; Unit) {
+      f();
     };
-  }
 
-  MainM.fbld {
-    module MainM(MainI) {
-      import @ { UnitM; };
-      import UnitM { Unit; f; };
-      func main( ; Unit) {
-        f();
-      };
-
-      # f was already defined via importing
-      func f( ; Unit) {
-        Unit();
-      };
+    # f was already defined via importing
+    func f( ; Unit) {
+      Unit();
     };
-  }
+  };
 }
 
-fbld-check-error $prg MainM MainM.fbld:10:12
+fbld-check-error $prg 28:10

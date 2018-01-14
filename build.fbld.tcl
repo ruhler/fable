@@ -33,60 +33,76 @@ run gcc {*}$FLAGS -o $::fbldtest out/fbld/obj/fbld-test.o -L out/fbld -lfbld -L 
 run gcc {*}$FLAGS -o out/fbld/fbld-md5 out/fbld/obj/fbld-md5.o -L out/fbld -lfbld -L out/fblc -lfblc
 run gcc {*}$FLAGS -o out/fbld/fbld-snake out/fbld/obj/fbld-snake.o -L out/fbld -lfbld -L out/fblc -lfblc -lncurses
 
-# See langs/fbld/README.txt for the description of this function
-proc fbld-check-error { program module loc } {
-  set testloc [info frame -1]
+proc fbld-check-error-internal { program loc testloc} {
   set line [dict get $testloc line]
   set file [dict get $testloc file]
   set name "[file tail $file]_$line"
-  set dir ./out/test/fbld/$name
-  exec mkdir -p $dir
 
-  # Write the modules to file.
-  foreach {name content} $program {
-    exec echo $content > $dir/$name
-  }
+  exec mkdir -p out/test/fbld
+  set fprogram ./out/test/fbld/$name.fbld
+  exec echo $program > $fprogram
 
   set errtext "no error reported"
   try {
-    set errtext [exec $::fbldcheck --error $dir $module]
+    set errtext [exec $::fbldcheck --error $fprogram]
   } on error {results options} {
-    error "$file:$line: error: $results"
+    error "$file:$line: error: fbld-check passed unexpectedly: $results"
   }
 
-  exec echo $errtext > $dir/$name.err
-  if {-1 == [string first "$loc: error" $errtext]} {
+  exec echo $errtext > ./out/test/fbld/$name.err
+  if {-1 == [string first ":$loc: error" $errtext]} {
     error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
   }
 }
 
-# See langs/fbld/README.txt for the description of this function.
-proc fbld-test { program entry args script } {
-  set loc [info frame -1]
+# See langs/fblc/README.txt for the description of this function
+proc fblc-check-error { program loc } {
+  fbld-check-error-internal $program $loc [info frame -1]
+}
+
+# See langs/fbld/README.txt for the description of this function
+proc fbld-check-error { program loc } {
+  fbld-check-error-internal $program $loc [info frame -1]
+}
+
+proc fbld-test-internal { program entry args script loc} {
   set line [dict get $loc line]
   set file [dict get $loc file]
   set name "[file tail $file]_$line"
-  set dir ./out/test/fbld/$name
-  exec mkdir -p $dir
 
-  # Generate the script.
-  set fscript $dir/script
+  # Write the script to file.
+  exec mkdir -p out/test/fbld
+  set fscript ./out/test/fbld/$name.script
   exec rm -f $fscript
   exec touch $fscript
   foreach cmd [split [string trim $script] "\n"] {
     exec echo [string trim $cmd] >> $fscript
   }
 
-  # Write the modules to file.
-  foreach {name content} $program {
-    exec echo $content > $dir/$name
-  }
+  # Write the program to file.
+  set fprogram ./out/test/fbld/$name.fbld
+  exec echo $program > $fprogram
 
   try {
-    exec $::fbldtest $fscript $dir $entry {*}$args
+    exec $::fbldtest $fscript $fprogram $entry {*}$args
   } on error {results options} {
     error "$file:$line: error: \n$results"
   }
+}
+
+# See langs/fblc/README.txt for the description of this function.
+proc fblc-test { program entry args script } {
+  fbld-test-internal $program $entry $args $script [info frame -1]
+}
+
+# See langs/fbld/README.txt for the description of this function.
+proc fbld-test { program entry args script } {
+  fbld-test-internal $program $entry $args $script [info frame -1]
+}
+
+foreach {x} [lsort [glob langs/fblc/*.tcl]]  {
+  puts "test $x"
+  source $x
 }
 
 foreach {x} [lsort [glob langs/fbld/*.tcl]]  {

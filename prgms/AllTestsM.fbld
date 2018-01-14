@@ -13,28 +13,16 @@ module AllTestsM(AllTestsI) {
       Md5TestFailure Md5Test
   );
   
-  module UBNatTestFailureF(FunctionI<UBNatTestFailure, TestFailure>) {
-    import @ { UBNatTestFailure; TestFailure; };
-
-    func f(UBNatTestFailure a ; TestFailure) {
-      TestFailure:UBNatTest(a);
-    };
+  func UBNatTestFailureF(UBNatTestFailure a ; TestFailure) {
+    TestFailure:UBNatTest(a);
   };
 
-  module PrimesTestFailureF(FunctionI<PrimesTestFailure, TestFailure>) {
-    import @ { PrimesTestFailure; TestFailure; };
-
-    func f(PrimesTestFailure a ; TestFailure) {
-      TestFailure:PrimesTest(a);
-    };
+  func PrimesTestFailureF(PrimesTestFailure a ; TestFailure) {
+    TestFailure:PrimesTest(a);
   };
 
-  module Md5TestFailureF(FunctionI<Md5TestFailure, TestFailure>) {
-    import @ { Md5TestFailure; TestFailure; };
-
-    func f(Md5TestFailure a ; TestFailure) {
-      TestFailure:Md5Test(a);
-    };
+  func Md5TestFailureF(Md5TestFailure a ; TestFailure) {
+    TestFailure:Md5Test(a);
   };
 
   proc Test( ; ; S<TestFailure>) {
@@ -42,7 +30,7 @@ module AllTestsM(AllTestsI) {
     $(Append<TestFailure>(
         Append<TestFailure>(
           MapS<UBNatTestFailure, TestFailure; UBNatTestFailureF>(Test@UBNatTestM()),
-          MapS<PrimesTestFailure, TestFailure; PrimesTestFailureF>(Test@PrimesTestM())),
-        MapS<Md5TestFailure, TestFailure; Md5TestFailureF>(md5)));
+          MapS<PrimesTestFailure, TestFailure, PrimesTestFailureF>(Test@PrimesTestM())),
+        MapS<Md5TestFailure, TestFailure, Md5TestFailureF>(md5)));
   };
 };

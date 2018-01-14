@@ -2,5 +2,5 @@ interf MaybeI {
   import @ { UnitM; };
   import UnitM { Unit; };
 
-  union Maybe<T>(T just, Unit nothing);
+  union Maybe<type T>(T just, Unit nothing);
 };
