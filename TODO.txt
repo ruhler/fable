@@ -1,6 +1,6 @@
 Fbld 4:
-* Rewrite spec given language updates.
 * Implement new spec.
+   - Change FbldLoadProgram interface to match FblcLoadProgram.
 * Port existing programs and tests to new spec.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program taking advantage of the new features.

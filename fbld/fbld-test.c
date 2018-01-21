@@ -79,9 +79,9 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fbld-test SCRIPT PATH MAIN [ARG...]\n"
+      "Usage: fbld-test SCRIPT FILE MAIN [ARG...]\n"
       "Execute the function or process called MAIN in the environment of the\n"
-      "fbld modules located on the given search PATH with the given ARGs.\n"  
+      "fbld program FILE with the given ARGs.\n"  
       "The program is driven and tested based on the sequence of commands\n"
       "read from SCRIPT. The commands are of the form:"
       "      put NAME VALUE\n"
@@ -91,10 +91,7 @@ static void PrintUsage(FILE* stream)
       "The get command reads the fblc value from the named port and asserts\n"
       "that the value read matches the given value.\n" 
       "The return command waits for the result of the process and asserts\n"
-      "that the resultinv value matches the given value.\n"
-      "PATH should be a colon separated list of directories to search for fbld\n"
-      "modules.\n"
-      "MAIN should be a qualified entry, such as main@Foo<;>.\n"
+      "that the resulting value matches the given value.\n"
       "VALUEs should be specified using qualified names.\n"
   );
 }
@@ -496,7 +493,7 @@ int main(int argc, char* argv[])
   }
   
   if (argc <= 2) {
-    fprintf(stderr, "no module search path.\n");
+    fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
     return 1;
   }
@@ -519,31 +516,16 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FbldStringV search_path;
-  FblcVectorInit(arena, search_path);
-  FblcVectorAppend(arena, search_path, path);
-
   FbldQRef* qentry = FbldParseQRefFromString(arena, entry);
   if (qentry == NULL) {
     fprintf(stderr, "failed to parse entry\n");
     return 1;
   }
 
-  FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
-  FblcVectorInit(arena, prgm->interfv);
-  FblcVectorInit(arena, prgm->mheaderv);
-  FblcVectorInit(arena, prgm->modulev);
-
-  if (!FbldLoadEntry(arena, &search_path, qentry, prgm)) {
-    fprintf(stderr, "failed to load\n");
-    return 1;
-  }
-
   FbldAccessLocV accessv;
   FblcVectorInit(arena, accessv);
-  FbldLoaded* loaded = FbldCompileProgram(arena, &accessv, prgm, qentry);
+  FbldLoaded* loaded = FbldLoadProgram(arena, &accessv, path, entry);
   if (loaded == NULL) {
-    fprintf(stderr, "failed to compile\n");
     return 1;
   }
 

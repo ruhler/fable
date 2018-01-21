@@ -337,7 +337,7 @@ We could also define a generic 'Contains' function to check if a list contains
 a specific element, but only if we also provide a func parameter to define
 what it means for two elements to be equal:
   
-  func Contains<type T; func Eq(T a, T b; Bool)>(ListS<T> list, T elem; Bool) {
+  func Contains<type T, func Eq(T a, T b; Bool)>(ListS<T> list, T elem; Bool) {
     ?(list;
         False(),                                    # The list is empty.
         ?(Eq(elem, list.cons.head);
@@ -345,149 +345,135 @@ what it means for two elements to be equal:
           Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
   };
 
-
-
-Interfaces
-~~~~~~~~~~
-Every module has an interface that describes what entities the module makes
-publicly available. Only entities listed in the module interface are visible
-to other modules.
-
-Here as an example of an IntegerI interface that exposes all the entities
-defined in the IntegerM module:
-
-  interf IntegerI {
-    import @ { Unit; };
-
-    union Int(Unit 0, Int S);
-    func Add(Int a, Int b; Int);
-  };
-
-An interface can be thought of as a module declaration with all the
-implementation details left out. As with a module declaration, entities
-declared in an interface belong to their own namespace. Use of import
-statements and qualified references is required to access entities from other
-namespaces.
-
-Import statements in the interface are not considered part of the interface.
-The import of the Unit type in the above example does not make the Unit type
-visible as an entity made available by the module, and does not imply that a
-module implementation of the interface reference the Unit type using the same
-mechanism or name.
-
 Prototypes
-^^^^^^^^^^
-In place of type, func, proc, module, and interf definitions in a module, the
-interface contains only prototypes of those things. The prototypes provide
-enough information to use the entity without any other implementation details.
-The following forms of prototypes can be used in an interface.
+~~~~~~~~~~
+Prototypes are used to describe what kind of entity is required for an entity
+parameter. The prototypes provide enough information to use an entity without
+any other implementation details. The following forms of prototypes can be
+used in static parameter lists.
 
 Abstract Type
 .............
 The prototype for an abstract type is declared using the 'type' keyword. For
 example:
-  type Int;
 
-This prototype says that Int is a type, but does not indicate whether it is a
-union or field type, or what the fields of the type are. The user of this Int
-type cannot directly construct values of the type, access any fields of the
-type, or condition based on the type.
+  type T
 
-An abstract type can be implemented in a module by any kind of struct or union
-type.
+This prototype matches any type, without indiciating whether the type is a
+union or struct type, or what the fields of the type are. The user of the type
+can refer to the type under the name T, but cannot directly construct values
+of the type, access any fields of the type, or condition based on objects of
+the type.
 
 Struct Type
 ...........
-The prototype for a struct type is a full struct type definition, because the
-fields of the struct type are part of its interface. Users of a struct type
-can use the constructor to construct values of the type and field access to
-access members of the type.
+The prototype for a struct type is a struct type definition, with fields
+included because the fields of the struct type are part of its interface.
 
-  struct IntPair(Int first, Int second);
+  struct T(Int first, Int second)
 
-A struct type can be implemented in a module with a matching struct
-definition. Both the type and field names must match.
+This prototype matches any struct type that has the same field types and
+names. The user of the type can refer to the type under the name T, can
+use T as a constructor to construct values of the type, and can use field
+access to access members of the type.
 
 Union Type
 ..........
-The prototype for a union type is a full union type definition, because the
-fields of the union type are part of its interface. Users of a union type
-can use the constructor to construct values of the type, field access to
-access members of the type, and conditionals to select based on the tag of the
-type.
+The prototype for a union type is a union type definition, with fields
+included because the fields of the union type are part of its interface.
 
-  union Fruit(Unit Apple, Unit Banana, Unit Pair);
+  union T(Unit Apple, Unit Banana, Unit Pair)
 
-A union type can be implemented in a module with a matching union
-definition. Both the type and field names must match.
+This prototype matches any union type that has the same field types and names.
+The user of the type can refer to the type under the name T, can construct
+values of the type, access fields, and use conditions that select based on the
+tag of the type.
 
 Function
 ........
-The prototype for a function is the same as the function defininition, but
-without the body of the function.
+The prototype for a function is a function defininition without the body
+of the function.
 
-  func Add(Int a, Int b; Int);
+  func F(Int a, Int b; Int);
 
-A user can apply the function given the prototype.
-
-Because a user does not need to know the argument names to call a function,
-the argument names need not match between a prototype and implementation for
-the prototype to be considered matching.
+This prototype matches any function that has the same argument and return
+types; the argument names need not match. The user of the function can call
+the function under the name F.
 
 Process
 .......
-The prototype for a process is the same as the process definition, but without
-the body of the process.
+The prototype for a process is a process definition without the body of the
+process.
 
-  proc Put(Data+ out; Data value; Unit);
+  proc P(Data+ out; Data value; Unit);
 
-A user can call the process given the prototype.
+This prototype matches any process that has the same port polarity and types,
+argument types and return type; the port and argument names need not match.
+The user of the process can call the process under the name P.
 
-Because a user does not need to know the port and argument names to call a
-process, the port and argument names need not match between a prototype and
-implementation for the prototype to be considered matching.
+Module
+......
+To specify a prototype for a module, we introduce a new kind of entity called
+an interface. An interface describes everything a user of a module needs to
+know to use the interface.
 
-Interface
-.........
-The prototype for an interface is a full interface declaration.
+An interface is defined like a module, except that entity declarations are
+replaced with prototypes for those entities. For example, an interface for the
+Integer module used as an example previously could be:
 
   interf IntegerI {
     import @ { Unit; };
 
-    union Int(Unit 0, Int S);
+    type Int;
     func Add(Int a, Int b; Int);
   };
 
-A user can implement the interface or access entities in a module through the
-interface.
+As with modules, interfaces introduce new namespaces. All prototypes in the
+interface must be public. A 'type' prototype is used in place of an 'abst'
+type in a module.
 
-Module
-......
-The prototype for a module is the module header.
+To use the Integer module as a polymorphic parameter under the IntegerI
+interface, we must explicitly specify in the implementation of the Integer
+module that it has interface IntegerI:
 
-  module IntegerM(IntegerI);
+    module Integer(IntegerI) {
+      import @ { Unit; };
+      abst union Int(Unit 0, Int S);
 
-A user can access entities in the module through its interface.
+      func Add(Int a, Int b; Int) {
+        ?(a; b, Incr(Add(a.S, b)));
+      };
+    };
 
-Requirements for Satisfying an Interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A module satisfies an interface if it defines an entity to match every
-prototype in the interface. It is acceptable for a module to define additional
-entities; these additional entities will not be visible to users outside of
-the module itself.
+A module can only implement an interface if there is a one-to-one
+correspondence between prototypes in the interface and public entities in the
+module. The prototypes must match exactly, including entity names, argument
+names, and port names.
 
-A module cannot use an import statement to define an interface entity. Instead
-the entity should be imported under a different name and use the proto = qref;
-declaration form to define it in the module. This ensure the prototype of the
-entity is explicitly included in the module.
+An explicit interface is only needed for a module if that module will be
+passed as a polymorphic parameter. If there will only ever be a single
+implementation of a module's interface, there is no need to introduce an
+explicit interface to describe it.
 
-A module cannot rely on the interface for the definition of any entities.
-Because the interface prototypes will match the module definition, there will
-be duplication of prototypes between the interface and module. For struct,
-union, and inter entities, the entire definition must be duplicated. As with
-all other entities, struct and union types from different modules are
-considered different types, even if they both have the same interface
-prototype. 
+A module prototype is the module definition for a module with an explicit
+interface, without the body of the module:
+
+  module M(IntegerI)
+
+This prototype matches any module that explicitly implements the interface
+IntegerI.
+
+Interface
+.........
+The prototype for an interface declaration is a full interface declaration.
+
+  interf I {
+    type Int;
+    func Add(Int a, Int b; Int);
+  };
+
+A user can implement a module with the interface or access entities in a
+module through the interface.
 
 Declaring Polymorphic Entities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -495,17 +481,12 @@ Declaring Polymorphic Entities
 
 To declare a polymorphic entity, supply a list of zero or more static
 parameters after the entity name surrounded by angle brackets. A static
-parameter is described using a prototype, as defined previously in the context
-of interfaces. All kinds of prototypes are allowed, including abstract type,
-struct, union, func, proc, interf, and module, though union, and interf
-prototypes may not be as useful in practice.
+parameter is described using a prototype, as defined above.
+All kinds of prototypes are allowed, including abstract type,
+struct, union, func, proc, interf, and module.
 
 The prototype introduces an entity into scope, visible to all later static
 parameter prototypes and the body of the entity declaration.
-
-TODO: Are static parameters visible across module namespace boundaries, or do
-they need to be imported explicitly like all other entities into module
-namespaces?
 
 Note that the prototypes of arguments can themselves be prototypes for
 parameterized entities.
@@ -524,7 +505,7 @@ required by the entity, in which case we say partial application of static
 parameters has occured. This is useful for supplying parameterized arguments
 to another entity. For example, consider a monadic function:
 
-  bind<type A, type B, type M<T>, func F(A x; M<B>)>(M<A> x; M<B>);
+  bind<type A, type B, type M<type T>, func F(A x; M<B>)>(M<A> x; M<B>);
 
   This could be used with an Either monad by supplying a partial application of
   the Either type constructor:
@@ -549,91 +530,11 @@ define a Bit8 type in terms of that generic type:
 
   type Bit8 = BitXY<Bit4, Bit4>;
 
-TODO: clarify the details here. Who gets to know that Bit8 is a BitXY under
-the covers?
-
-Source Statements
------------------
-To practically facilitiate reuse of code developed by different developers and
-used in different programs, it is convenient to be able to split a single
-program across multiple files. To allow this, we introduce a 'source'
-statement that can be used in place of an entity declaration or prototype:
-
-  'source' tname uri ';'
-
-The source statement directs the parser to retreive and parse an entity
-definition identified by the given uri as if the entity were declared in place
-of the source statement.
-
-The context for the uri is uri for the file that contains the source
-statement. Any ';' character within the uri must be encoded as described by
-the URI specification, because it is considered an unsafe character in this
-context.
-
-For example, instead of having a single program stored in the file
-Example.fbld:
-
-  struct Unit();
-
-  interf IntegerI {
-    import '@' { Unit; };
-    union Int(Unit 0, Int S);
-    func Add(Int a, Int b; Int);
-  };
-
-  module IntegerM(IntegerI) {
-    import '@' { Unit; };
-    union Int(Unit 0, Int S);
-
-    func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
-    };
-  };
-
-  import IntegerM { Int; };
-  struct IntPair(Int first, Int second);
-
-The program could be split into separate files Example.fbld, IntegerI.fbld,
-and IntegerM.fbld:
-
-Example.fbld:
-  struct Unit();
-
-  source IntegerI IntegerI.fbld;
-  source IntegerM IntegerM.fbld;
-
-  import IntegerM { Int; };
-  struct IntPair(Int first, Int second);
-
-IntegerI.fbld:
-  interf IntegerI {
-    import '@' { Unit; };
-    union Int(Unit 0, Int S);
-    func Add(Int a, Int b; Int);
-  };
-
-IntegerM.fbld:
-  module IntegerM(IntegerI) {
-    import '@' { Unit; };
-    union Int(Unit 0, Int S);
-
-    func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
-    };
-  };
-
-A sourced file must define exactly one top level declaration with the same
-name as provided in the source statement. This allows tools to identify which
-uri to follow to find the definition of an entity. By convention, the ".fbld"
-extension is used for files containing fbld programs or sourced entity
-definitions.
-
-This specification does not say whether a sourced declaration must be
-eagerly parsed and type checked or whether parsing and checking the entity
-can be deferred, possibly indefinately, until it is referenced. Different
-tools for different use cases will wish to choose different alternatives. For
-example, an interpreter may choose not to parse the entity if it is never
-referenced, while a static analyzer may choose to parse all entities.
+Within the namespaces context where the alias occurs, use of the entity will
+be treated as equivalent to use of its value. For example, Bit8 will be
+considered the same type as BitXY<Bit4, Bit4>. Outside the namespace context
+where the alias occurs, the entity will be treated as if it was a new
+declaration.
 
 Syntax Reference
 ----------------
@@ -730,19 +631,3 @@ I approve these changes as improving the overall simplicity and generality of
 the language. Parameterized protos, partial application, and protos = 'qref'
 do add complexity, but they do so in a simple way and provide important
 capabilities.
-
-TODO
-----
-Rewrite spec to incorporate the following changes:
-* module's can have implicit interfaces.
-* Use of 'priv' and 'abst' keywords in a module implementation.
-* A module proto for module Foo within a module Bar can be used to say: read
-  the body of Foo from the file Bar/Foo.fbld.
-* Module parameters are subject to the same namespace controls as other
-  entities.
-* Kinds between interf and module must be equal.
-  Kinds when passing arguments must match, where match means:
-   - the name of the entity doesn't matter.
-   - func and proc arg and port names don't matter.
-* handling of top level programs.
-
