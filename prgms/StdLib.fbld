@@ -1,0 +1,6 @@
+
+struct Unit();
+module Bool;
+union Maybe<type T>(T just, Unit nothing);
+module List;
+

@@ -3,7 +3,7 @@ module UBNatM(UBNatI) {
   import UnitM { Unit; };
   import BoolM { Bool; True; False; };
 
-  union Nat(
+  abst union Nat(
     Unit 0,
     Unit 1,
     Nat 2p0,  # 2 * x + 0, where x != 0

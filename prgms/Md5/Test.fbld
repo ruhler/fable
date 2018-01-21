@@ -20,14 +20,14 @@ module Md5TestM(Md5TestI) {
   struct TestFailure(TestName name, Md5Hash wnt, Md5Hash got);
 
   # Compute the md5 hash for a string of bytes.
-  proc Md5Str(; S<Bit8> bytes; Md5Hash) {
+  priv proc Md5Str(; S<Bit8> bytes; Md5Hash) {
     Maybe<Bit8> +- put, get;
     Md5Hash md5 = Md5(get; ), Unit x = PutAll(put; bytes);
     $(md5);
   };
   
   # Put all the bytes onto the output port, followed by nothing.
-  proc PutAll(Maybe<Bit8>+ out; S<Bit8> bytes; Unit) {
+  priv proc PutAll(Maybe<Bit8>+ out; S<Bit8> bytes; Unit) {
     ?(bytes; {
         Maybe<Bit8> x = +out(Maybe<Bit8>:just(bytes.cons.head));
         PutAll(out; bytes.cons.tail);
@@ -37,16 +37,16 @@ module Md5TestM(Md5TestI) {
     });
   };
 
-  proc TestStr( ; TestName name, Md5Hash wnt, S<Bit8> bytes; TestFailure) {
+  priv proc TestStr( ; TestName name, Md5Hash wnt, S<Bit8> bytes; TestFailure) {
     Md5Hash got = Md5Str( ; bytes);
     $(TestFailure(name, wnt, got));
   };
 
-  func L(Hex hi, Hex lo, S<Bit8> l; S<Bit8>) {
+  priv func L(Hex hi, Hex lo, S<Bit8> l; S<Bit8>) {
     S<Bit8>:cons(P<Bit8>(H2(hi, lo), l));
   };
 
-  func T(TestFailure x, S<TestFailure> l; S<TestFailure>) {
+  priv func T(TestFailure x, S<TestFailure> l; S<TestFailure>) {
     ?(Eq(x.wnt, x.got); l, S<TestFailure>:cons(P<TestFailure>(x, l)));
   };
 

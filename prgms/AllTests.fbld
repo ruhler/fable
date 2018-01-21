@@ -1,0 +1,40 @@
+
+import @ {
+  StdLib;
+  UBNatTest=Test@UBNat;
+  PrimesTest=Test@Primes;
+  Md5Test=Test@Md5;
+};
+
+import StdLib { Unit; List; };
+import List { S; P; Append; MapS; };
+import UBNatTest { UBNatTestFailure = TestFailure; };
+import PrimesTest { PrimesTestFailure = TestFailure; };
+import Md5Test { Md5TestFailure = TestFailure; };
+
+union TestFailure(
+    UBNatTestFailure UBNatTest,
+    PrimesTestFailure PrimesTest,
+    Md5TestFailure Md5Test
+);
+
+priv func UBNatTestFailureF(UBNatTestFailure a ; TestFailure) {
+  TestFailure:UBNatTest(a);
+};
+
+priv func PrimesTestFailureF(PrimesTestFailure a ; TestFailure) {
+  TestFailure:PrimesTest(a);
+};
+
+priv func Md5TestFailureF(Md5TestFailure a ; TestFailure) {
+  TestFailure:Md5Test(a);
+};
+
+proc Test( ; ; S<TestFailure>) {
+  S<Md5TestFailure> md5 = Test@Md5TestM(;);
+  $(Append<TestFailure>(
+      Append<TestFailure>(
+        MapS<UBNatTestFailure, TestFailure, UBNatTestFailureF>(Test@UBNatTestM()),
+        MapS<PrimesTestFailure, TestFailure, PrimesTestFailureF>(Test@PrimesTestM())),
+      MapS<Md5TestFailure, TestFailure, Md5TestFailureF>(md5)));
+};

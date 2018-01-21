@@ -15,14 +15,13 @@ no overhead at runtime after compiling the program down to fblc. The developer
 need not have to make a tradeoff between modularity/abstraction and runtime
 performance.
 
-Damocrates facilitates development of large scale programs by introducing
-three broad features extending the existing fblc language: modules,
-polymorphism, and source statements. Modules allow the same peice of code to
-be reused in many different programs, polymorphism allows the same peice
-of code to be reused in many different contexts within a single program, and
-source statements allow the source code for a program to be split across
-multiple files. These features allow a developer to easily leverage the
-existing work of others to assemble and reuse large scale programs.
+Damocrates facilitates development of large scale programs by introducing two
+broad features extending the existing fblc language: modules and polymorphism.
+Modules allow the same peice of code to be reused in many different programs,
+and polymorphism allows the same peice of code to be reused in many different
+contexts within a single program. These features allow a developer to easily
+leverage the existing work of others to assemble and reuse large scale
+programs.
 
 Modules
 -------
@@ -511,8 +510,8 @@ Syntax Reference
   proc_proto ::= 'proc' tname params '('
                      [qref polarity pname [',' qref polarity pname [...]]] ';'
                      [qref vname [',' qref vname [...]]] ';' qref ')' ;
-  interf_proto ::= 'interf' tname params '{' [decl [decl [...]]] '}' ;
-  module_proto ::= 'module' tname params '(' qref ')' ;
+  interf_proto ::= 'interf' tname params '{' [idecl [idecl [...]]] '}' ;
+  module_proto ::= 'module' tname params ['(' qref ')'] ;
 
   proto ::= type_proto
          | struct_proto
@@ -528,25 +527,22 @@ Syntax Reference
    | 'import' qref '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
    ;
 
-  source ::= 'source' tname uri ;
+  idecl ::=
+     proto ';'
+   | import ';'
+   ;
 
-  decl ::= proto ';'
-         | import ';'
-         | source ';'
-         ;
-
-  defn ::= struct_proto ';'
+  decl ::= struct_proto ';'
         |  union_proto ';'
         |  func_proto expr ';'
         |  proc_proto proc ';'
         |  interf_proto ';'
-        |  module_proto '{' [defn [defn [...]]] '}' ';'
+        |  module_proto ['{' [decl [decl [...]]] '}'] ';'
         |  proto '=' qref ';'
         |  import ';'
-        |  source ';'
         ;
   
-  prgm ::= defn [defn [...]] ;
+  prgm ::= decl [decl [...]] ;
  
   params ::= ['<' [proto [',' proto [...]]] '>'] ;
 
@@ -592,22 +588,27 @@ things, not fully applied things.
 * protos = 'qref'
 Which really is needed for full generality.
 
-* Introduction of the 'source' statement.
+* Allow modules to be specified in different files.
 
-* Top level fbld programs do not belong to any module. This means an fblc
-  program is a valid fbld program.
+* An fblc program is a valid fbld program.
 
 I approve these changes as improving the overall simplicity and generality of
 the language. Parameterized protos, partial application, and protos = 'qref'
 do add complexity, but they do so in a simple way and provide important
-capabilities. The need for uri's are unfortunate, but this what they were
-designed for: an ascii representation for locating an object in some abstract
-way, and there is no way to be completely abstract while providing a practical
-implementation on a real existing platform.
+capabilities.
 
 TODO
 ----
-* Don't use 'decl' an fblc for the same thing 'defn' is used in fbld.4? It's
-  confusing that that non-terminal changes meaning when fbld is a superset of
-  fblc.
+Rewrite spec to incorporate the following changes:
+* module's can have implicit interfaces.
+* Use of 'priv' and 'abst' keywords in a module implementation.
+* A module proto for module Foo within a module Bar can be used to say: read
+  the body of Foo from the file Bar/Foo.fbld.
+* Module parameters are subject to the same namespace controls as other
+  entities.
+* Kinds between interf and module must be equal.
+  Kinds when passing arguments must match, where match means:
+   - the name of the entity doesn't matter.
+   - func and proc arg and port names don't matter.
+* handling of top level programs.
 

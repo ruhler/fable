@@ -1,1 +1,1 @@
-return S<TestFailure@AllTestsM>@ListM:nil(Unit@UnitM())
+return S<TestFailure@AllTests>@List@StdLib:nil(Unit@StdLib())

@@ -1,0 +1,42 @@
+
+import @ { Unit; };
+
+union Bool(Unit true, Unit false);
+
+func True( ; Bool) {
+  Bool:true(Unit());
+};
+
+func False( ; Bool) {
+  Bool:false(Unit());
+};
+
+func Not(Bool a; Bool) {
+  ?(a; False(), True());
+};
+
+func And(Bool a, Bool b; Bool) {
+  ?(a; b, False());
+};
+
+func Or(Bool a, Bool b; Bool) {
+  ?(a; True(), b);
+};
+
+interf Eq<type T> {
+  func Eq(T a, T b; Bool);
+  func Ne(T a, T b; Bool);
+};
+
+class EqBool(Eq<Bool>) {
+  import @ { Bool; Not; };
+  func Eq(Bool a, Bool b; Bool) ?(a; b, Not(b));
+  func Ne(Bool a, Bool b; Bool) ?(a; Not(b), b);
+};
+
+interf Cmp<type T> {
+  func Lt(T a, T b; Bool);
+  func Gt(T a, T b; Bool);
+  class Eq(
+  
+
