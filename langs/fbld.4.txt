@@ -28,19 +28,16 @@ Modules
 A module is a collection of type, func, and proc entities that can be reused
 in different programs. The entities defined in a module exist in their own
 namespace to avoid name conflicts when combining modules together to form
-programs. To make it simpler to use a module without having to understand its
-implementation details, a module has a separate interface describing what
-entities it makes publicly available for use. To allow the benefits of modules
-to scale to much larger programs, modules and their interfaces can be defined
-hierarchically; a module can define its own sub-interfaces and sub-modules in
-addition to defining types, funcs, and procs.
+programs. Entities defined within a module can be private to that module.
+Modules are organized hierarchically, with the option of specifying the
+implementation of a module in its own source file.
 
 Module Declaration
 ~~~~~~~~~~~~~~~~~~
 The following shows an example of a module declaring a unary integer type and
 operations:
 
-  module IntegerM(IntegerI) {
+  module Integer {
     struct Unit();
     union Int(Unit 0, Int S);
 
@@ -49,9 +46,9 @@ operations:
     };
   };
 
-The module declaration provides the name of the module, "IntegerM", the name
-of the module's interface "IntegerI", and the collection of entities defined
-by the module: types "Unit" and "Int" and function "Add" in this case.
+The module declaration provides the name of the module and the collection of
+entities defined by the module: types "Unit" and "Int" and function "Add" in
+this case.
 
 Module Namespaces
 ~~~~~~~~~~~~~~~~~
@@ -63,7 +60,7 @@ the namespace where IntPair is defined:
 
   struct Unit();
 
-  module IntegerM(IntegerI) {
+  module Integer {
     union Int(Unit 0, Int S);               # ERROR: 'Unit' not defined
 
     func Add(Int a, Int b; Int) {
@@ -80,13 +77,13 @@ Import from Parent
 ^^^^^^^^^^^^^^^^^^
 A module can explicitly import entities into its own namespace from the
 namespace in which the module itself is defined. For example, this can be used
-to improt the Unit type in the previous example into the IntegerM namespace so
+to import the Unit type in the previous example into the Integer namespace so
 that it can be referred to when defining the Int type. To import an entity
 from a parent module, an "import @" statement is used:
 
   struct Unit();
 
-  module IntegerM(IntegerI) {
+  module Integer {
     import @ { Unit; };               # Unit imported from parent namespace.
     union Int(Unit 0, Int S);         # OK: 'Unit' is now in scope.
 
@@ -98,10 +95,10 @@ from a parent module, an "import @" statement is used:
 The basic form of the import @ statement is to list entities in the parent
 namespace to import under the same name in the module namespace. Multiple
 entities can be imported with a single import @ statement, separated by
-semicolons. For example, to import entities Apple, Bannana, and Pair from a
+semicolons. For example, to import entities Apple, Banana, and Pair from a
 parent namespace, you could write:
 
-  import @ { Apple; Bannana; Pair; };
+  import @ { Apple; Banana; Pair; };
 
 More generally, an entity can be imported from the parent namespace to the
 module namespace under a different name. This allows a module to have full
@@ -110,7 +107,7 @@ name MyParentsUnit:
 
   struct Unit();
 
-  module IntegerM(IntegerI) {
+  module Integer {
     import @ { MyParentsUnit=Unit; };
     union Int(MyParentsUnit 0, Int S); # OK: 'MyParentsUnit' is now in scope.
 
@@ -137,12 +134,12 @@ references. Qualified references allow you to access an entity declared within
 a module in your current namespace. The syntax is to put the name of the
 entity, followed by '@' and the name of the module it belongs to.
 
-For example, we can use the qualified reference Int@IntegerM to refer to the
+For example, we can use the qualified reference Int@Integer to refer to the
 Int type from the parent module when defining IntPair:
 
   struct Unit();
 
-  module IntegerM(IntegerI) {
+  module Integer {
     import @ { Unit; };
     union Int(Unit 0, Int S);
 
@@ -151,7 +148,7 @@ Int type from the parent module when defining IntPair:
     };
   };
 
-  struct IntPair(Int@IntegerM first, Int@IntegerM second);
+  struct IntPair(Int@Integer first, Int@Integer second);
 
 Import from Module
 ^^^^^^^^^^^^^^^^^^
@@ -165,7 +162,7 @@ example becomes:
 
   struct Unit();
 
-  module IntegerM(IntegerI) {
+  module Integer {
     import @ { Unit; };
     union Int(Unit 0, Int S);
 
@@ -174,13 +171,181 @@ example becomes:
     };
   };
 
-  import IntegerM { Int; };
+  import Integer { Int; };
   struct IntPair(Int first, Int second);
 
 As with the import '@' statement, entities can be renamed upon import:
 
-  import IntegerM { MyInt=Int; };
+  import Integer { MyInt=Int; };
   struct IntPair(MyInt first, MyInt second);
+
+Private Entities
+~~~~~~~~~~~~~~~~
+By default, entities defined in a module are publicly available to other
+modules. The keyword 'priv' can be used before an entity to declare the entity
+is a private to a module. A private entity cannot be referenced using a
+qualified reference or import from module, though it can be imported into a
+child module using import from parent.
+
+For example, the following code defines a private 'Incr' function within the
+Integer module that cannot be accessed externally:
+
+  struct Unit();
+
+  module Integer {
+    import @ { Unit; };
+    union Int(Unit 0, Int S);
+
+    priv func Incr(Int a; Int) {
+      Int:S(a);
+    };
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Incr(Add(a.S, b)));
+    };
+  };
+
+  import Integer { Int; Add; Incr; };        # ERROR: 'Incr' not defined
+  struct IntPair(Int first, Int second);
+
+Struct and union types have an additional visibility option. By default they
+are public, with the 'priv' keyword they are private, but they can also be
+labeled as an abstract type using the keyword 'abst'. The name of an abstract
+type is visible externally, but the fields of the type are not. This means
+external users cannot construct instances of the type, access fields, or
+perform conditional operations. For example, it makes sense to mark 'Int' as
+an abstract type:
+
+  struct Unit();
+
+  module Integer {
+    import @ { Unit; };
+    abst union Int(Unit 0, Int S);
+
+    priv func Incr(Int a; Int) {
+      Int:S(a);
+    };
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Incr(Add(a.S, b)));
+    };
+  };
+
+  import Integer { Int; };
+  struct IntPair(Int first, Int second);
+  func Decr(Int a ; Int) {
+    a.S;              # ERROR: field access not allowed on abstract type 'Int'
+  };
+
+Module Hierarchy
+~~~~~~~~~~~~~~~~
+Modules are defined hierarchically. To facilitate reuse of modules in
+different programs, different modules can be implemented in different files
+rather than require an entire program to be implemented in a single large
+file. To indicate that a module is defined in a different file, the body of
+the module should be omitted in the parent module. For example, assuming our
+example program was described in Main.fbld, the Integer module can be
+described in a file Main/Integer.fbld as follows:
+
+Main.fbld:
+  struct Unit();
+
+  module Integer;   # body of module read from Main/Integer.fbld
+
+  import Integer { Int; };
+
+  struct IntPair(Int first, Int second);
+
+Main/Integer.fbld:
+  import @ { Unit; };
+  abst union Int(Unit 0, Int S);
+
+  func Add(Int a, Int b; Int) {
+    ?(a; b, Incr(Add(a.S, b)));
+  };
+
+When working with a program specified in file Main.fbld, it is
+interpreted to mean there is an implicit unnamed top level module that sources
+Main.fbld using "module Main;", and any other modules listed using an import
+from parent within the module Main. For example, assuming Unit is defined as
+part of a StdLib module:
+
+StdLib.fbld:
+  struct Unit();
+
+Main.fbld:
+  import @ { Unit@StdLib; };
+
+  module Integer;
+
+  import Integer { Int; };
+
+  struct IntPair(Int first, Int second);
+
+Main/Integer.fbld:
+  import @ { Unit; };
+  abst union Int(Unit 0, Int S);
+
+  func Add(Int a, Int b; Int) {
+    ?(a; b, Incr(Add(a.S, b)));
+  };
+
+Referring to Main.fbld as a top level program is implicitly taken as
+equivalent to the complete program:
+
+  module StdLib {
+    struct Unit();
+  };
+
+  module Main {
+    import @ { Unit@StdLib; };
+
+    module Integer {
+      import @ { Unit; };
+      abst union Int(Unit 0, Int S);
+
+      func Add(Int a, Int b; Int) {
+        ?(a; b, Incr(Add(a.S, b)));
+      };
+    };
+
+    import Integer { Int; };
+
+    struct IntPair(Int first, Int second);
+  }
+
+Polymorphism
+------------
+Polymorphism makes it possible to reuse the same code in multiple different
+contexts in the same program. For example, with polymorphism it is possible to
+provide one implementation of a list type and associated functions that work
+for lists of any arbitrary type of element. Polymorphism is introduced in
+Damocrates by allowing entity declarations to be parameterized by other
+entities.
+
+A generic list type and 'Last' function could be defined by introducing a type
+parameter T as follows:
+
+  struct ListP<type T>(T head, ListS<T> tail);
+  union ListS<type T>(Unit nil, ListP<T> cons);
+
+  func Last<type T>(ListP<T> list ; T) {
+    ?(list.tail; list.head, Last<T>(list.tail.cons));
+  };
+
+We could also define a generic 'Contains' function to check if a list contains
+a specific element, but only if we also provide a func parameter to define
+what it means for two elements to be equal:
+  
+  func Contains<type T; func Eq(T a, T b; Bool)>(ListS<T> list, T elem; Bool) {
+    ?(list;
+        False(),                                    # The list is empty.
+        ?(Eq(elem, list.cons.head);
+          True(),                                   # head matches.
+          Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
+  };
+
+
 
 Interfaces
 ~~~~~~~~~~
@@ -323,37 +488,6 @@ union, and inter entities, the entire definition must be duplicated. As with
 all other entities, struct and union types from different modules are
 considered different types, even if they both have the same interface
 prototype. 
-
-Polymorphism
-------------
-Polymorphism makes it possible to reuse the same code in multiple different
-contexts in the same program. For example, with polymorphism it is possible to
-provide one implementation of a list type and associated functions that work
-for lists of any arbitrary type of element. Polymorphism is introduced in
-Damocrates by allowing entity declarations to be parameterized by other
-entities.
-
-A generic list type and 'Last' function could be defined by introducing a type
-parameter T as follows:
-
-  struct ListP<type T>(T head, ListS<T> tail);
-  union ListS<type T>(Unit nil, ListP<T> cons);
-
-  func Last<type T>(ListP<T> list ; T) {
-    ?(list.tail; list.head, Last<T>(list.tail.cons));
-  };
-
-We could also define a generic 'Contains' function to check if a list contains
-a specific element, but only if we also provide a func parameter to define
-what it means for two elements to be equal:
-  
-  func Contains<type T; func Eq(T a, T b; Bool)>(ListS<T> list, T elem; Bool) {
-    ?(list;
-        False(),                                    # The list is empty.
-        ?(Eq(elem, list.cons.head);
-          True(),                                   # head matches.
-          Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
-  };
 
 Declaring Polymorphic Entities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -532,12 +666,12 @@ Syntax Reference
    | import ';'
    ;
 
-  decl ::= struct_proto ';'
-        |  union_proto ';'
-        |  func_proto expr ';'
-        |  proc_proto proc ';'
-        |  interf_proto ';'
-        |  module_proto ['{' [decl [decl [...]]] '}'] ';'
+  decl ::= ['priv' | 'abst'] struct_proto ';'
+        |  ['priv' | 'abst'] union_proto ';'
+        |  ['priv'] func_proto expr ';'
+        |  ['priv'] proc_proto proc ';'
+        |  ['priv'] interf_proto ';'
+        |  ['priv'] module_proto ['{' [decl [decl [...]]] '}'] ';'
         |  proto '=' qref ';'
         |  import ';'
         ;
