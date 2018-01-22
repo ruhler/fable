@@ -248,6 +248,20 @@ bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b);
 // Side effects:
 //   May allocate a new qref used for the return value.
 FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref);
+
+// FbldPrintQRef --
+//   Print a resolved qref in human readable format to the given stream.
+//
+// Inputs:
+//   stream - Stream to print the type to.
+//   qref - The qref to print.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints the qref to the stream.
+void FbldPrintQRef(FILE* stream, FbldQRef* qref);
 
 // FbldExprTag --
 //   A tag used to distinguish among different kinds of expressions.
@@ -591,12 +605,17 @@ typedef struct {
   FbldActn* body;
 } FbldProc;
 
+// FbldProgram --
+typedef struct {
+  FbldImportV* importv;
+  FbldDeclV* declv;
+} FbldProgram;
+
 // FbldInterf --
 //   An fbld interface declaration.
 struct FbldInterf {
   FbldDecl _base;
-  FbldImportV* importv;
-  FbldDeclV* declv;
+  FbldProgram body;
 };
 
 // FbldInterfV --
@@ -618,8 +637,7 @@ struct FbldInterfV {
 typedef struct {
   FbldDecl _base;
   FbldQRef* iref;
-  FbldImportV* importv;
-  FbldDeclV* declv;
+  FbldProgram* body;
 } FbldModule;
 
 // FbldModuleV --
@@ -628,20 +646,6 @@ struct FbldModuleV {
   size_t size;
   FbldModule** xs;
 };
-
-// FbldProgram --
-//   A collection of top level interfaces, module headers, and modules
-//   representing a program.
-//
-//   A module header is an module whose body has not necessarily been checked
-//   for validity. This makes it possible to check the validity of a module
-//   without the need for the implementations of the other modules it depends
-//   on.
-typedef struct {
-  FbldInterfV interfv;
-  FbldModuleV mheaderv;
-  FbldModuleV modulev;
-} FbldProgram;
 
 // Forward declaration of FbldValue type.
 typedef struct FbldValue FbldValue;
@@ -662,63 +666,24 @@ struct FbldValue {
   FbldValueV* fieldv;
 };
 
-// FbldParseInterf --
-//   Parse the interface declaration from the file with the given filename.
+// FbldParseProgram --
+//   Parse a program the file with the given filename.
 //
 // Inputs:
-//   arena - The arena to use for allocating the parsed declaration.
-//   filename - The name of the file to parse the declaration from.
+//   arena - The arena to use for allocating the parsed program.
+//   filename - The name of the file to parse the program from.
 //
 // Results:
-//   The parsed declaration, or NULL if the declaration could not be parsed.
+//   The parsed program, or NULL in case of error.
 //
 // Side effects:
-//   Prints an error message to stderr if the declaration cannot be parsed.
+//   Prints an error message to stderr if the program cannot be parsed.
 //
 // Allocations:
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
-//   size of the returned declaration if there is no error.
-FbldInterf* FbldParseInterf(FblcArena* arena, const char* filename);
-
-// FbldParseModule --
-//   Parse the module definition from the file with the given filename.
-//
-// Inputs:
-//   arena - The arena to use for allocating the parsed definition.
-//   filename - The name of the file to parse the definition from.
-//
-// Results:
-//   The parsed definition, or NULL if the definition could not be parsed.
-//
-// Side effects:
-//   Prints an error message to stderr if the definition cannot be parsed.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the returned definition if there is no error.
-FbldModule* FbldParseModule(FblcArena* arena, const char* filename);
-
-// FbldParseTopDecl --
-//   Parse a top level interface or module declaration from the file with the
-//   given filename.
-//
-// Inputs:
-//   arena - The arena to use for allocating the parsed definition.
-//   filename - The name of the file to parse the definition from.
-//
-// Results:
-//   The parsed declaration, or NULL in case of error.
-//
-// Side effects:
-//   Prints an error message to stderr if the declaration cannot be parsed.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the returned definition if there is no error.
-FbldDecl* FbldParseTopDecl(FblcArena* arena, const char* filename);
+//   size of the returned program if there is no error.
+FbldProgram* FbldParseProgram(FblcArena* arena, const char* filename);
 
 // FbldParseValueFromString --
 //   Parse an fbld value from the given string.
@@ -757,284 +722,41 @@ FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string);
 //   this function.
 FbldQRef* FbldParseQRefFromString(FblcArena* arena, const char* string);
 
-// FbldStringV --
-//   A vector of char* used for describing fbld search paths.
-typedef struct {
-  size_t size;
-  const char** xs;
-} FbldStringV;
+// FbldCheckProgram --
+//   Check that the given top-level program environment describes a well
+//   formed and well typed program.
+//
+// Inputs:
+//   arena - Arena used for allocations.
+//   prgm - The program environment to check.
+//
+// Results:
+//   true if the program environment is well formed and well typed,
+//   false otherwise.
+//
+// Side effects:
+//   If the program environment is not well formed, an error message is
+//   printed to stderr describing the problem with the program environment.
+bool FbldCheckProgram(FblcArena* arena, FbldProgram* prgm);
 
-// FbldLoadInterf --
-//   Load the interface declaration for the module with the given name.
-//   If the interface declaration has already been loaded, it is returned as
-//   is. Otherwise the interface declaration and all of its dependencies are
-//   located according to the given search path, parsed, checked, and added to
-//   the collection of loaded modules before the requested interface is
-//   returned.
-//
-// Inputs:
-//   arena - The arena to use for allocating the parsed declaration.
-//   path - A search path used to find the interface declaration on disk.
-//   name - The name of the interface whose declaration to load.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   The loaded interface declaration, or NULL if the interface declaration
-//   could not be loaded.
-//
-// Side effects:
-//   Read the interface delacaration and any other required interface
-//   delacarations from disk and add them to the prgm.
-//   Prints an error message to stderr if the interface declaration or any
-//   other required interface declarations cannot be loaded, either because
-//   they cannot be found on the path, fail to parse, or fail to check.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of all loaded declarations if there is no error.
-FbldInterf* FbldLoadInterf(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
-
-// FbldLoadModuleHeader --
-//   Load the module header for the module with the
-//   given name. The module definition, its corresponding module type, and all
-//   of the module types and declarations that the module header depends on are
-//   located according to the given search path, parsed, checked, and to the
-//   program before the loaded module definition is returned. The contents of
-//   the body of the returned module are not yet checked.
-//
-// Inputs:
-//   arena - The arena to use for allocating the loaded definition and
-//           declarations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   name - The name of the module whose definition to load.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   The loaded module definition, or NULL if the module definition could
-//   not be loaded.
-//
-// Side effects:
-//   Read the module definition and any other required module delacarations
-//   from disk and add the module declarations to the prgm.
-//   Prints an error message to stderr if the module definition or any other
-//   required module declarations cannot be loaded, either because they cannot
-//   be found on the path, fail to parse, or fail to check.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the definition and all loaded declarations if there is no error.
-FbldModule* FbldLoadModuleHeader(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
-
-// FbldLoadModule --
-//   Load the module declaration for the module with the given name.
-//   The module definition, its corresponding module type, and all of
-//   the module types and declarations they depend on are located according to
-//   the given search path, parsed, checked, and to the program before the
-//   loaded module definition is returned.
-//
-// Inputs:
-//   arena - The arena to use for allocating the loaded definition and
-//           declarations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   name - The name of the module whose definition to load.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   The loaded module definition, or NULL if the module definition could
-//   not be loaded.
-//
-// Side effects:
-//   Read the module definition and any other required module delacarations
-//   from disk and add the module declarations to the prgm.
-//   Prints an error message to stderr if the module definition or any other
-//   required module declarations cannot be loaded, either because they cannot
-//   be found on the path, fail to parse, or fail to check.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the definition and all loaded declarations if there is no error.
-FbldModule* FbldLoadModule(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
-
-// FbldLoadTopDecl --
-//   Load the top level declaration for the entity with the given name.
-//   The declaration and all of the module types and declarations they depend
-//   on are located according to the given search path, parsed, checked, and
-//   to the program before the loaded declaration is returned. The declaration
-//   may be either an interface or module declaration.
-//
-// Inputs:
-//   arena - The arena to use for allocating the loaded definition and
-//           declarations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   name - The name of the module whose definition to load.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   The loaded declaration, or NULL if the declaration could not be loaded.
-//
-// Side effects:
-//   Read the module definition and any other required module declarations
-//   from disk and add the module declarations to the prgm.
-//   Prints an error message to stderr if the module definition or any other
-//   required module declarations cannot be loaded, either because they cannot
-//   be found on the path, fail to parse, or fail to check.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the definition and all loaded declarations if there is no error.
-FbldDecl* FbldLoadTopDecl(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
-
-// FbldLoadModules --
-//   Load all module definitions and declarations required by the
-//   named module.
-//   All of the module declarations and definitions the module depends
-//   on are located according to the given search path, parsed, checked, and
-//   added to the collections of loaded module declarations and definitions.
-//
-// Inputs:
-//   arena - The arena to use for allocating the loaded definition and
-//           declarations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   name - The name of the module for which to load dependencies.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   True on success, false on error.
-//
-// Side effects:
-//   Reads required module delacarations and definitions from disk and adds
-//   them to the prgm.
-//   Prints an error message to stderr if there is an error.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of all loaded declarations and definitions if there is no error.
-bool FbldLoadModules(FblcArena* arena, FbldStringV* path, const char* name, FbldProgram* prgm);
-
-// FbldLoadEntry --
-//   Load all module definitions and declarations required to compile the
-//   named entity.
-//   All of the module declarations and definitions the named entity depends
-//   on are located according to the given search path, parsed, checked, and
-//   added to the collections of loaded module declarations and definitions.
-//
-// Inputs:
-//   arena - The arena to use for allocating the loaded definition and
-//           declarations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   entry - The entity for which to load dependencies.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   True on success, false on error.
-//
-// Side effects:
-//   Reads required module delacarations and definitions from disk and adds
-//   them to the prgm. Resolves qentry.
-//   Prints an error message to stderr if there is an error.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of all loaded declarations and definitions if there is no error.
-bool FbldLoadEntry(FblcArena* arena, FbldStringV* path, FbldQRef* entry, FbldProgram* prgm);
-
 // FbldCheckQRef --
 //   Check that the given qualified reference is well formed and well typed in
 //   the global context.
 //
 // Inputs:
 //   arena - Arena used for allocations.
-//   path - A search path used to find interface and module declaration on
-//          disk.
+//   prgm - The program.
 //   qref - The qualified reference to check.
-//   prgm - The collection of declarations loaded for the program so far.
 //
 // Results:
 //   true if the qualified reference is well formed and well typed, false
 //   otherwise.
 //
 // Side effects:
-//   Loads and checks required interfaces and module headers (not modules),
-//   adding them to prgm.
 //   If this qualified reference or any of the required declarations are not
 //   well formed, error messages are printed to stderr describing the
 //   problems.
-bool FbldCheckQRef(FblcArena* arena, FbldStringV* path, FbldQRef* qref, FbldProgram* prgm);
-
-// FbldCheckInterf --
-//   Check that the given interface declaration is well formed and well typed.
-//
-// Inputs:
-//   arena - Arena used for allocations.
-//   path - A search path used to find interface and module declaration on
-//          disk.
-//   interf - The interface declaration to check.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   true if the interface declaration is well formed and well typed, false
-//   otherwise.
-//
-// Side effects:
-//   Loads and checks required interfaces and module headers (not modules),
-//   adding them to prgm.
-//   If this declaration or any of the required declarations are not well
-//   formed, error messages are printed to stderr describing the problems.
-bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, FbldProgram* prgm);
-
-// FbldCheckModuleHeader --
-//   Check that the declaration part of the given module definition is well
-//   formed, well typed, and consistent with its own module declaration.
-//
-// Inputs:
-//   arena - Arena used for allocations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   module - The module declaration part to check.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   true if the module header is well formed and well typed, false otherwise.
-//
-// Side effects:
-//   Loads and checks required interface declarations and module headers (not
-//   module definitions), adding them to prgm.
-//   If this declaration or any of the required declarations are not well
-//   formed, error messages are printed to stderr describing the problems.
-bool FbldCheckModuleHeader(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm);
-
-// FbldCheckModule --
-//   Check that the given module definition is well formed, well typed, and
-//   consistent with its own module declaration.
-//
-// Inputs:
-//   arena - Arena used for allocations.
-//   path - A search path used to find the module definitions and declaration
-//          on disk.
-//   module - The module declaration to check.
-//   prgm - The collection of declarations loaded for the program so far.
-//
-// Results:
-//   true if the module declaration is well formed and well typed, false
-//   otherwise.
-//
-// Side effects:
-//   Loads and checks required interface declarations and module headers (not
-//   module definitions), adding them to prgm.
-//   If this declaration or any of the required declarations are not well
-//   formed, error messages are printed to stderr describing the problems.
-bool FbldCheckModule(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm);
+bool FbldCheckQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* qref);
 
 // FbldCheckValue --
 //   Check that the value is well formed in a global context.
@@ -1051,20 +773,6 @@ bool FbldCheckModule(FblcArena* arena, FbldStringV* path, FbldModule* module, Fb
 //   Resolves references in the value.
 //   Prints a message to stderr if the value is not well formed.
 bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value);
-
-// FbldPrintQRef --
-//   Print a resolved qref in human readable format to the given stream.
-//
-// Inputs:
-//   stream - Stream to print the type to.
-//   qref - The qref to print.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints the qref to the stream.
-void FbldPrintQRef(FILE* stream, FbldQRef* qref);
 
 // FbldAccessLoc --
 //   The location of an access expression, for aid in debugging undefined
@@ -1127,4 +835,28 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 //   The behavior is undefined if the fbld program is not a valid fbld
 //   program or the fbld value is not well typed.
 FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value);
+
+// FbldLoadProgram --
+//   Load the top level program from the given file using the given arena for
+//   allocations. Performs parsing, type check, and compilation of the given
+//   entry point of the program.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   accessv - collection of access expression locations.
+//   path - The name of the file to load the program from.
+//   entry - The main entry point.
+//
+// Results:
+//   The loaded program and entry points or NULL on error.
+//
+// Side effects:
+//   Arena allocations are made in order to load the program. If the program
+//   cannot be loaded, an error message is printed to stderr.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the program if there is no error.
+FbldLoaded* FbldLoadProgram(FblcArena* arena, FbldAccessLocV* accessv, const char* path, FbldQRef* entry);
 #endif // FBLD_H_

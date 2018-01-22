@@ -28,8 +28,8 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fbld-check [--error] PATH MAIN\n"
-      "Check whether the module MAIN is a well formed fbld program.\n"
+      "Usage: fbld-check [--error] FILE\n"
+      "Check whether the program FILE is a well formed fbld program.\n"
       "Exit status is 0 if the program is well formed, 1 otherwise.\n"
       "With --error, exit status is 0 if the program is not well formed, 0 otherwise.\n"
   );
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   }
 
   if (argc < 1) {
-    fprintf(stderr, "no program path.\n");
+    fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
     return EX_USAGE;
   }
@@ -78,22 +78,14 @@ int main(int argc, char* argv[])
   argv++;
   argc--;
   
-  if (argc < 1) {
-    fprintf(stderr, "no main module.\n");
-    PrintUsage(stderr);
-    return EX_USAGE;
-  }
-  const char* main_module = *argv;
-  argv++;
-  argc--;
-
   if (argc > 0) {
     fprintf(stderr, "too many arguments.\n");
     return EX_USAGE;
   }
 
-  FILE* old_stderr = stderr;
   stderr = expect_error ? stdout : stderr;
+  int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
+  int exit_fail = expect_error ? EX_SUCCESS : EX_FAIL;
 
   // Simply pass allocations through to malloc. We won't be able to track or
   // free memory that the caller is supposed to track and free, but we don't
@@ -101,21 +93,6 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FbldStringV search_path;
-  FblcVectorInit(arena, search_path);
-  FblcVectorAppend(arena, search_path, path);
-
-  FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
-  FblcVectorInit(arena, prgm->interfv);
-  FblcVectorInit(arena, prgm->mheaderv);
-  FblcVectorInit(arena, prgm->modulev);
-
-  if (FbldLoadModules(arena, &search_path, main_module, prgm)) {
-    if (expect_error) {
-      fprintf(old_stderr, "expected error, but no error encountered.\n");
-      return EX_FAIL;
-    }
-    return EX_SUCCESS;
-  }
-  return expect_error ? EX_SUCCESS : EX_FAIL;
+  FbldProgram* prgm = FbldParseProgram(arena, path);
+  return (prgm != NULL && FbldCheckProgram(arena, prgm)) ? exit_success : exit_fail;
 }
