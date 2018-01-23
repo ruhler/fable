@@ -1,6 +1,0 @@
-interf MaybeI {
-  import @ { UnitM; };
-  import UnitM { Unit; };
-
-  union Maybe<type T>(T just, Unit nothing);
-};

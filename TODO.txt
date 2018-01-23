@@ -1,6 +1,7 @@
 Fbld 4:
 * Implement new spec.
-   - Change FbldLoadProgram interface to match FblcLoadProgram.
+  - Port fbld-snake and fbld-md5 to new fbld interface.
+  - Implement new fbld interface.
 * Port existing programs and tests to new spec.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program taking advantage of the new features.
