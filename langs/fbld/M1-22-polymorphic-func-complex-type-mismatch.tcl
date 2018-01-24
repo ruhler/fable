@@ -9,9 +9,9 @@ set prg {
   module MainM(MainI) {
     struct Unit();
     union Bool(Unit true, Unit false);
-    union Maybe<T>(T just, Unit nothing);
+    union Maybe<type T>(T just, Unit nothing);
 
-    func JustValue<T>(Maybe<T> m; T) {
+    func JustValue<type T>(Maybe<T> m; T) {
       m.just;
     };
 
@@ -22,4 +22,4 @@ set prg {
   };
 }
 
-fbld-check-error $prg 20:23
+skip fbld-check-error $prg 20:23

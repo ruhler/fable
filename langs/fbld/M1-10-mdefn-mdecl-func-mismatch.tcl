@@ -15,4 +15,4 @@ set prg {
   };
 }
 
-fbld-check-error $prg 7:10
+fbld-check-error $prg 12:10

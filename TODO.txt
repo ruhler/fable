@@ -1,10 +1,12 @@
 Fbld 4:
 * Implement new spec.
-  - Port fbld-snake and fbld-md5 to new fbld interface.
-  - Implement new fbld interface.
+  - Generalize support for static parameters.
+  - Add support for qref import.
+  - Add support for reading modules from other files.
+  - Add support for parsing top level programs with implicit dependencies.
 * Port existing programs and tests to new spec.
 * Refactor existing programs to take advantage of the new features.
-* Write a new program taking advantage of the new features.
+* Write a new program (deflate) taking advantage of the new features.
 
 Fbld Test:
 * Add a test that you can't use a func, proc, interf, or module as a type

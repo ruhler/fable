@@ -29,7 +29,7 @@
   //   Used to store the final parsed object depending on what kind of object
   //   is parsed.
   typedef union {
-    FbldDecl* decl;
+    FbldProgram* prgm;
     FbldValue* value;
     FbldQRef* qref;
   } ParseResult;
@@ -43,13 +43,6 @@
     FbldNameV* targv;
     FbldMArgV* margv;
   } Params;
-
-  // Decls --
-  //   Structure to store a list of declarations of various kind.
-  typedef struct {
-    FbldImportV* importv;
-    FbldDeclV* declv;
-  } Decls;
 
   #define YYLTYPE FbldLoc*
 
@@ -80,7 +73,7 @@
   FbldDecl* decl;
   FbldPolarity polarity;
   FbldPortV* portv;
-  Decls decls;
+  FbldProgram* program;
   FbldValue* value;
   FbldValueV* valuev;
 }
@@ -107,11 +100,9 @@
 // single-character non-whitespace, non-name indicator token at the beginning
 // of the input stream to indicate the start symbol to use depending on what
 // we want to parse.
-%token START_INTERF 1 "interf parse start indicator"
-%token START_MODULE 2 "module parse start indicator"
-%token START_TOP_DECL 3 "top decl parse start indicator"
-%token START_VALUE 4 "value parse start indicator"
-%token START_QNAME 5 "qref parse start indicator"
+%token START_PROGRAM 1 "program parse start indicator"
+%token START_VALUE 2 "value parse start indicator"
+%token START_QNAME 3 "qref parse start indicator"
 
 %token <name> NAME
 
@@ -147,7 +138,7 @@
 %type <decl> type_decl type_defn abstract_type_decl struct_decl union_decl
 %type <decl> func_decl func_defn proc_decl proc_defn
 %type <decl> interf module_decl module_defn decl defn
-%type <decls> decl_list defn_list
+%type <program> decl_list defn_list
 %type <value> value
 %type <valuev> value_list non_empty_value_list
 
@@ -157,10 +148,7 @@
 // tokens. We insert an arbitrary, artificial single-character token to
 // indicate which start token we actually want to use.
 start:
-     START_INTERF interf ';' { result->decl = $2; }
-   | START_MODULE module_defn ';' { result->decl = $2; }
-   | START_TOP_DECL interf ';' { result->decl = $2; }
-   | START_TOP_DECL module_defn ';' { result->decl = $2; }
+     START_PROGRAM defn_list { result->prgm = $2; }
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
    ;
@@ -654,17 +642,18 @@ decl: type_decl | func_decl | proc_decl | interf | module_decl ;
 
 decl_list:
     %empty {
-      $$.importv = FBLC_ALLOC(arena, FbldImportV);
-      $$.declv = FBLC_ALLOC(arena, FbldDeclV);
-      FblcVectorInit(arena, *($$.importv));
-      FblcVectorInit(arena, *($$.declv));
+      $$ = FBLC_ALLOC(arena, FbldProgram);
+      $$->importv = FBLC_ALLOC(arena, FbldImportV);
+      $$->declv = FBLC_ALLOC(arena, FbldDeclV);
+      FblcVectorInit(arena, *($$->importv));
+      FblcVectorInit(arena, *($$->declv));
     }
   | decl_list import ';' {
-      FblcVectorAppend(arena, *($1.importv), $2);
+      FblcVectorAppend(arena, *($1->importv), $2);
       $$ = $1;
     }
   | decl_list decl ';' {
-      FblcVectorAppend(arena, *($1.declv), $2);
+      FblcVectorAppend(arena, *($1->declv), $2);
       $$ = $1;
     }
   ;
@@ -675,8 +664,7 @@ interf: "interf" name params '{' decl_list '}' {
           interf->_base.name = $2;
           interf->_base.targv = $3.targv;
           interf->_base.margv = $3.margv;
-          interf->importv = $5.importv;
-          interf->declv = $5.declv;
+          interf->body = $5;
           $$ = &interf->_base;
         }
      ;
@@ -685,17 +673,18 @@ defn: type_defn | func_defn | proc_defn | interf | module_defn ;
 
 defn_list:
     %empty {
-      $$.importv = FBLC_ALLOC(arena, FbldImportV);
-      $$.declv = FBLC_ALLOC(arena, FbldDeclV);
-      FblcVectorInit(arena, *($$.importv));
-      FblcVectorInit(arena, *($$.declv));
+      $$ = FBLC_ALLOC(arena, FbldProgram);
+      $$->importv = FBLC_ALLOC(arena, FbldImportV);
+      $$->declv = FBLC_ALLOC(arena, FbldDeclV);
+      FblcVectorInit(arena, *($$->importv));
+      FblcVectorInit(arena, *($$->declv));
     }
   | defn_list import ';' {
-      FblcVectorAppend(arena, *($1.importv), $2);
+      FblcVectorAppend(arena, *($1->importv), $2);
       $$ = $1;
     }
   | defn_list defn ';' {
-      FblcVectorAppend(arena, *($1.declv), $2);
+      FblcVectorAppend(arena, *($1->declv), $2);
       $$ = $1;
     }
   ;
@@ -707,16 +696,14 @@ module_decl: "module" name params '(' qref ')' {
           module->_base.targv = $3.targv;
           module->_base.margv = $3.margv;
           module->iref = $5;
-          module->importv = NULL;
-          module->declv = NULL;
+          module->body = NULL;
           $$ = &module->_base;
         }
      ;
 
 module_defn: module_decl '{' defn_list '}' {
       FbldModule* module = (FbldModule*)$1;
-      module->importv = $3.importv;
-      module->declv = $3.declv;
+      module->body = $3;
       $$ = &module->_base;
     }
   ;
@@ -798,9 +785,7 @@ static bool IsNameChar(int c)
 static bool IsSingleChar(int c)
 {
   return strchr("(){};,@:?=.<>+-$", c) != NULL
-    || c == START_INTERF
-    || c == START_MODULE
-    || c == START_TOP_DECL
+    || c == START_PROGRAM
     || c == START_VALUE
     || c == START_QNAME;
 }
@@ -943,8 +928,8 @@ static void yyerror(YYLTYPE* llocp, FblcArena* arena, Lex* lex, ParseResult* res
   FbldReportError("%s\n", *llocp, msg);
 }
 
-// FbldParseInterf -- see documentation in fbld.h
-FbldInterf* FbldParseInterf(FblcArena* arena, const char* filename)
+// FbldParseProgram -- see documentation in fbld.h
+FbldProgram* FbldParseProgram(FblcArena* arena, const char* filename)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -953,62 +938,14 @@ FbldInterf* FbldParseInterf(FblcArena* arena, const char* filename)
   }
 
   Lex lex = {
-    .c = START_INTERF,
+    .c = START_PROGRAM,
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
   };
   ParseResult result;
-  result.decl = NULL;
-  yyparse(arena, &lex, &result);
-  assert(result.decl == NULL || result.decl->tag == FBLD_INTERF_DECL);
-  return (FbldInterf*)result.decl;
-}
-
-// FbldParseModule -- see documentation in fbld.h
-FbldModule* FbldParseModule(FblcArena* arena, const char* filename)
-{
-  FILE* fin = fopen(filename, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
-    return NULL;
-  }
-
-  Lex lex = {
-    .c = START_MODULE,
-    .loc = { .source = filename, .line = 1, .col = 0 },
-    .fin = fin,
-    .sin = NULL
-  };
-  ParseResult result;
-  result.decl = NULL;
-  yyparse(arena, &lex, &result);
-  assert(result.decl == NULL || result.decl->tag == FBLD_MODULE_DECL);
-  return (FbldModule*)result.decl;
-}
-
-// FbldParseTopDecl -- see documentation in fbld.h
-FbldDecl* FbldParseTopDecl(FblcArena* arena, const char* filename)
-{
-  FILE* fin = fopen(filename, "r");
-  if (fin == NULL) {
-    fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
-    return NULL;
-  }
-
-  Lex lex = {
-    .c = START_TOP_DECL,
-    .loc = { .source = filename, .line = 1, .col = 0 },
-    .fin = fin,
-    .sin = NULL
-  };
-  ParseResult result;
-  result.decl = NULL;
-  yyparse(arena, &lex, &result);
-  assert(result.decl == NULL
-      || result.decl->tag == FBLD_INTERF_DECL
-      || result.decl->tag == FBLD_MODULE_DECL);
-  return result.decl;
+  result.prgm = NULL;
+  return (0 == yyparse(arena, &lex, &result)) ? result.prgm : NULL;
 }
 
 // FbldParseValueFromString -- see documentation in fbld.h
@@ -1022,8 +959,7 @@ FbldValue* FbldParseValueFromString(FblcArena* arena, const char* string)
   };
   ParseResult result;
   result.value = NULL;
-  yyparse(arena, &lex, &result);
-  return result.value;
+  return (0 == yyparse(arena, &lex, &result)) ? result.value : NULL;
 }
 
 // FbldParseQRefFromString -- see documentation in fbld.h
@@ -1037,6 +973,5 @@ FbldQRef* FbldParseQRefFromString(FblcArena* arena, const char* string)
   };
   ParseResult result;
   result.qref = NULL;
-  yyparse(arena, &lex, &result);
-  return result.qref;
+  return (0 == yyparse(arena, &lex, &result)) ? result.qref : NULL;
 }

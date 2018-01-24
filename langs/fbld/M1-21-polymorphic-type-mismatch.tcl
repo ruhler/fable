@@ -9,7 +9,7 @@ set prg {
   module MainM(MainI) {
     struct Unit();
     union Bool(Unit true, Unit false);
-    union Maybe<T>(T just, Unit nothing);
+    union Maybe<type T>(T just, Unit nothing);
     func main( ; Bool) {
       # The Maybe constructor is passed a Unit, not a Bool.
       Maybe<Bool>:just(Unit()).just;
@@ -17,4 +17,4 @@ set prg {
   };
 }
 
-fbld-check-error $prg 15:24
+skip fbld-check-error $prg 15:24

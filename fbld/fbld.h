@@ -615,7 +615,7 @@ typedef struct {
 //   An fbld interface declaration.
 struct FbldInterf {
   FbldDecl _base;
-  FbldProgram body;
+  FbldProgram* body;
 };
 
 // FbldInterfV --

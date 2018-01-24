@@ -57,9 +57,9 @@ static void OnUndefinedAccess(FblcInstr* instr, FblcExpr* expr);
 static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, const char* string);
 static void EnsureCommandReady(IOUser* user, FblcArena* arena);
 static FblcFieldId LookupPort(FbldProc* proc, const char* name);
-static FbldType* LookupType(FbldProgram* prgm, FbldQRef* qref);
-static FbldModule* LookupModule(FbldProgram* prgm, FbldQRef* qref);
-static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value);
+// static FbldType* LookupType(FbldProgram* prgm, FbldQRef* qref);
+// static FbldModule* LookupModule(FbldProgram* prgm, FbldQRef* qref);
+// static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value);
 static bool ValuesEqual(FblcValue* a, FblcValue* b);
 static void AssertValuesEqual(FblcArena* arena, IOUser* user, FbldQRef* type, FblcValue* a, FblcValue* b);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
@@ -269,34 +269,34 @@ static FblcFieldId LookupPort(FbldProc* proc, const char* name)
 //
 // Side effects:
 //   Behavior is undefined if the module could not be found.
-static FbldModule* LookupModule(FbldProgram* prgm, FbldQRef* qref)
-{
-  assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  assert(entity->decl->tag == FBLD_MODULE_DECL);
-  FbldName* name = entity->decl->name;
-  if (entity->mref == NULL) {
-    // We are looking for a top-level module declaration.
-    for (size_t i = 0; i < prgm->modulev.size; ++i) {
-      if (FbldNamesEqual(prgm->modulev.xs[i]->_base.name->name, name->name)) {
-        return prgm->modulev.xs[i];
-      }
-    }
-    assert(false && "LookupModule failed");
-    return NULL;
-  }
-
-  FbldModule* module = LookupModule(prgm, entity->mref);
-  for (size_t i = 0; i < module->declv->size; ++i) {
-    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-      assert(module->declv->xs[i]->tag == FBLD_MODULE_DECL);
-      return (FbldModule*)module->declv->xs[i];
-    }
-  }
-  assert(false && "LookupModule failed");
-  return NULL;
-}
+//static FbldModule* LookupModule(FbldProgram* prgm, FbldQRef* qref)
+//{
+//  assert(qref->r != NULL);
+//  assert(qref->r->tag == FBLD_ENTITY_R);
+//  FbldEntityR* entity = (FbldEntityR*)qref->r;
+//  assert(entity->decl->tag == FBLD_MODULE_DECL);
+//  FbldName* name = entity->decl->name;
+//  if (entity->mref == NULL) {
+//    // We are looking for a top-level module declaration.
+//    for (size_t i = 0; i < prgm->modulev.size; ++i) {
+//      if (FbldNamesEqual(prgm->modulev.xs[i]->_base.name->name, name->name)) {
+//        return prgm->modulev.xs[i];
+//      }
+//    }
+//    assert(false && "LookupModule failed");
+//    return NULL;
+//  }
+//
+//  FbldModule* module = LookupModule(prgm, entity->mref);
+//  for (size_t i = 0; i < module->declv->size; ++i) {
+//    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
+//      assert(module->declv->xs[i]->tag == FBLD_MODULE_DECL);
+//      return (FbldModule*)module->declv->xs[i];
+//    }
+//  }
+//  assert(false && "LookupModule failed");
+//  return NULL;
+//}
 
 // LookupType --
 //   Lookup the declaration of the type referred to by qref.
@@ -310,24 +310,24 @@ static FbldModule* LookupModule(FbldProgram* prgm, FbldQRef* qref)
 //
 // Side effects:
 //   Behavior is undefined if the type could not be found.
-static FbldType* LookupType(FbldProgram* prgm, FbldQRef* qref)
-{
-  assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  assert(entity->mref != NULL && "type is not a valid top-level declaration");
-  assert(entity->decl->tag == FBLD_TYPE_DECL);
-  FbldName* name = entity->decl->name;
-  FbldModule* module = LookupModule(prgm, entity->mref);
-  for (size_t i = 0; i < module->declv->size; ++i) {
-    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-      assert(module->declv->xs[i]->tag == FBLD_TYPE_DECL);
-      return (FbldType*)module->declv->xs[i];
-    }
-  }
-  assert(false && "LookupType failed");
-  return NULL;
-}
+//static FbldType* LookupType(FbldProgram* prgm, FbldQRef* qref)
+//{
+//  assert(qref->r != NULL);
+//  assert(qref->r->tag == FBLD_ENTITY_R);
+//  FbldEntityR* entity = (FbldEntityR*)qref->r;
+//  assert(entity->mref != NULL && "type is not a valid top-level declaration");
+//  assert(entity->decl->tag == FBLD_TYPE_DECL);
+//  FbldName* name = entity->decl->name;
+//  FbldModule* module = LookupModule(prgm, entity->mref);
+//  for (size_t i = 0; i < module->declv->size; ++i) {
+//    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
+//      assert(module->declv->xs[i]->tag == FBLD_TYPE_DECL);
+//      return (FbldType*)module->declv->xs[i];
+//    }
+//  }
+//  assert(false && "LookupType failed");
+//  return NULL;
+//}
 
 // PrintValue --
 //   Print the given fblc value in fbld format.
@@ -343,33 +343,33 @@ static FbldType* LookupType(FbldProgram* prgm, FbldQRef* qref)
 //
 // Side effects:
 //   Prints the value to the stream in fbld format.
-static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value)
-{
-  FbldType* type = LookupType(prgm, type_name);
-  assert(type != NULL);
-  assert(type->fieldv->size == value->fieldc);
-  FbldPrintQRef(stream, type_name);
-  if (type->kind == FBLD_STRUCT_KIND) {
-    assert(value->kind == FBLC_STRUCT_KIND);
-    fprintf(stream, "(");
-    for (size_t i = 0; i < type->fieldv->size; ++i) {
-      if (i > 0) {
-        fprintf(stream, ",");
-      }
-      FbldQRef* field_type = FbldImportQRef(arena, type_name, type->fieldv->xs[i]->type);
-      PrintValue(arena, stream, prgm, field_type, value->fields[i]);
-    }
-    fprintf(stream, ")");
-  } else if (type->kind == FBLD_UNION_KIND) {
-    assert(value->kind == FBLC_UNION_KIND);
-    fprintf(stream, ":%s(", type->fieldv->xs[value->tag]->name->name);
-    FbldQRef* field_type = FbldImportQRef(arena, type_name, type->fieldv->xs[value->tag]->type);
-    PrintValue(arena, stream, prgm, field_type, value->fields[0]);
-    fprintf(stream, ")");
-  } else {
-    assert(false && "Invalid Kind");
-  }
-}
+//static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value)
+//{
+//  FbldType* type = LookupType(prgm, type_name);
+//  assert(type != NULL);
+//  assert(type->fieldv->size == value->fieldc);
+//  FbldPrintQRef(stream, type_name);
+//  if (type->kind == FBLD_STRUCT_KIND) {
+//    assert(value->kind == FBLC_STRUCT_KIND);
+//    fprintf(stream, "(");
+//    for (size_t i = 0; i < type->fieldv->size; ++i) {
+//      if (i > 0) {
+//        fprintf(stream, ",");
+//      }
+//      FbldQRef* field_type = FbldImportQRef(arena, type_name, type->fieldv->xs[i]->type);
+//      PrintValue(arena, stream, prgm, field_type, value->fields[i]);
+//    }
+//    fprintf(stream, ")");
+//  } else if (type->kind == FBLD_UNION_KIND) {
+//    assert(value->kind == FBLC_UNION_KIND);
+//    fprintf(stream, ":%s(", type->fieldv->xs[value->tag]->name->name);
+//    FbldQRef* field_type = FbldImportQRef(arena, type_name, type->fieldv->xs[value->tag]->type);
+//    PrintValue(arena, stream, prgm, field_type, value->fields[0]);
+//    fprintf(stream, ")");
+//  } else {
+//    assert(false && "Invalid Kind");
+//  }
+//}
 
 // ValuesEqual --
 //   Check whether two values are structurally equal.
@@ -432,10 +432,10 @@ static void AssertValuesEqual(FblcArena* arena, IOUser* user, FbldQRef* type, Fb
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
-    fprintf(stderr, "\nexpected: ");
-    PrintValue(arena, stderr, user->prog, type, a);
-    fprintf(stderr, "\nactual:   ");
-    PrintValue(arena, stderr, user->prog, type, b);
+    fprintf(stderr, "\nexpected: ???");
+    // PrintValue(arena, stderr, user->prog, type, a);
+    fprintf(stderr, "\nactual:  ??? ");
+    // PrintValue(arena, stderr, user->prog, type, b);
     fprintf(stderr, "\n");
     abort();
   }
@@ -524,7 +524,7 @@ int main(int argc, char* argv[])
 
   FbldAccessLocV accessv;
   FblcVectorInit(arena, accessv);
-  FbldLoaded* loaded = FbldLoadProgram(arena, &accessv, path, entry);
+  FbldLoaded* loaded = FbldLoadProgram(arena, &accessv, path, qentry);
   if (loaded == NULL) {
     return 1;
   }

@@ -112,13 +112,13 @@ static int DiffTimeMillis(Time* a, Time* b)
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fbld-snake PATH MAIN [ARG...] \n"
+      "Usage: fbld-snake FILE MAIN [ARG...] \n"
       "Execute the snake process called MAIN in the environment of the\n"
-      "fbld modules located on the given search PATH with the given ARGs.\n"
+      "fbld program FILE with the given ARGs.\n"
       "ARG is a value text representation of the argument value.\n"
       "The number of arguments must match the expected types for the MAIN\n"
       "process.\n"
-      "Example: fbld-snake prgms Main@SnakeM\n"
+      "Example: fbld-snake prgms/Snake.fbld Main\n"
   );
 }
 
@@ -151,7 +151,7 @@ static FblcValue* ParseValueFromString(FblcArena* arena, FbldProgram* prgm, cons
 }
 
 // ReadUBNat --
-//   Read a number from an FblcValue of type Nat@UBNat<;>
+//   Read a number from an FblcValue of type Nat@UBNat
 //
 // Inputs:
 //   x - the value of the number.
@@ -238,8 +238,7 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
 }
 
 // main --
-//   The main entry point for fblc-tictactoe. Evaluates the MAIN
-//   process from the given program with the given arguments.
+//   The main entry point for fbld-snake.
 //
 // Inputs:
 //   argc - The number of command line arguments.
@@ -264,7 +263,7 @@ int main(int argc, char* argv[])
   }
 
   if (argc <= 1) {
-    fprintf(stderr, "no module search path.\n");
+    fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
     return 1;
   }
@@ -286,31 +285,16 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FbldStringV search_path;
-  FblcVectorInit(arena, search_path);
-  FblcVectorAppend(arena, search_path, path);
-
   FbldQRef* qentry = FbldParseQRefFromString(arena, entry);
   if (qentry == NULL) {
     fprintf(stderr, "failed to parse entry\n");
     return 1;
   }
 
-  FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
-  FblcVectorInit(arena, prgm->interfv);
-  FblcVectorInit(arena, prgm->mheaderv);
-  FblcVectorInit(arena, prgm->modulev);
-
-  if (!FbldLoadEntry(arena, &search_path, qentry, prgm)) {
-    fprintf(stderr, "failed to load\n");
-    return 1;
-  }
-
   FbldAccessLocV accessv;
   FblcVectorInit(arena, accessv);
-  FbldLoaded* loaded = FbldCompileProgram(arena, &accessv, prgm, qentry);
+  FbldLoaded* loaded = FbldLoadProgram(arena, &accessv, path, qentry);
   if (loaded == NULL) {
-    fprintf(stderr, "failed to compile\n");
     return 1;
   }
 

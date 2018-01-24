@@ -21,12 +21,11 @@ typedef struct DeclList {
 // Env --
 //   An environment of declarations.
 //
-// Conventionally this is passed as a NULL pointer to indicate the global
-// namespace.
-//
 // Fields:
-//   parent - The environment of the parent module.
-//   mref - The mref to use for entities declared in the current module/interf.
+//   parent - The environment of the parent module. Null if this is the top
+//            level module or global namespace.
+//   mref - The global mref to use for entities declared in the current
+//          namespace.
 //   source - The source associated with mref.
 //   importv - List of import statements in the current module/interf.
 //   declv - List of declarations in the current module/interf.
@@ -36,8 +35,7 @@ typedef struct Env {
   struct Env* parent;
   FbldQRef* mref;
   FbldEntitySource source;
-  FbldImportV* importv;
-  FbldDeclV* declv;
+  FbldProgram* prgm;
   DeclList* svars;
 } Env;
 
@@ -46,13 +44,9 @@ typedef struct Env {
 //
 // Fields:
 //   arena - Arena to use for allocations.
-//   prgm - Program to add any loaded modules to.
-//   path - The module search path.
 //   error - Flag tracking whether any type errors have been encountered.
 typedef struct {
   FblcArena* arena;
-  FbldProgram* prgm;
-  FbldStringV* path;
   bool error;
 } Context;
 
@@ -83,6 +77,7 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 
 static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldDecl* decl);
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
+static bool CheckEnv(Context* ctx, Env* env);
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
 static bool CheckModule(Context* ctx, Env* env, FbldModule* module);
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module);
@@ -264,11 +259,11 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     FbldInterf* interf = (FbldInterf*)ient->decl;
 
     // Look for the entity declaration in the interface.
-    for (size_t i = 0; i < interf->declv->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, interf->declv->xs[i]->name->name)) {
+    for (size_t i = 0; i < interf->body->declv->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, interf->body->declv->xs[i]->name->name)) {
         FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
         entity->_base.tag = FBLD_ENTITY_R;
-        entity->decl = interf->declv->xs[i];
+        entity->decl = interf->body->declv->xs[i];
         entity->mref = qref->mref;
         entity->source = FBLD_INTERF_SOURCE;
 
@@ -288,33 +283,11 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 
   // The entity is not explicitly qualified. Look it up in the current
   // environment.
-  if (env == NULL) {
-    // This is the global environment. Look for a matching top level
-    // declaration.
-    FbldDecl* decl = FbldLoadTopDecl(ctx->arena, ctx->path, qref->name->name, ctx->prgm);
-    if (decl == NULL) {
-      ReportError("Failed to load top level declaration for %s.\n",
-          &ctx->error, qref->name->loc, qref->name->name);
-      return false;
-    }
-
-    FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
-    entity->_base.tag = FBLD_ENTITY_R;
-    entity->decl = decl;
-    entity->mref = NULL;
-    entity->source = FBLD_MODULE_SOURCE;
-
-    if (!CheckParams(ctx, env, qref, entity->decl)) {
-      return false;
-    }
-
-    qref->r = &entity->_base;
-    return true;
-  }
+  assert(env != NULL);
 
   // Check if it is declared locally in this non-global environment.
-  for (size_t i = 0; i < env->importv->size; ++i) {
-    FbldImport* import = env->importv->xs[i];
+  for (size_t i = 0; i < env->prgm->importv->size; ++i) {
+    FbldImport* import = env->prgm->importv->xs[i];
     for (size_t j = 0; j < import->itemv->size; ++j) {
       if (FbldNamesEqual(qref->name->name, import->itemv->xs[j]->dest->name)) {
         FbldQRef imported_qref = {
@@ -370,11 +343,11 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
     }
   }
 
-  for (size_t i = 0; i < env->declv->size; ++i) {
-    if (FbldNamesEqual(qref->name->name, env->declv->xs[i]->name->name)) {
+  for (size_t i = 0; i < env->prgm->declv->size; ++i) {
+    if (FbldNamesEqual(qref->name->name, env->prgm->declv->xs[i]->name->name)) {
       FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
       entity->_base.tag = FBLD_ENTITY_R;
-      entity->decl = env->declv->xs[i];
+      entity->decl = env->prgm->declv->xs[i];
       entity->mref = env->mref;
       entity->source = env->source;
       if (!CheckParams(ctx, env, qref, entity->decl)) {
@@ -440,6 +413,31 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   return false;
 }
 
+// CheckEnv --
+//   Check that the entities from the given environment are well formed.
+//
+// Inputs:
+//   ctx - The context to check the declaration in.
+//   env - The environment to check.
+//
+// Result:
+//   true if the environment is well formed, false otherwise.
+//
+// Side effects:
+//   Resolves qrefs.
+//   Prints a message to stderr if the environment is not well formed.
+static bool CheckEnv(Context* ctx, Env* env)
+{
+  CheckProtos(ctx, env);
+
+  // Bail out here if the prototypes failed to check properly, because
+  // CheckBodies assumes the prototypes are well formed.
+  if (!ctx->error) {
+    CheckBodies(ctx, env);
+  }
+  return !ctx->error;
+}
+
 // CheckInterf --
 //   Check that the given interf declaration is well formed.
 //
@@ -491,8 +489,7 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
     .parent = env,
     .mref = mref,
     .source = FBLD_INTERF_SOURCE,
-    .importv = interf->importv,
-    .declv = interf->declv,
+    .prgm = interf->body,
     .svars = &dl,
   };
   CheckProtos(ctx, &interf_env);
@@ -523,8 +520,8 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   FbldEntityR* entity = FBLC_ALLOC(ctx->arena, FbldEntityR);
   entity->_base.tag = FBLD_ENTITY_R;
   entity->decl = &module->_base;
-  entity->mref = env == NULL ? NULL : env->mref;
-  entity->source = env == NULL ? FBLD_MODULE_SOURCE : env->source;
+  entity->mref = env->mref;
+  entity->source = env->source;
 
   FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
   mref->name = module->_base.name;
@@ -544,12 +541,11 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     .parent = env,
     .mref = mref,
     .source = FBLD_MODULE_SOURCE,
-    .importv = module->importv,
-    .declv = module->declv,
+    .prgm = module->body,
     .svars = &dl,
   };
 
-  CheckProtos(ctx, &module_env);
+  CheckEnv(ctx, &module_env);
 
   // Bail out here if the prototypes failed to check properly, because
   // we assume from here on out that the prototypes are well formed.
@@ -569,10 +565,10 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   dent->mref = mref;
   dent->source = FBLD_INTERF_SOURCE;
 
-  for (size_t i = 0; i < interf->declv->size; ++i) {
-    FbldDecl* decl_i = interf->declv->xs[i];
-    for (size_t m = 0; m < module->declv->size; ++m) {
-      FbldDecl* decl_m = module->declv->xs[m];
+  for (size_t i = 0; i < interf->body->declv->size; ++i) {
+    FbldDecl* decl_i = interf->body->declv->xs[i];
+    for (size_t m = 0; m < module->body->declv->size; ++m) {
+      FbldDecl* decl_m = module->body->declv->xs[m];
       if (FbldNamesEqual(decl_i->name->name, decl_m->name->name)) {
         FbldQRef* src = DeclQRef(ctx, mref, decl_m);
         dent->decl = decl_m;
@@ -588,10 +584,6 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     if (decl_i != NULL) {
       ReportError("No implementation found for %s from the interface\n", &ctx->error, module->_base.name->loc, decl_i->name->name);
     }
-  }
-
-  if (!ctx->error) {
-    CheckBodies(ctx, &module_env);
   }
 
   return !ctx->error;
@@ -1105,8 +1097,8 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
         }
       }
 
-      if (FbldNamesEqual(link_actn->get->name, link_actn->put->name)) {
-        ReportError("Redefinition of port '%s'\n", &ctx->error, link_actn->put->loc, link_actn->put->name);
+      if (FbldNamesEqual(link_actn->put->name, link_actn->get->name)) {
+        ReportError("Redefinition of port '%s'\n", &ctx->error, link_actn->get->loc, link_actn->get->name);
       }
 
       Ports getport = {
@@ -1294,8 +1286,8 @@ static void CheckProtos(Context* ctx, Env* env)
   FblcVectorInit(ctx->arena, defined);
 
   // Check import statements.
-  for (size_t import_id = 0; import_id < env->importv->size; ++import_id) {
-    FbldImport* import = env->importv->xs[import_id];
+  for (size_t import_id = 0; import_id < env->prgm->importv->size; ++import_id) {
+    FbldImport* import = env->prgm->importv->xs[import_id];
     for (size_t i = 0; i < import->itemv->size; ++i) {
       DefineName(ctx, import->itemv->xs[i]->dest, &defined);
 
@@ -1312,8 +1304,8 @@ static void CheckProtos(Context* ctx, Env* env)
     }
   }
 
-  for (size_t decl_id = 0; decl_id < env->declv->size; ++decl_id) {
-    FbldDecl* decl = env->declv->xs[decl_id];
+  for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
+    FbldDecl* decl = env->prgm->declv->xs[decl_id];
     DefineName(ctx, decl->name, &defined);
 
     // TODO: Check the type parameters.
@@ -1422,8 +1414,8 @@ static void CheckProtos(Context* ctx, Env* env)
 //   headers (not module definitions), adding them to the context.
 static void CheckBodies(Context* ctx, Env* env)
 {
-  for (size_t decl_id = 0; decl_id < env->declv->size; ++decl_id) {
-    FbldDecl* decl = env->declv->xs[decl_id];
+  for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
+    FbldDecl* decl = env->prgm->declv->xs[decl_id];
 
     DeclList dl = {
       .decl = decl,
@@ -1487,41 +1479,22 @@ static void CheckBodies(Context* ctx, Env* env)
 }
 
 // FbldCheckQRef -- see fblcs.h for documentation.
-bool FbldCheckQRef(FblcArena* arena, FbldStringV* path, FbldQRef* qref, FbldProgram* prgm)
+bool FbldCheckQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* qref)
 {
   Context ctx = {
     .arena = arena,
-    .prgm = prgm,
-    .path = path,
     .error = false
   };
-  CheckQRef(&ctx, NULL, qref);
-  return !ctx.error;
-}
-
-// FbldCheckInterf -- see fblcs.h for documentation.
-bool FbldCheckInterf(FblcArena* arena, FbldStringV* path, FbldInterf* interf, FbldProgram* prgm)
-{
-  Context ctx = {
-    .arena = arena,
+
+  Env env = {
+    .parent = NULL,
+    .mref = NULL,
+    .source = FBLD_MODULE_SOURCE,
     .prgm = prgm,
-    .path = path,
-    .error = false
+    .svars = NULL
   };
-  CheckInterf(&ctx, NULL, interf);
-  return !ctx.error;
-}
-
-// FbldCheckModuleHeader -- see documentation in fbld.h
-bool FbldCheckModuleHeader(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
-{
-  Context ctx = {
-    .arena = arena,
-    .prgm = prgm,
-    .path = path,
-    .error = false
-  };
-  CheckModuleHeader(&ctx, NULL, module);
+
+  CheckQRef(&ctx, &env, qref);
   return !ctx.error;
 }
 
@@ -1651,16 +1624,22 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
   }
 }
 
-// FbldCheckModule -- see documentation in fbld.h
-bool FbldCheckModule(FblcArena* arena, FbldStringV* path, FbldModule* module, FbldProgram* prgm)
+// FbldCheckProgram -- see documentation in fbld.h
+bool FbldCheckProgram(FblcArena* arena, FbldProgram* prgm)
 {
   Context ctx = {
     .arena = arena,
-    .prgm = prgm,
-    .path = path,
     .error = false
   };
-  CheckModule(&ctx, NULL, module);
+
+  Env env = {
+    .parent = NULL,
+    .mref = NULL,
+    .source = FBLD_MODULE_SOURCE,
+    .prgm = prgm,
+    .svars = NULL
+  };
+  CheckEnv(&ctx, &env);
   return !ctx.error;
 }
 
@@ -1728,13 +1707,19 @@ static bool CheckValue(Context* ctx, Env* env, FbldValue* value)
 // FblcCheckValue -- see documentation in fbld.h
 bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
 {
-  FbldStringV path = { .size = 0, .xs = NULL };
   Context ctx = {
     .arena = arena,
-    .prgm = prgm,
-    .path = &path,
     .error = false
   };
-  CheckValue(&ctx, NULL, value);
+
+  Env env = {
+    .parent = NULL,
+    .mref = NULL,
+    .source = FBLD_MODULE_SOURCE,
+    .prgm = prgm,
+    .svars = NULL
+  };
+
+  CheckValue(&ctx, &env, value);
   return !ctx.error;
 }

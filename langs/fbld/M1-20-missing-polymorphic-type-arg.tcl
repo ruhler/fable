@@ -9,7 +9,7 @@ set prg {
   module MainM(MainI) {
     struct Unit();
     union Bool(Unit true, Unit false);
-    union Maybe<T>(T just, Unit nothing);
+    union Maybe<type T>(T just, Unit nothing);
     func main( ; Bool) {
       # The type argument to 'Maybe' is missing
       Maybe:just(Bool:true(Unit())).just;
@@ -17,4 +17,4 @@ set prg {
   };
 }
 
-fbld-check-error $prg 15:7
+skip fbld-check-error $prg 15:7

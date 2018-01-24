@@ -35,9 +35,9 @@ static void PrintUsage(FILE* stream)
   fprintf(stream,
       "Usage: fbld-md5 PATH MAIN FILE \n"
       "Execute the md5 process called MAIN in the environment of the\n"
-      "fbld modules located on the given search PATH.\n"
+      "fbld program PATH.\n"
       "The contents of FILE are streamed to the md5 process.\n"
-      "Example: fbld-md5 prgms Md5@Md5M foo.txt\n"
+      "Example: fbld-md5 prgms/Md5.fbld Md5@Md5 foo.txt\n"
   );
 }
 
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
   }
 
   if (argc <= 1) {
-    fprintf(stderr, "no module search path.\n");
+    fprintf(stderr, "no input program.\n");
     PrintUsage(stderr);
     return 1;
   }
@@ -119,31 +119,16 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FbldStringV search_path;
-  FblcVectorInit(arena, search_path);
-  FblcVectorAppend(arena, search_path, path);
-
   FbldQRef* qentry = FbldParseQRefFromString(arena, entry);
   if (qentry == NULL) {
     fprintf(stderr, "failed to parse entry\n");
     return 1;
   }
 
-  FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
-  FblcVectorInit(arena, prgm->interfv);
-  FblcVectorInit(arena, prgm->mheaderv);
-  FblcVectorInit(arena, prgm->modulev);
-
-  if (!FbldLoadEntry(arena, &search_path, qentry, prgm)) {
-    fprintf(stderr, "failed to load\n");
-    return 1;
-  }
-
   FbldAccessLocV accessv;
   FblcVectorInit(arena, accessv);
-  FbldLoaded* loaded = FbldCompileProgram(arena, &accessv, prgm, qentry);
+  FbldLoaded* loaded = FbldLoadProgram(arena, &accessv, path, qentry);
   if (loaded == NULL) {
-    fprintf(stderr, "failed to compile\n");
     return 1;
   }
 
@@ -172,4 +157,3 @@ int main(int argc, char* argv[])
 
   return 0;
 }
-

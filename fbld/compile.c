@@ -72,6 +72,7 @@ typedef struct {
   CompiledProcV procv;
 } Context;
 
+static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind);
 static FbldType* LookupType(Context* ctx, FbldQRef* qref);
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref);
 static FbldProc* LookupProc(Context* ctx, FbldQRef* qref);
@@ -84,6 +85,48 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn);
 static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr);
 static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 
+
+// LookupDecl --
+//   Lookup the declaration of the given kind referred to by qref.
+//
+// Inputs:
+//   ctx - The compilation context.
+//   qref - A global resolved qref referring to the decl to look up.
+//
+// Results:
+//   The declaration.
+//
+// Side effects:
+//   Behavior is undefined if the declaration could not be found.
+static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
+{
+  assert(qref->r != NULL);
+  assert(qref->r->tag == FBLD_ENTITY_R);
+  FbldEntityR* entity = (FbldEntityR*)qref->r;
+  assert(entity->decl->tag == kind);
+  FbldName* name = entity->decl->name;
+
+  if (entity->mref == NULL) {
+    for (size_t i = 0; i < ctx->prgm->declv->size; ++i) {
+      if (FbldNamesEqual(ctx->prgm->declv->xs[i]->name->name, name->name)) {
+        assert(ctx->prgm->declv->xs[i]->tag == kind);
+        return ctx->prgm->declv->xs[i];
+      }
+    }
+    assert(false && "LookupDecl top level failed");
+    return NULL;
+  }
+
+  FbldModule* module = LookupModule(ctx, entity->mref);
+  for (size_t i = 0; i < module->body->declv->size; ++i) {
+    if (FbldNamesEqual(module->body->declv->xs[i]->name->name, name->name)) {
+      assert(module->body->declv->xs[i]->tag == kind);
+      return module->body->declv->xs[i];
+    }
+  }
+  assert(false && "LookupDecl failed");
+  return NULL;
+}
 
 // LookupType --
 //   Lookup the declaration of the type referred to by qref.
@@ -99,21 +142,7 @@ static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 //   Behavior is undefined if the type could not be found.
 static FbldType* LookupType(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  assert(entity->mref != NULL && "type is not a valid top-level declaration");
-  assert(entity->decl->tag == FBLD_TYPE_DECL);
-  FbldName* name = entity->decl->name;
-  FbldModule* module = LookupModule(ctx, entity->mref);
-  for (size_t i = 0; i < module->declv->size; ++i) {
-    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-      assert(module->declv->xs[i]->tag == FBLD_TYPE_DECL);
-      return (FbldType*)module->declv->xs[i];
-    }
-  }
-  assert(false && "LookupType failed");
-  return NULL;
+  return (FbldType*)LookupDecl(ctx, qref, FBLD_TYPE_DECL);
 }
 
 // LookupFunc --
@@ -130,21 +159,7 @@ static FbldType* LookupType(Context* ctx, FbldQRef* qref)
 //   Behavior is undefined if the function could not be found.
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  assert(entity->mref != NULL && "func is not a valid top-level declaration");
-  assert(entity->decl->tag == FBLD_FUNC_DECL);
-  FbldName* name = entity->decl->name;
-  FbldModule* module = LookupModule(ctx, entity->mref);
-  for (size_t i = 0; i < module->declv->size; ++i) {
-    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-      assert(module->declv->xs[i]->tag == FBLD_FUNC_DECL);
-      return (FbldFunc*)module->declv->xs[i];
-    }
-  }
-  assert(false && "LookupFunc failed");
-  return NULL;
+  return (FbldFunc*)LookupDecl(ctx, qref, FBLD_FUNC_DECL);
 }
 
 // LookupProc --
@@ -161,21 +176,7 @@ static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
 //   Behavior is undefined if the process could not be found.
 static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  assert(entity->mref != NULL && "proc is not a valid top-level declaration");
-  assert(entity->decl->tag == FBLD_PROC_DECL);
-  FbldName* name = entity->decl->name;
-  FbldModule* module = LookupModule(ctx, entity->mref);
-  for (size_t i = 0; i < module->declv->size; ++i) {
-    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-      assert(module->declv->xs[i]->tag == FBLD_PROC_DECL);
-      return (FbldProc*)module->declv->xs[i];
-    }
-  }
-  assert(false && "LookupProc failed");
-  return NULL;
+  return (FbldProc*)LookupDecl(ctx, qref, FBLD_PROC_DECL);
 }
 
 // LookupModule --
@@ -192,31 +193,7 @@ static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
 //   Behavior is undefined if the module could not be found.
 static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
 {
-  assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  assert(entity->decl->tag == FBLD_MODULE_DECL);
-  FbldName* name = entity->decl->name;
-  if (entity->mref == NULL) {
-    // We are looking for a top-level module declaration.
-    for (size_t i = 0; i < ctx->prgm->modulev.size; ++i) {
-      if (FbldNamesEqual(ctx->prgm->modulev.xs[i]->_base.name->name, name->name)) {
-        return ctx->prgm->modulev.xs[i];
-      }
-    }
-    assert(false && "LookupModule failed");
-    return NULL;
-  }
-
-  FbldModule* module = LookupModule(ctx, entity->mref);
-  for (size_t i = 0; i < module->declv->size; ++i) {
-    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-      assert(module->declv->xs[i]->tag == FBLD_MODULE_DECL);
-      return (FbldModule*)module->declv->xs[i];
-    }
-  }
-  assert(false && "LookupModule failed");
-  return NULL;
+  return (FbldModule*)LookupDecl(ctx, qref, FBLD_MODULE_DECL);
 }
 
 // CompileGivenProc --

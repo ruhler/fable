@@ -1,0 +1,24 @@
+
+import @ { StdLib; UBNat@UBNat; Primes; };
+import StdLib { Unit; };
+import Bool@StdLib { Bool; };
+import List@StdLib { S; P; };
+import UBNat { Nat; 1; 3; 10; Lit2; Eq; };
+import Primes { NthPrime; };
+
+union TestName(
+    Unit NthPrime_1_10
+);
+
+struct TestFailure(TestName name, Nat a, Nat b);
+
+func Test( ; S<TestFailure>) {
+  TEq(TestName:NthPrime_1_10(Unit()), Lit2(3(), 1()), NthPrime(1(), 10()),
+  S<TestFailure>:nil(Unit()));
+};
+
+priv func TEq(TestName name, Nat a, Nat b, S<TestFailure> rest; S<TestFailure>) {
+  ?(Eq(a, b); rest,
+    S<TestFailure>:cons(P<TestFailure>(TestFailure(name, a, b), rest)));
+};
+
