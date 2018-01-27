@@ -41,6 +41,7 @@ void FbldReportError(const char* format, FbldLoc* loc, ...);
 // Forward declarations. See below for descriptions of these types.
 typedef struct FbldInterf FbldInterf;
 typedef struct FbldDecl FbldDecl;
+typedef struct FbldDeclV FbldDeclV;
 typedef struct FbldQRef FbldQRef;
 typedef struct FbldQRefV FbldQRefV;
 
@@ -77,73 +78,51 @@ typedef struct {
   FbldId* xs;
 } FbldIdV;
 
-// FbldRTag --
-//   A tag used to distinguish among different kinds of resolved qrefs.
-typedef enum {
-  FBLD_FAILED_R,          // The qref failed resolution.
-  FBLD_ENTITY_R,          // The qref resolved to a normal entity.
-  FBLD_PARAM_R,           // The qref resolved to a type or module parameter.
-} FbldRTag;
-
 // FbldR --
-//   Common base type for the following fbld r types. The tag can be used to
-//   determine what kind of r this is to get access to additional fields of
-//   the r by first casting to that specific type.
-typedef struct {
-  FbldRTag tag;
-} FbldR;
-
-// FbldEntitySource --
-//   Enumeration used to distinguish the source of a resolved entity.
-typedef enum {
-  FBLD_INTERF_SOURCE,
-  FBLD_MODULE_SOURCE
-} FbldEntitySource;
-
-// FbldEntityR --
-//   Used when a qref resolves to an entity from a module or interface.
-//
+//   Resolved qref information.
+// 
 // Fields:
-//   decl - The declaration of the resolved entity.
-//   mref - The module or interface the entity belongs to.
-//   source - Whether the module was resolved from an interface or module.
+//   decl - The declaration that the qref resolved to.
+//          This may be a declaration of an entity from a module, a prototype
+//          in an interface, the declaration of a static parameter, or NULL to
+//          indicate failed resolution.
+//   mref - The module/interf namespace that the entity belongs to. NULL for
+//          entities defined at the top level.
+//   param - True if the qref refers to a static parameter or a prototype from
+//           an interface that has not had its module resolved.
+//   interf - The interface that a prototype was defined in. NULL if decl
+//            is not a prototype from an interface.
+//
+// States:
+//   * Failed resolution:
+//      decl == NULL, all others unused.
+//   * Entity from module:
+//      decl != NULL,
+//      mref != NULL except top level decls,
+//      !param, interf == NULL
+//   * Static parameter:
+//      decl != NULL,
+//      mref != NULL except top level decls
+//      param, interf == NULL
+//   * Interface prototype with module not yet resolved:
+//      decl != NULL,
+//      mref != NULL except top level decls
+//      param, interf != NULL.
+//   * Interface prototype with module resolved:
+//      decl != NULL,
+//      mref != NULL,
+//      !param, interf != NULL.
 typedef struct {
-  FbldR _base;
   FbldDecl* decl;
   FbldQRef* mref;
-  FbldEntitySource source;
-} FbldEntityR;
-
-// FbldParamR --
-//   Used when a qref resolve to a type or module parameter.
-//
-// Fields:
-//   decl - The declaration introducing this parameter.
-//   iref - The interface of this parameter if it is a module parameter.
-//          NULL if the parameter is a type parameter.
-//   index - The index into targv or margv of decl identifying this parameter.
-//
-// Type parameters can be found at decl->targv[index].
-// Module parameters can be found at decl->margv[index], except in the case
-// where the module parameter is used when checking an interface, in which
-// case index will be set to FBLD_INTERF_PARAM_INDEX and the module in
-// question is the module that implements the interface whose declaration is
-// decl.
-typedef struct {
-  FbldR _base;
-  FbldQRef* iref;
-  FbldDecl* decl;
-  int index;
-} FbldParamR;
-
-// FBLD_INTERF_PARAM_INDEX --
-//   The special index used in the FbldParamR for an interface.
-#define FBLD_INTERF_PARAM_INDEX (-1)
+  bool param;
+  FbldInterf* interf;
+} FbldR;
 
 // FbldQRef --
 //   A reference to a qualified interface, module, type, function or process,
 //   such as:
-//    find<Nat; Eq<Nat> eqNat>@ListM
+//    find<type Nat, module eqNat(Eq<Nat>)>@ListM
 //
 // FbldQRef stores both unresolved and resolved versions of the qualified
 // reference. The unresolved version is as the reference appears in the source
@@ -153,16 +132,14 @@ typedef struct {
 //
 // Fields:
 //   name - The unresolved name of the entity.
-//   targv - The type arguments to the entity.
-//   margv - The module arguments to the entity.
+//   paramv - The static paramters to the entity.
 //   mref - The unresolved module the entity is from. NULL for references that
 //          are not explicitly qualified.
 //   r - The resolved reference, or NULL if the reference has not yet been
 //       resolved.
 struct FbldQRef {
   FbldName* name;
-  FbldQRefV* targv;
-  FbldQRefV* margv;
+  FbldQRefV* paramv;
   FbldQRef* mref;
   FbldR* r;
 };
@@ -501,6 +478,7 @@ typedef struct {
 // Fields:
 //   iref - The interface of the module argument.
 //   name - The name of the module argument.
+// TODO: Remove this type?
 typedef struct {
   FbldQRef* iref;
   FbldName* name;
@@ -508,6 +486,7 @@ typedef struct {
 
 // FbldMArgV --
 //   A vector of module arguments.
+// TODO: Remove this type?
 typedef struct {
   size_t size;
   FbldMArg** xs;
@@ -527,19 +506,23 @@ typedef enum {
 //   Common base type for the following fbld decl types. The tag can be
 //   used to determine what kind of decl this is to get access to additional
 //   fields of the decl by first casting to that specific type.
+//
+// Fields:
+//   tag - the kind of declaration.
+//   name - the name of the declaration.
+//   paramv - the static parameters of the declaration.
 struct FbldDecl {
   FbldDeclTag tag;
   FbldName* name;
-  FbldNameV* targv;
-  FbldMArgV* margv;
+  FbldDeclV* paramv;
 };
 
 // FbldDeclV --
 //   A vector of FbldDecls.
-typedef struct {
+struct FbldDeclV {
   size_t size;
   FbldDecl** xs;
-} FbldDeclV;
+};
 
 // FbldKind --
 //   An enum used to distinguish between struct, union, and abstract types.

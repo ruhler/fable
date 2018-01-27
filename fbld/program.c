@@ -11,24 +11,13 @@
 void FbldPrintQRef(FILE* stream, FbldQRef* qref)
 {
   fprintf(stream, "%s", qref->name->name);
-  if (qref->targv->size > 0 || qref->margv->size > 0) {
+  if (qref->paramv->size > 0) {
     fprintf(stream, "<");
-    for (size_t i = 0; i < qref->targv->size; ++i) {
+    for (size_t i = 0; i < qref->paramv->size; ++i) {
       if (i > 0) {
         fprintf(stream, ",");
       }
-      FbldPrintQRef(stream, qref->targv->xs[i]);
-    }
-
-    if (qref->margv->size > 0) {
-      fprintf(stream, ";");
-
-      for (size_t i = 0; i < qref->margv->size; ++i) {
-        if (i > 0) {
-          fprintf(stream, ",");
-        }
-        FbldPrintQRef(stream, qref->margv->xs[i]);
-      }
+      FbldPrintQRef(stream, qref->paramv->xs[i]);
     }
     fprintf(stream, ">");
   }

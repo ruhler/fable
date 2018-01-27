@@ -101,12 +101,11 @@ static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
 {
   assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  assert(entity->decl->tag == kind);
-  FbldName* name = entity->decl->name;
+  assert(qref->r->decl != NULL);
+  assert(qref->r->decl->tag == kind);
+  FbldName* name = qref->r->decl->name;
 
-  if (entity->mref == NULL) {
+  if (qref->r->mref == NULL) {
     for (size_t i = 0; i < ctx->prgm->declv->size; ++i) {
       if (FbldNamesEqual(ctx->prgm->declv->xs[i]->name->name, name->name)) {
         assert(ctx->prgm->declv->xs[i]->tag == kind);
@@ -117,7 +116,7 @@ static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
     return NULL;
   }
 
-  FbldModule* module = LookupModule(ctx, entity->mref);
+  FbldModule* module = LookupModule(ctx, qref->r->mref);
   for (size_t i = 0; i < module->body->declv->size; ++i) {
     if (FbldNamesEqual(module->body->declv->xs[i]->name->name, name->name)) {
       assert(module->body->declv->xs[i]->tag == kind);
@@ -276,9 +275,8 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr)
       FbldAppExpr* app_expr_d = (FbldAppExpr*)expr;
       FbldQRef* qref = app_expr_d->func;
       assert(qref->r != NULL);
-      assert(qref->r->tag == FBLD_ENTITY_R);
-      FbldEntityR* entity = (FbldEntityR*)qref->r;
-      if (entity->decl->tag == FBLD_FUNC_DECL) {
+      assert(qref->r->decl != NULL);
+      if (qref->r->decl->tag == FBLD_FUNC_DECL) {
         FblcAppExpr* app_expr_c = FBLC_ALLOC(ctx->arena, FblcAppExpr);
         app_expr_c->_base.tag = FBLC_APP_EXPR;
         app_expr_c->func = CompileFunc(ctx, src, qref);
@@ -594,9 +592,8 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 
   FbldProc* proc_d = NULL;
   assert(qref->r != NULL);
-  assert(qref->r->tag == FBLD_ENTITY_R);
-  FbldEntityR* entity = (FbldEntityR*)qref->r;
-  switch (entity->decl->tag) {
+  assert(qref->r->decl != NULL);
+  switch (qref->r->decl->tag) {
     case FBLD_PROC_DECL:
       proc_d = LookupProc(&ctx, qref);
       break;
@@ -607,8 +604,7 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
       proc_d->_base.name = func_d->_base.name;
       proc_d->portv = FBLC_ALLOC(arena, FbldPortV);
       FblcVectorInit(arena, *proc_d->portv);
-      proc_d->_base.targv = func_d->_base.targv;
-      proc_d->_base.margv = func_d->_base.margv;
+      proc_d->_base.paramv = func_d->_base.paramv;
       proc_d->argv = func_d->argv;
       proc_d->return_type = func_d->return_type;
       FbldEvalActn* body = FBLC_ALLOC(arena, FbldEvalActn);

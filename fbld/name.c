@@ -24,182 +24,118 @@ bool FbldQRefsEqual(FbldQRef* a, FbldQRef* b)
     return false;
   }
 
-  if (a->targv->size != b->targv->size) {
+  if (a->paramv->size != b->paramv->size) {
     return false;
   }
 
-  for (size_t i = 0; i < a->targv->size; ++i) {
-    if (!FbldQRefsEqual(a->targv->xs[i], b->targv->xs[i])) {
-      return false;
-    }
-  }
-
-  if (a->margv->size != b->margv->size) {
-    return false;
-  }
-
-  for (size_t i = 0; i < a->margv->size; ++i) {
-    if (!FbldQRefsEqual(a->margv->xs[i], b->margv->xs[i])) {
+  for (size_t i = 0; i < a->paramv->size; ++i) {
+    if (!FbldQRefsEqual(a->paramv->xs[i], b->paramv->xs[i])) {
       return false;
     }
   }
 
   assert(a->r != NULL);
+  assert(a->r->decl != NULL);
+
   assert(b->r != NULL);
-  if (a->r->tag != b->r->tag) {
+  assert(b->r->decl != NULL);
+
+  if (!FbldNamesEqual(a->r->decl->name->name, b->r->decl->name->name)) {
     return false;
   }
 
-  switch (a->r->tag) {
-    case FBLD_FAILED_R:
-      assert(false);
-      return false;
-
-    case FBLD_ENTITY_R: {
-      FbldEntityR* aent = (FbldEntityR*)a->r;
-      FbldEntityR* bent = (FbldEntityR*)b->r;
-      if (!FbldNamesEqual(aent->decl->name->name, bent->decl->name->name)) {
-        return false;
-      }
-
-      if (!FbldQRefsEqual(aent->mref, bent->mref)) {
-        return false;
-      }
-      return true;
-    }
-
-    case FBLD_PARAM_R: {
-      FbldParamR* apar = (FbldParamR*)a->r;
-      FbldParamR* bpar = (FbldParamR*)b->r;
-
-      if (!FbldNamesEqual(apar->decl->name->name, bpar->decl->name->name)) {
-        return false;
-      }
-
-      if (apar->index != bpar->index) {
-        return false;
-      }
-      return true;
-    }
-
-    default:
-      assert(false && "Invalid R tag");
-      return false;
+  if (!FbldQRefsEqual(a->r->mref, b->r->mref)) {
+    return false;
   }
+
+  return true;
 }
 
 // FbldImportQRef -- see documentation in fbld.h
 FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
 {
-  // The qref should already have been resolved by this point, otherwise
-  // something has gone wrong.
-  assert(qref->r != NULL);
-  switch (qref->r->tag) {
-    case FBLD_FAILED_R: {
-      assert(false && "ForeignType with failed src?");
-      return NULL;
-    }
-
-    case FBLD_ENTITY_R: {
-      FbldEntityR* entity = (FbldEntityR*)qref->r;
-
-      // TODO: Avoid allocation if the foreign module is the same?
-      FbldEntityR* ient = FBLC_ALLOC(arena, FbldEntityR);
-      ient->_base.tag = FBLD_ENTITY_R;
-      ient->decl = entity->decl;
-      ient->mref = entity->mref == NULL ? NULL : FbldImportQRef(arena, src, entity->mref);
-      ient->source = entity->source;
-
-      FbldQRef* imported = FBLC_ALLOC(arena, FbldQRef);
-      imported->name = qref->name;
-      imported->targv = FBLC_ALLOC(arena, FbldQRefV);
-      FblcVectorInit(arena, *(imported->targv));
-      for (size_t i = 0; i < qref->targv->size; ++i) {
-        FbldQRef* p = FbldImportQRef(arena, src, qref->targv->xs[i]);
-        FblcVectorAppend(arena, *(imported->targv), p);
-      }
-
-      imported->margv = FBLC_ALLOC(arena, FbldQRefV);
-      FblcVectorInit(arena, *(imported->margv));
-      for (size_t i = 0; i < qref->margv->size; ++i) {
-        FbldQRef* p = FbldImportQRef(arena, src, qref->margv->xs[i]);
-        FblcVectorAppend(arena, *(imported->margv), p);
-      }
-
-      imported->mref = ient->mref;
-      imported->r = &ient->_base;
-      return imported;
-    }
-
-    case FBLD_PARAM_R: {
-      FbldParamR* param = (FbldParamR*)qref->r;
-
-      FbldQRef* qdecl = src;
-
-      do {
-        assert(qdecl->r->tag == FBLD_ENTITY_R);
-        FbldEntityR* entity = (FbldEntityR*)qdecl->r;
-        FbldDecl* decl = entity->decl;
-
-        // Check for a matching type or module parameter on this declaration.
-        // TODO: Is it safe to match by name here instead of decl?
-        // Using decl has the problem of considering the interf and module
-        // versions of the same declaration as different.
-        if (FbldNamesEqual(decl->name->name, param->decl->name->name)) {
-          if (param->iref == NULL) {
-            assert(param->index < qdecl->targv->size);
-            return qdecl->targv->xs[param->index];
-          }
-          assert(param->index < qdecl->margv->size);
-          return qdecl->margv->xs[param->index];
-        }
-
-        // Get the module that the declaration belongs to.
-        FbldQRef* mref = entity->mref;
-
-        // Get the interface of that module.
-        FbldQRef* iref = NULL;
-        switch (mref->r->tag) {
-          case FBLD_FAILED_R: {
-            assert(false && "invalid state");
-            return NULL;
-          }
-
-          case FBLD_ENTITY_R: {
-            FbldEntityR* ment = (FbldEntityR*)mref->r;
-            assert(ment->decl->tag == FBLD_MODULE_DECL);
-            FbldModule* module = (FbldModule*)ment->decl;
-            iref = FbldImportQRef(arena, mref, module->iref);
-            break;
-          }
-
-          case FBLD_PARAM_R: {
-            FbldParamR* mpar = (FbldParamR*)mref->r;
-            assert(mpar->iref != NULL);
-            iref = mpar->iref;
-            break;
-          }
-        }
-
-        if (param->index == FBLD_INTERF_PARAM_INDEX) {
-          assert(iref->r->tag == FBLD_ENTITY_R);
-          FbldEntityR* ient = (FbldEntityR*)iref->r;
-          assert(ient->decl->tag == FBLD_INTERF_DECL);
-          if (ient->decl == param->decl) {
-            return mref;
-          }
-        }
-
-        qdecl = (entity->source == FBLD_INTERF_SOURCE) ? iref : mref;
-      } while (qdecl != NULL);
-
-      assert(false && "No match found for parameter");
-      return NULL;
-    }
-
-    default: {
-      assert(false && "Invalid R tag");
-      return NULL;
-    }
+  // Base case for recursion up to the global name space.
+  if (qref == NULL) {
+    return NULL;
   }
+
+  // The qref should already have been successfully resolved by this point,
+  // otherwise something has gone wrong.
+  assert(qref->r != NULL);
+  assert(qref->r->decl != NULL);
+
+  if (qref->r->param && qref->r->interf == NULL) {
+    // qref refers to a static parameter. Find the matching argument.
+    FbldQRef* mref = src;
+    while (mref != NULL) {
+      FbldDecl* decl = mref->r->decl;
+      for (size_t i = 0; i < decl->paramv->size; ++i) {
+        if (decl->paramv->xs[i] == qref->r->decl) {
+          assert(qref->paramv->size == 0 && "TODO");
+          return mref->paramv->xs[i];
+        }
+      }
+
+      bool interf = mref->r->interf != NULL;
+      mref = mref->mref;
+      if (interf) {
+        assert(mref->r->decl->tag == FBLD_MODULE_DECL);
+        FbldModule* module = (FbldModule*)mref->r->decl;
+        mref = module->iref;
+      }
+    }
+    assert(false && "Failed to match static parameter");
+    return NULL;
+  }
+
+  if (qref->r->param && qref->r->interf != NULL) {
+    // qref refers to an interface prototype. Find the matching module from
+    // the context.
+    for (FbldQRef* mref = src; mref != NULL; mref = mref->r->mref) {
+      if (mref->r->decl->tag == FBLD_MODULE_DECL) {
+        FbldModule* module = (FbldModule*)mref->r->decl;
+        if (module->iref->r->decl == &qref->r->interf->_base) {
+          FbldQRef* imported = FBLC_ALLOC(arena, FbldQRef);
+          imported->name = qref->name;
+          imported->paramv = FBLC_ALLOC(arena, FbldQRefV);
+          FblcVectorInit(arena, *(imported->paramv));
+          for (size_t i = 0; i < qref->paramv->size; ++i) {
+            FbldQRef* p = FbldImportQRef(arena, src, qref->paramv->xs[i]);
+            FblcVectorAppend(arena, *(imported->paramv), p);
+          }
+
+          imported->mref = mref;
+
+          FbldR* r = FBLC_ALLOC(arena, FbldR);
+          r->decl = qref->r->decl;
+          r->mref = imported->mref;
+          r->param = false;
+          r->interf = qref->r->interf;
+          imported->r = r;
+          return imported;
+        }
+      }
+    }
+
+    assert(false && "Failed to match interface.");
+    return NULL;
+  }
+
+  FbldQRef* imported = FBLC_ALLOC(arena, FbldQRef);
+  imported->name = qref->name;
+  imported->paramv = FBLC_ALLOC(arena, FbldQRefV);
+  FblcVectorInit(arena, *(imported->paramv));
+  for (size_t i = 0; i < qref->paramv->size; ++i) {
+    FbldQRef* p = FbldImportQRef(arena, src, qref->paramv->xs[i]);
+    FblcVectorAppend(arena, *(imported->paramv), p);
+  }
+  imported->mref = FbldImportQRef(arena, src, qref->r->mref);
+
+  FbldR* r = FBLC_ALLOC(arena, FbldR);
+  r->decl = qref->r->decl;
+  r->mref = imported->mref;
+  r->param = false;
+  r->interf = qref->r->interf;
+  imported->r = r;
+  return imported;
 }
