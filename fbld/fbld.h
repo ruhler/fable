@@ -43,8 +43,6 @@ typedef struct FbldInterf FbldInterf;
 typedef struct FbldDecl FbldDecl;
 typedef struct FbldQRef FbldQRef;
 typedef struct FbldQRefV FbldQRefV;
-typedef struct FbldInterfV FbldInterfV;
-typedef struct FbldModuleV FbldModuleV;
 
 // FbldName -- 
 //   A name along with its associated location in a source file. The location
@@ -618,13 +616,6 @@ struct FbldInterf {
   FbldProgram* body;
 };
 
-// FbldInterfV --
-//   A vector of fbld interface declarations.
-struct FbldInterfV {
-  size_t size;
-  FbldInterf** xs;
-};
-
 // FbldModule --
 //   An fbld module declaration.
 //
@@ -639,13 +630,6 @@ typedef struct {
   FbldQRef* iref;
   FbldProgram* body;
 } FbldModule;
-
-// FbldModuleV --
-//   A vector of fbld modules.
-struct FbldModuleV {
-  size_t size;
-  FbldModule** xs;
-};
 
 // Forward declaration of FbldValue type.
 typedef struct FbldValue FbldValue;
