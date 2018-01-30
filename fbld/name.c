@@ -77,7 +77,7 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
       }
 
       bool interf = mref->r->interf != NULL;
-      mref = mref->mref;
+      mref = mref->r->mref;
       if (interf) {
         assert(mref->r->decl->tag == FBLD_MODULE_DECL);
         FbldModule* module = (FbldModule*)mref->r->decl;

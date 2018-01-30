@@ -214,7 +214,7 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
     for (size_t i = 0; i < dl->decl->paramv->size; ++i) {
       if (FbldNamesEqual(qref->name->name, dl->decl->paramv->xs[i]->name->name)) {
         FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
-        r->decl = dl->decl;
+        r->decl = dl->decl->paramv->xs[i];
         r->mref = env->mref;
         r->param = true;
         r->interf = NULL;
