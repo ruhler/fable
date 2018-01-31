@@ -22,4 +22,4 @@ set prg {
   };
 }
 
-skip fbld-check-error $prg 20:23
+fbld-check-error $prg 20:23

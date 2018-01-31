@@ -17,4 +17,4 @@ set prg {
   };
 }
 
-skip fbld-check-error $prg 15:24
+fbld-check-error $prg 15:24
