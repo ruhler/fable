@@ -78,6 +78,7 @@ static FbldR FailedR = {
 
 static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 
+static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldDecl* decl);
 static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckEnv(Context* ctx, Env* env);
@@ -95,7 +96,7 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
 static void CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual, bool* error);
 static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 
-static void CheckArgsMatch(Context* ctx, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
+static void CheckArgsMatch(Context* ctx, FbldName* name, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
 static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
 
 // ReportError --
@@ -122,6 +123,41 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
   fprintf(stderr, "%s:%d:%d: error: ", loc->source, loc->line, loc->col);
   vfprintf(stderr, format, ap);
   va_end(ap);
+}
+
+// DeclQRef --
+//   Create a non-parameter qref that refers to the given declaration.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   mref - Reference for the module the declaration is defined in.
+//   decl - The decl to create a qref to.
+//
+// Result:
+//   A non-parameter qref that refers to the given declaration.
+//
+// Side Effects:
+//   Allocates a new qref.
+static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldDecl* decl)
+{
+  FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
+  r->decl = decl;
+  r->mref = mref;
+  r->param = false;
+  r->interf = NULL;
+
+  FbldQRef* qref = FBLC_ALLOC(ctx->arena, FbldQRef);
+  qref->name = decl->name;
+
+  qref->paramv = FBLC_ALLOC(ctx->arena, FbldQRefV);
+  FblcVectorInit(ctx->arena, *qref->paramv);
+  for (size_t i = 0; i < decl->paramv->size; ++i) {
+    FblcVectorAppend(ctx->arena, *qref->paramv, DeclQRef(ctx, mref, decl->paramv->xs[i]));
+  }
+
+  qref->mref = mref;
+  qref->r = r;
+  return qref;
 }
 
 // ResolveQRef --
@@ -410,29 +446,14 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
   FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
 
-  // Set up a qref we can reuse as src for for the module declarations.
-  FbldQRefV paramv = { .size = 0, .xs = NULL };
-  FbldR sr = {
-    .decl = NULL,   // Will be overwritten per decl.
-    .mref = mref,
-    .param = false,
-    .interf = NULL
-  };
-  FbldQRef src = {
-    .name = NULL,   // Will be overwritten per decl.
-    .paramv = &paramv,
-    .mref = mref,
-    .r = &sr
-  };
-
   for (size_t i = 0; i < interf->body->declv->size; ++i) {
     FbldDecl* decl_i = interf->body->declv->xs[i];
     for (size_t m = 0; m < module->body->declv->size; ++m) {
       FbldDecl* decl_m = module->body->declv->xs[m];
       if (FbldNamesEqual(decl_i->name->name, decl_m->name->name)) {
-        sr.decl = decl_m;
-        src.name = decl_m->name;
-        CheckDeclsMatch(ctx, &src, decl_i, decl_m);
+        // TODO: Don't leak src like this.
+        FbldQRef* src = DeclQRef(ctx, mref, decl_i);
+        CheckDeclsMatch(ctx, src, decl_i, decl_m);
 
         // Set type_i to NULL to indicate we found the matching type.
         decl_i = NULL;
@@ -1258,6 +1279,7 @@ bool FbldCheckQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* qref)
 //
 // Inputs:
 //   ctx - The context for type checking.
+//   name - The name of the declaration to check the arguments of.
 //   src - The source qref used to import the foreign args from args_i
 //   args_i - The interface arg vector.
 //   args_m - The module arg vector.
@@ -1268,12 +1290,12 @@ bool FbldCheckQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* qref)
 // Side effects:
 //   Prints an error message and sets ctx->error if the module arguments don't
 //   match the interface arguments.
-static void CheckArgsMatch(Context* ctx, FbldQRef* src, FbldArgV* args_i,
+static void CheckArgsMatch(Context* ctx, FbldName* name, FbldQRef* src, FbldArgV* args_i,
     FbldArgV* args_m)
 {
   if (args_i->size != args_m->size) {
     ReportError("Wrong number of args, expected %i but found %i\n",
-        &ctx->error, src->name->loc, args_i->size, args_m->size);
+        &ctx->error, name->loc, args_i->size, args_m->size);
   }
 
   for (size_t i = 0; i < args_i->size && i < args_m->size; ++i) {
@@ -1292,7 +1314,7 @@ static void CheckArgsMatch(Context* ctx, FbldQRef* src, FbldArgV* args_i,
 //
 // Inputs:
 //   ctx - The context for type checking.
-//   src - The qref referring to decl_m in the current context.
+//   src - The qref referring to decl_i in the current context.
 //   decl_i - The declared in the interface.
 //   decl_m - The declared in the module.
 //
@@ -1331,14 +1353,14 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
       }
 
       if (type_i->kind != FBLD_ABSTRACT_KIND) {
-        CheckArgsMatch(ctx, src, type_i->fieldv, type_m->fieldv);
+        CheckArgsMatch(ctx, decl_m->name, src, type_i->fieldv, type_m->fieldv);
       }
     } break;
 
     case FBLD_FUNC_DECL: {
       FbldFunc* func_i = (FbldFunc*)decl_i;
       FbldFunc* func_m = (FbldFunc*)decl_m;
-      CheckArgsMatch(ctx, src, func_i->argv, func_m->argv);
+      CheckArgsMatch(ctx, decl_m->name, src, func_i->argv, func_m->argv);
       CheckTypesMatch(func_m->return_type->name->loc, FbldImportQRef(ctx->arena, src, func_i->return_type), func_m->return_type, &ctx->error);
     } break;
 
@@ -1365,7 +1387,7 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
         }
       }
     
-      CheckArgsMatch(ctx, src, proc_i->argv, proc_m->argv);
+      CheckArgsMatch(ctx, decl_m->name, src, proc_i->argv, proc_m->argv);
       CheckTypesMatch(proc_m->return_type->name->loc, FbldImportQRef(ctx->arena, src, proc_i->return_type), proc_m->return_type, &ctx->error);
     }
 
