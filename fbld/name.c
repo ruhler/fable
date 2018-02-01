@@ -81,7 +81,7 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
       if (interf) {
         assert(mref->r->decl->tag == FBLD_MODULE_DECL);
         FbldModule* module = (FbldModule*)mref->r->decl;
-        mref = module->iref;
+        mref = FbldImportQRef(arena, mref, module->iref);
       }
     }
     assert(false && "Failed to match static parameter");

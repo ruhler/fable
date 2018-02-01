@@ -451,8 +451,12 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     for (size_t m = 0; m < module->body->declv->size; ++m) {
       FbldDecl* decl_m = module->body->declv->xs[m];
       if (FbldNamesEqual(decl_i->name->name, decl_m->name->name)) {
+        // Create a src reference that is as if we had accessed the module's
+        // declaration through its interface, rather than directly, with
+        // static parameters that match the parameters in the module.
         // TODO: Don't leak src like this.
         FbldQRef* src = DeclQRef(ctx, mref, decl_i);
+        src->r->interf = interf;
         CheckDeclsMatch(ctx, src, decl_i, decl_m);
 
         // Set type_i to NULL to indicate we found the matching type.
