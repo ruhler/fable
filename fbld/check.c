@@ -78,7 +78,7 @@ static FbldR FailedR = {
 
 static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 
-static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldDecl* decl);
+static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldInterf* interf, FbldDecl* decl);
 static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckEnv(Context* ctx, Env* env);
@@ -131,20 +131,21 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...)
 // Inputs:
 //   ctx - The context for type checking.
 //   mref - Reference for the module the declaration is defined in.
+//   interf - The interface this decl is declared in, if at all.
 //   decl - The decl to create a qref to.
 //
 // Result:
-//   A non-parameter qref that refers to the given declaration.
+//   A qref that refers to the given declaration.
 //
 // Side Effects:
 //   Allocates a new qref.
-static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldDecl* decl)
+static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldInterf* interf, FbldDecl* decl)
 {
   FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
   r->decl = decl;
   r->mref = mref;
-  r->param = false;
-  r->interf = NULL;
+  r->param = interf != NULL;
+  r->interf = interf;
 
   FbldQRef* qref = FBLC_ALLOC(ctx->arena, FbldQRef);
   qref->name = decl->name;
@@ -152,7 +153,7 @@ static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldDecl* decl)
   qref->paramv = FBLC_ALLOC(ctx->arena, FbldQRefV);
   FblcVectorInit(ctx->arena, *qref->paramv);
   for (size_t i = 0; i < decl->paramv->size; ++i) {
-    FblcVectorAppend(ctx->arena, *qref->paramv, DeclQRef(ctx, mref, decl->paramv->xs[i]));
+    FblcVectorAppend(ctx->arena, *qref->paramv, DeclQRef(ctx, mref, NULL, decl->paramv->xs[i]));
   }
 
   qref->mref = mref;
@@ -249,9 +250,14 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
   for (DeclList* dl = env->svars; dl != NULL; dl = dl->next) {
     for (size_t i = 0; i < dl->decl->paramv->size; ++i) {
       if (FbldNamesEqual(qref->name->name, dl->decl->paramv->xs[i]->name->name)) {
+        // Create a qref for the entity to use as the parent of the static
+        // parameter, to ensure previous parameter values are in scope for
+        // static parameter resolution.
+        FbldQRef* eqref = DeclQRef(ctx, env->mref, env->interf, dl->decl);
+
         FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
         r->decl = dl->decl->paramv->xs[i];
-        r->mref = env->mref;
+        r->mref = eqref;
         r->param = true;
         r->interf = NULL;
         return r;
@@ -358,19 +364,7 @@ static bool CheckEnv(Context* ctx, Env* env)
 //   formed.
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
 {
-  FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
-  r->decl = &interf->_base;
-  r->mref = env->mref;
-  r->param = env->interf != NULL;
-  r->interf = env->interf;
-
-  FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
-  mref->name = interf->_base.name;
-  mref->paramv = FBLC_ALLOC(ctx->arena, FbldQRefV);
-  FblcVectorInit(ctx->arena, *mref->paramv);
-  mref->mref = env->mref;
-  mref->r = r;
-
+  FbldQRef* mref = DeclQRef(ctx, env->mref, env->interf, &interf->_base);
   DeclList dl = {
     .decl = &interf->_base,
     .next = NULL,
@@ -408,18 +402,8 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     return false;
   }
 
-  FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
-  r->decl = &module->_base;
-  r->mref = env->mref;
-  r->param = false;
-  r->interf = NULL;
-
-  FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
-  mref->name = module->_base.name;
-  mref->paramv = FBLC_ALLOC(ctx->arena, FbldQRefV);
-  FblcVectorInit(ctx->arena, *mref->paramv);
-  mref->mref = env->mref;
-  mref->r = r;
+  assert(env->interf == NULL);
+  FbldQRef* mref = DeclQRef(ctx, env->mref, env->interf, &module->_base);
 
   DeclList dl = {
     .decl = &module->_base,
@@ -455,8 +439,8 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
         // declaration through its interface, rather than directly, with
         // static parameters that match the parameters in the module.
         // TODO: Don't leak src like this.
-        FbldQRef* src = DeclQRef(ctx, mref, decl_i);
-        src->r->interf = interf;
+        FbldQRef* src = DeclQRef(ctx, mref, interf, decl_i);
+        src->r->param = false;
         CheckDeclsMatch(ctx, src, decl_i, decl_m);
 
         // Set type_i to NULL to indicate we found the matching type.
@@ -1051,9 +1035,11 @@ static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
   // Check the static parameters.
   // TODO: The static parameters should only be visible to static parameters
   // before it in the list, not all of them.
+  env->mref = DeclQRef(ctx, env->mref, env->interf, decl);
   for (size_t i = 0; i < decl->paramv->size; ++i) {
     CheckProto(ctx, env, decl->paramv->xs[i]);
   }
+  env->mref = env->mref->r->mref;
 
   switch (decl->tag) {
     case FBLD_TYPE_DECL: {
