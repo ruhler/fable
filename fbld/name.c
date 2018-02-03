@@ -84,8 +84,10 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
         mref = FbldImportQRef(arena, mref, module->iref);
       }
     }
-    assert(false && "Failed to match static parameter");
-    return NULL;
+
+    // No match found for the static parameter. We must be importing it into a
+    // context with the parameter available in scope, so leave it as is.
+    return qref;
   }
 
   if (qref->r->param && qref->r->interf != NULL) {

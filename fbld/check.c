@@ -250,14 +250,9 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
   for (DeclList* dl = env->svars; dl != NULL; dl = dl->next) {
     for (size_t i = 0; i < dl->decl->paramv->size; ++i) {
       if (FbldNamesEqual(qref->name->name, dl->decl->paramv->xs[i]->name->name)) {
-        // Create a qref for the entity to use as the parent of the static
-        // parameter, to ensure previous parameter values are in scope for
-        // static parameter resolution.
-        FbldQRef* eqref = DeclQRef(ctx, env->mref, env->interf, dl->decl);
-
         FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
         r->decl = dl->decl->paramv->xs[i];
-        r->mref = eqref;
+        r->mref = env->mref;
         r->param = true;
         r->interf = NULL;
         return r;
@@ -364,7 +359,19 @@ static bool CheckEnv(Context* ctx, Env* env)
 //   formed.
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
 {
-  FbldQRef* mref = DeclQRef(ctx, env->mref, env->interf, &interf->_base);
+  FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
+  r->decl = &interf->_base;
+  r->mref = env->mref;
+  r->param = env->interf != NULL;
+  r->interf = env->interf;
+
+  FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
+  mref->name = interf->_base.name;
+  mref->paramv = FBLC_ALLOC(ctx->arena, FbldQRefV);
+  FblcVectorInit(ctx->arena, *mref->paramv);
+  mref->mref = env->mref;
+  mref->r = r;
+
   DeclList dl = {
     .decl = &interf->_base,
     .next = NULL,
@@ -402,8 +409,18 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     return false;
   }
 
-  assert(env->interf == NULL);
-  FbldQRef* mref = DeclQRef(ctx, env->mref, env->interf, &module->_base);
+  FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
+  r->decl = &module->_base;
+  r->mref = env->mref;
+  r->param = false;
+  r->interf = NULL;
+
+  FbldQRef* mref = FBLC_ALLOC(ctx->arena, FbldQRef);
+  mref->name = module->_base.name;
+  mref->paramv = FBLC_ALLOC(ctx->arena, FbldQRefV);
+  FblcVectorInit(ctx->arena, *mref->paramv);
+  mref->mref = env->mref;
+  mref->r = r;
 
   DeclList dl = {
     .decl = &module->_base,
@@ -1035,11 +1052,9 @@ static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
   // Check the static parameters.
   // TODO: The static parameters should only be visible to static parameters
   // before it in the list, not all of them.
-  env->mref = DeclQRef(ctx, env->mref, env->interf, decl);
   for (size_t i = 0; i < decl->paramv->size; ++i) {
     CheckProto(ctx, env, decl->paramv->xs[i]);
   }
-  env->mref = env->mref->r->mref;
 
   switch (decl->tag) {
     case FBLD_TYPE_DECL: {
