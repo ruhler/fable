@@ -80,6 +80,7 @@ static void ReportError(const char* format, bool* error, FbldLoc* loc, ...);
 
 static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldInterf* interf, FbldDecl* decl);
 static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref);
+static bool CheckPartialQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckEnv(Context* ctx, Env* env);
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
@@ -264,7 +265,7 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
   return NULL;
 }
 
-// CheckQRef --
+// CheckPartialQRef --
 //   Check that the given qref is well formed.
 //
 // Inputs:
@@ -275,12 +276,10 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
 //   true if the qref is well formed, false otherwise.
 //
 // Side effects:
-//   Loads and checks top-level module declarations and interfaces as needed
-//   to check the qref.
 //   Updates qref.r.* fields based on the result of qref resolution.
 //   Prints a message to stderr if the qref is not well formed and has not
 //   already been reported as being bad.
-static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
+static bool CheckPartialQRef(Context* ctx, Env* env, FbldQRef* qref)
 {
   if (qref->r != NULL) {
     return qref->r->decl != NULL;
@@ -308,13 +307,43 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
   for (size_t i = 0; i < qref->paramv->size; ++i) {
     // TODO: Check that the qref's kind matches the parameter declarations
     // kind.
-    if (!CheckQRef(ctx, env, qref->paramv->xs[i])) {
+    if (!CheckPartialQRef(ctx, env, qref->paramv->xs[i])) {
       // TODO: Free r
       return false;
     }
   }
   
   qref->r = r;
+  return true;
+}
+
+// CheckQRef --
+//   Check that the given qref is well formed and has all static parameters
+//   supplied.
+//
+// Inputs:
+//   ctx - The context to check the qref in.
+//   qref - The qref to check.
+//
+// Returns:
+//   true if the qref is well formed, false otherwise.
+//
+// Side effects:
+//   Updates qref.r.* fields based on the result of qref resolution.
+//   Prints a message to stderr if the qref is not well formed and has not
+//   already been reported as being bad.
+static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
+{
+  if (!CheckPartialQRef(ctx, env, qref)) {
+    return false;
+  }
+
+  if (qref->paramv->size != qref->r->decl->paramv->size) {
+    ReportError("Expected %i arguments to %s, but only %i provided\n",
+        &ctx->error, qref->name->loc, qref->r->decl->paramv->size, qref->name->name,
+        qref->paramv->size);
+    return false;
+  }
   return true;
 }
 
@@ -1162,7 +1191,7 @@ static void CheckProtos(Context* ctx, Env* env)
       };
 
       Env* import_env = import->mref == NULL ? env->parent : env;
-      CheckQRef(ctx, import_env, &entity);
+      CheckPartialQRef(ctx, import_env, &entity);
     }
   }
 

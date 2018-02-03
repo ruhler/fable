@@ -1,8 +1,8 @@
 Fbld 4:
 * Implement new spec.
-  - Generalize support for static parameters.
-    * mref for static param should be entity the parameter is for.
   - Add support for qref import.
+  - Add support for modules with anonymous interfaces. 
+  - Add support for priv and abst.
   - Add support for reading modules from other files.
   - Add support for parsing top level programs with implicit dependencies.
 * Port existing programs and tests to new spec.
