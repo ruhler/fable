@@ -114,9 +114,9 @@ exec mkdir -p out/fbld/cov/spec
 run gcov {*}$::fbld_objs > out/fbld/cov/spec/fbld.gcov
 exec mv {*}[glob *.gcov] out/fbld/cov/spec
 
-skip run $::fbldtest prgms/AllTests.wnt prgms/AllTests.fbld Test@AllTests
-skip run $::fbldcheck prgms/ prgms/Snake.fbld
-skip run $::fbldmd5 prgms/Md5.fbld Md5@Md5 /dev/null | grep d41d8cd98f00b204e9800998ecf8427e
+skip run $::fbldtest prgms/AllTests.wnt prgms/ Test@AllTests
+skip run $::fbldcheck prgms/ Snake
+skip run $::fbldmd5 prgms Md5@Md5@Md5 /dev/null | grep d41d8cd98f00b204e9800998ecf8427e
 
 exec mkdir -p out/fbld/cov/all
 run gcov {*}$::fbld_objs > out/fbld/cov/all/fbld.gcov

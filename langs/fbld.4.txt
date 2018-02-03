@@ -237,12 +237,14 @@ an abstract type:
     a.S;              # ERROR: field access not allowed on abstract type 'Int'
   };
 
-Module Hierarchy
-~~~~~~~~~~~~~~~~
+Module Hierarchy File Organization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Modules are defined hierarchically. To facilitate reuse of modules in
 different programs, different modules can be implemented in different files
 rather than require an entire program to be implemented in a single large
-file. To indicate that a module is defined in a different file, the body of
+file.
+
+To indicate that a module is defined in a different file, the body of
 the module should be omitted in the parent module. For example, assuming our
 example program was described in Main.fbld, the Integer module can be
 described in a file Main/Integer.fbld as follows:
@@ -264,16 +266,20 @@ Main/Integer.fbld:
     ?(a; b, Incr(Add(a.S, b)));
   };
 
-When working with a program specified in file Main.fbld, it is
-interpreted to mean there is an implicit unnamed top level module that sources
-Main.fbld using "module Main;", and any other modules listed using an import
-from parent within the module Main. For example, assuming Unit is defined as
-part of a StdLib module:
+The top level fbld program can be specified either as a file, or as a
+directory. If specified as a file, the file is taken to be the definition of
+the root of the module hierarchy with an anonymous interface. No import '@'
+statements are permitted at the root of the module hierarchy.
 
-StdLib.fbld:
+If specified as a directory, the directory is taken to be the definition of
+the root of the module hierarchy with an anonymous interface and public
+child modules for each fbld file found within the directory. For example,
+consider the following directory and file organization:
+
+foo/StdLib.fbld:
   struct Unit();
 
-Main.fbld:
+foo/Main.fbld:
   import @ { Unit@StdLib; };
 
   module Integer;
@@ -282,7 +288,7 @@ Main.fbld:
 
   struct IntPair(Int first, Int second);
 
-Main/Integer.fbld:
+foo/Main/Integer.fbld:
   import @ { Unit; };
   abst union Int(Unit 0, Int S);
 
@@ -290,7 +296,7 @@ Main/Integer.fbld:
     ?(a; b, Incr(Add(a.S, b)));
   };
 
-Referring to Main.fbld as a top level program is implicitly taken as
+Referring to foo as a top level program is implicitly taken as
 equivalent to the complete program:
 
   module StdLib {
@@ -313,6 +319,12 @@ equivalent to the complete program:
 
     struct IntPair(Int first, Int second);
   }
+
+In this case, implementations are encouraged to provide options for loading
+and checking only those modules needed for the task. For example, if the
+directory contained another file foo/Main2.fbld, and Main2 was not referenced
+as part of running the program Main, then running the program Main should not
+require foo/Main2.fbld to be loaded.
 
 Polymorphism
 ------------
