@@ -443,7 +443,7 @@ typedef struct {
 // which case the source and dest fields should be identical, rather than
 // setting one or the other to NULL.
 typedef struct {
-  FbldName* source;
+  FbldQRef* source;
   FbldName* dest;
 } FbldImportItem;
 

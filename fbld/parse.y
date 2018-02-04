@@ -420,12 +420,17 @@ import_item_list:
     }
   | import_item_list name ';' {
       FbldImportItem* item = FBLC_ALLOC(arena, FbldImportItem);
-      item->source = $2;
+      item->source = FBLC_ALLOC(arena, FbldQRef);
+      item->source->name = $2;
+      item->source->paramv = FBLC_ALLOC(arena, FbldQRefV);
+      item->source->mref = NULL;
+      FblcVectorInit(arena, *item->source->paramv);
+      item->source->r = NULL;
       item->dest = $2;
       FblcVectorAppend(arena, *$1, item);
       $$ = $1;
     }
-  | import_item_list name '=' name ';' {
+  | import_item_list name '=' qref ';' {
       FbldImportItem* item = FBLC_ALLOC(arena, FbldImportItem);
       item->source = $4;
       item->dest = $2;

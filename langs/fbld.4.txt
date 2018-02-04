@@ -244,10 +244,13 @@ different programs, different modules can be implemented in different files
 rather than require an entire program to be implemented in a single large
 file.
 
-To indicate that a module is defined in a different file, the body of
-the module should be omitted in the parent module. For example, assuming our
-example program was described in Main.fbld, the Integer module can be
-described in a file Main/Integer.fbld as follows:
+When implementing modules in different files, the program is specified using a
+directory name rather than a file name. When the program is specified this
+way, modules may be defined in different files. To indicate that a module is
+defined in a different file, the body of the module should be omitted in the
+parent module. For example, assuming our example program was described in
+Main.fbld, the Integer module can be described in a file Main/Integer.fbld as
+follows:
 
 Main.fbld:
   struct Unit();
@@ -266,15 +269,14 @@ Main/Integer.fbld:
     ?(a; b, Incr(Add(a.S, b)));
   };
 
-The top level fbld program can be specified either as a file, or as a
-directory. If specified as a file, the file is taken to be the definition of
-the root of the module hierarchy with an anonymous interface. No import '@'
-statements are permitted at the root of the module hierarchy.
+Note that this is only allowed when the top level program is specified as a
+directory, to make it clear that only the file or directory provided for the
+top level program is accessed, and not additional files outside of what was
+explicitly provided.
 
-If specified as a directory, the directory is taken to be the definition of
-the root of the module hierarchy with an anonymous interface and public
-child modules for each fbld file found within the directory. For example,
-consider the following directory and file organization:
+When specifying the top level program using a directory, the top level program
+contains public child modules for each fbld file found within that directory.
+For example, consider the following directory and file organization:
 
 foo/StdLib.fbld:
   struct Unit();
@@ -296,8 +298,8 @@ foo/Main/Integer.fbld:
     ?(a; b, Incr(Add(a.S, b)));
   };
 
-Referring to foo as a top level program is implicitly taken as
-equivalent to the complete program:
+Referring to foo as a top level program is implicitly taken as equivalent to
+the complete program:
 
   module StdLib {
     struct Unit();

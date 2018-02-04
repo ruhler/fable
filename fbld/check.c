@@ -221,16 +221,8 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
     FbldImport* import = env->prgm->importv->xs[i];
     for (size_t j = 0; j < import->itemv->size; ++j) {
       if (FbldNamesEqual(qref->name->name, import->itemv->xs[j]->dest->name)) {
-        FbldQRefV paramv = { .size = 0, .xs = NULL };
-        FbldQRef imported_qref = {
-          .name = import->itemv->xs[j]->source,
-          .paramv = &paramv,
-          .mref = import->mref,
-          .r = NULL,
-        };
-
-        Env* import_env = import->mref == NULL ? env->parent : env;
-        return ResolveQRef(ctx, import_env, &imported_qref);
+        assert(import->itemv->xs[j]->source->r != NULL);
+        return import->itemv->xs[j]->source->r;
       } 
     }
   }
@@ -1180,18 +1172,19 @@ static void CheckProtos(Context* ctx, Env* env)
     FbldImport* import = env->prgm->importv->xs[import_id];
     for (size_t i = 0; i < import->itemv->size; ++i) {
       DefineName(ctx, import->itemv->xs[i]->dest, &defined);
+      Env* import_env = env->parent;
+      if (import->mref != NULL) {
+        import_env = env;
 
-      FbldQRefV paramv = { .size = 0, .xs = NULL };
-
-      FbldQRef entity = {
-        .name = import->itemv->xs[i]->source,
-        .paramv = &paramv,
-        .mref = import->mref,
-        .r = NULL
-      };
-
-      Env* import_env = import->mref == NULL ? env->parent : env;
-      CheckPartialQRef(ctx, import_env, &entity);
+        // Append the import mref to the back of the source for checking the
+        // source.
+        FbldQRef* shead = import->itemv->xs[i]->source;
+        while (shead->mref != NULL) {
+          shead = shead->mref;
+        }
+        shead->mref = import->mref;
+      }
+      CheckPartialQRef(ctx, import_env, import->itemv->xs[i]->source);
     }
   }
 

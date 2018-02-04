@@ -1,10 +1,7 @@
 Fbld 4:
 * Implement new spec.
-  - Add support for qref import.
-  - Add support for modules with anonymous interfaces. 
   - Add support for priv and abst.
-  - Add support for reading modules from other files.
-  - Add support for parsing top level programs specified by directory.
+  - Add support for modules with anonymous interfaces. 
 * Port existing programs and tests to new spec.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program (deflate) taking advantage of the new features.
