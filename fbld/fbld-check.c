@@ -93,6 +93,6 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FbldProgram* prgm = FbldParseProgram(arena, path);
-  return (prgm != NULL && FbldCheckProgram(arena, prgm)) ? exit_success : exit_fail;
+  FbldProgram* prgm = FbldLoadProgram(arena, path);
+  return (prgm != NULL) ? exit_success : exit_fail;
 }
