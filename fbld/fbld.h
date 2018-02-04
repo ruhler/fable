@@ -803,7 +803,7 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 //   program or the fbld value is not well typed.
 FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value);
 
-// FbldLoadProgram --
+// FbldLoadCompileProgram --
 //   Load the top level program from the given file using the given arena for
 //   allocations. Performs parsing, type check, and compilation of the given
 //   entry point of the program.
@@ -825,5 +825,5 @@ FblcValue* FbldCompileValue(FblcArena* arena, FbldProgram* prgm, FbldValue* valu
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the program if there is no error.
-FbldLoaded* FbldLoadProgram(FblcArena* arena, FbldAccessLocV* accessv, const char* path, FbldQRef* entry);
+FbldLoaded* FbldLoadCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, const char* path, FbldQRef* entry);
 #endif // FBLD_H_

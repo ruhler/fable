@@ -4,8 +4,8 @@
 #include "fblc.h"
 #include "fbld.h"
 
-// FbldLoadProgram -- see documentation in fbld.h
-FbldLoaded* FbldLoadProgram(FblcArena* arena, FbldAccessLocV* accessv, const char* path, FbldQRef* entry)
+// FbldLoadCompileProgram -- see documentation in fbld.h
+FbldLoaded* FbldLoadCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, const char* path, FbldQRef* entry)
 {
   FbldProgram* prgm = FbldParseProgram(arena, path);
   if (prgm == NULL) {

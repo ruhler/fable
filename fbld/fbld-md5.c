@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 
   FbldAccessLocV accessv;
   FblcVectorInit(arena, accessv);
-  FbldLoaded* loaded = FbldLoadProgram(arena, &accessv, path, qentry);
+  FbldLoaded* loaded = FbldLoadCompileProgram(arena, &accessv, path, qentry);
   if (loaded == NULL) {
     return 1;
   }
