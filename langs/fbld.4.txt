@@ -2,8 +2,8 @@ The Fable of Damocrates
 =======================
 Richard Uhler <ruhler@degralder.com>
 
-Introduction
-------------
+1. Introduction
+---------------
 Damocrates is a computer programming language from the Fable collection. It
 builds on top of the Calvisus language, providing compile-time developer
 features for modularity and abstraction geared at reducing the cost of
@@ -23,8 +23,8 @@ contexts within a single program. These features allow a developer to easily
 leverage the existing work of others to assemble and reuse large scale
 programs.
 
-Modules
--------
+2. Modules
+----------
 A module is a collection of type, func, and proc entities that can be reused
 in different programs. The entities defined in a module exist in their own
 namespace to avoid name conflicts when combining modules together to form
@@ -32,8 +32,8 @@ programs. Entities defined within a module can be private to that module.
 Modules are organized hierarchically, with the option of specifying the
 implementation of a module in its own source file.
 
-Module Declaration
-~~~~~~~~~~~~~~~~~~
+2.1. Module Declaration
+-----------------------
 The following shows an example of a module declaring a unary integer type and
 operations:
 
@@ -50,8 +50,8 @@ The module declaration provides the name of the module and the collection of
 entities defined by the module: types "Unit" and "Int" and function "Add" in
 this case.
 
-Module Namespaces
-~~~~~~~~~~~~~~~~~
+2.2. Module Namespaces
+----------------------
 The braces of a module declaration introduce a new name space. Entities
 declared in a different namespace cannot be directly referred to. For example,
 the following program is incorrect, because the Unit type is not available
@@ -73,8 +73,8 @@ the namespace where IntPair is defined:
 There are three ways to refer to entities declared in another name space:
 import from parent, qualified references, and import from module.
 
-Import from Parent
-^^^^^^^^^^^^^^^^^^
+2.2.1. Import from Parent
+-------------------------
 A module can explicitly import entities into its own namespace from the
 namespace in which the module itself is defined. For example, this can be used
 to import the Unit type in the previous example into the Integer namespace so
@@ -127,8 +127,8 @@ be imported unless it has first been imported into the parent namespace.
 Entities imported this way must not recursively depend on the definition of
 this module.
 
-Qualified References
-^^^^^^^^^^^^^^^^^^^^
+2.2.2. Qualified References
+---------------------------
 A second way to reference entities from another namespace is to use qualified
 references. Qualified references allow you to access an entity declared within
 a module in your current namespace. The syntax is to put the name of the
@@ -150,8 +150,8 @@ Int type from the parent module when defining IntPair:
 
   struct IntPair(Int@Integer first, Int@Integer second);
 
-Import from Module
-^^^^^^^^^^^^^^^^^^
+2.2.3. Import from Module
+-------------------------
 Because it can be tedious to always be using qualified references to access
 entities from other modules, we also provide a way to import those entities
 directly into your namespace using an import statement. The import statement
@@ -179,8 +179,8 @@ As with the import '@' statement, entities can be renamed upon import:
   import Integer { MyInt=Int; };
   struct IntPair(MyInt first, MyInt second);
 
-Private Entities
-~~~~~~~~~~~~~~~~
+2.3. Private Entities
+---------------------
 By default, entities defined in a module are publicly available to other
 modules. The keyword 'priv' can be used before an entity to declare the entity
 is a private to a module. A private entity cannot be referenced using a
@@ -237,8 +237,8 @@ an abstract type:
     a.S;              # ERROR: field access not allowed on abstract type 'Int'
   };
 
-Module Hierarchy File Organization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2.4. Module Hierarchy File Organization
+---------------------------------------
 Modules are defined hierarchically. To facilitate reuse of modules in
 different programs, different modules can be implemented in different files
 rather than require an entire program to be implemented in a single large
@@ -328,8 +328,8 @@ directory contained another file foo/Main2.fbld, and Main2 was not referenced
 as part of running the program Main, then running the program Main should not
 require foo/Main2.fbld to be loaded.
 
-Polymorphism
-------------
+3. Polymorphism
+---------------
 Polymorphism makes it possible to reuse the same code in multiple different
 contexts in the same program. For example, with polymorphism it is possible to
 provide one implementation of a list type and associated functions that work
@@ -359,15 +359,15 @@ what it means for two elements to be equal:
           Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
   };
 
-Prototypes
-~~~~~~~~~~
+3.1. Prototypes
+---------------
 Prototypes are used to describe what kind of entity is required for an entity
 parameter. The prototypes provide enough information to use an entity without
 any other implementation details. The following forms of prototypes can be
 used in static parameter lists.
 
-Abstract Type
-.............
+3.1.1. Abstract Type
+--------------------
 The prototype for an abstract type is declared using the 'type' keyword. For
 example:
 
@@ -379,8 +379,8 @@ can refer to the type under the name T, but cannot directly construct values
 of the type, access any fields of the type, or condition based on objects of
 the type.
 
-Struct Type
-...........
+3.1.2. Struct Type
+------------------
 The prototype for a struct type is a struct type definition, with fields
 included because the fields of the struct type are part of its interface.
 
@@ -391,8 +391,8 @@ names. The user of the type can refer to the type under the name T, can
 use T as a constructor to construct values of the type, and can use field
 access to access members of the type.
 
-Union Type
-..........
+3.1.3. Union Type
+-----------------
 The prototype for a union type is a union type definition, with fields
 included because the fields of the union type are part of its interface.
 
@@ -403,8 +403,8 @@ The user of the type can refer to the type under the name T, can construct
 values of the type, access fields, and use conditions that select based on the
 tag of the type.
 
-Function
-........
+3.1.4. Function
+---------------
 The prototype for a function is a function defininition without the body
 of the function.
 
@@ -414,8 +414,8 @@ This prototype matches any function that has the same argument and return
 types; the argument names need not match. The user of the function can call
 the function under the name F.
 
-Process
-.......
+3.1.5. Process
+--------------
 The prototype for a process is a process definition without the body of the
 process.
 
@@ -425,8 +425,8 @@ This prototype matches any process that has the same port polarity and types,
 argument types and return type; the port and argument names need not match.
 The user of the process can call the process under the name P.
 
-Module
-......
+3.1.6. Module
+-------------
 To specify a prototype for a module, we introduce a new kind of entity called
 an interface. An interface describes everything a user of a module needs to
 know to use the interface.
@@ -477,8 +477,8 @@ interface, without the body of the module:
 This prototype matches any module that explicitly implements the interface
 IntegerI.
 
-Interface
-.........
+3.1.7. Interface
+----------------
 The prototype for an interface declaration is a full interface declaration.
 
   interf I {
@@ -489,8 +489,8 @@ The prototype for an interface declaration is a full interface declaration.
 A user can implement a module with the interface or access entities in a
 module through the interface.
 
-Declaring Polymorphic Entities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3.2. Declaring Polymorphic Entities
+-----------------------------------
   params ::= ['<' [proto [',' proto [...]]] '>'] ;
 
 To declare a polymorphic entity, supply a list of zero or more static
@@ -505,8 +505,8 @@ parameter prototypes and the body of the entity declaration.
 Note that the prototypes of arguments can themselves be prototypes for
 parameterized entities.
 
-Supplying Static Parameter Values
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3.3. Supplying Static Parameter Values
+--------------------------------------
 ['<' [qref [',' qref [...]]] '>']
 
 To use a parameterized entity, static parameter values must be provided. These
@@ -528,8 +528,8 @@ to another entity. For example, consider a monadic function:
 
     ... bind<Int, Bool, Either<String>, IsZero>(x) ...
 
-Entity Aliases
-~~~~~~~~~~~~~~
+3.4. Entity Aliases
+-------------------
 Reuse of parameterized entities provides another way to define an entity: by
 static application of parameters to some other polymorphic entity. To support
 this, we introduce another form of entity definition:
@@ -550,8 +550,8 @@ considered the same type as BitXY<Bit4, Bit4>. Outside the namespace context
 where the alias occurs, the entity will be treated as if it was a new
 declaration.
 
-Syntax Reference
-----------------
+4. Syntax Reference
+-------------------
   type_proto ::= 'type' tname params ;
   struct_proto ::= 'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ;
   union_proto ::= 'union' tname params '(' qref fname [',' qref fname [...]] ')' ;
@@ -608,8 +608,8 @@ Syntax Reference
   tname ::= ... (* as in fblc *)
   vname ::= ... (* as in fblc *)
 
-Style Suggestions
------------------
+A.1 Style Suggestions
+---------------------
 * Capitalize entities, including types, functions, procs, interfaces, and
   modules.
 * Lowercase field names, including for structs, unions, function and proc
@@ -621,8 +621,8 @@ Style Suggestions
 
   But "0" before "1" for bit, decimal, byte, hex, etc?
 
-Changes from Fbld 3
--------------------
+A.2. Changes from Fbld 3
+------------------------
 * Instead of <[type...] ; [module...]> for params, we have <[proto...]>.
 Which is surely an improvement in simplicity and generality.
 

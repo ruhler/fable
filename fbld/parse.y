@@ -106,7 +106,7 @@
 
 %type <name> keyword name
 %type <idv> id_list non_empty_id_list
-%type <qref> qref
+%type <qref> qref module_defn_iref
 %type <qrefv> qref_list sargs
 %type <argv> arg_list non_empty_arg_list
 %type <expr> expr stmt
@@ -643,9 +643,18 @@ module_decl: "module" name params '(' qref ')' {
         }
      ;
 
-module_defn: module_decl '{' defn_list '}' {
-      FbldModule* module = (FbldModule*)$1;
-      module->body = $3;
+module_defn_iref: 
+     %empty      { $$ = NULL; }
+  | '(' qref ')' { $$ = $2; }
+  ;
+
+module_defn: "module" name params module_defn_iref '{' defn_list '}' {
+      FbldModule* module = FBLC_ALLOC(arena, FbldModule);
+      module->_base.tag = FBLD_MODULE_DECL;
+      module->_base.name = $2;
+      module->_base.paramv = $3;
+      module->iref = $4;
+      module->body = $6;
       $$ = &module->_base;
     }
   ;

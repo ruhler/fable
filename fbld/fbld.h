@@ -605,7 +605,8 @@ struct FbldInterf {
 // Fields:
 //   name - The name of the module being defined.
 //   params - The polymorphic type and module parameters of the module.
-//   iref - The interface the module implements.
+//   iref - The interface the module implements. NULL if the module has an
+//          anonymous interface.
 //   importv - The import statements within the module definition.
 //   declv - The declarations within the module definition.
 typedef struct {

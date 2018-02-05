@@ -193,25 +193,44 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
 
     FbldModule* module = (FbldModule*)qref->mref->r->decl;
 
-    // We should have already checked the module interface is correct, right?
-    assert(module->iref->r != NULL);
-    assert(module->iref->r->decl != NULL);
-    assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
-    FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
+    if (module->iref != NULL) {
+      // We should have already checked the module interface is correct, right?
+      assert(module->iref->r != NULL);
+      assert(module->iref->r->decl != NULL);
+      assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
+      FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
 
-    // Look for the entity declaration in the interface.
-    for (size_t i = 0; i < interf->body->declv->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, interf->body->declv->xs[i]->name->name)) {
+      // Look for the entity declaration in the interface.
+      for (size_t i = 0; i < interf->body->declv->size; ++i) {
+        if (FbldNamesEqual(qref->name->name, interf->body->declv->xs[i]->name->name)) {
+          FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
+          r->decl = interf->body->declv->xs[i];
+          r->mref = qref->mref;
+          r->param = false;
+          r->interf = interf;
+          return r;
+        }
+      }
+
+      ReportError("%s not found in interface for %s\n", &ctx->error,
+          qref->name->loc, qref->name->name, qref->mref->name->name);
+      return NULL;
+    }
+
+    // The module's interface is anonymous. Look inside the module itself for
+    // the matching entity.
+    for (size_t i = 0; i < module->body->declv->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, module->body->declv->xs[i]->name->name)) {
         FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
-        r->decl = interf->body->declv->xs[i];
+        r->decl = module->body->declv->xs[i];
         r->mref = qref->mref;
         r->param = false;
-        r->interf = interf;
+        r->interf = NULL;
         return r;
       }
     }
 
-    ReportError("%s not found in interface for %s\n", &ctx->error,
+    ReportError("%s not found in module %s\n", &ctx->error,
         qref->name->loc, qref->name->name, qref->mref->name->name);
     return NULL;
   }
@@ -464,31 +483,33 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     return false;
   }
 
-  // Verify the module has everything it should according to its interface.
-  assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
-  FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
+  if (module->iref != NULL) {
+    // Verify the module has everything it should according to its interface.
+    assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
+    FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
 
-  for (size_t i = 0; i < interf->body->declv->size; ++i) {
-    FbldDecl* decl_i = interf->body->declv->xs[i];
-    for (size_t m = 0; m < module->body->declv->size; ++m) {
-      FbldDecl* decl_m = module->body->declv->xs[m];
-      if (FbldNamesEqual(decl_i->name->name, decl_m->name->name)) {
-        // Create a src reference that is as if we had accessed the module's
-        // declaration through its interface, rather than directly, with
-        // static parameters that match the parameters in the module.
-        // TODO: Don't leak src like this.
-        FbldQRef* src = DeclQRef(ctx, mref, interf, decl_i);
-        src->r->param = false;
-        CheckDeclsMatch(ctx, src, decl_i, decl_m);
+    for (size_t i = 0; i < interf->body->declv->size; ++i) {
+      FbldDecl* decl_i = interf->body->declv->xs[i];
+      for (size_t m = 0; m < module->body->declv->size; ++m) {
+        FbldDecl* decl_m = module->body->declv->xs[m];
+        if (FbldNamesEqual(decl_i->name->name, decl_m->name->name)) {
+          // Create a src reference that is as if we had accessed the module's
+          // declaration through its interface, rather than directly, with
+          // static parameters that match the parameters in the module.
+          // TODO: Don't leak src like this.
+          FbldQRef* src = DeclQRef(ctx, mref, interf, decl_i);
+          src->r->param = false;
+          CheckDeclsMatch(ctx, src, decl_i, decl_m);
 
-        // Set type_i to NULL to indicate we found the matching type.
-        decl_i = NULL;
-        break;
+          // Set type_i to NULL to indicate we found the matching type.
+          decl_i = NULL;
+          break;
+        }
       }
-    }
 
-    if (decl_i != NULL) {
-      ReportError("No implementation found for %s from the interface\n", &ctx->error, module->_base.name->loc, decl_i->name->name);
+      if (decl_i != NULL) {
+        ReportError("No implementation found for %s from the interface\n", &ctx->error, module->_base.name->loc, decl_i->name->name);
+      }
     }
   }
 
@@ -513,13 +534,15 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
 //   formed.
 static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
 {
-  if (!CheckQRef(ctx, env, module->iref)) {
-    return false;
-  }
+  if (module->iref != NULL) {
+    if (!CheckQRef(ctx, env, module->iref)) {
+      return false;
+    }
 
-  if (module->iref->r->decl->tag != FBLD_INTERF_DECL) {
-    ReportError("%s does not refer to an interface\n", &ctx->error, module->iref->name->loc, module->iref->name->name);
-    return false;
+    if (module->iref->r->decl->tag != FBLD_INTERF_DECL) {
+      ReportError("%s does not refer to an interface\n", &ctx->error, module->iref->name->loc, module->iref->name->name);
+      return false;
+    }
   }
   return true;
 }
