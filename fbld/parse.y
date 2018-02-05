@@ -63,6 +63,7 @@
   FbldProgram* program;
   FbldValue* value;
   FbldValueV* valuev;
+  FbldAccess access;
 }
 
 %{
@@ -103,6 +104,8 @@
 %token <name> FUNC "func"
 %token <name> PROC "proc"
 %token <name> IMPORT "import"
+%token <name> PRIV "priv"
+%token <name> ABST "abst"
 
 %type <name> keyword name
 %type <idv> id_list non_empty_id_list
@@ -125,6 +128,7 @@
 %type <program> decl_list defn_list
 %type <value> value
 %type <valuev> value_list non_empty_value_list
+%type <access> access
 
 %%
 
@@ -482,6 +486,7 @@ abstract_type_decl: "type" name params {
       type->_base.tag = FBLD_TYPE_DECL;
       type->_base.name = $2;
       type->_base.paramv = $3;
+      type->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
       type->kind = FBLD_ABSTRACT_KIND;
       type->fieldv = NULL;
       $$ = &type->_base;
@@ -493,6 +498,7 @@ struct_decl: "struct" name params '(' arg_list ')' {
       type->_base.tag = FBLD_TYPE_DECL;
       type->_base.name = $2;
       type->_base.paramv = $3;
+      type->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
       type->kind = FBLD_STRUCT_KIND;
       type->fieldv = $5;
       $$ = &type->_base;
@@ -504,6 +510,7 @@ union_decl: "union" name params '(' non_empty_arg_list ')' {
       type->_base.tag = FBLD_TYPE_DECL;
       type->_base.name = $2;
       type->_base.paramv = $3;
+      type->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
       type->kind = FBLD_UNION_KIND;
       type->fieldv = $5;
       $$ = &type->_base;
@@ -512,13 +519,29 @@ union_decl: "union" name params '(' non_empty_arg_list ')' {
 
 type_decl: abstract_type_decl | struct_decl | union_decl ;
 
-type_defn: struct_decl | union_decl ;
+access:
+   %empty { $$ = FBLD_PUBLIC_ACCESS; }
+ | "priv" { $$ = FBLD_PRIVATE_ACCESS; }
+ | "abst" { $$ = FBLD_ABSTRACT_ACCESS; }
+ ;
+
+type_defn:
+   access struct_decl { 
+     $$ = $2;
+     $$->access = $1;
+   }
+ | access union_decl {
+     $$ = $2;
+     $$->access = $1;
+   }
+ ;
 
 func_decl: "func" name params '(' arg_list ';' qref ')' {
       FbldFunc* func = FBLC_ALLOC(arena, FbldFunc);
       func->_base.tag = FBLD_FUNC_DECL;
       func->_base.name = $2;
       func->_base.paramv = $3;
+      func->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
       func->argv = $5;
       func->return_type = $7;
       func->body = NULL;
@@ -526,9 +549,10 @@ func_decl: "func" name params '(' arg_list ';' qref ')' {
     }
   ;
 
-func_defn: func_decl expr {
-      FbldFunc* func = (FbldFunc*)$1;
-      func->body = $2;
+func_defn: access func_decl expr {
+      $2->access = $1;
+      FbldFunc* func = (FbldFunc*)$2;
+      func->body = $3;
       $$ = &func->_base;
     }
   ;
@@ -567,6 +591,7 @@ proc_decl: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
       proc->_base.tag = FBLD_PROC_DECL;
       proc->_base.name = $2;
       proc->_base.paramv = $3;
+      proc->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
       proc->portv = $5;
       proc->argv = $7;
       proc->return_type = $9;
@@ -575,9 +600,10 @@ proc_decl: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
     }
   ;
 
-proc_defn: proc_decl actn {
-      FbldProc* proc = (FbldProc*)$1;
-      proc->body = $2;
+proc_defn: access proc_decl actn {
+      $2->access = $1;
+      FbldProc* proc = (FbldProc*)$2;
+      proc->body = $3;
       $$ = &proc->_base;
     }
   ;
@@ -607,6 +633,7 @@ interf: "interf" name params '{' decl_list '}' {
           interf->_base.tag = FBLD_INTERF_DECL;
           interf->_base.name = $2;
           interf->_base.paramv = $3;
+          interf->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
           interf->body = $5;
           $$ = &interf->_base;
         }
@@ -637,6 +664,7 @@ module_decl: "module" name params '(' qref ')' {
           module->_base.tag = FBLD_MODULE_DECL;
           module->_base.name = $2;
           module->_base.paramv = $3;
+          module->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
           module->iref = $5;
           module->body = NULL;
           $$ = &module->_base;
@@ -648,13 +676,14 @@ module_defn_iref:
   | '(' qref ')' { $$ = $2; }
   ;
 
-module_defn: "module" name params module_defn_iref '{' defn_list '}' {
+module_defn: access "module" name params module_defn_iref '{' defn_list '}' {
       FbldModule* module = FBLC_ALLOC(arena, FbldModule);
       module->_base.tag = FBLD_MODULE_DECL;
-      module->_base.name = $2;
-      module->_base.paramv = $3;
-      module->iref = $4;
-      module->body = $6;
+      module->_base.name = $3;
+      module->_base.paramv = $4;
+      module->_base.access = $1;
+      module->iref = $5;
+      module->body = $7;
       $$ = &module->_base;
     }
   ;
@@ -847,7 +876,9 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
     {.keyword = "union", .symbol = UNION},
     {.keyword = "func", .symbol = FUNC},
     {.keyword = "proc", .symbol = PROC},
-    {.keyword = "import", .symbol = IMPORT}
+    {.keyword = "import", .symbol = IMPORT},
+    {.keyword = "priv", .symbol = PRIV},
+    {.keyword = "abst", .symbol = ABST}
   };
   size_t num_keywords = sizeof(keywords)/(sizeof(keywords[0]));
   for (size_t i = 0; i < num_keywords; ++i) {

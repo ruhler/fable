@@ -605,6 +605,7 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
       proc_d->portv = FBLC_ALLOC(arena, FbldPortV);
       FblcVectorInit(arena, *proc_d->portv);
       proc_d->_base.paramv = func_d->_base.paramv;
+      proc_d->_base.access = func_d->_base.access;
       proc_d->argv = func_d->argv;
       proc_d->return_type = func_d->return_type;
       FbldEvalActn* body = FBLC_ALLOC(arena, FbldEvalActn);

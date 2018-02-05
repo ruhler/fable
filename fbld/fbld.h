@@ -502,6 +502,15 @@ typedef enum {
   FBLD_MODULE_DECL
 } FbldDeclTag;
 
+// FbldAccess --
+//   Enum used to distinguish among public, abstract, and private entity
+//   access.
+typedef enum {
+  FBLD_PUBLIC_ACCESS,
+  FBLD_ABSTRACT_ACCESS,
+  FBLD_PRIVATE_ACCESS
+} FbldAccess;
+
 // FbldDecl --
 //   Common base type for the following fbld decl types. The tag can be
 //   used to determine what kind of decl this is to get access to additional
@@ -511,10 +520,12 @@ typedef enum {
 //   tag - the kind of declaration.
 //   name - the name of the declaration.
 //   paramv - the static parameters of the declaration.
+//   access - the access mode of the declaration.
 struct FbldDecl {
   FbldDeclTag tag;
   FbldName* name;
   FbldDeclV* paramv;
+  FbldAccess access;
 };
 
 // FbldDeclV --
