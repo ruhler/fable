@@ -57,6 +57,8 @@ static bool ParseSubModules(FblcArena* arena, const char* dir, FbldProgram* prgm
 
         module->body = FbldParseProgram(arena, file);
         if (module->body == NULL) {
+          FbldReportError("Error parsing implementation of module %s\n",
+              module->_base.name->loc, module->_base.name->name);
           return false;
         }
       }

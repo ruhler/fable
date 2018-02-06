@@ -1,5 +1,5 @@
 
-import @ { StdLib; UBNat@UBNat; Primes; };
+import @ { StdLib; UBNat = UBNat@UBNat; Primes; };
 import StdLib { Unit; };
 import Bool@StdLib { Bool; };
 import List@StdLib { S; P; };

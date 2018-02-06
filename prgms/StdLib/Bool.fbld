@@ -28,15 +28,9 @@ interf Eq<type T> {
   func Ne(T a, T b; Bool);
 };
 
-class EqBool(Eq<Bool>) {
+module EqBool(Eq<Bool>) {
   import @ { Bool; Not; };
   func Eq(Bool a, Bool b; Bool) ?(a; b, Not(b));
   func Ne(Bool a, Bool b; Bool) ?(a; Not(b), b);
 };
-
-interf Cmp<type T> {
-  func Lt(T a, T b; Bool);
-  func Gt(T a, T b; Bool);
-  class Eq(
-  
 

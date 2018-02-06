@@ -125,7 +125,7 @@
 %type <decl> type_decl type_defn abstract_type_decl struct_decl union_decl
 %type <decl> func_decl func_defn proc_decl proc_defn
 %type <decl> interf module_decl module_defn decl defn
-%type <program> decl_list defn_list
+%type <program> decl_list defn_list module_body
 %type <value> value
 %type <valuev> value_list non_empty_value_list
 %type <access> access
@@ -676,14 +676,19 @@ module_defn_iref:
   | '(' qref ')' { $$ = $2; }
   ;
 
-module_defn: access "module" name params module_defn_iref '{' defn_list '}' {
+module_body:
+     %empty           { $$ = NULL; }
+  | '{' defn_list '}' { $$ = $2; }
+  ;
+
+module_defn: access "module" name params module_defn_iref module_body {
       FbldModule* module = FBLC_ALLOC(arena, FbldModule);
       module->_base.tag = FBLD_MODULE_DECL;
       module->_base.name = $3;
       module->_base.paramv = $4;
       module->_base.access = $1;
       module->iref = $5;
-      module->body = $7;
+      module->body = $6;
       $$ = &module->_base;
     }
   ;

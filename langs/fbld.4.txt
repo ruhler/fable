@@ -645,3 +645,11 @@ I approve these changes as improving the overall simplicity and generality of
 the language. Parameterized protos, partial application, and protos = 'qref'
 do add complexity, but they do so in a simple way and provide important
 capabilities.
+
+A.3. TODO
+---------
+* Can you say something like:
+    import @ { Bool@StdLib; }
+  And have that automatically mean:
+    import @ { Bool=Bool@StdLib;}
+  
