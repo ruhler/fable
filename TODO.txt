@@ -1,8 +1,5 @@
 Fbld 4:
 * Implement new spec as needed for tests to pass.
- - Fix file names when parsing from directory, and better report why we are
-   trying to load a particular top level module (aka, give a location of the
-   reference to that module with a meaningful file name).
 * Increase test coverage for spec.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program (deflate) taking advantage of the new features.

@@ -924,9 +924,14 @@ FbldProgram* FbldParseProgram(FblcArena* arena, const char* filename)
     return NULL;
   }
 
+  // Make a copy of the filename for locations so that the user doesn't have
+  // to worry about keeping it alive for the duration of the program lifetime.
+  char* source = arena->alloc(arena, sizeof(char) * (strlen(filename) + 1));
+  strcpy(source, filename);
+
   Lex lex = {
     .c = START_PROGRAM,
-    .loc = { .source = filename, .line = 1, .col = 0 },
+    .loc = { .source = source, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
   };

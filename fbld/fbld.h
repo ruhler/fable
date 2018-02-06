@@ -662,6 +662,11 @@ struct FbldValue {
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned program if there is no error.
+//
+// Note:
+//   A copy of the filename will be made for use in locations. The user need
+//   not ensure that filename remains valid for the duration of the lifetime
+//   of the program.
 FbldProgram* FbldParseProgram(FblcArena* arena, const char* filename);
 
 // FbldParseValueFromString --
