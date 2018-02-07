@@ -31,10 +31,10 @@ priv func Md5TestFailureF(Md5TestFailure a ; TestFailure) {
 };
 
 proc Test( ; ; S<TestFailure>) {
-  S<Md5TestFailure> md5 = Test@Md5TestM(;);
+  S<Md5TestFailure> md5 = Test@Md5Test(;);
   $(Append<TestFailure>(
       Append<TestFailure>(
-        MapS<UBNatTestFailure, TestFailure, UBNatTestFailureF>(Test@UBNatTestM()),
-        MapS<PrimesTestFailure, TestFailure, PrimesTestFailureF>(Test@PrimesTestM())),
+        MapS<UBNatTestFailure, TestFailure, UBNatTestFailureF>(Test@UBNatTest()),
+        MapS<PrimesTestFailure, TestFailure, PrimesTestFailureF>(Test@PrimesTest())),
       MapS<Md5TestFailure, TestFailure, Md5TestFailureF>(md5)));
 };

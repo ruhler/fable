@@ -1,5 +1,5 @@
 
-import @ { StdLib; BitM; Bit8M; Bit32M; Bit64M; HexM; };
+import @ { StdLib; Bits; };
 
 module Md5;
 module Test;

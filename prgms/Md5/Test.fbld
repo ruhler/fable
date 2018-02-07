@@ -1,10 +1,9 @@
 
-import @ { StdLib; Bit8M; HexM; ListM; MaybeM; Md5M; };
-import StdLib { Unit; Bool; };
-import Bit8M { Bit8; H2; };
-import HexM { Hex; 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; a; b; c; d; e; f; };
-import ListM { P; S; };
-import MaybeM { Maybe; };
+import @ { StdLib; Bits; Md5M = Md5; };
+import StdLib { Unit; Bool; Maybe; };
+import Bit8@Bits { Bit8; H2; };
+import Hex@Bits { Hex; 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; a; b; c; d; e; f; };
+import List@StdLib { P; S; };
 import Md5M { Md5Hash; Md5; Eq; };
 
 union TestName(

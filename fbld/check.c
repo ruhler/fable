@@ -1241,7 +1241,11 @@ static void CheckProtos(Context* ctx, Env* env)
 static void CheckBodies(Context* ctx, Env* env)
 {
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
-    FbldDecl* decl = env->prgm->declv->xs[decl_id];
+    // TODO: For now, go over declarations in reverse order to work around a bug
+    // in dependencies between declarations that shows up in the test cases.
+    // This dependency bug should be fixed, then stop doing things backwards.
+    // FbldDecl* decl = env->prgm->declv->xs[decl_id];
+    FbldDecl* decl = env->prgm->declv->xs[env->prgm->declv->size - 1 - decl_id];
 
     DeclList dl = {
       .decl = decl,

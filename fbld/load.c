@@ -114,6 +114,8 @@ static bool ParseTopModule(FblcArena* arena, const char* dir, FbldQRef* qref, Fb
 
   FbldProgram* body = FbldParseProgram(arena, file);
   if (body == NULL) {
+    FbldReportError("Unable to load implementation of module %s\n",
+        qref->name->loc, qref->name->name);
     return false;
   }
 
