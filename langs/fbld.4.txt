@@ -237,7 +237,14 @@ an abstract type:
     a.S;              # ERROR: field access not allowed on abstract type 'Int'
   };
 
-2.4. Module Hierarchy File Organization
+2.4. Module Dependencies
+------------------------
+To maintain the integrity and meaning of a module, a module declaration
+must not depend on itself recursively through external entities. It is not
+allowed to import @ into a module an entity that comes from or depends on an
+entity defined within the module.
+
+2.5. Module Hierarchy File Organization
 ---------------------------------------
 Modules are defined hierarchically. To facilitate reuse of modules in
 different programs, different modules can be implemented in different files
@@ -652,4 +659,14 @@ A.3. TODO
     import @ { Bool@StdLib; }
   And have that automatically mean:
     import @ { Bool=Bool@StdLib;}
+* Do you need to import @ your module's parameters?
+  That is, can you say:
+   module<type Foo> M {
+     func foo( ; Foo);
+   }
+  Or does it need to be:
+   module<type Foo> M {
+     import @ { Foo; };
+     func foo( ; Foo);
+   }
   
