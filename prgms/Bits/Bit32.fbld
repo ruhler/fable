@@ -1,0 +1,62 @@
+
+import @ { Bit8M=Bit8; Bit=Bit@Bit; Bit1; BitNI; BoolM=Bool@StdLib; };
+import Bit8M { Bit8; };
+
+# Bit8 3 is the most significant byte.
+# Bit8 0 is the least significant byte.
+struct Bit32(Bit8 3, Bit8 2, Bit8 1, Bit8 0);
+
+module BitN(BitNI<Bit32>) {
+  import @ { Bit32; B=BitN@Bit8M; Bit1; Bit; BoolM; };
+  import BoolM { And; Bool; };
+
+  func not(Bit32 a ; Bit32) {
+    Bit32(not@B(a.3), not@B(a.2), not@B(a.1), not@B(a.0));
+  };
+
+  func and(Bit32 a, Bit32 b; Bit32) {
+    Bit32(and@B(a.3, b.3), and@B(a.2, b.2), and@B(a.1, b.1), and@B(a.0, b.0));
+  };
+
+  func or(Bit32 a, Bit32 b; Bit32) {
+    Bit32(or@B(a.3, b.3), or@B(a.2, b.2), or@B(a.1, b.1), or@B(a.0, b.0));
+  };
+
+  func xor(Bit32 a, Bit32 b; Bit32) {
+    Bit32(xor@B(a.3, b.3), xor@B(a.2, b.2), xor@B(a.1, b.1), xor@B(a.0, b.0));
+  };
+
+  func add(Bit32 a, Bit32 b; Bit32) fulladd(a, b, zero@Bit1M()).z;
+
+  func zero(; Bit32) Bit32(zero@B(), zero@B(), zero@B(), zero@B());
+
+  func iszero(Bit32 a; Bool) {
+     And(And(iszero@B(a.3), iszero@B(a.2)),
+         And(iszero@B(a.1), iszero@B(a.0)));
+  };
+
+  func eq(Bit32 a, Bit32 b; Bool) {
+     And(And(eq@B(a.3, b.3), eq@B(a.2, b.2)),
+         And(eq@B(a.1, b.1), eq@B(a.0, b.0)));
+  };
+
+  func clshift(Bit32 a; Bit32) lshift(a, a.3.7).z;
+
+  struct Result(Bit32 z, Bit cout);
+
+  func fulladd(Bit32 a, Bit32 b, Bit cin; Result) {
+    Result@B r0 = fulladd@B(a.0, b.0, cin);
+    Result@B r1 = fulladd@B(a.1, b.1, r0.cout);
+    Result@B r2 = fulladd@B(a.2, b.2, r1.cout);
+    Result@B r3 = fulladd@B(a.3, b.3, r2.cout);
+    Result(Bit32(r3.z, r2.z, r1.z, r0.z), r3.cout);
+  };
+
+  func lshift(Bit32 a, Bit cin; Result) {
+    Result@B r0 = lshift@B(a.0, cin);
+    Result@B r1 = lshift@B(a.1, r0.cout);
+    Result@B r2 = lshift@B(a.2, r1.cout);
+    Result@B r3 = lshift@B(a.3, r2.cout);
+    Result(Bit32(r3.z, r2.z, r1.z, r0.z), r3.cout);
+  };
+};

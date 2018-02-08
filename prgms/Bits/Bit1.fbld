@@ -1,0 +1,24 @@
+
+import @ { Bit=Bit@Bit; BitM; StdLib; };
+import StdLib { Unit; BoolM=Bool; };
+import BoolM { Bool; True; False; };
+
+func not(Bit a ; Bit) ?(a; Bit:1(Unit()), Bit:0(Unit()));
+func and(Bit a, Bit b; Bit) ?(a; a, ?(b; b, a));
+func or(Bit a, Bit b; Bit) ?(a; ?(b; a, b), a);
+func xor(Bit a, Bit b; Bit) ?(a; b, not(b));
+func add(Bit a, Bit b; Bit) fulladd(a, b, Bit:0(Unit())).z;
+func zero(; Bit) Bit:0(Unit());
+func iszero(Bit a; Bool) ?(a; True(), False());
+func eq(Bit a, Bit b; Bool) {
+  ?(a; ?(b; True(), False()),
+       ?(b; False(), True()));
+};
+func clshift(Bit a; Bit) a;
+
+struct Result(Bit z, Bit cout);
+func lshift(Bit a, Bit cin; Result) Result(cin, a);
+
+func fulladd(Bit a, Bit b, Bit cin; Result) {
+  ?(xor(a, b); Result(cin, a), Result(not(cin), cin));
+};

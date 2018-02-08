@@ -618,6 +618,7 @@ static bool CheckType(Context* ctx, Env* env, FbldQRef* qref)
 
   if (qref->r->decl->tag != FBLD_TYPE_DECL) {
     ReportError("%s does not refer to a type\n", &ctx->error, qref->name->loc, qref->name->name);
+    ReportError("(%s defined here)\n", &ctx->error, qref->r->decl->name->loc, qref->name->name);
     return false;
   }
   return true;

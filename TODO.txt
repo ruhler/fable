@@ -1,5 +1,7 @@
 Fbld 4:
 * Implement new spec as needed for tests to pass.
+ - Fix order dependency issue in check.
+ - Add support for import @ { foo@bar; };
 * Increase test coverage for spec.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program (deflate) taking advantage of the new features.

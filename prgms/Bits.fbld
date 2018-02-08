@@ -2,3 +2,28 @@
 import @ { StdLib; };
 
 module Hex;
+module Bit;
+module Bit8;
+module Bit1(BitNI<Bit@Bit>);
+module Bit32;
+module Bit64;
+
+# TODO: Put the body of this into its own file once that is supported.
+interf BitNI<type T> {
+  import @ { Bit=Bit@Bit; Bool=Bool@Bool@StdLib; };
+
+  func not(T a ; T);        # !a
+  func and(T a, T b; T);    # a & b
+  func or(T a, T b; T);     # a | b
+  func xor(T a, T b; T);    # a ^ b
+  func add(T a, T b; T);    # a + b
+  func zero(; T);           # 0
+  func iszero(T a; Bool);   # a == 0
+  func eq(T a, T b; Bool);  # a == b
+  func clshift(T a; T);     # circular left shift by 1
+
+  struct Result(T z, Bit cout);
+  func fulladd(T a, T b, Bit cin; Result);
+  func lshift(T a, Bit cin; Result); # left shift by 1
+};
+

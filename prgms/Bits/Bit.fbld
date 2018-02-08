@@ -1,0 +1,5 @@
+
+import @ { Unit=Unit@StdLib; };
+
+union Bit(Unit 0, Unit 1);
+
