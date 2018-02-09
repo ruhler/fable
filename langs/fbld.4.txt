@@ -150,6 +150,14 @@ Int type from the parent module when defining IntPair:
 
   struct IntPair(Int@Integer first, Int@Integer second);
 
+Qualified references can be used in the source part of an import statement.
+For example:
+
+  import @ { Apple@Fruit; B=Banana@Fruit; };
+
+This imports the entity Apple@Fruit under the name Apple and Banana@Fruit
+under the name B in the local namespace.
+
 2.2.3. Import from Module
 -------------------------
 Because it can be tedious to always be using qualified references to access
@@ -655,13 +663,6 @@ capabilities.
 
 A.3. TODO
 ---------
-* Can you say something like:
-    import @ { Bool@StdLib; }
-  And have that automatically mean:
-    import @ { Bool=Bool@StdLib;}
-
-  Yes. This comes up a lot. It makes sense: import the entity locally.
-
 * Do you need to import @ your module's parameters?
   That is, can you say:
    module<type Foo> M {

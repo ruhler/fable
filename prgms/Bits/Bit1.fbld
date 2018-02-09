@@ -1,5 +1,5 @@
 
-import @ { Bit=Bit@Bit; BitM; StdLib; };
+import @ { Bit@Bit; BitM; StdLib; };
 import StdLib { Unit; BoolM=Bool; };
 import BoolM { Bool; True; False; };
 

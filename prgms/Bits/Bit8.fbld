@@ -1,5 +1,5 @@
 
-import @ { Bit=Bit@Bit; Bit1; BitNI; Hex=Hex@Hex; StdLib; };
+import @ { Bit@Bit; Bit1; BitNI; Hex@Hex; StdLib; };
 import StdLib { Unit; BoolM=Bool; };
 
 # Bit 7 is the most significant bit.

@@ -422,15 +422,10 @@ import_item_list:
       $$ = FBLC_ALLOC(arena, FbldImportItemV);
       FblcVectorInit(arena, *$$);
     }
-  | import_item_list name ';' {
+  | import_item_list qref ';' {
       FbldImportItem* item = FBLC_ALLOC(arena, FbldImportItem);
-      item->source = FBLC_ALLOC(arena, FbldQRef);
-      item->source->name = $2;
-      item->source->paramv = FBLC_ALLOC(arena, FbldQRefV);
-      item->source->mref = NULL;
-      FblcVectorInit(arena, *item->source->paramv);
-      item->source->r = NULL;
-      item->dest = $2;
+      item->source = $2;
+      item->dest = $2->name;
       FblcVectorAppend(arena, *$1, item);
       $$ = $1;
     }

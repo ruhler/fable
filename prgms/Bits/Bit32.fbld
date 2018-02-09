@@ -1,5 +1,5 @@
 
-import @ { Bit8M=Bit8; Bit=Bit@Bit; Bit1; BitNI; BoolM=Bool@StdLib; };
+import @ { Bit8M=Bit8; Bit@Bit; Bit1; BitNI; BoolM=Bool@StdLib; };
 import Bit8M { Bit8; };
 
 # Bit8 3 is the most significant byte.
