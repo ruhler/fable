@@ -29,6 +29,6 @@ set prg {
   };
 }
 
-fbld-test $prg "main" {} {
+skip fbld-test $prg "main" {} {
   return Unit@subA@A()
 }
