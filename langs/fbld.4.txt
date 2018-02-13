@@ -515,10 +515,16 @@ All kinds of prototypes are allowed, including abstract type,
 struct, union, func, proc, interf, and module.
 
 The prototype introduces an entity into scope, visible to all later static
-parameter prototypes and the body of the entity declaration.
+parameter prototypes and the body of the entity declaration. Parameter
+entities must be explicitly imported into module and interface name spaces.
+For example:
 
-Note that the prototypes of arguments can themselves be prototypes for
-parameterized entities.
+  module MaybeEq<type T>(Eq(Maybe<T>)) {
+    import @ { Maybe; T; };
+    ...
+  };
+
+Note that the prototypes of arguments can themselves be polymorphic.
 
 3.3. Supplying Static Parameter Values
 --------------------------------------
@@ -663,25 +669,6 @@ capabilities.
 
 A.3. TODO
 ---------
-* Do you need to import @ your module's parameters?
-  That is, can you say:
-   module<type Foo> M {
-     func foo( ; Foo);
-   }
-
-  Or does it need to be:
-   module<type Foo> M {
-     import @ { Foo; };
-     func foo( ; Foo);
-   }
-
-  The second makes more sense if you think about '{' as introducing the name
-  space, and is nicer for when modules are implemented in separate files,
-  where the explicit import is needed to know that Foo comes from outside the
-  file. But it would mean having this funny intermediate namespace and seems
-  like it would be annoying to always have to import the parameters every
-  time.
-
 * Importing entities Foo@Foo and Bar@Foo from a parent requires name
   shuffling:
   import @ { FooM = Foo; };
@@ -694,4 +681,3 @@ A.3. TODO
 * Have some way to put interfaces in separate files, not just modules.
   But now it is more awkward that we don't see parameter types in the file
   with the body of the interface.
-  

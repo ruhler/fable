@@ -8,6 +8,7 @@ set prg {
     struct Unit();
 
     interf Make<type T> {
+      import @ { T; };
       func make( ; T);
     };
 

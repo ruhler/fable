@@ -11,13 +11,6 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// DeclList
-//   A linked list of declarations.
-typedef struct DeclList {
-  FbldDecl* decl;
-  struct DeclList* next;
-} DeclList;
-
 // Env --
 //   An environment of declarations.
 //
@@ -29,14 +22,15 @@ typedef struct DeclList {
 //   interf - The interface declaration if the current environment is in an
 //            interface. NULL otherwise.
 //   prgm - The body of the current module/interf.
-//   svars - Stack of declarations whose static parameters are
-//           visible in the current context.
+//   decl - The declaration whose static parameters are visible in the current
+//          context. NULL if there is no declaration with static parameters
+//          visible in the current context.
 typedef struct Env {
   struct Env* parent;
   FbldQRef* mref;
   FbldInterf* interf;
   FbldProgram* prgm;
-  DeclList* svars;
+  FbldDecl* decl;
 } Env;
 
 // Context --
@@ -194,6 +188,7 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
     FbldModule* module = (FbldModule*)qref->mref->r->decl;
 
     if (module->iref != NULL) {
+      // TODO: FbldImportQRef the interface?
       // We should have already checked the module interface is correct, right?
       assert(module->iref->r != NULL);
       assert(module->iref->r->decl != NULL);
@@ -259,11 +254,11 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
   }
 
   // Check whether the name refers to a static parameter in scope.
-  for (DeclList* dl = env->svars; dl != NULL; dl = dl->next) {
-    for (size_t i = 0; i < dl->decl->paramv->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, dl->decl->paramv->xs[i]->name->name)) {
+  if (env->decl != NULL) {
+    for (size_t i = 0; i < env->decl->paramv->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, env->decl->paramv->xs[i]->name->name)) {
         FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
-        r->decl = dl->decl->paramv->xs[i];
+        r->decl = env->decl->paramv->xs[i];
         r->mref = env->mref;
         r->param = true;
         r->interf = NULL;
@@ -412,17 +407,12 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
   mref->mref = env->mref;
   mref->r = r;
 
-  DeclList dl = {
-    .decl = &interf->_base,
-    .next = NULL,
-  };
-
   Env interf_env = {
     .parent = env,
     .mref = mref,
     .interf = interf,
     .prgm = interf->body,
-    .svars = &dl,
+    .decl = NULL,
   };
   CheckProtos(ctx, &interf_env);
 }
@@ -462,17 +452,12 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   mref->mref = env->mref;
   mref->r = r;
 
-  DeclList dl = {
-    .decl = &module->_base,
-    .next = NULL,
-  };
-
   Env module_env = {
     .parent = env,
     .mref = mref,
     .interf = NULL,
     .prgm = module->body,
-    .svars = &dl,
+    .decl = NULL,
   };
 
   CheckEnv(ctx, &module_env);
@@ -1074,6 +1059,7 @@ static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined)
 
 // CheckProto --
 //   Check that the given prototype is well formed and well typed.
+//   It is assumed that env->decl has already been set up properly.
 //
 // Inputs:
 //   ctx - The context for type checking.
@@ -1088,12 +1074,6 @@ static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined)
 //   problems.
 static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
 {
-  DeclList dl = {
-    .decl = decl,
-    .next = env->svars,
-  };
-  env->svars = &dl;
-
   // Check the static parameters.
   // TODO: The static parameters should only be visible to static parameters
   // before it in the list, not all of them.
@@ -1165,8 +1145,6 @@ static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
     default:
       UNREACHABLE("Invalid decl tag");
   }
-
-  env->svars = dl.next;
 }
 
 // CheckProtos --
@@ -1215,7 +1193,9 @@ static void CheckProtos(Context* ctx, Env* env)
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
     DefineName(ctx, decl->name, &defined);
+    env->decl = decl;
     CheckProto(ctx, env, decl);
+    env->decl = NULL;
   }
 }
 
@@ -1244,11 +1224,7 @@ static void CheckBodies(Context* ctx, Env* env)
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
 
-    DeclList dl = {
-      .decl = decl,
-      .next = env->svars,
-    };
-    env->svars = &dl;
+    env->decl = decl;
 
     switch (decl->tag) {
       case FBLD_TYPE_DECL: {
@@ -1301,7 +1277,7 @@ static void CheckBodies(Context* ctx, Env* env)
         UNREACHABLE("Invalid decl tag");
     }
 
-    env->svars = dl.next;
+    env->decl = NULL;
   }
 }
 
@@ -1318,7 +1294,7 @@ bool FbldCheckQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* qref)
     .mref = NULL,
     .interf = NULL,
     .prgm = prgm,
-    .svars = NULL
+    .decl = NULL
   };
 
   CheckQRef(&ctx, &env, qref);
@@ -1465,7 +1441,7 @@ bool FbldCheckProgram(FblcArena* arena, FbldProgram* prgm)
     .mref = NULL,
     .interf = NULL,
     .prgm = prgm,
-    .svars = NULL
+    .decl = NULL
   };
   CheckEnv(&ctx, &env);
   return !ctx.error;
@@ -1539,7 +1515,7 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
     .mref = NULL,
     .interf = NULL,
     .prgm = prgm,
-    .svars = NULL
+    .decl = NULL
   };
 
   CheckValue(&ctx, &env, value);

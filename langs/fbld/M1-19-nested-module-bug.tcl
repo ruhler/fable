@@ -1,5 +1,6 @@
 set prg {
   interf IdI<type T> {
+    import @ { T; };
     func id(T a ; T);
   };
 
