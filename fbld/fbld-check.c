@@ -83,9 +83,8 @@ int main(int argc, char* argv[])
     return EX_USAGE;
   }
 
+  FILE* stderr_save = stderr;
   stderr = expect_error ? stdout : stderr;
-  int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
-  int exit_fail = expect_error ? EX_SUCCESS : EX_FAIL;
 
   // Simply pass allocations through to malloc. We won't be able to track or
   // free memory that the caller is supposed to track and free, but we don't
@@ -94,5 +93,14 @@ int main(int argc, char* argv[])
   FblcArena* arena = &FblcMallocArena;
 
   FbldProgram* prgm = FbldLoadProgram(arena, path);
-  return (prgm != NULL) ? exit_success : exit_fail;
+  if (prgm == NULL) {
+    return expect_error ? EX_SUCCESS : EX_FAIL;
+  }
+
+  if (expect_error) {
+    fprintf(stderr_save, "expected error, but none encountered.\n");
+    return EX_FAIL;
+  }
+
+  return EX_SUCCESS;
 }

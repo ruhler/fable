@@ -82,14 +82,11 @@ static FbldQRef* DeclQRef(Context* ctx, FbldQRef* mref, FbldInterf* interf, Fbld
 static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckPartialQRef(Context* ctx, Env* env, FbldQRef* qref);
 static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref);
-static bool CheckEnv(Context* ctx, Env* env);
+static void CheckEnv(Context* ctx, Env* env);
 static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf);
 static bool CheckModule(Context* ctx, Env* env, FbldModule* module);
-static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module);
 static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined);
-static void CheckProto(Context* ctx, Env* env, FbldDecl* decl);
-static void CheckProtos(Context* ctx, Env* env);
-static void CheckBodies(Context* ctx, Env* env);
+static void CheckDecl(Context* ctx, Env* env, FbldDecl* decl);
 static bool CheckType(Context* ctx, Env* env, FbldQRef* qref);
 static Vars* CheckArgV(Context* ctx, Env* env, FbldArgV* argv, Vars* vars);
 static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr);
@@ -360,21 +357,43 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 //   env - The environment to check.
 //
 // Result:
-//   true if the environment is well formed, false otherwise.
+//   none.
 //
 // Side effects:
 //   Resolves qrefs.
-//   Prints a message to stderr if the environment is not well formed.
-static bool CheckEnv(Context* ctx, Env* env)
+//   Sets ctx->error and prints a message to stderr if the environment is not
+//   well formed.
+static void CheckEnv(Context* ctx, Env* env)
 {
-  CheckProtos(ctx, env);
+  FbldNameV defined;
+  FblcVectorInit(ctx->arena, defined);
 
-  // Bail out here if the prototypes failed to check properly, because
-  // CheckBodies assumes the prototypes are well formed.
-  if (!ctx->error) {
-    CheckBodies(ctx, env);
+  // Check import statements.
+  for (size_t import_id = 0; import_id < env->prgm->importv->size; ++import_id) {
+    FbldImport* import = env->prgm->importv->xs[import_id];
+    for (size_t i = 0; i < import->itemv->size; ++i) {
+      DefineName(ctx, import->itemv->xs[i]->dest, &defined);
+      Env* import_env = env->parent;
+      if (import->mref != NULL) {
+        import_env = env;
+
+        // Append the import mref to the back of the source for checking the
+        // source.
+        FbldQRef* shead = import->itemv->xs[i]->source;
+        while (shead->mref != NULL) {
+          shead = shead->mref;
+        }
+        shead->mref = import->mref;
+      }
+      CheckPartialQRef(ctx, import_env, import->itemv->xs[i]->source);
+    }
   }
-  return !ctx->error;
+
+  for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
+    FbldDecl* decl = env->prgm->declv->xs[decl_id];
+    DefineName(ctx, decl->name, &defined);
+    CheckDecl(ctx, env, decl);
+  }
 }
 
 // CheckInterf --
@@ -413,7 +432,7 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
     .prgm = interf->body,
     .svars = NULL,
   };
-  CheckProtos(ctx, &interf_env);
+  CheckEnv(ctx, &interf_env);
 }
 
 // CheckModule --
@@ -434,8 +453,19 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
 //   formed.
 static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
 {
-  if (!CheckModuleHeader(ctx, env, module)) {
-    return false;
+  if (module->iref != NULL) {
+    if (!CheckQRef(ctx, env, module->iref)) {
+      return false;
+    }
+
+    if (module->iref->r->decl->tag != FBLD_INTERF_DECL) {
+      ReportError("%s does not refer to an interface\n", &ctx->error, module->iref->name->loc, module->iref->name->name);
+      return false;
+    }
+  }
+
+  if (module->body == NULL) {
+    return true;
   }
 
   FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
@@ -498,37 +528,6 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
   }
 
   return !ctx->error;
-}
-
-// CheckModuleHeader --
-//   Check that the given module header is well formed.
-//
-// Inputs:
-//   ctx - The context to check the declaration in.
-//   module - The module header to check.
-//
-// Result:
-//   true if the module header is well formed, false otherwise.
-//
-// Side effects:
-//   Loads and checks top-level module declarations and interfaces as needed
-//   to check the interface declaration.
-//   Resolves qrefs.
-//   Prints a message to stderr if the module definition is not well
-//   formed.
-static bool CheckModuleHeader(Context* ctx, Env* env, FbldModule* module)
-{
-  if (module->iref != NULL) {
-    if (!CheckQRef(ctx, env, module->iref)) {
-      return false;
-    }
-
-    if (module->iref->r->decl->tag != FBLD_INTERF_DECL) {
-      ReportError("%s does not refer to an interface\n", &ctx->error, module->iref->name->loc, module->iref->name->name);
-      return false;
-    }
-  }
-  return true;
 }
 
 // CheckTypesMatch --
@@ -1056,13 +1055,13 @@ static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined)
   FblcVectorAppend(ctx->arena, *defined, name);
 }
 
-// CheckProto --
-//   Check that the given prototype is well formed and well typed.
+// CheckDecl --
+//   Check that the given declaration is well formed and well typed.
 //
 // Inputs:
 //   ctx - The context for type checking.
 //   env - The current environment.
-//   decl - The prototype to check.
+//   decl - The declaration to check.
 //
 // Results:
 //   None.
@@ -1070,13 +1069,13 @@ static void DefineName(Context* ctx, FbldName* name, FbldNameV* defined)
 // Side effects:
 //   Prints error messages to stderr and sets error to true if there are any
 //   problems.
-static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
+static void CheckDecl(Context* ctx, Env* env, FbldDecl* decl)
 {
   // Check the static parameters and add them to the environment.
   SVar* svars_in = env->svars;
   SVar svars_data[decl->paramv->size];
   for (size_t i = 0; i < decl->paramv->size; ++i) {
-    CheckProto(ctx, env, decl->paramv->xs[i]);
+    CheckDecl(ctx, env, decl->paramv->xs[i]);
 
     FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
     r->decl = decl->paramv->xs[i];
@@ -1105,8 +1104,12 @@ static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
     case FBLD_FUNC_DECL: {
       FbldFunc* func = (FbldFunc*)decl;
       Vars vars_data[func->argv->size];
-      CheckArgV(ctx, env, func->argv, vars_data);
+      Vars* vars = CheckArgV(ctx, env, func->argv, vars_data);
       CheckType(ctx, env, func->return_type);
+      if (func->body != NULL) {
+        FbldQRef* body_type = CheckExpr(ctx, env, vars, func->body);
+        CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
+      }
       break;
     }
 
@@ -1130,11 +1133,12 @@ static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
       }
 
       Vars vars_data[proc->argv->size];
-      // TODO: Split CheckArgV into two functions, one for checking
-      // prototypes (no vars needed) and one for checking bodies (not
-      // redefinition or other checks needed)?
-      CheckArgV(ctx, env, proc->argv, vars_data);
+      Vars* vars = CheckArgV(ctx, env, proc->argv, vars_data);
       CheckType(ctx, env, proc->return_type);
+      if (proc->body != NULL) {
+        FbldQRef* body_type = CheckActn(ctx, env, vars, ports, proc->body);
+        CheckTypesMatch(proc->body->loc, proc->return_type, body_type, &ctx->error);
+      }
       break;
     }
 
@@ -1146,7 +1150,7 @@ static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
 
     case FBLD_MODULE_DECL: {
       FbldModule* module = (FbldModule*)decl;
-      CheckModuleHeader(ctx, env, module);
+      CheckModule(ctx, env, module);
       break;
     }
 
@@ -1155,151 +1159,6 @@ static void CheckProto(Context* ctx, Env* env, FbldDecl* decl)
   }
 
   env->svars = svars_in;
-}
-
-// CheckProtos --
-//   Check that the declarations in the environment are well formed and well
-//   typed. Only the prototypes of the declarations are checked, not the
-//   bodies.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   env - The environment of declarations to check.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints error messages to stderr and sets error to true if there are any
-//   problems. Function and process declarations may be NULL to indicate these
-//   declarations belong to an interface declaration; this is not considered
-//   an error.
-static void CheckProtos(Context* ctx, Env* env)
-{
-  FbldNameV defined;
-  FblcVectorInit(ctx->arena, defined);
-
-  // Check import statements.
-  for (size_t import_id = 0; import_id < env->prgm->importv->size; ++import_id) {
-    FbldImport* import = env->prgm->importv->xs[import_id];
-    for (size_t i = 0; i < import->itemv->size; ++i) {
-      DefineName(ctx, import->itemv->xs[i]->dest, &defined);
-      Env* import_env = env->parent;
-      if (import->mref != NULL) {
-        import_env = env;
-
-        // Append the import mref to the back of the source for checking the
-        // source.
-        FbldQRef* shead = import->itemv->xs[i]->source;
-        while (shead->mref != NULL) {
-          shead = shead->mref;
-        }
-        shead->mref = import->mref;
-      }
-      CheckPartialQRef(ctx, import_env, import->itemv->xs[i]->source);
-    }
-  }
-
-  for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
-    FbldDecl* decl = env->prgm->declv->xs[decl_id];
-    DefineName(ctx, decl->name, &defined);
-    CheckProto(ctx, env, decl);
-  }
-}
-
-// CheckBodies --
-//   Check that the declarations in the environment are well formed and well
-//   typed. Only the declaration bodies are checked.
-//
-// Inputs:
-//   ctx - The context for type checking.
-//   env - The environment of declarations to check.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Behavior is undefined if the declaration prototypes have not already been
-//   determined to be well formed.
-//   Prints error messages to stderr and sets error to true if there are any
-//   problems. Function and process declarations may be NULL to indicate these
-//   declarations belong to an interface declaration; this is not considered
-//   an error.
-//   Loads and checks required top-level interface declarations and module
-//   headers (not module definitions), adding them to the context.
-static void CheckBodies(Context* ctx, Env* env)
-{
-  for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
-    FbldDecl* decl = env->prgm->declv->xs[decl_id];
-
-    // Add the static parameters to the environment.
-    SVar* svars_in = env->svars;
-    SVar svars_data[decl->paramv->size];
-    for (size_t i = 0; i < decl->paramv->size; ++i) {
-      FbldR* r = FBLC_ALLOC(ctx->arena, FbldR);
-      r->decl = decl->paramv->xs[i];
-      r->mref = env->mref;
-      r->param = true;
-      r->interf = NULL;
-      svars_data[i].name = decl->paramv->xs[i]->name;
-      svars_data[i].var = r;
-      svars_data[i].next = env->svars;
-      env->svars = svars_data + i;
-    }
-
-    switch (decl->tag) {
-      case FBLD_TYPE_DECL: {
-        // Types do not have any bodies to check.
-        break;
-      }
-
-      case FBLD_FUNC_DECL: {
-        FbldFunc* func = (FbldFunc*)decl;
-        Vars vars_data[func->argv->size];
-        Vars* vars = CheckArgV(ctx, env, func->argv, vars_data);
-        FbldQRef* body_type = CheckExpr(ctx, env, vars, func->body);
-        CheckTypesMatch(func->body->loc, func->return_type, body_type, &ctx->error);
-        break;
-      }
-
-      case FBLD_PROC_DECL: {
-        FbldProc* proc = (FbldProc*)decl;
-        Ports ports_data[proc->portv->size];
-        Ports* ports = NULL;
-        for (size_t port_id = 0; port_id < proc->portv->size; ++port_id) {
-          FbldPort* port = proc->portv->xs + port_id;
-          ports_data[port_id].name = port->name->name;
-          ports_data[port_id].type = CheckType(ctx, env, port->type) ? port->type : NULL;
-          ports_data[port_id].polarity = port->polarity;
-          ports_data[port_id].next = ports;
-          ports = ports_data + port_id;
-        }
-
-        Vars vars_data[proc->argv->size];
-        Vars* vars = CheckArgV(ctx, env, proc->argv, vars_data);
-        FbldQRef* body_type = CheckActn(ctx, env, vars, ports, proc->body);
-        CheckTypesMatch(proc->body->loc, proc->return_type, body_type, &ctx->error);
-        break;
-      }
-
-      case FBLD_INTERF_DECL: {
-        FbldInterf* interf = (FbldInterf*)decl;
-        CheckInterf(ctx, env, interf);
-        break;
-      }
-
-      case FBLD_MODULE_DECL: {
-        FbldModule* module = (FbldModule*)decl;
-        CheckModule(ctx, env, module);
-        break;
-      }
-
-      default:
-        UNREACHABLE("Invalid decl tag");
-    }
-
-    env->svars = svars_in;
-  }
 }
 
 // FbldCheckQRef -- see fblcs.h for documentation.

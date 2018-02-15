@@ -46,7 +46,7 @@ proc fbld-check-error-internal { program loc testloc} {
   try {
     set errtext [exec $::fbldcheck --error $fprogram]
   } on error {results options} {
-    error "$file:$line: error: fbld-check passed unexpectedly: $results"
+    error "$file:$line: error: fbld-check failed: $results"
   }
 
   exec echo $errtext > ./out/test/fbld/$name.err
