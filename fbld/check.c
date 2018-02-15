@@ -299,7 +299,7 @@ static bool CheckPartialQRef(Context* ctx, Env* env, FbldQRef* qref)
   qref->r = &FailedR;
 
   FbldR* r = ResolveQRef(ctx, env, qref);
-  if (r == NULL) {
+  if (r == NULL || r->decl == NULL) {
     return false;
   }
 
