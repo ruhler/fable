@@ -192,9 +192,15 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
 
     if (module->iref != NULL) {
       // TODO: FbldImportQRef the interface?
-      // We should have already checked the module interface is correct, right?
+      // TODO: Check the module if it hasn't already been checked.
       assert(module->iref->r != NULL);
-      assert(module->iref->r->decl != NULL);
+
+      // Bail out now if the interface failed to check. There would already
+      // have been an error message reported for that failure.
+      if (module->iref->r->decl == NULL) {
+        return NULL;
+      }
+
       assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
       FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
 
