@@ -28,6 +28,6 @@ set prg {
   };
 }
 
-skip fbld-test $prg "main" {} {
+fbld-test $prg "main" {} {
   return TB@B()
 }

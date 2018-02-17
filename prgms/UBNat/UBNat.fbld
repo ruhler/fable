@@ -1,7 +1,7 @@
 
 import @ { StdLib; };
-import StdLib { Unit; Bool; };
-import Bool { Bool; True; False; };
+import StdLib { Unit; BoolM=Bool; };
+import BoolM { Bool; True; False; };
 
 abst union Nat(
   Unit 0,

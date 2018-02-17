@@ -19,6 +19,14 @@ typedef struct SVar {
   struct SVar* next;
 } SVar;
 
+// DeclStatus --
+//   Status of checking a declaration.
+typedef enum {
+  DS_NEW,       // The declaration has not been checked yet.
+  DS_CHECKED,   // The declaration has successfully been checked.
+  DS_FAILED,    // The declaration failed to check successfully.
+} DeclStatus;
+
 // Env --
 //   An environment of declarations.
 //
@@ -31,12 +39,15 @@ typedef struct SVar {
 //            interface. NULL otherwise.
 //   prgm - The body of the current module/interf.
 //   svars - List of static parameters in scope.
+//   decl_status - Map from prgm declv index to the status of that
+//                 declaration.
 typedef struct Env {
   struct Env* parent;
   FbldQRef* mref;
   FbldInterf* interf;
   FbldProgram* prgm;
   SVar* svars;
+  DeclStatus* decl_status;
 } Env;
 
 // Context --
@@ -96,6 +107,7 @@ static bool CheckValue(Context* ctx, Env* env, FbldValue* value);
 
 static void CheckArgsMatch(Context* ctx, FbldName* name, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
 static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
+static bool EnsureCheckDecl(Context* ctx, Env* env, FbldDecl* decl);
 
 // ReportError --
 //   Report an error message associated with a location in a source file.
@@ -183,16 +195,18 @@ static FbldR* ResolveQRef(Context* ctx, Env* env, FbldQRef* qref)
     }
 
     assert(qref->mref->r->decl != NULL);
+    if (!EnsureCheckDecl(ctx, env, qref->mref->r->decl)) {
+      return NULL;
+    }
+
     if (qref->mref->r->decl->tag != FBLD_MODULE_DECL) {
       ReportError("%s does not refer to a module\n", &ctx->error, qref->mref->name->loc, qref->mref->name->name);
       return NULL;
     }
 
     FbldModule* module = (FbldModule*)qref->mref->r->decl;
-
     if (module->iref != NULL) {
       // TODO: FbldImportQRef the interface?
-      // TODO: Check the module if it hasn't already been checked.
       assert(module->iref->r != NULL);
 
       // Bail out now if the interface failed to check. There would already
@@ -371,6 +385,12 @@ static bool CheckQRef(Context* ctx, Env* env, FbldQRef* qref)
 //   well formed.
 static void CheckEnv(Context* ctx, Env* env)
 {
+  DeclStatus decl_status[env->prgm->declv->size];
+  for (size_t i = 0; i < env->prgm->declv->size; ++i) {
+    decl_status[i] = DS_NEW;
+  }
+  env->decl_status = decl_status;
+
   FbldNameV defined;
   FblcVectorInit(ctx->arena, defined);
 
@@ -398,7 +418,7 @@ static void CheckEnv(Context* ctx, Env* env)
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
     DefineName(ctx, decl->name, &defined);
-    CheckDecl(ctx, env, decl);
+    EnsureCheckDecl(ctx, env, decl);
   }
 }
 
@@ -437,6 +457,7 @@ static void CheckInterf(Context* ctx, Env* env, FbldInterf* interf)
     .interf = interf,
     .prgm = interf->body,
     .svars = NULL,
+    .decl_status = NULL
   };
   CheckEnv(ctx, &interf_env);
 }
@@ -493,6 +514,7 @@ static bool CheckModule(Context* ctx, Env* env, FbldModule* module)
     .interf = NULL,
     .prgm = module->body,
     .svars = NULL,
+    .decl_status = NULL,
   };
 
   CheckEnv(ctx, &module_env);
@@ -659,6 +681,9 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       if (app_expr->func->r->decl == NULL) {
         return NULL;
       }
+      if (!EnsureCheckDecl(ctx, env, app_expr->func->r->decl)) {
+        return NULL;
+      }
 
       if (app_expr->func->r->decl->tag == FBLD_FUNC_DECL) {
         FbldFunc* func = (FbldFunc*)app_expr->func->r->decl;
@@ -694,6 +719,9 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       if (qref == NULL || qref->r->decl == NULL) {
         return NULL;
       }
+      if (!EnsureCheckDecl(ctx, env, qref->r->decl)) {
+        return NULL;
+      }
 
       assert(qref->r->decl->tag == FBLD_TYPE_DECL);
       FbldType* type = (FbldType*)qref->r->decl;
@@ -711,6 +739,9 @@ static FbldQRef* CheckExpr(Context* ctx, Env* env, Vars* vars, FbldExpr* expr)
       FbldUnionExpr* union_expr = (FbldUnionExpr*)expr;
       FbldQRef* arg_type = CheckExpr(ctx, env, vars, union_expr->arg);
       if (!CheckType(ctx, env, union_expr->type)) {
+        return NULL;
+      }
+      if (!EnsureCheckDecl(ctx, env, union_expr->type->r->decl)) {
         return NULL;
       }
 
@@ -901,6 +932,9 @@ static FbldQRef* CheckActn(Context* ctx, Env* env, Vars* vars, Ports* ports, Fbl
       }
 
       if (!CheckQRef(ctx, env, call_actn->proc)) {
+        return NULL;
+      }
+      if (!EnsureCheckDecl(ctx, env, call_actn->proc->r->decl)) {
         return NULL;
       }
 
@@ -1180,7 +1214,8 @@ bool FbldCheckQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* qref)
     .mref = NULL,
     .interf = NULL,
     .prgm = prgm,
-    .svars = NULL
+    .svars = NULL,
+    .decl_status = NULL,
   };
 
   CheckQRef(&ctx, &env, qref);
@@ -1314,6 +1349,45 @@ static void CheckDeclsMatch(Context* ctx, FbldQRef* src, FbldDecl* decl_i, FbldD
   }
 }
 
+// EnsureCheckDecl --
+//  Ensure that the given declaration has been checked, or check it if
+//  necessary and it is a local declaration.
+//
+// Inputs:
+//   ctx - The context for type checking.
+//   env - The environment to resolve from. Static parameters in the
+//         environment will be ignored when doing resolution.
+//   decl - The declaration to ensure has been checked.
+//
+// Results:
+//   true if the declaration checked out fine, false otherwise.
+//
+// Side effects:
+//   Checks the declaration if necessary and possible.
+static bool EnsureCheckDecl(Context* ctx, Env* env, FbldDecl* decl)
+{
+  if (env->decl_status != NULL) {
+    for (size_t i = 0; i < env->prgm->declv->size; ++i) {
+      if (env->prgm->declv->xs[i] == decl) {
+        if (env->decl_status[i] == DS_NEW) {
+          SVar* svars = env->svars;
+          env->svars = NULL;
+          CheckDecl(ctx, env, decl);
+          // For now, assume the declaration failed if we've seen any
+          // failures so far. TODO: Don't make this assumption. Keep track of
+          // whether the declaration actually failed.
+          env->decl_status[i] = ctx->error ? DS_FAILED : DS_CHECKED;
+          env->svars = svars;
+        }
+        return env->decl_status[i] == DS_CHECKED;
+      }
+    }
+  }
+
+  // Non-local declarations must already have been checked.
+  return true;
+}
+
 // FbldCheckProgram -- see documentation in fbld.h
 bool FbldCheckProgram(FblcArena* arena, FbldProgram* prgm)
 {
@@ -1327,7 +1401,8 @@ bool FbldCheckProgram(FblcArena* arena, FbldProgram* prgm)
     .mref = NULL,
     .interf = NULL,
     .prgm = prgm,
-    .svars = NULL
+    .svars = NULL,
+    .decl_status = NULL,
   };
   CheckEnv(&ctx, &env);
   return !ctx.error;
@@ -1401,7 +1476,8 @@ bool FbldCheckValue(FblcArena* arena, FbldProgram* prgm, FbldValue* value)
     .mref = NULL,
     .interf = NULL,
     .prgm = prgm,
-    .svars = NULL
+    .svars = NULL,
+    .decl_status = NULL,
   };
 
   CheckValue(&ctx, &env, value);

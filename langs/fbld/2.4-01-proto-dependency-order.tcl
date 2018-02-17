@@ -25,10 +25,10 @@ set prg {
   };
 
   func main( ; Unit@subA@A) {
-    tb();
+    tb(Unit@subB@B());
   };
 }
 
-skip fbld-test $prg "main" {} {
+fbld-test $prg "main" {} {
   return Unit@subA@A()
 }
