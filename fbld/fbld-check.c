@@ -28,8 +28,8 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fbld-check [--error] FILE\n"
-      "Check whether the program FILE is a well formed fbld program.\n"
+      "Usage: fbld-check [--error] FILE [MAIN]\n"
+      "Check whether the entry MAIN from program FILE is a well formed fbld program.\n"
       "Exit status is 0 if the program is well formed, 1 otherwise.\n"
       "With --error, exit status is 0 if the program is not well formed, 0 otherwise.\n"
   );
@@ -77,6 +77,13 @@ int main(int argc, char* argv[])
   const char* path = *argv;
   argv++;
   argc--;
+
+  const char* entry = NULL;
+  if (argc > 0) {
+    entry = *argv;
+    argv++;
+    argc--;
+  }
   
   if (argc > 0) {
     fprintf(stderr, "too many arguments.\n");
@@ -92,7 +99,16 @@ int main(int argc, char* argv[])
   // program, so we should be okay.
   FblcArena* arena = &FblcMallocArena;
 
-  FbldProgram* prgm = FbldLoadProgram(arena, path);
+  FbldQRef* qentry = NULL;
+  if (entry != NULL) {
+    qentry = FbldParseQRefFromString(arena, entry);
+    if (qentry == NULL) {
+      fprintf(stderr, "failed to parse entry\n");
+      return EX_USAGE;
+    }
+  }
+
+  FbldProgram* prgm = FbldLoadProgram(arena, path, qentry);
   if (prgm == NULL) {
     return expect_error ? EX_SUCCESS : EX_FAIL;
   }

@@ -13,5 +13,6 @@ checkerr: all
 
 .PHONY: foo
 foo:
-	./out/fbld/fbld-test prgms/AllTests.wnt prgms/ Test@AllTests
+	#./out/fbld/fbld-test prgms/AllTests.wnt prgms/ Test@AllTests
+	./out/fbld/fbld-check prgms Snake
 

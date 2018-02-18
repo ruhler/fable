@@ -1,5 +1,4 @@
 Fbld 4:
-* Change fbld-check to take 'entry'.
 * Increase test coverage for spec.
  - Enforce priv and abst.
  - Add support for aliases?

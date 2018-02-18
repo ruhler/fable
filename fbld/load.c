@@ -205,9 +205,9 @@ static FbldProgram* LoadParsedProgram(FblcArena* arena, const char* path, FbldQR
 }
 
 // FbldLoadProgram -- see documentation in fbld.h
-FbldProgram* FbldLoadProgram(FblcArena* arena, const char* path)
+FbldProgram* FbldLoadProgram(FblcArena* arena, const char* path, FbldQRef* entry)
 {
-  FbldProgram* prgm = LoadParsedProgram(arena, path, NULL);
+  FbldProgram* prgm = LoadParsedProgram(arena, path, entry);
   if (prgm == NULL) {
     return NULL;
   }

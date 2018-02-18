@@ -1,9 +1,9 @@
 
-import @ { StdLib; UBNatM; DrawM; };
-import StdLib { Unit; Bool; List; };
-import Bool { Bool; True; False; And; };
+import @ { StdLib; DrawM=Draw; UBNat@UBNat; };
+import StdLib { Unit; BoolM=Bool; List; };
+import BoolM { Bool; True; False; And; };
 import List { P; S; InitP; LastP; };
-import UBNatM { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
+import UBNat { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
 import DrawM { Color; Draw; };
 
 priv func MinRow( ; Nat) 0();
