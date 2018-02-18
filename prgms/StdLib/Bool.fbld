@@ -24,6 +24,7 @@ func Or(Bool a, Bool b; Bool) {
 };
 
 interf Eq<type T> {
+  import @ { T; Bool; };
   func Eq(T a, T b; Bool);
   func Ne(T a, T b; Bool);
 };

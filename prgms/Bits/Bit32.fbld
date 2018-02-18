@@ -26,7 +26,7 @@ module BitN(BitNI<Bit32>) {
     Bit32(xor@B(a.3, b.3), xor@B(a.2, b.2), xor@B(a.1, b.1), xor@B(a.0, b.0));
   };
 
-  func add(Bit32 a, Bit32 b; Bit32) fulladd(a, b, zero@Bit1M()).z;
+  func add(Bit32 a, Bit32 b; Bit32) fulladd(a, b, zero@Bit1()).z;
 
   func zero(; Bit32) Bit32(zero@B(), zero@B(), zero@B(), zero@B());
 

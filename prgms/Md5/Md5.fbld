@@ -1,18 +1,15 @@
 
-import @ {
-  StdLib;
-  BitM; Bit8M; Bit32M; Bit64M; HexM;
-};
+import @ { StdLib; Bits; };
 
-import StdLib { Bool; List; Maybe; Unit; };
-import Bool { Bool; True; False; And; };
+import StdLib { BoolM=Bool; List; Maybe; Unit; };
+import BoolM { Bool; True; False; And; };
 import List { SL=S; PL=P; };
 
-import BitM { Bit; };
+import Bits { Bit@Bit; Bit8M=Bit8; Bit32M=Bit32; Bit64M=Bit64; HexM=Hex; };
 import Bit8M { Bit8; H2; };
 import Bit32M { Bit32; };
-import BitN@Bit32M { eq; and; or; not; xor; clshift; add; };
 import Bit64M { Bit64; };
+import BitN@Bit32M { eq; and; or; not; xor; clshift; add; };
 import HexM { Hex; 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; a; b; c; d; e; f; };
 
 struct Md5Hash(

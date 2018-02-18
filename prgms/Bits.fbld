@@ -10,7 +10,7 @@ module Bit64;
 
 # TODO: Put the body of this into its own file once that is supported.
 interf BitNI<type T> {
-  import @ { Bit@Bit; Bool@Bool@StdLib; };
+  import @ { T; Bit@Bit; Bool@Bool@StdLib; };
 
   func not(T a ; T);        # !a
   func and(T a, T b; T);    # a & b

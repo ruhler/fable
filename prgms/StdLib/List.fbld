@@ -27,5 +27,5 @@ func MapS<type A, type B, func F(A x; B)>(S<A> a; S<B>) {
 };
 
 func MapP<type A, type B, func F(A x; B)>(P<A> a; P<B>) {
-  P<B>(f@F(a.head), MapS<A, B, F>(a.tail));
+  P<B>(F(a.head), MapS<A, B, F>(a.tail));
 };

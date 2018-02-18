@@ -1,12 +1,13 @@
 Fbld 4:
-* Implement new spec as needed for tests to pass.
+* Change fbld-check to take 'entry'.
 * Increase test coverage for spec.
+ - Enforce priv and abst.
+ - Add support for aliases?
+* Clean up code.
+ - Introduce FbldProto as distinct type from FbldDecl.
+ - Put 'access' in front of defn, not each individual defn in parse.y grammar.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program (deflate) taking advantage of the new features.
-
-Fbld 4 Cleanup:
-* Introduce FbldProto as distinct type from FbldDecl.
-* Put 'access' in front of defn, not each individual defn in parse.y grammar.
 
 Fbld 4 Test:
 * Test that you can't have recursion through a module declaration.
@@ -33,8 +34,6 @@ Fbld Cleanup:
 * Define and use UNREACHABLE everywhere appropriate.
 * Make it more clear in error messages when a module decl doesn't match its
   interf decl that that's why we expected something different.
-* Change check's ReportError to take a context.
-* Change CheckTypesMatch to take a context.
 * Make sure the Side Effects description of the Check functions say that r
   states are resolved.
 * General code cleanup.

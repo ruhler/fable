@@ -424,9 +424,26 @@ static bool CheckEnv(FblcArena* arena, Env* env)
     FbldImport* import = env->prgm->importv->xs[import_id];
     for (size_t i = 0; i < import->itemv->size; ++i) {
       Require(DefineName(arena, import->itemv->xs[i]->dest, &defined), &success);
-      Env* import_env = env->parent;
-      if (import->mref != NULL) {
-        import_env = env;
+      if (import->mref == NULL) {
+        // Import '@' from parent
+
+        // Ensure the imported entity has already been checked.
+        FbldQRef* shead = import->itemv->xs[i]->source;
+        while (shead->mref != NULL) {
+          shead = shead->mref;
+        }
+
+        if (!CheckPartialQRef(arena, env->parent, shead)) {
+          return false;
+        }
+        assert(shead->r->decl != NULL);
+        if (!EnsureDecl(arena, env->parent, shead->r->decl)) {
+          return false;
+        }
+
+        Require(CheckPartialQRef(arena, env->parent, import->itemv->xs[i]->source), &success);
+      } else {
+        // Import from local
 
         // Append the import mref to the back of the source for checking the
         // source.
@@ -435,8 +452,8 @@ static bool CheckEnv(FblcArena* arena, Env* env)
           shead = shead->mref;
         }
         shead->mref = import->mref;
+        Require(CheckPartialQRef(arena, env, import->itemv->xs[i]->source), &success);
       }
-      Require(CheckPartialQRef(arena, import_env, import->itemv->xs[i]->source), &success);
     }
   }
 
