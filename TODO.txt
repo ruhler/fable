@@ -7,9 +7,6 @@ Fbld 4:
 
 Fbld 4 Cleanup:
 * Introduce FbldProto as distinct type from FbldDecl.
-* Clean up error tracking in check
- - Each declaration should know if it errored, independant of the other
-   declarations.
 * Put 'access' in front of defn, not each individual defn in parse.y grammar.
 
 Fbld 4 Test:
