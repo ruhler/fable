@@ -1,6 +1,5 @@
 Fbld 4:
 * Implement new spec as needed for tests to pass.
- - Fix support for recursion.
 * Increase test coverage for spec.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program (deflate) taking advantage of the new features.
@@ -10,6 +9,7 @@ Fbld 4 Cleanup:
 * Put 'access' in front of defn, not each individual defn in parse.y grammar.
 
 Fbld 4 Test:
+* Test that you can't have recursion through a module declaration.
 * Test that you can't have two static parameters with the same name.
 * Add a test that you can't use a func, proc, interf, or module as a type
   parameter argument.

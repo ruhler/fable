@@ -19,12 +19,28 @@ typedef struct SVar {
   struct SVar* next;
 } SVar;
 
+// DeclProgress --
+//   The current progress of checking a declaration.
+typedef enum {
+  DP_NEW,     // The declaration needs to be checked.
+  DP_PROTO,   // Checking of the prototype is in progress.
+  DP_DECL,    // Checking of the body is in progress.
+  DP_DONE     // Checking of the declaration is complete.
+} DeclProgress;
+
 // DeclStatus --
 //   Status of checking a declaration.
-typedef enum {
-  DS_NEW,       // The declaration has not been checked yet.
-  DS_CHECKED,   // The declaration has successfully been checked.
-  DS_FAILED,    // The declaration failed to check successfully.
+//
+// Fiels:
+//   progress - Current progress of checking the declaration.
+//   proto - true if the proto checks out fine. Only valid for progress
+//           DP_DECL or DP_DONE.
+//   decl - true if the full declaration checks out fine. Only valid for
+//          progress DP_DONE.
+typedef struct {
+  DeclProgress progress;
+  bool proto;
+  bool decl;
 } DeclStatus;
 
 // Env --
@@ -87,7 +103,7 @@ static bool CheckEnv(FblcArena* arena, Env* env);
 static bool CheckInterf(FblcArena* arena, Env* env, FbldInterf* interf);
 static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module);
 static bool DefineName(FblcArena* arena, FbldName* name, FbldNameV* defined);
-static bool CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl);
+static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* status);
 static bool CheckType(FblcArena* arena, Env* env, FbldQRef* qref);
 static Vars* CheckArgV(FblcArena* arena, Env* env, FbldArgV* argv, Vars* vars, bool* success);
 static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* expr);
@@ -97,7 +113,8 @@ static bool CheckValue(FblcArena* arena, Env* env, FbldValue* value);
 
 static bool CheckArgsMatch(FblcArena* arena, FbldName* name, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
 static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
-static bool EnsureCheckDecl(FblcArena* arena, Env* env, FbldDecl* decl);
+static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl);
+static bool EnsureDecl(FblcArena* arena, Env* env, FbldDecl* decl);
 
 // Require --
 //   Convenience function for requiring some condition to hold.
@@ -200,7 +217,7 @@ static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref)
     }
 
     assert(qref->mref->r->decl != NULL);
-    if (!EnsureCheckDecl(arena, env, qref->mref->r->decl)) {
+    if (!EnsureDecl(arena, env, qref->mref->r->decl)) {
       return NULL;
     }
 
@@ -393,7 +410,9 @@ static bool CheckEnv(FblcArena* arena, Env* env)
 
   DeclStatus decl_status[env->prgm->declv->size];
   for (size_t i = 0; i < env->prgm->declv->size; ++i) {
-    decl_status[i] = DS_NEW;
+    decl_status[i].progress = DP_NEW;
+    decl_status[i].proto = false;
+    decl_status[i].decl = false;
   }
   env->decl_status = decl_status;
 
@@ -424,7 +443,7 @@ static bool CheckEnv(FblcArena* arena, Env* env)
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
     Require(DefineName(arena, decl->name, &defined), &success);
-    Require(EnsureCheckDecl(arena, env, decl), &success);
+    Require(EnsureDecl(arena, env, decl), &success);
   }
 
   return success;
@@ -533,7 +552,7 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
   if (module->iref != NULL) {
     // Verify the module has everything it should according to its interface.
     assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
-    if (!EnsureCheckDecl(arena, env, module->iref->r->decl)) {
+    if (!EnsureDecl(arena, env, module->iref->r->decl)) {
       return false;
     }
     FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
@@ -689,7 +708,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
       if (app_expr->func->r->decl == NULL) {
         return NULL;
       }
-      if (!EnsureCheckDecl(arena, env, app_expr->func->r->decl)) {
+      if (!EnsureProto(arena, env, app_expr->func->r->decl)) {
         return NULL;
       }
 
@@ -728,7 +747,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
       if (qref == NULL || qref->r->decl == NULL) {
         return NULL;
       }
-      if (!EnsureCheckDecl(arena, env, qref->r->decl)) {
+      if (!EnsureProto(arena, env, qref->r->decl)) {
         return NULL;
       }
 
@@ -753,7 +772,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
       if (!CheckType(arena, env, union_expr->type)) {
         return NULL;
       }
-      if (!EnsureCheckDecl(arena, env, union_expr->type->r->decl)) {
+      if (!EnsureProto(arena, env, union_expr->type->r->decl)) {
         return NULL;
       }
 
@@ -963,7 +982,7 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
       if (!CheckQRef(arena, env, call_actn->proc)) {
         return NULL;
       }
-      if (!EnsureCheckDecl(arena, env, call_actn->proc->r->decl)) {
+      if (!EnsureProto(arena, env, call_actn->proc->r->decl)) {
         return NULL;
       }
 
@@ -1146,21 +1165,32 @@ static bool DefineName(FblcArena* arena, FbldName* name, FbldNameV* defined)
 //   arena - Arena to use for allocations.
 //   env - The current environment.
 //   decl - The declaration to check.
+//   status - Updated with progress and status of decl checking.
 //
 // Results:
-//   true if the declaration checks out, false on error.
+//   None.
 //
 // Side effects:
 //   Prints error messages to stderr if there are any problems.
-static bool CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl)
+//   Updates status as progress is made with status updates.
+static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* status)
 {
   bool success = true;
+  assert(status->progress == DP_NEW);
+  status->progress = DP_PROTO;
 
   // Check the static parameters and add them to the environment.
   SVar* svars_in = env->svars;
   SVar svars_data[decl->paramv->size];
   for (size_t i = 0; i < decl->paramv->size; ++i) {
-    Require(CheckDecl(arena, env, decl->paramv->xs[i]), &success);
+    DeclStatus status = {
+      .progress = DP_NEW,
+      .proto = false,
+      .decl = false
+    };
+    CheckDecl(arena, env, decl->paramv->xs[i], &status);
+    assert(status.proto == status.decl);
+    Require(status.proto, &success);
 
     FbldR* r = FBLC_ALLOC(arena, FbldR);
     r->decl = decl->paramv->xs[i];
@@ -1183,6 +1213,10 @@ static bool CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl)
         Vars unused[type->fieldv->size];
         CheckArgV(arena, env, type->fieldv, unused, &success);
       }
+
+      status->proto = success;
+      status->decl = success;
+      status->progress = DP_DONE;
       break;
     }
 
@@ -1191,11 +1225,18 @@ static bool CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl)
       Vars vars_data[func->argv->size];
       Vars* vars = CheckArgV(arena, env, func->argv, vars_data, &success);
       Require(CheckType(arena, env, func->return_type), &success);
+
+      status->proto = success;
+      status->progress = DP_DECL;
+
       if (func->body != NULL) {
         FbldQRef* body_type = CheckExpr(arena, env, vars, func->body);
         Require(body_type != NULL, &success);
         Require(CheckTypesMatch(func->body->loc, func->return_type, body_type), &success);
       }
+
+      status->decl = success;
+      status->progress = DP_DONE;
       break;
     }
 
@@ -1223,23 +1264,38 @@ static bool CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl)
       Vars vars_data[proc->argv->size];
       Vars* vars = CheckArgV(arena, env, proc->argv, vars_data, &success);
       Require(CheckType(arena, env, proc->return_type), &success);
+
+      status->proto = success;
+      status->progress = DP_DECL;
+
       if (proc->body != NULL) {
         FbldQRef* body_type = CheckActn(arena, env, vars, ports, proc->body);
         Require(body_type != NULL, &success);
         Require(CheckTypesMatch(proc->body->loc, proc->return_type, body_type), &success);
       }
+
+      status->decl = success;
+      status->progress = DP_DONE;
       break;
     }
 
     case FBLD_INTERF_DECL: {
       FbldInterf* interf = (FbldInterf*)decl;
       Require(CheckInterf(arena, env, interf), &success);
+
+      status->proto = success;
+      status->decl = success;
+      status->progress = DP_DONE;
       break;
     }
 
     case FBLD_MODULE_DECL: {
       FbldModule* module = (FbldModule*)decl;
       Require(CheckModule(arena, env, module), &success);
+
+      status->proto = success;
+      status->decl = success;
+      status->progress = DP_DONE;
       break;
     }
 
@@ -1247,8 +1303,8 @@ static bool CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl)
       UNREACHABLE("Invalid decl tag");
   }
 
+  assert(status->progress == DP_DONE);
   env->svars = svars_in;
-  return success;
 }
 
 // FbldCheckQRef -- see fblcs.h for documentation.
@@ -1403,9 +1459,9 @@ static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, F
   return success;
 }
 
-// EnsureCheckDecl --
-//  Ensure that the given declaration has been checked, or check it if
-//  necessary and it is a local declaration.
+// EnsureProto --
+//  Ensure that the prototype of the given declaration has been checked, or
+//  check it if necessary and it is a local declaration.
 //
 // Inputs:
 //   arena - Arena to use for allocations.
@@ -1414,22 +1470,72 @@ static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, F
 //   decl - The declaration to ensure has been checked.
 //
 // Results:
-//   true if the declaration checked out fine, false otherwise.
+//   true if the declaration prototype checked out fine, false otherwise.
 //
 // Side effects:
 //   Checks the declaration if necessary and possible.
-static bool EnsureCheckDecl(FblcArena* arena, Env* env, FbldDecl* decl)
+//   Prints an error message to stderr in case of error.
+static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl)
 {
   if (env->decl_status != NULL) {
     for (size_t i = 0; i < env->prgm->declv->size; ++i) {
       if (env->prgm->declv->xs[i] == decl) {
-        if (env->decl_status[i] == DS_NEW) {
+        DeclStatus* status = env->decl_status + i;
+        if (status->progress == DP_NEW) {
           SVar* svars = env->svars;
           env->svars = NULL;
-          env->decl_status[i] = CheckDecl(arena, env, decl) ? DS_CHECKED : DS_FAILED;
+          CheckDecl(arena, env, decl, status);
           env->svars = svars;
+        } else if (status->progress == DP_PROTO) {
+          // TODO: Is this possible? How?
+          // TODO: Use the location of the caller, not the declaration itself.
+          ReportError("Recursive proto dependency detected involving %s\n",
+              decl->name->loc, decl->name->name);
+          return false;
         }
-        return env->decl_status[i] == DS_CHECKED;
+        return status->proto;
+      }
+    }
+  }
+
+  // Non-local declarations must already have been checked and succeeded.
+  return true;
+}
+
+// EnsureDecl --
+//  Ensure that the full given declaration has been checked, or
+//  check it if necessary and it is a local declaration.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   env - The environment to resolve from. Static parameters in the
+//         environment will be ignored when doing resolution.
+//   decl - The declaration to ensure has been checked.
+//
+// Results:
+//   true if the full declaration checked out fine, false otherwise.
+//
+// Side effects:
+//   Checks the declaration if necessary and possible.
+//   Prints an error message to stderr in case of error.
+static bool EnsureDecl(FblcArena* arena, Env* env, FbldDecl* decl)
+{
+  if (env->decl_status != NULL) {
+    for (size_t i = 0; i < env->prgm->declv->size; ++i) {
+      if (env->prgm->declv->xs[i] == decl) {
+        DeclStatus* status = env->decl_status + i;
+        if (status->progress == DP_NEW) {
+          SVar* svars = env->svars;
+          env->svars = NULL;
+          CheckDecl(arena, env, decl, status);
+          env->svars = svars;
+        } else if (status->progress == DP_PROTO || status->progress == DP_DECL) {
+          // TODO: Use the location of the caller, not the declaration itself.
+          ReportError("Recursive dependency detected involving %s\n",
+              decl->name->loc, decl->name->name);
+          return false;
+        }
+        return status->decl;
       }
     }
   }
@@ -1437,6 +1543,7 @@ static bool EnsureCheckDecl(FblcArena* arena, Env* env, FbldDecl* decl)
   // Non-local declarations must already have been checked.
   return true;
 }
+
 
 // FbldCheckProgram -- see documentation in fbld.h
 bool FbldCheckProgram(FblcArena* arena, FbldProgram* prgm)

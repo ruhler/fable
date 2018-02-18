@@ -12,4 +12,4 @@ set prg {
   };
 }
 
-skip fblc-test $prg main {} "return Int:0(Unit())"
+fblc-test $prg main {} "return Int:0(Unit())"
