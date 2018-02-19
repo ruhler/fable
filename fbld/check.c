@@ -20,27 +20,23 @@ typedef struct SVar {
 } SVar;
 
 // DeclProgress --
-//   The current progress of checking a declaration.
+//   The current progress of checking a prototype or declaration.
 typedef enum {
-  DP_NEW,     // The declaration needs to be checked.
-  DP_PROTO,   // Checking of the prototype is in progress.
-  DP_DECL,    // Checking of the body is in progress.
-  DP_DONE     // Checking of the declaration is complete.
+  DP_NEW,       // The declaration has not yet started being checked.
+  DP_PENDING,   // Checking is currently in progress.
+  DP_SUCCESS,   // Check succeeded.
+  DP_FAILED     // Check failed.
 } DeclProgress;
 
 // DeclStatus --
 //   Status of checking a declaration.
 //
 // Fiels:
-//   progress - Current progress of checking the declaration.
-//   proto - true if the proto checks out fine. Only valid for progress
-//           DP_DECL or DP_DONE.
-//   decl - true if the full declaration checks out fine. Only valid for
-//          progress DP_DONE.
+//   proto - The progress of checking the proto.
+//   decl - The progress of checking the full declaration.
 typedef struct {
-  DeclProgress progress;
-  bool proto;
-  bool decl;
+  DeclProgress proto;
+  DeclProgress decl;
 } DeclStatus;
 
 // Env --
@@ -410,9 +406,8 @@ static bool CheckEnv(FblcArena* arena, Env* env)
 
   DeclStatus decl_status[env->prgm->declv->size];
   for (size_t i = 0; i < env->prgm->declv->size; ++i) {
-    decl_status[i].progress = DP_NEW;
-    decl_status[i].proto = false;
-    decl_status[i].decl = false;
+    decl_status[i].proto = DP_NEW;
+    decl_status[i].decl = DP_NEW;
   }
   env->decl_status = decl_status;
 
@@ -1182,7 +1177,7 @@ static bool DefineName(FblcArena* arena, FbldName* name, FbldNameV* defined)
 //   arena - Arena to use for allocations.
 //   env - The current environment.
 //   decl - The declaration to check.
-//   status - Updated with progress and status of decl checking.
+//   status - Updated with progress and status of proto and decl checking.
 //
 // Results:
 //   None.
@@ -1193,17 +1188,18 @@ static bool DefineName(FblcArena* arena, FbldName* name, FbldNameV* defined)
 static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* status)
 {
   bool success = true;
-  assert(status->progress == DP_NEW);
-  status->progress = DP_PROTO;
+  assert(status->proto == DP_NEW);
+  assert(status->decl == DP_NEW);
+  status->proto = DP_PENDING;
+  status->decl = DP_PENDING;
 
   // Check the static parameters and add them to the environment.
   SVar* svars_in = env->svars;
   SVar svars_data[decl->paramv->size];
   for (size_t i = 0; i < decl->paramv->size; ++i) {
     DeclStatus status = {
-      .progress = DP_NEW,
-      .proto = false,
-      .decl = false
+      .proto = DP_NEW,
+      .decl = DP_NEW,
     };
     CheckDecl(arena, env, decl->paramv->xs[i], &status);
     assert(status.proto == status.decl);
@@ -1231,9 +1227,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
         CheckArgV(arena, env, type->fieldv, unused, &success);
       }
 
-      status->proto = success;
-      status->decl = success;
-      status->progress = DP_DONE;
+      status->proto = success ? DP_SUCCESS : DP_FAILED;
+      status->decl = success ? DP_SUCCESS : DP_FAILED;
       break;
     }
 
@@ -1243,8 +1238,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
       Vars* vars = CheckArgV(arena, env, func->argv, vars_data, &success);
       Require(CheckType(arena, env, func->return_type), &success);
 
-      status->proto = success;
-      status->progress = DP_DECL;
+      status->proto = success ? DP_SUCCESS : DP_FAILED;
 
       if (func->body != NULL) {
         FbldQRef* body_type = CheckExpr(arena, env, vars, func->body);
@@ -1252,8 +1246,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
         Require(CheckTypesMatch(func->body->loc, func->return_type, body_type), &success);
       }
 
-      status->decl = success;
-      status->progress = DP_DONE;
+      status->decl = success ? DP_SUCCESS : DP_FAILED;
       break;
     }
 
@@ -1282,8 +1275,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
       Vars* vars = CheckArgV(arena, env, proc->argv, vars_data, &success);
       Require(CheckType(arena, env, proc->return_type), &success);
 
-      status->proto = success;
-      status->progress = DP_DECL;
+      status->proto = success ? DP_SUCCESS : DP_FAILED;
 
       if (proc->body != NULL) {
         FbldQRef* body_type = CheckActn(arena, env, vars, ports, proc->body);
@@ -1291,8 +1283,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
         Require(CheckTypesMatch(proc->body->loc, proc->return_type, body_type), &success);
       }
 
-      status->decl = success;
-      status->progress = DP_DONE;
+      status->decl = success ? DP_SUCCESS : DP_FAILED;
       break;
     }
 
@@ -1300,9 +1291,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
       FbldInterf* interf = (FbldInterf*)decl;
       Require(CheckInterf(arena, env, interf), &success);
 
-      status->proto = success;
-      status->decl = success;
-      status->progress = DP_DONE;
+      status->proto = success ? DP_SUCCESS : DP_FAILED;
+      status->decl = success ? DP_SUCCESS : DP_FAILED;
       break;
     }
 
@@ -1310,9 +1300,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
       FbldModule* module = (FbldModule*)decl;
       Require(CheckModule(arena, env, module), &success);
 
-      status->proto = success;
-      status->decl = success;
-      status->progress = DP_DONE;
+      status->proto = success ? DP_SUCCESS : DP_FAILED;
+      status->decl = success ? DP_SUCCESS : DP_FAILED;
       break;
     }
 
@@ -1320,8 +1309,10 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
       UNREACHABLE("Invalid decl tag");
   }
 
-  assert(status->progress == DP_DONE);
   env->svars = svars_in;
+
+  assert(status->proto != DP_NEW && status->proto != DP_PENDING);
+  assert(status->decl != DP_NEW && status->decl != DP_PENDING);
 }
 
 // FbldCheckQRef -- see fblcs.h for documentation.
@@ -1498,19 +1489,19 @@ static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl)
     for (size_t i = 0; i < env->prgm->declv->size; ++i) {
       if (env->prgm->declv->xs[i] == decl) {
         DeclStatus* status = env->decl_status + i;
-        if (status->progress == DP_NEW) {
+        if (status->proto == DP_NEW) {
           SVar* svars = env->svars;
           env->svars = NULL;
           CheckDecl(arena, env, decl, status);
           env->svars = svars;
-        } else if (status->progress == DP_PROTO) {
+        } else if (status->proto == DP_PENDING) {
           // TODO: Is this possible? How?
           // TODO: Use the location of the caller, not the declaration itself.
           ReportError("Recursive proto dependency detected involving %s\n",
               decl->name->loc, decl->name->name);
           return false;
         }
-        return status->proto;
+        return status->proto == DP_SUCCESS;
       }
     }
   }
@@ -1541,18 +1532,18 @@ static bool EnsureDecl(FblcArena* arena, Env* env, FbldDecl* decl)
     for (size_t i = 0; i < env->prgm->declv->size; ++i) {
       if (env->prgm->declv->xs[i] == decl) {
         DeclStatus* status = env->decl_status + i;
-        if (status->progress == DP_NEW) {
+        if (status->decl == DP_NEW) {
           SVar* svars = env->svars;
           env->svars = NULL;
           CheckDecl(arena, env, decl, status);
           env->svars = svars;
-        } else if (status->progress == DP_PROTO || status->progress == DP_DECL) {
+        } else if (status->decl == DP_PENDING) {
           // TODO: Use the location of the caller, not the declaration itself.
           ReportError("Recursive dependency detected involving %s\n",
               decl->name->loc, decl->name->name);
           return false;
         }
-        return status->decl;
+        return status->decl == DP_SUCCESS;
       }
     }
   }
