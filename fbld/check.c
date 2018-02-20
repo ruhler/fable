@@ -223,50 +223,32 @@ static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref)
     }
 
     FbldModule* module = (FbldModule*)qref->mref->r->decl;
-    if (module->iref != NULL) {
-      // TODO: FbldImportQRef the interface?
-      assert(module->iref->r != NULL);
+    assert(module->iref != NULL && "Anonymous interface not generated as expected");
+    // TODO: FbldImportQRef the interface?
+    assert(module->iref->r != NULL);
 
-      // Bail out now if the interface failed to check. There would already
-      // have been an error message reported for that failure.
-      if (module->iref->r->decl == NULL) {
-        return NULL;
-      }
-
-      assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
-      FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
-
-      // Look for the entity declaration in the interface.
-      for (size_t i = 0; i < interf->body->declv->size; ++i) {
-        if (FbldNamesEqual(qref->name->name, interf->body->declv->xs[i]->name->name)) {
-          FbldR* r = FBLC_ALLOC(arena, FbldR);
-          r->decl = interf->body->declv->xs[i];
-          r->mref = qref->mref;
-          r->param = false;
-          r->interf = interf;
-          return r;
-        }
-      }
-
-      ReportError("%s not found in interface for %s\n",
-          qref->name->loc, qref->name->name, qref->mref->name->name);
+    // Bail out now if the interface failed to check. There would already
+    // have been an error message reported for that failure.
+    if (module->iref->r->decl == NULL) {
       return NULL;
     }
 
-    // The module's interface is anonymous. Look inside the module itself for
-    // the matching entity.
-    for (size_t i = 0; i < module->body->declv->size; ++i) {
-      if (FbldNamesEqual(qref->name->name, module->body->declv->xs[i]->name->name)) {
+    assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
+    FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
+
+    // Look for the entity declaration in the interface.
+    for (size_t i = 0; i < interf->body->declv->size; ++i) {
+      if (FbldNamesEqual(qref->name->name, interf->body->declv->xs[i]->name->name)) {
         FbldR* r = FBLC_ALLOC(arena, FbldR);
-        r->decl = module->body->declv->xs[i];
+        r->decl = interf->body->declv->xs[i];
         r->mref = qref->mref;
         r->param = false;
-        r->interf = NULL;
+        r->interf = interf;
         return r;
       }
     }
 
-    ReportError("%s not found in module %s\n",
+    ReportError("%s not found in interface for %s\n",
         qref->name->loc, qref->name->name, qref->mref->name->name);
     return NULL;
   }
@@ -512,9 +494,8 @@ static bool CheckInterf(FblcArena* arena, Env* env, FbldInterf* interf)
 //   true if the module is well formed, false otherwise.
 //
 // Side effects:
-//   Loads and checks top-level module declarations and interfaces as needed
-//   to check the interface declaration.
 //   Resolves qrefs.
+//   Generates an anonymous interface for the module if appropriate.
 //   Prints a message to stderr if the module definition is not well
 //   formed.
 static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
@@ -593,6 +574,18 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
         success = false;
       }
     }
+  } else {
+    // Generate an explicit anonymous interface for the module.
+    FbldInterf* interf = FBLC_ALLOC(arena, FbldInterf);
+    interf->_base.tag = FBLD_INTERF_DECL;
+    interf->_base.name = module->_base.name;
+    interf->_base.paramv = module->_base.paramv;
+    interf->_base.access = module->_base.access;
+
+    // TODO: Only export public interfaces from the module.
+    interf->body = module->body;
+
+    module->iref = DeclQRef(arena, env->mref, env->interf, &interf->_base);
   }
 
   return success;
