@@ -213,7 +213,7 @@ static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref)
     }
 
     assert(qref->mref->r->decl != NULL);
-    if (!EnsureDecl(arena, env, qref->mref->r->decl)) {
+    if (!EnsureProto(arena, env, qref->mref->r->decl)) {
       return NULL;
     }
 
