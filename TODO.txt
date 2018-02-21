@@ -3,8 +3,7 @@ Fbld 4:
  - Enforce priv and abst.
  - Add support for aliases?
 * Clean up code.
- - Introduce FbldProto as distinct type from FbldDecl.
- - Put 'access' in front of defn, not each individual defn in parse.y grammar.
+ - [on hold] Introduce FbldProto as distinct type from FbldDecl.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program (deflate) taking advantage of the new features.
 

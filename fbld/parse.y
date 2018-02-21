@@ -122,10 +122,10 @@
 %type <declv> params param_list
 %type <polarity> polarity
 %type <portv> port_list non_empty_port_list
-%type <decl> type_decl type_defn abstract_type_decl struct_decl union_decl
-%type <decl> func_decl func_defn proc_decl proc_defn
-%type <decl> interf module_decl module_defn decl defn
-%type <program> decl_list defn_list module_body
+%type <decl> abstract_type_proto struct_proto union_proto type_proto
+%type <decl> func_proto proc_proto interf_proto module_proto proto 
+%type <decl> type_decl func_decl proc_decl interf_decl module_decl plain_decl decl
+%type <program> proto_env decl_env module_body
 %type <value> value
 %type <valuev> value_list non_empty_value_list
 %type <access> access
@@ -136,7 +136,7 @@
 // tokens. We insert an arbitrary, artificial single-character token to
 // indicate which start token we actually want to use.
 start:
-     START_PROGRAM defn_list { result->prgm = $2; }
+     START_PROGRAM decl_env { result->prgm = $2; }
    | START_VALUE value { result->value = $2; }
    | START_QNAME qref { result->qref = $2; }
    ;
@@ -465,18 +465,18 @@ param_list:
       $$ = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *$$);
     }
-  | decl {
+  | proto {
       $$ = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *$$);
       FblcVectorAppend(arena, *$$, $1);
     }
-  | param_list ',' decl {
+  | param_list ',' proto {
       FblcVectorAppend(arena, *$1, $3);
       $$ = $1;
     }
   ;
 
-abstract_type_decl: "type" name params {
+abstract_type_proto: "type" name params {
       FbldType* type = FBLC_ALLOC(arena, FbldType);
       type->_base.tag = FBLD_TYPE_DECL;
       type->_base.name = $2;
@@ -488,7 +488,7 @@ abstract_type_decl: "type" name params {
     }
   ;
 
-struct_decl: "struct" name params '(' arg_list ')' {
+struct_proto: "struct" name params '(' arg_list ')' {
       FbldType* type = FBLC_ALLOC(arena, FbldType);
       type->_base.tag = FBLD_TYPE_DECL;
       type->_base.name = $2;
@@ -500,7 +500,7 @@ struct_decl: "struct" name params '(' arg_list ')' {
     }
   ;
 
-union_decl: "union" name params '(' non_empty_arg_list ')' {
+union_proto: "union" name params '(' non_empty_arg_list ')' {
       FbldType* type = FBLC_ALLOC(arena, FbldType);
       type->_base.tag = FBLD_TYPE_DECL;
       type->_base.name = $2;
@@ -512,26 +512,9 @@ union_decl: "union" name params '(' non_empty_arg_list ')' {
     }
   ;
 
-type_decl: abstract_type_decl | struct_decl | union_decl ;
+type_proto: abstract_type_proto | struct_proto | union_proto ;
 
-access:
-   %empty { $$ = FBLD_PUBLIC_ACCESS; }
- | "priv" { $$ = FBLD_PRIVATE_ACCESS; }
- | "abst" { $$ = FBLD_ABSTRACT_ACCESS; }
- ;
-
-type_defn:
-   access struct_decl { 
-     $$ = $2;
-     $$->access = $1;
-   }
- | access union_decl {
-     $$ = $2;
-     $$->access = $1;
-   }
- ;
-
-func_decl: "func" name params '(' arg_list ';' qref ')' {
+func_proto: "func" name params '(' arg_list ';' qref ')' {
       FbldFunc* func = FBLC_ALLOC(arena, FbldFunc);
       func->_base.tag = FBLD_FUNC_DECL;
       func->_base.name = $2;
@@ -540,14 +523,6 @@ func_decl: "func" name params '(' arg_list ';' qref ')' {
       func->argv = $5;
       func->return_type = $7;
       func->body = NULL;
-      $$ = &func->_base;
-    }
-  ;
-
-func_defn: access func_decl expr {
-      $2->access = $1;
-      FbldFunc* func = (FbldFunc*)$2;
-      func->body = $3;
       $$ = &func->_base;
     }
   ;
@@ -581,7 +556,7 @@ non_empty_port_list:
     }
   ;
 
-proc_decl: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
+proc_proto: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
       FbldProc* proc = FBLC_ALLOC(arena, FbldProc);
       proc->_base.tag = FBLD_PROC_DECL;
       proc->_base.name = $2;
@@ -595,35 +570,7 @@ proc_decl: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
     }
   ;
 
-proc_defn: access proc_decl actn {
-      $2->access = $1;
-      FbldProc* proc = (FbldProc*)$2;
-      proc->body = $3;
-      $$ = &proc->_base;
-    }
-  ;
-
-decl: type_decl | func_decl | proc_decl | interf | module_decl ;
-
-decl_list:
-    %empty {
-      $$ = FBLC_ALLOC(arena, FbldProgram);
-      $$->importv = FBLC_ALLOC(arena, FbldImportV);
-      $$->declv = FBLC_ALLOC(arena, FbldDeclV);
-      FblcVectorInit(arena, *($$->importv));
-      FblcVectorInit(arena, *($$->declv));
-    }
-  | decl_list import ';' {
-      FblcVectorAppend(arena, *($1->importv), $2);
-      $$ = $1;
-    }
-  | decl_list decl ';' {
-      FblcVectorAppend(arena, *($1->declv), $2);
-      $$ = $1;
-    }
-  ;
-
-interf: "interf" name params '{' decl_list '}' {
+interf_proto: "interf" name params '{' proto_env '}' {
           FbldInterf* interf = FBLC_ALLOC(arena, FbldInterf);
           interf->_base.tag = FBLD_INTERF_DECL;
           interf->_base.name = $2;
@@ -634,27 +581,7 @@ interf: "interf" name params '{' decl_list '}' {
         }
      ;
 
-defn: type_defn | func_defn | proc_defn | interf | module_defn ;
-
-defn_list:
-    %empty {
-      $$ = FBLC_ALLOC(arena, FbldProgram);
-      $$->importv = FBLC_ALLOC(arena, FbldImportV);
-      $$->declv = FBLC_ALLOC(arena, FbldDeclV);
-      FblcVectorInit(arena, *($$->importv));
-      FblcVectorInit(arena, *($$->declv));
-    }
-  | defn_list import ';' {
-      FblcVectorAppend(arena, *($1->importv), $2);
-      $$ = $1;
-    }
-  | defn_list defn ';' {
-      FblcVectorAppend(arena, *($1->declv), $2);
-      $$ = $1;
-    }
-  ;
-
-module_decl: "module" name params '(' qref ')' {
+module_proto: "module" name params '(' qref ')' {
           FbldModule* module = FBLC_ALLOC(arena, FbldModule);
           module->_base.tag = FBLD_MODULE_DECL;
           module->_base.name = $2;
@@ -666,6 +593,26 @@ module_decl: "module" name params '(' qref ')' {
         }
      ;
 
+proto: type_proto | func_proto | proc_proto | interf_proto | module_proto ;
+
+type_decl: struct_proto | union_proto ;
+
+func_decl: func_proto expr {
+      FbldFunc* func = (FbldFunc*)$1;
+      func->body = $2;
+      $$ = &func->_base;
+    }
+  ;
+
+proc_decl: proc_proto actn {
+      FbldProc* proc = (FbldProc*)$1;
+      proc->body = $2;
+      $$ = &proc->_base;
+    }
+  ;
+
+interf_decl: interf_proto ;
+
 module_defn_iref: 
      %empty      { $$ = NULL; }
   | '(' qref ')' { $$ = $2; }
@@ -673,18 +620,68 @@ module_defn_iref:
 
 module_body:
      %empty           { $$ = NULL; }
-  | '{' defn_list '}' { $$ = $2; }
+  | '{' decl_env '}' { $$ = $2; }
   ;
 
-module_defn: access "module" name params module_defn_iref module_body {
+module_decl: "module" name params module_defn_iref module_body {
       FbldModule* module = FBLC_ALLOC(arena, FbldModule);
       module->_base.tag = FBLD_MODULE_DECL;
-      module->_base.name = $3;
-      module->_base.paramv = $4;
-      module->_base.access = $1;
-      module->iref = $5;
-      module->body = $6;
+      module->_base.name = $2;
+      module->_base.paramv = $3;
+      module->_base.access = FBLD_PUBLIC_ACCESS;
+      module->iref = $4;
+      module->body = $5;
       $$ = &module->_base;
+    }
+  ;
+
+plain_decl: type_decl | func_decl | proc_decl | interf_decl | module_decl ;
+
+access:
+   %empty { $$ = FBLD_PUBLIC_ACCESS; }
+ | "priv" { $$ = FBLD_PRIVATE_ACCESS; }
+ | "abst" { $$ = FBLD_ABSTRACT_ACCESS; }
+ ;
+
+decl: access plain_decl {
+    $$ = $2;
+    $$->access = $1;
+  }
+ ;
+
+proto_env:
+    %empty {
+      $$ = FBLC_ALLOC(arena, FbldProgram);
+      $$->importv = FBLC_ALLOC(arena, FbldImportV);
+      $$->declv = FBLC_ALLOC(arena, FbldDeclV);
+      FblcVectorInit(arena, *($$->importv));
+      FblcVectorInit(arena, *($$->declv));
+    }
+  | proto_env import ';' {
+      FblcVectorAppend(arena, *($1->importv), $2);
+      $$ = $1;
+    }
+  | proto_env proto ';' {
+      FblcVectorAppend(arena, *($1->declv), $2);
+      $$ = $1;
+    }
+  ;
+
+decl_env:
+    %empty {
+      $$ = FBLC_ALLOC(arena, FbldProgram);
+      $$->importv = FBLC_ALLOC(arena, FbldImportV);
+      $$->declv = FBLC_ALLOC(arena, FbldDeclV);
+      FblcVectorInit(arena, *($$->importv));
+      FblcVectorInit(arena, *($$->declv));
+    }
+  | decl_env import ';' {
+      FblcVectorAppend(arena, *($1->importv), $2);
+      $$ = $1;
+    }
+  | decl_env decl ';' {
+      FblcVectorAppend(arena, *($1->declv), $2);
+      $$ = $1;
     }
   ;
 
