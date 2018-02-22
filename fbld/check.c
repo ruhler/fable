@@ -582,8 +582,19 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
     interf->_base.paramv = module->_base.paramv;
     interf->_base.access = module->_base.access;
 
-    // TODO: Only export public interfaces from the module.
-    interf->body = module->body;
+    // TODO: What should we do if a public entity refers to a private entity
+    // in the prototype? Is that allowed?
+    interf->body = FBLC_ALLOC(arena, FbldProgram);
+    interf->body->importv = FBLC_ALLOC(arena, FbldImportV);
+    interf->body->declv = FBLC_ALLOC(arena, FbldDeclV);
+    FblcVectorInit(arena, *interf->body->importv);
+    FblcVectorInit(arena, *interf->body->declv);
+    for (size_t i = 0; i < module->body->declv->size; ++i) {
+      if (module->body->declv->xs[i]->access != FBLD_PRIVATE_ACCESS) {
+        // TODO: Don't expose the fields of an abstract type.
+        FblcVectorAppend(arena, *interf->body->declv, module->body->declv->xs[i]);
+      }
+    }
 
     module->iref = DeclQRef(arena, env->mref, env->interf, &interf->_base);
   }
