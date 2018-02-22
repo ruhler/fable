@@ -150,6 +150,9 @@ Int type from the parent module when defining IntPair:
 
   struct IntPair(Int@Integer first, Int@Integer second);
 
+The entity after the '@' symbol must refer to a module. It may not refer to an
+interface or any other kind of entity.
+
 Qualified references can be used in the source part of an import statement.
 For example:
 
