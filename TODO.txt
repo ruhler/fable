@@ -8,6 +8,7 @@ Fbld 4:
 * Write a new program (deflate) taking advantage of the new features.
 
 Fbld 4 Test:
+* Can you output abstract or private types in fbld-test?
 * Test that you can't have recursion through a module declaration.
 * Test that you can't have two static parameters with the same name.
 * Add a test that you can't use a func, proc, interf, or module as a type

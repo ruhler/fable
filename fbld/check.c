@@ -544,6 +544,8 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
   bool success = true;
   if (module->iref != NULL) {
     // Verify the module has everything it should according to its interface.
+    // TODO: Ensure public/private/abstract annotations in the module match
+    // the interface for every entity.
     assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
     if (!EnsureDecl(arena, env, module->iref->r->decl)) {
       return false;
@@ -590,9 +592,30 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
     FblcVectorInit(arena, *interf->body->importv);
     FblcVectorInit(arena, *interf->body->declv);
     for (size_t i = 0; i < module->body->declv->size; ++i) {
-      if (module->body->declv->xs[i]->access != FBLD_PRIVATE_ACCESS) {
-        // TODO: Don't expose the fields of an abstract type.
-        FblcVectorAppend(arena, *interf->body->declv, module->body->declv->xs[i]);
+      FbldDecl* decl = module->body->declv->xs[i];
+      switch (decl->access) {
+        case FBLD_PUBLIC_ACCESS: {
+          FblcVectorAppend(arena, *interf->body->declv, decl);
+          break;
+        }
+
+        case FBLD_ABSTRACT_ACCESS: {
+          // Create an abstract type declaration for this type.
+          assert(decl->tag == FBLD_TYPE_DECL);
+          FbldType* type = FBLC_ALLOC(arena, FbldType);
+          type->_base.tag = FBLD_TYPE_DECL;
+          type->_base.name = decl->name;
+          type->_base.paramv = decl->paramv;
+          type->_base.access = FBLD_PUBLIC_ACCESS;
+          type->kind = FBLD_ABSTRACT_KIND;
+          type->fieldv = NULL;
+          FblcVectorAppend(arena, *interf->body->declv, &type->_base);
+          break;
+        }
+
+        case FBLD_PRIVATE_ACCESS:
+          // Don't include this in the interface.
+          break;
       }
     }
 
