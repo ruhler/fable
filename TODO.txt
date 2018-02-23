@@ -1,9 +1,7 @@
 Fbld 4:
 * Increase test coverage for spec.
- - Enforce priv and abst.
+ - Enforce priv and abst for explicit interfaces.
  - Add support for aliases?
-* Clean up code.
- - [on hold] Introduce FbldProto as distinct type from FbldDecl.
 * Refactor existing programs to take advantage of the new features.
 * Write a new program (deflate) taking advantage of the new features.
 
