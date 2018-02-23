@@ -544,8 +544,6 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
   bool success = true;
   if (module->iref != NULL) {
     // Verify the module has everything it should according to its interface.
-    // TODO: Ensure public/private/abstract annotations in the module match
-    // the interface for every entity.
     assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
     if (!EnsureDecl(arena, env, module->iref->r->decl)) {
       return false;
@@ -565,6 +563,17 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
           src->r->param = false;
           Require(CheckDeclsMatch(arena, src, decl_i, decl_m), &success);
 
+          FbldType* type_i = (FbldType*)decl_i;
+          if (decl_i->tag == FBLD_TYPE_DECL && type_i->kind == FBLD_ABSTRACT_KIND) {
+            if (decl_m->access != FBLD_ABSTRACT_ACCESS) {
+              ReportError("%s is abstract in the interface.\n", decl_m->name->loc, decl_m->name->name);
+              success = false;
+            }
+          } else if (decl_m->access != FBLD_PUBLIC_ACCESS) {
+              ReportError("%s is public in the interface.\n", decl_m->name->loc, decl_m->name->name);
+              success = false;
+          }
+
           // Set type_i to NULL to indicate we found the matching type.
           decl_i = NULL;
           break;
@@ -574,6 +583,21 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
       if (decl_i != NULL) {
         ReportError("No implementation found for %s from the interface\n", module->_base.name->loc, decl_i->name->name);
         success = false;
+      }
+    }
+
+    for (size_t m = 0; m < module->body->declv->size; ++m) {
+      FbldDecl* decl_m = module->body->declv->xs[m];
+      if (decl_m->access != FBLD_PRIVATE_ACCESS) {
+        bool found = false;
+        for (size_t i = 0; !found && i < interf->body->declv->size; ++i) {
+          FbldDecl* decl_i = interf->body->declv->xs[i];
+          found = FbldNamesEqual(decl_i->name->name, decl_m->name->name);
+        }
+        if (!found) {
+          ReportError("%s not declared in interface.\n", decl_m->name->loc, decl_m->name->name);
+          success = false;
+        }
       }
     }
   } else {

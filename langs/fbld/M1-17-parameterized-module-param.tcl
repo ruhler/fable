@@ -7,17 +7,17 @@ set prg {
   module MainM(MainI) {
     struct Unit();
 
-    interf Make<type T> {
+    priv interf Make<type T> {
       import @ { T; };
       func make( ; T);
     };
 
     # Test that we can declare and use a parameterized module parameter.
-    func foo<type A, module M(Make<A>)>( ; A) {
+    priv func foo<type A, module M(Make<A>)>( ; A) {
       make@M();
     };
 
-    module MakeUnit(Make<Unit>) {
+    priv module MakeUnit(Make<Unit>) {
       import @ { Unit; };
 
       func make( ; Unit) {
