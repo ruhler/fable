@@ -17,6 +17,7 @@ typedef struct FblcArena {
   // Inputs:
   //   this - The arena to allocate memory from.
   //   size - The number of bytes to allocate.
+  //   msg - A message used to identify the allocation for debugging purposes.
   //
   // Result:
   //   A pointer to a newly allocated size bytes of memory in the arena.
@@ -25,7 +26,7 @@ typedef struct FblcArena {
   //   Allocates size bytes from the arena.
   //   The behavior is undefined if the 'this' argument is not the same from
   //   which the alloc function is invoked.
-  void* (*alloc)(struct FblcArena* this, size_t size);
+  void* (*alloc)(struct FblcArena* this, size_t size, const char* msg);
 
   // free --
   //   Free a memory allocation.
@@ -60,7 +61,9 @@ typedef struct FblcArena {
 //
 // Side effects:
 //   Uses the arena to allocation the object.
-#define FBLC_ALLOC(arena, T) ((T*) (arena)->alloc((arena), sizeof(T)))
+#define FBLC_ALLOC_LINE(x) #x
+#define FBLC_ALLOC_MSG(file, line) file ":" FBLC_ALLOC_LINE(line)
+#define FBLC_ALLOC(arena, T) ((T*) (arena)->alloc((arena), sizeof(T), FBLC_ALLOC_MSG(__FILE__, __LINE__)))
 
 // FblcMallocArena --
 //   A stateless FblcArena that uses malloc and free to implement its alloc
@@ -70,6 +73,45 @@ typedef struct FblcArena {
 //   which means it is not suited for use with functions that rely on the
 //   allocator to track allocations, unless it is okay to leak the memory.
 extern FblcArena FblcMallocArena;
+
+// FblcDebugAlloc -- 
+//   Private type used in FblcDebugMallocArena.
+typedef struct FblcDebugAlloc FblcDebugAlloc;
+
+// FblcDebugMallocArena --
+//   An FblcArena using malloc and free that provides additional tracking for
+//   debugging purposes.
+typedef struct {
+  FblcArena _base;
+  FblcDebugAlloc* head;
+} FblcDebugMallocArena;
+
+// FblcInitDebugMallocArena
+//   Initialize a new debug malloc arena.
+//
+// Inputs: 
+//   arena - A pointer to the arena to initialize.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Prepares the arena so that it is suitable for use as an FblcArena.
+void FblcInitDebugMallocArena(FblcDebugMallocArena* arena);
+
+// FblcAssertEmptyDebugMallocArena
+//   Check that there are no outstanding allocations in the given debug malloc
+//   arena.
+// Inputs:
+//   arena - A pointer to the arena to check.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Prints debug message to stderr and aborts the process if there are any
+//   outstanding allocations in the arena.
+void FblcAssertEmptyDebugMallocArena(FblcDebugMallocArena* arena);
 
 // FblcVector --
 //   A common data structure in fblc is an array of elements with a size. By
@@ -101,7 +143,7 @@ extern FblcArena FblcMallocArena;
 //   The array initially has size 0 and capacity 1.
 #define FblcVectorInit(arena, vector) \
   (vector).size = 0; \
-  (vector).xs = arena->alloc(arena, sizeof(*((vector).xs)))
+  (vector).xs = arena->alloc(arena, sizeof(*((vector).xs)), FBLC_ALLOC_MSG(__FILE__, __LINE__))
 
 // FblcVectorExtend --
 //   Append an uninitialized element to the vector.

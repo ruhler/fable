@@ -10,7 +10,7 @@
 // FblcNewStruct -- See documentation in fblc.h.
 FblcValue* FblcNewStruct(FblcArena* arena, size_t fieldc)
 {
-  FblcValue* value = arena->alloc(arena, sizeof(FblcValue) + fieldc * sizeof(FblcValue*));
+  FblcValue* value = arena->alloc(arena, sizeof(FblcValue) + fieldc * sizeof(FblcValue*), FBLC_ALLOC_MSG(__FILE__, __LINE__));
   value->refcount = 1;
   value->kind = FBLC_STRUCT_KIND;
   value->fieldc = fieldc;
@@ -21,7 +21,7 @@ FblcValue* FblcNewStruct(FblcArena* arena, size_t fieldc)
 // FblcNewUnion -- see documentation in fblc.h.
 FblcValue* FblcNewUnion(FblcArena* arena, size_t fieldc, FblcFieldId tag, FblcValue* field)
 {
-  FblcValue* value = arena->alloc(arena, sizeof(FblcValue) + sizeof(FblcValue*));
+  FblcValue* value = arena->alloc(arena, sizeof(FblcValue) + sizeof(FblcValue*), FBLC_ALLOC_MSG(__FILE__, __LINE__));
   value->refcount = 1;
   value->kind = FBLC_UNION_KIND;
   value->fieldc = fieldc;

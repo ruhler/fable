@@ -37,7 +37,7 @@ static void PrintUsage(FILE* stream)
       "Execute the md5 process called MAIN in the environment of the\n"
       "fbld program PATH.\n"
       "The contents of FILE are streamed to the md5 process.\n"
-      "Example: fbld-md5 prgms/Md5.fbld Md5@Md5 foo.txt\n"
+      "Example: fbld-md5 prgms Md5@Md5@Md5 foo.txt\n"
   );
 }
 

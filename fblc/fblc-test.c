@@ -265,6 +265,8 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
     io_user->cmd_ready = false;
     FblcRelease(arena, ports[io_user->cmd.port]);
     ports[io_user->cmd.port] = NULL;
+    FblcRelease(arena, io_user->cmd.value);
+    io_user->cmd.value = NULL;
   } else if (io_user->cmd.tag == CMD_PUT && ports[io_user->cmd.port] == NULL) {
     io_user->cmd_ready = false;
     ports[io_user->cmd.port] = io_user->cmd.value;
@@ -337,11 +339,6 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FblcValue* args[argc];
-  for (size_t i = 0; i < argc; ++i) {
-    args[i] = FblcsParseValueFromString(arena, loaded->prog, &loaded->sproc->argv.xs[i].type, argv[i]);
-  }
-
   IOUser user;
   user.prog = loaded->prog;
   user.proc = loaded->sproc;
@@ -356,6 +353,15 @@ int main(int argc, char* argv[])
   FblcIO io = { .io = &IO, .user = &user };
   FblcInstr instr = { .on_undefined_access = NULL };
 
+  FblcDebugMallocArena debug_arena;
+  FblcInitDebugMallocArena(&debug_arena);
+  arena = &debug_arena._base;
+
+  FblcValue* args[argc];
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = FblcsParseValueFromString(arena, loaded->prog, &loaded->sproc->argv.xs[i].type, argv[i]);
+  }
+
   FblcValue* value = FblcExecute(arena, &instr, loaded->proc, args, &io);
   assert(value != NULL);
 
@@ -367,5 +373,7 @@ int main(int argc, char* argv[])
   AssertValuesEqual(&user, &loaded->sproc->return_type, user.cmd.value, value);
   FblcRelease(arena, user.cmd.value);
   FblcRelease(arena, value);
+
+  FblcAssertEmptyDebugMallocArena(&debug_arena);
   return 0;
 }

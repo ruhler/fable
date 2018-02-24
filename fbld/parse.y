@@ -918,7 +918,7 @@ FbldProgram* FbldParseProgram(FblcArena* arena, const char* filename)
 
   // Make a copy of the filename for locations so that the user doesn't have
   // to worry about keeping it alive for the duration of the program lifetime.
-  char* source = arena->alloc(arena, sizeof(char) * (strlen(filename) + 1));
+  char* source = arena->alloc(arena, sizeof(char) * (strlen(filename) + 1), FBLC_ALLOC_MSG(__FILE__, __LINE__));
   strcpy(source, filename);
 
   Lex lex = {
