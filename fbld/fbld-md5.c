@@ -142,6 +142,10 @@ int main(int argc, char* argv[])
   FblcIO io = { .io = &IO, .user = &user };
   FblcInstr instr = { .on_undefined_access = NULL };
 
+  FblcDebugMallocArena debug_arena;
+  FblcInitDebugMallocArena(&debug_arena);
+  arena = &debug_arena._base;
+
   FblcValue* value = FblcExecute(arena, &instr, loaded->proc_c, NULL, &io);
 
   // Print the md5 hash
@@ -154,6 +158,7 @@ int main(int argc, char* argv[])
   }
   printf("\n");
   FblcRelease(arena, value);
+  FblcAssertEmptyDebugMallocArena(&debug_arena);
 
   return 0;
 }

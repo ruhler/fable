@@ -587,7 +587,7 @@ FblcValue* FblcNewStruct(FblcArena* arena, size_t fieldc);
 //   A newly constructed, fully initialized union value.
 //
 // Side effects:
-//   Performs arena allocations.
+//   Performs arena allocations. Takes ownership of the given value object.
 FblcValue* FblcNewUnion(FblcArena* arena, size_t fieldc, FblcFieldId tag, FblcValue* value);
 
 // FblcCopy --

@@ -373,7 +373,6 @@ int main(int argc, char* argv[])
   AssertValuesEqual(&user, &loaded->sproc->return_type, user.cmd.value, value);
   FblcRelease(arena, user.cmd.value);
   FblcRelease(arena, value);
-
   FblcAssertEmptyDebugMallocArena(&debug_arena);
   return 0;
 }

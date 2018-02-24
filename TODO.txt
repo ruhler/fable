@@ -1,10 +1,12 @@
 Fbld 4:
 * Increase test coverage for spec.
- - Add support for aliases?
-* Refactor existing programs to take advantage of the new features.
-* Write a new program (deflate) taking advantage of the new features.
+* Rethink alias and implement them.
+* Refactor md5 program to share Bit composition code.
+* Implement deflat program.
 
 Fbld 4 Test:
+* Switch to DebugMallocArena for fbld-test
+  - Will requiring fixing all the crazy memory leaks in parser and checker.
 * Can you output abstract or private types in fbld-test?
 * Test that you can't have recursion through a module declaration.
 * Test that you can't have two static parameters with the same name.
@@ -72,9 +74,8 @@ Snake Arc:
 * Keep track of and report score.
 
 Miscellanous:
-* Add test to fblc-test that we don't leak memory in FblcExecute.
-  - See for example, fbld-md5 which clearly shows we do leak memory in
-    FblcExecute.
+* Track down memory-leak like behavior in fbld-md5
+  - Perhaps we should put a limit on link sizes?
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
   - Something that cannot be typed, such as x, when x is not defined.  "maltyped"
