@@ -1,47 +1,43 @@
-Damocrates is a meta-language built on top of Androcles, Bathylus, and Calvisus
-designed to be programmed by human, with features for modularity and
-development. These features facilitate reuse of code across multiple programs,
-expanding the scale of programs that can be developed by individuals and
-larger organizations in practice.
+The Fable of Damocrates 
+=======================
+Richard Uhler <ruhler@degralder.com>
 
-A core philosophy of Damocrates is that it can be statically compiled into
-Androcles/Bathylus/Calvisus. The abstractions introduced by the Damocrates
-language are zero-cost in the sense that they have no overhead at runtime
-after compiling the program down to Androcles/Bathylus/Calvisus. The developer
+1. Introduction
+---------------
+Damocrates is a computer programming language from the Fable collection. It
+builds on top of the Calvisus language, providing compile-time developer
+features for modularity and abstraction geared at reducing the cost of
+producing large fblc programs.
+
+A core philosophy of fbld is that it can be statically compiled to fblc.
+The abstractions introduced by fbld are zero-cost in the sense that they have
+no overhead at runtime after compiling the program down to fblc. The developer
 need not have to make a tradeoff between modularity/abstraction and runtime
 performance.
 
-Overview of Damocrates
-----------------------
-Damocrates adds support for modularity and polymorphism on top of the
-Calvisus language.
+Damocrates facilitates development of large scale programs by introducing two
+broad features extending the existing fblc language: modules and polymorphism.
+Modules allow the same peice of code to be reused in many different programs,
+and polymorphism allows the same peice of code to be reused in many different
+contexts within a single program. These features allow a developer to easily
+leverage the existing work of others to assemble and reuse large scale
+programs.
 
-Modularity
-^^^^^^^^^^
-A module is a collection of declarations with an abstract interface. The
-benefits of modules are:
-* They allow common functionality to be reused across many different programs.
-* That common functionality can be understood and used solely based on its
-  abstract interface, separate from any complex implementation details.
-* Modules act as namespaces for declarations, which helps to avoid name
-  conflicts when assembling programs using code from different developers.
+2. Modules
+----------
+A module is a collection of type, func, and proc entities that can be reused
+in different programs. The entities defined in a module exist in their own
+namespace to avoid name conflicts when combining modules together to form
+programs. Entities defined within a module can be private to that module.
+Modules are organized hierarchically, with the option of specifying the
+implementation of a module in its own source file.
 
-For example, many programs make use of some form of integer arithmetic. Rather
-than reimplement and retest integer arithmetic for each program, a single
-integer arithmetic module can be developed and reused. The integer arithmetic
-module can be defined with an abstract interface so that users need only know
-there is some type Int and an operation to add two Ints together, without
-having to worry about whether the Int type is implemented using a unary,
-binary, 2s-complement or other representation. Here is what the interface
-definition and an implementation based on a unary representation might look
-like in Damocrates:
+2.1. Module Declaration
+-----------------------
+The following shows an example of a module declaring a unary integer type and
+operations:
 
-  interf IntegerI {
-    type Int;
-    func Add(Int a, Int b; Int);
-  };
-
-  module IntegerM(IntegerI) {
+  module Integer {
     struct Unit();
     union Int(Unit 0, Int S);
 
@@ -50,511 +46,641 @@ like in Damocrates:
     };
   };
 
-The Int type and Add function can then be referenced from other modules using
-qualified references Int@IntegerM and Add@IntegerM. Alternatively, the Int and
-Add functions can be imported into the local namespace from the IntegerM
-module. Both of these appropaches are demonstrated in this contrived main
-module that defines operations on pairs of integers:
+The module declaration provides the name of the module and the collection of
+entities defined by the module: types "Unit" and "Int" and function "Add" in
+this case.
 
-  module MainM(MainI) {
-    import @ { IntegerM; };    # import IntegerM from parent module namespace
-    import IntegerM { Int; };  # import Int from IntegerM namespace
+2.2. Module Namespaces
+----------------------
+The braces of a module declaration introduce a new name space. Entities
+declared in a different namespace cannot be directly referred to. For example,
+the following program is incorrect, because the Unit type is not available
+in the namespace where Int is defined, and the Int type is not available in
+the namespace where IntPair is defined:
 
-    struct IntPair(Int a, Int b);
-    func AddPair(IntPair x ; Int) {
-      Add@IntegerM(x.a, x.b);
+  struct Unit();
+
+  module Integer {
+    union Int(Unit 0, Int S);               # ERROR: 'Unit' not defined
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
     };
   };
 
-Polymorphism 
-^^^^^^^^^^^^
-Polymorphism makes it possible to reuse the same code in different type and
-behavioral contexts. For example, with polymorphism it is possible to provide
-one implementation of a list type and associated functions that work for lists
-of any arbitrary type of element. Polymorphism is introduced in Damocrates by
-allowing declarations to be parameterized by type and module.
+  struct IntPair(Int first, Int second);    # ERROR: 'Int' not defined.
+
+There are three ways to refer to entities declared in another name space:
+import from parent, qualified references, and import from module.
+
+2.2.1. Import from Parent
+-------------------------
+A module can explicitly import entities into its own namespace from the
+namespace in which the module itself is defined. For example, this can be used
+to import the Unit type in the previous example into the Integer namespace so
+that it can be referred to when defining the Int type. To import an entity
+from a parent module, an "import @" statement is used:
+
+  struct Unit();
+
+  module Integer {
+    import @ { Unit; };               # Unit imported from parent namespace.
+    union Int(Unit 0, Int S);         # OK: 'Unit' is now in scope.
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+The basic form of the import @ statement is to list entities in the parent
+namespace to import under the same name in the module namespace. Multiple
+entities can be imported with a single import @ statement, separated by
+semicolons. For example, to import entities Apple, Banana, and Pair from a
+parent namespace, you could write:
+
+  import @ { Apple; Banana; Pair; };
+
+More generally, an entity can be imported from the parent namespace to the
+module namespace under a different name. This allows a module to have full
+control over its own namespace. For example, to import the Unit type under the
+name MyParentsUnit:
+
+  struct Unit();
+
+  module Integer {
+    import @ { MyParentsUnit=Unit; };
+    union Int(MyParentsUnit 0, Int S); # OK: 'MyParentsUnit' is now in scope.
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+The general syntax for the parent import statement is:
+
+   'import' '@'  '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
+
+Only entities available in the module's immediate parent namespace may be
+imported this way. An entity declared in the parent's parent namespace cannot
+be imported unless it has first been imported into the parent namespace.
+
+Entities imported this way must not recursively depend on the definition of
+this module.
+
+2.2.2. Qualified References
+---------------------------
+A second way to reference entities from another namespace is to use qualified
+references. Qualified references allow you to access an entity declared within
+a module in your current namespace. The syntax is to put the name of the
+entity, followed by '@' and the name of the module it belongs to.
+
+For example, we can use the qualified reference Int@Integer to refer to the
+Int type from the parent module when defining IntPair:
+
+  struct Unit();
+
+  module Integer {
+    import @ { Unit; };
+    union Int(Unit 0, Int S);
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+  struct IntPair(Int@Integer first, Int@Integer second);
+
+The entity after the '@' symbol must refer to a module. It may not refer to an
+interface or any other kind of entity.
+
+Qualified references can be used in the source part of an import statement.
+For example:
+
+  import @ { Apple@Fruit; B=Banana@Fruit; };
+
+This imports the entity Apple@Fruit under the name Apple and Banana@Fruit
+under the name B in the local namespace.
+
+2.2.3. Import from Module
+-------------------------
+Because it can be tedious to always be using qualified references to access
+entities from other modules, we also provide a way to import those entities
+directly into your namespace using an import statement. The import statement
+behaves the same as an import '@' statement, but in place of the '@' specifies
+a module currently in scope to import entities from. Using this approach, our
+example becomes:
+
+
+  struct Unit();
+
+  module Integer {
+    import @ { Unit; };
+    union Int(Unit 0, Int S);
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Int:S(Add(a.S, b)));
+    };
+  };
+
+  import Integer { Int; };
+  struct IntPair(Int first, Int second);
+
+As with the import '@' statement, entities can be renamed upon import:
+
+  import Integer { MyInt=Int; };
+  struct IntPair(MyInt first, MyInt second);
+
+2.3. Private Entities
+---------------------
+By default, entities defined in a module are publicly available to other
+modules. The keyword 'priv' can be used before an entity to declare the entity
+is a private to a module. A private entity cannot be referenced using a
+qualified reference or import from module, though it can be imported into a
+child module using import from parent.
+
+For example, the following code defines a private 'Incr' function within the
+Integer module that cannot be accessed externally:
+
+  struct Unit();
+
+  module Integer {
+    import @ { Unit; };
+    union Int(Unit 0, Int S);
+
+    priv func Incr(Int a; Int) {
+      Int:S(a);
+    };
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Incr(Add(a.S, b)));
+    };
+  };
+
+  import Integer { Int; Add; Incr; };        # ERROR: 'Incr' not defined
+  struct IntPair(Int first, Int second);
+
+Struct and union types have an additional visibility option. By default they
+are public, with the 'priv' keyword they are private, but they can also be
+labeled as an abstract type using the keyword 'abst'. The name of an abstract
+type is visible externally, but the fields of the type are not. This means
+external users cannot construct instances of the type, access fields, or
+perform conditional operations. For example, it makes sense to mark 'Int' as
+an abstract type:
+
+  struct Unit();
+
+  module Integer {
+    import @ { Unit; };
+    abst union Int(Unit 0, Int S);
+
+    priv func Incr(Int a; Int) {
+      Int:S(a);
+    };
+
+    func Add(Int a, Int b; Int) {
+      ?(a; b, Incr(Add(a.S, b)));
+    };
+  };
+
+  import Integer { Int; };
+  struct IntPair(Int first, Int second);
+  func Decr(Int a ; Int) {
+    a.S;              # ERROR: field access not allowed on abstract type 'Int'
+  };
+
+2.4. Module Dependencies
+------------------------
+To maintain the integrity and meaning of a module, a module declaration
+must not depend on itself recursively through external entities. It is not
+allowed to import @ into a module an entity that comes from or depends on an
+entity defined within the module.
+
+2.5. Module Hierarchy File Organization
+---------------------------------------
+Modules are defined hierarchically. To facilitate reuse of modules in
+different programs, different modules can be implemented in different files
+rather than require an entire program to be implemented in a single large
+file.
+
+When implementing modules in different files, the program is specified using a
+directory name rather than a file name. When the program is specified this
+way, modules may be defined in different files. To indicate that a module is
+defined in a different file, the body of the module should be omitted in the
+parent module. For example, assuming our example program was described in
+Main.fbld, the Integer module can be described in a file Main/Integer.fbld as
+follows:
+
+Main.fbld:
+  struct Unit();
+
+  module Integer;   # body of module read from Main/Integer.fbld
+
+  import Integer { Int; };
+
+  struct IntPair(Int first, Int second);
+
+Main/Integer.fbld:
+  import @ { Unit; };
+  abst union Int(Unit 0, Int S);
+
+  func Add(Int a, Int b; Int) {
+    ?(a; b, Incr(Add(a.S, b)));
+  };
+
+Note that this is only allowed when the top level program is specified as a
+directory, to make it clear that only the file or directory provided for the
+top level program is accessed, and not additional files outside of what was
+explicitly provided.
+
+When specifying the top level program using a directory, the top level program
+contains public child modules for each fbld file found within that directory.
+For example, consider the following directory and file organization:
+
+foo/StdLib.fbld:
+  struct Unit();
+
+foo/Main.fbld:
+  import @ { Unit@StdLib; };
+
+  module Integer;
+
+  import Integer { Int; };
+
+  struct IntPair(Int first, Int second);
+
+foo/Main/Integer.fbld:
+  import @ { Unit; };
+  abst union Int(Unit 0, Int S);
+
+  func Add(Int a, Int b; Int) {
+    ?(a; b, Incr(Add(a.S, b)));
+  };
+
+Referring to foo as a top level program is implicitly taken as equivalent to
+the complete program:
+
+  module StdLib {
+    struct Unit();
+  };
+
+  module Main {
+    import @ { Unit@StdLib; };
+
+    module Integer {
+      import @ { Unit; };
+      abst union Int(Unit 0, Int S);
+
+      func Add(Int a, Int b; Int) {
+        ?(a; b, Incr(Add(a.S, b)));
+      };
+    };
+
+    import Integer { Int; };
+
+    struct IntPair(Int first, Int second);
+  }
+
+In this case, implementations are encouraged to provide options for loading
+and checking only those modules needed for the task. For example, if the
+directory contained another file foo/Main2.fbld, and Main2 was not referenced
+as part of running the program Main, then running the program Main should not
+require foo/Main2.fbld to be loaded.
+
+3. Polymorphism
+---------------
+Polymorphism makes it possible to reuse the same code in multiple different
+contexts in the same program. For example, with polymorphism it is possible to
+provide one implementation of a list type and associated functions that work
+for lists of any arbitrary type of element. Polymorphism is introduced in
+Damocrates by allowing entity declarations to be parameterized by other
+entities.
 
 A generic list type and 'Last' function could be defined by introducing a type
 parameter T as follows:
 
-  struct ListP<T>(T head, ListS<T> tail);
-  union ListS<T>(Unit nil, ListP<T> cons);
+  struct ListP<type T>(T head, ListS<T> tail);
+  union ListS<type T>(Unit nil, ListP<T> cons);
 
-  func Last<T>(ListP<T> list ; T) {
+  func Last<type T>(ListP<T> list ; T) {
     ?(list.tail; list.head, Last<T>(list.tail.cons));
   };
 
-We can also define a generic 'Contains' function to check if a list contains a
-specific element, but only if we also provide a module parameter to define
+We could also define a generic 'Contains' function to check if a list contains
+a specific element, but only if we also provide a func parameter to define
 what it means for two elements to be equal:
   
-  interf Eq<T> {
-    import @ { Bool; }; 
-    func Equals(T a, T b; Bool);
-  };
-
-  func Contains<T; Eq<T> eq>(ListS<T> list, T elem; Bool) {
+  func Contains<type T, func Eq(T a, T b; Bool)>(ListS<T> list, T elem; Bool) {
     ?(list;
         False(),                                    # The list is empty.
-        ?(eq.Equals(elem, list.cons.head);
+        ?(Eq(elem, list.cons.head);
           True(),                                   # head matches.
-          Contains<T, eq>(list.cons.tail, elem)));  # check the tail.
+          Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
   };
 
-Top Level Declarations
-----------------------
-Fbld code is organized into a collection of top level interface and module
-declarations that form the global namespace. An fbld program is made up of
-the module containing its main entry point and all other top level
-declarations the main module depends on directly or indirectly.
+3.1. Prototypes
+---------------
+Prototypes are used to describe what kind of entity is required for an entity
+parameter. The prototypes provide enough information to use an entity without
+any other implementation details. The following forms of prototypes can be
+used in static parameter lists.
 
-To avoid the need to parse a large number of top level declarations unused in
-most programs, it is suggested to organize top level declarations by putting
-each declaration in its own file called Foo.fbld, where Foo is the name of the
-top level declaration.
-
-Top level declarations must not recursively reference other top level
-declarations; the graph of top level interface and module dependencies
-should be a directed acyclic graph. The reason for this is to avoid complex
-module dependencies that would make it difficult to reason about or understand
-a module in isolation.
-
-Note that the prescribed file system layout for top level declarations is
-intended solely for practical purposes when developing on a posix-like system.
-It should not be considered a fundamental part of the language specification.
-In particular, these guidelines are not applicable to non-posix systems.
-
-Namespaces
-----------
-Every entity is defined in the context of a namespace. In addition to the
-global namespace of top level declarations, each interface and module
-definition introduces its own namespace.
-
-An entity may refer to any other entity defined in the same namespace context
-directly using that other entity's name. In order to refer to entities defined
-in other namespaces, those entities must either be imported into the namespace
-or referred to using a qualified reference from an entity already accessible
-from the namespace.
-
-Entities can be defined with the same name as long as they belong to different
-namespaces.
-
-Import Declarations
-^^^^^^^^^^^^^^^^^^^
-The 'import' declaration is used to import external entities into a module or
-interface's local namespace. There are two forms of import declaration:
-
-  'import' '@' '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-
-If the '@' symbol follows the 'import' keyword, then entities are imported
-from the parent namespace. Otherwise the entities are imported from a module
-already in the local namespace refered to by mref.
-
-By default entities are imported using the same name they are declared with,
-but it is possible to specify an alternate name when importing an entity in
-order to avoid name conflicts.
-
-For example:
-  import BoolM { Bool; true=True; false=False; };
-
-The above statement imports three entities from the BoolM module: the Bool
-type, the True function renamed to 'true' locally, and the False function,
-renamed to 'false' locally.
-
-Following the module is a list of entities to give local names to, each entity
-terminated with a semicolon. Entities can be names of types, functions,
-processes, interfaces, or modules. The entity can either be a single name,
-indicating that entity from the module is being imported under its same name,
-and can be referred to elsewhere by that simple name. Or the entity can have
-the form 'name' = 'name', where the first name is the name the entity is
-imported under, and the second name is the name of the entity as declared in
-the module it is being imported from.
-
-Type and module parameters should not be supplied in the import statement
-for imported polymorphic entities. The locally imported names will refer to
-polymorphic entities that can be used with different type and module
-parameters within the local namespace. For example, a List type could be
-imported once from the List module, then used locally as List<Int>,
-List<Bool>, or any other kind of list.
-
-It is legal to have multiple import statements for the same module and
-to import the same external entity multiple times under the same or different
-names, either within a single import statement or spanning across multiple
-import statements for the same module. It is not required to import entities
-from locally available modules; qualified references can be used to refer to
-those entities instead. In order to refer to entities from the parent name
-space, they must be imported.
-
-Qualified References
-^^^^^^^^^^^^^^^^^^^^
-A module serves as a namespace. Entities defined in different modules can
-have the same name. To reference an entity from an external module that has
-not been imported locally, the name of the entity and the name of the
-module where it resides must be supplied using a qualified reference taking
-the form <name>@<mref>. For example, to refer to a function 'True' in a
-locally accessible module named BoolM:
-    
-    True@BoolM
-
-Polymorphism
-------------
-Declarations can be parameterized by zero or more type and module parameters.
-The general syntax for defining a polymorphic entity is to use angle brackets
-after the entities name with the syntax:
-
-params ::= ['<' [tparam [',' tparam [...]]] [';' [mparam [',' mparam [...]]]] '>'] ;
-mparam ::= iref params tname ;
-tparam ::= tname ;
-
-If nothing is given after the entity name, the entity is assumed to take no
-type or module parameters. If the angle brackets do not include a semicolon
-followed by type parameters, the entity is assumed to take no module
-parameters. In any case, it is acceptable to use the explicit syntax with zero
-or more type and module parameters.
-
-Type parameters introduce abstract type declarations of the corresponding name
-into the context of the entity being declared.
-
-It is not currently possible to parameterize a declaration by a type or module
-that is itself parameterized, though that feature is under consideration for
-future revisions of this language specification. Such a feature would be
-useful for defining generic monadic functions, for example, where the generic
-monadic type would be represented as a parameterized type parameter M<T>.
-
-Interface Specification
------------------------
-'interf' <interface_name> params {
-  <interface_declarations>
-};
-
-An interface is an abstract view of a module that includes the information
-necessary to interact with a module, without any module implementation
-details. Interfaces are named and may be polymorphic in types or modules as
-described by 'params'.
-
-The body of the interface specification consists of a list of zero or more
-interface_declaration items and introduces a new namespace. Interface
-declaration items declared in the body of the interface can only access
-external named entities through an import declaration in the body of the
-interface.
-
-There are 8 kinds of interface_declaration items: import, type, struct, union,
-func, proc, interf, and module. 
-
-Import Declaration
-^^^^^^^^^^^^^^^^^^
-  'import' '@' '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-
-Import declarations are supported within interface declarations. They behave
-as already discussed in ???. Imported entities are not considered part of the
-interface. The purpose of import declarations is to refer to external entities
-in the interface specification, not define new entities in the interface.
-
-Abstract Type Declarations
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-  'type' params tname ';'
-
-The 'type' declaration is used to declare an abstract type that is defined
-internally by modules implementing the interface. For example:
-
-   type Int;
-
-This defines an abstract Int type. The 'Int' type can be used anywhere a type
-is expected. Values of abstract types cannot be used as objects of member
-access or arguments to conditional expressions or processes.
-
-Abstract types may be polymorphic in types or modules as described by
-'params'. For example, an abstract implementation of a list type could be
-declared as:
-
-   type List<T>;
-
-Struct Declarations
-^^^^^^^^^^^^^^^^^^^
-  'struct' tname param '(' [qref fname [',' qref fname [...]]] ')' ';'
-
-Struct declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', and they can
-reference qualified types from other modules.
-
-A struct declaration is used to declare a struct type that is defined by the
-module implementing the interface. The defined type can be used anywhere a
-struct type is expected. In particular, values of the defined type can be
-constructed and used as objects of member access.
-
-Union Declarations
-^^^^^^^^^^^^^^^^^^
-  'union' tname param '(' [qref fname [',' qref fname [...]]] ')' ';'
-
-Union declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', and they can
-reference qualified types from other modules.
-
-A union declaration is used to declare a union type that is defined by the
-module implementing the interface. The defined type can be used anywhere a
-union type is expected. In particular, values of the defined type can be
-constructed, used as objects of member access, and used as the condition in
-conditional expressions.
-
-Function Declarations
-^^^^^^^^^^^^^^^^^^^^^
-  'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' ';'
-
-Function declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', they can
-reference qualified types from other modules, and no function body is given.
-
-A function declaration is used to declare a function that is defined by the
-module implementing the interface. The defined function can be used anywhere
-a function of the same type is expected.
-
-Process Declarations
-^^^^^^^^^^^^^^^^^^^^
-  'proc' tname params '('
-     [qref polarity pname [',' qref polarity pname [...]]] ';'
-     [qref vname [',' qref vname [...]]] ';' qref ')' ';'
-
-Process declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', they can
-reference qualified types from other modules, and no process body is given.
-
-A process declaration is used to declare a process that is defined by the
-module implementing the interface. The defined process can be used anywhere
-a process of the same type is expected.
-
-Sub-Interface Declarations
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-'interf' <interface_name> params '{'
-  <interface_declarations>
-'};'
-
-Interface declarations can be nested. A sub-interface declaration is used to
-declare a sub-interface that is defined by the module implementing the
-interface.
-
-Sub-Module Declarations
-^^^^^^^^^^^^^^^^^^^^^^^
-  'module' <module_name> params '(' iref ')' ';'
-
-A sub-module declaration is used to declare a sub-module that is defined by
-the module implementing the interface. The defined sub-module can be used
-anywhere a module of the same type is expected.
-
-Module Specification
+3.1.1. Abstract Type
 --------------------
-'module' <module_name> params '(' iref ')' '{'
-  <module_declarations>
-'};'
+The prototype for an abstract type is declared using the 'type' keyword. For
+example:
 
-Modules are named and may be polymorphic in tyeps or modules as described by
-'params'. Each module implements a single interface. For a module to properly
-implement an interface, every entity declared in the interface must have a
-corresponding implementation supplied by the module.
+  type T
 
-There are 7 kinds of module_declaration items: import, struct, union, func,
-proc, interf, and module. These correspond to the interface declarations,
-except that abstract type declarations are not allowed within modules.
+This prototype matches any type, without indiciating whether the type is a
+union or struct type, or what the fields of the type are. The user of the type
+can refer to the type under the name T, but cannot directly construct values
+of the type, access any fields of the type, or condition based on objects of
+the type.
 
-Import Declaration
-^^^^^^^^^^^^^^^^^^
-  'import' '@' '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
+3.1.2. Struct Type
+------------------
+The prototype for a struct type is a struct type definition, with fields
+included because the fields of the struct type are part of its interface.
 
-Import declarations are supported within module declarations. They behave
-as already discussed.
+  struct T(Int first, Int second)
 
-Struct Declarations
-^^^^^^^^^^^^^^^^^^^
-  'struct' tname param '(' [qref fname [',' qref fname [...]]] ')' ';'
+This prototype matches any struct type that has the same field types and
+names. The user of the type can refer to the type under the name T, can
+use T as a constructor to construct values of the type, and can use field
+access to access members of the type.
 
-Struct declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', and they can
-reference qualified types from other modules.
+3.1.3. Union Type
+-----------------
+The prototype for a union type is a union type definition, with fields
+included because the fields of the union type are part of its interface.
 
-Union Declarations
-^^^^^^^^^^^^^^^^^^
-  'union' tname param '(' [qref fname [',' qref fname [...]]] ')' ';'
+  union T(Unit Apple, Unit Banana, Unit Pair)
 
-Union declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', and they can
-reference qualified types from other modules.
+This prototype matches any union type that has the same field types and names.
+The user of the type can refer to the type under the name T, can construct
+values of the type, access fields, and use conditions that select based on the
+tag of the type.
 
-Function Declarations
-^^^^^^^^^^^^^^^^^^^^^
-  'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' expr ';'
+3.1.4. Function
+---------------
+The prototype for a function is a function defininition without the body
+of the function.
 
-Function declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', and they can
-reference qualified types from other modules.
+  func F(Int a, Int b; Int);
 
-Process Declarations
-^^^^^^^^^^^^^^^^^^^^
-  'proc' tname params '('
-     [qref polarity pname [',' qref polarity pname [...]]] ';'
-     [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
+This prototype matches any function that has the same argument and return
+types; the argument names need not match. The user of the function can call
+the function under the name F.
 
-Process declarations are as in fblc, except that they now support
-polymorphic type and module parameters as described by 'params', and they can
-reference qualified types from other modules.
+3.1.5. Process
+--------------
+The prototype for a process is a process definition without the body of the
+process.
 
-Sub-Interface Declarations
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-'interf' <interface_name> params '{'
-  <interface_declarations>
-'};'
+  proc P(Data+ out; Data value; Unit);
 
-Modules can contain interface declarations.
+This prototype matches any process that has the same port polarity and types,
+argument types and return type; the port and argument names need not match.
+The user of the process can call the process under the name P.
 
-Sub-Module Declarations
-^^^^^^^^^^^^^^^^^^^^^^^
-  'module' <module_name> params '(' iref ')' ';'
+3.1.6. Module
+-------------
+To specify a prototype for a module, we introduce a new kind of entity called
+an interface. An interface describes everything a user of a module needs to
+know to use the interface.
 
-Modules can contain sub-module declarations.
+An interface is defined like a module, except that entity declarations are
+replaced with prototypes for those entities. For example, an interface for the
+Integer module used as an example previously could be:
 
-Interface Requirements
-^^^^^^^^^^^^^^^^^^^^^^
-For a module to correctly implement its interface, every entity declared in
-the interface must have a corresponding implementation supplied by the module.
+  interf IntegerI {
+    import @ { Unit; };
 
-An abstract type declared in an interface can be implemented using either a
-struct or union type declaration with matching name in the module.
+    type Int;
+    func Add(Int a, Int b; Int);
+  };
 
-Any struct/union type in the interface must be implemented with a matching
-struct/union declaration in the module. This can be interpreted as saying the
-type declaration in the interface specifies the interface for constructing
-and deconstructing the type, while the corresponding declaration in the module
-definition is a unique definition of the type. If two different modules
-ModuleA and ModuleB implement the same interface Interface, and that interface
-includes a struct or union declaration Foo, then Foo@ModuleA is considered a
-different type from Foo@ModuleB.
+As with modules, interfaces introduce new namespaces. All prototypes in the
+interface must be public. A 'type' prototype is used in place of an 'abst'
+type in a module.
 
-Any sub-interface declared in the interface must have a matching sub-interface
-defined in the module.
+To use the Integer module as a polymorphic parameter under the IntegerI
+interface, we must explicitly specify in the implementation of the Integer
+module that it has interface IntegerI:
 
-Any func, proc, or sub-module declared in the interface must have a matching func,
-proc, or sub-module declaration in the module where the body of the
-declaration has been supplied.
+    module Integer(IntegerI) {
+      import @ { Unit; };
+      abst union Int(Unit 0, Int S);
 
-For declarations to be considered matching, they must have the same type and
-name of arguments. Whether a type is referred to under a local name or using a
-qualified reference does not matter.
+      func Add(Int a, Int b; Int) {
+        ?(a; b, Incr(Add(a.S, b)));
+      };
+    };
 
-Syntax Reference
+A module can only implement an interface if there is a one-to-one
+correspondence between prototypes in the interface and public entities in the
+module. The prototypes must match exactly, including entity names, argument
+names, and port names.
+
+An explicit interface is only needed for a module if that module will be
+passed as a polymorphic parameter. If there will only ever be a single
+implementation of a module's interface, there is no need to introduce an
+explicit interface to describe it.
+
+A module prototype is the module definition for a module with an explicit
+interface, without the body of the module:
+
+  module M(IntegerI)
+
+This prototype matches any module that explicitly implements the interface
+IntegerI.
+
+3.1.7. Interface
 ----------------
-  interf ::= 'interf' tname params '{'
-                [interf_decl [interf_decl [...]]] '}' ';' ;
+The prototype for an interface declaration is a full interface declaration.
 
-  module ::= 'module' tname  params '(' iref ')' '{'
-                [module_decl [module_decl [...]]] '}' ';' ;
+  interf I {
+    type Int;
+    func Add(Int a, Int b; Int);
+  };
 
-  params ::= ['<'[tname [',' tname [...]]] [';'
-                 [iref tname [',' iref tname [...]]]] '>'] ;
+A user can implement a module with the interface or access entities in a
+module through the interface.
 
-  qref ::= tname ['<' [qref [',' qref [...]]] [';'
-                 [mref [',' mref [...]]]] '>']
-                 ['@' qref] ;
-  iref ::= qref ;
-  mref ::= qref ;
+3.2. Declaring Polymorphic Entities
+-----------------------------------
+  params ::= ['<' [proto [',' proto [...]]] '>'] ;
 
-  interf_decl ::= 'import' '@'  '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-                  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-               |  'type' tname params ';'
-               |  'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
-               |  'union' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
-               |  'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' ';'
-               |  'proc' tname params '('
+To declare a polymorphic entity, supply a list of zero or more static
+parameters after the entity name surrounded by angle brackets. A static
+parameter is described using a prototype, as defined above.
+All kinds of prototypes are allowed, including abstract type,
+struct, union, func, proc, interf, and module.
+
+The prototype introduces an entity into scope, visible to all later static
+parameter prototypes and the body of the entity declaration. Parameter
+entities must be explicitly imported into module and interface name spaces.
+For example:
+
+  module MaybeEq<type T>(Eq(Maybe<T>)) {
+    import @ { Maybe; T; };
+    ...
+  };
+
+Note that the prototypes of arguments can themselves be polymorphic.
+
+3.3. Supplying Static Parameter Values
+--------------------------------------
+['<' [qref [',' qref [...]]] '>']
+
+To use a parameterized entity, static parameter values must be provided. These
+are provided as a list of qualified references in angle brackets. Each qref
+must have a prototype matching that of the prototype specified when the entity
+was declared.
+
+The number of qref's supplied may be less than the number of static parameters
+required by the entity, in which case we say partial application of static
+parameters has occured. This is useful for supplying parameterized arguments
+to another entity. For example, consider a monadic function:
+
+  bind<type A, type B, type M<type T>, func F(A x; M<B>)>(M<A> x; M<B>);
+
+  This could be used with an Either monad by supplying a partial application of
+  the Either type constructor:
+
+    struct Either<type A, type B>(A left, B right);
+
+    ... bind<Int, Bool, Either<String>, IsZero>(x) ...
+
+3.4. Entity Aliases
+-------------------
+Reuse of parameterized entities provides another way to define an entity: by
+static application of parameters to some other polymorphic entity. To support
+this, we introduce another form of entity definition:
+
+  proto '=' qref ';' ;
+
+This form can be used in place of a standard entity declaration. For example,
+we could provide a generic BitXY type for composing bit types together, then
+define a Bit8 type in terms of that generic type:
+
+  struct BitXY<type A, type B>(A hi, B lo);
+
+  type Bit8 = BitXY<Bit4, Bit4>;
+
+Within the namespaces context where the alias occurs, use of the entity will
+be treated as equivalent to use of its value. For example, Bit8 will be
+considered the same type as BitXY<Bit4, Bit4>. Outside the namespace context
+where the alias occurs, the entity will be treated as if it was a new
+declaration.
+
+4. Syntax Reference
+-------------------
+  type_proto ::= 'type' tname params ;
+  struct_proto ::= 'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ;
+  union_proto ::= 'union' tname params '(' qref fname [',' qref fname [...]] ')' ;
+  func_proto ::= 'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' ;
+  proc_proto ::= 'proc' tname params '('
                      [qref polarity pname [',' qref polarity pname [...]]] ';'
-                     [qref vname [',' qref vname [...]]] ';' qref ')' ';'
-               |  interf
-               |  'module' tname params '(' iref ')' ';'
-               ;
+                     [qref vname [',' qref vname [...]]] ';' qref ')' ;
+  interf_proto ::= 'interf' tname params '{' [idecl [idecl [...]]] '}' ;
+  module_proto ::= 'module' tname params ['(' qref ')'] ;
 
-  module_decl ::= 'import' '@' '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-               |  'import' mref '{' [tname ['=' tname]; [tname ['=' tname]; [...]]] '}' ';'
-               |  'struct' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
-               |  'union' tname params '(' [qref fname [',' qref fname [...]]] ')' ';'
-               |  'func' tname params '(' [qref vname [',' qref vname [...]]] ';' qref ')' expr ';'
-               |  'proc' tname params '('
-                     [qref polarity pname [',' qref polarity pname [...]]] ';'
-                     [qref vname [',' qref vname [...]]] ';' qref ')' proc ';'
-               |  interf
-               |  module
-               ;
+  proto ::= type_proto
+         | struct_proto
+         | union_proto
+         | func_proto
+         | proc_proto
+         | interf_proto
+         | module_proto
+         ;
+
+  import ::= 
+     'import' '@'  '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
+   | 'import' qref '{' [tname ['=' qref]; [tname ['=' qref]; [...]]] '}'
+   ;
+
+  idecl ::=
+     proto ';'
+   | import ';'
+   ;
+
+  decl ::= ['priv' | 'abst'] struct_proto ';'
+        |  ['priv' | 'abst'] union_proto ';'
+        |  ['priv'] func_proto expr ';'
+        |  ['priv'] proc_proto proc ';'
+        |  ['priv'] interf_proto ';'
+        |  ['priv'] module_proto ['{' [decl [decl [...]]] '}'] ';'
+        |  proto '=' qref ';'
+        |  import ';'
+        ;
+  
+  prgm ::= decl [decl [...]] ;
+ 
+  params ::= ['<' [proto [',' proto [...]]] '>'] ;
+
+  qref ::= tname
+        |  qref '<' [qref [',' qref [...]]] '>'
+        |  qref '@' qref
+        ;
 
   expr ::= ... (* as in fblc, with qref in place of tname *)
   proc ::= ... (* as in fblc, with qref in place of tname *)
 
   polarity ::= ... (* as in fblc *)
-  fname ::= ... (* as in fblc *)
   pname ::= ... (* as in fblc *)
   tname ::= ... (* as in fblc *)
   vname ::= ... (* as in fblc *)
 
-Open Questions
---------------
-* Can you import the same entity multiple times under a different name in the
-  same import statement?
-  I recommend no, for the purpose of error checking. For this rare legitimate
-  use case, use a separate import statement to achieve the same thing.
+A.1 Style Suggestions
+---------------------
+* Capitalize entities, including types, functions, procs, interfaces, and
+  modules.
+* Lowercase field names, including for structs, unions, function and proc
+  arguments.
+* Lowercase variable names.
+* "true/something/cons" before "false/nothing/empty/error" when ordering
+  fields of that kind of union declaration, so that ?(x; a, b) is
+  consistent with (x ? a : b) behavior.
 
-* Can you import the same entity multiple times under a different name in
-  different import statements?
-  Yes.
+  But "0" before "1" for bit, decimal, byte, hex, etc?
 
-* Can you have multiple import statements for the same (concrete) module?
-  Yes.
+A.2. Changes from Fbld 3
+------------------------
+* Instead of <[type...] ; [module...]> for params, we have <[proto...]>.
+Which is surely an improvement in simplicity and generality.
 
-* Can you import public entities from your own module in import statements?
-  No. Your own module name is not in scope, and to import your module name
-  from your parent would be a recursive module definition which is not
-  allowed.
+* Kinds can themselves be parameterized.
+Which avoids an artificial arbitrary limitation by allowing full generality.
 
-* Can you import private entities from your own module in import statements?
-  No. Your own module name is not in scope, and to import your module name
-  from your parent would be a recursive module definition which is not
-  allowed.
+* Partial application of qrefs.
+Needed once protos are parameterized.
+Also generalizes import statements, which implicitly import parameterized
+things, not fully applied things.
 
-* Can you import funcs or procs in an interf's import statement, or only
-  types?
-  If you import something that is not referenced, it should be flagged as not
-  referenced. In other words: no you may not, but the error isn't that you are
-  trying to import them from an interf's import statement, but rather that
-  they are imported without being referenced.
+* protos = 'qref'
+Which really is needed for full generality.
 
-* Can you use an imported type in the import's module parameter?
-  For example, something like: import Maybe(T) { T=Maybe };
-  Not sure.
+* Allow modules to be specified in different files.
 
-Wish List
+* An fblc program is a valid fbld program.
+
+I approve these changes as improving the overall simplicity and generality of
+the language. Parameterized protos, partial application, and protos = 'qref'
+do add complexity, but they do so in a simple way and provide important
+capabilities.
+
+A.3. TODO
 ---------
-* Some way to create a variable sized object that doesn't require O(N) 
-  open-paren/close-paren pairs. For example, have a 'list' literal or varargs
-  function. This would be useful when defining a list of test cases, for
-  example.
+* Importing entities Foo@Foo and Bar@Foo from a parent requires name
+  shuffling:
+  import @ { FooM = Foo; };
+  import FooM { Foo; Bar; };
 
-* Builtin support for arrays? For example, it's pretty daunting to think about
-  how to define a large 2D array. Or how to define an array for a HashTable
-  implementation. Use case and alternatives not fully explored yet. You can
-  think of an array as a natural progression of the types though: if union is
-  sum, struct is times, then array is power.
+  You can't have both the module and entity Foo in the scope under the same
+  name. This seems to happen pretty often. Is it okay to require the rename,
+  or should we find a better solution to this?
 
-* Higher kinded type and module parameters.
-
-* Type and module aliases.
-
-* How to know when to make an interface that takes some type T as an argument,
-  and when to have an interface that defines some type T?
-
-* Anything akin to default methods for interfaces?
-  For example, an instance of N-bit numbers could implement a generic
-  add(T a, T b; T) method given a fulladd(T a, T b, Bit cin; Result)
-  implementation. It would be nice if implementations of N-bit numbers could
-  inherit that implementation. Where would that implementation go though?
-
-* When does it make sense to group a bunch of things into a single module?
-  For example, should Bit, BitN, Bit1, Bit8, Bit32, and helper functions be
-  defined all in separate modules, each with a separate interface? Or would it
-  be easier to have them all in one place, with a single top level interface
-  and implementation?
+* Have some way to put interfaces in separate files, not just modules.
+  But now it is more awkward that we don't see parameter types in the file
+  with the body of the interface.

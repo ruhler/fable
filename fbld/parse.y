@@ -745,7 +745,7 @@ static bool IsNameChar(int c)
   return isalnum(c) || c == '_';
 }
 
-// IsNameChar --
+// IsSingleChar --
 //   Tests whether a character is an acceptable single-character token.
 //   token.
 //
