@@ -1,4 +1,5 @@
 Fbld 4:
+* Test newly implemented List sort routine.
 * Increase test coverage for spec.
 * Rethink alias and implement them.
 * Refactor md5 program to share Bit composition code.

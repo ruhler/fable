@@ -1,5 +1,5 @@
 
-import @ { Unit; };
+import @ { Unit; Bool@Bool; };
 
 # P - A list of 1 or more elements: T+
 struct P<type T>(T head, S<T> tail);
@@ -28,4 +28,24 @@ func MapS<type A, type B, func F(A x; B)>(S<A> a; S<B>) {
 
 func MapP<type A, type B, func F(A x; B)>(P<A> a; P<B>) {
   P<B>(F(a.head), MapS<A, B, F>(a.tail));
+};
+
+# Sort the given list of elements, using LE for the comparisons.
+func SortS<type T, func LE(T a, T b; Bool)>(S<T> l; S<T>) {
+  ?(l; S<T>:cons(SortP<T, LE>(l.cons)), l);
+};
+
+# Insert the element 'x' into 'l' at the sorted position based on the LE
+# comparision function.
+priv func SortInsert<type T, func LE(T a, T b; Bool)>(T x, S<T> l; P<T>) {
+  ?(l; ?(LE(x, l.cons.head);
+          P<T>(x, l),
+          P<T>(l.cons.head, S<T>:cons(SortInsert<T, LE>(x, l.cons.tail)))),
+       P<T>(x, S<T>:nil(Unit())));
+};
+
+# Sort the given list of elements, using LE for the comparisons.
+# TODO: Use something more efficient than an insertion sort.
+func SortP<type T, func LE(T a, T b; Bool)>(P<T> l; P<T>) {
+  SortInsert<T, LE>(l.head, SortS<T, LE>(l.tail));
 };
