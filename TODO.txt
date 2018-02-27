@@ -1,7 +1,9 @@
 Fbld 4:
+* Introduce and use Eq class for test cases.
 * Test newly implemented List sort routine.
 * Increase test coverage for spec.
 * Rethink alias and implement them.
+* Add support for specifying interfaces in different files.
 * Refactor md5 program to share Bit composition code.
 * Implement deflat program.
 

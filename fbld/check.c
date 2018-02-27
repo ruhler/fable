@@ -608,18 +608,43 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
     interf->_base.paramv = module->_base.paramv;
     interf->_base.access = module->_base.access;
 
-    // TODO: What should we do if a public entity refers to a private entity
-    // in the prototype? Is that allowed?
     interf->body = FBLC_ALLOC(arena, FbldProgram);
     interf->body->importv = FBLC_ALLOC(arena, FbldImportV);
     interf->body->declv = FBLC_ALLOC(arena, FbldDeclV);
     FblcVectorInit(arena, *interf->body->importv);
     FblcVectorInit(arena, *interf->body->declv);
+
+    // Include in the interface all the imports from public entities
+    for (size_t i = 0; i < module->body->importv->size; ++i) {
+      FbldImport* import = module->body->importv->xs[i];
+      if (import->mref == NULL) {
+        FblcVectorAppend(arena, *interf->body->importv, import);
+      } else {
+        assert(import->mref->r != NULL);
+        assert(import->mref->r->decl != NULL);
+        assert(import->mref->r->decl->access != FBLD_ABSTRACT_ACCESS);
+        if (import->mref->r->decl->access == FBLD_PUBLIC_ACCESS) {
+          FblcVectorAppend(arena, *interf->body->importv, import);
+        }
+      }
+    }
+
+    // Include in the interface prototypes for all the public entities.
     for (size_t i = 0; i < module->body->declv->size; ++i) {
       FbldDecl* decl = module->body->declv->xs[i];
       switch (decl->access) {
         case FBLD_PUBLIC_ACCESS: {
-          FblcVectorAppend(arena, *interf->body->declv, decl);
+          FbldDecl* proto = decl;
+
+          // TODO: Make proto a copy of decl that does not have the qrefs
+          // resolved yet. We need this to ensure prototypes refer to abstract
+          // declarations for types, not their concrete declarations.
+
+          // proto->tag = decl->tag;
+          // proto->name = decl->name;
+          // proto->paramv = decl->paramv;
+          // proto->access = decl->access;
+          FblcVectorAppend(arena, *interf->body->declv, proto);
           break;
         }
 

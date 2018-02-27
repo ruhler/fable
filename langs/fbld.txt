@@ -248,6 +248,19 @@ an abstract type:
     a.S;              # ERROR: field access not allowed on abstract type 'Int'
   };
 
+Entities exposed publicly must not refer to private entities in their
+prototypes. For example, the following is not allowed, because the public
+function Zero refers to private type Int:
+
+  module Integer {
+    import @ { Unit; };
+    priv union Int(Unit 0, Int S);
+
+    func Zero(; Int) {
+      Int:0(Unit());
+    };
+  };
+
 2.4. Module Dependencies
 ------------------------
 To maintain the integrity and meaning of a module, a module declaration
