@@ -42,11 +42,12 @@ proc fblc-check-error { program loc } {
   try {
     set errtext [exec $::fblccheck --error $fprogram]
   } on error {results options} {
-    error "$file:$line: error: fblc-check passed unexpectedly: $results"
+    fail $name "$file:$line: error: fblc-check passed unexpectedly: $results"
+    return
   }
   exec echo $errtext > ./out/test/fblc/$name.err
   if {-1 == [string first ":$loc: error" $errtext]} {
-    error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
+    fail $name "$file:$line: error: Expected error at $loc, but got:\n$errtext"
   }
 }
 
@@ -73,7 +74,7 @@ proc fblc-test { program entry args script } {
   try {
     exec $::fblctest $fscript $fprogram $entry {*}$args
   } on error {results options} {
-    error "$file:$line: error: \n$results"
+    fail $name "$file:$line: error: \n$results"
   }
 }
 

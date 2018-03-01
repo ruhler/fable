@@ -46,12 +46,13 @@ proc fbld-check-error-internal { program loc testloc} {
   try {
     set errtext [exec $::fbldcheck --error $fprogram]
   } on error {results options} {
-    error "$file:$line: error: fbld-check failed: $results"
+    fail $name "$file:$line: error: fbld-check failed: $results"
+    return
   }
 
   exec echo $errtext > ./out/test/fbld/$name.err
   if {-1 == [string first ":$loc: error" $errtext]} {
-    error "$file:$line: error: Expected error at $loc, but got:\n$errtext"
+    fail $name "$file:$line: error: Expected error at $loc, but got:\n$errtext"
   }
 }
 
@@ -86,7 +87,7 @@ proc fbld-test-internal { program entry args script loc} {
   try {
     exec $::fbldtest $fscript $fprogram $entry {*}$args
   } on error {results options} {
-    error "$file:$line: error: \n$results"
+    fail $name "$file:$line: error: \n$results"
   }
 }
 
