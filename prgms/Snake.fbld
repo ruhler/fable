@@ -3,7 +3,7 @@ import @ { StdLib; DrawM=Draw; UBNat@UBNat; };
 import StdLib { Unit; BoolM=Bool; List; };
 import BoolM { Bool; True; False; And; };
 import List { P; S; InitP; LastP; };
-import UBNat { Nat; 0; 1; 2; 6; Lit2; Eq; Inc; Dec; };
+import UBNat { Nat; 0; 1; 2; 6; Lit2; Eq@EqNat; Inc; Dec; };
 import DrawM { Color; Draw; };
 
 priv func MinRow( ; Nat) 0();
