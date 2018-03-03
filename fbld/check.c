@@ -223,7 +223,27 @@ static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref)
     }
 
     FbldModule* module = (FbldModule*)qref->mref->r->decl;
-    assert(module->iref != NULL && "Anonymous interface not generated as expected");
+    if (module->iref == NULL) {
+      // The module does not have an explicit interface.
+      // Look for the entity declaration in the body of the module.
+      assert(module->body != NULL);
+      for (size_t i = 0; i < module->body->declv->size; ++i) {
+        FbldDecl* decl = module->body->declv->xs[i];
+        if (decl->access != FBLD_PRIVATE_ACCESS && FbldNamesEqual(qref->name->name, decl->name->name)) {
+          FbldR* r = FBLC_ALLOC(arena, FbldR);
+          r->decl = decl;
+          r->mref = qref->mref;
+          r->param = false;
+          r->interf = NULL;
+          return r;
+        }
+      }
+
+      ReportError("%s not found in %s\n",
+          qref->name->loc, qref->name->name, qref->mref->name->name);
+      return NULL;
+    }
+
     // TODO: FbldImportQRef the interface?
     assert(module->iref->r != NULL);
 
@@ -600,75 +620,6 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
         }
       }
     }
-  } else {
-    // Generate an explicit anonymous interface for the module.
-    FbldInterf* interf = FBLC_ALLOC(arena, FbldInterf);
-    interf->_base.tag = FBLD_INTERF_DECL;
-    interf->_base.name = module->_base.name;
-    interf->_base.paramv = module->_base.paramv;
-    interf->_base.access = module->_base.access;
-
-    interf->body = FBLC_ALLOC(arena, FbldProgram);
-    interf->body->importv = FBLC_ALLOC(arena, FbldImportV);
-    interf->body->declv = FBLC_ALLOC(arena, FbldDeclV);
-    FblcVectorInit(arena, *interf->body->importv);
-    FblcVectorInit(arena, *interf->body->declv);
-
-    // Include in the interface all the imports from public entities
-    for (size_t i = 0; i < module->body->importv->size; ++i) {
-      FbldImport* import = module->body->importv->xs[i];
-      if (import->mref == NULL) {
-        FblcVectorAppend(arena, *interf->body->importv, import);
-      } else {
-        assert(import->mref->r != NULL);
-        assert(import->mref->r->decl != NULL);
-        assert(import->mref->r->decl->access != FBLD_ABSTRACT_ACCESS);
-        if (import->mref->r->decl->access == FBLD_PUBLIC_ACCESS) {
-          FblcVectorAppend(arena, *interf->body->importv, import);
-        }
-      }
-    }
-
-    // Include in the interface prototypes for all the public entities.
-    for (size_t i = 0; i < module->body->declv->size; ++i) {
-      FbldDecl* decl = module->body->declv->xs[i];
-      switch (decl->access) {
-        case FBLD_PUBLIC_ACCESS: {
-          FbldDecl* proto = decl;
-
-          // TODO: Make proto a copy of decl that does not have the qrefs
-          // resolved yet. We need this to ensure prototypes refer to abstract
-          // declarations for types, not their concrete declarations.
-
-          // proto->tag = decl->tag;
-          // proto->name = decl->name;
-          // proto->paramv = decl->paramv;
-          // proto->access = decl->access;
-          FblcVectorAppend(arena, *interf->body->declv, proto);
-          break;
-        }
-
-        case FBLD_ABSTRACT_ACCESS: {
-          // Create an abstract type declaration for this type.
-          assert(decl->tag == FBLD_TYPE_DECL);
-          FbldType* type = FBLC_ALLOC(arena, FbldType);
-          type->_base.tag = FBLD_TYPE_DECL;
-          type->_base.name = decl->name;
-          type->_base.paramv = decl->paramv;
-          type->_base.access = FBLD_PUBLIC_ACCESS;
-          type->kind = FBLD_ABSTRACT_KIND;
-          type->fieldv = NULL;
-          FblcVectorAppend(arena, *interf->body->declv, &type->_base);
-          break;
-        }
-
-        case FBLD_PRIVATE_ACCESS:
-          // Don't include this in the interface.
-          break;
-      }
-    }
-
-    module->iref = DeclQRef(arena, env->mref, env->interf, &interf->_base);
   }
 
   return success;
