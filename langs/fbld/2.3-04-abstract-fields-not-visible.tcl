@@ -10,8 +10,7 @@ set prg {
   import StdLib { Unit; Pair; MkPair; };
 
   func main( ; Unit) {
-    # The 'first' field of Pair cannot be accessed because it is an abstract
-    # type.
+    # The 'first' field of Pair cannot be accessed because it is an abstract type.
     MkPair().first;
   };
 }

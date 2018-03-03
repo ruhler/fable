@@ -91,6 +91,7 @@ static FbldR FailedR = {
 static void Require(bool x, bool* success);
 static void ReportError(const char* format, FbldLoc* loc, ...);
 
+static bool IsAbstract(FbldQRef* type, FbldQRef* mref);
 static FbldQRef* DeclQRef(FblcArena* arena, FbldQRef* mref, FbldInterf* interf, FbldDecl* decl);
 static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref);
 static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref);
@@ -151,6 +152,56 @@ static void ReportError(const char* format, FbldLoc* loc, ...)
   fprintf(stderr, "%s:%d:%d: error: ", loc->source, loc->line, loc->col);
   vfprintf(stderr, format, ap);
   va_end(ap);
+}
+
+// IsAbstract --
+//   Check whether the given type is abstract when accessed from the context
+//   of mref.
+//
+// Inputs:
+//   type - Resolved qref for the type to check.
+//   mref - Resolved qref for the context from which the type is accessed.
+//
+// Results:
+//   True if the type is considered abstract in the context of mref, false
+//   otherwise.
+//
+// Side effects:
+//   None.
+static bool IsAbstract(FbldQRef* type, FbldQRef* mref)
+{
+  assert(type->r != NULL);
+  assert(type->r->decl != NULL);
+
+  // If the type has abstract kind, then it must be a proto from an interface
+  // or static parameter. In this case it certainly is abstract.
+  FbldType* type_decl = (FbldType*)type->r->decl;
+  if (type_decl->kind == FBLD_ABSTRACT_KIND) {
+    return true;
+  }
+
+  // If the kind isn't abstract, then the type can only be abstract if the
+  // declaration is marked abstract.
+  if (type->r->decl->access != FBLD_ABSTRACT_ACCESS) {
+    return false;
+  }
+
+  // If the type is defined in the global namespace, then everyone has access
+  // to it.
+  if (type->r->mref == NULL) {
+    return false;
+  }
+
+  // Otherwise, if we find the parent module of the type is an ancestor of the
+  // current context, then we have access to the type.
+  while (mref != NULL) {
+    if (FbldQRefsEqual(mref, type->r->mref)) {
+      return false;
+    }
+    mref = mref->r->mref;
+  }
+
+  return true;
 }
 
 // DeclQRef --
@@ -757,7 +808,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
         return_type = FbldImportQRef(arena, app_expr->func, func->return_type);
       } else if (app_expr->func->r->decl->tag == FBLD_TYPE_DECL) {
         FbldType* type = (FbldType*)app_expr->func->r->decl;
-        if (type->kind != FBLD_STRUCT_KIND) {
+        if (type->kind != FBLD_STRUCT_KIND || IsAbstract(app_expr->func, env->mref)) {
           ReportError("Cannot do application on type %s.\n", app_expr->func->name->loc, app_expr->func->name->name);
           return NULL;
         }
@@ -790,6 +841,11 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
         return NULL;
       }
 
+      if (IsAbstract(qref, env->mref)) {
+        ReportError("Cannot access field of abstract type %s\n", access_expr->field.name->loc, qref->name->name);
+        return NULL;
+      }
+
       assert(qref->r->decl->tag == FBLD_TYPE_DECL);
       FbldType* type = (FbldType*)qref->r->decl;
       for (size_t i = 0; i < type->fieldv->size; ++i) {
@@ -817,7 +873,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
 
       assert(union_expr->type->r->decl->tag == FBLD_TYPE_DECL);
       FbldType* type_def = (FbldType*)union_expr->type->r->decl;
-      if (type_def->kind != FBLD_UNION_KIND) {
+      if (type_def->kind != FBLD_UNION_KIND || IsAbstract(union_expr->type, env->mref)) {
         ReportError("%s does not refer to a union type.\n", union_expr->type->name->loc, union_expr->type->name->name);
         return NULL;
       }
@@ -869,7 +925,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
       if (type != NULL) {
         assert(type->r->decl->tag == FBLD_TYPE_DECL);
         FbldType* type_def = (FbldType*)type->r->decl;
-        if (type_def->kind == FBLD_UNION_KIND) {
+        if (type_def->kind == FBLD_UNION_KIND && !IsAbstract(type, env->mref)) {
           if (type_def->fieldv->size != cond_expr->argv->size) {
             ReportError("Expected %d arguments, but %d were provided.\n", cond_expr->_base.loc, type_def->fieldv->size, cond_expr->argv->size);
             success = false;
@@ -969,7 +1025,7 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
       if (type != NULL) {
         assert(type->r->decl->tag == FBLD_TYPE_DECL);
         FbldType* type_def = (FbldType*)type->r->decl;
-        if (type_def->kind == FBLD_UNION_KIND) {
+        if (type_def->kind == FBLD_UNION_KIND && !IsAbstract(type, env->mref)) {
           if (type_def->fieldv->size != cond_actn->argv->size) {
             ReportError("Expected %d arguments, but %d were provided.\n", cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
             success = false;

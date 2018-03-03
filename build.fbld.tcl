@@ -46,7 +46,7 @@ proc fbld-check-error-internal { program loc testloc} {
   try {
     set errtext [exec $::fbldcheck --error $fprogram]
   } on error {results options} {
-    fail $name "$file:$line: error: fbld-check failed: $results"
+    fail $name "$file:$line: error: fbld-check failed:\n$results"
     return
   }
 
