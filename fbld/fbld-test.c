@@ -257,85 +257,13 @@ static FblcFieldId LookupPort(FbldProc* proc, const char* name)
   return FBLC_NULL_ID;
 }
 
-// LookupModule --
-//   Lookup the declaration of the module referred to by qref.
-//
-// Inputs:
-//   prgm - The program environment.
-//   qref - A global resolved qref referring to the module to look up.
-//
-// Results:
-//   The declaration of the module.
-//
-// Side effects:
-//   Behavior is undefined if the module could not be found.
-//static FbldModule* LookupModule(FbldProgram* prgm, FbldQRef* qref)
-//{
-//  assert(qref->r != NULL);
-//  assert(qref->r->tag == FBLD_ENTITY_R);
-//  FbldEntityR* entity = (FbldEntityR*)qref->r;
-//  assert(entity->decl->tag == FBLD_MODULE_DECL);
-//  FbldName* name = entity->decl->name;
-//  if (entity->mref == NULL) {
-//    // We are looking for a top-level module declaration.
-//    for (size_t i = 0; i < prgm->modulev.size; ++i) {
-//      if (FbldNamesEqual(prgm->modulev.xs[i]->_base.name->name, name->name)) {
-//        return prgm->modulev.xs[i];
-//      }
-//    }
-//    assert(false && "LookupModule failed");
-//    return NULL;
-//  }
-//
-//  FbldModule* module = LookupModule(prgm, entity->mref);
-//  for (size_t i = 0; i < module->declv->size; ++i) {
-//    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-//      assert(module->declv->xs[i]->tag == FBLD_MODULE_DECL);
-//      return (FbldModule*)module->declv->xs[i];
-//    }
-//  }
-//  assert(false && "LookupModule failed");
-//  return NULL;
-//}
-
-// LookupType --
-//   Lookup the declaration of the type referred to by qref.
-//
-// Inputs:
-//   prgm - The program to search in.
-//   qref - A global resolved qref referring to the type to look up.
-//
-// Results:
-//   The declaration of the type.
-//
-// Side effects:
-//   Behavior is undefined if the type could not be found.
-//static FbldType* LookupType(FbldProgram* prgm, FbldQRef* qref)
-//{
-//  assert(qref->r != NULL);
-//  assert(qref->r->tag == FBLD_ENTITY_R);
-//  FbldEntityR* entity = (FbldEntityR*)qref->r;
-//  assert(entity->mref != NULL && "type is not a valid top-level declaration");
-//  assert(entity->decl->tag == FBLD_TYPE_DECL);
-//  FbldName* name = entity->decl->name;
-//  FbldModule* module = LookupModule(prgm, entity->mref);
-//  for (size_t i = 0; i < module->declv->size; ++i) {
-//    if (FbldNamesEqual(module->declv->xs[i]->name->name, name->name)) {
-//      assert(module->declv->xs[i]->tag == FBLD_TYPE_DECL);
-//      return (FbldType*)module->declv->xs[i];
-//    }
-//  }
-//  assert(false && "LookupType failed");
-//  return NULL;
-//}
-
 // PrintValue --
 //   Print the given fblc value in fbld format.
 //
 // Inputs:
 //   stream - The stream to print the value to.
 //   prgm - The program environment.
-//   type_name - The name of the type of the value to print.
+//   type - The name of the type of the value to print.
 //   value - The value to print.
 //
 // Results:
@@ -343,33 +271,36 @@ static FblcFieldId LookupPort(FbldProc* proc, const char* name)
 //
 // Side effects:
 //   Prints the value to the stream in fbld format.
-//static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type_name, FblcValue* value)
-//{
-//  FbldType* type = LookupType(prgm, type_name);
-//  assert(type != NULL);
-//  assert(type->fieldv->size == value->fieldc);
-//  FbldPrintQRef(stream, type_name);
-//  if (type->kind == FBLD_STRUCT_KIND) {
-//    assert(value->kind == FBLC_STRUCT_KIND);
-//    fprintf(stream, "(");
-//    for (size_t i = 0; i < type->fieldv->size; ++i) {
-//      if (i > 0) {
-//        fprintf(stream, ",");
-//      }
-//      FbldQRef* field_type = FbldImportQRef(arena, type_name, type->fieldv->xs[i]->type);
-//      PrintValue(arena, stream, prgm, field_type, value->fields[i]);
-//    }
-//    fprintf(stream, ")");
-//  } else if (type->kind == FBLD_UNION_KIND) {
-//    assert(value->kind == FBLC_UNION_KIND);
-//    fprintf(stream, ":%s(", type->fieldv->xs[value->tag]->name->name);
-//    FbldQRef* field_type = FbldImportQRef(arena, type_name, type->fieldv->xs[value->tag]->type);
-//    PrintValue(arena, stream, prgm, field_type, value->fields[0]);
-//    fprintf(stream, ")");
-//  } else {
-//    assert(false && "Invalid Kind");
-//  }
-//}
+static void PrintValue(FblcArena* arena, FILE* stream, FbldProgram* prgm, FbldQRef* type, FblcValue* value)
+{
+  assert(type->r != NULL);
+  assert(type->r->decl != NULL);
+  assert(type->r->decl->tag == FBLD_TYPE_DECL);
+
+  FbldType* type_decl = (FbldType*)type->r->decl;
+  assert(type_decl->fieldv->size == value->fieldc);
+  FbldPrintQRef(stream, type);
+  if (type_decl->kind == FBLD_STRUCT_KIND) {
+    assert(value->kind == FBLC_STRUCT_KIND);
+    fprintf(stream, "(");
+    for (size_t i = 0; i < type_decl->fieldv->size; ++i) {
+      if (i > 0) {
+        fprintf(stream, ",");
+      }
+      FbldQRef* field_type = FbldImportQRef(arena, type, type_decl->fieldv->xs[i]->type);
+      PrintValue(arena, stream, prgm, field_type, value->fields[i]);
+    }
+    fprintf(stream, ")");
+  } else if (type_decl->kind == FBLD_UNION_KIND) {
+    assert(value->kind == FBLC_UNION_KIND);
+    fprintf(stream, ":%s(", type_decl->fieldv->xs[value->tag]->name->name);
+    FbldQRef* field_type = FbldImportQRef(arena, type, type_decl->fieldv->xs[value->tag]->type);
+    PrintValue(arena, stream, prgm, field_type, value->fields[0]);
+    fprintf(stream, ")");
+  } else {
+    assert(false && "Invalid Kind");
+  }
+}
 
 // ValuesEqual --
 //   Check whether two values are structurally equal.
@@ -432,10 +363,10 @@ static void AssertValuesEqual(FblcArena* arena, IOUser* user, FbldQRef* type, Fb
 {
   if (!ValuesEqual(a, b)) {
     ReportError(user, "value mismatch.");
-    fprintf(stderr, "\nexpected: ???");
-    // PrintValue(arena, stderr, user->prog, type, a);
-    fprintf(stderr, "\nactual:  ??? ");
-    // PrintValue(arena, stderr, user->prog, type, b);
+    fprintf(stderr, "\nexpected: ");
+    PrintValue(arena, stderr, user->prog, type, a);
+    fprintf(stderr, "\nactual:   ");
+    PrintValue(arena, stderr, user->prog, type, b);
     fprintf(stderr, "\n");
     abort();
   }

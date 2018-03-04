@@ -1,5 +1,4 @@
 Fbld 4:
-* Implement PrintValue for fbld-test.
 * Increase test coverage for spec.
 * Rethink alias and implement them.
 * Add support for specifying interfaces in different files?
