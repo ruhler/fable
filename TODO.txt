@@ -1,4 +1,5 @@
 Fbld 4:
+* Recategorize all M1-* tests.
 * Increase test coverage for spec.
 * Rethink alias and implement them.
 * Add support for specifying interfaces in different files?
