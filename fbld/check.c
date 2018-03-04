@@ -433,7 +433,7 @@ static bool CheckQRef(FblcArena* arena, Env* env, FbldQRef* qref)
   }
 
   if (qref->paramv->size != qref->r->decl->paramv->size) {
-    ReportError("Expected %i arguments to %s, but only %i provided\n", qref->name->loc, qref->r->decl->paramv->size, qref->name->name,
+    ReportError("Expected %i arguments to %s, but %i provided\n", qref->name->loc, qref->r->decl->paramv->size, qref->name->name,
         qref->paramv->size);
     return false;
   }

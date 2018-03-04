@@ -1,0 +1,46 @@
+
+import @ { StdLib; };
+import StdLib { Unit; BoolM=Bool; List; };
+import List { S; P; S0; S1; S5; SortS; };
+import BoolM { Bool; True; False; And; };
+
+union Elem(Unit A, Unit B, Unit C, Unit D, Unit E);
+union TestName(Unit List_Sort_basic);
+struct TestFailure(TestName name, S<Elem> wnt, S<Elem> got);
+
+priv func ElemLe(Elem a, Elem b; Bool) {
+  ?(a; ?(b; True(), True(), True(), True(), True()),
+       ?(b; False(), True(), True(), True(), True()),
+       ?(b; False(), False(), True(), True(), True()),
+       ?(b; False(), False(), False(), True(), True()),
+       ?(b; False(), False(), False(), False(), True()));
+};
+
+priv func ElemEq(Elem a, Elem b; Bool) {
+  ?(a; ?(b; True(), False(), False(), False(), False()),
+       ?(b; False(), True(), False(), False(), False()),
+       ?(b; False(), False(), True(), False(), False()),
+       ?(b; False(), False(), False(), True(), False()),
+       ?(b; False(), False(), False(), False(), True()));
+};
+
+# TODO: Move this to StdLib/List and make it public?
+priv func SEq<type T, func EqT(T a, T b; Bool)>(S<T> a, S<T> b; Bool) {
+  ?(a; ?(b; PEq<T, EqT>(a.cons, b.cons), False()),
+       ?(b; False(), True()));
+};
+
+# TODO: Move this to StdLib/List and make it public?
+priv func PEq<type T, func EqT(T a, T b; Bool)>(P<T> a, P<T> b; Bool) {
+  And(EqT(a.head, b.head), SEq<T, EqT>(a.tail, b.tail));
+};
+
+func Test( ; S<TestFailure>) {
+  S<Elem> unsorted = S5<Elem>(Elem:D(Unit()), Elem:A(Unit()), Elem:B(Unit()), Elem:E(Unit()), Elem:C(Unit()));
+  S<Elem> wnt = S5<Elem>(Elem:A(Unit()), Elem:B(Unit()), Elem:C(Unit()), Elem:D(Unit()), Elem:E(Unit()));
+  S<Elem> got = SortS<Elem, ElemLe>(unsorted);
+  ?(SEq<Elem, ElemEq>(wnt, got);
+      S0<TestFailure>(),
+      S1<TestFailure>(TestFailure(TestName:List_Sort_basic(Unit()), wnt, got)));
+};
+

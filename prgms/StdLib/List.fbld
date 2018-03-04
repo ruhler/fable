@@ -7,6 +7,14 @@ struct P<type T>(T head, S<T> tail);
 # S - A list of 0 or more elements: T*
 union S<type T>(P<T> cons, Unit nil); 
 
+func ConsS<type T>(T a, S<T> l; S<T>) S<T>:cons(P<T>(a, l));
+func S0<type T>( ; S<T>) S<T>:nil(Unit());
+func S1<type T>(T a; S<T>) ConsS<T>(a, S0<T>());
+func S2<type T>(T a, T b; S<T>) ConsS<T>(a, S1<T>(b));
+func S3<type T>(T a, T b, T c; S<T>) ConsS<T>(a, S2<T>(b, c));
+func S4<type T>(T a, T b, T c, T d; S<T>) ConsS<T>(a, S3<T>(b, c, d));
+func S5<type T>(T a, T b, T c, T d, T e; S<T>) ConsS<T>(a, S4<T>(b, c, d, e));
+
 # InitP - Return all but the last element in 'list'.
 func InitP<type T>(P<T> list; S<T>) {
   ?(list.tail; S<T>:nil(Unit()), S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons))));
@@ -20,6 +28,11 @@ func LastP<type T>(P<T> list; T) {
 # Append list b to the end of list a.
 func Append<type T>(S<T> a, S<T> b ; S<T>) {
   ?(a; S<T>:cons(P<T>(a.cons.head, Append<T>(a.cons.tail, b))), b);
+};
+
+# Concat: Flatten a list of lists into a single list of all the elements.
+func Concat<type T>(S<S<T>> x; S<T>) {
+  ?(x; Append<T>(x.cons.head, Concat<T>(x.cons.tail)), S0<T>());
 };
 
 func MapS<type A, type B, func F(A x; B)>(S<A> a; S<B>) {

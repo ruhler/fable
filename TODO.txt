@@ -1,11 +1,10 @@
 Fbld 4:
-* Introduce and use Eq class for test cases.
-* Test newly implemented List sort routine.
+* Implement PrintValue for fbld-test.
 * Increase test coverage for spec.
 * Rethink alias and implement them.
-* Add support for specifying interfaces in different files.
+* Add support for specifying interfaces in different files?
 * Refactor md5 program to share Bit composition code.
-* Implement deflat program.
+* Implement deflate program.
 
 Fbld 4 Test:
 * Switch to DebugMallocArena for fbld-test
@@ -31,6 +30,10 @@ Fbld 4 Test:
   times, even if we use Foo multiple times without it being defined?
 * Reach full test coverage.
 * Warn for unused imports?
+
+StdLib:
+* Should Eq just be a function or an interface?
+* Write Test library.
 
 Fbld Cleanup:
 * Move contents of program.c into name.c. Maybe call it qref.c?
