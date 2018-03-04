@@ -1,5 +1,4 @@
 Fbld 4:
-* Recategorize all M1-* tests.
 * Increase test coverage for spec.
 * Rethink alias and implement them.
 * Add support for specifying interfaces in different files?
@@ -112,6 +111,10 @@ Miscellanous:
 * Rethink arenas and documentation, because some cases appear to assume you
   have a bulk-free arena. Other cases its not well specified what is freed
   explicitly and what is expected to be freed implicitly.
+
+  I claim a good model is: pass an arena to a function to say: the function
+  allocates its result in this arena. The function creates and uses a separate
+  arena for its intermediate allocations.
 
 * Document performance model.
   Specifically that we use strict evaluation to model performance because it
