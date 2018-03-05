@@ -80,6 +80,12 @@ Snake Arc:
 * Ignore moves that aren't orthoginal to current snake direction.
 * Keep track of and report score.
 
+Fblc Performance:
+* Avoid repeatedly constructing ExprCmds and other commands.
+  - Perhaps compile functions to some sort of intermediate representation
+    suitable for direct execution ahead of time, rather than repeatedly on the
+    fly?
+
 Miscellanous:
 * Track down memory-leak like behavior in fbld-md5
   - Perhaps we should put a limit on link sizes?

@@ -1286,7 +1286,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
     };
     CheckDecl(arena, env, decl->paramv->xs[i], &status);
     assert(status.proto == status.decl);
-    Require(status.proto, &success);
+    Require(status.proto == DP_SUCCESS, &success);
 
     FbldR* r = FBLC_ALLOC(arena, FbldR);
     r->decl = decl->paramv->xs[i];
@@ -1524,7 +1524,7 @@ static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, F
         Require(CheckTypesMatch(port_m->type->name->loc, FbldImportQRef(arena, src, port_i->type), port_m->type), &success);
     
         if (!FbldNamesEqual(port_i->name->name, port_m->name->name)) {
-          ReportError("Expected name %s, but found name %s\n", decl_m->name->loc,
+          ReportError("Expected name %s, but found name %s\n", port_m->name->loc,
               port_i->name->name, port_m->name->name);
           success = false;
         }
@@ -1634,7 +1634,6 @@ static bool EnsureDecl(FblcArena* arena, Env* env, FbldDecl* decl)
   // Non-local declarations must already have been checked.
   return true;
 }
-
 
 // FbldCheckProgram -- see documentation in fbld.h
 bool FbldCheckProgram(FblcArena* arena, FbldProgram* prgm)
