@@ -112,7 +112,7 @@ static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
         return ctx->prgm->declv->xs[i];
       }
     }
-    assert(false && "LookupDecl top level failed");
+    UNREACHABLE("LookupDecl top level failed");
     return NULL;
   }
 
@@ -123,7 +123,7 @@ static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
       return module->body->declv->xs[i];
     }
   }
-  assert(false && "LookupDecl failed");
+  UNREACHABLE("LookupDecl failed");
   return NULL;
 }
 
@@ -661,7 +661,7 @@ static FblcValue* CompileValue(Context* ctx, FbldValue* value)
           return FblcNewUnion(ctx->arena, type->fieldv->size, i, arg);
         }
       }
-      assert(false && "Invalid union tag");
+      UNREACHABLE("Invalid union tag");
       return NULL;
     }
 
