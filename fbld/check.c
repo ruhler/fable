@@ -111,7 +111,7 @@ static bool CheckValue(FblcArena* arena, Env* env, FbldValue* value);
 static bool CheckArgsMatch(FblcArena* arena, FbldName* name, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
 static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
 static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl);
-static bool EnsureDecl(FblcArena* arena, Env* env, FbldDecl* decl);
+static bool EnsureDecl(FblcArena* arena, Env* env, FbldLoc* loc, FbldDecl* decl);
 
 // Require --
 //   Convenience function for requiring some condition to hold.
@@ -485,7 +485,7 @@ static bool CheckEnv(FblcArena* arena, Env* env)
           return false;
         }
         assert(shead->r->decl != NULL);
-        if (!EnsureDecl(arena, env->parent, shead->r->decl)) {
+        if (!EnsureDecl(arena, env->parent, shead->name->loc, shead->r->decl)) {
           return false;
         }
 
@@ -508,7 +508,7 @@ static bool CheckEnv(FblcArena* arena, Env* env)
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
     Require(DefineName(arena, decl->name, &defined), &success);
-    Require(EnsureDecl(arena, env, decl), &success);
+    Require(EnsureDecl(arena, env, decl->name->loc, decl), &success);
   }
 
   return success;
@@ -616,7 +616,7 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
   if (module->iref != NULL) {
     // Verify the module has everything it should according to its interface.
     assert(module->iref->r->decl->tag == FBLD_INTERF_DECL);
-    if (!EnsureDecl(arena, env, module->iref->r->decl)) {
+    if (!EnsureDecl(arena, env, module->iref->name->loc, module->iref->r->decl)) {
       return false;
     }
     FbldInterf* interf = (FbldInterf*)module->iref->r->decl;
@@ -1601,6 +1601,8 @@ static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl)
 //   arena - Arena to use for allocations.
 //   env - The environment to resolve from. Static parameters in the
 //         environment will be ignored when doing resolution.
+//   loc - The location where the decl is required, for error reporting
+//         purposes.
 //   decl - The declaration to ensure has been checked.
 //
 // Results:
@@ -1609,7 +1611,7 @@ static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl)
 // Side effects:
 //   Checks the declaration if necessary and possible.
 //   Prints an error message to stderr in case of error.
-static bool EnsureDecl(FblcArena* arena, Env* env, FbldDecl* decl)
+static bool EnsureDecl(FblcArena* arena, Env* env, FbldLoc* loc, FbldDecl* decl)
 {
   if (env->decl_status != NULL) {
     for (size_t i = 0; i < env->prgm->declv->size; ++i) {
@@ -1621,9 +1623,7 @@ static bool EnsureDecl(FblcArena* arena, Env* env, FbldDecl* decl)
           CheckDecl(arena, env, decl, status);
           env->svars = svars;
         } else if (status->decl == DP_PENDING) {
-          // TODO: Use the location of the caller, not the declaration itself.
-          ReportError("Recursive dependency detected involving %s\n",
-              decl->name->loc, decl->name->name);
+          ReportError("Recursive dependency through %s not allowed\n", loc, decl->name->name);
           return false;
         }
         return status->decl == DP_SUCCESS;
