@@ -8,17 +8,11 @@ Fbld 4:
 Fbld 4 Test:
 * Switch to DebugMallocArena for fbld-test
   - Will requiring fixing all the crazy memory leaks in parser and checker.
-* Test that you can't have a public entity that refers to a private entity in
-  the prototype.
 * Can you output abstract or private types in fbld-test?
-* Test that you can't have recursion through a module declaration.
-* Test that you can't have two static parameters with the same name.
-* Add a test that you can't use a func, proc, interf, or module as a type
-  parameter argument.
-* Add a test that you can't use a type, func, proc, interf as a module
-  parameter argument.
-* Add a test that you can't use a module parameter argument of the wrong
-  interface type.
+* Add tests for all possible mismatches of
+    * struct proto vs func, proc, interf, module
+    * union, func, proc, interf, module proto
+      vs type, struct, union, func proc, interf, module
 * Add a test for inner module definition with following declaration.
 * Add test for importing a polymorphic declaration.
 * Test case when abstract type is used as select for conditional.

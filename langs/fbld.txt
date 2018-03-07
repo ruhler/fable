@@ -542,6 +542,11 @@ For example:
 
 Note that the prototypes of arguments can themselves be polymorphic.
 
+Static parameters must not shadow any existing named entities, including other
+static parameters. It is not allowed to have two static parameters with the
+same name, and it is not allowed to have a static parameter with the same name
+as an existing entity in the namespace.
+
 3.3. Supplying Static Parameter Values
 --------------------------------------
 ['<' [qref [',' qref [...]]] '>']
