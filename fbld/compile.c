@@ -413,8 +413,8 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
       call_actn_c->_base.tag = FBLC_CALL_ACTN;
       call_actn_c->proc = CompileProc(ctx, src, call_actn_d->proc);
       FblcVectorInit(ctx->arena, call_actn_c->portv);
-      for (size_t i = 0; i < call_actn_d->portv->size; ++i) {
-        FblcPortId port = call_actn_d->portv->xs[i].id;
+      for (size_t i = 0; i < call_actn_d->portv.size; ++i) {
+        FblcPortId port = call_actn_d->portv.xs[i].id;
         FblcVectorAppend(ctx->arena, call_actn_c->portv, port);
       }
       FblcVectorInit(ctx->arena, call_actn_c->argv);

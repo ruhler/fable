@@ -1,6 +1,9 @@
 Fbld 4:
+* Check that static params don't redefine names.
+* Check that static args have the right kind.
 * Increase test coverage for spec.
-* Rethink alias and implement them.
+* Add support for aliases
+  - Add Alias alongside Import in Program.
 * Add support for specifying interfaces in different files?
 * Refactor md5 program to share Bit composition code.
 * Implement deflate program.

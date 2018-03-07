@@ -1050,20 +1050,20 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
       bool success = true;
       FbldCallActn* call_actn = (FbldCallActn*)actn;
 
-      Ports* port_types[call_actn->portv->size];
-      for (size_t i = 0; i < call_actn->portv->size; ++i) {
+      Ports* port_types[call_actn->portv.size];
+      for (size_t i = 0; i < call_actn->portv.size; ++i) {
         port_types[i] = NULL;
         Ports* curr = ports;
         for (size_t id = 0; curr != NULL; ++id) {
-          if (FbldNamesEqual(curr->name, call_actn->portv->xs[i].name->name)) {
-            call_actn->portv->xs[i].id = id;
+          if (FbldNamesEqual(curr->name, call_actn->portv.xs[i].name->name)) {
+            call_actn->portv.xs[i].id = id;
             port_types[i] = curr;
             break;
           }
           curr = curr->next;
         }
         if (port_types[i] == NULL) {
-          ReportError("Port '%s' not defined.\n", call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name);
+          ReportError("Port '%s' not defined.\n", call_actn->portv.xs[i].name->loc, call_actn->portv.xs[i].name->name);
           success = false;
         }
       }
@@ -1087,22 +1087,22 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
       }
 
       FbldProc* proc = (FbldProc*)call_actn->proc->r->decl;
-      if (proc->portv->size == call_actn->portv->size) {
+      if (proc->portv->size == call_actn->portv.size) {
         for (size_t i = 0; i < proc->portv->size; ++i) {
           if (port_types[i] != NULL) {
             if (port_types[i]->polarity != proc->portv->xs[i].polarity) {
                 ReportError("Port '%s' has wrong polarity. Expected '%s', but found '%s'.\n",
-                    call_actn->portv->xs[i].name->loc, call_actn->portv->xs[i].name->name,
+                    call_actn->portv.xs[i].name->loc, call_actn->portv.xs[i].name->name,
                     proc->portv->xs[i].polarity == FBLD_PUT_POLARITY ? "put" : "get",
                     port_types[i]->polarity == FBLD_PUT_POLARITY ? "put" : "get");
                 success = false;
             }
             FbldQRef* expected = FbldImportQRef(arena, call_actn->proc, proc->portv->xs[i].type);
-            Require(CheckTypesMatch(call_actn->portv->xs[i].name->loc, expected, port_types[i]->type), &success);
+            Require(CheckTypesMatch(call_actn->portv.xs[i].name->loc, expected, port_types[i]->type), &success);
           }
         }
       } else {
-        ReportError("Expected %d port arguments to %s, but %d were provided.\n", call_actn->proc->name->loc, proc->portv->size, call_actn->proc->name->name, call_actn->portv->size);
+        ReportError("Expected %d port arguments to %s, but %d were provided.\n", call_actn->proc->name->loc, proc->portv->size, call_actn->proc->name->name, call_actn->portv.size);
         success = false;
       }
 

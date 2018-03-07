@@ -45,7 +45,7 @@
 
 %union {
   FbldName* name;
-  FbldIdV* idv;
+  FbldIdV idv;
   FbldQRef* qref;
   FbldQRefV* qrefv;
   FbldArgV* argv;
@@ -147,23 +147,22 @@ name: NAME | keyword ;
 
 id_list:
     %empty {
-      $$ = FBLC_ALLOC(arena, FbldIdV);
-      FblcVectorInit(arena, *$$);
+      FblcVectorInit(arena, $$);
     }
   | non_empty_id_list
   ;
 
 non_empty_id_list:
   name {
-      $$ = FBLC_ALLOC(arena, FbldIdV);
-      FblcVectorInit(arena, *$$);
-      FbldId* id = FblcVectorExtend(arena, *$$);
+      FblcVectorInit(arena, $$);
+      FbldId* id = FblcVectorExtend(arena, $$);
       id->name = $1;
       id->id = FBLC_NULL_ID;
     }
   | non_empty_id_list ',' name {
-      $$ = $1;
-      FbldId* id = FblcVectorExtend(arena, *$$);
+      $$.size = $1.size;
+      $$.xs = $1.xs;
+      FbldId* id = FblcVectorExtend(arena, $$);
       id->name = $3;
       id->id = FBLC_NULL_ID;
     }
@@ -360,7 +359,8 @@ actn:
       call_actn->_base.tag = FBLD_CALL_ACTN;
       call_actn->_base.loc = @$;
       call_actn->proc = $1;
-      call_actn->portv = $3;
+      call_actn->portv.size = $3.size;
+      call_actn->portv.xs = $3.xs;
       call_actn->argv = $5;
       $$ = &call_actn->_base;
     }

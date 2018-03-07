@@ -390,7 +390,7 @@ typedef struct {
 typedef struct {
   FbldActn _base;
   FbldQRef* proc;
-  FbldIdV* portv;
+  FbldIdV portv;
   FbldExprV* argv;
 } FbldCallActn;
 
