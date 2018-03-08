@@ -771,13 +771,13 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
     case FBLD_VAR_EXPR: {
       FbldVarExpr* var_expr = (FbldVarExpr*)expr;
       for (size_t i = 0; vars != NULL; ++i) {
-        if (FbldNamesEqual(vars->name, var_expr->var.name->name)) {
+        if (FbldNamesEqual(vars->name, var_expr->var.name.name)) {
           var_expr->var.id = i;
           return vars->type;
         }
         vars = vars->next;
       }
-      ReportError("variable '%s' not defined\n", var_expr->var.name->loc, var_expr->var.name->name);
+      ReportError("variable '%s' not defined\n", var_expr->var.name.loc, var_expr->var.name.name);
       return NULL;
     }
 
@@ -842,19 +842,19 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
       }
 
       if (IsAbstract(qref, env->mref)) {
-        ReportError("Cannot access field of abstract type %s\n", access_expr->field.name->loc, qref->name->name);
+        ReportError("Cannot access field of abstract type %s\n", access_expr->field.name.loc, qref->name->name);
         return NULL;
       }
 
       assert(qref->r->decl->tag == FBLD_TYPE_DECL);
       FbldType* type = (FbldType*)qref->r->decl;
       for (size_t i = 0; i < type->fieldv->size; ++i) {
-        if (FbldNamesEqual(access_expr->field.name->name, type->fieldv->xs[i]->name->name)) {
+        if (FbldNamesEqual(access_expr->field.name.name, type->fieldv->xs[i]->name->name)) {
           access_expr->field.id = i;
           return FbldImportQRef(arena, qref, type->fieldv->xs[i]->type);
         }
       }
-      ReportError("%s is not a field of type %s\n", access_expr->field.name->loc, access_expr->field.name->name, type->_base.name->name);
+      ReportError("%s is not a field of type %s\n", access_expr->field.name.loc, access_expr->field.name.name, type->_base.name->name);
       return NULL;
     }
 
@@ -880,7 +880,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
 
 
       for (size_t i = 0; i < type_def->fieldv->size; ++i) {
-        if (FbldNamesEqual(union_expr->field.name->name, type_def->fieldv->xs[i]->name->name)) {
+        if (FbldNamesEqual(union_expr->field.name.name, type_def->fieldv->xs[i]->name->name)) {
           union_expr->field.id = i;
           FbldQRef* expected = FbldImportQRef(arena, union_expr->type, type_def->fieldv->xs[i]->type);
           if (!CheckTypesMatch(union_expr->arg->loc, expected, arg_type)) {
@@ -889,7 +889,7 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
           return union_expr->type;
         }
       }
-      ReportError("%s is not a field of type %s\n", union_expr->field.name->loc, union_expr->field.name->name, union_expr->type->name->name);
+      ReportError("%s is not a field of type %s\n", union_expr->field.name.loc, union_expr->field.name.name, union_expr->type->name->name);
       return NULL;
     }
 
@@ -979,18 +979,18 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
     case FBLD_GET_ACTN: {
       FbldGetActn* get_actn = (FbldGetActn*)actn;
       for (size_t i = 0; ports != NULL; ++i) {
-        if (FbldNamesEqual(ports->name, get_actn->port.name->name)) {
+        if (FbldNamesEqual(ports->name, get_actn->port.name.name)) {
           if (ports->polarity == FBLD_GET_POLARITY) {
             get_actn->port.id = i;
             return ports->type;
           } else {
-            ReportError("Port '%s' should have get polarity, but has put polarity.\n", get_actn->port.name->loc, get_actn->port.name->name);
+            ReportError("Port '%s' should have get polarity, but has put polarity.\n", get_actn->port.name.loc, get_actn->port.name.name);
             return NULL;
           }
         }
         ports = ports->next;
       }
-      ReportError("port '%s' not defined.\n", get_actn->port.name->loc, get_actn->port.name->name);
+      ReportError("port '%s' not defined.\n", get_actn->port.name.loc, get_actn->port.name.name);
       return NULL;
     }
 
@@ -999,7 +999,7 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
       FbldQRef* arg_type = CheckExpr(arena, env, vars, put_actn->arg);
 
       for (size_t i = 0; ports != NULL; ++i) {
-        if (FbldNamesEqual(ports->name, put_actn->port.name->name)) {
+        if (FbldNamesEqual(ports->name, put_actn->port.name.name)) {
           if (ports->polarity == FBLD_PUT_POLARITY) {
             put_actn->port.id = i;
             if (!CheckTypesMatch(put_actn->arg->loc, ports->type, arg_type)) {
@@ -1007,13 +1007,13 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
             }
             return arg_type != NULL ? ports->type : NULL;
           } else {
-            ReportError("Port '%s' should have put polarity, but has get polarity.\n", put_actn->port.name->loc, put_actn->port.name->name);
+            ReportError("Port '%s' should have put polarity, but has get polarity.\n", put_actn->port.name.loc, put_actn->port.name.name);
             return NULL;
           }
         }
         ports = ports->next;
       }
-      ReportError("port '%s' not defined.\n", put_actn->port.name->loc, put_actn->port.name->name);
+      ReportError("port '%s' not defined.\n", put_actn->port.name.loc, put_actn->port.name.name);
       return NULL;
     }
 
@@ -1055,7 +1055,7 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
         port_types[i] = NULL;
         Ports* curr = ports;
         for (size_t id = 0; curr != NULL; ++id) {
-          if (FbldNamesEqual(curr->name, call_actn->portv.xs[i].name->name)) {
+          if (FbldNamesEqual(curr->name, call_actn->portv.xs[i].name.name)) {
             call_actn->portv.xs[i].id = id;
             port_types[i] = curr;
             break;
@@ -1063,7 +1063,7 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
           curr = curr->next;
         }
         if (port_types[i] == NULL) {
-          ReportError("Port '%s' not defined.\n", call_actn->portv.xs[i].name->loc, call_actn->portv.xs[i].name->name);
+          ReportError("Port '%s' not defined.\n", call_actn->portv.xs[i].name.loc, call_actn->portv.xs[i].name.name);
           success = false;
         }
       }
@@ -1092,13 +1092,13 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
           if (port_types[i] != NULL) {
             if (port_types[i]->polarity != proc->portv->xs[i].polarity) {
                 ReportError("Port '%s' has wrong polarity. Expected '%s', but found '%s'.\n",
-                    call_actn->portv.xs[i].name->loc, call_actn->portv.xs[i].name->name,
+                    call_actn->portv.xs[i].name.loc, call_actn->portv.xs[i].name.name,
                     proc->portv->xs[i].polarity == FBLD_PUT_POLARITY ? "put" : "get",
                     port_types[i]->polarity == FBLD_PUT_POLARITY ? "put" : "get");
                 success = false;
             }
             FbldQRef* expected = FbldImportQRef(arena, call_actn->proc, proc->portv->xs[i].type);
-            Require(CheckTypesMatch(call_actn->portv.xs[i].name->loc, expected, port_types[i]->type), &success);
+            Require(CheckTypesMatch(call_actn->portv.xs[i].name.loc, expected, port_types[i]->type), &success);
           }
         }
       } else {

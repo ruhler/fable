@@ -156,13 +156,13 @@ non_empty_id_list:
   name {
       FblcVectorInit(arena, $$);
       FbldId* id = FblcVectorExtend(arena, $$);
-      id->name = $1;
+      id->name = *$1;
       id->id = FBLC_NULL_ID;
     }
   | non_empty_id_list ',' name {
       $$ = $1;
       FbldId* id = FblcVectorExtend(arena, $$);
-      id->name = $3;
+      id->name = *$3;
       id->id = FBLC_NULL_ID;
     }
   ;
@@ -243,7 +243,7 @@ expr:
       FbldVarExpr* var_expr = FBLC_ALLOC(arena, FbldVarExpr);
       var_expr->_base.tag = FBLD_VAR_EXPR;
       var_expr->_base.loc = @$;
-      var_expr->var.name = $1;
+      var_expr->var.name = *$1;
       var_expr->var.id = FBLC_NULL_ID;
       $$ = &var_expr->_base;
     }
@@ -260,7 +260,7 @@ expr:
       union_expr->_base.tag = FBLD_UNION_EXPR;
       union_expr->_base.loc = @$;
       union_expr->type = $1;
-      union_expr->field.name = $3;
+      union_expr->field.name = *$3;
       union_expr->field.id = FBLC_NULL_ID;
       union_expr->arg = $5;
       $$ = &union_expr->_base;
@@ -270,7 +270,7 @@ expr:
       access_expr->_base.tag = FBLD_ACCESS_EXPR;
       access_expr->_base.loc = @$;
       access_expr->obj = $1;
-      access_expr->field.name = $3;
+      access_expr->field.name = *$3;
       access_expr->field.id = FBLC_NULL_ID;
       $$ = &access_expr->_base;
     }
@@ -332,7 +332,7 @@ actn:
       FbldGetActn* get_actn = FBLC_ALLOC(arena, FbldGetActn);
       get_actn->_base.tag = FBLD_GET_ACTN;
       get_actn->_base.loc = @$;
-      get_actn->port.name = $2;
+      get_actn->port.name = *$2;
       get_actn->port.id = FBLC_NULL_ID;
       $$ = &get_actn->_base;
     }
@@ -340,7 +340,7 @@ actn:
       FbldPutActn* put_actn = FBLC_ALLOC(arena, FbldPutActn);
       put_actn->_base.tag = FBLD_PUT_ACTN;
       put_actn->_base.loc = @$;
-      put_actn->port.name = $2;
+      put_actn->port.name = *$2;
       put_actn->port.id = FBLC_NULL_ID;
       put_actn->arg = $4;
       $$ = &put_actn->_base;

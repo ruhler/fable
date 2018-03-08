@@ -68,7 +68,7 @@ typedef struct {
 //   id - The fblc id of the field. This is set to FBLC_NULL_ID by the parser,
 //        then later filled in during type check and used by the compiler.
 typedef struct {
-  FbldName* name;
+  FbldName name;
   size_t id;
 } FbldId;
 
