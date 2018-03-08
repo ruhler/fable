@@ -1457,8 +1457,8 @@ static bool CheckArgsMatch(FblcArena* arena, FbldName* name, FbldQRef* src, Fbld
 // Inputs:
 //   arena - Arena to use for allocations.
 //   src - The qref referring to decl_i in the current context.
-//   decl_i - The declared in the interface.
-//   decl_m - The declared in the module.
+//   decl_i - The declarartion in the interface.
+//   decl_m - The declarartion in the module.
 //
 // Results:
 //   true if the decls match, false otherwise.
