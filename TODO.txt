@@ -1,6 +1,7 @@
 Fbld 4:
 * Check that static args have the right kind.
 * Check that public entity doesn't refer to a private one.
+* Fix TODO in import qref that prevents poly poly from working.
 * Increase test coverage for spec.
 * Add support for aliases
   - Add Alias alongside Import in Program.
@@ -11,6 +12,8 @@ Fbld 4:
 Fbld 4 Test:
 * Test that you can use a function foo<type A>(A x) where function
   foo<type B>(B x) is expected.
+* Test that a function foo(A x ; B) can be used where a function foo(A y ; B)
+  is expected, both as static param and interf entity implementation.
 * Switch to DebugMallocArena for fbld-test
   - Will requiring fixing all the crazy memory leaks in parser and checker.
 * Can you output abstract or private types in fbld-test?

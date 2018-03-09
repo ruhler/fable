@@ -492,8 +492,8 @@ module that it has interface IntegerI:
 
 A module can only implement an interface if there is a one-to-one
 correspondence between prototypes in the interface and public entities in the
-module. The prototypes must match exactly, including entity names, argument
-names, and port names.
+module. The interface prototypes must match the public module entities
+according to the matching rules for prototypes described previously.
 
 An explicit interface is only needed for a module if that module will be
 passed as a polymorphic parameter. If there will only ever be a single
