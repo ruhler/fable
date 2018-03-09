@@ -1,6 +1,4 @@
 Fbld 4:
-* Check that static params don't redefine names.
- - Need some way to keep track of parameter names through CheckDecl calls.
 * Check that static args have the right kind.
 * Check that public entity doesn't refer to a private one.
 * Increase test coverage for spec.
@@ -11,6 +9,8 @@ Fbld 4:
 * Implement deflate program.
 
 Fbld 4 Test:
+* Test that you can use a function foo<type A>(A x) where function
+  foo<type B>(B x) is expected.
 * Switch to DebugMallocArena for fbld-test
   - Will requiring fixing all the crazy memory leaks in parser and checker.
 * Can you output abstract or private types in fbld-test?
@@ -54,6 +54,7 @@ Fbld Cleanup:
 * Don't allocate and leak FbldLocs like crazy in the lexer/parser.
 * Cleanup fbld types to have less pointers - don't include an indirection just
   because it makes parsing easier. Copy values in parser as needed instead.
+   1. Switch uses of FbldName* to FbldName.
 * Use consistent style for error messages. Capitalize? Punctuate?
 
 App Ideas:

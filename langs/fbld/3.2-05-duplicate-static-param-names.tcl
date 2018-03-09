@@ -3,4 +3,4 @@ set prg {
   struct Pair<type A, type A>(A first, A second);
 }
 
-fbld-check-error $prg 3:27
+fbld-check-error $prg 3:28

@@ -6,6 +6,7 @@
 #include <stdarg.h>   // for va_start, va_end, vfprintf
 #include <stdlib.h>   // for NULL
 #include <stdio.h>    // for FILE, fprintf, stderr
+#include <string.h>   // for strcmp
 
 #include "fbld.h"
 
@@ -99,7 +100,8 @@ static bool CheckQRef(FblcArena* arena, Env* env, FbldQRef* qref);
 static bool CheckEnv(FblcArena* arena, Env* env);
 static bool CheckInterf(FblcArena* arena, Env* env, FbldInterf* interf);
 static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module);
-static bool DefineName(FblcArena* arena, FbldName* name, FbldNameV* defined);
+static bool NotRedefinedHelper(FbldName* redef, FbldName* prev);
+static bool NotRedefined(Env* env, FbldName* name);
 static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* status);
 static bool CheckType(FblcArena* arena, Env* env, FbldQRef* qref);
 static Vars* CheckArgV(FblcArena* arena, Env* env, FbldArgV* argv, Vars* vars, bool* success);
@@ -464,14 +466,11 @@ static bool CheckEnv(FblcArena* arena, Env* env)
   }
   env->decl_status = decl_status;
 
-  FbldNameV defined;
-  FblcVectorInit(arena, defined);
-
   // Check import statements.
   for (size_t import_id = 0; import_id < env->prgm->importv->size; ++import_id) {
     FbldImport* import = env->prgm->importv->xs[import_id];
     for (size_t i = 0; i < import->itemv->size; ++i) {
-      Require(DefineName(arena, import->itemv->xs[i]->dest, &defined), &success);
+      Require(NotRedefined(env, import->itemv->xs[i]->dest), &success);
       if (import->mref == NULL) {
         // Import '@' from parent
 
@@ -507,7 +506,6 @@ static bool CheckEnv(FblcArena* arena, Env* env)
 
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
-    Require(DefineName(arena, decl->name, &defined), &success);
     Require(EnsureDecl(arena, env, decl->name->loc, decl), &success);
   }
 
@@ -1225,31 +1223,79 @@ static Vars* CheckArgV(FblcArena* arena, Env* env, FbldArgV* argv, Vars* vars, b
   return next;
 }
 
-// DefineName --
-//   Check if a given name has already been defined, and add it to the list of
-//   defined names.
+// NotRedefinedHelper --
+//   Helper function for NotRedefined. Checks whether the two names are for
+//   the same entity definition.
 //
 // Inputs:
-//   arena - Arena to use for allocations.
-//   name - The name to define.
-//   defined - The list of already defined names to check and update.
+//   redef - The name of a potentially redefined entity.
+//   prev - The name of a potentially previous entity that has the same name.
 //
 // Results:
-//   true if there was no trouble defining the name, false otherwise.
+//   true if redef and prev are names of the same entity, false otherwise.
 //
 // Side effects:
-//   Reports an error if the name is already defined and adds the name to the
-//   list of defined names.
-static bool DefineName(FblcArena* arena, FbldName* name, FbldNameV* defined)
+//   Reports an error in case redef and prev are names from different entity
+//   definitions.
+static bool NotRedefinedHelper(FbldName* redef, FbldName* prev)
 {
-  for (size_t i = 0; i < defined->size; ++i) {
-    if (FbldNamesEqual(name->name, defined->xs[i]->name)) {
-      ReportError("redefinition of %s\n", name->loc, name->name);
-      ReportError("previous definition was here\n", defined->xs[i]->loc);
-      return false;
+  // This function is only intended to be called after we have checked the two
+  // names are equal (as opposed to from the same entity definition).
+  assert(FbldNamesEqual(redef->name, prev->name));
+
+  if (redef == prev) {
+    return true;
+  }
+
+  assert(strcmp(redef->loc->source, prev->loc->source) != 0
+      || redef->loc->line != prev->loc->line
+      || redef->loc->col != prev->loc->col);
+  ReportError("redefinition of %s\n", redef->loc, redef->name);
+  ReportError("previous definition was here\n", prev->loc);
+  return false;
+}
+
+// NotRedefined --
+//   Ensure that an entity has not already been defined with the given name in
+//   the environment.
+//
+// Inputs:
+//   env - The environment to check if the name is redefined in.
+//   name - The name to check.
+//
+// Results:
+//   true if the name has not already been defined in the environment, false
+//   otherwise.
+//
+// Side effects:
+//   Reports an error if the name is already defined.
+static bool NotRedefined(Env* env, FbldName* name)
+{
+  // We use pointer equality on the FbldName to check whether the first
+  // definition of the entity in the environment has the given name.
+  for (size_t import_id = 0; import_id < env->prgm->importv->size; ++import_id) {
+    FbldImport* import = env->prgm->importv->xs[import_id];
+    for (size_t i = 0; i < import->itemv->size; ++i) {
+      FbldName* dest = import->itemv->xs[i]->dest;
+      if (FbldNamesEqual(name->name, dest->name)) {
+        return NotRedefinedHelper(name, dest);
+      }
     }
   }
-  FblcVectorAppend(arena, *defined, name);
+
+  for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
+    FbldName* decl = env->prgm->declv->xs[decl_id]->name;
+    if (FbldNamesEqual(name->name, decl->name)) {
+      return NotRedefinedHelper(name, decl);
+    }
+  }
+
+  for (SVar* svar = env->svars; svar != NULL; svar = svar->next) {
+    if (FbldNamesEqual(name->name, svar->name->name)) {
+      return NotRedefinedHelper(name, svar->name);
+    }
+  }
+
   return true;
 }
 
@@ -1275,6 +1321,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
   assert(status->decl == DP_NEW);
   status->proto = DP_PENDING;
   status->decl = DP_PENDING;
+
+  Require(NotRedefined(env, decl->name), &success);
 
   // Check the static parameters and add them to the environment.
   SVar* svars_in = env->svars;
