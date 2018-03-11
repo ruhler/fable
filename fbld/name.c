@@ -71,8 +71,19 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
       FbldDecl* decl = mref->r->decl;
       for (size_t i = 0; i < decl->paramv->size; ++i) {
         if (decl->paramv->xs[i] == qref->r->decl) {
-          assert(qref->paramv->size == 0 && "TODO");
-          return mref->paramv->xs[i];
+          FbldQRef* param = mref->paramv->xs[i];
+          FbldQRef* imported = FBLC_ALLOC(arena, FbldQRef);
+          imported->name = param->name;
+          imported->paramv = FBLC_ALLOC(arena, FbldQRefV);
+          FblcVectorInit(arena, *(imported->paramv));
+          for (size_t i = 0; i < qref->paramv->size; ++i) {
+            FbldQRef* p = FbldImportQRef(arena, src, qref->paramv->xs[i]);
+            FblcVectorAppend(arena, *(imported->paramv), p);
+          }
+
+          imported->mref = param->mref;
+          imported->r = param->r;
+          return imported;
         }
       }
 

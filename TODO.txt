@@ -1,7 +1,7 @@
 Fbld 4:
 * Check that static args have the right kind.
 * Check that public entity doesn't refer to a private one.
-* Fix TODO in import qref that prevents poly poly from working.
+* Add test to cover bug found by AllTests.
 * Increase test coverage for spec.
 * Add support for aliases
   - Add Alias alongside Import in Program.
@@ -29,6 +29,8 @@ Fbld 4 Test:
   declaration Blah" multiple times.
 * Test that we don't print error messages for "Foo not defined" multiple
   times, even if we use Foo multiple times without it being defined?
+* Test interf matches between interf and module.
+* Test module matches between interf and module.
 * Reach full test coverage.
 * Warn for unused imports?
 
