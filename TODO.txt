@@ -10,10 +10,6 @@ Fbld 4:
 * Implement deflate program.
 
 Fbld 4 Test:
-* Catch AllTest and other failures and continue rather than aborting like we
-  do now.
-   - In other words, factor out ability to "test" a generic tcl function call,
-     and reuse that for spec tests and high level fbld tests.
 * Test that you can use a function foo<type A>(A x) where function
   foo<type B>(B x) is expected.
 * Test that a function foo(A x ; B) can be used where a function foo(A y ; B)
