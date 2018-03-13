@@ -68,8 +68,10 @@ FbldQRef* FbldImportQRef(FblcArena* arena, FbldQRef* src, FbldQRef* qref)
     // qref refers to a static parameter. Find the matching argument.
     FbldQRef* mref = src;
     while (mref != NULL) {
+      // Note that mref may have fewer arguments than decl in case it is
+      // a partial qref.
       FbldDecl* decl = mref->r->decl;
-      for (size_t i = 0; i < decl->paramv->size; ++i) {
+      for (size_t i = 0; i < mref->paramv->size; ++i) {
         if (decl->paramv->xs[i] == qref->r->decl) {
           FbldQRef* param = mref->paramv->xs[i];
           FbldQRef* imported = FBLC_ALLOC(arena, FbldQRef);

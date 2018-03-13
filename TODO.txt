@@ -1,6 +1,6 @@
 Fbld 4:
-* Check that static args have the right kind.
-  - And figure out what error locations the error messages should have.
+* Figure out what error locations the error messages should have when a qref
+  doesn't match its proto or a module decl doesn't match its proto.
 * Check that public entity doesn't refer to a private one.
 * Debug poly-poly-regression.
 * Increase test coverage for spec.

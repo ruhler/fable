@@ -45,7 +45,7 @@ proc fbld-check-error-run {tloc program loc} {
   set errtext [exec $::fbldcheck --error $fprogram]
   exec echo $errtext > ./out/test/fbld/$name.err
   if {-1 == [string first ":$loc: error" $errtext]} {
-    throw "Expected error at $loc, but got:\n$errtext"
+    error "Expected error at $loc, but got:\n$errtext"
   }
 }
 

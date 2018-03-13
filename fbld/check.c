@@ -400,15 +400,21 @@ static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref)
   }
 
   for (size_t i = 0; i < qref->paramv->size; ++i) {
-    // TODO: Check that the qref's kind matches the parameter declarations
-    // kind.
     if (!CheckPartialQRef(arena, env, qref->paramv->xs[i])) {
       // TODO: Free r
       return false;
     }
   }
-  
+
   qref->r = r;
+  for (size_t i = 0; i < qref->paramv->size; ++i) {
+    if (!CheckProto(arena, qref->paramv->xs[i], qref, r->decl->paramv->xs[i])) {
+      // TODO: Free r
+      qref->r = &FailedR;
+      return false;
+    }
+  }
+  
   return true;
 }
 
@@ -1536,14 +1542,14 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
         case FBLD_STRUCT_KIND: {
           if (type->kind != FBLD_STRUCT_KIND) {
             ReportError("%s does not refer to a struct type as required\n", qref->name->loc, qref->name->name);
-            success = false;
+            return false;
           }
         } break;
 
         case FBLD_UNION_KIND: {
           if (type->kind != FBLD_UNION_KIND) {
             ReportError("%s does not refer to a union type as required\n", qref->name->loc, qref->name->name);
-            success = false;
+            return false;
           }
         } break;
 
@@ -1555,14 +1561,17 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
       if (type_proto->kind != FBLD_ABSTRACT_KIND) {
         Require(CheckProtoArgs(arena, qref, type->fieldv, proto_src, type_proto->fieldv, true), &success);
       }
-    } break;
+
+      return success;
+    }
 
     case FBLD_FUNC_DECL: {
       FbldFunc* func_proto = (FbldFunc*)proto;
       FbldFunc* func = (FbldFunc*)decl;
       Require(CheckProtoArgs(arena, qref, func->argv, proto_src, func_proto->argv, false), &success);
       Require(CheckTypesMatch(qref->name->loc, FbldImportQRef(arena, proto_src, func_proto->return_type), FbldImportQRef(arena, qref, func->return_type)), &success);
-    } break;
+      return success;
+    }
 
     case FBLD_PROC_DECL: {
       FbldProc* proc_proto = (FbldProc*)proto;
@@ -1592,17 +1601,26 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
     
       Require(CheckProtoArgs(arena, qref, proc->argv, proto_src, proc_proto->argv, false), &success);
       Require(CheckTypesMatch(proc->return_type->name->loc, FbldImportQRef(arena, proto_src, proc_proto->return_type), FbldImportQRef(arena, qref, proc->return_type)), &success);
+      return success;
     }
 
     case FBLD_INTERF_DECL: {
       // TODO: Check interface declarations match.
+      return true;
     }
 
     case FBLD_MODULE_DECL: {
       // TODO: Check module declarations match.
+      return true;
+    }
+
+    default: {
+      UNREACHABLE("Invalid decl kind");
+      return false;
     }
   }
-  return success;
+
+  UNREACHABLE("Should already have returned");
 }
 
 // EnsureProto --
