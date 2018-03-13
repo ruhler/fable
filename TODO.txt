@@ -1,5 +1,6 @@
 Fbld 4:
 * Check that static args have the right kind.
+  - And figure out what error locations the error messages should have.
 * Check that public entity doesn't refer to a private one.
 * Debug poly-poly-regression.
 * Increase test coverage for spec.
@@ -10,6 +11,8 @@ Fbld 4:
 * Implement deflate program.
 
 Fbld 4 Test:
+* Reorganize tests for module vs. interface protos
+ - By decl type and sub-error within it. And better name them.
 * Test that you can use a function foo<type A>(A x) where function
   foo<type B>(B x) is expected.
 * Test that a function foo(A x ; B) can be used where a function foo(A y ; B)

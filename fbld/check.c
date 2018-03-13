@@ -110,8 +110,8 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
 static bool CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual);
 static bool CheckValue(FblcArena* arena, Env* env, FbldValue* value);
 
-static bool CheckArgsMatch(FblcArena* arena, FbldName* name, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m);
-static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m);
+static bool CheckProtoArgs(FblcArena* arena, FbldQRef* qref, FbldArgV* args, FbldQRef* proto_src, FbldArgV* proto_args, bool match_names);
+static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, FbldDecl* proto);
 static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl);
 static bool EnsureDecl(FblcArena* arena, Env* env, FbldLoc* loc, FbldDecl* decl);
 
@@ -627,10 +627,11 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
           // Create a src reference that is as if we had accessed the module's
           // declaration through its interface, rather than directly, with
           // static parameters that match the parameters in the module.
-          // TODO: Don't leak src like this.
-          FbldQRef* src = DeclQRef(arena, mref, interf, decl_i);
-          src->r->param = false;
-          Require(CheckDeclsMatch(arena, src, decl_i, decl_m), &success);
+          // TODO: Don't leak src and qref like this.
+          FbldQRef* proto_src = DeclQRef(arena, mref, interf, decl_i);
+          proto_src->r->param = false;
+          FbldQRef* qref = DeclQRef(arena, mref, NULL, decl_m);
+          Require(CheckProto(arena, qref, proto_src, decl_i), &success);
 
           FbldType* type_i = (FbldType*)decl_i;
           if (decl_i->tag == FBLD_TYPE_DECL && type_i->kind == FBLD_ABSTRACT_KIND) {
@@ -1461,81 +1462,87 @@ bool FbldCheckQRef(FblcArena* arena, FbldProgram* prgm, FbldQRef* qref)
   return CheckQRef(arena, &env, qref);
 }
 
-// CheckArgsMatch --
-//   Check whether args from a module prototype match the interface prototype.
+// CheckProtoArgs --
+//   Check whether the args from a declaration match the prototype's args.
 //
 // Inputs:
 //   arena - Arena to use for allocations.
-//   name - The name of the declaration to check the arguments of.
-//   src - The source qref used to import the foreign args from args_i
-//   args_i - The interface arg vector.
-//   args_m - The module arg vector.
+//   qref - The qref where the args came from.
+//   args - The args to check.
+//   proto_src - The src where the proto_args are from.
+//   proto_args - The args from the prototype.
+//   match_names - Whether the argument names must match as well as the types.
 //
 // Result:
 //   True on success, false on error.
 //
 // Side effects:
-//   Prints an error message if the module arguments don't match the interface
+//   Prints an error message if the arguments don't match the prototype
 //   arguments.
-static bool CheckArgsMatch(FblcArena* arena, FbldName* name, FbldQRef* src, FbldArgV* args_i, FbldArgV* args_m)
+static bool CheckProtoArgs(FblcArena* arena, FbldQRef* qref, FbldArgV* args, FbldQRef* proto_src, FbldArgV* proto_args, bool match_names)
 {
-  if (args_i->size != args_m->size) {
+  if (proto_args->size != args->size) {
     ReportError("Wrong number of args, expected %i but found %i\n",
-        name->loc, args_i->size, args_m->size);
+        qref->name->loc, proto_args->size, args->size);
     return false;
   }
 
   bool success = true;
-  for (size_t i = 0; i < args_i->size && i < args_m->size; ++i) {
-    Require(CheckTypesMatch(args_m->xs[i]->type->name->loc, FbldImportQRef(arena, src, args_i->xs[i]->type), args_m->xs[i]->type), &success);
-    if (!FbldNamesEqual(args_i->xs[i]->name->name, args_m->xs[i]->name->name)) {
-      ReportError("Module name %s does not match interface name %s\n",
-          args_m->xs[i]->name->loc, args_m->xs[i]->name->name,
-          args_i->xs[i]->name->name);
+  for (size_t i = 0; i < proto_args->size && i < args->size; ++i) {
+    Require(CheckTypesMatch(qref->name->loc, FbldImportQRef(arena, proto_src, proto_args->xs[i]->type), FbldImportQRef(arena, qref, args->xs[i]->type)), &success);
+    if (match_names && !FbldNamesEqual(proto_args->xs[i]->name->name, args->xs[i]->name->name)) {
+      ReportError("Argument name %s does not match prototype name %s\n",
+          args->xs[i]->name->loc, args->xs[i]->name->name,
+          proto_args->xs[i]->name->name);
       success = false;
     }
   }
   return success;
 }
 
-// CheckDeclsMatch --
-//   Check that a module declaration matches its corresponding interface
-//   declaration.
+// CheckProto --
+//   Check that a qref matches the given prototype.
 //
 // Inputs:
 //   arena - Arena to use for allocations.
-//   src - The qref referring to decl_i in the current context.
-//   decl_i - The declarartion in the interface.
-//   decl_m - The declarartion in the module.
+//   qref - The qref whose proto to check.
+//   proto_src - The src referring to the proto to check against.
+//   proto - The expected prototype of qref.
 //
 // Results:
-//   true if the decls match, false otherwise.
+//   true if qref matches the given prototype, false otherwise.
 //
 // Side effects:
-//   Prints a message to stderr if the declarations don't match.
-static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, FbldDecl* decl_m)
+//   Prints a message to stderr if the prototype doesn't match.
+//
+static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, FbldDecl* proto)
 {
-  if (decl_i->tag != decl_m->tag) {
-    ReportError("%s does not match interface declaration\n", decl_m->name->loc, decl_m->name->name);
+  assert(qref->r != NULL);
+  assert(qref->r->decl != NULL);
+  FbldDecl* decl = qref->r->decl;
+
+  if (proto->tag != decl->tag) {
+    ReportError("%s does not match required prototype\n", qref->name->loc, qref->name->name);
+    ReportError("Required prototype here.\n", proto->name->loc, proto->name->name);
     return false;
   }
 
   bool success = true;
-  switch (decl_i->tag) {
+  switch (proto->tag) {
     case FBLD_TYPE_DECL: {
-      FbldType* type_i = (FbldType*)decl_i;
-      FbldType* type_m = (FbldType*)decl_m;
-      switch (type_i->kind) {
+      FbldType* type_proto = (FbldType*)proto;
+      FbldType* type = (FbldType*)decl;
+      switch (type_proto->kind) {
         case FBLD_STRUCT_KIND: {
-          if (type_m->kind != FBLD_STRUCT_KIND) {
-            ReportError("%s previously declared as a struct\n", decl_m->name->loc, decl_m->name->name);
+          if (type->kind != FBLD_STRUCT_KIND) {
+            ReportError("%s does not refer to a struct type as required\n", qref->name->loc, qref->name->name);
             success = false;
           }
         } break;
 
         case FBLD_UNION_KIND: {
-          if (type_m->kind != FBLD_UNION_KIND) {
-            ReportError("%s previously declared as a union\n", decl_m->name->loc, decl_m->name->name);
+          if (type->kind != FBLD_UNION_KIND) {
+            ReportError("%s does not refer to a union type as required\n", qref->name->loc, qref->name->name);
             success = false;
           }
         } break;
@@ -1545,46 +1552,46 @@ static bool CheckDeclsMatch(FblcArena* arena, FbldQRef* src, FbldDecl* decl_i, F
         } break;
       }
 
-      if (type_i->kind != FBLD_ABSTRACT_KIND) {
-        Require(CheckArgsMatch(arena, decl_m->name, src, type_i->fieldv, type_m->fieldv), &success);
+      if (type_proto->kind != FBLD_ABSTRACT_KIND) {
+        Require(CheckProtoArgs(arena, qref, type->fieldv, proto_src, type_proto->fieldv, true), &success);
       }
     } break;
 
     case FBLD_FUNC_DECL: {
-      FbldFunc* func_i = (FbldFunc*)decl_i;
-      FbldFunc* func_m = (FbldFunc*)decl_m;
-      Require(CheckArgsMatch(arena, decl_m->name, src, func_i->argv, func_m->argv), &success);
-      Require(CheckTypesMatch(func_m->return_type->name->loc, FbldImportQRef(arena, src, func_i->return_type), func_m->return_type), &success);
+      FbldFunc* func_proto = (FbldFunc*)proto;
+      FbldFunc* func = (FbldFunc*)decl;
+      Require(CheckProtoArgs(arena, qref, func->argv, proto_src, func_proto->argv, false), &success);
+      Require(CheckTypesMatch(qref->name->loc, FbldImportQRef(arena, proto_src, func_proto->return_type), FbldImportQRef(arena, qref, func->return_type)), &success);
     } break;
 
     case FBLD_PROC_DECL: {
-      FbldProc* proc_i = (FbldProc*)decl_i;
-      FbldProc* proc_m = (FbldProc*)decl_m;
-      if (proc_i->portv->size != proc_m->portv->size) {
-        ReportError("Process %s does not match its interface declaration: expectd %i ports but found %i\n", decl_m->name->loc, decl_m->name->name,
-            proc_i->portv->size, proc_m->portv->size);
+      FbldProc* proc_proto = (FbldProc*)proto;
+      FbldProc* proc = (FbldProc*)decl;
+      if (proc_proto->portv->size != proc->portv->size) {
+        ReportError("Process %s does not satisfy the required prototype: expectd %i ports but found %i\n", qref->name->loc, qref->name->name,
+            proc_proto->portv->size, proc->portv->size);
         success = false;
       }
     
-      for (size_t i = 0; i < proc_i->portv->size && i < proc_m->portv->size; ++i) {
-        FbldPort* port_i = proc_i->portv->xs + i;
-        FbldPort* port_m = proc_m->portv->xs + i;
-        Require(CheckTypesMatch(port_m->type->name->loc, FbldImportQRef(arena, src, port_i->type), port_m->type), &success);
+      for (size_t i = 0; i < proc_proto->portv->size && i < proc->portv->size; ++i) {
+        FbldPort* proto_port = proc_proto->portv->xs + i;
+        FbldPort* port = proc->portv->xs + i;
+        Require(CheckTypesMatch(qref->name->loc, FbldImportQRef(arena, proto_src, proto_port->type), FbldImportQRef(arena, qref, port->type)), &success);
     
-        if (!FbldNamesEqual(port_i->name->name, port_m->name->name)) {
-          ReportError("Expected name %s, but found name %s\n", port_m->name->loc,
-              port_i->name->name, port_m->name->name);
+        if (!FbldNamesEqual(proto_port->name->name, port->name->name)) {
+          ReportError("Expected name %s, but found name %s\n", port->name->loc,
+              proto_port->name->name, port->name->name);
           success = false;
         }
     
-        if (port_i->polarity != port_m->polarity) {
-          ReportError("Expected opposite polarity", port_m->name->loc);
+        if (proto_port->polarity != port->polarity) {
+          ReportError("Expected opposite polarity", port->name->loc);
           success = false;
         }
       }
     
-      Require(CheckArgsMatch(arena, decl_m->name, src, proc_i->argv, proc_m->argv), &success);
-      Require(CheckTypesMatch(proc_m->return_type->name->loc, FbldImportQRef(arena, src, proc_i->return_type), proc_m->return_type), &success);
+      Require(CheckProtoArgs(arena, qref, proc->argv, proto_src, proc_proto->argv, false), &success);
+      Require(CheckTypesMatch(proc->return_type->name->loc, FbldImportQRef(arena, proto_src, proc_proto->return_type), FbldImportQRef(arena, qref, proc->return_type)), &success);
     }
 
     case FBLD_INTERF_DECL: {

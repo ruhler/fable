@@ -1,17 +1,15 @@
 set prg {
   interf I {
     struct Unit();
-    func f(Unit x, Unit y; Unit);
+    struct Coord(Unit x, Unit y);
   };
 
   module M(I) {
     struct Unit();
 
-    # The argument name 'x' here doesn't match the declaration in interf I.
-    func f(Unit z, Unit y; Unit) {
-      Unit();
-    };
+    # The argument name 'z' here doesn't match the declaration in interf I.
+    struct Coord(Unit z, Unit y);
   };
 }
 
-fbld-check-error $prg 11:17
+fbld-check-error $prg 11:23
