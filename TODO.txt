@@ -1,9 +1,6 @@
 Fbld 4:
 * Figure out what error locations the error messages should have when a qref
   doesn't match its proto or a module decl doesn't match its proto.
-* Check that public entity doesn't refer to a private one.
- - The visibility of the entity should not be wider than the visibility of any
-   of its arguments.
 * Fix 3.2-09, 3.2-10 tests
  - Need to distinguish between SProto and Proto for EnsureProto?
    For example, consider:
@@ -22,6 +19,12 @@ Fbld 4:
 * Implement deflate program.
 
 Fbld 4 Test:
+* Add variety of tests for using "private" entity in "public" interface
+  Where private and public depend on the context.
+  For example, public function in private module refers to private entity at
+  the same level as the module should be okay.
+* Test that a public interf cannot refer to a private entity.
+* Test that a public module (header?) cannot refer to a private entity.
 * Reorganize tests for module vs. interface protos
  - By decl type and sub-error within it. And better name them.
 * Test that you can use a function foo<type A>(A x) where function

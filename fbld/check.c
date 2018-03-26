@@ -104,7 +104,8 @@ static bool NotRedefinedHelper(FbldName* redef, FbldName* prev);
 static bool NotRedefined(Env* env, FbldName* name);
 static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* status);
 static bool CheckType(FblcArena* arena, Env* env, FbldQRef* qref);
-static Vars* CheckArgV(FblcArena* arena, Env* env, FbldArgV* argv, Vars* vars, bool* success);
+static bool CheckTypeInProto(FblcArena* arena, Env* env, FbldQRef* proto, FbldQRef* qref);
+static Vars* CheckArgV(FblcArena* arena, Env* env, FbldQRef* proto, FbldArgV* argv, Vars* vars, bool* success);
 static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* expr);
 static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports, FbldActn* actn);
 static bool CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual);
@@ -756,6 +757,55 @@ static bool CheckType(FblcArena* arena, Env* env, FbldQRef* qref)
   return true;
 }
 
+// CheckTypeInProto --
+//   Check that the given qref refers to a type and has acceptable access
+//   modes given that it is referenced from the given proto.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   env - The environment for type checking.
+//   proto - The proto that refers to the qref.
+//   qref - The qref to check.
+//
+// Result:
+//   true if the qref resolves, refers to a type, and has proper visibility,
+//   false otherwise.
+//
+// Side effects:
+//   Resolves qref if necessary.
+//   Reports errors to stderr.
+static bool CheckTypeInProto(FblcArena* arena, Env* env, FbldQRef* proto, FbldQRef* qref)
+{
+  if (!CheckType(arena, env, qref)) {
+    return false;
+  }
+
+  // Confirm that qref has at least as much visibility as proto.
+  FbldQRef* qrefv = qref;
+  while (qrefv != NULL && qrefv->r->decl->access != FBLD_PRIVATE_ACCESS) {
+    qrefv = qrefv->r->mref;
+  }
+
+  if (qrefv == NULL) {
+    return true;
+  }
+
+  FbldQRef* protov = proto;
+  while (protov != NULL && protov->r->decl->access != FBLD_PRIVATE_ACCESS) {
+    protov = protov->r->mref;
+  }
+
+  while (protov != NULL) {
+    if (FbldQRefsEqual(protov->r->mref, qrefv->r->mref)) {
+      return true;
+    }
+    protov = protov->r->mref;
+  }
+
+  ReportError("%s has less visibility than %s\n", qref->name->loc, qref->name->name, proto->name->name);
+  return false;
+}
+
 // CheckExpr --
 //   Check that the given expression is well formed.
 //
@@ -1193,6 +1243,7 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
 // Inputs:
 //   arena - Arena to use for allocations.
 //   env - The environment for type checking.
+//   proto - The proto that refers to the args.
 //   argv - The vector of args to check.
 //   vars - Space for argv->size vars to fill in based on the given args.
 //   success - Set to false on error.
@@ -1204,7 +1255,7 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
 //   Fills in elements of vars.
 //   Loads program modules as needed to check the arguments. In case
 //   there is a problem, reports errors to stderr and sets success to false.
-static Vars* CheckArgV(FblcArena* arena, Env* env, FbldArgV* argv, Vars* vars, bool* success)
+static Vars* CheckArgV(FblcArena* arena, Env* env, FbldQRef* proto, FbldArgV* argv, Vars* vars, bool* success)
 {
   Vars* next = NULL;
   for (size_t arg_id = 0; arg_id < argv->size; ++arg_id) {
@@ -1218,7 +1269,7 @@ static Vars* CheckArgV(FblcArena* arena, Env* env, FbldArgV* argv, Vars* vars, b
         break;
       }
     }
-    Require(CheckType(arena, env, arg->type), success);
+    Require(CheckTypeInProto(arena, env, proto, arg->type), success);
 
     vars[arg_id].name = arg->name->name;
     vars[arg_id].type = CheckType(arena, env, arg->type) ? arg->type : NULL;
@@ -1354,6 +1405,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
     env->svars = svars_data + i;
   }
 
+  // TODO: Don't leak proto.
+  FbldQRef* proto = DeclQRef(arena, env->mref, env->interf, decl);
   switch (decl->tag) {
     case FBLD_TYPE_DECL: {
       FbldType* type = (FbldType*)decl;
@@ -1362,7 +1415,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
 
       if (type->fieldv != NULL) {
         Vars unused[type->fieldv->size];
-        CheckArgV(arena, env, type->fieldv, unused, &success);
+        CheckArgV(arena, env, proto, type->fieldv, unused, &success);
       }
 
       status->proto = success ? DP_SUCCESS : DP_FAILED;
@@ -1373,8 +1426,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
     case FBLD_FUNC_DECL: {
       FbldFunc* func = (FbldFunc*)decl;
       Vars vars_data[func->argv->size];
-      Vars* vars = CheckArgV(arena, env, func->argv, vars_data, &success);
-      Require(CheckType(arena, env, func->return_type), &success);
+      Vars* vars = CheckArgV(arena, env, proto, func->argv, vars_data, &success);
+      Require(CheckTypeInProto(arena, env, proto, func->return_type), &success);
 
       status->proto = success ? DP_SUCCESS : DP_FAILED;
 
@@ -1402,7 +1455,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
         }
 
         ports_data[port_id].name = port->name->name;
-        ports_data[port_id].type = CheckType(arena, env, port->type) ? port->type : NULL;
+        ports_data[port_id].type = CheckTypeInProto(arena, env, proto, port->type) ? port->type : NULL;
         Require(ports_data[port_id].type != NULL, &success);
         ports_data[port_id].polarity = port->polarity;
         ports_data[port_id].next = ports;
@@ -1410,8 +1463,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
       }
 
       Vars vars_data[proc->argv->size];
-      Vars* vars = CheckArgV(arena, env, proc->argv, vars_data, &success);
-      Require(CheckType(arena, env, proc->return_type), &success);
+      Vars* vars = CheckArgV(arena, env, proto, proc->argv, vars_data, &success);
+      Require(CheckTypeInProto(arena, env, proto, proc->return_type), &success);
 
       status->proto = success ? DP_SUCCESS : DP_FAILED;
 
@@ -1426,6 +1479,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
     }
 
     case FBLD_INTERF_DECL: {
+      // TODO: Verify the visiblity of the entities referred to in the interf
       FbldInterf* interf = (FbldInterf*)decl;
       Require(CheckInterf(arena, env, interf), &success);
 
@@ -1435,6 +1489,7 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
     }
 
     case FBLD_MODULE_DECL: {
+      // TODO: Verify the visiblity of the entities referred to in the interf
       FbldModule* module = (FbldModule*)decl;
       Require(CheckModule(arena, env, module), &success);
 
