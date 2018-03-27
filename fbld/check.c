@@ -114,7 +114,7 @@ static bool CheckTypesMatch(FbldLoc* loc, FbldQRef* expected, FbldQRef* actual);
 static bool CheckValue(FblcArena* arena, Env* env, FbldValue* value);
 
 static bool CheckProtoArgs(FblcArena* arena, FbldQRef* qref, FbldArgV* args, FbldQRef* proto_src, FbldArgV* proto_args, bool match_names);
-static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, FbldDecl* proto);
+static bool CheckProto(FblcArena* arena, Env* env, FbldQRef* qref, FbldQRef* proto_src, FbldDecl* proto);
 static bool EnsureParams(FblcArena* arena, Env* env, FbldDecl* decl);
 static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl);
 static bool EnsureDecl(FblcArena* arena, Env* env, FbldLoc* loc, FbldDecl* decl);
@@ -395,6 +395,10 @@ static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref)
     return false;
   }
 
+  if (!EnsureParams(arena, env, r->decl)) {
+    return false;
+  }
+
   // Check the parameters we have so far. Not all parameters need be supplied
   // at this point.
   if (qref->paramv->size > r->decl->paramv->size) {
@@ -412,7 +416,7 @@ static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref)
 
   qref->r = r;
   for (size_t i = 0; i < qref->paramv->size; ++i) {
-    if (!CheckProto(arena, qref->paramv->xs[i], qref, r->decl->paramv->xs[i])) {
+    if (!CheckProto(arena, env, qref->paramv->xs[i], qref, r->decl->paramv->xs[i])) {
       // TODO: Free r
       qref->r = &FailedR;
       return false;
@@ -642,7 +646,7 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
           FbldQRef* proto_src = DeclQRef(arena, mref, interf, decl_i);
           proto_src->r->param = false;
           FbldQRef* qref = DeclQRef(arena, mref, NULL, decl_m);
-          Require(CheckProto(arena, qref, proto_src, decl_i), &success);
+          Require(CheckProto(arena, env, qref, proto_src, decl_i), &success);
 
           FbldType* type_i = (FbldType*)decl_i;
           if (decl_i->tag == FBLD_TYPE_DECL && type_i->kind == FBLD_ABSTRACT_KIND) {
@@ -1574,6 +1578,7 @@ static bool CheckProtoArgs(FblcArena* arena, FbldQRef* qref, FbldArgV* args, Fbl
 //
 // Inputs:
 //   arena - Arena to use for allocations.
+//   env - The current environment.
 //   qref - The qref whose proto to check.
 //   proto_src - The src referring to the proto to check against.
 //   proto - The expected prototype of qref.
@@ -1584,7 +1589,7 @@ static bool CheckProtoArgs(FblcArena* arena, FbldQRef* qref, FbldArgV* args, Fbl
 // Side effects:
 //   Prints a message to stderr if the prototype doesn't match.
 //
-static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, FbldDecl* proto)
+static bool CheckProto(FblcArena* arena, Env* env, FbldQRef* qref, FbldQRef* proto_src, FbldDecl* proto)
 {
   assert(qref->r != NULL);
   assert(qref->r->decl != NULL);
@@ -1593,6 +1598,10 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
   if (proto->tag != decl->tag) {
     ReportError("%s does not match required prototype\n", qref->name->loc, qref->name->name);
     ReportError("Required prototype here.\n", proto->name->loc, proto->name->name);
+    return false;
+  }
+
+  if (!EnsureProto(arena, env, proto)) {
     return false;
   }
 

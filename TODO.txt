@@ -1,14 +1,4 @@
 Fbld 4:
-* Fix 3.2-09, 3.2-10 tests
- - Need to distinguish between SProto and Proto for EnsureProto?
-   For example, consider:
-    struct Foo<type A, func F(A x; A)>(Bar<A, F> bar);
-    struct Bar<Type A, func F(A x; A)>(Foo<A, F> foo);
-
-   This recursion should be allowed, but to check that Bar<A, F> is valid, we
-   must first check the SProto of Bar. If we try to check the Proto of Bar
-   instead of the SProto, that requires we check the SProto of Foo. If we try
-   to check the Proto of Foo instead, we report a prototype recursion.
 * Increase test coverage for spec.
 * Add support for aliases
   - Add Alias alongside Import in Program.
