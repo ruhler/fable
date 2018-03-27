@@ -1617,7 +1617,7 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
         Require(CheckProtoArgs(arena, qref, type->fieldv, proto_src, type_proto->fieldv, true), &success);
       }
 
-      return success;
+      break;
     }
 
     case FBLD_FUNC_DECL: {
@@ -1625,7 +1625,7 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
       FbldFunc* func = (FbldFunc*)decl;
       Require(CheckProtoArgs(arena, qref, func->argv, proto_src, func_proto->argv, false), &success);
       Require(CheckTypesMatch(qref->name->loc, FbldImportQRef(arena, proto_src, func_proto->return_type), FbldImportQRef(arena, qref, func->return_type)), &success);
-      return success;
+      break;
     }
 
     case FBLD_PROC_DECL: {
@@ -1634,7 +1634,7 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
       if (proc_proto->portv->size != proc->portv->size) {
         ReportError("Process %s does not satisfy the required prototype: expectd %i ports but found %i\n", qref->name->loc, qref->name->name,
             proc_proto->portv->size, proc->portv->size);
-        success = false;
+        return false;
       }
     
       for (size_t i = 0; i < proc_proto->portv->size && i < proc->portv->size; ++i) {
@@ -1645,18 +1645,18 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
         if (!FbldNamesEqual(proto_port->name->name, port->name->name)) {
           ReportError("Expected name %s, but found name %s\n", port->name->loc,
               proto_port->name->name, port->name->name);
-          success = false;
+          return false;
         }
     
         if (proto_port->polarity != port->polarity) {
           ReportError("Expected opposite polarity", port->name->loc);
-          success = false;
+          return false;
         }
       }
     
       Require(CheckProtoArgs(arena, qref, proc->argv, proto_src, proc_proto->argv, false), &success);
       Require(CheckTypesMatch(proc->return_type->name->loc, FbldImportQRef(arena, proto_src, proc_proto->return_type), FbldImportQRef(arena, qref, proc->return_type)), &success);
-      return success;
+      break;
     }
 
     case FBLD_INTERF_DECL: {
@@ -1675,7 +1675,13 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
     }
   }
 
-  UNREACHABLE("Should already have returned");
+  if (!success) {
+    // TODO: Print expected and actual prototypes.
+    ReportError("%s does not have required prototype\n", qref->name->loc, qref->name->name);
+    return false;
+  }
+
+  return true;
 }
 
 // EnsureProto --
