@@ -33,9 +33,11 @@ typedef enum {
 //   Status of checking a declaration.
 //
 // Fiels:
+//   params - The progress of checking the params.
 //   proto - The progress of checking the proto.
 //   decl - The progress of checking the full declaration.
 typedef struct {
+  DeclProgress params;
   DeclProgress proto;
   DeclProgress decl;
 } DeclStatus;
@@ -113,6 +115,7 @@ static bool CheckValue(FblcArena* arena, Env* env, FbldValue* value);
 
 static bool CheckProtoArgs(FblcArena* arena, FbldQRef* qref, FbldArgV* args, FbldQRef* proto_src, FbldArgV* proto_args, bool match_names);
 static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, FbldDecl* proto);
+static bool EnsureParams(FblcArena* arena, Env* env, FbldDecl* decl);
 static bool EnsureProto(FblcArena* arena, Env* env, FbldDecl* decl);
 static bool EnsureDecl(FblcArena* arena, Env* env, FbldLoc* loc, FbldDecl* decl);
 
@@ -468,6 +471,7 @@ static bool CheckEnv(FblcArena* arena, Env* env)
 
   DeclStatus decl_status[env->prgm->declv->size];
   for (size_t i = 0; i < env->prgm->declv->size; ++i) {
+    decl_status[i].params = DP_NEW;
     decl_status[i].proto = DP_NEW;
     decl_status[i].decl = DP_NEW;
   }
@@ -1375,8 +1379,10 @@ static bool NotRedefined(Env* env, FbldName* name)
 static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* status)
 {
   bool success = true;
+  assert(status->params == DP_NEW);
   assert(status->proto == DP_NEW);
   assert(status->decl == DP_NEW);
+  status->params = DP_PENDING;
   status->proto = DP_PENDING;
   status->decl = DP_PENDING;
 
@@ -1404,6 +1410,8 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
     svars_data[i].next = env->svars;
     env->svars = svars_data + i;
   }
+
+  status->params = success ? DP_SUCCESS : DP_FAILED;
 
   // TODO: Don't leak proto.
   FbldQRef* proto = DeclQRef(arena, env->mref, env->interf, decl);
@@ -1681,6 +1689,48 @@ static bool CheckProto(FblcArena* arena, FbldQRef* qref, FbldQRef* proto_src, Fb
     return false;
   }
 
+  return true;
+}
+
+// EnsureParams --
+//  Ensure that the static parameters of the given declaration have been checked, or
+//  check it if necessary and it is a local declaration.
+//
+// Inputs:
+//   arena - Arena to use for allocations.
+//   env - The environment to resolve from. Static parameters in the
+//         environment will be ignored when doing resolution.
+//   decl - The declaration to ensure has been checked.
+//
+// Results:
+//   true if the declaration static params checked out fine, false otherwise.
+//
+// Side effects:
+//   Checks the declaration if necessary and possible.
+//   Prints an error message to stderr in case of error.
+static bool EnsureParams(FblcArena* arena, Env* env, FbldDecl* decl)
+{
+  if (env->decl_status != NULL) {
+    for (size_t i = 0; i < env->prgm->declv->size; ++i) {
+      if (env->prgm->declv->xs[i] == decl) {
+        DeclStatus* status = env->decl_status + i;
+        if (status->params == DP_NEW) {
+          SVar* svars = env->svars;
+          env->svars = NULL;
+          CheckDecl(arena, env, decl, status);
+          env->svars = svars;
+        } else if (status->params == DP_PENDING) {
+          // TODO: Use the location of the caller, not the declaration itself.
+          ReportError("Recursive params dependency detected involving %s\n",
+              decl->name->loc, decl->name->name);
+          return false;
+        }
+        return status->params == DP_SUCCESS;
+      }
+    }
+  }
+
+  // Non-local declarations must already have been checked and succeeded.
   return true;
 }
 
