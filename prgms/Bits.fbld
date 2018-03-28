@@ -3,8 +3,9 @@ import @ { StdLib; };
 
 module Hex;
 module Bit;
-module Bit8;
 module Bit1(BitNI<Bit@Bit>);
+module Bit8;
+module Bit16;
 module Bit32;
 module Bit64;
 

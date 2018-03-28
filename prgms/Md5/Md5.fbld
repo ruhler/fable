@@ -5,7 +5,7 @@ import StdLib { BoolM=Bool; List; Maybe; Unit; };
 import BoolM { Bool; True; False; And; };
 import List { SL=S; PL=P; };
 
-import Bits { Bit@Bit; Bit8M=Bit8; Bit32M=Bit32; Bit64M=Bit64; HexM=Hex; };
+import Bits { Bit@Bit; Bit16@Bit16; Bit8M=Bit8; Bit32M=Bit32; Bit64M=Bit64; HexM=Hex; };
 import Bit8M { Bit8; H2; };
 import Bit32M { Bit32; };
 import Bit64M { Bit64; };
@@ -187,7 +187,7 @@ priv proc GetWord(Streamed<Bit8>- padded; ; Streamed<Bit32>) {
   Streamed<Bit8> b = -padded();
   Streamed<Bit8> c = -padded();
   Streamed<Bit8> d = -padded();
-  $(Streamed<Bit32>(Bit32(d.data, c.data, b.data, a.data), d.last));
+  $(Streamed<Bit32>(Bit32(Bit16(d.data, c.data), Bit16(b.data, a.data)), d.last));
 };
 
 # Gets the next block from a pre-padded input
@@ -245,7 +245,7 @@ priv func shl64(Bit64 a; Bit64) {
 
 priv func H2_64(Hex a, Hex b; Bit64) {
   Bit8 0 = H2(0(), 0());
-  Bit64(Bit32(0, 0, 0, 0), Bit32(0, 0, 0, H2(a, b)));
+  Bit64(Bit32(Bit16(0, 0), Bit16(0, 0)), Bit32(Bit16(0, 0), Bit16(0, H2(a, b))));
 };
 
 # Add zeros as needed, then the final length to the output message.
@@ -254,14 +254,14 @@ priv proc PadZ(Streamed<Bit8>+ output; Bit64 msglen, Bit64 length; Unit) {
       and@BitN@Bit64M(H2_64(3(), f()),
                       add@BitN@Bit64M(H2_64(0(), 8()), length))); {
        Bit64 bits = $(shl64(shl64(shl64(msglen))));
-       Streamed<Bit8> _0 = +output(Streamed<Bit8>(bits.lo.0, False()));
-       Streamed<Bit8> _1 = +output(Streamed<Bit8>(bits.lo.1, False()));
-       Streamed<Bit8> _2 = +output(Streamed<Bit8>(bits.lo.2, False()));
-       Streamed<Bit8> _3 = +output(Streamed<Bit8>(bits.lo.3, False()));
-       Streamed<Bit8> _4 = +output(Streamed<Bit8>(bits.hi.0, False()));
-       Streamed<Bit8> _5 = +output(Streamed<Bit8>(bits.hi.1, False()));
-       Streamed<Bit8> _6 = +output(Streamed<Bit8>(bits.hi.2, False()));
-       Streamed<Bit8> _7 = +output(Streamed<Bit8>(bits.hi.3, True()));
+       Streamed<Bit8> _0 = +output(Streamed<Bit8>(bits.lo.lo.lo, False()));
+       Streamed<Bit8> _1 = +output(Streamed<Bit8>(bits.lo.lo.hi, False()));
+       Streamed<Bit8> _2 = +output(Streamed<Bit8>(bits.lo.hi.lo, False()));
+       Streamed<Bit8> _3 = +output(Streamed<Bit8>(bits.lo.hi.hi, False()));
+       Streamed<Bit8> _4 = +output(Streamed<Bit8>(bits.hi.lo.lo, False()));
+       Streamed<Bit8> _5 = +output(Streamed<Bit8>(bits.hi.lo.hi, False()));
+       Streamed<Bit8> _6 = +output(Streamed<Bit8>(bits.hi.hi.lo, False()));
+       Streamed<Bit8> _7 = +output(Streamed<Bit8>(bits.hi.hi.hi, True()));
        $(Unit());
      }, {
        Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(0(), 0()), False()));
@@ -286,7 +286,7 @@ proc Md5(Maybe<Bit8>- input; ; Md5Hash) {
 
 # Construct a Bit32 in hex, with high-order byte first.
 priv func H8(Hex 7, Hex 6, Hex 5, Hex 4, Hex 3, Hex 2, Hex 1, Hex 0; Bit32) {
-  Bit32(H2(7, 6), H2(5, 4), H2(3, 2), H2(1, 0));
+  Bit32(Bit16(H2(7, 6), H2(5, 4)), Bit16(H2(3, 2), H2(1, 0)));
 };
 
 priv func t1( ; Bit32) H8(d(), 7(), 6(), a(), a(), 4(), 7(), 8());
@@ -369,14 +369,14 @@ priv func HexFromByte(Bit8 byte; HexPair) {
 };
 
 priv func HexFromABCD(ABCD x; Md5Hash) {
-  HexPair a0 = HexFromByte(x.a.0); HexPair a1 = HexFromByte(x.a.1);
-  HexPair a2 = HexFromByte(x.a.2); HexPair a3 = HexFromByte(x.a.3);
-  HexPair b0 = HexFromByte(x.b.0); HexPair b1 = HexFromByte(x.b.1);
-  HexPair b2 = HexFromByte(x.b.2); HexPair b3 = HexFromByte(x.b.3);
-  HexPair c0 = HexFromByte(x.c.0); HexPair c1 = HexFromByte(x.c.1);
-  HexPair c2 = HexFromByte(x.c.2); HexPair c3 = HexFromByte(x.c.3);
-  HexPair d0 = HexFromByte(x.d.0); HexPair d1 = HexFromByte(x.d.1);
-  HexPair d2 = HexFromByte(x.d.2); HexPair d3 = HexFromByte(x.d.3);
+  HexPair a0 = HexFromByte(x.a.lo.lo); HexPair a1 = HexFromByte(x.a.lo.hi);
+  HexPair a2 = HexFromByte(x.a.hi.lo); HexPair a3 = HexFromByte(x.a.hi.hi);
+  HexPair b0 = HexFromByte(x.b.lo.lo); HexPair b1 = HexFromByte(x.b.lo.hi);
+  HexPair b2 = HexFromByte(x.b.hi.lo); HexPair b3 = HexFromByte(x.b.hi.hi);
+  HexPair c0 = HexFromByte(x.c.lo.lo); HexPair c1 = HexFromByte(x.c.lo.hi);
+  HexPair c2 = HexFromByte(x.c.hi.lo); HexPair c3 = HexFromByte(x.c.hi.hi);
+  HexPair d0 = HexFromByte(x.d.lo.lo); HexPair d1 = HexFromByte(x.d.lo.hi);
+  HexPair d2 = HexFromByte(x.d.hi.lo); HexPair d3 = HexFromByte(x.d.hi.hi);
   Md5Hash(a0.hi, a0.lo, a1.hi, a1.lo, a2.hi, a2.lo, a3.hi, a3.lo,
           b0.hi, b0.lo, b1.hi, b1.lo, b2.hi, b2.lo, b3.hi, b3.lo,
           c0.hi, c0.lo, c1.hi, c1.lo, c2.hi, c2.lo, c3.hi, c3.lo,
