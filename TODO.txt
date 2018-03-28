@@ -7,6 +7,9 @@ Fbld 4:
 * Implement deflate program.
 
 Fbld 4 Test:
+* Clarify in spec what is allowed in terms of recursion through static params.
+  For example, presumably we can't do something like:
+    struct Foo<struct Bar(Foo x)>(Bar y);
 * Add variety of tests for using "private" entity in "public" interface
   Where private and public depend on the context.
   For example, public function in private module refers to private entity at

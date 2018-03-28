@@ -245,7 +245,7 @@ priv func shl64(Bit64 a; Bit64) {
 
 priv func H2_64(Hex a, Hex b; Bit64) {
   Bit8 0 = H2(0(), 0());
-  Bit64(0, 0, 0, 0, 0, 0, 0, H2(a, b));
+  Bit64(Bit32(0, 0, 0, 0), Bit32(0, 0, 0, H2(a, b)));
 };
 
 # Add zeros as needed, then the final length to the output message.
@@ -254,14 +254,14 @@ priv proc PadZ(Streamed<Bit8>+ output; Bit64 msglen, Bit64 length; Unit) {
       and@BitN@Bit64M(H2_64(3(), f()),
                       add@BitN@Bit64M(H2_64(0(), 8()), length))); {
        Bit64 bits = $(shl64(shl64(shl64(msglen))));
-       Streamed<Bit8> _0 = +output(Streamed<Bit8>(bits.0, False()));
-       Streamed<Bit8> _1 = +output(Streamed<Bit8>(bits.1, False()));
-       Streamed<Bit8> _2 = +output(Streamed<Bit8>(bits.2, False()));
-       Streamed<Bit8> _3 = +output(Streamed<Bit8>(bits.3, False()));
-       Streamed<Bit8> _4 = +output(Streamed<Bit8>(bits.4, False()));
-       Streamed<Bit8> _5 = +output(Streamed<Bit8>(bits.5, False()));
-       Streamed<Bit8> _6 = +output(Streamed<Bit8>(bits.6, False()));
-       Streamed<Bit8> _7 = +output(Streamed<Bit8>(bits.7, True()));
+       Streamed<Bit8> _0 = +output(Streamed<Bit8>(bits.lo.0, False()));
+       Streamed<Bit8> _1 = +output(Streamed<Bit8>(bits.lo.1, False()));
+       Streamed<Bit8> _2 = +output(Streamed<Bit8>(bits.lo.2, False()));
+       Streamed<Bit8> _3 = +output(Streamed<Bit8>(bits.lo.3, False()));
+       Streamed<Bit8> _4 = +output(Streamed<Bit8>(bits.hi.0, False()));
+       Streamed<Bit8> _5 = +output(Streamed<Bit8>(bits.hi.1, False()));
+       Streamed<Bit8> _6 = +output(Streamed<Bit8>(bits.hi.2, False()));
+       Streamed<Bit8> _7 = +output(Streamed<Bit8>(bits.hi.3, True()));
        $(Unit());
      }, {
        Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(0(), 0()), False()));
