@@ -16,6 +16,7 @@ typedef struct {
 } IOUser;
 
 static void PrintUsage(FILE* stream);
+static FblcValue* MkBitN(FblcArena* arena, int n, int data);
 static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports);
 int main(int argc, char* argv[]);
 
@@ -41,6 +42,35 @@ static void PrintUsage(FILE* stream)
   );
 }
 
+// MkBitN --
+//  Construct a BitN fblc value.
+//
+// Inputs:
+//   arena - the arena to use for allocating the value.
+//   n - the number of bits value to create. Must be a power of 2.
+//   data - the raw data to use for the bits.
+//
+// Results:
+//   A new Bit<n> value constructed from the least significant n bits of data.
+//
+// Side effects:
+//   Allocates fblc values.
+static FblcValue* MkBitN(FblcArena* arena, int n, int data)
+{
+  assert(n > 0 && "Invalid n supplied");
+
+  if (n == 1) {
+    return FblcNewUnion(arena, 2, data & 0x1, FblcNewStruct(arena, 0));
+  }
+
+  assert(n % 2 == 0 && "Invalid n supplied");
+  FblcValue* v = FblcNewStruct(arena, 2);
+  int halfn = n / 2;
+  v->fields[1] = MkBitN(arena, halfn, data);
+  v->fields[0] = MkBitN(arena, halfn, (data >> halfn));
+  return v;
+}
+
 // IO --
 //   io function for external ports with IOUser as user data.
 //   See the corresponding documentation in fblc.h.
@@ -54,12 +84,7 @@ static void IO(void* user, FblcArena* arena, bool block, FblcValue** ports)
       // Maybe<Bit8>:nothing(Unit())
       ports[0] = FblcNewUnion(arena, 2, 1, FblcNewStruct(arena, 0));
     } else {
-      FblcValue* byte = FblcNewStruct(arena, 8);
-      for (size_t i = 0; i < 8; ++i) {
-        int bit = c & 0x01;
-        byte->fields[7 - i] = FblcNewUnion(arena, 2, bit, FblcNewStruct(arena, 0));
-        c >>= 1;
-      }
+      FblcValue* byte = MkBitN(arena, 8, c);
       // Maybe<Bit8>:just(c)
       ports[0] = FblcNewUnion(arena, 2, 0, byte);
     }

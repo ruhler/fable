@@ -1,7 +1,5 @@
 Fbld 4:
 * Use aliases to share Bit composition code in md5
-  - Add test for Md5 that covers bit parsing.
-  - Fix bit parsing in Md5
   - Add function for getting MSB of a bit, add it to Bit1 through 64.
   - Add Alias alongside Import in Program.
 * Increase test coverage for spec.

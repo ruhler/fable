@@ -108,7 +108,9 @@ exec mv {*}[glob *.gcov] out/fbld/cov/spec
 
 test exec $::fbldtest prgms/AllTests.wnt prgms/ Test@AllTests
 test exec $::fbldcheck prgms/ Snake
-test exec $::fbldmd5 prgms/ Md5@Md5@Md5 /dev/null | grep d41d8cd98f00b204e9800998ecf8427e
+
+exec echo "hello" > out/test/fbld/hello.txt
+test exec $::fbldmd5 prgms/ Md5@Md5@Md5 out/test/fbld/hello.txt | grep b1946ac92492d2347c6235b4d2611184
 
 exec mkdir -p out/fbld/cov/all
 run gcov {*}$::fbld_objs > out/fbld/cov/all/fbld.gcov
