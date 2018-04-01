@@ -5,7 +5,7 @@ import StdLib { BoolM=Bool; List; Maybe; Unit; };
 import BoolM { Bool; True; False; And; };
 import List { SL=S; PL=P; };
 
-import Bits { Bit@Bit; Bit16@Bit16; Bit8M=Bit8; Bit32M=Bit32; Bit64M=Bit64; HexM=Hex; };
+import Bits { Bit@Bit; Bit16@Bit16; Bit8M=Bit8; Bit4@Bit4; Bit32M=Bit32; Bit64M=Bit64; HexM=Hex; };
 import Bit8M { Bit8; H2; };
 import Bit32M { Bit32; };
 import Bit64M { Bit64; };
@@ -361,11 +361,14 @@ priv func HexFromBits(Bit 3, Bit 2, Bit 1, Bit 0; Hex) {
             ?(1; ?(0; c(), d()), ?(0; e(), f()))));
 };
 
+priv func HexFromBit4(Bit4 x ; Hex) {
+  HexFromBits(x.hi.hi, x.hi.lo, x.lo.hi, x.lo.lo);
+};
+
 priv struct HexPair(Hex hi, Hex lo);
 
 priv func HexFromByte(Bit8 byte; HexPair) {
-  HexPair(HexFromBits(byte.7, byte.6, byte.5, byte.4),
-          HexFromBits(byte.3, byte.2, byte.1, byte.0));
+  HexPair(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
 };
 
 priv func HexFromABCD(ABCD x; Md5Hash) {

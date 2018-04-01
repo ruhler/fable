@@ -38,7 +38,7 @@ module BitN(BitNI<Bit32>) {
      And(eq@B(a.hi, b.hi), eq@B(a.lo, b.lo));
   };
 
-  func clshift(Bit32 a; Bit32) lshift(a, a.hi.hi.7).z;
+  func clshift(Bit32 a; Bit32) lshift(a, a.hi.hi.hi.hi.hi).z;
 
   struct Result(Bit32 z, Bit cout);
 

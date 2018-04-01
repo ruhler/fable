@@ -4,6 +4,8 @@ import @ { StdLib; };
 module Hex;
 module Bit;
 module Bit1(BitNI<Bit@Bit>);
+module Bit2;
+module Bit4;
 module Bit8;
 module Bit16;
 module Bit32;
