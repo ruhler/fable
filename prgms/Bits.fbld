@@ -4,8 +4,14 @@ import @ { StdLib; };
 module Hex;
 module Bit;
 module Bit1(BitNI<Bit@Bit>);
-module Bit2;
-module Bit4;
+
+module Bit2 {
+  import @ { Bit@Bit; Bit1; BitNI; Bit2XN; };
+
+  struct Bit2(Bit hi, Bit lo);
+  module BitN(BitNI<Bit2>) = Bit2XN<Bit, Bit1, Bit2>;
+};
+
 module Bit8;
 module Bit16;
 module Bit32;
@@ -31,3 +37,7 @@ interf BitNI<type T> {
   func lshift(T a, Bit cin; Result); # left shift by 1
 };
 
+module Bit2XN<
+  type T,
+  module B(BitNI<T>),
+  struct Bit2X(T hi, T lo)>(BitNI<Bit2X>);

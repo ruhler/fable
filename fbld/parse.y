@@ -56,6 +56,7 @@
   FbldExecV* execv;
   FbldImportItemV* iitemv;
   FbldImport* import;
+  FbldAlias* alias;
   FbldDecl* decl;
   FbldDeclV* declv;
   FbldPolarity polarity;
@@ -119,6 +120,7 @@
 %type <execv> non_empty_exec_list
 %type <iitemv> import_item_list
 %type <import> import
+%type <alias> alias
 %type <declv> params param_list
 %type <polarity> polarity
 %type <portv> port_list non_empty_port_list
@@ -448,6 +450,13 @@ import: "import" qref '{' import_item_list '}' {
     }
   ;
 
+alias: access proto '=' qref {
+      $$ = FBLC_ALLOC(arena, FbldAlias);
+      $$->proto = $2;
+      $$->qref = $4;
+    }
+  ;
+
 params: 
     %empty {
       $$ = FBLC_ALLOC(arena, FbldDeclV);
@@ -651,8 +660,10 @@ proto_env:
     %empty {
       $$ = FBLC_ALLOC(arena, FbldProgram);
       $$->importv = FBLC_ALLOC(arena, FbldImportV);
+      $$->aliasv = FBLC_ALLOC(arena, FbldAliasV);
       $$->declv = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *($$->importv));
+      FblcVectorInit(arena, *($$->aliasv));
       FblcVectorInit(arena, *($$->declv));
     }
   | proto_env import ';' {
@@ -669,12 +680,18 @@ decl_env:
     %empty {
       $$ = FBLC_ALLOC(arena, FbldProgram);
       $$->importv = FBLC_ALLOC(arena, FbldImportV);
+      $$->aliasv = FBLC_ALLOC(arena, FbldAliasV);
       $$->declv = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *($$->importv));
+      FblcVectorInit(arena, *($$->aliasv));
       FblcVectorInit(arena, *($$->declv));
     }
   | decl_env import ';' {
       FblcVectorAppend(arena, *($1->importv), $2);
+      $$ = $1;
+    }
+  | decl_env alias ';' {
+      FblcVectorAppend(arena, *($1->aliasv), $2);
       $$ = $1;
     }
   | decl_env decl ';' {

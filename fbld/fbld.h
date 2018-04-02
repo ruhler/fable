@@ -472,6 +472,21 @@ typedef struct {
   FbldImport** xs;
 } FbldImportV;
 
+// FbldAlias --
+//   An alias declaration of the form:
+//    proto = qref;
+typedef struct {
+  FbldDecl* proto;
+  FbldQRef* qref;
+} FbldAlias;
+
+// FbldAliasV --
+//   A vector of FbldAlias.
+typedef struct {
+  size_t size;
+  FbldAlias** xs;
+} FbldAliasV;
+
 // FbldMArg --
 //   A module argument, such as: Map<Int, String> M
 //
@@ -600,6 +615,7 @@ typedef struct {
 // FbldProgram --
 typedef struct {
   FbldImportV* importv;
+  FbldAliasV* aliasv;
   FbldDeclV* declv;
 } FbldProgram;
 
@@ -612,14 +628,6 @@ struct FbldInterf {
 
 // FbldModule --
 //   An fbld module declaration.
-//
-// Fields:
-//   name - The name of the module being defined.
-//   params - The polymorphic type and module parameters of the module.
-//   iref - The interface the module implements. NULL if the module has an
-//          anonymous interface.
-//   importv - The import statements within the module definition.
-//   declv - The declarations within the module definition.
 typedef struct {
   FbldDecl _base;
   FbldQRef* iref;

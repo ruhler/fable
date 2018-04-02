@@ -519,6 +519,10 @@ static bool CheckEnv(FblcArena* arena, Env* env)
     }
   }
 
+  for (size_t alias_id = 0; alias_id < env->prgm->aliasv->size; ++alias_id) {
+    assert(false && "TODO: Check Aliases");
+  }
+
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
     Require(EnsureDecl(arena, env, decl->name->loc, decl), &success);
@@ -1346,6 +1350,13 @@ static bool NotRedefined(Env* env, FbldName* name)
       if (FbldNamesEqual(name->name, dest->name)) {
         return NotRedefinedHelper(name, dest);
       }
+    }
+  }
+
+  for (size_t alias_id = 0; alias_id < env->prgm->aliasv->size; ++alias_id) {
+    FbldName* alias = env->prgm->aliasv->xs[alias_id]->proto->name;
+    if (FbldNamesEqual(name->name, alias->name)) {
+      return NotRedefinedHelper(name, alias);
     }
   }
 

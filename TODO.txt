@@ -1,12 +1,16 @@
 Fbld 4:
 * Use aliases to share Bit composition code in md5
-  - Port Bit to use common impl.
-  - Add Alias alongside Import in Program.
+  - Clarify in spec that alias cannot be private or abstract. Or can they? And
+    if not, how to deal with the shift-reduce conflicts that show up?
 * Increase test coverage for spec.
 * Add support for specifying interfaces in different files?
 * Implement deflate program.
 
 Fbld 4 Test:
+* Test that alias cannot be private or abstract.
+* Test alias visible access and invisible access.
+* Test that alias protos and qrefs are checked.
+* Test that alias qref matches its proto.
 * Clarify in spec what is allowed in terms of recursion through static params.
   For example, presumably we can't do something like:
     struct Foo<struct Bar(Foo x)>(Bar y);
