@@ -40,7 +40,9 @@ module BitN(BitNI<Bit4>) {
      And(eq@B(a.hi, b.hi), eq@B(a.lo, b.lo));
   };
 
-  func clshift(Bit4 a; Bit4) lshift(a, a.hi.hi).z;
+  func msb(Bit4 a; Bit) msb@B(a.hi);
+
+  func clshift(Bit4 a; Bit4) lshift(a, msb(a)).z;
 
   struct Result(Bit4 z, Bit cout);
 

@@ -14,6 +14,7 @@ func eq(Bit a, Bit b; Bool) {
   ?(a; ?(b; True(), False()),
        ?(b; False(), True()));
 };
+func msb(Bit a; Bit) a;
 func clshift(Bit a; Bit) a;
 
 struct Result(Bit z, Bit cout);

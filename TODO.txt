@@ -1,6 +1,6 @@
 Fbld 4:
 * Use aliases to share Bit composition code in md5
-  - Add function for getting MSB of a bit, add it to Bit1 through 64.
+  - Port Bit to use common impl.
   - Add Alias alongside Import in Program.
 * Increase test coverage for spec.
 * Add support for specifying interfaces in different files?
