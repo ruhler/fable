@@ -56,7 +56,6 @@
   FbldExecV* execv;
   FbldImportItemV* iitemv;
   FbldImport* import;
-  FbldAlias* alias;
   FbldDecl* decl;
   FbldDeclV* declv;
   FbldPolarity polarity;
@@ -120,7 +119,6 @@
 %type <execv> non_empty_exec_list
 %type <iitemv> import_item_list
 %type <import> import
-%type <alias> alias
 %type <declv> params param_list
 %type <polarity> polarity
 %type <portv> port_list non_empty_port_list
@@ -450,13 +448,6 @@ import: "import" qref '{' import_item_list '}' {
     }
   ;
 
-alias: access proto '=' qref {
-      $$ = FBLC_ALLOC(arena, FbldAlias);
-      $$->proto = $2;
-      $$->qref = $4;
-    }
-  ;
-
 params: 
     %empty {
       $$ = FBLC_ALLOC(arena, FbldDeclV);
@@ -489,6 +480,7 @@ abstract_type_proto: "type" name params {
       type->_base.name = $2;
       type->_base.paramv = $3;
       type->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
+      type->_base.alias = NULL;
       type->kind = FBLD_ABSTRACT_KIND;
       type->fieldv = NULL;
       $$ = &type->_base;
@@ -501,6 +493,7 @@ struct_proto: "struct" name params '(' arg_list ')' {
       type->_base.name = $2;
       type->_base.paramv = $3;
       type->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
+      type->_base.alias = NULL;
       type->kind = FBLD_STRUCT_KIND;
       type->fieldv = $5;
       $$ = &type->_base;
@@ -513,6 +506,7 @@ union_proto: "union" name params '(' non_empty_arg_list ')' {
       type->_base.name = $2;
       type->_base.paramv = $3;
       type->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
+      type->_base.alias = NULL;
       type->kind = FBLD_UNION_KIND;
       type->fieldv = $5;
       $$ = &type->_base;
@@ -527,6 +521,7 @@ func_proto: "func" name params '(' arg_list ';' qref ')' {
       func->_base.name = $2;
       func->_base.paramv = $3;
       func->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
+      func->_base.alias = NULL;
       func->argv = $5;
       func->return_type = $7;
       func->body = NULL;
@@ -569,6 +564,7 @@ proc_proto: "proc" name params '(' port_list ';' arg_list ';' qref ')' {
       proc->_base.name = $2;
       proc->_base.paramv = $3;
       proc->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
+      proc->_base.alias = NULL;
       proc->portv = $5;
       proc->argv = $7;
       proc->return_type = $9;
@@ -583,6 +579,7 @@ interf_proto: "interf" name params '{' proto_env '}' {
           interf->_base.name = $2;
           interf->_base.paramv = $3;
           interf->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
+          interf->_base.alias = NULL;
           interf->body = $5;
           $$ = &interf->_base;
         }
@@ -594,6 +591,7 @@ module_proto: "module" name params '(' qref ')' {
           module->_base.name = $2;
           module->_base.paramv = $3;
           module->_base.access = FBLD_PUBLIC_ACCESS;  // TODO: What to put here?
+          module->_base.alias = NULL;
           module->iref = $5;
           module->body = NULL;
           $$ = &module->_base;
@@ -636,13 +634,19 @@ module_decl: "module" name params module_defn_iref module_body {
       module->_base.name = $2;
       module->_base.paramv = $3;
       module->_base.access = FBLD_PUBLIC_ACCESS;
+      module->_base.alias = NULL;
       module->iref = $4;
       module->body = $5;
       $$ = &module->_base;
     }
   ;
 
-plain_decl: type_decl | func_decl | proc_decl | interf_decl | module_decl ;
+plain_decl: type_decl | func_decl | proc_decl | interf_decl | module_decl
+  | proto '=' qref {
+      $$ = $1;
+      $$->alias = $3;
+    }
+  ;
 
 access:
    %empty { $$ = FBLD_PUBLIC_ACCESS; }
@@ -660,10 +664,8 @@ proto_env:
     %empty {
       $$ = FBLC_ALLOC(arena, FbldProgram);
       $$->importv = FBLC_ALLOC(arena, FbldImportV);
-      $$->aliasv = FBLC_ALLOC(arena, FbldAliasV);
       $$->declv = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *($$->importv));
-      FblcVectorInit(arena, *($$->aliasv));
       FblcVectorInit(arena, *($$->declv));
     }
   | proto_env import ';' {
@@ -680,18 +682,12 @@ decl_env:
     %empty {
       $$ = FBLC_ALLOC(arena, FbldProgram);
       $$->importv = FBLC_ALLOC(arena, FbldImportV);
-      $$->aliasv = FBLC_ALLOC(arena, FbldAliasV);
       $$->declv = FBLC_ALLOC(arena, FbldDeclV);
       FblcVectorInit(arena, *($$->importv));
-      FblcVectorInit(arena, *($$->aliasv));
       FblcVectorInit(arena, *($$->declv));
     }
   | decl_env import ';' {
       FblcVectorAppend(arena, *($1->importv), $2);
-      $$ = $1;
-    }
-  | decl_env alias ';' {
-      FblcVectorAppend(arena, *($1->aliasv), $2);
       $$ = $1;
     }
   | decl_env decl ';' {

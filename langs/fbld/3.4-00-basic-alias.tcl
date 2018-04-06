@@ -1,10 +1,14 @@
 set prg {
   # A basic use case of alias.
-  module StdLib {
+  interf StdLibI {
     struct Unit();
   };
 
-  module Aliased = StdLib;
+  module StdLib(StdLibI) {
+    struct Unit();
+  };
+
+  module Aliased(StdLibI) = StdLib;
 
   func main( ; Unit@Aliased) {
     Unit@Aliased();

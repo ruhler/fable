@@ -343,13 +343,23 @@ static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref)
 
   // Entity defined locally?
   for (size_t i = 0; i < env->prgm->declv->size; ++i) {
-    if (FbldNamesEqual(qref->name->name, env->prgm->declv->xs[i]->name->name)) {
-      FbldR* r = FBLC_ALLOC(arena, FbldR);
-      r->decl = env->prgm->declv->xs[i];
-      r->mref = env->mref;
-      r->param = env->interf != NULL;
-      r->interf = env->interf;
-      return r;
+    FbldDecl* decl = env->prgm->declv->xs[i];
+    if (FbldNamesEqual(qref->name->name, decl->name->name)) {
+      if (decl->alias == NULL) {
+        FbldR* r = FBLC_ALLOC(arena, FbldR);
+        r->decl = decl;
+        r->mref = env->mref;
+        r->param = env->interf != NULL;
+        r->interf = env->interf;
+        return r;
+      } else {
+        if (!EnsureDecl(arena, env, qref->name->loc, decl)) {
+          return NULL;
+        }
+        assert(decl->alias->r != NULL);
+        assert(decl->alias->r->decl != NULL);
+        return decl->alias->r;
+      }
     }
   }
 
@@ -519,10 +529,6 @@ static bool CheckEnv(FblcArena* arena, Env* env)
     }
   }
 
-  for (size_t alias_id = 0; alias_id < env->prgm->aliasv->size; ++alias_id) {
-    assert(false && "TODO: Check Aliases");
-  }
-
   for (size_t decl_id = 0; decl_id < env->prgm->declv->size; ++decl_id) {
     FbldDecl* decl = env->prgm->declv->xs[decl_id];
     Require(EnsureDecl(arena, env, decl->name->loc, decl), &success);
@@ -597,6 +603,20 @@ static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
       ReportError("%s does not refer to an interface\n", module->iref->name->loc, module->iref->name->name);
       return false;
     }
+  }
+
+  if (module->_base.alias != NULL) {
+    assert(module->body == NULL);
+    if (!CheckPartialQRef(arena, env, module->_base.alias)) {
+      return false;
+    }
+
+    // TODO: is env->mref the right proto_src to use? I don't think so. I
+    // think we need a DeclQRef for module.
+    if (!CheckProto(arena, env, module->_base.alias, env->mref, &module->_base)) {
+      return false;
+    }
+    return true;
   }
 
   if (module->body == NULL) {
@@ -1350,13 +1370,6 @@ static bool NotRedefined(Env* env, FbldName* name)
       if (FbldNamesEqual(name->name, dest->name)) {
         return NotRedefinedHelper(name, dest);
       }
-    }
-  }
-
-  for (size_t alias_id = 0; alias_id < env->prgm->aliasv->size; ++alias_id) {
-    FbldName* alias = env->prgm->aliasv->xs[alias_id]->proto->name;
-    if (FbldNamesEqual(name->name, alias->name)) {
-      return NotRedefinedHelper(name, alias);
     }
   }
 

@@ -472,21 +472,6 @@ typedef struct {
   FbldImport** xs;
 } FbldImportV;
 
-// FbldAlias --
-//   An alias declaration of the form:
-//    proto = qref;
-typedef struct {
-  FbldDecl* proto;
-  FbldQRef* qref;
-} FbldAlias;
-
-// FbldAliasV --
-//   A vector of FbldAlias.
-typedef struct {
-  size_t size;
-  FbldAlias** xs;
-} FbldAliasV;
-
 // FbldMArg --
 //   A module argument, such as: Map<Int, String> M
 //
@@ -536,11 +521,14 @@ typedef enum {
 //   name - the name of the declaration.
 //   paramv - the static parameters of the declaration.
 //   access - the access mode of the declaration.
+//   alias - set to the qref that this decl is aliased for. NULL if this is a
+//           proto or not defined as an alias.
 struct FbldDecl {
   FbldDeclTag tag;
   FbldName* name;
   FbldDeclV* paramv;
   FbldAccess access;
+  FbldQRef* alias;
 };
 
 // FbldDeclV --
@@ -615,7 +603,6 @@ typedef struct {
 // FbldProgram --
 typedef struct {
   FbldImportV* importv;
-  FbldAliasV* aliasv;
   FbldDeclV* declv;
 } FbldProgram;
 

@@ -44,7 +44,7 @@ static bool ParseSubModules(FblcArena* arena, const char* dir, FbldProgram* prgm
       strcat(ndir, "/");
       strcat(ndir, module->_base.name->name);
 
-      if (module->body == NULL) {
+      if (module->_base.alias == NULL && module->body == NULL) {
         if (dir == NULL) {
           FbldReportError("No implementation found for module %s\n",
               module->_base.name->loc, module->_base.name->name);
@@ -170,10 +170,8 @@ static FbldProgram* LoadParsedProgram(FblcArena* arena, const char* path, FbldQR
   if (S_ISDIR(sb.st_mode)) {
     FbldProgram* prgm = FBLC_ALLOC(arena, FbldProgram);
     prgm->importv = FBLC_ALLOC(arena, FbldImportV);
-    prgm->aliasv = FBLC_ALLOC(arena, FbldAliasV);
     prgm->declv = FBLC_ALLOC(arena, FbldDeclV);
     FblcVectorInit(arena, *prgm->importv);
-    FblcVectorInit(arena, *prgm->aliasv);
     FblcVectorInit(arena, *prgm->declv);
     if (!ParseTopModule(arena, path, entry, prgm)) {
       return NULL;
