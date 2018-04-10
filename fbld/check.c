@@ -101,7 +101,7 @@ static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref);
 static bool CheckQRef(FblcArena* arena, Env* env, FbldQRef* qref);
 static bool CheckEnv(FblcArena* arena, Env* env);
 static bool CheckInterf(FblcArena* arena, Env* env, FbldInterf* interf);
-static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module);
+static bool CheckModuleBody(FblcArena* arena, Env* env, FbldModule* module);
 static bool NotRedefinedHelper(FbldName* redef, FbldName* prev);
 static bool NotRedefined(Env* env, FbldName* name);
 static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* status);
@@ -577,34 +577,22 @@ static bool CheckInterf(FblcArena* arena, Env* env, FbldInterf* interf)
   return CheckEnv(arena, &interf_env);
 }
 
-// CheckModule --
-//   Check that the given module definition is well formed.
+// CheckModuleBody --
+//   Check that the body of the given module definition is well formed.
 //
 // Inputs:
 //   arena - Arena to use for allocations.
 //   module - The module definition to check.
 //
 // Result:
-//   true if the module is well formed, false otherwise.
+//   true if the module body is well formed, false otherwise.
 //
 // Side effects:
 //   Resolves qrefs.
-//   Generates an anonymous interface for the module if appropriate.
-//   Prints a message to stderr if the module definition is not well
+//   Prints a message to stderr if the module body is not well
 //   formed.
-static bool CheckModule(FblcArena* arena, Env* env, FbldModule* module)
+static bool CheckModuleBody(FblcArena* arena, Env* env, FbldModule* module)
 {
-  if (module->iref != NULL) {
-    if (!CheckQRef(arena, env, module->iref)) {
-      return false;
-    }
-
-    if (module->iref->r->decl->tag != FBLD_INTERF_DECL) {
-      ReportError("%s does not refer to an interface\n", module->iref->name->loc, module->iref->name->name);
-      return false;
-    }
-  }
-
   if (module->_base.alias != NULL) {
     assert(module->body == NULL);
     if (!CheckPartialQRef(arena, env, module->_base.alias)) {
@@ -1527,9 +1515,21 @@ static void CheckDecl(FblcArena* arena, Env* env, FbldDecl* decl, DeclStatus* st
     case FBLD_MODULE_DECL: {
       // TODO: Verify the visiblity of the entities referred to in the interf
       FbldModule* module = (FbldModule*)decl;
-      Require(CheckModule(arena, env, module), &success);
+      if (module->iref != NULL) {
+        if (!CheckQRef(arena, env, module->iref)) {
+          success = false;
+        }
 
+        if (success && module->iref->r->decl->tag != FBLD_INTERF_DECL) {
+          ReportError("%s does not refer to an interface\n", module->iref->name->loc, module->iref->name->name);
+          success = false;
+        }
+      }
       status->proto = success ? DP_SUCCESS : DP_FAILED;
+
+      if (success) {
+        Require(CheckModuleBody(arena, env, module), &success);
+      }
       status->decl = success ? DP_SUCCESS : DP_FAILED;
       break;
     }

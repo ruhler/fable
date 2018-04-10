@@ -44,27 +44,29 @@ static bool ParseSubModules(FblcArena* arena, const char* dir, FbldProgram* prgm
       strcat(ndir, "/");
       strcat(ndir, module->_base.name->name);
 
-      if (module->_base.alias == NULL && module->body == NULL) {
-        if (dir == NULL) {
-          FbldReportError("No implementation found for module %s\n",
-              module->_base.name->loc, module->_base.name->name);
-          return false;
-        }
-
-        char file[strlen(ndir) + strlen(".fbld") + 1];
-        strcpy(file, ndir);
-        strcat(file, ".fbld");
-
-        module->body = FbldParseProgram(arena, file);
+      if (module->_base.alias == NULL) {
         if (module->body == NULL) {
-          FbldReportError("Error parsing implementation of module %s\n",
-              module->_base.name->loc, module->_base.name->name);
+          if (dir == NULL) {
+            FbldReportError("No implementation found for module %s\n",
+                module->_base.name->loc, module->_base.name->name);
+            return false;
+          }
+
+          char file[strlen(ndir) + strlen(".fbld") + 1];
+          strcpy(file, ndir);
+          strcat(file, ".fbld");
+
+          module->body = FbldParseProgram(arena, file);
+          if (module->body == NULL) {
+            FbldReportError("Error parsing implementation of module %s\n",
+                module->_base.name->loc, module->_base.name->name);
+            return false;
+          }
+        }
+
+        if (!ParseSubModules(arena, dir == NULL ? NULL : ndir, module->body)) {
           return false;
         }
-      }
-
-      if (!ParseSubModules(arena, dir == NULL ? NULL : ndir, module->body)) {
-        return false;
       }
     }
   }
