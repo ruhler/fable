@@ -12,6 +12,7 @@ module Bit2 {
   module BitN(BitNI<Bit2>) = Bit2XN<Bit, Bit1, Bit2>;
 };
 
+module Bit4;
 module Bit8;
 module Bit16;
 module Bit32;

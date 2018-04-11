@@ -134,6 +134,7 @@ static bool ParseTopModule(FblcArena* arena, const char* dir, FbldQRef* qref, Fb
 
   module->_base.paramv = FBLC_ALLOC(arena, FbldDeclV);
   module->_base.access = FBLD_PUBLIC_ACCESS;
+  module->_base.alias = NULL;
   FblcVectorInit(arena, *module->_base.paramv);
   module->iref = NULL;
   module->body = body;
