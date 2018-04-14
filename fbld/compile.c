@@ -72,6 +72,7 @@ typedef struct {
   CompiledProcV procv;
 } Context;
 
+static FbldDecl* LookupAliasDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind);
 static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind);
 static FbldType* LookupType(Context* ctx, FbldQRef* qref);
 static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref);
@@ -86,8 +87,9 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr);
 static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 
 
-// LookupDecl --
-//   Lookup the declaration of the given kind referred to by qref.
+// LookupAliasDecl --
+//   Lookup the declaration of the given kind referred to by qref. Does not
+//   resolve aliases.
 //
 // Inputs:
 //   ctx - The compilation context.
@@ -98,7 +100,7 @@ static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 //
 // Side effects:
 //   Behavior is undefined if the declaration could not be found.
-static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
+static FbldDecl* LookupAliasDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
 {
   assert(qref->r != NULL);
   assert(qref->r->decl != NULL);
@@ -125,6 +127,33 @@ static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
   }
   UNREACHABLE("LookupDecl failed");
   return NULL;
+}
+
+// LookupDecl --
+//   Lookup the declaration of the given kind referred to by qref. Resolves
+//   aliases.
+//
+// Inputs:
+//   ctx - The compilation context.
+//   qref - A global resolved qref referring to the decl to look up.
+//
+// Results:
+//   The declaration.
+//
+// Side effects:
+//   Behavior is undefined if the declaration could not be found.
+static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
+{
+  FbldDecl* decl = LookupAliasDecl(ctx, qref, kind);
+  assert(decl != NULL);
+
+  if (decl->alias != NULL) {
+    // We don't support aliases with static parameters yet, because we would
+    // need to recursively substitute the value of the static parameters.
+    assert(decl->paramv->size == 0 && "TODO: Support alias with static params");
+    return LookupDecl(ctx, decl->alias, kind);
+  }
+  return decl;
 }
 
 // LookupType --

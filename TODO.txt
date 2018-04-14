@@ -1,8 +1,7 @@
 Fbld 4:
 * Use aliases to share Bit composition code in md5
-  - Figure out how to deal with the fact that aliases aren't fully resolved
-    for compilation because we can't do proper type check if they are fully
-    resolved (test 3.4-01).
+  - Test and fix bug with private aliases being resolved for name import that
+    supply parameter values.
   - Clarify in spec that alias acts as another way to define the body of an
     entity, it doesn't effect the use of that entity.
   - Update syntax reference in spec for aliases.
@@ -11,6 +10,8 @@ Fbld 4:
 * Implement deflate program.
 
 Fbld 4 Test:
+* Test 3.4-00 and 3.4-01 variants where the alias pre-applies some static
+  parameters.
 * Test alias visible access and invisible access.
 * Test that alias protos and qrefs are checked.
 * Test that alias qref matches its proto.
