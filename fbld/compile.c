@@ -72,12 +72,7 @@ typedef struct {
   CompiledProcV procv;
 } Context;
 
-static FbldDecl* LookupAliasDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind);
-static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind);
-static FbldType* LookupType(Context* ctx, FbldQRef* qref);
-static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref);
-static FbldProc* LookupProc(Context* ctx, FbldQRef* qref);
-static FbldModule* LookupModule(Context* ctx, FbldQRef* qref);
+static FbldQRef* ImportQRef(Context* ctx, FbldQRef* src, FbldQRef* qref);
 static FblcProc* CompileGivenProc(Context* ctx, FbldQRef* qref, FbldProc* proc);
 static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref);
 static FblcFunc* CompileFunc(Context* ctx, FbldQRef* src, FbldQRef* qref);
@@ -87,141 +82,69 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr);
 static FblcValue* CompileValue(Context* ctx, FbldValue* value);
 
 
-// LookupAliasDecl --
-//   Lookup the declaration of the given kind referred to by qref. Does not
-//   resolve aliases.
+// ImportQRef --
+//   ImportQRef and resolve aliases.
 //
 // Inputs:
-//   ctx - The compilation context.
-//   qref - A global resolved qref referring to the decl to look up.
+//   ctx - The context for compilation.
+//   src - The context of the qref to import from.
+//   qref - The qref to import.
 //
 // Results:
-//   The declaration.
+//   An unaliased qref in the current context.
 //
 // Side effects:
-//   Behavior is undefined if the declaration could not be found.
-static FbldDecl* LookupAliasDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
+//   Allocates memory for the qref.
+static FbldQRef* ImportQRef(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
+  // 1. Import the qref into this context.
+  qref = FbldImportQRef(ctx->arena, src, qref);
+
+  // 2. Find the implementation of the qref, in case it points to a prototype.
   assert(qref->r != NULL);
   assert(qref->r->decl != NULL);
-  assert(qref->r->decl->tag == kind);
   FbldName* name = qref->r->decl->name;
+
+  FbldQRef* nqref = FBLC_ALLOC(ctx->arena, FbldQRef);
+  nqref->name = qref->name;
+  nqref->paramv = qref->paramv;
+  nqref->mref = qref->mref;
+  nqref->r = FBLC_ALLOC(ctx->arena, FbldR);
+  nqref->r->decl = NULL; // to be filled in
+  nqref->r->mref = NULL; // to be filled in
+  nqref->r->param = qref->r->param;
+  nqref->r->interf = qref->r->interf;
 
   if (qref->r->mref == NULL) {
     for (size_t i = 0; i < ctx->prgm->declv->size; ++i) {
       if (FbldNamesEqual(ctx->prgm->declv->xs[i]->name->name, name->name)) {
-        assert(ctx->prgm->declv->xs[i]->tag == kind);
-        return ctx->prgm->declv->xs[i];
+        nqref->r->decl = ctx->prgm->declv->xs[i];
+        break;
       }
     }
-    UNREACHABLE("LookupDecl top level failed");
-    return NULL;
-  }
-
-  FbldModule* module = LookupModule(ctx, qref->r->mref);
-  for (size_t i = 0; i < module->body->declv->size; ++i) {
-    if (FbldNamesEqual(module->body->declv->xs[i]->name->name, name->name)) {
-      assert(module->body->declv->xs[i]->tag == kind);
-      return module->body->declv->xs[i];
+    assert(nqref->r->decl != NULL && "LookupDecl top level failed");
+  } else {
+    // TODO: Any problem double-importing this already imported mref? Is NULL
+    // the right src to use in that case?
+    FbldQRef* mref = ImportQRef(ctx, NULL, qref->r->mref);
+    nqref->r->mref = mref;
+    assert(mref->r->decl->tag == FBLD_MODULE_DECL);
+    FbldModule* module = (FbldModule*)mref->r->decl;
+    for (size_t i = 0; i < module->body->declv->size; ++i) {
+      if (FbldNamesEqual(module->body->declv->xs[i]->name->name, name->name)) {
+        nqref->r->decl = module->body->declv->xs[i];
+        break;
+      }
     }
+    assert(nqref->r->decl != NULL && "LookupDecl failed");
   }
-  UNREACHABLE("LookupDecl failed");
-  return NULL;
-}
-
-// LookupDecl --
-//   Lookup the declaration of the given kind referred to by qref. Resolves
-//   aliases.
-//
-// Inputs:
-//   ctx - The compilation context.
-//   qref - A global resolved qref referring to the decl to look up.
-//
-// Results:
-//   The declaration.
-//
-// Side effects:
-//   Behavior is undefined if the declaration could not be found.
-static FbldDecl* LookupDecl(Context* ctx, FbldQRef* qref, FbldDeclTag kind)
-{
-  FbldDecl* decl = LookupAliasDecl(ctx, qref, kind);
-  assert(decl != NULL);
 
-  if (decl->alias != NULL) {
-    // We don't support aliases with static parameters yet, because we would
-    // need to recursively substitute the value of the static parameters.
-    assert(decl->paramv->size == 0 && "TODO: Support alias with static params");
-    return LookupDecl(ctx, decl->alias, kind);
+  // 3. If we ended up with an alias, resolve that now.
+  if (nqref->r->decl->alias != NULL) {
+    nqref = ImportQRef(ctx, nqref, nqref->r->decl->alias);
   }
-  return decl;
-}
-
-// LookupType --
-//   Lookup the declaration of the type referred to by qref.
-//
-// Inputs:
-//   ctx - The compilation context.
-//   qref - A global resolved qref referring to the type to look up.
-//
-// Results:
-//   The declaration of the type.
-//
-// Side effects:
-//   Behavior is undefined if the type could not be found.
-static FbldType* LookupType(Context* ctx, FbldQRef* qref)
-{
-  return (FbldType*)LookupDecl(ctx, qref, FBLD_TYPE_DECL);
-}
-
-// LookupFunc --
-//   Lookup the declaration of the function referred to by qref.
-//
-// Inputs:
-//   ctx - The compilation context.
-//   qref - A global resolved qref referring to the function to look up.
-//
-// Results:
-//   The declaration of the function.
-//
-// Side effects:
-//   Behavior is undefined if the function could not be found.
-static FbldFunc* LookupFunc(Context* ctx, FbldQRef* qref)
-{
-  return (FbldFunc*)LookupDecl(ctx, qref, FBLD_FUNC_DECL);
-}
-
-// LookupProc --
-//   Lookup the declaration of the process referred to by qref.
-//
-// Inputs:
-//   ctx - The compilation context.
-//   qref - A global resolved qref referring to the process to look up.
-//
-// Results:
-//   The declaration of the process.
-//
-// Side effects:
-//   Behavior is undefined if the process could not be found.
-static FbldProc* LookupProc(Context* ctx, FbldQRef* qref)
-{
-  return (FbldProc*)LookupDecl(ctx, qref, FBLD_PROC_DECL);
-}
-
-// LookupModule --
-//   Lookup the declaration of the module referred to by qref.
-//
-// Inputs:
-//   ctx - The compilation context.
-//   qref - A global resolved qref referring to the module to look up.
-//
-// Results:
-//   The declaration of the module.
-//
-// Side effects:
-//   Behavior is undefined if the module could not be found.
-static FbldModule* LookupModule(Context* ctx, FbldQRef* qref)
-{
-  return (FbldModule*)LookupDecl(ctx, qref, FBLD_MODULE_DECL);
+
+  return nqref;
 }
 
 // CompileGivenProc --
@@ -500,7 +423,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
 //   Adds the compiled function to 'compiled' if it is newly compiled.
 static FblcFunc* CompileFunc(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
-  qref = FbldImportQRef(ctx->arena, src, qref);
+  qref = ImportQRef(ctx, src, qref);
 
   // Check to see if we have already compiled the entity.
   for (size_t i = 0; i < ctx->funcv.size; ++i) {
@@ -509,8 +432,9 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* src, FbldQRef* qref)
     }
   }
 
-  FbldFunc* func_d = LookupFunc(ctx, qref);
-  assert(func_d != NULL);
+  assert(qref->r->decl != NULL);
+  assert(qref->r->decl->tag == FBLD_FUNC_DECL);
+  FbldFunc* func_d = (FbldFunc*)qref->r->decl;
 
   FblcFunc* func_c = FBLC_ALLOC(ctx->arena, FblcFunc);
   CompiledFunc* compiled_func = FblcVectorExtend(ctx->arena, ctx->funcv);
@@ -543,7 +467,7 @@ static FblcFunc* CompileFunc(Context* ctx, FbldQRef* src, FbldQRef* qref)
 //   Adds the compiled type to the context if it is newly compiled.
 static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
-  qref = FbldImportQRef(ctx->arena, src, qref);
+  qref = ImportQRef(ctx, src, qref);
 
   // Check to see if we have already compiled the entity.
   for (size_t i = 0; i < ctx->typev.size; ++i) {
@@ -552,8 +476,9 @@ static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref)
     }
   }
 
-  FbldType* type_d = LookupType(ctx, qref);
-  assert(type_d != NULL);
+  assert(qref->r->decl != NULL);
+  assert(qref->r->decl->tag == FBLD_TYPE_DECL);
+  FbldType* type_d = (FbldType*)qref->r->decl;
 
   FblcType* type_c = FBLC_ALLOC(ctx->arena, FblcType);
   CompiledType* compiled_type = FblcVectorExtend(ctx->arena, ctx->typev);
@@ -592,7 +517,7 @@ static FblcType* CompileType(Context* ctx, FbldQRef* src, FbldQRef* qref)
 //   Adds the compiled process to 'compiled' if it is newly compiled.
 static FblcProc* CompileProc(Context* ctx, FbldQRef* src, FbldQRef* qref)
 {
-  qref = FbldImportQRef(ctx->arena, src, qref);
+  qref = ImportQRef(ctx, src, qref);
 
   // Check to see if we have already compiled the entity.
   for (size_t i = 0; i < ctx->procv.size; ++i) {
@@ -602,8 +527,9 @@ static FblcProc* CompileProc(Context* ctx, FbldQRef* src, FbldQRef* qref)
   }
 
 
-  FbldProc* proc_d = LookupProc(ctx, qref);
-  assert(proc_d != NULL);
+  assert(qref->r->decl != NULL);
+  assert(qref->r->decl->tag == FBLD_PROC_DECL);
+  FbldProc* proc_d = (FbldProc*)qref->r->decl;
   return CompileGivenProc(ctx, qref, proc_d);
 }
 
@@ -619,16 +545,19 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
   FblcVectorInit(arena, ctx.funcv);
   FblcVectorInit(arena, ctx.procv);
 
+  // TODO: Okay to double import this qref? What source to use?
+  qref = ImportQRef(&ctx, NULL, qref);
+
   FbldProc* proc_d = NULL;
   assert(qref->r != NULL);
   assert(qref->r->decl != NULL);
   switch (qref->r->decl->tag) {
     case FBLD_PROC_DECL:
-      proc_d = LookupProc(&ctx, qref);
+      proc_d = (FbldProc*)qref->r->decl;
       break;
 
     case FBLD_FUNC_DECL: {
-      FbldFunc* func_d = LookupFunc(&ctx, qref);
+      FbldFunc* func_d = (FbldFunc*)qref->r->decl;
       proc_d = FBLC_ALLOC(arena, FbldProc);
       proc_d->_base.name = func_d->_base.name;
       proc_d->portv = FBLC_ALLOC(arena, FbldPortV);
@@ -672,7 +601,9 @@ FbldLoaded* FbldCompileProgram(FblcArena* arena, FbldAccessLocV* accessv, FbldPr
 //   Behavior is undefined if the value is not well typed.
 static FblcValue* CompileValue(Context* ctx, FbldValue* value)
 {
-  FbldType* type = LookupType(ctx, value->type);
+  assert(value->type->r->decl != NULL);
+  assert(value->type->r->decl->tag == FBLD_TYPE_DECL);
+  FbldType* type = (FbldType*)value->type->r->decl;
 
   switch (value->kind) {
     case FBLD_STRUCT_KIND: {
