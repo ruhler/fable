@@ -113,7 +113,7 @@ static FbldQRef* ImportQRef(Context* ctx, FbldQRef* src, FbldQRef* qref)
   nqref->r->decl = NULL; // to be filled in
   nqref->r->mref = NULL; // to be filled in
   nqref->r->param = qref->r->param;
-  nqref->r->interf = qref->r->interf;
+  nqref->r->interf = NULL;
 
   if (qref->r->mref == NULL) {
     for (size_t i = 0; i < ctx->prgm->declv->size; ++i) {
