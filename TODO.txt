@@ -1,6 +1,6 @@
 Fbld 4:
 * Use aliases to share Bit composition code in md5
-  - Make a regression test to catch AllTest failure. And fix the bug.
+  - Understand and fix 3.2-11.
   - Clarify in spec that alias acts as another way to define the body of an
     entity, it doesn't effect the use of that entity.
   - Update syntax reference in spec for aliases.
