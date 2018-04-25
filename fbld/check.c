@@ -238,7 +238,9 @@ static FbldQRef* DeclQRef(FblcArena* arena, FbldQRef* mref, FbldInterf* interf, 
   qref->paramv = FBLC_ALLOC(arena, FbldQRefV);
   FblcVectorInit(arena, *qref->paramv);
   for (size_t i = 0; i < decl->paramv->size; ++i) {
-    FblcVectorAppend(arena, *qref->paramv, DeclQRef(arena, mref, NULL, decl->paramv->xs[i]));
+    FbldQRef* p = DeclQRef(arena, mref, NULL, decl->paramv->xs[i]);
+    p->r->param = true;
+    FblcVectorAppend(arena, *qref->paramv, p);
   }
 
   qref->mref = mref;
@@ -611,18 +613,7 @@ static bool CheckModuleBody(FblcArena* arena, Env* env, FbldModule* module)
     return true;
   }
 
-  FbldR* r = FBLC_ALLOC(arena, FbldR);
-  r->decl = &module->_base;
-  r->mref = env->mref;
-  r->param = false;
-  r->interf = NULL;
-
-  FbldQRef* mref = FBLC_ALLOC(arena, FbldQRef);
-  mref->name = module->_base.name;
-  mref->paramv = FBLC_ALLOC(arena, FbldQRefV);
-  FblcVectorInit(arena, *mref->paramv);
-  mref->mref = env->mref;
-  mref->r = r;
+  FbldQRef* mref = DeclQRef(arena, env->mref, env->interf, &module->_base);
 
   Env module_env = {
     .parent = env,
