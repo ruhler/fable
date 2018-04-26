@@ -1,22 +1,19 @@
-Fbld 4:
-* Use aliases to share Bit composition code in md5
-  - Expand use of alias to rest of Bit types.
-  - Clarify in spec that alias acts as another way to define the body of an
-    entity, it doesn't effect the use of that entity.
-  - Update syntax reference in spec for aliases.
-* Increase test coverage for spec.
+Fbld 4 Spec:
+* Clarify in spec that alias acts as another way to define the body of an
+  entity, it doesn't effect the use of that entity.
+* Update syntax reference in spec for aliases.
+* Clarify in spec what is allowed in terms of recursion through static params.
+  For example, presumably we can't do something like:
+    struct Foo<struct Bar(Foo x)>(Bar y);
 * Add support for specifying interfaces in different files?
-* Implement deflate program.
 
 Fbld 4 Test:
+* Increase test coverage for spec.
 * Test 3.4-00 and 3.4-01 variants where the alias pre-applies some static
   parameters.
 * Test alias visible access and invisible access.
 * Test that alias protos and qrefs are checked.
 * Test that alias qref matches its proto.
-* Clarify in spec what is allowed in terms of recursion through static params.
-  For example, presumably we can't do something like:
-    struct Foo<struct Bar(Foo x)>(Bar y);
 * Add variety of tests for using "private" entity in "public" interface
   Where private and public depend on the context.
   For example, public function in private module refers to private entity at
@@ -51,10 +48,6 @@ Fbld 4 Test:
 * Reach full test coverage.
 * Warn for unused imports?
 
-StdLib:
-* Should Eq just be a function or an interface?
-* Write Test library.
-
 Fbld Cleanup:
 * Move contents of program.c into name.c. Maybe call it qref.c?
 * Define and use UNREACHABLE everywhere appropriate.
@@ -79,7 +72,11 @@ Fbld Cleanup:
    1. Switch uses of FbldName* to FbldName.
 * Use consistent style for error messages. Capitalize? Punctuate?
 
-App Ideas:
+Fbld Lib:
+* Should Eq just be a function or an interface?
+* Write Test library.
+
+Fbld App Ideas:
 * compress/deflate
 * snake - text based and graphics
 * tictactoe - text based and graphics
@@ -95,7 +92,7 @@ General Cleanup:
  - Increase test code coverage as much as reasonably possible.
  - Put vector type definitions after their corresponding element definitions.
 
-Snake Arc:
+Fbld Snake:
 * Make food appear randomly instead of at the tail.
 * Speed up the snake every time it eats something.
 * Test and fix bug when snake eats its tail.

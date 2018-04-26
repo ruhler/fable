@@ -2,23 +2,13 @@
 import @ { StdLib; };
 
 module Hex;
-module Bit;
-module Bit1(BitNI<Bit@Bit>);
 
-module Bit2 {
-  import @ { Bit@Bit; Bit1; BitNI; Bit2XN; };
-
-  struct Bit2(Bit hi, Bit lo);
-  module BitN(BitNI<Bit2>) = Bit2XN<Bit, Bit1, Bit2>;
+module Bit {
+  import @ { Unit@StdLib; };
+  union Bit(Unit 0, Unit 1);
 };
 
-module Bit4;
-module Bit8;
-module Bit16;
-module Bit32;
-module Bit64;
-
-# TODO: Put the body of this into its own file once that is supported.
+# TODO: Put the body of this into its own file once that is supported?
 interf BitNI<type T> {
   import @ { T; Bit@Bit; Bool@Bool@StdLib; };
 
@@ -38,7 +28,79 @@ interf BitNI<type T> {
   func lshift(T a, Bit cin; Result); # left shift by 1
 };
 
+module Bit1(BitNI<Bit@Bit>);
+
 module Bit2XN<
   type T,
   module B(BitNI<T>),
   struct Bit2X(T hi, T lo)>(BitNI<Bit2X>);
+
+module Bit2 {
+  import @ { Bit@Bit; Bit1; BitNI; Bit2XN; };
+
+  struct Bit2(Bit hi, Bit lo);
+  module BitN(BitNI<Bit2>) = Bit2XN<Bit, Bit1, Bit2>;
+};
+
+module Bit4 {
+  import @ { Hex@Hex; Bit@Bit; Unit@StdLib; };
+  import @ { BitNI; Bit2XN; Bit2@Bit2; Bit2N=BitN@Bit2; };
+
+  struct Bit4(Bit2 hi, Bit2 lo);
+  module BitN(BitNI<Bit4>) = Bit2XN<Bit2, Bit2N, Bit4>;
+
+  func H1(Hex x; Bit4) {
+    Bit 0 = Bit:0(Unit());
+    Bit 1 = Bit:1(Unit());
+    ?(x; Bit4(Bit2(0, 0), Bit2(0, 0)),
+         Bit4(Bit2(0, 0), Bit2(0, 1)),
+         Bit4(Bit2(0, 0), Bit2(1, 0)),
+         Bit4(Bit2(0, 0), Bit2(1, 1)),
+         Bit4(Bit2(0, 1), Bit2(0, 0)),
+         Bit4(Bit2(0, 1), Bit2(0, 1)),
+         Bit4(Bit2(0, 1), Bit2(1, 0)),
+         Bit4(Bit2(0, 1), Bit2(1, 1)),
+         Bit4(Bit2(1, 0), Bit2(0, 0)),
+         Bit4(Bit2(1, 0), Bit2(0, 1)),
+         Bit4(Bit2(1, 0), Bit2(1, 0)),
+         Bit4(Bit2(1, 0), Bit2(1, 1)),
+         Bit4(Bit2(1, 1), Bit2(0, 0)),
+         Bit4(Bit2(1, 1), Bit2(0, 1)),
+         Bit4(Bit2(1, 1), Bit2(1, 0)),
+         Bit4(Bit2(1, 1), Bit2(1, 1)));
+  };
+};
+
+module Bit8 {
+  import @ { Hex@Hex; 0@Hex; Bit4H1=H1@Bit4; };
+  import @ { BitNI; Bit2XN; Bit4@Bit4; Bit4N=BitN@Bit4; };
+
+  struct Bit8(Bit4 hi, Bit4 lo);
+  module BitN(BitNI<Bit8>) = Bit2XN<Bit4, Bit4N, Bit8>;
+
+  # Construct a byte from 1 or 2 hex digits.
+  func H1(Hex x; Bit8) H2(0(), x);
+  func H2(Hex hi, Hex lo; Bit8) Bit8(Bit4H1(hi), Bit4H1(lo));
+};
+
+module Bit16 {
+  import @ { BitNI; Bit2XN; Bit8@Bit8; Bit8N=BitN@Bit8; };
+
+  struct Bit16(Bit8 hi, Bit8 lo);
+  module BitN(BitNI<Bit16>) = Bit2XN<Bit8, Bit8N, Bit16>;
+};
+
+module Bit32 {
+  import @ { BitNI; Bit2XN; Bit16@Bit16; Bit16N=BitN@Bit16; };
+
+  struct Bit32(Bit16 hi, Bit16 lo);
+  module BitN(BitNI<Bit32>) = Bit2XN<Bit16, Bit16N, Bit32>;
+};
+
+module Bit64 {
+  import @ { BitNI; Bit2XN; Bit32@Bit32; Bit32N=BitN@Bit32; };
+
+  struct Bit64(Bit32 hi, Bit32 lo);
+  module BitN(BitNI<Bit64>) = Bit2XN<Bit32, Bit32N, Bit64>;
+};
+
