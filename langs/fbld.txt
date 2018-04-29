@@ -190,6 +190,18 @@ As with the import '@' statement, entities can be renamed upon import:
   import Integer { MyInt=Int; };
   struct IntPair(MyInt first, MyInt second);
 
+You can import entities this way only from modules. You cannot import entities
+from types, functions, processes, or interfaces. You cannot recursively import
+a module from itself. The following statements are not allowed:
+
+  struct T(...);
+  import T { ... };   # ERROR: Can't import from a type.
+  
+  import A { A; };    # ERROR: Self recursive import
+
+  import B { C; };    # ERROR: Mutually recursive import with C.
+  import C { B; };
+
 2.3. Private Entities
 ---------------------
 By default, entities defined in a module are publicly available to other

@@ -1,3 +1,12 @@
+Space Invaders:
+* Render objects - how to test?
+  manual test: Draw all objects to the screen as a gallery of them.
+* Game loop driven by timer - how to test? 
+  manual test: Have app with just ship that can be moved left and right (and
+  fire bullets into space?)
+* Pseudo-random bullet attack, UFO - how to test?
+* Collision detection
+
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an
   entity, it doesn't effect the use of that entity.
@@ -5,6 +14,8 @@ Fbld 4 Spec:
 * Clarify in spec what is allowed in terms of recursion through static params.
   For example, presumably we can't do something like:
     struct Foo<struct Bar(Foo x)>(Bar y);
+* Clarify in spec what is allowed in terms of recursion through imports.
+  Example: import A { A; }; Then fix 2.2.3-03
 * Add support for specifying interfaces in different files?
 
 Fbld 4 Test:
@@ -107,7 +118,8 @@ Fblc Performance:
 
 Miscellanous:
 * Track down memory-leak like behavior in fbld-md5
-  - Perhaps we should put a limit on link sizes?
+  - Perhaps we should put a limit on link sizes? Or prioritize threads that
+    are getting over threads that are putting?
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
   - Something that cannot be typed, such as x, when x is not defined.  "maltyped"
