@@ -1,12 +1,3 @@
-Space Invaders:
-* Render objects - how to test?
-  manual test: Draw all objects to the screen as a gallery of them.
-* Game loop driven by timer - how to test? 
-  manual test: Have app with just ship that can be moved left and right (and
-  fire bullets into space?)
-* Pseudo-random bullet attack, UFO - how to test?
-* Collision detection
-
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an
   entity, it doesn't effect the use of that entity.
@@ -102,6 +93,16 @@ General Cleanup:
    specifically, what the caller should do to free all allocations.
  - Increase test code coverage as much as reasonably possible.
  - Put vector type definitions after their corresponding element definitions.
+
+Space Invaders:
+* Render objects - how to test?
+  manual test: Draw all objects to the screen as a gallery of them.
+* Game loop driven by timer - how to test? 
+  manual test: Have app with just ship that can be moved left and right (and
+  fire bullets into space?)
+* Pseudo-random bullet attack, UFO - how to test?
+* Collision detection
+
 
 Fbld Snake:
 * Make food appear randomly instead of at the tail.
