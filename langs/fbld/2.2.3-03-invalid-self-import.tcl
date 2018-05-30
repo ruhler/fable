@@ -3,4 +3,4 @@ set prg {
   import A { A; };
 }
 
-fbld-check-error $prg 3:10
+fbld-check-error $prg 3:14

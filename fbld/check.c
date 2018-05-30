@@ -91,6 +91,16 @@ static FbldR FailedR = {
   .interf = NULL
 };
 
+// PendingR --
+//   A static instance of FbldR indicating the qref is in the process of being
+//   resolved.
+static FbldR PendingR = {
+  .decl = NULL,
+  .mref = NULL,
+  .param = false,
+  .interf = NULL
+};
+
 static void Require(bool x, bool* success);
 static void ReportError(const char* format, FbldLoc* loc, ...);
 
@@ -397,21 +407,28 @@ static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref)
 //   already been reported as being bad.
 static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref)
 {
+  if (qref->r == &PendingR) {
+    ReportError("%s depends on itself recursively\n", qref->name->loc, qref->name->name);
+    return false;
+  }
+
   if (qref->r != NULL) {
     return qref->r->decl != NULL;
   }
 
-  // By default assume the qref fails to resolve. We will overwrite this with
+  // Mark that resolution of this qref is pending. We will overwrite this with
   // something more meaningful once we have successfully resolved the
   // reference and confirmed the qref is well formed.
-  qref->r = &FailedR;
+  qref->r = &PendingR;
 
   FbldR* r = ResolveQRef(arena, env, qref);
   if (r == NULL || r->decl == NULL) {
+    qref->r = &FailedR;
     return false;
   }
 
   if (!EnsureParams(arena, env, r->decl)) {
+    qref->r = &FailedR;
     return false;
   }
 
@@ -420,12 +437,14 @@ static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref)
   if (qref->paramv->size > r->decl->paramv->size) {
     ReportError("Too many static arguments to %s\n", qref->name->loc, qref->name->name);
     // TODO: Free r
+    qref->r = &FailedR;
     return false;
   }
 
   for (size_t i = 0; i < qref->paramv->size; ++i) {
     if (!CheckPartialQRef(arena, env, qref->paramv->xs[i])) {
       // TODO: Free r
+      qref->r = &FailedR;
       return false;
     }
   }
@@ -439,6 +458,7 @@ static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref)
     }
   }
   
+  assert(qref->r != &PendingR);
   return true;
 }
 
@@ -490,6 +510,11 @@ static bool CheckQRef(FblcArena* arena, Env* env, FbldQRef* qref)
 //   Prints a message to stderr if the environment is not well formed.
 static bool CheckImport(FblcArena* arena, Env* env, FbldQRef* mref, FbldQRef* src)
 {
+  if (src->r == &PendingR) {
+    ReportError("%s imports itself recursively\n", src->name->loc, src->name->name);
+    return NULL;
+  }
+
   if (mref == NULL) {
     // Import '@' from parent
 
