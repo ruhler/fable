@@ -99,6 +99,7 @@ static FbldQRef* DeclQRef(FblcArena* arena, FbldQRef* mref, FbldInterf* interf, 
 static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref);
 static bool CheckPartialQRef(FblcArena* arena, Env* env, FbldQRef* qref);
 static bool CheckQRef(FblcArena* arena, Env* env, FbldQRef* qref);
+static bool CheckImport(FblcArena* arena, Env* env, FbldQRef* mref, FbldQRef* src);
 static bool CheckEnv(FblcArena* arena, Env* env);
 static bool CheckInterf(FblcArena* arena, Env* env, FbldInterf* interf);
 static bool CheckModuleBody(FblcArena* arena, Env* env, FbldModule* module);
@@ -337,6 +338,9 @@ static FbldR* ResolveQRef(FblcArena* arena, Env* env, FbldQRef* qref)
     FbldImport* import = env->prgm->importv->xs[i];
     for (size_t j = 0; j < import->itemv->size; ++j) {
       if (FbldNamesEqual(qref->name->name, import->itemv->xs[j]->dest->name)) {
+        if (!CheckImport(arena, env, import->mref, import->itemv->xs[j]->source)) {
+          return NULL;
+        }
         assert(import->itemv->xs[j]->source->r != NULL);
         return import->itemv->xs[j]->source->r;
       } 
@@ -468,6 +472,60 @@ static bool CheckQRef(FblcArena* arena, Env* env, FbldQRef* qref)
   return true;
 }
 
+// CheckImport --
+//   Check the validity of an imported entity.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   env - the current environment.
+//   mref - reference to the module being imported from. May be 'null' to
+//          indicate import from parent.
+//   src - The entity to import from mref.
+//
+// Result:
+//   true if the import is valid, false otherwise.
+//
+// Side effects:
+//   Resolves mref and src.
+//   Prints a message to stderr if the environment is not well formed.
+static bool CheckImport(FblcArena* arena, Env* env, FbldQRef* mref, FbldQRef* src)
+{
+  if (mref == NULL) {
+    // Import '@' from parent
+
+    // Ensure the imported entity has already been checked.
+    FbldQRef* shead = src;
+    while (shead->mref != NULL) {
+      shead = shead->mref;
+    }
+
+    if (!CheckPartialQRef(arena, env->parent, shead)) {
+      return false;
+    }
+    assert(shead->r->decl != NULL);
+    if (!EnsureDecl(arena, env->parent, shead->name->loc, shead->r->decl)) {
+      return false;
+    }
+
+    return CheckPartialQRef(arena, env->parent, src);
+  } else {
+    // Import from local
+
+    // Append the import mref to the back of the source for checking the
+    // source.
+    // TODO: Make a copy of the qref we want to check, rather than modifying
+    // src in place?
+    FbldQRef* shead = src;
+    while (shead->mref != NULL) {
+      shead = shead->mref;
+    }
+    shead->mref = mref;
+    bool result = CheckPartialQRef(arena, env, src);
+    shead->mref = NULL;
+    return result;
+  }
+}
+
 // CheckEnv --
 //   Check that the entities from the given environment are well formed.
 //
@@ -498,36 +556,7 @@ static bool CheckEnv(FblcArena* arena, Env* env)
     FbldImport* import = env->prgm->importv->xs[import_id];
     for (size_t i = 0; i < import->itemv->size; ++i) {
       Require(NotRedefined(env, import->itemv->xs[i]->dest), &success);
-      if (import->mref == NULL) {
-        // Import '@' from parent
-
-        // Ensure the imported entity has already been checked.
-        FbldQRef* shead = import->itemv->xs[i]->source;
-        while (shead->mref != NULL) {
-          shead = shead->mref;
-        }
-
-        if (!CheckPartialQRef(arena, env->parent, shead)) {
-          return false;
-        }
-        assert(shead->r->decl != NULL);
-        if (!EnsureDecl(arena, env->parent, shead->name->loc, shead->r->decl)) {
-          return false;
-        }
-
-        Require(CheckPartialQRef(arena, env->parent, import->itemv->xs[i]->source), &success);
-      } else {
-        // Import from local
-
-        // Append the import mref to the back of the source for checking the
-        // source.
-        FbldQRef* shead = import->itemv->xs[i]->source;
-        while (shead->mref != NULL) {
-          shead = shead->mref;
-        }
-        shead->mref = import->mref;
-        Require(CheckPartialQRef(arena, env, import->itemv->xs[i]->source), &success);
-      }
+      Require(CheckImport(arena, env, import->mref, import->itemv->xs[i]->source), &success);
     }
   }
 
