@@ -1,17 +1,16 @@
 Fable
 =====
 Richard Uhler <ruhler@degralder.com>
-April 2015
 
-Introduction
-------------
+1. Introduction
+---------------
 Fable is a collection of computer languages for systems and application
-programming. The collection is based on the belief that simple,
-targeted languages will lead to more flexible and efficient programs that are
-easier to develop and understand.
+programming. The collection is based on the belief that simple, targeted
+languages will lead to more flexible and efficient programs that are easier to
+develop and understand.
 
-Simplicity
-~~~~~~~~~~
+1.1 Simplicity
+--------------
 Existing languages for systems and applications programming are complex. The
 subtleties of Java class loading, the proper implementation of move and copy
 constructors or diagnosing compiler errors involving templates in C++, and
@@ -35,23 +34,26 @@ Whether complex systems and applications can be implemented and executed
 efficiently with only simple languages and interfaces is to be seen. Fable is
 an attempt to answer that question.
 
-Fable's Fables
---------------
+2. Fable's Fables
+-----------------
 The languages of Fable are targeted; there is no one language to rule them
 all. Instead, the language best suited to the task at hand should be used. The
 Fable collection currently includes the following languages.
 
-Androcles:: A functional language for finite computations well suited to tasks
-that could be solved in digital hardware with combinational logic.
+Androcles
+  A functional language for finite computations well suited to tasks
+  that could be solved in digital hardware with combinational logic.
 
-Bathylus:: A Turing-complete functional language based on Androcles suited for
-general data manipulation and compilation tasks. Bathylus extends the
-Androcles language with recursive data types and functions.
+Bathylus
+  A Turing-complete functional language based on Androcles suited for general
+  data manipulation and compilation tasks. Bathylus extends the Androcles
+  language with recursive data types and functions.
 
-Calvisus:: A Turing-complete language for interactive programs and processes.
-Calvisus extends the Bathylus language with processes.
+Calvisus
+  A Turing-complete language for interactive programs and processes. Calvisus
+  extends the Bathylus language with processes.
 
-Damocrates:: A meta-language built on top of Androcles, Bathylus, and Calvisus
-designed to be programmed by human, with features for modularity and
-development.
+Damocrates
+  A meta-language built on top of Androcles, Bathylus, and Calvisus designed
+  to be programmed by human, with features for modularity and development.
 

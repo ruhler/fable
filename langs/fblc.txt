@@ -1,757 +1,855 @@
-@title The Fable of Calvisus
-@author Richard Uhler <ruhler@degralder.com>
-@date May 2015
+The Fable of Calvisus
+=====================
+Richard Uhler <ruhler@degralder.com>
 
-@section 1. Introduction
- @section 1.1. What is Calvisus
-  Calvisus is a computer programming language from the Fable collection.
-  It is a simple, Turing-complete language for interactive programs built on top of a core Turing-complete functional language for general data manipulation and compilation tasks.
+1. Introduction
+---------------
+1.1. What is Calvisus
+---------------------
+Calvisus is a computer programming language from the Fable collection. It is
+a simple, Turing-complete language for interactive programs built on top of a
+core Turing-complete functional language for general data manipulation and
+compilation tasks.
 
-  For those familiar with the Bathylus language, Calvisus extends Bathylus with support for interactive processes.
+For those familiar with the Bathylus language, Calvisus extends Bathylus with
+support for interactive processes.
 
-  This document defines and explains the Calvisus programming language.
- @end
+This document defines and explains the Calvisus programming language.
 
- @section 1.2. Organization of this Document
-  This document is intended to serve both as a guided explanation of the Calvisus language and as a complete reference specification for the language.
-  It starts with a discussion of how data is represented in Calvisus, followed by a discussion of how computation on data is described, that in turn is followed by a discussion of how interactive processes are described.
-  Bits and pieces of the language syntax are described throughout the document.
-  A complete syntax reference is available in the appendix, with links to the description of the corresponding terms.
- @end
+1.2. Organization of this Document
+----------------------------------
+This document is intended to serve both as a guided explanation of the
+Calvisus language and as a complete reference specification for the language.
+It starts with a discussion of how data is represented in Calvisus, followed
+by a discussion of how computation on data is described, that in turn is
+followed by a discussion of how interactive processes are described. Bits and
+pieces of the language syntax are described throughout the document. A
+complete syntax reference is available in the appendix, with links to the
+description of the corresponding terms.
 
- @section 1.3  A Note about Concrete Syntax
-  This document defines a concrete syntax for the Calvisus language and uses that syntax in code examples.
-  This is not intended to suggest the concrete syntax is a fundamental part of the language.
-  Much more important is the abstract syntax and the interpretation of the abstract syntax presented here.
-  Never-the-less, concrete syntax is invaluable for the purposes of illustration, so a simple, C-like concrete syntax is presented here as the Calvisus language, rather than describing the language in terms solely as abstract syntax, or a mix of concrete and abstract syntax, which would be confusing.
- @end
-@end
+1.3  A Note about Concrete Syntax
+---------------------------------
+This document defines a concrete syntax for the Calvisus language and uses
+that syntax in code examples. This is not intended to suggest the concrete
+syntax is a fundamental part of the language. Much more important is the
+abstract syntax and the interpretation of the abstract syntax presented here.
+Never-the-less, concrete syntax is invaluable for the purposes of
+illustration, so a simple, C-like concrete syntax is presented here as the
+Calvisus language, rather than describing the language in terms solely as
+abstract syntax, or a mix of concrete and abstract syntax, which would be
+confusing.
 
-@section 2. Data
- The representation and manipulation of data is a central part of the Calvisus language.
- Data in Calvisus is organized using structures and unions.
- A structure represents a grouping of data items, and a union represents a choice among data items.
+2. Data
+-------
+The representation and manipulation of data is a central part of the Calvisus
+language. Data in Calvisus is organized using structures and unions. A
+structure represents a grouping of data items, and a union represents a choice
+among data items.
 
- @section 2.1. A Note about Assumed Types for Illustration
-  Unlike many programming language, Calvisus has no primitive data types.
-  All types are made up solely of structures and unions.
-  For the purposes of illustration, it is useful to assume some types have already been defined.
-  Assume int is the type of signed 32-bit integers with constructors 1(), 2(), and so on, char is the type of characters, and bool is the type of boolean values with constructors True() and False().
-  We will show later how these types and constructors can be defined using structures and unions.
- @end
+2.1. A Note about Assumed Types for Illustration
+------------------------------------------------
+Unlike many programming language, Calvisus has no primitive data types. All
+types are made up solely of structures and unions. For the purposes of
+illustration, it is useful to assume some types have already been defined.
+Assume int is the type of signed 32-bit integers with constructors 1(), 2(),
+and so on, char is the type of characters, and bool is the type of boolean
+values with constructors True() and False(). We will show later how these
+types and constructors can be defined using structures and unions.
 
- @section 2.2. Structures
-  A structure is a bundle (or grouping) of data values.
-  The items of a structure are organized into a finite number of fields.
-  Each field has a name, used to identify the field, and a type, specifying the type of data value for that field.
+2.2. Structures
+---------------
+A structure is a bundle (or grouping) of data values. The items of a
+structure are organized into a finite number of fields. Each field has a
+name, used to identify the field, and a type, specifying the type of data
+value for that field.
 
-  For example, a two-dimensional Cartesian coordinate would be represented as a structure with two fields, an 'x' component, and a 'y' component.
+For example, a two-dimensional Cartesian coordinate would be represented as a
+structure with two fields, an 'x' component, and a 'y' component.
 
-  @section 2.2.1. Declaration
-   Syntax:  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+2.2.1. Declaration
+------------------
+Syntax:  'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
 
-   Assuming the 'int' type has been defined, the coordinate structure could be defined using the following syntax:
-   @example
-    struct Coord(int x, int y);
-   @end
+Assuming the 'int' type has been defined, the coordinate structure could be
+defined using the following syntax:
 
-   The Coord struct type has two fields, 'int x', and 'int y'. In general, a struct type can have any non-negative, fixed number of fields.
+  struct Coord(int x, int y);
 
-   A field can have any type that is defined somewhere in the program.
-   For example, the following shows a contrived struct type with fields of different type:
-   @example
-    struct Crazy(int a, bool b, bool c, char d);
-   @end
+The Coord struct type has two fields, 'int x', and 'int y'. In general, a
+struct type can have any non-negative, fixed number of fields.
 
-   A struct may contain fields of that struct type itself, or other structs that depend on the struct type being defined in a mutually recursive way.
-   Recursively defined data types are used to represent data that is unbounded in size.
-   We will show examples of useful recursively defined data types after unions have been introduced.
+A field can have any type that is defined somewhere in the program. For
+example, the following shows a contrived struct type with fields of different
+type:
 
-   Each field of a struct type must have a different name.
-   For example, the following is not a legal struct type definition:
-   @example
-    struct Foo(int x, bool x);
-   @end
+  struct Crazy(int a, bool b, bool c, char d);
 
-   The order of fields is important, because it is the order that will be used when construction values of the type.
+A struct may contain fields of that struct type itself, or other structs that
+depend on the struct type being defined in a mutually recursive way.
+Recursively defined data types are used to represent data that is unbounded in
+size. We will show examples of useful recursively defined data types after
+unions have been introduced.
 
-   Two struct types with different names may have the same fields.
-   These struct types are considered different, incompatible types.
+Each field of a struct type must have a different name. For example, the
+following is not a legal struct type definition:
 
-   A struct declaration is valid if the following conditions hold:
-   @list[numbered]
-    @li All field names in the struct declaration are unique.
-    @li The type of each field refers to a type defined in the program.
-   @end
+  struct Foo(int x, bool x);
+
+The order of fields is important, because it is the order that will be used
+when construction values of the type.
+
+Two struct types with different names may have the same fields. These struct
+types are considered different, incompatible types.
+
+A struct declaration is valid if the following conditions hold:
+1. All field names in the struct declaration are unique.
+2. The type of each field refers to a type defined in the program.
    
-   It is legal for a struct to be defined that has no fields.
-   This is useful as the foundation on which all other types are built and is commonly called the 'Unit' type:
-   @example
-    struct Unit();
-   @end
-  @end
+It is legal for a struct to be defined that has no fields. This is useful as
+the foundation on which all other types are built and is commonly called the
+'Unit' type:
 
-  @section 2.2.2. Construction
-   Syntax:  tname '(' [value [',' value [...]]] ')'
+  struct Unit();
 
-   A structure value is constructed by specifying the contents of each component of the structure in the order in which the fields of the structure type are declared.
-   For example, the following syntax shows how to construct a value of type Coord with x component 5 and y component 6:
-   @example
-    Coord(5(), 6())
-   @end
+2.2.2. Construction
+-------------------
+Syntax:  tname '(' [value [',' value [...]]] ')'
 
-   Construction of a structure is valid if the following conditions hold:
-   @list[numbered]
-    @li The number of arguments to the constructor must match the number of fields declared for the structure.
-    @li The type of each argument must match the type of the corresponding field declared for the structure.
-   @end
+A structure value is constructed by specifying the contents of each component
+of the structure in the order in which the fields of the structure type are
+declared. For example, the following syntax shows how to construct a value of
+type Coord with x component 5 and y component 6:
 
-   The resulting value is a value of the structure type.
-  @end
+  Coord(5(), 6())
 
-  @section 2.2.3. Field Access
-   Syntax:  value '.' fname
+Construction of a structure is valid if the following conditions hold:
+1. The number of arguments to the constructor must match the number of fields
+declared for the structure.
+2. The type of each argument must match the type of the corresponding field
+declared for the structure.
+
+The resulting value is a value of the structure type.
+
+2.2.3. Field Access
+-------------------
+Syntax:  value '.' fname
         
-   The fields of a structure are accessed using the dot notation.
-   For example, if coord is the value of type Coord constructed with 'Coord(5(), 6())', then 'coord.x' is the value of type int representing the x coordinate (5), and 'coord.y' is the value of type int representing the y coordinate (6).
+The fields of a structure are accessed using the dot notation. For example, if
+coord is the value of type Coord constructed with 'Coord(5(), 6())', then
+'coord.x' is the value of type int representing the x coordinate (5), and
+'coord.y' is the value of type int representing the y coordinate (6).
 
-   More generally, a value of a structure type followed by a '.' then a field name, refers to the value of the field of the structure with that name.
+More generally, a value of a structure type followed by a '.' then a field
+name, refers to the value of the field of the structure with that name.
 
-   The following is required for a field access to be valid:
-   @list[numbered]
-    @li The field name must refer to a field declared to be part of the structure.
-   @end
+The following is required for a field access to be valid:
+1. The field name must refer to a field declared to be part of the structure.
 
-   The resulting value is a value of the type for the field being accessed.
-  @end
- @end
+The resulting value is a value of the type for the field being accessed.
 
- @section 2.3. Unions
-  The union type is used to describe a choice among named values of different type.
+2.3. Unions
+-----------
+The union type is used to describe a choice among named values of different
+type.
  
-  @section 2.3.1. Declaration
-   Syntax: 'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
+2.3.1. Declaration
+------------------
+Syntax: 'union'  tname '(' [tname fname [',' tname fname [...]]] ')' ';'
 
-   The simplest case of a union type is an enumeration:
-   @example
-    union Fruit(Unit apple, Unit banana, Unit kiwi);
-   @end
+The simplest case of a union type is an enumeration:
 
-   A value of type 'Fruit' can be one of 'apple', 'banana', or 'kiwi'.
-   More generally, the choices for a data value may have non-trivial data associated with them.
-   A value of a union is tagged with a particular field name.
-   For example, consider the definition of a calculator instruction type.
-   Perhaps the calculator has binary operations Add and Subtract, a unary Negate operation, and a Clear operation.
-   The calculator instruction type could be defined as:
-   @example
-    struct Unary(int a);
-    struct Binary(int a, int b);
-    union CalcInstr(Binary add, Binary sub, Unary negate, Unit clear);
-   @end
+  union Fruit(Unit apple, Unit banana, Unit kiwi);
 
-   When a value of type CalcInstr is tagged with the field 'add', the Binary value corresponding to the 'add' field, with operands 'a' and 'b', can be accessed.
-   If instead the value was tagged with the field 'negate', the Unary value with operand 'a' can be accessed, and so on.
+A value of type 'Fruit' can be one of 'apple', 'banana', or 'kiwi'. More
+generally, the choices for a data value may have non-trivial data associated
+with them. A value of a union is tagged with a particular field name. For
+example, consider the definition of a calculator instruction type. Perhaps the
+calculator has binary operations Add and Subtract, a unary Negate operation,
+and a Clear operation. The calculator instruction type could be defined as:
 
-   A union may contain fields of that union type itself, or other unions that depend on the union type being defined in a mutually recursive way.
+  struct Unary(int a);
+  struct Binary(int a, int b);
+  union CalcInstr(Binary add, Binary sub, Unary negate, Unit clear);
 
-   Each field of a union type must have a different name.
+When a value of type CalcInstr is tagged with the field 'add', the Binary
+value corresponding to the 'add' field, with operands 'a' and 'b', can be
+accessed. If instead the value was tagged with the field 'negate', the Unary
+value with operand 'a' can be accessed, and so on.
 
-   Two union types with different names may have the same fields.
-   These union types are considered distinct and incompatible.
+A union may contain fields of that union type itself, or other unions that
+depend on the union type being defined in a mutually recursive way.
 
-   A union declaration is valid if the following conditions hold:
-   @list[numbered]
-    @li All field names in the union declaration are unique.
-    @li The type of each field refers to a type defined in the program.
-    @li The union type must have at least one field.
-   @end
+Each field of a union type must have a different name.
 
-   Rationale for (3): If a union type has no fields, there is no way to construct a value of that type.
-   More importantly, a union type with no fields would lead to an ambiguous type for conditional expressions if used as the condition, and we would much prefer not to have ambiguous types.
-  @end
+Two union types with different names may have the same fields. These union
+types are considered distinct and incompatible.
 
-  @section 2.3.2. Construction
-   Syntax: tname ':' fname '(' value ')'
+A union declaration is valid if the following conditions hold:
+1. All field names in the union declaration are unique.
+2. The type of each field refers to a type defined in the program.
+3. The union type must have at least one field.
 
-   A value of a union type is constructed by providing the name of the field to tag the union with and the value to use for that field.
-   For example, a value of type Fruit which is a banana is described using 'Fruit:banana(Unit())', and a calculator instruction for subtracting 2 from 6 is described using 'CalcInstr:subtract(Binary(6(), 2()))'.
+Rationale for (3): If a union type has no fields, there is no way to construct
+a value of that type. More importantly, a union type with no fields would lead
+to an ambiguous type for conditional expressions if used as the condition, and
+we would much prefer not to have ambiguous types.
 
-   The following is required for a valid union construction:
-   @list[numbered]
-    @li The union type must have a field with the given field name.
-    @li The type of the argument value must match the type of the named field in the declaration of the union.
-   @end
+2.3.2. Construction
+-------------------
+Syntax: tname ':' fname '(' value ')'
 
-   The resulting value is a value of the union type.
-  @end
+A value of a union type is constructed by providing the name of the field to
+tag the union with and the value to use for that field. For example, a value
+of type Fruit which is a banana is described using 'Fruit:banana(Unit())', and
+a calculator instruction for subtracting 2 from 6 is described using
+'CalcInstr:subtract(Binary(6(), 2()))'.
+
+The following is required for a valid union construction:
+1. The union type must have a field with the given field name.
+2. The type of the argument value must match the type of the named field in the declaration of the union.
+
+The resulting value is a value of the union type.
  
-  @section 2.3.3. Field Access
-   Syntax: value '.' fname
+Field Access
+------------
+Syntax: value '.' fname
 
-   Field access can be used for unions to access fields using the same syntax as field access for structures.
-   The key difference is a field access is considered illegal and produces undefined results if the union is not tagged with that field.
-   For example, given a calculator instruction 6_minus_2 formed with 'CalcInstr:subtract(Binary(6(), 2()))', '6_minus_2.subtract' is a well defined value of type Binary.
-   On the other hand, '6_minus_2.negate' is illegal and produces undefined behavior, because the CalcInstr value is not tagged with the 'negate' field.
+Field access can be used for unions to access fields using the same syntax as
+field access for structures. The key difference is a field access is
+considered illegal and produces undefined results if the union is not tagged
+with that field. For example, given a calculator instruction 6_minus_2 formed
+with 'CalcInstr:subtract(Binary(6(), 2()))', '6_minus_2.subtract' is a well
+defined value of type Binary. On the other hand, '6_minus_2.negate' is illegal
+and produces undefined behavior, because the CalcInstr value is not tagged
+with the 'negate' field.
 
-   As with field access for structures, the following is required for a field access to be valid:
-   @list[numbered]
-    @li The field name must refer to a field declared to be part of the union.
-   @end
+As with field access for structures, the following is required for a field
+access to be valid:
+1. The field name must refer to a field declared to be part of the union.
 
-   At runtime, the following additional condition is required to avoid undefined behavior:
-   @list[numbered continued from prior list]
-    @li The field name must match the tag on the union value.
-   @end
+At runtime, the following additional condition is required to avoid undefined
+behavior:
+1. The field name must match the tag on the union value.
 
-   The resulting value is a value of the type for the field being accessed.
-  @end
+The resulting value is a value of the type for the field being accessed.
 
-  @section 2.3.4. A Note on Undefined Behavior
-   An implementation may do what it likes in the case of undefined behavior.
-   It could return an arbitrary result and continue computing, it could halt computation with an error message, or anything else.
-   The user must not rely on undefined behavior, compilers should try to warn whenever possible about undefined behavior detected in programs, and interpreters should offer a debug mode that explicitly halts the program and reports undefined behavior when it occurs.
+2.3.4. A Note on Undefined Behavior
+-----------------------------------
+An implementation may do what it likes in the case of undefined behavior. It
+could return an arbitrary result and continue computing, it could halt
+computation with an error message, or anything else. The user must not rely on
+undefined behavior, compilers should try to warn whenever possible about
+undefined behavior detected in programs, and interpreters should offer a debug
+mode that explicitly halts the program and reports undefined behavior when it
+occurs.
 
-   There is some concern about having undefined behavior, because of the fear that the actual behavior of the dominant interpreter/compiler will come to be relied on, and hence defined.
-   We could force the user to define the behavior explicitly, but that would clutter the code, they probably wouldn't have a good way to define the behavior anyway, and it could hurt performance.
-   For that reason, we say the behavior is undefined.
-  @end
+There is some concern about having undefined behavior, because of the fear
+that the actual behavior of the dominant interpreter/compiler will come to be
+relied on, and hence defined. We could force the user to define the behavior
+explicitly, but that would clutter the code, they probably wouldn't have a
+good way to define the behavior anyway, and it could hurt performance. For
+that reason, we say the behavior is undefined.
 
-  @section 2.3.5. Conditional
-   Syntax: '?' '(' value ';' [value [',' value [...]]] ')'
+2.3.5. Conditional
+------------------
+Syntax: '?' '(' value ';' [value [',' value [...]]] ')'
 
-   A conditional is used to select a value or other object based on the tagged field of a union.
-   For example, assuming instr is a value of type CalcInstr, and that 'add', 'sub', and 'neg' are functions for performing addition, subtraction, and negation of integers respectively, the following represents a value of type 'int' containing the result of executing the calculator instruction:
-   @example
+A conditional is used to select a value or other object based on the tagged
+field of a union. For example, assuming instr is a value of type CalcInstr,
+and that 'add', 'sub', and 'neg' are functions for performing addition,
+subtraction, and negation of integers respectively, the following represents a
+value of type 'int' containing the result of executing the calculator
+instruction:
+
+  ?(instr ;
+      add(instr.add.a, instr.add.b),
+      sub(instr.sub.a, instr.sub.b),
+      neg(instr.negate.a),
+      0())
+
+In this example, 'instr' is called the condition of the conditional. What
+comes after the condition and semicolon are called the arguments of the
+conditional.
+
+If the tag of the union value refers to the first field in the union declaration, the conditional takes the value of its first argument. If the tag of the union value refers to the second field in the union declaration, the conditional takes the value of its second argument, and so on.
+
+A conditional is considered valid if the following conditions hold:
+1. The condition of the conditional must have a union type.
+2. The number of arguments to the conditional must match the number of fields
+in the union type.
+3. Every argument must have the same type.
+
+The result is an object of the same type as the arguments.
+
+2.4. Data Performance Model
+---------------------------
+A programmer should assume the following about the space and performance of
+data for a decent implementation of the Calvisus language:
+* The size of a struct value is big-O of the sum of the size of the fields
+  values of the struct value.
+* The size of a union value is big-O of the largest field of the union value
+  plus log the number of fields in the union.
+* A struct value takes O(N) time in the number of fields to construct.
+* A union value takes O(log(N)) time in the number of fields to construct.
+* Struct and union values are cheap to copy.
+* Field access is done in O(log(N)) the number of fields of the value. In
+  practice this is basically constant time, because we don't expect there to
+  be that many fields.
+* Conditionals are done in O(log(N)) the number of fields of the value. In
+  practice this basically constant time, because we don't expect there to be
+  that many fields.
+
+2.5. Value Text Representation
+------------------------------
+This section specifies a concrete text-based syntax for describing struct and
+union values. It consists of solely constructors for struct and union values.
+ 
+  dname ::= A name of a declared type.
+  fname ::= A field name.
+
+  value ::= dname ':' fname '(' <value> ')'
+         |  dname '(' [<value> [',' <value> ...]] ')'
+         ;
+
+A value is output as a stream of characters using the above syntax, with no
+whitespace. This produces a unique output for a given data value, in a format
+that is valid syntax for an expression of the same type as the value that
+produces the value when executed.
+
+A sequence of values is output using the above syntax, with each individual
+value terminated with a single newline character.
+
+When reading a value or sequence of values from text, the same syntax should
+be used, with the exception that additional whitespace is permitted between
+tokens.
+
+2.6. Value Binary Representation
+--------------------------------
+This section specifies a standard way of representing data values as sequences
+of bits. This serves as a more compact representation for values than the
+text-based format, and can be used to read data values directly from files on
+a posix system.
+
+A struct is encoded as a sequence of bits by concatenating the values of each
+field of the struct encoded as a sequence of bits. The field values are
+concatenated in the same order in which the fields are declared in the struct
+type declaration.
+
+A union is encoded as a tag identifying the tagged field, followed by the
+value of the tagged field. The tag is encoded using as few bits as possible to
+distinguish between all the possible fields of the union. For N fields, the
+tag will be the ceiling of the log based 2 of N. The value 0 is used for the
+tag of the first field in the union declaration, 1 is used for the tag of the
+second field in the union declaration, and so on.
+
+A sequence of bits is represented as a sequence of bytes by having the most
+significant bit of the byte come first.
+
+A sequence of values is described as a sequence of bits for the individual
+elements, with the restriction that the bits for each value in the sequence
+must start on a new 8-bit boundary. In particular, individual values that
+normally are represented with 0 bits take 8 bits to represent as part of a
+binary stream. This makes it possible to represent a stream of values that take
+0 bits, and ensures every value in the stream is described by disjoint sets of
+bytes.
+
+There is no explicit encoding of the type of a value in the binary
+representation. The type must be known in the context in which that value is
+being read or written.
+
+3. Functions
+------------
+Data computation is described using functions. A function computes an output
+data value given input data arguments. Functions in Calvisus are pure; they
+are deterministic and without side effects. Functions add variables and
+(potentially recursive) function calls to the methods already discussed for
+manipulating data.
+
+3.1. Declaration
+----------------
+Syntax: 'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
+
+A function declaration defines the name, input arguments, return type, and
+body of a function. For example, here is a function that computes the result
+of a calculator instruction:
+
+  func Calculate(CalcInstr instr; int) {
     ?(instr ;
         add(instr.add.a, instr.add.b),
         sub(instr.sub.a, instr.sub.b),
         neg(instr.negate.a),
-        0())
-   @end
+        0());
+  };
 
-   In this example, 'instr' is called the condition of the conditional.
-   What comes after the condition and semicolon are called the arguments of the conditional.
+The input arguments and the output type are separated by a semicolon in the
+argument list.
 
-   If the tag of the union value refers to the first field in the union declaration, the conditional takes the value of its first argument.
-   If the tag of the union value refers to the second field in the union declaration, the conditional takes the value of its second argument, and so on.
+A function declaration is well formed if the following conditions hold:
+1. All argument names are unique.
+2. The type of each argument refers to a type defined in the program.
+3. The return type of the function refers to a type defined in the program.
+4. The body of the function is well formed in the environment of the arguments and has a type that matches the return type of the function.
 
-   A conditional is considered valid if the following conditions hold:
-   @list[numbered]
-    @li The condition of the conditional must have a union type.
-    @li The number of arguments to the conditional must match the number of fields in the union type.
-    @li Every argument must have the same type.
-   @end
+3.2. Variables, Scopes, and Name Spaces
+---------------------------------------
+A variable is a name for a data value. Each variable has a unique type
+matching the type of the variable's data value. In the previous example,
+'instr' is a variable of type 'CalcInstr' that, at the time the function is
+called, will refer to a CalcInstr data value.
 
-   The result is an object of the same type as the arguments.
-  @end
- @end
+Variables are lexically scoped. Function arguments are visible in the the body
+of the function. Variables can also be introduced by let statements, in which
+case the variable defined is visible in only the body of that let statement.
 
- @section 2.4. Data Performance Model
-  A programmer should assume the following about the space and performance of data for a decent implementation of the Calvisus language:
-  @list[bulleted]
-   @li The size of a struct value is big-O of the sum of the size of the fields values of the struct value.
-   @li The size of a union value is big-O of the largest field of the union value plus log the number of fields in the union.
-   @li A struct value takes O(N) time in the number of fields to construct.
-   @li A union value takes O(log(N)) time in the number of fields to construct.
-   @li Struct and union values are cheap to copy.
-   @bi
-    Field access is done in O(log(N)) the number of fields of the value.
-    In practice this is basically constant time, because we don't expect there to be that many fields.
-   @end
-   @bi
-    Conditionals are done in O(log(N)) the number of fields of the value.
-    In practice this basically constant time, because we don't expect there to be that many fields.
-   @end
-  @end
- @end
+In general, names in Calvisus are interpreted according to the following name
+spaces:
+* All type, function, and process names belong to a single global namespace.
+  No type, function, or process can have the same name as any other type,
+  function, or process.
+* Field names belong to a namespace associated with a specific struct or union
+  type. No field in a given type can have the same name as any other field in
+  that same type. It is fine for two different types to have fields with the
+  same name.
+* Variable names belong to a namespace associated with a specific function.
+  They are only visible inside the function. No variable in a function may
+  have the same name as another variable in that function, including input
+  variables. It is fine for variables in different functions to have the same
+  name.
 
- @section 2.5. Value Text Representation
-  This section specifies a concrete text-based syntax for describing struct and union values.
-  It consists of solely constructors for struct and union values.
- 
-  @example
-   dname ::= A name of a declared type.
-   fname ::= A field name.
+3.4. Expressions
+----------------
+This section discusses the syntax and behavior of expressions in Calvisus.
 
-   value ::= dname ':' fname '(' <value> ')'
-          |  dname '(' [<value> [',' <value> ...]] ')'
-          ;
-  @end
+In the typical case, given a variable scope, an expression evaluates to a data
+value. Expressions are typed. A well-formed expression will always produce a
+data value whose type matches the type of the expression.
 
-  A value is output as a stream of characters using the above syntax, with no whitespace.
-  This produces a unique output for a given data value, in a format that is valid syntax for an expression of the same type as the value that produces the value when executed.
-
-  A sequence of values is output using the above syntax, with each individual value terminated with a single newline character.
-
-  When reading a value or sequence of values from text, the same syntax should be used, with the exception that additional whitespace is permitted between tokens.
- @end
-
- @section 2.6. Value Binary Representation
-  This section specifies a standard way of representing data values as sequences of bits.
-  This serves as a more compact representation for values than the text-based format, and can be used to read data values directly from files on a posix system.
-
-  A struct is encoded as a sequence of bits by concatenating the values of each field of the struct encoded as a sequence of bits.
-  The field values are concatenated in the same order in which the fields are declared in the struct type declaration.
-
-  A union is encoded as a tag identifying the tagged field, followed by the value of the tagged field.
-  The tag is encoded using as few bits as possible to distinguish between all the possible fields of the union.
-  For N fields, the tag will be the ceiling of the log based 2 of N.
-  The value 0 is used for the tag of the first field in the union declaration, 1 is used for the tag of the second field in the union declaration, and so on.
-
-  A sequence of bits is represented as a sequence of bytes by having the most significant bit of the byte come first.
-
-  A sequence of values is described as a sequence of bits for the individual elements, with the restriction that the bits for each value in the sequence must start on a new 8-bit boundary.
-  In particular, individual values that normally are represented with 0 bits take 8 bits to represent as part of a binary stream.
-  This makes it possible to represent a stream of valus that take 0 bits, and ensures every value in the stream is described by disjoint sets of bytes.
-
-  There is no explicit encoding of the type of a value in the binary representation.
-  The type must be known in the context in which that value is being read or written.
- @end
-@end
-
-@section 3. Functions
- Data computation is described using functions.
- A function computes an output data value given input data arguments.
- Functions in Calvisus are pure; they are deterministic and without side effects.
- Functions add variables and (potentially recursive) function calls to the methods already discussed for manipulating data.
-
- @section 3.1. Declaration
-  Syntax: 'func' tname '(' [tname vname [',' tname vname [...]]] ';' tname ')' expr ';'
-
-  A function declaration defines the name, input arguments, return type, and body of a function.
-  For example, here is a function that computes the result of a calculator instruction:
-  @example
-   func Calculate(CalcInstr instr; int) {
-     ?(instr ;
-         add(instr.add.a, instr.add.b),
-         sub(instr.sub.a, instr.sub.b),
-         neg(instr.negate.a),
-         0());
-   };
-  @end
-
-  The input arguments and the output type are separated by a semicolon in the argument list.
-
-  A function declaration is well formed if the following conditions hold:
-  @list[numbered]
-   @li All argument names are unique.
-   @li The type of each argument refers to a type defined in the program.
-   @li The return type of the function refers to a type defined in the program.
-   @li The body of the function is well formed in the environment of the arguments and has a type that matches the return type of the function.
-  @end
- @end
-
- @section 3.2. Variables, Scopes, and Name Spaces
-  A variable is a name for a data value.
-  Each variable has a unique type matching the type of the variable's data value.
-  In the previous example, 'instr' is a variable of type 'CalcInstr' that, at the time the function is called, will refer to a CalcInstr data value.
-
-  Variables are lexically scoped.
-  Function arguments are visible in the the body of the function.
-  Variables can also be introduced by let statements, in which case the variable defined is visible in only the body of that let statement.
-
-  In general, names in Calvisus are interpreted according to the following name spaces:
-  @list
-   @bi
-    All type, function, and process names belong to a single global namespace.
-    No type, function, or process can have the same name as any other type, function, or process.
-   @end
-   @bi
-    Field names belong to a namespace associated with a specific struct or union type.
-    No field in a given type can have the same name as any other field in that same type.
-    It is fine for two different types to have fields with the same name.
-   @end
-   @bi
-    Variable names belong to a namespace associated with a specific function.
-    They are only visible inside the function.
-    No variable in a function may have the same name as another variable in that function, including input variables.
-    It is fine for variables in different functions to have the same name.
-   @end
-  @end
- @end
-
- @section 3.4. Expressions
-  This section discusses the syntax and behavior of expressions in Calvisus.
-
-  In the typical case, given a variable scope, an expression evaluates to a data value.
-  Expressions are typed.
-  A well-formed expression will always produce a data value whose type matches the type of the expression.
-
-  More generally, an expression may also have undefined behavior or fail to terminate.
-  In the following description of expression behavior, we will not distinguish between undefined behavior and failure to terminate.
-  Instead we will say the expression does not finish.
+More generally, an expression may also have undefined behavior or fail to
+terminate. In the following description of expression behavior, we will not
+distinguish between undefined behavior and failure to terminate. Instead we
+will say the expression does not finish.
   
-  @section 3.4.1. Variable Expression
-   Syntax:  vname
+3.4.1. Variable Expression
+--------------------------
+Syntax:  vname
 
-   A variable expression evaluates to the value of the named variable in scope.
+A variable expression evaluates to the value of the named variable in scope.
 
-   For a variable expression to be well formed, the following conditions must hold:
-   @list
-    @li The variable name must be the name of a variable in scope.
-   @end
+For a variable expression to be well formed, the following conditions must
+hold:
+* The variable name must be the name of a variable in scope.
 
-   The type of the expression is the type of the variable.
-  @end
+The type of the expression is the type of the variable.
 
-  @section 3.4.2. Struct Expression
-   Syntax: tname '(' [expr [',' expr [...]]] ')'
+3.4.2. Struct Expression
+------------------------
+Syntax: tname '(' [expr [',' expr [...]]] ')'
 
-   A struct expression is used to construct struct values.
-   First the arguments of the struct expression are evaluated to values, then a new struct data value is created with its fields set to the corresponding evaluated values.
+A struct expression is used to construct struct values. First the arguments of
+the struct expression are evaluated to values, then a new struct data value is
+created with its fields set to the corresponding evaluated values.
 
-   The order in which the arguments are evaluated is unspecified.
-   The struct expression will finish evaluating only if all its arguments finish evaluating.
+The order in which the arguments are evaluated is unspecified. The struct
+expression will finish evaluating only if all its arguments finish evaluating.
 
-   For a struct expression to be well formed, the following must hold:
-   @list
-    @li tname must refer to a struct type defined in the program.
-    @li The number of argument expressions must match the number of fields in the struct type.
-    @li Each argument must be well formed and have a type that matches the type of the corresponding field in the struct declaration.
-   @end
+For a struct expression to be well formed, the following must hold:
+* tname must refer to a struct type defined in the program.
+* The number of argument expressions must match the number of fields in the struct type.
+* Each argument must be well formed and have a type that matches the type of the corresponding field in the struct declaration.
  
-   The type of the expression is the named struct type.
-  @end
-
-  @section 3.4.3. Union Expression
-   Syntax: tname ':' fname '(' expr ')
-
-   A union expression is used to construct union values.
-   First the argument of the union expression is evaluated to a value, then a new union data value is created tagged with the given field name and with the value set to the evaluated value.
-
-   A union expression will finish evaluating only if its argument finishes evaluating.
-
-   For a union expression to be well formed, the following must hold:
-   @list
-    @li tname must refer to a union type defined in the program.
-    @li fname must refer to a field of that union type.
-    @li expr must be a well formed expression whose type matches the type of the named field.
-   @end
-
-   The type of the expression is the named union type.
-  @end
-
-  @section 3.4.4. Field Access Expression
-   Syntax: expr '.' fname
-
-   The field access expression is used to access data from a struct or union.
-   First the argument expression, sometimes referred to as the object of the access, is evaluated to a value.
-   Then the named field of the value is accessed.
-
-   A field access expression will finish evaluating only if its object expression finishes evaluating.
-   If the object is of union type, the behavior is undefined if the field being accessed does not match the tag of the union value.
-   This is another case in which a field access expression does not finish evaluating.
-
-   The following must hold for the field access expression to be well formed:
-   @list
-    @li The object expression must be well formed and have some type T.
-    @li The field name must be a field of the Type T.
-   @end
-
-   The type of the expression is the type for the named field in T.
-
-   Note that it is infeasible in general to determine statically whether a field access for a union type may result in undefined behavior at runtime.
-   Where possible, it is encouraged for implementations to warn about potential undefined behavior determined statically.
-  @end
-
-  @section 3.4.5. Conditional Expression
-   Syntax: ?(expr ; expr [, expr [...]])
-
-   The conditional expression uses the tag of a union value to select among possible expressions.
-
-   A conditional expression is well formed if the following hold:
-   @list
-    @li The condition expression is of union type.
-    @li The number of arguments match the number of fields in the union type of the condition argument.
-    @li Each argument must have the same type.
-   @end
-
-   The type of the conditional expression is the same as the type of the arguments.
-
-   First the condition is evaluated to a union value.
-   The tag of the evaluated condition is then used to select the expression in the argument list in the same position as the tagged field in the union type declaration.
-   The result of the conditional expression is then the result of evaluating the selected expression.
-
-   The unselected arguments are not evaluated.
-   More precisely, the behavior is that the conditional expression finishes evaluating if both the condition and the selected expression finish evaluating.
-  @end
-
-  @section 3.4.6. Application Expression
-   Syntax: tname '(' [expr [',' expr [...]]] ')'
-
-   An application expression is used to apply a function to arguments.
-   It has the same syntax as struct construction, only the tname is the name of a declared function instead of a name of a declared struct type.
-
-   An application expression is well formed if the following hold:
-   @list
-    @li The tname must refer to a declared function.
-    @li The number of argument expressions must match the number of arguments in the function declaration.
-    @li Each argument must be well formed and have a type that matches the type of the corresponding argument in the function declaration.
-   @end
-
-   The type of the expression is the return type listed in the function declaration.
-
-   First the arguments of the application expression are evaluated to values.
-   The order in which the arguments are evaluated is unspecified.
-   The application expression will finish evaluating only if all its arguments finish evaluating.
-
-   The evaluated values become the values for the parameters in the body of the function, which is then evaluated in its own scope.
-   The variables visible to the application expression are not visible when executing the function body in its own scope.
-  @end
-
-  @section 3.4.7. Statement Expression
-   Syntax: '{' stmt '}'
-
-   The statement expression is an artifact of the concrete syntax, to support the let statement.
-   The statement syntax makes it clear what the scope of a variable is while allowing a single close brace to end the scope for multiple variables.
-   Implementations need not make any distinction between expressions and statements in their internal representation of a program.
-
-   The result of a statement expression is the result of evaluating the statement.
-
-   The statement expression is well formed if the stmt is well formed and has the same type as the stmt.
-  @end
-
-  @section 3.4.8. Expression Statement
-   Syntax: expr ';'
-
-   The expression statement is the other half of the artifact of the concrete syntax to support the let statement.
-   The result of the expression statement is the result of evaluating the expression.
-
-   The expression statement is well formed if the expr is well formed and has the same type as the expr.
-  @end
-
-  @section 3.4.9. Let Statement
-   Syntax:  tname vname '=' expr ';' stmt
-
-   The let statement introduces a local variable whose value can be shared in the body of another statement or expression.
-   It is interpreted as a sequential operation.
-   First the expression is evaluated to a value, then the body statement is executed in a scope where the variable is set to the value from the expression.
-   Evaluation of the let statement does not finish if evaluation of the expr or body stmt do not finish.
-
-   A let statement is well formed if the following conditions hold:
-   @list
-    @li The vname must not refer to a variable in scope.
-    @li The expr must be well formed with a type equal to tname.
-    @li The stmt must be well formed.
-   @end
-
-   The type of the let statement is the same as the type of its body statement.
-  @end
- @end
-@end
-
-@section 4. Process
- A process is a computation that may have side effects before eventually returning a value.
- Side effects are achieved by putting and getting data to and from ports.
-
- @section 4.1. Get Port
-  There are two kinds of ports, a 'get' port is used to read data from outside the process.
-  A get port, denoted with polarity '-', as in 'Foo- x', can be used repeatedly to get subsequent data of the given type -- in this case 'Foo' -- from the port -- in this case 'x'.
-  When a process gets data from a get port, it will block until data is available on the port.
- @end
-
- @section 4.2. Put Port
-  A process can communicate data outside of itself using a 'put' port.
-  A put port has polarity '+', as in 'Foo+ x', and can be used to repeatedly put data of the given type onto the port.
-  The put operation does not block.
- @end
-
- @section 4.3. Link
-  A link is a FIFO channel with a put port and a get port that two running processes can use to communicate.
-  The link is unbounded in size so that putting data into it will never block, but getting data from the link will block as long as the link is empty.
-  There is the potential for deadlock if all the running processes are blocked waiting for data on get ports.
- @end
-
- @section 4.4. Parallel Processes
-  Multiple processes can be executed in parallel.
-  At any given time, a port may only be accessed by a single process.
-  This is enforced statically using a conservative notion that a port is accessed by a process if the process has or makes any reference to the port.
-
-  Ensuring only a single process has access to a port at any given time ensures deterministic computation, assuming the external world is deterministic.
-  The restriction of allowing a single process access to a port at any given time could be lifted if non-deterministic computation was desired, but for now, we desire deterministic computation.
- @end
-
- @section 4.5. Fairness
-  Evaluation of processes must be fair in the following sense.
-  Any process that is not blocked on a get of an empty port and is not non-terminating must eventually make progress.
-
-  For example, given three processes A, B, and C...
-  @list
-   @li If A and B are blocked on gets, but C is not, C must run.
-   @li If A and B interact infinitely, and C is not blocked, C must make progress.
-   @li If A and B are non-terminating, and C is not blocked, C must make
-progress.
-  @end
-
-  Progress is measured by observable actions: puts, gets, and completion.
- @end
-
- @section 4.6. Declaration
-  Syntax:  'proc' tname '(' [tname polarity pname [',' tname polarity pname [...]]] ';' [tname vname [',' tname vname [...]]] ';' tname ')' proc ';'
-
-  A process declaration defines the name, ports, input arguments, return type, and body of a process.
-
-  Each port has a type and polarity.
-  The polarity '-' is used for get ports, and '+' is used for put ports.
- @end
-
- @section 4.7. Processes
-  This section discusses the syntax and behavior of processes in Calvisus.
-
-  In the typical case, given an environment of variables and ports, a process performs zero or more put and get operations on the ports in the environment then returns a data value.
-  Processes are typed.
-  A well-formed process will produce a data value whose type matches the type of the process.
-
-  More generally, a process may also have undefined behavior or fail to terminate, either from evaluation of an expression that fails to terminate, deadlock, livelock, or because the process simply runs forever.
-  In the following description of process behavior, we will not distinguish between undefined behavior and failure to terminate.
-  Instead we will say the process does not finish.
-
-  @section 4.7.1. Evaluation Process
-   Syntax:    '$' '(' expr ')'
-
-   The evaluation process evaluates an expression and returns the result without performing any put or get operations.
-
-   The evaluation process is well formed if the expression is well formed.
-   The return type of the process is the type of the expression.
-   The process will return a result if the expression finishes evaluating.
-  @end
-
-  @section 4.7.2. Get Process
-   Syntax: '-' pname '(' ')'
-
-   The get process performs a get operation on the named port, returning the value gotten from the port.
-
-   The get process is well formed if the following conditions hold:
-   @list
-    @li named port is in scope and has get polarity.
-   @end
-
-   The type of the process is the type of the port.
-   The process will return a result if there is eventually data on the port to get, otherwise the process will block.
-  @end
-
-  @section 4.7.3. Put Process
-   Syntax: '+' pname '(' expr ')'
-
-   The put process performs a put operation on the named port, returning the value put on the port.
-
-   The put process is well formed if the following conditions hold:
-   @list
-    @li The named port has put polarity.
-    @li The expression is well formed.
-    @li The type of the named port matches the type of the expression.
-   @end
-
-   The type of the process is the type of the port.
-   The process will finish if the expression finishes evaluating.
-   The reason the put process returns the value put onto the port is because it must return some value, and that's the only option available to return.
-  @end
-
-  @section 4.7.4. Conditional Process
-   Syntax: '?' '(' expr ; proc [',' proc [...]] ')'
-
-   The conditional process uses the tag of a union value to select among possible processes.
-
-   A conditional process is well formed if the following hold:
-   @list
-    @li The condition expression is of union type.
-    @li The number of arguments match the number of fields in the union type of the condition.
-    @li Each argument must have the same type.
-   @end
-
-   The type of the conditional process is the same as the type of the arguments.
-
-   First the condition is evaluated to a union value.
-   The tag of the evaluated condition is then used to select the process in the argument list in the same position as the tagged field in the union type declaration.
-   The side effects and result of the conditional process is then the side effects and result of executing the selected process.
-
-   The unselected arguments are not executed.
-  @end
-
-  @section 4.7.5. Call Process
-   Syntax:  tname '(' [pname [',' pname [...]]] ';' [expr [',' expr [...]]] ')'        
-
-   A call process is used to call a process with given port and data arguments.
-   A call process is well formed if the following hold:
-   @list
-    @li The tname must refer to a declared process.
-    @li The number and polarities of port arguments must match the number and polarities of port arguments in the process declaration.
-    @li The number of argument expressions must match the number of expression arguments in the process declaration.
-    @li Each argument expression must be well formed and have a type that matches the type of the corresponding expression argument in the process declaration.
-   @end
-
-   The type of the process is the return type listed in the process declaration.
-
-   First the expression arguments of the call process are evaluated to values.
-   The order in which the arguments are evaluated is unspecified.
-   The call process will finish evaluating only if all its arguments finish evaluating.
-
-   The evaluated values become the values for the parameters in the body of the process, and the port arguments become the values for the port parameters in the body of the process.
-   The ports and variables visible to the call expression are not visible when executing the process body in its own scope.
-  @end
-
-  @section 4.7.6. Statement Process
-   Syntax:  '{ pstmt '}'
-
-   As with the statement expression, the statement process is an artifact of the concrete syntax to support execution and link process statements.
-   The statement syntax makes it clear what the scope of a variable or port is while allowing a single close brace to end the scope for multiple variables and ports.
-   Implementations need not make any distinction between processes and process statements in their internal representation of a program.
-
-   The side effects and result of a statement process is the side effects and result of executing the statement.
-
-   The statement process is well formed if the pstmt is well formed and has the same type as the pstmt.
-  @end
-
-  @section 4.7.7. Link Process Statement
-   Syntax: tname '+-' pname ',' pname ';' pstmt
-
-   The link process statement instantiates a link with joined put and get ports that can be used in subsequent process statements.
-   It adds to the port scope a put port with the first name and a get port with the second name.
-   Gets to the get port will read data values that were put to the put port, in the order they were put.
-   The body of the process statement is executed in a scope with the new put and get ports.
-
-   A link process statement is well formed if the following conditions hold:
-   @list
-    @li The tname must refer to a type declared in the program.
-    @li The pnames must be unique and not be the same as any variables or ports already in scope.
-    @li The body must be well formed.
-   @end
-
-   The type and return value of the link statement is the type and return value of its body statement.
-  @end
-
-  @section 4.7.8. Execution Process Statement
-   Syntax:  tname vname = pstmt [',' tname vname = pstmt [...]]] ';' pstmt
-
-   The execution process statement is used to execute one or more processes in parallel, followed by execution of a process in the scope that includes results of the parallely executed processes.
-
-   An execution process statement is well formed if:
-   @list
-    @li Each execution is well formed, meaning the proc is well formed with type matching tname, and the variable doesn't refer to a variable or port in scope, and the variable name is distinct from all other variable names declared in the execution process statement.
-    @li No port in scope is referred to by more than one of the executions.
-    @li The body of the process statement, if any, is well formed.
-   @end
-
-   The execution process statement has the same type as its body statement.
-
-   To execute an execution process statement, first all processes listed are executed in parallel, according to the fairness rules already stated in another section and interleaved in such a way as to avoid violation of causality.
-
-   Once every executed processes has completed, the body of the execution process statement is executed in a scope augmented with the results of the executed processes.
-
-   The execution process statement completes only if all the executed processes complete and the body process completes.
-  @end
- @end
-@end
-
-@section 5. Program
- Syntax: decl [decl [...]] ;
-
- A program is a collection of type, function, and process declarations.
- An interpreter or compiler should have an implementation-specific mechanism for selecting the main function or process to interpret or compile.
-@end
-
-@section 6. Syntax Reference
- @example
+The type of the expression is the named struct type.
+
+3.4.3. Union Expression
+-----------------------
+Syntax: tname ':' fname '(' expr ')
+
+A union expression is used to construct union values. First the argument of
+the union expression is evaluated to a value, then a new union data value is
+created tagged with the given field name and with the value set to the
+evaluated value.
+
+A union expression will finish evaluating only if its argument finishes
+evaluating.
+
+For a union expression to be well formed, the following must hold:
+* tname must refer to a union type defined in the program.
+* fname must refer to a field of that union type.
+* expr must be a well formed expression whose type matches the type of the named field.
+
+The type of the expression is the named union type.
+
+3.4.4. Field Access Expression
+------------------------------
+Syntax: expr '.' fname
+
+The field access expression is used to access data from a struct or union.
+First the argument expression, sometimes referred to as the object of the
+access, is evaluated to a value. Then the named field of the value is
+accessed.
+
+A field access expression will finish evaluating only if its object expression
+finishes evaluating. If the object is of union type, the behavior is undefined
+if the field being accessed does not match the tag of the union value. This is
+another case in which a field access expression does not finish evaluating.
+
+The following must hold for the field access expression to be well formed:
+* The object expression must be well formed and have some type T.
+* The field name must be a field of the Type T.
+
+The type of the expression is the type for the named field in T.
+
+Note that it is infeasible in general to determine statically whether a field
+access for a union type may result in undefined behavior at runtime. Where
+possible, it is encouraged for implementations to warn about potential
+undefined behavior determined statically.
+
+3.4.5. Conditional Expression
+-----------------------------
+Syntax: ?(expr ; expr [, expr [...]])
+
+The conditional expression uses the tag of a union value to select among
+possible expressions.
+
+A conditional expression is well formed if the following hold:
+* The condition expression is of union type.
+* The number of arguments match the number of fields in the union type of the
+  condition argument.
+* Each argument must have the same type.
+
+The type of the conditional expression is the same as the type of the
+arguments.
+
+First the condition is evaluated to a union value. The tag of the evaluated
+condition is then used to select the expression in the argument list in the
+same position as the tagged field in the union type declaration. The result of
+the conditional expression is then the result of evaluating the selected
+expression.
+
+The unselected arguments are not evaluated. More precisely, the behavior is
+that the conditional expression finishes evaluating if both the condition and
+the selected expression finish evaluating.
+
+3.4.6. Application Expression
+-----------------------------
+Syntax: tname '(' [expr [',' expr [...]]] ')'
+
+An application expression is used to apply a function to arguments. It has the
+same syntax as struct construction, only the tname is the name of a declared
+function instead of a name of a declared struct type.
+
+An application expression is well formed if the following hold:
+* The tname must refer to a declared function.
+* The number of argument expressions must match the number of arguments in the
+  function declaration.
+* Each argument must be well formed and have a type that matches the type of
+  the corresponding argument in the function declaration.
+
+The type of the expression is the return type listed in the function
+declaration.
+
+First the arguments of the application expression are evaluated to values. The
+order in which the arguments are evaluated is unspecified. The application
+expression will finish evaluating only if all its arguments finish evaluating.
+
+The evaluated values become the values for the parameters in the body of the
+function, which is then evaluated in its own scope. The variables visible to
+the application expression are not visible when executing the function body in
+its own scope.
+
+3.4.7. Statement Expression
+---------------------------
+Syntax: '{' stmt '}'
+
+The statement expression is an artifact of the concrete syntax, to support the
+let statement. The statement syntax makes it clear what the scope of a
+variable is while allowing a single close brace to end the scope for multiple
+variables. Implementations need not make any distinction between expressions
+and statements in their internal representation of a program.
+
+The result of a statement expression is the result of evaluating the
+statement.
+
+The statement expression is well formed if the stmt is well formed and has the
+same type as the stmt.
+
+3.4.8. Expression Statement
+---------------------------
+Syntax: expr ';'
+
+The expression statement is the other half of the artifact of the concrete
+syntax to support the let statement. The result of the expression statement is
+the result of evaluating the expression.
+
+The expression statement is well formed if the expr is well formed and has the
+same type as the expr.
+
+3.4.9. Let Statement
+--------------------
+Syntax:  tname vname '=' expr ';' stmt
+
+The let statement introduces a local variable whose value can be shared in the
+body of another statement or expression. It is interpreted as a sequential
+operation. First the expression is evaluated to a value, then the body
+statement is executed in a scope where the variable is set to the value from
+the expression. Evaluation of the let statement does not finish if evaluation
+of the expr or body stmt do not finish.
+
+A let statement is well formed if the following conditions hold:
+* The vname must not refer to a variable in scope.
+* The expr must be well formed with a type equal to tname.
+* The stmt must be well formed.
+
+The type of the let statement is the same as the type of its body statement.
+
+4. Processes
+------------
+A process is a computation that may have side effects before eventually
+returning a value. Side effects are achieved by putting and getting data to
+and from ports.
+
+4.1. Get Port
+-------------
+There are two kinds of ports, a 'get' port is used to read data from outside
+the process. A get port, denoted with polarity '-', as in 'Foo- x', can be
+used repeatedly to get subsequent data of the given type ('Foo') from the port
+('x'). When a process gets data from a get port, it will block until data is
+available on the port.
+
+4.2. Put Port
+-------------
+A process can communicate data outside of itself using a 'put' port. A put
+port has polarity '+', as in 'Foo+ x', and can be used to repeatedly put data
+of the given type onto the port. The put operation does not block.
+
+4.3. Link
+---------
+A link is a first in first out (FIFO) channel with a put port and a get port
+that two running processes can use to communicate. The link is unbounded in
+size so that putting data into it will never block, but getting data from the
+link will block as long as the link is empty. There is the potential for
+deadlock if all the running processes are blocked waiting for data on get
+ports.
+
+4.4. Parallel Processes
+-----------------------
+Multiple processes can be executed in parallel. At any given time, a port may
+only be accessed by a single process. This is enforced statically using a
+conservative notion that a port is accessed by a process if the process has or
+makes any reference to the port.
+
+Ensuring only a single process has access to a port at any given time ensures
+deterministic computation, assuming the external world is deterministic. The
+restriction of allowing a single process access to a port at any given time
+could be lifted if non-deterministic computation was desired, but for now, we
+desire deterministic computation.
+
+4.5. Fairness
+-------------
+Evaluation of processes must be fair in the following sense. Any process that
+is not blocked on a get of an empty port and is not non-terminating must
+eventually make progress.
+
+For example, given three processes A, B, and C...
+* If A and B are blocked on gets, but C is not, C must run.
+* If A and B interact infinitely, and C is not blocked, C must make progress.
+* If A and B are non-terminating, and C is not blocked, C must make progress.
+
+Progress is measured by observable actions: puts, gets, and completion.
+
+4.6. Declaration
+----------------
+Syntax:  'proc' tname '(' [tname polarity pname [',' tname polarity pname [...]]] ';' [tname vname [',' tname vname [...]]] ';' tname ')' proc ';'
+
+A process declaration defines the name, ports, input arguments, return type,
+and body of a process.
+
+Each port has a type and polarity. The polarity '-' is used for get ports, and
+'+' is used for put ports.
+
+4.7. Processes
+--------------
+This section discusses the syntax and behavior of processes in Calvisus.
+
+In the typical case, given an environment of variables and ports, a process
+performs zero or more put and get operations on the ports in the environment
+then returns a data value. Processes are typed. A well-formed process will
+produce a data value whose type matches the type of the process.
+
+More generally, a process may also have undefined behavior or fail to
+terminate, either from evaluation of an expression that fails to terminate,
+deadlock, livelock, or because the process simply runs forever. In the
+following description of process behavior, we will not distinguish between
+undefined behavior and failure to terminate. Instead we will say the process
+does not finish.
+
+4.7.1. Evaluation Process
+-------------------------
+Syntax:    '$' '(' expr ')'
+
+The evaluation process evaluates an expression and returns the result without
+performing any put or get operations.
+
+The evaluation process is well formed if the expression is well formed. The
+return type of the process is the type of the expression. The process will
+return a result if the expression finishes evaluating.
+
+4.7.2. Get Process
+------------------
+Syntax: '-' pname '(' ')'
+
+The get process performs a get operation on the named port, returning the
+value gotten from the port.
+
+The get process is well formed if the following conditions hold:
+* The named port is in scope and has get polarity.
+
+The type of the process is the type of the port. The process will return a
+result if there is eventually data on the port to get, otherwise the process
+will block.
+
+4.7.3. Put Process
+------------------
+Syntax: '+' pname '(' expr ')'
+
+The put process performs a put operation on the named port, returning the
+value put on the port.
+
+The put process is well formed if the following conditions hold:
+* The named port has put polarity.
+* The expression is well formed.
+* The type of the named port matches the type of the expression.
+
+The type of the process is the type of the port. The process will finish if
+the expression finishes evaluating. The reason the put process returns the
+value put onto the port is because it must return some value, and that's the
+only option available to return.
+
+4.7.4. Conditional Process
+--------------------------
+Syntax: '?' '(' expr ; proc [',' proc [...]] ')'
+
+The conditional process uses the tag of a union value to select among possible
+processes.
+
+A conditional process is well formed if the following hold:
+* The condition expression is of union type.
+* The number of arguments match the number of fields in the union type of the
+  condition.
+* Each argument must have the same type.
+
+The type of the conditional process is the same as the type of the arguments.
+
+First the condition is evaluated to a union value. The tag of the evaluated
+condition is then used to select the process in the argument list in the same
+position as the tagged field in the union type declaration. The side effects
+and result of the conditional process is then the side effects and result of
+executing the selected process.
+
+The unselected arguments are not executed.
+
+4.7.5. Call Process
+-------------------
+Syntax:  tname '(' [pname [',' pname [...]]] ';' [expr [',' expr [...]]] ')'        
+
+A call process is used to call a process with given port and data arguments. A
+call process is well formed if the following hold:
+* The tname must refer to a declared process.
+* The number and polarities of port arguments must match the number and
+  polarities of port arguments in the process declaration.
+* The number of argument expressions must match the number of expression
+  arguments in the process declaration.
+* Each argument expression must be well formed and have a type that matches
+  the type of the corresponding expression argument in the process
+  declaration.
+
+The type of the process is the return type listed in the process declaration.
+
+First the expression arguments of the call process are evaluated to values.
+The order in which the arguments are evaluated is unspecified. The call
+process will finish evaluating only if all its arguments finish evaluating.
+
+The evaluated values become the values for the parameters in the body of the
+process, and the port arguments become the values for the port parameters in
+the body of the process. The ports and variables visible to the call
+expression are not visible when executing the process body in its own scope.
+
+4.7.6. Statement Process
+------------------------
+Syntax:  '{ pstmt '}'
+
+As with the statement expression, the statement process is an artifact of the
+concrete syntax to support execution and link process statements. The
+statement syntax makes it clear what the scope of a variable or port is while
+allowing a single close brace to end the scope for multiple variables and
+ports. Implementations need not make any distinction between processes and
+process statements in their internal representation of a program.
+
+The side effects and result of a statement process is the side effects and
+result of executing the statement.
+
+The statement process is well formed if the pstmt is well formed and has the
+same type as the pstmt.
+
+4.7.7. Link Process Statement
+-----------------------------
+Syntax: tname '+-' pname ',' pname ';' pstmt
+
+The link process statement instantiates a link with joined put and get ports
+that can be used in subsequent process statements. It adds to the port scope a
+put port with the first name and a get port with the second name. Gets to the
+get port will read data values that were put to the put port, in the order
+they were put. The body of the process statement is executed in a scope with
+the new put and get ports.
+
+A link process statement is well formed if the following conditions hold:
+* The tname must refer to a type declared in the program.
+* The pnames must be unique and not be the same as any variables or ports
+  already in scope.
+* The body must be well formed.
+
+The type and return value of the link statement is the type and return value
+of its body statement.
+
+4.7.8. Execution Process Statement
+----------------------------------
+Syntax:  tname vname = pstmt [',' tname vname = pstmt [...]]] ';' pstmt
+
+The execution process statement is used to execute one or more processes in
+parallel, followed by execution of a process in the scope that includes
+results of the parallely executed processes.
+
+An execution process statement is well formed if:
+* Each execution is well formed, meaning the proc is well formed with type
+  matching tname, and the variable doesn't refer to a variable or port in
+  scope, and the variable name is distinct from all other variable names
+  declared in the execution process statement.
+* No port in scope is referred to by more than one of the executions.
+* The body of the process statement, if any, is well formed.
+
+The execution process statement has the same type as its body statement.
+
+To execute an execution process statement, first all processes listed are
+executed in parallel, according to the fairness rules already stated in
+another section and interleaved in such a way as to avoid violation of
+causality.
+
+Once every executed processes has completed, the body of the execution process
+statement is executed in a scope augmented with the results of the executed
+processes.
+
+The execution process statement completes only if all the executed processes
+complete and the body process completes.
+
+5. Program
+----------
+Syntax: decl [decl [...]] ;
+
+A program is a collection of type, function, and process declarations. An
+interpreter or compiler should have an implementation-specific mechanism for
+selecting the main function or process to interpret or compile.
+
+6. Syntax Reference
+-------------------
   prog ::= decl [decl [...]] ;
 
   decl ::= 'struct' tname '(' [tname fname [',' tname fname [...]]] ')' ';'
@@ -798,50 +896,41 @@ progress.
   pname ::= name    (* A name of a port *)
   tname ::= name    (* A name referring to a type or function *)
   vname ::= name    (* A name referring to a value *)
- @end
 
- @section 6.1. Guidelines for Concrete Syntax
-  Don't have keywords that aren't allowed to be used as variable or field names.
-  Because I find it very annoying in C and Java how you can't use names like 'class' or 'union' for variable and field names.
+6.1. Guidelines for Concrete Syntax
+-----------------------------------
+Don't have keywords that aren't allowed to be used as variable or field names.
+Because I find it very annoying in C and Java how you can't use names like
+'class' or 'union' for variable and field names.
 
-  Try to keep parsing simple, both in order to simplify parser implementations and under the assumption that something simpler to write a parser for is simpler for a human to parse as well.
- @end
-@end
+Try to keep parsing simple, both in order to simplify parser implementations
+and under the assumption that something simpler to write a parser for is
+simpler for a human to parse as well.
 
-@section 7. TODO
- @list[bulleted]
-  @bi
-   Is it unreasonable to support infinite size links?
-   Should we say they only hold 1 or K values before put blocks instead?
-  @end
-  @li Add a section describing how we describe syntax?
-  @li Discuss guarantees for not smashing stack with tail calls?
-  @li Discuss guarantees for freeing link resources?
-  @bi
-   Add a section talking about lexicography?
-   Namely that tokens are punctuation or words and that whitespace is a token delimiter.
-  @end
-  @li Add a section saying we support # style comments.
-  @li Add those examples of recursive data types I promised but haven't included yet.
-  @li Show how the types bool, char, and int can be defined in the Unions section.
-  @li Add a section with the suggested binary encoding of a program.
-  @bi Idea: how about this for name terminology:
-   @list[bulleted]
-    @li "static name" for function, union, struct, and process names.
-    @li "variable name" for variables.
-    @li "field name" for fields.
-   @end
-  @end
-  @li Include examples with all the expression descriptions.
-  @bi
-   I worry it is easy to get the order of conditional arguments wrong.
-   Would it not make more sense to explicitly specify the tag corresponding to each conditional argument, so that the compiler can verify it for you?
-   In particular, imagine switching the order of a Bool/Bit/Maybe/List type.
-   The compiler will give you no help to track down all the places that need to change.
-  @end
-  @bi
-   Handling of port arguments feels suspect to me.
-   Don't separate port arguments from normal arguments?
-   Add support for "port structs"?
- @end
-@end
+7. TODO
+-------
+* Is it unreasonable to support infinite size links? Should we say they only
+  hold 1 or K values before put blocks instead?
+* Add a section describing how we describe syntax?
+* Discuss guarantees for not smashing stack with tail calls?
+* Discuss guarantees for freeing link resources?
+* Add a section talking about lexicography? Namely that tokens are punctuation
+  or words and that whitespace is a token delimiter.
+* Add a section saying we support # style comments.
+* Add those examples of recursive data types I promised but haven't included
+  yet.
+* Show how the types bool, char, and int can be defined in the Unions section.
+* Add a section with the suggested binary encoding of a program.
+* Idea: how about this for name terminology:
+ - "static name" for function, union, struct, and process names.
+ - "variable name" for variables.
+ - "field name" for fields.
+* Include examples with all the expression descriptions.
+* I worry it is easy to get the order of conditional arguments wrong. Would it
+  not make more sense to explicitly specify the tag corresponding to each
+  conditional argument, so that the compiler can verify it for you? In
+  particular, imagine switching the order of a Bool/Bit/Maybe/List type. The
+  compiler will give you no help to track down all the places that need to
+  change.
+* Handling of port arguments feels suspect to me. Don't separate port
+  arguments from normal arguments? Add support for "port structs"?
