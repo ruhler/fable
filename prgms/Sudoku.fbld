@@ -1,0 +1,231 @@
+
+import @ { Unit@StdLib; List@StdLib; Maybe@StdLib; };
+import List { S; P };
+
+union Symbol(
+  Unit S1, Unit S2, Unit S3,
+  Unit S4, Unit S5, Unit S6,
+  Unit S7, Unit S8, Unit S9);
+
+struct CellId(Symbol row, Symbol col);
+              
+struct SymbolArray<type T>(
+  T s1, T s2, T s3,
+  T s4, T s5, T s6,
+  T s7, T s8, T s9);
+
+type CellIdArray<type T> = SymbolArray<SymbolArray<T>>;
+
+# Solve --
+#   Solve a sudoku puzzle.
+func Solve(CellIdArray<Maybe<Symbol>> input; Maybe<CellIdArray<Symbol>>) {
+  SolveFully(State(InitialConstraints(input), InitialBoard()));
+};
+
+
+######### Private below here ############
+
+priv func MapSymbolArray<type A, type B, func F(A x; B)>(SymbolArray<A> xs;
+SymbolArray<B>) {
+  SymbolArray<B>(F(xs.s1), F(xs.s2), F(xs.s3),
+                 F(xs.s4), F(xs.s5), F(xs.s6),
+                 F(xs.s7), F(xs.s8), F(xs.s9));
+};
+
+priv union GroupId(Symbol row, Symbol col, Symbol box);
+
+priv struct GroupIdArray<type T>(SymbolArray<SymbolArray<SymbolArray<T>>>);
+
+priv struct Assign(CellId cell, Symbol symbol);
+priv union Constraint(Assign eq, Assign ne);
+
+# SymbolSet -- 
+#   A set of symbols. Implemented as a linked list of symbols sorted in
+#   order S1, S2, ... , S9.
+priv type SymbolSet = S<Symbol>;
+
+# CellSet --
+#   A set of cells. Implemented as an unordered linked list of cell ids.
+priv type CellSet = S<CellId>;
+
+# Cells --
+#   Mapping from CellId to the set of possible symbols for that cell.
+priv type Cells = CellIdArray<SymbolSet>;
+
+# Groups --
+#   Mapping from (GroupId, Symbol) to the set of possible cells for that group
+#   that can take on that symbol.
+priv type Groups = GroupIdArray<SymbolArray<CellSet>>;
+
+priv struct Board(Cells cells, Groups groups);
+
+priv struct State(S<Constraint> cs, Board b);
+
+# InitialConstraints --
+#   Convert an input board specification into a set of initial constraints.
+priv func InitialConstraints(CellIdArray<Maybe<Symbol>> input; S<Constraint>)
+{
+  # TODO: Use some sort of list monad or fold or something to make it easier
+  # to specify this traversal in a more abstract way? It's a little sad that
+  # this approach requires code duplication per symbol and overspecifies the
+  # traversal order.
+  # For example, it would be awesome to have something like:
+  #   row <- AllSymbols();
+  #   col <- AllSymbols();
+  #   cell <- input[row][col];  # guards on Maybe type
+  #   EqConstraint(CellId(row, col), cell);
+  InitialRowConstraints(s1(), input.s1,
+  InitialRowConstraints(s2(), input.s2,
+  InitialRowConstraints(s3(), input.s3,
+  InitialRowConstraints(s4(), input.s4,
+  InitialRowConstraints(s5(), input.s5,
+  InitialRowConstraints(s6(), input.s6,
+  InitialRowConstraints(s7(), input.s7,
+  InitialRowConstraints(s8(), input.s8,
+  InitialRowConstraints(s9(), input.s9,
+    S0<Constraint>())))))))));
+};
+
+# InitialRowConstraints --
+#   Convert an input row specification into a set of initial constraints.
+# 
+# Inputs:
+#   row - The id of the row
+#   cols - The specification of the columns for that row.
+#   cs - Existing constraints to propagate to the output set of constraints.
+#
+# Returns:
+#   The constraints of this row appened to the existing constraints.
+priv func InitialRowConstraints(Symbol row, SymbolArray<Maybe<Symbol>> cols,
+S<Constraint> cs; S<Constraint>) {
+  InitialCellConstraint(row, s1(), cols.s1,
+  InitialCellConstraint(row, s2(), cols.s2,
+  InitialCellConstraint(row, s3(), cols.s3,
+  InitialCellConstraint(row, s4(), cols.s4,
+  InitialCellConstraint(row, s5(), cols.s5,
+  InitialCellConstraint(row, s6(), cols.s6,
+  InitialCellConstraint(row, s7(), cols.s7,
+  InitialCellConstraint(row, s8(), cols.s8,
+  InitialCellConstraint(row, s9(), cols.s0, cs)))))))));
+};
+
+# InitialCellConstraint --
+#   Convert an input cell specification into a set of initial constraints.
+# 
+# Inputs:
+#   row - The id of the row
+#   col - The id of the column
+#   cell - The specification of the cell
+#   cs - Existing constraints to propagate to the output set of constraints.
+#
+# Returns:
+#   The constraints of this cell appened to the existing constraints.
+priv func InitialCellConstraint(Symbol row, Symbol col, Maybe<Symbol> cell,
+S<Constraint> cs; S<Constraint>) {
+  ?(cell;
+      ConsS<Constraint>(Constraint:eq(Assign(CellId(row, col), cell.just)), cs),
+      cs);
+};
+
+# InitialBoard --
+#   Create a newly initialized board
+func InitialBoard( ; Board) {
+  Board(InitialCells(), InitialGroups());
+};
+
+# InitialCells --
+#   Create a newly initialized Cells
+func InitialCells( ; Cells);
+
+# InitialGroups --
+#   Create a newly initialized Groups
+func InitialCells( ; Groups);
+
+# Apply --
+#   Apply a single constraint to the given board.
+#
+# Inputs:
+#   c - The constraint to apply
+#   cs - existing constraints to preserve in the output state.
+#   b - The board to apply the constraint to.
+# 
+# Returns:
+#   Nothing if the board is found to be inconsistent. Otherwise the updated
+#   state with additional constraints and the revised board.
+#
+# TODO:
+#   eq -> Cells: Check and set cell value.
+#   ne -> Cells: Check and exclude cell value, generate eq if needed.
+#   eq -> Groups: Check and set symbol.
+#                 Generate ne to rest of cells that could have been that symbol.
+#   ne -> Groups: Check and exclude symbol cell, generate eq if needed.
+priv func Apply(Constraint c, S<Constraint> cs, Board b; Maybe<State>);
+
+
+# ApplyAll --
+#   Repeatedly apply all constraints in the given state.
+#
+# Returns:
+#   Nothing if the board is found to be inconsistent. Otherwise the updated
+#   board with all constraints applied.
+priv func ApplyAll(State s; Maybe<Board>) {
+  ?(s.cs; 
+      {
+        Maybe<State> ms = Apply(s.cs.cons.head, s.cs.cons.tail, s.b);
+        ?(ms; ApplyAll(ms.Just), Maybe<Board>:Nothing(Unit()));
+      },
+      Maybe<Board>:Just(s.b));
+};
+
+# Split --
+#   Find a cell in the given board that still has a choice of symbols.
+#
+# The board must be consistent with all constraints fully propagated.
+#
+# Returns:
+#   An assignment to one of the cells with a choice, or Nothing if all cells
+#   have been assigned.
+priv func Split(Board b; Maybe<Assign>);
+
+# ExtractSolution --
+#   Extract the solution from a completely solved board.
+#
+# Behavior is undefined if the board is not completely solved.
+#
+# Returns:
+#   The extracted solution
+priv func ExtractSolution(Board b; CellIdArray<Symbol>) {
+  MapSymbolArray<SymbolArray<SymbolSet>, SymbolArray<Symbol>,
+    MapSymbolArray<SymbolSet, Symbol, HeadS>>(b.cells);
+};
+
+priv func SolveFully(State s; Maybe<CellIdArray<Symbol>>) {
+  MaybeBoard mb = ApplyAll(s);
+  ?(mb; {
+      Maybe<Assign> ma = Split(mb.just);
+      ?(ma; {
+         Maybe<CellIdArray<Symbol>> meq = SolveFully(
+            State(S1(Constraint:eq(ma.just)), mb.just));
+         ?(meq; meq.just, SolveFully(State(S1(Constraint:ne(ma.just)),
+mb.just)));
+        }, Maybe<CellIdArray<Symbol>>:just(ExtractSolution(mb.just)));
+    }, Maybe<CellIdArray<Symbol>>:nothing(Unit()));
+};
+
+# 8.. .9. ..2     816 497 532 
+# 72. ... .49     723 518 649 
+# ... 3.6 ...     495 326 781 
+#                             
+# .5. .8. .16     354 789 216 
+# ..9 ... 3..     289 164 375 
+# 67. .5. .9.     671 253 498 
+#                             
+# ... 9.1 ...     542 971 863 
+# 96. ... .54     967 832 154 
+# 1.. .4. ..7     138 645 927 
+
+# Notes: Sample traversal-like things:
+# * Map over elements of array to get a new array
+# * Construct an array by setting all elements to the same initial value
+# * Map over elements of an array and combine to get a list
+# * Filter elements out of a maybe to get a list
