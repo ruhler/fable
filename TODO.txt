@@ -1,6 +1,4 @@
 Conditional Syntax Change
-* Change fblc spec to require tags for conditionals
-  - include rationale
 * Update all test cases to new syntax
 * Update fblc code to implement new syntax
 * Update all fblc programs to use new syntax

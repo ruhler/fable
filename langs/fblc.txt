@@ -252,7 +252,7 @@ that reason, we say the behavior is undefined.
 
 2.3.5. Conditional
 ------------------
-Syntax: '?' '(' value ';' [value [',' value [...]]] ')'
+Syntax: '?' '(' value ';' [fname ':' value [',' fname ':' value [...]]] ')'
 
 A conditional is used to select a value or other object based on the tagged
 field of a union. For example, assuming instr is a value of type CalcInstr,
@@ -262,22 +262,24 @@ value of type 'int' containing the result of executing the calculator
 instruction:
 
   ?(instr ;
-      add(instr.add.a, instr.add.b),
-      sub(instr.sub.a, instr.sub.b),
-      neg(instr.negate.a),
-      0())
+      add: add(instr.add.a, instr.add.b),
+      sub: sub(instr.sub.a, instr.sub.b),
+      negate: neg(instr.negate.a),
+      clear: 0())
 
 In this example, 'instr' is called the condition of the conditional. What
 comes after the condition and semicolon are called the arguments of the
 conditional.
 
-If the tag of the union value refers to the first field in the union declaration, the conditional takes the value of its first argument. If the tag of the union value refers to the second field in the union declaration, the conditional takes the value of its second argument, and so on.
+The conditional takes the value of the argument whose label matches the tag of
+the union value.
 
 A conditional is considered valid if the following conditions hold:
 1. The condition of the conditional must have a union type.
 2. The number of arguments to the conditional must match the number of fields
 in the union type.
-3. Every argument must have the same type.
+3. The argument labels match the names and order of fields in the union type.
+4. Every argument must have the same type.
 
 The result is an object of the same type as the arguments.
 
@@ -375,10 +377,10 @@ of a calculator instruction:
 
   func Calculate(CalcInstr instr; int) {
     ?(instr ;
-        add(instr.add.a, instr.add.b),
-        sub(instr.sub.a, instr.sub.b),
-        neg(instr.negate.a),
-        0());
+        add: add(instr.add.a, instr.add.b),
+        sub: sub(instr.sub.a, instr.sub.b),
+        negate: neg(instr.negate.a),
+        clear: 0());
   };
 
 The input arguments and the output type are separated by a semicolon in the
@@ -505,7 +507,7 @@ undefined behavior determined statically.
 
 3.4.5. Conditional Expression
 -----------------------------
-Syntax: ?(expr ; expr [, expr [...]])
+Syntax: ?(expr ; fname ':' expr [, fname ':' expr [...]])
 
 The conditional expression uses the tag of a union value to select among
 possible expressions.
@@ -514,16 +516,17 @@ A conditional expression is well formed if the following hold:
 * The condition expression is of union type.
 * The number of arguments match the number of fields in the union type of the
   condition argument.
-* Each argument must have the same type.
+* The argument labels match the names and order of fields in the union type.
+* Every argument has the same type.
 
 The type of the conditional expression is the same as the type of the
 arguments.
 
 First the condition is evaluated to a union value. The tag of the evaluated
-condition is then used to select the expression in the argument list in the
-same position as the tagged field in the union type declaration. The result of
-the conditional expression is then the result of evaluating the selected
-expression.
+condition is then used to select the expression in the argument list with the
+same label and position as the tagged field in the union type declaration. The
+result of the conditional expression is then the result of evaluating the
+selected expression.
 
 The unselected arguments are not evaluated. More precisely, the behavior is
 that the conditional expression finishes evaluating if both the condition and
@@ -726,7 +729,7 @@ only option available to return.
 
 4.7.4. Conditional Process
 --------------------------
-Syntax: '?' '(' expr ; proc [',' proc [...]] ')'
+Syntax: '?' '(' expr ; fname ':' proc [',' fname ':' proc [...]] ')'
 
 The conditional process uses the tag of a union value to select among possible
 processes.
@@ -735,15 +738,16 @@ A conditional process is well formed if the following hold:
 * The condition expression is of union type.
 * The number of arguments match the number of fields in the union type of the
   condition.
-* Each argument must have the same type.
+* The argument labels match the names and order of fields in the union type.
+* Every argument has the same type.
 
 The type of the conditional process is the same as the type of the arguments.
 
 First the condition is evaluated to a union value. The tag of the evaluated
-condition is then used to select the process in the argument list in the same
-position as the tagged field in the union type declaration. The side effects
-and result of the conditional process is then the side effects and result of
-executing the selected process.
+condition is then used to select the process in the argument list with the
+same label and position as the tagged field in the union type declaration. The
+side effects and result of the conditional process is then the side effects
+and result of executing the selected process.
 
 The unselected arguments are not executed.
 
@@ -864,7 +868,8 @@ selecting the main function or process to interpret or compile.
         |  tname '(' [expr [',' expr [...]]] ')'        (* struct *)
         |  tname ':' fname '(' expr ')'                 (* union *)
         |  expr '.' fname                               (* field access *)
-        |  '?' '(' expr ';' expr [',' expr [...]] ')'   (* conditional *)
+        |  '?' '(' expr ';' fname ':' expr              (* conditional *)
+                       [',' fname ':' expr [...]] ')'   
         |  tname '(' [expr [',' expr [...]]] ')'        (* application *)
         |  '{' stmt '}'                                 (* statement *)
         ;
@@ -880,7 +885,8 @@ selecting the main function or process to interpret or compile.
   proc ::= '$' '(' expr ')'                             (* eval *)
         |  '-' pname '(' ')'                            (* get *)
         |  '+' pname '(' expr ')'                       (* put *)
-        |  '?'(expr ';' proc [',' proc [...]] ')'       (* conditional *)
+        |  '?'(expr ';' fname ':' proc                  (* conditional *)
+                   [',' fname ':' proc [...]] ')'
         |  tname '(' [pname [',' pname [...]]] ';'      (* call *) 
                      [expr [',' expr [...]]] ')'        
         |  '{ pstmt '}'                                 (* process statment *)
@@ -926,11 +932,5 @@ simpler for a human to parse as well.
  - "variable name" for variables.
  - "field name" for fields.
 * Include examples with all the expression descriptions.
-* I worry it is easy to get the order of conditional arguments wrong. Would it
-  not make more sense to explicitly specify the tag corresponding to each
-  conditional argument, so that the compiler can verify it for you? In
-  particular, imagine switching the order of a Bool/Bit/Maybe/List type. The
-  compiler will give you no help to track down all the places that need to
-  change.
 * Handling of port arguments feels suspect to me. Don't separate port
   arguments from normal arguments? Add support for "port structs"?
