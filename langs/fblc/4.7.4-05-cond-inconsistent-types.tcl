@@ -5,7 +5,9 @@ set prg {
   proc main( ; ; Fruit) {
     # The condition argument types are not consistent.
     ?(Fruit:pear(Unit()) ;
-      $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Unit()));
+      apple: $(Fruit:pear(Unit())),
+      banana: $(Fruit:apple(Unit())),
+      pear: $(Unit()));
   };
 }
-fblc-check-error $prg 8:54
+fblc-check-error $prg 10:13

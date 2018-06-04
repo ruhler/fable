@@ -6,7 +6,7 @@ set prg {
   func main( ; EnumXYZ) {
     # The conditional has a comma instead of a semicolon after the condition.
     ?(EnumABC:C(Unit()),
-      EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit()));
+      A: EnumXYZ:X(Unit()), B: EnumXYZ:Y(Unit()), C: EnumXYZ:Z(Unit()));
   };
 }
 fblc-check-error $prg 8:24

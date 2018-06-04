@@ -5,7 +5,7 @@ set prg {
 
   func main( ; Foo) {
     # The open parenthesis before the argument is missing.
-    Foo:bar ?(Foo:bar(Unit()) ; Unit(), Unit()));
+    Foo:bar ?(Foo:bar(Unit()) ; bar: Unit(), sludge: Unit()));
   };
 }
 fblc-check-error $prg 8:13

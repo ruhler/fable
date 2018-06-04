@@ -6,7 +6,7 @@ set prg {
   func main( ; EnumXYZ) {
     # The condition should take 3 arguments, not 2.
     ?(EnumABC:B(Unit()) ;
-      EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()));
+      A: EnumXYZ:X(Unit()), B: EnumXYZ:Y(Unit()));
   };
 }
 # TODO: Where exactly should the error be?

@@ -5,7 +5,7 @@ set prg {
 
   func main( ; EnumXYZ) {
     # The variable 'x' is not declared.
-    ?(x ; EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit()));
+    ?(x ; A: EnumXYZ:X(Unit()), B: EnumXYZ:Y(Unit()), C: EnumXYZ:Z(Unit()));
   };
 }
 fblc-check-error $prg 8:7

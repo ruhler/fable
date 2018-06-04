@@ -5,7 +5,7 @@ set prg {
 
   proc main( ; ; Fruit) {
     # The variable x is not declared.
-    ?(Bool:true(Unit()) ; $(Fruit:pear(Unit())), $(x));
+    ?(Bool:true(Unit()) ; true: $(Fruit:pear(Unit())), false: $(x));
   };
 }
-fblc-check-error $prg 8:52
+fblc-check-error $prg 8:65

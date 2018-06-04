@@ -5,7 +5,8 @@ set prg {
   proc main( ; ; Fruit) {
     # The condition has too few arguments.
     ?(Fruit:pear(Unit()) ;
-      $(Fruit:pear(Unit())), $(Fruit:apple(Unit())));
+      apple: $(Fruit:pear(Unit())),
+      banana: $(Fruit:apple(Unit())));
   };
 }
 # TODO: Where exactly should the error location be?

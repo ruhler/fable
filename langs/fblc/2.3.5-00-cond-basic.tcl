@@ -6,7 +6,7 @@ set prg {
 
   func main( ; EnumXYZ) {
     ?(EnumABC:C(Unit()) ;
-      EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit()));
+      A: EnumXYZ:X(Unit()), B: EnumXYZ:Y(Unit()), C: EnumXYZ:Z(Unit()));
   };
 }
 

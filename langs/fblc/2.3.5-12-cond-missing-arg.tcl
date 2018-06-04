@@ -6,7 +6,7 @@ set prg {
   func main( ; EnumXYZ) {
     # The conditional is missing one of its arguments.
     ?(EnumABC:C(Unit());
-      EnumXYZ:X(Unit()), , EnumXYZ:Z(Unit()));
+      A: EnumXYZ:X(Unit()), , B: EnumXYZ:Z(Unit()));
   };
 }
-fblc-check-error $prg 9:26
+fblc-check-error $prg 9:29

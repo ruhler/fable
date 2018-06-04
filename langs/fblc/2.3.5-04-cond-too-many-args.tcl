@@ -6,7 +6,7 @@ set prg {
   func main( ; EnumXYZ) {
     # The condition should take 3 args, not 4.
     ?(EnumABC:B(Unit()) ;
-      EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit()), EnumXYZ:X(Unit()));
+      A: EnumXYZ:X(Unit()), B: EnumXYZ:Y(Unit()), C: EnumXYZ:Z(Unit()), D: EnumXYZ:X(Unit()));
   };
 }
 fblc-check-error $prg 8:5

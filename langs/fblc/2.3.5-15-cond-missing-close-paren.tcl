@@ -6,7 +6,7 @@ set prg {
   func main( ; EnumXYZ) {
     # The conditional is missing the final close parenthesis.
     ?(EnumABC:C(Unit());
-      EnumXYZ:X(Unit()), EnumXYZ:Y(Unit()), EnumXYZ:Z(Unit());
+      A: EnumXYZ:X(Unit()), B: EnumXYZ:Y(Unit()), C: EnumXYZ:Z(Unit());
   };
 }
-fblc-check-error $prg 9:62
+fblc-check-error $prg 9:71

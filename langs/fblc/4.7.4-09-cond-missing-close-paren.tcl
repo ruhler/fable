@@ -5,7 +5,9 @@ set prg {
   proc main( ; ; Fruit) {
     # A condition is missing its final close paren.
     ?(Fruit:pear(Unit()) ;
-      $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Fruit:banana(Unit()));
+      apple: $(Fruit:pear(Unit())),
+      banana: $(Fruit:apple(Unit())),
+      pear: $(Fruit:banana(Unit()));
   };
 }
-fblc-check-error $prg 8:77
+fblc-check-error $prg 10:36

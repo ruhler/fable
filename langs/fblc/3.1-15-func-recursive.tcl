@@ -3,7 +3,7 @@ set prg {
   union Int(Unit 0, Unit 1, Unit 2);
 
   func f(Int x ; Int) {
-    ?(x ; x, f(Int:0(Unit())), f(Int:1(Unit())));
+    ?(x ; 0: x, 1: f(Int:0(Unit())), 2: f(Int:1(Unit())));
   };
 
   # Recursive functions should be fine.

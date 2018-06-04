@@ -6,8 +6,8 @@ set prg {
   func main( ; EnumXYZ) {
     # Not all arguments to the conditional have the same type.
     ?(EnumABC:C(Unit()) ;
-      EnumXYZ:X(Unit()), EnumABC:B(Unit()), EnumXYZ:Z(Unit()));
+      A: EnumXYZ:X(Unit()), B: EnumABC:B(Unit()), C: EnumXYZ:Z(Unit()));
   };
 }
 # TODO: Where should the error be?
-fblc-check-error $prg 9:26
+fblc-check-error $prg 9:32

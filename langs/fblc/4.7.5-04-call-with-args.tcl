@@ -4,7 +4,7 @@ set prg {
   union Bool(Unit true, Unit false);
 
   proc sub( ; Bool x; Bool) {
-    ?(x ; $(Bool:false(Unit())), $(Bool:true(Unit())));
+    ?(x ; true: $(Bool:false(Unit())), false: $(Bool:true(Unit())));
   };
 
   proc main( ; ; Bool) {

@@ -5,7 +5,9 @@ set prg {
 
   proc main( ; ; Fruit) {
     ?(Fruit:pear(Unit()) ;
-      $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Fruit:banana(Unit())));
+      apple: $(Fruit:pear(Unit())),
+      banana: $(Fruit:apple(Unit())),
+      pear: $(Fruit:banana(Unit())));
   };
 }
 

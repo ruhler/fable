@@ -1,7 +1,7 @@
 Conditional Syntax Change
-* Update all test cases to new syntax
 * Update fblc code to implement new syntax
 * Update all fblc programs to use new syntax
+* Update all fbld test cases to new syntax
 * Update fbld code to implement new syntax
 * Update all programs to use new syntax
 * Add test cases to cover tag boundary conditions

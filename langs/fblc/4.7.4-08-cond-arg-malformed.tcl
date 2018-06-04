@@ -5,7 +5,9 @@ set prg {
   proc main( ; ; Fruit) {
     # A condition arg is malformed.
     ?(Fruit:pear(Unit()) ;
-      $(Fruit:pear(Unit())), ???, $(Fruit:banana(Unit())));
+      apple: $(Fruit:pear(Unit())),
+      banana: ???,
+      pear: $(Fruit:banana(Unit())));
   };
 }
-fblc-check-error $prg 8:31
+fblc-check-error $prg 9:16

@@ -6,7 +6,9 @@ set prg {
   proc main( ; ; Fruit) {
     # The condition is not a union type.
     ?(Pair(Unit(), Unit(), Unit()) ;
-      $(Fruit:pear(Unit())), $(Fruit:apple(Unit())), $(Fruit:banana(Unit())));
+      apple: $(Fruit:pear(Unit())),
+      banana: $(Fruit:apple(Unit())),
+      pear: $(Fruit:banana(Unit())));
   };
 }
 fblc-check-error $prg 8:7
