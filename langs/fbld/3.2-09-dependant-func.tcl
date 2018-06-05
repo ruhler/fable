@@ -7,7 +7,7 @@ set prg {
   # Regression test: Use of the function F depends on the type variable A
   # declared earlier in the parameter list.
   func MapS<type A, func F(A x; A)>(S<A> a; S<A>) {
-    ?(a; S<A>:cons(MapP<A, F>(a.cons)), S<A>:nil(Unit()));
+    ?(a; cons: S<A>:cons(MapP<A, F>(a.cons)), nil: S<A>:nil(Unit()));
   };
 
   func MapP<type A, func F(A x; A)>(P<A> a; P<A>) {

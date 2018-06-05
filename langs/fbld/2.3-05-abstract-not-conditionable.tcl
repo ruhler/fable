@@ -13,7 +13,7 @@ set prg {
   func main( ; Unit) {
     # Fruit cannot be used as the argument of a condition because it is
     # abstract.
-    ?(MkApple(); Unit(), Unit());
+    ?(MkApple(); apple: Unit(), banana: Unit());
   };
 }
 

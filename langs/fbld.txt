@@ -42,7 +42,7 @@ operations:
     union Int(Unit 0, Int S);
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
+      ?(a; 0: b, S: Int:S(Add(a.S, b)));
     };
   };
 
@@ -64,7 +64,7 @@ the namespace where IntPair is defined:
     union Int(Unit 0, Int S);               # ERROR: 'Unit' not defined
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
+      ?(a; 0: b, S: Int:S(Add(a.S, b)));
     };
   };
 
@@ -88,7 +88,7 @@ from a parent module, an "import @" statement is used:
     union Int(Unit 0, Int S);         # OK: 'Unit' is now in scope.
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
+      ?(a; 0: b, S: Int:S(Add(a.S, b)));
     };
   };
 
@@ -112,7 +112,7 @@ name MyParentsUnit:
     union Int(MyParentsUnit 0, Int S); # OK: 'MyParentsUnit' is now in scope.
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
+      ?(a; 0: b, S: Int:S(Add(a.S, b)));
     };
   };
 
@@ -144,7 +144,7 @@ Int type from the parent module when defining IntPair:
     union Int(Unit 0, Int S);
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
+      ?(a; 0: b, S: Int:S(Add(a.S, b)));
     };
   };
 
@@ -178,7 +178,7 @@ example becomes:
     union Int(Unit 0, Int S);
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Int:S(Add(a.S, b)));
+      ?(a; 0: b, S: Int:S(Add(a.S, b)));
     };
   };
 
@@ -224,7 +224,7 @@ Integer module that cannot be accessed externally:
     };
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Incr(Add(a.S, b)));
+      ?(a; 0: b, S: Incr(Add(a.S, b)));
     };
   };
 
@@ -250,7 +250,7 @@ an abstract type:
     };
 
     func Add(Int a, Int b; Int) {
-      ?(a; b, Incr(Add(a.S, b)));
+      ?(a; 0: b, S: Incr(Add(a.S, b)));
     };
   };
 
@@ -309,7 +309,7 @@ Main/Integer.fbld:
   abst union Int(Unit 0, Int S);
 
   func Add(Int a, Int b; Int) {
-    ?(a; b, Incr(Add(a.S, b)));
+    ?(a; 0: b, S: Incr(Add(a.S, b)));
   };
 
 Note that this is only allowed when the top level program is specified as a
@@ -338,7 +338,7 @@ foo/Main/Integer.fbld:
   abst union Int(Unit 0, Int S);
 
   func Add(Int a, Int b; Int) {
-    ?(a; b, Incr(Add(a.S, b)));
+    ?(a; 0: b, S: Incr(Add(a.S, b)));
   };
 
 Referring to foo as a top level program is implicitly taken as equivalent to
@@ -356,7 +356,7 @@ the complete program:
       abst union Int(Unit 0, Int S);
 
       func Add(Int a, Int b; Int) {
-        ?(a; b, Incr(Add(a.S, b)));
+        ?(a; 0: b, S: Incr(Add(a.S, b)));
       };
     };
 
@@ -387,7 +387,7 @@ parameter T as follows:
   union ListS<type T>(Unit nil, ListP<T> cons);
 
   func Last<type T>(ListP<T> list ; T) {
-    ?(list.tail; list.head, Last<T>(list.tail.cons));
+    ?(list.tail; nil: list.head, cons: Last<T>(list.tail.cons));
   };
 
 We could also define a generic 'Contains' function to check if a list contains
@@ -396,10 +396,10 @@ what it means for two elements to be equal:
   
   func Contains<type T, func Eq(T a, T b; Bool)>(ListS<T> list, T elem; Bool) {
     ?(list;
-        False(),                                    # The list is empty.
-        ?(Eq(elem, list.cons.head);
-          True(),                                   # head matches.
-          Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
+        nil: False(),                               # The list is empty.
+        cons: ?(Eq(elem, list.cons.head);
+                  true: True(),                     # head matches.
+                  false: Contains<T, Eq>(list.cons.tail, elem)));  # check the tail.
   };
 
 3.1. Prototypes
@@ -498,7 +498,7 @@ module that it has interface IntegerI:
       abst union Int(Unit 0, Int S);
 
       func Add(Int a, Int b; Int) {
-        ?(a; b, Incr(Add(a.S, b)));
+        ?(a; 0: b, S: Incr(Add(a.S, b)));
       };
     };
 
@@ -670,7 +670,7 @@ A.1 Style Suggestions
   arguments.
 * Lowercase variable names.
 * "true/something/cons" before "false/nothing/empty/error" when ordering
-  fields of that kind of union declaration, so that ?(x; a, b) is
+  fields of that kind of union declaration, so that ?(x; true: a, false: b) is
   consistent with (x ? a : b) behavior.
 
   But "0" before "1" for bit, decimal, byte, hex, etc?

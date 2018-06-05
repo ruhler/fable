@@ -9,14 +9,14 @@ set prg {
   func S1<type T>(T a; S<T>) ConsS<T>(a, S0<T>());
 
   func Append<type T>(S<T> a, S<T> b ; S<T>) {
-    ?(a; S<T>:cons(P<T>(a.cons.head, Append<T>(a.cons.tail, b))), b);
+    ?(a; cons: S<T>:cons(P<T>(a.cons.head, Append<T>(a.cons.tail, b))), nil: b);
   };
 
   func Concat<type T>(S<S<T>> x; S<T>) {
     # Regression test for a bug where this would give an error:
     # x.cons.head: expected type S<T>, but got type S
     # x.cons.tail: expected type S<S<T>>, but got type S<S>
-    ?(x; Append<T>(x.cons.head, Concat<T>(x.cons.tail)), S0<T>());
+    ?(x; cons: Append<T>(x.cons.head, Concat<T>(x.cons.tail)), nil: S0<T>());
   };
 
   func main( ; Unit) {
