@@ -3,11 +3,12 @@ set prg {
   union Fruit(Unit apple, Unit banana, Unit pear);
 
   proc main( ; ; Fruit) {
-    # The select expression is maltyped.
-    ?( x ;
-      apple: $(Fruit:pear(Unit())),
+    # The conditional arguments are in the wrong order.
+    ?(Fruit:pear(Unit()) ;
       banana: $(Fruit:apple(Unit())),
+      apple: $(Fruit:pear(Unit())),
       pear: $(Fruit:banana(Unit())));
   };
 }
-fblc-check-error $prg 7:8
+
+fblc-check-error $prg 8:7

@@ -3,11 +3,12 @@ set prg {
   union Fruit(Unit apple, Unit banana, Unit pear);
 
   proc main( ; ; Fruit) {
-    # The select expression is maltyped.
-    ?( x ;
+    # 'bogus' is not the right tag.
+    ?(Fruit:pear(Unit()) ;
       apple: $(Fruit:pear(Unit())),
-      banana: $(Fruit:apple(Unit())),
+      bogus: $(Fruit:apple(Unit())),
       pear: $(Fruit:banana(Unit())));
   };
 }
-fblc-check-error $prg 7:8
+
+fblc-check-error $prg 9:7

@@ -84,14 +84,22 @@ int main(int argc, char* argv[])
 
   const char* filename = argv[0];
 
+  FILE* stderr_save = stderr;
   stderr = expect_error ? stdout : stderr;
-  int exit_success = expect_error ? EX_FAIL : EX_SUCCESS;
-  int exit_fail = expect_error ? EX_SUCCESS : EX_FAIL;
 
   // Simply pass allocations through to malloc. We won't be able to track or
   // free memory that the caller is supposed to track and free, but we don't
   // leak memory in a loop and we assume this is the main entry point of the
   // program, so we should be okay.
   FblcsProgram* prog = FblcsParseProgram(&FblcMallocArena, filename);
-  return (prog != NULL && FblcsCheckProgram(prog)) ? exit_success : exit_fail;
+  if (prog == NULL || !FblcsCheckProgram(prog)) {
+    return expect_error ? EX_SUCCESS : EX_FAIL;
+  }
+
+  if (expect_error) {
+    fprintf(stderr_save, "expected error, but none encountered.\n");
+    return EX_FAIL;
+  }
+
+  return EX_SUCCESS;
 }

@@ -3,7 +3,7 @@ set prg {
   union Int(Unit 0, Unit 1, Unit 2);
 
   func f(Int x ; Int) {
-    ?(x ; 0: x, 1; h(Int:0(Unit())), 2: h(Int:1(Unit())));
+    ?(x ; 0: x, 1: h(Int:0(Unit())), 2: h(Int:1(Unit())));
   };
 
   func h(Int x ; Int) {

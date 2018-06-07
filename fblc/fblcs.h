@@ -60,6 +60,13 @@ typedef struct {
   FblcsLoc* loc;
 } FblcsName;
 
+// FblcsName --
+//   A vector of FblcsNames.
+typedef struct {
+  size_t size;
+  FblcsName* xs;
+} FblcsNameV;
+
 // FblcsArg --
 //   An fblcs name with associated type. Used for declaring fields of
 //   types and arguments to functions and processes.
@@ -159,12 +166,15 @@ typedef struct {
 } FblcsAccessExpr;
 
 // FblcsCondExpr --
-//   A conditional expression of the form '?(select; arg0, arg1, ...)', which
-//   conditionally selects an argument based on the tag of the select value.
+//   A conditional expression of the form
+//      '?(select; tag0: arg0, tag1: arg1, ...)'
+//   which conditionally selects an argument based on the tag of the select
+//   value.
 typedef struct {
   FblcsExpr _base;
   FblcsExpr* select;
   FblcsExprV argv;
+  FblcsNameV tagv;
 } FblcsCondExpr;
 
 // FblcsLetExpr --
@@ -232,12 +242,15 @@ typedef struct {
 } FblcsPutActn;
 
 // FblcsCondActn --
-//   A conditional action of the form '?(select; arg0, arg1, ...)', which
-//   conditionally selects an argument based on the tag of the select value.
+//   A conditional action of the form
+//    '?(select; tag0: arg0, tag1: arg1, ...)'
+//   which conditionally selects an argument based on the tag of the select
+//   value.
 typedef struct {
   FblcsActn _base;
   FblcsExpr* select;
   FblcsActnV argv;
+  FblcsNameV tagv;
 } FblcsCondActn;
 
 // FblcsCallActn --

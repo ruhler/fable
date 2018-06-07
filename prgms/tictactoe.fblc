@@ -27,21 +27,23 @@ union Position(
 
 # Returns the value of the square at position 'p' in board 'b'.
 func GetSquare(Board b, Position p; Square) {
-  ?(p; b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr);
+  ?(p; UL: b.ul, UC: b.uc, UR: b.ur,
+       ML: b.ml, MC: b.mc, MR: b.mr,
+       LL: b.ll, LC: b.lc, LR: b.lr);
 };
 
 # Sets the square at position 'p' in board 'b' to value 's'.
 func SetSquare(Board b, Position p, Square s ; Board) {
   ?(p;
-      Board(   s, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
-      Board(b.ul,    s, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
-      Board(b.ul, b.uc,    s, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
-      Board(b.ul, b.uc, b.ur,    s, b.mc, b.mr, b.ll, b.lc, b.lr),
-      Board(b.ul, b.uc, b.ur, b.ml,    s, b.mr, b.ll, b.lc, b.lr),
-      Board(b.ul, b.uc, b.ur, b.ml, b.mc,    s, b.ll, b.lc, b.lr),
-      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr,    s, b.lc, b.lr),
-      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll,    s, b.lr),
-      Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
+      UL: Board(   s, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      UC: Board(b.ul,    s, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      UR: Board(b.ul, b.uc,    s, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+      ML: Board(b.ul, b.uc, b.ur,    s, b.mc, b.mr, b.ll, b.lc, b.lr),
+      MC: Board(b.ul, b.uc, b.ur, b.ml,    s, b.mr, b.ll, b.lc, b.lr),
+      MR: Board(b.ul, b.uc, b.ur, b.ml, b.mc,    s, b.ll, b.lc, b.lr),
+      LL: Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr,    s, b.lc, b.lr),
+      LC: Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll,    s, b.lr),
+      LR: Board(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
 };
 
 union MaybeBoard(Board Just, Unit Nothing);
@@ -52,7 +54,9 @@ union Bool(Unit True, Unit False);
 
 # Returns true if the square 's' is empty.
 func IsEmpty(Square s ; Bool) {
-  ?(s; Bool:False(Unit()), Bool:False(Unit()), Bool:True(Unit()));
+  ?(s; X: Bool:False(Unit()),
+       O: Bool:False(Unit()),
+       E: Bool:True(Unit()));
 };
 
 # Returns the board resulting from player 'x' making a play at position 'p'
@@ -60,8 +64,8 @@ func IsEmpty(Square s ; Bool) {
 # not empty.
 func Move(Board b, Position p, Player x; MaybeBoard) {
   ?(IsEmpty(GetSquare(b, p)) ; 
-     MaybeBoard:Just(SetSquare(b, p, ?(x; Square:X(Unit()), Square:O(Unit())))),
-     MaybeBoard:Nothing(Unit()));
+     True: MaybeBoard:Just(SetSquare(b, p, ?(x; X: Square:X(Unit()), O: Square:O(Unit())))),
+     False: MaybeBoard:Nothing(Unit()));
 };
 
 # The status of a (valid) board is one of:
@@ -73,16 +77,16 @@ union Status(Unit X, Unit O, Unit D, Unit E);
 
 # Return the status of a single square.
 func SquareStatus(Square a ; Status) {
-  ?(a ; Status:X(Unit()), Status:O(Unit()), Status:E(Unit()));
+  ?(a ; X: Status:X(Unit()), O: Status:O(Unit()), E: Status:E(Unit()));
 };
 
 # Combine two Status using an 'and' operation.
 func AndStatus(Status a, Status b; Status) {
   ?(a ;
-      ?(b ; a, Status:D(Unit()), b, b), 
-      ?(b ; Status:D(Unit()), a, b, b),
-      ?(b ; a, a, a, b),
-      a);
+      X: ?(b ; X: a, O: Status:D(Unit()), D: b, E: b), 
+      O: ?(b ; X: Status:D(Unit()), O: a, D: b, E: b),
+      D: ?(b ; X: a, O: a, D: a, E: b),
+      E: a);
 };
 
 # Combine two Status using an 'or' operation.

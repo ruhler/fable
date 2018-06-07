@@ -5,10 +5,10 @@ union Digit(
     Unit 5, Unit 6, Unit 7, Unit 8, Unit 9);
 
 func incr(Digit a ; Digit)
-  ?(a ; Digit:1(Unit()), Digit:2(Unit()), Digit:3(Unit()),
-        Digit:4(Unit()), Digit:5(Unit()), Digit:6(Unit()),
-        Digit:7(Unit()), Digit:8(Unit()), Digit:9(Unit()),
-        Digit:0(Unit()));
+  ?(a ; 0: Digit:1(Unit()), 1: Digit:2(Unit()), 2: Digit:3(Unit()),
+        3: Digit:4(Unit()), 4: Digit:5(Unit()), 5: Digit:6(Unit()),
+        6: Digit:7(Unit()), 7: Digit:8(Unit()), 8: Digit:9(Unit()),
+        9: Digit:0(Unit()));
 
 proc clock(Unit- tick, Digit+ display ; Digit time ; Unit) {
   Digit displayed = +display(time),

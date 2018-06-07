@@ -261,6 +261,14 @@ static FblcsType* CheckExpr(FblcsProgram* prog, Vars* vars, FblcsExpr* expr, boo
           if (type->fieldv.size != cond_expr->argv.size) {
             ReportError("Expected %d arguments, but %d were provided.\n", error, cond_expr->_base.loc, type->fieldv.size, cond_expr->argv.size);
           }
+
+          assert(cond_expr->argv.size == cond_expr->tagv.size);
+          for (size_t i = 0; i < type->fieldv.size && i < cond_expr->tagv.size; ++i) {
+            if (!FblcsNamesEqual(type->fieldv.xs[i].name.name, cond_expr->tagv.xs[i].name)) {
+              ReportError("Expected tag '%s', but found '%s'.\n", error,
+                  cond_expr->tagv.xs[i].loc, type->fieldv.xs[i].name.name, cond_expr->tagv.xs[i].name);
+            }
+          }
         } else {
           ReportError("The condition has type %s, which is not a union type.\n", error, cond_expr->select->loc, type->name.name);
         }
@@ -466,6 +474,14 @@ static FblcsType* CheckActn(FblcsProgram* prog, Vars* vars, Ports* ports, FblcsA
         if (type->kind == FBLCS_UNION_KIND) {
           if (type->fieldv.size != cond_actn->argv.size) {
             ReportError("Expected %d arguments, but %d were provided.\n", error, cond_actn->_base.loc, type->fieldv.size, cond_actn->argv.size);
+          }
+
+          assert(cond_actn->argv.size == cond_actn->tagv.size);
+          for (size_t i = 0; i < type->fieldv.size && i < cond_actn->tagv.size; ++i) {
+            if (!FblcsNamesEqual(type->fieldv.xs[i].name.name, cond_actn->tagv.xs[i].name)) {
+              ReportError("Expected tag '%s', but found '%s'.\n", error,
+                  cond_actn->tagv.xs[i].loc, type->fieldv.xs[i].name.name, cond_actn->tagv.xs[i].name);
+            }
           }
         } else {
           ReportError("The condition has type %s, which is not a union type.\n", error, cond_actn->select->loc, type->name.name);

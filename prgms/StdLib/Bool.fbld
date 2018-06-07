@@ -12,15 +12,15 @@ func False( ; Bool) {
 };
 
 func Not(Bool a; Bool) {
-  ?(a; False(), True());
+  ?(a; true: False(), false: True());
 };
 
 func And(Bool a, Bool b; Bool) {
-  ?(a; b, False());
+  ?(a; true: b, false: False());
 };
 
 func Or(Bool a, Bool b; Bool) {
-  ?(a; True(), b);
+  ?(a; true: True(), false: b);
 };
 
 interf Eq<type T> {
@@ -31,7 +31,7 @@ interf Eq<type T> {
 
 module EqBool(Eq<Bool>) {
   import @ { Bool; Not; };
-  func Eq(Bool a, Bool b; Bool) ?(a; b, Not(b));
-  func Ne(Bool a, Bool b; Bool) ?(a; Not(b), b);
+  func Eq(Bool a, Bool b; Bool) ?(a; true: b, false: Not(b));
+  func Ne(Bool a, Bool b; Bool) ?(a; true: Not(b), false: b);
 };
 

@@ -11,7 +11,7 @@ func False( ; Bool) {
 };
 
 func And(Bool a, Bool b; Bool) {
-  ?(a; b, False());
+  ?(a; true: b, false: False());
 };
 
 union Row(Unit Z, Row S);
@@ -53,14 +53,14 @@ func MaxCol( ; Col) {
 
 func EqRow(Row a, Row b; Bool) {
   ?(a;
-      ?(b; True(), False()),
-      ?(b; False(), EqRow(a.S, b.S)));
+      Z: ?(b; Z: True(), S: False()),
+      S: ?(b; Z: False(), S: EqRow(a.S, b.S)));
 };
 
 func EqCol(Col a, Col b; Bool) {
   ?(a;
-      ?(b; True(), False()),
-      ?(b; False(), EqCol(a.S, b.S)));
+      Z: ?(b; Z: True(), S: False()),
+      S: ?(b; Z: False(), S: EqCol(a.S, b.S)));
 };
 
 func EqPos(Pos a, Pos b; Bool) {
@@ -76,11 +76,11 @@ func IncrCol(Col a ; Col) {
 };
 
 func DecrRow(Row a ; Row) {
-  ?(a; Row:Z(Unit()), a.S);
+  ?(a; Z: Row:Z(Unit()), S: a.S);
 };
 
 func DecrCol(Col a ; Col) {
-  ?(a; Col:Z(Unit()), a.S);
+  ?(a; Z: Col:Z(Unit()), S: a.S);
 };
 
 union Direction(Unit up, Unit down, Unit left, Unit right);
@@ -106,7 +106,7 @@ union PosS(Unit nil, PosP cons);
 struct State(Direction dir, Pos food, Pos nfood, PosP snake);
 
 func DrawSnakeS(PosS s ; DrawS) {
-  ?(s; DrawS:nil(Unit()), DrawS:cons(DrawSnakeP(s.cons)));
+  ?(s; nil: DrawS:nil(Unit()), cons: DrawS:cons(DrawSnakeP(s.cons)));
 };
 
 func DrawSnakeP(PosP s ; DrawP) {
@@ -142,22 +142,22 @@ union PosM(Unit dead, Pos pos);
 
 # Return true if the given position is found in the list of positions.
 func InPosS(PosS s, Pos p ; Bool) {
-  ?(s ; False(), InPosP(s.cons, p));
+  ?(s ; nil: False(), cons: InPosP(s.cons, p));
 };
 
 # Return true if the given position is found in the list of positions.
 func InPosP(PosP s, Pos p ; Bool) {
-  ?(EqPos(s.head, p); True(), InPosS(s.tail, p));
+  ?(EqPos(s.head, p); true: True(), false: InPosS(s.tail, p));
 };
 
 # Return all but the last element in l.
 func InitPosP(PosP l ; PosS) {
-  ?(l.tail; PosS:nil(Unit()), PosS:cons(PosP(l.head, InitPosP(l.tail.cons))));
+  ?(l.tail; nil: PosS:nil(Unit()), cons: PosS:cons(PosP(l.head, InitPosP(l.tail.cons))));
 };
 
 # Return the last element in l.
 func LastPosP(PosP l ; Pos) {
-  ?(l.tail; l.head, LastPosP(l.tail.cons));
+  ?(l.tail; nil: l.head, cons: LastPosP(l.tail.cons));
 };
 
 func Move(State s; MoveResultM) {

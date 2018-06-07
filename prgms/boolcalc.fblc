@@ -34,15 +34,16 @@ func False( ; Bool) {
 };
 
 func Not(Bool a ; Bool) {
-  ?(a; Bool:false(Unit()), Bool:true(Unit()));
+  ?(a; true: Bool:false(Unit()),
+       false: Bool:true(Unit()));
 };
 
 func Or(Bool a, Bool b ; Bool) {
-  ?(a ; a, b);
+  ?(a ; true: a, false: b);
 };
 
 func And(Bool a, Bool b ; Bool) {
-  ?(a ; b, Bool:false(Unit()));
+  ?(a ; true: b, false: Bool:false(Unit()));
 };
 
 func MError( ; Machine) {
@@ -55,21 +56,23 @@ func MOk(Operands operands, Operators operators ; Machine) {
 
 # Perform the operation on the top of the stacks.
 func Operate(Machine m ; Machine) {
-  ?(m ; MError(),
-    ?(m.ok.operators ; MError(),
+  ?(m ; error: MError(), ok:
+    ?(m.ok.operators ; nil: MError(), cons:
       ?(m.ok.operators.cons.head;
-        # OPEN PAREN
-        MError(),
+        OPEN_PAREN: MError(),
 
-        # CLOSE PAREN - should match an open paren. Pop them both.
-        ?(m.ok.operators.cons.tail; MError(),
+        CLOSE_PAREN: # should match an open paren. Pop them both.
+        ?(m.ok.operators.cons.tail; nil: MError(), cons:
            ?(m.ok.operators.cons.tail.cons.head;
-              MOk(m.ok.operands, m.ok.operators.cons.tail.cons.tail),
-              MError(), MError(), MError(), MError())),
+              OPEN_PAREN: MOk(m.ok.operands, m.ok.operators.cons.tail.cons.tail),
+              CLOSE_PAREN: MError(),
+              AND: MError(),
+              OR: MError(),
+              NOT: MError())),
         
-        # AND
-        ?(m.ok.operands ; MError(),
-          ?(m.ok.operands.cons.tail ; MError(),
+        AND:
+        ?(m.ok.operands ; nil: MError(), cons:
+          ?(m.ok.operands.cons.tail ; nil: MError(), cons:
             MOk(
               Operands:cons(
                 NonEmptyOperands(
@@ -78,9 +81,9 @@ func Operate(Machine m ; Machine) {
                   m.ok.operands.cons.tail.cons.tail)),
               m.ok.operators.cons.tail))),
 
-        # OR
-        ?(m.ok.operands ; MError(),
-          ?(m.ok.operands.cons.tail ; MError(),
+        OR:
+        ?(m.ok.operands ; nil: MError(), cons:
+          ?(m.ok.operands.cons.tail ; nil: MError(), cons:
             MOk(
               Operands:cons(
                 NonEmptyOperands(
@@ -89,8 +92,8 @@ func Operate(Machine m ; Machine) {
                   m.ok.operands.cons.tail.cons.tail)),
               m.ok.operators.cons.tail))),
 
-        # NOT
-        ?(m.ok.operands ; MError(),
+        NOT:
+        ?(m.ok.operands ; nil: MError(), cons:
           MOk(
             Operands:cons(
               NonEmptyOperands(
@@ -105,44 +108,50 @@ func Operate(Machine m ; Machine) {
 # Return true if the given operator should be pushed on the operator stack.
 func ShouldPush(MachineOk m, Operator op ; Bool) {
   ?(m.operators ;
-    # nil: Always push if we don't have any operators yet.
-    True(),
+    # Always push if we don't have any operators yet.
+    nil: True(),
 
     # cons: Push depending on the operator.
-    ?(op ;
-      # OPEN_PAREN:
-      ?(m.operators.cons.head ;
-        True(), True(), True(), True(), True()),
+    cons: ?(op ;
+      OPEN_PAREN: ?(m.operators.cons.head ;
+        OPEN_PAREN: True(), CLOSE_PAREN: True(),
+        AND: True(), OR: True(), NOT: True()),
 
-      # CLOSE_PAREN:
+      CLOSE_PAREN:
       ?(m.operators.cons.head ;
-        True(), False(), False(), False(), False()),
+        OPEN_PAREN: True(), CLOSE_PAREN: False(),
+        AND: False(), OR: False(), NOT: False()),
 
-      # AND:
+      AND:
       ?(m.operators.cons.head ;
-        True(), False(), False(), True(), False()),
+        OPEN_PAREN: True(), CLOSE_PAREN: False(),
+        AND: False(), OR: True(), NOT: False()),
 
-      # OR:
+      OR:
       ?(m.operators.cons.head ;
-        True(), False(), False(), False(), False()),
+        OPEN_PAREN: True(), CLOSE_PAREN: False(),
+        AND: False(), OR: False(), NOT: False()),
 
-      # NOT:
+      NOT:
       ?(m.operators.cons.head ;
-        True(), False(), True(), True(), False())
+        OPEN_PAREN: True(), CLOSE_PAREN: False(),
+        AND: True(), OR: True(), NOT: False())
     )
   );
 };
 
 # Feed the machine a single token.
 func Input(Machine m, Token tok ; Machine) {
-  ?(m ; MError(),
+  ?(m ; error: MError(), ok:
      ?(tok ; 
-       # Operand: Push the operand onto the operand stack.
+       # Push the operand onto the operand stack.
+       operand:
        MOk(
          Operands:cons(NonEmptyOperands(tok.operand, m.ok.operands)),
          m.ok.operators),
 
-       # Operator: Push the operator or operate as appropriate.
+       # Push the operator or operate as appropriate.
+       operator:
        ?(ShouldPush(m.ok, tok.operator) ;
          MOk(
            m.ok.operands,
@@ -154,7 +163,7 @@ func Input(Machine m, Token tok ; Machine) {
 
 # Feed all tokens into the given machine.
 func InputAll(Machine m, Tokens toks ; Machine) {
-  ?(toks; m, InputAll(Input(m, toks.cons.head), toks.cons.tail));
+  ?(toks; nil: m, cons: InputAll(Input(m, toks.cons.head), toks.cons.tail));
 };
 
 union Result(Unit error, Bool value);
@@ -162,18 +171,18 @@ union Result(Unit error, Bool value);
 # Perform all remaining operations for the given machine and return the final
 # machine.
 func FinishMachine(Machine m ; Machine) {
-  ?(m ; MError(), ?(m.ok.operators ; m, FinishMachine(Operate(m))));
+  ?(m ; error: MError(), ok: ?(m.ok.operators ; m, FinishMachine(Operate(m))));
 };
 
 # Perform all remaining operations for the given machine and return the final
 # result.
 func Finish(Machine m ; Result) {
   Machine finished = FinishMachine(m);
-  ?(finished ; Result:error(Unit()),
-      ?(finished.ok.operands; Result:error(Unit()),
+  ?(finished ; error: Result:error(Unit()), ok:
+      ?(finished.ok.operands; nil: Result:error(Unit()), cons:
         ?(finished.ok.operands.cons.tail ;
-          Result:value(finished.ok.operands.cons.head),
-          Result:error(Unit()))));
+          nil: Result:value(finished.ok.operands.cons.head),
+          cons: Result:error(Unit()))));
 };
 
 # Evaluate the boolean formula described by the given sequence of tokens.
@@ -200,11 +209,11 @@ func T(TestName name, Result expected, Tokens toks, TestFailures rest ; TestFail
   TestFailures pass = rest;
   TestFailures fail = TestFailures:cons(NonEmptyTestFailures(TestFail(name, expected, actual, final), rest));
   ?(expected ;
-      ?(actual ; pass, fail),
-      ?(actual ; fail,
-          ?(expected.value;
-              ?(actual.value; pass, fail),
-              ?(actual.value; fail, pass))));
+      error: ?(actual ; error: pass, value: fail),
+      value: ?(actual ; error: fail, value:
+                 ?(expected.value;
+                     true: ?(actual.value; true: pass, false: fail),
+                     false: ?(actual.value; true: fail, false: pass))));
 };
 
 func Test( ; TestFailures) {

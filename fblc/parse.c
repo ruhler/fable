@@ -645,7 +645,8 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
       expr = &var_expr->_base;
     }
   } else if (IsToken(toks, '?')) {
-    // This is a conditional expression of the form: ?(<expr> ; <args>)
+    // This is a conditional expression of the form:
+    //    ?(<expr> ; <name>: <arg>, ...)
     FblcsCondExpr* cond_expr = FBLC_ALLOC(arena, FblcsCondExpr);
     cond_expr->_base.tag = FBLCS_COND_EXPR;
     cond_expr->_base.loc = loc;
@@ -660,8 +661,30 @@ static FblcsExpr* ParseExpr(FblcArena* arena, TokenStream* toks, bool in_stmt)
     if (!GetToken(toks, ';')) {
       return NULL;
     }
-    if (!ParseNonZeroArgs(arena, toks, &cond_expr->argv)) {
-      return NULL;
+    FblcVectorInit(arena, cond_expr->argv);
+    FblcVectorInit(arena, cond_expr->tagv);
+    bool first = true;
+    while (first || IsToken(toks, ',')) {
+      if (first) {
+        first = false;
+      } else {
+        assert(IsToken(toks, ','));
+        GetToken(toks, ',');
+      }
+      if (!GetNameToken(arena, toks, "field name", FblcVectorExtend(arena, cond_expr->tagv))) {
+        return NULL;
+      }
+      if (!GetToken(toks, ':')) {
+        return NULL;
+      }
+      FblcsExpr* arg = ParseExpr(arena, toks, false);
+      if (arg == NULL) {
+        return false;
+      }
+      FblcVectorAppend(arena, cond_expr->argv, arg);
+    }
+    if (!GetToken(toks, ')')) {
+      return false;
     }
     expr = &cond_expr->_base;
   } else {
@@ -880,7 +903,8 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       return NULL;
     }
   } else if (IsToken(toks, '?')) {
-    // This is a conditional action of the form: ?(<expr> ; <proc>, ...)
+    // This is a conditional action of the form:
+    //  ?(<expr> ; <name>: <proc>, ...)
     FblcsCondActn* cond_actn = FBLC_ALLOC(arena, FblcsCondActn);
     cond_actn->_base.tag = FBLC_COND_ACTN;
     cond_actn->_base.loc = loc;
@@ -897,6 +921,7 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
     }
 
     FblcVectorInit(arena, cond_actn->argv);
+    FblcVectorInit(arena, cond_actn->tagv);
     bool first = true;
     while (first || IsToken(toks, ',')) {
       if (first) {
@@ -904,6 +929,12 @@ static FblcsActn* ParseActn(FblcArena* arena, TokenStream* toks, bool in_stmt)
       } else {
         assert(IsToken(toks, ','));
         GetToken(toks, ',');
+      }
+      if (!GetNameToken(arena, toks, "field name", FblcVectorExtend(arena, cond_actn->tagv))) {
+        return NULL;
+      }
+      if (!GetToken(toks, ':')) {
+        return NULL;
       }
       FblcsActn* arg = ParseActn(arena, toks, false);
       if (arg == NULL) {

@@ -7,6 +7,7 @@ struct P<type T>(T head, S<T> tail);
 # S - A list of 0 or more elements: T*
 union S<type T>(P<T> cons, Unit nil); 
 
+func HeadS<type T>(S<T> l; T) l.cons.head;
 func ConsS<type T>(T a, S<T> l; S<T>) S<T>:cons(P<T>(a, l));
 func S0<type T>( ; S<T>) S<T>:nil(Unit());
 func S1<type T>(T a; S<T>) ConsS<T>(a, S0<T>());
@@ -17,7 +18,10 @@ func S5<type T>(T a, T b, T c, T d, T e; S<T>) ConsS<T>(a, S4<T>(b, c, d, e));
 
 # InitP - Return all but the last element in 'list'.
 func InitP<type T>(P<T> list; S<T>) {
-  ?(list.tail; S<T>:nil(Unit()), S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons))));
+  ?(list.tail;
+      nil: S<T>:nil(Unit()),
+      cons: S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons)))
+  );
 };
 
 # LastP - Return the last element in 'list'.
