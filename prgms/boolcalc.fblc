@@ -153,10 +153,10 @@ func Input(Machine m, Token tok ; Machine) {
        # Push the operator or operate as appropriate.
        operator:
        ?(ShouldPush(m.ok, tok.operator) ;
-         MOk(
+         true: MOk(
            m.ok.operands,
            Operators:cons(NonEmptyOperators(tok.operator, m.ok.operators))),
-         Input(Operate(m), tok))
+         false: Input(Operate(m), tok))
       )
    );
 };
@@ -171,7 +171,7 @@ union Result(Unit error, Bool value);
 # Perform all remaining operations for the given machine and return the final
 # machine.
 func FinishMachine(Machine m ; Machine) {
-  ?(m ; error: MError(), ok: ?(m.ok.operators ; m, FinishMachine(Operate(m))));
+  ?(m ; error: MError(), ok: ?(m.ok.operators ; nil: m, cons: FinishMachine(Operate(m))));
 };
 
 # Perform all remaining operations for the given machine and return the final

@@ -162,17 +162,21 @@ func LastPosP(PosP l ; Pos) {
 
 func Move(State s; MoveResultM) {
   PosM pm = ?(s.dir;
-    ?(EqRow(s.snake.head.row, MaxRow()); PosM:dead(Unit()), 
+    up:
+    ?(EqRow(s.snake.head.row, MaxRow()); true: PosM:dead(Unit()), false:
         PosM:pos(Pos(IncrRow(s.snake.head.row), s.snake.head.col))),
-    ?(EqRow(s.snake.head.row, MinRow()); PosM:dead(Unit()), 
+    down:
+    ?(EqRow(s.snake.head.row, MinRow()); true: PosM:dead(Unit()), false:
         PosM:pos(Pos(DecrRow(s.snake.head.row), s.snake.head.col))),
-    ?(EqCol(s.snake.head.col, MinCol()); PosM:dead(Unit()), 
+    left:
+    ?(EqCol(s.snake.head.col, MinCol()); true: PosM:dead(Unit()), false:
         PosM:pos(Pos(s.snake.head.row, DecrCol(s.snake.head.col)))),
-    ?(EqCol(s.snake.head.col, MaxCol()); PosM:dead(Unit()), 
+    right:
+    ?(EqCol(s.snake.head.col, MaxCol()); true: PosM:dead(Unit()), false:
         PosM:pos(Pos(s.snake.head.row, IncrCol(s.snake.head.col)))));
-  ?(pm; MoveResultM:dead(Unit()),
+  ?(pm; dead: MoveResultM:dead(Unit()), pos:
       ?(EqPos(pm.pos, s.food);
-          {
+          true: {
             # TODO: Properly handle the case where the snake eats food at its
             # tail.
             PosP nsnake = PosP(s.food, PosS:cons(s.snake));
@@ -182,8 +186,9 @@ func Move(State s; MoveResultM) {
                          DrawS:nil(Unit())))));
             MoveResultM:mr(MoveResult(ns, draw));
           },
-          ?(InPosP(s.snake, pm.pos); MoveResultM:dead(Unit()),
-            {
+          false:
+          ?(InPosP(s.snake, pm.pos); true: MoveResultM:dead(Unit()),
+            false: {
               # TODO: Combine calls to Init and Last so we only have to
               # iterate over the list of elements once instead of twice?
               PosP nsnake = PosP(pm.pos, InitPosP(s.snake));
@@ -197,8 +202,8 @@ func Move(State s; MoveResultM) {
 };
 
 proc DrawAll(Draw+ out; DrawS draw ; Unit) {
-  ?(draw ; $(Unit()),
-      {
+  ?(draw ; nil: $(Unit()),
+      cons: {
          Draw x = +out(draw.cons.head);
          DrawAll(out; draw.cons.tail);
       });
@@ -206,12 +211,12 @@ proc DrawAll(Draw+ out; DrawS draw ; Unit) {
 
 proc Snake(Input- in, Draw+ out; State s ; Unit) {
   Input x = -in();
-  ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
-       {
+  ?(x; dir: Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
+       tick: {
            MoveResultM m = $(Move(s));
            ?(m;
-              $(Unit()),
-              {
+              dead: $(Unit()),
+              mr: {
                  Unit u = DrawAll(out; m.mr.draw);
                  Snake(in, out; m.mr.state);
               });

@@ -43,39 +43,40 @@ func ZeroDP( ; DigitP) {
 # or '1'.
 func IncrDS(DigitS ds ; DigitP) {
   ?(ds ;
-      DigitP(Digit:1(Unit()), DigitS:nil(Unit())),
-      {
+      nil: DigitP(Digit:1(Unit()), DigitS:nil(Unit())),
+      cons: {
         DigitP x = IncrDS(ds.cons.tail);
         ?(EqD(x.head, Digit:0(Unit()));
-            DigitP(Digit:0(Unit()), DigitS:cons(DigitP(ds.cons.head, x.tail))),
-            ?(EqD(ds.cons.head, Digit:9(Unit()));
-                DigitP(Digit:1(Unit()), DigitS:cons(DigitP(Digit:0(Unit()), x.tail))),
-                DigitP(Digit:0(Unit()), DigitS:cons(DigitP(IncrD(ds.cons.head), x.tail)))));
+            true: DigitP(Digit:0(Unit()), DigitS:cons(DigitP(ds.cons.head, x.tail))),
+            false:
+             ?(EqD(ds.cons.head, Digit:9(Unit()));
+                true: DigitP(Digit:1(Unit()), DigitS:cons(DigitP(Digit:0(Unit()), x.tail))),
+                false: DigitP(Digit:0(Unit()), DigitS:cons(DigitP(IncrD(ds.cons.head), x.tail)))));
       });
 };
 
 func IncrDP(DigitP dp ; DigitP) {
   DigitP x = IncrDS(DigitS:cons(dp));
-  ?(EqD(Digit:0(Unit()), x.head); x.tail.cons, x);
+  ?(EqD(Digit:0(Unit()), x.head); true: x.tail.cons, false: x);
 };
 
 func EqD(Digit a, Digit b ; Bool) {
   ?(a; 
-      ?(b; True(), False(), False(), False(), False(), False(), False(), False(), False(), False()),
-      ?(b; False(), True(), False(), False(), False(), False(), False(), False(), False(), False()),
-      ?(b; False(), False(), True(), False(), False(), False(), False(), False(), False(), False()),
-      ?(b; False(), False(), False(), True(), False(), False(), False(), False(), False(), False()),
-      ?(b; False(), False(), False(), False(), True(), False(), False(), False(), False(), False()),
-      ?(b; False(), False(), False(), False(), False(), True(), False(), False(), False(), False()),
-      ?(b; False(), False(), False(), False(), False(), False(), True(), False(), False(), False()),
-      ?(b; False(), False(), False(), False(), False(), False(), False(), True(), False(), False()),
-      ?(b; False(), False(), False(), False(), False(), False(), False(), False(), True(), False()),
-      ?(b; False(), False(), False(), False(), False(), False(), False(), False(), False(), True()));
+      0: ?(b; 0: True(),  1: False(), 2: False(), 3: False(), 4: False(), 5: False(), 6: False(), 7: False(), 8: False(), 9: False()),
+      1: ?(b; 0: False(), 1: True(),  2: False(), 3: False(), 4: False(), 5: False(), 6: False(), 7: False(), 8: False(), 9: False()),
+      2: ?(b; 0: False(), 1: False(), 2: True(),  3: False(), 4: False(), 5: False(), 6: False(), 7: False(), 8: False(), 9: False()),
+      3: ?(b; 0: False(), 1: False(), 2: False(), 3: True(),  4: False(), 5: False(), 6: False(), 7: False(), 8: False(), 9: False()),
+      4: ?(b; 0: False(), 1: False(), 2: False(), 3: False(), 4: True(),  5: False(), 6: False(), 7: False(), 8: False(), 9: False()),
+      5: ?(b; 0: False(), 1: False(), 2: False(), 3: False(), 4: False(), 5: True(),  6: False(), 7: False(), 8: False(), 9: False()),
+      6: ?(b; 0: False(), 1: False(), 2: False(), 3: False(), 4: False(), 5: False(), 6: True(),  7: False(), 8: False(), 9: False()),
+      7: ?(b; 0: False(), 1: False(), 2: False(), 3: False(), 4: False(), 5: False(), 6: False(), 7: True(),  8: False(), 9: False()),
+      8: ?(b; 0: False(), 1: False(), 2: False(), 3: False(), 4: False(), 5: False(), 6: False(), 7: False(), 8: True(),  9: False()),
+      9: ?(b; 0: False(), 1: False(), 2: False(), 3: False(), 4: False(), 5: False(), 6: False(), 7: False(), 8: False(), 9: True()));
 };
 
 func EqDS(DigitS a, DigitS b ; Bool) {
-  ?(a; ?(b; True(), False()),
-       ?(b; False(), EqDP(a.cons, b.cons)));
+  ?(a; nil:  ?(b; nil: True(),  cons: False()),
+       cons: ?(b; nil: False(), cons: EqDP(a.cons, b.cons)));
 };
 
 func EqDP(DigitP a, DigitP b ; Bool) {
@@ -102,15 +103,15 @@ func TwoN( ; N) {
 };
 
 func DigitN(Digit d ; N) {
-  ?(d; ZeroN(), OneN(),
-      N:S(DigitN(Digit:1(Unit()))),
-      N:S(DigitN(Digit:2(Unit()))),
-      N:S(DigitN(Digit:3(Unit()))),
-      N:S(DigitN(Digit:4(Unit()))),
-      N:S(DigitN(Digit:5(Unit()))),
-      N:S(DigitN(Digit:6(Unit()))),
-      N:S(DigitN(Digit:7(Unit()))),
-      N:S(DigitN(Digit:8(Unit()))));
+  ?(d; 0: ZeroN(), 1: OneN(),
+      2: N:S(DigitN(Digit:1(Unit()))),
+      3: N:S(DigitN(Digit:2(Unit()))),
+      4: N:S(DigitN(Digit:3(Unit()))),
+      5: N:S(DigitN(Digit:4(Unit()))),
+      6: N:S(DigitN(Digit:5(Unit()))),
+      7: N:S(DigitN(Digit:6(Unit()))),
+      8: N:S(DigitN(Digit:7(Unit()))),
+      9: N:S(DigitN(Digit:8(Unit()))));
 };
 
 func TenN( ; N) {
@@ -118,8 +119,8 @@ func TenN( ; N) {
 };
 
 func DigitsNAux(DigitS ds, N sum; N) {
-  ?(ds ; sum,
-         DigitsNAux(ds.cons.tail, AddN(MulN(TenN(), sum), DigitN(ds.cons.head))));
+  ?(ds ; nil: sum,
+         cons: DigitsNAux(ds.cons.tail, AddN(MulN(TenN(), sum), DigitN(ds.cons.head))));
 };
 
 func DigitsN(DigitP ds ; N) {
@@ -127,7 +128,7 @@ func DigitsN(DigitP ds ; N) {
 };
 
 func ToDigitsN(N n; DigitP) {
-  ?(n ; ZeroDP(), IncrDP(ToDigitsN(n.S)));
+  ?(n ; Z: ZeroDP(), S: IncrDP(ToDigitsN(n.S)));
 };
 
 func IncrN(N a; N) {
@@ -135,26 +136,26 @@ func IncrN(N a; N) {
 };
 
 func AddN(N a, N b; N) {
-  ?(a; b, AddN(a.S, N:S(b)));
+  ?(a; Z: b, S: AddN(a.S, N:S(b)));
 };
 
 # SubN -- 
 #   a - b
 #  Returns 0 if a <= b.
 func SubN(N a, N b; N) {
-  ?(b ; a, ?(a ; ZeroN(), SubN(a.S, b.S)));
+  ?(b ; Z: a, S: ?(a ; Z: ZeroN(), S: SubN(a.S, b.S)));
 };
 
 func MulN(N a, N b; N) {
-  ?(a; ZeroN(),
-      ?(b; ZeroN(),
-          IncrN(AddN(AddN(a.S, b.S), MulN(a.S, b.S)))));
+  ?(a; Z: ZeroN(),
+       S: ?(b; Z: ZeroN(),
+               S: IncrN(AddN(AddN(a.S, b.S), MulN(a.S, b.S)))));
 };
 
 func EqN(N a, N b; Bool) {
   ?(a;
-      ?(b; True(), False()),
-      ?(b; False(), EqN(a.S, b.S)));
+      Z: ?(b; Z: True(),  S: False()),
+      S: ?(b; Z: False(), S: EqN(a.S, b.S)));
 };
 
 func NeqN(N a, N b; Bool) {
@@ -163,22 +164,22 @@ func NeqN(N a, N b; Bool) {
 
 func LtN(N a, N b; Bool) {
   ?(a;
-      ?(b; False(), True()),
-      ?(b; False(), LtN(a.S, b.S)));
+      Z: ?(b; Z: False(), S: True()),
+      S: ?(b; Z: False(), S: LtN(a.S, b.S)));
 };
 
 func GtN(N a, N b; Bool) {
   ?(a;
-      ?(b; False(), False()),
-      ?(b; True(), GtN(a.S, b.S)));
+      Z: ?(b; Z: False(), S: False()),
+      S: ?(b; Z: True(),  S: GtN(a.S, b.S)));
 };
 
 # DividesN --
 #   Returns true if the divisor exactly devides the dividend.
 #   For example, DividesN(18, 2) is true, but DividesN(17, 2) is false.
 func DividesN(N dividend, N divisor ; Bool) {
-  ?(EqN(dividend, divisor) ; True(),
-      ?(LtN(dividend, divisor) ; False(),
+  ?(EqN(dividend, divisor) ; true: True(), false:
+      ?(LtN(dividend, divisor) ; true: False(), false:
           DividesN(SubN(dividend, divisor), divisor)));
 };
 
@@ -186,13 +187,13 @@ func DividesN(N dividend, N divisor ; Bool) {
 #   Computes whether x is prime given that no factors of x other than 1 are
 #   less than f.
 func IsPrimeN_(N x, N f ; Bool) {
-  ?(GtN(MulN(f, f), x); True(),
-      ?(DividesN(x, f); False(),
+  ?(GtN(MulN(f, f), x); true: True(), false:
+      ?(DividesN(x, f); true: False(), false:
           IsPrimeN_(x, IncrN(f))));
 };
 
 func IsPrimeN(N x ; Bool) {
-  ?(LtN(x, TwoN()) ; False(), IsPrimeN_(x, TwoN()));
+  ?(LtN(x, TwoN()) ; true: False(), false: IsPrimeN_(x, TwoN()));
 };
 
 # Return the nth prime after x, starting with 0.
@@ -203,8 +204,8 @@ func IsPrimeN(N x ; Bool) {
 #   NthPrimeN(6, 1) gives 7
 func NthPrimeN(N x, N n; N) {
   ?(IsPrimeN(x) ;
-      ?(n ; x, NthPrimeN(IncrN(x), n.S)),
-      NthPrimeN(IncrN(x), n));
+      true: ?(n ; Z: x, S: NthPrimeN(IncrN(x), n.S)),
+      false: NthPrimeN(IncrN(x), n));
 };
 
 # Tests
@@ -235,26 +236,26 @@ struct TestFailureP(TestFailure head, TestFailureS tail);
 union TestFailureS(Unit nil, TestFailureP cons);
 
 func T(TestResult result, TestFailureS rest; TestFailureS) {
-  ?(result; rest, TestFailureS:cons(TestFailureP(result.failed, rest)));
+  ?(result; passed: rest, failed: TestFailureS:cons(TestFailureP(result.failed, rest)));
 };
 
 func T_EqN(TestName name, N a, N b; TestResult) {
-  ?(EqN(a, b); TestResult:passed(Unit()),
+  ?(EqN(a, b); true: TestResult:passed(Unit()), false:
       TestResult:failed(TestFailure:2n(TestFailure2N(name, a, b))));
 };
 
 func T_EqDP(TestName name, DigitP a, DigitP b; TestResult) {
-  ?(EqDP(a, b); TestResult:passed(Unit()),
+  ?(EqDP(a, b); true: TestResult:passed(Unit()), false:
       TestResult:failed(TestFailure:2dp(TestFailure2DP(name, a, b))));
 };
 
 func T_NeqN(TestName name, N a, N b; TestResult) {
-  ?(NeqN(a, b); TestResult:passed(Unit()),
+  ?(NeqN(a, b); true: TestResult:passed(Unit()), false:
       TestResult:failed(TestFailure:2n(TestFailure2N(name, a, b))));
 };
 
 func T_NeqDP(TestName name, DigitP a, DigitP b; TestResult) {
-  ?(NeqDP(a, b); TestResult:passed(Unit()),
+  ?(NeqDP(a, b); true: TestResult:passed(Unit()), false:
       TestResult:failed(TestFailure:2dp(TestFailure2DP(name, a, b))));
 };
 
