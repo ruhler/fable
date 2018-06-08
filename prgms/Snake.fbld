@@ -43,7 +43,7 @@ priv struct State(Direction dir, Pos food, Pos nfood, P<Pos> snake);
 
 priv func DrawSnakeS(S<Pos> s ; S<Draw>) {
   # TODO: Use MapS for this.
-  ?(s; S<Draw>:cons(DrawSnakeP(s.cons)), S<Draw>:nil(Unit()));
+  ?(s; cons: S<Draw>:cons(DrawSnakeP(s.cons)), nil: S<Draw>:nil(Unit()));
 };
 
 priv func DrawSnakeP(P<Pos> s ; P<Draw>) {
@@ -80,27 +80,31 @@ priv union PosM(Unit dead, Pos pos);
 
 # Return true if the given position is found in the list of positions.
 priv func InPosS(S<Pos> s, Pos p ; Bool) {
-  ?(s ; InPosP(s.cons, p), False());
+  ?(s ; cons: InPosP(s.cons, p), nil: False());
 };
 
 # Return true if the given position is found in the list of positions.
 priv func InPosP(P<Pos> s, Pos p ; Bool) {
-  ?(EqPos(s.head, p); True(), InPosS(s.tail, p));
+  ?(EqPos(s.head, p); true: True(), false: InPosS(s.tail, p));
 };
 
 priv func Move(State s; MoveResultM) {
   PosM pm = ?(s.dir;
+    up:
     ?(Eq(s.snake.head.row, MaxRow()); PosM:dead(Unit()), 
         PosM:pos(Pos(Inc(s.snake.head.row), s.snake.head.col))),
+    down:
     ?(Eq(s.snake.head.row, MinRow()); PosM:dead(Unit()), 
         PosM:pos(Pos(Dec(s.snake.head.row), s.snake.head.col))),
+    left:
     ?(Eq(s.snake.head.col, MinCol()); PosM:dead(Unit()), 
         PosM:pos(Pos(s.snake.head.row, Dec(s.snake.head.col)))),
+    right:
     ?(Eq(s.snake.head.col, MaxCol()); PosM:dead(Unit()), 
         PosM:pos(Pos(s.snake.head.row, Inc(s.snake.head.col)))));
-  ?(pm; MoveResultM:dead(Unit()),
+  ?(pm; dead: MoveResultM:dead(Unit()), pos:
       ?(EqPos(pm.pos, s.food);
-          {
+          true: {
             # TODO: Properly handle the case where the snake eats food at its
             # tail.
             P<Pos> nsnake = P<Pos>(s.food, S<Pos>:cons(s.snake));
@@ -110,8 +114,9 @@ priv func Move(State s; MoveResultM) {
                          S<Draw>:nil(Unit())))));
             MoveResultM:mr(MoveResult(ns, draw));
           },
-          ?(InPosP(s.snake, pm.pos); MoveResultM:dead(Unit()),
-            {
+          false:
+          ?(InPosP(s.snake, pm.pos); true: MoveResultM:dead(Unit()),
+            false: {
               # TODO: Combine calls to Init and Last so we only have to
               # iterate over the list of elements once instead of twice?
               P<Pos> nsnake = P<Pos>(pm.pos, InitP<Pos>(s.snake));
@@ -126,12 +131,12 @@ priv func Move(State s; MoveResultM) {
 
 priv proc Snake(Input- in, S<Draw>+ out; State s ; Unit) {
   Input x = -in();
-  ?(x; Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
-       {
+  ?(x; dir: Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
+       tick: {
            MoveResultM m = $(Move(s));
            ?(m;
-              $(Unit()),
-              {
+              dead: $(Unit()),
+              mr: {
                  S<Draw> drawn = +out(m.mr.draw);
                  Snake(in, out; m.mr.state);
               });

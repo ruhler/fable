@@ -34,24 +34,24 @@ priv union S(
 );
 
 priv func NextS(S s; Maybe<S>) {
-  ?(s; Maybe<S>:nothing(Unit()),
-       Maybe<S>:just(S:0(Unit())), Maybe<S>:just(S:1(Unit())),
-       Maybe<S>:just(S:2(Unit())), Maybe<S>:just(S:3(Unit())),
-       Maybe<S>:just(S:4(Unit())), Maybe<S>:just(S:5(Unit())),
-       Maybe<S>:just(S:6(Unit())), Maybe<S>:just(S:7(Unit())),
-       Maybe<S>:just(S:8(Unit())), Maybe<S>:just(S:9(Unit())),
-       Maybe<S>:just(S:10(Unit())), Maybe<S>:just(S:11(Unit())),
-       Maybe<S>:just(S:12(Unit())), Maybe<S>:just(S:13(Unit())),
-       Maybe<S>:just(S:14(Unit())), Maybe<S>:just(S:15(Unit())),
-       Maybe<S>:just(S:16(Unit())), Maybe<S>:just(S:17(Unit())),
-       Maybe<S>:just(S:18(Unit())), Maybe<S>:just(S:19(Unit())),
-       Maybe<S>:just(S:20(Unit())), Maybe<S>:just(S:21(Unit())),
-       Maybe<S>:just(S:22(Unit())));
+  ?(s; 0: Maybe<S>:nothing(Unit()),
+       1: Maybe<S>:just(S:0(Unit())), 2: Maybe<S>:just(S:1(Unit())),
+       3: Maybe<S>:just(S:2(Unit())), 4: Maybe<S>:just(S:3(Unit())),
+       5: Maybe<S>:just(S:4(Unit())), 6: Maybe<S>:just(S:5(Unit())),
+       7: Maybe<S>:just(S:6(Unit())), 8: Maybe<S>:just(S:7(Unit())),
+       9: Maybe<S>:just(S:8(Unit())), 10: Maybe<S>:just(S:9(Unit())),
+       11: Maybe<S>:just(S:10(Unit())), 12: Maybe<S>:just(S:11(Unit())),
+       13: Maybe<S>:just(S:12(Unit())), 14: Maybe<S>:just(S:13(Unit())),
+       15: Maybe<S>:just(S:14(Unit())), 16: Maybe<S>:just(S:15(Unit())),
+       17: Maybe<S>:just(S:16(Unit())), 18: Maybe<S>:just(S:17(Unit())),
+       19: Maybe<S>:just(S:18(Unit())), 20: Maybe<S>:just(S:19(Unit())),
+       21: Maybe<S>:just(S:20(Unit())), 22: Maybe<S>:just(S:21(Unit())),
+       23: Maybe<S>:just(S:22(Unit())));
 };
 
 priv func cls(Bit32 a, S s; Bit32) {
   Maybe<S> next = NextS(s);
-  ?(next; cls(clshift(a), next.just), a);
+  ?(next; just: cls(clshift(a), next.just), nothing: a);
 };
 
 priv func F(Bit32 x, Bit32 y, Bit32 z; Bit32) or(and(x, y), and(not(x), z));
@@ -220,16 +220,16 @@ priv proc GetBlock(Streamed<Bit8>- padded; ; Streamed<Block>) {
 priv proc PaddedMd5(Streamed<Bit8>- padded; ABCD abcd; ABCD) {
   Streamed<Block> block = GetBlock(padded;);
   ABCD md5 = $(DoBlock(abcd, block.data));
-  ?(block.last; $(md5), PaddedMd5(padded; md5));
+  ?(block.last; true: $(md5), false: PaddedMd5(padded; md5));
 };
 
 # Note: length is in units of bytes
 priv proc Pad(Maybe<Bit8>- input, Streamed<Bit8>+ output; Bit64 length; Unit) {
   Maybe<Bit8> x = -input();
-  ?(x; {
+  ?(x; just: {
          Streamed<Bit8> _ = +output(Streamed<Bit8>(x.just, False()));
          Pad(input, output; Inc64(length));
-       }, {
+       }, nothing: {
          Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(8(), 0()), False()));
          PadZ(output; length, Inc64(length));
        });
@@ -252,7 +252,7 @@ priv func H2_64(Hex a, Hex b; Bit64) {
 priv proc PadZ(Streamed<Bit8>+ output; Bit64 msglen, Bit64 length; Unit) {
   ?(iszero@BitN@Bit64M(
       and@BitN@Bit64M(H2_64(3(), f()),
-                      add@BitN@Bit64M(H2_64(0(), 8()), length))); {
+                      add@BitN@Bit64M(H2_64(0(), 8()), length))); true: {
        Bit64 bits = $(shl64(shl64(shl64(msglen))));
        Streamed<Bit8> _0 = +output(Streamed<Bit8>(bits.lo.lo.lo, False()));
        Streamed<Bit8> _1 = +output(Streamed<Bit8>(bits.lo.lo.hi, False()));
@@ -263,7 +263,7 @@ priv proc PadZ(Streamed<Bit8>+ output; Bit64 msglen, Bit64 length; Unit) {
        Streamed<Bit8> _6 = +output(Streamed<Bit8>(bits.hi.hi.lo, False()));
        Streamed<Bit8> _7 = +output(Streamed<Bit8>(bits.hi.hi.hi, True()));
        $(Unit());
-     }, {
+     }, false: {
        Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(0(), 0()), False()));
        PadZ(output; msglen, Inc64(length));
      });
@@ -355,10 +355,10 @@ priv func t63( ; Bit32) H8(2(), a(), d(), 7(), d(), 2(), b(), b());
 priv func t64( ; Bit32) H8(e(), b(), 8(), 6(), d(), 3(), 9(), 1());
 
 priv func HexFromBits(Bit 3, Bit 2, Bit 1, Bit 0; Hex) {
-  ?(3; ?(2; ?(1; ?(0; 0(), 1()), ?(0; 2(), 3())),
-            ?(1; ?(0; 4(), 5()), ?(0; 6(), 7()))),
-       ?(2; ?(1; ?(0; 8(), 9()), ?(0; a(), b())),
-            ?(1; ?(0; c(), d()), ?(0; e(), f()))));
+  ?(3; 0: ?(2; 0: ?(1; 0: ?(0; 0: 0(), 1: 1()), 0: ?(0; 0: 2(), 1: 3())),
+               1: ?(1; 0: ?(0; 0: 4(), 1: 5()), 0: ?(0; 0: 6(), 1: 7()))),
+       1: ?(2; 0: ?(1; 0: ?(0; 0: 8(), 1: 9()), 0: ?(0; 0: a(), 1: b())),
+               1: ?(1; 0: ?(0; 0: c(), 1: d()), 0: ?(0; 0: e(), 1: f()))));
 };
 
 priv func HexFromBit4(Bit4 x ; Hex) {

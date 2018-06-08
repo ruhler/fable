@@ -304,13 +304,27 @@ typedef struct {
   FbldId field;
 } FbldAccessExpr;
 
+// FbldTaggedExpr --
+//   An expression with a tag used as an argument to a conditional expression.
+typedef struct {
+  FbldName* tag;
+  FbldExpr* expr;
+} FbldTaggedExpr;
+
+// FbldTaggedExprV -- 
+//   A vector of FbldTaggedExprs.
+typedef struct {
+  size_t size;
+  FbldTaggedExpr* xs;
+} FbldTaggedExprV;
+
 // FbldCondExpr --
 //   A conditional expression of the form '?(select; arg0, arg1, ...)', which
 //   conditionally selects an argument based on the tag of the select value.
 typedef struct {
   FbldExpr _base;
   FbldExpr* select;
-  FbldExprV* argv;
+  FbldTaggedExprV* argv;
 } FbldCondExpr;
 
 // FbldLetExpr --
@@ -345,13 +359,6 @@ typedef struct {
   FbldLoc* loc;
 } FbldActn;
 
-// FbldActnV --
-//   A vector of fblcs actions.
-typedef struct {
-  size_t size;
-  FbldActn** xs;
-} FbldActnV;
-
 // FbldEvalActn --
 //   An evaluation action of the form '$(arg)' which evaluates the given
 //   expression without side effects.
@@ -375,13 +382,27 @@ typedef struct {
   FbldExpr* arg;
 } FbldPutActn;
 
+// FbldTaggedActn --
+//   An action with a tag used as an argument to a conditional action.
+typedef struct {
+  FbldName* tag;
+  FbldActn* actn;
+} FbldTaggedActn;
+
+// FbldTaggedActnV -- 
+//   A vector of FbldTaggedActns.
+typedef struct {
+  size_t size;
+  FbldTaggedActn* xs;
+} FbldTaggedActnV;
+
 // FbldCondActn --
 //   A conditional action of the form '?(select; arg0, arg1, ...)', which
 //   conditionally selects an argument based on the tag of the select value.
 typedef struct {
   FbldActn _base;
   FbldExpr* select;
-  FbldActnV* argv;
+  FbldTaggedActnV* argv;
 } FbldCondActn;
 
 // FbldCallActn --

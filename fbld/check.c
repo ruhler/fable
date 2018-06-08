@@ -1050,6 +1050,16 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
             ReportError("Expected %d arguments, but %d were provided.\n", cond_expr->_base.loc, type_def->fieldv->size, cond_expr->argv->size);
             success = false;
           }
+
+          for (size_t i = 0; i < type_def->fieldv->size && i < cond_expr->argv->size; ++i) {
+            if (!FbldNamesEqual(type_def->fieldv->xs[i]->name->name, cond_expr->argv->xs[i].tag->name)) {
+              ReportError("Expected tag '%s', but found '%s'.\n",
+                  cond_expr->argv->xs[i].tag->loc,
+                  type_def->fieldv->xs[i]->name->name,
+                  cond_expr->argv->xs[i].tag->name);
+              success = false;
+            }
+          }
         } else {
           ReportError("The condition has type %s, which is not a union type.\n", cond_expr->select->loc, type_def->_base.name->name);
           success = false;
@@ -1057,11 +1067,11 @@ static FbldQRef* CheckExpr(FblcArena* arena, Env* env, Vars* vars, FbldExpr* exp
       }
 
       assert(cond_expr->argv->size > 0);
-      FbldQRef* result_type = CheckExpr(arena, env, vars, cond_expr->argv->xs[0]);
+      FbldQRef* result_type = CheckExpr(arena, env, vars, cond_expr->argv->xs[0].expr);
       for (size_t i = 1; i < cond_expr->argv->size; ++i) {
-        FbldQRef* arg_type = CheckExpr(arena, env, vars, cond_expr->argv->xs[i]);
+        FbldQRef* arg_type = CheckExpr(arena, env, vars, cond_expr->argv->xs[i].expr);
         Require(arg_type != NULL, &success);
-        Require(CheckTypesMatch(cond_expr->argv->xs[i]->loc, result_type, arg_type), &success);
+        Require(CheckTypesMatch(cond_expr->argv->xs[i].expr->loc, result_type, arg_type), &success);
       }
       return success ? result_type : NULL;
     }
@@ -1150,6 +1160,16 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
             ReportError("Expected %d arguments, but %d were provided.\n", cond_actn->_base.loc, type_def->fieldv->size, cond_actn->argv->size);
             success = false;
           }
+
+          for (size_t i = 0; i < type_def->fieldv->size && i < cond_actn->argv->size; ++i) {
+            if (!FbldNamesEqual(type_def->fieldv->xs[i]->name->name, cond_actn->argv->xs[i].tag->name)) {
+              ReportError("Expected tag '%s', but found '%s'.\n",
+                  cond_actn->argv->xs[i].tag->loc,
+                  type_def->fieldv->xs[i]->name->name,
+                  cond_actn->argv->xs[i].tag->name);
+              success = false;
+            }
+          }
         } else {
           ReportError("The condition has type %s, which is not a union type.\n", cond_actn->select->loc, type_def->_base.name->name);
           success = false;
@@ -1157,11 +1177,11 @@ static FbldQRef* CheckActn(FblcArena* arena, Env* env, Vars* vars, Ports* ports,
       }
 
       assert(cond_actn->argv->size > 0);
-      FbldQRef* result_type = CheckActn(arena, env, vars, ports, cond_actn->argv->xs[0]);
+      FbldQRef* result_type = CheckActn(arena, env, vars, ports, cond_actn->argv->xs[0].actn);
       for (size_t i = 1; i < cond_actn->argv->size; ++i) {
-        FbldQRef* arg_type = CheckActn(arena, env, vars, ports, cond_actn->argv->xs[i]);
+        FbldQRef* arg_type = CheckActn(arena, env, vars, ports, cond_actn->argv->xs[i].actn);
         Require(arg_type != NULL, &success);
-        Require(CheckTypesMatch(cond_actn->argv->xs[i]->loc, result_type, arg_type), &success);
+        Require(CheckTypesMatch(cond_actn->argv->xs[i].actn->loc, result_type, arg_type), &success);
       }
       return success ? result_type : NULL;
     }

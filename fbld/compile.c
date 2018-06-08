@@ -281,7 +281,7 @@ static FblcExpr* CompileExpr(Context* ctx, FbldQRef* src, FbldExpr* expr)
       cond_expr_c->select = CompileExpr(ctx, src, cond_expr_d->select);
       FblcVectorInit(ctx->arena, cond_expr_c->argv);
       for (size_t i = 0; i < cond_expr_d->argv->size; ++i) {
-        FblcExpr* arg = CompileExpr(ctx, src, cond_expr_d->argv->xs[i]);
+        FblcExpr* arg = CompileExpr(ctx, src, cond_expr_d->argv->xs[i].expr);
         FblcVectorAppend(ctx->arena, cond_expr_c->argv, arg);
       }
       return &cond_expr_c->_base;
@@ -353,7 +353,7 @@ static FblcActn* CompileActn(Context* ctx, FbldQRef* src, FbldActn* actn)
       cond_actn_c->select = CompileExpr(ctx, src, cond_actn_d->select);
       FblcVectorInit(ctx->arena, cond_actn_c->argv);
       for (size_t i = 0; i < cond_actn_d->argv->size; ++i) {
-        FblcActn* arg = CompileActn(ctx, src, cond_actn_d->argv->xs[i]);
+        FblcActn* arg = CompileActn(ctx, src, cond_actn_d->argv->xs[i].actn);
         FblcVectorAppend(ctx->arena, cond_actn_c->argv, arg);
       }
       return &cond_actn_c->_base;

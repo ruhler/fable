@@ -51,8 +51,9 @@
   FbldArgV* argv;
   FbldExpr* expr;
   FbldExprV* exprv;
+  FbldTaggedExprV* texprv;
   FbldActn* actn;
-  FbldActnV* actnv;
+  FbldTaggedActnV* tactnv;
   FbldExecV* execv;
   FbldImportItemV* iitemv;
   FbldImport* import;
@@ -114,8 +115,9 @@
 %type <argv> arg_list non_empty_arg_list
 %type <expr> expr stmt
 %type <exprv> expr_list non_empty_expr_list
+%type <texprv> tagged_expr_list
 %type <actn> actn pstmt
-%type <actnv> non_empty_actn_list
+%type <tactnv> tagged_actn_list
 %type <execv> non_empty_exec_list
 %type <iitemv> import_item_list
 %type <import> import
@@ -274,7 +276,7 @@ expr:
       access_expr->field.id = FBLC_NULL_ID;
       $$ = &access_expr->_base;
     }
-  | '?' '(' expr ';' non_empty_expr_list ')' {
+  | '?' '(' expr ';' tagged_expr_list ')' {
       FbldCondExpr* cond_expr = FBLC_ALLOC(arena, FbldCondExpr);
       cond_expr->_base.tag = FBLD_COND_EXPR;
       cond_expr->_base.loc = @$;
@@ -317,6 +319,22 @@ non_empty_expr_list:
     }
   ;
 
+tagged_expr_list:
+  name ':' expr {
+      $$ = FBLC_ALLOC(arena, FbldTaggedExprV);
+      FblcVectorInit(arena, *$$);
+      FbldTaggedExpr* texpr = FblcVectorExtend(arena, *$$);
+      texpr->tag = $1;
+      texpr->expr = $3;
+    }
+  | tagged_expr_list ',' name ':' expr {
+      $$ = $1;
+      FbldTaggedExpr* texpr = FblcVectorExtend(arena, *$$);
+      texpr->tag = $3;
+      texpr->expr = $5;
+    }
+  ;
+
 actn:
     '{' pstmt '}' {
         $$ = $2;
@@ -345,7 +363,7 @@ actn:
       put_actn->arg = $4;
       $$ = &put_actn->_base;
     }
-  | '?' '(' expr ';' non_empty_actn_list ')' {
+  | '?' '(' expr ';' tagged_actn_list ')' {
       FbldCondActn* cond_actn = FBLC_ALLOC(arena, FbldCondActn);
       cond_actn->_base.tag = FBLD_COND_ACTN;
       cond_actn->_base.loc = @$;
@@ -385,15 +403,19 @@ pstmt: actn ';' { $$ = $1; }
        }
      ;
 
-non_empty_actn_list:
-  actn {
-      $$ = FBLC_ALLOC(arena, FbldActnV);
+tagged_actn_list:
+  name ':' actn {
+      $$ = FBLC_ALLOC(arena, FbldTaggedActnV);
       FblcVectorInit(arena, *$$);
-      FblcVectorAppend(arena, *$$, $1);
+      FbldTaggedActn* tactn = FblcVectorExtend(arena, *$$);
+      tactn->tag = $1;
+      tactn->actn = $3;
     }
-  | non_empty_actn_list ',' actn {
-      FblcVectorAppend(arena, *$1, $3);
+  | tagged_actn_list ',' name ':' actn {
       $$ = $1;
+      FbldTaggedActn* tactn = FblcVectorExtend(arena, *$$);
+      tactn->tag = $3;
+      tactn->actn = $5;
     }
   ;
 
