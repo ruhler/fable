@@ -123,8 +123,8 @@ S<Constraint> cs; S<Constraint>) {
 priv func InitialCellConstraint(Symbol row, Symbol col, Maybe<Symbol> cell,
 S<Constraint> cs; S<Constraint>) {
   ?(cell;
-      ConsS<Constraint>(Constraint:eq(Assign(CellId(row, col), cell.just)), cs),
-      cs);
+      just: ConsS<Constraint>(Constraint:eq(Assign(CellId(row, col), cell.just)), cs),
+      nothing: cs);
 };
 
 # InitialBoard --
@@ -170,11 +170,11 @@ priv func Apply(Constraint c, S<Constraint> cs, Board b; Maybe<State>);
 #   board with all constraints applied.
 priv func ApplyAll(State s; Maybe<Board>) {
   ?(s.cs; 
-      {
+      cons: {
         Maybe<State> ms = Apply(s.cs.cons.head, s.cs.cons.tail, s.b);
-        ?(ms; ApplyAll(ms.Just), Maybe<Board>:Nothing(Unit()));
+        ?(ms; just: ApplyAll(ms.Just), nothing: Maybe<Board>:Nothing(Unit()));
       },
-      Maybe<Board>:Just(s.b));
+      nil: Maybe<Board>:Just(s.b));
 };
 
 # Split --
@@ -201,15 +201,15 @@ priv func ExtractSolution(Board b; CellIdArray<Symbol>) {
 
 priv func SolveFully(State s; Maybe<CellIdArray<Symbol>>) {
   MaybeBoard mb = ApplyAll(s);
-  ?(mb; {
+  ?(mb; just: {
       Maybe<Assign> ma = Split(mb.just);
-      ?(ma; {
+      ?(ma; just: {
          Maybe<CellIdArray<Symbol>> meq = SolveFully(
             State(S1(Constraint:eq(ma.just)), mb.just));
-         ?(meq; meq.just, SolveFully(State(S1(Constraint:ne(ma.just)),
+         ?(meq; just: meq.just, nothing: SolveFully(State(S1(Constraint:ne(ma.just)),
 mb.just)));
-        }, Maybe<CellIdArray<Symbol>>:just(ExtractSolution(mb.just)));
-    }, Maybe<CellIdArray<Symbol>>:nothing(Unit()));
+        }, nothing: Maybe<CellIdArray<Symbol>>:just(ExtractSolution(mb.just)));
+    }, nothing: Maybe<CellIdArray<Symbol>>:nothing(Unit()));
 };
 
 # 8.. .9. ..2     816 497 532 

@@ -4,14 +4,14 @@ import BoolM { Bool; True; False; };
 import UBNat { Nat; 2; IsZero; Eq@EqNat; Lt; Gt; Inc; Dec; Mul; Mod; };
 
 func IsPrime(Nat x ; Bool) {
-  ?(Lt(x, 2()) ; False(), IsPrimeHelper(x, 2()));
+  ?(Lt(x, 2()) ; true: False(), false: IsPrimeHelper(x, 2()));
 };
 
 
 func NthPrime(Nat x, Nat n; Nat) {
   ?(IsPrime(x) ;
-      ?(IsZero(n) ; x, NthPrime(Inc(x), Dec(n))),
-      NthPrime(Inc(x), n));
+      true: ?(IsZero(n) ; true: x, false: NthPrime(Inc(x), Dec(n))),
+      false: NthPrime(Inc(x), n));
 };
 
 # Returns true if f evenly divides x.
@@ -23,7 +23,7 @@ priv func Divides(Nat x, Nat f; Bool) {
 #   Computes whether x is prime given that there are no factors of x other
 #   than 1 that are less than f.
 priv func IsPrimeHelper(Nat x, Nat f ; Bool) {
-  ?(Gt(Mul(f, f), x); True(),
-      ?(Divides(x, f); False(),
+  ?(Gt(Mul(f, f), x); true: True(), false:
+      ?(Divides(x, f); true: False(), false:
           IsPrimeHelper(x, Inc(f))));
 };

@@ -24,9 +24,9 @@ union Input(Direction dir, Unit tick);
 priv union Cell(Unit empty, Unit snake, Unit food);
 
 priv func DrawCell(Pos pos, Cell cell ; Draw) {
-  Color c = ?(cell; Color:black(Unit()),
-                    Color:blue(Unit()),
-                    Color:green(Unit()));
+  Color c = ?(cell; empty: Color:black(Unit()),
+                    snake: Color:blue(Unit()),
+                    food: Color:green(Unit()));
   Draw(pos.col, pos.row, 1(), 1(), c);
 };
 
@@ -91,17 +91,17 @@ priv func InPosP(P<Pos> s, Pos p ; Bool) {
 priv func Move(State s; MoveResultM) {
   PosM pm = ?(s.dir;
     up:
-    ?(Eq(s.snake.head.row, MaxRow()); PosM:dead(Unit()), 
-        PosM:pos(Pos(Inc(s.snake.head.row), s.snake.head.col))),
+    ?(Eq(s.snake.head.row, MaxRow()); true: PosM:dead(Unit()), 
+        false: PosM:pos(Pos(Inc(s.snake.head.row), s.snake.head.col))),
     down:
-    ?(Eq(s.snake.head.row, MinRow()); PosM:dead(Unit()), 
-        PosM:pos(Pos(Dec(s.snake.head.row), s.snake.head.col))),
+    ?(Eq(s.snake.head.row, MinRow()); true: PosM:dead(Unit()), 
+        false: PosM:pos(Pos(Dec(s.snake.head.row), s.snake.head.col))),
     left:
-    ?(Eq(s.snake.head.col, MinCol()); PosM:dead(Unit()), 
-        PosM:pos(Pos(s.snake.head.row, Dec(s.snake.head.col)))),
+    ?(Eq(s.snake.head.col, MinCol()); true: PosM:dead(Unit()), 
+        false: PosM:pos(Pos(s.snake.head.row, Dec(s.snake.head.col)))),
     right:
-    ?(Eq(s.snake.head.col, MaxCol()); PosM:dead(Unit()), 
-        PosM:pos(Pos(s.snake.head.row, Inc(s.snake.head.col)))));
+    ?(Eq(s.snake.head.col, MaxCol()); true: PosM:dead(Unit()), 
+        false: PosM:pos(Pos(s.snake.head.row, Inc(s.snake.head.col)))));
   ?(pm; dead: MoveResultM:dead(Unit()), pos:
       ?(EqPos(pm.pos, s.food);
           true: {

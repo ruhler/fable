@@ -18,7 +18,7 @@ func Test( ; S<TestFailure>) {
 };
 
 priv func TEq(TestName name, Nat a, Nat b, S<TestFailure> rest; S<TestFailure>) {
-  ?(Eq(a, b); rest,
-    S<TestFailure>:cons(P<TestFailure>(TestFailure(name, a, b), rest)));
+  ?(Eq(a, b); true: rest,
+    false: S<TestFailure>:cons(P<TestFailure>(TestFailure(name, a, b), rest)));
 };
 

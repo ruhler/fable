@@ -27,10 +27,10 @@ priv proc Md5Str(; S<Bit8> bytes; Md5Hash) {
 
 # Put all the bytes onto the output port, followed by nothing.
 priv proc PutAll(Maybe<Bit8>+ out; S<Bit8> bytes; Unit) {
-  ?(bytes; {
+  ?(bytes; cons: {
       Maybe<Bit8> x = +out(Maybe<Bit8>:just(bytes.cons.head));
       PutAll(out; bytes.cons.tail);
-    }, {
+    }, nil: {
       Maybe<Bit8> x = +out(Maybe<Bit8>:nothing(Unit()));
       $(Unit());
   });
@@ -46,7 +46,7 @@ priv func L(Hex hi, Hex lo, S<Bit8> l; S<Bit8>) {
 };
 
 priv func T(TestFailure x, S<TestFailure> l; S<TestFailure>) {
-  ?(Eq(x.wnt, x.got); l, S<TestFailure>:cons(P<TestFailure>(x, l)));
+  ?(Eq(x.wnt, x.got); true: l, false: S<TestFailure>:cons(P<TestFailure>(x, l)));
 };
 
 proc Test( ; ; S<TestFailure>) {

@@ -19,8 +19,8 @@ func S5<type T>(T a, T b, T c, T d, T e; S<T>) ConsS<T>(a, S4<T>(b, c, d, e));
 # InitP - Return all but the last element in 'list'.
 func InitP<type T>(P<T> list; S<T>) {
   ?(list.tail;
-      nil: S<T>:nil(Unit()),
-      cons: S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons)))
+      cons: S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons))),
+      nil: S<T>:nil(Unit())
   );
 };
 

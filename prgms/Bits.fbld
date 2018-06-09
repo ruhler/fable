@@ -52,22 +52,22 @@ module Bit4 {
   func H1(Hex x; Bit4) {
     Bit 0 = Bit:0(Unit());
     Bit 1 = Bit:1(Unit());
-    ?(x; Bit4(Bit2(0, 0), Bit2(0, 0)),
-         Bit4(Bit2(0, 0), Bit2(0, 1)),
-         Bit4(Bit2(0, 0), Bit2(1, 0)),
-         Bit4(Bit2(0, 0), Bit2(1, 1)),
-         Bit4(Bit2(0, 1), Bit2(0, 0)),
-         Bit4(Bit2(0, 1), Bit2(0, 1)),
-         Bit4(Bit2(0, 1), Bit2(1, 0)),
-         Bit4(Bit2(0, 1), Bit2(1, 1)),
-         Bit4(Bit2(1, 0), Bit2(0, 0)),
-         Bit4(Bit2(1, 0), Bit2(0, 1)),
-         Bit4(Bit2(1, 0), Bit2(1, 0)),
-         Bit4(Bit2(1, 0), Bit2(1, 1)),
-         Bit4(Bit2(1, 1), Bit2(0, 0)),
-         Bit4(Bit2(1, 1), Bit2(0, 1)),
-         Bit4(Bit2(1, 1), Bit2(1, 0)),
-         Bit4(Bit2(1, 1), Bit2(1, 1)));
+    ?(x; 0: Bit4(Bit2(0, 0), Bit2(0, 0)),
+         1: Bit4(Bit2(0, 0), Bit2(0, 1)),
+         2: Bit4(Bit2(0, 0), Bit2(1, 0)),
+         3: Bit4(Bit2(0, 0), Bit2(1, 1)),
+         4: Bit4(Bit2(0, 1), Bit2(0, 0)),
+         5: Bit4(Bit2(0, 1), Bit2(0, 1)),
+         6: Bit4(Bit2(0, 1), Bit2(1, 0)),
+         7: Bit4(Bit2(0, 1), Bit2(1, 1)),
+         8: Bit4(Bit2(1, 0), Bit2(0, 0)),
+         9: Bit4(Bit2(1, 0), Bit2(0, 1)),
+         A: Bit4(Bit2(1, 0), Bit2(1, 0)),
+         B: Bit4(Bit2(1, 0), Bit2(1, 1)),
+         C: Bit4(Bit2(1, 1), Bit2(0, 0)),
+         D: Bit4(Bit2(1, 1), Bit2(0, 1)),
+         E: Bit4(Bit2(1, 1), Bit2(1, 0)),
+         F: Bit4(Bit2(1, 1), Bit2(1, 1)));
   };
 };
 

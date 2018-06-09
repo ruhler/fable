@@ -31,12 +31,12 @@ struct TestFailure(TestName name, Nat a, Nat b);
 priv func T(TestName name, Bool p, S<TestFailure> rest; S<TestFailure>) {
   # Just use 0 for the context arguments for now to avoid introducing
   # a union for the test failure type.
-  ?(p; rest, S<TestFailure>:cons(P<TestFailure>(TestFailure(name, 0(), 0()), rest)));
+  ?(p; true: rest, false: S<TestFailure>:cons(P<TestFailure>(TestFailure(name, 0(), 0()), rest)));
 };
 
 priv func TEq(TestName name, Nat a, Nat b, S<TestFailure> rest; S<TestFailure>) {
-  ?(Eq(a, b); rest,
-    S<TestFailure>:cons(P<TestFailure>(TestFailure(name, a, b), rest)));
+  ?(Eq(a, b); true: rest,
+    false: S<TestFailure>:cons(P<TestFailure>(TestFailure(name, a, b), rest)));
 };
 
 func Test( ; S<TestFailure>) {

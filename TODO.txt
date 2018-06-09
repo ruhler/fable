@@ -1,12 +1,3 @@
-Conditional Syntax Change
-* Update fblc code to implement new syntax
-* Update all fblc programs to use new syntax
-* Update all fbld test cases to new syntax
-* Update fbld code to implement new syntax
-* Update all programs to use new syntax
-* Add test cases to cover tag boundary conditions
- - missing tag, tag out of order, invalid tag, etc.
-
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an
   entity, it doesn't effect the use of that entity.
