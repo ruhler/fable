@@ -1,0 +1,78 @@
+Experimental Features
+
+1. Local recursion.
+Syntax:  '*' tname '(' [tname vname '=' expr [',' tname vname '=' expr[...]]] ';' tname ')' expr ';'
+
+Defines a local function tname with given arguments and return type. That
+function is visible from within the body of itself, allowing for recursive
+calls. Applies the function to initial argument values based on the '=' expr
+in the arg list and returns the result. Note that the body of the function may
+refer to any variables in scope at the time of the function declaration.
+
+Purpose:
+1. Allow local traversals without having to "pull out" separate functions.
+2. Make it clear when writing code that the code is being executed by
+providing the initial arguments right away, rather than in a separate step.
+
+Example: To do a local traversal of a list, something like:
+
+* f(List l = xs; X) {
+    ?(l; nil: List:nil(Unit()),
+         cons: List:cons(g(a, l.cons.head), f(l.cons.tail)));
+  };
+
+Instead of:
+  func mapList(A a, List l; X) {
+    ?(l; nil: List:nil(Unit()),
+         cons: List:cons(g(a, l.cons.head), f(a, l.cons.tail)));
+  };
+
+  ...
+  mapList(a, xs);
+
+Note that this syntax is suitable for inclusion in fblc.
+It could potentially be used as a generalization of a let. Instead of
+
+Foo f = xxx;
+yyy(xxx)
+
+* _(Foo f = xxx; Y)
+  yyy(xxx)
+
+Perhaps make the return type optional?
+
+
+2. Bind syntax
+args <- qref(xxx);
+yyy
+
+Is short hand for:
+
+qref<f>(xxx)
+
+where 
+  func f(args; Y) yyy
+
+And yyy can access the local context.
+
+Example:
+
+Instead of:
+  Maybe<X> mx = ...;
+  ?(mx; just: {
+          Maybe<Y> my = f(mx.Just);
+          ?(my; just: g(my.Just),
+                nothing: Maybe<Z>:Nothing(Unit()))
+      }, nothing: Maybe<Z>:Nothing(Unit()));
+
+
+func maybe<type A, type B, func f(A a; B)>(Maybe<A> ma; Maybe<B>) {
+  ?(ma; just: f(ma.Just), nothing: Maybe<B>:Nothing(Unit()));
+};
+
+...
+  X x <- maybe<X, Z>(...);
+  Y y <- maybe<Y, Z>(f(x));
+  g(y);
+
+

@@ -32,17 +32,60 @@ SymbolArray<B>) {
                  F(xs.s7), F(xs.s8), F(xs.s9));
 };
 
+priv func FillSymbolArray<type A>(A x; SymbolArray<A> xs) {
+  SymbolArray<A>(x, x, x, x, x, x, x, x, x, x);
+};
+
+# xs[index] = x;
+priv func SymbolArraySet<type A>(Symbol index, A x, SymbolArray<A> xs;
+SymbolArray<A>) {
+  ?(x;
+    s1: SymbolArray<A>(    x, xs.s2, xs.s3, xs.s4, xs.s5, xs.s6, xs.s7, xs.s8, xs.s9),
+    s2: SymbolArray<A>(xs.s1,     x, xs.s3, xs.s4, xs.s5, xs.s6, xs.s7, xs.s8, xs.s9),
+    s3: SymbolArray<A>(xs.s1, xs.s2,     x, xs.s4, xs.s5, xs.s6, xs.s7, xs.s8, xs.s9),
+    s4: SymbolArray<A>(xs.s1, xs.s2, xs.s3,     x, xs.s5, xs.s6, xs.s7, xs.s8, xs.s9),
+    s5: SymbolArray<A>(xs.s1, xs.s2, xs.s3, xs.s4,     x, xs.s6, xs.s7, xs.s8, xs.s9),
+    s6: SymbolArray<A>(xs.s1, xs.s2, xs.s3, xs.s4, xs.s5,     x, xs.s7, xs.s8, xs.s9),
+    s7: SymbolArray<A>(xs.s1, xs.s2, xs.s3, xs.s4, xs.s5, xs.s6,     x, xs.s8, xs.s9),
+    s8: SymbolArray<A>(xs.s1, xs.s2, xs.s3, xs.s4, xs.s5, xs.s6, xs.s7,     x, xs.s9),
+    s9: SymbolArray<A>(xs.s1, xs.s2, xs.s3, xs.s4, xs.s5, xs.s6, xs.s7, xs.s8,     x),
+};
+
+# ss[x][y] = z
+priv func SymbolArraySet2D<type A>(Symbol x, Symbol y, A z,
+SymbolArray<SymbolArray<A>> ss; SymbolArray<SymbolArray<A>>) {
+  SymbolArraySet<SymbolArray<A>>(x, SymbolArraySet<A>(y, z,
+    SymbolArrayGet<SymbolArray<A>>(x, ss)));
+};
+
 priv union GroupId(Symbol row, Symbol col, Symbol box);
 
-priv struct GroupIdArray<type T>(SymbolArray<SymbolArray<SymbolArray<T>>>);
+priv struct GroupIdArray<type T>(
+   SymbolArray<T> row,
+   SymbolArray<T> col,
+   SymbolArray<T> box);
 
 priv struct Assign(CellId cell, Symbol symbol);
-priv union Constraint(Assign eq, Assign ne);
+priv union ConstraintSpec(Unit eq, Unit ne);
+priv struct Constraint(Assign assign, ConstraintSpec spec);
 
 # SymbolSet -- 
 #   A set of symbols. Implemented as a linked list of symbols sorted in
 #   order S1, S2, ... , S9.
 priv type SymbolSet = S<Symbol>;
+
+priv func FullSymbolSet( ; SymbolSet) {
+  Append<Symbol>(
+    S9(Symbol:S1(Unit()),
+       Symbol:S2(Unit()),
+       Symbol:S3(Unit()),
+       Symbol:S4(Unit()),
+       Symbol:S5(Unit()),
+       Symbol:S6(Unit()),
+       Symbol:S7(Unit()),
+       Symbol:S8(Unit()),
+       Symbol:S9(Unit()));
+};
 
 # CellSet --
 #   A set of cells. Implemented as an unordered linked list of cell ids.
@@ -57,9 +100,13 @@ priv type Cells = CellIdArray<SymbolSet>;
 #   that can take on that symbol.
 priv type Groups = GroupIdArray<SymbolArray<CellSet>>;
 
+
 priv struct Board(Cells cells, Groups groups);
 
-priv struct State(S<Constraint> cs, Board b);
+# An object associated with additional constraints.
+priv struct Cs<type T>(S<Constraints> cs, T x);
+
+priv struct State = Cs<Board>;
 
 # InitialConstraints --
 #   Convert an input board specification into a set of initial constraints.
@@ -135,23 +182,170 @@ func InitialBoard( ; Board) {
 
 # InitialCells --
 #   Create a newly initialized Cells
-func InitialCells( ; Cells);
+func InitialCells( ; Cells) {
+  FillSymbolArray<SymbolArray<SymbolSet>>(
+    FillSymbolArray<SymbolSet>(FullSymbolSet()));
+};
 
 # InitialGroups --
 #   Create a newly initialized Groups
-func InitialCells( ; Groups);
+func InitialGroups( ; Groups) {
+  Groups(
+    SymbolArray<SymbolArray<CellSet>>(
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:1(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:2(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:3(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:4(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:5(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:6(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:7(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:8(Unit()))),
+      FillSymbolArray<CellSet>(RowGroupCells(Symbol:9(Unit())))),
+    SymbolArray<SymbolArray<CellSet>>(
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:1(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:2(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:3(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:4(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:5(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:6(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:7(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:8(Unit()))),
+      FillSymbolArray<CellSet>(ColGroupCells(Symbol:9(Unit())))),
+    SymbolArray<SymbolArray<CellSet>>(
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S1(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S1(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S1(Unit()), Symbol:S3(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S3(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S3(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S1(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S1(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S1(Unit()), Symbol:S6(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S6(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S6(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S1(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S1(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S1(Unit()), Symbol:S9(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S2(Unit()), Symbol:S9(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S3(Unit()), Symbol:S9(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S4(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S4(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S4(Unit()), Symbol:S3(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S3(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S3(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S4(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S4(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S4(Unit()), Symbol:S6(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S6(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S6(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S4(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S4(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S4(Unit()), Symbol:S9(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S5(Unit()), Symbol:S9(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S6(Unit()), Symbol:S9(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S7(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S7(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S7(Unit()), Symbol:S3(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S3(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S1(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S2(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S3(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S7(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S7(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S7(Unit()), Symbol:S6(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S6(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S4(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S5(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S6(Unit())))),
+      FillSymbolArray<CellSet>(
+        S9(CellId(Symbol:S7(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S7(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S7(Unit()), Symbol:S9(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S8(Unit()), Symbol:S9(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S7(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S8(Unit())),
+           CellId(Symbol:S9(Unit()), Symbol:S9(Unit()))))));
+};
+
+# RowGroupCells --
+#   The set of cells belonging to a row group.
+func RowGroupCells(Symbol row; S<CellId>) {
+  # Symbol col <- MapS(FullSymbolSet());
+  # CellId(row, col);
+  S9(CellId(row, Symbol:S1(Unit())),
+     CellId(row, Symbol:S2(Unit())),
+     CellId(row, Symbol:S3(Unit())),
+     CellId(row, Symbol:S4(Unit())),
+     CellId(row, Symbol:S5(Unit())),
+     CellId(row, Symbol:S6(Unit())),
+     CellId(row, Symbol:S7(Unit())),
+     CellId(row, Symbol:S8(Unit())),
+     CellId(row, Symbol:S9(Unit())));
+};
+
+# ColGroupCells --
+#   The set of cells belonging to a column group.
+func ColGroupCells(Symbol col; S<CellId>) {
+  # Symbol row <- MapS(FullSymbolSet());
+  # CellId(row, col);
+  S9(CellId(Symbol:S1(Unit()), col),
+     CellId(Symbol:S2(Unit()), col),
+     CellId(Symbol:S3(Unit()), col),
+     CellId(Symbol:S4(Unit()), col),
+     CellId(Symbol:S5(Unit()), col),
+     CellId(Symbol:S6(Unit()), col),
+     CellId(Symbol:S7(Unit()), col),
+     CellId(Symbol:S8(Unit()), col),
+     CellId(Symbol:S9(Unit()), col));
+};
 
 # Apply --
 #   Apply a single constraint to the given board.
 #
 # Inputs:
 #   c - The constraint to apply
-#   cs - existing constraints to preserve in the output state.
 #   b - The board to apply the constraint to.
 # 
 # Returns:
-#   Nothing if the board is found to be inconsistent. Otherwise the updated
-#   state with additional constraints and the revised board.
+#   Nothing if the board is found to be inconsistent. Otherwise a state with
+#   new constraints and the revised board.
 #
 # TODO:
 #   eq -> Cells: Check and set cell value.
@@ -159,8 +353,17 @@ func InitialCells( ; Groups);
 #   eq -> Groups: Check and set symbol.
 #                 Generate ne to rest of cells that could have been that symbol.
 #   ne -> Groups: Check and exclude symbol cell, generate eq if needed.
-priv func Apply(Constraint c, S<Constraint> cs, Board b; Maybe<State>);
-
+priv func Apply(Constraint c, Board b; Maybe<State>) {
+  Maybe<Cs<Cells>> mcells = ApplyToCells(c, b.cells);
+  Maybe<Cs<Groups>> mgroups = ApplyToGroups(c, b.groups);
+  ?(mcells; just: ?(mgroups: just: Maybe<State>:just({
+      Cs<Cells> cscells = mcells.just;
+      Cs<Groups> csgroups = mgroups.just;
+      State(Append<Constraint>(cscells.cs, csgroups.cs),
+            Board(cscells.x, csgroups.x));
+    }), nothing: Maybe<State>:nothing(Unit())),
+        nothing: Maybe<State>:nothing(Unit()));
+};
 
 # ApplyAll --
 #   Repeatedly apply all constraints in the given state.
@@ -171,8 +374,11 @@ priv func Apply(Constraint c, S<Constraint> cs, Board b; Maybe<State>);
 priv func ApplyAll(State s; Maybe<Board>) {
   ?(s.cs; 
       cons: {
-        Maybe<State> ms = Apply(s.cs.cons.head, s.cs.cons.tail, s.b);
-        ?(ms; just: ApplyAll(ms.Just), nothing: Maybe<Board>:Nothing(Unit()));
+        Maybe<State> ms = Apply(s.cs.cons.head, s.b);
+        ?(ms; just: {
+           State ns = State(Append<Constraint>(s.cs.cons.tail, ms.just.cs), ms.just.b);
+           ApplyAll(ns)
+          }, nothing: Maybe<Board>:Nothing(Unit()));
       },
       nil: Maybe<Board>:Just(s.b));
 };
@@ -186,6 +392,7 @@ priv func ApplyAll(State s; Maybe<Board>) {
 #   An assignment to one of the cells with a choice, or Nothing if all cells
 #   have been assigned.
 priv func Split(Board b; Maybe<Assign>);
+  # TODO: Implement ME
 
 # ExtractSolution --
 #   Extract the solution from a completely solved board.

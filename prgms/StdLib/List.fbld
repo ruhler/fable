@@ -15,6 +15,9 @@ func S2<type T>(T a, T b; S<T>) ConsS<T>(a, S1<T>(b));
 func S3<type T>(T a, T b, T c; S<T>) ConsS<T>(a, S2<T>(b, c));
 func S4<type T>(T a, T b, T c, T d; S<T>) ConsS<T>(a, S3<T>(b, c, d));
 func S5<type T>(T a, T b, T c, T d, T e; S<T>) ConsS<T>(a, S4<T>(b, c, d, e));
+func S9<type T>(T a, T b, T c, T d, T e, T f, T g, T h, T i; S<T>) {
+  Append<T>(S5(a, b, c, d, e), S4(f, g, h, i));
+};
 
 # InitP - Return all but the last element in 'list'.
 func InitP<type T>(P<T> list; S<T>) {

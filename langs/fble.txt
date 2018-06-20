@@ -1,0 +1,219 @@
+Fable E
+=======
+Richard Uhler <ruhler@degralder.com>
+
+Introduction
+------------
+Fble is an experimental replacement for fblc. The problem with fblc/fbld is
+that it's just too tedious to program in, and the particular cause for that, I
+claim, is because of the fundamental assumption that functions are declared at
+the top level scope.
+
+Fble is a reenvisioning of fblc based around the assumption that functions can
+be declared locally with access to variables in the context where they are
+declared.
+
+Here is an example that came up when developing a Sudoku solver in fbld to
+illustrate the crux of the problem.
+
+We have a Maybe monad, a Writer monad, and a Pair data structure. We apply
+different functions to each element of the Pair, then combine the results.
+
+  Maybe<Writer<A>> ma = fa(p.a);
+  Maybe<Writer<B>> mb = fb(p.b);
+  ?(ma; just:
+    ?(mb; just: {
+      Writer<A> wa = ma.just;
+      Writer<B> wb = mb.just;
+      Writer<Pair<A, B>>(Append(wa.out, wb.out), Pair<A, B>(wa.x, wb.x));
+    }), nothing: Maybe<Writer<Pair<A, B>>>:nothing(Unit()),
+        nothing: Maybe<Writer<Pair<A, B>>>:nothing(Unit()));
+
+The problem here is that we repeat the logic for accessing a maybe multiple
+times, and the only feasible way to avoid that replication would be to pull
+the function out into various top level functions:
+
+  func maybe<type A, type B, func F(A x; B)>(Maybe<A> ma; Maybe<B>) {
+    ?(ma: just: Maybe<B>:just(F(ma.just)), nothing: Maybe<B>:nothing(Unit()));
+  };
+ 
+But ugh. Try finishing that yourself. It's so much of a slog I'm not even
+willing to finish working through the example.
+
+If functions could be declared locally with access to local context, however,
+then it would be natural to set up a monadic bind kind of syntactic sugar for
+easily factoring things out:
+
+  Writer<A> wa <- maybe fa(p.a);
+  Writer<B> wb <- maybe fb(p.b);
+  a <- write wa
+  b <- write wb
+  Pair<A, B>(a, b)
+
+Which is easy to write and easy to read, and factors out the repeated
+application of maybe and the writer monads.
+
+Overview
+--------
+Fble will have four types of object:
+1. struct values
+2. union values
+3. function values
+4. types
+
+Each type of object has a corresponding type:
+1. struct type:
+  syntax: *(type name, type name, ...)
+  example: *() is the Unit type
+  example: *(int x, int y) is the type of a pair of ints x, y.
+
+  Structures can store any kind of argument: structs, unions, functions, or
+  types.
+
+  Note: Unlike fblc, two struct types with the same fields are considered
+  the same type, even if they have different names. This is to avoid 
+  
+
+2. union type
+  syntax: +(type name, type name, ...)
+  exmaple: +(Unit true, Unit false) is a boolean type
+
+  Unions can store any kind of argument: structs, unions, functions, or types.
+
+3. function type
+  syntax: \(type name, type name, ...; type)
+  example: \(Int a, Int b; Bool) is the type for a binary integer predicate
+
+  Functions can take any kind of argument: structs, unions, functions, or
+  types.
+
+  Argument types for functions are dependant: a subsequent argument
+  type can refer to a previous argument name. For example:
+  \(@ T, T x; Maybe(T)) is the type of a function that constructs a Just
+  maybe. Note that the type of the second argument refers to the name of the
+  first argument.
+ 
+  As a consequence, when comparing functions for equality, naming of arguments
+  is not taken into account. For example:
+  \(@ T, T x; Maybe(T)) is considered the same type as \(@ Y, Y y; Maybe(Y)).
+
+  Partial application of functions is allowed.
+  Zero argument functions are not allowed.
+
+4. type type
+  syntax: @
+  example: @ is the type of types.
+
+The basic operations are:
+* construct a struct value
+  syntax: stype:(expr, expr, ...)
+  example: Coord:(3, 4)
+  example: *(int x, int y):(3, 4)
+
+  For the special case of *(), the constructor takes no arguments:
+  @ Unit = *();
+  Unit UnitValue = Unit:  ;
+
+* struct field access
+  syntax: expr.name
+  example: coord.x
+
+  Returns the value passed to the structure at the corresponding field
+  position when the struct was constructed.
+
+* construct a union value
+  syntax: utype:name(expr)
+  example: Bool:true(Unit)
+  example: +(Unit true, Unit false):true(Unit())
+
+* union field access
+  syntax: expr.name
+  example: p.true
+
+  Returns the value passed to the union at the corresponding field
+  position when the union was constructed. Behavior is undefined if the union
+  tag does not match the field being accessed.
+
+* conditional
+  syntax: ?(expr; name: expr, name: expr, ...)
+  example: ?(mInt; just: mInt.just, nothing: 0)
+
+  expr must have union type. Returns the value of the expression selected by
+  the tag of the conditional, without causing any other argument to be
+  evaluated.
+
+* construct a function value
+  syntax: \(type name, type name, ...) expr
+  example: \(Bool a) ?(a; true: False, false: True)
+
+  Note: the return type is not specified in the opening \(...) of a lambda,
+  because it can be inferred directly from the body of the lambda.
+
+* apply a function
+  syntax: expr(expr, expr, ...)
+  example: Not(True)
+  
+  Returns the value of the expression you would get by substituting the
+  arguments into the function body. TODO: Strict or lazy evaluation?
+
+* (recursive) let expression
+  syntax: type name = expr, type name = expr, ...; expr
+  example: Int x = 2; Add(x, x)
+
+  Defines name as refering to the corresponding expr, and adds the name to the
+  context. The name is available in the context of all of the exprs in the
+  let, which allows functions and types (and values I suppose?) to be defined
+  recursively.
+
+  example:
+   \(List l; E) Last = \(List l; E) {
+     ?(l: cons.tail.cons; cons: Last(cons.tail), nil: cons.head);
+   };
+   ...
+
+A program is an expression that creates a function value with a function type
+suitable for execution.
+
+Miscellaneous Notes:
+* I'd like there to be no such thing as a zero argument function. Use a value
+  for that instead.
+
+* As with fblc/fbld, I would like the type of an expression to be determined
+  completely by the expression and the types of any variables it refers to.
+  The type of the expression should not otherwise depend on the context where
+  the expression is used.
+
+* Concern: How to distinguish between a type constructor used as a type and a
+  type constructor used to construct a value?
+
+  For example, given the context
+  @ Unit = *();
+  ...
+
+  What is the type of 'Unit'? Is it @ or *()?
+
+  Proposal: change syntax of struct constructors to include a :.
+  For example: Unit has type @, Unit: has type *()?
+
+* Defining functions is tedious because you end up duplicating the type
+  information. For example:
+
+  \(Bool a, Bool b; Bool) And = \(Bool a, Bool b; Bool) {
+    ?(a; true: b, false: False);
+  };
+
+  Maybe we should support some syntactic sugar to help with this?
+  Or, at least we could remove the return type in the lambda expression,
+  because you can infer that from the body of the function, right?
+
+* It's super nice having global value declarations, instead of having to
+  define zero argument functions.
+
+* Syntax highlighting could be tricky, because it is mostly already
+  highlighted by punctuation. Maybe highlight identifiers in let expressions?
+
+* It's nice not having to worry that any declaration may refer to any other in
+  the file. Limiting those recursive loops to just where they are needed is
+  nice.
+
+* TODO: Figure out how to deal with processes.
