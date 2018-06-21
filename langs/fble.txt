@@ -55,7 +55,7 @@ application of maybe and the writer monads.
 
 Overview
 --------
-Fble will have four types of object:
+Fble core will have four types of object:
 1. struct values
 2. union values
 3. function values
@@ -174,9 +174,68 @@ The basic operations are:
 A program is an expression that creates a function value with a function type
 suitable for execution.
 
-Miscellaneous Notes:
+Processes
+---------
+For processes, add the following on top of the core language:
+
+* process type
+A built in type constructor of the form \(@ T; @).
+syntax: <type>!
+
+Example: Foo!  is a process that when finished returns a value of type Foo.
+
+* input type
+A built in type constructor of the form \(@ T; @).
+syntax: <type>-
+
+Example: Foo-  is an input port from which you can get values of type Foo.
+
+* output type
+A built in type constructor of the form \(@ T; @).
+syntax: <type>+
+
+Example: Foo+  is an output port to which you can put values of type Foo.
+
+* eval
+syntax: $(<expr>)
+
+Given expression of type T, returns a process of type T! that returns the
+value of the expression without performing any other actions.
+
+Example: $(3) is a process that returns the value 3.
+
+* get
+syntax: <expr>(), where <expr> refers to an input port.
+If <expr> has type T-, returns a process of type T! that gets the next value
+from the port.
+
+* put
+syntax: <port_expr>(<expr>), where <port_expr> refers to an output port.
+If <port_expr> has type T+, <expr> must have type T, and returns a process of
+type T! that puts the given value onto the port and returns that same value.
+
+* link
+syntax: +-(<expr>)
+<expr> is a function taking an output port of type T and an input port of type
+T and returning a process. The effect of this is to create a new link and then
+call the function with the output and input ends of the link.
+
+Using bind sugar:
+type+ name, type- name <- +-;
+...
+
+* exec
+syntax: type name <- expr, type name <- expr, ...; expr
+Runs each process in parallel, then executes the body with the results of the
+processes assigned to variables in scope.
+
+Miscellaneous Notes
+-------------------
 * I'd like there to be no such thing as a zero argument function. Use a value
   for that instead.
+  
+  Although, perhaps you could use a zero argument function to distinguish
+  between a strict and a lazy value?
 
 * As with fblc/fbld, I would like the type of an expression to be determined
   completely by the expression and the types of any variables it refers to.
@@ -215,5 +274,3 @@ Miscellaneous Notes:
 * It's nice not having to worry that any declaration may refer to any other in
   the file. Limiting those recursive loops to just where they are needed is
   nice.
-
-* TODO: Figure out how to deal with processes.

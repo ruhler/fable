@@ -1,6 +1,4 @@
 Fble:
-* Figure out how to deal with processes.
- - Finish converting snake.fble.
 * Draft a syntax reference.
 * Implement an fble interpreter.
 

@@ -185,32 +185,32 @@ State InitialState = {
             })));
 };
 
-#####################################
-
-proc DrawAll(Draw+ out; DrawS draw ; Unit) {
-  ?(draw ; nil: $(Unit()),
+\(Draw+ out, S(Draw) draw; Unit!) DrawAll = \(Draw+ out, S(Draw) draw) {
+  ?(draw ; nil: $(Unit:),
       cons: {
-         Draw x = +out(draw.cons.head);
-         DrawAll(out; draw.cons.tail);
+         Draw x <- out(draw.cons.head);
+         DrawAll(out, draw.cons.tail);
       });
 };
 
-proc Snake(Input- in, Draw+ out; State s ; Unit) {
-  Input x = -in();
-  ?(x; dir: Snake(in, out; State(x.dir, s.food, s.nfood, s.snake)),
+\(Input- in, Draw+ out, State s; Unit!) Snake = \(Input- in, Draw+ out, State s) {
+  Input x <- in();
+  ?(x; dir: Snake(in, out, State(x.dir, s.food, s.nfood, s.snake)),
        tick: {
-           MoveResultM m = $(Move(s));
+           MoveResultM m <- $(Move(s));
            ?(m;
-              dead: $(Unit()),
+              dead: $(Unit:),
               mr: {
-                 Unit u = DrawAll(out; m.mr.draw);
-                 Snake(in, out; m.mr.state);
+                 Unit u <- DrawAll(out, m.mr.draw);
+                 Snake(in, out, m.mr.state);
               });
        });
 };
 
-proc Main(Input- in, Draw+ out; ; Unit) {
-  State s = $(InitialState());
-  Unit u = DrawAll(out ; DrawState(s));
-  Snake(in, out; s);
+\(Input- in, Draw+ out; Unit!) Main = \(Input- in, Draw+ out) {
+  State s = InitialState;
+  Unit u <- DrawAll(out, DrawState(s));
+  Snake(in, out, s);
 };
+
+Main;
