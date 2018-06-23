@@ -229,6 +229,50 @@ syntax: type name <- expr, type name <- expr, ...; expr
 Runs each process in parallel, then executes the body with the results of the
 processes assigned to variables in scope.
 
+Abstract Syntax Reference
+-------------------------
+expr ::=
+      (* types *)
+         type_type
+      |  struct_type [(type, name)]       (* fields *)
+      |  union_type [(type, name)]        (* non empty list of fields *)
+      |  func_type [(type, name)] type    (* args, return *)
+      |  proc_type type                   (* result type *)
+      |  input_type type                  (* input type *)
+      |  output_type type                 (* output type *)
+
+      (* values *)
+      |  struct_value expr [expr]         (* struct type, args *)
+      |  struct_access expr name          (* struct value, field *)
+      |  union_value expr name expr       (* union type, field, arg *)
+      |  union_access expr name           (* union value, field *)
+      |  cond expr [(name, expr)]         (* condition, cases *)
+      |  func_value [(type, name)] expr   (* args, body *)
+      |  func_apply expr [expr]           (* function, args *)
+      |  let [(type, name, expr)] expr    (* non empty list of bindings, body *)
+      |  var name                         (* variable name *)
+      |  proc_eval expr                   (* value to return *)
+      |  proc_get expr                    (* port to get from *)
+      |  proc_put expr expr               (* port to put to, value to put *)
+      |  proc_link type name name expr    (* link type, put port name, get port name, body*)
+      |  proc_exec [(type, name, expr)] expr  (* non empty list of bindings, body*)
+      ;
+
+Thoughts for concrete syntax:
+* struct_value can consider the struct type a function and reuse function apply
+* union_value con consider the (expr, name) a function and reuse function apply
+* proc_get expr can be a zero argument function (if we support such a thing).
+  Or just a value?
+* proc_put expr can be a single argument function.
+* proc_link can have expr be a function taking two link args.
+* Then do we have: Foo+ is equivalent to \(Foo; Foo!)
+                   Foo- is equivalent to Foo!
+  Or let people do explicit conversions when they want. That's probably easier
+  in the implementation and description of the language.
+* Let's just hope there aren't too many conflicts in the grammar that are hard
+  to fix!
+  
+
 Miscellaneous Notes
 -------------------
 * I'd like there to be no such thing as a zero argument function. Use a value
@@ -274,3 +318,15 @@ Miscellaneous Notes
 * It's nice not having to worry that any declaration may refer to any other in
   the file. Limiting those recursive loops to just where they are needed is
   nice.
+
+* Typing is going to be a little bit interesting, because to type check an
+  expression requires evaluating the types. There is a spectrum of where we
+  could be. On one end, type as you go lazily. In particular, you don't type
+  check the body of a function before executing the function. On the other
+  extreme, some sort of abstract interpretation or static elaboration of
+  function bodies to figure out types, ignoring the fact that you don't know
+  argument values. Possibly in between: restrictions on what kinds of types
+  can be used in, say conditional expressions and recursive functions so that
+  it's straight forward to evaluate types without evaluating other things.
+
+  No need to decide now. Let's just see how things evolve.

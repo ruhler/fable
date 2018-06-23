@@ -1,5 +1,6 @@
 Fble:
-* Draft a syntax reference.
+* Draft a concrete syntax reference.
+* Implement an fble parser.
 * Implement an fble interpreter.
 
 Fbld 4 Spec:
