@@ -148,7 +148,7 @@ Abstract Syntax:
   let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
 Concrete Syntax: (in statement context)
-  type name '=' expr [',' type name = expr [...]] ';' expr
+  type name '=' expr [',' type name = expr [...]] ';' stmt
 
 Examples:
   Int x = mul(3, 3); mul(x, x)
@@ -451,14 +451,30 @@ E.20 Exec
 Abstract Syntax:
   exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
-Concrete Syntax:
-  type name '<-' expr [',' type name '<' expr [...]] ';' expr
+Concrete Syntax: (* in statement context *)
+  type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
 
 Example:
-  Int x <- getx(), Int y <- gety(); $(add(x, y))
+  Int x := getx(), Int y := gety(); $(add(x, y))
 
 Runs each process in parallel, then executes the body with the results of the
 processes assigned to variables in scope.
+
+E.21 Bind
+---------
+Abstract Syntax:
+  bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+
+Concrete Syntax: (* in statement context *)
+  type name [',' type name [...]] '<-' expr ';' stmt
+
+Example
+  Int x <- map(l); f(x, y)
+
+Bind is syntactic sugar for applying a function to a function value. It is
+equivalent to:
+
+  apply func (func_value args body)
 
 P. Program
 ----------
@@ -504,6 +520,7 @@ Expr ::=
  | put (port :: Expr) (value :: Expr)
  | link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
  | exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+ | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
  ;
 
 Concrete Syntax Reference
@@ -525,9 +542,9 @@ expr ::=
  | type '(' [expr [',' expr [...]]] ')'                   (* struct_value *)
  | expr '.' name                                          (* struct_access *)
 
- | '+(' type name [',' type name [...]] ')'               (* union_type *)
- | type ':' name '(' expr ')'                             (* union_value *)
- | expr '.' name                                          (* union_access *)
+ | '+(' type name [',' type name [...]] ')'                   (* union_type *)
+ | type ':' name '(' expr ')'                                 (* union_value *)
+ | expr '.' name                                              (* union_access *)
  | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'  (* cond *)
 
  | type '!'                                               (* proc_type *)
@@ -539,10 +556,11 @@ expr ::=
  ;
 
 stmt ::=
-   expr ';'                                                   (* expr *)
- | type name '=' expr [',' type name = expr [...]] ';' stmt   (* let *)
- | type '~' name ',' name ';' stmt                            (* link *)
- | type name '<-' expr [',' type name '<-' expr [...]] ';' stmt  (* exec *)
+   expr ';'                                                      (* expr *)
+ | type name '=' expr [',' type name = expr [...]] ';' stmt      (* let *)
+ | type '~' name ',' name ';' stmt                               (* link *)
+ | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt  (* exec *)
+ | type name [',' type name [...]] '<-' expr ';' stmt            (* bind *)
  ;
 
 Notes:
