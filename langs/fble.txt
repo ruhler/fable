@@ -630,3 +630,8 @@ Miscellaneous Thoughts
   it's straight forward to evaluate types without evaluating other things.
 
   No need to decide now. Let's just see how things evolve.
+
+* Eventually I'll want to think about how to scale up fble programs. Is there
+  a natural way to split fble programs across multiple files/directories
+  authored by multiple different authors? But that's something to worry about
+  later.
