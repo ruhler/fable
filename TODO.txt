@@ -1,6 +1,8 @@
 Fble:
-* Draft a concrete syntax reference.
 * Implement an fble parser.
+ - confirm no conflicts in grammar
+ - get it to parse snake.fble
+ - don't worry about writing spec tests at this point
 * Implement an fble interpreter.
 
 Fbld 4 Spec:
