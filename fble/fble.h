@@ -191,5 +191,283 @@ void FbleAssertEmptyArena(FbleArena* arena);
 //   the new element.
 void FbleVectorIncrSize(FbleArena* arena, size_t elem_size, size_t* size, void** xs);
 
+// FbleLoc --
+//   Represents a location in a source file.
+//
+// Fields:
+//   source - The name of the source file or other description of the source
+//            of the program text.
+//   line - The line within the file for the location.
+//   col - The column within the line for the location.
+typedef struct {
+  const char* source;
+  int line;
+  int col;
+} FbleLoc;
+
+// FbleName -- 
+//   A name along with its associated location in a source file. The location
+//   is typically used for error reporting purposes.
+typedef struct {
+  const char* name;
+  FbleLoc loc;
+} FbleName;
+
+// FbleExprTag --
+//   A tag used to distinguish among different kinds of expressions.
+typedef enum {
+  FBLE_VAR_EXPR,
+  FBLE_LET_EXPR,
+
+  FBLE_TYPE_TYPE_EXPR,
+
+  FBLE_FUNC_TYPE_EXPR,
+  FBLE_FUNC_VALUE_EXPR,
+  FBLE_APPLY_EXPR,
+
+  FBLE_STRUCT_TYPE_EXPR,
+  FBLE_STRUCT_VALUE_EXPR,
+  FBLE_STRUCT_ACCESS_EXPR,
+
+  FBLE_UNION_TYPE_EXPR,
+  FBLE_UNION_VALUE_EXPR,
+  FBLE_UNION_ACCESS_EXPR,
+  FBLE_COND_EXPR,
+
+  FBLE_PROC_TYPE_EXPR,
+  FBLE_INPUT_TYPE_EXPR,
+  FBLE_OUTPUT_TYPE_EXPR,
+  FBLE_EVAL_EXPR,
+  FBLE_GET_EXPR,
+  FBLE_PUT_EXPR,
+  FBLE_LINK_EXPR,
+  FBLE_EXEC_EXPR,
+} FbleExprTag;
+
+// FbleExpr --
+//   A tagged union of expression types. All expressions have the same initial
+//   layout as FbleExpr. The tag can be used to determine what kind of
+//   expression this is to get access to additional fields of the expression
+//   by first casting to that specific type of expression.
+typedef struct {
+  FbleExprTag tag;
+  FbleLoc loc;
+} FbleExpr;
+
+// FbleExprV --
+//   A vector of FbleExpr.
+typedef struct {
+  size_t size;
+  FbleExpr** xs;
+} FbleExprV;
+
+// FbleType --
+//   A typedef for FbleExpr used to help document which expressions are used
+//   to describe types.
+typedef FbleExpr FbleType;
+
+// FbleField --
+//   A pair of (Type, Name) used to describe type and function arguments.
+typedef struct {
+  FbleType* type;
+  FbleName name;
+} FbleField;
+
+// FbleFieldV --
+//   A vector of FbleField.
+typedef struct {
+  size_t size;
+  FbleField* xs;
+} FbleFieldV;
+
+// FbleChoice --
+//   A pair of (Name, Expr) used in conditional expressions.
+typedef struct {
+  FbleName name;
+  FbleExpr* expr;
+} FbleChoice;
+
+// FbleChoiceV --
+//   A vector of FbleChoice.
+typedef struct {
+  size_t size;
+  FbleChoice* xs;
+} FbleChoiceV;
+
+// FbleBinding --
+//   A triple of (Type, Name, Expr) used in let and exec expressions.
+typedef struct {
+  FbleType* type;
+  FbleName name;
+  FbleExpr* expr;
+} FbleBinding;
+
+// FbleBindingV --
+//   A vector of FbleBinding
+typedef struct {
+  size_t size;
+  FbleBinding* xs;
+} FbleBindingV;
+
+// FbleVarExpr --
+//   FBLE_VAR_EXPR (name :: Name)
+typedef struct {
+  FbleExpr _base;
+  FbleName var;
+} FbleVarExpr;
+
+// FbleLetExpr --
+//   FBLE_LET_EXPR (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleBindingV bindings;
+  FbleExpr* body;
+} FbleLetExpr;
+
+// FbleTypeTypeExpr --
+//   FBLE_TYPE_TYPE_EXPR
+typedef struct {
+  FbleExpr _base;
+} FbleTypeTypeExpr;
+
+// FbleFuncTypeExpr --
+//   FBLE_FUNC_TYPE_EXPR (args :: [(Type, Name)]) (return :: Type)
+typedef struct {
+  FbleExpr _base;
+  FbleFieldV args;
+  FbleType* rtype;
+} FbleFuncTypeExpr;
+
+// FbleFuncValueExpr --
+//   FBLE_FUNC_VALUE_EXPR (args :: [(Type, Name)]) (body :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleFieldV args;
+  FbleExpr* body;
+} FbleFuncValueExpr;
+
+// FbleApplyExpr --
+//   FBLE_APPLY_EXPR (args :: [Expr])
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* func;
+  FbleExprV args;
+} FbleApplyExpr;
+
+// FbleStructTypeExpr --
+//   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
+typedef struct {
+  FbleExpr _base;
+  FbleFieldV fields;
+} FbleStructTypeExpr;
+
+// FbleStructValueExpr --
+//   FBLE_STRUCT_VALUE_EXPR (type :: Type) (args :: [Expr])
+typedef struct {
+  FbleExpr _base;
+  FbleType* type;
+  FbleExprV args;
+} FbleStructValueExpr;
+
+// FbleStructAccessExpr --
+//   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* object;
+  FbleName field;
+} FbleStructAccessExpr;
+
+// FbleUnionTypeExpr --
+//   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
+typedef struct {
+  FbleExpr _base;
+  FbleFieldV fields;
+} FbleUnionTypeExpr;
+
+// FbleUnionValueExpr --
+//   FBLE_UNION_VALUE_EXPR (type :: Type) (field :: Name) (arg :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleType* type;
+  FbleName field;
+  FbleExpr* arg;
+} FbleUnionValueExpr;
+
+// FbleUnionAccessExpr --
+//   FBLE_UNION_ACCESS_EXPR (object :: Expr) (field :: Name)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* object;
+  FbleName field;
+} FbleUnionAccessExpr;
+
+// FbleCondExpr --
+//   FBLE_COND_EXPR (condition :: Expr) (choices :: [(Name, Expr)])
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* condition;
+  FbleChoiceV choices;
+} FbleCondExpr;
+
+// FbleProcTypeExpr --
+//   FBLE_PROC_TYPE_EXPR (return :: Type)
+typedef struct {
+  FbleExpr _base;
+  FbleType* rtype;
+} FbleProcTypeExpr;
+
+// FbleInputTypeExpr --
+//   FBLE_INPUT_TYPE_EXPR (type :: Type)
+typedef struct {
+  FbleExpr _base;
+  FbleType* type;
+} FbleInputTypeExpr;
+
+// FbleOutpuTypeExpr --
+//   FBLE_OUTPUT_TYPE_EXPR (type :: Type)
+typedef struct {
+  FbleExpr _base;
+  FbleType* type;
+} FbleOutputTypeExpr;
+
+// FbleEvalExpr --
+//   FBLE_EVAL_EXPR (expr :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* expr;
+} FbleEvalExpr;
+
+// FbleGetExpr --
+//   FBLE_GET_EXPR (port :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* port;
+} FbleGetExpr;
+
+// FblePutExpr --
+//   FBLE_PUT_EXPR (port :: Expr) (value :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* port;
+  FbleExpr* value;
+} FblePutExpr;
+
+// FbleLinkExpr --
+//   FBLE_LINK_EXPR (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleType* type;
+  FbleName get;
+  FbleName put;
+  FbleExpr* body;
+} FbleLinkExpr;
+
+// FbleExecExpr --
+//   FBLE_EXEC_EXPR (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleBindingV bindings;
+  FbleExpr* body;
+} FbleExecExpr;
 
 #endif // FBLE_H_
