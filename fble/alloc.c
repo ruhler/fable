@@ -102,8 +102,8 @@ void FbleDeleteArena(FbleArena* arena)
   }
   free(arena->arenas);
 
-  Arena* a = ((Arena*)arena) - 2;
-  assert(arena == &a->arena);
+  Arena* a = (Arena*)(((Arena**)arena) - 2);
+  assert(arena == &(a->arena));
 
   a->next->prev = a->prev;
   a->prev->next = a->next;

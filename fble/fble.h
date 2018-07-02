@@ -5,6 +5,8 @@
 #ifndef FBLE_H_
 #define FBLE_H_
 
+#include <sys/types.h>  // for size_t
+
 // FbleArena --
 //   A handle used for allocating and freeing memory.
 typedef struct FbleArena FbleArena;
@@ -132,7 +134,7 @@ void FbleAssertEmptyArena(FbleArena* arena);
 //   The array initially has size 0 and capacity 1.
 #define FbleVectorInit(arena, vector) \
   (vector).size = 0; \
-  (vector).xs = FbleArenaAlloc(arena, sizeof(*((vector).xs)), FBLC_ALLOC_MSG(__FILE__, __LINE__))
+  (vector).xs = FbleArenaAlloc(arena, sizeof(*((vector).xs)), FbleAllocMsg(__FILE__, __LINE__))
 
 // FbleVectorExtend --
 //   Append an uninitialized element to the vector.
@@ -205,6 +207,21 @@ typedef struct {
   int col;
 } FbleLoc;
 
+// FbleReportError --
+//   Report an error message associated with a location in a source file.
+//
+// Inputs:
+//   format - A printf format string for the error message.
+//   loc - The location of the error message to report.
+//   ... - printf arguments as specified by the format string.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints an error message to stderr with error location.
+void FbleReportError(const char* format, FbleLoc* loc, ...);
+
 // FbleName -- 
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
@@ -469,5 +486,29 @@ typedef struct {
   FbleBindingV bindings;
   FbleExpr* body;
 } FbleExecExpr;
+
+// FbleParse --
+//   Parse an expression from a file.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed program.
+//   filename - The name of the file to parse the program from.
+//
+// Results:
+//   The parsed program, or NULL in case of error.
+//
+// Side effects:
+//   Prints an error message to stderr if the program cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned program if there is no error.
+//
+// Note:
+//   A copy of the filename will be made for use in locations. The user need
+//   not ensure that filename remains valid for the duration of the lifetime
+//   of the program.
+FbleExpr* FbleParse(FbleArena* arena, const char* filename);
 
 #endif // FBLE_H_

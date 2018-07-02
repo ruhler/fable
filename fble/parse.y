@@ -2,7 +2,9 @@
 //   This file describes the bison grammar for parsing fble expressions.
 %{
   #include <ctype.h>    // for isalnum
-  #include <string.h>   // for strchr
+  #include <stdbool.h>  // for bool
+  #include <stdio.h>    // for FILE, fprintf, stderr
+  #include <string.h>   // for strchr, strcpy
 
   #include "fble.h"
 
@@ -17,12 +19,12 @@
   //   sin - The input stream if reading from a string, NULL otherwise.
   typedef struct {
     int c;
-    FbldLoc loc;
+    FbleLoc loc;
     FILE* fin;
     const char* sin;
   } Lex;
 
-  #define YYLTYPE FbldLoc
+  #define YYLTYPE FbleLoc
 
   #define YYLLOC_DEFAULT(Cur, Rhs, N)  \
   do                                   \
@@ -32,8 +34,8 @@
 %}
 
 %union {
-  FbldName name;
-  FbldExpr* expr;
+  FbleName name;
+  FbleExpr* expr;
 }
 
 %{
@@ -41,13 +43,14 @@
   static bool IsSingleChar(int c);
   static void ReadNextChar(Lex* lex);
   static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex);
-  static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, const char* msg);
+  static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, const char* msg);
 %}
 
 %locations
 %define api.pure
 %define parse.error verbose
 %param {FbleArena* arena} {Lex* lex}
+%parse-param {FbleExpr** result}
 
 %token END 0 "end of file"
 %token INVALID "invalid character"
@@ -64,7 +67,7 @@ expr:
    '{' stmt '}' {
       $$ = $2;
    }
- | name {
+ | NAME {
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
       var_expr->_base.tag = FBLE_VAR_EXPR;
       var_expr->_base.loc = @$;
@@ -166,7 +169,7 @@ static void ReadNextChar(Lex* lex)
 //   stream, sets llocp with the location of the next token in the input
 //   stream, advances the stream to the subsequent token and updates the lex
 //   loc accordingly.
-static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
+static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex)
 {
   // Skip past white space and comments.
   bool is_comment_start = (lex->c == '#');
@@ -204,10 +207,10 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
   struct { size_t size; char* xs; } namev;
   FbleVectorInit(arena, namev);
   while (IsNameChar(lex->c)) {
-    FblcVectorAppend(arena, namev, lex->c);
+    FbleVectorAppend(arena, namev, lex->c);
     ReadNextChar(lex);
   }
-  FblcVectorAppend(arena, namev, '\0');
+  FbleVectorAppend(arena, namev, '\0');
   lvalp->name.name = namev.xs;
   lvalp->name.loc = *llocp;
 
@@ -222,6 +225,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
 //   arena - unused.
 //   fin - unused.
 //   lex - The lexical context.
+//   result - unused.
 //   msg - The error message.
 //
 // Results:
@@ -229,8 +233,32 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FblcArena* arena, Lex* lex)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, const char* msg)
+static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, const char* msg)
 {
   FbleReportError("%s\n", llocp, msg);
 }
 
+// FbleParse -- see documentation in fble.h
+FbleExpr* FbleParse(FbleArena* arena, const char* filename)
+{
+  FILE* fin = fopen(filename, "r");
+  if (fin == NULL) {
+    fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
+    return NULL;
+  }
+
+  // Make a copy of the filename for locations so that the user doesn't have
+  // to worry about keeping it alive for the duration of the program lifetime.
+  char* source = FbleArenaAlloc(arena, sizeof(char) * (strlen(filename) + 1), FbleAllocMsg(__FILE__, __LINE__));
+  strcpy(source, filename);
+
+  Lex lex = {
+    .c = ' ',
+    .loc = { .source = source, .line = 1, .col = 0 },
+    .fin = fin,
+    .sin = NULL
+  };
+  FbleExpr* result = NULL;
+  yyparse(arena, &lex, &result);
+  return result;
+}
