@@ -380,11 +380,10 @@ typedef struct {
 
 // FbleStructValueExpr --
 //   FBLE_STRUCT_VALUE_EXPR (type :: Type) (args :: [Expr])
-typedef struct {
-  FbleExpr _base;
-  FbleType* type;
-  FbleExprV args;
-} FbleStructValueExpr;
+//
+// Note: this uses the same type as apply expression because we can't
+// distinguish between the two when parsing.
+typedef FbleApplyExpr FbleStructValueExpr;
 
 // FbleStructAccessExpr --
 //   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)

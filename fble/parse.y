@@ -36,6 +36,9 @@
 %union {
   FbleName name;
   FbleExpr* expr;
+  FbleExprV exprs;
+  FbleFieldV fields;
+  FbleBindingV bindings;
 }
 
 %{
@@ -58,6 +61,9 @@
 %token <name> NAME
 
 %type <expr> expr stmt
+%type <exprs> exprs
+%type <fields> fieldp fields
+%type <bindings> let_bindings
 
 %%
 
@@ -74,10 +80,121 @@ expr:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
+ | '@' {
+      FbleTypeTypeExpr* type_type_expr = FbleAlloc(arena, FbleTypeTypeExpr);
+      type_type_expr->_base.tag = FBLE_TYPE_TYPE_EXPR;
+      type_type_expr->_base.loc = @$;
+      $$ = &type_type_expr->_base;
+   }
+ | '\\' '(' fields ';' expr ')' {
+      FbleFuncTypeExpr* func_type_expr = FbleAlloc(arena, FbleFuncTypeExpr);
+      func_type_expr->_base.tag = FBLE_FUNC_TYPE_EXPR;
+      func_type_expr->_base.loc = @$;
+      func_type_expr->args = $3;
+      func_type_expr->rtype = $5;
+      $$ = &func_type_expr->_base;
+   }
+ | '\\' '(' fields ')' expr {
+      FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
+      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+      func_value_expr->_base.loc = @$;
+      func_value_expr->args = $3;
+      func_value_expr->body = $5;
+      $$ = &func_value_expr->_base;
+   }
+ | expr '(' exprs ')' {
+      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_APPLY_EXPR;
+      apply_expr->_base.loc = @$;
+      apply_expr->func = $1;
+      apply_expr->args = $3;
+      $$ = &apply_expr->_base;
+   }
+ | '*' '(' fields ')' {
+      FbleStructTypeExpr* struct_type_expr = FbleAlloc(arena, FbleStructTypeExpr);
+      struct_type_expr->_base.tag = FBLE_STRUCT_TYPE_EXPR;
+      struct_type_expr->_base.loc = @$;
+      struct_type_expr->fields = $3;
+      $$ = &struct_type_expr->_base;
+   }
+ | '+' '(' fieldp ')' {
+      FbleUnionTypeExpr* union_type_expr = FbleAlloc(arena, FbleUnionTypeExpr);
+      union_type_expr->_base.tag = FBLE_UNION_TYPE_EXPR;
+      union_type_expr->_base.loc = @$;
+      union_type_expr->fields = $3;
+      $$ = &union_type_expr->_base;
+   }
+ | expr ':' NAME '(' expr ')' {
+      FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
+      union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
+      union_value_expr->_base.loc = @$;
+      union_value_expr->type = $1;
+      union_value_expr->field = $3;
+      union_value_expr->arg = $5;
+      $$ = &union_value_expr->_base;
+   }
  ;
 
-stmt: expr ';' { $$ = $1; }
-    ;
+stmt:
+    expr ';' { $$ = $1; }
+  | let_bindings ';' stmt {
+      FbleLetExpr* let_expr = FbleAlloc(arena, FbleLetExpr);
+      let_expr->_base.tag = FBLE_LET_EXPR;
+      let_expr->_base.loc = @$;
+      let_expr->bindings = $1;
+      let_expr->body = $3;
+      $$ = &let_expr->_base;
+    }  
+  ;
+
+exprs:
+   %empty { FbleVectorInit(arena, $$); }
+ | expr {
+     FbleVectorInit(arena, $$);
+     FbleVectorAppend(arena, $$, $1);
+   }
+ | exprs ',' expr {
+     $$ = $1;
+     FbleVectorAppend(arena, $$, $3);
+   }
+ ;
+
+fields:
+   %empty { FbleVectorInit(arena, $$); }
+ | fieldp { $$ = $1; }
+ ;
+
+fieldp:
+   expr NAME {
+     FbleVectorInit(arena, $$);
+     FbleField* field = FbleVectorExtend(arena, $$);
+     field->type = $1;
+     field->name = $2;
+   }
+ | fieldp ',' expr NAME {
+     $$ = $1;
+     FbleField* field = FbleVectorExtend(arena, $$);
+     field->type = $3;
+     field->name = $4;
+   }
+ ;
+
+let_bindings: 
+  expr NAME '=' expr {
+      FbleVectorInit(arena, $$);
+      FbleBinding* binding = FbleVectorExtend(arena, $$);
+      binding->type = $1;
+      binding->name = $2;
+      binding->expr = $4;
+    }
+  | let_bindings ',' expr NAME '=' expr {
+      $$ = $1;
+      FbleBinding* binding = FbleVectorExtend(arena, $$);
+      binding->type = $3;
+      binding->name = $4;
+      binding->expr = $6;
+    }
+  ;
 
 %%
 
@@ -116,7 +233,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,:?=.<+*-!$", c) != NULL;
+  return strchr("(){};,:?=.<+*-!$@\\", c) != NULL;
 }
 
 // ReadNextChar --

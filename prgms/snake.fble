@@ -1,8 +1,8 @@
 
 @ Unit = *();
 @ Bool = +(Unit true, Unit false);
-Bool True = Bool:true(Unit:);
-Bool False = Bool:false(Unit:);
+Bool True = Bool:true(Unit());
+Bool False = Bool:false(Unit());
 
 \(Bool a, Bool b; Bool) And = \(Bool a, Bool b) {
   ?(a; true: b, false: False);

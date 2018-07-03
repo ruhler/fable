@@ -14,7 +14,7 @@ foreach {x} [glob fble/*.c] {
 
 # Generate and compile the fble parser.
 exec mkdir -p out/fble/src
-run bison -o out/fble/src/parse.tab.c fble/parse.y 
+run bison --report=all --report-file=out/fble/src/parse.tab.report.txt -o out/fble/src/parse.tab.c fble/parse.y 
 run gcc {*}$FLAGS -c -o out/fble/obj/parse.tab.o out/fble/src/parse.tab.c
 
 # Generate libfble.a
