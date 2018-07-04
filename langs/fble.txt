@@ -224,7 +224,7 @@ Abstract Syntax:
   func_value (args :: [(Type, Name)]) (body :: Expr)
 
 Concrete Syntax:
-  '\(' type name [',' type name [...]] ')' expr
+  '\(' type name [',' type name [...]] ')' '{' stmt '}'
 
 Example:
   \(Bool a) ?(a; true: False, false: True)
@@ -232,6 +232,14 @@ Example:
 The function value expression is used to describe a primitive function value
 given the list of arguments and the body of the function. The return type of
 the function is inferred to be the type of the body of the function.
+
+Rationale for Concrete Syntax: The body of the function requires use of braces
+to avoid ambiguity that would arise otherwise with an expression such as:
+
+  \(T x) f (y)
+
+In this case it isn't clear if the argument 'y' is being applied to the
+function \(T x) f, or to the function f.
 
 E.6 Application
 ---------------
@@ -535,7 +543,7 @@ expr ::=
  | '@'                                                    (* type_type *)
 
  | '\(' type name [',' type name [...]] ';' type ')'      (* func_type *)
- | '\(' type name [',' type name [...]] ')' expr          (* func_value *)
+ | '\(' type name [',' type name [...]] ')' '{' stmt '}'  (* func_value *)
  | expr '(' [expr [',' expr [...]]] ')'                   (* apply *)
 
  | '*(' [type name [',' type name [...]]] ')'             (* struct_type *)

@@ -411,11 +411,10 @@ typedef struct {
 
 // FbleUnionAccessExpr --
 //   FBLE_UNION_ACCESS_EXPR (object :: Expr) (field :: Name)
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* object;
-  FbleName field;
-} FbleUnionAccessExpr;
+//
+// Note: this uses the same type as struct access because we can't
+// distinguish between the two when parsing.
+typedef FbleStructAccessExpr FbleUnionAccessExpr;
 
 // FbleCondExpr --
 //   FBLE_COND_EXPR (condition :: Expr) (choices :: [(Name, Expr)])

@@ -63,5 +63,5 @@ int main(int argc, char* argv[])
   }
 
   FbleDeleteArena(arena);
-  return (prgm == NULL) ? 0 : 1;
+  return (prgm == NULL) ? 1 : 0;
 }

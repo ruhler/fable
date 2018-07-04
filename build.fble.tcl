@@ -25,7 +25,7 @@ foreach {x} [list alloc loc parse.tab vector] {
 run ar rcs out/fble/libfble.a {*}$fble_objs
 
 # Compile the executables
-set ::fbletest ./out/fble/fbld-test
+set ::fbletest ./out/fble/fble-test
 run gcc {*}$FLAGS -o $::fbletest out/fble/obj/fble-test.o -L out/fble -lfble
 
 test exec $::fbletest prgms/snake.fble

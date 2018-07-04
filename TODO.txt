@@ -1,11 +1,7 @@
 Fble:
 * Implement an fble parser.
- - figure out how to deal with shift/reduce conflict
-     \(T x) f(y)
-   Is this: { \(T x) f; }(y)
-   or:      \(T x) {f(y);}
+ - add rest of constructs.
  - confirm no conflicts in grammar
- - get it to parse snake.fble
  - don't worry about writing spec tests at this point
 * Implement an fble interpreter.
 
