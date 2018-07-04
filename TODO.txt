@@ -1,8 +1,4 @@
 Fble:
-* Implement an fble parser.
- - add rest of constructs.
- - confirm no conflicts in grammar
- - don't worry about writing spec tests at this point
 * Implement an fble interpreter.
 
 Fbld 4 Spec:

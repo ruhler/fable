@@ -119,6 +119,9 @@ expr:
       struct_type_expr->fields = $3;
       $$ = &struct_type_expr->_base;
    }
+
+ // | struct_value covered by apply
+
  | expr '.' NAME {
       FbleStructAccessExpr* struct_access_expr = FbleAlloc(arena, FbleStructAccessExpr);
       struct_access_expr->_base.tag = FBLE_STRUCT_ACCESS_EXPR;
@@ -143,6 +146,9 @@ expr:
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }
+
+ // | union_access covered by struct_access
+
  | '?' '(' expr ';' choices ')' {
       FbleCondExpr* cond_expr = FbleAlloc(arena, FbleCondExpr);
       cond_expr->_base.tag = FBLE_COND_EXPR;
@@ -179,6 +185,10 @@ expr:
       eval_expr->expr = $3;
       $$ = &eval_expr->_base;
    }
+
+ // | get covered by apply
+
+ // | put covered by apply
  ;
 
 stmt:
@@ -191,6 +201,16 @@ stmt:
       let_expr->body = $3;
       $$ = &let_expr->_base;
     }  
+  | expr '~' NAME ',' NAME ';' stmt {
+      FbleLinkExpr* link_expr = FbleAlloc(arena, FbleLinkExpr);
+      link_expr->_base.tag = FBLE_LINK_EXPR;
+      link_expr->_base.loc = @$;
+      link_expr->type = $1;
+      link_expr->get = $3;
+      link_expr->put = $5;
+      link_expr->body = $7;
+      $$ = &link_expr->_base;
+    }
   | exec_bindings ';' stmt {
       FbleExecExpr* exec_expr = FbleAlloc(arena, FbleExecExpr);
       exec_expr->_base.tag = FBLE_EXEC_EXPR;
@@ -198,6 +218,21 @@ stmt:
       exec_expr->bindings = $1;
       exec_expr->body = $3;
       $$ = &exec_expr->_base;
+    }
+  | fieldp '<' '-' expr ';' stmt {
+      FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
+      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+      func_value_expr->_base.loc = @$;
+      func_value_expr->args = $1;
+      func_value_expr->body = $6;
+
+      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_APPLY_EXPR;
+      apply_expr->_base.loc = @$;
+      apply_expr->func = &func_value_expr->_base;
+      FbleVectorInit(arena, apply_expr->args);
+      FbleVectorAppend(arena, apply_expr->args, $4);
+      $$ = &apply_expr->_base;
     }
   ;
 
