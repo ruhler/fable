@@ -240,7 +240,7 @@ typedef enum {
 
   FBLE_FUNC_TYPE_EXPR,
   FBLE_FUNC_VALUE_EXPR,
-  FBLE_APPLY_EXPR,
+  FBLE_FUNC_APPLY_EXPR,
 
   FBLE_STRUCT_TYPE_EXPR,
   FBLE_STRUCT_VALUE_EXPR,
@@ -259,6 +259,10 @@ typedef enum {
   FBLE_PUT_EXPR,
   FBLE_LINK_EXPR,
   FBLE_EXEC_EXPR,
+
+  // Expressions that have yet to be resolved based on their type.
+  FBLE_ACCESS_EXPR,
+  FBLE_APPLY_EXPR,
 } FbleExprTag;
 
 // FbleExpr --
@@ -371,6 +375,10 @@ typedef struct {
   FbleExprV args;
 } FbleApplyExpr;
 
+// FbleFuncApplyExpr --
+//   FBLE_FUNC_APPLY_EXPR (args :: [Expr])
+typedef FbleApplyExpr FbleFuncApplyExpr;
+
 // FbleStructTypeExpr --
 //   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
@@ -385,13 +393,18 @@ typedef struct {
 // distinguish between the two when parsing.
 typedef FbleApplyExpr FbleStructValueExpr;
 
-// FbleStructAccessExpr --
-//   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)
+// FbleAccessExpr --
+//   FBLE_ACCESS_EXPR (object :: Expr) (field :: Name)
+// Common form used for FBLE_STRUCT_ACCESS_EXPR and FBLE_UNION_ACCESS_EXPR.
 typedef struct {
   FbleExpr _base;
   FbleExpr* object;
   FbleName field;
-} FbleStructAccessExpr;
+} FbleAccessExpr;
+
+// FbleStructAccessExpr --
+//   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)
+typedef FbleAccessExpr FbleStructAccessExpr;
 
 // FbleUnionTypeExpr --
 //   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
@@ -411,10 +424,7 @@ typedef struct {
 
 // FbleUnionAccessExpr --
 //   FBLE_UNION_ACCESS_EXPR (object :: Expr) (field :: Name)
-//
-// Note: this uses the same type as struct access because we can't
-// distinguish between the two when parsing.
-typedef FbleStructAccessExpr FbleUnionAccessExpr;
+typedef FbleAccessExpr FbleUnionAccessExpr;
 
 // FbleCondExpr --
 //   FBLE_COND_EXPR (condition :: Expr) (choices :: [(Name, Expr)])
@@ -454,18 +464,11 @@ typedef struct {
 
 // FbleGetExpr --
 //   FBLE_GET_EXPR (port :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* port;
-} FbleGetExpr;
+typedef FbleApplyExpr FbleGetExpr;
 
 // FblePutExpr --
 //   FBLE_PUT_EXPR (port :: Expr) (value :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* port;
-  FbleExpr* value;
-} FblePutExpr;
+typedef FbleApplyExpr FblePutExpr;
 
 // FbleLinkExpr --
 //   FBLE_LINK_EXPR (type :: Type) (get :: Name) (put :: Name) (body :: Expr)

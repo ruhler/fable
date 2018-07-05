@@ -120,15 +120,13 @@ expr:
       $$ = &struct_type_expr->_base;
    }
 
- // | struct_value covered by apply
-
  | expr '.' NAME {
-      FbleStructAccessExpr* struct_access_expr = FbleAlloc(arena, FbleStructAccessExpr);
-      struct_access_expr->_base.tag = FBLE_STRUCT_ACCESS_EXPR;
-      struct_access_expr->_base.loc = @$;
-      struct_access_expr->object = $1;
-      struct_access_expr->field = $3;
-      $$ = &struct_access_expr->_base;
+      FbleAccessExpr* access_expr = FbleAlloc(arena, FbleAccessExpr);
+      access_expr->_base.tag = FBLE_ACCESS_EXPR;
+      access_expr->_base.loc = @$;
+      access_expr->object = $1;
+      access_expr->field = $3;
+      $$ = &access_expr->_base;
    }
  | '+' '(' fieldp ')' {
       FbleUnionTypeExpr* union_type_expr = FbleAlloc(arena, FbleUnionTypeExpr);
@@ -146,8 +144,6 @@ expr:
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }
-
- // | union_access covered by struct_access
 
  | '?' '(' expr ';' choices ')' {
       FbleCondExpr* cond_expr = FbleAlloc(arena, FbleCondExpr);
@@ -185,10 +181,6 @@ expr:
       eval_expr->expr = $3;
       $$ = &eval_expr->_base;
    }
-
- // | get covered by apply
-
- // | put covered by apply
  ;
 
 stmt:
@@ -226,8 +218,8 @@ stmt:
       func_value_expr->args = $1;
       func_value_expr->body = $6;
 
-      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
-      apply_expr->_base.tag = FBLE_APPLY_EXPR;
+      FbleFuncApplyExpr* apply_expr = FbleAlloc(arena, FbleFuncApplyExpr);
+      apply_expr->_base.tag = FBLE_FUNC_APPLY_EXPR;
       apply_expr->_base.loc = @$;
       apply_expr->func = &func_value_expr->_base;
       FbleVectorInit(arena, apply_expr->args);

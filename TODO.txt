@@ -1,5 +1,14 @@
 Fble:
-* Implement an fble interpreter.
+* Come up with syntax to distinguish between struct_value and rest of apply?
+  - Because struct_value is the only one where we need to evaluate the value
+    of the thing being applied in order to check its type.
+* Figure out testing strategy.
+* Start implementing evaluator
+ - with option to check types or assume they have already been checked
+ - with option to evaluate abstract (just type and whatever is needed for
+   type checking) or to evaluate fully.
+* Figure out how to allow an fble file to be reused for multiple different
+  programs.
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an
