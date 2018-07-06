@@ -3,8 +3,13 @@
 
 #include "fble.h"
 
+#include <stdbool.h>  // for bool
 #include <stdio.h>    // for FILE, fprintf
 #include <string.h>   // for strcmp
+
+#define EX_SUCCESS 0
+#define EX_FAIL 1
+#define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
@@ -23,8 +28,11 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-test FILE\n"
-      "Parse the fble program from FILE.\n"
+      "Usage: fble-test [--error] FILE\n"
+      "Type check and evaluate the fble program from FILE.\n"
+      "If the result is a process, run the process.\n"
+      "Exit status is 0 if the program produced no type or runtime errors, 1 otherwise.\n"
+      "With --error, exit status is 0 if the program produced a type or runtime error, 0 otherwise.\n"
   );
 }
 
@@ -42,26 +50,48 @@ static void PrintUsage(FILE* stream)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, char* argv[])
 {
-  if (argc > 1 && strcmp("--help", argv[1]) == 0) {
+  argc--;
+  argv++;
+  if (argc > 0 && strcmp("--help", *argv) == 0) {
     PrintUsage(stdout);
-    return 0;
+    return EX_SUCCESS;
   }
 
-  if (argc <= 1) {
+  bool expect_error = false;
+  if (argc > 0 && strcmp("--error", *argv) == 0) {
+    expect_error = true;
+    argc--;
+    argv++;
+  }
+
+  if (argc < 1) {
     fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
-    return 1;
+    return EX_USAGE;
   }
   
-  const char* path = argv[1];
+  const char* path = *argv;
+
+  FILE* stderr_save = stderr;
+  stderr = expect_error ? stdout : stderr;
 
   FbleArena* arena = FbleNewArena(NULL);
 
   FbleExpr* prgm = FbleParse(arena, path);
-  if (prgm == NULL) {
-    fprintf(stderr, "failed to parse program\n");
-  }
+
+  // TODO: Type check and evaluate the program.
+  // TODO: If the result is a process, run the process.
 
   FbleDeleteArena(arena);
-  return (prgm == NULL) ? 1 : 0;
+
+  if (prgm == NULL) {
+    return expect_error ? EX_SUCCESS : EX_FAIL;
+  }
+
+  if (expect_error) {
+    fprintf(stderr_save, "expected error, but none encountered.\n");
+    return EX_FAIL;
+  }
+
+  return EX_SUCCESS;
 }
