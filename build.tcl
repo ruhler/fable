@@ -44,8 +44,14 @@ source build.fble.tcl
 #puts "fbld Coverage: "
 #puts "  Spec: [exec tail -n 1 out/fbld/cov/spec/fbld.gcov]"
 #puts "  All : [exec tail -n 1 out/fbld/cov/all/fbld.gcov]"
-#puts ""
-#puts "$::num_tests_passed passed, $::num_tests_failed failed, [expr $::num_tests_passed + $::num_tests_failed] total"
+puts ""
+puts "Fble Coverage: "
+puts "  Spec: [exec tail -n 1 out/fble/cov/spec/fble.gcov]"
+puts "  All : [exec tail -n 1 out/fble/cov/all/fble.gcov]"
+puts ""
+puts "Test Results: "
+puts "  $::num_tests_passed passed, $::num_tests_failed failed, [expr $::num_tests_passed + $::num_tests_failed] total"
+puts ""
 
 if {[llength $::failed] != 0} {
   puts "Failed Tests:"
@@ -53,5 +59,6 @@ if {[llength $::failed] != 0} {
     puts "  $test"
   }
 
+  puts ""
   exit 1
 }

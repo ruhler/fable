@@ -639,7 +639,52 @@ Miscellaneous Thoughts
 
   No need to decide now. Let's just see how things evolve.
 
+  Time to decide now. I propose the following:
+  
+  A type is called a kinded type if expressions with that type can be used to
+  evaluate to a type. @ is a kinded type. A struct or union type that has any
+  fields of a kinded type are kinded types. A function type whose return type
+  is a kinded type is itself a kinded type.
+
+  Process or input or output types are disallowed from being kinded type.
+  Conditional expressions are disallowed from being kinded type.
+
+  Expressions of kinded type are evaluated during type check. Other
+  expressions are not evaluated during type check.
+
+  When evaluating expressions of kinded type during type check, it may be the
+  case that the resulting value depends on unknown input parameters. This is
+  not an error unless the value of those input parmaters must be known to type
+  check the expression.
+
+  I think that gives everything I need.
+
 * Eventually I'll want to think about how to scale up fble programs. Is there
   a natural way to split fble programs across multiple files/directories
   authored by multiple different authors? But that's something to worry about
   later.
+ 
+  I'm thinking have a way to import an expression from a file.
+  And have ways to create struct values from a context and set up a context
+  given struct values.
+  And have a way to say: here is a struct value that should be evaluated at
+  type check and used directly, without having to supply a type.
+  And have a way to say: I require some named, untyped, structure to be
+  available implicitly in my expression.
+
+* Need syntax to distinguish between struct_value and apply?
+  Because for struct_value, we have to know the value of the "function" at
+  type check type, but for apply we don't. Probably better to have syntax so
+  we can tell that easily when we go to type check the expression.
+
+  Not sure what syntax to use though. Maybe:
+    struct_value ::= type ':' '(' args ')'
+
+* How to test?
+  Provide an expression.
+  Type check and evaluate the expression.
+  If the result is a process, run the process.
+
+  The test fails if there is a type error or undefined union field access.
+  The test succeeds otherwise.
+
