@@ -78,13 +78,17 @@ int main(int argc, char* argv[])
   FbleArena* arena = FbleNewArena(NULL);
 
   FbleExpr* prgm = FbleParse(arena, path);
+  FbleValue* result = NULL;
+  if (prgm != NULL) {
+    result = FbleEval(arena, prgm);
 
-  // TODO: Type check and evaluate the program.
-  // TODO: If the result is a process, run the process.
+    // TODO: If the result is a process, run the process.
+    // TODO: Free the resulting value and ensure nothing leaked.
+  }
 
   FbleDeleteArena(arena);
 
-  if (prgm == NULL) {
+  if (result == NULL) {
     return expect_error ? EX_SUCCESS : EX_FAIL;
   }
 

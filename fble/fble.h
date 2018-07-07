@@ -512,5 +512,55 @@ typedef struct {
 //   not ensure that filename remains valid for the duration of the lifetime
 //   of the program.
 FbleExpr* FbleParse(FbleArena* arena, const char* filename);
+
+// FbleValueTag --
+//   A tag used to distinguish among different kinds of values.
+typedef enum {
+  FBLE_TYPE_TYPE_VALUE,
+  FBLE_FUNC_TYPE_VALUE,
+  FBLE_FUNC_VALUE,
+  FBLE_STRUCT_TYPE_VALUE,
+  FBLE_STRUCT_VALUE,
+  FBLE_UNION_TYPE_VALUE,
+  FBLE_UNION_VALUE,
+  FBLE_PROC_TYPE_VALUE,
+  FBLE_INPUT_TYPE_VALUE,
+  FBLE_OUTPUT_TYPE_VALUE,
+  FBLE_PROC_VALUE,
+  FBLE_INPUT_VALUE,
+  FBLE_OUTPUT_VALUE,
+} FbleValueTag;
+
+// FbleValue --
+//   A tagged union of value types. All values have the same initial
+//   layout as FbleValue. The tag can be used to determine what kind of
+//   value this is to get access to additional fields of the value
+//   by first casting to that specific type of value.
+typedef struct FbleValue {
+  FbleValueTag tag;
+  size_t refcount;
+  struct FbleValue* type;
+} FbleValue;
+
+// FbleTypeTypeValue --
+//   FBLE_TYPE_TYPE_VALUE
+typedef struct {
+  FbleValue _base;
+} FbleTypeTypeValue;
+
+// FbleEval --
+//   Type check and evaluate an expression.
+//
+// Inputs:
+//   arena - The arena to use for allocating values.
+//   expr - The expression to evaluate.
+//
+// Results:
+//   The value of the evaluated expression, or NULL in case of error. The
+//   error could be a type error or an undefined union field access.
+//
+// Side effects:
+//   Prints an error message to stderr in case of error.
+FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr);
 
 #endif // FBLE_H_
