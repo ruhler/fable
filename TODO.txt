@@ -3,9 +3,6 @@ Fble:
 * Finish implementing evaluator
   - adding tests as we go.
   - until we can run snake.fble.
-* Come up with syntax to distinguish between struct_value and rest of apply?
-  - Because struct_value is the only one where we need to evaluate the value
-    of the thing being applied in order to check its type.
 * Figure out how to allow an fble file to be reused for multiple different
   programs.
 

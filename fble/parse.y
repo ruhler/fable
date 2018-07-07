@@ -119,7 +119,14 @@ expr:
       struct_type_expr->fields = $3;
       $$ = &struct_type_expr->_base;
    }
-
+ | expr '@' '(' exprs ')' {
+      FbleStructValueExpr* struct_value_expr = FbleAlloc(arena, FbleStructValueExpr);
+      struct_value_expr->_base.tag = FBLE_STRUCT_VALUE_EXPR;
+      struct_value_expr->_base.loc = @$;
+      struct_value_expr->type = $1;
+      struct_value_expr->args = $4;
+      $$ = &struct_value_expr->_base;
+   }
  | expr '.' NAME {
       FbleAccessExpr* access_expr = FbleAlloc(arena, FbleAccessExpr);
       access_expr->_base.tag = FBLE_ACCESS_EXPR;
@@ -135,13 +142,13 @@ expr:
       union_type_expr->fields = $3;
       $$ = &union_type_expr->_base;
    }
- | expr ':' NAME '(' expr ')' {
+ | expr '@' '(' NAME ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
       union_value_expr->_base.loc = @$;
       union_value_expr->type = $1;
-      union_value_expr->field = $3;
-      union_value_expr->arg = $5;
+      union_value_expr->field = $4;
+      union_value_expr->arg = $6;
       $$ = &union_value_expr->_base;
    }
 

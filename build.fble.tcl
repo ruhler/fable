@@ -39,7 +39,7 @@ proc fble-test-error-run { tloc loc expr } {
   set errtext [exec $::fbletest --error $fprgm]
   exec echo $errtext > ./out/test/fble/$name.err
   if {-1 == [string first ":$loc: error" $errtext]} {
-    throw "Expected error at $loc, but got:\n$errtext"
+    error "Expected error at $loc, but got:\n$errtext"
   }
 }
 

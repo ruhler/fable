@@ -286,13 +286,10 @@ Abstract Syntax:
   struct_value (type :: Type) (args :: [Expr])
 
 Concrete Syntax:
-  type '(' [expr [',' expr [...]]] ')'
+  type '@' '(' [expr [',' expr [...]]] ')'
 
 Example:
-  Coord(3, 5)
-
-TODO: Clarify the case of constructing a value of type *(). Depending on
-whether we consider zero-argument functions different from values.
+  Coord@(3, 5)
 
 E.9 Struct Access
 -----------------
@@ -329,10 +326,10 @@ Abstract Syntax:
   union_value (type :: Type) (field :: Name) (arg :: Expr)
 
 Concrete Syntax:
-  type ':' name '(' expr ')'
+  type '@' '(' name ':' expr ')'
 
 Example:
-  Maybe:Just(3)
+  Maybe@(Just: 3)
 
 E.11 Union Access
 -----------------
@@ -547,11 +544,11 @@ expr ::=
  | expr '(' [expr [',' expr [...]]] ')'                   (* apply *)
 
  | '*(' [type name [',' type name [...]]] ')'             (* struct_type *)
- | type '(' [expr [',' expr [...]]] ')'                   (* struct_value *)
+ | type '@' '(' [expr [',' expr [...]]] ')'               (* struct_value *)
  | expr '.' name                                          (* struct_access *)
 
  | '+(' type name [',' type name [...]] ')'                   (* union_type *)
- | type ':' name '(' expr ')'                                 (* union_value *)
+ | type '@' '(' name ':' expr ')'                             (* union_value *)
  | expr '.' name                                              (* union_access *)
  | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'  (* cond *)
 
@@ -574,7 +571,7 @@ stmt ::=
 Notes:
 * struct_access and union_access share the same form. The type of expr is used
   to distinguish between the two kinds of expressions.
-* apply, struct_value, get, and put share the same form. The type of the expr
+* apply, get, and put share the same form. The type of the expr
   is used to distinguish between the four kinds of expressions.
   
 Miscellaneous Thoughts
@@ -679,6 +676,10 @@ Miscellaneous Thoughts
 
   Not sure what syntax to use though. Maybe:
     struct_value ::= type ':' '(' args ')'
+
+  Picking: type '@' '(' exprs ')'
+  To go with union: type '@' '(' name ':' expr ')'
+  
 
 * How to test?
   Provide an expression.
