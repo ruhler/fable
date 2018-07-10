@@ -548,6 +548,23 @@ typedef struct {
   FbleValue _base;
 } FbleTypeTypeValue;
 
+// FbleRelease --
+//
+//   Free the resources associated with a value.
+//
+// Inputs:
+//   arena - The arena the value was allocated with.
+//   value - The value to free the resources of.
+//
+// Results:
+//   None.
+//
+// Side effect:
+//   The resources for the value are freed. The value may be NULL, in which
+//   case no action is taken.
+void FbleRelease(FbleArena* arena, FbleValue* value);
+
+
 // FbleEval --
 //   Type check and evaluate an expression.
 //

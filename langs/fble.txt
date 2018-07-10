@@ -584,6 +584,8 @@ Miscellaneous Thoughts
 
   And what about input ports, which use the syntax of no-argument functions?
 
+  Maybe a zero argument function is fine.
+
 * As with fblc/fbld, I would like the type of an expression to be determined
   completely by the expression and the types of any variables it refers to.
   The type of the expression should not otherwise depend on the context where
@@ -603,6 +605,8 @@ Miscellaneous Thoughts
 
   Or is this only an issue if we don't support zero-argument function syntax?
 
+  Not an issue anymore with new syntax: Unit vs. Unit@().
+
 * Defining functions is tedious because you end up duplicating the type
   information. For example:
 
@@ -613,6 +617,8 @@ Miscellaneous Thoughts
   Maybe we should support some syntactic sugar to help with this?
   Or, at least we could remove the return type in the lambda expression,
   because you can infer that from the body of the function, right?
+
+  Done.
 
 * It's super nice having global value declarations, instead of having to
   define zero argument functions.
@@ -688,4 +694,26 @@ Miscellaneous Thoughts
 
   The test fails if there is a type error or undefined union field access.
   The test succeeds otherwise.
+
+* What is the lifetime of a local variable?
+  This is important, for example, for recursive functions so the programmer
+  knows when the stack will be smashed. In other words, does the lifetime of
+  that local variable extend beyond the recursive function call, or does it
+  end before that?
+
+  Assume we know, based on the evaluation semantics, when an expression is
+  evaluated. The programmer needs to know this for performance reasons. Then
+  how about we say the lifetime of a local variable is just long enough for
+  all the expressions that will need the variable value to be evaluated.
+
+  Example:
+  \(List l, Int acc; Int) sum = \(List l, Int acc) {
+    ?(l; nil: acc,
+         cons: sum(l.cons.tail, Add(l.cons.head, acc)));
+  };
+  
+  The local variable 'acc' is no longer live after the Add call, so it is safe
+  to do the recursive sum call without having to worry about memory growth in
+  the size of the list.
+  
 

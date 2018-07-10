@@ -80,10 +80,14 @@ int main(int argc, char* argv[])
   FbleExpr* prgm = FbleParse(arena, path);
   FbleValue* result = NULL;
   if (prgm != NULL) {
-    result = FbleEval(arena, prgm);
+    FbleArena* eval_arena = FbleNewArena(arena);
+    result = FbleEval(eval_arena, prgm);
 
     // TODO: If the result is a process, run the process.
-    // TODO: Free the resulting value and ensure nothing leaked.
+
+    FbleRelease(eval_arena, result);
+    FbleAssertEmptyArena(eval_arena);
+    FbleDeleteArena(eval_arena);
   }
 
   FbleDeleteArena(arena);
