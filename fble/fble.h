@@ -548,6 +548,21 @@ typedef struct {
   FbleValue _base;
 } FbleTypeTypeValue;
 
+// FbleCopy --
+//
+//   Make a (likely shared) copy of the given value.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   src - The value to make a copy of.
+//
+// Results:
+//   A copy of the value, which may be the same as the original value.
+//
+// Side effects:
+//   May perform arena allocations.
+FbleValue* FbleCopy(FbleArena* arena, FbleValue* src);
+
 // FbleRelease --
 //
 //   Free the resources associated with a value.

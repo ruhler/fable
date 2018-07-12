@@ -8,6 +8,12 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// FbleCopy -- see documentation in fble.h
+FbleValue* FbleCopy(FbleArena* arena, FbleValue* src)
+{
+  src->refcount++;
+  return src;
+}
 
 // FbleRelease -- see documentation in fble.h
 void FbleRelease(FbleArena* arena, FbleValue* value)

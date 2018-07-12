@@ -9,6 +9,12 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+static FbleValue gTypeTypeValue = {
+  .tag = FBLE_TYPE_TYPE_VALUE,
+  .refcount = 1,
+  .type = &gTypeTypeValue
+};
+
 // InstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
@@ -68,11 +74,7 @@ static FbleValue* Compile(FbleArena* arena, FbleExpr* expr, Instr** instrs)
       instr->_base.tag = TYPE_TYPE_INSTR;
       *instrs = &instr->_base;
 
-      FbleTypeTypeValue* type = FbleAlloc(arena, FbleTypeTypeValue);
-      type->_base.tag = FBLE_TYPE_TYPE_VALUE;
-      type->_base.refcount = 1;
-      type->_base.type = &type->_base;
-      return &type->_base;
+      return FbleCopy(arena, &gTypeTypeValue);
     }
 
     case FBLE_FUNC_TYPE_EXPR: assert(false && "TODO: FBLE_FUNC_TYPE_EXPR"); return NULL;
@@ -136,11 +138,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm)
 
     switch (pc->tag) {
       case TYPE_TYPE_INSTR: {
-        FbleTypeTypeValue* type = FbleAlloc(arena, FbleTypeTypeValue);
-        type->_base.tag = FBLE_TYPE_TYPE_VALUE;
-        type->_base.refcount = 1;
-        type->_base.type = &type->_base;
-        result = &type->_base;
+        result = FbleCopy(arena, &gTypeTypeValue);
         break;
       }
 
