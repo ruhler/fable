@@ -1,10 +1,6 @@
 // eval.c --
 //   This file implements the fble evaluation routines.
 
-#include <assert.h>   // for assert
-#include <stdbool.h>  // for false
-#include <stdlib.h>   // for NULL
-
 #include "fble.h"
 
 #define UNREACHABLE(x) assert(false && x)
@@ -15,10 +11,19 @@ static FbleValue gTypeTypeValue = {
   .type = &gTypeTypeValue
 };
 
+// Vars --
+//   Scope of variables visible during type checking.
+typedef struct Vars {
+  FbleName name;
+  FbleValue* type;
+  struct Vars* next;
+} Vars;
+
 // InstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
   TYPE_TYPE_INSTR,
+  VAR_INSTR,
 } InstrTag;
 
 // Instr --
@@ -33,6 +38,14 @@ typedef struct {
   Instr _base;
 } TypeTypeInstr;
 
+// VarInstr -- VAR_INSTR
+//   Reads the variable at the given position in the stack. Position 0 is the
+//   top of the stack.
+typedef struct {
+  Instr _base;
+  int position;
+} VarInstr;
+
 // ResultStack --
 // 
 // Fields:
@@ -45,7 +58,7 @@ typedef struct ResultStack {
   struct ResultStack* tail;
 } ResultStack;
 
-static FbleValue* Compile(FbleArena* arena, FbleExpr* expr, Instr** instrs);
+static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** instrs);
 static FbleValue* Eval(FbleArena* arena, Instr* instrs);
 static void FreeInstrs(FbleArena* arena, Instr* instrs);
 
@@ -55,6 +68,7 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs);
 //
 // Inputs:
 //   arena - arena to use for allocations.
+//   vars - the list of variables in scope.
 //   expr - the expression to compile.
 //   instrs - output pointer to store generated in structions
 //
@@ -63,10 +77,30 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs);
 //
 // Side effects:
 //   Prints a message to stderr if the expression fails to compile.
-static FbleValue* Compile(FbleArena* arena, FbleExpr* expr, Instr** instrs)
+static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** instrs)
 {
   switch (expr->tag) {
-    case FBLE_VAR_EXPR: assert(false && "TODO: FBLE_VAR_EXPR"); return NULL;
+    case FBLE_VAR_EXPR: {
+      FbleVarExpr* var_expr = (FbleVarExpr*)expr;
+
+      int position = 0;
+      while (vars != NULL && !FbleNamesEqual(var_expr->var.name, vars->name.name)) {
+        vars = vars->next;
+        position++;
+      }
+
+      if (vars == NULL) {
+        FbleReportError("variable '%s' not defined\n", &var_expr->var.loc, var_expr->var.name);
+        return NULL;
+      }
+
+      VarInstr* instr = FbleAlloc(arena, VarInstr);
+      instr->_base.tag = VAR_INSTR;
+      instr->position = position;
+      *instrs = &instr->_base;
+      return vars->type;
+    }
+
     case FBLE_LET_EXPR: assert(false && "TODO: FBLE_LET_EXPR"); return NULL;
 
     case FBLE_TYPE_TYPE_EXPR: {
@@ -166,6 +200,7 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
 {
   switch (instrs->tag) {
     case TYPE_TYPE_INSTR:
+    case VAR_INSTR:
       FbleFree(arena, instrs);
       return;
   }
@@ -176,7 +211,7 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
 FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 {
   Instr* instrs = NULL;
-  FbleValue* type = Compile(arena, expr, &instrs);
+  FbleValue* type = Compile(arena, NULL, expr, &instrs);
   if (type == NULL) {
     return NULL;
   }

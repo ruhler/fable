@@ -5,7 +5,10 @@
 #ifndef FBLE_H_
 #define FBLE_H_
 
-#include <sys/types.h>  // for size_t
+#include <assert.h>       // for assert
+#include <stdbool.h>      // for bool
+#include <stdlib.h>       // for NULL
+#include <sys/types.h>    // for size_t
 
 // FbleArena --
 //   A handle used for allocating and freeing memory.
@@ -230,6 +233,20 @@ typedef struct {
   FbleLoc loc;
 } FbleName;
 
+// FbleNamesEqual --
+//   Test whether two names are equal.
+//
+// Inputs:
+//   a - The first name.
+//   b - The second name.
+//
+// Results:
+//   true if the first name equals the second, false otherwise.
+//
+// Side effects:
+//   None.
+bool FbleNamesEqual(const char* a, const char* b);
+
 // FbleExprTag --
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {

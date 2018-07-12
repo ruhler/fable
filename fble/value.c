@@ -1,9 +1,6 @@
 // value.c
 //   This file implements routines associated with fble values.
 
-#include <assert.h>   // for assert
-#include <stdbool.h>  // for bool
-
 #include "fble.h"
 
 #define UNREACHABLE(x) assert(false && x)
@@ -18,6 +15,10 @@ FbleValue* FbleCopy(FbleArena* arena, FbleValue* src)
 // FbleRelease -- see documentation in fble.h
 void FbleRelease(FbleArena* arena, FbleValue* value)
 {
+  if (value == NULL) {
+    return;
+  }
+
   assert(value->refcount > 0);
   if (--(value->refcount) == 0) {
     switch (value->tag) {

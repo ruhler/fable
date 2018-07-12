@@ -1,11 +1,10 @@
 // fble-test.c --
 //   This file implements the main entry point for the fble-test program.
 
-#include "fble.h"
-
-#include <stdbool.h>  // for bool
-#include <stdio.h>    // for FILE, fprintf
 #include <string.h>   // for strcmp
+#include <stdio.h>    // for FILE, fprintf, stderr
+
+#include "fble.h"
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

@@ -1,9 +1,7 @@
 // alloc.c --
 //   This file implements the fble allocation routines.
 
-#include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
-#include <stdlib.h>   // for abort, malloc, free
 
 #include "fble.h"
 
