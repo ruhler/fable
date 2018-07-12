@@ -27,19 +27,17 @@ typedef struct {
   Instr _base;
 } TypeTypeInstr;
 
-// Result --
-//   A single frame of the result stack.
-typedef struct {
+// ResultStack --
+// 
+// Fields:
+//   result - Pointer to where the result of evaluating an expression should
+//            be stored.
+//   next_pc - The next instruction to execute after returning a result.
+typedef struct ResultStack {
   FbleValue** result;
-  Instr* next;
-} Result;
-
-// ResultV --
-//   A vector of Result.
-typedef struct {
-  size_t size;
-  Result* xs;
-} ResultV;
+  Instr* next_pc;
+  struct ResultStack* tail;
+} ResultStack;
 
 static FbleValue* Compile(FbleArena* arena, FbleExpr* expr, Instr** instrs);
 static FbleValue* Eval(FbleArena* arena, Instr* instrs);
@@ -123,22 +121,35 @@ static FbleValue* Compile(FbleArena* arena, FbleExpr* expr, Instr** instrs)
 //
 // Side effects:
 //   Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleArena* arena, Instr* instrs)
+static FbleValue* Eval(FbleArena* arena, Instr* prgm)
 {
-//  FbleValue* result;
-//
-//  ResultV results;
-//  FbleVectorInit(arena, results);
-//  Result* r = FbleVectorExtend(arena, results);
-//  r->result = &result;
-//  r->next = NULL;
-//
-//  while (true) {
-//    if (instrs == NULL) {
-//      if (results
-//    }
-//  }
-  UNREACHABLE("should never get here");
+  Instr* pc = prgm;
+  FbleValue* result = NULL;
+  ResultStack* rstack = NULL;
+
+  while (result == NULL || rstack != NULL) {
+    if (result != NULL) {
+      *(rstack->result) = result;
+      pc = rstack->next_pc;
+      rstack = rstack->tail;
+    }
+
+    switch (pc->tag) {
+      case TYPE_TYPE_INSTR: {
+        FbleTypeTypeValue* type = FbleAlloc(arena, FbleTypeTypeValue);
+        type->_base.tag = FBLE_TYPE_TYPE_VALUE;
+        type->_base.refcount = 1;
+        type->_base.type = &type->_base;
+        result = &type->_base;
+        break;
+      }
+
+      default:
+        UNREACHABLE("invalid instruction");
+        return NULL;
+    }
+  }
+  return result;
 }
 
 // FreeInstrs --
@@ -155,7 +166,12 @@ static FbleValue* Eval(FbleArena* arena, Instr* instrs)
 //   Frees memory allocated for the instrs.
 static void FreeInstrs(FbleArena* arena, Instr* instrs)
 {
-  assert(false && "TODO");
+  switch (instrs->tag) {
+    case TYPE_TYPE_INSTR:
+      FbleFree(arena, instrs);
+      return;
+  }
+  UNREACHABLE("invalid instruction");
 }
 
 // FbleEval -- see documentation in fble.h
