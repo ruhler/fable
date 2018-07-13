@@ -1,6 +1,8 @@
 // eval.c --
 //   This file implements the fble evaluation routines.
 
+#include <stdio.h>    // for fprintf, stderr
+
 #include "fble.h"
 
 #define UNREACHABLE(x) assert(false && x)
@@ -24,6 +26,7 @@ typedef struct Vars {
 typedef enum {
   TYPE_TYPE_INSTR,
   VAR_INSTR,
+  LET_INSTR,
 } InstrTag;
 
 // Instr --
@@ -31,6 +34,13 @@ typedef enum {
 typedef struct {
   InstrTag tag;
 } Instr;
+
+// InstrV --
+//   A vector of Instr.
+typedef struct {
+  size_t size;
+  Instr** xs;
+} InstrV;
 
 // TypeTypeInstr -- TYPE_TYPE_INSTR
 //   Outputs a TYPE_TYPE_VALUE.
@@ -46,6 +56,15 @@ typedef struct {
   int position;
 } VarInstr;
 
+// LetInstr -- LET_INSTR
+//   Evaluate each of the bindings, add the results to the scope, then execute
+//   the body.
+typedef struct {
+  Instr _base;
+  InstrV bindings;
+  Instr* body;
+} LetInstr;
+
 // ResultStack --
 // 
 // Fields:
@@ -58,10 +77,60 @@ typedef struct ResultStack {
   struct ResultStack* tail;
 } ResultStack;
 
+static bool TypesEqual(FbleValue* a, FbleValue* b);
+static void PrintType(FbleValue* type);
 static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** instrs);
 static FbleValue* Eval(FbleArena* arena, Instr* instrs);
 static void FreeInstrs(FbleArena* arena, Instr* instrs);
 
+
+// TypesEqual --
+//   Test whether the two given types are equal.
+//
+// Inputs:
+//   a - the first type
+//   b - the second type
+//
+// Results:
+//   True if the first type equals the second type, false otherwise.
+//
+// Side effects:
+//   None.
+static bool TypesEqual(FbleValue* a, FbleValue* b)
+{
+  assert(false && "TODO: TypesEqual");
+  return false;
+}
+
+// PrintType --
+//   Print the given type in human readable form to stderr.
+//
+// Inputs:
+//   type - the type to print.
+//
+// Result:
+//   None.
+//
+// Side effect:
+//   Prints the given type in human readable form to stderr.
+static void PrintType(FbleValue* type)
+{
+  switch (type->tag) {
+    case FBLE_TYPE_TYPE_VALUE: fprintf(stderr, "@"); return;
+    case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return;
+    case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return;
+    case FBLE_STRUCT_TYPE_VALUE: assert(false && "TODO STRUCT_TYPE"); return;
+    case FBLE_STRUCT_VALUE: UNREACHABLE("not a type"); return;
+    case FBLE_UNION_TYPE_VALUE: assert(false && "TODO UNION_TYPE"); return;
+    case FBLE_UNION_VALUE: UNREACHABLE("not a type"); return;
+    case FBLE_PROC_TYPE_VALUE: assert(false && "TODO PROC_TYPE"); return;
+    case FBLE_INPUT_TYPE_VALUE: assert(false && "TODO INPUT_TYPE"); return;
+    case FBLE_OUTPUT_TYPE_VALUE: assert(false && "TODO OUTPUT_TYPE"); return;
+    case FBLE_PROC_VALUE: UNREACHABLE("not a type"); return;
+    case FBLE_INPUT_VALUE: UNREACHABLE("not a type"); return;
+    case FBLE_OUTPUT_VALUE: UNREACHABLE("not a type"); return;
+  }
+}
 
 // Compile --
 //   Type check and compile the given expression.
@@ -101,7 +170,69 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
       return vars->type;
     }
 
-    case FBLE_LET_EXPR: assert(false && "TODO: FBLE_LET_EXPR"); return NULL;
+    case FBLE_LET_EXPR: {
+      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
+
+      // Step 1: Compile, check, and evaluate the types of all the variables.
+      FbleValue* types[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        Instr* prgm;
+        FbleType* type_expr = let_expr->bindings.xs[i].type;
+        FbleValue* type_type = Compile(arena, vars, type_expr, &prgm);
+        if (type_type == NULL) {
+          return NULL;
+        }
+        
+        if (type_type->tag != FBLE_TYPE_TYPE_VALUE) {
+          FbleReportError("expected a type, found something else\n", &type_expr->loc);
+          return NULL;
+        }
+
+        // TODO: Pass in the current scope, otherwise this is sure to fail.
+        types[i] = Eval(arena, prgm);
+        if (types[i] == NULL) {
+          FbleReportError("failed to evaluate type\n", &type_expr->loc);
+          return NULL;
+        }
+      }
+
+      // Step 2: Add the new variables to the scope.
+      assert(let_expr->bindings.size > 0);
+      Vars nvars[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        nvars[i].name = let_expr->bindings.xs[i].name;
+        nvars[i].type = types[i];
+        nvars[i].next = vars;
+        vars = nvars + i;
+      }
+
+      // Step 3: Compile, check, and if appropriate, evaluate the values of
+      // the variables.
+      LetInstr* instr = FbleAlloc(arena, LetInstr);
+      instr->_base.tag = LET_INSTR;
+      FbleVectorInit(arena, instr->bindings);
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        Instr** prgm = FbleVectorExtend(arena, instr->bindings);
+        FbleValue* type = Compile(arena, vars, let_expr->bindings.xs[i].expr, prgm);
+        if (type == NULL) {
+          return NULL;
+        }
+
+        if (!TypesEqual(types[i], type)) {
+          FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
+          PrintType(types[i]);
+          fprintf(stderr, ", but found ");
+          PrintType(type);
+          fprintf(stderr, "\n");
+          return NULL;
+        }
+
+        // TODO: Evaluate the variable if it has a kinded type.
+      }
+
+      *instrs = &instr->_base;
+      return Compile(arena, vars, let_expr->body, &(instr->body));
+    }
 
     case FBLE_TYPE_TYPE_EXPR: {
       TypeTypeInstr* instr = FbleAlloc(arena, TypeTypeInstr);
@@ -200,9 +331,21 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
 {
   switch (instrs->tag) {
     case TYPE_TYPE_INSTR:
-    case VAR_INSTR:
+    case VAR_INSTR: {
       FbleFree(arena, instrs);
       return;
+    }
+
+    case LET_INSTR: {
+      LetInstr* let_instr = (LetInstr*)instrs;
+      for (size_t i = 0; i < let_instr->bindings.size; ++i) {
+        FreeInstrs(arena, let_instr->bindings.xs[i]);
+      }
+      FbleFree(arena, let_instr->bindings.xs);
+      FreeInstrs(arena, let_instr->body);
+      FbleFree(arena, let_instr);
+      return;
+    }
   }
   UNREACHABLE("invalid instruction");
 }
