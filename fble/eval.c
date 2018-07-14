@@ -27,6 +27,7 @@ typedef enum {
   TYPE_TYPE_INSTR,
   VAR_INSTR,
   LET_INSTR,
+  STRUCT_TYPE_INSTR,
 } InstrTag;
 
 // Instr --
@@ -41,6 +42,20 @@ typedef struct {
   size_t size;
   Instr** xs;
 } InstrV;
+
+// FInstr --
+//   An instruction associated with a field name.
+typedef struct {
+  Instr* instr;
+  FbleName name;
+} FInstr;
+
+// FInstrV --
+//   A vector of FInstr
+typedef struct {
+  size_t size;
+  FInstr* xs;
+} FInstrV;
 
 // TypeTypeInstr -- TYPE_TYPE_INSTR
 //   Outputs a TYPE_TYPE_VALUE.
@@ -64,6 +79,13 @@ typedef struct {
   InstrV bindings;
   Instr* body;
 } LetInstr;
+
+// StructTypeInstr -- STRUCT_TYPE_INSTR
+//   Allocate a struct type, then execute each of the field types.
+typedef struct {
+  Instr _base;
+  FInstrV fields;
+} StructTypeInstr;
 
 // ResultStack --
 // 
@@ -98,8 +120,27 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs);
 //   None.
 static bool TypesEqual(FbleValue* a, FbleValue* b)
 {
-  assert(false && "TODO: TypesEqual");
-  return false;
+  if (a->tag != b->tag) {
+    return false;
+  }
+
+  switch (a->tag) {
+    case FBLE_TYPE_TYPE_VALUE: return true;
+    case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return false;
+    case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_STRUCT_TYPE_VALUE: assert(false && "TODO STRUCT_TYPE"); return false;
+    case FBLE_STRUCT_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_UNION_TYPE_VALUE: assert(false && "TODO UNION_TYPE"); return false;
+    case FBLE_UNION_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_PROC_TYPE_VALUE: assert(false && "TODO PROC_TYPE"); return false;
+    case FBLE_INPUT_TYPE_VALUE: assert(false && "TODO INPUT_TYPE"); return false;
+    case FBLE_OUTPUT_TYPE_VALUE: assert(false && "TODO OUTPUT_TYPE"); return false;
+    case FBLE_PROC_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_INPUT_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_OUTPUT_VALUE: UNREACHABLE("not a type"); return false;
+  }
+
+  UNREACHABLE("should never get here");
 }
 
 // PrintType --
@@ -246,7 +287,40 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
     case FBLE_FUNC_VALUE_EXPR: assert(false && "TODO: FBLE_FUNC_VALUE_EXPR"); return NULL;
     case FBLE_FUNC_APPLY_EXPR: assert(false && "TODO: FBLE_FUNC_APPLY_EXPR"); return NULL;
 
-    case FBLE_STRUCT_TYPE_EXPR: assert(false && "TODO: FBLE_STRUCT_TYPE_EXPR"); return NULL;
+    case FBLE_STRUCT_TYPE_EXPR: {
+      FbleStructTypeExpr* struct_type_expr = (FbleStructTypeExpr*)expr;
+      StructTypeInstr* instr = FbleAlloc(arena, StructTypeInstr);
+      instr->_base.tag = STRUCT_TYPE_INSTR;
+      FbleVectorInit(arena, instr->fields);
+      for (size_t i = 0; i < struct_type_expr->fields.size; ++i) {
+        FInstr* finstr = FbleVectorExtend(arena, instr->fields);
+        FbleField* field = struct_type_expr->fields.xs + i;
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(field->name.name, struct_type_expr->fields.xs[j].name.name)) {
+            FbleReportError("duplicate field name '%s'\n", &field->name.loc, &field->name.name);
+            return NULL;
+          }
+        }
+
+        finstr->name = field->name;
+        FbleValue* type = Compile(arena, vars, field->type, &finstr->instr);
+        if (type == NULL) {
+          return NULL;
+        }
+
+        if (!TypesEqual(type, &gTypeTypeValue)) {
+          FbleReportError("expected a type, but found something of type ", &field->type->loc);
+          PrintType(type);
+          fprintf(stderr, "\n");
+          return NULL;
+        }
+      }
+
+      *instrs = &instr->_base;
+      return FbleCopy(arena, &gTypeTypeValue);
+    }
+
     case FBLE_STRUCT_VALUE_EXPR: assert(false && "TODO: FBLE_STRUCT_VALUE_EXPR"); return NULL;
     case FBLE_STRUCT_ACCESS_EXPR: assert(false && "TODO: FBLE_STRUCT_ACCESS_EXPR"); return NULL;
 
@@ -344,6 +418,16 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
       FbleFree(arena, let_instr->bindings.xs);
       FreeInstrs(arena, let_instr->body);
       FbleFree(arena, let_instr);
+      return;
+    }
+
+    case STRUCT_TYPE_INSTR: {
+      StructTypeInstr* struct_type_instr = (StructTypeInstr*)instrs;
+      for (size_t i = 0; i < struct_type_instr->fields.size; ++i) {
+        FreeInstrs(arena, struct_type_instr->fields.xs[i].instr);
+      }
+      FbleFree(arena, struct_type_instr->fields.xs);
+      FbleFree(arena, struct_type_instr);
       return;
     }
   }
