@@ -7,6 +7,7 @@ Fble:
   programs.
 
 Fble Cleanup:
+* Share common code between checking StructType, UnionType, and FuncType?
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an

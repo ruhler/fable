@@ -28,6 +28,7 @@ typedef enum {
   VAR_INSTR,
   LET_INSTR,
   STRUCT_TYPE_INSTR,
+  UNION_TYPE_INSTR,
 } InstrTag;
 
 // Instr --
@@ -86,6 +87,13 @@ typedef struct {
   Instr _base;
   FInstrV fields;
 } StructTypeInstr;
+
+// UnionTypeInstr -- UNION_TYPE_INSTR
+//   Allocate a union type, then execute each of the field types.
+typedef struct {
+  Instr _base;
+  FInstrV fields;
+} UnionTypeInstr;
 
 // ResultStack --
 // 
@@ -324,7 +332,41 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
     case FBLE_STRUCT_VALUE_EXPR: assert(false && "TODO: FBLE_STRUCT_VALUE_EXPR"); return NULL;
     case FBLE_STRUCT_ACCESS_EXPR: assert(false && "TODO: FBLE_STRUCT_ACCESS_EXPR"); return NULL;
 
-    case FBLE_UNION_TYPE_EXPR: assert(false && "TODO: FBLE_UNION_TYPE_EXPR"); return NULL;
+    case FBLE_UNION_TYPE_EXPR: {
+      FbleUnionTypeExpr* union_type_expr = (FbleUnionTypeExpr*)expr;
+      UnionTypeInstr* instr = FbleAlloc(arena, UnionTypeInstr);
+      instr->_base.tag = UNION_TYPE_INSTR;
+      FbleVectorInit(arena, instr->fields);
+      assert(union_type_expr->fields.size > 0);
+      for (size_t i = 0; i < union_type_expr->fields.size; ++i) {
+        FInstr* finstr = FbleVectorExtend(arena, instr->fields);
+        FbleField* field = union_type_expr->fields.xs + i;
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(field->name.name, union_type_expr->fields.xs[j].name.name)) {
+            FbleReportError("duplicate field name '%s'\n", &field->name.loc, &field->name.name);
+            return NULL;
+          }
+        }
+
+        finstr->name = field->name;
+        FbleValue* type = Compile(arena, vars, field->type, &finstr->instr);
+        if (type == NULL) {
+          return NULL;
+        }
+
+        if (!TypesEqual(type, &gTypeTypeValue)) {
+          FbleReportError("expected a type, but found something of type ", &field->type->loc);
+          PrintType(type);
+          fprintf(stderr, "\n");
+          return NULL;
+        }
+      }
+
+      *instrs = &instr->_base;
+      return FbleCopy(arena, &gTypeTypeValue);
+    }
+
     case FBLE_UNION_VALUE_EXPR: assert(false && "TODO: FBLE_UNION_VALUE_EXPR"); return NULL;
     case FBLE_UNION_ACCESS_EXPR: assert(false && "TODO: FBLE_UNION_ACCESS_EXPR"); return NULL;
     case FBLE_COND_EXPR: assert(false && "TODO: FBLE_COND_EXPR"); return NULL;
@@ -428,6 +470,16 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
       }
       FbleFree(arena, struct_type_instr->fields.xs);
       FbleFree(arena, struct_type_instr);
+      return;
+    }
+
+    case UNION_TYPE_INSTR: {
+      UnionTypeInstr* union_type_instr = (UnionTypeInstr*)instrs;
+      for (size_t i = 0; i < union_type_instr->fields.size; ++i) {
+        FreeInstrs(arena, union_type_instr->fields.xs[i].instr);
+      }
+      FbleFree(arena, union_type_instr->fields.xs);
+      FbleFree(arena, union_type_instr);
       return;
     }
   }
