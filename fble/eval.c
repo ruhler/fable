@@ -2,6 +2,7 @@
 //   This file implements the fble evaluation routines.
 
 #include <stdio.h>    // for fprintf, stderr
+#include <string.h>   // for memcpy
 
 #include "fble.h"
 
@@ -20,6 +21,14 @@ typedef struct Vars {
   FbleValue* type;
   struct Vars* next;
 } Vars;
+
+// VStack --
+//   A stack of values.
+typedef struct {
+  size_t size;
+  size_t capacity;
+  FbleValue** xs;
+} VStack;
 
 // InstrTag --
 //   Enum used to distinguish among different kinds of instructions.
@@ -69,7 +78,7 @@ typedef struct {
 //   top of the stack.
 typedef struct {
   Instr _base;
-  int position;
+  size_t position;
 } VarInstr;
 
 // LetInstr -- LET_INSTR
@@ -107,12 +116,95 @@ typedef struct ResultStack {
   struct ResultStack* tail;
 } ResultStack;
 
+static void Push(FbleArena* arena, VStack* stack, FbleValue* value);
+static void Pop(FbleArena* arena, VStack* stack, size_t count);
+static FbleValue* Get(VStack* stack, size_t position);
+
 static bool TypesEqual(FbleValue* a, FbleValue* b);
 static void PrintType(FbleValue* type);
-static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** instrs);
-static FbleValue* Eval(FbleArena* arena, Instr* instrs);
+static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs);
+static FbleValue* Eval(FbleArena* arena, Instr* instrs, VStack* stack);
 static void FreeInstrs(FbleArena* arena, Instr* instrs);
 
+
+// Push --
+//   Push a value onto a value stack.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   stack - the stack to push the value onto.
+//   value - the value to push.
+//
+// Result:
+//   None.
+//
+// Side effects:
+//   Pushes the value on top of the stack. Does not take a refcount copy of
+//   the value that will be released when the value is popped from the stack.
+//   It is the callers job to ensure a refcount is taken for the value before
+//   it is put onto the stack.
+static void Push(FbleArena* arena, VStack* stack, FbleValue* value)
+{
+  if (stack->size == stack->capacity) {
+    stack->capacity = 2 * stack->size;
+    FbleValue** nxs = FbleArenaAlloc(arena, sizeof(FbleValue*) * stack->capacity, FbleAllocMsg(__FILE__, __LINE__));
+    memcpy(nxs, stack->xs, sizeof(FbleValue*) * stack->size);
+    FbleFree(arena, stack->xs);
+    stack->xs = nxs;
+  }
+
+  stack->xs[stack->size++] = value;
+}
+
+// Pop --
+//   Remove values from the top of the stack.
+//
+// Inputs:
+//   arena - the arena to use for allocation.
+//   stack - the stack to pop the value from.
+//   count - the number of values to remove from the stack.
+//
+// Result:
+//   none.
+//
+// Side effects:
+//   Removes the top 'count' values on the stack.
+static void Pop(FbleArena* arena, VStack* stack, size_t count)
+{
+  assert(count <= stack->size);
+  stack->size -= count;
+  for (size_t i = 0; i < count; ++i) {
+    FbleRelease(arena, stack->xs[stack->size + i]);
+  }
+
+  if (2 * stack->size < stack->capacity) {
+    stack->capacity = 2 * stack->size;
+    FbleValue** nxs = FbleArenaAlloc(arena, sizeof(FbleValue*) * stack->capacity, FbleAllocMsg(__FILE__, __LINE__));
+    memcpy(nxs, stack->xs, sizeof(FbleValue*) * stack->size);
+    FbleFree(arena, stack->xs);
+    stack->xs = nxs;
+  }
+}
+
+// Get --
+//   Get the value at the given position relative to the top of the stack.
+//
+// Inputs: 
+//   stack - the stack to get the value from.
+//   position - how deep into the stack to get the value from. 0 is the top of
+//              the stack.
+//
+// Results:
+//   The value at the given position in the stack.
+//
+// Side effects:
+//   Does not increment the refcount of the value. It is the callers job to do
+//   so if so required.
+static FbleValue* Get(VStack* stack, size_t position)
+{
+  assert(position < stack->size);
+  return stack->xs[stack->size - 1 - position];
+}
 
 // TypesEqual --
 //   Test whether the two given types are equal.
@@ -187,6 +279,7 @@ static void PrintType(FbleValue* type)
 // Inputs:
 //   arena - arena to use for allocations.
 //   vars - the list of variables in scope.
+//   vstack - the value stack.
 //   expr - the expression to compile.
 //   instrs - output pointer to store generated in structions
 //
@@ -195,7 +288,7 @@ static void PrintType(FbleValue* type)
 //
 // Side effects:
 //   Prints a message to stderr if the expression fails to compile.
-static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** instrs)
+static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs)
 {
   switch (expr->tag) {
     case FBLE_VAR_EXPR: {
@@ -227,7 +320,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         Instr* prgm;
         FbleType* type_expr = let_expr->bindings.xs[i].type;
-        FbleValue* type_type = Compile(arena, vars, type_expr, &prgm);
+        FbleValue* type_type = Compile(arena, vars, vstack, type_expr, &prgm);
         if (type_type == NULL) {
           return NULL;
         }
@@ -237,8 +330,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
           return NULL;
         }
 
-        // TODO: Pass in the current scope, otherwise this is sure to fail.
-        types[i] = Eval(arena, prgm);
+        types[i] = Eval(arena, prgm, vstack);
         if (types[i] == NULL) {
           FbleReportError("failed to evaluate type\n", &type_expr->loc);
           return NULL;
@@ -253,6 +345,9 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
         nvars[i].type = types[i];
         nvars[i].next = vars;
         vars = nvars + i;
+
+        // TODO: Push an abstract value here instead of NULL?
+        Push(arena, vstack, NULL);
       }
 
       // Step 3: Compile, check, and if appropriate, evaluate the values of
@@ -262,7 +357,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
       FbleVectorInit(arena, instr->bindings);
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         Instr** prgm = FbleVectorExtend(arena, instr->bindings);
-        FbleValue* type = Compile(arena, vars, let_expr->bindings.xs[i].expr, prgm);
+        FbleValue* type = Compile(arena, vars, vstack, let_expr->bindings.xs[i].expr, prgm);
         if (type == NULL) {
           return NULL;
         }
@@ -280,7 +375,9 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
       }
 
       *instrs = &instr->_base;
-      return Compile(arena, vars, let_expr->body, &(instr->body));
+      FbleValue* result = Compile(arena, vars, vstack, let_expr->body, &(instr->body));
+      Pop(arena, vstack, let_expr->bindings.size);
+      return result;
     }
 
     case FBLE_TYPE_TYPE_EXPR: {
@@ -312,7 +409,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
         }
 
         finstr->name = field->name;
-        FbleValue* type = Compile(arena, vars, field->type, &finstr->instr);
+        FbleValue* type = Compile(arena, vars, vstack, field->type, &finstr->instr);
         if (type == NULL) {
           return NULL;
         }
@@ -350,7 +447,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
         }
 
         finstr->name = field->name;
-        FbleValue* type = Compile(arena, vars, field->type, &finstr->instr);
+        FbleValue* type = Compile(arena, vars, vstack, field->type, &finstr->instr);
         if (type == NULL) {
           return NULL;
         }
@@ -398,13 +495,14 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, FbleExpr* expr, Instr** 
 // Inputs:
 //   arena - the arena to use for allocations.
 //   instrs - the instructions to evaluate.
+//   vstack - the stack of values in scope.
 //
 // Results:
 //   The computed value, or NULL on error.
 //
 // Side effects:
 //   Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleArena* arena, Instr* prgm)
+static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
 {
   Instr* pc = prgm;
   FbleValue* result = NULL;
@@ -423,9 +521,15 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm)
         break;
       }
 
-      default:
-        UNREACHABLE("invalid instruction");
-        return NULL;
+      case VAR_INSTR: {
+        VarInstr* var_instr = (VarInstr*)pc;
+        result = FbleCopy(arena, Get(vstack, var_instr->position));
+        break;
+      }
+
+      case LET_INSTR: assert(false && "TODO LET_INSTR"); return NULL;
+      case STRUCT_TYPE_INSTR: assert(false && "TODO STRUCT_INSTR"); return NULL;
+      case UNION_TYPE_INSTR: assert(false && "TODO UNION_INSTR"); return NULL;
     }
   }
   return result;
@@ -489,14 +593,27 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
 // FbleEval -- see documentation in fble.h
 FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 {
+  VStack vstack = {
+    .size = 0,
+    .capacity = 1,
+    .xs = FbleArenaAlloc(arena, sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__)),
+  };
+
   Instr* instrs = NULL;
-  FbleValue* type = Compile(arena, NULL, expr, &instrs);
+  FbleValue* type = Compile(arena, NULL, &vstack, expr, &instrs);
+  assert(vstack.size == 0);
+
   if (type == NULL) {
+    FbleFree(arena, vstack.xs);
     return NULL;
   }
+
   FbleRelease(arena, type);
 
-  FbleValue* result = Eval(arena, instrs);
+  FbleValue* result = Eval(arena, instrs, &vstack);
+
+  assert(vstack.size == 0);
+  FbleFree(arena, vstack.xs);
   FreeInstrs(arena, instrs);
   return result;
 }
