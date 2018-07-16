@@ -122,6 +122,8 @@ static FbleValue* Get(VStack* stack, size_t position);
 
 static bool TypesEqual(FbleValue* a, FbleValue* b);
 static void PrintType(FbleValue* type);
+static bool IsKinded(FbleValue* type);
+
 static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs);
 static FbleValue* Eval(FbleArena* arena, Instr* instrs, VStack* stack);
 static void FreeInstrs(FbleArena* arena, Instr* instrs);
@@ -273,6 +275,38 @@ static void PrintType(FbleValue* type)
   }
 }
 
+// IsKinded --
+//   Returns true if the given type contains @ somewhere within it.
+//
+// Inputs:
+//   type - the type to check kindedness of
+//
+// Results:
+//   true if the type is kinded, false otherwise.
+//
+// Side effects:
+//   none.
+static bool IsKinded(FbleValue* type)
+{
+  switch (type->tag) {
+    case FBLE_TYPE_TYPE_VALUE: return true;
+    case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return false;
+    case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_STRUCT_TYPE_VALUE: assert(false && "TODO STRUCT_TYPE"); return false;
+    case FBLE_STRUCT_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_UNION_TYPE_VALUE: assert(false && "TODO UNION_TYPE"); return false;
+    case FBLE_UNION_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_PROC_TYPE_VALUE: assert(false && "TODO PROC_TYPE"); return false;
+    case FBLE_INPUT_TYPE_VALUE: assert(false && "TODO INPUT_TYPE"); return false;
+    case FBLE_OUTPUT_TYPE_VALUE: assert(false && "TODO OUTPUT_TYPE"); return false;
+    case FBLE_PROC_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_INPUT_VALUE: UNREACHABLE("not a type"); return false;
+    case FBLE_OUTPUT_VALUE: UNREACHABLE("not a type"); return false;
+  }
+  UNREACHABLE("Should not get here");
+  return false;
+}
+
 // Compile --
 //   Type check and compile the given expression.
 //
@@ -371,7 +405,13 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           return NULL;
         }
 
-        // TODO: Evaluate the variable if it has a kinded type.
+        if (IsKinded(types[i])) {
+          FbleValue* v = Eval(arena, *prgm, vstack);
+          if (v == NULL) {
+            return NULL;
+          }
+          vstack->xs[vstack->size - let_expr->bindings.size + i] = v;
+        }
       }
 
       *instrs = &instr->_base;
