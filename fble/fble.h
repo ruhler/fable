@@ -565,6 +565,27 @@ typedef struct {
   FbleValue _base;
 } FbleTypeTypeValue;
 
+// FbleFieldValue --
+//   A pair of (Type, Name) used to describe type and function arguments.
+typedef struct {
+  FbleValue* type;
+  FbleName name;
+} FbleFieldValue;
+
+// FbleFieldValueV --
+//   A vector of FbleFieldValue
+typedef struct {
+  size_t size;
+  FbleFieldValue* xs;
+} FbleFieldValueV;
+
+// FbleStructTypeValue --
+//   FBLE_STRUCT_TYPE_VALUE
+typedef struct {
+  FbleValue _base;
+  FbleFieldValueV fields;
+} FbleStructTypeValue;
+
 // FbleCopy --
 //
 //   Make a (likely shared) copy of the given value.

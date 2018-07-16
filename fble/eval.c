@@ -546,29 +546,62 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
 {
   Instr* pc = prgm;
   FbleValue* result = NULL;
-  ResultStack* rstack = NULL;
+  ResultStack* rstack = FbleAlloc(arena, ResultStack);
+  rstack->result = &result;
+  rstack->next_pc = NULL;
+  rstack->tail = NULL;
 
-  while (result == NULL || rstack != NULL) {
-    if (result != NULL) {
-      *(rstack->result) = result;
+  while (pc != NULL || rstack->next_pc != NULL) {
+    if (pc == NULL) {
       pc = rstack->next_pc;
       rstack = rstack->tail;
     }
 
     switch (pc->tag) {
       case TYPE_TYPE_INSTR: {
-        result = FbleCopy(arena, &gTypeTypeValue);
+        *(rstack->result) = FbleCopy(arena, &gTypeTypeValue);
+        pc = NULL;
         break;
       }
 
       case VAR_INSTR: {
         VarInstr* var_instr = (VarInstr*)pc;
-        result = FbleCopy(arena, Get(vstack, var_instr->position));
+        *(rstack->result) = FbleCopy(arena, Get(vstack, var_instr->position));
+        pc = NULL;
         break;
       }
 
       case LET_INSTR: assert(false && "TODO LET_INSTR"); return NULL;
-      case STRUCT_TYPE_INSTR: assert(false && "TODO STRUCT_INSTR"); return NULL;
+
+      case STRUCT_TYPE_INSTR: {
+        StructTypeInstr* instr = (StructTypeInstr*)pc;
+        FbleStructTypeValue* value = FbleAlloc(arena, FbleStructTypeValue);
+        value->_base.tag = FBLE_STRUCT_TYPE_VALUE;
+        value->_base.refcount = 1;
+        value->_base.type = FbleCopy(arena, &gTypeTypeValue);
+        FbleVectorInit(arena, value->fields);
+        for (size_t i = 0; i < instr->fields.size; ++i) {
+          FbleFieldValue* fv = FbleVectorExtend(arena, value->fields);
+          fv->type = NULL;
+          fv->name = instr->fields.xs[i].name;
+        }
+
+        *(rstack->result) = &value->_base;
+        pc = rstack->next_pc;
+        rstack = rstack->tail;
+        for (size_t i = 0; i < value->fields.size; ++i) {
+          size_t j = value->fields.size - 1 - i;
+
+          ResultStack* nrstack = FbleAlloc(arena, ResultStack);
+          nrstack->result = &value->fields.xs[j].type;
+          nrstack->next_pc = pc;
+          nrstack->tail = rstack;
+          rstack = nrstack;
+          pc = instr->fields.xs[j].instr;
+        }
+        break;
+      }
+
       case UNION_TYPE_INSTR: assert(false && "TODO UNION_INSTR"); return NULL;
     }
   }
