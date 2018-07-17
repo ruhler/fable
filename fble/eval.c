@@ -595,7 +595,28 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         break;
       }
 
-      case UNION_TYPE_INSTR: assert(false && "TODO UNION_INSTR"); return NULL;
+      case UNION_TYPE_INSTR: {
+        UnionTypeInstr* union_type_instr = (UnionTypeInstr*)instr;
+        FbleUnionTypeValue* value = FbleAlloc(arena, FbleUnionTypeValue);
+        value->_base.tag = FBLE_UNION_TYPE_VALUE;
+        value->_base.refcount = 1;
+        value->_base.type = FbleCopy(arena, &gTypeTypeValue);
+        *presult = &value->_base;
+
+        FbleVectorInit(arena, value->fields);
+        for (size_t i = 0; i < union_type_instr->fields.size; ++i) {
+          FbleFieldValue* fv = FbleVectorExtend(arena, value->fields);
+          fv->type = NULL;
+          fv->name = union_type_instr->fields.xs[i].name;
+
+          ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
+          ntstack->result = &fv->type;
+          ntstack->instr = union_type_instr->fields.xs[i].instr;
+          ntstack->tail = tstack;
+          tstack = ntstack;
+        }
+        break;
+      }
     }
   }
   return final_result;

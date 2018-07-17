@@ -586,6 +586,13 @@ typedef struct {
   FbleFieldValueV fields;
 } FbleStructTypeValue;
 
+// FbleUnionTypeValue --
+//   FBLE_UNION_TYPE_VALUE
+typedef struct {
+  FbleValue _base;
+  FbleFieldValueV fields;
+} FbleUnionTypeValue;
+
 // FbleCopy --
 //
 //   Make a (likely shared) copy of the given value.
