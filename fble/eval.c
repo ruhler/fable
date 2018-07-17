@@ -37,7 +37,9 @@ typedef enum {
   VAR_INSTR,
   LET_INSTR,
   STRUCT_TYPE_INSTR,
+  STRUCT_VALUE_INSTR,
   UNION_TYPE_INSTR,
+  UNION_VALUE_INSTR,
 } InstrTag;
 
 // Instr --
@@ -97,12 +99,28 @@ typedef struct {
   FInstrV fields;
 } StructTypeInstr;
 
+// StructValueInstr -- STRUCT_VALUE_INSTR
+//   Allocate a struct value, then execute each of its arguments.
+typedef struct {
+  Instr _base;
+  Instr* mktype;
+  FInstrV fields;
+} StructValueInstr;
+
 // UnionTypeInstr -- UNION_TYPE_INSTR
 //   Allocate a union type, then execute each of the field types.
 typedef struct {
   Instr _base;
   FInstrV fields;
 } UnionTypeInstr;
+
+// UnionValueInstr -- UNION_VALUE_INSTR
+//   Allocate a union value, then execute its argument.
+typedef struct {
+  Instr _base;
+  Instr* mktype;
+  FInstr field;
+} UnionValueInstr;
 
 // ThreadStack --
 //   The computation context for a thread.
@@ -467,7 +485,73 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       return FbleCopy(arena, &gTypeTypeValue);
     }
 
-    case FBLE_STRUCT_VALUE_EXPR: assert(false && "TODO: FBLE_STRUCT_VALUE_EXPR"); return NULL;
+    case FBLE_STRUCT_VALUE_EXPR: {
+      FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
+      Instr* mktype = NULL;
+      FbleValue* type_type = Compile(arena, vars, vstack, struct_value_expr->type, &mktype);
+      if (type_type == NULL) {
+        return NULL;
+      }
+
+      if (!TypesEqual(type_type, &gTypeTypeValue)) {
+        FbleReportError("expected a type, but found something of type ", &struct_value_expr->type->loc);
+        PrintType(type_type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      FbleValue* type = Eval(arena, mktype, vstack);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      if (type->tag != FBLE_STRUCT_TYPE_VALUE) {
+        FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      FbleStructTypeValue* struct_type = (FbleStructTypeValue*)type;
+
+      if (struct_type->fields.size != struct_value_expr->args.size) {
+        // TODO: Where should the error message go?
+        FbleReportError("expected %i args, but %i were provided\n",
+            &expr->loc, struct_type->fields.size, struct_value_expr->args.size);
+        return NULL;
+      }
+
+      StructValueInstr* instr = FbleAlloc(arena, StructValueInstr);
+      instr->_base.tag = STRUCT_VALUE_INSTR;
+      instr->mktype = mktype;
+      FbleVectorInit(arena, instr->fields);
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        FbleFieldValue* field = struct_type->fields.xs + i;
+
+        Instr* mkarg = NULL;
+        FbleValue* arg_type = Compile(arena, vars, vstack, struct_value_expr->args.xs[i], &mkarg);
+        if (arg_type == NULL) {
+          return NULL;
+        }
+
+        if (!TypesEqual(field->type, arg_type)) {
+          FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
+          PrintType(field->type);
+          fprintf(stderr, ", but found ");
+          PrintType(arg_type);
+          fprintf(stderr, "\n");
+          return NULL;
+        }
+
+        FInstr* finstr = FbleVectorExtend(arena, instr->fields);
+        finstr->name = field->name;
+        finstr->instr = mkarg;
+      }
+
+      *instrs = &instr->_base;
+      return type;
+    }
+
     case FBLE_STRUCT_ACCESS_EXPR: assert(false && "TODO: FBLE_STRUCT_ACCESS_EXPR"); return NULL;
 
     case FBLE_UNION_TYPE_EXPR: {
@@ -564,7 +648,12 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         return NULL;
       }
 
-      *instrs = mkarg;
+      UnionValueInstr* instr = FbleAlloc(arena, UnionValueInstr);
+      instr->_base.tag = UNION_VALUE_INSTR;
+      instr->mktype = mktype;
+      instr->field.name = union_value_expr->field;
+      instr->field.instr = mkarg;
+      *instrs = &instr->_base;
       return type;
     }
 
@@ -657,6 +746,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         break;
       }
 
+      case STRUCT_VALUE_INSTR: assert(false && "TODO: STRUCT_VALUE_INSTR"); return NULL;
+
       case UNION_TYPE_INSTR: {
         UnionTypeInstr* union_type_instr = (UnionTypeInstr*)instr;
         FbleUnionTypeValue* value = FbleAlloc(arena, FbleUnionTypeValue);
@@ -679,6 +770,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         }
         break;
       }
+
+      case UNION_VALUE_INSTR: assert(false && "TODO: UNIOIN_VALUE_INSTR"); return NULL;
     }
   }
   return final_result;
@@ -726,6 +819,8 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
       return;
     }
 
+    case STRUCT_VALUE_INSTR: assert(false && "TODO: STRUCT_VALUE_INSTR"); return;
+
     case UNION_TYPE_INSTR: {
       UnionTypeInstr* union_type_instr = (UnionTypeInstr*)instrs;
       for (size_t i = 0; i < union_type_instr->fields.size; ++i) {
@@ -735,6 +830,8 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
       FbleFree(arena, union_type_instr);
       return;
     }
+
+    case UNION_VALUE_INSTR: assert(false && "TODO: UNION_VALUE_INSTR"); return;
   }
   UNREACHABLE("invalid instruction");
 }
