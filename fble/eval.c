@@ -505,7 +505,69 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       return FbleCopy(arena, &gTypeTypeValue);
     }
 
-    case FBLE_UNION_VALUE_EXPR: assert(false && "TODO: FBLE_UNION_VALUE_EXPR"); return NULL;
+    case FBLE_UNION_VALUE_EXPR: {
+      FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
+      Instr* mktype = NULL;
+      FbleValue* type_type = Compile(arena, vars, vstack, union_value_expr->type, &mktype);
+      if (type_type == NULL) {
+        return NULL;
+      }
+
+      if (!TypesEqual(type_type, &gTypeTypeValue)) {
+        FbleReportError("expected a type, but found something of type ", &union_value_expr->type->loc);
+        PrintType(type_type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      FbleValue* type = Eval(arena, mktype, vstack);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      if (type->tag != FBLE_UNION_TYPE_VALUE) {
+        FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      FbleUnionTypeValue* union_type = (FbleUnionTypeValue*)type;
+      FbleValue* field_type = NULL;
+      for (size_t i = 0; i < union_type->fields.size; ++i) {
+        FbleFieldValue* field = union_type->fields.xs + i;
+        if (FbleNamesEqual(field->name.name, union_value_expr->field.name)) {
+          field_type = field->type;
+          break;
+        }
+      }
+
+      if (field_type == NULL) {
+        FbleReportError("'%s' is not a field of type ", &union_value_expr->field.loc, union_value_expr->field.name);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      Instr* mkarg = NULL;
+      FbleValue* arg_type = Compile(arena, vars, vstack, union_value_expr->arg, &mkarg);
+      if (arg_type == NULL) {
+        return NULL;
+      }
+
+      if (!TypesEqual(field_type, arg_type)) {
+        FbleReportError("expected type ", &union_value_expr->arg->loc);
+        PrintType(field_type);
+        fprintf(stderr, ", but found type ");
+        PrintType(arg_type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      *instrs = mkarg;
+      return type;
+    }
+
     case FBLE_UNION_ACCESS_EXPR: assert(false && "TODO: FBLE_UNION_ACCESS_EXPR"); return NULL;
     case FBLE_COND_EXPR: assert(false && "TODO: FBLE_COND_EXPR"); return NULL;
 
