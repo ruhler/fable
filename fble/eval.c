@@ -104,17 +104,18 @@ typedef struct {
   FInstrV fields;
 } UnionTypeInstr;
 
-// ResultStack --
+// ThreadStack --
+//   The computation context for a thread.
 // 
 // Fields:
 //   result - Pointer to where the result of evaluating an expression should
 //            be stored.
-//   next_pc - The next instruction to execute after returning a result.
-typedef struct ResultStack {
+//   instr -  The instructions for executing the expression.
+typedef struct ThreadStack {
   FbleValue** result;
-  Instr* next_pc;
-  struct ResultStack* tail;
-} ResultStack;
+  Instr* instr;
+  struct ThreadStack* tail;
+} ThreadStack;
 
 static void Push(FbleArena* arena, VStack* stack, FbleValue* value);
 static void Pop(FbleArena* arena, VStack* stack, size_t count);
@@ -544,60 +545,52 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 //   Prints a message to stderr in case of error.
 static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
 {
-  Instr* pc = prgm;
-  FbleValue* result = NULL;
-  ResultStack* rstack = FbleAlloc(arena, ResultStack);
-  rstack->result = &result;
-  rstack->next_pc = NULL;
-  rstack->tail = NULL;
+  FbleValue* final_result = NULL;
+  ThreadStack* tstack = FbleAlloc(arena, ThreadStack);
+  tstack->result = &final_result;
+  tstack->instr = prgm;
+  tstack->tail = NULL;
 
-  while (pc != NULL || rstack->next_pc != NULL) {
-    if (pc == NULL) {
-      pc = rstack->next_pc;
-      rstack = rstack->tail;
-    }
+  while (tstack != NULL) {
+    FbleValue** presult = tstack->result;
+    Instr* instr = tstack->instr;
+    ThreadStack* tstack_done = tstack;
+    tstack = tstack->tail;
+    FbleFree(arena, tstack_done);
 
-    switch (pc->tag) {
+    switch (instr->tag) {
       case TYPE_TYPE_INSTR: {
-        *(rstack->result) = FbleCopy(arena, &gTypeTypeValue);
-        pc = NULL;
+        *presult = FbleCopy(arena, &gTypeTypeValue);
         break;
       }
 
       case VAR_INSTR: {
-        VarInstr* var_instr = (VarInstr*)pc;
-        *(rstack->result) = FbleCopy(arena, Get(vstack, var_instr->position));
-        pc = NULL;
+        VarInstr* var_instr = (VarInstr*)instr;
+        *presult = FbleCopy(arena, Get(vstack, var_instr->position));
         break;
       }
 
       case LET_INSTR: assert(false && "TODO LET_INSTR"); return NULL;
 
       case STRUCT_TYPE_INSTR: {
-        StructTypeInstr* instr = (StructTypeInstr*)pc;
+        StructTypeInstr* struct_type_instr = (StructTypeInstr*)instr;
         FbleStructTypeValue* value = FbleAlloc(arena, FbleStructTypeValue);
         value->_base.tag = FBLE_STRUCT_TYPE_VALUE;
         value->_base.refcount = 1;
         value->_base.type = FbleCopy(arena, &gTypeTypeValue);
+        *presult = &value->_base;
+
         FbleVectorInit(arena, value->fields);
-        for (size_t i = 0; i < instr->fields.size; ++i) {
+        for (size_t i = 0; i < struct_type_instr->fields.size; ++i) {
           FbleFieldValue* fv = FbleVectorExtend(arena, value->fields);
           fv->type = NULL;
-          fv->name = instr->fields.xs[i].name;
-        }
+          fv->name = struct_type_instr->fields.xs[i].name;
 
-        *(rstack->result) = &value->_base;
-        pc = rstack->next_pc;
-        rstack = rstack->tail;
-        for (size_t i = 0; i < value->fields.size; ++i) {
-          size_t j = value->fields.size - 1 - i;
-
-          ResultStack* nrstack = FbleAlloc(arena, ResultStack);
-          nrstack->result = &value->fields.xs[j].type;
-          nrstack->next_pc = pc;
-          nrstack->tail = rstack;
-          rstack = nrstack;
-          pc = instr->fields.xs[j].instr;
+          ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
+          ntstack->result = &fv->type;
+          ntstack->instr = struct_type_instr->fields.xs[i].instr;
+          ntstack->tail = tstack;
+          tstack = ntstack;
         }
         break;
       }
@@ -605,7 +598,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
       case UNION_TYPE_INSTR: assert(false && "TODO UNION_INSTR"); return NULL;
     }
   }
-  return result;
+  return final_result;
 }
 
 // FreeInstrs --
