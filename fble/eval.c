@@ -249,9 +249,47 @@ static bool TypesEqual(FbleValue* a, FbleValue* b)
     case FBLE_TYPE_TYPE_VALUE: return true;
     case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return false;
     case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return false;
-    case FBLE_STRUCT_TYPE_VALUE: assert(false && "TODO STRUCT_TYPE"); return false;
+
+    case FBLE_STRUCT_TYPE_VALUE: {
+      FbleStructTypeValue* sta = (FbleStructTypeValue*)a;
+      FbleStructTypeValue* stb = (FbleStructTypeValue*)b;
+      if (sta->fields.size != stb->fields.size) {
+        return false;
+      }
+
+      for (size_t i = 0; i < sta->fields.size; ++i) {
+        if (!FbleNamesEqual(sta->fields.xs[i].name.name, stb->fields.xs[i].name.name)) {
+          return false;
+        }
+        
+        if (!TypesEqual(sta->fields.xs[i].type, stb->fields.xs[i].type)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     case FBLE_STRUCT_VALUE: UNREACHABLE("not a type"); return false;
-    case FBLE_UNION_TYPE_VALUE: assert(false && "TODO UNION_TYPE"); return false;
+
+    case FBLE_UNION_TYPE_VALUE: {
+      FbleUnionTypeValue* uta = (FbleUnionTypeValue*)a;
+      FbleUnionTypeValue* utb = (FbleUnionTypeValue*)b;
+      if (uta->fields.size != utb->fields.size) {
+        return false;
+      }
+
+      for (size_t i = 0; i < uta->fields.size; ++i) {
+        if (!FbleNamesEqual(uta->fields.xs[i].name.name, utb->fields.xs[i].name.name)) {
+          return false;
+        }
+        
+        if (!TypesEqual(uta->fields.xs[i].type, utb->fields.xs[i].type)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     case FBLE_UNION_VALUE: UNREACHABLE("not a type"); return false;
     case FBLE_PROC_TYPE_VALUE: assert(false && "TODO PROC_TYPE"); return false;
     case FBLE_INPUT_TYPE_VALUE: assert(false && "TODO INPUT_TYPE"); return false;
@@ -311,9 +349,29 @@ static bool IsKinded(FbleValue* type)
     case FBLE_TYPE_TYPE_VALUE: return true;
     case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return false;
     case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return false;
-    case FBLE_STRUCT_TYPE_VALUE: assert(false && "TODO STRUCT_TYPE"); return false;
+
+    case FBLE_STRUCT_TYPE_VALUE: {
+      FbleStructTypeValue* st = (FbleStructTypeValue*)type;
+      for (size_t i = 0; i < st->fields.size; ++i) {
+        if (IsKinded(st->fields.xs[i].type)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     case FBLE_STRUCT_VALUE: UNREACHABLE("not a type"); return false;
-    case FBLE_UNION_TYPE_VALUE: assert(false && "TODO UNION_TYPE"); return false;
+
+    case FBLE_UNION_TYPE_VALUE: {
+      FbleUnionTypeValue* ut = (FbleUnionTypeValue*)type;
+      for (size_t i = 0; i < ut->fields.size; ++i) {
+        if (IsKinded(ut->fields.xs[i].type)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     case FBLE_UNION_VALUE: UNREACHABLE("not a type"); return false;
     case FBLE_PROC_TYPE_VALUE: assert(false && "TODO PROC_TYPE"); return false;
     case FBLE_INPUT_TYPE_VALUE: assert(false && "TODO INPUT_TYPE"); return false;
@@ -729,11 +787,12 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         value->_base.tag = FBLE_STRUCT_TYPE_VALUE;
         value->_base.refcount = 1;
         value->_base.type = FbleCopy(arena, &gTypeTypeValue);
+        value->fields.size = struct_type_instr->fields.size;
+        value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleFieldValue), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
 
-        FbleVectorInit(arena, value->fields);
         for (size_t i = 0; i < struct_type_instr->fields.size; ++i) {
-          FbleFieldValue* fv = FbleVectorExtend(arena, value->fields);
+          FbleFieldValue* fv = value->fields.xs + i;
           fv->type = NULL;
           fv->name = struct_type_instr->fields.xs[i].name;
 
@@ -754,11 +813,12 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         value->_base.tag = FBLE_UNION_TYPE_VALUE;
         value->_base.refcount = 1;
         value->_base.type = FbleCopy(arena, &gTypeTypeValue);
+        value->fields.size = union_type_instr->fields.size;
+        value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleFieldValue), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
 
-        FbleVectorInit(arena, value->fields);
         for (size_t i = 0; i < union_type_instr->fields.size; ++i) {
-          FbleFieldValue* fv = FbleVectorExtend(arena, value->fields);
+          FbleFieldValue* fv = value->fields.xs + i;
           fv->type = NULL;
           fv->name = union_type_instr->fields.xs[i].name;
 
