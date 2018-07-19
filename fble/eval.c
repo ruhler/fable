@@ -620,8 +620,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       return type;
     }
 
-    case FBLE_STRUCT_ACCESS_EXPR: assert(false && "TODO: FBLE_STRUCT_ACCESS_EXPR"); return NULL;
-
     case FBLE_UNION_TYPE_EXPR: {
       FbleUnionTypeExpr* union_type_expr = (FbleUnionTypeExpr*)expr;
       UnionTypeInstr* instr = FbleAlloc(arena, UnionTypeInstr);
@@ -725,7 +723,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       return type;
     }
 
-    case FBLE_UNION_ACCESS_EXPR: assert(false && "TODO: FBLE_UNION_ACCESS_EXPR"); return NULL;
     case FBLE_COND_EXPR: assert(false && "TODO: FBLE_COND_EXPR"); return NULL;
 
     case FBLE_PROC_TYPE_EXPR: assert(false && "TODO: FBLE_PROC_TYPE_EXPR"); return NULL;
