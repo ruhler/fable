@@ -24,10 +24,9 @@ typedef struct Vars {
 
 // VStack --
 //   A stack of values.
-typedef struct {
-  size_t size;
-  size_t capacity;
-  FbleValue** xs;
+typedef struct VStack {
+  FbleValue* value;
+  struct VStack* tail;
 } VStack;
 
 // InstrTag --
@@ -145,10 +144,6 @@ typedef struct ThreadStack {
   struct ThreadStack* tail;
 } ThreadStack;
 
-static void Push(FbleArena* arena, VStack* stack, FbleValue* value);
-static void Pop(FbleArena* arena, VStack* stack, size_t count);
-static FbleValue* Get(VStack* stack, size_t position);
-
 static bool TypesEqual(FbleValue* a, FbleValue* b);
 static void PrintType(FbleValue* type);
 static bool IsKinded(FbleValue* type);
@@ -157,86 +152,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 static FbleValue* Eval(FbleArena* arena, Instr* instrs, VStack* stack);
 static void FreeInstrs(FbleArena* arena, Instr* instrs);
 
-
-// Push --
-//   Push a value onto a value stack.
-//
-// Inputs:
-//   arena - the arena to use for allocations.
-//   stack - the stack to push the value onto.
-//   value - the value to push.
-//
-// Result:
-//   None.
-//
-// Side effects:
-//   Pushes the value on top of the stack. Does not take a refcount copy of
-//   the value that will be released when the value is popped from the stack.
-//   It is the callers job to ensure a refcount is taken for the value before
-//   it is put onto the stack.
-static void Push(FbleArena* arena, VStack* stack, FbleValue* value)
-{
-  if (stack->size == stack->capacity) {
-    stack->capacity = 2 * stack->size;
-    FbleValue** nxs = FbleArenaAlloc(arena, sizeof(FbleValue*) * stack->capacity, FbleAllocMsg(__FILE__, __LINE__));
-    memcpy(nxs, stack->xs, sizeof(FbleValue*) * stack->size);
-    FbleFree(arena, stack->xs);
-    stack->xs = nxs;
-  }
-
-  stack->xs[stack->size++] = value;
-}
-
-// Pop --
-//   Remove values from the top of the stack.
-//
-// Inputs:
-//   arena - the arena to use for allocation.
-//   stack - the stack to pop the value from.
-//   count - the number of values to remove from the stack.
-//
-// Result:
-//   none.
-//
-// Side effects:
-//   Removes the top 'count' values on the stack.
-static void Pop(FbleArena* arena, VStack* stack, size_t count)
-{
-  assert(count <= stack->size);
-  stack->size -= count;
-  for (size_t i = 0; i < count; ++i) {
-    FbleRelease(arena, stack->xs[stack->size + i]);
-  }
-
-  if (2 * stack->size < stack->capacity) {
-    stack->capacity = 2 * stack->size;
-    FbleValue** nxs = FbleArenaAlloc(arena, sizeof(FbleValue*) * stack->capacity, FbleAllocMsg(__FILE__, __LINE__));
-    memcpy(nxs, stack->xs, sizeof(FbleValue*) * stack->size);
-    FbleFree(arena, stack->xs);
-    stack->xs = nxs;
-  }
-}
-
-// Get --
-//   Get the value at the given position relative to the top of the stack.
-//
-// Inputs: 
-//   stack - the stack to get the value from.
-//   position - how deep into the stack to get the value from. 0 is the top of
-//              the stack.
-//
-// Results:
-//   The value at the given position in the stack.
-//
-// Side effects:
-//   Does not increment the refcount of the value. It is the callers job to do
-//   so if so required.
-static FbleValue* Get(VStack* stack, size_t position)
-{
-  assert(position < stack->size);
-  return stack->xs[stack->size - 1 - position];
-}
-
 // TypesEqual --
 //   Test whether the two given types are equal.
 //
@@ -461,6 +376,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       // Step 2: Add the new variables to the scope.
       assert(let_expr->bindings.size > 0);
       Vars nvars[let_expr->bindings.size];
+      VStack vstack_data[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         nvars[i].name = let_expr->bindings.xs[i].name;
         nvars[i].type = types[i];
@@ -468,7 +384,9 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         vars = nvars + i;
 
         // TODO: Push an abstract value here instead of NULL?
-        Push(arena, vstack, NULL);
+        vstack_data[i].value = NULL;
+        vstack_data[i].tail = vstack;
+        vstack = vstack_data + i;
       }
 
       // Step 3: Compile, check, and if appropriate, evaluate the values of
@@ -497,13 +415,15 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           if (v == NULL) {
             return NULL;
           }
-          vstack->xs[vstack->size - let_expr->bindings.size + i] = v;
+          vstack_data[i].value = v;
         }
       }
 
       *instrs = &instr->_base;
       FbleValue* result = Compile(arena, vars, vstack, let_expr->body, &(instr->body));
-      Pop(arena, vstack, let_expr->bindings.size);
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleRelease(arena, vstack_data[i].value);
+      }
       return result;
     }
 
@@ -816,7 +736,12 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
 
       case VAR_INSTR: {
         VarInstr* var_instr = (VarInstr*)instr;
-        *presult = FbleCopy(arena, Get(vstack, var_instr->position));
+        VStack* v = vstack;
+        for (size_t i = 0; i < var_instr->position; ++i) {
+          assert(v->tail != NULL);
+          v = v->tail;
+        }
+        *presult = FbleCopy(arena, v->value);
         break;
       }
 
@@ -944,27 +869,16 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
 // FbleEval -- see documentation in fble.h
 FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 {
-  VStack vstack = {
-    .size = 0,
-    .capacity = 1,
-    .xs = FbleArenaAlloc(arena, sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__)),
-  };
-
+  VStack* vstack = NULL;
   Instr* instrs = NULL;
-  FbleValue* type = Compile(arena, NULL, &vstack, expr, &instrs);
-  assert(vstack.size == 0);
-
+  FbleValue* type = Compile(arena, NULL, vstack, expr, &instrs);
   if (type == NULL) {
-    FbleFree(arena, vstack.xs);
     return NULL;
   }
 
   FbleRelease(arena, type);
 
-  FbleValue* result = Eval(arena, instrs, &vstack);
-
-  assert(vstack.size == 0);
-  FbleFree(arena, vstack.xs);
+  FbleValue* result = Eval(arena, instrs, vstack);
   FreeInstrs(arena, instrs);
   return result;
 }
