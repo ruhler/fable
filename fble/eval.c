@@ -41,6 +41,8 @@ typedef enum {
   UNION_TYPE_INSTR,
   UNION_VALUE_INSTR,
   UNION_ACCESS_INSTR,
+
+  POP_INSTR,
 } InstrTag;
 
 // Instr --
@@ -130,6 +132,13 @@ typedef struct {
   Instr* mktype;
   FInstr field;
 } UnionValueInstr;
+
+// PopInstr -- POP_INSTR
+//   Pop count values from the value stack.
+typedef struct {
+  Instr _base;
+  size_t count;
+} PopInstr;
 
 // ThreadStack --
 //   The computation context for a thread.
@@ -745,7 +754,39 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         break;
       }
 
-      case LET_INSTR: assert(false && "TODO LET_INSTR"); return NULL;
+      case LET_INSTR: {
+        LetInstr* let_instr = (LetInstr*)instr;
+
+        PopInstr* pop_instr = FbleAlloc(arena, PopInstr);
+        pop_instr->_base.tag = POP_INSTR;
+        pop_instr->count = let_instr->bindings.size;
+
+        ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
+        ntstack->result = NULL;
+        ntstack->instr = &pop_instr->_base;
+        ntstack->tail = tstack;
+        tstack = ntstack;
+
+        ntstack = FbleAlloc(arena, ThreadStack);
+        ntstack->result = presult;
+        ntstack->instr = let_instr->body;
+        ntstack->tail = tstack;
+        tstack = ntstack;
+
+        for (size_t i = 0; i < let_instr->bindings.size; ++i) {
+          VStack* nvstack = FbleAlloc(arena, VStack);
+          nvstack->value = NULL;
+          nvstack->tail = vstack;
+          vstack = nvstack;
+
+          ntstack = FbleAlloc(arena, ThreadStack);
+          ntstack->result = &vstack->value;
+          ntstack->instr = let_instr->bindings.xs[i];
+          ntstack->tail = tstack;
+          tstack = ntstack;
+        }
+        break;
+      }
 
       case STRUCT_TYPE_INSTR: {
         StructTypeInstr* struct_type_instr = (StructTypeInstr*)instr;
@@ -800,6 +841,19 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
 
       case UNION_VALUE_INSTR: assert(false && "TODO: UNIOIN_VALUE_INSTR"); return NULL;
       case UNION_ACCESS_INSTR: assert(false && "TODO: UNION_ACCESS_INSTR"); return NULL;
+
+      case POP_INSTR: {
+        PopInstr* pop_instr = (PopInstr*)instr;
+        for (size_t i = 0; i < pop_instr->count; ++i) {
+          assert(vstack != NULL);
+          VStack* ovstack = vstack;
+          vstack = vstack->tail;
+          FbleRelease(arena, ovstack->value);
+          FbleFree(arena, ovstack);
+        }
+        FbleFree(arena, pop_instr);
+        break;
+      }
     }
   }
   return final_result;
@@ -821,7 +875,8 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
 {
   switch (instrs->tag) {
     case TYPE_TYPE_INSTR:
-    case VAR_INSTR: {
+    case VAR_INSTR:
+    case POP_INSTR: {
       FbleFree(arena, instrs);
       return;
     }
