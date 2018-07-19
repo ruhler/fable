@@ -130,7 +130,8 @@ typedef struct {
 typedef struct {
   Instr _base;
   Instr* mktype;
-  FInstr field;
+  size_t tag;
+  Instr* mkarg;
 } UnionValueInstr;
 
 // PopInstr -- POP_INSTR
@@ -613,9 +614,11 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       FbleUnionTypeValue* union_type = (FbleUnionTypeValue*)type;
       FbleValue* field_type = NULL;
+      size_t tag = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         FbleFieldValue* field = union_type->fields.xs + i;
         if (FbleNamesEqual(field->name.name, union_value_expr->field.name)) {
+          tag = i;
           field_type = field->type;
           break;
         }
@@ -646,8 +649,8 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       UnionValueInstr* instr = FbleAlloc(arena, UnionValueInstr);
       instr->_base.tag = UNION_VALUE_INSTR;
       instr->mktype = mktype;
-      instr->field.name = union_value_expr->field;
-      instr->field.instr = mkarg;
+      instr->tag = tag;
+      instr->mkarg = mkarg;
       *instrs = &instr->_base;
       return type;
     }
@@ -839,7 +842,31 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         break;
       }
 
-      case UNION_VALUE_INSTR: assert(false && "TODO: UNIOIN_VALUE_INSTR"); return NULL;
+      case UNION_VALUE_INSTR: {
+        UnionValueInstr* union_value_instr = (UnionValueInstr*)instr;
+        FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
+        union_value->_base.tag = FBLE_UNION_VALUE;
+        union_value->_base.refcount = 1;
+        union_value->_base.type = NULL;
+        union_value->tag = union_value_instr->tag;
+        union_value->arg = NULL;
+
+        *presult = &union_value->_base;
+
+        ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
+        ntstack->result = &union_value->arg;
+        ntstack->instr = union_value_instr->mkarg;
+        ntstack->tail = tstack;
+        tstack = ntstack;
+
+        ntstack = FbleAlloc(arena, ThreadStack);
+        ntstack->result = &union_value->_base.type;
+        ntstack->instr = union_value_instr->mktype;
+        ntstack->tail = tstack;
+        tstack = ntstack;
+        break;
+      }
+
       case UNION_ACCESS_INSTR: assert(false && "TODO: UNION_ACCESS_INSTR"); return NULL;
 
       case POP_INSTR: {
