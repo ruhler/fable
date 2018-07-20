@@ -547,6 +547,13 @@ typedef struct FbleValue {
   size_t refcount;
 } FbleValue;
 
+// FbleValueV --
+//   A vector of FbleValue*
+typedef struct {
+  size_t size;
+  FbleValue** xs;
+} FbleValueV;
+
 // FbleTypeTypeValue --
 //   FBLE_TYPE_TYPE_VALUE
 typedef struct {
@@ -573,6 +580,13 @@ typedef struct {
   FbleValue _base;
   FbleFieldValueV fields;
 } FbleStructTypeValue;
+
+// FbleStructValue --
+//   FBLE_STRUCT_VALUE
+typedef struct {
+  FbleValue _base;
+  FbleValueV fields;
+} FbleStructValue;
 
 // FbleUnionTypeValue --
 //   FBLE_UNION_TYPE_VALUE

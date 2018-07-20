@@ -113,8 +113,7 @@ typedef struct {
 //   Allocate a struct value, then execute each of its arguments.
 typedef struct {
   Instr _base;
-  Instr* mktype;
-  FInstrV fields;
+  InstrV fields;
 } StructValueInstr;
 
 // AccessInstr -- STRUCT_ACCESS_INSTR, UNION_ACCESS_INSTR
@@ -522,7 +521,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       StructValueInstr* instr = FbleAlloc(arena, StructValueInstr);
       instr->_base.tag = STRUCT_VALUE_INSTR;
-      instr->mktype = mktype;
       FbleVectorInit(arena, instr->fields);
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         FbleFieldValue* field = struct_type->fields.xs + i;
@@ -542,9 +540,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           return NULL;
         }
 
-        FInstr* finstr = FbleVectorExtend(arena, instr->fields);
-        finstr->name = field->name;
-        finstr->instr = mkarg;
+        FbleVectorAppend(arena, instr->fields, mkarg);
       }
 
       *instrs = &instr->_base;
@@ -810,7 +806,25 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         break;
       }
 
-      case STRUCT_VALUE_INSTR: assert(false && "TODO: STRUCT_VALUE_INSTR"); return NULL;
+      case STRUCT_VALUE_INSTR: {
+        StructValueInstr* struct_value_instr = (StructValueInstr*)instr;
+        FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
+        value->_base.tag = FBLE_STRUCT_VALUE;
+        value->_base.refcount = 1;
+        value->fields.size = struct_value_instr->fields.size;
+        value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
+        *presult = &value->_base;
+
+        for (size_t i = 0; i < struct_value_instr->fields.size; ++i) {
+          ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
+          ntstack->result = value->fields.xs + i;
+          ntstack->instr = struct_value_instr->fields.xs[i];
+          ntstack->tail = tstack;
+          tstack = ntstack;
+        }
+        break;
+      }
+
       case STRUCT_ACCESS_INSTR: assert(false && "TODO: STRUCT_ACCESS_INSTR"); return NULL;
 
       case UNION_TYPE_INSTR: {
