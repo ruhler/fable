@@ -25,10 +25,44 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
       case FBLE_TYPE_TYPE_VALUE: FbleFree(arena, value); return;
       case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO: release FBLE_FUNC_TYPE_VALUE"); return;
       case FBLE_FUNC_VALUE: assert(false && "TODO: release FBLE_FUNC_VALUE"); return;
-      case FBLE_STRUCT_TYPE_VALUE: assert(false && "TODO: release FBLE_STRUCT_TYPE_VALUE"); return;
-      case FBLE_STRUCT_VALUE: assert(false && "TODO: release FBLE_STRUCT_VALUE"); return;
-      case FBLE_UNION_TYPE_VALUE: assert(false && "TODO: release FBLE_UNION_TYPE_VALUE"); return;
-      case FBLE_UNION_VALUE: assert(false && "TODO: release FBLE_UNION_VALUE"); return;
+
+      case FBLE_STRUCT_TYPE_VALUE: {
+        FbleStructTypeValue* stv = (FbleStructTypeValue*)value;
+        for (size_t i = 0; i < stv->fields.size; ++i) {
+          FbleRelease(arena, stv->fields.xs[i].type);
+        }
+        FbleFree(arena, stv->fields.xs);
+        FbleFree(arena, value);
+        return;
+      }
+
+      case FBLE_STRUCT_VALUE: {
+        FbleStructValue* sv = (FbleStructValue*)value;
+        for (size_t i = 0; i < sv->fields.size; ++i) {
+          FbleRelease(arena, sv->fields.xs[i]);
+        }
+        FbleFree(arena, sv->fields.xs);
+        FbleFree(arena, value);
+        return;
+      }
+
+      case FBLE_UNION_TYPE_VALUE: {
+        FbleUnionTypeValue* utv = (FbleUnionTypeValue*)value;
+        for (size_t i = 0; i < utv->fields.size; ++i) {
+          FbleRelease(arena, utv->fields.xs[i].type);
+        }
+        FbleFree(arena, utv->fields.xs);
+        FbleFree(arena, value);
+        return;
+      }
+
+      case FBLE_UNION_VALUE: {
+        FbleUnionValue* uv = (FbleUnionValue*)value;
+        FbleRelease(arena, uv->arg);
+        FbleFree(arena, value);
+        return;
+      }
+
       case FBLE_PROC_TYPE_VALUE: assert(false && "TODO: release FBLE_PROC_TYPE_VALUE"); return;
       case FBLE_INPUT_TYPE_VALUE: assert(false && "TODO: release FBLE_INPUT_TYPE_VALUE"); return;
       case FBLE_OUTPUT_TYPE_VALUE: assert(false && "TODO: release FBLE_OUTPUT_TYPE_VALUE"); return;

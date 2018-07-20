@@ -746,8 +746,9 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 //
 // Side effects:
 //   Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
+static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 {
+  VStack* vstack = vstack_in;
   FbleValue* final_result = NULL;
   ThreadStack* tstack = FbleAlloc(arena, ThreadStack);
   tstack->result = &final_result;
@@ -902,6 +903,21 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
 
         if (value->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
+
+          // Clean up the stacks.
+          while (vstack != vstack_in) {
+            VStack* ovstack = vstack;
+            vstack = vstack->tail;
+            FbleRelease(arena, ovstack->value);
+            FbleFree(arena, ovstack);
+          }
+
+          while (tstack != NULL) {
+            ThreadStack* otstack = tstack;
+            tstack = tstack->tail;
+            FbleFree(arena, otstack);
+          }
+
           return NULL;
         }
         *presult = value->arg;
