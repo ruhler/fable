@@ -545,7 +545,6 @@ typedef enum {
 typedef struct FbleValue {
   FbleValueTag tag;
   size_t refcount;
-  struct FbleValue* type;
 } FbleValue;
 
 // FbleTypeTypeValue --

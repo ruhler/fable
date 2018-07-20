@@ -11,7 +11,6 @@
 static FbleValue gTypeTypeValue = {
   .tag = FBLE_TYPE_TYPE_VALUE,
   .refcount = 1,
-  .type = &gTypeTypeValue
 };
 
 // Vars --
@@ -129,7 +128,6 @@ typedef struct {
 //   Allocate a union value, then execute its argument.
 typedef struct {
   Instr _base;
-  Instr* mktype;
   size_t tag;
   Instr* mkarg;
 } UnionValueInstr;
@@ -648,7 +646,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       UnionValueInstr* instr = FbleAlloc(arena, UnionValueInstr);
       instr->_base.tag = UNION_VALUE_INSTR;
-      instr->mktype = mktype;
       instr->tag = tag;
       instr->mkarg = mkarg;
       *instrs = &instr->_base;
@@ -796,7 +793,6 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         FbleStructTypeValue* value = FbleAlloc(arena, FbleStructTypeValue);
         value->_base.tag = FBLE_STRUCT_TYPE_VALUE;
         value->_base.refcount = 1;
-        value->_base.type = FbleCopy(arena, &gTypeTypeValue);
         value->fields.size = struct_type_instr->fields.size;
         value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleFieldValue), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
@@ -823,7 +819,6 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         FbleUnionTypeValue* value = FbleAlloc(arena, FbleUnionTypeValue);
         value->_base.tag = FBLE_UNION_TYPE_VALUE;
         value->_base.refcount = 1;
-        value->_base.type = FbleCopy(arena, &gTypeTypeValue);
         value->fields.size = union_type_instr->fields.size;
         value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleFieldValue), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
@@ -847,7 +842,6 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
         union_value->_base.tag = FBLE_UNION_VALUE;
         union_value->_base.refcount = 1;
-        union_value->_base.type = NULL;
         union_value->tag = union_value_instr->tag;
         union_value->arg = NULL;
 
@@ -856,12 +850,6 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
         ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
         ntstack->result = &union_value->arg;
         ntstack->instr = union_value_instr->mkarg;
-        ntstack->tail = tstack;
-        tstack = ntstack;
-
-        ntstack = FbleAlloc(arena, ThreadStack);
-        ntstack->result = &union_value->_base.type;
-        ntstack->instr = union_value_instr->mktype;
         ntstack->tail = tstack;
         tstack = ntstack;
         break;
