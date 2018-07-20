@@ -10,8 +10,6 @@ Fble Cleanup:
 * Share common code between checking StructType, UnionType, and FuncType?
 * Share common code for checking a type is a type and evaluating it to its
   type value.
-* Append a PopInstr to each LetInstr rather than allocate it dynamically
-  during execution?
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an

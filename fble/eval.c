@@ -85,6 +85,13 @@ typedef struct {
   size_t position;
 } VarInstr;
 
+// PopInstr -- POP_INSTR
+//   Pop count values from the value stack.
+typedef struct {
+  Instr _base;
+  size_t count;
+} PopInstr;
+
 // LetInstr -- LET_INSTR
 //   Evaluate each of the bindings, add the results to the scope, then execute
 //   the body.
@@ -92,6 +99,7 @@ typedef struct {
   Instr _base;
   InstrV bindings;
   Instr* body;
+  PopInstr pop;
 } LetInstr;
 
 // StructTypeInstr -- STRUCT_TYPE_INSTR
@@ -131,13 +139,6 @@ typedef struct {
   size_t tag;
   Instr* mkarg;
 } UnionValueInstr;
-
-// PopInstr -- POP_INSTR
-//   Pop count values from the value stack.
-typedef struct {
-  Instr _base;
-  size_t count;
-} PopInstr;
 
 // ThreadStack --
 //   The computation context for a thread.
@@ -401,6 +402,8 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       // the variables.
       LetInstr* instr = FbleAlloc(arena, LetInstr);
       instr->_base.tag = LET_INSTR;
+      instr->pop._base.tag = POP_INSTR;
+      instr->pop.count = instr->bindings.size;
       FbleVectorInit(arena, instr->bindings);
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         Instr** prgm = FbleVectorExtend(arena, instr->bindings);
@@ -757,13 +760,9 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
       case LET_INSTR: {
         LetInstr* let_instr = (LetInstr*)instr;
 
-        PopInstr* pop_instr = FbleAlloc(arena, PopInstr);
-        pop_instr->_base.tag = POP_INSTR;
-        pop_instr->count = let_instr->bindings.size;
-
         ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
         ntstack->result = NULL;
-        ntstack->instr = &pop_instr->_base;
+        ntstack->instr = &let_instr->pop._base;
         ntstack->tail = tstack;
         tstack = ntstack;
 
@@ -866,7 +865,6 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack)
           FbleRelease(arena, ovstack->value);
           FbleFree(arena, ovstack);
         }
-        FbleFree(arena, pop_instr);
         break;
       }
     }
