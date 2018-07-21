@@ -167,6 +167,7 @@ static void PrintType(FbleValue* type);
 static bool IsKinded(FbleValue* type);
 
 static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs);
+static FbleValue* CompileType(FbleArena* arena, Vars* vars, VStack* vstack, FbleType* type);
 static FbleValue* Eval(FbleArena* arena, Instr* instrs, VStack* stack);
 static void FreeInstrs(FbleArena* arena, Instr* instrs);
 
@@ -372,21 +373,8 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       // Step 1: Compile, check, and evaluate the types of all the variables.
       FbleValue* types[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        Instr* prgm;
-        FbleType* type_expr = let_expr->bindings.xs[i].type;
-        FbleValue* type_type = Compile(arena, vars, vstack, type_expr, &prgm);
-        if (type_type == NULL) {
-          return NULL;
-        }
-        
-        if (type_type->tag != FBLE_TYPE_TYPE_VALUE) {
-          FbleReportError("expected a type, found something else\n", &type_expr->loc);
-          return NULL;
-        }
-
-        types[i] = Eval(arena, prgm, vstack);
+        types[i] = CompileType(arena, vars, vstack, let_expr->bindings.xs[i].type);
         if (types[i] == NULL) {
-          FbleReportError("failed to evaluate type\n", &type_expr->loc);
           return NULL;
         }
       }
@@ -495,20 +483,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
     case FBLE_STRUCT_VALUE_EXPR: {
       FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
-      Instr* mktype = NULL;
-      FbleValue* type_type = Compile(arena, vars, vstack, struct_value_expr->type, &mktype);
-      if (type_type == NULL) {
-        return NULL;
-      }
-
-      if (!TypesEqual(type_type, &gTypeTypeValue)) {
-        FbleReportError("expected a type, but found something of type ", &struct_value_expr->type->loc);
-        PrintType(type_type);
-        fprintf(stderr, "\n");
-        return NULL;
-      }
-
-      FbleValue* type = Eval(arena, mktype, vstack);
+      FbleValue* type = CompileType(arena, vars, vstack, struct_value_expr->type);
       if (type == NULL) {
         return NULL;
       }
@@ -594,20 +569,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
-      Instr* mktype = NULL;
-      FbleValue* type_type = Compile(arena, vars, vstack, union_value_expr->type, &mktype);
-      if (type_type == NULL) {
-        return NULL;
-      }
-
-      if (!TypesEqual(type_type, &gTypeTypeValue)) {
-        FbleReportError("expected a type, but found something of type ", &union_value_expr->type->loc);
-        PrintType(type_type);
-        fprintf(stderr, "\n");
-        return NULL;
-      }
-
-      FbleValue* type = Eval(arena, mktype, vstack);
+      FbleValue* type = CompileType(arena, vars, vstack, union_value_expr->type);
       if (type == NULL) {
         return NULL;
       }
@@ -731,6 +693,44 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
   UNREACHABLE("should already have returned");
   return NULL;
+}
+
+// CompileType --
+//   Convenience function for compiling and evaluating a type.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   vars - the list of variables in scope.
+//   vstack - the value stack.
+//   expr - the type to compile.
+//
+// Results:
+//   The value of the compiled and evaluated type, or NULL in case of error.
+//
+// Side effects:
+//   Prints a message to stderr if the type fails to compile or evalute.
+static FbleValue* CompileType(FbleArena* arena, Vars* vars, VStack* vstack, FbleType* type)
+{
+  Instr* mktype = NULL;
+  FbleValue* type_type = Compile(arena, vars, vstack, type, &mktype);
+  if (type_type == NULL) {
+    return NULL;
+  }
+
+  if (type_type->tag != FBLE_TYPE_TYPE_VALUE) {
+    FbleRelease(arena, type_type);
+    FbleReportError("expected a type, found something else\n", &type->loc);
+    return NULL;
+  }
+  FbleRelease(arena, type_type);
+
+  FbleValue* type_value = Eval(arena, mktype, vstack);
+  FreeInstrs(arena, mktype);
+  if (type_value == NULL) {
+    FbleReportError("failed to evaluate type\n", &type->loc);
+    return NULL;
+  }
+  return type_value;
 }
 
 // Eval --
