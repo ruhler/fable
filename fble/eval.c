@@ -166,6 +166,8 @@ static bool TypesEqual(FbleValue* a, FbleValue* b);
 static void PrintType(FbleValue* type);
 static bool IsKinded(FbleValue* type);
 
+static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, ThreadStack* tail); 
+
 static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs);
 static FbleValue* CompileType(FbleArena* arena, Vars* vars, VStack* vstack, FbleType* type);
 static FbleValue* Eval(FbleArena* arena, Instr* instrs, VStack* stack);
@@ -326,6 +328,29 @@ static bool IsKinded(FbleValue* type)
   }
   UNREACHABLE("Should not get here");
   return false;
+}
+
+// TPush --
+//   Push an element onto a thread stack.
+//
+// Inputs:
+//   arena - the arena to use for allocations
+//   presult - the result pointer to push
+//   instr - the instr to push
+//   tail - the stack to push to
+//
+// Result:
+//   The new stack with pushed value.
+//
+// Side effects:
+//   Allocates a new ThreadStack instance that should be freed when done.
+static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, ThreadStack* tail)
+{
+  ThreadStack* tstack = FbleAlloc(arena, ThreadStack);
+  tstack->result = presult;
+  tstack->instr = instr;
+  tstack->tail = tail;
+  return tstack;
 }
 
 // Compile --
@@ -751,10 +776,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 {
   VStack* vstack = vstack_in;
   FbleValue* final_result = NULL;
-  ThreadStack* tstack = FbleAlloc(arena, ThreadStack);
-  tstack->result = &final_result;
-  tstack->instr = prgm;
-  tstack->tail = NULL;
+  ThreadStack* tstack = TPush(arena, &final_result, prgm, NULL);
 
   while (tstack != NULL) {
     FbleValue** presult = tstack->result;
@@ -783,17 +805,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
       case LET_INSTR: {
         LetInstr* let_instr = (LetInstr*)instr;
 
-        ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
-        ntstack->result = NULL;
-        ntstack->instr = &let_instr->pop._base;
-        ntstack->tail = tstack;
-        tstack = ntstack;
-
-        ntstack = FbleAlloc(arena, ThreadStack);
-        ntstack->result = presult;
-        ntstack->instr = let_instr->body;
-        ntstack->tail = tstack;
-        tstack = ntstack;
+        tstack = TPush(arena, NULL, &let_instr->pop._base, tstack);
+        tstack = TPush(arena, presult, let_instr->body, tstack);
 
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
           VStack* nvstack = FbleAlloc(arena, VStack);
@@ -801,11 +814,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
           nvstack->tail = vstack;
           vstack = nvstack;
 
-          ntstack = FbleAlloc(arena, ThreadStack);
-          ntstack->result = &vstack->value;
-          ntstack->instr = let_instr->bindings.xs[i];
-          ntstack->tail = tstack;
-          tstack = ntstack;
+          tstack = TPush(arena, &vstack->value, let_instr->bindings.xs[i], tstack);
         }
         break;
       }
@@ -824,11 +833,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
           fv->type = NULL;
           fv->name = struct_type_instr->fields.xs[i].name;
 
-          ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
-          ntstack->result = &fv->type;
-          ntstack->instr = struct_type_instr->fields.xs[i].instr;
-          ntstack->tail = tstack;
-          tstack = ntstack;
+          tstack = TPush(arena, &fv->type, struct_type_instr->fields.xs[i].instr, tstack);
         }
         break;
       }
@@ -843,11 +848,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         *presult = &value->_base;
 
         for (size_t i = 0; i < struct_value_instr->fields.size; ++i) {
-          ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
-          ntstack->result = value->fields.xs + i;
-          ntstack->instr = struct_value_instr->fields.xs[i];
-          ntstack->tail = tstack;
-          tstack = ntstack;
+          tstack = TPush(arena, value->fields.xs + i, struct_value_instr->fields.xs[i], tstack);
         }
         break;
       }
@@ -868,11 +869,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
           fv->type = NULL;
           fv->name = union_type_instr->fields.xs[i].name;
 
-          ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
-          ntstack->result = &fv->type;
-          ntstack->instr = union_type_instr->fields.xs[i].instr;
-          ntstack->tail = tstack;
-          tstack = ntstack;
+          tstack = TPush(arena, &fv->type, union_type_instr->fields.xs[i].instr, tstack);
         }
         break;
       }
@@ -887,11 +884,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 
         *presult = &union_value->_base;
 
-        ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
-        ntstack->result = &union_value->arg;
-        ntstack->instr = union_value_instr->mkarg;
-        ntstack->tail = tstack;
-        tstack = ntstack;
+        tstack = TPush(arena, &union_value->arg, union_value_instr->mkarg, tstack);
         break;
       }
 
@@ -937,17 +930,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         nvstack->tail = vstack;
         vstack = nvstack;
 
-        ThreadStack* ntstack = FbleAlloc(arena, ThreadStack);
-        ntstack->result = presult;
-        ntstack->instr = &access_instr->access._base;
-        ntstack->tail = tstack;
-        tstack = ntstack;
-
-        ntstack = FbleAlloc(arena, ThreadStack);
-        ntstack->result = &vstack->value;
-        ntstack->instr = access_instr->object;
-        ntstack->tail = tstack;
-        tstack = ntstack;
+        tstack = TPush(arena, presult, &access_instr->access._base, tstack);
+        tstack = TPush(arena, &vstack->value, access_instr->object, tstack);
         break;
       }
 
