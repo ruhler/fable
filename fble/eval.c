@@ -364,7 +364,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       instr->_base.tag = VAR_INSTR;
       instr->position = position;
       *instrs = &instr->_base;
-      return vars->type;
+      return FbleCopy(arena, vars->type);
     }
 
     case FBLE_LET_EXPR: {
@@ -430,6 +430,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       *instrs = &instr->_base;
       FbleValue* result = Compile(arena, vars, vstack, let_expr->body, &(instr->body));
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleRelease(arena, nvars[i].type);
         FbleRelease(arena, vstack_data[i].value);
       }
       return result;
