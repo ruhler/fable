@@ -1,5 +1,4 @@
 Fble:
-* Set up evaluator to pass basic tests.
 * Finish implementing evaluator
   - adding tests as we go.
   - until we can run snake.fble.

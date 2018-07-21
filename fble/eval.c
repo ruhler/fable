@@ -440,8 +440,10 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           fprintf(stderr, ", but found ");
           PrintType(type);
           fprintf(stderr, "\n");
+          FbleRelease(arena, type);
           return NULL;
         }
+        FbleRelease(arena, type);
 
         if (IsKinded(types[i])) {
           FbleValue* v = Eval(arena, *prgm, vstack);
@@ -501,6 +503,8 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           fprintf(stderr, "\n");
           return NULL;
         }
+
+        FbleRelease(arena, type);
       }
 
       *instrs = &instr->_base;
@@ -518,6 +522,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
         PrintType(type);
         fprintf(stderr, "\n");
+        FbleRelease(arena, type);
         return NULL;
       }
 
@@ -527,6 +532,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         // TODO: Where should the error message go?
         FbleReportError("expected %i args, but %i were provided\n",
             &expr->loc, struct_type->fields.size, struct_value_expr->args.size);
+        FbleRelease(arena, type);
         return NULL;
       }
 
@@ -539,6 +545,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         Instr* mkarg = NULL;
         FbleValue* arg_type = Compile(arena, vars, vstack, struct_value_expr->args.xs[i], &mkarg);
         if (arg_type == NULL) {
+          FbleRelease(arena, type);
           return NULL;
         }
 
@@ -548,10 +555,13 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           fprintf(stderr, ", but found ");
           PrintType(arg_type);
           fprintf(stderr, "\n");
+          FbleRelease(arena, arg_type);
+          FbleRelease(arena, type);
           return NULL;
         }
 
         FbleVectorAppend(arena, instr->fields, mkarg);
+        FbleRelease(arena, arg_type);
       }
 
       *instrs = &instr->_base;
@@ -587,6 +597,8 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           fprintf(stderr, "\n");
           return NULL;
         }
+
+        FbleRelease(arena, type);
       }
 
       *instrs = &instr->_base;
@@ -604,6 +616,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
         PrintType(type);
         fprintf(stderr, "\n");
+        FbleRelease(arena, type);
         return NULL;
       }
 
@@ -623,12 +636,14 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         FbleReportError("'%s' is not a field of type ", &union_value_expr->field.loc, union_value_expr->field.name);
         PrintType(type);
         fprintf(stderr, "\n");
+        FbleRelease(arena, type);
         return NULL;
       }
 
       Instr* mkarg = NULL;
       FbleValue* arg_type = Compile(arena, vars, vstack, union_value_expr->arg, &mkarg);
       if (arg_type == NULL) {
+        FbleRelease(arena, type);
         return NULL;
       }
 
@@ -638,6 +653,8 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         fprintf(stderr, ", but found type ");
         PrintType(arg_type);
         fprintf(stderr, "\n");
+        FbleRelease(arena, arg_type);
+        FbleRelease(arena, type);
         return NULL;
       }
 
@@ -646,6 +663,8 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       instr->tag = tag;
       instr->mkarg = mkarg;
       *instrs = &instr->_base;
+
+      FbleRelease(arena, arg_type);
       return type;
     }
 
@@ -693,6 +712,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
         PrintType(type);
         fprintf(stderr, "\n");
+        FbleRelease(arena, type);
         return NULL;
       }
 
@@ -700,13 +720,15 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name.name)) {
           instr->access.tag = i;
           *instrs = &instr->_base;
-          return fields->xs[i].type;
+          FbleRelease(arena, type);
+          return FbleCopy(arena, fields->xs[i].type);
         }
       }
 
       FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
       PrintType(type);
       fprintf(stderr, "\n");
+      FbleRelease(arena, type);
       return NULL;
     }
 
@@ -914,7 +936,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 
           return NULL;
         }
-        *presult = value->arg;
+        *presult = FbleCopy(arena, value->arg);
 
         VStack* ovstack = vstack;
         vstack = vstack->tail;
@@ -948,6 +970,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
       }
     }
   }
+  assert(vstack == vstack_in);
   return final_result;
 }
 
