@@ -367,6 +367,9 @@ static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, T
 //   The type of the expression, or NULL if the expression is not well typed.
 //
 // Side effects:
+//   Sets instrs to point to the compiled instructions if the expression is
+//   well typed. The user is responsible for freeing the allocated
+//   instructions when they are no longer needed.
 //   Prints a message to stderr if the expression fails to compile.
 static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs)
 {
@@ -424,9 +427,10 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       // the variables.
       LetInstr* instr = FbleAlloc(arena, LetInstr);
       instr->_base.tag = LET_INSTR;
+      FbleVectorInit(arena, instr->bindings);
+      instr->body = NULL;
       instr->pop._base.tag = POP_INSTR;
       instr->pop.count = let_expr->bindings.size;
-      FbleVectorInit(arena, instr->bindings);
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         Instr** prgm = FbleVectorExtend(arena, instr->bindings);
         FbleValue* type = Compile(arena, vars, vstack, let_expr->bindings.xs[i].expr, prgm);
@@ -456,6 +460,10 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       *instrs = &instr->_base;
       FbleValue* result = Compile(arena, vars, vstack, let_expr->body, &(instr->body));
+      if (result == NULL) {
+        FreeInstrs(arena, &instr->_base);
+      }
+
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleRelease(arena, nvars[i].type);
         FbleRelease(arena, vstack_data[i].value);
@@ -979,7 +987,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 //
 // Inputs:
 //   arena - the arena used to allocation the instructions.
-//   instrs - the instructions to free.
+//   instrs - the instructions to free. May be NULL.
 //
 // Result:
 //   none.
@@ -988,6 +996,10 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 //   Frees memory allocated for the instrs.
 static void FreeInstrs(FbleArena* arena, Instr* instrs)
 {
+  if (instrs == NULL) {
+    return;
+  }
+
   switch (instrs->tag) {
     case TYPE_TYPE_INSTR:
     case VAR_INSTR:
