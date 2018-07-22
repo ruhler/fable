@@ -425,7 +425,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       LetInstr* instr = FbleAlloc(arena, LetInstr);
       instr->_base.tag = LET_INSTR;
       instr->pop._base.tag = POP_INSTR;
-      instr->pop.count = instr->bindings.size;
+      instr->pop.count = let_expr->bindings.size;
       FbleVectorInit(arena, instr->bindings);
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         Instr** prgm = FbleVectorExtend(arena, instr->bindings);

@@ -1,7 +1,40 @@
 Fble:
-* Finish implementing evaluator
-  - adding tests as we go.
-  - until we can run snake.fble.
+* Add tests to get full coverage of eval.c in its current form
+ - struct type number of fields mismatch
+ - struct type field name mismatch
+ - struct type field type mismatch
+ - struct type with more than 1 field
+ - struct type with duplicate field names
+ - struct type with field type that fails to compile.
+ - struct type with field type that isn't a type
+ - struct value with type that fails to compile
+ - struct value with type that isn't a struct type
+ - struct value with type that isn't a type
+ - struct value with wrong number of args
+ - struct value with arg that doesn't compile
+ - struct value with arg that has wrong type
+ - union type number of fields mismatch
+ - union type field name mismatch
+ - union type field type mismatch
+ - union type with duplicate field names
+ - union type with field type that doesn't compile
+ - union type with field type that isn't a type
+ - union value with type that doesn't compile
+ - union value with type that isn't a union type
+ - union value with type that isn't a type
+ - union value with invalid field
+ - union value with arg that doesn't compile
+ - union value with arg that has wrong type
+ - access expr with object that doesn't compile
+ - access expr with object that is a struct value
+ - access expr with object that isn't a struct or union value
+ - access expr with invalid field
+ - union access with correct tag
+ - let expr binding type fails to compile
+ - let expr binding expr fails to compile
+ - let expr binding type mismatch
+ - let expr kinded type fails to evaluate
+* Finish implementing evaluator, adding tests, until snake.fble runs.
 * Figure out how to allow an fble file to be reused for multiple different
   programs.
 
