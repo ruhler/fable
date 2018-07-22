@@ -433,6 +433,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       instr->pop.count = let_expr->bindings.size;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         Instr** prgm = FbleVectorExtend(arena, instr->bindings);
+        *prgm = NULL;
         FbleValue* type = Compile(arena, vars, vstack, let_expr->bindings.xs[i].expr, prgm);
         if (type == NULL) {
           return NULL;
@@ -458,10 +459,11 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         }
       }
 
-      *instrs = &instr->_base;
       FbleValue* result = Compile(arena, vars, vstack, let_expr->body, &(instr->body));
       if (result == NULL) {
         FreeInstrs(arena, &instr->_base);
+      } else {
+        *instrs = &instr->_base;
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
