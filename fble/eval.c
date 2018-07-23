@@ -265,9 +265,37 @@ static void PrintType(FbleValue* type)
     case FBLE_TYPE_TYPE_VALUE: fprintf(stderr, "@"); return;
     case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return;
     case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return;
-    case FBLE_STRUCT_TYPE_VALUE: assert(false && "TODO STRUCT_TYPE"); return;
+
+    case FBLE_STRUCT_TYPE_VALUE: {
+      FbleStructTypeValue* stv = (FbleStructTypeValue*)type;
+      fprintf(stderr, "*(");
+      const char* comma = "";
+      for (size_t i = 0; i < stv->fields.size; ++i) {
+        fprintf(stderr, "%s", comma);
+        PrintType(stv->fields.xs[i].type);
+        fprintf(stderr, " %s", stv->fields.xs[i].name.name);
+        comma = ", ";
+      }
+      fprintf(stderr, ")");
+      return;
+    };
+
     case FBLE_STRUCT_VALUE: UNREACHABLE("not a type"); return;
-    case FBLE_UNION_TYPE_VALUE: assert(false && "TODO UNION_TYPE"); return;
+
+    case FBLE_UNION_TYPE_VALUE: {
+      FbleUnionTypeValue* utv = (FbleUnionTypeValue*)type;
+      fprintf(stderr, "+(");
+      const char* comma = "";
+      for (size_t i = 0; i < utv->fields.size; ++i) {
+        fprintf(stderr, "%s", comma);
+        PrintType(utv->fields.xs[i].type);
+        fprintf(stderr, " %s", utv->fields.xs[i].name.name);
+        comma = ", ";
+      }
+      fprintf(stderr, ")");
+      return;
+    };
+
     case FBLE_UNION_VALUE: UNREACHABLE("not a type"); return;
     case FBLE_PROC_TYPE_VALUE: assert(false && "TODO PROC_TYPE"); return;
     case FBLE_INPUT_TYPE_VALUE: assert(false && "TODO INPUT_TYPE"); return;

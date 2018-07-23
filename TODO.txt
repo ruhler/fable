@@ -36,8 +36,6 @@ Fble:
 
 Fble Cleanup:
 * Share common code between checking StructType, UnionType, and FuncType?
-* Anyway to clean up cleanup code? For example, duplicated cleanup in LET_EXPR
-  for error conditions.
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an
