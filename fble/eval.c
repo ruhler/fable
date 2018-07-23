@@ -368,8 +368,8 @@ static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, T
 //
 // Side effects:
 //   Sets instrs to point to the compiled instructions if the expression is
-//   well typed. The user is responsible for freeing the allocated
-//   instructions when they are no longer needed.
+//   well typed. The user is responsible for releasing the allocated type and
+//   freeing the allocated instructions when they are no longer needed.
 //   Prints a message to stderr if the expression fails to compile.
 static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs)
 {
@@ -397,79 +397,79 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
     case FBLE_LET_EXPR: {
       FbleLetExpr* let_expr = (FbleLetExpr*)expr;
+      bool error = false;
 
-      // Step 1: Compile, check, and evaluate the types of all the variables.
-      FbleValue* types[let_expr->bindings.size];
+      // Evaluate the types of the bindings and set up the new vars.
+      Vars nvarsd[let_expr->bindings.size];
+      VStack nvstackd[let_expr->bindings.size];
+      Vars* nvars = vars;
+      VStack* nvstack = vstack;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        types[i] = CompileType(arena, vars, vstack, let_expr->bindings.xs[i].type);
-        if (types[i] == NULL) {
-          return NULL;
-        }
-      }
-
-      // Step 2: Add the new variables to the scope.
-      assert(let_expr->bindings.size > 0);
-      Vars nvars[let_expr->bindings.size];
-      VStack vstack_data[let_expr->bindings.size];
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        nvars[i].name = let_expr->bindings.xs[i].name;
-        nvars[i].type = types[i];
-        nvars[i].next = vars;
-        vars = nvars + i;
+        nvarsd[i].name = let_expr->bindings.xs[i].name;
+        nvarsd[i].type = CompileType(arena, vars, vstack, let_expr->bindings.xs[i].type);
+        error = error || (nvarsd[i].type == NULL);
+        nvarsd[i].next = nvars;
+        nvars = nvarsd + i;
 
         // TODO: Push an abstract value here instead of NULL?
-        vstack_data[i].value = NULL;
-        vstack_data[i].tail = vstack;
-        vstack = vstack_data + i;
+        nvstackd[i].value = NULL;
+        nvstackd[i].tail = nvstack;
+        nvstack = nvstackd + i;
       }
 
-      // Step 3: Compile, check, and if appropriate, evaluate the values of
-      // the variables.
+      // Compile, check, and if appropriate, evaluate the values of the
+      // variables.
       LetInstr* instr = FbleAlloc(arena, LetInstr);
       instr->_base.tag = LET_INSTR;
       FbleVectorInit(arena, instr->bindings);
       instr->body = NULL;
       instr->pop._base.tag = POP_INSTR;
       instr->pop.count = let_expr->bindings.size;
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        Instr** prgm = FbleVectorExtend(arena, instr->bindings);
-        *prgm = NULL;
-        FbleValue* type = Compile(arena, vars, vstack, let_expr->bindings.xs[i].expr, prgm);
-        if (type == NULL) {
-          return NULL;
-        }
 
-        if (!TypesEqual(types[i], type)) {
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        Instr* mkval = NULL;
+        FbleValue* type = NULL;
+        if (!error) {
+          type = Compile(arena, nvars, nvstack, let_expr->bindings.xs[i].expr, &mkval);
+        }
+        error = error || (type == NULL);
+        FbleVectorAppend(arena, instr->bindings, mkval);
+
+        if (!error && !TypesEqual(nvarsd[i].type, type)) {
+          error = true;
           FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
-          PrintType(types[i]);
+          PrintType(nvarsd[i].type);
           fprintf(stderr, ", but found ");
           PrintType(type);
           fprintf(stderr, "\n");
-          FbleRelease(arena, type);
-          return NULL;
         }
         FbleRelease(arena, type);
 
-        if (IsKinded(types[i])) {
-          FbleValue* v = Eval(arena, *prgm, vstack);
-          if (v == NULL) {
-            return NULL;
-          }
-          vstack_data[i].value = v;
+        if (!error && IsKinded(nvarsd[i].type)) {
+          assert(nvstackd[i].value == NULL);
+          nvstackd[i].value = Eval(arena, mkval, nvstack);
+          error = (nvstackd[i].value == NULL);
         }
       }
 
-      FbleValue* result = Compile(arena, vars, vstack, let_expr->body, &(instr->body));
-      if (result == NULL) {
-        FreeInstrs(arena, &instr->_base);
-      } else {
-        *instrs = &instr->_base;
+      FbleValue* result = NULL;
+      if (!error) {
+        result = Compile(arena, nvars, nvstack, let_expr->body, &(instr->body));
+        error = (result == NULL);
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleRelease(arena, nvars[i].type);
-        FbleRelease(arena, vstack_data[i].value);
+        FbleRelease(arena, nvarsd[i].type);
+        FbleRelease(arena, nvstackd[i].value);
       }
+
+      if (error) {
+        FreeInstrs(arena, &instr->_base);
+        FbleRelease(arena, result);
+        return NULL;
+      }
+
+      *instrs = &instr->_base;
       return result;
     }
 
