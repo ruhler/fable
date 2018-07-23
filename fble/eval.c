@@ -804,12 +804,13 @@ static FbleValue* CompileType(FbleArena* arena, Vars* vars, VStack* vstack, Fble
   }
 
   if (type_type->tag != FBLE_TYPE_TYPE_VALUE) {
-    FbleRelease(arena, type_type);
     FbleReportError("expected a type, found something else\n", &type->loc);
+    FbleRelease(arena, type_type);
+    FreeInstrs(arena, mktype);
     return NULL;
   }
-  FbleRelease(arena, type_type);
 
+  FbleRelease(arena, type_type);
   FbleValue* type_value = Eval(arena, mktype, vstack);
   FreeInstrs(arena, mktype);
   if (type_value == NULL) {
