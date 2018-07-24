@@ -3,22 +3,18 @@ Fble:
  - struct type number of fields mismatch
  - struct type field name mismatch
  - struct type field type mismatch
- - struct type with more than 1 field
- - struct type with duplicate field names
- - struct type with field type that fails to compile.
- - struct type with field type that isn't a type
+
  - struct value with type that fails to compile
  - struct value with type that isn't a struct type
  - struct value with type that isn't a type
  - struct value with wrong number of args
  - struct value with arg that doesn't compile
  - struct value with arg that has wrong type
+
  - union type number of fields mismatch
  - union type field name mismatch
  - union type field type mismatch
- - union type with duplicate field names
- - union type with field type that doesn't compile
- - union type with field type that isn't a type
+
  - union value with type that doesn't compile
  - union value with type that isn't a union type
  - union value with type that isn't a type

@@ -515,6 +515,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
     case FBLE_STRUCT_TYPE_EXPR: {
       FbleStructTypeExpr* struct_type_expr = (FbleStructTypeExpr*)expr;
+      bool error = false;
       StructTypeInstr* instr = FbleAlloc(arena, StructTypeInstr);
       instr->_base.tag = STRUCT_TYPE_INSTR;
       FbleVectorInit(arena, instr->fields);
@@ -524,25 +525,29 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(field->name.name, struct_type_expr->fields.xs[j].name.name)) {
-            FbleReportError("duplicate field name '%s'\n", &field->name.loc, &field->name.name);
-            return NULL;
+            error = true;
+            FbleReportError("duplicate field name '%s'\n", &field->name.loc, field->name.name);
+            break;
           }
         }
 
         finstr->name = field->name;
         FbleValue* type = Compile(arena, vars, vstack, field->type, &finstr->instr);
-        if (type == NULL) {
-          return NULL;
-        }
+        error = error || (type == NULL);
 
-        if (!TypesEqual(type, &gTypeTypeValue)) {
+        if (type != NULL && !TypesEqual(type, &gTypeTypeValue)) {
           FbleReportError("expected a type, but found something of type ", &field->type->loc);
           PrintType(type);
           fprintf(stderr, "\n");
-          return NULL;
+          error = true;
         }
 
         FbleRelease(arena, type);
+      }
+
+      if (error) {
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
       }
 
       *instrs = &instr->_base;
@@ -608,6 +613,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
     case FBLE_UNION_TYPE_EXPR: {
       FbleUnionTypeExpr* union_type_expr = (FbleUnionTypeExpr*)expr;
+      bool error = false;
       UnionTypeInstr* instr = FbleAlloc(arena, UnionTypeInstr);
       instr->_base.tag = UNION_TYPE_INSTR;
       FbleVectorInit(arena, instr->fields);
@@ -618,25 +624,29 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(field->name.name, union_type_expr->fields.xs[j].name.name)) {
+            error = true;
             FbleReportError("duplicate field name '%s'\n", &field->name.loc, &field->name.name);
-            return NULL;
+            break;
           }
         }
 
         finstr->name = field->name;
         FbleValue* type = Compile(arena, vars, vstack, field->type, &finstr->instr);
-        if (type == NULL) {
-          return NULL;
-        }
+        error = error || (type == NULL);
 
-        if (!TypesEqual(type, &gTypeTypeValue)) {
+        if (type != NULL && !TypesEqual(type, &gTypeTypeValue)) {
           FbleReportError("expected a type, but found something of type ", &field->type->loc);
           PrintType(type);
           fprintf(stderr, "\n");
-          return NULL;
+          error = true;
         }
 
         FbleRelease(arena, type);
+      }
+
+      if (error) {
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
       }
 
       *instrs = &instr->_base;
