@@ -570,7 +570,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       }
 
       FbleStructTypeValue* struct_type = (FbleStructTypeValue*)type;
-
       if (struct_type->fields.size != struct_value_expr->args.size) {
         // TODO: Where should the error message go?
         FbleReportError("expected %i args, but %i were provided\n",
@@ -579,6 +578,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         return NULL;
       }
 
+      bool error = false;
       StructValueInstr* instr = FbleAlloc(arena, StructValueInstr);
       instr->_base.tag = STRUCT_VALUE_INSTR;
       FbleVectorInit(arena, instr->fields);
@@ -587,24 +587,25 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
         Instr* mkarg = NULL;
         FbleValue* arg_type = Compile(arena, vars, vstack, struct_value_expr->args.xs[i], &mkarg);
-        if (arg_type == NULL) {
-          FbleRelease(arena, type);
-          return NULL;
-        }
+        error = error || (arg_type == NULL);
 
-        if (!TypesEqual(field->type, arg_type)) {
+        if (arg_type != NULL && !TypesEqual(field->type, arg_type)) {
           FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
           PrintType(field->type);
           fprintf(stderr, ", but found ");
           PrintType(arg_type);
           fprintf(stderr, "\n");
-          FbleRelease(arena, arg_type);
-          FbleRelease(arena, type);
-          return NULL;
+          error = true;
         }
 
         FbleVectorAppend(arena, instr->fields, mkarg);
         FbleRelease(arena, arg_type);
+      }
+
+      if (error) {
+        FbleRelease(arena, type);
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
       }
 
       *instrs = &instr->_base;
