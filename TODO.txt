@@ -1,13 +1,5 @@
 Fble:
 * Add tests to get full coverage of eval.c in its current form
- - struct type number of fields mismatch
- - struct type field name mismatch
- - struct type field type mismatch
-
- - union type number of fields mismatch
- - union type field name mismatch
- - union type field type mismatch
-
  - union value with type that doesn't compile
  - union value with type that isn't a union type
  - union value with type that isn't a type
