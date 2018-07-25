@@ -291,20 +291,6 @@ Concrete Syntax:
 Example:
   Coord@(3, 5)
 
-E.9 Struct Access
------------------
-Abstract Syntax:
-  struct_access (object :: Expr) (field :: Name)
-
-Concrete Syntax:
-  expr '.' name
-
-Example:
-  x.first
-
-Returns the value passed to the structure at the corresponding field position
-when the struct was constructed.
-
 E.9 Union Type
 --------------
 Abstract Syntax:
@@ -331,20 +317,24 @@ Concrete Syntax:
 Example:
   Maybe@(Just: 3)
 
-E.11 Union Access
------------------
+E.11 Access
+-----------
 Abstract Syntax:
-  union_access (object :: Expr) (field :: Name)
+  access (object :: Expr) (field :: Name)
 
 Concrete Syntax:
   expr '.' name
 
 Example:
+  x.first
   x.Just
 
-Returns the value passed to the union at the corresponding field position when
-the union was constructed. Behavior is undefined if the union tag does not
-match the field being accessed.
+When the object is a struct value, returns the value passed to the structure
+at the corresponding field position when the struct was constructed.
+
+When the object is a union value, returns the value passed to the union at the
+corresponding field position when the union was constructed. Behavior is
+undefined if the union tag does not match the field being accessed.
 
 E.12 Conditional
 ----------------
@@ -510,11 +500,11 @@ Expr ::=
 
  | struct_type (fields :: [(Type, Name)])
  | struct_value (type :: Type) (args :: [Expr])
- | struct_access (object :: Expr) (field :: Name)
 
  | union_type (fields :: [(Type, Name)])
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
- | union_access (object :: Expr) (field :: Name)
+
+ | access (object :: Expr) (field :: Name)
  | cond (condition :: Expr) (choices :: [(Name, Expr)])
 
  | proc_type (return :: Type)
@@ -545,11 +535,11 @@ expr ::=
 
  | '*(' [type name [',' type name [...]]] ')'             (* struct_type *)
  | type '@' '(' [expr [',' expr [...]]] ')'               (* struct_value *)
- | expr '.' name                                          (* struct_access *)
 
  | '+(' type name [',' type name [...]] ')'                   (* union_type *)
  | type '@' '(' name ':' expr ')'                             (* union_value *)
- | expr '.' name                                              (* union_access *)
+
+ | expr '.' name                                              (* _access *)
  | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'  (* cond *)
 
  | type '!'                                               (* proc_type *)
@@ -569,8 +559,6 @@ stmt ::=
  ;
 
 Notes:
-* struct_access and union_access share the same form. The type of expr is used
-  to distinguish between the two kinds of expressions.
 * apply, get, and put share the same form. The type of the expr
   is used to distinguish between the four kinds of expressions.
   

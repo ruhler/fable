@@ -264,6 +264,8 @@ typedef enum {
 
   FBLE_UNION_TYPE_EXPR,
   FBLE_UNION_VALUE_EXPR,
+
+  FBLE_ACCESS_EXPR,
   FBLE_COND_EXPR,
 
   FBLE_PROC_TYPE_EXPR,
@@ -275,7 +277,6 @@ typedef enum {
   FBLE_LINK_EXPR,
   FBLE_EXEC_EXPR,
 
-  FBLE_ACCESS_EXPR,     // STRUCT or UNION ACCESS
   FBLE_APPLY_EXPR,
 } FbleExprTag;
 
@@ -408,15 +409,6 @@ typedef struct {
   FbleExprV args;
 } FbleStructValueExpr;
 
-// FbleAccessExpr --
-//   FBLE_ACCESS_EXPR (object :: Expr) (field :: Name)
-// Common form used for both struct and union access.
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* object;
-  FbleName field;
-} FbleAccessExpr;
-
 // FbleUnionTypeExpr --
 //   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
@@ -432,6 +424,15 @@ typedef struct {
   FbleName field;
   FbleExpr* arg;
 } FbleUnionValueExpr;
+
+// FbleAccessExpr --
+//   FBLE_ACCESS_EXPR (object :: Expr) (field :: Name)
+// Common form used for both struct and union access.
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* object;
+  FbleName field;
+} FbleAccessExpr;
 
 // FbleCondExpr --
 //   FBLE_COND_EXPR (condition :: Expr) (choices :: [(Name, Expr)])
