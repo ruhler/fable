@@ -735,23 +735,25 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       AccessInstr* instr = FbleAlloc(arena, AccessInstr);
       instr->_base.tag = ACCESS_INSTR;
+      instr->object = NULL;
       instr->access.loc = access_expr->field.loc;
       FbleValue* type = Compile(arena, &nvars, &nvstack, access_expr->object, &instr->object);
-      if (type == NULL) {
-        return NULL;
-      }
 
       FbleFieldValueV* fields = NULL;
-      if (type->tag == FBLE_STRUCT_TYPE_VALUE) {
+      if (type != NULL && type->tag == FBLE_STRUCT_TYPE_VALUE) {
         instr->access._base.tag = STRUCT_ACCESS_INSTR;
         fields = &((FbleStructTypeValue*)type)->fields;
-      } else if (type->tag == FBLE_UNION_TYPE_VALUE) {
+      } else if (type != NULL && type->tag == FBLE_UNION_TYPE_VALUE) {
         instr->access._base.tag = UNION_ACCESS_INSTR;
         fields = &((FbleUnionTypeValue*)type)->fields;
       } else {
-        FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
-        PrintType(type);
-        fprintf(stderr, "\n");
+        if (type != NULL) {
+          FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
+          PrintType(type);
+          fprintf(stderr, "\n");
+        }
+
+        FreeInstrs(arena, &instr->_base);
         FbleRelease(arena, type);
         return NULL;
       }
@@ -760,14 +762,16 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name.name)) {
           instr->access.tag = i;
           *instrs = &instr->_base;
+          FbleValue* field_type = FbleCopy(arena, fields->xs[i].type);
           FbleRelease(arena, type);
-          return FbleCopy(arena, fields->xs[i].type);
+          return field_type;
         }
       }
 
       FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
       PrintType(type);
       fprintf(stderr, "\n");
+      FreeInstrs(arena, &instr->_base);
       FbleRelease(arena, type);
       return NULL;
     }
@@ -928,7 +932,21 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         break;
       }
 
-      case STRUCT_ACCESS_INSTR: assert(false && "TODO: STRUCT_ACCESS_INSTR"); return NULL;
+      case STRUCT_ACCESS_INSTR: {
+        DataAccessInstr* access_instr = (DataAccessInstr*)instr;
+        assert(vstack != NULL);
+        FbleStructValue* value = (FbleStructValue*)vstack->value;
+        assert(value->_base.tag == FBLE_STRUCT_VALUE);
+
+        assert(access_instr->tag < value->fields.size);
+        *presult = FbleCopy(arena, value->fields.xs[access_instr->tag]);
+
+        VStack* ovstack = vstack;
+        vstack = vstack->tail;
+        FbleRelease(arena, ovstack->value);
+        FbleFree(arena, ovstack);
+        break;
+      }
 
       case UNION_TYPE_INSTR: {
         UnionTypeInstr* union_type_instr = (UnionTypeInstr*)instr;
@@ -995,6 +1013,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         vstack = vstack->tail;
         FbleRelease(arena, ovstack->value);
         FbleFree(arena, ovstack);
+        break;
       }
 
       case ACCESS_INSTR: {

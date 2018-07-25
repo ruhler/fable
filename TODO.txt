@@ -1,10 +1,4 @@
 Fble:
-* Add tests to get full coverage of eval.c in its current form
- - access expr with object that doesn't compile
- - access expr with object that is a struct value
- - access expr with object that isn't a struct or union value
- - access expr with invalid field
- - union access with correct tag
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 * Figure out how to allow an fble file to be reused for multiple different
   programs.
