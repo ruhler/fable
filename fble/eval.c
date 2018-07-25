@@ -669,6 +669,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         return NULL;
       }
 
+      bool error = false;
       FbleUnionTypeValue* union_type = (FbleUnionTypeValue*)type;
       FbleValue* field_type = NULL;
       size_t tag = 0;
@@ -685,24 +686,27 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
         FbleReportError("'%s' is not a field of type ", &union_value_expr->field.loc, union_value_expr->field.name);
         PrintType(type);
         fprintf(stderr, "\n");
-        FbleRelease(arena, type);
-        return NULL;
+        error = true;
       }
 
       Instr* mkarg = NULL;
       FbleValue* arg_type = Compile(arena, vars, vstack, union_value_expr->arg, &mkarg);
       if (arg_type == NULL) {
-        FbleRelease(arena, type);
-        return NULL;
+        error = true;
       }
 
-      if (!TypesEqual(field_type, arg_type)) {
+      if (field_type != NULL && arg_type != NULL && !TypesEqual(field_type, arg_type)) {
         FbleReportError("expected type ", &union_value_expr->arg->loc);
         PrintType(field_type);
         fprintf(stderr, ", but found type ");
         PrintType(arg_type);
         fprintf(stderr, "\n");
-        FbleRelease(arena, arg_type);
+        error = true;
+      }
+      FbleRelease(arena, arg_type);
+
+      if (error) {
+        FreeInstrs(arena, mkarg);
         FbleRelease(arena, type);
         return NULL;
       }
@@ -712,8 +716,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       instr->tag = tag;
       instr->mkarg = mkarg;
       *instrs = &instr->_base;
-
-      FbleRelease(arena, arg_type);
       return type;
     }
 

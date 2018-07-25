@@ -1,11 +1,5 @@
 Fble:
 * Add tests to get full coverage of eval.c in its current form
- - union value with type that doesn't compile
- - union value with type that isn't a union type
- - union value with type that isn't a type
- - union value with invalid field
- - union value with arg that doesn't compile
- - union value with arg that has wrong type
  - access expr with object that doesn't compile
  - access expr with object that is a struct value
  - access expr with object that isn't a struct or union value
