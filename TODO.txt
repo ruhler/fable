@@ -1,4 +1,6 @@
 Fble:
+* Add support for conditional expressions.
+* Add support for functions.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 * Figure out how to allow an fble file to be reused for multiple different
   programs.
