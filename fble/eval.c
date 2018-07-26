@@ -40,6 +40,7 @@ typedef enum {
   UNION_TYPE_INSTR,
   UNION_VALUE_INSTR,
   UNION_ACCESS_INSTR,
+  COND_INSTR,
 
   PUSH_INSTR,
   POP_INSTR,
@@ -148,6 +149,14 @@ typedef struct {
   size_t tag;
   Instr* mkarg;
 } UnionValueInstr;
+
+// CondInstr -- COND_INSTR
+//   Select the next thing to execute based on the tag of the value on top of
+//   the value stack.
+typedef struct {
+  Instr _base;
+  InstrV choices;
+} CondInstr;
 
 // ThreadStack --
 //   The computation context for a thread.
@@ -755,10 +764,10 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
           PrintType(type);
           fprintf(stderr, "\n");
+          FbleRelease(arena, type);
         }
 
         FreeInstrs(arena, &instr->_base);
-        FbleRelease(arena, type);
         return NULL;
       }
 
@@ -780,7 +789,100 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       return NULL;
     }
 
-    case FBLE_COND_EXPR: assert(false && "TODO: FBLE_COND_EXPR"); return NULL;
+    case FBLE_COND_EXPR: {
+      FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
+
+      // Allocate a slot on the variable stack for the intermediate value
+      Vars nvars = {
+        .name = { .name = "", .loc = expr->loc },
+        .type = NULL,
+        .next = vars,
+      };
+
+      // TODO: Push an abstract value here instead of NULL?
+      // Or should we try to compute the actual value?
+      VStack nvstack = { .value = NULL, .tail = vstack };
+
+      PushInstr* push = FbleAlloc(arena, PushInstr);
+      push->_base.tag = PUSH_INSTR;
+      push->value = NULL;
+      push->next = NULL;
+
+      FbleValue* type = Compile(arena, &nvars, &nvstack, cond_expr->condition, &push->value);
+      if (type == NULL) {
+        FreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      if (type->tag != FBLE_UNION_TYPE_VALUE) {
+        FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        FbleRelease(arena, type);
+        FreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      FbleUnionTypeValue* union_type = (FbleUnionTypeValue*)type;
+      if (union_type->fields.size != cond_expr->choices.size) {
+        FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
+        FbleRelease(arena, type);
+        FreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      CondInstr* cond_instr = FbleAlloc(arena, CondInstr);
+      cond_instr->_base.tag = COND_INSTR;
+      push->next = &cond_instr->_base;
+      FbleVectorInit(arena, cond_instr->choices);
+
+      FbleValue* return_type = NULL;
+      for (size_t i = 0; i < cond_expr->choices.size; ++i) {
+        if (!FbleNamesEqual(cond_expr->choices.xs[i].name.name, union_type->fields.xs[i].name.name)) {
+          FbleReportError("expected tag '%s', but found '%s'.\n",
+              &cond_expr->choices.xs[i].name.loc,
+              union_type->fields.xs[i].name.name,
+              cond_expr->choices.xs[i].name.name);
+          FbleRelease(arena, return_type);
+          FbleRelease(arena, type);
+          FreeInstrs(arena, &push->_base);
+          return NULL;
+        }
+
+        Instr* mkarg = NULL;
+        FbleValue* arg_type = Compile(arena, vars, vstack, cond_expr->choices.xs[i].expr, &mkarg);
+        if (arg_type == NULL) {
+          FbleRelease(arena, return_type);
+          FbleRelease(arena, type);
+          FreeInstrs(arena, &push->_base);
+          return NULL;
+        }
+        FbleVectorAppend(arena, cond_instr->choices, mkarg);
+
+        if (return_type == NULL) {
+          return_type = arg_type;
+        } else {
+          if (!TypesEqual(return_type, arg_type)) {
+            FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
+            PrintType(return_type);
+            fprintf(stderr, ", but found ");
+            PrintType(arg_type);
+            fprintf(stderr, "\n");
+
+            FbleRelease(arena, arg_type);
+            FbleRelease(arena, return_type);
+            FbleRelease(arena, type);
+            FreeInstrs(arena, &push->_base);
+            return NULL;
+          }
+          FbleRelease(arena, arg_type);
+        }
+      }
+
+      FbleRelease(arena, type);
+      *instrs = &push->_base;
+      return return_type;
+    }
 
     case FBLE_PROC_TYPE_EXPR: assert(false && "TODO: FBLE_PROC_TYPE_EXPR"); return NULL;
     case FBLE_INPUT_TYPE_EXPR: assert(false && "TODO: FBLE_INPUT_TYPE_EXPR"); return NULL;
@@ -1020,6 +1122,22 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         break;
       }
 
+      case COND_INSTR: {
+        CondInstr* cond_instr = (CondInstr*)instr;
+        assert(vstack != NULL);
+        FbleUnionValue* value = (FbleUnionValue*)vstack->value;
+        assert(value->_base.tag == FBLE_UNION_VALUE);
+
+        assert(value->tag < cond_instr->choices.size);
+        tstack = TPush(arena, presult, cond_instr->choices.xs[value->tag], tstack);
+
+        VStack* ovstack = vstack;
+        vstack = vstack->tail;
+        FbleRelease(arena, ovstack->value);
+        FbleFree(arena, ovstack);
+        break;
+      }
+
       case PUSH_INSTR: {
         PushInstr* push_instr = (PushInstr*)instr;
 
@@ -1122,6 +1240,16 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
     case UNION_VALUE_INSTR: {
       UnionValueInstr* instr = (UnionValueInstr*)instrs;
       FreeInstrs(arena, instr->mkarg);
+      FbleFree(arena, instrs);
+      return;
+    }
+
+    case COND_INSTR: {
+      CondInstr* instr = (CondInstr*)instrs;
+      for (size_t i = 0; i < instr->choices.size; ++i) {
+        FreeInstrs(arena, instr->choices.xs[i]);
+      }
+      FbleFree(arena, instr->choices.xs);
       FbleFree(arena, instrs);
       return;
     }
