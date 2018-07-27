@@ -6,6 +6,7 @@ Fble:
 
 Fble Cleanup:
 * Share common code between checking StructType, UnionType, and FuncType?
+* Rename test cases so that, for example, E10-* doesn't come before E4-*
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an

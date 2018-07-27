@@ -35,6 +35,7 @@ typedef enum {
   VAR_INSTR,
   LET_INSTR,
   FUNC_TYPE_INSTR,
+  FUNC_VALUE_INSTR,
   STRUCT_TYPE_INSTR,
   STRUCT_VALUE_INSTR,
   STRUCT_ACCESS_INSTR,
@@ -113,6 +114,27 @@ typedef struct {
   FInstrV fields;
   Instr* rtype;
 } FuncTypeInstr;
+
+// FbleFuncValue -- FBLE_FUNC_VALUE
+//
+// Fields:
+//   context - The value stack at the time the function was created,
+//             representing the lexical context available to the function.
+//             Stored in reverse order of the standard value stack.
+//   body - The instr representing the body of the function.
+struct FbleFuncValue {
+  FbleValue _base;
+  VStack* context;
+  Instr* body;
+};
+
+// FuncValueInstr -- FUNC_VALUE_INSTR
+//   Allocate a function, capturing the current variable context in the
+//   process.
+typedef struct {
+  Instr _base;
+  Instr* body;
+} FuncValueInstr;
 
 // StructTypeInstr -- STRUCT_TYPE_INSTR
 //   Allocate a struct type, then execute each of the field types.
@@ -1130,6 +1152,24 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         break;
       }
 
+      case FUNC_VALUE_INSTR: {
+        FuncValueInstr* func_value_instr = (FuncValueInstr*)instr;
+        FbleFuncValue* value = FbleAlloc(arena, FbleFuncValue);
+        value->_base.tag = FBLE_FUNC_VALUE;
+        value->_base.refcount = 1;
+        value->context = NULL;
+        value->body = func_value_instr->body;
+        *presult = &value->_base;
+
+        for (VStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+          VStack* nvs = FbleAlloc(arena, VStack);
+          nvs->value = FbleCopy(arena, vs->value);
+          nvs->tail = value->context;
+          value->context = nvs;
+        }
+        break;
+      }
+
       case STRUCT_TYPE_INSTR: {
         StructTypeInstr* struct_type_instr = (StructTypeInstr*)instr;
         FbleStructTypeValue* value = FbleAlloc(arena, FbleStructTypeValue);
@@ -1330,6 +1370,13 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
       FbleFree(arena, let_instr->bindings.xs);
       FreeInstrs(arena, let_instr->body);
       FbleFree(arena, let_instr);
+      return;
+    }
+
+    case FUNC_VALUE_INSTR: {
+      FuncValueInstr* func_value_instr = (FuncValueInstr*)instrs;
+      FreeInstrs(arena, func_value_instr->body);
+      FbleFree(arena, func_value_instr);
       return;
     }
 

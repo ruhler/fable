@@ -583,6 +583,13 @@ typedef struct {
   FbleValue* rtype;
 } FbleFuncTypeValue;
 
+// FbleFuncValue --
+//   FBLE_FUNC_VALUE
+//
+// Defined internally, because representing the body of the function depends
+// on the internals of the evaluator.
+typedef struct FbleFuncValue FbleFuncValue;
+
 // FbleStructTypeValue --
 //   FBLE_STRUCT_TYPE_VALUE
 typedef struct {
