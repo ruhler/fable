@@ -22,8 +22,22 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
   assert(value->refcount > 0);
   if (--(value->refcount) == 0) {
     switch (value->tag) {
-      case FBLE_TYPE_TYPE_VALUE: FbleFree(arena, value); return;
-      case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO: release FBLE_FUNC_TYPE_VALUE"); return;
+      case FBLE_TYPE_TYPE_VALUE: {
+        FbleFree(arena, value);
+        return;
+      }
+
+      case FBLE_FUNC_TYPE_VALUE: {
+        FbleFuncTypeValue* ftv = (FbleFuncTypeValue*)value;
+        for (size_t i = 0; i < ftv->fields.size; ++i) {
+          FbleRelease(arena, ftv->fields.xs[i].type);
+        }
+        FbleRelease(arena, ftv->rtype);
+        FbleFree(arena, ftv->fields.xs);
+        FbleFree(arena, value);
+        return;
+      }
+
       case FBLE_FUNC_VALUE: assert(false && "TODO: release FBLE_FUNC_VALUE"); return;
 
       case FBLE_STRUCT_TYPE_VALUE: {

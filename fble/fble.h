@@ -575,6 +575,14 @@ typedef struct {
   FbleFieldValue* xs;
 } FbleFieldValueV;
 
+// FbleFuncTypeValue --
+//   FBLE_FUNC_TYPE_VALUE
+typedef struct {
+  FbleValue _base;
+  FbleFieldValueV fields;
+  FbleValue* rtype;
+} FbleFuncTypeValue;
+
 // FbleStructTypeValue --
 //   FBLE_STRUCT_TYPE_VALUE
 typedef struct {

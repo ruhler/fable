@@ -34,6 +34,7 @@ typedef enum {
   TYPE_TYPE_INSTR,
   VAR_INSTR,
   LET_INSTR,
+  FUNC_TYPE_INSTR,
   STRUCT_TYPE_INSTR,
   STRUCT_VALUE_INSTR,
   STRUCT_ACCESS_INSTR,
@@ -103,6 +104,15 @@ typedef struct {
   Instr* body;
   PopInstr pop;
 } LetInstr;
+
+// FuncTypeInstr -- FUNC_TYPE_INSTR
+//   Allocate a function type and fill in each of the arg types and the return
+//   type.
+typedef struct {
+  Instr _base;
+  FInstrV fields;
+  Instr* rtype;
+} FuncTypeInstr;
 
 // StructTypeInstr -- STRUCT_TYPE_INSTR
 //   Allocate a struct type, then execute each of the field types.
@@ -202,7 +212,25 @@ static bool TypesEqual(FbleValue* a, FbleValue* b)
 
   switch (a->tag) {
     case FBLE_TYPE_TYPE_VALUE: return true;
-    case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return false;
+    case FBLE_FUNC_TYPE_VALUE: {
+      FbleFuncTypeValue* fta = (FbleFuncTypeValue*)a;
+      FbleFuncTypeValue* ftb = (FbleFuncTypeValue*)b;
+      if (fta->fields.size != ftb->fields.size) {
+        return false;
+      }
+
+      for (size_t i = 0; i < fta->fields.size; ++i) {
+        if (!FbleNamesEqual(fta->fields.xs[i].name.name, ftb->fields.xs[i].name.name)) {
+          return false;
+        }
+        
+        if (!TypesEqual(fta->fields.xs[i].type, ftb->fields.xs[i].type)) {
+          return false;
+        }
+      }
+      return TypesEqual(fta->rtype, ftb->rtype);
+    }
+
     case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return false;
 
     case FBLE_STRUCT_TYPE_VALUE: {
@@ -271,8 +299,27 @@ static bool TypesEqual(FbleValue* a, FbleValue* b)
 static void PrintType(FbleValue* type)
 {
   switch (type->tag) {
-    case FBLE_TYPE_TYPE_VALUE: fprintf(stderr, "@"); return;
-    case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return;
+    case FBLE_TYPE_TYPE_VALUE: {
+      fprintf(stderr, "@");
+      return;
+    }
+
+    case FBLE_FUNC_TYPE_VALUE: {
+      FbleFuncTypeValue* ftv = (FbleFuncTypeValue*)type;
+      fprintf(stderr, "\\(");
+      const char* comma = "";
+      for (size_t i = 0; i < ftv->fields.size; ++i) {
+        fprintf(stderr, "%s", comma);
+        PrintType(ftv->fields.xs[i].type);
+        fprintf(stderr, " %s", ftv->fields.xs[i].name.name);
+        comma = ", ";
+      }
+      fprintf(stderr, "; ");
+      PrintType(ftv->rtype);
+      fprintf(stderr, ")");
+      return;
+    };
+
     case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return;
 
     case FBLE_STRUCT_TYPE_VALUE: {
@@ -329,8 +376,15 @@ static void PrintType(FbleValue* type)
 static bool IsKinded(FbleValue* type)
 {
   switch (type->tag) {
-    case FBLE_TYPE_TYPE_VALUE: return true;
-    case FBLE_FUNC_TYPE_VALUE: assert(false && "TODO FUNC_TYPE"); return false;
+    case FBLE_TYPE_TYPE_VALUE: {
+      return true;
+    }
+
+    case FBLE_FUNC_TYPE_VALUE: {
+      FbleFuncTypeValue* ft = (FbleFuncTypeValue*)type;
+      return IsKinded(ft->rtype);
+    }
+
     case FBLE_FUNC_VALUE: UNREACHABLE("not a type"); return false;
 
     case FBLE_STRUCT_TYPE_VALUE: {
@@ -518,7 +572,59 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       return FbleCopy(arena, &gTypeTypeValue);
     }
 
-    case FBLE_FUNC_TYPE_EXPR: assert(false && "TODO: FBLE_FUNC_TYPE_EXPR"); return NULL;
+    case FBLE_FUNC_TYPE_EXPR: {
+      FbleFuncTypeExpr* func_type_expr = (FbleFuncTypeExpr*)expr;
+      bool error = false;
+      FuncTypeInstr* instr = FbleAlloc(arena, FuncTypeInstr);
+      instr->_base.tag = FUNC_TYPE_INSTR;
+      FbleVectorInit(arena, instr->fields);
+      instr->rtype = NULL;
+      for (size_t i = 0; i < func_type_expr->args.size; ++i) {
+        FInstr* finstr = FbleVectorExtend(arena, instr->fields);
+        FbleField* field = func_type_expr->args.xs + i;
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(field->name.name, func_type_expr->args.xs[j].name.name)) {
+            error = true;
+            FbleReportError("duplicate arg name '%s'\n", &field->name.loc, field->name.name);
+            break;
+          }
+        }
+
+        finstr->name = field->name;
+        FbleValue* type = Compile(arena, vars, vstack, field->type, &finstr->instr);
+        error = error || (type == NULL);
+
+        if (type != NULL && !TypesEqual(type, &gTypeTypeValue)) {
+          FbleReportError("expected a type, but found something of type ", &field->type->loc);
+          PrintType(type);
+          fprintf(stderr, "\n");
+          error = true;
+        }
+
+        FbleRelease(arena, type);
+      }
+
+      FbleValue* rtypetype = Compile(arena, vars, vstack, func_type_expr->rtype, &instr->rtype);
+      error = error || (rtypetype == NULL);
+
+      if (rtypetype != NULL && !TypesEqual(rtypetype, &gTypeTypeValue)) {
+        FbleReportError("expected a type, but found something of type ", &func_type_expr->rtype->loc);
+        PrintType(rtypetype);
+        fprintf(stderr, "\n");
+        error = true;
+      }
+      FbleRelease(arena, rtypetype);
+
+      if (error) {
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+
+      *instrs = &instr->_base;
+      return FbleCopy(arena, &gTypeTypeValue);
+    }
+
     case FBLE_FUNC_VALUE_EXPR: assert(false && "TODO: FBLE_FUNC_VALUE_EXPR"); return NULL;
     case FBLE_FUNC_APPLY_EXPR: assert(false && "TODO: FBLE_FUNC_APPLY_EXPR"); return NULL;
 
@@ -1004,6 +1110,26 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         break;
       }
 
+      case FUNC_TYPE_INSTR: {
+        FuncTypeInstr* func_type_instr = (FuncTypeInstr*)instr;
+        FbleFuncTypeValue* value = FbleAlloc(arena, FbleFuncTypeValue);
+        value->_base.tag = FBLE_FUNC_TYPE_VALUE;
+        value->_base.refcount = 1;
+        value->fields.size = func_type_instr->fields.size;
+        value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleFieldValue), FbleAllocMsg(__FILE__, __LINE__));
+        *presult = &value->_base;
+
+        for (size_t i = 0; i < func_type_instr->fields.size; ++i) {
+          FbleFieldValue* fv = value->fields.xs + i;
+          fv->type = NULL;
+          fv->name = func_type_instr->fields.xs[i].name;
+
+          tstack = TPush(arena, &fv->type, func_type_instr->fields.xs[i].instr, tstack);
+        }
+        tstack = TPush(arena, &value->rtype, func_type_instr->rtype, tstack);
+        break;
+      }
+
       case STRUCT_TYPE_INSTR: {
         StructTypeInstr* struct_type_instr = (StructTypeInstr*)instr;
         FbleStructTypeValue* value = FbleAlloc(arena, FbleStructTypeValue);
@@ -1204,6 +1330,17 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
       FbleFree(arena, let_instr->bindings.xs);
       FreeInstrs(arena, let_instr->body);
       FbleFree(arena, let_instr);
+      return;
+    }
+
+    case FUNC_TYPE_INSTR: {
+      FuncTypeInstr* func_type_instr = (FuncTypeInstr*)instrs;
+      for (size_t i = 0; i < func_type_instr->fields.size; ++i) {
+        FreeInstrs(arena, func_type_instr->fields.xs[i].instr);
+      }
+      FreeInstrs(arena, func_type_instr->rtype);
+      FbleFree(arena, func_type_instr->fields.xs);
+      FbleFree(arena, func_type_instr);
       return;
     }
 
