@@ -122,6 +122,9 @@ typedef struct {
 //             representing the lexical context available to the function.
 //             Stored in reverse order of the standard value stack.
 //   body - The instr representing the body of the function.
+//          Note: fbleFuncValue does not take ownership of body. The
+//          FuncValueInstr that allocates the FbleFuncValue has ownership of
+//          the body.
 struct FbleFuncValue {
   FbleValue _base;
   VStack* context;
@@ -459,6 +462,7 @@ static bool IsKinded(FbleValue* type)
 //   Allocates a new ThreadStack instance that should be freed when done.
 static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, ThreadStack* tail)
 {
+  assert(instr != NULL && "TPush NULL Instr");
   ThreadStack* tstack = FbleAlloc(arena, ThreadStack);
   tstack->result = presult;
   tstack->instr = instr;
@@ -647,7 +651,62 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       return FbleCopy(arena, &gTypeTypeValue);
     }
 
-    case FBLE_FUNC_VALUE_EXPR: assert(false && "TODO: FBLE_FUNC_VALUE_EXPR"); return NULL;
+    case FBLE_FUNC_VALUE_EXPR: {
+      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
+      FbleFuncTypeValue* func_type = FbleAlloc(arena, FbleFuncTypeValue);
+      func_type->_base.tag = FBLE_FUNC_TYPE_VALUE;
+      func_type->_base.refcount = 1;
+      FbleVectorInit(arena, func_type->fields);
+      func_type->rtype = NULL;
+
+      Vars nvarsd[func_value_expr->args.size];
+      VStack nvstackd[func_value_expr->args.size];
+      Vars* nvars = vars;
+      VStack* nvstack = vstack;
+      bool error = false;
+      for (size_t i = 0; i < func_value_expr->args.size; ++i) {
+        FbleFieldValue* field = FbleVectorExtend(arena, func_type->fields);
+        field->name = func_value_expr->args.xs[i].name;
+        field->type = CompileType(arena, vars, vstack, func_value_expr->args.xs[i].type);
+        error = error || (field->type == NULL);
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(field->name.name, func_value_expr->args.xs[j].name.name)) {
+            error = true;
+            FbleReportError("duplicate arg name '%s'\n", &field->name.loc, field->name.name);
+            break;
+          }
+        }
+
+        nvarsd[i].name = field->name;
+        nvarsd[i].type = field->type;
+        nvarsd[i].next = nvars;
+        nvars = nvarsd + i;
+
+        // TODO: Push an abstract value here instead of NULL?
+        nvstackd[i].value = NULL;
+        nvstackd[i].tail = nvstack;
+        nvstack = nvstackd + i;
+      }
+
+      FuncValueInstr* instr = FbleAlloc(arena, FuncValueInstr);
+      instr->_base.tag = FUNC_VALUE_INSTR;
+      instr->body = NULL;
+      if (!error) {
+        func_type->rtype = Compile(arena, nvars, nvstack, func_value_expr->body, &instr->body);
+        error = error || (func_type->rtype == NULL);
+      }
+
+      if (error) {
+        FbleRelease(arena, &func_type->_base);
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+
+      *instrs = &instr->_base;
+      return &func_type->_base;
+    }
+
     case FBLE_FUNC_APPLY_EXPR: assert(false && "TODO: FBLE_FUNC_APPLY_EXPR"); return NULL;
 
     case FBLE_STRUCT_TYPE_EXPR: {
@@ -1465,4 +1524,19 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
   FreeInstrs(arena, instrs);
   return result;
 }
+
+// FbleFreeFuncValue -- see documentation in fble.h
+void FbleFreeFuncValue(FbleArena* arena, FbleFuncValue* value)
+{
+  VStack* vs = value->context;
+  while (vs != NULL) {
+    VStack* ovstack = vs;
+    vs = vs->tail;
+    FbleRelease(arena, ovstack->value);
+    FbleFree(arena, ovstack);
+  }
 
+  // Note: The FbleFuncValue does not take ownership of value->body, so we
+  // should not free it here.
+  FbleFree(arena, value);
+}

@@ -38,7 +38,11 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
         return;
       }
 
-      case FBLE_FUNC_VALUE: assert(false && "TODO: release FBLE_FUNC_VALUE"); return;
+      case FBLE_FUNC_VALUE: {
+        FbleFuncValue* fv = (FbleFuncValue*)value;
+        FbleFreeFuncValue(arena, fv);
+        return;
+      }
 
       case FBLE_STRUCT_TYPE_VALUE: {
         FbleStructTypeValue* stv = (FbleStructTypeValue*)value;
