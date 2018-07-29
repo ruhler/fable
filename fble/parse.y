@@ -225,7 +225,7 @@ stmt:
       func_value_expr->body = $6;
 
       FbleFuncApplyExpr* apply_expr = FbleAlloc(arena, FbleFuncApplyExpr);
-      apply_expr->_base.tag = FBLE_FUNC_APPLY_EXPR;
+      apply_expr->_base.tag = FBLE_APPLY_EXPR;
       apply_expr->_base.loc = @$;
       apply_expr->func = &func_value_expr->_base;
       FbleVectorInit(arena, apply_expr->args);

@@ -1,10 +1,13 @@
 Fble:
 * Add support for functions.
+ - Figure out how to avoid a function value retaining a reference to itself
+   via its own context.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 * Figure out how to allow an fble file to be reused for multiple different
   programs.
 
 Fble Cleanup:
+* Share commong code for pushing and popping a value from the vstack.
 * Share common code between checking StructType, UnionType, and FuncType?
 * Rename test cases so that, for example, E10-* doesn't come before E4-*
 

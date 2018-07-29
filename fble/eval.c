@@ -36,6 +36,7 @@ typedef enum {
   LET_INSTR,
   FUNC_TYPE_INSTR,
   FUNC_VALUE_INSTR,
+  FUNC_APPLY_INSTR,
   STRUCT_TYPE_INSTR,
   STRUCT_VALUE_INSTR,
   STRUCT_ACCESS_INSTR,
@@ -125,10 +126,14 @@ typedef struct {
 //          Note: fbleFuncValue does not take ownership of body. The
 //          FuncValueInstr that allocates the FbleFuncValue has ownership of
 //          the body.
+//   pop - An instruction that can be used to pop the arguments, the
+//         context, and the function value itself after a function is done
+//         executing.
 struct FbleFuncValue {
   FbleValue _base;
   VStack* context;
   Instr* body;
+  PopInstr pop;
 };
 
 // FuncValueInstr -- FUNC_VALUE_INSTR
@@ -136,8 +141,19 @@ struct FbleFuncValue {
 //   process.
 typedef struct {
   Instr _base;
+  size_t argc;
   Instr* body;
 } FuncValueInstr;
+
+// FuncApplyInstr -- FUNC_APPLY_INSTR
+//   Given f, x1, x2, ... on the top of the value stack,
+//   apply f(x1, x2, ...).
+// From the top of the stack down, we should find the arguments in reverse
+// order and then the function value.
+typedef struct {
+  Instr _base;
+  size_t argc;
+} FuncApplyInstr;
 
 // StructTypeInstr -- STRUCT_TYPE_INSTR
 //   Allocate a struct type, then execute each of the field types.
@@ -162,11 +178,11 @@ typedef struct {
 } AccessInstr;
 
 // PushInstr -- PUSH_INSTR
-//   Evaluate and push the given value on top of the value stack and execute
+//   Evaluate and push the given values on top of the value stack and execute
 //   the following instruction.
 typedef struct {
   Instr _base;
-  Instr* value;
+  InstrV values;
   Instr* next;
 } PushInstr;
 
@@ -691,6 +707,7 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       FuncValueInstr* instr = FbleAlloc(arena, FuncValueInstr);
       instr->_base.tag = FUNC_VALUE_INSTR;
+      instr->argc = func_value_expr->args.size;
       instr->body = NULL;
       if (!error) {
         func_type->rtype = Compile(arena, nvars, nvstack, func_value_expr->body, &instr->body);
@@ -706,8 +723,6 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
       *instrs = &instr->_base;
       return &func_type->_base;
     }
-
-    case FBLE_FUNC_APPLY_EXPR: assert(false && "TODO: FBLE_FUNC_APPLY_EXPR"); return NULL;
 
     case FBLE_STRUCT_TYPE_EXPR: {
       FbleStructTypeExpr* struct_type_expr = (FbleStructTypeExpr*)expr;
@@ -931,13 +946,15 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       PushInstr* instr = FbleAlloc(arena, PushInstr);
       instr->_base.tag = PUSH_INSTR;
-      instr->value = NULL;
+      FbleVectorInit(arena, instr->values);
+      Instr** mkobj = FbleVectorExtend(arena, instr->values);
+      *mkobj = NULL;
 
       AccessInstr* access = FbleAlloc(arena, AccessInstr);
       access->_base.tag = STRUCT_ACCESS_INSTR;
       instr->next = &access->_base;
       access->loc = access_expr->field.loc;
-      FbleValue* type = Compile(arena, &nvars, &nvstack, access_expr->object, &instr->value);
+      FbleValue* type = Compile(arena, &nvars, &nvstack, access_expr->object, mkobj);
 
       FbleFieldValueV* fields = NULL;
       if (type != NULL && type->tag == FBLE_STRUCT_TYPE_VALUE) {
@@ -992,10 +1009,12 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
 
       PushInstr* push = FbleAlloc(arena, PushInstr);
       push->_base.tag = PUSH_INSTR;
-      push->value = NULL;
+      FbleVectorInit(arena, push->values);
       push->next = NULL;
 
-      FbleValue* type = Compile(arena, &nvars, &nvstack, cond_expr->condition, &push->value);
+      Instr** mkobj = FbleVectorExtend(arena, push->values);
+      *mkobj = NULL;
+      FbleValue* type = Compile(arena, &nvars, &nvstack, cond_expr->condition, mkobj);
       if (type == NULL) {
         FreeInstrs(arena, &push->_base);
         return NULL;
@@ -1075,13 +1094,95 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
     case FBLE_INPUT_TYPE_EXPR: assert(false && "TODO: FBLE_INPUT_TYPE_EXPR"); return NULL;
     case FBLE_OUTPUT_TYPE_EXPR: assert(false && "TODO: FBLE_OUTPUT_TYPE_EXPR"); return NULL;
     case FBLE_EVAL_EXPR: assert(false && "TODO: FBLE_EVAL_EXPR"); return NULL;
-    case FBLE_GET_EXPR: assert(false && "TODO: FBLE_GET_EXPR"); return NULL;
-    case FBLE_PUT_EXPR: assert(false && "TODO: FBLE_PUT_EXPR"); return NULL;
     case FBLE_LINK_EXPR: assert(false && "TODO: FBLE_LINK_EXPR"); return NULL;
     case FBLE_EXEC_EXPR: assert(false && "TODO: FBLE_EXEC_EXPR"); return NULL;
 
+    case FBLE_APPLY_EXPR: {
+      FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
-    case FBLE_APPLY_EXPR: assert(false && "TODO: FBLE_APPLY_EXPR"); return NULL;
+      // Allocate space on the stack for the intermediate values.
+      Vars nvarsd[1 + apply_expr->args.size];
+      VStack nvstackd[1 + apply_expr->args.size];
+      Vars* nvars = vars;
+      VStack* nvstack = vstack;
+      for (size_t i = 0; i < 1 + apply_expr->args.size; ++i) {
+        nvarsd[i].type = NULL;
+        nvarsd[i].name.name = "";
+        nvarsd[i].name.loc = expr->loc;
+        nvarsd[i].next = nvars;
+        nvars = nvarsd + i;
+
+        // TODO: Push an abstract value here instead of NULL?
+        nvstackd[i].value = NULL;
+        nvstackd[i].tail = nvstack;
+        nvstack = nvstackd + i;
+      };
+
+      PushInstr* push = FbleAlloc(arena, PushInstr);
+      push->_base.tag = PUSH_INSTR;
+      FbleVectorInit(arena, push->values);
+      push->next = NULL;
+
+      Instr** mkfunc = FbleVectorExtend(arena, push->values);
+      *mkfunc = NULL;
+      FbleValue* type = Compile(arena, nvars, nvstack, apply_expr->func, mkfunc);
+      if (type == NULL) {
+        FreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      switch (type->tag) {
+        case FBLE_FUNC_TYPE_VALUE: {
+          FbleFuncTypeValue* func_type = (FbleFuncTypeValue*)type;
+          bool error = false;
+          if (func_type->fields.size != apply_expr->args.size) {
+            FbleReportError("expected %i args, but %i provided\n",
+                &expr->loc, func_type->fields.size, apply_expr->args.size);
+            error = true;
+          }
+
+          for (size_t i = 0; i < func_type->fields.size && i < apply_expr->args.size; ++i) {
+            Instr** mkarg = FbleVectorExtend(arena, push->values);
+            *mkarg = NULL;
+            FbleValue* arg_type = Compile(arena, nvars, nvstack, apply_expr->args.xs[i], mkarg);
+            error = error || (arg_type == NULL);
+            if (arg_type != NULL && !TypesEqual(func_type->fields.xs[i].type, arg_type)) {
+              FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
+              PrintType(func_type->fields.xs[i].type);
+              fprintf(stderr, ", but found ");
+              PrintType(arg_type);
+              fprintf(stderr, "\n");
+              error = true;
+            }
+            FbleRelease(arena, arg_type);
+          }
+
+          if (error) {
+            FbleRelease(arena, type);
+            FreeInstrs(arena, &push->_base);
+            return NULL;
+          }
+
+          FuncApplyInstr* apply_instr = FbleAlloc(arena, FuncApplyInstr);
+          apply_instr->_base.tag = FUNC_APPLY_INSTR;
+          apply_instr->argc = func_type->fields.size;
+          push->next = &apply_instr->_base;
+          *instrs = &push->_base;
+          return FbleCopy(arena, func_type->rtype);
+        }
+
+        default: {
+          FbleReportError("cannot perform application on an object of type ", &expr->loc);
+          PrintType(type);
+          FbleRelease(arena, type);
+          FreeInstrs(arena, &push->_base);
+          return NULL;
+        }
+      }
+
+      UNREACHABLE("should not get here");
+      return NULL;
+    }
 
     default:
       UNREACHABLE("invalid expression tag");
@@ -1218,6 +1319,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         value->_base.refcount = 1;
         value->context = NULL;
         value->body = func_value_instr->body;
+        value->pop._base.tag = POP_INSTR;
+        value->pop.count = 1 + func_value_instr->argc;
         *presult = &value->_base;
 
         for (VStack* vs = vstack; vs != NULL;  vs = vs->tail) {
@@ -1225,7 +1328,45 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
           nvs->value = FbleCopy(arena, vs->value);
           nvs->tail = value->context;
           value->context = nvs;
+          value->pop.count++;
         }
+        break;
+      }
+
+      case FUNC_APPLY_INSTR: {
+        FuncApplyInstr* apply_instr = (FuncApplyInstr*)instr;
+        FbleValue* args[apply_instr->argc];
+        for (size_t i = 0; i < apply_instr->argc; ++i) {
+          args[i] = vstack->value;
+
+          VStack* ovstack = vstack;
+          vstack = vstack->tail;
+          FbleFree(arena, ovstack);
+        }
+
+        FbleFuncValue* func = (FbleFuncValue*)vstack->value;
+        assert(func->_base.tag = FBLE_FUNC_VALUE);
+
+        // Push the function's context on top of the value stack.
+        for (VStack* vs = func->context; vs != NULL; vs = vs->tail) {
+          VStack* nvstack = FbleAlloc(arena, VStack);
+          nvstack->value = FbleCopy(arena, vs->value);
+          nvstack->tail = vstack;
+          vstack = nvstack;
+        }
+
+        // Push the function args on top of the value stack.
+        for (size_t i = 0; i < apply_instr->argc; ++i) {
+          size_t j = apply_instr->argc - 1 - i;
+
+          VStack* nvstack = FbleAlloc(arena, VStack);
+          nvstack->value = args[j];
+          nvstack->tail = vstack;
+          vstack = nvstack;
+        }
+
+        tstack = TPush(arena, NULL, &func->pop._base, tstack);
+        tstack = TPush(arena, presult, func->body, tstack);
         break;
       }
 
@@ -1366,13 +1507,15 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
       case PUSH_INSTR: {
         PushInstr* push_instr = (PushInstr*)instr;
 
-        VStack* nvstack = FbleAlloc(arena, VStack);
-        nvstack->value = NULL;
-        nvstack->tail = vstack;
-        vstack = nvstack;
-
         tstack = TPush(arena, presult, push_instr->next, tstack);
-        tstack = TPush(arena, &vstack->value, push_instr->value, tstack);
+        for (size_t i = 0; i < push_instr->values.size; ++i) {
+          VStack* nvstack = FbleAlloc(arena, VStack);
+          nvstack->value = NULL;
+          nvstack->tail = vstack;
+          vstack = nvstack;
+
+          tstack = TPush(arena, &vstack->value, push_instr->values.xs[i], tstack);
+        }
         break;
       }
 
@@ -1414,6 +1557,7 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
   switch (instrs->tag) {
     case TYPE_TYPE_INSTR:
     case VAR_INSTR:
+    case FUNC_APPLY_INSTR:
     case STRUCT_ACCESS_INSTR:
     case UNION_ACCESS_INSTR:
     case POP_INSTR: {
@@ -1499,7 +1643,10 @@ static void FreeInstrs(FbleArena* arena, Instr* instrs)
 
     case PUSH_INSTR: {
       PushInstr* push_instr = (PushInstr*)instrs;
-      FreeInstrs(arena, push_instr->value);
+      for (size_t i = 0; i < push_instr->values.size; ++i) {
+        FreeInstrs(arena, push_instr->values.xs[i]);
+      }
+      FbleFree(arena, push_instr->values.xs);
       FreeInstrs(arena, push_instr->next);
       FbleFree(arena, instrs);
       return;
