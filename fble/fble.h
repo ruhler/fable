@@ -637,7 +637,7 @@ typedef struct {
 //
 // Inputs:
 //   arena - The arena to use for allocations.
-//   src - The value to make a copy of.
+//   src - The value to make a copy of. May be be NULL.
 //
 // Results:
 //   A copy of the value, which may be the same as the original value.

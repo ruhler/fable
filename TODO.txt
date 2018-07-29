@@ -1,7 +1,4 @@
 Fble:
-* Add support for functions.
- - Figure out how to avoid a function value retaining a reference to itself
-   via its own context.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 * Figure out how to allow an fble file to be reused for multiple different
   programs.

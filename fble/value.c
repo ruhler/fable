@@ -8,7 +8,10 @@
 // FbleCopy -- see documentation in fble.h
 FbleValue* FbleCopy(FbleArena* arena, FbleValue* src)
 {
-  src->refcount++;
+  if (src != NULL) {
+    src->refcount++;
+  }
+
   return src;
 }
 

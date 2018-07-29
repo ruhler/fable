@@ -1168,7 +1168,9 @@ static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr
           apply_instr->argc = func_type->fields.size;
           push->next = &apply_instr->_base;
           *instrs = &push->_base;
-          return FbleCopy(arena, func_type->rtype);
+          FbleValue* rtype = FbleCopy(arena, func_type->rtype);
+          FbleRelease(arena, type);
+          return rtype;
         }
 
         default: {
@@ -1321,7 +1323,6 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         value->body = func_value_instr->body;
         value->pop._base.tag = POP_INSTR;
         value->pop.count = 1 + func_value_instr->argc;
-        *presult = &value->_base;
 
         for (VStack* vs = vstack; vs != NULL;  vs = vs->tail) {
           VStack* nvs = FbleAlloc(arena, VStack);
@@ -1330,6 +1331,10 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
           value->context = nvs;
           value->pop.count++;
         }
+        
+        // Set the result after copying the context, to avoid introducing a
+        // circular reference chain from this value to itself.
+        *presult = &value->_base;
         break;
       }
 
