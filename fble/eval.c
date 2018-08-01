@@ -226,6 +226,7 @@ static bool TypesEqual(FbleValue* a, FbleValue* b);
 static void PrintType(FbleValue* type);
 static bool IsKinded(FbleValue* type);
 
+static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail);
 static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, ThreadStack* tail); 
 
 static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs);
@@ -460,6 +461,27 @@ static bool IsKinded(FbleValue* type)
   }
   UNREACHABLE("Should not get here");
   return false;
+}
+
+// TPush --
+//   Push a value onto a value stack.
+//
+// Inputs:
+//   arena - the arena to use for allocations
+//   value - the value to push
+//   tail - the stack to push to
+//
+// Result:
+//   The new stack with pushed value.
+//
+// Side effects:
+//   Allocates a new VStack instance that should be freed when done.
+static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail)
+{
+  VStack* vstack = FbleAlloc(arena, VStack);
+  vstack->value = value;
+  vstack->tail = tail;
+  return vstack;
 }
 
 // TPush --
@@ -1284,11 +1306,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         tstack = TPush(arena, presult, let_instr->body, tstack);
 
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
-          VStack* nvstack = FbleAlloc(arena, VStack);
-          nvstack->value = NULL;
-          nvstack->tail = vstack;
-          vstack = nvstack;
-
+          vstack = VPush(arena, NULL, vstack);
           tstack = TPush(arena, &vstack->value, let_instr->bindings.xs[i], tstack);
         }
         break;
@@ -1325,10 +1343,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         value->pop.count = 1 + func_value_instr->argc;
 
         for (VStack* vs = vstack; vs != NULL;  vs = vs->tail) {
-          VStack* nvs = FbleAlloc(arena, VStack);
-          nvs->value = FbleCopy(arena, vs->value);
-          nvs->tail = value->context;
-          value->context = nvs;
+          value->context = VPush(arena, FbleCopy(arena, vs->value), value->context);
           value->pop.count++;
         }
         
@@ -1354,20 +1369,13 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 
         // Push the function's context on top of the value stack.
         for (VStack* vs = func->context; vs != NULL; vs = vs->tail) {
-          VStack* nvstack = FbleAlloc(arena, VStack);
-          nvstack->value = FbleCopy(arena, vs->value);
-          nvstack->tail = vstack;
-          vstack = nvstack;
+          vstack = VPush(arena, FbleCopy(arena, vs->value), vstack);
         }
 
         // Push the function args on top of the value stack.
         for (size_t i = 0; i < apply_instr->argc; ++i) {
           size_t j = apply_instr->argc - 1 - i;
-
-          VStack* nvstack = FbleAlloc(arena, VStack);
-          nvstack->value = args[j];
-          nvstack->tail = vstack;
-          vstack = nvstack;
+          vstack = VPush(arena, args[j], vstack);
         }
 
         tstack = TPush(arena, NULL, &func->pop._base, tstack);
@@ -1514,11 +1522,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 
         tstack = TPush(arena, presult, push_instr->next, tstack);
         for (size_t i = 0; i < push_instr->values.size; ++i) {
-          VStack* nvstack = FbleAlloc(arena, VStack);
-          nvstack->value = NULL;
-          nvstack->tail = vstack;
-          vstack = nvstack;
-
+          vstack = VPush(arena, NULL, vstack);
           tstack = TPush(arena, &vstack->value, push_instr->values.xs[i], tstack);
         }
         break;
