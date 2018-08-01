@@ -227,6 +227,7 @@ static void PrintType(FbleValue* type);
 static bool IsKinded(FbleValue* type);
 
 static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail);
+static VStack* VPop(FbleArena* arena, VStack* vstack);
 static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, ThreadStack* tail); 
 
 static FbleValue* Compile(FbleArena* arena, Vars* vars, VStack* vstack, FbleExpr* expr, Instr** instrs);
@@ -482,6 +483,26 @@ static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail)
   vstack->value = value;
   vstack->tail = tail;
   return vstack;
+}
+
+// VPop --
+//   Pop a value off the value stack.
+//
+// Inputs:
+//   arena - the arena to use for deallocation
+//   stack - the stack to pop from
+//
+// Results:
+//   The popped stack.
+//
+// Side effects:
+//   Frees the top stack frame. It is the users job to release the value if
+//   necessary before popping the top of the stack.
+static VStack* VPop(FbleArena* arena, VStack* vstack)
+{
+  VStack* tail = vstack->tail;
+  FbleFree(arena, vstack);
+  return tail;
 }
 
 // TPush --
@@ -1358,10 +1379,7 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         FbleValue* args[apply_instr->argc];
         for (size_t i = 0; i < apply_instr->argc; ++i) {
           args[i] = vstack->value;
-
-          VStack* ovstack = vstack;
-          vstack = vstack->tail;
-          FbleFree(arena, ovstack);
+          vstack = VPop(arena, vstack);
         }
 
         FbleFuncValue* func = (FbleFuncValue*)vstack->value;
@@ -1426,10 +1444,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         assert(access_instr->tag < value->fields.size);
         *presult = FbleCopy(arena, value->fields.xs[access_instr->tag]);
 
-        VStack* ovstack = vstack;
-        vstack = vstack->tail;
-        FbleRelease(arena, ovstack->value);
-        FbleFree(arena, ovstack);
+        FbleRelease(arena, vstack->value);
+        vstack = VPop(arena, vstack);
         break;
       }
 
@@ -1478,10 +1494,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
 
           // Clean up the stacks.
           while (vstack != vstack_in) {
-            VStack* ovstack = vstack;
-            vstack = vstack->tail;
-            FbleRelease(arena, ovstack->value);
-            FbleFree(arena, ovstack);
+            FbleRelease(arena, vstack->value);
+            vstack = VPop(arena, vstack);
           }
 
           while (tstack != NULL) {
@@ -1494,10 +1508,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         }
         *presult = FbleCopy(arena, value->arg);
 
-        VStack* ovstack = vstack;
-        vstack = vstack->tail;
-        FbleRelease(arena, ovstack->value);
-        FbleFree(arena, ovstack);
+        FbleRelease(arena, vstack->value);
+        vstack = VPop(arena, vstack);
         break;
       }
 
@@ -1510,10 +1522,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         assert(value->tag < cond_instr->choices.size);
         tstack = TPush(arena, presult, cond_instr->choices.xs[value->tag], tstack);
 
-        VStack* ovstack = vstack;
-        vstack = vstack->tail;
-        FbleRelease(arena, ovstack->value);
-        FbleFree(arena, ovstack);
+        FbleRelease(arena, vstack->value);
+        vstack = VPop(arena, vstack);
         break;
       }
 
@@ -1532,10 +1542,8 @@ static FbleValue* Eval(FbleArena* arena, Instr* prgm, VStack* vstack_in)
         PopInstr* pop_instr = (PopInstr*)instr;
         for (size_t i = 0; i < pop_instr->count; ++i) {
           assert(vstack != NULL);
-          VStack* ovstack = vstack;
-          vstack = vstack->tail;
-          FbleRelease(arena, ovstack->value);
-          FbleFree(arena, ovstack);
+          FbleRelease(arena, vstack->value);
+          vstack = VPop(arena, vstack);
         }
         break;
       }
@@ -1686,10 +1694,8 @@ void FbleFreeFuncValue(FbleArena* arena, FbleFuncValue* value)
 {
   VStack* vs = value->context;
   while (vs != NULL) {
-    VStack* ovstack = vs;
-    vs = vs->tail;
-    FbleRelease(arena, ovstack->value);
-    FbleFree(arena, ovstack);
+    FbleRelease(arena, vs->value);
+    vs = VPop(arena, vs);
   }
 
   // Note: The FbleFuncValue does not take ownership of value->body, so we

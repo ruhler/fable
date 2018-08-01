@@ -5,7 +5,6 @@ Fble:
   programs.
 
 Fble Cleanup:
-* Share commong code for pushing and popping a value from the vstack.
 * Share common code between checking StructType, UnionType, and FuncType?
 * Rename test cases so that, for example, E10-* doesn't come before E4-*
 
