@@ -1,8 +1,13 @@
 Fble:
-* Figure out how to support recursive types.
+* Finish revising fble.2.txt 
+* Redesign test infrastructure for new fble spec
+* Distinguish between exprs and types in the syntax.
+* Distinguish between normal values and type values.
+* Implement strong/weak refcounting scheme
+* Implement recursive let properly.
+* Implement lazy type evaluation properly.
+* Implement type equality properly.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
-* Figure out how to allow an fble file to be reused for multiple different
-  programs.
 
 Fble Cleanup:
 * Share common code between checking StructType, UnionType, and FuncType?
