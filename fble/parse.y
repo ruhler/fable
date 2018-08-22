@@ -81,7 +81,7 @@ kind:
       type_type_expr->_base.loc = @$;
       $$ = &type_type_expr->_base;
    }
- | '\\' '(' tfieldp ';' kind ')' {
+ | '\\' '<' tfieldp ';' kind '>' {
       FbleFuncTypeExpr* func_type_expr = FbleAlloc(arena, FbleFuncTypeExpr);
       func_type_expr->_base.tag = FBLE_FUNC_TYPE_EXPR;
       func_type_expr->_base.loc = @$;
@@ -102,7 +102,7 @@ type:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
- | '\\' '(' tfieldp ')' '{' type_stmt '}' {
+ | '\\' '<' tfieldp '>' '{' type_stmt '}' {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
       func_value_expr->_base.loc = @$;
@@ -110,7 +110,7 @@ type:
       func_value_expr->body = $6;
       $$ = &func_value_expr->_base;
    }
- | type '(' typep ')' {
+ | type '<' typep '>' {
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
       apply_expr->_base.tag = FBLE_APPLY_EXPR;
       apply_expr->_base.loc = @$;
@@ -185,6 +185,22 @@ expr:
       var_expr->_base.loc = @$;
       var_expr->var = $1;
       $$ = &var_expr->_base;
+   }
+ | '\\' '<' tfieldp '>' '{' stmt '}' {
+      FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
+      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+      func_value_expr->_base.loc = @$;
+      func_value_expr->args = $3;
+      func_value_expr->body = $6;
+      $$ = &func_value_expr->_base;
+   }
+ | expr '<' typep '>' {
+      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_APPLY_EXPR;
+      apply_expr->_base.loc = @$;
+      apply_expr->func = $1;
+      apply_expr->args = $3;
+      $$ = &apply_expr->_base;
    }
  | '\\' '(' fields ')' '{' stmt '}' {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
@@ -459,7 +475,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,:?=.<+*-!$@\\", c) != NULL;
+  return strchr("(){};,:?=.<>+*-!$@\\", c) != NULL;
 }
 
 // ReadNextChar --

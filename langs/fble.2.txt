@@ -719,13 +719,13 @@ name ::= (* [a-zA-Z--9_]+ *)
 tname ::= name '@'
 
 kind ::= '@'                                              (* basic_kind *)
- | '\(' kind tname [',' kind tname [...]] ';' kind ')'    (* func_kind *)
+ | '\<' kind tname [',' kind tname [...]] ';' kind '>'    (* poly_kind *)
 
 type ::= 
    '{' type_stmt '}'                                        (* type_stmt *)
  | tname                                                    (* type_var *)
- | '\(' kind tname [',' kind tname [...]] ')' '{' type_stmt '}'  (* type_func_value *)
- | type '(' [type [',' type [...]]] ')'                     (* type_apply *)
+ | '\<' kind tname [',' kind tname [...]] '>' '{' type_stmt '}'  (* poly_type *)
+ | type '<' [type [',' type [...]]] '>'                     (* poly_type_apply *)
  | '\(' type name [',' type name [...]] ';' type ')'        (* func_type *)
  | '*(' [type name [',' type name [...]]] ')'               (* struct_type *)
  | '+(' type name [',' type name [...]] ')'                 (* union_type *)
@@ -742,7 +742,9 @@ type_stmt ::=
 expr ::=
    '{' stmt '}'                                           (* statement *)
  | name                                                   (* var *)
- | '\(' type name [',' type name [...]] ')' '{' stmt '}'  (* func_value *)
+ | '\<' kind tname [',' kind tname [...]] '>' '{' stmt '}'  (* poly *)
+ | expr '<' [type [',' type [...]]] '>'                   (* poly_apply *)
+ | '\(' [type name [',' type name [...]]] ')' '{' stmt '}'  (* func_value *)
  | expr '(' [expr [',' expr [...]]] ')'                   (* apply *)
  | type '(' [expr [',' expr [...]]] ')'                   (* struct_value *)
  | type '(' name ':' expr ')'                             (* union_value *)
