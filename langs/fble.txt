@@ -2,66 +2,172 @@ Fable E
 =======
 Richard Uhler <ruhler@degralder.com>
 
-Introduction
+1. Introduction
+---------------
+Fble is a general purpose, Turing-complete functional programming language
+with support for polymorphism and concurrent processes.
+
+1.1 Goals
+---------
+The primary design goals of fble are:
+
+* Fble should be as simple a language as possible while still being useful.
+  A simple language should hopefully be simple to specify, simple to learn,
+  simple to understand, simple to program, powerful, and low cost to develop
+  high quality tools for.
+
+* Fble should support high performance, low overhead computing. This is
+  achieved by using a static type system and having a very clear performance
+  model that a developer can optimize for.
+
+* Fble should be a joy to program in. It should be easy to describe the
+  majority of programs we want to describe, not tediously difficult. To
+  accomplish this, fble allows functions to be declared locally with access to
+  variables in the context where they are declared, and fble supports
+  polymorphic types and functions.
+
+* Fble, or an extension thereof, should support programming at scale. That is,
+  namespace control and composition of modules developed by different
+  individual developers or organizations.
+
+2. Language Overview
+--------------------
+The primitive data types of fble are structs, unions, functions, and
+processes.
+
+Data values and the expressions that describe them are strongly typed. A
+value's type describes the kinds of operations that can legally be performed
+on that value. Types are used to check that an fble programs is well formed
+statically. Types do not take part in the dynamic execution of an fble program
+after it has been statically checked.
+
+Local variables allow data values to be reused throughout a program, including
+recursively. Analogously, type variables allow types to be reused throughout a
+program and recursively.
+
+Both expressions and types can be polymorphic, which is to say they can be
+made abstract with respect to type parameters. To facilitate more advanced use
+of polymorphism, types themselves are strongly typed; we call the type of a
+type its kind.
+
+3. Structs
+----------
+A struct value is a grouping of other values. The items of a struct are
+organized into a finite number of fields. Each field has a name, used to
+identify the field, and a type, specifying the type of value for that field.
+
+Struct values are constructed by supplying values for all fields of the
+struct. Individual components of a struct can be accessed by field name.
+
+3.1 Struct Type
+---------------
+Abstract Syntax:
+  Type ::= struct_type (fields :: [(Type, Name)])
+
+Concrete Syntax:
+  type ::= '*(' [type name [',' type name [...]]] ')'
+
+Examples:
+  *()                 is the Unit type
+  *(Int@ x, Int@ y)   is the type of a pair of ints x, y.
+
+Struct types are considered equal if their fields are equal, including field
+types, field names, and the order of the fields.
+
+3.2 Struct Value
+----------------
+Abstract Syntax:
+  Expr ::= struct_value (type :: Type) (args :: [Expr])
+
+Concrete Syntax:
+  expr ::= type '(' [expr [',' expr [...]]] ')'
+
+Example:
+  Coord@(3, 5)
+
+3.3 Struct Access
+-----------------
+Abstract Syntax:
+  Expr ::= struct_access (object :: Expr) (field :: Name)
+
+Concrete Syntax:
+  expr '.' name
+
+Example:
+  x.first
+
+Returns the value passed to the struct at the corresponding field position
+when the struct was constructed.
+
+4. Unions
+---------
+A union value is a particular value chosen amongst a group of possible values.
+The possible choices are organized into a finite number of fields. Each field
+has a name, used to identify the field, and a type, specifying the type of
+value for that field.
+
+Union values are constructed by supplying a value for a particular field of
+the union. The particular value for the union can be accessed by field name,
+and the union can be used to select among other values and expressions based
+on the field present in the union value.
+
+4.1 Union Type
+--------------
+Abstract Syntax:
+  Type ::= union_type (fields :: [(Type, Name)])
+
+Concrete Syntax:
+  type ::= '+(' type name [',' type name [...]] ')'
+
+Example:
+  +(Unit@ true, Unit@ false)
+
+Union types are considered equal if their fields are equal, including field
+types, field names, and the order of the fields.
+
+4.2 Union Value
+---------------
+Abstract Syntax:
+  Expr ::= union_value (type :: Type) (field :: Name) (arg :: Expr)
+
+Concrete Syntax:
+  expr ::= type '(' name ':' expr ')'
+
+Example:
+  Maybe@(Just: 3)
+
+4.3 Union Access
+----------------
+Abstract Syntax:
+  Expr ::= union_access (object :: Expr) (field :: Name)
+
+Concrete Syntax:
+  expr ::= expr '.' name
+
+Example:
+  x.Just
+
+Returns the value passed to the union at the corresponding field position when
+the union was constructed. Behavior is undefined if the union tag does not
+match the field being accessed.
+
+4.4 Conditional
+---------------
+Abstract Syntax:
+  Expr ::= cond (condition :: Expr) (choices :: [(Name, Expr)])
+
+Concrete Syntax:
+  expr ::= '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'
+
+Example:
+  ?(mfoo; Just: mfoo.Just, Nothing: 3)
+
+The condition must have union type. Returns the value of the choice selected
+by the tag of the condition, without causing any other choices to be
+evaluated.
+
+5. Functions
 ------------
-Fble is an experimental replacement for fblc. The problem with fblc/fbld is
-that it's just too tedious to program in, and the particular cause for that, I
-claim, is because of the fundamental assumption that functions are declared at
-the top level scope.
-
-Fble is a reenvisioning of fblc based around the assumption that functions can
-be declared locally with access to variables in the context where they are
-declared.
-
-Here is an example that came up when developing a Sudoku solver in fbld to
-illustrate the crux of the problem.
-
-We have a Maybe monad, a Writer monad, and a Pair data structure. We apply
-different functions to each element of the Pair, then combine the results.
-
-  Maybe<Writer<A>> ma = fa(p.a);
-  Maybe<Writer<B>> mb = fb(p.b);
-  ?(ma; just:
-    ?(mb; just: {
-      Writer<A> wa = ma.just;
-      Writer<B> wb = mb.just;
-      Writer<Pair<A, B>>(Append(wa.out, wb.out), Pair<A, B>(wa.x, wb.x));
-    }), nothing: Maybe<Writer<Pair<A, B>>>:nothing(Unit()),
-        nothing: Maybe<Writer<Pair<A, B>>>:nothing(Unit()));
-
-The problem here is that we repeat the logic for accessing a maybe multiple
-times, and the only feasible way to avoid that replication would be to pull
-the function out into various top level functions:
-
-  func maybe<type A, type B, func F(A x; B)>(Maybe<A> ma; Maybe<B>) {
-    ?(ma: just: Maybe<B>:just(F(ma.just)), nothing: Maybe<B>:nothing(Unit()));
-  };
- 
-But ugh. Try finishing that yourself. It's so much of a slog I'm not even
-willing to finish working through the example.
-
-If functions could be declared locally with access to local context, however,
-then it would be natural to set up a monadic bind kind of syntactic sugar for
-easily factoring things out:
-
-  Writer<A> wa <- maybe fa(p.a);
-  Writer<B> wb <- maybe fb(p.b);
-  a <- write wa
-  b <- write wb
-  Pair<A, B>(a, b)
-
-Which is easy to write and easy to read, and factors out the repeated
-application of maybe and the writer monads.
-
-V. Values
----------
-V.1 Types
----------
-The most primitive kind of value in fble is a type value. Every value has a
-type, and the type value is what is used to describe that type.
-
-V.2 Functions
--------------
 A function is a mapping from argument values to result value. The arguments
 are organized into a finite number of args. Each arg has a name, used to
 identify the argument in the body of the function, and a type, specifying the
@@ -73,161 +179,43 @@ Functions are described using the fble expression language. A function can be
 applied to a set of arguments of appropriate type to produce a value with the
 return type of the function.
 
-V.3 Structures
---------------
-A structure is a bundle (or grouping) of values. The items of a
-structure are organized into a finite number of fields. Each field has a
-name, used to identify the field, and a type, specifying the type of value for
-that field.
-
-Structure values are constructed by supplying values for all fields of the
-structure. Individual components of a constructor can be accessed by field
-name.
-
-V.4 Unions
-----------
-A union is a particular value chosen amongst a group of possible values. The
-possible choices are organized into a finite number of fields. Each field has a
-name, used to identify the field, and a type, specifying the type of value for
-that field.
-
-Union values are constructed by supplying a value for a particular field of
-the union. The particular value for the union can be accessed by field name,
-and the union can be used to select amongts other values and expressions based
-on the field present in the union value.
-
-V.5 Process
------------
-A process is a computation with side effects that produces a value. Side
-effects take the form of getting and putting values to and from links that can
-be accessed by other running processes.
-
-There are primitive processes for getting a value from a link, putting a value
-to a link, and creating and using a new link. Processes can be combined by
-executing them in parallel and serial.
-
-V.6 Input Port
---------------
-An input port is a handle to a link that can be used to get values from
-the link. An input port is typed, so that only values of the given type can be
-taken from the port.
-
-An input port is created for every link that is created. An input port can be
-used as a process that takes a value off its link.
-
-V.7 Output Port
----------------
-An output port is a handle to a link that can be used to put values onto the
-link. An output port is typed, so that only values of the given type can be
-put onto the link.
-
-An output port is created for every link that is created. An output port can
-be used as a process that puts a value onto its link.
-
-E. Expressions
---------------
-E.1 Variable Expression
------------------------
-Abstract Syntax:
-  var (name :: Name)
-
-Concrete Syntax:
-  name
-
-Example:
-  x
-
-Expressions are evaluated in a context that maps variable names to values and
-types. The value of the variable expression is the value associated with the
-variable name in the context. The type of the variable expression is the type
-associated with the variable name in the context.
-
-E.2 Let Expression
-------------------
-Abstract Syntax:
-  let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
-
-Concrete Syntax: (in statement context)
-  type name '=' expr [',' type name = expr [...]] ';' stmt
-
-Examples:
-  Int x = mul(3, 3); mul(x, x)
-
-  P = *(Int head, S tail), S = +(Unit nil, P cons); P(3, S:nil(Unit()))
-
-The let expression is used to define variables. For each binding, a new
-variable is defined. The value of the variable is the result of evaluating the
-expression for the variable's binding.
-
-The defined variables are visible in the body of the let expression. To
-support self and mutually recursive types and functions, the defined variables
-are also visible in all of the bindings expressions.
-
-TODO: Are recursive struct and union values also supported? Does that imply
-lazy evaluation?
-
-TODO: Are bindings allowed to defined variables with the same name as
-variables already in scope, thus shadowing the variable already in scope?
-
-The value of the let expression is the value of its body.
-
-E.3 Type Type
--------------
-Abstract Syntax:
-  type_type
-
-Concrete Syntax:
-  '@'
-
-Example:
-  @
-
-The type type is a type value representing the type of all type values.
-
-TODO: Is the type of a the type type value itself, or some implicit thing that
-cannot be referred to? Can you say something like: @ x = @; ... ?
-
-E.4 Function Type
+5.1 Function Type
 -----------------
 Abstract Syntax:
-  func_type (args :: [(Type, Name)]) (return :: Type)
+  Type ::= func_type (args :: [(Type, Name)]) (return :: Type)
 
 Concrete Syntax:
-  '\(' type name [',' type name [...]] ';' type ')'
+  type ::= '\(' type name [',' type name [...]] ';' type ')'
 
 Examples:
-  \(Int a, Int b; Bool)
-
-  \(@ T, T x; Maybe(T))
+  \(Int@ a, Int@ b; Bool@)
 
 The function type describes the type of a function value by specifying the
 function value's type and name of input arguments and return type.
 
-A function argument is a variable definition that is visible to the types for
-all subsequent arguments in the argument list and the return type. This allows
-you to write polymorphic functions parameterized by abstract types supplied
-when the function is invoked.
+Function arguments can be structs, unions, functions, or processes.
 
-Functions can take any kind of argument: structs, unions, functions, or types.
-
-Two functions are the same if they take the same args and return type, with
+Two function types are equal if they take the same args and return type, with
 possible renaming of argument names. For example, the following two function
-types are the same:
-  \(@ A, A a; Maybe(A))
-  \(@ T, T x; Maybe(T))
+types are equal:
+  \(Int x; Int)
+  \(Int y; Int)
 
-TODO: Are zero argument functions allowed?
+The rationale for including argument names in the function type when they are
+not involved in the equality check is because argument names often, but not
+always, serve as documentation suggestive to the programmer as to the intent
+of when the function should be called.
 
-E.5 Function Value
+5.2 Function Value
 ------------------
 Abstract Syntax:
-  func_value (args :: [(Type, Name)]) (body :: Expr)
+  Expr ::= func_value (args :: [(Type, Name)]) (body :: Expr)
 
 Concrete Syntax:
-  '\(' type name [',' type name [...]] ')' '{' stmt '}'
+  expr ::= '\(' type name [',' type name [...]] ')' '{' stmt '}'
 
 Example:
-  \(Bool a) ?(a; true: False, false: True)
+  \(Bool@ a) ?(a; true: False, false: True)
 
 The function value expression is used to describe a primitive function value
 given the list of arguments and the body of the function. The return type of
@@ -236,18 +224,18 @@ the function is inferred to be the type of the body of the function.
 Rationale for Concrete Syntax: The body of the function requires use of braces
 to avoid ambiguity that would arise otherwise with an expression such as:
 
-  \(T x) f (y)
+  \(T@ x) f (y)
 
 In this case it isn't clear if the argument 'y' is being applied to the
-function \(T x) f, or to the function f.
+function \(T@ x) f, or to the function f.
 
-E.6 Application
+5.3 Application
 ---------------
 Abstract Syntax:
-  apply (func :: Expr) (args :: [Expr])
+  Expr ::= apply (func :: Expr) (args :: [Expr])
 
 Concrete Syntax:
-  expr '(' [expr [',' expr [...]]] ')'
+  expr ::= expr '(' [expr [',' expr [...]]] ')'
 
 Example:
   foo(x, 3)
@@ -261,136 +249,124 @@ remaining arguments.
 If all arguments are supplied, the application expression evaluates to the
 value of the body of the function in the context of the supplied arguments.
 
-TODO: Is evaluation struct? Lazy?
+TODO: Can extra arguments be supplied to a function if the function returns a
+function, thus causing the returned function to be called with those extra
+arguments supplied as well?
 
-E.7 Struct Type
----------------
+5.4 Bind
+--------
 Abstract Syntax:
-  struct_type (fields :: [(Type, Name)])
+  Expr ::= bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
 
 Concrete Syntax:
-  '*(' [type name [',' type name [...]]] ')'
+  stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
 
-Examples:
-  *()                 is the Unit type
-  *(Int x, Int y)     is the type of a pair of ints x, y.
+Example
+  Int@ x <- map(l); f(x, y)
 
-Structures can store any kind of argument: structs, unions, functions, or
-types.
+Bind is syntactic sugar for applying a function to a function value. It is
+equivalent to:
 
-Struct types are considered equal if their fields are equal.
+  apply func (func_value args body)
 
-E.8 Struct Value
+6 Processes
+-----------
+A process is a computation with side effects that produces a value. Side
+effects take the form of getting and putting values to and from links that can
+be accessed by other running processes.
+
+There are primitive processes for getting a value from a link, putting a value
+to a link, and creating and using a new link. Processes can be combined by
+executing them in parallel and serial.
+
+6.1 Process Type
 ----------------
 Abstract Syntax:
-  struct_value (type :: Type) (args :: [Expr])
+  Type ::= proc_type (return :: Type)
 
 Concrete Syntax:
-  type '@' '(' [expr [',' expr [...]]] ')'
+  type ::= type '!'
 
 Example:
-  Coord@(3, 5)
+  Int@!
 
-E.9 Union Type
+6.2 Input Type
 --------------
 Abstract Syntax:
-  union_type (fields :: [(Type, Name)])
+  Type ::= input_type (type :: Type)
 
 Concrete Syntax:
-  '+(' type name [',' type name [...]] ')'
+  type ::= type '-'
 
 Example:
-  +(Unit true, Unit false)
+  Int@-
 
-Unions can store any kind of argument: structs, unions, functions, or types.
+An input port is a handle to a link that can be used to get values from
+the link. An input port is typed, so that only values of the given type can be
+taken from the port.
 
-Union types are considered equal if their fields are equal.
+An input port is created for every link that is created. An input port can be
+used as a process that takes a value off its link.
 
-E.10 Union Value
-----------------
-Abstract Syntax:
-  union_value (type :: Type) (field :: Name) (arg :: Expr)
-
-Concrete Syntax:
-  type '@' '(' name ':' expr ')'
-
-Example:
-  Maybe@(Just: 3)
-
-E.11 Access
------------
-Abstract Syntax:
-  access (object :: Expr) (field :: Name)
-
-Concrete Syntax:
-  expr '.' name
-
-Example:
-  x.first
-  x.Just
-
-When the object is a struct value, returns the value passed to the structure
-at the corresponding field position when the struct was constructed.
-
-When the object is a union value, returns the value passed to the union at the
-corresponding field position when the union was constructed. Behavior is
-undefined if the union tag does not match the field being accessed.
-
-E.12 Conditional
-----------------
-Abstract Syntax:
-  cond (condition :: Expr) (choices :: [(Name, Expr)])
-
-Concrete Syntax:
-  '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'
-
-Example:
-  ?(mfoo; Just: mfoo.Just, Nothing: 3)
-
-The condition must have union type. Returns the value of the choice selected
-by the tag of the condition, without causing any other choices to be
-evaluated.
-
-E.13 Process Type
------------------
-Abstract Syntax:
-  proc_type (return :: Type)
-
-Concrete Syntax:
-  type '!'
-
-Example:
-  Int!
-
-E.14 Input Type
+6.3 Output Type
 ---------------
 Abstract Syntax:
-  input_type (type :: Type)
+  Type ::= output_type (type :: Type)
 
 Concrete Syntax:
-  type '-'
+  type ::= type '+'
 
 Example:
-  Int-
+  Int@+
 
-E.15 Output Type
-----------------
+An output port is a handle to a link that can be used to put values onto the
+link. An output port is typed, so that only values of the given type can be
+put onto the link.
+
+An output port is created for every link that is created. An output port can
+be used as a process that puts a value onto its link.
+
+6.4 Get
+-------
 Abstract Syntax:
-  output_type (type :: Type)
+  Expr ::= get (port :: Expr)
 
 Concrete Syntax:
-  type '+'
+  expr ::= expr '()'
 
 Example:
-  Int+
+  input()
 
-E.16 Eval
----------
+The port must have type input_type. If the port has type T@-, evaluates to a
+process value of type T@! that gets the next value from the port.
+
+6.5 Put
+-------
 Abstract Syntax:
-  eval (expr :: Expr)
+  Expr ::= put (port :: Expr) (value :: Expr)
 
 Concrete Syntax:
-  '$(' expr ')'
+  expr ::= expr '(' expr ')'
+
+Example:
+  output(3)
+
+The port must have type output_type. If the port has type T@+, evaluates to a
+process value of type T@! that puts the given value onto the port and returns
+that same value.
+
+The rationale for having put return its argument value is that fble is to
+avoid the complexity of introducing a builtin notion of a unit type or a
+process that doesn't return anything. In most cases we expect the return value
+of a put process to be ignored.
+
+6.6 Eval
+--------
+Abstract Syntax:
+  Expr ::= eval (expr :: Expr)
+
+Concrete Syntax:
+  expr ::= '$(' expr ')'
 
 Example:
   $(3)
@@ -398,310 +374,297 @@ Example:
 A process that returns the value of expr without performance any other
 actions.
 
-E.17 Get
+6.7 Link
 --------
 Abstract Syntax:
-  get (port :: Expr)
+  Expr ::= link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
 
 Concrete Syntax:
-  expr '()'
+  stmt ::= type '~' name ',' name ';' expr
 
 Example:
-  input()
-
-The port must have type input_type. If the port has type T-, evaluates to a
-process value of type T! that gets the next value from the port.
-
-E.18 Put
---------
-Abstract Syntax:
-  put (port :: Expr) (value :: Expr)
-
-Concrete Syntax:
-  expr '(' expr ')'
-
-Example:
-  output(3)
-
-The port must have type output_type. If the port has type T+, evaluates to a
-process value of type T! that puts the given value onto the port and returns
-that same value.
-
-E.19 Link
----------
-Abstract Syntax:
-  link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
-
-Concrete Syntax:
-  type '~' name ',' name ';' expr
-
-Example:
-  Int ~ input, output; f(input, output)
+  Int@ ~ input, output; f(input, output)
 
 The body must have type process_type. Evaluates to the value of the body with
 get and put ports of type type- and type+ respectively added to the context.
 
-E.20 Exec
----------
+6.8 Exec
+--------
 Abstract Syntax:
-  exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+  Expr ::= exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
-Concrete Syntax: (* in statement context *)
-  type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
+Concrete Syntax:
+  stmt ::= type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
 
 Example:
-  Int x := getx(), Int y := gety(); $(add(x, y))
+  Int@ x := getx(), Int@ y := gety(); $(add(x, y))
 
 Runs each process in parallel, then executes the body with the results of the
 processes assigned to variables in scope.
 
-E.21 Bind
----------
+7. Local Variables
+------------------
+Let expressions can be used to define local variables that allow values to be
+reused in multiple places in a program. Let expressions support recursive
+definitions of variables, which makes it possible to define recursive values.
+
+In the same way, type variables can be defined to allow types to be reused in
+multiple places in a program. Recursive definitions of type variables makes it
+possible to define recursive types.
+
+Type variables are distinguished syntactically from regular variables by
+adding the '@' character as a suffix to the variable name:
+
+7.1 Variable
+------------
 Abstract Syntax:
-  bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+  Expr ::= var (name :: Name)
 
-Concrete Syntax: (* in statement context *)
-  type name [',' type name [...]] '<-' expr ';' stmt
+Concrete Syntax:
+  expr ::= name
 
-Example
-  Int x <- map(l); f(x, y)
+Example:
+  x
 
-Bind is syntactic sugar for applying a function to a function value. It is
-equivalent to:
+Expressions are evaluated in a context that maps variable names to values and
+the types of those values. The value of the variable expression is the value
+associated with the variable name in the context. The type of the variable
+expression is the type associated with the variable name in the context.
 
-  apply func (func_value args body)
+7.2 Let
+-------
+Abstract Syntax:
+  Expr ::= let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
-P. Program
+Concrete Syntax:
+  stmt ::= type name '=' expr [',' type name = expr [...]] ';' stmt
+
+Example:
+  Int@ x = mul(3, 3); mul(x, x)
+
+The let expression is used to define variables. For each binding, a new
+variable is defined. The value of the variable is the result of evaluating the
+expression for the variable's binding.
+
+The defined variables are visible in the body of the let expression. To
+support self and mutually recursive values, the defined variables
+are also visible in all of the bindings expressions.
+
+TODO: Are bindings allowed to defined variables with the same name as
+variables already in scope, thus shadowing the variable already in scope?
+
+The value of the let expression is the value of its body.
+
+7.3 Type Variable
+-----------------
+Abstract Syntax:
+  Type ::= type_var (name :: Name)
+
+Concrete Syntax:
+  type_name ::= name '@'
+  type ::= type_name
+
+Example:
+  Int@
+
+Types and expressions are evaluated in a context that maps type variable names
+to types and the kinds of those types. The type of the type variable is
+the type associated with the type variable name in the context. The kind of
+the type variable is the kind associated with the type variable name in the
+context.
+
+7.4 Type Let
+------------
+Abstract Syntax:
+  Kind ::= basic_kind
+  Type ::= type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
+  Expr ::= type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
+
+Concrete Syntax:
+  kind ::= '@'
+  type_stmt ::= kind type_name '=' type [',' kind type_name = type [...]] ';' type_stmt
+  stmt ::= kind type_name '=' type [',' kind type_name = type [...]] ';' stmt
+
+Example:
+  @ Unit@ = *(); Unit@();
+  @ Unit@ = *(); +(Unit@ true, Unit@ false);
+  @ P@ = *(Int@ head, S@ tail), @ S@ = +(Unit@ nil, P@ cons); P@(3, S@:nil(Unit@()))
+
+The type let is used to define type variables, when describing either types or
+expressions. For each binding, a new type variable is defined. The type of the
+type variable is the result of evaluating the type for the variable's binding.
+
+The defined type variables are visible in the body of the let. To support self
+and mutually recursive types, the defined type variables are also visible in
+all of the bindings expressions.
+
+TODO: Are bindings allowed to defined variables with the same name as
+variables already in scope, thus shadowing the variable already in scope?
+
+The value of the type let is the value of its body.
+
+8. Polymorphism
+---------------
+Polymorphism allows expressions and types to be parameterized by abstract
+types.
+
+8.1 Poly Kind
+-------------
+Abstract Syntax:
+  Kind ::= poly_kind (args :: [Kind]) (return :: Kind)
+
+Concrete Syntax:
+  kind ::= '\<' kind [',' kind [...]] ';' kind '>'
+
+Examples:
+  \<@ ; @>
+
+A poly kind describes the kind of a polymorphic type, analogous to the way
+function types describe the type of functions.
+
+Two poly kinds are equal if they have the same args and return kinds.
+
+The rationale for not including argument names in the poly kind the way they
+are included in function types is that poly kinds are much less common and the
+name of the arguments typically does not convey much useful information for
+how to use the corresponding polymorphic type.
+
+8.2 Poly
+--------
+Abstract Syntax:
+  Type ::= poly_type (args :: [(Kind, Name)]) (body :: Type)
+  Expr ::= poly_expr (args :: [(Kind, Name)]) (body :: Expr)
+
+Concrete Syntax:
+  type ::= '\<' kind type_name [',' kind type_name [...]] '>' '{' type_stmt '}'
+  expr ::= '\<' kind type_name [',' kind type_name [...]] '>' '{' stmt '}'
+ 
+Examples:
+  \<@ T@> { +(T@ just, Unit nothing); }
+  \<@ T@> { \(T@ x; Maybe@<T@>) { Maybe@<T@>(just: x); }; }
+
+8.3 Poly Application
+--------------------
+Abstract Syntax:
+  Type ::= poly_type_apply (poly :: Type) (args :: [Type])
+  Expr ::= poly_expr_apply (poly :: Expr) (args :: [Type])
+
+Concrete Syntax:
+  type ::= type '<' type [',' type [...]] '>'
+  expr ::= expr '<' type [',' type [...]] '>'
+
+Examples:
+  Maybe@<Int@>
+  fromJust<Int@>(3)
+
+9. Program
 ----------
-A program is an expressions that creates a value that is used however is
+A program is an fble expressions that creates a value that is used however is
 deemed suitable by whoever is executing the program. Commonly this could be:
 
-* func value: apply the function to arguments provided on the command line,
+* struct: evaluate and output the value
+* union: evaluate and output the value
+* function: apply the function to arguments provided on the command line,
   evaluate and output the resulting value
-* struct value: evaluate and output the value
-* union value: evaluate and output the value
-* process value: run the process, evaluate and output the resulting value.
-
+* process: run the process, evaluate and output the resulting value.
   
-Abstract Syntax Reference
--------------------------
+10. Abstract Syntax Reference
+-----------------------------
 Name ::= (* A string of characters *)
-Type ::= (* Expr that evaluates to a type value *)
 
-Expr ::=
-   var (name :: Name)
- | let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+Kind ::=
+   basic_kind
+ | poly_kind (args :: [Kind]) (return :: Kind)
+ ;
 
- | type_type
-
- | func_type (args :: [(Type, Name)]) (return :: Type)
- | func_value (args :: [(Type, Name)]) (body :: Expr)
- | apply (func :: Expr) (args :: [Expr])
-
- | struct_type (fields :: [(Type, Name)])
- | struct_value (type :: Type) (args :: [Expr])
-
+Type ::=
+   struct_type (fields :: [(Type, Name)])
  | union_type (fields :: [(Type, Name)])
- | union_value (type :: Type) (field :: Name) (arg :: Expr)
-
- | access (object :: Expr) (field :: Name)
- | cond (condition :: Expr) (choices :: [(Name, Expr)])
-
+ | func_type (args :: [(Type, Name)]) (return :: Type)
  | proc_type (return :: Type)
  | input_type (type :: Type)
  | output_type (type :: Type)
- | eval (expr :: Expr)
- | get (port :: Expr)
- | put (port :: Expr) (value :: Expr)
- | link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
- | exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
- | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+ | type_var (name :: Name)
+ | type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
+ | poly_type (args :: [(Kind, Name)]) (body :: Type)
+ | poly_type_apply (poly :: Type) (args :: [Type])
  ;
 
-Concrete Syntax Reference
--------------------------
+Expr ::=
+   struct_value (type :: Type) (args :: [Expr])
+ | struct_access (object :: Expr) (field :: Name)
+ | union_value (type :: Type) (field :: Name) (arg :: Expr)
+ | union_access (object :: Expr) (field :: Name)
+ | cond (condition :: Expr) (choices :: [(Name, Expr)])
+ | func_value (args :: [(Type, Name)]) (body :: Expr)
+ | apply (func :: Expr) (args :: [Expr])
+ | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+ | get (port :: Expr)
+ | put (port :: Expr) (value :: Expr)
+ | eval (expr :: Expr)
+ | link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
+ | exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+ | var (name :: Name)
+ | let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+ | type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
+ | poly_expr (args :: [(Kind, Name)]) (body :: Expr)
+ | poly_expr_apply (poly :: Expr) (args :: [Type])
+ ;
+
+11. Concrete Syntax Reference
+-----------------------------
 name ::= (* [a-zA-Z--9_]+ *)
-type ::= expr ;
+
+type_name ::= name '@'
+
+kind ::=
+   '@'                                        (* basic_kind *)
+ | '\<' kind [',' kind [...]] ';' kind '>'    (* poly_kind *)
+ ;
+
+type ::= 
+   '*(' [type name [',' type name [...]]] ')'                            (* struct_type *)
+ | '+(' type name [',' type name [...]] ')'                              (* union_type *)
+ | '\(' type name [',' type name [...]] ';' type ')'                     (* func_type *)
+ | type '!'                                                              (* proc_type *)
+ | type '-'                                                              (* input_type *)
+ | type '+'                                                              (* output_type *)
+ | type_name                                                             (* type_var *)
+ | '\<' kind type_name [',' kind type_name [...]] '>' '{' type_stmt '}'  (* poly_type *)
+ | type '<' [type [',' type [...]]] '>'                                  (* poly_type_apply *)
+ | '{' type_stmt '}'                                                     (* type_stmt *)
+ ;
+
+type_stmt ::=
+   type ';'                                                                   (* type *)
+ | kind type_name '=' type [',' kind type_name '=' type [...]] ';' type_stmt  (* type_let_type *)
+ ;
 
 expr ::=
-   '{' stmt '}'                                           (* statement *)
- | name                                                   (* var *)
-
- | '@'                                                    (* type_type *)
-
- | '\(' type name [',' type name [...]] ';' type ')'      (* func_type *)
- | '\(' type name [',' type name [...]] ')' '{' stmt '}'  (* func_value *)
- | expr '(' [expr [',' expr [...]]] ')'                   (* apply *)
-
- | '*(' [type name [',' type name [...]]] ')'             (* struct_type *)
- | type '@' '(' [expr [',' expr [...]]] ')'               (* struct_value *)
-
- | '+(' type name [',' type name [...]] ')'                   (* union_type *)
- | type '@' '(' name ':' expr ')'                             (* union_value *)
-
- | expr '.' name                                              (* _access *)
- | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'  (* cond *)
-
- | type '!'                                               (* proc_type *)
- | type '-'                                               (* input_type *)
- | type '+'                                               (* output_type *)
- | '$(' expr ')'                                          (* eval *)
- | expr '()'                                              (* get *)
- | expr '(' expr ')'                                      (* put *)
+   type '(' [expr [',' expr [...]]] ')'                             (* struct_value *)
+ | type '(' name ':' expr ')'                                       (* union_value *)
+ | expr '.' name                                                    (* access *)
+ | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'        (* cond *)
+ | '\(' [type name [',' type name [...]]] ')' '{' stmt '}'          (* func_value *)
+ | expr '(' [expr [',' expr [...]]] ')'                             (* apply *)
+ | '$(' expr ')'                                                    (* eval *)
+ | name                                                             (* var *)
+ | '\<' kind type_name [',' kind type_name [...]] '>' '{' stmt '}'  (* poly_expr *)
+ | expr '<' [type [',' type [...]]] '>'                             (* poly_expr_apply *)
+ | '{' stmt '}'                                                     (* statement *)
  ;
 
 stmt ::=
-   expr ';'                                                      (* expr *)
- | type name '=' expr [',' type name = expr [...]] ';' stmt      (* let *)
- | type '~' name ',' name ';' stmt                               (* link *)
- | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt  (* exec *)
- | type name [',' type name [...]] '<-' expr ';' stmt            (* bind *)
+   expr ';'                                                             (* expr *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                   (* bind *)
+ | type name '=' expr [',' type name = expr [...]] ';' stmt             (* let *)
+ | kind type_name '=' type [',' kind type_name = type [...]] ';' stmt   (* type_let_expr *)
+ | type '~' name ',' name ';' stmt                                      (* link *)
+ | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt         (* exec *)
  ;
 
 Notes:
-* apply, get, and put share the same form. The type of the expr
-  is used to distinguish between the four kinds of expressions.
-  
-Miscellaneous Thoughts
-----------------------
-* I'd like there to be no such thing as a zero argument function. Use a value
-  for that instead.
-  
-  Although, perhaps you could use a zero argument function to distinguish
-  between a strict and a lazy value?
-
-  And what about input ports, which use the syntax of no-argument functions?
-
-  Maybe a zero argument function is fine.
-
-* As with fblc/fbld, I would like the type of an expression to be determined
-  completely by the expression and the types of any variables it refers to.
-  The type of the expression should not otherwise depend on the context where
-  the expression is used.
-
-* Concern: How to distinguish between a type constructor used as a type and a
-  type constructor used to construct a value?
-
-  For example, given the context
-  @ Unit = *();
-  ...
-
-  What is the type of 'Unit'? Is it @ or *()?
-
-  Proposal: change syntax of struct constructors to include a :.
-  For example: Unit has type @, Unit: has type *()?
-
-  Or is this only an issue if we don't support zero-argument function syntax?
-
-  Not an issue anymore with new syntax: Unit vs. Unit@().
-
-* Defining functions is tedious because you end up duplicating the type
-  information. For example:
-
-  \(Bool a, Bool b; Bool) And = \(Bool a, Bool b; Bool) {
-    ?(a; true: b, false: False);
-  };
-
-  Maybe we should support some syntactic sugar to help with this?
-  Or, at least we could remove the return type in the lambda expression,
-  because you can infer that from the body of the function, right?
-
-  Done.
-
-* It's super nice having global value declarations, instead of having to
-  define zero argument functions.
-
-* Syntax highlighting could be tricky, because it is mostly already
-  highlighted by punctuation. Maybe highlight identifiers in let expressions?
-
-* It's nice not having to worry that any declaration may refer to any other in
-  the file. Limiting those recursive loops to just where they are needed is
-  nice.
-
-* Typing is going to be a little bit interesting, because to type check an
-  expression requires evaluating the types. There is a spectrum of where we
-  could be. On one end, type as you go lazily. In particular, you don't type
-  check the body of a function before executing the function. On the other
-  extreme, some sort of abstract interpretation or static elaboration of
-  function bodies to figure out types, ignoring the fact that you don't know
-  argument values. Possibly in between: restrictions on what kinds of types
-  can be used in, say conditional expressions and recursive functions so that
-  it's straight forward to evaluate types without evaluating other things.
-
-  No need to decide now. Let's just see how things evolve.
-
-  Time to decide now. I propose the following:
-  
-  A type is called a kinded type if expressions with that type can be used to
-  evaluate to a type. @ is a kinded type. A struct or union type that has any
-  fields of a kinded type are kinded types. A function type whose return type
-  is a kinded type is itself a kinded type.
-
-  Process or input or output types are disallowed from being kinded type.
-  Conditional expressions are disallowed from being kinded type.
-
-  Expressions of kinded type are evaluated during type check. Other
-  expressions are not evaluated during type check.
-
-  When evaluating expressions of kinded type during type check, it may be the
-  case that the resulting value depends on unknown input parameters. This is
-  not an error unless the value of those input parmaters must be known to type
-  check the expression.
-
-  I think that gives everything I need.
-
-* Eventually I'll want to think about how to scale up fble programs. Is there
-  a natural way to split fble programs across multiple files/directories
-  authored by multiple different authors? But that's something to worry about
-  later.
- 
-  I'm thinking have a way to import an expression from a file.
-  And have ways to create struct values from a context and set up a context
-  given struct values.
-  And have a way to say: here is a struct value that should be evaluated at
-  type check and used directly, without having to supply a type.
-  And have a way to say: I require some named, untyped, structure to be
-  available implicitly in my expression.
-
-* Need syntax to distinguish between struct_value and apply?
-  Because for struct_value, we have to know the value of the "function" at
-  type check type, but for apply we don't. Probably better to have syntax so
-  we can tell that easily when we go to type check the expression.
-
-  Not sure what syntax to use though. Maybe:
-    struct_value ::= type ':' '(' args ')'
-
-  Picking: type '@' '(' exprs ')'
-  To go with union: type '@' '(' name ':' expr ')'
-  
-
-* How to test?
-  Provide an expression.
-  Type check and evaluate the expression.
-  If the result is a process, run the process.
-
-  The test fails if there is a type error or undefined union field access.
-  The test succeeds otherwise.
-
-* What is the lifetime of a local variable?
-  This is important, for example, for recursive functions so the programmer
-  knows when the stack will be smashed. In other words, does the lifetime of
-  that local variable extend beyond the recursive function call, or does it
-  end before that?
-
-  Assume we know, based on the evaluation semantics, when an expression is
-  evaluated. The programmer needs to know this for performance reasons. Then
-  how about we say the lifetime of a local variable is just long enough for
-  all the expressions that will need the variable value to be evaluated.
-
-  Example:
-  \(List l, Int acc; Int) sum = \(List l, Int acc) {
-    ?(l; nil: acc,
-         cons: sum(l.cons.tail, Add(l.cons.head, acc)));
-  };
-  
-  The local variable 'acc' is no longer live after the Add call, so it is safe
-  to do the recursive sum call without having to worry about memory growth in
-  the size of the list.
-  
-
+* struct and union access share the same form. The type of the object is used
+  to distinguish between the two kinds of expressions.
+* apply, get, and put share the same form. The type of the expr is used to
+  distinguish between the three kinds of expressions.
