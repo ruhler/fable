@@ -1,8 +1,8 @@
 Fble:
-* Finish revising fble.2.txt 
-* Redesign test infrastructure for new fble spec
-* Distinguish between exprs and types in the syntax.
-* Distinguish between normal values and type values.
+* Port pending tests to new spec
+* Update parser for new spec
+* Rewrite fble.h abstract syntax to match new spec
+ - And rewrite the implementation to match
 * Implement strong/weak refcounting scheme
 * Implement recursive let properly.
 * Implement lazy type evaluation properly.
