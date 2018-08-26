@@ -320,6 +320,9 @@ typedef struct {
   FbleField* xs;
 } FbleFieldV;
 
+typedef FbleField FbleTypeField;
+typedef FbleFieldV FbleTypeFieldV;
+
 // FbleChoice --
 //   A pair of (Name, Expr) used in conditional expressions.
 typedef struct {
@@ -348,6 +351,9 @@ typedef struct {
   size_t size;
   FbleBinding* xs;
 } FbleBindingV;
+
+typedef FbleBinding FbleTypeBinding;
+typedef FbleBindingV FbleTypeBindingV;
 
 // FbleVarExpr --
 //   FBLE_VAR_EXPR (name :: Name)

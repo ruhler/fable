@@ -42,8 +42,10 @@
   FbleExpr* expr;
   FbleExprV exprs;
   FbleFieldV fields;
+  FbleTypeFieldV type_fields;
   FbleChoiceV choices;
   FbleBindingV bindings;
+  FbleTypeBindingV type_bindings;
 }
 
 %{
@@ -67,14 +69,16 @@
 
 %type <name> type_name
 %type <kind> kind
-%type <kinds> kindp
+%type <kinds> kind_p
 %type <type> type type_stmt 
-%type <types> typep
+%type <types> type_p
 %type <expr> expr stmt
-%type <exprs> exprs
-%type <fields> fieldp fields tfieldp
+%type <exprs> expr_s
+%type <fields> field_p field_s
+%type <type_fields> type_field_p
 %type <choices> choices
-%type <bindings> let_bindings tlet_bindings exec_bindings
+%type <bindings> let_bindings exec_bindings
+%type <type_bindings> type_let_bindings
 
 %%
 
@@ -89,39 +93,39 @@ kind:
       type_type_expr->_base.loc = @$;
       $$ = &type_type_expr->_base;
    }
- | '\\' '<' kindp ';' kind '>' {
+ | '\\' '<' kind_p ';' kind '>' {
       assert(false && "TODO: parse poly_kind");
       $$ = NULL;
    }
  ;
 
-kindp:
+kind_p:
    kind {
      FbleVectorInit(arena, $$);
      FbleVectorAppend(arena, $$, $1);
    }
- | kindp ',' kind {
+ | kind_p ',' kind {
      $$ = $1;
      FbleVectorAppend(arena, $$, $3);
    }
  ;
 
 type:
-   '*' '(' fields ')' {
+   '*' '(' field_s ')' {
       FbleStructTypeExpr* struct_type_expr = FbleAlloc(arena, FbleStructTypeExpr);
       struct_type_expr->_base.tag = FBLE_STRUCT_TYPE_EXPR;
       struct_type_expr->_base.loc = @$;
       struct_type_expr->fields = $3;
       $$ = &struct_type_expr->_base;
    }
- | '+' '(' fieldp ')' {
+ | '+' '(' field_p ')' {
       FbleUnionTypeExpr* union_type_expr = FbleAlloc(arena, FbleUnionTypeExpr);
       union_type_expr->_base.tag = FBLE_UNION_TYPE_EXPR;
       union_type_expr->_base.loc = @$;
       union_type_expr->fields = $3;
       $$ = &union_type_expr->_base;
    }
- | '\\' '(' fields ';' type ')' {
+ | '\\' '(' field_s ';' type ')' {
       FbleFuncTypeExpr* func_type_expr = FbleAlloc(arena, FbleFuncTypeExpr);
       func_type_expr->_base.tag = FBLE_FUNC_TYPE_EXPR;
       func_type_expr->_base.loc = @$;
@@ -157,7 +161,7 @@ type:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
- | '\\' '<' tfieldp '>' '{' type_stmt '}' {
+ | '\\' '<' type_field_p '>' '{' type_stmt '}' {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
       func_value_expr->_base.loc = @$;
@@ -165,7 +169,7 @@ type:
       func_value_expr->body = $6;
       $$ = &func_value_expr->_base;
    }
- | type '<' typep '>' {
+ | type '<' type_p '>' {
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
       apply_expr->_base.tag = FBLE_APPLY_EXPR;
       apply_expr->_base.loc = @$;
@@ -180,7 +184,7 @@ type:
 
 type_stmt:
     type ';' { $$ = $1; }
-  | tlet_bindings ';' type_stmt {
+  | type_let_bindings ';' type_stmt {
       FbleLetExpr* let_expr = FbleAlloc(arena, FbleLetExpr);
       let_expr->_base.tag = FBLE_LET_EXPR;
       let_expr->_base.loc = @$;
@@ -190,25 +194,25 @@ type_stmt:
     }  
   ;
 
-typep:
+type_p:
    type {
      FbleVectorInit(arena, $$);
      FbleVectorAppend(arena, $$, $1);
    }
- | typep ',' type {
+ | type_p ',' type {
      $$ = $1;
      FbleVectorAppend(arena, $$, $3);
    }
  ;
 
-tfieldp:
+type_field_p:
    kind type_name {
      FbleVectorInit(arena, $$);
      FbleField* field = FbleVectorExtend(arena, $$);
      field->type = $1;
      field->name = $2;
    }
- | tfieldp ',' kind type_name {
+ | type_field_p ',' kind type_name {
      $$ = $1;
      FbleField* field = FbleVectorExtend(arena, $$);
      field->type = $3;
@@ -216,19 +220,19 @@ tfieldp:
    }
  ;
 
-fields:
+field_s:
    %empty { FbleVectorInit(arena, $$); }
- | fieldp { $$ = $1; }
+ | field_p { $$ = $1; }
  ;
 
-fieldp:
+field_p:
    type NAME {
      FbleVectorInit(arena, $$);
      FbleField* field = FbleVectorExtend(arena, $$);
      field->type = $1;
      field->name = $2;
    }
- | fieldp ',' type NAME {
+ | field_p ',' type NAME {
      $$ = $1;
      FbleField* field = FbleVectorExtend(arena, $$);
      field->type = $3;
@@ -237,7 +241,7 @@ fieldp:
  ;
 
 expr:
-   type '(' exprs ')' {
+   type '(' expr_s ')' {
       FbleStructValueExpr* struct_value_expr = FbleAlloc(arena, FbleStructValueExpr);
       struct_value_expr->_base.tag = FBLE_STRUCT_VALUE_EXPR;
       struct_value_expr->_base.loc = @$;
@@ -270,7 +274,7 @@ expr:
       cond_expr->choices = $5;
       $$ = &cond_expr->_base;
    }
- | '\\' '(' fields ')' '{' stmt '}' {
+ | '\\' '(' field_s ')' '{' stmt '}' {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
       func_value_expr->_base.loc = @$;
@@ -278,7 +282,7 @@ expr:
       func_value_expr->body = $6;
       $$ = &func_value_expr->_base;
    }
- | expr '(' exprs ')' {
+ | expr '(' expr_s ')' {
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
       apply_expr->_base.tag = FBLE_APPLY_EXPR;
       apply_expr->_base.loc = @$;
@@ -300,7 +304,7 @@ expr:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
- | '\\' '<' tfieldp '>' '{' stmt '}' {
+ | '\\' '<' type_field_p '>' '{' stmt '}' {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
       func_value_expr->_base.loc = @$;
@@ -308,7 +312,7 @@ expr:
       func_value_expr->body = $6;
       $$ = &func_value_expr->_base;
    }
- | expr '<' typep '>' {
+ | expr '<' type_p '>' {
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
       apply_expr->_base.tag = FBLE_APPLY_EXPR;
       apply_expr->_base.loc = @$;
@@ -324,7 +328,7 @@ expr:
 
 stmt:
     expr ';' { $$ = $1; }
-  | fieldp '<' '-' expr ';' stmt {
+  | field_p '<' '-' expr ';' stmt {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
       func_value_expr->_base.loc = @$;
@@ -365,7 +369,7 @@ stmt:
       let_expr->body = $3;
       $$ = &let_expr->_base;
     }  
-  | tlet_bindings ';' stmt {
+  | type_let_bindings ';' stmt {
       FbleLetExpr* let_expr = FbleAlloc(arena, FbleLetExpr);
       let_expr->_base.tag = FBLE_LET_EXPR;
       let_expr->_base.loc = @$;
@@ -375,13 +379,13 @@ stmt:
     }  
   ;
 
-exprs:
+expr_s:
    %empty { FbleVectorInit(arena, $$); }
  | expr {
      FbleVectorInit(arena, $$);
      FbleVectorAppend(arena, $$, $1);
    }
- | exprs ',' expr {
+ | expr_s ',' expr {
      $$ = $1;
      FbleVectorAppend(arena, $$, $3);
    }
@@ -419,7 +423,7 @@ let_bindings:
     }
   ;
 
-tlet_bindings: 
+type_let_bindings: 
   kind type_name '=' type {
       FbleVectorInit(arena, $$);
       FbleBinding* binding = FbleVectorExtend(arena, $$);
@@ -427,7 +431,7 @@ tlet_bindings:
       binding->name = $2;
       binding->expr = $4;
     }
-  | tlet_bindings ',' kind type_name '=' type {
+  | type_let_bindings ',' kind type_name '=' type {
       $$ = $1;
       FbleBinding* binding = FbleVectorExtend(arena, $$);
       binding->type = $3;

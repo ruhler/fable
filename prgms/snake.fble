@@ -71,8 +71,8 @@ Col@ MaxCol = Col60;
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 @ Draw@ = *(Pos@ pos, Cell@ cell);
 
-\<@ T@; @> P@ = \<@ T@> { *(T@ head, S@<T@> tail); },
-\<@ T@; @> S@ = \<@ T@> { +(Unit@ nil, P@<T@> cons); };
+\<@ ; @> P@ = \<@ T@> { *(T@ head, S@<T@> tail); },
+\<@ ; @> S@ = \<@ T@> { +(Unit@ nil, P@<T@> cons); };
 
 @ DrawP@ = P@<Draw@>;  
 @ DrawS@ = S@<Draw@>;

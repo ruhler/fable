@@ -1,5 +1,4 @@
 Fble:
-* Update parser for new spec
 * Rewrite fble.h abstract syntax to match new spec
  - And rewrite the implementation to match
 * Implement strong/weak refcounting scheme
