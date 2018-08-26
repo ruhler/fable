@@ -1,5 +1,4 @@
 Fble:
-* Port pending tests to new spec
 * Update parser for new spec
 * Rewrite fble.h abstract syntax to match new spec
  - And rewrite the implementation to match

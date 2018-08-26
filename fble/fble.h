@@ -294,10 +294,17 @@ typedef struct {
   FbleExpr** xs;
 } FbleExprV;
 
+// FbleKind --
+//   A typedef for FbleExpr used to help document which expressions are used
+//   to describe kinds.
+typedef FbleExpr FbleKind;
+typedef FbleExprV FbleKindV;
+
 // FbleType --
 //   A typedef for FbleExpr used to help document which expressions are used
 //   to describe types.
 typedef FbleExpr FbleType;
+typedef FbleExprV FbleTypeV;
 
 // FbleField --
 //   A pair of (Type, Name) used to describe type and function arguments.

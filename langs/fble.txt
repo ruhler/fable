@@ -657,10 +657,10 @@ expr ::=
 stmt ::=
    expr ';'                                                             (* expr *)
  | type name [',' type name [...]] '<-' expr ';' stmt                   (* bind *)
- | type name '=' expr [',' type name = expr [...]] ';' stmt             (* let *)
- | kind type_name '=' type [',' kind type_name = type [...]] ';' stmt   (* type_let_expr *)
  | type '~' name ',' name ';' stmt                                      (* link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt         (* exec *)
+ | type name '=' expr [',' type name = expr [...]] ';' stmt             (* let *)
+ | kind type_name '=' type [',' kind type_name = type [...]] ';' stmt   (* type_let_expr *)
  ;
 
 Notes:
