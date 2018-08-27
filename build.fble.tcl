@@ -19,7 +19,7 @@ run gcc {*}$FLAGS -c -o out/fble/obj/parse.tab.o out/fble/src/parse.tab.c
 
 # Generate libfble.a
 set fble_objs [list]
-foreach {x} [list alloc eval loc name parse.tab value vector] {
+foreach {x} [list alloc loc name eval parse.tab value vector] {
   lappend fble_objs out/fble/obj/$x.o
 }
 run ar rcs out/fble/libfble.a {*}$fble_objs
