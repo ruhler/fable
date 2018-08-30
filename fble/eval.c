@@ -479,6 +479,63 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       return type;
     }
 
+    case FBLE_UNION_VALUE_EXPR: {
+      FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
+      FbleType* type = CompileType(arena, type_vars, union_value_expr->type);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      if (type->tag != FBLE_UNION_TYPE) {
+        FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      FbleUnionType* union_type = (FbleUnionType*)type;
+      FbleType* field_type = NULL;
+      size_t tag = 0;
+      for (size_t i = 0; i < union_type->fields.size; ++i) {
+        FbleField* field = union_type->fields.xs + i;
+        if (FbleNamesEqual(field->name.name, union_value_expr->field.name)) {
+          tag = i;
+          field_type = field->type;
+          break;
+        }
+      }
+
+      if (field_type == NULL) {
+        FbleReportError("'%s' is not a field of type ", &union_value_expr->field.loc, union_value_expr->field.name);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      Instr* mkarg = NULL;
+      FbleType* arg_type = Compile(arena, vars, type_vars, union_value_expr->arg, &mkarg);
+      if (arg_type == NULL) {
+        return NULL;
+      }
+
+      if (!TypesEqual(field_type, arg_type)) {
+        FbleReportError("expected type ", &union_value_expr->arg->loc);
+        PrintType(field_type);
+        fprintf(stderr, ", but found type ");
+        PrintType(arg_type);
+        fprintf(stderr, "\n");
+        FreeInstrs(arena, mkarg);
+        return NULL;
+      }
+
+      UnionValueInstr* instr = FbleAlloc(arena, UnionValueInstr);
+      instr->_base.tag = UNION_VALUE_INSTR;
+      instr->tag = tag;
+      instr->mkarg = mkarg;
+      *instrs = &instr->_base;
+      return type;
+    }
+
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
 
@@ -680,70 +737,6 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
 //
 //
 //
-//    case FBLE_UNION_VALUE_EXPR: {
-//      FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
-//      FbleValue* type = CompileType(arena, vars, vstack, union_value_expr->type);
-//      if (type == NULL) {
-//        return NULL;
-//      }
-//
-//      if (type->tag != FBLE_UNION_TYPE_VALUE) {
-//        FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
-//        PrintType(type);
-//        fprintf(stderr, "\n");
-//        FbleRelease(arena, type);
-//        return NULL;
-//      }
-//
-//      bool error = false;
-//      FbleUnionTypeValue* union_type = (FbleUnionTypeValue*)type;
-//      FbleValue* field_type = NULL;
-//      size_t tag = 0;
-//      for (size_t i = 0; i < union_type->fields.size; ++i) {
-//        FbleFieldValue* field = union_type->fields.xs + i;
-//        if (FbleNamesEqual(field->name.name, union_value_expr->field.name)) {
-//          tag = i;
-//          field_type = field->type;
-//          break;
-//        }
-//      }
-//
-//      if (field_type == NULL) {
-//        FbleReportError("'%s' is not a field of type ", &union_value_expr->field.loc, union_value_expr->field.name);
-//        PrintType(type);
-//        fprintf(stderr, "\n");
-//        error = true;
-//      }
-//
-//      Instr* mkarg = NULL;
-//      FbleValue* arg_type = Compile(arena, vars, vstack, union_value_expr->arg, &mkarg);
-//      if (arg_type == NULL) {
-//        error = true;
-//      }
-//
-//      if (field_type != NULL && arg_type != NULL && !TypesEqual(field_type, arg_type)) {
-//        FbleReportError("expected type ", &union_value_expr->arg->loc);
-//        PrintType(field_type);
-//        fprintf(stderr, ", but found type ");
-//        PrintType(arg_type);
-//        fprintf(stderr, "\n");
-//        error = true;
-//      }
-//      FbleRelease(arena, arg_type);
-//
-//      if (error) {
-//        FreeInstrs(arena, mkarg);
-//        FbleRelease(arena, type);
-//        return NULL;
-//      }
-//
-//      UnionValueInstr* instr = FbleAlloc(arena, UnionValueInstr);
-//      instr->_base.tag = UNION_VALUE_INSTR;
-//      instr->tag = tag;
-//      instr->mkarg = mkarg;
-//      *instrs = &instr->_base;
-//      return type;
-//    }
 //
 //    case FBLE_ACCESS_EXPR: {
 //      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
