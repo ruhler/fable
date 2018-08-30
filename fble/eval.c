@@ -591,6 +591,145 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       return NULL;
     }
 
+    case FBLE_COND_EXPR: {
+      FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
+
+      // Allocate a slot on the variable stack for the intermediate value
+      Vars nvars = {
+        .name = { .name = "", .loc = expr->loc },
+        .type = NULL,
+        .next = vars,
+      };
+
+      PushInstr* push = FbleAlloc(arena, PushInstr);
+      push->_base.tag = PUSH_INSTR;
+      FbleVectorInit(arena, push->values);
+      push->next = NULL;
+
+      Instr** mkobj = FbleVectorExtend(arena, push->values);
+      *mkobj = NULL;
+      FbleType* type = Compile(arena, &nvars, type_vars, cond_expr->condition, mkobj);
+      if (type == NULL) {
+        FreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      if (type->tag != FBLE_UNION_TYPE) {
+        FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        FreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      FbleUnionType* union_type = (FbleUnionType*)type;
+      if (union_type->fields.size != cond_expr->choices.size) {
+        FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
+        FreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      CondInstr* cond_instr = FbleAlloc(arena, CondInstr);
+      cond_instr->_base.tag = COND_INSTR;
+      push->next = &cond_instr->_base;
+      FbleVectorInit(arena, cond_instr->choices);
+
+      FbleType* return_type = NULL;
+      for (size_t i = 0; i < cond_expr->choices.size; ++i) {
+        if (!FbleNamesEqual(cond_expr->choices.xs[i].name.name, union_type->fields.xs[i].name.name)) {
+          FbleReportError("expected tag '%s', but found '%s'.\n",
+              &cond_expr->choices.xs[i].name.loc,
+              union_type->fields.xs[i].name.name,
+              cond_expr->choices.xs[i].name.name);
+          FreeInstrs(arena, &push->_base);
+          return NULL;
+        }
+
+        Instr* mkarg = NULL;
+        FbleType* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &mkarg);
+        if (arg_type == NULL) {
+          FreeInstrs(arena, &push->_base);
+          return NULL;
+        }
+        FbleVectorAppend(arena, cond_instr->choices, mkarg);
+
+        if (return_type == NULL) {
+          return_type = arg_type;
+        } else {
+          if (!TypesEqual(return_type, arg_type)) {
+            FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
+            PrintType(return_type);
+            fprintf(stderr, ", but found ");
+            PrintType(arg_type);
+            fprintf(stderr, "\n");
+
+            FreeInstrs(arena, &push->_base);
+            return NULL;
+          }
+        }
+      }
+
+      *instrs = &push->_base;
+      return return_type;
+    }
+
+//    case FBLE_FUNC_VALUE_EXPR: {
+//      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
+//      FbleFuncTypeValue* func_type = FbleAlloc(arena, FbleFuncTypeValue);
+//      func_type->_base.tag = FBLE_FUNC_TYPE_VALUE;
+//      func_type->_base.refcount = 1;
+//      FbleVectorInit(arena, func_type->fields);
+//      func_type->rtype = NULL;
+//
+//      Vars nvarsd[func_value_expr->args.size];
+//      VStack nvstackd[func_value_expr->args.size];
+//      Vars* nvars = vars;
+//      VStack* nvstack = vstack;
+//      bool error = false;
+//      for (size_t i = 0; i < func_value_expr->args.size; ++i) {
+//        FbleFieldValue* field = FbleVectorExtend(arena, func_type->fields);
+//        field->name = func_value_expr->args.xs[i].name;
+//        field->type = CompileType(arena, vars, vstack, func_value_expr->args.xs[i].type);
+//        error = error || (field->type == NULL);
+//
+//        for (size_t j = 0; j < i; ++j) {
+//          if (FbleNamesEqual(field->name.name, func_value_expr->args.xs[j].name.name)) {
+//            error = true;
+//            FbleReportError("duplicate arg name '%s'\n", &field->name.loc, field->name.name);
+//            break;
+//          }
+//        }
+//
+//        nvarsd[i].name = field->name;
+//        nvarsd[i].type = field->type;
+//        nvarsd[i].next = nvars;
+//        nvars = nvarsd + i;
+//
+//        // TODO: Push an abstract value here instead of NULL?
+//        nvstackd[i].value = NULL;
+//        nvstackd[i].tail = nvstack;
+//        nvstack = nvstackd + i;
+//      }
+//
+//      FuncValueInstr* instr = FbleAlloc(arena, FuncValueInstr);
+//      instr->_base.tag = FUNC_VALUE_INSTR;
+//      instr->argc = func_value_expr->args.size;
+//      instr->body = NULL;
+//      if (!error) {
+//        func_type->rtype = Compile(arena, nvars, nvstack, func_value_expr->body, &instr->body);
+//        error = error || (func_type->rtype == NULL);
+//      }
+//
+//      if (error) {
+//        FbleRelease(arena, &func_type->_base);
+//        FreeInstrs(arena, &instr->_base);
+//        return NULL;
+//      }
+//
+//      *instrs = &instr->_base;
+//      return &func_type->_base;
+//    }
+
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
 
@@ -692,163 +831,10 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
     }
 
 //
-//    case FBLE_FUNC_VALUE_EXPR: {
-//      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
-//      FbleFuncTypeValue* func_type = FbleAlloc(arena, FbleFuncTypeValue);
-//      func_type->_base.tag = FBLE_FUNC_TYPE_VALUE;
-//      func_type->_base.refcount = 1;
-//      FbleVectorInit(arena, func_type->fields);
-//      func_type->rtype = NULL;
-//
-//      Vars nvarsd[func_value_expr->args.size];
-//      VStack nvstackd[func_value_expr->args.size];
-//      Vars* nvars = vars;
-//      VStack* nvstack = vstack;
-//      bool error = false;
-//      for (size_t i = 0; i < func_value_expr->args.size; ++i) {
-//        FbleFieldValue* field = FbleVectorExtend(arena, func_type->fields);
-//        field->name = func_value_expr->args.xs[i].name;
-//        field->type = CompileType(arena, vars, vstack, func_value_expr->args.xs[i].type);
-//        error = error || (field->type == NULL);
-//
-//        for (size_t j = 0; j < i; ++j) {
-//          if (FbleNamesEqual(field->name.name, func_value_expr->args.xs[j].name.name)) {
-//            error = true;
-//            FbleReportError("duplicate arg name '%s'\n", &field->name.loc, field->name.name);
-//            break;
-//          }
-//        }
-//
-//        nvarsd[i].name = field->name;
-//        nvarsd[i].type = field->type;
-//        nvarsd[i].next = nvars;
-//        nvars = nvarsd + i;
-//
-//        // TODO: Push an abstract value here instead of NULL?
-//        nvstackd[i].value = NULL;
-//        nvstackd[i].tail = nvstack;
-//        nvstack = nvstackd + i;
-//      }
-//
-//      FuncValueInstr* instr = FbleAlloc(arena, FuncValueInstr);
-//      instr->_base.tag = FUNC_VALUE_INSTR;
-//      instr->argc = func_value_expr->args.size;
-//      instr->body = NULL;
-//      if (!error) {
-//        func_type->rtype = Compile(arena, nvars, nvstack, func_value_expr->body, &instr->body);
-//        error = error || (func_type->rtype == NULL);
-//      }
-//
-//      if (error) {
-//        FbleRelease(arena, &func_type->_base);
-//        FreeInstrs(arena, &instr->_base);
-//        return NULL;
-//      }
-//
-//      *instrs = &instr->_base;
-//      return &func_type->_base;
-//    }
 //
 //
 //
 //
-//
-//    case FBLE_COND_EXPR: {
-//      FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
-//
-//      // Allocate a slot on the variable stack for the intermediate value
-//      Vars nvars = {
-//        .name = { .name = "", .loc = expr->loc },
-//        .type = NULL,
-//        .next = vars,
-//      };
-//
-//      // TODO: Push an abstract value here instead of NULL?
-//      // Or should we try to compute the actual value?
-//      VStack nvstack = { .value = NULL, .tail = vstack };
-//
-//      PushInstr* push = FbleAlloc(arena, PushInstr);
-//      push->_base.tag = PUSH_INSTR;
-//      FbleVectorInit(arena, push->values);
-//      push->next = NULL;
-//
-//      Instr** mkobj = FbleVectorExtend(arena, push->values);
-//      *mkobj = NULL;
-//      FbleValue* type = Compile(arena, &nvars, &nvstack, cond_expr->condition, mkobj);
-//      if (type == NULL) {
-//        FreeInstrs(arena, &push->_base);
-//        return NULL;
-//      }
-//
-//      if (type->tag != FBLE_UNION_TYPE_VALUE) {
-//        FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
-//        PrintType(type);
-//        fprintf(stderr, "\n");
-//        FbleRelease(arena, type);
-//        FreeInstrs(arena, &push->_base);
-//        return NULL;
-//      }
-//
-//      FbleUnionTypeValue* union_type = (FbleUnionTypeValue*)type;
-//      if (union_type->fields.size != cond_expr->choices.size) {
-//        FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
-//        FbleRelease(arena, type);
-//        FreeInstrs(arena, &push->_base);
-//        return NULL;
-//      }
-//
-//      CondInstr* cond_instr = FbleAlloc(arena, CondInstr);
-//      cond_instr->_base.tag = COND_INSTR;
-//      push->next = &cond_instr->_base;
-//      FbleVectorInit(arena, cond_instr->choices);
-//
-//      FbleValue* return_type = NULL;
-//      for (size_t i = 0; i < cond_expr->choices.size; ++i) {
-//        if (!FbleNamesEqual(cond_expr->choices.xs[i].name.name, union_type->fields.xs[i].name.name)) {
-//          FbleReportError("expected tag '%s', but found '%s'.\n",
-//              &cond_expr->choices.xs[i].name.loc,
-//              union_type->fields.xs[i].name.name,
-//              cond_expr->choices.xs[i].name.name);
-//          FbleRelease(arena, return_type);
-//          FbleRelease(arena, type);
-//          FreeInstrs(arena, &push->_base);
-//          return NULL;
-//        }
-//
-//        Instr* mkarg = NULL;
-//        FbleValue* arg_type = Compile(arena, vars, vstack, cond_expr->choices.xs[i].expr, &mkarg);
-//        if (arg_type == NULL) {
-//          FbleRelease(arena, return_type);
-//          FbleRelease(arena, type);
-//          FreeInstrs(arena, &push->_base);
-//          return NULL;
-//        }
-//        FbleVectorAppend(arena, cond_instr->choices, mkarg);
-//
-//        if (return_type == NULL) {
-//          return_type = arg_type;
-//        } else {
-//          if (!TypesEqual(return_type, arg_type)) {
-//            FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
-//            PrintType(return_type);
-//            fprintf(stderr, ", but found ");
-//            PrintType(arg_type);
-//            fprintf(stderr, "\n");
-//
-//            FbleRelease(arena, arg_type);
-//            FbleRelease(arena, return_type);
-//            FbleRelease(arena, type);
-//            FreeInstrs(arena, &push->_base);
-//            return NULL;
-//          }
-//          FbleRelease(arena, arg_type);
-//        }
-//      }
-//
-//      FbleRelease(arena, type);
-//      *instrs = &push->_base;
-//      return return_type;
-//    }
 //
 //    case FBLE_EVAL_EXPR: assert(false && "TODO: FBLE_EVAL_EXPR"); return NULL;
 //    case FBLE_LINK_EXPR: assert(false && "TODO: FBLE_LINK_EXPR"); return NULL;
