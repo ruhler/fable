@@ -612,6 +612,63 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       return vars->type;
     }
 
+    case FBLE_LET_EXPR: {
+      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
+      bool error = false;
+
+      // Evaluate the types of the bindings and set up the new vars.
+      Vars nvd[let_expr->bindings.size];
+      Vars* nvars = vars;
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        nvd[i].name = let_expr->bindings.xs[i].name;
+        nvd[i].type = CompileType(arena, type_vars, let_expr->bindings.xs[i].type);
+        error = error || (nvd[i].type == NULL);
+        nvd[i].next = nvars;
+        nvars = nvd + i;
+      }
+
+      // Compile the values of the variables.
+      LetInstr* instr = FbleAlloc(arena, LetInstr);
+      instr->_base.tag = LET_INSTR;
+      FbleVectorInit(arena, instr->bindings);
+      instr->body = NULL;
+      instr->pop._base.tag = POP_INSTR;
+      instr->pop.count = let_expr->bindings.size;
+
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        Instr* mkval = NULL;
+        FbleType* type = NULL;
+        if (!error) {
+          type = Compile(arena, nvars, type_vars, let_expr->bindings.xs[i].expr, &mkval);
+        }
+        error = error || (type == NULL);
+        FbleVectorAppend(arena, instr->bindings, mkval);
+
+        if (!error && !TypesEqual(nvd[i].type, type)) {
+          error = true;
+          FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
+          PrintType(nvd[i].type);
+          fprintf(stderr, ", but found ");
+          PrintType(type);
+          fprintf(stderr, "\n");
+        }
+      }
+
+      FbleType* result = NULL;
+      if (!error) {
+        result = Compile(arena, nvars, type_vars, let_expr->body, &(instr->body));
+        error = (result == NULL);
+      }
+
+      if (error) {
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+
+      *instrs = &instr->_base;
+      return result;
+    }
+
     case FBLE_TYPE_LET_EXPR: {
       FbleTypeLetExpr* let = (FbleTypeLetExpr*)expr;
 
@@ -634,104 +691,6 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       return Compile(arena, vars, ntvs, let->body, instrs);
     }
 
-//    case FBLE_LET_EXPR: {
-//      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
-//      bool error = false;
-//
-//      // Evaluate the types of the bindings and set up the new vars.
-//      Vars nvarsd[let_expr->bindings.size];
-//      VStack nvstackd[let_expr->bindings.size];
-//      Vars* nvars = vars;
-//      VStack* nvstack = vstack;
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        nvarsd[i].name = let_expr->bindings.xs[i].name;
-//        nvarsd[i].type = CompileType(arena, vars, vstack, let_expr->bindings.xs[i].type);
-//        error = error || (nvarsd[i].type == NULL);
-//        nvarsd[i].next = nvars;
-//        nvars = nvarsd + i;
-//
-//        // TODO: Push an abstract value here instead of NULL?
-//        nvstackd[i].value = NULL;
-//        nvstackd[i].tail = nvstack;
-//        nvstack = nvstackd + i;
-//      }
-//
-//      // Compile, check, and if appropriate, evaluate the values of the
-//      // variables.
-//      LetInstr* instr = FbleAlloc(arena, LetInstr);
-//      instr->_base.tag = LET_INSTR;
-//      FbleVectorInit(arena, instr->bindings);
-//      instr->body = NULL;
-//      instr->pop._base.tag = POP_INSTR;
-//      instr->pop.count = let_expr->bindings.size;
-//
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        Instr* mkval = NULL;
-//        FbleValue* type = NULL;
-//        if (!error) {
-//          type = Compile(arena, nvars, nvstack, let_expr->bindings.xs[i].expr, &mkval);
-//        }
-//        error = error || (type == NULL);
-//        FbleVectorAppend(arena, instr->bindings, mkval);
-//
-//        if (!error && !TypesEqual(nvarsd[i].type, type)) {
-//          error = true;
-//          FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
-//          PrintType(nvarsd[i].type);
-//          fprintf(stderr, ", but found ");
-//          PrintType(type);
-//          fprintf(stderr, "\n");
-//        }
-//        FbleRelease(arena, type);
-//
-//        if (!error && IsKinded(nvarsd[i].type)) {
-//          assert(nvstackd[i].value == NULL);
-//          nvstackd[i].value = Eval(arena, mkval, nvstack);
-//          error = (nvstackd[i].value == NULL);
-//        }
-//      }
-//
-//      FbleValue* result = NULL;
-//      if (!error) {
-//        result = Compile(arena, nvars, nvstack, let_expr->body, &(instr->body));
-//        error = (result == NULL);
-//      }
-//
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        FbleRelease(arena, nvarsd[i].type);
-//        FbleRelease(arena, nvstackd[i].value);
-//      }
-//
-//      if (error) {
-//        FreeInstrs(arena, &instr->_base);
-//        FbleRelease(arena, result);
-//        return NULL;
-//      }
-//
-//      *instrs = &instr->_base;
-//      return result;
-//    }
-//
-//
-//      FbleValue* rtypetype = Compile(arena, vars, vstack, func_type_expr->rtype, &instr->rtype);
-//      error = error || (rtypetype == NULL);
-//
-//      if (rtypetype != NULL && !TypesEqual(rtypetype, &gTypeTypeValue)) {
-//        FbleReportError("expected a type, but found something of type ", &func_type_expr->rtype->loc);
-//        PrintType(rtypetype);
-//        fprintf(stderr, "\n");
-//        error = true;
-//      }
-//      FbleRelease(arena, rtypetype);
-//
-//      if (error) {
-//        FreeInstrs(arena, &instr->_base);
-//        return NULL;
-//      }
-//
-//      *instrs = &instr->_base;
-//      return FbleCopy(arena, &gTypeTypeValue);
-//    }
 //
 //    case FBLE_FUNC_VALUE_EXPR: {
 //      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
