@@ -536,6 +536,61 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       return type;
     }
 
+    case FBLE_ACCESS_EXPR: {
+      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
+
+      // Allocate a slot on the variable stack for the intermediate value
+      Vars nvars = {
+        .name = { .name = "", .loc = expr->loc },
+        .type = NULL,
+        .next = vars,
+      };
+
+      PushInstr* instr = FbleAlloc(arena, PushInstr);
+      instr->_base.tag = PUSH_INSTR;
+      FbleVectorInit(arena, instr->values);
+      Instr** mkobj = FbleVectorExtend(arena, instr->values);
+      *mkobj = NULL;
+
+      AccessInstr* access = FbleAlloc(arena, AccessInstr);
+      access->_base.tag = STRUCT_ACCESS_INSTR;
+      instr->next = &access->_base;
+      access->loc = access_expr->field.loc;
+      FbleType* type = Compile(arena, &nvars, type_vars, access_expr->object, mkobj);
+
+      FbleFieldV* fields = NULL;
+      if (type != NULL && type->tag == FBLE_STRUCT_TYPE) {
+        access->_base.tag = STRUCT_ACCESS_INSTR;
+        fields = &((FbleStructType*)type)->fields;
+      } else if (type != NULL && type->tag == FBLE_UNION_TYPE) {
+        access->_base.tag = UNION_ACCESS_INSTR;
+        fields = &((FbleUnionType*)type)->fields;
+      } else {
+        if (type != NULL) {
+          FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
+          PrintType(type);
+          fprintf(stderr, "\n");
+        }
+
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+
+      for (size_t i = 0; i < fields->size; ++i) {
+        if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name.name)) {
+          access->tag = i;
+          *instrs = &instr->_base;
+          return fields->xs[i].type;
+        }
+      }
+
+      FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
+      PrintType(type);
+      fprintf(stderr, "\n");
+      FreeInstrs(arena, &instr->_base);
+      return NULL;
+    }
+
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
 
@@ -738,68 +793,6 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
 //
 //
 //
-//    case FBLE_ACCESS_EXPR: {
-//      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
-//
-//      // Allocate a slot on the variable stack for the intermediate value
-//      Vars nvars = {
-//        .name = { .name = "", .loc = expr->loc },
-//        .type = NULL,
-//        .next = vars,
-//      };
-//
-//      // TODO: Push an abstract value here instead of NULL?
-//      // Or should we try to compute the actual value?
-//      VStack nvstack = { .value = NULL, .tail = vstack };
-//
-//      PushInstr* instr = FbleAlloc(arena, PushInstr);
-//      instr->_base.tag = PUSH_INSTR;
-//      FbleVectorInit(arena, instr->values);
-//      Instr** mkobj = FbleVectorExtend(arena, instr->values);
-//      *mkobj = NULL;
-//
-//      AccessInstr* access = FbleAlloc(arena, AccessInstr);
-//      access->_base.tag = STRUCT_ACCESS_INSTR;
-//      instr->next = &access->_base;
-//      access->loc = access_expr->field.loc;
-//      FbleValue* type = Compile(arena, &nvars, &nvstack, access_expr->object, mkobj);
-//
-//      FbleFieldValueV* fields = NULL;
-//      if (type != NULL && type->tag == FBLE_STRUCT_TYPE_VALUE) {
-//        access->_base.tag = STRUCT_ACCESS_INSTR;
-//        fields = &((FbleStructTypeValue*)type)->fields;
-//      } else if (type != NULL && type->tag == FBLE_UNION_TYPE_VALUE) {
-//        access->_base.tag = UNION_ACCESS_INSTR;
-//        fields = &((FbleUnionTypeValue*)type)->fields;
-//      } else {
-//        if (type != NULL) {
-//          FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
-//          PrintType(type);
-//          fprintf(stderr, "\n");
-//          FbleRelease(arena, type);
-//        }
-//
-//        FreeInstrs(arena, &instr->_base);
-//        return NULL;
-//      }
-//
-//      for (size_t i = 0; i < fields->size; ++i) {
-//        if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name.name)) {
-//          access->tag = i;
-//          *instrs = &instr->_base;
-//          FbleValue* field_type = FbleCopy(arena, fields->xs[i].type);
-//          FbleRelease(arena, type);
-//          return field_type;
-//        }
-//      }
-//
-//      FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
-//      PrintType(type);
-//      fprintf(stderr, "\n");
-//      FreeInstrs(arena, &instr->_base);
-//      FbleRelease(arena, type);
-//      return NULL;
-//    }
 //
 //    case FBLE_COND_EXPR: {
 //      FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
