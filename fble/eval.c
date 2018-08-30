@@ -425,6 +425,60 @@ static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, Instr* instr, T
 static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, Instr** instrs)
 {
   switch (expr->tag) {
+    case FBLE_STRUCT_VALUE_EXPR: {
+      FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
+      FbleType* type = CompileType(arena, type_vars, struct_value_expr->type);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      if (type->tag != FBLE_STRUCT_TYPE) {
+        FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+        return NULL;
+      }
+
+      FbleStructType* struct_type = (FbleStructType*)type;
+      if (struct_type->fields.size != struct_value_expr->args.size) {
+        // TODO: Where should the error message go?
+        FbleReportError("expected %i args, but %i were provided\n",
+            &expr->loc, struct_type->fields.size, struct_value_expr->args.size);
+        return NULL;
+      }
+
+      bool error = false;
+      StructValueInstr* instr = FbleAlloc(arena, StructValueInstr);
+      instr->_base.tag = STRUCT_VALUE_INSTR;
+      FbleVectorInit(arena, instr->fields);
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        FbleField* field = struct_type->fields.xs + i;
+
+        Instr* mkarg = NULL;
+        FbleType* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], &mkarg);
+        error = error || (arg_type == NULL);
+
+        if (arg_type != NULL && !TypesEqual(field->type, arg_type)) {
+          FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
+          PrintType(field->type);
+          fprintf(stderr, ", but found ");
+          PrintType(arg_type);
+          fprintf(stderr, "\n");
+          error = true;
+        }
+
+        FbleVectorAppend(arena, instr->fields, mkarg);
+      }
+
+      if (error) {
+        FreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+
+      *instrs = &instr->_base;
+      return type;
+    }
+
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
 
@@ -445,7 +499,29 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       *instrs = &instr->_base;
       return vars->type;
     }
-//
+
+    case FBLE_TYPE_LET_EXPR: {
+      FbleTypeLetExpr* let = (FbleTypeLetExpr*)expr;
+
+      Vars ntvd[let->bindings.size];
+      Vars* ntvs = type_vars;
+      bool error = false;
+      for (size_t i = 0; i < let->bindings.size; ++i) {
+        // TODO: Confirm the kind of the type matches what is specified in the
+        // let binding.
+        ntvd[i].name = let->bindings.xs[i].name;
+        ntvd[i].type = CompileType(arena, type_vars, let->bindings.xs[i].type);
+        error = error || (ntvd[i].type == NULL);
+        ntvd[i].next = ntvs;
+        ntvs = ntvd + i;
+      }
+
+      if (error) {
+        return NULL;
+      }
+      return Compile(arena, vars, ntvs, let->body, instrs);
+    }
+
 //    case FBLE_LET_EXPR: {
 //      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
 //      bool error = false;
@@ -602,59 +678,6 @@ static FbleType* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr
 //      return &func_type->_base;
 //    }
 //
-    case FBLE_STRUCT_VALUE_EXPR: {
-      FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
-      FbleType* type = CompileType(arena, type_vars, struct_value_expr->type);
-      if (type == NULL) {
-        return NULL;
-      }
-
-      if (type->tag != FBLE_STRUCT_TYPE) {
-        FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
-        PrintType(type);
-        fprintf(stderr, "\n");
-        return NULL;
-      }
-
-      FbleStructType* struct_type = (FbleStructType*)type;
-      if (struct_type->fields.size != struct_value_expr->args.size) {
-        // TODO: Where should the error message go?
-        FbleReportError("expected %i args, but %i were provided\n",
-            &expr->loc, struct_type->fields.size, struct_value_expr->args.size);
-        return NULL;
-      }
-
-      bool error = false;
-      StructValueInstr* instr = FbleAlloc(arena, StructValueInstr);
-      instr->_base.tag = STRUCT_VALUE_INSTR;
-      FbleVectorInit(arena, instr->fields);
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        FbleField* field = struct_type->fields.xs + i;
-
-        Instr* mkarg = NULL;
-        FbleType* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], &mkarg);
-        error = error || (arg_type == NULL);
-
-        if (arg_type != NULL && !TypesEqual(field->type, arg_type)) {
-          FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
-          PrintType(field->type);
-          fprintf(stderr, ", but found ");
-          PrintType(arg_type);
-          fprintf(stderr, "\n");
-          error = true;
-        }
-
-        FbleVectorAppend(arena, instr->fields, mkarg);
-      }
-
-      if (error) {
-        FreeInstrs(arena, &instr->_base);
-        return NULL;
-      }
-
-      *instrs = &instr->_base;
-      return type;
-    }
 //
 //
 //    case FBLE_UNION_VALUE_EXPR: {
