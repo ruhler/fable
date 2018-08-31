@@ -1,6 +1,8 @@
 Fble:
 * Rewrite eval for new fble.h.
 * Figure out a better way to compile types.
+ - In particular, to handle the fact that compilation requires allocation of
+   type values, for at least the case of a function value.
 * Implement strong/weak refcounting scheme.
 * Implement recursive let properly.
 * Implement lazy type evaluation properly.
@@ -9,7 +11,6 @@ Fble:
 
 Fble Cleanup:
 * Share common code between checking StructType, UnionType, and FuncType?
-* Rename test cases so that, for example, E10-* doesn't come before E4-*
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an

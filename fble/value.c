@@ -1,7 +1,7 @@
 // value.c
 //   This file implements routines associated with fble values.
 
-#include "fble.h"
+#include "fble-internal.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
