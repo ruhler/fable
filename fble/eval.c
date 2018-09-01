@@ -333,9 +333,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
 // FbleEval -- see documentation in fble.h
 FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 {
-  FbleInstr* instrs = NULL;
-  FbleType* type = FbleCompile(arena, expr, &instrs);
-  if (type == NULL) {
+  FbleInstr* instrs = FbleCompile(arena, expr);
+  if (instrs == NULL) {
     return NULL;
   }
 

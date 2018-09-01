@@ -140,15 +140,15 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs);
 // Inputs:
 //   arena - arena to use for allocations.
 //   expr - the expression to compile.
-//   instrs - output pointer to store generated in structions
 //
 // Results:
-//   The type of the expression, or NULL if the expression is not well typed.
+//   The compiled expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-//   Sets instrs to point to the compiled instructions if the expression is
-//   well typed. Prints a message to stderr if the expression fails to compile.
-FbleType* FbleCompile(FbleArena* arena, FbleExpr* expr, FbleInstr** instrs);
+//   Prints a message to stderr if the expression fails to compile. Allocates
+//   memory for the instructions which must be freed with FbleFreeInstrs when
+//   it is no longer needed.
+FbleInstr* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
 // FbleFreeFuncValue --
 //   Free memory associated with the given function value.

@@ -900,7 +900,11 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
 }
 
 // FbleCompile -- see documentation in fble-internal.h
-FbleType* FbleCompile(FbleArena* arena, FbleExpr* expr, FbleInstr** instrs)
+FbleInstr* FbleCompile(FbleArena* arena, FbleExpr* expr)
 {
-  return Compile(arena, NULL, NULL, expr, instrs);
+  FbleInstr* instrs = NULL;
+  if (Compile(arena, NULL, NULL, expr, &instrs) == NULL) {
+    return NULL;
+  }
+  return instrs;
 }

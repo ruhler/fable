@@ -1,8 +1,7 @@
 Fble:
-* Rewrite eval for new fble.h.
-* Figure out a better way to compile types.
- - In particular, to handle the fact that compilation requires allocation of
-   type values, for at least the case of a function value.
+* Introduce a Type type in compile.c for compiled types with ref counting.
+* Finish enough of eval and compile for the func and apply tests to pass.
+* Add a round of new tests to get code coverage up as much as reasonable.
 * Implement strong/weak refcounting scheme.
 * Implement recursive let properly.
 * Implement lazy type evaluation properly.
