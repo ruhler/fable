@@ -347,7 +347,6 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 // FbleFreeFuncValue -- see documentation in fble-internal.h
 void FbleFreeFuncValue(FbleArena* arena, FbleFuncValue* value)
 {
-  assert(false && "TODO: FbleFreeFuncValue");
   VStack* vs = value->context;
   while (vs != NULL) {
     FbleRelease(arena, vs->value);
