@@ -1,5 +1,4 @@
 Fble:
-* Introduce a Type type in compile.c for compiled types with ref counting.
 * Finish enough of eval and compile for the func and apply tests to pass.
 * Add a round of new tests to get code coverage up as much as reasonable.
 * Implement strong/weak refcounting scheme.
