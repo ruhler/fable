@@ -438,8 +438,8 @@ typedef struct {
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
   FBLE_STRUCT_VALUE_EXPR,
-  FBLE_ACCESS_EXPR,       // Used for STRUCT_ACCESS, UNION_ACCESS
   FBLE_UNION_VALUE_EXPR,
+  FBLE_ACCESS_EXPR,       // Used for STRUCT_ACCESS, UNION_ACCESS
   FBLE_COND_EXPR,
   FBLE_FUNC_VALUE_EXPR,
   FBLE_APPLY_EXPR,        // Used for APPLY, GET, PUT
