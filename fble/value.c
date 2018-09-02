@@ -53,11 +53,6 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
       case FBLE_INPUT_VALUE: assert(false && "TODO: release FBLE_INPUT_VALUE"); return;
 
       case FBLE_OUTPUT_VALUE: assert(false && "TODO: release FBLE_OUTPUT_VALUE"); return;
-
-      default: {
-        UNREACHABLE("invalid value tag");
-        return;
-      }
     }
 
     UNREACHABLE("Should not get here");

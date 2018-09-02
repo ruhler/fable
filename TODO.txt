@@ -1,12 +1,13 @@
 Fble:
-* Add a round of new tests to get code coverage up as much as reasonable.
-* Test and add support for recursive functions without recursive types.
+* Add tests for let type for code coverage purposes.
+* Test and add support for recursive values.
  - Implement strong/weak refcounting scheme.
  - Implement recursive let properly.
 * Test and add support for non-recursive polymorphism.
  - Implement type equality properly.
 * Test and add support for recursive polymorphism.
  - Implement lazy type evaluation properly.
+* Test and add support for processes.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 
 Fble Cleanup:
