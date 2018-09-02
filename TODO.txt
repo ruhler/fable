@@ -1,14 +1,17 @@
 Fble:
-* Finish enough of eval and compile for the func and apply tests to pass.
 * Add a round of new tests to get code coverage up as much as reasonable.
-* Implement strong/weak refcounting scheme.
-* Implement recursive let properly.
-* Implement lazy type evaluation properly.
-* Implement type equality properly.
+* Test and add support for recursive functions without recursive types.
+ - Implement strong/weak refcounting scheme.
+ - Implement recursive let properly.
+* Test and add support for non-recursive polymorphism.
+ - Implement type equality properly.
+* Test and add support for recursive polymorphism.
+ - Implement lazy type evaluation properly.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 
 Fble Cleanup:
-* Share common code between checking StructType, UnionType, and FuncType?
+* Share common code between checking FbleStructType, FbleUnionType, and
+  FbleFuncType?
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an

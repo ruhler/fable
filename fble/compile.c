@@ -640,94 +640,79 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 //    case FBLE_LINK_EXPR: assert(false && "TODO: FBLE_LINK_EXPR"); return NULL;
 //    case FBLE_EXEC_EXPR: assert(false && "TODO: FBLE_EXEC_EXPR"); return NULL;
 //
-//    case FBLE_APPLY_EXPR: {
-//      FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
-//
-//      // Allocate space on the stack for the intermediate values.
-//      Vars nvarsd[1 + apply_expr->args.size];
-//      VStack nvstackd[1 + apply_expr->args.size];
-//      Vars* nvars = vars;
-//      VStack* nvstack = vstack;
-//      for (size_t i = 0; i < 1 + apply_expr->args.size; ++i) {
-//        nvarsd[i].type = NULL;
-//        nvarsd[i].name.name = "";
-//        nvarsd[i].name.loc = expr->loc;
-//        nvarsd[i].next = nvars;
-//        nvars = nvarsd + i;
-//
-//        // TODO: Push an abstract value here instead of NULL?
-//        nvstackd[i].value = NULL;
-//        nvstackd[i].tail = nvstack;
-//        nvstack = nvstackd + i;
-//      };
-//
-//      PushInstr* push = FbleAlloc(arena, PushInstr);
-//      push->_base.tag = PUSH_INSTR;
-//      FbleVectorInit(arena, push->values);
-//      push->next = NULL;
-//
-//      Instr** mkfunc = FbleVectorExtend(arena, push->values);
-//      *mkfunc = NULL;
-//      FbleValue* type = Compile(arena, nvars, nvstack, apply_expr->func, mkfunc);
-//      if (type == NULL) {
-//        FreeInstrs(arena, &push->_base);
-//        return NULL;
-//      }
-//
-//      switch (type->tag) {
-//        case FBLE_FUNC_TYPE_VALUE: {
-//          FbleFuncTypeValue* func_type = (FbleFuncTypeValue*)type;
-//          bool error = false;
-//          if (func_type->fields.size != apply_expr->args.size) {
-//            FbleReportError("expected %i args, but %i provided\n",
-//                &expr->loc, func_type->fields.size, apply_expr->args.size);
-//            error = true;
-//          }
-//
-//          for (size_t i = 0; i < func_type->fields.size && i < apply_expr->args.size; ++i) {
-//            Instr** mkarg = FbleVectorExtend(arena, push->values);
-//            *mkarg = NULL;
-//            FbleValue* arg_type = Compile(arena, nvars, nvstack, apply_expr->args.xs[i], mkarg);
-//            error = error || (arg_type == NULL);
-//            if (arg_type != NULL && !TypesEqual(func_type->fields.xs[i].type, arg_type)) {
-//              FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
-//              PrintType(func_type->fields.xs[i].type);
-//              fprintf(stderr, ", but found ");
-//              PrintType(arg_type);
-//              fprintf(stderr, "\n");
-//              error = true;
-//            }
-//            FbleRelease(arena, arg_type);
-//          }
-//
-//          if (error) {
-//            FbleRelease(arena, type);
-//            FreeInstrs(arena, &push->_base);
-//            return NULL;
-//          }
-//
-//          FuncApplyInstr* apply_instr = FbleAlloc(arena, FuncApplyInstr);
-//          apply_instr->_base.tag = FUNC_APPLY_INSTR;
-//          apply_instr->argc = func_type->fields.size;
-//          push->next = &apply_instr->_base;
-//          *instrs = &push->_base;
-//          FbleValue* rtype = FbleCopy(arena, func_type->rtype);
-//          FbleRelease(arena, type);
-//          return rtype;
-//        }
-//
-//        default: {
-//          FbleReportError("cannot perform application on an object of type ", &expr->loc);
-//          PrintType(type);
-//          FbleRelease(arena, type);
-//          FreeInstrs(arena, &push->_base);
-//          return NULL;
-//        }
-//      }
-//
-//      UNREACHABLE("should not get here");
-//      return NULL;
-//    }
+    case FBLE_APPLY_EXPR: {
+      FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
+
+      // Allocate space on the stack for the intermediate values.
+      Vars nvd[1 + apply_expr->args.size];
+      Vars* nvars = vars;
+      for (size_t i = 0; i < 1 + apply_expr->args.size; ++i) {
+        nvd[i].type = NULL;
+        nvd[i].name.name = "";
+        nvd[i].name.loc = expr->loc;
+        nvd[i].next = nvars;
+        nvars = nvd + i;
+      };
+
+      FblePushInstr* push = FbleAlloc(arena, FblePushInstr);
+      push->_base.tag = FBLE_PUSH_INSTR;
+      FbleVectorInit(arena, push->values);
+      push->next = NULL;
+
+      FbleInstr** mkfunc = FbleVectorExtend(arena, push->values);
+      *mkfunc = NULL;
+      Type* type = Compile(arena, nvars, type_vars, apply_expr->func, mkfunc);
+      if (type == NULL) {
+        FbleFreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      if (type->tag != FUNC_TYPE) {
+        FbleReportError("cannot perform application on an object of type ", &expr->loc);
+        PrintType(type);
+        FreeType(arena, type);
+        FbleFreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      bool error = false;
+      if (type->fields.size != apply_expr->args.size) {
+        FbleReportError("expected %i args, but %i provided\n",
+            &expr->loc, type->fields.size, apply_expr->args.size);
+        error = true;
+      }
+
+      for (size_t i = 0; i < type->fields.size && i < apply_expr->args.size; ++i) {
+        FbleInstr** mkarg = FbleVectorExtend(arena, push->values);
+        *mkarg = NULL;
+        Type* arg_type = Compile(arena, nvars, type_vars, apply_expr->args.xs[i], mkarg);
+        error = error || (arg_type == NULL);
+        if (arg_type != NULL && !TypesEqual(type->fields.xs[i].type, arg_type)) {
+          FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
+          PrintType(type->fields.xs[i].type);
+          fprintf(stderr, ", but found ");
+          PrintType(arg_type);
+          fprintf(stderr, "\n");
+          error = true;
+        }
+        FreeType(arena, arg_type);
+      }
+
+      if (error) {
+        FreeType(arena, type);
+        FbleFreeInstrs(arena, &push->_base);
+        return NULL;
+      }
+
+      FbleFuncApplyInstr* apply_instr = FbleAlloc(arena, FbleFuncApplyInstr);
+      apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+      apply_instr->argc = type->fields.size;
+      push->next = &apply_instr->_base;
+      *instrs = &push->_base;
+      Type* rtype = CopyType(arena, type->rtype);
+      FreeType(arena, type);
+      return rtype;
+    }
 
     default:
       UNREACHABLE("invalid expression tag");
