@@ -668,3 +668,8 @@ Notes:
   to distinguish between the two kinds of expressions.
 * apply, get, and put share the same form. The type of the expr is used to
   distinguish between the three kinds of expressions.
+
+12. Thoughts
+------------
+* Is there really any need for a type let type? It seems like you could always
+  use either a type let expression or a polymorphic type function.

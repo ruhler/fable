@@ -1,8 +1,8 @@
 Fble:
-* Add tests for let type for code coverage purposes.
 * Test and add support for recursive values.
  - Implement strong/weak refcounting scheme.
  - Implement recursive let properly.
+* Test and add support for recursive types.
 * Test and add support for non-recursive polymorphism.
  - Implement type equality properly.
 * Test and add support for recursive polymorphism.
