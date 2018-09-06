@@ -187,8 +187,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         tstack = TPush(arena, presult, let_instr->body, tstack);
 
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
-          vstack = VPush(arena, NULL, vstack);
-          tstack = TPush(arena, &vstack->value, let_instr->bindings.xs[i], tstack);
+          FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
+          rv->_base.tag = FBLE_REF_VALUE;
+          rv->_base.refcount = 1;
+          rv->value = NULL;
+          vstack = VPush(arena, &rv->_base, vstack);
+          tstack = TPush(arena, &rv->value, let_instr->bindings.xs[i], tstack);
         }
         break;
       }
@@ -222,8 +226,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
           vstack = VPop(arena, vstack);
         }
 
-        FbleFuncValue* func = (FbleFuncValue*)vstack->value;
-        assert(func->_base.tag == FBLE_FUNC_VALUE);
+        FbleFuncValue* func = (FbleFuncValue*)Deref(vstack->value, FBLE_FUNC_VALUE);
 
         // Push the function's context on top of the value stack.
         for (VStack* vs = func->context; vs != NULL; vs = vs->tail) {
