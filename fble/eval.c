@@ -198,7 +198,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         }
 
         FbleFuncValue* func = (FbleFuncValue*)vstack->value;
-        assert(func->_base.tag = FBLE_FUNC_VALUE);
+        assert(func->_base.tag == FBLE_FUNC_VALUE);
 
         // Push the function's context on top of the value stack.
         for (VStack* vs = func->context; vs != NULL; vs = vs->tail) {
