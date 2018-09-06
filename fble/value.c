@@ -53,6 +53,13 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
       case FBLE_INPUT_VALUE: assert(false && "TODO: release FBLE_INPUT_VALUE"); return;
 
       case FBLE_OUTPUT_VALUE: assert(false && "TODO: release FBLE_OUTPUT_VALUE"); return;
+
+      case FBLE_REF_VALUE: {
+        FbleRefValue* rv = (FbleRefValue*)value;
+        FbleRelease(arena, rv->value);
+        FbleFree(arena, value);
+        return;
+      }
     }
 
     UNREACHABLE("Should not get here");

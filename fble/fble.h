@@ -647,6 +647,7 @@ typedef enum {
   FBLE_PROC_VALUE,
   FBLE_INPUT_VALUE,
   FBLE_OUTPUT_VALUE,
+  FBLE_REF_VALUE,
 } FbleValueTag;
 
 // FbleValue --
@@ -687,6 +688,18 @@ typedef struct {
 // Defined internally, because representing the body of the function depends
 // on the internals of the evaluator.
 typedef struct FbleFuncValue FbleFuncValue;
+
+// FbleRefValue --
+//   FBLE_REF_VALUE
+//
+// A implementation-specific value introduced to support recursive values. A
+// ref value is simply a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are reference
+// values.
+typedef struct {
+  FbleValue _base;
+  FbleValue* value;
+} FbleRefValue;
 
 // FbleCopy --
 //

@@ -45,12 +45,37 @@ typedef struct ThreadStack {
   struct ThreadStack* tail;
 } ThreadStack;
 
+static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
 static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail);
 static VStack* VPop(FbleArena* arena, VStack* vstack);
 static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* instr, ThreadStack* tail); 
 
 static FbleValue* Eval(FbleArena* arena, FbleInstr* instrs, VStack* stack);
 
+
+// Deref --
+//   Dereference a value. Removes all layers of reference values until a
+//   non-reference value is encountered and returns the non-reference value.
+//
+//   A tag for the type of dereferenced value should be provided. This
+//   function will assert that the correct kind of value is encountered.
+//
+// Inputs:
+//   value - the value to dereference.
+//   tag - the expected tag of the dereferenced value.
+static FbleValue* Deref(FbleValue* value, FbleValueTag tag)
+{
+  while (value->tag == FBLE_REF_VALUE) {
+    FbleRefValue* rv = (FbleRefValue*)value;
+
+    // In theory, if static analysis was done properly, the code should never
+    // try to dereference an abstract reference value.
+    assert(rv->value != NULL && "dereference of abstract value");
+    value = rv->value;
+  }
+  assert(value->tag == tag);
+  return value;
+}
 
 // TPush --
 //   Push a value onto a value stack.
@@ -234,12 +259,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         assert(vstack != NULL);
-        FbleStructValue* value = (FbleStructValue*)vstack->value;
-        assert(value->_base.tag == FBLE_STRUCT_VALUE);
-
-        assert(access_instr->tag < value->fields.size);
-        *presult = FbleCopy(arena, value->fields.xs[access_instr->tag]);
-
+        FbleStructValue* sv = (FbleStructValue*)Deref(vstack->value, FBLE_STRUCT_VALUE);
+        assert(access_instr->tag < sv->fields.size);
+        *presult = FbleCopy(arena, sv->fields.xs[access_instr->tag]);
         FbleRelease(arena, vstack->value);
         vstack = VPop(arena, vstack);
         break;
@@ -263,10 +285,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
         assert(vstack != NULL);
-        FbleUnionValue* value = (FbleUnionValue*)vstack->value;
-        assert(value->_base.tag == FBLE_UNION_VALUE);
-
-        if (value->tag != access_instr->tag) {
+        FbleUnionValue* uv = (FbleUnionValue*)Deref(vstack->value, FBLE_UNION_VALUE);
+        if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
 
           // Clean up the stacks.
@@ -283,7 +303,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
 
           return NULL;
         }
-        *presult = FbleCopy(arena, value->arg);
+        *presult = FbleCopy(arena, uv->arg);
 
         FbleRelease(arena, vstack->value);
         vstack = VPop(arena, vstack);
@@ -293,12 +313,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
       case FBLE_COND_INSTR: {
         FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
         assert(vstack != NULL);
-        FbleUnionValue* value = (FbleUnionValue*)vstack->value;
-        assert(value->_base.tag == FBLE_UNION_VALUE);
-
-        assert(value->tag < cond_instr->choices.size);
-        tstack = TPush(arena, presult, cond_instr->choices.xs[value->tag], tstack);
-
+        FbleUnionValue* uv = (FbleUnionValue*)Deref(vstack->value, FBLE_UNION_VALUE);
+        assert(uv->tag < cond_instr->choices.size);
+        tstack = TPush(arena, presult, cond_instr->choices.xs[uv->tag], tstack);
         FbleRelease(arena, vstack->value);
         vstack = VPop(arena, vstack);
         break;
