@@ -21,6 +21,7 @@ typedef enum {
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
   FBLE_POP_INSTR,
+  FBLE_WEAKEN_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -101,6 +102,15 @@ typedef struct {
   size_t count;
 } FblePopInstr;
 
+// FbleWeakenInstr -- FBLE_WEAKEN_INSTR
+//   The top count values on the value stack should be ref values that hold
+//   strong refs to their values. Change all of those to hold weak refs to
+//   their values instead.
+typedef struct {
+  FbleInstr _base;
+  size_t count;
+} FbleWeakenInstr;
+
 // FbleLetInstr -- FBLE_LET_INSTR
 //   Evaluate each of the bindings, add the results to the scope, then execute
 //   the body.
@@ -109,6 +119,7 @@ typedef struct {
   FbleInstrV bindings;
   FbleInstr* body;
   FblePopInstr pop;
+  FbleWeakenInstr weaken;
 } FbleLetInstr;
 
 // FblePushInstr -- FBLE_PUSH_INSTR

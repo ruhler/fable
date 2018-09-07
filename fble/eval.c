@@ -185,6 +185,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
 
         tstack = TPush(arena, NULL, &let_instr->pop._base, tstack);
         tstack = TPush(arena, presult, let_instr->body, tstack);
+        tstack = TPush(arena, NULL, &let_instr->weaken._base, tstack);
 
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
           FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
@@ -342,6 +343,21 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
           assert(vstack != NULL);
           FbleRelease(arena, vstack->value);
           vstack = VPop(arena, vstack);
+        }
+        break;
+      }
+
+      case FBLE_WEAKEN_INSTR: {
+        FbleWeakenInstr* weaken_instr = (FbleWeakenInstr*)instr;
+        VStack* vs = vstack;
+        for (size_t i = 0; i < weaken_instr->count; ++i) {
+          assert(vs != NULL);
+          FbleRefValue* rv = (FbleRefValue*) vs->value;
+          assert(rv->_base.tag == FBLE_REF_VALUE);
+
+          // TODO: Weaken here.
+
+          vs = vs->tail;
         }
         break;
       }
