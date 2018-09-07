@@ -206,15 +206,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         value->body = func_value_instr->body;
         value->pop._base.tag = FBLE_POP_INSTR;
         value->pop.count = 1 + func_value_instr->argc;
+        *presult = &value->_base;
 
+        // TODO: This copies the entire context, but really we should only
+        // need to copy those variables that are used in the body of the
+        // function. This has implications for performance and memory that
+        // should be considered.
         for (VStack* vs = vstack; vs != NULL;  vs = vs->tail) {
           value->context = VPush(arena, FbleCopy(arena, vs->value), value->context);
           value->pop.count++;
         }
-        
-        // Set the result after copying the context, to avoid introducing a
-        // circular reference chain from this value to itself.
-        *presult = &value->_base;
         break;
       }
 
