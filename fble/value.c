@@ -9,7 +9,7 @@
 FbleValue* FbleCopy(FbleArena* arena, FbleValue* src)
 {
   if (src != NULL) {
-    src->refcount++;
+    src->strong_ref_count++;
   }
 
   return src;
@@ -22,8 +22,8 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
     return;
   }
 
-  assert(value->refcount > 0);
-  if (--(value->refcount) == 0) {
+  assert(value->strong_ref_count > 0);
+  if (--(value->strong_ref_count) == 0) {
     switch (value->tag) {
       case FBLE_STRUCT_VALUE: {
         FbleStructValue* sv = (FbleStructValue*)value;

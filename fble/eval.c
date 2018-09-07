@@ -190,7 +190,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
           FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
           rv->_base.tag = FBLE_REF_VALUE;
-          rv->_base.refcount = 1;
+          rv->_base.strong_ref_count = 1;
           rv->value = NULL;
           vstack = VPush(arena, &rv->_base, vstack);
           tstack = TPush(arena, &rv->value, let_instr->bindings.xs[i], tstack);
@@ -202,7 +202,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
         FbleFuncValue* value = FbleAlloc(arena, FbleFuncValue);
         value->_base.tag = FBLE_FUNC_VALUE;
-        value->_base.refcount = 1;
+        value->_base.strong_ref_count = 1;
         value->context = NULL;
         value->body = func_value_instr->body;
         value->pop._base.tag = FBLE_POP_INSTR;
@@ -250,7 +250,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
         FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
         value->_base.tag = FBLE_STRUCT_VALUE;
-        value->_base.refcount = 1;
+        value->_base.strong_ref_count = 1;
         value->fields.size = struct_value_instr->fields.size;
         value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
@@ -276,7 +276,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
         FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
         union_value->_base.tag = FBLE_UNION_VALUE;
-        union_value->_base.refcount = 1;
+        union_value->_base.strong_ref_count = 1;
         union_value->tag = union_value_instr->tag;
         union_value->arg = NULL;
 

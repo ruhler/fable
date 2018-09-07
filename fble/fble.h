@@ -657,7 +657,7 @@ typedef enum {
 //   by first casting to that specific type of value.
 typedef struct FbleValue {
   FbleValueTag tag;
-  size_t refcount;
+  size_t strong_ref_count;
 } FbleValue;
 
 // FbleValueV --
