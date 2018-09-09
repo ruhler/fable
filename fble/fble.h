@@ -701,20 +701,23 @@ typedef struct {
   FbleValue* value;
 } FbleRefValue;
 
-// FbleCopy --
+// FbleTakeStrongRef --
 //
-//   Make a (likely shared) copy of the given value.
+//   Increment the strong reference count of a value.
 //
 // Inputs:
-//   arena - The arena to use for allocations.
-//   src - The value to make a copy of. May be be NULL.
+//   value - The value to increment the strong reference count of. The value
+//           may be NULL, in which case nothing is done.
 //
 // Results:
-//   A copy of the value, which may be the same as the original value.
+//   The given value, for the caller's convenience when incrementing the
+//   reference count and assigning it at the same time.
 //
 // Side effects:
-//   May perform arena allocations.
-FbleValue* FbleCopy(FbleArena* arena, FbleValue* src);
+//   Increments the strong reference count on the value. The reference count
+//   must be decrement using FbleDropStrongRef when the value is no longer
+//   needed.
+FbleValue* FbleTakeStrongRef(FbleValue* src);
 
 // FbleRelease --
 //

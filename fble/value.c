@@ -5,8 +5,8 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// FbleCopy -- see documentation in fble.h
-FbleValue* FbleCopy(FbleArena* arena, FbleValue* src)
+// FbleTakeStrongRef -- see documentation in fble.h
+FbleValue* FbleTakeStrongRef(FbleValue* src)
 {
   if (src != NULL) {
     src->strong_ref_count++;

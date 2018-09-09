@@ -176,7 +176,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
           assert(v->tail != NULL);
           v = v->tail;
         }
-        *presult = FbleCopy(arena, v->value);
+        *presult = FbleTakeStrongRef(v->value);
         break;
       }
 
@@ -214,7 +214,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         // function. This has implications for performance and memory that
         // should be considered.
         for (VStack* vs = vstack; vs != NULL;  vs = vs->tail) {
-          value->context = VPush(arena, FbleCopy(arena, vs->value), value->context);
+          value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
           value->pop.count++;
         }
         break;
@@ -232,7 +232,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
 
         // Push the function's context on top of the value stack.
         for (VStack* vs = func->context; vs != NULL; vs = vs->tail) {
-          vstack = VPush(arena, FbleCopy(arena, vs->value), vstack);
+          vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
         }
 
         // Push the function args on top of the value stack.
@@ -266,7 +266,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         assert(vstack != NULL);
         FbleStructValue* sv = (FbleStructValue*)Deref(vstack->value, FBLE_STRUCT_VALUE);
         assert(access_instr->tag < sv->fields.size);
-        *presult = FbleCopy(arena, sv->fields.xs[access_instr->tag]);
+        *presult = FbleTakeStrongRef(sv->fields.xs[access_instr->tag]);
         FbleRelease(arena, vstack->value);
         vstack = VPop(arena, vstack);
         break;
@@ -308,7 +308,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
 
           return NULL;
         }
-        *presult = FbleCopy(arena, uv->arg);
+        *presult = FbleTakeStrongRef(uv->arg);
 
         FbleRelease(arena, vstack->value);
         vstack = VPop(arena, vstack);

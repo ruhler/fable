@@ -1,7 +1,7 @@
 Fble:
 * Test and add support for recursive values.
+ - Switch from FbleCopy/FbleRelease to FbleIncr/FbleDecr, or some similar
  - Implement strong/weak refcounting scheme.
- - Implement recursive let properly.
 * Test and add support for recursive types.
 * Test and add support for non-recursive polymorphism.
  - Implement type equality properly.
