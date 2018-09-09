@@ -719,21 +719,23 @@ typedef struct {
 //   needed.
 FbleValue* FbleTakeStrongRef(FbleValue* src);
 
-// FbleRelease --
+// FbleDropStrongRef --
 //
-//   Free the resources associated with a value.
+//   Decrement the strong reference count of a value and free the resources
+//   associated with that value if it has no more references.
 //
 // Inputs:
 //   arena - The arena the value was allocated with.
-//   value - The value to free the resources of.
+//   value - The value to decrement the strong reference count of. The value
+//           may be NULL, in which case no action is performed.
 //
 // Results:
 //   None.
 //
 // Side effect:
-//   The resources for the value are freed. The value may be NULL, in which
-//   case no action is taken.
-void FbleRelease(FbleArena* arena, FbleValue* value);
+//   Decrements the strong reference count of the value and frees resources
+//   associated with the value if there are no more references to it.
+void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
 
 // FbleEval --
 //   Type check and evaluate an expression.

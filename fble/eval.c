@@ -267,7 +267,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleStructValue* sv = (FbleStructValue*)Deref(vstack->value, FBLE_STRUCT_VALUE);
         assert(access_instr->tag < sv->fields.size);
         *presult = FbleTakeStrongRef(sv->fields.xs[access_instr->tag]);
-        FbleRelease(arena, vstack->value);
+        FbleDropStrongRef(arena, vstack->value);
         vstack = VPop(arena, vstack);
         break;
       }
@@ -296,7 +296,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
 
           // Clean up the stacks.
           while (vstack != vstack_in) {
-            FbleRelease(arena, vstack->value);
+            FbleDropStrongRef(arena, vstack->value);
             vstack = VPop(arena, vstack);
           }
 
@@ -310,7 +310,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         }
         *presult = FbleTakeStrongRef(uv->arg);
 
-        FbleRelease(arena, vstack->value);
+        FbleDropStrongRef(arena, vstack->value);
         vstack = VPop(arena, vstack);
         break;
       }
@@ -321,7 +321,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleUnionValue* uv = (FbleUnionValue*)Deref(vstack->value, FBLE_UNION_VALUE);
         assert(uv->tag < cond_instr->choices.size);
         tstack = TPush(arena, presult, cond_instr->choices.xs[uv->tag], tstack);
-        FbleRelease(arena, vstack->value);
+        FbleDropStrongRef(arena, vstack->value);
         vstack = VPop(arena, vstack);
         break;
       }
@@ -341,7 +341,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FblePopInstr* pop_instr = (FblePopInstr*)instr;
         for (size_t i = 0; i < pop_instr->count; ++i) {
           assert(vstack != NULL);
-          FbleRelease(arena, vstack->value);
+          FbleDropStrongRef(arena, vstack->value);
           vstack = VPop(arena, vstack);
         }
         break;
@@ -386,7 +386,7 @@ void FbleFreeFuncValue(FbleArena* arena, FbleFuncValue* value)
 {
   VStack* vs = value->context;
   while (vs != NULL) {
-    FbleRelease(arena, vs->value);
+    FbleDropStrongRef(arena, vs->value);
     vs = VPop(arena, vs);
   }
 

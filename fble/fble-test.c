@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
 
     // TODO: If the result is a process, run the process.
 
-    FbleRelease(eval_arena, result);
+    FbleDropStrongRef(eval_arena, result);
     FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);
   }

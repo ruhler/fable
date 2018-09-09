@@ -15,8 +15,8 @@ FbleValue* FbleTakeStrongRef(FbleValue* src)
   return src;
 }
 
-// FbleRelease -- see documentation in fble.h
-void FbleRelease(FbleArena* arena, FbleValue* value)
+// FbleDropStrongRef -- see documentation in fble.h
+void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
 {
   if (value == NULL) {
     return;
@@ -28,7 +28,7 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
       case FBLE_STRUCT_VALUE: {
         FbleStructValue* sv = (FbleStructValue*)value;
         for (size_t i = 0; i < sv->fields.size; ++i) {
-          FbleRelease(arena, sv->fields.xs[i]);
+          FbleDropStrongRef(arena, sv->fields.xs[i]);
         }
         FbleFree(arena, sv->fields.xs);
         FbleFree(arena, value);
@@ -37,7 +37,7 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
 
       case FBLE_UNION_VALUE: {
         FbleUnionValue* uv = (FbleUnionValue*)value;
-        FbleRelease(arena, uv->arg);
+        FbleDropStrongRef(arena, uv->arg);
         FbleFree(arena, value);
         return;
       }
@@ -56,7 +56,7 @@ void FbleRelease(FbleArena* arena, FbleValue* value)
 
       case FBLE_REF_VALUE: {
         FbleRefValue* rv = (FbleRefValue*)value;
-        FbleRelease(arena, rv->value);
+        FbleDropStrongRef(arena, rv->value);
         FbleFree(arena, value);
         return;
       }
