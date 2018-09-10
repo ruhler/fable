@@ -658,6 +658,7 @@ typedef enum {
 typedef struct FbleValue {
   FbleValueTag tag;
   size_t strong_ref_count;
+  size_t weak_ref_count;
 } FbleValue;
 
 // FbleValueV --
@@ -719,6 +720,24 @@ typedef struct {
 //   needed.
 FbleValue* FbleTakeStrongRef(FbleValue* src);
 
+// FbleTakeWeakRef --
+//
+//   Increment the weak reference count of a value.
+//
+// Inputs:
+//   value - The value to increment the strong reference count of. The value
+//           may be NULL, in which case nothing is done.
+//
+// Results:
+//   The given value, for the caller's convenience when incrementing the
+//   reference count and assigning it at the same time.
+//
+// Side effects:
+//   Increments the weak reference count on the value. The reference count
+//   must be decrement using FbleDropWeakRef when the value is no longer
+//   needed.
+FbleValue* FbleTakeWeakRef(FbleValue* src);
+
 // FbleDropStrongRef --
 //
 //   Decrement the strong reference count of a value and free the resources
@@ -736,6 +755,24 @@ FbleValue* FbleTakeStrongRef(FbleValue* src);
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
 void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
+
+// FbleDropWeakRef --
+//
+//   Decrement the weak reference count of a value and free the resources
+//   associated with that value if it has no more references.
+//
+// Inputs:
+//   arena - The arena the value was allocated with.
+//   value - The value to decrement the weak reference count of. The value
+//           may be NULL, in which case no action is performed.
+//
+// Results:
+//   None.
+//
+// Side effect:
+//   Decrements the weak reference count of the value and frees resources
+//   associated with the value if there are no more references to it.
+void FbleDropWeakRef(FbleArena* arena, FbleValue* value);
 
 // FbleEval --
 //   Type check and evaluate an expression.

@@ -191,6 +191,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
           FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
           rv->_base.tag = FBLE_REF_VALUE;
           rv->_base.strong_ref_count = 1;
+          rv->_base.weak_ref_count = 0;
           rv->value = NULL;
           vstack = VPush(arena, &rv->_base, vstack);
           tstack = TPush(arena, &rv->value, let_instr->bindings.xs[i], tstack);
@@ -203,6 +204,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleFuncValue* value = FbleAlloc(arena, FbleFuncValue);
         value->_base.tag = FBLE_FUNC_VALUE;
         value->_base.strong_ref_count = 1;
+        value->_base.weak_ref_count = 0;
         value->context = NULL;
         value->body = func_value_instr->body;
         value->pop._base.tag = FBLE_POP_INSTR;
@@ -251,6 +253,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
         value->_base.tag = FBLE_STRUCT_VALUE;
         value->_base.strong_ref_count = 1;
+        value->_base.weak_ref_count = 0;
         value->fields.size = struct_value_instr->fields.size;
         value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
@@ -277,6 +280,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
         union_value->_base.tag = FBLE_UNION_VALUE;
         union_value->_base.strong_ref_count = 1;
+        union_value->_base.weak_ref_count = 0;
         union_value->tag = union_value_instr->tag;
         union_value->arg = NULL;
 
@@ -355,7 +359,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
           FbleRefValue* rv = (FbleRefValue*) vs->value;
           assert(rv->_base.tag == FBLE_REF_VALUE);
 
-          // TODO: Weaken here.
+          FbleTakeWeakRef(rv->value);
+          FbleDropStrongRef(arena, rv->value);
 
           vs = vs->tail;
         }
