@@ -359,8 +359,14 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
           FbleRefValue* rv = (FbleRefValue*) vs->value;
           assert(rv->_base.tag == FBLE_REF_VALUE);
 
+          assert(rv->value != NULL);
+
+          // The vstack takes over the strong ref of rv->value, and rv gets a
+          // weak ref to rv->value, then we drop the vstack's strong ref to
+          // rv.
+          vs->value = rv->value;
           FbleTakeWeakRef(rv->value);
-          FbleDropStrongRef(arena, rv->value);
+          FbleDropStrongRef(arena, &rv->_base);
 
           vs = vs->tail;
         }

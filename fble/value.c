@@ -99,39 +99,41 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
 
   assert(value->strong_ref_count > 0);
   value->strong_ref_count--;
-  switch (value->tag) {
-    case FBLE_STRUCT_VALUE: {
-      FbleStructValue* sv = (FbleStructValue*)value;
-      for (size_t i = 0; i < sv->fields.size; ++i) {
-        FbleDropStrongRef(arena, sv->fields.xs[i]);
+  if (value->strong_ref_count == 0) {
+    switch (value->tag) {
+      case FBLE_STRUCT_VALUE: {
+        FbleStructValue* sv = (FbleStructValue*)value;
+        for (size_t i = 0; i < sv->fields.size; ++i) {
+          FbleDropStrongRef(arena, sv->fields.xs[i]);
+        }
+        break;
       }
-      break;
+
+      case FBLE_UNION_VALUE: {
+        FbleUnionValue* uv = (FbleUnionValue*)value;
+        FbleDropStrongRef(arena, uv->arg);
+        break;
+      }
+
+      case FBLE_FUNC_VALUE: {
+        assert(false && "TODO: drop strong refs on vstack.");
+        break;
+      }
+
+      case FBLE_PROC_VALUE: assert(false && "TODO"); break;
+      case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
+      case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
+
+      case FBLE_REF_VALUE: {
+        FbleRefValue* rv = (FbleRefValue*)value;
+        FbleDropWeakRef(arena, rv->value);
+        break;
+      }
     }
 
-    case FBLE_UNION_VALUE: {
-      FbleUnionValue* uv = (FbleUnionValue*)value;
-      FbleDropStrongRef(arena, uv->arg);
-      break;
+    if (value->weak_ref_count == 0) {
+      FreeValue(arena, value);
     }
-
-    case FBLE_FUNC_VALUE: {
-      assert(false && "TODO: drop strong refs on vstack.");
-      break;
-    }
-
-    case FBLE_PROC_VALUE: assert(false && "TODO"); break;
-    case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
-    case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
-
-    case FBLE_REF_VALUE: {
-      FbleRefValue* rv = (FbleRefValue*)value;
-      FbleDropWeakRef(arena, rv->value);
-      break;
-    }
-  }
-
-  if (value->strong_ref_count == 0 && value->weak_ref_count == 0) {
-    FreeValue(arena, value);
   }
 }
 
@@ -144,38 +146,40 @@ void FbleDropWeakRef(FbleArena* arena, FbleValue* value)
 
   assert(value->weak_ref_count > 0);
   value->weak_ref_count--;
-  switch (value->tag) {
-    case FBLE_STRUCT_VALUE: {
-      FbleStructValue* sv = (FbleStructValue*)value;
-      for (size_t i = 0; i < sv->fields.size; ++i) {
-        FbleDropWeakRef(arena, sv->fields.xs[i]);
+  if (value->weak_ref_count == 0) {
+    switch (value->tag) {
+      case FBLE_STRUCT_VALUE: {
+        FbleStructValue* sv = (FbleStructValue*)value;
+        for (size_t i = 0; i < sv->fields.size; ++i) {
+          FbleDropWeakRef(arena, sv->fields.xs[i]);
+        }
+        break;
       }
-      break;
+
+      case FBLE_UNION_VALUE: {
+        FbleUnionValue* uv = (FbleUnionValue*)value;
+        FbleDropWeakRef(arena, uv->arg);
+        break;
+      }
+
+      case FBLE_FUNC_VALUE: {
+        assert(false && "TODO: drop weak refs on vstack.");
+        break;
+      }
+
+      case FBLE_PROC_VALUE: assert(false && "TODO"); break;
+      case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
+      case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
+
+      case FBLE_REF_VALUE: {
+        // Nothing to do here.
+        break;
+      }
     }
 
-    case FBLE_UNION_VALUE: {
-      FbleUnionValue* uv = (FbleUnionValue*)value;
-      FbleDropWeakRef(arena, uv->arg);
-      break;
+    if (value->strong_ref_count == 0) {
+      FreeValue(arena, value);
     }
-
-    case FBLE_FUNC_VALUE: {
-      assert(false && "TODO: drop weak refs on vstack.");
-      break;
-    }
-
-    case FBLE_PROC_VALUE: assert(false && "TODO"); break;
-    case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
-    case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
-
-    case FBLE_REF_VALUE: {
-      // Nothing to do here.
-      break;
-    }
-  }
-
-  if (value->strong_ref_count == 0 && value->weak_ref_count == 0) {
-    FreeValue(arena, value);
   }
 }
 
