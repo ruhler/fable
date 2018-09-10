@@ -5,33 +5,6 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// VStack --
-//   A stack of values.
-typedef struct VStack {
-  FbleValue* value;
-  struct VStack* tail;
-} VStack;
-
-// FbleFuncValue -- FBLE_FUNC_VALUE
-//
-// Fields:
-//   context - The value stack at the time the function was created,
-//             representing the lexical context available to the function.
-//             Stored in reverse order of the standard value stack.
-//   body - The instr representing the body of the function.
-//          Note: fbleFuncValue does not take ownership of body. The
-//          FuncValueInstr that allocates the FbleFuncValue has ownership of
-//          the body.
-//   pop - An instruction that can be used to pop the arguments, the
-//         context, and the function value itself after a function is done
-//         executing.
-struct FbleFuncValue {
-  FbleValue _base;
-  VStack* context;
-  FbleInstr* body;
-  FblePopInstr pop;
-};
-
 // ThreadStack --
 //   The computation context for a thread.
 // 
@@ -46,11 +19,11 @@ typedef struct ThreadStack {
 } ThreadStack;
 
 static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
-static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail);
-static VStack* VPop(FbleArena* arena, VStack* vstack);
+static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
+static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
 static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* instr, ThreadStack* tail); 
 
-static FbleValue* Eval(FbleArena* arena, FbleInstr* instrs, VStack* stack);
+static FbleValue* Eval(FbleArena* arena, FbleInstr* instrs, FbleVStack* stack);
 
 
 // Deref --
@@ -89,10 +62,10 @@ static FbleValue* Deref(FbleValue* value, FbleValueTag tag)
 //   The new stack with pushed value.
 //
 // Side effects:
-//   Allocates a new VStack instance that should be freed when done.
-static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail)
+//   Allocates a new FbleVStack instance that should be freed when done.
+static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail)
 {
-  VStack* vstack = FbleAlloc(arena, VStack);
+  FbleVStack* vstack = FbleAlloc(arena, FbleVStack);
   vstack->value = value;
   vstack->tail = tail;
   return vstack;
@@ -111,9 +84,9 @@ static VStack* VPush(FbleArena* arena, FbleValue* value, VStack* tail)
 // Side effects:
 //   Frees the top stack frame. It is the users job to release the value if
 //   necessary before popping the top of the stack.
-static VStack* VPop(FbleArena* arena, VStack* vstack)
+static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
 {
-  VStack* tail = vstack->tail;
+  FbleVStack* tail = vstack->tail;
   FbleFree(arena, vstack);
   return tail;
 }
@@ -155,9 +128,9 @@ static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* inst
 //
 // Side effects:
 //   Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
+static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
 {
-  VStack* vstack = vstack_in;
+  FbleVStack* vstack = vstack_in;
   FbleValue* final_result = NULL;
   ThreadStack* tstack = TPush(arena, &final_result, prgm, NULL);
 
@@ -171,7 +144,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
     switch (instr->tag) {
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
-        VStack* v = vstack;
+        FbleVStack* v = vstack;
         for (size_t i = 0; i < var_instr->position; ++i) {
           assert(v->tail != NULL);
           v = v->tail;
@@ -215,7 +188,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         // need to copy those variables that are used in the body of the
         // function. This has implications for performance and memory that
         // should be considered.
-        for (VStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
           value->pop.count++;
         }
@@ -233,7 +206,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
         FbleFuncValue* func = (FbleFuncValue*)Deref(vstack->value, FBLE_FUNC_VALUE);
 
         // Push the function's context on top of the value stack.
-        for (VStack* vs = func->context; vs != NULL; vs = vs->tail) {
+        for (FbleVStack* vs = func->context; vs != NULL; vs = vs->tail) {
           vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
         }
 
@@ -353,7 +326,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, VStack* vstack_in)
 
       case FBLE_WEAKEN_INSTR: {
         FbleWeakenInstr* weaken_instr = (FbleWeakenInstr*)instr;
-        VStack* vs = vstack;
+        FbleVStack* vs = vstack;
         for (size_t i = 0; i < weaken_instr->count; ++i) {
           assert(vs != NULL);
           FbleRefValue* rv = (FbleRefValue*) vs->value;
@@ -386,22 +359,8 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
     return NULL;
   }
 
-  VStack* vstack = NULL;
+  FbleVStack* vstack = NULL;
   FbleValue* result = Eval(arena, instrs, vstack);
   FbleFreeInstrs(arena, instrs);
   return result;
-}
-
-// FbleFreeFuncValue -- see documentation in fble-internal.h
-void FbleFreeFuncValue(FbleArena* arena, FbleFuncValue* value)
-{
-  VStack* vs = value->context;
-  while (vs != NULL) {
-    FbleDropStrongRef(arena, vs->value);
-    vs = VPop(arena, vs);
-  }
-
-  // Note: The FbleFuncValue does not take ownership of value->body, so we
-  // should not free it here.
-  FbleFree(arena, value);
 }

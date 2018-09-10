@@ -28,8 +28,12 @@ FbleValue* FbleTakeStrongRef(FbleValue* value)
         }
 
         case FBLE_FUNC_VALUE: {
-          assert(false && "TODO: take strong refs on vstack");
-          // FbleFuncValue* fv = (FbleFuncValue*)value;
+          FbleFuncValue* fv = (FbleFuncValue*)value;
+          FbleVStack* vs = fv->context;
+          while (vs != NULL) {
+            FbleTakeStrongRef(vs->value);
+            vs = vs->tail;
+          }
           break;
         }
 
@@ -70,8 +74,12 @@ FbleValue* FbleTakeWeakRef(FbleValue* value)
         }
 
         case FBLE_FUNC_VALUE: {
-          assert(false && "TODO: take weak refs on vstack");
-          // FbleFuncValue* fv = (FbleFuncValue*)value;
+          FbleFuncValue* fv = (FbleFuncValue*)value;
+          FbleVStack* vs = fv->context;
+          while (vs != NULL) {
+            FbleTakeWeakRef(vs->value);
+            vs = vs->tail;
+          }
           break;
         }
 
@@ -116,7 +124,12 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
       }
 
       case FBLE_FUNC_VALUE: {
-        assert(false && "TODO: drop strong refs on vstack.");
+        FbleFuncValue* fv = (FbleFuncValue*)value;
+        FbleVStack* vs = fv->context;
+        while (vs != NULL) {
+          FbleDropStrongRef(arena, vs->value);
+          vs = vs->tail;
+        }
         break;
       }
 
@@ -163,7 +176,12 @@ void FbleDropWeakRef(FbleArena* arena, FbleValue* value)
       }
 
       case FBLE_FUNC_VALUE: {
-        assert(false && "TODO: drop weak refs on vstack.");
+        FbleFuncValue* fv = (FbleFuncValue*)value;
+        FbleVStack* vs = fv->context;
+        while (vs != NULL) {
+          FbleDropWeakRef(arena, vs->value);
+          vs = vs->tail;
+        }
         break;
       }
 
@@ -213,7 +231,13 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* fv = (FbleFuncValue*)value;
-      FbleFreeFuncValue(arena, fv);
+      FbleVStack* vs = fv->context;
+      while (vs != NULL) {
+        FbleVStack* tmp = vs;
+        vs = vs->tail;
+        FbleFree(arena, tmp);
+      }
+      FbleFree(arena, fv);
       return;
     }
 

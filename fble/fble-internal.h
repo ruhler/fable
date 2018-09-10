@@ -161,20 +161,31 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs);
 //   it is no longer needed.
 FbleInstr* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
-// FbleFreeFuncValue --
-//   Free memory associated with the given function value.
+// FbleVStack --
+//   A stack of values.
+typedef struct FbleVStack {
+  FbleValue* value;
+  struct FbleVStack* tail;
+} FbleVStack;
+
+// FbleFuncValue -- FBLE_FUNC_VALUE
 //
-// Inputs: 
-//   arena - the arena used for allocation.
-//   value - the value to free.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Frees all memory associated with the function value, including value
-//   itself.
-void FbleFreeFuncValue(FbleArena* arena, FbleFuncValue* value);
-
+// Fields:
+//   context - The value stack at the time the function was created,
+//             representing the lexical context available to the function.
+//             Stored in reverse order of the standard value stack.
+//   body - The instr representing the body of the function.
+//          Note: fbleFuncValue does not take ownership of body. The
+//          FuncValueInstr that allocates the FbleFuncValue has ownership of
+//          the body.
+//   pop - An instruction that can be used to pop the arguments, the
+//         context, and the function value itself after a function is done
+//         executing.
+struct FbleFuncValue {
+  FbleValue _base;
+  FbleVStack* context;
+  FbleInstr* body;
+  FblePopInstr pop;
+};
 
 #endif // FBLE_INTERNAL_H_
