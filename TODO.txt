@@ -8,9 +8,6 @@ Fble:
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 
 Fble Cleanup:
-* Test that we don't leak memory or crash when there is a runtime error in the
-  body of a let. In particular, that pre-weakend ref values, when freed,
-  properly free their references.
 * Share common code between checking FbleStructType, FbleUnionType, and
   FbleFuncType?
 

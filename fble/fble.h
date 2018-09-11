@@ -697,9 +697,15 @@ typedef struct FbleFuncValue FbleFuncValue;
 // ref value is simply a reference to another value. All values must be
 // dereferenced before being otherwise accessed in case they are reference
 // values.
+//
+// Fields:
+//   value - the value being referenced
+//   strong - true if we hold a strong reference to the value, false if we
+//            hold a weak reference to the value.
 typedef struct {
   FbleValue _base;
   FbleValue* value;
+  bool strong;
 } FbleRefValue;
 
 // FbleTakeStrongRef --

@@ -88,7 +88,7 @@ FbleValue* FbleTakeWeakRef(FbleValue* value)
         case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
 
         case FBLE_REF_VALUE: {
-          // Nothing to do here.
+          // Nothing to do here. 
           break;
         }
       }
@@ -138,7 +138,11 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
 
       case FBLE_REF_VALUE: {
         FbleRefValue* rv = (FbleRefValue*)value;
-        FbleDropWeakRef(arena, rv->value);
+        if (rv->strong) {
+          FbleDropStrongRef(arena, rv->value);
+        } else {
+          FbleDropWeakRef(arena, rv->value);
+        }
         break;
       }
     }
