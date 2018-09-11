@@ -106,8 +106,7 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
   }
 
   assert(value->strong_ref_count > 0);
-  value->strong_ref_count--;
-  if (value->strong_ref_count == 0) {
+  if (value->strong_ref_count == 1) {
     switch (value->tag) {
       case FBLE_STRUCT_VALUE: {
         FbleStructValue* sv = (FbleStructValue*)value;
@@ -143,10 +142,11 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
         break;
       }
     }
+  }
 
-    if (value->weak_ref_count == 0) {
-      FreeValue(arena, value);
-    }
+  value->strong_ref_count--;
+  if (value->strong_ref_count == 0 && value->weak_ref_count == 0) {
+    FreeValue(arena, value);
   }
 }
 
@@ -158,8 +158,7 @@ void FbleDropWeakRef(FbleArena* arena, FbleValue* value)
   }
 
   assert(value->weak_ref_count > 0);
-  value->weak_ref_count--;
-  if (value->weak_ref_count == 0) {
+  if (value->weak_ref_count == 1) {
     switch (value->tag) {
       case FBLE_STRUCT_VALUE: {
         FbleStructValue* sv = (FbleStructValue*)value;
@@ -194,10 +193,11 @@ void FbleDropWeakRef(FbleArena* arena, FbleValue* value)
         break;
       }
     }
+  }
 
-    if (value->strong_ref_count == 0) {
-      FreeValue(arena, value);
-    }
+  value->weak_ref_count--;
+  if (value->strong_ref_count == 0 && value->weak_ref_count == 0) {
+    FreeValue(arena, value);
   }
 }
 
