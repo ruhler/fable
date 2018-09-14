@@ -8,6 +8,7 @@ Fble:
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 
 Fble Cleanup:
+* Use better names for BasicType* variables than 'basic' in compile.c.
 * Share common code between checking FbleStructType, FbleUnionType, and
   FbleFuncType?
 
