@@ -540,7 +540,7 @@ Concrete Syntax:
   expr ::= '\<' kind type_name [',' kind type_name [...]] '>' '{' stmt '}'
  
 Examples:
-  \<@ T@> { +(T@ just, Unit nothing); }
+  \<@ T@> { +(T@ just, Unit@ nothing); }
   \<@ T@> { \(T@ x; Maybe@<T@>) { Maybe@<T@>(just: x); }; }
 
 8.3 Poly Application
