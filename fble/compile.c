@@ -68,6 +68,7 @@ typedef struct Vars {
 
 static Type* CopyType(FbleArena* arena, Type* type);
 static void FreeType(FbleArena* arena, Type* type);
+static NormalType* Normal(FbleArena* arena, Type* type);
 static bool TypesEqual(Type* a, Type* b);
 static void PrintType(Type* type);
 
@@ -129,7 +130,32 @@ static void FreeType(FbleArena* arena, Type* type)
     }
   }
 }
+
+// Normal --
+//   Reduce a Type to NormalType form.
+//
+// Inputs:
+//   arena - arena to use for allocations, if any.
+//   type - the type to reduce.
+//
+// Results:
+//   The type reduced to normal form.
+//
+// Side effects:
+//   The caller is responsible for calling FreeType on the returned type when
+//   it is no longer needed.
+static NormalType* Normal(FbleArena* arena, Type* type)
+{
+  switch (type->tag) {
+    case STRUCT_TYPE: return (NormalType*)CopyType(arena, type);
+    case UNION_TYPE: return (NormalType*)CopyType(arena, type);
+    case FUNC_TYPE: return (NormalType*)CopyType(arena, type);
+  }
 
+  UNREACHABLE("Should never get here");
+  return NULL;
+}
+
 // TypesEqual --
 //   Test whether the two given compiled types are equal.
 //
@@ -253,21 +279,22 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      if (type->tag != STRUCT_TYPE) {
+      StructType* struct_type = Normal(arena, type);
+      if (struct_type->_base.tag != STRUCT_TYPE) {
         FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
         PrintType(type);
         fprintf(stderr, "\n");
         FreeType(arena, type);
+        FreeType(arena, &struct_type->_base);
         return NULL;
       }
-
-      StructType* struct_type = (StructType*)type;
 
       if (struct_type->fields.size != struct_value_expr->args.size) {
         // TODO: Where should the error message go?
         FbleReportError("expected %i args, but %i were provided\n",
             &expr->loc, struct_type->fields.size, struct_value_expr->args.size);
         FreeType(arena, type);
+        FreeType(arena, &struct_type->_base);
         return NULL;
       }
 
@@ -295,6 +322,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleVectorAppend(arena, instr->fields, mkarg);
       }
 
+      FreeType(arena, &struct_type->_base);
+
       if (error) {
         FreeType(arena, type);
         FbleFreeInstrs(arena, &instr->_base);
@@ -312,15 +341,16 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      if (type->tag != UNION_TYPE) {
+      UnionType* union_type = Normal(arena, type);
+      if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
         PrintType(type);
         fprintf(stderr, "\n");
         FreeType(arena, type);
+        FreeType(arena, &union_type->_base);
         return NULL;
       }
 
-      UnionType* union_type = (UnionType*)type;
       Type* field_type = NULL;
       size_t tag = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
@@ -337,6 +367,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         PrintType(type);
         fprintf(stderr, "\n");
         FreeType(arena, type);
+        FreeType(arena, &union_type->_base);
         return NULL;
       }
 
@@ -344,6 +375,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       Type* arg_type = Compile(arena, vars, type_vars, union_value_expr->arg, &mkarg);
       if (arg_type == NULL) {
         FreeType(arena, type);
+        FreeType(arena, &union_type->_base);
         return NULL;
       }
 
@@ -355,10 +387,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, "\n");
         FbleFreeInstrs(arena, mkarg);
         FreeType(arena, type);
+        FreeType(arena, &union_type->_base);
         FreeType(arena, arg_type);
         return NULL;
       }
       FreeType(arena, arg_type);
+      FreeType(arena, &union_type->_base);
 
       FbleUnionValueInstr* instr = FbleAlloc(arena, FbleUnionValueInstr);
       instr->_base.tag = FBLE_UNION_VALUE_INSTR;
@@ -389,30 +423,34 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->next = &access->_base;
       access->loc = access_expr->field.loc;
       Type* type = Compile(arena, &nvars, type_vars, access_expr->object, mkobj);
-
-      if (type != NULL && type->tag == STRUCT_TYPE) {
-        access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
-      } else if (type != NULL && type->tag == UNION_TYPE) {
-        access->_base.tag = FBLE_UNION_ACCESS_INSTR;
-      } else {
-        if (type != NULL) {
-          FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
-          PrintType(type);
-          fprintf(stderr, "\n");
-        }
-
-        FreeType(arena, type);
+      if (type == NULL) {
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
       }
 
-      NormalType* data_type = (NormalType*)type;
+      NormalType* data_type = Normal(arena, type);
+      if (data_type->_base.tag == STRUCT_TYPE) {
+        access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
+      } else if (data_type->_base.tag == UNION_TYPE) {
+        access->_base.tag = FBLE_UNION_ACCESS_INSTR;
+      } else {
+        FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+
+        FreeType(arena, type);
+        FreeType(arena, &data_type->_base);
+        FbleFreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+
       for (size_t i = 0; i < data_type->fields.size; ++i) {
         if (FbleNamesEqual(access_expr->field.name, data_type->fields.xs[i].name.name)) {
           access->tag = i;
           *instrs = &instr->_base;
           Type* rtype = CopyType(arena, data_type->fields.xs[i].type);
           FreeType(arena, type);
+          FreeType(arena, &data_type->_base);
           return rtype;
         }
       }
@@ -421,6 +459,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       PrintType(type);
       fprintf(stderr, "\n");
       FreeType(arena, type);
+      FreeType(arena, &data_type->_base);
       FbleFreeInstrs(arena, &instr->_base);
       return NULL;
     }
@@ -448,20 +487,22 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      if (type->tag != UNION_TYPE) {
+      UnionType* union_type = Normal(arena, type);
+      if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
         PrintType(type);
         fprintf(stderr, "\n");
         FbleFreeInstrs(arena, &push->_base);
         FreeType(arena, type);
+        FreeType(arena, &union_type->_base);
         return NULL;
       }
 
-      UnionType* union_type = (UnionType*)type;
       if (union_type->fields.size != cond_expr->choices.size) {
         FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
         FbleFreeInstrs(arena, &push->_base);
         FreeType(arena, type);
+        FreeType(arena, &union_type->_base);
         return NULL;
       }
 
@@ -480,6 +521,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           FbleFreeInstrs(arena, &push->_base);
           FreeType(arena, return_type);
           FreeType(arena, type);
+          FreeType(arena, &union_type->_base);
           return NULL;
         }
 
@@ -488,6 +530,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (arg_type == NULL) {
           FreeType(arena, return_type);
           FreeType(arena, type);
+          FreeType(arena, &union_type->_base);
           FbleFreeInstrs(arena, &push->_base);
           return NULL;
         }
@@ -504,6 +547,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             fprintf(stderr, "\n");
 
             FreeType(arena, type);
+            FreeType(arena, &union_type->_base);
             FreeType(arena, return_type);
             FreeType(arena, arg_type);
             FbleFreeInstrs(arena, &push->_base);
@@ -513,6 +557,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         }
       }
       FreeType(arena, type);
+      FreeType(arena, &union_type->_base);
 
       *instrs = &push->_base;
       return return_type;
@@ -596,15 +641,16 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      if (type->tag != FUNC_TYPE) {
+      FuncType* func_type = Normal(arena, type);
+      if (func_type->_base.tag != FUNC_TYPE) {
         FbleReportError("cannot perform application on an object of type ", &expr->loc);
         PrintType(type);
         FreeType(arena, type);
+        FreeType(arena, &func_type->_base);
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
       }
 
-      FuncType* func_type = (FuncType*)type;
       bool error = false;
       if (func_type->fields.size != apply_expr->args.size) {
         FbleReportError("expected %i args, but %i provided\n",
@@ -630,6 +676,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         FreeType(arena, type);
+        FreeType(arena, &func_type->_base);
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
       }
@@ -641,6 +688,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       *instrs = &push->_base;
       Type* rtype = CopyType(arena, func_type->rtype);
       FreeType(arena, type);
+      FreeType(arena, &func_type->_base);
       return rtype;
     }
 
