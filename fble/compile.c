@@ -13,6 +13,7 @@ typedef enum {
   STRUCT_TYPE,
   UNION_TYPE,
   FUNC_TYPE,
+  VAR_TYPE,
 } TypeTag;
 
 // Type --
@@ -58,6 +59,13 @@ typedef NormalType UnionType;
 //   A NormalType for functions.
 typedef NormalType FuncType;
 
+// VarType -- VAR_TYPE
+typedef struct {
+  Type _base;
+  FbleName var;
+  Type* value;
+} VarType;
+
 // Vars --
 //   Scope of variables visible during type checking.
 typedef struct Vars {
@@ -69,7 +77,7 @@ typedef struct Vars {
 static Type* CopyType(FbleArena* arena, Type* type);
 static void FreeType(FbleArena* arena, Type* type);
 static NormalType* Normal(FbleArena* arena, Type* type);
-static bool TypesEqual(Type* a, Type* b);
+static bool TypesEqual(FbleArena* arena, Type* a, Type* b);
 static void PrintType(Type* type);
 
 static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstr** instrs);
@@ -126,6 +134,13 @@ static void FreeType(FbleArena* arena, Type* type)
           FbleFree(arena, normal);
           break;
         }
+
+        case VAR_TYPE: {
+          VarType* var = (VarType*)type;
+          FreeType(arena, var->value);
+          FbleFree(arena, var);
+          break;
+        }
       }
     }
   }
@@ -150,6 +165,10 @@ static NormalType* Normal(FbleArena* arena, Type* type)
     case STRUCT_TYPE: return (NormalType*)CopyType(arena, type);
     case UNION_TYPE: return (NormalType*)CopyType(arena, type);
     case FUNC_TYPE: return (NormalType*)CopyType(arena, type);
+    case VAR_TYPE: {
+      VarType* var_type = (VarType*)type;
+      return Normal(arena, var_type->value);
+    }
   }
 
   UNREACHABLE("Should never get here");
@@ -168,42 +187,49 @@ static NormalType* Normal(FbleArena* arena, Type* type)
 //
 // Side effects:
 //   None.
-static bool TypesEqual(Type* a, Type* b)
+static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
 {
   if (a == b) {
     return true;
   }
 
-  if (a->tag != b->tag) {
+  NormalType* na = Normal(arena, a);
+  NormalType* nb = Normal(arena, b);
+  if (na == nb) {
+    FreeType(arena, &na->_base);
+    FreeType(arena, &nb->_base);
+    return true;
+  }
+
+  if (na->_base.tag != nb->_base.tag) {
+    FreeType(arena, &na->_base);
+    FreeType(arena, &nb->_base);
     return false;
   }
 
-  switch (a->tag) {
-    case STRUCT_TYPE:
-    case UNION_TYPE:
-    case FUNC_TYPE: {
-      NormalType* aa = (NormalType*)a;
-      NormalType* bb = (NormalType*)b;
-      if (aa->fields.size != bb->fields.size) {
-        return false;
-      }
+  if (na->fields.size != nb->fields.size) {
+    FreeType(arena, &na->_base);
+    FreeType(arena, &nb->_base);
+    return false;
+  }
 
-      for (size_t i = 0; i < aa->fields.size; ++i) {
-        if (!FbleNamesEqual(aa->fields.xs[i].name.name, bb->fields.xs[i].name.name)) {
-          return false;
-        }
+  for (size_t i = 0; i < na->fields.size; ++i) {
+    if (!FbleNamesEqual(na->fields.xs[i].name.name, nb->fields.xs[i].name.name)) {
+      FreeType(arena, &na->_base);
+      FreeType(arena, &nb->_base);
+      return false;
+    }
 
-        if (!TypesEqual(aa->fields.xs[i].type, bb->fields.xs[i].type)) {
-          return false;
-        }
-      }
-
-      return TypesEqual(aa->rtype, bb->rtype);
+    if (!TypesEqual(arena, na->fields.xs[i].type, nb->fields.xs[i].type)) {
+      FreeType(arena, &na->_base);
+      FreeType(arena, &nb->_base);
+      return false;
     }
   }
 
-  UNREACHABLE("should never get here");
-  return false;
+  FreeType(arena, &na->_base);
+  FreeType(arena, &nb->_base);
+  return TypesEqual(arena, na->rtype, nb->rtype);
 }
 
 // PrintType --
@@ -219,7 +245,6 @@ static bool TypesEqual(Type* a, Type* b)
 //   Prints the given type in human readable form to stderr.
 static void PrintType(Type* type)
 {
-
   switch (type->tag) {
     case STRUCT_TYPE:
     case UNION_TYPE:
@@ -229,6 +254,7 @@ static void PrintType(Type* type)
         case STRUCT_TYPE: kind = '*'; break;
         case UNION_TYPE: kind = '+'; break;
         case FUNC_TYPE: kind = '\\'; break;
+        case VAR_TYPE: UNREACHABLE("not possible"); break;
       }
 
       NormalType* normal = (NormalType*)type;
@@ -246,6 +272,12 @@ static void PrintType(Type* type)
         PrintType(normal->rtype);
       }
       fprintf(stderr, ")");
+      break;
+    }
+
+    case VAR_TYPE: {
+      VarType* var_type = (VarType*)type;
+      fprintf(stderr, "%s", var_type->var.name);
       break;
     }
   }
@@ -309,7 +341,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         Type* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], &mkarg);
         error = error || (arg_type == NULL);
 
-        if (arg_type != NULL && !TypesEqual(field->type, arg_type)) {
+        if (arg_type != NULL && !TypesEqual(arena, field->type, arg_type)) {
           FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
           PrintType(field->type);
           fprintf(stderr, ", but found ");
@@ -379,7 +411,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      if (!TypesEqual(field_type, arg_type)) {
+      if (!TypesEqual(arena, field_type, arg_type)) {
         FbleReportError("expected type ", &union_value_expr->arg->loc);
         PrintType(field_type);
         fprintf(stderr, ", but found type ");
@@ -539,7 +571,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (return_type == NULL) {
           return_type = arg_type;
         } else {
-          if (!TypesEqual(return_type, arg_type)) {
+          if (!TypesEqual(arena, return_type, arg_type)) {
             FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
             PrintType(return_type);
             fprintf(stderr, ", but found ");
@@ -663,7 +695,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         *mkarg = NULL;
         Type* arg_type = Compile(arena, nvars, type_vars, apply_expr->args.xs[i], mkarg);
         error = error || (arg_type == NULL);
-        if (arg_type != NULL && !TypesEqual(func_type->fields.xs[i].type, arg_type)) {
+        if (arg_type != NULL && !TypesEqual(arena, func_type->fields.xs[i].type, arg_type)) {
           FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
           PrintType(func_type->fields.xs[i].type);
           fprintf(stderr, ", but found ");
@@ -751,7 +783,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         error = error || (type == NULL);
         FbleVectorAppend(arena, instr->bindings, mkval);
 
-        if (!error && !TypesEqual(nvd[i].type, type)) {
+        if (!error && !TypesEqual(arena, nvd[i].type, type)) {
           error = true;
           FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
           PrintType(nvd[i].type);
@@ -941,7 +973,6 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
     case FBLE_OUTPUT_TYPE: assert(false && "TODO: FBLE_OUTPUT_TYPE"); return NULL;
 
     case FBLE_VAR_TYPE: {
-      // TODO: Allocate a VarType here instead of directly inlining.
       FbleVarType* var_type = (FbleVarType*)type;
 
       while (vars != NULL && !FbleNamesEqual(var_type->var.name, vars->name.name)) {
@@ -952,7 +983,14 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
         FbleReportError("variable '%s' not defined\n", &var_type->var.loc, var_type->var.name);
         return NULL;
       }
-      return CopyType(arena, vars->type);
+
+      VarType* vt = FbleAlloc(arena, VarType);
+      vt->_base.loc = type->loc;
+      vt->_base.refcount = 1;
+      vt->_base.tag = VAR_TYPE;
+      vt->var = var_type->var;
+      vt->value = CopyType(arena, vars->type);
+      return &vt->_base;
     }
 
     case FBLE_LET_TYPE: assert(false && "TODO: FBLE_LET_TYPE"); return NULL;

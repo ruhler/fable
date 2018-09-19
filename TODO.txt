@@ -1,6 +1,5 @@
 Fble:
 * Test and add support for non-recursive polymorphism.
- - Have 'var' compiled type, use it to improve error messages.
  - Implement type equality properly.
 * Test and add support for recursive types.
 * Test and add support for recursive polymorphism.
