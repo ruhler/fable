@@ -1099,7 +1099,33 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       return &vt->_base;
     }
 
-    case FBLE_LET_TYPE: assert(false && "TODO: FBLE_LET_TYPE"); return NULL;
+    case FBLE_LET_TYPE: {
+      FbleLetType* let = (FbleLetType*)type;
+
+      Vars ntvd[let->bindings.size];
+      Vars* ntvs = vars;
+      bool error = false;
+      for (size_t i = 0; i < let->bindings.size; ++i) {
+        // TODO: Confirm the kind of the type matches what is specified in the
+        // let binding.
+        ntvd[i].name = let->bindings.xs[i].name;
+        ntvd[i].type = CompileType(arena, vars, let->bindings.xs[i].type);
+        error = error || (ntvd[i].type == NULL);
+        ntvd[i].next = ntvs;
+        ntvs = ntvd + i;
+      }
+
+      Type* rtype = NULL;
+      if (!error) {
+        rtype = CompileType(arena, ntvs, let->body);
+      }
+
+      for (size_t i = 0; i < let->bindings.size; ++i) {
+        FreeType(arena, ntvd[i].type);
+      }
+      return rtype;
+    }
+
     case FBLE_POLY_TYPE: assert(false && "TODO: FBLE_POLY_TYPE"); return NULL;
     case FBLE_POLY_APPLY_TYPE: assert(false && "TODO: FBLE_POLY_APPLY_TYPE"); return NULL;
   }

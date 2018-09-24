@@ -1,9 +1,7 @@
 Fble:
 * Test and add support for non-recursive polymorphism.
- - Implement type equality properly.
 * Test and add support for recursive types.
 * Test and add support for recursive polymorphism.
- - Implement lazy type evaluation properly.
 * Test and add support for processes.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 
