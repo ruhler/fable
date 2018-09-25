@@ -1,5 +1,6 @@
 Fble:
-* Test and add support for non-recursive polymorphism.
+* Test partial function application.
+* Test non-recursive polymorphism in all its flavors and kind checking.
 * Test and add support for recursive types.
 * Test and add support for recursive polymorphism.
 * Test and add support for processes.

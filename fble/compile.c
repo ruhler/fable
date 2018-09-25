@@ -107,6 +107,7 @@ typedef struct Vars {
 
 static Type* CopyType(FbleArena* arena, Type* type);
 static void FreeType(FbleArena* arena, Type* type);
+static Type* Subst(FbleArena* arena, Type* src, AbstractTypeV params, TypeV args);
 static Type* Normal(FbleArena* arena, Type* type);
 static bool TypesEqual(FbleArena* arena, Type* a, Type* b);
 static void PrintType(Type* type);
@@ -201,6 +202,8 @@ static void FreeType(FbleArena* arena, Type* type)
           for (size_t i = 0; i < pt->args.size; ++i) {
             FreeType(arena, pt->args.xs[i]);
           }
+          FbleFree(arena, pt->args.xs);
+          FreeType(arena, pt->body);
           FbleFree(arena, pt);
           break;
         }
@@ -211,12 +214,133 @@ static void FreeType(FbleArena* arena, Type* type)
           for (size_t i = 0; i < pat->args.size; ++i) {
             FreeType(arena, pat->args.xs[i]);
           }
+          FbleFree(arena, pat->args.xs);
           FbleFree(arena, pat);
           break;
         }
       }
     }
   }
+}
+
+// Subst --
+//   Substitute the given arguments in place of the given parameters in the
+//   given type.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   type - the type to substitute into.
+//   params - the abstract types to substitute out.
+//   args - the concrete types to substitute in.
+//
+// Results:
+//   A type with all occurrences of params replaced with the corresponding
+//   args types.
+//
+// Side effects:
+//   The caller is responsible for calling FreeType on the returned type when
+//   it is no longer needed.
+static Type* Subst(FbleArena* arena, Type* type, AbstractTypeV params, TypeV args)
+{
+  switch (type->tag) {
+    case STRUCT_TYPE: {
+      StructType* st = (StructType*)type;
+      StructType* sst = FbleAlloc(arena, StructType);
+      sst->_base.tag = STRUCT_TYPE;
+      sst->_base.loc = st->_base.loc;
+      sst->_base.refcount = 1;
+      FbleVectorInit(arena, sst->fields);
+      for (size_t i = 0; i < st->fields.size; ++i) {
+        Field* field = FbleVectorExtend(arena, sst->fields);
+        field->name = st->fields.xs[i].name;
+        field->type = Subst(arena, st->fields.xs[i].type, params, args);
+      }
+      return &sst->_base;
+    }
+
+    case UNION_TYPE: {
+      UnionType* ut = (UnionType*)type;
+      UnionType* sut = FbleAlloc(arena, UnionType);
+      sut->_base.tag = UNION_TYPE;
+      sut->_base.loc = ut->_base.loc;
+      sut->_base.refcount = 1;
+      FbleVectorInit(arena, sut->fields);
+      for (size_t i = 0; i < ut->fields.size; ++i) {
+        Field* field = FbleVectorExtend(arena, sut->fields);
+        field->name = ut->fields.xs[i].name;
+        field->type = Subst(arena, ut->fields.xs[i].type, params, args);
+      }
+      return &sut->_base;
+    }
+
+    case FUNC_TYPE: {
+      FuncType* ft = (FuncType*)type;
+      FuncType* sft = FbleAlloc(arena, FuncType);
+      sft->_base.tag = FUNC_TYPE;
+      sft->_base.loc = ft->_base.loc;
+      sft->_base.refcount = 1;
+      FbleVectorInit(arena, sft->args);
+      for (size_t i = 0; i < ft->args.size; ++i) {
+        Field* arg = FbleVectorExtend(arena, sft->args);
+        arg->name = ft->args.xs[i].name;
+        arg->type = Subst(arena, ft->args.xs[i].type, params, args);
+      }
+      sft->rtype = Subst(arena, ft->rtype, params, args);
+      return &sft->_base;
+    }
+
+    case VAR_TYPE: {
+      VarType* vt = (VarType*)type;
+      VarType* svt = FbleAlloc(arena, VarType);
+      svt->_base.tag = VAR_TYPE;
+      svt->_base.loc = vt->_base.loc;
+      svt->_base.refcount = 1;
+      svt->var = vt->var;
+      svt->value = Subst(arena, vt->value, params, args);
+      return &svt->_base;
+    }
+
+    case ABSTRACT_TYPE: {
+      for (size_t i = 0; i < params.size; ++i) {
+        if (type == params.xs[i]) {
+          return CopyType(arena, args.xs[i]);
+        }
+      }
+      return CopyType(arena, type);
+    }
+
+    case POLY_TYPE: {
+      PolyType* pt = (PolyType*)type;
+      PolyType* spt = FbleAlloc(arena, PolyType);
+      spt->_base.tag = POLY_TYPE;
+      spt->_base.loc = pt->_base.loc;
+      spt->_base.refcount = 1;
+      FbleVectorInit(arena, spt->args);
+      for (size_t i = 0; i < pt->args.size; ++i) {
+        FbleVectorAppend(arena, spt->args, CopyType(arena, pt->args.xs[i]));
+      }
+      spt->body = Subst(arena, pt->body, params, args);
+      return &spt->_base;
+    }
+
+    case POLY_APPLY_TYPE: {
+      PolyApplyType* pat = (PolyApplyType*)type;
+      PolyApplyType* spat = FbleAlloc(arena, PolyApplyType);
+      spat->_base.tag = POLY_APPLY_TYPE;
+      spat->_base.loc = pat->_base.loc;
+      spat->_base.refcount = 1;
+      spat->poly = Subst(arena, pat->poly, params, args);
+      FbleVectorInit(arena, spat->args);
+      for (size_t i = 0; i < pat->args.size; ++i) {
+        Type* arg = Subst(arena, pat->args.xs[i], params, args);
+        FbleVectorAppend(arena, spat->args, arg);
+      }
+      return &spat->_base;
+    }
+  }
+
+  UNREACHABLE("Should never get here");
+  return NULL;
 }
 
 // Normal --
@@ -239,13 +363,23 @@ static Type* Normal(FbleArena* arena, Type* type)
     case STRUCT_TYPE: return CopyType(arena, type);
     case UNION_TYPE: return CopyType(arena, type);
     case FUNC_TYPE: return CopyType(arena, type);
+
     case VAR_TYPE: {
       VarType* var_type = (VarType*)type;
       return Normal(arena, var_type->value);
     }
+
     case ABSTRACT_TYPE: return CopyType(arena, type);
     case POLY_TYPE: return CopyType(arena, type);
-    case POLY_APPLY_TYPE: assert(false && "TODO: Normal POLY_APPLY_TYPE"); return NULL;
+
+    case POLY_APPLY_TYPE: {
+      PolyApplyType* pat = (PolyApplyType*)type;
+      PolyType* poly = (PolyType*)Normal(arena, pat->poly);
+      assert(poly->_base.tag == POLY_TYPE);
+      Type* subst = Subst(arena, poly->body, poly->args, pat->args);
+      FreeType(arena, &poly->_base);
+      return subst;
+    }
   }
 
   UNREACHABLE("Should never get here");
@@ -1236,11 +1370,13 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
         ntvs = ntvd + i;
       }
 
-      Type* rtype = CompileType(arena, ntvs, poly->body);
-      if (rtype == NULL) {
+      pt->body = CompileType(arena, ntvs, poly->body);
+      if (pt->body == NULL) {
         FreeType(arena, &pt->_base);
+        return NULL;
       }
-      return rtype;
+
+      return &pt->_base;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
