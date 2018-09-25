@@ -14,6 +14,9 @@ typedef enum {
   UNION_TYPE,
   FUNC_TYPE,
   VAR_TYPE,
+  ABSTRACT_TYPE,
+  POLY_TYPE,
+  POLY_APPLY_TYPE,
 } TypeTag;
 
 // Type --
@@ -26,6 +29,13 @@ typedef struct Type {
   FbleLoc loc;
   int refcount;
 } Type;
+
+// TypeV --
+//   A vector of Type.
+typedef struct {
+  size_t size;
+  Type** xs;
+} TypeV;
 
 // Field --
 //   A pair of (Type, Name) used to describe type and function arguments.
@@ -66,6 +76,26 @@ typedef struct {
   FbleName var;
   Type* value;
 } VarType;
+
+// AbstractType -- ABSTRAC_TYPE
+typedef Type AbstractType;
+
+// A vector of AbstractType
+typedef TypeV AbstractTypeV;
+
+// PolyType -- POLY_TYPE
+typedef struct {
+  Type _base;
+  AbstractTypeV args;
+  Type* body;
+} PolyType;
+
+// PolyApplyType -- POLY_APPLY_TYPE
+typedef struct {
+  Type _base;
+  Type* poly;
+  TypeV args;
+} PolyApplyType;
 
 // Vars --
 //   Scope of variables visible during type checking.
@@ -160,6 +190,30 @@ static void FreeType(FbleArena* arena, Type* type)
           FbleFree(arena, var);
           break;
         }
+
+        case ABSTRACT_TYPE: {
+          FbleFree(arena, type);
+          break;
+        }
+
+        case POLY_TYPE: {
+          PolyType* pt = (PolyType*)type;
+          for (size_t i = 0; i < pt->args.size; ++i) {
+            FreeType(arena, pt->args.xs[i]);
+          }
+          FbleFree(arena, pt);
+          break;
+        }
+
+        case POLY_APPLY_TYPE: {
+          PolyApplyType* pat = (PolyApplyType*)type;
+          FreeType(arena, pat->poly);
+          for (size_t i = 0; i < pat->args.size; ++i) {
+            FreeType(arena, pat->args.xs[i]);
+          }
+          FbleFree(arena, pat);
+          break;
+        }
       }
     }
   }
@@ -189,6 +243,9 @@ static Type* Normal(FbleArena* arena, Type* type)
       VarType* var_type = (VarType*)type;
       return Normal(arena, var_type->value);
     }
+    case ABSTRACT_TYPE: return CopyType(arena, type);
+    case POLY_TYPE: return CopyType(arena, type);
+    case POLY_APPLY_TYPE: assert(false && "TODO: Normal POLY_APPLY_TYPE"); return NULL;
   }
 
   UNREACHABLE("Should never get here");
@@ -317,6 +374,21 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
       UNREACHABLE("var type is not Normal");
       return false;
     }
+
+    case ABSTRACT_TYPE: {
+      assert(a != b);
+      return false;
+    }
+
+    case POLY_TYPE: {
+      assert(false && "TODO: TYPE_EQ for POLY_TYPE");
+      return false;
+    }
+
+    case POLY_APPLY_TYPE: {
+      UNREACHABLE("poly apply type is not Normal");
+      return false;
+    }
   }
 
   UNREACHABLE("Should never get here");
@@ -384,6 +456,21 @@ static void PrintType(Type* type)
     case VAR_TYPE: {
       VarType* var_type = (VarType*)type;
       fprintf(stderr, "%s", var_type->var.name);
+      break;
+    }
+
+    case ABSTRACT_TYPE: {
+      fprintf(stderr, "??%p", (void*)type);
+      break;
+    }
+
+    case POLY_TYPE: {
+      assert(false && "TODO: PrintType POLY_TYPE");
+      break;
+    }
+
+    case POLY_APPLY_TYPE: {
+      assert(false && "TODO: PrintType POLY_APPLY_TYPE");
       break;
     }
   }
@@ -1126,8 +1213,60 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       return rtype;
     }
 
-    case FBLE_POLY_TYPE: assert(false && "TODO: FBLE_POLY_TYPE"); return NULL;
-    case FBLE_POLY_APPLY_TYPE: assert(false && "TODO: FBLE_POLY_APPLY_TYPE"); return NULL;
+    case FBLE_POLY_TYPE: {
+      FblePolyType* poly = (FblePolyType*)type;
+      PolyType* pt = FbleAlloc(arena, PolyType);
+      pt->_base.tag = POLY_TYPE;
+      pt->_base.loc = type->loc;
+      pt->_base.refcount = 1;
+      FbleVectorInit(arena, pt->args);
+
+      Vars ntvd[poly->args.size];
+      Vars* ntvs = vars;
+      for (size_t i = 0; i < poly->args.size; ++i) {
+        AbstractType* arg = FbleAlloc(arena, AbstractType);
+        arg->tag = ABSTRACT_TYPE;
+        arg->loc = poly->args.xs[i].name.loc;
+        arg->refcount = 1;
+        FbleVectorAppend(arena, pt->args, arg);
+
+        ntvd[i].name = poly->args.xs[i].name;
+        ntvd[i].type = arg;
+        ntvd[i].next = ntvs;
+        ntvs = ntvd + i;
+      }
+
+      Type* rtype = CompileType(arena, ntvs, poly->body);
+      if (rtype == NULL) {
+        FreeType(arena, &pt->_base);
+      }
+      return rtype;
+    }
+
+    case FBLE_POLY_APPLY_TYPE: {
+      FblePolyApplyType* apply = (FblePolyApplyType*)type;
+      PolyApplyType* pat = FbleAlloc(arena, PolyApplyType);
+      pat->_base.tag = POLY_APPLY_TYPE;
+      pat->_base.loc = type->loc;
+      pat->_base.refcount = 1;
+      FbleVectorInit(arena, pat->args);
+
+      // TODO: Verify the poly has the right kind and the arg kinds match.
+      pat->poly = CompileType(arena, vars, apply->poly);
+      bool error = pat->poly == NULL;
+      for (size_t i = 0; i < apply->args.size; ++i) {
+        Type* arg = CompileType(arena, vars, apply->args.xs[i]);
+        FbleVectorAppend(arena, pat->args, arg);
+        error = (error || arg == NULL);
+      }
+
+      if (error) {
+        FreeType(arena, &pat->_base);
+        return NULL;
+      }
+
+      return &pat->_base;
+    }
   }
 
   UNREACHABLE("should already have returned");
