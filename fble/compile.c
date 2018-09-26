@@ -485,12 +485,6 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
       }
 
       for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!FbleNamesEqual(fta->args.xs[i].name.name, ftb->args.xs[i].name.name)) {
-          FreeType(arena, a);
-          FreeType(arena, b);
-          return false;
-        }
-
         if (!TypesEqual(arena, fta->args.xs[i].type, ftb->args.xs[i].type)) {
           FreeType(arena, a);
           FreeType(arena, b);

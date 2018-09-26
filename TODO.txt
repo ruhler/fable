@@ -1,5 +1,21 @@
 Fble:
-* Test partial function application.
+* Expand tests for coverage
+ - subst on struct
+ - subst on func
+ - subst on abstract
+ - subst on poly
+ - subst on poly apply
+ - normal on abstract (aka equality on abstract type)
+ - func type arg count mismatch
+ - func type arg type mismatch
+ - abstract type mismatch
+ - poly expr
+ - poly apply expr
+ - poly type body bad
+ - poly apply type error
+ - weak to strong reference resurrection
+* Clarify spec on partial and excessive function application
+* Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors and kind checking.
 * Test and add support for recursive types.
 * Test and add support for recursive polymorphism.
