@@ -1,13 +1,10 @@
 Fble:
+* Come up with a way to write down the type of a polymorphic expression.
 * Expand tests for coverage
- - subst on struct
- - subst on func
  - subst on abstract
  - subst on poly
  - subst on poly apply
  - normal on abstract (aka equality on abstract type)
- - func type arg count mismatch
- - func type arg type mismatch
  - abstract type mismatch
  - poly expr
  - poly apply expr
