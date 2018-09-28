@@ -509,8 +509,25 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
     }
 
     case POLY_TYPE: {
-      assert(false && "TODO: TYPE_EQ for POLY_TYPE");
-      return false;
+      PolyType* pta = (PolyType*)a;
+      PolyType* ptb = (PolyType*)b;
+      
+      if (pta->args.size != ptb->args.size) {
+        FreeType(arena, a);
+        FreeType(arena, b);
+        return false;
+      }
+
+      // TODO: Verify all the args have matching kinds.
+
+      // Substitute in the arguments of pta for the paramaters of b so we can
+      // compare the bodies of the types with the same set of abstract types.
+      Type* t = Subst(arena, b,  ptb->args, pta->args);
+      bool eq = TypesEqual(arena, pta->body, t);
+      FreeType(arena, a);
+      FreeType(arena, b);
+      FreeType(arena, t);
+      return eq;
     }
 
     case POLY_APPLY_TYPE: {
@@ -593,12 +610,30 @@ static void PrintType(Type* type)
     }
 
     case POLY_TYPE: {
-      assert(false && "TODO: PrintType POLY_TYPE");
+      PolyType* pt = (PolyType*)type;
+      fprintf(stderr, "\\<");
+      const char* comma = "";
+      for (size_t i = 0; i < pt->args.size; ++i) {
+        fprintf(stderr, "%s@ ??%p@", comma, (void*)pt->args.xs[i]);
+        comma = ", ";
+      }
+      fprintf(stderr, " { ");
+      PrintType(pt->body);
+      fprintf(stderr, "; }");
       break;
     }
 
     case POLY_APPLY_TYPE: {
-      assert(false && "TODO: PrintType POLY_APPLY_TYPE");
+      PolyApplyType* pat = (PolyApplyType*)type;
+      PrintType(pat->poly);
+      fprintf(stderr, "<");
+      const char* comma = "";
+      for (size_t i = 0; i < pat->args.size; ++i) {
+        fprintf(stderr, "%s", comma);
+        PrintType(pat->args.xs[i]);
+        comma = ", ";
+      }
+      fprintf(stderr, ">");
       break;
     }
   }
@@ -1164,9 +1199,69 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       return rtype;
     }
 
-    case FBLE_POLY_EXPR: assert(false && "TODO: FBLE_POLY_EXPR"); return NULL;
-    case FBLE_POLY_APPLY_EXPR: assert(false && "TODO: FBLE_POLY_APPLY_EXPR"); return NULL;
+    case FBLE_POLY_EXPR: {
+      FblePolyExpr* poly = (FblePolyExpr*)expr;
 
+      PolyType* pt = FbleAlloc(arena, PolyType);
+      pt->_base.tag = POLY_TYPE;
+      pt->_base.loc = expr->loc;
+      pt->_base.refcount = 1;
+      FbleVectorInit(arena, pt->args);
+
+      Vars ntvd[poly->args.size];
+      Vars* ntvs = type_vars;
+      for (size_t i = 0; i < poly->args.size; ++i) {
+        AbstractType* arg = FbleAlloc(arena, AbstractType);
+        arg->tag = ABSTRACT_TYPE;
+        arg->loc = poly->args.xs[i].name.loc;
+        arg->refcount = 1;
+        FbleVectorAppend(arena, pt->args, arg);
+
+        ntvd[i].name = poly->args.xs[i].name;
+        ntvd[i].type = arg;
+        ntvd[i].next = ntvs;
+        ntvs = ntvd + i;
+      }
+
+      pt->body = Compile(arena, vars, ntvs, poly->body, instrs);
+      if (pt->body == NULL) {
+        FreeType(arena, &pt->_base);
+        return NULL;
+      }
+
+      return &pt->_base;
+    }
+
+    case FBLE_POLY_APPLY_EXPR: {
+      FblePolyApplyExpr* apply = (FblePolyApplyExpr*)expr;
+      PolyApplyType* pat = FbleAlloc(arena, PolyApplyType);
+      pat->_base.tag = POLY_APPLY_TYPE;
+      pat->_base.loc = expr->loc;
+      pat->_base.refcount = 1;
+      FbleVectorInit(arena, pat->args);
+
+      pat->poly = Compile(arena, vars, type_vars, apply->poly, instrs);
+      if (pat->poly == NULL) {
+        FreeType(arena, &pat->_base);
+        return NULL;
+      }
+
+      // TODO: Verify the poly has the right kind and the arg kinds match.
+      bool error = false;
+      for (size_t i = 0; i < apply->args.size; ++i) {
+        Type* arg = CompileType(arena, type_vars, apply->args.xs[i]);
+        FbleVectorAppend(arena, pat->args, arg);
+        error = (error || arg == NULL);
+      }
+
+      if (error) {
+        FreeType(arena, &pat->_base);
+        FbleFreeInstrs(arena, *instrs);
+        return NULL;
+      }
+
+      return &pat->_base;
+    }
   }
 
   UNREACHABLE("should already have returned");
