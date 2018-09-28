@@ -1,5 +1,4 @@
 Fble:
-* Come up with a way to write down the type of a polymorphic expression.
 * Expand tests for coverage
  - subst on abstract
  - subst on poly
@@ -8,8 +7,6 @@ Fble:
  - abstract type mismatch
  - poly expr
  - poly apply expr
- - poly type body bad
- - poly apply type error
  - weak to strong reference resurrection
 * Clarify spec on partial and excessive function application
 * Test partial function and excessive function application.
