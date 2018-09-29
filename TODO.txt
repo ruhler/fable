@@ -1,13 +1,17 @@
 Fble:
 * Expand tests for coverage
- - subst on abstract
- - subst on poly
- - subst on poly apply
- - normal on abstract (aka equality on abstract type)
- - abstract type mismatch
- - poly expr
- - poly apply expr
  - weak to strong reference resurrection
+ - abstract type mismatch
+ - poly type arg count mismatch
+ - PrintType struct
+ - PrintType union
+ - PrintType func
+ - PrintType abstract
+ - PrintType poly
+ - PrintType poly apply
+ - poly expr body maltyped
+ - poly apply expr poly maltyped
+ - poly apply expr arg maltyped
 * Clarify spec on partial and excessive function application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors and kind checking.

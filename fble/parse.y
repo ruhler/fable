@@ -318,7 +318,7 @@ expr:
    }
  | expr '<' type_p '>' {
       FblePolyApplyExpr* poly_apply_expr = FbleAlloc(arena, FblePolyApplyExpr);
-      poly_apply_expr->_base.tag = FBLE_APPLY_EXPR;
+      poly_apply_expr->_base.tag = FBLE_POLY_APPLY_EXPR;
       poly_apply_expr->_base.loc = @$;
       poly_apply_expr->poly = $1;
       poly_apply_expr->args = $3;

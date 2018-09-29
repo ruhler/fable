@@ -522,7 +522,7 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
 
       // Substitute in the arguments of pta for the paramaters of b so we can
       // compare the bodies of the types with the same set of abstract types.
-      Type* t = Subst(arena, b,  ptb->args, pta->args);
+      Type* t = Subst(arena, ptb->body,  ptb->args, pta->args);
       bool eq = TypesEqual(arena, pta->body, t);
       FreeType(arena, a);
       FreeType(arena, b);
