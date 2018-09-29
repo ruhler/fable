@@ -1257,6 +1257,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       if (error) {
         FreeType(arena, &pat->_base);
         FbleFreeInstrs(arena, *instrs);
+        *instrs = NULL;
         return NULL;
       }
 
