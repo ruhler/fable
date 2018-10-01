@@ -1,16 +1,14 @@
 Fble:
-* Expand tests for coverage
- - abstract type mismatch
- - PrintType struct
- - PrintType union
- - PrintType func
- - PrintType abstract
- - PrintType poly
- - PrintType poly apply
-* Clarify spec on partial and excessive function application
+* Test and add support for recursive types.
+ - Use VAR_TYPE of ABSTRACT_TYPE during evaluation of let type bindings, then
+   replace that ABSTRACT_TYPE with the generated type. There should only be
+   one reference at the time it is replaced.
+ - PrintType should work fine, because it doesn't go through vars.
+ - Modify TypesEqual to keep track of what it has seen recursively and assume
+   true.
+* Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors and kind checking.
-* Test and add support for recursive types.
 * Test and add support for recursive polymorphism.
 * Test and add support for processes.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
