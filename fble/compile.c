@@ -7,6 +7,45 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// KindTag --
+//   A tag used to distinguish between the two kinds of kinds.
+typedef enum {
+  BASIC_KIND,
+  POLY_KIND
+} KindTag;
+
+// Kind --
+//   A tagged union of kind types. All kinds have the same initial
+//   layout as Kind. The tag can be used to determine what kind of
+//   kind this is to get access to additional fields of the kind
+//   by first casting to that specific type of kind.
+typedef struct {
+  KindTag tag;
+  FbleLoc loc;
+  int refcount;
+} Kind;
+
+// KindV --
+//   A vector of Kind.
+typedef struct {
+  size_t size;
+  Kind** xs;
+} KindV;
+
+// BasicKind --
+//   BASIC_KIND
+typedef struct {
+  Kind _base;
+} BasicKind;
+
+// PolyKind --
+//   POLY_KIND (args :: [Kind]) (return :: Kind)
+typedef struct {
+  Kind _base;
+  KindV args;
+  Kind* rkind;
+} PolyKind;
+
 // TypeTag --
 //   A tag used to dinstinguish among different kinds of compiled types.
 typedef enum {
@@ -77,16 +116,16 @@ typedef struct {
   Type* value;
 } VarType;
 
-// AbstractType -- ABSTRAC_TYPE
-typedef Type AbstractType;
-
-// A vector of AbstractType
-typedef TypeV AbstractTypeV;
+// AbstractType -- ABSTRACT_TYPE
+typedef struct {
+  Type _base;
+  Kind* kind;
+} AbstractType;
 
 // PolyType -- POLY_TYPE
 typedef struct {
   Type _base;
-  AbstractTypeV args;
+  TypeV args;
   Type* body;
 } PolyType;
 
@@ -105,15 +144,79 @@ typedef struct Vars {
   struct Vars* next;
 } Vars;
 
+static Kind* CopyKind(FbleArena* arena, Kind* kind);
+static void FreeKind(FbleArena* arena, Kind* kind);
 static Type* CopyType(FbleArena* arena, Type* type);
 static void FreeType(FbleArena* arena, Type* type);
-static Type* Subst(FbleArena* arena, Type* src, AbstractTypeV params, TypeV args);
+static Kind* GetKind(FbleArena* arena, Type* type);
+static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args);
 static Type* Normal(FbleArena* arena, Type* type);
 static bool TypesEqual(FbleArena* arena, Type* a, Type* b);
+static bool KindsEqual(Kind* a, Kind* b);
 static void PrintType(Type* type);
 
 static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstr** instrs);
 static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type);
+static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
+
+// CopyKind --
+//   Makes a (refcount) copy of a compiled kind.
+//
+// Inputs:
+//   arena - for allocations.
+//   kind - the kind to copy.
+//
+// Results:
+//   The copied kind.
+//
+// Side effects:
+//   The returned kind must be freed using FreeKind when no longer in use.
+static Kind* CopyKind(FbleArena* arena, Kind* kind)
+{
+  assert(kind != NULL);
+  kind->refcount++;
+  return kind;
+}
+
+// FreeKind --
+//   Frees a (refcount) copy of a compiled kind.
+//
+// Inputs:
+//   arena - for deallocations.
+//   kind - the kind to free. May be NULL.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Decrements the refcount for the kind and frees it if there are no
+//   more references to it.
+static void FreeKind(FbleArena* arena, Kind* kind)
+{
+  if (kind != NULL) {
+    assert(kind->refcount > 0);
+    kind->refcount--;
+    if (kind->refcount == 0) {
+      switch (kind->tag) {
+        case BASIC_KIND: {
+          FbleFree(arena, kind);
+          break;
+        }
+
+        case POLY_KIND: {
+          PolyKind* poly = (PolyKind*)kind;
+          for (size_t i = 0; i < poly->args.size; ++i) {
+            FreeKind(arena, poly->args.xs[i]);
+          }
+          FbleFree(arena, poly->args.xs);
+          FreeKind(arena, poly->rkind);
+          FbleFree(arena, poly);
+          break;
+        }
+      }
+    }
+  }
+}
 
 // CopyType --
 //   Makes a (refcount) copy of a compiled type.
@@ -193,6 +296,8 @@ static void FreeType(FbleArena* arena, Type* type)
         }
 
         case ABSTRACT_TYPE: {
+          AbstractType* abstract = (AbstractType*)type;
+          FreeKind(arena, abstract->kind);
           FbleFree(arena, type);
           break;
         }
@@ -223,6 +328,87 @@ static void FreeType(FbleArena* arena, Type* type)
   }
 }
 
+// GetKind --
+//   Get the kind of the given type.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   type - the type to get the kind of.
+//
+// Results:
+//   The kind of the type.
+//
+// Side effects:
+//   The caller is responsible for calling FreeKind on the returned type when
+//   it is no longer needed.
+static Kind* GetKind(FbleArena* arena, Type* type)
+{
+  switch (type->tag) {
+    case STRUCT_TYPE:
+    case UNION_TYPE:
+    case FUNC_TYPE: {
+      BasicKind* kind = FbleAlloc(arena, BasicKind);
+      kind->_base.tag = BASIC_KIND;
+      kind->_base.loc = type->loc;
+      kind->_base.refcount = 1;
+      return &kind->_base;
+    }
+
+    case VAR_TYPE: {
+      VarType* vt = (VarType*)type;
+      return GetKind(arena, vt->value);
+    }
+
+    case ABSTRACT_TYPE: {
+      AbstractType* abstract = (AbstractType*)type;
+      return CopyKind(arena, abstract->kind);
+    }
+
+    case POLY_TYPE: {
+      PolyType* poly = (PolyType*)type;
+      PolyKind* kind = FbleAlloc(arena, PolyKind);
+      kind->_base.tag = POLY_KIND;
+      kind->_base.loc = type->loc;
+      kind->_base.refcount = 1;
+      FbleVectorInit(arena, kind->args);
+
+      for (size_t i = 0; i < poly->args.size; ++i) {
+        FbleVectorAppend(arena, kind->args, GetKind(arena, poly->args.xs[i]));
+      }
+      kind->rkind = GetKind(arena, poly->body);
+      return &kind->_base;
+    }
+
+    case POLY_APPLY_TYPE: {
+      PolyApplyType* pat = (PolyApplyType*)type;
+      PolyKind* kind = (PolyKind*)GetKind(arena, pat->poly);
+      assert(kind->_base.tag == POLY_KIND);
+      assert(kind->args.size >= pat->args.size);
+
+      if (kind->args.size == pat->args.size) {
+        Kind* rkind = CopyKind(arena, kind->rkind);
+        FreeKind(arena, &kind->_base);
+        return rkind;
+      }
+
+      PolyKind* pkind = FbleAlloc(arena, PolyKind);
+      pkind->_base.tag = POLY_KIND;
+      pkind->_base.loc = type->loc;
+      pkind->_base.refcount = 1;
+      FbleVectorInit(arena, pkind->args);
+      for (size_t i = pat->args.size; i < kind->args.size; ++i) {
+        FbleVectorAppend(arena, pkind->args, CopyKind(arena, kind->args.xs[i]));
+      }
+      pkind->rkind = CopyKind(arena, kind->rkind);
+      FreeKind(arena, &kind->_base);
+      return &pkind->_base;
+    }
+  }
+
+  UNREACHABLE("Should never get here");
+  return NULL;
+}
+
 // Subst --
 //   Substitute the given arguments in place of the given parameters in the
 //   given type.
@@ -240,7 +426,7 @@ static void FreeType(FbleArena* arena, Type* type)
 // Side effects:
 //   The caller is responsible for calling FreeType on the returned type when
 //   it is no longer needed.
-static Type* Subst(FbleArena* arena, Type* type, AbstractTypeV params, TypeV args)
+static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
 {
   switch (type->tag) {
     case STRUCT_TYPE: {
@@ -533,6 +719,53 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
     case POLY_APPLY_TYPE: {
       UNREACHABLE("poly apply type is not Normal");
       return false;
+    }
+  }
+
+  UNREACHABLE("Should never get here");
+  return false;
+}
+
+// KindsEqual --
+//   Test whether the two given compiled kinds are equal.
+//
+// Inputs:
+//   a - the first kind
+//   b - the second kind
+//
+// Results:
+//   True if the first kind equals the second kind, false otherwise.
+//
+// Side effects:
+//   None.
+static bool KindsEqual(Kind* a, Kind* b)
+{
+  if (a->tag != b->tag) {
+    return false;
+  }
+
+  switch (a->tag) {
+    case BASIC_KIND: {
+      assert(b->tag == BASIC_KIND);
+      return true;
+    }
+
+    case POLY_KIND: {
+      PolyKind* pa = (PolyKind*)a;
+      PolyKind* pb = (PolyKind*)b;
+
+      if (pa->args.size != pb->args.size) {
+        return false;
+      }
+
+      for (size_t i = 0; i < pa->args.size; ++i) {
+        if (!KindsEqual(pa->args.xs[i], pb->args.xs[i])) {
+          return false;
+        }
+      }
+
+      // TODO: Is "(a, b) -> c" equal to "a -> b -> c"?
+      return KindsEqual(pa->rkind, pb->rkind);
     }
   }
 
@@ -1212,13 +1445,14 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       Vars* ntvs = type_vars;
       for (size_t i = 0; i < poly->args.size; ++i) {
         AbstractType* arg = FbleAlloc(arena, AbstractType);
-        arg->tag = ABSTRACT_TYPE;
-        arg->loc = poly->args.xs[i].name.loc;
-        arg->refcount = 1;
-        FbleVectorAppend(arena, pt->args, arg);
+        arg->_base.tag = ABSTRACT_TYPE;
+        arg->_base.loc = poly->args.xs[i].name.loc;
+        arg->_base.refcount = 1;
+        arg->kind = CompileKind(arena, poly->args.xs[i].kind);
+        FbleVectorAppend(arena, pt->args, &arg->_base);
 
         ntvd[i].name = poly->args.xs[i].name;
-        ntvd[i].type = arg;
+        ntvd[i].type = &arg->_base;
         ntvd[i].next = ntvs;
         ntvs = ntvd + i;
       }
@@ -1417,11 +1651,24 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       Vars* ntvs = vars;
       bool error = false;
       for (size_t i = 0; i < let->bindings.size; ++i) {
-        // TODO: Confirm the kind of the type matches what is specified in the
-        // let binding.
+
         ntvd[i].name = let->bindings.xs[i].name;
         ntvd[i].type = CompileType(arena, vars, let->bindings.xs[i].type);
         error = error || (ntvd[i].type == NULL);
+
+        if (ntvd[i].type != NULL) {
+          Kind* expected_kind = CompileKind(arena, let->bindings.xs[i].kind);
+          Kind* actual_kind = GetKind(arena, ntvd[i].type);
+          if (!KindsEqual(expected_kind, actual_kind)) {
+            // TODO: Give a better error message.
+            FbleReportError("kind mismatch: ", &ntvd[i].type->loc);
+            error = true;
+          }
+
+          FreeKind(arena, expected_kind);
+          FreeKind(arena, actual_kind);
+        }
+
         ntvd[i].next = ntvs;
         ntvs = ntvd + i;
       }
@@ -1449,13 +1696,14 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       Vars* ntvs = vars;
       for (size_t i = 0; i < poly->args.size; ++i) {
         AbstractType* arg = FbleAlloc(arena, AbstractType);
-        arg->tag = ABSTRACT_TYPE;
-        arg->loc = poly->args.xs[i].name.loc;
-        arg->refcount = 1;
-        FbleVectorAppend(arena, pt->args, arg);
+        arg->_base.tag = ABSTRACT_TYPE;
+        arg->_base.loc = poly->args.xs[i].name.loc;
+        arg->_base.refcount = 1;
+        arg->kind = CompileKind(arena, poly->args.xs[i].kind);
+        FbleVectorAppend(arena, pt->args, &arg->_base);
 
         ntvd[i].name = poly->args.xs[i].name;
-        ntvd[i].type = arg;
+        ntvd[i].type = &arg->_base;
         ntvd[i].next = ntvs;
         ntvs = ntvd + i;
       }
@@ -1497,6 +1745,49 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
 
   UNREACHABLE("should already have returned");
   return NULL;
+}
+
+// CompileKind --
+//   Compile a kind.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   type - the kind to compile.
+//
+// Results:
+//   The compiled kind.
+//
+// Side effects:
+//   Allocates a reference-counted kind that must be freed using FreeKind
+//   when it is no longer needed.
+static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
+{
+  switch (kind->tag) {
+    case FBLE_BASIC_KIND: {
+      FbleBasicKind* basic = (FbleBasicKind*)kind;
+      BasicKind* k = FbleAlloc(arena, BasicKind);
+      k->_base.tag = BASIC_KIND;
+      k->_base.loc = basic->_base.loc;
+      k->_base.refcount = 1;
+      return &k->_base;
+    }
+
+    case FBLE_POLY_KIND: {
+      FblePolyKind* poly = (FblePolyKind*)kind;
+      PolyKind* k = FbleAlloc(arena, PolyKind);
+      k->_base.tag = POLY_KIND;
+      k->_base.loc = poly->_base.loc;
+      k->_base.refcount = 1;
+      FbleVectorInit(arena, k->args);
+      for (size_t i = 0; i < poly->args.size; ++i) {
+        FbleVectorAppend(arena, k->args, CompileKind(arena, poly->args.xs[i]));
+      }
+      k->rkind = CompileKind(arena, poly->rkind);
+      return &k->_base;
+    }
+  }
+
+  UNREACHABLE("Should never get here");
 }
 
 // FbleFreeInstrs -- see documentation in fble-internal.h
