@@ -154,6 +154,7 @@ static Type* Normal(FbleArena* arena, Type* type);
 static bool TypesEqual(FbleArena* arena, Type* a, Type* b);
 static bool KindsEqual(Kind* a, Kind* b);
 static void PrintType(Type* type);
+static void PrintKind(Kind* type);
 
 static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstr** instrs);
 static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type);
@@ -872,6 +873,42 @@ static void PrintType(Type* type)
   }
 }
 
+// PrintKind --
+//   Print the given compiled kind in human readable form to stderr.
+//
+// Inputs:
+//   kind - the kind to print.
+//
+// Result:
+//   None.
+//
+// Side effect:
+//   Prints the given kind in human readable form to stderr.
+static void PrintKind(Kind* kind)
+{
+  switch (kind->tag) {
+    case BASIC_KIND: {
+      fprintf(stderr, "@");
+      break;
+    }
+
+    case POLY_KIND: {
+      PolyKind* poly = (PolyKind*)kind;
+      fprintf(stderr, "\\<");
+      const char* comma = "";
+      for (size_t i = 0; i < poly->args.size; ++i) {
+        fprintf(stderr, "%s", comma);
+        PrintKind(poly->args.xs[i]);
+        comma = ", ";
+      }
+      fprintf(stderr, "; ");
+      PrintKind(poly->rkind);
+      fprintf(stderr, ">");
+      break;
+    }
+  }
+}
+
 // Compile --
 //   Type check and compile the given expression.
 //
@@ -1417,6 +1454,23 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         ntvd[i].name = let->bindings.xs[i].name;
         ntvd[i].type = CompileType(arena, type_vars, let->bindings.xs[i].type);
         error = error || (ntvd[i].type == NULL);
+
+        if (ntvd[i].type != NULL) {
+          Kind* expected_kind = CompileKind(arena, let->bindings.xs[i].kind);
+          Kind* actual_kind = GetKind(arena, ntvd[i].type);
+          if (!KindsEqual(expected_kind, actual_kind)) {
+            FbleReportError("expected kind ", &ntvd[i].type->loc);
+            PrintKind(expected_kind);
+            fprintf(stderr, ", but found ");
+            PrintKind(actual_kind);
+            fprintf(stderr, "\n");
+            error = true;
+          }
+
+          FreeKind(arena, expected_kind);
+          FreeKind(arena, actual_kind);
+        }
+
         ntvd[i].next = ntvs;
         ntvs = ntvd + i;
       }
@@ -1480,14 +1534,42 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      // TODO: Verify the poly has the right kind and the arg kinds match.
+      PolyKind* poly_kind = (PolyKind*)GetKind(arena, pat->poly);
+      if (poly_kind->_base.tag != POLY_KIND) {
+        FbleReportError("cannot apply poly args to a basic kinded entity", &expr->loc);
+        FreeKind(arena, &poly_kind->_base);
+        FreeType(arena, &pat->_base);
+        return NULL;
+      }
+
       bool error = false;
+      if (apply->args.size > poly_kind->args.size) {
+        FbleReportError("expected %i poly args, but %i provided",
+            &expr->loc, poly_kind->args.size, apply->args.size);
+        error = true;
+      }
+
       for (size_t i = 0; i < apply->args.size; ++i) {
         Type* arg = CompileType(arena, type_vars, apply->args.xs[i]);
         FbleVectorAppend(arena, pat->args, arg);
         error = (error || arg == NULL);
+
+        if (arg != NULL && i < poly_kind->args.size) {
+          Kind* expected_kind = poly_kind->args.xs[i];
+          Kind* actual_kind = GetKind(arena, arg);
+          if (!KindsEqual(expected_kind, actual_kind)) {
+            FbleReportError("expected kind ", &arg->loc);
+            PrintKind(expected_kind);
+            fprintf(stderr, ", but found ");
+            PrintKind(actual_kind);
+            fprintf(stderr, "\n");
+            error = true;
+          }
+          FreeKind(arena, actual_kind);
+        }
       }
 
+      FreeKind(arena, &poly_kind->_base);
       if (error) {
         FreeType(arena, &pat->_base);
         FbleFreeInstrs(arena, *instrs);
@@ -1651,7 +1733,6 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       Vars* ntvs = vars;
       bool error = false;
       for (size_t i = 0; i < let->bindings.size; ++i) {
-
         ntvd[i].name = let->bindings.xs[i].name;
         ntvd[i].type = CompileType(arena, vars, let->bindings.xs[i].type);
         error = error || (ntvd[i].type == NULL);
@@ -1660,8 +1741,11 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
           Kind* expected_kind = CompileKind(arena, let->bindings.xs[i].kind);
           Kind* actual_kind = GetKind(arena, ntvd[i].type);
           if (!KindsEqual(expected_kind, actual_kind)) {
-            // TODO: Give a better error message.
-            FbleReportError("kind mismatch: ", &ntvd[i].type->loc);
+            FbleReportError("expected kind ", &ntvd[i].type->loc);
+            PrintKind(expected_kind);
+            fprintf(stderr, ", but found ");
+            PrintKind(actual_kind);
+            fprintf(stderr, "\n");
             error = true;
           }
 
@@ -1725,15 +1809,48 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       pat->_base.refcount = 1;
       FbleVectorInit(arena, pat->args);
 
-      // TODO: Verify the poly has the right kind and the arg kinds match.
       pat->poly = CompileType(arena, vars, apply->poly);
-      bool error = pat->poly == NULL;
+      if (pat->poly == NULL) {
+        FreeType(arena, &pat->_base);
+        return NULL;
+      }
+
+      PolyKind* poly_kind = (PolyKind*)GetKind(arena, pat->poly);
+      if (poly_kind->_base.tag != POLY_KIND) {
+        FbleReportError("cannot apply poly args to a basic kinded entity", &type->loc);
+        FreeKind(arena, &poly_kind->_base);
+        FreeType(arena, &pat->_base);
+        return NULL;
+      }
+
+      bool error = false;
+      if (apply->args.size > poly_kind->args.size) {
+        FbleReportError("expected %i poly args, but %i provided",
+            &type->loc, poly_kind->args.size, apply->args.size);
+        error = true;
+      }
+
       for (size_t i = 0; i < apply->args.size; ++i) {
         Type* arg = CompileType(arena, vars, apply->args.xs[i]);
         FbleVectorAppend(arena, pat->args, arg);
         error = (error || arg == NULL);
+
+        if (arg != NULL && i < poly_kind->args.size) {
+          Kind* expected_kind = poly_kind->args.xs[i];
+          Kind* actual_kind = GetKind(arena, arg);
+          if (!KindsEqual(expected_kind, actual_kind)) {
+            FbleReportError("expected kind ", &arg->loc);
+            PrintKind(expected_kind);
+            fprintf(stderr, ", but found ");
+            PrintKind(actual_kind);
+            fprintf(stderr, "\n");
+            error = true;
+          }
+          FreeKind(arena, actual_kind);
+        }
       }
 
+      FreeKind(arena, &poly_kind->_base);
       if (error) {
         FreeType(arena, &pat->_base);
         return NULL;

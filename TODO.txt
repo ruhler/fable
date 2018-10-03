@@ -1,9 +1,4 @@
 Fble:
-* Kind cleanup
- - Print kind nicely in case of kind mismatch.
- - test kind mismatch
- - Check for kinds in type let expressions
- - fix remaining failing poly kind tests.
 * Test and add support for recursive types.
  - Use VAR_TYPE of ABSTRACT_TYPE during evaluation of let type bindings, then
    replace that ABSTRACT_TYPE with the generated type. There should only be
