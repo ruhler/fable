@@ -1510,19 +1510,36 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       Vars ntvd[let->bindings.size];
       Vars* ntvs = type_vars;
+
+      // Set up reference types for all the bindings, to support recursive
+      // types.
+      for (size_t i = 0; i < let->bindings.size; ++i) {
+        RefType* ref = FbleAlloc(arena, RefType);
+        ref->_base.tag = REF_TYPE;
+        ref->_base.loc = let->bindings.xs[i].name.loc;
+        ref->_base.refcount = 1;
+        ref->kind = CompileKind(arena, let->bindings.xs[i].kind);
+        ref->value = NULL;
+
+        ntvd[i].name = let->bindings.xs[i].name;
+        ntvd[i].type = &ref->_base;
+        ntvd[i].next = ntvs;
+        ntvs = ntvd + i;
+      }
+
+      // Evaluate the type bindings.
+      Type* types[let->bindings.size];
       bool error = false;
       for (size_t i = 0; i < let->bindings.size; ++i) {
-        // TODO: Confirm the kind of the type matches what is specified in the
-        // let binding.
-        ntvd[i].name = let->bindings.xs[i].name;
-        ntvd[i].type = CompileType(arena, type_vars, let->bindings.xs[i].type);
-        error = error || (ntvd[i].type == NULL);
+        types[i] = CompileType(arena, ntvs, let->bindings.xs[i].type);
+        error = error || (types[i] == NULL);
 
-        if (ntvd[i].type != NULL) {
+        if (types[i] != NULL) {
+          // TODO: get expected_kind from ntvd[i]->kind rather than recompile?
           Kind* expected_kind = CompileKind(arena, let->bindings.xs[i].kind);
-          Kind* actual_kind = GetKind(arena, ntvd[i].type);
+          Kind* actual_kind = GetKind(arena, types[i]);
           if (!KindsEqual(expected_kind, actual_kind)) {
-            FbleReportError("expected kind ", &ntvd[i].type->loc);
+            FbleReportError("expected kind ", &types[i]->loc);
             PrintKind(expected_kind);
             fprintf(stderr, ", but found ");
             PrintKind(actual_kind);
@@ -1533,9 +1550,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           FreeKind(arena, expected_kind);
           FreeKind(arena, actual_kind);
         }
+      }
 
-        ntvd[i].next = ntvs;
-        ntvs = ntvd + i;
+      for (size_t i = 0; i < let->bindings.size; ++i) {
+        RefType* ref = (RefType*)ntvd[i].type;
+        assert(ref->_base.tag == REF_TYPE);
+        ref->value = types[i];
       }
 
       Type* rtype = NULL;

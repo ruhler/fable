@@ -1,11 +1,9 @@
 Fble:
 * Test and add support for recursive types.
- - Use REF_TYPE during evaluation of let type bindings, then
-   fill in that REF_TYPE with the generated type.
- - PrintType should work fine, because it doesn't go through vars.
- - Modify TypesEqual to keep track of what it has seen recursively and assume
-   true.
  - Add double reference counting to types.
+ - Test recursive type using type let type (as opposed to type let expr)
+ - Test a case where TypesEqual would be infinitely recursive.
+ - Test a case where Subst would be infinitely recursive (a la snake.fble)
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors.
