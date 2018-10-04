@@ -56,6 +56,7 @@ typedef enum {
   ABSTRACT_TYPE,
   POLY_TYPE,
   POLY_APPLY_TYPE,
+  REF_TYPE,
 } TypeTag;
 
 // Type --
@@ -135,6 +136,17 @@ typedef struct {
   Type* poly;
   TypeV args;
 } PolyApplyType;
+
+// RefType --
+//   REF_TYPE
+//
+// A implementation-specific type introduced to support recursive types. A
+// ref type is simply a reference to another type.
+typedef struct {
+  Type _base;
+  Kind* kind;
+  Type* value;
+} RefType;
 
 // Vars --
 //   Scope of variables visible during type checking.
@@ -324,6 +336,14 @@ static void FreeType(FbleArena* arena, Type* type)
           FbleFree(arena, pat);
           break;
         }
+
+        case REF_TYPE: {
+          RefType* ref = (RefType*)type;
+          FreeKind(arena, ref->kind);
+          FreeType(arena, ref->value);
+          FbleFree(arena, ref);
+          break;
+        }
       }
     }
   }
@@ -403,6 +423,11 @@ static Kind* GetKind(FbleArena* arena, Type* type)
       pkind->rkind = CopyKind(arena, kind->rkind);
       FreeKind(arena, &kind->_base);
       return &pkind->_base;
+    }
+
+    case REF_TYPE: {
+      RefType* ref = (RefType*)type;
+      return CopyKind(arena, ref->kind);
     }
   }
 
@@ -524,6 +549,17 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
       }
       return &spat->_base;
     }
+
+    case REF_TYPE: {
+      RefType* ref = (RefType*)type;
+
+      // TODO: Avoid infinite recursion by caching the result of substitution
+      // on this reference.
+      if (ref->value == NULL) {
+        return CopyType(arena, type);
+      }
+      return Subst(arena, ref->value, params, args);
+    }
   }
 
   UNREACHABLE("Should never get here");
@@ -566,6 +602,14 @@ static Type* Normal(FbleArena* arena, Type* type)
       Type* subst = Subst(arena, poly->body, poly->args, pat->args);
       FreeType(arena, &poly->_base);
       return subst;
+    }
+
+    case REF_TYPE: {
+      RefType* ref = (RefType*)type;
+      if (ref->value == NULL) {
+        return CopyType(arena, type);
+      }
+      return Normal(arena, ref->value);
     }
   }
 
@@ -721,6 +765,15 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
       UNREACHABLE("poly apply type is not Normal");
       return false;
     }
+
+    case REF_TYPE: {
+      RefType* ra = (RefType*)a;
+      RefType* rb = (RefType*)b;
+
+      assert(ra->value == NULL && rb->value == NULL);
+      assert(a != b);
+      return false;
+    }
   }
 
   UNREACHABLE("Should never get here");
@@ -868,6 +921,16 @@ static void PrintType(Type* type)
         comma = ", ";
       }
       fprintf(stderr, ">");
+      break;
+    }
+
+    case REF_TYPE: {
+      RefType* ref = (RefType*)ref;
+      if (ref->value == NULL) {
+        fprintf(stderr, "??%p", (void*)type);
+      } else {
+        PrintType(ref->value);
+      }
       break;
     }
   }
