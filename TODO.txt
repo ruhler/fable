@@ -1,6 +1,5 @@
 Fble:
 * Test and add support for recursive types.
- - Test recursive type using type let type (as opposed to type let expr)
  - Test a case where TypesEqual would be infinitely recursive.
  - Test a case where Subst would be infinitely recursive (a la snake.fble)
 * Clarify spec on partial and excessive function and poly application

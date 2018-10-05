@@ -2145,13 +2145,33 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
 
       Vars ntvd[let->bindings.size];
       Vars* ntvs = vars;
+
+      // Set up reference types for all the bindings, to support recursive
+      // types.
+      for (size_t i = 0; i < let->bindings.size; ++i) {
+        RefType* ref = FbleAlloc(arena, RefType);
+        ref->_base.tag = REF_TYPE;
+        ref->_base.loc = let->bindings.xs[i].name.loc;
+        ref->_base.strong_ref_count = 1;
+        ref->_base.weak_ref_count = 0;
+        ref->kind = CompileKind(arena, let->bindings.xs[i].kind);
+        ref->value = NULL;
+
+        ntvd[i].name = let->bindings.xs[i].name;
+        ntvd[i].type = &ref->_base;
+        ntvd[i].next = ntvs;
+        ntvs = ntvd + i;
+      }
+
+      // Evaluate the type bindings.
+      Type* types[let->bindings.size];
       bool error = false;
       for (size_t i = 0; i < let->bindings.size; ++i) {
-        ntvd[i].name = let->bindings.xs[i].name;
-        ntvd[i].type = CompileType(arena, vars, let->bindings.xs[i].type);
-        error = error || (ntvd[i].type == NULL);
+        types[i] = CompileType(arena, ntvs, let->bindings.xs[i].type);
+        error = error || (types[i] == NULL);
 
-        if (ntvd[i].type != NULL) {
+        if (types[i] != NULL) {
+          // TODO: get expected_kind from ntvd[i]->kind rather than recompile?
           Kind* expected_kind = CompileKind(arena, let->bindings.xs[i].kind);
           Kind* actual_kind = GetKind(arena, ntvd[i].type);
           if (!KindsEqual(expected_kind, actual_kind)) {
@@ -2166,9 +2186,19 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
           FreeKind(arena, expected_kind);
           FreeKind(arena, actual_kind);
         }
+      }
 
-        ntvd[i].next = ntvs;
-        ntvs = ntvd + i;
+      for (size_t i = 0; i < let->bindings.size; ++i) {
+        // At this point types[i] has a strong reference to it.
+        // Take a weak reference to types[i] for ref->value, and reuse the
+        // strong reference to it for ntvd.
+        RefType* ref = (RefType*)ntvd[i].type;
+        assert(ref->_base.tag == REF_TYPE);
+        if (types[i] != NULL) {
+          ref->value = TypeTakeWeakRef(arena, types[i]);
+        }
+        TypeDropStrongRef(arena, &ref->_base);
+        ntvd[i].type = types[i];
       }
 
       Type* rtype = NULL;
