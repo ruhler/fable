@@ -149,6 +149,14 @@ typedef struct {
   Type* value;
 } RefType;
 
+// TypePairs --
+//   A set of pairs of types.
+typedef struct TypePairs {
+  Type* a;
+  Type* b;
+  struct TypePairs* next;
+} TypePairs;
+
 // Vars --
 //   Scope of variables visible during type checking.
 typedef struct Vars {
@@ -167,7 +175,7 @@ static void FreeType(FbleArena* arena, Type* type);
 static Kind* GetKind(FbleArena* arena, Type* type);
 static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args);
 static Type* Normal(FbleArena* arena, Type* type);
-static bool TypesEqual(FbleArena* arena, Type* a, Type* b);
+static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq);
 static bool KindsEqual(Kind* a, Kind* b);
 static void PrintType(Type* type);
 static void PrintKind(Kind* type);
@@ -939,18 +947,15 @@ static Type* Normal(FbleArena* arena, Type* type)
 // Inputs:
 //   a - the first type
 //   b - the second type
+//   eq - A set of pairs of types that should be assumed to be equal
 //
 // Results:
 //   True if the first type equals the second type, false otherwise.
 //
 // Side effects:
 //   None.
-static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
+static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
 {
-  if (a == b) {
-    return true;
-  }
-
   a = Normal(arena, a);
   b = Normal(arena, b);
   if (a == b) {
@@ -958,6 +963,20 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
     TypeDropStrongRef(arena, b);
     return true;
   }
+
+  for (TypePairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
+    if (a == pairs->a && b == pairs->b) {
+      TypeDropStrongRef(arena, a);
+      TypeDropStrongRef(arena, b);
+      return true;
+    }
+  }
+
+  TypePairs neq = {
+    .a = a,
+    .b = b,
+    .next = eq,
+  };
 
   if (a->tag != b->tag) {
     TypeDropStrongRef(arena, a);
@@ -982,7 +1001,7 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
           return false;
         }
 
-        if (!TypesEqual(arena, sta->fields.xs[i].type, stb->fields.xs[i].type)) {
+        if (!TypesEqual(arena, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
           TypeDropStrongRef(arena, a);
           TypeDropStrongRef(arena, b);
           return false;
@@ -1010,7 +1029,7 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
           return false;
         }
 
-        if (!TypesEqual(arena, uta->fields.xs[i].type, utb->fields.xs[i].type)) {
+        if (!TypesEqual(arena, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
           TypeDropStrongRef(arena, a);
           TypeDropStrongRef(arena, b);
           return false;
@@ -1032,14 +1051,14 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
       }
 
       for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!TypesEqual(arena, fta->args.xs[i].type, ftb->args.xs[i].type)) {
+        if (!TypesEqual(arena, fta->args.xs[i].type, ftb->args.xs[i].type, &neq)) {
           TypeDropStrongRef(arena, a);
           TypeDropStrongRef(arena, b);
           return false;
         }
       }
 
-      bool rtype_equal = TypesEqual(arena, fta->rtype, ftb->rtype);
+      bool rtype_equal = TypesEqual(arena, fta->rtype, ftb->rtype, &neq);
       TypeDropStrongRef(arena, a);
       TypeDropStrongRef(arena, b);
       return rtype_equal;
@@ -1070,11 +1089,11 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b)
       // Substitute in the arguments of pta for the paramaters of b so we can
       // compare the bodies of the types with the same set of abstract types.
       Type* t = Subst(arena, ptb->body,  ptb->args, pta->args);
-      bool eq = TypesEqual(arena, pta->body, t);
+      bool result = TypesEqual(arena, pta->body, t, &neq);
       TypeDropStrongRef(arena, a);
       TypeDropStrongRef(arena, b);
       TypeDropStrongRef(arena, t);
-      return eq;
+      return result;
     }
 
     case POLY_APPLY_TYPE: {
@@ -1346,7 +1365,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         Type* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], &mkarg);
         error = error || (arg_type == NULL);
 
-        if (arg_type != NULL && !TypesEqual(arena, field->type, arg_type)) {
+        if (arg_type != NULL && !TypesEqual(arena, field->type, arg_type, NULL)) {
           FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
           PrintType(field->type);
           fprintf(stderr, ", but found ");
@@ -1416,7 +1435,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      if (!TypesEqual(arena, field_type, arg_type)) {
+      if (!TypesEqual(arena, field_type, arg_type, NULL)) {
         FbleReportError("expected type ", &union_value_expr->arg->loc);
         PrintType(field_type);
         fprintf(stderr, ", but found type ");
@@ -1578,7 +1597,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (return_type == NULL) {
           return_type = arg_type;
         } else {
-          if (!TypesEqual(arena, return_type, arg_type)) {
+          if (!TypesEqual(arena, return_type, arg_type, NULL)) {
             FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
             PrintType(return_type);
             fprintf(stderr, ", but found ");
@@ -1703,7 +1722,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         *mkarg = NULL;
         Type* arg_type = Compile(arena, nvars, type_vars, apply_expr->args.xs[i], mkarg);
         error = error || (arg_type == NULL);
-        if (arg_type != NULL && !TypesEqual(arena, func_type->args.xs[i].type, arg_type)) {
+        if (arg_type != NULL && !TypesEqual(arena, func_type->args.xs[i].type, arg_type, NULL)) {
           FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
           PrintType(func_type->args.xs[i].type);
           fprintf(stderr, ", but found ");
@@ -1791,7 +1810,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         error = error || (type == NULL);
         FbleVectorAppend(arena, instr->bindings, mkval);
 
-        if (!error && !TypesEqual(arena, nvd[i].type, type)) {
+        if (!error && !TypesEqual(arena, nvd[i].type, type, NULL)) {
           error = true;
           FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
           PrintType(nvd[i].type);
