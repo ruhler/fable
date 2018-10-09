@@ -1,6 +1,6 @@
 Fble:
 * Test and add support for recursive types.
- - Avoid infinite recursion in Subst.
+ - Cache poly applications to avoid infinite recursion there.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors.

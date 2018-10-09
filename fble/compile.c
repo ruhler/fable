@@ -173,7 +173,7 @@ static Type* TypeTakeWeakRef(FbleArena* arena, Type* type);
 static void TypeDropWeakRef(FbleArena* arena, Type* type);
 static void FreeType(FbleArena* arena, Type* type);
 static Kind* GetKind(FbleArena* arena, Type* type);
-static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args);
+static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps);
 static Type* Normal(FbleArena* arena, Type* type);
 static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq);
 static bool KindsEqual(Kind* a, Kind* b);
@@ -762,6 +762,7 @@ static Kind* GetKind(FbleArena* arena, Type* type)
 //   type - the type to substitute into.
 //   params - the abstract types to substitute out.
 //   args - the concrete types to substitute in.
+//   tps - a map of already substituted types, to avoid infinite recursion.
 //
 // Results:
 //   A type with all occurrences of params replaced with the corresponding
@@ -770,7 +771,7 @@ static Kind* GetKind(FbleArena* arena, Type* type)
 // Side effects:
 //   The caller is responsible for calling TypeDropStrongRef on the returned
 //   type when it is no longer needed.
-static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
+static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypePairs* tps)
 {
   switch (type->tag) {
     case STRUCT_TYPE: {
@@ -784,7 +785,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
       for (size_t i = 0; i < st->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena, sst->fields);
         field->name = st->fields.xs[i].name;
-        field->type = Subst(arena, st->fields.xs[i].type, params, args);
+        field->type = Subst(arena, st->fields.xs[i].type, params, args, tps);
       }
       return &sst->_base;
     }
@@ -800,7 +801,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
       for (size_t i = 0; i < ut->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena, sut->fields);
         field->name = ut->fields.xs[i].name;
-        field->type = Subst(arena, ut->fields.xs[i].type, params, args);
+        field->type = Subst(arena, ut->fields.xs[i].type, params, args, tps);
       }
       return &sut->_base;
     }
@@ -816,9 +817,9 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
       for (size_t i = 0; i < ft->args.size; ++i) {
         Field* arg = FbleVectorExtend(arena, sft->args);
         arg->name = ft->args.xs[i].name;
-        arg->type = Subst(arena, ft->args.xs[i].type, params, args);
+        arg->type = Subst(arena, ft->args.xs[i].type, params, args, tps);
       }
-      sft->rtype = Subst(arena, ft->rtype, params, args);
+      sft->rtype = Subst(arena, ft->rtype, params, args, tps);
       return &sft->_base;
     }
 
@@ -830,7 +831,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
       svt->_base.strong_ref_count = 1;
       svt->_base.weak_ref_count = 0;
       svt->var = vt->var;
-      svt->value = Subst(arena, vt->value, params, args);
+      svt->value = Subst(arena, vt->value, params, args, tps);
       return &svt->_base;
     }
 
@@ -854,7 +855,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
       for (size_t i = 0; i < pt->args.size; ++i) {
         FbleVectorAppend(arena, spt->args, TypeTakeStrongRef(arena, pt->args.xs[i]));
       }
-      spt->body = Subst(arena, pt->body, params, args);
+      spt->body = Subst(arena, pt->body, params, args, tps);
       return &spt->_base;
     }
 
@@ -865,10 +866,10 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
       spat->_base.loc = pat->_base.loc;
       spat->_base.strong_ref_count = 1;
       spat->_base.weak_ref_count = 0;
-      spat->poly = Subst(arena, pat->poly, params, args);
+      spat->poly = Subst(arena, pat->poly, params, args, tps);
       FbleVectorInit(arena, spat->args);
       for (size_t i = 0; i < pat->args.size; ++i) {
-        Type* arg = Subst(arena, pat->args.xs[i], params, args);
+        Type* arg = Subst(arena, pat->args.xs[i], params, args, tps);
         FbleVectorAppend(arena, spat->args, arg);
       }
       return &spat->_base;
@@ -877,12 +878,33 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
 
-      // TODO: Avoid infinite recursion by caching the result of substitution
-      // on this reference.
+      for (TypePairs* tp = tps; tp != NULL; tp = tp->next) {
+        if (tp->a == type) {
+          return TypeTakeStrongRef(arena, tp->b);
+        }
+      }
+
       if (ref->value == NULL) {
         return TypeTakeStrongRef(arena, type);
       }
-      return Subst(arena, ref->value, params, args);
+
+      RefType* sref = FbleAlloc(arena, RefType);
+      sref->_base.tag = REF_TYPE;
+      sref->_base.loc = type->loc;
+      sref->_base.strong_ref_count = 1;
+      sref->_base.weak_ref_count = 0;
+      sref->value = NULL;
+
+      TypePairs ntp = {
+        .a = &ref->_base,
+        .b = &sref->_base,
+        .next = tps
+      };
+
+      sref->value = Subst(arena, ref->value, params, args, &ntp);
+      TypeTakeWeakRef(arena, sref->value);
+      TypeDropStrongRef(arena, sref->value);
+      return &sref->_base;
     }
   }
 
@@ -923,7 +945,7 @@ static Type* Normal(FbleArena* arena, Type* type)
       PolyApplyType* pat = (PolyApplyType*)type;
       PolyType* poly = (PolyType*)Normal(arena, pat->poly);
       assert(poly->_base.tag == POLY_TYPE);
-      Type* subst = Subst(arena, poly->body, poly->args, pat->args);
+      Type* subst = Subst(arena, poly->body, poly->args, pat->args, NULL);
       TypeDropStrongRef(arena, &poly->_base);
       return subst;
     }
@@ -1088,7 +1110,7 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
 
       // Substitute in the arguments of pta for the paramaters of b so we can
       // compare the bodies of the types with the same set of abstract types.
-      Type* t = Subst(arena, ptb->body,  ptb->args, pta->args);
+      Type* t = Subst(arena, ptb->body,  ptb->args, pta->args, NULL);
       bool result = TypesEqual(arena, pta->body, t, &neq);
       TypeDropStrongRef(arena, a);
       TypeDropStrongRef(arena, b);
