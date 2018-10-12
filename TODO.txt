@@ -1,4 +1,5 @@
 Fble:
+* Figure out how to fix recursive reference counting.
 * Test and add support for recursive types.
  - Cache poly applications to avoid infinite recursion there.
 * Clarify spec on partial and excessive function and poly application
