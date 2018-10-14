@@ -5,6 +5,7 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+static void DropWeakRef(FbleArena* arena, FbleValue* value);
 static void FreeValue(FbleArena* arena, FbleValue* value);
 
 // FbleTakeStrongRef -- see documentation in fble.h
@@ -141,7 +142,7 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
         if (rv->strong) {
           FbleDropStrongRef(arena, rv->value);
         } else {
-          FbleDropWeakRef(arena, rv->value);
+          DropWeakRef(arena, rv->value);
         }
         break;
       }
@@ -154,8 +155,23 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
   }
 }
 
-// FbleDropWeakRef -- see documentation in fble.h
-void FbleDropWeakRef(FbleArena* arena, FbleValue* value)
+// DropWeakRef --
+//
+//   Decrement the weak reference count of a value and free the resources
+//   associated with that value if it has no more references.
+//
+// Inputs:
+//   arena - The arena the value was allocated with.
+//   value - The value to decrement the weak reference count of. The value
+//           may be NULL, in which case no action is performed.
+//
+// Results:
+//   None.
+//
+// Side effect:
+//   Decrements the weak reference count of the value and frees resources
+//   associated with the value if there are no more references to it.
+static void DropWeakRef(FbleArena* arena, FbleValue* value)
 {
   if (value == NULL) {
     return;
@@ -167,14 +183,14 @@ void FbleDropWeakRef(FbleArena* arena, FbleValue* value)
       case FBLE_STRUCT_VALUE: {
         FbleStructValue* sv = (FbleStructValue*)value;
         for (size_t i = 0; i < sv->fields.size; ++i) {
-          FbleDropWeakRef(arena, sv->fields.xs[i]);
+          DropWeakRef(arena, sv->fields.xs[i]);
         }
         break;
       }
 
       case FBLE_UNION_VALUE: {
         FbleUnionValue* uv = (FbleUnionValue*)value;
-        FbleDropWeakRef(arena, uv->arg);
+        DropWeakRef(arena, uv->arg);
         break;
       }
 
@@ -182,7 +198,7 @@ void FbleDropWeakRef(FbleArena* arena, FbleValue* value)
         FbleFuncValue* fv = (FbleFuncValue*)value;
         FbleVStack* vs = fv->context;
         while (vs != NULL) {
-          FbleDropWeakRef(arena, vs->value);
+          DropWeakRef(arena, vs->value);
           vs = vs->tail;
         }
         break;

@@ -739,9 +739,7 @@ FbleValue* FbleTakeStrongRef(FbleValue* src);
 //   reference count and assigning it at the same time.
 //
 // Side effects:
-//   Increments the weak reference count on the value. The reference count
-//   must be decrement using FbleDropWeakRef when the value is no longer
-//   needed.
+//   Increments the weak reference count on the value.
 FbleValue* FbleTakeWeakRef(FbleValue* src);
 
 // FbleDropStrongRef --
@@ -761,24 +759,6 @@ FbleValue* FbleTakeWeakRef(FbleValue* src);
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
 void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
-
-// FbleDropWeakRef --
-//
-//   Decrement the weak reference count of a value and free the resources
-//   associated with that value if it has no more references.
-//
-// Inputs:
-//   arena - The arena the value was allocated with.
-//   value - The value to decrement the weak reference count of. The value
-//           may be NULL, in which case no action is performed.
-//
-// Results:
-//   None.
-//
-// Side effect:
-//   Decrements the weak reference count of the value and frees resources
-//   associated with the value if there are no more references to it.
-void FbleDropWeakRef(FbleArena* arena, FbleValue* value);
 
 // FbleEval --
 //   Type check and evaluate an expression.
