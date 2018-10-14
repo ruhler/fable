@@ -658,7 +658,7 @@ typedef enum {
 typedef struct FbleValue {
   FbleValueTag tag;
   size_t strong_ref_count;
-  size_t weak_ref_count;
+  size_t break_cycle_ref_count;
 } FbleValue;
 
 // FbleValueV --
@@ -700,12 +700,11 @@ typedef struct FbleFuncValue FbleFuncValue;
 //
 // Fields:
 //   value - the value being referenced
-//   strong - true if we hold a strong reference to the value, false if we
-//            hold a weak reference to the value.
+//   siblings - TODO: the ref values for the other variables defined in the same let
+//              binding as this ref value. Used for breaking reference cycles.
 typedef struct {
   FbleValue _base;
   FbleValue* value;
-  bool strong;
 } FbleRefValue;
 
 // FbleTakeStrongRef --
@@ -726,21 +725,23 @@ typedef struct {
 //   needed.
 FbleValue* FbleTakeStrongRef(FbleValue* src);
 
-// FbleTakeWeakRef --
+// FbleBreakCycleRef --
 //
-//   Increment the weak reference count of a value.
+//   Increment the break cycle reference count of a value.
 //
 // Inputs:
-//   value - The value to increment the strong reference count of. The value
-//           may be NULL, in which case nothing is done.
+//   arena - Arena to use for deallocation.
+//   value - The value to increment the break cycle reference count of. The
+//           value may be NULL, in which case nothing is done.
 //
 // Results:
 //   The given value, for the caller's convenience when incrementing the
 //   reference count and assigning it at the same time.
 //
 // Side effects:
-//   Increments the weak reference count on the value.
-FbleValue* FbleTakeWeakRef(FbleValue* src);
+//   Increments the break cycle reference count on the value. Breaks the cycle
+//   if necessary, which could cause values to be freed.
+FbleValue* FbleBreakCycleRef(FbleArena* arena, FbleValue* src);
 
 // FbleDropStrongRef --
 //

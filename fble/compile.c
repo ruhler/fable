@@ -1820,8 +1820,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->body = NULL;
       instr->pop._base.tag = FBLE_POP_INSTR;
       instr->pop.count = let_expr->bindings.size;
-      instr->weaken._base.tag = FBLE_WEAKEN_INSTR;
-      instr->weaken.count = let_expr->bindings.size;
+      instr->break_cycle._base.tag = FBLE_BREAK_CYCLE_INSTR;
+      instr->break_cycle.count = let_expr->bindings.size;
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleInstr* mkval = NULL;
@@ -2408,7 +2408,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR:
     case FBLE_POP_INSTR:
-    case FBLE_WEAKEN_INSTR: {
+    case FBLE_BREAK_CYCLE_INSTR: {
       FbleFree(arena, instrs);
       return;
     }

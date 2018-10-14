@@ -5,26 +5,28 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static void DropWeakRef(FbleArena* arena, FbleValue* value);
+static void DropBreakCycleRef(FbleValue* value);
+static void BreakCycle(FbleArena* arena, FbleValue* value);
 static void FreeValue(FbleArena* arena, FbleValue* value);
 
 // FbleTakeStrongRef -- see documentation in fble.h
 FbleValue* FbleTakeStrongRef(FbleValue* value)
 {
   if (value != NULL) {
-    if (value->strong_ref_count++ == 0) {
+    assert(value->strong_ref_count > 0);
+    if (value->strong_ref_count++ == value->break_cycle_ref_count) {
       switch (value->tag) {
         case FBLE_STRUCT_VALUE: {
           FbleStructValue* sv = (FbleStructValue*)value;
           for (size_t i = 0; i < sv->fields.size; ++i) {
-            FbleTakeStrongRef(sv->fields.xs[i]);
+            DropBreakCycleRef(sv->fields.xs[i]);
           }
           break;
         }
 
         case FBLE_UNION_VALUE: {
           FbleUnionValue* uv = (FbleUnionValue*)value;
-          FbleTakeStrongRef(uv->arg);
+          DropBreakCycleRef(uv->arg);
           break;
         }
 
@@ -32,53 +34,7 @@ FbleValue* FbleTakeStrongRef(FbleValue* value)
           FbleFuncValue* fv = (FbleFuncValue*)value;
           FbleVStack* vs = fv->context;
           while (vs != NULL) {
-            FbleTakeStrongRef(vs->value);
-            vs = vs->tail;
-          }
-          break;
-        }
-
-        case FBLE_PROC_VALUE: assert(false && "TODO"); break;
-        case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
-        case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
-
-        case FBLE_REF_VALUE: {
-          FbleRefValue* rv = (FbleRefValue*)value;
-          FbleTakeWeakRef(rv->value);
-          break;
-        }
-      }
-    }
-  }
-
-  return value;
-}
-
-// FbleTakeWeakRef -- see documentation in fble.h
-FbleValue* FbleTakeWeakRef(FbleValue* value)
-{
-  if (value != NULL) {
-    if (value->weak_ref_count++ == 0) {
-      switch (value->tag) {
-        case FBLE_STRUCT_VALUE: {
-          FbleStructValue* sv = (FbleStructValue*)value;
-          for (size_t i = 0; i < sv->fields.size; ++i) {
-            FbleTakeWeakRef(sv->fields.xs[i]);
-          }
-          break;
-        }
-
-        case FBLE_UNION_VALUE: {
-          FbleUnionValue* uv = (FbleUnionValue*)value;
-          FbleTakeWeakRef(uv->arg);
-          break;
-        }
-
-        case FBLE_FUNC_VALUE: {
-          FbleFuncValue* fv = (FbleFuncValue*)value;
-          FbleVStack* vs = fv->context;
-          while (vs != NULL) {
-            FbleTakeWeakRef(vs->value);
+            DropBreakCycleRef(vs->value);
             vs = vs->tail;
           }
           break;
@@ -93,6 +49,19 @@ FbleValue* FbleTakeWeakRef(FbleValue* value)
           break;
         }
       }
+    }
+  }
+
+  return value;
+}
+
+// FbleBreakCycleRef -- see documentation in fble.h
+FbleValue* FbleBreakCycleRef(FbleArena* arena, FbleValue* value)
+{
+  if (value != NULL) {
+    value->break_cycle_ref_count++;
+    if (value->break_cycle_ref_count == value->strong_ref_count) {
+      BreakCycle(arena, value);
     }
   }
 
@@ -139,58 +108,53 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
 
       case FBLE_REF_VALUE: {
         FbleRefValue* rv = (FbleRefValue*)value;
-        if (rv->strong) {
-          FbleDropStrongRef(arena, rv->value);
-        } else {
-          DropWeakRef(arena, rv->value);
-        }
+        FbleDropStrongRef(arena, rv->value);
         break;
       }
     }
-  }
 
-  value->strong_ref_count--;
-  if (value->strong_ref_count == 0 && value->weak_ref_count == 0) {
     FreeValue(arena, value);
+  } else {
+    value->strong_ref_count--;
+    if (value->strong_ref_count == value->break_cycle_ref_count) {
+      BreakCycle(arena, value);
+    }
   }
 }
 
-// DropWeakRef --
+// DropBreakCycleRef --
 //
-//   Decrement the weak reference count of a value and free the resources
-//   associated with that value if it has no more references.
+//   Decrement the break cycle reference count of a value.
 //
 // Inputs:
-//   arena - The arena the value was allocated with.
-//   value - The value to decrement the weak reference count of. The value
-//           may be NULL, in which case no action is performed.
+//   value - The value to decrement the break cycle reference count of. The
+//           value may be NULL, in which case no action is performed.
 //
 // Results:
 //   None.
 //
 // Side effect:
-//   Decrements the weak reference count of the value and frees resources
-//   associated with the value if there are no more references to it.
-static void DropWeakRef(FbleArena* arena, FbleValue* value)
+//   Decrements the break cycle reference count of the value.
+static void DropBreakCycleRef(FbleValue* value)
 {
   if (value == NULL) {
     return;
   }
 
-  assert(value->weak_ref_count > 0);
-  if (value->weak_ref_count == 1) {
+  assert(value->break_cycle_ref_count > 0);
+  if (value->break_cycle_ref_count-- == value->strong_ref_count) {
     switch (value->tag) {
       case FBLE_STRUCT_VALUE: {
         FbleStructValue* sv = (FbleStructValue*)value;
         for (size_t i = 0; i < sv->fields.size; ++i) {
-          DropWeakRef(arena, sv->fields.xs[i]);
+          DropBreakCycleRef(sv->fields.xs[i]);
         }
         break;
       }
 
       case FBLE_UNION_VALUE: {
         FbleUnionValue* uv = (FbleUnionValue*)value;
-        DropWeakRef(arena, uv->arg);
+        DropBreakCycleRef(uv->arg);
         break;
       }
 
@@ -198,7 +162,7 @@ static void DropWeakRef(FbleArena* arena, FbleValue* value)
         FbleFuncValue* fv = (FbleFuncValue*)value;
         FbleVStack* vs = fv->context;
         while (vs != NULL) {
-          DropWeakRef(arena, vs->value);
+          DropBreakCycleRef(vs->value);
           vs = vs->tail;
         }
         break;
@@ -214,10 +178,60 @@ static void DropWeakRef(FbleArena* arena, FbleValue* value)
       }
     }
   }
+}
+
+// BreakCycle --
+//   Called when the strong ref count and break cycle ref count of value
+//   become equal.
+//
+// Inputs:
+//   arena - arena for deallocation
+//   value - the value to break the cycle of.
+//
+// Results: 
+//   none.
+//
+// Side effects:
+//   Propagates the broken cycle to references and, if appropriate, breaks the
+//   cycle through ref values.
+static void BreakCycle(FbleArena* arena, FbleValue* value)
+{
+  assert(value->strong_ref_count > 0);
+  assert(value->strong_ref_count == value->break_cycle_ref_count);
+  switch (value->tag) {
+    case FBLE_STRUCT_VALUE: {
+      FbleStructValue* sv = (FbleStructValue*)value;
+      for (size_t i = 0; i < sv->fields.size; ++i) {
+        FbleBreakCycleRef(arena, sv->fields.xs[i]);
+      }
+      break;
+    }
 
-  value->weak_ref_count--;
-  if (value->strong_ref_count == 0 && value->weak_ref_count == 0) {
-    FreeValue(arena, value);
+    case FBLE_UNION_VALUE: {
+      FbleUnionValue* uv = (FbleUnionValue*)value;
+      FbleBreakCycleRef(arena, uv->arg);
+      break;
+    }
+
+    case FBLE_FUNC_VALUE: {
+      FbleFuncValue* fv = (FbleFuncValue*)value;
+      FbleVStack* vs = fv->context;
+      while (vs != NULL) {
+        FbleBreakCycleRef(arena, vs->value);
+        vs = vs->tail;
+      }
+      break;
+    }
+
+    case FBLE_PROC_VALUE: assert(false && "TODO"); break;
+    case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
+    case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
+
+    case FBLE_REF_VALUE: {
+      // TODO: drop a strong ref to this value if all sibling refs are fully
+      // broken.
+      break;
+    }
   }
 }
 
@@ -235,7 +249,6 @@ static void DropWeakRef(FbleArena* arena, FbleValue* value)
 //   Frees resources associated with the given value.
 static void FreeValue(FbleArena* arena, FbleValue* value)
 {
-  assert(value->strong_ref_count == 0 && value->weak_ref_count == 0);
   switch (value->tag) {
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;

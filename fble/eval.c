@@ -158,15 +158,14 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
 
         tstack = TPush(arena, NULL, &let_instr->pop._base, tstack);
         tstack = TPush(arena, presult, let_instr->body, tstack);
-        tstack = TPush(arena, NULL, &let_instr->weaken._base, tstack);
+        tstack = TPush(arena, NULL, &let_instr->break_cycle._base, tstack);
 
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
           FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
           rv->_base.tag = FBLE_REF_VALUE;
           rv->_base.strong_ref_count = 1;
-          rv->_base.weak_ref_count = 0;
+          rv->_base.break_cycle_ref_count = 0;
           rv->value = NULL;
-          rv->strong = true;
           vstack = VPush(arena, &rv->_base, vstack);
           tstack = TPush(arena, &rv->value, let_instr->bindings.xs[i], tstack);
         }
@@ -178,7 +177,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         FbleFuncValue* value = FbleAlloc(arena, FbleFuncValue);
         value->_base.tag = FBLE_FUNC_VALUE;
         value->_base.strong_ref_count = 1;
-        value->_base.weak_ref_count = 0;
+        value->_base.break_cycle_ref_count = 0;
         value->context = NULL;
         value->body = func_value_instr->body;
         value->pop._base.tag = FBLE_POP_INSTR;
@@ -227,7 +226,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
         value->_base.tag = FBLE_STRUCT_VALUE;
         value->_base.strong_ref_count = 1;
-        value->_base.weak_ref_count = 0;
+        value->_base.break_cycle_ref_count = 0;
         value->fields.size = struct_value_instr->fields.size;
         value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
@@ -254,7 +253,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
         union_value->_base.tag = FBLE_UNION_VALUE;
         union_value->_base.strong_ref_count = 1;
-        union_value->_base.weak_ref_count = 0;
+        union_value->_base.break_cycle_ref_count = 0;
         union_value->tag = union_value_instr->tag;
         union_value->arg = NULL;
 
@@ -325,23 +324,17 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         break;
       }
 
-      case FBLE_WEAKEN_INSTR: {
-        FbleWeakenInstr* weaken_instr = (FbleWeakenInstr*)instr;
+      case FBLE_BREAK_CYCLE_INSTR: {
+        FbleBreakCycleInstr* break_cycle_instr = (FbleBreakCycleInstr*)instr;
         FbleVStack* vs = vstack;
-        for (size_t i = 0; i < weaken_instr->count; ++i) {
+        for (size_t i = 0; i < break_cycle_instr->count; ++i) {
           assert(vs != NULL);
           FbleRefValue* rv = (FbleRefValue*) vs->value;
           assert(rv->_base.tag == FBLE_REF_VALUE);
 
           assert(rv->value != NULL);
-          assert(rv->strong);
-
-          // The vstack takes over the strong ref of rv->value, and rv gets a
-          // weak ref to rv->value, then we drop the vstack's strong ref to
-          // rv.
-          vs->value = rv->value;
-          FbleTakeWeakRef(rv->value);
-          rv->strong = false;
+          vs->value = FbleTakeStrongRef(rv->value);
+          FbleBreakCycleRef(arena, rv->value);
           FbleDropStrongRef(arena, &rv->_base);
 
           vs = vs->tail;
