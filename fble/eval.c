@@ -160,15 +160,26 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         tstack = TPush(arena, presult, let_instr->body, tstack);
         tstack = TPush(arena, NULL, &let_instr->break_cycle._base, tstack);
 
+        FbleRefValue* first = NULL;
+        FbleRefValue* curr = NULL;
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
           FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
           rv->_base.tag = FBLE_REF_VALUE;
           rv->_base.strong_ref_count = 1;
           rv->_base.break_cycle_ref_count = 0;
           rv->value = NULL;
+          rv->broke_cycle = false;
+          rv->siblings = curr;
           vstack = VPush(arena, &rv->_base, vstack);
           tstack = TPush(arena, &rv->value, let_instr->bindings.xs[i], tstack);
+
+          if (first == NULL) {
+            first = rv;
+          }
+          curr = rv;
         }
+        assert(first != NULL);
+        first->siblings = curr;
         break;
       }
 
@@ -335,6 +346,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
           assert(rv->value != NULL);
           vs->value = FbleTakeStrongRef(rv->value);
           FbleBreakCycleRef(arena, rv->value);
+          rv->broke_cycle = true;
           FbleDropStrongRef(arena, &rv->_base);
 
           vs = vs->tail;

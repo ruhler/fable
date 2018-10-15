@@ -699,12 +699,20 @@ typedef struct FbleFuncValue FbleFuncValue;
 // values.
 //
 // Fields:
-//   value - the value being referenced
-//   siblings - TODO: the ref values for the other variables defined in the same let
-//              binding as this ref value. Used for breaking reference cycles.
-typedef struct {
+//   value - the value being referenced, or NULL if no value is referenced.
+//   broke_cycle - true if the FbleBreakCycleRef count has been called on the
+//                 value for this reference, false otherwise.
+//   siblings - A circular singly linked list of the ref values for the other
+//              variables defined in the same let binding as this ref value.
+//              Used for breaking reference cycles.
+//              The siblings list does not count as a reference to the ref
+//              values. RefValues are responsible for removing themselves from
+//              the list when they are freed.
+typedef struct FbleRefValue {
   FbleValue _base;
   FbleValue* value;
+  bool broke_cycle;
+  struct FbleRefValue* siblings;
 } FbleRefValue;
 
 // FbleTakeStrongRef --
