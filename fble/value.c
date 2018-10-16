@@ -201,11 +201,10 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
         } while (sibling != rv);
 
         // 3. Release our strong references to the siblings.
-        sibling = rv;
-        do {
-          FbleDropStrongRef(arena, &sibling->_base);
-          sibling = sibling->siblings;
-        } while (sibling != rv);
+        while (rv->siblings != rv) {
+          FbleDropStrongRef(arena, &(rv->siblings->_base));
+        }
+        FbleDropStrongRef(arena, &rv->_base);
       }
       break;
     }
