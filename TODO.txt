@@ -1,5 +1,5 @@
 Fble:
-* Implement new reference counting scheme.
+* Fix failing type test.
 * Re-enable langs/fble/8.3-06-poly-apply-recursive-type.tcl.XXX
 * Test and add support for recursive types.
  - Cache poly applications to avoid infinite recursion there.
@@ -11,6 +11,8 @@ Fble:
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 
 Fble Cleanup:
+* Don't duplicate reference counting code between values and types. Share it
+  instead?
 * Share common code between checking FbleStructType, FbleUnionType, and
   FbleFuncType?
 

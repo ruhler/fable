@@ -734,7 +734,6 @@ typedef struct FbleRefValue {
 FbleValue* FbleTakeStrongRef(FbleValue* src);
 
 // FbleBreakCycleRef --
-//
 //   Increment the break cycle reference count of a value.
 //
 // Inputs:

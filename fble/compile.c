@@ -68,7 +68,7 @@ typedef struct Type {
   TypeTag tag;
   FbleLoc loc;
   int strong_ref_count;
-  int weak_ref_count;
+  int break_cycle_ref_count;
 } Type;
 
 // TypeV --
@@ -143,10 +143,12 @@ typedef struct {
 //
 // A implementation-specific type introduced to support recursive types. A
 // ref type is simply a reference to another type.
-typedef struct {
+typedef struct RefType {
   Type _base;
   Kind* kind;
   Type* value;
+  bool broke_cycle;
+  struct RefType* siblings;
 } RefType;
 
 // TypePairs --
@@ -167,11 +169,15 @@ typedef struct Vars {
 
 static Kind* CopyKind(FbleArena* arena, Kind* kind);
 static void FreeKind(FbleArena* arena, Kind* kind);
-static Type* TypeTakeStrongRef(FbleArena* arena, Type* type);
+
+static Type* TypeTakeStrongRef(Type* type);
+static Type* TypeBreakCycleRef(FbleArena* arena, Type* type);
 static void TypeDropStrongRef(FbleArena* arena, Type* type);
-static Type* TypeTakeWeakRef(FbleArena* arena, Type* type);
-static void TypeDropWeakRef(FbleArena* arena, Type* type);
+static void DropBreakCycleRef(Type* type);
+static void BreakCycle(FbleArena* arena, Type* type);
+static void UnBreakCycle(Type* type);
 static void FreeType(FbleArena* arena, Type* type);
+
 static Kind* GetKind(FbleArena* arena, Type* type);
 static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps);
 static Type* Normal(FbleArena* arena, Type* type);
@@ -247,7 +253,6 @@ static void FreeKind(FbleArena* arena, Kind* kind)
 //   Takes a strong reference to a compiled type.
 //
 // Inputs:
-//   arena - for allocations.
 //   type - the type to take the reference for.
 //
 // Results:
@@ -255,76 +260,42 @@ static void FreeKind(FbleArena* arena, Kind* kind)
 //
 // Side effects:
 //   The returned type must be freed using TypeDropStrongRef when no longer in use.
-static Type* TypeTakeStrongRef(FbleArena* arena, Type* type)
+static Type* TypeTakeStrongRef(Type* type)
 {
   if (type != NULL) {
-    if (type->strong_ref_count++ == 0) {
-      switch (type->tag) {
-        case STRUCT_TYPE: {
-          StructType* st = (StructType*)type;
-          for (size_t i = 0; i < st->fields.size; ++i) {
-            TypeTakeStrongRef(arena, st->fields.xs[i].type);
-          }
-          break;
-        }
-
-        case UNION_TYPE: {
-          UnionType* ut = (UnionType*)type;
-          for (size_t i = 0; i < ut->fields.size; ++i) {
-            TypeTakeStrongRef(arena, ut->fields.xs[i].type);
-          }
-          break;
-        }
-
-        case FUNC_TYPE: {
-          FuncType* ft = (FuncType*)type;
-          for (size_t i = 0; i < ft->args.size; ++i) {
-            TypeTakeStrongRef(arena, ft->args.xs[i].type);
-          }
-          TypeTakeStrongRef(arena, ft->rtype);
-          break;
-        }
-
-        case VAR_TYPE: {
-          VarType* var = (VarType*)type;
-          TypeTakeStrongRef(arena, var->value);
-          break;
-        }
-
-        case ABSTRACT_TYPE: {
-          break;
-        }
-
-        case POLY_TYPE: {
-          PolyType* pt = (PolyType*)type;
-          for (size_t i = 0; i < pt->args.size; ++i) {
-            TypeTakeStrongRef(arena, pt->args.xs[i]);
-          }
-          TypeTakeStrongRef(arena, pt->body);
-          break;
-        }
-
-        case POLY_APPLY_TYPE: {
-          PolyApplyType* pat = (PolyApplyType*)type;
-          TypeTakeStrongRef(arena, pat->poly);
-          for (size_t i = 0; i < pat->args.size; ++i) {
-            TypeTakeStrongRef(arena, pat->args.xs[i]);
-          }
-          break;
-        }
-
-        case REF_TYPE: {
-          RefType* ref = (RefType*)type;
-          TypeTakeWeakRef(arena, ref->value);
-          break;
-        }
-      }
+    assert(type->strong_ref_count > 0);
+    if (type->strong_ref_count++ == type->break_cycle_ref_count) {
+      UnBreakCycle(type);
+    }
+  }
+  return type;
+}
+
+// TypeBreakCycleRef --
+//   Increment the break cycle reference count of a compiled type.
+//
+// Inputs:
+//   arena - for allocations.
+//   type - the type to take the reference for.
+//
+// Results:
+//   The type with incremented break cycle reference count.
+//
+// Side effects:
+//   Increments the break cycle reference count on the type. Breaks the cycle
+//   if necessary, which could cause types to be freed.
+static Type* TypeBreakCycleRef(FbleArena* arena, Type* type)
+{
+  if (type != NULL) {
+    type->break_cycle_ref_count++;
+    if (type->break_cycle_ref_count == type->strong_ref_count) {
+      BreakCycle(arena, type);
     }
   }
 
   return type;
 }
-
+
 // TypeDropStrongRef --
 //   Drop a strong reference to a compiled type.
 //
@@ -402,15 +373,239 @@ static void TypeDropStrongRef(FbleArena* arena, Type* type)
 
       case REF_TYPE: {
         RefType* ref = (RefType*)type;
-        TypeDropWeakRef(arena, ref->value);
+        if (ref->broke_cycle) {
+          DropBreakCycleRef(ref->value);
+        }
+        TypeDropStrongRef(arena, ref->value);
         break;
       }
     }
+
+    FreeType(arena, type);
+  } else {
+    type->strong_ref_count--;
+    if (type->strong_ref_count == type->break_cycle_ref_count) {
+      BreakCycle(arena, type);
+    }
+  }
+}
+
+// DropBreakCycleRef --
+//   Decrement the break cycle reference count of a type.
+//
+// Inputs:
+//   type - the type to decrement the break cycle reference count of.
+//          May be NULL.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Decrements the break cycle reference count of the type.
+static void DropBreakCycleRef(Type* type)
+{
+  if (type == NULL) {
+    return;
   }
 
-  type->strong_ref_count--;
-  if (type->strong_ref_count == 0 && type->weak_ref_count == 0) {
-    FreeType(arena, type);
+  assert(type->break_cycle_ref_count > 0);
+  if (type->break_cycle_ref_count-- == type->strong_ref_count) {
+    UnBreakCycle(type);
+  }
+}
+
+// BreakCycle --
+//   Called when the strong ref count and break cycle ref count of type
+//   become equal.
+//
+// Inputs:
+//   arena - arena for deallocation
+//   type - the type to break the cycle of.
+//
+// Results: 
+//   none.
+//
+// Side effects:
+//   Propagates the broken cycle to references and, if appropriate, breaks the
+//   cycle through ref types.
+static void BreakCycle(FbleArena* arena, Type* type)
+{
+  assert(type->strong_ref_count > 0);
+  assert(type->strong_ref_count == type->break_cycle_ref_count);
+  switch (type->tag) {
+    case STRUCT_TYPE: {
+      StructType* st = (StructType*)type;
+      for (size_t i = 0; i < st->fields.size; ++i) {
+        TypeBreakCycleRef(arena, st->fields.xs[i].type);
+      }
+      break;
+    }
+
+    case UNION_TYPE: {
+      UnionType* ut = (UnionType*)type;
+      for (size_t i = 0; i < ut->fields.size; ++i) {
+        TypeBreakCycleRef(arena, ut->fields.xs[i].type);
+      }
+      break;
+    }
+
+    case FUNC_TYPE: {
+      FuncType* ft = (FuncType*)type;
+      for (size_t i = 0; i < ft->args.size; ++i) {
+        TypeBreakCycleRef(arena, ft->args.xs[i].type);
+      }
+      TypeBreakCycleRef(arena, ft->rtype);
+      break;
+    }
+
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      TypeBreakCycleRef(arena, var->value);
+      break;
+    }
+
+    case ABSTRACT_TYPE: {
+      break;
+    }
+
+    case POLY_TYPE: {
+      PolyType* pt = (PolyType*)type;
+      for (size_t i = 0; i < pt->args.size; ++i) {
+        TypeBreakCycleRef(arena, pt->args.xs[i]);
+      }
+      TypeBreakCycleRef(arena, pt->body);
+      break;
+    }
+
+    case POLY_APPLY_TYPE: {
+      PolyApplyType* pat = (PolyApplyType*)type;
+      TypeBreakCycleRef(arena, pat->poly);
+      for (size_t i = 0; i < pat->args.size; ++i) {
+        TypeBreakCycleRef(arena, pat->args.xs[i]);
+      }
+      break;
+    }
+
+    case REF_TYPE: {
+      RefType* ref = (RefType*)type;
+
+      // Check if all siblings can be broken now.
+      bool can_break = true;
+      RefType* sibling = ref;
+      do {
+        if (sibling->_base.strong_ref_count != sibling->_base.break_cycle_ref_count) {
+          can_break = false;
+          break;
+        }
+        sibling = sibling->siblings;
+      } while (sibling != ref);
+
+      if (can_break) {
+        // Break the references of all the siblings.
+        // 1. Grab strong references to all the siblings to make sure they
+        // don't get freed out from under us.
+        sibling = ref;
+        do {
+          TypeTakeStrongRef(&sibling->_base);
+          sibling = sibling->siblings;
+        } while (sibling != ref);
+
+        // 2. Break the references of all the siblings.
+        sibling = ref;
+        do {
+          Type* value = sibling->value;
+          sibling->value = NULL;
+          if (sibling->broke_cycle) {
+            DropBreakCycleRef(value);
+          }
+          TypeDropStrongRef(arena, value);
+          sibling = sibling->siblings;
+        } while (sibling != ref);
+
+        // 3. Release our strong references to the siblings.
+        while (ref->siblings != ref) {
+          TypeDropStrongRef(arena, &(ref->siblings->_base));
+        }
+        TypeDropStrongRef(arena, &ref->_base);
+      }
+
+      break;
+    }
+  }
+}
+
+// UnBreakCycle --
+//   Called when the strong ref count and break cycle ref count of type
+//   become unequal.
+//
+// Inputs:
+//   type - the type to unbreak the cycle of.
+//
+// Results: 
+//   none.
+//
+// Side effects:
+//   Propagates the unbroken cycle to references.
+static void UnBreakCycle(Type* type)
+{
+  switch (type->tag) {
+    case STRUCT_TYPE: {
+      StructType* st = (StructType*)type;
+      for (size_t i = 0; i < st->fields.size; ++i) {
+        DropBreakCycleRef(st->fields.xs[i].type);
+      }
+      break;
+    }
+
+    case UNION_TYPE: {
+      UnionType* ut = (UnionType*)type;
+      for (size_t i = 0; i < ut->fields.size; ++i) {
+        DropBreakCycleRef(ut->fields.xs[i].type);
+      }
+      break;
+    }
+
+    case FUNC_TYPE: {
+      FuncType* ft = (FuncType*)type;
+      for (size_t i = 0; i < ft->args.size; ++i) {
+        DropBreakCycleRef(ft->args.xs[i].type);
+      }
+      DropBreakCycleRef(ft->rtype);
+      break;
+    }
+
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      DropBreakCycleRef(var->value);
+      break;
+    }
+
+    case ABSTRACT_TYPE: {
+      break;
+    }
+
+    case POLY_TYPE: {
+      PolyType* pt = (PolyType*)type;
+      for (size_t i = 0; i < pt->args.size; ++i) {
+        DropBreakCycleRef(pt->args.xs[i]);
+      }
+      DropBreakCycleRef(pt->body);
+      break;
+    }
+
+    case POLY_APPLY_TYPE: {
+      PolyApplyType* pat = (PolyApplyType*)type;
+      DropBreakCycleRef(pat->poly);
+      for (size_t i = 0; i < pat->args.size; ++i) {
+        DropBreakCycleRef(pat->args.xs[i]);
+      }
+      break;
+    }
+
+    case REF_TYPE: {
+      // Nothing to do here. 
+      break;
+    }
   }
 }
 
@@ -441,7 +636,6 @@ static void TypeDropStrongRef(FbleArena* arena, Type* type)
 //   call.
 static void FreeType(FbleArena* arena, Type* type)
 {
-  assert(type->strong_ref_count == 0 && type->weak_ref_count == 0);
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
@@ -493,177 +687,18 @@ static void FreeType(FbleArena* arena, Type* type)
 
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
+
+      // Remove this ref from its list of siblings.
+      RefType* sibling = ref->siblings;
+      while (sibling->siblings != ref) {
+        sibling = sibling->siblings;
+      }
+      sibling->siblings = ref->siblings;
+
       FreeKind(arena, ref->kind);
       FbleFree(arena, ref);
       break;
     }
-  }
-}
-
-// TypeTakeWeakRef --
-//   Takes a weak reference to a compiled type.
-//
-// Inputs:
-//   arena - for allocations.
-//   type - the type to take the reference for.
-//
-// Results:
-//   The type with incremented weak reference count.
-//
-// Side effects:
-//   The returned type must be freed using TypeDropWeakRef when no longer in use.
-static Type* TypeTakeWeakRef(FbleArena* arena, Type* type)
-{
-  if (type != NULL) {
-    if (type->weak_ref_count++ == 0) {
-      switch (type->tag) {
-        case STRUCT_TYPE: {
-          StructType* st = (StructType*)type;
-          for (size_t i = 0; i < st->fields.size; ++i) {
-            TypeTakeWeakRef(arena, st->fields.xs[i].type);
-          }
-          break;
-        }
-
-        case UNION_TYPE: {
-          UnionType* ut = (UnionType*)type;
-          for (size_t i = 0; i < ut->fields.size; ++i) {
-            TypeTakeWeakRef(arena, ut->fields.xs[i].type);
-          }
-          break;
-        }
-
-        case FUNC_TYPE: {
-          FuncType* ft = (FuncType*)type;
-          for (size_t i = 0; i < ft->args.size; ++i) {
-            TypeTakeWeakRef(arena, ft->args.xs[i].type);
-          }
-          TypeTakeWeakRef(arena, ft->rtype);
-          break;
-        }
-
-        case VAR_TYPE: {
-          VarType* var = (VarType*)type;
-          TypeTakeWeakRef(arena, var->value);
-          break;
-        }
-
-        case ABSTRACT_TYPE: {
-          break;
-        }
-
-        case POLY_TYPE: {
-          PolyType* pt = (PolyType*)type;
-          for (size_t i = 0; i < pt->args.size; ++i) {
-            TypeTakeWeakRef(arena, pt->args.xs[i]);
-          }
-          TypeTakeWeakRef(arena, pt->body);
-          break;
-        }
-
-        case POLY_APPLY_TYPE: {
-          PolyApplyType* pat = (PolyApplyType*)type;
-          TypeTakeWeakRef(arena, pat->poly);
-          for (size_t i = 0; i < pat->args.size; ++i) {
-            TypeTakeWeakRef(arena, pat->args.xs[i]);
-          }
-          break;
-        }
-
-        case REF_TYPE: {
-          break;
-        }
-      }
-    }
-  }
-
-  return type;
-}
-
-// TypeDropWeakRef --
-//   Drop a weak reference to a compiled type.
-//
-// Inputs:
-//   arena - for deallocations.
-//   type - the type to drop the refcount for. May be NULL.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Decrements the weak refcount for the type and frees it if there are no
-//   more references to it.
-static void TypeDropWeakRef(FbleArena* arena, Type* type)
-{
-  if (type == NULL) {
-    return;
-  }
-
-  assert(type->weak_ref_count > 0);
-  if (type->weak_ref_count == 1) {
-    switch (type->tag) {
-      case STRUCT_TYPE: {
-        StructType* st = (StructType*)type;
-        for (size_t i = 0; i < st->fields.size; ++i) {
-          TypeDropWeakRef(arena, st->fields.xs[i].type);
-        }
-        break;
-      }
-
-      case UNION_TYPE: {
-        UnionType* ut = (UnionType*)type;
-        for (size_t i = 0; i < ut->fields.size; ++i) {
-          TypeDropWeakRef(arena, ut->fields.xs[i].type);
-        }
-        break;
-      }
-
-      case FUNC_TYPE: {
-        FuncType* ft = (FuncType*)type;
-        for (size_t i = 0; i < ft->args.size; ++i) {
-          TypeDropWeakRef(arena, ft->args.xs[i].type);
-        }
-        TypeDropWeakRef(arena, ft->rtype);
-        break;
-      }
-
-      case VAR_TYPE: {
-        VarType* var = (VarType*)type;
-        TypeDropWeakRef(arena, var->value);
-        break;
-      }
-
-      case ABSTRACT_TYPE: {
-        break;
-      }
-
-      case POLY_TYPE: {
-        PolyType* pt = (PolyType*)type;
-        for (size_t i = 0; i < pt->args.size; ++i) {
-          TypeDropWeakRef(arena, pt->args.xs[i]);
-        }
-        TypeDropWeakRef(arena, pt->body);
-        break;
-      }
-
-      case POLY_APPLY_TYPE: {
-        PolyApplyType* pat = (PolyApplyType*)type;
-        TypeDropWeakRef(arena, pat->poly);
-        for (size_t i = 0; i < pat->args.size; ++i) {
-          TypeDropWeakRef(arena, pat->args.xs[i]);
-        }
-        break;
-      }
-
-      case REF_TYPE: {
-        break;
-      }
-    }
-  }
-
-  type->weak_ref_count--;
-  if (type->strong_ref_count == 0 && type->weak_ref_count == 0) {
-    FreeType(arena, type);
   }
 }
 
@@ -780,7 +815,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
       sst->_base.tag = STRUCT_TYPE;
       sst->_base.loc = st->_base.loc;
       sst->_base.strong_ref_count = 1;
-      sst->_base.weak_ref_count = 0;
+      sst->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena, sst->fields);
@@ -796,7 +831,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
       sut->_base.tag = UNION_TYPE;
       sut->_base.loc = ut->_base.loc;
       sut->_base.strong_ref_count = 1;
-      sut->_base.weak_ref_count = 0;
+      sut->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, sut->fields);
       for (size_t i = 0; i < ut->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena, sut->fields);
@@ -812,7 +847,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
       sft->_base.tag = FUNC_TYPE;
       sft->_base.loc = ft->_base.loc;
       sft->_base.strong_ref_count = 1;
-      sft->_base.weak_ref_count = 0;
+      sft->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, sft->args);
       for (size_t i = 0; i < ft->args.size; ++i) {
         Field* arg = FbleVectorExtend(arena, sft->args);
@@ -829,7 +864,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
       svt->_base.tag = VAR_TYPE;
       svt->_base.loc = vt->_base.loc;
       svt->_base.strong_ref_count = 1;
-      svt->_base.weak_ref_count = 0;
+      svt->_base.break_cycle_ref_count = 0;
       svt->var = vt->var;
       svt->value = Subst(arena, vt->value, params, args, tps);
       return &svt->_base;
@@ -838,10 +873,10 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
     case ABSTRACT_TYPE: {
       for (size_t i = 0; i < params.size; ++i) {
         if (type == params.xs[i]) {
-          return TypeTakeStrongRef(arena, args.xs[i]);
+          return TypeTakeStrongRef(args.xs[i]);
         }
       }
-      return TypeTakeStrongRef(arena, type);
+      return TypeTakeStrongRef(type);
     }
 
     case POLY_TYPE: {
@@ -850,10 +885,10 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
       spt->_base.tag = POLY_TYPE;
       spt->_base.loc = pt->_base.loc;
       spt->_base.strong_ref_count = 1;
-      spt->_base.weak_ref_count = 0;
+      spt->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, spt->args);
       for (size_t i = 0; i < pt->args.size; ++i) {
-        FbleVectorAppend(arena, spt->args, TypeTakeStrongRef(arena, pt->args.xs[i]));
+        FbleVectorAppend(arena, spt->args, TypeTakeStrongRef(pt->args.xs[i]));
       }
       spt->body = Subst(arena, pt->body, params, args, tps);
       return &spt->_base;
@@ -865,7 +900,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
       spat->_base.tag = POLY_APPLY_TYPE;
       spat->_base.loc = pat->_base.loc;
       spat->_base.strong_ref_count = 1;
-      spat->_base.weak_ref_count = 0;
+      spat->_base.break_cycle_ref_count = 0;
       spat->poly = Subst(arena, pat->poly, params, args, tps);
       FbleVectorInit(arena, spat->args);
       for (size_t i = 0; i < pat->args.size; ++i) {
@@ -880,20 +915,26 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
 
       for (TypePairs* tp = tps; tp != NULL; tp = tp->next) {
         if (tp->a == type) {
-          return TypeTakeStrongRef(arena, tp->b);
+          return TypeTakeStrongRef(tp->b);
         }
       }
 
       if (ref->value == NULL) {
-        return TypeTakeStrongRef(arena, type);
+        return TypeTakeStrongRef(type);
       }
 
       RefType* sref = FbleAlloc(arena, RefType);
       sref->_base.tag = REF_TYPE;
       sref->_base.loc = type->loc;
       sref->_base.strong_ref_count = 1;
-      sref->_base.weak_ref_count = 0;
+      sref->_base.break_cycle_ref_count = 0;
+      sref->kind = ref->kind;
       sref->value = NULL;
+      sref->broke_cycle = false;    // TODO: ???
+
+      // TODO: We need to properly copy cycles somehow.
+      assert(ref->siblings == ref && "TODO: Support mutually recursive types in substitution");
+      sref->siblings = sref;        // TODO: ???
 
       TypePairs ntp = {
         .a = &ref->_base,
@@ -902,8 +943,8 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
       };
 
       sref->value = Subst(arena, ref->value, params, args, &ntp);
-      TypeTakeWeakRef(arena, sref->value);
-      TypeDropStrongRef(arena, sref->value);
+      TypeBreakCycleRef(arena, sref->value);
+      sref->broke_cycle = true;
       return &sref->_base;
     }
   }
@@ -929,17 +970,17 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
 static Type* Normal(FbleArena* arena, Type* type)
 {
   switch (type->tag) {
-    case STRUCT_TYPE: return TypeTakeStrongRef(arena, type);
-    case UNION_TYPE: return TypeTakeStrongRef(arena, type);
-    case FUNC_TYPE: return TypeTakeStrongRef(arena, type);
+    case STRUCT_TYPE: return TypeTakeStrongRef(type);
+    case UNION_TYPE: return TypeTakeStrongRef(type);
+    case FUNC_TYPE: return TypeTakeStrongRef(type);
 
     case VAR_TYPE: {
       VarType* var_type = (VarType*)type;
       return Normal(arena, var_type->value);
     }
 
-    case ABSTRACT_TYPE: return TypeTakeStrongRef(arena, type);
-    case POLY_TYPE: return TypeTakeStrongRef(arena, type);
+    case ABSTRACT_TYPE: return TypeTakeStrongRef(type);
+    case POLY_TYPE: return TypeTakeStrongRef(type);
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
@@ -953,7 +994,7 @@ static Type* Normal(FbleArena* arena, Type* type)
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
       if (ref->value == NULL) {
-        return TypeTakeStrongRef(arena, type);
+        return TypeTakeStrongRef(type);
       }
       return Normal(arena, ref->value);
     }
@@ -1528,7 +1569,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (FbleNamesEqual(access_expr->field.name, data_type->fields.xs[i].name.name)) {
           access->tag = i;
           *instrs = &instr->_base;
-          Type* rtype = TypeTakeStrongRef(arena, data_type->fields.xs[i].type);
+          Type* rtype = TypeTakeStrongRef(data_type->fields.xs[i].type);
           TypeDropStrongRef(arena, type);
           TypeDropStrongRef(arena, &data_type->_base);
           return rtype;
@@ -1649,7 +1690,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       type->_base.tag = FUNC_TYPE;
       type->_base.loc = expr->loc;
       type->_base.strong_ref_count = 1;
-      type->_base.weak_ref_count = 0;
+      type->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, type->args);
       type->rtype = NULL;
       
@@ -1767,7 +1808,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       apply_instr->argc = func_type->args.size;
       push->next = &apply_instr->_base;
       *instrs = &push->_base;
-      Type* rtype = TypeTakeStrongRef(arena, func_type->rtype);
+      Type* rtype = TypeTakeStrongRef(func_type->rtype);
       TypeDropStrongRef(arena, type);
       TypeDropStrongRef(arena, &func_type->_base);
       return rtype;
@@ -1795,7 +1836,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->_base.tag = FBLE_VAR_INSTR;
       instr->position = position;
       *instrs = &instr->_base;
-      return TypeTakeStrongRef(arena, vars->type);
+      return TypeTakeStrongRef(vars->type);
     }
 
     case FBLE_LET_EXPR: {
@@ -1871,20 +1912,31 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       // Set up reference types for all the bindings, to support recursive
       // types.
+      RefType* first = NULL;
+      RefType* curr = NULL;
       for (size_t i = 0; i < let->bindings.size; ++i) {
         RefType* ref = FbleAlloc(arena, RefType);
         ref->_base.tag = REF_TYPE;
         ref->_base.loc = let->bindings.xs[i].name.loc;
         ref->_base.strong_ref_count = 1;
-        ref->_base.weak_ref_count = 0;
+        ref->_base.break_cycle_ref_count = 0;
         ref->kind = CompileKind(arena, let->bindings.xs[i].kind);
         ref->value = NULL;
+        ref->broke_cycle = false;
+        ref->siblings = curr;
 
         ntvd[i].name = let->bindings.xs[i].name;
         ntvd[i].type = &ref->_base;
         ntvd[i].next = ntvs;
         ntvs = ntvd + i;
+
+        if (first == NULL) {
+          first = ref;
+        }
+        curr = ref;
       }
+      assert(first != NULL);
+      first->siblings = curr;
 
       // Evaluate the type bindings.
       Type* types[let->bindings.size];
@@ -1912,16 +1964,13 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       for (size_t i = 0; i < let->bindings.size; ++i) {
-        // At this point types[i] has a strong reference to it.
-        // Take a weak reference to types[i] for ref->value, and reuse the
-        // strong reference to it for ntvd.
         RefType* ref = (RefType*)ntvd[i].type;
         assert(ref->_base.tag == REF_TYPE);
-        if (types[i] != NULL) {
-          ref->value = TypeTakeWeakRef(arena, types[i]);
-        }
+        ref->value = types[i];
+        ntvd[i].type = TypeTakeStrongRef(ref->value);
+        TypeBreakCycleRef(arena, ref->value);
+        ref->broke_cycle = true;
         TypeDropStrongRef(arena, &ref->_base);
-        ntvd[i].type = types[i];
       }
 
       Type* rtype = NULL;
@@ -1951,7 +2000,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         arg->_base.tag = ABSTRACT_TYPE;
         arg->_base.loc = poly->args.xs[i].name.loc;
         arg->_base.strong_ref_count = 1;
-        arg->_base.weak_ref_count = 0;
+        arg->_base.break_cycle_ref_count = 0;
         arg->kind = CompileKind(arena, poly->args.xs[i].kind);
         FbleVectorAppend(arena, pt->args, &arg->_base);
 
@@ -1976,7 +2025,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       pat->_base.tag = POLY_APPLY_TYPE;
       pat->_base.loc = expr->loc;
       pat->_base.strong_ref_count = 1;
-      pat->_base.weak_ref_count = 0;
+      pat->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, pat->args);
 
       pat->poly = Compile(arena, vars, type_vars, apply->poly, instrs);
@@ -2058,7 +2107,7 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       StructType* st = FbleAlloc(arena, StructType);
       st->_base.loc = type->loc;
       st->_base.strong_ref_count = 1;
-      st->_base.weak_ref_count = 0;
+      st->_base.break_cycle_ref_count = 0;
       st->_base.tag = STRUCT_TYPE;
       FbleVectorInit(arena, st->fields);
       FbleStructType* struct_type = (FbleStructType*)type;
@@ -2088,7 +2137,7 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       UnionType* ut = FbleAlloc(arena, UnionType);
       ut->_base.loc = type->loc;
       ut->_base.strong_ref_count = 1;
-      ut->_base.weak_ref_count = 0;
+      ut->_base.break_cycle_ref_count = 0;
       ut->_base.tag = UNION_TYPE;
       FbleVectorInit(arena, ut->fields);
 
@@ -2119,7 +2168,7 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       FuncType* ft = FbleAlloc(arena, FuncType);
       ft->_base.loc = type->loc;
       ft->_base.strong_ref_count = 1;
-      ft->_base.weak_ref_count = 0;
+      ft->_base.break_cycle_ref_count = 0;
       ft->_base.tag = FUNC_TYPE;
       FbleVectorInit(arena, ft->args);
       ft->rtype = NULL;
@@ -2174,10 +2223,10 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       VarType* vt = FbleAlloc(arena, VarType);
       vt->_base.loc = type->loc;
       vt->_base.strong_ref_count = 1;
-      vt->_base.weak_ref_count = 0;
+      vt->_base.break_cycle_ref_count = 0;
       vt->_base.tag = VAR_TYPE;
       vt->var = var_type->var;
-      vt->value = TypeTakeStrongRef(arena, vars->type);
+      vt->value = TypeTakeStrongRef(vars->type);
       return &vt->_base;
     }
 
@@ -2189,20 +2238,31 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
 
       // Set up reference types for all the bindings, to support recursive
       // types.
+      RefType* first = NULL;
+      RefType* curr = NULL;
       for (size_t i = 0; i < let->bindings.size; ++i) {
         RefType* ref = FbleAlloc(arena, RefType);
         ref->_base.tag = REF_TYPE;
         ref->_base.loc = let->bindings.xs[i].name.loc;
         ref->_base.strong_ref_count = 1;
-        ref->_base.weak_ref_count = 0;
+        ref->_base.break_cycle_ref_count = 0;
         ref->kind = CompileKind(arena, let->bindings.xs[i].kind);
         ref->value = NULL;
+        ref->broke_cycle = false;
+        ref->siblings = curr;
 
         ntvd[i].name = let->bindings.xs[i].name;
         ntvd[i].type = &ref->_base;
         ntvd[i].next = ntvs;
         ntvs = ntvd + i;
+
+        if (first == NULL) {
+          first = ref;
+        }
+        curr = ref;
       }
+      assert(first != NULL);
+      first->siblings = curr;
 
       // Evaluate the type bindings.
       Type* types[let->bindings.size];
@@ -2230,16 +2290,13 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       }
 
       for (size_t i = 0; i < let->bindings.size; ++i) {
-        // At this point types[i] has a strong reference to it.
-        // Take a weak reference to types[i] for ref->value, and reuse the
-        // strong reference to it for ntvd.
         RefType* ref = (RefType*)ntvd[i].type;
         assert(ref->_base.tag == REF_TYPE);
-        if (types[i] != NULL) {
-          ref->value = TypeTakeWeakRef(arena, types[i]);
-        }
+        ref->value = types[i];
+        ntvd[i].type = TypeTakeStrongRef(ref->value);
+        TypeBreakCycleRef(arena, ref->value);
+        ref->broke_cycle = true;
         TypeDropStrongRef(arena, &ref->_base);
-        ntvd[i].type = types[i];
       }
 
       Type* rtype = NULL;
@@ -2259,7 +2316,7 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       pt->_base.tag = POLY_TYPE;
       pt->_base.loc = type->loc;
       pt->_base.strong_ref_count = 1;
-      pt->_base.weak_ref_count = 0;
+      pt->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, pt->args);
 
       Vars ntvd[poly->args.size];
@@ -2269,7 +2326,7 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
         arg->_base.tag = ABSTRACT_TYPE;
         arg->_base.loc = poly->args.xs[i].name.loc;
         arg->_base.strong_ref_count = 1;
-        arg->_base.weak_ref_count = 0;
+        arg->_base.break_cycle_ref_count = 0;
         arg->kind = CompileKind(arena, poly->args.xs[i].kind);
         FbleVectorAppend(arena, pt->args, &arg->_base);
 
@@ -2294,7 +2351,7 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       pat->_base.tag = POLY_APPLY_TYPE;
       pat->_base.loc = type->loc;
       pat->_base.strong_ref_count = 1;
-      pat->_base.weak_ref_count = 0;
+      pat->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, pat->args);
 
       pat->poly = CompileType(arena, vars, apply->poly);
