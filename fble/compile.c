@@ -695,6 +695,8 @@ static void FreeType(FbleArena* arena, Type* type)
       }
       sibling->siblings = ref->siblings;
 
+      // TODO: If the rest of the siblings can be broken, do that now!
+
       FreeKind(arena, ref->kind);
       FbleFree(arena, ref);
       break;

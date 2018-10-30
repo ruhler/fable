@@ -10,6 +10,7 @@ Fble:
 * Test and add support for processes.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 * Better error messages on types that have the same name but different values.
+* Figure out how to make a version of 7.4-06-* for values.
 
 Fble Cleanup:
 * Don't duplicate reference counting code between values and types. Share it
