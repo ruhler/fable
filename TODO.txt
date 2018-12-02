@@ -1,6 +1,12 @@
 Fble:
+* Re-enable and fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl.XXX
+ - Don't make copies of values in substitution that don't depend on the
+   variable. Needed to avoid making copies of polys, which would mess up
+   caching poly application results.
+ - Cache poly application results with poly types.
+ - Don't make more than one copy of values in substitution that due depend on
+   the variable are shared. ?
 * Fix failing type test.
-* Re-enable langs/fble/8.3-06-poly-apply-recursive-type.tcl.XXX
 * Test and add support for recursive types.
  - Cache poly applications to avoid infinite recursion there.
 * Clarify spec on partial and excessive function and poly application

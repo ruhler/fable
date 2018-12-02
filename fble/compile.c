@@ -883,6 +883,15 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypeP
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
+
+      if (pt->args.xs == params.xs) {
+        // Don't substitute into the body if the variable is bound by this
+        // poly. For example:
+        //  Subst (\T-> T), T = Unit
+        // should give \T -> T, not \T -> Unit
+        return type;
+      }
+
       PolyType* spt = FbleAlloc(arena, PolyType);
       spt->_base.tag = POLY_TYPE;
       spt->_base.loc = pt->_base.loc;
