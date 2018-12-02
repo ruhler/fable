@@ -1,14 +1,10 @@
 Fble:
-* Re-enable and fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl.XXX
- - Don't make copies of values in substitution that don't depend on the
-   variable. Needed to avoid making copies of polys, which would mess up
-   caching poly application results.
- - Cache poly application results with poly types.
- - Don't make more than one copy of values in substitution that due depend on
-   the variable are shared. ?
+* fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
+ - Type* should have no resolvable poly apply types, by construction.
+   for type let, use abstract types for type variables, then do a substitution
+   for a Ref 
+ - Normalize should never allocate.
 * Fix failing type test.
-* Test and add support for recursive types.
- - Cache poly applications to avoid infinite recursion there.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors.
