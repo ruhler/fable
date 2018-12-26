@@ -157,6 +157,13 @@ typedef struct {
   RefType** xs;
 } RefTypeV;
 
+// TypeList --
+//   A linked list of types.
+typedef struct TypeList {
+  Type* type;
+  struct TypeList* next;
+} TypeList;
+
 // TypePairs --
 //   A set of pairs of types.
 typedef struct TypePairs {
@@ -185,6 +192,7 @@ static void UnBreakCycle(Type* type);
 static void FreeType(FbleArena* arena, Type* type);
 
 static Kind* GetKind(FbleArena* arena, Type* type);
+static bool HasParams(Type* type, TypeV params, TypeList* visited);
 static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args);
 static Type* SubstInternal(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps, RefTypeV* refs);
 static Type* Normal(FbleArena* arena, Type* type);
@@ -797,6 +805,110 @@ static Kind* GetKind(FbleArena* arena, Type* type)
   return NULL;
 }
 
+// HasParams --
+//   Check whether a type has any of the given params as free type variables.
+//
+// Inputs:
+//   type - the type to check.
+//   params - the abstract types to check for.
+//   visited - a list of types already visited to end the recursion.
+//
+// Results:
+//   True if any of the params occur in type, false otherwise.
+//
+// Side effects:
+//   None.
+static bool HasParams(Type* type, TypeV params, TypeList* visited)
+{
+  for (TypeList* v = visited; v != NULL; v = v->next) {
+    if (type == v->type) {
+      return false;
+    }
+  }
+
+  TypeList nv = {
+    .type = type,
+    .next = visited
+  };
+
+  switch (type->tag) {
+    case STRUCT_TYPE: {
+      StructType* st = (StructType*)type;
+      for (size_t i = 0; i < st->fields.size; ++i) {
+        if (HasParams(st->fields.xs[i].type, params, &nv)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    case UNION_TYPE: {
+      UnionType* ut = (UnionType*)type;
+      for (size_t i = 0; i < ut->fields.size; ++i) {
+        if (HasParams(ut->fields.xs[i].type, params, &nv)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    case FUNC_TYPE: {
+      FuncType* ft = (FuncType*)type;
+      for (size_t i = 0; i < ft->args.size; ++i) {
+        if (HasParams(ft->args.xs[i].type, params, &nv)) {
+          return true;
+        }
+      }
+      return HasParams(ft->rtype, params, &nv);
+    }
+
+    case VAR_TYPE: {
+      VarType* vt = (VarType*)type;
+      return HasParams(vt->value, params, &nv);
+    }
+
+    case ABSTRACT_TYPE: {
+      for (size_t i = 0; i < params.size; ++i) {
+        if (type == params.xs[i]) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    case POLY_TYPE: {
+      PolyType* pt = (PolyType*)type;
+
+      if (pt->args.xs == params.xs) {
+        return false;
+      }
+      return HasParams(pt->body, params, &nv);
+    }
+
+    case POLY_APPLY_TYPE: {
+      PolyApplyType* pat = (PolyApplyType*)type;
+      for (size_t i = 0; i < pat->args.size; ++i) {
+        if (HasParams(pat->args.xs[i], params, &nv)) {
+          return true;
+        }
+      }
+      return HasParams(pat->poly, params, &nv);
+    }
+
+    case REF_TYPE: {
+      RefType* ref = (RefType*)type;
+
+      if (ref->value == NULL) {
+        return false;
+      }
+      return HasParams(ref->value, params, &nv);
+    }
+  }
+
+  UNREACHABLE("Should never get here");
+  return false;
+}
+
 // Subst --
 //   Substitute the given arguments in place of the given parameters in the
 //   given type. Note: Subst does not necessarily return a type in normal
@@ -859,6 +971,10 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
 //   type when it is no longer needed. The caller needs to hook up the refs.
 static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV args, TypePairs* tps, RefTypeV* refs)
 {
+  if (!HasParams(type, params, NULL)) {
+    return TypeTakeStrongRef(type);
+  }
+
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
@@ -927,20 +1043,12 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
           return TypeTakeStrongRef(args.xs[i]);
         }
       }
+      assert(false && "HasParams result was wrong.");
       return TypeTakeStrongRef(type);
     }
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
-
-      if (pt->args.xs == params.xs) {
-        // Don't substitute into the body if the variable is bound by this
-        // poly. For example:
-        //  Subst (\T-> T), T = Unit
-        // should give \T -> T, not \T -> Unit
-        return TypeTakeStrongRef(type);
-      }
-
       PolyType* spt = FbleAlloc(arena, PolyType);
       spt->_base.tag = POLY_TYPE;
       spt->_base.loc = pt->_base.loc;
