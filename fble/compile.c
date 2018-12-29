@@ -167,6 +167,15 @@ typedef struct TypeList {
   struct TypeList* next;
 } TypeList;
 
+// PolyApplyList --
+//   A linked list of cached poly apply results.
+typedef struct PolyApplyList {
+  Type* poly;
+  TypeV args;
+  Type* result;
+  struct PolyApplyList* next;
+} PolyApplyList;
+
 // TypePairs --
 //   A set of pairs of types.
 typedef struct TypePairs {
@@ -198,7 +207,7 @@ static Kind* GetKind(FbleArena* arena, Type* type);
 static bool HasParams(Type* type, TypeV params, TypeList* visited);
 static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args);
 static Type* SubstInternal(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps, RefTypeV* refs);
-static void Eval(FbleArena* arena, Type* type, TypeList* evaled);
+static void Eval(FbleArena* arena, Type* type, TypeList* evaled, PolyApplyList* applied);
 static Type* Normal(Type* type);
 static bool TypesEqual(Type* a, Type* b, TypePairs* eq);
 static bool KindsEqual(Kind* a, Kind* b);
@@ -1135,13 +1144,15 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
 //   type - the type to evaluate. May be NULL.
 //   evaled - list of types to assume have been evaluated already, to avoid
 //            infinite recursion.
+//   applied - cache of poly applications already evaluated, to avoid infinite
+//             recursion.
 //
 // Results:
 //   None.
 //
 // Side effects:
 //   The type is evaluated in place.
-static void Eval(FbleArena* arena, Type* type, TypeList* evaled)
+static void Eval(FbleArena* arena, Type* type, TypeList* evaled, PolyApplyList* applied)
 {
   if (type == NULL) {
     return;
@@ -1162,7 +1173,7 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled)
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
       for (size_t i = 0; i < st->fields.size; ++i) {
-        Eval(arena, st->fields.xs[i].type, &nevaled);
+        Eval(arena, st->fields.xs[i].type, &nevaled, applied);
       }
       return;
     }
@@ -1170,7 +1181,7 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled)
     case UNION_TYPE: {
       UnionType* ut = (UnionType*)type;
       for (size_t i = 0; i < ut->fields.size; ++i) {
-        Eval(arena, ut->fields.xs[i].type, &nevaled);
+        Eval(arena, ut->fields.xs[i].type, &nevaled, applied);
       }
       return;
     }
@@ -1178,15 +1189,15 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled)
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        Eval(arena, ft->args.xs[i].type, &nevaled);
+        Eval(arena, ft->args.xs[i].type, &nevaled, applied);
       }
-      Eval(arena, ft->rtype, &nevaled);
+      Eval(arena, ft->rtype, &nevaled, applied);
       return;
     }
 
     case VAR_TYPE: {
       VarType* vt = (VarType*)type;
-      Eval(arena, vt->value, &nevaled);
+      Eval(arena, vt->value, &nevaled, applied);
       return;
     }
 
@@ -1201,19 +1212,42 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled)
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
       if (pat->result != NULL) {
-        // We have already evaluated this poly.
+        // We have already evaluated this poly apply.
         return;
       }
 
-      Eval(arena, pat->poly, &nevaled);
+      Eval(arena, pat->poly, &nevaled, applied);
       for (size_t i = 0; i < pat->args.size; ++i) {
-        Eval(arena, pat->args.xs[i], &nevaled);
+        Eval(arena, pat->args.xs[i], &nevaled, applied);
+      }
+
+      // Check whether we have already applied these args to this poly.
+      for (PolyApplyList* pal = applied; pal != NULL; pal = pal->next) {
+        if (pal->args.size == pat->args.size && TypesEqual(pal->poly, pat->poly, NULL)) {
+          bool allmatch = true;
+          for (size_t i = 0; i < pat->args.size; ++i) {
+            allmatch = allmatch && TypesEqual(pal->args.xs[i], pat->args.xs[i], NULL);
+          }
+
+          if (allmatch) {
+            pat->result = TypeTakeStrongRef(pal->result);
+            return;
+          }
+        }
       }
 
       PolyType* poly = (PolyType*)Normal(pat->poly);
       if (poly->_base.tag == POLY_TYPE) {
         pat->result = Subst(arena, poly->body, poly->args, pat->args);
-        Eval(arena, pat->result, &nevaled);
+
+        PolyApplyList napplied = {
+          .poly = &poly->_base,
+          .args = pat->args,
+          .result = pat->result,
+          .next = applied
+        };
+
+        Eval(arena, pat->result, &nevaled, &napplied);
       }
       return;
     }
@@ -1222,7 +1256,7 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled)
       RefType* ref = (RefType*)type;
 
       if (ref->value != NULL) {
-        Eval(arena, ref->value, &nevaled);
+        Eval(arena, ref->value, &nevaled, applied);
       }
       return;
     }
@@ -1643,7 +1677,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_STRUCT_VALUE_EXPR: {
       FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
       Type* type = CompileType(arena, type_vars, struct_value_expr->type);
-      Eval(arena, type, NULL);
+      Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -1674,7 +1708,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
         FbleInstr* mkarg = NULL;
         Type* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], &mkarg);
-        Eval(arena, arg_type, NULL);
+        Eval(arena, arg_type, NULL, NULL);
         error = error || (arg_type == NULL);
 
         if (arg_type != NULL && !TypesEqual(field->type, arg_type, NULL)) {
@@ -1703,7 +1737,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       Type* type = CompileType(arena, type_vars, union_value_expr->type);
-      Eval(arena, type, NULL);
+      Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -1738,7 +1772,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleInstr* mkarg = NULL;
       Type* arg_type = Compile(arena, vars, type_vars, union_value_expr->arg, &mkarg);
-      Eval(arena, arg_type, NULL);
+      Eval(arena, arg_type, NULL, NULL);
       if (arg_type == NULL) {
         TypeDropStrongRef(arena, type);
         return NULL;
@@ -1786,7 +1820,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->next = &access->_base;
       access->loc = access_expr->field.loc;
       Type* type = Compile(arena, &nvars, type_vars, access_expr->object, mkobj);
-      Eval(arena, type, NULL);
+      Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
@@ -1887,7 +1921,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
         FbleInstr* mkarg = NULL;
         Type* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &mkarg);
-        Eval(arena, arg_type, NULL);
+        Eval(arena, arg_type, NULL, NULL);
         if (arg_type == NULL) {
           TypeDropStrongRef(arena, return_type);
           TypeDropStrongRef(arena, type);
@@ -1995,7 +2029,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleInstr** mkfunc = FbleVectorExtend(arena, push->values);
       *mkfunc = NULL;
       Type* type = Compile(arena, nvars, type_vars, apply_expr->func, mkfunc);
-      Eval(arena, type, NULL);
+      Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
@@ -2021,7 +2055,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleInstr** mkarg = FbleVectorExtend(arena, push->values);
         *mkarg = NULL;
         Type* arg_type = Compile(arena, nvars, type_vars, apply_expr->args.xs[i], mkarg);
-        Eval(arena, arg_type, NULL);
+        Eval(arena, arg_type, NULL, NULL);
         error = error || (arg_type == NULL);
         if (arg_type != NULL && !TypesEqual(func_type->args.xs[i].type, arg_type, NULL)) {
           FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
@@ -2085,7 +2119,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         nvd[i].name = let_expr->bindings.xs[i].name;
         nvd[i].type = CompileType(arena, type_vars, let_expr->bindings.xs[i].type);
-        Eval(arena, nvd[i].type, NULL);
+        Eval(arena, nvd[i].type, NULL, NULL);
         error = error || (nvd[i].type == NULL);
         nvd[i].next = nvars;
         nvars = nvd + i;
@@ -2106,7 +2140,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         Type* type = NULL;
         if (!error) {
           type = Compile(arena, nvars, type_vars, let_expr->bindings.xs[i].expr, &mkval);
-          Eval(arena, type, NULL);
+          Eval(arena, type, NULL, NULL);
         }
         error = error || (type == NULL);
         FbleVectorAppend(arena, instr->bindings, mkval);
