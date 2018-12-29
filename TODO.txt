@@ -1,9 +1,6 @@
 Fble:
 * fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
- - Type* should have no resolvable poly apply types, by construction.
-   for type let, use abstract types for type variables, then do a substitution
-   for a Ref 
- - Normalize should never allocate.
+ - Cache poly apply results, using TypeEquals for cache lookup.
 * Fix failing type test.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
@@ -15,6 +12,9 @@ Fble:
 * Figure out how to make a version of 7.4-06-* for values.
 
 Fble Cleanup:
+* Clean up when Eval is done for types.
+ - Always eval at Compile, except internal calls to CompileType from in
+   CompileType. That should work I think.
 * Don't duplicate reference counting code between values and types. Share it
   instead?
 * Share common code between checking FbleStructType, FbleUnionType, and

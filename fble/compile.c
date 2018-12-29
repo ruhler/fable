@@ -132,10 +132,13 @@ typedef struct {
 } PolyType;
 
 // PolyApplyType -- POLY_APPLY_TYPE
+//   The 'result' field is the result of evaluating the poly apply type, or
+//   NULL if it has not yet been evaluated.
 typedef struct {
   Type _base;
   Type* poly;
   TypeV args;
+  Type* result;
 } PolyApplyType;
 
 // RefType --
@@ -195,8 +198,9 @@ static Kind* GetKind(FbleArena* arena, Type* type);
 static bool HasParams(Type* type, TypeV params, TypeList* visited);
 static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args);
 static Type* SubstInternal(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps, RefTypeV* refs);
-static Type* Normal(FbleArena* arena, Type* type);
-static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq);
+static void Eval(FbleArena* arena, Type* type, TypeList* evaled);
+static Type* Normal(Type* type);
+static bool TypesEqual(Type* a, Type* b, TypePairs* eq);
 static bool KindsEqual(Kind* a, Kind* b);
 static void PrintType(Type* type);
 static void PrintKind(Kind* type);
@@ -383,6 +387,7 @@ static void TypeDropStrongRef(FbleArena* arena, Type* type)
         for (size_t i = 0; i < pat->args.size; ++i) {
           TypeDropStrongRef(arena, pat->args.xs[i]);
         }
+        TypeDropStrongRef(arena, pat->result);
         break;
       }
 
@@ -498,6 +503,7 @@ static void BreakCycle(FbleArena* arena, Type* type)
       for (size_t i = 0; i < pat->args.size; ++i) {
         TypeBreakCycleRef(arena, pat->args.xs[i]);
       }
+      TypeBreakCycleRef(arena, pat->result);
       break;
     }
 
@@ -614,6 +620,7 @@ static void UnBreakCycle(Type* type)
       for (size_t i = 0; i < pat->args.size; ++i) {
         DropBreakCycleRef(pat->args.xs[i]);
       }
+      DropBreakCycleRef(pat->result);
       break;
     }
 
@@ -911,8 +918,7 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
 
 // Subst --
 //   Substitute the given arguments in place of the given parameters in the
-//   given type. Note: Subst does not necessarily return a type in normal
-//   form.
+//   given type. The returned type may not be fully evaluated or normalized.
 //
 // Inputs:
 //   arena - arena to use for allocations.
@@ -949,7 +955,7 @@ static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
   FbleFree(arena, refs.xs);
   return result;
 }
-
+
 // SubstInternal --
 //   Substitute the given arguments in place of the given parameters in the
 //   given type.
@@ -1070,6 +1076,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       spat->_base.strong_ref_count = 1;
       spat->_base.break_cycle_ref_count = 0;
       spat->poly = SubstInternal(arena, pat->poly, params, args, tps, refs);
+      spat->result = NULL;
       FbleVectorInit(arena, spat->args);
       for (size_t i = 0; i < pat->args.size; ++i) {
         Type* arg = SubstInternal(arena, pat->args.xs[i], params, args, tps, refs);
@@ -1119,52 +1126,154 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
   return NULL;
 }
 
-// Normal --
-//   Reduce a Type to normal form. Normal form types are struct, union, and
-//   func types, but not var types, for example.
+// Eval --
+//   Evaluate the given type in place. After evaluation there are no more
+//   unevaluated poly apply types that can be applied.
 //
 // Inputs:
-//   arena - arena to use for allocations, if any.
+//   arena - arena to use for allocations.
+//   type - the type to evaluate. May be NULL.
+//   evaled - list of types to assume have been evaluated already, to avoid
+//            infinite recursion.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The type is evaluated in place.
+static void Eval(FbleArena* arena, Type* type, TypeList* evaled)
+{
+  if (type == NULL) {
+    return;
+  }
+
+  for (TypeList* e = evaled; e != NULL; e = e->next) {
+    if (type == e->type) {
+      return;
+    }
+  }
+
+  TypeList nevaled = {
+    .type = type,
+    .next = evaled
+  };
+
+  switch (type->tag) {
+    case STRUCT_TYPE: {
+      StructType* st = (StructType*)type;
+      for (size_t i = 0; i < st->fields.size; ++i) {
+        Eval(arena, st->fields.xs[i].type, &nevaled);
+      }
+      return;
+    }
+
+    case UNION_TYPE: {
+      UnionType* ut = (UnionType*)type;
+      for (size_t i = 0; i < ut->fields.size; ++i) {
+        Eval(arena, ut->fields.xs[i].type, &nevaled);
+      }
+      return;
+    }
+
+    case FUNC_TYPE: {
+      FuncType* ft = (FuncType*)type;
+      for (size_t i = 0; i < ft->args.size; ++i) {
+        Eval(arena, ft->args.xs[i].type, &nevaled);
+      }
+      Eval(arena, ft->rtype, &nevaled);
+      return;
+    }
+
+    case VAR_TYPE: {
+      VarType* vt = (VarType*)type;
+      Eval(arena, vt->value, &nevaled);
+      return;
+    }
+
+    case ABSTRACT_TYPE: {
+      return;
+    }
+
+    case POLY_TYPE: {
+      return;
+    }
+
+    case POLY_APPLY_TYPE: {
+      PolyApplyType* pat = (PolyApplyType*)type;
+      if (pat->result != NULL) {
+        // We have already evaluated this poly.
+        return;
+      }
+
+      Eval(arena, pat->poly, &nevaled);
+      for (size_t i = 0; i < pat->args.size; ++i) {
+        Eval(arena, pat->args.xs[i], &nevaled);
+      }
+
+      PolyType* poly = (PolyType*)Normal(pat->poly);
+      if (poly->_base.tag == POLY_TYPE) {
+        pat->result = Subst(arena, poly->body, poly->args, pat->args);
+        Eval(arena, pat->result, &nevaled);
+      }
+      return;
+    }
+
+    case REF_TYPE: {
+      RefType* ref = (RefType*)type;
+
+      if (ref->value != NULL) {
+        Eval(arena, ref->value, &nevaled);
+      }
+      return;
+    }
+  }
+
+  UNREACHABLE("Should never get here");
+}
+
+// Normal --
+//   Reduce an evaluated type to normal form. Normal form types are struct,
+//   union, and func types, but not var types, for example.
+//
+// Inputs:
 //   type - the type to reduce.
 //
 // Results:
 //   The type reduced to normal form.
 //
 // Side effects:
-//   The caller is responsible for calling TypeDropStrongRef on the returned
-//   type when it is no longer needed.
-static Type* Normal(FbleArena* arena, Type* type)
+//   The result is only valid for as long as the input type is retained. It is
+//   the callers responsibility to take a references to the return typed if
+//   they want it to live longer than the given input type.
+static Type* Normal(Type* type)
 {
   switch (type->tag) {
-    case STRUCT_TYPE: return TypeTakeStrongRef(type);
-    case UNION_TYPE: return TypeTakeStrongRef(type);
-    case FUNC_TYPE: return TypeTakeStrongRef(type);
+    case STRUCT_TYPE: return type;
+    case UNION_TYPE: return type;
+    case FUNC_TYPE: return type;
 
     case VAR_TYPE: {
       VarType* var_type = (VarType*)type;
-      return Normal(arena, var_type->value);
+      return Normal(var_type->value);
     }
 
-    case ABSTRACT_TYPE: return TypeTakeStrongRef(type);
-    case POLY_TYPE: return TypeTakeStrongRef(type);
+    case ABSTRACT_TYPE: return type;
+    case POLY_TYPE: return type;
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
-      PolyType* poly = (PolyType*)Normal(arena, pat->poly);
-      assert(poly->_base.tag == POLY_TYPE);
-      Type* subst = Subst(arena, poly->body, poly->args, pat->args);
-      TypeDropStrongRef(arena, &poly->_base);
-      Type* result = Normal(arena, subst);
-      TypeDropStrongRef(arena, subst);
-      return result;
+      if (pat->result == NULL) {
+        return type;
+      }
+      return Normal(pat->result);
     }
 
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
       if (ref->value == NULL) {
-        return TypeTakeStrongRef(type);
+        return type;
       }
-      return Normal(arena, ref->value);
+      return Normal(ref->value);
     }
   }
 
@@ -1173,7 +1282,7 @@ static Type* Normal(FbleArena* arena, Type* type)
 }
 
 // TypesEqual --
-//   Test whether the two given compiled types are equal.
+//   Test whether the two given evaluated types are equal.
 //
 // Inputs:
 //   a - the first type
@@ -1185,20 +1294,16 @@ static Type* Normal(FbleArena* arena, Type* type)
 //
 // Side effects:
 //   None.
-static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
+static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
 {
-  a = Normal(arena, a);
-  b = Normal(arena, b);
+  a = Normal(a);
+  b = Normal(b);
   if (a == b) {
-    TypeDropStrongRef(arena, a);
-    TypeDropStrongRef(arena, b);
     return true;
   }
 
   for (TypePairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
     if (a == pairs->a && b == pairs->b) {
-      TypeDropStrongRef(arena, a);
-      TypeDropStrongRef(arena, b);
       return true;
     }
   }
@@ -1210,8 +1315,6 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
   };
 
   if (a->tag != b->tag) {
-    TypeDropStrongRef(arena, a);
-    TypeDropStrongRef(arena, b);
     return false;
   }
 
@@ -1220,27 +1323,19 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
       StructType* sta = (StructType*)a;
       StructType* stb = (StructType*)b;
       if (sta->fields.size != stb->fields.size) {
-        TypeDropStrongRef(arena, a);
-        TypeDropStrongRef(arena, b);
         return false;
       }
 
       for (size_t i = 0; i < sta->fields.size; ++i) {
         if (!FbleNamesEqual(sta->fields.xs[i].name.name, stb->fields.xs[i].name.name)) {
-          TypeDropStrongRef(arena, a);
-          TypeDropStrongRef(arena, b);
           return false;
         }
 
-        if (!TypesEqual(arena, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
-          TypeDropStrongRef(arena, a);
-          TypeDropStrongRef(arena, b);
+        if (!TypesEqual(sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
           return false;
         }
       }
 
-      TypeDropStrongRef(arena, a);
-      TypeDropStrongRef(arena, b);
       return true;
     }
 
@@ -1248,27 +1343,19 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
       UnionType* uta = (UnionType*)a;
       UnionType* utb = (UnionType*)b;
       if (uta->fields.size != utb->fields.size) {
-        TypeDropStrongRef(arena, a);
-        TypeDropStrongRef(arena, b);
         return false;
       }
 
       for (size_t i = 0; i < uta->fields.size; ++i) {
         if (!FbleNamesEqual(uta->fields.xs[i].name.name, utb->fields.xs[i].name.name)) {
-          TypeDropStrongRef(arena, a);
-          TypeDropStrongRef(arena, b);
           return false;
         }
 
-        if (!TypesEqual(arena, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
-          TypeDropStrongRef(arena, a);
-          TypeDropStrongRef(arena, b);
+        if (!TypesEqual(uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
           return false;
         }
       }
 
-      TypeDropStrongRef(arena, a);
-      TypeDropStrongRef(arena, b);
       return true;
     }
 
@@ -1276,22 +1363,16 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
       FuncType* fta = (FuncType*)a;
       FuncType* ftb = (FuncType*)b;
       if (fta->args.size != ftb->args.size) {
-        TypeDropStrongRef(arena, a);
-        TypeDropStrongRef(arena, b);
         return false;
       }
 
       for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!TypesEqual(arena, fta->args.xs[i].type, ftb->args.xs[i].type, &neq)) {
-          TypeDropStrongRef(arena, a);
-          TypeDropStrongRef(arena, b);
+        if (!TypesEqual(fta->args.xs[i].type, ftb->args.xs[i].type, &neq)) {
           return false;
         }
       }
 
-      bool rtype_equal = TypesEqual(arena, fta->rtype, ftb->rtype, &neq);
-      TypeDropStrongRef(arena, a);
-      TypeDropStrongRef(arena, b);
+      bool rtype_equal = TypesEqual(fta->rtype, ftb->rtype, &neq);
       return rtype_equal;
     }
 
@@ -1310,21 +1391,21 @@ static bool TypesEqual(FbleArena* arena, Type* a, Type* b, TypePairs* eq)
       PolyType* ptb = (PolyType*)b;
       
       if (pta->args.size != ptb->args.size) {
-        TypeDropStrongRef(arena, a);
-        TypeDropStrongRef(arena, b);
         return false;
       }
 
       // TODO: Verify all the args have matching kinds.
-
-      // Substitute in the arguments of pta for the paramaters of b so we can
-      // compare the bodies of the types with the same set of abstract types.
-      Type* t = Subst(arena, ptb->body,  ptb->args, pta->args);
-      bool result = TypesEqual(arena, pta->body, t, &neq);
-      TypeDropStrongRef(arena, a);
-      TypeDropStrongRef(arena, b);
-      TypeDropStrongRef(arena, t);
-      return result;
+   
+      TypePairs nneq[pta->args.size]; 
+      TypePairs* pneq = &neq;
+      for (size_t i = 0; i < pta->args.size; ++i) {
+        nneq[i].a = pta->args.xs[i];
+        nneq[i].b = ptb->args.xs[i];
+        nneq[i].next = pneq;
+        pneq = nneq + i;
+      }
+      
+      return TypesEqual(pta->body, ptb->body, pneq);
     }
 
     case POLY_APPLY_TYPE: {
@@ -1562,17 +1643,17 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_STRUCT_VALUE_EXPR: {
       FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
       Type* type = CompileType(arena, type_vars, struct_value_expr->type);
+      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
 
-      StructType* struct_type = (StructType*)Normal(arena, type);
+      StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
         FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
         PrintType(type);
         fprintf(stderr, "\n");
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &struct_type->_base);
         return NULL;
       }
 
@@ -1581,7 +1662,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleReportError("expected %i args, but %i were provided\n",
             &expr->loc, struct_type->fields.size, struct_value_expr->args.size);
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &struct_type->_base);
         return NULL;
       }
 
@@ -1594,9 +1674,10 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
         FbleInstr* mkarg = NULL;
         Type* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], &mkarg);
+        Eval(arena, arg_type, NULL);
         error = error || (arg_type == NULL);
 
-        if (arg_type != NULL && !TypesEqual(arena, field->type, arg_type, NULL)) {
+        if (arg_type != NULL && !TypesEqual(field->type, arg_type, NULL)) {
           FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
           PrintType(field->type);
           fprintf(stderr, ", but found ");
@@ -1608,8 +1689,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
         FbleVectorAppend(arena, instr->fields, mkarg);
       }
-
-      TypeDropStrongRef(arena, &struct_type->_base);
 
       if (error) {
         TypeDropStrongRef(arena, type);
@@ -1624,17 +1703,17 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       Type* type = CompileType(arena, type_vars, union_value_expr->type);
+      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
 
-      UnionType* union_type = (UnionType*)Normal(arena, type);
+      UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
         PrintType(type);
         fprintf(stderr, "\n");
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &union_type->_base);
         return NULL;
       }
 
@@ -1654,19 +1733,18 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         PrintType(type);
         fprintf(stderr, "\n");
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &union_type->_base);
         return NULL;
       }
 
       FbleInstr* mkarg = NULL;
       Type* arg_type = Compile(arena, vars, type_vars, union_value_expr->arg, &mkarg);
+      Eval(arena, arg_type, NULL);
       if (arg_type == NULL) {
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &union_type->_base);
         return NULL;
       }
 
-      if (!TypesEqual(arena, field_type, arg_type, NULL)) {
+      if (!TypesEqual(field_type, arg_type, NULL)) {
         FbleReportError("expected type ", &union_value_expr->arg->loc);
         PrintType(field_type);
         fprintf(stderr, ", but found type ");
@@ -1674,12 +1752,10 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, "\n");
         FbleFreeInstrs(arena, mkarg);
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &union_type->_base);
         TypeDropStrongRef(arena, arg_type);
         return NULL;
       }
       TypeDropStrongRef(arena, arg_type);
-      TypeDropStrongRef(arena, &union_type->_base);
 
       FbleUnionValueInstr* instr = FbleAlloc(arena, FbleUnionValueInstr);
       instr->_base.tag = FBLE_UNION_VALUE_INSTR;
@@ -1710,6 +1786,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->next = &access->_base;
       access->loc = access_expr->field.loc;
       Type* type = Compile(arena, &nvars, type_vars, access_expr->object, mkobj);
+      Eval(arena, type, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
@@ -1717,7 +1794,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       // Note: We can safely pretend the type is always a struct, because
       // StructType and UnionType have the same structure.
-      StructType* data_type = (StructType*)Normal(arena, type);
+      StructType* data_type = (StructType*)Normal(type);
       if (data_type->_base.tag == STRUCT_TYPE) {
         access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
       } else if (data_type->_base.tag == UNION_TYPE) {
@@ -1728,7 +1805,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, "\n");
 
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &data_type->_base);
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
       }
@@ -1739,7 +1815,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           *instrs = &instr->_base;
           Type* rtype = TypeTakeStrongRef(data_type->fields.xs[i].type);
           TypeDropStrongRef(arena, type);
-          TypeDropStrongRef(arena, &data_type->_base);
           return rtype;
         }
       }
@@ -1748,7 +1823,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       PrintType(type);
       fprintf(stderr, "\n");
       TypeDropStrongRef(arena, type);
-      TypeDropStrongRef(arena, &data_type->_base);
       FbleFreeInstrs(arena, &instr->_base);
       return NULL;
     }
@@ -1776,14 +1850,13 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      UnionType* union_type = (UnionType*)Normal(arena, type);
+      UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
         PrintType(type);
         fprintf(stderr, "\n");
         FbleFreeInstrs(arena, &push->_base);
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &union_type->_base);
         return NULL;
       }
 
@@ -1791,7 +1864,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
         FbleFreeInstrs(arena, &push->_base);
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &union_type->_base);
         return NULL;
       }
 
@@ -1810,16 +1882,15 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           FbleFreeInstrs(arena, &push->_base);
           TypeDropStrongRef(arena, return_type);
           TypeDropStrongRef(arena, type);
-          TypeDropStrongRef(arena, &union_type->_base);
           return NULL;
         }
 
         FbleInstr* mkarg = NULL;
         Type* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &mkarg);
+        Eval(arena, arg_type, NULL);
         if (arg_type == NULL) {
           TypeDropStrongRef(arena, return_type);
           TypeDropStrongRef(arena, type);
-          TypeDropStrongRef(arena, &union_type->_base);
           FbleFreeInstrs(arena, &push->_base);
           return NULL;
         }
@@ -1828,7 +1899,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (return_type == NULL) {
           return_type = arg_type;
         } else {
-          if (!TypesEqual(arena, return_type, arg_type, NULL)) {
+          if (!TypesEqual(return_type, arg_type, NULL)) {
             FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
             PrintType(return_type);
             fprintf(stderr, ", but found ");
@@ -1836,7 +1907,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             fprintf(stderr, "\n");
 
             TypeDropStrongRef(arena, type);
-            TypeDropStrongRef(arena, &union_type->_base);
             TypeDropStrongRef(arena, return_type);
             TypeDropStrongRef(arena, arg_type);
             FbleFreeInstrs(arena, &push->_base);
@@ -1846,7 +1916,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         }
       }
       TypeDropStrongRef(arena, type);
-      TypeDropStrongRef(arena, &union_type->_base);
 
       *instrs = &push->_base;
       return return_type;
@@ -1926,17 +1995,17 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleInstr** mkfunc = FbleVectorExtend(arena, push->values);
       *mkfunc = NULL;
       Type* type = Compile(arena, nvars, type_vars, apply_expr->func, mkfunc);
+      Eval(arena, type, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
       }
 
-      FuncType* func_type = (FuncType*)Normal(arena, type);
+      FuncType* func_type = (FuncType*)Normal(type);
       if (func_type->_base.tag != FUNC_TYPE) {
         FbleReportError("cannot perform application on an object of type ", &expr->loc);
         PrintType(type);
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &func_type->_base);
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
       }
@@ -1952,8 +2021,9 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleInstr** mkarg = FbleVectorExtend(arena, push->values);
         *mkarg = NULL;
         Type* arg_type = Compile(arena, nvars, type_vars, apply_expr->args.xs[i], mkarg);
+        Eval(arena, arg_type, NULL);
         error = error || (arg_type == NULL);
-        if (arg_type != NULL && !TypesEqual(arena, func_type->args.xs[i].type, arg_type, NULL)) {
+        if (arg_type != NULL && !TypesEqual(func_type->args.xs[i].type, arg_type, NULL)) {
           FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
           PrintType(func_type->args.xs[i].type);
           fprintf(stderr, ", but found ");
@@ -1966,7 +2036,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeDropStrongRef(arena, type);
-        TypeDropStrongRef(arena, &func_type->_base);
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
       }
@@ -1978,7 +2047,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       *instrs = &push->_base;
       Type* rtype = TypeTakeStrongRef(func_type->rtype);
       TypeDropStrongRef(arena, type);
-      TypeDropStrongRef(arena, &func_type->_base);
       return rtype;
     }
 
@@ -2017,6 +2085,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         nvd[i].name = let_expr->bindings.xs[i].name;
         nvd[i].type = CompileType(arena, type_vars, let_expr->bindings.xs[i].type);
+        Eval(arena, nvd[i].type, NULL);
         error = error || (nvd[i].type == NULL);
         nvd[i].next = nvars;
         nvars = nvd + i;
@@ -2037,11 +2106,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         Type* type = NULL;
         if (!error) {
           type = Compile(arena, nvars, type_vars, let_expr->bindings.xs[i].expr, &mkval);
+          Eval(arena, type, NULL);
         }
         error = error || (type == NULL);
         FbleVectorAppend(arena, instr->bindings, mkval);
 
-        if (!error && !TypesEqual(arena, nvd[i].type, type, NULL)) {
+        if (!error && !TypesEqual(nvd[i].type, type, NULL)) {
           error = true;
           FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
           PrintType(nvd[i].type);
@@ -2195,6 +2265,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       pat->_base.strong_ref_count = 1;
       pat->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, pat->args);
+      pat->result = NULL;
 
       pat->poly = Compile(arena, vars, type_vars, apply->poly, instrs);
       if (pat->poly == NULL) {
@@ -2521,6 +2592,7 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       pat->_base.strong_ref_count = 1;
       pat->_base.break_cycle_ref_count = 0;
       FbleVectorInit(arena, pat->args);
+      pat->result = NULL;
 
       pat->poly = CompileType(arena, vars, apply->poly);
       if (pat->poly == NULL) {
