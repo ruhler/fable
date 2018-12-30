@@ -355,7 +355,7 @@ The port must have type output_type. If the port has type T@+, evaluates to a
 process value of type T@! that puts the given value onto the port and returns
 that same value.
 
-The rationale for having put return its argument value is that fble is to
+The rationale for having put return its argument value is to
 avoid the complexity of introducing a builtin notion of a unit type or a
 process that doesn't return anything. In most cases we expect the return value
 of a put process to be ignored.

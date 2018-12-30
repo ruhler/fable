@@ -1,14 +1,14 @@
 Fble:
-* Add test that a Maybe<Unit> can be the arg of a conditional
- - There's a missing Eval call there (see failing snake.fble).
 * fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
  - Figure out how to deal with reference loops from poly apply cache.
-* Fix failing type test.
+* Fix failing langs/fble/7.4-06-type-let-bad-mutually-recursive-type.tcl
+ - Need to debug to understand what's broken, or clean up ref handling and
+   hope that fixes the bug.
+* Test and add support for processes.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors.
 * Test and add support for recursive polymorphism.
-* Test and add support for processes.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
