@@ -1879,6 +1879,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleInstr** mkobj = FbleVectorExtend(arena, push->values);
       *mkobj = NULL;
       Type* type = Compile(arena, &nvars, type_vars, cond_expr->condition, mkobj);
+      Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
