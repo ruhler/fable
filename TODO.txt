@@ -5,7 +5,8 @@ Fble:
  - Need to debug to understand what's broken, or clean up ref handling and
    hope that fixes the bug.
 * Test and add support for processes.
- - Execute the evaluated process result in fble-test.
+ - Implement exec instruction.
+ - Implement FbleExec on top of exec instruction. 6.0-01 should now pass.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors.

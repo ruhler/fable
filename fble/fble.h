@@ -790,4 +790,19 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
 //   Prints an error message to stderr in case of error.
 FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr);
 
+// FbleExec --
+//   Execute a process.
+//
+// Inputs:
+//   arena - The arena to use for allocating values.
+//   proc - The process to execute.
+//
+// Results:
+//   The result of executing the process, or NULL in case of error. The
+//   error could be an undefined union field access.
+//
+// Side effects:
+//   Prints an error message to stderr in case of error.
+FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc);
+
 #endif // FBLE_H_

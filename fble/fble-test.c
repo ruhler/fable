@@ -82,7 +82,13 @@ int main(int argc, char* argv[])
     FbleArena* eval_arena = FbleNewArena(arena);
     result = FbleEval(eval_arena, prgm);
 
-    // TODO: If the result is a process, run the process.
+    // As a special case, if the result of evaluation is a process, execute
+    // the process. This allows us to test process execution.
+    if (result != NULL && result->tag == FBLE_PROC_VALUE) {
+      FbleValue* exec_result = FbleExec(eval_arena, (FbleProcValue*)result);
+      FbleDropStrongRef(eval_arena, result);
+      result = exec_result;
+    }
 
     FbleDropStrongRef(eval_arena, result);
     FbleAssertEmptyArena(eval_arena);

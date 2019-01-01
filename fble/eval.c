@@ -395,3 +395,10 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
   FbleFreeInstrs(arena, instrs);
   return result;
 }
+// FbleExec -- see documentation in fble.h
+FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
+{
+  // TODO: Create an exec instruction to execute the proc.
+  assert(false && "TODO: FbleExec");
+  return NULL;
+}
