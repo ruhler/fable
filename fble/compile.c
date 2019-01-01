@@ -52,6 +52,7 @@ typedef enum {
   STRUCT_TYPE,
   UNION_TYPE,
   FUNC_TYPE,
+  PROC_TYPE,
   VAR_TYPE,
   ABSTRACT_TYPE,
   POLY_TYPE,
@@ -110,6 +111,12 @@ typedef struct {
   FieldV args;
   struct Type* rtype;
 } FuncType;
+
+// ProcType -- PROC_TYPE
+typedef struct {
+  Type _base;
+  Type* rtype;
+} ProcType;
 
 // VarType -- VAR_TYPE
 typedef struct {
@@ -371,6 +378,12 @@ static void TypeDropStrongRef(FbleArena* arena, Type* type)
         break;
       }
 
+      case PROC_TYPE: {
+        ProcType* pt = (ProcType*)type;
+        TypeDropStrongRef(arena, pt->rtype);
+        break;
+      }
+
       case VAR_TYPE: {
         VarType* var = (VarType*)type;
         TypeDropStrongRef(arena, var->value);
@@ -484,6 +497,12 @@ static void BreakCycle(FbleArena* arena, Type* type)
         TypeBreakCycleRef(arena, ft->args.xs[i].type);
       }
       TypeBreakCycleRef(arena, ft->rtype);
+      break;
+    }
+
+    case PROC_TYPE: {
+      ProcType* pt = (ProcType*)type;
+      TypeBreakCycleRef(arena, pt->rtype);
       break;
     }
 
@@ -604,6 +623,12 @@ static void UnBreakCycle(Type* type)
       break;
     }
 
+    case PROC_TYPE: {
+      ProcType* pt = (ProcType*)type;
+      DropBreakCycleRef(pt->rtype);
+      break;
+    }
+
     case VAR_TYPE: {
       VarType* var = (VarType*)type;
       DropBreakCycleRef(var->value);
@@ -689,6 +714,12 @@ static void FreeType(FbleArena* arena, Type* type)
       break;
     }
 
+    case PROC_TYPE: {
+      ProcType* pt = (ProcType*)type;
+      FbleFree(arena, pt);
+      break;
+    }
+
     case VAR_TYPE: {
       VarType* var = (VarType*)type;
       FbleFree(arena, var);
@@ -753,7 +784,8 @@ static Kind* GetKind(FbleArena* arena, Type* type)
   switch (type->tag) {
     case STRUCT_TYPE:
     case UNION_TYPE:
-    case FUNC_TYPE: {
+    case FUNC_TYPE:
+    case PROC_TYPE: {
       BasicKind* kind = FbleAlloc(arena, BasicKind);
       kind->_base.tag = BASIC_KIND;
       kind->_base.loc = type->loc;
@@ -876,6 +908,11 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
         }
       }
       return HasParams(ft->rtype, params, &nv);
+    }
+
+    case PROC_TYPE: {
+      ProcType* pt = (ProcType*)type;
+      return HasParams(pt->rtype, params, &nv);
     }
 
     case VAR_TYPE: {
@@ -1040,6 +1077,17 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       return &sft->_base;
     }
 
+    case PROC_TYPE: {
+      ProcType* pt = (ProcType*)type;
+      ProcType* spt = FbleAlloc(arena, ProcType);
+      spt->_base.tag = PROC_TYPE;
+      spt->_base.loc = pt->_base.loc;
+      spt->_base.strong_ref_count = 1;
+      spt->_base.break_cycle_ref_count = 0;
+      spt->rtype = SubstInternal(arena, pt->rtype, params, args, tps, refs);
+      return &spt->_base;
+    }
+
     case VAR_TYPE: {
       VarType* vt = (VarType*)type;
       VarType* svt = FbleAlloc(arena, VarType);
@@ -1195,6 +1243,12 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       return;
     }
 
+    case PROC_TYPE: {
+      ProcType* pt = (ProcType*)type;
+      Eval(arena, pt->rtype, &nevaled, applied);
+      return;
+    }
+
     case VAR_TYPE: {
       VarType* vt = (VarType*)type;
       Eval(arena, vt->value, &nevaled, applied);
@@ -1285,6 +1339,7 @@ static Type* Normal(Type* type)
     case STRUCT_TYPE: return type;
     case UNION_TYPE: return type;
     case FUNC_TYPE: return type;
+    case PROC_TYPE: return type;
 
     case VAR_TYPE: {
       VarType* var_type = (VarType*)type;
@@ -1406,8 +1461,13 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
         }
       }
 
-      bool rtype_equal = TypesEqual(fta->rtype, ftb->rtype, &neq);
-      return rtype_equal;
+      return TypesEqual(fta->rtype, ftb->rtype, &neq);
+    }
+
+    case PROC_TYPE: {
+      ProcType* pta = (ProcType*)a;
+      ProcType* ptb = (ProcType*)b;
+      return TypesEqual(pta->rtype, ptb->rtype, &neq);
     }
 
     case VAR_TYPE: {
@@ -1563,6 +1623,13 @@ static void PrintType(Type* type)
       fprintf(stderr, "; ");
       PrintType(ft->rtype);
       fprintf(stderr, ")");
+      break;
+    }
+
+    case PROC_TYPE: {
+      ProcType* pt = (ProcType*)type;
+      PrintType(pt->rtype);
+      fprintf(stderr, "!");
       break;
     }
 
@@ -2478,7 +2545,23 @@ static Type* CompileType(FbleArena* arena, Vars* vars, FbleType* type)
       return &ft->_base;
     }
 
-    case FBLE_PROC_TYPE: assert(false && "TODO: FBLE_PROC_TYPE"); return NULL;
+    case FBLE_PROC_TYPE: {
+      ProcType* pt = FbleAlloc(arena, ProcType);
+      pt->_base.loc = type->loc;
+      pt->_base.strong_ref_count = 1;
+      pt->_base.break_cycle_ref_count = 0;
+      pt->_base.tag = PROC_TYPE;
+      pt->rtype = NULL;
+
+      FbleProcType* proc_type = (FbleProcType*)type;
+      pt->rtype = CompileType(arena, vars, proc_type->rtype);
+      if (pt->rtype == NULL) {
+        TypeDropStrongRef(arena, &pt->_base);
+        return NULL;
+      }
+      return &pt->_base;
+    }
+
     case FBLE_INPUT_TYPE: assert(false && "TODO: FBLE_INPUT_TYPE"); return NULL;
     case FBLE_OUTPUT_TYPE: assert(false && "TODO: FBLE_OUTPUT_TYPE"); return NULL;
 
