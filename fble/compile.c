@@ -2892,6 +2892,13 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       return;
     }
 
+    case FBLE_PROC_INSTR: {
+      FbleProcInstr* proc_instr = (FbleProcInstr*)instrs;
+      FbleDropStrongRef(arena, &proc_instr->proc->_base);
+      FbleFree(arena, proc_instr);
+      return;
+    }
+
     case FBLE_COND_INSTR: {
       FbleCondInstr* instr = (FbleCondInstr*)instrs;
       for (size_t i = 0; i < instr->choices.size; ++i) {

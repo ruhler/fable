@@ -5,8 +5,10 @@ Fble:
  - Need to debug to understand what's broken, or clean up ref handling and
    hope that fixes the bug.
 * Test and add support for processes.
- - Implement exec instruction.
- - Implement FbleExec on top of exec instruction. 6.0-01 should now pass.
+ - Make sure PROC_VALUE retains the backing instructions.
+   Perhaps by introducing reference counting for instructions (sigh).
+   Needed for 6.0-00 and 6.0-01 should now pass.
+   Probably need the same thing if we generate and return function values too.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Test non-recursive polymorphism in all its flavors.

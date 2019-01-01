@@ -326,6 +326,19 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         break;
       }
 
+      case FBLE_PROC_INSTR: {
+        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
+        FbleProcValue* proc = proc_instr->proc;
+
+        // Push the proc's context on top of the value stack.
+        for (FbleVStack* vs = proc->context; vs != NULL; vs = vs->tail) {
+          vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
+        }
+        tstack = TPush(arena, NULL, &proc->pop._base, tstack);
+        tstack = TPush(arena, presult, proc->body, tstack);
+        break;
+      }
+
       case FBLE_COND_INSTR: {
         FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
         assert(vstack != NULL);
@@ -398,7 +411,12 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 // FbleExec -- see documentation in fble.h
 FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
 {
-  // TODO: Create an exec instruction to execute the proc.
-  assert(false && "TODO: FbleExec");
-  return NULL;
+  FbleProcInstr instr = {
+    ._base = { .tag = FBLE_PROC_INSTR },
+    .proc = proc
+  };
+
+  FbleVStack* vstack = NULL;
+  FbleValue* result = Eval(arena, &instr._base, vstack);
+  return result;
 }

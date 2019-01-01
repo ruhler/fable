@@ -18,6 +18,7 @@ typedef enum {
   FBLE_FUNC_VALUE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
   FBLE_PROC_EVAL_INSTR,
+  FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
@@ -94,6 +95,13 @@ typedef struct {
   FbleInstr _base;
   FbleInstr* body;
 } FbleProcEvalInstr;
+
+// FbleProcInstr -- FBLE_PROC_INSTR
+//   Execute a process.
+typedef struct {
+  FbleInstr _base;
+  FbleProcValue* proc;
+} FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
 //   Reads the variable at the given position in the stack. Position 0 is the
