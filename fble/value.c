@@ -69,7 +69,16 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
         break;
       }
 
-      case FBLE_PROC_VALUE: assert(false && "TODO"); break;
+      case FBLE_PROC_VALUE: {
+        FbleProcValue* pv = (FbleProcValue*)value;
+        FbleVStack* vs = pv->context;
+        while (vs != NULL) {
+          FbleDropStrongRef(arena, vs->value);
+          vs = vs->tail;
+        }
+        break;
+      }
+
       case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
       case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
 
@@ -160,7 +169,16 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
       break;
     }
 
-    case FBLE_PROC_VALUE: assert(false && "TODO"); break;
+    case FBLE_PROC_VALUE: {
+      FbleProcValue* pv = (FbleProcValue*)value;
+      FbleVStack* vs = pv->context;
+      while (vs != NULL) {
+        FbleBreakCycleRef(arena, vs->value);
+        vs = vs->tail;
+      }
+      break;
+    }
+
     case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
     case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
 
@@ -250,7 +268,16 @@ static void UnBreakCycle(FbleValue* value)
       break;
     }
 
-    case FBLE_PROC_VALUE: assert(false && "TODO"); break;
+    case FBLE_PROC_VALUE: {
+      FbleProcValue* pv = (FbleProcValue*)value;
+      FbleVStack* vs = pv->context;
+      while (vs != NULL) {
+        DropBreakCycleRef(vs->value);
+        vs = vs->tail;
+      }
+      break;
+    }
+
     case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
     case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
 
@@ -300,7 +327,18 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
       return;
     }
 
-    case FBLE_PROC_VALUE: assert(false && "TODO"); return;
+    case FBLE_PROC_VALUE: {
+      FbleProcValue* pv = (FbleProcValue*)value;
+      FbleVStack* vs = pv->context;
+      while (vs != NULL) {
+        FbleVStack* tmp = vs;
+        vs = vs->tail;
+        FbleFree(arena, tmp);
+      }
+      FbleFree(arena, pv);
+      return;
+    }
+
     case FBLE_INPUT_VALUE: assert(false && "TODO"); return;
     case FBLE_OUTPUT_VALUE: assert(false && "TODO"); return;
 

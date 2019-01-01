@@ -303,6 +303,29 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         break;
       }
 
+      case FBLE_PROC_EVAL_INSTR: {
+        FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instr;
+        FbleProcValue* value = FbleAlloc(arena, FbleProcValue);
+        value->_base.tag = FBLE_PROC_VALUE;
+        value->_base.strong_ref_count = 1;
+        value->_base.break_cycle_ref_count = 0;
+        value->context = NULL;
+        value->body = proc_eval_instr->body;
+        value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop.count = 0;
+        *presult = &value->_base;
+
+        // TODO: This copies the entire context, but really we should only
+        // need to copy those variables that are used in the body of the
+        // eval. This has implications for performance and memory that
+        // should be considered.
+        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+          value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
+          value->pop.count++;
+        }
+        break;
+      }
+
       case FBLE_COND_INSTR: {
         FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
         assert(vstack != NULL);

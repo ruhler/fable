@@ -690,6 +690,13 @@ typedef struct {
 // on the internals of the evaluator.
 typedef struct FbleFuncValue FbleFuncValue;
 
+// FbleProcValue --
+//   FBLE_PROC_VALUE
+//
+// Defined internally, because representing a process depends on the internals
+// of the evaluator.
+typedef struct FbleProcValue FbleProcValue;
+
 // FbleRefValue --
 //   FBLE_REF_VALUE
 //

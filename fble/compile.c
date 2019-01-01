@@ -2152,7 +2152,29 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       return rtype;
     }
 
-    case FBLE_EVAL_EXPR: assert(false && "TODO: FBLE_EVAL_EXPR"); return NULL;
+    case FBLE_EVAL_EXPR: {
+      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
+      ProcType* type = FbleAlloc(arena, ProcType);
+      type->_base.tag = PROC_TYPE;
+      type->_base.loc = expr->loc;
+      type->_base.strong_ref_count = 1;
+      type->_base.break_cycle_ref_count = 0;
+
+      FbleProcEvalInstr* instr = FbleAlloc(arena, FbleProcEvalInstr);
+      instr->_base.tag = FBLE_PROC_EVAL_INSTR;
+      instr->body = NULL;
+
+      type->rtype = Compile(arena, vars, type_vars, eval_expr->expr, &instr->body);
+      if (type->rtype == NULL) {
+        TypeDropStrongRef(arena, &type->_base);
+        FbleFreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+      
+      *instrs = &instr->_base;
+      return &type->_base;
+    }
+
     case FBLE_LINK_EXPR: assert(false && "TODO: FBLE_LINK_EXPR"); return NULL;
     case FBLE_EXEC_EXPR: assert(false && "TODO: FBLE_EXEC_EXPR"); return NULL;
 
@@ -2860,6 +2882,13 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       FbleUnionValueInstr* instr = (FbleUnionValueInstr*)instrs;
       FbleFreeInstrs(arena, instr->mkarg);
       FbleFree(arena, instrs);
+      return;
+    }
+
+    case FBLE_PROC_EVAL_INSTR: {
+      FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instrs;
+      FbleFreeInstrs(arena, proc_eval_instr->body);
+      FbleFree(arena, proc_eval_instr);
       return;
     }
 

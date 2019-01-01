@@ -17,6 +17,7 @@ typedef enum {
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
+  FBLE_PROC_EVAL_INSTR,
   FBLE_VAR_INSTR,
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
@@ -86,6 +87,13 @@ typedef struct {
   FbleInstr _base;
   size_t argc;
 } FbleFuncApplyInstr;
+
+// FbleProcEvalInstr -- FBLE_PROC_EVAL_INSTR
+//   Allocate a process, capturing the current variable context.
+typedef struct {
+  FbleInstr _base;
+  FbleInstr* body;
+} FbleProcEvalInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
 //   Reads the variable at the given position in the stack. Position 0 is the
@@ -176,13 +184,32 @@ typedef struct FbleVStack {
 //             representing the lexical context available to the function.
 //             Stored in reverse order of the standard value stack.
 //   body - The instr representing the body of the function.
-//          Note: fbleFuncValue does not take ownership of body. The
+//          Note: FbleFuncValue does not take ownership of body. The
 //          FuncValueInstr that allocates the FbleFuncValue has ownership of
 //          the body.
 //   pop - An instruction that can be used to pop the arguments, the
 //         context, and the function value itself after a function is done
 //         executing.
 struct FbleFuncValue {
+  FbleValue _base;
+  FbleVStack* context;
+  FbleInstr* body;
+  FblePopInstr pop;
+};
+
+// FbleProcValue -- FBLE_PROC_VALUE
+//
+// Fields:
+//   context - The value stack at the time the process was created,
+//             representing the lexical context available to the process.
+//             Stored in reverse order of the standard value stack.
+//   body - The instr representing the body of the process.
+//          Note: FbleProcValue does not take ownership of body. The
+//          instruction that allocates the FbleProcValue has ownership of
+//          the body.
+//   pop - An instruction that can be used to pop the context after a process
+//         is done executing.
+struct FbleProcValue {
   FbleValue _base;
   FbleVStack* context;
   FbleInstr* body;
