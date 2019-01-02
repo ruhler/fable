@@ -498,7 +498,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,:?=.<>+*-!$@\\", c) != NULL;
+  return strchr("(){};,:?=.<>+*-!$@~\\", c) != NULL;
 }
 
 // ReadNextChar --
