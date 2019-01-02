@@ -191,7 +191,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         value->_base.break_cycle_ref_count = 0;
         value->context = NULL;
         value->body = func_value_instr->body;
+        value->body->refcount++;
         value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop._base.refcount = 1;
         value->pop.count = 1 + func_value_instr->argc;
         *presult = &value->_base;
 
@@ -311,7 +313,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
         value->_base.break_cycle_ref_count = 0;
         value->context = NULL;
         value->body = proc_eval_instr->body;
+        value->body->refcount++;
         value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop._base.refcount = 1;
         value->pop.count = 0;
         *presult = &value->_base;
 
@@ -412,7 +416,7 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
 {
   FbleProcInstr instr = {
-    ._base = { .tag = FBLE_PROC_INSTR },
+    ._base = { .tag = FBLE_PROC_INSTR, .refcount = 1 },
     .proc = proc
   };
 

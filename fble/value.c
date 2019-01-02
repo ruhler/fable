@@ -323,6 +323,7 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
         vs = vs->tail;
         FbleFree(arena, tmp);
       }
+      FbleFreeInstrs(arena, fv->body);
       FbleFree(arena, fv);
       return;
     }
@@ -335,6 +336,7 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
         vs = vs->tail;
         FbleFree(arena, tmp);
       }
+      FbleFreeInstrs(arena, pv->body);
       FbleFree(arena, pv);
       return;
     }

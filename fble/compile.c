@@ -1769,6 +1769,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       bool error = false;
       FbleStructValueInstr* instr = FbleAlloc(arena, FbleStructValueInstr);
       instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      instr->_base.refcount = 1;
       FbleVectorInit(arena, instr->fields);
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         Field* field = struct_type->fields.xs + i;
@@ -1860,6 +1861,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleUnionValueInstr* instr = FbleAlloc(arena, FbleUnionValueInstr);
       instr->_base.tag = FBLE_UNION_VALUE_INSTR;
+      instr->_base.refcount = 1;
       instr->tag = tag;
       instr->mkarg = mkarg;
       *instrs = &instr->_base;
@@ -1878,12 +1880,14 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
       instr->_base.tag = FBLE_PUSH_INSTR;
+      instr->_base.refcount = 1;
       FbleVectorInit(arena, instr->values);
       FbleInstr** mkobj = FbleVectorExtend(arena, instr->values);
       *mkobj = NULL;
 
       FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
       access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
+      access->_base.refcount = 1;
       instr->next = &access->_base;
       access->loc = access_expr->field.loc;
       Type* type = Compile(arena, &nvars, type_vars, access_expr->object, mkobj);
@@ -1940,6 +1944,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FblePushInstr* push = FbleAlloc(arena, FblePushInstr);
       push->_base.tag = FBLE_PUSH_INSTR;
+      push->_base.refcount = 1;
       FbleVectorInit(arena, push->values);
       push->next = NULL;
 
@@ -1971,6 +1976,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleCondInstr* cond_instr = FbleAlloc(arena, FbleCondInstr);
       cond_instr->_base.tag = FBLE_COND_INSTR;
+      cond_instr->_base.refcount = 1;
       push->next = &cond_instr->_base;
       FbleVectorInit(arena, cond_instr->choices);
 
@@ -2058,6 +2064,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
+      instr->_base.refcount = 1;
       instr->argc = func_value_expr->args.size;
       instr->body = NULL;
       if (!error) {
@@ -2091,6 +2098,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FblePushInstr* push = FbleAlloc(arena, FblePushInstr);
       push->_base.tag = FBLE_PUSH_INSTR;
+      push->_base.refcount = 1;
       FbleVectorInit(arena, push->values);
       push->next = NULL;
 
@@ -2144,6 +2152,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleFuncApplyInstr* apply_instr = FbleAlloc(arena, FbleFuncApplyInstr);
       apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+      apply_instr->_base.refcount = 1;
       apply_instr->argc = func_type->args.size;
       push->next = &apply_instr->_base;
       *instrs = &push->_base;
@@ -2162,6 +2171,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleProcEvalInstr* instr = FbleAlloc(arena, FbleProcEvalInstr);
       instr->_base.tag = FBLE_PROC_EVAL_INSTR;
+      instr->_base.refcount = 1;
       instr->body = NULL;
 
       type->rtype = Compile(arena, vars, type_vars, eval_expr->expr, &instr->body);
@@ -2194,6 +2204,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleVarInstr* instr = FbleAlloc(arena, FbleVarInstr);
       instr->_base.tag = FBLE_VAR_INSTR;
+      instr->_base.refcount = 1;
       instr->position = position;
       *instrs = &instr->_base;
       return TypeTakeStrongRef(vars->type);
@@ -2218,11 +2229,14 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       // Compile the values of the variables.
       FbleLetInstr* instr = FbleAlloc(arena, FbleLetInstr);
       instr->_base.tag = FBLE_LET_INSTR;
+      instr->_base.refcount = 1;
       FbleVectorInit(arena, instr->bindings);
       instr->body = NULL;
       instr->pop._base.tag = FBLE_POP_INSTR;
+      instr->pop._base.refcount = 1;
       instr->pop.count = let_expr->bindings.size;
       instr->break_cycle._base.tag = FBLE_BREAK_CYCLE_INSTR;
+      instr->break_cycle._base.refcount = 1;
       instr->break_cycle.count = let_expr->bindings.size;
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
@@ -2839,88 +2853,92 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
     return;
   }
 
-  switch (instrs->tag) {
-    case FBLE_VAR_INSTR:
-    case FBLE_FUNC_APPLY_INSTR:
-    case FBLE_STRUCT_ACCESS_INSTR:
-    case FBLE_UNION_ACCESS_INSTR:
-    case FBLE_POP_INSTR:
-    case FBLE_BREAK_CYCLE_INSTR: {
-      FbleFree(arena, instrs);
-      return;
-    }
-
-    case FBLE_LET_INSTR: {
-      FbleLetInstr* let_instr = (FbleLetInstr*)instrs;
-      for (size_t i = 0; i < let_instr->bindings.size; ++i) {
-        FbleFreeInstrs(arena, let_instr->bindings.xs[i]);
+  assert(instrs->refcount > 0);
+  instrs->refcount--;
+  if (instrs->refcount == 0) {
+    switch (instrs->tag) {
+      case FBLE_VAR_INSTR:
+      case FBLE_FUNC_APPLY_INSTR:
+      case FBLE_STRUCT_ACCESS_INSTR:
+      case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_POP_INSTR:
+      case FBLE_BREAK_CYCLE_INSTR: {
+        FbleFree(arena, instrs);
+        return;
       }
-      FbleFree(arena, let_instr->bindings.xs);
-      FbleFreeInstrs(arena, let_instr->body);
-      FbleFree(arena, let_instr);
-      return;
-    }
 
-    case FBLE_FUNC_VALUE_INSTR: {
-      FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instrs;
-      FbleFreeInstrs(arena, func_value_instr->body);
-      FbleFree(arena, func_value_instr);
-      return;
-    }
-
-    case FBLE_STRUCT_VALUE_INSTR: {
-      FbleStructValueInstr* instr = (FbleStructValueInstr*)instrs;
-      for (size_t i = 0; i < instr->fields.size; ++i) {
-        FbleFreeInstrs(arena, instr->fields.xs[i]);
+      case FBLE_LET_INSTR: {
+        FbleLetInstr* let_instr = (FbleLetInstr*)instrs;
+        for (size_t i = 0; i < let_instr->bindings.size; ++i) {
+          FbleFreeInstrs(arena, let_instr->bindings.xs[i]);
+        }
+        FbleFree(arena, let_instr->bindings.xs);
+        FbleFreeInstrs(arena, let_instr->body);
+        FbleFree(arena, let_instr);
+        return;
       }
-      FbleFree(arena, instr->fields.xs);
-      FbleFree(arena, instr);
-      return;
-    }
 
-    case FBLE_UNION_VALUE_INSTR: {
-      FbleUnionValueInstr* instr = (FbleUnionValueInstr*)instrs;
-      FbleFreeInstrs(arena, instr->mkarg);
-      FbleFree(arena, instrs);
-      return;
-    }
-
-    case FBLE_PROC_EVAL_INSTR: {
-      FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instrs;
-      FbleFreeInstrs(arena, proc_eval_instr->body);
-      FbleFree(arena, proc_eval_instr);
-      return;
-    }
-
-    case FBLE_PROC_INSTR: {
-      FbleProcInstr* proc_instr = (FbleProcInstr*)instrs;
-      FbleDropStrongRef(arena, &proc_instr->proc->_base);
-      FbleFree(arena, proc_instr);
-      return;
-    }
-
-    case FBLE_COND_INSTR: {
-      FbleCondInstr* instr = (FbleCondInstr*)instrs;
-      for (size_t i = 0; i < instr->choices.size; ++i) {
-        FbleFreeInstrs(arena, instr->choices.xs[i]);
+      case FBLE_FUNC_VALUE_INSTR: {
+        FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instrs;
+        FbleFreeInstrs(arena, func_value_instr->body);
+        FbleFree(arena, func_value_instr);
+        return;
       }
-      FbleFree(arena, instr->choices.xs);
-      FbleFree(arena, instrs);
-      return;
-    }
 
-    case FBLE_PUSH_INSTR: {
-      FblePushInstr* push_instr = (FblePushInstr*)instrs;
-      for (size_t i = 0; i < push_instr->values.size; ++i) {
-        FbleFreeInstrs(arena, push_instr->values.xs[i]);
+      case FBLE_STRUCT_VALUE_INSTR: {
+        FbleStructValueInstr* instr = (FbleStructValueInstr*)instrs;
+        for (size_t i = 0; i < instr->fields.size; ++i) {
+          FbleFreeInstrs(arena, instr->fields.xs[i]);
+        }
+        FbleFree(arena, instr->fields.xs);
+        FbleFree(arena, instr);
+        return;
       }
-      FbleFree(arena, push_instr->values.xs);
-      FbleFreeInstrs(arena, push_instr->next);
-      FbleFree(arena, instrs);
-      return;
+
+      case FBLE_UNION_VALUE_INSTR: {
+        FbleUnionValueInstr* instr = (FbleUnionValueInstr*)instrs;
+        FbleFreeInstrs(arena, instr->mkarg);
+        FbleFree(arena, instrs);
+        return;
+      }
+
+      case FBLE_PROC_EVAL_INSTR: {
+        FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instrs;
+        FbleFreeInstrs(arena, proc_eval_instr->body);
+        FbleFree(arena, proc_eval_instr);
+        return;
+      }
+
+      case FBLE_PROC_INSTR: {
+        FbleProcInstr* proc_instr = (FbleProcInstr*)instrs;
+        FbleDropStrongRef(arena, &proc_instr->proc->_base);
+        FbleFree(arena, proc_instr);
+        return;
+      }
+
+      case FBLE_COND_INSTR: {
+        FbleCondInstr* instr = (FbleCondInstr*)instrs;
+        for (size_t i = 0; i < instr->choices.size; ++i) {
+          FbleFreeInstrs(arena, instr->choices.xs[i]);
+        }
+        FbleFree(arena, instr->choices.xs);
+        FbleFree(arena, instrs);
+        return;
+      }
+
+      case FBLE_PUSH_INSTR: {
+        FblePushInstr* push_instr = (FblePushInstr*)instrs;
+        for (size_t i = 0; i < push_instr->values.size; ++i) {
+          FbleFreeInstrs(arena, push_instr->values.xs[i]);
+        }
+        FbleFree(arena, push_instr->values.xs);
+        FbleFreeInstrs(arena, push_instr->next);
+        FbleFree(arena, instrs);
+        return;
+      }
     }
+    UNREACHABLE("invalid instruction");
   }
-  UNREACHABLE("invalid instruction");
 }
 
 // FbleCompile -- see documentation in fble-internal.h

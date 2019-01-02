@@ -30,6 +30,7 @@ typedef enum {
 //   Common base type for all instructions.
 typedef struct {
   FbleInstrTag tag;
+  int refcount;
 } FbleInstr;
 
 // FbleInstrV --
@@ -192,9 +193,6 @@ typedef struct FbleVStack {
 //             representing the lexical context available to the function.
 //             Stored in reverse order of the standard value stack.
 //   body - The instr representing the body of the function.
-//          Note: FbleFuncValue does not take ownership of body. The
-//          FuncValueInstr that allocates the FbleFuncValue has ownership of
-//          the body.
 //   pop - An instruction that can be used to pop the arguments, the
 //         context, and the function value itself after a function is done
 //         executing.
@@ -212,9 +210,6 @@ struct FbleFuncValue {
 //             representing the lexical context available to the process.
 //             Stored in reverse order of the standard value stack.
 //   body - The instr representing the body of the process.
-//          Note: FbleProcValue does not take ownership of body. The
-//          instruction that allocates the FbleProcValue has ownership of
-//          the body.
 //   pop - An instruction that can be used to pop the context after a process
 //         is done executing.
 struct FbleProcValue {
