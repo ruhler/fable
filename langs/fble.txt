@@ -279,6 +279,12 @@ There are primitive processes for getting a value from a link, putting a value
 to a link, and creating and using a new link. Processes can be combined by
 executing them in parallel and serial.
 
+We make a distinction between when a process is evaluated and when a process
+is executed. Evaluating a process means evaluating the fble expression that
+describes the process, producing a process value. Executing a process means
+executing the process described by a process value, producing the result of
+the process.
+
 6.1 Process Type
 ----------------
 Abstract Syntax:
@@ -338,7 +344,7 @@ Example:
   input()
 
 The port must have type input_type. If the port has type T@-, evaluates to a
-process value of type T@! that gets the next value from the port.
+process value of type T@! that when executed gets the next value from the port.
 
 6.5 Put
 -------
@@ -352,8 +358,9 @@ Example:
   output(3)
 
 The port must have type output_type. If the port has type T@+, evaluates to a
-process value of type T@! that puts the given value onto the port and returns
-that same value.
+process value of type T@! that when executed puts the given value onto the
+port and returns that same value. The value put onto the port is evaluated
+as part of evaluation of the process.
 
 The rationale for having put return its argument value is to
 avoid the complexity of introducing a builtin notion of a unit type or a
@@ -371,8 +378,8 @@ Concrete Syntax:
 Example:
   $(3)
 
-A process that returns the value of expr without performance any other
-actions.
+A process that returns the value of expr without performing any other
+actions. The value to return is evaluated as part of evaluating the process.
 
 6.7 Link
 --------
@@ -385,8 +392,9 @@ Concrete Syntax:
 Example:
   Int@ ~ input, output; f(input, output)
 
-The body must have type process_type. Evaluates to the value of the body with
-get and put ports of type type- and type+ respectively added to the context.
+The body must have type process_type. When executed, creates a new link, then
+evaluates and executes the body with get and put ports of type type- and type+
+respectively added to the context.
 
 6.8 Exec
 --------
@@ -399,8 +407,10 @@ Concrete Syntax:
 Example:
   Int@ x := getx(), Int@ y := gety(); $(add(x, y))
 
-Runs each process in parallel, then executes the body with the results of the
-processes assigned to variables in scope.
+Executes each process in parallel, then evaluates and executes the body with
+the results of the processes assigned to variables in scope. The binding
+processes are evaluated at the same time the overall exec process is
+evaluated.
 
 7. Local Variables
 ------------------
