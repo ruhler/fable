@@ -204,19 +204,10 @@ struct FbleFuncValue {
 };
 
 // FbleProcValue -- FBLE_PROC_VALUE
-//
-// Fields:
-//   context - The value stack at the time the process was created,
-//             representing the lexical context available to the process.
-//             Stored in reverse order of the standard value stack.
-//   body - The instr representing the body of the process.
-//   pop - An instruction that can be used to pop the context after a process
-//         is done executing.
+//   TODO: Don't hard code this to an EVAL proc
 struct FbleProcValue {
   FbleValue _base;
-  FbleVStack* context;
-  FbleInstr* body;
-  FblePopInstr pop;
+  FbleValue* result;
 };
 
 #endif // FBLE_INTERNAL_H_

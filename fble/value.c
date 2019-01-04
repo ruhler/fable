@@ -71,11 +71,7 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
 
       case FBLE_PROC_VALUE: {
         FbleProcValue* pv = (FbleProcValue*)value;
-        FbleVStack* vs = pv->context;
-        while (vs != NULL) {
-          FbleDropStrongRef(arena, vs->value);
-          vs = vs->tail;
-        }
+        FbleDropStrongRef(arena, pv->result);
         break;
       }
 
@@ -171,11 +167,7 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
-      FbleVStack* vs = pv->context;
-      while (vs != NULL) {
-        FbleBreakCycleRef(arena, vs->value);
-        vs = vs->tail;
-      }
+      FbleBreakCycleRef(arena, pv->result);
       break;
     }
 
@@ -270,11 +262,7 @@ static void UnBreakCycle(FbleValue* value)
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
-      FbleVStack* vs = pv->context;
-      while (vs != NULL) {
-        DropBreakCycleRef(vs->value);
-        vs = vs->tail;
-      }
+      DropBreakCycleRef(pv->result);
       break;
     }
 
@@ -330,13 +318,6 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
-      FbleVStack* vs = pv->context;
-      while (vs != NULL) {
-        FbleVStack* tmp = vs;
-        vs = vs->tail;
-        FbleFree(arena, tmp);
-      }
-      FbleFreeInstrs(arena, pv->body);
       FbleFree(arena, pv);
       return;
     }

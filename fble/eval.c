@@ -296,6 +296,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
             FbleFree(arena, otstack);
           }
 
+          FbleDropStrongRef(arena, final_result);
           return NULL;
         }
         *presult = FbleTakeStrongRef(uv->arg);
@@ -307,39 +308,22 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
 
       case FBLE_PROC_EVAL_INSTR: {
         FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instr;
-        FbleProcValue* value = FbleAlloc(arena, FbleProcValue);
-        value->_base.tag = FBLE_PROC_VALUE;
-        value->_base.strong_ref_count = 1;
-        value->_base.break_cycle_ref_count = 0;
-        value->context = NULL;
-        value->body = proc_eval_instr->body;
-        value->body->refcount++;
-        value->pop._base.tag = FBLE_POP_INSTR;
-        value->pop._base.refcount = 1;
-        value->pop.count = 0;
-        *presult = &value->_base;
+        FbleProcValue* proc_value = FbleAlloc(arena, FbleProcValue);
+        proc_value->_base.tag = FBLE_PROC_VALUE;
+        proc_value->_base.strong_ref_count = 1;
+        proc_value->_base.break_cycle_ref_count = 0;
+        proc_value->result = NULL;
 
-        // TODO: This copies the entire context, but really we should only
-        // need to copy those variables that are used in the body of the
-        // eval. This has implications for performance and memory that
-        // should be considered.
-        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
-          value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
-          value->pop.count++;
-        }
+        *presult = &proc_value->_base;
+
+        tstack = TPush(arena, &proc_value->result, proc_eval_instr->body, tstack);
         break;
       }
 
       case FBLE_PROC_INSTR: {
         FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = proc_instr->proc;
-
-        // Push the proc's context on top of the value stack.
-        for (FbleVStack* vs = proc->context; vs != NULL; vs = vs->tail) {
-          vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
-        }
-        tstack = TPush(arena, NULL, &proc->pop._base, tstack);
-        tstack = TPush(arena, presult, proc->body, tstack);
+        *presult = FbleTakeStrongRef(proc->result);
         break;
       }
 
