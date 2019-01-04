@@ -23,7 +23,7 @@ static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
 static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
 static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* instr, ThreadStack* tail); 
 
-static FbleValue* Eval(FbleArena* arena, FbleInstr* instrs, FbleVStack* stack);
+static FbleValue* Eval(FbleArena* arena, FbleInstr* instrs);
 
 
 // Deref --
@@ -121,16 +121,15 @@ static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* inst
 // Inputs:
 //   arena - the arena to use for allocations.
 //   instrs - the instructions to evaluate.
-//   vstack - the stack of values in scope.
 //
 // Results:
 //   The computed value, or NULL on error.
 //
 // Side effects:
 //   Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
+static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm)
 {
-  FbleVStack* vstack = vstack_in;
+  FbleVStack* vstack = NULL;
   FbleValue* final_result = NULL;
   ThreadStack* tstack = TPush(arena, &final_result, prgm, NULL);
 
@@ -285,7 +284,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
 
           // Clean up the stacks.
-          while (vstack != vstack_in) {
+          while (vstack != NULL) {
             FbleDropStrongRef(arena, vstack->value);
             vstack = VPop(arena, vstack);
           }
@@ -379,7 +378,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleVStack* vstack_in)
       }
     }
   }
-  assert(vstack == vstack_in);
+  assert(vstack == NULL);
   return final_result;
 }
 
@@ -391,8 +390,7 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
     return NULL;
   }
 
-  FbleVStack* vstack = NULL;
-  FbleValue* result = Eval(arena, instrs, vstack);
+  FbleValue* result = Eval(arena, instrs);
   FbleFreeInstrs(arena, instrs);
   return result;
 }
@@ -404,7 +402,6 @@ FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
     .proc = proc
   };
 
-  FbleVStack* vstack = NULL;
-  FbleValue* result = Eval(arena, &instr._base, vstack);
+  FbleValue* result = Eval(arena, &instr._base);
   return result;
 }
