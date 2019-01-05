@@ -98,10 +98,9 @@ typedef struct {
 } FbleProcEvalInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
-//   Execute a process.
+//   Execute the process value on top of the value stack.
 typedef struct {
   FbleInstr _base;
-  FbleProcValue* proc;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR

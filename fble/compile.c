@@ -2861,6 +2861,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_FUNC_APPLY_INSTR:
       case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_PROC_INSTR:
       case FBLE_POP_INSTR:
       case FBLE_BREAK_CYCLE_INSTR: {
         FbleFree(arena, instrs);
@@ -2906,13 +2907,6 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instrs;
         FbleFreeInstrs(arena, proc_eval_instr->body);
         FbleFree(arena, proc_eval_instr);
-        return;
-      }
-
-      case FBLE_PROC_INSTR: {
-        FbleProcInstr* proc_instr = (FbleProcInstr*)instrs;
-        FbleDropStrongRef(arena, &proc_instr->proc->_base);
-        FbleFree(arena, proc_instr);
         return;
       }
 

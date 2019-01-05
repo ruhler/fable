@@ -5,7 +5,6 @@ Fble:
  - Need to debug to understand what's broken, or clean up ref handling and
    hope that fixes the bug.
 * Test and add support for procs.
- - change FbleProcInstr to take the ProcValue from the vstack.
  - Make FbleEvalProcValue as a subclass of FbleProcValue
  - Add and implement Get, Put, Link, Exec (single binding) subclasses of
    FbleProcValue 6.0-02-* should now pass.

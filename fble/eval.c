@@ -23,7 +23,7 @@ static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
 static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
 static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* instr, ThreadStack* tail); 
 
-static FbleValue* Eval(FbleArena* arena, FbleInstr* instrs);
+static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg);
 
 
 // Deref --
@@ -121,15 +121,24 @@ static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* inst
 // Inputs:
 //   arena - the arena to use for allocations.
 //   instrs - the instructions to evaluate.
+//   arg - an optional initial argument to place on the stack.
+//         Note: ideally this is an arbitrary list of arguments to prepopulate
+//         the value stack with, but currently it is only used to implement
+//         FbleExec, which passes a single ProcValue argument, and it doesn't
+//         seem worth the hassle to pass in a list.
 //
 // Results:
 //   The computed value, or NULL on error.
 //
 // Side effects:
 //   Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm)
+static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 {
   FbleVStack* vstack = NULL;
+  if (arg != NULL) {
+    vstack = VPush(arena, FbleTakeStrongRef(arg), vstack);
+  }
+    
   FbleValue* final_result = NULL;
   ThreadStack* tstack = TPush(arena, &final_result, prgm, NULL);
 
@@ -320,9 +329,10 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm)
       }
 
       case FBLE_PROC_INSTR: {
-        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-        FbleProcValue* proc = proc_instr->proc;
+        FbleProcValue* proc = (FbleProcValue*)Deref(vstack->value, FBLE_PROC_VALUE);
         *presult = FbleTakeStrongRef(proc->result);
+        FbleDropStrongRef(arena, vstack->value);
+        vstack = VPop(arena, vstack);
         break;
       }
 
@@ -390,7 +400,7 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
     return NULL;
   }
 
-  FbleValue* result = Eval(arena, instrs);
+  FbleValue* result = Eval(arena, instrs, NULL);
   FbleFreeInstrs(arena, instrs);
   return result;
 }
@@ -399,9 +409,8 @@ FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
 {
   FbleProcInstr instr = {
     ._base = { .tag = FBLE_PROC_INSTR, .refcount = 1 },
-    .proc = proc
   };
 
-  FbleValue* result = Eval(arena, &instr._base);
+  FbleValue* result = Eval(arena, &instr._base, &proc->_base);
   return result;
 }
