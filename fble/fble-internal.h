@@ -18,6 +18,7 @@ typedef enum {
   FBLE_FUNC_VALUE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
   FBLE_PROC_EVAL_INSTR,
+  FBLE_PROC_LINK_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
   FBLE_LET_INSTR,
@@ -91,11 +92,18 @@ typedef struct {
 } FbleFuncApplyInstr;
 
 // FbleProcEvalInstr -- FBLE_PROC_EVAL_INSTR
-//   Allocate a process, capturing the current variable context.
+//   Allocate an FbleEvalProcValue process.
 typedef struct {
   FbleInstr _base;
   FbleInstr* body;
 } FbleProcEvalInstr;
+
+// FbleProcLinkInstr -- FBLE_PROC_LINK_INSTR
+//   Allocate an FbleLinkProcvalue, capturing the context in the process.
+typedef struct {
+  FbleInstr _base;
+  FbleInstr* body;
+} FbleProcLinkInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute the process value on top of the value stack.
@@ -202,11 +210,30 @@ struct FbleFuncValue {
   FblePopInstr pop;
 };
 
+// FbleProcValueTag --
+//   A tag used to distinguish among different kinds of proc values.
+typedef enum {
+  FBLE_GET_PROC_VALUE,
+  FBLE_PUT_PROC_VALUE,
+  FBLE_EVAL_PROC_VALUE,
+  FBLE_LINK_PROC_VALUE,
+  FBLE_EXEC_PROC_VALUE,
+} FbleProcValueTag;
+
 // FbleProcValue -- FBLE_PROC_VALUE
-//   TODO: Don't hard code this to an EVAL proc
+//   A tagged union of proc value types. All values have the same initial
+//   layout as FbleProcValue. The tag can be used to determine what kind of
+//   proc value this is to get access to additional fields of the proc value
+//   by first casting to that specific type of proc value.
 struct FbleProcValue {
   FbleValue _base;
-  FbleValue* result;
+  FbleProcValueTag tag;
 };
+
+// FbleEvalProcValue -- FBLE_EVAL_PROC_VALUE
+typedef struct {
+  FbleProcValue _base;
+  FbleValue* result;
+} FbleEvalProcValue;
 
 #endif // FBLE_INTERNAL_H_

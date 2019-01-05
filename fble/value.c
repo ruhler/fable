@@ -71,7 +71,19 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
 
       case FBLE_PROC_VALUE: {
         FbleProcValue* pv = (FbleProcValue*)value;
-        FbleDropStrongRef(arena, pv->result);
+        switch (pv->tag) {
+          case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
+          case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+
+          case FBLE_EVAL_PROC_VALUE: {
+            FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
+            FbleDropStrongRef(arena, eval->result);
+            break;
+          }
+
+          case FBLE_LINK_PROC_VALUE: assert(false && "TODO: FBLE_LINK_PROC_VALUE"); break;
+          case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+        }
         break;
       }
 
@@ -167,7 +179,19 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
-      FbleBreakCycleRef(arena, pv->result);
+      switch (pv->tag) {
+        case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
+        case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+
+        case FBLE_EVAL_PROC_VALUE: {
+          FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
+          FbleBreakCycleRef(arena, eval->result);
+          break;
+        }
+
+        case FBLE_LINK_PROC_VALUE: assert(false && "TODO: FBLE_LINK_PROC_VALUE"); break;
+        case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+      }
       break;
     }
 
@@ -262,7 +286,19 @@ static void UnBreakCycle(FbleValue* value)
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
-      DropBreakCycleRef(pv->result);
+      switch (pv->tag) {
+        case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
+        case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+
+        case FBLE_EVAL_PROC_VALUE: {
+          FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
+          DropBreakCycleRef(eval->result);
+          break;
+        }
+
+        case FBLE_LINK_PROC_VALUE: assert(false && "TODO: FBLE_LINK_PROC_VALUE"); break;
+        case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+      }
       break;
     }
 
@@ -317,8 +353,7 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
     }
 
     case FBLE_PROC_VALUE: {
-      FbleProcValue* pv = (FbleProcValue*)value;
-      FbleFree(arena, pv);
+      FbleFree(arena, value);
       return;
     }
 

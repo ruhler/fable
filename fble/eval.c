@@ -316,21 +316,40 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_PROC_EVAL_INSTR: {
         FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instr;
-        FbleProcValue* proc_value = FbleAlloc(arena, FbleProcValue);
-        proc_value->_base.tag = FBLE_PROC_VALUE;
-        proc_value->_base.strong_ref_count = 1;
-        proc_value->_base.break_cycle_ref_count = 0;
+        FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);
+        proc_value->_base._base.tag = FBLE_PROC_VALUE;
+        proc_value->_base._base.strong_ref_count = 1;
+        proc_value->_base._base.break_cycle_ref_count = 0;
+        proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
         proc_value->result = NULL;
 
-        *presult = &proc_value->_base;
+        *presult = &proc_value->_base._base;
 
         tstack = TPush(arena, &proc_value->result, proc_eval_instr->body, tstack);
         break;
       }
 
+      case FBLE_PROC_LINK_INSTR: {
+        assert(false && "TODO: FBLE_PROC_LINK_INSTR");
+        break;
+      }
+
       case FBLE_PROC_INSTR: {
         FbleProcValue* proc = (FbleProcValue*)Deref(vstack->value, FBLE_PROC_VALUE);
-        *presult = FbleTakeStrongRef(proc->result);
+        switch (proc->tag) {
+          case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
+          case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+
+          case FBLE_EVAL_PROC_VALUE: {
+            FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
+            *presult = FbleTakeStrongRef(eval->result);
+            break;
+          }
+
+          case FBLE_LINK_PROC_VALUE: assert(false && "TODO: FBLE_LINK_PROC_VALUE"); break;
+          case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+        }
+
         FbleDropStrongRef(arena, vstack->value);
         vstack = VPop(arena, vstack);
         break;
