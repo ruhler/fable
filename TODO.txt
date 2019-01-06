@@ -5,8 +5,6 @@ Fble:
  - Need to debug to understand what's broken, or clean up ref handling and
    hope that fixes the bug.
 * Test and add support for procs.
- - Fix "cannot perform application on object of type Foo+" error.
- - Compile PUT, GET expressions
  - Eval LINK, EXEC, PUT, GET expressions
  - FbleProcValue 6.0-02-* should now pass.
  - Add threading infrastructure and support for multi-binding exec

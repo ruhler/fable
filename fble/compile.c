@@ -2491,15 +2491,26 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         error = error || (type == NULL);
         FbleVectorAppend(arena, instr->bindings, mkarg);
 
-        if (nvd[i].type != NULL && type != NULL && !TypesEqual(nvd[i].type, type, NULL)) {
-          error = true;
-          FbleReportError("expected type ", &exec_expr->bindings.xs[i].expr->loc);
-          PrintType(nvd[i].type);
-          fprintf(stderr, ", but found ");
-          PrintType(type);
-          fprintf(stderr, "\n");
+        if (type != NULL) {
+          ProcType* proc_type = (ProcType*)Normal(type);
+          if (proc_type->_base.tag == PROC_TYPE) {
+            if (nvd[i].type != NULL && !TypesEqual(nvd[i].type, proc_type->rtype, NULL)) {
+              error = true;
+              FbleReportError("expected type ", &exec_expr->bindings.xs[i].expr->loc);
+              PrintType(nvd[i].type);
+              fprintf(stderr, "!, but found ");
+              PrintType(type);
+              fprintf(stderr, "\n");
+            }
+          } else {
+            error = true;
+            FbleReportError("expected process, but found expression of type",
+                &exec_expr->bindings.xs[i].expr->loc);
+            PrintType(type);
+            fprintf(stderr, "\n");
+          }
+          TypeDropStrongRef(arena, type);
         }
-        TypeDropStrongRef(arena, type);
       }
 
       Type* rtype = NULL;
