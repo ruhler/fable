@@ -2237,10 +2237,11 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       // Check the argument types match what is expected.
       if (type != NULL) {
-        switch (Normal(type)->tag) {
+        Type* normal = Normal(type);
+        switch (normal->tag) {
           case FUNC_TYPE: {
             // This is normal function application.
-            FuncType* func_type = (FuncType*)type;
+            FuncType* func_type = (FuncType*)normal;
             if (func_type->args.size != apply_expr->args.size) {
               FbleReportError("expected %i args, but %i provided\n",
                   &expr->loc, func_type->args.size, apply_expr->args.size);
@@ -2281,7 +2282,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
           case INPUT_TYPE: {
             // This is a GET process.
-            InputType* input_type = (InputType*)type;
+            InputType* input_type = (InputType*)normal;
             if (apply_expr->args.size != 0) {
               FbleReportError("expected 0 args to get process, but %i provided\n",
                   &expr->loc, apply_expr->args.size);
@@ -2316,7 +2317,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
           case OUTPUT_TYPE: {
             // This is a PUT process.
-            OutputType* output_type = (OutputType*)type;
+            OutputType* output_type = (OutputType*)normal;
             if (apply_expr->args.size == 1) {
               if (arg_types[0] != NULL && !TypesEqual(output_type->rtype, arg_types[0], NULL)) {
                 FbleReportError("expected type ", &apply_expr->args.xs[0]->loc);
