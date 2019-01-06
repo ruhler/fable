@@ -314,6 +314,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_PROC_GET_INSTR: {
+        assert(false && "TODO: FBLE_PROC_GET_INSTR");
+        break;
+      }
+
+      case FBLE_PROC_PUT_INSTR: {
+        assert(false && "TODO: FBLE_PROC_PUT_INSTR");
+        break;
+      }
+
       case FBLE_PROC_EVAL_INSTR: {
         FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instr;
         FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);

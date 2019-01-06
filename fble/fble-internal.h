@@ -17,6 +17,8 @@ typedef enum {
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
+  FBLE_PROC_GET_INSTR,
+  FBLE_PROC_PUT_INSTR,
   FBLE_PROC_EVAL_INSTR,
   FBLE_PROC_LINK_INSTR,
   FBLE_PROC_EXEC_INSTR,
@@ -91,6 +93,18 @@ typedef struct {
   FbleInstr _base;
   size_t argc;
 } FbleFuncApplyInstr;
+
+// FbleProcGetInstr -- FBLE_PROC_GET_INSTR
+//   Allocate an FbleGetProcValue, taking the port from the stack.
+typedef struct {
+  FbleInstr _base;
+} FbleProcGetInstr;
+
+// FbleProcPutInstr -- FBLE_PROC_PUT_INSTR
+//   Allocate an FblePutProcValue, taking the port and argument from the stack.
+typedef struct {
+  FbleInstr _base;
+} FbleProcPutInstr;
 
 // FbleProcEvalInstr -- FBLE_PROC_EVAL_INSTR
 //   Allocate an FbleEvalProcValue process.

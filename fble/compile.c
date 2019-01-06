@@ -2239,6 +2239,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       if (type != NULL) {
         switch (Normal(type)->tag) {
           case FUNC_TYPE: {
+            // This is normal function application.
             FuncType* func_type = (FuncType*)type;
             if (func_type->args.size != apply_expr->args.size) {
               FbleReportError("expected %i args, but %i provided\n",
@@ -2276,6 +2277,85 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             Type* rtype = TypeTakeStrongRef(func_type->rtype);
             TypeDropStrongRef(arena, type);
             return rtype;
+          }
+
+          case INPUT_TYPE: {
+            // This is a GET process.
+            InputType* input_type = (InputType*)type;
+            if (apply_expr->args.size != 0) {
+              FbleReportError("expected 0 args to get process, but %i provided\n",
+                  &expr->loc, apply_expr->args.size);
+              error = true;
+            }
+
+            for (size_t i = 0; i < apply_expr->args.size; ++i) {
+              TypeDropStrongRef(arena, arg_types[i]);
+            }
+
+            if (error) {
+              TypeDropStrongRef(arena, type);
+              FbleFreeInstrs(arena, &push->_base);
+              return NULL;
+            }
+
+            FbleProcGetInstr* get_instr = FbleAlloc(arena, FbleProcGetInstr);
+            get_instr->_base.tag = FBLE_PROC_GET_INSTR;
+            get_instr->_base.refcount = 1;
+            push->next = &get_instr->_base;
+            *instrs = &push->_base;
+
+            ProcType* proc_type = FbleAlloc(arena, ProcType);
+            proc_type->_base.tag = PROC_TYPE;
+            proc_type->_base.loc = expr->loc;
+            proc_type->_base.strong_ref_count = 1;
+            proc_type->_base.break_cycle_ref_count = 0;
+            proc_type->rtype = TypeTakeStrongRef(input_type->rtype);
+            TypeDropStrongRef(arena, type);
+            return &proc_type->_base;
+          }
+
+          case OUTPUT_TYPE: {
+            // This is a PUT process.
+            OutputType* output_type = (OutputType*)type;
+            if (apply_expr->args.size == 1) {
+              if (arg_types[0] != NULL && !TypesEqual(output_type->rtype, arg_types[0], NULL)) {
+                FbleReportError("expected type ", &apply_expr->args.xs[0]->loc);
+                PrintType(output_type->rtype);
+                fprintf(stderr, ", but found ");
+                PrintType(arg_types[0]);
+                fprintf(stderr, "\n");
+                error = true;
+              }
+            } else {
+              FbleReportError("expected 1 args to put process, but %i provided\n",
+                  &expr->loc, apply_expr->args.size);
+              error = true;
+            }
+
+            for (size_t i = 0; i < apply_expr->args.size; ++i) {
+              TypeDropStrongRef(arena, arg_types[i]);
+            }
+
+            if (error) {
+              TypeDropStrongRef(arena, type);
+              FbleFreeInstrs(arena, &push->_base);
+              return NULL;
+            }
+
+            FbleProcPutInstr* put_instr = FbleAlloc(arena, FbleProcPutInstr);
+            put_instr->_base.tag = FBLE_PROC_PUT_INSTR;
+            put_instr->_base.refcount = 1;
+            push->next = &put_instr->_base;
+            *instrs = &push->_base;
+
+            ProcType* proc_type = FbleAlloc(arena, ProcType);
+            proc_type->_base.tag = PROC_TYPE;
+            proc_type->_base.loc = expr->loc;
+            proc_type->_base.strong_ref_count = 1;
+            proc_type->_base.break_cycle_ref_count = 0;
+            proc_type->rtype = TypeTakeStrongRef(output_type->rtype);
+            TypeDropStrongRef(arena, type);
+            return &proc_type->_base;
           }
 
           default: {
@@ -3152,6 +3232,8 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_FUNC_APPLY_INSTR:
       case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_PROC_GET_INSTR:
+      case FBLE_PROC_PUT_INSTR:
       case FBLE_PROC_INSTR:
       case FBLE_POP_INSTR:
       case FBLE_BREAK_CYCLE_INSTR: {
