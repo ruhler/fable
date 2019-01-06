@@ -5,8 +5,10 @@ Fble:
  - Need to debug to understand what's broken, or clean up ref handling and
    hope that fixes the bug.
 * Test and add support for procs.
- - Add and implement Get, Put, Link, Exec (single binding) subclasses of
-   FbleProcValue 6.0-02-* should now pass.
+ - Fix "cannot perform application on object of type Foo+" error.
+ - Compile PUT, GET expressions
+ - Eval LINK, EXEC, PUT, GET expressions
+ - FbleProcValue 6.0-02-* should now pass.
  - Add threading infrastructure and support for multi-binding exec
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
@@ -17,6 +19,8 @@ Fble:
 * Figure out how to make a version of 7.4-06-* for values.
 
 Fble Cleanup:
+* Consistent naming of Proc things: e.g. ProcExecInstr vs. ExecProcValue
+ - Do we even need the proc prefix?
 * Share common code between PROC_TYPE, INPUT_TYPE, and OUTPUT_TYPE?
 * Clean up when Eval is done for types.
  - Always eval at Compile, except internal calls to CompileType from in

@@ -2235,6 +2235,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       if (func_type->_base.tag != FUNC_TYPE) {
         FbleReportError("cannot perform application on an object of type ", &expr->loc);
         PrintType(type);
+        fprintf(stderr, "\n");
         TypeDropStrongRef(arena, type);
         FbleFreeInstrs(arena, &push->_base);
         return NULL;
@@ -2331,7 +2332,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       put_type->_base.break_cycle_ref_count = 0;
       put_type->rtype = TypeTakeStrongRef(port_type);
       Vars put_var = {
-        .name = link_expr->get,
+        .name = link_expr->put,
         .type = &put_type->_base,
         .next = &get_var
       };
@@ -2367,7 +2368,72 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       return type;
     }
 
-    case FBLE_EXEC_EXPR: assert(false && "TODO: FBLE_EXEC_EXPR"); return NULL;
+    case FBLE_EXEC_EXPR: {
+      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
+      bool error = false;
+
+      // Evaluate the types of the bindings and set up the new vars.
+      Vars nvd[exec_expr->bindings.size];
+      Vars* nvars = vars;
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        nvd[i].name = exec_expr->bindings.xs[i].name;
+        nvd[i].type = CompileType(arena, type_vars, exec_expr->bindings.xs[i].type);
+        Eval(arena, nvd[i].type, NULL, NULL);
+        error = error || (nvd[i].type == NULL);
+        nvd[i].next = nvars;
+        nvars = nvd + i;
+      }
+
+      // Compile the proc values for computing the variables.
+      FbleProcExecInstr* instr = FbleAlloc(arena, FbleProcExecInstr);
+      instr->_base.tag = FBLE_PROC_EXEC_INSTR;
+      instr->_base.refcount = 1;
+      FbleVectorInit(arena, instr->bindings);
+      instr->body = NULL;
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        FbleInstr* mkarg = NULL;
+        Type* type = Compile(arena, vars, type_vars, exec_expr->bindings.xs[i].expr, &mkarg);
+        Eval(arena, type, NULL, NULL);
+        error = error || (type == NULL);
+        FbleVectorAppend(arena, instr->bindings, mkarg);
+
+        if (nvd[i].type != NULL && type != NULL && !TypesEqual(nvd[i].type, type, NULL)) {
+          error = true;
+          FbleReportError("expected type ", &exec_expr->bindings.xs[i].expr->loc);
+          PrintType(nvd[i].type);
+          fprintf(stderr, ", but found ");
+          PrintType(type);
+          fprintf(stderr, "\n");
+        }
+        TypeDropStrongRef(arena, type);
+      }
+
+      Type* rtype = NULL;
+      if (!error) {
+        rtype = Compile(arena, nvars, type_vars, exec_expr->body, &(instr->body));
+        Eval(arena, rtype, NULL, NULL);
+        error = (rtype == NULL);
+      }
+
+      if (rtype != NULL && Normal(rtype)->tag != PROC_TYPE) {
+        error = true;
+        FbleReportError("expected a value of type proc, but found ", &rtype->loc);
+      }
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        TypeDropStrongRef(arena, nvd[i].type);
+      }
+
+      if (error) {
+        TypeDropStrongRef(arena, rtype);
+        FbleFreeInstrs(arena, &instr->_base);
+        return NULL;
+      }
+
+      *instrs = &instr->_base;
+      return rtype;
+    }
 
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
@@ -3126,6 +3192,17 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         FbleProcLinkInstr* proc_link_instr = (FbleProcLinkInstr*)instrs;
         FbleFreeInstrs(arena, proc_link_instr->body);
         FbleFree(arena, proc_link_instr);
+        return;
+      }
+
+      case FBLE_PROC_EXEC_INSTR: {
+        FbleProcExecInstr* exec_instr = (FbleProcExecInstr*)instrs;
+        for (size_t i = 0; i < exec_instr->bindings.size; ++i) {
+          FbleFreeInstrs(arena, exec_instr->bindings.xs[i]);
+        }
+        FbleFree(arena, exec_instr->bindings.xs);
+        FbleFreeInstrs(arena, exec_instr->body);
+        FbleFree(arena, exec_instr);
         return;
       }
 

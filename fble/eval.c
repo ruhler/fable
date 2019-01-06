@@ -334,6 +334,11 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_PROC_EXEC_INSTR: {
+        assert(false && "TODO: FBLE_PROC_EXEC_INSTR");
+        break;
+      }
+
       case FBLE_PROC_INSTR: {
         FbleProcValue* proc = (FbleProcValue*)Deref(vstack->value, FBLE_PROC_VALUE);
         switch (proc->tag) {

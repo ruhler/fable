@@ -19,6 +19,7 @@ typedef enum {
   FBLE_FUNC_APPLY_INSTR,
   FBLE_PROC_EVAL_INSTR,
   FBLE_PROC_LINK_INSTR,
+  FBLE_PROC_EXEC_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
   FBLE_LET_INSTR,
@@ -99,11 +100,21 @@ typedef struct {
 } FbleProcEvalInstr;
 
 // FbleProcLinkInstr -- FBLE_PROC_LINK_INSTR
-//   Allocate an FbleLinkProcvalue, capturing the context in the process.
+//   Allocate an FbleLinkProcValue, capturing the context in the process.
 typedef struct {
   FbleInstr _base;
   FbleInstr* body;
 } FbleProcLinkInstr;
+
+// FbleProcExecInstr -- FBLE_PROC_EXEC_INSTR
+//   Allocate an FbleExecProcValue, evaluating binding arguments and capturing
+//   the context in the process.
+//  TODO: Do we need to add a pop instruction?
+typedef struct {
+  FbleInstr _base;
+  FbleInstrV bindings;
+  FbleInstr* body;
+} FbleProcExecInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute the process value on top of the value stack.
