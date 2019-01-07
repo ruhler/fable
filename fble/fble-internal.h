@@ -261,4 +261,13 @@ typedef struct {
   FbleValue* result;
 } FbleEvalProcValue;
 
+// FbleLinkProcValue -- FBLE_LINK_PROC_VALUE
+typedef struct {
+  FbleProcValue _base;
+  FbleVStack* context;
+  FbleInstr* body;
+  FblePopInstr pop;
+} FbleLinkProcValue;
+
+
 #endif // FBLE_INTERNAL_H_

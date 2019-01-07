@@ -340,7 +340,28 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
 
       case FBLE_PROC_LINK_INSTR: {
-        assert(false && "TODO: FBLE_PROC_LINK_INSTR");
+        FbleProcLinkInstr* link_instr = (FbleProcLinkInstr*)instr;
+        FbleLinkProcValue* value = FbleAlloc(arena, FbleLinkProcValue);
+        value->_base._base.tag = FBLE_PROC_VALUE;
+        value->_base._base.strong_ref_count = 1;
+        value->_base._base.break_cycle_ref_count = 0;
+        value->_base.tag = FBLE_LINK_PROC_VALUE;
+        value->context = NULL;
+        value->body = link_instr->body;
+        value->body->refcount++;
+        value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop._base.refcount = 1;
+        value->pop.count = 2;
+        *presult = &value->_base._base;
+
+        // TODO: This copies the entire context, but really we should only
+        // need to copy those variables that are used in the body of the
+        // link process. This has implications for performance and memory that
+        // should be considered.
+        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+          value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
+          value->pop.count++;
+        }
         break;
       }
 
