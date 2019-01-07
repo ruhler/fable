@@ -267,7 +267,7 @@ typedef struct {
   FbleVStack* context;
   FbleInstr* body;
   FblePopInstr pop;
+  FbleProcInstr proc;
 } FbleLinkProcValue;
-
 
 #endif // FBLE_INTERNAL_H_
