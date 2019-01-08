@@ -697,6 +697,18 @@ typedef struct FbleFuncValue FbleFuncValue;
 // of the evaluator.
 typedef struct FbleProcValue FbleProcValue;
 
+// FbleInputValue --
+//   FBLE_INPUT_VALUE
+//
+// Defined internally.
+typedef struct FbleInputValue FbleInputValue;
+
+// FbleOutputValue --
+//   FBLE_OUTPUT_VALUE
+//
+// Defined internally.
+typedef struct FbleOutputValue FbleOutputValue;
+
 // FbleRefValue --
 //   FBLE_REF_VALUE
 //

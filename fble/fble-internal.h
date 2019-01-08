@@ -270,4 +270,27 @@ typedef struct {
   FbleProcInstr proc;
 } FbleLinkProcValue;
 
+// FbleValues --
+//   A non-circular singly linked list of values.
+typedef struct FbleValues {
+  FbleValue* value;
+  struct FbleValues* next;
+} FbleValues;
+
+// FbleInputValue -- FBLE_INPUT_VALUE
+//   Holds the list of values to get. Values are added to the tail and taken
+//   from the head. If there are no values on the list, both head and tail are
+//   set to NULL.
+struct FbleInputValue {
+  FbleValue _base;
+  FbleValues* head;
+  FbleValues* tail;
+};
+
+// FbleOutputValue -- FBLE_OUTPUT_VALUE
+struct FbleOutputValue {
+  FbleValue _base;
+  FbleInputValue* dest;
+};
+
 #endif // FBLE_INTERNAL_H_

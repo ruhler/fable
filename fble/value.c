@@ -96,8 +96,19 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
         break;
       }
 
-      case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
-      case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
+      case FBLE_INPUT_VALUE: {
+        FbleInputValue* v = (FbleInputValue*)value;
+        for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
+          FbleDropStrongRef(arena, elem->value);
+        }
+        break;
+      }
+
+      case FBLE_OUTPUT_VALUE: {
+        FbleOutputValue* v = (FbleOutputValue*)value;
+        FbleDropStrongRef(arena, &v->dest->_base);
+        break;
+      }
 
       case FBLE_REF_VALUE: {
         FbleRefValue* rv = (FbleRefValue*)value;
@@ -213,8 +224,19 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
       break;
     }
 
-    case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
-    case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
+    case FBLE_INPUT_VALUE: {
+      FbleInputValue* v = (FbleInputValue*)value;
+      for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
+        FbleBreakCycleRef(arena, elem->value);
+      }
+      break;
+    }
+
+    case FBLE_OUTPUT_VALUE: {
+      FbleOutputValue* v = (FbleOutputValue*)value;
+      FbleBreakCycleRef(arena, &v->dest->_base);
+      break;
+    }
 
     case FBLE_REF_VALUE: {
       FbleRefValue* rv = (FbleRefValue*)value;
@@ -329,8 +351,19 @@ static void UnBreakCycle(FbleValue* value)
       break;
     }
 
-    case FBLE_INPUT_VALUE: assert(false && "TODO"); break;
-    case FBLE_OUTPUT_VALUE: assert(false && "TODO"); break;
+    case FBLE_INPUT_VALUE: {
+      FbleInputValue* v = (FbleInputValue*)value;
+      for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
+        DropBreakCycleRef(elem->value);
+      }
+      break;
+    }
+
+    case FBLE_OUTPUT_VALUE: {
+      FbleOutputValue* v = (FbleOutputValue*)value;
+      DropBreakCycleRef(&v->dest->_base);
+      break;
+    }
 
     case FBLE_REF_VALUE: {
       // Nothing to do here. 
@@ -405,8 +438,22 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
       return;
     }
 
-    case FBLE_INPUT_VALUE: assert(false && "TODO"); return;
-    case FBLE_OUTPUT_VALUE: assert(false && "TODO"); return;
+    case FBLE_INPUT_VALUE: {
+      FbleInputValue* v = (FbleInputValue*)value;
+      FbleValues* curr = v->head;
+      while (curr != NULL) {
+        FbleValues* tmp = curr;
+        curr = curr->next;
+        FbleFree(arena, tmp);
+      }
+      FbleFree(arena, value);
+      break;
+    }
+
+    case FBLE_OUTPUT_VALUE: {
+      FbleFree(arena, value);
+      break;
+    }
 
     case FBLE_REF_VALUE: {
       FbleRefValue* rv = (FbleRefValue*)value;
