@@ -398,7 +398,20 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             }
 
             // Allocate the link and push the ports on top of the value stack.
-            assert(false && "TODO: create link here");
+            FbleInputValue* get = FbleAlloc(arena, FbleInputValue);
+            get->_base.tag = FBLE_INPUT_VALUE;
+            get->_base.strong_ref_count = 2;
+            get->_base.break_cycle_ref_count = 0;
+            get->head = NULL;
+            get->tail = NULL;
+            vstack = VPush(arena, &get->_base, vstack);
+
+            FbleOutputValue* put = FbleAlloc(arena, FbleOutputValue);
+            put->_base.tag = FBLE_OUTPUT_VALUE;
+            put->_base.strong_ref_count = 1;
+            put->_base.break_cycle_ref_count = 0;
+            put->dest = get;
+            vstack = VPush(arena, &put->_base, vstack);
 
             // Set up the thread stack to finish execution.
             tstack = TPush(arena, presult, &link->proc._base, tstack);

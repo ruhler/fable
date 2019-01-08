@@ -1,6 +1,6 @@
 Fble:
 * Test and add support for procs.
- - Eval LINK, EXEC, PUT, GET expressions
+ - Eval EXEC, PUT, GET expressions
  - Exec LINK, EXEC, PUT, GET expressions
  - FbleProcValue 6.0-02-* should now pass.
  - Add threading infrastructure and support for multi-binding exec
