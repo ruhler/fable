@@ -315,12 +315,33 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
 
       case FBLE_PROC_GET_INSTR: {
-        assert(false && "TODO: FBLE_PROC_GET_INSTR");
+        FbleGetProcValue* value = FbleAlloc(arena, FbleGetProcValue);
+        value->_base._base.tag = FBLE_PROC_VALUE;
+        value->_base._base.strong_ref_count = 1;
+        value->_base._base.break_cycle_ref_count = 0;
+        value->_base.tag = FBLE_GET_PROC_VALUE;
+
+        value->port = vstack->value;
+        vstack = VPop(arena, vstack);
+
+        *presult = &value->_base._base;
         break;
       }
 
       case FBLE_PROC_PUT_INSTR: {
-        assert(false && "TODO: FBLE_PROC_PUT_INSTR");
+        FblePutProcValue* value = FbleAlloc(arena, FblePutProcValue);
+        value->_base._base.tag = FBLE_PROC_VALUE;
+        value->_base._base.strong_ref_count = 1;
+        value->_base._base.break_cycle_ref_count = 0;
+        value->_base.tag = FBLE_GET_PROC_VALUE;
+
+        value->arg = vstack->value;
+        vstack = VPop(arena, vstack);
+
+        value->port = vstack->value;
+        vstack = VPop(arena, vstack);
+
+        *presult = &value->_base._base;
         break;
       }
 

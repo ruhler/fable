@@ -1,7 +1,6 @@
 Fble:
 * Test and add support for procs.
- - Eval PUT, GET expressions
- - FbleProcValue 6.0-02-* should now pass.
+ - Fix bugs until FbleProcValue 6.0-02-* passes.
  - Add threading infrastructure and support for multi-binding exec
 * fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
  - Figure out how to deal with reference loops from poly apply cache.
@@ -17,6 +16,8 @@ Fble:
 * Test what gets evaluated at eval vs. exec time for each kind of process.
 
 Fble Cleanup:
+* When to use PUSH instruction and when to do push as part of, e.g. APPLY or
+  STRUCT_VALUE instruction?
 * Consistent naming of Proc things: e.g. ProcExecInstr vs. ExecProcValue
  - Do we even need the proc prefix?
 * Share common code between PROC_TYPE, INPUT_TYPE, and OUTPUT_TYPE?
