@@ -1,7 +1,6 @@
 Fble:
 * Test and add support for procs.
  - Eval EXEC, PUT, GET expressions
- - Exec LINK, EXEC, PUT, GET expressions
  - FbleProcValue 6.0-02-* should now pass.
  - Add threading infrastructure and support for multi-binding exec
 * fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
@@ -9,11 +8,13 @@ Fble:
 * Fix failing langs/fble/7.4-06-type-let-bad-mutually-recursive-type.tcl
  - Need to debug to understand what's broken, or clean up ref handling and
    hope that fixes the bug.
+* Prototype new reference counting implementation.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
 * Finish implementing evaluator, adding tests, until snake.fble runs.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
+* Test what gets evaluated at eval vs. exec time for each kind of process.
 
 Fble Cleanup:
 * Consistent naming of Proc things: e.g. ProcExecInstr vs. ExecProcValue

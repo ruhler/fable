@@ -376,8 +376,43 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleProcValue* proc = (FbleProcValue*)Deref(vstack->value, FBLE_PROC_VALUE);
         vstack = VPop(arena, vstack);
         switch (proc->tag) {
-          case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
-          case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+          case FBLE_GET_PROC_VALUE: {
+            FbleGetProcValue* get = (FbleGetProcValue*)proc;
+            FbleInputValue* port = (FbleInputValue*)get->port;
+            assert(port->_base.tag == FBLE_INPUT_VALUE);
+            assert(port->head != NULL && "TODO: Block on empty link port");
+            FbleValues* head = port->head;
+            port->head = port->head->next;
+            if (port->head == NULL) {
+              port->tail = NULL;
+            }
+            *presult = head->value;
+            FbleFree(arena, head);
+            break;
+          }
+
+          case FBLE_PUT_PROC_VALUE: {
+            FblePutProcValue* put = (FblePutProcValue*)proc;
+            FbleOutputValue* port = (FbleOutputValue*)put->port;
+            assert(port->_base.tag == FBLE_OUTPUT_VALUE);
+
+            FbleValues* tail = FbleAlloc(arena, FbleValues);
+            tail->value = FbleTakeStrongRef(put->arg);
+            tail->next = NULL;
+
+            FbleInputValue* link = port->dest;
+            if (link->head == NULL) {
+              link->head = tail;
+              link->tail = tail;
+            } else {
+              assert(link->tail != NULL);
+              link->tail->next = tail;
+              link->tail = tail;
+            }
+
+            *presult = FbleTakeStrongRef(put->arg);
+            break;
+          }
 
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
@@ -420,7 +455,35 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             break;
           }
 
-          case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+          case FBLE_EXEC_PROC_VALUE: {
+            FbleExecProcValue* exec = (FbleExecProcValue*)proc;
+
+            // Reserve a slot on the value stack for the exec body ProcValue.
+            vstack = VPush(arena, NULL, vstack);
+            FbleValue** body = &vstack->value;
+
+            // Push the body's context on top of the value stack.
+            for (FbleVStack* vs = exec->context; vs != NULL; vs = vs->tail) {
+              vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
+            }
+
+            assert(exec->bindings.size == 1 && "TODO: Support multi-binding exec");
+
+            // Reserve a slot on the value stack for the binding value.
+            vstack = VPush(arena, NULL, vstack);
+            FbleValue** arg = &vstack->value;
+
+            // Push the argument proc value on the stack in preparation for
+            // execution.
+            vstack = VPush(arena, exec->bindings.xs[0], vstack);
+
+            // Set up the thread stack to finish execution.
+            tstack = TPush(arena, presult, &exec->proc._base, tstack);
+            tstack = TPush(arena, NULL, &exec->pop._base, tstack);
+            tstack = TPush(arena, body, exec->body, tstack);
+            tstack = TPush(arena, arg, &exec->proc._base, tstack);
+            break;
+          }
         }
         FbleDropStrongRef(arena, &proc->_base);
         break;

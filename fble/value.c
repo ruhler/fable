@@ -72,8 +72,18 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
       case FBLE_PROC_VALUE: {
         FbleProcValue* pv = (FbleProcValue*)value;
         switch (pv->tag) {
-          case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
-          case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+          case FBLE_GET_PROC_VALUE: {
+            FbleGetProcValue* get = (FbleGetProcValue*)value;
+            FbleDropStrongRef(arena, get->port);
+            break;
+          }
+
+          case FBLE_PUT_PROC_VALUE: {
+            FblePutProcValue* put = (FblePutProcValue*)value;
+            FbleDropStrongRef(arena, put->port);
+            FbleDropStrongRef(arena, put->arg);
+            break;
+          }
 
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
@@ -83,15 +93,22 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
 
           case FBLE_LINK_PROC_VALUE: {
             FbleLinkProcValue* v = (FbleLinkProcValue*)value;
-            FbleVStack* vs = v->context;
-            while (vs != NULL) {
+            for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
               FbleDropStrongRef(arena, vs->value);
-              vs = vs->tail;
             }
             break;
           }
 
-          case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+          case FBLE_EXEC_PROC_VALUE: {
+            FbleExecProcValue* v = (FbleExecProcValue*)value;
+            for (size_t i = 0; i < v->bindings.size; ++i) {
+              FbleDropStrongRef(arena, v->bindings.xs[i]);
+            }
+            for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
+              FbleDropStrongRef(arena, vs->value);
+            }
+            break;
+          }
         }
         break;
       }
@@ -200,14 +217,24 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
       switch (pv->tag) {
-        case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
-        case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+        case FBLE_GET_PROC_VALUE: {
+          FbleGetProcValue* get = (FbleGetProcValue*)value;
+          FbleBreakCycleRef(arena, get->port);
+          break;
+        }
 
-          case FBLE_EVAL_PROC_VALUE: {
-            FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
-            FbleBreakCycleRef(arena, eval->result);
-            break;
-          }
+        case FBLE_PUT_PROC_VALUE: {
+          FblePutProcValue* put = (FblePutProcValue*)value;
+          FbleBreakCycleRef(arena, put->port);
+          FbleBreakCycleRef(arena, put->arg);
+          break;
+        }
+
+        case FBLE_EVAL_PROC_VALUE: {
+          FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
+          FbleBreakCycleRef(arena, eval->result);
+          break;
+        }
 
         case FBLE_LINK_PROC_VALUE: {
             FbleLinkProcValue* v = (FbleLinkProcValue*)value;
@@ -219,7 +246,16 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
             break;
         }
 
-        case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+        case FBLE_EXEC_PROC_VALUE: {
+          FbleExecProcValue* v = (FbleExecProcValue*)value;
+          for (size_t i = 0; i < v->bindings.size; ++i) {
+            FbleBreakCycleRef(arena, v->bindings.xs[i]);
+          }
+          for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
+            FbleBreakCycleRef(arena, vs->value);
+          }
+          break;
+        }
       }
       break;
     }
@@ -327,8 +363,18 @@ static void UnBreakCycle(FbleValue* value)
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
       switch (pv->tag) {
-        case FBLE_GET_PROC_VALUE: assert(false && "TODO: FBLE_GET_PROC_VALUE"); break;
-        case FBLE_PUT_PROC_VALUE: assert(false && "TODO: FBLE_PUT_PROC_VALUE"); break;
+        case FBLE_GET_PROC_VALUE: {
+          FbleGetProcValue* get = (FbleGetProcValue*)value;
+          DropBreakCycleRef(get->port);
+          break;
+        }
+
+        case FBLE_PUT_PROC_VALUE: {
+          FblePutProcValue* put = (FblePutProcValue*)value;
+          DropBreakCycleRef(put->port);
+          DropBreakCycleRef(put->arg);
+          break;
+        }
 
         case FBLE_EVAL_PROC_VALUE: {
           FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
@@ -346,7 +392,16 @@ static void UnBreakCycle(FbleValue* value)
             break;
         }
 
-        case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+        case FBLE_EXEC_PROC_VALUE: {
+          FbleExecProcValue* v = (FbleExecProcValue*)value;
+          for (size_t i = 0; i < v->bindings.size; ++i) {
+            DropBreakCycleRef(v->bindings.xs[i]);
+          }
+          for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
+            DropBreakCycleRef(vs->value);
+          }
+          break;
+        }
       }
       break;
     }
@@ -431,7 +486,17 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
           break;
         }
 
-        case FBLE_EXEC_PROC_VALUE: assert(false && "TODO: FBLE_EXEC_PROC_VALUE"); break;
+        case FBLE_EXEC_PROC_VALUE: {
+          FbleExecProcValue* v = (FbleExecProcValue*)value;
+          FbleVStack* vs = v->context;
+          while (vs != NULL) {
+            FbleVStack* tmp = vs;
+            vs = vs->tail;
+            FbleFree(arena, tmp);
+          }
+          FbleFreeInstrs(arena, v->body);
+          break;
+        }
       }
 
       FbleFree(arena, value);

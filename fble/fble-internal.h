@@ -255,6 +255,19 @@ struct FbleProcValue {
   FbleProcValueTag tag;
 };
 
+// FbleGetProcValue -- FBLE_GET_PROC_VALUE
+typedef struct {
+  FbleProcValue _base;
+  FbleValue* port;
+} FbleGetProcValue;
+
+// FblePutProcValue -- FBLE_PUT_PROC_VALUE
+typedef struct {
+  FbleProcValue _base;
+  FbleValue* port;
+  FbleValue* arg;
+} FblePutProcValue;
+
 // FbleEvalProcValue -- FBLE_EVAL_PROC_VALUE
 typedef struct {
   FbleProcValue _base;
@@ -269,6 +282,16 @@ typedef struct {
   FblePopInstr pop;
   FbleProcInstr proc;
 } FbleLinkProcValue;
+
+// FbleExecProcValue -- FBLE_EXEC_PROC_VALUE
+typedef struct {
+  FbleProcValue _base;
+  FbleValueV bindings;
+  FbleVStack* context;
+  FbleInstr* body;
+  FblePopInstr pop;
+  FbleProcInstr proc;
+} FbleExecProcValue;
 
 // FbleValues --
 //   A non-circular singly linked list of values.
