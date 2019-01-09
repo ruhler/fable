@@ -368,7 +368,37 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
 
       case FBLE_PROC_EXEC_INSTR: {
-        assert(false && "TODO: FBLE_PROC_EXEC_INSTR");
+        FbleProcExecInstr* exec_instr = (FbleProcExecInstr*)instr;
+        FbleExecProcValue* value = FbleAlloc(arena, FbleExecProcValue);
+        value->_base._base.tag = FBLE_PROC_VALUE;
+        value->_base._base.strong_ref_count = 1;
+        value->_base._base.break_cycle_ref_count = 0;
+        value->_base.tag = FBLE_EXEC_PROC_VALUE;
+        value->bindings.size = exec_instr->bindings.size;
+        value->bindings.xs = FbleArenaAlloc(arena, value->bindings.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
+        FbleVectorInit(arena, value->bindings);
+        value->context = NULL;
+        value->body = exec_instr->body;
+        value->body->refcount++;
+        value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop._base.refcount = 1;
+        value->pop.count = exec_instr->bindings.size;
+        value->proc._base.tag = FBLE_PROC_INSTR;
+        value->proc._base.refcount = 1;
+        *presult = &value->_base._base;
+
+        // TODO: This copies the entire context, but really we should only
+        // need to copy those variables that are used in the body of the
+        // exec process. This has implications for performance and memory that
+        // should be considered.
+        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+          value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
+          value->pop.count++;
+        }
+
+        for (size_t i = 0; i < exec_instr->bindings.size; ++i) {
+          tstack = TPush(arena, value->bindings.xs + i, exec_instr->bindings.xs[i], tstack);
+        }
         break;
       }
 

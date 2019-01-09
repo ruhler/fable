@@ -488,6 +488,7 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
 
         case FBLE_EXEC_PROC_VALUE: {
           FbleExecProcValue* v = (FbleExecProcValue*)value;
+          FbleFree(arena, v->bindings.xs);
           FbleVStack* vs = v->context;
           while (vs != NULL) {
             FbleVStack* tmp = vs;

@@ -1,6 +1,6 @@
 Fble:
 * Test and add support for procs.
- - Eval EXEC, PUT, GET expressions
+ - Eval PUT, GET expressions
  - FbleProcValue 6.0-02-* should now pass.
  - Add threading infrastructure and support for multi-binding exec
 * fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
