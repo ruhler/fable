@@ -333,7 +333,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
         value->_base._base.break_cycle_ref_count = 0;
-        value->_base.tag = FBLE_GET_PROC_VALUE;
+        value->_base.tag = FBLE_PUT_PROC_VALUE;
 
         value->arg = vstack->value;
         vstack = VPop(arena, vstack);
@@ -397,7 +397,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base.tag = FBLE_EXEC_PROC_VALUE;
         value->bindings.size = exec_instr->bindings.size;
         value->bindings.xs = FbleArenaAlloc(arena, value->bindings.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
-        FbleVectorInit(arena, value->bindings);
         value->context = NULL;
         value->body = exec_instr->body;
         value->body->refcount++;

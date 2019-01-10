@@ -1,6 +1,7 @@
 Fble:
 * Test and add support for procs.
- - Fix bugs until FbleProcValue 6.0-02-* passes.
+ - Fix ref counting / free for proc values.
+ - FbleProcValue 6.0-02-* should now pass
  - Add threading infrastructure and support for multi-binding exec
 * fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
  - Figure out how to deal with reference loops from poly apply cache.
