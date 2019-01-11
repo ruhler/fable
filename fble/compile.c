@@ -2299,8 +2299,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
               return NULL;
             }
 
-            FbleProcGetInstr* get_instr = FbleAlloc(arena, FbleProcGetInstr);
-            get_instr->_base.tag = FBLE_PROC_GET_INSTR;
+            FbleGetInstr* get_instr = FbleAlloc(arena, FbleGetInstr);
+            get_instr->_base.tag = FBLE_GET_INSTR;
             get_instr->_base.refcount = 1;
             push->next = &get_instr->_base;
             *instrs = &push->_base;
@@ -2343,8 +2343,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
               return NULL;
             }
 
-            FbleProcPutInstr* put_instr = FbleAlloc(arena, FbleProcPutInstr);
-            put_instr->_base.tag = FBLE_PROC_PUT_INSTR;
+            FblePutInstr* put_instr = FbleAlloc(arena, FblePutInstr);
+            put_instr->_base.tag = FBLE_PUT_INSTR;
             put_instr->_base.refcount = 1;
             push->next = &put_instr->_base;
             *instrs = &push->_base;
@@ -2384,8 +2384,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       type->_base.strong_ref_count = 1;
       type->_base.break_cycle_ref_count = 0;
 
-      FbleProcEvalInstr* instr = FbleAlloc(arena, FbleProcEvalInstr);
-      instr->_base.tag = FBLE_PROC_EVAL_INSTR;
+      FbleEvalInstr* instr = FbleAlloc(arena, FbleEvalInstr);
+      instr->_base.tag = FBLE_EVAL_INSTR;
       instr->_base.refcount = 1;
       instr->body = NULL;
 
@@ -2431,8 +2431,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         .next = &get_var
       };
 
-      FbleProcLinkInstr* instr = FbleAlloc(arena, FbleProcLinkInstr);
-      instr->_base.tag = FBLE_PROC_LINK_INSTR;
+      FbleLinkInstr* instr = FbleAlloc(arena, FbleLinkInstr);
+      instr->_base.tag = FBLE_LINK_INSTR;
       instr->_base.refcount = 1;
       instr->body = NULL;
 
@@ -2479,8 +2479,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       // Compile the proc values for computing the variables.
-      FbleProcExecInstr* instr = FbleAlloc(arena, FbleProcExecInstr);
-      instr->_base.tag = FBLE_PROC_EXEC_INSTR;
+      FbleExecInstr* instr = FbleAlloc(arena, FbleExecInstr);
+      instr->_base.tag = FBLE_EXEC_INSTR;
       instr->_base.refcount = 1;
       FbleVectorInit(arena, instr->bindings);
       instr->body = NULL;
@@ -3244,8 +3244,8 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_FUNC_APPLY_INSTR:
       case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
-      case FBLE_PROC_GET_INSTR:
-      case FBLE_PROC_PUT_INSTR:
+      case FBLE_GET_INSTR:
+      case FBLE_PUT_INSTR:
       case FBLE_PROC_INSTR:
       case FBLE_POP_INSTR:
       case FBLE_BREAK_CYCLE_INSTR: {
@@ -3288,22 +3288,22 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         return;
       }
 
-      case FBLE_PROC_EVAL_INSTR: {
-        FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instrs;
+      case FBLE_EVAL_INSTR: {
+        FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instrs;
         FbleFreeInstrs(arena, proc_eval_instr->body);
         FbleFree(arena, proc_eval_instr);
         return;
       }
 
-      case FBLE_PROC_LINK_INSTR: {
-        FbleProcLinkInstr* proc_link_instr = (FbleProcLinkInstr*)instrs;
+      case FBLE_LINK_INSTR: {
+        FbleLinkInstr* proc_link_instr = (FbleLinkInstr*)instrs;
         FbleFreeInstrs(arena, proc_link_instr->body);
         FbleFree(arena, proc_link_instr);
         return;
       }
 
-      case FBLE_PROC_EXEC_INSTR: {
-        FbleProcExecInstr* exec_instr = (FbleProcExecInstr*)instrs;
+      case FBLE_EXEC_INSTR: {
+        FbleExecInstr* exec_instr = (FbleExecInstr*)instrs;
         for (size_t i = 0; i < exec_instr->bindings.size; ++i) {
           FbleFreeInstrs(arena, exec_instr->bindings.xs[i]);
         }

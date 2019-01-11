@@ -314,7 +314,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_PROC_GET_INSTR: {
+      case FBLE_GET_INSTR: {
         FbleGetProcValue* value = FbleAlloc(arena, FbleGetProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
@@ -328,7 +328,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_PROC_PUT_INSTR: {
+      case FBLE_PUT_INSTR: {
         FblePutProcValue* value = FbleAlloc(arena, FblePutProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
@@ -345,8 +345,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_PROC_EVAL_INSTR: {
-        FbleProcEvalInstr* proc_eval_instr = (FbleProcEvalInstr*)instr;
+      case FBLE_EVAL_INSTR: {
+        FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instr;
         FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);
         proc_value->_base._base.tag = FBLE_PROC_VALUE;
         proc_value->_base._base.strong_ref_count = 1;
@@ -360,8 +360,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_PROC_LINK_INSTR: {
-        FbleProcLinkInstr* link_instr = (FbleProcLinkInstr*)instr;
+      case FBLE_LINK_INSTR: {
+        FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
         FbleLinkProcValue* value = FbleAlloc(arena, FbleLinkProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
@@ -388,8 +388,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_PROC_EXEC_INSTR: {
-        FbleProcExecInstr* exec_instr = (FbleProcExecInstr*)instr;
+      case FBLE_EXEC_INSTR: {
+        FbleExecInstr* exec_instr = (FbleExecInstr*)instr;
         FbleExecProcValue* value = FbleAlloc(arena, FbleExecProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;

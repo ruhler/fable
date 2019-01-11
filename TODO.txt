@@ -23,8 +23,6 @@ Fble Cleanup:
 * Test what gets evaluated at eval vs. exec time for each kind of process.
 * Clarify spec on partial and excessive function and poly application
 * Test partial function and excessive function application.
-* Consistent naming of Proc things: e.g. ProcExecInstr vs. ExecProcValue
- - Do we even need the proc prefix?
 * Share common code between PROC_TYPE, INPUT_TYPE, and OUTPUT_TYPE?
 * Clean up when Eval is done for types.
  - Always eval at Compile, except internal calls to CompileType from in

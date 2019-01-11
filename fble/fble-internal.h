@@ -17,11 +17,11 @@ typedef enum {
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
-  FBLE_PROC_GET_INSTR,
-  FBLE_PROC_PUT_INSTR,
-  FBLE_PROC_EVAL_INSTR,
-  FBLE_PROC_LINK_INSTR,
-  FBLE_PROC_EXEC_INSTR,
+  FBLE_GET_INSTR,
+  FBLE_PUT_INSTR,
+  FBLE_EVAL_INSTR,
+  FBLE_LINK_INSTR,
+  FBLE_EXEC_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
   FBLE_LET_INSTR,
@@ -94,33 +94,33 @@ typedef struct {
   size_t argc;
 } FbleFuncApplyInstr;
 
-// FbleProcGetInstr -- FBLE_PROC_GET_INSTR
+// FbleGetInstr -- FBLE_GET_INSTR
 //   Allocate an FbleGetProcValue, taking the port from the stack.
 typedef struct {
   FbleInstr _base;
-} FbleProcGetInstr;
+} FbleGetInstr;
 
-// FbleProcPutInstr -- FBLE_PROC_PUT_INSTR
+// FblePutInstr -- FBLE_PUT_INSTR
 //   Allocate an FblePutProcValue, taking the port and argument from the stack.
 typedef struct {
   FbleInstr _base;
-} FbleProcPutInstr;
+} FblePutInstr;
 
-// FbleProcEvalInstr -- FBLE_PROC_EVAL_INSTR
+// FbleEvalInstr -- FBLE_EVAL_INSTR
 //   Allocate an FbleEvalProcValue process.
 typedef struct {
   FbleInstr _base;
   FbleInstr* body;
-} FbleProcEvalInstr;
+} FbleEvalInstr;
 
-// FbleProcLinkInstr -- FBLE_PROC_LINK_INSTR
+// FbleLinkInstr -- FBLE_LINK_INSTR
 //   Allocate an FbleLinkProcValue, capturing the context in the process.
 typedef struct {
   FbleInstr _base;
   FbleInstr* body;
-} FbleProcLinkInstr;
+} FbleLinkInstr;
 
-// FbleProcExecInstr -- FBLE_PROC_EXEC_INSTR
+// FbleExecInstr -- FBLE_EXEC_INSTR
 //   Allocate an FbleExecProcValue, evaluating binding arguments and capturing
 //   the context in the process.
 //  TODO: Do we need to add a pop instruction?
@@ -128,7 +128,7 @@ typedef struct {
   FbleInstr _base;
   FbleInstrV bindings;
   FbleInstr* body;
-} FbleProcExecInstr;
+} FbleExecInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute the process value on top of the value stack.
