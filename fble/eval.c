@@ -405,7 +405,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->pop.count = exec_instr->bindings.size;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
-        *presult = &value->_base._base;
 
         // TODO: This copies the entire context, but really we should only
         // need to copy those variables that are used in the body of the
@@ -419,6 +418,11 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         for (size_t i = 0; i < exec_instr->bindings.size; ++i) {
           tstack = TPush(arena, value->bindings.xs + i, exec_instr->bindings.xs[i], tstack);
         }
+
+        // Update the result after capturing the context so that we don't grab
+        // a reference to ourself when we copy the context.
+        // TODO: Shouldn't reference counting take care of this?
+        *presult = &value->_base._base;
         break;
       }
 
@@ -525,7 +529,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
             // Push the argument proc value on the stack in preparation for
             // execution.
-            vstack = VPush(arena, exec->bindings.xs[0], vstack);
+            vstack = VPush(arena, FbleTakeStrongRef(exec->bindings.xs[0]), vstack);
 
             // Set up the thread stack to finish execution.
             tstack = TPush(arena, presult, &exec->proc._base, tstack);

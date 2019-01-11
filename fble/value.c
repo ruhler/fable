@@ -513,12 +513,12 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
         FbleFree(arena, tmp);
       }
       FbleFree(arena, value);
-      break;
+      return;
     }
 
     case FBLE_OUTPUT_VALUE: {
       FbleFree(arena, value);
-      break;
+      return;
     }
 
     case FBLE_REF_VALUE: {

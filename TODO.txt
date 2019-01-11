@@ -1,5 +1,5 @@
 Fble:
-* Fix ref counting / free for proc values.
+* Find and fix push/pop mismatch
  - FbleProcValue 6.0-02-* should now pass
 
 * Prototype new reference counting implementation.

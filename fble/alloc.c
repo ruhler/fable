@@ -127,7 +127,7 @@ void FbleAssertEmptyArena(FbleArena* arena)
   if (arena->allocs->next != arena->allocs) {
     fprintf(stderr, "the following allocations are outstanding:\n");
     for (Alloc* alloc = arena->allocs->next; alloc != arena->allocs; alloc = alloc->next) {
-      fprintf(stderr, "  %s\n", alloc->msg);
+      fprintf(stderr, "  %s %p\n", alloc->msg, alloc->data);
     }
     abort();
   }
