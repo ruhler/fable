@@ -1,12 +1,6 @@
 Fble:
 * Fix use after free failures.
 
-* Fix push/pop mismatch
- - The FbleExecProcValue is being freed before it's pop instruction is
-   executed, thus making the pop instruction on the stack bogus by the time it
-   comes to execute.
- - FbleProcValue 6.0-02-* should now pass
-
 * Prototype new reference counting implementation.
 * fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
  - Figure out how to deal with reference loops from poly apply cache.

@@ -376,6 +376,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->pop.count = 2;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
+        value->proc.pop._base.tag = FBLE_POP_INSTR;
+        value->proc.pop._base.refcount = 1;
+        value->proc.pop.count = 1;
         *presult = &value->_base._base;
 
         // TODO: This copies the entire context, but really we should only
@@ -406,6 +409,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->pop.count = exec_instr->bindings.size;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
+        value->proc.pop._base.tag = FBLE_POP_INSTR;
+        value->proc.pop._base.refcount = 1;
+        value->proc.pop.count = 1;
 
         // TODO: This copies the entire context, but really we should only
         // need to copy those variables that are used in the body of the
@@ -428,8 +434,15 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
 
       case FBLE_PROC_INSTR: {
+        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = (FbleProcValue*)Deref(vstack->value, FBLE_PROC_VALUE);
-        vstack = VPop(arena, vstack);
+
+        // Some proc values own the instructions they use to execute, which
+        // means we need to ensure the proc values are retained until they are
+        // done executing. To do so, simply keep the proc value on the value
+        // stack until after it's done executing.
+        tstack = TPush(arena, NULL, &proc_instr->pop._base, tstack);
+
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
@@ -540,7 +553,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             break;
           }
         }
-        FbleDropStrongRef(arena, &proc->_base);
         break;
       }
 
@@ -616,7 +628,17 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr)
 FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
 {
   FbleProcInstr instr = {
-    ._base = { .tag = FBLE_PROC_INSTR, .refcount = 1 },
+    ._base = {
+      .tag = FBLE_PROC_INSTR,
+      .refcount = 1
+    },
+    .pop = {
+      ._base = {
+        .tag = FBLE_POP_INSTR,
+        .refcount = 1
+      },
+      .count = 1
+    }
   };
 
   FbleValue* result = Eval(arena, &instr._base, &proc->_base);

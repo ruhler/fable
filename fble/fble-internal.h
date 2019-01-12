@@ -130,10 +130,18 @@ typedef struct {
   FbleInstr* body;
 } FbleExecInstr;
 
+// FblePopInstr -- FBLE_POP_INSTR
+//   Pop count values from the value stack.
+typedef struct {
+  FbleInstr _base;
+  size_t count;
+} FblePopInstr;
+
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute the process value on top of the value stack.
 typedef struct {
   FbleInstr _base;
+  FblePopInstr pop;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
@@ -143,13 +151,6 @@ typedef struct {
   FbleInstr _base;
   size_t position;
 } FbleVarInstr;
-
-// FblePopInstr -- FBLE_POP_INSTR
-//   Pop count values from the value stack.
-typedef struct {
-  FbleInstr _base;
-  size_t count;
-} FblePopInstr;
 
 // FbleBreakCycleInstr -- FBLE_BREAK_CYCLE_INSTR
 //   The top count values on the value stack should be ref values that whose
