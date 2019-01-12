@@ -799,7 +799,8 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
 //   error could be a type error or an undefined union field access.
 //
 // Side effects:
-//   Prints an error message to stderr in case of error.
+//   The returned value must be freed with FbleDropStrongRef when no longer in
+//   use. Prints an error message to stderr in case of error.
 FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr);
 
 // FbleExec --

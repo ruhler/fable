@@ -2,6 +2,7 @@
 //   This file implements the fble allocation routines.
 
 #include <stdio.h>    // for fprintf, stderr
+#include <string.h>   // for memset
 
 #include "fble.h"
 
@@ -11,6 +12,7 @@ typedef struct Alloc {
   struct Alloc* prev;
   struct Alloc* next;
   const char* msg;
+  size_t size;
   char data[];
 } Alloc;
 
@@ -45,6 +47,7 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg)
   alloc->prev->next = alloc;
   alloc->next->prev = alloc;
   alloc->msg = msg;
+  alloc->size = size;
   return (void*)alloc->data;
 }
 
@@ -69,7 +72,9 @@ void FbleFree(FbleArena* arena, void* ptr)
 
   alloc->next->prev = alloc->prev;
   alloc->prev->next = alloc->next;
-  free(alloc);
+
+  // Poison the data to help catch use after free.
+  free(memset(alloc, 0xDD, sizeof(Alloc) + alloc->size));
 }
 
 // FbleNewArena -- see documentation in fble.h
@@ -127,7 +132,7 @@ void FbleAssertEmptyArena(FbleArena* arena)
   if (arena->allocs->next != arena->allocs) {
     fprintf(stderr, "the following allocations are outstanding:\n");
     for (Alloc* alloc = arena->allocs->next; alloc != arena->allocs; alloc = alloc->next) {
-      fprintf(stderr, "  %s %p\n", alloc->msg, alloc->data);
+      fprintf(stderr, "  %s %p %zi bytes\n", alloc->msg, alloc->data, alloc->size);
     }
     abort();
   }

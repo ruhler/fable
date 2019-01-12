@@ -131,7 +131,8 @@ static ThreadStack* TPush(FbleArena* arena, FbleValue** presult, FbleInstr* inst
 //   The computed value, or NULL on error.
 //
 // Side effects:
-//   Prints a message to stderr in case of error.
+//   The returned value must be freed with FbleDropStrongRef when no longer in
+//   use. Prints a message to stderr in case of error.
 static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 {
   FbleVStack* vstack = NULL;
