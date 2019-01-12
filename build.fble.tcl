@@ -71,16 +71,18 @@ proc fble-test-error { loc expr } {
   testl $tloc fble-test-error-run $tloc $loc $expr
 }
 
-foreach {x} [lsort [glob langs/fble/*.tcl]]  {
-  source $x
-}
+test exec $::fblereftest
 
+source langs/fble/0-00-test-fble-test.tcl
+#foreach {x} [lsort [glob langs/fble/*.tcl]]  {
+#  source $x
+#}
+#
 exec mkdir -p out/fble/cov/spec
 run gcov {*}$::fble_objs > out/fble/cov/spec/fble.gcov
 exec mv {*}[glob *.gcov] out/fble/cov/spec
 
-test exec $::fbletest prgms/snake.fble
-test exec $::fblereftest
+#test exec $::fbletest prgms/snake.fble
 
 exec mkdir -p out/fble/cov/all
 run gcov {*}$::fble_objs > out/fble/cov/all/fble.gcov
