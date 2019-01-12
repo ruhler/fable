@@ -219,7 +219,8 @@ int main(int argc, char* argv[])
   };
 
   {
-    // Test a simple chain a -> b -> c
+    // Test a simple chain
+    //   a -> b -> c
     Ref* c = Create(&ref_arena);
 
     Ref* b = Create(&ref_arena);
@@ -240,8 +241,9 @@ int main(int argc, char* argv[])
   }
 
   {
-    // Test shared refs a -> b -> c
-    //                    -> d >-/
+    // Test shared refs
+    //   a --> b -> c
+    //    \-> d >-/
     Ref* c = Create(&ref_arena);
 
     Ref* b = Create(&ref_arena);
@@ -262,6 +264,30 @@ int main(int argc, char* argv[])
     assert(Alive(b));
     assert(Alive(c));
     assert(Alive(d));
+
+    RefRelease(&ref_arena, a);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
+    // Test a cycle
+    //  a --> b --> c
+    //   \----<----/
+    Ref* c = Create(&ref_arena);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, b, c);
+    RefRelease(&ref_arena, c);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, a, b);
+    RefRelease(&ref_arena, b);
+
+    RefAdd(&ref_arena, c, a);
+
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
 
     RefRelease(&ref_arena, a);
     FbleAssertEmptyArena(arena);
