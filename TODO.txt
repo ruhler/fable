@@ -1,14 +1,9 @@
 Fble:
-* Fix use after free failures.
-
 * Prototype new reference counting implementation.
-* fix failing langs/fble/8.3-06-poly-apply-recursive-type.tcl
- - Figure out how to deal with reference loops from poly apply cache.
-* Fix failing langs/fble/7.4-06-type-let-bad-mutually-recursive-type.tcl
- - Need to debug to understand what's broken, or clean up ref handling and
-   hope that fixes the bug.
+* Switch to new reference counting implementation.
+* All the failing test cases should, hopefully, now pass.
 
-* Finish implementing evaluator, adding tests, until snake.fble evaluates.
+* Finish adding and fixing tests until snake.fble evaluates.
 * Hook up fble-test I/O for snake.fble.
 
 * Port the rest of the fblc tests to fble.

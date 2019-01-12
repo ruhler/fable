@@ -26,7 +26,9 @@ run ar rcs out/fble/libfble.a {*}$fble_objs
 
 # Compile the executables
 set ::fbletest ./out/fble/fble-test
+set ::fblereftest ./out/fble/fble-ref-test
 run gcc {*}$FLAGS -o $::fbletest out/fble/obj/fble-test.o -L out/fble -lfble
+run gcc {*}$FLAGS -o $::fblereftest out/fble/obj/fble-ref-test.o -L out/fble -lfble
 
 proc fble-test-error-run { tloc loc expr } {
   set line [dict get $tloc line]
@@ -78,6 +80,7 @@ run gcov {*}$::fble_objs > out/fble/cov/spec/fble.gcov
 exec mv {*}[glob *.gcov] out/fble/cov/spec
 
 test exec $::fbletest prgms/snake.fble
+test exec $::fblereftest
 
 exec mkdir -p out/fble/cov/all
 run gcov {*}$::fble_objs > out/fble/cov/all/fble.gcov
