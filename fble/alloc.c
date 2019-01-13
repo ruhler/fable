@@ -11,8 +11,13 @@
 typedef struct Alloc {
   struct Alloc* prev;
   struct Alloc* next;
+
+  // msg, size, and arena are all for debugging purposes only.
   const char* msg;
   size_t size;
+  struct FbleArena* arena;
+
+  // The allocation returned to the caller.
   char data[];
 } Alloc;
 
@@ -48,6 +53,7 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg)
   alloc->next->prev = alloc;
   alloc->msg = msg;
   alloc->size = size;
+  alloc->arena = arena;
   return (void*)alloc->data;
 }
 
@@ -58,17 +64,7 @@ void FbleFree(FbleArena* arena, void* ptr)
 
   Alloc* alloc = ((Alloc*)ptr) - 1;
   assert(ptr == (void*)alloc->data);
-
-  // For debugging purposes, check that the allocation actually exists on the
-  // arena.
-  bool found = false;
-  for (Alloc* a = arena->allocs->next; a != arena->allocs; a = a->next) {
-    if (alloc == a) {
-      found = true;
-      break;
-    }
-  }
-  assert(found && "FbleFree on bad ptr");
+  assert(alloc->arena == arena && "FbleFree on bad ptr");
 
   alloc->next->prev = alloc->prev;
   alloc->prev->next = alloc->next;
