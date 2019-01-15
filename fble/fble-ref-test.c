@@ -149,7 +149,12 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 //   retained at least as long as src is retained.
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
-  FbleRefRetain(arena, dst);
+  if (src->id > dst->id) {
+    FbleRefRetain(arena, dst);
+    return;
+  }
+
+  assert(false && "TODO: support potential cycles");
 }
 
 typedef struct {
@@ -285,29 +290,29 @@ int main(int argc, char* argv[])
     FbleAssertEmptyArena(arena);
   }
 
-//  {
-//    // Test a cycle
-//    //  a --> b --> c
-//    //   \----<----/
-//    Ref* c = Create(&ref_arena);
-//
-//    Ref* b = Create(&ref_arena);
-//    RefAdd(&ref_arena, b, c);
-//    RefRelease(&ref_arena, c);
-//
-//    Ref* a = Create(&ref_arena);
-//    RefAdd(&ref_arena, a, b);
-//    RefRelease(&ref_arena, b);
-//
-//    RefAdd(&ref_arena, c, a);
-//
-//    assert(Alive(a));
-//    assert(Alive(b));
-//    assert(Alive(c));
-//
-//    RefRelease(&ref_arena, a);
-//    FbleAssertEmptyArena(arena);
-//  }
+  {
+    // Test a cycle
+    //  a --> b --> c
+    //   \----<----/
+    Ref* c = Create(&ref_arena);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, b, c);
+    RefRelease(&ref_arena, c);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, a, b);
+    RefRelease(&ref_arena, b);
+
+    RefAdd(&ref_arena, c, a);
+
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
+
+    RefRelease(&ref_arena, a);
+    FbleAssertEmptyArena(arena);
+  }
 
   FbleDeleteArena(arena);
   return 0;
