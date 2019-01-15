@@ -20,6 +20,7 @@ typedef struct {
 struct FbleRefArena {
   FbleArena* arena;
   size_t next_id;
+  size_t next_round_id;
 
   // free --
   //   Free the object associated with the given ref, because the ref is no
@@ -57,9 +58,25 @@ struct FbleRefArena {
 //   A reference to an object. The intention is that the user knows how to get
 //   a pointer to the object given a pointer to this reference, typically
 //   because the two pointers are the same.
+//
+// Fields:
+//   id - A unique identifier for the node. Ids are assigned in increasing
+//        order of node allocation.
+//   refcount - The number of references to this node. 0 if the node
+//              belongs to a cycle.
+//   cycle - A pointer to the head of the cycle this node belongs to. NULL
+//           if the node does not belong to a cycle.
+//   round_id - Temporary state used for detecting cycles. If set to the
+//              current round id, the node has been visited this round.
+//   round_new - Temporary state used for detecting cycles. If round_id
+//               matches the current round id and this is true, then the node
+//               has not yet been initially processed for this round.
 struct FbleRef {
   size_t id;
   size_t refcount;
+  FbleRef* cycle;
+  size_t round_id;
+  bool round_new;
 };
 
 // FbleRefInit --
@@ -78,6 +95,9 @@ void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
 {
   ref->id = arena->next_id++;
   ref->refcount = 1;
+  ref->cycle = NULL;
+  ref->round_id = 0;
+  ref->round_new = false;
 }
 
 // FbleRefRetain --
@@ -97,10 +117,14 @@ void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
 //   made.
 void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
 {
+  if (ref->cycle != NULL) {
+    assert(ref->cycle->cycle == NULL);
+    ref = ref->cycle;
+  }
   ref->refcount++;
 }
 
-// FbleRefRetain --
+// FbleRefRelease --
 //   Release the given reference, cause the reference to be freed if there are
 //   no outstanding references to it.
 //
@@ -122,6 +146,7 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 
   while (refs.size > 0) {
     FbleRef* r = refs.xs[--refs.size];
+    assert(r->cycle == NULL && "TODO: release cycles");
     assert(r->refcount > 0);
     r->refcount--;
     if (r->refcount == 0) {
@@ -154,7 +179,72 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
     return;
   }
 
-  assert(false && "TODO: support potential cycles");
+  // There is potentially a cycle from dst --*--> src --> dst
+  // Change all nodes with ids between src->id and dst->id to src->id.
+  // If any subset of those nodes form a path between dst and src, set dst as
+  // their cycle and transfer their external refcount to dst.
+  size_t round = arena->next_round_id++;
+  FbleRefV stack;
+  FbleVectorInit(arena->arena, stack);
+
+  dst->round_id = round;
+  dst->round_new = true;
+  assert(dst->cycle == NULL && "TODO: Handle this case.");
+  FbleVectorAppend(arena->arena, stack, dst);
+
+  while (stack.size > 0) {
+    FbleRef* ref = stack.xs[stack.size - 1];
+    assert(ref->round_id == round);
+
+    FbleRefV children;
+    FbleVectorInit(arena->arena, children);
+    arena->added(arena, ref, &children);
+
+    if (ref->round_new) {
+      ref->round_new = false;
+      for (size_t i = 0; i < children.size; ++i) {
+        FbleRef* child = children.xs[i];
+        if (child->round_id != round && child->id >= src->id) {
+          child->round_id = round;
+          child->round_new = true;
+          FbleVectorAppend(arena->arena, stack, child);
+        }
+      }
+    } else {
+      stack.size--;
+      ref->id = src->id;
+      size_t children_in_cycle = 0;
+      for (size_t i = 0; i < children.size; ++i) {
+        if (children.xs[i]->cycle == dst) {
+          children_in_cycle++;
+        }
+      }
+
+      if (ref == src || children_in_cycle > 0) {
+        ref->cycle = dst;
+        ref->cycle->refcount += ref->refcount;
+
+        // Remove all cycle-internal references from ref->cycle->refcount.
+        // TODO: This is wrong. We don't necessarily know all of the children
+        // that are in the cycle at this point. For example, if the child is
+        // still sitting on the stack waiting to have its processing finished,
+        // it will not show as being part of the cycle when it really is.
+        ref->cycle->refcount -= children_in_cycle;
+
+        if (ref != dst) {
+          ref->refcount = 0;
+        }
+      }
+    }
+
+    FbleFree(arena->arena, children.xs);
+  }
+
+  if (dst->cycle == dst) {
+    dst->cycle = NULL;
+  }
+
+  FbleFree(arena->arena, stack.xs);
 }
 
 typedef struct {
@@ -220,6 +310,7 @@ int main(int argc, char* argv[])
   FbleRefArena ref_arena = {
     .arena = arena,
     .next_id = 1,
+    .next_round_id = 1,
     .free = &Free,
     .added = &Added,
   };
