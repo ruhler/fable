@@ -146,10 +146,15 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 
   while (refs.size > 0) {
     FbleRef* r = refs.xs[--refs.size];
-    assert(r->cycle == NULL && "TODO: release cycles");
+
+    if (r->cycle != NULL) {
+      r = r->cycle;
+    }
+
     assert(r->refcount > 0);
     r->refcount--;
     if (r->refcount == 0) {
+      assert(r->cycle != NULL && "TODO: Free cycles");
       arena->added(arena, r, &refs);
       arena->free(arena, r);
     }
