@@ -172,10 +172,15 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 // Side effects:
 //   Adds a reference from the src node to the dst node, so that dst is
 //   retained at least as long as src is retained.
+//
+// TODO: Clarify whether 'added' should include this reference from src to dst
+// at the time of this call or not. I think the current implementation assumes
+// 'added' does include the reference.
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
+  FbleRefRetain(arena, dst);
+
   if (src->id > dst->id) {
-    FbleRefRetain(arena, dst);
     return;
   }
 
@@ -189,11 +194,11 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
   dst->round_id = round;
   dst->round_new = true;
-  assert(dst->cycle == NULL && "TODO: Handle this case.");
   FbleVectorAppend(arena->arena, stack, dst);
 
   while (stack.size > 0) {
     FbleRef* ref = stack.xs[stack.size - 1];
+    assert(ref->cycle == NULL && "TODO: Handle this case.");
     assert(ref->round_id == round);
 
     FbleRefV children;
@@ -213,27 +218,13 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
     } else {
       stack.size--;
       ref->id = src->id;
-      size_t children_in_cycle = 0;
-      for (size_t i = 0; i < children.size; ++i) {
-        if (children.xs[i]->cycle == dst) {
-          children_in_cycle++;
-        }
+      bool in_cycle = (ref == src);
+      for (size_t i = 0; !in_cycle && i < children.size; ++i) {
+        in_cycle = (children.xs[i]->cycle == dst);
       }
 
-      if (ref == src || children_in_cycle > 0) {
+      if (in_cycle) {
         ref->cycle = dst;
-        ref->cycle->refcount += ref->refcount;
-
-        // Remove all cycle-internal references from ref->cycle->refcount.
-        // TODO: This is wrong. We don't necessarily know all of the children
-        // that are in the cycle at this point. For example, if the child is
-        // still sitting on the stack waiting to have its processing finished,
-        // it will not show as being part of the cycle when it really is.
-        ref->cycle->refcount -= children_in_cycle;
-
-        if (ref != dst) {
-          ref->refcount = 0;
-        }
       }
     }
 
@@ -241,7 +232,40 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   }
 
   if (dst->cycle == dst) {
-    dst->cycle = NULL;
+    // Fix up refcounts for the cycle by moving any refs from nodes outside the
+    // cycle to the head node of the cycle and removing all refs from nodes
+    // inside the cycle.
+    size_t total = 0;
+    size_t internal = 0;
+
+    // Note: We repurpose round_new to indicate we have processed this node.
+    // TODO: Pick a better name for round_new.
+    dst->round_new = true;  
+    FbleVectorAppend(arena->arena, stack, dst);
+    while (stack.size > 0) {
+      FbleRef* ref = stack.xs[--stack.size];
+      total += ref->refcount;
+      ref->refcount = 0;
+
+      FbleRefV children;
+      FbleVectorInit(arena->arena, children);
+      arena->added(arena, ref, &children);
+
+      for (size_t i = 0; i < children.size; ++i) {
+        FbleRef* child = children.xs[i];
+        if (child->cycle == dst) {
+          internal++;
+          if (!child->round_new) {
+            child->round_new = true;
+            FbleVectorAppend(arena->arena, stack, child);
+          }
+        }
+      }
+
+      FbleFree(arena->arena, children.xs);
+    }
+
+    dst->refcount = total - internal;
   }
 
   FbleFree(arena->arena, stack.xs);

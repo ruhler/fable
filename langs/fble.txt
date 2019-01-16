@@ -683,3 +683,18 @@ Notes:
 ------------
 * Is there really any need for a type let type? It seems like you could always
   use either a type let expression or a polymorphic type function.
+* When it comes time to add module support, here are three concepts to think
+  about:
+ 1. How to group types and values into single objects. For values we can just
+ use struct values. For types, maybe introduce an analogous concept?
+
+ 2. Namespace control: Ideally a child module cannot break if its parent
+ brings starts using a new name that conflicts with the child's internals. Can
+ a child use a named entity that the parent doesn't have in scope?
+
+ 3. Dependency questions: Modules depend on other modules. As a user of a
+ module, it's not easy or fair to have to keep track of all the internal
+ dependencies of other modules to figure out what order to define the modules.
+ So it might be nice for the system to take care of that. Should a parent
+ module explicitly report all required dependencies of all child modules, or
+ is it okay for dependencies to be explicit?
