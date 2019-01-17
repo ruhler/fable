@@ -314,6 +314,8 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   FbleFree(arena->arena, stack.xs);
 }
 
+static size_t sRefsAlive = 0;
+
 typedef struct {
   FbleRef _base;
   FbleRefV added;
@@ -322,6 +324,9 @@ typedef struct {
 
 static void Free(FbleRefArena* arena, FbleRef* ref)
 {
+  assert(sRefsAlive > 0);
+  sRefsAlive--;
+
   Ref* r = (Ref*)ref;
   r->alive = 0xDEAD;
   FbleFree(arena->arena, r->added.xs);
@@ -345,6 +350,7 @@ static Ref* Create(FbleRefArena* arena) {
   FbleRefInit(arena, &ref->_base);
   FbleVectorInit(arena->arena, ref->added);
   ref->alive = 0xA11BE;
+  sRefsAlive++;
   return ref;
 }
 
@@ -396,11 +402,13 @@ int main(int argc, char* argv[])
     RefRelease(&ref_arena, b);
 
     // All three references should still be available.
+    assert(sRefsAlive == 3);
     assert(Alive(a));
     assert(Alive(b));
     assert(Alive(c));
 
     RefRelease(&ref_arena, a);
+    assert(sRefsAlive == 0);
     FbleAssertEmptyArena(arena);
   }
 
@@ -416,6 +424,7 @@ int main(int argc, char* argv[])
       x = y;
     }
     RefRelease(&ref_arena, x);
+    assert(sRefsAlive == 0);
     FbleAssertEmptyArena(arena);
   }
 
@@ -439,12 +448,14 @@ int main(int argc, char* argv[])
     RefRelease(&ref_arena, d);
 
     // All references should still be available.
+    assert(sRefsAlive == 4);
     assert(Alive(a));
     assert(Alive(b));
     assert(Alive(c));
     assert(Alive(d));
 
     RefRelease(&ref_arena, a);
+    assert(sRefsAlive == 0);
     FbleAssertEmptyArena(arena);
   }
 
@@ -464,11 +475,13 @@ int main(int argc, char* argv[])
 
     RefAdd(&ref_arena, c, a);
 
+    assert(sRefsAlive == 3);
     assert(Alive(a));
     assert(Alive(b));
     assert(Alive(c));
 
     RefRelease(&ref_arena, a);
+    assert(sRefsAlive == 0);
     FbleAssertEmptyArena(arena);
   }
 
