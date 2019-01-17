@@ -154,9 +154,47 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
     assert(r->refcount > 0);
     r->refcount--;
     if (r->refcount == 0) {
-      assert(r->cycle != NULL && "TODO: Free cycles");
-      arena->added(arena, r, &refs);
-      arena->free(arena, r);
+      if (r->cycle == NULL) {
+        arena->added(arena, r, &refs);
+        arena->free(arena, r);
+      } else {
+        size_t round = arena->next_round_id++;
+        FbleRefV stack;
+        FbleVectorInit(arena->arena, stack);
+        FbleRefV in_cycle;
+        FbleVectorInit(arena->arena, in_cycle);
+
+        r->round_id = round;
+        FbleVectorAppend(arena->arena, stack, r);
+
+        while (stack.size > 0) {
+          FbleRef* node = stack.xs[--stack.size];
+          FbleVectorAppend(arena->arena, in_cycle, node);
+
+          FbleRefV children;
+          FbleVectorInit(arena->arena, children);
+          arena->added(arena, node, &children);
+          for (size_t i = 0; i < children.size; ++i) {
+            FbleRef* child = children.xs[i];
+            if (child->cycle == r) {
+              if (child->round_id != round) {
+                child->round_id = round;
+                FbleVectorAppend(arena->arena, stack, child);
+              }
+            } else {
+              FbleVectorAppend(arena->arena, refs, child);
+            }
+          }
+          FbleFree(arena->arena, children.xs);
+        }
+
+        for (size_t i = 0; i < in_cycle.size; ++i) {
+          arena->free(arena, in_cycle.xs[i]);
+        }
+
+        FbleFree(arena->arena, stack.xs);
+        FbleFree(arena->arena, in_cycle.xs);
+      }
     }
   }
 
