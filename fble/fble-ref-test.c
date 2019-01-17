@@ -118,7 +118,6 @@ void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
 void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
 {
   if (ref->cycle != NULL) {
-    assert(ref->cycle->cycle == NULL);
     ref = ref->cycle;
   }
   ref->refcount++;
@@ -479,6 +478,45 @@ int main(int argc, char* argv[])
     assert(Alive(a));
     assert(Alive(b));
     assert(Alive(c));
+
+    RefRelease(&ref_arena, a);
+    assert(sRefsAlive == 0);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
+    // Test a nested cycle
+    //  a --> b --> c --> d --> e
+    //   \     \----<----/     /
+    //    \---------<---------/
+    Ref* e = Create(&ref_arena);
+
+    Ref* d = Create(&ref_arena);
+    RefAdd(&ref_arena, d, e);
+    RefRelease(&ref_arena, e);
+
+    Ref* c = Create(&ref_arena);
+    RefAdd(&ref_arena, c, d);
+    RefRelease(&ref_arena, d);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, b, c);
+    RefRelease(&ref_arena, c);
+
+    RefAdd(&ref_arena, d, b);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, a, b);
+    RefRelease(&ref_arena, b);
+
+    RefAdd(&ref_arena, e, a);
+
+    assert(sRefsAlive == 5);
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
+    assert(Alive(d));
+    assert(Alive(e));
 
     RefRelease(&ref_arena, a);
     assert(sRefsAlive == 0);
