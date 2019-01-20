@@ -59,13 +59,18 @@ struct FbleRefArena {
 //   a pointer to the object given a pointer to this reference, typically
 //   because the two pointers are the same.
 //
+//   When references form cycles, we designate one of the nodes in the cycle
+//   as the head of the cycle. All other nodes in the cycle are children of
+//   the cycle. The child nodes of cycles are treated specially. Note that the
+//   head of a cycle may be a child of some other cycle.
+//
 // Fields:
 //   id - A unique identifier for the node. Ids are assigned in increasing
 //        order of node allocation.
 //   refcount - The number of references to this node. 0 if the node
-//              belongs to a cycle.
+//              is a child node in a cycle.
 //   cycle - A pointer to the head of the cycle this node belongs to. NULL
-//           if the node does not belong to a cycle.
+//           if the node is not a child node of a cycle.
 //   round_id - Temporary state used for detecting cycles. If set to the
 //              current round id, the node has been visited this round.
 //   round_new - Temporary state used for detecting cycles. If round_id
@@ -78,6 +83,121 @@ struct FbleRef {
   size_t round_id;
   bool round_new;
 };
+
+// CycleHead --
+//   Get the head of the biggest cycle that ref belongs to.
+//
+// Inputs:
+//   ref - The reference to get the head of.
+//
+// Results:
+//   The head of the biggest cycle that ref belongs to.
+//
+// Side effects:
+//   None.
+static FbleRef* CycleHead(FbleRef* ref)
+{
+  while (ref->cycle != NULL) {
+    ref = ref->cycle;
+  }
+  return ref;
+}
+
+// CycleAdded --
+//   Get the list of added nodes for a cycle.
+//
+// Inputs:
+//   arena - the reference arena.
+//   ref - the reference to get the list of added for.
+//   refs - output vector to append the added references to.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Appends to refs the cycle head of every reference x that is external to
+//   the cycle but reachable by direct reference from a node in the cycle.
+static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
+{
+  int round_id = arena->next_round_id++;
+  FbleRefV stack;
+  FbleVectorInit(arena->arena, stack);
+  FbleVectorAppend(arena->arena, stack, ref);
+
+  while (stack.size > 0) {
+    FbleRef* r = stack.xs[--stack.size];
+
+    FbleRefV children;
+    FbleVectorInit(arena->arena, children);
+    arena->added(arena, r, &children);
+    for (size_t i = 0; i < children.size; ++i) {
+      FbleRef* child = children.xs[i];
+      if (child == ref || child->cycle == ref) {
+        if (child != ref && child->round_id != round_id) {
+          assert(child->cycle == ref);
+          child->round_id = round_id;
+          FbleVectorAppend(arena->arena, stack, child);
+        }
+      } else {
+        FbleVectorAppend(arena->arena, *refs, child);
+      }
+    }
+
+    FbleFree(arena->arena, children.xs);
+  }
+  FbleFree(arena->arena, stack.xs);
+}
+
+// CycleFree --
+//   Free the object associated with the given ref and its cycle, because the
+//   ref is no longer acessible.
+//
+// Inputs:
+//   arena - the reference arena.
+//   ref - the reference whose cycle to free.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Unspecified.
+static void CycleFree(FbleRefArena* arena, FbleRef* ref)
+{
+  int round_id = arena->next_round_id++;
+  FbleRefV in_cycle;
+  FbleVectorInit(arena->arena, in_cycle);
+
+  FbleRefV stack;
+  FbleVectorInit(arena->arena, stack);
+  FbleVectorAppend(arena->arena, stack, ref);
+
+  while (stack.size > 0) {
+    FbleRef* r = stack.xs[--stack.size];
+    FbleVectorAppend(arena->arena, in_cycle, r);
+
+    FbleRefV children;
+    FbleVectorInit(arena->arena, children);
+    arena->added(arena, r, &children);
+    for (size_t i = 0; i < children.size; ++i) {
+      FbleRef* child = children.xs[i];
+      if (child->cycle == ref) {
+        if (child->round_id != round_id) {
+          child->round_id = round_id;
+          FbleVectorAppend(arena->arena, stack, child);
+        }
+      }
+    }
+
+    FbleFree(arena->arena, children.xs);
+  }
+
+  for (size_t i = 0; i < in_cycle.size; ++i) {
+    arena->free(arena, in_cycle.xs[i]);
+  }
+
+  FbleFree(arena->arena, in_cycle.xs);
+  FbleFree(arena->arena, stack.xs);
+}
 
 // FbleRefInit --
 //   Initialize and retain the reference pointed to by ref.
@@ -117,9 +237,7 @@ void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
 //   made.
 void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
 {
-  if (ref->cycle != NULL) {
-    ref = ref->cycle;
-  }
+  ref = CycleHead(ref);
   ref->refcount++;
 }
 
@@ -141,59 +259,18 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 {
   FbleRefV refs;
   FbleVectorInit(arena->arena, refs);
-  FbleVectorAppend(arena->arena, refs, ref);
+  FbleVectorAppend(arena->arena, refs, CycleHead(ref));
 
   while (refs.size > 0) {
     FbleRef* r = refs.xs[--refs.size];
-
-    if (r->cycle != NULL) {
-      r = r->cycle;
-    }
-
+    assert(r->cycle == NULL);
     assert(r->refcount > 0);
     r->refcount--;
     if (r->refcount == 0) {
-      if (r->cycle == NULL) {
-        arena->added(arena, r, &refs);
-        arena->free(arena, r);
-      } else {
-        size_t round = arena->next_round_id++;
-        FbleRefV stack;
-        FbleVectorInit(arena->arena, stack);
-        FbleRefV in_cycle;
-        FbleVectorInit(arena->arena, in_cycle);
-
-        r->round_id = round;
-        FbleVectorAppend(arena->arena, stack, r);
-
-        while (stack.size > 0) {
-          FbleRef* node = stack.xs[--stack.size];
-          FbleVectorAppend(arena->arena, in_cycle, node);
-
-          FbleRefV children;
-          FbleVectorInit(arena->arena, children);
-          arena->added(arena, node, &children);
-          for (size_t i = 0; i < children.size; ++i) {
-            FbleRef* child = children.xs[i];
-            if (child->cycle == r) {
-              if (child->round_id != round) {
-                child->round_id = round;
-                FbleVectorAppend(arena->arena, stack, child);
-              }
-            } else {
-              FbleVectorAppend(arena->arena, refs, child);
-            }
-          }
-          FbleFree(arena->arena, children.xs);
-        }
-
-        for (size_t i = 0; i < in_cycle.size; ++i) {
-          arena->free(arena, in_cycle.xs[i]);
-        }
-
-        FbleFree(arena->arena, stack.xs);
-        FbleFree(arena->arena, in_cycle.xs);
-      }
+      // TODO: Inline CycleAdded, CycleFree into a single iteration, rather
+      // than iterating over the cycles twice here?
+      CycleAdded(arena, r, &refs);
+      CycleFree(arena, r);
     }
   }
 
@@ -221,10 +298,12 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
   FbleRefRetain(arena, dst);
-
   if (src->id > dst->id) {
     return;
   }
+
+  src = CycleHead(src);
+  dst = CycleHead(dst);
 
   // There is potentially a cycle from dst --*--> src --> dst
   // Change all nodes with ids between src->id and dst->id to src->id.
@@ -240,12 +319,12 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
   while (stack.size > 0) {
     FbleRef* ref = stack.xs[stack.size - 1];
-    assert(ref->cycle == NULL && "TODO: Handle this case.");
+    assert(ref->cycle == NULL);
     assert(ref->round_id == round);
 
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
-    arena->added(arena, ref, &children);
+    CycleAdded(arena, ref, &children);
 
     if (ref->round_new) {
       ref->round_new = false;
@@ -274,6 +353,8 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   }
 
   if (dst->cycle == dst) {
+    dst->cycle = NULL;
+
     // Fix up refcounts for the cycle by moving any refs from nodes outside the
     // cycle to the head node of the cycle and removing all refs from nodes
     // inside the cycle.
@@ -291,7 +372,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
       FbleRefV children;
       FbleVectorInit(arena->arena, children);
-      arena->added(arena, ref, &children);
+      CycleAdded(arena, ref, &children);
 
       for (size_t i = 0; i < children.size; ++i) {
         FbleRef* child = children.xs[i];

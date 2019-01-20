@@ -1,0 +1,95 @@
+
+Proposal for fble modules.
+
+1. We can already group values hierarchically using struct values.
+We also want a way to group types hierarchically. So introduce a new sort of
+type or kind which is a collection of named types that you can access and
+refer to by name.
+
+Now you can refer to both types and values hierarchically, assuming they are
+in scope. For example:
+  StdLib@.List@.S@
+  StdLib.List.MapS
+
+And you can define and export groups of entities this way.
+
+2. Have a construct to clear the scope aside from explicitly named entities.
+This is needed so that if a parent module adds a new entity, it will not
+conflict with some private internals of a child module.
+
+In other words, it makes it so a child module has full control over its
+scopes.
+
+Using this mechanism, a child module explicitly lists those entities it is
+assuming are already available. The list can be in any order. It is up to
+whoever instantiates the child module to ensure the entities are available.
+
+This mechanism also implies that a parent module must explicitly import any
+external modules required by any of its child modules. Note that the parent
+does not need to know about what any of the imported modules depend on.
+
+3. No special mechanism is needed for instantiating modules. No automatic
+dependency analysis. A parent module instantiates each child module in order
+using the same approach as existing let expressions. For instance, the
+definition of StdLib might look like:
+
+@@ Unit = [instantiate Unit];
+@@ Maybe = [instantiate Maybe];
+@@ List = [instantiate List];
+...
+StdLib(Unit, Maybe, List, ...)
+
+The developer of the parent module is responsible for declaring child modules
+in dependency order. Child modules can be defined recursively using
+traditional recursive let blocks if needed.
+
+4. We need some mechanism to map from an [instantiate Foo] clause to identify
+the source code for the module Foo. For instance, using a directory structure,
+look for the definition of module Foo in a subdirectory with the same name as
+the parent module. Or, as a special case for top level modules, the compiler
+can have a list of search paths.
+
+Each top-level program (as opposed to module) would be responsible for
+instantiating all required top level modules in dependency order. This makes
+the dependencies of the program clear.
+
+This way a module can be reused in multiple programs, so long as each program
+it is used in supplies its required dependencies.
+
+5. Previous thoughts and how to interpret them now:
+ 1. How to group types and values into single objects. For values we can just
+ use struct values. For types, maybe introduce an analogous concept?
+
+ A. See (1)
+
+ 2. Namespace control: Ideally a child module cannot break if its parent
+ brings starts using a new name that conflicts with the child's internals. Can
+ a child use a named entity that the parent doesn't have in scope?
+
+ A. A child cannot use a named entity that the parent doesn't have in scope.
+ Else see (2).
+ 
+
+ 3. Dependency questions: Modules depend on other modules. As a user of a
+ module, it's not easy or fair to have to keep track of all the internal
+ dependencies of other modules to figure out what order to define the modules.
+ So it might be nice for the system to take care of that. Should a parent
+ module explicitly report all required dependencies of all child modules, or
+ is it okay for dependencies to be explicit?
+
+ A: a module does have to figure out what order to instantiate its
+ child modules, but it need not figure out what order to instantiate external
+ modules, and it need not know the dependencies of external modules.
+
+ The question that remains is, how hard will it be to figure out the
+ dependency order, particularly for top-level programs? Presumably the
+ compiler will tell you if you get the order wrong. Maybe libraries can play a
+ role in saying: "this is the right order to use for this group of modules,
+ I'll take care of it." One possibility would be to pass required modules as
+ arguments when you instantiate a module. That should make it clear.
+
+ In that case, a module is like a function definition that does not inherit
+ any scope from its parent. Sort of. Not quite. Because remember, modules are
+ defined and uniquely identified by their name and no other notion or
+ description.
+
