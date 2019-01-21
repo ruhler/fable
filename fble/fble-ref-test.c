@@ -136,10 +136,10 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
         if (child != ref && child->round_id != round_id) {
           assert(child->cycle == ref);
           child->round_id = round_id;
-          FbleVectorAppend(arena->arena, stack, CycleHead(child));
+          FbleVectorAppend(arena->arena, stack, child);
         }
       } else {
-        FbleVectorAppend(arena->arena, *refs, child);
+        FbleVectorAppend(arena->arena, *refs, CycleHead(child));
       }
     }
 

@@ -1,7 +1,6 @@
 Fble:
 * Prototype new reference counting implementation.
- - Fix bug where CycleAdded returns unintended result when in the process of
-   building a new cycle.
+ - Fix bug in CycleAdded in case of nested cycles.
 * Switch to new reference counting implementation.
 * All the failing test cases should, hopefully, now pass.
 
