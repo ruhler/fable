@@ -136,7 +136,7 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
         if (child != ref && child->round_id != round_id) {
           assert(child->cycle == ref);
           child->round_id = round_id;
-          FbleVectorAppend(arena->arena, stack, child);
+          FbleVectorAppend(arena->arena, stack, CycleHead(child));
         }
       } else {
         FbleVectorAppend(arena->arena, *refs, child);
@@ -317,6 +317,8 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   dst->round_new = true;
   FbleVectorAppend(arena->arena, stack, dst);
 
+  FbleRefV cycle;
+  FbleVectorInit(arena->arena, cycle);
   while (stack.size > 0) {
     FbleRef* ref = stack.xs[stack.size - 1];
     assert(ref->cycle == NULL);
@@ -340,57 +342,69 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
       stack.size--;
       ref->id = src->id;
       bool in_cycle = (ref == src);
+      // TODO: Find a more efficient way to check whether ref has a child node
+      // in the cycle.
       for (size_t i = 0; !in_cycle && i < children.size; ++i) {
-        in_cycle = (children.xs[i]->cycle == dst);
+        for (size_t j = 0; !in_cycle && j < cycle.size; ++j) {
+          if (cycle.xs[j] == children.xs[i]) {
+            in_cycle = true;
+          }
+        }
       }
 
       if (in_cycle) {
-        ref->cycle = dst;
+        FbleVectorAppend(arena->arena, cycle, ref);
       }
     }
 
     FbleFree(arena->arena, children.xs);
   }
 
-  if (dst->cycle == dst) {
-    dst->cycle = NULL;
+  bool in_cycle = false;
+  for (size_t i = 0; !in_cycle && i < cycle.size; ++i) {
+    if (dst == cycle.xs[i]) {
+      in_cycle = true;
+    }
+  }
 
+  if (in_cycle) {
     // Fix up refcounts for the cycle by moving any refs from nodes outside the
     // cycle to the head node of the cycle and removing all refs from nodes
     // inside the cycle.
     size_t total = 0;
     size_t internal = 0;
 
-    // Note: We repurpose round_new to indicate we have processed this node.
-    // TODO: Pick a better name for round_new.
-    dst->round_new = true;  
-    FbleVectorAppend(arena->arena, stack, dst);
-    while (stack.size > 0) {
-      FbleRef* ref = stack.xs[--stack.size];
+    for (size_t i = 0; i < cycle.size; ++i) {
+      FbleRef* ref = cycle.xs[i];
       total += ref->refcount;
-      ref->refcount = 0;
 
       FbleRefV children;
       FbleVectorInit(arena->arena, children);
       CycleAdded(arena, ref, &children);
 
-      for (size_t i = 0; i < children.size; ++i) {
-        FbleRef* child = children.xs[i];
-        if (child->cycle == dst) {
-          internal++;
-          if (!child->round_new) {
-            child->round_new = true;
-            FbleVectorAppend(arena->arena, stack, child);
+      // TODO: Figure out a more efficient way to check if a child is in the
+      // cycle.
+      for (size_t j = 0; j < children.size; ++j) {
+        for (size_t k = 0; k < cycle.size; ++k) {
+          if (children.xs[j] == cycle.xs[k]) {
+            internal++;
           }
         }
       }
 
       FbleFree(arena->arena, children.xs);
     }
+    
+    for (size_t i = 0; i < cycle.size; ++i) {
+      cycle.xs[i]->refcount = 0;
+      cycle.xs[i]->cycle = dst;
+    }
 
     dst->refcount = total - internal;
+    dst->cycle = NULL;
   }
 
+  FbleFree(arena->arena, cycle.xs);
   FbleFree(arena->arena, stack.xs);
 }
 
