@@ -301,6 +301,11 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 // 'added' does include the reference.
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
+  if (CycleHead(src) == CycleHead(dst)) {
+    // Ignore new references within the same cycle.
+    return;
+  }
+
   FbleRefRetain(arena, dst);
   if (src->id > dst->id) {
     return;
@@ -456,6 +461,11 @@ static void RefAdd(FbleRefArena* arena, Ref* src, Ref* dst)
 {
   FbleVectorAppend(arena->arena, src->added, &dst->_base);
   FbleRefAdd(arena, &src->_base, &dst->_base);
+}
+
+static void RefRetain(FbleRefArena* arena, Ref* ref)
+{
+  FbleRefRetain(arena, &ref->_base);
 }
 
 static void RefRelease(FbleRefArena* arena, Ref* ref)
@@ -616,6 +626,150 @@ int main(int argc, char* argv[])
     assert(Alive(c));
     assert(Alive(d));
     assert(Alive(e));
+
+    RefRelease(&ref_arena, a);
+    assert(sRefsAlive == 0);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
+    // Test a cycle with multiple separate external references.
+    //  --> a --> b --> c <--
+    //       \-<--d-<--/
+    Ref* d = Create(&ref_arena);
+
+    Ref* c = Create(&ref_arena);
+    RefAdd(&ref_arena, c, d);
+    RefRelease(&ref_arena, d);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, b, c);
+    RefRelease(&ref_arena, c);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, a, b);
+    RefRelease(&ref_arena, b);
+
+    RefAdd(&ref_arena, d, a);
+    RefRetain(&ref_arena, c);
+    RefRelease(&ref_arena, a);
+
+    assert(sRefsAlive == 4);
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
+    assert(Alive(d));
+
+    RefRelease(&ref_arena, c);
+    assert(sRefsAlive == 0);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
+    // Test a reverse chain
+    //   a <- b <- c
+    Ref* c = Create(&ref_arena);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, c, b);
+    RefRelease(&ref_arena, b);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, b, a);
+    RefRelease(&ref_arena, a);
+
+    // All three references should still be available.
+    assert(sRefsAlive == 3);
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
+
+    RefRelease(&ref_arena, c);
+    assert(sRefsAlive == 0);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
+    // Test a reverse cycle
+    //  a <-- b <-- c
+    //   \---->----/
+    Ref* c = Create(&ref_arena);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, c, b);
+    RefRelease(&ref_arena, b);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, b, a);
+    RefRelease(&ref_arena, a);
+
+    RefAdd(&ref_arena, a, c);
+
+    assert(sRefsAlive == 3);
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
+
+    RefRelease(&ref_arena, c);
+    assert(sRefsAlive == 0);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
+    // Test a cycle that has an external reference
+    //  a --> b --> c --> d
+    //   \----<----/
+    Ref* d = Create(&ref_arena);
+
+    Ref* c = Create(&ref_arena);
+    RefAdd(&ref_arena, c, d);
+    RefRelease(&ref_arena, d);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, b, c);
+    RefRelease(&ref_arena, c);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, a, b);
+    RefRelease(&ref_arena, b);
+
+    RefAdd(&ref_arena, c, a);
+
+    assert(sRefsAlive == 4);
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
+    assert(Alive(d));
+
+    RefRelease(&ref_arena, a);
+    assert(sRefsAlive == 0);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
+    // Test a cycle with a bunch of internal references.
+    //   /---->----\_
+    //  a --> b --> c
+    //  \\-<-/ \-<-//
+    //   \----<----/
+    Ref* c = Create(&ref_arena);
+
+    Ref* b = Create(&ref_arena);
+    RefAdd(&ref_arena, b, c);
+    RefRelease(&ref_arena, c);
+
+    Ref* a = Create(&ref_arena);
+    RefAdd(&ref_arena, a, b);
+    RefRelease(&ref_arena, b);
+
+    RefAdd(&ref_arena, c, a);
+    RefAdd(&ref_arena, c, b);
+    RefAdd(&ref_arena, b, a);
+
+    assert(sRefsAlive == 3);
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
 
     RefRelease(&ref_arena, a);
     assert(sRefsAlive == 0);
