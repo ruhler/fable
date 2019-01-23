@@ -45,10 +45,11 @@ typedef struct {
 } FbleInstrV;
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
-//   Allocate a struct value, then execute each of its arguments.
+//   Allocate a struct value, taking and popping its argc arguments from the
+//   top of the stack.
 typedef struct {
   FbleInstr _base;
-  FbleInstrV fields;
+  size_t argc;
 } FbleStructValueInstr;
 
 // FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR

@@ -1,0 +1,21 @@
+|| Failed Tests:
+||   5.1-06-func-types-match.tcl:1
+||   5.1-07-func-types-arg-name-mismatch.tcl:1
+||   5.2-04-func-value-recursive.tcl:1
+||   5.3-00-apply.tcl:1
+||   5.3-01-apply-multi-arg.tcl:1
+||   5.3-02-apply-func-maltyped.tcl:1
+||   7.2-06-let-recursive.tcl:1
+||   7.4-00-type-let-recursive-type.tcl:1
+||   7.4-03-type-let-type-recursive-type.tcl:1
+||   7.4-04-recursive-types-equal.tcl:1
+||   7.4-05-type-let-mutually-recursive-type.tcl:1
+||   7.4-06-type-let-bad-mutually-recursive-type.tcl:1
+||   8.2-01-poly-struct-type.tcl:1
+||   8.2-02-poly-func-type.tcl:1
+||   8.2-07-poly-union-cond-arg.tcl:1
+||   8.3-06-poly-apply-recursive-type.tcl:1
+||   build.fble.tcl:84
+|| 
+|| Test Summary:
+||   93 passed, 17 failed, 110 total

@@ -245,16 +245,18 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
+
         FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
         value->_base.tag = FBLE_STRUCT_VALUE;
         value->_base.strong_ref_count = 1;
         value->_base.break_cycle_ref_count = 0;
-        value->fields.size = struct_value_instr->fields.size;
+        value->fields.size = struct_value_instr->argc;
         value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
         *presult = &value->_base;
 
-        for (size_t i = 0; i < struct_value_instr->fields.size; ++i) {
-          tstack = TPush(arena, value->fields.xs + i, struct_value_instr->fields.xs[i], tstack);
+        for (size_t i = 0; i < struct_value_instr->argc; ++i) {
+          value->fields.xs[value->fields.size - i - 1] = vstack->value;
+          vstack = VPop(arena, vstack);
         }
         break;
       }

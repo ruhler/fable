@@ -1887,10 +1887,17 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       bool error = false;
-      FbleStructValueInstr* instr = FbleAlloc(arena, FbleStructValueInstr);
-      instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
+      instr->_base.tag = FBLE_PUSH_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->fields);
+      FbleVectorInit(arena, instr->values);
+
+      FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
+      struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      struct_instr->_base.refcount = 1;
+      struct_instr->argc = struct_type->fields.size;
+      instr->next = &struct_instr->_base;
+
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         Field* field = struct_type->fields.xs + i;
 
@@ -1909,7 +1916,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         }
         TypeDropStrongRef(arena, arg_type);
 
-        FbleVectorAppend(arena, instr->fields, mkarg);
+        FbleVectorAppend(arena, instr->values, mkarg);
       }
 
       if (error) {
@@ -3242,6 +3249,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
     switch (instrs->tag) {
       case FBLE_VAR_INSTR:
       case FBLE_FUNC_APPLY_INSTR:
+      case FBLE_STRUCT_VALUE_INSTR:
       case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
       case FBLE_GET_INSTR:
@@ -3268,16 +3276,6 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instrs;
         FbleFreeInstrs(arena, func_value_instr->body);
         FbleFree(arena, func_value_instr);
-        return;
-      }
-
-      case FBLE_STRUCT_VALUE_INSTR: {
-        FbleStructValueInstr* instr = (FbleStructValueInstr*)instrs;
-        for (size_t i = 0; i < instr->fields.size; ++i) {
-          FbleFreeInstrs(arena, instr->fields.xs[i]);
-        }
-        FbleFree(arena, instr->fields.xs);
-        FbleFree(arena, instr);
         return;
       }
 
