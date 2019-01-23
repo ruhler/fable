@@ -25,6 +25,9 @@ Fble Cleanup:
 * Share common code between checking FbleStructType, FbleUnionType, and
   FbleFuncType?
 
+Fble Performance:
+* Optimize reference counting scheme.
+
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an
   entity, it doesn't effect the use of that entity.
