@@ -53,11 +53,11 @@ typedef struct {
 } FbleStructValueInstr;
 
 // FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR
-//   Allocate a union value, then execute its argument.
+//   Allocate a union value, taking and popping its argument from the top of
+//   the stack.
 typedef struct {
   FbleInstr _base;
   size_t tag;
-  FbleInstr* mkarg;
 } FbleUnionValueInstr;
 
 // FbleAccessInstr -- FBLE_STRUCT_ACCESS_INSTR or FBLE_UNION_ACCESS_INSTR

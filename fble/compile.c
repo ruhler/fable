@@ -1986,11 +1986,18 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
       TypeDropStrongRef(arena, arg_type);
 
-      FbleUnionValueInstr* instr = FbleAlloc(arena, FbleUnionValueInstr);
-      instr->_base.tag = FBLE_UNION_VALUE_INSTR;
+      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
+      instr->_base.tag = FBLE_PUSH_INSTR;
       instr->_base.refcount = 1;
-      instr->tag = tag;
-      instr->mkarg = mkarg;
+      FbleVectorInit(arena, instr->values);
+      FbleVectorAppend(arena, instr->values, mkarg);
+
+      FbleUnionValueInstr* union_instr = FbleAlloc(arena, FbleUnionValueInstr);
+      union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
+      union_instr->_base.refcount = 1;
+      union_instr->tag = tag;
+      instr->next = &union_instr->_base;
+
       *instrs = &instr->_base;
       return type;
     }
@@ -3251,6 +3258,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_FUNC_APPLY_INSTR:
       case FBLE_STRUCT_VALUE_INSTR:
       case FBLE_STRUCT_ACCESS_INSTR:
+      case FBLE_UNION_VALUE_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
       case FBLE_GET_INSTR:
       case FBLE_PUT_INSTR:
@@ -3276,13 +3284,6 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instrs;
         FbleFreeInstrs(arena, func_value_instr->body);
         FbleFree(arena, func_value_instr);
-        return;
-      }
-
-      case FBLE_UNION_VALUE_INSTR: {
-        FbleUnionValueInstr* instr = (FbleUnionValueInstr*)instrs;
-        FbleFreeInstrs(arena, instr->mkarg);
-        FbleFree(arena, instrs);
         return;
       }
 

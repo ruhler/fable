@@ -4,7 +4,6 @@
 ||   5.2-04-func-value-recursive.tcl:1
 ||   5.3-00-apply.tcl:1
 ||   5.3-01-apply-multi-arg.tcl:1
-||   5.3-02-apply-func-maltyped.tcl:1
 ||   7.2-06-let-recursive.tcl:1
 ||   7.4-00-type-let-recursive-type.tcl:1
 ||   7.4-03-type-let-type-recursive-type.tcl:1
@@ -18,4 +17,4 @@
 ||   build.fble.tcl:84
 || 
 || Test Summary:
-||   93 passed, 17 failed, 110 total
+||   94 passed, 16 failed, 110 total

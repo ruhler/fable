@@ -274,16 +274,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
+
         FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
         union_value->_base.tag = FBLE_UNION_VALUE;
         union_value->_base.strong_ref_count = 1;
         union_value->_base.break_cycle_ref_count = 0;
         union_value->tag = union_value_instr->tag;
-        union_value->arg = NULL;
+        union_value->arg = vstack->value;
+        vstack = VPop(arena, vstack);
 
         *presult = &union_value->_base;
-
-        tstack = TPush(arena, &union_value->arg, union_value_instr->mkarg, tstack);
         break;
       }
 

@@ -1,5 +1,7 @@
 Fble:
 * Factor out and switch to new reference counting implementation.
+ - Define and use FbleNewStructValue and FbleNewUnionValue functions.
+ - Move implementation of refs into libfble
 * All the failing test cases should, hopefully, now pass.
 
 * Finish adding and fixing tests until snake.fble evaluates.
