@@ -46,7 +46,8 @@ typedef struct {
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value, taking and popping its argc arguments from the
-//   top of the stack.
+//   top of the stack, where the first argument is on the top of the stack,
+//   and subsequent arguments are further down the stack.
 typedef struct {
   FbleInstr _base;
   size_t argc;

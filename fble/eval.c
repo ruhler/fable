@@ -245,18 +245,23 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
+        size_t argc = struct_value_instr->argc;
 
-        FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
-        value->_base.tag = FBLE_STRUCT_VALUE;
-        value->_base.strong_ref_count = 1;
-        value->_base.break_cycle_ref_count = 0;
-        value->fields.size = struct_value_instr->argc;
-        value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
-        *presult = &value->_base;
-
+        FbleValue* argv[argc];
         for (size_t i = 0; i < struct_value_instr->argc; ++i) {
-          value->fields.xs[value->fields.size - i - 1] = vstack->value;
+          argv[i] = vstack->value;
           vstack = VPop(arena, vstack);
+        }
+
+        FbleValueV args = {
+          .size = argc,
+          .xs = argv,
+        };
+
+        *presult = FbleNewStructValue(arena, &args);
+
+        for (size_t i = 0; i < args.size; ++i) {
+          FbleDropStrongRef(arena, argv[i]);
         }
         break;
       }
@@ -274,16 +279,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-
-        FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
-        union_value->_base.tag = FBLE_UNION_VALUE;
-        union_value->_base.strong_ref_count = 1;
-        union_value->_base.break_cycle_ref_count = 0;
-        union_value->tag = union_value_instr->tag;
-        union_value->arg = vstack->value;
+        *presult = FbleNewUnionValue(arena, union_value_instr->tag, vstack->value);
+        FbleDropStrongRef(arena, vstack->value);
         vstack = VPop(arena, vstack);
-
-        *presult = &union_value->_base;
         break;
       }
 

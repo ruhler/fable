@@ -786,6 +786,39 @@ FbleValue* FbleBreakCycleRef(FbleArena* arena, FbleValue* src);
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
 void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
+
+// FbleNewStructValue --
+//   Create a new struct value with given arguments.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   args - The arguments to the struct value.
+//
+// Results:
+//   A newly allocated struct value with given args.
+//
+// Side effects:
+//   The returned struct value must be freed using FbleDropStrongRef when no
+//   longer in use. This function does not take ownership of any of the args
+//   reference counts.
+FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args);
+
+// FbleNewUnionValue --
+//   Create a new union value with given tag and argument.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   tag - The tag of the union value.
+//   arg - The argument of the union value.
+//
+// Results:
+//   A newly allocated union value with given tag and arg.
+//
+// Side effects:
+//   The returned union value must be freed using FbleDropStrongRef when no
+//   longer in use. This function does not take ownership of the arg's
+//   reference counts.
+FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg);
 
 // FbleEval --
 //   Type check and evaluate an expression.

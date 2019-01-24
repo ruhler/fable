@@ -538,3 +538,31 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
 
   UNREACHABLE("Should not get here");
 }
+
+// FbleNewStructValue -- see documentation in fble.h
+FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args)
+{
+  FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
+  value->_base.tag = FBLE_STRUCT_VALUE;
+  value->_base.strong_ref_count = 1;
+  value->_base.break_cycle_ref_count = 0;
+  value->fields.size = args->size;
+  value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
+
+  for (size_t i = 0; i < args->size; ++i) {
+    value->fields.xs[i] = FbleTakeStrongRef(args->xs[i]);
+  }
+  return &value->_base;
+}
+
+// FbleNewUnionValue -- see documentation in fble.h
+FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg)
+{
+  FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
+  union_value->_base.tag = FBLE_UNION_VALUE;
+  union_value->_base.strong_ref_count = 1;
+  union_value->_base.break_cycle_ref_count = 0;
+  union_value->tag = tag;
+  union_value->arg = FbleTakeStrongRef(arg);
+  return &union_value->_base;
+}

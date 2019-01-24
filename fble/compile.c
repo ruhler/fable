@@ -1898,7 +1898,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       struct_instr->argc = struct_type->fields.size;
       instr->next = &struct_instr->_base;
 
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+      for (size_t j = 0; j < struct_type->fields.size; ++j) {
+        size_t i = struct_type->fields.size - 1 - j;
         Field* field = struct_type->fields.xs + i;
 
         FbleInstr* mkarg = NULL;
