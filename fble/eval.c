@@ -50,7 +50,7 @@ static FbleValue* Deref(FbleValue* value, FbleValueTag tag)
   return value;
 }
 
-// TPush --
+// VPush --
 //   Push a value onto a value stack.
 //
 // Inputs:
