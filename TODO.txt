@@ -1,6 +1,7 @@
 Fble:
-* Create a separate variable stack in eval
- - To fix 3.2-07-struct-value-var-stack-smash.tcl and similar bugs.
+* Make an EXEC_JOIN instruction
+ - To fix the basic proc tests: moving the binding value from the data stack
+   to the var stack for now.
 * Remove result from ThreadStack
  - Always push the result to the top of the stack. 
 * Factor out and switch to new reference counting implementation.

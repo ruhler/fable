@@ -2006,13 +2006,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_ACCESS_EXPR: {
       FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
-      // Allocate a slot on the variable stack for the intermediate value
-      Vars nvars = {
-        .name = { .name = "", .loc = expr->loc },
-        .type = NULL,
-        .next = vars,
-      };
-
       FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
       instr->_base.tag = FBLE_PUSH_INSTR;
       instr->_base.refcount = 1;
@@ -2025,7 +2018,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       access->_base.refcount = 1;
       instr->next = &access->_base;
       access->loc = access_expr->field.loc;
-      Type* type = Compile(arena, &nvars, type_vars, access_expr->object, mkobj);
+      Type* type = Compile(arena, vars, type_vars, access_expr->object, mkobj);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &instr->_base);
@@ -2070,13 +2063,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_COND_EXPR: {
       FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
 
-      // Allocate a slot on the variable stack for the intermediate value
-      Vars nvars = {
-        .name = { .name = "", .loc = expr->loc },
-        .type = NULL,
-        .next = vars,
-      };
-
       FblePushInstr* push = FbleAlloc(arena, FblePushInstr);
       push->_base.tag = FBLE_PUSH_INSTR;
       push->_base.refcount = 1;
@@ -2085,7 +2071,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleInstr** mkobj = FbleVectorExtend(arena, push->values);
       *mkobj = NULL;
-      Type* type = Compile(arena, &nvars, type_vars, cond_expr->condition, mkobj);
+      Type* type = Compile(arena, vars, type_vars, cond_expr->condition, mkobj);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &push->_base);
@@ -2220,17 +2206,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_APPLY_EXPR: {
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
-      // Allocate space on the stack for the function and argument values.
-      Vars nvd[1 + apply_expr->args.size];
-      Vars* nvars = vars;
-      for (size_t i = 0; i < 1 + apply_expr->args.size; ++i) {
-        nvd[i].type = NULL;
-        nvd[i].name.name = "";
-        nvd[i].name.loc = expr->loc;
-        nvd[i].next = nvars;
-        nvars = nvd + i;
-      };
-
       FblePushInstr* push = FbleAlloc(arena, FblePushInstr);
       push->_base.tag = FBLE_PUSH_INSTR;
       push->_base.refcount = 1;
@@ -2238,14 +2213,14 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       push->next = NULL;
 
       // Compile the function value.
-      Type* type = Compile(arena, nvars, type_vars, apply_expr->func, FbleVectorExtend(arena, push->values));
+      Type* type = Compile(arena, vars, type_vars, apply_expr->func, FbleVectorExtend(arena, push->values));
       Eval(arena, type, NULL, NULL);
       bool error = (type == NULL);
 
       // Compile the arguments.
       Type* arg_types[apply_expr->args.size];
       for (size_t i = 0; i < apply_expr->args.size; ++i) {
-        arg_types[i] = Compile(arena, nvars, type_vars, apply_expr->args.xs[i], FbleVectorExtend(arena, push->values));
+        arg_types[i] = Compile(arena, vars, type_vars, apply_expr->args.xs[i], FbleVectorExtend(arena, push->values));
         Eval(arena, arg_types[i], NULL, NULL);
         error = error || (arg_types[i] == NULL);
       }

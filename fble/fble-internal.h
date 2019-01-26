@@ -133,7 +133,7 @@ typedef struct {
 } FbleExecInstr;
 
 // FblePopInstr -- FBLE_POP_INSTR
-//   Pop count values from the value stack.
+//   Pop count values from the variable value stack.
 typedef struct {
   FbleInstr _base;
   size_t count;
@@ -176,8 +176,10 @@ typedef struct {
 } FbleLetInstr;
 
 // FblePushInstr -- FBLE_PUSH_INSTR
-//   Evaluate and push the given values on top of the value stack and execute
-//   the following instruction.
+//   Evaluate and push the given values on top of the (data) value stack and
+//   execute the following instruction.
+//   TODO: Rename this to FBLE_COMPOUND_INSTR once instructions implicitly
+//   push their results to the value stack.
 typedef struct {
   FbleInstr _base;
   FbleInstrV values;

@@ -136,9 +136,13 @@ static IStack* IPush(FbleArena* arena, FbleValue** presult, FbleInstr* instr, IS
 //   use. Prints a message to stderr in case of error.
 static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 {
-  FbleVStack* vstack = NULL;
+  // The var_stack is used to store named values (aka variables).
+  FbleVStack* var_stack = NULL;
+
+  // The data_stack is used to store anonymous intermediate values.
+  FbleVStack* data_stack = NULL;
   if (arg != NULL) {
-    vstack = VPush(arena, FbleTakeStrongRef(arg), vstack);
+    data_stack = VPush(arena, FbleTakeStrongRef(arg), data_stack);
   }
     
   FbleValue* final_result = NULL;
@@ -154,7 +158,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
     switch (instr->tag) {
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
-        FbleVStack* v = vstack;
+        FbleVStack* v = var_stack;
         for (size_t i = 0; i < var_instr->position; ++i) {
           assert(v->tail != NULL);
           v = v->tail;
@@ -180,7 +184,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           rv->value = NULL;
           rv->broke_cycle = false;
           rv->siblings = curr;
-          vstack = VPush(arena, &rv->_base, vstack);
+          var_stack = VPush(arena, &rv->_base, var_stack);
           istack = IPush(arena, &rv->value, let_instr->bindings.xs[i], istack);
 
           if (first == NULL) {
@@ -211,7 +215,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         // need to copy those variables that are used in the body of the
         // function. This has implications for performance and memory that
         // should be considered.
-        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
           value->pop.count++;
         }
@@ -222,21 +226,21 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
         FbleValue* args[apply_instr->argc];
         for (size_t i = 0; i < apply_instr->argc; ++i) {
-          args[i] = vstack->value;
-          vstack = VPop(arena, vstack);
+          args[i] = data_stack->value;
+          data_stack = VPop(arena, data_stack);
         }
 
-        FbleFuncValue* func = (FbleFuncValue*)Deref(vstack->value, FBLE_FUNC_VALUE);
+        FbleFuncValue* func = (FbleFuncValue*)Deref(data_stack->value, FBLE_FUNC_VALUE);
 
-        // Push the function's context on top of the value stack.
+        // Push the function's context on top of the variable stack.
         for (FbleVStack* vs = func->context; vs != NULL; vs = vs->tail) {
-          vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
+          var_stack = VPush(arena, FbleTakeStrongRef(vs->value), var_stack);
         }
 
-        // Push the function args on top of the value stack.
+        // Push the function args on top of the variable stack.
         for (size_t i = 0; i < apply_instr->argc; ++i) {
           size_t j = apply_instr->argc - 1 - i;
-          vstack = VPush(arena, args[j], vstack);
+          var_stack = VPush(arena, args[j], var_stack);
         }
 
         istack = IPush(arena, NULL, &func->pop._base, istack);
@@ -250,8 +254,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
         FbleValue* argv[argc];
         for (size_t i = 0; i < struct_value_instr->argc; ++i) {
-          argv[i] = vstack->value;
-          vstack = VPop(arena, vstack);
+          argv[i] = data_stack->value;
+          data_stack = VPop(arena, data_stack);
         }
 
         FbleValueV args = {
@@ -269,35 +273,40 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        assert(vstack != NULL);
-        FbleStructValue* sv = (FbleStructValue*)Deref(vstack->value, FBLE_STRUCT_VALUE);
+        assert(data_stack != NULL);
+        FbleStructValue* sv = (FbleStructValue*)Deref(data_stack->value, FBLE_STRUCT_VALUE);
         assert(access_instr->tag < sv->fields.size);
         *presult = FbleTakeStrongRef(sv->fields.xs[access_instr->tag]);
-        FbleDropStrongRef(arena, vstack->value);
-        vstack = VPop(arena, vstack);
+        FbleDropStrongRef(arena, data_stack->value);
+        data_stack = VPop(arena, data_stack);
         break;
       }
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-        *presult = FbleNewUnionValue(arena, union_value_instr->tag, vstack->value);
-        FbleDropStrongRef(arena, vstack->value);
-        vstack = VPop(arena, vstack);
+        *presult = FbleNewUnionValue(arena, union_value_instr->tag, data_stack->value);
+        FbleDropStrongRef(arena, data_stack->value);
+        data_stack = VPop(arena, data_stack);
         break;
       }
 
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        assert(vstack != NULL);
-        FbleUnionValue* uv = (FbleUnionValue*)Deref(vstack->value, FBLE_UNION_VALUE);
+        assert(data_stack != NULL);
+        FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
 
           // Clean up the stacks.
-          while (vstack != NULL) {
-            FbleDropStrongRef(arena, vstack->value);
-            vstack = VPop(arena, vstack);
+          while (var_stack != NULL) {
+            FbleDropStrongRef(arena, var_stack->value);
+            var_stack = VPop(arena, var_stack);
+          }
+
+          while (data_stack != NULL) {
+            FbleDropStrongRef(arena, data_stack->value);
+            data_stack = VPop(arena, data_stack);
           }
 
           while (istack != NULL) {
@@ -311,8 +320,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         }
         *presult = FbleTakeStrongRef(uv->arg);
 
-        FbleDropStrongRef(arena, vstack->value);
-        vstack = VPop(arena, vstack);
+        FbleDropStrongRef(arena, data_stack->value);
+        data_stack = VPop(arena, data_stack);
         break;
       }
 
@@ -323,8 +332,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_GET_PROC_VALUE;
 
-        value->port = vstack->value;
-        vstack = VPop(arena, vstack);
+        value->port = data_stack->value;
+        data_stack = VPop(arena, data_stack);
 
         *presult = &value->_base._base;
         break;
@@ -337,11 +346,11 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_PUT_PROC_VALUE;
 
-        value->arg = vstack->value;
-        vstack = VPop(arena, vstack);
+        value->arg = data_stack->value;
+        data_stack = VPop(arena, data_stack);
 
-        value->port = vstack->value;
-        vstack = VPop(arena, vstack);
+        value->port = data_stack->value;
+        data_stack = VPop(arena, data_stack);
 
         *presult = &value->_base._base;
         break;
@@ -386,7 +395,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         // need to copy those variables that are used in the body of the
         // link process. This has implications for performance and memory that
         // should be considered.
-        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
           value->pop.count++;
         }
@@ -418,7 +427,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         // need to copy those variables that are used in the body of the
         // exec process. This has implications for performance and memory that
         // should be considered.
-        for (FbleVStack* vs = vstack; vs != NULL;  vs = vs->tail) {
+        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
           value->pop.count++;
         }
@@ -436,7 +445,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_PROC_INSTR: {
         FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-        FbleProcValue* proc = (FbleProcValue*)Deref(vstack->value, FBLE_PROC_VALUE);
+        FbleProcValue* proc = (FbleProcValue*)Deref(data_stack->value, FBLE_PROC_VALUE);
 
         // Some proc values own the instructions they use to execute, which
         // means we need to ensure the proc values are retained until they are
@@ -492,30 +501,30 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           case FBLE_LINK_PROC_VALUE: {
             FbleLinkProcValue* link = (FbleLinkProcValue*)proc;
 
-            // Reserve a slot on the value stack for the link body ProcValue.
-            vstack = VPush(arena, NULL, vstack);
-            FbleValue** body = &vstack->value;
+            // Reserve a slot on the data stack for the link body ProcValue.
+            data_stack = VPush(arena, NULL, data_stack);
+            FbleValue** body = &data_stack->value;
 
-            // Push the body's context on top of the value stack.
+            // Push the body's context on top of the variable stack.
             for (FbleVStack* vs = link->context; vs != NULL; vs = vs->tail) {
-              vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
+              var_stack = VPush(arena, FbleTakeStrongRef(vs->value), var_stack);
             }
 
-            // Allocate the link and push the ports on top of the value stack.
+            // Allocate the link and push the ports on top of the variable stack.
             FbleInputValue* get = FbleAlloc(arena, FbleInputValue);
             get->_base.tag = FBLE_INPUT_VALUE;
             get->_base.strong_ref_count = 2;
             get->_base.break_cycle_ref_count = 0;
             get->head = NULL;
             get->tail = NULL;
-            vstack = VPush(arena, &get->_base, vstack);
+            var_stack = VPush(arena, &get->_base, var_stack);
 
             FbleOutputValue* put = FbleAlloc(arena, FbleOutputValue);
             put->_base.tag = FBLE_OUTPUT_VALUE;
             put->_base.strong_ref_count = 1;
             put->_base.break_cycle_ref_count = 0;
             put->dest = get;
-            vstack = VPush(arena, &put->_base, vstack);
+            var_stack = VPush(arena, &put->_base, var_stack);
 
             // Set up the instruction stack to finish execution.
             istack = IPush(arena, presult, &link->proc._base, istack);
@@ -527,29 +536,31 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           case FBLE_EXEC_PROC_VALUE: {
             FbleExecProcValue* exec = (FbleExecProcValue*)proc;
 
-            // Reserve a slot on the value stack for the exec body ProcValue.
-            vstack = VPush(arena, NULL, vstack);
-            FbleValue** body = &vstack->value;
+            // Reserve a slot on the data stack for the exec body ProcValue.
+            data_stack = VPush(arena, NULL, data_stack);
+            FbleValue** body = &data_stack->value;
 
-            // Push the body's context on top of the value stack.
+            // Push the body's context on top of the variable stack.
             for (FbleVStack* vs = exec->context; vs != NULL; vs = vs->tail) {
-              vstack = VPush(arena, FbleTakeStrongRef(vs->value), vstack);
+              var_stack = VPush(arena, FbleTakeStrongRef(vs->value), var_stack);
             }
 
             assert(exec->bindings.size == 1 && "TODO: Support multi-binding exec");
 
-            // Reserve a slot on the value stack for the binding value.
-            vstack = VPush(arena, NULL, vstack);
-            FbleValue** arg = &vstack->value;
+            // Reserve a slot on the data stack for the binding value.
+            data_stack = VPush(arena, NULL, data_stack);
+            FbleValue** arg = &data_stack->value;
 
             // Push the argument proc value on the stack in preparation for
             // execution.
-            vstack = VPush(arena, FbleTakeStrongRef(exec->bindings.xs[0]), vstack);
+            data_stack = VPush(arena, FbleTakeStrongRef(exec->bindings.xs[0]), data_stack);
 
             // Set up the instruction stack to finish execution.
             istack = IPush(arena, presult, &exec->proc._base, istack);
             istack = IPush(arena, NULL, &exec->pop._base, istack);
             istack = IPush(arena, body, exec->body, istack);
+            // TODO: Add a Join instruction here to move the binding over to
+            // the variable stack.
             istack = IPush(arena, arg, &exec->proc._base, istack);
             break;
           }
@@ -559,12 +570,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_COND_INSTR: {
         FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
-        assert(vstack != NULL);
-        FbleUnionValue* uv = (FbleUnionValue*)Deref(vstack->value, FBLE_UNION_VALUE);
+        assert(data_stack != NULL);
+        FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
         assert(uv->tag < cond_instr->choices.size);
         istack = IPush(arena, presult, cond_instr->choices.xs[uv->tag], istack);
-        FbleDropStrongRef(arena, vstack->value);
-        vstack = VPop(arena, vstack);
+        FbleDropStrongRef(arena, data_stack->value);
+        data_stack = VPop(arena, data_stack);
         break;
       }
 
@@ -573,8 +584,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
         istack = IPush(arena, presult, push_instr->next, istack);
         for (size_t i = 0; i < push_instr->values.size; ++i) {
-          vstack = VPush(arena, NULL, vstack);
-          istack = IPush(arena, &vstack->value, push_instr->values.xs[i], istack);
+          data_stack = VPush(arena, NULL, data_stack);
+          istack = IPush(arena, &data_stack->value, push_instr->values.xs[i], istack);
         }
         break;
       }
@@ -582,16 +593,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_POP_INSTR: {
         FblePopInstr* pop_instr = (FblePopInstr*)instr;
         for (size_t i = 0; i < pop_instr->count; ++i) {
-          assert(vstack != NULL);
-          FbleDropStrongRef(arena, vstack->value);
-          vstack = VPop(arena, vstack);
+          assert(var_stack != NULL);
+          FbleDropStrongRef(arena, var_stack->value);
+          var_stack = VPop(arena, var_stack);
         }
         break;
       }
 
       case FBLE_BREAK_CYCLE_INSTR: {
         FbleBreakCycleInstr* break_cycle_instr = (FbleBreakCycleInstr*)instr;
-        FbleVStack* vs = vstack;
+        FbleVStack* vs = var_stack;
         for (size_t i = 0; i < break_cycle_instr->count; ++i) {
           assert(vs != NULL);
           FbleRefValue* rv = (FbleRefValue*) vs->value;
@@ -609,7 +620,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
     }
   }
-  assert(vstack == NULL);
+  assert(var_stack == NULL);
+  assert(data_stack == NULL);
   return final_result;
 }
 
