@@ -422,6 +422,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->proc.pop._base.tag = FBLE_POP_INSTR;
         value->proc.pop._base.refcount = 1;
         value->proc.pop.count = 1;
+        value->join._base.tag = FBLE_JOIN_INSTR;
+        value->join._base.refcount = 1;
 
         // TODO: This copies the entire context, but really we should only
         // need to copy those variables that are used in the body of the
@@ -451,6 +453,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         // means we need to ensure the proc values are retained until they are
         // done executing. To do so, simply keep the proc value on the value
         // stack until after it's done executing.
+        // TODO: But we need to pop from the data_stack, not the value stack!
         istack = IPush(arena, NULL, &proc_instr->pop._base, istack);
 
         switch (proc->tag) {
@@ -559,8 +562,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             istack = IPush(arena, presult, &exec->proc._base, istack);
             istack = IPush(arena, NULL, &exec->pop._base, istack);
             istack = IPush(arena, body, exec->body, istack);
-            // TODO: Add a Join instruction here to move the binding over to
-            // the variable stack.
+            istack = IPush(arena, NULL, &exec->join._base, istack);
             istack = IPush(arena, arg, &exec->proc._base, istack);
             break;
           }
@@ -597,6 +599,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           FbleDropStrongRef(arena, var_stack->value);
           var_stack = VPop(arena, var_stack);
         }
+        break;
+      }
+
+      case FBLE_JOIN_INSTR: {
+        var_stack = VPush(arena, data_stack->value, var_stack);
+        data_stack = VPop(arena, data_stack);
         break;
       }
 

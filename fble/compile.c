@@ -3239,6 +3239,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_GET_INSTR:
       case FBLE_PUT_INSTR:
       case FBLE_PROC_INSTR:
+      case FBLE_JOIN_INSTR:
       case FBLE_POP_INSTR:
       case FBLE_BREAK_CYCLE_INSTR: {
         FbleFree(arena, instrs);

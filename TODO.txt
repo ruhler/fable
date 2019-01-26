@@ -1,7 +1,6 @@
 Fble:
-* Make an EXEC_JOIN instruction
- - To fix the basic proc tests: moving the binding value from the data stack
-   to the var stack for now.
+* Pop proc value from data stack, not value stack.
+ - To fix the basic proc tests
 * Remove result from ThreadStack
  - Always push the result to the top of the stack. 
 * Factor out and switch to new reference counting implementation.

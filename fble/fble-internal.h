@@ -27,6 +27,7 @@ typedef enum {
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
   FBLE_POP_INSTR,
+  FBLE_JOIN_INSTR,
   FBLE_BREAK_CYCLE_INSTR,
 } FbleInstrTag;
 
@@ -131,6 +132,12 @@ typedef struct {
   FbleInstrV bindings;
   FbleInstr* body;
 } FbleExecInstr;
+
+// FbleJoinInstr -- FBLE_JOIN_INSTR
+//   Move the top value of the data stack to the variable stack.
+typedef struct {
+  FbleInstr _base;
+} FbleJoinInstr;
 
 // FblePopInstr -- FBLE_POP_INSTR
 //   Pop count values from the variable value stack.
@@ -296,6 +303,7 @@ typedef struct {
   FbleInstr* body;
   FblePopInstr pop;
   FbleProcInstr proc;
+  FbleJoinInstr join;
 } FbleExecProcValue;
 
 // FbleValues --
