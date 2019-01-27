@@ -16,8 +16,8 @@ typedef enum {
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_ACCESS_INSTR,
   FBLE_COND_INSTR,
-
   FBLE_FUNC_VALUE_INSTR,
+
   FBLE_FUNC_APPLY_INSTR,
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
@@ -97,7 +97,7 @@ typedef struct {
 //     ==> ...
 //
 // istack: ...
-//     ==> ...,choices[obj.tag]
+//     ==> ..., choices[obj.tag]
 typedef struct {
   FbleInstr _base;
   FbleInstrV choices;
@@ -106,6 +106,9 @@ typedef struct {
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
 //   Allocate a function, capturing the current variable context in the
 //   process.
+//
+// dstack: ...
+//     ==> ..., func
 typedef struct {
   FbleInstr _base;
   size_t argc;

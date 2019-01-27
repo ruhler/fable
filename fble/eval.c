@@ -241,6 +241,34 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_FUNC_VALUE_INSTR: {
+        FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+        FbleFuncValue* value = FbleAlloc(arena, FbleFuncValue);
+        value->_base.tag = FBLE_FUNC_VALUE;
+        value->_base.strong_ref_count = 1;
+        value->_base.break_cycle_ref_count = 0;
+        value->context = NULL;
+        value->body = func_value_instr->body;
+        value->body->refcount++;
+        value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop._base.refcount = 1;
+        value->pop.count = func_value_instr->argc;
+        value->dpop._base.tag = FBLE_DATA_POP_INSTR;
+        value->dpop._base.refcount = 1;
+
+        // TODO: This copies the entire context, but really we should only
+        // need to copy those variables that are used in the body of the
+        // function. This has implications for performance and memory that
+        // should be considered.
+        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
+          value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
+          value->pop.count++;
+        }
+
+        data_stack = VPush(arena, &value->_base, data_stack);
+        break;
+      }
+
 
 
       case FBLE_VAR_INSTR: {
@@ -285,33 +313,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_FUNC_VALUE_INSTR: {
-        FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-        FbleFuncValue* value = FbleAlloc(arena, FbleFuncValue);
-        value->_base.tag = FBLE_FUNC_VALUE;
-        value->_base.strong_ref_count = 1;
-        value->_base.break_cycle_ref_count = 0;
-        value->context = NULL;
-        value->body = func_value_instr->body;
-        value->body->refcount++;
-        value->pop._base.tag = FBLE_POP_INSTR;
-        value->pop._base.refcount = 1;
-        value->pop.count = func_value_instr->argc;
-        value->dpop._base.tag = FBLE_DATA_POP_INSTR;
-        value->dpop._base.refcount = 1;
-
-        // TODO: This copies the entire context, but really we should only
-        // need to copy those variables that are used in the body of the
-        // function. This has implications for performance and memory that
-        // should be considered.
-        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
-          value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
-          value->pop.count++;
-        }
-
-        data_stack = VPush(arena, &value->_base, data_stack);
-        break;
-      }
 
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
@@ -330,7 +331,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           data_stack = VPop(arena, data_stack);
         }
 
-        // The func value own the instructions we use to execute the body,
+        // The func value owns the instructions we use to execute the body,
         // which means we need to ensure the func value is retained until
         // the body is done executing. To do so, keep the func value on the
         // data stack until after it's done executing.

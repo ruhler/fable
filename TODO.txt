@@ -1,9 +1,11 @@
 Fble:
 * Remove result from ThreadStack
 * Cleanup eval
- - Change PUSH_INSTR to COMPOUND_INSTR.
- - Better names and documentation for instructions.
+ - Better names and documentation for instructions and switch to
+   COMPOUND_INSTR.
  - Remove unused PushInstr.
+ - Clean up FuncProcValue definition: it should store a pre-compiled compound
+   instr rather than a bunch of different instructions.
 * Factor out and switch to new reference counting implementation.
 * All the failing test cases should, hopefully, now pass.
 
