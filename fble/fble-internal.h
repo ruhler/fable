@@ -111,10 +111,10 @@ typedef struct {
 } FblePutInstr;
 
 // FbleEvalInstr -- FBLE_EVAL_INSTR
-//   Allocate an FbleEvalProcValue process.
+//   Allocate an FbleEvalProcValue process, taking the result value from the
+//   stack.
 typedef struct {
   FbleInstr _base;
-  FbleInstr* body;
 } FbleEvalInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR

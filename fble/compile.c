@@ -2368,26 +2368,33 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
     case FBLE_EVAL_EXPR: {
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
-      ProcType* type = FbleAlloc(arena, ProcType);
-      type->_base.tag = PROC_TYPE;
-      type->_base.loc = expr->loc;
-      type->_base.strong_ref_count = 1;
-      type->_base.break_cycle_ref_count = 0;
 
-      FbleEvalInstr* instr = FbleAlloc(arena, FbleEvalInstr);
-      instr->_base.tag = FBLE_EVAL_INSTR;
-      instr->_base.refcount = 1;
-      instr->body = NULL;
-
-      type->rtype = Compile(arena, vars, type_vars, eval_expr->expr, &instr->body);
-      if (type->rtype == NULL) {
-        TypeDropStrongRef(arena, &type->_base);
-        FbleFreeInstrs(arena, &instr->_base);
+      FbleInstr* mkbody = NULL;
+      Type* type = Compile(arena, vars, type_vars, eval_expr->expr, &mkbody);
+      if (type == NULL) {
         return NULL;
       }
+
+      ProcType* proc_type = FbleAlloc(arena, ProcType);
+      proc_type->_base.tag = PROC_TYPE;
+      proc_type->_base.loc = expr->loc;
+      proc_type->_base.strong_ref_count = 1;
+      proc_type->_base.break_cycle_ref_count = 0;
+      proc_type->rtype = type;
+
+      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
+      instr->_base.tag = FBLE_PUSH_INSTR;
+      instr->_base.refcount = 1;
+      FbleVectorInit(arena, instr->values);
+      FbleVectorAppend(arena, instr->values, mkbody);
+
+      FbleEvalInstr* eval_instr = FbleAlloc(arena, FbleEvalInstr);
+      eval_instr->_base.tag = FBLE_EVAL_INSTR;
+      eval_instr->_base.refcount = 1;
+      instr->next = &eval_instr->_base;
       
       *instrs = &instr->_base;
-      return &type->_base;
+      return &proc_type->_base;
     }
 
     case FBLE_LINK_EXPR: {
@@ -3236,6 +3243,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_VALUE_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_EVAL_INSTR:
       case FBLE_GET_INSTR:
       case FBLE_PUT_INSTR:
       case FBLE_PROC_INSTR:
@@ -3262,13 +3270,6 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instrs;
         FbleFreeInstrs(arena, func_value_instr->body);
         FbleFree(arena, func_value_instr);
-        return;
-      }
-
-      case FBLE_EVAL_INSTR: {
-        FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instrs;
-        FbleFreeInstrs(arena, proc_eval_instr->body);
-        FbleFree(arena, proc_eval_instr);
         return;
       }
 

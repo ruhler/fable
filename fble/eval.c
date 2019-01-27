@@ -357,17 +357,15 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
 
       case FBLE_EVAL_INSTR: {
-        FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instr;
         FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);
         proc_value->_base._base.tag = FBLE_PROC_VALUE;
         proc_value->_base._base.strong_ref_count = 1;
         proc_value->_base._base.break_cycle_ref_count = 0;
         proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
-        proc_value->result = NULL;
+        proc_value->result = data_stack->value;
+        data_stack = VPop(arena, data_stack);
 
         *presult = &proc_value->_base._base;
-
-        istack = IPush(arena, &proc_value->result, proc_eval_instr->body, istack);
         break;
       }
 
