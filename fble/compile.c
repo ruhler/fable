@@ -1986,17 +1986,17 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
       TypeDropStrongRef(arena, arg_type);
 
-      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
-      instr->_base.tag = FBLE_PUSH_INSTR;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->values);
-      FbleVectorAppend(arena, instr->values, mkarg);
+      FbleVectorInit(arena, instr->instrs);
+      FbleVectorAppend(arena, instr->instrs, mkarg);
 
       FbleUnionValueInstr* union_instr = FbleAlloc(arena, FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->_base.refcount = 1;
       union_instr->tag = tag;
-      instr->next = &union_instr->_base;
+      FbleVectorAppend(arena, instr->instrs, &union_instr->_base);
 
       *instrs = &instr->_base;
       return type;

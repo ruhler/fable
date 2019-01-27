@@ -12,9 +12,9 @@
 typedef enum {
   FBLE_COMPOUND_INSTR,
   FBLE_STRUCT_VALUE_INSTR,
+  FBLE_UNION_VALUE_INSTR,
 
   FBLE_STRUCT_ACCESS_INSTR,
-  FBLE_UNION_VALUE_INSTR,
   FBLE_UNION_ACCESS_INSTR,
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
@@ -50,12 +50,17 @@ typedef struct {
 
 // FbleCompoundInstr -- FBLE_COMPOUND_INSTR
 //   Execute a sequence of instructions in order.
+//
+// istack: ...
+//     ==> ..., iN, ..., i2, i1
 typedef struct {
   FbleInstr _base;
   FbleInstrV instrs;
 } FbleCompoundInstr;
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
+//   Allocate a struct value.
+//
 // dstack:  ..., a1, a2, ..., aN
 //     ==>  ..., struct(a1, a2, ..., aN)
 typedef struct {
@@ -64,8 +69,10 @@ typedef struct {
 } FbleStructValueInstr;
 
 // FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR
-//   Allocate a union value, taking and popping its argument from the top of
-//   the stack.
+//   Allocate a unio value.
+//
+// dstack: ..., arg
+//     ==> ..., union(arg)
 typedef struct {
   FbleInstr _base;
   size_t tag;

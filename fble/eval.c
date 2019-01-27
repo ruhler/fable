@@ -176,6 +176,15 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_UNION_VALUE_INSTR: {
+        FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
+        FbleValue* arg = data_stack->value;
+        data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, FbleNewUnionValue(arena, union_value_instr->tag, arg), data_stack);
+        FbleDropStrongRef(arena, arg);
+        break;
+      }
+
 
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
@@ -284,15 +293,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, FbleTakeStrongRef(sv->fields.xs[access_instr->tag]), data_stack);
         FbleDropStrongRef(arena, &sv->_base);
-        break;
-      }
-
-      case FBLE_UNION_VALUE_INSTR: {
-        FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-        FbleValue* arg = data_stack->value;
-        data_stack = VPop(arena, data_stack);
-        data_stack = VPush(arena, FbleNewUnionValue(arena, union_value_instr->tag, arg), data_stack);
-        FbleDropStrongRef(arena, arg);
         break;
       }
 
