@@ -10,11 +10,8 @@
 //   a thread.
 // 
 // Fields:
-//   result - Pointer to where the result of evaluating an expression should
-//            be stored.
 //   instr -  The instructions for executing the expression.
 typedef struct IStack {
-  FbleValue** result;
   FbleInstr* instr;
   struct IStack* tail;
 } IStack;
@@ -22,7 +19,7 @@ typedef struct IStack {
 static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
 static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
 static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
-static IStack* IPush(FbleArena* arena, FbleValue** presult, FbleInstr* instr, IStack* tail); 
+static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail); 
 
 static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg);
 
@@ -93,11 +90,10 @@ static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
 }
 
 // IPush --
-//   Push an element onto an instruction stack.
+//   Push an instruction onto an instruction stack.
 //
 // Inputs:
 //   arena - the arena to use for allocations
-//   presult - the result pointer to push
 //   instr - the instr to push
 //   tail - the stack to push to
 //
@@ -106,11 +102,10 @@ static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
 //
 // Side effects:
 //   Allocates a new IStack instance that should be freed when done.
-static IStack* IPush(FbleArena* arena, FbleValue** presult, FbleInstr* instr, IStack* tail)
+static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail)
 {
   assert(instr != NULL && "IPush NULL FbleInstr");
   IStack* istack = FbleAlloc(arena, IStack);
-  istack->result = presult;
   istack->instr = instr;
   istack->tail = tail;
   return istack;
@@ -145,11 +140,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
     data_stack = VPush(arena, FbleTakeStrongRef(arg), data_stack);
   }
     
-  FbleValue* final_result = NULL;
-  IStack* istack = IPush(arena, &final_result, prgm, NULL);
-
+  IStack* istack = IPush(arena, prgm, NULL);
   while (istack != NULL) {
-    FbleValue** presult = istack->result;
     FbleInstr* instr = istack->instr;
     IStack* tstack_done = istack;
     istack = istack->tail;
@@ -163,16 +155,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           assert(v->tail != NULL);
           v = v->tail;
         }
-        *presult = FbleTakeStrongRef(v->value);
+        data_stack = VPush(arena, FbleTakeStrongRef(v->value), data_stack);
         break;
       }
 
       case FBLE_LET_INSTR: {
         FbleLetInstr* let_instr = (FbleLetInstr*)instr;
 
-        istack = IPush(arena, NULL, &let_instr->pop._base, istack);
-        istack = IPush(arena, presult, let_instr->body, istack);
-        istack = IPush(arena, NULL, &let_instr->break_cycle._base, istack);
+        istack = IPush(arena, &let_instr->pop._base, istack);
+        istack = IPush(arena, let_instr->body, istack);
+        istack = IPush(arena, &let_instr->break_cycle._base, istack);
 
         FbleRefValue* first = NULL;
         FbleRefValue* curr = NULL;
@@ -186,8 +178,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           rv->siblings = curr;
           var_stack = VPush(arena, &rv->_base, var_stack);
 
-          data_stack = VPush(arena, NULL, data_stack);
-          istack = IPush(arena, &data_stack->value, let_instr->bindings.xs[i], istack);
+          istack = IPush(arena, let_instr->bindings.xs[i], istack);
 
           if (first == NULL) {
             first = rv;
@@ -210,8 +201,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->body->refcount++;
         value->pop._base.tag = FBLE_POP_INSTR;
         value->pop._base.refcount = 1;
-        value->pop.count = 1 + func_value_instr->argc;
-        *presult = &value->_base;
+        value->pop.count = func_value_instr->argc;
+        value->dpop._base.tag = FBLE_DATA_POP_INSTR;
+        value->dpop._base.refcount = 1;
 
         // TODO: This copies the entire context, but really we should only
         // need to copy those variables that are used in the body of the
@@ -221,32 +213,37 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
           value->pop.count++;
         }
+
+        data_stack = VPush(arena, &value->_base, data_stack);
         break;
       }
 
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
-        FbleValue* args[apply_instr->argc];
-        for (size_t i = 0; i < apply_instr->argc; ++i) {
-          args[i] = data_stack->value;
-          data_stack = VPop(arena, data_stack);
-        }
 
         FbleFuncValue* func = (FbleFuncValue*)Deref(data_stack->value, FBLE_FUNC_VALUE);
+        data_stack = VPop(arena, data_stack);
 
         // Push the function's context on top of the variable stack.
         for (FbleVStack* vs = func->context; vs != NULL; vs = vs->tail) {
           var_stack = VPush(arena, FbleTakeStrongRef(vs->value), var_stack);
         }
 
-        // Push the function args on top of the variable stack.
+        // Move the function args from the data stack to the variable stack.
         for (size_t i = 0; i < apply_instr->argc; ++i) {
-          size_t j = apply_instr->argc - 1 - i;
-          var_stack = VPush(arena, args[j], var_stack);
+          var_stack = VPush(arena, data_stack->value, var_stack);
+          data_stack = VPop(arena, data_stack);
         }
 
-        istack = IPush(arena, NULL, &func->pop._base, istack);
-        istack = IPush(arena, presult, func->body, istack);
+        // The func value own the instructions we use to execute the body,
+        // which means we need to ensure the func value is retained until
+        // the body is done executing. To do so, keep the func value on the
+        // data stack until after it's done executing.
+        data_stack = VPush(arena, &func->_base, data_stack);
+
+        istack = IPush(arena, &func->pop._base, istack);
+        istack = IPush(arena, &func->dpop._base, istack);
+        istack = IPush(arena, func->body, istack);
         break;
       }
 
@@ -265,7 +262,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           .xs = argv,
         };
 
-        *presult = FbleNewStructValue(arena, &args);
+        data_stack = VPush(arena, FbleNewStructValue(arena, &args), data_stack);
 
         for (size_t i = 0; i < args.size; ++i) {
           FbleDropStrongRef(arena, argv[i]);
@@ -278,17 +275,18 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         assert(data_stack != NULL);
         FbleStructValue* sv = (FbleStructValue*)Deref(data_stack->value, FBLE_STRUCT_VALUE);
         assert(access_instr->tag < sv->fields.size);
-        *presult = FbleTakeStrongRef(sv->fields.xs[access_instr->tag]);
-        FbleDropStrongRef(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, FbleTakeStrongRef(sv->fields.xs[access_instr->tag]), data_stack);
+        FbleDropStrongRef(arena, &sv->_base);
         break;
       }
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-        *presult = FbleNewUnionValue(arena, union_value_instr->tag, data_stack->value);
-        FbleDropStrongRef(arena, data_stack->value);
+        FbleValue* arg = data_stack->value;
         data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, FbleNewUnionValue(arena, union_value_instr->tag, arg), data_stack);
+        FbleDropStrongRef(arena, arg);
         break;
       }
 
@@ -316,14 +314,13 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             istack = istack->tail;
             FbleFree(arena, otstack);
           }
-
-          FbleDropStrongRef(arena, final_result);
           return NULL;
         }
-        *presult = FbleTakeStrongRef(uv->arg);
 
-        FbleDropStrongRef(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, FbleTakeStrongRef(uv->arg), data_stack);
+
+        FbleDropStrongRef(arena, &uv->_base);
         break;
       }
 
@@ -333,11 +330,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base._base.strong_ref_count = 1;
         value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_GET_PROC_VALUE;
-
         value->port = data_stack->value;
         data_stack = VPop(arena, data_stack);
-
-        *presult = &value->_base._base;
+        data_stack = VPush(arena, &value->_base._base, data_stack);
         break;
       }
 
@@ -347,14 +342,11 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base._base.strong_ref_count = 1;
         value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_PUT_PROC_VALUE;
-
-        value->arg = data_stack->value;
-        data_stack = VPop(arena, data_stack);
-
         value->port = data_stack->value;
         data_stack = VPop(arena, data_stack);
-
-        *presult = &value->_base._base;
+        value->arg = data_stack->value;
+        data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, &value->_base._base, data_stack);
         break;
       }
 
@@ -366,8 +358,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
         proc_value->result = data_stack->value;
         data_stack = VPop(arena, data_stack);
-
-        *presult = &proc_value->_base._base;
+        data_stack = VPush(arena, &proc_value->_base._base, data_stack);
         break;
       }
 
@@ -388,7 +379,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->proc._base.refcount = 1;
         value->proc.pop._base.tag = FBLE_DATA_POP_INSTR;
         value->proc.pop._base.refcount = 1;
-        *presult = &value->_base._base;
 
         // TODO: This copies the entire context, but really we should only
         // need to copy those variables that are used in the body of the
@@ -398,6 +388,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
           value->pop.count++;
         }
+
+        data_stack = VPush(arena, &value->_base._base, data_stack);
         break;
       }
 
@@ -438,7 +430,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           data_stack = VPop(arena, data_stack);
         }
 
-        *presult = &value->_base._base;
+        data_stack = VPush(arena, &value->_base._base, data_stack);
         break;
       }
 
@@ -448,9 +440,10 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
         // Some proc values own the instructions they use to execute, which
         // means we need to ensure the proc values are retained until they are
-        // done executing. To do so, simply keep the proc value on the value
+        // done executing. To do so, keep the proc value on the value
         // stack until after it's done executing.
-        istack = IPush(arena, NULL, &proc_instr->pop._base, istack);
+        // TODO: We should only need this for Link and Exec proc values.
+        istack = IPush(arena, &proc_instr->pop._base, istack);
 
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
@@ -463,7 +456,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             if (port->head == NULL) {
               port->tail = NULL;
             }
-            *presult = head->value;
+            data_stack = VPush(arena, head->value, data_stack);
             FbleFree(arena, head);
             break;
           }
@@ -487,22 +480,18 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
               link->tail = tail;
             }
 
-            *presult = FbleTakeStrongRef(put->arg);
+            data_stack = VPush(arena, FbleTakeStrongRef(put->arg), data_stack);
             break;
           }
 
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
-            *presult = FbleTakeStrongRef(eval->result);
+            data_stack = VPush(arena, FbleTakeStrongRef(eval->result), data_stack);
             break;
           }
 
           case FBLE_LINK_PROC_VALUE: {
             FbleLinkProcValue* link = (FbleLinkProcValue*)proc;
-
-            // Reserve a slot on the data stack for the link body ProcValue.
-            data_stack = VPush(arena, NULL, data_stack);
-            FbleValue** body = &data_stack->value;
 
             // Push the body's context on top of the variable stack.
             for (FbleVStack* vs = link->context; vs != NULL; vs = vs->tail) {
@@ -526,18 +515,14 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             var_stack = VPush(arena, &put->_base, var_stack);
 
             // Set up the instruction stack to finish execution.
-            istack = IPush(arena, presult, &link->proc._base, istack);
-            istack = IPush(arena, NULL, &link->pop._base, istack);
-            istack = IPush(arena, body, link->body, istack);
+            istack = IPush(arena, &link->proc._base, istack);
+            istack = IPush(arena, &link->pop._base, istack);
+            istack = IPush(arena, link->body, istack);
             break;
           }
 
           case FBLE_EXEC_PROC_VALUE: {
             FbleExecProcValue* exec = (FbleExecProcValue*)proc;
-
-            // Reserve a slot on the data stack for the exec body ProcValue.
-            data_stack = VPush(arena, NULL, data_stack);
-            FbleValue** body = &data_stack->value;
 
             // Push the body's context on top of the variable stack.
             for (FbleVStack* vs = exec->context; vs != NULL; vs = vs->tail) {
@@ -546,20 +531,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
             assert(exec->bindings.size == 1 && "TODO: Support multi-binding exec");
 
-            // Reserve a slot on the data stack for the binding value.
-            data_stack = VPush(arena, NULL, data_stack);
-            FbleValue** arg = &data_stack->value;
-
             // Push the argument proc value on the stack in preparation for
             // execution.
             data_stack = VPush(arena, FbleTakeStrongRef(exec->bindings.xs[0]), data_stack);
 
             // Set up the instruction stack to finish execution.
-            istack = IPush(arena, presult, &exec->proc._base, istack);
-            istack = IPush(arena, NULL, &exec->pop._base, istack);
-            istack = IPush(arena, body, exec->body, istack);
-            istack = IPush(arena, NULL, &exec->join._base, istack);
-            istack = IPush(arena, arg, &exec->proc._base, istack);
+            istack = IPush(arena, &exec->proc._base, istack);
+            istack = IPush(arena, &exec->pop._base, istack);
+            istack = IPush(arena, exec->body, istack);
+            istack = IPush(arena, &exec->join._base, istack);
+            istack = IPush(arena, &exec->proc._base, istack);
             break;
           }
         }
@@ -570,20 +551,18 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
         assert(data_stack != NULL);
         FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
-        assert(uv->tag < cond_instr->choices.size);
-        istack = IPush(arena, presult, cond_instr->choices.xs[uv->tag], istack);
-        FbleDropStrongRef(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
+        assert(uv->tag < cond_instr->choices.size);
+        istack = IPush(arena, cond_instr->choices.xs[uv->tag], istack);
+        FbleDropStrongRef(arena, &uv->_base);
         break;
       }
 
       case FBLE_PUSH_INSTR: {
         FblePushInstr* push_instr = (FblePushInstr*)instr;
-
-        istack = IPush(arena, presult, push_instr->next, istack);
+        istack = IPush(arena, push_instr->next, istack);
         for (size_t i = 0; i < push_instr->values.size; ++i) {
-          data_stack = VPush(arena, NULL, data_stack);
-          istack = IPush(arena, &data_stack->value, push_instr->values.xs[i], istack);
+          istack = IPush(arena, push_instr->values.xs[i], istack);
         }
         break;
       }
@@ -599,8 +578,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
 
       case FBLE_DATA_POP_INSTR: {
+        FbleValue* v = data_stack->value;
+        data_stack = VPop(arena, data_stack);
+
         FbleDropStrongRef(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, v, data_stack);
         break;
       }
 
@@ -634,6 +617,10 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
     }
   }
   assert(var_stack == NULL);
+
+  assert(data_stack != NULL);
+  FbleValue* final_result = data_stack->value;
+  data_stack = VPop(arena, data_stack);
   assert(data_stack == NULL);
   return final_result;
 }

@@ -89,10 +89,8 @@ typedef struct {
 } FbleFuncValueInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   Given f, x1, x2, ... on the top of the value stack,
+//   Given ..., x3, x2, x1, f on the top of the data stack,
 //   apply f(x1, x2, ...).
-// From the top of the stack down, we should find the arguments in reverse
-// order and then the function value.
 typedef struct {
   FbleInstr _base;
   size_t argc;
@@ -105,6 +103,7 @@ typedef struct {
 } FbleGetInstr;
 
 // FblePutInstr -- FBLE_PUT_INSTR
+//   Given ..., arg, port on the top of the data stack.
 //   Allocate an FblePutProcValue, taking the port and argument from the stack.
 typedef struct {
   FbleInstr _base;
@@ -150,7 +149,10 @@ typedef struct {
 } FblePopInstr;
 
 // FbleDataPopInstr -- FBLE_DATA_POP_INSTR
-//   Pop a value off of the top of the data value stack.
+//   Given data stack ..., P1, V1
+//   Release and pop P1, so that the data stack ends up: ..., V1
+//
+// TODO: Come up with a better name for this instruction.
 typedef struct {
   FbleInstr _base;
 } FbleDataPopInstr;
@@ -246,14 +248,16 @@ typedef struct FbleVStack {
 //             representing the lexical context available to the function.
 //             Stored in reverse order of the standard value stack.
 //   body - The instr representing the body of the function.
-//   pop - An instruction that can be used to pop the arguments, the
-//         context, and the function value itself after a function is done
-//         executing.
+//   pop - An instruction that can be used to pop the arguments and the
+//         context after a function is done executing.
+//   dpop - An instruction that can be used to pop the function value after
+//          the function is done executing.
 struct FbleFuncValue {
   FbleValue _base;
   FbleVStack* context;
   FbleInstr* body;
   FblePopInstr pop;
+  FbleDataPopInstr dpop;
 };
 
 // FbleProcValueTag --

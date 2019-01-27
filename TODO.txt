@@ -1,5 +1,8 @@
 Fble:
 * Remove result from ThreadStack
+* Cleanup eval
+ - Change PUSH_INSTR to COMPOUND_INSTR.
+ - Better names and documentation for instructions.
 * Factor out and switch to new reference counting implementation.
 * All the failing test cases should, hopefully, now pass.
 
