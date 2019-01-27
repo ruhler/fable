@@ -2475,19 +2475,25 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         nvars = nvd + i;
       }
 
-      // Compile the proc values for computing the variables.
-      FbleExecInstr* instr = FbleAlloc(arena, FbleExecInstr);
-      instr->_base.tag = FBLE_EXEC_INSTR;
+      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
+      instr->_base.tag = FBLE_PUSH_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->bindings);
-      instr->body = NULL;
+      FbleVectorInit(arena, instr->values);
+
+      // Compile the proc values for computing the variables.
+      FbleExecInstr* exec_instr = FbleAlloc(arena, FbleExecInstr);
+      exec_instr->_base.tag = FBLE_EXEC_INSTR;
+      exec_instr->_base.refcount = 1;
+      exec_instr->argc = exec_expr->bindings.size;
+      exec_instr->body = NULL;
+      instr->next = &exec_instr->_base;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleInstr* mkarg = NULL;
         Type* type = Compile(arena, vars, type_vars, exec_expr->bindings.xs[i].expr, &mkarg);
         Eval(arena, type, NULL, NULL);
         error = error || (type == NULL);
-        FbleVectorAppend(arena, instr->bindings, mkarg);
+        FbleVectorAppend(arena, instr->values, mkarg);
 
         if (type != NULL) {
           ProcType* proc_type = (ProcType*)Normal(type);
@@ -2513,7 +2519,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       Type* rtype = NULL;
       if (!error) {
-        rtype = Compile(arena, nvars, type_vars, exec_expr->body, &(instr->body));
+        rtype = Compile(arena, nvars, type_vars, exec_expr->body, &exec_instr->body);
         Eval(arena, rtype, NULL, NULL);
         error = (rtype == NULL);
       }
@@ -3282,10 +3288,6 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
 
       case FBLE_EXEC_INSTR: {
         FbleExecInstr* exec_instr = (FbleExecInstr*)instrs;
-        for (size_t i = 0; i < exec_instr->bindings.size; ++i) {
-          FbleFreeInstrs(arena, exec_instr->bindings.xs[i]);
-        }
-        FbleFree(arena, exec_instr->bindings.xs);
         FbleFreeInstrs(arena, exec_instr->body);
         FbleFree(arena, exec_instr);
         return;

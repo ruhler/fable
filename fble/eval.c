@@ -406,14 +406,14 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base._base.strong_ref_count = 1;
         value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_EXEC_PROC_VALUE;
-        value->bindings.size = exec_instr->bindings.size;
+        value->bindings.size = exec_instr->argc;
         value->bindings.xs = FbleArenaAlloc(arena, value->bindings.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
         value->context = NULL;
         value->body = exec_instr->body;
         value->body->refcount++;
         value->pop._base.tag = FBLE_POP_INSTR;
         value->pop._base.refcount = 1;
-        value->pop.count = exec_instr->bindings.size;
+        value->pop.count = exec_instr->argc;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
         value->proc.pop._base.tag = FBLE_DATA_POP_INSTR;
@@ -430,13 +430,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           value->pop.count++;
         }
 
-        for (size_t i = 0; i < exec_instr->bindings.size; ++i) {
-          istack = IPush(arena, value->bindings.xs + i, exec_instr->bindings.xs[i], istack);
+        for (size_t i = 0; i < exec_instr->argc; ++i) {
+          size_t j = exec_instr->argc - 1 - i;
+          value->bindings.xs[j] = data_stack->value;
+          data_stack = VPop(arena, data_stack);
         }
 
-        // Update the result after capturing the context so that we don't grab
-        // a reference to ourself when we copy the context.
-        // TODO: Shouldn't reference counting take care of this?
         *presult = &value->_base._base;
         break;
       }

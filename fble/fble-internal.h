@@ -125,12 +125,14 @@ typedef struct {
 } FbleLinkInstr;
 
 // FbleExecInstr -- FBLE_EXEC_INSTR
-//   Allocate an FbleExecProcValue, evaluating binding arguments and capturing
-//   the context in the process.
-//  TODO: Do we need to add a pop instruction?
+//   Allocate an FbleExecProcValue, taking the binding argument values from
+//   the stack.
+//
+// From the top of the stack down, we should find the binding arguments in
+// reverse order.
 typedef struct {
   FbleInstr _base;
-  FbleInstrV bindings;
+  size_t argc;
   FbleInstr* body;
 } FbleExecInstr;
 
