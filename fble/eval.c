@@ -148,6 +148,35 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
     FbleFree(arena, tstack_done);
 
     switch (instr->tag) {
+      case FBLE_COMPOUND_INSTR: {
+        FbleCompoundInstr* compound_instr = (FbleCompoundInstr*)instr;
+        for (size_t i = 0; i < compound_instr->instrs.size; ++i) {
+          size_t j = compound_instr->instrs.size - 1 - i;
+          istack = IPush(arena, compound_instr->instrs.xs[j], istack);
+        }
+        break;
+      }
+
+      case FBLE_STRUCT_VALUE_INSTR: {
+        FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
+        size_t argc = struct_value_instr->argc;
+
+        FbleValue* argv[argc];
+        for (size_t i = 0; i < argc; ++i) {
+          argv[argc - i - 1] = data_stack->value;
+          data_stack = VPop(arena, data_stack);
+        }
+
+        FbleValueV args = { .size = argc, .xs = argv, };
+        data_stack = VPush(arena, FbleNewStructValue(arena, &args), data_stack);
+
+        for (size_t i = 0; i < args.size; ++i) {
+          FbleDropStrongRef(arena, argv[i]);
+        }
+        break;
+      }
+
+
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
         FbleVStack* v = var_stack;
@@ -244,29 +273,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         istack = IPush(arena, &func->pop._base, istack);
         istack = IPush(arena, &func->dpop._base, istack);
         istack = IPush(arena, func->body, istack);
-        break;
-      }
-
-      case FBLE_STRUCT_VALUE_INSTR: {
-        FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-        size_t argc = struct_value_instr->argc;
-
-        FbleValue* argv[argc];
-        for (size_t i = 0; i < struct_value_instr->argc; ++i) {
-          argv[i] = data_stack->value;
-          data_stack = VPop(arena, data_stack);
-        }
-
-        FbleValueV args = {
-          .size = argc,
-          .xs = argv,
-        };
-
-        data_stack = VPush(arena, FbleNewStructValue(arena, &args), data_stack);
-
-        for (size_t i = 0; i < args.size; ++i) {
-          FbleDropStrongRef(arena, argv[i]);
-        }
         break;
       }
 
@@ -558,14 +564,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_COMPOUND_INSTR: {
-        FbleCompoundInstr* compound_instr = (FbleCompoundInstr*)instr;
-        for (size_t i = 0; i < compound_instr->instrs.size; ++i) {
-          size_t j = compound_instr->instrs.size - 1 - i;
-          istack = IPush(arena, compound_instr->instrs.xs[j], istack);
-        }
-        break;
-      }
 
       case FBLE_PUSH_INSTR: {
         FblePushInstr* push_instr = (FblePushInstr*)instr;

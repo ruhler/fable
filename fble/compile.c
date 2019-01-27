@@ -1887,19 +1887,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       bool error = false;
-      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
-      instr->_base.tag = FBLE_PUSH_INSTR;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->values);
+      FbleVectorInit(arena, instr->instrs);
 
-      FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
-      struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
-      struct_instr->_base.refcount = 1;
-      struct_instr->argc = struct_type->fields.size;
-      instr->next = &struct_instr->_base;
-
-      for (size_t j = 0; j < struct_type->fields.size; ++j) {
-        size_t i = struct_type->fields.size - 1 - j;
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
         Field* field = struct_type->fields.xs + i;
 
         FbleInstr* mkarg = NULL;
@@ -1917,7 +1910,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         }
         TypeDropStrongRef(arena, arg_type);
 
-        FbleVectorAppend(arena, instr->values, mkarg);
+        FbleVectorAppend(arena, instr->instrs, mkarg);
       }
 
       if (error) {
@@ -1925,6 +1918,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
       }
+
+      FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
+      struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      struct_instr->_base.refcount = 1;
+      struct_instr->argc = struct_type->fields.size;
+      FbleVectorAppend(arena, instr->instrs, &struct_instr->_base);
 
       *instrs = &instr->_base;
       return type;

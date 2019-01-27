@@ -11,8 +11,8 @@
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
   FBLE_COMPOUND_INSTR,
-
   FBLE_STRUCT_VALUE_INSTR,
+
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_VALUE_INSTR,
   FBLE_UNION_ACCESS_INSTR,
@@ -56,9 +56,8 @@ typedef struct {
 } FbleCompoundInstr;
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
-//   Allocate a struct value, taking and popping its argc arguments from the
-//   top of the stack, where the first argument is on the top of the stack,
-//   and subsequent arguments are further down the stack.
+// dstack:  ..., a1, a2, ..., aN
+//     ==>  ..., struct(a1, a2, ..., aN)
 typedef struct {
   FbleInstr _base;
   size_t argc;
