@@ -3303,6 +3303,16 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         return;
       }
 
+      case FBLE_COMPOUND_INSTR: {
+        FbleCompoundInstr* compound_instr = (FbleCompoundInstr*)instrs;
+        for (size_t i = 0; i < compound_instr->instrs.size; ++i) {
+          FbleFreeInstrs(arena, compound_instr->instrs.xs[i]);
+        }
+        FbleFree(arena, compound_instr->instrs.xs);
+        FbleFree(arena, instrs);
+        return;
+      }
+
       case FBLE_PUSH_INSTR: {
         FblePushInstr* push_instr = (FblePushInstr*)instrs;
         for (size_t i = 0; i < push_instr->values.size; ++i) {

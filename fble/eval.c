@@ -558,6 +558,15 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_COMPOUND_INSTR: {
+        FbleCompoundInstr* compound_instr = (FbleCompoundInstr*)instr;
+        for (size_t i = 0; i < compound_instr->instrs.size; ++i) {
+          size_t j = compound_instr->instrs.size - 1 - i;
+          istack = IPush(arena, compound_instr->instrs.xs[j], istack);
+        }
+        break;
+      }
+
       case FBLE_PUSH_INSTR: {
         FblePushInstr* push_instr = (FblePushInstr*)instr;
         istack = IPush(arena, push_instr->next, istack);

@@ -3,6 +3,7 @@ Fble:
 * Cleanup eval
  - Change PUSH_INSTR to COMPOUND_INSTR.
  - Better names and documentation for instructions.
+ - Remove unused PushInstr.
 * Factor out and switch to new reference counting implementation.
 * All the failing test cases should, hopefully, now pass.
 
