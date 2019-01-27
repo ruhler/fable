@@ -2064,34 +2064,33 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_COND_EXPR: {
       FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
 
-      FblePushInstr* push = FbleAlloc(arena, FblePushInstr);
-      push->_base.tag = FBLE_PUSH_INSTR;
-      push->_base.refcount = 1;
-      FbleVectorInit(arena, push->values);
-      push->next = NULL;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
+      instr->_base.refcount = 1;
+      FbleVectorInit(arena, instr->instrs);
 
-      FbleInstr** mkobj = FbleVectorExtend(arena, push->values);
-      *mkobj = NULL;
-      Type* type = Compile(arena, vars, type_vars, cond_expr->condition, mkobj);
+      FbleInstr* mkobj = NULL;
+      Type* type = Compile(arena, vars, type_vars, cond_expr->condition, &mkobj);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
-        FbleFreeInstrs(arena, &push->_base);
+        FbleFreeInstrs(arena, &instr->_base);
         return NULL;
       }
+      FbleVectorAppend(arena, instr->instrs, mkobj);
 
       UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
         PrintType(type);
         fprintf(stderr, "\n");
-        FbleFreeInstrs(arena, &push->_base);
+        FbleFreeInstrs(arena, &instr->_base);
         TypeDropStrongRef(arena, type);
         return NULL;
       }
 
       if (union_type->fields.size != cond_expr->choices.size) {
         FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
-        FbleFreeInstrs(arena, &push->_base);
+        FbleFreeInstrs(arena, &instr->_base);
         TypeDropStrongRef(arena, type);
         return NULL;
       }
@@ -2099,7 +2098,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleCondInstr* cond_instr = FbleAlloc(arena, FbleCondInstr);
       cond_instr->_base.tag = FBLE_COND_INSTR;
       cond_instr->_base.refcount = 1;
-      push->next = &cond_instr->_base;
+      FbleVectorAppend(arena, instr->instrs, &cond_instr->_base);
       FbleVectorInit(arena, cond_instr->choices);
 
       Type* return_type = NULL;
@@ -2109,7 +2108,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
               &cond_expr->choices.xs[i].name.loc,
               union_type->fields.xs[i].name.name,
               cond_expr->choices.xs[i].name.name);
-          FbleFreeInstrs(arena, &push->_base);
+          FbleFreeInstrs(arena, &instr->_base);
           TypeDropStrongRef(arena, return_type);
           TypeDropStrongRef(arena, type);
           return NULL;
@@ -2121,7 +2120,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (arg_type == NULL) {
           TypeDropStrongRef(arena, return_type);
           TypeDropStrongRef(arena, type);
-          FbleFreeInstrs(arena, &push->_base);
+          FbleFreeInstrs(arena, &instr->_base);
           return NULL;
         }
         FbleVectorAppend(arena, cond_instr->choices, mkarg);
@@ -2139,7 +2138,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             TypeDropStrongRef(arena, type);
             TypeDropStrongRef(arena, return_type);
             TypeDropStrongRef(arena, arg_type);
-            FbleFreeInstrs(arena, &push->_base);
+            FbleFreeInstrs(arena, &instr->_base);
             return NULL;
           }
           TypeDropStrongRef(arena, arg_type);
@@ -2147,7 +2146,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
       TypeDropStrongRef(arena, type);
 
-      *instrs = &push->_base;
+      *instrs = &instr->_base;
       return return_type;
     }
 

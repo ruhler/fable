@@ -230,6 +230,17 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_COND_INSTR: {
+        FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
+        assert(data_stack != NULL);
+        FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
+        data_stack = VPop(arena, data_stack);
+        assert(uv->tag < cond_instr->choices.size);
+        istack = IPush(arena, cond_instr->choices.xs[uv->tag], istack);
+        FbleDropStrongRef(arena, &uv->_base);
+        break;
+      }
+
 
 
       case FBLE_VAR_INSTR: {
@@ -554,16 +565,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_COND_INSTR: {
-        FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
-        assert(data_stack != NULL);
-        FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
-        data_stack = VPop(arena, data_stack);
-        assert(uv->tag < cond_instr->choices.size);
-        istack = IPush(arena, cond_instr->choices.xs[uv->tag], istack);
-        FbleDropStrongRef(arena, &uv->_base);
-        break;
-      }
 
 
       case FBLE_PUSH_INSTR: {
