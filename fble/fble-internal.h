@@ -27,6 +27,7 @@ typedef enum {
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
   FBLE_POP_INSTR,
+  FBLE_DATA_POP_INSTR,
   FBLE_JOIN_INSTR,
   FBLE_BREAK_CYCLE_INSTR,
 } FbleInstrTag;
@@ -146,11 +147,17 @@ typedef struct {
   size_t count;
 } FblePopInstr;
 
+// FbleDataPopInstr -- FBLE_DATA_POP_INSTR
+//   Pop a value off of the top of the data value stack.
+typedef struct {
+  FbleInstr _base;
+} FbleDataPopInstr;
+
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute the process value on top of the value stack.
 typedef struct {
   FbleInstr _base;
-  FblePopInstr pop;
+  FbleDataPopInstr pop;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
