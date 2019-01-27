@@ -13,9 +13,9 @@ typedef enum {
   FBLE_COMPOUND_INSTR,
   FBLE_STRUCT_VALUE_INSTR,
   FBLE_UNION_VALUE_INSTR,
-
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_ACCESS_INSTR,
+
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
@@ -69,7 +69,7 @@ typedef struct {
 } FbleStructValueInstr;
 
 // FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR
-//   Allocate a unio value.
+//   Allocate a union value.
 //
 // dstack: ..., arg
 //     ==> ..., union(arg)
@@ -80,6 +80,9 @@ typedef struct {
 
 // FbleAccessInstr -- FBLE_STRUCT_ACCESS_INSTR or FBLE_UNION_ACCESS_INSTR
 //   Access the tagged field from the object on top of the vstack.
+//
+// dstack: ..., obj
+//     ==> ..., obj.tag
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;

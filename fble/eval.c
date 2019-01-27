@@ -185,6 +185,52 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_STRUCT_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        assert(data_stack != NULL);
+        FbleStructValue* sv = (FbleStructValue*)Deref(data_stack->value, FBLE_STRUCT_VALUE);
+        assert(access_instr->tag < sv->fields.size);
+        data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, FbleTakeStrongRef(sv->fields.xs[access_instr->tag]), data_stack);
+        FbleDropStrongRef(arena, &sv->_base);
+        break;
+      }
+
+      case FBLE_UNION_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+
+        assert(data_stack != NULL);
+        FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
+        if (uv->tag != access_instr->tag) {
+          FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
+
+          // Clean up the stacks.
+          while (var_stack != NULL) {
+            FbleDropStrongRef(arena, var_stack->value);
+            var_stack = VPop(arena, var_stack);
+          }
+
+          while (data_stack != NULL) {
+            FbleDropStrongRef(arena, data_stack->value);
+            data_stack = VPop(arena, data_stack);
+          }
+
+          while (istack != NULL) {
+            IStack* otstack = istack;
+            istack = istack->tail;
+            FbleFree(arena, otstack);
+          }
+          return NULL;
+        }
+
+        data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, FbleTakeStrongRef(uv->arg), data_stack);
+
+        FbleDropStrongRef(arena, &uv->_base);
+        break;
+      }
+
+
 
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
@@ -282,51 +328,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         istack = IPush(arena, &func->pop._base, istack);
         istack = IPush(arena, &func->dpop._base, istack);
         istack = IPush(arena, func->body, istack);
-        break;
-      }
-
-      case FBLE_STRUCT_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        assert(data_stack != NULL);
-        FbleStructValue* sv = (FbleStructValue*)Deref(data_stack->value, FBLE_STRUCT_VALUE);
-        assert(access_instr->tag < sv->fields.size);
-        data_stack = VPop(arena, data_stack);
-        data_stack = VPush(arena, FbleTakeStrongRef(sv->fields.xs[access_instr->tag]), data_stack);
-        FbleDropStrongRef(arena, &sv->_base);
-        break;
-      }
-
-      case FBLE_UNION_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-
-        assert(data_stack != NULL);
-        FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
-        if (uv->tag != access_instr->tag) {
-          FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
-
-          // Clean up the stacks.
-          while (var_stack != NULL) {
-            FbleDropStrongRef(arena, var_stack->value);
-            var_stack = VPop(arena, var_stack);
-          }
-
-          while (data_stack != NULL) {
-            FbleDropStrongRef(arena, data_stack->value);
-            data_stack = VPop(arena, data_stack);
-          }
-
-          while (istack != NULL) {
-            IStack* otstack = istack;
-            istack = istack->tail;
-            FbleFree(arena, otstack);
-          }
-          return NULL;
-        }
-
-        data_stack = VPop(arena, data_stack);
-        data_stack = VPush(arena, FbleTakeStrongRef(uv->arg), data_stack);
-
-        FbleDropStrongRef(arena, &uv->_base);
         break;
       }
 

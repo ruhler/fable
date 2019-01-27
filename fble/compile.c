@@ -2005,24 +2005,26 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_ACCESS_EXPR: {
       FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
-      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
-      instr->_base.tag = FBLE_PUSH_INSTR;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->values);
-      FbleInstr** mkobj = FbleVectorExtend(arena, instr->values);
-      *mkobj = NULL;
+      FbleVectorInit(arena, instr->instrs);
 
-      FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
-      access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
-      access->_base.refcount = 1;
-      instr->next = &access->_base;
-      access->loc = access_expr->field.loc;
-      Type* type = Compile(arena, vars, type_vars, access_expr->object, mkobj);
+      FbleInstr* mkobj = NULL;
+      Type* type = Compile(arena, vars, type_vars, access_expr->object, &mkobj);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
       }
+
+      FbleVectorAppend(arena, instr->instrs, mkobj);
+
+      FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
+      access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
+      access->_base.refcount = 1;
+      access->loc = access_expr->field.loc;
+      FbleVectorAppend(arena, instr->instrs, &access->_base);
 
       // Note: We can safely pretend the type is always a struct, because
       // StructType and UnionType have the same structure.
