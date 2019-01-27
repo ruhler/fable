@@ -185,7 +185,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           rv->broke_cycle = false;
           rv->siblings = curr;
           var_stack = VPush(arena, &rv->_base, var_stack);
-          istack = IPush(arena, &rv->value, let_instr->bindings.xs[i], istack);
+
+          data_stack = VPush(arena, NULL, data_stack);
+          istack = IPush(arena, &data_stack->value, let_instr->bindings.xs[i], istack);
 
           if (first == NULL) {
             first = rv;
@@ -615,6 +617,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           assert(vs != NULL);
           FbleRefValue* rv = (FbleRefValue*) vs->value;
           assert(rv->_base.tag == FBLE_REF_VALUE);
+
+          rv->value = data_stack->value;
+          data_stack = VPop(arena, data_stack);
 
           assert(rv->value != NULL);
           vs->value = FbleTakeStrongRef(rv->value);

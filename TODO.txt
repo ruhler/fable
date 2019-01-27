@@ -1,6 +1,5 @@
 Fble:
 * Remove result from ThreadStack
- - LET binding save to data stack, then transfer to var stack.
 * Factor out and switch to new reference counting implementation.
 * All the failing test cases should, hopefully, now pass.
 

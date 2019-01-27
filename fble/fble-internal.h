@@ -171,10 +171,10 @@ typedef struct {
 } FbleVarInstr;
 
 // FbleBreakCycleInstr -- FBLE_BREAK_CYCLE_INSTR
-//   The top count values on the value stack should be ref values that whose
-//   values have not yet had their break cycle ref count incremented.
-//   Increment the break cycle ref counts of those values and remove the
-//   indirection of the ref value on the stack.
+//   The top count values on the variable stack should be ref values that whose
+//   values have not yet been assigned.
+//   The top count values on the data stack should be the values to assign to
+//   those ref values on the variable stack.
 typedef struct {
   FbleInstr _base;
   size_t count;
