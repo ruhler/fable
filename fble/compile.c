@@ -2214,10 +2214,10 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           pop->count = instr->contextc + instr->argc;
           FbleVectorAppend(arena, compound->instrs, &pop->_base);
 
-          FbleDataPopInstr* dpop = FbleAlloc(arena, FbleDataPopInstr);
-          dpop->_base.tag = FBLE_DATA_POP_INSTR;
-          dpop->_base.refcount = 1;
-          FbleVectorAppend(arena, compound->instrs, &dpop->_base);
+          FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
+          release->_base.tag = FBLE_RELEASE_INSTR;
+          release->_base.refcount = 1;
+          FbleVectorAppend(arena, compound->instrs, &release->_base);
         }
       }
 
@@ -3271,19 +3271,19 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
   instrs->refcount--;
   if (instrs->refcount == 0) {
     switch (instrs->tag) {
-      case FBLE_VAR_INSTR:
-      case FBLE_FUNC_APPLY_INSTR:
       case FBLE_STRUCT_VALUE_INSTR:
-      case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_VALUE_INSTR:
+      case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_RELEASE_INSTR:
+      case FBLE_FUNC_APPLY_INSTR:
+      case FBLE_VAR_INSTR:
       case FBLE_EVAL_INSTR:
       case FBLE_GET_INSTR:
       case FBLE_PUT_INSTR:
       case FBLE_PROC_INSTR:
       case FBLE_JOIN_INSTR:
       case FBLE_POP_INSTR:
-      case FBLE_DATA_POP_INSTR:
       case FBLE_BREAK_CYCLE_INSTR: {
         FbleFree(arena, instrs);
         return;

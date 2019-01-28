@@ -17,6 +17,7 @@ typedef enum {
   FBLE_UNION_ACCESS_INSTR,
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
+  FBLE_RELEASE_INSTR,
 
   FBLE_FUNC_APPLY_INSTR,
   FBLE_GET_INSTR,
@@ -29,7 +30,6 @@ typedef enum {
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
   FBLE_POP_INSTR,
-  FBLE_DATA_POP_INSTR,
   FBLE_JOIN_INSTR,
   FBLE_BREAK_CYCLE_INSTR,
 } FbleInstrTag;
@@ -124,6 +124,18 @@ typedef struct {
   FbleInstr* body;
 } FbleFuncValueInstr;
 
+// FbleReleaseInstr -- FBLE_RELEASE_INSTR
+//   Given data stack ..., P1, V1
+//   Release and pop P1, so that the data stack ends up: ..., V1
+//
+// Used in those cases where the instruction to compute V1 is owned by P1, so
+// we keep P1 on the data stack until after V1 has been computed so the
+// instruction isn't freed before it is done executing.
+typedef struct {
+  FbleInstr _base;
+} FbleReleaseInstr;
+
+
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
 //   Given ..., x3, x2, x1, f on the top of the data stack,
 //   apply f(x1, x2, ...).
@@ -184,20 +196,11 @@ typedef struct {
   size_t count;
 } FblePopInstr;
 
-// FbleDataPopInstr -- FBLE_DATA_POP_INSTR
-//   Given data stack ..., P1, V1
-//   Release and pop P1, so that the data stack ends up: ..., V1
-//
-// TODO: Come up with a better name for this instruction.
-typedef struct {
-  FbleInstr _base;
-} FbleDataPopInstr;
-
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute the process value on top of the value stack.
 typedef struct {
   FbleInstr _base;
-  FbleDataPopInstr pop;
+  FbleReleaseInstr pop;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR

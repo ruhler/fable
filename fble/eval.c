@@ -266,6 +266,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_RELEASE_INSTR: {
+        FbleValue* v = data_stack->value;
+        data_stack = VPop(arena, data_stack);
+
+        FbleDropStrongRef(arena, data_stack->value);
+        data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, v, data_stack);
+        break;
+      }
+
 
 
       case FBLE_VAR_INSTR: {
@@ -392,7 +402,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->pop.count = 2;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
-        value->proc.pop._base.tag = FBLE_DATA_POP_INSTR;
+        value->proc.pop._base.tag = FBLE_RELEASE_INSTR;
         value->proc.pop._base.refcount = 1;
 
         // TODO: This copies the entire context, but really we should only
@@ -425,7 +435,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->pop.count = exec_instr->argc;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
-        value->proc.pop._base.tag = FBLE_DATA_POP_INSTR;
+        value->proc.pop._base.tag = FBLE_RELEASE_INSTR;
         value->proc.pop._base.refcount = 1;
         value->join._base.tag = FBLE_JOIN_INSTR;
         value->join._base.refcount = 1;
@@ -583,15 +593,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_DATA_POP_INSTR: {
-        FbleValue* v = data_stack->value;
-        data_stack = VPop(arena, data_stack);
-
-        FbleDropStrongRef(arena, data_stack->value);
-        data_stack = VPop(arena, data_stack);
-        data_stack = VPush(arena, v, data_stack);
-        break;
-      }
 
       case FBLE_JOIN_INSTR: {
         var_stack = VPush(arena, data_stack->value, var_stack);
@@ -653,7 +654,7 @@ FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
     },
     .pop = {
       ._base = {
-        .tag = FBLE_DATA_POP_INSTR,
+        .tag = FBLE_RELEASE_INSTR,
         .refcount = 1
       },
     }
