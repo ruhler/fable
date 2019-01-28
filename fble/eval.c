@@ -250,11 +250,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->context = NULL;
         value->body = func_value_instr->body;
         value->body->refcount++;
-        value->pop._base.tag = FBLE_POP_INSTR;
-        value->pop._base.refcount = 1;
-        value->pop.count = func_value_instr->contextc + func_value_instr->argc;
-        value->dpop._base.tag = FBLE_DATA_POP_INSTR;
-        value->dpop._base.refcount = 1;
 
         // TODO: This copies the entire lexical context, but really we should
         // only need to copy those variables that are used in the body of the
@@ -336,11 +331,10 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         // The func value owns the instructions we use to execute the body,
         // which means we need to ensure the func value is retained until
         // the body is done executing. To do so, keep the func value on the
-        // data stack until after it's done executing.
+        // data stack until after it's done executing. The body of the
+        // function will take care of releasing this.
         data_stack = VPush(arena, &func->_base, data_stack);
 
-        istack = IPush(arena, &func->pop._base, istack);
-        istack = IPush(arena, &func->dpop._base, istack);
         istack = IPush(arena, func->body, istack);
         break;
       }

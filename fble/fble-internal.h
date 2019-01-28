@@ -113,6 +113,10 @@ typedef struct {
 // Fields:
 //   contextc - The number of variables from the scope to capture from the top
 //              of the variable stack.
+//   body - An instruction that will execute the body of the function in the
+//          context of its scope and arguments. The instruction should remove
+//          the context of its scope and arguments and release the function
+//          value.
 typedef struct {
   FbleInstr _base;
   size_t contextc;
@@ -279,17 +283,13 @@ typedef struct FbleVStack {
 //   context - The value stack at the time the function was created,
 //             representing the lexical context available to the function.
 //             Stored in reverse order of the standard value stack.
-//   body - The instr representing the body of the function.
-//   pop - An instruction that can be used to pop the arguments and the
-//         context after a function is done executing.
-//   dpop - An instruction that can be used to pop the function value after
-//          the function is done executing.
+//   body - The instr representing the body of the function, which should pop
+//          the arguments and context and release the function value after the
+//          function is done executing.
 struct FbleFuncValue {
   FbleValue _base;
   FbleVStack* context;
   FbleInstr* body;
-  FblePopInstr pop;
-  FbleDataPopInstr dpop;
 };
 
 // FbleProcValueTag --

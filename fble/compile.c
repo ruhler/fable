@@ -2193,10 +2193,32 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       instr->argc = func_value_expr->args.size;
-      instr->body = NULL;
+
+      FbleCompoundInstr* compound = FbleAlloc(arena, FbleCompoundInstr);
+      compound->_base.tag = FBLE_COMPOUND_INSTR;
+      compound->_base.refcount = 1;
+      FbleVectorInit(arena, compound->instrs);
+      instr->body = &compound->_base;
+
       if (!error) {
-        type->rtype = Compile(arena, nvars, type_vars, func_value_expr->body, &instr->body);
+        FbleInstr* body = NULL;
+        type->rtype = Compile(arena, nvars, type_vars, func_value_expr->body, &body);
         error = error || (type->rtype == NULL);
+
+        if (!error) {
+          FbleVectorAppend(arena, compound->instrs, body);
+
+          FblePopInstr* pop = FbleAlloc(arena, FblePopInstr);
+          pop->_base.tag = FBLE_POP_INSTR;
+          pop->_base.refcount = 1;
+          pop->count = instr->contextc + instr->argc;
+          FbleVectorAppend(arena, compound->instrs, &pop->_base);
+
+          FbleDataPopInstr* dpop = FbleAlloc(arena, FbleDataPopInstr);
+          dpop->_base.tag = FBLE_DATA_POP_INSTR;
+          dpop->_base.refcount = 1;
+          FbleVectorAppend(arena, compound->instrs, &dpop->_base);
+        }
       }
 
       if (error) {

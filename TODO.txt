@@ -2,7 +2,6 @@ Fble:
 * Cleanup eval
  - Clean up FuncProcValue definition: it should store a pre-compiled compound
    instr rather than a bunch of different instructions.
-   + precompile [body, pop, dpop] instruction to save in FuncValue
    + rename DPOP RELEASE, rename POP DESCOPE
    + use compound instr for APPLY_EXPR
  - Better names and documentation for instructions and switch to
