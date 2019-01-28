@@ -2186,6 +2186,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
       instr->_base.refcount = 1;
+
+      instr->contextc = 0;
+      for (Vars* v = vars; v != NULL; v = v->next) {
+        instr->contextc++;
+      }
+
       instr->argc = func_value_expr->args.size;
       instr->body = NULL;
       if (!error) {

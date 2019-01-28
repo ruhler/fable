@@ -1,11 +1,13 @@
 Fble:
-* Remove result from ThreadStack
 * Cleanup eval
+ - Clean up FuncProcValue definition: it should store a pre-compiled compound
+   instr rather than a bunch of different instructions.
+   + precompile [body, pop, dpop] instruction to save in FuncValue
+   + rename DPOP RELEASE, rename POP DESCOPE
+   + use compound instr for APPLY_EXPR
  - Better names and documentation for instructions and switch to
    COMPOUND_INSTR.
  - Remove unused PushInstr.
- - Clean up FuncProcValue definition: it should store a pre-compiled compound
-   instr rather than a bunch of different instructions.
 * Factor out and switch to new reference counting implementation.
 * All the failing test cases should, hopefully, now pass.
 

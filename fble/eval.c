@@ -252,17 +252,19 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->body->refcount++;
         value->pop._base.tag = FBLE_POP_INSTR;
         value->pop._base.refcount = 1;
-        value->pop.count = func_value_instr->argc;
+        value->pop.count = func_value_instr->contextc + func_value_instr->argc;
         value->dpop._base.tag = FBLE_DATA_POP_INSTR;
         value->dpop._base.refcount = 1;
 
-        // TODO: This copies the entire context, but really we should only
-        // need to copy those variables that are used in the body of the
+        // TODO: This copies the entire lexical context, but really we should
+        // only need to copy those variables that are used in the body of the
         // function. This has implications for performance and memory that
         // should be considered.
-        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
+        FbleVStack* vs = var_stack;
+        for (size_t i = 0; i < func_value_instr->contextc; ++i) {
+          assert(vs != NULL);
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
-          value->pop.count++;
+          vs = vs->tail;
         }
 
         data_stack = VPush(arena, &value->_base, data_stack);

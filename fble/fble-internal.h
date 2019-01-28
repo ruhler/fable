@@ -109,8 +109,13 @@ typedef struct {
 //
 // dstack: ...
 //     ==> ..., func
+//
+// Fields:
+//   contextc - The number of variables from the scope to capture from the top
+//              of the variable stack.
 typedef struct {
   FbleInstr _base;
+  size_t contextc;
   size_t argc;
   FbleInstr* body;
 } FbleFuncValueInstr;
