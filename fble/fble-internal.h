@@ -17,6 +17,7 @@ typedef enum {
   FBLE_UNION_ACCESS_INSTR,
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
+  FBLE_DESCOPE_INSTR,
   FBLE_RELEASE_INSTR,
 
   FBLE_FUNC_APPLY_INSTR,
@@ -29,7 +30,6 @@ typedef enum {
   FBLE_VAR_INSTR,
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
-  FBLE_POP_INSTR,
   FBLE_JOIN_INSTR,
   FBLE_BREAK_CYCLE_INSTR,
 } FbleInstrTag;
@@ -124,9 +124,21 @@ typedef struct {
   FbleInstr* body;
 } FbleFuncValueInstr;
 
+// FbleDescopeInstr -- FBLE_DESCOPE_INSTR
+//   Pop count values from the top of the variable stack.
+//
+// vstack: ..., vN, ..., v2, v1
+//     ==> ...,
+typedef struct {
+  FbleInstr _base;
+  size_t count;
+} FbleDescopeInstr;
+
 // FbleReleaseInstr -- FBLE_RELEASE_INSTR
-//   Given data stack ..., P1, V1
-//   Release and pop P1, so that the data stack ends up: ..., V1
+//   Release and remove the secod value from top of the data stack.
+//
+// dstack: ..., P1, V1
+//     ==> ..., V1
 //
 // Used in those cases where the instruction to compute V1 is owned by P1, so
 // we keep P1 on the data stack until after V1 has been computed so the
@@ -189,13 +201,6 @@ typedef struct {
   FbleInstr _base;
 } FbleJoinInstr;
 
-// FblePopInstr -- FBLE_POP_INSTR
-//   Pop count values from the variable value stack.
-typedef struct {
-  FbleInstr _base;
-  size_t count;
-} FblePopInstr;
-
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute the process value on top of the value stack.
 typedef struct {
@@ -228,7 +233,7 @@ typedef struct {
   FbleInstr _base;
   FbleInstrV bindings;
   FbleInstr* body;
-  FblePopInstr pop;
+  FbleDescopeInstr pop;
   FbleBreakCycleInstr break_cycle;
 } FbleLetInstr;
 
@@ -339,7 +344,7 @@ typedef struct {
   FbleProcValue _base;
   FbleVStack* context;
   FbleInstr* body;
-  FblePopInstr pop;
+  FbleDescopeInstr pop;
   FbleProcInstr proc;
 } FbleLinkProcValue;
 
@@ -349,7 +354,7 @@ typedef struct {
   FbleValueV bindings;
   FbleVStack* context;
   FbleInstr* body;
-  FblePopInstr pop;
+  FbleDescopeInstr pop;
   FbleProcInstr proc;
   FbleJoinInstr join;
 } FbleExecProcValue;

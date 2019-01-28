@@ -266,6 +266,16 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_DESCOPE_INSTR: {
+        FbleDescopeInstr* descope_instr = (FbleDescopeInstr*)instr;
+        for (size_t i = 0; i < descope_instr->count; ++i) {
+          assert(var_stack != NULL);
+          FbleDropStrongRef(arena, var_stack->value);
+          var_stack = VPop(arena, var_stack);
+        }
+        break;
+      }
+
       case FBLE_RELEASE_INSTR: {
         FbleValue* v = data_stack->value;
         data_stack = VPop(arena, data_stack);
@@ -397,7 +407,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->context = NULL;
         value->body = link_instr->body;
         value->body->refcount++;
-        value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop._base.tag = FBLE_DESCOPE_INSTR;
         value->pop._base.refcount = 1;
         value->pop.count = 2;
         value->proc._base.tag = FBLE_PROC_INSTR;
@@ -430,7 +440,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->context = NULL;
         value->body = exec_instr->body;
         value->body->refcount++;
-        value->pop._base.tag = FBLE_POP_INSTR;
+        value->pop._base.tag = FBLE_DESCOPE_INSTR;
         value->pop._base.refcount = 1;
         value->pop.count = exec_instr->argc;
         value->proc._base.tag = FBLE_PROC_INSTR;
@@ -583,15 +593,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_POP_INSTR: {
-        FblePopInstr* pop_instr = (FblePopInstr*)instr;
-        for (size_t i = 0; i < pop_instr->count; ++i) {
-          assert(var_stack != NULL);
-          FbleDropStrongRef(arena, var_stack->value);
-          var_stack = VPop(arena, var_stack);
-        }
-        break;
-      }
 
 
       case FBLE_JOIN_INSTR: {

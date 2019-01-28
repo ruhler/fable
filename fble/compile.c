@@ -2208,11 +2208,11 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (!error) {
           FbleVectorAppend(arena, compound->instrs, body);
 
-          FblePopInstr* pop = FbleAlloc(arena, FblePopInstr);
-          pop->_base.tag = FBLE_POP_INSTR;
-          pop->_base.refcount = 1;
-          pop->count = instr->contextc + instr->argc;
-          FbleVectorAppend(arena, compound->instrs, &pop->_base);
+          FbleDescopeInstr* descope = FbleAlloc(arena, FbleDescopeInstr);
+          descope->_base.tag = FBLE_DESCOPE_INSTR;
+          descope->_base.refcount = 1;
+          descope->count = instr->contextc + instr->argc;
+          FbleVectorAppend(arena, compound->instrs, &descope->_base);
 
           FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
           release->_base.tag = FBLE_RELEASE_INSTR;
@@ -2615,7 +2615,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->_base.refcount = 1;
       FbleVectorInit(arena, instr->bindings);
       instr->body = NULL;
-      instr->pop._base.tag = FBLE_POP_INSTR;
+      instr->pop._base.tag = FBLE_DESCOPE_INSTR;
       instr->pop._base.refcount = 1;
       instr->pop.count = let_expr->bindings.size;
       instr->break_cycle._base.tag = FBLE_BREAK_CYCLE_INSTR;
@@ -3275,6 +3275,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_UNION_VALUE_INSTR:
       case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_DESCOPE_INSTR:
       case FBLE_RELEASE_INSTR:
       case FBLE_FUNC_APPLY_INSTR:
       case FBLE_VAR_INSTR:
@@ -3283,7 +3284,6 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_PUT_INSTR:
       case FBLE_PROC_INSTR:
       case FBLE_JOIN_INSTR:
-      case FBLE_POP_INSTR:
       case FBLE_BREAK_CYCLE_INSTR: {
         FbleFree(arena, instrs);
         return;

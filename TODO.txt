@@ -1,9 +1,5 @@
 Fble:
 * Cleanup eval
- - Clean up FuncProcValue definition: it should store a pre-compiled compound
-   instr rather than a bunch of different instructions.
-   + rename POP DESCOPE
-   + use compound instr for APPLY_EXPR
  - Better names and documentation for instructions and switch to
    COMPOUND_INSTR.
  - Remove unused PushInstr.
