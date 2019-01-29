@@ -2234,21 +2234,24 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_APPLY_EXPR: {
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
-      FblePushInstr* push = FbleAlloc(arena, FblePushInstr);
-      push->_base.tag = FBLE_PUSH_INSTR;
-      push->_base.refcount = 1;
-      FbleVectorInit(arena, push->values);
-      push->next = NULL;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
+      instr->_base.refcount = 1;
+      FbleVectorInit(arena, instr->instrs);
 
       // Compile the function value.
-      Type* type = Compile(arena, vars, type_vars, apply_expr->func, FbleVectorExtend(arena, push->values));
+      FbleInstr* mkfunc = NULL;
+      Type* type = Compile(arena, vars, type_vars, apply_expr->func, &mkfunc);
+      FbleVectorAppend(arena, instr->instrs, mkfunc);
       Eval(arena, type, NULL, NULL);
       bool error = (type == NULL);
 
       // Compile the arguments.
       Type* arg_types[apply_expr->args.size];
       for (size_t i = 0; i < apply_expr->args.size; ++i) {
-        arg_types[i] = Compile(arena, vars, type_vars, apply_expr->args.xs[i], FbleVectorExtend(arena, push->values));
+        FbleInstr* mkarg = NULL;
+        arg_types[i] = Compile(arena, vars, type_vars, apply_expr->args.xs[i], &mkarg);
+        FbleVectorAppend(arena, instr->instrs, mkarg);
         Eval(arena, arg_types[i], NULL, NULL);
         error = error || (arg_types[i] == NULL);
       }
@@ -2283,7 +2286,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeDropStrongRef(arena, type);
-              FbleFreeInstrs(arena, &push->_base);
+              FbleFreeInstrs(arena, &instr->_base);
               return NULL;
             }
 
@@ -2291,8 +2294,9 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
             apply_instr->_base.refcount = 1;
             apply_instr->argc = func_type->args.size;
-            push->next = &apply_instr->_base;
-            *instrs = &push->_base;
+
+            FbleVectorAppend(arena, instr->instrs, &apply_instr->_base);
+            *instrs = &instr->_base;
             Type* rtype = TypeTakeStrongRef(func_type->rtype);
             TypeDropStrongRef(arena, type);
             return rtype;
@@ -2313,15 +2317,15 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeDropStrongRef(arena, type);
-              FbleFreeInstrs(arena, &push->_base);
+              FbleFreeInstrs(arena, &instr->_base);
               return NULL;
             }
 
             FbleGetInstr* get_instr = FbleAlloc(arena, FbleGetInstr);
             get_instr->_base.tag = FBLE_GET_INSTR;
             get_instr->_base.refcount = 1;
-            push->next = &get_instr->_base;
-            *instrs = &push->_base;
+            FbleVectorAppend(arena, instr->instrs, &get_instr->_base);
+            *instrs = &instr->_base;
 
             ProcType* proc_type = FbleAlloc(arena, ProcType);
             proc_type->_base.tag = PROC_TYPE;
@@ -2357,15 +2361,15 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeDropStrongRef(arena, type);
-              FbleFreeInstrs(arena, &push->_base);
+              FbleFreeInstrs(arena, &instr->_base);
               return NULL;
             }
 
             FblePutInstr* put_instr = FbleAlloc(arena, FblePutInstr);
             put_instr->_base.tag = FBLE_PUT_INSTR;
             put_instr->_base.refcount = 1;
-            push->next = &put_instr->_base;
-            *instrs = &push->_base;
+            FbleVectorAppend(arena, instr->instrs, &put_instr->_base);
+            *instrs = &instr->_base;
 
             ProcType* proc_type = FbleAlloc(arena, ProcType);
             proc_type->_base.tag = PROC_TYPE;
@@ -2390,7 +2394,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       for (size_t i = 0; i < apply_expr->args.size; ++i) {
         TypeDropStrongRef(arena, arg_types[i]);
       }
-      FbleFreeInstrs(arena, &push->_base);
+      FbleFreeInstrs(arena, &instr->_base);
       return NULL;
     }
 

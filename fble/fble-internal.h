@@ -149,22 +149,27 @@ typedef struct {
 
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   Given ..., x3, x2, x1, f on the top of the data stack,
-//   apply f(x1, x2, ...).
+//   dstack: ..., f, x1, x2, ..., xN
+//       ==> ..., f(x1, x2, .., xN)
 typedef struct {
   FbleInstr _base;
   size_t argc;
 } FbleFuncApplyInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR
-//   Allocate an FbleGetProcValue, taking the port from the stack.
+//   Allocates a get proc value.
+//
+// dstack: ..., port
+//     ==> ..., get(port)
 typedef struct {
   FbleInstr _base;
 } FbleGetInstr;
 
 // FblePutInstr -- FBLE_PUT_INSTR
-//   Given ..., arg, port on the top of the data stack.
-//   Allocate an FblePutProcValue, taking the port and argument from the stack.
+//   Allocates a put proc value.
+//
+// dstack: ..., port, arg
+//     ==> ..., put(port, arg)
 typedef struct {
   FbleInstr _base;
 } FblePutInstr;

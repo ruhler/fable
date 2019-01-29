@@ -334,6 +334,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
 
+        FbleValue* args[apply_instr->argc];
+        for (size_t i = 0; i < apply_instr->argc; ++i) {
+          args[apply_instr->argc - i - 1] = data_stack->value;
+          data_stack = VPop(arena, data_stack);
+        }
+
         FbleFuncValue* func = (FbleFuncValue*)Deref(data_stack->value, FBLE_FUNC_VALUE);
         data_stack = VPop(arena, data_stack);
 
@@ -342,10 +348,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           var_stack = VPush(arena, FbleTakeStrongRef(vs->value), var_stack);
         }
 
-        // Move the function args from the data stack to the variable stack.
+        // Push the function args onto the variable stack.
         for (size_t i = 0; i < apply_instr->argc; ++i) {
-          var_stack = VPush(arena, data_stack->value, var_stack);
-          data_stack = VPop(arena, data_stack);
+          var_stack = VPush(arena, args[i], var_stack);
         }
 
         // The func value owns the instructions we use to execute the body,
@@ -377,9 +382,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->_base._base.strong_ref_count = 1;
         value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_PUT_PROC_VALUE;
-        value->port = data_stack->value;
-        data_stack = VPop(arena, data_stack);
         value->arg = data_stack->value;
+        data_stack = VPop(arena, data_stack);
+        value->port = data_stack->value;
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, &value->_base._base, data_stack);
         break;
