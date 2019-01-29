@@ -345,6 +345,18 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_EVAL_INSTR: {
+        FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);
+        proc_value->_base._base.tag = FBLE_PROC_VALUE;
+        proc_value->_base._base.strong_ref_count = 1;
+        proc_value->_base._base.break_cycle_ref_count = 0;
+        proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
+        proc_value->result = data_stack->value;
+        data_stack = VPop(arena, data_stack);
+        data_stack = VPush(arena, &proc_value->_base._base, data_stack);
+        break;
+      }
+
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
         FbleVStack* v = var_stack;
@@ -384,19 +396,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         }
         assert(first != NULL);
         first->siblings = curr;
-        break;
-      }
-
-
-      case FBLE_EVAL_INSTR: {
-        FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);
-        proc_value->_base._base.tag = FBLE_PROC_VALUE;
-        proc_value->_base._base.strong_ref_count = 1;
-        proc_value->_base._base.break_cycle_ref_count = 0;
-        proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
-        proc_value->result = data_stack->value;
-        data_stack = VPop(arena, data_stack);
-        data_stack = VPush(arena, &proc_value->_base._base, data_stack);
         break;
       }
 

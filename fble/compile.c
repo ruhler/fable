@@ -2414,16 +2414,16 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       proc_type->_base.break_cycle_ref_count = 0;
       proc_type->rtype = type;
 
-      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
-      instr->_base.tag = FBLE_PUSH_INSTR;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->values);
-      FbleVectorAppend(arena, instr->values, mkbody);
+      FbleVectorInit(arena, instr->instrs);
+      FbleVectorAppend(arena, instr->instrs, mkbody);
 
       FbleEvalInstr* eval_instr = FbleAlloc(arena, FbleEvalInstr);
       eval_instr->_base.tag = FBLE_EVAL_INSTR;
       eval_instr->_base.refcount = 1;
-      instr->next = &eval_instr->_base;
+      FbleVectorAppend(arena, instr->instrs, &eval_instr->_base);
       
       *instrs = &instr->_base;
       return &proc_type->_base;
