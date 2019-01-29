@@ -474,13 +474,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_PROC_INSTR: {
         FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = (FbleProcValue*)Deref(data_stack->value, FBLE_PROC_VALUE);
-
-        // Some proc values own the instructions they use to execute, which
-        // means we need to ensure the proc values are retained until they are
-        // done executing. To do so, keep the proc value on the value
-        // stack until after it's done executing.
-        // TODO: We should only need this for Link and Exec proc values.
-        istack = IPush(arena, &proc_instr->pop._base, istack);
+        data_stack = VPop(arena, data_stack);
 
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
@@ -551,7 +545,14 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             put->dest = get;
             var_stack = VPush(arena, &put->_base, var_stack);
 
+            // The link proc value owns the instruction it uses to execute,
+            // which means we need to ensure the proc value is retained
+            // until we are done executing. To do so, keep the proc value on
+            // the data stack until after it's done executing.
+            data_stack = VPush(arena, FbleTakeStrongRef(&proc->_base), data_stack);
+
             // Set up the instruction stack to finish execution.
+            istack = IPush(arena, &proc_instr->pop._base, istack);
             istack = IPush(arena, &link->proc._base, istack);
             istack = IPush(arena, &link->pop._base, istack);
             istack = IPush(arena, link->body, istack);
@@ -568,11 +569,18 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
             assert(exec->bindings.size == 1 && "TODO: Support multi-binding exec");
 
+            // The exec proc value owns the instruction it uses to execute,
+            // which means we need to ensure the proc value is retained
+            // until we are done executing. To do so, keep the proc value on
+            // the data stack until after it's done executing.
+            data_stack = VPush(arena, FbleTakeStrongRef(&proc->_base), data_stack);
+
             // Push the argument proc value on the stack in preparation for
             // execution.
             data_stack = VPush(arena, FbleTakeStrongRef(exec->bindings.xs[0]), data_stack);
 
             // Set up the instruction stack to finish execution.
+            istack = IPush(arena, &proc_instr->pop._base, istack);
             istack = IPush(arena, &exec->proc._base, istack);
             istack = IPush(arena, &exec->pop._base, istack);
             istack = IPush(arena, exec->body, istack);
@@ -581,6 +589,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             break;
           }
         }
+
+        FbleDropStrongRef(arena, &proc->_base);
         break;
       }
 

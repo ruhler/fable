@@ -183,7 +183,7 @@ typedef struct {
 } FbleEvalInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
-//   Allocate an FbleLinkProcValue, capturing the context in the process.
+//   Allocate an FbleLinkProcValue.
 typedef struct {
   FbleInstr _base;
   FbleInstr* body;
