@@ -286,51 +286,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-
-
-      case FBLE_VAR_INSTR: {
-        FbleVarInstr* var_instr = (FbleVarInstr*)instr;
-        FbleVStack* v = var_stack;
-        for (size_t i = 0; i < var_instr->position; ++i) {
-          assert(v->tail != NULL);
-          v = v->tail;
-        }
-        data_stack = VPush(arena, FbleTakeStrongRef(v->value), data_stack);
-        break;
-      }
-
-      case FBLE_LET_INSTR: {
-        FbleLetInstr* let_instr = (FbleLetInstr*)instr;
-
-        istack = IPush(arena, &let_instr->pop._base, istack);
-        istack = IPush(arena, let_instr->body, istack);
-        istack = IPush(arena, &let_instr->break_cycle._base, istack);
-
-        FbleRefValue* first = NULL;
-        FbleRefValue* curr = NULL;
-        for (size_t i = 0; i < let_instr->bindings.size; ++i) {
-          FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
-          rv->_base.tag = FBLE_REF_VALUE;
-          rv->_base.strong_ref_count = 1;
-          rv->_base.break_cycle_ref_count = 0;
-          rv->value = NULL;
-          rv->broke_cycle = false;
-          rv->siblings = curr;
-          var_stack = VPush(arena, &rv->_base, var_stack);
-
-          istack = IPush(arena, let_instr->bindings.xs[i], istack);
-
-          if (first == NULL) {
-            first = rv;
-          }
-          curr = rv;
-        }
-        assert(first != NULL);
-        first->siblings = curr;
-        break;
-      }
-
-
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
 
@@ -389,6 +344,49 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         data_stack = VPush(arena, &value->_base._base, data_stack);
         break;
       }
+
+      case FBLE_VAR_INSTR: {
+        FbleVarInstr* var_instr = (FbleVarInstr*)instr;
+        FbleVStack* v = var_stack;
+        for (size_t i = 0; i < var_instr->position; ++i) {
+          assert(v->tail != NULL);
+          v = v->tail;
+        }
+        data_stack = VPush(arena, FbleTakeStrongRef(v->value), data_stack);
+        break;
+      }
+
+      case FBLE_LET_INSTR: {
+        FbleLetInstr* let_instr = (FbleLetInstr*)instr;
+
+        istack = IPush(arena, &let_instr->pop._base, istack);
+        istack = IPush(arena, let_instr->body, istack);
+        istack = IPush(arena, &let_instr->break_cycle._base, istack);
+
+        FbleRefValue* first = NULL;
+        FbleRefValue* curr = NULL;
+        for (size_t i = 0; i < let_instr->bindings.size; ++i) {
+          FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
+          rv->_base.tag = FBLE_REF_VALUE;
+          rv->_base.strong_ref_count = 1;
+          rv->_base.break_cycle_ref_count = 0;
+          rv->value = NULL;
+          rv->broke_cycle = false;
+          rv->siblings = curr;
+          var_stack = VPush(arena, &rv->_base, var_stack);
+
+          istack = IPush(arena, let_instr->bindings.xs[i], istack);
+
+          if (first == NULL) {
+            first = rv;
+          }
+          curr = rv;
+        }
+        assert(first != NULL);
+        first->siblings = curr;
+        break;
+      }
+
 
       case FBLE_EVAL_INSTR: {
         FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);
