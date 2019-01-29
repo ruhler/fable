@@ -411,19 +411,21 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->body->refcount++;
         value->pop._base.tag = FBLE_DESCOPE_INSTR;
         value->pop._base.refcount = 1;
-        value->pop.count = 2;
+        value->pop.count = 2 + link_instr->contextc;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
         value->proc.pop._base.tag = FBLE_RELEASE_INSTR;
         value->proc.pop._base.refcount = 1;
 
-        // TODO: This copies the entire context, but really we should only
+        // TODO: This copies the entire lexical context, but really we should only
         // need to copy those variables that are used in the body of the
         // link process. This has implications for performance and memory that
         // should be considered.
-        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
+        FbleVStack* vs = var_stack;
+        for (size_t i = 0; i < link_instr->contextc; ++i) {
+          assert(vs != NULL);
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
-          value->pop.count++;
+          vs = vs->tail;
         }
 
         data_stack = VPush(arena, &value->_base._base, data_stack);

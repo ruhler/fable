@@ -186,6 +186,7 @@ typedef struct {
 //   Allocate an FbleLinkProcValue.
 typedef struct {
   FbleInstr _base;
+  size_t contextc;
   FbleInstr* body;
 } FbleLinkInstr;
 

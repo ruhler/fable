@@ -2463,6 +2463,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleLinkInstr* instr = FbleAlloc(arena, FbleLinkInstr);
       instr->_base.tag = FBLE_LINK_INSTR;
       instr->_base.refcount = 1;
+
+      instr->contextc = 0;
+      for (Vars* v = vars; v != NULL; v = v->next) {
+        instr->contextc++;
+      }
+
       instr->body = NULL;
 
       Type* type = Compile(arena, &put_var, type_vars, link_expr->body, &instr->body);
