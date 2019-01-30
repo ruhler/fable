@@ -2687,19 +2687,18 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         nvars = nvd + i;
       }
 
-      // Compile the values of the variables.
-      FbleLetPrepInstr* instr = FbleAlloc(arena, FbleLetPrepInstr);
-      instr->_base.tag = FBLE_LET_PREP_INSTR;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->bindings);
-      instr->body = NULL;
-      instr->pop._base.tag = FBLE_DESCOPE_INSTR;
-      instr->pop._base.refcount = 1;
-      instr->pop.count = let_expr->bindings.size;
-      instr->break_cycle._base.tag = FBLE_LET_DEF_INSTR;
-      instr->break_cycle._base.refcount = 1;
-      instr->break_cycle.count = let_expr->bindings.size;
+      FbleVectorInit(arena, instr->instrs);
 
+      FbleLetPrepInstr* let_prep_instr = FbleAlloc(arena, FbleLetPrepInstr);
+      let_prep_instr->_base.tag = FBLE_LET_PREP_INSTR;
+      let_prep_instr->_base.refcount = 1;
+      let_prep_instr->count = let_expr->bindings.size;
+      FbleVectorAppend(arena, instr->instrs, &let_prep_instr->_base);
+
+      // Compile the values of the variables.
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleInstr* mkval = NULL;
         Type* type = NULL;
@@ -2708,7 +2707,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           Eval(arena, type, NULL, NULL);
         }
         error = error || (type == NULL);
-        FbleVectorAppend(arena, instr->bindings, mkval);
+        FbleVectorAppend(arena, instr->instrs, mkval);
 
         if (!error && !TypesEqual(nvd[i].type, type, NULL)) {
           error = true;
@@ -2721,10 +2720,18 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         TypeDropStrongRef(arena, type);
       }
 
+      FbleLetDefInstr* let_def_instr = FbleAlloc(arena, FbleLetDefInstr);
+      let_def_instr->_base.tag = FBLE_LET_DEF_INSTR;
+      let_def_instr->_base.refcount = 1;
+      let_def_instr->count = let_expr->bindings.size;
+      FbleVectorAppend(arena, instr->instrs, &let_def_instr->_base);
+
       Type* rtype = NULL;
       if (!error) {
-        rtype = Compile(arena, nvars, type_vars, let_expr->body, &(instr->body));
+        FbleInstr* body = NULL;
+        rtype = Compile(arena, nvars, type_vars, let_expr->body, &body);
         error = (rtype == NULL);
+        FbleVectorAppend(arena, instr->instrs, body);
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
@@ -2736,6 +2743,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
       }
+
+      FbleDescopeInstr* descope = FbleAlloc(arena, FbleDescopeInstr);
+      descope->_base.tag = FBLE_DESCOPE_INSTR;
+      descope->_base.refcount = 1;
+      descope->count = let_expr->bindings.size;
+      FbleVectorAppend(arena, instr->instrs, &descope->_base);
 
       *instrs = &instr->_base;
       return rtype;
@@ -3362,19 +3375,9 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_PUT_INSTR:
       case FBLE_PROC_INSTR:
       case FBLE_JOIN_INSTR:
+      case FBLE_LET_PREP_INSTR:
       case FBLE_LET_DEF_INSTR: {
         FbleFree(arena, instrs);
-        return;
-      }
-
-      case FBLE_LET_PREP_INSTR: {
-        FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instrs;
-        for (size_t i = 0; i < let_instr->bindings.size; ++i) {
-          FbleFreeInstrs(arena, let_instr->bindings.xs[i]);
-        }
-        FbleFree(arena, let_instr->bindings.xs);
-        FbleFreeInstrs(arena, let_instr->body);
-        FbleFree(arena, let_instr);
         return;
       }
 

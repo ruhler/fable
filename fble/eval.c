@@ -371,13 +371,9 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_LET_PREP_INSTR: {
         FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instr;
 
-        istack = IPush(arena, &let_instr->pop._base, istack);
-        istack = IPush(arena, let_instr->body, istack);
-        istack = IPush(arena, &let_instr->break_cycle._base, istack);
-
         FbleRefValue* first = NULL;
         FbleRefValue* curr = NULL;
-        for (size_t i = 0; i < let_instr->bindings.size; ++i) {
+        for (size_t i = 0; i < let_instr->count; ++i) {
           FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
           rv->_base.tag = FBLE_REF_VALUE;
           rv->_base.strong_ref_count = 1;
@@ -386,8 +382,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           rv->broke_cycle = false;
           rv->siblings = curr;
           var_stack = VPush(arena, &rv->_base, var_stack);
-
-          istack = IPush(arena, let_instr->bindings.xs[i], istack);
 
           if (first == NULL) {
             first = rv;

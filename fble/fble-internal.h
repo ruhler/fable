@@ -28,9 +28,9 @@ typedef enum {
   FBLE_JOIN_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
-
   FBLE_LET_PREP_INSTR,
   FBLE_LET_DEF_INSTR,
+
   FBLE_PUSH_INSTR,
 } FbleInstrTag;
 
@@ -238,6 +238,16 @@ typedef struct {
   size_t position;
 } FbleVarInstr;
 
+// FbleLetPrepInstr -- FBLE_LET_PREP_INSTR
+//   Prepare to evaluate a let.
+//
+// vstack: ...
+//     ==> ..., r1, r2, ..., rN
+typedef struct {
+  FbleInstr _base;
+  size_t count;
+} FbleLetPrepInstr;
+
 // FbleLetDefInstr -- FBLE_LET_DEF_INSTR
 //
 // vstack: ..., r1, r2, ..., rN
@@ -249,19 +259,6 @@ typedef struct {
   FbleInstr _base;
   size_t count;
 } FbleLetDefInstr;
-
-// FbleLetPrepInstr -- FBLE_LET_PREP_INSTR
-//   Prepare to evaluate a let.
-//
-// vstack: ...
-//     ==> ..., r1, r2, ..., rN
-typedef struct {
-  FbleInstr _base;
-  FbleInstrV bindings;
-  FbleInstr* body;
-  FbleDescopeInstr pop;
-  FbleLetDefInstr break_cycle;
-} FbleLetPrepInstr;
 
 // FblePushInstr -- FBLE_PUSH_INSTR
 //   Evaluate and push the given values on top of the (data) value stack and
