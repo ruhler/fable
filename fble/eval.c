@@ -368,31 +368,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_LET_PREP_INSTR: {
-        FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instr;
-
-        FbleRefValue* first = NULL;
-        FbleRefValue* curr = NULL;
-        for (size_t i = 0; i < let_instr->count; ++i) {
-          FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
-          rv->_base.tag = FBLE_REF_VALUE;
-          rv->_base.strong_ref_count = 1;
-          rv->_base.break_cycle_ref_count = 0;
-          rv->value = NULL;
-          rv->broke_cycle = false;
-          rv->siblings = curr;
-          var_stack = VPush(arena, &rv->_base, var_stack);
-
-          if (first == NULL) {
-            first = rv;
-          }
-          curr = rv;
-        }
-        assert(first != NULL);
-        first->siblings = curr;
-        break;
-      }
-
       case FBLE_LINK_INSTR: {
         FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
         FbleLinkProcValue* value = FbleAlloc(arena, FbleLinkProcValue);
@@ -571,14 +546,28 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_LET_PREP_INSTR: {
+        FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instr;
 
+        FbleRefValue* first = NULL;
+        FbleRefValue* curr = NULL;
+        for (size_t i = 0; i < let_instr->count; ++i) {
+          FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
+          rv->_base.tag = FBLE_REF_VALUE;
+          rv->_base.strong_ref_count = 1;
+          rv->_base.break_cycle_ref_count = 0;
+          rv->value = NULL;
+          rv->broke_cycle = false;
+          rv->siblings = curr;
+          var_stack = VPush(arena, &rv->_base, var_stack);
 
-      case FBLE_PUSH_INSTR: {
-        FblePushInstr* push_instr = (FblePushInstr*)instr;
-        istack = IPush(arena, push_instr->next, istack);
-        for (size_t i = 0; i < push_instr->values.size; ++i) {
-          istack = IPush(arena, push_instr->values.xs[i], istack);
+          if (first == NULL) {
+            first = rv;
+          }
+          curr = rv;
         }
+        assert(first != NULL);
+        first->siblings = curr;
         break;
       }
 

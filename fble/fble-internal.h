@@ -30,8 +30,6 @@ typedef enum {
   FBLE_VAR_INSTR,
   FBLE_LET_PREP_INSTR,
   FBLE_LET_DEF_INSTR,
-
-  FBLE_PUSH_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -259,17 +257,6 @@ typedef struct {
   FbleInstr _base;
   size_t count;
 } FbleLetDefInstr;
-
-// FblePushInstr -- FBLE_PUSH_INSTR
-//   Evaluate and push the given values on top of the (data) value stack and
-//   execute the following instruction.
-//   TODO: Rename this to FBLE_COMPOUND_INSTR once instructions implicitly
-//   push their results to the value stack.
-typedef struct {
-  FbleInstr _base;
-  FbleInstrV values;
-  FbleInstr* next;
-} FblePushInstr;
 
 // FbleFreeInstrs --
 //   Free the given sequence of instructions.

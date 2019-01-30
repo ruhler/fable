@@ -3421,17 +3421,6 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         FbleFree(arena, instrs);
         return;
       }
-
-      case FBLE_PUSH_INSTR: {
-        FblePushInstr* push_instr = (FblePushInstr*)instrs;
-        for (size_t i = 0; i < push_instr->values.size; ++i) {
-          FbleFreeInstrs(arena, push_instr->values.xs[i]);
-        }
-        FbleFree(arena, push_instr->values.xs);
-        FbleFreeInstrs(arena, push_instr->next);
-        FbleFree(arena, instrs);
-        return;
-      }
     }
     UNREACHABLE("invalid instruction");
   }

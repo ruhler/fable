@@ -1,5 +1,4 @@
 Fble:
-* Remove unused PushInstr.
 * Factor out and switch to new reference counting implementation.
 * All the failing test cases should, hopefully, now pass.
 
