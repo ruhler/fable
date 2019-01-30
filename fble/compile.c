@@ -2489,8 +2489,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->_base.refcount = 1;
-      proc->pop._base.tag = FBLE_RELEASE_INSTR;
-      proc->pop._base.refcount = 1;
       FbleVectorAppend(arena, compound->instrs, &proc->_base);
 
       FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
@@ -2591,8 +2589,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
         proc->_base.tag = FBLE_PROC_INSTR;
         proc->_base.refcount = 1;
-        proc->pop._base.tag = FBLE_RELEASE_INSTR;
-        proc->pop._base.refcount = 1;
         FbleVectorAppend(arena, compound->instrs, &proc->_base);
       }
 
@@ -2639,8 +2635,6 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
         proc->_base.tag = FBLE_PROC_INSTR;
         proc->_base.refcount = 1;
-        proc->pop._base.tag = FBLE_RELEASE_INSTR;
-        proc->pop._base.refcount = 1;
         FbleVectorAppend(arena, compound->instrs, &proc->_base);
       }
 

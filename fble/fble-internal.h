@@ -227,7 +227,6 @@ typedef struct {
 //   Execute the process value on top of the value stack.
 typedef struct {
   FbleInstr _base;
-  FbleReleaseInstr pop;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR

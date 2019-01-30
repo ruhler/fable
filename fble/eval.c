@@ -642,12 +642,6 @@ FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc)
       .tag = FBLE_PROC_INSTR,
       .refcount = 1
     },
-    .pop = {
-      ._base = {
-        .tag = FBLE_RELEASE_INSTR,
-        .refcount = 1
-      },
-    }
   };
 
   FbleValue* result = Eval(arena, &instr._base, &proc->_base);
