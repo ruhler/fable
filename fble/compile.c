@@ -2537,31 +2537,17 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         nvars = nvd + i;
       }
 
-      FblePushInstr* instr = FbleAlloc(arena, FblePushInstr);
-      instr->_base.tag = FBLE_PUSH_INSTR;
+      FbleCompoundInstr* instr = FbleAlloc(arena, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
       instr->_base.refcount = 1;
-      FbleVectorInit(arena, instr->values);
-
-      // Compile the proc values for computing the variables.
-      FbleExecInstr* exec_instr = FbleAlloc(arena, FbleExecInstr);
-      exec_instr->_base.tag = FBLE_EXEC_INSTR;
-      exec_instr->_base.refcount = 1;
-      exec_instr->argc = exec_expr->bindings.size;
-      exec_instr->body = NULL;
-
-      exec_instr->contextc = 0;
-      for (Vars* v = vars; v != NULL; v = v->next) {
-        exec_instr->contextc++;
-      }
-
-      instr->next = &exec_instr->_base;
+      FbleVectorInit(arena, instr->instrs);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleInstr* mkarg = NULL;
         Type* type = Compile(arena, vars, type_vars, exec_expr->bindings.xs[i].expr, &mkarg);
         Eval(arena, type, NULL, NULL);
         error = error || (type == NULL);
-        FbleVectorAppend(arena, instr->values, mkarg);
+        FbleVectorAppend(arena, instr->instrs, mkarg);
 
         if (type != NULL) {
           ProcType* proc_type = (ProcType*)Normal(type);
@@ -2585,11 +2571,45 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         }
       }
 
+      FbleExecInstr* exec_instr = FbleAlloc(arena, FbleExecInstr);
+      exec_instr->_base.tag = FBLE_EXEC_INSTR;
+      exec_instr->_base.refcount = 1;
+      exec_instr->argc = exec_expr->bindings.size;
+      exec_instr->contextc = 0;
+      for (Vars* v = vars; v != NULL; v = v->next) {
+        exec_instr->contextc++;
+      }
+      FbleVectorAppend(arena, instr->instrs, &exec_instr->_base);
+
+      FbleCompoundInstr* compound = FbleAlloc(arena, FbleCompoundInstr);
+      compound->_base.tag = FBLE_COMPOUND_INSTR;
+      compound->_base.refcount = 1;
+      FbleVectorInit(arena, compound->instrs);
+      exec_instr->body = &compound->_base;
+
+      {
+        FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
+        proc->_base.tag = FBLE_PROC_INSTR;
+        proc->_base.refcount = 1;
+        proc->pop._base.tag = FBLE_RELEASE_INSTR;
+        proc->pop._base.refcount = 1;
+        FbleVectorAppend(arena, compound->instrs, &proc->_base);
+      }
+
+      {
+        FbleJoinInstr* join = FbleAlloc(arena, FbleJoinInstr);
+        join->_base.tag = FBLE_JOIN_INSTR;
+        join->_base.refcount = 1;
+        FbleVectorAppend(arena, compound->instrs, &join->_base);
+      }
+
       Type* rtype = NULL;
       if (!error) {
-        rtype = Compile(arena, nvars, type_vars, exec_expr->body, &exec_instr->body);
+        FbleInstr* body = NULL;
+        rtype = Compile(arena, nvars, type_vars, exec_expr->body, &body);
         Eval(arena, rtype, NULL, NULL);
         error = (rtype == NULL);
+        FbleVectorAppend(arena, compound->instrs, body);
       }
 
       if (rtype != NULL && Normal(rtype)->tag != PROC_TYPE) {
@@ -2605,6 +2625,30 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         TypeDropStrongRef(arena, rtype);
         FbleFreeInstrs(arena, &instr->_base);
         return NULL;
+      }
+
+      {
+        FbleDescopeInstr* descope = FbleAlloc(arena, FbleDescopeInstr);
+        descope->_base.tag = FBLE_DESCOPE_INSTR;
+        descope->_base.refcount = 1;
+        descope->count = exec_instr->contextc + exec_instr->argc;
+        FbleVectorAppend(arena, compound->instrs, &descope->_base);
+      }
+
+      {
+        FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
+        proc->_base.tag = FBLE_PROC_INSTR;
+        proc->_base.refcount = 1;
+        proc->pop._base.tag = FBLE_RELEASE_INSTR;
+        proc->pop._base.refcount = 1;
+        FbleVectorAppend(arena, compound->instrs, &proc->_base);
+      }
+
+      {
+        FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
+        release->_base.tag = FBLE_RELEASE_INSTR;
+        release->_base.refcount = 1;
+        FbleVectorAppend(arena, compound->instrs, &release->_base);
       }
 
       *instrs = &instr->_base;

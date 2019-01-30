@@ -437,15 +437,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->context = NULL;
         value->body = exec_instr->body;
         value->body->refcount++;
-        value->pop._base.tag = FBLE_DESCOPE_INSTR;
-        value->pop._base.refcount = 1;
-        value->pop.count = exec_instr->contextc + exec_instr->argc;
-        value->proc._base.tag = FBLE_PROC_INSTR;
-        value->proc._base.refcount = 1;
-        value->proc.pop._base.tag = FBLE_RELEASE_INSTR;
-        value->proc.pop._base.refcount = 1;
-        value->join._base.tag = FBLE_JOIN_INSTR;
-        value->join._base.refcount = 1;
 
         // TODO: This copies the entire lexical context, but really we should
         // only need to copy those variables that are used in the body of the
@@ -469,7 +460,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       }
 
       case FBLE_PROC_INSTR: {
-        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = (FbleProcValue*)Deref(data_stack->value, FBLE_PROC_VALUE);
         data_stack = VPop(arena, data_stack);
 
@@ -572,13 +562,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             // execution.
             data_stack = VPush(arena, FbleTakeStrongRef(exec->bindings.xs[0]), data_stack);
 
-            // Set up the instruction stack to finish execution.
-            istack = IPush(arena, &proc_instr->pop._base, istack);
-            istack = IPush(arena, &exec->proc._base, istack);
-            istack = IPush(arena, &exec->pop._base, istack);
             istack = IPush(arena, exec->body, istack);
-            istack = IPush(arena, &exec->join._base, istack);
-            istack = IPush(arena, &exec->proc._base, istack);
             break;
           }
         }

@@ -206,6 +206,10 @@ typedef struct {
 //
 // dstack: ..., p1, p2, ..., pN
 //     ==> exec(p1, p2, ..., pN)
+//
+// The body is an instruction that does the following:
+// dstack: ..., exec, b1
+//     ==> ..., body(b1)
 typedef struct {
   FbleInstr _base;
   size_t contextc;
@@ -370,9 +374,6 @@ typedef struct {
   FbleValueV bindings;
   FbleVStack* context;
   FbleInstr* body;
-  FbleDescopeInstr pop;
-  FbleProcInstr proc;
-  FbleJoinInstr join;
 } FbleExecProcValue;
 
 // FbleValues --
