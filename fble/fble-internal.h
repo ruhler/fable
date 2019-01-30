@@ -23,8 +23,8 @@ typedef enum {
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
   FBLE_EVAL_INSTR,
-
   FBLE_LINK_INSTR,
+
   FBLE_EXEC_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
@@ -184,6 +184,17 @@ typedef struct {
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
 //   Allocate an FbleLinkProcValue.
+//
+// dstack: ...,
+//     ==> ..., link()
+//
+// Fields:
+//   contextc - The number of variables from the scope to capture from the top
+//              of the variable stack.
+//   body - An instruction that will execute the body of the link in the
+//          context of its scope and put and get ports. The instruction should
+//          remove the context of its scope and put and get ports and release
+//          the link proc value.
 typedef struct {
   FbleInstr _base;
   size_t contextc;
@@ -351,8 +362,6 @@ typedef struct {
   FbleProcValue _base;
   FbleVStack* context;
   FbleInstr* body;
-  FbleDescopeInstr pop;
-  FbleProcInstr proc;
 } FbleLinkProcValue;
 
 // FbleExecProcValue -- FBLE_EXEC_PROC_VALUE
