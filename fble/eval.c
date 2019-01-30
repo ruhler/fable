@@ -439,7 +439,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->body->refcount++;
         value->pop._base.tag = FBLE_DESCOPE_INSTR;
         value->pop._base.refcount = 1;
-        value->pop.count = exec_instr->argc;
+        value->pop.count = exec_instr->contextc + exec_instr->argc;
         value->proc._base.tag = FBLE_PROC_INSTR;
         value->proc._base.refcount = 1;
         value->proc.pop._base.tag = FBLE_RELEASE_INSTR;
@@ -447,13 +447,15 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         value->join._base.tag = FBLE_JOIN_INSTR;
         value->join._base.refcount = 1;
 
-        // TODO: This copies the entire context, but really we should only
-        // need to copy those variables that are used in the body of the
+        // TODO: This copies the entire lexical context, but really we should
+        // only need to copy those variables that are used in the body of the
         // exec process. This has implications for performance and memory that
         // should be considered.
-        for (FbleVStack* vs = var_stack; vs != NULL;  vs = vs->tail) {
+        FbleVStack* vs = var_stack;
+        for (size_t i = 0; i < exec_instr->contextc; ++i) {
+          assert(vs != NULL);
           value->context = VPush(arena, FbleTakeStrongRef(vs->value), value->context);
-          value->pop.count++;
+          vs = vs->tail;
         }
 
         for (size_t i = 0; i < exec_instr->argc; ++i) {

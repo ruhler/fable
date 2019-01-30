@@ -2548,6 +2548,12 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       exec_instr->_base.refcount = 1;
       exec_instr->argc = exec_expr->bindings.size;
       exec_instr->body = NULL;
+
+      exec_instr->contextc = 0;
+      for (Vars* v = vars; v != NULL; v = v->next) {
+        exec_instr->contextc++;
+      }
+
       instr->next = &exec_instr->_base;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {

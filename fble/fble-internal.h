@@ -24,8 +24,8 @@ typedef enum {
   FBLE_PUT_INSTR,
   FBLE_EVAL_INSTR,
   FBLE_LINK_INSTR,
-
   FBLE_EXEC_INSTR,
+
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
   FBLE_LET_INSTR,
@@ -202,13 +202,13 @@ typedef struct {
 } FbleLinkInstr;
 
 // FbleExecInstr -- FBLE_EXEC_INSTR
-//   Allocate an FbleExecProcValue, taking the binding argument values from
-//   the stack.
+//   Allocate an FbleExecProcValue.
 //
-// From the top of the stack down, we should find the binding arguments in
-// reverse order.
+// dstack: ..., p1, p2, ..., pN
+//     ==> exec(p1, p2, ..., pN)
 typedef struct {
   FbleInstr _base;
+  size_t contextc;
   size_t argc;
   FbleInstr* body;
 } FbleExecInstr;
