@@ -29,7 +29,7 @@ typedef enum {
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
 
-  FBLE_LET_INSTR,
+  FBLE_LET_PREP_INSTR,
   FBLE_LET_DEF_INSTR,
   FBLE_PUSH_INSTR,
 } FbleInstrTag;
@@ -250,16 +250,18 @@ typedef struct {
   size_t count;
 } FbleLetDefInstr;
 
-// FbleLetInstr -- FBLE_LET_INSTR
-//   Evaluate each of the bindings, add the results to the scope, then execute
-//   the body.
+// FbleLetPrepInstr -- FBLE_LET_PREP_INSTR
+//   Prepare to evaluate a let.
+//
+// vstack: ...
+//     ==> ..., r1, r2, ..., rN
 typedef struct {
   FbleInstr _base;
   FbleInstrV bindings;
   FbleInstr* body;
   FbleDescopeInstr pop;
   FbleLetDefInstr break_cycle;
-} FbleLetInstr;
+} FbleLetPrepInstr;
 
 // FblePushInstr -- FBLE_PUSH_INSTR
 //   Evaluate and push the given values on top of the (data) value stack and

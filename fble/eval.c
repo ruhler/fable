@@ -368,8 +368,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-      case FBLE_LET_INSTR: {
-        FbleLetInstr* let_instr = (FbleLetInstr*)instr;
+      case FBLE_LET_PREP_INSTR: {
+        FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instr;
 
         istack = IPush(arena, &let_instr->pop._base, istack);
         istack = IPush(arena, let_instr->body, istack);

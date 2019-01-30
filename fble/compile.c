@@ -2688,8 +2688,8 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       // Compile the values of the variables.
-      FbleLetInstr* instr = FbleAlloc(arena, FbleLetInstr);
-      instr->_base.tag = FBLE_LET_INSTR;
+      FbleLetPrepInstr* instr = FbleAlloc(arena, FbleLetPrepInstr);
+      instr->_base.tag = FBLE_LET_PREP_INSTR;
       instr->_base.refcount = 1;
       FbleVectorInit(arena, instr->bindings);
       instr->body = NULL;
@@ -3367,8 +3367,8 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
         return;
       }
 
-      case FBLE_LET_INSTR: {
-        FbleLetInstr* let_instr = (FbleLetInstr*)instrs;
+      case FBLE_LET_PREP_INSTR: {
+        FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instrs;
         for (size_t i = 0; i < let_instr->bindings.size; ++i) {
           FbleFreeInstrs(arena, let_instr->bindings.xs[i]);
         }
