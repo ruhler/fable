@@ -25,9 +25,9 @@ typedef enum {
   FBLE_EVAL_INSTR,
   FBLE_LINK_INSTR,
   FBLE_EXEC_INSTR,
-
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
+
   FBLE_LET_INSTR,
   FBLE_PUSH_INSTR,
   FBLE_JOIN_INSTR,
@@ -230,8 +230,9 @@ typedef struct {
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
-//   Reads the variable at the given position in the stack. Position 0 is the
-//   top of the stack.
+// vstack: ..., v[2], v[1], v[0]
+// dstack: ...,
+//     ==> ..., v[position]
 typedef struct {
   FbleInstr _base;
   size_t position;
