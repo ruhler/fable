@@ -459,6 +459,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
+      case FBLE_JOIN_INSTR: {
+        var_stack = VPush(arena, data_stack->value, var_stack);
+        data_stack = VPop(arena, data_stack);
+        break;
+      }
+
       case FBLE_PROC_INSTR: {
         FbleProcValue* proc = (FbleProcValue*)Deref(data_stack->value, FBLE_PROC_VALUE);
         data_stack = VPop(arena, data_stack);
@@ -582,18 +588,10 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         break;
       }
 
-
-
-      case FBLE_JOIN_INSTR: {
-        var_stack = VPush(arena, data_stack->value, var_stack);
-        data_stack = VPop(arena, data_stack);
-        break;
-      }
-
-      case FBLE_BREAK_CYCLE_INSTR: {
-        FbleBreakCycleInstr* break_cycle_instr = (FbleBreakCycleInstr*)instr;
+      case FBLE_LET_DEF_INSTR: {
+        FbleLetDefInstr* let_def_instr = (FbleLetDefInstr*)instr;
         FbleVStack* vs = var_stack;
-        for (size_t i = 0; i < break_cycle_instr->count; ++i) {
+        for (size_t i = 0; i < let_def_instr->count; ++i) {
           assert(vs != NULL);
           FbleRefValue* rv = (FbleRefValue*) vs->value;
           assert(rv->_base.tag == FBLE_REF_VALUE);

@@ -2696,7 +2696,7 @@ static Type* Compile(FbleArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->pop._base.tag = FBLE_DESCOPE_INSTR;
       instr->pop._base.refcount = 1;
       instr->pop.count = let_expr->bindings.size;
-      instr->break_cycle._base.tag = FBLE_BREAK_CYCLE_INSTR;
+      instr->break_cycle._base.tag = FBLE_LET_DEF_INSTR;
       instr->break_cycle._base.refcount = 1;
       instr->break_cycle.count = let_expr->bindings.size;
 
@@ -3362,7 +3362,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_PUT_INSTR:
       case FBLE_PROC_INSTR:
       case FBLE_JOIN_INSTR:
-      case FBLE_BREAK_CYCLE_INSTR: {
+      case FBLE_LET_DEF_INSTR: {
         FbleFree(arena, instrs);
         return;
       }

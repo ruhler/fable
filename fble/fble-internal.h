@@ -25,13 +25,13 @@ typedef enum {
   FBLE_EVAL_INSTR,
   FBLE_LINK_INSTR,
   FBLE_EXEC_INSTR,
+  FBLE_JOIN_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
 
   FBLE_LET_INSTR,
+  FBLE_LET_DEF_INSTR,
   FBLE_PUSH_INSTR,
-  FBLE_JOIN_INSTR,
-  FBLE_BREAK_CYCLE_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -238,15 +238,17 @@ typedef struct {
   size_t position;
 } FbleVarInstr;
 
-// FbleBreakCycleInstr -- FBLE_BREAK_CYCLE_INSTR
-//   The top count values on the variable stack should be ref values that whose
-//   values have not yet been assigned.
-//   The top count values on the data stack should be the values to assign to
-//   those ref values on the variable stack.
+// FbleLetDefInstr -- FBLE_LET_DEF_INSTR
+//
+// vstack: ..., r1, r2, ..., rN
+// dstack: ..., v1, v2, ..., vN
+//     ==>
+// vstack: ..., r1=v1, r2=v2, ..., rN=vN
+// dstack: ...
 typedef struct {
   FbleInstr _base;
   size_t count;
-} FbleBreakCycleInstr;
+} FbleLetDefInstr;
 
 // FbleLetInstr -- FBLE_LET_INSTR
 //   Evaluate each of the bindings, add the results to the scope, then execute
@@ -256,7 +258,7 @@ typedef struct {
   FbleInstrV bindings;
   FbleInstr* body;
   FbleDescopeInstr pop;
-  FbleBreakCycleInstr break_cycle;
+  FbleLetDefInstr break_cycle;
 } FbleLetInstr;
 
 // FblePushInstr -- FBLE_PUSH_INSTR
