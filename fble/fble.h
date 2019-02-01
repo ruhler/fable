@@ -658,7 +658,6 @@ typedef enum {
 typedef struct FbleValue {
   FbleValueTag tag;
   size_t strong_ref_count;
-  size_t break_cycle_ref_count;
 } FbleValue;
 
 // FbleValueV --
@@ -719,19 +718,9 @@ typedef struct FbleOutputValue FbleOutputValue;
 //
 // Fields:
 //   value - the value being referenced, or NULL if no value is referenced.
-//   broke_cycle - true if the FbleBreakCycleRef count has been called on the
-//                 value for this reference, false otherwise.
-//   siblings - A circular singly linked list of the ref values for the other
-//              variables defined in the same let binding as this ref value.
-//              Used for breaking reference cycles.
-//              The siblings list does not count as a reference to the ref
-//              values. RefValues are responsible for removing themselves from
-//              the list when they are freed.
 typedef struct FbleRefValue {
   FbleValue _base;
   FbleValue* value;
-  bool broke_cycle;
-  struct FbleRefValue* siblings;
 } FbleRefValue;
 
 // FbleValueRetain --
@@ -751,23 +740,6 @@ typedef struct FbleRefValue {
 //   calls is made on the value. FbleValueRelease must be called when the
 //   value is no longer needed.
 FbleValue* FbleValueRetain(FbleValue* src);
-
-// FbleBreakCycleRef --
-//   Increment the break cycle reference count of a value.
-//
-// Inputs:
-//   arena - Arena to use for deallocation.
-//   value - The value to increment the break cycle reference count of. The
-//           value may be NULL, in which case nothing is done.
-//
-// Results:
-//   The given value, for the caller's convenience when incrementing the
-//   reference count and assigning it at the same time.
-//
-// Side effects:
-//   Increments the break cycle reference count on the value. Breaks the cycle
-//   if necessary, which could cause values to be freed.
-FbleValue* FbleBreakCycleRef(FbleArena* arena, FbleValue* src);
 
 // FbleValueRelease --
 //

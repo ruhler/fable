@@ -246,7 +246,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleFuncValue* value = FbleAlloc(arena, FbleFuncValue);
         value->_base.tag = FBLE_FUNC_VALUE;
         value->_base.strong_ref_count = 1;
-        value->_base.break_cycle_ref_count = 0;
         value->context = NULL;
         value->body = func_value_instr->body;
         value->body->refcount++;
@@ -323,7 +322,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleGetProcValue* value = FbleAlloc(arena, FbleGetProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
-        value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_GET_PROC_VALUE;
         value->port = data_stack->value;
         data_stack = VPop(arena, data_stack);
@@ -335,7 +333,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FblePutProcValue* value = FbleAlloc(arena, FblePutProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
-        value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_PUT_PROC_VALUE;
         value->arg = data_stack->value;
         data_stack = VPop(arena, data_stack);
@@ -349,7 +346,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleEvalProcValue* proc_value = FbleAlloc(arena, FbleEvalProcValue);
         proc_value->_base._base.tag = FBLE_PROC_VALUE;
         proc_value->_base._base.strong_ref_count = 1;
-        proc_value->_base._base.break_cycle_ref_count = 0;
         proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
         proc_value->result = data_stack->value;
         data_stack = VPop(arena, data_stack);
@@ -373,7 +369,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleLinkProcValue* value = FbleAlloc(arena, FbleLinkProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
-        value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_LINK_PROC_VALUE;
         value->context = NULL;
         value->body = link_instr->body;
@@ -399,7 +394,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleExecProcValue* value = FbleAlloc(arena, FbleExecProcValue);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base._base.strong_ref_count = 1;
-        value->_base._base.break_cycle_ref_count = 0;
         value->_base.tag = FBLE_EXEC_PROC_VALUE;
         value->bindings.size = exec_instr->argc;
         value->bindings.xs = FbleArenaAlloc(arena, value->bindings.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
@@ -495,7 +489,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             FbleInputValue* get = FbleAlloc(arena, FbleInputValue);
             get->_base.tag = FBLE_INPUT_VALUE;
             get->_base.strong_ref_count = 2;
-            get->_base.break_cycle_ref_count = 0;
             get->head = NULL;
             get->tail = NULL;
             var_stack = VPush(arena, &get->_base, var_stack);
@@ -503,7 +496,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
             FbleOutputValue* put = FbleAlloc(arena, FbleOutputValue);
             put->_base.tag = FBLE_OUTPUT_VALUE;
             put->_base.strong_ref_count = 1;
-            put->_base.break_cycle_ref_count = 0;
             put->dest = get;
             var_stack = VPush(arena, &put->_base, var_stack);
 
@@ -549,25 +541,13 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_LET_PREP_INSTR: {
         FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instr;
 
-        FbleRefValue* first = NULL;
-        FbleRefValue* curr = NULL;
         for (size_t i = 0; i < let_instr->count; ++i) {
           FbleRefValue* rv = FbleAlloc(arena, FbleRefValue);
           rv->_base.tag = FBLE_REF_VALUE;
           rv->_base.strong_ref_count = 1;
-          rv->_base.break_cycle_ref_count = 0;
           rv->value = NULL;
-          rv->broke_cycle = false;
-          rv->siblings = curr;
           var_stack = VPush(arena, &rv->_base, var_stack);
-
-          if (first == NULL) {
-            first = rv;
-          }
-          curr = rv;
         }
-        assert(first != NULL);
-        first->siblings = curr;
         break;
       }
 
@@ -584,8 +564,6 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
           assert(rv->value != NULL);
           vs->value = FbleValueRetain(rv->value);
-          FbleBreakCycleRef(arena, rv->value);
-          rv->broke_cycle = true;
           FbleValueRelease(arena, &rv->_base);
 
           vs = vs->tail;
