@@ -734,23 +734,23 @@ typedef struct FbleRefValue {
   struct FbleRefValue* siblings;
 } FbleRefValue;
 
-// FbleTakeStrongRef --
-//
-//   Increment the strong reference count of a value.
+// FbleValueRetain --
+//   Keep the given value alive until a corresponding FbleValueRelease is
+//   called.
 //
 // Inputs:
-//   value - The value to increment the strong reference count of. The value
-//           may be NULL, in which case nothing is done.
+//   value - The value to retain. The value may be NULL, in which case nothing
+//           is done.
 //
 // Results:
-//   The given value, for the caller's convenience when incrementing the
-//   reference count and assigning it at the same time.
+//   The given value, for the caller's convenience when retaining the
+//   value and assigning it at the same time.
 //
 // Side effects:
-//   Increments the strong reference count on the value. The reference count
-//   must be decrement using FbleValueRelease when the value is no longer
-//   needed.
-FbleValue* FbleTakeStrongRef(FbleValue* src);
+//   Causes the value to be retained until a corresponding FbleValueRelease
+//   calls is made on the value. FbleValueRelease must be called when the
+//   value is no longer needed.
+FbleValue* FbleValueRetain(FbleValue* src);
 
 // FbleBreakCycleRef --
 //   Increment the break cycle reference count of a value.

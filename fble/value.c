@@ -10,8 +10,8 @@ static void BreakCycle(FbleArena* arena, FbleValue* value);
 static void UnBreakCycle(FbleValue* value);
 static void FreeValue(FbleArena* arena, FbleValue* value);
 
-// FbleTakeStrongRef -- see documentation in fble.h
-FbleValue* FbleTakeStrongRef(FbleValue* value)
+// FbleValueRetain -- see documentation in fble.h
+FbleValue* FbleValueRetain(FbleValue* value)
 {
   if (value != NULL) {
     assert(value->strong_ref_count > 0);
@@ -294,7 +294,7 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
         // don't get freed out from under us.
         sibling = rv;
         do {
-          FbleTakeStrongRef(&sibling->_base);
+          FbleValueRetain(&sibling->_base);
           sibling = sibling->siblings;
         } while (sibling != rv);
 
@@ -550,7 +550,7 @@ FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args)
   value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
 
   for (size_t i = 0; i < args->size; ++i) {
-    value->fields.xs[i] = FbleTakeStrongRef(args->xs[i]);
+    value->fields.xs[i] = FbleValueRetain(args->xs[i]);
   }
   return &value->_base;
 }
@@ -563,6 +563,6 @@ FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg)
   union_value->_base.strong_ref_count = 1;
   union_value->_base.break_cycle_ref_count = 0;
   union_value->tag = tag;
-  union_value->arg = FbleTakeStrongRef(arg);
+  union_value->arg = FbleValueRetain(arg);
   return &union_value->_base;
 }
