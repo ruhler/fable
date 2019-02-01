@@ -190,6 +190,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         assert(data_stack != NULL);
         FbleStructValue* sv = (FbleStructValue*)Deref(data_stack->value, FBLE_STRUCT_VALUE);
         assert(access_instr->tag < sv->fields.size);
+        FbleValueRetain(&sv->_base);
+        FbleValueRelease(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, FbleValueRetain(sv->fields.xs[access_instr->tag]), data_stack);
         FbleValueRelease(arena, &sv->_base);
@@ -223,6 +225,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           return NULL;
         }
 
+        FbleValueRetain(&uv->_base);
+        FbleValueRelease(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, FbleValueRetain(uv->arg), data_stack);
 
@@ -234,6 +238,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
         assert(data_stack != NULL);
         FbleUnionValue* uv = (FbleUnionValue*)Deref(data_stack->value, FBLE_UNION_VALUE);
+        FbleValueRetain(&uv->_base);
+        FbleValueRelease(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
         assert(uv->tag < cond_instr->choices.size);
         istack = IPush(arena, cond_instr->choices.xs[uv->tag], istack);
@@ -295,6 +301,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         }
 
         FbleFuncValue* func = (FbleFuncValue*)Deref(data_stack->value, FBLE_FUNC_VALUE);
+        FbleValueRetain(&func->_base);
+        FbleValueRelease(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
 
         // Push the function's context on top of the variable stack.
@@ -430,6 +438,8 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_PROC_INSTR: {
         FbleProcValue* proc = (FbleProcValue*)Deref(data_stack->value, FBLE_PROC_VALUE);
+        FbleValueRetain(&proc->_base);
+        FbleValueRelease(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
 
         switch (proc->tag) {
