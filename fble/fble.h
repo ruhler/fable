@@ -748,7 +748,7 @@ typedef struct FbleRefValue {
 //
 // Side effects:
 //   Increments the strong reference count on the value. The reference count
-//   must be decrement using FbleDropStrongRef when the value is no longer
+//   must be decrement using FbleValueRelease when the value is no longer
 //   needed.
 FbleValue* FbleTakeStrongRef(FbleValue* src);
 
@@ -769,7 +769,7 @@ FbleValue* FbleTakeStrongRef(FbleValue* src);
 //   if necessary, which could cause values to be freed.
 FbleValue* FbleBreakCycleRef(FbleArena* arena, FbleValue* src);
 
-// FbleDropStrongRef --
+// FbleValueRelease --
 //
 //   Decrement the strong reference count of a value and free the resources
 //   associated with that value if it has no more references.
@@ -785,7 +785,7 @@ FbleValue* FbleBreakCycleRef(FbleArena* arena, FbleValue* src);
 // Side effect:
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
-void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
+void FbleValueRelease(FbleArena* arena, FbleValue* value);
 
 // FbleNewStructValue --
 //   Create a new struct value with given arguments.
@@ -798,7 +798,7 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value);
 //   A newly allocated struct value with given args.
 //
 // Side effects:
-//   The returned struct value must be freed using FbleDropStrongRef when no
+//   The returned struct value must be freed using FbleValueRelease when no
 //   longer in use. This function does not take ownership of any of the args
 //   reference counts.
 FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args);
@@ -815,7 +815,7 @@ FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args);
 //   A newly allocated union value with given tag and arg.
 //
 // Side effects:
-//   The returned union value must be freed using FbleDropStrongRef when no
+//   The returned union value must be freed using FbleValueRelease when no
 //   longer in use. This function does not take ownership of the arg's
 //   reference counts.
 FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg);
@@ -832,7 +832,7 @@ FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg);
 //   error could be a type error or an undefined union field access.
 //
 // Side effects:
-//   The returned value must be freed with FbleDropStrongRef when no longer in
+//   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
 FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr);
 

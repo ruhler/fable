@@ -86,11 +86,11 @@ int main(int argc, char* argv[])
     // the process. This allows us to test process execution.
     if (result != NULL && result->tag == FBLE_PROC_VALUE) {
       FbleValue* exec_result = FbleExec(eval_arena, (FbleProcValue*)result);
-      FbleDropStrongRef(eval_arena, result);
+      FbleValueRelease(eval_arena, result);
       result = exec_result;
     }
 
-    FbleDropStrongRef(eval_arena, result);
+    FbleValueRelease(eval_arena, result);
     FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);
   }

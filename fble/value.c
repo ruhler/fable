@@ -35,8 +35,8 @@ FbleValue* FbleBreakCycleRef(FbleArena* arena, FbleValue* value)
   return value;
 }
 
-// FbleDropStrongRef -- see documentation in fble.h
-void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
+// FbleValueRelease -- see documentation in fble.h
+void FbleValueRelease(FbleArena* arena, FbleValue* value)
 {
   if (value == NULL) {
     return;
@@ -48,14 +48,14 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
       case FBLE_STRUCT_VALUE: {
         FbleStructValue* sv = (FbleStructValue*)value;
         for (size_t i = 0; i < sv->fields.size; ++i) {
-          FbleDropStrongRef(arena, sv->fields.xs[i]);
+          FbleValueRelease(arena, sv->fields.xs[i]);
         }
         break;
       }
 
       case FBLE_UNION_VALUE: {
         FbleUnionValue* uv = (FbleUnionValue*)value;
-        FbleDropStrongRef(arena, uv->arg);
+        FbleValueRelease(arena, uv->arg);
         break;
       }
 
@@ -63,7 +63,7 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
         FbleFuncValue* fv = (FbleFuncValue*)value;
         FbleVStack* vs = fv->context;
         while (vs != NULL) {
-          FbleDropStrongRef(arena, vs->value);
+          FbleValueRelease(arena, vs->value);
           vs = vs->tail;
         }
         break;
@@ -74,27 +74,27 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
         switch (pv->tag) {
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)value;
-            FbleDropStrongRef(arena, get->port);
+            FbleValueRelease(arena, get->port);
             break;
           }
 
           case FBLE_PUT_PROC_VALUE: {
             FblePutProcValue* put = (FblePutProcValue*)value;
-            FbleDropStrongRef(arena, put->port);
-            FbleDropStrongRef(arena, put->arg);
+            FbleValueRelease(arena, put->port);
+            FbleValueRelease(arena, put->arg);
             break;
           }
 
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
-            FbleDropStrongRef(arena, eval->result);
+            FbleValueRelease(arena, eval->result);
             break;
           }
 
           case FBLE_LINK_PROC_VALUE: {
             FbleLinkProcValue* v = (FbleLinkProcValue*)value;
             for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
-              FbleDropStrongRef(arena, vs->value);
+              FbleValueRelease(arena, vs->value);
             }
             break;
           }
@@ -102,10 +102,10 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
           case FBLE_EXEC_PROC_VALUE: {
             FbleExecProcValue* v = (FbleExecProcValue*)value;
             for (size_t i = 0; i < v->bindings.size; ++i) {
-              FbleDropStrongRef(arena, v->bindings.xs[i]);
+              FbleValueRelease(arena, v->bindings.xs[i]);
             }
             for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
-              FbleDropStrongRef(arena, vs->value);
+              FbleValueRelease(arena, vs->value);
             }
             break;
           }
@@ -116,14 +116,14 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
       case FBLE_INPUT_VALUE: {
         FbleInputValue* v = (FbleInputValue*)value;
         for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
-          FbleDropStrongRef(arena, elem->value);
+          FbleValueRelease(arena, elem->value);
         }
         break;
       }
 
       case FBLE_OUTPUT_VALUE: {
         FbleOutputValue* v = (FbleOutputValue*)value;
-        FbleDropStrongRef(arena, &v->dest->_base);
+        FbleValueRelease(arena, &v->dest->_base);
         break;
       }
 
@@ -132,7 +132,7 @@ void FbleDropStrongRef(FbleArena* arena, FbleValue* value)
         if (rv->broke_cycle) {
           DropBreakCycleRef(rv->value);
         }
-        FbleDropStrongRef(arena, rv->value);
+        FbleValueRelease(arena, rv->value);
         break;
       }
     }
@@ -306,15 +306,15 @@ static void BreakCycle(FbleArena* arena, FbleValue* value)
           if (sibling->broke_cycle) {
             DropBreakCycleRef(value);
           }
-          FbleDropStrongRef(arena, value);
+          FbleValueRelease(arena, value);
           sibling = sibling->siblings;
         } while (sibling != rv);
 
         // 3. Release our strong references to the siblings.
         while (rv->siblings != rv) {
-          FbleDropStrongRef(arena, &(rv->siblings->_base));
+          FbleValueRelease(arena, &(rv->siblings->_base));
         }
-        FbleDropStrongRef(arena, &rv->_base);
+        FbleValueRelease(arena, &rv->_base);
       }
       break;
     }

@@ -127,7 +127,7 @@ static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail)
 //   The computed value, or NULL on error.
 //
 // Side effects:
-//   The returned value must be freed with FbleDropStrongRef when no longer in
+//   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
 static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 {
@@ -171,7 +171,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         data_stack = VPush(arena, FbleNewStructValue(arena, &args), data_stack);
 
         for (size_t i = 0; i < args.size; ++i) {
-          FbleDropStrongRef(arena, argv[i]);
+          FbleValueRelease(arena, argv[i]);
         }
         break;
       }
@@ -181,7 +181,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleValue* arg = data_stack->value;
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, FbleNewUnionValue(arena, union_value_instr->tag, arg), data_stack);
-        FbleDropStrongRef(arena, arg);
+        FbleValueRelease(arena, arg);
         break;
       }
 
@@ -192,7 +192,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         assert(access_instr->tag < sv->fields.size);
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, FbleTakeStrongRef(sv->fields.xs[access_instr->tag]), data_stack);
-        FbleDropStrongRef(arena, &sv->_base);
+        FbleValueRelease(arena, &sv->_base);
         break;
       }
 
@@ -206,12 +206,12 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
 
           // Clean up the stacks.
           while (var_stack != NULL) {
-            FbleDropStrongRef(arena, var_stack->value);
+            FbleValueRelease(arena, var_stack->value);
             var_stack = VPop(arena, var_stack);
           }
 
           while (data_stack != NULL) {
-            FbleDropStrongRef(arena, data_stack->value);
+            FbleValueRelease(arena, data_stack->value);
             data_stack = VPop(arena, data_stack);
           }
 
@@ -226,7 +226,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, FbleTakeStrongRef(uv->arg), data_stack);
 
-        FbleDropStrongRef(arena, &uv->_base);
+        FbleValueRelease(arena, &uv->_base);
         break;
       }
 
@@ -237,7 +237,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         data_stack = VPop(arena, data_stack);
         assert(uv->tag < cond_instr->choices.size);
         istack = IPush(arena, cond_instr->choices.xs[uv->tag], istack);
-        FbleDropStrongRef(arena, &uv->_base);
+        FbleValueRelease(arena, &uv->_base);
         break;
       }
 
@@ -270,7 +270,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleDescopeInstr* descope_instr = (FbleDescopeInstr*)instr;
         for (size_t i = 0; i < descope_instr->count; ++i) {
           assert(var_stack != NULL);
-          FbleDropStrongRef(arena, var_stack->value);
+          FbleValueRelease(arena, var_stack->value);
           var_stack = VPop(arena, var_stack);
         }
         break;
@@ -280,7 +280,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
         FbleValue* v = data_stack->value;
         data_stack = VPop(arena, data_stack);
 
-        FbleDropStrongRef(arena, data_stack->value);
+        FbleValueRelease(arena, data_stack->value);
         data_stack = VPop(arena, data_stack);
         data_stack = VPush(arena, v, data_stack);
         break;
@@ -542,7 +542,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           }
         }
 
-        FbleDropStrongRef(arena, &proc->_base);
+        FbleValueRelease(arena, &proc->_base);
         break;
       }
 
@@ -586,7 +586,7 @@ static FbleValue* Eval(FbleArena* arena, FbleInstr* prgm, FbleValue* arg)
           vs->value = FbleTakeStrongRef(rv->value);
           FbleBreakCycleRef(arena, rv->value);
           rv->broke_cycle = true;
-          FbleDropStrongRef(arena, &rv->_base);
+          FbleValueRelease(arena, &rv->_base);
 
           vs = vs->tail;
         }
