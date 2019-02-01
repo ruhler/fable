@@ -30,19 +30,7 @@ typedef struct {
 
 // FbleRefArena --
 //   An arena used for allocating automatically memory managed allocations.
-//
-// Fields:
-//   arena - the underlying arena associated with this reference arena.
-//
-// All other fields of FbleRefArena are for internal use only.
-typedef struct FbleRefArena {
-  FbleArena* arena;
-
-  size_t next_id;
-  size_t next_round_id;
-  void (*free)(struct FbleRefArena* arena, FbleRef* ref);
-  void (*added)(struct FbleRefArena* arena, FbleRef* ref, FbleRefV* refs);
-} FbleRefArena;
+typedef struct FbleRefArena FbleRefArena;
 
 // FbleNewRefArena --
 //   Create a new reference arena.
@@ -102,6 +90,19 @@ FbleRefArena* FbleNewRefArena(
 // Side effects:
 //   Frees resources associated with the given arena.
 void FbleDeleteRefArena(FbleRefArena* arena);
+
+// FbleRefArenaArena --
+//   Returns the arena underlying this ref arena.
+//
+// Inputs:
+//   arena - the ref arena.
+//
+// Results:
+//   The underlying arena of this ref arena.
+//
+// Side effects:
+//   None.
+FbleArena* FbleRefArenaArena(FbleRefArena* arena);
 
 // FbleRefInit --
 //   Initialize and retain the reference pointed to by ref.

@@ -16,13 +16,15 @@ typedef struct {
 
 static void Free(FbleRefArena* arena, FbleRef* ref)
 {
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+
   assert(sRefsAlive > 0);
   sRefsAlive--;
 
   Ref* r = (Ref*)ref;
   r->alive = 0xDEAD;
-  FbleFree(arena->arena, r->added.xs);
-  FbleFree(arena->arena, r);
+  FbleFree(arena_, r->added.xs);
+  FbleFree(arena_, r);
 }
 
 static bool Alive(Ref* ref)
@@ -33,14 +35,15 @@ static bool Alive(Ref* ref)
 static void Added(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs) {
   Ref* r = (Ref*)ref;
   for (size_t i = 0; i < r->added.size; ++i) {
-    FbleVectorAppend(arena->arena, *refs, r->added.xs[i]);
+    FbleVectorAppend(FbleRefArenaArena(arena), *refs, r->added.xs[i]);
   }
 }
 
 static Ref* Create(FbleRefArena* arena) {
-  Ref* ref = FbleAlloc(arena->arena, Ref);
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  Ref* ref = FbleAlloc(arena_, Ref);
   FbleRefInit(arena, &ref->_base);
-  FbleVectorInit(arena->arena, ref->added);
+  FbleVectorInit(arena_, ref->added);
   ref->alive = 0xA11BE;
   sRefsAlive++;
   return ref;
@@ -48,7 +51,7 @@ static Ref* Create(FbleRefArena* arena) {
 
 static void RefAdd(FbleRefArena* arena, Ref* src, Ref* dst)
 {
-  FbleVectorAppend(arena->arena, src->added, &dst->_base);
+  FbleVectorAppend(FbleRefArenaArena(arena), src->added, &dst->_base);
   FbleRefAdd(arena, &src->_base, &dst->_base);
 }
 

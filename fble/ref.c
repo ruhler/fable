@@ -20,6 +20,14 @@
 //               matches the current round id and this is true, then the node
 //               has not yet been initially processed for this round.
 
+struct FbleRefArena {
+  FbleArena* arena;
+  size_t next_id;
+  size_t next_round_id;
+  void (*free)(struct FbleRefArena* arena, FbleRef* ref);
+  void (*added)(struct FbleRefArena* arena, FbleRef* ref, FbleRefV* refs);
+};
+
 static FbleRef* CycleHead(FbleRef* ref);
 static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs);
 static void CycleFree(FbleRefArena* arena, FbleRef* ref);
@@ -162,6 +170,12 @@ FbleRefArena* FbleNewRefArena(
 void FbleDeleteRefArena(FbleRefArena* arena)
 {
   FbleFree(arena->arena, arena);
+}
+
+// FbleRefArenaArena -- see documentation in fble-ref.h
+FbleArena* FbleRefArenaArena(FbleRefArena* arena)
+{
+  return arena->arena;
 }
 
 // FbleRefInit -- see documentation in fble-ref.h
