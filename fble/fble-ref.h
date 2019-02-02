@@ -5,7 +5,10 @@
 #ifndef FBLE_REF_H_
 #define FBLE_REF_H_
 
-#include "fble.h"
+#include <stdbool.h>    // for bool
+
+#include "fble-alloc.h"
+#include "fble-vector.h"
 
 // FbleRef --
 //   A reference to an object that will be automatically freed when no longer

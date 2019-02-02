@@ -10,6 +10,7 @@
 
 #include "fble-alloc.h"
 #include "fble-vector.h"
+#include "fble-ref.h"
 
 
 // FbleLoc --
