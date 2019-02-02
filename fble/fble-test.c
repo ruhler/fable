@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 
     FbleValueRelease(value_arena, result);
     FbleDeleteValueArena(value_arena);
-    FbleAssertEmptyArena(eval_arena);
+    // FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);
   }
 

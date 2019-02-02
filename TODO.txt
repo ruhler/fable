@@ -1,6 +1,7 @@
 Fble:
 
 * Switch to new reference counting implementation for Type.
+* Re-enable memory leak asserting.
 * All the failing test cases should, hopefully, now pass.
 
 * Finish adding and fixing tests until snake.fble evaluates.
