@@ -8,7 +8,7 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static void FreeValue(FbleArena* arena, FbleValue* value);
+static void FreeValue(FbleValueArena* arena, FbleValue* value);
 
 
 // FbleNewValueArena -- see documentation in fble-.h
@@ -132,7 +132,7 @@ void FbleValueRelease(FbleValueArena* arena, FbleValue* value)
       }
     }
 
-    FreeValue(FbleRefArenaArena(arena), value);
+    FreeValue(arena, value);
   } else {
     value->strong_ref_count--;
   }
@@ -150,18 +150,19 @@ void FbleValueRelease(FbleValueArena* arena, FbleValue* value)
 //
 // Side effects:
 //   Frees resources associated with the given value.
-static void FreeValue(FbleArena* arena, FbleValue* value)
+static void FreeValue(FbleValueArena* arena, FbleValue* value)
 {
+  FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (value->tag) {
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
-      FbleFree(arena, sv->fields.xs);
-      FbleFree(arena, value);
+      FbleFree(arena_, sv->fields.xs);
+      FbleFree(arena_, value);
       return;
     }
 
     case FBLE_UNION_VALUE: {
-      FbleFree(arena, value);
+      FbleFree(arena_, value);
       return;
     }
 
@@ -171,10 +172,10 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
       while (vs != NULL) {
         FbleVStack* tmp = vs;
         vs = vs->tail;
-        FbleFree(arena, tmp);
+        FbleFree(arena_, tmp);
       }
-      FbleFreeInstrs(arena, fv->body);
-      FbleFree(arena, fv);
+      FbleFreeInstrs(arena_, fv->body);
+      FbleFree(arena_, fv);
       return;
     }
 
@@ -191,27 +192,27 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
           while (vs != NULL) {
             FbleVStack* tmp = vs;
             vs = vs->tail;
-            FbleFree(arena, tmp);
+            FbleFree(arena_, tmp);
           }
-          FbleFreeInstrs(arena, v->body);
+          FbleFreeInstrs(arena_, v->body);
           break;
         }
 
         case FBLE_EXEC_PROC_VALUE: {
           FbleExecProcValue* v = (FbleExecProcValue*)value;
-          FbleFree(arena, v->bindings.xs);
+          FbleFree(arena_, v->bindings.xs);
           FbleVStack* vs = v->context;
           while (vs != NULL) {
             FbleVStack* tmp = vs;
             vs = vs->tail;
-            FbleFree(arena, tmp);
+            FbleFree(arena_, tmp);
           }
-          FbleFreeInstrs(arena, v->body);
+          FbleFreeInstrs(arena_, v->body);
           break;
         }
       }
 
-      FbleFree(arena, value);
+      FbleFree(arena_, value);
       return;
     }
 
@@ -221,19 +222,19 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
       while (curr != NULL) {
         FbleValues* tmp = curr;
         curr = curr->next;
-        FbleFree(arena, tmp);
+        FbleFree(arena_, tmp);
       }
-      FbleFree(arena, value);
+      FbleFree(arena_, value);
       return;
     }
 
     case FBLE_OUTPUT_VALUE: {
-      FbleFree(arena, value);
+      FbleFree(arena_, value);
       return;
     }
 
     case FBLE_REF_VALUE: {
-      FbleFree(arena, value);
+      FbleFree(arena_, value);
       return;
     }
   }
