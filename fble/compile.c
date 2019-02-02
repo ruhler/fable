@@ -221,7 +221,6 @@ static void FreeType(FbleArena* arena, Type* type);
 
 static Kind* GetKind(FbleArena* arena, Type* type);
 static bool HasParams(Type* type, TypeV params, TypeList* visited);
-static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args);
 static Type* SubstInternal(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps);
 static void Eval(FbleArena* arena, Type* type, TypeList* evaled, PolyApplyList* applied);
 static Type* Normal(Type* type);
@@ -715,29 +714,6 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
   return false;
 }
 
-// Subst --
-//   Substitute the given arguments in place of the given parameters in the
-//   given type. The returned type may not be fully evaluated or normalized.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   type - the type to substitute into.
-//   params - the abstract types to substitute out.
-//   args - the concrete types to substitute in.
-//   tps - a map of already substituted types, to avoid infinite recursion.
-//
-// Results:
-//   A type with all occurrences of params replaced with the corresponding
-//   args types.
-//
-// Side effects:
-//   The caller is responsible for calling TypeRelease on the returned
-//   type when it is no longer needed.
-static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args)
-{
-  return SubstInternal(arena, type, params, args, NULL);
-}
-
 // SubstInternal --
 //   Substitute the given arguments in place of the given parameters in the
 //   given type.
@@ -1049,7 +1025,7 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
 
       PolyType* poly = (PolyType*)Normal(pat->poly);
       if (poly->_base.tag == POLY_TYPE) {
-        pat->result = Subst(arena, poly->body, poly->args, pat->args);
+        pat->result = SubstInternal(arena, poly->body, poly->args, pat->args, NULL);
 
         PolyApplyList napplied = {
           .poly = &poly->_base,
