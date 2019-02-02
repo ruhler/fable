@@ -255,8 +255,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_FUNC_VALUE_INSTR: {
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
         FbleFuncValue* value = FbleAlloc(arena_, FbleFuncValue);
+        FbleRefInit(arena, &value->_base.ref);
         value->_base.tag = FBLE_FUNC_VALUE;
-        value->_base.strong_ref_count = 1;
         value->context = NULL;
         value->body = func_value_instr->body;
         value->body->refcount++;
@@ -333,8 +333,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_GET_INSTR: {
         FbleGetProcValue* value = FbleAlloc(arena_, FbleGetProcValue);
+        FbleRefInit(arena, &value->_base._base.ref);
         value->_base._base.tag = FBLE_PROC_VALUE;
-        value->_base._base.strong_ref_count = 1;
         value->_base.tag = FBLE_GET_PROC_VALUE;
         value->port = data_stack->value;
         data_stack = VPop(arena_, data_stack);
@@ -344,8 +344,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_PUT_INSTR: {
         FblePutProcValue* value = FbleAlloc(arena_, FblePutProcValue);
+        FbleRefInit(arena, &value->_base._base.ref);
         value->_base._base.tag = FBLE_PROC_VALUE;
-        value->_base._base.strong_ref_count = 1;
         value->_base.tag = FBLE_PUT_PROC_VALUE;
         value->arg = data_stack->value;
         data_stack = VPop(arena_, data_stack);
@@ -357,8 +357,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
 
       case FBLE_EVAL_INSTR: {
         FbleEvalProcValue* proc_value = FbleAlloc(arena_, FbleEvalProcValue);
+        FbleRefInit(arena, &proc_value->_base._base.ref);
         proc_value->_base._base.tag = FBLE_PROC_VALUE;
-        proc_value->_base._base.strong_ref_count = 1;
         proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
         proc_value->result = data_stack->value;
         data_stack = VPop(arena_, data_stack);
@@ -380,8 +380,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_LINK_INSTR: {
         FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
         FbleLinkProcValue* value = FbleAlloc(arena_, FbleLinkProcValue);
+        FbleRefInit(arena, &value->_base._base.ref);
         value->_base._base.tag = FBLE_PROC_VALUE;
-        value->_base._base.strong_ref_count = 1;
         value->_base.tag = FBLE_LINK_PROC_VALUE;
         value->context = NULL;
         value->body = link_instr->body;
@@ -405,8 +405,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
       case FBLE_EXEC_INSTR: {
         FbleExecInstr* exec_instr = (FbleExecInstr*)instr;
         FbleExecProcValue* value = FbleAlloc(arena_, FbleExecProcValue);
+        FbleRefInit(arena, &value->_base._base.ref);
         value->_base._base.tag = FBLE_PROC_VALUE;
-        value->_base._base.strong_ref_count = 1;
         value->_base.tag = FBLE_EXEC_PROC_VALUE;
         value->bindings.size = exec_instr->argc;
         value->bindings.xs = FbleArenaAlloc(arena_, value->bindings.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
@@ -502,15 +502,15 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
 
             // Allocate the link and push the ports on top of the variable stack.
             FbleInputValue* get = FbleAlloc(arena_, FbleInputValue);
+            FbleRefInit(arena, &get->_base.ref);
             get->_base.tag = FBLE_INPUT_VALUE;
-            get->_base.strong_ref_count = 2;
             get->head = NULL;
             get->tail = NULL;
-            var_stack = VPush(arena_, &get->_base, var_stack);
+            var_stack = VPush(arena_, FbleValueRetain(arena, &get->_base), var_stack);
 
             FbleOutputValue* put = FbleAlloc(arena_, FbleOutputValue);
+            FbleRefInit(arena, &put->_base.ref);
             put->_base.tag = FBLE_OUTPUT_VALUE;
-            put->_base.strong_ref_count = 1;
             put->dest = get;
             var_stack = VPush(arena_, &put->_base, var_stack);
 
@@ -558,8 +558,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
 
         for (size_t i = 0; i < let_instr->count; ++i) {
           FbleRefValue* rv = FbleAlloc(arena_, FbleRefValue);
+          FbleRefInit(arena, &rv->_base.ref);
           rv->_base.tag = FBLE_REF_VALUE;
-          rv->_base.strong_ref_count = 1;
           rv->value = NULL;
           var_stack = VPush(arena_, &rv->_base, var_stack);
         }

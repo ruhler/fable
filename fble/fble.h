@@ -475,8 +475,8 @@ typedef enum {
 //   value this is to get access to additional fields of the value
 //   by first casting to that specific type of value.
 typedef struct FbleValue {
+  FbleRef ref;
   FbleValueTag tag;
-  size_t strong_ref_count;
 } FbleValue;
 
 // FbleValueV --
