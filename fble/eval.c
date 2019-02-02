@@ -1,6 +1,9 @@
 // eval.c --
 //   This file implements the fble evaluation routines.
 
+#include <assert.h>   // for assert
+#include <stdlib.h>   // for NULL
+
 #include "fble-internal.h"
 
 #define UNREACHABLE(x) assert(false && x)

@@ -1,6 +1,7 @@
 // fble-ref-test.c --
 //   This file implements the main entry point for the fble-ref-test program.
 
+#include <assert.h>   // for assert
 #include <stdio.h>    // for FILE, fprintf, stderr
 
 #include "fble.h"

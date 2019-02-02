@@ -2,6 +2,7 @@
 //   This file implements the fble-ref.h apis.
 
 #include <assert.h>   // for assert
+#include <stdlib.h>   // for NULL
 
 #include "fble-ref.h"
 

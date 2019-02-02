@@ -1,6 +1,8 @@
 // compile.c --
 //   This file implements the fble compilation routines.
 
+#include <stdlib.h>   // for NULL
+#include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
 
 #include "fble-internal.h"

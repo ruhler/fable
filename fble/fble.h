@@ -5,9 +5,7 @@
 #ifndef FBLE_H_
 #define FBLE_H_
 
-#include <assert.h>       // for assert
 #include <stdbool.h>      // for bool
-#include <stdlib.h>       // for NULL
 #include <sys/types.h>    // for size_t
 
 #include "fble-alloc.h"
