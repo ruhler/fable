@@ -3,7 +3,8 @@
 
 #include <string.h>     // for memcpy
 
-#include "fble.h"
+#include "fble-alloc.h"
+#include "fble-vector.h"
 
 // FbleVectorIncrSize -- see fble.h for documentation of this function.
 void FbleVectorIncrSize(FbleArena* arena, size_t elem_size, size_t* size, void** xs)
