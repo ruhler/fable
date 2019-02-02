@@ -1,8 +1,4 @@
 Fble:
-* Switch to new reference counting implementation for FbleValue.
-
-* Re-enable memory leak assertion in fble-test.c
-* Many of the failing test cases should, hopefully, now pass.
 
 * Switch to new reference counting implementation for Type.
 * All the failing test cases should, hopefully, now pass.

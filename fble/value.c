@@ -265,7 +265,8 @@ FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV* args)
   value->fields.xs = FbleArenaAlloc(arena_, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
 
   for (size_t i = 0; i < args->size; ++i) {
-    value->fields.xs[i] = FbleValueRetain(arena, args->xs[i]);
+    value->fields.xs[i] = args->xs[i];
+    FbleRefAdd(arena, &value->_base.ref, &args->xs[i]->ref);
   }
   return &value->_base;
 }
@@ -277,6 +278,7 @@ FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
   FbleRefInit(arena, &union_value->_base.ref);
   union_value->_base.tag = FBLE_UNION_VALUE;
   union_value->tag = tag;
-  union_value->arg = FbleValueRetain(arena, arg);
+  union_value->arg = arg;
+  FbleRefAdd(arena, &union_value->_base.ref, &arg->ref);
   return &union_value->_base;
 }
