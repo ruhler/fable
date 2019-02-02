@@ -221,7 +221,7 @@ static void FreeType(FbleArena* arena, Type* type);
 
 static Kind* GetKind(FbleArena* arena, Type* type);
 static bool HasParams(Type* type, TypeV params, TypeList* visited);
-static Type* SubstInternal(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps);
+static Type* Subst(FbleArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps);
 static void Eval(FbleArena* arena, Type* type, TypeList* evaled, PolyApplyList* applied);
 static Type* Normal(Type* type);
 static bool TypesEqual(Type* a, Type* b, TypePairs* eq);
@@ -714,7 +714,7 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
   return false;
 }
 
-// SubstInternal --
+// Subst --
 //   Substitute the given arguments in place of the given parameters in the
 //   given type.
 //
@@ -732,7 +732,7 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
 // Side effects:
 //   The caller is responsible for calling TypeRelease on the returned
 //   type when it is no longer needed. The caller needs to hook up the refs.
-static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV args, TypePairs* tps)
+static Type* Subst(FbleArena* arena, Type* type, TypeV params, TypeV args, TypePairs* tps)
 {
   if (!HasParams(type, params, NULL)) {
     return TypeRetain(type);
@@ -749,7 +749,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       for (size_t i = 0; i < st->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena, sst->fields);
         field->name = st->fields.xs[i].name;
-        field->type = SubstInternal(arena, st->fields.xs[i].type, params, args, tps);
+        field->type = Subst(arena, st->fields.xs[i].type, params, args, tps);
       }
       return &sst->_base;
     }
@@ -764,7 +764,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       for (size_t i = 0; i < ut->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena, sut->fields);
         field->name = ut->fields.xs[i].name;
-        field->type = SubstInternal(arena, ut->fields.xs[i].type, params, args, tps);
+        field->type = Subst(arena, ut->fields.xs[i].type, params, args, tps);
       }
       return &sut->_base;
     }
@@ -779,9 +779,9 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       for (size_t i = 0; i < ft->args.size; ++i) {
         Field* arg = FbleVectorExtend(arena, sft->args);
         arg->name = ft->args.xs[i].name;
-        arg->type = SubstInternal(arena, ft->args.xs[i].type, params, args, tps);
+        arg->type = Subst(arena, ft->args.xs[i].type, params, args, tps);
       }
-      sft->rtype = SubstInternal(arena, ft->rtype, params, args, tps);
+      sft->rtype = Subst(arena, ft->rtype, params, args, tps);
       return &sft->_base;
     }
 
@@ -791,7 +791,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       spt->_base.tag = PROC_TYPE;
       spt->_base.loc = pt->_base.loc;
       spt->_base.strong_ref_count = 1;
-      spt->rtype = SubstInternal(arena, pt->rtype, params, args, tps);
+      spt->rtype = Subst(arena, pt->rtype, params, args, tps);
       return &spt->_base;
     }
 
@@ -801,7 +801,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       spt->_base.tag = INPUT_TYPE;
       spt->_base.loc = pt->_base.loc;
       spt->_base.strong_ref_count = 1;
-      spt->rtype = SubstInternal(arena, pt->rtype, params, args, tps);
+      spt->rtype = Subst(arena, pt->rtype, params, args, tps);
       return &spt->_base;
     }
 
@@ -811,7 +811,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       spt->_base.tag = OUTPUT_TYPE;
       spt->_base.loc = pt->_base.loc;
       spt->_base.strong_ref_count = 1;
-      spt->rtype = SubstInternal(arena, pt->rtype, params, args, tps);
+      spt->rtype = Subst(arena, pt->rtype, params, args, tps);
       return &spt->_base;
     }
 
@@ -822,7 +822,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       svt->_base.loc = vt->_base.loc;
       svt->_base.strong_ref_count = 1;
       svt->var = vt->var;
-      svt->value = SubstInternal(arena, vt->value, params, args, tps);
+      svt->value = Subst(arena, vt->value, params, args, tps);
       return &svt->_base;
     }
 
@@ -846,7 +846,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       for (size_t i = 0; i < pt->args.size; ++i) {
         FbleVectorAppend(arena, spt->args, TypeRetain(pt->args.xs[i]));
       }
-      spt->body = SubstInternal(arena, pt->body, params, args, tps);
+      spt->body = Subst(arena, pt->body, params, args, tps);
       return &spt->_base;
     }
 
@@ -856,11 +856,11 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
       spat->_base.tag = POLY_APPLY_TYPE;
       spat->_base.loc = pat->_base.loc;
       spat->_base.strong_ref_count = 1;
-      spat->poly = SubstInternal(arena, pat->poly, params, args, tps);
+      spat->poly = Subst(arena, pat->poly, params, args, tps);
       spat->result = NULL;
       FbleVectorInit(arena, spat->args);
       for (size_t i = 0; i < pat->args.size; ++i) {
-        Type* arg = SubstInternal(arena, pat->args.xs[i], params, args, tps);
+        Type* arg = Subst(arena, pat->args.xs[i], params, args, tps);
         FbleVectorAppend(arena, spat->args, arg);
       }
       return &spat->_base;
@@ -895,7 +895,7 @@ static Type* SubstInternal(FbleArena* arena, Type* type, TypeV params, TypeV arg
         .next = tps
       };
 
-      sref->value = SubstInternal(arena, ref->value, params, args, &ntp);
+      sref->value = Subst(arena, ref->value, params, args, &ntp);
       return TypeRetain(sref->value);
     }
   }
@@ -1025,7 +1025,7 @@ static void Eval(FbleArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
 
       PolyType* poly = (PolyType*)Normal(pat->poly);
       if (poly->_base.tag == POLY_TYPE) {
-        pat->result = SubstInternal(arena, poly->body, poly->args, pat->args, NULL);
+        pat->result = Subst(arena, poly->body, poly->args, pat->args, NULL);
 
         PolyApplyList napplied = {
           .poly = &poly->_base,
