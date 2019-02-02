@@ -9,9 +9,22 @@
 #define UNREACHABLE(x) assert(false && x)
 
 static void FreeValue(FbleArena* arena, FbleValue* value);
+
+
+// FbleNewValueArena -- see documentation in fble-.h
+FbleValueArena* FbleNewValueArena(FbleArena* arena)
+{
+  return FbleNewRefArena(arena, NULL, NULL);
+}
+
+// FbleDeleteValueArena -- see documentation in fble.h
+void FbleDeleteValueArena(FbleValueArena* arena)
+{
+  FbleDeleteRefArena(arena);
+}
 
 // FbleValueRetain -- see documentation in fble.h
-FbleValue* FbleValueRetain(FbleValue* value)
+FbleValue* FbleValueRetain(FbleValueArena* arena, FbleValue* value)
 {
   if (value != NULL) {
     assert(value->strong_ref_count > 0);
@@ -21,7 +34,7 @@ FbleValue* FbleValueRetain(FbleValue* value)
 }
 
 // FbleValueRelease -- see documentation in fble.h
-void FbleValueRelease(FbleArena* arena, FbleValue* value)
+void FbleValueRelease(FbleValueArena* arena, FbleValue* value)
 {
   if (value == NULL) {
     return;
@@ -119,7 +132,7 @@ void FbleValueRelease(FbleArena* arena, FbleValue* value)
       }
     }
 
-    FreeValue(arena, value);
+    FreeValue(FbleRefArenaArena(arena), value);
   } else {
     value->strong_ref_count--;
   }
@@ -229,27 +242,28 @@ static void FreeValue(FbleArena* arena, FbleValue* value)
 }
 
 // FbleNewStructValue -- see documentation in fble.h
-FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args)
+FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV* args)
 {
-  FbleStructValue* value = FbleAlloc(arena, FbleStructValue);
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleStructValue* value = FbleAlloc(arena_, FbleStructValue);
   value->_base.tag = FBLE_STRUCT_VALUE;
   value->_base.strong_ref_count = 1;
   value->fields.size = args->size;
-  value->fields.xs = FbleArenaAlloc(arena, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
+  value->fields.xs = FbleArenaAlloc(arena_, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
 
   for (size_t i = 0; i < args->size; ++i) {
-    value->fields.xs[i] = FbleValueRetain(args->xs[i]);
+    value->fields.xs[i] = FbleValueRetain(arena, args->xs[i]);
   }
   return &value->_base;
 }
 
 // FbleNewUnionValue -- see documentation in fble.h
-FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg)
+FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
 {
-  FbleUnionValue* union_value = FbleAlloc(arena, FbleUnionValue);
+  FbleUnionValue* union_value = FbleAlloc(FbleRefArenaArena(arena), FbleUnionValue);
   union_value->_base.tag = FBLE_UNION_VALUE;
   union_value->_base.strong_ref_count = 1;
   union_value->tag = tag;
-  union_value->arg = FbleValueRetain(arg);
+  union_value->arg = FbleValueRetain(arena, arg);
   return &union_value->_base;
 }

@@ -455,6 +455,8 @@ typedef struct {
 //   of the program.
 FbleExpr* FbleParse(FbleArena* arena, const char* filename);
 
+typedef FbleRefArena FbleValueArena;
+
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of values.
 typedef enum {
@@ -540,11 +542,39 @@ typedef struct FbleRefValue {
   FbleValue* value;
 } FbleRefValue;
 
+// FbleNewValueArena --
+//   Create a new arena for allocation of values.
+// 
+// Inputs: 
+//   arena - the arena to use for underlying allocations.
+//
+// Results:
+//   A value arena that can be used to allocate values.
+//
+// Side effects:
+//   Allocates a value arena that should be freed using FbleDeleteValueArena.
+FbleValueArena* FbleNewValueArena(FbleArena* arena);
+
+// FbleDeleteValueArena --
+//   Reclaim resources associated with a value arena.
+//
+// Inputs:
+//   arena - the arena to free.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The resources associated with the given arena are freed. The arena should
+//   not be used after this call.
+void FbleDeleteValueArena(FbleValueArena* arena);
+
 // FbleValueRetain --
 //   Keep the given value alive until a corresponding FbleValueRelease is
 //   called.
 //
 // Inputs:
+//   arena - The arena used to allocate the value.
 //   value - The value to retain. The value may be NULL, in which case nothing
 //           is done.
 //
@@ -556,7 +586,7 @@ typedef struct FbleRefValue {
 //   Causes the value to be retained until a corresponding FbleValueRelease
 //   calls is made on the value. FbleValueRelease must be called when the
 //   value is no longer needed.
-FbleValue* FbleValueRetain(FbleValue* src);
+FbleValue* FbleValueRetain(FbleValueArena* arena, FbleValue* src);
 
 // FbleValueRelease --
 //
@@ -564,7 +594,7 @@ FbleValue* FbleValueRetain(FbleValue* src);
 //   associated with that value if it has no more references.
 //
 // Inputs:
-//   arena - The arena the value was allocated with.
+//   arena - The value arena the value was allocated with.
 //   value - The value to decrement the strong reference count of. The value
 //           may be NULL, in which case no action is performed.
 //
@@ -574,7 +604,7 @@ FbleValue* FbleValueRetain(FbleValue* src);
 // Side effect:
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
-void FbleValueRelease(FbleArena* arena, FbleValue* value);
+void FbleValueRelease(FbleValueArena* arena, FbleValue* value);
 
 // FbleNewStructValue --
 //   Create a new struct value with given arguments.
@@ -590,7 +620,7 @@ void FbleValueRelease(FbleArena* arena, FbleValue* value);
 //   The returned struct value must be freed using FbleValueRelease when no
 //   longer in use. This function does not take ownership of any of the args
 //   reference counts.
-FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args);
+FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV* args);
 
 // FbleNewUnionValue --
 //   Create a new union value with given tag and argument.
@@ -607,7 +637,7 @@ FbleValue* FbleNewStructValue(FbleArena* arena, FbleValueV* args);
 //   The returned union value must be freed using FbleValueRelease when no
 //   longer in use. This function does not take ownership of the arg's
 //   reference counts.
-FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg);
+FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg);
 
 // FbleEval --
 //   Type check and evaluate an expression.
@@ -623,7 +653,7 @@ FbleValue* FbleNewUnionValue(FbleArena* arena, size_t tag, FbleValue* arg);
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
-FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr);
+FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
 
 // FbleExec --
 //   Execute a process.
@@ -638,6 +668,6 @@ FbleValue* FbleEval(FbleArena* arena, FbleExpr* expr);
 //
 // Side effects:
 //   Prints an error message to stderr in case of error.
-FbleValue* FbleExec(FbleArena* arena, FbleProcValue* proc);
+FbleValue* FbleExec(FbleValueArena* arena, FbleProcValue* proc);
 
 #endif // FBLE_H_

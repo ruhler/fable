@@ -29,6 +29,9 @@ Fble Cleanup:
   instead?
 * Share common code between checking FbleStructType, FbleUnionType, and
   FbleFuncType?
+* Clean up header files and what is easily externally visible.
+  For example, should FbleRef be visible from fble.h?
+  And make sure all "see documentation in ..." lines are accurate.
 
 Fble Performance:
 * Optimize reference counting scheme.

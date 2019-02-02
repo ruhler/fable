@@ -80,17 +80,19 @@ int main(int argc, char* argv[])
   FbleValue* result = NULL;
   if (prgm != NULL) {
     FbleArena* eval_arena = FbleNewArena(arena);
-    result = FbleEval(eval_arena, prgm);
+    FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
+    result = FbleEval(value_arena, prgm);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
     if (result != NULL && result->tag == FBLE_PROC_VALUE) {
-      FbleValue* exec_result = FbleExec(eval_arena, (FbleProcValue*)result);
-      FbleValueRelease(eval_arena, result);
+      FbleValue* exec_result = FbleExec(value_arena, (FbleProcValue*)result);
+      FbleValueRelease(value_arena, result);
       result = exec_result;
     }
 
-    FbleValueRelease(eval_arena, result);
+    FbleValueRelease(value_arena, result);
+    FbleDeleteValueArena(value_arena);
     // FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);
   }
