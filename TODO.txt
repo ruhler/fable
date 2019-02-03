@@ -1,16 +1,21 @@
 Fble:
-
-* Switch to new reference counting implementation for Type.
-* Re-enable memory leak asserting.
-* All the failing test cases should, hopefully, now pass.
-
+* Debug failing tests, which in theory should now be passing.
 * Finish adding and fixing tests until snake.fble evaluates.
-* Hook up fble-test I/O for snake.fble.
 
-* Port the rest of the fblc tests to fble.
 * Add threading infrastructure and support for multi-binding exec
    Add a type Thread: tstack, vstack, parent, join count
    Add thread lists for running threads and threads blocked on a given link.
+
+* Hook up fble-test I/O for snake.fble.
+ - I should now be able to play snake.
+
+* Expand tests for test coverage.
+* Port the rest of the fblc tests to fble.
+
+* Implement support for modulatity.
+* Port the rest of the fbld tests to fble.
+
+* Delete the obsolete fblc/ and fbld/ code and TODOs.
 
 Fble Cleanup:
 * Better error messages on types that have the same name but different values.
@@ -167,7 +172,7 @@ Miscellanous:
 * Test what happens when we try to access the wrong field of a union.
 
 * Better document that for binary encodings of values, the top level value is
-  guarenteed to take at least one bytes, regardless of whether or not it is
+  guaranteed to take at least one bytes, regardless of whether or not it is
   part of a stream.
 
 * Change fblc-check-error and friends to take the program last, and switch to
