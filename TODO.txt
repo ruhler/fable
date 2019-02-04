@@ -1,5 +1,4 @@
 Fble:
-* Debug failing tests, which in theory should now be passing.
 * Finish adding and fixing tests until snake.fble evaluates.
 
 * Add threading infrastructure and support for multi-binding exec

@@ -3115,10 +3115,10 @@ FbleInstr* FbleCompile(FbleArena* arena, FbleExpr* expr)
   FbleInstr* instrs = NULL;
   TypeArena* type_arena = FbleNewRefArena(arena, &TypeFree, &TypeAdded);
   Type* type = Compile(type_arena, NULL, NULL, expr, &instrs);
+  TypeRelease(type_arena, type);
+  FbleDeleteRefArena(type_arena);
   if (type == NULL) {
     return NULL;
   }
-  TypeRelease(type_arena, type);
-  FbleDeleteRefArena(type_arena);
   return instrs;
 }
