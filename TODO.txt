@@ -1,4 +1,5 @@
 Fble:
+* Capture failing 7.2-07 in an fble-ref-test and fix it.
 * Finish adding and fixing tests until snake.fble evaluates.
 
 * Add threading infrastructure and support for multi-binding exec
