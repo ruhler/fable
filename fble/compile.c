@@ -2812,7 +2812,6 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       vt->var = var_type->var;
       vt->value = vars->type;
       FbleRefAdd(arena, &vt->_base.ref, &vt->value->ref);
-      TypeRelease(arena, vt->value);
       return &vt->_base;
     }
 
