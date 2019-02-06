@@ -70,7 +70,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
         FbleFree(arena_, tmp);
       }
       FbleFreeInstrs(arena_, fv->body);
-      FbleFree(arena_, fv);
+      FbleFree(arena_, value);
       return;
     }
 

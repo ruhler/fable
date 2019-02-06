@@ -353,6 +353,33 @@ int main(int argc, char* argv[])
     assert(sRefsAlive == 0);
   }
 
+  {
+    // Regression test involving nested cycles.
+    Ref* a = Create(ref_arena);
+    Ref* b = Create(ref_arena);
+    Ref* c = Create(ref_arena);
+    RefAdd(ref_arena, c, a);
+    RefAdd(ref_arena, c, b);
+    Ref* d = Create(ref_arena);
+    RefAdd(ref_arena, d, a);
+    RefAdd(ref_arena, d, b);
+    RefAdd(ref_arena, b, c);
+    RefRelease(ref_arena, b);
+
+    RefAdd(ref_arena, a, d);
+    RefRelease(ref_arena, a);
+
+    RefRelease(ref_arena, c);
+    assert(sRefsAlive == 4);
+    assert(Alive(a));
+    assert(Alive(b));
+    assert(Alive(c));
+    assert(Alive(d));
+
+    RefRelease(ref_arena, d);
+    assert(sRefsAlive == 0);
+  }
+
   FbleDeleteRefArena(ref_arena);
   FbleDeleteArena(arena);
   FbleAssertEmptyArena(arena);
