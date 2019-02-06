@@ -354,29 +354,32 @@ int main(int argc, char* argv[])
   }
 
   {
-    // Regression test involving nested cycles.
+    // Regression test.
+    //  a -->--b->\.
+    //   \-->------c
+    //    \---<---/
+    //
+    // This triggered a bug when adding the final reference from c to a. We
+    // push c on the stack for processing, process b assuming c will be fine,
+    // but because we haven't processed c yet by the time we are done we b, we
+    // failed to recognize that b belongs to the cycle as well.
     Ref* a = Create(ref_arena);
     Ref* b = Create(ref_arena);
     Ref* c = Create(ref_arena);
-    RefAdd(ref_arena, c, a);
-    RefAdd(ref_arena, c, b);
-    Ref* d = Create(ref_arena);
-    RefAdd(ref_arena, d, a);
-    RefAdd(ref_arena, d, b);
-    RefAdd(ref_arena, b, c);
+    RefAdd(ref_arena, a, c);
+    RefAdd(ref_arena, a, b);
     RefRelease(ref_arena, b);
-
-    RefAdd(ref_arena, a, d);
-    RefRelease(ref_arena, a);
-
     RefRelease(ref_arena, c);
-    assert(sRefsAlive == 4);
+
+    RefAdd(ref_arena, b, c);
+    RefAdd(ref_arena, c, a);
+
+    assert(sRefsAlive == 3);
     assert(Alive(a));
     assert(Alive(b));
     assert(Alive(c));
-    assert(Alive(d));
 
-    RefRelease(ref_arena, d);
+    RefRelease(ref_arena, a);
     assert(sRefsAlive == 0);
   }
 

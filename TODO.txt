@@ -1,5 +1,8 @@
 Fble:
 * Debug failing fble-ref-test.
+ - In our traversal to find nodes in the cycle, we must make sure ALL children
+   are checked for reaching the cycle before deciding for a node. It's not
+   enough for a child node to be on the stack of things to do.
 * Finish adding and fixing tests until snake.fble evaluates.
 
 * Add threading infrastructure and support for multi-binding exec
