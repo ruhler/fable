@@ -143,18 +143,16 @@ static void CycleFree(FbleRefArena* arena, FbleRef* ref)
 {
   assert(ref->cycle == NULL);
 
-  int round_id = arena->next_round_id++;
   FbleRefV in_cycle;
   FbleVectorInit(arena->arena, in_cycle);
 
   FbleRefV stack;
   FbleVectorInit(arena->arena, stack);
   FbleVectorAppend(arena->arena, stack, ref);
-  ref->round_id = round_id;
+  FbleVectorAppend(arena->arena, in_cycle, ref);
 
   while (stack.size > 0) {
     FbleRef* r = stack.xs[--stack.size];
-    FbleVectorAppend(arena->arena, in_cycle, r);
 
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
@@ -162,9 +160,9 @@ static void CycleFree(FbleRefArena* arena, FbleRef* ref)
     for (size_t i = 0; i < children.size; ++i) {
       FbleRef* child = children.xs[i];
       if (CycleHead(child) == ref) {
-        if (child->round_id != round_id) {
-          child->round_id = round_id;
+        if (!Contains(&in_cycle, child)) {
           FbleVectorAppend(arena->arena, stack, child);
+          FbleVectorAppend(arena->arena, in_cycle, child);
         }
       }
     }
