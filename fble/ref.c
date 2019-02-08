@@ -29,9 +29,34 @@ struct FbleRefArena {
   void (*added)(struct FbleRefArena* arena, FbleRef* ref, FbleRefV* refs);
 };
 
+static bool Contains(FbleRefV* refs, FbleRef* ref);
+
 static FbleRef* CycleHead(FbleRef* ref);
 static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs);
 static void CycleFree(FbleRefArena* arena, FbleRef* ref);
+
+// Contains --
+//   Check of a vector of references contains a give referece.
+//
+// Inputs:
+//   refs - the vector of references.
+//   ref - the reference to check for
+//
+// Results:
+//   true if the vector of references contains the given reference, false
+//   otherwise.
+//
+// Side effects:
+//   None.
+static bool Contains(FbleRefV* refs, FbleRef* ref)
+{
+  for (size_t i = 0; i < refs->size; ++i) {
+    if (refs->xs[i] == ref) {
+      return true;
+    }
+  }
+  return false;
+}
 
 // CycleHead --
 //   Get the head of the biggest cycle that ref belongs to.
@@ -70,7 +95,9 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
 {
   assert(ref->cycle == NULL);
 
-  int round_id = arena->next_round_id++;
+  FbleRefV visited;
+  FbleVectorInit(arena->arena, visited);
+
   FbleRefV stack;
   FbleVectorInit(arena->arena, stack);
   FbleVectorAppend(arena->arena, stack, ref);
@@ -84,8 +111,8 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
     for (size_t i = 0; i < children.size; ++i) {
       FbleRef* child = children.xs[i];
       if (child == ref || CycleHead(child) == ref) {
-        if (child != ref && child->round_id != round_id) {
-          child->round_id = round_id;
+        if (child != ref && !Contains(&visited, child)) {
+          FbleVectorAppend(arena->arena, visited, child);
           FbleVectorAppend(arena->arena, stack, child);
         }
       } else {
@@ -95,6 +122,7 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
 
     FbleFree(arena->arena, children.xs);
   }
+  FbleFree(arena->arena, visited.xs);
   FbleFree(arena->arena, stack.xs);
 }
 
