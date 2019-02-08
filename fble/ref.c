@@ -265,65 +265,97 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   // Change all nodes with ids between src->id and dst->id to src->id.
   // If any subset of those nodes form a path between dst and src, set dst as
   // their cycle and transfer their external refcount to dst.
-  size_t round = arena->next_round_id++;
   FbleRefV stack;
   FbleVectorInit(arena->arena, stack);
 
-  dst->round_id = round;
-  dst->round_new = true;
-  FbleVectorAppend(arena->arena, stack, dst);
+  FbleRefV visited;
+  FbleVectorInit(arena->arena, visited);
 
-  FbleRefV cycle;
-  FbleVectorInit(arena->arena, cycle);
+  // Keep track of a reverse mapping from child to parent nodes. The child
+  // node at index i is visited[i].
+  struct { size_t size; FbleRefV* xs; } reverse;
+  FbleVectorInit(arena->arena, reverse);
+
+  FbleVectorAppend(arena->arena, stack, dst);
+  FbleVectorAppend(arena->arena, visited, dst);
+
+  {
+    FbleRefV* parents = FbleVectorExtend(arena->arena, reverse);
+    FbleVectorInit(arena->arena, *parents);
+  }
+
+  // Traverse all nodes reachable from dst with ids between src->id and
+  // dst->id, setting their ids to src->id.
   while (stack.size > 0) {
-    FbleRef* ref = stack.xs[stack.size - 1];
+    FbleRef* ref = stack.xs[--stack.size];
     assert(ref->cycle == NULL);
-    assert(ref->round_id == round);
+    ref->id = src->id;
 
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
     CycleAdded(arena, ref, &children);
 
-    if (ref->round_new) {
-      ref->round_new = false;
-      for (size_t i = 0; i < children.size; ++i) {
-        FbleRef* child = children.xs[i];
-        if (child->round_id != round && child->id >= src->id) {
-          child->round_id = round;
-          child->round_new = true;
-          FbleVectorAppend(arena->arena, stack, child);
-        }
-      }
-    } else {
-      stack.size--;
-      ref->id = src->id;
-      bool in_cycle = (ref == src);
-      // TODO: Find a more efficient way to check whether ref has a child node
-      // in the cycle.
-      for (size_t i = 0; !in_cycle && i < children.size; ++i) {
-        for (size_t j = 0; !in_cycle && j < cycle.size; ++j) {
-          if (cycle.xs[j] == children.xs[i]) {
-            in_cycle = true;
+    for (size_t i = 0; i < children.size; ++i) {
+      FbleRef* child = children.xs[i];
+      if (child->id >= src->id) {
+        FbleRefV* parents = NULL;
+        for (size_t j = 0; parents == NULL && j < visited.size; ++j) {
+          if (visited.xs[j] == child) {
+            parents = reverse.xs + j;
           }
         }
-      }
 
-      if (in_cycle) {
-        FbleVectorAppend(arena->arena, cycle, ref);
+        if (parents == NULL) {
+          FbleVectorAppend(arena->arena, stack, child);
+          FbleVectorAppend(arena->arena, visited, child);
+          parents = FbleVectorExtend(arena->arena, reverse);
+          FbleVectorInit(arena->arena, *parents);
+        }
+        FbleVectorAppend(arena->arena, *parents, ref);
       }
     }
-
     FbleFree(arena->arena, children.xs);
   }
 
-  bool in_cycle = false;
-  for (size_t i = 0; !in_cycle && i < cycle.size; ++i) {
-    if (dst == cycle.xs[i]) {
-      in_cycle = true;
+  // Traverse backwards from src (if reached) to identify all nodes in a newly
+  // created cycle.
+  FbleRefV cycle;
+  FbleVectorInit(arena->arena, cycle);
+  for (size_t i = 0; i < visited.size; ++i) {
+    if (visited.xs[i] == src) {
+      FbleVectorAppend(arena->arena, stack, src);
+      FbleVectorAppend(arena->arena, cycle, src);
     }
   }
 
-  if (in_cycle) {
+  while (stack.size > 0) {
+    FbleRef* ref = stack.xs[--stack.size];
+
+    FbleRefV* parents = NULL;
+    for (size_t i = 0; parents == NULL && i < visited.size; ++i) {
+      if (visited.xs[i] == ref) {
+        parents = reverse.xs + i;
+      }
+    }
+    assert(parents != NULL);
+
+    for (size_t i = 0; i < parents->size; ++i) {
+      FbleRef* parent = parents->xs[i];
+      if (!Contains(&cycle, parent)) {
+        FbleVectorAppend(arena->arena, stack, parent);
+        FbleVectorAppend(arena->arena, cycle, parent);
+      }
+    }
+  }
+
+  FbleFree(arena->arena, stack.xs);
+  FbleFree(arena->arena, visited.xs);
+  for (size_t i = 0; i < reverse.size; ++i) {
+    FbleFree(arena->arena, reverse.xs[i].xs);
+  }
+  FbleFree(arena->arena, reverse.xs);
+
+  if (cycle.size > 0) {
     // Fix up refcounts for the cycle by moving any refs from nodes outside the
     // cycle to the head node of the cycle and removing all refs from nodes
     // inside the cycle.
@@ -361,5 +393,4 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   }
 
   FbleFree(arena->arena, cycle.xs);
-  FbleFree(arena->arena, stack.xs);
 }
