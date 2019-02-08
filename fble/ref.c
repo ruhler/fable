@@ -15,16 +15,10 @@
 //              is a child node in a cycle.
 //   cycle - A pointer to the head of the cycle this node belongs to. NULL
 //           if the node is not a child node of a cycle.
-//   round_id - Temporary state used for detecting cycles. If set to the
-//              current round id, the node has been visited this round.
-//   round_new - Temporary state used for detecting cycles. If round_id
-//               matches the current round id and this is true, then the node
-//               has not yet been initially processed for this round.
 
 struct FbleRefArena {
   FbleArena* arena;
   size_t next_id;
-  size_t next_round_id;
   void (*free)(struct FbleRefArena* arena, FbleRef* ref);
   void (*added)(struct FbleRefArena* arena, FbleRef* ref, FbleRefV* refs);
 };
@@ -187,7 +181,6 @@ FbleRefArena* FbleNewRefArena(
   FbleRefArena* ref_arena = FbleAlloc(arena, FbleRefArena);
   ref_arena->arena = arena;
   ref_arena->next_id = 1;
-  ref_arena->next_round_id = 1;
   ref_arena->free = free;
   ref_arena->added = added;
   return ref_arena;
@@ -211,8 +204,6 @@ void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
   ref->id = arena->next_id++;
   ref->refcount = 1;
   ref->cycle = NULL;
-  ref->round_id = 0;
-  ref->round_new = false;
 }
 
 // FbleRefRetain -- see documentation in fble-ref.h

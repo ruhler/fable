@@ -20,8 +20,6 @@ typedef struct FbleRef {
   size_t id;
   size_t refcount;
   struct FbleRef* cycle;
-  size_t round_id;
-  bool round_new;
 } FbleRef;
 
 // FbleRefV --
