@@ -1,6 +1,4 @@
 Fble:
-* Improve test code coverage.
-
 * Add threading infrastructure and support for multi-binding exec
    Add a type Thread: istack vstack, dstack, parent, children, next, siblings.
    Add a FINISH instruction to wake up parent thread if you are its next
@@ -35,6 +33,7 @@ Fble Cleanup:
 * Clean up header files and what is easily externally visible.
   For example, should FbleRef be visible from fble.h?
   And make sure all "see documentation in ..." lines are accurate.
+* Improve test coverage around polymorphic types.
 
 Fble Performance:
 * Optimize reference counting scheme.
