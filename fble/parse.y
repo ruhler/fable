@@ -342,9 +342,9 @@ stmt:
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
       apply_expr->_base.tag = FBLE_APPLY_EXPR;
       apply_expr->_base.loc = @$;
-      apply_expr->func = &func_value_expr->_base;
+      apply_expr->func = $4;
       FbleVectorInit(arena, apply_expr->args);
-      FbleVectorAppend(arena, apply_expr->args, $4);
+      FbleVectorAppend(arena, apply_expr->args, &func_value_expr->_base);
       $$ = &apply_expr->_base;
     }
   | type '~' NAME ',' NAME ';' stmt {
