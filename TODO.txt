@@ -1,9 +1,12 @@
 Fble:
 * Improve test code coverage.
- - polymorphic kind with multiple args
 
 * Add threading infrastructure and support for multi-binding exec
-   Add a type Thread: tstack, vstack, parent, join count
+   Add a type Thread: istack vstack, dstack, parent, children, next, siblings.
+   Add a FINISH instruction to wake up parent thread if you are its next
+       child, or return if parent is NULL.
+   Add a JOIN instruction to check if next child thread is done executing,
+       take its value from the stack, and clean up the child thread.
    Add thread lists for running threads and threads blocked on a given link.
 
 * Hook up fble-test I/O for snake.fble.
