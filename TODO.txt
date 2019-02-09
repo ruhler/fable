@@ -1,9 +1,6 @@
 Fble:
 * Improve test code coverage.
  - polymorphic kind with multiple args
- - tests for process types
- - tests for input types
- - tests for output types
 
 * Add threading infrastructure and support for multi-binding exec
    Add a type Thread: tstack, vstack, parent, join count
