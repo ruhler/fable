@@ -26,8 +26,6 @@ Fble Cleanup:
 * Clean up when Eval is done for types.
  - Always eval at Compile, except internal calls to CompileType from in
    CompileType. That should work I think.
-* Don't duplicate reference counting code between values and types. Share it
-  instead?
 * Share common code between checking FbleStructType, FbleUnionType, and
   FbleFuncType?
 * Clean up header files and what is easily externally visible.
@@ -157,7 +155,7 @@ Fblc Performance:
     suitable for direct execution ahead of time, rather than repeatedly on the
     fly?
 
-Miscellanous:
+Miscellaneous:
 * Track down memory-leak like behavior in fbld-md5
   - Perhaps we should put a limit on link sizes? Or prioritize threads that
     are getting over threads that are putting?
