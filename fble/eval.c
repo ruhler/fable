@@ -2,7 +2,8 @@
 //   This file implements the fble evaluation routines.
 
 #include <assert.h>   // for assert
-#include <stdlib.h>   // for NULL
+#include <stdio.h>    // for fprintf, stderr
+#include <stdlib.h>   // for NULL, abort
 
 #include "fble-internal.h"
 
@@ -26,10 +27,12 @@ typedef struct IStack {
 //   var_stack - used to store named values (aka variables)
 //   data_stack - used to store anonymous intermediate values
 //   istack - stores the instructions still to execute.
+//   iquota - the number of instructions this thread is allowed to execute.
 typedef struct {
   FbleVStack* var_stack;
   FbleVStack* data_stack;
   IStack* istack;
+  size_t iquota;
 } Thread;
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
@@ -187,7 +190,7 @@ static IStack* IPop(FbleArena* arena, IStack* istack)
 static void RunThread(FbleValueArena* arena, Thread* thread)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  while (thread->istack != NULL) {
+  while (thread->iquota > 0 && thread->istack != NULL) {
     FbleInstr* instr = thread->istack->instr;
     thread->istack = IPop(arena_, thread->istack);
 
@@ -504,7 +507,12 @@ static void RunThread(FbleValueArena* arena, Thread* thread)
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
             FbleInputValue* port = (FbleInputValue*)get->port;
             assert(port->_base.tag == FBLE_INPUT_VALUE);
-            assert(port->head != NULL && "TODO: Block on empty link port");
+
+            if (port->head == NULL) {
+              // Blocked on get.
+              return;
+            }
+
             FbleValues* head = port->head;
             port->head = port->head->next;
             if (port->head == NULL) {
@@ -641,6 +649,7 @@ static void RunThread(FbleValueArena* arena, Thread* thread)
         break;
       }
     }
+    thread->iquota--;
   }
 }
 
@@ -668,14 +677,29 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
   Thread thread = {
     .var_stack = NULL,
     .data_stack = NULL,
-    .istack = IPush(arena_, prgm, NULL)
+    .istack = IPush(arena_, prgm, NULL),
+    .iquota = 0,
   };
 
   if (arg != NULL) {
     thread.data_stack = VPush(arena_, FbleValueRetain(arena, arg), NULL);
   }
 
-  RunThread(arena, &thread);
+  // Run the main thread repeatedly until it no longer makes any forward
+  // progress.
+  do {
+    thread.iquota = 1024;
+    RunThread(arena, &thread);
+  } while (thread.iquota < 1024);
+
+  if (thread.istack != NULL) {
+    // We have instructions to run still, but we stopped making forward
+    // progress. This must be a deadlock.
+    // TODO: Handle this more gracefully.
+    fprintf(stderr, "Deadlock detected\n");
+    abort();
+    return NULL;
+  }
     
   // The thread should now be finished with a single value on the data stack
   // which is the value to return.
