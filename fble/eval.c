@@ -46,6 +46,8 @@ struct Thread {
   ThreadV children;
 };
 
+static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR, .refcount = 1 };
+
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
 static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
@@ -503,8 +505,31 @@ static void RunThread(FbleValueArena* arena, Thread* thread)
       }
 
       case FBLE_JOIN_INSTR: {
-        thread->var_stack = VPush(arena_, thread->data_stack->value, thread->var_stack);
-        thread->data_stack = VPop(arena_, thread->data_stack);
+        assert(thread->children.size > 0);
+        for (size_t i = 0; i < thread->children.size; ++i) {
+          if (thread->children.xs[i]->istack != NULL) {
+            // Blocked on child. Restore the thread state and return before
+            // iquota has been decremented.
+            thread->istack = IPush(arena_, instr, thread->istack);
+            return;
+          }
+        }
+        
+        for (size_t i = 0; i < thread->children.size; ++i) {
+          Thread* child = thread->children.xs[i];
+          assert(child->data_stack != NULL);
+          FbleValue* result = child->data_stack->value;
+          child->data_stack = VPop(arena_, child->data_stack);
+          assert(child->data_stack == NULL);
+          assert(result != NULL && "TODO: Propagate error from child?");
+          thread->var_stack = VPush(arena_, result, thread->var_stack);
+          assert(child->istack == NULL);
+          assert(child->iquota == 0);
+          FbleFree(arena_, child->children.xs);
+          FbleFree(arena_, child);
+        }
+
+        thread->children.size = 0;
         break;
       }
 
@@ -521,7 +546,10 @@ static void RunThread(FbleValueArena* arena, Thread* thread)
             assert(port->_base.tag == FBLE_INPUT_VALUE);
 
             if (port->head == NULL) {
-              // Blocked on get.
+              // Blocked on get. Restore the thread state and return before
+              // iquota has been decremented.
+              thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
+              thread->istack = IPush(arena_, instr, thread->istack);
               return;
             }
 
@@ -605,17 +633,22 @@ static void RunThread(FbleValueArena* arena, Thread* thread)
               thread->var_stack = VPush(arena_, FbleValueRetain(arena, vs->value), thread->var_stack);
             }
 
-            assert(exec->bindings.size == 1 && "TODO: Support multi-binding exec");
+            // Set up child threads.
+            for (size_t i = 0; i < exec->bindings.size; ++i) {
+              Thread* child = FbleAlloc(arena_, Thread);
+              child->var_stack = thread->var_stack;
+              child->data_stack = VPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
+              child->istack = IPush(arena_, &g_proc_instr, NULL);
+              child->iquota = 0;
+              FbleVectorInit(arena_, child->children);
+              FbleVectorAppend(arena_, thread->children, child);
+            }
 
             // The exec proc value owns the instruction it uses to execute,
             // which means we need to ensure the proc value is retained
             // until we are done executing. To do so, keep the proc value on
             // the data stack until after it's done executing.
             thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
-
-            // Push the argument proc value on the stack in preparation for
-            // execution.
-            thread->data_stack = VPush(arena_, FbleValueRetain(arena, exec->bindings.xs[0]), thread->data_stack);
 
             thread->istack = IPush(arena_, exec->body, thread->istack);
             break;

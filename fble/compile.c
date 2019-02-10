@@ -2268,13 +2268,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       exec_instr->body = &compound->_base;
 
       {
-        FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
-        proc->_base.tag = FBLE_PROC_INSTR;
-        proc->_base.refcount = 1;
-        FbleVectorAppend(arena_, compound->instrs, &proc->_base);
-      }
-
-      {
         FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
         join->_base.tag = FBLE_JOIN_INSTR;
         join->_base.refcount = 1;

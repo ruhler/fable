@@ -1,12 +1,4 @@
 Fble:
-* Add threading infrastructure and support for multi-binding exec
-   Add a type Thread: istack vstack, dstack, parent, children, next, siblings.
-   Add a FINISH instruction to wake up parent thread if you are its next
-       child, or return if parent is NULL.
-   Add a JOIN instruction to check if next child thread is done executing,
-       take its value from the stack, and clean up the child thread.
-   Add thread lists for running threads and threads blocked on a given link.
-
 * Hook up fble-test I/O for snake.fble.
  - I should now be able to play snake.
 
@@ -32,6 +24,9 @@ Fble Cleanup:
   For example, should FbleRef be visible from fble.h?
   And make sure all "see documentation in ..." lines are accurate.
 * Improve test coverage around polymorphic types.
+* Test that we don't smash the stack with many nested child threads.
+* Test that we don't leak (Thread) memory with tail recursive single binding
+  exec processes.
 
 Fble Performance:
 * Optimize reference counting scheme.

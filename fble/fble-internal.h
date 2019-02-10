@@ -216,7 +216,8 @@ typedef struct {
 } FbleExecInstr;
 
 // FbleJoinInstr -- FBLE_JOIN_INSTR
-//   Move the top value of the data stack to the variable stack.
+//   If all child threads are done executing, move their results to the top of
+//   the variable stack and free the child thread resources.
 typedef struct {
   FbleInstr _base;
 } FbleJoinInstr;
