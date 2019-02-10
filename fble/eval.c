@@ -20,6 +20,15 @@ typedef struct IStack {
   struct IStack* tail;
 } IStack;
 
+typedef struct Thread Thread;
+
+// ThreadV -- 
+//   A vector of threads.
+typedef struct {
+  size_t size;
+  Thread** xs;
+} ThreadV;
+
 // Thread --
 //   Represents a thread of execution.
 //
@@ -28,12 +37,14 @@ typedef struct IStack {
 //   data_stack - used to store anonymous intermediate values
 //   istack - stores the instructions still to execute.
 //   iquota - the number of instructions this thread is allowed to execute.
-typedef struct {
+//   children - child threads that this thread is potentially blocked on.
+struct Thread {
   FbleVStack* var_stack;
   FbleVStack* data_stack;
   IStack* istack;
   size_t iquota;
-} Thread;
+  ThreadV children;
+};
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
@@ -44,6 +55,7 @@ static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail);
 static IStack* IPop(FbleArena* arena, IStack* istack);
 
 static void RunThread(FbleValueArena* arena, Thread* thread);
+static void RunThreads(FbleValueArena* arena, Thread* thread);
 static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg);
 
 
@@ -653,6 +665,39 @@ static void RunThread(FbleValueArena* arena, Thread* thread)
   }
 }
 
+// RunThreads --
+//   Run the given thread and its children to completion or until it can no
+//   longer make progress.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   thread - the thread to run.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   The thread and its children are executed and updated.
+static void RunThreads(FbleValueArena* arena, Thread* thread)
+{
+  // TODO: Make this iterative instead of recursive to avoid smashing the
+  // stack.
+
+  // Spend some time running children threads first.
+  for (size_t i = 0; i < thread->children.size; ++i) {
+    size_t iquota = thread->iquota / (thread->children.size - i);
+    Thread* child = thread->children.xs[i];
+    thread->iquota -= iquota;
+    child->iquota += iquota;
+    RunThread(arena, child);
+    thread->iquota += child->iquota;
+    child->iquota = 0;
+  }
+
+  // Spend the remaining time running this thread.
+  RunThread(arena, thread);
+}
+
 // Eval --
 //   Execute the given sequence of instructions to completion.
 //
@@ -680,6 +725,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
     .istack = IPush(arena_, prgm, NULL),
     .iquota = 0,
   };
+  FbleVectorInit(arena_, thread.children);
 
   if (arg != NULL) {
     thread.data_stack = VPush(arena_, FbleValueRetain(arena, arg), NULL);
@@ -689,7 +735,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
   // progress.
   do {
     thread.iquota = 1024;
-    RunThread(arena, &thread);
+    RunThreads(arena, &thread);
   } while (thread.iquota < 1024);
 
   if (thread.istack != NULL) {
@@ -700,7 +746,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
     abort();
     return NULL;
   }
-    
+
   // The thread should now be finished with a single value on the data stack
   // which is the value to return.
   assert(thread.var_stack == NULL);
@@ -709,6 +755,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleInstr* prgm, FbleValue* arg)
   thread.data_stack = VPop(arena_, thread.data_stack);
   assert(thread.data_stack == NULL);
   assert(thread.istack == NULL);
+  FbleFree(arena_, thread.children.xs);
   return final_result;
 }
 
