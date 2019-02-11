@@ -619,7 +619,7 @@ void FbleValueRelease(FbleValueArena* arena, FbleValue* value);
 // Side effects:
 //   The returned struct value must be freed using FbleValueRelease when no
 //   longer in use. This function does not take ownership of any of the args
-//   reference counts.
+//   reference counts or the args array.
 FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV* args);
 
 // FbleNewUnionValue --

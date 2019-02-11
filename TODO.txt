@@ -1,5 +1,9 @@
 Fble:
-* Hook up fble-test I/O for snake.fble.
+* Hook up I/O for snake.fble.
+ - Implement FbleValue* FbleNewPortValue(FbleValueArena* arena, size_t id).
+ - Add support for I/O port values in GET and PUT implementation.
+ - Implement FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* f, FbleValueV* args);
+ - Implement support for I/O function call back to FbleExec.
  - I should now be able to play snake.
 
 * Clarify spec on partial and excessive function and poly application

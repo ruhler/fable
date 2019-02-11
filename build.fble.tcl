@@ -29,6 +29,7 @@ set ::fbletest ./out/fble/fble-test
 set ::fblereftest ./out/fble/fble-ref-test
 run gcc {*}$FLAGS -o $::fbletest out/fble/obj/fble-test.o -L out/fble -lfble
 run gcc {*}$FLAGS -o $::fblereftest out/fble/obj/fble-ref-test.o -L out/fble -lfble
+run gcc {*}$FLAGS -o ./out/fble/fble-snake out/fble/obj/fble-snake.o -L out/fble -lfble
 
 proc fble-test-error-run { tloc loc expr } {
   set line [dict get $tloc line]
