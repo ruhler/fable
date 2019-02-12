@@ -865,10 +865,27 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 }
 
 // FbleApply -- see documentation in fble.h
-FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV* args)
+FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args)
 {
-  assert(false && "TODO");
-  return NULL;
+  FbleFuncApplyInstr instr = {
+    ._base = {
+      .tag = FBLE_FUNC_APPLY_INSTR,
+      .refcount = 1
+    },
+    .argc = args.size,
+  };
+
+  FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
+
+  FbleValue* xs[1 + args.size];
+  xs[0] = &func->_base;
+  for (size_t i = 0; i < args.size; ++i) {
+    xs[i+1] = args.xs[i];
+  }
+
+  FbleValueV eval_args = { .size = 1 + args.size, .xs = xs };
+  FbleValue* result = Eval(arena, &io, &instr._base, eval_args);
+  return result;
 }
 
 // FbleExec -- see documentation in fble.h
