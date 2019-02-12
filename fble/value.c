@@ -282,3 +282,10 @@ FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
   FbleRefAdd(arena, &union_value->_base.ref, &arg->ref);
   return &union_value->_base;
 }
+
+// FbleNewPortValue -- see documentation in fble.h
+FbleValue* FbleNewPortValue(FbleValueArena* arena, size_t id)
+{
+  assert(false && "TODO");
+  return NULL;
+}

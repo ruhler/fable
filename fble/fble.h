@@ -638,6 +638,21 @@ FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV* args);
 //   longer in use. This function does not take ownership of the arg's
 //   reference counts.
 FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg);
+
+// FbleNewPortValue --
+//   Create a new io port value with given id.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   id - the id of the port for use with FbleIO.
+//
+// Results:
+//   A newly allocated port value.
+//
+// Side effects:
+//   The returned port value must be freed using FbleValueRelease when no
+//   longer in use.
+FbleValue* FbleNewPortValue(FbleValueArena* arena, size_t id);
 
 // FbleEval --
 //   Type check and evaluate an expression.
@@ -655,12 +670,83 @@ FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg);
 //   use. Prints an error message to stderr in case of error.
 FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
 
+// FbleApply --
+//   Apply a function to the given arguments.
+//
+// Inputs:
+//   arena - the arena to use for allocating values.
+//   func - the function to apply.
+//   args - the arguments to apply the function to.
+//
+// Results:
+//   The result of applying the function to the given arguments.
+//
+// Side effects:
+//   The returned value must be freed with FbleValueRelease when no longer in
+//   use. Prints an error message to stderr in case of error.
+FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV* args);
+
+// FbleIO --
+//   An interface for reading or writing values over external ports.
+typedef struct FbleIO {
+  // io --
+  //   Read or write values over the external ports. An FbleValue* is supplied
+  //   for each port. The behavior of the function depends on the port type and
+  //   whether the provided FbleValue* is NULL or non-NULL as follows:
+  //
+  //   Get Ports:
+  //     NULL: the io function may, at its option, read the next input
+  //       value and replace NULL with the newly read value.
+  //     non-NULL: the io function should do nothing for this port.
+  //
+  //   Put Ports:
+  //     NULL: the io function should do nothing for this port.
+  //     non-NULL: the io function may, at its option, output the value.
+  //       If the io function chooses to output the value, it should
+  //       FbleValueRelease the value and replace it with NULL. Otherwise the
+  //       io function should leave the existing value as is.
+  //
+  //   io may blocking or non-blocking depending on the 'block' input. For
+  //   non-blocking io, the io function should return immediately without
+  //   blocking for inputs to be ready. For blocking io, the io function
+  //   should block until there is an input available on one of the NULL get
+  //   ports.
+  //
+  //   The function should return true if any of the ports have been read or
+  //   written, false otherwise.
+  //
+  // Inputs:
+  //   user - The user data associated with this io.
+  //   arena - The arena to use for allocating and freeing values.
+  //   block - true if io should be blocking, false if it should be
+  //           non-blocking.
+  //   ports - Array of values indicating which of the external ports to read
+  //           to and write from. The length of the array is the number of
+  //           ports specified for this io.
+  //
+  // Result:
+  //   true if one or more ports have been read or written, false otherwise.
+  //
+  // Side effects:
+  //   Reads or writes values to external ports depending on the provided
+  //   arguments and may block.
+  //   
+  bool (*io)(void* user, FbleValueArena* arena, bool block, FbleValue** ports);
+
+  // The number of IO ports.
+  size_t portc;
+
+  // User data to pass to the io function.
+  void* user;
+} FbleIO;
+
 // FbleExec --
 //   Execute a process.
 //
 // Inputs:
 //   arena - The arena to use for allocating values.
 //   proc - The process to execute.
+//   io - The io to use for external ports.
 //
 // Results:
 //   The result of executing the process, or NULL in case of error. The
@@ -668,6 +754,6 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
 //
 // Side effects:
 //   Prints an error message to stderr in case of error.
-FbleValue* FbleExec(FbleValueArena* arena, FbleProcValue* proc);
+FbleValue* FbleExec(FbleValueArena* arena, FbleProcValue* proc, FbleIO* io);
 
 #endif // FBLE_H_

@@ -269,8 +269,8 @@ int main(int argc, char* argv[])
   FbleVectorAppend(arena, args, FbleNewPortValue(value_arena, 0));
   FbleVectorAppend(arena, args, FbleNewPortValue(value_arena, 1));
   FbleValue* proc = FbleApply(value_arena, (FbleFuncValue*)func, &args);
-  FbleReleaseValue(value_arena, args.xs[0]);
-  FbleReleaseValue(value_arena, args.xs[1]);
+  FbleValueRelease(value_arena, args.xs[0]);
+  FbleValueRelease(value_arena, args.xs[1]);
   FbleFree(arena, args.xs);
 
   if (proc == NULL) {
