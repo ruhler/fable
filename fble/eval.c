@@ -58,7 +58,7 @@ static IStack* IPop(FbleArena* arena, IStack* istack);
 
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
 static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread);
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleValue* arg);
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleValueV args);
 
 static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 
@@ -783,11 +783,7 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
 //   arena - the arena to use for allocations.
 //   io - io to use for external ports.
 //   instrs - the instructions to evaluate.
-//   arg - an optional initial argument to place on the stack.
-//         Note: ideally this is an arbitrary list of arguments to prepopulate
-//         the value stack with, but currently it is only used to implement
-//         FbleExec, which passes a single ProcValue argument, and it doesn't
-//         seem worth the hassle to pass in a list.
+//   args - an optional initial argument to place on the data stack.
 //
 // Results:
 //   The computed value, or NULL on error.
@@ -795,7 +791,7 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleValue* arg)
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleValueV args)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Thread thread = {
@@ -806,8 +802,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleV
   };
   FbleVectorInit(arena_, thread.children);
 
-  if (arg != NULL) {
-    thread.data_stack = VPush(arena_, FbleValueRetain(arena, arg), NULL);
+  for (size_t i = 0; i < args.size; ++i) {
+    thread.data_stack = VPush(arena_, FbleValueRetain(arena, args.xs[i]), NULL);
   }
 
   // Run the main thread repeatedly until it no longer makes any forward
@@ -862,7 +858,8 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
   }
 
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
-  FbleValue* result = Eval(arena, &io, instrs, NULL);
+  FbleValueV args = { .size = 0, .xs = NULL };
+  FbleValue* result = Eval(arena, &io, instrs, args);
   FbleFreeInstrs(arena_, instrs);
   return result;
 }
@@ -884,6 +881,8 @@ FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleProcValue* proc)
     },
   };
 
-  FbleValue* result = Eval(arena, io, &instr._base, &proc->_base);
+  FbleValue* xs[1] = { &proc->_base };
+  FbleValueV args = { .size = 1, .xs = xs };
+  FbleValue* result = Eval(arena, io, &instr._base, args);
   return result;
 }
