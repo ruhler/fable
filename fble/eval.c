@@ -627,7 +627,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               break;
             }
 
-            UNREACHABLE("get port must be an output or port value");
+            UNREACHABLE("put port must be an output or port value");
           }
 
           case FBLE_EVAL_PROC_VALUE: {
@@ -767,7 +767,7 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
     Thread* child = thread->children.xs[i];
     thread->iquota -= iquota;
     child->iquota += iquota;
-    RunThread(arena, io, child);
+    RunThreads(arena, io, child);
     thread->iquota += child->iquota;
     child->iquota = 0;
   }

@@ -1,9 +1,7 @@
 Fble:
-* Hook up I/O for snake.fble.
- - Implement FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* f, FbleValueV* args);
- - I should now be able to play snake.
+* Track down memory leak in fble-snake.
 
-* Clarify spec on partial and excessive function and poly application
+* Clarify spec on partial and excessive function and poly application.
 * Test partial function and excessive function application.
 
 * Implement support for modularity.

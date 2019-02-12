@@ -14,14 +14,6 @@
 #define MAX_COL 60
 #define TICK_INTERVAL 200
 
-//static char* DRAW_COLOR_CHARS = " RGYBMCW";
-static char* DRAW_COLOR_CHARS = "        ";
-static short DRAW_COLORS[] = {
-  COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
-  COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE
-};
-static short DRAW_COLOR_PAIRS[8];
-
 // Time --
 //   Opaque representation of a point in time.
 typedef int Time;
@@ -147,38 +139,26 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
   bool change = false;
 
   if (io->ports.xs[1] != NULL) {
-    FbleUnionValue* drawS = (FbleUnionValue*)io->ports.xs[1];
-    assert(drawS->_base.tag == FBLE_UNION_VALUE);
-    while (drawS->tag) {
-      FbleStructValue* drawP = (FbleStructValue*)drawS->arg;
-      assert(drawP->_base.tag == FBLE_STRUCT_VALUE);
+    FbleStructValue* draw = (FbleStructValue*)io->ports.xs[1];
+    assert(draw->_base.tag == FBLE_STRUCT_VALUE);
+    FbleStructValue* pos = (FbleStructValue*)draw->fields.xs[0];
+    assert(pos->_base.tag == FBLE_STRUCT_VALUE);
+    int row = ReadNum(pos->fields.xs[0]);
+    int col = ReadNum(pos->fields.xs[1]);
 
-      FbleStructValue* draw = (FbleStructValue*)drawP->fields.xs[0];
-      assert(draw->_base.tag == FBLE_STRUCT_VALUE);
+    int y = MAX_ROW + 1 - row;
+    int x = col + 1;
 
-      drawS = (FbleUnionValue*)drawP->fields.xs[1];
-      assert(drawS->_base.tag == FBLE_UNION_VALUE);
-
-      int ux = ReadNum(draw->fields.xs[0]);
-      int uy = ReadNum(draw->fields.xs[1]);
-      int w = ReadNum(draw->fields.xs[2]);
-      int h = ReadNum(draw->fields.xs[3]);
-
-      FbleUnionValue* color = (FbleUnionValue*)draw->fields.xs[4];
-      assert(color->_base.tag == FBLE_UNION_VALUE);
-
-      char c = DRAW_COLOR_CHARS[color->tag];
-      color_set(DRAW_COLOR_PAIRS[color->tag], NULL);
-      for (int i = ux; i < ux + w; ++i) {
-        for (int j = uy; j < uy + h; ++j) {
-          int x = i + 1;
-          int y = MAX_ROW + 1 - j;
-          mvaddch(y, x, c);
-        }
-      }
-      color_set(0, NULL);
+    FbleUnionValue* cell = (FbleUnionValue*)draw->fields.xs[1];
+    assert(cell->_base.tag == FBLE_UNION_VALUE);
+    char c = '?';
+    switch (cell->tag) {
+      case 0: c = ' '; break;
+      case 1: c = 'S'; break;
+      case 2: c = '$'; break;
     }
 
+    mvaddch(y, x, c);
     FbleValueRelease(arena, io->ports.xs[1]);
     io->ports.xs[1] = NULL;
     change = true;
@@ -270,6 +250,7 @@ int main(int argc, char* argv[])
   FbleVectorAppend(arena, args, FbleNewPortValue(value_arena, 0));
   FbleVectorAppend(arena, args, FbleNewPortValue(value_arena, 1));
   FbleValue* proc = FbleApply(value_arena, (FbleFuncValue*)func, args);
+  FbleValueRelease(value_arena, func);
   FbleValueRelease(value_arena, args.xs[0]);
   FbleValueRelease(value_arena, args.xs[1]);
   FbleFree(arena, args.xs);
@@ -287,30 +268,20 @@ int main(int argc, char* argv[])
   noecho();
   curs_set(0);
 
-  // Set up the color pairs.
-  start_color();
-  assert(COLOR_PAIRS > 8);
-  for (int i = 0; i < 8; ++i) {
-    init_pair(i+1, COLOR_WHITE, DRAW_COLORS[i]);
-    DRAW_COLOR_PAIRS[i] = i+1;
-  }
-
-  color_set(8, NULL);
   for (int c = 0; c <= MAX_COL + 2; ++c) {
-    mvaddch(0, c, ' ');
-    mvaddch(MAX_ROW + 2, c, ' ');
+    mvaddch(0, c, '#');
+    mvaddch(MAX_ROW + 2, c, '#');
   }
 
   for (int r = 1; r <= MAX_ROW + 1; ++r) {
-    mvaddch(r, 0, ' ');
-    mvaddch(r, MAX_COL + 2, ' ');
+    mvaddch(r, 0, '#');
+    mvaddch(r, MAX_COL + 2, '#');
   }
-  color_set(0, NULL);
   refresh();
 
   FbleValue* ports[2] = {NULL, NULL};
   SnakeIO sio = {
-    .io = { .io = &IO, .ports = { .size = 0, .xs = ports} },
+    .io = { .io = &IO, .ports = { .size = 2, .xs = ports} },
     .tnext = 0
   };
 
@@ -319,6 +290,7 @@ int main(int argc, char* argv[])
 
   FbleValue* value = FbleExec(value_arena, &sio.io, (FbleProcValue*)proc);
 
+  FbleValueRelease(value_arena, proc);
   FbleValueRelease(value_arena, ports[0]);
   FbleValueRelease(value_arena, ports[1]);
 
