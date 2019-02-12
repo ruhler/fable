@@ -1,6 +1,5 @@
 Fble:
 * Hook up I/O for snake.fble.
- - Add support for I/O port values in GET and PUT implementation.
  - Implement FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* f, FbleValueV* args);
  - I should now be able to play snake.
 

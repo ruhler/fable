@@ -544,48 +544,90 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
-            FbleInputValue* port = (FbleInputValue*)get->port;
-            assert(port->_base.tag == FBLE_INPUT_VALUE);
 
-            if (port->head == NULL) {
-              // Blocked on get. Restore the thread state and return before
-              // iquota has been decremented.
-              thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
-              thread->istack = IPush(arena_, instr, thread->istack);
-              return;
+            if (get->port->tag == FBLE_INPUT_VALUE) {
+              FbleInputValue* port = (FbleInputValue*)get->port;
+
+              if (port->head == NULL) {
+                // Blocked on get. Restore the thread state and return before
+                // iquota has been decremented.
+                thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
+                thread->istack = IPush(arena_, instr, thread->istack);
+                return;
+              }
+
+              FbleValues* head = port->head;
+              port->head = port->head->next;
+              if (port->head == NULL) {
+                port->tail = NULL;
+              }
+              thread->data_stack = VPush(arena_, head->value, thread->data_stack);
+              FbleFree(arena_, head);
+              break;
             }
 
-            FbleValues* head = port->head;
-            port->head = port->head->next;
-            if (port->head == NULL) {
-              port->tail = NULL;
+            if (get->port->tag == FBLE_PORT_VALUE) {
+              FblePortValue* port = (FblePortValue*)get->port;
+              assert(port->id < io->ports.size);
+              if (io->ports.xs[port->id] == NULL) {
+                // Blocked on get. Restore the thread state and return before
+                // iquota has been decremented.
+                thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
+                thread->istack = IPush(arena_, instr, thread->istack);
+                return;
+              }
+
+              thread->data_stack = VPush(arena_, io->ports.xs[port->id], thread->data_stack);
+              io->ports.xs[port->id] = NULL;
+              break;
             }
-            thread->data_stack = VPush(arena_, head->value, thread->data_stack);
-            FbleFree(arena_, head);
+
+            UNREACHABLE("get port must be an input or port value");
             break;
           }
 
           case FBLE_PUT_PROC_VALUE: {
             FblePutProcValue* put = (FblePutProcValue*)proc;
-            FbleOutputValue* port = (FbleOutputValue*)put->port;
-            assert(port->_base.tag == FBLE_OUTPUT_VALUE);
 
-            FbleValues* tail = FbleAlloc(arena_, FbleValues);
-            tail->value = FbleValueRetain(arena, put->arg);
-            tail->next = NULL;
+            if (put->port->tag == FBLE_OUTPUT_VALUE) {
+              FbleOutputValue* port = (FbleOutputValue*)put->port;
 
-            FbleInputValue* link = port->dest;
-            if (link->head == NULL) {
-              link->head = tail;
-              link->tail = tail;
-            } else {
-              assert(link->tail != NULL);
-              link->tail->next = tail;
-              link->tail = tail;
+              FbleValues* tail = FbleAlloc(arena_, FbleValues);
+              tail->value = FbleValueRetain(arena, put->arg);
+              tail->next = NULL;
+
+              FbleInputValue* link = port->dest;
+              if (link->head == NULL) {
+                link->head = tail;
+                link->tail = tail;
+              } else {
+                assert(link->tail != NULL);
+                link->tail->next = tail;
+                link->tail = tail;
+              }
+
+              thread->data_stack = VPush(arena_, FbleValueRetain(arena, put->arg), thread->data_stack);
+              break;
             }
 
-            thread->data_stack = VPush(arena_, FbleValueRetain(arena, put->arg), thread->data_stack);
-            break;
+            if (put->port->tag == FBLE_PORT_VALUE) {
+              FblePortValue* port = (FblePortValue*)put->port;
+              assert(port->id < io->ports.size);
+
+              if (io->ports.xs[port->id] != NULL) {
+                // Blocked on put. Restore the thread state and return before
+                // iquota has been decremented.
+                thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
+                thread->istack = IPush(arena_, instr, thread->istack);
+                return;
+              }
+
+              io->ports.xs[port->id] = FbleValueRetain(arena, put->arg);
+              thread->data_stack = VPush(arena_, FbleValueRetain(arena, put->arg), thread->data_stack);
+              break;
+            }
+
+            UNREACHABLE("get port must be an output or port value");
           }
 
           case FBLE_EVAL_PROC_VALUE: {
