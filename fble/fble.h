@@ -466,6 +466,7 @@ typedef enum {
   FBLE_PROC_VALUE,
   FBLE_INPUT_VALUE,
   FBLE_OUTPUT_VALUE,
+  FBLE_PORT_VALUE,
   FBLE_REF_VALUE,
 } FbleValueTag;
 
@@ -526,6 +527,14 @@ typedef struct FbleInputValue FbleInputValue;
 //
 // Defined internally.
 typedef struct FbleOutputValue FbleOutputValue;
+
+// FblePortValue --
+//   FBLE_PORT_VALUE
+//
+// Use for input and output values linked to external IO.
+//
+// Defined internally.
+typedef struct FblePortValue FblePortValue;
 
 // FbleRefValue --
 //   FBLE_REF_VALUE

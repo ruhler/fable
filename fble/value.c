@@ -128,6 +128,11 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
       return;
     }
 
+    case FBLE_PORT_VALUE: {
+      FbleFree(arena_, value);
+      return;
+    }
+
     case FBLE_REF_VALUE: {
       FbleFree(arena_, value);
       return;
@@ -246,6 +251,10 @@ static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs)
       break;
     }
 
+    case FBLE_PORT_VALUE: {
+      break;
+    }
+
     case FBLE_REF_VALUE: {
       FbleRefValue* rv = (FbleRefValue*)value;
       Add(arena, refs, rv->value);
@@ -286,6 +295,9 @@ FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
 // FbleNewPortValue -- see documentation in fble.h
 FbleValue* FbleNewPortValue(FbleValueArena* arena, size_t id)
 {
-  assert(false && "TODO");
-  return NULL;
+  FblePortValue* port_value = FbleAlloc(FbleRefArenaArena(arena), FblePortValue);
+  FbleRefInit(arena, &port_value->_base.ref);
+  port_value->_base.tag = FBLE_PORT_VALUE;
+  port_value->id = id;
+  return &port_value->_base;
 }

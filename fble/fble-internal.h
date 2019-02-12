@@ -388,4 +388,10 @@ struct FbleOutputValue {
   FbleInputValue* dest;
 };
 
+// FblePortValue -- FBLE_PORT_VALUE
+struct FblePortValue {
+  FbleValue _base;
+  size_t id;
+};
+
 #endif // FBLE_INTERNAL_H_
