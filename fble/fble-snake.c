@@ -26,11 +26,12 @@ static short DRAW_COLOR_PAIRS[8];
 //   Opaque representation of a point in time.
 typedef int Time;
 
-// IOUser --
-//   User data for FblcIO.
+// SnakeIO --
+//   The FbleIO with additional user data.
 typedef struct {
+  FbleIO io;
   Time tnext;
-} IOUser;
+} SnakeIO;
 
 static void GetCurrentTime(Time* time);
 static void AddTimeMillis(Time* time, int millis);
@@ -38,7 +39,7 @@ static int DiffTimeMillis(Time* a, Time* b);
 
 static void PrintUsage(FILE* stream);
 static int ReadNum(FbleValue* num);
-static bool IO(void* user, FbleValueArena* arena, bool block, FbleValue** ports);
+static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
 int main(int argc, char* argv[]);
 
 // GetCurrentTime --
@@ -138,15 +139,15 @@ static int ReadNum(FbleValue* x)
 }
 
 // IO --
-//   io function for external ports with IOUser as user data.
+//   io function for external ports.
 //   See the corresponding documentation in fble.h.
-static bool IO(void* user, FbleValueArena* arena, bool block, FbleValue** ports)
+static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 {
+  SnakeIO* sio = (SnakeIO*)io;
   bool change = false;
-  IOUser* io_user = (IOUser*)user;
 
-  if (ports[1] != NULL) {
-    FbleUnionValue* drawS = (FbleUnionValue*)ports[1];
+  if (io->ports.xs[1] != NULL) {
+    FbleUnionValue* drawS = (FbleUnionValue*)io->ports.xs[1];
     assert(drawS->_base.tag == FBLE_UNION_VALUE);
     while (drawS->tag) {
       FbleStructValue* drawP = (FbleStructValue*)drawS->arg;
@@ -178,16 +179,16 @@ static bool IO(void* user, FbleValueArena* arena, bool block, FbleValue** ports)
       color_set(0, NULL);
     }
 
-    FbleValueRelease(arena, ports[1]);
-    ports[1] = NULL;
+    FbleValueRelease(arena, io->ports.xs[1]);
+    io->ports.xs[1] = NULL;
     change = true;
   }
 
-  if (block && ports[0] == NULL) {
+  if (block && io->ports.xs[0] == NULL) {
     // Read the next input from the user.
     Time tnow;
     GetCurrentTime(&tnow);
-    int dt = DiffTimeMillis(&io_user->tnext, &tnow);
+    int dt = DiffTimeMillis(&sio->tnext, &tnow);
     while (dt > 0) {
       timeout(dt);
       refresh();
@@ -201,16 +202,16 @@ static bool IO(void* user, FbleValueArena* arena, bool block, FbleValue** ports)
       }
       if (c != ERR) {
         FbleValueV args = { .size = 0, .xs = NULL };
-        ports[0] = FbleNewUnionValue(arena, 0, FbleNewUnionValue(arena, c, FbleNewStructValue(arena, &args)));
+        io->ports.xs[0] = FbleNewUnionValue(arena, 0, FbleNewUnionValue(arena, c, FbleNewStructValue(arena, &args)));
         return true;
       }
       GetCurrentTime(&tnow);
-      dt = DiffTimeMillis(&io_user->tnext, &tnow);
+      dt = DiffTimeMillis(&sio->tnext, &tnow);
     }
 
-    AddTimeMillis(&io_user->tnext, TICK_INTERVAL);
+    AddTimeMillis(&sio->tnext, TICK_INTERVAL);
     FbleValueV args = { .size = 0, .xs = NULL };
-    ports[0] = FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, &args));
+    io->ports.xs[0] = FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, &args));
     change = true;
   }
 
@@ -307,12 +308,19 @@ int main(int argc, char* argv[])
   color_set(0, NULL);
   refresh();
 
-  IOUser user;
-  GetCurrentTime(&user.tnext);
-  AddTimeMillis(&user.tnext, TICK_INTERVAL);
-  FbleIO io = { .io = &IO, .portc = 2, .user = &user };
+  FbleValue* ports[2] = {NULL, NULL};
+  SnakeIO sio = {
+    .io = { .io = &IO, .ports = { .size = 0, .xs = ports} },
+    .tnext = 0
+  };
 
-  FbleValue* value = FbleExec(value_arena, (FbleProcValue*)proc, &io);
+  GetCurrentTime(&sio.tnext);
+  AddTimeMillis(&sio.tnext, TICK_INTERVAL);
+
+  FbleValue* value = FbleExec(value_arena, &sio.io, (FbleProcValue*)proc);
+
+  FbleValueRelease(value_arena, ports[0]);
+  FbleValueRelease(value_arena, ports[1]);
 
   FbleValueRelease(value_arena, value);
   FbleDeleteValueArena(value_arena);

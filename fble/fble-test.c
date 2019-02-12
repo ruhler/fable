@@ -11,14 +11,14 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static bool NoIO(void* user, FbleValueArena* arena, bool block, FbleValue** ports);
+static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
 
 // NoIO --
 //   An IO function that does no IO.
 //   See documentation in fble.h
-static bool NoIO(void* user, FbleValueArena* arena, bool block, FbleValue** ports)
+static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 {
   assert(!block && "blocked indefinately on no IO");
   return false;
@@ -97,8 +97,8 @@ int main(int argc, char* argv[])
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
     if (result != NULL && result->tag == FBLE_PROC_VALUE) {
-      FbleIO io = { .io = &NoIO, .portc = 0, .user = NULL };
-      FbleValue* exec_result = FbleExec(value_arena, (FbleProcValue*)result, &io);
+      FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
+      FbleValue* exec_result = FbleExec(value_arena, &io, (FbleProcValue*)result);
       FbleValueRelease(value_arena, result);
       result = exec_result;
     }

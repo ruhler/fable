@@ -716,13 +716,10 @@ typedef struct FbleIO {
   //   written, false otherwise.
   //
   // Inputs:
-  //   user - The user data associated with this io.
+  //   io - The FbleIO associated with this io.
   //   arena - The arena to use for allocating and freeing values.
   //   block - true if io should be blocking, false if it should be
   //           non-blocking.
-  //   ports - Array of values indicating which of the external ports to read
-  //           to and write from. The length of the array is the number of
-  //           ports specified for this io.
   //
   // Result:
   //   true if one or more ports have been read or written, false otherwise.
@@ -731,13 +728,11 @@ typedef struct FbleIO {
   //   Reads or writes values to external ports depending on the provided
   //   arguments and may block.
   //   
-  bool (*io)(void* user, FbleValueArena* arena, bool block, FbleValue** ports);
+  bool (*io)(struct FbleIO* io, FbleValueArena* arena, bool block);
 
-  // The number of IO ports.
-  size_t portc;
-
-  // User data to pass to the io function.
-  void* user;
+  // Vector of port values to read from and write to. The caller must
+  // initialize and clear this vector.
+  FbleValueV ports;
 } FbleIO;
 
 // FbleExec --
@@ -745,8 +740,8 @@ typedef struct FbleIO {
 //
 // Inputs:
 //   arena - The arena to use for allocating values.
-//   proc - The process to execute.
 //   io - The io to use for external ports.
+//   proc - The process to execute.
 //
 // Results:
 //   The result of executing the process, or NULL in case of error. The
@@ -754,6 +749,6 @@ typedef struct FbleIO {
 //
 // Side effects:
 //   Prints an error message to stderr in case of error.
-FbleValue* FbleExec(FbleValueArena* arena, FbleProcValue* proc, FbleIO* io);
+FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleProcValue* proc);
 
 #endif // FBLE_H_
