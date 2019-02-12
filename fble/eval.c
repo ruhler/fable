@@ -803,7 +803,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleV
   FbleVectorInit(arena_, thread.children);
 
   for (size_t i = 0; i < args.size; ++i) {
-    thread.data_stack = VPush(arena_, FbleValueRetain(arena, args.xs[i]), NULL);
+    thread.data_stack = VPush(arena_, FbleValueRetain(arena, args.xs[i]), thread.data_stack);
   }
 
   // Run the main thread repeatedly until it no longer makes any forward
