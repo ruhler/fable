@@ -182,7 +182,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       }
       if (c != ERR) {
         FbleValueV args = { .size = 0, .xs = NULL };
-        io->ports.xs[0] = FbleNewUnionValue(arena, 0, FbleNewUnionValue(arena, c, FbleNewStructValue(arena, &args)));
+        io->ports.xs[0] = FbleNewUnionValue(arena, 0, FbleNewUnionValue(arena, c, FbleNewStructValue(arena, args)));
         return true;
       }
       GetCurrentTime(&tnow);
@@ -191,7 +191,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 
     AddTimeMillis(&sio->tnext, TICK_INTERVAL);
     FbleValueV args = { .size = 0, .xs = NULL };
-    io->ports.xs[0] = FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, &args));
+    io->ports.xs[0] = FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, args));
     change = true;
   }
 

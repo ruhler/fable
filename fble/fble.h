@@ -627,9 +627,10 @@ void FbleValueRelease(FbleValueArena* arena, FbleValue* value);
 //
 // Side effects:
 //   The returned struct value must be freed using FbleValueRelease when no
-//   longer in use. This function does not take ownership of any of the args
-//   reference counts or the args array.
-FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV* args);
+//   longer in use. The args are freed using FbleValueRelease as part of
+//   calling this function. The function does not take ownership of the args
+//   array.
+FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args);
 
 // FbleNewUnionValue --
 //   Create a new union value with given tag and argument.
@@ -644,8 +645,8 @@ FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV* args);
 //
 // Side effects:
 //   The returned union value must be freed using FbleValueRelease when no
-//   longer in use. This function does not take ownership of the arg's
-//   reference counts.
+//   longer in use. The arg is freed using FbleValueRelease as part of calling
+//   this function.
 FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg);
 
 // FbleNewPortValue --

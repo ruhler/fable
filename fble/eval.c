@@ -231,11 +231,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         }
 
         FbleValueV args = { .size = argc, .xs = argv, };
-        thread->data_stack = VPush(arena_, FbleNewStructValue(arena, &args), thread->data_stack);
-
-        for (size_t i = 0; i < args.size; ++i) {
-          FbleValueRelease(arena, argv[i]);
-        }
+        thread->data_stack = VPush(arena_, FbleNewStructValue(arena, args), thread->data_stack);
         break;
       }
 
@@ -244,7 +240,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValue* arg = thread->data_stack->value;
         thread->data_stack = VPop(arena_, thread->data_stack);
         thread->data_stack = VPush(arena_, FbleNewUnionValue(arena, union_value_instr->tag, arg), thread->data_stack);
-        FbleValueRelease(arena, arg);
         break;
       }
 
