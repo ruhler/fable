@@ -13,6 +13,43 @@ in scope. For example:
 
 And you can define and export groups of entities this way.
 
+Candidate Proposals
+
+A. Just use the existing struct and union types for this, by adding a '.' type
+operator. For example, you could do:
+
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@.true u = Unit@();
+
+Or, much less contrived:
+
+@ StdLib@ = *(List@ List, Int@ Int, ...);
+StdLib@.List l = empty();
+
+But that is admittedly a little strange. Would you have a module be a struct
+or a union type? Note that I don't expect you would ever instantiate a value
+of this type, because it's non-sensical. It doesn't make sense to have one
+sample value of every type that is defined in the module.
+
+B. Introduce the concept of a struct kind.
+Note though, we don't have names for kinds, so it would be awkward to work
+with.
+
++<@ List@, @ Bool@, @ Int@, \<@;@> Maybe@> StdLib@ = 
+ +<@ List@, @ Int@, \<@;@> Maybe@>(List@, Bool@, Int@, Maybe@);
+
+StdLib@.Bool@ true = StdLib@.Bool@(true: Unit@());
+
+The downside being that the caller would have to know the names of all the
+things defined in the kind, which is not at all happy.
+
+C. Cheat a little. Allow Foo@.Bar@ for types, like we allow Foo@(x, y, z) for
+types, even though it isn't explicit in the kind @ for the type Foo@.
+
+@ StdLib@ = @(List@ = List@, Bool@ = Bool@, Int@, Maybe@, ...);
+StdLib@.Bool@ true = StdLib@.Bool@(true: Unit@());
+
 2. Have a construct to clear the scope aside from explicitly named entities.
 This is needed so that if a parent module adds a new entity, it will not
 conflict with some private internals of a child module.
@@ -27,6 +64,17 @@ whoever instantiates the child module to ensure the entities are available.
 This mechanism also implies that a parent module must explicitly import any
 external modules required by any of its child modules. Note that the parent
 does not need to know about what any of the imported modules depend on.
+
+Candidate Proposal:
+  %([name = ] name, [name = ] name, ...) { ... }
+  %([name@ = ] name@, [name@ = ] name@, ...) { ... }
+
+For example
+
+%(Unit@, Bool@, Maybe@, Map@ = HashMap@) {
+  Bool@ true = Bool@(true: Unit@());
+  true;
+}
 
 3. No special mechanism is needed for instantiating modules. No automatic
 dependency analysis. A parent module instantiates each child module in order
@@ -55,6 +103,15 @@ the dependencies of the program clear.
 
 This way a module can be reused in multiple programs, so long as each program
 it is used in supplies its required dependencies.
+
+Candidate Proposal:
+ %name
+ %name@
+
+For example:
+  @ StdLib@ = %StdLib@;
+  StdLib@.StdLib@ StdLib = %StdLib;
+  StdLib@.Bool@ true = StdLib.true;
 
 5. Previous thoughts and how to interpret them now:
  1. How to group types and values into single objects. For values we can just

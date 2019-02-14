@@ -1,6 +1,4 @@
 Fble:
-* Track down memory leak in fble-snake.
-
 * Clarify spec on partial and excessive function and poly application.
 * Test partial function and excessive function application.
 
@@ -140,7 +138,7 @@ Fbld Snake:
 * Make food appear randomly instead of at the tail.
 * Speed up the snake every time it eats something.
 * Test and fix bug when snake eats its tail.
-* Ignore moves that aren't orthoginal to current snake direction.
+* Ignore moves that aren't orthogonal to current snake direction.
 * Keep track of and report score.
 
 Fblc Performance:
