@@ -150,3 +150,306 @@ For example:
  defined and uniquely identified by their name and no other notion or
  description.
 
+Namespaces Proposal
+-------------------
+Rather than try to reuse structs, how about we introduce a new concept called
+a namespace? A separate syntactic construct. You can do type and value lets in
+namespaces. And also...
+
+Namespace Let
+-------------
+Abstract Syntax:
+  Namespace ::= namespace_let_namespace (bindings :: [(Name, Namespace)] (body :: Namespace)
+  Type      ::= namespace_let_type      (bindings :: [(Name, Namespace)] (body :: Type)
+  Expr      ::= namespace_let_expr      (bindings :: [(Name, Namespace)] (body :: Expr)
+
+Concrete Syntax:
+  namespace_stmt ::= '%' namespace_name '=' namespace [',' '%' namespace_name '=' namespace [...]] ';' namespace_stmt
+  type_stmt ::= '%' namespace_name '=' namespace [',' '%' namespace_name '=' namespace [...]] ';' type_stmt
+  stmt ::= '%' namespace_name '=' namespace [',' '%' namespace_name '=' namespace [...]] ';' stmt
+
+Example:
+  % Bool% = %(Bool@, True, False, And, Or, Not);
+  And(Bool%.True, Bool%.False)
+
+The namespace let is used to define namespace variables, when describing
+namespaces, types, or expressions. For each binding, a new namespace variable
+is defined. The value of the namespace variable is the result of evaluating
+the namespace for the variable's binding.
+
+The defined namespace variables are visible in the body of the let.
+
+TODO: Are recursive namespace definitions allowed?
+
+The value of the namespace let is the value of its body.
+
+Type and Expression Let
+-----------------------
+You can use type and normal value lets when defining namespaces.
+
+For example:
+  @ Unit@ = *();
+  Unit@ Unit = Unit@();
+  %(Unit@, Unit);
+
+Namespace Access
+----------------
+Abstract Syntax:
+  Namespace ::= namespace_access_namespace (namespace :: Namespace) (name :: Name);
+  Type      ::= namespace_access_type      (namespace :: Namespace) (name :: Name);
+  Expr      ::= namespace_access_expr      (namespace :: Namespace) (name :: Name);
+
+Concrete Syntax:
+  namespace '.' namespace_name
+  namespace '.' type_name
+  namespace '.' name
+
+Example:
+  Bool%.Bool@
+
+Returns the namespace, type, or value provided for the given name when
+creating the namespace.
+
+Current Namespace
+-----------------
+Abstract Syntax:
+  Namespace ::= current_namespace
+
+Concrete Syntax:
+  namespace ::= '%'
+
+Example:
+  %
+
+Gives the current namespace, including all namespace, type, and value
+variables in scope.
+
+Namespace Restriction
+---------------------
+Abstract Syntax:
+  Namespace ::= namespace_restriction (namespace :: Namespace) (names :: [(Name, Thing)])
+
+Concrete Syntax:
+  namespace ::= namespace '(' name ['=' name] [',' ...]] ')'
+
+Define a new namespace restricted to the named entities from a given
+namespace. If the '=' name is not provided, defaults to '=' name.
+
+Example:
+  Bool%(Bool@, true=True, false=False)
+
+Note: Complex expressions are not supported in the namespace restriction. If a
+more complex form of renaming is required, then a namespace eval can be used.
+For example, instead of
+  StdLib%(Bool%.Bool@, BoolList@ = List%.LIst@<Bool@>)
+
+You would write something like:
+
+  StdLib% {
+    @ Bool@ = Bool%.Bool@;
+    @ BoolList@ = List%.List@<Bool@>;
+    %(Bool@, BoolList@);
+  }
+
+Namespace Eval
+--------------
+Abstract Syntax:
+  Thing ::= namespace_eval (namespace :: Namespace) (body :: Thing)
+
+Concrete Syntax:
+  thing ::= namespace '{' thing '}'
+
+Example:
+  %StdLib(Unit%, Bool%) { Bool%.True; }
+
+Evaluate a namespace, type, or value in the given namespace.
+
+Namespace Import
+----------------
+Abstract Syntax:
+  Thing ::= namespace_import (namespace :: Namespace) (body :: Thing)
+
+Concrete Syntax:
+  thing_stmt ::= namespace ';' thing_stmt
+
+Example:
+  StdLib% ;
+  Bool%.True;
+
+Creates a thing in the namespace formed of the union of the current namespace
+and the given namespace.
+
+Namespace Variable
+------------------
+Abstract Syntax:
+  Namespace ::= namespace_variable Name
+
+Concrete Syntax:
+  namespace ::= namespace_name
+  namespace_name = name '%'
+
+Example:
+  StdLib%
+
+Refer to a namespace variable in scope.
+
+Include
+-------
+Abstract Syntax:
+  Thing ::= include (name :: Name)
+
+Concrete Syntax:
+  thing ::= '&' name
+
+Example:
+  &Bool%
+
+Syntactically includes the named module in place of the thing. The definition
+of the module is located in a platform dependent way relative to the current
+module. This allows an fble program to be split across multiple files that are
+reused in multiple programs.
+
+Implementation Note: Dealing with Many Lets
+-------------------------------------------
+The namespaces proposal introduces many kinds of lets into the language.
+
+We already have:
+  let type ; type
+  let type ; value
+  let value ; value
+
+Now we add the namespace lets:
+  let namespace ; namespace
+  let namespace ; type
+  let namespace ; value
+
+And we update the other lets:
+  let type ; namespace
+  let value ; namespace
+
+The only one missing at this point is the useless, but probably not
+harmful:
+  let value ; type
+
+Is there any way we can simplify the abstract syntax, parser, and compiler to
+avoid having to implement 8 kinds of lets instead of just 3?
+
+Start by assuming any of the 9 combinations is possible, for the most
+simplicity / generality.
+
+Internally we could have a unified type called a 'thing'.
+
+thing ::= namespace | type | value;
+
+And say things are typed, in the sense that we know if a thing is a namespace,
+type, or value. Then we could write a syntax such as:
+
+expr ::= ... 
+       | let thing ; expr
+
+Hmm... That's an interesting approach. The let is generic. So focus on making
+the let generic rather than the body.
+
+let_bindings ::= let_type_bindings | let_value_bindings | let_namespace_bindings
+
+expr ::= ... | let_bindings ';' expr
+
+Implementation wise, it's not exactly what you want, but it keeps the syntax
+correct. We don't have to have some notion of a type.
+
+And then, in the compiler, we have some generic function to process let
+bindings? Namespace updates the namespace, types updates the namespace. The
+only funny one is expr, which needs to generate code to compile.
+
+The opposite approach would be:
+
+let ::= namespace ';' thing
+     |  type ';' thing
+     |  value ';' thing
+     ;
+
+type ::= ...
+      | let
+      ;
+
+expr ::= ...
+      | let
+      ;
+
+And rely on a type checking phase in the parser to assert that the body of the
+let for an expr is an expr, the body of the let for a type is the type, and so
+on.
+
+Maybe?
+
+Unified Proposal
+----------------
+If structs could hold types, then namespaces are just structs. If types were
+values, then would we get namespaces for free?
+
+This approach is appealing, because it means we don't have 8 different
+kinds of let statements. It ties the knot, as it were. Then anything we could
+do to describe expressions in complex ways we could use to describe types and
+namespaces in complex ways too. The language would be fully general and
+simple.
+
+Here are some problems with the unified proposal:
+
+1. The polymorphic list types S@<T@> and P@<T@>, if interpreted as normal
+functions an expressions, would be an infinite recursion.
+
+2. Some things would need to be evaluated at compile time. Other things we
+would want to defer to evaluation time. How do you decide which?
+
+For example:
+  @ MyList@ = List@(Bool@);
+  MyList@ x = emptyList(Bool@);
+
+  Foo@ foo = ComputationallyHeavyFunction();
+
+We want to evaluate the List@(Bool@) at compile time, but maybe we don't want
+to evaluate the ComputationallyHeavyFunction. How do you distinguish between
+them?
+
+3. What does it mean to have something like ?(x ; true: Bool@, false: Int@).
+
+4. How do we prevent infinite recursion during compilation?
+  
+None of these challenges is insurmountable on their own.
+
+For (1) we can say there are two kinds of evaluation: compile time and run
+time.  Compile time evaluation is lazy, run time evaluation is eager. Then it
+works. Or we can say that types are lazy. Then it works.
+
+For (2) we can say we eagerly evaluate everything we can at compile time. Or
+we do lazy evaluation at compile time and compile only what is needed for type
+checking. Or we could augment the syntax for let expressions to distinguish
+between those that need to be evaluated at compile time versus run time.
+
+For (3) we can say that is meaningless if x is unknown. Or we can say the
+result of ?(...) is always unknown at compile time, and all types have to be
+known at compile time.
+
+For (4) we can say that the body of ?(...) is never evaluated at compile time.
+
+A fifth problem, when considering namespaces, is:
+
+5. A struct containing a type requires some form of dependant types support.
+
+Say we want a namespace containing the type Bool@ and the function Not. As a
+struct, it's type would be: *(@ Bool@, \(Bool@ x; Bool@) Not). But what's to
+keep you from constructing a value of this type as: (Int@, Not)? Something
+magical needs to happen to link the value of the type field with the type of
+the value fields.
+
+Taken all together, the unified proposal doesn't appear to provide any
+benefit. It just hides a bunch of complexity under a deceptively simple
+syntax. If there are two ways everything is evaluated, if some things can only
+be done at compile time and others only at run time, then it would seem much
+better to reflect that real complexity of the language explicitly in the
+syntax as well.
+
+Thus I repeat my conclusion to the type/value unification question reached
+before: better to keep types and values (and now namespaces) separate
+syntactic constructs.
+

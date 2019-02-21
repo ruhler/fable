@@ -261,7 +261,7 @@ remaining arguments.
 If all arguments are supplied, the application expression evaluates to the
 value of the body of the function in the context of the supplied arguments.
 
-TODO: Is evaluation struct? Lazy?
+TODO: Is evaluation strict? Lazy?
 
 E.7 Struct Type
 ---------------
@@ -645,7 +645,7 @@ Miscellaneous Thoughts
 
   When evaluating expressions of kinded type during type check, it may be the
   case that the resulting value depends on unknown input parameters. This is
-  not an error unless the value of those input parmaters must be known to type
+  not an error unless the value of those input parameters must be known to type
   check the expression.
 
   I think that gives everything I need.
