@@ -1,6 +1,7 @@
 // parse.y --
 //   This file describes the bison grammar for parsing fble expressions.
 %{
+  #include <assert.h>   // for assert
   #include <ctype.h>    // for isalnum
   #include <stdbool.h>  // for bool
   #include <stdio.h>    // for FILE, fprintf, stderr
@@ -73,7 +74,7 @@
 %type <type> type type_stmt 
 %type <types> type_p
 %type <expr> expr stmt
-%type <exprs> expr_s
+%type <exprs> expr_s expr_p
 %type <fields> field_p field_s
 %type <type_fields> type_field_p
 %type <choices> choices
@@ -184,6 +185,18 @@ type:
  | '{' type_stmt '}' {
       $$ = $2;
    }
+ | type '.'  type_name {
+      assert(false && "TODO: Support type field access");
+      $$ = NULL;
+   }
+ | expr '.'  type_name {
+      assert(false && "TODO: Support type field access");
+      $$ = NULL;
+   }
+ | '&' type_name {
+      assert(false && "TODO: Support type include");
+      $$ = NULL;
+   }
  ;
 
 type_stmt:
@@ -252,6 +265,10 @@ expr:
       struct_value_expr->type = $1;
       struct_value_expr->args = $3;
       $$ = &struct_value_expr->_base;
+   }
+ | '@' '(' anon_struct_arg_s ')' {
+      assert(false && "TODO: anonymous struct");
+      $$ = NULL;
    }
  | type '(' NAME ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
@@ -327,6 +344,14 @@ expr:
  | '{' stmt '}' {
       $$ = $2;
    }
+ | expr '{' stmt '}' {
+      assert(false && "TODO: namespace eval");
+      $$ = NULL;
+   }
+ | '&' NAME {
+      assert(false && "TODO: Support include");
+      $$ = NULL;
+   }
  ;
 
 
@@ -381,15 +406,23 @@ stmt:
       let_expr->body = $3;
       $$ = &let_expr->_base;
     }  
+  | expr ';' stmt {
+      assert(false && "TODO: namespace import");
+      $$ = NULL;
+    }
   ;
 
 expr_s:
    %empty { FbleVectorInit(arena, $$); }
- | expr {
+ | expr_p { $$ = $1; }
+ ;
+
+expr_p:
+   expr {
      FbleVectorInit(arena, $$);
      FbleVectorAppend(arena, $$, $1);
    }
- | expr_s ',' expr {
+ | expr_p ',' expr {
      $$ = $1;
      FbleVectorAppend(arena, $$, $3);
    }
@@ -407,6 +440,39 @@ choices:
       FbleChoice* choice = FbleVectorExtend(arena, $$);
       choice->name = $3;
       choice->expr = $5;
+    }
+  ;
+
+anon_struct_arg:
+    NAME {
+      assert(false && "TODO: anon_struct_arg");
+    }
+  | NAME ':' expr {
+      assert(false && "TODO: anon_struct_arg");
+    }
+  | type_name {
+      assert(false && "TODO: anon_struct_arg");
+    }
+  | type_name ':' type {
+      assert(false && "TODO: anon_struct_arg");
+    }
+  ;
+
+anon_struct_arg_s:
+    %empty {
+      assert(false && "TODO: anon_struct_arg");
+    }
+  | anon_struct_arg_p {
+      assert(false && "TODO: anon_struct_arg");
+    }
+  ;
+
+anon_struct_arg_p:
+  anon_struct_arg {
+      assert(false && "TODO: anon_struct_args");
+    }
+  | anon_struct_arg_p ',' anon_struct_arg {
+      assert(false && "TODO: anon_struct_args");
     }
   ;
 
@@ -498,7 +564,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,:?=.<>+*-!$@~\\", c) != NULL;
+  return strchr("(){};,:?=.<>+*-!$@~&\\", c) != NULL;
 }
 
 // ReadNextChar --

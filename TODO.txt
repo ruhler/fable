@@ -11,6 +11,7 @@ Fble Namespaces:
   - namespace eval
   - namespace import
   - include
+* Convert rest of what's needed for AllTests.fble to fble.
 * Add support for all new constructs to the parser
   - to verify there aren't any conflicts in the grammar.
 * Add support for compiling and evaluating all new constructs.

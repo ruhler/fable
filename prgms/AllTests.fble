@@ -1,0 +1,22 @@
+
+@(StdLib = &StdLib);
+
+StdLib { @(Unit@, List); };
+List { @(S@, P@, S1, Concat, MapS); };
+StdLib.ListTest { @(ListTestFailure@); };
+
+@ TestFailure@ = +(ListTestFailure@ ListTest);
+
+\(ListTestFailure@ a; TestFailure@) ListTestFailureF = \(ListTestFailure@ a) {
+  TestFailure@(ListTest: a);
+};
+
+S@<TestFailure@>! Test = {
+  $(Concat<TestFailure@>(S1@<S@<TestFailure@>>(
+          MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLib.ListTest.Test)
+          )));
+};
+
+S@<TestFailure@> result := Test;
+$(result.nil);
+

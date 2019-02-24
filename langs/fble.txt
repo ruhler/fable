@@ -567,8 +567,65 @@ Examples:
   Maybe@<Int@>
   fromJust<Int@>(3)
 
-9. Program
-----------
+9. Namespaces
+-------------
+Namespaces provide a means to support programming at scale, where parts of a
+program are developed by different organizations and reused in multiple
+different programs.
+
+Namespaces allow a developer to have full control over the names of variables
+visible in a module of a program, regardless of what programs that module is
+used in. They also allow development of libraries of types and values, so that
+a developer, instead of describing a program to be executed, describes a
+namespace whose members can be reused by other programmers.
+
+The idea behind namespace support in fble is to recognize that a struct value
+already acts as a namespace of values. We generalize structs to support type
+fields in addition regular value fields. Then we provide syntax for
+manipulating the current namespace based on struct values.
+
+9.1 Struct Type Fields
+----------------------
+
+9.2 Struct Type Field Access
+----------------------------
+
+9.3 Anonymous Struct Value
+--------------------------
+
+9.4 Namespace Eval
+------------------
+
+9.5 Namespace Import
+--------------------
+
+9.6 Include
+-----------
+Abstract Syntax:
+  Type ::= type_include (name :: Name)
+  Expr ::= include (name :: Name)
+
+Concrete Syntax:
+  type ::= '&' type_name
+  expr ::= '&' name
+
+Example:
+  &StdLib
+
+Syntactically includes the named module in place of the thing. The definition
+of the module is located in a platform dependent way relative to the current
+module. This allows an fble program to be split across multiple files that are
+reused in multiple programs.
+
+For example, assuming StdLib.fble is in the current directory and describes
+the StdLib namespace, then a top level program Foo.fble could reuse the StdLib
+namespace by including it:
+
+  @(StdLib = &StdLib);
+  ...
+
+10. Program
+-----------
 A program is an fble expressions that creates a value that is used however is
 deemed suitable by whoever is executing the program. Commonly this could be:
 
@@ -578,7 +635,7 @@ deemed suitable by whoever is executing the program. Commonly this could be:
   evaluate and output the resulting value
 * process: run the process, evaluate and output the resulting value.
   
-10. Abstract Syntax Reference
+11. Abstract Syntax Reference
 -----------------------------
 Name ::= (* A string of characters *)
 
@@ -598,6 +655,7 @@ Type ::=
  | type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
  | poly_type (args :: [(Kind, Name)]) (body :: Type)
  | poly_type_apply (poly :: Type) (args :: [Type])
+ | type_include (name :: Name)
  ;
 
 Expr ::=
@@ -619,9 +677,10 @@ Expr ::=
  | type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
  | poly_expr (args :: [(Kind, Name)]) (body :: Expr)
  | poly_expr_apply (poly :: Expr) (args :: [Type])
+ | include (name :: Name)
  ;
 
-11. Concrete Syntax Reference
+12. Concrete Syntax Reference
 -----------------------------
 name ::= (* [a-zA-Z--9_]+ *)
 
@@ -643,6 +702,7 @@ type ::=
  | '\<' kind type_name [',' kind type_name [...]] '>' '{' type_stmt '}'  (* poly_type *)
  | type '<' [type [',' type [...]]] '>'                                  (* poly_type_apply *)
  | '{' type_stmt '}'                                                     (* type_stmt *)
+ | '&' type_name                                                         (* type_include *)
  ;
 
 type_stmt ::=
@@ -662,6 +722,7 @@ expr ::=
  | '\<' kind type_name [',' kind type_name [...]] '>' '{' stmt '}'  (* poly_expr *)
  | expr '<' [type [',' type [...]]] '>'                             (* poly_expr_apply *)
  | '{' stmt '}'                                                     (* statement *)
+ | '&' name                                                         (* include *)
  ;
 
 stmt ::=
@@ -679,7 +740,9 @@ Notes:
 * apply, get, and put share the same form. The type of the expr is used to
   distinguish between the three kinds of expressions.
 
-12. Thoughts
+13. Thoughts
 ------------
 * Is there really any need for a type let type? It seems like you could always
   use either a type let expression or a polymorphic type function.
+* TODO: Add program and module to the syntax reference to answer the question:
+  is a program / module an expr or a stmt or a type or a type_stmt?
