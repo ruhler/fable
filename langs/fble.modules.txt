@@ -382,6 +382,25 @@ on.
 
 Maybe?
 
+Problems with this approach: if you define expressions for a namespace, then a
+namespace has to take up space at runtime, and that's not clearly explained.
+In particular, if you try to define expressions for a namespace used entirely
+within a type context, how could we ever evaluate those expressions? It's very
+confusing.
+
+The solution:
+1. Have a namespace just be a struct, and perhaps be able to augment a struct
+type with type definitions. For example:
+   *(@ Bool@ = +(Unit@ true, Unit@ false), 
+     Bool@ True, Bool@ False, \(Bool@ x; Bool@) Not, ...)
+
+This way we can reuse the existing lets for namespaces by just treating them
+as normal types and expressions.
+
+2. Have a 'typeof' operator that allows you to use expressions to define
+types. typeof (expr :: Expr) would be the type of the given expression,
+without ever evaluating that expression.
+
 Unified Proposal
 ----------------
 If structs could hold types, then namespaces are just structs. If types were
@@ -453,3 +472,74 @@ Thus I repeat my conclusion to the type/value unification question reached
 before: better to keep types and values (and now namespaces) separate
 syntactic constructs.
 
+Struct as Namespace
+-------------------
+Ignoring the question of namespaces for types vs. values for the time being,
+how could we make structs act as (value) namespaces in a happy syntactic way?
+
+1. Introduce a new anonymous-type struct constructor:
+
+Abstract Syntax: anon_struct (args :: [(Name, Maybe Expr)])
+Concrete Syntax: '@' '(' [name [':' expr] [',' ...]] ')'
+Example: @(True, False, Not: NotInternal)
+
+Defines a struct whose type is inferred from the arguments. If no value is
+provided for an argument, it is assumed to be the variable expression with the
+same name. For example, the argument: "Foo" is equal to writing "Foo: Foo".
+
+This would not replace the existing version of struct constructor with
+explicit type provided. That is still useful to have in those cases where you
+want type checking of the arguments. We could consider requiring the name:
+syntax in the existing struct constructor syntax, but given that you provide
+the type explicitly, I don't see too much motivation to change the existing
+syntax.
+
+2. Namespace Eval
+Abstract Syntax: namespace_eval (namespace :: Expr) (body :: Expr)
+Concrete Syntax: expr '{' stmt '}'
+Example: @(True, False, And) { And(True, False); }
+
+The namespace argument must be of type struct. The body of the expression is
+evaluated in a namespace consisting solely of the fields of the struct. This
+construct allows you to hide names in the current namespace when evaluating
+the body of an expression.
+
+3. Namespace Import
+Abstract Syntax: namespace_import (namespace :: Expr) (body :: Expr)
+Concrete Syntax: expr ';' stmt
+Example: @(And); And(True, False);
+
+This is like a short hand form of let expression. The namespace must be of
+struct type. The fields of the struct are added to scope and are visible in
+the execution of the body.
+
+The typical use of namespace import is to import values from an existing
+namespace into the current namespace using a combination of namespace
+import, namespace eval, and anonymous struct construction. For example:
+
+StdLib { @(Bool, Maybe, List); };
+...
+
+Has the effect of importing just Bool, Maybe, and List from StdLib.
+
+Note that you can also make use of this construct for defining a variable
+without having to explicitly specify its type. This may be useful for defining
+modules without having to provide a separate type. For example:
+  @(StdLib: &StdLib); ...
+
+Or, as another example, the following two are equivalent:
+
+ Bool@ True = Bool@(true: Unit@()); ...
+ @(True: Bool@(true: Unit@())); ...
+
+But note, this form of let is a non-recursive form of let.
+
+The Final Proposal
+------------------
+I think we have all the pieces:
+* Add the option to define a type as part of a struct type.
+* Have some form of 'typeof' operator or type field struct access.
+* Add the namespace-struct operations.
+* Add the 'include' operation.
+
+We should now be able to come up with a final proposal that is happy happy.

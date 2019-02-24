@@ -1,0 +1,25 @@
+
+@(Unit@) {
+  @ Bool@ = +(Unit@ true, Unit@ false);
+  
+  Bool@ True = Bool@(true: Unit@());
+  Bool@ False = Bool@(false: Unit@());
+
+  \(Bool@ a; Bool@) Not = \(Bool@ a) {
+    ?(a; true: False, false: True);
+  };
+
+  \(Bool@ a, Bool@ b; Bool@) And = \(Bool@ a, Bool@ b) {
+    ?(a; true: b, false: False);
+  };
+
+  \(Bool@ a, Bool@ b; Bool@) Or = \(Bool@ a, Bool@ b) {
+    ?(a; true: True, false: b);
+  };
+
+  \(Bool@ a, Bool@ b; Bool@) Eq = \(Bool@ a, Bool@ b) {
+    ?(a; true: Not(b), false: b)
+  };
+ 
+  @(Bool@, True, False, Not, And, Or, Eq);
+};

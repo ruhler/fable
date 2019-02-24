@@ -1,0 +1,11 @@
+@() {
+  @ Unit@ = *();
+
+  @(Bool: &Bool);
+
+  \<@ ; @> Maybe@ = \<@ T@> { +(T@ just, Unit@ nothing); };
+
+  @(List: &List);
+
+  @(Unit@, Bool, Maybe@, List);
+};

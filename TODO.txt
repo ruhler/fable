@@ -1,15 +1,19 @@
 Fble:
-* Draft spec for modularity
- - update fble.txt with namespace proposal.
- - think about how to simplify / reuse the awkward combination of lets.
+* Add namespace support. See Fble Namespsaces below.
+* Port rest of fbld tests and programs to fble.
+* Delete obsolete fblc/ and fbld/ code and TODOs.
+* Go from there.
 
-* Implement support for modularity.
-* Port the rest of the fbld tests to fble.
-
-* Delete the obsolete fblc/ and fbld/ code and TODOs.
-
-* Clarify spec on partial and excessive function and poly application.
-* Test partial function and excessive function application.
+Fble Namespaces:
+* Add chapter on namespaces to fble.txt
+  - struct type fields and type field access.
+  - anonymous struct
+  - namespace eval
+  - namespace import
+  - include
+* Add support for all new constructs to the parser
+  - to verify there aren't any conflicts in the grammar.
+* Add support for compiling and evaluating all new constructs.
 
 Fble Cleanup:
 * Better error messages on types that have the same name but different values.
@@ -28,6 +32,8 @@ Fble Cleanup:
 * Test that we don't smash the stack with many nested child threads.
 * Test that we don't leak (Thread) memory with tail recursive single binding
   exec processes.
+* Clarify spec on partial and excessive function and poly application.
+* Test partial function and excessive function application.
 
 Fble Performance:
 * Optimize reference counting scheme.
