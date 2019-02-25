@@ -595,9 +595,86 @@ manipulating the current namespace based on struct values.
 
 9.4 Namespace Eval
 ------------------
+Abstract Syntax:
+  Expr ::= namespace_eval (namespace :: Expr) (body :: Expr)
+
+Concrete Syntax:
+  expr ::= expr '{' stmt '}'
+
+Example:
+  @(True, False, And) { And(True, False); }
+
+Namespace eval allows you to hide names in the current namespace when
+evaluating an expression. The namespace must evaluate to a struct value. Then
+the body of the namespace_eval will be evaluated in a scope of variables which
+are the fields of the namespace value and no others.
+
+Namespace eval is typically used when defining a module to hide all external
+variables except those you need for the module. This allows the module to be
+reused many different contexts. For example, a module that only requires use
+of the StdLib library would be written:
+
+@(StdLib) {
+  ...
+};
+
+That way, regardless of what other libraries are in scope, there will be no
+name conflicts between what is already in scope and what is being defined by
+the module itself.
 
 9.5 Namespace Import
 --------------------
+Abstract Syntax:
+  Expr ::= namespace_import (namespace :: Expr) (body :: Expr)
+
+Concrete Syntax:
+  stmt ::= expr ';' stmt
+
+Example:
+  @(And); And(True, False);
+
+Namespace import is a short hand form of let expression that allows you to
+introduce new variables in scope. The namespace must evaluate to a struct
+type. Then the body of import is evaluated in a namespace augmented with the
+fields of the namespace struct.
+
+The advantage of using namespace import over using a regular let expression is
+the convenience of not having to explicitly write the types of the variables
+being defined and being able to define a group of variables concisely.
+
+For example, assuming a namespace of boolean operations:
+  @ BoolOps@ = *(Bool@ True, Bool@ False, \(Bool@ x; Bool@) Not);
+  BoolOps@ ops = ...
+
+The following two are equivalent:
+1. Bool@ True = ops.True;
+   Bool@ False = ops.False;
+   \(Bool@ x; Bool@) Not = ops.Not;
+   ...
+
+2. ops;
+   ...
+  
+The typical use of namespace import is to import values from an existing
+namespace into the current namespace using a combination of namespace
+import, namespace eval, and anonymous struct construction. For example:
+
+  StdLib { @(Bool, Maybe, List); };
+  ...
+
+Has the effect of importing just Bool, Maybe, and List from StdLib.
+
+Note that you can also make use of this construct with anonymous struct values
+for defining a variable without having to explicitly specify its type. This
+is useful for referring to a namespace without having to provide an explicit
+type for the namespace. For example:
+
+  @(StdLib: &StdLib); ...
+
+Or, as another example, the following two are equivalent:
+
+1. Bool@ True = Bool@(true: Unit@()); ...
+2. @(True: Bool@(true: Unit@())); ...
 
 9.6 Include
 -----------
@@ -677,6 +754,8 @@ Expr ::=
  | type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
  | poly_expr (args :: [(Kind, Name)]) (body :: Expr)
  | poly_expr_apply (poly :: Expr) (args :: [Type])
+ | namespace_eval (namespace :: Expr) (body :: Expr)
+ | namespace_import (namespace :: Expr) (body :: Expr)
  | include (name :: Name)
  ;
 
@@ -722,6 +801,7 @@ expr ::=
  | '\<' kind type_name [',' kind type_name [...]] '>' '{' stmt '}'  (* poly_expr *)
  | expr '<' [type [',' type [...]]] '>'                             (* poly_expr_apply *)
  | '{' stmt '}'                                                     (* statement *)
+ | expr '{' stmt '}'                                                (* namespace_eval *)
  | '&' name                                                         (* include *)
  ;
 
@@ -732,6 +812,7 @@ stmt ::=
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt         (* exec *)
  | type name '=' expr [',' type name = expr [...]] ';' stmt             (* let *)
  | kind type_name '=' type [',' kind type_name = type [...]] ';' stmt   (* type_let_expr *)
+ | stmt ::= expr ';' stmt                                               (* namespace_import *)
  ;
 
 Notes:
@@ -744,5 +825,24 @@ Notes:
 ------------
 * Is there really any need for a type let type? It seems like you could always
   use either a type let expression or a polymorphic type function.
+
+  On related notes: should there be a namespace_import or namespace_eval for
+  types? I honestly can't imagine it would ever be necessary, but it somehow
+  feels incomplete to leave those out.
+
 * TODO: Add program and module to the syntax reference to answer the question:
   is a program / module an expr or a stmt or a type or a type_stmt?
+
+* Function definitions can be really hard to read. Consider adding a syntactic
+  sugar to make it easier? For example, instead of:
+
+  \<@ T@> { \(S@<T@> a, S@<T@> b; S@<T@>); } Append = \<@ T@> {
+    \(S@<T@> a, S@<T@> b) {
+      ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
+    };
+  };
+
+  Perhaps something like:
+  S@<T@> Append<@ T@>(S@<T@> a, S@<T@> b) {
+    ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
+  };

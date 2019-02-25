@@ -16,32 +16,63 @@
     };
   };
 
-  func S0<type T>( ; S<T>) S<T>:nil(Unit());
-  func S1<type T>(T a; S<T>) ConsS<T>(a, S0<T>());
-  func S2<type T>(T a, T b; S<T>) ConsS<T>(a, S1<T>(b));
-  func S3<type T>(T a, T b, T c; S<T>) ConsS<T>(a, S2<T>(b, c));
-  func S4<type T>(T a, T b, T c, T d; S<T>) ConsS<T>(a, S3<T>(b, c, d));
-  func S5<type T>(T a, T b, T c, T d, T e; S<T>) ConsS<T>(a, S4<T>(b, c, d, e));
-  func S9<type T>(T a, T b, T c, T d, T e, T f, T g, T h, T i; S<T>) {
-    Append<T>(S5(a, b, c, d, e), S4(f, g, h, i));
+  # Append list b to the end of list a.
+  \<@ T@> { \(S@<T@> a, S@<T@> b; S@<T@>); } Append = \<@ T@> {
+    \(S@<T@> a, S@<T@> b) {
+      ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
+    };
+  };
+
+  \<@ T@> { S@<T@>; } S0 = \<@ T@> {
+    S@<T@>(nil: Unit@());
+  };
+
+  \<@ T@> { \(T@ a; S@<T@>); } S1 = \<@ T@> {
+    \(T@ a) {
+      ConsS<T@>(a, S0<T@>);
+    };
+  };
+
+  \<@ T@> { \(T@ a, T@ b; S@<T@>); } S2 = \<@ T@> {
+    \(T@ a, T@ b) {
+      ConsS<T@>(a, S1<T@>(b));
+    };
+  };
+
+  \<@ T@> { \(T@ a, T@ b, T@ c; S@<T@>); } S3 = \<@ T@> {
+    \(T@ a, T@ b, T@ c) {
+      ConsS<T@>(a, S2<T@>(b, c));
+    };
+  };
+
+  \<@ T@> { \(T@ a, T@ b, T@ c, T@ d; S@<T@>); } S4 = \<@ T@> {
+    \(T@ a, T@ b, T@ c, T@ d) {
+      ConsS<T@>(a, S3<T@>(b, c, d));
+    };
+  };
+
+  \<@ T@> { \(T@ a, T@ b, T@ c, T@ d, T@ e; S@<T@>); } S5 = \<@ T@> {
+    \(T@ a, T@ b, T@ c, T@ d, T@ e) {
+      ConsS<T@>(a, S4<T@>(b, c, d, e));
+    };
+  };
+
+  \<@ T@> { \(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g, T@ h, T@ i; S@<T@>); } S9 = \<@ T@> {
+    \(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g, T@ h, T@ i) {
+      Append<T@>(S5<T@>(a, b, c, d, e), S4<T@>(f, g, h, i));
+    };
   };
 
   # InitP - Return all but the last element in 'list'.
-  func InitP<type T>(P<T> list; S<T>) {
-    ?(list.tail;
-        cons: S<T>:cons(P<T>(list.head, InitP<T>(list.tail.cons))),
-        nil: S<T>:nil(Unit())
-    );
+  \<@ T@> { \(P@<T@> list; S@<T@>); } InitP = \<@ T@> {
+    \(P@<T@> list) {
+      ?(list.tail; cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: S0<T@>);
+    };
   };
 
   # LastP - Return the last element in 'list'.
   func LastP<type T>(P<T> list; T) {
     ?(list.tail; cons: LastP<T>(list.tail.cons), nil: list.head);
-  };
-
-  # Append list b to the end of list a.
-  func Append<type T>(S<T> a, S<T> b ; S<T>) {
-    ?(a; cons: S<T>:cons(P<T>(a.cons.head, Append<T>(a.cons.tail, b))), nil: b);
   };
 
   # Concat: Flatten a list of lists into a single list of all the elements.
@@ -78,6 +109,6 @@
   };
 
   @(P@, S@,
-    HeadS, ConsS, S0, S1, S2, S3, S4, S5, S9,
-    InitP, LastP, Append, Concat, MapS, MapP, SortS, SortP);
+    HeadS, ConsS, Append, S0, S1, S2, S3, S4, S5, S9,
+    InitP, LastP, Concat, MapS, MapP, SortS, SortP);
 };
