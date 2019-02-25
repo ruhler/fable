@@ -8,12 +8,7 @@ Fble Namespaces:
 * Add chapter on namespaces to fble.txt
   - 9.1 struct type fields and 9.2 type field access.
   - 9.3 anonymous struct
-  - 9.4 namespace eval
-  - 9.5 namespace import
 * Convert rest of what's needed for AllTests.fble to fble.
-* Add support for all new constructs to the parser
-  - to verify there aren't any conflicts in the grammar.
-  - add type fields in struct type definition.
 * Add support for compiling and evaluating all new constructs.
 
 Fble Cleanup:

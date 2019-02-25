@@ -42,6 +42,7 @@
   FbleTypeV types;
   FbleExpr* expr;
   FbleExprV exprs;
+  FbleField field;
   FbleFieldV fields;
   FbleTypeFieldV type_fields;
   FbleChoiceV choices;
@@ -75,7 +76,8 @@
 %type <types> type_p
 %type <expr> expr stmt struct_arg
 %type <exprs> expr_s expr_p struct_arg_s struct_arg_p
-%type <fields> field_p field_s
+%type <field> struct_field
+%type <fields> field_p field_s struct_field_p struct_field_s
 %type <type_fields> type_field_p
 %type <choices> choices
 %type <bindings> let_bindings exec_bindings
@@ -116,7 +118,7 @@ kind_p:
  ;
 
 type:
-   '*' '(' field_s ')' {
+   '*' '(' struct_field_s ')' {
       FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
       struct_type->_base.tag = FBLE_STRUCT_TYPE;
       struct_type->_base.loc = @$;
@@ -234,6 +236,32 @@ type_field_p:
      FbleTypeField* field = FbleVectorExtend(arena, $$);
      field->kind = $3;
      field->name = $4;
+   }
+ ;
+
+struct_field_s:
+   %empty { FbleVectorInit(arena, $$); }
+ | struct_field_p { $$ = $1; }
+ ;
+
+struct_field_p:
+   struct_field {
+     FbleVectorInit(arena, $$);
+     FbleVectorAppend(arena, $$, $1);
+   }
+ | struct_field_p ',' struct_field {
+     $$ = $1;
+     FbleVectorAppend(arena, $$, $3);
+   }
+ ;
+
+struct_field:
+   type NAME {
+     $$.type = $1;
+     $$.name = $2;
+   }
+ | kind type_name '=' type {
+     assert(false && "TODO: struct type field");
    }
  ;
 
