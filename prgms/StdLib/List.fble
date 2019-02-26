@@ -71,41 +71,52 @@
   };
 
   # LastP - Return the last element in 'list'.
-  func LastP<type T>(P<T> list; T) {
-    ?(list.tail; cons: LastP<T>(list.tail.cons), nil: list.head);
+  \<@ T@> { \(P@<T@> list; T@); } LastP = \<@ T@> {
+    \(P@<T@> list) {
+      ?(list.tail; cons: LastP<T@>(list.tail.cons), nil: list.head);
+    };
   };
 
   # Concat: Flatten a list of lists into a single list of all the elements.
-  func Concat<type T>(S<S<T>> x; S<T>) {
-    ?(x; cons: Append<T>(x.cons.head, Concat<T>(x.cons.tail)), nil: S0<T>());
+  \<@ T@> { \(S@<S@<T@>> x; S@<T@>); } Concat = \<@ T@> {
+    \(S@<S@<T@>> x) {
+      ?(x; cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: S0<T@>);
+    };
   };
 
-  func MapS<type A, type B, func F(A x; B)>(S<A> a; S<B>) {
-    ?(a; cons: S<B>:cons(MapP<A, B, F>(a.cons)), nil: S<B>:nil(Unit()));
+  \<@ A@, @ B@> { \(\(A@ x; B@) f, S@<A@> a; S@<B@>); } MapS = \<@ A@, @ B@> {
+    \(\(A@ x; B@) f, S@<A@> a) {
+      ?(a; cons: S@<B@>(cons: MapP<A@, B@>(f, a.cons)), nil: S0<B@>);
+    };
+  },
+  \<@ A@, @ B@> { \(\(A@ x; B@) f, P@<A@> a; P@<B@>); } MapP = \<@ A@, @ B@> {
+    \(\(A@ x; B@) f, P@<A@> a) {
+      P@<B@>(f(a.head), MapS<A@, B@>(f, a.tail));
+    };
   };
 
-  func MapP<type A, type B, func F(A x; B)>(P<A> a; P<B>) {
-    P<B>(F(a.head), MapS<A, B, F>(a.tail));
-  };
-
-  # Sort the given list of elements, using LE for the comparisons.
-  func SortS<type T, func LE(T a, T b; Bool)>(S<T> l; S<T>) {
-    ?(l; cons: S<T>:cons(SortP<T, LE>(l.cons)), nil: l);
-  };
-
-  # Insert the element 'x' into 'l' at the sorted position based on the LE
+  # Insert the element 'x' into 'l' at the sorted position based on the le
   # comparision function.
-  priv func SortInsert<type T, func LE(T a, T b; Bool)>(T x, S<T> l; P<T>) {
-    ?(l; cons: ?(LE(x, l.cons.head);
-                  true: P<T>(x, l),
-                  false: P<T>(l.cons.head, S<T>:cons(SortInsert<T, LE>(x, l.cons.tail)))),
-         nil: P<T>(x, S<T>:nil(Unit())));
+  \<@ T@> { \(\(T@ a, T@ b; Bool@) le, T@ x, S@<T@> l; P@<T@>); } SortInsert = \<@ T@> {
+    \(\(T@ a, T@ b; Bool@) le, T@ x, S@<T@> l) {
+      ?(l; cons: ?(le(x, l.cons.head);
+                    true: P@<T@>(x, l),
+                    false: P@<T@>(l.cons.head, S<T>(cons: SortInsert<T@>(le, x, l.cons.tail)))),
+           nil: P@<T@>(x, S0<T@>));
+    };
   };
 
   # Sort the given list of elements, using LE for the comparisons.
   # TODO: Use something more efficient than an insertion sort.
-  func SortP<type T, func LE(T a, T b; Bool)>(P<T> l; P<T>) {
-    SortInsert<T, LE>(l.head, SortS<T, LE>(l.tail));
+  \<@ T@> { \(\(T@ a, T2 b; Bool@) le, S@<T@> l; S@<T@>); } SortS = \<@ T@> {
+    \(\(T@ a, T2 b; Bool@) le, S@<T@> l) {
+      ?(l; cons: S@<T@>(cons: SortP<T@>(le, l.cons)), nil: l);
+    };
+  },
+  \<@ T@> { \(\(T@ a, T2 b; Bool@) le, P@<T@> l; P@<T@>); } SortP = \<@ T@> {
+    \(\(T@ a, T2 b; Bool@) le, P@<T@> l) {
+      SortInsert<T@>(le, l.head, SortS<T@>(le, l.tail));
+    };
   };
 
   @(P@, S@,

@@ -843,6 +843,6 @@ Notes:
   };
 
   Perhaps something like:
-  S@<T@> Append<@ T@>(S@<T@> a, S@<T@> b) {
+  Append<@ T@>(S@<T@> a, S@<T@> b; S@<T@>) {
     ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
   };

@@ -8,7 +8,6 @@ Fble Namespaces:
 * Add chapter on namespaces to fble.txt
   - 9.1 struct type fields and 9.2 type field access.
   - 9.3 anonymous struct
-* Convert rest of what's needed for AllTests.fble to fble.
 * Add support for compiling and evaluating all new constructs.
 
 Fble Cleanup:

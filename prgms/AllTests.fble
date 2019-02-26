@@ -1,9 +1,9 @@
 
-@(StdLib = &StdLib);
+@(StdLib = &StdLib, StdLibTest = &StdLibTest);
 
 StdLib { @(Unit@, List); };
 List { @(S@, P@, S1, Concat, MapS); };
-StdLib.ListTest { @(ListTestFailure@); };
+StdLibTest.ListTest { @(ListTestFailure@); };
 
 @ TestFailure@ = +(ListTestFailure@ ListTest);
 
@@ -13,7 +13,7 @@ StdLib.ListTest { @(ListTestFailure@); };
 
 S@<TestFailure@>! Test = {
   $(Concat<TestFailure@>(S1@<S@<TestFailure@>>(
-          MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLib.ListTest.Test)
+          MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLibTest.ListTest.Test)
           )));
 };
 
