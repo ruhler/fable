@@ -586,12 +586,79 @@ manipulating the current namespace based on struct values.
 
 9.1 Struct Type Fields
 ----------------------
+Abstract Syntax:
+  Type ::= struct_type (type_fields :: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
+
+Concrete Syntax:
+  type ::= '*(' [type name [',' type name [...]]] ')'
+        |  '*(' kind type_name '=' type [',' kind type_name '=' type [',' ...]
+                [',' type name [',' type name [...]]] ')'
+
+Examples:
+  *(@ Bool@ = Bool@, Bool@ True, Bool@ False)
+
+To support namespaces, we augment struct types to support type fields in
+addition to normal fields. As with other uses of types in fble, type fields
+are used only during the type checking phase. They otherwise take up no space
+and are inaccessible at runtime.
+
+Type fields allow a struct to be defined with fields describing both types and
+values, which makes the struct suitable as the representation for namespaces.
+
+All type fields are grouped together and come before all normal fields. The
+rationale for this is that native code accesses normal fields by index but
+can't access type fields, and we would like those normal field indices to be
+contiguous.
+
+To construct value of a struct with type fields, you can use the normal struct
+value expression. You do not need to provide type field values when you create
+a struct value, because their values are already specified as part of the type
+itself.
+
+Struct types with type fields are equal only if they have the same type fields
+and type field values in the same order.
 
 9.2 Struct Type Field Access
 ----------------------------
+Abstract Syntax:
+  Type ::= type_field_access (obj :: Expr) (field :: Name)
+
+Concrete Syntax:
+  type ::= expr '.' type_name
+
+Examples:
+  Bool.Bool@
+
+Allows you to access a type field. The object being accessed should be of a
+struct type. Type field access gives the value of the type field of the type
+of the object. Note that the object of type field access is never evaluated.
+Its expression is used solely to determine the type from which the type field
+is read.
 
 9.3 Anonymous Struct Value
 --------------------------
+Abstract Syntax:
+  Expr ::= anon_struct (type_args :: [(Name, Type)]) (args :: [(Name, Expr)])
+
+Concrete Syntax:
+  expr ::= '@' '(' [name [':' expr] [',' ...]] ')'
+        |  '@' '(' type_name [':' type] [',' ...]
+                   [',' name [':' expr] [',' ...]] ')'
+
+Example:
+  @(Bool@, True, False, Not: NotInternal)
+
+Allows you to construct a struct value with an anonymous type. When defining
+namespaces, it is tedious to have to repeat the types of the entities being
+defined and to worry about what order they are defined in. The anoymous struct
+value makes it more convenient to define structs used as namespaces.
+
+If no value for a field is provided, it's value is assumed to be the type
+variable or normal variable with same name as the field. For example, the
+above example is equivalent to:
+
+  @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
+  
 
 9.4 Namespace Eval
 ------------------
@@ -722,7 +789,7 @@ Kind ::=
  ;
 
 Type ::=
-   struct_type (fields :: [(Type, Name)])
+   struct_type (type_fields :: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
  | union_type (fields :: [(Type, Name)])
  | func_type (args :: [(Type, Name)]) (return :: Type)
  | proc_type (return :: Type)
@@ -733,10 +800,12 @@ Type ::=
  | poly_type (args :: [(Kind, Name)]) (body :: Type)
  | poly_type_apply (poly :: Type) (args :: [Type])
  | type_include (name :: Name)
+ | type_field_access (obj :: Expr) (field :: Name)
  ;
 
 Expr ::=
    struct_value (type :: Type) (args :: [Expr])
+ | anon_struct (type_args :: [(Name, Type)]) (args :: [(Name, Expr)])
  | struct_access (object :: Expr) (field :: Name)
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
  | union_access (object :: Expr) (field :: Name)
@@ -772,6 +841,8 @@ kind ::=
 
 type ::= 
    '*(' [type name [',' type name [...]]] ')'                            (* struct_type *)
+ | '*(' kind type_name '=' type [',' kind type_name '=' type [',' ...]   (* struct_type with type fields *)
+        [',' type name [',' type name [...]]] ')'
  | '+(' type name [',' type name [...]] ')'                              (* union_type *)
  | '\(' type name [',' type name [...]] ';' type ')'                     (* func_type *)
  | type '!'                                                              (* proc_type *)
@@ -782,6 +853,7 @@ type ::=
  | type '<' [type [',' type [...]]] '>'                                  (* poly_type_apply *)
  | '{' type_stmt '}'                                                     (* type_stmt *)
  | '&' type_name                                                         (* type_include *)
+ | expr '.' type_name                                                    (* type_field_access *)
  ;
 
 type_stmt ::=
@@ -791,6 +863,9 @@ type_stmt ::=
 
 expr ::=
    type '(' [expr [',' expr [...]]] ')'                             (* struct_value *)
+ | '@' '(' [name [':' expr] [',' ...]] ')'                          (* anon_struct *)
+ | '@' '(' type_name [':' type] [',' ...]                           (* anon_struct with type fields *)
+           [',' name [':' expr] [',' ...]] ')'
  | type '(' name ':' expr ')'                                       (* union_value *)
  | expr '.' name                                                    (* access *)
  | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'        (* cond *)
@@ -811,7 +886,7 @@ stmt ::=
  | type '~' name ',' name ';' stmt                                      (* link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt         (* exec *)
  | type name '=' expr [',' type name = expr [...]] ';' stmt             (* let *)
- | kind type_name '=' type [',' kind type_name = type [...]] ';' stmt   (* type_let_expr *)
+ | kind type_name '=' type [',' kind type_name '=' type [...]] ';' stmt (* type_let_expr *)
  | stmt ::= expr ';' stmt                                               (* namespace_import *)
  ;
 
@@ -830,6 +905,11 @@ Notes:
   types? I honestly can't imagine it would ever be necessary, but it somehow
   feels incomplete to leave those out.
 
+* Should we all type field access on struct type in addition to its value?
+  It seems like a good thing to have generally speaking, but I don't know when
+  you would actually use it. Similar to previous thought on whether we should
+  have a type let type.
+
 * TODO: Add program and module to the syntax reference to answer the question:
   is a program / module an expr or a stmt or a type or a type_stmt?
 
@@ -846,3 +926,6 @@ Notes:
   Append<@ T@>(S@<T@> a, S@<T@> b; S@<T@>) {
     ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
   };
+
+* Need to figure out better support for partial application of functions.
+

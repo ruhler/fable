@@ -82,6 +82,7 @@ exec mv {*}[glob *.gcov] out/fble/cov/spec
 
 test exec $::fblereftest
 test exec $::fbletest prgms/snake.fble
+test exec $::fbletest prgms/AllTests.fble
 
 exec mkdir -p out/fble/cov/all
 run gcov {*}$::fble_objs > out/fble/cov/all/fble.gcov

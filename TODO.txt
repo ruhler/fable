@@ -1,14 +1,10 @@
 Fble:
-* Add namespace support. See Fble Namespsaces below.
+* Add support for compiling and evaluating all new namespace constructs.
+  Until AllTests test passes.
+
 * Port rest of fbld tests and programs to fble.
 * Delete obsolete fblc/ and fbld/ code and TODOs.
 * Go from there.
-
-Fble Namespaces:
-* Add chapter on namespaces to fble.txt
-  - 9.1 struct type fields and 9.2 type field access.
-  - 9.3 anonymous struct
-* Add support for compiling and evaluating all new constructs.
 
 Fble Cleanup:
 * Better error messages on types that have the same name but different values.
