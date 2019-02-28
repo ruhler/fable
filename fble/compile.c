@@ -1603,6 +1603,11 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       return type;
     }
 
+    case FBLE_ANON_STRUCT_VALUE_EXPR: {
+      assert(false && "TODO: compile anon struct value.");
+      return NULL;
+    }
+
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       Type* type = CompileType(arena, type_vars, union_value_expr->type);

@@ -45,6 +45,7 @@
   FbleField field;
   FbleFieldV fields;
   FbleTypeFieldV type_fields;
+  FbleChoice choice;
   FbleChoiceV choices;
   FbleBindingV bindings;
   FbleTypeBindingV type_bindings;
@@ -79,7 +80,8 @@
 %type <field> struct_field
 %type <fields> field_p field_s struct_field_p struct_field_s
 %type <type_fields> type_field_p
-%type <choices> choices
+%type <choice> anon_struct_arg
+%type <choices> choices anon_struct_arg_s anon_struct_arg_p
 %type <bindings> let_bindings exec_bindings
 %type <type_bindings> type_let_bindings
 
@@ -295,8 +297,12 @@ expr:
       $$ = &struct_value_expr->_base;
    }
  | '@' '(' anon_struct_arg_s ')' {
-      assert(false && "TODO: anonymous struct");
-      $$ = NULL;
+      // TODO: Support type args too.
+      FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
+      expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
+      expr->_base.loc = @$;
+      expr->args = $3;
+      $$ = &expr->_base;
    }
  | type '(' NAME ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
@@ -497,34 +503,31 @@ struct_arg_p:
 
 anon_struct_arg:
     NAME {
-      assert(false && "TODO: anon_struct_arg");
+      $$.name = $1;
+      FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
+      var_expr->_base.tag = FBLE_VAR_EXPR;
+      var_expr->_base.loc = @$;
+      var_expr->var = $1;
+      $$.expr = &var_expr->_base;
     }
   | NAME ':' expr {
-      assert(false && "TODO: anon_struct_arg");
-    }
-  | type_name {
-      assert(false && "TODO: anon_struct_arg");
-    }
-  | type_name ':' type {
-      assert(false && "TODO: anon_struct_arg");
+      $$.name = $1;
+      $$.expr = $3;
     }
   ;
 
 anon_struct_arg_s:
-    %empty {
-      assert(false && "TODO: anon_struct_arg");
-    }
-  | anon_struct_arg_p {
-      assert(false && "TODO: anon_struct_arg");
-    }
+    %empty { FbleVectorInit(arena, $$); }
+  | anon_struct_arg_p { $$ = $1; }
   ;
 
 anon_struct_arg_p:
   anon_struct_arg {
-      assert(false && "TODO: anon_struct_args");
+      FbleVectorInit(arena, $$);
+      FbleVectorAppend(arena, $$, $1);
     }
   | anon_struct_arg_p ',' anon_struct_arg {
-      assert(false && "TODO: anon_struct_args");
+      FbleVectorAppend(arena, $1, $3);
     }
   ;
 

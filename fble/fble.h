@@ -255,6 +255,7 @@ typedef struct {
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
   FBLE_STRUCT_VALUE_EXPR,
+  FBLE_ANON_STRUCT_VALUE_EXPR,
   FBLE_UNION_VALUE_EXPR,
   FBLE_ACCESS_EXPR,       // Used for STRUCT_ACCESS, UNION_ACCESS
   FBLE_COND_EXPR,
@@ -295,6 +296,30 @@ typedef struct {
   FbleExprV args;
 } FbleStructValueExpr;
 
+// FbleChoice --
+//   A pair of (Name, Expr) used in conditional expressions and anonymous
+//   struct values.
+typedef struct {
+  FbleName name;
+  FbleExpr* expr;
+} FbleChoice;
+
+// FbleChoiceV --
+//   A vector of FbleChoice.
+typedef struct {
+  size_t size;
+  FbleChoice* xs;
+} FbleChoiceV;
+
+// FbleAnonStructValueExpr --
+//   FBLE_ANON_STRUCT_VALUE_EXPR
+//    (type_args :: [(Name, Type)] (args :: [(Name, Expr)])
+typedef struct {
+  FbleExpr _base;
+  FbleFieldV type_args;
+  FbleChoiceV args;
+} FbleAnonStructValueExpr;
+
 // FbleAccessExpr --
 //   FBLE_ACCESS_EXPR (object :: Expr) (field :: Name)
 // Common form used for both struct and union access.
@@ -312,20 +337,6 @@ typedef struct {
   FbleName field;
   FbleExpr* arg;
 } FbleUnionValueExpr;
-
-// FbleChoice --
-//   A pair of (Name, Expr) used in conditional expressions.
-typedef struct {
-  FbleName name;
-  FbleExpr* expr;
-} FbleChoice;
-
-// FbleChoiceV --
-//   A vector of FbleChoice.
-typedef struct {
-  size_t size;
-  FbleChoice* xs;
-} FbleChoiceV;
 
 // FbleCondExpr --
 //   FBLE_COND_EXPR (condition :: Expr) (choices :: [(Name, Expr)])

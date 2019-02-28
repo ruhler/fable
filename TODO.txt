@@ -31,6 +31,8 @@ Fble Cleanup:
   exec processes.
 * Clarify spec on partial and excessive function and poly application.
 * Test partial function and excessive function application.
+* Pick a better name for FbleChoice, which is used now for more than just
+  conditional expressions. Maybe FbleNamedValue? NamedExpr?
 
 Fble Performance:
 * Optimize reference counting scheme.
