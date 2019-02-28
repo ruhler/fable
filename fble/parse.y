@@ -527,7 +527,8 @@ anon_struct_arg_p:
       FbleVectorAppend(arena, $$, $1);
     }
   | anon_struct_arg_p ',' anon_struct_arg {
-      FbleVectorAppend(arena, $1, $3);
+      $$ = $1;
+      FbleVectorAppend(arena, $$, $3);
     }
   ;
 

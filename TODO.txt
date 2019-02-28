@@ -3,7 +3,7 @@ Fble:
   Until AllTests test passes.
   - type fields
   - type field access
-  - anonymous struct value
+  - anonymous struct value with type fields
   - namespace eval
   - namespace import
   - include

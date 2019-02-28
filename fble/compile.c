@@ -1604,8 +1604,58 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     }
 
     case FBLE_ANON_STRUCT_VALUE_EXPR: {
-      assert(false && "TODO: compile anon struct value.");
-      return NULL;
+      FbleAnonStructValueExpr* struct_expr = (FbleAnonStructValueExpr*)expr;
+      StructType* struct_type = FbleAlloc(arena_, StructType);
+      FbleRefInit(arena, &struct_type->_base.ref);
+      struct_type->_base.loc = expr->loc;
+      struct_type->_base.tag = STRUCT_TYPE;
+      FbleVectorInit(arena_, struct_type->fields);
+
+      bool error = false;
+      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
+      instr->_base.refcount = 1;
+      FbleVectorInit(arena_, instr->instrs);
+
+      for (size_t i = 0; i < struct_expr->args.size; ++i) {
+        FbleChoice* choice = struct_expr->args.xs + i;
+        FbleInstr* mkarg = NULL;
+        Type* arg_type = Compile(arena, vars, type_vars, choice->expr, &mkarg);
+        Eval(arena, arg_type, NULL, NULL);
+        error = error || (arg_type == NULL);
+
+        if (arg_type != NULL) {
+          Field* cfield = FbleVectorExtend(arena_, struct_type->fields);
+          cfield->name = choice->name;
+          cfield->type = arg_type;
+          FbleRefAdd(arena, &struct_type->_base.ref, &cfield->type->ref);
+          TypeRelease(arena, arg_type);
+        }
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(choice->name.name, struct_expr->args.xs[j].name.name)) {
+            error = true;
+            FbleReportError("duplicate field name '%s'\n", &choice->name.loc, struct_expr->args.xs[j].name.name);
+          }
+        }
+
+        FbleVectorAppend(arena_, instr->instrs, mkarg);
+      }
+
+      if (error) {
+        TypeRelease(arena, &struct_type->_base);
+        FbleFreeInstrs(arena_, &instr->_base);
+        return NULL;
+      }
+
+      FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
+      struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      struct_instr->_base.refcount = 1;
+      struct_instr->argc = struct_expr->args.size;
+      FbleVectorAppend(arena_, instr->instrs, &struct_instr->_base);
+
+      *instrs = &instr->_base;
+      return &struct_type->_base;
     }
 
     case FBLE_UNION_VALUE_EXPR: {
