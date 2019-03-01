@@ -3113,7 +3113,8 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_PROC_INSTR:
       case FBLE_JOIN_INSTR:
       case FBLE_LET_PREP_INSTR:
-      case FBLE_LET_DEF_INSTR: {
+      case FBLE_LET_DEF_INSTR:
+      case FBLE_NAMESPACE_INSTR: {
         FbleFree(arena, instrs);
         return;
       }

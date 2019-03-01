@@ -732,6 +732,18 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         }
         break;
       }
+
+      case FBLE_NAMESPACE_INSTR: {
+        FbleStructValue* sv = (FbleStructValue*)Deref(thread->data_stack->value, FBLE_STRUCT_VALUE);
+        FbleValueRetain(arena, &sv->_base);
+        FbleValueRelease(arena, thread->data_stack->value);
+        thread->data_stack = VPop(arena_, thread->data_stack);
+        for (size_t i = 0; i < sv->fields.size; ++i) {
+          thread->var_stack = VPush(arena_, FbleValueRetain(arena, sv->fields.xs[i]), thread->var_stack);
+        }
+        FbleValueRelease(arena, &sv->_base);
+        break;
+      }
     }
     thread->iquota--;
   }

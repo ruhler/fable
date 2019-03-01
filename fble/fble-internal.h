@@ -30,6 +30,7 @@ typedef enum {
   FBLE_VAR_INSTR,
   FBLE_LET_PREP_INSTR,
   FBLE_LET_DEF_INSTR,
+  FBLE_NAMESPACE_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -133,7 +134,7 @@ typedef struct {
 } FbleDescopeInstr;
 
 // FbleReleaseInstr -- FBLE_RELEASE_INSTR
-//   Release and remove the secod value from top of the data stack.
+//   Release and remove the second value from top of the data stack.
 //
 // dstack: ..., P1, V1
 //     ==> ..., V1
@@ -258,6 +259,19 @@ typedef struct {
   FbleInstr _base;
   size_t count;
 } FbleLetDefInstr;
+
+// FbleNamespaceInstr -- FBLE_NAMESPACE_INSTR
+//
+// vstack: ...
+// dstack: ..., v
+//     ==>
+// vstack: ..., v[1], v[2], ..., v[n]
+// dstack: ...
+//
+// Where 'v' is a struct value and v[i] is the ith field of the struct value.
+typedef struct {
+  FbleInstr _base;
+} FbleNamespaceInstr;
 
 // FbleFreeInstrs --
 //   Free the given sequence of instructions.
