@@ -2659,8 +2659,71 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
     case FBLE_NAMESPACE_EVAL_EXPR:
     case FBLE_NAMESPACE_IMPORT_EXPR: {
-      assert(false && "TODO: compile namespace expr");
-      return NULL;
+      FbleNamespaceExpr* namespace_expr = (FbleNamespaceExpr*)expr;
+
+      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
+      instr->_base.tag = FBLE_COMPOUND_INSTR;
+      instr->_base.refcount = 1;
+      FbleVectorInit(arena_, instr->instrs);
+
+      FbleInstr* mkobj = NULL;
+      Type* type = Compile(arena, vars, type_vars, namespace_expr->nspace, &mkobj);
+      Eval(arena, type, NULL, NULL);
+      if (type == NULL) {
+        FbleFreeInstrs(arena_, &instr->_base);
+        return NULL;
+      }
+
+      StructType* struct_type = (StructType*)Normal(type);
+      if (struct_type->_base.tag != STRUCT_TYPE) {
+        FbleReportError("expected value of type struct, but found value of type ", &namespace_expr->nspace->loc);
+        PrintType(type);
+        fprintf(stderr, "\n");
+
+        TypeRelease(arena, type);
+        FbleFreeInstrs(arena_, &instr->_base);
+        return NULL;
+      }
+
+      FbleVectorAppend(arena_, instr->instrs, mkobj);
+
+      {
+        FbleNamespaceInstr* nspace = FbleAlloc(arena_, FbleNamespaceInstr);
+        nspace->_base.tag = FBLE_NAMESPACE_INSTR;
+        nspace->_base.refcount = 1;
+        FbleVectorAppend(arena_, instr->instrs, &nspace->_base);
+      }
+
+      Vars nvd[struct_type->fields.size];
+      Vars* nvars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : vars;
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        nvd[i].name = struct_type->fields.xs[i].name;
+        nvd[i].type = struct_type->fields.xs[i].type;
+        nvd[i].next = nvars;
+        nvars = nvd + i;
+      }
+
+      FbleInstr* body = NULL;
+      Type* rtype = Compile(arena, nvars, type_vars, namespace_expr->body, &body);
+      if (rtype == NULL) {
+        TypeRelease(arena, type);
+        FbleFreeInstrs(arena_, &instr->_base);
+        return NULL;
+      }
+
+      FbleVectorAppend(arena_, instr->instrs, body);
+
+      {
+        FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+        descope->_base.tag = FBLE_DESCOPE_INSTR;
+        descope->_base.refcount = 1;
+        descope->count = struct_type->fields.size;
+        FbleVectorAppend(arena_, instr->instrs, &descope->_base);
+      }
+
+      TypeRelease(arena, type);
+      *instrs = &instr->_base;
+      return rtype;
     }
   }
 
