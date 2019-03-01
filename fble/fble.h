@@ -268,7 +268,9 @@ typedef enum {
   FBLE_LET_EXPR,
   FBLE_TYPE_LET_EXPR,
   FBLE_POLY_EXPR,
-  FBLE_POLY_APPLY_EXPR
+  FBLE_POLY_APPLY_EXPR,
+  FBLE_NAMESPACE_EVAL_EXPR,
+  FBLE_NAMESPACE_IMPORT_EXPR,
 } FbleExprTag;
 
 // FbleExpr --
@@ -441,6 +443,15 @@ typedef struct {
   FbleExpr* poly;
   FbleTypeV args;
 } FblePolyApplyExpr;
+
+// FbleNamespaceExpr --
+//   FBLE_NAMESPACE_EVAL_EXPR (namespace :: Expr) (body :: Expr)
+//   FBLE_NAMESPACE_IMPORT_EXPR (namespace :: Expr) (body :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* nspace;
+  FbleExpr* body;
+} FbleNamespaceExpr;
 
 // FbleParse --
 //   Parse an expression from a file.

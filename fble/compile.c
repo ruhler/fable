@@ -2656,6 +2656,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       return &pat->_base;
     }
+
+    case FBLE_NAMESPACE_EVAL_EXPR:
+    case FBLE_NAMESPACE_IMPORT_EXPR: {
+      assert(false && "TODO: compile namespace expr");
+      return NULL;
+    }
   }
 
   UNREACHABLE("should already have returned");

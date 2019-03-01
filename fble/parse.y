@@ -379,8 +379,12 @@ expr:
       $$ = $2;
    }
  | expr '{' stmt '}' {
-      assert(false && "TODO: namespace eval");
-      $$ = NULL;
+      FbleNamespaceExpr* expr = FbleAlloc(arena, FbleNamespaceExpr);
+      expr->_base.tag = FBLE_NAMESPACE_EVAL_EXPR;
+      expr->_base.loc = @$;
+      expr->nspace = $1;
+      expr->body = $3;
+      $$ = &expr->_base;
    }
  | '&' NAME {
       assert(false && "TODO: Support include");
@@ -441,8 +445,12 @@ stmt:
       $$ = &let_expr->_base;
     }  
   | expr ';' stmt {
-      assert(false && "TODO: namespace import");
-      $$ = NULL;
+      FbleNamespaceExpr* expr = FbleAlloc(arena, FbleNamespaceExpr);
+      expr->_base.tag = FBLE_NAMESPACE_IMPORT_EXPR;
+      expr->_base.loc = @$;
+      expr->nspace = $1;
+      expr->body = $3;
+      $$ = &expr->_base;
     }
   ;
 
