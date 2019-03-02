@@ -4,8 +4,7 @@ Fble:
   - type fields
   - type field access
   - anonymous struct value with type fields
-  - namespace eval
-  - namespace import
+  - namespace eval & import with type fields
   - include
 
 * Port rest of fbld tests and programs to fble.

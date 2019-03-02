@@ -75,8 +75,8 @@
 %type <kinds> kind_p
 %type <type> type type_stmt 
 %type <types> type_p
-%type <expr> expr stmt struct_arg
-%type <exprs> expr_s expr_p struct_arg_s struct_arg_p
+%type <expr> expr stmt
+%type <exprs> expr_s expr_p
 %type <field> struct_field
 %type <fields> field_p field_s struct_field_p struct_field_s
 %type <type_fields> type_field_p
@@ -288,7 +288,7 @@ field_p:
  ;
 
 expr:
-   type '(' struct_arg_s ')' {
+   type '(' expr_s ')' {
       FbleStructValueExpr* struct_value_expr = FbleAlloc(arena, FbleStructValueExpr);
       struct_value_expr->_base.tag = FBLE_STRUCT_VALUE_EXPR;
       struct_value_expr->_base.loc = @$;
@@ -484,30 +484,6 @@ choices:
       choice->expr = $5;
     }
   ;
-
-struct_arg:
-    expr { $$ = $1; }
-  | type {
-      assert(false && "TODO: type field arg");
-      $$ = NULL;
-    }
-  ;
-
-struct_arg_s:
-   %empty { FbleVectorInit(arena, $$); }
- | struct_arg_p { $$ = $1; }
- ;
-
-struct_arg_p:
-   struct_arg {
-     FbleVectorInit(arena, $$);
-     FbleVectorAppend(arena, $$, $1);
-   }
- | struct_arg_p ',' struct_arg {
-     $$ = $1;
-     FbleVectorAppend(arena, $$, $3);
-   }
- ;
 
 anon_struct_arg:
     NAME {
