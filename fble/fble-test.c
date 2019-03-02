@@ -38,8 +38,9 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-test [--error] FILE\n"
+      "Usage: fble-test [--error] FILE [PATH]\n"
       "Type check and evaluate the fble program from FILE.\n"
+      "PATH is an optional include search path.\n"
       "If the result is a process, run the process.\n"
       "Exit status is 0 if the program produced no type or runtime errors, 1 otherwise.\n"
       "With --error, exit status is 0 if the program produced a type or runtime error, 0 otherwise.\n"
@@ -81,13 +82,20 @@ int main(int argc, char* argv[])
   }
   
   const char* path = *argv;
+  argc--;
+  argv++;
+
+  const char* include_path = NULL;
+  if (argc > 0) {
+    include_path = *argv;
+  }
 
   FILE* stderr_save = stderr;
   stderr = expect_error ? stdout : stderr;
 
   FbleArena* arena = FbleNewArena(NULL);
 
-  FbleExpr* prgm = FbleParse(arena, path, NULL);
+  FbleExpr* prgm = FbleParse(arena, path, include_path);
   FbleValue* result = NULL;
   if (prgm != NULL) {
     FbleArena* eval_arena = FbleNewArena(arena);

@@ -387,8 +387,24 @@ expr:
       $$ = &expr->_base;
    }
  | '&' NAME {
-      FbleReportError("%s not found for include\n", &(@$), $2);
-      YYERROR;
+      if (include_path == NULL) {
+        FbleReportError("%s not found for include\n", &(@$), $2);
+        YYERROR;
+      }
+
+      char new_include_path[strlen(include_path) + strlen($2.name) + 2];
+      strcpy(new_include_path, include_path);
+      strcat(new_include_path, "/");
+      strcat(new_include_path, $2.name);
+
+      char new_filename[strlen(new_include_path) + 6];
+      strcpy(new_filename, new_include_path);
+      strcat(new_filename, ".fble");
+
+      $$ = FbleParse(arena, new_filename, new_include_path);
+      if ($$ == NULL) {
+        YYERROR;
+      }
    }
  ;
 
