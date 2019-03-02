@@ -761,12 +761,15 @@ of the module is located in a platform dependent way relative to the current
 module. This allows an fble program to be split across multiple files that are
 reused in multiple programs.
 
-For example, assuming StdLib.fble is in the current directory and describes
-the StdLib namespace, then a top level program Foo.fble could reuse the StdLib
-namespace by including it:
+For example, assuming the current include search path is "lib", a program
+Foo.fble can include module StdLib as follows:
 
   @(StdLib = &StdLib);
   ...
+
+This would read StdLib from the file "lib/StdLib.fble". When reading
+StdLib.fble, the include search path is adjusted to "lib/StdLib" for any child
+modules included in StdLib.fble.
 
 10. Program
 -----------
