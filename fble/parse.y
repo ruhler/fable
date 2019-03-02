@@ -190,7 +190,7 @@ type:
       $$ = $2;
    }
  | type '.'  type_name {
-      assert(false && "TODO: Support type field access");
+      assert(false && "TODO: Support type field access?");
       $$ = NULL;
    }
  | expr '.'  type_name {
@@ -198,7 +198,7 @@ type:
       $$ = NULL;
    }
  | '&' type_name {
-      assert(false && "TODO: Support type include");
+      assert(false && "TODO: Support type include?");
       $$ = NULL;
    }
  ;
@@ -387,8 +387,8 @@ expr:
       $$ = &expr->_base;
    }
  | '&' NAME {
-      assert(false && "TODO: Support include");
-      $$ = NULL;
+      FbleReportError("%s not found for include\n", &(@$), $2);
+      YYERROR;
    }
  ;
 
