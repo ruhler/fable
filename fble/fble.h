@@ -459,6 +459,7 @@ typedef struct {
 // Inputs:
 //   arena - The arena to use for allocating the parsed program.
 //   filename - The name of the file to parse the program from.
+//   include_path - The directory to search for includes in. May be NULL.
 //
 // Results:
 //   The parsed program, or NULL in case of error.
@@ -475,7 +476,7 @@ typedef struct {
 //   A copy of the filename will be made for use in locations. The user need
 //   not ensure that filename remains valid for the duration of the lifetime
 //   of the program.
-FbleExpr* FbleParse(FbleArena* arena, const char* filename);
+FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path);
 
 typedef FbleRefArena FbleValueArena;
 

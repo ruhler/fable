@@ -55,14 +55,14 @@
   static bool IsNameChar(int c);
   static bool IsSingleChar(int c);
   static void ReadNextChar(Lex* lex);
-  static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex);
-  static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, const char* msg);
+  static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex);
+  static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, const char* msg);
 %}
 
 %locations
 %define api.pure
 %define parse.error verbose
-%param {FbleArena* arena} {Lex* lex}
+%param {FbleArena* arena} {const char* include_path} {Lex* lex}
 %parse-param {FbleExpr** result}
 
 %token END 0 "end of file"
@@ -647,6 +647,7 @@ static void ReadNextChar(Lex* lex)
 //   lvalp - Output parameter for returned token value.
 //   llocp - Output parameter for the returned token's location.
 //   arena - Arena used for allocating names.
+//   include_path - the include path to search for includes.
 //   lex - The lex context to parse the next token from.
 // 
 // Results:
@@ -657,7 +658,7 @@ static void ReadNextChar(Lex* lex)
 //   stream, sets llocp with the location of the next token in the input
 //   stream, advances the stream to the subsequent token and updates the lex
 //   loc accordingly.
-static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex)
+static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex)
 {
   // Skip past white space and comments.
   bool is_comment_start = (lex->c == '#');
@@ -711,8 +712,8 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex)
 // Inputs:
 //   llocp - The location of the error.
 //   arena - unused.
-//   fin - unused.
-//   lex - The lexical context.
+//   include_path - unused.
+//   lex - unused.
 //   result - unused.
 //   msg - The error message.
 //
@@ -721,13 +722,13 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, const char* msg)
+static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, const char* msg)
 {
   FbleReportError("%s\n", llocp, msg);
 }
 
 // FbleParse -- see documentation in fble.h
-FbleExpr* FbleParse(FbleArena* arena, const char* filename)
+FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -747,6 +748,6 @@ FbleExpr* FbleParse(FbleArena* arena, const char* filename)
     .sin = NULL
   };
   FbleExpr* result = NULL;
-  yyparse(arena, &lex, &result);
+  yyparse(arena, include_path, &lex, &result);
   return result;
 }

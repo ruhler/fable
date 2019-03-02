@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 
   FbleArena* arena = FbleNewArena(NULL);
 
-  FbleExpr* prgm = FbleParse(arena, path);
+  FbleExpr* prgm = FbleParse(arena, path, NULL);
   FbleValue* result = NULL;
   if (prgm != NULL) {
     FbleArena* eval_arena = FbleNewArena(arena);
