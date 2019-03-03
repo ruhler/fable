@@ -236,7 +236,7 @@ static void PrintType(FbleArena* arena, Type* type);
 static void PrintKind(Kind* type);
 
 static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstr** instrs);
-static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
+static Type* CompileType(TypeArena* arena, Vars* type_vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
 
 // CopyKind --
@@ -2807,7 +2807,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   vars - the value of type variables in scope.
+//   type_vars - the value of type variables in scope.
 //   type - the type to compile.
 //
 // Results:
@@ -2817,7 +2817,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 //   Prints a message to stderr if the type fails to compile or evalute.
 //   Allocates a reference-counted type that must be freed using
 //   TypeRelease when it is no longer needed.
-static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
+static Type* CompileType(TypeArena* arena, Vars* type_vars, FbleType* type)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (type->tag) {
@@ -2833,7 +2833,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
         FbleTypeBinding* field = struct_type->type_fields.xs + i;
 
-        Type* type = CompileType(arena, vars, field->type);
+        Type* type = CompileType(arena, type_vars, field->type);
         if (type == NULL) {
           TypeRelease(arena, &st->_base);
           return NULL;
@@ -2881,7 +2881,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         FbleField* field = struct_type->fields.xs + i;
-        Type* compiled = CompileType(arena, vars, field->type);
+        Type* compiled = CompileType(arena, type_vars, field->type);
         if (compiled == NULL) {
           TypeRelease(arena, &st->_base);
           return NULL;
@@ -2913,7 +2913,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       FbleUnionType* union_type = (FbleUnionType*)type;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         FbleField* field = union_type->fields.xs + i;
-        Type* compiled = CompileType(arena, vars, field->type);
+        Type* compiled = CompileType(arena, type_vars, field->type);
         if (compiled == NULL) {
           TypeRelease(arena, &ut->_base);
           return NULL;
@@ -2947,7 +2947,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       for (size_t i = 0; i < func_type->args.size; ++i) {
         FbleField* field = func_type->args.xs + i;
 
-        Type* compiled = CompileType(arena, vars, field->type);
+        Type* compiled = CompileType(arena, type_vars, field->type);
         if (compiled == NULL) {
           TypeRelease(arena, &ft->_base);
           return NULL;
@@ -2967,7 +2967,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
         }
       }
 
-      Type* compiled = CompileType(arena, vars, func_type->rtype);
+      Type* compiled = CompileType(arena, type_vars, func_type->rtype);
       if (compiled == NULL) {
         TypeRelease(arena, &ft->_base);
         return NULL;
@@ -2986,7 +2986,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       pt->rtype = NULL;
 
       FbleProcType* proc_type = (FbleProcType*)type;
-      pt->rtype = CompileType(arena, vars, proc_type->rtype);
+      pt->rtype = CompileType(arena, type_vars, proc_type->rtype);
       if (pt->rtype == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
@@ -3004,7 +3004,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       pt->rtype = NULL;
 
       FbleInputType* input_type = (FbleInputType*)type;
-      pt->rtype = CompileType(arena, vars, input_type->type);
+      pt->rtype = CompileType(arena, type_vars, input_type->type);
       if (pt->rtype == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
@@ -3022,7 +3022,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       pt->rtype = NULL;
 
       FbleOutputType* output_type = (FbleOutputType*)type;
-      pt->rtype = CompileType(arena, vars, output_type->type);
+      pt->rtype = CompileType(arena, type_vars, output_type->type);
       if (pt->rtype == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
@@ -3035,11 +3035,11 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     case FBLE_VAR_TYPE: {
       FbleVarType* var_type = (FbleVarType*)type;
 
-      while (vars != NULL && !FbleNamesEqual(var_type->var.name, vars->name.name)) {
-        vars = vars->next;
+      while (type_vars != NULL && !FbleNamesEqual(var_type->var.name, type_vars->name.name)) {
+        type_vars = type_vars->next;
       }
 
-      if (vars == NULL) {
+      if (type_vars == NULL) {
         FbleReportError("variable '%s' not defined\n", &var_type->var.loc, var_type->var.name);
         return NULL;
       }
@@ -3049,7 +3049,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       vt->_base.loc = type->loc;
       vt->_base.tag = VAR_TYPE;
       vt->var = var_type->var;
-      vt->value = vars->type;
+      vt->value = type_vars->type;
       FbleRefAdd(arena, &vt->_base.ref, &vt->value->ref);
       return &vt->_base;
     }
@@ -3058,7 +3058,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       FbleLetType* let = (FbleLetType*)type;
 
       Vars ntvd[let->bindings.size];
-      Vars* ntvs = vars;
+      Vars* ntvs = type_vars;
 
       // Set up reference types for all the bindings, to support recursive
       // types.
@@ -3133,7 +3133,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       FbleVectorInit(arena_, pt->args);
 
       Vars ntvd[poly->args.size];
-      Vars* ntvs = vars;
+      Vars* ntvs = type_vars;
       for (size_t i = 0; i < poly->args.size; ++i) {
         AbstractType* arg = FbleAlloc(arena_, AbstractType);
         FbleRefInit(arena, &arg->_base.ref);
@@ -3169,7 +3169,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       FbleVectorInit(arena_, pat->args);
       pat->result = NULL;
 
-      pat->poly = CompileType(arena, vars, apply->poly);
+      pat->poly = CompileType(arena, type_vars, apply->poly);
       if (pat->poly == NULL) {
         TypeRelease(arena, &pat->_base);
         return NULL;
@@ -3193,7 +3193,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       }
 
       for (size_t i = 0; i < apply->args.size; ++i) {
-        Type* arg = CompileType(arena, vars, apply->args.xs[i]);
+        Type* arg = CompileType(arena, type_vars, apply->args.xs[i]);
         FbleVectorAppend(arena_, pat->args, arg);
         if (arg != NULL) {
           FbleRefAdd(arena, &pat->_base.ref, &arg->ref);

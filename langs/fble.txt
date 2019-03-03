@@ -908,6 +908,10 @@ Notes:
   types? I honestly can't imagine it would ever be necessary, but it somehow
   feels incomplete to leave those out.
 
+  Perhaps we should allow both type and expr lets in both types and
+  expressions? Maybe combine type and expr let into a single thing where you
+  can mix both type and expr bindings?
+
 * Should we all type field access on struct type in addition to its value?
   It seems like a good thing to have generally speaking, but I don't know when
   you would actually use it. Similar to previous thought on whether we should
