@@ -42,6 +42,7 @@
   FbleTypeV types;
   FbleExpr* expr;
   FbleExprV exprs;
+  FbleField field;
   FbleFieldV fields;
   FbleTypeFieldV type_fields;
   FbleChoice choice;
@@ -76,7 +77,8 @@
 %type <types> type_p
 %type <expr> expr stmt
 %type <exprs> expr_s expr_p
-%type <fields> field_p field_s
+%type <field> anon_struct_type_arg
+%type <fields> field_p field_s anon_struct_type_arg_p
 %type <type_fields> type_field_p
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
@@ -286,11 +288,27 @@ expr:
       $$ = &struct_value_expr->_base;
    }
  | '@' '(' anon_struct_arg_s ')' {
-      // TODO: Support type args too.
       FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
       expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
       expr->_base.loc = @$;
+      FbleVectorInit(arena, expr->type_args);
       expr->args = $3;
+      $$ = &expr->_base;
+   }
+ | '@' '(' anon_struct_type_arg_p ')' {
+      FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
+      expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
+      expr->_base.loc = @$;
+      expr->type_args = $3;
+      FbleVectorInit(arena, expr->args);
+      $$ = &expr->_base;
+   }
+ | '@' '(' anon_struct_type_arg_p ',' anon_struct_arg_p ')' {
+      FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
+      expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
+      expr->_base.loc = @$;
+      expr->type_args = $3;
+      expr->args = $5;
       $$ = &expr->_base;
    }
  | type '(' NAME ':' expr ')' {
@@ -487,6 +505,32 @@ choices:
       FbleChoice* choice = FbleVectorExtend(arena, $$);
       choice->name = $3;
       choice->expr = $5;
+    }
+  ;
+
+anon_struct_type_arg:
+    type_name {
+      $$.name = $1;
+      FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
+      var_type->_base.tag = FBLE_VAR_TYPE;
+      var_type->_base.loc = @$;
+      var_type->var = $1;
+      $$.type = &var_type->_base;
+    }
+  | type_name ':' type {
+      $$.name = $1;
+      $$.type = $3;
+    }
+  ;
+
+anon_struct_type_arg_p:
+  anon_struct_type_arg {
+      FbleVectorInit(arena, $$);
+      FbleVectorAppend(arena, $$, $1);
+    }
+  | anon_struct_type_arg_p ',' anon_struct_type_arg {
+      $$ = $1;
+      FbleVectorAppend(arena, $$, $3);
     }
   ;
 

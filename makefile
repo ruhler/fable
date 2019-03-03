@@ -13,5 +13,5 @@ checkerr: all
 
 .PHONY: foo
 foo:
-	./out/fble/fble-test prgms/AllTests.fble
+	./out/fble/fble-test prgms/AllTests.fble prgms
 

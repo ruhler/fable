@@ -18,7 +18,7 @@
   };
 
   \(Bool@ a, Bool@ b; Bool@) Eq = \(Bool@ a, Bool@ b) {
-    ?(a; true: Not(b), false: b)
+    ?(a; true: Not(b), false: b);
   };
  
   @(Bool@, True, False, Not, And, Or, Eq);
