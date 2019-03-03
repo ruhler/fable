@@ -7,5 +7,5 @@
 
   @(List: &List);
 
-  @(Unit@, Bool, Maybe@, List);
+  @(Unit@, Maybe@, Bool, List);
 };

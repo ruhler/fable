@@ -3224,6 +3224,11 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
 
       return &pat->_base;
     }
+
+    case FBLE_TYPE_FIELD_ACCESS_TYPE: {
+      assert(false && "TODO: compile type field access");
+      return NULL;
+    }
   }
 
   UNREACHABLE("should already have returned");

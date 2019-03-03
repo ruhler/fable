@@ -101,20 +101,20 @@
     \(\(T@ a, T@ b; Bool@) le, T@ x, S@<T@> l) {
       ?(l; cons: ?(le(x, l.cons.head);
                     true: P@<T@>(x, l),
-                    false: P@<T@>(l.cons.head, S<T>(cons: SortInsert<T@>(le, x, l.cons.tail)))),
+                    false: P@<T@>(l.cons.head, S@<T@>(cons: SortInsert<T@>(le, x, l.cons.tail)))),
            nil: P@<T@>(x, S0<T@>));
     };
   };
 
   # Sort the given list of elements, using LE for the comparisons.
   # TODO: Use something more efficient than an insertion sort.
-  \<@ T@> { \(\(T@ a, T2 b; Bool@) le, S@<T@> l; S@<T@>); } SortS = \<@ T@> {
-    \(\(T@ a, T2 b; Bool@) le, S@<T@> l) {
+  \<@ T@> { \(\(T@ a, T@ b; Bool@) le, S@<T@> l; S@<T@>); } SortS = \<@ T@> {
+    \(\(T@ a, T@ b; Bool@) le, S@<T@> l) {
       ?(l; cons: S@<T@>(cons: SortP<T@>(le, l.cons)), nil: l);
     };
   },
-  \<@ T@> { \(\(T@ a, T2 b; Bool@) le, P@<T@> l; P@<T@>); } SortP = \<@ T@> {
-    \(\(T@ a, T2 b; Bool@) le, P@<T@> l) {
+  \<@ T@> { \(\(T@ a, T@ b; Bool@) le, P@<T@> l; P@<T@>); } SortP = \<@ T@> {
+    \(\(T@ a, T@ b; Bool@) le, P@<T@> l) {
       SortInsert<T@>(le, l.head, SortS<T@>(le, l.tail));
     };
   };

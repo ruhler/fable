@@ -128,7 +128,8 @@ typedef enum {
   FBLE_VAR_TYPE,
   FBLE_LET_TYPE,
   FBLE_POLY_TYPE,
-  FBLE_POLY_APPLY_TYPE
+  FBLE_POLY_APPLY_TYPE,
+  FBLE_TYPE_FIELD_ACCESS_TYPE,
 } FbleTypeTag;
 
 // FbleType --
@@ -252,6 +253,16 @@ typedef struct {
   FbleTypeV args;
 } FblePolyApplyType;
 
+typedef struct FbleExpr FbleExpr;
+
+// FbleTypeFieldAccessType --
+//   FBLE_TYPE_FIELD_ACCESS_TYPE (expr :: Expr) (field :: Name)
+typedef struct {
+  FbleType _base;
+  FbleExpr* expr;
+  FbleName field;
+} FbleTypeFieldAccessType;
+
 // FbleExprTag --
 //   A tag used to distinguish among different kinds of expressions.
 typedef enum {
@@ -279,10 +290,10 @@ typedef enum {
 //   layout as FbleExpr. The tag can be used to determine what kind of
 //   expression this is to get access to additional fields of the expression
 //   by first casting to that specific type of expression.
-typedef struct {
+struct FbleExpr {
   FbleExprTag tag;
   FbleLoc loc;
-} FbleExpr;
+};
 
 // FbleExprV --
 //   A vector of FbleExpr.

@@ -38,23 +38,23 @@
 
   \( ; S@<TestFailure@>) Test = \() {
     S@<Elem@> unsorted = S5<Elem@>(
-      Elem(D: Unit@()),
-      Elem(A: Unit@()),
-      Elem(B: Unit@()),
-      Elem(E: Unit@()),
-      Elem(C: Unit@()));
+      Elem@(D: Unit@()),
+      Elem@(A: Unit@()),
+      Elem@(B: Unit@()),
+      Elem@(E: Unit@()),
+      Elem@(C: Unit@()));
 
     S@<Elem@> wnt = S5<Elem@>(
-      Elem(A: Unit@()),
-      Elem(B: Unit@()),
-      Elem(C: Unit@()),
-      Elem(D: Unit@()),
-      Elem(E: Unit@()));
+      Elem@(A: Unit@()),
+      Elem@(B: Unit@()),
+      Elem@(C: Unit@()),
+      Elem@(D: Unit@()),
+      Elem@(E: Unit@()));
 
     S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
-    ?(SEq<Elem>(ElemEq, wnt, got);
+    ?(SEq<Elem@>(ElemEq, wnt, got);
       true: S0<TestFailure@>,
-      false: S1<TestFailure@>(TestFailure@(TestName: List_Sort_basic(Unit@()), wnt, got)));
+      false: S1<TestFailure@>(TestFailure@(List_Sort_basic(Unit@()), wnt, got)));
   };
 
   @(Elem@, TestName@, TestFailure@, Test@);

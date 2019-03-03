@@ -211,8 +211,12 @@ type:
       $$ = NULL;
    }
  | expr '.'  type_name {
-      assert(false && "TODO: Support type field access");
-      $$ = NULL;
+      FbleTypeFieldAccessType* type = FbleAlloc(arena, FbleTypeFieldAccessType);
+      type->_base.tag = FBLE_TYPE_FIELD_ACCESS_TYPE;
+      type->_base.loc = @$;
+      type->expr = $1;
+      type->field = $3;
+      $$ = &type->_base;
    }
  | '&' type_name {
       assert(false && "TODO: Support type include?");
