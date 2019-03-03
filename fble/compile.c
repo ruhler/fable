@@ -2802,15 +2802,63 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (type->tag) {
     case FBLE_STRUCT_TYPE: {
+      FbleStructType* struct_type = (FbleStructType*)type;
       StructType* st = FbleAlloc(arena_, StructType);
       FbleRefInit(arena, &st->_base.ref);
       st->_base.loc = type->loc;
       st->_base.tag = STRUCT_TYPE;
       FbleVectorInit(arena_, st->type_fields);
-      // TODO: Add syntax support for type fields and compile those here.
-
       FbleVectorInit(arena_, st->fields);
-      FbleStructType* struct_type = (FbleStructType*)type;
+
+      for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
+        FbleTypeBinding* field = struct_type->type_fields.xs + i;
+
+        Type* type = CompileType(arena, vars, field->type);
+        if (type == NULL) {
+          TypeRelease(arena, &st->_base);
+          return NULL;
+        }
+
+        Kind* expected_kind = CompileKind(arena_, field->kind);
+        if (expected_kind == NULL) {
+          TypeRelease(arena, type);
+          TypeRelease(arena, &st->_base);
+          return NULL;
+        }
+
+        Kind* actual_kind = GetKind(arena_, type);
+        if (!KindsEqual(expected_kind, actual_kind)) {
+          FbleReportError("expected kind ", &type->loc);
+          PrintKind(expected_kind);
+          fprintf(stderr, ", but found ");
+          PrintKind(actual_kind);
+          fprintf(stderr, "\n");
+
+          FreeKind(arena_, expected_kind);
+          FreeKind(arena_, actual_kind);
+          TypeRelease(arena, type);
+          TypeRelease(arena, &st->_base);
+          return NULL;
+        }
+
+        FreeKind(arena_, expected_kind);
+        FreeKind(arena_, actual_kind);
+
+        Field* cfield = FbleVectorExtend(arena_, st->type_fields);
+        cfield->name = field->name;
+        cfield->type = type;
+        FbleRefAdd(arena, &st->_base.ref, &cfield->type->ref);
+        TypeRelease(arena, type);
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(field->name.name, struct_type->type_fields.xs[j].name.name)) {
+            FbleReportError("duplicate type field name '%s'\n", &field->name.loc, field->name.name);
+            TypeRelease(arena, &st->_base);
+            return NULL;
+          }
+        }
+      }
+
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         FbleField* field = struct_type->fields.xs + i;
         Type* compiled = CompileType(arena, vars, field->type);
