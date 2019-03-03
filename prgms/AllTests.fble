@@ -1,5 +1,6 @@
 
-@(StdLib: &StdLib, StdLibTest: &StdLibTest);
+@(StdLib: &StdLib);
+@(StdLibTest: &StdLibTest);
 
 StdLib { @(Unit@, List); };
 List { @(S@, P@, S1, Concat, MapS); };

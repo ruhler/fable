@@ -4,8 +4,9 @@ fble-test {
 
   Bool@ foo = Bool@(true: Unit@());
 
-  Bool@ bar = @(true: Bool@(true: Unit@()), false: Bool@(false: Unit@())) {
-    false;
+  Bool@ bar = @(Bool@, true: Bool@(true: Unit@()), false: Bool@(false: Unit@())) {
+    Bool@ foo = false;
+    foo;
   };
 
   Unit@ tt = foo.true;

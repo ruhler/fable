@@ -2765,6 +2765,15 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleVectorAppend(arena_, instr->instrs, &nspace->_base);
       }
 
+      Vars ntvd[struct_type->type_fields.size];
+      Vars* ntype_vars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : type_vars;
+      for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
+        ntvd[i].name = struct_type->type_fields.xs[i].name;
+        ntvd[i].type = struct_type->type_fields.xs[i].type;
+        ntvd[i].next = ntype_vars;
+        ntype_vars = ntvd + i;
+      }
+
       Vars nvd[struct_type->fields.size];
       Vars* nvars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : vars;
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
@@ -2775,7 +2784,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       FbleInstr* body = NULL;
-      Type* rtype = Compile(arena, nvars, type_vars, namespace_expr->body, &body);
+      Type* rtype = Compile(arena, nvars, ntype_vars, namespace_expr->body, &body);
       if (rtype == NULL) {
         TypeRelease(arena, type);
         FbleFreeInstrs(arena_, &instr->_base);

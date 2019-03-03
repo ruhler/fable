@@ -414,6 +414,7 @@ expr:
 
       $$ = FbleParse(arena, new_filename, new_include_path);
       if ($$ == NULL) {
+        FbleReportError("(included from here)\n", &(@$));
         YYERROR;
       }
    }
