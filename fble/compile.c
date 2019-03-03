@@ -3227,7 +3227,36 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
     }
 
     case FBLE_TYPE_FIELD_ACCESS_TYPE: {
-      assert(false && "TODO: compile type field access");
+      FbleTypeFieldAccessType* access_type = (FbleTypeFieldAccessType*)type;
+      FbleInstr* instrs;
+      Type* type = Compile(arena, vars, type_vars, access_type->expr, &instrs);
+      Eval(arena, type, NULL, NULL);
+      if (type == NULL) {
+        return NULL;
+      }
+      FbleFreeInstrs(arena_, instrs);
+
+      StructType* struct_type = (StructType*)Normal(type);
+      if (struct_type->_base.tag != STRUCT_TYPE) {
+        FbleReportError("expected expression of type struct, but found expression of type ", &access_type->expr->loc);
+        PrintType(arena_, type);
+        fprintf(stderr, "\n");
+        TypeRelease(arena, type);
+        return NULL;
+      }
+
+      for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
+        if (FbleNamesEqual(access_type->field.name, struct_type->type_fields.xs[i].name.name)) {
+          Type* rtype = TypeRetain(arena, struct_type->type_fields.xs[i].type);
+          TypeRelease(arena, type);
+          return rtype;
+        }
+      }
+
+      FbleReportError("%s@ is not a type field of type ", &access_type->field.loc, access_type->field.name);
+      PrintType(arena_, type);
+      fprintf(stderr, "\n");
+      TypeRelease(arena, type);
       return NULL;
     }
   }

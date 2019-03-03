@@ -1,7 +1,6 @@
 Fble:
 * Add support for compiling and evaluating all new namespace constructs.
   Until AllTests test passes.
-  - type field access
   - namespace eval & import with type fields
 
 * Port rest of fbld tests and programs to fble.
