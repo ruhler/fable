@@ -1658,10 +1658,30 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       struct_type->_base.loc = expr->loc;
       struct_type->_base.tag = STRUCT_TYPE;
       FbleVectorInit(arena_, struct_type->type_fields);
-      // TODO: Support type fields in the syntax and process those here.
       FbleVectorInit(arena_, struct_type->fields);
 
       bool error = false;
+      for (size_t i = 0; i < struct_expr->type_args.size; ++i) {
+        FbleField* field = struct_expr->type_args.xs + i;
+        Type* type = CompileType(arena, type_vars, field->type);
+        Eval(arena, type, NULL, NULL);
+        error = error || (type == NULL);
+        if (type != NULL) {
+          Field* cfield = FbleVectorExtend(arena_, struct_type->type_fields);
+          cfield->name = field->name;
+          cfield->type = type;
+          FbleRefAdd(arena, &struct_type->_base.ref, &cfield->type->ref);
+          TypeRelease(arena, type);
+        }
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(field->name.name, struct_expr->type_args.xs[j].name.name)) {
+            error = true;
+            FbleReportError("duplicate type field name '%s'\n", &field->name.loc, struct_expr->type_args.xs[j].name.name);
+          }
+        }
+      }
+
       FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
       instr->_base.tag = FBLE_COMPOUND_INSTR;
       instr->_base.refcount = 1;
