@@ -9,6 +9,8 @@ Fble:
 * Port rest of fbld tests and programs to fble.
 * Delete obsolete fblc/ and fbld/ code and TODOs.
 * Go from there.
+  - figure out what you can do with types versus expressions.
+  - figure out partial function application.
 
 Fble Cleanup:
 * Better error messages on types that have the same name but different values.

@@ -101,6 +101,7 @@ typedef struct {
 // StructType -- STRUCT_TYPE
 typedef struct {
   Type _base;
+  FieldV type_fields;
   FieldV fields;
 } StructType;
 
@@ -231,7 +232,7 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
 static Type* Normal(Type* type);
 static bool TypesEqual(Type* a, Type* b, TypePairs* eq);
 static bool KindsEqual(Kind* a, Kind* b);
-static void PrintType(Type* type);
+static void PrintType(FbleArena* arena, Type* type);
 static void PrintKind(Kind* type);
 
 static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstr** instrs);
@@ -346,6 +347,7 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
+      FbleFree(arena_, st->type_fields.xs);
       FbleFree(arena_, st->fields.xs);
       FbleFree(arena_, st);
       break;
@@ -431,6 +433,9 @@ static void TypeAdded(TypeArena* arena, FbleRef* ref, FbleRefV* refs)
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
+      for (size_t i = 0; i < st->type_fields.size; ++i) {
+        Add(arena, refs, st->type_fields.xs[i].type);
+      }
       for (size_t i = 0; i < st->fields.size; ++i) {
         Add(arena, refs, st->fields.xs[i].type);
       }
@@ -627,6 +632,11 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
+      for (size_t i = 0; i < st->type_fields.size; ++i) {
+        if (HasParams(st->type_fields.xs[i].type, params, &nv)) {
+          return true;
+        }
+      }
       for (size_t i = 0; i < st->fields.size; ++i) {
         if (HasParams(st->fields.xs[i].type, params, &nv)) {
           return true;
@@ -750,6 +760,16 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       FbleRefInit(arena, &sst->_base.ref);
       sst->_base.tag = STRUCT_TYPE;
       sst->_base.loc = st->_base.loc;
+
+      FbleVectorInit(arena_, sst->type_fields);
+      for (size_t i = 0; i < st->type_fields.size; ++i) {
+        Field* field = FbleVectorExtend(arena_, sst->type_fields);
+        field->name = st->type_fields.xs[i].name;
+        field->type = Subst(arena, st->type_fields.xs[i].type, params, args, tps);
+        FbleRefAdd(arena, &sst->_base.ref, &field->type->ref);
+        TypeRelease(arena, field->type);
+      }
+
       FbleVectorInit(arena_, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena_, sst->fields);
@@ -970,6 +990,9 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
+      for (size_t i = 0; i < st->type_fields.size; ++i) {
+        Eval(arena, st->type_fields.xs[i].type, &nevaled, applied);
+      }
       for (size_t i = 0; i < st->fields.size; ++i) {
         Eval(arena, st->fields.xs[i].type, &nevaled, applied);
       }
@@ -1178,6 +1201,20 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
     case STRUCT_TYPE: {
       StructType* sta = (StructType*)a;
       StructType* stb = (StructType*)b;
+      if (sta->type_fields.size != stb->type_fields.size) {
+        return false;
+      }
+
+      for (size_t i = 0; i < sta->type_fields.size; ++i) {
+        if (!FbleNamesEqual(sta->type_fields.xs[i].name.name, stb->type_fields.xs[i].name.name)) {
+          return false;
+        }
+
+        if (!TypesEqual(sta->type_fields.xs[i].type, stb->type_fields.xs[i].type, &neq)) {
+          return false;
+        }
+      }
+
       if (sta->fields.size != stb->fields.size) {
         return false;
       }
@@ -1351,6 +1388,7 @@ static bool KindsEqual(Kind* a, Kind* b)
 //   Print the given compiled type in human readable form to stderr.
 //
 // Inputs:
+//   arena - arena to use for internal allocations.
 //   type - the type to print.
 //
 // Result:
@@ -1358,16 +1396,26 @@ static bool KindsEqual(Kind* a, Kind* b)
 //
 // Side effect:
 //   Prints the given type in human readable form to stderr.
-static void PrintType(Type* type)
+static void PrintType(FbleArena* arena, Type* type)
 {
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
       fprintf(stderr, "*(");
       const char* comma = "";
+      for (size_t i = 0; i < st->type_fields.size; ++i) {
+        fprintf(stderr, "%s", comma);
+        Kind* kind = GetKind(arena, st->type_fields.xs[i].type);
+        PrintKind(kind);
+        FreeKind(arena, kind);
+        fprintf(stderr, " %s@ = ", st->type_fields.xs[i].name.name);
+        PrintType(arena, st->type_fields.xs[i].type);
+        comma = ", ";
+      }
+
       for (size_t i = 0; i < st->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
-        PrintType(st->fields.xs[i].type);
+        PrintType(arena, st->fields.xs[i].type);
         fprintf(stderr, " %s", st->fields.xs[i].name.name);
         comma = ", ";
       }
@@ -1381,7 +1429,7 @@ static void PrintType(Type* type)
       const char* comma = "";
       for (size_t i = 0; i < ut->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
-        PrintType(ut->fields.xs[i].type);
+        PrintType(arena, ut->fields.xs[i].type);
         fprintf(stderr, " %s", ut->fields.xs[i].name.name);
         comma = ", ";
       }
@@ -1395,33 +1443,33 @@ static void PrintType(Type* type)
       const char* comma = "";
       for (size_t i = 0; i < ft->args.size; ++i) {
         fprintf(stderr, "%s", comma);
-        PrintType(ft->args.xs[i].type);
+        PrintType(arena, ft->args.xs[i].type);
         fprintf(stderr, " %s", ft->args.xs[i].name.name);
         comma = ", ";
       }
       fprintf(stderr, "; ");
-      PrintType(ft->rtype);
+      PrintType(arena, ft->rtype);
       fprintf(stderr, ")");
       break;
     }
 
     case PROC_TYPE: {
       ProcType* pt = (ProcType*)type;
-      PrintType(pt->rtype);
+      PrintType(arena, pt->rtype);
       fprintf(stderr, "!");
       break;
     }
 
     case INPUT_TYPE: {
       InputType* pt = (InputType*)type;
-      PrintType(pt->rtype);
+      PrintType(arena, pt->rtype);
       fprintf(stderr, "-");
       break;
     }
 
     case OUTPUT_TYPE: {
       OutputType* pt = (OutputType*)type;
-      PrintType(pt->rtype);
+      PrintType(arena, pt->rtype);
       fprintf(stderr, "+");
       break;
     }
@@ -1446,19 +1494,19 @@ static void PrintType(Type* type)
         comma = ", ";
       }
       fprintf(stderr, " { ");
-      PrintType(pt->body);
+      PrintType(arena, pt->body);
       fprintf(stderr, "; }");
       break;
     }
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
-      PrintType(pat->poly);
+      PrintType(arena, pat->poly);
       fprintf(stderr, "<");
       const char* comma = "";
       for (size_t i = 0; i < pat->args.size; ++i) {
         fprintf(stderr, "%s", comma);
-        PrintType(pat->args.xs[i]);
+        PrintType(arena, pat->args.xs[i]);
         comma = ", ";
       }
       fprintf(stderr, ">");
@@ -1470,7 +1518,7 @@ static void PrintType(Type* type)
       if (ref->value == NULL) {
         fprintf(stderr, "??%p", (void*)type);
       } else {
-        PrintType(ref->value);
+        PrintType(arena, ref->value);
       }
       break;
     }
@@ -1546,7 +1594,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
         FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
-        PrintType(type);
+        PrintType(arena_, type);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
         return NULL;
@@ -1576,9 +1624,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
         if (arg_type != NULL && !TypesEqual(field->type, arg_type, NULL)) {
           FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
-          PrintType(field->type);
+          PrintType(arena_, field->type);
           fprintf(stderr, ", but found ");
-          PrintType(arg_type);
+          PrintType(arena_, arg_type);
           fprintf(stderr, "\n");
           error = true;
         }
@@ -1609,6 +1657,8 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleRefInit(arena, &struct_type->_base.ref);
       struct_type->_base.loc = expr->loc;
       struct_type->_base.tag = STRUCT_TYPE;
+      FbleVectorInit(arena_, struct_type->type_fields);
+      // TODO: Support type fields in the syntax and process those here.
       FbleVectorInit(arena_, struct_type->fields);
 
       bool error = false;
@@ -1669,7 +1719,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
-        PrintType(type);
+        PrintType(arena_, type);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
         return NULL;
@@ -1688,7 +1738,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (field_type == NULL) {
         FbleReportError("'%s' is not a field of type ", &union_value_expr->field.loc, union_value_expr->field.name);
-        PrintType(type);
+        PrintType(arena_, type);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
         return NULL;
@@ -1704,9 +1754,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (!TypesEqual(field_type, arg_type, NULL)) {
         FbleReportError("expected type ", &union_value_expr->arg->loc);
-        PrintType(field_type);
+        PrintType(arena_, field_type);
         fprintf(stderr, ", but found type ");
-        PrintType(arg_type);
+        PrintType(arena_, arg_type);
         fprintf(stderr, "\n");
         FbleFreeInstrs(arena_, mkarg);
         TypeRelease(arena, type);
@@ -1755,16 +1805,17 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       access->loc = access_expr->field.loc;
       FbleVectorAppend(arena_, instr->instrs, &access->_base);
 
-      // Note: We can safely pretend the type is always a struct, because
-      // StructType and UnionType have the same structure.
-      StructType* data_type = (StructType*)Normal(type);
-      if (data_type->_base.tag == STRUCT_TYPE) {
+      Type* normal = Normal(type);
+      FieldV* fields = NULL;
+      if (normal->tag == STRUCT_TYPE) {
         access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
-      } else if (data_type->_base.tag == UNION_TYPE) {
+        fields = &((StructType*)normal)->fields;
+      } else if (normal->tag == UNION_TYPE) {
         access->_base.tag = FBLE_UNION_ACCESS_INSTR;
+        fields = &((UnionType*)normal)->fields;
       } else {
         FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
-        PrintType(type);
+        PrintType(arena_, type);
         fprintf(stderr, "\n");
 
         TypeRelease(arena, type);
@@ -1772,18 +1823,18 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      for (size_t i = 0; i < data_type->fields.size; ++i) {
-        if (FbleNamesEqual(access_expr->field.name, data_type->fields.xs[i].name.name)) {
+      for (size_t i = 0; i < fields->size; ++i) {
+        if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name.name)) {
           access->tag = i;
           *instrs = &instr->_base;
-          Type* rtype = TypeRetain(arena, data_type->fields.xs[i].type);
+          Type* rtype = TypeRetain(arena, fields->xs[i].type);
           TypeRelease(arena, type);
           return rtype;
         }
       }
 
       FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
-      PrintType(type);
+      PrintType(arena_, type);
       fprintf(stderr, "\n");
       TypeRelease(arena, type);
       FbleFreeInstrs(arena_, &instr->_base);
@@ -1810,7 +1861,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
-        PrintType(type);
+        PrintType(arena_, type);
         fprintf(stderr, "\n");
         FbleFreeInstrs(arena_, &instr->_base);
         TypeRelease(arena, type);
@@ -1859,9 +1910,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         } else {
           if (!TypesEqual(return_type, arg_type, NULL)) {
             FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
-            PrintType(return_type);
+            PrintType(arena_, return_type);
             fprintf(stderr, ", but found ");
-            PrintType(arg_type);
+            PrintType(arena_, arg_type);
             fprintf(stderr, "\n");
 
             TypeRelease(arena, type);
@@ -2008,9 +2059,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             for (size_t i = 0; i < func_type->args.size && i < apply_expr->args.size; ++i) {
               if (arg_types[i] != NULL && !TypesEqual(func_type->args.xs[i].type, arg_types[i], NULL)) {
                 FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
-                PrintType(func_type->args.xs[i].type);
+                PrintType(arena_, func_type->args.xs[i].type);
                 fprintf(stderr, ", but found ");
-                PrintType(arg_types[i]);
+                PrintType(arena_, arg_types[i]);
                 fprintf(stderr, "\n");
                 error = true;
               }
@@ -2079,9 +2130,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             if (apply_expr->args.size == 1) {
               if (arg_types[0] != NULL && !TypesEqual(output_type->rtype, arg_types[0], NULL)) {
                 FbleReportError("expected type ", &apply_expr->args.xs[0]->loc);
-                PrintType(output_type->rtype);
+                PrintType(arena_, output_type->rtype);
                 fprintf(stderr, ", but found ");
-                PrintType(arg_types[0]);
+                PrintType(arena_, arg_types[0]);
                 fprintf(stderr, "\n");
                 error = true;
               }
@@ -2119,7 +2170,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
           default: {
             FbleReportError("cannot perform application on an object of type ", &expr->loc);
-            PrintType(type);
+            PrintType(arena_, type);
             fprintf(stderr, "\n");
             break;
           }
@@ -2245,7 +2296,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (Normal(type)->tag != PROC_TYPE) {
         FbleReportError("expected a value of type proc, but found ", &type->loc);
-        PrintType(type);
+        PrintType(arena_, type);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
         FbleFreeInstrs(arena_, &instr->_base);
@@ -2290,16 +2341,16 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             if (nvd[i].type != NULL && !TypesEqual(nvd[i].type, proc_type->rtype, NULL)) {
               error = true;
               FbleReportError("expected type ", &exec_expr->bindings.xs[i].expr->loc);
-              PrintType(nvd[i].type);
+              PrintType(arena_, nvd[i].type);
               fprintf(stderr, "!, but found ");
-              PrintType(type);
+              PrintType(arena_, type);
               fprintf(stderr, "\n");
             }
           } else {
             error = true;
             FbleReportError("expected process, but found expression of type",
                 &exec_expr->bindings.xs[i].expr->loc);
-            PrintType(type);
+            PrintType(arena_, type);
             fprintf(stderr, "\n");
           }
           TypeRelease(arena, type);
@@ -2442,9 +2493,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (!error && !TypesEqual(nvd[i].type, type, NULL)) {
           error = true;
           FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
-          PrintType(nvd[i].type);
+          PrintType(arena_, nvd[i].type);
           fprintf(stderr, ", but found ");
-          PrintType(type);
+          PrintType(arena_, type);
           fprintf(stderr, "\n");
         }
         TypeRelease(arena, type);
@@ -2677,7 +2728,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
         FbleReportError("expected value of type struct, but found value of type ", &namespace_expr->nspace->loc);
-        PrintType(type);
+        PrintType(arena_, type);
         fprintf(stderr, "\n");
 
         TypeRelease(arena, type);
@@ -2755,6 +2806,9 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       FbleRefInit(arena, &st->_base.ref);
       st->_base.loc = type->loc;
       st->_base.tag = STRUCT_TYPE;
+      FbleVectorInit(arena_, st->type_fields);
+      // TODO: Add syntax support for type fields and compile those here.
+
       FbleVectorInit(arena_, st->fields);
       FbleStructType* struct_type = (FbleStructType*)type;
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
