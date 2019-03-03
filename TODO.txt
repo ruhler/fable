@@ -1,7 +1,6 @@
 Fble:
 * Add support for compiling and evaluating all new namespace constructs.
   Until AllTests test passes.
-  - type fields
   - type field access
   - anonymous struct value with type fields
   - namespace eval & import with type fields

@@ -42,7 +42,6 @@
   FbleTypeV types;
   FbleExpr* expr;
   FbleExprV exprs;
-  FbleField field;
   FbleFieldV fields;
   FbleTypeFieldV type_fields;
   FbleChoice choice;
@@ -77,8 +76,7 @@
 %type <types> type_p
 %type <expr> expr stmt
 %type <exprs> expr_s expr_p
-%type <field> struct_field
-%type <fields> field_p field_s struct_field_p struct_field_s
+%type <fields> field_p field_s
 %type <type_fields> type_field_p
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
@@ -120,13 +118,28 @@ kind_p:
  ;
 
 type:
-   '*' '(' struct_field_s ')' {
+   '*' '(' field_s ')' {
       FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
       struct_type->_base.tag = FBLE_STRUCT_TYPE;
       struct_type->_base.loc = @$;
-      // TODO: Parse type fields here.
       FbleVectorInit(arena, struct_type->type_fields);
       struct_type->fields = $3;
+      $$ = &struct_type->_base;
+   }
+ | '*' '(' type_let_binding_p ')' {
+      FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
+      struct_type->_base.tag = FBLE_STRUCT_TYPE;
+      struct_type->_base.loc = @$;
+      struct_type->type_fields = $3;
+      FbleVectorInit(arena, struct_type->fields);
+      $$ = &struct_type->_base;
+   }
+ | '*' '(' type_let_binding_p ',' field_p ')' {
+      FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
+      struct_type->_base.tag = FBLE_STRUCT_TYPE;
+      struct_type->_base.loc = @$;
+      struct_type->type_fields = $3;
+      struct_type->fields = $5;
       $$ = &struct_type->_base;
    }
  | '+' '(' field_p ')' {
@@ -240,32 +253,6 @@ type_field_p:
      FbleTypeField* field = FbleVectorExtend(arena, $$);
      field->kind = $3;
      field->name = $4;
-   }
- ;
-
-struct_field_s:
-   %empty { FbleVectorInit(arena, $$); }
- | struct_field_p { $$ = $1; }
- ;
-
-struct_field_p:
-   struct_field {
-     FbleVectorInit(arena, $$);
-     FbleVectorAppend(arena, $$, $1);
-   }
- | struct_field_p ',' struct_field {
-     $$ = $1;
-     FbleVectorAppend(arena, $$, $3);
-   }
- ;
-
-struct_field:
-   type NAME {
-     $$.type = $1;
-     $$.name = $2;
-   }
- | kind type_name '=' type {
-     assert(false && "TODO: struct type field");
    }
  ;
 
