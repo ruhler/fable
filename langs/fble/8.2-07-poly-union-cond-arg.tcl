@@ -1,5 +1,5 @@
 fble-test {
-  # Regression test for passing an applied poly morphic type as an argument to
+  # Regression test for passing an applied polymorphic type as an argument to
   # a condition.
   @ Unit@ = *();
   \<@; @> Maybe@ = \<@ T@> { +(T@ just, Unit@ nothing); };

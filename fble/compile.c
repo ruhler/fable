@@ -1045,6 +1045,8 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
     }
 
     case POLY_TYPE: {
+      PolyType* pt = (PolyType*)type;
+      Eval(arena, pt->body, &nevaled, applied);
       return;
     }
 
@@ -1476,7 +1478,7 @@ static void PrintType(FbleArena* arena, Type* type)
 
     case VAR_TYPE: {
       VarType* var_type = (VarType*)type;
-      fprintf(stderr, "%s", var_type->var.name);
+      fprintf(stderr, "%s@", var_type->var.name);
       break;
     }
 
