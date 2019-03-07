@@ -10,7 +10,9 @@ Fble:
 * Port rest of fbld tests and programs to fble.
 
 * Delete obsolete fblc/ and fbld/ code and TODOs.
+
 * Go from there.
+  - Switch to testing approach better aligned with what fble supports.
   - figure out what you can do with types versus expressions.
   - figure out partial function application.
 
