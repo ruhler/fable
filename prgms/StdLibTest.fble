@@ -1,4 +1,4 @@
 
 @(StdLib) {
-  &ListTest;
+  @(ListTest: &ListTest);
 };

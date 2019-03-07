@@ -1,6 +1,14 @@
 Fble:
-* Add tests and fix bugs until AllTests test passes.
+* Fix 8.3-07
+ - debugging: S<T> ==> S'<T'>
+    Eval S'<T'>, but we know Normal(S) == Normal(S') and T == T', so rather
+    than do the substitution S'<T'>, we say it is just the same as what S<T>
+    substitutes to, which is S'<T'>. Thus S'<T'> substitutes to itself.
+   
+    That explains the observed behavior. But what is the desired behavior?
+
 * Port rest of fbld tests and programs to fble.
+
 * Delete obsolete fblc/ and fbld/ code and TODOs.
 * Go from there.
   - figure out what you can do with types versus expressions.

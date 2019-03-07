@@ -1072,6 +1072,7 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
 
           if (allmatch) {
             pat->result = pal->result;
+            assert(&pat->_base != pat->result);
             FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
             return;
           }
@@ -1081,6 +1082,7 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       PolyType* poly = (PolyType*)Normal(pat->poly);
       if (poly->_base.tag == POLY_TYPE) {
         pat->result = Subst(arena, poly->body, poly->args, pat->args, NULL);
+        assert(&pat->_base != pat->result);
         FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
         TypeRelease(arena, pat->result);
 
@@ -3052,7 +3054,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       }
 
       if (type_vars == NULL) {
-        FbleReportError("variable '%s' not defined\n", &var_type->var.loc, var_type->var.name);
+        FbleReportError("type variable '%s' not defined\n", &var_type->var.loc, var_type->var.name);
         return NULL;
       }
 
