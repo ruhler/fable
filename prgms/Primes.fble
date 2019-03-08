@@ -1,0 +1,6 @@
+@(StdLib, UBNat) {
+  @(Primes: &Primes);
+  @(Test: &Test);
+
+  @(Primes, Test);
+};

@@ -1,0 +1,30 @@
+@(Bool: StdLib.Bool, UBNat: UBNat.UBNat) {
+  Bool { @(Bool@, True, False); };
+  UBNat { @(Nat@, 2, IsZero, Lt, Gt, Inc, Dec, Mul, Mod); };
+
+  # Returns true if f evenly divides x.
+  \(Nat@ x, Nat@ f; Bool@) Divides = \(Nat@ x, Nat@ f) {
+    IsZero(Mod(x, f));
+  };
+
+  # Helper function for IsPrime.
+  #   Computes whether x is prime given that there are no factors of x other
+  #   than 1 that are less than f.
+  \(Nat@ x, Nat@ f; Bool@) IsPrimeHelper = \(Nat@ x, Nat@ f) {
+    ?(Gt(Mul(f, f), x); true: True, false:
+        ?(Divides(x, f); true: False, false:
+            IsPrimeHelper(x, Inc(f))));
+  };
+
+  \(Nat@ x; Bool@) IsPrime = \(Nat@ x) {
+    ?(Lt(x, 2) ; true: False, false: IsPrimeHelper(x, 2));
+  };
+
+  \(Nat@ x, Nat@ n; Nat@) NthPrime = \(Nat@ x, Nat@ n) {
+    ?(IsPrime(x) ;
+        true: ?(IsZero(n) ; true: x, false: NthPrime(Inc(x), Dec(n))),
+        false: NthPrime(Inc(x), n));
+  };
+
+  @(IsPrime, NthPrime);
+};

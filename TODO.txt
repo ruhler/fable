@@ -1,6 +1,9 @@
 Fble:
 
 * Port rest of fbld tests and programs to fble.
+  - Md5, Snake v2, Sudoku partial draft, spec test coverage
+
+* Delete obsolete fblc/ and fbld/ code and TODOs.
 
 * Fix 8.3-07
  - debugging: S<T> ==> S'<T'>
@@ -18,12 +21,13 @@ Fble:
     information to test if they are the same, or keep some token that is
     preserved across substitution and use that to detect if they are the same.
 
-* Delete obsolete fblc/ and fbld/ code and TODOs.
 
 * Go from there.
   - Switch to testing approach better aligned with what fble supports.
+    Try making use of monadic bind syntax?
   - figure out what you can do with types versus expressions.
   - figure out partial function application.
+  - Finish the sudoku program
 
 Fble Cleanup:
 * Better error messages on types that have the same name but different values.

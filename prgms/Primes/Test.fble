@@ -1,0 +1,23 @@
+@(StdLib, UBNat: UBNat.UBNat, Primes); {
+  StdLib { @(Unit@); };
+  StdLib.Bool { @(Bool@); };
+  StdLib.List { @(S@, P@, ConsS, S0); };
+  UBNat { @(Nat@, 1, 3, 10, Lit2, EqNat); };
+  Primes { @(NthPrime); };
+
+  @ TestName@ = +(Unit@ NthPrime_1_10);
+  @ TestFailure@ = *(TestName@ name, Nat@ a, Nat@ b);
+
+  \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest; S@<TestFailure@>) TEq =
+    \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest) {
+      ?(EqNat(a, b); true: rest,
+          false: ConsS<TestFailure@>(TestFailure@(name, a, b), rest));
+    };
+
+  \( ; S@<TestFailure@>) Test = \() {
+    TEq(TestName@(NthPrime_1_10: Unit@()), Lit2(3, 1), NthPrime(1, 10),
+        S0<TestFailure@>);
+  };
+
+  @(TestName@, TestFailure@, Test);
+};
