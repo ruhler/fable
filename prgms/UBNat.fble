@@ -1,0 +1,6 @@
+@(StdLib) {
+  @(UBNat: &UBNat);
+  @(Test: &Test);
+
+  @(UBNat, Test);
+};

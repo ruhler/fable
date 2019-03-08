@@ -1,19 +1,28 @@
 
 @(StdLib: &StdLib);
 @(StdLibTest: &StdLibTest);
+@(UBNat: &UBNat);
 
 StdLib { @(Unit@, List); };
-List { @(S@, P@, S1, Concat, MapS); };
+List { @(S@, P@, S2, Concat, MapS); };
 StdLibTest.ListTest { @(ListTestFailure@: TestFailure@); };
+UBNat.Test { @(UBNatTestFailure@: TestFailure@); };
 
-@ TestFailure@ = +(ListTestFailure@ ListTest);
+@ TestFailure@ = +(
+    UBNatTestFailure@ UBNatTest,
+    ListTestFailure@ ListTest);
+
+\(UBNatTestFailure@ a; TestFailure@) UBNatTestFailureF = \(UBNatTestFailure@ a) {
+  TestFailure@(UBNatTest: a);
+};
 
 \(ListTestFailure@ a; TestFailure@) ListTestFailureF = \(ListTestFailure@ a) {
   TestFailure@(ListTest: a);
 };
 
 S@<TestFailure@>! Test = {
-  $(Concat<TestFailure@>(S1<S@<TestFailure@>>(
+  $(Concat<TestFailure@>(S2<S@<TestFailure@>>(
+          MapS<UBNatTestFailure@, TestFailure@>(UBNatTestFailureF, UBNat.Test.Test()),
           MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLibTest.ListTest.Test())
           )));
 };

@@ -1,4 +1,7 @@
 Fble:
+
+* Port rest of fbld tests and programs to fble.
+
 * Fix 8.3-07
  - debugging: S<T> ==> S'<T'>
     Eval S'<T'>, but we know Normal(S) == Normal(S') and T == T', so rather
@@ -7,7 +10,13 @@ Fble:
    
     That explains the observed behavior. But what is the desired behavior?
 
-* Port rest of fbld tests and programs to fble.
+    1. It should be a compile error if a type is defined in terms of itself,
+    without a normal type in between. Detect this case and report an error.
+    
+    2. The key is that we want to detect when two things are the same
+    definition of a type, or the same occurrence. So, either use the location
+    information to test if they are the same, or keep some token that is
+    preserved across substitution and use that to detect if they are the same.
 
 * Delete obsolete fblc/ and fbld/ code and TODOs.
 
