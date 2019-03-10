@@ -1,0 +1,6 @@
+@(StdLib, Bits) {
+  @(Md5: &Md5);
+  @(Test: &Test);
+
+  @(Md5, Test);
+};

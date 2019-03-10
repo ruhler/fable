@@ -3,17 +3,21 @@
 @(StdLibTest: &StdLibTest);
 @(UBNat: &UBNat);
 @(Primes: &Primes);
+#@(Bits: &Bits);
+@(Md5: &Md5);
 
 StdLib { @(Unit@, List); };
-List { @(S@, P@, S3, Concat, MapS); };
+List { @(S@, P@, S4, Concat, MapS); };
 StdLibTest.ListTest { @(ListTestFailure@: TestFailure@); };
 UBNat.Test { @(UBNatTestFailure@: TestFailure@); };
 Primes.Test { @(PrimesTestFailure@: TestFailure@); };
+Md5.Test { @(Md5TestFailure@: TestFailure@); };
 
 @ TestFailure@ = +(
     UBNatTestFailure@ UBNatTest,
     PrimesTestFailure@ PrimesTest,
-    ListTestFailure@ ListTest);
+    ListTestFailure@ ListTest,
+    Md5TestFailure@ Md5TestFailure);
 
 \(UBNatTestFailure@ a; TestFailure@) UBNatTestFailureF = \(UBNatTestFailure@ a) {
   TestFailure@(UBNatTest: a);
@@ -27,11 +31,17 @@ Primes.Test { @(PrimesTestFailure@: TestFailure@); };
   TestFailure@(ListTest: a);
 };
 
+\(Md5TestFailure@ a; TestFailure@) Md5TestFailureF = \(Md5TestFailure@ a) {
+  TestFailure@(Md5Test: a);
+};
+
 S@<TestFailure@>! Test = {
-  $(Concat<TestFailure@>(S3<S@<TestFailure@>>(
+  S@<Md5TestFailure@> md5 := Md5.Test.Test();
+  $(Concat<TestFailure@>(S4<S@<TestFailure@>>(
           MapS<UBNatTestFailure@, TestFailure@>(UBNatTestFailureF, UBNat.Test.Test()),
           MapS<PrimesTestFailure@, TestFailure@>(PrimesTestFailureF, Primes.Test.Test()),
-          MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLibTest.ListTest.Test())
+          MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLibTest.ListTest.Test()),
+          MapS<Md5TestFailure@, TestFailure@>(md5)
           )));
 };
 

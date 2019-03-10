@@ -936,3 +936,35 @@ Notes:
 
 * Need to figure out better support for partial application of functions.
 
+* Vague concern: will fble support static evaluation / compilation to
+  hardware? Is it bad to support structs and links that can hold functions and
+  processes?
+
+  I envision static evaluation as follows: you evaluate a program to, say, a
+  function. That's the static evaluation pass. The result will be based on the
+  interpreter you are using. If you have a hardware interpreter, for example,
+  the resulting function will be a description of a hardware circuit.
+
+* Vague concern: how to support abstract data types?
+  If a user guesses the type of something, they can access internals. How to
+  prevent that?
+
+  Imagine I want an abstract collection data type, that supports the following
+  operations:
+    empty - the empty collection.
+    append(x) - appends the value x to the collection.
+    contains(x) - checks if the collection contains the value x.
+
+  Maybe we could implement that as:
+    @ Internal@ = ...
+    @ Collection@ = *(\(X@ x ; Collection@) append, \(X@ x ; Bool@) contains);
+
+    \(Internal@ i; Collection@) mkCollection = \(Internal@ i) {
+      Collection@(appendInternal(i), containsInternal(i));
+    }
+
+  etc... In other words, the type becomes the struct with the abstract
+  interface, and we hide the internal type inside of functions. I think that
+  could work. It's just a question of whether we want to provide common syntax
+  or language features to support this if it is desired.
+

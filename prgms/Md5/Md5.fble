@@ -1,395 +1,417 @@
-
 @(StdLib, Bits) {
-  StdLib { @(Bool, List, Maybe@, Unit@); };
-  Bool { @(Bool@, True, False, And); };
-  List { @(SL@: S@, PL@: P@); };
+  StdLib { @(Unit@, Maybe@); };
+  StdLib.Bool { @(Bool@, True, False, And); };
+  StdLib.List { @(SL@: S@, PL@: P@); };
+  Bits.Bit { @(Bit@); };
+  Bits.Bit4 { @(Bit4@); };
+  Bits.Bit8 { @(Bit8@, H2); };
+  Bits.Bit16 { @(Bit16@); };
+  Bits.Bit32 { @(Bit32@, eq, and, or, not, xor, clshift, add); };
+  Bits.Bit64 { @(Bit64@); };
+  Bits.Hex { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
 
-  import Bits { Bit@Bit; Bit16@Bit16; Bit8M=Bit8; Bit4@Bit4; Bit32M=Bit32; Bit64M=Bit64; HexM=Hex; };
-  import Bit8M { Bit8; H2; };
-  import Bit32M { Bit32; };
-  import Bit64M { Bit64; };
-  import BitN@Bit32M { eq; and; or; not; xor; clshift; add; };
-  import HexM { Hex; 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; a; b; c; d; e; f; };
+  # Construct a Bit32 in hex, with high-order byte first.
+  \(Hex@ 7, Hex@ 6, Hex@ 5, Hex@ 4, Hex@ 3, Hex@ 2, Hex@ 1, Hex@ 0; Bit32@) H8 =
+    \(Hex@ 7, Hex@ 6, Hex@ 5, Hex@ 4, Hex@ 3, Hex@ 2, Hex@ 1, Hex@ 0) {
+      Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
+    };
 
-  struct Md5Hash(
-    Hex  0, Hex  1, Hex  2, Hex  3, Hex  4, Hex  5, Hex  6, Hex  7,
-    Hex  8, Hex  9, Hex 10, Hex 11, Hex 12, Hex 13, Hex 14, Hex 15,
-    Hex 16, Hex 17, Hex 18, Hex 19, Hex 20, Hex 21, Hex 22, Hex 23,
-    Hex 24, Hex 25, Hex 26, Hex 27, Hex 28, Hex 29, Hex 30, Hex 31
+  Bit32@ t01  = H8(d, 7, 6, a, a, 4, 7, 8);
+  Bit32@ t02  = H8(e, 8, c, 7, b, 7, 5, 6);
+  Bit32@ t03  = H8(2, 4, 2, 0, 7, 0, d, b);
+  Bit32@ t04  = H8(c, 1, b, d, c, e, e, e);
+  Bit32@ t05  = H8(f, 5, 7, c, 0, f, a, f);
+  Bit32@ t06  = H8(4, 7, 8, 7, c, 6, 2, a);
+  Bit32@ t07  = H8(a, 8, 3, 0, 4, 6, 1, 3);
+  Bit32@ t08  = H8(f, d, 4, 6, 9, 5, 0, 1);
+  Bit32@ t09  = H8(6, 9, 8, 0, 9, 8, d, 8);
+  Bit32@ t10 = H8(8, b, 4, 4, f, 7, a, f);
+  Bit32@ t11 = H8(f, f, f, f, 5, b, b, 1);
+  Bit32@ t12 = H8(8, 9, 5, c, d, 7, b, e);
+  Bit32@ t13 = H8(6, b, 9, 0, 1, 1, 2, 2);
+  Bit32@ t14 = H8(f, d, 9, 8, 7, 1, 9, 3);
+  Bit32@ t15 = H8(a, 6, 7, 9, 4, 3, 8, e);
+  Bit32@ t16 = H8(4, 9, b, 4, 0, 8, 2, 1);
+  Bit32@ t17 = H8(f, 6, 1, e, 2, 5, 6, 2);
+  Bit32@ t18 = H8(c, 0, 4, 0, b, 3, 4, 0);
+  Bit32@ t19 = H8(2, 6, 5, e, 5, a, 5, 1);
+  Bit32@ t20 = H8(e, 9, b, 6, c, 7, a, a);
+  Bit32@ t21 = H8(d, 6, 2, f, 1, 0, 5, d);
+  Bit32@ t22 = H8(0, 2, 4, 4, 1, 4, 5, 3);
+  Bit32@ t23 = H8(d, 8, a, 1, e, 6, 8, 1);
+  Bit32@ t24 = H8(e, 7, d, 3, f, b, c, 8);
+  Bit32@ t25 = H8(2, 1, e, 1, c, d, e, 6);
+  Bit32@ t26 = H8(c, 3, 3, 7, 0, 7, d, 6);
+  Bit32@ t27 = H8(f, 4, d, 5, 0, d, 8, 7);
+  Bit32@ t28 = H8(4, 5, 5, a, 1, 4, e, d);
+  Bit32@ t29 = H8(a, 9, e, 3, e, 9, 0, 5);
+  Bit32@ t30 = H8(f, c, e, f, a, 3, f, 8);
+  Bit32@ t31 = H8(6, 7, 6, f, 0, 2, d, 9);
+  Bit32@ t32 = H8(8, d, 2, a, 4, c, 8, a);
+  Bit32@ t33 = H8(f, f, f, a, 3, 9, 4, 2);
+  Bit32@ t34 = H8(8, 7, 7, 1, f, 6, 8, 1);
+  Bit32@ t35 = H8(6, d, 9, d, 6, 1, 2, 2);
+  Bit32@ t36 = H8(f, d, e, 5, 3, 8, 0, c);
+  Bit32@ t37 = H8(a, 4, b, e, e, a, 4, 4);
+  Bit32@ t38 = H8(4, b, d, e, c, f, a, 9);
+  Bit32@ t39 = H8(f, 6, b, b, 4, b, 6, 0);
+  Bit32@ t40 = H8(b, e, b, f, b, c, 7, 0);
+  Bit32@ t41 = H8(2, 8, 9, b, 7, e, c, 6);
+  Bit32@ t42 = H8(e, a, a, 1, 2, 7, f, a);
+  Bit32@ t43 = H8(d, 4, e, f, 3, 0, 8, 5);
+  Bit32@ t44 = H8(0, 4, 8, 8, 1, d, 0, 5);
+  Bit32@ t45 = H8(d, 9, d, 4, d, 0, 3, 9);
+  Bit32@ t46 = H8(e, 6, d, b, 9, 9, e, 5);
+  Bit32@ t47 = H8(1, f, a, 2, 7, c, f, 8);
+  Bit32@ t48 = H8(c, 4, a, c, 5, 6, 6, 5);
+  Bit32@ t49 = H8(f, 4, 2, 9, 2, 2, 4, 4);
+  Bit32@ t50 = H8(4, 3, 2, a, f, f, 9, 7);
+  Bit32@ t51 = H8(a, b, 9, 4, 2, 3, a, 7);
+  Bit32@ t52 = H8(f, c, 9, 3, a, 0, 3, 9);
+  Bit32@ t53 = H8(6, 5, 5, b, 5, 9, c, 3);
+  Bit32@ t54 = H8(8, f, 0, c, c, c, 9, 2);
+  Bit32@ t55 = H8(f, f, e, f, f, 4, 7, d);
+  Bit32@ t56 = H8(8, 5, 8, 4, 5, d, d, 1);
+  Bit32@ t57 = H8(6, f, a, 8, 7, e, 4, f);
+  Bit32@ t58 = H8(f, e, 2, c, e, 6, e, 0);
+  Bit32@ t59 = H8(a, 3, 0, 1, 4, 3, 1, 4);
+  Bit32@ t60 = H8(4, e, 0, 8, 1, 1, a, 1);
+  Bit32@ t61 = H8(f, 7, 5, 3, 7, e, 8, 2);
+  Bit32@ t62 = H8(b, d, 3, a, f, 2, 3, 5);
+  Bit32@ t63 = H8(2, a, d, 7, d, 2, b, b);
+  Bit32@ t64 = H8(e, b, 8, 6, d, 3, 9, 1);
+
+  @ Md5Hash@ = *(
+    Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,
+    Hex@  8, Hex@  9, Hex@ 10, Hex@ 11, Hex@ 12, Hex@ 13, Hex@ 14, Hex@ 15,
+    Hex@ 16, Hex@ 17, Hex@ 18, Hex@ 19, Hex@ 20, Hex@ 21, Hex@ 22, Hex@ 23,
+    Hex@ 24, Hex@ 25, Hex@ 26, Hex@ 27, Hex@ 28, Hex@ 29, Hex@ 30, Hex@ 31
   );
 
-  priv struct ABCD(Bit32 a, Bit32 b, Bit32 c, Bit32 d);
+  @ ABCD@ = *(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d);
 
-  priv struct Block(
-    Bit32 0, Bit32 1, Bit32 2, Bit32 3,
-    Bit32 4, Bit32 5, Bit32 6, Bit32 7,
-    Bit32 8, Bit32 9, Bit32 10, Bit32 11,
-    Bit32 12, Bit32 13, Bit32 14, Bit32 15);
+  @ Block@ = *(
+    Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
+    Bit32@ 4, Bit32@ 5, Bit32@ 6, Bit32@ 7,
+    Bit32@ 8, Bit32@ 9, Bit32@ 10, Bit32@ 11,
+    Bit32@ 12, Bit32@ 13, Bit32@ 14, Bit32@ 15);
 
-  priv union S(
-    Unit  0, Unit  1, Unit  2, Unit  3, Unit  4, Unit  5, Unit  6, Unit  7,
-    Unit  8, Unit  9, Unit 10, Unit 11, Unit 12, Unit 13, Unit 14, Unit 15,
-    Unit 16, Unit 17, Unit 18, Unit 19, Unit 20, Unit 21, Unit 22, Unit 23
+  @ S@ = +(
+    Unit@  0, Unit@  1, Unit@  2, Unit@  3, Unit@  4, Unit@  5, Unit@  6, Unit@  7,
+    Unit@  8, Unit@  9, Unit@ 10, Unit@ 11, Unit@ 12, Unit@ 13, Unit@ 14, Unit@ 15,
+    Unit@ 16, Unit@ 17, Unit@ 18, Unit@ 19, Unit@ 20, Unit@ 21, Unit@ 22, Unit@ 23
   );
 
-  priv func NextS(S s; Maybe<S>) {
-    ?(s; 0: Maybe<S>:nothing(Unit()),
-         1: Maybe<S>:just(S:0(Unit())), 2: Maybe<S>:just(S:1(Unit())),
-         3: Maybe<S>:just(S:2(Unit())), 4: Maybe<S>:just(S:3(Unit())),
-         5: Maybe<S>:just(S:4(Unit())), 6: Maybe<S>:just(S:5(Unit())),
-         7: Maybe<S>:just(S:6(Unit())), 8: Maybe<S>:just(S:7(Unit())),
-         9: Maybe<S>:just(S:8(Unit())), 10: Maybe<S>:just(S:9(Unit())),
-         11: Maybe<S>:just(S:10(Unit())), 12: Maybe<S>:just(S:11(Unit())),
-         13: Maybe<S>:just(S:12(Unit())), 14: Maybe<S>:just(S:13(Unit())),
-         15: Maybe<S>:just(S:14(Unit())), 16: Maybe<S>:just(S:15(Unit())),
-         17: Maybe<S>:just(S:16(Unit())), 18: Maybe<S>:just(S:17(Unit())),
-         19: Maybe<S>:just(S:18(Unit())), 20: Maybe<S>:just(S:19(Unit())),
-         21: Maybe<S>:just(S:20(Unit())), 22: Maybe<S>:just(S:21(Unit())),
-         23: Maybe<S>:just(S:22(Unit())));
+  \(S@ s; Maybe@<S@>) NextS = \(S@ s) {
+    ?(s; 0: Maybe@<S@>(nothing: Unit@()),
+         1: Maybe@<S@>(just: S@(0: Unit@())), 2: Maybe@<S@>(just: S@(1: Unit@())),
+         3: Maybe@<S@>(just: S@(2: Unit@())), 4: Maybe@<S@>(just: S@(3: Unit@())),
+         5: Maybe@<S@>(just: S@(4: Unit@())), 6: Maybe@<S@>(just: S@(5: Unit@())),
+         7: Maybe@<S@>(just: S@(6: Unit@())), 8: Maybe@<S@>(just: S@(7: Unit@())),
+         9: Maybe@<S@>(just: S@(8: Unit@())), 10: Maybe@<S@>(just: S@(9: Unit@())),
+         11: Maybe@<S@>(just: S@(10: Unit@())), 12: Maybe@<S@>(just: S@(11: Unit@())),
+         13: Maybe@<S@>(just: S@(12: Unit@())), 14: Maybe@<S@>(just: S@(13: Unit@())),
+         15: Maybe@<S@>(just: S@(14: Unit@())), 16: Maybe@<S@>(just: S@(15: Unit@())),
+         17: Maybe@<S@>(just: S@(16: Unit@())), 18: Maybe@<S@>(just: S@(17: Unit@())),
+         19: Maybe@<S@>(just: S@(18: Unit@())), 20: Maybe@<S@>(just: S@(19: Unit@())),
+         21: Maybe@<S@>(just: S@(20: Unit@())), 22: Maybe@<S@>(just: S@(21: Unit@())),
+         23: Maybe@<S@>(just: S@(22: Unit@())));
   };
 
-  priv func cls(Bit32 a, S s; Bit32) {
-    Maybe<S> next = NextS(s);
+  \(Bit32@ a, S@ s; Bit32@) cls = \(Bit32@ a, S@ s) {
+    Maybe@<S@> next = NextS(s);
     ?(next; just: cls(clshift(a), next.just), nothing: a);
   };
 
-  priv func F(Bit32 x, Bit32 y, Bit32 z; Bit32) or(and(x, y), and(not(x), z));
-  priv func G(Bit32 x, Bit32 y, Bit32 z; Bit32) or(and(x, z), and(y, not(z)));
-  priv func H(Bit32 x, Bit32 y, Bit32 z; Bit32) xor(x, xor(y, z));
-  priv func I(Bit32 x, Bit32 y, Bit32 z; Bit32) xor(y, or(x, not(z)));
-
-  priv func FF(Bit32 a, Bit32 b, Bit32 c, Bit32 d, Bit32 x, S s, Bit32 t ; Bit32) {
-    add(b, cls(add(add(a, F(b, c ,d)), add(x, t)), s));
+  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) F = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+    or(and(x, y), and(not(x), z));
   };
 
-  priv func GG(Bit32 a, Bit32 b, Bit32 c, Bit32 d, Bit32 x, S s, Bit32 t ; Bit32) {
-    add(b, cls(add(add(a, G(b, c ,d)), add(x, t)), s));
+  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) G = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+    or(and(x, z), and(y, not(z)));
   };
 
-  priv func HH(Bit32 a, Bit32 b, Bit32 c, Bit32 d, Bit32 x, S s, Bit32 t ; Bit32) {
-    add(b, cls(add(add(a, H(b, c ,d)), add(x, t)), s));
+  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) H = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+    xor(x, xor(y, z));
   };
 
-  priv func II(Bit32 a, Bit32 b, Bit32 c, Bit32 d, Bit32 x, S s, Bit32 t ; Bit32) {
-    add(b, cls(add(add(a, I(b, c ,d)), add(x, t)), s));
+  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) I = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+    xor(y, or(x, not(z)));
   };
 
-  priv func Round1(Bit32 a0, Bit32 b0, Bit32 c0, Bit32 d0, Block block; ABCD) {
-    Bit32 a1 = FF(a0, b0, c0, d0, block.0, S:7(Unit()), t1());
-    Bit32 d1 = FF(d0, a1, b0, c0, block.1, S:12(Unit()), t2());
-    Bit32 c1 = FF(c0, d1, a1, b0, block.2, S:17(Unit()), t3());
-    Bit32 b1 = FF(b0, c1, d1, a1, block.3, S:22(Unit()), t4());
+  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) FF =
+    \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+      add(b, cls(add(add(a, F(b, c ,d)), add(x, t)), s));
+    };
 
-    Bit32 a2 = FF(a1, b1, c1, d1, block.4, S:7(Unit()), t5());
-    Bit32 d2 = FF(d1, a2, b1, c1, block.5, S:12(Unit()), t6());
-    Bit32 c2 = FF(c1, d2, a2, b1, block.6, S:17(Unit()), t7());
-    Bit32 b2 = FF(b1, c2, d2, a2, block.7, S:22(Unit()), t8());
+  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) GG =
+    \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+      add(b, cls(add(add(a, G(b, c ,d)), add(x, t)), s));
+    };
 
-    Bit32 a3 = FF(a2, b2, c2, d2, block.8, S:7(Unit()), t9());
-    Bit32 d3 = FF(d2, a3, b2, c2, block.9, S:12(Unit()), t10());
-    Bit32 c3 = FF(c2, d3, a3, b2, block.10, S:17(Unit()), t11());
-    Bit32 b3 = FF(b2, c3, d3, a3, block.11, S:22(Unit()), t12());
+  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) HH =
+    \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+      add(b, cls(add(add(a, H(b, c ,d)), add(x, t)), s));
+    };
 
-    Bit32 a4 = FF(a3, b3, c3, d3, block.12, S:7(Unit()), t13());
-    Bit32 d4 = FF(d3, a4, b3, c3, block.13, S:12(Unit()), t14());
-    Bit32 c4 = FF(c3, d4, a4, b3, block.14, S:17(Unit()), t15());
-    Bit32 b4 = FF(b3, c4, d4, a4, block.15, S:22(Unit()), t16());
+  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) II =
+    \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+      add(b, cls(add(add(a, I(b, c ,d)), add(x, t)), s));
+    };
 
-    ABCD(a4, b4, c4, d4);
+  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round1 =
+    \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+      Bit32@ a1 = FF(a0, b0, c0, d0, block.0, S@(7: Unit@()), t01);
+      Bit32@ d1 = FF(d0, a1, b0, c0, block.1, S@(12: Unit@()), t02);
+      Bit32@ c1 = FF(c0, d1, a1, b0, block.2, S@(17: Unit@()), t03);
+      Bit32@ b1 = FF(b0, c1, d1, a1, block.3, S@(22: Unit@()), t04);
+
+      Bit32@ a2 = FF(a1, b1, c1, d1, block.4, S@(7: Unit@()), t05);
+      Bit32@ d2 = FF(d1, a2, b1, c1, block.5, S@(12: Unit@()), t06);
+      Bit32@ c2 = FF(c1, d2, a2, b1, block.6, S@(17: Unit@()), t07);
+      Bit32@ b2 = FF(b1, c2, d2, a2, block.7, S@(22: Unit@()), t08);
+
+      Bit32@ a3 = FF(a2, b2, c2, d2, block.8, S@(7: Unit@()), t09);
+      Bit32@ d3 = FF(d2, a3, b2, c2, block.9, S@(12: Unit@()), t10);
+      Bit32@ c3 = FF(c2, d3, a3, b2, block.10, S@(17: Unit@()), t11);
+      Bit32@ b3 = FF(b2, c3, d3, a3, block.11, S@(22: Unit@()), t12);
+
+      Bit32@ a4 = FF(a3, b3, c3, d3, block.12, S@(7: Unit@()), t13);
+      Bit32@ d4 = FF(d3, a4, b3, c3, block.13, S@(12: Unit@()), t14);
+      Bit32@ c4 = FF(c3, d4, a4, b3, block.14, S@(17: Unit@()), t15);
+      Bit32@ b4 = FF(b3, c4, d4, a4, block.15, S@(22: Unit@()), t16);
+
+      ABCD@(a4, b4, c4, d4);
+    };
+
+  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round2 =
+    \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+      Bit32@ a1 = GG(a0, b0, c0, d0, block.1, S@(5: Unit@()), t17);
+      Bit32@ d1 = GG(d0, a1, b0, c0, block.6, S@(9: Unit@()), t18);
+      Bit32@ c1 = GG(c0, d1, a1, b0, block.11, S@(14: Unit@()), t19);
+      Bit32@ b1 = GG(b0, c1, d1, a1, block.0, S@(20: Unit@()), t20);
+
+      Bit32@ a2 = GG(a1, b1, c1, d1, block.5, S@(5: Unit@()), t21);
+      Bit32@ d2 = GG(d1, a2, b1, c1, block.10, S@(9: Unit@()), t22);
+      Bit32@ c2 = GG(c1, d2, a2, b1, block.15, S@(14: Unit@()), t23);
+      Bit32@ b2 = GG(b1, c2, d2, a2, block.4, S@(20: Unit@()), t24);
+
+      Bit32@ a3 = GG(a2, b2, c2, d2, block.9, S@(5: Unit@()), t25);
+      Bit32@ d3 = GG(d2, a3, b2, c2, block.14, S@(9: Unit@()), t26);
+      Bit32@ c3 = GG(c2, d3, a3, b2, block.3, S@(14: Unit@()), t27);
+      Bit32@ b3 = GG(b2, c3, d3, a3, block.8, S@(20: Unit@()), t28);
+
+      Bit32@ a4 = GG(a3, b3, c3, d3, block.13, S@(5: Unit@()), t29);
+      Bit32@ d4 = GG(d3, a4, b3, c3, block.2, S@(9: Unit@()), t30);
+      Bit32@ c4 = GG(c3, d4, a4, b3, block.7, S@(14: Unit@()), t31);
+      Bit32@ b4 = GG(b3, c4, d4, a4, block.12, S@(20: Unit@()), t32);
+
+      ABCD@(a4, b4, c4, d4);
+    };
+
+  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round3 =
+    \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+      Bit32@ a1 = HH(a0, b0, c0, d0, block.5, S@(4: Unit@()), t33);
+      Bit32@ d1 = HH(d0, a1, b0, c0, block.8, S@(11: Unit@()), t34);
+      Bit32@ c1 = HH(c0, d1, a1, b0, block.11, S@(16: Unit@()), t35);
+      Bit32@ b1 = HH(b0, c1, d1, a1, block.14, S@(23: Unit@()), t36);
+
+      Bit32@ a2 = HH(a1, b1, c1, d1, block.1, S@(4: Unit@()), t37);
+      Bit32@ d2 = HH(d1, a2, b1, c1, block.4, S@(11: Unit@()), t38);
+      Bit32@ c2 = HH(c1, d2, a2, b1, block.7, S@(16: Unit@()), t39);
+      Bit32@ b2 = HH(b1, c2, d2, a2, block.10, S@(23: Unit@()), t40);
+
+      Bit32@ a3 = HH(a2, b2, c2, d2, block.13, S@(4: Unit@()), t41);
+      Bit32@ d3 = HH(d2, a3, b2, c2, block.0, S@(11: Unit@()), t42);
+      Bit32@ c3 = HH(c2, d3, a3, b2, block.3, S@(16: Unit@()), t43);
+      Bit32@ b3 = HH(b2, c3, d3, a3, block.6, S@(23: Unit@()), t44);
+
+      Bit32@ a4 = HH(a3, b3, c3, d3, block.9, S@(4: Unit@()), t45);
+      Bit32@ d4 = HH(d3, a4, b3, c3, block.12, S@(11: Unit@()), t46);
+      Bit32@ c4 = HH(c3, d4, a4, b3, block.15, S@(16: Unit@()), t47);
+      Bit32@ b4 = HH(b3, c4, d4, a4, block.2, S@(23: Unit@()), t48);
+
+      ABCD@(a4, b4, c4, d4);
+    };
+
+  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round4 =
+    \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+      Bit32@ a1 = II(a0, b0, c0, d0, block.0, S@(6: Unit@()), t49);
+      Bit32@ d1 = II(d0, a1, b0, c0, block.7, S@(10: Unit@()), t50);
+      Bit32@ c1 = II(c0, d1, a1, b0, block.14, S@(15: Unit@()), t51);
+      Bit32@ b1 = II(b0, c1, d1, a1, block.5, S@(21: Unit@()), t52);
+
+      Bit32@ a2 = II(a1, b1, c1, d1, block.12, S@(6: Unit@()), t53);
+      Bit32@ d2 = II(d1, a2, b1, c1, block.3, S@(10: Unit@()), t54);
+      Bit32@ c2 = II(c1, d2, a2, b1, block.10, S@(15: Unit@()), t55);
+      Bit32@ b2 = II(b1, c2, d2, a2, block.1, S@(21: Unit@()), t56);
+
+      Bit32@ a3 = II(a2, b2, c2, d2, block.8, S@(6: Unit@()), t57);
+      Bit32@ d3 = II(d2, a3, b2, c2, block.15, S@(10: Unit@()), t58);
+      Bit32@ c3 = II(c2, d3, a3, b2, block.6, S@(15: Unit@()), t59);
+      Bit32@ b3 = II(b2, c3, d3, a3, block.13, S@(21: Unit@()), t60);
+
+      Bit32@ a4 = II(a3, b3, c3, d3, block.4, S@(6: Unit@()), t61);
+      Bit32@ d4 = II(d3, a4, b3, c3, block.11, S@(10: Unit@()), t62);
+      Bit32@ c4 = II(c3, d4, a4, b3, block.2, S@(15: Unit@()), t63);
+      Bit32@ b4 = II(b3, c4, d4, a4, block.9, S@(21: Unit@()), t64);
+
+      ABCD@(a4, b4, c4, d4);
+    };
+
+  \(ABCD@ abcd, Block@ block; ABCD@) DoBlock = \(ABCD@ abcd, Block@ block) {
+    ABCD@ r1 = Round1(abcd.a, abcd.b, abcd.c, abcd.d, block);
+    ABCD@ r2 = Round2(r1.a, r1.b, r1.c, r1.d, block);
+    ABCD@ r3 = Round3(r2.a, r2.b, r2.c, r2.d, block);
+    ABCD@ r4 = Round4(r3.a, r3.b, r3.c, r3.d, block);
+    ABCD@(add(abcd.a, r4.a), add(abcd.b, r4.b), add(abcd.c, r4.c), add(abcd.d, r4.d));
   };
 
-  priv func Round2(Bit32 a0, Bit32 b0, Bit32 c0, Bit32 d0, Block block; ABCD) {
-    Bit32 a1 = GG(a0, b0, c0, d0, block.1, S:5(Unit()), t17());
-    Bit32 d1 = GG(d0, a1, b0, c0, block.6, S:9(Unit()), t18());
-    Bit32 c1 = GG(c0, d1, a1, b0, block.11, S:14(Unit()), t19());
-    Bit32 b1 = GG(b0, c1, d1, a1, block.0, S:20(Unit()), t20());
-
-    Bit32 a2 = GG(a1, b1, c1, d1, block.5, S:5(Unit()), t21());
-    Bit32 d2 = GG(d1, a2, b1, c1, block.10, S:9(Unit()), t22());
-    Bit32 c2 = GG(c1, d2, a2, b1, block.15, S:14(Unit()), t23());
-    Bit32 b2 = GG(b1, c2, d2, a2, block.4, S:20(Unit()), t24());
-
-    Bit32 a3 = GG(a2, b2, c2, d2, block.9, S:5(Unit()), t25());
-    Bit32 d3 = GG(d2, a3, b2, c2, block.14, S:9(Unit()), t26());
-    Bit32 c3 = GG(c2, d3, a3, b2, block.3, S:14(Unit()), t27());
-    Bit32 b3 = GG(b2, c3, d3, a3, block.8, S:20(Unit()), t28());
-
-    Bit32 a4 = GG(a3, b3, c3, d3, block.13, S:5(Unit()), t29());
-    Bit32 d4 = GG(d3, a4, b3, c3, block.2, S:9(Unit()), t30());
-    Bit32 c4 = GG(c3, d4, a4, b3, block.7, S:14(Unit()), t31());
-    Bit32 b4 = GG(b3, c4, d4, a4, block.12, S:20(Unit()), t32());
-
-    ABCD(a4, b4, c4, d4);
-  };
-
-  priv func Round3(Bit32 a0, Bit32 b0, Bit32 c0, Bit32 d0, Block block; ABCD) {
-    Bit32 a1 = HH(a0, b0, c0, d0, block.5, S:4(Unit()), t33());
-    Bit32 d1 = HH(d0, a1, b0, c0, block.8, S:11(Unit()), t34());
-    Bit32 c1 = HH(c0, d1, a1, b0, block.11, S:16(Unit()), t35());
-    Bit32 b1 = HH(b0, c1, d1, a1, block.14, S:23(Unit()), t36());
-
-    Bit32 a2 = HH(a1, b1, c1, d1, block.1, S:4(Unit()), t37());
-    Bit32 d2 = HH(d1, a2, b1, c1, block.4, S:11(Unit()), t38());
-    Bit32 c2 = HH(c1, d2, a2, b1, block.7, S:16(Unit()), t39());
-    Bit32 b2 = HH(b1, c2, d2, a2, block.10, S:23(Unit()), t40());
-
-    Bit32 a3 = HH(a2, b2, c2, d2, block.13, S:4(Unit()), t41());
-    Bit32 d3 = HH(d2, a3, b2, c2, block.0, S:11(Unit()), t42());
-    Bit32 c3 = HH(c2, d3, a3, b2, block.3, S:16(Unit()), t43());
-    Bit32 b3 = HH(b2, c3, d3, a3, block.6, S:23(Unit()), t44());
-
-    Bit32 a4 = HH(a3, b3, c3, d3, block.9, S:4(Unit()), t45());
-    Bit32 d4 = HH(d3, a4, b3, c3, block.12, S:11(Unit()), t46());
-    Bit32 c4 = HH(c3, d4, a4, b3, block.15, S:16(Unit()), t47());
-    Bit32 b4 = HH(b3, c4, d4, a4, block.2, S:23(Unit()), t48());
-
-    ABCD(a4, b4, c4, d4);
-  };
-
-  priv func Round4(Bit32 a0, Bit32 b0, Bit32 c0, Bit32 d0, Block block; ABCD) {
-    Bit32 a1 = II(a0, b0, c0, d0, block.0, S:6(Unit()), t49());
-    Bit32 d1 = II(d0, a1, b0, c0, block.7, S:10(Unit()), t50());
-    Bit32 c1 = II(c0, d1, a1, b0, block.14, S:15(Unit()), t51());
-    Bit32 b1 = II(b0, c1, d1, a1, block.5, S:21(Unit()), t52());
-
-    Bit32 a2 = II(a1, b1, c1, d1, block.12, S:6(Unit()), t53());
-    Bit32 d2 = II(d1, a2, b1, c1, block.3, S:10(Unit()), t54());
-    Bit32 c2 = II(c1, d2, a2, b1, block.10, S:15(Unit()), t55());
-    Bit32 b2 = II(b1, c2, d2, a2, block.1, S:21(Unit()), t56());
-
-    Bit32 a3 = II(a2, b2, c2, d2, block.8, S:6(Unit()), t57());
-    Bit32 d3 = II(d2, a3, b2, c2, block.15, S:10(Unit()), t58());
-    Bit32 c3 = II(c2, d3, a3, b2, block.6, S:15(Unit()), t59());
-    Bit32 b3 = II(b2, c3, d3, a3, block.13, S:21(Unit()), t60());
-
-    Bit32 a4 = II(a3, b3, c3, d3, block.4, S:6(Unit()), t61());
-    Bit32 d4 = II(d3, a4, b3, c3, block.11, S:10(Unit()), t62());
-    Bit32 c4 = II(c3, d4, a4, b3, block.2, S:15(Unit()), t63());
-    Bit32 b4 = II(b3, c4, d4, a4, block.9, S:21(Unit()), t64());
-
-    ABCD(a4, b4, c4, d4);
-  };
-
-  priv func DoBlock(ABCD abcd, Block block; ABCD) {
-    ABCD r1 = Round1(abcd.a, abcd.b, abcd.c, abcd.d, block);
-    ABCD r2 = Round2(r1.a, r1.b, r1.c, r1.d, block);
-    ABCD r3 = Round3(r2.a, r2.b, r2.c, r2.d, block);
-    ABCD r4 = Round4(r3.a, r3.b, r3.c, r3.d, block);
-    ABCD(add(abcd.a, r4.a), add(abcd.b, r4.b), add(abcd.c, r4.c), add(abcd.d, r4.d));
-  };
-
-  priv struct Streamed<type T>(T data, Bool last);
+  \<@ ; @> Streamed@ = \<@ T@> { *(T@ data, Bool@ last); }; 
 
   # Gets the next word from a pre-padded input
-  priv proc GetWord(Streamed<Bit8>- padded; ; Streamed<Bit32>) {
-    Streamed<Bit8> a = -padded();
-    Streamed<Bit8> b = -padded();
-    Streamed<Bit8> c = -padded();
-    Streamed<Bit8> d = -padded();
-    $(Streamed<Bit32>(Bit32(Bit16(d.data, c.data), Bit16(b.data, a.data)), d.last));
+  \(Streamed@<Bit@>- padded; Streamed@<Bit32@>) GetWord = \(Streamed@<Bit@>- padded) {
+    Streamed@<Bit8@> a := padded();
+    Streamed@<Bit8@> b := padded();
+    Streamed@<Bit8@> c := padded();
+    Streamed@<Bit8@> d := padded();
+    $(Streamed@<Bit32@>(Bit32@(Bit16@(d.data, c.data), Bit16@(b.data, a.data)), d.last));
   };
 
   # Gets the next block from a pre-padded input
-  priv proc GetBlock(Streamed<Bit8>- padded; ; Streamed<Block>) {
-    Streamed<Bit32> 0 = GetWord(padded;);
-    Streamed<Bit32> 1 = GetWord(padded;);
-    Streamed<Bit32> 2 = GetWord(padded;);
-    Streamed<Bit32> 3 = GetWord(padded;);
-    Streamed<Bit32> 4 = GetWord(padded;);
-    Streamed<Bit32> 5 = GetWord(padded;);
-    Streamed<Bit32> 6 = GetWord(padded;);
-    Streamed<Bit32> 7 = GetWord(padded;);
-    Streamed<Bit32> 8 = GetWord(padded;);
-    Streamed<Bit32> 9 = GetWord(padded;);
-    Streamed<Bit32> 10 = GetWord(padded;);
-    Streamed<Bit32> 11 = GetWord(padded;);
-    Streamed<Bit32> 12 = GetWord(padded;);
-    Streamed<Bit32> 13 = GetWord(padded;);
-    Streamed<Bit32> 14 = GetWord(padded;);
-    Streamed<Bit32> 15 = GetWord(padded;);
-    $(Streamed<Block>(
-       Block(0.data, 1.data, 2.data, 3.data,
-             4.data, 5.data, 6.data, 7.data,
-             8.data, 9.data, 10.data, 11.data,
-             12.data, 13.data, 14.data, 15.data),
+  \(Streamed@<Bit8@>- padded; Streamed@<Block@>) GetBlock = \(Streamed@<Bit8@>- padded) {
+    Streamed@<Bit32@> 0 := GetWord(padded);
+    Streamed@<Bit32@> 1 := GetWord(padded);
+    Streamed@<Bit32@> 2 := GetWord(padded);
+    Streamed@<Bit32@> 3 := GetWord(padded);
+    Streamed@<Bit32@> 4 := GetWord(padded);
+    Streamed@<Bit32@> 5 := GetWord(padded);
+    Streamed@<Bit32@> 6 := GetWord(padded);
+    Streamed@<Bit32@> 7 := GetWord(padded);
+    Streamed@<Bit32@> 8 := GetWord(padded);
+    Streamed@<Bit32@> 9 := GetWord(padded);
+    Streamed@<Bit32@> 10 := GetWord(padded);
+    Streamed@<Bit32@> 11 := GetWord(padded);
+    Streamed@<Bit32@> 12 := GetWord(padded);
+    Streamed@<Bit32@> 13 := GetWord(padded);
+    Streamed@<Bit32@> 14 := GetWord(padded);
+    Streamed@<Bit32@> 15 := GetWord(padded);
+    $(Streamed@<Block@>(
+       Block@(0.data, 1.data, 2.data, 3.data,
+              4.data, 5.data, 6.data, 7.data,
+              8.data, 9.data, 10.data, 11.data,
+              12.data, 13.data, 14.data, 15.data),
        15.last));
   };
 
   # Computes the MD5 checksum of a pre-padded sequence of bytes.
-  priv proc PaddedMd5(Streamed<Bit8>- padded; ABCD abcd; ABCD) {
-    Streamed<Block> block = GetBlock(padded;);
-    ABCD md5 = $(DoBlock(abcd, block.data));
-    ?(block.last; true: $(md5), false: PaddedMd5(padded; md5));
+  \(Streamd@<Bit8@>- padded, ABCD@ abcd; ABCD@) PaddedMd5 = \(Streamd@<Bit8@>- padded, ABCD@ abcd) {
+    Streamed@<Block@> block := GetBlock(padded);
+    ABCD@ md5 := $(DoBlock(abcd, block.data));
+    ?(block.last; true: $(md5), false: PaddedMd5(padded, md5));
+  };
+
+  \(Bit64@ a; Bit64@) Inc64 = \(Bit64@ a) {
+    Bits.Bit64.fulladd(a, Bits.Bit64.zero, Bit@(1: Unit@())).z;
   };
 
   # Note: length is in units of bytes
-  priv proc Pad(Maybe<Bit8>- input, Streamed<Bit8>+ output; Bit64 length; Unit) {
-    Maybe<Bit8> x = -input();
-    ?(x; just: {
-           Streamed<Bit8> _ = +output(Streamed<Bit8>(x.just, False()));
-           Pad(input, output; Inc64(length));
-         }, nothing: {
-           Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(8(), 0()), False()));
-           PadZ(output; length, Inc64(length));
-         });
+  \(Maybe@<Bit8@>- input, Streamd@<Bit8@>+ output, Bit64@ length; Unit@) Pad =
+    \(Maybe@<Bit8@>- input, Streamd@<Bit8@>+ output, Bit64@ length) {
+      Maybe@<Bit8@> x := input();
+      ?(x; just: {
+          Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(x.just, False));
+          Pad(input, output, Inc64(length));
+        }, nothing: {
+          Streamed@<Bit8@> _ = output(Streamed@<Bit8@>(H2(8, 0), False));
+          PadZ(output, length, Inc64(length));
+        });
+    };
+
+  \(Bit64@ a; Bit64@) shl64 = \(Bit64@ a) {
+    Bits.Bit64.lshift(a, Bit@(0: Unit@())).z;
   };
 
-  priv func Inc64(Bit64 a; Bit64) {
-    fulladd@BitN@Bit64M(a, zero@BitN@Bit64M(), Bit:1(Unit())).z;
-  };
-
-  priv func shl64(Bit64 a; Bit64) {
-    lshift@BitN@Bit64M(a, Bit:0(Unit())).z;
-  };
-
-  priv func H2_64(Hex a, Hex b; Bit64) {
-    Bit8 0 = H2(0(), 0());
-    Bit64(Bit32(Bit16(0, 0), Bit16(0, 0)), Bit32(Bit16(0, 0), Bit16(0, H2(a, b))));
+  \(Hex@ a, Hex@ b; Bit64@) H2_64 = \(Hex@ a, Hex@ b) {
+    Bit8@ 0b8 = H2(0, 0);
+    Bit64(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
   };
 
   # Add zeros as needed, then the final length to the output message.
-  priv proc PadZ(Streamed<Bit8>+ output; Bit64 msglen, Bit64 length; Unit) {
-    ?(iszero@BitN@Bit64M(
-        and@BitN@Bit64M(H2_64(3(), f()),
-                        add@BitN@Bit64M(H2_64(0(), 8()), length))); true: {
-         Bit64 bits = $(shl64(shl64(shl64(msglen))));
-         Streamed<Bit8> _0 = +output(Streamed<Bit8>(bits.lo.lo.lo, False()));
-         Streamed<Bit8> _1 = +output(Streamed<Bit8>(bits.lo.lo.hi, False()));
-         Streamed<Bit8> _2 = +output(Streamed<Bit8>(bits.lo.hi.lo, False()));
-         Streamed<Bit8> _3 = +output(Streamed<Bit8>(bits.lo.hi.hi, False()));
-         Streamed<Bit8> _4 = +output(Streamed<Bit8>(bits.hi.lo.lo, False()));
-         Streamed<Bit8> _5 = +output(Streamed<Bit8>(bits.hi.lo.hi, False()));
-         Streamed<Bit8> _6 = +output(Streamed<Bit8>(bits.hi.hi.lo, False()));
-         Streamed<Bit8> _7 = +output(Streamed<Bit8>(bits.hi.hi.hi, True()));
-         $(Unit());
-       }, false: {
-         Streamed<Bit8> _ = +output(Streamed<Bit8>(H2(0(), 0()), False()));
-         PadZ(output; msglen, Inc64(length));
-       });
-  };
+  \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length; Unit@) PadZ =
+    \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length) {
+      ?(Bits.Bit64.iszero(
+          Bits.Bit64.and(H2_64(3, f), Bits.Bit64.add(H2_64(0, 8), length)));
+            true: {
+           Bit64@ bits = $(shl64(shl64(shl64(msglen))));
+           Streamed@<Bit8@> _0 := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
+           Streamed@<Bit8@> _1 := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
+           Streamed@<Bit8@> _2 := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
+           Streamed@<Bit8@> _3 := output(Streamed@<Bit8@>(bits.lo.hi.hi, False));
+           Streamed@<Bit8@> _4 := output(Streamed@<Bit8@>(bits.hi.lo.lo, False));
+           Streamed@<Bit8@> _5 := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
+           Streamed@<Bit8@> _6 := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
+           Streamed@<Bit8@> _7 := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
+           $(Unit@());
+         }, false: {
+           Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(0, 0), False));
+           PadZ(output, msglen, Inc64(length));
+         });
+    };
 
-  priv func ABCD0( ; ABCD) ABCD(
+  ABCD@ ABCD0 = ABCD@(
       # Note: the spec lists these low-order byte first, but H8 takes high
       # order byte first.
-      H8(6(), 7(), 4(), 5(), 2(), 3(), 0(), 1()),
-      H8(e(), f(), c(), d(), a(), b(), 8(), 9()),
-      H8(9(), 8(), b(), a(), d(), c(), f(), e()),
-      H8(1(), 0(), 3(), 2(), 5(), 4(), 7(), 6()));
+      H8(6, 7, 4, 5, 2, 3, 0, 1),
+      H8(e, f, c, d, a, b, 8, 9),
+      H8(9, 8, b, a, d, c, f, e),
+      H8(1, 0, 3, 2, 5, 4, 7, 6));
 
-  proc Md5(Maybe<Bit8>- input; ; Md5Hash) {
-    Streamed<Bit8> +- put_padded, get_padded;
-    Unit _ = Pad(input, put_padded; zero@BitN@Bit64M()),
-    ABCD md5 = PaddedMd5(get_padded; ABCD0());
+  \(Maybe@<Bit8@>- input; Md5Hash@) Md5 = \(Maybe@<Bit8@>- input) {
+    Streamed@<Bit8@> ~ put_padded, get_padded;
+    Unit@ _ := Pad(input, put_padded, Bits.Bit64.zero),
+    ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
     $(HexFromABCD(md5));
   };
 
-  # Construct a Bit32 in hex, with high-order byte first.
-  priv func H8(Hex 7, Hex 6, Hex 5, Hex 4, Hex 3, Hex 2, Hex 1, Hex 0; Bit32) {
-    Bit32(Bit16(H2(7, 6), H2(5, 4)), Bit16(H2(3, 2), H2(1, 0)));
-  };
+  \(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0; Hex@) HexFromBits =
+    \(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0) {
+      ?(3; 0: ?(2; 0: ?(1; 0: ?(0; 0: 0, 1: 1), 1: ?(0; 0: 2, 1: 3)),
+                   1: ?(1; 0: ?(0; 0: 4, 1: 5), 1: ?(0; 0: 6, 1: 7))),
+           1: ?(2; 0: ?(1; 0: ?(0; 0: 8, 1: 9), 1: ?(0; 0: a, 1: b)),
+                   1: ?(1; 0: ?(0; 0: c, 1: d), 1: ?(0; 0: e, 1: f))));
+    };
 
-  priv func t1( ; Bit32) H8(d(), 7(), 6(), a(), a(), 4(), 7(), 8());
-  priv func t2( ; Bit32) H8(e(), 8(), c(), 7(), b(), 7(), 5(), 6());
-  priv func t3( ; Bit32) H8(2(), 4(), 2(), 0(), 7(), 0(), d(), b());
-  priv func t4( ; Bit32) H8(c(), 1(), b(), d(), c(), e(), e(), e());
-  priv func t5( ; Bit32) H8(f(), 5(), 7(), c(), 0(), f(), a(), f());
-  priv func t6( ; Bit32) H8(4(), 7(), 8(), 7(), c(), 6(), 2(), a());
-  priv func t7( ; Bit32) H8(a(), 8(), 3(), 0(), 4(), 6(), 1(), 3());
-  priv func t8( ; Bit32) H8(f(), d(), 4(), 6(), 9(), 5(), 0(), 1());
-  priv func t9( ; Bit32) H8(6(), 9(), 8(), 0(), 9(), 8(), d(), 8());
-  priv func t10( ; Bit32) H8(8(), b(), 4(), 4(), f(), 7(), a(), f());
-  priv func t11( ; Bit32) H8(f(), f(), f(), f(), 5(), b(), b(), 1());
-  priv func t12( ; Bit32) H8(8(), 9(), 5(), c(), d(), 7(), b(), e());
-  priv func t13( ; Bit32) H8(6(), b(), 9(), 0(), 1(), 1(), 2(), 2());
-  priv func t14( ; Bit32) H8(f(), d(), 9(), 8(), 7(), 1(), 9(), 3());
-  priv func t15( ; Bit32) H8(a(), 6(), 7(), 9(), 4(), 3(), 8(), e());
-  priv func t16( ; Bit32) H8(4(), 9(), b(), 4(), 0(), 8(), 2(), 1());
-  priv func t17( ; Bit32) H8(f(), 6(), 1(), e(), 2(), 5(), 6(), 2());
-  priv func t18( ; Bit32) H8(c(), 0(), 4(), 0(), b(), 3(), 4(), 0());
-  priv func t19( ; Bit32) H8(2(), 6(), 5(), e(), 5(), a(), 5(), 1());
-  priv func t20( ; Bit32) H8(e(), 9(), b(), 6(), c(), 7(), a(), a());
-  priv func t21( ; Bit32) H8(d(), 6(), 2(), f(), 1(), 0(), 5(), d());
-  priv func t22( ; Bit32) H8(0(), 2(), 4(), 4(), 1(), 4(), 5(), 3());
-  priv func t23( ; Bit32) H8(d(), 8(), a(), 1(), e(), 6(), 8(), 1());
-  priv func t24( ; Bit32) H8(e(), 7(), d(), 3(), f(), b(), c(), 8());
-  priv func t25( ; Bit32) H8(2(), 1(), e(), 1(), c(), d(), e(), 6());
-  priv func t26( ; Bit32) H8(c(), 3(), 3(), 7(), 0(), 7(), d(), 6());
-  priv func t27( ; Bit32) H8(f(), 4(), d(), 5(), 0(), d(), 8(), 7());
-  priv func t28( ; Bit32) H8(4(), 5(), 5(), a(), 1(), 4(), e(), d());
-  priv func t29( ; Bit32) H8(a(), 9(), e(), 3(), e(), 9(), 0(), 5());
-  priv func t30( ; Bit32) H8(f(), c(), e(), f(), a(), 3(), f(), 8());
-  priv func t31( ; Bit32) H8(6(), 7(), 6(), f(), 0(), 2(), d(), 9());
-  priv func t32( ; Bit32) H8(8(), d(), 2(), a(), 4(), c(), 8(), a());
-  priv func t33( ; Bit32) H8(f(), f(), f(), a(), 3(), 9(), 4(), 2());
-  priv func t34( ; Bit32) H8(8(), 7(), 7(), 1(), f(), 6(), 8(), 1());
-  priv func t35( ; Bit32) H8(6(), d(), 9(), d(), 6(), 1(), 2(), 2());
-  priv func t36( ; Bit32) H8(f(), d(), e(), 5(), 3(), 8(), 0(), c());
-  priv func t37( ; Bit32) H8(a(), 4(), b(), e(), e(), a(), 4(), 4());
-  priv func t38( ; Bit32) H8(4(), b(), d(), e(), c(), f(), a(), 9());
-  priv func t39( ; Bit32) H8(f(), 6(), b(), b(), 4(), b(), 6(), 0());
-  priv func t40( ; Bit32) H8(b(), e(), b(), f(), b(), c(), 7(), 0());
-  priv func t41( ; Bit32) H8(2(), 8(), 9(), b(), 7(), e(), c(), 6());
-  priv func t42( ; Bit32) H8(e(), a(), a(), 1(), 2(), 7(), f(), a());
-  priv func t43( ; Bit32) H8(d(), 4(), e(), f(), 3(), 0(), 8(), 5());
-  priv func t44( ; Bit32) H8(0(), 4(), 8(), 8(), 1(), d(), 0(), 5());
-  priv func t45( ; Bit32) H8(d(), 9(), d(), 4(), d(), 0(), 3(), 9());
-  priv func t46( ; Bit32) H8(e(), 6(), d(), b(), 9(), 9(), e(), 5());
-  priv func t47( ; Bit32) H8(1(), f(), a(), 2(), 7(), c(), f(), 8());
-  priv func t48( ; Bit32) H8(c(), 4(), a(), c(), 5(), 6(), 6(), 5());
-  priv func t49( ; Bit32) H8(f(), 4(), 2(), 9(), 2(), 2(), 4(), 4());
-  priv func t50( ; Bit32) H8(4(), 3(), 2(), a(), f(), f(), 9(), 7());
-  priv func t51( ; Bit32) H8(a(), b(), 9(), 4(), 2(), 3(), a(), 7());
-  priv func t52( ; Bit32) H8(f(), c(), 9(), 3(), a(), 0(), 3(), 9());
-  priv func t53( ; Bit32) H8(6(), 5(), 5(), b(), 5(), 9(), c(), 3());
-  priv func t54( ; Bit32) H8(8(), f(), 0(), c(), c(), c(), 9(), 2());
-  priv func t55( ; Bit32) H8(f(), f(), e(), f(), f(), 4(), 7(), d());
-  priv func t56( ; Bit32) H8(8(), 5(), 8(), 4(), 5(), d(), d(), 1());
-  priv func t57( ; Bit32) H8(6(), f(), a(), 8(), 7(), e(), 4(), f());
-  priv func t58( ; Bit32) H8(f(), e(), 2(), c(), e(), 6(), e(), 0());
-  priv func t59( ; Bit32) H8(a(), 3(), 0(), 1(), 4(), 3(), 1(), 4());
-  priv func t60( ; Bit32) H8(4(), e(), 0(), 8(), 1(), 1(), a(), 1());
-  priv func t61( ; Bit32) H8(f(), 7(), 5(), 3(), 7(), e(), 8(), 2());
-  priv func t62( ; Bit32) H8(b(), d(), 3(), a(), f(), 2(), 3(), 5());
-  priv func t63( ; Bit32) H8(2(), a(), d(), 7(), d(), 2(), b(), b());
-  priv func t64( ; Bit32) H8(e(), b(), 8(), 6(), d(), 3(), 9(), 1());
-
-  priv func HexFromBits(Bit 3, Bit 2, Bit 1, Bit 0; Hex) {
-    ?(3; 0: ?(2; 0: ?(1; 0: ?(0; 0: 0(), 1: 1()), 1: ?(0; 0: 2(), 1: 3())),
-                 1: ?(1; 0: ?(0; 0: 4(), 1: 5()), 1: ?(0; 0: 6(), 1: 7()))),
-         1: ?(2; 0: ?(1; 0: ?(0; 0: 8(), 1: 9()), 1: ?(0; 0: a(), 1: b())),
-                 1: ?(1; 0: ?(0; 0: c(), 1: d()), 1: ?(0; 0: e(), 1: f()))));
-  };
-
-  priv func HexFromBit4(Bit4 x ; Hex) {
+  \(Bit4@ x; Hex@) HexFromBit4 = \(Bit4@ x) {
     HexFromBits(x.hi.hi, x.hi.lo, x.lo.hi, x.lo.lo);
   };
 
-  priv struct HexPair(Hex hi, Hex lo);
+  @ HexPair@ = *(Hex@ hi, Hex@ lo);
 
-  priv func HexFromByte(Bit8 byte; HexPair) {
+  \(Bit8@ byte; HexPair@) HexFromByte = \(Bit8@ byte) {
     HexPair(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
   };
 
-  priv func HexFromABCD(ABCD x; Md5Hash) {
-    HexPair a0 = HexFromByte(x.a.lo.lo); HexPair a1 = HexFromByte(x.a.lo.hi);
-    HexPair a2 = HexFromByte(x.a.hi.lo); HexPair a3 = HexFromByte(x.a.hi.hi);
-    HexPair b0 = HexFromByte(x.b.lo.lo); HexPair b1 = HexFromByte(x.b.lo.hi);
-    HexPair b2 = HexFromByte(x.b.hi.lo); HexPair b3 = HexFromByte(x.b.hi.hi);
-    HexPair c0 = HexFromByte(x.c.lo.lo); HexPair c1 = HexFromByte(x.c.lo.hi);
-    HexPair c2 = HexFromByte(x.c.hi.lo); HexPair c3 = HexFromByte(x.c.hi.hi);
-    HexPair d0 = HexFromByte(x.d.lo.lo); HexPair d1 = HexFromByte(x.d.lo.hi);
-    HexPair d2 = HexFromByte(x.d.hi.lo); HexPair d3 = HexFromByte(x.d.hi.hi);
-    Md5Hash(a0.hi, a0.lo, a1.hi, a1.lo, a2.hi, a2.lo, a3.hi, a3.lo,
-            b0.hi, b0.lo, b1.hi, b1.lo, b2.hi, b2.lo, b3.hi, b3.lo,
-            c0.hi, c0.lo, c1.hi, c1.lo, c2.hi, c2.lo, c3.hi, c3.lo,
-            d0.hi, d0.lo, d1.hi, d1.lo, d2.hi, d2.lo, d3.hi, d3.lo);
+  \(ABCD@ x; Md5Hash@) HexFromABCD = \(ABCD@ x) {
+    HexPair@ a0 = HexFromByte(x.a.lo.lo); HexPair@ a1 = HexFromByte(x.a.lo.hi);
+    HexPair@ a2 = HexFromByte(x.a.hi.lo); HexPair@ a3 = HexFromByte(x.a.hi.hi);
+    HexPair@ b0 = HexFromByte(x.b.lo.lo); HexPair@ b1 = HexFromByte(x.b.lo.hi);
+    HexPair@ b2 = HexFromByte(x.b.hi.lo); HexPair@ b3 = HexFromByte(x.b.hi.hi);
+    HexPair@ c0 = HexFromByte(x.c.lo.lo); HexPair@ c1 = HexFromByte(x.c.lo.hi);
+    HexPair@ c2 = HexFromByte(x.c.hi.lo); HexPair@ c3 = HexFromByte(x.c.hi.hi);
+    HexPair@ d0 = HexFromByte(x.d.lo.lo); HexPair@ d1 = HexFromByte(x.d.lo.hi);
+    HexPair@ d2 = HexFromByte(x.d.hi.lo); HexPair@ d3 = HexFromByte(x.d.hi.hi);
+    Md5Hash@(a0.hi, a0.lo, a1.hi, a1.lo, a2.hi, a2.lo, a3.hi, a3.lo,
+             b0.hi, b0.lo, b1.hi, b1.lo, b2.hi, b2.lo, b3.hi, b3.lo,
+             c0.hi, c0.lo, c1.hi, c1.lo, c2.hi, c2.lo, c3.hi, c3.lo,
+             d0.hi, d0.lo, d1.hi, d1.lo, d2.hi, d2.lo, d3.hi, d3.lo);
   };
 
-  priv func EqHex(Hex a, Hex b; Bool) {
-    eq@BitN@Bit8M(H2(0(), a), H2(0(), b));
+  \(Hex@ a, Hex@ b; Bool@) ExHex = \(Hex@ a, Hex@ b) {
+    Bits.Bit8.eq(H2(0, a), H2(0, b));
   };
 
-  func Eq(Md5Hash a, Md5Hash b; Bool) {
+  \(Md5Hash@ a, Md5Hash@ b; Bool@) Eq = \(Md5Hash@ a, Md5Hash@ b) {
     And(And(And(And(And(EqHex(a.0, b.0), EqHex(a.1, b.1)),
                     And(EqHex(a.2, b.2), EqHex(a.3, b.3))),
                 And(And(EqHex(a.4, b.4), EqHex(a.5, b.5)),
