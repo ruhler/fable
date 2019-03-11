@@ -3,7 +3,7 @@
 @(StdLibTest: &StdLibTest);
 @(UBNat: &UBNat);
 @(Primes: &Primes);
-#@(Bits: &Bits);
+@(Bits: &Bits);
 @(Md5: &Md5);
 
 StdLib { @(Unit@, List); };
