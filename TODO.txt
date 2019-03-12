@@ -1,7 +1,7 @@
 Fble:
 
 * Port rest of fbld tests and programs to fble.
-  - Md5, Snake v2, Sudoku partial draft, spec test coverage
+  - Snake v2, Sudoku partial draft, spec test coverage
 
 * Delete obsolete fblc/ and fbld/ code and TODOs.
 
@@ -50,6 +50,10 @@ Fble Cleanup:
 * Test partial function and excessive function application.
 * Pick a better name for FbleChoice, which is used now for more than just
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
+* Test what happens if you try to shadow variable names, and figure out what
+  ought to happen.
+* Better error message when the difference between a type is accidentally
+  defining + vs. *, and it contains substituted polymorphic type variables.
 
 Fble Performance:
 * Optimize reference counting scheme.

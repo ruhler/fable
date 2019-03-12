@@ -1,62 +1,64 @@
-@(Bit2XT@: Bit2X@, StdLib, Bit1) {
+@(BitN@, Bit2XT@: Bit2X@, StdLib, Bit1) {
   StdLib.Bool { @(Bool@, And); };
 
-  \<@ T@> { \(BitN@<T@> B) {
-    @ Bit2X@ = Bit2XT@<T@>;
-    @ Result@ = *(Bit2X@ z, Bit1.Bit1@ cout);
+  \<@ T@> {
+    \(BitN@<T@> B) {
+      @ Bit2X@ = Bit2XT@<T@>;
+      @ Result@ = *(Bit2X@ z, Bit1.Bit1@ cout);
 
-    \(Bit2X@ a ; Bit2X@) not = \(Bit2X@ a) {
-      Bit2X@(B.not(a.hi), B.not(a.lo));
-    };
-
-    \(Bit2X@ a, Bit2X@ b; Bit2X@) and = \(Bit2X@ a, Bit2X@ b) {
-      Bit2X@(B.and(a.hi, b.hi), B.and(a.lo, b.lo));
-    };
-
-    \(Bit2X@ a, Bit2X@ b; Bit2X@) or = \(Bit2X@ a, Bit2X@ b) {
-      Bit2X@(B.or(a.hi, b.hi), B.or(a.lo, b.lo));
-    };
-
-    \(Bit2X@ a, Bit2X@ b; Bit2X@) xor = \(Bit2X@ a, Bit2X@ b) {
-      Bit2X@(B.xor(a.hi, b.hi), B.xor(a.lo, b.lo));
-    };
-
-    \(Bit2X@ a, Bit2X@ b; Bit2X@) add = \(Bit2X@ a, Bit2X@ b) {
-      fulladd(a, b, Bit1.zero).z;
-    };
-
-    Bit2X@ zero = Bit2X@(B.zero, B.zero);
-
-    \(Bit2X@ a; Bool@) iszero = \(Bit2X@ a) {
-      And(B.iszero(a.hi), B.iszero(a.lo));
-    };
-
-    \(Bit2X@ a, Bit2X@ b; Bool@) eq = \(Bit2X@ a, Bit2X@ b) {
-      And(B.eq(a.hi, b.hi), B.eq(a.lo, b.lo));
-    };
-
-    \(Bit2X@ a; Bit1.Bit1@) msb = \(Bit2X@ a) {
-      B.msb(a.hi);
-    };
-
-    \(Bit2X@ a; Bit2X@) clshift = \(Bit2X@ a) {
-      lshift(a, msb(a)).z;
-    };
-
-    \(Bit2X@ a, Bit2X@ b, Bit1.Bit1@ cin; Result@) fulladd =
-      \(Bit2X@ a, Bit2X@ b, Bit1.Bit1@ cin) {
-        Result@B rlo = fulladd@B(a.lo, b.lo, cin);
-        Result@B rhi = fulladd@B(a.hi, b.hi, rlo.cout);
-        Result@(Bit2X(rhi.z, rlo.z), rhi.cout);
+      \(Bit2X@ a ; Bit2X@) not = \(Bit2X@ a) {
+        Bit2X@(B.not(a.hi), B.not(a.lo));
       };
 
-    \(Bit2X@ a, Bit1.Bit1@ cin; Result@) lshift = 
-      \(Bit2X@ a, Bit1.Bit1@ cin) {
-        Result@B rlo = lshift@B(a.lo, cin);
-        Result@B rhi = lshift@B(a.hi, rlo.cout);
-        Result@(Bit2X(rhi.z, rlo.z), rhi.cout);
+      \(Bit2X@ a, Bit2X@ b; Bit2X@) and = \(Bit2X@ a, Bit2X@ b) {
+        Bit2X@(B.and(a.hi, b.hi), B.and(a.lo, b.lo));
       };
 
-    @(not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
+      \(Bit2X@ a, Bit2X@ b; Bit2X@) or = \(Bit2X@ a, Bit2X@ b) {
+        Bit2X@(B.or(a.hi, b.hi), B.or(a.lo, b.lo));
+      };
+
+      \(Bit2X@ a, Bit2X@ b; Bit2X@) xor = \(Bit2X@ a, Bit2X@ b) {
+        Bit2X@(B.xor(a.hi, b.hi), B.xor(a.lo, b.lo));
+      };
+
+      \(Bit2X@ a, Bit2X@ b, Bit1.Bit1@ cin; Result@) fulladd =
+        \(Bit2X@ a, Bit2X@ b, Bit1.Bit1@ cin) {
+          B.Result@ rlo = B.fulladd(a.lo, b.lo, cin);
+          B.Result@ rhi = B.fulladd(a.hi, b.hi, rlo.cout);
+          Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
+        };
+
+      \(Bit2X@ a, Bit2X@ b; Bit2X@) add = \(Bit2X@ a, Bit2X@ b) {
+        fulladd(a, b, Bit1.BitN.zero).z;
+      };
+
+      Bit2X@ zero = Bit2X@(B.zero, B.zero);
+
+      \(Bit2X@ a; Bool@) iszero = \(Bit2X@ a) {
+        And(B.iszero(a.hi), B.iszero(a.lo));
+      };
+
+      \(Bit2X@ a, Bit2X@ b; Bool@) eq = \(Bit2X@ a, Bit2X@ b) {
+        And(B.eq(a.hi, b.hi), B.eq(a.lo, b.lo));
+      };
+
+      \(Bit2X@ a; Bit1.Bit1@) msb = \(Bit2X@ a) {
+        B.msb(a.hi);
+      };
+
+      \(Bit2X@ a, Bit1.Bit1@ cin; Result@) lshift = 
+        \(Bit2X@ a, Bit1.Bit1@ cin) {
+          B.Result@ rlo = B.lshift(a.lo, cin);
+          B.Result@ rhi = B.lshift(a.hi, rlo.cout);
+          Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
+        };
+
+      \(Bit2X@ a; Bit2X@) clshift = \(Bit2X@ a) {
+        lshift(a, msb(a)).z;
+      };
+
+      BitN@<Bit2X@>(not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
+    };
   };
 };

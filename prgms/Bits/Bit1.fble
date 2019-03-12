@@ -1,4 +1,4 @@
-@(StdLib, Bit) {
+@(BitN@, StdLib, Bit) {
   StdLib { @(Unit@, Bool); };
   Bool { @(Bool@, True, False); };
   Bit { @(Bit@); };
@@ -6,7 +6,7 @@
   @ Result@ = *(Bit@ z, Bit@ cout);
 
   \(Bit@ a ; Bit@) not = \(Bit@ a) {
-    ?(a; 0: Bit@:1(Unit@()), 1: Bit@:0(Unit@()));
+    ?(a; 0: Bit@(1: Unit@()), 1: Bit@(0: Unit@()));
   };
 
   \(Bit@ a, Bit@ b; Bit@) and = \(Bit@ a, Bit@ b) {
@@ -21,19 +21,23 @@
     ?(a; 0: b, 1: not(b));
   };
 
+  \(Bit@ a, Bit@ b, Bit@ cin; Result@) fulladd = \(Bit@ a, Bit@ b, Bit@ cin) {
+    ?(xor(a, b); 0: Result@(cin, a), 1: Result@(not(cin), cin));
+  };
+
   \(Bit@ a, Bit@ b; Bit@) add = \(Bit@ a, Bit@ b) {
-    fulladd(a, b, Bit@:0(Unit@())).z;
+    fulladd(a, b, Bit@(0: Unit@())).z;
   };
 
-  Bit@ zero = Bit@:0(Unit@());
+  Bit@ zero = Bit@(0: Unit@());
 
-  \(Bit@ a; Bool) iszero = \(Bit@ a) {
-    ?(a; 0: True(), 1: False());
+  \(Bit@ a; Bool@) iszero = \(Bit@ a) {
+    ?(a; 0: True, 1: False);
   };
 
-  \(Bit@ a, Bit@ b; Bool) eq = \(Bit@ a, Bit@ b) {
-    ?(a; 0: ?(b; 0: True(), 1: False()),
-        1: ?(b; 0: False(), 1: True()));
+  \(Bit@ a, Bit@ b; Bool@) eq = \(Bit@ a, Bit@ b) {
+    ?(a; 0: ?(b; 0: True, 1: False),
+        1: ?(b; 0: False, 1: True));
   };
 
   \(Bit@ a; Bit@) msb = \(Bit@ a) {
@@ -48,9 +52,5 @@
     Result@(cin, a);
   };
 
-  \(Bit@ a, Bit@ b, Bit@ cin; Result@) fulladd = \(Bit@ a, Bit@ b, Bit@ cin) {
-    ?(xor(a, b); 0: Result@(cin, a), 1: Result@(not(cin), cin));
-  };
-
-  @(not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
+  BitN@<Bit@>(not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
 };

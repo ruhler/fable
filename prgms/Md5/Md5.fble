@@ -6,7 +6,8 @@
   Bits.Bit4 { @(Bit4@); };
   Bits.Bit8 { @(Bit8@, H2); };
   Bits.Bit16 { @(Bit16@); };
-  Bits.Bit32 { @(Bit32@, eq, and, or, not, xor, clshift, add); };
+  Bits.Bit32 { @(Bit32@); };
+  Bits.Bit32.BitN { @(eq, and, or, not, xor, clshift, add); };
   Bits.Bit64 { @(Bit64@); };
   Bits.Hex { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
 
@@ -270,7 +271,7 @@
   \<@ ; @> Streamed@ = \<@ T@> { *(T@ data, Bool@ last); }; 
 
   # Gets the next word from a pre-padded input
-  \(Streamed@<Bit@>- padded; Streamed@<Bit32@>) GetWord = \(Streamed@<Bit@>- padded) {
+  \(Streamed@<Bit8@>- padded; Streamed@<Bit32@>!) GetWord = \(Streamed@<Bit8@>- padded) {
     Streamed@<Bit8@> a := padded();
     Streamed@<Bit8@> b := padded();
     Streamed@<Bit8@> c := padded();
@@ -279,7 +280,7 @@
   };
 
   # Gets the next block from a pre-padded input
-  \(Streamed@<Bit8@>- padded; Streamed@<Block@>) GetBlock = \(Streamed@<Bit8@>- padded) {
+  \(Streamed@<Bit8@>- padded; Streamed@<Block@>!) GetBlock = \(Streamed@<Bit8@>- padded) {
     Streamed@<Bit32@> 0 := GetWord(padded);
     Streamed@<Bit32@> 1 := GetWord(padded);
     Streamed@<Bit32@> 2 := GetWord(padded);
@@ -305,45 +306,32 @@
   };
 
   # Computes the MD5 checksum of a pre-padded sequence of bytes.
-  \(Streamd@<Bit8@>- padded, ABCD@ abcd; ABCD@) PaddedMd5 = \(Streamd@<Bit8@>- padded, ABCD@ abcd) {
+  \(Streamed@<Bit8@>- padded, ABCD@ abcd; ABCD@!) PaddedMd5 = \(Streamed@<Bit8@>- padded, ABCD@ abcd) {
     Streamed@<Block@> block := GetBlock(padded);
     ABCD@ md5 := $(DoBlock(abcd, block.data));
     ?(block.last; true: $(md5), false: PaddedMd5(padded, md5));
   };
 
   \(Bit64@ a; Bit64@) Inc64 = \(Bit64@ a) {
-    Bits.Bit64.fulladd(a, Bits.Bit64.zero, Bit@(1: Unit@())).z;
-  };
-
-  # Note: length is in units of bytes
-  \(Maybe@<Bit8@>- input, Streamd@<Bit8@>+ output, Bit64@ length; Unit@) Pad =
-    \(Maybe@<Bit8@>- input, Streamd@<Bit8@>+ output, Bit64@ length) {
-      Maybe@<Bit8@> x := input();
-      ?(x; just: {
-          Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(x.just, False));
-          Pad(input, output, Inc64(length));
-        }, nothing: {
-          Streamed@<Bit8@> _ = output(Streamed@<Bit8@>(H2(8, 0), False));
-          PadZ(output, length, Inc64(length));
-        });
-    };
-
-  \(Bit64@ a; Bit64@) shl64 = \(Bit64@ a) {
-    Bits.Bit64.lshift(a, Bit@(0: Unit@())).z;
+    Bits.Bit64.BitN.fulladd(a, Bits.Bit64.BitN.zero, Bit@(1: Unit@())).z;
   };
 
   \(Hex@ a, Hex@ b; Bit64@) H2_64 = \(Hex@ a, Hex@ b) {
     Bit8@ 0b8 = H2(0, 0);
-    Bit64(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
+    Bit64@(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
+  };
+
+  \(Bit64@ a; Bit64@) shl64 = \(Bit64@ a) {
+    Bits.Bit64.BitN.lshift(a, Bit@(0: Unit@())).z;
   };
 
   # Add zeros as needed, then the final length to the output message.
-  \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length; Unit@) PadZ =
+  \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length; Unit@!) PadZ =
     \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length) {
-      ?(Bits.Bit64.iszero(
-          Bits.Bit64.and(H2_64(3, f), Bits.Bit64.add(H2_64(0, 8), length)));
+      ?(Bits.Bit64.BitN.iszero(
+          Bits.Bit64.BitN.and(H2_64(3, f), Bits.Bit64.BitN.add(H2_64(0, 8), length)));
             true: {
-           Bit64@ bits = $(shl64(shl64(shl64(msglen))));
+           Bit64@ bits = shl64(shl64(shl64(msglen)));
            Streamed@<Bit8@> _0 := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
            Streamed@<Bit8@> _1 := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
            Streamed@<Bit8@> _2 := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
@@ -359,6 +347,19 @@
          });
     };
 
+  # Note: length is in units of bytes
+  \(Maybe@<Bit8@>- input, Streamed@<Bit8@>+ output, Bit64@ length; Unit@!) Pad =
+    \(Maybe@<Bit8@>- input, Streamed@<Bit8@>+ output, Bit64@ length) {
+      Maybe@<Bit8@> x := input();
+      ?(x; just: {
+          Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(x.just, False));
+          Pad(input, output, Inc64(length));
+        }, nothing: {
+          Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(8, 0), False));
+          PadZ(output, length, Inc64(length));
+        });
+    };
+
   ABCD@ ABCD0 = ABCD@(
       # Note: the spec lists these low-order byte first, but H8 takes high
       # order byte first.
@@ -367,19 +368,12 @@
       H8(9, 8, b, a, d, c, f, e),
       H8(1, 0, 3, 2, 5, 4, 7, 6));
 
-  \(Maybe@<Bit8@>- input; Md5Hash@) Md5 = \(Maybe@<Bit8@>- input) {
-    Streamed@<Bit8@> ~ put_padded, get_padded;
-    Unit@ _ := Pad(input, put_padded, Bits.Bit64.zero),
-    ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
-    $(HexFromABCD(md5));
-  };
-
-  \(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0; Hex@) HexFromBits =
-    \(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0) {
-      ?(3; 0: ?(2; 0: ?(1; 0: ?(0; 0: 0, 1: 1), 1: ?(0; 0: 2, 1: 3)),
-                   1: ?(1; 0: ?(0; 0: 4, 1: 5), 1: ?(0; 0: 6, 1: 7))),
-           1: ?(2; 0: ?(1; 0: ?(0; 0: 8, 1: 9), 1: ?(0; 0: a, 1: b)),
-                   1: ?(1; 0: ?(0; 0: c, 1: d), 1: ?(0; 0: e, 1: f))));
+  \(Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0; Hex@) HexFromBits =
+    \(Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
+      ?(b3; 0: ?(b2; 0: ?(b1; 0: ?(b0; 0: 0, 1: 1), 1: ?(b0; 0: 2, 1: 3)),
+                     1: ?(b1; 0: ?(b0; 0: 4, 1: 5), 1: ?(b0; 0: 6, 1: 7))),
+            1: ?(b2; 0: ?(b1; 0: ?(b0; 0: 8, 1: 9), 1: ?(b0; 0: a, 1: b)),
+                     1: ?(b1; 0: ?(b0; 0: c, 1: d), 1: ?(b0; 0: e, 1: f))));
     };
 
   \(Bit4@ x; Hex@) HexFromBit4 = \(Bit4@ x) {
@@ -389,7 +383,7 @@
   @ HexPair@ = *(Hex@ hi, Hex@ lo);
 
   \(Bit8@ byte; HexPair@) HexFromByte = \(Bit8@ byte) {
-    HexPair(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
+    HexPair@(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
   };
 
   \(ABCD@ x; Md5Hash@) HexFromABCD = \(ABCD@ x) {
@@ -407,8 +401,15 @@
              d0.hi, d0.lo, d1.hi, d1.lo, d2.hi, d2.lo, d3.hi, d3.lo);
   };
 
-  \(Hex@ a, Hex@ b; Bool@) ExHex = \(Hex@ a, Hex@ b) {
-    Bits.Bit8.eq(H2(0, a), H2(0, b));
+  \(Maybe@<Bit8@>- input; Md5Hash@!) Md5 = \(Maybe@<Bit8@>- input) {
+    Streamed@<Bit8@> ~ get_padded, put_padded;
+    Unit@ _ := Pad(input, put_padded, Bits.Bit64.BitN.zero),
+    ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
+    $(HexFromABCD(md5));
+  };
+
+  \(Hex@ a, Hex@ b; Bool@) EqHex = \(Hex@ a, Hex@ b) {
+    Bits.Bit8.BitN.eq(H2(0, a), H2(0, b));
   };
 
   \(Md5Hash@ a, Md5Hash@ b; Bool@) Eq = \(Md5Hash@ a, Md5Hash@ b) {

@@ -1,6 +1,6 @@
 @(StdLib, Bits, Md5) {
   StdLib { @(Unit@, Maybe@); };
-  StdLib.List{ @(P@, S@, ConsS); };
+  StdLib.List{ @(P@, S@, ConsS, S0); };
   Bits.Bit8 { @(Bit8@, H2); };
   Bits.Hex { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
   Md5 { @(Md5Hash@, Eq); };
@@ -18,7 +18,7 @@
   @ TestFailure@ = *(TestName@ name, Md5Hash@ wnt, Md5Hash@ got);
 
   # Put all the bytes onto the output port, followed by nothing.
-  \(Maybe@<Bit8@>+ out, S@<Bit8@> bytes; Unit@) PutAll =
+  \(Maybe@<Bit8@>+ out, S@<Bit8@> bytes; Unit@!) PutAll =
     \(Maybe@<Bit8@>+ out, S@<Bit8@> bytes) {
       ?(bytes; cons: {
           Maybe@<Bit8@> x := out(Maybe@<Bit8@>(just: bytes.cons.head));
@@ -31,13 +31,13 @@
 
 
   # Compute the md5 hash for a string of bytes.
-  \(S@<Bit8@> bytes; Md5Hash@) Md5Str = \(S@<Bit8@> bytes) {
-    Maybe@<Bit8@> ~ put, get;
-    Md5Hash@ md5 = Md5.Md5(get), Unit@ x = PutAll(put, bytes);
+  \(S@<Bit8@> bytes; Md5Hash@!) Md5Str = \(S@<Bit8@> bytes) {
+    Maybe@<Bit8@> ~ get, put;
+    Md5Hash@ md5 := Md5.Md5(get), Unit@ x := PutAll(put, bytes);
     $(md5);
   };
 
-  \(TestName@ name, Md5Hash@ wnt, S@<Bit8@> bytes; TestFailure@) TestStr =
+  \(TestName@ name, Md5Hash@ wnt, S@<Bit8@> bytes; TestFailure@!) TestStr =
     \(TestName@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
       Md5Hash@ got := Md5Str(bytes);
       $(TestFailure@(name, wnt, got));
@@ -64,7 +64,7 @@
       S0<Bit8@>
     );
 
-    TestFailure@ a := TestStr(
+    TestFailure@ _a := TestStr(
       TestName@(Md5_a: Unit@()),
       Md5Hash@(
         0, c, c, 1, 7, 5, b, 9,
@@ -184,7 +184,7 @@
           )))))))))))))))))))))))))))))))
     ))))))))))))))))))))))))))))))))))));
 
-    $(T(empty, T(a, T(abc, T(message, T(a_to_z, T(A_to_9, T(1_to_0,
+    $(T(empty, T(_a, T(abc, T(message, T(a_to_z, T(A_to_9, T(1_to_0,
         S0<TestFailure@>))))))));
   };
 

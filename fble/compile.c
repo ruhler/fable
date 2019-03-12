@@ -2416,6 +2416,8 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       if (rtype != NULL && Normal(rtype)->tag != PROC_TYPE) {
         error = true;
         FbleReportError("expected a value of type proc, but found ", &exec_expr->body->loc);
+        PrintType(arena_, rtype);
+        fprintf(stderr, "\n");
       }
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
