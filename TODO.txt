@@ -1,6 +1,6 @@
 Fble:
 * Port rest of fbld tests and programs to fble.
-  - Snake v2, Sudoku partial draft, spec test coverage
+  - Sudoku partial draft, spec test coverage
 
 * Delete obsolete fblc/ and fbld/ code and TODOs.
 
@@ -61,6 +61,7 @@ Fble Performance:
 * Only save bits of context that are used, to reduce cost of descope.
 * Make variable stack an array and do direct access rather than walk the chain
   of variables each time.
+* Make eval stacks arrays where possible to avoid allocations for push/pop.
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an

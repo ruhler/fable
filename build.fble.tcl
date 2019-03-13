@@ -30,6 +30,7 @@ set ::fblereftest ./out/fble/fble-ref-test
 run gcc {*}$FLAGS -o $::fbletest out/fble/obj/fble-test.o -L out/fble -lfble
 run gcc {*}$FLAGS -o $::fblereftest out/fble/obj/fble-ref-test.o -L out/fble -lfble
 run gcc {*}$FLAGS -o ./out/fble/fble-snake out/fble/obj/fble-snake.o -L out/fble -lfble -lncurses
+run gcc {*}$FLAGS -o ./out/fble/fble-Snake out/fble/obj/fble-Snake.o -L out/fble -lfble -lncurses
 
 proc fble-test-error-run { tloc loc expr } {
   set line [dict get $tloc line]
@@ -82,6 +83,7 @@ exec mv {*}[glob *.gcov] out/fble/cov/spec
 
 test exec $::fblereftest
 test exec $::fbletest prgms/snake.fble
+test exec $::fbletest prgms/Snake.fble prgms
 test exec $::fbletest prgms/AllTests.fble prgms
 
 exec mkdir -p out/fble/cov/all
