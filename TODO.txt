@@ -1,5 +1,4 @@
 Fble:
-
 * Port rest of fbld tests and programs to fble.
   - Snake v2, Sudoku partial draft, spec test coverage
 
@@ -56,7 +55,12 @@ Fble Cleanup:
   defining + vs. *, and it contains substituted polymorphic type variables.
 
 Fble Performance:
-* Optimize reference counting scheme.
+* Fast path common case in FbleRefRelease
+  - Reduces md5 time from 1m50s down to 1m25s.
+* Flatten nested compound instructions.
+* Only save bits of context that are used, to reduce cost of descope.
+* Make variable stack an array and do direct access rather than walk the chain
+  of variables each time.
 
 Fbld 4 Spec:
 * Clarify in spec that alias acts as another way to define the body of an
