@@ -1,8 +1,11 @@
 Fble:
 * Port rest of fbld tests and programs to fble.
-  - Sudoku partial draft, spec test coverage
-
-* Delete obsolete fblc/ and fbld/ code and TODOs.
+  - Sudoku partial draft
+  - fblc spec test coverage
+  - fbld spec test coverage
+  - tictactoe
+  - fbld-md5 program
+  - any other remainin fblc, fbld things.
 
 * Fix 8.3-07
  - debugging: S<T> ==> S'<T'>
@@ -22,6 +25,7 @@ Fble:
 
 
 * Go from there.
+  - Fix performance issues for md5 tests
   - Switch to testing approach better aligned with what fble supports.
     Try making use of monadic bind syntax?
   - figure out what you can do with types versus expressions.
@@ -53,111 +57,29 @@ Fble Cleanup:
   ought to happen.
 * Better error message when the difference between a type is accidentally
   defining + vs. *, and it contains substituted polymorphic type variables.
+* Use consistent style for error messages. Capitalize? Punctuate?
 
 Fble Performance:
 * Fast path common case in FbleRefRelease
-  - Reduces md5 time from 1m50s down to 1m25s.
+  - Reduces md5 time from 1m50s down to 1m25s, but maybe find a more general
+    optimization for refs.
 * Flatten nested compound instructions.
 * Only save bits of context that are used, to reduce cost of descope.
 * Make variable stack an array and do direct access rather than walk the chain
   of variables each time.
 * Make eval stacks arrays where possible to avoid allocations for push/pop.
 
-Fbld 4 Spec:
-* Clarify in spec that alias acts as another way to define the body of an
-  entity, it doesn't effect the use of that entity.
-* Update syntax reference in spec for aliases.
-* Clarify in spec what is allowed in terms of recursion through static params.
-  For example, presumably we can't do something like:
-    struct Foo<struct Bar(Foo x)>(Bar y);
-* Clarify in spec what is allowed in terms of recursion through imports.
-  Example: import A { A; };
-* Add support for specifying interfaces in different files?
-
-Fbld 4 Test:
-* Increase test coverage for spec.
-* Test 3.4-00 and 3.4-01 variants where the alias pre-applies some static
-  parameters.
-* Test alias visible access and invisible access.
-* Test that alias protos and qrefs are checked.
-* Test that alias qref matches its proto.
-* Add variety of tests for using "private" entity in "public" interface
-  Where private and public depend on the context.
-  For example, public function in private module refers to private entity at
-  the same level as the module should be okay.
-* Test that a public interf cannot refer to a private entity.
-* Test that a public module (header?) cannot refer to a private entity.
-* Reorganize tests for module vs. interface protos
- - By decl type and sub-error within it. And better name them.
- - And change the location to be the module decl name.
- - And print the actual and expected prototypes in the message.
-* Test that you can use a function foo<type A>(A x) where function
-  foo<type B>(B x) is expected.
-* Test that a function foo(A x ; B) can be used where a function foo(A y ; B)
-  is expected, both as static param and interf entity implementation.
-* Switch to DebugMallocArena for fbld-test
-  - Will requiring fixing all the crazy memory leaks in parser and checker.
-* Can you output abstract or private types in fbld-test?
-* Add tests for all possible mismatches of
-    * struct proto vs func, proc, interf, module
-    * union, func, proc, interf, module proto
-      vs type, struct, union, func proc, interf, module
-* Add a test for inner module definition with following declaration.
-* Add test for importing a polymorphic declaration.
-* Test case when abstract type is used as select for conditional.
-* Test that all imported names exist in the module they are imported from.
-* Test that we don't print error messages for "failed to load top level
-  declaration Blah" multiple times.
-* Test that we don't print error messages for "Foo not defined" multiple
-  times, even if we use Foo multiple times without it being defined?
-* Test interf matches between interf and module.
-* Test module matches between interf and module.
-* Reach full test coverage.
-* Warn for unused imports?
-
-Fbld Cleanup:
-* Move contents of program.c into name.c. Maybe call it qref.c?
-* Define and use UNREACHABLE everywhere appropriate.
-* Make it more clear in error messages when a module decl doesn't match its
-  interf decl that that's why we expected something different.
-* Make sure the Side Effects description of the Check functions say that r
-  states are resolved.
-* General code cleanup.
-* Re-organize parse.y to match order in fbld.h.
-* Figure out how to deal with allocations in fbld check and compile, and maybe
-  how to reuse allocations rather than allocating duplicates of things.
-* Review all documentation and other things for consistency.
-* Document that parse returns FBLC_NULL_ID for field ids and check fills in
-  field ids.
-* Update comments on FbldCompile functions to clarify assumptions about the
-  input program, namely that entity modules have already been resolved.
-* Update comments on FbldCheck functions to clarify that module names are
-  resolved as a side effect.
-* Don't allocate and leak FbldLocs like crazy in the lexer/parser.
-* Cleanup fbld types to have less pointers - don't include an indirection just
-  because it makes parsing easier. Copy values in parser as needed instead.
-   1. Switch uses of FbldName* to FbldName.
-* Use consistent style for error messages. Capitalize? Punctuate?
-
-Fbld Lib:
+Fble Lib:
 * Should Eq just be a function or an interface?
 * Write Test library.
 
-Fbld App Ideas:
+Fble App Ideas:
 * compress/deflate
 * snake - text based and graphics
 * tictactoe - text based and graphics
 * space invaders
 * scrabble crush
 * 2d minigolf
-
-General Cleanup:
- - Rename FBLC_ALLOC FblcAlloc to be more consistent?
- - Verify all document comments are present and up to date.
- - Document allocations for every function that takes an FblcArena,
-   specifically, what the caller should do to free all allocations.
- - Increase test code coverage as much as reasonably possible.
- - Put vector type definitions after their corresponding element definitions.
 
 Space Invaders:
 * Render objects - how to test?
@@ -168,19 +90,12 @@ Space Invaders:
 * Pseudo-random bullet attack, UFO - how to test?
 * Collision detection
 
-
-Fbld Snake:
+Snake:
 * Make food appear randomly instead of at the tail.
 * Speed up the snake every time it eats something.
 * Test and fix bug when snake eats its tail.
 * Ignore moves that aren't orthogonal to current snake direction.
 * Keep track of and report score.
-
-Fblc Performance:
-* Avoid repeatedly constructing ExprCmds and other commands.
-  - Perhaps compile functions to some sort of intermediate representation
-    suitable for direct execution ahead of time, rather than repeatedly on the
-    fly?
 
 Miscellaneous:
 * Track down memory-leak like behavior in fbld-md5
@@ -194,22 +109,8 @@ Miscellaneous:
 * Test that tail recursive functions and procedures don't smash the stack.
   - And document the performance model which says tail recursive functions
     should not smash the stack.
-* Test what happens when we try to access the wrong field of a union.
 
-* Better document that for binary encodings of values, the top level value is
-  guaranteed to take at least one bytes, regardless of whether or not it is
-  part of a stream.
-
-* Change fblc-check-error and friends to take the program last, and switch to
-  a style where an anonymous program is passed rather than setting a $prg
-  variable?
-
-* Test writing a stream of Units
- - which requires some alignment be done.
-
-* Test that error messages don't contain garbled characters.
-
-* Write man pages for fblc and friends?
+* Write man pages for fble and friends?
 
 * Rethink arenas and documentation, because some cases appear to assume you
   have a bulk-free arena. Other cases its not well specified what is freed
@@ -247,11 +148,11 @@ Future:
   and we can pipeline or duplicate the blocks to allow for even more
   parallelism.
 
-* Implement an fblc debugger. Where at minimum you can trace through source
+* Implement an fble debugger. Where at minimum you can trace through source
   locations as the program executes. Maybe we want fancy stuff like viewing
   variables, breakpoints, setting values, etc... but mostly to start tracing
   through source locations.
 
-* Implement fblc code coverage tool. Input is a program to run. Output is a
+* Implement fble code coverage tool. Input is a program to run. Output is a
   list of error messages for each line of code not exercise by the program?
 

@@ -1,5 +1,0 @@
-
-import @ { StdLib; Bits; };
-
-module Md5;
-module Test;
