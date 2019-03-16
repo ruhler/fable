@@ -1,5 +1,7 @@
 Fble:
+* [perf] fix perf issues for AllTests.
 * [lang] Switch to new proposed function syntax.
+* [lang] work out what you can do with types vs. exprs.
 
 * [test] Port rest of fbld tests and programs to fble.
   - Sudoku partial draft
@@ -24,13 +26,6 @@ Fble:
     definition of a type, or the same occurrence. So, either use the location
     information to test if they are the same, or keep some token that is
     preserved across substitution and use that to detect if they are the same.
-
-* Go from there.
-  - Fix performance issues for md5 tests
-  - Switch to testing approach better aligned with what fble supports.
-    Try making use of monadic bind syntax?
-  - figure out what you can do with types versus expressions.
-  - Finish the sudoku program
 
 Fble Cleanup:
 * Better error messages on types that have the same name but different values.
@@ -60,11 +55,10 @@ Fble Cleanup:
 * Use consistent style for error messages. Capitalize? Punctuate?
 
 Fble Performance:
-* Flatten nested compound instructions.
-* Only save bits of context that are used, to reduce cost of descope.
-* Make variable stack an array and do direct access rather than walk the chain
-  of variables each time.
-* Make eval stacks arrays where possible to avoid allocations for push/pop.
+* Don't push individual instructions on stack for compound instructions.
+  - Process the instructions as a group, either of basic blocks or function
+    calls.
+* Only save bits of function context that are used.
 
 Fble Lib:
 * Should Eq just be a function or an interface?
