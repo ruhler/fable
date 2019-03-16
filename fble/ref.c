@@ -33,7 +33,7 @@ static void AddToVector(AddToVectorCallback* add, FbleRef* ref);
 static bool Contains(FbleRefV* refs, FbleRef* ref);
 
 static FbleRef* CycleHead(FbleRef* ref);
-static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs);
+static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref);
 static void CycleFree(FbleRefArena* arena, FbleRef* ref);
 
 // AddToVector --
@@ -100,16 +100,16 @@ static FbleRef* CycleHead(FbleRef* ref)
 //
 // Inputs:
 //   arena - the reference arena.
+//   add - callback to call for each reference.
 //   ref - the reference to get the list of added for.
-//   refs - output vector to append the added references to.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   Appends to refs the cycle head of every reference x that is external to
+//   Calls the add callback on the cycle head of every reference x that is external to
 //   the cycle but reachable by direct reference from a node in the cycle.
-static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
+static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
 {
   assert(ref->cycle == NULL);
 
@@ -133,6 +133,9 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
     };
     arena->added(&callback._base, r);
     for (size_t i = 0; i < children.size; ++i) {
+      // TODO: Move this loop body into a callback that is called by
+      // arena->added rather than take the two step process of getting a
+      // vector of refs and then processing each ref.
       FbleRef* child = children.xs[i];
       if (child == ref || CycleHead(child) == ref) {
         if (child != ref && !Contains(&visited, child)) {
@@ -140,7 +143,7 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs)
           FbleVectorAppend(arena->arena, stack, child);
         }
       } else {
-        FbleVectorAppend(arena->arena, *refs, CycleHead(child));
+        add->callback(add, CycleHead(child));
       }
     }
 
@@ -248,27 +251,56 @@ void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
   ref->refcount++;
 }
 
+typedef struct {
+  FbleRefCallback _base;
+  FbleArena* arena;
+  FbleRefV* refs;
+} RefReleaseCallback;
+
+// RefRelease --
+//   Callback function to decrement the refcount of a ref and add it to the
+//   list of refs if the refcount has gone to zero.
+static void RefRelease(RefReleaseCallback* data, FbleRef* ref)
+{
+  assert(ref->cycle == NULL);
+  assert(ref->refcount > 0);
+  ref->refcount--;
+  if (ref->refcount == 0) {
+    FbleVectorAppend(data->arena, *data->refs, ref);
+  }
+}
+
 // FbleRefRelease -- see documentation in fble-ref.h
 void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 {
-  FbleRefV refs;
-  FbleVectorInit(arena->arena, refs);
-  FbleVectorAppend(arena->arena, refs, CycleHead(ref));
+  ref = CycleHead(ref);
+  assert(ref->cycle == NULL);
+  assert(ref->refcount > 0);
+  ref->refcount--;
 
-  while (refs.size > 0) {
-    FbleRef* r = refs.xs[--refs.size];
-    assert(r->cycle == NULL);
-    assert(r->refcount > 0);
-    r->refcount--;
-    if (r->refcount == 0) {
+  if (ref->refcount == 0) {
+    FbleRefV refs;
+    FbleVectorInit(arena->arena, refs);
+    FbleVectorAppend(arena->arena, refs, ref);
+
+    while (refs.size > 0) {
+      FbleRef* r = refs.xs[--refs.size];
+      assert(r->refcount == 0);
+
+      RefReleaseCallback callback = {
+        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefRelease },
+        .arena = arena->arena,
+        .refs = &refs
+      };
+
       // TODO: Inline CycleAdded, CycleFree into a single iteration, rather
       // than iterating over the cycles twice here?
-      CycleAdded(arena, r, &refs);
+      CycleAdded(arena, &callback._base, r);
       CycleFree(arena, r);
     }
-  }
 
-  FbleFree(arena->arena, refs.xs);
+    FbleFree(arena->arena, refs.xs);
+  }
 }
 
 // FbleRefAdd -- see documentation in fble-ref.h
@@ -319,7 +351,12 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
-    CycleAdded(arena, ref, &children);
+    AddToVectorCallback callback = {
+      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddToVector },
+      .arena = arena->arena,
+      .refs = &children
+    };
+    CycleAdded(arena, &callback._base, ref);
 
     for (size_t i = 0; i < children.size; ++i) {
       FbleRef* child = children.xs[i];
@@ -394,7 +431,12 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
       FbleRefV children;
       FbleVectorInit(arena->arena, children);
-      CycleAdded(arena, ref, &children);
+      AddToVectorCallback callback = {
+        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddToVector },
+        .arena = arena->arena,
+        .refs = &children
+      };
+      CycleAdded(arena, &callback._base, ref);
 
       // TODO: Figure out a more efficient way to check if a child is in the
       // cycle.
