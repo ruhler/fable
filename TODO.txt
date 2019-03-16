@@ -1,6 +1,4 @@
 Fble:
-* [perf] Change 'added' interface to ref to take a function to output rather than add
-  to a vector.
 * [perf] Don't allocate in ref release if refcount is greater than 1.
 * [lang] Switch to new proposed function syntax.
 

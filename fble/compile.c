@@ -222,8 +222,8 @@ static Type* TypeRetain(TypeArena* arena, Type* type);
 static void TypeRelease(TypeArena* arena, Type* type);
 
 static void TypeFree(TypeArena* arena, FbleRef* ref);
-static void Add(TypeArena* arena, FbleRefV* refs, Type* type);
-static void TypeAdded(TypeArena* arena, FbleRef* ref, FbleRefV* refs);
+static void Add(FbleRefCallback* add, Type* type);
+static void TypeAdded(FbleRefCallback* add, FbleRef* ref);
 
 static Kind* GetKind(FbleArena* arena, Type* type);
 static bool HasParams(Type* type, TypeV params, TypeList* visited);
@@ -409,35 +409,34 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
 //   Helper function for adding types to a vector of refs.
 //
 // Inputs:
-//   arena - the type arena
-//   refs - vector of refs to append to
-//   type - the type to append.
+//   add - the add callback.
+//   type - the type to add.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   If type is not null, it is appended to the list of refs.
-static void Add(TypeArena* arena, FbleRefV* refs, Type* type)
+//   If type is not null, the add callback is called on it.
+static void Add(FbleRefCallback* add, Type* type)
 {
   if (type != NULL) {
-    FbleVectorAppend(FbleRefArenaArena(arena), *refs, &type->ref);
+    add->callback(add, &type->ref);
   }
 }
 
 // TypeAdded --
 //   The added function for types. See documentation in fble-ref.h
-static void TypeAdded(TypeArena* arena, FbleRef* ref, FbleRefV* refs)
+static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
 {
   Type* type = (Type*)ref;
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
       for (size_t i = 0; i < st->type_fields.size; ++i) {
-        Add(arena, refs, st->type_fields.xs[i].type);
+        Add(add, st->type_fields.xs[i].type);
       }
       for (size_t i = 0; i < st->fields.size; ++i) {
-        Add(arena, refs, st->fields.xs[i].type);
+        Add(add, st->fields.xs[i].type);
       }
       break;
     }
@@ -445,7 +444,7 @@ static void TypeAdded(TypeArena* arena, FbleRef* ref, FbleRefV* refs)
     case UNION_TYPE: {
       UnionType* ut = (UnionType*)type;
       for (size_t i = 0; i < ut->fields.size; ++i) {
-        Add(arena, refs, ut->fields.xs[i].type);
+        Add(add, ut->fields.xs[i].type);
       }
       break;
     }
@@ -453,33 +452,33 @@ static void TypeAdded(TypeArena* arena, FbleRef* ref, FbleRefV* refs)
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        Add(arena, refs, ft->args.xs[i].type);
+        Add(add, ft->args.xs[i].type);
       }
-      Add(arena, refs, ft->rtype);
+      Add(add, ft->rtype);
       break;
     }
 
     case PROC_TYPE: {
       ProcType* pt = (ProcType*)type;
-      Add(arena, refs, pt->rtype);
+      Add(add, pt->rtype);
       break;
     }
 
     case INPUT_TYPE: {
       InputType* t = (InputType*)type;
-      Add(arena, refs, t->rtype);
+      Add(add, t->rtype);
       break;
     }
 
     case OUTPUT_TYPE: {
       OutputType* t = (OutputType*)type;
-      Add(arena, refs, t->rtype);
+      Add(add, t->rtype);
       break;
     }
 
     case VAR_TYPE: {
       VarType* var = (VarType*)type;
-      Add(arena, refs, var->value);
+      Add(add, var->value);
       break;
     }
 
@@ -490,25 +489,25 @@ static void TypeAdded(TypeArena* arena, FbleRef* ref, FbleRefV* refs)
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
       for (size_t i = 0; i < pt->args.size; ++i) {
-        Add(arena, refs, pt->args.xs[i]);
+        Add(add, pt->args.xs[i]);
       }
-      Add(arena, refs, pt->body);
+      Add(add, pt->body);
       break;
     }
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
-      Add(arena, refs, pat->poly);
+      Add(add, pat->poly);
       for (size_t i = 0; i < pat->args.size; ++i) {
-        Add(arena, refs, pat->args.xs[i]);
+        Add(add, pat->args.xs[i]);
       }
-      Add(arena, refs, pat->result);
+      Add(add, pat->result);
       break;
     }
 
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
-      Add(arena, refs, ref->value);
+      Add(add, ref->value);
       break;
     }
   }

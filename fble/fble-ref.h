@@ -33,6 +33,12 @@ typedef struct {
 //   An arena used for allocating automatically memory managed allocations.
 typedef struct FbleRefArena FbleRefArena;
 
+// FbleRefCallback --
+//   A call back function used for communicating information about references.
+typedef struct FbleRefCallback {
+  void (*callback)(struct FbleRefCallback* this, FbleRef* ref);
+} FbleRefCallback;
+
 // FbleNewRefArena --
 //   Create a new reference arena.
 //
@@ -57,15 +63,14 @@ typedef struct FbleRefArena FbleRefArena;
 //       Return the list of references that have been added to the given ref.
 //    
 //     Inputs:
-//       arena - the reference arena.
+//       add - callback to call for each added reference.
 //       ref - the reference to get the list of added for.
-//       refs - output vector to append the added references to.
 //    
 //     Results:
 //       None.
 //    
 //     Side effects:
-//       Appends to refs every reference x for which FbleRefAdd(arena, ref, x)
+//       Calls add for every reference x for which FbleRefAdd(arena, ref, x)
 //       has been called.
 //
 //  Results:
@@ -77,7 +82,7 @@ typedef struct FbleRefArena FbleRefArena;
 FbleRefArena* FbleNewRefArena(
     FbleArena* arena, 
     void (*free)(FbleRefArena* arena, FbleRef* ref),
-    void (*added)(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs));
+    void (*added)(FbleRefCallback* add, FbleRef* ref));
 
 // FbleDeleteRefArena --
 //   Delete a reference arena no longer in use.

@@ -33,10 +33,10 @@ static bool Alive(Ref* ref)
   return ref->alive == 0XA11BE;
 }
 
-static void Added(FbleRefArena* arena, FbleRef* ref, FbleRefV* refs) {
+static void Added(FbleRefCallback* add, FbleRef* ref) {
   Ref* r = (Ref*)ref;
   for (size_t i = 0; i < r->added.size; ++i) {
-    FbleVectorAppend(FbleRefArenaArena(arena), *refs, r->added.xs[i]);
+    add->callback(add, r->added.xs[i]);
   }
 }
 

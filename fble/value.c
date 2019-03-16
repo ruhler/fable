@@ -9,8 +9,8 @@
 #define UNREACHABLE(x) assert(false && x)
 
 static void ValueFree(FbleValueArena* arena, FbleRef* ref);
-static void Add(FbleValueArena* arena, FbleRefV* refs, FbleValue* value);
-static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs);
+static void Add(FbleRefCallback* add, FbleValue* value);
+static void ValueAdded(FbleRefCallback* add, FbleRef* ref);
 
 
 // FbleNewValueArena -- see documentation in fble-.h
@@ -143,43 +143,42 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
 }
 
 // Add --
-//   Helper function for implementing ValueAdded. Add the value to the given
-//   list of refs if the value is not null.
+//   Helper function for implementing ValueAdded. Call the add callback
+//   if the value is not null.
 //
 // Inputs:
-//   arena - the value arena
-//   refs - vector of refs to add the value to
-//   value - the value to add
+//   add - the ref callback.
+//   value - the value to add.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   If value is non-null, add it to the list of refs.
-static void Add(FbleValueArena* arena, FbleRefV* refs, FbleValue* value)
+//   If value is non-null, the add callback is called for it.
+static void Add(FbleRefCallback* add, FbleValue* value)
 {
   if (value != NULL) {
-    FbleVectorAppend(FbleRefArenaArena(arena), *refs, &value->ref);
+    add->callback(add, &value->ref);
   }
 }
 
 // ValueAdded --
 //   The 'added' function for values. See documentation in fble-ref.h
-static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs)
+static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
 {
   FbleValue* value = (FbleValue*)ref;
   switch (value->tag) {
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
       for (size_t i = 0; i < sv->fields.size; ++i) {
-        Add(arena, refs, sv->fields.xs[i]);
+        Add(add, sv->fields.xs[i]);
       }
       break;
     }
 
     case FBLE_UNION_VALUE: {
       FbleUnionValue* uv = (FbleUnionValue*)value;
-      Add(arena, refs, uv->arg);
+      Add(add, uv->arg);
       break;
     }
 
@@ -187,7 +186,7 @@ static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs)
       FbleFuncValue* fv = (FbleFuncValue*)value;
       FbleVStack* vs = fv->context;
       while (vs != NULL) {
-        Add(arena, refs, vs->value);
+        Add(add, vs->value);
         vs = vs->tail;
       }
       break;
@@ -198,27 +197,27 @@ static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs)
       switch (pv->tag) {
         case FBLE_GET_PROC_VALUE: {
           FbleGetProcValue* get = (FbleGetProcValue*)value;
-          Add(arena, refs, get->port);
+          Add(add, get->port);
           break;
         }
 
         case FBLE_PUT_PROC_VALUE: {
           FblePutProcValue* put = (FblePutProcValue*)value;
-          Add(arena, refs, put->port);
-          Add(arena, refs, put->arg);
+          Add(add, put->port);
+          Add(add, put->arg);
           break;
         }
 
         case FBLE_EVAL_PROC_VALUE: {
           FbleEvalProcValue* eval = (FbleEvalProcValue*)value;
-          Add(arena, refs, eval->result);
+          Add(add, eval->result);
           break;
         }
 
         case FBLE_LINK_PROC_VALUE: {
           FbleLinkProcValue* v = (FbleLinkProcValue*)value;
           for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
-            Add(arena, refs, vs->value);
+            Add(add, vs->value);
           }
           break;
         }
@@ -226,10 +225,10 @@ static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs)
         case FBLE_EXEC_PROC_VALUE: {
           FbleExecProcValue* v = (FbleExecProcValue*)value;
           for (size_t i = 0; i < v->bindings.size; ++i) {
-            Add(arena, refs, v->bindings.xs[i]);
+            Add(add, v->bindings.xs[i]);
           }
           for (FbleVStack* vs = v->context; vs != NULL; vs = vs->tail) {
-            Add(arena, refs, vs->value);
+            Add(add, vs->value);
           }
           break;
         }
@@ -240,14 +239,14 @@ static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs)
     case FBLE_INPUT_VALUE: {
       FbleInputValue* v = (FbleInputValue*)value;
       for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
-        Add(arena, refs, elem->value);
+        Add(add, elem->value);
       }
       break;
     }
 
     case FBLE_OUTPUT_VALUE: {
       FbleOutputValue* v = (FbleOutputValue*)value;
-      Add(arena, refs, &v->dest->_base);
+      Add(add, &v->dest->_base);
       break;
     }
 
@@ -257,7 +256,7 @@ static void ValueAdded(FbleValueArena* arena, FbleRef* ref, FbleRefV* refs)
 
     case FBLE_REF_VALUE: {
       FbleRefValue* rv = (FbleRefValue*)value;
-      Add(arena, refs, rv->value);
+      Add(add, rv->value);
       break;
     }
   }
