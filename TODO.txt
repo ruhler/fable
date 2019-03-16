@@ -1,13 +1,18 @@
 Fble:
-* Port rest of fbld tests and programs to fble.
+* [perf] Change 'added' interface to ref to take a function to output rather than add
+  to a vector.
+* [perf] Don't allocate in ref release if refcount is greater than 1.
+* [lang] Switch to new proposed function syntax.
+
+* [test] Port rest of fbld tests and programs to fble.
   - Sudoku partial draft
   - fblc spec test coverage
   - fbld spec test coverage
   - tictactoe
   - fbld-md5 program
-  - any other remainin fblc, fbld things.
+  - any other remaining fblc, fbld things.
 
-* Fix 8.3-07
+* [test] Fix 8.3-07
  - debugging: S<T> ==> S'<T'>
     Eval S'<T'>, but we know Normal(S) == Normal(S') and T == T', so rather
     than do the substitution S'<T'>, we say it is just the same as what S<T>
@@ -23,13 +28,11 @@ Fble:
     information to test if they are the same, or keep some token that is
     preserved across substitution and use that to detect if they are the same.
 
-
 * Go from there.
   - Fix performance issues for md5 tests
   - Switch to testing approach better aligned with what fble supports.
     Try making use of monadic bind syntax?
   - figure out what you can do with types versus expressions.
-  - figure out partial function application.
   - Finish the sudoku program
 
 Fble Cleanup:
@@ -60,9 +63,11 @@ Fble Cleanup:
 * Use consistent style for error messages. Capitalize? Punctuate?
 
 Fble Performance:
+* A more efficient alloc/free allocator
+  - Potential to reduce 1m50s down to 1m25s, as seen when switching to pure
+    malloc/free.
 * Fast path common case in FbleRefRelease
-  - Reduces md5 time from 1m50s down to 1m25s, but maybe find a more general
-    optimization for refs.
+  - Potential to reduce from 1m50s down to 1m25s.
 * Flatten nested compound instructions.
 * Only save bits of context that are used, to reduce cost of descope.
 * Make variable stack an array and do direct access rather than walk the chain

@@ -912,7 +912,7 @@ Notes:
   expressions? Maybe combine type and expr let into a single thing where you
   can mix both type and expr bindings?
 
-* Should we all type field access on struct type in addition to its value?
+* Should we allow type field access on struct type in addition to its value?
   It seems like a good thing to have generally speaking, but I don't know when
   you would actually use it. Similar to previous thought on whether we should
   have a type let type.
@@ -933,8 +933,11 @@ Notes:
   Append<@ T@>(S@<T@> a, S@<T@> b; S@<T@>) {
     ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
   };
+  
+  Note proposal in fble.revised.txt helps a little.
 
 * Need to figure out better support for partial application of functions.
+  See proposal in fble.revised.txt.
 
 * Vague concern: will fble support static evaluation / compilation to
   hardware? Is it bad to support structs and links that can hold functions and
