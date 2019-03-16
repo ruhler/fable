@@ -95,6 +95,33 @@ static FbleRef* CycleHead(FbleRef* ref)
   return ref;
 }
 
+// CycleAddedChildCallback --
+//   Callback used in the implementation of CycleAdded.
+typedef struct {
+  FbleRefCallback _base;
+  FbleArena* arena;
+  FbleRef* ref;
+  FbleRefV* visited;
+  FbleRefV* stack;
+  FbleRefCallback* add;
+} CycleAddedChildCallback;
+
+// CycleAddedChild --
+//   Called for each child visited in a cycle. If the child is internal, adds
+//   it to the stack to process. Otherwise calls the 'add' callback on the
+//   child's cycle head.
+static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
+{
+  if (child == data->ref || CycleHead(child) == data->ref) {
+    if (child != data->ref && !Contains(data->visited, child)) {
+      FbleVectorAppend(data->arena, *data->visited, child);
+      FbleVectorAppend(data->arena, *data->stack, child);
+    }
+  } else {
+    data->add->callback(data->add, CycleHead(child));
+  }
+}
+
 // CycleAdded --
 //   Get the list of added nodes for a cycle.
 //
@@ -120,35 +147,19 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
   FbleVectorInit(arena->arena, stack);
   FbleVectorAppend(arena->arena, stack, ref);
 
+  CycleAddedChildCallback callback = {
+    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleAddedChild },
+    .arena = arena->arena,
+    .ref = ref,
+    .visited = &visited,
+    .stack = &stack,
+    .add = add
+  };
+
   while (stack.size > 0) {
-    FbleRef* r = stack.xs[--stack.size];
-
-    FbleRefV children;
-    FbleVectorInit(arena->arena, children);
-
-    AddToVectorCallback callback = {
-      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddToVector },
-      .arena = arena->arena,
-      .refs = &children
-    };
-    arena->added(&callback._base, r);
-    for (size_t i = 0; i < children.size; ++i) {
-      // TODO: Move this loop body into a callback that is called by
-      // arena->added rather than take the two step process of getting a
-      // vector of refs and then processing each ref.
-      FbleRef* child = children.xs[i];
-      if (child == ref || CycleHead(child) == ref) {
-        if (child != ref && !Contains(&visited, child)) {
-          FbleVectorAppend(arena->arena, visited, child);
-          FbleVectorAppend(arena->arena, stack, child);
-        }
-      } else {
-        add->callback(add, CycleHead(child));
-      }
-    }
-
-    FbleFree(arena->arena, children.xs);
+    arena->added(&callback._base, stack.xs[--stack.size]);
   }
+
   FbleFree(arena->arena, visited.xs);
   FbleFree(arena->arena, stack.xs);
 }
