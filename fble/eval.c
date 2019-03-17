@@ -234,15 +234,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
     thread->istack = IPop(arena_, thread->istack);
 
     switch (instr->tag) {
-      case FBLE_COMPOUND_INSTR: {
-        FbleCompoundInstr* compound_instr = (FbleCompoundInstr*)instr;
-        for (size_t i = 0; i < compound_instr->instrs.size; ++i) {
-          size_t j = compound_instr->instrs.size - 1 - i;
-          thread->istack = IPush(arena_, compound_instr->instrs.xs[j], thread->istack);
-        }
-        break;
-      }
-
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_value_instr->argc;

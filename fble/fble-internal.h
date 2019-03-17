@@ -10,7 +10,6 @@
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
-  FBLE_COMPOUND_INSTR,
   FBLE_STRUCT_VALUE_INSTR,
   FBLE_UNION_VALUE_INSTR,
   FBLE_STRUCT_ACCESS_INSTR,
@@ -52,16 +51,6 @@ typedef struct {
   size_t refcount;
   FbleInstrV instrs;
 } FbleInstrBlock;
-
-// FbleCompoundInstr -- FBLE_COMPOUND_INSTR
-//   Execute a sequence of instructions in order.
-//
-// istack: ...
-//     ==> ..., iN, ..., i2, i1
-typedef struct {
-  FbleInstr _base;
-  FbleInstrV instrs;
-} FbleCompoundInstr;
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.

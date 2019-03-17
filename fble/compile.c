@@ -1633,16 +1633,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleFree(arena, instr);
       return;
     }
-
-    case FBLE_COMPOUND_INSTR: {
-      FbleCompoundInstr* compound_instr = (FbleCompoundInstr*)instr;
-      for (size_t i = 0; i < compound_instr->instrs.size; ++i) {
-        FreeInstr(arena, compound_instr->instrs.xs[i]);
-      }
-      FbleFree(arena, compound_instr->instrs.xs);
-      FbleFree(arena, instr);
-      return;
-    }
   }
 
   UNREACHABLE("invalid instruction");
