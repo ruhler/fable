@@ -237,7 +237,7 @@ static void PrintKind(Kind* type);
 
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 
-static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstr** instrs);
+static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstrV* instrs);
 static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
 
@@ -1656,17 +1656,19 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 //   vars - the list of variables in scope.
 //   type_vars - the value of type variables in scope.
 //   expr - the expression to compile.
-//   instrs - output pointer to store generated in structions
+//   instrs - vector of instructions to append new instructions to.
 //
 // Results:
 //   The type of the expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-//   Sets instrs to point to the compiled instructions if the expression is
-//   well typed. Prints a message to stderr if the expression fails to compile.
+//   Appends instructions to 'instrs' for executing the given expression.
+//   There is no gaurentee about what instructions have been appended to
+//   'instrs' if the expression fails to compile.
+//   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   TypeRelease when it is no longer needed.
-static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstr** instrs)
+static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstrV* instrs)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (expr->tag) {
@@ -1696,15 +1698,10 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       }
 
       bool error = false;
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         Field* field = struct_type->fields.xs + i;
 
-        FbleInstr* mkarg = NULL;
-        Type* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], &mkarg);
+        Type* arg_type = Compile(arena, vars, type_vars, struct_value_expr->args.xs[i], instrs);
         Eval(arena, arg_type, NULL, NULL);
         error = error || (arg_type == NULL);
 
@@ -1717,22 +1714,17 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           error = true;
         }
         TypeRelease(arena, arg_type);
-
-        FbleVectorAppend(arena_, instr->instrs, mkarg);
       }
 
       if (error) {
         TypeRelease(arena, type);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
       FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->argc = struct_type->fields.size;
-      FbleVectorAppend(arena_, instr->instrs, &struct_instr->_base);
-
-      *instrs = &instr->_base;
+      FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
       return type;
     }
 
@@ -1767,14 +1759,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         }
       }
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
       for (size_t i = 0; i < struct_expr->args.size; ++i) {
         FbleChoice* choice = struct_expr->args.xs + i;
-        FbleInstr* mkarg = NULL;
-        Type* arg_type = Compile(arena, vars, type_vars, choice->expr, &mkarg);
+        Type* arg_type = Compile(arena, vars, type_vars, choice->expr, instrs);
         Eval(arena, arg_type, NULL, NULL);
         error = error || (arg_type == NULL);
 
@@ -1792,22 +1779,17 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             FbleReportError("duplicate field name '%s'\n", &choice->name.loc, struct_expr->args.xs[j].name.name);
           }
         }
-
-        FbleVectorAppend(arena_, instr->instrs, mkarg);
       }
 
       if (error) {
         TypeRelease(arena, &struct_type->_base);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
       FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->argc = struct_expr->args.size;
-      FbleVectorAppend(arena_, instr->instrs, &struct_instr->_base);
-
-      *instrs = &instr->_base;
+      FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
       return &struct_type->_base;
     }
 
@@ -1847,8 +1829,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      FbleInstr* mkarg = NULL;
-      Type* arg_type = Compile(arena, vars, type_vars, union_value_expr->arg, &mkarg);
+      Type* arg_type = Compile(arena, vars, type_vars, union_value_expr->arg, instrs);
       Eval(arena, arg_type, NULL, NULL);
       if (arg_type == NULL) {
         TypeRelease(arena, type);
@@ -1861,48 +1842,32 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, ", but found type ");
         PrintType(arena_, arg_type);
         fprintf(stderr, "\n");
-        FreeInstr(arena_, mkarg);
         TypeRelease(arena, type);
         TypeRelease(arena, arg_type);
         return NULL;
       }
       TypeRelease(arena, arg_type);
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-      FbleVectorAppend(arena_, instr->instrs, mkarg);
-
       FbleUnionValueInstr* union_instr = FbleAlloc(arena_, FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->tag = tag;
-      FbleVectorAppend(arena_, instr->instrs, &union_instr->_base);
-
-      *instrs = &instr->_base;
+      FbleVectorAppend(arena_, *instrs, &union_instr->_base);
       return type;
     }
 
     case FBLE_ACCESS_EXPR: {
       FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
-      FbleInstr* mkobj = NULL;
-      Type* type = Compile(arena, vars, type_vars, access_expr->object, &mkobj);
+      Type* type = Compile(arena, vars, type_vars, access_expr->object, instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
-
-      FbleVectorAppend(arena_, instr->instrs, mkobj);
 
       FbleAccessInstr* access = FbleAlloc(arena_, FbleAccessInstr);
       access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
       access->loc = access_expr->field.loc;
-      FbleVectorAppend(arena_, instr->instrs, &access->_base);
+      FbleVectorAppend(arena_, *instrs, &access->_base);
 
       Type* normal = Normal(type);
       FieldV* fields = NULL;
@@ -1918,14 +1883,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, "\n");
 
         TypeRelease(arena, type);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name.name)) {
           access->tag = i;
-          *instrs = &instr->_base;
           Type* rtype = TypeRetain(arena, fields->xs[i].type);
           TypeRelease(arena, type);
           return rtype;
@@ -1936,46 +1899,36 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       PrintType(arena_, type);
       fprintf(stderr, "\n");
       TypeRelease(arena, type);
-      FreeInstr(arena_, &instr->_base);
       return NULL;
     }
 
     case FBLE_COND_EXPR: {
       FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
-      FbleInstr* mkobj = NULL;
-      Type* type = Compile(arena, vars, type_vars, cond_expr->condition, &mkobj);
+      Type* type = Compile(arena, vars, type_vars, cond_expr->condition, instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
-      FbleVectorAppend(arena_, instr->instrs, mkobj);
 
       UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
         FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
         PrintType(arena_, type);
         fprintf(stderr, "\n");
-        FreeInstr(arena_, &instr->_base);
         TypeRelease(arena, type);
         return NULL;
       }
 
       if (union_type->fields.size != cond_expr->choices.size) {
         FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
-        FreeInstr(arena_, &instr->_base);
         TypeRelease(arena, type);
         return NULL;
       }
 
       FbleCondInstr* cond_instr = FbleAlloc(arena_, FbleCondInstr);
       cond_instr->_base.tag = FBLE_COND_INSTR;
-      FbleVectorAppend(arena_, instr->instrs, &cond_instr->_base);
+      FbleVectorAppend(arena_, *instrs, &cond_instr->_base);
       FbleVectorInit(arena_, cond_instr->choices);
 
       Type* return_type = NULL;
@@ -1985,22 +1938,23 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
               &cond_expr->choices.xs[i].name.loc,
               union_type->fields.xs[i].name.name,
               cond_expr->choices.xs[i].name.name);
-          FreeInstr(arena_, &instr->_base);
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
           return NULL;
         }
 
-        FbleInstr* mkarg = NULL;
-        Type* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &mkarg);
+        FbleCompoundInstr* choice = FbleAlloc(arena_, FbleCompoundInstr);
+        choice->_base.tag = FBLE_COMPOUND_INSTR;
+        FbleVectorInit(arena_, choice->instrs);
+        FbleVectorAppend(arena_, cond_instr->choices, &choice->_base);
+
+        Type* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &choice->instrs);
         Eval(arena, arg_type, NULL, NULL);
         if (arg_type == NULL) {
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
-          FreeInstr(arena_, &instr->_base);
           return NULL;
         }
-        FbleVectorAppend(arena_, cond_instr->choices, mkarg);
 
         if (return_type == NULL) {
           return_type = arg_type;
@@ -2015,15 +1969,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             TypeRelease(arena, type);
             TypeRelease(arena, return_type);
             TypeRelease(arena, arg_type);
-            FreeInstr(arena_, &instr->_base);
             return NULL;
           }
           TypeRelease(arena, arg_type);
         }
       }
       TypeRelease(arena, type);
-
-      *instrs = &instr->_base;
       return return_type;
     }
 
@@ -2064,6 +2015,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleFuncValueInstr* instr = FbleAlloc(arena_, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
 
       instr->contextc = 0;
       for (Vars* v = vars; v != NULL; v = v->next) {
@@ -2080,8 +2032,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->body->instr = &compound->_base;
 
       if (!error) {
-        FbleInstr* body = NULL;
-        type->rtype = Compile(arena, nvars, type_vars, func_value_expr->body, &body);
+        type->rtype = Compile(arena, nvars, type_vars, func_value_expr->body, &compound->instrs);
         if (type->rtype != NULL) {
           FbleRefAdd(arena, &type->_base.ref, &type->rtype->ref);
           TypeRelease(arena, type->rtype);
@@ -2089,8 +2040,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         error = error || (type->rtype == NULL);
 
         if (!error) {
-          FbleVectorAppend(arena_, compound->instrs, body);
-
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
           descope->count = instr->contextc + instr->argc;
@@ -2104,34 +2053,23 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, &type->_base);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
-
-      *instrs = &instr->_base;
       return &type->_base;
     }
 
     case FBLE_APPLY_EXPR: {
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
       // Compile the function value.
-      FbleInstr* mkfunc = NULL;
-      Type* type = Compile(arena, vars, type_vars, apply_expr->func, &mkfunc);
-      FbleVectorAppend(arena_, instr->instrs, mkfunc);
+      Type* type = Compile(arena, vars, type_vars, apply_expr->func, instrs);
       Eval(arena, type, NULL, NULL);
       bool error = (type == NULL);
 
       // Compile the arguments.
       Type* arg_types[apply_expr->args.size];
       for (size_t i = 0; i < apply_expr->args.size; ++i) {
-        FbleInstr* mkarg = NULL;
-        arg_types[i] = Compile(arena, vars, type_vars, apply_expr->args.xs[i], &mkarg);
-        FbleVectorAppend(arena_, instr->instrs, mkarg);
+        arg_types[i] = Compile(arena, vars, type_vars, apply_expr->args.xs[i], instrs);
         Eval(arena, arg_types[i], NULL, NULL);
         error = error || (arg_types[i] == NULL);
       }
@@ -2166,7 +2104,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeRelease(arena, type);
-              FreeInstr(arena_, &instr->_base);
               return NULL;
             }
 
@@ -2174,8 +2111,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
             apply_instr->argc = func_type->args.size;
 
-            FbleVectorAppend(arena_, instr->instrs, &apply_instr->_base);
-            *instrs = &instr->_base;
+            FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
             Type* rtype = TypeRetain(arena, func_type->rtype);
             TypeRelease(arena, type);
             return rtype;
@@ -2196,14 +2132,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeRelease(arena, type);
-              FreeInstr(arena_, &instr->_base);
               return NULL;
             }
 
             FbleGetInstr* get_instr = FbleAlloc(arena_, FbleGetInstr);
             get_instr->_base.tag = FBLE_GET_INSTR;
-            FbleVectorAppend(arena_, instr->instrs, &get_instr->_base);
-            *instrs = &instr->_base;
+            FbleVectorAppend(arena_, *instrs, &get_instr->_base);
 
             ProcType* proc_type = FbleAlloc(arena_, ProcType);
             FbleRefInit(arena, &proc_type->_base.ref);
@@ -2239,14 +2173,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeRelease(arena, type);
-              FreeInstr(arena_, &instr->_base);
               return NULL;
             }
 
             FblePutInstr* put_instr = FbleAlloc(arena_, FblePutInstr);
             put_instr->_base.tag = FBLE_PUT_INSTR;
-            FbleVectorAppend(arena_, instr->instrs, &put_instr->_base);
-            *instrs = &instr->_base;
+            FbleVectorAppend(arena_, *instrs, &put_instr->_base);
 
             ProcType* proc_type = FbleAlloc(arena_, ProcType);
             FbleRefInit(arena, &proc_type->_base.ref);
@@ -2271,15 +2203,13 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       for (size_t i = 0; i < apply_expr->args.size; ++i) {
         TypeRelease(arena, arg_types[i]);
       }
-      FreeInstr(arena_, &instr->_base);
       return NULL;
     }
 
     case FBLE_EVAL_EXPR: {
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
-      FbleInstr* mkbody = NULL;
-      Type* type = Compile(arena, vars, type_vars, eval_expr->expr, &mkbody);
+      Type* type = Compile(arena, vars, type_vars, eval_expr->expr, instrs);
       if (type == NULL) {
         return NULL;
       }
@@ -2292,16 +2222,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->rtype->ref);
       TypeRelease(arena, proc_type->rtype);
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-      FbleVectorAppend(arena_, instr->instrs, mkbody);
-
       FbleEvalInstr* eval_instr = FbleAlloc(arena_, FbleEvalInstr);
       eval_instr->_base.tag = FBLE_EVAL_INSTR;
-      FbleVectorAppend(arena_, instr->instrs, &eval_instr->_base);
-      
-      *instrs = &instr->_base;
+      FbleVectorAppend(arena_, *instrs, &eval_instr->_base);
       return &proc_type->_base;
     }
 
@@ -2338,6 +2261,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleLinkInstr* instr = FbleAlloc(arena_, FbleLinkInstr);
       instr->_base.tag = FBLE_LINK_INSTR;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
 
       instr->contextc = 0;
       for (Vars* v = vars; v != NULL; v = v->next) {
@@ -2351,10 +2275,8 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       instr->body->refcount = 1;
       instr->body->instr = &compound->_base;
 
-      FbleInstr* body = NULL;
-      Type* type = Compile(arena, &put_var, type_vars, link_expr->body, &body);
+      Type* type = Compile(arena, &put_var, type_vars, link_expr->body, &compound->instrs);
       Eval(arena, type, NULL, NULL);
-      FbleVectorAppend(arena_, compound->instrs, body);
 
       FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
       descope->_base.tag = FBLE_DESCOPE_INSTR;
@@ -2375,7 +2297,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (type == NULL) {
         TypeRelease(arena, type);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2384,11 +2305,8 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         PrintType(arena_, type);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
-
-      *instrs = &instr->_base;
       return type;
     }
 
@@ -2408,16 +2326,10 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         nvars = nvd + i;
       }
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        FbleInstr* mkarg = NULL;
-        Type* type = Compile(arena, vars, type_vars, exec_expr->bindings.xs[i].expr, &mkarg);
+        Type* type = Compile(arena, vars, type_vars, exec_expr->bindings.xs[i].expr, instrs);
         Eval(arena, type, NULL, NULL);
         error = error || (type == NULL);
-        FbleVectorAppend(arena_, instr->instrs, mkarg);
 
         if (type != NULL) {
           ProcType* proc_type = (ProcType*)Normal(type);
@@ -2448,7 +2360,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       for (Vars* v = vars; v != NULL; v = v->next) {
         exec_instr->contextc++;
       }
-      FbleVectorAppend(arena_, instr->instrs, &exec_instr->_base);
+      FbleVectorAppend(arena_, *instrs, &exec_instr->_base);
 
       FbleCompoundInstr* compound = FbleAlloc(arena_, FbleCompoundInstr);
       compound->_base.tag = FBLE_COMPOUND_INSTR;
@@ -2465,11 +2377,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       Type* rtype = NULL;
       if (!error) {
-        FbleInstr* body = NULL;
-        rtype = Compile(arena, nvars, type_vars, exec_expr->body, &body);
+        rtype = Compile(arena, nvars, type_vars, exec_expr->body, &compound->instrs);
         Eval(arena, rtype, NULL, NULL);
         error = (rtype == NULL);
-        FbleVectorAppend(arena_, compound->instrs, body);
       }
 
       if (rtype != NULL && Normal(rtype)->tag != PROC_TYPE) {
@@ -2485,7 +2395,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, rtype);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2508,7 +2417,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleVectorAppend(arena_, compound->instrs, &release->_base);
       }
 
-      *instrs = &instr->_base;
       return rtype;
     }
 
@@ -2529,7 +2437,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
       instr->_base.tag = FBLE_VAR_INSTR;
       instr->position = position;
-      *instrs = &instr->_base;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
       return TypeRetain(arena, vars->type);
     }
 
@@ -2549,25 +2457,19 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         nvars = nvd + i;
       }
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
       FbleLetPrepInstr* let_prep_instr = FbleAlloc(arena_, FbleLetPrepInstr);
       let_prep_instr->_base.tag = FBLE_LET_PREP_INSTR;
       let_prep_instr->count = let_expr->bindings.size;
-      FbleVectorAppend(arena_, instr->instrs, &let_prep_instr->_base);
+      FbleVectorAppend(arena_, *instrs, &let_prep_instr->_base);
 
       // Compile the values of the variables.
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleInstr* mkval = NULL;
         Type* type = NULL;
         if (!error) {
-          type = Compile(arena, nvars, type_vars, let_expr->bindings.xs[i].expr, &mkval);
+          type = Compile(arena, nvars, type_vars, let_expr->bindings.xs[i].expr, instrs);
           Eval(arena, type, NULL, NULL);
         }
         error = error || (type == NULL);
-        FbleVectorAppend(arena_, instr->instrs, mkval);
 
         if (!error && !TypesEqual(nvd[i].type, type, NULL)) {
           error = true;
@@ -2583,14 +2485,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleLetDefInstr* let_def_instr = FbleAlloc(arena_, FbleLetDefInstr);
       let_def_instr->_base.tag = FBLE_LET_DEF_INSTR;
       let_def_instr->count = let_expr->bindings.size;
-      FbleVectorAppend(arena_, instr->instrs, &let_def_instr->_base);
+      FbleVectorAppend(arena_, *instrs, &let_def_instr->_base);
 
       Type* rtype = NULL;
       if (!error) {
-        FbleInstr* body = NULL;
-        rtype = Compile(arena, nvars, type_vars, let_expr->body, &body);
+        rtype = Compile(arena, nvars, type_vars, let_expr->body, instrs);
         error = (rtype == NULL);
-        FbleVectorAppend(arena_, instr->instrs, body);
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
@@ -2599,16 +2499,13 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, rtype);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
       FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
       descope->_base.tag = FBLE_DESCOPE_INSTR;
       descope->count = let_expr->bindings.size;
-      FbleVectorAppend(arena_, instr->instrs, &descope->_base);
-
-      *instrs = &instr->_base;
+      FbleVectorAppend(arena_, *instrs, &descope->_base);
       return rtype;
     }
 
@@ -2777,8 +2674,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FreeKind(arena_, &poly_kind->_base);
       if (error) {
         TypeRelease(arena, &pat->_base);
-        FreeInstr(arena_, *instrs);
-        *instrs = NULL;
         return NULL;
       }
 
@@ -2789,15 +2684,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
     case FBLE_NAMESPACE_IMPORT_EXPR: {
       FbleNamespaceExpr* namespace_expr = (FbleNamespaceExpr*)expr;
 
-      FbleCompoundInstr* instr = FbleAlloc(arena_, FbleCompoundInstr);
-      instr->_base.tag = FBLE_COMPOUND_INSTR;
-      FbleVectorInit(arena_, instr->instrs);
-
-      FbleInstr* mkobj = NULL;
-      Type* type = Compile(arena, vars, type_vars, namespace_expr->nspace, &mkobj);
+      Type* type = Compile(arena, vars, type_vars, namespace_expr->nspace, instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2808,16 +2697,13 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, "\n");
 
         TypeRelease(arena, type);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
-
-      FbleVectorAppend(arena_, instr->instrs, mkobj);
 
       {
         FbleNamespaceInstr* nspace = FbleAlloc(arena_, FbleNamespaceInstr);
         nspace->_base.tag = FBLE_NAMESPACE_INSTR;
-        FbleVectorAppend(arena_, instr->instrs, &nspace->_base);
+        FbleVectorAppend(arena_, *instrs, &nspace->_base);
       }
 
       Vars ntvd[struct_type->type_fields.size];
@@ -2838,25 +2724,20 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         nvars = nvd + i;
       }
 
-      FbleInstr* body = NULL;
-      Type* rtype = Compile(arena, nvars, ntype_vars, namespace_expr->body, &body);
+      Type* rtype = Compile(arena, nvars, ntype_vars, namespace_expr->body, instrs);
       if (rtype == NULL) {
         TypeRelease(arena, type);
-        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
-
-      FbleVectorAppend(arena_, instr->instrs, body);
 
       {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
         descope->_base.tag = FBLE_DESCOPE_INSTR;
         descope->count = struct_type->fields.size;
-        FbleVectorAppend(arena_, instr->instrs, &descope->_base);
+        FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
 
       TypeRelease(arena, type);
-      *instrs = &instr->_base;
       return rtype;
     }
   }
@@ -3279,13 +3160,18 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
 
     case FBLE_TYPE_FIELD_ACCESS_TYPE: {
       FbleTypeFieldAccessType* access_type = (FbleTypeFieldAccessType*)type;
-      FbleInstr* instrs;
+      FbleInstrV instrs;
+      FbleVectorInit(arena_, instrs);
       Type* type = Compile(arena, vars, type_vars, access_type->expr, &instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         return NULL;
       }
-      FreeInstr(arena_, instrs);
+
+      for (size_t i = 0; i < instrs.size; ++i) {
+        FreeInstr(arena_, instrs.xs[i]);
+      }
+      FbleFree(arena_, instrs.xs);
 
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
@@ -3377,17 +3263,21 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 // FbleCompile -- see documentation in fble-internal.h
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
 {
-  FbleInstr* instrs = NULL;
+  FbleCompoundInstr* body = FbleAlloc(arena, FbleCompoundInstr);
+  body->_base.tag = FBLE_COMPOUND_INSTR;
+  FbleVectorInit(arena, body->instrs);
+
   TypeArena* type_arena = FbleNewRefArena(arena, &TypeFree, &TypeAdded);
-  Type* type = Compile(type_arena, NULL, NULL, expr, &instrs);
+  Type* type = Compile(type_arena, NULL, NULL, expr, &body->instrs);
   TypeRelease(type_arena, type);
   FbleDeleteRefArena(type_arena);
   if (type == NULL) {
+    FreeInstr(arena, &body->_base);
     return NULL;
   }
 
   FbleInstrBlock* block = FbleAlloc(arena, FbleInstrBlock);
   block->refcount = 1;
-  block->instr = instrs;
+  block->instr = &body->_base;
   return block;
 }
