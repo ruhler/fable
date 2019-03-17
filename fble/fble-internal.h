@@ -50,7 +50,7 @@ typedef struct {
 //   A reference counted block of instructions.
 typedef struct {
   size_t refcount;
-  FbleInstr* instr; // TODO: Make this an FbleInstrV.
+  FbleInstrV instrs;
 } FbleInstrBlock;
 
 // FbleCompoundInstr -- FBLE_COMPOUND_INSTR

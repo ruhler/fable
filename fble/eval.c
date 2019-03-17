@@ -54,11 +54,12 @@ static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
 static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
 static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
 static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail); 
+static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail); 
 static IStack* IPop(FbleArena* arena, IStack* istack);
 
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
 static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread);
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleValueV args);
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args);
 
 static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 
@@ -168,6 +169,28 @@ static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail)
   istack->instr = instr;
   istack->tail = tail;
   return istack;
+}
+
+// IPushBlock --
+//   Push a block of instructions onto an instruction stack.
+//
+// Inputs:
+//   arena - the arena to use for allocations
+//   block - the block of instructions to push
+//   tail - the stack to push to
+//
+// Result:
+//   The new stack with pushed instructions..
+//
+// Side effects:
+//   Allocates new IStack instances that should be freed when done.
+static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail)
+{
+  for (size_t i = 0; i < block->instrs.size; ++i) {
+    size_t j = block->instrs.size - 1 - i;
+    tail = IPush(arena, block->instrs.xs[j], tail);
+  }
+  return tail;
 }
 
 // IPop --
@@ -302,7 +325,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = VPop(arena_, thread->data_stack);
         assert(uv->tag < cond_instr->choices.size);
-        thread->istack = IPush(arena_, cond_instr->choices.xs[uv->tag]->instr, thread->istack);
+        thread->istack = IPushBlock(arena_, cond_instr->choices.xs[uv->tag], thread->istack);
         FbleValueRelease(arena, &uv->_base);
         break;
       }
@@ -383,7 +406,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         // function will take care of releasing this.
         thread->data_stack = VPush(arena_, &func->_base, thread->data_stack);
 
-        thread->istack = IPush(arena_, func->body->instr, thread->istack);
+        thread->istack = IPushBlock(arena_, func->body, thread->istack);
         break;
       }
 
@@ -660,7 +683,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             // the data stack until after it's done executing.
             thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
 
-            thread->istack = IPush(arena_, link->body->instr, thread->istack);
+            thread->istack = IPushBlock(arena_, link->body, thread->istack);
             break;
           }
 
@@ -689,7 +712,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             // the data stack until after it's done executing.
             thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
 
-            thread->istack = IPush(arena_, exec->body->instr, thread->istack);
+            thread->istack = IPushBlock(arena_, exec->body, thread->istack);
             break;
           }
         }
@@ -798,13 +821,13 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstr* prgm, FbleValueV args)
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Thread thread = {
     .var_stack = NULL,
     .data_stack = NULL,
-    .istack = IPush(arena_, prgm, NULL),
+    .istack = IPushBlock(arena_, prgm, NULL),
     .iquota = 0,
   };
   FbleVectorInit(arena_, thread.children);
@@ -866,7 +889,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValueV args = { .size = 0, .xs = NULL };
-  FbleValue* result = Eval(arena, &io, instrs->instr, args);
+  FbleValue* result = Eval(arena, &io, instrs, args);
   FbleFreeInstrBlock(arena_, instrs);
   return result;
 }
@@ -878,7 +901,9 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args
     ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
     .argc = args.size,
   };
-
+  FbleInstr* ixs = &instr._base;
+  FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = &ixs } };
+        
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
   FbleValue* xs[1 + args.size];
@@ -888,7 +913,7 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args
   }
 
   FbleValueV eval_args = { .size = 1 + args.size, .xs = xs };
-  FbleValue* result = Eval(arena, &io, &instr._base, eval_args);
+  FbleValue* result = Eval(arena, &io, &block, eval_args);
   return result;
 }
 
@@ -896,8 +921,11 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args
 FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleProcValue* proc)
 {
   FbleProcInstr instr = { ._base = { .tag = FBLE_PROC_INSTR } };
+  FbleInstr* ixs = &instr._base;
+  FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = &ixs } };
+
   FbleValue* xs[1] = { &proc->_base };
   FbleValueV args = { .size = 1, .xs = xs };
-  FbleValue* result = Eval(arena, io, &instr._base, args);
+  FbleValue* result = Eval(arena, io, &block, args);
   return result;
 }
