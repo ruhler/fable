@@ -1627,7 +1627,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_COND_INSTR: {
       FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
       for (size_t i = 0; i < cond_instr->choices.size; ++i) {
-        FreeInstr(arena, cond_instr->choices.xs[i]);
+        FbleFreeInstrBlock(arena, cond_instr->choices.xs[i]);
       }
       FbleFree(arena, cond_instr->choices.xs);
       FbleFree(arena, instr);
@@ -1943,12 +1943,17 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           return NULL;
         }
 
-        FbleCompoundInstr* choice = FbleAlloc(arena_, FbleCompoundInstr);
-        choice->_base.tag = FBLE_COMPOUND_INSTR;
-        FbleVectorInit(arena_, choice->instrs);
-        FbleVectorAppend(arena_, cond_instr->choices, &choice->_base);
+        FbleCompoundInstr* compound = FbleAlloc(arena_, FbleCompoundInstr);
+        compound->_base.tag = FBLE_COMPOUND_INSTR;
+        FbleVectorInit(arena_, compound->instrs);
 
-        Type* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &choice->instrs);
+        FbleInstrBlock* choice = FbleAlloc(arena_, FbleInstrBlock);
+        choice->refcount = 1;
+        choice->instr = &compound->_base;
+
+        FbleVectorAppend(arena_, cond_instr->choices, choice);
+
+        Type* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &compound->instrs);
         Eval(arena, arg_type, NULL, NULL);
         if (arg_type == NULL) {
           TypeRelease(arena, return_type);

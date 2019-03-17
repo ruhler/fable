@@ -302,7 +302,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = VPop(arena_, thread->data_stack);
         assert(uv->tag < cond_instr->choices.size);
-        thread->istack = IPush(arena_, cond_instr->choices.xs[uv->tag], thread->istack);
+        thread->istack = IPush(arena_, cond_instr->choices.xs[uv->tag]->instr, thread->istack);
         FbleValueRelease(arena, &uv->_base);
         break;
       }

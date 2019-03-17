@@ -94,6 +94,11 @@ typedef struct {
   size_t tag;
 } FbleAccessInstr;
 
+typedef struct {
+  size_t size;
+  FbleInstrBlock** xs;
+} FbleInstrBlockV;
+
 // FbleCondInstr -- FBLE_COND_INSTR
 //   Select the next thing to execute based on the tag of the value on top of
 //   the value stack.
@@ -105,7 +110,7 @@ typedef struct {
 //     ==> ..., choices[obj.tag]
 typedef struct {
   FbleInstr _base;
-  FbleInstrV choices;
+  FbleInstrBlockV choices;
 } FbleCondInstr;
 
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
