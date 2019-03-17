@@ -3,6 +3,6 @@ fble-test {
   @ Bool@ = +(Unit@ true, Unit@ false);
 
   Bool@ ~ get, put;
-  Bool@- myget = get;
+  -Bool@ myget = get;
   $(Unit@());
 }

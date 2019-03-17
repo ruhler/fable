@@ -287,10 +287,10 @@ Abstract Syntax:
   Type ::= proc_type (return :: Type)
 
 Concrete Syntax:
-  type ::= type '!'
+  type ::= '!' type
 
 Example:
-  Int@!
+ !Int@
 
 6.2 Input Type
 --------------
@@ -298,10 +298,10 @@ Abstract Syntax:
   Type ::= input_type (type :: Type)
 
 Concrete Syntax:
-  type ::= type '-'
+  type ::= '-' type
 
 Example:
-  Int@-
+  -Int@
 
 An input port is a handle to a link that can be used to get values from
 the link. An input port is typed, so that only values of the given type can be
@@ -316,10 +316,10 @@ Abstract Syntax:
   Type ::= output_type (type :: Type)
 
 Concrete Syntax:
-  type ::= type '+'
+  type ::= '+' type
 
 Example:
-  Int@+
+  +Int@
 
 An output port is a handle to a link that can be used to put values onto the
 link. An output port is typed, so that only values of the given type can be
@@ -838,21 +838,28 @@ kind ::=
  | '\<' kind [',' kind [...]] ';' kind '>'    (* poly_kind *)
  ;
 
-type ::= 
-   '*(' [type name [',' type name [...]]] ')'                            (* struct_type *)
+poly_type ::=
+ | type_name                                                             (* type_var *)
+ | '\<' kind type_name [',' kind type_name [...]] '>' '{' type_stmt '}'  (* poly_type *)
+ | expr '.' type_name                                                    (* type_field_access *)
+ ;
+
+data_type ::=
+   poly_type
+ | '*(' [type name [',' type name [...]]] ')'                            (* struct_type *)
  | '*(' kind type_name '=' type [',' kind type_name '=' type [',' ...]   (* struct_type with type fields *)
         [',' type name [',' type name [...]]] ')'
  | '+(' type name [',' type name [...]] ')'                              (* union_type *)
+ ;
+
+type ::= 
+   data_type
  | '\(' type [',' type [...]] ';' type ')'                               (* func_type *)
- | type '!'                                                              (* proc_type *)
- | type '-'                                                              (* input_type *)
- | type '+'                                                              (* output_type *)
- | type_name                                                             (* type_var *)
- | '\<' kind type_name [',' kind type_name [...]] '>' '{' type_stmt '}'  (* poly_type *)
- | type '<' [type [',' type [...]]] '>'                                  (* poly_type_apply *)
+ | '!' type                                                              (* proc_type *)
+ | '-' type                                                              (* input_type *)
+ | '+' type                                                              (* output_type *)
  | '{' type_stmt '}'                                                     (* type_stmt *)
  | '&' type_name                                                         (* type_include *)
- | expr '.' type_name                                                    (* type_field_access *)
  ;
 
 type_stmt ::=
@@ -861,11 +868,11 @@ type_stmt ::=
  ;
 
 expr ::=
-   type '(' [expr [',' expr [...]]] ')'                             (* struct_value *)
+   data_type '(' [expr [',' expr [...]]] ')'                        (* struct_value *)
  | '@' '(' [name [':' expr] [',' ...]] ')'                          (* anon_struct *)
  | '@' '(' type_name [':' type] [',' ...]                           (* anon_struct with type fields *)
            [',' name [':' expr] [',' ...]] ')'
- | type '(' name ':' expr ')'                                       (* union_value *)
+ | data_type '(' name ':' expr ')'                                  (* union_value *)
  | expr '.' name                                                    (* access *)
  | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'        (* cond *)
  | '\(' [type name [',' type name [...]]] ')' '{' stmt '}'          (* func_value *)
