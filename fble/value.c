@@ -69,7 +69,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
         vs = vs->tail;
         FbleFree(arena_, tmp);
       }
-      FbleFreeInstrs(arena_, fv->body);
+      FbleFreeInstr(arena_, fv->body);
       FbleFree(arena_, value);
       return;
     }
@@ -89,7 +89,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
             vs = vs->tail;
             FbleFree(arena_, tmp);
           }
-          FbleFreeInstrs(arena_, v->body);
+          FbleFreeInstr(arena_, v->body);
           break;
         }
 
@@ -102,7 +102,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
             vs = vs->tail;
             FbleFree(arena_, tmp);
           }
-          FbleFreeInstrs(arena_, v->body);
+          FbleFreeInstr(arena_, v->body);
           break;
         }
       }

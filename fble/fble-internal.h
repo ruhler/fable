@@ -273,19 +273,19 @@ typedef struct {
   FbleInstr _base;
 } FbleNamespaceInstr;
 
-// FbleFreeInstrs --
-//   Free the given sequence of instructions.
+// FbleFreeInstr --
+//   Free the given instruction.
 //
 // Inputs:
 //   arena - the arena used to allocation the instructions.
-//   instrs - the instructions to free. May be NULL.
+//   instr - the instruction to free. May be NULL.
 //
 // Result:
 //   none.
 //
 // Side effect:
-//   Frees memory allocated for the instrs.
-void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs);
+//   Frees memory allocated for the given instruction.
+void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 
 // FbleCompile --
 //   Type check and compile the given expression.
@@ -299,7 +299,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs);
 //
 // Side effects:
 //   Prints a message to stderr if the expression fails to compile. Allocates
-//   memory for the instructions which must be freed with FbleFreeInstrs when
+//   memory for the instructions which must be freed with FbleFreeInstr when
 //   it is no longer needed.
 FbleInstr* FbleCompile(FbleArena* arena, FbleExpr* expr);
 

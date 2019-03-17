@@ -867,7 +867,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValueV args = { .size = 0, .xs = NULL };
   FbleValue* result = Eval(arena, &io, instrs, args);
-  FbleFreeInstrs(arena_, instrs);
+  FbleFreeInstr(arena_, instrs);
   return result;
 }
 

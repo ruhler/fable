@@ -1638,7 +1638,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, type);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -1715,7 +1715,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, &struct_type->_base);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -1779,7 +1779,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, ", but found type ");
         PrintType(arena_, arg_type);
         fprintf(stderr, "\n");
-        FbleFreeInstrs(arena_, mkarg);
+        FbleFreeInstr(arena_, mkarg);
         TypeRelease(arena, type);
         TypeRelease(arena, arg_type);
         return NULL;
@@ -1814,7 +1814,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       Type* type = Compile(arena, vars, type_vars, access_expr->object, &mkobj);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -1840,7 +1840,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, "\n");
 
         TypeRelease(arena, type);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -1858,7 +1858,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       PrintType(arena_, type);
       fprintf(stderr, "\n");
       TypeRelease(arena, type);
-      FbleFreeInstrs(arena_, &instr->_base);
+      FbleFreeInstr(arena_, &instr->_base);
       return NULL;
     }
 
@@ -1874,7 +1874,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       Type* type = Compile(arena, vars, type_vars, cond_expr->condition, &mkobj);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
       FbleVectorAppend(arena_, instr->instrs, mkobj);
@@ -1884,14 +1884,14 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
         PrintType(arena_, type);
         fprintf(stderr, "\n");
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         TypeRelease(arena, type);
         return NULL;
       }
 
       if (union_type->fields.size != cond_expr->choices.size) {
         FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         TypeRelease(arena, type);
         return NULL;
       }
@@ -1909,7 +1909,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
               &cond_expr->choices.xs[i].name.loc,
               union_type->fields.xs[i].name.name,
               cond_expr->choices.xs[i].name.name);
-          FbleFreeInstrs(arena_, &instr->_base);
+          FbleFreeInstr(arena_, &instr->_base);
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
           return NULL;
@@ -1921,7 +1921,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (arg_type == NULL) {
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
-          FbleFreeInstrs(arena_, &instr->_base);
+          FbleFreeInstr(arena_, &instr->_base);
           return NULL;
         }
         FbleVectorAppend(arena_, cond_instr->choices, mkarg);
@@ -1939,7 +1939,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             TypeRelease(arena, type);
             TypeRelease(arena, return_type);
             TypeRelease(arena, arg_type);
-            FbleFreeInstrs(arena_, &instr->_base);
+            FbleFreeInstr(arena_, &instr->_base);
             return NULL;
           }
           TypeRelease(arena, arg_type);
@@ -2030,7 +2030,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, &type->_base);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2093,7 +2093,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeRelease(arena, type);
-              FbleFreeInstrs(arena_, &instr->_base);
+              FbleFreeInstr(arena_, &instr->_base);
               return NULL;
             }
 
@@ -2124,7 +2124,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeRelease(arena, type);
-              FbleFreeInstrs(arena_, &instr->_base);
+              FbleFreeInstr(arena_, &instr->_base);
               return NULL;
             }
 
@@ -2168,7 +2168,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             if (error) {
               TypeRelease(arena, type);
-              FbleFreeInstrs(arena_, &instr->_base);
+              FbleFreeInstr(arena_, &instr->_base);
               return NULL;
             }
 
@@ -2201,7 +2201,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       for (size_t i = 0; i < apply_expr->args.size; ++i) {
         TypeRelease(arena, arg_types[i]);
       }
-      FbleFreeInstrs(arena_, &instr->_base);
+      FbleFreeInstr(arena_, &instr->_base);
       return NULL;
     }
 
@@ -2310,7 +2310,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (type == NULL) {
         TypeRelease(arena, type);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2319,7 +2319,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         PrintType(arena_, type);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2422,7 +2422,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, rtype);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2543,7 +2543,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       if (error) {
         TypeRelease(arena, rtype);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2722,7 +2722,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FreeKind(arena_, &poly_kind->_base);
       if (error) {
         TypeRelease(arena, &pat->_base);
-        FbleFreeInstrs(arena_, *instrs);
+        FbleFreeInstr(arena_, *instrs);
         *instrs = NULL;
         return NULL;
       }
@@ -2743,7 +2743,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       Type* type = Compile(arena, vars, type_vars, namespace_expr->nspace, &mkobj);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2754,7 +2754,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         fprintf(stderr, "\n");
 
         TypeRelease(arena, type);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -2789,7 +2789,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       Type* rtype = Compile(arena, nvars, ntype_vars, namespace_expr->body, &body);
       if (rtype == NULL) {
         TypeRelease(arena, type);
-        FbleFreeInstrs(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return NULL;
       }
 
@@ -3233,7 +3233,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       if (type == NULL) {
         return NULL;
       }
-      FbleFreeInstrs(arena_, instrs);
+      FbleFreeInstr(arena_, instrs);
 
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
@@ -3307,8 +3307,8 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
   UNREACHABLE("Should never get here");
 }
 
-// FbleFreeInstrs -- see documentation in fble-internal.h
-void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
+// FbleFreeInstr -- see documentation in fble-internal.h
+void FbleFreeInstr(FbleArena* arena, FbleInstr* instrs)
 {
   if (instrs == NULL) {
     return;
@@ -3340,21 +3340,21 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
 
       case FBLE_FUNC_VALUE_INSTR: {
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instrs;
-        FbleFreeInstrs(arena, func_value_instr->body);
+        FbleFreeInstr(arena, func_value_instr->body);
         FbleFree(arena, func_value_instr);
         return;
       }
 
       case FBLE_LINK_INSTR: {
         FbleLinkInstr* proc_link_instr = (FbleLinkInstr*)instrs;
-        FbleFreeInstrs(arena, proc_link_instr->body);
+        FbleFreeInstr(arena, proc_link_instr->body);
         FbleFree(arena, proc_link_instr);
         return;
       }
 
       case FBLE_EXEC_INSTR: {
         FbleExecInstr* exec_instr = (FbleExecInstr*)instrs;
-        FbleFreeInstrs(arena, exec_instr->body);
+        FbleFreeInstr(arena, exec_instr->body);
         FbleFree(arena, exec_instr);
         return;
       }
@@ -3362,7 +3362,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_COND_INSTR: {
         FbleCondInstr* instr = (FbleCondInstr*)instrs;
         for (size_t i = 0; i < instr->choices.size; ++i) {
-          FbleFreeInstrs(arena, instr->choices.xs[i]);
+          FbleFreeInstr(arena, instr->choices.xs[i]);
         }
         FbleFree(arena, instr->choices.xs);
         FbleFree(arena, instrs);
@@ -3372,7 +3372,7 @@ void FbleFreeInstrs(FbleArena* arena, FbleInstr* instrs)
       case FBLE_COMPOUND_INSTR: {
         FbleCompoundInstr* compound_instr = (FbleCompoundInstr*)instrs;
         for (size_t i = 0; i < compound_instr->instrs.size; ++i) {
-          FbleFreeInstrs(arena, compound_instr->instrs.xs[i]);
+          FbleFreeInstr(arena, compound_instr->instrs.xs[i]);
         }
         FbleFree(arena, compound_instr->instrs.xs);
         FbleFree(arena, instrs);
