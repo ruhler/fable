@@ -3,7 +3,7 @@ fble-test-error 7:19 {
   @ Bool@ = +(Unit@ true, Unit@ false);
 
   Bool@ ~ get, put;
-  +Bool@ myput = put;
-  +Unit@ myput2 = myput;
+  Bool@+ myput = put;
+  Unit@+ myput2 = myput;
   $(Unit@());
 }

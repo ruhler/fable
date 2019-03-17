@@ -4,6 +4,6 @@ fble-test-error 7:3 {
   Unit@ ~ get, put;
 
   # The type Bool@ is not defined.
-  -Bool@ myget = get;
+  Bool@- myget = get;
   $(Unit@());
 }

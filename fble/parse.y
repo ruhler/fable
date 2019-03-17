@@ -73,7 +73,7 @@
 %type <name> type_name
 %type <kind> kind
 %type <kinds> kind_p
-%type <type> poly_type data_type type type_stmt 
+%type <type> type type_stmt 
 %type <types> type_p type_s
 %type <expr> expr stmt
 %type <exprs> expr_s expr_p
@@ -119,35 +119,8 @@ kind_p:
    }
  ;
 
-poly_type:
-   type_name {
-      FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
-      var_type->_base.tag = FBLE_VAR_TYPE;
-      var_type->_base.loc = @$;
-      var_type->var = $1;
-      $$ = &var_type->_base;
-   }
- | '\\' '<' type_field_p '>' '{' type_stmt '}' {
-      FblePolyType* poly_type = FbleAlloc(arena, FblePolyType);
-      poly_type->_base.tag = FBLE_POLY_TYPE;
-      poly_type->_base.loc = @$;
-      poly_type->args = $3;
-      poly_type->body = $6;
-      $$ = &poly_type->_base;
-   }
- | expr '.'  type_name {
-      FbleTypeFieldAccessType* type = FbleAlloc(arena, FbleTypeFieldAccessType);
-      type->_base.tag = FBLE_TYPE_FIELD_ACCESS_TYPE;
-      type->_base.loc = @$;
-      type->expr = $1;
-      type->field = $3;
-      $$ = &type->_base;
-   }
- ;
-
-data_type:
-   poly_type { $$ = $1; }
- | '*' '(' field_s ')' {
+type:
+   '*' '(' field_s ')' {
       FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
       struct_type->_base.tag = FBLE_STRUCT_TYPE;
       struct_type->_base.loc = @$;
@@ -178,18 +151,6 @@ data_type:
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
- | poly_type '<' type_p '>' {
-      FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
-      poly_apply_type->_base.tag = FBLE_POLY_APPLY_TYPE;
-      poly_apply_type->_base.loc = @$;
-      poly_apply_type->poly = $1;
-      poly_apply_type->args = $3;
-      $$ = &poly_apply_type->_base;
-   }
- ;
-
-type:
-   data_type { $$ = $1; }
  | '\\' '(' type_s ';' type ')' {
       FbleFuncType* func_type = FbleAlloc(arena, FbleFuncType);
       func_type->_base.tag = FBLE_FUNC_TYPE;
@@ -198,31 +159,64 @@ type:
       func_type->rtype = $5;
       $$ = &func_type->_base;
    }
- | '!' type {
+ | type '!' {
       FbleProcType* proc_type = FbleAlloc(arena, FbleProcType);
       proc_type->_base.tag = FBLE_PROC_TYPE;
       proc_type->_base.loc = @$;
-      proc_type->rtype = $2;
+      proc_type->rtype = $1;
       $$ = &proc_type->_base;
    }
- | '-' type {
+ | type '-' {
       FbleInputType* input_type = FbleAlloc(arena, FbleInputType);
       input_type->_base.tag = FBLE_INPUT_TYPE;
       input_type->_base.loc = @$;
-      input_type->type = $2;
+      input_type->type = $1;
       $$ = &input_type->_base;
    }
- | '+' type {
+ | type '+' {
       FbleOutputType* output_type = FbleAlloc(arena, FbleOutputType);
       output_type->_base.tag = FBLE_OUTPUT_TYPE;
       output_type->_base.loc = @$;
-      output_type->type = $2;
+      output_type->type = $1;
       $$ = &output_type->_base;
    }
-
- // TODO: Should these be data_type? { ...}(...) is legal?
+ | type_name {
+      FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
+      var_type->_base.tag = FBLE_VAR_TYPE;
+      var_type->_base.loc = @$;
+      var_type->var = $1;
+      $$ = &var_type->_base;
+   }
+ | '\\' '<' type_field_p '>' '{' type_stmt '}' {
+      FblePolyType* poly_type = FbleAlloc(arena, FblePolyType);
+      poly_type->_base.tag = FBLE_POLY_TYPE;
+      poly_type->_base.loc = @$;
+      poly_type->args = $3;
+      poly_type->body = $6;
+      $$ = &poly_type->_base;
+   }
+ | type '<' type_p '>' {
+      FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
+      poly_apply_type->_base.tag = FBLE_POLY_APPLY_TYPE;
+      poly_apply_type->_base.loc = @$;
+      poly_apply_type->poly = $1;
+      poly_apply_type->args = $3;
+      $$ = &poly_apply_type->_base;
+   }
  | '{' type_stmt '}' {
       $$ = $2;
+   }
+ | type '.'  type_name {
+      assert(false && "TODO: Support type field access?");
+      $$ = NULL;
+   }
+ | expr '.'  type_name {
+      FbleTypeFieldAccessType* type = FbleAlloc(arena, FbleTypeFieldAccessType);
+      type->_base.tag = FBLE_TYPE_FIELD_ACCESS_TYPE;
+      type->_base.loc = @$;
+      type->expr = $1;
+      type->field = $3;
+      $$ = &type->_base;
    }
  | '&' type_name {
       assert(false && "TODO: Support type include?");
@@ -294,7 +288,7 @@ field_p:
  ;
 
 expr:
-   data_type '(' expr_s ')' {
+   type '(' expr_s ')' {
       FbleStructValueExpr* struct_value_expr = FbleAlloc(arena, FbleStructValueExpr);
       struct_value_expr->_base.tag = FBLE_STRUCT_VALUE_EXPR;
       struct_value_expr->_base.loc = @$;
@@ -326,7 +320,7 @@ expr:
       expr->args = $5;
       $$ = &expr->_base;
    }
- | data_type '(' NAME ':' expr ')' {
+ | type '(' NAME ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
       union_value_expr->_base.loc = @$;

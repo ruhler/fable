@@ -1,7 +1,7 @@
 Fble:
 * [lang] Switch to new proposed function syntax.
- - pull poly_type out into separate concrete syntactic type.
  - move !+- to front of type from back of type in concrete syntax.
+ - pull poly_type out into separate concrete syntactic type.
  - switch concrete syntax to to the newly proposed function syntax.
  - change abstract syntax to have a single arg for functions.
 
@@ -72,9 +72,6 @@ Fble Performance:
   - Process the instructions as a group, either of basic blocks or function
     calls.
 * Only save bits of function context that are used.
-* Make sure the inline description of concrete syntax in fble.txt matches the
-  reference section. For example around poly_type construct.
-* Have support for partial application of poly type?
 
 Fble Lib:
 * Should Eq just be a function or an interface?
