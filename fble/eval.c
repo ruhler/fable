@@ -46,7 +46,7 @@ struct Thread {
   ThreadV children;
 };
 
-static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR, .refcount = 1 };
+static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
@@ -383,7 +383,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         // function will take care of releasing this.
         thread->data_stack = VPush(arena_, &func->_base, thread->data_stack);
 
-        thread->istack = IPush(arena_, func->body, thread->istack);
+        thread->istack = IPush(arena_, func->body->instr, thread->istack);
         break;
       }
 
@@ -660,7 +660,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             // the data stack until after it's done executing.
             thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
 
-            thread->istack = IPush(arena_, link->body, thread->istack);
+            thread->istack = IPush(arena_, link->body->instr, thread->istack);
             break;
           }
 
@@ -689,7 +689,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             // the data stack until after it's done executing.
             thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
 
-            thread->istack = IPush(arena_, exec->body, thread->istack);
+            thread->istack = IPush(arena_, exec->body->instr, thread->istack);
             break;
           }
         }
@@ -859,15 +859,15 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleInstr* instrs = FbleCompile(arena_, expr);
+  FbleInstrBlock* instrs = FbleCompile(arena_, expr);
   if (instrs == NULL) {
     return NULL;
   }
 
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValueV args = { .size = 0, .xs = NULL };
-  FbleValue* result = Eval(arena, &io, instrs, args);
-  FbleFreeInstr(arena_, instrs);
+  FbleValue* result = Eval(arena, &io, instrs->instr, args);
+  FbleFreeInstrBlock(arena_, instrs);
   return result;
 }
 
@@ -875,10 +875,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args)
 {
   FbleFuncApplyInstr instr = {
-    ._base = {
-      .tag = FBLE_FUNC_APPLY_INSTR,
-      .refcount = 1
-    },
+    ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
     .argc = args.size,
   };
 
@@ -898,13 +895,7 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args
 // FbleExec -- see documentation in fble.h
 FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleProcValue* proc)
 {
-  FbleProcInstr instr = {
-    ._base = {
-      .tag = FBLE_PROC_INSTR,
-      .refcount = 1
-    },
-  };
-
+  FbleProcInstr instr = { ._base = { .tag = FBLE_PROC_INSTR } };
   FbleValue* xs[1] = { &proc->_base };
   FbleValueV args = { .size = 1, .xs = xs };
   FbleValue* result = Eval(arena, io, &instr._base, args);

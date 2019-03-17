@@ -1,10 +1,4 @@
 Fble:
-* [lang] Switch to new proposed function syntax.
- - move !+- to front of type from back of type in concrete syntax.
- - pull poly_type out into separate concrete syntactic type.
- - switch concrete syntax to to the newly proposed function syntax.
- - change abstract syntax to have a single arg for functions.
-
 * [perf] Rework how instructions are composed together
  - each top level expression should compile to a vector of instructions.
  - case expression keeps track of instruction index to jump to.
@@ -12,6 +6,8 @@ Fble:
  - add finish instructions for finishing top level expression.
  - change istack to be stack of (Instr**, index) pairs or some such.
  - remove composite instruction.
+
+* [lang] Figure out new function syntax
 
 * [lang] work out what you can do with types vs. exprs.
 

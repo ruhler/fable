@@ -37,7 +37,6 @@ typedef enum {
 //   Common base type for all instructions.
 typedef struct {
   FbleInstrTag tag;
-  int refcount;
 } FbleInstr;
 
 // FbleInstrV --
@@ -46,6 +45,13 @@ typedef struct {
   size_t size;
   FbleInstr** xs;
 } FbleInstrV;
+
+// FbleInstrBlock --
+//   A reference counted block of instructions.
+typedef struct {
+  size_t refcount;
+  FbleInstr* instr; // TODO: Make this an FbleInstrV.
+} FbleInstrBlock;
 
 // FbleCompoundInstr -- FBLE_COMPOUND_INSTR
 //   Execute a sequence of instructions in order.
@@ -112,15 +118,15 @@ typedef struct {
 // Fields:
 //   contextc - The number of variables from the scope to capture from the top
 //              of the variable stack.
-//   body - An instruction that will execute the body of the function in the
-//          context of its scope and arguments. The instruction should remove
-//          the context of its scope and arguments and release the function
-//          value.
+//   body - A block of instructions that will execute the body of the function
+//          in the context of its scope and arguments. The instruction should
+//          remove the context of its scope and arguments and release the
+//          function value.
 typedef struct {
   FbleInstr _base;
   size_t contextc;
   size_t argc;
-  FbleInstr* body;
+  FbleInstrBlock* body;
 } FbleFuncValueInstr;
 
 // FbleDescopeInstr -- FBLE_DESCOPE_INSTR
@@ -190,14 +196,14 @@ typedef struct {
 // Fields:
 //   contextc - The number of variables from the scope to capture from the top
 //              of the variable stack.
-//   body - An instruction that will execute the body of the link in the
-//          context of its scope and put and get ports. The instruction should
-//          remove the context of its scope and put and get ports and release
-//          the link proc value.
+//   body - A block of instructions that will execute the body of the link in
+//          the context of its scope and put and get ports. The instruction
+//          should remove the context of its scope and put and get ports and
+//          release the link proc value.
 typedef struct {
   FbleInstr _base;
   size_t contextc;
-  FbleInstr* body;
+  FbleInstrBlock* body;
 } FbleLinkInstr;
 
 // FbleExecInstr -- FBLE_EXEC_INSTR
@@ -213,7 +219,7 @@ typedef struct {
   FbleInstr _base;
   size_t contextc;
   size_t argc;
-  FbleInstr* body;
+  FbleInstrBlock* body;
 } FbleExecInstr;
 
 // FbleJoinInstr -- FBLE_JOIN_INSTR
@@ -273,19 +279,19 @@ typedef struct {
   FbleInstr _base;
 } FbleNamespaceInstr;
 
-// FbleFreeInstr --
-//   Free the given instruction.
+// FbleFreeInstrBlock --
+//   Free the given block of instructions.
 //
 // Inputs:
 //   arena - the arena used to allocation the instructions.
-//   instr - the instruction to free. May be NULL.
+//   block - the block of instructions to free. May be NULL.
 //
 // Result:
 //   none.
 //
 // Side effect:
-//   Frees memory allocated for the given instruction.
-void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
+//   Frees memory allocated for the given block of instruction.
+void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 
 // FbleCompile --
 //   Type check and compile the given expression.
@@ -299,9 +305,9 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 //
 // Side effects:
 //   Prints a message to stderr if the expression fails to compile. Allocates
-//   memory for the instructions which must be freed with FbleFreeInstr when
+//   memory for the instructions which must be freed with FbleFreeInstrBlock when
 //   it is no longer needed.
-FbleInstr* FbleCompile(FbleArena* arena, FbleExpr* expr);
+FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
 // FbleVStack --
 //   A stack of values.
@@ -316,13 +322,13 @@ typedef struct FbleVStack {
 //   context - The value stack at the time the function was created,
 //             representing the lexical context available to the function.
 //             Stored in reverse order of the standard value stack.
-//   body - The instr representing the body of the function, which should pop
-//          the arguments and context and release the function value after the
-//          function is done executing.
+//   body - The block of instructions representing the body of the function,
+//          which should pop the arguments and context and release the
+//          function value after the function is done executing.
 struct FbleFuncValue {
   FbleValue _base;
   FbleVStack* context;
-  FbleInstr* body;
+  FbleInstrBlock* body;
 };
 
 // FbleProcValueTag --
@@ -368,7 +374,7 @@ typedef struct {
 typedef struct {
   FbleProcValue _base;
   FbleVStack* context;
-  FbleInstr* body;
+  FbleInstrBlock* body;
 } FbleLinkProcValue;
 
 // FbleExecProcValue -- FBLE_EXEC_PROC_VALUE
@@ -376,7 +382,7 @@ typedef struct {
   FbleProcValue _base;
   FbleValueV bindings;
   FbleVStack* context;
-  FbleInstr* body;
+  FbleInstrBlock* body;
 } FbleExecProcValue;
 
 // FbleValues --
