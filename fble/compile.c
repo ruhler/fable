@@ -114,7 +114,7 @@ typedef struct {
 // FuncType -- FUNC_TYPE
 typedef struct {
   Type _base;
-  FieldV args;
+  TypeV args;
   struct Type* rtype;
 } FuncType;
 
@@ -452,7 +452,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        Add(add, ft->args.xs[i].type);
+        Add(add, ft->args.xs[i]);
       }
       Add(add, ft->rtype);
       break;
@@ -657,7 +657,7 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        if (HasParams(ft->args.xs[i].type, params, &nv)) {
+        if (HasParams(ft->args.xs[i], params, &nv)) {
           return true;
         }
       }
@@ -805,11 +805,10 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       sft->_base.loc = ft->_base.loc;
       FbleVectorInit(arena_, sft->args);
       for (size_t i = 0; i < ft->args.size; ++i) {
-        Field* arg = FbleVectorExtend(arena_, sft->args);
-        arg->name = ft->args.xs[i].name;
-        arg->type = Subst(arena, ft->args.xs[i].type, params, args, tps);
-        FbleRefAdd(arena, &sft->_base.ref, &arg->type->ref);
-        TypeRelease(arena, arg->type);
+        Type* arg_type = Subst(arena, ft->args.xs[i], params, args, tps);
+        FbleVectorAppend(arena_, sft->args, arg_type);
+        FbleRefAdd(arena, &sft->_base.ref, &arg_type->ref);
+        TypeRelease(arena, arg_type);
       }
       sft->rtype = Subst(arena, ft->rtype, params, args, tps);
       FbleRefAdd(arena, &sft->_base.ref, &sft->rtype->ref);
@@ -1009,7 +1008,7 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        Eval(arena, ft->args.xs[i].type, &nevaled, applied);
+        Eval(arena, ft->args.xs[i], &nevaled, applied);
       }
       Eval(arena, ft->rtype, &nevaled, applied);
       return;
@@ -1263,7 +1262,7 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       }
 
       for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!TypesEqual(fta->args.xs[i].type, ftb->args.xs[i].type, &neq)) {
+        if (!TypesEqual(fta->args.xs[i], ftb->args.xs[i], &neq)) {
           return false;
         }
       }
@@ -1446,8 +1445,7 @@ static void PrintType(FbleArena* arena, Type* type)
       const char* comma = "";
       for (size_t i = 0; i < ft->args.size; ++i) {
         fprintf(stderr, "%s", comma);
-        PrintType(arena, ft->args.xs[i].type);
-        fprintf(stderr, " %s", ft->args.xs[i].name.name);
+        PrintType(arena, ft->args.xs[i]);
         comma = ", ";
       }
       fprintf(stderr, "; ");
@@ -1966,25 +1964,24 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       Vars* nvars = vars;
       bool error = false;
       for (size_t i = 0; i < func_value_expr->args.size; ++i) {
-        Field* field = FbleVectorExtend(arena_, type->args);
-        field->name = func_value_expr->args.xs[i].name;
-        field->type = CompileType(arena, vars, type_vars, func_value_expr->args.xs[i].type);
-        if (field->type != NULL) {
-          FbleRefAdd(arena, &type->_base.ref, &field->type->ref);
-          TypeRelease(arena, field->type);
+        Type* arg_type = CompileType(arena, vars, type_vars, func_value_expr->args.xs[i].type);
+        if (arg_type != NULL) {
+          FbleVectorAppend(arena_, type->args, arg_type);
+          FbleRefAdd(arena, &type->_base.ref, &arg_type->ref);
+          TypeRelease(arena, arg_type);
         }
-        error = error || (field->type == NULL);
+        error = error || (arg_type == NULL);
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name.name, func_value_expr->args.xs[j].name.name)) {
+          if (FbleNamesEqual(func_value_expr->args.xs[i].name.name, func_value_expr->args.xs[j].name.name)) {
             error = true;
-            FbleReportError("duplicate arg name '%s'\n", &field->name.loc, field->name.name);
+            FbleReportError("duplicate arg name '%s'\n", &func_value_expr->args.xs[i].name.loc, func_value_expr->args.xs[i].name.name);
             break;
           }
         }
 
-        nvds[i].name = field->name;
-        nvds[i].type = field->type;
+        nvds[i].name = func_value_expr->args.xs[i].name;
+        nvds[i].type = arg_type;
         nvds[i].next = nvars;
         nvars = nvds + i;
       }
@@ -2080,9 +2077,9 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             }
 
             for (size_t i = 0; i < func_type->args.size && i < apply_expr->args.size; ++i) {
-              if (arg_types[i] != NULL && !TypesEqual(func_type->args.xs[i].type, arg_types[i], NULL)) {
+              if (arg_types[i] != NULL && !TypesEqual(func_type->args.xs[i], arg_types[i], NULL)) {
                 FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
-                PrintType(arena_, func_type->args.xs[i].type);
+                PrintType(arena_, func_type->args.xs[i]);
                 fprintf(stderr, ", but found ");
                 PrintType(arena_, arg_types[i]);
                 fprintf(stderr, "\n");
@@ -2960,34 +2957,22 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
 
       FbleFuncType* func_type = (FbleFuncType*)type;
       for (size_t i = 0; i < func_type->args.size; ++i) {
-        FbleField* field = func_type->args.xs + i;
-
-        Type* compiled = CompileType(arena, vars, type_vars, field->type);
-        if (compiled == NULL) {
+        Type* arg_type = CompileType(arena, vars, type_vars, func_type->args.xs[i]);
+        if (arg_type == NULL) {
           TypeRelease(arena, &ft->_base);
           return NULL;
         }
-        Field* cfield = FbleVectorExtend(arena_, ft->args);
-        cfield->name = field->name;
-        cfield->type = compiled;
-        FbleRefAdd(arena, &ft->_base.ref, &cfield->type->ref);
-        TypeRelease(arena, cfield->type);
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name.name, func_type->args.xs[j].name.name)) {
-            FbleReportError("duplicate arg name '%s'\n", &field->name.loc, field->name.name);
-            TypeRelease(arena, &ft->_base);
-            return NULL;
-          }
-        }
+        FbleVectorAppend(arena_, ft->args, arg_type);
+        FbleRefAdd(arena, &ft->_base.ref, &arg_type->ref);
+        TypeRelease(arena, arg_type);
       }
 
-      Type* compiled = CompileType(arena, vars, type_vars, func_type->rtype);
-      if (compiled == NULL) {
+      Type* rtype = CompileType(arena, vars, type_vars, func_type->rtype);
+      if (rtype == NULL) {
         TypeRelease(arena, &ft->_base);
         return NULL;
       }
-      ft->rtype = compiled;
+      ft->rtype = rtype;
       FbleRefAdd(arena, &ft->_base.ref, &ft->rtype->ref);
       TypeRelease(arena, ft->rtype);
       return &ft->_base;

@@ -182,29 +182,23 @@ return type of the function.
 5.1 Function Type
 -----------------
 Abstract Syntax:
-  Type ::= func_type (args :: [(Type, Name)]) (return :: Type)
+  Type ::= func_type (args :: [Type]) (return :: Type)
 
 Concrete Syntax:
-  type ::= '\(' type name [',' type name [...]] ';' type ')'
+  type ::= '\(' type [',' type [...]] ';' type ')'
 
 Examples:
-  \(Int@ a, Int@ b; Bool@)
+  \(Int@, Int@; Bool@)
 
 The function type describes the type of a function value by specifying the
-function value's type and name of input arguments and return type.
+function value's argument and return types.
 
 Function arguments can be structs, unions, functions, or processes.
 
-Two function types are equal if they take the same args and return type, with
-possible renaming of argument names. For example, the following two function
-types are equal:
-  \(Int x; Int)
-  \(Int y; Int)
-
-The rationale for including argument names in the function type when they are
-not involved in the equality check is because argument names often, but not
-always, serve as documentation suggestive to the programmer as to the intent
-of when the function should be called.
+Two function types are equal if they take the same args and return types.
+For example, the following two function types are equal:
+  \(Int; Int)
+  \(Int; Int)
 
 5.2 Function Value
 ------------------
@@ -219,7 +213,9 @@ Example:
 
 The function value expression is used to describe a primitive function value
 given the list of arguments and the body of the function. The return type of
-the function is inferred to be the type of the body of the function.
+the function is inferred to be the type of the body of the function. The
+argument names chosen when defining a function have no effect on the type of
+the function.
 
 Rationale for Concrete Syntax: The body of the function requires use of braces
 to avoid ambiguity that would arise otherwise with an expression such as:
@@ -847,7 +843,7 @@ type ::=
  | '*(' kind type_name '=' type [',' kind type_name '=' type [',' ...]   (* struct_type with type fields *)
         [',' type name [',' type name [...]]] ')'
  | '+(' type name [',' type name [...]] ')'                              (* union_type *)
- | '\(' type name [',' type name [...]] ';' type ')'                     (* func_type *)
+ | '\(' type [',' type [...]] ';' type ')'                               (* func_type *)
  | type '!'                                                              (* proc_type *)
  | type '-'                                                              (* input_type *)
  | type '+'                                                              (* output_type *)

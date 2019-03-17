@@ -11,32 +11,32 @@
     @ Result@ = *(T@ z, Bit@ cout);
     *(
       @ Result@ = Result@,
-      \(T@ a; T@) not,          # !a
-      \(T@ a, T@ b; T@) and,    # a & b
-      \(T@ a, T@ b; T@) or,     # a | b
-      \(T@ a, T@ b; T@) xor,    # a ^ b
-      \(T@ a, T@ b; T@) add,    # a + b
-      T@ zero,                  # 0
-      \(T@ a; Bool@) iszero,    # a == 0
-      \(T@ a, T@ b; Bool@) eq,  # a == b
-      \(T@ a; Bit@) msb,        # most significant bit
-      \(T@ a; T@) clshift,      # circular left shift by 1
-      \(T@ a, T@ b, Bit@ cin; Result@) fulladd,
-      \(T@ a, Bit@ cin; Result@) lshift # left shift by 1
+      \(T@; T@) not,          # !a
+      \(T@, T@; T@) and,      # a & b
+      \(T@, T@; T@) or,       # a | b
+      \(T@, T@; T@) xor,      # a ^ b
+      \(T@, T@; T@) add,      # a + b
+      T@ zero,                # 0
+      \(T@; Bool@) iszero,    # a == 0
+      \(T@, T@; Bool@) eq,    # a == b
+      \(T@; Bit@) msb,        # most significant bit
+      \(T@; T@) clshift,      # circular left shift by 1
+      \(T@, T@, Bit@; Result@) fulladd,
+      \(T@, Bit@; Result@) lshift # left shift by 1
     );
   };
 
   @(Bit1: @(Bit1@: Bit@, BitN: &Bit1));
 
   \<@ ; @> Bit2X@ = \<@ T@> { *(T@ hi, T@ lo); };
-  \<@ T@> { \(BitN@<T@> B; BitN@<Bit2X@<T@>>); } Bit2XN = &Bit2XN;
+  \<@ T@> { \(BitN@<T@>; BitN@<Bit2X@<T@>>); } Bit2XN = &Bit2XN;
 
   @(Bit2: @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN)));
 
   {
     @ Bit2@ = Bit2.Bit2@;
     @ Bit4@ = Bit2X@<Bit2@>;
-    \(Hex@ x; Bit4@) H1 = \(Hex@ x) {
+    \(Hex@; Bit4@) H1 = \(Hex@ x) {
       Bit@ 0 = Bit@(0: Unit@());
       Bit@ 1 = Bit@(1: Unit@());
       ?(x; 0: Bit4@(Bit2@(0, 0), Bit2@(0, 0)),
@@ -62,11 +62,11 @@
   {
     @ Bit8@ = Bit2X@<Bit4.Bit4@>;
 
-    \(Hex@ hi, Hex@ lo; Bit8@) H2 = \(Hex@ hi, Hex@ lo) {
+    \(Hex@, Hex@; Bit8@) H2 = \(Hex@ hi, Hex@ lo) {
       Bit8@(Bit4.H1(hi), Bit4.H1(lo));
     };
 
-    \(Hex@ x; Bit8@) H1 = \(Hex@ x) {
+    \(Hex@; Bit8@) H1 = \(Hex@ x) {
       H2(0, x);
     };
 

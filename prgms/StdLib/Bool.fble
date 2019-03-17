@@ -5,19 +5,19 @@
   Bool@ True = Bool@(true: Unit@());
   Bool@ False = Bool@(false: Unit@());
 
-  \(Bool@ a; Bool@) Not = \(Bool@ a) {
+  \(Bool@; Bool@) Not = \(Bool@ a) {
     ?(a; true: False, false: True);
   };
 
-  \(Bool@ a, Bool@ b; Bool@) And = \(Bool@ a, Bool@ b) {
+  \(Bool@, Bool@; Bool@) And = \(Bool@ a, Bool@ b) {
     ?(a; true: b, false: False);
   };
 
-  \(Bool@ a, Bool@ b; Bool@) Or = \(Bool@ a, Bool@ b) {
+  \(Bool@, Bool@; Bool@) Or = \(Bool@ a, Bool@ b) {
     ?(a; true: True, false: b);
   };
 
-  \(Bool@ a, Bool@ b; Bool@) Eq = \(Bool@ a, Bool@ b) {
+  \(Bool@, Bool@; Bool@) Eq = \(Bool@ a, Bool@ b) {
     ?(a; true: Not(b), false: b);
   };
  

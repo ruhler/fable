@@ -5,8 +5,8 @@ fble-test-error 12:14 {
   @ Fruit@ = +(Unit@ apple, Unit@ banana, Unit@ cherry);
 
   # The functions have different return types.
-  @ FuncA@ = \(Bool@ x, Fruit@ y; Bool@);
-  @ FuncB@ = \(Bool@ x, Fruit@ y; Fruit@);
+  @ FuncA@ = \(Bool@, Fruit@; Bool@);
+  @ FuncB@ = \(Bool@, Fruit@; Fruit@);
 
   FuncA@ a = \(Bool@ x, Fruit@ y) { true; };
   FuncB@ b = a;

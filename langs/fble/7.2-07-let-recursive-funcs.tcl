@@ -7,10 +7,10 @@ fble-test {
 
   # Regression test for when mutually recursive functions like this led to a
   # memory leak.
-  \(S@ x; S@) CopyS = \(S@ x) {
+  \(S@; S@) CopyS = \(S@ x) {
     ?(x; nil: S@(nil: Unit@()), cons: S@(cons: CopyP(x.cons)));
   },
-  \(P@ x; P@) CopyP = \(P@ x) {
+  \(P@; P@) CopyP = \(P@ x) {
     P@(x.head, CopyS(x.tail));
   };
 

@@ -27,7 +27,7 @@
 
   @ TestFailure@ = *(TestName@ name, Nat@ a, Nat@ b);
 
-  \(TestName@ name, Bool@ p, S@<TestFailure@> rest; S@<TestFailure@>) T =
+  \(TestName@, Bool@, S@<TestFailure@>; S@<TestFailure@>) T =
     \(TestName@ name, Bool@ p, S@<TestFailure@> rest) {
       # Just use 0 for the context arguments for now to avoid introducing
       # a union for the test failure type.
@@ -35,7 +35,7 @@
            false: ConsS<TestFailure@>(TestFailure@(name, 0, 0), rest));
     };
 
-  \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest; S@<TestFailure@>) TEq =
+  \(TestName@, Nat@, Nat@, S@<TestFailure@>; S@<TestFailure@>) TEq =
     \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest) {
       ?(EqNat(a, b);
           true: rest,

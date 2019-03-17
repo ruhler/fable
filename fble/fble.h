@@ -194,10 +194,10 @@ typedef struct {
 } FbleUnionType;
 
 // FbleFuncType --
-//   FBLE_FUNC_TYPE (args :: [(Type, Name)]) (return :: Type)
+//   FBLE_FUNC_TYPE (args :: Type) (return :: Type)
 typedef struct {
   FbleType _base;
-  FbleFieldV args;
+  FbleTypeV args;
   FbleType* rtype;
 } FbleFuncType;
 

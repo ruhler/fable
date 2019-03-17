@@ -4,7 +4,7 @@ fble-test-error 12:14 {
   Bool@ true = Bool@(true: Unit@());
   Bool@ false = Bool@(false: Unit@());
 
-  \(Bool@ x, Bool@ y; Bool@) Snd = \(Bool@ x, Bool@ y) {
+  \(Bool@, Bool@; Bool@) Snd = \(Bool@ x, Bool@ y) {
     y;
   };
 

@@ -4,7 +4,7 @@
 Bool@ True = Bool@(true: Unit@());
 Bool@ False = Bool@(false: Unit@());
 
-\(Bool@ a, Bool@ b; Bool@) And = \(Bool@ a, Bool@ b) {
+\(Bool@, Bool@; Bool@) And = \(Bool@ a, Bool@ b) {
   ?(a; true: b, false: False);
 };
 
@@ -38,30 +38,30 @@ Col@ Col60 = Col@(S: Col@(S: Col@(S: Col@(S: Col@(S: Col@(S: Col@(S:
 
 Col@ MaxCol = Col60;
 
-\(Row@ a, Row@ b; Bool@) EqRow = \(Row@ a, Row@ b) {
+\(Row@, Row@; Bool@) EqRow = \(Row@ a, Row@ b) {
   ?(a;
       Z: ?(b; Z: True, S: False),
       S: ?(b; Z: False, S: EqRow(a.S, b.S)));
 };
 
-\(Col@ a, Col@ b; Bool@) EqCol = \(Col@ a, Col@ b) {
+\(Col@, Col@; Bool@) EqCol = \(Col@ a, Col@ b) {
   ?(a;
       Z: ?(b; Z: True, S: False),
       S: ?(b; Z: False, S: EqCol(a.S, b.S)));
 };
 
-\(Pos@ a, Pos@ b; Bool@) EqPos = \(Pos@ a, Pos@ b) {
+\(Pos@, Pos@; Bool@) EqPos = \(Pos@ a, Pos@ b) {
   And(EqRow(a.row, b.row), EqCol(a.col, b.col));
 };
 
-\(Row@ a; Row@) IncrRow = \(Row@ a) { Row@(S: a); };
-\(Col@ a; Col@) IncrCol = \(Col@ a) { Col@(S: a); };
+\(Row@; Row@) IncrRow = \(Row@ a) { Row@(S: a); };
+\(Col@; Col@) IncrCol = \(Col@ a) { Col@(S: a); };
 
-\(Row@ a; Row@) DecrRow = \(Row@ a) {
+\(Row@; Row@) DecrRow = \(Row@ a) {
   ?(a; Z: Row@(Z: Unit@()), S: a.S);
 };
 
-\(Col@ a; Col@) DecrCol = \(Col@ a) {
+\(Col@; Col@) DecrCol = \(Col@ a) {
   ?(a; Z: Col@(Z: Unit@()), S: a.S);
 };
 
@@ -89,14 +89,14 @@ Col@ MaxCol = Col60;
 #   snake - The positions of the snake, in order from head to tail.
 @ State@ = *(Direction@ dir, Pos@ food, Pos@ nfood, P@<Pos@> snake);
 
-\(S@<Pos@> s; S@<Draw@>) DrawSnakeS = \(S@<Pos@> s) {
+\(S@<Pos@>; S@<Draw@>) DrawSnakeS = \(S@<Pos@> s) {
   ?(s; nil: S@<Draw@>(nil: Unit@()), cons: S@<Draw@>(cons: DrawSnakeP(s.cons)));
 },
-\(P@<Pos@> s; P@<Draw@>) DrawSnakeP = \(P@<Pos@> s) {
+\(P@<Pos@>; P@<Draw@>) DrawSnakeP = \(P@<Pos@> s) {
   P@<Draw@>(Draw@(s.head, Cell@(snake: Unit@())), DrawSnakeS(s.tail));
 };
 
-\(State@ s; S@<Draw@>) DrawState = \(State@ s) {
+\(State@; S@<Draw@>) DrawState = \(State@ s) {
   S@<Draw@>(cons: P@<Draw@>(Draw@(s.food, Cell@(food: Unit@())),
   S@<Draw@>(cons: DrawSnakeP(s.snake))));
 };
@@ -123,26 +123,26 @@ State@ InitialState = {
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
-\(S@<Pos@> s, Pos@ p; Bool@) InPosS = \(S@<Pos@> s, Pos@ p) {
+\(S@<Pos@>, Pos@; Bool@) InPosS = \(S@<Pos@> s, Pos@ p) {
   ?(s ; nil: False, cons: InPosP(s.cons, p));
 },
-\(P@<Pos@> s, Pos@ p; Bool@) InPosP = \(P@<Pos@> s, Pos@ p) {
+\(P@<Pos@>, Pos@; Bool@) InPosP = \(P@<Pos@> s, Pos@ p) {
   ?(EqPos(s.head, p); true: True, false: InPosS(s.tail, p));
 };
 
 # Return all but the last element in l.
-\(P@<Pos@> l; S@<Pos@>) InitPosP = \(P@<Pos@> l) {
+\(P@<Pos@>; S@<Pos@>) InitPosP = \(P@<Pos@> l) {
   ?(l.tail;
        nil: PosS@(nil: Unit@()),
       cons: PosS@(cons: P@<Pos@>(l.head, InitPosP(l.tail.cons))));
 };
 
 # Return the last element in l.
-\(P@<Pos@> l; Pos@) LastPosP = \(P@<Pos@> l) {
+\(P@<Pos@>; Pos@) LastPosP = \(P@<Pos@> l) {
   ?(l.tail; nil: l.head, cons: LastPosP(l.tail.cons));
 };
 
-\(State@ s; MoveResultM@) Move = \(State@ s) {
+\(State@; MoveResultM@) Move = \(State@ s) {
   PosM@ pm = ?(s.dir;
     up:
     ?(EqRow(s.snake.head.row, MaxRow);
@@ -191,7 +191,7 @@ State@ InitialState = {
             })));
 };
 
-\(Draw@+ out, S@<Draw@> draw; Unit@!) DrawAll = \(Draw@+ out, S@<Draw@> draw) {
+\(Draw@+, S@<Draw@>; Unit@!) DrawAll = \(Draw@+ out, S@<Draw@> draw) {
   ?(draw ; nil: $(Unit@()),
       cons: {
          Draw@ x := out(draw.cons.head);
@@ -199,7 +199,7 @@ State@ InitialState = {
       });
 };
 
-\(Input@- in, Draw@+ out, State@ s; Unit@!) Snake = \(Input@- in, Draw@+ out,
+\(Input@-, Draw@+, State@; Unit@!) Snake = \(Input@- in, Draw@+ out,
 State@ s) {
   Input@ x := in();
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
@@ -214,7 +214,7 @@ State@ s) {
        });
 };
 
-\(Input@- in, Draw@+ out; Unit@!) Main = \(Input@- in, Draw@+ out) {
+\(Input@-, Draw@+; Unit@!) Main = \(Input@- in, Draw@+ out) {
   State@ s = InitialState;
   Unit@ u := DrawAll(out, DrawState(s));
   Snake(in, out, s);

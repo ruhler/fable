@@ -8,7 +8,7 @@
   @ TestName@ = +(Unit@ NthPrime_1_10);
   @ TestFailure@ = *(TestName@ name, Nat@ a, Nat@ b);
 
-  \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest; S@<TestFailure@>) TEq =
+  \(TestName@, Nat@, Nat@, S@<TestFailure@>; S@<TestFailure@>) TEq =
     \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest) {
       ?(EqNat(a, b); true: rest,
           false: ConsS<TestFailure@>(TestFailure@(name, a, b), rest));

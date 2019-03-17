@@ -6,8 +6,8 @@ fble-test {
 
   @ Maybe@ = +(Bool@ just, Unit@ nothing);
 
-  \(Maybe@ m; \(\(Bool@ x; Bool@) f; Maybe@)) Map = \(Maybe@ m) {
-    \(\(Bool@ x; Bool@) f) {
+  \(Maybe@; \(\(Bool@; Bool@); Maybe@)) Map = \(Maybe@ m) {
+    \(\(Bool@; Bool@) f) {
       ?(m;
          just: Maybe@(just: f(m.just)),
          nothing: Maybe@(nothing: Unit@()));

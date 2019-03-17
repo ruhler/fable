@@ -7,7 +7,7 @@
   @ TestName@ = +(Unit@ List_Sort_basic);
   @ TestFailure@ = *(TestName@ name, S@<Elem@> wnt, S@<Elem@> got);
 
-  \(Elem@ a, Elem@ b; Bool@) ElemLe = \(Elem@ a, Elem@ b) {
+  \(Elem@, Elem@; Bool@) ElemLe = \(Elem@ a, Elem@ b) {
     ?(a; A: ?(b; A: True,  B: True,  C: True,  D: True,  E: True),
          B: ?(b; A: False, B: True,  C: True,  D: True,  E: True),
          C: ?(b; A: False, B: False, C: True,  D: True,  E: True),
@@ -15,7 +15,7 @@
          E: ?(b; A: False, B: False, C: False, D: False, E: True));
   };
 
-  \(Elem@ a, Elem@ b; Bool@) ElemEq = \(Elem@ a, Elem@ b) {
+  \(Elem@, Elem@; Bool@) ElemEq = \(Elem@ a, Elem@ b) {
     ?(a; A: ?(b; A: True,  B: False, C: False, D: False, E: False),
          B: ?(b; A: False, B: True,  C: False, D: False, E: False),
          C: ?(b; A: False, B: False, C: True,  D: False, E: False),
@@ -24,14 +24,14 @@
   };
 
   # TODO: Move these to StdLib/List and make it public?
-  \<@ T@> { \(\(T@ a, T@ b; Bool@) eq, S@<T@> a, S@<T@> b; Bool@); } SEq = \<@ T@> {
-    \(\(T@ a, T@ b; Bool@) eq, S@<T@> a, S@<T@> b) {
+  \<@ T@> { \(\(T@, T@; Bool@), S@<T@>, S@<T@>; Bool@); } SEq = \<@ T@> {
+    \(\(T@, T@; Bool@) eq, S@<T@> a, S@<T@> b) {
       ?(a; cons: ?(b; cons: PEq<T@>(eq, a.cons, b.cons), nil: False),
            nil: ?(b; cons: False, nil: True));
     };
   },
-  \<@ T@> { \(\(T@ a, T@ b; Bool@) eq, P@<T@> a, P@<T@> b; Bool@); } PEq = \<@ T@> {
-    \(\(T@ a, T@ b; Bool@) eq, P@<T@> a, P@<T@> b) {
+  \<@ T@> { \(\(T@, T@; Bool@), P@<T@>, P@<T@>; Bool@); } PEq = \<@ T@> {
+    \(\(T@, T@; Bool@) eq, P@<T@> a, P@<T@> b) {
       And(eq(a.head, b.head), SEq<T@>(eq, a.tail, b.tail));
     };
   };

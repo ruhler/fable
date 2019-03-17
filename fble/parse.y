@@ -74,7 +74,7 @@
 %type <kind> kind
 %type <kinds> kind_p
 %type <type> type type_stmt 
-%type <types> type_p
+%type <types> type_p type_s
 %type <expr> expr stmt
 %type <exprs> expr_s expr_p
 %type <field> anon_struct_type_arg
@@ -151,7 +151,7 @@ type:
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
- | '\\' '(' field_s ';' type ')' {
+ | '\\' '(' type_s ';' type ')' {
       FbleFuncType* func_type = FbleAlloc(arena, FbleFuncType);
       func_type->_base.tag = FBLE_FUNC_TYPE;
       func_type->_base.loc = @$;
@@ -235,6 +235,11 @@ type_stmt:
       $$ = &let_type->_base;
     }  
   ;
+
+type_s:
+   %empty { FbleVectorInit(arena, $$); }
+ | type_p { $$ = $1; }
+ ;
 
 type_p:
    type {

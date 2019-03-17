@@ -12,7 +12,7 @@
   Bits.Hex { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
 
   # Construct a Bit32 in hex, with high-order byte first.
-  \(Hex@ 7, Hex@ 6, Hex@ 5, Hex@ 4, Hex@ 3, Hex@ 2, Hex@ 1, Hex@ 0; Bit32@) H8 =
+  \(Hex@, Hex@, Hex@, Hex@, Hex@, Hex@, Hex@, Hex@; Bit32@) H8 =
     \(Hex@ 7, Hex@ 6, Hex@ 5, Hex@ 4, Hex@ 3, Hex@ 2, Hex@ 1, Hex@ 0) {
       Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
     };
@@ -103,7 +103,7 @@
     Unit@ 16, Unit@ 17, Unit@ 18, Unit@ 19, Unit@ 20, Unit@ 21, Unit@ 22, Unit@ 23
   );
 
-  \(S@ s; Maybe@<S@>) NextS = \(S@ s) {
+  \(S@; Maybe@<S@>) NextS = \(S@ s) {
     ?(s; 0: Maybe@<S@>(nothing: Unit@()),
          1: Maybe@<S@>(just: S@(0: Unit@())), 2: Maybe@<S@>(just: S@(1: Unit@())),
          3: Maybe@<S@>(just: S@(2: Unit@())), 4: Maybe@<S@>(just: S@(3: Unit@())),
@@ -119,48 +119,48 @@
          23: Maybe@<S@>(just: S@(22: Unit@())));
   };
 
-  \(Bit32@ a, S@ s; Bit32@) cls = \(Bit32@ a, S@ s) {
+  \(Bit32@, S@; Bit32@) cls = \(Bit32@ a, S@ s) {
     Maybe@<S@> next = NextS(s);
     ?(next; just: cls(clshift(a), next.just), nothing: a);
   };
 
-  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) F = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+  \(Bit32@, Bit32@, Bit32@; Bit32@) F = \(Bit32@ x, Bit32@ y, Bit32@ z) {
     or(and(x, y), and(not(x), z));
   };
 
-  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) G = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+  \(Bit32@, Bit32@, Bit32@; Bit32@) G = \(Bit32@ x, Bit32@ y, Bit32@ z) {
     or(and(x, z), and(y, not(z)));
   };
 
-  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) H = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+  \(Bit32@, Bit32@, Bit32@; Bit32@) H = \(Bit32@ x, Bit32@ y, Bit32@ z) {
     xor(x, xor(y, z));
   };
 
-  \(Bit32@ x, Bit32@ y, Bit32@ z; Bit32@) I = \(Bit32@ x, Bit32@ y, Bit32@ z) {
+  \(Bit32@, Bit32@, Bit32@; Bit32@) I = \(Bit32@ x, Bit32@ y, Bit32@ z) {
     xor(y, or(x, not(z)));
   };
 
-  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) FF =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@; Bit32@) FF =
     \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
       add(b, cls(add(add(a, F(b, c ,d)), add(x, t)), s));
     };
 
-  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) GG =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@; Bit32@) GG =
     \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
       add(b, cls(add(add(a, G(b, c ,d)), add(x, t)), s));
     };
 
-  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) HH =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@; Bit32@) HH =
     \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
       add(b, cls(add(add(a, H(b, c ,d)), add(x, t)), s));
     };
 
-  \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t ; Bit32@) II =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@; Bit32@) II =
     \(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
       add(b, cls(add(add(a, I(b, c ,d)), add(x, t)), s));
     };
 
-  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round1 =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Block@; ABCD@) Round1 =
     \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
       Bit32@ a1 = FF(a0, b0, c0, d0, block.0, S@(7: Unit@()), t01);
       Bit32@ d1 = FF(d0, a1, b0, c0, block.1, S@(12: Unit@()), t02);
@@ -185,7 +185,7 @@
       ABCD@(a4, b4, c4, d4);
     };
 
-  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round2 =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Block@; ABCD@) Round2 =
     \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
       Bit32@ a1 = GG(a0, b0, c0, d0, block.1, S@(5: Unit@()), t17);
       Bit32@ d1 = GG(d0, a1, b0, c0, block.6, S@(9: Unit@()), t18);
@@ -210,7 +210,7 @@
       ABCD@(a4, b4, c4, d4);
     };
 
-  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round3 =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Block@; ABCD@) Round3 =
     \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
       Bit32@ a1 = HH(a0, b0, c0, d0, block.5, S@(4: Unit@()), t33);
       Bit32@ d1 = HH(d0, a1, b0, c0, block.8, S@(11: Unit@()), t34);
@@ -235,7 +235,7 @@
       ABCD@(a4, b4, c4, d4);
     };
 
-  \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block; ABCD@) Round4 =
+  \(Bit32@, Bit32@, Bit32@, Bit32@, Block@; ABCD@) Round4 =
     \(Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
       Bit32@ a1 = II(a0, b0, c0, d0, block.0, S@(6: Unit@()), t49);
       Bit32@ d1 = II(d0, a1, b0, c0, block.7, S@(10: Unit@()), t50);
@@ -260,7 +260,7 @@
       ABCD@(a4, b4, c4, d4);
     };
 
-  \(ABCD@ abcd, Block@ block; ABCD@) DoBlock = \(ABCD@ abcd, Block@ block) {
+  \(ABCD@, Block@; ABCD@) DoBlock = \(ABCD@ abcd, Block@ block) {
     ABCD@ r1 = Round1(abcd.a, abcd.b, abcd.c, abcd.d, block);
     ABCD@ r2 = Round2(r1.a, r1.b, r1.c, r1.d, block);
     ABCD@ r3 = Round3(r2.a, r2.b, r2.c, r2.d, block);
@@ -271,7 +271,7 @@
   \<@ ; @> Streamed@ = \<@ T@> { *(T@ data, Bool@ last); }; 
 
   # Gets the next word from a pre-padded input
-  \(Streamed@<Bit8@>- padded; Streamed@<Bit32@>!) GetWord = \(Streamed@<Bit8@>- padded) {
+  \(Streamed@<Bit8@>-; Streamed@<Bit32@>!) GetWord = \(Streamed@<Bit8@>- padded) {
     Streamed@<Bit8@> a := padded();
     Streamed@<Bit8@> b := padded();
     Streamed@<Bit8@> c := padded();
@@ -280,7 +280,7 @@
   };
 
   # Gets the next block from a pre-padded input
-  \(Streamed@<Bit8@>- padded; Streamed@<Block@>!) GetBlock = \(Streamed@<Bit8@>- padded) {
+  \(Streamed@<Bit8@>-; Streamed@<Block@>!) GetBlock = \(Streamed@<Bit8@>- padded) {
     Streamed@<Bit32@> 0 := GetWord(padded);
     Streamed@<Bit32@> 1 := GetWord(padded);
     Streamed@<Bit32@> 2 := GetWord(padded);
@@ -306,27 +306,27 @@
   };
 
   # Computes the MD5 checksum of a pre-padded sequence of bytes.
-  \(Streamed@<Bit8@>- padded, ABCD@ abcd; ABCD@!) PaddedMd5 = \(Streamed@<Bit8@>- padded, ABCD@ abcd) {
+  \(Streamed@<Bit8@>-, ABCD@; ABCD@!) PaddedMd5 = \(Streamed@<Bit8@>- padded, ABCD@ abcd) {
     Streamed@<Block@> block := GetBlock(padded);
     ABCD@ md5 := $(DoBlock(abcd, block.data));
     ?(block.last; true: $(md5), false: PaddedMd5(padded, md5));
   };
 
-  \(Bit64@ a; Bit64@) Inc64 = \(Bit64@ a) {
+  \(Bit64@; Bit64@) Inc64 = \(Bit64@ a) {
     Bits.Bit64.BitN.fulladd(a, Bits.Bit64.BitN.zero, Bit@(1: Unit@())).z;
   };
 
-  \(Hex@ a, Hex@ b; Bit64@) H2_64 = \(Hex@ a, Hex@ b) {
+  \(Hex@, Hex@; Bit64@) H2_64 = \(Hex@ a, Hex@ b) {
     Bit8@ 0b8 = H2(0, 0);
     Bit64@(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
   };
 
-  \(Bit64@ a; Bit64@) shl64 = \(Bit64@ a) {
+  \(Bit64@; Bit64@) shl64 = \(Bit64@ a) {
     Bits.Bit64.BitN.lshift(a, Bit@(0: Unit@())).z;
   };
 
   # Add zeros as needed, then the final length to the output message.
-  \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length; Unit@!) PadZ =
+  \(Streamed@<Bit8@>+, Bit64@, Bit64@; Unit@!) PadZ =
     \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length) {
       ?(Bits.Bit64.BitN.iszero(
           Bits.Bit64.BitN.and(H2_64(3, f), Bits.Bit64.BitN.add(H2_64(0, 8), length)));
@@ -348,7 +348,7 @@
     };
 
   # Note: length is in units of bytes
-  \(Maybe@<Bit8@>- input, Streamed@<Bit8@>+ output, Bit64@ length; Unit@!) Pad =
+  \(Maybe@<Bit8@>-, Streamed@<Bit8@>+, Bit64@; Unit@!) Pad =
     \(Maybe@<Bit8@>- input, Streamed@<Bit8@>+ output, Bit64@ length) {
       Maybe@<Bit8@> x := input();
       ?(x; just: {
@@ -368,7 +368,7 @@
       H8(9, 8, b, a, d, c, f, e),
       H8(1, 0, 3, 2, 5, 4, 7, 6));
 
-  \(Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0; Hex@) HexFromBits =
+  \(Bit@, Bit@, Bit@, Bit@; Hex@) HexFromBits =
     \(Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
       ?(b3; 0: ?(b2; 0: ?(b1; 0: ?(b0; 0: 0, 1: 1), 1: ?(b0; 0: 2, 1: 3)),
                      1: ?(b1; 0: ?(b0; 0: 4, 1: 5), 1: ?(b0; 0: 6, 1: 7))),
@@ -376,17 +376,17 @@
                      1: ?(b1; 0: ?(b0; 0: c, 1: d), 1: ?(b0; 0: e, 1: f))));
     };
 
-  \(Bit4@ x; Hex@) HexFromBit4 = \(Bit4@ x) {
+  \(Bit4@; Hex@) HexFromBit4 = \(Bit4@ x) {
     HexFromBits(x.hi.hi, x.hi.lo, x.lo.hi, x.lo.lo);
   };
 
   @ HexPair@ = *(Hex@ hi, Hex@ lo);
 
-  \(Bit8@ byte; HexPair@) HexFromByte = \(Bit8@ byte) {
+  \(Bit8@; HexPair@) HexFromByte = \(Bit8@ byte) {
     HexPair@(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
   };
 
-  \(ABCD@ x; Md5Hash@) HexFromABCD = \(ABCD@ x) {
+  \(ABCD@; Md5Hash@) HexFromABCD = \(ABCD@ x) {
     HexPair@ a0 = HexFromByte(x.a.lo.lo); HexPair@ a1 = HexFromByte(x.a.lo.hi);
     HexPair@ a2 = HexFromByte(x.a.hi.lo); HexPair@ a3 = HexFromByte(x.a.hi.hi);
     HexPair@ b0 = HexFromByte(x.b.lo.lo); HexPair@ b1 = HexFromByte(x.b.lo.hi);
@@ -401,18 +401,18 @@
              d0.hi, d0.lo, d1.hi, d1.lo, d2.hi, d2.lo, d3.hi, d3.lo);
   };
 
-  \(Maybe@<Bit8@>- input; Md5Hash@!) Md5 = \(Maybe@<Bit8@>- input) {
+  \(Maybe@<Bit8@>-; Md5Hash@!) Md5 = \(Maybe@<Bit8@>- input) {
     Streamed@<Bit8@> ~ get_padded, put_padded;
     Unit@ _ := Pad(input, put_padded, Bits.Bit64.BitN.zero),
     ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
     $(HexFromABCD(md5));
   };
 
-  \(Hex@ a, Hex@ b; Bool@) EqHex = \(Hex@ a, Hex@ b) {
+  \(Hex@, Hex@; Bool@) EqHex = \(Hex@ a, Hex@ b) {
     Bits.Bit8.BitN.eq(H2(0, a), H2(0, b));
   };
 
-  \(Md5Hash@ a, Md5Hash@ b; Bool@) Eq = \(Md5Hash@ a, Md5Hash@ b) {
+  \(Md5Hash@, Md5Hash@; Bool@) Eq = \(Md5Hash@ a, Md5Hash@ b) {
     And(And(And(And(And(EqHex(a.0, b.0), EqHex(a.1, b.1)),
                     And(EqHex(a.2, b.2), EqHex(a.3, b.3))),
                 And(And(EqHex(a.4, b.4), EqHex(a.5, b.5)),

@@ -5,8 +5,8 @@ fble-test {
   @ Fruit@ = +(Unit@ apple, Unit@ banana, Unit@ cherry);
 
   # The two following function types are equal.
-  @ FuncA@ = \(Bool@ x, Fruit@ y; Bool@);
-  @ FuncB@ = \(Bool@ x, Fruit@ y; Bool@);
+  @ FuncA@ = \(Bool@, Fruit@; Bool@);
+  @ FuncB@ = \(Bool@, Fruit@; Bool@);
 
   FuncA@ a = \(Bool@ x, Fruit@ y) { true; };
   FuncB@ b = a;

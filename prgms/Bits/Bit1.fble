@@ -5,50 +5,50 @@
 
   @ Result@ = *(Bit@ z, Bit@ cout);
 
-  \(Bit@ a ; Bit@) not = \(Bit@ a) {
+  \(Bit@; Bit@) not = \(Bit@ a) {
     ?(a; 0: Bit@(1: Unit@()), 1: Bit@(0: Unit@()));
   };
 
-  \(Bit@ a, Bit@ b; Bit@) and = \(Bit@ a, Bit@ b) {
+  \(Bit@, Bit@; Bit@) and = \(Bit@ a, Bit@ b) {
     ?(a; 0: a, 1: ?(b; 0: b, 1: a));
   };
 
-  \(Bit@ a, Bit@ b; Bit@) or = \(Bit@ a, Bit@ b) {
+  \(Bit@, Bit@; Bit@) or = \(Bit@ a, Bit@ b) {
     ?(a; 0: ?(b; 0: a, 1: b), 1: a);
   };
 
-  \(Bit@ a, Bit@ b; Bit@) xor = \(Bit@ a, Bit@ b) {
+  \(Bit@, Bit@; Bit@) xor = \(Bit@ a, Bit@ b) {
     ?(a; 0: b, 1: not(b));
   };
 
-  \(Bit@ a, Bit@ b, Bit@ cin; Result@) fulladd = \(Bit@ a, Bit@ b, Bit@ cin) {
+  \(Bit@, Bit@, Bit@; Result@) fulladd = \(Bit@ a, Bit@ b, Bit@ cin) {
     ?(xor(a, b); 0: Result@(cin, a), 1: Result@(not(cin), cin));
   };
 
-  \(Bit@ a, Bit@ b; Bit@) add = \(Bit@ a, Bit@ b) {
+  \(Bit@, Bit@; Bit@) add = \(Bit@ a, Bit@ b) {
     fulladd(a, b, Bit@(0: Unit@())).z;
   };
 
   Bit@ zero = Bit@(0: Unit@());
 
-  \(Bit@ a; Bool@) iszero = \(Bit@ a) {
+  \(Bit@; Bool@) iszero = \(Bit@ a) {
     ?(a; 0: True, 1: False);
   };
 
-  \(Bit@ a, Bit@ b; Bool@) eq = \(Bit@ a, Bit@ b) {
+  \(Bit@, Bit@; Bool@) eq = \(Bit@ a, Bit@ b) {
     ?(a; 0: ?(b; 0: True, 1: False),
         1: ?(b; 0: False, 1: True));
   };
 
-  \(Bit@ a; Bit@) msb = \(Bit@ a) {
+  \(Bit@; Bit@) msb = \(Bit@ a) {
     a;
   };
 
-  \(Bit@ a; Bit@) clshift = \(Bit@ a) {
+  \(Bit@; Bit@) clshift = \(Bit@ a) {
     a;
   };
 
-  \(Bit@ a, Bit@ cin; Result@) lshift = \(Bit@ a, Bit@ cin) {
+  \(Bit@, Bit@; Result@) lshift = \(Bit@ a, Bit@ cin) {
     Result@(cin, a);
   };
 
