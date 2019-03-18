@@ -14,9 +14,11 @@
 //   a thread.
 // 
 // Fields:
-//   instr -  The instructions for executing the expression.
+//   instrs - A vector of instructions in the currently executing block.
+//   pc - The location of the next instruction in the current block to execute.
 typedef struct IStack {
-  FbleInstr* instr;
+  FbleInstrV instrs;
+  size_t pc;
   struct IStack* tail;
 } IStack;
 
@@ -55,7 +57,6 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
 static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
 static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
-static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail); 
 static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail); 
 static IStack* IPop(FbleArena* arena, IStack* istack);
 
@@ -151,28 +152,6 @@ static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
   return tail;
 }
 
-// IPush --
-//   Push an instruction onto an instruction stack.
-//
-// Inputs:
-//   arena - the arena to use for allocations
-//   instr - the instr to push
-//   tail - the stack to push to
-//
-// Result:
-//   The new stack with pushed value.
-//
-// Side effects:
-//   Allocates a new IStack instance that should be freed when done.
-static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail)
-{
-  assert(instr != NULL && "IPush NULL FbleInstr");
-  IStack* istack = FbleAlloc(arena, IStack);
-  istack->instr = instr;
-  istack->tail = tail;
-  return istack;
-}
-
 // IPushBlock --
 //   Push a block of instructions onto an instruction stack.
 //
@@ -182,17 +161,17 @@ static IStack* IPush(FbleArena* arena, FbleInstr* instr, IStack* tail)
 //   tail - the stack to push to
 //
 // Result:
-//   The new stack with pushed instructions..
+//   The new stack with pushed instructions.
 //
 // Side effects:
 //   Allocates new IStack instances that should be freed when done.
 static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail)
 {
-  for (size_t i = 0; i < block->instrs.size; ++i) {
-    size_t j = block->instrs.size - 1 - i;
-    tail = IPush(arena, block->instrs.xs[j], tail);
-  }
-  return tail;
+  IStack* istack = FbleAlloc(arena, IStack);
+  istack->instrs = block->instrs;
+  istack->pc = 0;
+  istack->tail = tail;
+  return istack;
 }
 
 // IPop --
@@ -232,9 +211,8 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   while (thread->iquota > 0 && thread->istack != NULL) {
-    FbleInstr* instr = thread->istack->instr;
-    thread->istack = IPop(arena_, thread->istack);
-
+    assert(thread->istack->pc < thread->istack->instrs.size);
+    FbleInstr* instr = thread->istack->instrs.xs[thread->istack->pc++];
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
@@ -523,7 +501,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           if (thread->children.xs[i]->istack != NULL) {
             // Blocked on child. Restore the thread state and return before
             // iquota has been decremented.
-            thread->istack = IPush(arena_, instr, thread->istack);
+            thread->istack->pc--;
             return;
           }
         }
@@ -563,7 +541,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
                 // Blocked on get. Restore the thread state and return before
                 // iquota has been decremented.
                 thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
-                thread->istack = IPush(arena_, instr, thread->istack);
+                thread->istack->pc--;
                 return;
               }
 
@@ -584,7 +562,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
                 // Blocked on get. Restore the thread state and return before
                 // iquota has been decremented.
                 thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
-                thread->istack = IPush(arena_, instr, thread->istack);
+                thread->istack->pc--;
                 return;
               }
 
@@ -629,7 +607,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
                 // Blocked on put. Restore the thread state and return before
                 // iquota has been decremented.
                 thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
-                thread->istack = IPush(arena_, instr, thread->istack);
+                thread->istack->pc--;
                 return;
               }
 
@@ -675,7 +653,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             // until we are done executing. To do so, keep the proc value on
             // the data stack until after it's done executing.
             thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
-
             thread->istack = IPushBlock(arena_, link->body, thread->istack);
             break;
           }
@@ -704,7 +681,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             // until we are done executing. To do so, keep the proc value on
             // the data stack until after it's done executing.
             thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
-
             thread->istack = IPushBlock(arena_, exec->body, thread->istack);
             break;
           }
@@ -761,6 +737,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         break;
       }
     }
+
+    // TODO: Introduce a FINISH instruction or some such to do the IPop rather
+    // than have to check this in every iteration of the instruction loop?
+    while (thread->istack != NULL && thread->istack->pc >= thread->istack->instrs.size) {
+      thread->istack = IPop(arena_, thread->istack);
+    }
+
     thread->iquota--;
   }
 }

@@ -1,9 +1,7 @@
 Fble:
 * [perf] Rework how instructions are composed together
- - change istack to be stack of (Instr**, index) pairs or some such.
- - add finish instructions for finishing top level expression.
- - case expression keeps track of instruction index to jump to.
- - add goto instructions for finishing case branches.
+ - add finish instructions for finishing top level expression rather than
+   check every iteration of execution loop.
 
 * [lang] Figure out new function syntax
 
@@ -60,11 +58,11 @@ Fble Cleanup:
 * Better error message when the difference between a type is accidentally
   defining + vs. *, and it contains substituted polymorphic type variables.
 * Use consistent style for error messages. Capitalize? Punctuate?
+* Should we store an InstrBlock* on IStack and have the IStack take a
+  reference to it rather than have to hold on to a reference to the func/proc/
+  whatever object we originally got the instructions from on the data stack?
 
 Fble Performance:
-* Don't push individual instructions on stack for compound instructions.
-  - Process the instructions as a group, either of basic blocks or function
-    calls.
 * Only save bits of function context that are used.
 
 Fble Lib:
