@@ -1,11 +1,9 @@
 Fble:
 * [perf] Rework how instructions are composed together
- - each top level expression should compile to a vector of instructions.
+ - change istack to be stack of (Instr**, index) pairs or some such.
+ - add finish instructions for finishing top level expression.
  - case expression keeps track of instruction index to jump to.
  - add goto instructions for finishing case branches.
- - add finish instructions for finishing top level expression.
- - change istack to be stack of (Instr**, index) pairs or some such.
- - remove composite instruction.
 
 * [lang] Figure out new function syntax
 

@@ -47,6 +47,8 @@ struct Thread {
 };
 
 static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
+static FbleInstr* g_proc_instr_ptr = &g_proc_instr;
+static FbleInstrBlock g_proc_block = { .refcount = 1, .instrs = { .size = 1, .xs = &g_proc_instr_ptr } };
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
@@ -691,7 +693,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               Thread* child = FbleAlloc(arena_, Thread);
               child->var_stack = thread->var_stack;
               child->data_stack = VPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
-              child->istack = IPush(arena_, &g_proc_instr, NULL);
+              child->istack = IPushBlock(arena_, &g_proc_block, NULL);
               child->iquota = 0;
               FbleVectorInit(arena_, child->children);
               FbleVectorAppend(arena_, thread->children, child);
@@ -911,12 +913,8 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args
 // FbleExec -- see documentation in fble.h
 FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleProcValue* proc)
 {
-  FbleProcInstr instr = { ._base = { .tag = FBLE_PROC_INSTR } };
-  FbleInstr* ixs = &instr._base;
-  FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = &ixs } };
-
   FbleValue* xs[1] = { &proc->_base };
   FbleValueV args = { .size = 1, .xs = xs };
-  FbleValue* result = Eval(arena, io, &block, args);
+  FbleValue* result = Eval(arena, io, &g_proc_block, args);
   return result;
 }
