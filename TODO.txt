@@ -1,8 +1,4 @@
 Fble:
-* [perf] Rework how instructions are composed together
- - add finish instructions for finishing top level expression rather than
-   check every iteration of execution loop.
-
 * [lang] Figure out new function syntax
 
 * [lang] work out what you can do with types vs. exprs.

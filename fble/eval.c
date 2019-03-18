@@ -49,8 +49,12 @@ struct Thread {
 };
 
 static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
-static FbleInstr* g_proc_instr_ptr = &g_proc_instr;
-static FbleInstrBlock g_proc_block = { .refcount = 1, .instrs = { .size = 1, .xs = &g_proc_instr_ptr } };
+static FbleInstr g_ipop_instr = { .tag = FBLE_IPOP_INSTR };
+static FbleInstr* g_proc_block_instrs[] = { &g_proc_instr, &g_ipop_instr };
+static FbleInstrBlock g_proc_block = {
+  .refcount = 1,
+  .instrs = { .size = 2, .xs = g_proc_block_instrs }
+};
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
@@ -167,6 +171,11 @@ static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
 //   Allocates new IStack instances that should be freed when done.
 static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail)
 {
+  // For debugging purposes, double check that all blocks will pop themselves
+  // when done.
+  assert(block->instrs.size > 0);
+  assert(block->instrs.xs[block->instrs.size - 1]->tag == FBLE_IPOP_INSTR);
+
   IStack* istack = FbleAlloc(arena, IStack);
   istack->instrs = block->instrs;
   istack->pc = 0;
@@ -736,12 +745,11 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValueRelease(arena, &sv->_base);
         break;
       }
-    }
 
-    // TODO: Introduce a FINISH instruction or some such to do the IPop rather
-    // than have to check this in every iteration of the instruction loop?
-    while (thread->istack != NULL && thread->istack->pc >= thread->istack->instrs.size) {
-      thread->istack = IPop(arena_, thread->istack);
+      case FBLE_IPOP_INSTR: {
+        thread->istack = IPop(arena_, thread->istack);
+        break;
+      }
     }
 
     thread->iquota--;
@@ -873,12 +881,14 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args)
 {
-  FbleFuncApplyInstr instr = {
+  FbleFuncApplyInstr apply = {
     ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
     .argc = args.size,
   };
-  FbleInstr* ixs = &instr._base;
-  FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = &ixs } };
+  FbleIPopInstr ipop = { ._base = { .tag = FBLE_IPOP_INSTR }, };
+
+  FbleInstr* instrs[] = { &apply._base, &ipop._base };
+  FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 2, .xs = instrs } };
         
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 

@@ -1598,7 +1598,8 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_JOIN_INSTR:
     case FBLE_LET_PREP_INSTR:
     case FBLE_LET_DEF_INSTR:
-    case FBLE_NAMESPACE_INSTR: {
+    case FBLE_NAMESPACE_INSTR:
+    case FBLE_IPOP_INSTR: {
       FbleFree(arena, instr);
       return;
     }
@@ -1939,6 +1940,13 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleVectorAppend(arena_, cond_instr->choices, choice);
 
         Type* arg_type = Compile(arena, vars, type_vars, cond_expr->choices.xs[i].expr, &choice->instrs);
+
+        {
+          FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
+          ipop->_base.tag = FBLE_IPOP_INSTR;
+          FbleVectorAppend(arena_, choice->instrs, &ipop->_base);
+        }
+
         Eval(arena, arg_type, NULL, NULL);
         if (arg_type == NULL) {
           TypeRelease(arena, return_type);
@@ -2035,6 +2043,10 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
           release->_base.tag = FBLE_RELEASE_INSTR;
           FbleVectorAppend(arena_, instr->body->instrs, &release->_base);
+
+          FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
+          ipop->_base.tag = FBLE_IPOP_INSTR;
+          FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
         }
       }
 
@@ -2275,6 +2287,10 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       release->_base.tag = FBLE_RELEASE_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &release->_base);
 
+      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
+      ipop->_base.tag = FBLE_IPOP_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
+
       TypeRelease(arena, port_type);
       TypeRelease(arena, &get_type->_base);
       TypeRelease(arena, &put_type->_base);
@@ -2396,6 +2412,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
         release->_base.tag = FBLE_RELEASE_INSTR;
         FbleVectorAppend(arena_, exec_instr->body->instrs, &release->_base);
+      }
+
+      {
+          FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
+          ipop->_base.tag = FBLE_IPOP_INSTR;
+          FbleVectorAppend(arena_, exec_instr->body->instrs, &ipop->_base);
       }
 
       return rtype;
@@ -3259,5 +3281,9 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
     FbleFreeInstrBlock(arena, block);
     return NULL;
   }
+
+  FbleIPopInstr* ipop = FbleAlloc(arena, FbleIPopInstr);
+  ipop->_base.tag = FBLE_IPOP_INSTR;
+  FbleVectorAppend(arena, block->instrs, &ipop->_base);
   return block;
 }
