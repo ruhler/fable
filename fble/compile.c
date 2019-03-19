@@ -114,7 +114,7 @@ typedef struct {
 // FuncType -- FUNC_TYPE
 typedef struct {
   Type _base;
-  TypeV args;
+  Type* arg;
   struct Type* rtype;
 } FuncType;
 
@@ -362,13 +362,7 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
       break;
     }
 
-    case FUNC_TYPE: {
-      FuncType* ft = (FuncType*)type;
-      FbleFree(arena_, ft->args.xs);
-      FbleFree(arena_, ft);
-      break;
-    }
-
+    case FUNC_TYPE:
     case PROC_TYPE:
     case INPUT_TYPE:
     case OUTPUT_TYPE:
@@ -453,9 +447,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
 
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        Add(add, ft->args.xs[i]);
-      }
+      Add(add, ft->arg);
       Add(add, ft->rtype);
       break;
     }
@@ -658,12 +650,8 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
 
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        if (HasParams(ft->args.xs[i], params, &nv)) {
-          return true;
-        }
-      }
-      return HasParams(ft->rtype, params, &nv);
+      return HasParams(ft->arg, params, &nv)
+          || HasParams(ft->rtype, params, &nv);
     }
 
     case PROC_TYPE: {
@@ -805,13 +793,11 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       FbleRefInit(arena, &sft->_base.ref);
       sft->_base.tag = FUNC_TYPE;
       sft->_base.loc = ft->_base.loc;
-      FbleVectorInit(arena_, sft->args);
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        Type* arg_type = Subst(arena, ft->args.xs[i], params, args, tps);
-        FbleVectorAppend(arena_, sft->args, arg_type);
-        FbleRefAdd(arena, &sft->_base.ref, &arg_type->ref);
-        TypeRelease(arena, arg_type);
-      }
+
+      sft->arg = Subst(arena, ft->arg, params, args, tps);
+      FbleRefAdd(arena, &sft->_base.ref, &sft->arg->ref);
+      TypeRelease(arena, sft->arg);
+
       sft->rtype = Subst(arena, ft->rtype, params, args, tps);
       FbleRefAdd(arena, &sft->_base.ref, &sft->rtype->ref);
       TypeRelease(arena, sft->rtype);
@@ -1009,9 +995,7 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
 
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        Eval(arena, ft->args.xs[i], &nevaled, applied);
-      }
+      Eval(arena, ft->arg, &nevaled, applied);
       Eval(arena, ft->rtype, &nevaled, applied);
       return;
     }
@@ -1259,17 +1243,8 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
     case FUNC_TYPE: {
       FuncType* fta = (FuncType*)a;
       FuncType* ftb = (FuncType*)b;
-      if (fta->args.size != ftb->args.size) {
-        return false;
-      }
-
-      for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!TypesEqual(fta->args.xs[i], ftb->args.xs[i], &neq)) {
-          return false;
-        }
-      }
-
-      return TypesEqual(fta->rtype, ftb->rtype, &neq);
+      return TypesEqual(fta->arg, ftb->arg, &neq)
+          && TypesEqual(fta->rtype, ftb->rtype, &neq);
     }
 
     case PROC_TYPE: {
@@ -1444,12 +1419,7 @@ static void PrintType(FbleArena* arena, Type* type)
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
       fprintf(stderr, "\\(");
-      const char* comma = "";
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        fprintf(stderr, "%s", comma);
-        PrintType(arena, ft->args.xs[i]);
-        comma = ", ";
-      }
+      PrintType(arena, ft->arg);
       fprintf(stderr, "; ");
       PrintType(arena, ft->rtype);
       fprintf(stderr, ")");
@@ -1981,34 +1951,22 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleRefInit(arena, &type->_base.ref);
       type->_base.tag = FUNC_TYPE;
       type->_base.loc = expr->loc;
-      FbleVectorInit(arena_, type->args);
+      type->arg = NULL;
       type->rtype = NULL;
+
+      Vars nvars = {
+        .name = func_value_expr->arg.name,
+        .type = NULL,
+        .next = vars,
+      };
       
-      Vars nvds[func_value_expr->args.size];
-      Vars* nvars = vars;
-      bool error = false;
-      for (size_t i = 0; i < func_value_expr->args.size; ++i) {
-        Type* arg_type = CompileType(arena, vars, type_vars, func_value_expr->args.xs[i].type);
-        if (arg_type != NULL) {
-          FbleVectorAppend(arena_, type->args, arg_type);
-          FbleRefAdd(arena, &type->_base.ref, &arg_type->ref);
-          TypeRelease(arena, arg_type);
-        }
-        error = error || (arg_type == NULL);
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(func_value_expr->args.xs[i].name.name, func_value_expr->args.xs[j].name.name)) {
-            error = true;
-            FbleReportError("duplicate arg name '%s'\n", &func_value_expr->args.xs[i].name.loc, func_value_expr->args.xs[i].name.name);
-            break;
-          }
-        }
-
-        nvds[i].name = func_value_expr->args.xs[i].name;
-        nvds[i].type = arg_type;
-        nvds[i].next = nvars;
-        nvars = nvds + i;
+      type->arg = CompileType(arena, vars, type_vars, func_value_expr->arg.type);
+      nvars.type = type->arg;
+      if (type->arg != NULL) {
+        FbleRefAdd(arena, &type->_base.ref, &type->arg->ref);
+        TypeRelease(arena, type->arg);
       }
+      bool error = (type->arg == NULL);
 
       FbleFuncValueInstr* instr = FbleAlloc(arena_, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
@@ -2019,14 +1977,12 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         instr->contextc++;
       }
 
-      instr->argc = func_value_expr->args.size;
-
       instr->body = FbleAlloc(arena_, FbleInstrBlock);
       instr->body->refcount = 1;
       FbleVectorInit(arena_, instr->body->instrs);
 
       if (!error) {
-        type->rtype = Compile(arena, nvars, type_vars, func_value_expr->body, &instr->body->instrs);
+        type->rtype = Compile(arena, &nvars, type_vars, func_value_expr->body, &instr->body->instrs);
         if (type->rtype != NULL) {
           FbleRefAdd(arena, &type->_base.ref, &type->rtype->ref);
           TypeRelease(arena, type->rtype);
@@ -2036,7 +1992,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (!error) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->count = instr->contextc + instr->argc;
+          descope->count = instr->contextc + 1;
           FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
           FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
@@ -2075,21 +2031,19 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           case FUNC_TYPE: {
             // This is normal function application.
             FuncType* func_type = (FuncType*)normal;
-            if (func_type->args.size != apply_expr->args.size) {
-              FbleReportError("expected %i args, but %i provided\n",
-                  &expr->loc, func_type->args.size, apply_expr->args.size);
+            if (1 != apply_expr->args.size) {
+              FbleReportError("expected 1 arg, but %i provided\n",
+                  &expr->loc, apply_expr->args.size);
               error = true;
             }
 
-            for (size_t i = 0; i < func_type->args.size && i < apply_expr->args.size; ++i) {
-              if (arg_types[i] != NULL && !TypesEqual(func_type->args.xs[i], arg_types[i], NULL)) {
-                FbleReportError("expected type ", &apply_expr->args.xs[i]->loc);
-                PrintType(arena_, func_type->args.xs[i]);
-                fprintf(stderr, ", but found ");
-                PrintType(arena_, arg_types[i]);
-                fprintf(stderr, "\n");
-                error = true;
-              }
+            if (apply_expr->args.size > 0 && arg_types[0] != NULL && !TypesEqual(func_type->arg, arg_types[0], NULL)) {
+              FbleReportError("expected type ", &apply_expr->args.xs[0]->loc);
+              PrintType(arena_, func_type->arg);
+              fprintf(stderr, ", but found ");
+              PrintType(arena_, arg_types[0]);
+              fprintf(stderr, "\n");
+              error = true;
             }
 
             for (size_t i = 0; i < apply_expr->args.size; ++i) {
@@ -2103,7 +2057,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
             FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
             apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
-            apply_instr->argc = func_type->args.size;
 
             FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
             Type* rtype = TypeRetain(arena, func_type->rtype);
@@ -2867,20 +2820,17 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       FbleRefInit(arena, &ft->_base.ref);
       ft->_base.loc = type->loc;
       ft->_base.tag = FUNC_TYPE;
-      FbleVectorInit(arena_, ft->args);
+      ft->arg = NULL;
       ft->rtype = NULL;
 
       FbleFuncType* func_type = (FbleFuncType*)type;
-      for (size_t i = 0; i < func_type->args.size; ++i) {
-        Type* arg_type = CompileType(arena, vars, type_vars, func_type->args.xs[i]);
-        if (arg_type == NULL) {
-          TypeRelease(arena, &ft->_base);
-          return NULL;
-        }
-        FbleVectorAppend(arena_, ft->args, arg_type);
-        FbleRefAdd(arena, &ft->_base.ref, &arg_type->ref);
-        TypeRelease(arena, arg_type);
+      ft->arg = CompileType(arena, vars, type_vars, func_type->arg);
+      if (ft->arg == NULL) {
+        TypeRelease(arena, &ft->_base);
+        return NULL;
       }
+      FbleRefAdd(arena, &ft->_base.ref, &ft->arg->ref);
+      TypeRelease(arena, ft->arg);
 
       Type* rtype = CompileType(arena, vars, type_vars, func_type->rtype);
       if (rtype == NULL) {

@@ -194,10 +194,10 @@ typedef struct {
 } FbleUnionType;
 
 // FbleFuncType --
-//   FBLE_FUNC_TYPE (args :: Type) (return :: Type)
+//   FBLE_FUNC_TYPE (arg :: Type) (return :: Type)
 typedef struct {
   FbleType _base;
-  FbleTypeV args;
+  FbleType* arg;
   FbleType* rtype;
 } FbleFuncType;
 
@@ -361,10 +361,10 @@ typedef struct {
 } FbleCondExpr;
 
 // FbleFuncValueExpr --
-//   FBLE_FUNC_VALUE_EXPR (args :: [(Type, Name)]) (body :: Expr)
+//   FBLE_FUNC_VALUE_EXPR (arg :: (Type, Name)) (body :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleFieldV args;
+  FbleField arg;
   FbleExpr* body;
 } FbleFuncValueExpr;
 

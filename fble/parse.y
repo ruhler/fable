@@ -154,13 +154,10 @@ type:
  | '\\' '(' type_p ';' type ')' {
       $$ = $5;
       for (size_t i = 0; i < $3.size; ++i) {
-        FbleType* arg = $3.xs[$3.size - 1 - i];
-
         FbleFuncType* func_type = FbleAlloc(arena, FbleFuncType);
         func_type->_base.tag = FBLE_FUNC_TYPE;
         func_type->_base.loc = @$;
-        FbleVectorInit(arena, func_type->args);
-        FbleVectorAppend(arena, func_type->args, arg);
+        func_type->arg = $3.xs[$3.size - 1 - i];
         func_type->rtype = $$;
         $$ = &func_type->_base;
       }
@@ -350,13 +347,10 @@ expr:
  | '\\' '(' field_p ')' '{' stmt '}' {
       $$ = $6;
       for (size_t i = 0; i < $3.size; ++i) {
-        FbleField arg = $3.xs[$3.size - 1 - i];
-
         FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
         func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
         func_value_expr->_base.loc = @$;
-        FbleVectorInit(arena, func_value_expr->args);
-        FbleVectorAppend(arena, func_value_expr->args, arg);
+        func_value_expr->arg = $3.xs[$3.size - 1 - i];
         func_value_expr->body = $$;
         $$ = &func_value_expr->_base;
       }
@@ -452,18 +446,25 @@ expr:
 stmt:
     expr ';' { $$ = $1; }
   | field_p '<' '-' expr ';' stmt {
-      FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
-      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
-      func_value_expr->_base.loc = @$;
-      func_value_expr->args = $1;
-      func_value_expr->body = $6;
+      FbleExpr* func = $6;
+      for (size_t i = 0; i < $1.size; ++i) {
+        FbleField arg = $1.xs[$1.size - 1 - i];
+
+        FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
+        func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+        func_value_expr->_base.loc = @$;
+        func_value_expr->arg = arg;
+        func_value_expr->body = func;
+        func = &func_value_expr->_base;
+      }
+      FbleFree(arena, $1.xs);
 
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
       apply_expr->_base.tag = FBLE_APPLY_EXPR;
       apply_expr->_base.loc = @$;
       apply_expr->func = $4;
       FbleVectorInit(arena, apply_expr->args);
-      FbleVectorAppend(arena, apply_expr->args, &func_value_expr->_base);
+      FbleVectorAppend(arena, apply_expr->args, func);
       $$ = &apply_expr->_base;
     }
   | type '~' NAME ',' NAME ';' stmt {

@@ -118,7 +118,6 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   size_t contextc;
-  size_t argc;
   FbleInstrBlock* body;
 } FbleFuncValueInstr;
 
@@ -133,11 +132,10 @@ typedef struct {
 } FbleDescopeInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   dstack: ..., f, x1, x2, ..., xN
-//       ==> ..., f(x1, x2, .., xN)
+//   dstack: ..., f, x1
+//       ==> ..., f(x1)
 typedef struct {
   FbleInstr _base;
-  size_t argc;
 } FbleFuncApplyInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR
