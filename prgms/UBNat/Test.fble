@@ -42,7 +42,7 @@
           false: ConsS<TestFailure@>(TestFailure@(name, a, b), rest));
     };
 
-  \( ; S@<TestFailure@>) Test = \() {
+  \(Unit@ ; S@<TestFailure@>) Test = \(Unit@ _) {
     T(TestName@(Eq_0_0: Unit@()), EqNat(0, 0),
     T(TestName@(Eq_0_1: Unit@()), Not(EqNat(0, 1)),
     T(TestName@(Eq_1_1: Unit@()), EqNat(1, 1),

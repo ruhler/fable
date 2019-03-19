@@ -53,7 +53,7 @@
       ?(Eq(x.wnt, x.got); true: l, false: ConsS<TestFailure@>(x, l));
     };
 
-  \( ; S@<TestFailure@>!) Test = \() {
+  \(Unit@ ; S@<TestFailure@>!) Test = \(Unit@ _) {
     TestFailure@ empty := TestStr(
       TestName@(Md5_empty: Unit@()),
       Md5Hash@(

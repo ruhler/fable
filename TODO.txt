@@ -1,18 +1,23 @@
 Fble:
+* [lang] Switch to single-argument functions and poly's in abstract syntax.
+ - update fble spec too.
+
+* [clean] Clean up handling of union access errors
+  - make sure they are propagated cleanly, and figure out a better way to
+    clean up the stacks to allow for the following performance optimization.
+* [perf] Save value stack on stack frame
+  - to allow us to reuse the function context without copying it to the value
+    stack.
+
+* [lang] Redesign language syntax.
+
+* [test] Port tictactoe to fble.
 * [test] Implement fble-md5 program.
-* [lang] Figure out new function syntax
-* [perf] Figure out how to only save variables on stack that need to be saved.
 
 * [lang] work out what you can do with types vs. exprs.
+  - answer should be: you can do everything with both.
 
-* [perf] fix perf issues for AllTests.
-* [test] Port rest of fbld tests and programs to fble.
-  - Sudoku partial draft
-  - fblc spec test coverage
-  - fbld spec test coverage
-  - tictactoe
-  - fbld-md5 program
-  - any other remaining fblc, fbld things.
+* [perf] fix perf issues with AllTests.
 
 * [test] Fix 8.3-07
  - debugging: S<T> ==> S'<T'>
@@ -29,6 +34,9 @@ Fble:
     definition of a type, or the same occurrence. So, either use the location
     information to test if they are the same, or keep some token that is
     preserved across substitution and use that to detect if they are the same.
+
+
+
 
 Fble Cleanup:
 * Better error messages on types that have the same name but different values.
@@ -59,9 +67,10 @@ Fble Cleanup:
 * Should we store an InstrBlock* on IStack and have the IStack take a
   reference to it rather than have to hold on to a reference to the func/proc/
   whatever object we originally got the instructions from on the data stack?
-
-Fble Performance:
-* Only save bits of function context that are used.
+* Port rest of fbld tests and programs to fble.
+  - Sudoku partial draft
+  - fblc spec test coverage
+  - fbld spec test coverage
 
 Fble Lib:
 * Should Eq just be a function or an interface?

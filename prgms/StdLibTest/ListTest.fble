@@ -36,7 +36,7 @@
     };
   };
 
-  \( ; S@<TestFailure@>) Test = \() {
+  \(Unit@ ; S@<TestFailure@>) Test = \(Unit@ _) {
     S@<Elem@> unsorted = S5<Elem@>(
       Elem@(D: Unit@()),
       Elem@(A: Unit@()),
