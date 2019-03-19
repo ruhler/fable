@@ -14,9 +14,11 @@
 //   a thread.
 // 
 // Fields:
+//   retain - A value to retain for the duration of the stack frame. May be NULL.
 //   instrs - A vector of instructions in the currently executing block.
 //   pc - The location of the next instruction in the current block to execute.
 typedef struct IStack {
+  FbleValue* retain;
   FbleInstrV instrs;
   size_t pc;
   struct IStack* tail;
@@ -61,8 +63,8 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
 static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
 static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
-static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail); 
-static IStack* IPop(FbleArena* arena, IStack* istack);
+static IStack* IPush(FbleArena* arena, FbleValue* retain, FbleInstrBlock* block, IStack* tail); 
+static IStack* IPop(FbleValueArena* arena, IStack* istack);
 
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
 static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread);
@@ -156,11 +158,12 @@ static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
   return tail;
 }
 
-// IPushBlock --
+// IPush --
 //   Push a block of instructions onto an instruction stack.
 //
 // Inputs:
 //   arena - the arena to use for allocations
+//   retain - an optional value to retain for the duration of the stack frame.
 //   block - the block of instructions to push
 //   tail - the stack to push to
 //
@@ -168,8 +171,9 @@ static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
 //   The new stack with pushed instructions.
 //
 // Side effects:
-//   Allocates new IStack instances that should be freed when done.
-static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail)
+//   Allocates new IStack instances that should be freed when done. Takes over
+//   ownership of the passed 'retain' value.
+static IStack* IPush(FbleArena* arena, FbleValue* retain, FbleInstrBlock* block, IStack* tail)
 {
   // For debugging purposes, double check that all blocks will pop themselves
   // when done.
@@ -177,6 +181,7 @@ static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail)
   assert(block->instrs.xs[block->instrs.size - 1]->tag == FBLE_IPOP_INSTR);
 
   IStack* istack = FbleAlloc(arena, IStack);
+  istack->retain = retain;
   istack->instrs = block->instrs;
   istack->pc = 0;
   istack->tail = tail;
@@ -195,10 +200,11 @@ static IStack* IPushBlock(FbleArena* arena, FbleInstrBlock* block, IStack* tail)
 //
 // Side effects:
 //   Frees the top instruction stack.
-static IStack* IPop(FbleArena* arena, IStack* istack)
+static IStack* IPop(FbleValueArena* arena, IStack* istack)
 {
+  FbleValueRelease(arena, istack->retain);
   IStack* tail = istack->tail;
-  FbleFree(arena, istack);
+  FbleFree(FbleRefArenaArena(arena), istack);
   return tail;
 }
 
@@ -279,7 +285,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           }
 
           while (thread->istack != NULL) {
-            thread->istack = IPop(arena_, thread->istack);
+            thread->istack = IPop(arena, thread->istack);
           }
 
           // Push a NULL value on top of the data_stack in place of the return
@@ -305,7 +311,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = VPop(arena_, thread->data_stack);
         assert(uv->tag < cond_instr->choices.size);
-        thread->istack = IPushBlock(arena_, cond_instr->choices.xs[uv->tag], thread->istack);
+        thread->istack = IPush(arena_, NULL, cond_instr->choices.xs[uv->tag], thread->istack);
         FbleValueRelease(arena, &uv->_base);
         break;
       }
@@ -345,16 +351,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         break;
       }
 
-      case FBLE_RELEASE_INSTR: {
-        FbleValue* v = thread->data_stack->value;
-        thread->data_stack = VPop(arena_, thread->data_stack);
-
-        FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
-        thread->data_stack = VPush(arena_, v, thread->data_stack);
-        break;
-      }
-
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
 
@@ -379,14 +375,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           thread->var_stack = VPush(arena_, args[i], thread->var_stack);
         }
 
-        // The func value owns the instructions we use to execute the body,
-        // which means we need to ensure the func value is retained until
-        // the body is done executing. To do so, keep the func value on the
-        // data stack until after it's done executing. The body of the
-        // function will take care of releasing this.
-        thread->data_stack = VPush(arena_, &func->_base, thread->data_stack);
-
-        thread->istack = IPushBlock(arena_, func->body, thread->istack);
+        thread->istack = IPush(arena_, &func->_base, func->body, thread->istack);
         break;
       }
 
@@ -656,13 +645,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             put->dest = get;
             Add(arena, &put->_base, &get->_base);
             thread->var_stack = VPush(arena_, &put->_base, thread->var_stack);
-
-            // The link proc value owns the instruction it uses to execute,
-            // which means we need to ensure the proc value is retained
-            // until we are done executing. To do so, keep the proc value on
-            // the data stack until after it's done executing.
-            thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
-            thread->istack = IPushBlock(arena_, link->body, thread->istack);
+            thread->istack = IPush(arena_, FbleValueRetain(arena, &link->_base._base), link->body, thread->istack);
             break;
           }
 
@@ -679,18 +662,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               Thread* child = FbleAlloc(arena_, Thread);
               child->var_stack = thread->var_stack;
               child->data_stack = VPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
-              child->istack = IPushBlock(arena_, &g_proc_block, NULL);
+              child->istack = IPush(arena_, NULL, &g_proc_block, NULL);
               child->iquota = 0;
               FbleVectorInit(arena_, child->children);
               FbleVectorAppend(arena_, thread->children, child);
             }
 
-            // The exec proc value owns the instruction it uses to execute,
-            // which means we need to ensure the proc value is retained
-            // until we are done executing. To do so, keep the proc value on
-            // the data stack until after it's done executing.
-            thread->data_stack = VPush(arena_, FbleValueRetain(arena, &proc->_base), thread->data_stack);
-            thread->istack = IPushBlock(arena_, exec->body, thread->istack);
+            thread->istack = IPush(arena_, FbleValueRetain(arena, &proc->_base), exec->body, thread->istack);
             break;
           }
         }
@@ -747,7 +725,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_IPOP_INSTR: {
-        thread->istack = IPop(arena_, thread->istack);
+        thread->istack = IPop(arena, thread->istack);
         break;
       }
     }
@@ -811,7 +789,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   Thread thread = {
     .var_stack = NULL,
     .data_stack = NULL,
-    .istack = IPushBlock(arena_, prgm, NULL),
+    .istack = IPush(arena_, NULL, prgm, NULL),
     .iquota = 0,
   };
   FbleVectorInit(arena_, thread.children);

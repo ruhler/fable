@@ -17,7 +17,6 @@ typedef enum {
   FBLE_COND_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_DESCOPE_INSTR,
-  FBLE_RELEASE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
@@ -115,8 +114,7 @@ typedef struct {
 //              of the variable stack.
 //   body - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should
-//          remove the context of its scope and arguments and release the
-//          function value.
+//          remove the context of its scope and arguments.
 typedef struct {
   FbleInstr _base;
   size_t contextc;
@@ -133,19 +131,6 @@ typedef struct {
   FbleInstr _base;
   size_t count;
 } FbleDescopeInstr;
-
-// FbleReleaseInstr -- FBLE_RELEASE_INSTR
-//   Release and remove the second value from top of the data stack.
-//
-// dstack: ..., P1, V1
-//     ==> ..., V1
-//
-// Used in those cases where the instruction to compute V1 is owned by P1, so
-// we keep P1 on the data stack until after V1 has been computed so the
-// instruction isn't freed before it is done executing.
-typedef struct {
-  FbleInstr _base;
-} FbleReleaseInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
 //   dstack: ..., f, x1, x2, ..., xN
@@ -193,8 +178,7 @@ typedef struct {
 //              of the variable stack.
 //   body - A block of instructions that will execute the body of the link in
 //          the context of its scope and put and get ports. The instruction
-//          should remove the context of its scope and put and get ports and
-//          release the link proc value.
+//          should remove the context of its scope and put and get ports.
 typedef struct {
   FbleInstr _base;
   size_t contextc;
@@ -326,8 +310,7 @@ typedef struct FbleVStack {
 //             representing the lexical context available to the function.
 //             Stored in reverse order of the standard value stack.
 //   body - The block of instructions representing the body of the function,
-//          which should pop the arguments and context and release the
-//          function value after the function is done executing.
+//          which should pop the arguments and context.
 struct FbleFuncValue {
   FbleValue _base;
   FbleVStack* context;

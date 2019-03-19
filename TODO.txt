@@ -1,5 +1,7 @@
 Fble:
+* [test] Implement fble-md5 program.
 * [lang] Figure out new function syntax
+* [perf] Figure out how to only save variables on stack that need to be saved.
 
 * [lang] work out what you can do with types vs. exprs.
 

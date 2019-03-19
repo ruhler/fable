@@ -1588,7 +1588,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR:
     case FBLE_DESCOPE_INSTR:
-    case FBLE_RELEASE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
     case FBLE_EVAL_INSTR:
@@ -2040,10 +2039,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
           descope->count = instr->contextc + instr->argc;
           FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
-          FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
-          release->_base.tag = FBLE_RELEASE_INSTR;
-          FbleVectorAppend(arena_, instr->body->instrs, &release->_base);
-
           FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
           ipop->_base.tag = FBLE_IPOP_INSTR;
           FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
@@ -2283,10 +2278,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
-      FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
-      release->_base.tag = FBLE_RELEASE_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &release->_base);
-
       FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
       ipop->_base.tag = FBLE_IPOP_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
@@ -2395,30 +2386,18 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      {
-        FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-        descope->_base.tag = FBLE_DESCOPE_INSTR;
-        descope->count = exec_instr->contextc + exec_instr->argc;
-        FbleVectorAppend(arena_, exec_instr->body->instrs, &descope->_base);
-      }
+      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+      descope->_base.tag = FBLE_DESCOPE_INSTR;
+      descope->count = exec_instr->contextc + exec_instr->argc;
+      FbleVectorAppend(arena_, exec_instr->body->instrs, &descope->_base);
 
-      {
-        FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
-        proc->_base.tag = FBLE_PROC_INSTR;
-        FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
-      }
+      FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
+      proc->_base.tag = FBLE_PROC_INSTR;
+      FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
 
-      {
-        FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
-        release->_base.tag = FBLE_RELEASE_INSTR;
-        FbleVectorAppend(arena_, exec_instr->body->instrs, &release->_base);
-      }
-
-      {
-          FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
-          ipop->_base.tag = FBLE_IPOP_INSTR;
-          FbleVectorAppend(arena_, exec_instr->body->instrs, &ipop->_base);
-      }
+      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
+      ipop->_base.tag = FBLE_IPOP_INSTR;
+      FbleVectorAppend(arena_, exec_instr->body->instrs, &ipop->_base);
 
       return rtype;
     }
