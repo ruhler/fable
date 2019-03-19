@@ -39,6 +39,7 @@ Fble:
 
 
 Fble Cleanup:
+* Add test that you can't shadow a variable.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
