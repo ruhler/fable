@@ -35,11 +35,7 @@ Fble:
     information to test if they are the same, or keep some token that is
     preserved across substitution and use that to detect if they are the same.
 
-
-
-
 Fble Cleanup:
-* Add test that you can't shadow a variable.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
@@ -60,6 +56,7 @@ Fble Cleanup:
 * Test partial function and excessive function application.
 * Pick a better name for FbleChoice, which is used now for more than just
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
+* Add test that you can't shadow a variable.
 * Test what happens if you try to shadow variable names, and figure out what
   ought to happen.
 * Better error message when the difference between a type is accidentally
@@ -72,6 +69,10 @@ Fble Cleanup:
   - Sudoku partial draft
   - fblc spec test coverage
   - fbld spec test coverage
+* It's very unintuitive that $(f(...)) calls f(...) before executing the
+  process $(...). Clarify the spec on that and make sure we implement it
+  correctly.
+* Remove iquota from Thread data structure. It should be managed separately.
 
 Fble Lib:
 * Should Eq just be a function or an interface?

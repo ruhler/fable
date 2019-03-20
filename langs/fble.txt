@@ -168,42 +168,39 @@ evaluated.
 
 5. Functions
 ------------
-A function is a mapping from argument values to result value. The arguments
-are organized into a finite number of args. Each arg has a name, used to
-identify the argument in the body of the function, and a type, specifying the
-type of value that can be supplied for that argument. A function has a return
-type, specifying the type of value that will result when applying the
-function.
+A function is a mapping from argument value to result value. The argument has
+a name, used to identify the argument in the body of the function, and a type,
+specifying the type of value that can be supplied for that argument. A
+function has a return type, specifying the type of value that will result when
+applying the function.
 
 Functions are described using the fble expression language. A function can be
-applied to a set of arguments of appropriate type to produce a value with the
-return type of the function.
+applied to an argument of appropriate type to produce a value with the return
+type of the function.
 
 5.1 Function Type
 -----------------
 Abstract Syntax:
-  Type ::= func_type (args :: [Type]) (return :: Type)
+  Type ::= func_type (arg :: Type) (return :: Type)
 
 Concrete Syntax:
-  type ::= '\(' type [',' type [...]] ';' type ')'
+  type ::= '\(' type ';' type ')'
 
 Examples:
-  \(Int@, Int@; Bool@)
+  \(Int@; \(Int@; Bool@))
 
 The function type describes the type of a function value by specifying the
-function value's argument and return types.
+function's argument and return types.
 
-Function arguments can be structs, unions, functions, or processes.
+Function arguments can be any kind of value, including structs, unions,
+functions, or processes.
 
-Two function types are equal if they take the same args and return types.
-For example, the following two function types are equal:
-  \(Int; Int)
-  \(Int; Int)
+Two function types are equal if they take the same argument and return types.
 
 5.2 Function Value
 ------------------
 Abstract Syntax:
-  Expr ::= func_value (args :: [(Type, Name)]) (body :: Expr)
+  Expr ::= func_value (arg :: (Type, Name)) (body :: Expr)
 
 Concrete Syntax:
   expr ::= '\(' type name [',' type name [...]] ')' '{' stmt '}'
@@ -212,9 +209,9 @@ Example:
   \(Bool@ a) ?(a; true: False, false: True)
 
 The function value expression is used to describe a primitive function value
-given the list of arguments and the body of the function. The return type of
+given the argument and the body of the function. The return type of
 the function is inferred to be the type of the body of the function. The
-argument names chosen when defining a function have no effect on the type of
+argument name chosen when defining a function has no effect on the type of
 the function.
 
 Rationale for Concrete Syntax: The body of the function requires use of braces
@@ -228,26 +225,18 @@ function \(T@ x) f, or to the function f.
 5.3 Application
 ---------------
 Abstract Syntax:
-  Expr ::= apply (func :: Expr) (args :: [Expr])
+  Expr ::= apply (func :: Expr) (arg :: Expr)
 
 Concrete Syntax:
   expr ::= expr '(' [expr [',' expr [...]]] ')'
 
 Example:
-  foo(x, 3)
+  foo(x)
 
-The application expression is used to apply a function to arguments. Partial
-application of arguments are allowed. The supplied arguments must match the
-types of arguments specified for the function. If not all arguments are
-supplied, the resulting value is a function value parameterized by the
-remaining arguments.
-
-If all arguments are supplied, the application expression evaluates to the
-value of the body of the function in the context of the supplied arguments.
-
-TODO: Can extra arguments be supplied to a function if the function returns a
-function, thus causing the returned function to be called with those extra
-arguments supplied as well?
+The application expression is used to apply a function to an argument.  The
+supplied argument must match the type of argument specified for the function.
+The application expression evaluates to the value of the body of the function
+in the context of the supplied argument.
 
 5.4 Bind
 --------
