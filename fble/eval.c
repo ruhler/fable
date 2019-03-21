@@ -319,18 +319,17 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->body = func_value_instr->body;
         value->body->refcount++;
 
-        FbleVStack* context = NULL;
+        FbleValue* context[func_value_instr->contextc];
         FbleVStack* vs = thread->istack->var_stack;
         for (size_t i = 0; i < func_value_instr->contextc; ++i) {
           assert(vs != NULL);
-          context = VPush(arena_, vs->value, context);
+          context[func_value_instr->contextc - 1 - i] = vs->value;
           Add(arena, &value->_base, vs->value);
           vs = vs->tail;
         }
 
-        while (context != NULL) {
-          value->context = VPush(arena_, context->value, value->context);
-          context = VPop(arena_, context);
+        for (size_t i = 0; i < func_value_instr->contextc; ++i) {
+          value->context = VPush(arena_, context[i], value->context);
         }
 
         thread->data_stack = VPush(arena_, &value->_base, thread->data_stack);

@@ -9,41 +9,49 @@ Kind ::=
 
 Type ::=
    struct_type (type_fields :: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
+ | struct_type_access (obj :: type) (field :: Name)
+
  | union_type (fields :: [(Type, Name)])
+
  | func_type (arg :: Type) (result :: Type)
+
  | proc_type (result :: Type)
  | input_type (type :: Type)
  | output_type (type :: Type)
 
  | type_var (name :: Name)
- | type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
- | expr_let_type (bindings :: [(Name, Type, Expr]) (body :: Type)
  | poly_type (arg :: Kind) (body :: Type)
  | poly_type_apply (poly :: Type) (arg :: Type)
+ | type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
+ | expr_let_type (bindings :: [(Name, Type, Expr]) (body :: Type)
+ | namespace_eval_type (namespace :: Expr) (body :: Type)
+ | namespace_import_type (namespace :: Expr) (body :: Type)
  | type_include (name :: Name)
- | type_field_access (obj :: Expr) (field :: Name)
  ;
 
 Expr ::=
    struct_value (type :: Type) (args :: [Expr])
  | anon_struct (type_args :: [(Name, Type)]) (args :: [(Name, Expr)])
  | struct_access (object :: Expr) (field :: Name)
+
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
  | union_access (object :: Expr) (field :: Name)
  | cond (condition :: Expr) (choices :: [(Name, Expr)])
+
  | func_value (args :: [(Type, Name)]) (body :: Expr)
- | apply (func :: Expr) (args :: [Expr])
- | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+ | apply (func :: Expr) (arg :: Expr)
+
  | get (port :: Expr)
  | put (port :: Expr) (value :: Expr)
  | eval (expr :: Expr)
  | link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
  | exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+
  | var (name :: Name)
- | let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+ | poly_expr (arg :: Kind) (body :: Expr)
+ | poly_expr_apply (poly :: Expr) (arg :: Type)
  | type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
- | poly_expr (args :: [(Kind, Name)]) (body :: Expr)
- | poly_expr_apply (poly :: Expr) (args :: [Type])
+ | expr_let_expr (bindings :: [(Type, Name, Expr)]) (body :: Expr)
  | namespace_eval (namespace :: Expr) (body :: Expr)
  | namespace_import (namespace :: Expr) (body :: Expr)
  | include (name :: Name)
