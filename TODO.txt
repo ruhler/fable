@@ -5,9 +5,9 @@ Fble:
 * [clean] Clean up handling of union access errors
   - make sure they are propagated cleanly, and figure out a better way to
     clean up the stacks to allow for the following performance optimization.
-* [perf] Save value stack on stack frame
-  - to allow us to reuse the function context without copying it to the value
-    stack.
+
+* [perf] Avoid copying captured contexts
+  - particularly for multi-arg functions.
 
 * [lang] Redesign language syntax.
 

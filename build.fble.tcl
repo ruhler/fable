@@ -3,7 +3,7 @@ exec rm -rf out
 
 # Note: to profile, add -pg flag here, then after running fble-test, run:
 #  gprof out/fble/fble-test
-set FLAGS [list -I fble -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb] 
+set FLAGS [list -I fble -std=c99 -pedantic -Wall -Werror -O0 -fprofile-arcs -ftest-coverage -gdwarf-3 -ggdb -pg] 
 
 # Compile all object files.
 # We compile these separately and ensure they are placed in a subdirectory of

@@ -305,9 +305,8 @@ typedef struct FbleVStack {
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
-//   context - The value stack at the time the function was created,
+//   context - The var_stack at the time the function was created,
 //             representing the lexical context available to the function.
-//             Stored in reverse order of the standard value stack.
 //   body - The block of instructions representing the body of the function,
 //          which should pop the arguments and context.
 struct FbleFuncValue {

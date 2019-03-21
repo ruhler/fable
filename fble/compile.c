@@ -1992,7 +1992,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         if (!error) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->count = instr->contextc + 1;
+          descope->count = 1;
           FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
           FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
@@ -2224,7 +2224,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
       descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = 2 + instr->contextc;
+      descope->count = 2;
       FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
@@ -2341,7 +2341,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 
       FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
       descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = exec_instr->contextc + exec_instr->argc;
+      descope->count = exec_instr->argc;
       FbleVectorAppend(arena_, exec_instr->body->instrs, &descope->_base);
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
