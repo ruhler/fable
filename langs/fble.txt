@@ -376,7 +376,7 @@ Concrete Syntax:
   stmt ::= type '~' name ',' name ';' expr
 
 Example:
-  Int@ ~ input, output; f(input, output)
+  Int@ ~ input, output; f[input][output]
 
 The body must have type process_type. When executed, creates a new link, then
 evaluates and executes the body with get and put ports of type type- and type+
@@ -391,7 +391,7 @@ Concrete Syntax:
   stmt ::= type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
 
 Example:
-  Int@ x := getx(), Int@ y := gety(); $(add(x, y))
+  Int@ x := getx(), Int@ y := gety(); $(add[x][y])
 
 Executes each process in parallel, then evaluates and executes the body with
 the results of the processes assigned to variables in scope. The binding
@@ -436,7 +436,7 @@ Concrete Syntax:
   stmt ::= type name '=' expr [',' type name = expr [...]] ';' stmt
 
 Example:
-  Int@ x = mul(3, 3); mul(x, x)
+  Int@ x = mul[3][3]; mul[x][x]
 
 The let expression is used to define variables. For each binding, a new
 variable is defined. The value of the variable is the result of evaluating the
@@ -507,23 +507,18 @@ types.
 8.1 Poly Kind
 -------------
 Abstract Syntax:
-  Kind ::= poly_kind (args :: [Kind]) (return :: Kind)
+  Kind ::= poly_kind (arg :: Kind) (return :: Kind)
 
 Concrete Syntax:
-  kind ::= '\<' kind [',' kind [...]] ';' kind '>'
+  kind ::= '<' kind '>' kind
 
 Examples:
-  \<@ ; @>
+  <@>@
 
 A poly kind describes the kind of a polymorphic type, analogous to the way
 function types describe the type of functions.
 
-Two poly kinds are equal if they have the same args and return kinds.
-
-The rationale for not including argument names in the poly kind the way they
-are included in function types is that poly kinds are much less common and the
-name of the arguments typically does not convey much useful information for
-how to use the corresponding polymorphic type.
+Two poly kinds are equal if they have the same argument and return kinds.
 
 8.2 Poly
 --------
@@ -532,26 +527,26 @@ Abstract Syntax:
   Expr ::= poly_expr (args :: [(Kind, Name)]) (body :: Expr)
 
 Concrete Syntax:
-  type ::= '\<' kind type_name [',' kind type_name [...]] '>' '{' type_stmt '}'
-  expr ::= '\<' kind type_name [',' kind type_name [...]] '>' '{' stmt '}'
+  type ::= '<' kind type_name '>' '{' type_stmt '}'
+  expr ::= '<' kind type_name '>' '{' stmt '}'
  
 Examples:
-  \<@ T@> { +(T@ just, Unit@ nothing); }
-  \<@ T@> { \(T@ x; Maybe@<T@>) { Maybe@<T@>(just: x); }; }
+  <@ T@> { +(T@ just, Unit@ nothing); }
+  <@ T@> { \(T@ x; Maybe@<T@>) { Maybe@<T@>(just: x); }; }
 
 8.3 Poly Application
 --------------------
 Abstract Syntax:
-  Type ::= poly_type_apply (poly :: Type) (args :: [Type])
-  Expr ::= poly_expr_apply (poly :: Expr) (args :: [Type])
+  Type ::= poly_type_apply (poly :: Type) (arg :: Type)
+  Expr ::= poly_expr_apply (poly :: Expr) (arg :: Type)
 
 Concrete Syntax:
-  type ::= type '<' type [',' type [...]] '>'
-  expr ::= expr '<' type [',' type [...]] '>'
+  type ::= type '<' type '>'
+  expr ::= expr '<' type '>'
 
 Examples:
   Maybe@<Int@>
-  fromJust<Int@>(3)
+  fromJust<Int@>[3]
 
 9. Namespaces
 -------------
@@ -898,13 +893,25 @@ Notes:
   expressions? Maybe combine type and expr let into a single thing where you
   can mix both type and expr bindings?
 
+  Answer: yes, there is a need for a type let. Everything you could want to
+  do, you should be able to: namespaces, let exprs, includes, type field
+  access, etc. Don't combine type and expr in the same syntactic construct.
+
+
 * Should we allow type field access on struct type in addition to its value?
   It seems like a good thing to have generally speaking, but I don't know when
   you would actually use it. Similar to previous thought on whether we should
   have a type let type.
 
+  Answer: yes. For example, if you want to define an interface with a common
+  type, it's nice if the implementors of that interface can reuse the type
+  field defined from the type of the interface. And for completeness sake.
+
 * TODO: Add program and module to the syntax reference to answer the question:
   is a program / module an expr or a stmt or a type or a type_stmt?
+
+  Answer: it should be stmt and type_stmt. But with the open and close braces
+  implied.
 
 * Function definitions can be really hard to read. Consider adding a syntactic
   sugar to make it easier? For example, instead of:
@@ -920,10 +927,10 @@ Notes:
     ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
   };
   
-  Note proposal in fble.revised.txt helps a little.
-
-* Need to figure out better support for partial application of functions.
-  See proposal in fble.revised.txt.
+  Note new proposal for syntax helps a little:
+    <@ T@>[S@<T@>][S@<T@>]{S@<T@>;} Append = <@ T@>[S@<T@> a][S@<T@> b] {
+      ?(...)
+    };
 
 * Vague concern: will fble support static evaluation / compilation to
   hardware? Is it bad to support structs and links that can hold functions and
@@ -956,4 +963,8 @@ Notes:
   interface, and we hide the internal type inside of functions. I think that
   could work. It's just a question of whether we want to provide common syntax
   or language features to support this if it is desired.
+
+* Concern: how to support raw literals
+  Like string literals, integers, anything where you want to specify a dense
+  amount of information for processing.
 

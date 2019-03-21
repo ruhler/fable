@@ -38,6 +38,8 @@ typedef struct {
 //
 // Fields:
 //   var_stack - used to store named values (aka variables)
+//   shared_var_stack - the point in var_stack below which all variables are shared
+//                 with other contexts rather than private to this context.
 //   data_stack - used to store anonymous intermediate values
 //   istack - stores the instructions still to execute.
 //   iquota - the number of instructions this thread is allowed to execute.
@@ -47,6 +49,7 @@ typedef struct {
 //             field access.
 struct Thread {
   FbleVStack* var_stack;
+  FbleVStack* shared_var_stack;
   FbleVStack* data_stack;
   IStack* istack;
   size_t iquota;
@@ -492,6 +495,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         
         for (size_t i = 0; i < thread->children.size; ++i) {
           Thread* child = thread->children.xs[i];
+          assert(child->var_stack == child->shared_var_stack);
           assert(child->data_stack != NULL);
           FbleValue* result = child->data_stack->value;
           child->data_stack = VPop(arena_, child->data_stack);
@@ -651,6 +655,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             for (size_t i = 0; i < exec->bindings.size; ++i) {
               Thread* child = FbleAlloc(arena_, Thread);
               child->var_stack = thread->var_stack;
+              child->shared_var_stack = thread->var_stack;
               child->data_stack = VPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
               child->istack = IPush(arena_, NULL, &g_proc_block, NULL);
               child->iquota = 0;
@@ -747,21 +752,20 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
   FbleArena* arena_ = FbleRefArenaArena(arena);
   for (size_t i = 0; i < thread->children.size; ++i) {
     AbortThread(arena, thread->children.xs[i]);
+    FbleFree(arena_, thread->children.xs[i]);
   }
   thread->children.size = 0;
   FbleFree(arena_, thread->children.xs);
   thread->children.xs = NULL;
 
+  while (thread->var_stack != thread->shared_var_stack) {
+    FbleValueRelease(arena, thread->var_stack->value);
+    thread->var_stack = VPop(arena_, thread->var_stack);
+  }
+
   while (thread->data_stack != NULL) {
     FbleValueRelease(arena, thread->data_stack->value);
     thread->data_stack = VPop(arena_, thread->data_stack);
-  }
-
-  // TODO: Don't free borrowed stack var stack segments, otherwise we'll end
-  // up double-freeing.
-  while (thread->var_stack != NULL) {
-    FbleValueRelease(arena, thread->var_stack->value);
-    thread->var_stack = VPop(arena_, thread->var_stack);
   }
 
   while (thread->istack != NULL) {
@@ -823,6 +827,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Thread thread = {
     .var_stack = NULL,
+    .shared_var_stack = NULL,
     .data_stack = NULL,
     .istack = IPush(arena_, NULL, prgm, NULL),
     .iquota = 0,
