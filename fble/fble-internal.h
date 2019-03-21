@@ -254,6 +254,7 @@ typedef struct {
 // Where 'v' is a struct value and v[i] is the ith field of the struct value.
 typedef struct {
   FbleInstr _base;
+  size_t fieldc;
 } FbleNamespaceInstr;
 
 // FbleIPopInstr -- FBLE_IPOP_INSTR

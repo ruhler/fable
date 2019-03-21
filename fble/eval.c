@@ -42,12 +42,16 @@ typedef struct {
 //   istack - stores the instructions still to execute.
 //   iquota - the number of instructions this thread is allowed to execute.
 //   children - child threads that this thread is potentially blocked on.
+//      This vector is {0, NULL} when there are no child threads.
+//   aborted - true if the thread has been aborted due to undefined union
+//             field access.
 struct Thread {
   FbleVStack* var_stack;
   FbleVStack* data_stack;
   IStack* istack;
   size_t iquota;
   ThreadV children;
+  bool aborted;
 };
 
 static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
@@ -67,6 +71,7 @@ static IStack* IPush(FbleArena* arena, FbleValue* retain, FbleInstrBlock* block,
 static IStack* IPop(FbleValueArena* arena, IStack* istack);
 
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
+static void AbortThread(FbleValueArena* arena, Thread* thread);
 static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread);
 static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args);
 
@@ -225,6 +230,7 @@ static IStack* IPop(FbleValueArena* arena, IStack* istack)
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
+  assert(!thread->aborted);
   while (thread->iquota > 0 && thread->istack != NULL) {
     assert(thread->istack->pc < thread->istack->instrs.size);
     FbleInstr* instr = thread->istack->instrs.xs[thread->istack->pc++];
@@ -272,26 +278,8 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleUnionValue* uv = (FbleUnionValue*)Deref(thread->data_stack->value, FBLE_UNION_VALUE);
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
-
-          // Clean up the stacks.
-          while (thread->var_stack != NULL) {
-            FbleValueRelease(arena, thread->var_stack->value);
-            thread->var_stack = VPop(arena_, thread->var_stack);
-          }
-
-          while (thread->data_stack != NULL) {
-            FbleValueRelease(arena, thread->data_stack->value);
-            thread->data_stack = VPop(arena_, thread->data_stack);
-          }
-
-          while (thread->istack != NULL) {
-            thread->istack = IPop(arena, thread->istack);
-          }
-
-          // Push a NULL value on top of the data_stack in place of the return
-          // value.
-          thread->data_stack = VPush(arena_, NULL, thread->data_stack);
-          break;
+          AbortThread(arena, thread);
+          return;
         }
 
         FbleValueRetain(arena, &uv->_base);
@@ -489,6 +477,11 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       case FBLE_JOIN_INSTR: {
         assert(thread->children.size > 0);
         for (size_t i = 0; i < thread->children.size; ++i) {
+          if (thread->children.xs[i]->aborted) {
+            AbortThread(arena, thread);
+            return;
+          }
+
           if (thread->children.xs[i]->istack != NULL) {
             // Blocked on child. Restore the thread state and return before
             // iquota has been decremented.
@@ -503,15 +496,16 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           FbleValue* result = child->data_stack->value;
           child->data_stack = VPop(arena_, child->data_stack);
           assert(child->data_stack == NULL);
-          assert(result != NULL && "TODO: Propagate error from child?");
-          thread->var_stack = VPush(arena_, result, thread->var_stack);
           assert(child->istack == NULL);
           assert(child->iquota == 0);
-          FbleFree(arena_, child->children.xs);
           FbleFree(arena_, child);
+
+          thread->var_stack = VPush(arena_, result, thread->var_stack);
         }
 
         thread->children.size = 0;
+        FbleFree(arena_, thread->children.xs);
+        thread->children.xs = NULL;
         break;
       }
 
@@ -651,13 +645,18 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             }
 
             // Set up child threads.
+            assert(thread->children.size == 0);
+            assert(thread->children.xs == NULL);
+            FbleVectorInit(arena_, thread->children);
             for (size_t i = 0; i < exec->bindings.size; ++i) {
               Thread* child = FbleAlloc(arena_, Thread);
               child->var_stack = thread->var_stack;
               child->data_stack = VPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
               child->istack = IPush(arena_, NULL, &g_proc_block, NULL);
               child->iquota = 0;
-              FbleVectorInit(arena_, child->children);
+              child->aborted = false;
+              child->children.size = 0;
+              child->children.xs = NULL;
               FbleVectorAppend(arena_, thread->children, child);
             }
 
@@ -727,6 +726,49 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
   }
 }
 
+// AbortThread --
+//   Unwind the given thread, cleaning up thread, variable, and data stacks
+//   and children threads as appropriate.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   thread - the thread to abort.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Cleans up the thread state by unwinding the thread. Sets the thread state
+//   as aborted.
+static void AbortThread(FbleValueArena* arena, Thread* thread)
+{
+  thread->aborted = true;
+
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  for (size_t i = 0; i < thread->children.size; ++i) {
+    AbortThread(arena, thread->children.xs[i]);
+  }
+  thread->children.size = 0;
+  FbleFree(arena_, thread->children.xs);
+  thread->children.xs = NULL;
+
+  while (thread->data_stack != NULL) {
+    FbleValueRelease(arena, thread->data_stack->value);
+    thread->data_stack = VPop(arena_, thread->data_stack);
+  }
+
+  // TODO: Don't free borrowed stack var stack segments, otherwise we'll end
+  // up double-freeing.
+  while (thread->var_stack != NULL) {
+    FbleValueRelease(arena, thread->var_stack->value);
+    thread->var_stack = VPop(arena_, thread->var_stack);
+  }
+
+  while (thread->istack != NULL) {
+    thread->istack = IPop(arena, thread->istack);
+  }
+}
+
 // RunThreads --
 //   Run the given thread and its children to completion or until it can no
 //   longer make progress.
@@ -784,8 +826,9 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
     .data_stack = NULL,
     .istack = IPush(arena_, NULL, prgm, NULL),
     .iquota = 0,
+    .children = {0, NULL},
+    .aborted = false,
   };
-  FbleVectorInit(arena_, thread.children);
 
   for (size_t i = 0; i < args.size; ++i) {
     thread.data_stack = VPush(arena_, FbleValueRetain(arena, args.xs[i]), thread.data_stack);
@@ -798,6 +841,9 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   do {
     thread.iquota = QUOTA;
     RunThreads(arena, io, &thread);
+    if (thread.aborted) {
+      return NULL;
+    }
 
     bool block = (thread.iquota == QUOTA) && (thread.istack != NULL);
     did_io = io->io(io, arena, block);
@@ -820,7 +866,8 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   thread.data_stack = VPop(arena_, thread.data_stack);
   assert(thread.data_stack == NULL);
   assert(thread.istack == NULL);
-  FbleFree(arena_, thread.children.xs);
+  assert(thread.children.size == 0);
+  assert(thread.children.xs == NULL);
   return final_result;
 }
 

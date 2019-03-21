@@ -2638,6 +2638,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       {
         FbleNamespaceInstr* nspace = FbleAlloc(arena_, FbleNamespaceInstr);
         nspace->_base.tag = FBLE_NAMESPACE_INSTR;
+        nspace->fieldc = struct_type->fields.size;
         FbleVectorAppend(arena_, *instrs, &nspace->_base);
       }
 

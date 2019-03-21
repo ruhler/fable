@@ -47,7 +47,7 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg);
 // Inputs:
 //   arena - The arena to free the memory from.
 //   ptr - The allocation to free, which must have been returned by a call
-//         to alloc on this arena.
+//         to alloc on this arena. ptr may be NULL.
 //
 // Result:
 //   None.

@@ -26,9 +26,9 @@ The primary design goals of fble are:
   variables in the context where they are declared, and fble supports
   polymorphic types and functions.
 
-* Fble, or an extension thereof, should support programming at scale. That is,
-  namespace control and composition of modules developed by different
-  individual developers or organizations.
+* Fble should support programming at scale. That is, namespace control and
+  composition of modules developed by different individual developers or
+  organizations.
 
 2. Language Overview
 --------------------
@@ -184,10 +184,10 @@ Abstract Syntax:
   Type ::= func_type (arg :: Type) (return :: Type)
 
 Concrete Syntax:
-  type ::= '\(' type ';' type ')'
+  type ::= '[' type ']' '{' type_stmt '}'
 
 Examples:
-  \(Int@; \(Int@; Bool@))
+  [Int@][Int@]{Bool@;}
 
 The function type describes the type of a function value by specifying the
 function's argument and return types.
@@ -203,10 +203,10 @@ Abstract Syntax:
   Expr ::= func_value (arg :: (Type, Name)) (body :: Expr)
 
 Concrete Syntax:
-  expr ::= '\(' type name [',' type name [...]] ')' '{' stmt '}'
+  expr ::= [type name] '{' stmt '}'
 
 Example:
-  \(Bool@ a) ?(a; true: False, false: True)
+  [Bool@ a] { ?(a; true: False, false: True); }
 
 The function value expression is used to describe a primitive function value
 given the argument and the body of the function. The return type of
@@ -217,10 +217,10 @@ the function.
 Rationale for Concrete Syntax: The body of the function requires use of braces
 to avoid ambiguity that would arise otherwise with an expression such as:
 
-  \(T@ x) f (y)
+  [T@ x] f [y]
 
 In this case it isn't clear if the argument 'y' is being applied to the
-function \(T@ x) f, or to the function f.
+function [T@ x] f, or to the function f.
 
 5.3 Application
 ---------------
@@ -228,10 +228,10 @@ Abstract Syntax:
   Expr ::= apply (func :: Expr) (arg :: Expr)
 
 Concrete Syntax:
-  expr ::= expr '(' [expr [',' expr [...]]] ')'
+  expr ::= expr '[' expr ']'
 
 Example:
-  foo(x)
+  foo[x]
 
 The application expression is used to apply a function to an argument.  The
 supplied argument must match the type of argument specified for the function.
@@ -241,18 +241,19 @@ in the context of the supplied argument.
 5.4 Bind
 --------
 Abstract Syntax:
-  Expr ::= bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+  Expr ::= bind (arg :: (Type, Name)) (func :: Expr) (body :: Expr)
 
 Concrete Syntax:
-  stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
+  stmt ::= type name '<-' expr ';' stmt
 
 Example
-  Int@ x <- map(l); f(x, y)
+  Int@ x <- map[l];
+  f[x][y]
 
 Bind is syntactic sugar for applying a function to a function value. It is
 equivalent to:
 
-  apply func (func_value args body)
+  apply func (func_value arg body)
 
 6 Processes
 -----------

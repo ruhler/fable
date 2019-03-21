@@ -62,6 +62,10 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg)
 // FbleFree -- see documentation in fble.h
 void FbleFree(FbleArena* arena, void* ptr)
 {
+  if (ptr == NULL) {
+    return;
+  }
+
   assert(arena != NULL);
 
   Alloc* alloc = ((Alloc*)ptr) - 1;
