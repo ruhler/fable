@@ -86,12 +86,12 @@
 
   \<@ A@, @ B@> { \(\(A@; B@), S@<A@>; S@<B@>); } MapS = \<@ A@, @ B@> {
     \(\(A@; B@) f, S@<A@> a) {
-      ?(a; cons: S@<B@>(cons: MapP<A@, B@>(f, a.cons)), nil: S0<B@>);
+      ?(a; cons: S@<B@>(cons: MapP<A@><B@>(f, a.cons)), nil: S0<B@>);
     };
   },
   \<@ A@, @ B@> { \(\(A@; B@), P@<A@>; P@<B@>); } MapP = \<@ A@, @ B@> {
     \(\(A@; B@) f, P@<A@> a) {
-      P@<B@>(f(a.head), MapS<A@, B@>(f, a.tail));
+      P@<B@>(f(a.head), MapS<A@><B@>(f, a.tail));
     };
   };
 

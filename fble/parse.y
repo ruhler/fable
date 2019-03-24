@@ -207,17 +207,13 @@ type:
       }
       FbleFree(arena, $3.xs);
    }
- | type '<' type_p '>' {
-      $$ = $1;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
-        poly_apply_type->_base.tag = FBLE_POLY_APPLY_TYPE;
-        poly_apply_type->_base.loc = @$;
-        poly_apply_type->poly = $$;
-        poly_apply_type->arg = $3.xs[i];
-        $$ = &poly_apply_type->_base;
-      }
-      FbleFree(arena, $3.xs);
+ | type '<' type '>' {
+      FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
+      poly_apply_type->_base.tag = FBLE_POLY_APPLY_TYPE;
+      poly_apply_type->_base.loc = @$;
+      poly_apply_type->poly = $1;
+      poly_apply_type->arg = $3;
+      $$ = &poly_apply_type->_base;
    }
  | '{' type_stmt '}' {
       $$ = $2;
@@ -416,17 +412,13 @@ expr:
       }
       FbleFree(arena, $3.xs);
    }
- | expr '<' type_p '>' {
-      $$ = $1;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FblePolyApplyExpr* poly_apply_expr = FbleAlloc(arena, FblePolyApplyExpr);
-        poly_apply_expr->_base.tag = FBLE_POLY_APPLY_EXPR;
-        poly_apply_expr->_base.loc = @$;
-        poly_apply_expr->poly = $$;
-        poly_apply_expr->arg = $3.xs[i];
-        $$ = &poly_apply_expr->_base;
-      }
-      FbleFree(arena, $3.xs);
+ | expr '<' type '>' {
+      FblePolyApplyExpr* poly_apply_expr = FbleAlloc(arena, FblePolyApplyExpr);
+      poly_apply_expr->_base.tag = FBLE_POLY_APPLY_EXPR;
+      poly_apply_expr->_base.loc = @$;
+      poly_apply_expr->poly = $1;
+      poly_apply_expr->arg = $3;
+      $$ = &poly_apply_expr->_base;
    }
  | '{' stmt '}' {
       $$ = $2;
