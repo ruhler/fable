@@ -1,0 +1,275 @@
+Fble Revised
+------------
+Abstract Syntax Reference
+-------------------------
+Kind ::=
+   basic_kind
+ | type_kind
+ | poly_kind (arg :: Kind) (result :: Kind)
+ ;
+
+Type ::= (* synonym for Expr where a type is expected *)
+
+MType ::=
+   implicit_type
+ | explicit_type (type :: Type)
+ ;
+     
+Expr ::=
+   struct_type (fields :: [(Type, Name)])
+ | struct_value_explicit_type (type :: Type) (args :: [Expr])
+ | struct_value_implicit_type (args :: [(Name, Expr)])
+ | struct_access (object :: Expr) (field :: Name)
+ | struct_eval (namespace :: Expr) (body :: Expr)
+ | struct_import (namespace :: Expr) (body :: Expr)
+
+ | union_type (fields :: [(Type, Name)])
+ | union_value (type :: Type) (field :: Name) (arg :: Expr)
+ | union_access (object :: Expr) (field :: Name)
+ | cond (condition :: Expr) (choices :: [(Name, Expr)])
+
+ | func_type (arg :: Type) (result :: Type)
+ | func_value (arg :: (Type, Name)) (body :: Expr)
+ | apply (func :: Expr) (arg :: Expr)
+
+ | proc_type (result :: Type)
+ | input_type (type :: Type)
+ | output_type (type :: Type)
+ | get (port :: Expr)
+ | put (port :: Expr) (value :: Expr)
+ | eval (expr :: Expr)
+ | link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
+ | exec (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+
+ | var (name :: Name)
+ | let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+
+ | typeof (expr :: Expr)
+
+ | poly (arg :: (Kind, Name)) (body :: Expr)
+ | poly_apply (poly :: Expr) (arg :: Expr)
+
+ | include (name :: Name)
+ ;
+
+Concrete Syntax Reference
+-------------------------
+name ::= (* [a-zA-Z--9_]+[@]? *)
+
+kind ::=
+   '*'                  (* basic_kind *)
+ | '@'                  (* type_kind *)
+ | '[' kind ']' kind    (* poly_kind *)
+ ;
+
+type ::= expr ;
+
+m_type ::= 
+   '@'    (* implicit_type *)
+ | type   (* explicit_type *)
+ ;
+
+expr ::= 
+   '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
+ | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type, get, put *)
+ | '@' '(' [name [':' expr] [',' ...]] ')'         (* struct_value_implicit_type *)
+ | expr '.' name                                   (* struct_access, union_access *)
+ | expr '{' stmt '}'                               (* struct_eval *)
+ | '+(' type name [',' type name [...]] ')'        (* union_type *)
+ | type '(' name ':' expr ')'                      (* union_value *)
+ | '?(' expr ';' name ':' expr                     (* cond *)
+            [',' name ':' expr [...]] ')'   
+ | expr '[' expr ']'                               (* apply *)
+ | type '!'                                        (* proc_type *)
+ | type '-'                                        (* input_type *)
+ | type '+'                                        (* output_type *)
+ | '$(' expr ')'                                   (* eval *)
+ | name                                            (* var *)
+ | '@' '<' expr '>'                                (* typeof *)
+ | expr '<' type '>'                               (* poly_apply *)
+ | '&' name                                        (* include *)
+ | block
+ ;
+
+block ::=
+   '{' stmt '}'
+ | '[' type ']' block             (* func_type *)
+ | '[' type name ']' block        (* func_value *)
+ | '<' kind name '>' block        (* poly *)
+ ;
+
+stmt ::=
+   expr ';'
+ | expr ';' stmt                                                     (* struct_import *)
+ | type '~' name ',' name ';' stmt                                   (* link *)
+ | m_type name ':=' expr [',' m_type name ':=' expr [...]] ';' stmt  (* exec *)
+ | m_type name '=' expr [',' m_type name '=' expr [...]] ';' stmt    (* let *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
+ ;
+
+Discussion
+----------
+Every expression evaluates to a value whose type is the same as the type of
+the expression, and whose kind is the same as the kind of the expression.
+
+typeof (expr :: Expr)
+---------------------
+Suggested concrete syntax: @<expr>
+
+The value is the type of the given expression.
+The type is the type of the type of the given expression.
+The kind is ...
+  for a basic_kind expression: type_kind
+  for a type_kind expression: type_kind
+  for a poly_kind arg result expression: poly_kind arg (typeof(result))
+
+Used for specifying the type of a struct type field. For example:
+
+  @ Unit@ = *();
+  @ Bool@ = +(Unit@ true, Unit@ false);
+  @ Bool = *(@<Bool@> Bool@, Bool@ True, Bool@ False)
+
+struct_type (fields :: [(Type, Name)])
+--------------------------------------
+The value is a struct type value.
+The type is typeof that struct type value.
+The kind is type_kind.
+
+The field types must be type_kind or a poly_kind that describes a type.
+
+struct_value (type :: MType) (args :: [Expr])
+---------------------------------------------
+The value is a struct value with the given args.
+The type is the struct type provided.
+The kind is a basic_kind.
+
+poly (arg :: (Kind, Name)) (body :: Expr)
+-----------------------------------------
+The value is a poly value.
+The type is: poly arg typeof(body)
+The kind is poly_kind kindof(arg) kindof(body)
+
+poly_apply (poly :: Expr) (arg :: Expr)
+---------------------------------------
+The value is the body of the poly with arg plugged in.
+The type is the type of the body of the poly with arg plugged in.
+The kind is the result kind of the poly.
+The arg kind must match the expected kind for the poly.
+
+Note on Abstract Things
+-----------------------
+A normal variable can be abstract for type purposes, for example when defining
+a function. In this case you don't know the value of the variable, but you
+know from it's type all the operations it supports.
+
+It's not useful to have type arguments to normal functions, because typically
+the type of a type arg determines its value completely.
+
+A poly arg can be abstract for type purposes, for example when defining a
+poly. In this case you don't know the value of the poly, but you know from its
+kind all the ways in which it can be poly applied, and if it can be used as a
+type or a value.
+
+Recommendation
+--------------
+Require variable, arg, and field names to end in '@' if and only if they are a
+type kind.
+
+
+Older Thoughts
+--------------
+New idea for how to make this work:
+* The type of a type is itself, not '@'. The value of a type is 'void'.
+
+Now, to address the challenges of the unified proposal:
+
+1. The polymorphic list types S@<T@> and P@<T@>, if interpreted as normal
+functions an expressions, would be an infinite recursion.
+
+\(@; @) P = \(@ T) { *(T head, S(T) tail); },
+\(@; @) S = \(@ T) { +(P(T) cons, Unit nil); };
+P(Int);
+
+Because S(T) is in a type position, we evaluate its type, not its value. To
+evaluate the type of an applied function, we evaluate the type of the function
+and apply that to the type of the arg. Err... somehow that magically avoids
+the infinite recursion. It's a type evaluation instead of a value evaluation
+because of the context for where the function application occurs.
+
+2. Some things would need to be evaluated at compile time. Other things we
+would want to defer to evaluation time. How do you decide which?
+
+For example:
+  @ MyList = List(Bool);
+  MyList x = emptyList(Bool);
+
+  Foo foo = ComputationallyHeavyFunction();
+
+We want to evaluate the List(Bool) at compile time, but maybe we don't want
+to evaluate the ComputationallyHeavyFunction. How do you distinguish between
+them?
+
+We'll say we evaluate everything as types at compile time, then evaluate
+everything as values at run time. The type of a type is itself. The type of a
+value is its type. The value of a type is void, the value of a value is
+itself. So we interpret the program two different ways:
+
+Type:
+
+@ MyList = List(Bool);
+MyList x = List(Bool);
+Foo foo = Foo();
+
+Value:
+@ -- = --;
+-- x = --;
+-- foo = ComputationallyHeavyFunction();
+
+In other words, values cost nothing to evaluate at compile time, because you
+evaluate them in terms of their types not their values. Types cost nothing to
+execute at run time, because they are all void at runtime.
+
+3. What does it mean to have something like ?(x ; true: Bool, false: Int).
+
+This is not well typed. The type of Bool is Bool, the type of Int is Int.
+Because the two types don't match, this is not legal.
+
+4. How do we prevent infinite recursion during compilation?
+Make it impossible for type evaluation to lead to infinite recursion. Probably
+based on type evaluation being lazy instead of eager and because you never
+have to force types all the way: you can test for equality without forcing the
+types.
+
+5. A struct containing a type requires some form of dependant types support.
+
+Say we want a namespace containing the type Bool@ and the function Not. As a
+struct, it's type would be: *(@ Bool@, \(Bool@ x; Bool@) Not). But what's to
+keep you from constructing a value of this type as: (Int@, Not)? Something
+magical needs to happen to link the value of the type field with the type of
+the value fields.
+
+Easy: the type of Bool@ is Bool@ which is different from Int@.
+
+
+With the existing namespaces proposal, we are already incorporating a few of
+these ideas. The idea that you can have a field of a struct that is a type
+whose type is itself the same type. The idea for namespaces that you evaluate
+an expression at compile time by evaluating its type instead of its value. The
+idea that a type takes up no space at run time.
+
+I actually really like this idea, as long as I can work my head around it and
+clearly specify it from the bottom up. In particular, I'll have to figure out
+what '@' is and how it operates.
+
+
+Miscellaneous Examples:
+
+* Bool module. Demonstrating the difference between a type and the type of
+  that type. Where @(...) is used as the typeof operator.
+
+  ? UnitT = *();
+  ? BoolT = +(UnitT true, UnitT false);
+  ? BoolMT = *(@(BoolT) BoolT, BoolT True, BoolT False)
+  BoolMT BoolM = BoolMT(BoolT, BoolT(true: UnitT()), BoolT(false: UnitT()));
+  BoolM.BoolT tt = BoolM.True;
+

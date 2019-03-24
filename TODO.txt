@@ -1,21 +1,19 @@
+Fble New:
+* Draft concrete syntax.
+* Try implementing a version of it from scratch?
+
 Fble:
 * [lang] Switch to single-argument functions and poly's in abstract syntax.
  - update fble spec too.
-
-* [clean] Clean up handling of union access errors
-  - make sure they are propagated cleanly, and figure out a better way to
-    clean up the stacks to allow for the following performance optimization.
 
 * [perf] Avoid copying captured contexts
   - particularly for multi-arg functions.
 
 * [lang] Redesign language syntax.
+  - how should namespace + type mix?
 
 * [test] Port tictactoe to fble.
 * [test] Implement fble-md5 program.
-
-* [lang] work out what you can do with types vs. exprs.
-  - answer should be: you can do everything with both.
 
 * [perf] fix perf issues with AllTests.
 

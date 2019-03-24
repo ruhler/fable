@@ -8,8 +8,7 @@ Kind ::=
  ;
 
 Type ::=
-   struct_type (type_fields :: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
- | struct_type_access (obj :: type) (field :: Name)
+   struct_type (fields :: [(Type, Name)])
 
  | union_type (fields :: [(Type, Name)])
 
@@ -20,18 +19,23 @@ Type ::=
  | output_type (type :: Type)
 
  | type_var (name :: Name)
- | poly_type (arg :: Kind) (body :: Type)
- | poly_type_apply (poly :: Type) (arg :: Type)
  | type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
  | expr_let_type (bindings :: [(Name, Type, Expr]) (body :: Type)
+
+ | poly_type (arg :: Kind) (body :: Type)
+ | poly_apply_type (poly :: Type) (arg :: Type)
+
+ | namespace_type (type_fields :: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
+ | namespace_type_type_access (namespace :: Type) (field :: Name)
+ | namespace_type_access (namespace :: Expr) (field :: Name)
  | namespace_eval_type (namespace :: Expr) (body :: Type)
  | namespace_import_type (namespace :: Expr) (body :: Type)
+
  | type_include (name :: Name)
  ;
 
 Expr ::=
    struct_value (type :: Type) (args :: [Expr])
- | anon_struct (type_args :: [(Name, Type)]) (args :: [(Name, Expr)])
  | struct_access (object :: Expr) (field :: Name)
 
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
@@ -48,12 +52,17 @@ Expr ::=
  | exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
  | var (name :: Name)
- | poly_expr (arg :: Kind) (body :: Expr)
- | poly_expr_apply (poly :: Expr) (arg :: Type)
  | type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
  | expr_let_expr (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+
+ | poly_expr (arg :: Kind) (body :: Expr)
+ | poly_apply_expr (poly :: Expr) (arg :: Type)
+
+ | namespace (type_args :: [(Name, Type)]) (args :: [(Name, Expr)])
+ | namespace_access (namespace :: Expr) (field :: Name)
  | namespace_eval (namespace :: Expr) (body :: Expr)
  | namespace_import (namespace :: Expr) (body :: Expr)
+
  | include (name :: Name)
  ;
 
