@@ -268,7 +268,7 @@
     ABCD@(add(abcd.a, r4.a), add(abcd.b, r4.b), add(abcd.c, r4.c), add(abcd.d, r4.d));
   };
 
-  <@>@ Streamed@ = \<@ T@> { *(T@ data, Bool@ last); }; 
+  <@>@ Streamed@ = <@ T@> { *(T@ data, Bool@ last); }; 
 
   # Gets the next word from a pre-padded input
   \(Streamed@<Bit8@>-; Streamed@<Bit32@>!) GetWord = \(Streamed@<Bit8@>- padded) {

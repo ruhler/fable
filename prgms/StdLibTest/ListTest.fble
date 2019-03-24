@@ -24,13 +24,13 @@
   };
 
   # TODO: Move these to StdLib/List and make it public?
-  \<@ T@> { \(\(T@, T@; Bool@), S@<T@>, S@<T@>; Bool@); } SEq = \<@ T@> {
+  <@ T@> { \(\(T@, T@; Bool@), S@<T@>, S@<T@>; Bool@); } SEq = <@ T@> {
     \(\(T@, T@; Bool@) eq, S@<T@> a, S@<T@> b) {
       ?(a; cons: ?(b; cons: PEq<T@>(eq, a.cons, b.cons), nil: False),
            nil: ?(b; cons: False, nil: True));
     };
   },
-  \<@ T@> { \(\(T@, T@; Bool@), P@<T@>, P@<T@>; Bool@); } PEq = \<@ T@> {
+  <@ T@> { \(\(T@, T@; Bool@), P@<T@>, P@<T@>; Bool@); } PEq = <@ T@> {
     \(\(T@, T@; Bool@) eq, P@<T@> a, P@<T@> b) {
       And(eq(a.head, b.head), SEq<T@>(eq, a.tail, b.tail));
     };

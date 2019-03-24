@@ -43,7 +43,6 @@
   FbleExprV exprs;
   FbleField field;
   FbleFieldV fields;
-  FbleTypeFieldV type_fields;
   FbleChoice choice;
   FbleChoiceV choices;
   FbleBindingV bindings;
@@ -71,13 +70,12 @@
 
 %type <name> type_name
 %type <kind> kind
-%type <type> type type_stmt 
+%type <type> type type_block type_stmt 
 %type <types> type_p
-%type <expr> expr stmt
+%type <expr> expr block stmt
 %type <exprs> expr_s expr_p
 %type <field> anon_struct_type_arg
 %type <fields> field_p field_s anon_struct_type_arg_p
-%type <type_fields> type_field_p
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
 %type <bindings> let_bindings exec_bindings
@@ -178,18 +176,6 @@ type:
       var_type->var = $1;
       $$ = &var_type->_base;
    }
- | '\\' '<' type_field_p '>' '{' type_stmt '}' {
-      $$ = $6;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FblePolyType* poly_type = FbleAlloc(arena, FblePolyType);
-        poly_type->_base.tag = FBLE_POLY_TYPE;
-        poly_type->_base.loc = @$;
-        poly_type->arg = $3.xs[$3.size - 1 - i];
-        poly_type->body = $$;
-        $$ = &poly_type->_base;
-      }
-      FbleFree(arena, $3.xs);
-   }
  | type '<' type '>' {
       FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
       poly_apply_type->_base.tag = FBLE_POLY_APPLY_TYPE;
@@ -198,8 +184,8 @@ type:
       poly_apply_type->arg = $3;
       $$ = &poly_apply_type->_base;
    }
- | '{' type_stmt '}' {
-      $$ = $2;
+ | type_block {
+      $$ = $1;
    }
  | type '.'  type_name {
       assert(false && "TODO: Support type field access?");
@@ -216,6 +202,21 @@ type:
  | '&' type_name {
       assert(false && "TODO: Support type include?");
       $$ = NULL;
+   }
+ ;
+
+type_block:
+   '{' type_stmt '}' {
+      $$ = $2;
+   }
+ | '<' kind type_name '>' type_block {
+      FblePolyType* poly_type = FbleAlloc(arena, FblePolyType);
+      poly_type->_base.tag = FBLE_POLY_TYPE;
+      poly_type->_base.loc = @$;
+      poly_type->arg.kind = $2;
+      poly_type->arg.name = $3;
+      poly_type->body = $5;
+      $$ = &poly_type->_base;
    }
  ;
 
@@ -239,21 +240,6 @@ type_p:
  | type_p ',' type {
      $$ = $1;
      FbleVectorAppend(arena, $$, $3);
-   }
- ;
-
-type_field_p:
-   kind type_name {
-     FbleVectorInit(arena, $$);
-     FbleTypeField* field = FbleVectorExtend(arena, $$);
-     field->kind = $1;
-     field->name = $2;
-   }
- | type_field_p ',' kind type_name {
-     $$ = $1;
-     FbleTypeField* field = FbleVectorExtend(arena, $$);
-     field->kind = $3;
-     field->name = $4;
    }
  ;
 
@@ -383,18 +369,6 @@ expr:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
- | '\\' '<' type_field_p '>' '{' stmt '}' {
-      $$ = $6;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
-        poly_expr->_base.tag = FBLE_POLY_EXPR;
-        poly_expr->_base.loc = @$;
-        poly_expr->arg = $3.xs[$3.size - 1 - i];
-        poly_expr->body = $$;
-        $$ = &poly_expr->_base;
-      }
-      FbleFree(arena, $3.xs);
-   }
  | expr '<' type '>' {
       FblePolyApplyExpr* poly_apply_expr = FbleAlloc(arena, FblePolyApplyExpr);
       poly_apply_expr->_base.tag = FBLE_POLY_APPLY_EXPR;
@@ -403,8 +377,8 @@ expr:
       poly_apply_expr->arg = $3;
       $$ = &poly_apply_expr->_base;
    }
- | '{' stmt '}' {
-      $$ = $2;
+ | block { 
+      $$ = $1;
    }
  | expr '{' stmt '}' {
       FbleNamespaceExpr* expr = FbleAlloc(arena, FbleNamespaceExpr);
@@ -436,6 +410,22 @@ expr:
       }
    }
  ;
+
+block:
+  '{' stmt '}' {
+      $$ = $2;
+    }
+ | '<' kind type_name '>' block {
+      FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
+      poly_expr->_base.tag = FBLE_POLY_EXPR;
+      poly_expr->_base.loc = @$;
+      poly_expr->arg.kind = $2;
+      poly_expr->arg.name = $3;
+      poly_expr->body = $5;
+      $$ = &poly_expr->_base;
+   }
+ ;
+
 
 
 stmt:

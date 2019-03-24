@@ -7,7 +7,7 @@
   @ Bit@ = +(StdLib.Unit@ 0, StdLib.Unit@ 1);
   @(Bit: @(Bit@));
 
-  <@>@ BitN@ = \<@ T@> {
+  <@>@ BitN@ = <@ T@> {
     @ Result@ = *(T@ z, Bit@ cout);
     *(
       @ Result@ = Result@,
@@ -28,8 +28,8 @@
 
   @(Bit1: @(Bit1@: Bit@, BitN: &Bit1));
 
-  <@>@ Bit2X@ = \<@ T@> { *(T@ hi, T@ lo); };
-  \<@ T@> { \(BitN@<T@>; BitN@<Bit2X@<T@>>); } Bit2XN = &Bit2XN;
+  <@>@ Bit2X@ = <@ T@> { *(T@ hi, T@ lo); };
+  <@ T@> { \(BitN@<T@>; BitN@<Bit2X@<T@>>); } Bit2XN = &Bit2XN;
 
   @(Bit2: @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN)));
 

@@ -3,7 +3,7 @@
 
   @(Bool: &Bool);
 
-  <@>@ Maybe@ = \<@ T@> { +(T@ just, Unit@ nothing); };
+  <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
   @(List: &List);
 

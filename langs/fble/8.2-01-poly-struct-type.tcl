@@ -1,6 +1,6 @@
 fble-test {
   # Test a polymorphic struct type.
-  <@>@ Pair@ = \<@ T@> { *(T@ first, T@ second); };
+  <@>@ Pair@ = <@ T@> { *(T@ first, T@ second); };
 
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);

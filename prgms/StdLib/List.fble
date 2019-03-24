@@ -1,95 +1,95 @@
 @(Unit@, Bool@: Bool.Bool@) {
   # P - A list of 1 or more elements: T+
   # S - A list of 0 or more elements: T*
-  <@>@ P@ = \<@ T@> { *(T@ head, S@<T@> tail); },
-  <@>@ S@ = \<@ T@> { +(P@<T@> cons, Unit@ nil); };
+  <@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },
+  <@>@ S@ = <@ T@> { +(P@<T@> cons, Unit@ nil); };
 
-  \<@ T@> { \(S@<T@>; T@); } HeadS = \<@ T@> {
+  <@ T@> { \(S@<T@>; T@); } HeadS = <@ T@> {
     \(S@<T@> l) {
       l.cons.head;
     };
   };
 
-  \<@ T@> { \(T@, S@<T@>; S@<T@>); } ConsS = \<@ T@> {
+  <@ T@> { \(T@, S@<T@>; S@<T@>); } ConsS = <@ T@> {
     \(T@ a, S@<T@> l) {
       S@<T@>(cons: P@<T@>(a, l));
     };
   };
 
   # Append list b to the end of list a.
-  \<@ T@> { \(S@<T@>, S@<T@>; S@<T@>); } Append = \<@ T@> {
+  <@ T@> { \(S@<T@>, S@<T@>; S@<T@>); } Append = <@ T@> {
     \(S@<T@> a, S@<T@> b) {
       ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
     };
   };
 
-  S@ S0 = \<@ T@> {
+  S@ S0 = <@ T@> {
     S@<T@>(nil: Unit@());
   };
 
-  \<@ T@> { \(T@; S@<T@>); } S1 = \<@ T@> {
+  <@ T@> { \(T@; S@<T@>); } S1 = <@ T@> {
     \(T@ a) {
       ConsS<T@>(a, S0<T@>);
     };
   };
 
-  \<@ T@> { \(T@, T@; S@<T@>); } S2 = \<@ T@> {
+  <@ T@> { \(T@, T@; S@<T@>); } S2 = <@ T@> {
     \(T@ a, T@ b) {
       ConsS<T@>(a, S1<T@>(b));
     };
   };
 
-  \<@ T@> { \(T@, T@, T@; S@<T@>); } S3 = \<@ T@> {
+  <@ T@> { \(T@, T@, T@; S@<T@>); } S3 = <@ T@> {
     \(T@ a, T@ b, T@ c) {
       ConsS<T@>(a, S2<T@>(b, c));
     };
   };
 
-  \<@ T@> { \(T@, T@, T@, T@; S@<T@>); } S4 = \<@ T@> {
+  <@ T@> { \(T@, T@, T@, T@; S@<T@>); } S4 = <@ T@> {
     \(T@ a, T@ b, T@ c, T@ d) {
       ConsS<T@>(a, S3<T@>(b, c, d));
     };
   };
 
-  \<@ T@> { \(T@, T@, T@, T@, T@; S@<T@>); } S5 = \<@ T@> {
+  <@ T@> { \(T@, T@, T@, T@, T@; S@<T@>); } S5 = <@ T@> {
     \(T@ a, T@ b, T@ c, T@ d, T@ e) {
       ConsS<T@>(a, S4<T@>(b, c, d, e));
     };
   };
 
-  \<@ T@> { \(T@, T@, T@, T@, T@, T@, T@, T@, T@; S@<T@>); } S9 = \<@ T@> {
+  <@ T@> { \(T@, T@, T@, T@, T@, T@, T@, T@, T@; S@<T@>); } S9 = <@ T@> {
     \(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g, T@ h, T@ i) {
       Append<T@>(S5<T@>(a, b, c, d, e), S4<T@>(f, g, h, i));
     };
   };
 
   # InitP - Return all but the last element in 'list'.
-  \<@ T@> { \(P@<T@>; S@<T@>); } InitP = \<@ T@> {
+  <@ T@> { \(P@<T@>; S@<T@>); } InitP = <@ T@> {
     \(P@<T@> list) {
       ?(list.tail; cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: S0<T@>);
     };
   };
 
   # LastP - Return the last element in 'list'.
-  \<@ T@> { \(P@<T@>; T@); } LastP = \<@ T@> {
+  <@ T@> { \(P@<T@>; T@); } LastP = <@ T@> {
     \(P@<T@> list) {
       ?(list.tail; cons: LastP<T@>(list.tail.cons), nil: list.head);
     };
   };
 
   # Concat: Flatten a list of lists into a single list of all the elements.
-  \<@ T@> { \(S@<S@<T@>>; S@<T@>); } Concat = \<@ T@> {
+  <@ T@> { \(S@<S@<T@>>; S@<T@>); } Concat = <@ T@> {
     \(S@<S@<T@>> x) {
       ?(x; cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: S0<T@>);
     };
   };
 
-  \<@ A@, @ B@> { \(\(A@; B@), S@<A@>; S@<B@>); } MapS = \<@ A@, @ B@> {
+  <@ A@><@ B@> { \(\(A@; B@), S@<A@>; S@<B@>); } MapS = <@ A@><@ B@> {
     \(\(A@; B@) f, S@<A@> a) {
       ?(a; cons: S@<B@>(cons: MapP<A@><B@>(f, a.cons)), nil: S0<B@>);
     };
   },
-  \<@ A@, @ B@> { \(\(A@; B@), P@<A@>; P@<B@>); } MapP = \<@ A@, @ B@> {
+  <@ A@><@ B@> { \(\(A@; B@), P@<A@>; P@<B@>); } MapP = <@ A@><@ B@> {
     \(\(A@; B@) f, P@<A@> a) {
       P@<B@>(f(a.head), MapS<A@><B@>(f, a.tail));
     };
@@ -97,7 +97,7 @@
 
   # Insert the element 'x' into 'l' at the sorted position based on the le
   # comparision function.
-  \<@ T@> { \(\(T@, T@; Bool@), T@, S@<T@>; P@<T@>); } SortInsert = \<@ T@> {
+  <@ T@> { \(\(T@, T@; Bool@), T@, S@<T@>; P@<T@>); } SortInsert = <@ T@> {
     \(\(T@, T@; Bool@) le, T@ x, S@<T@> l) {
       ?(l; cons: ?(le(x, l.cons.head);
                     true: P@<T@>(x, l),
@@ -108,12 +108,12 @@
 
   # Sort the given list of elements, using LE for the comparisons.
   # TODO: Use something more efficient than an insertion sort.
-  \<@ T@> { \(\(T@, T@; Bool@), S@<T@>; S@<T@>); } SortS = \<@ T@> {
+  <@ T@> { \(\(T@, T@; Bool@), S@<T@>; S@<T@>); } SortS = <@ T@> {
     \(\(T@, T@; Bool@) le, S@<T@> l) {
       ?(l; cons: S@<T@>(cons: SortP<T@>(le, l.cons)), nil: l);
     };
   },
-  \<@ T@> { \(\(T@, T@; Bool@), P@<T@>; P@<T@>); } SortP = \<@ T@> {
+  <@ T@> { \(\(T@, T@; Bool@), P@<T@>; P@<T@>); } SortP = <@ T@> {
     \(\(T@, T@; Bool@) le, P@<T@> l) {
       SortInsert<T@>(le, l.head, SortS<T@>(le, l.tail));
     };

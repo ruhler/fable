@@ -1,7 +1,7 @@
 @(BitN@, Bit2XT@: Bit2X@, StdLib, Bit1) {
   StdLib.Bool { @(Bool@, And); };
 
-  \<@ T@> {
+  <@ T@> {
     \(BitN@<T@> B) {
       @ Bit2X@ = Bit2XT@<T@>;
       @ Result@ = *(Bit2X@ z, Bit1.Bit1@ cout);

@@ -4,7 +4,7 @@ fble-test {
   Bool@ true = Bool@(true: Unit@());
 
   # Test use of a polymorphic function.
-  \<@ T@> { \(T@; T@); } Id = \<@ T@> {
+  <@ T@> { \(T@; T@); } Id = <@ T@> {
     \(T@ a) {
       a;
     };

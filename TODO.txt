@@ -1,7 +1,7 @@
 Fble:
-* [lang] Switch to new concrete syntax for func and poly
+* [lang] Switch to new concrete syntax for func
   - remove multi-arg application desugaring in parser.
-  - add type_block and block to concrete syntax.
+  - use block for func_values.
 
 * [lang] Flesh out spec for new fble.
 
