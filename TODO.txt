@@ -1,21 +1,12 @@
-Fble New:
-* Draft concrete syntax.
-* Try implementing a version of it from scratch?
-
 Fble:
-* [lang] Switch to single-argument functions and poly's in abstract syntax.
- - update fble spec too.
+* [lang] Switch to single-argument poly's in abstract syntax.
+
+* [lang] Flesh out spec for new fble.
+
+* [lang] Implement abstract syntax and parser for new fble.
 
 * [perf] Avoid copying captured contexts
   - particularly for multi-arg functions.
-
-* [lang] Redesign language syntax.
-  - how should namespace + type mix?
-
-* [test] Port tictactoe to fble.
-* [test] Implement fble-md5 program.
-
-* [perf] fix perf issues with AllTests.
 
 * [test] Fix 8.3-07
  - debugging: S<T> ==> S'<T'>
