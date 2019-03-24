@@ -1,8 +1,8 @@
 @(Unit@, Bool@: Bool.Bool@) {
   # P - A list of 1 or more elements: T+
   # S - A list of 0 or more elements: T*
-  \<@ ; @> P@ = \<@ T@> { *(T@ head, S@<T@> tail); },
-  \<@ ; @> S@ = \<@ T@> { +(P@<T@> cons, Unit@ nil); };
+  <@>@ P@ = \<@ T@> { *(T@ head, S@<T@> tail); },
+  <@>@ S@ = \<@ T@> { +(P@<T@> cons, Unit@ nil); };
 
   \<@ T@> { \(S@<T@>; T@); } HeadS = \<@ T@> {
     \(S@<T@> l) {

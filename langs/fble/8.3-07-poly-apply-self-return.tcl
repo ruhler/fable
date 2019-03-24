@@ -1,8 +1,8 @@
 fble-test {
   @ Unit@ = *();
 
-  \<@ ; @> P@ = \<@ T@> { *(T@ head, S@<T@> tail); },
-  \<@ ; @> S@ = \<@ T@> { +(P@<T@> cons, Unit@ nil); };
+  <@>@ P@ = \<@ T@> { *(T@ head, S@<T@> tail); },
+  <@>@ S@ = \<@ T@> { +(P@<T@> cons, Unit@ nil); };
 
   # Regression test of a poly application that results in itself.
   # There was a bug previously where this lead to a stack overflow.

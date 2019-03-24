@@ -2,7 +2,7 @@ fble-test {
   # Regression test for passing an applied polymorphic type as an argument to
   # a condition.
   @ Unit@ = *();
-  \<@; @> Maybe@ = \<@ T@> { +(T@ just, Unit@ nothing); };
+  <@>@ Maybe@ = \<@ T@> { +(T@ just, Unit@ nothing); };
 
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());

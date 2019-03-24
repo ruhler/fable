@@ -37,7 +37,6 @@
 %union {
   FbleName name;
   FbleKind* kind;
-  FbleKindV kinds;
   FbleType* type;
   FbleTypeV types;
   FbleExpr* expr;
@@ -72,7 +71,6 @@
 
 %type <name> type_name
 %type <kind> kind
-%type <kinds> kind_p
 %type <type> type type_stmt 
 %type <types> type_p
 %type <expr> expr stmt
@@ -98,28 +96,13 @@ kind:
       basic_kind->_base.loc = @$;
       $$ = &basic_kind->_base;
    }
- | '\\' '<' kind_p ';' kind '>' {
-      $$ = $5;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FblePolyKind* poly_kind = FbleAlloc(arena, FblePolyKind);
-        poly_kind->_base.tag = FBLE_POLY_KIND;
-        poly_kind->_base.loc = @$;
-        poly_kind->arg = $3.xs[$3.size - 1 - i];
-        poly_kind->rkind = $$;
-        $$ = &poly_kind->_base;
-      }
-      FbleFree(arena, $3.xs);
-   }
- ;
-
-kind_p:
-   kind {
-     FbleVectorInit(arena, $$);
-     FbleVectorAppend(arena, $$, $1);
-   }
- | kind_p ',' kind {
-     $$ = $1;
-     FbleVectorAppend(arena, $$, $3);
+ | '<' kind '>' kind {
+      FblePolyKind* poly_kind = FbleAlloc(arena, FblePolyKind);
+      poly_kind->_base.tag = FBLE_POLY_KIND;
+      poly_kind->_base.loc = @$;
+      poly_kind->arg = $2;
+      poly_kind->rkind = $4;
+      $$ = &poly_kind->_base;
    }
  ;
 
