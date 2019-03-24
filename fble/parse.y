@@ -101,13 +101,10 @@ kind:
  | '\\' '<' kind_p ';' kind '>' {
       $$ = $5;
       for (size_t i = 0; i < $3.size; ++i) {
-        FbleKind* arg = $3.xs[$3.size - 1 - i];
-
         FblePolyKind* poly_kind = FbleAlloc(arena, FblePolyKind);
         poly_kind->_base.tag = FBLE_POLY_KIND;
         poly_kind->_base.loc = @$;
-        FbleVectorInit(arena, poly_kind->args);
-        FbleVectorAppend(arena, poly_kind->args, arg);
+        poly_kind->arg = $3.xs[$3.size - 1 - i];
         poly_kind->rkind = $$;
         $$ = &poly_kind->_base;
       }
@@ -201,13 +198,10 @@ type:
  | '\\' '<' type_field_p '>' '{' type_stmt '}' {
       $$ = $6;
       for (size_t i = 0; i < $3.size; ++i) {
-        FbleTypeField arg = $3.xs[$3.size - 1 - i];
-
         FblePolyType* poly_type = FbleAlloc(arena, FblePolyType);
         poly_type->_base.tag = FBLE_POLY_TYPE;
         poly_type->_base.loc = @$;
-        FbleVectorInit(arena, poly_type->args);
-        FbleVectorAppend(arena, poly_type->args, arg);
+        poly_type->arg = $3.xs[$3.size - 1 - i];
         poly_type->body = $$;
         $$ = &poly_type->_base;
       }
@@ -216,14 +210,11 @@ type:
  | type '<' type_p '>' {
       $$ = $1;
       for (size_t i = 0; i < $3.size; ++i) {
-        FbleType* arg = $3.xs[i];
-
         FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
         poly_apply_type->_base.tag = FBLE_POLY_APPLY_TYPE;
         poly_apply_type->_base.loc = @$;
         poly_apply_type->poly = $$;
-        FbleVectorInit(arena, poly_apply_type->args);
-        FbleVectorAppend(arena, poly_apply_type->args, arg);
+        poly_apply_type->arg = $3.xs[i];
         $$ = &poly_apply_type->_base;
       }
       FbleFree(arena, $3.xs);
@@ -416,13 +407,10 @@ expr:
  | '\\' '<' type_field_p '>' '{' stmt '}' {
       $$ = $6;
       for (size_t i = 0; i < $3.size; ++i) {
-        FbleTypeField arg = $3.xs[$3.size - 1 - i];
-
         FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
         poly_expr->_base.tag = FBLE_POLY_EXPR;
         poly_expr->_base.loc = @$;
-        FbleVectorInit(arena, poly_expr->args);
-        FbleVectorAppend(arena, poly_expr->args, arg);
+        poly_expr->arg = $3.xs[$3.size - 1 - i];
         poly_expr->body = $$;
         $$ = &poly_expr->_base;
       }
@@ -431,14 +419,11 @@ expr:
  | expr '<' type_p '>' {
       $$ = $1;
       for (size_t i = 0; i < $3.size; ++i) {
-        FbleType* arg = $3.xs[i];
-
         FblePolyApplyExpr* poly_apply_expr = FbleAlloc(arena, FblePolyApplyExpr);
         poly_apply_expr->_base.tag = FBLE_POLY_APPLY_EXPR;
         poly_apply_expr->_base.loc = @$;
         poly_apply_expr->poly = $$;
-        FbleVectorInit(arena, poly_apply_expr->args);
-        FbleVectorAppend(arena, poly_apply_expr->args, arg);
+        poly_apply_expr->arg = $3.xs[i];
         $$ = &poly_apply_expr->_base;
       }
       FbleFree(arena, $3.xs);

@@ -43,10 +43,10 @@ typedef struct {
 } BasicKind;
 
 // PolyKind --
-//   POLY_KIND (args :: [Kind]) (return :: Kind)
+//   POLY_KIND (arg :: Kind) (return :: Kind)
 typedef struct {
   Kind _base;
-  KindV args;
+  Kind* arg;
   Kind* rkind;
 } PolyKind;
 
@@ -152,7 +152,7 @@ typedef struct {
 // PolyType -- POLY_TYPE
 typedef struct {
   Type _base;
-  TypeV args;
+  Type* arg;
   Type* body;
 } PolyType;
 
@@ -162,7 +162,7 @@ typedef struct {
 typedef struct {
   Type _base;
   Type* poly;
-  TypeV args;
+  Type* arg;
   Type* result;
 } PolyApplyType;
 
@@ -194,7 +194,7 @@ typedef struct TypeList {
 //   A linked list of cached poly apply results.
 typedef struct PolyApplyList {
   Type* poly;
-  TypeV args;
+  Type* arg;
   Type* result;
   struct PolyApplyList* next;
 } PolyApplyList;
@@ -226,8 +226,8 @@ static void Add(FbleRefCallback* add, Type* type);
 static void TypeAdded(FbleRefCallback* add, FbleRef* ref);
 
 static Kind* GetKind(FbleArena* arena, Type* type);
-static bool HasParams(Type* type, TypeV params, TypeList* visited);
-static Type* Subst(TypeArena* arena, Type* src, TypeV params, TypeV args, TypePairs* tps);
+static bool HasParam(Type* type, Type* param, TypeList* visited);
+static Type* Subst(TypeArena* arena, Type* src, Type* param, Type* arg, TypePairs* tps);
 static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* applied);
 static Type* Normal(Type* type);
 static bool TypesEqual(Type* a, Type* b, TypePairs* eq);
@@ -287,10 +287,7 @@ static void FreeKind(FbleArena* arena, Kind* kind)
 
         case POLY_KIND: {
           PolyKind* poly = (PolyKind*)kind;
-          for (size_t i = 0; i < poly->args.size; ++i) {
-            FreeKind(arena, poly->args.xs[i]);
-          }
-          FbleFree(arena, poly->args.xs);
+          FreeKind(arena, poly->arg);
           FreeKind(arena, poly->rkind);
           FbleFree(arena, poly);
           break;
@@ -366,7 +363,9 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
     case PROC_TYPE:
     case INPUT_TYPE:
     case OUTPUT_TYPE:
-    case VAR_TYPE: {
+    case VAR_TYPE:
+    case POLY_TYPE:
+    case POLY_APPLY_TYPE: {
       FbleFree(arena_, type);
       break;
     }
@@ -375,20 +374,6 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
       AbstractType* abstract = (AbstractType*)type;
       FreeKind(arena_, abstract->kind);
       FbleFree(arena_, type);
-      break;
-    }
-
-    case POLY_TYPE: {
-      PolyType* pt = (PolyType*)type;
-      FbleFree(arena_, pt->args.xs);
-      FbleFree(arena_, pt);
-      break;
-    }
-
-    case POLY_APPLY_TYPE: {
-      PolyApplyType* pat = (PolyApplyType*)type;
-      FbleFree(arena_, pat->args.xs);
-      FbleFree(arena_, pat);
       break;
     }
 
@@ -482,9 +467,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
-      for (size_t i = 0; i < pt->args.size; ++i) {
-        Add(add, pt->args.xs[i]);
-      }
+      Add(add, pt->arg);
       Add(add, pt->body);
       break;
     }
@@ -492,9 +475,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
       Add(add, pat->poly);
-      for (size_t i = 0; i < pat->args.size; ++i) {
-        Add(add, pat->args.xs[i]);
-      }
+      Add(add, pat->arg);
       Add(add, pat->result);
       break;
     }
@@ -552,11 +533,7 @@ static Kind* GetKind(FbleArena* arena, Type* type)
       kind->_base.tag = POLY_KIND;
       kind->_base.loc = type->loc;
       kind->_base.refcount = 1;
-      FbleVectorInit(arena, kind->args);
-
-      for (size_t i = 0; i < poly->args.size; ++i) {
-        FbleVectorAppend(arena, kind->args, GetKind(arena, poly->args.xs[i]));
-      }
+      kind->arg = GetKind(arena, poly->arg);
       kind->rkind = GetKind(arena, poly->body);
       return &kind->_base;
     }
@@ -565,25 +542,10 @@ static Kind* GetKind(FbleArena* arena, Type* type)
       PolyApplyType* pat = (PolyApplyType*)type;
       PolyKind* kind = (PolyKind*)GetKind(arena, pat->poly);
       assert(kind->_base.tag == POLY_KIND);
-      assert(kind->args.size >= pat->args.size);
 
-      if (kind->args.size == pat->args.size) {
-        Kind* rkind = CopyKind(arena, kind->rkind);
-        FreeKind(arena, &kind->_base);
-        return rkind;
-      }
-
-      PolyKind* pkind = FbleAlloc(arena, PolyKind);
-      pkind->_base.tag = POLY_KIND;
-      pkind->_base.loc = type->loc;
-      pkind->_base.refcount = 1;
-      FbleVectorInit(arena, pkind->args);
-      for (size_t i = pat->args.size; i < kind->args.size; ++i) {
-        FbleVectorAppend(arena, pkind->args, CopyKind(arena, kind->args.xs[i]));
-      }
-      pkind->rkind = CopyKind(arena, kind->rkind);
+      Kind* rkind = CopyKind(arena, kind->rkind);
       FreeKind(arena, &kind->_base);
-      return &pkind->_base;
+      return rkind;
     }
 
     case REF_TYPE: {
@@ -596,20 +558,20 @@ static Kind* GetKind(FbleArena* arena, Type* type)
   return NULL;
 }
 
-// HasParams --
-//   Check whether a type has any of the given params as free type variables.
+// HasParam --
+//   Check whether a type has the given param as a free type variable.
 //
 // Inputs:
 //   type - the type to check.
-//   params - the abstract types to check for.
+//   param - the abstract type to check for.
 //   visited - a list of types already visited to end the recursion.
 //
 // Results:
-//   True if any of the params occur in type, false otherwise.
+//   True if the param occur in type, false otherwise.
 //
 // Side effects:
 //   None.
-static bool HasParams(Type* type, TypeV params, TypeList* visited)
+static bool HasParam(Type* type, Type* param, TypeList* visited)
 {
   for (TypeList* v = visited; v != NULL; v = v->next) {
     if (type == v->type) {
@@ -626,12 +588,12 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
       for (size_t i = 0; i < st->type_fields.size; ++i) {
-        if (HasParams(st->type_fields.xs[i].type, params, &nv)) {
+        if (HasParam(st->type_fields.xs[i].type, param, &nv)) {
           return true;
         }
       }
       for (size_t i = 0; i < st->fields.size; ++i) {
-        if (HasParams(st->fields.xs[i].type, params, &nv)) {
+        if (HasParam(st->fields.xs[i].type, param, &nv)) {
           return true;
         }
       }
@@ -641,7 +603,7 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
     case UNION_TYPE: {
       UnionType* ut = (UnionType*)type;
       for (size_t i = 0; i < ut->fields.size; ++i) {
-        if (HasParams(ut->fields.xs[i].type, params, &nv)) {
+        if (HasParam(ut->fields.xs[i].type, param, &nv)) {
           return true;
         }
       }
@@ -650,65 +612,48 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
 
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
-      return HasParams(ft->arg, params, &nv)
-          || HasParams(ft->rtype, params, &nv);
+      return HasParam(ft->arg, param, &nv)
+          || HasParam(ft->rtype, param, &nv);
     }
 
     case PROC_TYPE: {
       ProcType* pt = (ProcType*)type;
-      return HasParams(pt->rtype, params, &nv);
+      return HasParam(pt->rtype, param, &nv);
     }
 
     case INPUT_TYPE: {
       InputType* t = (InputType*)type;
-      return HasParams(t->rtype, params, &nv);
+      return HasParam(t->rtype, param, &nv);
     }
 
     case OUTPUT_TYPE: {
       OutputType* t = (OutputType*)type;
-      return HasParams(t->rtype, params, &nv);
+      return HasParam(t->rtype, param, &nv);
     }
 
     case VAR_TYPE: {
       VarType* vt = (VarType*)type;
-      return HasParams(vt->value, params, &nv);
+      return HasParam(vt->value, param, &nv);
     }
 
     case ABSTRACT_TYPE: {
-      for (size_t i = 0; i < params.size; ++i) {
-        if (type == params.xs[i]) {
-          return true;
-        }
-      }
-      return false;
+      return (type == param);
     }
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
-
-      if (pt->args.xs == params.xs) {
-        return false;
-      }
-      return HasParams(pt->body, params, &nv);
+      return pt->arg != param && HasParam(pt->body, param, &nv);
     }
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
-      for (size_t i = 0; i < pat->args.size; ++i) {
-        if (HasParams(pat->args.xs[i], params, &nv)) {
-          return true;
-        }
-      }
-      return HasParams(pat->poly, params, &nv);
+      return HasParam(pat->arg, param, &nv)
+          || HasParam(pat->poly, param, &nv);
     }
 
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
-
-      if (ref->value == NULL) {
-        return false;
-      }
-      return HasParams(ref->value, params, &nv);
+      return ref->value != NULL && HasParam(ref->value, param, &nv);
     }
   }
 
@@ -717,26 +662,25 @@ static bool HasParams(Type* type, TypeV params, TypeList* visited)
 }
 
 // Subst --
-//   Substitute the given arguments in place of the given parameters in the
+//   Substitute the given argument in place of the given parameter in the
 //   given type.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   type - the type to substitute into.
-//   params - the abstract types to substitute out.
-//   args - the concrete types to substitute in.
+//   param - the abstract type to substitute out.
+//   arg - the concrete type to substitute in.
 //   tps - a map of already substituted types, to avoid infinite recursion.
 //
 // Results:
-//   A type with all occurrences of params replaced with the corresponding
-//   args types.
+//   A type with all occurrences of param replaced with the arg type.
 //
 // Side effects:
 //   The caller is responsible for calling TypeRelease on the returned
 //   type when it is no longer needed.
-static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypePairs* tps)
+static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePairs* tps)
 {
-  if (!HasParams(type, params, NULL)) {
+  if (!HasParam(type, param, NULL)) {
     return TypeRetain(arena, type);
   }
 
@@ -754,7 +698,7 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       for (size_t i = 0; i < st->type_fields.size; ++i) {
         Field* field = FbleVectorExtend(arena_, sst->type_fields);
         field->name = st->type_fields.xs[i].name;
-        field->type = Subst(arena, st->type_fields.xs[i].type, params, args, tps);
+        field->type = Subst(arena, st->type_fields.xs[i].type, param, arg, tps);
         FbleRefAdd(arena, &sst->_base.ref, &field->type->ref);
         TypeRelease(arena, field->type);
       }
@@ -763,7 +707,7 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       for (size_t i = 0; i < st->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena_, sst->fields);
         field->name = st->fields.xs[i].name;
-        field->type = Subst(arena, st->fields.xs[i].type, params, args, tps);
+        field->type = Subst(arena, st->fields.xs[i].type, param, arg, tps);
         FbleRefAdd(arena, &sst->_base.ref, &field->type->ref);
         TypeRelease(arena, field->type);
       }
@@ -780,7 +724,7 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       for (size_t i = 0; i < ut->fields.size; ++i) {
         Field* field = FbleVectorExtend(arena_, sut->fields);
         field->name = ut->fields.xs[i].name;
-        field->type = Subst(arena, ut->fields.xs[i].type, params, args, tps);
+        field->type = Subst(arena, ut->fields.xs[i].type, param, arg, tps);
         FbleRefAdd(arena, &sut->_base.ref, &field->type->ref);
         TypeRelease(arena, field->type);
       }
@@ -794,11 +738,11 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       sft->_base.tag = FUNC_TYPE;
       sft->_base.loc = ft->_base.loc;
 
-      sft->arg = Subst(arena, ft->arg, params, args, tps);
+      sft->arg = Subst(arena, ft->arg, param, arg, tps);
       FbleRefAdd(arena, &sft->_base.ref, &sft->arg->ref);
       TypeRelease(arena, sft->arg);
 
-      sft->rtype = Subst(arena, ft->rtype, params, args, tps);
+      sft->rtype = Subst(arena, ft->rtype, param, arg, tps);
       FbleRefAdd(arena, &sft->_base.ref, &sft->rtype->ref);
       TypeRelease(arena, sft->rtype);
       return &sft->_base;
@@ -810,7 +754,7 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       FbleRefInit(arena, &spt->_base.ref);
       spt->_base.tag = PROC_TYPE;
       spt->_base.loc = pt->_base.loc;
-      spt->rtype = Subst(arena, pt->rtype, params, args, tps);
+      spt->rtype = Subst(arena, pt->rtype, param, arg, tps);
       FbleRefAdd(arena, &spt->_base.ref, &spt->rtype->ref);
       TypeRelease(arena, spt->rtype);
       return &spt->_base;
@@ -822,7 +766,7 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       FbleRefInit(arena, &spt->_base.ref);
       spt->_base.tag = INPUT_TYPE;
       spt->_base.loc = pt->_base.loc;
-      spt->rtype = Subst(arena, pt->rtype, params, args, tps);
+      spt->rtype = Subst(arena, pt->rtype, param, arg, tps);
       FbleRefAdd(arena, &spt->_base.ref, &spt->rtype->ref);
       TypeRelease(arena, spt->rtype);
       return &spt->_base;
@@ -834,7 +778,7 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       FbleRefInit(arena, &spt->_base.ref);
       spt->_base.tag = OUTPUT_TYPE;
       spt->_base.loc = pt->_base.loc;
-      spt->rtype = Subst(arena, pt->rtype, params, args, tps);
+      spt->rtype = Subst(arena, pt->rtype, param, arg, tps);
       FbleRefAdd(arena, &spt->_base.ref, &spt->rtype->ref);
       TypeRelease(arena, spt->rtype);
       return &spt->_base;
@@ -847,20 +791,15 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       svt->_base.tag = VAR_TYPE;
       svt->_base.loc = vt->_base.loc;
       svt->var = vt->var;
-      svt->value = Subst(arena, vt->value, params, args, tps);
+      svt->value = Subst(arena, vt->value, param, arg, tps);
       FbleRefAdd(arena, &svt->_base.ref, &svt->value->ref);
       TypeRelease(arena, svt->value);
       return &svt->_base;
     }
 
     case ABSTRACT_TYPE: {
-      for (size_t i = 0; i < params.size; ++i) {
-        if (type == params.xs[i]) {
-          return TypeRetain(arena, args.xs[i]);
-        }
-      }
-      assert(false && "HasParams result was wrong.");
-      return TypeRetain(arena, type);
+      assert(type == param && "HasParam result was wrong.");
+      return TypeRetain(arena, arg);
     }
 
     case POLY_TYPE: {
@@ -869,12 +808,9 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       spt->_base.tag = POLY_TYPE;
       spt->_base.loc = pt->_base.loc;
       FbleRefInit(arena, &spt->_base.ref);
-      FbleVectorInit(arena_, spt->args);
-      for (size_t i = 0; i < pt->args.size; ++i) {
-        FbleVectorAppend(arena_, spt->args, pt->args.xs[i]);
-        FbleRefAdd(arena, &spt->_base.ref, &pt->args.xs[i]->ref);
-      }
-      spt->body = Subst(arena, pt->body, params, args, tps);
+      spt->arg = pt->arg;
+      FbleRefAdd(arena, &spt->_base.ref, &pt->arg->ref);
+      spt->body = Subst(arena, pt->body, param, arg, tps);
       FbleRefAdd(arena, &spt->_base.ref, &spt->body->ref);
       TypeRelease(arena, spt->body);
       return &spt->_base;
@@ -886,17 +822,13 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
       FbleRefInit(arena, &spat->_base.ref);
       spat->_base.tag = POLY_APPLY_TYPE;
       spat->_base.loc = pat->_base.loc;
-      spat->poly = Subst(arena, pat->poly, params, args, tps);
+      spat->poly = Subst(arena, pat->poly, param, arg, tps);
       FbleRefAdd(arena, &spat->_base.ref, &spat->poly->ref);
       TypeRelease(arena, spat->poly);
       spat->result = NULL;
-      FbleVectorInit(arena_, spat->args);
-      for (size_t i = 0; i < pat->args.size; ++i) {
-        Type* arg = Subst(arena, pat->args.xs[i], params, args, tps);
-        FbleVectorAppend(arena_, spat->args, arg);
-        FbleRefAdd(arena, &spat->_base.ref, &arg->ref);
-        TypeRelease(arena, arg);
-      }
+      spat->arg = Subst(arena, pat->arg, param, arg, tps);
+      FbleRefAdd(arena, &spat->_base.ref, &spat->arg->ref);
+      TypeRelease(arena, spat->arg);
       return &spat->_base;
     }
 
@@ -929,7 +861,7 @@ static Type* Subst(TypeArena* arena, Type* type, TypeV params, TypeV args, TypeP
         .next = tps
       };
 
-      sref->value = Subst(arena, ref->value, params, args, &ntp);
+      sref->value = Subst(arena, ref->value, param, arg, &ntp);
       FbleRefAdd(arena, &sref->_base.ref, &sref->value->ref);
       return sref->value;
     }
@@ -1042,19 +974,12 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       }
 
       Eval(arena, pat->poly, &nevaled, applied);
-      for (size_t i = 0; i < pat->args.size; ++i) {
-        Eval(arena, pat->args.xs[i], &nevaled, applied);
-      }
+      Eval(arena, pat->arg, &nevaled, applied);
 
-      // Check whether we have already applied these args to this poly.
+      // Check whether we have already applied the arg to this poly.
       for (PolyApplyList* pal = applied; pal != NULL; pal = pal->next) {
-        if (pal->args.size == pat->args.size && TypesEqual(pal->poly, pat->poly, NULL)) {
-          bool allmatch = true;
-          for (size_t i = 0; i < pat->args.size; ++i) {
-            allmatch = allmatch && TypesEqual(pal->args.xs[i], pat->args.xs[i], NULL);
-          }
-
-          if (allmatch) {
+        if (TypesEqual(pal->poly, pat->poly, NULL)) {
+          if (TypesEqual(pal->arg, pat->arg, NULL)) {
             pat->result = pal->result;
             assert(&pat->_base != pat->result);
             FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
@@ -1065,14 +990,14 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
 
       PolyType* poly = (PolyType*)Normal(pat->poly);
       if (poly->_base.tag == POLY_TYPE) {
-        pat->result = Subst(arena, poly->body, poly->args, pat->args, NULL);
+        pat->result = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
         assert(&pat->_base != pat->result);
         FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
         TypeRelease(arena, pat->result);
 
         PolyApplyList napplied = {
           .poly = &poly->_base,
-          .args = pat->args,
+          .arg = pat->arg,
           .result = pat->result,
           .next = applied
         };
@@ -1279,22 +1204,14 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       PolyType* pta = (PolyType*)a;
       PolyType* ptb = (PolyType*)b;
       
-      if (pta->args.size != ptb->args.size) {
-        return false;
-      }
-
-      // TODO: Verify all the args have matching kinds.
+      // TODO: Verify the args have matching kinds.
    
-      TypePairs nneq[pta->args.size]; 
-      TypePairs* pneq = &neq;
-      for (size_t i = 0; i < pta->args.size; ++i) {
-        nneq[i].a = pta->args.xs[i];
-        nneq[i].b = ptb->args.xs[i];
-        nneq[i].next = pneq;
-        pneq = nneq + i;
-      }
-      
-      return TypesEqual(pta->body, ptb->body, pneq);
+      TypePairs pneq = {
+        .a = pta->arg,
+        .b = ptb->arg,
+        .next = &neq
+      };
+      return TypesEqual(pta->body, ptb->body, &pneq);
     }
 
     case POLY_APPLY_TYPE: {
@@ -1343,19 +1260,8 @@ static bool KindsEqual(Kind* a, Kind* b)
     case POLY_KIND: {
       PolyKind* pa = (PolyKind*)a;
       PolyKind* pb = (PolyKind*)b;
-
-      if (pa->args.size != pb->args.size) {
-        return false;
-      }
-
-      for (size_t i = 0; i < pa->args.size; ++i) {
-        if (!KindsEqual(pa->args.xs[i], pb->args.xs[i])) {
-          return false;
-        }
-      }
-
-      // TODO: Is "(a, b) -> c" equal to "a -> b -> c"?
-      return KindsEqual(pa->rkind, pb->rkind);
+      return KindsEqual(pa->arg, pb->arg)
+          && KindsEqual(pa->rkind, pb->rkind);
     }
   }
 
@@ -1460,13 +1366,7 @@ static void PrintType(FbleArena* arena, Type* type)
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
-      fprintf(stderr, "\\<");
-      const char* comma = "";
-      for (size_t i = 0; i < pt->args.size; ++i) {
-        fprintf(stderr, "%s@ ??%p@", comma, (void*)pt->args.xs[i]);
-        comma = ", ";
-      }
-      fprintf(stderr, " { ");
+      fprintf(stderr, "\\<@ ??%p@> {", (void*)pt->arg);
       PrintType(arena, pt->body);
       fprintf(stderr, "; }");
       break;
@@ -1476,12 +1376,7 @@ static void PrintType(FbleArena* arena, Type* type)
       PolyApplyType* pat = (PolyApplyType*)type;
       PrintType(arena, pat->poly);
       fprintf(stderr, "<");
-      const char* comma = "";
-      for (size_t i = 0; i < pat->args.size; ++i) {
-        fprintf(stderr, "%s", comma);
-        PrintType(arena, pat->args.xs[i]);
-        comma = ", ";
-      }
+      PrintType(arena, pat->arg);
       fprintf(stderr, ">");
       break;
     }
@@ -1520,12 +1415,7 @@ static void PrintKind(Kind* kind)
     case POLY_KIND: {
       PolyKind* poly = (PolyKind*)kind;
       fprintf(stderr, "\\<");
-      const char* comma = "";
-      for (size_t i = 0; i < poly->args.size; ++i) {
-        fprintf(stderr, "%s", comma);
-        PrintKind(poly->args.xs[i]);
-        comma = ", ";
-      }
+      PrintKind(poly->arg);
       fprintf(stderr, "; ");
       PrintKind(poly->rkind);
       fprintf(stderr, ">");
@@ -2521,27 +2411,23 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleRefInit(arena, &pt->_base.ref);
       pt->_base.tag = POLY_TYPE;
       pt->_base.loc = expr->loc;
-      FbleVectorInit(arena_, pt->args);
 
-      Vars ntvd[poly->args.size];
-      Vars* ntvs = type_vars;
-      for (size_t i = 0; i < poly->args.size; ++i) {
-        AbstractType* arg = FbleAlloc(arena_, AbstractType);
-        FbleRefInit(arena, &arg->_base.ref);
-        arg->_base.tag = ABSTRACT_TYPE;
-        arg->_base.loc = poly->args.xs[i].name.loc;
-        arg->kind = CompileKind(arena_, poly->args.xs[i].kind);
-        FbleVectorAppend(arena_, pt->args, &arg->_base);
-        FbleRefAdd(arena, &pt->_base.ref, &arg->_base.ref);
-        TypeRelease(arena, &arg->_base);
+      AbstractType* arg = FbleAlloc(arena_, AbstractType);
+      FbleRefInit(arena, &arg->_base.ref);
+      arg->_base.tag = ABSTRACT_TYPE;
+      arg->_base.loc = poly->arg.name.loc;
+      arg->kind = CompileKind(arena_, poly->arg.kind);
+      pt->arg = &arg->_base;
+      FbleRefAdd(arena, &pt->_base.ref, &arg->_base.ref);
+      TypeRelease(arena, &arg->_base);
 
-        ntvd[i].name = poly->args.xs[i].name;
-        ntvd[i].type = &arg->_base;
-        ntvd[i].next = ntvs;
-        ntvs = ntvd + i;
-      }
+      Vars ntvs = {
+        .name = poly->arg.name,
+        .type = &arg->_base,
+        .next = type_vars
+      };
 
-      pt->body = Compile(arena, vars, ntvs, poly->body, instrs);
+      pt->body = Compile(arena, vars, &ntvs, poly->body, instrs);
       if (pt->body == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
@@ -2556,7 +2442,7 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       FbleRefInit(arena, &pat->_base.ref);
       pat->_base.tag = POLY_APPLY_TYPE;
       pat->_base.loc = expr->loc;
-      FbleVectorInit(arena_, pat->args);
+      pat->arg = NULL;
       pat->result = NULL;
 
       pat->poly = Compile(arena, vars, type_vars, apply->poly, instrs);
@@ -2575,35 +2461,25 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         return NULL;
       }
 
-      bool error = false;
-      if (apply->args.size > poly_kind->args.size) {
-        FbleReportError("expected %i poly args, but %i provided",
-            &expr->loc, poly_kind->args.size, apply->args.size);
-        error = true;
+      pat->arg = CompileType(arena, vars, type_vars, apply->arg);
+      if (pat->arg != NULL) {
+        FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
+        TypeRelease(arena, pat->arg);
       }
 
-      for (size_t i = 0; i < apply->args.size; ++i) {
-        Type* arg = CompileType(arena, vars, type_vars, apply->args.xs[i]);
-        FbleVectorAppend(arena_, pat->args, arg);
-        if (arg != NULL) {
-          FbleRefAdd(arena, &pat->_base.ref, &arg->ref);
-          TypeRelease(arena, arg);
+      bool error = (pat->arg == NULL);
+      if (pat->arg != NULL) {
+        Kind* expected_kind = poly_kind->arg;
+        Kind* actual_kind = GetKind(arena_, pat->arg);
+        if (!KindsEqual(expected_kind, actual_kind)) {
+          FbleReportError("expected kind ", &pat->arg->loc);
+          PrintKind(expected_kind);
+          fprintf(stderr, ", but found ");
+          PrintKind(actual_kind);
+          fprintf(stderr, "\n");
+          error = true;
         }
-        error = (error || arg == NULL);
-
-        if (arg != NULL && i < poly_kind->args.size) {
-          Kind* expected_kind = poly_kind->args.xs[i];
-          Kind* actual_kind = GetKind(arena_, arg);
-          if (!KindsEqual(expected_kind, actual_kind)) {
-            FbleReportError("expected kind ", &arg->loc);
-            PrintKind(expected_kind);
-            fprintf(stderr, ", but found ");
-            PrintKind(actual_kind);
-            fprintf(stderr, "\n");
-            error = true;
-          }
-          FreeKind(arena_, actual_kind);
-        }
+        FreeKind(arena_, actual_kind);
       }
 
       FreeKind(arena_, &poly_kind->_base);
@@ -2996,27 +2872,24 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       FbleRefInit(arena, &pt->_base.ref);
       pt->_base.tag = POLY_TYPE;
       pt->_base.loc = type->loc;
-      FbleVectorInit(arena_, pt->args);
+      pt->arg = NULL;
 
-      Vars ntvd[poly->args.size];
-      Vars* ntvs = type_vars;
-      for (size_t i = 0; i < poly->args.size; ++i) {
-        AbstractType* arg = FbleAlloc(arena_, AbstractType);
-        FbleRefInit(arena, &arg->_base.ref);
-        arg->_base.tag = ABSTRACT_TYPE;
-        arg->_base.loc = poly->args.xs[i].name.loc;
-        arg->kind = CompileKind(arena_, poly->args.xs[i].kind);
-        FbleVectorAppend(arena_, pt->args, &arg->_base);
-        FbleRefAdd(arena, &pt->_base.ref, &arg->_base.ref);
-        TypeRelease(arena, &arg->_base);
+      AbstractType* arg = FbleAlloc(arena_, AbstractType);
+      FbleRefInit(arena, &arg->_base.ref);
+      arg->_base.tag = ABSTRACT_TYPE;
+      arg->_base.loc = poly->arg.name.loc;
+      arg->kind = CompileKind(arena_, poly->arg.kind);
+      pt->arg = &arg->_base;
+      FbleRefAdd(arena, &pt->_base.ref, &arg->_base.ref);
+      TypeRelease(arena, &arg->_base);
 
-        ntvd[i].name = poly->args.xs[i].name;
-        ntvd[i].type = &arg->_base;
-        ntvd[i].next = ntvs;
-        ntvs = ntvd + i;
-      }
+      Vars ntvs = {
+        .name = poly->arg.name,
+        .type = &arg->_base,
+        .next = type_vars
+      };
 
-      pt->body = CompileType(arena, vars, ntvs, poly->body);
+      pt->body = CompileType(arena, vars, &ntvs, poly->body);
       if (pt->body == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
@@ -3032,7 +2905,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       FbleRefInit(arena, &pat->_base.ref);
       pat->_base.tag = POLY_APPLY_TYPE;
       pat->_base.loc = type->loc;
-      FbleVectorInit(arena_, pat->args);
+      pat->arg = NULL;
       pat->result = NULL;
 
       pat->poly = CompileType(arena, vars, type_vars, apply->poly);
@@ -3051,35 +2924,25 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
         return NULL;
       }
 
-      bool error = false;
-      if (apply->args.size > poly_kind->args.size) {
-        FbleReportError("expected %i poly args, but %i provided",
-            &type->loc, poly_kind->args.size, apply->args.size);
-        error = true;
+      pat->arg = CompileType(arena, vars, type_vars, apply->arg);
+      if (pat->arg != NULL) {
+        FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
+        TypeRelease(arena, pat->arg);
       }
 
-      for (size_t i = 0; i < apply->args.size; ++i) {
-        Type* arg = CompileType(arena, vars, type_vars, apply->args.xs[i]);
-        FbleVectorAppend(arena_, pat->args, arg);
-        if (arg != NULL) {
-          FbleRefAdd(arena, &pat->_base.ref, &arg->ref);
-          TypeRelease(arena, arg);
+      bool error = (pat->arg == NULL);
+      if (pat->arg != NULL) {
+        Kind* expected_kind = poly_kind->arg;
+        Kind* actual_kind = GetKind(arena_, pat->arg);
+        if (!KindsEqual(expected_kind, actual_kind)) {
+          FbleReportError("expected kind ", &pat->arg->loc);
+          PrintKind(expected_kind);
+          fprintf(stderr, ", but found ");
+          PrintKind(actual_kind);
+          fprintf(stderr, "\n");
+          error = true;
         }
-        error = (error || arg == NULL);
-
-        if (arg != NULL && i < poly_kind->args.size) {
-          Kind* expected_kind = poly_kind->args.xs[i];
-          Kind* actual_kind = GetKind(arena_, arg);
-          if (!KindsEqual(expected_kind, actual_kind)) {
-            FbleReportError("expected kind ", &arg->loc);
-            PrintKind(expected_kind);
-            fprintf(stderr, ", but found ");
-            PrintKind(actual_kind);
-            fprintf(stderr, "\n");
-            error = true;
-          }
-          FreeKind(arena_, actual_kind);
-        }
+        FreeKind(arena_, actual_kind);
       }
 
       FreeKind(arena_, &poly_kind->_base);
@@ -3166,10 +3029,7 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
       k->_base.tag = POLY_KIND;
       k->_base.loc = poly->_base.loc;
       k->_base.refcount = 1;
-      FbleVectorInit(arena, k->args);
-      for (size_t i = 0; i < poly->args.size; ++i) {
-        FbleVectorAppend(arena, k->args, CompileKind(arena, poly->args.xs[i]));
-      }
+      k->arg = CompileKind(arena, poly->arg);
       k->rkind = CompileKind(arena, poly->rkind);
       return &k->_base;
     }

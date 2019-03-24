@@ -1,5 +1,5 @@
 Fble:
-* [lang] Switch to single-argument poly's in abstract syntax.
+* [lang] Switch to new concrete syntax for func and poly
 
 * [lang] Flesh out spec for new fble.
 

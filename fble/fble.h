@@ -95,10 +95,10 @@ typedef struct {
 } FbleBasicKind;
 
 // FblePolyKind --
-//   FBLE_POLY_KIND (args :: [Kind]) (return :: Kind)
+//   FBLE_POLY_KIND (args :: Kind) (return :: Kind)
 typedef struct {
   FbleKind _base;
-  FbleKindV args;
+  FbleKind* arg;
   FbleKind* rkind;
 } FblePolyKind;
 
@@ -238,19 +238,19 @@ typedef struct {
 } FbleLetType;
 
 // FblePolyType --
-//   FBLE_POLY_TYPE (args :: [(Kind, Name)]) (body :: Type)
+//   FBLE_POLY_TYPE (args :: (Kind, Name)) (body :: Type)
 typedef struct {
   FbleType _base;
-  FbleTypeFieldV args;
+  FbleTypeField arg;
   FbleType* body;
 } FblePolyType;
 
 // FblePolyApplyType --
-//   FBLE_POLY_APPLY_TYPE (poly :: Type) (args :: [Type])
+//   FBLE_POLY_APPLY_TYPE (poly :: Type) (arg :: Type)
 typedef struct {
   FbleType _base;
   FbleType* poly;
-  FbleTypeV args;
+  FbleType* arg;
 } FblePolyApplyType;
 
 typedef struct FbleExpr FbleExpr;
@@ -441,19 +441,19 @@ typedef struct {
 } FbleTypeLetExpr;
 
 // FblePolyExpr --
-//   FBLE_POLY_EXPR (args :: [(Kind, Name)]) (body :: Expr)
+//   FBLE_POLY_EXPR (args :: (Kind, Name)) (body :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleTypeFieldV args;
+  FbleTypeField arg;
   FbleExpr* body;
 } FblePolyExpr;
 
 // FblePolyApplyExpr --
-//   FBLE_POLY_APPLY_EXPR (poly :: Expr) (args :: [Type])
+//   FBLE_POLY_APPLY_EXPR (poly :: Expr) (arg :: Type)
 typedef struct {
   FbleExpr _base;
   FbleExpr* poly;
-  FbleTypeV args;
+  FbleType* arg;
 } FblePolyApplyExpr;
 
 // FbleNamespaceExpr --
