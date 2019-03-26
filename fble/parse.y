@@ -341,13 +341,12 @@ expr:
       $$ = &get_expr->_base;
    }
  | expr '(' expr ')' {
-      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
-      apply_expr->_base.tag = FBLE_APPLY_EXPR;  // PUT
-      apply_expr->_base.loc = @$;
-      apply_expr->func = $1;
-      FbleVectorInit(arena, apply_expr->args);
-      FbleVectorAppend(arena, apply_expr->args, $3);
-      $$ = &apply_expr->_base;
+      FblePutExpr* put_expr = FbleAlloc(arena, FblePutExpr);
+      put_expr->_base.tag = FBLE_PUT_EXPR;
+      put_expr->_base.loc = @$;
+      put_expr->port = $1;
+      put_expr->arg = $3;
+      $$ = &put_expr->_base;
    }
  | expr '[' expr ']' {
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);

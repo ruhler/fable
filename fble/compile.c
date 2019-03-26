@@ -1954,47 +1954,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             return rtype;
           }
 
-          case OUTPUT_TYPE: {
-            // This is a PUT process.
-            OutputType* output_type = (OutputType*)normal;
-            if (apply_expr->args.size == 1) {
-              if (arg_types[0] != NULL && !TypesEqual(output_type->rtype, arg_types[0], NULL)) {
-                FbleReportError("expected type ", &apply_expr->args.xs[0]->loc);
-                PrintType(arena_, output_type->rtype);
-                fprintf(stderr, ", but found ");
-                PrintType(arena_, arg_types[0]);
-                fprintf(stderr, "\n");
-                error = true;
-              }
-            } else {
-              FbleReportError("expected 1 args to put process, but %i provided\n",
-                  &expr->loc, apply_expr->args.size);
-              error = true;
-            }
-
-            for (size_t i = 0; i < apply_expr->args.size; ++i) {
-              TypeRelease(arena, arg_types[i]);
-            }
-
-            if (error) {
-              TypeRelease(arena, type);
-              return NULL;
-            }
-
-            FblePutInstr* put_instr = FbleAlloc(arena_, FblePutInstr);
-            put_instr->_base.tag = FBLE_PUT_INSTR;
-            FbleVectorAppend(arena_, *instrs, &put_instr->_base);
-
-            ProcType* proc_type = FbleAlloc(arena_, ProcType);
-            FbleRefInit(arena, &proc_type->_base.ref);
-            proc_type->_base.tag = PROC_TYPE;
-            proc_type->_base.loc = expr->loc;
-            proc_type->rtype = output_type->rtype;
-            FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->rtype->ref);
-            TypeRelease(arena, type);
-            return &proc_type->_base;
-          }
-
           default: {
             FbleReportError("cannot perform application on an object of type ", &expr->loc);
             PrintType(arena_, type);
@@ -2039,6 +1998,60 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       proc_type->_base.tag = PROC_TYPE;
       proc_type->_base.loc = expr->loc;
       proc_type->rtype = input_type->rtype;
+      FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->rtype->ref);
+      TypeRelease(arena, type);
+      return &proc_type->_base;
+    }
+
+    case FBLE_PUT_EXPR: {
+      FblePutExpr* put_expr = (FblePutExpr*)expr;
+
+      // Compile the port value.
+      Type* type = Compile(arena, vars, type_vars, put_expr->port, instrs);
+      Eval(arena, type, NULL, NULL);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      OutputType* output_type = (OutputType*)Normal(type);
+      if (output_type->_base.tag != OUTPUT_TYPE) {
+        FbleReportError("cannot put to an object of type ", &expr->loc);
+        PrintType(arena_, type);
+        fprintf(stderr, "\n");
+        TypeRelease(arena, type);
+        return NULL;
+      }
+
+      // Compile the argument.
+      Type* arg_type = Compile(arena, vars, type_vars, put_expr->arg, instrs);
+      Eval(arena, arg_type, NULL, NULL);
+      bool error = (arg_type == NULL);
+
+      if (arg_type != NULL && !TypesEqual(output_type->rtype, arg_type, NULL)) {
+        FbleReportError("expected type ", &put_expr->arg->loc);
+        PrintType(arena_, output_type->rtype);
+        fprintf(stderr, ", but found ");
+        PrintType(arena_, arg_type);
+        fprintf(stderr, "\n");
+        error = true;
+      }
+
+      TypeRelease(arena, arg_type);
+
+      if (error) {
+        TypeRelease(arena, type);
+        return NULL;
+      }
+
+      FblePutInstr* put_instr = FbleAlloc(arena_, FblePutInstr);
+      put_instr->_base.tag = FBLE_PUT_INSTR;
+      FbleVectorAppend(arena_, *instrs, &put_instr->_base);
+
+      ProcType* proc_type = FbleAlloc(arena_, ProcType);
+      FbleRefInit(arena, &proc_type->_base.ref);
+      proc_type->_base.tag = PROC_TYPE;
+      proc_type->_base.loc = expr->loc;
+      proc_type->rtype = output_type->rtype;
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->rtype->ref);
       TypeRelease(arena, type);
       return &proc_type->_base;

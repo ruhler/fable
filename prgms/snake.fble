@@ -90,24 +90,24 @@ Col@ MaxCol = Col60;
 @ State@ = *(Direction@ dir, Pos@ food, Pos@ nfood, P@<Pos@> snake);
 
 \(S@<Pos@>; S@<Draw@>) DrawSnakeS = \(S@<Pos@> s) {
-  ?(s; nil: S@<Draw@>(nil: Unit@()), cons: S@<Draw@>(cons: DrawSnakeP(s.cons)));
+  ?(s; nil: S@<Draw@>(nil: Unit@()), cons: S@<Draw@>(cons: DrawSnakeP[s.cons]));
 },
 \(P@<Pos@>; P@<Draw@>) DrawSnakeP = \(P@<Pos@> s) {
-  P@<Draw@>(Draw@(s.head, Cell@(snake: Unit@())), DrawSnakeS(s.tail));
+  P@<Draw@>(Draw@(s.head, Cell@(snake: Unit@())), DrawSnakeS[s.tail]);
 };
 
 \(State@; S@<Draw@>) DrawState = \(State@ s) {
   S@<Draw@>(cons: P@<Draw@>(Draw@(s.food, Cell@(food: Unit@())),
-  S@<Draw@>(cons: DrawSnakeP(s.snake))));
+  S@<Draw@>(cons: DrawSnakeP[s.snake])));
 };
 
 State@ InitialState = {
   Col@ c0 = MinCol;
-  Col@ c1 = IncrCol(c0); Col@ c2 = IncrCol(c1);
-  Col@ c3 = IncrCol(c2); Col@ c4 = IncrCol(c3);
+  Col@ c1 = IncrCol[c0]; Col@ c2 = IncrCol[c1];
+  Col@ c3 = IncrCol[c2]; Col@ c4 = IncrCol[c3];
   Row@ r0 = MinRow;
-  Row@ r1 = IncrRow(r0); Row@ r2 = IncrRow(r1);
-  Row@ r3 = IncrRow(r2); Row@ r4 = IncrRow(r3);
+  Row@ r1 = IncrRow[r0]; Row@ r2 = IncrRow[r1];
+  Row@ r3 = IncrRow[r2]; Row@ r4 = IncrRow[r3];
   State@(
       Direction@(right: Unit@()),
       Pos@(r4, c1),
@@ -134,12 +134,12 @@ State@ InitialState = {
 \(P@<Pos@>; S@<Pos@>) InitPosP = \(P@<Pos@> l) {
   ?(l.tail;
        nil: PosS@(nil: Unit@()),
-      cons: PosS@(cons: P@<Pos@>(l.head, InitPosP(l.tail.cons))));
+      cons: PosS@(cons: P@<Pos@>(l.head, InitPosP[l.tail.cons])));
 };
 
 # Return the last element in l.
 \(P@<Pos@>; Pos@) LastPosP = \(P@<Pos@> l) {
-  ?(l.tail; nil: l.head, cons: LastPosP(l.tail.cons));
+  ?(l.tail; nil: l.head, cons: LastPosP[l.tail.cons]);
 };
 
 \(State@; MoveResultM@) Move = \(State@ s) {
@@ -147,22 +147,22 @@ State@ InitialState = {
     up:
     ?(EqRow[s.snake.head.row][MaxRow];
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(IncrRow(s.snake.head.row), s.snake.head.col))),
+       false: PosM@(pos: Pos@(IncrRow[s.snake.head.row], s.snake.head.col))),
 
     down:
     ?(EqRow[s.snake.head.row][MinRow];
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(DecrRow(s.snake.head.row), s.snake.head.col))),
+       false: PosM@(pos: Pos@(DecrRow[s.snake.head.row], s.snake.head.col))),
 
     left:
     ?(EqCol[s.snake.head.col][MinCol];
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(s.snake.head.row, DecrCol(s.snake.head.col)))),
+       false: PosM@(pos: Pos@(s.snake.head.row, DecrCol[s.snake.head.col]))),
 
     right:
     ?(EqCol[s.snake.head.col][MaxCol];
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(s.snake.head.row, IncrCol(s.snake.head.col)))));
+       false: PosM@(pos: Pos@(s.snake.head.row, IncrCol[s.snake.head.col]))));
 
   ?(pm; dead: MoveResultM@(dead: Unit@()), pos:
       ?(EqPos[pm.pos][s.food];
@@ -181,8 +181,8 @@ State@ InitialState = {
             false: {
               # TODO: Combine calls to Init and Last so we only have to
               # iterate over the list of elements once instead of twice?
-              P@<Pos@> nsnake = P@<Pos@>(pm.pos, InitPosP(s.snake));
-              Pos@ nfood = LastPosP(s.snake);
+              P@<Pos@> nsnake = P@<Pos@>(pm.pos, InitPosP[s.snake]);
+              Pos@ nfood = LastPosP[s.snake];
               State@ ns = State@(s.dir, s.food, nfood, nsnake);
               DrawS@ draw = S@<Draw@>(cons: P@<Draw@>(Draw@(pm.pos, Cell@(snake: Unit@())),
                            S@<Draw@>(cons: P@<Draw@>(Draw@(nfood, Cell@(empty: Unit@())),
@@ -204,7 +204,7 @@ State@ s) {
   Input@ x := in();
   ?(x; dir: Snake[in][out][State@(x.dir, s.food, s.nfood, s.snake)],
        tick: {
-           MoveResultM@ m := $(Move(s));
+           MoveResultM@ m := $(Move[s]);
            ?(m;
               dead: $(Unit@()),
               mr: {
@@ -216,7 +216,7 @@ State@ s) {
 
 \(Input@-, Draw@+; Unit@!) Main = \(Input@- in, Draw@+ out) {
   State@ s = InitialState;
-  Unit@ u := DrawAll[out][DrawState(s)];
+  Unit@ u := DrawAll[out][DrawState[s]];
   Snake[in][out][s];
 };
 

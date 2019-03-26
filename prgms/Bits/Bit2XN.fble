@@ -7,7 +7,7 @@
       @ Result@ = *(Bit2X@ z, Bit1.Bit1@ cout);
 
       \(Bit2X@; Bit2X@) not = \(Bit2X@ a) {
-        Bit2X@(B.not(a.hi), B.not(a.lo));
+        Bit2X@(B.not[a.hi], B.not[a.lo]);
       };
 
       \(Bit2X@, Bit2X@; Bit2X@) and = \(Bit2X@ a, Bit2X@ b) {
@@ -36,7 +36,7 @@
       Bit2X@ zero = Bit2X@(B.zero, B.zero);
 
       \(Bit2X@; Bool@) iszero = \(Bit2X@ a) {
-        And[B.iszero(a.hi)][B.iszero(a.lo)];
+        And[B.iszero[a.hi]][B.iszero[a.lo]];
       };
 
       \(Bit2X@, Bit2X@; Bool@) eq = \(Bit2X@ a, Bit2X@ b) {
@@ -44,7 +44,7 @@
       };
 
       \(Bit2X@; Bit1.Bit1@) msb = \(Bit2X@ a) {
-        B.msb(a.hi);
+        B.msb[a.hi];
       };
 
       \(Bit2X@, Bit1.Bit1@; Result@) lshift = 
@@ -55,7 +55,7 @@
         };
 
       \(Bit2X@; Bit2X@) clshift = \(Bit2X@ a) {
-        lshift[a][msb(a)].z;
+        lshift[a][msb[a]].z;
       };
 
       BitN@<Bit2X@>(not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);

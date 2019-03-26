@@ -43,19 +43,19 @@
   Nat@ 10 = Nat@(2p0: 5);
 
   \(Nat@; Nat@) Inc = \(Nat@ a) {
-    ?(a; 0: 1, 1: 2, 2p0: Nat@(2p1: a.2p0), 2p1: Nat@(2p0: Inc(a.2p1))); 
+    ?(a; 0: 1, 1: 2, 2p0: Nat@(2p1: a.2p0), 2p1: Nat@(2p0: Inc[a.2p1])); 
   };
 
   \(Nat@; Nat@) Dec = \(Nat@ a) {
     ?(a; 0: 0,                    # 0 - 1 ==> 0
          1: 0,                    # 1 - 1 = 0
-         2p0: 2p1(Dec(a.2p0)),    # 2a - 1 = 2(a-1)+1
+         2p0: 2p1[Dec[a.2p0]],    # 2a - 1 = 2(a-1)+1
          2p1: Nat@(2p0: a.2p1));  # 2a+1 - 1 = 2a
   };
 
   \(Nat@, Nat@; Nat@) Add = \(Nat@ a, Nat@ b) {
     ?(a; 0: b,
-         1: Inc(b),
+         1: Inc[b],
          2p0:
          ?(b; 0: a,
               1: Nat@(2p1: a.2p0),
@@ -70,7 +70,7 @@
 
   \(Nat@, Nat@; Nat@) Sub = \(Nat@ a, Nat@ b) {
     ?(b; 0: a,                                    # a - 0 = a
-         1: Dec(a),                               # a - 1 = a - 1
+         1: Dec[a],                               # a - 1 = a - 1
          2p0:
          ?(a; 0: 0,                               # 0 - 2b ==> 0
               1: 0,                               # 1 - 2b ==> 0
@@ -79,8 +79,8 @@
          2p1:
          ?(a; 0: 0,                               # 0 - (2b+1) ==> 0
               1: 0,                               # 1 - (2b+1) ==> 0
-              2p0: Dec(2p0(Sub[a.2p0][b.2p1])),   # 2a - (2b+1) = 2(a-b) - 1
-              2p1: 2p0(Sub[a.2p1][b.2p1])));      # 2a+1 - (2b+1) = 2(a-b)
+              2p0: Dec[2p0[Sub[a.2p0][b.2p1]]],   # 2a - (2b+1) = 2(a-b) - 1
+              2p1: 2p0[Sub[a.2p1][b.2p1]]));      # 2a+1 - (2b+1) = 2(a-b)
   };
 
   \(Nat@, Nat@; Nat@) Mul = \(Nat@ a, Nat@ b) {
@@ -89,7 +89,7 @@
          2p0:
          ?(b; 0: 0,                                 # 2a * 0 = 0
               1: a,                                 # 2a * 1 = 2a
-              2p0: 4p0(Mul[a.2p0][b.2p0]),          # 2a * 2b = 4ab
+              2p0: 4p0[Mul[a.2p0][b.2p0]],          # 2a * 2b = 4ab
               2p1: Add[4p0[Mul[a.2p0][b.2p1]]][a]), # 2a * (2b+1) = 4ab + 2a
          2p1:
          ?(b; 0: 0,                                 # (2a+1) * 0 = 0
@@ -122,17 +122,17 @@
          1: DivModResult@(0, 1),
          2p0: { 
             DivModResult@ qr = DivModAux[a.2p0][b];
-            Nat@ 2r = 2p0(qr.remainder);
+            Nat@ 2r = 2p0[qr.remainder];
             ?(Lt[2r][b];
-                true: DivModResult@(2p0(qr.quotient), 2r),
-                false: DivModResult@(2p1(qr.quotient), Sub[2r][b]));
+                true: DivModResult@(2p0[qr.quotient], 2r),
+                false: DivModResult@(2p1[qr.quotient], Sub[2r][b]));
          },
          2p1: {
             DivModResult@ qr = DivModAux[a.2p1][b];
-            Nat@ 2rp1 = Inc(2p0(qr.remainder));
+            Nat@ 2rp1 = Inc[2p0[qr.remainder]];
             ?(Lt[2rp1][b];
-                true: DivModResult@(2p0(qr.quotient), 2rp1),
-                false: DivModResult@(2p1(qr.quotient), Sub[2rp1][b]));
+                true: DivModResult@(2p0[qr.quotient], 2rp1),
+                false: DivModResult@(2p1[qr.quotient], Sub[2rp1][b]));
          });
   };
 

@@ -54,7 +54,7 @@
     S@<Elem@> got = SortS<Elem@>[ElemLe][unsorted];
     ?(SEq<Elem@>[ElemEq][wnt][got];
       true: S0<TestFailure@>,
-      false: S1<TestFailure@>(TestFailure@(TestName@(List_Sort_basic: Unit@()), wnt, got)));
+      false: S1<TestFailure@>[TestFailure@(TestName@(List_Sort_basic: Unit@()), wnt, got)]);
   };
 
   @(Elem@, TestName@, TestFailure@, Test);

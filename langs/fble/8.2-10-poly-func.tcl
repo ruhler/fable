@@ -10,5 +10,5 @@ fble-test {
     };
   };
 
-  Id<Bool@>(true).true;
+  Id<Bool@>[true].true;
 }

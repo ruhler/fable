@@ -9,7 +9,7 @@ fble-test {
   \(Maybe@; \(\(Bool@; Bool@); Maybe@)) Map = \(Maybe@ m) {
     \(\(Bool@; Bool@) f) {
       ?(m;
-         just: Maybe@(just: f(m.just)),
+         just: Maybe@(just: f[m.just]),
          nothing: Maybe@(nothing: Unit@()));
      };
   };
@@ -17,7 +17,7 @@ fble-test {
   Maybe@ mtrue = Maybe@(just: true);
 
   Maybe@ mfalse = {
-    Bool@ x <- Map(mtrue);
+    Bool@ x <- Map[mtrue];
     ?(x; true: false, false: true);
   };
 

@@ -274,6 +274,7 @@ typedef enum {
   FBLE_FUNC_VALUE_EXPR,
   FBLE_APPLY_EXPR,        // Used for APPLY, PUT
   FBLE_GET_EXPR,
+  FBLE_PUT_EXPR,
   FBLE_EVAL_EXPR,
   FBLE_LINK_EXPR,
   FBLE_EXEC_EXPR,
@@ -371,7 +372,6 @@ typedef struct {
 
 // FbleApplyExpr --
 //   FBLE_APPLY_EXPR (func :: Expr) (args :: [Expr])
-// Common form used for apply and put expressions.
 typedef struct {
   FbleExpr _base;
   FbleExpr* func;
@@ -384,6 +384,14 @@ typedef struct {
   FbleExpr _base;
   FbleExpr* port;
 } FbleGetExpr;
+
+// FblePutExpr --
+//   FBLE_PUT_EXPR (port :: Expr) (arg :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* port;
+  FbleExpr* arg;
+} FblePutExpr;
 
 // FbleEvalExpr --
 //   FBLE_EVAL_EXPR (expr :: Expr)

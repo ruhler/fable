@@ -33,13 +33,13 @@
   # Compute the md5 hash for a string of bytes.
   \(S@<Bit8@>; Md5Hash@!) Md5Str = \(S@<Bit8@> bytes) {
     Maybe@<Bit8@> ~ get, put;
-    Md5Hash@ md5 := Md5.Md5(get), Unit@ x := PutAll[put][bytes];
+    Md5Hash@ md5 := Md5.Md5[get], Unit@ x := PutAll[put][bytes];
     $(md5);
   };
 
   \(TestName@, Md5Hash@, S@<Bit8@>; TestFailure@!) TestStr =
     \(TestName@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
-      Md5Hash@ got := Md5Str(bytes);
+      Md5Hash@ got := Md5Str[bytes];
       $(TestFailure@(name, wnt, got));
     };
 

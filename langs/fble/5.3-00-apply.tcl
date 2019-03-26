@@ -9,5 +9,5 @@ fble-test {
   };
 
   # Basic test of a function application.
-  Not(false).true;
+  Not[false].true;
 }

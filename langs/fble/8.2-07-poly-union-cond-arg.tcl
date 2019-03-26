@@ -16,5 +16,5 @@ fble-test {
     ?(x; just: true, nothing: false);
   };
 
-  isJust(Maybe@<Unit@>(just: Unit@())).true;
+  isJust[Maybe@<Unit@>(just: Unit@())].true;
 }

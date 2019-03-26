@@ -120,16 +120,16 @@
   };
 
   \(Bit32@, S@; Bit32@) cls = \(Bit32@ a, S@ s) {
-    Maybe@<S@> next = NextS(s);
-    ?(next; just: cls[clshift(a)][next.just], nothing: a);
+    Maybe@<S@> next = NextS[s];
+    ?(next; just: cls[clshift[a]][next.just], nothing: a);
   };
 
   \(Bit32@, Bit32@, Bit32@; Bit32@) F = \(Bit32@ x, Bit32@ y, Bit32@ z) {
-    or[and[x][y]][and[not(x)][z]];
+    or[and[x][y]][and[not[x]][z]];
   };
 
   \(Bit32@, Bit32@, Bit32@; Bit32@) G = \(Bit32@ x, Bit32@ y, Bit32@ z) {
-    or[and[x][z]][and[y][not(z)]];
+    or[and[x][z]][and[y][not[z]]];
   };
 
   \(Bit32@, Bit32@, Bit32@; Bit32@) H = \(Bit32@ x, Bit32@ y, Bit32@ z) {
@@ -137,7 +137,7 @@
   };
 
   \(Bit32@, Bit32@, Bit32@; Bit32@) I = \(Bit32@ x, Bit32@ y, Bit32@ z) {
-    xor[y][or[x][not(z)]];
+    xor[y][or[x][not[z]]];
   };
 
   \(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@; Bit32@) FF =
@@ -281,22 +281,22 @@
 
   # Gets the next block from a pre-padded input
   \(Streamed@<Bit8@>-; Streamed@<Block@>!) GetBlock = \(Streamed@<Bit8@>- padded) {
-    Streamed@<Bit32@> 0 := GetWord(padded);
-    Streamed@<Bit32@> 1 := GetWord(padded);
-    Streamed@<Bit32@> 2 := GetWord(padded);
-    Streamed@<Bit32@> 3 := GetWord(padded);
-    Streamed@<Bit32@> 4 := GetWord(padded);
-    Streamed@<Bit32@> 5 := GetWord(padded);
-    Streamed@<Bit32@> 6 := GetWord(padded);
-    Streamed@<Bit32@> 7 := GetWord(padded);
-    Streamed@<Bit32@> 8 := GetWord(padded);
-    Streamed@<Bit32@> 9 := GetWord(padded);
-    Streamed@<Bit32@> 10 := GetWord(padded);
-    Streamed@<Bit32@> 11 := GetWord(padded);
-    Streamed@<Bit32@> 12 := GetWord(padded);
-    Streamed@<Bit32@> 13 := GetWord(padded);
-    Streamed@<Bit32@> 14 := GetWord(padded);
-    Streamed@<Bit32@> 15 := GetWord(padded);
+    Streamed@<Bit32@> 0 := GetWord[padded];
+    Streamed@<Bit32@> 1 := GetWord[padded];
+    Streamed@<Bit32@> 2 := GetWord[padded];
+    Streamed@<Bit32@> 3 := GetWord[padded];
+    Streamed@<Bit32@> 4 := GetWord[padded];
+    Streamed@<Bit32@> 5 := GetWord[padded];
+    Streamed@<Bit32@> 6 := GetWord[padded];
+    Streamed@<Bit32@> 7 := GetWord[padded];
+    Streamed@<Bit32@> 8 := GetWord[padded];
+    Streamed@<Bit32@> 9 := GetWord[padded];
+    Streamed@<Bit32@> 10 := GetWord[padded];
+    Streamed@<Bit32@> 11 := GetWord[padded];
+    Streamed@<Bit32@> 12 := GetWord[padded];
+    Streamed@<Bit32@> 13 := GetWord[padded];
+    Streamed@<Bit32@> 14 := GetWord[padded];
+    Streamed@<Bit32@> 15 := GetWord[padded];
     $(Streamed@<Block@>(
        Block@(0.data, 1.data, 2.data, 3.data,
               4.data, 5.data, 6.data, 7.data,
@@ -307,7 +307,7 @@
 
   # Computes the MD5 checksum of a pre-padded sequence of bytes.
   \(Streamed@<Bit8@>-, ABCD@; ABCD@!) PaddedMd5 = \(Streamed@<Bit8@>- padded, ABCD@ abcd) {
-    Streamed@<Block@> block := GetBlock(padded);
+    Streamed@<Block@> block := GetBlock[padded];
     ABCD@ md5 := $(DoBlock[abcd][block.data]);
     ?(block.last; true: $(md5), false: PaddedMd5[padded][md5]);
   };
@@ -328,10 +328,10 @@
   # Add zeros as needed, then the final length to the output message.
   \(Streamed@<Bit8@>+, Bit64@, Bit64@; Unit@!) PadZ =
     \(Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length) {
-      ?(Bits.Bit64.BitN.iszero(
-          Bits.Bit64.BitN.and[H2_64[3][f]][Bits.Bit64.BitN.add[H2_64[0][8]][length]]);
+      ?(Bits.Bit64.BitN.iszero[
+          Bits.Bit64.BitN.and[H2_64[3][f]][Bits.Bit64.BitN.add[H2_64[0][8]][length]]];
             true: {
-           Bit64@ bits = shl64(shl64(shl64(msglen)));
+           Bit64@ bits = shl64[shl64[shl64[msglen]]];
            Streamed@<Bit8@> _0 := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
            Streamed@<Bit8@> _1 := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
            Streamed@<Bit8@> _2 := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
@@ -343,7 +343,7 @@
            $(Unit@());
          }, false: {
            Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2[0][0], False));
-           PadZ[output][msglen][Inc64(length)];
+           PadZ[output][msglen][Inc64[length]];
          });
     };
 
@@ -353,10 +353,10 @@
       Maybe@<Bit8@> x := input();
       ?(x; just: {
           Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(x.just, False));
-          Pad[input][output][Inc64(length)];
+          Pad[input][output][Inc64[length]];
         }, nothing: {
           Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2[8][0], False));
-          PadZ[output][length][Inc64(length)];
+          PadZ[output][length][Inc64[length]];
         });
     };
 
@@ -383,18 +383,18 @@
   @ HexPair@ = *(Hex@ hi, Hex@ lo);
 
   \(Bit8@; HexPair@) HexFromByte = \(Bit8@ byte) {
-    HexPair@(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
+    HexPair@(HexFromBit4[byte.hi], HexFromBit4[byte.lo]);
   };
 
   \(ABCD@; Md5Hash@) HexFromABCD = \(ABCD@ x) {
-    HexPair@ a0 = HexFromByte(x.a.lo.lo); HexPair@ a1 = HexFromByte(x.a.lo.hi);
-    HexPair@ a2 = HexFromByte(x.a.hi.lo); HexPair@ a3 = HexFromByte(x.a.hi.hi);
-    HexPair@ b0 = HexFromByte(x.b.lo.lo); HexPair@ b1 = HexFromByte(x.b.lo.hi);
-    HexPair@ b2 = HexFromByte(x.b.hi.lo); HexPair@ b3 = HexFromByte(x.b.hi.hi);
-    HexPair@ c0 = HexFromByte(x.c.lo.lo); HexPair@ c1 = HexFromByte(x.c.lo.hi);
-    HexPair@ c2 = HexFromByte(x.c.hi.lo); HexPair@ c3 = HexFromByte(x.c.hi.hi);
-    HexPair@ d0 = HexFromByte(x.d.lo.lo); HexPair@ d1 = HexFromByte(x.d.lo.hi);
-    HexPair@ d2 = HexFromByte(x.d.hi.lo); HexPair@ d3 = HexFromByte(x.d.hi.hi);
+    HexPair@ a0 = HexFromByte[x.a.lo.lo]; HexPair@ a1 = HexFromByte[x.a.lo.hi];
+    HexPair@ a2 = HexFromByte[x.a.hi.lo]; HexPair@ a3 = HexFromByte[x.a.hi.hi];
+    HexPair@ b0 = HexFromByte[x.b.lo.lo]; HexPair@ b1 = HexFromByte[x.b.lo.hi];
+    HexPair@ b2 = HexFromByte[x.b.hi.lo]; HexPair@ b3 = HexFromByte[x.b.hi.hi];
+    HexPair@ c0 = HexFromByte[x.c.lo.lo]; HexPair@ c1 = HexFromByte[x.c.lo.hi];
+    HexPair@ c2 = HexFromByte[x.c.hi.lo]; HexPair@ c3 = HexFromByte[x.c.hi.hi];
+    HexPair@ d0 = HexFromByte[x.d.lo.lo]; HexPair@ d1 = HexFromByte[x.d.lo.hi];
+    HexPair@ d2 = HexFromByte[x.d.hi.lo]; HexPair@ d3 = HexFromByte[x.d.hi.hi];
     Md5Hash@(a0.hi, a0.lo, a1.hi, a1.lo, a2.hi, a2.lo, a3.hi, a3.lo,
              b0.hi, b0.lo, b1.hi, b1.lo, b2.hi, b2.lo, b3.hi, b3.lo,
              c0.hi, c0.lo, c1.hi, c1.lo, c2.hi, c2.lo, c3.hi, c3.lo,
@@ -405,7 +405,7 @@
     Streamed@<Bit8@> ~ get_padded, put_padded;
     Unit@ _ := Pad[input][put_padded][Bits.Bit64.BitN.zero],
     ABCD@ md5 := PaddedMd5[get_padded][ABCD0];
-    $(HexFromABCD(md5));
+    $(HexFromABCD[md5]);
   };
 
   \(Hex@, Hex@; Bool@) EqHex = \(Hex@ a, Hex@ b) {

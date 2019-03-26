@@ -18,11 +18,11 @@
   };
 
   \(Bit@, Bit@; Bit@) xor = \(Bit@ a, Bit@ b) {
-    ?(a; 0: b, 1: not(b));
+    ?(a; 0: b, 1: not[b]);
   };
 
   \(Bit@, Bit@, Bit@; Result@) fulladd = \(Bit@ a, Bit@ b, Bit@ cin) {
-    ?(xor[a][b]; 0: Result@(cin, a), 1: Result@(not(cin), cin));
+    ?(xor[a][b]; 0: Result@(cin, a), 1: Result@(not[cin], cin));
   };
 
   \(Bit@, Bit@; Bit@) add = \(Bit@ a, Bit@ b) {

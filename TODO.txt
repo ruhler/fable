@@ -1,12 +1,14 @@
 Fble:
 * [lang] Switch to new concrete syntax for func
-  - distinguish between apply, get, and put in abstract syntax.
+  - replace APPLY_EXPR with FUNC_APPLY_EXPR.
   - use block for func_types.
   - use block for func_values.
 
 * [lang] Flesh out spec for new fble.
 
-* [lang] Implement abstract syntax and parser for new fble.
+* [lang] Migrate fble to new spec
+  - migrate concrete syntax to a subset of the new spec
+  - make FbleType part of FbleExpr
 
 * [perf] Avoid copying captured contexts
   - particularly for multi-arg functions.

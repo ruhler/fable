@@ -4,7 +4,7 @@
 
   # Returns true if f evenly divides x.
   \(Nat@, Nat@; Bool@) Divides = \(Nat@ x, Nat@ f) {
-    IsZero(Mod[x][f]);
+    IsZero[Mod[x][f]];
   };
 
   # Helper function for IsPrime.
@@ -13,7 +13,7 @@
   \(Nat@, Nat@; Bool@) IsPrimeHelper = \(Nat@ x, Nat@ f) {
     ?(Gt[Mul[f][f]][x]; true: True, false:
         ?(Divides[x][f]; true: False, false:
-            IsPrimeHelper[x][Inc(f)]));
+            IsPrimeHelper[x][Inc[f]]));
   };
 
   \(Nat@; Bool@) IsPrime = \(Nat@ x) {
@@ -21,9 +21,9 @@
   };
 
   \(Nat@, Nat@; Nat@) NthPrime = \(Nat@ x, Nat@ n) {
-    ?(IsPrime(x) ;
-        true: ?(IsZero(n) ; true: x, false: NthPrime[Inc(x)][Dec(n)]),
-        false: NthPrime[Inc(x)][n]);
+    ?(IsPrime[x] ;
+        true: ?(IsZero[n] ; true: x, false: NthPrime[Inc[x]][Dec[n]]),
+        false: NthPrime[Inc[x]][n]);
   };
 
   @(IsPrime, NthPrime);
