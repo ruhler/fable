@@ -19,19 +19,19 @@ Md5.Test { @(Md5TestFailure@: TestFailure@); };
     ListTestFailure@ ListTest,
     Md5TestFailure@ Md5Test);
 
-\(UBNatTestFailure@; TestFailure@) UBNatTestFailureF = \(UBNatTestFailure@ a) {
+[UBNatTestFailure@]{TestFailure@;} UBNatTestFailureF = [UBNatTestFailure@ a] {
   TestFailure@(UBNatTest: a);
 };
 
-\(PrimesTestFailure@; TestFailure@) PrimesTestFailureF = \(PrimesTestFailure@ a) {
+[PrimesTestFailure@]{TestFailure@;} PrimesTestFailureF = [PrimesTestFailure@ a] {
   TestFailure@(PrimesTest: a);
 };
 
-\(ListTestFailure@; TestFailure@) ListTestFailureF = \(ListTestFailure@ a) {
+[ListTestFailure@]{TestFailure@;} ListTestFailureF = [ListTestFailure@ a] {
   TestFailure@(ListTest: a);
 };
 
-\(Md5TestFailure@; TestFailure@) Md5TestFailureF = \(Md5TestFailure@ a) {
+[Md5TestFailure@]{TestFailure@;} Md5TestFailureF = [Md5TestFailure@ a] {
   TestFailure@(Md5Test: a);
 };
 

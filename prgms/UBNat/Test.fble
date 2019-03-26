@@ -27,22 +27,22 @@
 
   @ TestFailure@ = *(TestName@ name, Nat@ a, Nat@ b);
 
-  \(TestName@, Bool@, S@<TestFailure@>; S@<TestFailure@>) T =
-    \(TestName@ name, Bool@ p, S@<TestFailure@> rest) {
+  [TestName@][Bool@][S@<TestFailure@>]{S@<TestFailure@>;} T =
+    [TestName@ name][Bool@ p][S@<TestFailure@> rest] {
       # Just use 0 for the context arguments for now to avoid introducing
       # a union for the test failure type.
       ?(p; true: rest,
            false: ConsS<TestFailure@>[TestFailure@(name, 0, 0)][rest]);
     };
 
-  \(TestName@, Nat@, Nat@, S@<TestFailure@>; S@<TestFailure@>) TEq =
-    \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest) {
+  [TestName@][Nat@][Nat@][S@<TestFailure@>]{S@<TestFailure@>;} TEq =
+    [TestName@ name][Nat@ a][Nat@ b][S@<TestFailure@> rest] {
       ?(EqNat[a][b];
           true: rest,
           false: ConsS<TestFailure@>[TestFailure@(name, a, b)][rest]);
     };
 
-  \(Unit@ ; S@<TestFailure@>) Test = \(Unit@ _) {
+  [Unit@ ]{S@<TestFailure@>;} Test = [Unit@ _] {
     T[TestName@(Eq_0_0: Unit@())][EqNat[0][0]][
     T[TestName@(Eq_0_1: Unit@())][Not[EqNat[0][1]]][
     T[TestName@(Eq_1_1: Unit@())][EqNat[1][1]][

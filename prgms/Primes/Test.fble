@@ -8,13 +8,13 @@
   @ TestName@ = +(Unit@ NthPrime_1_10);
   @ TestFailure@ = *(TestName@ name, Nat@ a, Nat@ b);
 
-  \(TestName@, Nat@, Nat@, S@<TestFailure@>; S@<TestFailure@>) TEq =
-    \(TestName@ name, Nat@ a, Nat@ b, S@<TestFailure@> rest) {
+  [TestName@][Nat@][Nat@][S@<TestFailure@>]{S@<TestFailure@>;} TEq =
+    [TestName@ name][Nat@ a][Nat@ b][S@<TestFailure@> rest] {
       ?(EqNat[a][b]; true: rest,
           false: ConsS<TestFailure@>[TestFailure@(name, a, b)][rest]);
     };
 
-  \(Unit@ ; S@<TestFailure@>) Test = \(Unit@ _) {
+  [Unit@ ]{S@<TestFailure@>;} Test = [Unit@ _] {
     TEq[TestName@(NthPrime_1_10: Unit@())][Lit2[3][1]][NthPrime[1][10]][
         S0<TestFailure@>];
   };

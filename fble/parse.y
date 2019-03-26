@@ -38,7 +38,6 @@
   FbleName name;
   FbleKind* kind;
   FbleType* type;
-  FbleTypeV types;
   FbleExpr* expr;
   FbleExprV exprs;
   FbleField field;
@@ -71,7 +70,6 @@
 %type <name> type_name
 %type <kind> kind
 %type <type> type type_block type_stmt 
-%type <types> type_p
 %type <expr> expr block stmt
 %type <exprs> expr_s expr_p
 %type <field> anon_struct_type_arg
@@ -135,18 +133,6 @@ type:
       union_type->_base.loc = @$;
       union_type->fields = $3;
       $$ = &union_type->_base;
-   }
- | '\\' '(' type_p ';' type ')' {
-      $$ = $5;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FbleFuncType* func_type = FbleAlloc(arena, FbleFuncType);
-        func_type->_base.tag = FBLE_FUNC_TYPE;
-        func_type->_base.loc = @$;
-        func_type->arg = $3.xs[$3.size - 1 - i];
-        func_type->rtype = $$;
-        $$ = &func_type->_base;
-      }
-      FbleFree(arena, $3.xs);
    }
  | type '!' {
       FbleProcType* proc_type = FbleAlloc(arena, FbleProcType);
@@ -218,6 +204,14 @@ type_block:
       poly_type->body = $5;
       $$ = &poly_type->_base;
    }
+ | '[' type ']' type_block {
+      FbleFuncType* func_type = FbleAlloc(arena, FbleFuncType);
+      func_type->_base.tag = FBLE_FUNC_TYPE;
+      func_type->_base.loc = @$;
+      func_type->arg = $2;
+      func_type->rtype = $4;
+      $$ = &func_type->_base;
+   }
  ;
 
 type_stmt:
@@ -231,17 +225,6 @@ type_stmt:
       $$ = &let_type->_base;
     }  
   ;
-
-type_p:
-   type {
-     FbleVectorInit(arena, $$);
-     FbleVectorAppend(arena, $$, $1);
-   }
- | type_p ',' type {
-     $$ = $1;
-     FbleVectorAppend(arena, $$, $3);
-   }
- ;
 
 field_s:
    %empty { FbleVectorInit(arena, $$); }
@@ -320,18 +303,6 @@ expr:
       cond_expr->condition = $3;
       cond_expr->choices = $5;
       $$ = &cond_expr->_base;
-   }
- | '\\' '(' field_p ')' '{' stmt '}' {
-      $$ = $6;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
-        func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
-        func_value_expr->_base.loc = @$;
-        func_value_expr->arg = $3.xs[$3.size - 1 - i];
-        func_value_expr->body = $$;
-        $$ = &func_value_expr->_base;
-      }
-      FbleFree(arena, $3.xs);
    }
  | expr '(' ')' {
       FbleGetExpr* get_expr = FbleAlloc(arena, FbleGetExpr);
@@ -424,6 +395,15 @@ block:
       poly_expr->arg.name = $3;
       poly_expr->body = $5;
       $$ = &poly_expr->_base;
+   }
+ | '[' type NAME ']' block {
+      FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
+      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+      func_value_expr->_base.loc = @$;
+      func_value_expr->arg.type = $2;
+      func_value_expr->arg.name = $3;
+      func_value_expr->body = $5;
+      $$ = &func_value_expr->_base;
    }
  ;
 
@@ -677,7 +657,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,:?=.<>+*-!$@~&[]\\", c) != NULL;
+  return strchr("(){};,:?=.<>+*-!$@~&[]", c) != NULL;
 }
 
 // ReadNextChar --

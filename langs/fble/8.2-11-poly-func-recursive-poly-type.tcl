@@ -6,10 +6,8 @@ fble-test {
 
   # Test defining a polymorphic function that involves use of a recursive
   # polymorphic type. This is a regression test.
-  <@ T@> { \(S@<T@>; T@); } HeadS = <@ T@> {
-    \(S@<T@> l) {
-      l.cons.head;
-    };
+  <@ T@>[S@<T@>]{T@;} HeadS = <@ T@>[S@<T@> l] {
+    l.cons.head;
   };
 
   Unit@();

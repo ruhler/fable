@@ -4,10 +4,8 @@ fble-test {
   Bool@ true = Bool@(true: Unit@());
 
   # Test use of a polymorphic function.
-  <@ T@> { \(T@; T@); } Id = <@ T@> {
-    \(T@ a) {
-      a;
-    };
+  <@ T@>[T@]{T@;} Id = <@ T@>[T@ a] {
+    a;
   };
 
   Id<Bool@>[true].true;

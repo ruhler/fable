@@ -14,20 +14,20 @@
 
   # Compute 2 * x.
   # This is like Nat@(2p0: x), but properly handles the case when x is 0.
-  \(Nat@; Nat@) 2p0 = \(Nat@ x) {
+  [Nat@]{Nat@;} 2p0 = [Nat@ x] {
     Nat@ z = Nat@(2p0: x);
     ?(x; 0: 0, 1: z, 2p0: z, 2p1: z);
   };
 
   # Compute 2 * x + 1.
   # This is like Nat@(2p1: x), but properly handles the case when x is 0.
-  \(Nat@; Nat@) 2p1 = \(Nat@ x) {
+  [Nat@]{Nat@;} 2p1 = [Nat@ x] {
     Nat@ z = Nat@(2p1: x);
     ?(x; 0: 1, 1: z, 2p0: z, 2p1: z);
   };
 
   # Compute 4 * x.
-  \(Nat@; Nat@) 4p0 = \(Nat@ x) {
+  [Nat@]{Nat@;} 4p0 = [Nat@ x] {
     Nat@ z = Nat@(2p0: Nat@(2p0: x));
     ?(x; 0: 0, 1: z, 2p0: z, 2p1: z);
   };
@@ -42,18 +42,18 @@
   Nat@ 9 = Nat@(2p1: 4);
   Nat@ 10 = Nat@(2p0: 5);
 
-  \(Nat@; Nat@) Inc = \(Nat@ a) {
+  [Nat@]{Nat@;} Inc = [Nat@ a] {
     ?(a; 0: 1, 1: 2, 2p0: Nat@(2p1: a.2p0), 2p1: Nat@(2p0: Inc[a.2p1])); 
   };
 
-  \(Nat@; Nat@) Dec = \(Nat@ a) {
+  [Nat@]{Nat@;} Dec = [Nat@ a] {
     ?(a; 0: 0,                    # 0 - 1 ==> 0
          1: 0,                    # 1 - 1 = 0
          2p0: 2p1[Dec[a.2p0]],    # 2a - 1 = 2(a-1)+1
          2p1: Nat@(2p0: a.2p1));  # 2a+1 - 1 = 2a
   };
 
-  \(Nat@, Nat@; Nat@) Add = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Nat@;} Add = [Nat@ a][Nat@ b] {
     ?(a; 0: b,
          1: Inc[b],
          2p0:
@@ -68,7 +68,7 @@
               2p1: Nat@(2p0: Inc[Add[a.2p1][b.2p1]]))); # 2a+1 + 2b+1 = 2(a+b+1)
   };
 
-  \(Nat@, Nat@; Nat@) Sub = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Nat@;} Sub = [Nat@ a][Nat@ b] {
     ?(b; 0: a,                                    # a - 0 = a
          1: Dec[a],                               # a - 1 = a - 1
          2p0:
@@ -83,7 +83,7 @@
               2p1: 2p0[Sub[a.2p1][b.2p1]]));      # 2a+1 - (2b+1) = 2(a-b)
   };
 
-  \(Nat@, Nat@; Nat@) Mul = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Nat@;} Mul = [Nat@ a][Nat@ b] {
     ?(a; 0: 0,                                      # 0 * b = 0
          1: b,                                      # 1 * b = b
          2p0:
@@ -99,14 +99,14 @@
               2p1: Nat@(2p1: Add[Nat@(2p0: Mul[a.2p1][b.2p1])][Add[a.2p1][b.2p1]])));
   };
 
-  \(Nat@, Nat@; Bool@) Lt = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Bool@;} Lt = [Nat@ a][Nat@ b] {
     ?(a;
        0:   ?(b; 0: False, 1: True, 2p0: True, 2p1: True),
        1:   ?(b; 0: False, 1: False, 2p0: True, 2p1: True),
        2p0: ?(b; 0: False, 1: False, 2p0: Lt[a.2p0][b.2p0], 2p1: Le[a.2p0][b.2p1]),
        2p1: ?(b; 0: False, 1: False, 2p0: Lt[a.2p1][b.2p0], 2p1: Lt[a.2p1][b.2p1]));
   },
-  \(Nat@, Nat@; Bool@) Le = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Bool@;} Le = [Nat@ a][Nat@ b] {
     ?(a;
        0: ?(b; 0: True, 1: True, 2p0: True, 2p1: True),
        1: ?(b; 0: False, 1: True, 2p0: True, 2p1: True),
@@ -117,7 +117,7 @@
   @ DivModResult@ = *(Nat@ quotient, Nat@ remainder);
 
   # DivMod assuming b > 1
-  \(Nat@, Nat@; DivModResult@) DivModAux = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{DivModResult@;} DivModAux = [Nat@ a][Nat@ b] {
     ?(a; 0: DivModResult@(0, 0),
          1: DivModResult@(0, 1),
          2p0: { 
@@ -136,26 +136,26 @@
          });
   };
 
-  \(Nat@, Nat@; DivModResult@) DivMod = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{DivModResult@;} DivMod = [Nat@ a][Nat@ b] {
     ?(b; 0: DivModResult@(0, 0),    
          1: DivModResult@(a, 0),
          2p0: DivModAux[a][b],
          2p1: DivModAux[a][b]);
   };
 
-  \(Nat@, Nat@; Nat@) Div = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Nat@;} Div = [Nat@ a][Nat@ b] {
     DivMod[a][b].quotient;
   };
 
-  \(Nat@, Nat@; Nat@) Mod = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Nat@;} Mod = [Nat@ a][Nat@ b] {
     DivMod[a][b].remainder;
   };
 
-  \(Nat@; Bool@) IsZero = \(Nat@ a) {
+  [Nat@]{Bool@;} IsZero = [Nat@ a] {
     ?(a; 0: True, 1: False, 2p0: False, 2p1: False);
   };
 
-  \(Nat@, Nat@; Bool@) EqNat = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Bool@;} EqNat = [Nat@ a][Nat@ b] {
     ?(a;
        0:   ?(b; 0: True,  1: False, 2p0: False, 2p1: False),
        1:   ?(b; 0: False, 1: True,  2p0: False, 2p1: False),
@@ -163,13 +163,13 @@
        2p1: ?(b; 0: False, 1: False, 2p0: False, 2p1: EqNat[a.2p1][b.2p1]));
   };
 
-  \(Nat@, Nat@; Bool@) Gt = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Bool@;} Gt = [Nat@ a][Nat@ b] {
     ?(a; 0: False,
        1: ?(b; 0: True, 1: False, 2p0: False, 2p1: False),
        2p0: ?(b; 0: True, 1: True, 2p0: Gt[a.2p0][b.2p0], 2p1: Gt[a.2p0][b.2p1]),
        2p1: ?(b; 0: True, 1: True, 2p0: Ge[a.2p1][b.2p0], 2p1: Gt[a.2p1][b.2p1]));
   },
-  \(Nat@, Nat@; Bool@) Ge = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Bool@;} Ge = [Nat@ a][Nat@ b] {
     ?(a;
        0: ?(b; 0: True, 1: False, 2p0: False, 2p1: False),
        1: ?(b; 0: True, 1: True, 2p0: False, 2p1: False),
@@ -179,11 +179,11 @@
 
   Nat@ 100 = Mul[10][10];
 
-  \(Nat@, Nat@; Nat@) Lit2 = \(Nat@ a, Nat@ b) {
+  [Nat@][Nat@]{Nat@;} Lit2 = [Nat@ a][Nat@ b] {
     Add[Mul[10][a]][b];
   };
 
-  \(Nat@, Nat@, Nat@; Nat@) Lit3 = \(Nat@ a, Nat@ b, Nat@ c) {
+  [Nat@][Nat@][Nat@]{Nat@;} Lit3 = [Nat@ a][Nat@ b][Nat@ c] {
     Add[Mul[100][a]][Lit2[b][c]];
   };
 

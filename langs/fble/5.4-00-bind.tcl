@@ -6,12 +6,10 @@ fble-test {
 
   @ Maybe@ = +(Bool@ just, Unit@ nothing);
 
-  \(Maybe@; \(\(Bool@; Bool@); Maybe@)) Map = \(Maybe@ m) {
-    \(\(Bool@; Bool@) f) {
-      ?(m;
-         just: Maybe@(just: f[m.just]),
-         nothing: Maybe@(nothing: Unit@()));
-     };
+  [Maybe@][[Bool@]{Bool@;}] { Maybe@; } Map = [Maybe@ m][[Bool@]{Bool@;} f] {
+    ?(m;
+      just: Maybe@(just: f[m.just]),
+      nothing: Maybe@(nothing: Unit@()));
   };
 
   Maybe@ mtrue = Maybe@(just: true);

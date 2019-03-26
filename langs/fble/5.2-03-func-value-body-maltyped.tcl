@@ -5,7 +5,7 @@ fble-test-error 9:5 {
   Bool@ false = Bool@(false: Unit@());
 
   # The body of the function fails to compile.
-  \(Bool@ x, Bool@ y) {
+  [Bool@ x][Bool@ y] {
     zzz;
   };
 }

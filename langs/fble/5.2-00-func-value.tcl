@@ -5,7 +5,7 @@ fble-test {
   Bool@ false = Bool@(false: Unit@());
 
   # Construct a basic function value.
-  \(Bool@ x, Bool@ y) {
+  [Bool@ x][Bool@ y] {
     ?(x; true: true, false: y);
   };
 }
