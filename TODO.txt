@@ -1,6 +1,7 @@
 Fble:
 * [lang] Switch to new concrete syntax for func
-  - remove multi-arg application desugaring in parser.
+  - distinguish between apply, get, and put in abstract syntax.
+  - use block for func_types.
   - use block for func_values.
 
 * [lang] Flesh out spec for new fble.

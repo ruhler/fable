@@ -334,12 +334,11 @@ expr:
       FbleFree(arena, $3.xs);
    }
  | expr '(' ')' {
-      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
-      apply_expr->_base.tag = FBLE_APPLY_EXPR;  // GET
-      apply_expr->_base.loc = @$;
-      apply_expr->func = $1;
-      FbleVectorInit(arena, apply_expr->args);
-      $$ = &apply_expr->_base;
+      FbleGetExpr* get_expr = FbleAlloc(arena, FbleGetExpr);
+      get_expr->_base.tag = FBLE_GET_EXPR;
+      get_expr->_base.loc = @$;
+      get_expr->port = $1;
+      $$ = &get_expr->_base;
    }
  | expr '(' expr ')' {
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);

@@ -1954,38 +1954,6 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
             return rtype;
           }
 
-          case INPUT_TYPE: {
-            // This is a GET process.
-            InputType* input_type = (InputType*)normal;
-            if (apply_expr->args.size != 0) {
-              FbleReportError("expected 0 args to get process, but %i provided\n",
-                  &expr->loc, apply_expr->args.size);
-              error = true;
-            }
-
-            for (size_t i = 0; i < apply_expr->args.size; ++i) {
-              TypeRelease(arena, arg_types[i]);
-            }
-
-            if (error) {
-              TypeRelease(arena, type);
-              return NULL;
-            }
-
-            FbleGetInstr* get_instr = FbleAlloc(arena_, FbleGetInstr);
-            get_instr->_base.tag = FBLE_GET_INSTR;
-            FbleVectorAppend(arena_, *instrs, &get_instr->_base);
-
-            ProcType* proc_type = FbleAlloc(arena_, ProcType);
-            FbleRefInit(arena, &proc_type->_base.ref);
-            proc_type->_base.tag = PROC_TYPE;
-            proc_type->_base.loc = expr->loc;
-            proc_type->rtype = input_type->rtype;
-            FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->rtype->ref);
-            TypeRelease(arena, type);
-            return &proc_type->_base;
-          }
-
           case OUTPUT_TYPE: {
             // This is a PUT process.
             OutputType* output_type = (OutputType*)normal;
@@ -2041,6 +2009,39 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
         TypeRelease(arena, arg_types[i]);
       }
       return NULL;
+    }
+
+    case FBLE_GET_EXPR: {
+      FbleGetExpr* get_expr = (FbleGetExpr*)expr;
+
+      // Compile the port value.
+      Type* type = Compile(arena, vars, type_vars, get_expr->port, instrs);
+      Eval(arena, type, NULL, NULL);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      InputType* input_type = (InputType*)Normal(type);
+      if (input_type->_base.tag != INPUT_TYPE) {
+        FbleReportError("cannot get from an object of type ", &expr->loc);
+        PrintType(arena_, type);
+        fprintf(stderr, "\n");
+        TypeRelease(arena, type);
+        return NULL;
+      }
+
+      FbleGetInstr* get_instr = FbleAlloc(arena_, FbleGetInstr);
+      get_instr->_base.tag = FBLE_GET_INSTR;
+      FbleVectorAppend(arena_, *instrs, &get_instr->_base);
+
+      ProcType* proc_type = FbleAlloc(arena_, ProcType);
+      FbleRefInit(arena, &proc_type->_base.ref);
+      proc_type->_base.tag = PROC_TYPE;
+      proc_type->_base.loc = expr->loc;
+      proc_type->rtype = input_type->rtype;
+      FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->rtype->ref);
+      TypeRelease(arena, type);
+      return &proc_type->_base;
     }
 
     case FBLE_EVAL_EXPR: {
