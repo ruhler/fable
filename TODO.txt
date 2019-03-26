@@ -1,6 +1,5 @@
 Fble:
 * [lang] Switch to new concrete syntax for func
-  - replace APPLY_EXPR with FUNC_APPLY_EXPR.
   - use block for func_types.
   - use block for func_values.
 

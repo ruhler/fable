@@ -1898,76 +1898,53 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
       return &type->_base;
     }
 
-    case FBLE_APPLY_EXPR: {
-      FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
+    case FBLE_FUNC_APPLY_EXPR: {
+      FbleFuncApplyExpr* apply_expr = (FbleFuncApplyExpr*)expr;
 
       // Compile the function value.
       Type* type = Compile(arena, vars, type_vars, apply_expr->func, instrs);
       Eval(arena, type, NULL, NULL);
-      bool error = (type == NULL);
-
-      // Compile the arguments.
-      Type* arg_types[apply_expr->args.size];
-      for (size_t i = 0; i < apply_expr->args.size; ++i) {
-        arg_types[i] = Compile(arena, vars, type_vars, apply_expr->args.xs[i], instrs);
-        Eval(arena, arg_types[i], NULL, NULL);
-        error = error || (arg_types[i] == NULL);
+      if (type == NULL) {
+        return NULL;
       }
 
-      // Check the argument types match what is expected.
-      if (type != NULL) {
-        Type* normal = Normal(type);
-        switch (normal->tag) {
-          case FUNC_TYPE: {
-            // This is normal function application.
-            FuncType* func_type = (FuncType*)normal;
-            if (1 != apply_expr->args.size) {
-              FbleReportError("expected 1 arg, but %i provided\n",
-                  &expr->loc, apply_expr->args.size);
-              error = true;
-            }
-
-            if (apply_expr->args.size > 0 && arg_types[0] != NULL && !TypesEqual(func_type->arg, arg_types[0], NULL)) {
-              FbleReportError("expected type ", &apply_expr->args.xs[0]->loc);
-              PrintType(arena_, func_type->arg);
-              fprintf(stderr, ", but found ");
-              PrintType(arena_, arg_types[0]);
-              fprintf(stderr, "\n");
-              error = true;
-            }
-
-            for (size_t i = 0; i < apply_expr->args.size; ++i) {
-              TypeRelease(arena, arg_types[i]);
-            }
-
-            if (error) {
-              TypeRelease(arena, type);
-              return NULL;
-            }
-
-            FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
-            apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
-
-            FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
-            Type* rtype = TypeRetain(arena, func_type->rtype);
-            TypeRelease(arena, type);
-            return rtype;
-          }
-
-          default: {
-            FbleReportError("cannot perform application on an object of type ", &expr->loc);
-            PrintType(arena_, type);
-            fprintf(stderr, "\n");
-            break;
-          }
-        }
+      FuncType* func_type = (FuncType*)Normal(type);
+      if (func_type->_base.tag != FUNC_TYPE) {
+        FbleReportError("expected function, but found something of type ", &expr->loc);
+        PrintType(arena_, type);
+        fprintf(stderr, "\n");
+        TypeRelease(arena, type);
+        return NULL;
       }
 
+      // Compile the argument.
+      Type* arg_type = Compile(arena, vars, type_vars, apply_expr->arg, instrs);
+      Eval(arena, arg_type, NULL, NULL);
+      bool error = (arg_type == NULL);
+
+      if (arg_type != NULL && !TypesEqual(func_type->arg, arg_type, NULL)) {
+        FbleReportError("expected type ", &apply_expr->arg->loc);
+        PrintType(arena_, func_type->arg);
+        fprintf(stderr, ", but found ");
+        PrintType(arena_, arg_type);
+        fprintf(stderr, "\n");
+        error = true;
+      }
+
+      TypeRelease(arena, arg_type);
+
+      if (error) {
+        TypeRelease(arena, type);
+        return NULL;
+      }
+
+      FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
+      apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+
+      FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
+      Type* rtype = TypeRetain(arena, func_type->rtype);
       TypeRelease(arena, type);
-      for (size_t i = 0; i < apply_expr->args.size; ++i) {
-        TypeRelease(arena, arg_types[i]);
-      }
-      return NULL;
+      return rtype;
     }
 
     case FBLE_GET_EXPR: {

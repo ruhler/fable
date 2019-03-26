@@ -349,12 +349,11 @@ expr:
       $$ = &put_expr->_base;
    }
  | expr '[' expr ']' {
-      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
-      apply_expr->_base.tag = FBLE_APPLY_EXPR;  // FUNC
+      FbleFuncApplyExpr* apply_expr = FbleAlloc(arena, FbleFuncApplyExpr);
+      apply_expr->_base.tag = FBLE_FUNC_APPLY_EXPR;
       apply_expr->_base.loc = @$;
       apply_expr->func = $1;
-      FbleVectorInit(arena, apply_expr->args);
-      FbleVectorAppend(arena, apply_expr->args, $3);
+      apply_expr->arg = $3;
       $$ = &apply_expr->_base;
    }
  | '$' '(' expr ')' {
@@ -446,12 +445,11 @@ stmt:
       }
       FbleFree(arena, $1.xs);
 
-      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
-      apply_expr->_base.tag = FBLE_APPLY_EXPR;
+      FbleFuncApplyExpr* apply_expr = FbleAlloc(arena, FbleFuncApplyExpr);
+      apply_expr->_base.tag = FBLE_FUNC_APPLY_EXPR;
       apply_expr->_base.loc = @$;
       apply_expr->func = $4;
-      FbleVectorInit(arena, apply_expr->args);
-      FbleVectorAppend(arena, apply_expr->args, func);
+      apply_expr->arg = func;
       $$ = &apply_expr->_base;
     }
   | type '~' NAME ',' NAME ';' stmt {
