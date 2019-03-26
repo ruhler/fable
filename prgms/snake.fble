@@ -41,17 +41,17 @@ Col@ MaxCol = Col60;
 \(Row@, Row@; Bool@) EqRow = \(Row@ a, Row@ b) {
   ?(a;
       Z: ?(b; Z: True, S: False),
-      S: ?(b; Z: False, S: EqRow(a.S, b.S)));
+      S: ?(b; Z: False, S: EqRow[a.S][b.S]));
 };
 
 \(Col@, Col@; Bool@) EqCol = \(Col@ a, Col@ b) {
   ?(a;
       Z: ?(b; Z: True, S: False),
-      S: ?(b; Z: False, S: EqCol(a.S, b.S)));
+      S: ?(b; Z: False, S: EqCol[a.S][b.S]));
 };
 
 \(Pos@, Pos@; Bool@) EqPos = \(Pos@ a, Pos@ b) {
-  And(EqRow(a.row, b.row), EqCol(a.col, b.col));
+  And[EqRow[a.row][b.row]][EqCol[a.col][b.col]];
 };
 
 \(Row@; Row@) IncrRow = \(Row@ a) { Row@(S: a); };
@@ -124,10 +124,10 @@ State@ InitialState = {
 
 # Return true if the given position is found in the list of positions.
 \(S@<Pos@>, Pos@; Bool@) InPosS = \(S@<Pos@> s, Pos@ p) {
-  ?(s ; nil: False, cons: InPosP(s.cons, p));
+  ?(s ; nil: False, cons: InPosP[s.cons][p]);
 },
 \(P@<Pos@>, Pos@; Bool@) InPosP = \(P@<Pos@> s, Pos@ p) {
-  ?(EqPos(s.head, p); true: True, false: InPosS(s.tail, p));
+  ?(EqPos[s.head][p]; true: True, false: InPosS[s.tail][p]);
 };
 
 # Return all but the last element in l.
@@ -145,27 +145,27 @@ State@ InitialState = {
 \(State@; MoveResultM@) Move = \(State@ s) {
   PosM@ pm = ?(s.dir;
     up:
-    ?(EqRow(s.snake.head.row, MaxRow);
+    ?(EqRow[s.snake.head.row][MaxRow];
         true: PosM@(dead: Unit@()),
        false: PosM@(pos: Pos@(IncrRow(s.snake.head.row), s.snake.head.col))),
 
     down:
-    ?(EqRow(s.snake.head.row, MinRow);
+    ?(EqRow[s.snake.head.row][MinRow];
         true: PosM@(dead: Unit@()),
        false: PosM@(pos: Pos@(DecrRow(s.snake.head.row), s.snake.head.col))),
 
     left:
-    ?(EqCol(s.snake.head.col, MinCol);
+    ?(EqCol[s.snake.head.col][MinCol];
         true: PosM@(dead: Unit@()),
        false: PosM@(pos: Pos@(s.snake.head.row, DecrCol(s.snake.head.col)))),
 
     right:
-    ?(EqCol(s.snake.head.col, MaxCol);
+    ?(EqCol[s.snake.head.col][MaxCol];
         true: PosM@(dead: Unit@()),
        false: PosM@(pos: Pos@(s.snake.head.row, IncrCol(s.snake.head.col)))));
 
   ?(pm; dead: MoveResultM@(dead: Unit@()), pos:
-      ?(EqPos(pm.pos, s.food);
+      ?(EqPos[pm.pos][s.food];
           true: {
             # TODO: Properly handle the case where the snake eats food at its
             # tail.
@@ -177,7 +177,7 @@ State@ InitialState = {
             MoveResultM@(mr: MoveResult@(ns, draw));
           },
           false:
-          ?(InPosP(s.snake, pm.pos); true: MoveResultM@(dead: Unit@()),
+          ?(InPosP[s.snake][pm.pos]; true: MoveResultM@(dead: Unit@()),
             false: {
               # TODO: Combine calls to Init and Last so we only have to
               # iterate over the list of elements once instead of twice?
@@ -195,29 +195,29 @@ State@ InitialState = {
   ?(draw ; nil: $(Unit@()),
       cons: {
          Draw@ x := out(draw.cons.head);
-         DrawAll(out, draw.cons.tail);
+         DrawAll[out][draw.cons.tail];
       });
 };
 
 \(Input@-, Draw@+, State@; Unit@!) Snake = \(Input@- in, Draw@+ out,
 State@ s) {
   Input@ x := in();
-  ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
+  ?(x; dir: Snake[in][out][State@(x.dir, s.food, s.nfood, s.snake)],
        tick: {
            MoveResultM@ m := $(Move(s));
            ?(m;
               dead: $(Unit@()),
               mr: {
-                 Unit@ u := DrawAll(out, m.mr.draw);
-                 Snake(in, out, m.mr.state);
+                 Unit@ u := DrawAll[out][m.mr.draw];
+                 Snake[in][out][m.mr.state];
               });
        });
 };
 
 \(Input@-, Draw@+; Unit@!) Main = \(Input@- in, Draw@+ out) {
   State@ s = InitialState;
-  Unit@ u := DrawAll(out, DrawState(s));
-  Snake(in, out, s);
+  Unit@ u := DrawAll[out][DrawState(s)];
+  Snake[in][out][s];
 };
 
 Main;

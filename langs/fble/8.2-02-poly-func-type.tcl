@@ -14,5 +14,5 @@ fble-test {
                      false: true));
   };
 
-  eqBool(false, false).true;
+  eqBool[false][false].true;
 }

@@ -26,33 +26,33 @@
   # TODO: Move these to StdLib/List and make it public?
   <@ T@> { \(\(T@, T@; Bool@), S@<T@>, S@<T@>; Bool@); } SEq = <@ T@> {
     \(\(T@, T@; Bool@) eq, S@<T@> a, S@<T@> b) {
-      ?(a; cons: ?(b; cons: PEq<T@>(eq, a.cons, b.cons), nil: False),
+      ?(a; cons: ?(b; cons: PEq<T@>[eq][a.cons][b.cons], nil: False),
            nil: ?(b; cons: False, nil: True));
     };
   },
   <@ T@> { \(\(T@, T@; Bool@), P@<T@>, P@<T@>; Bool@); } PEq = <@ T@> {
     \(\(T@, T@; Bool@) eq, P@<T@> a, P@<T@> b) {
-      And(eq(a.head, b.head), SEq<T@>(eq, a.tail, b.tail));
+      And[eq[a.head][b.head]][SEq<T@>[eq][a.tail][b.tail]];
     };
   };
 
   \(Unit@ ; S@<TestFailure@>) Test = \(Unit@ _) {
-    S@<Elem@> unsorted = S5<Elem@>(
-      Elem@(D: Unit@()),
-      Elem@(A: Unit@()),
-      Elem@(B: Unit@()),
-      Elem@(E: Unit@()),
-      Elem@(C: Unit@()));
+    S@<Elem@> unsorted = S5<Elem@>
+      [Elem@(D: Unit@())]
+      [Elem@(A: Unit@())]
+      [Elem@(B: Unit@())]
+      [Elem@(E: Unit@())]
+      [Elem@(C: Unit@())];
 
-    S@<Elem@> wnt = S5<Elem@>(
-      Elem@(A: Unit@()),
-      Elem@(B: Unit@()),
-      Elem@(C: Unit@()),
-      Elem@(D: Unit@()),
-      Elem@(E: Unit@()));
+    S@<Elem@> wnt = S5<Elem@>
+      [Elem@(A: Unit@())]
+      [Elem@(B: Unit@())]
+      [Elem@(C: Unit@())]
+      [Elem@(D: Unit@())]
+      [Elem@(E: Unit@())];
 
-    S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
-    ?(SEq<Elem@>(ElemEq, wnt, got);
+    S@<Elem@> got = SortS<Elem@>[ElemLe][unsorted];
+    ?(SEq<Elem@>[ElemEq][wnt][got];
       true: S0<TestFailure@>,
       false: S1<TestFailure@>(TestFailure@(TestName@(List_Sort_basic: Unit@()), wnt, got)));
   };

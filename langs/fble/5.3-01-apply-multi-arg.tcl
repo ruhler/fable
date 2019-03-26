@@ -8,5 +8,5 @@ fble-test {
     y;
   };
 
-  Snd(false, true).true;
+  Snd[false][true].true;
 }

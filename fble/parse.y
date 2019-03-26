@@ -335,25 +335,29 @@ expr:
    }
  | expr '(' ')' {
       FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
-      apply_expr->_base.tag = FBLE_APPLY_EXPR;
+      apply_expr->_base.tag = FBLE_APPLY_EXPR;  // GET
       apply_expr->_base.loc = @$;
       apply_expr->func = $1;
       FbleVectorInit(arena, apply_expr->args);
       $$ = &apply_expr->_base;
    }
- | expr '(' expr_p ')' {
-      $$ = $1;
-      for (size_t i = 0; i < $3.size; ++i) {
-        FbleExpr* arg = $3.xs[i];
-        FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
-        apply_expr->_base.tag = FBLE_APPLY_EXPR;
-        apply_expr->_base.loc = @$;
-        apply_expr->func = $$;
-        FbleVectorInit(arena, apply_expr->args);
-        FbleVectorAppend(arena, apply_expr->args, arg);
-        $$ = &apply_expr->_base;
-      }
-      FbleFree(arena, $3.xs);
+ | expr '(' expr ')' {
+      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_APPLY_EXPR;  // PUT
+      apply_expr->_base.loc = @$;
+      apply_expr->func = $1;
+      FbleVectorInit(arena, apply_expr->args);
+      FbleVectorAppend(arena, apply_expr->args, $3);
+      $$ = &apply_expr->_base;
+   }
+ | expr '[' expr ']' {
+      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_APPLY_EXPR;  // FUNC
+      apply_expr->_base.loc = @$;
+      apply_expr->func = $1;
+      FbleVectorInit(arena, apply_expr->args);
+      FbleVectorAppend(arena, apply_expr->args, $3);
+      $$ = &apply_expr->_base;
    }
  | '$' '(' expr ')' {
       FbleEvalExpr* eval_expr = FbleAlloc(arena, FbleEvalExpr);
@@ -677,7 +681,7 @@ static bool IsNameChar(int c)
 //   None.
 static bool IsSingleChar(int c)
 {
-  return strchr("(){};,:?=.<>+*-!$@~&\\", c) != NULL;
+  return strchr("(){};,:?=.<>+*-!$@~&[]\\", c) != NULL;
 }
 
 // ReadNextChar --

@@ -9,5 +9,5 @@ fble-test-error 12:3 {
   };
 
   # The function is provided with too many arguments.
-  Snd(false, true, true);
+  Snd[false][true][true];
 }

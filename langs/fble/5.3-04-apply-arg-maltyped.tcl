@@ -9,5 +9,5 @@ fble-test-error 12:14 {
   };
 
   # The second argument to the function fails to compile.
-  Snd(false, zzz);
+  Snd[false][zzz];
 }

@@ -9,5 +9,5 @@ fble-test-error 12:14 {
   };
 
   # The second argument to the function has the wrong type.
-  Snd(false, Unit@());
+  Snd[false][Unit@()];
 }

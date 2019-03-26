@@ -67,7 +67,7 @@
     };
 
     \(Hex@; Bit8@) H1 = \(Hex@ x) {
-      H2(0, x);
+      H2[0][x];
     };
 
     @(Bit8: @(Bit8@, BitN: Bit2XN<Bit4.Bit4@>(Bit4.BitN), H1, H2));

@@ -5,5 +5,5 @@ fble-test-error 8:3 {
   Bool@ false = Bool@(false: Unit@());
 
   # The function zzz fails to compile.
-  zzz(false, true);
+  zzz[false][true];
 }
