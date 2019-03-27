@@ -77,7 +77,7 @@
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
 %type <bindings> let_bindings exec_bindings
-%type <type_bindings> type_let_binding_p
+%type <type_bindings> type_field_p type_let_binding_p
 
 %%
 
@@ -111,7 +111,7 @@ type:
       struct_type->fields = $3;
       $$ = &struct_type->_base;
    }
- | '*' '(' type_let_binding_p ')' {
+ | '*' '(' type_field_p ')' {
       FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
       struct_type->_base.tag = FBLE_STRUCT_TYPE;
       struct_type->_base.loc = @$;
@@ -119,7 +119,7 @@ type:
       FbleVectorInit(arena, struct_type->fields);
       $$ = &struct_type->_base;
    }
- | '*' '(' type_let_binding_p ',' field_p ')' {
+ | '*' '(' type_field_p ',' field_p ')' {
       FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
       struct_type->_base.tag = FBLE_STRUCT_TYPE;
       struct_type->_base.loc = @$;
@@ -578,6 +578,23 @@ let_bindings:
       binding->type = $3;
       binding->name = $4;
       binding->expr = $6;
+    }
+  ;
+
+type_field_p:
+  kind type_name '=' type {
+      FbleVectorInit(arena, $$);
+      FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
+      binding->kind = $1;
+      binding->name = $2;
+      binding->type = $4;
+    }
+  | type_field_p ',' kind type_name '=' type {
+      $$ = $1;
+      FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
+      binding->kind = $3;
+      binding->name = $4;
+      binding->type = $6;
     }
   ;
 
