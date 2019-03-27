@@ -77,7 +77,7 @@
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
 %type <bindings> let_bindings exec_bindings
-%type <type_bindings> type_let_binding_s type_let_binding_p
+%type <type_bindings> type_let_binding_p
 
 %%
 
@@ -216,7 +216,7 @@ type_block:
 
 type_stmt:
     type ';' { $$ = $1; }
-  | type_let_binding_s ';' type_stmt {
+  | type_let_binding_p ';' type_stmt {
       FbleLetType* let_type = FbleAlloc(arena, FbleLetType);
       let_type->_base.tag = FBLE_LET_TYPE;
       let_type->_base.loc = @$;
@@ -458,7 +458,7 @@ stmt:
       let_expr->body = $3;
       $$ = &let_expr->_base;
     }  
-  | type_let_binding_s ';' stmt {
+  | type_let_binding_p ';' stmt {
       FbleTypeLetExpr* let_expr = FbleAlloc(arena, FbleTypeLetExpr);
       let_expr->_base.tag = FBLE_TYPE_LET_EXPR;
       let_expr->_base.loc = @$;
@@ -579,11 +579,6 @@ let_bindings:
       binding->name = $4;
       binding->expr = $6;
     }
-  ;
-
-type_let_binding_s: 
-    %empty { FbleVectorInit(arena, $$); }
-  | type_let_binding_p { $$ = $1; }
   ;
 
 type_let_binding_p:
