@@ -9,6 +9,13 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// FbleDStack --
+//   A stack of values.
+typedef struct FbleDStack {
+  FbleValue* value;
+  struct FbleDStack* tail;
+} FbleDStack;
+
 // IStack --
 //   A stack of instructions to execute. Describes the computation context for
 //   a thread.
@@ -50,7 +57,7 @@ typedef struct {
 //   aborted - true if the thread has been aborted due to undefined union
 //             field access.
 struct Thread {
-  FbleVStack* data_stack;
+  FbleDStack* data_stack;
   IStack* istack;
   size_t iquota;
   ThreadV children;
@@ -70,6 +77,8 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 static FbleValue* Deref(FbleValue* value, FbleValueTag tag);
 static FbleVStack* VPush(FbleArena* arena, FbleValue* value, FbleVStack* tail);
 static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack);
+static FbleDStack* DPush(FbleArena* arena, FbleValue* value, FbleDStack* tail);
+static FbleDStack* DPop(FbleArena* arena, FbleDStack* vstack);
 static IStack* IPush(FbleArena* arena, FbleValue* retain, FbleVStack* var_stack, FbleInstrBlock* block, IStack* tail); 
 static IStack* IPop(FbleValueArena* arena, IStack* istack);
 
@@ -166,6 +175,47 @@ static FbleVStack* VPop(FbleArena* arena, FbleVStack* vstack)
   return tail;
 }
 
+// DPush --
+//   Push a value onto a data value stack.
+//
+// Inputs:
+//   arena - the arena to use for allocations
+//   value - the value to push
+//   tail - the stack to push to
+//
+// Result:
+//   The new stack with pushed value.
+//
+// Side effects:
+//   Allocates a new FbleDStack instance that should be freed when done.
+static FbleDStack* DPush(FbleArena* arena, FbleValue* value, FbleDStack* tail)
+{
+  FbleDStack* dstack = FbleAlloc(arena, FbleDStack);
+  dstack->value = value;
+  dstack->tail = tail;
+  return dstack;
+}
+
+// DPop --
+//   Pop a value off the value stack.
+//
+// Inputs:
+//   arena - the arena to use for deallocation
+//   stack - the stack to pop from
+//
+// Results:
+//   The popped stack.
+//
+// Side effects:
+//   Frees the top stack frame. It is the user's job to release the value if
+//   necessary before popping the top of the stack.
+static FbleDStack* DPop(FbleArena* arena, FbleDStack* dstack)
+{
+  FbleDStack* tail = dstack->tail;
+  FbleFree(arena, dstack);
+  return tail;
+}
+
 // IPush --
 //   Push a block of instructions onto an instruction stack.
 //
@@ -248,19 +298,19 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValue* argv[argc];
         for (size_t i = 0; i < argc; ++i) {
           argv[argc - i - 1] = thread->data_stack->value;
-          thread->data_stack = VPop(arena_, thread->data_stack);
+          thread->data_stack = DPop(arena_, thread->data_stack);
         }
 
         FbleValueV args = { .size = argc, .xs = argv, };
-        thread->data_stack = VPush(arena_, FbleNewStructValue(arena, args), thread->data_stack);
+        thread->data_stack = DPush(arena_, FbleNewStructValue(arena, args), thread->data_stack);
         break;
       }
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
         FbleValue* arg = thread->data_stack->value;
-        thread->data_stack = VPop(arena_, thread->data_stack);
-        thread->data_stack = VPush(arena_, FbleNewUnionValue(arena, union_value_instr->tag, arg), thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
+        thread->data_stack = DPush(arena_, FbleNewUnionValue(arena, union_value_instr->tag, arg), thread->data_stack);
         break;
       }
 
@@ -271,8 +321,8 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         assert(access_instr->tag < sv->fields.size);
         FbleValueRetain(arena, &sv->_base);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
-        thread->data_stack = VPush(arena_, FbleValueRetain(arena, sv->fields.xs[access_instr->tag]), thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
+        thread->data_stack = DPush(arena_, FbleValueRetain(arena, sv->fields.xs[access_instr->tag]), thread->data_stack);
         FbleValueRelease(arena, &sv->_base);
         break;
       }
@@ -290,8 +340,8 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
         FbleValueRetain(arena, &uv->_base);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
-        thread->data_stack = VPush(arena_, FbleValueRetain(arena, uv->arg), thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
+        thread->data_stack = DPush(arena_, FbleValueRetain(arena, uv->arg), thread->data_stack);
 
         FbleValueRelease(arena, &uv->_base);
         break;
@@ -303,7 +353,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleUnionValue* uv = (FbleUnionValue*)Deref(thread->data_stack->value, FBLE_UNION_VALUE);
         FbleValueRetain(arena, &uv->_base);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
         assert(uv->tag < cond_instr->choices.size);
         thread->istack = IPush(arena_, NULL, thread->istack->var_stack, cond_instr->choices.xs[uv->tag], thread->istack);
         FbleValueRelease(arena, &uv->_base);
@@ -332,7 +382,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           value->context = VPush(arena_, context[i], value->context);
         }
 
-        thread->data_stack = VPush(arena_, &value->_base, thread->data_stack);
+        thread->data_stack = DPush(arena_, &value->_base, thread->data_stack);
         break;
       }
 
@@ -348,12 +398,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_FUNC_APPLY_INSTR: {
         FbleValue* arg = thread->data_stack->value;
-        thread->data_stack = VPop(arena_, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
 
         FbleFuncValue* func = (FbleFuncValue*)Deref(thread->data_stack->value, FBLE_FUNC_VALUE);
         FbleValueRetain(arena, &func->_base);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
         thread->istack = IPush(arena_, &func->_base, func->context, func->body, thread->istack);
         thread->istack->var_stack = VPush(arena_, arg, thread->istack->var_stack);
         break;
@@ -367,8 +417,8 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->port = thread->data_stack->value;
         Add(arena, &value->_base._base, value->port);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
-        thread->data_stack = VPush(arena_, &value->_base._base, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
+        thread->data_stack = DPush(arena_, &value->_base._base, thread->data_stack);
         break;
       }
 
@@ -380,12 +430,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->arg = thread->data_stack->value;
         Add(arena, &value->_base._base, value->arg);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
         value->port = thread->data_stack->value;
         Add(arena, &value->_base._base, value->port);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
-        thread->data_stack = VPush(arena_, &value->_base._base, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
+        thread->data_stack = DPush(arena_, &value->_base._base, thread->data_stack);
         break;
       }
 
@@ -395,8 +445,8 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         proc_value->_base._base.tag = FBLE_PROC_VALUE;
         proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
         proc_value->result = thread->data_stack->value;
-        thread->data_stack = VPop(arena_, thread->data_stack);
-        thread->data_stack = VPush(arena_, &proc_value->_base._base, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
+        thread->data_stack = DPush(arena_, &proc_value->_base._base, thread->data_stack);
         break;
       }
 
@@ -407,7 +457,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           assert(v->tail != NULL);
           v = v->tail;
         }
-        thread->data_stack = VPush(arena_, FbleValueRetain(arena, v->value), thread->data_stack);
+        thread->data_stack = DPush(arena_, FbleValueRetain(arena, v->value), thread->data_stack);
         break;
       }
 
@@ -435,7 +485,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           context = VPop(arena_, context);
         }
 
-        thread->data_stack = VPush(arena_, &value->_base._base, thread->data_stack);
+        thread->data_stack = DPush(arena_, &value->_base._base, thread->data_stack);
         break;
       }
 
@@ -470,10 +520,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           value->bindings.xs[j] = thread->data_stack->value;
           Add(arena, &value->_base._base, thread->data_stack->value);
           FbleValueRelease(arena, thread->data_stack->value);
-          thread->data_stack = VPop(arena_, thread->data_stack);
+          thread->data_stack = DPop(arena_, thread->data_stack);
         }
 
-        thread->data_stack = VPush(arena_, &value->_base._base, thread->data_stack);
+        thread->data_stack = DPush(arena_, &value->_base._base, thread->data_stack);
         break;
       }
 
@@ -497,7 +547,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           Thread* child = thread->children.xs[i];
           assert(child->data_stack != NULL);
           FbleValue* result = child->data_stack->value;
-          child->data_stack = VPop(arena_, child->data_stack);
+          child->data_stack = DPop(arena_, child->data_stack);
           assert(child->data_stack == NULL);
           assert(child->istack == NULL);
           assert(child->iquota == 0);
@@ -516,7 +566,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleProcValue* proc = (FbleProcValue*)Deref(thread->data_stack->value, FBLE_PROC_VALUE);
         FbleValueRetain(arena, &proc->_base);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
 
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
@@ -528,7 +578,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               if (port->head == NULL) {
                 // Blocked on get. Restore the thread state and return before
                 // iquota has been decremented.
-                thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
+                thread->data_stack = DPush(arena_, &proc->_base, thread->data_stack);
                 thread->istack->pc--;
                 return;
               }
@@ -538,7 +588,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               if (port->head == NULL) {
                 port->tail = NULL;
               }
-              thread->data_stack = VPush(arena_, head->value, thread->data_stack);
+              thread->data_stack = DPush(arena_, head->value, thread->data_stack);
               FbleFree(arena_, head);
               break;
             }
@@ -549,12 +599,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               if (io->ports.xs[port->id] == NULL) {
                 // Blocked on get. Restore the thread state and return before
                 // iquota has been decremented.
-                thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
+                thread->data_stack = DPush(arena_, &proc->_base, thread->data_stack);
                 thread->istack->pc--;
                 return;
               }
 
-              thread->data_stack = VPush(arena_, io->ports.xs[port->id], thread->data_stack);
+              thread->data_stack = DPush(arena_, io->ports.xs[port->id], thread->data_stack);
               io->ports.xs[port->id] = NULL;
               break;
             }
@@ -583,7 +633,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
                 link->tail = tail;
               }
 
-              thread->data_stack = VPush(arena_, FbleValueRetain(arena, put->arg), thread->data_stack);
+              thread->data_stack = DPush(arena_, FbleValueRetain(arena, put->arg), thread->data_stack);
               break;
             }
 
@@ -594,13 +644,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               if (io->ports.xs[port->id] != NULL) {
                 // Blocked on put. Restore the thread state and return before
                 // iquota has been decremented.
-                thread->data_stack = VPush(arena_, &proc->_base, thread->data_stack);
+                thread->data_stack = DPush(arena_, &proc->_base, thread->data_stack);
                 thread->istack->pc--;
                 return;
               }
 
               io->ports.xs[port->id] = FbleValueRetain(arena, put->arg);
-              thread->data_stack = VPush(arena_, FbleValueRetain(arena, put->arg), thread->data_stack);
+              thread->data_stack = DPush(arena_, FbleValueRetain(arena, put->arg), thread->data_stack);
               break;
             }
 
@@ -609,7 +659,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
-            thread->data_stack = VPush(arena_, FbleValueRetain(arena, eval->result), thread->data_stack);
+            thread->data_stack = DPush(arena_, FbleValueRetain(arena, eval->result), thread->data_stack);
             break;
           }
 
@@ -642,7 +692,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             FbleVectorInit(arena_, thread->children);
             for (size_t i = 0; i < exec->bindings.size; ++i) {
               Thread* child = FbleAlloc(arena_, Thread);
-              child->data_stack = VPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
+              child->data_stack = DPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
               child->istack = IPush(arena_, NULL, thread->istack->var_stack, &g_proc_block, NULL);
               child->iquota = 0;
               child->aborted = false;
@@ -684,7 +734,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           rv->value = thread->data_stack->value;
           Add(arena, &rv->_base, thread->data_stack->value);
           FbleValueRelease(arena, thread->data_stack->value);
-          thread->data_stack = VPop(arena_, thread->data_stack);
+          thread->data_stack = DPop(arena_, thread->data_stack);
 
           assert(rv->value != NULL);
           vs->value = FbleValueRetain(arena, rv->value);
@@ -699,7 +749,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleStructValue* sv = (FbleStructValue*)Deref(thread->data_stack->value, FBLE_STRUCT_VALUE);
         FbleValueRetain(arena, &sv->_base);
         FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = VPop(arena_, thread->data_stack);
+        thread->data_stack = DPop(arena_, thread->data_stack);
         for (size_t i = 0; i < sv->fields.size; ++i) {
           thread->istack->var_stack = VPush(arena_, FbleValueRetain(arena, sv->fields.xs[i]), thread->istack->var_stack);
         }
@@ -754,7 +804,7 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
 
   while (thread->data_stack != NULL) {
     FbleValueRelease(arena, thread->data_stack->value);
-    thread->data_stack = VPop(arena_, thread->data_stack);
+    thread->data_stack = DPop(arena_, thread->data_stack);
   }
 }
 
@@ -819,7 +869,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   };
 
   for (size_t i = 0; i < args.size; ++i) {
-    thread.data_stack = VPush(arena_, FbleValueRetain(arena, args.xs[i]), thread.data_stack);
+    thread.data_stack = DPush(arena_, FbleValueRetain(arena, args.xs[i]), thread.data_stack);
   }
 
   // Run the main thread repeatedly until it no longer makes any forward
@@ -850,7 +900,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   // which is the value to return.
   assert(thread.data_stack != NULL);
   FbleValue* final_result = thread.data_stack->value;
-  thread.data_stack = VPop(arena_, thread.data_stack);
+  thread.data_stack = DPop(arena_, thread.data_stack);
   assert(thread.data_stack == NULL);
   assert(thread.istack == NULL);
   assert(thread.children.size == 0);
