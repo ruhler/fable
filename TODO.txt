@@ -1,7 +1,5 @@
 Fble:
 * [lang] Migrate fble to new spec
-  - migrate concrete syntax to a subset of the new spec
-   + inferred types
   - make FbleType part of FbleExpr
 
 * [lang] Flesh out spec for new fble.

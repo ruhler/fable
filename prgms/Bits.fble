@@ -10,7 +10,7 @@
   <@>@ BitN@ = <@ T@> {
     @ Result@ = *(T@ z, Bit@ cout);
     *(
-      @ Result@ = Result@,
+      @<Result@> Result@,
       [T@]{T@;} not,          # !a
       [T@][T@]{T@;} and,      # a & b
       [T@][T@]{T@;} or,       # a | b

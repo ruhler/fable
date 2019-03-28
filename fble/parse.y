@@ -582,17 +582,17 @@ let_bindings:
   ;
 
 type_field_p:
-  kind type_name '=' type {
+  '@' '<' type '>' type_name {
       FbleVectorInit(arena, $$);
       FbleField* binding = FbleVectorExtend(arena, $$);
-      binding->name = $2;
-      binding->type = $4;
+      binding->name = $5;
+      binding->type = $3;
     }
-  | type_field_p ',' kind type_name '=' type {
+  | type_field_p ',' '@' '<' type '>' type_name {
       $$ = $1;
       FbleField* binding = FbleVectorExtend(arena, $$);
-      binding->name = $4;
-      binding->type = $6;
+      binding->name = $7;
+      binding->type = $5;
     }
   ;
 
