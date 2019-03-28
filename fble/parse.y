@@ -73,11 +73,11 @@
 %type <expr> expr block stmt
 %type <exprs> expr_s expr_p
 %type <field> anon_struct_type_arg
-%type <fields> field_p field_s anon_struct_type_arg_p
+%type <fields> field_p field_s type_field_p anon_struct_type_arg_p
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
 %type <bindings> let_bindings exec_bindings
-%type <type_bindings> type_field_p type_let_binding_p
+%type <type_bindings> type_let_binding_p
 
 %%
 
@@ -584,15 +584,13 @@ let_bindings:
 type_field_p:
   kind type_name '=' type {
       FbleVectorInit(arena, $$);
-      FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
-      binding->kind = $1;
+      FbleField* binding = FbleVectorExtend(arena, $$);
       binding->name = $2;
       binding->type = $4;
     }
   | type_field_p ',' kind type_name '=' type {
       $$ = $1;
-      FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
-      binding->kind = $3;
+      FbleField* binding = FbleVectorExtend(arena, $$);
       binding->name = $4;
       binding->type = $6;
     }

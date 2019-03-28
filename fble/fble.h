@@ -179,10 +179,10 @@ typedef struct {
 } FbleTypeBindingV;
 
 // FbleStructType --
-//   FBLE_STRUCT_TYPE (type_fields:: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
+//   FBLE_STRUCT_TYPE (type_fields:: [(Name, Type)]) (fields :: [(Type, Name)])
 typedef struct {
   FbleType _base;
-  FbleTypeBindingV type_fields;
+  FbleFieldV type_fields;
   FbleFieldV fields;
 } FbleStructType;
 

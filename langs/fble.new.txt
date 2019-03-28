@@ -65,7 +65,7 @@ kind ::=
 type ::= expr ;
 
 m_type ::= 
-   '@'    (* implicit_type *)
+   kind   (* implicit_type *)
  | type   (* explicit_type *)
  ;
 

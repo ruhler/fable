@@ -2579,38 +2579,13 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       FbleVectorInit(arena_, st->fields);
 
       for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
-        FbleTypeBinding* field = struct_type->type_fields.xs + i;
+        FbleField* field = struct_type->type_fields.xs + i;
 
         Type* type = CompileType(arena, vars, type_vars, field->type);
         if (type == NULL) {
           TypeRelease(arena, &st->_base);
           return NULL;
         }
-
-        Kind* expected_kind = CompileKind(arena_, field->kind);
-        if (expected_kind == NULL) {
-          TypeRelease(arena, type);
-          TypeRelease(arena, &st->_base);
-          return NULL;
-        }
-
-        Kind* actual_kind = GetKind(arena_, type);
-        if (!KindsEqual(expected_kind, actual_kind)) {
-          FbleReportError("expected kind ", &type->loc);
-          PrintKind(expected_kind);
-          fprintf(stderr, ", but found ");
-          PrintKind(actual_kind);
-          fprintf(stderr, "\n");
-
-          FreeKind(arena_, expected_kind);
-          FreeKind(arena_, actual_kind);
-          TypeRelease(arena, type);
-          TypeRelease(arena, &st->_base);
-          return NULL;
-        }
-
-        FreeKind(arena_, expected_kind);
-        FreeKind(arena_, actual_kind);
 
         Field* cfield = FbleVectorExtend(arena_, st->type_fields);
         cfield->name = field->name;
