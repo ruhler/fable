@@ -64,6 +64,7 @@ typedef enum {
   POLY_TYPE,
   POLY_APPLY_TYPE,
   REF_TYPE,
+  TYPE_TYPE,
 } TypeTag;
 
 // Type --
@@ -182,6 +183,15 @@ typedef struct {
   size_t size;
   RefType** xs;
 } RefTypeV;
+
+// TypeType --
+//   TYPE_TYPE
+//
+// The type of a type.
+typedef struct TypeType {
+  Type _base;
+  Type* type;
+} TypeType;
 
 // TypeList --
 //   A linked list of types.
@@ -383,6 +393,11 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
       FbleFree(arena_, ref);
       break;
     }
+
+    case TYPE_TYPE: {
+      FbleFree(arena_, type);
+      break;
+    }
   }
 }
 
@@ -485,6 +500,12 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
       Add(add, ref->value);
       break;
     }
+
+    case TYPE_TYPE: {
+      TypeType* t = (TypeType*)type;
+      Add(add, t->type);
+      break;
+    }
   }
 }
 
@@ -509,7 +530,8 @@ static Kind* GetKind(FbleArena* arena, Type* type)
     case FUNC_TYPE:
     case PROC_TYPE: 
     case INPUT_TYPE:
-    case OUTPUT_TYPE: {
+    case OUTPUT_TYPE:
+    case TYPE_TYPE: {
       BasicKind* kind = FbleAlloc(arena, BasicKind);
       kind->_base.tag = BASIC_KIND;
       kind->_base.loc = type->loc;
@@ -654,6 +676,11 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
       return ref->value != NULL && HasParam(ref->value, param, &nv);
+    }
+
+    case TYPE_TYPE: {
+      TypeType* type_type = (TypeType*)type;
+      return HasParam(type_type->type, param, &nv);
     }
   }
 
@@ -865,6 +892,18 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
       FbleRefAdd(arena, &sref->_base.ref, &sref->value->ref);
       return sref->value;
     }
+
+    case TYPE_TYPE: {
+      TypeType* tt = (TypeType*)type;
+      TypeType* stt = FbleAlloc(arena_, TypeType);
+      FbleRefInit(arena, &stt->_base.ref);
+      stt->_base.tag = TYPE_TYPE;
+      stt->_base.loc = tt->_base.loc;
+      stt->type = Subst(arena, tt->type, param, arg, tps);
+      FbleRefAdd(arena, &stt->_base.ref, &stt->type->ref);
+      TypeRelease(arena, stt->type);
+      return &stt->_base;
+    }
   }
 
   UNREACHABLE("Should never get here");
@@ -1015,6 +1054,12 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       }
       return;
     }
+
+    case TYPE_TYPE: {
+      TypeType* tt = (TypeType*)type;
+      Eval(arena, tt->type, &nevaled, applied);
+      return;
+    }
   }
 
   UNREACHABLE("Should never get here");
@@ -1067,6 +1112,8 @@ static Type* Normal(Type* type)
       }
       return Normal(ref->value);
     }
+
+    case TYPE_TYPE: return type;
   }
 
   UNREACHABLE("Should never get here");
@@ -1226,6 +1273,12 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       assert(ra->value == NULL && rb->value == NULL);
       assert(a != b);
       return false;
+    }
+
+    case TYPE_TYPE: {
+      TypeType* tta = (TypeType*)a;
+      TypeType* ttb = (TypeType*)b;
+      return TypesEqual(tta->type, ttb->type, &neq);
     }
   }
 
@@ -1390,6 +1443,14 @@ static void PrintType(FbleArena* arena, Type* type)
       }
       break;
     }
+
+    case TYPE_TYPE: {
+      TypeType* tt = (TypeType*)type;
+      fprintf(stderr, "@<");
+      PrintType(arena, tt->type);
+      fprintf(stderr, ">");
+      break;
+    }
   }
 }
 
@@ -1458,7 +1519,8 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_LET_PREP_INSTR:
     case FBLE_LET_DEF_INSTR:
     case FBLE_NAMESPACE_INSTR:
-    case FBLE_IPOP_INSTR: {
+    case FBLE_IPOP_INSTR:
+    case FBLE_TYPE_INSTR: {
       FbleFree(arena, instr);
       return;
     }
@@ -1535,8 +1597,47 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
     case FBLE_POLY_TYPE:
     case FBLE_POLY_APPLY_TYPE:
     case FBLE_TYPE_FIELD_ACCESS_TYPE: {
-      assert(false && "TODO: Compile type as expr");
-      return NULL;
+      Type* type = CompileType(arena, vars, type_vars, expr);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      Type* typeof = NULL;
+      switch (type->tag) {
+        case STRUCT_TYPE:
+        case UNION_TYPE:
+        case FUNC_TYPE:
+        case PROC_TYPE:
+        case INPUT_TYPE:
+        case OUTPUT_TYPE:
+        case TYPE_TYPE: {
+          TypeType* type_type = FbleAlloc(arena_, TypeType);
+          FbleRefInit(arena, &type_type->_base.ref);
+          type_type->_base.tag = TYPE_TYPE;
+          type_type->_base.loc = expr->loc;
+          type_type->type = type;
+          FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
+          typeof = &type_type->_base;
+          break;
+        }
+
+        case VAR_TYPE:
+        case ABSTRACT_TYPE:
+        case POLY_TYPE:
+        case POLY_APPLY_TYPE:
+        case REF_TYPE: {
+          assert(false && "TODO: typeof funny types.");
+          typeof = NULL;
+          break;
+        }
+      }
+
+      TypeRelease(arena, type);
+
+      FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
+      instr->_base.tag = FBLE_TYPE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
+      return typeof;
     }
 
     case FBLE_STRUCT_VALUE_EXPR: {

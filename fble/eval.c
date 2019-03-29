@@ -761,6 +761,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         thread->istack = IPop(arena, thread->istack);
         break;
       }
+
+      case FBLE_TYPE_INSTR: {
+        FbleTypeValue* value = FbleAlloc(arena_, FbleTypeValue);
+        FbleRefInit(arena, &value->_base.ref);
+        thread->data_stack = DPush(arena_, &value->_base, thread->data_stack);
+        break;
+      }
     }
 
     thread->iquota--;

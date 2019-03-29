@@ -515,6 +515,7 @@ typedef enum {
   FBLE_OUTPUT_VALUE,
   FBLE_PORT_VALUE,
   FBLE_REF_VALUE,
+  FBLE_TYPE_VALUE,
 } FbleValueTag;
 
 // FbleValue --
@@ -597,6 +598,15 @@ typedef struct FbleRefValue {
   FbleValue _base;
   FbleValue* value;
 } FbleRefValue;
+
+// FbleTypeValue --
+//   FBLE_TYPE_VALUE
+//
+// A value representing a type. Because types are compile-time concepts, not
+// runtime concepts, the type value contains no information.
+typedef struct FbleTypeValue {
+  FbleValue _base;
+} FbleTypeValue;
 
 // FbleNewValueArena --
 //   Create a new arena for allocation of values.

@@ -137,6 +137,11 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
       FbleFree(arena_, value);
       return;
     }
+
+    case FBLE_TYPE_VALUE: {
+      FbleFree(arena_, value);
+      return;
+    }
   }
 
   UNREACHABLE("Should not get here");
@@ -257,6 +262,10 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
     case FBLE_REF_VALUE: {
       FbleRefValue* rv = (FbleRefValue*)value;
       Add(add, rv->value);
+      break;
+    }
+
+    case FBLE_TYPE_VALUE: {
       break;
     }
   }
