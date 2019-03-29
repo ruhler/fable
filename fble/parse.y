@@ -65,9 +65,8 @@
 %token END 0 "end of file"
 %token INVALID "invalid character"
 
-%token <name> NAME
+%token <name> NAME TYPE_NAME
 
-%type <name> type_name
 %type <kind> kind
 %type <type> type type_block type_stmt 
 %type <expr> expr block stmt
@@ -82,8 +81,6 @@
 %%
 
 start: stmt { *result = $1; } ;
-
-type_name: NAME '@' { $$ = $1; } ;
 
 kind:
    '@' {
@@ -155,7 +152,7 @@ type:
       output_type->type = $1;
       $$ = &output_type->_base;
    }
- | type_name {
+ | TYPE_NAME {
       FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
       var_type->_base.tag = FBLE_VAR_TYPE;
       var_type->_base.loc = @$;
@@ -173,11 +170,11 @@ type:
  | type_block {
       $$ = $1;
    }
- | type '.'  type_name {
+ | type '.'  TYPE_NAME {
       assert(false && "TODO: Support type field access?");
       $$ = NULL;
    }
- | expr '.'  type_name {
+ | expr '.'  TYPE_NAME {
       FbleTypeFieldAccessType* type = FbleAlloc(arena, FbleTypeFieldAccessType);
       type->_base.tag = FBLE_TYPE_FIELD_ACCESS_TYPE;
       type->_base.loc = @$;
@@ -185,7 +182,7 @@ type:
       type->field = $3;
       $$ = &type->_base;
    }
- | '&' type_name {
+ | '&' TYPE_NAME {
       assert(false && "TODO: Support type include?");
       $$ = NULL;
    }
@@ -195,7 +192,7 @@ type_block:
    '{' type_stmt '}' {
       $$ = $2;
    }
- | '<' kind type_name '>' type_block {
+ | '<' kind TYPE_NAME '>' type_block {
       FblePolyType* poly_type = FbleAlloc(arena, FblePolyType);
       poly_type->_base.tag = FBLE_POLY_TYPE;
       poly_type->_base.loc = @$;
@@ -387,7 +384,7 @@ block:
   '{' stmt '}' {
       $$ = $2;
     }
- | '<' kind type_name '>' block {
+ | '<' kind TYPE_NAME '>' block {
       FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
       poly_expr->_base.tag = FBLE_POLY_EXPR;
       poly_expr->_base.loc = @$;
@@ -508,7 +505,7 @@ choices:
   ;
 
 anon_struct_type_arg:
-    type_name {
+    TYPE_NAME {
       $$.name = $1;
       FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
       var_type->_base.tag = FBLE_VAR_TYPE;
@@ -516,7 +513,7 @@ anon_struct_type_arg:
       var_type->var = $1;
       $$.type = &var_type->_base;
     }
-  | type_name ':' type {
+  | TYPE_NAME ':' type {
       $$.name = $1;
       $$.type = $3;
     }
@@ -582,13 +579,13 @@ let_bindings:
   ;
 
 type_field_p:
-  '@' '<' type '>' type_name {
+  '@' '<' type '>' TYPE_NAME {
       FbleVectorInit(arena, $$);
       FbleField* binding = FbleVectorExtend(arena, $$);
       binding->name = $5;
       binding->type = $3;
     }
-  | type_field_p ',' '@' '<' type '>' type_name {
+  | type_field_p ',' '@' '<' type '>' TYPE_NAME {
       $$ = $1;
       FbleField* binding = FbleVectorExtend(arena, $$);
       binding->name = $7;
@@ -597,14 +594,14 @@ type_field_p:
   ;
 
 type_let_binding_p:
-  kind type_name '=' type {
+  kind TYPE_NAME '=' type {
       FbleVectorInit(arena, $$);
       FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
       binding->kind = $1;
       binding->name = $2;
       binding->type = $4;
     }
-  | type_let_binding_p ',' kind type_name '=' type {
+  | type_let_binding_p ',' kind TYPE_NAME '=' type {
       $$ = $1;
       FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
       binding->kind = $3;
@@ -648,7 +645,7 @@ exec_bindings:
 //   None.
 static bool IsNameChar(int c)
 {
-  return isalnum(c) || c == '_';
+  return isalnum(c) || c == '_' || c == '@';
 }
 
 // IsSingleChar --
@@ -766,6 +763,9 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
   lvalp->name.name = namev.xs;
   lvalp->name.loc = *llocp;
 
+  if (namev.size > 1 && namev.xs[namev.size - 2] == '@') {
+    return TYPE_NAME;
+  }
   return NAME;
 }
 

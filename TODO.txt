@@ -1,8 +1,8 @@
 Fble:
 * [lang] Migrate fble to new spec
-  - fix todo in compile type as expr
-  - fix todo in compile expr as type
-  - dedup abstract syntax entities.
+  - add typeof to abstract syntax.
+  - dedup normal and type fields in abstract syntax.
+  - dedup rest of supported abstract syntax.
 
 * [lang] Flesh out spec for new fble.
 
