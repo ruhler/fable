@@ -317,12 +317,6 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 // FbleRefAdd -- see documentation in fble-ref.h
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
-  if (src == NULL || dst == NULL) {
-    // TODO: Should we have this cut-out? Is it reasonable for callers to call
-    // with a null src or dst?
-    return;
-  }
-
   if (CycleHead(src) == CycleHead(dst)) {
     // Ignore new references within the same cycle.
     return;
