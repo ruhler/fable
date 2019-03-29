@@ -1596,7 +1596,8 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
     case FBLE_LET_TYPE:
     case FBLE_POLY_TYPE:
     case FBLE_POLY_APPLY_TYPE:
-    case FBLE_TYPE_FIELD_ACCESS_TYPE: {
+    case FBLE_TYPE_FIELD_ACCESS_TYPE:
+    case FBLE_TYPEOF_EXPR: {
       Type* type = CompileType(arena, vars, type_vars, expr);
       if (type == NULL) {
         return NULL;
@@ -3075,6 +3076,19 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       fprintf(stderr, "\n");
       TypeRelease(arena, type);
       return NULL;
+    }
+
+    case FBLE_TYPEOF_EXPR: {
+      FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
+      FbleInstrV instrs;
+      FbleVectorInit(arena_, instrs);
+      Type* type = CompileExpr(arena, vars, type_vars, typeof->expr, &instrs);
+      Eval(arena, type, NULL, NULL);
+      for (size_t i = 0; i < instrs.size; ++i) {
+        FreeInstr(arena_, instrs.xs[i]);
+      }
+      FbleFree(arena_, instrs.xs);
+      return type;
     }
 
     case FBLE_STRUCT_VALUE_EXPR:

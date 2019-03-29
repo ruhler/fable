@@ -132,6 +132,8 @@ typedef enum {
   FBLE_POLY_APPLY_TYPE,           // dup to FBLE_POLY_APPLY_EXPR
   FBLE_TYPE_FIELD_ACCESS_TYPE,    // dup to FBLE_ACCESS_EXPR
 
+  FBLE_TYPEOF_EXPR,
+
   FBLE_STRUCT_VALUE_EXPR,
   FBLE_ANON_STRUCT_VALUE_EXPR,
   FBLE_UNION_VALUE_EXPR,
@@ -299,6 +301,13 @@ typedef struct {
   size_t size;
   FbleExpr** xs;
 } FbleExprV;
+
+// FbleTypeofExpr --
+//   FBLE_TYPEOF_EXPR (expr :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* expr;
+} FbleTypeofExpr;
 
 // FbleStructValueExpr --
 //   FBLE_STRUCT_VALUE_EXPR (type :: Type) (args :: [Expr])
