@@ -1522,6 +1522,21 @@ static Type* Compile(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* ex
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (expr->tag) {
+    case FBLE_STRUCT_TYPE:
+    case FBLE_UNION_TYPE:
+    case FBLE_FUNC_TYPE:
+    case FBLE_PROC_TYPE:
+    case FBLE_INPUT_TYPE:
+    case FBLE_OUTPUT_TYPE:
+    case FBLE_VAR_TYPE:
+    case FBLE_LET_TYPE:
+    case FBLE_POLY_TYPE:
+    case FBLE_POLY_APPLY_TYPE:
+    case FBLE_TYPE_FIELD_ACCESS_TYPE: {
+      assert(false && "TODO: Compile type as expr");
+      return NULL;
+    }
+
     case FBLE_STRUCT_VALUE_EXPR: {
       FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
       Type* type = CompileType(arena, vars, type_vars, struct_value_expr->type);
@@ -2956,6 +2971,29 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       PrintType(arena_, type);
       fprintf(stderr, "\n");
       TypeRelease(arena, type);
+      return NULL;
+    }
+
+    case FBLE_STRUCT_VALUE_EXPR:
+    case FBLE_ANON_STRUCT_VALUE_EXPR:
+    case FBLE_UNION_VALUE_EXPR:
+    case FBLE_ACCESS_EXPR:
+    case FBLE_COND_EXPR:
+    case FBLE_FUNC_VALUE_EXPR:
+    case FBLE_FUNC_APPLY_EXPR:
+    case FBLE_GET_EXPR:
+    case FBLE_PUT_EXPR:
+    case FBLE_EVAL_EXPR:
+    case FBLE_LINK_EXPR:
+    case FBLE_EXEC_EXPR:
+    case FBLE_VAR_EXPR:
+    case FBLE_LET_EXPR:
+    case FBLE_TYPE_LET_EXPR:
+    case FBLE_POLY_EXPR:
+    case FBLE_POLY_APPLY_EXPR:
+    case FBLE_NAMESPACE_EVAL_EXPR:
+    case FBLE_NAMESPACE_IMPORT_EXPR: {
+      assert(false && "TODO: Compile expr as type");
       return NULL;
     }
   }

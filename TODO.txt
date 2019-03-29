@@ -4,9 +4,8 @@ Fble:
 
 * [lang] Flesh out spec for new fble.
 
-* [perf] Avoid copying captured contexts
-  - particularly for multi-arg functions.
-  - the trick is tracking references to values properly and efficiently.
+* [perf] Avoid high cost of copying captured contexts
+  - but how?
 
 * [test] Fix 8.3-07
  - debugging: S<T> ==> S'<T'>

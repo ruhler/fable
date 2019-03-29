@@ -117,7 +117,8 @@ typedef struct {
 } FbleTypeFieldV;
 
 // FbleTypeTag --
-//   A tag used to dinstinguish among different kinds of types.
+//   A tag used to dinstinguish among different kinds of types and
+//   expressions.
 typedef enum {
   FBLE_STRUCT_TYPE,
   FBLE_UNION_TYPE,
@@ -130,6 +131,26 @@ typedef enum {
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
   FBLE_TYPE_FIELD_ACCESS_TYPE,
+
+  FBLE_STRUCT_VALUE_EXPR,
+  FBLE_ANON_STRUCT_VALUE_EXPR,
+  FBLE_UNION_VALUE_EXPR,
+  FBLE_ACCESS_EXPR,       // Used for STRUCT_ACCESS, UNION_ACCESS
+  FBLE_COND_EXPR,
+  FBLE_FUNC_VALUE_EXPR,
+  FBLE_FUNC_APPLY_EXPR,
+  FBLE_GET_EXPR,
+  FBLE_PUT_EXPR,
+  FBLE_EVAL_EXPR,
+  FBLE_LINK_EXPR,
+  FBLE_EXEC_EXPR,
+  FBLE_VAR_EXPR,
+  FBLE_LET_EXPR,
+  FBLE_TYPE_LET_EXPR,
+  FBLE_POLY_EXPR,
+  FBLE_POLY_APPLY_EXPR,
+  FBLE_NAMESPACE_EVAL_EXPR,
+  FBLE_NAMESPACE_IMPORT_EXPR,
 } FbleTypeTag;
 
 // FbleType --
@@ -253,7 +274,12 @@ typedef struct {
   FbleType* arg;
 } FblePolyApplyType;
 
-typedef struct FbleExpr FbleExpr;
+// FbleExpr --
+//   A tagged union of expression types. All expressions have the same initial
+//   layout as FbleExpr. The tag can be used to determine what kind of
+//   expression this is to get access to additional fields of the expression
+//   by first casting to that specific type of expression.
+typedef FbleType FbleExpr;
 
 // FbleTypeFieldAccessType --
 //   FBLE_TYPE_FIELD_ACCESS_TYPE (expr :: Expr) (field :: Name)
@@ -265,37 +291,7 @@ typedef struct {
 
 // FbleExprTag --
 //   A tag used to distinguish among different kinds of expressions.
-typedef enum {
-  FBLE_STRUCT_VALUE_EXPR,
-  FBLE_ANON_STRUCT_VALUE_EXPR,
-  FBLE_UNION_VALUE_EXPR,
-  FBLE_ACCESS_EXPR,       // Used for STRUCT_ACCESS, UNION_ACCESS
-  FBLE_COND_EXPR,
-  FBLE_FUNC_VALUE_EXPR,
-  FBLE_FUNC_APPLY_EXPR,
-  FBLE_GET_EXPR,
-  FBLE_PUT_EXPR,
-  FBLE_EVAL_EXPR,
-  FBLE_LINK_EXPR,
-  FBLE_EXEC_EXPR,
-  FBLE_VAR_EXPR,
-  FBLE_LET_EXPR,
-  FBLE_TYPE_LET_EXPR,
-  FBLE_POLY_EXPR,
-  FBLE_POLY_APPLY_EXPR,
-  FBLE_NAMESPACE_EVAL_EXPR,
-  FBLE_NAMESPACE_IMPORT_EXPR,
-} FbleExprTag;
-
-// FbleExpr --
-//   A tagged union of expression types. All expressions have the same initial
-//   layout as FbleExpr. The tag can be used to determine what kind of
-//   expression this is to get access to additional fields of the expression
-//   by first casting to that specific type of expression.
-struct FbleExpr {
-  FbleExprTag tag;
-  FbleLoc loc;
-};
+typedef FbleTypeTag FbleExprTag;
 
 // FbleExprV --
 //   A vector of FbleExpr.
