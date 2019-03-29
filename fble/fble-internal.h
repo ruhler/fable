@@ -297,10 +297,13 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
 // FbleVStack --
 //   A stack of values.
-typedef struct FbleVStack {
-  FbleValue* value;
-  struct FbleVStack* tail;
-} FbleVStack;
+//
+// We re-use struct values so that we have proper reference tracking from
+// value to stack to value.
+//
+// fields[0] is the value on top of the stack.
+// fields[1] is the tail of the stack.
+typedef FbleStructValue FbleVStack;
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
