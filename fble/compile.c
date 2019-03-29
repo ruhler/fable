@@ -2977,25 +2977,77 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
     }
 
     case FBLE_STRUCT_VALUE_EXPR:
-    case FBLE_ANON_STRUCT_VALUE_EXPR:
-    case FBLE_UNION_VALUE_EXPR:
-    case FBLE_ACCESS_EXPR:
-    case FBLE_COND_EXPR:
-    case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_FUNC_APPLY_EXPR:
+    case FBLE_ANON_STRUCT_VALUE_EXPR: {
+      FbleReportError("Struct values cannot be used as types\n", &type->loc);
+      return NULL;
+    }
+
+    case FBLE_UNION_VALUE_EXPR: {
+      FbleReportError("Union values cannot be used as types\n", &type->loc);
+      return NULL;
+    }
+
+    case FBLE_ACCESS_EXPR: {
+      assert(false && "TODO: Compile access expr as type");
+      return NULL;
+    }
+
+    case FBLE_COND_EXPR: {
+      assert(false && "TODO: Compile cond expr as type");
+      return NULL;
+    }
+
+    case FBLE_FUNC_VALUE_EXPR: {
+      FbleReportError("Function values cannot be used as types\n", &type->loc);
+      return NULL;
+    }
+
+    case FBLE_FUNC_APPLY_EXPR: {
+      assert(false && "TODO: Compile func apply expr as type");
+      return NULL;
+    }
+
     case FBLE_GET_EXPR:
     case FBLE_PUT_EXPR:
     case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
-    case FBLE_EXEC_EXPR:
-    case FBLE_VAR_EXPR:
-    case FBLE_LET_EXPR:
-    case FBLE_TYPE_LET_EXPR:
-    case FBLE_POLY_EXPR:
-    case FBLE_POLY_APPLY_EXPR:
-    case FBLE_NAMESPACE_EVAL_EXPR:
+    case FBLE_EXEC_EXPR: {
+      FbleReportError("Proc values cannot be used as types\n", &type->loc);
+      return NULL;
+    }
+
+    case FBLE_VAR_EXPR: {
+      assert(false && "TODO: Compile var expr as type");
+      return NULL;
+    }
+
+    case FBLE_LET_EXPR: {
+      assert(false && "TODO: Compile let expr as type");
+      return NULL;
+    }
+
+    case FBLE_TYPE_LET_EXPR: {
+      assert(false && "TODO: Compile type let expr as type");
+      return NULL;
+    }
+
+    case FBLE_POLY_EXPR: {
+      assert(false && "TODO: Compile poly expr as type");
+      return NULL;
+    }
+
+    case FBLE_POLY_APPLY_EXPR: {
+      assert(false && "TODO: Compile poly apply expr as type");
+      return NULL;
+    }
+
+    case FBLE_NAMESPACE_EVAL_EXPR: {
+      assert(false && "TODO: Compile namespace eval as type");
+      return NULL;
+    }
+
     case FBLE_NAMESPACE_IMPORT_EXPR: {
-      assert(false && "TODO: Compile expr as type");
+      assert(false && "TODO: Compile namespace import as type");
       return NULL;
     }
   }
