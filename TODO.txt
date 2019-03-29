@@ -1,6 +1,8 @@
 Fble:
 * [lang] Migrate fble to new spec
-  - make FbleType part of FbleExpr
+  - fix todo in compile type as expr
+  - fix todo in compile expr as type
+  - dedup abstract syntax entities.
 
 * [lang] Flesh out spec for new fble.
 
