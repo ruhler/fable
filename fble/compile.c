@@ -248,6 +248,7 @@ static void PrintKind(Kind* type);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 
 static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstrV* instrs);
+static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr);
 static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
 
@@ -2668,8 +2669,39 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
   return NULL;
 }
 
+// CompileExprNoInstrs --
+//   Type check and compile the given expression. Returns the type of the
+//   expression.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   vars - the list of variables in scope.
+//   type_vars - the value of type variables in scope.
+//   expr - the expression to compile.
+//
+// Results:
+//   The type of the expression, or NULL if the expression is not well typed.
+//
+// Side effects:
+//   Prints a message to stderr if the expression fails to compile.
+//   Allocates a reference-counted type that must be freed using
+//   TypeRelease when it is no longer needed.
+static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr)
+{
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleInstrV instrs;
+  FbleVectorInit(arena_, instrs);
+  Type* type = CompileExpr(arena, vars, type_vars, expr, &instrs);
+  Eval(arena, type, NULL, NULL);
+  for (size_t i = 0; i < instrs.size; ++i) {
+    FreeInstr(arena_, instrs.xs[i]);
+  }
+  FbleFree(arena_, instrs.xs);
+  return type;
+}
+
 // CompileType --
-//   Compile a type. Returns the value of the type.
+//   Compile a type, returning its value.
 //
 // Inputs:
 //   arena - arena to use for allocations.
@@ -3041,18 +3073,11 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
 
     case FBLE_TYPE_FIELD_ACCESS_TYPE: {
       FbleTypeFieldAccessType* access_type = (FbleTypeFieldAccessType*)type;
-      FbleInstrV instrs;
-      FbleVectorInit(arena_, instrs);
-      Type* type = CompileExpr(arena, vars, type_vars, access_type->expr, &instrs);
+      Type* type = CompileExprNoInstrs(arena, vars, type_vars, access_type->expr);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         return NULL;
       }
-
-      for (size_t i = 0; i < instrs.size; ++i) {
-        FreeInstr(arena_, instrs.xs[i]);
-      }
-      FbleFree(arena_, instrs.xs);
 
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
@@ -3080,15 +3105,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
 
     case FBLE_TYPEOF_EXPR: {
       FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
-      FbleInstrV instrs;
-      FbleVectorInit(arena_, instrs);
-      Type* type = CompileExpr(arena, vars, type_vars, typeof->expr, &instrs);
-      Eval(arena, type, NULL, NULL);
-      for (size_t i = 0; i < instrs.size; ++i) {
-        FreeInstr(arena_, instrs.xs[i]);
-      }
-      FbleFree(arena_, instrs.xs);
-      return type;
+      return CompileExprNoInstrs(arena, vars, type_vars, typeof->expr);
     }
 
     case FBLE_STRUCT_VALUE_EXPR:
@@ -3103,7 +3120,40 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
     }
 
     case FBLE_ACCESS_EXPR: {
-      assert(false && "TODO: Compile access expr as type");
+      FbleAccessExpr* access_expr = (FbleAccessExpr*)type;
+      Type* type = CompileExprNoInstrs(arena, vars, type_vars, access_expr->object);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      StructType* struct_type = (StructType*)Normal(type);
+      if (struct_type->_base.tag != STRUCT_TYPE) {
+        FbleReportError("expected value of type struct, but found value of type ", &access_expr->object->loc);
+        PrintType(arena_, type);
+        TypeRelease(arena, type);
+        return NULL;
+      }
+
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        if (FbleNamesEqual(access_expr->field.name, struct_type->fields.xs[i].name.name)) {
+          TypeType* type_type = (TypeType*)struct_type->fields.xs[i].type;
+          if (type_type->_base.tag != TYPE_TYPE) {
+            // TODO: add support for poly type and other funny kinds of types too.
+            FbleReportError("expected a type, but found value of type ", &access_expr->_base.loc);
+            PrintType(arena_, &type_type->_base);
+            TypeRelease(arena, type);
+            return NULL;
+          }
+          TypeRetain(arena, &type_type->_base);
+          TypeRelease(arena, type);
+          return &type_type->_base;
+        }
+      }
+
+      FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
+      PrintType(arena_, type);
+      fprintf(stderr, "\n");
+      TypeRelease(arena, type);
       return NULL;
     }
 
