@@ -38,6 +38,7 @@
   FbleName name;
   FbleKind* kind;
   FbleType* type;
+  FbleTypeV types;
   FbleExpr* expr;
   FbleExprV exprs;
   FbleField field;
@@ -69,10 +70,11 @@
 
 %type <kind> kind
 %type <type> type type_block type_stmt 
+%type <types> type_p
 %type <expr> expr block stmt
 %type <exprs> expr_s expr_p
-%type <field> anon_struct_type_arg
-%type <fields> field_p field_s type_field_p anon_struct_type_arg_p
+%type <field> field
+%type <fields> field_p field_s
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
 %type <bindings> let_bindings exec_bindings
@@ -106,22 +108,6 @@ type:
       struct_type->_base.loc = @$;
       FbleVectorInit(arena, struct_type->type_fields);
       struct_type->fields = $3;
-      $$ = &struct_type->_base;
-   }
- | '*' '(' type_field_p ')' {
-      FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
-      struct_type->_base.tag = FBLE_STRUCT_TYPE;
-      struct_type->_base.loc = @$;
-      struct_type->type_fields = $3;
-      FbleVectorInit(arena, struct_type->fields);
-      $$ = &struct_type->_base;
-   }
- | '*' '(' type_field_p ',' field_p ')' {
-      FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
-      struct_type->_base.tag = FBLE_STRUCT_TYPE;
-      struct_type->_base.loc = @$;
-      struct_type->type_fields = $3;
-      struct_type->fields = $5;
       $$ = &struct_type->_base;
    }
  | '+' '(' field_p ')' {
@@ -175,12 +161,12 @@ type:
       $$ = NULL;
    }
  | expr '.'  TYPE_NAME {
-      FbleTypeFieldAccessType* type = FbleAlloc(arena, FbleTypeFieldAccessType);
-      type->_base.tag = FBLE_TYPE_FIELD_ACCESS_TYPE;
-      type->_base.loc = @$;
-      type->expr = $1;
-      type->field = $3;
-      $$ = &type->_base;
+      FbleAccessExpr* access_expr = FbleAlloc(arena, FbleAccessExpr);
+      access_expr->_base.tag = FBLE_ACCESS_EXPR;
+      access_expr->_base.loc = @$;
+      access_expr->object = $1;
+      access_expr->field = $3;
+      $$ = &access_expr->_base;
    }
  | '&' TYPE_NAME {
       assert(false && "TODO: Support type include?");
@@ -223,23 +209,49 @@ type_stmt:
     }  
   ;
 
+type_p:
+   type {
+     FbleVectorInit(arena, $$);
+     FbleVectorAppend(arena, $$, $1);
+   }
+ | type_p ',' type {
+     $$ = $1;
+     FbleVectorAppend(arena, $$, $3);
+   }
+ ;
+
+field:
+   type NAME {
+     $$.type = $1;
+     $$.name = $2;
+   }
+ | '@' '<' type '>' TYPE_NAME {
+     FbleTypeofExpr* typeof = FbleAlloc(arena, FbleTypeofExpr);
+     typeof->_base.tag = FBLE_TYPEOF_EXPR;
+     typeof->_base.loc = @$;
+     typeof->expr = $3;
+     $$.type = &typeof->_base;
+     $$.name = $5;
+   }
+ ;
+
 field_s:
    %empty { FbleVectorInit(arena, $$); }
  | field_p { $$ = $1; }
  ;
 
 field_p:
-   type NAME {
+   field {
      FbleVectorInit(arena, $$);
      FbleField* field = FbleVectorExtend(arena, $$);
-     field->type = $1;
-     field->name = $2;
+     field->type = $1.type;
+     field->name = $1.name;
    }
- | field_p ',' type NAME {
+ | field_p ',' field {
      $$ = $1;
      FbleField* field = FbleVectorExtend(arena, $$);
-     field->type = $3;
-     field->name = $4;
+     field->type = $3.type;
+     field->name = $3.name;
    }
  ;
 
@@ -252,28 +264,24 @@ expr:
       struct_value_expr->args = $3;
       $$ = &struct_value_expr->_base;
    }
+ | type '(' type_p ',' expr_s ')' {
+      FbleStructValueExpr* struct_value_expr = FbleAlloc(arena, FbleStructValueExpr);
+      struct_value_expr->_base.tag = FBLE_STRUCT_VALUE_EXPR;
+      struct_value_expr->_base.loc = @$;
+      struct_value_expr->type = $1;
+      struct_value_expr->args = $3;
+      for (size_t i = 0; i < $5.size; ++i) {
+        FbleVectorAppend(arena, struct_value_expr->args, $5.xs[i]);
+      }
+      FbleFree(arena, $5.xs);
+      $$ = &struct_value_expr->_base;
+   }
  | '@' '(' anon_struct_arg_s ')' {
       FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
       expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
       expr->_base.loc = @$;
       FbleVectorInit(arena, expr->type_args);
       expr->args = $3;
-      $$ = &expr->_base;
-   }
- | '@' '(' anon_struct_type_arg_p ')' {
-      FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
-      expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
-      expr->_base.loc = @$;
-      expr->type_args = $3;
-      FbleVectorInit(arena, expr->args);
-      $$ = &expr->_base;
-   }
- | '@' '(' anon_struct_type_arg_p ',' anon_struct_arg_p ')' {
-      FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
-      expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
-      expr->_base.loc = @$;
-      expr->type_args = $3;
-      expr->args = $5;
       $$ = &expr->_base;
    }
  | type '(' NAME ':' expr ')' {
@@ -504,32 +512,6 @@ choices:
     }
   ;
 
-anon_struct_type_arg:
-    TYPE_NAME {
-      $$.name = $1;
-      FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
-      var_type->_base.tag = FBLE_VAR_TYPE;
-      var_type->_base.loc = @$;
-      var_type->var = $1;
-      $$.type = &var_type->_base;
-    }
-  | TYPE_NAME ':' type {
-      $$.name = $1;
-      $$.type = $3;
-    }
-  ;
-
-anon_struct_type_arg_p:
-  anon_struct_type_arg {
-      FbleVectorInit(arena, $$);
-      FbleVectorAppend(arena, $$, $1);
-    }
-  | anon_struct_type_arg_p ',' anon_struct_type_arg {
-      $$ = $1;
-      FbleVectorAppend(arena, $$, $3);
-    }
-  ;
-
 anon_struct_arg:
     NAME {
       $$.name = $1;
@@ -540,6 +522,18 @@ anon_struct_arg:
       $$.expr = &var_expr->_base;
     }
   | NAME ':' expr {
+      $$.name = $1;
+      $$.expr = $3;
+    }
+  | TYPE_NAME {
+      $$.name = $1;
+      FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
+      var_type->_base.tag = FBLE_VAR_TYPE;
+      var_type->_base.loc = @$;
+      var_type->var = $1;
+      $$.expr = &var_type->_base;
+    }
+  | TYPE_NAME ':' type {
       $$.name = $1;
       $$.expr = $3;
     }
@@ -575,21 +569,6 @@ let_bindings:
       binding->type = $3;
       binding->name = $4;
       binding->expr = $6;
-    }
-  ;
-
-type_field_p:
-  '@' '<' type '>' TYPE_NAME {
-      FbleVectorInit(arena, $$);
-      FbleField* binding = FbleVectorExtend(arena, $$);
-      binding->name = $5;
-      binding->type = $3;
-    }
-  | type_field_p ',' '@' '<' type '>' TYPE_NAME {
-      $$ = $1;
-      FbleField* binding = FbleVectorExtend(arena, $$);
-      binding->name = $7;
-      binding->type = $5;
     }
   ;
 

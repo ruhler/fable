@@ -4,7 +4,7 @@ fble-test {
 
   # A struct type with a type field.
   @ BoolM@ = *(@<B@> Bool@, B@ True, B@ False);
-  BoolM@ BoolM = BoolM@(B@(true: Unit@()), B@(false: Unit@()));
+  BoolM@ BoolM = BoolM@(B@, B@(true: Unit@()), B@(false: Unit@()));
 
   BoolM.True.true;
 }

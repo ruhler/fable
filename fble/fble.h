@@ -297,10 +297,7 @@ typedef FbleTypeTag FbleExprTag;
 
 // FbleExprV --
 //   A vector of FbleExpr.
-typedef struct {
-  size_t size;
-  FbleExpr** xs;
-} FbleExprV;
+typedef FbleTypeV FbleExprV;
 
 // FbleTypeofExpr --
 //   FBLE_TYPEOF_EXPR (expr :: Expr)

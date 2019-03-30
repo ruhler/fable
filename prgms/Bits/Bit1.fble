@@ -52,5 +52,5 @@
     Result@(cin, a);
   };
 
-  BitN@<Bit@>(not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
+  BitN@<Bit@>(Result@, not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
 };

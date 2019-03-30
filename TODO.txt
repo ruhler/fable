@@ -26,6 +26,7 @@ Fble:
     preserved across substitution and use that to detect if they are the same.
 
 Fble Cleanup:
+* Test namespace eval with mixed type and normal fields.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
 * Test what gets evaluated at eval vs. exec time for each kind of process.

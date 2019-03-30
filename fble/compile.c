@@ -1409,7 +1409,7 @@ static void PrintType(FbleArena* arena, Type* type)
 
     case VAR_TYPE: {
       VarType* var_type = (VarType*)type;
-      fprintf(stderr, "%s@", var_type->var.name);
+      fprintf(stderr, "%s", var_type->var.name);
       break;
     }
 
@@ -1604,42 +1604,20 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
         return NULL;
       }
 
-      Type* typeof = NULL;
-      switch (type->tag) {
-        case STRUCT_TYPE:
-        case UNION_TYPE:
-        case FUNC_TYPE:
-        case PROC_TYPE:
-        case INPUT_TYPE:
-        case OUTPUT_TYPE:
-        case TYPE_TYPE: {
-          TypeType* type_type = FbleAlloc(arena_, TypeType);
-          FbleRefInit(arena, &type_type->_base.ref);
-          type_type->_base.tag = TYPE_TYPE;
-          type_type->_base.loc = expr->loc;
-          type_type->type = type;
-          FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
-          typeof = &type_type->_base;
-          break;
-        }
+      assert(type->tag != POLY_TYPE && "TODO: typeof poly type");
 
-        case VAR_TYPE:
-        case ABSTRACT_TYPE:
-        case POLY_TYPE:
-        case POLY_APPLY_TYPE:
-        case REF_TYPE: {
-          assert(false && "TODO: typeof funny types.");
-          typeof = NULL;
-          break;
-        }
-      }
-
+      TypeType* type_type = FbleAlloc(arena_, TypeType);
+      FbleRefInit(arena, &type_type->_base.ref);
+      type_type->_base.tag = TYPE_TYPE;
+      type_type->_base.loc = expr->loc;
+      type_type->type = type;
+      FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
       TypeRelease(arena, type);
 
       FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-      return typeof;
+      return &type_type->_base;
     }
 
     case FBLE_STRUCT_VALUE_EXPR: {
@@ -2629,18 +2607,23 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
         FbleVectorAppend(arena_, *instrs, &nspace->_base);
       }
 
-      Vars ntvd[struct_type->type_fields.size];
-      Vars* ntype_vars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : type_vars;
-      for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
-        ntvd[i].name = struct_type->type_fields.xs[i].name;
-        ntvd[i].type = struct_type->type_fields.xs[i].type;
-        ntvd[i].next = ntype_vars;
-        ntype_vars = ntvd + i;
-      }
+      assert(struct_type->type_fields.size == 0);
 
+      Vars ntvd[struct_type->fields.size];
+      Vars* ntype_vars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : type_vars;
       Vars nvd[struct_type->fields.size];
       Vars* nvars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : vars;
+
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        // TODO: Make sure all kinds of types are handled properly here.
+        TypeType* type_type = (TypeType*)Normal(struct_type->fields.xs[i].type);
+        if (type_type->_base.tag == TYPE_TYPE) {
+          ntvd[i].name = struct_type->fields.xs[i].name;
+          ntvd[i].type = type_type->type;
+          ntvd[i].next = ntype_vars;
+          ntype_vars = ntvd + i;
+        }
+
         nvd[i].name = struct_type->fields.xs[i].name;
         nvd[i].type = struct_type->fields.xs[i].type;
         nvd[i].next = nvars;
@@ -3109,111 +3092,41 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
     }
 
     case FBLE_STRUCT_VALUE_EXPR:
-    case FBLE_ANON_STRUCT_VALUE_EXPR: {
-      FbleReportError("Struct values cannot be used as types\n", &type->loc);
-      return NULL;
-    }
-
-    case FBLE_UNION_VALUE_EXPR: {
-      FbleReportError("Union values cannot be used as types\n", &type->loc);
-      return NULL;
-    }
-
-    case FBLE_ACCESS_EXPR: {
-      FbleAccessExpr* access_expr = (FbleAccessExpr*)type;
-      Type* type = CompileExprNoInstrs(arena, vars, type_vars, access_expr->object);
-      if (type == NULL) {
-        return NULL;
-      }
-
-      StructType* struct_type = (StructType*)Normal(type);
-      if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected value of type struct, but found value of type ", &access_expr->object->loc);
-        PrintType(arena_, type);
-        TypeRelease(arena, type);
-        return NULL;
-      }
-
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        if (FbleNamesEqual(access_expr->field.name, struct_type->fields.xs[i].name.name)) {
-          TypeType* type_type = (TypeType*)struct_type->fields.xs[i].type;
-          if (type_type->_base.tag != TYPE_TYPE) {
-            // TODO: add support for poly type and other funny kinds of types too.
-            FbleReportError("expected a type, but found value of type ", &access_expr->_base.loc);
-            PrintType(arena_, &type_type->_base);
-            TypeRelease(arena, type);
-            return NULL;
-          }
-          TypeRetain(arena, &type_type->_base);
-          TypeRelease(arena, type);
-          return &type_type->_base;
-        }
-      }
-
-      FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
-      PrintType(arena_, type);
-      fprintf(stderr, "\n");
-      TypeRelease(arena, type);
-      return NULL;
-    }
-
-    case FBLE_COND_EXPR: {
-      assert(false && "TODO: Compile cond expr as type");
-      return NULL;
-    }
-
-    case FBLE_FUNC_VALUE_EXPR: {
-      FbleReportError("Function values cannot be used as types\n", &type->loc);
-      return NULL;
-    }
-
-    case FBLE_FUNC_APPLY_EXPR: {
-      assert(false && "TODO: Compile func apply expr as type");
-      return NULL;
-    }
-
+    case FBLE_ANON_STRUCT_VALUE_EXPR:
+    case FBLE_UNION_VALUE_EXPR:
+    case FBLE_ACCESS_EXPR:
+    case FBLE_COND_EXPR:
+    case FBLE_FUNC_VALUE_EXPR:
+    case FBLE_FUNC_APPLY_EXPR:
     case FBLE_GET_EXPR:
     case FBLE_PUT_EXPR:
     case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
-    case FBLE_EXEC_EXPR: {
-      FbleReportError("Proc values cannot be used as types\n", &type->loc);
-      return NULL;
-    }
-
-    case FBLE_VAR_EXPR: {
-      assert(false && "TODO: Compile var expr as type");
-      return NULL;
-    }
-
-    case FBLE_LET_EXPR: {
-      assert(false && "TODO: Compile let expr as type");
-      return NULL;
-    }
-
-    case FBLE_TYPE_LET_EXPR: {
-      assert(false && "TODO: Compile type let expr as type");
-      return NULL;
-    }
-
-    case FBLE_POLY_EXPR: {
-      assert(false && "TODO: Compile poly expr as type");
-      return NULL;
-    }
-
-    case FBLE_POLY_APPLY_EXPR: {
-      assert(false && "TODO: Compile poly apply expr as type");
-      return NULL;
-    }
-
-    case FBLE_NAMESPACE_EVAL_EXPR: {
-      assert(false && "TODO: Compile namespace eval as type");
-      return NULL;
-    }
-
+    case FBLE_EXEC_EXPR:
+    case FBLE_VAR_EXPR:
+    case FBLE_LET_EXPR:
+    case FBLE_TYPE_LET_EXPR:
+    case FBLE_POLY_EXPR:
+    case FBLE_POLY_APPLY_EXPR:
+    case FBLE_NAMESPACE_EVAL_EXPR:
     case FBLE_NAMESPACE_IMPORT_EXPR: {
-      assert(false && "TODO: Compile namespace import as type");
-      return NULL;
+      FbleExpr* expr = type;
+      Type* type = CompileExprNoInstrs(arena, vars, type_vars, expr);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      TypeType* type_type = (TypeType*)Normal(type);
+      if (type_type->_base.tag != TYPE_TYPE) {
+        // TODO: add support for poly type and other funny kinds of types too.
+        FbleReportError("expected a type, but found value of type ", &expr->loc);
+        PrintType(arena_, &type_type->_base);
+        TypeRelease(arena, type);
+        return NULL;
+      }
+      TypeRetain(arena, type_type->type);
+      TypeRelease(arena, type);
+      return type_type->type;
     }
   }
 

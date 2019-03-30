@@ -765,6 +765,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       case FBLE_TYPE_INSTR: {
         FbleTypeValue* value = FbleAlloc(arena_, FbleTypeValue);
         FbleRefInit(arena, &value->_base.ref);
+        value->_base.tag = FBLE_TYPE_VALUE;
         thread->data_stack = DPush(arena_, &value->_base, thread->data_stack);
         break;
       }

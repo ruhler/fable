@@ -55,6 +55,6 @@
       lshift[a][msb[a]].z;
     };
 
-    BitN@<Bit2X@>(not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
+    BitN@<Bit2X@>(Result@, not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
   };
 };
