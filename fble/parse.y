@@ -106,7 +106,6 @@ type:
       FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
       struct_type->_base.tag = FBLE_STRUCT_TYPE;
       struct_type->_base.loc = @$;
-      FbleVectorInit(arena, struct_type->type_fields);
       struct_type->fields = $3;
       $$ = &struct_type->_base;
    }

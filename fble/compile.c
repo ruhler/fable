@@ -102,7 +102,6 @@ typedef struct {
 // StructType -- STRUCT_TYPE
 typedef struct {
   Type _base;
-  FieldV type_fields;
   FieldV fields;
 } StructType;
 
@@ -357,7 +356,6 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
-      FbleFree(arena_, st->type_fields.xs);
       FbleFree(arena_, st->fields.xs);
       FbleFree(arena_, st);
       break;
@@ -429,9 +427,6 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
-      for (size_t i = 0; i < st->type_fields.size; ++i) {
-        Add(add, st->type_fields.xs[i].type);
-      }
       for (size_t i = 0; i < st->fields.size; ++i) {
         Add(add, st->fields.xs[i].type);
       }
@@ -610,11 +605,6 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
-      for (size_t i = 0; i < st->type_fields.size; ++i) {
-        if (HasParam(st->type_fields.xs[i].type, param, &nv)) {
-          return true;
-        }
-      }
       for (size_t i = 0; i < st->fields.size; ++i) {
         if (HasParam(st->fields.xs[i].type, param, &nv)) {
           return true;
@@ -721,15 +711,6 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
       FbleRefInit(arena, &sst->_base.ref);
       sst->_base.tag = STRUCT_TYPE;
       sst->_base.loc = st->_base.loc;
-
-      FbleVectorInit(arena_, sst->type_fields);
-      for (size_t i = 0; i < st->type_fields.size; ++i) {
-        Field* field = FbleVectorExtend(arena_, sst->type_fields);
-        field->name = st->type_fields.xs[i].name;
-        field->type = Subst(arena, st->type_fields.xs[i].type, param, arg, tps);
-        FbleRefAdd(arena, &sst->_base.ref, &field->type->ref);
-        TypeRelease(arena, field->type);
-      }
 
       FbleVectorInit(arena_, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
@@ -948,9 +929,6 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
-      for (size_t i = 0; i < st->type_fields.size; ++i) {
-        Eval(arena, st->type_fields.xs[i].type, &nevaled, applied);
-      }
       for (size_t i = 0; i < st->fields.size; ++i) {
         Eval(arena, st->fields.xs[i].type, &nevaled, applied);
       }
@@ -1162,19 +1140,6 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
     case STRUCT_TYPE: {
       StructType* sta = (StructType*)a;
       StructType* stb = (StructType*)b;
-      if (sta->type_fields.size != stb->type_fields.size) {
-        return false;
-      }
-
-      for (size_t i = 0; i < sta->type_fields.size; ++i) {
-        if (!FbleNamesEqual(sta->type_fields.xs[i].name.name, stb->type_fields.xs[i].name.name)) {
-          return false;
-        }
-
-        if (!TypesEqual(sta->type_fields.xs[i].type, stb->type_fields.xs[i].type, &neq)) {
-          return false;
-        }
-      }
 
       if (sta->fields.size != stb->fields.size) {
         return false;
@@ -1342,16 +1307,6 @@ static void PrintType(FbleArena* arena, Type* type)
       StructType* st = (StructType*)type;
       fprintf(stderr, "*(");
       const char* comma = "";
-      for (size_t i = 0; i < st->type_fields.size; ++i) {
-        fprintf(stderr, "%s", comma);
-        Kind* kind = GetKind(arena, st->type_fields.xs[i].type);
-        PrintKind(kind);
-        FreeKind(arena, kind);
-        fprintf(stderr, " %s@ = ", st->type_fields.xs[i].name.name);
-        PrintType(arena, st->type_fields.xs[i].type);
-        comma = ", ";
-      }
-
       for (size_t i = 0; i < st->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
         PrintType(arena, st->fields.xs[i].type);
@@ -1597,7 +1552,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
     case FBLE_LET_TYPE:
     case FBLE_POLY_TYPE:
     case FBLE_POLY_APPLY_TYPE:
-    case FBLE_TYPE_FIELD_ACCESS_TYPE:
     case FBLE_TYPEOF_EXPR: {
       Type* type = CompileType(arena, vars, type_vars, expr);
       if (type == NULL) {
@@ -1682,31 +1636,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       FbleRefInit(arena, &struct_type->_base.ref);
       struct_type->_base.loc = expr->loc;
       struct_type->_base.tag = STRUCT_TYPE;
-      FbleVectorInit(arena_, struct_type->type_fields);
       FbleVectorInit(arena_, struct_type->fields);
 
       bool error = false;
-      for (size_t i = 0; i < struct_expr->type_args.size; ++i) {
-        FbleField* field = struct_expr->type_args.xs + i;
-        Type* type = CompileType(arena, vars, type_vars, field->type);
-        Eval(arena, type, NULL, NULL);
-        error = error || (type == NULL);
-        if (type != NULL) {
-          Field* cfield = FbleVectorExtend(arena_, struct_type->type_fields);
-          cfield->name = field->name;
-          cfield->type = type;
-          FbleRefAdd(arena, &struct_type->_base.ref, &cfield->type->ref);
-          TypeRelease(arena, type);
-        }
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name.name, struct_expr->type_args.xs[j].name.name)) {
-            error = true;
-            FbleReportError("duplicate type field name '%s'\n", &field->name.loc, struct_expr->type_args.xs[j].name.name);
-          }
-        }
-      }
-
       for (size_t i = 0; i < struct_expr->args.size; ++i) {
         FbleChoice* choice = struct_expr->args.xs + i;
         Type* arg_type = CompileExpr(arena, vars, type_vars, choice->expr, instrs);
@@ -2607,8 +2539,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
         FbleVectorAppend(arena_, *instrs, &nspace->_base);
       }
 
-      assert(struct_type->type_fields.size == 0);
-
       Vars ntvd[struct_type->fields.size];
       Vars* ntype_vars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : type_vars;
       Vars nvd[struct_type->fields.size];
@@ -2709,32 +2639,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       FbleRefInit(arena, &st->_base.ref);
       st->_base.loc = type->loc;
       st->_base.tag = STRUCT_TYPE;
-      FbleVectorInit(arena_, st->type_fields);
       FbleVectorInit(arena_, st->fields);
-
-      for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
-        FbleField* field = struct_type->type_fields.xs + i;
-
-        Type* type = CompileType(arena, vars, type_vars, field->type);
-        if (type == NULL) {
-          TypeRelease(arena, &st->_base);
-          return NULL;
-        }
-
-        Field* cfield = FbleVectorExtend(arena_, st->type_fields);
-        cfield->name = field->name;
-        cfield->type = type;
-        FbleRefAdd(arena, &st->_base.ref, &cfield->type->ref);
-        TypeRelease(arena, type);
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name.name, struct_type->type_fields.xs[j].name.name)) {
-            FbleReportError("duplicate type field name '%s'\n", &field->name.loc, field->name.name);
-            TypeRelease(arena, &st->_base);
-            return NULL;
-          }
-        }
-      }
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         FbleField* field = struct_type->fields.xs + i;
@@ -3052,38 +2957,6 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
       }
 
       return &pat->_base;
-    }
-
-    case FBLE_TYPE_FIELD_ACCESS_TYPE: {
-      FbleTypeFieldAccessType* access_type = (FbleTypeFieldAccessType*)type;
-      Type* type = CompileExprNoInstrs(arena, vars, type_vars, access_type->expr);
-      Eval(arena, type, NULL, NULL);
-      if (type == NULL) {
-        return NULL;
-      }
-
-      StructType* struct_type = (StructType*)Normal(type);
-      if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected expression of type struct, but found expression of type ", &access_type->expr->loc);
-        PrintType(arena_, type);
-        fprintf(stderr, "\n");
-        TypeRelease(arena, type);
-        return NULL;
-      }
-
-      for (size_t i = 0; i < struct_type->type_fields.size; ++i) {
-        if (FbleNamesEqual(access_type->field.name, struct_type->type_fields.xs[i].name.name)) {
-          Type* rtype = TypeRetain(arena, struct_type->type_fields.xs[i].type);
-          TypeRelease(arena, type);
-          return rtype;
-        }
-      }
-
-      FbleReportError("%s@ is not a type field of type ", &access_type->field.loc, access_type->field.name);
-      PrintType(arena_, type);
-      fprintf(stderr, "\n");
-      TypeRelease(arena, type);
-      return NULL;
     }
 
     case FBLE_TYPEOF_EXPR: {
