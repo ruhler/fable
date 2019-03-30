@@ -403,8 +403,12 @@ typedef struct {
 } FbleLinkExpr;
 
 // FbleBinding --
-//   A triple of (Type, Name, Expr) used in let and exec expressions.
+//   (Kind, Type, Name, Expr) used in let and exec expressions.
+// Exactly one of Kind or Type should be NULL. If the Kind is null, it is
+// inferred from the given Type. If the Type is null, it is inferred from the
+// given Expr.
 typedef struct {
+  FbleKind* kind;
   FbleType* type;
   FbleName name;
   FbleExpr* expr;

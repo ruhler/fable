@@ -2295,10 +2295,25 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       Vars nvd[let_expr->bindings.size];
       Vars* nvars = vars;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleBinding* binding = let_expr->bindings.xs + i;
+
         nvd[i].name = let_expr->bindings.xs[i].name;
-        nvd[i].type = CompileType(arena, vars, type_vars, let_expr->bindings.xs[i].type);
-        Eval(arena, nvd[i].type, NULL, NULL);
-        error = error || (nvd[i].type == NULL);
+        if (binding->type == NULL) {
+          assert(binding->kind != NULL);
+          RefType* ref = FbleAlloc(arena_, RefType);
+          FbleRefInit(arena, &ref->_base.ref);
+          ref->_base.tag = REF_TYPE;
+          ref->_base.loc = binding->name.loc;
+          ref->kind = CompileKind(arena_, binding->kind);
+          ref->value = NULL;
+          nvd[i].type = &ref->_base;
+        } else {
+          assert(binding->kind == NULL);
+          nvd[i].type = CompileType(arena, vars, type_vars, binding->type);
+          Eval(arena, nvd[i].type, NULL, NULL);
+          error = error || (nvd[i].type == NULL);
+        }
+
         nvd[i].next = nvars;
         nvars = nvd + i;
       }
@@ -2310,21 +2325,46 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
 
       // Compile the values of the variables.
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleBinding* binding = let_expr->bindings.xs + i;
+
         Type* type = NULL;
         if (!error) {
-          type = CompileExpr(arena, nvars, type_vars, let_expr->bindings.xs[i].expr, instrs);
+          type = CompileExpr(arena, nvars, type_vars, binding->expr, instrs);
           Eval(arena, type, NULL, NULL);
         }
         error = error || (type == NULL);
 
-        if (!error && !TypesEqual(nvd[i].type, type, NULL)) {
+        if (!error && binding->type != NULL && !TypesEqual(nvd[i].type, type, NULL)) {
           error = true;
           FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
           PrintType(arena_, nvd[i].type);
           fprintf(stderr, ", but found ");
           PrintType(arena_, type);
           fprintf(stderr, "\n");
+        } else if (!error && binding->type == NULL) {
+          RefType* ref = (RefType*)nvd[i].type;
+          assert(ref->_base.tag == REF_TYPE);
+
+          Kind* expected_kind = ref->kind;
+          Kind* actual_kind = GetKind(arena_, type);
+          if (!KindsEqual(expected_kind, actual_kind)) {
+            FbleReportError("expected kind ", &type->loc);
+            PrintKind(expected_kind);
+            fprintf(stderr, ", but found ");
+            PrintKind(actual_kind);
+            fprintf(stderr, "\n");
+            error = true;
+          }
+          FreeKind(arena_, actual_kind);
+
+          ref->value = type;
+          if (ref->value != NULL) {
+            FbleRefAdd(arena, &ref->_base.ref, &ref->value->ref);
+          }
+          nvd[i].type = TypeRetain(arena, ref->value);
+          TypeRelease(arena, &ref->_base);
         }
+
         TypeRelease(arena, type);
       }
 

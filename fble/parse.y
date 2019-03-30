@@ -558,6 +558,7 @@ let_bindings:
   type NAME '=' expr {
       FbleVectorInit(arena, $$);
       FbleBinding* binding = FbleVectorExtend(arena, $$);
+      binding->kind = NULL;
       binding->type = $1;
       binding->name = $2;
       binding->expr = $4;
@@ -565,6 +566,7 @@ let_bindings:
   | let_bindings ',' type NAME '=' expr {
       $$ = $1;
       FbleBinding* binding = FbleVectorExtend(arena, $$);
+      binding->kind = NULL;
       binding->type = $3;
       binding->name = $4;
       binding->expr = $6;
@@ -592,6 +594,7 @@ exec_bindings:
   type NAME ':' '=' expr {
       FbleVectorInit(arena, $$);
       FbleBinding* binding = FbleVectorExtend(arena, $$);
+      binding->kind = NULL;
       binding->type = $1;
       binding->name = $2;
       binding->expr = $5;
@@ -599,6 +602,7 @@ exec_bindings:
   | exec_bindings ',' type NAME ':' '=' expr {
       $$ = $1;
       FbleBinding* binding = FbleVectorExtend(arena, $$);
+      binding->kind = NULL;
       binding->type = $3;
       binding->name = $4;
       binding->expr = $7;
