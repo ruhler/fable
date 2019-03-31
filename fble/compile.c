@@ -2478,19 +2478,41 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       arg->kind = CompileKind(arena_, poly->arg.kind);
       pt->arg = &arg->_base;
       FbleRefAdd(arena, &pt->_base.ref, &arg->_base.ref);
+
+      TypeType* type_type = FbleAlloc(arena_, TypeType);
+      FbleRefInit(arena, &type_type->_base.ref);
+      type_type->_base.tag = TYPE_TYPE;
+      type_type->_base.loc = poly->arg.name.loc;
+      type_type->type = &arg->_base;
+      FbleRefAdd(arena, &type_type->_base.ref, &arg->_base.ref);
+
       TypeRelease(arena, &arg->_base);
 
-      Vars ntvs = {
+      Vars nvars = {
         .name = poly->arg.name,
-        .type = &arg->_base,
-        .next = type_vars
+        .type = &type_type->_base,
+        .next = vars
       };
 
-      pt->body = CompileExpr(arena, vars, &ntvs, poly->body, instrs);
+      // TODO: It's a little silly to be allocating space on the variable
+      // stack for the type variable at runtime. If we are going to optimize
+      // this, how about optimize it out entirely? Or consider evaluating the
+      // arg at poly apply type and pushing it on the stack then.
+      FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
+      type_instr->_base.tag = FBLE_TYPE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &type_instr->_base);
+
+      pt->body = CompileExpr(arena, &nvars, type_vars, poly->body, instrs);
+      TypeRelease(arena, &type_type->_base);
       if (pt->body == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
       }
+
+      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+      descope->_base.tag = FBLE_DESCOPE_INSTR;
+      descope->count = 1;
+      FbleVectorAppend(arena_, *instrs, &descope->_base);
 
       return &pt->_base;
     }
