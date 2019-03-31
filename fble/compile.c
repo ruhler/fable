@@ -244,6 +244,8 @@ static bool KindsEqual(Kind* a, Kind* b);
 static void PrintType(FbleArena* arena, Type* type);
 static void PrintKind(Kind* type);
 
+static Type* ValueOfType(TypeArena* arena, Type* typeof);
+
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 
 static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr* expr, FbleInstrV* instrs);
@@ -1391,7 +1393,7 @@ static void PrintType(FbleArena* arena, Type* type)
     }
 
     case REF_TYPE: {
-      RefType* ref = (RefType*)ref;
+      RefType* ref = (RefType*)type;
       if (ref->value == NULL) {
         fprintf(stderr, "??%p", (void*)type);
       } else {
@@ -1439,6 +1441,67 @@ static void PrintKind(Kind* kind)
       break;
     }
   }
+}
+
+// ValueOfType --
+//   Returns the value of a type given the type of the type.
+//
+// Inputs:
+//   arena - type arena for allocations.
+//   typeof - the type of the type to get the value of.
+//
+// Results:
+//   The value of the type to get the value of. Or NULL if the value is not a
+//   type.
+//
+// Side effects:
+//   The returned type must be released using TypeRelease when no longer
+//   needed.
+static Type* ValueOfType(TypeArena* arena, Type* typeof)
+{
+  switch (typeof->tag) {
+    case STRUCT_TYPE:
+    case UNION_TYPE:
+    case FUNC_TYPE:
+    case PROC_TYPE:
+    case INPUT_TYPE:
+    case OUTPUT_TYPE: {
+      return NULL;
+    }
+
+    case VAR_TYPE: {
+      assert(false && "TODO: value of var type");
+      return NULL;
+    }
+
+    case ABSTRACT_TYPE: {
+      assert(false && "TODO: value of abstract type");
+      return NULL;
+    }
+
+    case POLY_TYPE: {
+      assert(false && "TODO: value of poly type");
+      return NULL;
+    }
+
+    case POLY_APPLY_TYPE: {
+      assert(false && "TODO: value of poly apply type");
+      return NULL;
+    }
+
+    case REF_TYPE: {
+      assert(false && "TODO: value of ref type");
+      return NULL;
+    }
+
+    case TYPE_TYPE: {
+      TypeType* type_type = (TypeType*)Normal(typeof);
+      return TypeRetain(arena, type_type->type);
+    }
+  }
+
+  UNREACHABLE("Should never get here");
+  return NULL;
 }
 
 // FreeInstr --
@@ -2156,7 +2219,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       }
 
       if (Normal(type)->tag != PROC_TYPE) {
-        FbleReportError("expected a value of type proc, but found ", &type->loc);
+        FbleReportError("expected a value of type proc, but found ", &link_expr->body->loc);
         PrintType(arena_, type);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
@@ -2294,6 +2357,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
       // Evaluate the types of the bindings and set up the new vars.
       Vars nvd[let_expr->bindings.size];
       Vars* nvars = vars;
+      RefType* ref_types[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleBinding* binding = let_expr->bindings.xs + i;
 
@@ -2306,7 +2370,17 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
           ref->_base.loc = binding->name.loc;
           ref->kind = CompileKind(arena_, binding->kind);
           ref->value = NULL;
-          nvd[i].type = &ref->_base;
+
+          TypeType* type_type = FbleAlloc(arena_, TypeType);
+          FbleRefInit(arena, &type_type->_base.ref);
+          type_type->_base.tag = TYPE_TYPE;
+          type_type->_base.loc = binding->name.loc;
+          type_type->type = &ref->_base;
+          FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
+          TypeRelease(arena, &ref->_base);
+
+          nvd[i].type = &type_type->_base;
+          ref_types[i] = ref;
         } else {
           assert(binding->kind == NULL);
           nvd[i].type = CompileType(arena, vars, type_vars, binding->type);
@@ -2342,8 +2416,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
           PrintType(arena_, type);
           fprintf(stderr, "\n");
         } else if (!error && binding->type == NULL) {
-          RefType* ref = (RefType*)nvd[i].type;
-          assert(ref->_base.tag == REF_TYPE);
+          RefType* ref = ref_types[i];
 
           Kind* expected_kind = ref->kind;
           Kind* actual_kind = GetKind(arena_, type);
@@ -2357,12 +2430,11 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, Vars* type_vars, FbleExpr
           }
           FreeKind(arena_, actual_kind);
 
-          ref->value = type;
+          ref->value = ValueOfType(arena, type);
           if (ref->value != NULL) {
             FbleRefAdd(arena, &ref->_base.ref, &ref->value->ref);
+            TypeRelease(arena, ref->value);
           }
-          nvd[i].type = TypeRetain(arena, ref->value);
-          TypeRelease(arena, &ref->_base);
         }
 
         TypeRelease(arena, type);
@@ -3029,17 +3101,14 @@ static Type* CompileType(TypeArena* arena, Vars* vars, Vars* type_vars, FbleType
         return NULL;
       }
 
-      TypeType* type_type = (TypeType*)Normal(type);
-      if (type_type->_base.tag != TYPE_TYPE) {
-        // TODO: add support for poly type and other funny kinds of types too.
+      Type* type_value = ValueOfType(arena, type);
+      TypeRelease(arena, type);
+      if (type_value == NULL) {
         FbleReportError("expected a type, but found value of type ", &expr->loc);
-        PrintType(arena_, &type_type->_base);
-        TypeRelease(arena, type);
+        PrintType(arena_, type);
         return NULL;
       }
-      TypeRetain(arena, type_type->type);
-      TypeRelease(arena, type);
-      return type_type->type;
+      return type_value;
     }
   }
 

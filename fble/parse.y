@@ -46,7 +46,6 @@
   FbleChoice choice;
   FbleChoiceV choices;
   FbleBindingV bindings;
-  FbleTypeBindingV type_bindings;
 }
 
 %{
@@ -77,8 +76,7 @@
 %type <fields> field_p field_s
 %type <choice> anon_struct_arg
 %type <choices> choices anon_struct_arg_s anon_struct_arg_p
-%type <bindings> let_bindings exec_bindings
-%type <type_bindings> type_let_binding_p
+%type <bindings> let_bindings exec_bindings type_let_binding_p
 
 %%
 
@@ -138,11 +136,11 @@ type:
       $$ = &output_type->_base;
    }
  | TYPE_NAME {
-      FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
-      var_type->_base.tag = FBLE_VAR_TYPE;
-      var_type->_base.loc = @$;
-      var_type->var = $1;
-      $$ = &var_type->_base;
+      FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
+      var_expr->_base.tag = FBLE_VAR_EXPR;
+      var_expr->_base.loc = @$;
+      var_expr->var = $1;
+      $$ = &var_expr->_base;
    }
  | type '<' type '>' {
       FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
@@ -199,12 +197,12 @@ type_block:
 type_stmt:
     type ';' { $$ = $1; }
   | type_let_binding_p ';' type_stmt {
-      FbleLetType* let_type = FbleAlloc(arena, FbleLetType);
-      let_type->_base.tag = FBLE_LET_TYPE;
-      let_type->_base.loc = @$;
-      let_type->bindings = $1;
-      let_type->body = $3;
-      $$ = &let_type->_base;
+      FbleLetExpr* let_expr = FbleAlloc(arena, FbleLetExpr);
+      let_expr->_base.tag = FBLE_LET_EXPR;
+      let_expr->_base.loc = @$;
+      let_expr->bindings = $1;
+      let_expr->body = $3;
+      $$ = &let_expr->_base;
     }  
   ;
 
@@ -463,8 +461,8 @@ stmt:
       $$ = &let_expr->_base;
     }  
   | type_let_binding_p ';' stmt {
-      FbleTypeLetExpr* let_expr = FbleAlloc(arena, FbleTypeLetExpr);
-      let_expr->_base.tag = FBLE_TYPE_LET_EXPR;
+      FbleLetExpr* let_expr = FbleAlloc(arena, FbleLetExpr);
+      let_expr->_base.tag = FBLE_LET_EXPR;
       let_expr->_base.loc = @$;
       let_expr->bindings = $1;
       let_expr->body = $3;
@@ -526,11 +524,11 @@ anon_struct_arg:
     }
   | TYPE_NAME {
       $$.name = $1;
-      FbleVarType* var_type = FbleAlloc(arena, FbleVarType);
-      var_type->_base.tag = FBLE_VAR_TYPE;
-      var_type->_base.loc = @$;
-      var_type->var = $1;
-      $$.expr = &var_type->_base;
+      FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
+      var_expr->_base.tag = FBLE_VAR_EXPR;
+      var_expr->_base.loc = @$;
+      var_expr->var = $1;
+      $$.expr = &var_expr->_base;
     }
   | TYPE_NAME ':' type {
       $$.name = $1;
@@ -576,17 +574,19 @@ let_bindings:
 type_let_binding_p:
   kind TYPE_NAME '=' type {
       FbleVectorInit(arena, $$);
-      FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
+      FbleBinding* binding = FbleVectorExtend(arena, $$);
       binding->kind = $1;
+      binding->type = NULL;
       binding->name = $2;
-      binding->type = $4;
+      binding->expr = $4;
     }
   | type_let_binding_p ',' kind TYPE_NAME '=' type {
       $$ = $1;
-      FbleTypeBinding* binding = FbleVectorExtend(arena, $$);
+      FbleBinding* binding = FbleVectorExtend(arena, $$);
       binding->kind = $3;
+      binding->type = NULL;
       binding->name = $4;
-      binding->type = $6;
+      binding->expr = $6;
     }
   ;
 
