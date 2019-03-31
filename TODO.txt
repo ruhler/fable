@@ -1,6 +1,9 @@
 Fble:
 * [lang] Migrate fble to new spec
-  - dedup rest of supported abstract syntax.
+  - fix support for polymorphism.
+  - remove unused type_vars arg to CompileType and CompileExpr?
+  - clean up merge of FbleType and FbleExpr - don't pretend they are two
+    different things.
 
 * [lang] Flesh out spec for new fble.
 

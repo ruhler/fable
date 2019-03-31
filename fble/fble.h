@@ -126,10 +126,6 @@ typedef enum {
   FBLE_PROC_TYPE,
   FBLE_INPUT_TYPE,
   FBLE_OUTPUT_TYPE,
-  FBLE_VAR_TYPE,                  // dup to FBLE_VAR_EXPR
-  FBLE_LET_TYPE,                  // dup to FBLE_LET_EXPR
-  FBLE_POLY_TYPE,                 // dup to FBLE_POLY_EXPR
-  FBLE_POLY_APPLY_TYPE,           // dup to FBLE_POLY_APPLY_EXPR
 
   FBLE_TYPEOF_EXPR,
 
@@ -147,7 +143,6 @@ typedef enum {
   FBLE_EXEC_EXPR,
   FBLE_VAR_EXPR,
   FBLE_LET_EXPR,
-  FBLE_TYPE_LET_EXPR,       // dup to FBLE_LET_EXPR
   FBLE_POLY_EXPR,
   FBLE_POLY_APPLY_EXPR,
   FBLE_NAMESPACE_EVAL_EXPR,
@@ -242,37 +237,6 @@ typedef struct {
   FbleType _base;
   FbleType* type;
 } FbleOutputType;
-
-// FbleVarType --
-//   FBLE_VAR_TYPE (name :: Name)
-typedef struct {
-  FbleType _base;
-  FbleName var;
-} FbleVarType;
-
-// FbleLetType --
-//   FBLE_LET_TYPE (bindings :: [(Kind, Name, Type)]) (body :: Type)
-typedef struct {
-  FbleType _base;
-  FbleTypeBindingV bindings;
-  FbleType* body;
-} FbleLetType;
-
-// FblePolyType --
-//   FBLE_POLY_TYPE (args :: (Kind, Name)) (body :: Type)
-typedef struct {
-  FbleType _base;
-  FbleTypeField arg;
-  FbleType* body;
-} FblePolyType;
-
-// FblePolyApplyType --
-//   FBLE_POLY_APPLY_TYPE (poly :: Type) (arg :: Type)
-typedef struct {
-  FbleType _base;
-  FbleType* poly;
-  FbleType* arg;
-} FblePolyApplyType;
 
 // FbleExpr --
 //   A tagged union of expression types. All expressions have the same initial
@@ -443,14 +407,6 @@ typedef struct {
   FbleBindingV bindings;
   FbleExpr* body;
 } FbleLetExpr;
-
-// FbleTypeLetExpr --
-//   FBLE_TYPE_LET_EXPR (bindings :: [(Kind, Name, Type)]) (body :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleTypeBindingV bindings;
-  FbleExpr* body;
-} FbleTypeLetExpr;
 
 // FblePolyExpr --
 //   FBLE_POLY_EXPR (args :: (Kind, Name)) (body :: Expr)

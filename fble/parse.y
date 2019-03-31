@@ -143,12 +143,12 @@ type:
       $$ = &var_expr->_base;
    }
  | type '<' type '>' {
-      FblePolyApplyType* poly_apply_type = FbleAlloc(arena, FblePolyApplyType);
-      poly_apply_type->_base.tag = FBLE_POLY_APPLY_TYPE;
-      poly_apply_type->_base.loc = @$;
-      poly_apply_type->poly = $1;
-      poly_apply_type->arg = $3;
-      $$ = &poly_apply_type->_base;
+      FblePolyApplyExpr* poly_apply_expr = FbleAlloc(arena, FblePolyApplyExpr);
+      poly_apply_expr->_base.tag = FBLE_POLY_APPLY_EXPR;
+      poly_apply_expr->_base.loc = @$;
+      poly_apply_expr->poly = $1;
+      poly_apply_expr->arg = $3;
+      $$ = &poly_apply_expr->_base;
    }
  | type_block {
       $$ = $1;
