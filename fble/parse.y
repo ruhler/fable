@@ -176,13 +176,13 @@ type_block:
       $$ = $2;
    }
  | '<' kind TYPE_NAME '>' type_block {
-      FblePolyType* poly_type = FbleAlloc(arena, FblePolyType);
-      poly_type->_base.tag = FBLE_POLY_TYPE;
-      poly_type->_base.loc = @$;
-      poly_type->arg.kind = $2;
-      poly_type->arg.name = $3;
-      poly_type->body = $5;
-      $$ = &poly_type->_base;
+      FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
+      poly_expr->_base.tag = FBLE_POLY_EXPR;
+      poly_expr->_base.loc = @$;
+      poly_expr->arg.kind = $2;
+      poly_expr->arg.name = $3;
+      poly_expr->body = $5;
+      $$ = &poly_expr->_base;
    }
  | '[' type ']' type_block {
       FbleFuncType* func_type = FbleAlloc(arena, FbleFuncType);
