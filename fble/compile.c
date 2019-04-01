@@ -528,8 +528,7 @@ static Kind* GetKind(FbleArena* arena, Type* type)
     case FUNC_TYPE:
     case PROC_TYPE: 
     case INPUT_TYPE:
-    case OUTPUT_TYPE:
-    case TYPE_TYPE: {
+    case OUTPUT_TYPE: {
       BasicKind* kind = FbleAlloc(arena, BasicKind);
       kind->_base.tag = BASIC_KIND;
       kind->_base.loc = type->loc;
@@ -571,6 +570,16 @@ static Kind* GetKind(FbleArena* arena, Type* type)
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
       return CopyKind(arena, ref->kind);
+    }
+
+    case TYPE_TYPE: {
+      TypeType* type_type = (TypeType*)type;
+
+      // TODO: This isn't right once we add non-type basic kinds internally.
+      // We need to adjust the kind in that case.
+      // TODO: Maybe we should arrange for TYPE_TYPE to only ever be applied
+      // to basic types?
+      return GetKind(arena, type_type->type);
     }
   }
 
@@ -1459,6 +1468,7 @@ static void PrintKind(Kind* kind)
 //   needed.
 static Type* ValueOfType(TypeArena* arena, Type* typeof)
 {
+  FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (typeof->tag) {
     case STRUCT_TYPE:
     case UNION_TYPE:
@@ -1480,13 +1490,42 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
     }
 
     case POLY_TYPE: {
-      assert(false && "TODO: value of poly type");
-      return NULL;
+      PolyType* pt = (PolyType*)typeof;
+      Type* valueof = ValueOfType(arena, pt->body);
+      if (valueof == NULL) {
+        return NULL;
+      }
+
+      PolyType* spt = FbleAlloc(arena_, PolyType);
+      spt->_base.tag = POLY_TYPE;
+      spt->_base.loc = pt->_base.loc;
+      FbleRefInit(arena, &spt->_base.ref);
+      spt->arg = pt->arg;
+      FbleRefAdd(arena, &spt->_base.ref, &pt->arg->ref);
+      spt->body = valueof;
+      FbleRefAdd(arena, &spt->_base.ref, &spt->body->ref);
+      TypeRelease(arena, spt->body);
+      return &spt->_base;
     }
 
     case POLY_APPLY_TYPE: {
-      assert(false && "TODO: value of poly apply type");
-      return NULL;
+      PolyApplyType* pat = (PolyApplyType*)typeof;
+      Type* valueof = ValueOfType(arena, pat->poly);
+      if (valueof == NULL) {
+        return NULL;
+      }
+
+      PolyApplyType* spat = FbleAlloc(arena_, PolyApplyType);
+      FbleRefInit(arena, &spat->_base.ref);
+      spat->_base.tag = POLY_APPLY_TYPE;
+      spat->_base.loc = pat->_base.loc;
+      spat->poly = valueof;
+      FbleRefAdd(arena, &spat->_base.ref, &spat->poly->ref);
+      TypeRelease(arena, spat->poly);
+      spat->result = NULL;
+      spat->arg = pat->arg;
+      FbleRefAdd(arena, &spat->_base.ref, &spat->arg->ref);
+      return &spat->_base;
     }
 
     case REF_TYPE: {
