@@ -2532,25 +2532,12 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         .next = vars
       };
 
-      // TODO: It's a little silly to be allocating space on the variable
-      // stack for the type variable at runtime. If we are going to optimize
-      // this, how about optimize it out entirely? Or consider evaluating the
-      // arg at poly apply type and pushing it on the stack then.
-      FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
-      type_instr->_base.tag = FBLE_TYPE_INSTR;
-      FbleVectorAppend(arena_, *instrs, &type_instr->_base);
-
       pt->body = CompileExpr(arena, &nvars, poly->body, instrs);
       TypeRelease(arena, &type_type->_base);
       if (pt->body == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
       }
-
-      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-      descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = 1;
-      FbleVectorAppend(arena_, *instrs, &descope->_base);
 
       return &pt->_base;
     }
@@ -2564,6 +2551,14 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       pat->arg = NULL;
       pat->result = NULL;
 
+      // TODO: It's a little silly to be allocating space on the variable
+      // stack for the type variable at runtime. If we are going to optimize
+      // this, how about optimize it out entirely? Or consider evaluating the
+      // arg at poly apply type and pushing it on the stack then.
+      FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
+      type_instr->_base.tag = FBLE_TYPE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &type_instr->_base);
+
       pat->poly = CompileExpr(arena, vars, apply->poly, instrs);
       if (pat->poly == NULL) {
         TypeRelease(arena, &pat->_base);
@@ -2571,6 +2566,11 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       }
       FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
       TypeRelease(arena, pat->poly);
+
+      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+      descope->_base.tag = FBLE_DESCOPE_INSTR;
+      descope->count = 1;
+      FbleVectorAppend(arena_, *instrs, &descope->_base);
 
       PolyKind* poly_kind = (PolyKind*)GetKind(arena_, pat->poly);
       if (poly_kind->_base.tag != POLY_KIND) {
