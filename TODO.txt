@@ -1,8 +1,7 @@
 Fble:
 * [lang] Migrate fble to new spec
-  - fix support for polymorphism.
-    - Add unit test to capture type error seen in List.fble.
-    - Restrict TYPE_TYPE to only apply to basic kinds.
+  - Fix memory leak in AllTests. We're forgetting to free a type somewhere.
+  - Fix 8.3-08 test by restricting TYPE_TYPE to only apply to basic kinds (?)
   - clean up merge of FbleType and FbleExpr - don't pretend they are two
     different things.
 
@@ -66,6 +65,8 @@ Fble Cleanup:
   process $(...). Clarify the spec on that and make sure we implement it
   correctly.
 * Remove iquota from Thread data structure. It should be managed separately.
+* Make poly type args VarType of AbstracType, so it's easier to interpret type
+  errors involving poly types?
 
 Fble Lib:
 * Should Eq just be a function or an interface?
