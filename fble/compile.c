@@ -1578,7 +1578,8 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_LET_DEF_INSTR:
     case FBLE_NAMESPACE_INSTR:
     case FBLE_IPOP_INSTR:
-    case FBLE_TYPE_INSTR: {
+    case FBLE_TYPE_INSTR:
+    case FBLE_VPUSH_INSTR: {
       FbleFree(arena, instr);
       return;
     }
@@ -2532,8 +2533,25 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         .next = vars
       };
 
+      // TODO: It's a little silly that we are pushing an empty type value
+      // here. Oh well. Maybe in the future we'll optimize those away or
+      // add support for non-type poly args too.
+      FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
+      type_instr->_base.tag = FBLE_TYPE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &type_instr->_base);
+
+      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
+      vpush->_base.tag = FBLE_VPUSH_INSTR;
+      FbleVectorAppend(arena_, *instrs, &vpush->_base);
+
       pt->body = CompileExpr(arena, &nvars, poly->body, instrs);
       TypeRelease(arena, &type_type->_base);
+
+      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+      descope->_base.tag = FBLE_DESCOPE_INSTR;
+      descope->count = 1;
+      FbleVectorAppend(arena_, *instrs, &descope->_base);
+
       if (pt->body == NULL) {
         TypeRelease(arena, &pt->_base);
         return NULL;
@@ -2548,16 +2566,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleRefInit(arena, &pat->_base.ref);
       pat->_base.tag = POLY_APPLY_TYPE;
       pat->_base.loc = expr->loc;
+      pat->poly = NULL;
       pat->arg = NULL;
       pat->result = NULL;
-
-      // TODO: It's a little silly to be allocating space on the variable
-      // stack for the type variable at runtime. If we are going to optimize
-      // this, how about optimize it out entirely? Or consider evaluating the
-      // arg at poly apply type and pushing it on the stack then.
-      FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
-      type_instr->_base.tag = FBLE_TYPE_INSTR;
-      FbleVectorAppend(arena_, *instrs, &type_instr->_base);
 
       pat->poly = CompileExpr(arena, vars, apply->poly, instrs);
       if (pat->poly == NULL) {
@@ -2567,10 +2578,13 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
       TypeRelease(arena, pat->poly);
 
-      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-      descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = 1;
-      FbleVectorAppend(arena_, *instrs, &descope->_base);
+      pat->arg = CompileType(arena, vars, apply->arg);
+      if (pat->arg == NULL) {
+        TypeRelease(arena, &pat->_base);
+        return NULL;
+      }
+      FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
+      TypeRelease(arena, pat->arg);
 
       PolyKind* poly_kind = (PolyKind*)GetKind(arena_, pat->poly);
       if (poly_kind->_base.tag != POLY_KIND) {
@@ -2578,12 +2592,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         FreeKind(arena_, &poly_kind->_base);
         TypeRelease(arena, &pat->_base);
         return NULL;
-      }
-
-      pat->arg = CompileType(arena, vars, apply->arg);
-      if (pat->arg != NULL) {
-        FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
-        TypeRelease(arena, pat->arg);
       }
 
       bool error = (pat->arg == NULL);

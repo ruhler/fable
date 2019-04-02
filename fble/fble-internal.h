@@ -31,6 +31,7 @@ typedef enum {
   FBLE_NAMESPACE_INSTR,
   FBLE_IPOP_INSTR,
   FBLE_TYPE_INSTR,
+  FBLE_VPUSH_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -273,6 +274,17 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
 }  FbleTypeInstr;
+
+// FbleVPushInstr -- FBLE_VPUSH_INSTR
+// dstack: ..., x
+//     ==> ...
+//
+// vstack: ...,
+//     ==> ..., x
+//
+typedef struct {
+  FbleInstr _base;
+}  FbleVPushInstr;
 
 // FbleFreeInstrBlock --
 //   Free the given block of instructions.

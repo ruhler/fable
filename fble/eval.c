@@ -769,6 +769,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         thread->data_stack = DPush(arena_, &value->_base, thread->data_stack);
         break;
       }
+
+      case FBLE_VPUSH_INSTR: {
+        FbleValue* value = thread->data_stack->value;
+        thread->data_stack = DPop(arena_, thread->data_stack);
+        thread->istack->var_stack = VPush(arena_, value, thread->istack->var_stack);
+        break;
+      }
     }
 
     thread->iquota--;
