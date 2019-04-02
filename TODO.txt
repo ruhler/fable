@@ -1,7 +1,6 @@
 Fble:
 * [lang] Migrate fble to new spec
   - fix support for polymorphism.
-    - Understand and fix infinite loop in PrintType
     - Add unit test to capture type error seen in List.fble.
     - Restrict TYPE_TYPE to only apply to basic kinds.
   - clean up merge of FbleType and FbleExpr - don't pretend they are two
