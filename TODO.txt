@@ -1,6 +1,10 @@
 Fble:
 * [lang] Migrate fble to new spec
-  - Fix 8.3-08 test by restricting TYPE_TYPE to only apply to basic kinds (?)
+  - Fix 8.3-08 test: Looks like a bug in Eval maybe?
+      \A -> (\B -> ...) A 
+    Should reduce to, or at least equal to:
+      \B -> ...
+   
   - clean up merge of FbleType and FbleExpr - don't pretend they are two
     different things.
 
