@@ -1,6 +1,5 @@
 Fble:
 * [lang] Migrate fble to new spec
-  - Fix memory leak in AllTests. We're forgetting to free a type somewhere.
   - Fix 8.3-08 test by restricting TYPE_TYPE to only apply to basic kinds (?)
   - clean up merge of FbleType and FbleExpr - don't pretend they are two
     different things.

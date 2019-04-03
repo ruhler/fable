@@ -881,9 +881,11 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
         .next = tps
       };
 
-      sref->value = Subst(arena, ref->value, param, arg, &ntp);
+      Type* value = Subst(arena, ref->value, param, arg, &ntp);
+      sref->value = value;
       FbleRefAdd(arena, &sref->_base.ref, &sref->value->ref);
-      return sref->value;
+      TypeRelease(arena, &sref->_base);
+      return value;
     }
 
     case TYPE_TYPE: {
