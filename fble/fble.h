@@ -183,21 +183,6 @@ typedef struct {
   FbleField* xs;
 } FbleFieldV;
 
-// FbleTypeBinding --
-//   A triple of (Kind, Name, Type) used in type let types and expressions.
-typedef struct {
-  FbleKind* kind;
-  FbleName name;
-  FbleType* type;
-} FbleTypeBinding;
-
-// FbleTypeBindingV --
-//   A vector of FbleTypeBinding
-typedef struct {
-  size_t size;
-  FbleTypeBinding* xs;
-} FbleTypeBindingV;
-
 // FbleStructTypeExpr --
 //   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
