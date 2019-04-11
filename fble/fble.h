@@ -119,12 +119,12 @@ typedef struct {
 // FbleExprTag --
 //   A tag used to dinstinguish among different kinds of types and expressions.
 typedef enum {
-  FBLE_STRUCT_TYPE,
-  FBLE_UNION_TYPE,
-  FBLE_FUNC_TYPE,
-  FBLE_PROC_TYPE,
-  FBLE_INPUT_TYPE,
-  FBLE_OUTPUT_TYPE,
+  FBLE_STRUCT_TYPE_EXPR,
+  FBLE_UNION_TYPE_EXPR,
+  FBLE_FUNC_TYPE_EXPR,
+  FBLE_PROC_TYPE_EXPR,
+  FBLE_INPUT_TYPE_EXPR,
+  FBLE_OUTPUT_TYPE_EXPR,
 
   FBLE_TYPEOF_EXPR,
 
@@ -148,22 +148,26 @@ typedef enum {
   FBLE_NAMESPACE_IMPORT_EXPR,
 } FbleExprTag;
 
-// FbleType --
-//   A tagged union of type types. All types have the same initial
-//   layout as FbleType. The tag can be used to determine what kind of
-//   type this is to get access to additional fields of the type
-//   by first casting to that specific type of type.
+// FbleExpr --
+//   A tagged union of expr types. All exprs have the same initial
+//   layout as FbleExpr. The tag can be used to determine what kind of
+//   expr this is to get access to additional fields of the expr
+//   by first casting to that specific type of expr.
 typedef struct {
   FbleExprTag tag;
   FbleLoc loc;
-} FbleType;
+} FbleExpr;
 
-// FbleTypeV --
-//   A vector of FbleType.
+// FbleExprV --
+//   A vector of FbleExpr.
 typedef struct {
   size_t size;
-  FbleType** xs;
-} FbleTypeV;
+  FbleExpr** xs;
+} FbleExprV;
+
+// FbleType -- Synonym for FbleExpr when a type is expected
+typedef FbleExpr FbleType;
+typedef FbleExprV FbleTypeV;
 
 // FbleField --
 //   A pair of (Type, Name) used to describe type and function arguments.
@@ -194,59 +198,48 @@ typedef struct {
   FbleTypeBinding* xs;
 } FbleTypeBindingV;
 
-// FbleStructType --
-//   FBLE_STRUCT_TYPE (fields :: [(Type, Name)])
+// FbleStructTypeExpr --
+//   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleType _base;
   FbleFieldV fields;
-} FbleStructType;
+} FbleStructTypeExpr;
 
-// FbleUnionType --
-//   FBLE_UNION_TYPE (fields :: [(Type, Name)])
+// FbleUnionTypeExpr --
+//   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleType _base;
   FbleFieldV fields;
-} FbleUnionType;
+} FbleUnionTypeExpr;
 
-// FbleFuncType --
-//   FBLE_FUNC_TYPE (arg :: Type) (return :: Type)
+// FbleFuncTypeExpr --
+//   FBLE_FUNC_TYPE_EXPR (arg :: Type) (return :: Type)
 typedef struct {
   FbleType _base;
   FbleType* arg;
   FbleType* rtype;
-} FbleFuncType;
+} FbleFuncTypeExpr;
 
-// FbleProcType --
-//   FBLE_PROC_TYPE (return :: Type)
+// FbleProcTypeExpr --
+//   FBLE_PROC_TYPE_EXPR (return :: Type)
 typedef struct {
   FbleType _base;
   FbleType* rtype;
-} FbleProcType;
+} FbleProcTypeExpr;
 
-// FbleInputType --
-//   FBLE_INPUT_TYPE (type :: Type)
+// FbleInputTypeExpr --
+//   FBLE_INPUT_TYPE_EXPR (type :: Type)
 typedef struct {
   FbleType _base;
   FbleType* type;
-} FbleInputType;
+} FbleInputTypeExpr;
 
-// FbleOutputType --
-//   FBLE_OUTPUT_TYPE (type :: Type)
+// FbleOutputTypeExpr --
+//   FBLE_OUTPUT_TYPE_EXPR (type :: Type)
 typedef struct {
   FbleType _base;
   FbleType* type;
-} FbleOutputType;
-
-// FbleExpr --
-//   A tagged union of expression types. All expressions have the same initial
-//   layout as FbleExpr. The tag can be used to determine what kind of
-//   expression this is to get access to additional fields of the expression
-//   by first casting to that specific type of expression.
-typedef FbleType FbleExpr;
-
-// FbleExprV --
-//   A vector of FbleExpr.
-typedef FbleTypeV FbleExprV;
+} FbleOutputTypeExpr;
 
 // FbleTypeofExpr --
 //   FBLE_TYPEOF_EXPR (expr :: Expr)

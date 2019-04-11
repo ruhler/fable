@@ -101,36 +101,36 @@ kind:
 
 type:
    '*' '(' field_s ')' {
-      FbleStructType* struct_type = FbleAlloc(arena, FbleStructType);
-      struct_type->_base.tag = FBLE_STRUCT_TYPE;
+      FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
+      struct_type->_base.tag = FBLE_STRUCT_TYPE_EXPR;
       struct_type->_base.loc = @$;
       struct_type->fields = $3;
       $$ = &struct_type->_base;
    }
  | '+' '(' field_p ')' {
-      FbleUnionType* union_type = FbleAlloc(arena, FbleUnionType);
-      union_type->_base.tag = FBLE_UNION_TYPE;
+      FbleUnionTypeExpr* union_type = FbleAlloc(arena, FbleUnionTypeExpr);
+      union_type->_base.tag = FBLE_UNION_TYPE_EXPR;
       union_type->_base.loc = @$;
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
  | type '!' {
-      FbleProcType* proc_type = FbleAlloc(arena, FbleProcType);
-      proc_type->_base.tag = FBLE_PROC_TYPE;
+      FbleProcTypeExpr* proc_type = FbleAlloc(arena, FbleProcTypeExpr);
+      proc_type->_base.tag = FBLE_PROC_TYPE_EXPR;
       proc_type->_base.loc = @$;
       proc_type->rtype = $1;
       $$ = &proc_type->_base;
    }
  | type '-' {
-      FbleInputType* input_type = FbleAlloc(arena, FbleInputType);
-      input_type->_base.tag = FBLE_INPUT_TYPE;
+      FbleInputTypeExpr* input_type = FbleAlloc(arena, FbleInputTypeExpr);
+      input_type->_base.tag = FBLE_INPUT_TYPE_EXPR;
       input_type->_base.loc = @$;
       input_type->type = $1;
       $$ = &input_type->_base;
    }
  | type '+' {
-      FbleOutputType* output_type = FbleAlloc(arena, FbleOutputType);
-      output_type->_base.tag = FBLE_OUTPUT_TYPE;
+      FbleOutputTypeExpr* output_type = FbleAlloc(arena, FbleOutputTypeExpr);
+      output_type->_base.tag = FBLE_OUTPUT_TYPE_EXPR;
       output_type->_base.loc = @$;
       output_type->type = $1;
       $$ = &output_type->_base;
@@ -185,8 +185,8 @@ type_block:
       $$ = &poly_expr->_base;
    }
  | '[' type ']' type_block {
-      FbleFuncType* func_type = FbleAlloc(arena, FbleFuncType);
-      func_type->_base.tag = FBLE_FUNC_TYPE;
+      FbleFuncTypeExpr* func_type = FbleAlloc(arena, FbleFuncTypeExpr);
+      func_type->_base.tag = FBLE_FUNC_TYPE_EXPR;
       func_type->_base.loc = @$;
       func_type->arg = $2;
       func_type->rtype = $4;
