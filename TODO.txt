@@ -4,6 +4,8 @@ Fble:
       \A -> (\B -> ...) A 
     Should reduce to, or at least equal to:
       \B -> ...
+
+    Or... looks like another manifestation of the old 8.3-07 bug?
    
   - clean up merge of FbleType and FbleExpr - don't pretend they are two
     different things.
@@ -82,6 +84,7 @@ Fble App Ideas:
 * space invaders
 * scrabble crush
 * 2d minigolf
+* game of life
 
 Space Invaders:
 * Render objects - how to test?
@@ -98,6 +101,11 @@ Snake:
 * Test and fix bug when snake eats its tail.
 * Ignore moves that aren't orthogonal to current snake direction.
 * Keep track of and report score.
+
+Game of Life:
+* live if
+  A. is alive and have 2 or 3 live neighbors
+  B. is dead and have 3 live neighbors
 
 Miscellaneous:
 * Track down memory-leak like behavior in fbld-md5

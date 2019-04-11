@@ -116,9 +116,8 @@ typedef struct {
   FbleTypeField* xs;
 } FbleTypeFieldV;
 
-// FbleTypeTag --
-//   A tag used to dinstinguish among different kinds of types and
-//   expressions.
+// FbleExprTag --
+//   A tag used to dinstinguish among different kinds of types and expressions.
 typedef enum {
   FBLE_STRUCT_TYPE,
   FBLE_UNION_TYPE,
@@ -147,7 +146,7 @@ typedef enum {
   FBLE_POLY_APPLY_EXPR,
   FBLE_NAMESPACE_EVAL_EXPR,
   FBLE_NAMESPACE_IMPORT_EXPR,
-} FbleTypeTag;
+} FbleExprTag;
 
 // FbleType --
 //   A tagged union of type types. All types have the same initial
@@ -155,7 +154,7 @@ typedef enum {
 //   type this is to get access to additional fields of the type
 //   by first casting to that specific type of type.
 typedef struct {
-  FbleTypeTag tag;
+  FbleExprTag tag;
   FbleLoc loc;
 } FbleType;
 
@@ -244,10 +243,6 @@ typedef struct {
 //   expression this is to get access to additional fields of the expression
 //   by first casting to that specific type of expression.
 typedef FbleType FbleExpr;
-
-// FbleExprTag --
-//   A tag used to distinguish among different kinds of expressions.
-typedef FbleTypeTag FbleExprTag;
 
 // FbleExprV --
 //   A vector of FbleExpr.

@@ -11,7 +11,7 @@ Kind ::=
 Type ::= (* synonym for Expr where a type is expected *)
 
 MType ::=
-   implicit_type
+   implicit_type (kind :: Kind)
  | explicit_type (type :: Type)
  ;
      

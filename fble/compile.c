@@ -1012,7 +1012,7 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
         if (TypesEqual(pal->poly, pat->poly, NULL)) {
           if (TypesEqual(pal->arg, pat->arg, NULL)) {
             pat->result = pal->result;
-            assert(&pat->_base != pat->result);
+            assert(&pat->_base != Normal(pat->result));
             FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
             return;
           }
@@ -1022,7 +1022,7 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       PolyType* poly = (PolyType*)Normal(pat->poly);
       if (poly->_base.tag == POLY_TYPE) {
         pat->result = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
-        assert(&pat->_base != pat->result);
+        assert(&pat->_base != Normal(pat->result));
         FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
         TypeRelease(arena, pat->result);
 
