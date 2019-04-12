@@ -1,15 +1,15 @@
 Fble:
-* [lang] Migrate fble to new spec
-  - Fix 8.3-08 test: Looks like a bug in Eval maybe?
+* [clean] Clean up code after language change
+ - better naming of abstract syntax things.
+ - re-order abstract syntax things.
+
+* [test] Fix 8.3-08 test: Looks like a bug in Eval maybe?
       \A -> (\B -> ...) A 
     Should reduce to, or at least equal to:
       \B -> ...
 
     Or... looks like another manifestation of the old 8.3-07 bug?
    
-  - clean up merge of FbleType and FbleExpr - don't pretend they are two
-    different things.
-
 * [lang] Flesh out spec for new fble.
 
 * [perf] Avoid high cost of copying captured contexts
@@ -32,6 +32,9 @@ Fble:
     preserved across substitution and use that to detect if they are the same.
 
 Fble Cleanup:
+* Rename STRUCT_VALUE_EXPR 
+ - or otherwise clean up used of shared abstract syntax for STRUCT and UNIOn
+   access and STRUCT_VALUE, PUT, GET.
 * Test namespace eval with mixed type and normal fields.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.

@@ -57,7 +57,7 @@ typedef struct {
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
 //
-// dstack:  ..., a1, a2, ..., aN
+// dstack:  ..., type, a1, a2, ..., aN
 //     ==>  ..., struct(a1, a2, ..., aN)
 typedef struct {
   FbleInstr _base;

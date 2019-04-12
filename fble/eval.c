@@ -301,6 +301,9 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           thread->data_stack = DPop(arena_, thread->data_stack);
         }
 
+        FbleValueRelease(arena, thread->data_stack->value);
+        thread->data_stack = DPop(arena_, thread->data_stack);
+
         FbleValueV args = { .size = argc, .xs = argv, };
         thread->data_stack = DPush(arena_, FbleNewStructValue(arena, args), thread->data_stack);
         break;
