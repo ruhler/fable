@@ -75,7 +75,7 @@ expr ::=
  | type '(' name ':' expr ')'                      (* union_value *)
  | '?(' expr ';' name ':' expr                     (* cond *)
             [',' name ':' expr [...]] ')'   
- | expr '[' expr ']'                               (* apply *)
+ | expr '[' expr ']'                               (* func_apply *)
  | type '!'                                        (* proc_type *)
  | type '-'                                        (* input_type *)
  | type '+'                                        (* output_type *)

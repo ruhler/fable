@@ -59,7 +59,6 @@ typedef enum {
   PROC_TYPE,
   INPUT_TYPE,
   OUTPUT_TYPE,
-  VAR_TYPE,
   ABSTRACT_TYPE,
   POLY_TYPE,
   POLY_APPLY_TYPE,
@@ -123,13 +122,6 @@ typedef struct {
   Type _base;
   Type* type;
 } UnaryType;
-
-// VarType -- VAR_TYPE
-typedef struct {
-  Type _base;
-  FbleName var;
-  Type* value;
-} VarType;
 
 // AbstractType -- ABSTRACT_TYPE
 typedef struct {
@@ -362,7 +354,6 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
     case PROC_TYPE:
     case INPUT_TYPE:
     case OUTPUT_TYPE:
-    case VAR_TYPE:
     case POLY_TYPE:
     case POLY_APPLY_TYPE: {
       FbleFree(arena_, type);
@@ -446,12 +437,6 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
       break;
     }
 
-    case VAR_TYPE: {
-      VarType* var = (VarType*)type;
-      Add(add, var->value);
-      break;
-    }
-
     case ABSTRACT_TYPE: {
       break;
     }
@@ -512,11 +497,6 @@ static Kind* GetKind(FbleArena* arena, Type* type)
       kind->_base.loc = type->loc;
       kind->_base.refcount = 1;
       return &kind->_base;
-    }
-
-    case VAR_TYPE: {
-      VarType* vt = (VarType*)type;
-      return GetKind(arena, vt->value);
     }
 
     case ABSTRACT_TYPE: {
@@ -623,11 +603,6 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
     case OUTPUT_TYPE: {
       UnaryType* ut = (UnaryType*)type;
       return HasParam(ut->type, param, &nv);
-    }
-
-    case VAR_TYPE: {
-      VarType* vt = (VarType*)type;
-      return HasParam(vt->value, param, &nv);
     }
 
     case ABSTRACT_TYPE: {
@@ -750,19 +725,6 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
       FbleRefAdd(arena, &sut->_base.ref, &sut->type->ref);
       TypeRelease(arena, sut->type);
       return &sut->_base;
-    }
-
-    case VAR_TYPE: {
-      VarType* vt = (VarType*)type;
-      VarType* svt = FbleAlloc(arena_, VarType);
-      FbleRefInit(arena, &svt->_base.ref);
-      svt->_base.tag = VAR_TYPE;
-      svt->_base.loc = vt->_base.loc;
-      svt->var = vt->var;
-      svt->value = Subst(arena, vt->value, param, arg, tps);
-      FbleRefAdd(arena, &svt->_base.ref, &svt->value->ref);
-      TypeRelease(arena, svt->value);
-      return &svt->_base;
     }
 
     case ABSTRACT_TYPE: {
@@ -919,12 +881,6 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       return;
     }
 
-    case VAR_TYPE: {
-      VarType* vt = (VarType*)type;
-      Eval(arena, vt->value, &nevaled, applied);
-      return;
-    }
-
     case ABSTRACT_TYPE: {
       return;
     }
@@ -1018,12 +974,6 @@ static Type* Normal(Type* type)
     case PROC_TYPE: return type;
     case INPUT_TYPE: return type;
     case OUTPUT_TYPE: return type;
-
-    case VAR_TYPE: {
-      VarType* var_type = (VarType*)type;
-      return Normal(var_type->value);
-    }
-
     case ABSTRACT_TYPE: return type;
     case POLY_TYPE: return type;
 
@@ -1142,11 +1092,6 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       UnaryType* uta = (UnaryType*)a;
       UnaryType* utb = (UnaryType*)b;
       return TypesEqual(uta->type, utb->type, &neq);
-    }
-
-    case VAR_TYPE: {
-      UNREACHABLE("var type is not Normal");
-      return false;
     }
 
     case ABSTRACT_TYPE: {
@@ -1317,12 +1262,6 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       break;
     }
 
-    case VAR_TYPE: {
-      VarType* var_type = (VarType*)type;
-      fprintf(stderr, "%s", var_type->var.name);
-      break;
-    }
-
     case ABSTRACT_TYPE: {
       fprintf(stderr, "??%p", (void*)type);
       break;
@@ -1330,7 +1269,7 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
-      fprintf(stderr, "<@ ??%p@> {", (void*)pt->arg);
+      fprintf(stderr, "<@ ??%p@> { ", (void*)pt->arg);
       PrintType(arena, pt->body, &nprinted);
       fprintf(stderr, "; }");
       break;
@@ -1420,11 +1359,6 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
     case PROC_TYPE:
     case INPUT_TYPE:
     case OUTPUT_TYPE: {
-      return NULL;
-    }
-
-    case VAR_TYPE: {
-      assert(false && "TODO: value of var type");
       return NULL;
     }
 

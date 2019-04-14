@@ -1,8 +1,4 @@
 Fble:
-* [clean] Clean up code after language change
- - better naming of abstract syntax things.
- - re-order abstract syntax things.
-
 * [test] Fix 8.3-08 test: Looks like a bug in Eval maybe?
       \A -> (\B -> ...) A 
     Should reduce to, or at least equal to:
@@ -11,6 +7,8 @@ Fble:
     Or... looks like another manifestation of the old 8.3-07 bug?
    
 * [lang] Flesh out spec for new fble.
+ - Incorporate new abstract and concrete syntax.
+ - Clarify spec on partial and excessive function and poly application.
 
 * [perf] Avoid high cost of copying captured contexts
   - but how?
@@ -36,12 +34,9 @@ Fble Cleanup:
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
-* Share common code between PROC_TYPE, INPUT_TYPE, and OUTPUT_TYPE?
 * Clean up when Eval is done for types.
  - Always eval at Compile, except internal calls to CompileType from in
    CompileType. That should work I think.
-* Share common code between checking FbleStructType, FbleUnionType, and
-  FbleFuncType?
 * Clean up header files and what is easily externally visible.
   For example, should FbleRef be visible from fble.h?
   And make sure all "see documentation in ..." lines are accurate.
@@ -49,7 +44,6 @@ Fble Cleanup:
 * Test that we don't smash the stack with many nested child threads.
 * Test that we don't leak (Thread) memory with tail recursive single binding
   exec processes.
-* Clarify spec on partial and excessive function and poly application.
 * Test partial function and excessive function application.
 * Pick a better name for FbleChoice, which is used now for more than just
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
@@ -59,9 +53,6 @@ Fble Cleanup:
 * Better error message when the difference between a type is accidentally
   defining + vs. *, and it contains substituted polymorphic type variables.
 * Use consistent style for error messages. Capitalize? Punctuate?
-* Should we store an InstrBlock* on IStack and have the IStack take a
-  reference to it rather than have to hold on to a reference to the func/proc/
-  whatever object we originally got the instructions from on the data stack?
 * Port rest of fbld tests and programs to fble.
   - Sudoku partial draft
   - fblc spec test coverage
@@ -70,7 +61,7 @@ Fble Cleanup:
   process $(...). Clarify the spec on that and make sure we implement it
   correctly.
 * Remove iquota from Thread data structure. It should be managed separately.
-* Make poly type args VarType of AbstracType, so it's easier to interpret type
+* Make poly type args VarType of AbstractType, so it's easier to interpret type
   errors involving poly types?
 
 Fble Lib:
