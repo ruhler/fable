@@ -30,7 +30,7 @@ Expr ::=
 
  | func_type (arg :: Type) (result :: Type)
  | func_value (arg :: (Type, Name)) (body :: Expr)
- | apply (func :: Expr) (arg :: Expr)
+ | func_apply (func :: Expr) (arg :: Expr)
 
  | proc_type (result :: Type)
  | input_type (type :: Type)
@@ -43,13 +43,9 @@ Expr ::=
 
  | var (name :: Name)
  | let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
-
  | typeof (expr :: Expr)
-
  | poly (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
-
- | include (name :: Name)
  ;
 
 Concrete Syntax Reference
