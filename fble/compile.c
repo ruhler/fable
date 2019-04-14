@@ -1688,9 +1688,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       return &type_type->_base;
     }
 
-    case FBLE_STRUCT_VALUE_EXPR: {
-      FbleStructValueExpr* struct_value_expr = (FbleStructValueExpr*)expr;
-      Type* type = CompileExpr(arena, vars, struct_value_expr->type, instrs);
+    case FBLE_MISC_APPLY_EXPR: {
+      FbleMiscApplyExpr* misc_apply_expr = (FbleMiscApplyExpr*)expr;
+      Type* type = CompileExpr(arena, vars, misc_apply_expr->misc, instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         return NULL;
@@ -1698,7 +1698,8 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       Type* normal = Normal(type);
       if (normal->tag == INPUT_TYPE) {
-        if (struct_value_expr->args.size != 0) {
+        // FBLE_GET_EXPR
+        if (misc_apply_expr->args.size != 0) {
           FbleReportError("too many arguments to get. expected 0.\n", &expr->loc);
           TypeRelease(arena, type);
           return NULL;
@@ -1720,7 +1721,8 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       }
 
       if (normal->tag == OUTPUT_TYPE) {
-        if (struct_value_expr->args.size != 1) {
+        // FBLE_PUT_EXPR
+        if (misc_apply_expr->args.size != 1) {
           FbleReportError("wrong number of arguments to put. expected 1.\n", &expr->loc);
           TypeRelease(arena, type);
           return NULL;
@@ -1729,7 +1731,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         OutputType* output_type = (OutputType*)normal;
 
         // Compile the argument.
-        FbleExpr* arg = struct_value_expr->args.xs[0];
+        FbleExpr* arg = misc_apply_expr->args.xs[0];
         Type* arg_type = CompileExpr(arena, vars, arg, instrs);
         Eval(arena, arg_type, NULL, NULL);
         bool error = (arg_type == NULL);
@@ -1764,27 +1766,28 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         return &proc_type->_base;
       }
 
+      // FBLE_STRUCT_VALUE_EXPR
       Type* vtype = ValueOfType(arena, normal);
       Eval(arena, vtype, NULL, NULL);
       TypeRelease(arena, type);
       if (vtype == NULL) {
-        FbleReportError("expected a type.\n", &struct_value_expr->type->loc);
+        FbleReportError("expected a type.\n", &misc_apply_expr->misc->loc);
         return NULL;
       }
 
       StructType* struct_type = (StructType*)Normal(vtype);
       if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected a struct type, but found ", &struct_value_expr->type->loc);
+        FbleReportError("expected a struct type, but found ", &misc_apply_expr->misc->loc);
         PrintType(arena_, vtype, NULL);
         fprintf(stderr, "\n");
         TypeRelease(arena, vtype);
         return NULL;
       }
 
-      if (struct_type->fields.size != struct_value_expr->args.size) {
+      if (struct_type->fields.size != misc_apply_expr->args.size) {
         // TODO: Where should the error message go?
         FbleReportError("expected %i args, but %i were provided\n",
-            &expr->loc, struct_type->fields.size, struct_value_expr->args.size);
+            &expr->loc, struct_type->fields.size, misc_apply_expr->args.size);
         TypeRelease(arena, vtype);
         return NULL;
       }
@@ -1793,12 +1796,12 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         Field* field = struct_type->fields.xs + i;
 
-        Type* arg_type = CompileExpr(arena, vars, struct_value_expr->args.xs[i], instrs);
+        Type* arg_type = CompileExpr(arena, vars, misc_apply_expr->args.xs[i], instrs);
         Eval(arena, arg_type, NULL, NULL);
         error = error || (arg_type == NULL);
 
         if (arg_type != NULL && !TypesEqual(field->type, arg_type, NULL)) {
-          FbleReportError("expected type ", &struct_value_expr->args.xs[i]->loc);
+          FbleReportError("expected type ", &misc_apply_expr->args.xs[i]->loc);
           PrintType(arena_, field->type, NULL);
           fprintf(stderr, ", but found ");
           PrintType(arena_, arg_type, NULL);
@@ -1929,8 +1932,8 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       return type;
     }
 
-    case FBLE_ACCESS_EXPR: {
-      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
+    case FBLE_MISC_ACCESS_EXPR: {
+      FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
 
       Type* type = CompileExpr(arena, vars, access_expr->object, instrs);
       Eval(arena, type, NULL, NULL);
@@ -2169,16 +2172,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       Type* rtype = TypeRetain(arena, func_type->rtype);
       TypeRelease(arena, type);
       return rtype;
-    }
-
-    case FBLE_GET_EXPR: {
-      UNREACHABLE("STRUCT_VALUE_TYPE should be used instead.");
-      return NULL;
-    }
-
-    case FBLE_PUT_EXPR: {
-      UNREACHABLE("STRUCT_VALUE_TYPE should be used instead.");
-      return NULL;
     }
 
     case FBLE_EVAL_EXPR: {
@@ -2895,15 +2888,13 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       return CompileExprNoInstrs(arena, vars, typeof->expr);
     }
 
-    case FBLE_STRUCT_VALUE_EXPR:
+    case FBLE_MISC_APPLY_EXPR:
     case FBLE_ANON_STRUCT_VALUE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
-    case FBLE_ACCESS_EXPR:
+    case FBLE_MISC_ACCESS_EXPR:
     case FBLE_COND_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
     case FBLE_FUNC_APPLY_EXPR:
-    case FBLE_GET_EXPR:
-    case FBLE_PUT_EXPR:
     case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR:

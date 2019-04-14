@@ -95,25 +95,15 @@ typedef struct {
   FbleKind* arg;
   FbleKind* rkind;
 } FblePolyKind;
-
-// FbleTypeField --
-//   A pair of (Kind, Name) used to describe poly arguments.
-typedef struct {
-  FbleKind* kind;
-  FbleName name;
-} FbleTypeField;
-
-// FbleTypeFieldV --
-//   A vector of FbleTypeField.
-typedef struct {
-  size_t size;
-  FbleTypeField* xs;
-} FbleTypeFieldV;
-
+
 // FbleExprTag --
-//   A tag used to dinstinguish among different kinds of types and expressions.
+//   A tag used to dinstinguish among different kinds of expressions.
 typedef enum {
+  FBLE_MISC_ACCESS_EXPR,  // Used for STRUCT_ACCESS, UNION_ACCESS
+  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE, PUT, GET
+
   FBLE_STRUCT_TYPE_EXPR,
+
   FBLE_UNION_TYPE_EXPR,
   FBLE_FUNC_TYPE_EXPR,
   FBLE_PROC_TYPE_EXPR,
@@ -122,15 +112,16 @@ typedef enum {
 
   FBLE_TYPEOF_EXPR,
 
-  FBLE_STRUCT_VALUE_EXPR, // Used for STRUCT_VALUE, PUT, GET
+  // FBLE_STRUCT_VALUE_EXPR = FBLE_MISC_APPLY_EXPR,
   FBLE_ANON_STRUCT_VALUE_EXPR,
   FBLE_UNION_VALUE_EXPR,
-  FBLE_ACCESS_EXPR,       // Used for STRUCT_ACCESS, UNION_ACCESS
+  // FBLE_STRUCT_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR,
+  // FBLE_UNION_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR,
   FBLE_COND_EXPR,
   FBLE_FUNC_VALUE_EXPR,
   FBLE_FUNC_APPLY_EXPR,
-  FBLE_GET_EXPR,          // Unused
-  FBLE_PUT_EXPR,          // Unused
+  // FBLE_GET_EXPR = FBLE_MISC_APPLY_EXPR,
+  // FBLE_PUT_EXPR = FBLE_MISC_APPLY_EXPR,
   FBLE_EVAL_EXPR,
   FBLE_LINK_EXPR,
   FBLE_EXEC_EXPR,
@@ -227,13 +218,16 @@ typedef struct {
   FbleExpr* expr;
 } FbleTypeofExpr;
 
-// FbleStructValueExpr --
+// FbleMiscApplyExpr --
+//   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])
 //   FBLE_STRUCT_VALUE_EXPR (type :: Type) (args :: [Expr])
+//   FBLE_GET_EXPR (port :: Expr)
+//   FBLE_PUT_EXPR (port :: Expr) (arg :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleType* type;
+  FbleExpr* misc;
   FbleExprV args;
-} FbleStructValueExpr;
+} FbleMiscApplyExpr;
 
 // FbleChoice --
 //   A pair of (Name, Expr) used in conditional expressions and anonymous
@@ -259,14 +253,16 @@ typedef struct {
   FbleChoiceV args;
 } FbleAnonStructValueExpr;
 
-// FbleAccessExpr --
-//   FBLE_ACCESS_EXPR (object :: Expr) (field :: Name)
+// FbleMiscAccessExpr --
+//   FBLE_MISC_ACCESS_EXPR (object :: Expr) (field :: Name)
+//   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)
+//   FBLE_UNION_ACCESS_EXPR (object :: Expr) (field :: Name)
 // Common form used for both struct and union access.
 typedef struct {
   FbleExpr _base;
   FbleExpr* object;
   FbleName field;
-} FbleAccessExpr;
+} FbleMiscAccessExpr;
 
 // FbleUnionValueExpr --
 //   FBLE_UNION_VALUE_EXPR (type :: Type) (field :: Name) (arg :: Expr)
@@ -300,21 +296,6 @@ typedef struct {
   FbleExpr* func;
   FbleExpr* arg;
 } FbleFuncApplyExpr;
-
-// FbleGetExpr --
-//   FBLE_GET_EXPR (port :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* port;
-} FbleGetExpr;
-
-// FblePutExpr --
-//   FBLE_PUT_EXPR (port :: Expr) (arg :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* port;
-  FbleExpr* arg;
-} FblePutExpr;
 
 // FbleEvalExpr --
 //   FBLE_EVAL_EXPR (expr :: Expr)
@@ -374,6 +355,21 @@ typedef struct {
   FbleBindingV bindings;
   FbleExpr* body;
 } FbleLetExpr;
+
+// FbleTypeField --
+//   A pair of (Kind, Name) used to describe poly arguments.
+typedef struct {
+  FbleKind* kind;
+  FbleName name;
+} FbleTypeField;
+
+// FbleTypeFieldV --
+//   A vector of FbleTypeField.
+typedef struct {
+  size_t size;
+  FbleTypeField* xs;
+} FbleTypeFieldV;
+
 
 // FblePolyExpr --
 //   FBLE_POLY_EXPR (args :: (Kind, Name)) (body :: Expr)

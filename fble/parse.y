@@ -110,12 +110,12 @@ expr:
       $$ = &struct_type->_base;
    }
  | expr '(' expr_s ')' {
-      FbleStructValueExpr* struct_value_expr = FbleAlloc(arena, FbleStructValueExpr);
-      struct_value_expr->_base.tag = FBLE_STRUCT_VALUE_EXPR;
-      struct_value_expr->_base.loc = @$;
-      struct_value_expr->type = $1;
-      struct_value_expr->args = $3;
-      $$ = &struct_value_expr->_base;
+      FbleMiscApplyExpr* misc_apply_expr = FbleAlloc(arena, FbleMiscApplyExpr);
+      misc_apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
+      misc_apply_expr->_base.loc = @$;
+      misc_apply_expr->misc = $1;
+      misc_apply_expr->args = $3;
+      $$ = &misc_apply_expr->_base;
    }
  | '@' '(' anon_struct_arg_s ')' {
       FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
@@ -212,8 +212,8 @@ expr:
       $$ = $1;
    }
  | expr '.' name {
-      FbleAccessExpr* access_expr = FbleAlloc(arena, FbleAccessExpr);
-      access_expr->_base.tag = FBLE_ACCESS_EXPR;
+      FbleMiscAccessExpr* access_expr = FbleAlloc(arena, FbleMiscAccessExpr);
+      access_expr->_base.tag = FBLE_MISC_ACCESS_EXPR;
       access_expr->_base.loc = @$;
       access_expr->object = $1;
       access_expr->field = $3;

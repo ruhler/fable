@@ -32,9 +32,6 @@ Fble:
     preserved across substitution and use that to detect if they are the same.
 
 Fble Cleanup:
-* Rename STRUCT_VALUE_EXPR 
- - or otherwise clean up used of shared abstract syntax for STRUCT and UNIOn
-   access and STRUCT_VALUE, PUT, GET.
 * Test namespace eval with mixed type and normal fields.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
