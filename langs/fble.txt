@@ -57,6 +57,13 @@ identify the field, and a type, specifying the type of value for that field.
 Struct values are constructed by supplying values for all fields of the
 struct. Individual components of a struct can be accessed by field name.
 
+Struct values can be used for modularity and namespace control, by grouping
+together a collection of types and values. Syntax is provided for creating
+struct values with implicit types, evaluating expressions in the context of
+the fields of a struct value, and importing fields of a struct into the
+current context. When used this way, we sometimes refer to the struct value as
+a namespace struct value.
+
 3.1 Struct Type
 ---------------
 Abstract Syntax:
@@ -654,77 +661,8 @@ Examples:
   Maybe@<Int@>
   fromJust<Int@>[3]
 
-9. Namespaces
--------------
-Namespaces provide a means to support programming at scale, where parts of a
-program are developed by different organizations and reused in multiple
-different programs.
-
-Namespaces allow a developer to have full control over the names of variables
-visible in a module of a program, regardless of what programs that module is
-used in. They also allow development of libraries of types and values, so that
-a developer, instead of describing a program to be executed, describes a
-namespace whose members can be reused by other programmers.
-
-The idea behind namespace support in fble is to recognize that a struct value
-already acts as a namespace of values. We generalize structs to support type
-fields in addition regular value fields. Then we provide syntax for
-manipulating the current namespace based on struct values.
-
-9.1 Struct Type Fields
-----------------------
-Abstract Syntax:
-  Type ::= struct_type (type_fields :: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
-
-Concrete Syntax:
-  type ::= '*(' [type name [',' type name [...]]] ')'
-        |  '*(' kind type_name '=' type [',' kind type_name '=' type [',' ...]
-                [',' type name [',' type name [...]]] ')'
-
-Examples:
-  *(@ Bool@ = Bool@, Bool@ True, Bool@ False)
-
-To support namespaces, we augment struct types to support type fields in
-addition to normal fields. As with other uses of types in fble, type fields
-are used only during the type checking phase. They otherwise take up no space
-and are inaccessible at runtime.
-
-Type fields allow a struct to be defined with fields describing both types and
-values, which makes the struct suitable as the representation for namespaces.
-
-All type fields are grouped together and come before all normal fields. The
-rationale for this is that native code accesses normal fields by index but
-can't access type fields, and we would like those normal field indices to be
-contiguous.
-
-To construct value of a struct with type fields, you can use the normal struct
-value expression. You do not need to provide type field values when you create
-a struct value, because their values are already specified as part of the type
-itself.
-
-Struct types with type fields are equal only if they have the same type fields
-and type field values in the same order.
-
-9.2 Struct Type Field Access
-----------------------------
-Abstract Syntax:
-  Type ::= type_field_access (obj :: Expr) (field :: Name)
-
-Concrete Syntax:
-  type ::= expr '.' type_name
-
-Examples:
-  Bool.Bool@
-
-Allows you to access a type field. The object being accessed should be of a
-struct type. Type field access gives the value of the type field of the type
-of the object. Note that the object of type field access is never evaluated.
-Its expression is used solely to determine the type from which the type field
-is read.
-
-
-9.6 Include
------------
+9 Include
+---------
 Abstract Syntax:
   Type ::= type_include (name :: Name)
   Expr ::= include (name :: Name)
