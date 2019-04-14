@@ -358,7 +358,7 @@ Example
 Bind is syntactic sugar for applying a function to a function value. It is
 equivalent to:
 
-  apply func (func_value arg body)
+  func_apply func (func_value arg body)
 
 6 Processes
 -----------
@@ -503,18 +503,11 @@ the results of the processes assigned to variables in scope. The binding
 processes are evaluated at the same time the overall exec process is
 evaluated.
 
-7. Local Variables
-------------------
+7. Variables
+------------
 Let expressions can be used to define local variables that allow values to be
 reused in multiple places in a program. Let expressions support recursive
 definitions of variables, which makes it possible to define recursive values.
-
-In the same way, type variables can be defined to allow types to be reused in
-multiple places in a program. Recursive definitions of type variables makes it
-possible to define recursive types.
-
-Type variables are distinguished syntactically from regular variables by
-adding the '@' character as a suffix to the variable name:
 
 7.1 Variable
 ------------
@@ -535,13 +528,16 @@ expression is the type associated with the variable name in the context.
 7.2 Let
 -------
 Abstract Syntax:
-  Expr ::= let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+  MType ::= implicit_type (kind :: Kind) | explicit_type (type :: Type) ;
+  Expr ::= let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
 
 Concrete Syntax:
-  stmt ::= type name '=' expr [',' type name = expr [...]] ';' stmt
+  mtype ::= kind | type ;
+  stmt ::= mtype name '=' expr [',' mtype name = expr [...]] ';' stmt
 
 Example:
   Int@ x = mul[3][3]; mul[x][x]
+  <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
 The let expression is used to define variables. For each binding, a new
 variable is defined. The value of the variable is the result of evaluating the
@@ -551,58 +547,17 @@ The defined variables are visible in the body of the let expression. To
 support self and mutually recursive values, the defined variables
 are also visible in all of the bindings expressions.
 
-TODO: Are bindings allowed to defined variables with the same name as
-variables already in scope, thus shadowing the variable already in scope?
-
 The value of the let expression is the value of its body.
 
-7.3 Type Variable
------------------
-Abstract Syntax:
-  Type ::= type_var (name :: Name)
-
-Concrete Syntax:
-  type_name ::= name '@'
-  type ::= type_name
-
-Example:
-  Int@
-
-Types and expressions are evaluated in a context that maps type variable names
-to types and the kinds of those types. The type of the type variable is
-the type associated with the type variable name in the context. The kind of
-the type variable is the kind associated with the type variable name in the
-context.
-
-7.4 Type Let
-------------
-Abstract Syntax:
-  Kind ::= basic_kind
-  Type ::= type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
-  Expr ::= type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
-
-Concrete Syntax:
-  kind ::= '@'
-  type_stmt ::= kind type_name '=' type [',' kind type_name = type [...]] ';' type_stmt
-  stmt ::= kind type_name '=' type [',' kind type_name = type [...]] ';' stmt
-
-Example:
-  @ Unit@ = *(); Unit@();
-  @ Unit@ = *(); +(Unit@ true, Unit@ false);
-  @ P@ = *(Int@ head, S@ tail), @ S@ = +(Unit@ nil, P@ cons); P@(3, S@:nil(Unit@()))
-
-The type let is used to define type variables, when describing either types or
-expressions. For each binding, a new type variable is defined. The type of the
-type variable is the result of evaluating the type for the variable's binding.
-
-The defined type variables are visible in the body of the let. To support self
-and mutually recursive types, the defined type variables are also visible in
-all of the bindings expressions.
+When defining type variables, in place of the type of the type variable the
+kind of the type variable can be used. The type of the type variable will be
+inferred automatically in that case. This way you can define a type variable
+without having to duplicate the definition in its own type. If a kind is
+provided for a type variable, the type variable will behave as an abstract
+type in the bindings, and a concrete type in the body of the let.
 
 TODO: Are bindings allowed to defined variables with the same name as
 variables already in scope, thus shadowing the variable already in scope?
-
-The value of the type let is the value of its body.
 
 8. Polymorphism
 ---------------

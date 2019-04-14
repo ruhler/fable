@@ -59,7 +59,6 @@ typedef enum {
   PROC_TYPE,
   INPUT_TYPE,
   OUTPUT_TYPE,
-  ABSTRACT_TYPE,
   POLY_TYPE,
   POLY_APPLY_TYPE,
   REF_TYPE,
@@ -123,12 +122,6 @@ typedef struct {
   Type* type;
 } UnaryType;
 
-// AbstractType -- ABSTRACT_TYPE
-typedef struct {
-  Type _base;
-  Kind* kind;
-} AbstractType;
-
 // PolyType -- POLY_TYPE
 typedef struct {
   Type _base;
@@ -149,8 +142,8 @@ typedef struct {
 // RefType --
 //   REF_TYPE
 //
-// A implementation-specific type introduced to support recursive types. A
-// ref type is simply a reference to another type.
+// An abstract type whose value may or may not be known. Used for the value of
+// type paramaters and recursive type values.
 typedef struct RefType {
   Type _base;
   Kind* kind;
@@ -360,13 +353,6 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
       break;
     }
 
-    case ABSTRACT_TYPE: {
-      AbstractType* abstract = (AbstractType*)type;
-      FreeKind(arena_, abstract->kind);
-      FbleFree(arena_, type);
-      break;
-    }
-
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
       FreeKind(arena_, ref->kind);
@@ -437,10 +423,6 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
       break;
     }
 
-    case ABSTRACT_TYPE: {
-      break;
-    }
-
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
       Add(add, pt->arg);
@@ -497,11 +479,6 @@ static Kind* GetKind(FbleArena* arena, Type* type)
       kind->_base.loc = type->loc;
       kind->_base.refcount = 1;
       return &kind->_base;
-    }
-
-    case ABSTRACT_TYPE: {
-      AbstractType* abstract = (AbstractType*)type;
-      return CopyKind(arena, abstract->kind);
     }
 
     case POLY_TYPE: {
@@ -605,10 +582,6 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
       return HasParam(ut->type, param, &nv);
     }
 
-    case ABSTRACT_TYPE: {
-      return (type == param);
-    }
-
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
       return pt->arg != param && HasParam(pt->body, param, &nv);
@@ -622,7 +595,8 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
 
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
-      return ref->value != NULL && HasParam(ref->value, param, &nv);
+      return (type == param)
+          || (ref->value != NULL && HasParam(ref->value, param, &nv));
     }
 
     case TYPE_TYPE: {
@@ -727,11 +701,6 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
       return &sut->_base;
     }
 
-    case ABSTRACT_TYPE: {
-      assert(type == param && "HasParam result was wrong.");
-      return TypeRetain(arena, arg);
-    }
-
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
       PolyType* spt = FbleAlloc(arena_, PolyType);
@@ -764,10 +733,8 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
 
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
-
-      // Treat null refs as abstract types.
       if (ref->value == NULL) {
-        return TypeRetain(arena, type);
+        return TypeRetain(arena, (type == param ? arg : type));
       }
 
       // Check to see if we've already done substitution on the value pointed
@@ -881,10 +848,6 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       return;
     }
 
-    case ABSTRACT_TYPE: {
-      return;
-    }
-
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
       Eval(arena, pt->body, &nevaled, applied);
@@ -974,7 +937,6 @@ static Type* Normal(Type* type)
     case PROC_TYPE: return type;
     case INPUT_TYPE: return type;
     case OUTPUT_TYPE: return type;
-    case ABSTRACT_TYPE: return type;
     case POLY_TYPE: return type;
 
     case POLY_APPLY_TYPE: {
@@ -1092,11 +1054,6 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       UnaryType* uta = (UnaryType*)a;
       UnaryType* utb = (UnaryType*)b;
       return TypesEqual(uta->type, utb->type, &neq);
-    }
-
-    case ABSTRACT_TYPE: {
-      assert(a != b);
-      return false;
     }
 
     case POLY_TYPE: {
@@ -1262,11 +1219,6 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       break;
     }
 
-    case ABSTRACT_TYPE: {
-      fprintf(stderr, "??%p", (void*)type);
-      break;
-    }
-
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
       fprintf(stderr, "<@ ??%p@> { ", (void*)pt->arg);
@@ -1359,11 +1311,6 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
     case PROC_TYPE:
     case INPUT_TYPE:
     case OUTPUT_TYPE: {
-      return NULL;
-    }
-
-    case ABSTRACT_TYPE: {
-      assert(false && "TODO: value of abstract type");
       return NULL;
     }
 
@@ -2384,11 +2331,12 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       pt->_base.tag = POLY_TYPE;
       pt->_base.loc = expr->loc;
 
-      AbstractType* arg = FbleAlloc(arena_, AbstractType);
+      RefType* arg = FbleAlloc(arena_, RefType);
       FbleRefInit(arena, &arg->_base.ref);
-      arg->_base.tag = ABSTRACT_TYPE;
+      arg->_base.tag = REF_TYPE;
       arg->_base.loc = poly->arg.name.loc;
       arg->kind = CompileKind(arena_, poly->arg.kind);
+      arg->value = NULL;
       pt->arg = &arg->_base;
       FbleRefAdd(arena, &pt->_base.ref, &arg->_base.ref);
 

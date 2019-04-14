@@ -60,7 +60,7 @@ kind ::=
 
 type ::= expr ;
 
-m_type ::= 
+mtype ::= 
    kind   (* implicit_type *)
  | type   (* explicit_type *)
  ;
@@ -98,8 +98,8 @@ stmt ::=
    expr ';'
  | expr ';' stmt                                                     (* struct_import *)
  | type '~' name ',' name ';' stmt                                   (* link *)
- | m_type name ':=' expr [',' m_type name ':=' expr [...]] ';' stmt  (* exec *)
- | m_type name '=' expr [',' m_type name '=' expr [...]] ';' stmt    (* let *)
+ | mtype name ':=' expr [',' mtype name ':=' expr [...]] ';' stmt    (* exec *)
+ | mtype name '=' expr [',' mtype name '=' expr [...]] ';' stmt      (* let *)
  | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
  ;
 
