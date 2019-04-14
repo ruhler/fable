@@ -71,8 +71,8 @@
 %type <exprs> expr_s expr_p
 %type <field> field
 %type <fields> field_p field_s
-%type <choice> anon_struct_arg
-%type <choices> choices anon_struct_arg_s anon_struct_arg_p
+%type <choice> choice
+%type <choices> choice_p choice_s
 %type <bindings> let_binding_p exec_bindings
 
 %%
@@ -114,7 +114,7 @@ expr:
       misc_apply_expr->args = $3;
       $$ = &misc_apply_expr->_base;
    }
- | '@' '(' anon_struct_arg_s ')' {
+ | '@' '(' choice_s ')' {
       FbleStructValueImplicitTypeExpr* expr = FbleAlloc(arena, FbleStructValueImplicitTypeExpr);
       expr->_base.tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR;
       expr->_base.loc = @$;
@@ -145,7 +145,7 @@ expr:
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }
- | '?' '(' expr ';' choices ')' {
+ | '?' '(' expr ';' choice_p ')' {
       FbleCondExpr* cond_expr = FbleAlloc(arena, FbleCondExpr);
       cond_expr->_base.tag = FBLE_COND_EXPR;
       cond_expr->_base.loc = @$;
@@ -379,22 +379,7 @@ expr_p:
    }
  ;
 
-choices:
-    NAME ':' expr {
-      FbleVectorInit(arena, $$);
-      FbleChoice* choice = FbleVectorExtend(arena, $$);
-      choice->name = $1;
-      choice->expr = $3;
-    }
-  | choices ',' NAME ':' expr {
-      $$ = $1;
-      FbleChoice* choice = FbleVectorExtend(arena, $$);
-      choice->name = $3;
-      choice->expr = $5;
-    }
-  ;
-
-anon_struct_arg:
+choice:
     name {
       $$.name = $1;
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
@@ -409,17 +394,17 @@ anon_struct_arg:
     }
   ;
 
-anon_struct_arg_s:
+choice_s:
     %empty { FbleVectorInit(arena, $$); }
-  | anon_struct_arg_p { $$ = $1; }
+  | choice_p { $$ = $1; }
   ;
 
-anon_struct_arg_p:
-  anon_struct_arg {
+choice_p:
+  choice {
       FbleVectorInit(arena, $$);
       FbleVectorAppend(arena, $$, $1);
     }
-  | anon_struct_arg_p ',' anon_struct_arg {
+  | choice_p ',' choice {
       $$ = $1;
       FbleVectorAppend(arena, $$, $3);
     }
