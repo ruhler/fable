@@ -605,20 +605,29 @@ Examples:
   Maybe@<Int@>
   fromJust<Int@>[3]
 
-9 Include
----------
+9. Program
+-----------
+A program is an fble expressions that creates a value that is used however is
+deemed suitable by whoever is executing the program. Commonly this could be:
+
+* struct: evaluate and output the value
+* union: evaluate and output the value
+* function: apply the function to arguments provided on the command line,
+  evaluate and output the resulting value
+* process: run the process, evaluate and output the resulting value.
+
+9.1 Include
+-----------
 Abstract Syntax:
-  Type ::= type_include (name :: Name)
   Expr ::= include (name :: Name)
 
 Concrete Syntax:
-  type ::= '&' type_name
   expr ::= '&' name
 
 Example:
   &StdLib
 
-Syntactically includes the named module in place of the thing. The definition
+Syntactically includes the named module in place of the expression. The definition
 of the module is located in a platform dependent way relative to the current
 module. This allows an fble program to be split across multiple files that are
 reused in multiple programs.
@@ -633,18 +642,7 @@ This would read StdLib from the file "lib/StdLib.fble". When reading
 StdLib.fble, the include search path is adjusted to "lib/StdLib" for any child
 modules included in StdLib.fble.
 
-10. Program
------------
-A program is an fble expressions that creates a value that is used however is
-deemed suitable by whoever is executing the program. Commonly this could be:
-
-* struct: evaluate and output the value
-* union: evaluate and output the value
-* function: apply the function to arguments provided on the command line,
-  evaluate and output the resulting value
-* process: run the process, evaluate and output the resulting value.
-  
-11. Abstract Syntax Reference
+10. Abstract Syntax Reference
 -----------------------------
 Name ::= (* A string of characters *)
 

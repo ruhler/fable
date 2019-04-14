@@ -61,7 +61,7 @@ typedef enum {
   OUTPUT_TYPE,
   POLY_TYPE,
   POLY_APPLY_TYPE,
-  REF_TYPE,
+  VAR_TYPE,
   TYPE_TYPE,
 } TypeTag;
 
@@ -139,23 +139,23 @@ typedef struct {
   Type* result;
 } PolyApplyType;
 
-// RefType --
-//   REF_TYPE
+// VarType --
+//   VAR_TYPE
 //
-// An abstract type whose value may or may not be known. Used for the value of
+// A variable type whose value may or may not be known. Used for the value of
 // type paramaters and recursive type values.
-typedef struct RefType {
+typedef struct VarType {
   Type _base;
   Kind* kind;
   FbleName name;
   Type* value;
-} RefType;
+} VarType;
 
-// RefTypeV - a vector of ref types.
+// VarTypeV - a vector of var types.
 typedef struct {
   size_t size;
-  RefType** xs;
-} RefTypeV;
+  VarType** xs;
+} VarTypeV;
 
 // TypeType --
 //   TYPE_TYPE
@@ -354,10 +354,10 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
       break;
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
-      FreeKind(arena_, ref->kind);
-      FbleFree(arena_, ref);
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      FreeKind(arena_, var->kind);
+      FbleFree(arena_, var);
       break;
     }
 
@@ -439,9 +439,9 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
       break;
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
-      Add(add, ref->value);
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      Add(add, var->value);
       break;
     }
 
@@ -503,9 +503,9 @@ static Kind* GetKind(FbleArena* arena, Type* type)
       return rkind;
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
-      return CopyKind(arena, ref->kind);
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      return CopyKind(arena, var->kind);
     }
 
     case TYPE_TYPE: {
@@ -594,10 +594,10 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
           || HasParam(pat->poly, param, &nv);
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
       return (type == param)
-          || (ref->value != NULL && HasParam(ref->value, param, &nv));
+          || (var->value != NULL && HasParam(var->value, param, &nv));
     }
 
     case TYPE_TYPE: {
@@ -732,38 +732,38 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
       return &spat->_base;
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
-      if (ref->value == NULL) {
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      if (var->value == NULL) {
         return TypeRetain(arena, (type == param ? arg : type));
       }
 
       // Check to see if we've already done substitution on the value pointed
       // to by this ref.
       for (TypePairs* tp = tps; tp != NULL; tp = tp->next) {
-        if (tp->a == ref->value) {
+        if (tp->a == var->value) {
           return TypeRetain(arena, tp->b);
         }
       }
 
-      RefType* sref = FbleAlloc(arena_, RefType);
-      FbleRefInit(arena, &sref->_base.ref);
-      sref->_base.tag = REF_TYPE;
-      sref->_base.loc = type->loc;
-      sref->name = ref->name;
-      sref->kind = CopyKind(arena_, ref->kind);
-      sref->value = NULL;
+      VarType* svar = FbleAlloc(arena_, VarType);
+      FbleRefInit(arena, &svar->_base.ref);
+      svar->_base.tag = VAR_TYPE;
+      svar->_base.loc = type->loc;
+      svar->name = var->name;
+      svar->kind = CopyKind(arena_, var->kind);
+      svar->value = NULL;
 
       TypePairs ntp = {
-        .a = ref->value,
-        .b = &sref->_base,
+        .a = var->value,
+        .b = &svar->_base,
         .next = tps
       };
 
-      Type* value = Subst(arena, ref->value, param, arg, &ntp);
-      sref->value = value;
-      FbleRefAdd(arena, &sref->_base.ref, &sref->value->ref);
-      TypeRelease(arena, &sref->_base);
+      Type* value = Subst(arena, var->value, param, arg, &ntp);
+      svar->value = value;
+      FbleRefAdd(arena, &svar->_base.ref, &svar->value->ref);
+      TypeRelease(arena, &svar->_base);
       return value;
     }
 
@@ -897,11 +897,11 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       return;
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
 
-      if (ref->value != NULL) {
-        Eval(arena, ref->value, &nevaled, applied);
+      if (var->value != NULL) {
+        Eval(arena, var->value, &nevaled, applied);
       }
       return;
     }
@@ -949,12 +949,12 @@ static Type* Normal(Type* type)
       return Normal(pat->result);
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
-      if (ref->value == NULL) {
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      if (var->value == NULL) {
         return type;
       }
-      return Normal(ref->value);
+      return Normal(var->value);
     }
 
     case TYPE_TYPE: return type;
@@ -1077,11 +1077,11 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       return false;
     }
 
-    case REF_TYPE: {
-      RefType* ra = (RefType*)a;
-      RefType* rb = (RefType*)b;
+    case VAR_TYPE: {
+      VarType* va = (VarType*)a;
+      VarType* vb = (VarType*)b;
 
-      assert(ra->value == NULL && rb->value == NULL);
+      assert(va->value == NULL && vb->value == NULL);
       assert(a != b);
       return false;
     }
@@ -1244,12 +1244,12 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       break;
     }
 
-    case REF_TYPE: {
-      RefType* ref = (RefType*)type;
-      if (ref->value == NULL) {
-        fprintf(stderr, "%s_%lx", ref->name.name, (unsigned long)type);
+    case VAR_TYPE: {
+      VarType* var = (VarType*)type;
+      if (var->value == NULL) {
+        fprintf(stderr, "%s_%lx", var->name.name, (unsigned long)type);
       } else {
-        PrintType(arena, ref->value, &nprinted);
+        PrintType(arena, var->value, &nprinted);
       }
       break;
     }
@@ -1361,8 +1361,8 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
       return &spat->_base;
     }
 
-    case REF_TYPE: {
-      assert(false && "TODO: value of ref type");
+    case VAR_TYPE: {
+      assert(false && "TODO: value of var type");
       return NULL;
     }
 
@@ -2221,31 +2221,31 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       // Evaluate the types of the bindings and set up the new vars.
       Vars nvd[let_expr->bindings.size];
       Vars* nvars = vars;
-      RefType* ref_types[let_expr->bindings.size];
+      VarType* var_types[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleBinding* binding = let_expr->bindings.xs + i;
 
         nvd[i].name = let_expr->bindings.xs[i].name;
         if (binding->type == NULL) {
           assert(binding->kind != NULL);
-          RefType* ref = FbleAlloc(arena_, RefType);
-          FbleRefInit(arena, &ref->_base.ref);
-          ref->_base.tag = REF_TYPE;
-          ref->_base.loc = binding->name.loc;
-          ref->name = let_expr->bindings.xs[i].name;
-          ref->kind = CompileKind(arena_, binding->kind);
-          ref->value = NULL;
+          VarType* var = FbleAlloc(arena_, VarType);
+          FbleRefInit(arena, &var->_base.ref);
+          var->_base.tag = VAR_TYPE;
+          var->_base.loc = binding->name.loc;
+          var->name = let_expr->bindings.xs[i].name;
+          var->kind = CompileKind(arena_, binding->kind);
+          var->value = NULL;
 
           TypeType* type_type = FbleAlloc(arena_, TypeType);
           FbleRefInit(arena, &type_type->_base.ref);
           type_type->_base.tag = TYPE_TYPE;
           type_type->_base.loc = binding->name.loc;
-          type_type->type = &ref->_base;
+          type_type->type = &var->_base;
           FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
-          TypeRelease(arena, &ref->_base);
+          TypeRelease(arena, &var->_base);
 
           nvd[i].type = &type_type->_base;
-          ref_types[i] = ref;
+          var_types[i] = var;
         } else {
           assert(binding->kind == NULL);
           nvd[i].type = CompileType(arena, vars, binding->type);
@@ -2281,9 +2281,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
           PrintType(arena_, type, NULL);
           fprintf(stderr, "\n");
         } else if (!error && binding->type == NULL) {
-          RefType* ref = ref_types[i];
+          VarType* var = var_types[i];
 
-          Kind* expected_kind = ref->kind;
+          Kind* expected_kind = var->kind;
           Kind* actual_kind = GetKind(arena_, type);
           if (!KindsEqual(expected_kind, actual_kind)) {
             FbleReportError("expected kind ", &type->loc);
@@ -2295,10 +2295,10 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
           }
           FreeKind(arena_, actual_kind);
 
-          ref->value = ValueOfType(arena, type);
-          if (ref->value != NULL) {
-            FbleRefAdd(arena, &ref->_base.ref, &ref->value->ref);
-            TypeRelease(arena, ref->value);
+          var->value = ValueOfType(arena, type);
+          if (var->value != NULL) {
+            FbleRefAdd(arena, &var->_base.ref, &var->value->ref);
+            TypeRelease(arena, var->value);
           }
         }
 
@@ -2340,9 +2340,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       pt->_base.tag = POLY_TYPE;
       pt->_base.loc = expr->loc;
 
-      RefType* arg = FbleAlloc(arena_, RefType);
+      VarType* arg = FbleAlloc(arena_, VarType);
       FbleRefInit(arena, &arg->_base.ref);
-      arg->_base.tag = REF_TYPE;
+      arg->_base.tag = VAR_TYPE;
       arg->_base.loc = poly->arg.name.loc;
       arg->name = poly->arg.name;
       arg->kind = CompileKind(arena_, poly->arg.kind);
