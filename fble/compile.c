@@ -1246,11 +1246,7 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
 
     case VAR_TYPE: {
       VarType* var = (VarType*)type;
-      if (var->value == NULL) {
-        fprintf(stderr, "%s_%lx", var->name.name, (unsigned long)type);
-      } else {
-        PrintType(arena, var->value, &nprinted);
-      }
+      fprintf(stderr, "%s", var->name.name);
       break;
     }
 
