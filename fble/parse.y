@@ -118,16 +118,15 @@ expr:
       $$ = &misc_apply_expr->_base;
    }
  | '@' '(' anon_struct_arg_s ')' {
-      FbleAnonStructValueExpr* expr = FbleAlloc(arena, FbleAnonStructValueExpr);
-      expr->_base.tag = FBLE_ANON_STRUCT_VALUE_EXPR;
+      FbleStructValueImplicitTypeExpr* expr = FbleAlloc(arena, FbleStructValueImplicitTypeExpr);
+      expr->_base.tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR;
       expr->_base.loc = @$;
-      FbleVectorInit(arena, expr->type_args);
       expr->args = $3;
       $$ = &expr->_base;
    }
  | expr '{' stmt '}' {
       FbleNamespaceExpr* expr = FbleAlloc(arena, FbleNamespaceExpr);
-      expr->_base.tag = FBLE_NAMESPACE_EVAL_EXPR;
+      expr->_base.tag = FBLE_STRUCT_EVAL_EXPR;
       expr->_base.loc = @$;
       expr->nspace = $1;
       expr->body = $3;
@@ -332,7 +331,7 @@ stmt:
     }
   | expr ';' stmt {
       FbleNamespaceExpr* expr = FbleAlloc(arena, FbleNamespaceExpr);
-      expr->_base.tag = FBLE_NAMESPACE_IMPORT_EXPR;
+      expr->_base.tag = FBLE_STRUCT_IMPORT_EXPR;
       expr->_base.loc = @$;
       expr->nspace = $1;
       expr->body = $3;

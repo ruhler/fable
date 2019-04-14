@@ -5,14 +5,14 @@ Richard Uhler <ruhler@degralder.com>
 1. Introduction
 ---------------
 Fble is a general purpose, Turing-complete functional programming language
-with support for concurrent processes, polymorphism, and modularity.
+with support for polymorphism and concurrent processes.
 
 1.1 Goals
 ---------
 The primary design goals of fble are:
 
 * Fble should be as simple a language as possible while still being useful.
-  A simple language will hopefully be simple to specify, simple to learn,
+  A simple language should hopefully be simple to specify, simple to learn,
   simple to understand, simple to program, powerful, and low cost to develop
   high quality tools for.
 

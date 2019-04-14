@@ -100,11 +100,11 @@ typedef struct {
 //   A tag used to dinstinguish among different kinds of expressions.
 typedef enum {
   FBLE_STRUCT_TYPE_EXPR,
-  // FBLE_STRUCT_VALUE_EXPR = FBLE_MISC_APPLY_EXPR,
+  // FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR,
+  FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
   // FBLE_STRUCT_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR,
-  FBLE_ANON_STRUCT_VALUE_EXPR,
-  FBLE_NAMESPACE_EVAL_EXPR,
-  FBLE_NAMESPACE_IMPORT_EXPR,
+  FBLE_STRUCT_EVAL_EXPR,
+  FBLE_STRUCT_IMPORT_EXPR,
 
   FBLE_UNION_TYPE_EXPR,
   FBLE_UNION_VALUE_EXPR,
@@ -131,7 +131,7 @@ typedef enum {
   FBLE_POLY_APPLY_EXPR,
 
   FBLE_MISC_ACCESS_EXPR,  // Used for STRUCT_ACCESS, UNION_ACCESS
-  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE, PUT, GET
+  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, PUT, GET
 } FbleExprTag;
 
 // FbleExpr --
@@ -191,17 +191,16 @@ typedef struct {
   FbleChoice* xs;
 } FbleChoiceV;
 
-// FbleAnonStructValueExpr --
-//   FBLE_ANON_STRUCT_VALUE_EXPR (args :: [(Name, Expr)])
+// FbleStructValueImplicitTypeExpr --
+//   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR (args :: [(Name, Expr)])
 typedef struct {
   FbleExpr _base;
-  FbleFieldV type_args;
   FbleChoiceV args;
-} FbleAnonStructValueExpr;
+} FbleStructValueImplicitTypeExpr;
 
 // FbleNamespaceExpr --
-//   FBLE_NAMESPACE_EVAL_EXPR (namespace :: Expr) (body :: Expr)
-//   FBLE_NAMESPACE_IMPORT_EXPR (namespace :: Expr) (body :: Expr)
+//   FBLE_STRUCT_EVAL_EXPR (namespace :: Expr) (body :: Expr)
+//   FBLE_STRUCT_IMPORT_EXPR (namespace :: Expr) (body :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleExpr* nspace;

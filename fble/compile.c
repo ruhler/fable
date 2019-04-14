@@ -1823,8 +1823,8 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       return vtype;
     }
 
-    case FBLE_ANON_STRUCT_VALUE_EXPR: {
-      FbleAnonStructValueExpr* struct_expr = (FbleAnonStructValueExpr*)expr;
+    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
+      FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
       StructType* struct_type = FbleAlloc(arena_, StructType);
       FbleRefInit(arena, &struct_type->_base.ref);
       struct_type->_base.loc = expr->loc;
@@ -2630,8 +2630,8 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       return &pat->_base;
     }
 
-    case FBLE_NAMESPACE_EVAL_EXPR:
-    case FBLE_NAMESPACE_IMPORT_EXPR: {
+    case FBLE_STRUCT_EVAL_EXPR:
+    case FBLE_STRUCT_IMPORT_EXPR: {
       FbleNamespaceExpr* namespace_expr = (FbleNamespaceExpr*)expr;
 
       Type* type = CompileExpr(arena, vars, namespace_expr->nspace, instrs);
@@ -2658,7 +2658,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       }
 
       Vars nvd[struct_type->fields.size];
-      Vars* nvars = (expr->tag == FBLE_NAMESPACE_EVAL_EXPR) ? NULL : vars;
+      Vars* nvars = (expr->tag == FBLE_STRUCT_EVAL_EXPR) ? NULL : vars;
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         nvd[i].name = struct_type->fields.xs[i].name;
         nvd[i].type = struct_type->fields.xs[i].type;
@@ -2889,7 +2889,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     }
 
     case FBLE_MISC_APPLY_EXPR:
-    case FBLE_ANON_STRUCT_VALUE_EXPR:
+    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_COND_EXPR:
@@ -2902,8 +2902,8 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     case FBLE_LET_EXPR:
     case FBLE_POLY_EXPR:
     case FBLE_POLY_APPLY_EXPR:
-    case FBLE_NAMESPACE_EVAL_EXPR:
-    case FBLE_NAMESPACE_IMPORT_EXPR: {
+    case FBLE_STRUCT_EVAL_EXPR:
+    case FBLE_STRUCT_IMPORT_EXPR: {
       FbleExpr* expr = type;
       Type* type = CompileExprNoInstrs(arena, vars, expr);
       if (type == NULL) {
