@@ -60,10 +60,10 @@ struct. Individual components of a struct can be accessed by field name.
 3.1 Struct Type
 ---------------
 Abstract Syntax:
-  Type ::= struct_type (fields :: [(Type, Name)])
+  Expr ::= struct_type (fields :: [(Type, Name)])
 
 Concrete Syntax:
-  type ::= '*(' [type name [',' type name [...]]] ')'
+  expr ::= '*(' [type name [',' type name [...]]] ')'
 
 Examples:
   *()                 is the Unit type
@@ -72,10 +72,10 @@ Examples:
 Struct types are considered equal if their fields are equal, including field
 types, field names, and the order of the fields.
 
-3.2 Struct Value
-----------------
+3.2 Struct Value Explicit Type
+------------------------------
 Abstract Syntax:
-  Expr ::= struct_value (type :: Type) (args :: [Expr])
+  Expr ::= struct_value_explicit_type (type :: Type) (args :: [Expr])
 
 Concrete Syntax:
   expr ::= type '(' [expr [',' expr [...]]] ')'
@@ -83,7 +83,30 @@ Concrete Syntax:
 Example:
   Coord@(3, 5)
 
-3.3 Struct Access
+3.3 Struct Value Implicit Type
+------------------------------
+Abstract Syntax:
+  Expr ::= struct_value_implicit_type (args :: [(Name, Expr)])
+
+Concrete Syntax:
+  expr ::= '@' '(' [name [':' expr] [',' ...]] ')'         (* struct_value_implicit_type *)
+
+Example:
+  @(x: 3, y: 5)
+  @(Bool@, True, False, Not: NotInternal)
+
+Allows you to construct a struct value with an implicit type. When defining
+structs used as namespaces, it is tedious to have to repeat the types of the
+entities being defined and to worry about what order they are defined in. The
+anoymous struct value makes it more convenient to define structs used as
+namespaces.
+
+If no value for a field is provided, its value is assumed to be the variable
+with same name as the field. For example, the above example is equivalent to:
+
+  @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
+
+3.4 Struct Access
 -----------------
 Abstract Syntax:
   Expr ::= struct_access (object :: Expr) (field :: Name)
@@ -613,31 +636,6 @@ struct type. Type field access gives the value of the type field of the type
 of the object. Note that the object of type field access is never evaluated.
 Its expression is used solely to determine the type from which the type field
 is read.
-
-9.3 Anonymous Struct Value
---------------------------
-Abstract Syntax:
-  Expr ::= anon_struct (type_args :: [(Name, Type)]) (args :: [(Name, Expr)])
-
-Concrete Syntax:
-  expr ::= '@' '(' [name [':' expr] [',' ...]] ')'
-        |  '@' '(' type_name [':' type] [',' ...]
-                   [',' name [':' expr] [',' ...]] ')'
-
-Example:
-  @(Bool@, True, False, Not: NotInternal)
-
-Allows you to construct a struct value with an anonymous type. When defining
-namespaces, it is tedious to have to repeat the types of the entities being
-defined and to worry about what order they are defined in. The anoymous struct
-value makes it more convenient to define structs used as namespaces.
-
-If no value for a field is provided, it's value is assumed to be the type
-variable or normal variable with same name as the field. For example, the
-above example is equivalent to:
-
-  @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
-  
 
 9.4 Namespace Eval
 ------------------

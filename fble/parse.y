@@ -63,7 +63,7 @@
 %token END 0 "end of file"
 %token INVALID "invalid character"
 
-%token <name> NAME TYPE_NAME
+%token <name> NAME
 
 %type <name> name
 %type <kind> kind
@@ -79,10 +79,7 @@
 
 start: stmt { *result = $1; } ;
 
-name:
-    NAME { $$ = $1; }
-  | TYPE_NAME { $$ = $1; }
-  ;
+name: NAME { $$ = $1; } ;
 
 kind:
    '@' {
@@ -617,10 +614,6 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
   FbleVectorAppend(arena, namev, '\0');
   lvalp->name.name = namev.xs;
   lvalp->name.loc = *llocp;
-
-  if (namev.size > 1 && namev.xs[namev.size - 2] == '@') {
-    return TYPE_NAME;
-  }
   return NAME;
 }
 
