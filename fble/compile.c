@@ -147,6 +147,7 @@ typedef struct {
 typedef struct RefType {
   Type _base;
   Kind* kind;
+  FbleName name;
   Type* value;
 } RefType;
 
@@ -749,6 +750,7 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
       FbleRefInit(arena, &sref->_base.ref);
       sref->_base.tag = REF_TYPE;
       sref->_base.loc = type->loc;
+      sref->name = ref->name;
       sref->kind = CopyKind(arena_, ref->kind);
       sref->value = NULL;
 
@@ -1221,7 +1223,13 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
-      fprintf(stderr, "<@ ??%p@> { ", (void*)pt->arg);
+      fprintf(stderr, "<");
+      Kind* kind = GetKind(arena, pt->arg);
+      PrintKind(kind);
+      FreeKind(arena, kind);
+      fprintf(stderr, " ");
+      PrintType(arena, pt->arg, &nprinted);
+      fprintf(stderr, "> { ");
       PrintType(arena, pt->body, &nprinted);
       fprintf(stderr, "; }");
       break;
@@ -1239,7 +1247,7 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
     case REF_TYPE: {
       RefType* ref = (RefType*)type;
       if (ref->value == NULL) {
-        fprintf(stderr, "??%p", (void*)type);
+        fprintf(stderr, "%s_%lx", ref->name.name, (unsigned long)type);
       } else {
         PrintType(arena, ref->value, &nprinted);
       }
@@ -2224,6 +2232,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
           FbleRefInit(arena, &ref->_base.ref);
           ref->_base.tag = REF_TYPE;
           ref->_base.loc = binding->name.loc;
+          ref->name = let_expr->bindings.xs[i].name;
           ref->kind = CompileKind(arena_, binding->kind);
           ref->value = NULL;
 
@@ -2335,6 +2344,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleRefInit(arena, &arg->_base.ref);
       arg->_base.tag = REF_TYPE;
       arg->_base.loc = poly->arg.name.loc;
+      arg->name = poly->arg.name;
       arg->kind = CompileKind(arena_, poly->arg.kind);
       arg->value = NULL;
       pt->arg = &arg->_base;

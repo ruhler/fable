@@ -53,8 +53,7 @@ Concrete Syntax Reference
 name ::= (* [a-zA-Z--9_]+[@]? *)
 
 kind ::=
-   '*'                  (* basic_kind *)
- | '@'                  (* type_kind *)
+   '@'                  (* type_kind *)
  | '<' kind '>' kind    (* poly_kind *)
  ;
 

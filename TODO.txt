@@ -61,8 +61,6 @@ Fble Cleanup:
   process $(...). Clarify the spec on that and make sure we implement it
   correctly.
 * Remove iquota from Thread data structure. It should be managed separately.
-* Make poly type args VarType of AbstractType, so it's easier to interpret type
-  errors involving poly types?
 
 Fble Lib:
 * Should Eq just be a function or an interface?

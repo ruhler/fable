@@ -561,15 +561,16 @@ variables already in scope, thus shadowing the variable already in scope?
 
 8. Polymorphism
 ---------------
-Polymorphism allows expressions and types to be parameterized by abstract
-types.
+Polymorphism allows expressions to be parameterized by abstract types.
 
 8.1 Poly Kind
 -------------
 Abstract Syntax:
+  Kind ::= type_kind
   Kind ::= poly_kind (arg :: Kind) (return :: Kind)
 
 Concrete Syntax:
+  kind ::= '@'
   kind ::= '<' kind '>' kind
 
 Examples:
@@ -583,12 +584,10 @@ Two poly kinds are equal if they have the same argument and return kinds.
 8.2 Poly
 --------
 Abstract Syntax:
-  Type ::= poly_type (args :: [(Kind, Name)]) (body :: Type)
-  Expr ::= poly_expr (args :: [(Kind, Name)]) (body :: Expr)
+  Expr ::= poly (arg :: (Kind, Name)) (body :: Expr)
 
 Concrete Syntax:
-  type ::= '<' kind type_name '>' '{' type_stmt '}'
-  expr ::= '<' kind type_name '>' '{' stmt '}'
+  block ::= '<' kind name '>' block
  
 Examples:
   <@ T@> { +(T@ just, Unit@ nothing); }
@@ -597,11 +596,9 @@ Examples:
 8.3 Poly Application
 --------------------
 Abstract Syntax:
-  Type ::= poly_type_apply (poly :: Type) (arg :: Type)
-  Expr ::= poly_expr_apply (poly :: Expr) (arg :: Type)
+  Expr ::= poly_apply (poly :: Expr) (arg :: Type)
 
 Concrete Syntax:
-  type ::= type '<' type '>'
   expr ::= expr '<' type '>'
 
 Examples:
