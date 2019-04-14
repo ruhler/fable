@@ -607,6 +607,12 @@ Examples:
 
 9. Program
 -----------
+Abstract Syntax:
+  Prgm ::= Expr
+
+Concrete Syntax:
+  prgm ::= stmt
+
 A program is an fble expressions that creates a value that is used however is
 deemed suitable by whoever is executing the program. Commonly this could be:
 
@@ -648,169 +654,117 @@ Name ::= (* A string of characters *)
 
 Kind ::=
    basic_kind
- | poly_kind (args :: [Kind]) (return :: Kind)
+ | type_kind
+ | poly_kind (arg :: Kind) (result :: Kind)
  ;
 
-Type ::=
-   struct_type (type_fields :: [(Kind, Name, Type)]) (fields :: [(Type, Name)])
- | union_type (fields :: [(Type, Name)])
- | func_type (args :: [(Type, Name)]) (return :: Type)
- | proc_type (return :: Type)
- | input_type (type :: Type)
- | output_type (type :: Type)
- | type_var (name :: Name)
- | type_let_type (bindings :: [(Kind, Name, Type)]) (body :: Type)
- | poly_type (args :: [(Kind, Name)]) (body :: Type)
- | poly_type_apply (poly :: Type) (args :: [Type])
- | type_include (name :: Name)
- | type_field_access (obj :: Expr) (field :: Name)
- ;
+Type ::= (* synonym for Expr where a type is expected *)
 
+MType ::=
+   implicit_type (kind :: Kind)
+ | explicit_type (type :: Type)
+ ;
+     
 Expr ::=
-   struct_value (type :: Type) (args :: [Expr])
- | anon_struct (type_args :: [(Name, Type)]) (args :: [(Name, Expr)])
+   struct_type (fields :: [(Type, Name)])
+ | struct_value_explicit_type (type :: Type) (args :: [Expr])
+ | struct_value_implicit_type (args :: [(Name, Expr)])
  | struct_access (object :: Expr) (field :: Name)
+ | struct_eval (namespace :: Expr) (body :: Expr)
+ | struct_import (namespace :: Expr) (body :: Expr)
+
+ | union_type (fields :: [(Type, Name)])
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
  | union_access (object :: Expr) (field :: Name)
  | cond (condition :: Expr) (choices :: [(Name, Expr)])
- | func_value (args :: [(Type, Name)]) (body :: Expr)
- | apply (func :: Expr) (args :: [Expr])
- | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+
+ | func_type (arg :: Type) (result :: Type)
+ | func_value (arg :: (Type, Name)) (body :: Expr)
+ | func_apply (func :: Expr) (arg :: Expr)
+
+ | proc_type (result :: Type)
+ | input_type (type :: Type)
+ | output_type (type :: Type)
  | get (port :: Expr)
  | put (port :: Expr) (value :: Expr)
  | eval (expr :: Expr)
  | link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
- | exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+ | exec (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+
  | var (name :: Name)
- | let (bindings :: [(Type, Name, Expr)]) (body :: Expr)
- | type_let_expr (bindings :: [(Kind, Name, Type)]) (body :: Expr)
- | poly_expr (args :: [(Kind, Name)]) (body :: Expr)
- | poly_expr_apply (poly :: Expr) (args :: [Type])
- | namespace_eval (namespace :: Expr) (body :: Expr)
- | namespace_import (namespace :: Expr) (body :: Expr)
- | include (name :: Name)
+ | let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+ | typeof (expr :: Expr)
+ | poly (arg :: (Kind, Name)) (body :: Expr)
+ | poly_apply (poly :: Expr) (arg :: Expr)
  ;
 
-12. Concrete Syntax Reference
------------------------------
-name ::= (* [a-zA-Z--9_]+ *)
+Prgm ::= Expr
 
-type_name ::= name '@'
+11. Concrete Syntax Reference
+-----------------------------
+name ::= (* [a-zA-Z0-9_@]+ *)
 
 kind ::=
-   '@'                                        (* basic_kind *)
- | '\<' kind [',' kind [...]] ';' kind '>'    (* poly_kind *)
+   '@'                  (* type_kind *)
+ | '<' kind '>' kind    (* poly_kind *)
  ;
 
-type ::= 
-   '*(' [type name [',' type name [...]]] ')'                            (* struct_type *)
- | '*(' kind type_name '=' type [',' kind type_name '=' type [',' ...]   (* struct_type with type fields *)
-        [',' type name [',' type name [...]]] ')'
- | '+(' type name [',' type name [...]] ')'                              (* union_type *)
- | '\(' type [',' type [...]] ';' type ')'                               (* func_type *)
- | type '!'                                                              (* proc_type *)
- | type '-'                                                              (* input_type *)
- | type '+'                                                              (* output_type *)
- | type_name                                                             (* type_var *)
- | '\<' kind type_name [',' kind type_name [...]] '>' '{' type_stmt '}'  (* poly_type *)
- | type '<' [type [',' type [...]]] '>'                                  (* poly_type_apply *)
- | '{' type_stmt '}'                                                     (* type_stmt *)
- | '&' type_name                                                         (* type_include *)
- | expr '.' type_name                                                    (* type_field_access *)
+type ::= expr ;
+
+mtype ::= 
+   kind   (* implicit_type *)
+ | type   (* explicit_type *)
  ;
 
-type_stmt ::=
-   type ';'                                                                   (* type *)
- | kind type_name '=' type [',' kind type_name '=' type [...]] ';' type_stmt  (* type_let_type *)
+expr ::= 
+   '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
+ | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type, get, put *)
+ | '@' '(' [name [':' expr] [',' ...]] ')'         (* struct_value_implicit_type *)
+ | expr '.' name                                   (* struct_access, union_access *)
+ | expr '{' stmt '}'                               (* struct_eval *)
+ | '+(' type name [',' type name [...]] ')'        (* union_type *)
+ | type '(' name ':' expr ')'                      (* union_value *)
+ | '?(' expr ';' name ':' expr                     (* cond *)
+            [',' name ':' expr [...]] ')'   
+ | expr '[' expr ']'                               (* func_apply *)
+ | type '!'                                        (* proc_type *)
+ | type '-'                                        (* input_type *)
+ | type '+'                                        (* output_type *)
+ | '$(' expr ')'                                   (* eval *)
+ | name                                            (* var *)
+ | '@' '<' expr '>'                                (* typeof *)
+ | expr '<' type '>'                               (* poly_apply *)
+ | '&' name                                        (* include *)
+ | block
  ;
 
-expr ::=
-   type '(' [expr [',' expr [...]]] ')'                             (* struct_value *)
- | '@' '(' [name [':' expr] [',' ...]] ')'                          (* anon_struct *)
- | '@' '(' type_name [':' type] [',' ...]                           (* anon_struct with type fields *)
-           [',' name [':' expr] [',' ...]] ')'
- | type '(' name ':' expr ')'                                       (* union_value *)
- | expr '.' name                                                    (* access *)
- | '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'        (* cond *)
- | '\(' [type name [',' type name [...]]] ')' '{' stmt '}'          (* func_value *)
- | expr '(' [expr [',' expr [...]]] ')'                             (* apply *)
- | '$(' expr ')'                                                    (* eval *)
- | name                                                             (* var *)
- | '\<' kind type_name [',' kind type_name [...]] '>' '{' stmt '}'  (* poly_expr *)
- | expr '<' [type [',' type [...]]] '>'                             (* poly_expr_apply *)
- | '{' stmt '}'                                                     (* statement *)
- | expr '{' stmt '}'                                                (* namespace_eval *)
- | '&' name                                                         (* include *)
+block ::=
+   '{' stmt '}'
+ | '[' type ']' block             (* func_type *)
+ | '[' type name ']' block        (* func_value *)
+ | '<' kind name '>' block        (* poly *)
  ;
 
 stmt ::=
-   expr ';'                                                             (* expr *)
- | type name [',' type name [...]] '<-' expr ';' stmt                   (* bind *)
- | type '~' name ',' name ';' stmt                                      (* link *)
- | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt         (* exec *)
- | type name '=' expr [',' type name = expr [...]] ';' stmt             (* let *)
- | kind type_name '=' type [',' kind type_name '=' type [...]] ';' stmt (* type_let_expr *)
- | stmt ::= expr ';' stmt                                               (* namespace_import *)
+   expr ';'
+ | expr ';' stmt                                                     (* struct_import *)
+ | type '~' name ',' name ';' stmt                                   (* link *)
+ | mtype name ':=' expr [',' mtype name ':=' expr [...]] ';' stmt    (* exec *)
+ | mtype name '=' expr [',' mtype name '=' expr [...]] ';' stmt      (* let *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
+ ;
+
+prgm ::= stmt                                                        (* program *)
  ;
 
 Notes:
 * struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* apply, get, and put share the same form. The type of the expr is used to
-  distinguish between the three kinds of expressions.
+* explicit type struct value, get, and put share the same form. The type of
+  the expr is used to distinguish between the three kinds of expressions.
 
-13. Thoughts
+12. Thoughts
 ------------
-* Is there really any need for a type let type? It seems like you could always
-  use either a type let expression or a polymorphic type function.
-
-  On related notes: should there be a namespace_import or namespace_eval for
-  types? I honestly can't imagine it would ever be necessary, but it somehow
-  feels incomplete to leave those out.
-
-  Perhaps we should allow both type and expr lets in both types and
-  expressions? Maybe combine type and expr let into a single thing where you
-  can mix both type and expr bindings?
-
-  Answer: yes, there is a need for a type let. Everything you could want to
-  do, you should be able to: namespaces, let exprs, includes, type field
-  access, etc. Don't combine type and expr in the same syntactic construct.
-
-
-* Should we allow type field access on struct type in addition to its value?
-  It seems like a good thing to have generally speaking, but I don't know when
-  you would actually use it. Similar to previous thought on whether we should
-  have a type let type.
-
-  Answer: yes. For example, if you want to define an interface with a common
-  type, it's nice if the implementors of that interface can reuse the type
-  field defined from the type of the interface. And for completeness sake.
-
-* TODO: Add program and module to the syntax reference to answer the question:
-  is a program / module an expr or a stmt or a type or a type_stmt?
-
-  Answer: it should be stmt and type_stmt. But with the open and close braces
-  implied.
-
-* Function definitions can be really hard to read. Consider adding a syntactic
-  sugar to make it easier? For example, instead of:
-
-  \<@ T@> { \(S@<T@> a, S@<T@> b; S@<T@>); } Append = \<@ T@> {
-    \(S@<T@> a, S@<T@> b) {
-      ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
-    };
-  };
-
-  Perhaps something like:
-  Append<@ T@>(S@<T@> a, S@<T@> b; S@<T@>) {
-    ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
-  };
-  
-  Note new proposal for syntax helps a little:
-    <@ T@>[S@<T@>][S@<T@>]{S@<T@>;} Append = <@ T@>[S@<T@> a][S@<T@> b] {
-      ?(...)
-    };
-
 * Vague concern: will fble support static evaluation / compilation to
   hardware? Is it bad to support structs and links that can hold functions and
   processes?
@@ -819,29 +773,6 @@ Notes:
   function. That's the static evaluation pass. The result will be based on the
   interpreter you are using. If you have a hardware interpreter, for example,
   the resulting function will be a description of a hardware circuit.
-
-* Vague concern: how to support abstract data types?
-  If a user guesses the type of something, they can access internals. How to
-  prevent that?
-
-  Imagine I want an abstract collection data type, that supports the following
-  operations:
-    empty - the empty collection.
-    append(x) - appends the value x to the collection.
-    contains(x) - checks if the collection contains the value x.
-
-  Maybe we could implement that as:
-    @ Internal@ = ...
-    @ Collection@ = *(\(X@ x ; Collection@) append, \(X@ x ; Bool@) contains);
-
-    \(Internal@ i; Collection@) mkCollection = \(Internal@ i) {
-      Collection@(appendInternal(i), containsInternal(i));
-    }
-
-  etc... In other words, the type becomes the struct with the abstract
-  interface, and we hide the internal type inside of functions. I think that
-  could work. It's just a question of whether we want to provide common syntax
-  or language features to support this if it is desired.
 
 * Concern: how to support raw literals
   Like string literals, integers, anything where you want to specify a dense

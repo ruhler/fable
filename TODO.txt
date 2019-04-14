@@ -7,8 +7,8 @@ Fble:
     Or... looks like another manifestation of the old 8.3-07 bug?
    
 * [lang] Flesh out spec for new fble.
- - Incorporate new abstract and concrete syntax.
  - Clarify spec on partial and excessive function and poly application.
+ - Describe types of types and kinds much better.
 
 * [perf] Avoid high cost of copying captured contexts
   - but how?

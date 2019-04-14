@@ -2,6 +2,8 @@ Fble Revised
 ------------
 Abstract Syntax Reference
 -------------------------
+Name ::= (* A string of characters *)
+
 Kind ::=
    basic_kind
  | type_kind
@@ -50,8 +52,6 @@ Expr ::=
 
 Concrete Syntax Reference
 -------------------------
-name ::= (* [a-zA-Z--9_]+[@]? *)
-
 kind ::=
    '@'                  (* type_kind *)
  | '<' kind '>' kind    (* poly_kind *)
