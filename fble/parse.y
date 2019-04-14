@@ -157,21 +157,21 @@ expr:
       $$ = &cond_expr->_base;
    }
  | expr '!' {
-      FbleProcTypeExpr* proc_type = FbleAlloc(arena, FbleProcTypeExpr);
+      FbleUnaryTypeExpr* proc_type = FbleAlloc(arena, FbleUnaryTypeExpr);
       proc_type->_base.tag = FBLE_PROC_TYPE_EXPR;
       proc_type->_base.loc = @$;
-      proc_type->rtype = $1;
+      proc_type->type = $1;
       $$ = &proc_type->_base;
    }
  | expr '-' {
-      FbleInputTypeExpr* input_type = FbleAlloc(arena, FbleInputTypeExpr);
+      FbleUnaryTypeExpr* input_type = FbleAlloc(arena, FbleUnaryTypeExpr);
       input_type->_base.tag = FBLE_INPUT_TYPE_EXPR;
       input_type->_base.loc = @$;
       input_type->type = $1;
       $$ = &input_type->_base;
    }
  | expr '+' {
-      FbleOutputTypeExpr* output_type = FbleAlloc(arena, FbleOutputTypeExpr);
+      FbleUnaryTypeExpr* output_type = FbleAlloc(arena, FbleUnaryTypeExpr);
       output_type->_base.tag = FBLE_OUTPUT_TYPE_EXPR;
       output_type->_base.loc = @$;
       output_type->type = $1;

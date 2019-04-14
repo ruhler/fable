@@ -255,26 +255,14 @@ typedef struct {
   FbleExpr* arg;
 } FbleFuncApplyExpr;
 
-// FbleProcTypeExpr --
-//   FBLE_PROC_TYPE_EXPR (return :: Type)
-typedef struct {
-  FbleType _base;
-  FbleType* rtype;
-} FbleProcTypeExpr;
-
-// FbleInputTypeExpr --
+// FbleUnaryTypeExpr --
+//   FBLE_PROC_TYPE_EXPR (type :: Type)
 //   FBLE_INPUT_TYPE_EXPR (type :: Type)
-typedef struct {
-  FbleType _base;
-  FbleType* type;
-} FbleInputTypeExpr;
-
-// FbleOutputTypeExpr --
 //   FBLE_OUTPUT_TYPE_EXPR (type :: Type)
 typedef struct {
   FbleType _base;
   FbleType* type;
-} FbleOutputTypeExpr;
+} FbleUnaryTypeExpr;
 
 // FbleEvalExpr --
 //   FBLE_EVAL_EXPR (expr :: Expr)

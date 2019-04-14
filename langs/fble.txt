@@ -32,23 +32,21 @@ The primary design goals of fble are:
 
 2. Language Overview
 --------------------
-The primitive data types of fble are structs, unions, functions, and
+The primitive data types of fble are types, structs, unions, functions, and
 processes.
 
 Data values and the expressions that describe them are strongly typed. A
 value's type describes the kinds of operations that can legally be performed
 on that value. Types are used to check that an fble programs is well formed
-statically. Types do not take part in the dynamic execution of an fble program
-after it has been statically checked.
+statically. Types do not take meaningful part in the dynamic execution of an
+fble program after it has been statically checked.
 
-Local variables allow data values to be reused throughout a program, including
-recursively. Analogously, type variables allow types to be reused throughout a
-program and recursively.
+Variables allow data values to be reused throughout a program, including
+recursively.
 
-Both expressions and types can be polymorphic, which is to say they can be
-made abstract with respect to type parameters. To facilitate more advanced use
-of polymorphism, types themselves are strongly typed; we call the type of a
-type its kind.
+Expressions can be polymorphic, which means they can be made abstract with
+respect to type parameters. We introduce the notion of a kind to describe
+which types can be used in place of a type parameter.
 
 3. Structs
 ----------
