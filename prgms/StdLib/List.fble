@@ -17,7 +17,7 @@
     ?(a; cons: ConsS<T@>[a.cons.head][Append<T@>[a.cons.tail][b]], nil: b);
   };
 
-  <@ T@>{S@<T@>;} S0 = <@ T@> {
+  S@ S0 = <@ T@> {
     S@<T@>(nil: Unit@());
   };
 

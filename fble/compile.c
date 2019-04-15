@@ -858,20 +858,22 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
-      if (pat->result != NULL) {
-        // We have already evaluated this poly apply.
-        return;
-      }
 
       Eval(arena, pat->poly, &nevaled, applied);
       Eval(arena, pat->arg, &nevaled, applied);
+
+      if (pat->result != NULL) {
+        Eval(arena, pat->result, &nevaled, applied);
+        return;
+      }
 
       // Check whether we have already applied the arg to this poly.
       for (PolyApplyList* pal = applied; pal != NULL; pal = pal->next) {
         if (TypesEqual(pal->poly, pat->poly, NULL)) {
           if (TypesEqual(pal->arg, pat->arg, NULL)) {
             pat->result = pal->result;
-            assert(&pat->_base != Normal(pat->result));
+            assert(pat->result != NULL);
+            assert(&pat->_base != pat->result);
             FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
             return;
           }
@@ -881,7 +883,8 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       PolyType* poly = (PolyType*)Normal(pat->poly);
       if (poly->_base.tag == POLY_TYPE) {
         pat->result = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
-        assert(&pat->_base != Normal(pat->result));
+        assert(pat->result != NULL);
+        assert(&pat->_base != pat->result);
         FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
         TypeRelease(arena, pat->result);
 
@@ -939,7 +942,20 @@ static Type* Normal(Type* type)
     case PROC_TYPE: return type;
     case INPUT_TYPE: return type;
     case OUTPUT_TYPE: return type;
-    case POLY_TYPE: return type;
+
+    case POLY_TYPE: {
+      // Normalize: (\x -> f x) to f
+      // TODO: Does this cover all the cases? It seems like overly specific
+      // pattern matching.
+      PolyType* poly = (PolyType*)type;
+      PolyApplyType* pat = (PolyApplyType*)Normal(poly->body);
+      if (pat->_base.tag == POLY_APPLY_TYPE) {
+        if (poly->arg == Normal(pat->arg)) {
+          return Normal(pat->poly);
+        }
+      }
+      return type;
+    }
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
