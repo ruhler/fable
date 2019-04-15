@@ -6,22 +6,6 @@ Fble:
 * [perf] Avoid high cost of copying captured contexts
   - but how?
 
-* [test] Fix 8.3-07
- - debugging: S<T> ==> S'<T'>
-    Eval S'<T'>, but we know Normal(S) == Normal(S') and T == T', so rather
-    than do the substitution S'<T'>, we say it is just the same as what S<T>
-    substitutes to, which is S'<T'>. Thus S'<T'> substitutes to itself.
-   
-    That explains the observed behavior. But what is the desired behavior?
-
-    1. It should be a compile error if a type is defined in terms of itself,
-    without a normal type in between. Detect this case and report an error.
-    
-    2. The key is that we want to detect when two things are the same
-    definition of a type, or the same occurrence. So, either use the location
-    information to test if they are the same, or keep some token that is
-    preserved across substitution and use that to detect if they are the same.
-
 Fble Cleanup:
 * Test namespace eval with mixed type and normal fields.
 * Better error messages on types that have the same name but different values.

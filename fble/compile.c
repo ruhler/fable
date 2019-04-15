@@ -871,11 +871,17 @@ static void Eval(TypeArena* arena, Type* type, TypeList* evaled, PolyApplyList* 
       for (PolyApplyList* pal = applied; pal != NULL; pal = pal->next) {
         if (TypesEqual(pal->poly, pat->poly, NULL)) {
           if (TypesEqual(pal->arg, pat->arg, NULL)) {
-            pat->result = pal->result;
-            assert(pat->result != NULL);
-            assert(&pat->_base != pat->result);
-            FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
-            return;
+            // TODO: This feels like a hacky workaround to a bug that may not
+            // catch all cases. Double check that this is the best way to
+            // test that pat and pal refer to entities that are the same or
+            // subst derived from one another.
+            if (&pat->_base != pal->result) {
+              pat->result = pal->result;
+              assert(pat->result != NULL);
+              assert(&pat->_base != pat->result);
+              FbleRefAdd(arena, &pat->_base.ref, &pat->result->ref);
+              return;
+            }
           }
         }
       }
