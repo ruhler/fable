@@ -30,8 +30,12 @@ The primary design goals of fble are:
   composition of modules developed by different individual developers or
   organizations.
 
-2. Language Overview
---------------------
+1.2 Overview
+------------
+TODO: me
+
+2. Types
+--------
 The primitive data types of fble are types, structs, unions, functions, and
 processes.
 
@@ -47,6 +51,81 @@ recursively.
 Expressions can be polymorphic, which means they can be made abstract with
 respect to type parameters. We introduce the notion of a kind to describe
 which types can be used in place of a type parameter.
+
+TODO: Clarify in spec that every expression and value has a type and a kind.
+The type of a type value is another type value. A kind is not the type of
+anything.
+
+TODO: Document that names end in '@' if and only if they refer to a type.
+
+2.1 Typeof
+----------
+Abstract Syntax:
+  Type ::= typeof (expr :: Expr)
+
+Concrete Syntax:
+  type ::= '@' '<' expr '>'
+
+Example:
+  @<x>
+
+Evaluates to the type of the expression, without evaluating the expression
+itself. This is primarily useful for defining explicit type namespace structs
+with type fields.
+
+2.2 Variable
+------------
+Abstract Syntax:
+  Expr ::= var (name :: Name)
+
+Concrete Syntax:
+  expr ::= name
+
+Example:
+  x
+
+Expressions are evaluated in a context that maps variable names to values and
+the types of those values. The value of the variable expression is the value
+associated with the variable name in the context. The type of the variable
+expression is the type associated with the variable name in the context.
+
+2.3 Let
+-------
+Abstract Syntax:
+  MType ::= implicit_type (kind :: Kind) | explicit_type (type :: Type) ;
+  Expr ::= let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+
+Concrete Syntax:
+  mtype ::= kind | type ;
+  stmt ::= mtype name '=' expr [',' mtype name = expr [...]] ';' stmt
+
+Example:
+  Int@ x = mul[3][3]; mul[x][x]
+  <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+Let expressions can be used to define local variables that allow values to be
+reused in multiple places in a program. Let expressions support recursive
+definitions of variables, which makes it possible to define recursive values.
+
+The let expression is used to define variables. For each binding, a new
+variable is defined. The value of the variable is the result of evaluating the
+expression for the variable's binding.
+
+The defined variables are visible in the body of the let expression. To
+support self and mutually recursive values, the defined variables
+are also visible in all of the bindings expressions.
+
+The value of the let expression is the value of its body.
+
+When defining type variables, in place of the type of the type variable the
+kind of the type variable can be used. The type of the type variable will be
+inferred automatically in that case. This way you can define a type variable
+without having to duplicate the definition in its own type. If a kind is
+provided for a type variable, the type variable will behave as an abstract
+type in the bindings, and a concrete type in the body of the let.
+
+TODO: Are bindings allowed to defined variables with the same name as
+variables already in scope, thus shadowing the variable already in scope?
 
 3. Structs
 ----------
@@ -264,10 +343,10 @@ Returns the value passed to the union at the corresponding field position when
 the union was constructed. Behavior is undefined if the union tag does not
 match the field being accessed.
 
-4.4 Conditional
----------------
+4.4 Union Select
+----------------
 Abstract Syntax:
-  Expr ::= cond (condition :: Expr) (choices :: [(Name, Expr)])
+  Expr ::= union_select (condition :: Expr) (choices :: [(Name, Expr)])
 
 Concrete Syntax:
   expr ::= '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'
@@ -343,10 +422,10 @@ supplied argument must match the type of argument specified for the function.
 The application expression evaluates to the value of the body of the function
 in the context of the supplied argument.
 
-5.4 Bind
---------
+5.4 Function Bind
+-----------------
 Abstract Syntax:
-  Expr ::= bind (arg :: (Type, Name)) (func :: Expr) (body :: Expr)
+  Expr ::= func_bind (arg :: (Type, Name)) (func :: Expr) (body :: Expr)
 
 Concrete Syntax:
   stmt ::= type name '<-' expr ';' stmt
@@ -387,10 +466,10 @@ Concrete Syntax:
 Example:
   Int@!
 
-6.2 Input Type
---------------
+6.2 Process Input Type
+----------------------
 Abstract Syntax:
-  Type ::= input_type (type :: Type)
+  Type ::= proc_input_type (type :: Type)
 
 Concrete Syntax:
   type ::= type '-'
@@ -405,10 +484,10 @@ taken from the port.
 An input port is created for every link that is created. An input port can be
 used as a process that takes a value off its link.
 
-6.3 Output Type
----------------
+6.3 Process Output Type
+-----------------------
 Abstract Syntax:
-  Type ::= output_type (type :: Type)
+  Type ::= proc_output_type (type :: Type)
 
 Concrete Syntax:
   type ::= type '+'
@@ -423,10 +502,10 @@ put onto the link.
 An output port is created for every link that is created. An output port can
 be used as a process that puts a value onto its link.
 
-6.4 Get
--------
+6.4 Process Get
+---------------
 Abstract Syntax:
-  Expr ::= get (port :: Expr)
+  Expr ::= proc_get (port :: Expr)
 
 Concrete Syntax:
   expr ::= expr '()'
@@ -437,10 +516,10 @@ Example:
 The port must have type input_type. If the port has type T@-, evaluates to a
 process value of type T@! that when executed gets the next value from the port.
 
-6.5 Put
--------
+6.5 Process Put
+---------------
 Abstract Syntax:
-  Expr ::= put (port :: Expr) (value :: Expr)
+  Expr ::= proc_put (port :: Expr) (value :: Expr)
 
 Concrete Syntax:
   expr ::= expr '(' expr ')'
@@ -448,7 +527,7 @@ Concrete Syntax:
 Example:
   output(3)
 
-The port must have type output_type. If the port has type T@+, evaluates to a
+The port must have type proc_output_type. If the port has type T@+, evaluates to a
 process value of type T@! that when executed puts the given value onto the
 port and returns that same value. The value put onto the port is evaluated
 as part of evaluation of the process.
@@ -458,10 +537,10 @@ avoid the complexity of introducing a builtin notion of a unit type or a
 process that doesn't return anything. In most cases we expect the return value
 of a put process to be ignored.
 
-6.6 Eval
---------
+6.6 Process Eval
+----------------
 Abstract Syntax:
-  Expr ::= eval (expr :: Expr)
+  Expr ::= proc_eval (expr :: Expr)
 
 Concrete Syntax:
   expr ::= '$(' expr ')'
@@ -472,10 +551,10 @@ Example:
 A process that returns the value of expr without performing any other
 actions. The value to return is evaluated as part of evaluating the process.
 
-6.7 Link
---------
+6.7 Process Link
+----------------
 Abstract Syntax:
-  Expr ::= link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
+  Expr ::= proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
 
 Concrete Syntax:
   stmt ::= type '~' name ',' name ';' expr
@@ -487,10 +566,10 @@ The body must have type process_type. When executed, creates a new link, then
 evaluates and executes the body with get and put ports of type type- and type+
 respectively added to the context.
 
-6.8 Exec
---------
+6.8 Process Exec
+----------------
 Abstract Syntax:
-  Expr ::= exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
+  Expr ::= proc_exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
 Concrete Syntax:
   stmt ::= type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
@@ -502,62 +581,6 @@ Executes each process in parallel, then evaluates and executes the body with
 the results of the processes assigned to variables in scope. The binding
 processes are evaluated at the same time the overall exec process is
 evaluated.
-
-7. Variables
-------------
-Let expressions can be used to define local variables that allow values to be
-reused in multiple places in a program. Let expressions support recursive
-definitions of variables, which makes it possible to define recursive values.
-
-7.1 Variable
-------------
-Abstract Syntax:
-  Expr ::= var (name :: Name)
-
-Concrete Syntax:
-  expr ::= name
-
-Example:
-  x
-
-Expressions are evaluated in a context that maps variable names to values and
-the types of those values. The value of the variable expression is the value
-associated with the variable name in the context. The type of the variable
-expression is the type associated with the variable name in the context.
-
-7.2 Let
--------
-Abstract Syntax:
-  MType ::= implicit_type (kind :: Kind) | explicit_type (type :: Type) ;
-  Expr ::= let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
-
-Concrete Syntax:
-  mtype ::= kind | type ;
-  stmt ::= mtype name '=' expr [',' mtype name = expr [...]] ';' stmt
-
-Example:
-  Int@ x = mul[3][3]; mul[x][x]
-  <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
-
-The let expression is used to define variables. For each binding, a new
-variable is defined. The value of the variable is the result of evaluating the
-expression for the variable's binding.
-
-The defined variables are visible in the body of the let expression. To
-support self and mutually recursive values, the defined variables
-are also visible in all of the bindings expressions.
-
-The value of the let expression is the value of its body.
-
-When defining type variables, in place of the type of the type variable the
-kind of the type variable can be used. The type of the type variable will be
-inferred automatically in that case. This way you can define a type variable
-without having to duplicate the definition in its own type. If a kind is
-provided for a type variable, the type variable will behave as an abstract
-type in the bindings, and a concrete type in the body of the let.
-
-TODO: Are bindings allowed to defined variables with the same name as
-variables already in scope, thus shadowing the variable already in scope?
 
 8. Polymorphism
 ---------------
@@ -581,10 +604,10 @@ function types describe the type of functions.
 
 Two poly kinds are equal if they have the same argument and return kinds.
 
-8.2 Poly
---------
+8.2 Poly Value
+--------------
 Abstract Syntax:
-  Expr ::= poly (arg :: (Kind, Name)) (body :: Expr)
+  Expr ::= poly_value (arg :: (Kind, Name)) (body :: Expr)
 
 Concrete Syntax:
   block ::= '<' kind name '>' block
@@ -653,8 +676,7 @@ modules included in StdLib.fble.
 Name ::= (* A string of characters *)
 
 Kind ::=
-   basic_kind
- | type_kind
+   type_kind
  | poly_kind (arg :: Kind) (result :: Kind)
  ;
 
@@ -666,7 +688,11 @@ MType ::=
  ;
      
 Expr ::=
-   struct_type (fields :: [(Type, Name)])
+   typeof (expr :: Expr)
+ | var (name :: Name)
+ | let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+
+ | struct_type (fields :: [(Type, Name)])
  | struct_value_explicit_type (type :: Type) (args :: [Expr])
  | struct_value_implicit_type (args :: [(Name, Expr)])
  | struct_access (object :: Expr) (field :: Name)
@@ -676,25 +702,22 @@ Expr ::=
  | union_type (fields :: [(Type, Name)])
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
  | union_access (object :: Expr) (field :: Name)
- | cond (condition :: Expr) (choices :: [(Name, Expr)])
+ | union_select (condition :: Expr) (choices :: [(Name, Expr)])
 
  | func_type (arg :: Type) (result :: Type)
  | func_value (arg :: (Type, Name)) (body :: Expr)
  | func_apply (func :: Expr) (arg :: Expr)
 
  | proc_type (result :: Type)
- | input_type (type :: Type)
- | output_type (type :: Type)
- | get (port :: Expr)
- | put (port :: Expr) (value :: Expr)
- | eval (expr :: Expr)
- | link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
- | exec (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+ | proc_input_type (type :: Type)
+ | proc_output_type (type :: Type)
+ | proc_get (port :: Expr)
+ | proc_put (port :: Expr) (value :: Expr)
+ | proc_eval (expr :: Expr)
+ | proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
+ | proc_exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
- | var (name :: Name)
- | let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
- | typeof (expr :: Expr)
- | poly (arg :: (Kind, Name)) (body :: Expr)
+ | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
  ;
 
@@ -702,7 +725,7 @@ Prgm ::= Expr
 
 11. Concrete Syntax Reference
 -----------------------------
-name ::= (* [a-zA-Z0-9_@]+ *)
+name ::= (* [a-zA-Z0-9_]+[@]? *)
 
 kind ::=
    '@'                  (* type_kind *)
@@ -717,23 +740,30 @@ mtype ::=
  ;
 
 expr ::= 
-   '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
+   '@' '<' expr '>'                                (* typeof *)
+ | name                                            (* var *)
+
+ | '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
  | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type, get, put *)
- | '@' '(' [name [':' expr] [',' ...]] ')'         (* struct_value_implicit_type *)
- | expr '.' name                                   (* struct_access, union_access *)
+ | '@(' [name [':' expr] [',' ...]] ')'            (* struct_value_implicit_type *)
+ | expr '.' name                                   (* struct_access *)
  | expr '{' stmt '}'                               (* struct_eval *)
+
  | '+(' type name [',' type name [...]] ')'        (* union_type *)
  | type '(' name ':' expr ')'                      (* union_value *)
- | '?(' expr ';' name ':' expr                     (* cond *)
+ | expr '.' name                                   (* union_access *)
+ | '?(' expr ';' name ':' expr                     (* union_select *)
             [',' name ':' expr [...]] ')'   
+
  | expr '[' expr ']'                               (* func_apply *)
+
  | type '!'                                        (* proc_type *)
- | type '-'                                        (* input_type *)
- | type '+'                                        (* output_type *)
- | '$(' expr ')'                                   (* eval *)
- | name                                            (* var *)
- | '@' '<' expr '>'                                (* typeof *)
+ | type '-'                                        (* proc_input_type *)
+ | type '+'                                        (* proc_output_type *)
+ | '$(' expr ')'                                   (* proc_eval *)
+
  | expr '<' type '>'                               (* poly_apply *)
+
  | '&' name                                        (* include *)
  | block
  ;
@@ -742,16 +772,16 @@ block ::=
    '{' stmt '}'
  | '[' type ']' block             (* func_type *)
  | '[' type name ']' block        (* func_value *)
- | '<' kind name '>' block        (* poly *)
+ | '<' kind name '>' block        (* poly_value *)
  ;
 
 stmt ::=
    expr ';'
- | expr ';' stmt                                                     (* struct_import *)
- | type '~' name ',' name ';' stmt                                   (* link *)
- | mtype name ':=' expr [',' mtype name ':=' expr [...]] ';' stmt    (* exec *)
  | mtype name '=' expr [',' mtype name '=' expr [...]] ';' stmt      (* let *)
- | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
+ | expr ';' stmt                                                     (* struct_import *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
+ | type '~' name ',' name ';' stmt                                   (* proc_link *)
+ | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
  ;
 
 prgm ::= stmt                                                        (* program *)
