@@ -32,33 +32,74 @@ The primary design goals of fble are:
 
 1.2 Overview
 ------------
-TODO: me
+Fble is based around the primitive data types of structs, unions, functions,
+and processes. It is a strongly and statically typed language supporting
+polymorphic types and values. Recursive types and values are supported through
+a recursive let construct. Types are treated as another kind of value in fble,
+which allows us to reuse the constructs of variables, lets, polymorphism, and
+structs for types in addition to normal values. Additional syntax is provided
+to make structs suitable for describing and manipulating namespaces.
 
-2. Types
---------
-The primitive data types of fble are types, structs, unions, functions, and
-processes.
-
+2. Types, Kinds, and Variables
+------------------------------
+2.1 Types
+---------
 Data values and the expressions that describe them are strongly typed. A
 value's type describes the kinds of operations that can legally be performed
 on that value. Types are used to check that an fble programs is well formed
 statically. Types do not take meaningful part in the dynamic execution of an
 fble program after it has been statically checked.
 
-Variables allow data values to be reused throughout a program, including
-recursively.
+Types are themselves treated as data values in fble, which allows us to reuse
+variables, lets, polymorphism, and structs for both types in addition to
+normal values. This means an expression can be used to describe either a
+normal value or a type, and that types themselves have types.
 
-Expressions can be polymorphic, which means they can be made abstract with
-respect to type parameters. We introduce the notion of a kind to describe
-which types can be used in place of a type parameter.
+To ensure all type information is available at compile time, there is a
+one-to-one mapping between a type and the type of that type. As a consequence,
+you can determine the value of a type if you know the type of that type.
 
-TODO: Clarify in spec that every expression and value has a type and a kind.
-The type of a type value is another type value. A kind is not the type of
-anything.
+For example, the boolean value 'True' is a normal value. The type of 'True' is
+the type 'Bool@', which is a union type. 'Bool@' is a type value. The type of
+'Bool@' is known only as the type of Bool@, expressed using the syntax:
+'@<Bool@>'. '@<Bool@>' is also a type value, and the type of that value is
+'@<@<Bool@>>'. If you have an expression of type '@<Bool@>', you know
+statically that the value of that expression must be 'Bool@', so the
+expression need not be evaluated at runtime.
 
-TODO: Document that names end in '@' if and only if they refer to a type.
+Type information is stripped away at runtime. The value of a type at runtime
+is a special unit value. Without the type information, there is no way to
+distinguish between the special unit value for different types. For this
+reason we say types do not take meaningful part in the dynamic execution of an
+fble program after it has been statically checked, though the special unit
+value for types may exist at runtime when using an fble native interface.
 
-2.1 Typeof
+2.2 Kinds
+---------
+To describe polymorphic expressions, we want a way to refer to an abstract
+type. For this purpose we introduce the notion of a kind. Kinds are analogous
+to types in that they describe what operations are supported by a particular
+value, but they are much more restricted in the operations they allow.
+Specifically, the kind of a value tells you if it is a normal value or a type
+value. Type values can be used anywhere an abstract type is expected. Unlike
+types, kinds do not act as values and cannot be described using expressions.
+
+The kind of a value is uniquely determined by the type of the value.
+
+To help distinguish between types and normal values syntactically, we
+distinguish between type names and normal names for variable names and field
+names. Type names must be used for any variables or fields that take on type
+values, and normal names must be used for any variables or fields that take on
+normal values. In the concrete syntax, names ending with the character '@' are
+type names. So, for example, 'True' is a normal value, and 'Bool@' is a type
+value.
+
+A polymorphic expression that results in a normal value is considered an
+normal value, and a polymorphic expression that results in a type value is
+considered a type value. So, for example, the polymorphic type 'Maybe@' is a
+type, and its constructor 'Just' is a normal value.
+
+2.3 Typeof
 ----------
 Abstract Syntax:
   Type ::= typeof (expr :: Expr)
@@ -70,11 +111,11 @@ Example:
   @<x>
 
 Evaluates to the type of the expression, without evaluating the expression
-itself. This is primarily useful for defining explicit type namespace structs
-with type fields.
+itself. This is primarily useful for explicitly describing the type of a
+struct that has type fields.
 
-2.2 Variable
-------------
+2.4 Variables
+-------------
 Abstract Syntax:
   Expr ::= var (name :: Name)
 
@@ -84,19 +125,25 @@ Concrete Syntax:
 Example:
   x
 
-Expressions are evaluated in a context that maps variable names to values and
-the types of those values. The value of the variable expression is the value
-associated with the variable name in the context. The type of the variable
-expression is the type associated with the variable name in the context.
+Variables allow data values to be reused multiple times within a program. In
+conjunction with let expressions, variables allow data values to be used
+recursively.
 
-2.3 Let
+Expressions are evaluated in a context that maps variable names to values,
+along with their types and kinds. The value, type, and kind of the variable
+expression is the value, type, and kind associated with the variable name in
+the context.
+
+2.5 Let
 -------
 Abstract Syntax:
-  MType ::= implicit_type (kind :: Kind) | explicit_type (type :: Type) ;
+  MType ::= implicit_type (kind :: Kind)
+  MType ::= explicit_type (type :: Type) ;
   Expr ::= let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
 
 Concrete Syntax:
-  mtype ::= kind | type ;
+  mtype ::= kind ;
+  mtype ::= type ;
   stmt ::= mtype name '=' expr [',' mtype name = expr [...]] ';' stmt
 
 Example:
@@ -137,11 +184,11 @@ Struct values are constructed by supplying values for all fields of the
 struct. Individual components of a struct can be accessed by field name.
 
 Struct values can be used for modularity and namespace control, by grouping
-together a collection of types and values. Syntax is provided for creating
-struct values with implicit types, evaluating expressions in the context of
-the fields of a struct value, and importing fields of a struct into the
-current context. When used this way, we sometimes refer to the struct value as
-a namespace struct value.
+together a collection of types and normal values. Syntax is provided for
+creating struct values with implicit types, evaluating expressions in the
+context of the fields of a struct value, and importing fields of a struct into
+the current context. When used this way, we sometimes refer to the struct
+value as a namespace struct value.
 
 3.1 Struct Type
 ---------------
@@ -187,8 +234,9 @@ entities being defined and to worry about what order they are defined in. The
 anoymous struct value makes it more convenient to define structs used as
 namespaces.
 
-If no value for a field is provided, its value is assumed to be the variable
-with same name as the field. For example, the above example is equivalent to:
+As a syntactic sugar, if no value for a field is provided, its value is
+assumed to be the variable with same name as the field. For example, the above
+example is equivalent to:
 
   @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
 
@@ -582,11 +630,11 @@ the results of the processes assigned to variables in scope. The binding
 processes are evaluated at the same time the overall exec process is
 evaluated.
 
-8. Polymorphism
+7. Polymorphism
 ---------------
 Polymorphism allows expressions to be parameterized by abstract types.
 
-8.1 Poly Kind
+7.1 Poly Kind
 -------------
 Abstract Syntax:
   Kind ::= type_kind
@@ -604,7 +652,11 @@ function types describe the type of functions.
 
 Two poly kinds are equal if they have the same argument and return kinds.
 
-8.2 Poly Value
+The is no syntax to describe the kind of a normal value, because there is no
+need. You can use normal functions with polymorphic types in that case, rather
+than use polymorphic expressions with normal kinds.
+
+7.2 Poly Value
 --------------
 Abstract Syntax:
   Expr ::= poly_value (arg :: (Kind, Name)) (body :: Expr)
@@ -616,7 +668,7 @@ Examples:
   <@ T@> { +(T@ just, Unit@ nothing); }
   <@ T@> { \(T@ x; Maybe@<T@>) { Maybe@<T@>(just: x); }; }
 
-8.3 Poly Application
+7.3 Poly Application
 --------------------
 Abstract Syntax:
   Expr ::= poly_apply (poly :: Expr) (arg :: Type)
@@ -628,7 +680,7 @@ Examples:
   Maybe@<Int@>
   fromJust<Int@>[3]
 
-9. Program
+8. Program
 -----------
 Abstract Syntax:
   Prgm ::= Expr
@@ -645,7 +697,7 @@ deemed suitable by whoever is executing the program. Commonly this could be:
   evaluate and output the resulting value
 * process: run the process, evaluate and output the resulting value.
 
-9.1 Include
+8.1 Include
 -----------
 Abstract Syntax:
   Expr ::= include (name :: Name)
@@ -671,9 +723,15 @@ This would read StdLib from the file "lib/StdLib.fble". When reading
 StdLib.fble, the include search path is adjusted to "lib/StdLib" for any child
 modules included in StdLib.fble.
 
-10. Abstract Syntax Reference
------------------------------
-Name ::= (* A string of characters *)
+9. Abstract Syntax Reference
+----------------------------
+NormalName ::= (* A string of characters *)
+TypeName ::= (* A string of characters *)
+
+Name ::=
+   normal_name (name :: NormalName)
+ | type_name (name :: TypeName)
+ ;
 
 Kind ::=
    type_kind
@@ -725,7 +783,13 @@ Prgm ::= Expr
 
 11. Concrete Syntax Reference
 -----------------------------
-name ::= (* [a-zA-Z0-9_]+[@]? *)
+normal_name ::= (* [a-zA-Z0-9_]+ *)
+type_name ::=   (* [a-zA-Z0-9_]+@ *)
+
+name ::= 
+   normal_name
+ | type_name
+ ;
 
 kind ::=
    '@'                  (* type_kind *)
