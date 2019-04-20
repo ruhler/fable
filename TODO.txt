@@ -6,8 +6,6 @@ Fble Cleanup:
 * Update abstract syntax and parser to match spec.
   - in terms of names of things and order of things.
 * Fix handling of type vs. normal name.
-* Rename FbleNamespaceExpr FbleStructEval, and typedef FbleStructImport to
-  match.
 * Test namespace eval with mixed type and normal fields.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.

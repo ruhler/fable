@@ -198,14 +198,17 @@ typedef struct {
   FbleChoiceV args;
 } FbleStructValueImplicitTypeExpr;
 
-// FbleNamespaceExpr --
+// FbleStructEvalExpr --
 //   FBLE_STRUCT_EVAL_EXPR (namespace :: Expr) (body :: Expr)
-//   FBLE_STRUCT_IMPORT_EXPR (namespace :: Expr) (body :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleExpr* nspace;
   FbleExpr* body;
-} FbleNamespaceExpr;
+} FbleStructEvalExpr;
+
+// FbleStructImportExpr --
+//   FBLE_STRUCT_IMPORT_EXPR (namespace :: Expr) (body :: Expr)
+typedef FbleStructEvalExpr FbleStructImportExpr;
 
 // FbleUnionTypeExpr --
 //   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])

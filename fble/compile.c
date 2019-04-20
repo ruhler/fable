@@ -2470,9 +2470,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
     case FBLE_STRUCT_EVAL_EXPR:
     case FBLE_STRUCT_IMPORT_EXPR: {
-      FbleNamespaceExpr* namespace_expr = (FbleNamespaceExpr*)expr;
+      FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
 
-      Type* type = CompileExpr(arena, vars, namespace_expr->nspace, instrs);
+      Type* type = CompileExpr(arena, vars, struct_eval_expr->nspace, instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         return NULL;
@@ -2480,7 +2480,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected value of type struct, but found value of type ", &namespace_expr->nspace->loc);
+        FbleReportError("expected value of type struct, but found value of type ", &struct_eval_expr->nspace->loc);
         PrintType(arena_, type, NULL);
         fprintf(stderr, "\n");
 
@@ -2504,7 +2504,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         nvars = nvd + i;
       }
 
-      Type* rtype = CompileExpr(arena, nvars, namespace_expr->body, instrs);
+      Type* rtype = CompileExpr(arena, nvars, struct_eval_expr->body, instrs);
       if (rtype == NULL) {
         TypeRelease(arena, type);
         return NULL;

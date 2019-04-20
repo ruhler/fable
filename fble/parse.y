@@ -130,7 +130,7 @@ expr:
       $$ = &access_expr->_base;
    }
  | expr '{' stmt '}' {
-      FbleNamespaceExpr* expr = FbleAlloc(arena, FbleNamespaceExpr);
+      FbleStructEvalExpr* expr = FbleAlloc(arena, FbleStructEvalExpr);
       expr->_base.tag = FBLE_STRUCT_EVAL_EXPR;
       expr->_base.loc = @$;
       expr->nspace = $1;
@@ -280,7 +280,7 @@ block:
 stmt:
     expr ';' { $$ = $1; }
   | expr ';' stmt {
-      FbleNamespaceExpr* expr = FbleAlloc(arena, FbleNamespaceExpr);
+      FbleStructImportExpr* expr = FbleAlloc(arena, FbleStructImportExpr);
       expr->_base.tag = FBLE_STRUCT_IMPORT_EXPR;
       expr->_base.loc = @$;
       expr->nspace = $1;
