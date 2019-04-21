@@ -350,15 +350,15 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         break;
       }
 
-      case FBLE_COND_INSTR: {
-        FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
+      case FBLE_UNION_SELECT_INSTR: {
+        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
         assert(thread->data_stack != NULL);
         FbleUnionValue* uv = (FbleUnionValue*)Deref(thread->data_stack->value, FBLE_UNION_VALUE);
         FbleValueRetain(arena, &uv->_base);
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = DPop(arena_, thread->data_stack);
-        assert(uv->tag < cond_instr->choices.size);
-        thread->istack = IPush(arena_, NULL, thread->istack->var_stack, cond_instr->choices.xs[uv->tag], thread->istack);
+        assert(uv->tag < select_instr->choices.size);
+        thread->istack = IPush(arena_, NULL, thread->istack->var_stack, select_instr->choices.xs[uv->tag], thread->istack);
         FbleValueRelease(arena, &uv->_base);
         break;
       }

@@ -14,7 +14,7 @@ typedef enum {
   FBLE_UNION_VALUE_INSTR,
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_ACCESS_INSTR,
-  FBLE_COND_INSTR,
+  FBLE_UNION_SELECT_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_DESCOPE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
@@ -90,7 +90,7 @@ typedef struct {
   FbleInstrBlock** xs;
 } FbleInstrBlockV;
 
-// FbleCondInstr -- FBLE_COND_INSTR
+// FbleUnionSelectInstr -- FBLE_UNION_SELECT_INSTR
 //   Select the next thing to execute based on the tag of the value on top of
 //   the value stack.
 //
@@ -102,7 +102,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleInstrBlockV choices;
-} FbleCondInstr;
+} FbleUnionSelectInstr;
 
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
 //   Allocate a function, capturing the current variable context in the

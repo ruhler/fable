@@ -154,12 +154,12 @@ expr:
       $$ = &union_value_expr->_base;
    }
  | '?' '(' expr ';' choice_p ')' {
-      FbleCondExpr* cond_expr = FbleAlloc(arena, FbleCondExpr);
-      cond_expr->_base.tag = FBLE_COND_EXPR;
-      cond_expr->_base.loc = @$;
-      cond_expr->condition = $3;
-      cond_expr->choices = $5;
-      $$ = &cond_expr->_base;
+      FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
+      select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
+      select_expr->_base.loc = @$;
+      select_expr->condition = $3;
+      select_expr->choices = $5;
+      $$ = &select_expr->_base;
    }
  | expr '[' expr ']' {
       FbleFuncApplyExpr* apply_expr = FbleAlloc(arena, FbleFuncApplyExpr);

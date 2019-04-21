@@ -1456,12 +1456,12 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
     }
 
-    case FBLE_COND_INSTR: {
-      FbleCondInstr* cond_instr = (FbleCondInstr*)instr;
-      for (size_t i = 0; i < cond_instr->choices.size; ++i) {
-        FbleFreeInstrBlock(arena, cond_instr->choices.xs[i]);
+    case FBLE_UNION_SELECT_INSTR: {
+      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+      for (size_t i = 0; i < select_instr->choices.size; ++i) {
+        FbleFreeInstrBlock(arena, select_instr->choices.xs[i]);
       }
-      FbleFree(arena, cond_instr->choices.xs);
+      FbleFree(arena, select_instr->choices.xs);
       FbleFree(arena, instr);
       return;
     }
@@ -1814,10 +1814,10 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       return NULL;
     }
 
-    case FBLE_COND_EXPR: {
-      FbleCondExpr* cond_expr = (FbleCondExpr*)expr;
+    case FBLE_UNION_SELECT_EXPR: {
+      FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
-      Type* type = CompileExpr(arena, vars, cond_expr->condition, instrs);
+      Type* type = CompileExpr(arena, vars, select_expr->condition, instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
         return NULL;
@@ -1825,31 +1825,31 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
-        FbleReportError("expected value of union type, but found value of type ", &cond_expr->condition->loc);
+        FbleReportError("expected value of union type, but found value of type ", &select_expr->condition->loc);
         PrintType(arena_, type, NULL);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
         return NULL;
       }
 
-      if (union_type->fields.size != cond_expr->choices.size) {
-        FbleReportError("expected %d arguments, but %d were provided.\n", &cond_expr->_base.loc, union_type->fields.size, cond_expr->choices.size);
+      if (union_type->fields.size != select_expr->choices.size) {
+        FbleReportError("expected %d arguments, but %d were provided.\n", &select_expr->_base.loc, union_type->fields.size, select_expr->choices.size);
         TypeRelease(arena, type);
         return NULL;
       }
 
-      FbleCondInstr* cond_instr = FbleAlloc(arena_, FbleCondInstr);
-      cond_instr->_base.tag = FBLE_COND_INSTR;
-      FbleVectorAppend(arena_, *instrs, &cond_instr->_base);
-      FbleVectorInit(arena_, cond_instr->choices);
+      FbleUnionSelectInstr* select_instr = FbleAlloc(arena_, FbleUnionSelectInstr);
+      select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
+      FbleVectorAppend(arena_, *instrs, &select_instr->_base);
+      FbleVectorInit(arena_, select_instr->choices);
 
       Type* return_type = NULL;
-      for (size_t i = 0; i < cond_expr->choices.size; ++i) {
-        if (!FbleNamesEqual(cond_expr->choices.xs[i].name.name, union_type->fields.xs[i].name.name)) {
+      for (size_t i = 0; i < select_expr->choices.size; ++i) {
+        if (!FbleNamesEqual(select_expr->choices.xs[i].name.name, union_type->fields.xs[i].name.name)) {
           FbleReportError("expected tag '%s', but found '%s'.\n",
-              &cond_expr->choices.xs[i].name.loc,
+              &select_expr->choices.xs[i].name.loc,
               union_type->fields.xs[i].name.name,
-              cond_expr->choices.xs[i].name.name);
+              select_expr->choices.xs[i].name.name);
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
           return NULL;
@@ -1858,9 +1858,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         FbleInstrBlock* choice = FbleAlloc(arena_, FbleInstrBlock);
         choice->refcount = 1;
         FbleVectorInit(arena_, choice->instrs);
-        FbleVectorAppend(arena_, cond_instr->choices, choice);
+        FbleVectorAppend(arena_, select_instr->choices, choice);
 
-        Type* arg_type = CompileExpr(arena, vars, cond_expr->choices.xs[i].expr, &choice->instrs);
+        Type* arg_type = CompileExpr(arena, vars, select_expr->choices.xs[i].expr, &choice->instrs);
 
         {
           FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
@@ -1879,7 +1879,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
           return_type = arg_type;
         } else {
           if (!TypesEqual(return_type, arg_type, NULL)) {
-            FbleReportError("expected type ", &cond_expr->choices.xs[i].expr->loc);
+            FbleReportError("expected type ", &select_expr->choices.xs[i].expr->loc);
             PrintType(arena_, return_type, NULL);
             fprintf(stderr, ", but found ");
             PrintType(arena_, arg_type, NULL);
@@ -2702,7 +2702,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
-    case FBLE_COND_EXPR:
+    case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
     case FBLE_FUNC_APPLY_EXPR:
     case FBLE_EVAL_EXPR:

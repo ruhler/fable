@@ -109,7 +109,7 @@ typedef enum {
   FBLE_UNION_TYPE_EXPR,
   FBLE_UNION_VALUE_EXPR,
 //FBLE_UNION_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR,
-  FBLE_COND_EXPR,
+  FBLE_UNION_SELECT_EXPR,
 
   FBLE_FUNC_TYPE_EXPR,
   FBLE_FUNC_VALUE_EXPR,
@@ -226,13 +226,13 @@ typedef struct {
   FbleExpr* arg;
 } FbleUnionValueExpr;
 
-// FbleCondExpr --
-//   FBLE_COND_EXPR (condition :: Expr) (choices :: [(Name, Expr)])
+// FbleUnionSelectExpr --
+//   FBLE_UNION_SELECT_EXPR (condition :: Expr) (choices :: [(Name, Expr)])
 typedef struct {
   FbleExpr _base;
   FbleExpr* condition;
   FbleChoiceV choices;
-} FbleCondExpr;
+} FbleUnionSelectExpr;
 
 // FbleFuncTypeExpr --
 //   FBLE_FUNC_TYPE_EXPR (arg :: Type) (return :: Type)
