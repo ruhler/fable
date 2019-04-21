@@ -38,13 +38,13 @@ run gcc {*}$FLAGS -o ./out/fble/fble-Snake out/fble/obj/fble-Snake.o -L out/fble
 proc fble-test-error-run { tloc loc expr } {
   set line [dict get $tloc line]
   set file [dict get $tloc file]
-  set name "[file tail $file]_$line"
+  set name "out/[relative_file $file]:$line"
 
-  exec mkdir -p out/test/fble
-  set fprgm ./out/test/fble/$name.fble
+  exec mkdir -p [file dirname $name]
+  set fprgm $name.fble
   exec echo $expr > $fprgm
   set errtext [exec $::fbletest --error $fprgm]
-  exec echo $errtext > ./out/test/fble/$name.err
+  exec echo $errtext > $name.err
   if {-1 == [string first ":$loc: error" $errtext]} {
     error "Expected error at $loc, but got:\n$errtext"
   }
@@ -53,11 +53,11 @@ proc fble-test-error-run { tloc loc expr } {
 proc fble-test-run { loc expr } {
   set line [dict get $loc line]
   set file [dict get $loc file]
-  set name "[file tail $file]_$line"
+  set name "out/[relative_file $file]:$line"
 
   # Write the program to file.
-  exec mkdir -p out/test/fble
-  set fprgm ./out/test/fble/$name.fble
+  exec mkdir -p [file dirname $name]
+  set fprgm $name.fble
   exec echo $expr > $fprgm
 
   # Execute the program.
@@ -76,7 +76,7 @@ proc fble-test-error { loc expr } {
   testl $tloc fble-test-error-run $tloc $loc $expr
 }
 
-foreach {x} [lsort [glob langs/fble/*.tcl]]  {
+foreach {x} [lsort [glob langs/fble/*/*.tcl]]  {
   source $x
 }
 

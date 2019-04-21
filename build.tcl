@@ -14,10 +14,17 @@ proc fail {name msg} {
 set ::num_tests_failed 0
 set ::num_tests_passed 0
 
+# Returns the given file name relative to the current working directory.
+proc relative_file {path} {
+  set cwd "[file normalize [pwd]]/"
+  set fname [file normalize $path]
+  return [string range $fname [string length $cwd] [string length $fname]]
+}
+
 proc testl {loc args} {
   set line [dict get $loc line]
   set file [dict get $loc file]
-  set name "[file tail $file]:$line"
+  set name "[relative_file $file]:$line"
 
   try {
     puts "test $name"
