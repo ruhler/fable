@@ -99,6 +99,10 @@ typedef struct {
 // FbleExprTag --
 //   A tag used to dinstinguish among different kinds of expressions.
 typedef enum {
+  FBLE_TYPEOF_EXPR,
+  FBLE_VAR_EXPR,
+  FBLE_LET_EXPR,
+
   FBLE_STRUCT_TYPE_EXPR,
 //FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR,
   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
@@ -124,9 +128,6 @@ typedef enum {
   FBLE_LINK_EXPR,
   FBLE_EXEC_EXPR,
 
-  FBLE_VAR_EXPR,
-  FBLE_LET_EXPR,
-  FBLE_TYPEOF_EXPR,
   FBLE_POLY_EXPR,
   FBLE_POLY_APPLY_EXPR,
 
