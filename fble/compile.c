@@ -1429,6 +1429,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_LET_DEF_INSTR:
     case FBLE_NAMESPACE_INSTR:
     case FBLE_IPOP_INSTR:
+    case FBLE_POP_SCOPE_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_VPUSH_INSTR: {
       FbleFree(arena, instr);
@@ -1947,6 +1948,10 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
           descope->count = 1;
           FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
+          FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
+          pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
+          FbleVectorAppend(arena_, instr->body->instrs, &pop_scope->_base);
+
           FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
           ipop->_base.tag = FBLE_IPOP_INSTR;
           FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
@@ -2087,6 +2092,10 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
+      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
+      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &pop_scope->_base);
+
       FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
       ipop->_base.tag = FBLE_IPOP_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
@@ -2203,6 +2212,10 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
+
+      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
+      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
+      FbleVectorAppend(arena_, exec_instr->body->instrs, &pop_scope->_base);
 
       FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
       ipop->_base.tag = FBLE_IPOP_INSTR;
@@ -2808,6 +2821,10 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
     FbleFreeInstrBlock(arena, block);
     return NULL;
   }
+
+  FblePopScopeInstr* pop_scope = FbleAlloc(arena, FblePopScopeInstr);
+  pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
+  FbleVectorAppend(arena, block->instrs, &pop_scope->_base);
 
   FbleIPopInstr* ipop = FbleAlloc(arena, FbleIPopInstr);
   ipop->_base.tag = FBLE_IPOP_INSTR;
