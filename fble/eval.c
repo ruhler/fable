@@ -82,6 +82,8 @@ static DStack* DPop(FbleArena* arena, DStack* vstack);
 static IStack* IPush(FbleArena* arena, FbleValue* retain, FbleScope* scope, FbleInstrBlock* block, IStack* tail); 
 static IStack* IPop(FbleValueArena* arena, IStack* istack);
 
+static void CaptureScope(FbleValueArena* arena, FbleScope* src, size_t scopec, FbleValue* value, FbleScope** dst);
+
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
 static void AbortThread(FbleValueArena* arena, Thread* thread);
 static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread);
@@ -269,6 +271,39 @@ static IStack* IPop(FbleValueArena* arena, IStack* istack)
   return tail;
 }
 
+// CaptureScope --
+//   Capture the current scope and save it in a value.
+//
+// Inputs:
+//   src - the scope to save.
+//   scopec - the size of the scope to save.
+//   value - the value to save the scope to.
+//   dst - a pointer to where the scope should be saved to. This is assumed to
+//         be a field of the value.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Makes a copy of the src scope, stores the copy in dst, and adds
+//   references from the value to everything on the scope.
+static void CaptureScope(FbleValueArena* arena, FbleScope* src, size_t scopec, FbleValue* value, FbleScope** dst)
+{
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleValue* scope[scopec];
+  FbleScope* vs = src;
+  for (size_t i = 0; i < scopec; ++i) {
+    assert(vs != NULL);
+    scope[scopec - 1 - i] = vs->value;
+    vs = vs->tail;
+  }
+
+  for (size_t i = 0; i < scopec; ++i) {
+    *dst = VPush(arena_, scope[i], *dst);
+    Add(arena, value, scope[i]);
+  }
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -371,20 +406,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->scope = NULL;
         value->body = func_value_instr->body;
         value->body->refcount++;
-
-        FbleValue* scope[func_value_instr->scopec];
-        FbleScope* vs = thread->istack->scope;
-        for (size_t i = 0; i < func_value_instr->scopec; ++i) {
-          assert(vs != NULL);
-          scope[func_value_instr->scopec - 1 - i] = vs->value;
-          Add(arena, &value->_base, vs->value);
-          vs = vs->tail;
-        }
-
-        for (size_t i = 0; i < func_value_instr->scopec; ++i) {
-          value->scope = VPush(arena_, scope[i], value->scope);
-        }
-
+        CaptureScope(arena, thread->istack->scope, func_value_instr->scopec, &value->_base, &value->scope);
         thread->data_stack = DPush(arena_, &value->_base, thread->data_stack);
         break;
       }
@@ -473,21 +495,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->scope = NULL;
         value->body = link_instr->body;
         value->body->refcount++;
-
-        FbleScope* scope = NULL;
-        FbleScope* vs = thread->istack->scope;
-        for (size_t i = 0; i < link_instr->scopec; ++i) {
-          assert(vs != NULL);
-          scope = VPush(arena_, vs->value, scope);
-          Add(arena, &value->_base._base, vs->value);
-          vs = vs->tail;
-        }
-
-        while (scope != NULL) {
-          value->scope = VPush(arena_, scope->value, value->scope);
-          scope = VPop(arena_, scope);
-        }
-
+        CaptureScope(arena, thread->istack->scope, link_instr->scopec, &value->_base._base, &value->scope);
         thread->data_stack = DPush(arena_, &value->_base._base, thread->data_stack);
         break;
       }
@@ -503,20 +511,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->scope = NULL;
         value->body = exec_instr->body;
         value->body->refcount++;
-
-        FbleScope* scope = NULL;
-        FbleScope* vs = thread->istack->scope;
-        for (size_t i = 0; i < exec_instr->scopec; ++i) {
-          assert(vs != NULL);
-          scope = VPush(arena_, vs->value, scope);
-          Add(arena, &value->_base._base, vs->value);
-          vs = vs->tail;
-        }
-
-        while (scope != NULL) {
-          value->scope = VPush(arena_, scope->value, value->scope);
-          scope = VPop(arena_, scope);
-        }
+        CaptureScope(arena, thread->istack->scope, exec_instr->scopec, &value->_base._base, &value->scope);
 
         for (size_t i = 0; i < exec_instr->argc; ++i) {
           size_t j = exec_instr->argc - 1 - i;
