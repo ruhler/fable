@@ -2,7 +2,6 @@ Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
 * [perf] Improve variable lookup and function context copy.
-  - don't share contexts at runtime - always copy. (expect hugely slower)
   - Separate istack from vstack. Don't make a copy of the context for case
     branch. (expect a little faster)
   - Switch from linked list to array for scope. (expect much faster)
