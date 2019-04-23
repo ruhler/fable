@@ -265,6 +265,12 @@ static IStack* IPush(FbleArena* arena, FbleValue* retain, FbleScope* scope, Fble
 //   Frees the top instruction stack.
 static IStack* IPop(FbleValueArena* arena, IStack* istack)
 {
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  while (istack->scope != istack->shared_scope) {
+    FbleValueRelease(arena, istack->scope->value);
+    istack->scope = VPop(arena_, istack->scope);
+  }
+
   FbleValueRelease(arena, istack->retain);
   IStack* tail = istack->tail;
   FbleFree(FbleRefArenaArena(arena), istack);
@@ -808,10 +814,6 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
   thread->children.xs = NULL;
 
   while (thread->istack != NULL) {
-    while (thread->istack->scope != thread->istack->shared_scope) {
-      FbleValueRelease(arena, thread->istack->scope->value);
-      thread->istack->scope = VPop(arena_, thread->istack->scope);
-    }
     thread->istack = IPop(arena, thread->istack);
   }
 
