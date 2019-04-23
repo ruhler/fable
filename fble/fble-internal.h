@@ -57,8 +57,8 @@ typedef struct {
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
 //
-// dstack:  ..., type, a1, a2, ..., aN
-//     ==>  ..., struct(a1, a2, ..., aN)
+// data_stack:  ..., type, a1, a2, ..., aN
+//         ==>  ..., struct(a1, a2, ..., aN)
 typedef struct {
   FbleInstr _base;
   size_t argc;
@@ -67,8 +67,8 @@ typedef struct {
 // FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR
 //   Allocate a union value.
 //
-// dstack: ..., arg
-//     ==> ..., union(arg)
+// data_stack: ..., arg
+//         ==> ..., union(arg)
 typedef struct {
   FbleInstr _base;
   size_t tag;
@@ -77,8 +77,8 @@ typedef struct {
 // FbleAccessInstr -- FBLE_STRUCT_ACCESS_INSTR or FBLE_UNION_ACCESS_INSTR
 //   Access the tagged field from the object on top of the vstack.
 //
-// dstack: ..., obj
-//     ==> ..., obj.tag
+// data_stack: ..., obj
+//         ==> ..., obj.tag
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
@@ -94,11 +94,11 @@ typedef struct {
 //   Select the next thing to execute based on the tag of the value on top of
 //   the value stack.
 //
-// dstack: ..., obj
+// data_stack: ..., obj
 //     ==> ...
 //
-// istack: ...
-//     ==> ..., choices[obj.tag]
+// instr_stack: ...
+//          ==> ..., choices[obj.tag]
 typedef struct {
   FbleInstr _base;
   FbleInstrBlockV choices;
@@ -108,8 +108,8 @@ typedef struct {
 //   Allocate a function, capturing the current variable scope in the
 //   process.
 //
-// dstack: ...
-//     ==> ..., func
+// data_stack: ...
+//         ==> ..., func
 //
 // Fields:
 //   scopec - The number of variables from the scope to capture from the top
@@ -134,8 +134,8 @@ typedef struct {
 } FbleDescopeInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   dstack: ..., f, x1
-//       ==> ..., f(x1)
+//   data_stack: ..., f, x1
+//           ==> ..., f(x1)
 typedef struct {
   FbleInstr _base;
 } FbleFuncApplyInstr;
@@ -143,8 +143,8 @@ typedef struct {
 // FbleGetInstr -- FBLE_GET_INSTR
 //   Allocate an FbleGetProcValue.
 //
-// dstack: ..., port
-//     ==> ..., get(port)
+// data_stack: ..., port
+//         ==> ..., get(port)
 typedef struct {
   FbleInstr _base;
 } FbleGetInstr;
@@ -152,8 +152,8 @@ typedef struct {
 // FblePutInstr -- FBLE_PUT_INSTR
 //   Allocate an FblePutProcValue.
 //
-// dstack: ..., port, arg
-//     ==> ..., put(port, arg)
+// data_stack: ..., port, arg
+//         ==> ..., put(port, arg)
 typedef struct {
   FbleInstr _base;
 } FblePutInstr;
@@ -161,8 +161,8 @@ typedef struct {
 // FbleEvalInstr -- FBLE_EVAL_INSTR
 //   Allocate an FbleEvalProcValue.
 //
-// dstack: ..., arg
-//     ==> ..., eval(arg)
+// data_stack: ..., arg
+//         ==> ..., eval(arg)
 typedef struct {
   FbleInstr _base;
 } FbleEvalInstr;
@@ -170,8 +170,8 @@ typedef struct {
 // FbleLinkInstr -- FBLE_LINK_INSTR
 //   Allocate an FbleLinkProcValue.
 //
-// dstack: ...,
-//     ==> ..., link()
+// data_stack: ...,
+//         ==> ..., link()
 //
 // Fields:
 //   scopec - The number of variables from the scope to capture from the top
@@ -188,12 +188,12 @@ typedef struct {
 // FbleExecInstr -- FBLE_EXEC_INSTR
 //   Allocate an FbleExecProcValue.
 //
-// dstack: ..., p1, p2, ..., pN
-//     ==> exec(p1, p2, ..., pN)
+// data_stack: ..., p1, p2, ..., pN
+//         ==> exec(p1, p2, ..., pN)
 //
 // The body is an instruction that does the following:
-// dstack: ..., exec, b1
-//     ==> ..., body(b1)
+// data_stack: ..., exec, b1
+//         ==> ..., body(b1)
 typedef struct {
   FbleInstr _base;
   size_t scopec;
@@ -216,8 +216,8 @@ typedef struct {
 
 // FbleVarInstr -- FBLE_VAR_INSTR
 // vstack: ..., v[2], v[1], v[0]
-// dstack: ...,
-//     ==> ..., v[position]
+// data_stack: ...,
+//         ==> ..., v[position]
 typedef struct {
   FbleInstr _base;
   size_t position;
@@ -236,10 +236,10 @@ typedef struct {
 // FbleLetDefInstr -- FBLE_LET_DEF_INSTR
 //
 // vstack: ..., r1, r2, ..., rN
-// dstack: ..., v1, v2, ..., vN
-//     ==>
+// data_stack: ..., v1, v2, ..., vN
+//         ==>
 // vstack: ..., r1=v1, r2=v2, ..., rN=vN
-// dstack: ...
+// data_stack: ...
 typedef struct {
   FbleInstr _base;
   size_t count;
@@ -248,10 +248,10 @@ typedef struct {
 // FbleNamespaceInstr -- FBLE_NAMESPACE_INSTR
 //
 // vstack: ...
-// dstack: ..., v
-//     ==>
+// data_stack: ..., v
+//   ==>
 // vstack: ..., v[1], v[2], ..., v[n]
-// dstack: ...
+// data_stack: ...
 //
 // Where 'v' is a struct value and v[i] is the ith field of the struct value.
 typedef struct {
@@ -261,23 +261,23 @@ typedef struct {
 
 // FbleIPopInstr -- FBLE_IPOP_INSTR
 //
-// istack: ..., i
-//     ==> ...
+// instr_stack: ..., i
+//          ==> ...
 typedef struct {
   FbleInstr _base;
 } FbleIPopInstr;
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR
-// dstack: ...
-//     ==> ..., ()
+// data_stack: ...
+//         ==> ..., ()
 //
 typedef struct {
   FbleInstr _base;
 }  FbleTypeInstr;
 
 // FbleVPushInstr -- FBLE_VPUSH_INSTR
-// dstack: ..., x
-//     ==> ...
+// data_stack: ..., x
+//         ==> ...
 //
 // vstack: ...,
 //     ==> ..., x
