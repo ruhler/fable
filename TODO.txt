@@ -1,6 +1,14 @@
 Fble:
 * [test] Rename tests to match new spec, and clean up tests.
-* [perf] Only copy those variables needed for a function context.
+
+* [perf] Improve variable lookup and function context copy.
+  - don't share contexts at runtime - always copy. (expect hugely slower)
+  - Separate istack from vstack. Don't make a copy of the context for case
+    branch. (expect a little faster)
+  - Switch from linked list to array for scope. (expect much faster)
+  - Only copy those parts of the context needed for the func, etc. involved.
+    (expect much faster)
+  
 
 Fble Cleanup:
 * Update abstract syntax and parser to match spec.

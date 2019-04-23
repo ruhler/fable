@@ -105,21 +105,21 @@ typedef struct {
 } FbleUnionSelectInstr;
 
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
-//   Allocate a function, capturing the current variable context in the
+//   Allocate a function, capturing the current variable scope in the
 //   process.
 //
 // dstack: ...
 //     ==> ..., func
 //
 // Fields:
-//   contextc - The number of variables from the scope to capture from the top
-//              of the variable stack.
+//   scopec - The number of variables from the scope to capture from the top
+//            of the variable stack.
 //   body - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should
 //          remove the context of its scope and arguments.
 typedef struct {
   FbleInstr _base;
-  size_t contextc;
+  size_t scopec;
   FbleInstrBlock* body;
 } FbleFuncValueInstr;
 
@@ -174,14 +174,14 @@ typedef struct {
 //     ==> ..., link()
 //
 // Fields:
-//   contextc - The number of variables from the scope to capture from the top
-//              of the variable stack.
+//   scopec - The number of variables from the scope to capture from the top
+//            of the variable stack.
 //   body - A block of instructions that will execute the body of the link in
 //          the context of its scope and put and get ports. The instruction
 //          should remove the context of its scope and put and get ports.
 typedef struct {
   FbleInstr _base;
-  size_t contextc;
+  size_t scopec;
   FbleInstrBlock* body;
 } FbleLinkInstr;
 
@@ -196,7 +196,7 @@ typedef struct {
 //     ==> ..., body(b1)
 typedef struct {
   FbleInstr _base;
-  size_t contextc;
+  size_t scopec;
   size_t argc;
   FbleInstrBlock* body;
 } FbleExecInstr;
@@ -316,23 +316,23 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   it is no longer needed.
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
-// FbleVStack --
-//   A stack of values.
-typedef struct FbleVStack {
+// FbleScope --
+//   A stack of variables.
+typedef struct FbleScope {
   FbleValue* value;
-  struct FbleVStack* tail;
-} FbleVStack;
+  struct FbleScope* tail;
+} FbleScope;
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
-//   context - The var_stack at the time the function was created,
-//             representing the lexical context available to the function.
+//   scope - The scope at the time the function was created,
+//           representing the lexical context available to the function.
 //   body - The block of instructions representing the body of the function,
 //          which should pop the arguments and context.
 struct FbleFuncValue {
   FbleValue _base;
-  FbleVStack* context;
+  FbleScope* scope;
   FbleInstrBlock* body;
 };
 
@@ -378,7 +378,7 @@ typedef struct {
 // FbleLinkProcValue -- FBLE_LINK_PROC_VALUE
 typedef struct {
   FbleProcValue _base;
-  FbleVStack* context;
+  FbleScope* scope;
   FbleInstrBlock* body;
 } FbleLinkProcValue;
 
@@ -386,7 +386,7 @@ typedef struct {
 typedef struct {
   FbleProcValue _base;
   FbleValueV bindings;
-  FbleVStack* context;
+  FbleScope* scope;
   FbleInstrBlock* body;
 } FbleExecProcValue;
 
