@@ -691,7 +691,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             for (size_t i = 0; i < exec->bindings.size; ++i) {
               Thread* child = FbleAlloc(arena_, Thread);
               child->data_stack = DPush(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
-              child->istack = IPush(arena_, NULL, thread->istack->scope, &g_proc_block, NULL);
+              child->istack = IPush(arena_, NULL, NULL, &g_proc_block, NULL);
               child->iquota = 0;
               child->aborted = false;
               child->children.size = 0;
