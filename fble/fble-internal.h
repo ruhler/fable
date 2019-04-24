@@ -30,6 +30,7 @@ typedef enum {
   FBLE_LET_DEF_INSTR,
   FBLE_NAMESPACE_INSTR,
   FBLE_IPOP_INSTR,
+  FBLE_PUSH_SCOPE_INSTR,
   FBLE_POP_SCOPE_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_VPUSH_INSTR,
@@ -267,6 +268,11 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
 } FbleIPopInstr;
+
+// FblePushScopeInstr -- FBLE_PUSH_SCOPE_INSTR
+typedef struct {
+  FbleInstr _base;
+} FblePushScopeInstr;
 
 // FblePopScopeInstr -- FBLE_POP_SCOPE_INSTR
 typedef struct {

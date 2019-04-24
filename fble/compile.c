@@ -1429,6 +1429,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_LET_DEF_INSTR:
     case FBLE_NAMESPACE_INSTR:
     case FBLE_IPOP_INSTR:
+    case FBLE_PUSH_SCOPE_INSTR:
     case FBLE_POP_SCOPE_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_VPUSH_INSTR: {
@@ -2812,6 +2813,10 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
   FbleInstrBlock* block = FbleAlloc(arena, FbleInstrBlock);
   block->refcount = 1;
   FbleVectorInit(arena, block->instrs);
+
+  FblePushScopeInstr* push_scope = FbleAlloc(arena, FblePushScopeInstr);
+  push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
+  FbleVectorAppend(arena, block->instrs, &push_scope->_base);
 
   TypeArena* type_arena = FbleNewRefArena(arena, &TypeFree, &TypeAdded);
   Type* type = CompileExpr(type_arena, NULL, expr, &block->instrs);
