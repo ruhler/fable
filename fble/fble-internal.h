@@ -329,23 +329,17 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   it is no longer needed.
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
-// FbleScope --
-//   A stack of variables.
-typedef struct FbleScope {
-  FbleValue* value;
-  struct FbleScope* tail;
-} FbleScope;
-
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
 //   scope - The scope at the time the function was created,
 //           representing the lexical context available to the function.
+//           Stored as a vector of variables in reverse scope order.
 //   body - The block of instructions representing the body of the function,
 //          which should pop the arguments and context.
 struct FbleFuncValue {
   FbleValue _base;
-  FbleScope* scope;
+  FbleValueV scope;
   FbleInstrBlock* body;
 };
 
@@ -391,7 +385,7 @@ typedef struct {
 // FbleLinkProcValue -- FBLE_LINK_PROC_VALUE
 typedef struct {
   FbleProcValue _base;
-  FbleScope* scope;
+  FbleValueV scope;
   FbleInstrBlock* body;
 } FbleLinkProcValue;
 
@@ -399,7 +393,7 @@ typedef struct {
 typedef struct {
   FbleProcValue _base;
   FbleValueV bindings;
-  FbleScope* scope;
+  FbleValueV scope;
   FbleInstrBlock* body;
 } FbleExecProcValue;
 

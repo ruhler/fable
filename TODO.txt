@@ -2,8 +2,6 @@ Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
 * [perf] Improve variable lookup and function context copy.
-  - Store captured scope as FbleValueV instead of FbleScope
-    Then FbleScope can move to an internal data type.
   - Switch from linked list to array for scope. (expect much faster)
   - Only copy those parts of the context needed for the func, etc. involved.
     (expect much faster)

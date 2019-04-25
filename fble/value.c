@@ -63,12 +63,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* fv = (FbleFuncValue*)value;
-      FbleScope* vs = fv->scope;
-      while (vs != NULL) {
-        FbleScope* tmp = vs;
-        vs = vs->tail;
-        FbleFree(arena_, tmp);
-      }
+      FbleFree(arena_, fv->scope.xs);
       FbleFreeInstrBlock(arena_, fv->body);
       FbleFree(arena_, value);
       return;
@@ -83,12 +78,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
 
         case FBLE_LINK_PROC_VALUE: {
           FbleLinkProcValue* v = (FbleLinkProcValue*)value;
-          FbleScope* vs = v->scope;
-          while (vs != NULL) {
-            FbleScope* tmp = vs;
-            vs = vs->tail;
-            FbleFree(arena_, tmp);
-          }
+          FbleFree(arena_, v->scope.xs);
           FbleFreeInstrBlock(arena_, v->body);
           break;
         }
@@ -96,12 +86,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
         case FBLE_EXEC_PROC_VALUE: {
           FbleExecProcValue* v = (FbleExecProcValue*)value;
           FbleFree(arena_, v->bindings.xs);
-          FbleScope* vs = v->scope;
-          while (vs != NULL) {
-            FbleScope* tmp = vs;
-            vs = vs->tail;
-            FbleFree(arena_, tmp);
-          }
+          FbleFree(arena_, v->scope.xs);
           FbleFreeInstrBlock(arena_, v->body);
           break;
         }
@@ -189,10 +174,8 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* fv = (FbleFuncValue*)value;
-      FbleScope* vs = fv->scope;
-      while (vs != NULL) {
-        Add(add, vs->value);
-        vs = vs->tail;
+      for (size_t i = 0; i < fv->scope.size; ++i) {
+        Add(add, fv->scope.xs[i]);
       }
       break;
     }
@@ -221,8 +204,8 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
 
         case FBLE_LINK_PROC_VALUE: {
           FbleLinkProcValue* v = (FbleLinkProcValue*)value;
-          for (FbleScope* vs = v->scope; vs != NULL; vs = vs->tail) {
-            Add(add, vs->value);
+          for (size_t i = 0; i < v->scope.size; ++i) {
+            Add(add, v->scope.xs[i]);
           }
           break;
         }
@@ -232,8 +215,8 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
           for (size_t i = 0; i < v->bindings.size; ++i) {
             Add(add, v->bindings.xs[i]);
           }
-          for (FbleScope* vs = v->scope; vs != NULL; vs = vs->tail) {
-            Add(add, vs->value);
+          for (size_t i = 0; i < v->scope.size; ++i) {
+            Add(add, v->scope.xs[i]);
           }
           break;
         }
