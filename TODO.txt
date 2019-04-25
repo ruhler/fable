@@ -4,7 +4,6 @@ Fble:
 * [perf] Improve variable lookup and function context copy.
   - Store captured scope as FbleValueV instead of FbleScope
     Then FbleScope can move to an internal data type.
-  - Assert all vars have already been popped when doing a scope pop.
   - Switch from linked list to array for scope. (expect much faster)
   - Only copy those parts of the context needed for the func, etc. involved.
     (expect much faster)
