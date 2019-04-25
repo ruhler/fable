@@ -1935,6 +1935,15 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       instr->body->refcount = 1;
       FbleVectorInit(arena_, instr->body->instrs);
 
+      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
+      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &push_scope->_base);
+
+      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
+      vpush->_base.tag = FBLE_VPUSH_INSTR;
+      vpush->count = instr->scopec + 1; // scope + arg
+      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
+
       if (!error) {
         type->rtype = CompileExpr(arena, &nvars, func_value_expr->body, &instr->body->instrs);
         if (type->rtype != NULL) {
@@ -1946,7 +1955,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         if (!error) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->count = 1;
+          descope->count = instr->scopec + 1;
           FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
           FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
@@ -1969,10 +1978,18 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
     case FBLE_FUNC_APPLY_EXPR: {
       FbleFuncApplyExpr* apply_expr = (FbleFuncApplyExpr*)expr;
 
+      // Compile the argument.
+      Type* arg_type = CompileExpr(arena, vars, apply_expr->arg, instrs);
+      Eval(arena, arg_type, NULL, NULL);
+      if (arg_type == NULL) {
+        return NULL;
+      }
+
       // Compile the function value.
       Type* type = CompileExpr(arena, vars, apply_expr->func, instrs);
       Eval(arena, type, NULL, NULL);
       if (type == NULL) {
+        TypeRelease(arena, arg_type);
         return NULL;
       }
 
@@ -1981,14 +1998,10 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         FbleReportError("expected function, but found something of type ", &expr->loc);
         PrintType(arena_, type, NULL);
         fprintf(stderr, "\n");
+        TypeRelease(arena, arg_type);
         TypeRelease(arena, type);
         return NULL;
       }
-
-      // Compile the argument.
-      Type* arg_type = CompileExpr(arena, vars, apply_expr->arg, instrs);
-      Eval(arena, arg_type, NULL, NULL);
-      bool error = (arg_type == NULL);
 
       if (arg_type != NULL && !TypesEqual(func_type->arg, arg_type, NULL)) {
         FbleReportError("expected type ", &apply_expr->arg->loc);
@@ -1996,15 +2009,12 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         fprintf(stderr, ", but found ");
         PrintType(arena_, arg_type, NULL);
         fprintf(stderr, "\n");
-        error = true;
-      }
-
-      TypeRelease(arena, arg_type);
-
-      if (error) {
+        TypeRelease(arena, arg_type);
         TypeRelease(arena, type);
         return NULL;
       }
+
+      TypeRelease(arena, arg_type);
 
       FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
       apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
@@ -2081,12 +2091,21 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       instr->body->refcount = 1;
       FbleVectorInit(arena_, instr->body->instrs);
 
+      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
+      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &push_scope->_base);
+
+      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
+      vpush->_base.tag = FBLE_VPUSH_INSTR;
+      vpush->count = instr->scopec + 2; // scope + ports
+      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
+
       Type* type = CompileExpr(arena, &put_var, link_expr->body, &instr->body->instrs);
       Eval(arena, type, NULL, NULL);
 
       FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
       descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = 2;
+      descope->count = instr->scopec + 2;
       FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
@@ -2175,6 +2194,15 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       exec_instr->body = FbleAlloc(arena_, FbleInstrBlock);
       exec_instr->body->refcount = 1;
       FbleVectorInit(arena_, exec_instr->body->instrs);
+
+      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
+      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
+      FbleVectorAppend(arena_, exec_instr->body->instrs, &push_scope->_base);
+
+      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
+      vpush->_base.tag = FBLE_VPUSH_INSTR;
+      vpush->count = exec_instr->scopec;
+      FbleVectorAppend(arena_, exec_instr->body->instrs, &vpush->_base);
 
       {
         FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
@@ -2406,6 +2434,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
+      vpush->count = 1;
       FbleVectorAppend(arena_, *instrs, &vpush->_base);
 
       pt->body = CompileExpr(arena, &nvars, poly->body, instrs);

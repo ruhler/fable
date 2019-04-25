@@ -2,9 +2,9 @@ Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
 * [perf] Improve variable lookup and function context copy.
-  - Push scope from PUSH_SCOPE instruction.
-    func, eval, and link should push context to the data stack, then use
-    explicit PUSH_SCOPE and PUSH_VAR instructions to initialize the scope.
+  - Store captured scope as FbleValueV instead of FbleScope
+    Then FbleScope can move to an internal data type.
+  - Assert all vars have already been popped when doing a scope pop.
   - Switch from linked list to array for scope. (expect much faster)
   - Only copy those parts of the context needed for the func, etc. involved.
     (expect much faster)

@@ -288,14 +288,15 @@ typedef struct {
 }  FbleTypeInstr;
 
 // FbleVPushInstr -- FBLE_VPUSH_INSTR
-// data_stack: ..., x
+// data_stack: ..., x0, x1, ..., xN
 //         ==> ...
 //
 // vstack: ...,
-//     ==> ..., x
+//     ==> ..., xN, ..., x1, x0
 //
 typedef struct {
   FbleInstr _base;
+  size_t count;
 }  FbleVPushInstr;
 
 // FbleFreeInstrBlock --

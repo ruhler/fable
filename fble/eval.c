@@ -83,13 +83,13 @@ static FbleScope* PushVar(FbleArena* arena, FbleValue* value, FbleScope* tail);
 static FbleScope* PopVar(FbleArena* arena, FbleScope* vstack);
 static DataStack* PushData(FbleArena* arena, FbleValue* value, DataStack* tail);
 static DataStack* PopData(FbleArena* arena, DataStack* stack);
-static ScopeStack* PushScope(FbleValueArena* arena, FbleScope* scope, ScopeStack* tail);
+static ScopeStack* PushScope(FbleValueArena* arena, ScopeStack* tail);
 static ScopeStack* PopScope(FbleValueArena* arena, ScopeStack* stack);
 static CodeStack* PushCode(FbleValueArena* arena, FbleValue* retain, FbleInstrBlock* block, CodeStack* tail);
 static CodeStack* PopCode(FbleValueArena* arena, CodeStack* stack);
 
 static void CaptureScope(FbleValueArena* arena, FbleScope* src, size_t scopec, FbleValue* value, FbleScope** dst);
-static FbleScope* CopyScope(FbleValueArena* arena, FbleScope* scope);
+static DataStack* RestoreScope(FbleValueArena* arena, FbleScope* scope, DataStack* stack);
 
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
 static void AbortThread(FbleValueArena* arena, Thread* thread);
@@ -225,25 +225,23 @@ static DataStack* PopData(FbleArena* arena, DataStack* stack)
   return tail;
 }
 
-// PushCode --
+// PushScope --
 //   Push a scope onto the scope stack.
 //
 // Inputs:
 //   arena - the arena to use for allocations
-//   scope - the initial scope, assumed to be shared with other contexts.
 //   tail - the stack to push to
 //
 // Result:
-//   The new stack with pushed scope.
+//   The stack with new pushed scope.
 //
 // Side effects:
 //   Allocates new ScopeStack instances that should be freed when done.
-static ScopeStack* PushScope(FbleValueArena* arena, FbleScope* scope, ScopeStack* tail)
+static ScopeStack* PushScope(FbleValueArena* arena, ScopeStack* tail)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-
   ScopeStack* stack = FbleAlloc(arena_, ScopeStack);
-  stack->scope = CopyScope(arena, scope);
+  stack->scope = NULL;
   stack->tail = tail;
   return stack;
 }
@@ -359,32 +357,27 @@ static void CaptureScope(FbleValueArena* arena, FbleScope* src, size_t scopec, F
   }
 }
 
-// CopyScope --
-//   Make a copy of the given scope.
+// RestoreScope --
+//   Copy the given scope to the data stack in reverse order.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   scope - the scope to copy.
+//   stack - the stack to copy to.
 //
 // Result:
-//   A copy of the scope, with its own references to the values on the scope.
+//   Updated stack with the scope values pushed.
 //
 // Side effects:
-//   Allocates a new scope that should be freed when no longer needed.
-static FbleScope* CopyScope(FbleValueArena* arena, FbleScope* scope)
+//   Allocates new DataStack that should be freed when no longer needed.
+static DataStack* RestoreScope(FbleValueArena* arena, FbleScope* scope, DataStack* stack)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleScope* reverse = NULL;
-  for (FbleScope* vs = scope; vs != NULL; vs = vs->tail) {
-    reverse = PushVar(arena_, vs->value, reverse);
+  while (scope != NULL) {
+    stack = PushData(arena_, FbleValueRetain(arena, scope->value), stack);
+    scope = scope->tail;
   }
-
-  FbleScope* copy = NULL;
-  while (reverse != NULL) {
-    copy = PushVar(arena_, FbleValueRetain(arena, reverse->value), copy);
-    reverse = PopVar(arena_, reverse);
-  }
-  return copy;
+  return stack;
 }
 
 // RunThread --
@@ -505,16 +498,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_FUNC_APPLY_INSTR: {
-        FbleValue* arg = thread->data_stack->value;
-        thread->data_stack = PopData(arena_, thread->data_stack);
-
         FbleFuncValue* func = (FbleFuncValue*)Deref(thread->data_stack->value, FBLE_FUNC_VALUE);
         FbleValueRetain(arena, &func->_base);
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
-        thread->scope_stack = PushScope(arena, func->scope, thread->scope_stack);
+        thread->data_stack = RestoreScope(arena, func->scope, thread->data_stack);
         thread->code_stack = PushCode(arena, &func->_base, func->body, thread->code_stack);
-        thread->scope_stack->scope = PushVar(arena_, arg, thread->scope_stack->scope);
         break;
       }
 
@@ -747,23 +736,24 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
           case FBLE_LINK_PROC_VALUE: {
             FbleLinkProcValue* link = (FbleLinkProcValue*)proc;
-            thread->scope_stack = PushScope(arena, link->scope, thread->scope_stack);
-            thread->code_stack = PushCode(arena, FbleValueRetain(arena, &link->_base._base), link->body, thread->code_stack);
 
-            // Allocate the link and push the ports on top of the variable stack.
+            // Allocate the link and push the ports on top of the data stack.
             FbleInputValue* get = FbleAlloc(arena_, FbleInputValue);
             FbleRefInit(arena, &get->_base.ref);
             get->_base.tag = FBLE_INPUT_VALUE;
             get->head = NULL;
             get->tail = NULL;
-            thread->scope_stack->scope = PushVar(arena_, &get->_base, thread->scope_stack->scope);
 
             FbleOutputValue* put = FbleAlloc(arena_, FbleOutputValue);
             FbleRefInit(arena, &put->_base.ref);
             put->_base.tag = FBLE_OUTPUT_VALUE;
             put->dest = get;
             Add(arena, &put->_base, &get->_base);
-            thread->scope_stack->scope = PushVar(arena_, &put->_base, thread->scope_stack->scope);
+
+            thread->data_stack = PushData(arena_, &put->_base, thread->data_stack);
+            thread->data_stack = PushData(arena_, &get->_base, thread->data_stack);
+            thread->data_stack = RestoreScope(arena, link->scope, thread->data_stack);
+            thread->code_stack = PushCode(arena, FbleValueRetain(arena, &link->_base._base), link->body, thread->code_stack);
             break;
           }
 
@@ -785,7 +775,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               FbleVectorAppend(arena_, thread->children, child);
             }
 
-            thread->scope_stack = PushScope(arena, exec->scope, thread->scope_stack);
+            thread->data_stack = RestoreScope(arena, exec->scope, thread->data_stack);
             thread->code_stack = PushCode(arena, FbleValueRetain(arena, &proc->_base), exec->body, thread->code_stack);
             break;
           }
@@ -848,7 +838,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_PUSH_SCOPE_INSTR: {
-        thread->scope_stack = PushScope(arena, NULL, thread->scope_stack);
+        thread->scope_stack = PushScope(arena, thread->scope_stack);
         break;
       }
 
@@ -866,9 +856,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_VPUSH_INSTR: {
-        FbleValue* value = thread->data_stack->value;
-        thread->data_stack = PopData(arena_, thread->data_stack);
-        thread->scope_stack->scope = PushVar(arena_, value, thread->scope_stack->scope);
+        FbleVPushInstr* vpush = (FbleVPushInstr*)instr;
+        for (size_t i = 0; i < vpush->count; ++i) {
+          assert(thread->data_stack != NULL);
+          FbleValue* value = thread->data_stack->value;
+          thread->data_stack = PopData(arena_, thread->data_stack);
+          thread->scope_stack->scope = PushVar(arena_, value, thread->scope_stack->scope);
+        }
         break;
       }
     }
