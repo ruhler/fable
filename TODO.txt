@@ -2,13 +2,15 @@ Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
 * [perf] Improve variable lookup and function context copy.
+  - Clean up Scope API
+    In preparation for changing implementation to an array.
+    Consider rewriting some instructions to reuse VAR_PUSH, etc.
   - Switch from linked list to array for scope. (expect much faster)
   - Only copy those parts of the context needed for the func, etc. involved.
     (expect much faster)
   
 
 Fble Cleanup:
-* rename NAMESPACE_INSTR to STRUCT_EVAL_INSTR.
 * Update abstract syntax and parser to match spec.
   - in terms of names of things and order of things.
 * Fix handling of type vs. normal name.

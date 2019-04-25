@@ -28,7 +28,7 @@ typedef enum {
   FBLE_VAR_INSTR,
   FBLE_LET_PREP_INSTR,
   FBLE_LET_DEF_INSTR,
-  FBLE_NAMESPACE_INSTR,
+  FBLE_STRUCT_EVAL_INSTR,
   FBLE_IPOP_INSTR,
   FBLE_PUSH_SCOPE_INSTR,
   FBLE_POP_SCOPE_INSTR,
@@ -247,7 +247,7 @@ typedef struct {
   size_t count;
 } FbleLetDefInstr;
 
-// FbleNamespaceInstr -- FBLE_NAMESPACE_INSTR
+// FbleStructEvalInstr -- FBLE_STRUCT_EVAL_INSTR
 //
 // vstack: ...
 // data_stack: ..., v
@@ -259,7 +259,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   size_t fieldc;
-} FbleNamespaceInstr;
+} FbleStructEvalInstr;
 
 // FbleIPopInstr -- FBLE_IPOP_INSTR
 //
