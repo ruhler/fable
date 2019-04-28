@@ -2,8 +2,12 @@ Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
 * [perf] Improve variable lookup and function context copy.
+  - Any way to factor out common code in compiler for compiling thunks, used
+    in func value, link, and exec?
   - Only copy those parts of the context needed for the func, etc. involved.
-    (expect much faster)
+    Switch Vars info at compile time to a vector.
+    Access vars at runtime from absolute position, not relative to top of
+    stack.
 
 Fble Perf:
 * Pre-allocate full scope in PushScope.
