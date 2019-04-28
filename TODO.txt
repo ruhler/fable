@@ -2,13 +2,11 @@ Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
 * [perf] Improve variable lookup and function context copy.
-  - Clean up Scope API
-    In preparation for changing implementation to an array.
-    Consider rewriting some instructions to reuse VAR_PUSH, etc.
-  - Switch from linked list to array for scope. (expect much faster)
   - Only copy those parts of the context needed for the func, etc. involved.
     (expect much faster)
-  
+
+Fble Perf:
+* Pre-allocate full scope in PushScope.
 
 Fble Cleanup:
 * Update abstract syntax and parser to match spec.
@@ -28,7 +26,6 @@ Fble Cleanup:
 * Test that we don't smash the stack with many nested child threads.
 * Test that we don't leak (Thread) memory with tail recursive single binding
   exec processes.
-* Test partial function and excessive function application.
 * Pick a better name for FbleChoice, which is used now for more than just
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
 * Add test that you can't shadow a variable.
@@ -43,7 +40,7 @@ Fble Cleanup:
   - fbld spec test coverage
 * It's very unintuitive that $(f(...)) calls f(...) before executing the
   process $(...). Clarify the spec on that and make sure we implement it
-  correctly.
+  correctly. And think about the other kinds of procs too, like put and get.
 * Remove iquota from Thread data structure. It should be managed separately.
 
 Fble Lib:

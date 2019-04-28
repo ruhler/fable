@@ -334,7 +334,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 // Fields:
 //   scope - The scope at the time the function was created,
 //           representing the lexical context available to the function.
-//           Stored as a vector of variables in reverse scope order.
+//           Stored as a vector of variables in scope order.
 //   body - The block of instructions representing the body of the function,
 //          which should pop the arguments and context.
 struct FbleFuncValue {

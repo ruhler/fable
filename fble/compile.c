@@ -1922,14 +1922,20 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       }
       bool error = (type->arg == NULL);
 
+      size_t scopec = 0;
+      for (Vars* v = vars; v != NULL; v = v->next) {
+        FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
+        get_var->_base.tag = FBLE_VAR_INSTR;
+        get_var->position = scopec;
+        FbleVectorAppend(arena_, *instrs, &get_var->_base);
+
+        scopec++;
+      }
+
       FbleFuncValueInstr* instr = FbleAlloc(arena_, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
+      instr->scopec = scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-
-      instr->scopec = 0;
-      for (Vars* v = vars; v != NULL; v = v->next) {
-        instr->scopec++;
-      }
 
       instr->body = FbleAlloc(arena_, FbleInstrBlock);
       instr->body->refcount = 1;
@@ -2078,14 +2084,20 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         .next = &get_var
       };
 
+      size_t scopec = 0;
+      for (Vars* v = vars; v != NULL; v = v->next) {
+        FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
+        get_var->_base.tag = FBLE_VAR_INSTR;
+        get_var->position = scopec;
+        FbleVectorAppend(arena_, *instrs, &get_var->_base);
+
+        scopec++;
+      }
+
       FbleLinkInstr* instr = FbleAlloc(arena_, FbleLinkInstr);
       instr->_base.tag = FBLE_LINK_INSTR;
+      instr->scopec = scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-
-      instr->scopec = 0;
-      for (Vars* v = vars; v != NULL; v = v->next) {
-        instr->scopec++;
-      }
 
       instr->body = FbleAlloc(arena_, FbleInstrBlock);
       instr->body->refcount = 1;
@@ -2182,13 +2194,20 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         }
       }
 
+      size_t scopec = 0;
+      for (Vars* v = vars; v != NULL; v = v->next) {
+        FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
+        get_var->_base.tag = FBLE_VAR_INSTR;
+        get_var->position = scopec;
+        FbleVectorAppend(arena_, *instrs, &get_var->_base);
+
+        scopec++;
+      }
+
       FbleExecInstr* exec_instr = FbleAlloc(arena_, FbleExecInstr);
       exec_instr->_base.tag = FBLE_EXEC_INSTR;
       exec_instr->argc = exec_expr->bindings.size;
-      exec_instr->scopec = 0;
-      for (Vars* v = vars; v != NULL; v = v->next) {
-        exec_instr->scopec++;
-      }
+      exec_instr->scopec = scopec;
       FbleVectorAppend(arena_, *instrs, &exec_instr->_base);
 
       exec_instr->body = FbleAlloc(arena_, FbleInstrBlock);

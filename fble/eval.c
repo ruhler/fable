@@ -90,7 +90,7 @@ static ScopeStack* PopScope(FbleArena* arena, ScopeStack* stack);
 static CodeStack* PushCode(FbleValueArena* arena, FbleValue* retain, FbleInstrBlock* block, CodeStack* tail);
 static CodeStack* PopCode(FbleValueArena* arena, CodeStack* stack);
 
-static void CaptureScope(FbleValueArena* arena, ScopeStack* scope_stack, size_t scopec, FbleValue* value, FbleValueV* dst);
+static DataStack* CaptureScope(FbleValueArena* arena, DataStack* data_stack, size_t scopec, FbleValue* value, FbleValueV* dst);
 static DataStack* RestoreScope(FbleValueArena* arena, FbleValueV scope, DataStack* stack);
 
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
@@ -366,33 +366,36 @@ static CodeStack* PopCode(FbleValueArena* arena, CodeStack* stack)
 }
 
 // CaptureScope --
-//   Capture the top scope in the stack and save it in a value.
+//   Capture the variables from the top of the data stack and save it in a value.
 //
 // Inputs:
-//   scope_stack - the stack with the scope to save.
-//   scopec - the size of the scope to save.
+//   data_stack - the data stack with the variables to save.
+//   scopec - the number of variables to save.
 //   value - the value to save the scope to.
 //   dst - a pointer to where the scope should be saved to. This is assumed to
 //         be a field of the value.
 //
 // Results:
-//   none.
+//   The data stack with scopec values popped off.
 //
 // Side effects:
-//   Makes a copy of the top scope, stores the copy in dst, and adds
+//   Stores a copy of the variables from the data stack in dst, and adds
 //   references from the value to everything on the scope.
-static void CaptureScope(FbleValueArena* arena, ScopeStack* scope_stack, size_t scopec, FbleValue* value, FbleValueV* dst)
+static DataStack* CaptureScope(FbleValueArena* arena, DataStack* data_stack, size_t scopec, FbleValue* value, FbleValueV* dst)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   for (size_t i = 0; i < scopec; ++i) {
-    FbleValue* var = GetVar(scope_stack, i);
+    FbleValue* var = data_stack->value;
+    data_stack = PopData(arena_, data_stack);
     FbleVectorAppend(arena_, *dst, var);
     Add(arena, value, var);
+    FbleValueRelease(arena, var);
   }
+  return data_stack;
 }
 
 // RestoreScope --
-//   Copy the given scope to the data stack in reverse order.
+//   Copy the given values to the data stack.
 //
 // Inputs:
 //   arena - arena to use for allocations.
@@ -408,7 +411,7 @@ static DataStack* RestoreScope(FbleValueArena* arena, FbleValueV scope, DataStac
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   for (size_t i = 0; i < scope.size; ++i) {
-    stack = PushData(arena_, FbleValueRetain(arena, scope.xs[i]), stack);
+    stack = PushData(arena_, FbleValueRetain(arena, scope.xs[scope.size - i - 1]), stack);
   }
   return stack;
 }
@@ -515,7 +518,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleVectorInit(arena_, value->scope);
         value->body = func_value_instr->body;
         value->body->refcount++;
-        CaptureScope(arena, thread->scope_stack, func_value_instr->scopec, &value->_base, &value->scope);
+        thread->data_stack = CaptureScope(arena, thread->data_stack, func_value_instr->scopec, &value->_base, &value->scope);
         thread->data_stack = PushData(arena_, &value->_base, thread->data_stack);
         break;
       }
@@ -597,7 +600,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleVectorInit(arena_, value->scope);
         value->body = link_instr->body;
         value->body->refcount++;
-        CaptureScope(arena, thread->scope_stack, link_instr->scopec, &value->_base._base, &value->scope);
+        thread->data_stack = CaptureScope(arena, thread->data_stack, link_instr->scopec, &value->_base._base, &value->scope);
         thread->data_stack = PushData(arena_, &value->_base._base, thread->data_stack);
         break;
       }
@@ -613,7 +616,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleVectorInit(arena_, value->scope);
         value->body = exec_instr->body;
         value->body->refcount++;
-        CaptureScope(arena, thread->scope_stack, exec_instr->scopec, &value->_base._base, &value->scope);
+        thread->data_stack = CaptureScope(arena, thread->data_stack, exec_instr->scopec, &value->_base._base, &value->scope);
 
         for (size_t i = 0; i < exec_instr->argc; ++i) {
           size_t j = exec_instr->argc - 1 - i;
