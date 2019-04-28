@@ -411,7 +411,7 @@ static DataStack* RestoreScope(FbleValueArena* arena, FbleValueV scope, DataStac
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   for (size_t i = 0; i < scope.size; ++i) {
-    stack = PushData(arena_, FbleValueRetain(arena, scope.xs[scope.size - i - 1]), stack);
+    stack = PushData(arena_, FbleValueRetain(arena, scope.xs[i]), stack);
   }
   return stack;
 }
@@ -586,7 +586,9 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
-        FbleValue* value = GetVar(thread->scope_stack, var_instr->position);
+        assert(thread->scope_stack != NULL);
+        assert(var_instr->position < thread->scope_stack->vars.size);
+        FbleValue* value = thread->scope_stack->vars.xs[var_instr->position];
         thread->data_stack = PushData(arena_, FbleValueRetain(arena, value), thread->data_stack);
         break;
       }
