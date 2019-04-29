@@ -225,6 +225,13 @@ typedef struct {
   size_t position;
 } FbleVarInstr;
 
+// FbleVarInstrV --
+//   A vector of var instructions.
+typedef struct {
+  size_t size;
+  FbleVarInstr** xs;
+} FbleVarInstrV;
+
 // FbleLetPrepInstr -- FBLE_LET_PREP_INSTR
 //   Prepare to evaluate a let.
 //

@@ -196,9 +196,14 @@ typedef struct TypePairs {
 
 // Var --
 //   Information about a variable visible during type checking.
+//
+// name - the name of the variable.
+// type - the type of the variable.
+// instrs - a record of the var instructions used to access the variable.
 typedef struct {
   FbleName name;
   Type* type;
+  FbleVarInstrV instrs;
 } Var;
 
 // Var --
@@ -243,6 +248,7 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof);
 
 static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type);
 static void PopVar(FbleArena* arena, Vars* vars);
+static void FreeVars(FbleArena* arena, Vars* vars);
 
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 
@@ -1448,6 +1454,7 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type)
   Var* var = vars->vars.xs + vars->nvars;
   if (vars->nvars == vars->vars.size) {
     var = FbleVectorExtend(arena, vars->vars); 
+    FbleVectorInit(arena, var->instrs);
   }
   var->name = name;
   var->type = type;
@@ -1470,6 +1477,26 @@ static void PopVar(FbleArena* arena, Vars* vars)
 {
   assert(vars->nvars > 0);
   vars->nvars--;
+}
+
+// FreeVars --
+//   Free memory associated with vars.
+//
+// Inputs:
+//   arena - arena for allocations.
+//   vars - the vars to free memory for.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Memory allocated for vars is freed.
+static void FreeVars(FbleArena* arena, Vars* vars)
+{
+  for (size_t i = 0; i < vars->vars.size; ++i) {
+    FbleFree(arena, vars->vars.xs[i].instrs.xs);
+  }
+  FbleFree(arena, vars->vars.xs);
 }
 
 // FreeInstr --
@@ -2003,6 +2030,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
         get_var->_base.tag = FBLE_VAR_INSTR;
         get_var->position = i;
+        FbleVectorAppend(arena_, vars->vars.xs[i].instrs, get_var);
         FbleVectorAppend(arena_, *instrs, &get_var->_base);
       }
 
@@ -2157,6 +2185,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
         get_var->_base.tag = FBLE_VAR_INSTR;
         get_var->position = i;
+        FbleVectorAppend(arena_, vars->vars.xs[i].instrs, get_var);
         FbleVectorAppend(arena_, *instrs, &get_var->_base);
       }
 
@@ -2265,6 +2294,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
         get_var->_base.tag = FBLE_VAR_INSTR;
         get_var->position = i;
+        FbleVectorAppend(arena_, vars->vars.xs[i].instrs, get_var);
         FbleVectorAppend(arena_, *instrs, &get_var->_base);
       }
 
@@ -2352,6 +2382,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
           instr->position = j;
+          FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
           return TypeRetain(arena, var->type);
         }
@@ -2659,8 +2690,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
         pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
         FbleVectorAppend(arena_, *instrs, &pop_scope->_base);
-
-        FbleFree(arena_, nvars.vars.xs);
+        FreeVars(arena_, &nvars);
       }
 
       TypeRelease(arena, type);
@@ -2962,7 +2992,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
   Type* type = CompileExpr(type_arena, &vars, expr, &block->instrs);
   TypeRelease(type_arena, type);
   FbleDeleteRefArena(type_arena);
-  FbleFree(arena, vars.vars.xs);
+  FreeVars(arena, &vars);
   if (type == NULL) {
     FbleFreeInstrBlock(arena, block);
     return NULL;
