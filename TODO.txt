@@ -1,9 +1,6 @@
 Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
-* [perf] Improve variable lookup and function context copy.
-  - Only copy those parts of the context needed for the func, etc. involved.
-
 Fble Cleanup:
 * Update abstract syntax and parser to match spec.
   - in terms of names of things and order of things.

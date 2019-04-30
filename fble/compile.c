@@ -2017,28 +2017,18 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       type->_base.evaluating = false;
       type->arg = NULL;
       type->rtype = NULL;
-
       
       type->arg = CompileType(arena, vars, func_value_expr->arg.type);
-      if (type->arg != NULL) {
-        FbleRefAdd(arena, &type->_base.ref, &type->arg->ref);
-        TypeRelease(arena, type->arg);
+      if (type->arg == NULL) {
+        TypeRelease(arena, &type->_base);
+        return NULL;
       }
-      bool error = (type->arg == NULL);
 
-      for (size_t i = 0; i < vars->nvars; ++i) {
-        FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
-        get_var->_base.tag = FBLE_VAR_INSTR;
-        get_var->position = i;
-        FbleVectorAppend(arena_, vars->vars.xs[i].instrs, get_var);
-        FbleVectorAppend(arena_, *instrs, &get_var->_base);
-      }
+      FbleRefAdd(arena, &type->_base.ref, &type->arg->ref);
+      TypeRelease(arena, type->arg);
 
       FbleFuncValueInstr* instr = FbleAlloc(arena_, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
-      instr->scopec = vars->nvars;
-      FbleVectorAppend(arena_, *instrs, &instr->_base);
-
       instr->body = FbleAlloc(arena_, FbleInstrBlock);
       instr->body->refcount = 1;
       FbleVectorInit(arena_, instr->body->instrs);
@@ -2049,39 +2039,68 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
-      vpush->count = instr->scopec + 1; // scope + arg
       FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
-      PushVar(arena_, vars, func_value_expr->arg.name, type->arg);
 
-      if (!error) {
-        type->rtype = CompileExpr(arena, vars, func_value_expr->body, &instr->body->instrs);
-        if (type->rtype != NULL) {
-          FbleRefAdd(arena, &type->_base.ref, &type->rtype->ref);
-          TypeRelease(arena, type->rtype);
-        }
-        error = error || (type->rtype == NULL);
-
-        if (!error) {
-          PopVar(arena_, vars);
-          FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-          descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->count = instr->scopec + 1;
-          FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
-
-          FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
-          pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-          FbleVectorAppend(arena_, instr->body->instrs, &pop_scope->_base);
-
-          FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
-          ipop->_base.tag = FBLE_IPOP_INSTR;
-          FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
-        }
+      Vars nvars;
+      FbleVectorInit(arena_, nvars.vars);
+      nvars.nvars = 0;
+      for (size_t i = 0; i < vars->nvars; ++i) {
+        PushVar(arena_, &nvars, vars->vars.xs[i].name, vars->vars.xs[i].type);
       }
+      PushVar(arena_, &nvars, func_value_expr->arg.name, type->arg);
 
-      if (error) {
+      type->rtype = CompileExpr(arena, &nvars, func_value_expr->body, &instr->body->instrs);
+      if (type->rtype == NULL) {
+        FreeVars(arena_, &nvars);
         TypeRelease(arena, &type->_base);
+        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
+
+      FbleRefAdd(arena, &type->_base.ref, &type->rtype->ref);
+      TypeRelease(arena, type->rtype);
+
+      size_t ni = 0;
+      for (size_t i = 0; i < vars->nvars; ++i) {
+        if (nvars.vars.xs[i].instrs.size > 0) {
+          FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
+          get_var->_base.tag = FBLE_VAR_INSTR;
+          get_var->position = i;
+          FbleVectorAppend(arena_, vars->vars.xs[i].instrs, get_var);
+          FbleVectorAppend(arena_, *instrs, &get_var->_base);
+
+          for (size_t j = 0; j < nvars.vars.xs[i].instrs.size; ++j) {
+            FbleVarInstr* var_instr = nvars.vars.xs[i].instrs.xs[j];
+            var_instr->position = ni;
+          }
+          ni++;
+        }
+      }
+      instr->scopec = ni;
+      vpush->count = instr->scopec + 1;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
+
+      for (size_t i = vars->nvars; i < nvars.vars.size; ++i) {
+          for (size_t j = 0; j < nvars.vars.xs[i].instrs.size; ++j) {
+            FbleVarInstr* var_instr = nvars.vars.xs[i].instrs.xs[j];
+            var_instr->position = i - vars->nvars + instr->scopec;
+          }
+      }
+      FreeVars(arena_, &nvars);
+
+      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+      descope->_base.tag = FBLE_DESCOPE_INSTR;
+      descope->count = instr->scopec + 1;
+      FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
+
+      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
+      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &pop_scope->_base);
+
+      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
+      ipop->_base.tag = FBLE_IPOP_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
+
       return &type->_base;
     }
 
@@ -2721,14 +2740,25 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
+
+  // Make a copy of vars to ensure we don't save references to any
+  // instructions that we may free.
+  Vars nvars;
+  FbleVectorInit(arena_, nvars.vars);
+  nvars.nvars = 0;
+  for (size_t i = 0; i < vars->nvars; ++i) {
+    PushVar(arena_, &nvars, vars->vars.xs[i].name, vars->vars.xs[i].type);
+  }
+
   FbleInstrV instrs;
   FbleVectorInit(arena_, instrs);
-  Type* type = CompileExpr(arena, vars, expr, &instrs);
+  Type* type = CompileExpr(arena, &nvars, expr, &instrs);
   Eval(arena, type, NULL);
   for (size_t i = 0; i < instrs.size; ++i) {
     FreeInstr(arena_, instrs.xs[i]);
   }
   FbleFree(arena_, instrs.xs);
+  FreeVars(arena_, &nvars);
   return type;
 }
 
