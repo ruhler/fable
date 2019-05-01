@@ -76,9 +76,18 @@ proc fble-test-error { loc expr } {
   testl $tloc fble-test-error-run $tloc $loc $expr
 }
 
-foreach {x} [lsort [glob langs/fble/*/*.tcl]]  {
-  source $x
+# Source all *.tcl files under the given directory, recursively.
+proc source_all { dir } {
+  foreach {x} [lsort [glob -nocomplain -type d $dir/*]] {
+    source_all $x
+  }
+
+  foreach {x} [lsort [glob -nocomplain -type f $dir/*.tcl]] {
+    source $x
+  }
 }
+
+source_all langs/fble
 
 exec mkdir -p out/fble/cov/spec
 run gcov {*}$::fble_objs > out/fble/cov/spec/fble.gcov

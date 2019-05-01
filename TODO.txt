@@ -1,7 +1,13 @@
 Fble:
 * [test] Rename tests to match new spec, and clean up tests.
 
+Fble Perf:
+* Reduce cost of capturing, popping scopes?
+* Clean up type Eval to avoid duplicate work.
+  4 seconds of AllTests is spent here. Practically the entire time for compilation.
+
 Fble Cleanup:
+* Factor out common code for thunks used by func, link, and exec.
 * Update abstract syntax and parser to match spec.
   - in terms of names of things and order of things.
 * Fix handling of type vs. normal name.

@@ -216,6 +216,11 @@ Concrete Syntax:
 Example:
   Coord@(3, 5)
 
+The type of the struct value is the explicit type provided, which must be a
+struct type. The number of arguments provided must match the number of fields
+in the provided type, and the type of each argument must match the type of the
+field of the struct type in the same position.
+
 3.3 Struct Value Implicit Type
 ------------------------------
 Abstract Syntax:
