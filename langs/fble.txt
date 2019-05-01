@@ -221,6 +221,10 @@ struct type. The number of arguments provided must match the number of fields
 in the provided type, and the type of each argument must match the type of the
 field of the struct type in the same position.
 
+The expression is evaluated by evaluating all arguments and creating a struct
+value with the results. The arguments may be evaluated in any order,
+sequentially or in parallel.
+
 3.3 Struct Value Implicit Type
 ------------------------------
 Abstract Syntax:
