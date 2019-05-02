@@ -5,7 +5,7 @@ fble-test-error 10:5 {
   Bool@ false = Bool@(false: Unit@());
 
   # The field being accessed is not valid.
-  @ BoolPair@ = *(Bool@ x, Bool@ y);
-  BoolPair@ z = BoolPair@(true, false);
+  @ Pair@ = *(Bool@ x, Bool@ y);
+  Pair@ z = Pair@(true, false);
   z.w;
 }
