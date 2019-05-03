@@ -38,12 +38,13 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-test [--error] FILE [PATH]\n"
+      "Usage: fble-test [--error] [--memory] FILE [PATH]\n"
       "Type check and evaluate the fble program from FILE.\n"
       "PATH is an optional include search path.\n"
       "If the result is a process, run the process.\n"
       "Exit status is 0 if the program produced no type or runtime errors, 1 otherwise.\n"
       "With --error, exit status is 0 if the program produced a type or runtime error, 0 otherwise.\n"
+      "With --memory, a memory report is given after executing the program.\n"
   );
 }
 
@@ -71,6 +72,13 @@ int main(int argc, char* argv[])
   bool expect_error = false;
   if (argc > 0 && strcmp("--error", *argv) == 0) {
     expect_error = true;
+    argc--;
+    argv++;
+  }
+
+  bool report_memory = false;
+  if (argc > 0 && strcmp("--memory", *argv) == 0) {
+    report_memory = true;
     argc--;
     argv++;
   }
@@ -115,6 +123,10 @@ int main(int argc, char* argv[])
     FbleDeleteValueArena(value_arena);
     FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);
+  }
+
+  if (report_memory) {
+    printf("Max memory used: %zi (bytes)\n", FbleArenaMaxSize(arena));
   }
 
   FbleDeleteArena(arena);

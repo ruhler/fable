@@ -13,5 +13,5 @@ checkerr: all
 
 .PHONY: foo
 foo:
-	./out/fble/fble-test prgms/AllTests.fble prgms
+	./out/fble/fble-test --memory prgms/AllTests.fble prgms
 
