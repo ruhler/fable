@@ -103,4 +103,17 @@ void FbleDeleteArena(FbleArena* arena);
 //   outstanding allocations in the arena.
 void FbleAssertEmptyArena(FbleArena* arena);
 
+// FbleArenaMaxSize
+//   Returns the maximum size the given arena reached in bytes.
+//
+// Inputs:
+//   arena - The arena to get the max size of.
+//
+// Results:
+//   The maximum size of the arena.
+//
+// Side effects:
+//   None.
+size_t FbleArenaMaxSize(FbleArena* arena);
+
 #endif // FBLE_ALLOC_H_

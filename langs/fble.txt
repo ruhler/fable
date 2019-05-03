@@ -263,6 +263,13 @@ Example:
 Returns the value passed to the struct at the corresponding field position
 when the struct was constructed.
 
+The object must be a struct value. The field must refer to a field of that
+struct value. The type of the expression is the type of the field being
+accessed.
+
+The expression is evaluated by evaluating the object, then accessing its field
+value.
+
 3.5 Struct Eval
 ---------------
 Abstract Syntax:

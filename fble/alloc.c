@@ -23,16 +23,23 @@ typedef struct Alloc {
   char data[];
 } Alloc;
 
-// FbleArena -- See fble.h for documentation.
+// FbleArena -- See fble-arena.h for documentation.
 //
 // Fields:
 //   allocs - The list of allocations for this arena. It is a circular, doubly
 //            linked list with the first node a dummy node.
-//   arenas - The list of child arenas for this arena. It is a circular,
-//            doubly linked list with the first node a dummy node.
+//   parent - the parent arena for this arena, or NULL.
+//   children - The list of child arenas for this arena. It is a circular,
+//              doubly linked list with the first node a dummy node.
+//   size - the sum of the sizes of current allocations, including allocations
+//          on child arenas.
+//   max_size - the maximum historic sum of the sizes of allocations.
 struct FbleArena {
   struct Alloc* allocs;
-  struct Arena* arenas;
+  struct FbleArena* parent;
+  struct Arena* children;
+  size_t size;
+  size_t max_size;
 };
 
 // Arena --
@@ -44,7 +51,7 @@ typedef struct Arena {
 } Arena;
 
 
-// FbleArenaAlloc -- see documentation in fble.h
+// FbleArenaAlloc -- see documentation in fble-arena.h
 void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg)
 {
   assert(arena != NULL);
@@ -56,10 +63,17 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg)
   alloc->msg = msg;
   alloc->size = size;
   alloc->arena = arena;
+
+  while (arena != NULL) {
+    arena->size += size;
+    arena->max_size = arena->size > arena->max_size ? arena->size : arena->max_size;
+    arena = arena->parent;
+  }
+
   return (void*)alloc->data;
 }
 
-// FbleFree -- see documentation in fble.h
+// FbleFree -- see documentation in fble-arena.h
 void FbleFree(FbleArena* arena, void* ptr)
 {
   if (ptr == NULL) {
@@ -75,19 +89,24 @@ void FbleFree(FbleArena* arena, void* ptr)
   alloc->next->prev = alloc->prev;
   alloc->prev->next = alloc->next;
 
+  while (arena != NULL) {
+    arena->size -= alloc->size;
+    arena = arena->parent;
+  }
+
   // Poison the data to help catch use after free.
   free(memset(alloc, 0xDD, sizeof(Alloc) + alloc->size));
 }
 
-// FbleNewArena -- see documentation in fble.h
+// FbleNewArena -- see documentation in fble-arena.h
 FbleArena* FbleNewArena(FbleArena* parent)
 {
   Arena* arena = malloc(sizeof(Arena));
   arena->prev = NULL;
   arena->next = NULL;
   if (parent != NULL) {
-    arena->prev = parent->arenas;
-    arena->next = parent->arenas->next;
+    arena->prev = parent->children;
+    arena->next = parent->children->next;
     arena->prev->next = arena;
     arena->next->prev = arena;
   }
@@ -97,15 +116,20 @@ FbleArena* FbleNewArena(FbleArena* parent)
   arena->arena.allocs->prev = arena->arena.allocs;
   arena->arena.allocs->msg = "?dummy?";
 
-  arena->arena.arenas = malloc(sizeof(Arena));
-  arena->arena.arenas->next = arena->arena.arenas;
-  arena->arena.arenas->prev = arena->arena.arenas;
-  arena->arena.arenas->arena.allocs = NULL;
-  arena->arena.arenas->arena.arenas = NULL;
+  arena->arena.parent = parent;
+
+  arena->arena.children = malloc(sizeof(Arena));
+  arena->arena.children->next = arena->arena.children;
+  arena->arena.children->prev = arena->arena.children;
+  arena->arena.children->arena.allocs = NULL;
+  arena->arena.children->arena.children = NULL;
+
+  arena->arena.size = 0;
+  arena->arena.max_size = 0;
   return &(arena->arena);
 }
 
-// FbleDeleteArena -- see documentation in fble.h
+// FbleDeleteArena -- see documentation in fble-arena.h
 void FbleDeleteArena(FbleArena* arena)
 {
   while (arena->allocs->next != arena->allocs) {
@@ -113,10 +137,10 @@ void FbleDeleteArena(FbleArena* arena)
   }
   free(arena->allocs);
 
-  while (arena->arenas->next != arena->arenas) {
-    FbleDeleteArena(&(arena->arenas->next->arena));
+  while (arena->children->next != arena->children) {
+    FbleDeleteArena(&(arena->children->next->arena));
   }
-  free(arena->arenas);
+  free(arena->children);
 
   Arena* a = (Arena*)(((Arena**)arena) - 2);
   assert(arena == &(a->arena));
@@ -128,7 +152,7 @@ void FbleDeleteArena(FbleArena* arena)
   free(a);
 }
 
-// FbleAssertEmptyArena -- see documentation in fble.h
+// FbleAssertEmptyArena -- see documentation in fble-arena.h
 void FbleAssertEmptyArena(FbleArena* arena)
 {
   if (arena->allocs->next != arena->allocs) {
@@ -139,8 +163,14 @@ void FbleAssertEmptyArena(FbleArena* arena)
     abort();
   }
 
-  if (arena->arenas->next != arena->arenas) {
+  if (arena->children->next != arena->children) {
     fprintf(stderr, "the arena has outstanding child arenas\n");
     abort();
   }
+}
+
+// FbleArenaMaxSize -- see documentation in fble-arena.h
+size_t FbleArenaMaxSize(FbleArena* arena)
+{
+  return arena->max_size;
 }
