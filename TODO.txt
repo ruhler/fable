@@ -1,26 +1,22 @@
-Fble:
 * [test] Rename tests to match new spec, and clean up tests.
-
-Fble Perf:
-* Reduce cost of capturing, popping scopes?
-* Clean up type Eval to avoid duplicate work.
-  4 seconds of AllTests is spent here. Practically the entire time for compilation.
-
-Fble Test:
+* [test] Set up infra for testing no memory growth.
+* [prgm] Port fbld-md5.c to fble-md5.c.
+* [prgm] Implement game of life.
+
+* [perf] Think about how to reduce cost of capturing, popping scopes.
+* [perf] Clean up type Eval to avoid duplicate work.
+ - Eval by construction and on update, not on use.
+ - Shave 4 seconds off AllTests compilation time.
+* [clean] Factor out common code for thunks used by func, link, and exec.
+* [test] Test and fix handling of type vs. normal name.
+
 * Test that explicit type struct values can take type args and poly args?
-
-Fble Cleanup:
-* Factor out common code for thunks used by func, link, and exec.
 * Update abstract syntax and parser to match spec.
   - in terms of names of things and order of things.
-* Fix handling of type vs. normal name.
 * Test namespace eval with mixed type and normal fields.
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
-* Clean up when Eval is done for types.
- - Always eval at Compile, except internal calls to CompileType from in
-   CompileType. That should work I think.
 * Clean up header files and what is easily externally visible.
   For example, should FbleRef be visible from fble.h?
   And make sure all "see documentation in ..." lines are accurate.
@@ -84,6 +80,7 @@ Miscellaneous:
 * Track down memory-leak like behavior in fbld-md5
   - Perhaps we should put a limit on link sizes? Or prioritize threads that
     are getting over threads that are putting?
+
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
   - Something that cannot be typed, such as x, when x is not defined.  "maltyped"

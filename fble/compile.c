@@ -1419,12 +1419,17 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
     }
 
     case VAR_TYPE: {
-      assert(false && "TODO: value of var type");
+      VarType* var_type = (VarType*)typeof;
+      if (var_type->value != NULL) {
+        return ValueOfType(arena, var_type->value);
+      }
+
+      assert(false && "TODO: value of type of an abstract var");
       return NULL;
     }
 
     case TYPE_TYPE: {
-      TypeType* type_type = (TypeType*)Normal(typeof);
+      TypeType* type_type = (TypeType*)typeof;
       return TypeRetain(arena, type_type->type);
     }
   }

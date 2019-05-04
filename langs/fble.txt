@@ -392,6 +392,13 @@ Concrete Syntax:
 Example:
   Maybe@(Just: 3)
 
+The type of the union value is the type provided, which must be a union type.
+The supplied argument name must be of a field in the union type, and the type
+of the argument must match the type of that field.
+
+The expression is evaluated by evaluating the argument and creating a union
+value with the result.
+
 4.3 Union Access
 ----------------
 Abstract Syntax:
