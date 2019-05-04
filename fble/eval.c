@@ -1089,9 +1089,9 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args
     FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
     FbleValue* xs[2];
-    xs[0] = &func->_base;
-    xs[1] = args.xs[i];
-    FbleValueV eval_args = { .size = 1 + args.size, .xs = xs };
+    xs[0] = args.xs[i];
+    xs[1] = &func->_base;
+    FbleValueV eval_args = { .size = 2, .xs = xs };
     result = Eval(arena, &io, &block, eval_args);
     FbleValueRelease(arena, &func->_base);
   }

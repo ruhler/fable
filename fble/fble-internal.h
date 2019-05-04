@@ -136,8 +136,8 @@ typedef struct {
 } FbleDescopeInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   data_stack: ..., f, x1
-//           ==> ..., f(x1)
+//   data_stack: ..., x, f
+//           ==> ..., f(x)
 typedef struct {
   FbleInstr _base;
 } FbleFuncApplyInstr;
