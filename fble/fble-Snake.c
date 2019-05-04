@@ -213,7 +213,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 }
 
 // main --
-//   The main entry point for fbld-snake.
+//   The main entry point for fble-snake.
 //
 // Inputs:
 //   argc - The number of command line arguments.
