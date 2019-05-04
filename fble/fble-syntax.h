@@ -7,6 +7,8 @@
 #include <stdbool.h>      // for bool
 #include <sys/types.h>    // for size_t
 
+#include "fble-alloc.h"
+
 // FbleLoc --
 //   Represents a location in a source file.
 //
@@ -378,5 +380,30 @@ typedef struct {
   FbleExpr* object;
   FbleName field;
 } FbleMiscAccessExpr;
+
+// FbleParse --
+//   Parse an expression from a file.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed program.
+//   filename - The name of the file to parse the program from.
+//   include_path - The directory to search for includes in. May be NULL.
+//
+// Results:
+//   The parsed program, or NULL in case of error.
+//
+// Side effects:
+//   Prints an error message to stderr if the program cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned program if there is no error.
+//
+// Note:
+//   A copy of the filename will be made for use in locations. The user need
+//   not ensure that filename remains valid for the duration of the lifetime
+//   of the program.
+FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path);
 
 #endif // FBLE_SYNTAX_H_

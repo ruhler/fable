@@ -623,7 +623,7 @@ static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, 
   FbleReportError("%s\n", llocp, msg);
 }
 
-// FbleParse -- see documentation in fble.h
+// FbleParse -- see documentation in fble-syntax.h
 FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path)
 {
   FILE* fin = fopen(filename, "r");
