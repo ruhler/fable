@@ -122,12 +122,10 @@ static void PrintUsage(FILE* stream)
 //   None
 static int ReadNum(FbleValue* x)
 {
-  assert(x->tag == FBLE_UNION_VALUE);
-  FbleUnionValue* u = (FbleUnionValue*)x;
-  if (u->tag == 0) {
+  if (FbleUnionValueTag(x) == 0) {
     return 0;
   }
-  return 1 + ReadNum(u->arg);
+  return 1 + ReadNum(FbleUnionValueArg(x));
 }
 
 // IO --
@@ -142,6 +140,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     FbleStructValue* draw = (FbleStructValue*)io->ports.xs[1];
     assert(draw->_base.tag == FBLE_STRUCT_VALUE);
     FbleStructValue* pos = (FbleStructValue*)draw->fields.xs[0];
+    FbleValue* cell = draw->fields.xs[1];
     assert(pos->_base.tag == FBLE_STRUCT_VALUE);
     int row = ReadNum(pos->fields.xs[0]);
     int col = ReadNum(pos->fields.xs[1]);
@@ -149,10 +148,8 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     int y = MAX_ROW + 1 - row;
     int x = col + 1;
 
-    FbleUnionValue* cell = (FbleUnionValue*)draw->fields.xs[1];
-    assert(cell->_base.tag == FBLE_UNION_VALUE);
     char c = '?';
-    switch (cell->tag) {
+    switch (FbleUnionValueTag(cell)) {
       case 0: c = ' '; break;
       case 1: c = 'S'; break;
       case 2: c = '$'; break;

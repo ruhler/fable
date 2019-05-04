@@ -130,13 +130,11 @@ static void PrintUsage(FILE* stream)
 //   None
 static int ReadUBNat(FbleValue* x)
 {
-  assert(x->tag == FBLE_UNION_VALUE);
-  FbleUnionValue* u = (FbleUnionValue*)x;
-  switch (u->tag) {
+  switch (FbleUnionValueTag(x)) {
     case 0: return 0;
     case 1: return 1;
-    case 2: return 2 * ReadUBNat(u->arg);
-    case 3: return 2 * ReadUBNat(u->arg) + 1;
+    case 2: return 2 * ReadUBNat(FbleUnionValueArg(x));
+    case 3: return 2 * ReadUBNat(FbleUnionValueArg(x)) + 1;
     default: assert(false && "Invalid UBNat tag"); abort();
   }
 }
@@ -150,25 +148,22 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
   bool change = false;
 
   if (io->ports.xs[1] != NULL) {
-    FbleUnionValue* drawS = (FbleUnionValue*)io->ports.xs[1];
-    assert(drawS->_base.tag == FBLE_UNION_VALUE);
-    while (drawS->tag == 0) {
-      FbleStructValue* drawP = (FbleStructValue*)drawS->arg;
+    FbleValue* drawS = io->ports.xs[1];
+    while (FbleUnionValueTag(drawS) == 0) {
+      FbleStructValue* drawP = (FbleStructValue*)FbleUnionValueArg(drawS);
       assert(drawP->_base.tag == FBLE_STRUCT_VALUE);
       FbleStructValue* draw = (FbleStructValue*)drawP->fields.xs[0];
       assert(draw->_base.tag == FBLE_STRUCT_VALUE);
-      drawS = (FbleUnionValue*)drawP->fields.xs[1];
-      assert(drawS->_base.tag == FBLE_UNION_VALUE);
+      drawS = drawP->fields.xs[1];
 
       int ux = ReadUBNat(draw->fields.xs[0]);
       int uy = ReadUBNat(draw->fields.xs[1]);
       int w = ReadUBNat(draw->fields.xs[2]);
       int h = ReadUBNat(draw->fields.xs[3]);
 
-      FbleUnionValue* color = (FbleUnionValue*)draw->fields.xs[4];
-      assert(color->_base.tag == FBLE_UNION_VALUE);
-      char c = DRAW_COLOR_CHARS[color->tag];
-      color_set(DRAW_COLOR_PAIRS[color->tag], NULL);
+      size_t color = FbleUnionValueTag(draw->fields.xs[4]);
+      char c = DRAW_COLOR_CHARS[color];
+      color_set(DRAW_COLOR_PAIRS[color], NULL);
       for (int i = ux; i < ux + w; ++i) {
         for (int j = uy; j < uy + h; ++j) {
           int x = i + 1;

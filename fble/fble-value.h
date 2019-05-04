@@ -212,6 +212,34 @@ FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args);
 //   this function.
 FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg);
 
+// FbleUnionValueTag --
+//   Gets the tag of a union value.
+//
+// Inputs:
+//   object - the union value object to get the tag of.
+//
+// Results:
+//   The tag of the union value object.
+//
+// Side effects:
+//   Behavior is undefined if the object is not a union value.
+//   
+size_t FbleUnionValueTag(FbleValue* object);
+
+// FbleUnionValueArg --
+//   Gets the argument of a union value.
+//
+// Inputs:
+//   object - the union value object to get the argument of.
+//
+// Results:
+//   The argument of the union value object.
+//
+// Side effects:
+//   Behavior is undefined if the object is not a union value.
+//   
+FbleValue* FbleUnionValueArg(FbleValue* object);
+
 // FbleNewPortValue --
 //   Create a new io port value with given id.
 //

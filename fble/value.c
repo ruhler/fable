@@ -272,7 +272,7 @@ FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args)
   return &value->_base;
 }
 
-// FbleNewUnionValue -- see documentation in fble.h
+// FbleNewUnionValue -- see documentation in fble-value.h
 FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
 {
   FbleUnionValue* union_value = FbleAlloc(FbleRefArenaArena(arena), FbleUnionValue);
@@ -283,6 +283,22 @@ FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
   FbleRefAdd(arena, &union_value->_base.ref, &arg->ref);
   FbleValueRelease(arena, arg);
   return &union_value->_base;
+}
+
+// FbleUnionValueTag -- see documentation in fble-value.h
+size_t FbleUnionValueTag(FbleValue* object)
+{
+  assert(object->tag == FBLE_UNION_VALUE);
+  FbleUnionValue* value = (FbleUnionValue*)object;
+  return value->tag;
+}
+
+// FbleUnionValueArg -- see documentation in fble-value.h
+FbleValue* FbleUnionValueArg(FbleValue* object)
+{
+  assert(object->tag == FBLE_UNION_VALUE);
+  FbleUnionValue* value = (FbleUnionValue*)object;
+  return value->arg;
 }
 
 // FbleNewPortValue -- see documentation in fble.h
