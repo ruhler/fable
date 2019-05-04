@@ -133,8 +133,8 @@ static int ReadUBNat(FbleValue* x)
   switch (FbleUnionValueTag(x)) {
     case 0: return 0;
     case 1: return 1;
-    case 2: return 2 * ReadUBNat(FbleUnionValueArg(x));
-    case 3: return 2 * ReadUBNat(FbleUnionValueArg(x)) + 1;
+    case 2: return 2 * ReadUBNat(FbleUnionValueAccess(x));
+    case 3: return 2 * ReadUBNat(FbleUnionValueAccess(x)) + 1;
     default: assert(false && "Invalid UBNat tag"); abort();
   }
 }
@@ -150,20 +150,19 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
   if (io->ports.xs[1] != NULL) {
     FbleValue* drawS = io->ports.xs[1];
     while (FbleUnionValueTag(drawS) == 0) {
-      FbleStructValue* drawP = (FbleStructValue*)FbleUnionValueArg(drawS);
-      assert(drawP->_base.tag == FBLE_STRUCT_VALUE);
-      FbleStructValue* draw = (FbleStructValue*)drawP->fields.xs[0];
-      assert(draw->_base.tag == FBLE_STRUCT_VALUE);
-      drawS = drawP->fields.xs[1];
+      FbleValue* drawP = FbleUnionValueAccess(drawS);
+      FbleValue* draw = FbleStructValueAccess(drawP, 0);
+      drawS = FbleStructValueAccess(drawP, 1);
 
-      int ux = ReadUBNat(draw->fields.xs[0]);
-      int uy = ReadUBNat(draw->fields.xs[1]);
-      int w = ReadUBNat(draw->fields.xs[2]);
-      int h = ReadUBNat(draw->fields.xs[3]);
+      int ux = ReadUBNat(FbleStructValueAccess(draw, 0));
+      int uy = ReadUBNat(FbleStructValueAccess(draw, 1));
+      int w = ReadUBNat(FbleStructValueAccess(draw, 2));
+      int h = ReadUBNat(FbleStructValueAccess(draw, 3));
+      FbleValue* color = FbleStructValueAccess(draw, 4);
 
-      size_t color = FbleUnionValueTag(draw->fields.xs[4]);
-      char c = DRAW_COLOR_CHARS[color];
-      color_set(DRAW_COLOR_PAIRS[color], NULL);
+      size_t color_index = FbleUnionValueTag(color);
+      char c = DRAW_COLOR_CHARS[color_index];
+      color_set(DRAW_COLOR_PAIRS[color_index], NULL);
       for (int i = ux; i < ux + w; ++i) {
         for (int j = uy; j < uy + h; ++j) {
           int x = i + 1;

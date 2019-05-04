@@ -125,7 +125,7 @@ static int ReadNum(FbleValue* x)
   if (FbleUnionValueTag(x) == 0) {
     return 0;
   }
-  return 1 + ReadNum(FbleUnionValueArg(x));
+  return 1 + ReadNum(FbleUnionValueAccess(x));
 }
 
 // IO --
@@ -137,13 +137,11 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
   bool change = false;
 
   if (io->ports.xs[1] != NULL) {
-    FbleStructValue* draw = (FbleStructValue*)io->ports.xs[1];
-    assert(draw->_base.tag == FBLE_STRUCT_VALUE);
-    FbleStructValue* pos = (FbleStructValue*)draw->fields.xs[0];
-    FbleValue* cell = draw->fields.xs[1];
-    assert(pos->_base.tag == FBLE_STRUCT_VALUE);
-    int row = ReadNum(pos->fields.xs[0]);
-    int col = ReadNum(pos->fields.xs[1]);
+    FbleValue* draw = io->ports.xs[1];
+    FbleValue* pos = FbleStructValueAccess(draw, 0);
+    FbleValue* cell = FbleStructValueAccess(draw, 1);
+    int row = ReadNum(FbleStructValueAccess(pos, 0));
+    int col = ReadNum(FbleStructValueAccess(pos, 1));
 
     int y = MAX_ROW + 1 - row;
     int x = col + 1;

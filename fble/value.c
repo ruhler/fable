@@ -271,7 +271,16 @@ FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args)
   }
   return &value->_base;
 }
-
+
+// FbleStructValueAccess -- see documentation in fble-value.h
+FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
+{
+  assert(object->tag == FBLE_STRUCT_VALUE);
+  FbleStructValue* value = (FbleStructValue*)object;
+  assert(field < value->fields.size);
+  return value->fields.xs[field];
+}
+
 // FbleNewUnionValue -- see documentation in fble-value.h
 FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
 {
@@ -293,8 +302,8 @@ size_t FbleUnionValueTag(FbleValue* object)
   return value->tag;
 }
 
-// FbleUnionValueArg -- see documentation in fble-value.h
-FbleValue* FbleUnionValueArg(FbleValue* object)
+// FbleUnionValueAccess -- see documentation in fble-value.h
+FbleValue* FbleUnionValueAccess(FbleValue* object)
 {
   assert(object->tag == FBLE_UNION_VALUE);
   FbleUnionValue* value = (FbleUnionValue*)object;

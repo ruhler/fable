@@ -195,6 +195,22 @@ void FbleValueRelease(FbleValueArena* arena, FbleValue* value);
 //   array.
 FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args);
 
+// FbleStructValueAccess --
+//   Gets the given field value of a struct value.
+//
+// Inputs:
+//   object - the struct value object to get the field value of.
+//   field - the field to access.
+//
+// Results:
+//   The value of the given field of the struct value object.
+//
+// Side effects:
+//   Behavior is undefined if the object is not a struct value or the field
+//   is invalid.
+//   
+FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
+
 // FbleNewUnionValue --
 //   Create a new union value with given tag and argument.
 //
@@ -226,7 +242,7 @@ FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg);
 //   
 size_t FbleUnionValueTag(FbleValue* object);
 
-// FbleUnionValueArg --
+// FbleUnionValueAccess --
 //   Gets the argument of a union value.
 //
 // Inputs:
@@ -238,7 +254,7 @@ size_t FbleUnionValueTag(FbleValue* object);
 // Side effects:
 //   Behavior is undefined if the object is not a union value.
 //   
-FbleValue* FbleUnionValueArg(FbleValue* object);
+FbleValue* FbleUnionValueAccess(FbleValue* object);
 
 // FbleNewPortValue --
 //   Create a new io port value with given id.
