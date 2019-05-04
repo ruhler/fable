@@ -9,6 +9,7 @@
  - Shave 4 seconds off AllTests compilation time.
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
+* [test] Think about how to support tail recursion without memory growth.
 
 * Test that explicit type struct values can take type args and poly args?
 * Update abstract syntax and parser to match spec.

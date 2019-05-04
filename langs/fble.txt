@@ -414,6 +414,13 @@ Returns the value passed to the union at the corresponding field position when
 the union was constructed. Behavior is undefined if the union tag does not
 match the field being accessed.
 
+The object must be a union value. The field must refer to a field of that
+union value. The type of the expression is the type of the field being
+accessed.
+
+The expression is evaluated by evaluating the object, then accessing its field
+value.
+
 4.4 Union Select
 ----------------
 Abstract Syntax:
