@@ -226,39 +226,39 @@ int main(int argc, char* argv[])
 
   const char* path = argv[1];
 
-  FbleArena* arena = FbleNewArena(NULL);
-  FbleExpr* prgm = FbleParse(arena, path, NULL);
+  FbleArena* prgm_arena = FbleNewArena();
+  FbleExpr* prgm = FbleParse(prgm_arena, path, NULL);
   if (prgm == NULL) {
-    FbleDeleteArena(arena);
+    FbleDeleteArena(prgm_arena);
     return 1;
   }
 
-  FbleArena* eval_arena = FbleNewArena(arena);
+  FbleArena* eval_arena = FbleNewArena();
   FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
 
   FbleValue* func = FbleEval(value_arena, prgm);
   if (func == NULL) {
     FbleDeleteValueArena(value_arena);
     FbleDeleteArena(eval_arena);
-    FbleDeleteArena(arena);
+    FbleDeleteArena(prgm_arena);
     return 1;
   }
   assert(func->tag == FBLE_FUNC_VALUE);
 
   FbleValueV args;
-  FbleVectorInit(arena, args);
-  FbleVectorAppend(arena, args, FbleNewPortValue(value_arena, 0));
-  FbleVectorAppend(arena, args, FbleNewPortValue(value_arena, 1));
+  FbleVectorInit(eval_arena, args);
+  FbleVectorAppend(eval_arena, args, FbleNewPortValue(value_arena, 0));
+  FbleVectorAppend(eval_arena, args, FbleNewPortValue(value_arena, 1));
   FbleValue* proc = FbleApply(value_arena, (FbleFuncValue*)func, args);
   FbleValueRelease(value_arena, func);
   FbleValueRelease(value_arena, args.xs[0]);
   FbleValueRelease(value_arena, args.xs[1]);
-  FbleFree(arena, args.xs);
+  FbleFree(eval_arena, args.xs);
 
   if (proc == NULL) {
     FbleDeleteValueArena(value_arena);
     FbleDeleteArena(eval_arena);
-    FbleDeleteArena(arena);
+    FbleDeleteArena(prgm_arena);
     return 1;
   }
   assert(proc->tag == FBLE_PROC_VALUE);
@@ -298,7 +298,7 @@ int main(int argc, char* argv[])
   FbleDeleteValueArena(value_arena);
   FbleAssertEmptyArena(eval_arena);
   FbleDeleteArena(eval_arena);
-  FbleDeleteArena(arena);
+  FbleDeleteArena(prgm_arena);
 
   mvaddstr(MAX_ROW + 3, 3, "GAME OVER");
   refresh();

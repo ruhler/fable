@@ -101,12 +101,15 @@ int main(int argc, char* argv[])
   FILE* stderr_save = stderr;
   stderr = expect_error ? stdout : stderr;
 
-  FbleArena* arena = FbleNewArena(NULL);
+  FbleArena* prgm_arena = FbleNewArena();
+  FbleExpr* prgm = FbleParse(prgm_arena, path, include_path);
+  if (report_memory) {
+    printf("max memory prgm: %zi (bytes)\n", FbleArenaMaxSize(prgm_arena));
+  }
 
-  FbleExpr* prgm = FbleParse(arena, path, include_path);
   FbleValue* result = NULL;
   if (prgm != NULL) {
-    FbleArena* eval_arena = FbleNewArena(arena);
+    FbleArena* eval_arena = FbleNewArena();
     FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
     result = FbleEval(value_arena, prgm);
 
@@ -121,15 +124,15 @@ int main(int argc, char* argv[])
 
     FbleValueRelease(value_arena, result);
     FbleDeleteValueArena(value_arena);
+
+    if (report_memory) {
+      printf("max memory eval: %zi (bytes)\n", FbleArenaMaxSize(eval_arena));
+    }
+
     FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);
   }
-
-  if (report_memory) {
-    printf("Max memory used: %zi (bytes)\n", FbleArenaMaxSize(arena));
-  }
-
-  FbleDeleteArena(arena);
+  FbleDeleteArena(prgm_arena);
 
   if (result == NULL) {
     return expect_error ? EX_SUCCESS : EX_FAIL;

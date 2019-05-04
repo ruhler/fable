@@ -61,17 +61,17 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg);
 void FbleFree(FbleArena* arena, void* ptr);
 
 // FbleNewArena --
-//   Create a new arena descended from the given arena.
+//   Create a new arena.
 //
 // Inputs:
-//   parent - the parent arena for the new arena. May be null.
+//   None.
 //
 // Result:
 //   The newly allocated arena.
 //
 // Side effects:
 //   Allocates a new arena which must be freed using FbleDeleteArena.
-FbleArena* FbleNewArena(FbleArena* parent);
+FbleArena* FbleNewArena();
 
 // FbleDeleteArena --
 //   Delete an arena created with FbleNewArena.
@@ -83,9 +83,8 @@ FbleArena* FbleNewArena(FbleArena* parent);
 //   None.
 //
 // Side effects:
-//   Frees memory associated with the arena, including the arena itself, all
-//   outstanding allocations made by the arena, and all descendant arenas and
-//   their allocations.
+//   Frees memory associated with the arena, including the arena itself and
+//   all outstanding allocations made by the arena.
 void FbleDeleteArena(FbleArena* arena);
 
 // FbleAssertEmptyArena

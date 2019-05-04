@@ -80,7 +80,7 @@ static void RefRelease(FbleRefArena* arena, Ref* ref)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, char* argv[])
 {
-  FbleArena* arena = FbleNewArena(NULL);
+  FbleArena* arena = FbleNewArena();
   FbleRefArena* ref_arena = FbleNewRefArena(arena, &Free, &Added);
 
   {
@@ -384,7 +384,7 @@ int main(int argc, char* argv[])
   }
 
   FbleDeleteRefArena(ref_arena);
-  FbleDeleteArena(arena);
   FbleAssertEmptyArena(arena);
+  FbleDeleteArena(arena);
   return 0;
 }
