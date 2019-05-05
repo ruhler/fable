@@ -45,7 +45,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
-FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args);
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.

@@ -153,12 +153,11 @@ int main(int argc, char* argv[])
     FbleDeleteArena(prgm_arena);
     return 1;
   }
-  assert(func->tag == FBLE_FUNC_VALUE);
 
   FbleValueV args;
   FbleVectorInit(eval_arena, args);
   FbleVectorAppend(eval_arena, args, FbleNewPortValue(value_arena, 0));
-  FbleValue* proc = FbleApply(value_arena, (FbleFuncValue*)func, args);
+  FbleValue* proc = FbleApply(value_arena, func, args);
   FbleValueRelease(value_arena, func);
   FbleValueRelease(value_arena, args.xs[0]);
   FbleFree(eval_arena, args.xs);

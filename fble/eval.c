@@ -1073,14 +1073,14 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 }
 
 // FbleApply -- see documentation in fble.h
-FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args)
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args)
 {
-  FbleValue* result = &func->_base;
+  FbleValue* result = func;
   FbleValueRetain(arena, result);
   assert(args.size > 0);
   for (size_t i = 0; i < args.size; ++i) {
     assert(result->tag == FBLE_FUNC_VALUE);
-    func = (FbleFuncValue*)result;
+    func = result;
 
     FbleFuncApplyInstr apply = { ._base = { .tag = FBLE_FUNC_APPLY_INSTR }, };
     FbleIPopInstr ipop = { ._base = { .tag = FBLE_IPOP_INSTR }, };
@@ -1090,10 +1090,10 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleFuncValue* func, FbleValueV args
 
     FbleValue* xs[2];
     xs[0] = args.xs[i];
-    xs[1] = &func->_base;
+    xs[1] = func;
     FbleValueV eval_args = { .size = 2, .xs = xs };
     result = Eval(arena, &io, &block, eval_args);
-    FbleValueRelease(arena, &func->_base);
+    FbleValueRelease(arena, func);
   }
   return result;
 }
