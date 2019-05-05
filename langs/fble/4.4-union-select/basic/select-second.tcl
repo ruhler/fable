@@ -1,10 +1,11 @@
-fble-test-error 8:13 {
+fble-test {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ t = Bool@(true: Unit@());
   Bool@ f = Bool@(false: Unit@());
 
-  # There are too many arguments to the conditional.
-  Bool@ z = ?(f; true: f, false: t, blah: t);
+  # Basic test of a conditional expression.
+  # Selects the second choice.
+  Bool@ z = ?(f; true: f, false: t);
   z.true;
 }

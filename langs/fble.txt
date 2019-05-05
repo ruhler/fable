@@ -432,9 +432,14 @@ Concrete Syntax:
 Example:
   ?(mfoo; Just: mfoo.Just, Nothing: 3)
 
-The condition must have union type. Returns the value of the choice selected
+The condition must be a union value. Returns the value of the choice selected
 by the tag of the condition, without causing any other choices to be
-evaluated.
+evaluated. The type of all choices must be the same. A choice must be present
+for each field of the condition's union type, in the same order the fields are
+declared in the union type.
+
+The expression is evaluated by evaluating the condition, then evaluating the
+choice selected by the condition. No other choices are evaluated.
 
 5. Functions
 ------------
