@@ -78,7 +78,8 @@ Game of Life:
   B. is dead and have 3 live neighbors
 
 Miscellaneous:
-* Track down memory-leak like behavior in fbld-md5
+* Track down memory-leak like behavior in fble-md5
+  - Is it just that we aren't doing tail calls properly?
   - Perhaps we should put a limit on link sizes? Or prioritize threads that
     are getting over threads that are putting?
 
