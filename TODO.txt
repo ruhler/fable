@@ -1,5 +1,4 @@
 * [test] Rename tests to match new spec, and clean up tests.
-* [test] Set up infra for testing no memory growth.
 * [prgm] Implement game of life.
 
 * [perf] Think about how to reduce cost of capturing, popping scopes.
@@ -88,7 +87,7 @@ Miscellaneous:
   - Something that cannot be typed, such as x, when x is not defined.  "maltyped"
   - Something with the wrong type, such as Donut(), when Unit() is expected. "mistyped"
 
-* Test that tail recursive functions and procedures don't smash the stack.
+* Test that tail recursive procedures don't smash the stack.
   - And document the performance model which says tail recursive functions
     should not smash the stack.
 

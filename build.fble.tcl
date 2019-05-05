@@ -30,9 +30,11 @@ run ar rcs out/fble/libfble.a {*}$fble_objs
 # Compile the executables
 set ::fbletest ./out/fble/fble-test
 set ::fblereftest ./out/fble/fble-ref-test
+set ::fblememtest ./out/fble/fble-mem-test
 set ::fblemd5 ./out/fble/fble-md5
 run gcc {*}$FLAGS -o $::fbletest out/fble/obj/fble-test.o -L out/fble -lfble
 run gcc {*}$FLAGS -o $::fblereftest out/fble/obj/fble-ref-test.o -L out/fble -lfble
+run gcc {*}$FLAGS -o $::fblememtest out/fble/obj/fble-mem-test.o -L out/fble -lfble
 run gcc {*}$FLAGS -o ./out/fble/fble-snake out/fble/obj/fble-snake.o -L out/fble -lfble -lncurses
 run gcc {*}$FLAGS -o ./out/fble/fble-Snake out/fble/obj/fble-Snake.o -L out/fble -lfble -lncurses
 run gcc {*}$FLAGS -o $::fblemd5 out/fble/obj/fble-md5.o -L out/fble -lfble
@@ -52,7 +54,7 @@ proc fble-test-error-run { tloc loc expr } {
   }
 }
 
-proc fble-test-run { loc expr } {
+proc fble-test-run { cmd loc expr } {
   set line [dict get $loc line]
   set file [dict get $loc file]
   set name "out/[relative_file $file]:$line"
@@ -63,19 +65,31 @@ proc fble-test-run { loc expr } {
   exec echo $expr > $fprgm
 
   # Execute the program.
-  exec $::fbletest $fprgm
+  exec {*}$cmd $fprgm
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test { expr } {
   set loc [info frame -1]
-  testl $loc fble-test-run $loc $expr
+  testl $loc fble-test-run $::fbletest $loc $expr
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-error { loc expr } {
   set tloc [info frame -1]
   testl $tloc fble-test-error-run $tloc $loc $expr
+}
+
+# See langs/fble/README.txt for the description of this function
+proc fble-test-memory-constant { expr } {
+  set loc [info frame -1]
+  testl $loc fble-test-run $::fblememtest $loc $expr
+}
+
+# See langs/fble/README.txt for the description of this function
+proc fble-test-memory-growth { expr } {
+  set loc [info frame -1]
+  testl $loc fble-test-run "$::fblememtest --growth" $loc $expr
 }
 
 # Source all *.tcl files under the given directory, recursively.
