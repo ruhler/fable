@@ -1,4 +1,5 @@
 fble-test {
+  # Two struct types with the same fields match.
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
