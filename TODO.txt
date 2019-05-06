@@ -1,5 +1,5 @@
 * [test] Rename tests to match new spec, and clean up tests.
-* [prgm] Implement game of life.
+* [test] Fix failing tail recursion memory test.
 
 * [perf] Think about how to reduce cost of capturing, popping scopes.
 * [perf] Clean up type Eval to avoid duplicate work.
@@ -7,10 +7,11 @@
  - Shave 4 seconds off AllTests compilation time.
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
-* [test] Think about how to support tail recursion without memory growth.
 * [clean] Make FbleValue abstract in fble.h.
+* [prgm] Implement game of life.
 
 * Test that explicit type struct values can take type args and poly args?
+* Test that a struct type doesn't equal a union type, func type, etc.
 * Update abstract syntax and parser to match spec.
   - in terms of names of things and order of things.
 * Test namespace eval with mixed type and normal fields.

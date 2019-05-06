@@ -307,7 +307,8 @@ typedef struct {
 }  FbleVPushInstr;
 
 // FbleFreeInstrBlock --
-//   Free the given block of instructions.
+//   Decrement the refcount on the given block of instructions and free it if
+//   appropriate.
 //
 // Inputs:
 //   arena - the arena used to allocation the instructions.
@@ -317,7 +318,8 @@ typedef struct {
 //   none.
 //
 // Side effect:
-//   Frees memory allocated for the given block of instruction.
+//   Frees memory allocated for the given block of instruction if the refcount
+//   has gone to 0.
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 
 // FbleCompile --
