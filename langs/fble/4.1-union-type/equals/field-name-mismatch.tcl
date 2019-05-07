@@ -4,8 +4,8 @@ fble-test-error 9:10 {
   Bool@ true = Bool@(true: Unit@());
 
   # A and B are different types because the field name differs.
-  @ A@ = *(Unit@ x, Bool@ y);
-  @ B@ = *(Unit@ x, Bool@ z);
-  A@ x = B@(Unit@(), true);
+  @ A@ = +(Unit@ x, Bool@ y);
+  @ B@ = +(Unit@ x, Bool@ z);
+  A@ x = B@(x: Unit@());
   x;
 }
