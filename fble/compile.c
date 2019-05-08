@@ -1527,6 +1527,8 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR:
+    case FBLE_UNION_SELECT_INSTR:
+    case FBLE_GOTO_INSTR:
     case FBLE_DESCOPE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
@@ -1565,16 +1567,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleExecInstr* exec_instr = (FbleExecInstr*)instr;
       FbleFreeInstrBlock(arena, exec_instr->body);
       FbleFree(arena, exec_instr);
-      return;
-    }
-
-    case FBLE_UNION_SELECT_INSTR: {
-      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      for (size_t i = 0; i < select_instr->choices.size; ++i) {
-        FbleFreeInstrBlock(arena, select_instr->choices.xs[i]);
-      }
-      FbleFree(arena, select_instr->choices.xs);
-      FbleFree(arena, instr);
       return;
     }
   }
@@ -1957,9 +1949,16 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena_, FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       FbleVectorAppend(arena_, *instrs, &select_instr->_base);
-      FbleVectorInit(arena_, select_instr->choices);
 
       Type* return_type = NULL;
+      FbleGotoInstr* enter_gotos[select_expr->choices.size];
+      for (size_t i = 0; i < select_expr->choices.size; ++i) {
+        enter_gotos[i] = FbleAlloc(arena_, FbleGotoInstr);
+        enter_gotos[i]->_base.tag = FBLE_GOTO_INSTR;
+        FbleVectorAppend(arena_, *instrs, &enter_gotos[i]->_base);
+      }
+
+      FbleGotoInstr* exit_gotos[select_expr->choices.size];
       for (size_t i = 0; i < select_expr->choices.size; ++i) {
         if (!FbleNamesEqual(select_expr->choices.xs[i].name.name, union_type->fields.xs[i].name.name)) {
           FbleReportError("expected tag '%s', but found '%s'.\n",
@@ -1971,18 +1970,13 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
           return NULL;
         }
 
-        FbleInstrBlock* choice = FbleAlloc(arena_, FbleInstrBlock);
-        choice->refcount = 1;
-        FbleVectorInit(arena_, choice->instrs);
-        FbleVectorAppend(arena_, select_instr->choices, choice);
 
-        Type* arg_type = CompileExpr(arena, vars, select_expr->choices.xs[i].expr, &choice->instrs);
+        enter_gotos[i]->pc = instrs->size;
+        Type* arg_type = CompileExpr(arena, vars, select_expr->choices.xs[i].expr, instrs);
 
-        {
-          FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
-          ipop->_base.tag = FBLE_IPOP_INSTR;
-          FbleVectorAppend(arena_, choice->instrs, &ipop->_base);
-        }
+        exit_gotos[i] = FbleAlloc(arena_, FbleGotoInstr);
+        exit_gotos[i]->_base.tag = FBLE_GOTO_INSTR;
+        FbleVectorAppend(arena_, *instrs, &exit_gotos[i]->_base);
 
         Eval(arena, arg_type, NULL);
         if (arg_type == NULL) {
@@ -2010,6 +2004,10 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         }
       }
       TypeRelease(arena, type);
+
+      for (size_t i = 0; i < select_expr->choices.size; ++i) {
+        exit_gotos[i]->pc = instrs->size;
+      }
       return return_type;
     }
 

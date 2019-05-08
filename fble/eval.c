@@ -495,15 +495,17 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_UNION_SELECT_INSTR: {
-        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
         assert(thread->data_stack != NULL);
         FbleUnionValue* uv = (FbleUnionValue*)Deref(thread->data_stack->value, FBLE_UNION_VALUE);
-        FbleValueRetain(arena, &uv->_base);
+        thread->code_stack->pc += uv->tag;
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
-        assert(uv->tag < select_instr->choices.size);
-        thread->code_stack = PushCode(arena, select_instr->choices.xs[uv->tag], thread->code_stack);
-        FbleValueRelease(arena, &uv->_base);
+        break;
+      }
+
+      case FBLE_GOTO_INSTR: {
+        FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
+        thread->code_stack->pc = goto_instr->pc;
         break;
       }
 

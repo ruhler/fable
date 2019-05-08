@@ -15,6 +15,7 @@ typedef enum {
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_ACCESS_INSTR,
   FBLE_UNION_SELECT_INSTR,
+  FBLE_GOTO_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_DESCOPE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
@@ -96,15 +97,19 @@ typedef struct {
 //   Select the next thing to execute based on the tag of the value on top of
 //   the value stack.
 //
-// data_stack: ..., obj
-//     ==> ...
-//
-// instr_stack: ...
-//          ==> ..., choices[obj.tag]
+// pc += obj.tag
 typedef struct {
   FbleInstr _base;
-  FbleInstrBlockV choices;
 } FbleUnionSelectInstr;
+
+// FbleGotoInstr -- FBLE_GOTO_INSTR
+//   Jumped to the specified position in the current instruction block.
+//
+// pc = pc
+typedef struct {
+  FbleInstr _base;
+  size_t pc;
+} FbleGotoInstr;
 
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
 //   Allocate a function, capturing the current variable scope in the
