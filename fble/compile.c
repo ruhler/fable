@@ -1539,7 +1539,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_JOIN_INSTR:
     case FBLE_LET_PREP_INSTR:
     case FBLE_LET_DEF_INSTR:
-    case FBLE_STRUCT_EVAL_INSTR:
+    case FBLE_STRUCT_IMPORT_INSTR:
     case FBLE_IPOP_INSTR:
     case FBLE_PUSH_SCOPE_INSTR:
     case FBLE_POP_SCOPE_INSTR:
@@ -2687,10 +2687,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       }
 
       {
-        FbleStructEvalInstr* struct_eval = FbleAlloc(arena_, FbleStructEvalInstr);
-        struct_eval->_base.tag = FBLE_STRUCT_EVAL_INSTR;
-        struct_eval->fieldc = struct_type->fields.size;
-        FbleVectorAppend(arena_, *instrs, &struct_eval->_base);
+        FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
+        struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
+        FbleVectorAppend(arena_, *instrs, &struct_import->_base);
       }
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {

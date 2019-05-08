@@ -850,7 +850,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         break;
       }
 
-      case FBLE_STRUCT_EVAL_INSTR: {
+      case FBLE_STRUCT_IMPORT_INSTR: {
         FbleStructValue* sv = (FbleStructValue*)Deref(thread->data_stack->value, FBLE_STRUCT_VALUE);
         FbleValueRetain(arena, &sv->_base);
         FbleValueRelease(arena, thread->data_stack->value);
