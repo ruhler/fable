@@ -249,6 +249,15 @@ example is equivalent to:
 
   @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
 
+The type of the struct value is a struct type with fields defined in the same
+order as the implicit value struct: the name of the field is the name provided
+and the type of the field is the type of the argument provided.
+
+The expression is evaluated by evaluating all arguments and creating a struct
+value with the results. The arguments may be evaluated in any order,
+sequentially or in parallel.
+
+
 3.4 Struct Access
 -----------------
 Abstract Syntax:
