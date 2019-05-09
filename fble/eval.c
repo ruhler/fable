@@ -59,8 +59,8 @@ struct Thread {
 };
 
 static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
-static FbleInstr g_ipop_instr = { .tag = FBLE_IPOP_INSTR };
-static FbleInstr* g_proc_block_instrs[] = { &g_proc_instr, &g_ipop_instr };
+static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
+static FbleInstr* g_proc_block_instrs[] = { &g_proc_instr, &g_exit_scope_instr };
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
   .instrs = { .size = 2, .xs = g_proc_block_instrs }
@@ -277,7 +277,7 @@ static ScopeStack* PushScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack
   // For debugging purposes, double check that all blocks will pop themselves
   // when done.
   assert(block->instrs.size > 0);
-  assert(block->instrs.xs[block->instrs.size - 1]->tag == FBLE_IPOP_INSTR);
+  assert(block->instrs.xs[block->instrs.size - 1]->tag == FBLE_EXIT_SCOPE_INSTR);
 
   block->refcount++;
 
@@ -811,13 +811,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         break;
       }
 
-      case FBLE_IPUSH_INSTR: {
-        FbleIPushInstr* ipush_instr = (FbleIPushInstr*)instr;
-        thread->scope_stack = PushScope(arena_, ipush_instr->block, thread->scope_stack);
+      case FBLE_ENTER_SCOPE_INSTR: {
+        FbleEnterScopeInstr* enter_scope_instr = (FbleEnterScopeInstr*)instr;
+        thread->scope_stack = PushScope(arena_, enter_scope_instr->block, thread->scope_stack);
         break;
       }
 
-      case FBLE_IPOP_INSTR: {
+      case FBLE_EXIT_SCOPE_INSTR: {
         thread->scope_stack = PopScope(arena_, thread->scope_stack);
         break;
       }
@@ -1023,8 +1023,8 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args)
     func = result;
 
     FbleFuncApplyInstr apply = { ._base = { .tag = FBLE_FUNC_APPLY_INSTR }, };
-    FbleIPopInstr ipop = { ._base = { .tag = FBLE_IPOP_INSTR }, };
-    FbleInstr* instrs[] = { &apply._base, &ipop._base };
+    FbleExitScopeInstr exit = { ._base = { .tag = FBLE_EXIT_SCOPE_INSTR }, };
+    FbleInstr* instrs[] = { &apply._base, &exit._base };
     FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 2, .xs = instrs } };
     FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 

@@ -1540,16 +1540,16 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_LET_PREP_INSTR:
     case FBLE_LET_DEF_INSTR:
     case FBLE_STRUCT_IMPORT_INSTR:
-    case FBLE_IPOP_INSTR:
+    case FBLE_EXIT_SCOPE_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_VPUSH_INSTR: {
       FbleFree(arena, instr);
       return;
     }
 
-    case FBLE_IPUSH_INSTR: {
-      FbleIPushInstr* ipush_instr = (FbleIPushInstr*)instr;
-      FbleFreeInstrBlock(arena, ipush_instr->block);
+    case FBLE_ENTER_SCOPE_INSTR: {
+      FbleEnterScopeInstr* enter_scope_instr = (FbleEnterScopeInstr*)instr;
+      FbleFreeInstrBlock(arena, enter_scope_instr->block);
       FbleFree(arena, instr);
       return;
     }
@@ -2097,9 +2097,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       descope->count = instr->scopec + 1;
       FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
 
-      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
-      ipop->_base.tag = FBLE_IPOP_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
+      FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);
+      exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &exit_scope->_base);
 
       return &type->_base;
     }
@@ -2238,9 +2238,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
-      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
-      ipop->_base.tag = FBLE_IPOP_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &ipop->_base);
+      FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);
+      exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &exit_scope->_base);
 
       TypeRelease(arena, port_type);
       TypeRelease(arena, &get_type->_base);
@@ -2368,9 +2368,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
 
-      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
-      ipop->_base.tag = FBLE_IPOP_INSTR;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &ipop->_base);
+      FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);
+      exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
+      FbleVectorAppend(arena_, exec_instr->body->instrs, &exit_scope->_base);
 
       return rtype;
     }
@@ -2654,8 +2654,8 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         return NULL;
       }
 
-      FbleIPushInstr* instr = FbleAlloc(arena_, FbleIPushInstr);
-      instr->_base.tag = FBLE_IPUSH_INSTR;
+      FbleEnterScopeInstr* instr = FbleAlloc(arena_, FbleEnterScopeInstr);
+      instr->_base.tag = FBLE_ENTER_SCOPE_INSTR;
       instr->block = FbleAlloc(arena_, FbleInstrBlock);
       instr->block->refcount = 1;
       FbleVectorInit(arena_, instr->block->instrs);
@@ -2686,9 +2686,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       FreeVars(arena_, &nvars);
 
-      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
-      ipop->_base.tag = FBLE_IPOP_INSTR;
-      FbleVectorAppend(arena_, instr->block->instrs, &ipop->_base);
+      FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);
+      exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
+      FbleVectorAppend(arena_, instr->block->instrs, &exit_scope->_base);
 
       TypeRelease(arena, type);
       return rtype;
@@ -3044,8 +3044,8 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
     return NULL;
   }
 
-  FbleIPopInstr* ipop = FbleAlloc(arena, FbleIPopInstr);
-  ipop->_base.tag = FBLE_IPOP_INSTR;
-  FbleVectorAppend(arena, block->instrs, &ipop->_base);
+  FbleExitScopeInstr* exit_scope = FbleAlloc(arena, FbleExitScopeInstr);
+  exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
+  FbleVectorAppend(arena, block->instrs, &exit_scope->_base);
   return block;
 }
