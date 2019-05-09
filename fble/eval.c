@@ -75,8 +75,8 @@ static FbleValue* GetVar(ScopeStack* scopes, size_t position);
 static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value);
 static DataStack* PushData(FbleArena* arena, FbleValue* value, DataStack* tail);
 static DataStack* PopData(FbleArena* arena, DataStack* stack);
-static ScopeStack* PushScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail);
-static ScopeStack* PopScope(FbleArena* arena, ScopeStack* stack);
+static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail);
+static ScopeStack* ExitScope(FbleArena* arena, ScopeStack* stack);
 
 static DataStack* CaptureScope(FbleValueArena* arena, DataStack* data_stack, size_t scopec, FbleValue* value, FbleValueV* dst);
 static DataStack* RestoreScope(FbleValueArena* arena, FbleValueV scope, DataStack* stack);
@@ -258,7 +258,7 @@ static DataStack* PopData(FbleArena* arena, DataStack* stack)
   return tail;
 }
 
-// PushScope --
+// EnterScope --
 //   Push a scope onto the scope stack.
 //
 // Inputs:
@@ -270,8 +270,8 @@ static DataStack* PopData(FbleArena* arena, DataStack* stack)
 //   The stack with new pushed scope.
 //
 // Side effects:
-//   Allocates new ScopeStack instances that should be freed with PopScope when done.
-static ScopeStack* PushScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail)
+//   Allocates new ScopeStack instances that should be freed with ExitScope when done.
+static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail)
 {
 
   // For debugging purposes, double check that all blocks will pop themselves
@@ -289,7 +289,7 @@ static ScopeStack* PushScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack
   return stack;
 }
 
-// PopScope --
+// ExitScope --
 //   Pop a scope off the scope stack.
 //
 // Inputs:
@@ -300,8 +300,8 @@ static ScopeStack* PushScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack
 //   The popped stack.
 //
 // Side effects:
-//   Frees the top scope, which must be empty.
-static ScopeStack* PopScope(FbleArena* arena, ScopeStack* stack)
+//   Frees the top scope, which must be empty of variables.
+static ScopeStack* ExitScope(FbleArena* arena, ScopeStack* stack)
 {
   assert(stack->vars.size == 0 && "Pop non-empty scope");
   FbleFree(arena, stack->vars.xs);
@@ -488,7 +488,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
         thread->data_stack = RestoreScope(arena, func->scope, thread->data_stack);
-        thread->scope_stack = PushScope(arena_, func->body, thread->scope_stack);
+        thread->scope_stack = EnterScope(arena_, func->body, thread->scope_stack);
         FbleValueRelease(arena, &func->_base);
         break;
       }
@@ -737,7 +737,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             thread->data_stack = PushData(arena_, &put->_base, thread->data_stack);
             thread->data_stack = PushData(arena_, &get->_base, thread->data_stack);
             thread->data_stack = RestoreScope(arena, link->scope, thread->data_stack);
-            thread->scope_stack = PushScope(arena_, link->body, thread->scope_stack);
+            thread->scope_stack = EnterScope(arena_, link->body, thread->scope_stack);
             break;
           }
 
@@ -750,7 +750,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             for (size_t i = 0; i < exec->bindings.size; ++i) {
               Thread* child = FbleAlloc(arena_, Thread);
               child->data_stack = PushData(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
-              child->scope_stack = PushScope(arena_, &g_proc_block, NULL);
+              child->scope_stack = EnterScope(arena_, &g_proc_block, NULL);
               child->iquota = 0;
               child->aborted = false;
               child->children.size = 0;
@@ -759,7 +759,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             }
 
             thread->data_stack = RestoreScope(arena, exec->scope, thread->data_stack);
-            thread->scope_stack = PushScope(arena_, exec->body, thread->scope_stack);
+            thread->scope_stack = EnterScope(arena_, exec->body, thread->scope_stack);
             break;
           }
         }
@@ -813,12 +813,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_ENTER_SCOPE_INSTR: {
         FbleEnterScopeInstr* enter_scope_instr = (FbleEnterScopeInstr*)instr;
-        thread->scope_stack = PushScope(arena_, enter_scope_instr->block, thread->scope_stack);
+        thread->scope_stack = EnterScope(arena_, enter_scope_instr->block, thread->scope_stack);
         break;
       }
 
       case FBLE_EXIT_SCOPE_INSTR: {
-        thread->scope_stack = PopScope(arena_, thread->scope_stack);
+        thread->scope_stack = ExitScope(arena_, thread->scope_stack);
         break;
       }
 
@@ -883,7 +883,7 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
       FbleValueRelease(arena, thread->scope_stack->vars.xs[i]);
     }
     thread->scope_stack->vars.size = 0;
-    thread->scope_stack = PopScope(arena_, thread->scope_stack);
+    thread->scope_stack = ExitScope(arena_, thread->scope_stack);
   }
 }
 
@@ -941,7 +941,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Thread thread = {
     .data_stack = NULL,
-    .scope_stack = PushScope(arena_, prgm, NULL),
+    .scope_stack = EnterScope(arena_, prgm, NULL),
     .iquota = 0,
     .children = {0, NULL},
     .aborted = false,
