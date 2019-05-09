@@ -2654,8 +2654,7 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       return &pat->_base;
     }
 
-    case FBLE_STRUCT_EVAL_EXPR:
-    case FBLE_STRUCT_IMPORT_EXPR: {
+    case FBLE_STRUCT_EVAL_EXPR: {
       FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
 
       Type* type = CompileExpr(arena, vars, struct_eval_expr->nspace, instrs);
@@ -2676,21 +2675,63 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
 
       Vars nvars;
-      if (expr->tag == FBLE_STRUCT_EVAL_EXPR) {
-        FbleVectorInit(arena_, nvars.vars);
-        nvars.nvars = 0;
-        vars = &nvars;
+      FbleVectorInit(arena_, nvars.vars);
+      nvars.nvars = 0;
 
-        FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
-        push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
-        FbleVectorAppend(arena_, *instrs, &push_scope->_base);
+      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
+      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &push_scope->_base);
+
+      FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
+      struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
+      FbleVectorAppend(arena_, *instrs, &struct_import->_base);
+
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        PushVar(arena_, &nvars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
       }
 
-      {
-        FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
-        struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
-        FbleVectorAppend(arena_, *instrs, &struct_import->_base);
+      Type* rtype = CompileExpr(arena, &nvars, struct_eval_expr->body, instrs);
+
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        PopVar(arena_, &nvars);
       }
+
+      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+      descope->_base.tag = FBLE_DESCOPE_INSTR;
+      descope->count = struct_type->fields.size;
+      FbleVectorAppend(arena_, *instrs, &descope->_base);
+
+      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
+      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &pop_scope->_base);
+      FreeVars(arena_, &nvars);
+
+      TypeRelease(arena, type);
+      return rtype;
+    }
+
+    case FBLE_STRUCT_IMPORT_EXPR: {
+      FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
+
+      Type* type = CompileExpr(arena, vars, struct_eval_expr->nspace, instrs);
+      Eval(arena, type, NULL);
+      if (type == NULL) {
+        return NULL;
+      }
+
+      StructType* struct_type = (StructType*)Normal(type);
+      if (struct_type->_base.tag != STRUCT_TYPE) {
+        FbleReportError("expected value of type struct, but found value of type ", &struct_eval_expr->nspace->loc);
+        PrintType(arena_, type, NULL);
+        fprintf(stderr, "\n");
+
+        TypeRelease(arena, type);
+        return NULL;
+      }
+
+      FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
+      struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
+      FbleVectorAppend(arena_, *instrs, &struct_import->_base);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PushVar(arena_, vars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
@@ -2706,13 +2747,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       descope->_base.tag = FBLE_DESCOPE_INSTR;
       descope->count = struct_type->fields.size;
       FbleVectorAppend(arena_, *instrs, &descope->_base);
-
-      if (expr->tag == FBLE_STRUCT_EVAL_EXPR) {
-        FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
-        pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-        FbleVectorAppend(arena_, *instrs, &pop_scope->_base);
-        FreeVars(arena_, &nvars);
-      }
 
       TypeRelease(arena, type);
       return rtype;

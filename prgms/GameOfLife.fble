@@ -1,0 +1,50 @@
+
+@(StdLib: &StdLib);
+@(Draw: &Draw);
+
+StdLib { @(Unit@); };
+StdLib.List { @(P@, S@); };
+Draw { @(Color@, Draw@); };
+
+@ Cell@ = +(Unit@ alive, Unit@ dead);
+Cell@ Alive = Cell@(alive: Unit@());
+Cell@ Dead = Cell@(dead: Unit@());
+
+@ CellCount@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4);
+
+[CellCount@][Cell@]{ CellCount@; } Add = [CellCount@ a][Cell@ b] {
+  ?(b; ?(a, CellCount@(1: Unit@()),
+            CellCount@(2: Unit@())
+            CellCount@(3: Unit@())
+            CellCount@(4: Unit@())
+            CellCount@(4: Unit@())), b);
+};
+
+[Cell@][Cell@][Cell@][Cell@][Cell@][Cell@][Cell@][Cell@]{ CellCount@; } Sum =
+  [Cell@ a][Cell@ b][Cell@ c][Cell@ d][Cell@ e][Cell@ f][Cell@ g][Cell@ h] {
+    Add[Add[Add[Add[Add[Add[Add[Add[CellCount@(0: Unit@())][a]][b]][c]][d]][e]][f]][g]][h];
+};
+
+[Cell@][CellCount@]{Cell@;} Next = [Cell@ cell][CellCount@ neighbors] {
+  ?(cell;  ?(neighbors; 0: Dead, 1: Dead, 2: Alive, 3: Alive, 4: Dead),
+           ?(neighbors; 0: Dead, 1: Dead, 2: Dead, 3: Alive, 4: Dead));
+};
+
+# A World@ is a list of rows of cells.
+# Each row has the same number of cells.
+# There are at least 3 rows and at least three cells in each row.
+@ RowP@ = P@<Cell@>;
+@ RowS@ = S@<Cell@>;
+@ World@ = P@<RowP@>;
+
+[World@]{S@<Draw@>;} DrawWorld = [World@ world] {
+  DrawRowP[world][0];
+};
+
+[RowP@][Nat@]{S@<Draw@>;} DrawRowP = [RowP@ row][Nat@ r] {
+  ConcatS<Draw@>(DrawColP[row][r][0], DrawRowS[row.tail][Inc[r]]);
+};
+
+[RowS@][Nat@]{S@<Draw@>;} DrawRowS = [RowS@ row][Nat@ r] {
+  
+};
