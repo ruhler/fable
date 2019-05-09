@@ -1549,6 +1549,13 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
     }
 
+    case FBLE_IPUSH_INSTR: {
+      FbleIPushInstr* ipush_instr = (FbleIPushInstr*)instr;
+      FbleFreeInstrBlock(arena, ipush_instr->block);
+      FbleFree(arena, instr);
+      return;
+    }
+
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
       FbleFreeInstrBlock(arena, func_value_instr->body);
@@ -2673,6 +2680,12 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
         return NULL;
       }
 
+      FbleIPushInstr* instr = FbleAlloc(arena_, FbleIPushInstr);
+      instr->_base.tag = FBLE_IPUSH_INSTR;
+      instr->block = FbleAlloc(arena_, FbleInstrBlock);
+      instr->block->refcount = 1;
+      FbleVectorInit(arena_, instr->block->instrs);
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
 
       Vars nvars;
       FbleVectorInit(arena_, nvars.vars);
@@ -2680,17 +2693,17 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
       push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
-      FbleVectorAppend(arena_, *instrs, &push_scope->_base);
+      FbleVectorAppend(arena_, instr->block->instrs, &push_scope->_base);
 
       FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
       struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
-      FbleVectorAppend(arena_, *instrs, &struct_import->_base);
+      FbleVectorAppend(arena_, instr->block->instrs, &struct_import->_base);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PushVar(arena_, &nvars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
       }
 
-      Type* rtype = CompileExpr(arena, &nvars, struct_eval_expr->body, instrs);
+      Type* rtype = CompileExpr(arena, &nvars, struct_eval_expr->body, &instr->block->instrs);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PopVar(arena_, &nvars);
@@ -2699,12 +2712,16 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
       descope->_base.tag = FBLE_DESCOPE_INSTR;
       descope->count = struct_type->fields.size;
-      FbleVectorAppend(arena_, *instrs, &descope->_base);
+      FbleVectorAppend(arena_, instr->block->instrs, &descope->_base);
 
       FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
       pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-      FbleVectorAppend(arena_, *instrs, &pop_scope->_base);
+      FbleVectorAppend(arena_, instr->block->instrs, &pop_scope->_base);
       FreeVars(arena_, &nvars);
+
+      FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
+      ipop->_base.tag = FBLE_IPOP_INSTR;
+      FbleVectorAppend(arena_, instr->block->instrs, &ipop->_base);
 
       TypeRelease(arena, type);
       return rtype;

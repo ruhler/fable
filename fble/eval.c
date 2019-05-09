@@ -862,6 +862,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         break;
       }
 
+      case FBLE_IPUSH_INSTR: {
+        FbleIPushInstr* ipush_instr = (FbleIPushInstr*)instr;
+        thread->code_stack = PushCode(arena, ipush_instr->block, thread->code_stack);
+        break;
+      }
+
       case FBLE_IPOP_INSTR: {
         thread->code_stack = PopCode(arena, thread->code_stack);
         break;
