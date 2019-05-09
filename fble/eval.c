@@ -822,16 +822,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         break;
       }
 
-      case FBLE_PUSH_SCOPE_INSTR: {
-        // TODO: Remove this no-op instruction.
-        break;
-      }
-
-      case FBLE_POP_SCOPE_INSTR: {
-        // TODO: Remove this no-op instruction.
-        break;
-      }
-
       case FBLE_TYPE_INSTR: {
         FbleTypeValue* value = FbleAlloc(arena_, FbleTypeValue);
         FbleRefInit(arena, &value->_base.ref);

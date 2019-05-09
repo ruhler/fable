@@ -1541,8 +1541,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_LET_DEF_INSTR:
     case FBLE_STRUCT_IMPORT_INSTR:
     case FBLE_IPOP_INSTR:
-    case FBLE_PUSH_SCOPE_INSTR:
-    case FBLE_POP_SCOPE_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_VPUSH_INSTR: {
       FbleFree(arena, instr);
@@ -2043,10 +2041,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       instr->body->refcount = 1;
       FbleVectorInit(arena_, instr->body->instrs);
 
-      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
-      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &push_scope->_base);
-
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
@@ -2102,10 +2096,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       descope->_base.tag = FBLE_DESCOPE_INSTR;
       descope->count = instr->scopec + 1;
       FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
-
-      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
-      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &pop_scope->_base);
 
       FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
       ipop->_base.tag = FBLE_IPOP_INSTR;
@@ -2227,10 +2217,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       instr->body->refcount = 1;
       FbleVectorInit(arena_, instr->body->instrs);
 
-      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
-      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &push_scope->_base);
-
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       vpush->count = instr->scopec + 2; // scope + ports
@@ -2251,10 +2237,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
-
-      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
-      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &pop_scope->_base);
 
       FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
       ipop->_base.tag = FBLE_IPOP_INSTR;
@@ -2337,10 +2319,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       exec_instr->body->refcount = 1;
       FbleVectorInit(arena_, exec_instr->body->instrs);
 
-      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
-      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &push_scope->_base);
-
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       vpush->count = exec_instr->scopec;
@@ -2389,10 +2367,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
-
-      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
-      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &pop_scope->_base);
 
       FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
       ipop->_base.tag = FBLE_IPOP_INSTR;
@@ -2691,10 +2665,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       FbleVectorInit(arena_, nvars.vars);
       nvars.nvars = 0;
 
-      FblePushScopeInstr* push_scope = FbleAlloc(arena_, FblePushScopeInstr);
-      push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
-      FbleVectorAppend(arena_, instr->block->instrs, &push_scope->_base);
-
       FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
       struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
       FbleVectorAppend(arena_, instr->block->instrs, &struct_import->_base);
@@ -2714,9 +2684,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       descope->count = struct_type->fields.size;
       FbleVectorAppend(arena_, instr->block->instrs, &descope->_base);
 
-      FblePopScopeInstr* pop_scope = FbleAlloc(arena_, FblePopScopeInstr);
-      pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-      FbleVectorAppend(arena_, instr->block->instrs, &pop_scope->_base);
       FreeVars(arena_, &nvars);
 
       FbleIPopInstr* ipop = FbleAlloc(arena_, FbleIPopInstr);
@@ -3063,10 +3030,6 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
   block->refcount = 1;
   FbleVectorInit(arena, block->instrs);
 
-  FblePushScopeInstr* push_scope = FbleAlloc(arena, FblePushScopeInstr);
-  push_scope->_base.tag = FBLE_PUSH_SCOPE_INSTR;
-  FbleVectorAppend(arena, block->instrs, &push_scope->_base);
-
   Vars vars;
   FbleVectorInit(arena, vars.vars);
   vars.nvars = 0;
@@ -3080,10 +3043,6 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
     FbleFreeInstrBlock(arena, block);
     return NULL;
   }
-
-  FblePopScopeInstr* pop_scope = FbleAlloc(arena, FblePopScopeInstr);
-  pop_scope->_base.tag = FBLE_POP_SCOPE_INSTR;
-  FbleVectorAppend(arena, block->instrs, &pop_scope->_base);
 
   FbleIPopInstr* ipop = FbleAlloc(arena, FbleIPopInstr);
   ipop->_base.tag = FBLE_IPOP_INSTR;

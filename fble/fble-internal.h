@@ -32,8 +32,6 @@ typedef enum {
   FBLE_STRUCT_IMPORT_INSTR,
   FBLE_IPUSH_INSTR,
   FBLE_IPOP_INSTR,
-  FBLE_PUSH_SCOPE_INSTR,
-  FBLE_POP_SCOPE_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_VPUSH_INSTR,
 } FbleInstrTag;
@@ -289,16 +287,6 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
 } FbleIPopInstr;
-
-// FblePushScopeInstr -- FBLE_PUSH_SCOPE_INSTR
-typedef struct {
-  FbleInstr _base;
-} FblePushScopeInstr;
-
-// FblePopScopeInstr -- FBLE_POP_SCOPE_INSTR
-typedef struct {
-  FbleInstr _base;
-} FblePopScopeInstr;
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR
 // data_stack: ...
