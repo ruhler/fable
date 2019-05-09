@@ -17,24 +17,18 @@ typedef struct DataStack {
 } DataStack;
 
 // ScopeStack --
-//   A stack of variable scopes.
-typedef struct ScopeStack {
-  FbleValueV vars;
-  struct ScopeStack* tail;
-} ScopeStack;
-
-// CodeStack --
-//   A stack of instructions to execute. Describes the computation context for
-//   a thread.
-// 
+//   A stack of instruction blocks and their variable scopes.
+//
 // Fields:
+//   vars - Values of variables in scope.
 //   instrs - The currently executing instruction block.
 //   pc - The location of the next instruction in the current block to execute.
-typedef struct CodeStack {
+typedef struct ScopeStack {
+  FbleValueV vars;
   FbleInstrBlock* block;
   size_t pc;
-  struct CodeStack* tail;
-} CodeStack;
+  struct ScopeStack* tail;
+} ScopeStack;
 
 typedef struct Thread Thread;
 
@@ -51,7 +45,6 @@ typedef struct {
 // Fields:
 //   data_stack - used to store anonymous intermediate values.
 //   scope_stack - stores variable scopes.
-//   code_stack - stores the instructions still to execute.
 //   iquota - the number of instructions this thread is allowed to execute.
 //   children - child threads that this thread is potentially blocked on.
 //      This vector is {0, NULL} when there are no child threads.
@@ -60,7 +53,6 @@ typedef struct {
 struct Thread {
   DataStack* data_stack;
   ScopeStack* scope_stack;
-  CodeStack* code_stack;
   size_t iquota;
   ThreadV children;
   bool aborted;
@@ -83,10 +75,8 @@ static FbleValue* GetVar(ScopeStack* scopes, size_t position);
 static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value);
 static DataStack* PushData(FbleArena* arena, FbleValue* value, DataStack* tail);
 static DataStack* PopData(FbleArena* arena, DataStack* stack);
-static ScopeStack* PushScope(FbleArena* arena, ScopeStack* tail);
+static ScopeStack* PushScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail);
 static ScopeStack* PopScope(FbleArena* arena, ScopeStack* stack);
-static CodeStack* PushCode(FbleValueArena* arena, FbleInstrBlock* block, CodeStack* tail);
-static CodeStack* PopCode(FbleValueArena* arena, CodeStack* stack);
 
 static DataStack* CaptureScope(FbleValueArena* arena, DataStack* data_stack, size_t scopec, FbleValue* value, FbleValueV* dst);
 static DataStack* RestoreScope(FbleValueArena* arena, FbleValueV scope, DataStack* stack);
@@ -273,23 +263,34 @@ static DataStack* PopData(FbleArena* arena, DataStack* stack)
 //
 // Inputs:
 //   arena - the arena to use for allocations
+//   block - the block of instructions to push
 //   tail - the stack to push to
 //
 // Result:
 //   The stack with new pushed scope.
 //
 // Side effects:
-//   Allocates new ScopeStack instances that should be freed when done.
-static ScopeStack* PushScope(FbleArena* arena, ScopeStack* tail)
+//   Allocates new ScopeStack instances that should be freed with PopScope when done.
+static ScopeStack* PushScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail)
 {
+
+  // For debugging purposes, double check that all blocks will pop themselves
+  // when done.
+  assert(block->instrs.size > 0);
+  assert(block->instrs.xs[block->instrs.size - 1]->tag == FBLE_IPOP_INSTR);
+
+  block->refcount++;
+
   ScopeStack* stack = FbleAlloc(arena, ScopeStack);
   FbleVectorInit(arena, stack->vars);
+  stack->block = block;
+  stack->pc = 0;
   stack->tail = tail;
   return stack;
 }
 
 // PopScope --
-//   Pop an empty scope off the scope stack.
+//   Pop a scope off the scope stack.
 //
 // Inputs:
 //   arena - the arena to use for deallocation
@@ -304,61 +305,10 @@ static ScopeStack* PopScope(FbleArena* arena, ScopeStack* stack)
 {
   assert(stack->vars.size == 0 && "Pop non-empty scope");
   FbleFree(arena, stack->vars.xs);
+  FbleFreeInstrBlock(arena, stack->block);
 
   ScopeStack* tail = stack->tail;
   FbleFree(arena, stack);
-  return tail;
-}
-
-// PushCode --
-//   Push a block of instructions onto an instruction stack.
-//
-// Inputs:
-//   arena - the arena to use for allocations
-//   block - the block of instructions to push
-//   tail - the stack to push to
-//
-// Result:
-//   The new stack with pushed instructions.
-//
-// Side effects:
-//   Allocates new CodeStack instances that should be freed with PopCode when done.
-static CodeStack* PushCode(FbleValueArena* arena, FbleInstrBlock* block, CodeStack* tail)
-{
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-
-  // For debugging purposes, double check that all blocks will pop themselves
-  // when done.
-  assert(block->instrs.size > 0);
-  assert(block->instrs.xs[block->instrs.size - 1]->tag == FBLE_IPOP_INSTR);
-
-  block->refcount++;
-
-  CodeStack* stack = FbleAlloc(arena_, CodeStack);
-  stack->block = block;
-  stack->pc = 0;
-  stack->tail = tail;
-  return stack;
-}
-
-// PopCode --
-//   Pop a value off the instruction stack.
-//
-// Inputs:
-//   arena - the arena to use for deallocation
-//   stack - the stack to pop from
-//
-// Results:
-//   The popped stack.
-//
-// Side effects:
-//   Frees the top instruction stack.
-static CodeStack* PopCode(FbleValueArena* arena, CodeStack* stack)
-{
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleFreeInstrBlock(arena_, stack->block);
-  CodeStack* tail = stack->tail;
-  FbleFree(arena_, stack);
   return tail;
 }
 
@@ -426,14 +376,14 @@ static DataStack* RestoreScope(FbleValueArena* arena, FbleValueV scope, DataStac
 //   None.
 //
 // Side effects:
-//   The thread is executed, updating its data_stack, and code_stack.
+//   The thread is executed, updating its data_stack, and scope_stack.
 static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   assert(!thread->aborted);
-  while (thread->iquota > 0 && thread->code_stack != NULL) {
-    assert(thread->code_stack->pc < thread->code_stack->block->instrs.size);
-    FbleInstr* instr = thread->code_stack->block->instrs.xs[thread->code_stack->pc++];
+  while (thread->iquota > 0 && thread->scope_stack != NULL) {
+    assert(thread->scope_stack->pc < thread->scope_stack->block->instrs.size);
+    FbleInstr* instr = thread->scope_stack->block->instrs.xs[thread->scope_stack->pc++];
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
@@ -497,7 +447,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       case FBLE_UNION_SELECT_INSTR: {
         assert(thread->data_stack != NULL);
         FbleUnionValue* uv = (FbleUnionValue*)Deref(thread->data_stack->value, FBLE_UNION_VALUE);
-        thread->code_stack->pc += uv->tag;
+        thread->scope_stack->pc += uv->tag;
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
         break;
@@ -505,7 +455,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_GOTO_INSTR: {
         FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-        thread->code_stack->pc = goto_instr->pc;
+        thread->scope_stack->pc = goto_instr->pc;
         break;
       }
 
@@ -538,7 +488,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
         thread->data_stack = RestoreScope(arena, func->scope, thread->data_stack);
-        thread->code_stack = PushCode(arena, func->body, thread->code_stack);
+        thread->scope_stack = PushScope(arena_, func->body, thread->scope_stack);
         FbleValueRelease(arena, &func->_base);
         break;
       }
@@ -640,10 +590,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             return;
           }
 
-          if (thread->children.xs[i]->code_stack != NULL) {
+          if (thread->children.xs[i]->scope_stack != NULL) {
             // Blocked on child. Restore the thread state and return before
             // iquota has been decremented.
-            thread->code_stack->pc--;
+            thread->scope_stack->pc--;
             return;
           }
         }
@@ -654,7 +604,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           FbleValue* result = child->data_stack->value;
           child->data_stack = PopData(arena_, child->data_stack);
           assert(child->data_stack == NULL);
-          assert(child->code_stack == NULL);
+          assert(child->scope_stack == NULL);
           assert(child->iquota == 0);
           FbleFree(arena_, child);
 
@@ -684,7 +634,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
                 // Blocked on get. Restore the thread state and return before
                 // iquota has been decremented.
                 thread->data_stack = PushData(arena_, &proc->_base, thread->data_stack);
-                thread->code_stack->pc--;
+                thread->scope_stack->pc--;
                 return;
               }
 
@@ -705,7 +655,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
                 // Blocked on get. Restore the thread state and return before
                 // iquota has been decremented.
                 thread->data_stack = PushData(arena_, &proc->_base, thread->data_stack);
-                thread->code_stack->pc--;
+                thread->scope_stack->pc--;
                 return;
               }
 
@@ -750,7 +700,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
                 // Blocked on put. Restore the thread state and return before
                 // iquota has been decremented.
                 thread->data_stack = PushData(arena_, &proc->_base, thread->data_stack);
-                thread->code_stack->pc--;
+                thread->scope_stack->pc--;
                 return;
               }
 
@@ -787,7 +737,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             thread->data_stack = PushData(arena_, &put->_base, thread->data_stack);
             thread->data_stack = PushData(arena_, &get->_base, thread->data_stack);
             thread->data_stack = RestoreScope(arena, link->scope, thread->data_stack);
-            thread->code_stack = PushCode(arena, link->body, thread->code_stack);
+            thread->scope_stack = PushScope(arena_, link->body, thread->scope_stack);
             break;
           }
 
@@ -800,8 +750,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             for (size_t i = 0; i < exec->bindings.size; ++i) {
               Thread* child = FbleAlloc(arena_, Thread);
               child->data_stack = PushData(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), NULL);
-              child->scope_stack = NULL;
-              child->code_stack = PushCode(arena, &g_proc_block, NULL);
+              child->scope_stack = PushScope(arena_, &g_proc_block, NULL);
               child->iquota = 0;
               child->aborted = false;
               child->children.size = 0;
@@ -810,7 +759,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             }
 
             thread->data_stack = RestoreScope(arena, exec->scope, thread->data_stack);
-            thread->code_stack = PushCode(arena, exec->body, thread->code_stack);
+            thread->scope_stack = PushScope(arena_, exec->body, thread->scope_stack);
             break;
           }
         }
@@ -864,22 +813,22 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_IPUSH_INSTR: {
         FbleIPushInstr* ipush_instr = (FbleIPushInstr*)instr;
-        thread->code_stack = PushCode(arena, ipush_instr->block, thread->code_stack);
+        thread->scope_stack = PushScope(arena_, ipush_instr->block, thread->scope_stack);
         break;
       }
 
       case FBLE_IPOP_INSTR: {
-        thread->code_stack = PopCode(arena, thread->code_stack);
+        thread->scope_stack = PopScope(arena_, thread->scope_stack);
         break;
       }
 
       case FBLE_PUSH_SCOPE_INSTR: {
-        thread->scope_stack = PushScope(arena_, thread->scope_stack);
+        // TODO: Remove this no-op instruction.
         break;
       }
 
       case FBLE_POP_SCOPE_INSTR: {
-        thread->scope_stack = PopScope(arena_, thread->scope_stack);
+        // TODO: Remove this no-op instruction.
         break;
       }
 
@@ -946,10 +895,6 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
     thread->scope_stack->vars.size = 0;
     thread->scope_stack = PopScope(arena_, thread->scope_stack);
   }
-
-  while (thread->code_stack != NULL) {
-    thread->code_stack = PopCode(arena, thread->code_stack);
-  }
 }
 
 // RunThreads --
@@ -1006,8 +951,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Thread thread = {
     .data_stack = NULL,
-    .scope_stack = NULL,
-    .code_stack = PushCode(arena, prgm, NULL),
+    .scope_stack = PushScope(arena_, prgm, NULL),
     .iquota = 0,
     .children = {0, NULL},
     .aborted = false,
@@ -1028,11 +972,11 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
       return NULL;
     }
 
-    bool block = (thread.iquota == QUOTA) && (thread.code_stack != NULL);
+    bool block = (thread.iquota == QUOTA) && (thread.scope_stack != NULL);
     did_io = io->io(io, arena, block);
   } while (did_io || thread.iquota < QUOTA);
 
-  if (thread.code_stack != NULL) {
+  if (thread.scope_stack != NULL) {
     // We have instructions to run still, but we stopped making forward
     // progress. This must be a deadlock.
     // TODO: Handle this more gracefully.
@@ -1047,7 +991,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   FbleValue* final_result = thread.data_stack->value;
   thread.data_stack = PopData(arena_, thread.data_stack);
   assert(thread.data_stack == NULL);
-  assert(thread.code_stack == NULL);
+  assert(thread.scope_stack == NULL);
   assert(thread.children.size == 0);
   assert(thread.children.xs == NULL);
   return final_result;

@@ -1,9 +1,5 @@
 * [test] Rename tests to match new spec, and clean up tests.
 * [test] Fix failing tail recursion memory test.
- - Use IPUSH / IPOP for struct eval.
- - Store scope size as part of InstrBlock.
- - PushScope as part of PushCode, and pop with IPOP, rather than have separate
-   instructions.
 
 * [perf] Think about how to reduce cost of capturing, popping scopes.
 * [perf] Clean up type Eval to avoid duplicate work.
@@ -13,6 +9,7 @@
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.
 * [prgm] Implement game of life.
+* [perf] Store scope size as part of InstrBlock and use an array for vars.
 
 * Test that explicit type struct values can take type args and poly args?
 * Test that a struct type doesn't equal a union type, func type, etc.
