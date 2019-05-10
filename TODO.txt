@@ -1,5 +1,7 @@
 * [test] Rename tests to match new spec, and clean up tests.
 * [test] Fix failing tail recursion memory test.
+ - Any way to factor out common code for tracking if EnterScope is at the end
+   of the block?
 
 * [perf] Think about how to reduce cost of capturing, popping scopes.
 * [perf] Clean up type Eval to avoid duplicate work.

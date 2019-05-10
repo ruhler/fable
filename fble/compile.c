@@ -2092,11 +2092,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       }
       FreeVars(arena_, &nvars);
 
-      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-      descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = instr->scopec + 1;
-      FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
-
       FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);
       exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &exit_scope->_base);
@@ -2678,12 +2673,6 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PopVar(arena_, &nvars);
       }
-
-      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-      descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = struct_type->fields.size;
-      FbleVectorAppend(arena_, instr->block->instrs, &descope->_base);
-
       FreeVars(arena_, &nvars);
 
       FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);

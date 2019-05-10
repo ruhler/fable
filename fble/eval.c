@@ -76,7 +76,7 @@ static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value);
 static DataStack* PushData(FbleArena* arena, FbleValue* value, DataStack* tail);
 static DataStack* PopData(FbleArena* arena, DataStack* stack);
 static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail);
-static ScopeStack* ExitScope(FbleArena* arena, ScopeStack* stack);
+static ScopeStack* ExitScope(FbleValueArena* arena, ScopeStack* stack);
 
 static DataStack* CaptureScope(FbleValueArena* arena, DataStack* data_stack, size_t scopec, FbleValue* value, FbleValueV* dst);
 static DataStack* RestoreScope(FbleValueArena* arena, FbleValueV scope, DataStack* stack);
@@ -300,15 +300,19 @@ static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, ScopeStac
 //   The popped stack.
 //
 // Side effects:
-//   Frees the top scope, which must be empty of variables.
-static ScopeStack* ExitScope(FbleArena* arena, ScopeStack* stack)
+//   Releases any remaining variables on the top scope and frees the top scope.
+static ScopeStack* ExitScope(FbleValueArena* arena, ScopeStack* stack)
 {
-  assert(stack->vars.size == 0 && "Pop non-empty scope");
-  FbleFree(arena, stack->vars.xs);
-  FbleFreeInstrBlock(arena, stack->block);
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  for (size_t i = 0; i < stack->vars.size; ++i) {
+    FbleValueRelease(arena, stack->vars.xs[i]);
+  }
+
+  FbleFree(arena_, stack->vars.xs);
+  FbleFreeInstrBlock(arena_, stack->block);
 
   ScopeStack* tail = stack->tail;
-  FbleFree(arena, stack);
+  FbleFree(arena_, stack);
   return tail;
 }
 
@@ -818,7 +822,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_EXIT_SCOPE_INSTR: {
-        thread->scope_stack = ExitScope(arena_, thread->scope_stack);
+        thread->scope_stack = ExitScope(arena, thread->scope_stack);
         break;
       }
 
@@ -879,11 +883,7 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
   }
 
   while (thread->scope_stack != NULL) {
-    for (size_t i = 0; i < thread->scope_stack->vars.size; ++i) {
-      FbleValueRelease(arena, thread->scope_stack->vars.xs[i]);
-    }
-    thread->scope_stack->vars.size = 0;
-    thread->scope_stack = ExitScope(arena_, thread->scope_stack);
+    thread->scope_stack = ExitScope(arena, thread->scope_stack);
   }
 }
 
