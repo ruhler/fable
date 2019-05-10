@@ -215,7 +215,7 @@ typedef struct {
 } FbleJoinInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
-//   Execute the process value on top of the value stack.
+//   Exit the current scope and execute the process value on top of the data stack.
 typedef struct {
   FbleInstr _base;
 } FbleProcInstr;

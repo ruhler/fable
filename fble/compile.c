@@ -2224,18 +2224,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
 
       PopVar(arena_, vars);
       PopVar(arena_, vars);
-      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-      descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = instr->scopec + 2;
-      FbleVectorAppend(arena_, instr->body->instrs, &descope->_base);
-
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
-
-      FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);
-      exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &exit_scope->_base);
 
       TypeRelease(arena, port_type);
       TypeRelease(arena, &get_type->_base);
@@ -2353,19 +2344,9 @@ static Type* CompileExpr(TypeArena* arena, Vars* vars, FbleExpr* expr, FbleInstr
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         PopVar(arena_, vars);
       }
-
-      FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-      descope->_base.tag = FBLE_DESCOPE_INSTR;
-      descope->count = exec_instr->scopec + exec_instr->argc;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &descope->_base);
-
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
-
-      FbleExitScopeInstr* exit_scope = FbleAlloc(arena_, FbleExitScopeInstr);
-      exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &exit_scope->_base);
 
       return rtype;
     }
