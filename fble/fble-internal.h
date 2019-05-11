@@ -142,8 +142,11 @@ typedef struct {
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
 //   data_stack: ..., x, f
 //           ==> ..., f(x)
+//
+// If exit is true, this is treated as a tail call.
 typedef struct {
   FbleInstr _base;
+  bool exit;
 } FbleFuncApplyInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR

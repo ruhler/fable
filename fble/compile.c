@@ -2175,8 +2175,8 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
 
       FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
       apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+      apply_instr->exit = exit;
       FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
-      CompileExit(arena_, exit, instrs);
 
       Type* rtype = TypeRetain(arena, func_type->rtype);
       TypeRelease(arena, type);

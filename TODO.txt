@@ -1,6 +1,6 @@
 * [test] Rename tests to match new spec, and clean up tests.
-* [test] Fix failing tail recursion memory test.
- - Propagate 'exit' flag from compile to func_apply instruction.
+* [test] Check if fble-md5 still leaks memory.
+ - If so, add a test and fix that.
 
 * [perf] Think about how to reduce cost of capturing, popping scopes.
 * [perf] Clean up type Eval to avoid duplicate work.

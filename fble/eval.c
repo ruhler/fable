@@ -512,12 +512,17 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_FUNC_APPLY_INSTR: {
+        FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
         FbleFuncValue* func = (FbleFuncValue*)Deref(thread->data_stack->value, FBLE_FUNC_VALUE);
         FbleValueRetain(arena, &func->_base);
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
         thread->data_stack = RestoreScope(arena, func->scope, thread->data_stack);
-        thread->scope_stack = EnterScope(arena_, func->body, thread->scope_stack);
+        if (func_apply_instr->exit) {
+          thread->scope_stack = ChangeScope(arena, func->body, thread->scope_stack);
+        } else {
+          thread->scope_stack = EnterScope(arena_, func->body, thread->scope_stack);
+        }
         FbleValueRelease(arena, &func->_base);
         break;
       }
@@ -1054,10 +1059,12 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args)
     assert(result->tag == FBLE_FUNC_VALUE);
     func = result;
 
-    FbleFuncApplyInstr apply = { ._base = { .tag = FBLE_FUNC_APPLY_INSTR }, };
-    FbleExitScopeInstr exit = { ._base = { .tag = FBLE_EXIT_SCOPE_INSTR }, };
-    FbleInstr* instrs[] = { &apply._base, &exit._base };
-    FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 2, .xs = instrs } };
+    FbleFuncApplyInstr apply = {
+      ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
+      .exit = true
+    };
+    FbleInstr* instrs[] = { &apply._base };
+    FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = instrs } };
     FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
     FbleValue* xs[2];
