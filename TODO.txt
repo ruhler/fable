@@ -1,15 +1,15 @@
 * [test] Rename tests to match new spec, and clean up tests.
-* [test] Check if fble-md5 still leaks memory.
- - If so, add a test and fix that.
-
+* [prgm] Implement game of life.
 * [perf] Think about how to reduce cost of capturing, popping scopes.
+ - Especially for multi-arg function case.
+
 * [perf] Clean up type Eval to avoid duplicate work.
  - Eval by construction and on update, not on use.
  - Shave 4 seconds off AllTests compilation time.
+* [perf] Revisit ref implementation for perf improvement opportunities.
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.
-* [prgm] Implement game of life.
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
 
 * Test that explicit type struct values can take type args and poly args?
@@ -80,11 +80,6 @@ Game of Life:
   B. is dead and have 3 live neighbors
 
 Miscellaneous:
-* Track down memory-leak like behavior in fble-md5
-  - Is it just that we aren't doing tail calls properly?
-  - Perhaps we should put a limit on link sizes? Or prioritize threads that
-    are getting over threads that are putting?
-
 * Use consistent naming in spec tests to distinguish between:
   - Something with the wrong syntax, such as ???. "malformed"
   - Something that cannot be typed, such as x, when x is not defined.  "maltyped"

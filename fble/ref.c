@@ -164,6 +164,28 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
   FbleFree(arena->arena, stack.xs);
 }
 
+// CycleFreeChildCallback --
+//   Callback used in the implementation of CycleFree.
+typedef struct {
+  FbleRefCallback _base;
+  FbleArena* arena;
+  FbleRef* ref;
+  FbleRefV* in_cycle;
+  FbleRefV* stack;
+} CycleFreeChildCallback;
+
+// CycleFreeChild --
+//   Called for each child visited in a cycle. If the child is internal, adds
+//   it to the stack to process.
+static void CycleFreeChild(CycleFreeChildCallback* data, FbleRef* child)
+{
+  if (CycleHead(child) == data->ref) {
+    if (!Contains(data->in_cycle, child)) {
+      FbleVectorAppend(data->arena, *data->stack, child);
+      FbleVectorAppend(data->arena, *data->in_cycle, child);
+    }
+  }
+}
 // CycleFree --
 //   Free the object associated with the given ref and its cycle, because the
 //   ref is no longer acessible.
@@ -189,28 +211,16 @@ static void CycleFree(FbleRefArena* arena, FbleRef* ref)
   FbleVectorAppend(arena->arena, stack, ref);
   FbleVectorAppend(arena->arena, in_cycle, ref);
 
+  CycleFreeChildCallback callback = {
+    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleFreeChild },
+    .arena = arena->arena,
+    .ref = ref,
+    .in_cycle = &in_cycle,
+    .stack = &stack,
+  };
+
   while (stack.size > 0) {
-    FbleRef* r = stack.xs[--stack.size];
-
-    FbleRefV children;
-    FbleVectorInit(arena->arena, children);
-    AddToVectorCallback callback = {
-      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddToVector },
-      .arena = arena->arena,
-      .refs = &children
-    };
-    arena->added(&callback._base, r);
-    for (size_t i = 0; i < children.size; ++i) {
-      FbleRef* child = children.xs[i];
-      if (CycleHead(child) == ref) {
-        if (!Contains(&in_cycle, child)) {
-          FbleVectorAppend(arena->arena, stack, child);
-          FbleVectorAppend(arena->arena, in_cycle, child);
-        }
-      }
-    }
-
-    FbleFree(arena->arena, children.xs);
+    arena->added(&callback._base, stack.xs[--stack.size]);
   }
 
   for (size_t i = 0; i < in_cycle.size; ++i) {
