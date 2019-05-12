@@ -34,7 +34,6 @@ static bool Contains(FbleRefV* refs, FbleRef* ref);
 
 static FbleRef* CycleHead(FbleRef* ref);
 static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref);
-static void CycleFree(FbleRefArena* arena, FbleRef* ref);
 
 // AddToVector --
 //   An FbleRefCallback that appends a ref to the given vector.
@@ -164,73 +163,6 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
   FbleFree(arena->arena, stack.xs);
 }
 
-// CycleFreeChildCallback --
-//   Callback used in the implementation of CycleFree.
-typedef struct {
-  FbleRefCallback _base;
-  FbleArena* arena;
-  FbleRef* ref;
-  FbleRefV* in_cycle;
-  FbleRefV* stack;
-} CycleFreeChildCallback;
-
-// CycleFreeChild --
-//   Called for each child visited in a cycle. If the child is internal, adds
-//   it to the stack to process.
-static void CycleFreeChild(CycleFreeChildCallback* data, FbleRef* child)
-{
-  if (CycleHead(child) == data->ref) {
-    if (!Contains(data->in_cycle, child)) {
-      FbleVectorAppend(data->arena, *data->stack, child);
-      FbleVectorAppend(data->arena, *data->in_cycle, child);
-    }
-  }
-}
-// CycleFree --
-//   Free the object associated with the given ref and its cycle, because the
-//   ref is no longer acessible.
-//
-// Inputs:
-//   arena - the reference arena.
-//   ref - the reference whose cycle to free.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Unspecified.
-static void CycleFree(FbleRefArena* arena, FbleRef* ref)
-{
-  assert(ref->cycle == NULL);
-
-  FbleRefV in_cycle;
-  FbleVectorInit(arena->arena, in_cycle);
-
-  FbleRefV stack;
-  FbleVectorInit(arena->arena, stack);
-  FbleVectorAppend(arena->arena, stack, ref);
-  FbleVectorAppend(arena->arena, in_cycle, ref);
-
-  CycleFreeChildCallback callback = {
-    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleFreeChild },
-    .arena = arena->arena,
-    .ref = ref,
-    .in_cycle = &in_cycle,
-    .stack = &stack,
-  };
-
-  while (stack.size > 0) {
-    arena->added(&callback._base, stack.xs[--stack.size]);
-  }
-
-  for (size_t i = 0; i < in_cycle.size; ++i) {
-    arena->free(arena, in_cycle.xs[i]);
-  }
-
-  FbleFree(arena->arena, in_cycle.xs);
-  FbleFree(arena->arena, stack.xs);
-}
-
 // FbleNewRefArena -- see documentation in fble-ref.h
 FbleRefArena* FbleNewRefArena(
     FbleArena* arena, 
@@ -276,18 +208,31 @@ typedef struct {
   FbleRefCallback _base;
   FbleArena* arena;
   FbleRefV* refs;
+  FbleRef* ref;
+  FbleRefV* in_cycle;
+  FbleRefV* stack;
 } RefReleaseCallback;
 
-// RefRelease --
-//   Callback function to decrement the refcount of a ref and add it to the
-//   list of refs if the refcount has gone to zero.
-static void RefRelease(RefReleaseCallback* data, FbleRef* ref)
+// RefReleaseChild --
+//   Callback function used when releasing references. Decrements the
+//   reference count of a ref not in the cycle, adding it to the list of nodes
+//   to free if the refcount has gone to zero. Accumulates the list of nodes
+//   in the cycle.
+static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
 {
-  assert(ref->cycle == NULL);
-  assert(ref->refcount > 0);
-  ref->refcount--;
-  if (ref->refcount == 0) {
-    FbleVectorAppend(data->arena, *data->refs, ref);
+  if (child == data->ref || CycleHead(child) == data->ref) {
+    if (child != data->ref && !Contains(data->in_cycle, child)) {
+      FbleVectorAppend(data->arena, *data->in_cycle, child);
+      FbleVectorAppend(data->arena, *data->stack, child);
+    }
+  } else {
+    FbleRef* head = CycleHead(child);
+    assert(head->cycle == NULL);
+    assert(head->refcount > 0);
+    head->refcount--;
+    if (head->refcount == 0) {
+      FbleVectorAppend(data->arena, *data->refs, head);
+    }
   }
 }
 
@@ -306,18 +251,36 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 
     while (refs.size > 0) {
       FbleRef* r = refs.xs[--refs.size];
+      assert(r->cycle == NULL);
       assert(r->refcount == 0);
 
+      FbleRefV in_cycle;
+      FbleVectorInit(arena->arena, in_cycle);
+      FbleVectorAppend(arena->arena, in_cycle, r);
+
+      FbleRefV stack;
+      FbleVectorInit(arena->arena, stack);
+      FbleVectorAppend(arena->arena, stack, r);
+
       RefReleaseCallback callback = {
-        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefRelease },
+        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefReleaseChild },
         .arena = arena->arena,
-        .refs = &refs
+        .refs = &refs,
+        .ref = r,
+        .in_cycle = &in_cycle,
+        .stack = &stack,
       };
 
-      // TODO: Inline CycleAdded, CycleFree into a single iteration, rather
-      // than iterating over the cycles twice here?
-      CycleAdded(arena, &callback._base, r);
-      CycleFree(arena, r);
+      while (stack.size > 0) {
+        arena->added(&callback._base, stack.xs[--stack.size]);
+      }
+
+      for (size_t i = 0; i < in_cycle.size; ++i) {
+        arena->free(arena, in_cycle.xs[i]);
+      }
+
+      FbleFree(arena->arena, in_cycle.xs);
+      FbleFree(arena->arena, stack.xs);
     }
 
     FbleFree(arena->arena, refs.xs);
