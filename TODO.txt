@@ -6,12 +6,13 @@
 * [perf] Clean up type Eval to avoid duplicate work.
  - Eval by construction and on update, not on use.
  - Shave 4 seconds off AllTests compilation time.
-* [perf] Revisit ref implementation for perf improvement opportunities.
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
 
+* [perf] Optimize FbleRefAdd
+ - replace all AddToVector callbacks in ref.c if feasible.
 * Test that explicit type struct values can take type args and poly args?
 * Test that a struct type doesn't equal a union type, func type, etc.
 * Update abstract syntax and parser to match spec.
