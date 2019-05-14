@@ -2420,6 +2420,7 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       VarType* var_types[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleBinding* binding = let_expr->bindings.xs + i;
+        var_types[i] = NULL;
 
         nvd[i].name = let_expr->bindings.xs[i].name;
         if (binding->type == NULL) {
@@ -2462,7 +2463,9 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       }
 
       // Compile the values of the variables.
+      Type* var_type_values[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        var_type_values[i] = NULL;
         FbleBinding* binding = let_expr->bindings.xs + i;
 
         Type* type = NULL;
@@ -2494,14 +2497,22 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
           }
           FreeKind(arena_, actual_kind);
 
-          var->value = ValueOfType(arena, type);
-          if (var->value != NULL) {
-            FbleRefAdd(arena, &var->_base.ref, &var->value->ref);
-            TypeRelease(arena, var->value);
-          }
+          var_type_values[i] = ValueOfType(arena, type);
         }
 
         TypeRelease(arena, type);
+      }
+
+      // Apply the newly computed type values for variables whose types were
+      // previously unknown.
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (var_type_values[i] != NULL) {
+          VarType* var = var_types[i];
+          assert(var != NULL);
+          var->value = var_type_values[i];
+          FbleRefAdd(arena, &var->_base.ref, &var->value->ref);
+          TypeRelease(arena, var->value);
+        }
       }
 
       FbleLetDefInstr* let_def_instr = FbleAlloc(arena_, FbleLetDefInstr);
