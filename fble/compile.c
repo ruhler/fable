@@ -1416,6 +1416,7 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
       spat->result = NULL;
       spat->arg = pat->arg;
       FbleRefAdd(arena, &spat->_base.ref, &spat->arg->ref);
+      Eval(arena, &spat->_base, NULL);
       return &spat->_base;
     }
 
@@ -1662,7 +1663,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
     case FBLE_MISC_APPLY_EXPR: {
       FbleMiscApplyExpr* misc_apply_expr = (FbleMiscApplyExpr*)expr;
       Type* type = CompileExpr(arena, false, vars, misc_apply_expr->misc, instrs);
-      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -1706,7 +1706,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
         // Compile the argument.
         FbleExpr* arg = misc_apply_expr->args.xs[0];
         Type* arg_type = CompileExpr(arena, false, vars, arg, instrs);
-        Eval(arena, arg_type, NULL);
         bool error = (arg_type == NULL);
 
         if (arg_type != NULL && !TypesEqual(output_type->type, arg_type, NULL)) {
@@ -1743,7 +1742,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
 
       // FBLE_STRUCT_VALUE_EXPR
       Type* vtype = ValueOfType(arena, normal);
-      Eval(arena, vtype, NULL);
       TypeRelease(arena, type);
       if (vtype == NULL) {
         FbleReportError("expected a type.\n", &misc_apply_expr->misc->loc);
@@ -1772,7 +1770,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
         Field* field = struct_type->fields.xs + i;
 
         Type* arg_type = CompileExpr(arena, false, vars, misc_apply_expr->args.xs[i], instrs);
-        Eval(arena, arg_type, NULL);
         error = error || (arg_type == NULL);
 
         if (arg_type != NULL && !TypesEqual(field->type, arg_type, NULL)) {
@@ -1816,7 +1813,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       for (size_t i = 0; i < struct_expr->args.size; ++i) {
         FbleChoice* choice = struct_expr->args.xs + i;
         Type* arg_type = CompileExpr(arena, false, vars, choice->expr, instrs);
-        Eval(arena, arg_type, NULL);
         error = error || (arg_type == NULL);
 
         if (arg_type != NULL) {
@@ -1851,7 +1847,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       Type* type = CompileType(arena, vars, union_value_expr->type);
-      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -1885,7 +1880,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       }
 
       Type* arg_type = CompileExpr(arena, false, vars, union_value_expr->arg, instrs);
-      Eval(arena, arg_type, NULL);
       if (arg_type == NULL) {
         TypeRelease(arena, type);
         return NULL;
@@ -1915,7 +1909,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
 
       Type* type = CompileExpr(arena, false, vars, access_expr->object, instrs);
-      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -1964,7 +1957,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
       Type* type = CompileExpr(arena, false, vars, select_expr->condition, instrs);
-      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -2018,7 +2010,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
           FbleVectorAppend(arena_, *instrs, &exit_gotos[i]->_base);
         }
 
-        Eval(arena, arg_type, NULL);
         if (arg_type == NULL) {
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
@@ -2137,14 +2128,12 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
 
       // Compile the argument.
       Type* arg_type = CompileExpr(arena, false, vars, apply_expr->arg, instrs);
-      Eval(arena, arg_type, NULL);
       if (arg_type == NULL) {
         return NULL;
       }
 
       // Compile the function value.
       Type* type = CompileExpr(arena, false, vars, apply_expr->func, instrs);
-      Eval(arena, type, NULL);
       if (type == NULL) {
         TypeRelease(arena, arg_type);
         return NULL;
@@ -2256,7 +2245,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       PushVar(arena_, vars, link_expr->put, &put_type->_base);
 
       Type* type = CompileExpr(arena, false, vars, link_expr->body, &instr->body->instrs);
-      Eval(arena, type, NULL);
 
       PopVar(arena_, vars);
       PopVar(arena_, vars);
@@ -2293,13 +2281,11 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         nvd[i].name = exec_expr->bindings.xs[i].name;
         nvd[i].type = CompileType(arena, vars, exec_expr->bindings.xs[i].type);
-        Eval(arena, nvd[i].type, NULL);
         error = error || (nvd[i].type == NULL);
       }
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         Type* type = CompileExpr(arena, false, vars, exec_expr->bindings.xs[i].expr, instrs);
-        Eval(arena, type, NULL);
         error = error || (type == NULL);
 
         if (type != NULL) {
@@ -2359,7 +2345,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       Type* rtype = NULL;
       if (!error) {
         rtype = CompileExpr(arena, false, vars, exec_expr->body, &exec_instr->body->instrs);
-        Eval(arena, rtype, NULL);
         error = (rtype == NULL);
       }
 
@@ -2448,7 +2433,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
         } else {
           assert(binding->kind == NULL);
           nvd[i].type = CompileType(arena, vars, binding->type);
-          Eval(arena, nvd[i].type, NULL);
           error = error || (nvd[i].type == NULL);
         }
       }
@@ -2471,7 +2455,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
         Type* type = NULL;
         if (!error) {
           type = CompileExpr(arena, false, vars, binding->expr, instrs);
-          Eval(arena, type, NULL);
         }
         error = error || (type == NULL);
 
@@ -2513,6 +2496,12 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
           FbleRefAdd(arena, &var->_base.ref, &var->value->ref);
           TypeRelease(arena, var->value);
         }
+      }
+
+      // Re-evaluate the variable types now that we have updated information
+      // about the values of some of the types in question.
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        Eval(arena, nvd[i].type, NULL);
       }
 
       FbleLetDefInstr* let_def_instr = FbleAlloc(arena_, FbleLetDefInstr);
@@ -2664,6 +2653,7 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
         return NULL;
       }
 
+      Eval(arena, &pat->_base, NULL);
       return &pat->_base;
     }
 
@@ -2671,7 +2661,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
 
       Type* type = CompileExpr(arena, false, vars, struct_eval_expr->nspace, instrs);
-      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -2721,7 +2710,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
 
       Type* type = CompileExpr(arena, false, vars, struct_eval_expr->nspace, instrs);
-      Eval(arena, type, NULL);
       if (type == NULL) {
         return NULL;
       }
@@ -2798,7 +2786,6 @@ static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr)
   FbleInstrV instrs;
   FbleVectorInit(arena_, instrs);
   Type* type = CompileExpr(arena, true, &nvars, expr, &instrs);
-  Eval(arena, type, NULL);
   for (size_t i = 0; i < instrs.size; ++i) {
     FreeInstr(arena_, instrs.xs[i]);
   }
