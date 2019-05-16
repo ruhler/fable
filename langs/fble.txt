@@ -282,7 +282,7 @@ value.
 3.5 Struct Eval
 ---------------
 Abstract Syntax:
-  Expr ::= struct_eval (namespace :: Expr) (body :: Expr)
+  Expr ::= struct_eval (object :: Expr) (body :: Expr)
 
 Concrete Syntax:
   expr ::= expr '{' stmt '}'
@@ -292,10 +292,14 @@ Example:
 
 Struct eval evaluates an expression in a context where the only variables in
 scope are those defined by the fields of a struct value. This allows you to
-hide names in the current namespace when evaluating an expression. The
-namespace must evaluate to a struct value. Then the body of the struct_eval
-will be evaluated in a scope of variables which are the fields of the
-namespace value and no others.
+hide variables when evaluating an expression.
+
+The object must be a struct value. The body of the struct_eval
+is evaluated in a scope of variables which are the fields of the
+struct value and no others.
+
+The expression is evaluated by evaluating the object, then evaluating the body
+under the new scope.
 
 Struct eval is typically used when defining a module to hide all external
 variables except those you need for the module. This allows the module to be

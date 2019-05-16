@@ -1,0 +1,82 @@
+Fble Multi-Arg Functions
+------------------------
+Question: should we add explicit support for multi-argument functions in fble?
+
+Currently you can define multi-arg functions as nested single-argument
+functions. For example:
+
+  [Bool@][Bool@]{Bool@;} And = [Bool@ x][Bool@ y] {
+    ?(x; y, False)
+  };
+
+Then when you apply the function:
+
+  And[a][b]
+
+This is fine and good. The syntax is pleasant. You can mix functions and
+polymorphism easily. The problem is the performance implications.
+
+A reasonable assumption to make is that creating a function value is O(N) in
+the number of variables from the outside scope captured, as is apply a
+function. This means if we were to have an N argument function that we
+applied, supplying N arguments, we expect it to take O(N^2) time: We allocate
+an O(N) function for each argument being applied.
+
+In practice, we really only want it to take O(N) time: push each argument once
+on the stack, then execute the body. But in order to use that approach
+requires some assumptions. Namely: The function is not evaluated until all
+arguments are available.
+
+Consider the two different versions of And:
+
+  [Bool@][Bool@]{Bool@;} And1 = [Bool@ x]{
+    ?(x; [Bool@ y]{y;}, [Bool@ y]{False;});
+  };
+
+  [Bool@][Bool@]{Bool@;} And2 = [Bool@ x][Bool@ y] {
+    ?(x; y, False)
+  };
+
+And2 requires us to retain both x and y until we execute the body of the
+function. And1 lets us make progress with just the argument x, and does not
+require x to be retained in the resulting function of y.
+
+Given And2[a][b], instead of having to allocating function And2[a] with
+captured outer scope, we may as well make a thunk And2[a]. You save the time
+of pushing the captured scope. You retain And2 and 'a', but you would have
+done that anyway. So there is no loss here. It's strictly better.
+
+But that's not true for And1[a]. If we make And1[a] a thunk, we hold on to
+And1 and a, but if we evaluate it, we don't have any more reference to parts
+of And1 and to the argument a.
+
+How can we distinguish between And2 and And1? What makes them different? Not
+the function type. Not the number of arguments supplied when we apply the
+function. It's that And2 captures the first argument and And1 doesn't. But
+what if we had a more complicated function that both uses and captures the
+first argument? In that case, there may be observable differences between
+creating a thunk and evaluating in place.
+
+But we kind of want to rely on function application being O(N) for multi-arg
+functions instead of O(N^2).
+
+Option 1: Have a subtle rule for performance in the spec that says if you have
+a function that takes the form of And2 instead of And1, something like: the
+result of the function is a function that captures the argument of the
+function and exactly those values captured by the function itself, then you
+are guaranteed O(N) time for applying N arguments to the function.
+
+Option 2: Add syntactic support for multi-arg functions. Any function using
+that syntax is guaranteed O(N) time to apply N arguments. With the implication
+that it will retain the function and all arguments until all N arguments have
+been applied.
+
+(2) sounds way better to me. Thus, we have a proposal:
+
+* Add multi-arg func_value to the abstract syntax.
+* Add multi-arg func_type and func_apply to the concrete syntax as syntactic
+  sugar.
+
+There is no need to distinguish between types [Bool@ x, Bool@ y]{Bool@;} and
+[Bool@ x][Bool@ y]{Bool@;}, but it seems like it's convenient to have
+multi-arg syntactic sugar regardless.
