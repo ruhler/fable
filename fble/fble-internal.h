@@ -120,12 +120,14 @@ typedef struct {
 // Fields:
 //   scopec - The number of variables from the scope to capture from the top
 //            of the variable stack.
+//   argc - The number of arguments to the function.
 //   body - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should
 //          remove the context of its scope and arguments.
 typedef struct {
   FbleInstr _base;
   size_t scopec;
+  size_t argc;
   FbleInstrBlock* body;
 } FbleFuncValueInstr;
 

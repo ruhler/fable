@@ -261,8 +261,10 @@ block:
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
       func_value_expr->_base.loc = @$;
-      func_value_expr->arg.type = $2;
-      func_value_expr->arg.name = $3;
+      FbleVectorInit(arena, func_value_expr->args);
+      FbleField* arg = FbleVectorExtend(arena, func_value_expr->args);
+      arg->type = $2;
+      arg->name = $3;
       func_value_expr->body = $5;
       $$ = &func_value_expr->_base;
    }
@@ -303,7 +305,8 @@ stmt:
         FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
         func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
         func_value_expr->_base.loc = @$;
-        func_value_expr->arg = arg;
+        FbleVectorInit(arena, func_value_expr->args);
+        FbleVectorAppend(arena, func_value_expr->args, arg);
         func_value_expr->body = func;
         func = &func_value_expr->_base;
       }

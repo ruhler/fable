@@ -246,10 +246,10 @@ typedef struct {
 } FbleFuncTypeExpr;
 
 // FbleFuncValueExpr --
-//   FBLE_FUNC_VALUE_EXPR (arg :: (Type, Name)) (body :: Expr)
+//   FBLE_FUNC_VALUE_EXPR (args :: [(Type, Name)]) (body :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleField arg;
+  FbleFieldV args;
   FbleExpr* body;
 } FbleFuncValueExpr;
 

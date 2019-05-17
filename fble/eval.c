@@ -494,7 +494,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleRefInit(arena, &value->_base._base.ref);
         value->_base._base.tag = FBLE_FUNC_VALUE;
         value->_base.tag = FBLE_BASIC_FUNC_VALUE;
-        value->_base.argc = 1;
+        value->_base.argc = func_value_instr->argc;
         FbleVectorInit(arena_, value->scope);
         value->body = func_value_instr->body;
         value->body->refcount++;
