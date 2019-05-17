@@ -296,7 +296,8 @@ hide variables when evaluating an expression.
 
 The object must be a struct value. The body of the struct_eval
 is evaluated in a scope of variables which are the fields of the
-struct value and no others.
+struct value and no others. The type of the expression is the type of the body
+of the expression.
 
 The expression is evaluated by evaluating the object, then evaluating the body
 under the new scope.
@@ -317,7 +318,7 @@ the module itself.
 3.6 Struct Import
 -----------------
 Abstract Syntax:
-  Expr ::= struct_import (namespace :: Expr) (body :: Expr)
+  Expr ::= struct_import (object :: Expr) (body :: Expr)
 
 Concrete Syntax:
   stmt ::= expr ';' stmt
@@ -326,15 +327,19 @@ Example:
   @(And); And(True, False);
 
 Struct import is a short hand form of let expression that allows you to
-introduce new variables in scope. The namespace must evaluate to a struct
-value. Then the body of import is evaluated in a namespace augmented with the
-fields of the namespace struct.
+introduce new variables in scope. The object must be a struct
+value. The body of import is evaluated in the current scope augmented with
+variables formed from the fields of the struct value. The type of the
+expression is the type of the body of the expression.
 
-The advantage of using namespace import over using a regular let expression is
+The expression is evaluated by evaluating the object, then evaluating the body
+under the new scope.
+
+The advantage of using struct import over using a regular let expression is
 the convenience of not having to explicitly write the types of the variables
 being defined and being able to define a group of variables concisely.
 
-For example, assuming a namespace struct of boolean operations:
+For example, assuming a struct of boolean operations:
   @ BoolOps@ = *(Bool@ True, Bool@ False, \(Bool@ x; Bool@) Not);
   BoolOps@ ops = ...
 
