@@ -258,15 +258,31 @@ block:
       $$ = &func_type->_base;
    }
  | '[' expr name ']' block {
-      FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
-      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
-      func_value_expr->_base.loc = @$;
-      FbleVectorInit(arena, func_value_expr->args);
-      FbleField* arg = FbleVectorExtend(arena, func_value_expr->args);
-      arg->type = $2;
-      arg->name = $3;
-      func_value_expr->body = $5;
-      $$ = &func_value_expr->_base;
+      if ($5->tag == FBLE_FUNC_VALUE_EXPR) {
+        // Infer this to be a multi-arg function. Insert the argument in the
+        // front of the argument list.
+        // TODO: Don't automatically infer multi arg functions.
+        FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)$5;
+        FbleField* arg = FbleVectorExtend(arena, func_value_expr->args);
+        for (size_t i = 1; i < func_value_expr->args.size; ++i) {
+          size_t j = func_value_expr->args.size - 1 - i;
+          *arg = func_value_expr->args.xs[j];
+          arg = func_value_expr->args.xs + j;
+        }
+        arg->type = $2;
+        arg->name = $3;
+        $$ = &func_value_expr->_base;
+      } else {
+        FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
+        func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+        func_value_expr->_base.loc = @$;
+        FbleVectorInit(arena, func_value_expr->args);
+        FbleField* arg = FbleVectorExtend(arena, func_value_expr->args);
+        arg->type = $2;
+        arg->name = $3;
+        func_value_expr->body = $5;
+        $$ = &func_value_expr->_base;
+      }
    }
  | '<' kind name '>' block {
       FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
