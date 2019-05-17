@@ -490,14 +490,16 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_FUNC_VALUE_INSTR: {
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-        FbleFuncValue* value = FbleAlloc(arena_, FbleFuncValue);
-        FbleRefInit(arena, &value->_base.ref);
-        value->_base.tag = FBLE_FUNC_VALUE;
+        FbleBasicFuncValue* value = FbleAlloc(arena_, FbleBasicFuncValue);
+        FbleRefInit(arena, &value->_base._base.ref);
+        value->_base._base.tag = FBLE_FUNC_VALUE;
+        value->_base.tag = FBLE_BASIC_FUNC_VALUE;
+        value->_base.argc = 1;
         FbleVectorInit(arena_, value->scope);
         value->body = func_value_instr->body;
         value->body->refcount++;
-        thread->data_stack = CaptureScope(arena, thread->data_stack, func_value_instr->scopec, &value->_base, &value->scope);
-        thread->data_stack = PushData(arena_, &value->_base, thread->data_stack);
+        thread->data_stack = CaptureScope(arena, thread->data_stack, func_value_instr->scopec, &value->_base._base, &value->scope);
+        thread->data_stack = PushData(arena_, &value->_base._base, thread->data_stack);
         break;
       }
 
@@ -517,11 +519,44 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleValueRetain(arena, &func->_base);
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
-        thread->data_stack = RestoreScope(arena, func->scope, thread->data_stack);
-        if (func_apply_instr->exit) {
-          thread->scope_stack = ChangeScope(arena, func->body, thread->scope_stack);
+
+        if (func->argc > 1) {
+          FbleThunkFuncValue* value = FbleAlloc(arena_, FbleThunkFuncValue);
+          FbleRefInit(arena, &value->_base._base.ref);
+          value->_base._base.tag = FBLE_FUNC_VALUE;
+          value->_base.tag = FBLE_THUNK_FUNC_VALUE;
+          value->_base.argc = func->argc - 1;
+          value->func = NULL;
+          value->arg = NULL;
+
+          value->func = func;
+          Add(arena, &value->_base._base, &value->func->_base);
+          value->arg = thread->data_stack->value;
+          Add(arena, &value->_base._base, value->arg);
+          FbleValueRelease(arena, thread->data_stack->value);
+          thread->data_stack = PopData(arena_, thread->data_stack);
+          thread->data_stack = PushData(arena_, &value->_base._base, thread->data_stack);
+
+          if (func_apply_instr->exit) {
+            thread->scope_stack = ExitScope(arena, thread->scope_stack);
+          }
         } else {
-          thread->scope_stack = EnterScope(arena_, func->body, thread->scope_stack);
+          while (func->tag == FBLE_THUNK_FUNC_VALUE) {
+            FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)func;
+            thread->data_stack = PushData(arena_, FbleValueRetain(arena, thunk->arg), thread->data_stack);
+            func = thunk->func;
+            FbleValueRetain(arena, &func->_base);
+            FbleValueRelease(arena, &thunk->_base._base);
+          }
+
+          assert(func->tag == FBLE_BASIC_FUNC_VALUE);
+          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)func;
+          thread->data_stack = RestoreScope(arena, basic->scope, thread->data_stack);
+          if (func_apply_instr->exit) {
+            thread->scope_stack = ChangeScope(arena, basic->body, thread->scope_stack);
+          } else {
+            thread->scope_stack = EnterScope(arena_, basic->body, thread->scope_stack);
+          }
         }
         FbleValueRelease(arena, &func->_base);
         break;
@@ -546,6 +581,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base.tag = FBLE_PUT_PROC_VALUE;
         value->arg = thread->data_stack->value;
+        // TODO: do we need to set value->port to NULL here first?
         Add(arena, &value->_base._base, value->arg);
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);

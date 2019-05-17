@@ -343,7 +343,27 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   it is no longer needed.
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
+typedef enum {
+  FBLE_BASIC_FUNC_VALUE,
+  FBLE_THUNK_FUNC_VALUE,
+} FbleFuncValueTag;
+
 // FbleFuncValue -- FBLE_FUNC_VALUE
+//   A tagged union of func value types. All values have the same initial
+//   layout as FbleFuncValue. The tag can be used to determine what kind of
+//   func value this is to get access to additional fields of the func value
+//   by first casting to that specific type of func value.
+//
+// Fields:
+//   argc - The number of arguments to be applied to this function before the
+//          function body is executed.
+struct FbleFuncValue {
+  FbleValue _base;
+  FbleFuncValueTag tag;
+  size_t argc;
+};
+
+// FbleBasicFuncValue -- FBLE_BASIC_FUNC_VALUE
 //
 // Fields:
 //   scope - The scope at the time the function was created,
@@ -351,11 +371,22 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 //           Stored as a vector of variables in scope order.
 //   body - The block of instructions representing the body of the function,
 //          which should pop the arguments and context.
-struct FbleFuncValue {
-  FbleValue _base;
+typedef struct {
+  FbleFuncValue _base;
   FbleValueV scope;
   FbleInstrBlock* body;
-};
+} FbleBasicFuncValue;
+
+// FbleThunkFuncValue -- FBLE_THUNK_FUNC_VALUE
+//   A function value that is the partial application of another function to
+//   an argument.
+//
+// The value of this function value is: func[arg]
+typedef struct {
+  FbleFuncValue _base;
+  FbleFuncValue* func;
+  FbleValue* arg;
+} FbleThunkFuncValue;
 
 // FbleProcValueTag --
 //   A tag used to distinguish among different kinds of proc values.

@@ -63,8 +63,16 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* fv = (FbleFuncValue*)value;
-      FbleFree(arena_, fv->scope.xs);
-      FbleFreeInstrBlock(arena_, fv->body);
+      switch (fv->tag) {
+        case FBLE_BASIC_FUNC_VALUE: {
+          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
+          FbleFree(arena_, basic->scope.xs);
+          FbleFreeInstrBlock(arena_, basic->body);
+          break;
+        }
+
+        case FBLE_THUNK_FUNC_VALUE: break;
+      }
       FbleFree(arena_, value);
       return;
     }
@@ -174,8 +182,21 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* fv = (FbleFuncValue*)value;
-      for (size_t i = 0; i < fv->scope.size; ++i) {
-        Add(add, fv->scope.xs[i]);
+      switch (fv->tag) {
+        case FBLE_BASIC_FUNC_VALUE: {
+          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
+          for (size_t i = 0; i < basic->scope.size; ++i) {
+            Add(add, basic->scope.xs[i]);
+          }
+          break;
+        }
+
+        case FBLE_THUNK_FUNC_VALUE: {
+          FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)fv;
+          Add(add, &thunk->func->_base);
+          Add(add, thunk->arg);
+          break;
+        }
       }
       break;
     }
