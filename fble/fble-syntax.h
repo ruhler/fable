@@ -119,7 +119,7 @@ typedef enum {
 
   FBLE_FUNC_TYPE_EXPR,
   FBLE_FUNC_VALUE_EXPR,
-  FBLE_FUNC_APPLY_EXPR,
+//FBLE_FUNC_APPLY_EXPR,
 
   FBLE_PROC_TYPE_EXPR,
   FBLE_INPUT_TYPE_EXPR,
@@ -134,7 +134,7 @@ typedef enum {
   FBLE_POLY_APPLY_EXPR,
 
   FBLE_MISC_ACCESS_EXPR,  // Used for STRUCT_ACCESS, UNION_ACCESS
-  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, PUT, GET
+  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, FUNC_APPLY, PUT, GET
 } FbleExprTag;
 
 // FbleExpr --
@@ -253,14 +253,6 @@ typedef struct {
   FbleExpr* body;
 } FbleFuncValueExpr;
 
-// FbleFuncApplyExpr --
-//   FBLE_FUNC_APPLY_EXPR (func :: Expr) (arg :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* func;
-  FbleExpr* arg;
-} FbleFuncApplyExpr;
-
 // FbleUnaryTypeExpr --
 //   FBLE_PROC_TYPE_EXPR (type :: Type)
 //   FBLE_INPUT_TYPE_EXPR (type :: Type)
@@ -343,6 +335,13 @@ typedef struct {
   FbleName name;
 } FbleTypeField;
 
+// FbleTypeFieldV -- 
+//   A vector of FbleTypeFields.
+typedef struct {
+  FbleTypeField* xs;
+  size_t size;
+} FbleTypeFieldV;
+
 // FblePolyExpr --
 //   FBLE_POLY_EXPR (arg :: (Kind, Name)) (body :: Expr)
 typedef struct {
@@ -362,6 +361,7 @@ typedef struct {
 // FbleMiscApplyExpr --
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])
 //   FBLE_STRUCT_VALUE_EXPR (type :: Type) (args :: [Expr])
+//   FBLE_FUNC_APPLY_EXPR (func :: Expr) (args :: [Expr])
 //   FBLE_GET_EXPR (port :: Expr)
 //   FBLE_PUT_EXPR (port :: Expr) (arg :: Expr)
 typedef struct {

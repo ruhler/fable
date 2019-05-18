@@ -8,7 +8,7 @@ fble-test {
   Bool@ true = Bool@(true: Unit@());
   Bool@ false = Bool@(false: Unit@());
 
-  [Maybe@<Unit@>]{Bool@;} isJust = [Maybe@<Unit@> x] {
+  (Maybe@<Unit@>){Bool@;} isJust = (Maybe@<Unit@> x) {
     # In a past bug, this failed with:
     #   expected value of union type, but found value of type Maybe<Unit>
     # Because we were not evaluating the type of x before checking it was a
@@ -16,5 +16,5 @@ fble-test {
     ?(x; just: true, nothing: false);
   };
 
-  isJust[Maybe@<Unit@>(just: Unit@())].true;
+  isJust(Maybe@<Unit@>(just: Unit@())).true;
 }

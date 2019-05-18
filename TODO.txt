@@ -1,14 +1,26 @@
+* [lang] Switch to using multi-arg functions
+ - Fix issue with polymorphic apply.
+ - Switch to using multi-arg functions in all prgms/
 * [test] Rename tests to match new spec, and clean up tests.
+   typeof, var, let,
+   func_type, func_value, func_apply, func_bind
+   proc_type, proc_input_type, proc_output_type, 
+   proc_get, proc_put, proc_eval, proc_link, proc_exec
+   poly_value, poly_apply
 * [prgm] Implement game of life.
-* [perf] Think about how to reduce cost of capturing, popping scopes.
- - Experiment with implementation support for multi-arg functions.
 
+* [perf] Avoid allocating at every call to PushData
+* [perf] For func apply, avoid retain/release of each thunk, we ought to just
+  release the top level function as a whole when done with everything.
+* [perf] Avoid extra retain/release for Deref if at all possible
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.
-* [perf] Store scope size as part of InstrBlock and use an array for vars.
 
+* [test] partial function application and excessive function application.
+* [test] multi arg func, poly, kind are equivalent to nested single arg.
 * [perf] Optimize FbleRefAdd
+* [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
 * Test that explicit type struct values can take type args and poly args?
   And same for all other kinds of struct expressions.

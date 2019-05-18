@@ -418,14 +418,14 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_value_instr->argc;
 
-        FbleValue* argv[argc];
-        for (size_t i = 0; i < argc; ++i) {
-          argv[argc - i - 1] = thread->data_stack->value;
-          thread->data_stack = PopData(arena_, thread->data_stack);
-        }
-
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
+
+        FbleValue* argv[argc];
+        for (size_t i = 0; i < argc; ++i) {
+          argv[i] = thread->data_stack->value;
+          thread->data_stack = PopData(arena_, thread->data_stack);
+        }
 
         FbleValueV args = { .size = argc, .xs = argv, };
         thread->data_stack = PushData(arena_, FbleNewStructValue(arena, args), thread->data_stack);
@@ -580,15 +580,19 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         FbleRefInit(arena, &value->_base._base.ref);
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base.tag = FBLE_PUT_PROC_VALUE;
-        value->arg = thread->data_stack->value;
-        // TODO: do we need to set value->port to NULL here first?
-        Add(arena, &value->_base._base, value->arg);
-        FbleValueRelease(arena, thread->data_stack->value);
-        thread->data_stack = PopData(arena_, thread->data_stack);
+        value->port = NULL;
+        value->arg = NULL;
+
         value->port = thread->data_stack->value;
         Add(arena, &value->_base._base, value->port);
         FbleValueRelease(arena, thread->data_stack->value);
         thread->data_stack = PopData(arena_, thread->data_stack);
+
+        value->arg = thread->data_stack->value;
+        Add(arena, &value->_base._base, value->arg);
+        FbleValueRelease(arena, thread->data_stack->value);
+        thread->data_stack = PopData(arena_, thread->data_stack);
+
         thread->data_stack = PushData(arena_, &value->_base._base, thread->data_stack);
         break;
       }

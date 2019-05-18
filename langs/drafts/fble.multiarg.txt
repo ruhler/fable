@@ -80,3 +80,37 @@ been applied.
 There is no need to distinguish between types [Bool@ x, Bool@ y]{Bool@;} and
 [Bool@ x][Bool@ y]{Bool@;}, but it seems like it's convenient to have
 multi-arg syntactic sugar regardless.
+
+Syntax Update
+-------------
+Now that we can specify multi arg function literals, for consistency it makes
+sense to have multi-arg function types and function application. In those
+cases it will just be syntactic sugar.
+
+Once we have multi-arg syntax, I claim there's no longer as much motivation to
+use square brackets instead of parens. The original motivation was that:
+
+  f(x)(y)(z)
+
+was less pleasant than
+  f[x][y][z]
+
+But now:
+  f(x, y, z)
+is more pleasant than
+  f[x, y, z]
+
+I recommend a simple switch: change back to parens for functions.
+
+Continue to support blocks and nested and everything else, so we could, for
+example, do something like:
+
+  <..>(..)<..>(..) { ... }
+
+To define a polymorphic function that returns a polymorphic function.
+I don't think there is any ambiguity with the rest of the concrete syntax. We
+just need to treat func apply as a misc apply.
+
+It also makes sense now to support multi-arg poly type and poly apply as a
+syntactic sugar. And multi-arg kinds as well.
+

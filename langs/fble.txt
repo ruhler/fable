@@ -471,16 +471,23 @@ Functions are described using the fble expression language. A function can be
 applied to an argument of appropriate type to produce a value with the return
 type of the function.
 
+Functions can have more than one argument. For the most part function
+expressions involving multiple arguments are desugared into function
+expressions involving single arguments, in the sense that a multiple argument
+function can be written as a single argument function that returns a function.
+The exception is that in some cases there are performance implications
+for use of multiple argument functions instead of single argument functions.
+
 5.1 Function Type
 -----------------
 Abstract Syntax:
   Type ::= func_type (arg :: Type) (return :: Type)
 
 Concrete Syntax:
-  expr ::= '[' type ']' '{' stmt '}'
+  block ::= '(' type [',' type [...]] ')' block
 
 Examples:
-  [Int@][Int@]{Bool@;}
+  (Int@, Int@){ Bool@; }
 
 The function type describes the type of a function value by specifying the
 function's argument and return types.
@@ -490,22 +497,40 @@ functions, or processes.
 
 Two function types are equal if they take the same argument and return types.
 
+The concrete syntax allows you to specify multiple arguments in a function
+type. This is syntactic sugar for nested single argument function types. For
+example, the following three expressions describe the same type:
+ 
+  (a, b, c){ d; }
+  (a)(b)(c){ d; }
+  (a){ (b){ (c){ d; }}}
+
 5.2 Function Value
 ------------------
 Abstract Syntax:
-  Expr ::= func_value (arg :: (Type, Name)) (body :: Expr)
+  Expr ::= func_value (args :: [(Type, Name)]) (body :: Expr)
 
 Concrete Syntax:
-  expr ::= [type name] block
+  block ::= '(' type name [',' type name [...]] ')' block
 
 Example:
-  [Bool@ a] { ?(a; true: False, false: True); }
+  (Bool@ a, Bool@ b) { ?(a; true: b, false: False); }
 
 The function value expression is used to describe a primitive function value
-given the argument and the body of the function. The return type of
+given the arguments and the body of the function. The return type of
 the function is inferred to be the type of the body of the function. The
-argument name chosen when defining a function has no effect on the type of
+argument names chosen when defining a function has no effect on the type of
 the function.
+
+There is a slight performance difference between specifying a multi-argument
+function value and nested single-argument function values. The body of the
+function is not executed until all arguments have been supplied. A
+multi-argument function can be partially applied, which creates a thunk that
+retains the provided arguments without executing the function until sufficient
+arguments are supplied for the function to be fully applied.
+
+Multi-argument functions can be used to have O(N) application in the case of N
+arguments, whereas nested single-argument functions would require O(N^2) time.
 
 5.3 Function Application
 ------------------------
@@ -513,32 +538,43 @@ Abstract Syntax:
   Expr ::= apply (func :: Expr) (arg :: Expr)
 
 Concrete Syntax:
-  expr ::= expr '[' expr ']'
+  expr ::= expr '(' expr [',' expr [...]] ')'
 
 Example:
-  foo[x]
+  foo(x, y)
 
 The application expression is used to apply a function to an argument. The
 supplied argument must match the type of argument specified for the function.
 The application expression evaluates to the value of the body of the function
 in the context of the supplied argument.
 
+The concrete syntax allows you to specify multiple arguments in a function
+application. This is syntactic sugar for repeated single argument function
+application. For example, the following three expressions describe the same
+expression:
+  foo(a, b, c)
+  foo(a)(b)(c)
+
+Function application creates a thunk if the function has not been supplied
+with all required arguments. Otherwise the body of the function is evaluated
+in the context of all arguments supplied to the function.
+
 5.4 Function Bind
 -----------------
 Abstract Syntax:
-  Expr ::= func_bind (arg :: (Type, Name)) (func :: Expr) (body :: Expr)
+  Expr ::= func_bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
 
 Concrete Syntax:
-  stmt ::= type name '<-' expr ';' stmt
+  stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
 
 Example
-  Int@ x <- map[l];
-  f[x][y]
+  Int@ x <- map(l);
+  f(x, y)
 
 Bind is syntactic sugar for applying a function to a function value. It is
 equivalent to:
 
-  func_apply func (func_value arg body)
+  func_apply func (func_value args body)
 
 6 Processes
 -----------
@@ -676,7 +712,7 @@ Concrete Syntax:
   stmt ::= type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
 
 Example:
-  Int@ x := getx(), Int@ y := gety(); $(add[x][y])
+  Int@ x := getx(), Int@ y := gety(); $(add(x, y))
 
 Executes each process in parallel, then evaluates and executes the body with
 the results of the processes assigned to variables in scope. The binding
@@ -695,7 +731,7 @@ Abstract Syntax:
 
 Concrete Syntax:
   kind ::= '@'
-  kind ::= '<' kind '>' kind
+  kind ::= '<' kind [',' kind [...]] '>' kind
 
 Examples:
   <@>@
@@ -709,13 +745,19 @@ The is no syntax to describe the kind of a normal value, because there is no
 need. You can use normal functions with polymorphic types in that case, rather
 than use polymorphic expressions with normal kinds.
 
+The concrete syntax allows you to specify multiple arguments in a poly kind.
+This is syntactic sugar for nested single argument poly kinds. For
+example, the following two expressions describe the same kind:
+  <@, @, @>@
+  <@><@><@>@
+
 7.2 Poly Value
 --------------
 Abstract Syntax:
   Expr ::= poly_value (arg :: (Kind, Name)) (body :: Expr)
 
 Concrete Syntax:
-  block ::= '<' kind name '>' block
+  block ::= '<' kind name [',' kind name [...] '>' block
  
 Examples:
   <@ T@> { +(T@ just, Unit@ nothing); }
@@ -727,11 +769,11 @@ Abstract Syntax:
   Expr ::= poly_apply (poly :: Expr) (arg :: Type)
 
 Concrete Syntax:
-  expr ::= expr '<' type '>'
+  expr ::= expr '<' type [',' type [...]] '>'
 
 Examples:
   Maybe@<Int@>
-  fromJust<Int@>[3]
+  fromJust<Int@>(3)
 
 8. Program
 -----------
@@ -816,7 +858,7 @@ Expr ::=
  | union_select (condition :: Expr) (choices :: [(Name, Expr)])
 
  | func_type (arg :: Type) (result :: Type)
- | func_value (arg :: (Type, Name)) (body :: Expr)
+ | func_value (args :: [(Type, Name)]) (body :: Expr)
  | func_apply (func :: Expr) (arg :: Expr)
 
  | proc_type (result :: Type)
@@ -845,8 +887,8 @@ name ::=
  ;
 
 kind ::=
-   '@'                  (* type_kind *)
- | '<' kind '>' kind    (* poly_kind *)
+   '@'                                (* type_kind *)
+ | '<' kind [',' kind [...]] '>' kind (* poly_kind *)
  ;
 
 type ::= expr ;
@@ -872,14 +914,14 @@ expr ::=
  | '?(' expr ';' name ':' expr                     (* union_select *)
             [',' name ':' expr [...]] ')'   
 
- | expr '[' expr ']'                               (* func_apply *)
+ | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 
  | type '!'                                        (* proc_type *)
  | type '-'                                        (* proc_input_type *)
  | type '+'                                        (* proc_output_type *)
  | '$(' expr ')'                                   (* proc_eval *)
 
- | expr '<' type '>'                               (* poly_apply *)
+ | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
  | '&' name                                        (* include *)
  | block
@@ -887,9 +929,9 @@ expr ::=
 
 block ::=
    '{' stmt '}'
- | '[' type ']' block             (* func_type *)
- | '[' type name ']' block        (* func_value *)
- | '<' kind name '>' block        (* poly_value *)
+ | '(' type [',' type [...]] ')' block             (* func_type *)
+ | '(' type name [',' type name [...]] ')' block   (* func_value *)
+ | '<' kind name [',' kind name [...]] '>' block   (* poly_value *)
  ;
 
 stmt ::=
@@ -907,8 +949,9 @@ prgm ::= stmt                                                        (* program 
 Notes:
 * struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* explicit type struct value, get, and put share the same form. The type of
-  the expr is used to distinguish between the three kinds of expressions.
+* explicit type struct value, function apply, get, and put share the same
+  form. The type of the expr is used to distinguish between the four kinds of
+  expressions.
 
 12. Thoughts
 ------------

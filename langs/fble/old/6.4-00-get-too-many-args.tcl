@@ -7,6 +7,6 @@ fble-test-error 10:19 {
   Bool@ ignored := put(true);
 
   # Too many args to get
-  Bool@ result := get(false);
+  Bool@ result := get(true);
   $(result.true);
 }

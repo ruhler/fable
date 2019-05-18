@@ -5,7 +5,7 @@ fble-test-error 8:13 {
   Bool@ false = Bool@(false: Unit@());
 
   # The second arguments type fails to compile.
-  [Bool@ x][zzz@ y] {
+  (Bool@ x, zzz@ y) {
     ?(x; true: true, false: y);
   };
 }

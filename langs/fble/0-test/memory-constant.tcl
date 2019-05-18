@@ -3,7 +3,7 @@ fble-test-memory-constant {
   @ Nat@ = +(Nat@ S, Unit@ Z);
 
   # f requires O(1) memory.
-  [Nat@]{ Unit@; } f = [Nat@ n] {
+  (Nat@){ Unit@; } f = (Nat@ n) {
     Unit@();
   };
 

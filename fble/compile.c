@@ -1662,138 +1662,212 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
 
     case FBLE_MISC_APPLY_EXPR: {
       FbleMiscApplyExpr* misc_apply_expr = (FbleMiscApplyExpr*)expr;
+      bool error = false;
+
+      size_t argc = misc_apply_expr->args.size;
+      Type* arg_types[argc];
+      for (size_t i = 0; i < argc; ++i) {
+        size_t j = argc - 1 - i;
+        arg_types[j] = CompileExpr(arena, false, vars, misc_apply_expr->args.xs[j], instrs);
+        error = error || (arg_types[j] == NULL);
+      }
+
       Type* type = CompileExpr(arena, false, vars, misc_apply_expr->misc, instrs);
-      if (type == NULL) {
+      error = error || (type == NULL);
+
+      if (error) {
+        for (size_t i = 0; i < argc; ++i) {
+          TypeRelease(arena, arg_types[i]);
+        }
+        TypeRelease(arena, type);
         return NULL;
       }
 
       Type* normal = Normal(type);
-      if (normal->tag == INPUT_TYPE) {
-        // FBLE_GET_EXPR
-        if (misc_apply_expr->args.size != 0) {
-          FbleReportError("too many arguments to get. expected 0.\n", &expr->loc);
+      switch (normal->tag) {
+        case FUNC_TYPE: {
+          // FUNC_APPLY
+          for (size_t i = 0; i < argc; ++i) {
+            if (normal->tag != FUNC_TYPE) {
+              FbleReportError("too many arguments to function.\n", &expr->loc);
+              for (size_t i = 0; i < argc; ++i) {
+                TypeRelease(arena, arg_types[i]);
+              }
+              TypeRelease(arena, type);
+              return NULL;
+            }
+
+            FuncType* func_type = (FuncType*)normal;
+            if (!TypesEqual(func_type->arg, arg_types[i], NULL)) {
+              FbleReportError("expected type ", &misc_apply_expr->args.xs[i]->loc);
+              PrintType(arena_, func_type->arg, NULL);
+              fprintf(stderr, ", but found ");
+              PrintType(arena_, arg_types[i], NULL);
+              fprintf(stderr, "\n");
+              for (size_t j = 0; j < argc; ++j) {
+                TypeRelease(arena, arg_types[j]);
+              }
+              TypeRelease(arena, type);
+              return NULL;
+            }
+
+            FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
+            apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+            apply_instr->exit = exit && (i+1 == argc);
+            FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
+
+            normal = Normal(func_type->rtype);
+          }
+
+          for (size_t i = 0; i < argc; ++i) {
+            TypeRelease(arena, arg_types[i]);
+          }
+
+          TypeRetain(arena, normal);
           TypeRelease(arena, type);
-          return NULL;
+          return normal;
         }
 
-        UnaryType* input_type = (UnaryType*)normal;
-        FbleGetInstr* get_instr = FbleAlloc(arena_, FbleGetInstr);
-        get_instr->_base.tag = FBLE_GET_INSTR;
-        FbleVectorAppend(arena_, *instrs, &get_instr->_base);
+        case INPUT_TYPE: {
+          // FBLE_GET_EXPR
+          if (argc != 0) {
+            FbleReportError("too many arguments to get. expected 0.\n", &expr->loc);
+            for (size_t i = 0; i < argc; ++i) {
+              TypeRelease(arena, arg_types[i]);
+            }
+            TypeRelease(arena, type);
+            return NULL;
+          }
 
-        UnaryType* proc_type = FbleAlloc(arena_, UnaryType);
-        FbleRefInit(arena, &proc_type->_base.ref);
-        proc_type->_base.tag = PROC_TYPE;
-        proc_type->_base.loc = expr->loc;
-        proc_type->_base.evaluating = false;
-        proc_type->type = input_type->type;
-        FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
-        TypeRelease(arena, type);
-        CompileExit(arena_, exit, instrs);
-        return &proc_type->_base;
-      }
+          UnaryType* input_type = (UnaryType*)normal;
+          FbleGetInstr* get_instr = FbleAlloc(arena_, FbleGetInstr);
+          get_instr->_base.tag = FBLE_GET_INSTR;
+          FbleVectorAppend(arena_, *instrs, &get_instr->_base);
 
-      if (normal->tag == OUTPUT_TYPE) {
-        // FBLE_PUT_EXPR
-        if (misc_apply_expr->args.size != 1) {
-          FbleReportError("wrong number of arguments to put. expected 1.\n", &expr->loc);
+          UnaryType* proc_type = FbleAlloc(arena_, UnaryType);
+          FbleRefInit(arena, &proc_type->_base.ref);
+          proc_type->_base.tag = PROC_TYPE;
+          proc_type->_base.loc = expr->loc;
+          proc_type->_base.evaluating = false;
+          proc_type->type = input_type->type;
+          FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
           TypeRelease(arena, type);
-          return NULL;
+          CompileExit(arena_, exit, instrs);
+          return &proc_type->_base;
         }
 
-        UnaryType* output_type = (UnaryType*)normal;
+        case OUTPUT_TYPE: {
+          // FBLE_PUT_EXPR
+          if (argc != 1) {
+            FbleReportError("wrong number of arguments to put. expected 1.\n", &expr->loc);
+            for (size_t i = 0; i < argc; ++i) {
+              TypeRelease(arena, arg_types[i]);
+            }
+            TypeRelease(arena, type);
+            return NULL;
+          }
 
-        // Compile the argument.
-        FbleExpr* arg = misc_apply_expr->args.xs[0];
-        Type* arg_type = CompileExpr(arena, false, vars, arg, instrs);
-        bool error = (arg_type == NULL);
+          UnaryType* output_type = (UnaryType*)normal;
+          if (!TypesEqual(output_type->type, arg_types[0], NULL)) {
+            FbleReportError("expected type ", &misc_apply_expr->args.xs[0]->loc);
+            PrintType(arena_, output_type->type, NULL);
+            fprintf(stderr, ", but found ");
+            PrintType(arena_, arg_types[0], NULL);
+            fprintf(stderr, "\n");
 
-        if (arg_type != NULL && !TypesEqual(output_type->type, arg_type, NULL)) {
-          FbleReportError("expected type ", &arg->loc);
-          PrintType(arena_, output_type->type, NULL);
-          fprintf(stderr, ", but found ");
-          PrintType(arena_, arg_type, NULL);
+            TypeRelease(arena, arg_types[0]);
+            TypeRelease(arena, type);
+            return NULL;
+          }
+
+          TypeRelease(arena, arg_types[0]);
+
+          FblePutInstr* put_instr = FbleAlloc(arena_, FblePutInstr);
+          put_instr->_base.tag = FBLE_PUT_INSTR;
+          FbleVectorAppend(arena_, *instrs, &put_instr->_base);
+
+          UnaryType* proc_type = FbleAlloc(arena_, UnaryType);
+          FbleRefInit(arena, &proc_type->_base.ref);
+          proc_type->_base.tag = PROC_TYPE;
+          proc_type->_base.loc = expr->loc;
+          proc_type->_base.evaluating = false;
+          proc_type->type = output_type->type;
+          FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
+          TypeRelease(arena, type);
+          CompileExit(arena_, exit, instrs);
+          return &proc_type->_base;
+        }
+
+        case TYPE_TYPE: {
+          // FBLE_STRUCT_VALUE_EXPR
+          Type* vtype = ValueOfType(arena, normal);
+          assert(vtype != NULL && "Value of type type is not a type?");
+          TypeRelease(arena, type);
+
+          StructType* struct_type = (StructType*)Normal(vtype);
+          if (struct_type->_base.tag != STRUCT_TYPE) {
+            FbleReportError("expected a struct type, but found ", &misc_apply_expr->misc->loc);
+            PrintType(arena_, vtype, NULL);
+            fprintf(stderr, "\n");
+            for (size_t i = 0; i < argc; ++i) {
+              TypeRelease(arena, arg_types[i]);
+            }
+            TypeRelease(arena, vtype);
+            return NULL;
+          }
+
+          if (struct_type->fields.size != argc) {
+            // TODO: Where should the error message go?
+            FbleReportError("expected %i args, but %i were provided\n",
+                &expr->loc, struct_type->fields.size, argc);
+            for (size_t i = 0; i < argc; ++i) {
+              TypeRelease(arena, arg_types[i]);
+            }
+            TypeRelease(arena, vtype);
+            return NULL;
+          }
+
+          bool error = false;
+          for (size_t i = 0; i < argc; ++i) {
+            Field* field = struct_type->fields.xs + i;
+
+            if (!TypesEqual(field->type, arg_types[i], NULL)) {
+              FbleReportError("expected type ", &misc_apply_expr->args.xs[i]->loc);
+              PrintType(arena_, field->type, NULL);
+              fprintf(stderr, ", but found ");
+              PrintType(arena_, arg_types[i], NULL);
+              fprintf(stderr, "\n");
+              error = true;
+            }
+            TypeRelease(arena, arg_types[i]);
+          }
+
+          if (error) {
+            TypeRelease(arena, vtype);
+            return NULL;
+          }
+
+          FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
+          struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+          struct_instr->argc = struct_type->fields.size;
+          FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
+          CompileExit(arena_, exit, instrs);
+          return vtype;
+        }
+
+        default: {
+          FbleReportError("Expecting a function, port, or struct type, but found something of type: ", &expr->loc);
+          PrintType(arena_, type, NULL);
           fprintf(stderr, "\n");
-          error = true;
-        }
-
-        TypeRelease(arena, arg_type);
-
-        if (error) {
+          for (size_t i = 0; i < argc; ++i) {
+            TypeRelease(arena, arg_types[i]);
+          }
           TypeRelease(arena, type);
           return NULL;
         }
-
-        FblePutInstr* put_instr = FbleAlloc(arena_, FblePutInstr);
-        put_instr->_base.tag = FBLE_PUT_INSTR;
-        FbleVectorAppend(arena_, *instrs, &put_instr->_base);
-
-        UnaryType* proc_type = FbleAlloc(arena_, UnaryType);
-        FbleRefInit(arena, &proc_type->_base.ref);
-        proc_type->_base.tag = PROC_TYPE;
-        proc_type->_base.loc = expr->loc;
-        proc_type->_base.evaluating = false;
-        proc_type->type = output_type->type;
-        FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
-        TypeRelease(arena, type);
-        CompileExit(arena_, exit, instrs);
-        return &proc_type->_base;
       }
 
-      // FBLE_STRUCT_VALUE_EXPR
-      Type* vtype = ValueOfType(arena, normal);
-      TypeRelease(arena, type);
-      if (vtype == NULL) {
-        FbleReportError("expected a type.\n", &misc_apply_expr->misc->loc);
-        return NULL;
-      }
-
-      StructType* struct_type = (StructType*)Normal(vtype);
-      if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected a struct type, but found ", &misc_apply_expr->misc->loc);
-        PrintType(arena_, vtype, NULL);
-        fprintf(stderr, "\n");
-        TypeRelease(arena, vtype);
-        return NULL;
-      }
-
-      if (struct_type->fields.size != misc_apply_expr->args.size) {
-        // TODO: Where should the error message go?
-        FbleReportError("expected %i args, but %i were provided\n",
-            &expr->loc, struct_type->fields.size, misc_apply_expr->args.size);
-        TypeRelease(arena, vtype);
-        return NULL;
-      }
-
-      bool error = false;
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        Field* field = struct_type->fields.xs + i;
-
-        Type* arg_type = CompileExpr(arena, false, vars, misc_apply_expr->args.xs[i], instrs);
-        error = error || (arg_type == NULL);
-
-        if (arg_type != NULL && !TypesEqual(field->type, arg_type, NULL)) {
-          FbleReportError("expected type ", &misc_apply_expr->args.xs[i]->loc);
-          PrintType(arena_, field->type, NULL);
-          fprintf(stderr, ", but found ");
-          PrintType(arena_, arg_type, NULL);
-          fprintf(stderr, "\n");
-          error = true;
-        }
-        TypeRelease(arena, arg_type);
-      }
-
-      if (error) {
-        TypeRelease(arena, vtype);
-        return NULL;
-      }
-
-      FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
-      struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
-      struct_instr->argc = struct_type->fields.size;
-      FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
-      CompileExit(arena_, exit, instrs);
-      return vtype;
+      UNREACHABLE("Should never get here");
     }
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
@@ -1805,22 +1879,24 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       struct_type->_base.evaluating = false;
       FbleVectorInit(arena_, struct_type->fields);
 
-      FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
-      instr->_base.tag = FBLE_TYPE_INSTR;
-      FbleVectorAppend(arena_, *instrs, &instr->_base);
-
+      size_t argc = struct_expr->args.size;
+      Type* arg_types[argc];
       bool error = false;
-      for (size_t i = 0; i < struct_expr->args.size; ++i) {
-        FbleChoice* choice = struct_expr->args.xs + i;
-        Type* arg_type = CompileExpr(arena, false, vars, choice->expr, instrs);
-        error = error || (arg_type == NULL);
+      for (size_t i = 0; i < argc; ++i) {
+        size_t j = argc - i - 1;
+        FbleChoice* choice = struct_expr->args.xs + j;
+        arg_types[j] = CompileExpr(arena, false, vars, choice->expr, instrs);
+        error = error || (arg_types[j] == NULL);
+      }
 
-        if (arg_type != NULL) {
+      for (size_t i = 0; i < argc; ++i) {
+        FbleChoice* choice = struct_expr->args.xs + i;
+        if (arg_types[i] != NULL) {
           Field* cfield = FbleVectorExtend(arena_, struct_type->fields);
           cfield->name = choice->name;
-          cfield->type = arg_type;
+          cfield->type = arg_types[i];
           FbleRefAdd(arena, &struct_type->_base.ref, &cfield->type->ref);
-          TypeRelease(arena, arg_type);
+          TypeRelease(arena, arg_types[i]);
         }
 
         for (size_t j = 0; j < i; ++j) {
@@ -1835,6 +1911,10 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
         TypeRelease(arena, &struct_type->_base);
         return NULL;
       }
+
+      FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
+      instr->_base.tag = FBLE_TYPE_INSTR;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
 
       FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
@@ -2142,55 +2222,6 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       }
 
       return type;
-    }
-
-    case FBLE_FUNC_APPLY_EXPR: {
-      FbleFuncApplyExpr* apply_expr = (FbleFuncApplyExpr*)expr;
-
-      // Compile the argument.
-      Type* arg_type = CompileExpr(arena, false, vars, apply_expr->arg, instrs);
-      if (arg_type == NULL) {
-        return NULL;
-      }
-
-      // Compile the function value.
-      Type* type = CompileExpr(arena, false, vars, apply_expr->func, instrs);
-      if (type == NULL) {
-        TypeRelease(arena, arg_type);
-        return NULL;
-      }
-
-      FuncType* func_type = (FuncType*)Normal(type);
-      if (func_type->_base.tag != FUNC_TYPE) {
-        FbleReportError("expected function, but found something of type ", &expr->loc);
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
-        TypeRelease(arena, arg_type);
-        TypeRelease(arena, type);
-        return NULL;
-      }
-
-      if (arg_type != NULL && !TypesEqual(func_type->arg, arg_type, NULL)) {
-        FbleReportError("expected type ", &apply_expr->arg->loc);
-        PrintType(arena_, func_type->arg, NULL);
-        fprintf(stderr, ", but found ");
-        PrintType(arena_, arg_type, NULL);
-        fprintf(stderr, "\n");
-        TypeRelease(arena, arg_type);
-        TypeRelease(arena, type);
-        return NULL;
-      }
-
-      TypeRelease(arena, arg_type);
-
-      FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
-      apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
-      apply_instr->exit = exit;
-      FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
-
-      Type* rtype = TypeRetain(arena, func_type->rtype);
-      TypeRelease(arena, type);
-      return rtype;
     }
 
     case FBLE_EVAL_EXPR: {
@@ -2967,7 +2998,6 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_FUNC_APPLY_EXPR:
     case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR:

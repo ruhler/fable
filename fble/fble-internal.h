@@ -59,7 +59,7 @@ typedef struct {
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
 //
-// data_stack:  ..., type, a1, a2, ..., aN
+// data_stack:  ..., aN, ..., a2, a1, type
 //         ==>  ..., struct(a1, a2, ..., aN)
 typedef struct {
   FbleInstr _base;
@@ -163,7 +163,7 @@ typedef struct {
 // FblePutInstr -- FBLE_PUT_INSTR
 //   Allocate an FblePutProcValue.
 //
-// data_stack: ..., port, arg
+// data_stack: ..., arg, port
 //         ==> ..., put(port, arg)
 typedef struct {
   FbleInstr _base;
