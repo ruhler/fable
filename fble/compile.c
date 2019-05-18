@@ -1798,10 +1798,21 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
           return &proc_type->_base;
         }
 
+        case POLY_APPLY_TYPE:
         case TYPE_TYPE: {
           // FBLE_STRUCT_VALUE_EXPR
           Type* vtype = ValueOfType(arena, normal);
-          assert(vtype != NULL && "Value of type type is not a type?");
+          if (vtype == NULL) {
+            FbleReportError("expected a type, but found ", &misc_apply_expr->misc->loc);
+            PrintType(arena_, type, NULL);
+            fprintf(stderr, "\n");
+            for (size_t i = 0; i < argc; ++i) {
+              TypeRelease(arena, arg_types[i]);
+            }
+            TypeRelease(arena, vtype);
+            return NULL;
+          }
+
           TypeRelease(arena, type);
 
           StructType* struct_type = (StructType*)Normal(vtype);
@@ -2660,6 +2671,8 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       pat->arg = NULL;
       pat->result = NULL;
 
+      // Note: typeof(f<x>) = typeof(f)<x>
+      // CompileExpr gives us typeof(apply->poly)
       pat->poly = CompileExpr(arena, exit, vars, apply->poly, instrs);
       if (pat->poly == NULL) {
         TypeRelease(arena, &pat->_base);
@@ -2668,6 +2681,7 @@ static Type* CompileExpr(TypeArena* arena, bool exit, Vars* vars, FbleExpr* expr
       FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
       TypeRelease(arena, pat->poly);
 
+      // Note: CompileType gives us the value of apply->arg
       pat->arg = CompileType(arena, vars, apply->arg);
       if (pat->arg == NULL) {
         TypeRelease(arena, &pat->_base);
