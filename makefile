@@ -21,7 +21,7 @@ perf:
 	./out/fble/fble-test prgms/AllTests.fble prgms
 	mkdir -p perf
 	gprof out/fble/fble-test > perf/gprof.txt
-	gcov out/fble/obj/{eval,compile,ref,value}.o > perf/fble.gcov
+	gcov out/fble/obj/eval.o out/fble/obj/compile.o out/fble/obj/ref.o out/fble/obj/value.o> perf/fble.gcov
 	mv *.gcov perf/
 	rm gmon.out
 

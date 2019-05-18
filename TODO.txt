@@ -5,11 +5,10 @@
    proc_get, proc_put, proc_eval, proc_link, proc_exec
    poly_value, poly_apply
 * [prgm] Implement game of life.
-
 * [perf] Avoid allocating at every call to PushData
-* [perf] For func apply, avoid retain/release of each thunk, we ought to just
-  release the top level function as a whole when done with everything.
 * [perf] Avoid extra retain/release for Deref if at all possible
+* [build] move 'perf' logic to build.fble.tcl
+
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.

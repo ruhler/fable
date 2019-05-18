@@ -541,16 +541,15 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             thread->scope_stack = ExitScope(arena, thread->scope_stack);
           }
         } else {
-          while (func->tag == FBLE_THUNK_FUNC_VALUE) {
-            FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)func;
+          FbleFuncValue* f = func;
+          while (f->tag == FBLE_THUNK_FUNC_VALUE) {
+            FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
             thread->data_stack = PushData(arena_, FbleValueRetain(arena, thunk->arg), thread->data_stack);
-            func = thunk->func;
-            FbleValueRetain(arena, &func->_base);
-            FbleValueRelease(arena, &thunk->_base._base);
+            f = thunk->func;
           }
 
-          assert(func->tag == FBLE_BASIC_FUNC_VALUE);
-          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)func;
+          assert(f->tag == FBLE_BASIC_FUNC_VALUE);
+          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)f;
           thread->data_stack = RestoreScope(arena, basic->scope, thread->data_stack);
           if (func_apply_instr->exit) {
             thread->scope_stack = ChangeScope(arena, basic->body, thread->scope_stack);
