@@ -38,10 +38,10 @@ Md5.Test { @(Md5TestFailure@: TestFailure@); };
 S@<TestFailure@>! Test = {
   S@<Md5TestFailure@> md5 := Md5.Test.Test(Unit@());
   $(Concat<TestFailure@>(S4<S@<TestFailure@>>
-          (MapS<UBNatTestFailure@><TestFailure@>(UBNatTestFailureF, UBNat.Test.Test(Unit@())))
-          (MapS<PrimesTestFailure@><TestFailure@>(PrimesTestFailureF, Primes.Test.Test(Unit@())))
-          (MapS<ListTestFailure@><TestFailure@>(ListTestFailureF, StdLibTest.ListTest.Test(Unit@())))
-          (MapS<Md5TestFailure@><TestFailure@>(Md5TestFailureF, md5))
+          (MapS<UBNatTestFailure@, TestFailure@>(UBNatTestFailureF, UBNat.Test.Test(Unit@())))
+          (MapS<PrimesTestFailure@, TestFailure@>(PrimesTestFailureF, Primes.Test.Test(Unit@())))
+          (MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLibTest.ListTest.Test(Unit@())))
+          (MapS<Md5TestFailure@, TestFailure@>(Md5TestFailureF, md5))
           ));
 };
 
