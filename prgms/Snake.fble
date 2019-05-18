@@ -11,14 +11,14 @@ Draw { @(Color@, Draw@); };
 
 
 Nat@ MinRow = 0;
-Nat@ MaxRow = Lit2[2][0];
+Nat@ MaxRow = Lit2(2, 0);
 Nat@ MinCol = 0;
-Nat@ MaxCol = Lit2[6][0];
+Nat@ MaxCol = Lit2(6, 0);
 
 @ Pos@ = *(Nat@ row, Nat@ col);
 
-[Pos@][Pos@]{Bool@;} EqPos = [Pos@ a][Pos@ b] {
-  And[EqNat[a.row][b.row]][EqNat[a.col][b.col]];
+(Pos@, Pos@){Bool@;} EqPos = (Pos@ a, Pos@ b) {
+  And(EqNat(a.row, b.row), EqNat(a.col, b.col));
 };
 
 @ Direction@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
@@ -27,7 +27,7 @@ Nat@ MaxCol = Lit2[6][0];
 
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
-[Pos@][Cell@]{Draw@;} DrawCell = [Pos@ pos][Cell@ cell] {
+(Pos@, Cell@){Draw@;} DrawCell = (Pos@ pos, Cell@ cell) {
   Color@ c = ?(cell; empty: Color@(black: Unit@()),
                      snake: Color@(blue: Unit@()),
                      food: Color@(green: Unit@()));
@@ -46,25 +46,25 @@ Nat@ MaxCol = Lit2[6][0];
 @ State@ = *(Direction@ dir, Pos@ food, Pos@ nfood, P@<Pos@> snake);
 
 # TODO: Use MapS for this
-[S@<Pos@>]{S@<Draw@>;} DrawSnakeS = [S@<Pos@> s] {
-  ?(s; cons: S@<Draw@>(cons: DrawSnakeP[s.cons]), nil: S@<Draw@>(nil: Unit@()));
+(S@<Pos@>){S@<Draw@>;} DrawSnakeS = (S@<Pos@> s) {
+  ?(s; cons: S@<Draw@>(cons: DrawSnakeP(s.cons)), nil: S@<Draw@>(nil: Unit@()));
 },
-[P@<Pos@>]{P@<Draw@>;} DrawSnakeP = [P@<Pos@> s] {
-  P@<Draw@>(DrawCell[s.head][Cell@(snake: Unit@())], DrawSnakeS[s.tail]);
+(P@<Pos@>){P@<Draw@>;} DrawSnakeP = (P@<Pos@> s) {
+  P@<Draw@>(DrawCell(s.head, Cell@(snake: Unit@())), DrawSnakeS(s.tail));
 };
 
-[State@]{S@<Draw@>;} DrawState = [State@ s] {
-  S@<Draw@>(cons: P@<Draw@>(DrawCell[s.food][Cell@(food: Unit@())],
-  S@<Draw@>(cons: DrawSnakeP[s.snake])));
+(State@){S@<Draw@>;} DrawState = (State@ s) {
+  S@<Draw@>(cons: P@<Draw@>(DrawCell(s.food, Cell@(food: Unit@())),
+  S@<Draw@>(cons: DrawSnakeP(s.snake))));
 };
 
 State@ InitialState = {
   Nat@ c0 = MinCol;
-  Nat@ c1 = Inc[c0]; Nat@ c2 = Inc[c1];
-  Nat@ c3 = Inc[c2]; Nat@ c4 = Inc[c3];
+  Nat@ c1 = Inc(c0); Nat@ c2 = Inc(c1);
+  Nat@ c3 = Inc(c2); Nat@ c4 = Inc(c3);
   Nat@ r0 = MinRow;
-  Nat@ r1 = Inc[r0]; Nat@ r2 = Inc[r1];
-  Nat@ r3 = Inc[r2]; Nat@ r4 = Inc[r3];
+  Nat@ r1 = Inc(r0); Nat@ r2 = Inc(r1);
+  Nat@ r3 = Inc(r2); Nat@ r4 = Inc(r3);
   State@(
       Direction@(right: Unit@()),
       Pos@(r4, c1),
@@ -80,81 +80,81 @@ State@ InitialState = {
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
-[S@<Pos@>][Pos@]{Bool@;} InPosS = [S@<Pos@> s][Pos@ p] {
-  ?(s ; cons: InPosP[s.cons][p], nil: False);
+(S@<Pos@>, Pos@){Bool@;} InPosS = (S@<Pos@> s, Pos@ p) {
+  ?(s ; cons: InPosP(s.cons, p), nil: False);
 },
-[P@<Pos@>][Pos@]{Bool@;} InPosP = [P@<Pos@> s][Pos@ p] {
-  ?(EqPos[s.head][p]; true: True, false: InPosS[s.tail][p]);
+(P@<Pos@>, Pos@){Bool@;} InPosP = (P@<Pos@> s, Pos@ p) {
+  ?(EqPos(s.head, p); true: True, false: InPosS(s.tail, p));
 };
 
 
-[State@]{MoveResultM@;} Move = [State@ s] {
+(State@){MoveResultM@;} Move = (State@ s) {
   PosM@ pm = ?(s.dir;
     up:
-    ?(EqNat[s.snake.head.row][MaxRow];
+    ?(EqNat(s.snake.head.row, MaxRow);
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(Inc[s.snake.head.row], s.snake.head.col))),
+       false: PosM@(pos: Pos@(Inc(s.snake.head.row), s.snake.head.col))),
 
     down:
-    ?(EqNat[s.snake.head.row][MinRow];
+    ?(EqNat(s.snake.head.row, MinRow);
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(Dec[s.snake.head.row], s.snake.head.col))),
+       false: PosM@(pos: Pos@(Dec(s.snake.head.row), s.snake.head.col))),
 
     left:
-    ?(EqNat[s.snake.head.col][MinCol];
+    ?(EqNat(s.snake.head.col, MinCol);
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(s.snake.head.row, Dec[s.snake.head.col]))),
+       false: PosM@(pos: Pos@(s.snake.head.row, Dec(s.snake.head.col)))),
 
     right:
-    ?(EqNat[s.snake.head.col][MaxCol];
+    ?(EqNat(s.snake.head.col, MaxCol);
         true: PosM@(dead: Unit@()),
-       false: PosM@(pos: Pos@(s.snake.head.row, Inc[s.snake.head.col]))));
+       false: PosM@(pos: Pos@(s.snake.head.row, Inc(s.snake.head.col)))));
 
   ?(pm; dead: MoveResultM@(dead: Unit@()), pos:
-      ?(EqPos[pm.pos][s.food];
+      ?(EqPos(pm.pos, s.food);
           true: {
             # TODO: Properly handle the case where the snake eats food at its
             # tail.
             P@<Pos@> nsnake = P@<Pos@>(s.food, S@<Pos@>(cons: s.snake));
             State@ ns = State@(s.dir, s.nfood, s.nfood, nsnake);
-            S@<Draw@> draw = S@<Draw@>(cons: P@<Draw@>(DrawCell[s.food][Cell@(snake: Unit@())],
-                        S@<Draw@>(cons: P@<Draw@>(DrawCell[s.nfood][Cell@(food: Unit@())],
+            S@<Draw@> draw = S@<Draw@>(cons: P@<Draw@>(DrawCell(s.food, Cell@(snake: Unit@())),
+                        S@<Draw@>(cons: P@<Draw@>(DrawCell(s.nfood, Cell@(food: Unit@())),
                         S@<Draw@>(nil: Unit@())))));
             MoveResultM@(mr: MoveResult@(ns, draw));
           },
           false:
-          ?(InPosP[s.snake][pm.pos]; true: MoveResultM@(dead: Unit@()),
+          ?(InPosP(s.snake, pm.pos); true: MoveResultM@(dead: Unit@()),
             false: {
               # TODO: Combine calls to Init and Last so we only have to
               # iterate over the list of elements once instead of twice?
-              P@<Pos@> nsnake = P@<Pos@>(pm.pos, InitP<Pos@>[s.snake]);
-              Pos@ nfood = LastP<Pos@>[s.snake];
+              P@<Pos@> nsnake = P@<Pos@>(pm.pos, InitP<Pos@>(s.snake));
+              Pos@ nfood = LastP<Pos@>(s.snake);
               State@ ns = State@(s.dir, s.food, nfood, nsnake);
-              S@<Draw@> draw = S@<Draw@>(cons: P@<Draw@>(DrawCell[pm.pos][Cell@(snake: Unit@())],
-                           S@<Draw@>(cons: P@<Draw@>(DrawCell[nfood][Cell@(empty: Unit@())],
+              S@<Draw@> draw = S@<Draw@>(cons: P@<Draw@>(DrawCell(pm.pos, Cell@(snake: Unit@())),
+                           S@<Draw@>(cons: P@<Draw@>(DrawCell(nfood, Cell@(empty: Unit@())),
                            S@<Draw@>(nil: Unit@())))));
               MoveResultM@(mr: MoveResult@(ns, draw));
             })));
 };
 
-[Input@-][S@<Draw@>+][State@]{Unit@!;} Snake = [Input@- in][S@<Draw@>+ out][State@ s] {
+(Input@-, S@<Draw@>+, State@){Unit@!;} Snake = (Input@- in, S@<Draw@>+ out, State@ s) {
   Input@ x := in();
-  ?(x; dir: Snake[in][out][State@(x.dir, s.food, s.nfood, s.snake)],
+  ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
        tick: {
-           MoveResultM@ m := $(Move[s]);
+           MoveResultM@ m := $(Move(s));
            ?(m;
               dead: $(Unit@()),
               mr: {
                  S@<Draw@> drawn := out(m.mr.draw);
-                 Snake[in][out][m.mr.state];
+                 Snake(in, out, m.mr.state);
               });
        });
 };
 
-[Input@-][S@<Draw@>+]{Unit@!;} Main = [Input@- in][S@<Draw@>+ out] {
+(Input@-, S@<Draw@>+){Unit@!;} Main = (Input@- in, S@<Draw@>+ out) {
   State@ s = InitialState;
-  S@<Draw@> drawn := out(DrawState[s]);
-  Snake[in][out][s];
+  S@<Draw@> drawn := out(DrawState(s));
+  Snake(in, out, s);
 };
 
 Main;

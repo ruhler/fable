@@ -1,6 +1,3 @@
-* [lang] Switch to using multi-arg functions
- - Fix issue with polymorphic apply.
- - Switch to using multi-arg functions in all prgms/
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_type, func_value, func_apply, func_bind
