@@ -6,7 +6,8 @@
    poly_value, poly_apply
 * [prgm] Implement game of life.
 * [perf] Avoid allocating at every call to PushData
-* [perf] Avoid extra retain/release for Deref if at all possible
+* [perf] Deref should auto transfer reference count to what it returns
+* [perf] Reuse a single common instance of the FBLE_TYPE_VALUE
 * [build] move 'perf' logic to build.fble.tcl
 
 * [clean] Factor out common code for thunks used by func, link, and exec.
