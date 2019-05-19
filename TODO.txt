@@ -5,8 +5,6 @@
    proc_get, proc_put, proc_eval, proc_link, proc_exec
    poly_value, poly_apply
 * [prgm] Implement game of life.
-* [perf] Avoid allocating at every call to PushData
-* [perf] Deref should auto transfer reference count to what it returns
 * [perf] Reuse a single common instance of the FBLE_TYPE_VALUE
 * [build] move 'perf' logic to build.fble.tcl
 

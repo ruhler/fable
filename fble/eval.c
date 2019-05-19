@@ -9,11 +9,22 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+#define DATA_STACK_CHUNK_SIZE 64
+
 // DataStack --
 //   A stack of data values.
+//
+// Fields:
+//   values - a chunk of values at the top of the stack.
+//   pos - the index of the next place to put a value in the values array.
+//   tail - the bottom chunks of the stack.
+//   next - an optional cached, currently unused chunk of the stack whose tail
+//          points to this chunk of the stack.
 typedef struct DataStack {
-  FbleValue* value;
+  FbleValue* values[DATA_STACK_CHUNK_SIZE];
+  size_t pos;
   struct DataStack* tail;
+  struct DataStack* next;
 } DataStack;
 
 // ScopeStack --
@@ -69,12 +80,16 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
 static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scopes);
 static void PopVar(FbleArena* arena, ScopeStack* scopes);
-static bool DataStackIsEmpty(Thread* thread);
 static FbleValue* GetVar(ScopeStack* scopes, size_t position);
 static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value);
+
+static void InitDataStack(FbleArena* arena, Thread* thread);
+static void FreeDataStack(FbleArena* arena, Thread* thread);
+static bool DataStackIsEmpty(Thread* thread);
 static void PushData(FbleArena* arena, FbleValue* value, Thread* thread);
 static FbleValue* PopData(FbleArena* arena, Thread* thread);
 static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Thread* thread);
+
 static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail);
 static ScopeStack* ExitScope(FbleValueArena* arena, ScopeStack* stack);
 static ScopeStack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, ScopeStack* stack);
@@ -194,6 +209,76 @@ static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value)
   scopes->vars.xs[scopes->vars.size - 1 - position] = value;
 }
 
+// InitDataStack --
+//   Initialize an empty data stack for the given thread.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   thread - the thread to initialize the data stack for.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Initializes the data stack. The stack must be freed with FreeDataStack
+//   when no longer in use.
+static void InitDataStack(FbleArena* arena, Thread* thread)
+{
+  thread->data_stack = FbleAlloc(arena, DataStack);
+  thread->data_stack->pos = 0;
+  thread->data_stack->tail = NULL;
+  thread->data_stack->next = NULL;
+}
+
+// FreeDataStack --
+//   Free resources associated with the data stack for the given thread.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   thread - the thread whose data stack to free.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Frees resources associated with the data stack for the given thread.
+static void FreeDataStack(FbleArena* arena, Thread* thread)
+{
+  assert(thread->data_stack != NULL);
+  assert(DataStackIsEmpty(thread));
+
+  DataStack* next = thread->data_stack->next;
+  while (next != NULL) {
+    DataStack* new_next = next->next;
+    FbleFree(arena, next);
+    next = new_next;
+  }
+
+  DataStack* stack = thread->data_stack;
+  while (stack != NULL) {
+    DataStack* tail = stack->tail;
+    FbleFree(arena, stack);
+    stack = tail;
+  }
+  thread->data_stack = NULL;
+}
+
+// DataStackIsEmpty --
+//   Returns true if the data stack for the given thread is empty.
+//
+// Inputs:
+//   thread - the thread to check.
+//
+// Results:
+//   true if the thread's data stack is empty.
+//
+// Side effects:
+//   None.
+static bool DataStackIsEmpty(Thread* thread)
+{
+  return (thread->data_stack->tail == NULL && thread->data_stack->pos == 0);
+}
+
 // PushData --
 //   Push a value onto the data stack of a thread.
 //
@@ -210,10 +295,18 @@ static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value)
 //   with PopData when done.
 static void PushData(FbleArena* arena, FbleValue* value, Thread* thread)
 {
-  DataStack* stack = FbleAlloc(arena, DataStack);
-  stack->value = value;
-  stack->tail = thread->data_stack;
-  thread->data_stack = stack;
+  DataStack* stack = thread->data_stack;
+  assert(stack->pos < DATA_STACK_CHUNK_SIZE);
+  stack->values[stack->pos++] = value;
+  if (stack->pos == DATA_STACK_CHUNK_SIZE) {
+    if (stack->next == NULL) {
+      stack->next = FbleAlloc(arena, DataStack);
+      stack->next->pos = 0;
+      stack->next->tail = stack;
+      stack->next->next = NULL;
+    }
+    thread->data_stack = stack->next;
+  }
 }
 
 // PopData --
@@ -232,12 +325,15 @@ static void PushData(FbleArena* arena, FbleValue* value, Thread* thread)
 //   The behavior is undefined if there are no elements on the stack.
 static FbleValue* PopData(FbleArena* arena, Thread* thread)
 {
-  assert(thread->data_stack != NULL);
   DataStack* stack = thread->data_stack;
-  FbleValue* value = stack->value;
-  thread->data_stack = stack->tail;
-  FbleFree(arena, stack);
-  return value;
+  if (stack->pos == 0) {
+    if (stack->next != NULL) {
+      FbleFree(arena, stack->next);
+      stack->next = NULL;
+    }
+    thread->data_stack = stack->tail;
+  }
+  return thread->data_stack->values[--thread->data_stack->pos];
 }
 
 // PopTaggedData --
@@ -281,23 +377,6 @@ static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Thread*
   FbleValueRelease(arena, original);
   return value;
 }
-
-// DataStackIsEmpty --
-//   Returns true if the data stack for the given thread is empty.
-//
-// Inputs:
-//   thread - the thread to check.
-//
-// Results:
-//   true if the thread's data stack is empty.
-//
-// Side effects:
-//   None.
-static bool DataStackIsEmpty(Thread* thread)
-{
-  return thread->data_stack == NULL;
-}
-
 
 // EnterScope --
 //   Push a scope onto the scope stack.
@@ -693,7 +772,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         for (size_t i = 0; i < thread->children.size; ++i) {
           Thread* child = thread->children.xs[i];
           FbleValue* result = PopData(arena_, child);
-          assert(DataStackIsEmpty(child));
+          FreeDataStack(arena_, child);
           assert(child->scope_stack == NULL);
           assert(child->iquota == 0);
           FbleFree(arena_, child);
@@ -842,7 +921,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
             FbleVectorInit(arena_, thread->children);
             for (size_t i = 0; i < exec->bindings.size; ++i) {
               Thread* child = FbleAlloc(arena_, Thread);
-              child->data_stack = NULL;
+              InitDataStack(arena_, child);
               PushData(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), child);
               child->scope_stack = EnterScope(arena_, &g_proc_block, NULL);
               child->iquota = 0;
@@ -961,8 +1040,12 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
   FbleFree(arena_, thread->children.xs);
   thread->children.xs = NULL;
 
-  while (!DataStackIsEmpty(thread)) {
-    FbleValueRelease(arena, PopData(arena_, thread));
+  if (thread->data_stack != NULL) {
+    while (!DataStackIsEmpty(thread)) {
+      FbleValueRelease(arena, PopData(arena_, thread));
+    }
+    FreeDataStack(arena_, thread);
+    thread->data_stack = NULL;
   }
 
   while (thread->scope_stack != NULL) {
@@ -1029,6 +1112,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
     .children = {0, NULL},
     .aborted = false,
   };
+  InitDataStack(arena_, &thread);
 
   for (size_t i = 0; i < args.size; ++i) {
     PushData(arena_, FbleValueRetain(arena, args.xs[i]), &thread);
@@ -1061,7 +1145,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   // The thread should now be finished with a single value on the data stack
   // which is the value to return.
   FbleValue* final_result = PopData(arena_, &thread);
-  assert(DataStackIsEmpty(&thread));
+  FreeDataStack(arena_, &thread);
   assert(thread.scope_stack == NULL);
   assert(thread.children.size == 0);
   assert(thread.children.xs == NULL);
