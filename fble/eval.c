@@ -67,7 +67,6 @@ static FbleInstrBlock g_proc_block = {
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
-static FbleValue* Deref(FbleValueArena* arena, FbleValue* value, FbleValueTag tag);
 static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scopes);
 static void PopVar(FbleArena* arena, ScopeStack* scopes);
 static bool DataStackIsEmpty(Thread* thread);
@@ -75,6 +74,7 @@ static FbleValue* GetVar(ScopeStack* scopes, size_t position);
 static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value);
 static void PushData(FbleArena* arena, FbleValue* value, Thread* thread);
 static FbleValue* PopData(FbleArena* arena, Thread* thread);
+static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Thread* thread);
 static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, ScopeStack* tail);
 static ScopeStack* ExitScope(FbleValueArena* arena, ScopeStack* stack);
 static ScopeStack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, ScopeStack* stack);
@@ -108,43 +108,6 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst)
   if (dst != NULL) {
     FbleRefAdd(arena, &src->ref, &dst->ref);
   }
-}
-
-// Deref --
-//   Dereference a value. Removes all layers of reference values until a
-//   non-reference value is encountered and returns the non-reference value.
-//
-//   A tag for the type of dereferenced value should be provided. This
-//   function will assert that the correct kind of value is encountered.
-//
-// Inputs:
-//   arena - the arena to use for allocations.
-//   value - the value to dereference.
-//   tag - the expected tag of the dereferenced value.
-//
-// Results:
-//   The dereferenced value.
-//
-// Side effects:
-//   Releases the given value. Retains the returned value, so that the user is
-//   responsible for releasing the returned value when no longer needed.
-static FbleValue* Deref(FbleValueArena* arena, FbleValue* value, FbleValueTag tag)
-{
-  FbleValue* original = value;
-  while (value->tag == FBLE_REF_VALUE) {
-    FbleRefValue* rv = (FbleRefValue*)value;
-
-    // In theory, if static analysis was done properly, the code should never
-    // try to dereference an abstract reference value.
-    assert(rv->value != NULL && "dereference of abstract value");
-    value = rv->value;
-  }
-  assert(value->tag == tag);
-
-  // TODO: Only do retain/release if value != original to improve performance?
-  FbleValueRetain(arena, value);
-  FbleValueRelease(arena, original);
-  return value;
 }
 
 // PushVar --
@@ -276,6 +239,49 @@ static FbleValue* PopData(FbleArena* arena, Thread* thread)
   FbleFree(arena, stack);
   return value;
 }
+
+// PopTaggedData --
+//   Pop and retrieve the top value from the data stack for a thread.
+//   Dereferences the data value, removing all layers of reference values
+//   until a non-reference value is encountered and returns the non-reference
+//   value. 
+//
+//   A tag for the type of dereferenced value should be provided. This
+//   function will assert that the correct kind of value is encountered.
+//
+// Inputs:
+//   arena - the arena to use for deallocation.
+//   tag - the expected tag of the value.
+//   thread - the thread to pop and get the data from.
+//
+// Results:
+//   The popped and dereferenced value.
+//
+// Side effects:
+//   Pops the top data element off the thread's data stack. It is the user's
+//   job to release the returned value if necessary.
+//   The behavior is undefined if there are no elements on the stack.
+static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Thread* thread)
+{
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleValue* original = PopData(arena_, thread);
+  FbleValue* value = original;
+  while (value->tag == FBLE_REF_VALUE) {
+    FbleRefValue* rv = (FbleRefValue*)value;
+
+    // In theory, if static analysis was done properly, the code should never
+    // try to dereference an abstract reference value.
+    assert(rv->value != NULL && "dereference of abstract value");
+    value = rv->value;
+  }
+  assert(value->tag == tag);
+
+  // TODO: Only do retain/release if value != original to improve performance?
+  FbleValueRetain(arena, value);
+  FbleValueRelease(arena, original);
+  return value;
+}
+
 // DataStackIsEmpty --
 //   Returns true if the data stack for the given thread is empty.
 //
@@ -474,7 +480,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        FbleStructValue* sv = (FbleStructValue*)Deref(arena, PopData(arena_, thread), FBLE_STRUCT_VALUE);
+        FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
         assert(access_instr->tag < sv->fields.size);
         PushData(arena_, FbleValueRetain(arena, sv->fields.xs[access_instr->tag]), thread);
         FbleValueRelease(arena, &sv->_base);
@@ -484,7 +490,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleUnionValue* uv = (FbleUnionValue*)Deref(arena, PopData(arena_, thread), FBLE_UNION_VALUE);
+        FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, thread);
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
           FbleValueRelease(arena, &uv->_base);
@@ -498,7 +504,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_UNION_SELECT_INSTR: {
-        FbleUnionValue* uv = (FbleUnionValue*)Deref(arena, PopData(arena_, thread), FBLE_UNION_VALUE);
+        FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, thread);
         thread->scope_stack->pc += uv->tag;
         FbleValueRelease(arena, &uv->_base);
         break;
@@ -537,7 +543,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
 
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)Deref(arena, PopData(arena_, thread), FBLE_FUNC_VALUE);
+        FbleFuncValue* func = (FbleFuncValue*)PopTaggedData(arena, FBLE_FUNC_VALUE, thread);
         if (func->argc > 1) {
           FbleThunkFuncValue* value = FbleAlloc(arena_, FbleThunkFuncValue);
           FbleRefInit(arena, &value->_base._base.ref);
@@ -702,7 +708,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_PROC_INSTR: {
-        FbleProcValue* proc = (FbleProcValue*)Deref(arena, PopData(arena_, thread), FBLE_PROC_VALUE);
+        FbleProcValue* proc = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, thread);
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
@@ -887,7 +893,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
       }
 
       case FBLE_STRUCT_IMPORT_INSTR: {
-        FbleStructValue* sv = (FbleStructValue*)Deref(arena, PopData(arena_, thread), FBLE_STRUCT_VALUE);
+        FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
         for (size_t i = 0; i < sv->fields.size; ++i) {
           PushVar(arena_, FbleValueRetain(arena, sv->fields.xs[i]), thread->scope_stack);
         }
