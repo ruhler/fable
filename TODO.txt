@@ -1,17 +1,22 @@
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
-   func_value, func_apply, func_bind
+   func_apply, func_bind
    proc_type, proc_input_type, proc_output_type, 
    proc_get, proc_put, proc_eval, proc_link, proc_exec
    poly_value, poly_apply
+* [prgm] Design better unit test library
+ - Define a string type for test names and error messages
+  
+
 * [prgm] Implement game of life.
-* [perf] Reuse a single common instance of the FBLE_TYPE_VALUE
-* [build] move 'perf' logic to build.fble.tcl
 
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.
-
+* [perf] figure out how to use 'perf' for profiling?
+  perf record --call-graph dwarf [COMMAND]
+  perf report -g --stdio
+* [build] move 'perf' logic to build.fble.tcl
 * [test] partial function application and excessive function application.
 * [test] multi arg func, poly, kind are equivalent to nested single arg.
 * [perf] Optimize FbleRefAdd

@@ -968,3 +968,8 @@ Notes:
   Like string literals, integers, anything where you want to specify a dense
   amount of information for processing.
 
+* Is variable shadowing allowed?
+  Consider also the following cases:
+ - multi-arg functions with duplicate arg values.
+ - variables whose value we explicitly want to ignore, such as the result of a
+   bind or a put_proc.
