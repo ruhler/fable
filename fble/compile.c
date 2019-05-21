@@ -1252,9 +1252,9 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
 
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
-      fprintf(stderr, "[");
+      fprintf(stderr, "(");
       PrintType(arena, ft->arg, &nprinted);
-      fprintf(stderr, "]{");
+      fprintf(stderr, "){");
       PrintType(arena, ft->rtype, &nprinted);
       fprintf(stderr, ";}");
       break;

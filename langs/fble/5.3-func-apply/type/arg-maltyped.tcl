@@ -1,4 +1,4 @@
-fble-test {
+fble-test-error 12:7 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
@@ -8,6 +8,6 @@ fble-test {
     ?(x; true: false, false: true);
   };
 
-  # Basic test of a function application.
-  Not(false).true;
+  # The argument does not compile.
+  Not(zzz);
 }

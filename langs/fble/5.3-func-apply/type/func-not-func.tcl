@@ -5,5 +5,5 @@ fble-test-error 8:3 {
   Bool@ false = Bool@(false: Unit@());
 
   # The function is not a function.
-  Unit@()(false, true);
+  true(true);
 }

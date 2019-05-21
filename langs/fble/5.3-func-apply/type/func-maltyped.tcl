@@ -4,10 +4,10 @@ fble-test-error 12:3 {
   Bool@ true = Bool@(true: Unit@());
   Bool@ false = Bool@(false: Unit@());
 
-  (Bool@, Bool@) { Bool@; } Snd = (Bool@ x, Bool@ y) {
-    y;
+  (Bool@) { Bool@; } Not = (Bool@ x) {
+    ?(x; true: false, false: true);
   };
 
-  # The function is provided with too many arguments.
-  Snd(false, true, true);
+  # The function does not compile.
+  zzz(true);
 }

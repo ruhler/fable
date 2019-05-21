@@ -1,6 +1,6 @@
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
-   func_apply, func_bind
+   func_bind
    proc_type, proc_input_type, proc_output_type, 
    proc_get, proc_put, proc_eval, proc_link, proc_exec
    poly_value, poly_apply

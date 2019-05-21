@@ -1,0 +1,160 @@
+Fble Syntactic Sugar
+--------------------
+Things that are clunky to do in fble syntax today:
+
+1. String and integer literals
+------------------------------
+For example, we have from Md5:
+  Bit32@ t01 = H8(d, 7, 6, a, a, 4, 7, 8);
+
+I haven't even started using strings, because I assume the same:
+  String@ hello = S5(h, e, l, l, o);
+
+Ideally we have something more like:
+  Bit32@ t01 = 0xd76aa478;
+  String@ hello = "hello";
+
+Note:
+* ideal syntax supports arbitrary length. Today we have to define a
+  constructor for every different length, which is not reasonable.
+* ideal syntax has no separator between characters in the raw literal.
+* elements of the literal are raw characters, not fble expressions.
+
+Actual Uses:
+* Md5 for Bit32 literals.
+* String names and output descriptions for tests.
+
+More generally: any densely packed raw information of arbitrary length where
+explicit separators between units of information would lead to a significant
+amount of overhead.
+
+Proposal:
+* Allow any kind of name with '...' and '...'@
+Where ... is any sequence of characters aside from single quote. But we can
+escape single quote with single quote using ''
+
+For example:  'don''t use single quote'
+And that becomes an atomic name.
+* Allow string literal "...", which is any character except double quote. But
+  we can escape double quote using "".
+
+For example: "The double quote, "", is good to avoid"
+
+You specify a struct s for decoding the string literal. The mapping is as
+follows. For each character c in the string, you use the value of the field
+s.'c'. Then you have two special pre-named operations:
+s.cons, s.nil.
+
+Thus: s"do, not." is desugared to:
+  s.cons(s.'d',
+  s.cons(s.'o',
+  s.cons(s.',',
+  s.cons(s.' ', 
+  s.cons(s.'n', 
+  s.cons(s.'o', 
+  s.cons(s.'t', 
+  s.cons(s.'.', 
+  s.nil))))))))
+
+Sounds good to me. Only questions are: the precise syntax to use, and whether
+'cons' and 'nil' are the right names to use for the combination.
+
+2. Lists
+--------
+Today we have:
+    S9(a, b, c, d, e, f, g, h, i);
+or: A(a, A(b, A(c, A(d, ...))))
+
+Ideally we have something more like:
+  [a, b, c, d, e, f, g, h, i]
+
+Note:
+* ideal syntax supports arbitrary length.
+* ideal syntax lets you add something in the middle of the list without having
+  to change anything at the beginning or end of the list specification.
+* elements of the list are expressions.
+
+Actual Uses:
+* When forming lists of test cases for a test.
+
+Proposal:
+* Ideally we get something for free when we work out the proposal for monadic
+  syntactic sugar.
+
+3. Traversals
+-------------
+Today we have:
+
+func ChooseBestMove(Board b, Player x; Position) {
+  MaybePositionResult ul = MoveResult(b, x, Position:UL(Unit()));
+  MaybePositionResult uc = MoveResult(b, x, Position:UC(Unit()));
+  MaybePositionResult ur = MoveResult(b, x, Position:UR(Unit()));
+  MaybePositionResult ml = MoveResult(b, x, Position:ML(Unit()));
+  MaybePositionResult mc = MoveResult(b, x, Position:MC(Unit()));
+  MaybePositionResult mr = MoveResult(b, x, Position:MR(Unit()));
+  MaybePositionResult ll = MoveResult(b, x, Position:LL(Unit()));
+  MaybePositionResult lc = MoveResult(b, x, Position:LC(Unit()));
+  MaybePositionResult lr = MoveResult(b, x, Position:LR(Unit()));
+  MaybePositionResult best = 
+    ChooseBestMaybePosition(
+      ChooseBestMaybePosition(
+        ChooseBestMaybePosition(
+          ChooseBestMaybePosition(ul, uc),
+          ChooseBestMaybePosition(ur, ml)),
+        ChooseBestMaybePosition(
+          ChooseBestMaybePosition(mc, mr),
+          ChooseBestMaybePosition(ll, lc))),
+      lr);
+  best.Just.position;
+};
+ 
+Nicer would have been:
+  Best $ do
+    Pos@ p <- positions();
+    MaybePositionResult pr <- MoveResult(b, x, p);
+    ...
+
+Or for sudoku we have:
+    InitialRowConstraints(s1(), input.s1,
+    InitialRowConstraints(s2(), input.s2,
+    InitialRowConstraints(s3(), input.s3,
+    InitialRowConstraints(s4(), input.s4,
+    InitialRowConstraints(s5(), input.s5,
+    InitialRowConstraints(s6(), input.s6,
+    InitialRowConstraints(s7(), input.s7,
+    InitialRowConstraints(s8(), input.s8,
+    InitialRowConstraints(s9(), input.s9,
+      S0<Constraint>())))))))));
+  };
+
+We want:
+    row <- AllSymbols();
+    col <- AllSymbols();
+    cell <- input[row][col];  # guards on Maybe type
+    EqConstraint(CellId(row, col), cell);
+
+Or:
+    for (row : AllSymbols) {
+      for (col : AllSymbols) {
+        for (cell : input[row][col]) {
+          ...
+
+Proposed syntax today is bind:
+  Foo@ x <- f;
+  body;
+
+Which is sugar for f((Foo@ x) { body; })
+
+Note some alternatives:
+* Monads in haskell: you don't specify the combining function on each line,
+  but have a single combining function for a sequence of statements. This way
+  you could easily describe a list: List { a; b; c; d; e;}
+
+  But we know there are issues with monad composition. So maybe that's not the
+  best approach.
+  
+  
+Practical Uses:
+* tictactoe, sudoku, etc.
+
+
