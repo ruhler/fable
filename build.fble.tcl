@@ -111,6 +111,7 @@ exec mv {*}[glob *.gcov] out/fble/cov/spec
 
 test exec $::fblereftest
 test exec $::fbletest prgms/snake.fble
+test exec $::fbletest prgms/tictactoe.fble
 test exec $::fbletest prgms/Snake.fble prgms
 test exec $::fbletest prgms/AllTests.fble prgms
 test exec $::fblemd5 prgms/FbleMd5.fble prgms /dev/null
