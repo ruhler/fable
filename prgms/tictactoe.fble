@@ -147,8 +147,8 @@ Board@ EmptyBoard = {
       O: ?(x; X: Result@(Loss: Unit@()), O: Result@(Win: Unit@())),
       D: Result@(Draw: Unit@()),
       E: {
-        Player o = ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()));
-        Position move = ChooseBestMove(b, o);
+        Player@ o = ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()));
+        Position@ move = ChooseBestMove(b, o);
         FlipResult(ExpectedResult(Move(b, move, o).Just, o));
       }
    );
@@ -158,9 +158,9 @@ Board@ EmptyBoard = {
 # 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
 # 'b'.
 (Board@, Player@, Position@){MaybePositionResult@;} MoveResult = (Board@ b, Player@ x, Position@ p){
-  MaybeBoard moved = Move(b, p, x);
+  MaybeBoard@ moved = Move(b, p, x);
   ?(moved;
-      Just: MaybePositionResult@(Just: PositionResult(p, ExpectedResult(moved.Just, x))),
+      Just: MaybePositionResult@(Just: PositionResult@(p, ExpectedResult(moved.Just, x))),
       Nothing: MaybePositionResult@(Nothing: Unit@()));
 },
 
@@ -189,107 +189,113 @@ Board@ EmptyBoard = {
   best.Just.position;
 };
 
-union GameStatus(Player Move, Player Win, Unit@ Draw); 
-struct Output(Board board, GameStatus status);
+@ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 
+@ Output@ = *(Board@ board, GameStatus@ status);
 
-func GameIsOver(GameStatus status ; Bool) {
-  ?(status; Move: Bool:False(Unit@()),
-            Win: Bool:True(Unit@()),
-            Draw: Bool:True(Unit@()));
+(GameStatus@){Bool@;} GameIsOver = (GameStatus@ status) {
+  ?(status; Move: Bool@(False: Unit@()),
+            Win: Bool@(True: Unit@()),
+            Draw: Bool@(True: Unit@()));
 };
 
 # position: Make a move at the given position for the current player.
 # computer: Have the computer make a move for the current player.
 # reset: Reset the game.
-union Input(Position position, Unit@ computer, Unit@ reset);
+@ Input@ = +(Position@ position, Unit@ computer, Unit@ reset);
 
-func InputIsReset(Input input; Bool) {
-  ?(input; position: Bool:False(Unit@()),
-           computer: Bool:False(Unit@()),
-           reset: Bool:True(Unit@()));
+(Input@){Bool@;} InputIsReset = (Input@ input) {
+  ?(input; position: Bool@(False: Unit@()),
+           computer: Bool@(False: Unit@()),
+           reset: Bool@(True: Unit@()));
 };
 
-func InputIsPosition(Input input; Bool) {
-  ?(input; position: Bool:True(Unit@()),
-           computer: Bool:False(Unit@()),
-           reset: Bool:False(Unit@()));
+(Input@){Bool@;} InputIsPosition = (Input@ input) {
+  ?(input; position: Bool@(True: Unit@()),
+           computer: Bool@(False: Unit@()),
+           reset: Bool@(False: Unit@()));
 };
 
-proc NewGame(Input- input, Output+ output; ; Unit@) {
-  PlayGame(input, output; EmptyBoard(), Player:X(Unit@()));
-};
-
-proc PlayGame(Input- input, Output+ output; Board board, Player x; Unit@) {
-  GameStatus status = $(?(BoardStatus(board);
-                          X: GameStatus:Win(Player:X(Unit@())),
-                          O: GameStatus:Win(Player:O(Unit@())),
-                          D: GameStatus:Draw(Unit@()),
-                          E: GameStatus:Move(x)));
-  Output ignored = +output(Output(board, status));
-  Input in = -input();
+(Input@-, Output@+){Unit@!;} NewGame = (Input@- input, Output@+ output) {
+  PlayGame(input, output, EmptyBoard, Player@(X: Unit@()));
+},
+(Input@-, Output@+, Board@, Player@){Unit@!;} PlayGame = 
+  (Input@- input, Output@+ output, Board@ board, Player@ x) {
+  GameStatus@ status := $(?(BoardStatus(board);
+                          X: GameStatus@(Win: Player@(X: Unit@())),
+                          O: GameStatus@(Win: Player@(O: Unit@())),
+                          D: GameStatus@(Draw: Unit@()),
+                          E: GameStatus@(Move: x)));
+  Output@ ignored := output(Output@(board, status));
+  Input@ in := input();
   ?(GameIsOver(status) ; 
       True:
-      ?(in ; position: PlayGame(input, output; board, x),
-             computer: PlayGame(input, output; board, x),
-             reset: NewGame(input, output; )),
+      ?(in ; position: PlayGame(input, output, board, x),
+             computer: PlayGame(input, output, board, x),
+             reset: NewGame(input, output)),
       False:
       ?(InputIsReset(in) ;
-         True: NewGame(input, output; ),
+         True: NewGame(input, output),
          False: {
-          Position pos = $(?(InputIsPosition(in) ;
+          Position@ pos := $(?(InputIsPosition(in) ;
                                True: in.position,
                                False: ChooseBestMove(board, x)));
-          MaybeBoard nboard = $(Move(board, pos, x));
+          MaybeBoard@ nboard := $(Move(board, pos, x));
           ?(nboard ;
-              Just: PlayGame(input, output; nboard.Just, ?(x; X: Player:O(Unit@()), O: Player:X(Unit@()))),
-              Nothing: PlayGame(input, output; board, x));
+              Just: PlayGame(input, output, nboard.Just, ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()))),
+              Nothing: PlayGame(input, output, board, x));
         }));
 };
 
-union TestResult(Unit@ Passed, Unit@ Failed);
+@ TestResult@ = +(Unit@ Passed, Unit@ Failed);
 
-func TestBoardStatus( ; TestResult) {
-  Status status = BoardStatus(Board(
-        Square@:X(Unit@()), Square@:O(Unit@()), Square@:O(Unit@()),
-        Square@:E(Unit@()), Square@:O(Unit@()), Square@:X(Unit@()),
-        Square@:O(Unit@()), Square@:X(Unit@()), Square@:X(Unit@())));
+TestResult@ TestBoardStatus = {
+  Status@ status = BoardStatus(Board@(
+        Square@(X: Unit@()), Square@(O: Unit@()), Square@(O: Unit@()),
+        Square@(E: Unit@()), Square@(O: Unit@()), Square@(X: Unit@()),
+        Square@(O: Unit@()), Square@(X: Unit@()), Square@(X: Unit@())));
   ?(status ;
-      X: TestResult:Failed(Unit@()),
-      O: TestResult:Passed(Unit@()),
-      D: TestResult:Failed(Unit@()),
-      E: TestResult:Failed(Unit@()));
+      X: TestResult@(Failed: Unit@()),
+      O: TestResult@(Passed: Unit@()),
+      D: TestResult@(Failed: Unit@()),
+      E: TestResult@(Failed: Unit@()));
 };
+Unit@ TestBoardStatusPassed = TestBoardStatus.Passed;
 
-union PositionTestResult(Unit@ Passed, Position Failed);
+@ PositionTestResult@ = +(Unit@ Passed, Position@ Failed);
 
-func TestChooseBestMoveWin( ; PositionTestResult) {
-  Position position = ChooseBestMove(Board(
-        Square@:X(Unit@()), Square@:X(Unit@()), Square@:E(Unit@()),
-        Square@:O(Unit@()), Square@:O(Unit@()), Square@:E(Unit@()),
-        Square@:E(Unit@()), Square@:E(Unit@()), Square@:E(Unit@())), Player:X(Unit@()));
+PositionTestResult@ TestChooseBestMoveWin = {
+  Position@ position = ChooseBestMove(Board@(
+        Square@(X: Unit@()), Square@(X: Unit@()), Square@(E: Unit@()),
+        Square@(O: Unit@()), Square@(O: Unit@()), Square@(E: Unit@()),
+        Square@(E: Unit@()), Square@(E: Unit@()), Square@(E: Unit@())), Player@(X: Unit@()));
   ?(position ;
-      UL: PositionTestResult:Failed(position), UC: PositionTestResult:Failed(position), UR: PositionTestResult:Passed(Unit@()),
-      ML: PositionTestResult:Failed(position), MC: PositionTestResult:Failed(position), MR: PositionTestResult:Failed(position),
-      LL: PositionTestResult:Failed(position), LC: PositionTestResult:Failed(position), LR: PositionTestResult:Failed(position));
+      UL: PositionTestResult@(Failed: position), UC: PositionTestResult@(Failed: position), UR: PositionTestResult@(Passed: Unit@()),
+      ML: PositionTestResult@(Failed: position), MC: PositionTestResult@(Failed: position), MR: PositionTestResult@(Failed: position),
+      LL: PositionTestResult@(Failed: position), LC: PositionTestResult@(Failed: position), LR: PositionTestResult@(Failed: position));
 };
+Unit@ TestChooseBestMoveWinPassed = TestChooseBestMoveWin.Passed;
 
-func TestChooseBestMoveNoLose( ; PositionTestResult) {
-  Position position = ChooseBestMove(Board(
-        Square@:E(Unit@()), Square@:E(Unit@()), Square@:E(Unit@()),
-        Square@:X(Unit@()), Square@:X(Unit@()), Square@:O(Unit@()),
-        Square@:E(Unit@()), Square@:E(Unit@()), Square@:O(Unit@())), Player:X(Unit@()));
+PositionTestResult@ TestChooseBestMoveNoLose = {
+  Position@ position = ChooseBestMove(Board@(
+        Square@(E: Unit@()), Square@(E: Unit@()), Square@(E: Unit@()),
+        Square@(X: Unit@()), Square@(X: Unit@()), Square@(O: Unit@()),
+        Square@(E: Unit@()), Square@(E: Unit@()), Square@(O: Unit@())), Player@(X: Unit@()));
   ?(position ;
-      UL: PositionTestResult:Failed(position), UC: PositionTestResult:Failed(position), UR: PositionTestResult:Passed(Unit@()),
-      ML: PositionTestResult:Failed(position), MC: PositionTestResult:Failed(position), MR: PositionTestResult:Failed(position),
-      LL: PositionTestResult:Failed(position), LC: PositionTestResult:Failed(position), LR: PositionTestResult:Failed(position));
+      UL: PositionTestResult@(Failed: position), UC: PositionTestResult@(Failed: position), UR: PositionTestResult@(Passed: Unit@()),
+      ML: PositionTestResult@(Failed: position), MC: PositionTestResult@(Failed: position), MR: PositionTestResult@(Failed: position),
+      LL: PositionTestResult@(Failed: position), LC: PositionTestResult@(Failed: position), LR: PositionTestResult@(Failed: position));
+};
+Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
+
+(Unit@){Position@;} BenchmarkChooseBestMove = (Unit@ _) {
+  ChooseBestMove(Board@(
+        Square@(E: Unit@()), Square@(E: Unit@()), Square@(E: Unit@()),
+        Square@(E: Unit@()), Square@(E: Unit@()), Square@(E: Unit@()),
+        Square@(E: Unit@()), Square@(E: Unit@()), Square@(E: Unit@())), Player@(X: Unit@()));
 };
 
-func BenchmarkChooseBestMove( ; Position) {
-  ChooseBestMove(Board(
-        Square@:E(Unit@()), Square@:E(Unit@()), Square@:E(Unit@()),
-        Square@:E(Unit@()), Square@:E(Unit@()), Square@:E(Unit@()),
-        Square@:E(Unit@()), Square@:E(Unit@()), Square@:E(Unit@())), Player:X(Unit@()));
-};
+# BenchmarkChooseBestMove(Unit@());
+NewGame;
 
 # TODO:
 # * Better way of expressing maybe monad
