@@ -5,10 +5,12 @@
    poly_value, poly_apply
 * [prgm] Design better unit test library
  - Define a string type for test names and error messages
-  
 
 * [prgm] Implement game of life.
 
+* [perf] Collect benchmarks somewhere?
+  - md5 run on 6k file.
+  - tictactoe find best move for empty board.
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.

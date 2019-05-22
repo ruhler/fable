@@ -37,6 +37,7 @@ run gcc {*}$FLAGS -o $::fblereftest out/fble/obj/fble-ref-test.o -L out/fble -lf
 run gcc {*}$FLAGS -o $::fblememtest out/fble/obj/fble-mem-test.o -L out/fble -lfble
 run gcc {*}$FLAGS -o ./out/fble/fble-snake out/fble/obj/fble-snake.o -L out/fble -lfble -lncurses
 run gcc {*}$FLAGS -o ./out/fble/fble-Snake out/fble/obj/fble-Snake.o -L out/fble -lfble -lncurses
+run gcc {*}$FLAGS -o ./out/fble/fble-tictactoe out/fble/obj/fble-tictactoe.o -L out/fble -lfble
 run gcc {*}$FLAGS -o $::fblemd5 out/fble/obj/fble-md5.o -L out/fble -lfble
 
 proc fble-test-error-run { tloc loc expr } {
