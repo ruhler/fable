@@ -1,12 +1,16 @@
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind
-   proc_get, proc_put, proc_eval, proc_link, proc_exec
+   proc_get, proc_put, proc_link, proc_exec
    poly_value, poly_apply
+* [tools] Add support for getting code coverage of fble executions.
+
+* [prgm] Optimize the fble implementation of tictactoe
+  - Using monadic operations where feasible?
+  - But only after setting up code coverage for fble.
+* [prgm] Implement game of life.
 * [prgm] Design better unit test library
  - Define a string type for test names and error messages
-
-* [prgm] Implement game of life.
 
 * [perf] Collect benchmarks somewhere?
   - md5 run on 6k file.
