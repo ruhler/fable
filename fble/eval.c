@@ -5,7 +5,7 @@
 #include <stdio.h>    // for fprintf, stderr
 #include <stdlib.h>   // for NULL, abort
 
-#include "fble-internal.h"
+#include "internal.h"
 
 #define UNREACHABLE(x) assert(false && x)
 

@@ -4,7 +4,7 @@
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for NULL
 
-#include "fble-internal.h"
+#include "internal.h"
 
 #define UNREACHABLE(x) assert(false && x)
 

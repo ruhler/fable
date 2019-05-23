@@ -45,8 +45,8 @@ source build.fble.tcl
 
 puts ""
 puts "Fble Coverage: "
-puts "  Spec: [exec tail -n 1 out/fble/cov/spec/fble.gcov]"
-puts "  All : [exec tail -n 1 out/fble/cov/all/fble.gcov]"
+puts "  Spec: [exec tail -n 1 out/cov/spec/fble.gcov]"
+puts "  All : [exec tail -n 1 out/cov/all/fble.gcov]"
 puts ""
 if {[llength $::failed] != 0} {
   puts "Failed Tests:"

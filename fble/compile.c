@@ -5,7 +5,7 @@
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
 
-#include "fble-internal.h"
+#include "internal.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -3082,7 +3082,7 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
   UNREACHABLE("Should never get here");
 }
 
-// FbleFreeInstrBlock -- see documentation in fble-internal.h
+// FbleFreeInstrBlock -- see documentation in internal.h
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 {
   if (block == NULL) {
@@ -3100,7 +3100,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
   }
 }
 
-// FbleCompile -- see documentation in fble-internal.h
+// FbleCompile -- see documentation in internal.h
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr)
 {
   FbleInstrBlock* block = FbleAlloc(arena, FbleInstrBlock);

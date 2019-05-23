@@ -1,4 +1,4 @@
-// fble-internal.h --
+// internal.h --
 //   This header file describes the internal interface used in the
 //   implementation of the fble library.
 

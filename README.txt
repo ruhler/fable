@@ -1,8 +1,9 @@
 Directory Structure
 -------------------
-fble/ - Soruce code for an fble interpreter implemented in C.
+fble/ - Source code for an fble interpreter implemented in C.
+test/ - Source code for fble test drivers.
 out/ - Directory where build outputs are placed, created as needed.
-prgms/ - Directory containing sample fblc, fbld, and fble programs.
+prgms/ - Sample fble programs.
 langs/ - Specifications of the fable languages.
 
 Build and Test
