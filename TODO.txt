@@ -13,8 +13,8 @@
  - Define a string type for test names and error messages
 
 * [perf] Collect benchmarks somewhere?
-  - md5 run on 6k file.
-  - tictactoe find best move for empty board.
+  - md5 run on 6k file. ~7 minutes
+  - tictactoe find best move for empty board. ~50 minutes
 * [clean] Factor out common code for thunks used by func, link, and exec.
 * [test] Test and fix handling of type vs. normal name.
 * [clean] Make FbleValue abstract in fble.h.
@@ -22,14 +22,12 @@
   perf record --call-graph dwarf [COMMAND]
   perf report -g --stdio
 * [build] move 'perf' logic to build.fble.tcl
-* [test] partial function application and excessive function application.
 * [test] multi arg func, poly, kind are equivalent to nested single arg.
 * [perf] Optimize FbleRefAdd
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
 * Test that explicit type struct values can take type args and poly args?
   And same for all other kinds of struct expressions.
-* Test that a struct type doesn't equal a union type, func type, etc.
 * Update abstract syntax and parser to match spec.
   - in terms of names of things and order of things.
 * Test namespace eval with mixed type and normal fields.
@@ -45,7 +43,6 @@
   exec processes.
 * Pick a better name for FbleChoice, which is used now for more than just
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
-* Add test that you can't shadow a variable.
 * Test what happens if you try to shadow variable names, and figure out what
   ought to happen.
 * Better error message when the difference between a type is accidentally

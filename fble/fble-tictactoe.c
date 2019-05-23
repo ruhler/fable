@@ -28,7 +28,7 @@ static void PrintUsage(FILE* stream)
   fprintf(stream,
       "Usage: fble-tictactoe FILE \n"
       "Execute the tictactoe process described by the fble program FILE.\n"
-      "Example: fble-tictactoe progms/tictactoe.fble\n"
+      "Example: fble-tictactoe progms/fble-tictactoe.fble\n"
   );
 }
 

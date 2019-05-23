@@ -14,7 +14,7 @@ checkerr: all
 .PHONY: foo
 foo:
 	#./out/fble/fble-test prgms/AllTests.fble prgms
-	./out/fble/fble-test prgms/tictactoe.fble
+	./out/fble/fble-test prgms/fble-tictactoe.fble
 
 .PHONY: perf
 perf:

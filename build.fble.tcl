@@ -111,11 +111,11 @@ run gcov {*}$::fble_objs > out/fble/cov/spec/fble.gcov
 exec mv {*}[glob *.gcov] out/fble/cov/spec
 
 test exec $::fblereftest
-test exec $::fbletest prgms/snake.fble
-test exec $::fbletest prgms/tictactoe.fble
-test exec $::fbletest prgms/Snake.fble prgms
+test exec $::fbletest prgms/fble-snake.fble
+test exec $::fbletest prgms/fble-tictactoe.fble
+test exec $::fbletest prgms/fble-Snake.fble prgms
 test exec $::fbletest prgms/AllTests.fble prgms
-test exec $::fblemd5 prgms/FbleMd5.fble prgms /dev/null
+test exec $::fblemd5 prgms/fble-md5.fble prgms /dev/null
 
 exec mkdir -p out/fble/cov/all
 run gcov {*}$::fble_objs > out/fble/cov/all/fble.gcov

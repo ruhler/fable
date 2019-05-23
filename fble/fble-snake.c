@@ -105,7 +105,7 @@ static void PrintUsage(FILE* stream)
   fprintf(stream,
       "Usage: fble-snake FILE \n"
       "Execute the snake process described by the fble program FILE.\n"
-      "Example: fble-snake prgms/snake.fble\n"
+      "Example: fble-snake prgms/fble-snake.fble\n"
   );
 }
 
