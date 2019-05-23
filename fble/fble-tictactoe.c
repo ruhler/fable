@@ -159,15 +159,14 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValueV args;
-  FbleVectorInit(eval_arena, args);
-  FbleVectorAppend(eval_arena, args, FbleNewPortValue(value_arena, 0));
-  FbleVectorAppend(eval_arena, args, FbleNewPortValue(value_arena, 1));
-  FbleValue* proc = FbleApply(value_arena, func, args);
+  FbleValue* input = FbleNewPortValue(value_arena, 0);
+  FbleValue* output = FbleNewPortValue(value_arena, 1);
+  FbleValue* main1 = FbleApply(value_arena, func, input);
+  FbleValue* proc = FbleApply(value_arena, main1, output);
   FbleValueRelease(value_arena, func);
-  FbleValueRelease(value_arena, args.xs[0]);
-  FbleValueRelease(value_arena, args.xs[1]);
-  FbleFree(eval_arena, args.xs);
+  FbleValueRelease(value_arena, main1);
+  FbleValueRelease(value_arena, input);
+  FbleValueRelease(value_arena, output);
 
   if (proc == NULL) {
     FbleDeleteValueArena(value_arena);

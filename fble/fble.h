@@ -32,20 +32,20 @@
 FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
 
 // FbleApply --
-//   Apply a function to the given arguments.
+//   Apply a function to the given argument.
 //
 // Inputs:
 //   arena - the arena to use for allocating values.
 //   func - the function to apply.
-//   args - the arguments to apply the function to.
+//   arg - the argument to apply the function to.
 //
 // Results:
-//   The result of applying the function to the given arguments.
+//   The result of applying the function to the given argument.
 //
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args);
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.

@@ -1178,30 +1178,28 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 }
 
 // FbleApply -- see documentation in fble.h
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args)
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg)
 {
   FbleValue* result = func;
   FbleValueRetain(arena, result);
-  assert(args.size > 0);
-  for (size_t i = 0; i < args.size; ++i) {
-    assert(result->tag == FBLE_FUNC_VALUE);
-    func = result;
 
-    FbleFuncApplyInstr apply = {
-      ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
-      .exit = true
-    };
-    FbleInstr* instrs[] = { &apply._base };
-    FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = instrs } };
-    FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
+  assert(result->tag == FBLE_FUNC_VALUE);
+  func = result;
 
-    FbleValue* xs[2];
-    xs[0] = args.xs[i];
-    xs[1] = func;
-    FbleValueV eval_args = { .size = 2, .xs = xs };
-    result = Eval(arena, &io, &block, eval_args);
-    FbleValueRelease(arena, func);
-  }
+  FbleFuncApplyInstr apply = {
+    ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
+    .exit = true
+  };
+  FbleInstr* instrs[] = { &apply._base };
+  FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = instrs } };
+  FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
+
+  FbleValue* xs[2];
+  xs[0] = arg;
+  xs[1] = func;
+  FbleValueV eval_args = { .size = 2, .xs = xs };
+  result = Eval(arena, &io, &block, eval_args);
+  FbleValueRelease(arena, func);
   return result;
 }
 
