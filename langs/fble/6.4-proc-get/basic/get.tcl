@@ -1,12 +1,11 @@
-fble-test-error 10:19 {
+fble-test {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
 
+  # A basic proc get.
   Bool@ ~ get, put;
   Bool@ ignored := put(true);
-
-  # Too many args to get
-  Bool@ result := get(true);
+  Bool@ result := get();
   $(result.true);
 }
