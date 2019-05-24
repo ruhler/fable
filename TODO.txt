@@ -3,7 +3,6 @@
    func_bind
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
-* [clean] Make FbleValue abstract in fble.h.
 * [tools] Add support for getting code coverage of fble executions.
 
 * [prgm] Optimize the fble implementation of tictactoe

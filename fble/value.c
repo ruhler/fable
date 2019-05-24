@@ -331,7 +331,13 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
   return value->arg;
 }
 
-// FbleNewPortValue -- see documentation in fble.h
+// FbleIsProcValue -- see documentation in fble-value.h
+bool FbleIsProcValue(FbleValue* value)
+{
+  return value->tag == FBLE_PROC_VALUE;
+}
+
+// FbleNewPortValue -- see documentation in fble-value.h
 FbleValue* FbleNewPortValue(FbleValueArena* arena, size_t id)
 {
   FblePortValue* port_value = FbleAlloc(FbleRefArenaArena(arena), FblePortValue);

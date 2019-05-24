@@ -345,6 +345,45 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   it is no longer needed.
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
 
+// FbleValueTag --
+//   A tag used to distinguish among different kinds of values.
+typedef enum {
+  FBLE_STRUCT_VALUE,
+  FBLE_UNION_VALUE,
+  FBLE_FUNC_VALUE,
+  FBLE_PROC_VALUE,
+  FBLE_INPUT_VALUE,
+  FBLE_OUTPUT_VALUE,
+  FBLE_PORT_VALUE,
+  FBLE_REF_VALUE,
+  FBLE_TYPE_VALUE,
+} FbleValueTag;
+
+// FbleValue --
+//   A tagged union of value types. All values have the same initial
+//   layout as FbleValue. The tag can be used to determine what kind of
+//   value this is to get access to additional fields of the value
+//   by first casting to that specific type of value.
+struct FbleValue {
+  FbleRef ref;
+  FbleValueTag tag;
+};
+
+// FbleStructValue --
+//   FBLE_STRUCT_VALUE
+typedef struct {
+  FbleValue _base;
+  FbleValueV fields;
+} FbleStructValue;
+
+// FbleUnionValue --
+//   FBLE_UNION_VALUE
+typedef struct {
+  FbleValue _base;
+  size_t tag;
+  FbleValue* arg;
+} FbleUnionValue;
+
 typedef enum {
   FBLE_BASIC_FUNC_VALUE,
   FBLE_THUNK_FUNC_VALUE,
@@ -359,11 +398,11 @@ typedef enum {
 // Fields:
 //   argc - The number of arguments to be applied to this function before the
 //          function body is executed.
-struct FbleFuncValue {
+typedef struct {
   FbleValue _base;
   FbleFuncValueTag tag;
   size_t argc;
-};
+} FbleFuncValue;
 
 // FbleBasicFuncValue -- FBLE_BASIC_FUNC_VALUE
 //
@@ -405,10 +444,10 @@ typedef enum {
 //   layout as FbleProcValue. The tag can be used to determine what kind of
 //   proc value this is to get access to additional fields of the proc value
 //   by first casting to that specific type of proc value.
-struct FbleProcValue {
+typedef struct {
   FbleValue _base;
   FbleProcValueTag tag;
-};
+} FbleProcValue;
 
 // FbleGetProcValue -- FBLE_GET_PROC_VALUE
 typedef struct {
@@ -455,22 +494,50 @@ typedef struct FbleValues {
 //   Holds the list of values to get. Values are added to the tail and taken
 //   from the head. If there are no values on the list, both head and tail are
 //   set to NULL.
-struct FbleInputValue {
+typedef struct {
   FbleValue _base;
   FbleValues* head;
   FbleValues* tail;
-};
+} FbleInputValue;
 
-// FbleOutputValue -- FBLE_OUTPUT_VALUE
-struct FbleOutputValue {
+// FbleOutputValue --
+//   FBLE_OUTPUT_VALUE
+typedef struct {
   FbleValue _base;
   FbleInputValue* dest;
-};
+} FbleOutputValue;
 
-// FblePortValue -- FBLE_PORT_VALUE
-struct FblePortValue {
+// FblePortValue --
+//   FBLE_PORT_VALUE
+//
+// Use for input and output values linked to external IO.
+typedef struct {
   FbleValue _base;
   size_t id;
-};
+} FblePortValue;
+
+// FbleRefValue --
+//   FBLE_REF_VALUE
+//
+// A implementation-specific value introduced to support recursive values. A
+// ref value is simply a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are reference
+// values.
+//
+// Fields:
+//   value - the value being referenced, or NULL if no value is referenced.
+typedef struct FbleRefValue {
+  FbleValue _base;
+  FbleValue* value;
+} FbleRefValue;
+
+// FbleTypeValue --
+//   FBLE_TYPE_VALUE
+//
+// A value representing a type. Because types are compile-time concepts, not
+// runtime concepts, the type value contains no information.
+typedef struct FbleTypeValue {
+  FbleValue _base;
+} FbleTypeValue;
 
 #endif // FBLE_INTERNAL_H_

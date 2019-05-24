@@ -110,6 +110,6 @@ typedef struct FbleIO {
 //
 // Side effects:
 //   Prints an error message to stderr in case of error.
-FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleProcValue* proc);
+FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc);
 
 #endif // FBLE_H_

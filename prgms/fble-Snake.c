@@ -274,7 +274,6 @@ int main(int argc, char* argv[])
     FbleDeleteArena(prgm_arena);
     return 1;
   }
-  assert(proc->tag == FBLE_PROC_VALUE);
 
   initscr();
   cbreak();
@@ -311,7 +310,7 @@ int main(int argc, char* argv[])
   GetCurrentTime(&sio.tnext);
   AddTimeMillis(&sio.tnext, TICK_INTERVAL);
 
-  FbleValue* value = FbleExec(value_arena, &sio.io, (FbleProcValue*)proc);
+  FbleValue* value = FbleExec(value_arena, &sio.io, proc);
 
   FbleValueRelease(value_arena, proc);
   FbleValueRelease(value_arena, ports[0]);

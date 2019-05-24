@@ -115,9 +115,9 @@ int main(int argc, char* argv[])
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
-    if (result != NULL && result->tag == FBLE_PROC_VALUE) {
+    if (result != NULL && FbleIsProcValue(result)) {
       FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
-      FbleValue* exec_result = FbleExec(value_arena, &io, (FbleProcValue*)result);
+      FbleValue* exec_result = FbleExec(value_arena, &io, result);
       FbleValueRelease(value_arena, result);
       result = exec_result;
     }

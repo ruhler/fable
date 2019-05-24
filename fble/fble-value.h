@@ -10,29 +10,9 @@
 
 typedef FbleRefArena FbleValueArena;
 
-// FbleValueTag --
-//   A tag used to distinguish among different kinds of values.
-typedef enum {
-  FBLE_STRUCT_VALUE,
-  FBLE_UNION_VALUE,
-  FBLE_FUNC_VALUE,
-  FBLE_PROC_VALUE,
-  FBLE_INPUT_VALUE,
-  FBLE_OUTPUT_VALUE,
-  FBLE_PORT_VALUE,
-  FBLE_REF_VALUE,
-  FBLE_TYPE_VALUE,
-} FbleValueTag;
-
 // FbleValue --
-//   A tagged union of value types. All values have the same initial
-//   layout as FbleValue. The tag can be used to determine what kind of
-//   value this is to get access to additional fields of the value
-//   by first casting to that specific type of value.
-typedef struct FbleValue {
-  FbleRef ref;
-  FbleValueTag tag;
-} FbleValue;
+//   An fble value.
+typedef struct FbleValue FbleValue;
 
 // FbleValueV --
 //   A vector of FbleValue*
@@ -40,79 +20,6 @@ typedef struct {
   size_t size;
   FbleValue** xs;
 } FbleValueV;
-
-// FbleStructValue --
-//   FBLE_STRUCT_VALUE
-typedef struct {
-  FbleValue _base;
-  FbleValueV fields;
-} FbleStructValue;
-
-// FbleUnionValue --
-//   FBLE_UNION_VALUE
-typedef struct {
-  FbleValue _base;
-  size_t tag;
-  FbleValue* arg;
-} FbleUnionValue;
-
-// FbleFuncValue --
-//   FBLE_FUNC_VALUE
-//
-// Defined internally, because representing the body of the function depends
-// on the internals of the evaluator.
-typedef struct FbleFuncValue FbleFuncValue;
-
-// FbleProcValue --
-//   FBLE_PROC_VALUE
-//
-// Defined internally, because representing a process depends on the internals
-// of the evaluator.
-typedef struct FbleProcValue FbleProcValue;
-
-// FbleInputValue --
-//   FBLE_INPUT_VALUE
-//
-// Defined internally.
-typedef struct FbleInputValue FbleInputValue;
-
-// FbleOutputValue --
-//   FBLE_OUTPUT_VALUE
-//
-// Defined internally.
-typedef struct FbleOutputValue FbleOutputValue;
-
-// FblePortValue --
-//   FBLE_PORT_VALUE
-//
-// Use for input and output values linked to external IO.
-//
-// Defined internally.
-typedef struct FblePortValue FblePortValue;
-
-// FbleRefValue --
-//   FBLE_REF_VALUE
-//
-// A implementation-specific value introduced to support recursive values. A
-// ref value is simply a reference to another value. All values must be
-// dereferenced before being otherwise accessed in case they are reference
-// values.
-//
-// Fields:
-//   value - the value being referenced, or NULL if no value is referenced.
-typedef struct FbleRefValue {
-  FbleValue _base;
-  FbleValue* value;
-} FbleRefValue;
-
-// FbleTypeValue --
-//   FBLE_TYPE_VALUE
-//
-// A value representing a type. Because types are compile-time concepts, not
-// runtime concepts, the type value contains no information.
-typedef struct FbleTypeValue {
-  FbleValue _base;
-} FbleTypeValue;
 
 // FbleNewValueArena --
 //   Create a new arena for allocation of values.
@@ -255,6 +162,19 @@ size_t FbleUnionValueTag(FbleValue* object);
 //   Behavior is undefined if the object is not a union value.
 //   
 FbleValue* FbleUnionValueAccess(FbleValue* object);
+
+// FbleIsProcValue --
+//   Returns true if the value represents a process value.
+//
+// Inputs:
+//   value - the value to check.
+//
+// Results:
+//   true if the value is a proc value, false otherwise.
+//
+// Side effects:
+//   none.
+bool FbleIsProcValue(FbleValue* value);
 
 // FbleNewPortValue --
 //   Create a new io port value with given id.

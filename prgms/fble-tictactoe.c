@@ -174,7 +174,6 @@ int main(int argc, char* argv[])
     FbleDeleteArena(prgm_arena);
     return 1;
   }
-  assert(proc->tag == FBLE_PROC_VALUE);
 
   FbleValue* ports[2] = {NULL, NULL};
   FbleIO io = {
@@ -182,7 +181,7 @@ int main(int argc, char* argv[])
     .ports = { .size = 2, .xs = ports}
   };
 
-  FbleValue* value = FbleExec(value_arena, &io, (FbleProcValue*)proc);
+  FbleValue* value = FbleExec(value_arena, &io, proc);
 
   FbleValueRelease(value_arena, proc);
   FbleValueRelease(value_arena, ports[0]);

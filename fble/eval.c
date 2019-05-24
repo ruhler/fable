@@ -1201,9 +1201,10 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg)
 }
 
 // FbleExec -- see documentation in fble.h
-FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleProcValue* proc)
+FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc)
 {
-  FbleValue* xs[1] = { &proc->_base };
+  assert(proc->tag == FBLE_PROC_VALUE);
+  FbleValue* xs[1] = { proc };
   FbleValueV args = { .size = 1, .xs = xs };
   FbleValue* result = Eval(arena, io, &g_proc_block, args);
   return result;

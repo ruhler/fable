@@ -165,8 +165,6 @@ int main(int argc, char* argv[])
     FbleDeleteArena(prgm_arena);
     return 1;
   }
-  assert(proc->tag == FBLE_PROC_VALUE);
-
 
   FILE* fin = fopen(file, "rb");
   if (fin == NULL) {
@@ -180,7 +178,7 @@ int main(int argc, char* argv[])
     .fin = fin
   };
 
-  FbleValue* value = FbleExec(value_arena, &mio.io, (FbleProcValue*)proc);
+  FbleValue* value = FbleExec(value_arena, &mio.io, proc);
 
   FbleValueRelease(value_arena, proc);
   assert(ports[0] == NULL);
