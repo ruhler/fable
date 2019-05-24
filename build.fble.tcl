@@ -3,8 +3,19 @@ exec rm -rf out
 
 # Note: to profile, add -pg flag here, then after running fble-test, run:
 #  gprof out/bin/fble-test
-set FBLE_FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -I fble -fprofile-arcs -ftest-coverage ]
-set PRGM_FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -I out/include -L out/lib -fprofile-arcs -ftest-coverage]
+set ::FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage ]
+
+# Compile source for libfble.a
+proc gcc_fble {args} {
+  puts "gcc $args"
+  exec gcc {*}$::FLAGS -I fble {*}$args
+}
+
+# Compile source for executables linking to libfble.a
+proc gcc_prgm {args} {
+  puts "gcc $args"
+  exec gcc {*}$::FLAGS -I out/include -L out/lib {*}$args
+}
 
 # Compile all object files.
 # We compile these separately and ensure they are placed in a subdirectory of
@@ -16,13 +27,13 @@ set fble_objs [list]
 foreach {x} [glob fble/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
   lappend fble_objs $object
-  run gcc {*}$FBLE_FLAGS -c -o $object $x
+  gcc_fble -c -o $object $x
 }
 
 # Generate and compile the fble parser.
 exec mkdir -p out/src
 run bison --report=all --report-file=out/src/parse.tab.report.txt -o out/src/parse.tab.c fble/parse.y 
-run gcc {*}$FBLE_FLAGS -c -o $::obj/parse.tab.o out/src/parse.tab.c
+gcc_fble -c -o $::obj/parse.tab.o out/src/parse.tab.c
 lappend fble_objs $::obj/parse.tab.o
 
 # Generate libfble.a
@@ -33,18 +44,18 @@ exec cp {*}[glob fble/fble*.h] out/include
 # Compile the executables
 foreach {x} [glob test/*.c prgms/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
-  run gcc {*}$PRGM_FLAGS -c -o $object $x
+  gcc_prgm -c -o $object $x
 }
 
 set ::bin out/bin
 exec mkdir -p $::bin
-run gcc {*}$PRGM_FLAGS -o $::bin/fble-test $::obj/fble-test.o -lfble
-run gcc {*}$PRGM_FLAGS -o $::bin/fble-ref-test $::obj/fble-ref-test.o -lfble
-run gcc {*}$PRGM_FLAGS -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble
-run gcc {*}$PRGM_FLAGS -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble
-run gcc {*}$PRGM_FLAGS -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble
-run gcc {*}$PRGM_FLAGS -o $::bin/fble-tictactoe $::obj/fble-tictactoe.o -lfble
-run gcc {*}$PRGM_FLAGS -o $::bin/fble-md5 $::obj/fble-md5.o -lfble
+gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble
+gcc_prgm -o $::bin/fble-ref-test $::obj/fble-ref-test.o -lfble
+gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble
+gcc_prgm -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble
+gcc_prgm -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble
+gcc_prgm -o $::bin/fble-tictactoe $::obj/fble-tictactoe.o -lfble
+gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble
 
 proc fble-test-error-run { tloc loc expr } {
   set line [dict get $tloc line]
