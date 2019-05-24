@@ -6,9 +6,8 @@
 
 #include "fble-alloc.h"
 #include "fble-vector.h"
-#include "fble-ref.h"
 
-typedef FbleRefArena FbleValueArena;
+typedef struct FbleRefArena FbleValueArena;
 
 // FbleValue --
 //   An fble value.

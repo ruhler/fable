@@ -1,12 +1,12 @@
 // ref.c --
-//   This file implements the fble-ref.h apis.
+//   This file implements the ref.h apis.
 
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for NULL
 
-#include "fble-ref.h"
+#include "ref.h"
 
-// FbleRef -- see definition and documentation in fble-ref.h
+// FbleRef -- see definition and documentation in ref.h
 //
 // Fields:
 //   id - A unique identifier for the node. Ids are assigned in increasing
@@ -163,7 +163,7 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
   FbleFree(arena->arena, stack.xs);
 }
 
-// FbleNewRefArena -- see documentation in fble-ref.h
+// FbleNewRefArena -- see documentation in ref.h
 FbleRefArena* FbleNewRefArena(
     FbleArena* arena, 
     void (*free)(FbleRefArena* arena, FbleRef* ref),
@@ -177,19 +177,19 @@ FbleRefArena* FbleNewRefArena(
   return ref_arena;
 }
 
-// FbleDeleteRefArena -- see documentation in fble-ref.h
+// FbleDeleteRefArena -- see documentation in ref.h
 void FbleDeleteRefArena(FbleRefArena* arena)
 {
   FbleFree(arena->arena, arena);
 }
 
-// FbleRefArenaArena -- see documentation in fble-ref.h
+// FbleRefArenaArena -- see documentation in ref.h
 FbleArena* FbleRefArenaArena(FbleRefArena* arena)
 {
   return arena->arena;
 }
 
-// FbleRefInit -- see documentation in fble-ref.h
+// FbleRefInit -- see documentation in ref.h
 void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
 {
   ref->id = arena->next_id++;
@@ -197,7 +197,7 @@ void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
   ref->cycle = NULL;
 }
 
-// FbleRefRetain -- see documentation in fble-ref.h
+// FbleRefRetain -- see documentation in ref.h
 void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
 {
   ref = CycleHead(ref);
@@ -236,7 +236,7 @@ static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
   }
 }
 
-// FbleRefRelease -- see documentation in fble-ref.h
+// FbleRefRelease -- see documentation in ref.h
 void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 {
   ref = CycleHead(ref);
@@ -287,7 +287,7 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
   }
 }
 
-// FbleRefAdd -- see documentation in fble-ref.h
+// FbleRefAdd -- see documentation in ref.h
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
   if (CycleHead(src) == CycleHead(dst)) {

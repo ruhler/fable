@@ -355,7 +355,7 @@ static void TypeRelease(TypeArena* arena, Type* type)
 }
 
 // TypeFree --
-//   The free function for types. See documentation in fble-ref.h
+//   The free function for types. See documentation in ref.h
 static void TypeFree(TypeArena* arena, FbleRef* ref)
 {
   Type* type = (Type*)ref;
@@ -419,7 +419,7 @@ static void Add(FbleRefCallback* add, Type* type)
 }
 
 // TypeAdded --
-//   The added function for types. See documentation in fble-ref.h
+//   The added function for types. See documentation in ref.h
 static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
 {
   Type* type = (Type*)ref;

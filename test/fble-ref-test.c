@@ -5,7 +5,7 @@
 #include <stdio.h>    // for FILE, fprintf, stderr
 
 #include "fble.h"
-#include "fble-ref.h"
+#include "ref.h"
 
 static size_t sRefsAlive = 0;
 

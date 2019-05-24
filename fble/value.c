@@ -43,7 +43,7 @@ void FbleValueRelease(FbleValueArena* arena, FbleValue* value)
 }
 
 // ValueFree --
-//   The 'free' function for values. See documentation in fble-ref.h
+//   The 'free' function for values. See documentation in ref.h
 static void ValueFree(FbleValueArena* arena, FbleRef* ref)
 {
   FbleValue* value = (FbleValue*)ref;
@@ -161,7 +161,7 @@ static void Add(FbleRefCallback* add, FbleValue* value)
 }
 
 // ValueAdded --
-//   The 'added' function for values. See documentation in fble-ref.h
+//   The 'added' function for values. See documentation in ref.h
 static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
 {
   FbleValue* value = (FbleValue*)ref;

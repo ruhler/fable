@@ -41,8 +41,11 @@ exec mkdir -p out/lib out/include
 run ar rcs out/lib/libfble.a {*}$fble_objs
 exec cp {*}[glob fble/fble*.h] out/include
 
-# Compile the executables
-foreach {x} [glob test/*.c prgms/*.c] {
+# Compile the ref test, which has special access to fble/ref.h
+gcc_prgm -c -I fble -o $::obj/fble-ref-test.o test/fble-ref-test.c
+
+# Compile the remaining executables
+foreach {x} [glob test/fble-test.c test/fble-mem-test.c prgms/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
   gcc_prgm -c -o $object $x
 }

@@ -1,4 +1,4 @@
-// fble-ref.h --
+// ref.h --
 //   Header file describing the interface for working with fble references.
 //   This is an internal library interface.
 

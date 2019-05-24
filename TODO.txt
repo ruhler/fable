@@ -12,6 +12,8 @@
  - Define a string type for test names and error messages
 * [prgm] Implement game of life.
 
+* [clean] Figure out a nicer way to deal with fble-ref-test having access to
+  internal ref.h
 * [perf] Collect benchmarks somewhere?
   - md5 run on 6k file. ~7 minutes
   - tictactoe find best move for empty board. ~50 minutes
@@ -33,9 +35,7 @@
 * Better error messages on types that have the same name but different values.
 * Figure out how to make a version of 7.4-06-* for values.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
-* Clean up header files and what is easily externally visible.
-  For example, should FbleRef be visible from fble.h?
-  And make sure all "see documentation in ..." lines are accurate.
+* Make sure all "see documentation in ..." lines are accurate.
 * Improve test coverage around polymorphic types.
 * Test that we don't smash the stack with many nested child threads.
 * Test that we don't leak (Thread) memory with tail recursive single binding

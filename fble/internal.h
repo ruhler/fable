@@ -6,6 +6,7 @@
 #define FBLE_INTERNAL_H_
 
 #include "fble.h"
+#include "ref.h"
 
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
