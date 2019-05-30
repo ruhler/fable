@@ -3,7 +3,15 @@
    func_bind
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
-* [tools] Add support for getting code coverage of fble executions.
+* [tools] Code coverage and profiling support
+ - implement profiling library: Profile, ProfileThread, Enter, Exit, AutoExit
+ - implement profile processing and dumping: block listing, coverage, missing
+   blocks, flat profile, graph profile.
+ - add and implement PROFILE_ENTER, EXIT, AUTO_EXIT instructions.
+ - Generate the PROFILE_* instructions in the compiler.
+ - Do auto-naming of blocks based on variable/field names relevant to the
+   block being compiled.
+ - Fix memory leak in case of tail recursion.
 
 * [prgm] Optimize the fble implementation of tictactoe
   - Using monadic operations where feasible?
@@ -143,7 +151,4 @@ Future:
   locations as the program executes. Maybe we want fancy stuff like viewing
   variables, breakpoints, setting values, etc... but mostly to start tracing
   through source locations.
-
-* Implement fble code coverage tool. Input is a program to run. Output is a
-  list of error messages for each line of code not exercise by the program?
 
