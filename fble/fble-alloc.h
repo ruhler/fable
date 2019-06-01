@@ -10,8 +10,9 @@
 //   A handle used for allocating and freeing memory.
 typedef struct FbleArena FbleArena;
 
-// FbleArenaAlloc --
-//   Allocate size bytes of memory.
+// FbleRawAlloc --
+//   Allocate size bytes of memory. This function is not type safe. It is
+//   recommended to use the FbleAlloc and FbleArrayAlloc macros instead.
 //
 // Inputs:
 //   arena - The arena to allocate memory from.
@@ -22,11 +23,12 @@ typedef struct FbleArena FbleArena;
 //   A pointer to a newly allocated size bytes of memory in the arena.
 //
 // Side effects:
-//   Allocates size bytes from the arena.
-void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg);
+//   Allocates size bytes from the arena that should be freed by calling
+//   FbleFree when no longer in use.
+void* FbleRawAlloc(FbleArena* arena, size_t size, const char* msg);
 
 // FbleAlloc --
-//   A type safer way of allocating objects from an arena.
+//   A type safe way of allocating objects from an arena.
 //
 // Inputs:
 //   arena - The arena to use for allocation.
@@ -36,10 +38,27 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg);
 //   A pointer to a newly allocated object of the given type.
 //
 // Side effects:
-//   Uses the arena to allocation the object.
+//   Allocates from the arena. The allocation should be freed by calling
+//   FbleFree when no longer in use.
 #define FbleAllocLine(x) #x
 #define FbleAllocMsg(file, line) file ":" FbleAllocLine(line)
-#define FbleAlloc(arena, T) ((T*) FbleArenaAlloc(arena, sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
+#define FbleAlloc(arena, T) ((T*) FbleRawAlloc(arena, sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
+
+// FbleArrayAlloc --
+//   A type safe way of allocating an array of objects from an arena.
+//
+// Inputs:
+//   arena - The arena to use for allocation.
+//   T - the type of object to allocate
+//   count - the number of objects in the array to allocate.
+//
+// Results:
+//   A pointer to a newly allocated array of count objects of the given type.
+//
+// Side effects:
+//   Allocates from the arena. The allocation should be freed by calling
+//   FbleFree when no longer in use.
+#define FbleArrayAlloc(arena, T, count) ((T*) FbleRawAlloc(arena, count * sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
 
 // FbleFree --
 //   Free a memory allocation.

@@ -36,7 +36,7 @@
 //   The array initially has size 0 and capacity 1.
 #define FbleVectorInit(arena, vector) \
   (vector).size = 0; \
-  (vector).xs = FbleArenaAlloc(arena, sizeof(*((vector).xs)), FbleAllocMsg(__FILE__, __LINE__))
+  (vector).xs = FbleRawAlloc(arena, sizeof(*((vector).xs)), FbleAllocMsg(__FILE__, __LINE__))
 
 // FbleVectorExtend --
 //   Append an uninitialized element to the vector.

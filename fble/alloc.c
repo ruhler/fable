@@ -23,7 +23,7 @@ typedef struct Alloc {
   char data[];
 } Alloc;
 
-// FbleArena -- See fble-arena.h for documentation.
+// FbleArena -- See fble-alloc.h for documentation.
 //
 // Fields:
 //   allocs - The list of allocations for this arena. It is a circular, doubly
@@ -41,8 +41,8 @@ struct FbleArena {
 };
 
 
-// FbleArenaAlloc -- see documentation in fble-arena.h
-void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg)
+// FbleRawAlloc -- see documentation in fble-alloc.h
+void* FbleRawAlloc(FbleArena* arena, size_t size, const char* msg)
 {
   assert(arena != NULL);
   Alloc* alloc = malloc(sizeof(Alloc) + size);
@@ -59,7 +59,7 @@ void* FbleArenaAlloc(FbleArena* arena, size_t size, const char* msg)
   return (void*)alloc->data;
 }
 
-// FbleFree -- see documentation in fble-arena.h
+// FbleFree -- see documentation in fble-alloc.h
 void FbleFree(FbleArena* arena, void* ptr)
 {
   if (ptr == NULL) {
@@ -81,7 +81,7 @@ void FbleFree(FbleArena* arena, void* ptr)
   free(memset(alloc, 0xDD, sizeof(Alloc) + alloc->size));
 }
 
-// FbleNewArena -- see documentation in fble-arena.h
+// FbleNewArena -- see documentation in fble-alloc.h
 FbleArena* FbleNewArena()
 {
   FbleArena* arena = malloc(sizeof(FbleArena));
@@ -95,7 +95,7 @@ FbleArena* FbleNewArena()
   return arena;
 }
 
-// FbleDeleteArena -- see documentation in fble-arena.h
+// FbleDeleteArena -- see documentation in fble-alloc.h
 void FbleDeleteArena(FbleArena* arena)
 {
   while (arena->allocs->next != arena->allocs) {
@@ -105,7 +105,7 @@ void FbleDeleteArena(FbleArena* arena)
   free(arena);
 }
 
-// FbleAssertEmptyArena -- see documentation in fble-arena.h
+// FbleAssertEmptyArena -- see documentation in fble-alloc.h
 void FbleAssertEmptyArena(FbleArena* arena)
 {
   if (arena->allocs->next != arena->allocs) {
@@ -117,7 +117,7 @@ void FbleAssertEmptyArena(FbleArena* arena)
   }
 }
 
-// FbleArenaMaxSize -- see documentation in fble-arena.h
+// FbleArenaMaxSize -- see documentation in fble-alloc.h
 size_t FbleArenaMaxSize(FbleArena* arena)
 {
   return arena->max_size;

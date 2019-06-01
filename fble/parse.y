@@ -689,7 +689,7 @@ FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_
 
   // Make a copy of the filename for locations so that the user doesn't have
   // to worry about keeping it alive for the duration of the program lifetime.
-  char* source = FbleArenaAlloc(arena, sizeof(char) * (strlen(filename) + 1), FbleAllocMsg(__FILE__, __LINE__));
+  char* source = FbleArrayAlloc(arena, char, strlen(filename) + 1);
   strcpy(source, filename);
 
   Lex lex = {

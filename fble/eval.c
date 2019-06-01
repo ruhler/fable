@@ -735,7 +735,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
         value->_base._base.tag = FBLE_PROC_VALUE;
         value->_base.tag = FBLE_EXEC_PROC_VALUE;
         value->bindings.size = exec_instr->argc;
-        value->bindings.xs = FbleArenaAlloc(arena_, value->bindings.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
+        value->bindings.xs = FbleArrayAlloc(arena_, FbleValue*, value->bindings.size);
         FbleVectorInit(arena_, value->scope);
         value->body = exec_instr->body;
         value->body->refcount++;

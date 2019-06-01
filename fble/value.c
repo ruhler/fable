@@ -283,7 +283,7 @@ FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args)
   FbleRefInit(arena, &value->_base.ref);
   value->_base.tag = FBLE_STRUCT_VALUE;
   value->fields.size = args.size;
-  value->fields.xs = FbleArenaAlloc(arena_, value->fields.size * sizeof(FbleValue*), FbleAllocMsg(__FILE__, __LINE__));
+  value->fields.xs = FbleArrayAlloc(arena_, FbleValue*, value->fields.size);
 
   for (size_t i = 0; i < args.size; ++i) {
     value->fields.xs[i] = args.xs[i];

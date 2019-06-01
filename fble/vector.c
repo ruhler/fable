@@ -15,7 +15,7 @@ void FbleVectorIncrSize(FbleArena* arena, size_t elem_size, size_t* size, void**
   // incremented.
   size_t s = (*size)++;
   if (s > 0 && (s & (s - 1)) == 0) {
-    void* resized = FbleArenaAlloc(arena, 2 * s * elem_size, FbleAllocMsg(__FILE__, __LINE__));
+    void* resized = FbleRawAlloc(arena, 2 * s * elem_size, FbleAllocMsg(__FILE__, __LINE__));
     memcpy(resized, *xs, s * elem_size);
     FbleFree(arena, *xs);
     *xs = resized;
