@@ -46,6 +46,13 @@ typedef struct {
   FbleLoc loc;
 } FbleName;
 
+// FbleNameV --
+//   A vector of FbleNames.
+typedef struct {
+  size_t size;
+  FbleName* xs;
+} FbleNameV;
+
 // FbleNamesEqual --
 //   Test whether two names are equal.
 //

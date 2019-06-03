@@ -1,4 +1,4 @@
-// fble-arena.h --
+// fble-alloc.h --
 //   Header file describing arena base allocation functionality for fble.
 
 #ifndef FBLE_ALLOC_H_
