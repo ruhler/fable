@@ -49,33 +49,6 @@ typedef struct {
   FbleCallDataV* xs;
 } FbleCallGraph;
 
-// FbleBlockProfile -- 
-//   Profile information for a particular block.
-//
-// Fields:
-//   call - the id, summary count and time spent in this block.
-//   callers - info about calls from other blocks into this block.
-//   callers - info about calls from this block into other blocks.
-typedef struct {
-  FbleCallData block;
-  FbleCallDataV callers;
-  FbleCallDataV callees;
-} FbleBlockProfile;
-
-// FbleBlockProfileV --
-//   A vector of FbleBlockProfile.
-typedef struct {
-  size_t size;
-  FbleBlockProfile** xs;
-} FbleBlockProfileV;
-
-// FbleProfile --
-//   A profile for a program.
-//
-// The blocks and the callees and callers within blocks will all be sorted in
-// increasing order of time.
-typedef FbleBlockProfileV FbleProfile;
-
 // FbleNewCallGraph --
 //   Creates a new, empty call graph for the given number of blocks.
 //
@@ -104,6 +77,130 @@ FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc);
 // Side effects:
 //   Frees the memory resources associated with the given call graph.
 void FbleFreeCallGraph(FbleArena* arena, FbleCallGraph* graph);
+
+// FbleProfileThread --
+//   A thread of calls used to generate call graph data.
+typedef struct FbleProfileThread FbleProfileThread;
+
+// FbleNewProfileThread --
+//   Allocate a new profile thread.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   graph - the call graph to save profiling data to.
+//
+// Results:
+//   A new profile thread.
+//
+// Side effects:
+//   Allocates a new profile thread that should be freed with
+//   FreeProfileThread when no longer in use.
+FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph);
+
+// FbleFreeProfileThread --
+//   Free resources associated with the given profile thread. Does not free
+//   the call graph associated with the given profile thread.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   thread - thread to free
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Frees resources associated with the given profile thread.
+void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
+
+// FbleProfileEnterCall -- 
+//   Call into a block on the given profile thread.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   thread - the thread to do the call on.
+//   callee - the block to call into.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   A corresponding call to FbleProfileExitCall should be made when the call
+//   leaves, for proper accounting and resource management.
+void FbleProfileEnterCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee);
+
+// FbleProfileEnterTailCall --
+//   Perform a tail call into a block on the given profile thread.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   thread - the thread to do the call on.
+//   callee - the block to call into.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   No corresponding call to FbleProfileExitCall should be made when the call
+//   leaves, because it is assumed to be a tail call that exits automatically
+//   when the callee exits.
+void FbleProfileEnterTailCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee);
+
+// FbleProfileTime --
+//   Spend time on the current profile thread.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   thread - the profile thread to spend time on
+//   time - the amount of time to record has having been spent in the current
+//   call.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Increments recorded time spent in the current call.
+void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time);
+
+// FbleProfileExitCall --
+//   Exits a call on the given profile thread.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   thread - the thread to exit the call on.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Updates the call graph data associated with the given thread.
+void FbleProfileExitCall(FbleArena* arena, FbleProfileThread* thread);
+
+// FbleBlockProfile -- 
+//   Profile information for a particular block.
+//
+// Fields:
+//   call - the id, summary count and time spent in this block.
+//   callers - info about calls from other blocks into this block.
+//   callers - info about calls from this block into other blocks.
+typedef struct {
+  FbleCallData block;
+  FbleCallDataV callers;
+  FbleCallDataV callees;
+} FbleBlockProfile;
+
+// FbleBlockProfileV --
+//   A vector of FbleBlockProfile.
+typedef struct {
+  size_t size;
+  FbleBlockProfile** xs;
+} FbleBlockProfileV;
+
+// FbleProfile --
+//   A profile for a program.
+//
+// The blocks and the callees and callers within blocks will all be sorted in
+// increasing order of time.
+typedef FbleBlockProfileV FbleProfile;
 
 // FbleComputeProfile --
 //   Compute the profile for a given call graph. Block id 0 is assumed to

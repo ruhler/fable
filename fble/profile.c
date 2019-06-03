@@ -6,6 +6,27 @@
 #include "fble-syntax.h"
 #include "fble-vector.h"
 
+// ProfileStack -- 
+//   Stack representing the current call stack for profiling purposes.
+//
+// Fields:
+//   id - the id of the block at the top of the stack.
+//   time - the amount of time spent at the top of the stack.
+//   tail_call - true if the call into this block was a tail call.
+//   tail - the rest of the stack.
+typedef struct ProfileStack {
+  FbleBlockId id;
+  size_t time;
+  bool tail_call;
+  struct ProfileStack* tail;
+} ProfileStack;
+
+// FbleProfileThread -- see documentation in fble-profile.h
+struct FbleProfileThread {
+  ProfileStack* stack;
+  FbleCallGraph* graph;
+};
+
 static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* seen, FbleBlockId root);
 static void MergeSortCallData(bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
 static void SortCallData(FbleCallDataV data);
@@ -197,6 +218,90 @@ void FbleFreeCallGraph(FbleArena* arena, FbleCallGraph* graph)
   }
   FbleFree(arena, graph->xs);
   FbleFree(arena, graph);
+}
+
+// FbleNewProfileThread -- see documentation in fble-profile.h
+FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph)
+{
+  FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
+  thread->graph = graph;
+  thread->stack = NULL;
+  FbleProfileEnterCall(arena, thread, 0);
+  return thread;
+}
+
+// FbleFreeProfileThread -- see documentation in fble-profile.h
+void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
+{
+  while (thread->stack != NULL) {
+    ProfileStack* tail = thread->stack->tail;
+    FbleFree(arena, thread->stack);
+    thread->stack = tail;
+  }
+  FbleFree(arena, thread);
+}
+
+// FbleProfileEnterCall -- see documentation in fble-profile.h
+void FbleProfileEnterCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee)
+{
+  ProfileStack* stack = FbleAlloc(arena, ProfileStack);
+  stack->id = callee;
+  stack->time = 0;
+  stack->tail_call = false;
+  stack->tail = thread->stack;
+  thread->stack = stack;
+}
+
+// FbleProfileEnterTailCall -- see documentation in fble-profile.h
+void FbleProfileEnterTailCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee)
+{
+  ProfileStack* stack = FbleAlloc(arena, ProfileStack);
+  stack->id = callee;
+  stack->time = 0;
+  stack->tail_call = true;
+  stack->tail = thread->stack;
+  thread->stack = stack;
+}
+
+// FbleProfileTime -- see documentation in fble-profile.h
+void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time)
+{
+  thread->stack->time += time;
+}
+
+// FbleProfileExitCall -- see documentation in fble-profile.h
+void FbleProfileExitCall(FbleArena* arena, FbleProfileThread* thread)
+{
+  bool exit = true;
+  while (exit) {
+    exit = thread->stack->tail_call;
+
+    FbleBlockId caller = thread->stack->tail->id;
+    FbleBlockId callee = thread->stack->id;
+
+    FbleCallData* call = NULL;
+    for (size_t i = 0; i < thread->graph->xs[caller].size; ++i) {
+      if (thread->graph->xs[caller].xs[i]->id == callee) {
+        call = thread->graph->xs[caller].xs[i];
+        break;
+      }
+    }
+
+    if (call == NULL) {
+      call = FbleAlloc(arena, FbleCallData);
+      call->id = callee;
+      call->time = 0;
+      call->count = 0;
+      FbleVectorAppend(arena, thread->graph->xs[caller], call);
+    }
+
+    call->count++;
+    call->time += thread->stack->time;
+
+    ProfileStack* tail = thread->stack->tail;
+    FbleFree(arena, thread->stack);
+    thread->stack = tail;
+  }
 }
 
 // FbleComputeProfile -- see documentation in fble-profile.h
