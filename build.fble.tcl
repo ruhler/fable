@@ -45,7 +45,7 @@ exec cp {*}[glob fble/fble*.h] out/include
 gcc_prgm -c -I fble -o $::obj/fble-ref-test.o test/fble-ref-test.c
 
 # Compile the remaining executables
-foreach {x} [glob test/fble-test.c test/fble-mem-test.c prgms/*.c] {
+foreach {x} [glob test/fble-test.c test/fble-mem-test.c test/fble-profile-test.c prgms/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
   gcc_prgm -c -o $object $x
 }
@@ -55,6 +55,7 @@ exec mkdir -p $::bin
 gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble
 gcc_prgm -o $::bin/fble-ref-test $::obj/fble-ref-test.o -lfble
 gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble
+gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble
 gcc_prgm -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble
 gcc_prgm -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble
 gcc_prgm -o $::bin/fble-tictactoe $::obj/fble-tictactoe.o -lfble
@@ -92,25 +93,29 @@ proc fble-test-run { cmd loc expr } {
 # See langs/fble/README.txt for the description of this function
 proc fble-test { expr } {
   set loc [info frame -1]
-  testl $loc fble-test-run $::bin/fble-test $loc $expr
+  set file [dict get $loc file]
+  testln $loc [relative_file $file] fble-test-run $::bin/fble-test $loc $expr
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-error { loc expr } {
   set tloc [info frame -1]
-  testl $tloc fble-test-error-run $tloc $loc $expr
+  set file [dict get $tloc file]
+  testln $tloc [relative_file $file] fble-test-error-run $tloc $loc $expr
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-memory-constant { expr } {
   set loc [info frame -1]
-  testl $loc fble-test-run $::bin/fble-mem-test $loc $expr
+  set file [dict get $loc file]
+  testln $loc [relative_file $file] fble-test-run $::bin/fble-mem-test $loc $expr
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-memory-growth { expr } {
   set loc [info frame -1]
-  testl $loc fble-test-run "$::bin/fble-mem-test --growth" $loc $expr
+  set file [dict get $loc file]
+  testln $loc [relative_file $file] fble-test-run "$::bin/fble-mem-test --growth" $loc $expr
 }
 
 # Source all *.tcl files under the given directory, recursively.
@@ -126,16 +131,20 @@ proc source_all { dir } {
 
 source_all langs/fble
 
-exec mkdir -p out/cov/spec
-run gcov {*}$::fble_objs > out/cov/spec/fble.gcov
-exec mv {*}[glob *.gcov] out/cov/spec
+# TODO: Figure out how to gracefully handle the case where we have 0 coverage
+# of a particular file.
+#exec mkdir -p out/cov/spec
+#run gcov {*}$::fble_objs > out/cov/spec/fble.gcov
+#exec mv {*}[glob *.gcov] out/cov/spec
 
-test exec $::bin/fble-ref-test
-test exec $::bin/fble-test prgms/fble-snake.fble
-test exec $::bin/fble-test prgms/fble-tictactoe.fble
-test exec $::bin/fble-test prgms/fble-Snake.fble prgms
-test exec $::bin/fble-test prgms/AllTests.fble prgms
-test exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
+exec mkdir -p out/test
+testn fble-ref-test exec $::bin/fble-ref-test
+testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-test.txt
+testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
+testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble
+testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
+testn AllTests exec $::bin/fble-test prgms/AllTests.fble prgms
+testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
 
 exec mkdir -p out/cov/all
 run gcov {*}$::fble_objs > out/cov/all/fble.gcov

@@ -21,10 +21,9 @@ proc relative_file {path} {
   return [string range $fname [string length $cwd] [string length $fname]]
 }
 
-proc testl {loc args} {
+proc testln {loc name args} {
   set line [dict get $loc line]
   set file [dict get $loc file]
-  set name "[relative_file $file]:$line"
 
   try {
     puts "test $name"
@@ -37,8 +36,8 @@ proc testl {loc args} {
   incr ::num_tests_passed
 }
 
-proc test {args} {
-  testl [info frame -1] {*}$args
+proc testn {name args} {
+  testln [info frame -1] $name {*}$args
 }
 
 source build.fble.tcl

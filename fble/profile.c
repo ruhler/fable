@@ -295,12 +295,14 @@ void FbleProfileExitCall(FbleArena* arena, FbleProfileThread* thread)
       FbleVectorAppend(arena, thread->graph->xs[caller], call);
     }
 
+    size_t time = thread->stack->time;
     call->count++;
-    call->time += thread->stack->time;
+    call->time += time;
 
     ProfileStack* tail = thread->stack->tail;
     FbleFree(arena, thread->stack);
     thread->stack = tail;
+    thread->stack->time += time;
   }
 }
 
@@ -316,6 +318,7 @@ FbleProfile* FbleComputeProfile(FbleArena* arena, FbleCallGraph* graph)
   profile->size = graph->size;
   profile->xs = FbleArrayAlloc(arena, FbleBlockProfile*, graph->size);
   for (size_t i = 0; i < graph->size; ++i) {
+    profile->xs[i] = FbleAlloc(arena, FbleBlockProfile);
     profile->xs[i]->block.id = i;
     profile->xs[i]->block.count = 0;
     profile->xs[i]->block.time = 0;
