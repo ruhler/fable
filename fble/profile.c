@@ -173,7 +173,7 @@ static void SortCallData(FbleCallDataV data)
 static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 {
   FbleName* name = blocks->xs + id;
-  fprintf(stderr, "[%04x]%s@%s:%d:%d", id, name->name, name->loc.source, name->loc.line, name->loc.col);
+  fprintf(fout, "[%04x]%s@%s:%d:%d", id, name->name, name->loc.source, name->loc.line, name->loc.col);
 }
 
 // PrintCallData --
@@ -193,7 +193,7 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call)
 {
   char h = highlight ? '*' : ' ';
-  fprintf(fout, " %c % 14d % 14d ", h, call->count, call->time);
+  fprintf(fout, " %c % 10d % 10d ", h, call->count, call->time);
   PrintBlockName(fout, blocks, call->id);
   fprintf(fout, "\n");
 }
@@ -214,6 +214,9 @@ FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc)
 void FbleFreeCallGraph(FbleArena* arena, FbleCallGraph* graph)
 {
   for (size_t i = 0; i < graph->size; ++i) {
+    for (size_t j = 0; j < graph->xs[i].size; ++j) {
+      FbleFree(arena, graph->xs[i].xs[j]);
+    }
     FbleFree(arena, graph->xs[i].xs);
   }
   FbleFree(arena, graph->xs);
@@ -384,8 +387,17 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 {
   for (size_t i = 0; i < profile->size; ++i) {
     FbleBlockProfile* block = profile->xs[i];
+
+    for (size_t j = 0; j < block->callers.size; ++j) {
+      FbleFree(arena, block->callers.xs[j]);
+    }
     FbleFree(arena, block->callers.xs);
+
+    for (size_t j = 0; j < block->callees.size; ++j) {
+      FbleFree(arena, block->callees.xs[j]);
+    }
     FbleFree(arena, block->callees.xs);
+
     FbleFree(arena, block);
   }
   FbleFree(arena, profile->xs);
@@ -406,7 +418,7 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   double coverage = (double)covered / (double)profile->size;
   fprintf(fout, "Code Coverage\n");
   fprintf(fout, "-------------\n");
-  fprintf(fout, "Blocks executed:%2.2f%% of %zi\n\n", coverage, profile->size);
+  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, profile->size);
 
   // Uncovered blocks
   fprintf(fout, "Uncovered Blocks\n");
@@ -423,7 +435,7 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   // Flat Profile
   fprintf(fout, "Flat Profile\n");
   fprintf(fout, "------------\n");
-  fprintf(fout, "   %14s %14s %s\n", "count", "time", "block");
+  fprintf(fout, "   %10s %10s %s\n", "count", "time", "block");
   for (size_t i = 0; i < profile->size; ++i) {
     PrintCallData(fout, blocks, true, &profile->xs[profile->size - i - 1]->block);
   }
@@ -433,14 +445,16 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   fprintf(fout, "Call Graph\n");
   fprintf(fout, "----------\n");
   for (size_t i = 0; i < profile->size; ++i) {
-    for (size_t j = 0; j < profile->xs[i]->callers.size; ++j) {
-      PrintCallData(fout, blocks, false, profile->xs[i]->callers.xs[j]);
+    FbleBlockProfile* block = profile->xs[profile->size - i - 1];
+    for (size_t j = 0; j < block->callers.size; ++j) {
+      PrintCallData(fout, blocks, false, block->callers.xs[j]);
     }
     PrintCallData(fout, blocks, true, &profile->xs[profile->size - i - 1]->block);
-    size_t callees_size = profile->xs[i]->callees.size;
+    size_t callees_size = block->callees.size;
     for (size_t j = 0; j < callees_size; ++j) {
-      PrintCallData(fout, blocks, false, profile->xs[i]->callees.xs[callees_size - j - 1]);
+      PrintCallData(fout, blocks, false, block->callees.xs[callees_size - j - 1]);
     }
+    fprintf(fout, "--------------------------\n");
   }
   fprintf(fout, "\n");
 }
