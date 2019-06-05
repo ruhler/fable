@@ -28,8 +28,8 @@ struct FbleProfileThread {
 };
 
 static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* seen, FbleBlockId root);
-static void MergeSortCallData(bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
-static void SortCallData(FbleCallDataV data);
+static void MergeSortCallData(bool ascending, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
+static void SortCallData(bool ascending, FbleCallDataV data);
 static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call);
 
@@ -82,6 +82,7 @@ static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* se
 //   2. !in_place - a is sorted into b, then a can be used as a scratch buffer
 //
 // Inputs:
+//   ascending - if true, sort in ascending order, otherwise in descending order
 //   in_place - whether to use in place sort or not.
 //   a - the data to sort
 //   b - if in_place, a scratch buffer. Otherwise the destination for the
@@ -94,7 +95,7 @@ static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* se
 // Side effects:
 //   Sorts the contents of data a, either in place or into b. Overwrites the
 //   contents of the non-sorted array with scratch data.
-static void MergeSortCallData(bool in_place, FbleCallData** a, FbleCallData** b, size_t size)
+static void MergeSortCallData(bool ascending, bool in_place, FbleCallData** a, FbleCallData** b, size_t size)
 {
   if (size == 0) {
     return;
@@ -110,12 +111,12 @@ static void MergeSortCallData(bool in_place, FbleCallData** a, FbleCallData** b,
   FbleCallData** a1 = a;
   FbleCallData** b1 = b;
   size_t size1 = size / 2;
-  MergeSortCallData(!in_place, a1, b1, size1);
+  MergeSortCallData(ascending, !in_place, a1, b1, size1);
 
   FbleCallData** a2 = a + size1;
   FbleCallData** b2 = b + size1;
   size_t size2 = size - size1;
-  MergeSortCallData(!in_place, a2, b2, size2);
+  MergeSortCallData(ascending, !in_place, a2, b2, size2);
 
   FbleCallData** s1 = in_place ? b1 : a1;
   FbleCallData** s2 = in_place ? b2 : a2;
@@ -124,10 +125,18 @@ static void MergeSortCallData(bool in_place, FbleCallData** a, FbleCallData** b,
   FbleCallData** e1 = s1 + size1;
   FbleCallData** e2 = s2 + size2;
   while (s1 < e1 && s2 < e2) {
-    if ((*s1)->time <= (*s2)->time) {
-      *d++ = *s1++;
+    if (ascending) {
+      if ((*s1)->time <= (*s2)->time) {
+        *d++ = *s1++;
+      } else {
+        *d++ = *s2++;
+      }
     } else {
-      *d++ = *s2++;
+      if ((*s1)->time >= (*s2)->time) {
+        *d++ = *s1++;
+      } else {
+        *d++ = *s2++;
+      }
     }
   }
 
@@ -144,6 +153,7 @@ static void MergeSortCallData(bool in_place, FbleCallData** a, FbleCallData** b,
 //   Sort a vector of call data by time.
 //
 // Inputs:
+//   ascending - if true, sort in ascending order, otherwise in descending order
 //   data - the call data to sort
 //
 // Results:
@@ -151,10 +161,10 @@ static void MergeSortCallData(bool in_place, FbleCallData** a, FbleCallData** b,
 //
 // Side effects:
 //   Sorts the given array of call data in increasing order of time.
-static void SortCallData(FbleCallDataV data)
+static void SortCallData(bool ascending, FbleCallDataV data)
 {
   FbleCallData* scratch[data.size];
-  MergeSortCallData(true, data.xs, scratch, data.size);
+  MergeSortCallData(ascending, true, data.xs, scratch, data.size);
 }
 
 // PrintBlockName --
@@ -374,11 +384,18 @@ FbleProfile* FbleComputeProfile(FbleArena* arena, FbleCallGraph* graph)
     }
   }
 
-  for (size_t i = 0; i < profile->size; ++i) {
-    SortCallData(profile->xs[i]->callers);
-    SortCallData(profile->xs[i]->callees);
+  // Treat block 0 specially so it represents the total execution for the
+  // program. We assume there are no incoming calls to block 0.
+  for (size_t i = 0; i < graph->xs[0].size; ++i) {
+    profile->xs[0]->block.count += graph->xs[0].xs[i]->count;
+    profile->xs[0]->block.time += graph->xs[0].xs[i]->time;
   }
-  SortCallData(*(FbleCallDataV*)profile);
+
+  for (size_t i = 0; i < profile->size; ++i) {
+    SortCallData(true /* ascending */, profile->xs[i]->callers);
+    SortCallData(false /*ascending */, profile->xs[i]->callees);
+  }
+  SortCallData(false /* ascending */, *(FbleCallDataV*)profile);
   return profile;
 }
 
@@ -437,22 +454,23 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   fprintf(fout, "------------\n");
   fprintf(fout, "   %10s %10s %s\n", "count", "time", "block");
   for (size_t i = 0; i < profile->size; ++i) {
-    PrintCallData(fout, blocks, true, &profile->xs[profile->size - i - 1]->block);
+    PrintCallData(fout, blocks, true, &profile->xs[i]->block);
   }
   fprintf(fout, "\n");
 
   // Call Graph
   fprintf(fout, "Call Graph\n");
   fprintf(fout, "----------\n");
+  fprintf(fout, "   %10s %10s %s\n", "count", "time", "block");
   for (size_t i = 0; i < profile->size; ++i) {
-    FbleBlockProfile* block = profile->xs[profile->size - i - 1];
+    FbleBlockProfile* block = profile->xs[i];
     for (size_t j = 0; j < block->callers.size; ++j) {
       PrintCallData(fout, blocks, false, block->callers.xs[j]);
     }
-    PrintCallData(fout, blocks, true, &profile->xs[profile->size - i - 1]->block);
+    PrintCallData(fout, blocks, true, &profile->xs[i]->block);
     size_t callees_size = block->callees.size;
     for (size_t j = 0; j < callees_size; ++j) {
-      PrintCallData(fout, blocks, false, block->callees.xs[callees_size - j - 1]);
+      PrintCallData(fout, blocks, false, block->callees.xs[j]);
     }
     fprintf(fout, "--------------------------\n");
   }

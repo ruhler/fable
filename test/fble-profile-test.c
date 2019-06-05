@@ -72,63 +72,63 @@ int main(int argc, char* argv[])
     assert(profile->size == 5);
     assert(profile->xs[0]->callers.size == 0);
     assert(profile->xs[0]->block.id == 0);
-    assert(profile->xs[0]->block.count == 0);
-    assert(profile->xs[0]->block.time == 0);
+    assert(profile->xs[0]->block.count == 1);
+    assert(profile->xs[0]->block.time == 131);
     assert(profile->xs[0]->callees.size == 1);
     assert(profile->xs[0]->callees.xs[0]->id == 1);
     assert(profile->xs[0]->callees.xs[0]->count == 1);
     assert(profile->xs[0]->callees.xs[0]->time == 131);
 
-    assert(profile->xs[4]->callers.size == 1);
-    assert(profile->xs[4]->callers.xs[0]->id == 0);
-    assert(profile->xs[4]->callers.xs[0]->count == 1);
-    assert(profile->xs[4]->callers.xs[0]->time == 131);
-    assert(profile->xs[4]->block.id == 1);
-    assert(profile->xs[4]->block.count == 1);
-    assert(profile->xs[4]->block.time == 131);
-    assert(profile->xs[4]->callees.size == 2);
-    assert(profile->xs[4]->callees.xs[0]->id == 3);
-    assert(profile->xs[4]->callees.xs[0]->count == 1);
-    assert(profile->xs[4]->callees.xs[0]->time == 31);
-    assert(profile->xs[4]->callees.xs[1]->id == 2);
-    assert(profile->xs[4]->callees.xs[1]->count == 1);
-    assert(profile->xs[4]->callees.xs[1]->time == 90);
-
-    assert(profile->xs[3]->callers.size == 1);
-    assert(profile->xs[3]->callers.xs[0]->id == 1);
-    assert(profile->xs[3]->callers.xs[0]->count == 1);
-    assert(profile->xs[3]->callers.xs[0]->time == 90);
-    assert(profile->xs[3]->block.id == 2);
-    assert(profile->xs[3]->block.count == 1);
-    assert(profile->xs[3]->block.time == 90);
-    assert(profile->xs[3]->callees.size == 2);
-    assert(profile->xs[3]->callees.xs[0]->id == 3);
-    assert(profile->xs[3]->callees.xs[0]->count == 1);
-    assert(profile->xs[3]->callees.xs[0]->time == 30);
-    assert(profile->xs[3]->callees.xs[1]->id == 4);
-    assert(profile->xs[3]->callees.xs[1]->count == 1);
-    assert(profile->xs[3]->callees.xs[1]->time == 40);
-
-    assert(profile->xs[2]->callers.size == 2);
-    assert(profile->xs[2]->callers.xs[0]->id == 2);
-    assert(profile->xs[2]->callers.xs[0]->count == 1);
-    assert(profile->xs[2]->callers.xs[0]->time == 30);
-    assert(profile->xs[2]->callers.xs[1]->id == 1);
-    assert(profile->xs[2]->callers.xs[1]->count == 1);
-    assert(profile->xs[2]->callers.xs[1]->time == 31);
-    assert(profile->xs[2]->block.id == 3);
-    assert(profile->xs[2]->block.count == 2);
-    assert(profile->xs[2]->block.time == 61);
-    assert(profile->xs[2]->callees.size == 0);
-
     assert(profile->xs[1]->callers.size == 1);
-    assert(profile->xs[1]->callers.xs[0]->id == 2);
+    assert(profile->xs[1]->callers.xs[0]->id == 0);
     assert(profile->xs[1]->callers.xs[0]->count == 1);
-    assert(profile->xs[1]->callers.xs[0]->time == 40);
-    assert(profile->xs[1]->block.id == 4);
+    assert(profile->xs[1]->callers.xs[0]->time == 131);
+    assert(profile->xs[1]->block.id == 1);
     assert(profile->xs[1]->block.count == 1);
-    assert(profile->xs[1]->block.time == 40);
-    assert(profile->xs[1]->callees.size == 0);
+    assert(profile->xs[1]->block.time == 131);
+    assert(profile->xs[1]->callees.size == 2);
+    assert(profile->xs[1]->callees.xs[0]->id == 2);
+    assert(profile->xs[1]->callees.xs[0]->count == 1);
+    assert(profile->xs[1]->callees.xs[0]->time == 90);
+    assert(profile->xs[1]->callees.xs[1]->id == 3);
+    assert(profile->xs[1]->callees.xs[1]->count == 1);
+    assert(profile->xs[1]->callees.xs[1]->time == 31);
+
+    assert(profile->xs[2]->callers.size == 1);
+    assert(profile->xs[2]->callers.xs[0]->id == 1);
+    assert(profile->xs[2]->callers.xs[0]->count == 1);
+    assert(profile->xs[2]->callers.xs[0]->time == 90);
+    assert(profile->xs[2]->block.id == 2);
+    assert(profile->xs[2]->block.count == 1);
+    assert(profile->xs[2]->block.time == 90);
+    assert(profile->xs[2]->callees.size == 2);
+    assert(profile->xs[2]->callees.xs[0]->id == 4);
+    assert(profile->xs[2]->callees.xs[0]->count == 1);
+    assert(profile->xs[2]->callees.xs[0]->time == 40);
+    assert(profile->xs[2]->callees.xs[1]->id == 3);
+    assert(profile->xs[2]->callees.xs[1]->count == 1);
+    assert(profile->xs[2]->callees.xs[1]->time == 30);
+
+    assert(profile->xs[3]->callers.size == 2);
+    assert(profile->xs[3]->callers.xs[0]->id == 2);
+    assert(profile->xs[3]->callers.xs[0]->count == 1);
+    assert(profile->xs[3]->callers.xs[0]->time == 30);
+    assert(profile->xs[3]->callers.xs[1]->id == 1);
+    assert(profile->xs[3]->callers.xs[1]->count == 1);
+    assert(profile->xs[3]->callers.xs[1]->time == 31);
+    assert(profile->xs[3]->block.id == 3);
+    assert(profile->xs[3]->block.count == 2);
+    assert(profile->xs[3]->block.time == 61);
+    assert(profile->xs[3]->callees.size == 0);
+
+    assert(profile->xs[4]->callers.size == 1);
+    assert(profile->xs[4]->callers.xs[0]->id == 2);
+    assert(profile->xs[4]->callers.xs[0]->count == 1);
+    assert(profile->xs[4]->callers.xs[0]->time == 40);
+    assert(profile->xs[4]->block.id == 4);
+    assert(profile->xs[4]->block.count == 1);
+    assert(profile->xs[4]->block.time == 40);
+    assert(profile->xs[4]->callees.size == 0);
 
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},

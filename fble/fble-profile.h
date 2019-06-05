@@ -198,8 +198,9 @@ typedef struct {
 // FbleProfile --
 //   A profile for a program.
 //
-// The blocks and the callees and callers within blocks will all be sorted in
-// increasing order of time.
+// Blocks are sorted in descending order of time.
+// Callers within blocks are sorted in ascending order of time.
+// Callees within blocks are sorted in descending order of time.
 typedef FbleBlockProfileV FbleProfile;
 
 // FbleComputeProfile --
