@@ -68,12 +68,12 @@ static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* se
     }
   }
 
+  FbleVectorAppend(arena, *seen, root);
   for (size_t i = 0; i < graph->xs[root].size; ++i) {
     FbleBlockId callee = graph->xs[root].xs[i]->id;
-    FbleVectorAppend(arena, *seen, callee);
     FixupCycles(arena, graph, seen, callee);
-    seen->size--;
   }
+  seen->size--;
 }
 
 // MergeSortCallData --
