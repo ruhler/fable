@@ -4,7 +4,10 @@
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
 * [tools] Code coverage and profiling support
- - test profiling library on sample traces.
+ - fix accounting for root block - it should be the sum of all callees as a
+   special case.
+ - test profiling library on more sample traces.
+   tail call, self recursion, mutual recursion.
  - add and implement PROFILE_ENTER, EXIT, AUTO_EXIT instructions.
  - Generate the PROFILE_* instructions in the compiler.
  - Do auto-naming of blocks based on variable/field names relevant to the

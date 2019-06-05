@@ -131,11 +131,9 @@ proc source_all { dir } {
 
 source_all langs/fble
 
-# TODO: Figure out how to gracefully handle the case where we have 0 coverage
-# of a particular file.
-#exec mkdir -p out/cov/spec
-#run gcov {*}$::fble_objs > out/cov/spec/fble.gcov
-#exec mv {*}[glob *.gcov] out/cov/spec
+exec mkdir -p out/cov/spec
+run -ignorestderr gcov {*}$::fble_objs > out/cov/spec/fble.gcov
+exec mv {*}[glob *.gcov] out/cov/spec
 
 exec mkdir -p out/test
 testn fble-ref-test exec $::bin/fble-ref-test
@@ -147,6 +145,6 @@ testn AllTests exec $::bin/fble-test prgms/AllTests.fble prgms
 testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
 
 exec mkdir -p out/cov/all
-run gcov {*}$::fble_objs > out/cov/all/fble.gcov
+run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov
 exec mv {*}[glob *.gcov] out/cov/all
 
