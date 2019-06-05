@@ -143,9 +143,66 @@ int main(int argc, char* argv[])
     FbleFreeProfile(arena, profile);
     FbleFreeCallGraph(arena, graph);
     FbleAssertEmptyArena(arena);
-    FbleDeleteArena(arena);
   }
 
+  {
+    // Test a graph with tail calls
+    // 0 -> 1 -> 2 => 3 -> 4
+    //                  => 5
+    //        -> 6
+    FbleAssertEmptyArena(arena);
+    FbleCallGraph* graph = FbleNewCallGraph(arena, 7);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, graph);
+    FbleProfileEnterCall(arena, thread, 1);
+    FbleProfileTime(arena, thread, 10);
+    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileTime(arena, thread, 20);
+    FbleProfileEnterTailCall(arena, thread, 3);
+    FbleProfileTime(arena, thread, 30);
+    FbleProfileEnterCall(arena, thread, 4);
+    FbleProfileTime(arena, thread, 40);
+    FbleProfileExitCall(arena, thread); // 4
+    FbleProfileEnterTailCall(arena, thread, 5);
+    FbleProfileTime(arena, thread, 50);
+    FbleProfileExitCall(arena, thread); // 5, 2
+    FbleProfileEnterCall(arena, thread, 6);
+    FbleProfileTime(arena, thread, 60);
+    FbleProfileExitCall(arena, thread); // 6
+    FbleProfileExitCall(arena, thread); // 1
+    FbleFreeProfileThread(arena, thread);
+
+    assert(graph->size == 7);
+    assert(graph->xs[0].size == 1);
+    assert(graph->xs[0].xs[0]->id == 1);
+    assert(graph->xs[0].xs[0]->count == 1);
+    assert(graph->xs[0].xs[0]->time == 210);
+    assert(graph->xs[1].size == 2);
+    assert(graph->xs[1].xs[0]->id == 2);
+    assert(graph->xs[1].xs[0]->count == 1);
+    assert(graph->xs[1].xs[0]->time == 140);
+    assert(graph->xs[1].xs[1]->id == 6);
+    assert(graph->xs[1].xs[1]->count == 1);
+    assert(graph->xs[1].xs[1]->time == 60);
+    assert(graph->xs[2].size == 1);
+    assert(graph->xs[2].xs[0]->id == 3);
+    assert(graph->xs[2].xs[0]->count == 1);
+    assert(graph->xs[2].xs[0]->time == 120);
+    assert(graph->xs[3].size == 2);
+    assert(graph->xs[3].xs[0]->id == 4);
+    assert(graph->xs[3].xs[0]->count == 1);
+    assert(graph->xs[3].xs[0]->time == 40);
+    assert(graph->xs[3].xs[1]->id == 5);
+    assert(graph->xs[3].xs[1]->count == 1);
+    assert(graph->xs[3].xs[1]->time == 50);
+    assert(graph->xs[4].size == 0);
+    assert(graph->xs[5].size == 0);
+    assert(graph->xs[6].size == 0);
+
+    FbleFreeCallGraph(arena, graph);
+    FbleAssertEmptyArena(arena);
+  }
+
+  FbleDeleteArena(arena);
   return 0;
 }
 
