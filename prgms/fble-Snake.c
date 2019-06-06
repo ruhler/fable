@@ -250,10 +250,14 @@ int main(int argc, char* argv[])
 
   FbleArena* eval_arena = FbleNewArena();
   FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
+  FbleNameV blocks;
+  FbleCallGraph* graph = NULL;
 
-  FbleValue* func = FbleEval(value_arena, prgm);
+  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &graph);
   if (func == NULL) {
     FbleDeleteValueArena(value_arena);
+    FbleFree(eval_arena, blocks.xs);
+    FbleFreeCallGraph(eval_arena, graph);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
     return 1;
@@ -261,8 +265,8 @@ int main(int argc, char* argv[])
 
   FbleValue* input = FbleNewPortValue(value_arena, 0);
   FbleValue* output = FbleNewPortValue(value_arena, 1);
-  FbleValue* main1 = FbleApply(value_arena, func, input);
-  FbleValue* proc = FbleApply(value_arena, main1, output);
+  FbleValue* main1 = FbleApply(value_arena, func, input, graph);
+  FbleValue* proc = FbleApply(value_arena, main1, output, graph);
   FbleValueRelease(value_arena, func);
   FbleValueRelease(value_arena, main1);
   FbleValueRelease(value_arena, input);
@@ -270,6 +274,8 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleDeleteValueArena(value_arena);
+    FbleFree(eval_arena, blocks.xs);
+    FbleFreeCallGraph(eval_arena, graph);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
     return 1;
@@ -310,7 +316,7 @@ int main(int argc, char* argv[])
   GetCurrentTime(&sio.tnext);
   AddTimeMillis(&sio.tnext, TICK_INTERVAL);
 
-  FbleValue* value = FbleExec(value_arena, &sio.io, proc);
+  FbleValue* value = FbleExec(value_arena, &sio.io, proc, graph);
 
   FbleValueRelease(value_arena, proc);
   FbleValueRelease(value_arena, ports[0]);
@@ -318,6 +324,8 @@ int main(int argc, char* argv[])
 
   FbleValueRelease(value_arena, value);
   FbleDeleteValueArena(value_arena);
+  FbleFree(eval_arena, blocks.xs);
+  FbleFreeCallGraph(eval_arena, graph);
   FbleAssertEmptyArena(eval_arena);
   FbleDeleteArena(eval_arena);
   FbleDeleteArena(prgm_arena);

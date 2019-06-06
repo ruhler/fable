@@ -1162,9 +1162,19 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 }
 
 // FbleEval -- see documentation in fble.h
-FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
+FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr, FbleNameV* blocks, FbleCallGraph** graph)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
+
+  FbleVectorInit(arena_, *blocks);
+  FbleName* nmain = FbleVectorExtend(arena_, *blocks);
+  nmain->name = "__main";
+  nmain->loc.source = __FILE__; 
+  nmain->loc.line = __LINE__;
+  nmain->loc.col = 0;
+
+  *graph = FbleNewCallGraph(arena_, 1);
+
   FbleInstrBlock* instrs = FbleCompile(arena_, expr);
   if (instrs == NULL) {
     return NULL;
@@ -1178,7 +1188,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr)
 }
 
 // FbleApply -- see documentation in fble.h
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg)
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, FbleCallGraph* graph)
 {
   FbleValueRetain(arena, func);
   assert(func->tag == FBLE_FUNC_VALUE);
@@ -1201,7 +1211,7 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg)
 }
 
 // FbleExec -- see documentation in fble.h
-FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc)
+FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleCallGraph* graph)
 {
   assert(proc->tag == FBLE_PROC_VALUE);
   FbleValue* xs[1] = { proc };

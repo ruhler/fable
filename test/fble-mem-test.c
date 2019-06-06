@@ -54,7 +54,9 @@ bool Run(FbleExpr* prgm, bool use_large_n, size_t* max_bytes)
   bool success = false;
   FbleArena* eval_arena = FbleNewArena();
   FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
-  FbleValue* func = FbleEval(value_arena, prgm);
+  FbleNameV blocks;
+  FbleCallGraph* graph = NULL;
+  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &graph);
   if (func != NULL) {
     // Number type is: @ Nat@ = +(Nat@ S, Unit@ Z);
     FbleValueV args = { .size = 0, .xs = NULL };
@@ -70,7 +72,7 @@ bool Run(FbleExpr* prgm, bool use_large_n, size_t* max_bytes)
     }
 
     FbleValue* n = (use_large_n ? large_n : small_n);
-    FbleValue* result = FbleApply(value_arena, func, n);
+    FbleValue* result = FbleApply(value_arena, func, n, graph);
     success = (result != NULL);
     FbleValueRelease(value_arena, result);
     FbleValueRelease(value_arena, large_n);
@@ -78,6 +80,9 @@ bool Run(FbleExpr* prgm, bool use_large_n, size_t* max_bytes)
 
   FbleValueRelease(value_arena, func);
   FbleDeleteValueArena(value_arena);
+  FbleFree(eval_arena, blocks.xs);
+  FbleFreeCallGraph(eval_arena, graph);
+
   *max_bytes = FbleArenaMaxSize(eval_arena);
   FbleAssertEmptyArena(eval_arena);
   FbleDeleteArena(eval_arena);

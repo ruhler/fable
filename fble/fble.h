@@ -12,6 +12,7 @@
 #include "fble-vector.h"
 #include "fble-syntax.h"
 #include "fble-value.h"
+#include "fble-profile.h"
 
 
 // FbleEval --
@@ -20,6 +21,8 @@
 // Inputs:
 //   arena - The arena to use for allocating values.
 //   expr - The expression to evaluate.
+//   blocks - Output info about blocks in the program.
+//   graph - Output call graph for the evaluation.
 //
 // Results:
 //   The value of the evaluated expression, or NULL in case of error. The
@@ -28,7 +31,11 @@
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
-FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
+//   Sets blocks to the info about all blocks in the program. This must be
+//   freed when no longer in use.
+//   Sets graph to the call graph for the evaluation. This must be freed with
+//   FbleFreeCallGraph when no longer in use.
+FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr, FbleNameV* blocks, FbleCallGraph** graph);
 
 // FbleApply --
 //   Apply a function to the given argument.
@@ -37,6 +44,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
 //   arena - the arena to use for allocating values.
 //   func - the function to apply.
 //   arg - the argument to apply the function to.
+//   graph - the call graph to update.
 //
 // Results:
 //   The result of applying the function to the given argument.
@@ -44,7 +52,8 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr);
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg);
+//   Updates the call graph with stats from the evaluation.
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, FbleCallGraph* graph);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.
@@ -102,6 +111,7 @@ typedef struct FbleIO {
 //   arena - The arena to use for allocating values.
 //   io - The io to use for external ports.
 //   proc - The process to execute.
+//   graph - the call graph to update.
 //
 // Results:
 //   The result of executing the process, or NULL in case of error. The
@@ -109,6 +119,7 @@ typedef struct FbleIO {
 //
 // Side effects:
 //   Prints an error message to stderr in case of error.
-FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc);
+//   Updates the call graph with stats from the evaluation.
+FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleCallGraph* graph);
 
 #endif // FBLE_H_
