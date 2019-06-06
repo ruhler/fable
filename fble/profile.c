@@ -12,12 +12,12 @@
 // Fields:
 //   id - the id of the block at the top of the stack.
 //   time - the amount of time spent at the top of the stack.
-//   tail_call - true if the call into this block was a tail call.
+//   exit - true if we should automatically exit from this block.
 //   tail - the rest of the stack.
 typedef struct ProfileStack {
   FbleBlockId id;
   size_t time;
-  bool tail_call;
+  bool exit;
   struct ProfileStack* tail;
 } ProfileStack;
 
@@ -239,7 +239,7 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph)
   FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
   thread->graph = graph;
   thread->stack = NULL;
-  FbleProfileEnterCall(arena, thread, 0);
+  FbleProfileEnterBlock(arena, thread, 0);
   return thread;
 }
 
@@ -254,24 +254,13 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
   FbleFree(arena, thread);
 }
 
-// FbleProfileEnterCall -- see documentation in fble-profile.h
-void FbleProfileEnterCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee)
+// FbleProfileEnterBlock -- see documentation in fble-profile.h
+void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block)
 {
   ProfileStack* stack = FbleAlloc(arena, ProfileStack);
-  stack->id = callee;
+  stack->id = block;
   stack->time = 0;
-  stack->tail_call = false;
-  stack->tail = thread->stack;
-  thread->stack = stack;
-}
-
-// FbleProfileEnterTailCall -- see documentation in fble-profile.h
-void FbleProfileEnterTailCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee)
-{
-  ProfileStack* stack = FbleAlloc(arena, ProfileStack);
-  stack->id = callee;
-  stack->time = 0;
-  stack->tail_call = true;
+  stack->exit = false;
   stack->tail = thread->stack;
   thread->stack = stack;
 }
@@ -282,13 +271,10 @@ void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time)
   thread->stack->time += time;
 }
 
-// FbleProfileExitCall -- see documentation in fble-profile.h
-void FbleProfileExitCall(FbleArena* arena, FbleProfileThread* thread)
+// FbleProfileExitBlock -- see documentation in fble-profile.h
+void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
-  bool exit = true;
-  while (exit) {
-    exit = thread->stack->tail_call;
-
+  for (bool exit = true; exit; exit = thread->stack->exit) {
     FbleBlockId caller = thread->stack->tail->id;
     FbleBlockId callee = thread->stack->id;
 
@@ -317,6 +303,12 @@ void FbleProfileExitCall(FbleArena* arena, FbleProfileThread* thread)
     thread->stack = tail;
     thread->stack->time += time;
   }
+}
+
+// FbleProfileAutoExitBlock -- see documentation in fble-profile.h
+void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
+{
+  thread->stack->exit = true;
 }
 
 // FbleComputeProfile -- see documentation in fble-profile.h

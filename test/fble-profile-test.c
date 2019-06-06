@@ -29,21 +29,21 @@ int main(int argc, char* argv[])
     //        -> 3
     FbleCallGraph* graph = FbleNewCallGraph(arena, 5);
     FbleProfileThread* thread = FbleNewProfileThread(arena, graph);
-    FbleProfileEnterCall(arena, thread, 1);
+    FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileTime(arena, thread, 10);
-    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileEnterBlock(arena, thread, 2);
     FbleProfileTime(arena, thread, 20);
-    FbleProfileEnterCall(arena, thread, 3);
+    FbleProfileEnterBlock(arena, thread, 3);
     FbleProfileTime(arena, thread, 30);
-    FbleProfileExitCall(arena, thread); // 3
-    FbleProfileEnterCall(arena, thread, 4);
+    FbleProfileExitBlock(arena, thread); // 3
+    FbleProfileEnterBlock(arena, thread, 4);
     FbleProfileTime(arena, thread, 40);
-    FbleProfileExitCall(arena, thread); // 4
-    FbleProfileExitCall(arena, thread); // 2
-    FbleProfileEnterCall(arena, thread, 3);
+    FbleProfileExitBlock(arena, thread); // 4
+    FbleProfileExitBlock(arena, thread); // 2
+    FbleProfileEnterBlock(arena, thread, 3);
     FbleProfileTime(arena, thread, 31);
-    FbleProfileExitCall(arena, thread); // 3
-    FbleProfileExitCall(arena, thread); // 1
+    FbleProfileExitBlock(arena, thread); // 3
+    FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
     assert(graph->size == 5);
@@ -153,22 +153,24 @@ int main(int argc, char* argv[])
     FbleAssertEmptyArena(arena);
     FbleCallGraph* graph = FbleNewCallGraph(arena, 7);
     FbleProfileThread* thread = FbleNewProfileThread(arena, graph);
-    FbleProfileEnterCall(arena, thread, 1);
+    FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileTime(arena, thread, 10);
-    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileEnterBlock(arena, thread, 2);
     FbleProfileTime(arena, thread, 20);
-    FbleProfileEnterTailCall(arena, thread, 3);
+    FbleProfileAutoExitBlock(arena, thread);  // 2
+    FbleProfileEnterBlock(arena, thread, 3);
     FbleProfileTime(arena, thread, 30);
-    FbleProfileEnterCall(arena, thread, 4);
+    FbleProfileEnterBlock(arena, thread, 4);
     FbleProfileTime(arena, thread, 40);
-    FbleProfileExitCall(arena, thread); // 4
-    FbleProfileEnterTailCall(arena, thread, 5);
+    FbleProfileExitBlock(arena, thread); // 4
+    FbleProfileAutoExitBlock(arena, thread);  // 3
+    FbleProfileEnterBlock(arena, thread, 5);
     FbleProfileTime(arena, thread, 50);
-    FbleProfileExitCall(arena, thread); // 5, 2
-    FbleProfileEnterCall(arena, thread, 6);
+    FbleProfileExitBlock(arena, thread); // 5
+    FbleProfileEnterBlock(arena, thread, 6);
     FbleProfileTime(arena, thread, 60);
-    FbleProfileExitCall(arena, thread); // 6
-    FbleProfileExitCall(arena, thread); // 1
+    FbleProfileExitBlock(arena, thread); // 6
+    FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
     assert(graph->size == 7);
@@ -208,21 +210,21 @@ int main(int argc, char* argv[])
     FbleAssertEmptyArena(arena);
     FbleCallGraph* graph = FbleNewCallGraph(arena, 4);
     FbleProfileThread* thread = FbleNewProfileThread(arena, graph);
-    FbleProfileEnterCall(arena, thread, 1);
+    FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileTime(arena, thread, 10);
-    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileEnterBlock(arena, thread, 2);
     FbleProfileTime(arena, thread, 20);
-    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileEnterBlock(arena, thread, 2);
     FbleProfileTime(arena, thread, 20);
-    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileEnterBlock(arena, thread, 2);
     FbleProfileTime(arena, thread, 20);
-    FbleProfileEnterCall(arena, thread, 3);
+    FbleProfileEnterBlock(arena, thread, 3);
     FbleProfileTime(arena, thread, 30);
-    FbleProfileExitCall(arena, thread); // 3
-    FbleProfileExitCall(arena, thread); // 2
-    FbleProfileExitCall(arena, thread); // 2
-    FbleProfileExitCall(arena, thread); // 2
-    FbleProfileExitCall(arena, thread); // 1
+    FbleProfileExitBlock(arena, thread); // 3
+    FbleProfileExitBlock(arena, thread); // 2
+    FbleProfileExitBlock(arena, thread); // 2
+    FbleProfileExitBlock(arena, thread); // 2
+    FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
     assert(graph->size == 4);
@@ -313,24 +315,24 @@ int main(int argc, char* argv[])
     FbleAssertEmptyArena(arena);
     FbleCallGraph* graph = FbleNewCallGraph(arena, 5);
     FbleProfileThread* thread = FbleNewProfileThread(arena, graph);
-    FbleProfileEnterCall(arena, thread, 1);
+    FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileTime(arena, thread, 10);
-    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileEnterBlock(arena, thread, 2);
     FbleProfileTime(arena, thread, 20);
-    FbleProfileEnterCall(arena, thread, 3);
+    FbleProfileEnterBlock(arena, thread, 3);
     FbleProfileTime(arena, thread, 30);
-    FbleProfileEnterCall(arena, thread, 2);
+    FbleProfileEnterBlock(arena, thread, 2);
     FbleProfileTime(arena, thread, 20);
-    FbleProfileEnterCall(arena, thread, 3);
+    FbleProfileEnterBlock(arena, thread, 3);
     FbleProfileTime(arena, thread, 30);
-    FbleProfileEnterCall(arena, thread, 4);
+    FbleProfileEnterBlock(arena, thread, 4);
     FbleProfileTime(arena, thread, 40);
-    FbleProfileExitCall(arena, thread); // 4
-    FbleProfileExitCall(arena, thread); // 3
-    FbleProfileExitCall(arena, thread); // 2
-    FbleProfileExitCall(arena, thread); // 3
-    FbleProfileExitCall(arena, thread); // 2
-    FbleProfileExitCall(arena, thread); // 1
+    FbleProfileExitBlock(arena, thread); // 4
+    FbleProfileExitBlock(arena, thread); // 3
+    FbleProfileExitBlock(arena, thread); // 2
+    FbleProfileExitBlock(arena, thread); // 3
+    FbleProfileExitBlock(arena, thread); // 2
+    FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
     assert(graph->size == 5);

@@ -4,7 +4,6 @@
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
 * [tools] Code coverage and profiling support
- - rework api to have ENTER, EXIT, and AUTO_EXIT
  - add and implement PROFILE_ENTER, EXIT, AUTO_EXIT instructions.
  - Generate the PROFILE_* instructions in the compiler.
  - Do auto-naming of blocks based on variable/field names relevant to the

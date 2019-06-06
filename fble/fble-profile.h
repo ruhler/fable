@@ -112,38 +112,22 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph);
 //   Frees resources associated with the given profile thread.
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
 
-// FbleProfileEnterCall -- 
-//   Call into a block on the given profile thread.
+// FbleProfileEnterBlock -- 
+//   Enter a block on the given profile thread.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   thread - the thread to do the call on.
-//   callee - the block to call into.
+//   block - the block to call into.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   A corresponding call to FbleProfileExitCall should be made when the call
-//   leaves, for proper accounting and resource management.
-void FbleProfileEnterCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee);
-
-// FbleProfileEnterTailCall --
-//   Perform a tail call into a block on the given profile thread.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   thread - the thread to do the call on.
-//   callee - the block to call into.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   No corresponding call to FbleProfileExitCall should be made when the call
-//   leaves, because it is assumed to be a tail call that exits automatically
-//   when the callee exits.
-void FbleProfileEnterTailCall(FbleArena* arena, FbleProfileThread* thread, FbleBlockId callee);
+//   A corresponding call to FbleProfileExitBlock or FbleProfileAutoExitBlock
+//   should be made when the call leaves, for proper accounting and resource
+//   management.
+void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block);
 
 // FbleProfileTime --
 //   Spend time on the current profile thread.
@@ -161,8 +145,8 @@ void FbleProfileEnterTailCall(FbleArena* arena, FbleProfileThread* thread, FbleB
 //   Increments recorded time spent in the current call.
 void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time);
 
-// FbleProfileExitCall --
-//   Exits a call on the given profile thread.
+// FbleProfileExitBlock --
+//   Exits the current block on the given profile thread.
 //
 // Inputs:
 //   arena - arena to use for allocations.
@@ -173,7 +157,22 @@ void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time);
 //
 // Side effects:
 //   Updates the call graph data associated with the given thread.
-void FbleProfileExitCall(FbleArena* arena, FbleProfileThread* thread);
+void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread);
+
+// FbleProfileAutoExitBlock --
+//   Arrange for the current block to exit the next time a callee of the block
+//   exits. This provides a way to express tail call.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   thread - the thread to exit the call on.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Updates the call graph data associated with the given thread.
+void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread);
 
 // FbleBlockProfile -- 
 //   Profile information for a particular block.
