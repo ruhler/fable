@@ -38,13 +38,13 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-test [--error] [--memory] FILE [PATH]\n"
+      "Usage: fble-test [--error] [--profile] FILE [PATH]\n"
       "Type check and evaluate the fble program from FILE.\n"
       "PATH is an optional include search path.\n"
       "If the result is a process, run the process.\n"
       "Exit status is 0 if the program produced no type or runtime errors, 1 otherwise.\n"
       "With --error, exit status is 0 if the program produced a type or runtime error, 0 otherwise.\n"
-      "With --memory, a memory report is given after executing the program.\n"
+      "With --profile, a profiling report is given after executing the program.\n"
   );
 }
 
@@ -76,9 +76,9 @@ int main(int argc, char* argv[])
     argv++;
   }
 
-  bool report_memory = false;
-  if (argc > 0 && strcmp("--memory", *argv) == 0) {
-    report_memory = true;
+  bool report_profile = false;
+  if (argc > 0 && strcmp("--profile", *argv) == 0) {
+    report_profile = true;
     argc--;
     argv++;
   }
@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 
   FbleArena* prgm_arena = FbleNewArena();
   FbleExpr* prgm = FbleParse(prgm_arena, path, include_path);
-  if (report_memory) {
+  if (report_profile) {
     printf("max memory prgm: %zi (bytes)\n", FbleArenaMaxSize(prgm_arena));
   }
 
@@ -127,13 +127,16 @@ int main(int argc, char* argv[])
     FbleValueRelease(value_arena, result);
     FbleDeleteValueArena(value_arena);
 
-    // TODO: Report code coverage here if requested.
+    if (report_profile) {
+      printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));
+
+      FbleProfile* profile = FbleComputeProfile(eval_arena, graph);
+      FbleDumpProfile(stdout, &blocks, profile);
+      FbleFreeProfile(eval_arena, profile);
+    }
+
     FbleFree(eval_arena, blocks.xs);
     FbleFreeCallGraph(eval_arena, graph);
-
-    if (report_memory) {
-      printf("max memory eval: %zi (bytes)\n", FbleArenaMaxSize(eval_arena));
-    }
 
     FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);
