@@ -645,6 +645,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
           if (func_apply_instr->exit) {
             thread->scope_stack = ExitScope(arena, thread->scope_stack);
+            FbleProfileExitBlock(arena_, thread->profile);
           }
         } else {
           FbleFuncValue* f = func;
@@ -659,6 +660,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           RestoreScope(arena, basic->scope, thread);
           if (func_apply_instr->exit) {
             thread->scope_stack = ChangeScope(arena, basic->body, thread->scope_stack);
+            FbleProfileAutoExitBlock(arena_, thread->profile);
           } else {
             thread->scope_stack = EnterScope(arena_, basic->body, thread->scope_stack);
           }
@@ -817,6 +819,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
               FbleFree(arena_, head);
 
               thread->scope_stack = ExitScope(arena, thread->scope_stack);
+              FbleProfileExitBlock(arena_, thread->profile);
               break;
             }
 
@@ -835,6 +838,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
               io->ports.xs[port->id] = NULL;
 
               thread->scope_stack = ExitScope(arena, thread->scope_stack);
+              FbleProfileExitBlock(arena_, thread->profile);
               break;
             }
 
@@ -864,6 +868,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
               PushData(arena_, FbleValueRetain(arena, put->arg), thread);
               thread->scope_stack = ExitScope(arena, thread->scope_stack);
+              FbleProfileExitBlock(arena_, thread->profile);
               break;
             }
 
@@ -882,6 +887,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
               io->ports.xs[port->id] = FbleValueRetain(arena, put->arg);
               PushData(arena_, FbleValueRetain(arena, put->arg), thread);
               thread->scope_stack = ExitScope(arena, thread->scope_stack);
+              FbleProfileExitBlock(arena_, thread->profile);
               break;
             }
 
@@ -892,6 +898,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
             PushData(arena_, FbleValueRetain(arena, eval->result), thread);
             thread->scope_stack = ExitScope(arena, thread->scope_stack);
+            FbleProfileExitBlock(arena_, thread->profile);
             break;
           }
 
@@ -915,6 +922,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             PushData(arena_, &get->_base, thread);
             RestoreScope(arena, link->scope, thread);
             thread->scope_stack = ChangeScope(arena, link->body, thread->scope_stack);
+            FbleProfileAutoExitBlock(arena_, thread->profile);
             break;
           }
 
@@ -939,6 +947,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
             RestoreScope(arena, exec->scope, thread);
             thread->scope_stack = ChangeScope(arena, exec->body, thread->scope_stack);
+            FbleProfileAutoExitBlock(arena_, thread->profile);
             break;
           }
         }
@@ -994,6 +1003,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
       case FBLE_EXIT_SCOPE_INSTR: {
         thread->scope_stack = ExitScope(arena, thread->scope_stack);
+        FbleProfileExitBlock(arena_, thread->profile);
         break;
       }
 
@@ -1072,6 +1082,7 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
 
   while (thread->scope_stack != NULL) {
     thread->scope_stack = ExitScope(arena, thread->scope_stack);
+    FbleProfileExitBlock(arena_, thread->profile);
   }
 
   if (thread->profile != NULL) {
@@ -1200,16 +1211,8 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr, FbleNameV* blocks, Fb
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
-  FbleVectorInit(arena_, *blocks);
-  FbleName* nmain = FbleVectorExtend(arena_, *blocks);
-  nmain->name = "__main";
-  nmain->loc.source = __FILE__; 
-  nmain->loc.line = __LINE__;
-  nmain->loc.col = 0;
-
-  *graph = FbleNewCallGraph(arena_, 1);
-
-  FbleInstrBlock* instrs = FbleCompile(arena_, expr);
+  FbleInstrBlock* instrs = FbleCompile(arena_, blocks, expr);
+  *graph = FbleNewCallGraph(arena_, blocks->size);
   if (instrs == NULL) {
     return NULL;
   }

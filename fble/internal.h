@@ -354,6 +354,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //
 // Inputs:
 //   arena - arena to use for allocations.
+//   blocks - vector of locations to record for each block.
 //   expr - the expression to compile.
 //
 // Results:
@@ -363,7 +364,8 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   Prints a message to stderr if the expression fails to compile. Allocates
 //   memory for the instructions which must be freed with FbleFreeInstrBlock when
 //   it is no longer needed.
-FbleInstrBlock* FbleCompile(FbleArena* arena, FbleExpr* expr);
+//   Initializes and populates blocks with the compiled blocks.
+FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleExpr* expr);
 
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of values.
