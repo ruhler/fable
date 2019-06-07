@@ -61,12 +61,14 @@ typedef struct {
 //      This vector is {0, NULL} when there are no child threads.
 //   aborted - true if the thread has been aborted due to undefined union
 //             field access.
+//   profile - the profile thread associated with this thread.
 struct Thread {
   DataStack* data_stack;
   ScopeStack* scope_stack;
   size_t iquota;
   ThreadV children;
   bool aborted;
+  FbleProfileThread* profile;
 };
 
 static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
@@ -97,10 +99,10 @@ static ScopeStack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Sco
 static void CaptureScope(FbleValueArena* arena, Thread* thread, size_t scopec, FbleValue* value, FbleValueV* dst);
 static void RestoreScope(FbleValueArena* arena, FbleValueV scope, Thread* thread);
 
-static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread);
+static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread);
 static void AbortThread(FbleValueArena* arena, Thread* thread);
-static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread);
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args);
+static void RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread);
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args, FbleCallGraph* graph);
 
 static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 
@@ -519,6 +521,7 @@ static void RestoreScope(FbleValueArena* arena, FbleValueV scope, Thread* thread
 // Inputs:
 //   arena - the arena to use for allocations.
 //   io - io to use for external ports.
+//   graph - the call graph to save execution stats to.
 //   thread - the thread to run.
 //
 // Results:
@@ -526,13 +529,14 @@ static void RestoreScope(FbleValueArena* arena, FbleValueV scope, Thread* thread
 //
 // Side effects:
 //   The thread is executed, updating its data_stack, and scope_stack.
-static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
+static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   assert(!thread->aborted);
   while (thread->iquota > 0 && thread->scope_stack != NULL) {
     assert(thread->scope_stack->pc < thread->scope_stack->block->instrs.size);
     FbleInstr* instr = thread->scope_stack->block->instrs.xs[thread->scope_stack->pc++];
+    FbleProfileTime(arena_, thread->profile, 1);
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
@@ -775,6 +779,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
           FreeDataStack(arena_, child);
           assert(child->scope_stack == NULL);
           assert(child->iquota == 0);
+          FbleFreeProfileThread(arena_, child->profile);
           FbleFree(arena_, child);
 
           PushVar(arena_, result, thread->scope_stack);
@@ -928,6 +933,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, Thread* thread)
               child->aborted = false;
               child->children.size = 0;
               child->children.xs = NULL;
+              child->profile = FbleNewProfileThread(arena_, graph);
               FbleVectorAppend(arena_, thread->children, child);
             }
 
@@ -1051,6 +1057,11 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
   while (thread->scope_stack != NULL) {
     thread->scope_stack = ExitScope(arena, thread->scope_stack);
   }
+
+  if (thread->profile != NULL) {
+    FbleFreeProfileThread(arena_, thread->profile);
+    thread->profile = NULL;
+  }
 }
 
 // RunThreads --
@@ -1060,6 +1071,7 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
 // Inputs:
 //   arena - the arena to use for allocations.
 //   io - io to use for external ports.
+//   graph - call graph to save execution stats to.
 //   thread - the thread to run.
 //
 // Results:
@@ -1067,7 +1079,8 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
 //
 // Side effects:
 //   The thread and its children are executed and updated.
-static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
+//   Updates the call graph based on the execution.
+static void RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread)
 {
   // TODO: Make this iterative instead of recursive to avoid smashing the
   // stack.
@@ -1078,13 +1091,13 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
     Thread* child = thread->children.xs[i];
     thread->iquota -= iquota;
     child->iquota += iquota;
-    RunThreads(arena, io, child);
+    RunThreads(arena, io, graph, child);
     thread->iquota += child->iquota;
     child->iquota = 0;
   }
 
   // Spend the remaining time running this thread.
-  RunThread(arena, io, thread);
+  RunThread(arena, io, graph, thread);
 }
 
 // Eval --
@@ -1095,6 +1108,7 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
 //   io - io to use for external ports.
 //   instrs - the instructions to evaluate.
 //   args - an optional initial argument to place on the data stack.
+//   graph - call graph to update with execution stats.
 //
 // Results:
 //   The computed value, or NULL on error.
@@ -1102,7 +1116,8 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, Thread* thread)
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args)
+//   Updates call graph based on the execution.
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args, FbleCallGraph* graph)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Thread thread = {
@@ -1111,6 +1126,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
     .iquota = 0,
     .children = {0, NULL},
     .aborted = false,
+    .profile = FbleNewProfileThread(arena_, graph),
   };
   InitDataStack(arena_, &thread);
 
@@ -1124,7 +1140,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   bool did_io = false;
   do {
     thread.iquota = QUOTA;
-    RunThreads(arena, io, &thread);
+    RunThreads(arena, io, graph, &thread);
     if (thread.aborted) {
       return NULL;
     }
@@ -1137,6 +1153,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
     // We have instructions to run still, but we stopped making forward
     // progress. This must be a deadlock.
     // TODO: Handle this more gracefully.
+    FbleFreeProfileThread(arena_, thread.profile);
     fprintf(stderr, "Deadlock detected\n");
     abort();
     return NULL;
@@ -1149,6 +1166,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
   assert(thread.scope_stack == NULL);
   assert(thread.children.size == 0);
   assert(thread.children.xs == NULL);
+  FbleFreeProfileThread(arena_, thread.profile);
   return final_result;
 }
 
@@ -1182,7 +1200,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr, FbleNameV* blocks, Fb
 
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValueV args = { .size = 0, .xs = NULL };
-  FbleValue* result = Eval(arena, &io, instrs, args);
+  FbleValue* result = Eval(arena, &io, instrs, args, *graph);
   FbleFreeInstrBlock(arena_, instrs);
   return result;
 }
@@ -1205,7 +1223,7 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
   xs[0] = arg;
   xs[1] = func;
   FbleValueV eval_args = { .size = 2, .xs = xs };
-  FbleValue* result = Eval(arena, &io, &block, eval_args);
+  FbleValue* result = Eval(arena, &io, &block, eval_args, graph);
   FbleValueRelease(arena, func);
   return result;
 }
@@ -1216,6 +1234,6 @@ FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleCall
   assert(proc->tag == FBLE_PROC_VALUE);
   FbleValue* xs[1] = { proc };
   FbleValueV args = { .size = 1, .xs = xs };
-  FbleValue* result = Eval(arena, io, &g_proc_block, args);
+  FbleValue* result = Eval(arena, io, &g_proc_block, args, graph);
   return result;
 }
