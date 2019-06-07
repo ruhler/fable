@@ -1013,6 +1013,22 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         }
         break;
       }
+
+      case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
+        FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
+        FbleProfileEnterBlock(arena_, thread->profile, enter->block);
+        break;
+      }
+
+      case FBLE_PROFILE_EXIT_BLOCK_INSTR: {
+        FbleProfileExitBlock(arena_, thread->profile);
+        break;
+      }
+
+      case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
+        FbleProfileAutoExitBlock(arena_, thread->profile);
+        break;
+      }
     }
 
     thread->iquota--;

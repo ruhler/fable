@@ -35,6 +35,9 @@ typedef enum {
   FBLE_EXIT_SCOPE_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_VPUSH_INSTR,
+  FBLE_PROFILE_ENTER_BLOCK_INSTR,
+  FBLE_PROFILE_EXIT_BLOCK_INSTR,
+  FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -313,6 +316,22 @@ typedef struct {
   FbleInstr _base;
   size_t count;
 }  FbleVPushInstr;
+
+// FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR
+typedef struct {
+  FbleInstr _base;
+  FbleBlockId block;
+}  FbleProfileEnterBlockInstr;
+
+// FbleProfileExitBlockInstr -- FBLE_PROFILE_EXIT_BLOCK_INSTR
+typedef struct {
+  FbleInstr _base;
+}  FbleProfileExitBlockInstr;
+
+// FbleProfileAutoExitBlockInstr -- FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR
+typedef struct {
+  FbleInstr _base;
+}  FbleProfileAutoExitBlockInstr;
 
 // FbleFreeInstrBlock --
 //   Decrement the refcount on the given block of instructions and free it if
