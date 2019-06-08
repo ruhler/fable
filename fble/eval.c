@@ -72,10 +72,14 @@ struct Thread {
 };
 
 static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
-static FbleInstr* g_proc_instr_p = &g_proc_instr;
+static FbleProfileEnterBlockInstr g_enter_instr = {
+  ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
+  .block = 0
+};
+static FbleInstr* g_proc_block_instrs[] = { &g_enter_instr._base, &g_proc_instr };
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
-  .instrs = { .size = 1, .xs = &g_proc_instr_p }
+  .instrs = { .size = 2, .xs = g_proc_block_instrs }
 };
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
@@ -1234,8 +1238,8 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
     ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
     .exit = true
   };
-  FbleInstr* instrs[] = { &apply._base };
-  FbleInstrBlock block = { .refcount = 1, .instrs = { .size = 1, .xs = instrs } };
+  FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
+  FbleInstrBlock block = { .refcount = 2, .instrs = { .size = 2, .xs = instrs } };
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
   FbleValue* xs[2];
