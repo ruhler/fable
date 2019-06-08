@@ -2104,6 +2104,12 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, bool exit, Vars* v
         return NULL;
       }
 
+      if (exit) {
+        FbleProfileAutoExitBlockInstr* exit_instr = FbleAlloc(arena_, FbleProfileAutoExitBlockInstr);
+        exit_instr->_base.tag = FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR;
+        FbleVectorAppend(arena_, *instrs, &exit_instr->_base);
+      }
+
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena_, FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       FbleVectorAppend(arena_, *instrs, &select_instr->_base);
@@ -2130,9 +2136,22 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, bool exit, Vars* v
 
 
         enter_gotos[i]->pc = instrs->size;
+
+        FbleProfileEnterBlockInstr* enter = FbleAlloc(arena_, FbleProfileEnterBlockInstr);
+        enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
+        enter->block = blocks->size;
+        FbleVectorAppend(arena_, *instrs, &enter->_base);
+        FbleName* name = FbleVectorExtend(arena_, *blocks);
+        name->name = "";
+        name->loc = select_expr->choices.xs[i].expr->loc;
+
         Type* arg_type = CompileExpr(arena, blocks, exit, vars, select_expr->choices.xs[i].expr, instrs);
 
         if (!exit) {
+          FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena_, FbleProfileExitBlockInstr);
+          exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
+          FbleVectorAppend(arena_, *instrs, &exit_instr->_base);
+
           exit_gotos[i] = FbleAlloc(arena_, FbleGotoInstr);
           exit_gotos[i]->_base.tag = FBLE_GOTO_INSTR;
           FbleVectorAppend(arena_, *instrs, &exit_gotos[i]->_base);

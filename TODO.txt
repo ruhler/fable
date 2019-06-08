@@ -4,8 +4,6 @@
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
 * [tools] Code coverage and profiling support
- - debug seg faults.
- - Generate PROFILE_* instructions for union select.
  - Do auto-naming of blocks based on variable/field names relevant to the
    block being compiled.
  - Fix memory leak in case of tail recursion.
