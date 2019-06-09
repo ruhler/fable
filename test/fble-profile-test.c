@@ -6,6 +6,53 @@
 
 #include "fble-profile.h"
 
+// AutoExitMaxMem --
+//   Returns the maximum memory required for an n deep auto exit self
+//   recursive call. For the purposes of testing that tail calls can be done
+//   using O(1) memory.
+//
+// Inputs:
+//   n - the depth of recursion
+//
+// Results:
+//   The max number of bytes allocated during the recursion.
+//
+// Side effects:
+//   None.
+static size_t AutoExitMaxMem(size_t n)
+{
+  // 0 -> 1 -> 1 -> ... -> 1
+  FbleArena* arena = FbleNewArena();
+  FbleCallGraph* graph = FbleNewCallGraph(arena, 2);
+  FbleProfileThread* thread = FbleNewProfileThread(arena, graph);
+  FbleProfileEnterBlock(arena, thread, 1);
+  FbleProfileTime(arena, thread, 10);
+
+  for (size_t i = 0; i < n; ++i) {
+    FbleProfileAutoExitBlock(arena, thread);
+    FbleProfileEnterBlock(arena, thread, 1);
+    FbleProfileTime(arena, thread, 10);
+  }
+  FbleProfileExitBlock(arena, thread);
+  FbleFreeProfileThread(arena, thread);
+
+  assert(graph->size == 2);
+  assert(graph->xs[0].size == 1);
+  assert(graph->xs[0].xs[0]->id == 1);
+  assert(graph->xs[0].xs[0]->count == 1);
+  assert(graph->xs[0].xs[0]->time == 10 * (n+1));
+  assert(graph->xs[1].size == 1);
+  assert(graph->xs[1].xs[0]->id == 1);
+  assert(graph->xs[1].xs[0]->count == n);
+  assert(graph->xs[1].xs[0]->time == 5 * n * (n + 1));
+
+  FbleFreeCallGraph(arena, graph);
+  FbleAssertEmptyArena(arena);
+  size_t memory = FbleArenaMaxSize(arena);
+  FbleDeleteArena(arena);
+  return memory;
+}
+
 // main --
 //   The main entry point for the fble-profile-test program.
 //
@@ -434,8 +481,14 @@ int main(int argc, char* argv[])
     FbleAssertEmptyArena(arena);
   }
 
+  {
+    // Test that tail calls have O(1) memory.
+    size_t mem_100 = AutoExitMaxMem(100);
+    size_t mem_200 = AutoExitMaxMem(200);
+    assert(mem_100 == mem_200);
+  }
+
   FbleDeleteArena(arena);
   return 0;
 }
-
 
