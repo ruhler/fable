@@ -1,10 +1,27 @@
 // profile.c --
 //   This file implements the fble profiling routines.
 
+#include <assert.h>   // for assert
+
 #include "fble-alloc.h"
 #include "fble-profile.h"
 #include "fble-syntax.h"
 #include "fble-vector.h"
+
+// CallList --
+//   A set of calls represented as a singly linked list.
+//
+// Fields:
+//   caller - the caller for this particular call
+//   callee - the callee for this particular call
+//   count - the number of times caller called callee
+//   tail - the rest of the calls in the set.
+typedef struct CallList {
+  FbleBlockId caller;
+  FbleBlockId callee;
+  size_t count;
+  struct CallList* tail;
+} CallList;
 
 // ProfileStack -- 
 //   Stack representing the current call stack for profiling purposes.
@@ -12,12 +29,14 @@
 // Fields:
 //   id - the id of the block at the top of the stack.
 //   time - the amount of time spent at the top of the stack.
-//   exit - true if we should automatically exit from this block.
+//   auto_exit - true if we should automatically exit from this block.
+//   exit_calls - the set of calls that should be exited when this call exits.
 //   tail - the rest of the stack.
 typedef struct ProfileStack {
   FbleBlockId id;
   size_t time;
-  bool exit;
+  bool auto_exit;
+  CallList* exit_calls;
   struct ProfileStack* tail;
 } ProfileStack;
 
@@ -27,11 +46,45 @@ struct FbleProfileThread {
   FbleCallGraph* graph;
 };
 
+static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlockId caller, FbleBlockId callee);
 static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* seen, FbleBlockId root);
 static void MergeSortCallData(bool ascending, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
 static void SortCallData(bool ascending, FbleCallDataV data);
 static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call);
+
+// GetCallData --
+//   Get the call data associated with the given caller/callee pair in the
+//   call graph. Creates new empty call data and adds it to the graph as
+//   required.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   graph - the call graph to get the data for
+//   caller - the caller of the call
+//   callee - the callee of the call
+//
+// Results:
+//   The call data associated with the caller/callee pair in the given call
+//   graph.
+//
+// Side effects:
+//   Allocates new empty call data and adds it to the graph if necessary.
+static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlockId caller, FbleBlockId callee)
+{
+  for (size_t i = 0; i < graph->xs[caller].size; ++i) {
+    if (graph->xs[caller].xs[i]->id == callee) {
+      return graph->xs[caller].xs[i];
+    }
+  }
+
+  FbleCallData* call = FbleAlloc(arena, FbleCallData);
+  call->id = callee;
+  call->time = 0;
+  call->count = 0;
+  FbleVectorAppend(arena, graph->xs[caller], call);
+  return call;
+}
 
 // FixupCycles --
 //   Removes double-counting of time due to cycles in the given call graph of
@@ -238,31 +291,74 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph)
 {
   FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
   thread->graph = graph;
-  thread->stack = NULL;
-  FbleProfileEnterBlock(arena, thread, 0);
+  thread->stack = FbleAlloc(arena, ProfileStack);
+  thread->stack->id = 0;
+  thread->stack->time = 0;
+  thread->stack->auto_exit = false;
+  thread->stack->exit_calls = NULL;
+  thread->stack->tail = NULL;
   return thread;
 }
 
 // FbleFreeProfileThread -- see documentation in fble-profile.h
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 {
-  while (thread->stack != NULL) {
-    ProfileStack* tail = thread->stack->tail;
-    FbleFree(arena, thread->stack);
-    thread->stack = tail;
+  assert(thread->stack != NULL);
+  while (thread->stack->tail != NULL) {
+    FbleProfileExitBlock(arena, thread);
   }
+  assert(thread->stack->exit_calls == NULL);
+  FbleFree(arena, thread->stack);
   FbleFree(arena, thread);
 }
 
 // FbleProfileEnterBlock -- see documentation in fble-profile.h
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block)
 {
-  ProfileStack* stack = FbleAlloc(arena, ProfileStack);
-  stack->id = block;
-  stack->time = 0;
-  stack->exit = false;
-  stack->tail = thread->stack;
-  thread->stack = stack;
+  assert(thread->stack != NULL);
+
+  FbleBlockId caller = thread->stack->id;
+  FbleBlockId callee = block;
+  GetCallData(arena, thread->graph, caller, callee)->count++;
+
+  if (thread->stack->auto_exit) {
+    for (CallList* c = thread->stack->exit_calls; c != NULL; c = c->tail) {
+      FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
+      call->time += thread->stack->time * call->count;
+    }
+
+    assert(thread->stack->tail != NULL);
+    thread->stack->tail->time += thread->stack->time;
+
+    thread->stack->id = callee;
+    thread->stack->time = 0;
+    thread->stack->auto_exit = false;
+  } else {
+    ProfileStack* stack = FbleAlloc(arena, ProfileStack);
+    stack->id = callee;
+    stack->time = 0;
+    stack->auto_exit = false;
+    stack->exit_calls = NULL;
+    stack->tail = thread->stack;
+    thread->stack = stack;
+  }
+
+  CallList* c = thread->stack->exit_calls;
+  for (; c != NULL; c = c->tail) {
+    if (c->caller == caller && c->callee == callee) {
+      break;
+    }
+  }
+
+  if (c == NULL) {
+    c = FbleAlloc(arena, CallList);
+    c->caller = caller;
+    c->callee = callee;
+    c->count = 0;
+    c->tail = thread->stack->exit_calls;
+    thread->stack->exit_calls = c;
+  }
+  c->count++;
 }
 
 // FbleProfileTime -- see documentation in fble-profile.h
@@ -274,41 +370,28 @@ void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time)
 // FbleProfileExitBlock -- see documentation in fble-profile.h
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
-  for (bool exit = true; exit; exit = thread->stack->exit) {
-    FbleBlockId caller = thread->stack->tail->id;
-    FbleBlockId callee = thread->stack->id;
+  assert(thread->stack != NULL);
+  while (thread->stack->exit_calls != NULL) {
+    CallList* c = thread->stack->exit_calls;
+    FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
+    call->time += thread->stack->time * call->count;
 
-    FbleCallData* call = NULL;
-    for (size_t i = 0; i < thread->graph->xs[caller].size; ++i) {
-      if (thread->graph->xs[caller].xs[i]->id == callee) {
-        call = thread->graph->xs[caller].xs[i];
-        break;
-      }
-    }
-
-    if (call == NULL) {
-      call = FbleAlloc(arena, FbleCallData);
-      call->id = callee;
-      call->time = 0;
-      call->count = 0;
-      FbleVectorAppend(arena, thread->graph->xs[caller], call);
-    }
-
-    size_t time = thread->stack->time;
-    call->count++;
-    call->time += time;
-
-    ProfileStack* tail = thread->stack->tail;
-    FbleFree(arena, thread->stack);
-    thread->stack = tail;
-    thread->stack->time += time;
+    thread->stack->exit_calls = c->tail;
+    FbleFree(arena, c);
   }
+
+  assert(thread->stack->tail != NULL);
+  thread->stack->tail->time += thread->stack->time;
+
+  ProfileStack* stack = thread->stack;
+  thread->stack = thread->stack->tail;
+  FbleFree(arena, stack);
 }
 
 // FbleProfileAutoExitBlock -- see documentation in fble-profile.h
 void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
-  thread->stack->exit = true;
+  thread->stack->auto_exit = true;
 }
 
 // FbleComputeProfile -- see documentation in fble-profile.h

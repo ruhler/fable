@@ -284,12 +284,12 @@ int main(int argc, char* argv[])
     assert(graph->xs[1].xs[0]->count == 1);
     assert(graph->xs[1].xs[0]->time == 90);
     assert(graph->xs[2].size == 2);
-    assert(graph->xs[2].xs[0]->id == 3);
-    assert(graph->xs[2].xs[0]->count == 1);
-    assert(graph->xs[2].xs[0]->time == 30);
-    assert(graph->xs[2].xs[1]->id == 2);
-    assert(graph->xs[2].xs[1]->count == 2);
-    assert(graph->xs[2].xs[1]->time == 120);
+    assert(graph->xs[2].xs[0]->id == 2);
+    assert(graph->xs[2].xs[0]->count == 2);
+    assert(graph->xs[2].xs[0]->time == 120);
+    assert(graph->xs[2].xs[1]->id == 3);
+    assert(graph->xs[2].xs[1]->count == 1);
+    assert(graph->xs[2].xs[1]->time == 30);
     assert(graph->xs[3].size == 0);
 
     FbleProfile* profile = FbleComputeProfile(arena, graph);
@@ -396,12 +396,12 @@ int main(int argc, char* argv[])
     assert(graph->xs[2].xs[0]->count == 2);
     assert(graph->xs[2].xs[0]->time == 190);
     assert(graph->xs[3].size == 2);
-    assert(graph->xs[3].xs[0]->id == 4);
+    assert(graph->xs[3].xs[0]->id == 2);
     assert(graph->xs[3].xs[0]->count == 1);
-    assert(graph->xs[3].xs[0]->time == 40);
-    assert(graph->xs[3].xs[1]->id == 2);
+    assert(graph->xs[3].xs[0]->time == 90);
+    assert(graph->xs[3].xs[1]->id == 4);
     assert(graph->xs[3].xs[1]->count == 1);
-    assert(graph->xs[3].xs[1]->time == 90);
+    assert(graph->xs[3].xs[1]->time == 40);
     assert(graph->xs[4].size == 0);
 
     FbleProfile* profile = FbleComputeProfile(arena, graph);
