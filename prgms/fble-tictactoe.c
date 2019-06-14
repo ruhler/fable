@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
   FbleValue* func = FbleEval(value_arena, prgm, &blocks, &graph);
   if (func == NULL) {
     FbleDeleteValueArena(value_arena);
-    FbleFree(eval_arena, blocks.xs);
+    FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeCallGraph(eval_arena, graph);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleDeleteValueArena(value_arena);
-    FbleFree(eval_arena, blocks.xs);
+    FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeCallGraph(eval_arena, graph);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
@@ -195,7 +195,7 @@ int main(int argc, char* argv[])
 
   FbleValueRelease(value_arena, value);
   FbleDeleteValueArena(value_arena);
-  FbleFree(eval_arena, blocks.xs);
+  FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeCallGraph(eval_arena, graph);
   FbleAssertEmptyArena(eval_arena);
   FbleDeleteArena(eval_arena);

@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
       FbleFreeProfile(eval_arena, profile);
     }
 
-    FbleFree(eval_arena, blocks.xs);
+    FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeCallGraph(eval_arena, graph);
 
     FbleAssertEmptyArena(eval_arena);

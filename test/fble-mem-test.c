@@ -80,7 +80,7 @@ bool Run(FbleExpr* prgm, bool use_large_n, size_t* max_bytes)
 
   FbleValueRelease(value_arena, func);
   FbleDeleteValueArena(value_arena);
-  FbleFree(eval_arena, blocks.xs);
+  FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeCallGraph(eval_arena, graph);
 
   *max_bytes = FbleArenaMaxSize(eval_arena);

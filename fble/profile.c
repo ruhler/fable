@@ -551,3 +551,12 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   }
   fprintf(fout, "\n");
 }
+
+// FbleFreeBlockNames -- see documentation in fble-profile.h
+void FbleFreeBlockNames(FbleArena* arena, FbleNameV* blocks)
+{
+  for (size_t i = 0; i < blocks->size; ++i) {
+    FbleFree(arena, (char*)blocks->xs[i].name);
+  }
+  FbleFree(arena, blocks->xs);
+}

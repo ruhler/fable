@@ -4,8 +4,8 @@
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
 * [tools] Code coverage and profiling support
- - Do auto-naming of blocks based on variable/field names relevant to the
-   block being compiled.
+ - change profile dump to dump locations of blocks in a separate section.
+   And list the id of blocks after names to help with diffing?
  - Use model for time instead of instructions executed.
 
 * [prgm] Optimize the fble implementation of tictactoe

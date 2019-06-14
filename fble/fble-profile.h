@@ -250,4 +250,18 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile);
 //   Writes a profile dump to the given file.
 void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile);
 
+// FbleFreeBlockNames --
+//   Free the names for blocks.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   blocks - the names of blocks to free
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Frees the name strings and the underlying array for blocks.
+void FbleFreeBlockNames(FbleArena* arena, FbleNameV* blocks);
+
 #endif // FBLE_PROFILE_H_
