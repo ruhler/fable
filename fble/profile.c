@@ -236,7 +236,7 @@ static void SortCallData(bool ascending, FbleCallDataV data)
 static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 {
   FbleName* name = blocks->xs + id;
-  fprintf(fout, "[%04x]%s@%s:%d:%d", id, name->name, name->loc.source, name->loc.line, name->loc.col);
+  fprintf(fout, "%s[%04x]", name->name, id);
 }
 
 // PrintCallData --
@@ -548,6 +548,16 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
       PrintCallData(fout, blocks, false, block->callees.xs[j]);
     }
     fprintf(fout, "--------------------------\n");
+  }
+  fprintf(fout, "\n");
+
+  // Locations
+  fprintf(fout, "Block Locations\n");
+  fprintf(fout, "---------------\n");
+  for (size_t i = 0; i < profile->size; ++i) {
+    FbleName* name = blocks->xs + profile->xs[i]->block.id;
+    PrintBlockName(fout, blocks, profile->xs[i]->block.id);
+    fprintf(fout, ": %s:%d:%d\n", name->loc.source, name->loc.line, name->loc.col);
   }
   fprintf(fout, "\n");
 }
