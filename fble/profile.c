@@ -324,7 +324,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   if (thread->stack->auto_exit) {
     for (CallList* c = thread->stack->exit_calls; c != NULL; c = c->tail) {
       FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
-      call->time += thread->stack->time * call->count;
+      call->time += thread->stack->time * c->count;
     }
 
     assert(thread->stack->tail != NULL);
@@ -374,7 +374,7 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
   while (thread->stack->exit_calls != NULL) {
     CallList* c = thread->stack->exit_calls;
     FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
-    call->time += thread->stack->time * call->count;
+    call->time += thread->stack->time * c->count;
 
     thread->stack->exit_calls = c->tail;
     FbleFree(arena, c);

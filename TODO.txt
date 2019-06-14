@@ -6,7 +6,6 @@
 * [tools] Code coverage and profiling support
  - Do auto-naming of blocks based on variable/field names relevant to the
    block being compiled.
- - Fix memory leak in case of tail recursion.
  - Use model for time instead of instructions executed.
 
 * [prgm] Optimize the fble implementation of tictactoe
