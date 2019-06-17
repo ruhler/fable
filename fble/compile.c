@@ -1564,6 +1564,7 @@ static FbleInstrBlock* NewInstrBlock(FbleArena* arena, FbleNameV* blocks, FbleNa
   FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
   enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
   enter->block = blocks->size;
+  enter->time = 1;
   FbleVectorAppend(arena, instr_block->instrs, &enter->_base);
 
   FbleName* nm = FbleVectorExtend(arena, *blocks);
@@ -2181,6 +2182,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         FbleProfileEnterBlockInstr* enter = FbleAlloc(arena_, FbleProfileEnterBlockInstr);
         enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
         enter->block = blocks->size;
+        enter->time = 1;
         FbleVectorAppend(arena_, *instrs, &enter->_base);
         FbleName* nm = FbleVectorExtend(arena_, *blocks);
         nm->name = MakeBlockName(arena_, name);

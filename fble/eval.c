@@ -74,7 +74,8 @@ struct Thread {
 static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
 static FbleProfileEnterBlockInstr g_enter_instr = {
   ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
-  .block = 0
+  .block = 0,
+  .time = 1,
 };
 static FbleInstr* g_proc_block_instrs[] = { &g_enter_instr._base, &g_proc_instr };
 static FbleInstrBlock g_proc_block = {
@@ -540,7 +541,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
   while (thread->iquota > 0 && thread->scope_stack != NULL) {
     assert(thread->scope_stack->pc < thread->scope_stack->block->instrs.size);
     FbleInstr* instr = thread->scope_stack->block->instrs.xs[thread->scope_stack->pc++];
-    FbleProfileTime(arena_, thread->profile, 1);
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
@@ -1031,6 +1031,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
         FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
         FbleProfileEnterBlock(arena_, thread->profile, enter->block);
+        FbleProfileTime(arena_, thread->profile, enter->time);
         break;
       }
 

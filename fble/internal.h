@@ -318,9 +318,13 @@ typedef struct {
 }  FbleVPushInstr;
 
 // FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR
+// 
+// Fields:
+//   time - the shallow time required to execute this block
 typedef struct {
   FbleInstr _base;
   FbleBlockId block;
+  size_t time;
 }  FbleProfileEnterBlockInstr;
 
 // FbleProfileExitBlockInstr -- FBLE_PROFILE_EXIT_BLOCK_INSTR
