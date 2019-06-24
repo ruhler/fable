@@ -1,0 +1,73 @@
+@(StdLib) {
+  StdLib { @(Unit@, Bool, Char, List); };
+  Bool { @(Bool@, True, False); };
+  Char { @(Char@, Chars); };
+  List { @(S@, P@, S0, S1, S2, S3, S4, S5, S6, Append, Concat); };
+
+  @ TestName@ = S@<Char@>;
+  @ TestResult@ = +(Unit@ pass, S@<Char@> fail);
+  @ Test@ = *(TestName@ name, TestResult@! test);
+
+  S@<Char@> passed = { Chars; S6<Char@>(P, A, S, S, E, D); };
+  S@<Char@> failed = { Chars; S6<Char@>(F, A, I, L, E, D); };
+
+  # Print a string to the given output stream.
+  (S@<Char@>+, S@<Char@>){ Unit@!; } Print = (S@<Char@>+ out, S@<Char@> str) {
+    S@<Char@> _ := out(str);
+    $(Unit@());
+  };
+
+  # Print a string and newline to the given output stream.
+  (S@<Char@>+, S@<Char@>){ Unit@!; } PrintLn = (S@<Char@>+ out, S@<Char@> str) {
+    S@<Char@> _ := out(Append<Char@>(str, S1<Char@>(Chars.nl)));
+    $(Unit@());
+  };
+
+  # Execute the list of tests given the results of previously executed tests,
+  # and print a summary of the result at the end.
+  # Returns True if the tests all pass, false otherwise.
+  (S@<Char@>+, S@<Test@>, S@<TestName@>){Bool@!;} RunTestsInternal =
+    (S@<Char@>+ out, S@<Test@> tests, S@<TestName@> fails) {
+      ?(tests;
+        cons: {
+          Unit@ _ := Print(out, Append<Char@>(tests.cons.head.name, S2<Char@>(Chars.colon, Chars.space)));
+          TestResult@ tr := tests.cons.head.test;
+          Unit@ _ := ?(tr; pass: PrintLn(out, passed),
+                           fail: PrintLn(out, Concat<Char@>(S3<S@<Char@>>(
+                               failed, S2<Char@>(Chars.colon, Chars.space), tr.fail))));
+          S@<TestName@> nfails = ?(tr; pass: fails,
+                                       fail: Append<TestName@>(fails, S1<TestName@>(tests.cons.head.name)));
+          RunTestsInternal(out, tests.cons.tail, nfails);
+        },
+        nil: {
+          # TODO: Print the names of the failing tests, and counts of tests
+          # passed and failed?
+          ?(fails; cons: $(False), nil: $(True));
+        }
+      );
+  };
+
+  # Returns True if the tests all pass, false otherwise.
+  (S@<Char@>+, S@<Test@>){Bool@!;} RunTests = (S@<Char@>+ out, S@<Test@> tests) {
+    RunTestsInternal(out, tests, S0<TestName@>);
+  };
+
+  S@<Test@> Tests = {
+    TestName@ prefix = { Chars; S5<Char@>(T, e, s, t, period); };
+    (TestName@){TestName@;} name = (TestName@ nm) {
+      Append<Char@>(prefix, nm);
+    };
+
+    Test@ pass = Test@(
+      name({ Chars; S4<Char@>(p, a, s, s); }),
+      $(TestResult@(pass: Unit@())));
+
+    Test@ fail = Test@(
+      name({ Chars; S4<Char@>(f, a, i, l); }),
+      $(TestResult@(fail: failed)));
+
+    S1<Test@>(pass);
+  };
+
+  @(TestName@, TestResult@, Test@, RunTests, Tests);
+};

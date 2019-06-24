@@ -1,0 +1,11 @@
+
+@(StdLib: &StdLib);
+@(Test: &Test);
+
+StdLib { @(Char, List); };
+Char { @(Char@); };
+List { @(S@); };
+
+(S@<Char@>+ out) {
+  Test.RunTests(out, Test.Tests);
+};

@@ -60,6 +60,7 @@ gcc_prgm -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble
 gcc_prgm -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble
 gcc_prgm -o $::bin/fble-tictactoe $::obj/fble-tictactoe.o -lfble
 gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble
+gcc_prgm -o $::bin/fble-tests $::obj/fble-tests.o -lfble
 
 proc fble-test-error-run { tloc loc expr } {
   set line [dict get $tloc line]
@@ -141,6 +142,7 @@ testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-te
 testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
 testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble
 testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
+testn fble-tests exec $::bin/fble-tests prgms/fble-tests.fble prgms >@ stdout
 testn AllTests exec $::bin/fble-test --profile prgms/AllTests.fble prgms > out/test/AllTests.prof.txt
 testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
 

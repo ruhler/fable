@@ -3,12 +3,11 @@
    func_bind
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
+* [prgm] Convert AllTests to new fble-tests format
+* [prgm] Expand test coverage
 
 * [prgm] Optimize the fble implementation of tictactoe
   - Using monadic operations where feasible?
-  - But only after setting up code coverage for fble.
-* [prgm] Design better unit test library
- - Define a string type for test names and error messages
 * [prgm] Implement game of life.
 
 * [clean] Tracking of time in the compiler is really messy

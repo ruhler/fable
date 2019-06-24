@@ -41,6 +41,16 @@
     ConsS<T@>(a, S4<T@>(b, c, d, e));
   };
 
+  <@ T@>(T@, T@, T@, T@, T@, T@){S@<T@>;} S6 =
+    <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f) {
+      Append<T@>(S3<T@>(a, b, c), S3<T@>(d, e, f));
+    };
+
+  <@ T@>(T@, T@, T@, T@, T@, T@, T@){S@<T@>;} S7 =
+    <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g) {
+      Append<T@>(S4<T@>(a, b, c, d), S3<T@>(e, f, g));
+    };
+
   <@ T@>(T@, T@, T@, T@, T@, T@, T@, T@, T@){S@<T@>;} S9 =
     <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g, T@ h, T@ i) {
       Append<T@>(S5<T@>(a, b, c, d, e), S4<T@>(f, g, h, i));
@@ -90,6 +100,6 @@
     };
 
   @(P@, S@,
-    HeadS, ConsS, Append, S0, S1, S2, S3, S4, S5, S9,
+    HeadS, ConsS, Append, S0, S1, S2, S3, S4, S5, S6, S7, S9,
     InitP, LastP, Concat, MapS, MapP, SortS, SortP);
 };
