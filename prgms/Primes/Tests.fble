@@ -1,0 +1,30 @@
+@(StdLib, UBNat: UBNat.UBNat, Primes, Test); {
+  StdLib { @(Unit@); };
+  StdLib.Bool { @(Bool@); };
+  StdLib.Char { @(Char@, Chars); };
+  StdLib.List { @(S@, P@, ConsS, S1, S2, S4, S6, S7, S9, Append, Concat); };
+  UBNat { @(Nat@, 1, 3, 10, Lit2, EqNat); };
+  Primes { @(NthPrime); };
+  Test { @(TestName@, TestResult@, Test@); };
+
+  TestName@ prefix = { Chars; S7<Char@>(P, r, i, m, e, s, period); };
+
+  (TestName@, Nat@, Nat@){Test@;} TEq = (TestName@ name, Nat@ a, Nat@ b) {
+    Test@(Append<Char@>(prefix, name), {
+      # TODO: Better error message in case of failure.
+      ?(EqNat(a, b);
+          true: $(TestResult@(pass: Unit@())),
+          false: $(TestResult@(fail: { Chars; S6<Char@>(f, a, i, l, e, d); })));
+    });
+  };
+
+  Test@ NthPrime_1_10 = TEq(
+    Concat<Char@>(S2<S@<Char@>>(
+      { Chars; S9<Char@>(N, t, h, P, r, i, m, e, underscore); },
+      { Chars; S4<Char@>(1, underscore, 1, 0); })),
+    Lit2(3, 1), NthPrime(1, 10));
+
+  S@<Test@> Tests = S1<Test@>(NthPrime_1_10);
+
+  @(Tests);
+};

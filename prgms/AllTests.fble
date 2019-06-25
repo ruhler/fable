@@ -2,25 +2,18 @@
 @(StdLib: &StdLib);
 @(StdLibTest: &StdLibTest);
 @(UBNat: &UBNat);
-@(Primes: &Primes);
 
 StdLib { @(Unit@, List); };
-List { @(S@, P@, S3, Concat, MapS); };
+List { @(S@, P@, S2, Concat, MapS); };
 StdLibTest.ListTest { @(ListTestFailure@: TestFailure@); };
 UBNat.Test { @(UBNatTestFailure@: TestFailure@); };
-Primes.Test { @(PrimesTestFailure@: TestFailure@); };
 
 @ TestFailure@ = +(
     UBNatTestFailure@ UBNatTest,
-    PrimesTestFailure@ PrimesTest,
     ListTestFailure@ ListTest);
 
 (UBNatTestFailure@){TestFailure@;} UBNatTestFailureF = (UBNatTestFailure@ a) {
   TestFailure@(UBNatTest: a);
-};
-
-(PrimesTestFailure@){TestFailure@;} PrimesTestFailureF = (PrimesTestFailure@ a) {
-  TestFailure@(PrimesTest: a);
 };
 
 (ListTestFailure@){TestFailure@;} ListTestFailureF = (ListTestFailure@ a) {
@@ -28,9 +21,8 @@ Primes.Test { @(PrimesTestFailure@: TestFailure@); };
 };
 
 S@<TestFailure@>! Test = {
-  $(Concat<TestFailure@>(S3<S@<TestFailure@>>(
+  $(Concat<TestFailure@>(S2<S@<TestFailure@>>(
       MapS<UBNatTestFailure@, TestFailure@>(UBNatTestFailureF, UBNat.Test.Test(Unit@())),
-      MapS<PrimesTestFailure@, TestFailure@>(PrimesTestFailureF, Primes.Test.Test(Unit@())),
       MapS<ListTestFailure@, TestFailure@>(ListTestFailureF, StdLibTest.ListTest.Test(Unit@())))));
 };
 

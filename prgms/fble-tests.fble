@@ -1,16 +1,21 @@
 
 @(StdLib: &StdLib);
+@(UBNat: &UBNat);
 @(Test: &Test);
+
+@(Primes: &Primes);
+
 @(Bits: &Bits);
 @(Md5: &Md5);
 
 StdLib { @(Char, List); };
 Char { @(Char@); };
-List { @(S@, S2, Concat); };
+List { @(S@, S3, Concat); };
 Test { @(Test@); };
 
-S@<Test@> AllTests = Concat<Test@>(S2<S@<Test@>>(
+S@<Test@> AllTests = Concat<Test@>(S3<S@<Test@>>(
   Test.Tests,
+  Primes.Tests.Tests,
   Md5.Tests.Tests
 ));
 
