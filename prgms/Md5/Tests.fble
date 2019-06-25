@@ -1,21 +1,32 @@
-@(StdLib, Bits, Md5) {
+@(StdLib, Bits, Md5, Test) {
   StdLib { @(Unit@, Maybe@); };
-  StdLib.List{ @(P@, S@, ConsS, S0); };
+  StdLib.Char{ @(Char@, Chars); };
+  StdLib.List{ @(P@, S@, ConsS, S0, S1, S3, S4, S5, S6, S7, S8, S9, S10, Append, Concat); };
   Bits.Bit8 { @(Bit8@, H2); };
   Bits.Hex { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
+  Test { @(TestName@, TestResult@, Test@); };
   Md5 { @(Md5Hash@, Eq); };
 
-  @ TestName@ = +(
-      Unit@ Md5_empty,
-      Unit@ Md5_a,
-      Unit@ Md5_abc,
-      Unit@ Md5_message,
-      Unit@ Md5_a_to_z,
-      Unit@ Md5_A_to_9,
-      Unit@ Md5_1_to_0
-  );
+  TestName@ prefix = { Chars; S4<Char@>(M, d, 5, period); };
 
-  @ TestFailure@ = *(TestName@ name, Md5Hash@ wnt, Md5Hash@ got);
+  (Hex@){Char@;} Hex2Char = (Hex@ h) {
+    ?(h; 0: Chars.0, 1: Chars.1, 2: Chars.2, 3: Chars.3,
+         4: Chars.4, 5: Chars.5, 6: Chars.6, 7: Chars.7,
+         8: Chars.8, 9: Chars.9, A: Chars.A, B: Chars.B,
+         C: Chars.C, D: Chars.D, E: Chars.E, F: Chars.F);
+  };
+
+  (Md5Hash@){S@<Char@>;} Md5Hash2Str = (Md5Hash@ x) {
+    Concat<Char@>(S8<S@<Char@>>(
+      S4<Char@>(Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)),
+      S4<Char@>(Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)),
+      S4<Char@>(Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)),
+      S4<Char@>(Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)),
+      S4<Char@>(Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)),
+      S4<Char@>(Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)),
+      S4<Char@>(Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)),
+      S4<Char@>(Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31))));
+  };
 
   # Put all the bytes onto the output port, followed by nothing.
   (Maybe@<Bit8@>+, S@<Bit8@>){Unit@!;} PutAll = (Maybe@<Bit8@>+ out, S@<Bit8@> bytes) {
@@ -36,22 +47,35 @@
     $(md5);
   };
 
-  (TestName@, Md5Hash@, S@<Bit8@>){TestFailure@!;} TestStr = (TestName@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
+  (Md5Hash@, Md5Hash@){TestResult@;} AssertEq = (Md5Hash@ wnt, Md5Hash@ got) {
+    ?(Eq(wnt, got);
+        true: TestResult@(pass: Unit@()),
+        false: {
+          S@<Char@> msg = Concat<Char@>(S4<S@<Char@>>(
+            { Chars; S10<Char@>(e, x, p, e, c, t, e, d, colon, space); },
+            Md5Hash2Str(wnt),
+            { Chars; S10<Char@>(space, b, u, t, space, g, o, t, colon, space); },
+            Md5Hash2Str(got)));
+          TestResult@(fail: msg);
+        });
+  };
+
+  (Md5Hash@, S@<Bit8@>){TestResult@!;} TestStr = (Md5Hash@ wnt, S@<Bit8@> bytes) {
       Md5Hash@ got := Md5Str(bytes);
-      $(TestFailure@(name, wnt, got));
+      $(AssertEq(wnt, got));
     };
 
   (Hex@, Hex@, S@<Bit8@>){S@<Bit8@>;} L = (Hex@ hi, Hex@ lo, S@<Bit8@> l) {
       ConsS<Bit8@>(H2(hi, lo), l);
     };
 
-  (TestFailure@, S@<TestFailure@>){S@<TestFailure@>;} T = (TestFailure@ x, S@<TestFailure@> l) {
-      ?(Eq(x.wnt, x.got); true: l, false: ConsS<TestFailure@>(x, l));
-    };
+  (TestName@, Md5Hash@, S@<Bit8@>){Test@;} T = (TestName@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
+    Test@(Append<Char@>(prefix, name), TestStr(wnt, bytes));
+  };
 
-  (Unit@ ){S@<TestFailure@>!;} Test = (Unit@ _) {
-    TestFailure@ empty := TestStr
-      (TestName@(Md5_empty: Unit@()))
+  S@<Test@> Tests = {
+    Test@ empty = T
+      ({ Chars; S5<Char@>(e, m, p, t, y); })
       (Md5Hash@(
         d, 4, 1, d, 8, c, d, 9,
         8, f, 0, 0, b, 2, 0, 4,
@@ -59,8 +83,8 @@
         e, c, f, 8, 4, 2, 7, e))
       (S0<Bit8@>);
 
-    TestFailure@ _a := TestStr
-      (TestName@(Md5_a: Unit@()))
+    Test@ _a = T
+      ({ Chars; S1<Char@>(a); })
       (Md5Hash@(
         0, c, c, 1, 7, 5, b, 9,
         c, 0, f, 1, b, 6, a, 8,
@@ -69,8 +93,8 @@
       (L(6, 1) # 'a'
         (S0<Bit8@>));
 
-    TestFailure@ abc := TestStr
-      (TestName@(Md5_abc: Unit@()))
+    Test@ abc = T
+      ({ Chars; S3<Char@>(a, b, c); })
       (Md5Hash@(
         9, 0, 0, 1, 5, 0, 9, 8,
         3, c, d, 2, 4, f, b, 0,
@@ -80,8 +104,8 @@
       (L(6, 1, L(6, 2, L(6, 3)
         (S0<Bit8@>))));
 
-    TestFailure@ message := TestStr
-      (TestName@(Md5_message: Unit@()))
+    Test@ message = T
+      ({ Chars; S7<Char@>(m, e, s, s, a, g, e); })
       (Md5Hash@(
         f, 9, 6, b, 6, 9, 7, d,
         7, c, b, 7, 9, 3, 8, d,
@@ -94,8 +118,8 @@
       (L(7, 3, L(7, 4)
         (S0<Bit8@>)))))))))))))));
 
-    TestFailure@ a_to_z := TestStr
-      (TestName@(Md5_a_to_z: Unit@()))
+    Test@ a_to_z = T
+      ({ Chars; S6<Char@>(a, underscore, t, o, underscore, z); })
       (Md5Hash@(
         c, 3, f, c, d, 3, d, 7,
         6, 1, 9, 2, e, 4, 0, 0,
@@ -112,8 +136,8 @@
         (S0<Bit8@>))))))))))))))))))))
       )))))));
 
-    TestFailure@ A_to_9 := TestStr
-      (TestName@(Md5_A_to_9: Unit@()))
+    Test@ A_to_9 = T
+      ({ Chars; S6<Char@>(A, underscore, t, o, underscore, 9); })
       (Md5Hash@(
         d, 1, 7, 4, a, b, 9, 8,
         d, 2, 7, 7, d, 9, f, 5,
@@ -141,8 +165,8 @@
       ))))))))))))))))))))))))))))))))
       )))))))))));
 
-    TestFailure@ 1_to_0 := TestStr
-      (TestName@(Md5_1_to_0: Unit@()))
+    Test@ 1_to_0 = T
+      ({ Chars; S6<Char@>(1, underscore, t, o, underscore, 0); })
       (Md5Hash@(
         5, 7, e, d, f, 4, a, 2,
         2, b, e, 3, c, 9, 5, 5,
@@ -177,9 +201,8 @@
       ))))))))))))))))))))))))))))))))
       )))))))))))))))))))))))))))));
 
-    $(T(empty, T(_a, T(abc, T(message, T(a_to_z, T(A_to_9, T(1_to_0)
-        (S0<TestFailure@>))))))));
+    S7<Test@>(empty, _a, abc, message, a_to_z, A_to_9, 1_to_0);
   };
 
-  @(TestName@, TestFailure@, Test);
+  @(Tests);
 };

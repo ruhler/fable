@@ -1,11 +1,19 @@
 
 @(StdLib: &StdLib);
 @(Test: &Test);
+@(Bits: &Bits);
+@(Md5: &Md5);
 
 StdLib { @(Char, List); };
 Char { @(Char@); };
-List { @(S@); };
+List { @(S@, S2, Concat); };
+Test { @(Test@); };
+
+S@<Test@> AllTests = Concat<Test@>(S2<S@<Test@>>(
+  Test.Tests,
+  Md5.Tests.Tests
+));
 
 (S@<Char@>+ out) {
-  Test.RunTests(out, Test.Tests);
+  Test.RunTests(out, AllTests);
 };
