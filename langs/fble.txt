@@ -973,3 +973,27 @@ Notes:
  - multi-arg functions with duplicate arg values.
  - variables whose value we explicitly want to ignore, such as the result of a
    bind or a put_proc.
+ - Things like {Chars; S4<Char@>(0, 1, 2, 3)}, where it's not unlikely that we
+   have a variable called 0, 1, 2, or 3 already in scope.
+
+* Issues that came up when switching to the new unit test format
+ - How should we organize tests? Do we need to import Test even if we just want to
+   use a library? Should the code for all tests be completely separate from
+   the code for all libraries? For example, instead of defining:
+      StdLib(StdLib, Tests), UBNat (UBNat, Tests), ...
+      (StdLib, UBNat, ...), (StdLibTests, UBNatTests, ...)?
+   Because, for example, fble-Snake.fble shouldn't need to care about
+   importing Test.
+
+ - It's annoying to have to remember to import all the S* functions, and to
+   have to figure out what number to put after each of them.
+
+   Can we have list literals, or varargs functions, or something so I can
+   change the number of elements in a list in a single place rather than
+   having to change multiple places in the code?
+ 
+ - String literals are tough to read and write.
+    For example, { Chars; S6<Char@>(G, t, underscore, 7, underscore, 5); }
+    Is much easier to read as  "Gt_7_5", or some variation.
+    Perhaps: {StrLit; "Gt_7_5"} is something we could realistically expect to
+    support?

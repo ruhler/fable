@@ -1,7 +1,7 @@
 
 @(StdLib: &StdLib);
-@(UBNat: &UBNat);
 @(Test: &Test);
+@(UBNat: &UBNat);
 
 @(Primes: &Primes);
 
@@ -10,11 +10,12 @@
 
 StdLib { @(Char, List); };
 Char { @(Char@); };
-List { @(S@, S3, Concat); };
+List { @(S@, S4, Concat); };
 Test { @(Test@); };
 
-S@<Test@> AllTests = Concat<Test@>(S3<S@<Test@>>(
+S@<Test@> AllTests = Concat<Test@>(S4<S@<Test@>>(
   Test.Tests,
+  UBNat.Tests.Tests,
   Primes.Tests.Tests,
   Md5.Tests.Tests
 ));

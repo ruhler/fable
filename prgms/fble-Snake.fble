@@ -1,5 +1,6 @@
 
 @(StdLib: &StdLib);
+@(Test: &Test);
 @(UBNat: &UBNat);
 @(Draw: &Draw);
 
