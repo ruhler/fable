@@ -1,0 +1,10 @@
+@(StdLib, Test) {
+  StdLib.List { @(S@, S1); };
+  Test { @(Test@); };
+
+  @(ListTests: &ListTests);
+
+  S@<Test@> Tests = ListTests.Tests;
+
+  @(Tests);
+};

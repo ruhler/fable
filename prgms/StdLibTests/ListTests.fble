@@ -1,11 +1,16 @@
-@(StdLib) {
-  StdLib { @(Unit@, Bool, List); };
-  List { @(S@, P@, S0, S1, S5, SortS); };
-  Bool { @(Bool@, True, False, And); };
+@(StdLib, Test) {
+  StdLib { @(Unit@); };
+  StdLib.Bool { @(Bool@, True, False, And); };
+  StdLib.Char { @(Char@, Chars); };
+  StdLib.List { @(S@, P@, S0, S1, S4, S5, S6, S7, Append, SortS); };
+  Test { @(TestName@, TestResult@, Test@); };
+
+  TestName@ prefix = { Chars; Append<Char@>(
+    S7<Char@>(S, t, d, L, i, b, period),
+    S5<Char@>(L, i, s, t, period));
+  };
 
   @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
-  @ TestName@ = +(Unit@ List_Sort_basic);
-  @ TestFailure@ = *(TestName@ name, S@<Elem@> wnt, S@<Elem@> got);
 
   (Elem@, Elem@){Bool@;} ElemLe = (Elem@ a, Elem@ b) {
     ?(a; A: ?(b; A: True,  B: True,  C: True,  D: True,  E: True),
@@ -34,26 +39,27 @@
       And(eq(a.head, b.head), SEq<T@>(eq, a.tail, b.tail));
     };
 
-  (Unit@ ){S@<TestFailure@>;} Test = (Unit@ _) {
-    S@<Elem@> unsorted = S5<Elem@>
-      (Elem@(D: Unit@()))
-      (Elem@(A: Unit@()))
-      (Elem@(B: Unit@()))
-      (Elem@(E: Unit@()))
-      (Elem@(C: Unit@()));
+  Test@ SortTest = Test@(
+    Append<Char@>(prefix, { Chars; S4<Char@>(S, o, r, t); }), $({
+      S@<Elem@> unsorted = S5<Elem@>
+        (Elem@(D: Unit@()))
+        (Elem@(A: Unit@()))
+        (Elem@(B: Unit@()))
+        (Elem@(E: Unit@()))
+        (Elem@(C: Unit@()));
 
-    S@<Elem@> wnt = S5<Elem@>
-      (Elem@(A: Unit@()))
-      (Elem@(B: Unit@()))
-      (Elem@(C: Unit@()))
-      (Elem@(D: Unit@()))
-      (Elem@(E: Unit@()));
+      S@<Elem@> wnt = S5<Elem@>
+        (Elem@(A: Unit@()))
+        (Elem@(B: Unit@()))
+        (Elem@(C: Unit@()))
+        (Elem@(D: Unit@()))
+        (Elem@(E: Unit@()));
 
-    S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
-    ?(SEq<Elem@>(ElemEq, wnt, got);
-      true: S0<TestFailure@>,
-      false: S1<TestFailure@>(TestFailure@(TestName@(List_Sort_basic: Unit@()), wnt, got)));
-  };
+      S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
+      ?(SEq<Elem@>(ElemEq, wnt, got);
+        true: TestResult@(pass: Unit@()),
+        false: TestResult@(fail: { Chars; S6<Char@>(f, a, i, l, e, d); }));
+  }));
 
-  @(Elem@, TestName@, TestFailure@, Test);
+  @(Tests: S1<Test@>(SortTest));
 };

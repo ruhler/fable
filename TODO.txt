@@ -3,7 +3,6 @@
    func_bind
    proc_put, proc_link, proc_exec
    poly_value, poly_apply
-* [prgm] Convert AllTests to new fble-tests format
 * [prgm] Have fble-tests generate code coverage and profile info.
 * [prgm] Expand test coverage
 * [prgm] Optimize the fble implementation of md5

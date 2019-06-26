@@ -997,3 +997,28 @@ Notes:
     Is much easier to read as  "Gt_7_5", or some variation.
     Perhaps: {StrLit; "Gt_7_5"} is something we could realistically expect to
     support?
+
+ - Should it be an error to import or define an unused variable?
+    Otherwise it's easy to make a change to what's used without updating an
+    import list.
+
+ - For writing tests, it would be really useful if common data types all had
+   function to convert them to strings.
+
+   How should that be organized? Does that bring in false dependencies between
+   modules? Like, I need to import String to import Unit, but I need to import
+   Unit to import String?
+
+ - It's not at all obvious when writing tests what part of the test is
+   executed when we define the test and what part of the test is executed when
+   we run the test.
+
+   For example, given something like:
+     { a = ..., b = ..., $(TestResult@(a, b)) }
+
+   I intend for nothing to be run until we execute the test, but I think in
+   practice the test is essentially run when we define the test, and executing
+   the test just returns the results.
+
+   This seems like a subtle trap to get caught with.
+   

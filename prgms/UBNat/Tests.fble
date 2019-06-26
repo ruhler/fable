@@ -16,6 +16,8 @@
 
   @ TestFailure@ = *(TestName@ name, Nat@ a, Nat@ b);
 
+  # TODO: This causes the test logic to be run when defining the tests.
+  # Ideally we would defer running the test logic until we execute the tests.
   (TestName@, Bool@, (Unit@){S@<Test@>;}){S@<Test@>;} T =
     (TestName@ name, Bool@ p, (Unit@){S@<Test@>;} tail) {
       Test@ t = Test@(Append<Char@>(prefix, name), {

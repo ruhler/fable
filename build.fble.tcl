@@ -143,7 +143,6 @@ testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
 testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble
 testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
 testn fble-tests exec $::bin/fble-tests prgms/fble-tests.fble prgms >@ stdout
-testn AllTests exec $::bin/fble-test --profile prgms/AllTests.fble prgms > out/test/AllTests.prof.txt
 testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
 
 exec mkdir -p out/cov/all
