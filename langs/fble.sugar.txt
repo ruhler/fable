@@ -71,6 +71,32 @@ ways of doing this:
     Foo'.'bar
     ''
 
+Using quotes is nice, because it lets you describe the empty sequence, and to
+give a dense specification of some kinds of funny characters. We probably want
+some form of escape characters regardless, for things like newline and other
+non-printable characters. Perhaps it makes sense to just allow a combination
+of the two. Then we have the following categories:
+
+* printable non-syntax characters: [a-z_A-Z0-9], etc.
+* printable syntax characters: [@[],{}+-()], etc.
+* non-printable characters: \n, \xXXX, etc.
+
+Then we add escape sequences for printable syntax characters: precede them
+with a \. Then an escaped printable syntax character is treated just like a
+printable non-syntax character. An escaped non-printable character is treated
+just like a printable non-syntax character. And, within single quotes, a
+non-escaped printable syntax character is treated like a printable non-syntax
+character. And maybe we want a way to have non-escaped non-printable
+characters be treated like printable non-syntax characters (like you can in
+tcl using {} instead of ""), but who knows.
+
+Then we could introduce a special syntax for string literals. Perhaps:
+Concrete Syntax:  '~' name
+
+Then you could do something like:
+    { StrLit; ~'hello there';}
+    { IntLit; ~1149;}
+
 2. Lists
 --------
 Today we have:
@@ -91,7 +117,19 @@ Actual Uses:
 
 Proposal:
 * Ideally we get something for free when we work out the proposal for monadic
-  syntactic sugar.
+  syntactic sugar. But unfortunately, I fear something like:
+  {T a; T b; T c; T d; T e; T f; T g;} is a bit too tedious still.
+
+* Or, hard code a list literal for a specific type and let people convert from
+  lists? I'd rather avoid hard coding anything for a specific type if
+  possible, because presumably there are more general and flexible ways of
+  doing such things.
+
+  Perhaps something more fundamental is something based on induction. You
+  provide an inductive case and some base cases, and it matches whatever it
+  can for inductive and base cases. Maybe we want to allow the base case to
+  require 4, or 3, or 2, or 1 args rather than assume the base case works with
+  0 args. For example, for a non-empty list literal.
 
 3. Traversals
 -------------
@@ -168,5 +206,4 @@ Note some alternatives:
   
 Practical Uses:
 * tictactoe, sudoku, etc.
-
 

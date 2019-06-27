@@ -1,0 +1,76 @@
+Fble Module Challenges
+----------------------
+There is a tension between grouping things together hierarchically, and
+introducing false dependencies.
+
+For example, we often want to define a collection of different modules
+defining some different data types: bool, char, list, string, maybe, etc. And
+then we want to define modules that are like classes that can be applied to
+other modules: Eq, Show, Test, etc. The question now is: where do we put the
+code that is needed in the intersection of some data type T and some class C?
+Is the implementation of Show for Bool defined with Bool, with Show, with a
+separate Show_Bool module, or somewhere else?
+
+This question comes up with tests today. Should we have:
+    Foo:(Impl, Tests), Bar:(Impl, Tests),
+or: Foo, Bar, Tests:(Foo, Bar)?
+
+In the former case, in order to use Foo, you need to bring in the whole Test
+infrastructure, even if you don't want to use the Foo.Tests part of it. That
+seems wrong.
+
+For things like Show and Eq, if you try to define the instance with the data
+type, you end up with false circular dependencies between modules: 
+  Bool depends on Bool.Show depends on String depends on String.Eq depends on
+  Bool, for example.
+
+I could argue what I want from the users perspective is: if I import the data
+type T and the class C, I'll get the instance of C for the type T. But how do
+I reference it? As T.C or as C.T?
+
+It feels to me like I'm conflating two separate things:
+1. Implementation side: grouping together things based on dependency order.
+In reality, it's more like: C depends on T, T.C depends on C, so we have three
+separate modules: T, C, T.C.
+
+2. Usage side: grouping together things based on who is supplying them or how
+they naturally group. That would always put T and T.C together I think, while
+making C an optional separate import.
+
+This issue is even more real when we start having multiple developers.
+Developer A defines some data type T, developer B defines some class C,
+developer D defines some data type S, whose job is it to define the instance
+of C for S, and where do we access it from? A developer can only define
+instances when they know about both the class and the data type, but often we
+don't know about the class ahead of time and we don't know about all the data
+types ahead of time.
+
+I guess this is one advantage to the class and instance approach taken in
+Haskell: the developer doesn't have to care where the instance is defined.
+They can refer to it by specifying the class and the type, and the compiler
+will tell them where it is defined. That means you can only have one
+implementation for a given (class, type) pair though.
+
+Maybe this could work if we have two separate directory notions: where a
+module is published to, versus the internal definition of a module.
+
+Today all modules are published to the top level directory, and anything
+beneath that is considered private implementation detail. So we have as
+published modules:
+
+  Bits, Draw, Md5, Primes, StdLib, StdLibTests, Test, UBNat
+
+But perhaps what we would like is to have published modules:
+  
+  Bits, Draw, Md5, Primes, StdLib, Test, UBNat,
+  Bits/Tests, Draw/Tests, Md5/Tests, Primes/Tests, StdLib/Tests, UBNat/Tests,
+
+That let's us group Primes and Primes/Tests together, but doesn't require is
+to import all or nothing. It gives us a hierarchical space for published
+modules.
+
+Note, the syntax is easy in this case. When you import, just allow '/' in the
+import name. But we would have to figure out how to distinguish between
+published modules and private modules in that case.
+
+

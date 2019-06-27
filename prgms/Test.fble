@@ -8,7 +8,6 @@
   @ TestResult@ = +(Unit@ pass, S@<Char@> fail);
   @ Test@ = *(TestName@ name, TestResult@! test);
 
-  S@<Char@> passed = { Chars; S6<Char@>(P, A, S, S, E, D); };
   S@<Char@> failed = { Chars; S6<Char@>(F, A, I, L, E, D); };
 
   # Print a string to the given output stream.
@@ -30,11 +29,14 @@
     (S@<Char@>+ out, S@<Test@> tests, S@<TestName@> fails) {
       ?(tests;
         cons: {
-          Unit@ _ := Print(out, Append<Char@>(tests.cons.head.name, S2<Char@>(Chars.colon, Chars.space)));
+          Unit@ _ := Print(out, tests.cons.head.name);
           TestResult@ tr := tests.cons.head.test;
-          Unit@ _ := ?(tr; pass: PrintLn(out, passed),
-                           fail: PrintLn(out, Concat<Char@>(S3<S@<Char@>>(
-                               failed, S2<Char@>(Chars.colon, Chars.space), tr.fail))));
+          Unit@ _ := ?(tr; pass: PrintLn(out, S0<Char@>),
+                           fail: PrintLn(out, Concat<Char@>(S4<S@<Char@>>(
+                               S2<Char@>(Chars.colon, Chars.space),
+                               failed,
+                               S2<Char@>(Chars.colon, Chars.space),
+                               tr.fail))));
           S@<TestName@> nfails = ?(tr; pass: fails,
                                        fail: Append<TestName@>(fails, S1<TestName@>(tests.cons.head.name)));
           RunTestsInternal(out, tests.cons.tail, nfails);

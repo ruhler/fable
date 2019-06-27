@@ -967,6 +967,8 @@ Notes:
 * Concern: how to support raw literals
   Like string literals, integers, anything where you want to specify a dense
   amount of information for processing.
+  
+  See fble.sugar.txt.
 
 * Is variable shadowing allowed?
   Consider also the following cases:
@@ -985,18 +987,24 @@ Notes:
    Because, for example, fble-Snake.fble shouldn't need to care about
    importing Test.
 
+   See fble.modules.txt
+
  - It's annoying to have to remember to import all the S* functions, and to
    have to figure out what number to put after each of them.
 
    Can we have list literals, or varargs functions, or something so I can
    change the number of elements in a list in a single place rather than
    having to change multiple places in the code?
+
+   See fble.sugar.txt for more discussion.
  
  - String literals are tough to read and write.
     For example, { Chars; S6<Char@>(G, t, underscore, 7, underscore, 5); }
     Is much easier to read as  "Gt_7_5", or some variation.
     Perhaps: {StrLit; "Gt_7_5"} is something we could realistically expect to
     support?
+
+    See fble.sugar.txt for more discussion.
 
  - Should it be an error to import or define an unused variable?
     Otherwise it's easy to make a change to what's used without updating an
@@ -1009,16 +1017,22 @@ Notes:
    modules? Like, I need to import String to import Unit, but I need to import
    Unit to import String?
 
+   See fble.modules.txt
+
  - It's not at all obvious when writing tests what part of the test is
    executed when we define the test and what part of the test is executed when
    we run the test.
 
    For example, given something like:
-     { a = ..., b = ..., $(TestResult@(a, b)) }
+     { a = ...; b = ...; $(TestResult@(a, b)) }
 
    I intend for nothing to be run until we execute the test, but I think in
    practice the test is essentially run when we define the test, and executing
    the test just returns the results.
 
    This seems like a subtle trap to get caught with.
+
+   Should we add a ${...} syntax analogous to $(...)? Then it's more obvious
+   you can write:
+     ${ a:= ...; b := ...; TestResult@(a, b); }
    
