@@ -26,9 +26,12 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-tests FILE DIR \n"
+      "Usage: fble-tests [--profile FILE] FILE DIR \n"
       "Run the fble test process described by the fble program FILE.\n"
-      "Example: fble-tests prgms/fble-tests.fble prgms\n"
+      "Options:\n"
+      "  --profile FILE\n"
+      "    Writes a profile of the test run to FILE\n"
+      "Example: fble-tests --profile tests.prof prgms/fble-tests.fble prgms\n"
   );
 }
 
@@ -98,6 +101,18 @@ int main(int argc, char* argv[])
     return 0;
   }
 
+  FILE* fprofile = NULL;
+  if (argc > 2 && strcmp("--profile", argv[1]) == 0) {
+    fprofile = fopen(argv[2], "w");
+    if (fprofile == NULL) {
+      fprintf(stderr, "unable to open %s for writing.\n", argv[2]);
+      return 1;
+    }
+
+    argc -= 2;
+    argv += 2;
+  }
+
   if (argc <= 1) {
     fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
@@ -155,6 +170,13 @@ int main(int argc, char* argv[])
 
   FbleValueRelease(value_arena, value);
   FbleDeleteValueArena(value_arena);
+
+  if (fprofile != NULL) {
+    FbleProfile* profile = FbleComputeProfile(eval_arena, graph);
+    FbleDumpProfile(fprofile, &blocks, profile);
+    FbleFreeProfile(eval_arena, profile);
+  }
+
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeCallGraph(eval_arena, graph);
   FbleAssertEmptyArena(eval_arena);

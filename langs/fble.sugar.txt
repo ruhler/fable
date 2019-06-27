@@ -59,6 +59,18 @@ Thus: s"do, not." is desugared to:
 Sounds good to me. Only questions are: the precise syntax to use, and whether
 'cons' and 'nil' are the right names to use for the combination.
 
+Fundamentally we want a way to describe an atomic sequence of characters in
+the input program that may contain funny characters. These sequences of
+characters are used for names and for string literals. Some, possibly nicer
+ways of doing this:
+
+* Allow raw escapes in the program:
+    Foo\.bar
+* Allow quotes, like in bash:
+    'Foo.bar'
+    Foo'.'bar
+    ''
+
 2. Lists
 --------
 Today we have:
