@@ -29,6 +29,14 @@
     fulladd(a, b, Bit@(0: Unit@())).z;
   };
 
+  (Bit@){Result@;} fullinc = (Bit@ a) {
+    Result@(not(a), a);
+  };
+
+  (Bit@){Bit@;} inc = (Bit@ a) {
+    fullinc(a).z;
+  };
+
   Bit@ zero = Bit@(0: Unit@());
 
   (Bit@){Bool@;} iszero = (Bit@ a) {
@@ -52,5 +60,5 @@
     Result@(cin, a);
   };
 
-  BitN@<Bit@>(Result@, not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
+  BitN@<Bit@>(Result@, not, and, or, xor, add, inc, zero, iszero, eq, msb, clshift, fulladd, fullinc, lshift);
 };

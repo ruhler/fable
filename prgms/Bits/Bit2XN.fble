@@ -31,6 +31,20 @@
       fulladd(a, b, Bit1.BitN.zero).z;
     };
 
+    (Bit2X@){Result@;} fullinc = (Bit2X@ a) {
+        B.Result@ rlo = B.fullinc(a.lo);
+        ?(rlo.cout;
+            0: Result@(Bit2X@(a.hi, rlo.z), Bit1.BitN.zero),
+            1: {
+                B.Result@ rhi = B.fullinc(a.hi);
+                Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
+            });
+      };
+
+    (Bit2X@){Bit2X@;} inc = (Bit2X@ a) {
+      fullinc(a).z;
+    };
+
     Bit2X@ zero = Bit2X@(B.zero, B.zero);
 
     (Bit2X@){Bool@;} iszero = (Bit2X@ a) {
@@ -55,6 +69,9 @@
       lshift(a, msb(a)).z;
     };
 
-    BitN@<Bit2X@>(Result@, not, and, or, xor, add, zero, iszero, eq, msb, clshift, fulladd, lshift);
+    BitN@<Bit2X@>(
+      Result@, not, and, or, xor, add, inc, zero, iszero, eq, msb,
+      clshift, fulladd, fullinc, lshift
+    );
   };
 };

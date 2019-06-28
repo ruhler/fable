@@ -313,7 +313,7 @@
   };
 
   (Bit64@){Bit64@;} Inc64 = (Bit64@ a) {
-    Bits.Bit64.BitN.fulladd(a, Bits.Bit64.BitN.zero, Bit@(1: Unit@())).z;
+    Bits.Bit64.BitN.inc(a);
   };
 
   (Hex@, Hex@){Bit64@;} H2_64 = (Hex@ a, Hex@ b) {

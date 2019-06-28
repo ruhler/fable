@@ -5,7 +5,7 @@
    poly_value, poly_apply
 * [prgm] Expand test coverage
 * [prgm] Optimize the fble implementation of md5
-  - particularly inc and cls functions.
+  - particularly the cls function.
 
 * [prgm] Optimize the fble implementation of tictactoe
   - Using monadic operations where feasible?
