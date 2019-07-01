@@ -131,6 +131,34 @@ Proposal:
   require 4, or 3, or 2, or 1 args rather than assume the base case works with
   0 args. For example, for a non-empty list literal.
 
+My vote is to keep things relatively simple and just desugar a list literal:
+    [a, b, c, d, e]
+
+To function calls with an expected name:
+     \,(a, \,(b, \,(c, \,(d, \,(e, '[]')))))
+
+In other words, pick a name for the cons function and a name for the nil
+value, where the proposed names here were ',' and '[]'.
+
+Question: does this work with type parameterized lists? You kind of wish you
+could automatically infer the type of the list rather than have to explicitly
+specify it. I guess you could always do:
+  { @(',': ConsS<Foo@>, '[]': S0<Foo@>); [a, b, c, d, e]; }
+
+or:
+  { List<Foo@>; [a, b, c, d, e]; }
+
+Which isn't too bad? Except it is a little sad to have everything done by name
+lookup without concrete type checking?
+
+We can do the exact same for string literals:
+  ~'hello' desugars to:
+  \,(h, \,(e, \,(l, \(l, \(o, '[]')))))
+
+Maybe ',' and ']' would be good names to pick, corresponding to the sugar
+a, b, ..., ]?
+  
+
 3. Traversals
 -------------
 Today we have:
@@ -202,7 +230,69 @@ Note some alternatives:
 
   But we know there are issues with monad composition. So maybe that's not the
   best approach.
+
+Another example came up. Given a list of tests, we want something like:
+
+  List<TestName@> fails;
+  for (T : Tests) {
+    Print(T.name);
+    Result r := T.test;
+    if (r.fail) {
+      Print("failed");
+      fails.append(T.name);
+    }
+  }
+
+There are three parts:
+1. traversal - iterating over all elements in Tests.
+2. body - the function to actually apply.
+3. combination - to collect the failing tests into 'fails' as output.
+
+The current proposal for bind gives traversal and body, but doesn't help with
+combination. If we used a monad, the assumption is that traversal and
+combination are the same data type. It's easier to specify, but less general.
+Is there an easy way to describe the combination here too? You could add it to
+the traversal I suppose:
+
+List<TestName@> fails = {
+ Test@ T <- forEachM(tests, catMaybes);
+   Print(T.name);
+   Result r := T.test;
+   if (r.fail) {
+     Print("fail");
+     Just(T.name);
+   } else {
+     Nothing;
+   }
+}
+
+Where the type of forEachM is:
+ [a] -> ([b] -> c) -> (a -> b) -> c 
+
+That makes sense, right? Or maybe:
+ [a] -> (b -> b -> b) -> (a -> b) -> b
+
+So you are given a list of elements a, a way to turn each element a into a b,
+and a way to collapse all the b together into a single element.
   
+Or make it another argument to the function? Provide the accumulation so far
+to the body? Or a function to finish the accumulation?
+
+ [a] -> (a -> b -> b) -> b
+
+List<TestName@> fails = {
+ Test@ T, List<TestName@> fails <- forEachM(tests);
+   Print(T.name);
+   Result r := T.test;
+   if (r.fail) {
+     Print("fail");
+     ConsS<TestName@>(T.name, fails);
+   } else {
+     fails;
+   }
+}
+
+Maybe I just need to be creative using the existing syntax options to start.
   
 Practical Uses:
 * tictactoe, sudoku, etc.

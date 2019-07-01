@@ -1,0 +1,30 @@
+Hardware vs Software
+--------------------
+Question: is it ever the case that optimizing an fble function for software
+makes it worse for hardware, and optimizing for hardware makes it worse for
+software? Or is it generally that case that optimizing an fble function is
+good for both software and hardware?
+
+The idea being:
+1. software: you want to short circuit wherever possible to avoid work
+2. hardware: you want the structure of the computation to be independent of
+the input data.
+
+Example: Increment.
+
+Assume you represent a bit vector as a binary tree of smaller bit vectors.
+
+Software:
+  Increment the low word.
+  If that overflows,
+     Increment the high word.
+
+Hardware:
+  Increment the low word.
+  Add the carry out to the high word.
+
+Hardware avoids the cost of the if, but pays the cost of adding to the high
+word regardless of the data. But for hardware that cost has already been paid,
+because you need it in the worst case anyway.
+
+Is this something to worry about?
