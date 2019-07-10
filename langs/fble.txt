@@ -876,10 +876,42 @@ Expr ::=
 
 Prgm ::= Expr
 
-11. Concrete Syntax Reference
------------------------------
-normal_name ::= (* [a-zA-Z0-9_]+ *)
-type_name ::=   (* [a-zA-Z0-9_]+@ *)
+11. Concrete Syntax
+-------------------
+11.1 Lexical Syntax
+-------------------
+There are three categories of characters:
+1. whitespace: Any whitespace character, as traditionally classified.
+2. punctuation: Any of the following characters:
+  (){};,:?=.<>+*-!$@~&'\
+3. normal: any other character.
+
+A sequence of continuous normal characters is grouped together into a word. To
+include whitespace or punctuation in a word, an escape sequence can be used.
+
+Any single punctuation or whitespace character can be preceded with a
+backslash to treat it as a normal character. For example: Foo\,Bar is a 7
+character word where the fourth character in the word is a comma.
+
+In addition, for convenience, the following escape sequences are supported as
+alternatives to whitespace characters:
+  \n - A newline character.
+
+A sequence of characters in single quotes is treated as a sequence of normal
+characters, regardless of what class the characters come from. All escape
+sequences can be used in single quotes, but escape of punctuation and
+whitespace is not required. For example: 'Foo.Bar' is the same word as the
+previous example.
+
+TODO:
+* Is: Foo'.'Bar a single word or three words? That is, do single quotes
+  introduce a word delimiter?
+
+11.2 Reference
+--------------
+word ::= (* word as described in the section on lexical syntax *)
+normal_name ::= word
+type_name ::=   word '@'
 
 name ::= 
    normal_name
@@ -977,6 +1009,9 @@ Notes:
    bind or a put_proc.
  - Things like {Chars; S4<Char@>(0, 1, 2, 3)}, where it's not unlikely that we
    have a variable called 0, 1, 2, or 3 already in scope.
+
+ I'm leaning towards yes. It doesn't make sense from a modularity perspective
+ otherwise.
 
 * Issues that came up when switching to the new unit test format
  - How should we organize tests? Do we need to import Test even if we just want to

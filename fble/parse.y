@@ -49,8 +49,9 @@
 }
 
 %{
-  static bool IsNameChar(int c);
-  static bool IsSingleChar(int c);
+  static bool IsSpaceChar(int c);
+  static bool IsPunctuationChar(int c);
+  static bool IsNormalChar(int c);
   static void ReadNextChar(Lex* lex);
   static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex);
   static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, const char* msg);
@@ -65,7 +66,7 @@
 %token END 0 "end of file"
 %token INVALID "invalid character"
 
-%token <name> NAME
+%token <name> WORD
 
 %type <name> name
 %type <kind> kind
@@ -83,7 +84,13 @@
 
 start: stmt { *result = $1; } ;
 
-name: NAME { $$ = $1; } ;
+name:
+   WORD { $$ = $1; }
+ | WORD '@' {
+    $$ = $1; 
+    strcat((char*)$$.name, "@");
+   }
+ ;
 
 kind:
    '@' {
@@ -194,7 +201,7 @@ expr:
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
- | expr '(' NAME ':' expr ')' {
+ | expr '(' name ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
       union_value_expr->_base.loc = @$;
@@ -251,7 +258,7 @@ expr:
       }
       FbleFree(arena, $3.xs);
    }
- | '&' NAME {
+ | '&' name {
       if (include_path == NULL) {
         FbleReportError("%s not found for include\n", &(@$), $2);
         YYERROR;
@@ -353,7 +360,7 @@ stmt:
       FbleVectorAppend(arena, apply_expr->args, &func_value_expr->_base);
       $$ = &apply_expr->_base;
     }
-  | expr '~' NAME ',' NAME ';' stmt {
+  | expr '~' name ',' name ';' stmt {
       FbleLinkExpr* link_expr = FbleAlloc(arena, FbleLinkExpr);
       link_expr->_base.tag = FBLE_LINK_EXPR;
       link_expr->_base.loc = @$;
@@ -521,42 +528,60 @@ let_binding_p:
 
 %%
 
-// IsNameChar --
-//   Tests whether a character is an acceptable character to use in a name
-//   token.
+// IsSpaceChar --
+//   Tests whether a character is whitespace.
 //
 // Inputs:
 //   c - The character to test. This must have a value of an unsigned char or
 //       EOF.
 //
 // Result:
-//   The value true if the character is an acceptable character to use in a
-//   name token, and the value false otherwise.
+//   The value true if the character is whitespace, false otherwise.
 //
 // Side effects:
 //   None.
-static bool IsNameChar(int c)
+static bool IsSpaceChar(int c)
 {
-  return isalnum(c) || c == '_' || c == '@';
+  return isspace(c);
 }
 
-// IsSingleChar --
-//   Tests whether a character is an acceptable single-character token.
-//   token.
+// IsPunctuationChar --
+//   Tests whether a character is one of the single-character punctuation tokens.
 //
 // Inputs:
 //   c - The character to test. This must have a value of an unsigned char or
 //       EOF.
 //
 // Result:
-//   The value true if the character is an acceptable character to use as a
-//   single character token, and the value false otherwise.
+//   The value true if the character is one of the fble punctuation tokens,
+//   false otherwise.
 //
 // Side effects:
 //   None.
-static bool IsSingleChar(int c)
+static bool IsPunctuationChar(int c)
 {
-  return strchr("(){};,:?=.<>+*-!$@~&", c) != NULL;
+  return strchr("(){};,:?=.<>+*-!$@~&'\\", c) != NULL;
+}
+
+// IsNormalChar --
+//   Tests whether a character is a normal character suitable for direct use
+//   in fble words.
+//
+// Inputs:
+//   c - The character to test. This must have a value of an unsigned char or
+//       EOF.
+//
+// Result:
+//   The value true if the character is a normal character, false otherwise.
+//
+// Side effects:
+//   None.
+static bool IsNormalChar(int c)
+{
+  if (IsSpaceChar(c) || IsPunctuationChar(c)) {
+    return false;
+  }
+  return true;
 }
 
 // ReadNextChar --
@@ -632,7 +657,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
     return END;
   }
 
-  if (IsSingleChar(lex->c)) {
+  if (IsPunctuationChar(lex->c)) {
     // Return the character and set the lexer character to whitespace so it
     // will be skipped over the next time we go to read a token from the
     // stream.
@@ -641,20 +666,22 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
     return c;
   };
 
-  if (!IsNameChar(lex->c)) {
-    return INVALID;
-  }
-
-  struct { size_t size; char* xs; } namev;
-  FbleVectorInit(arena, namev);
-  while (IsNameChar(lex->c)) {
-    FbleVectorAppend(arena, namev, lex->c);
+  struct { size_t size; char* xs; } wordv;
+  FbleVectorInit(arena, wordv);
+  while (IsNormalChar(lex->c)) {
+    FbleVectorAppend(arena, wordv, lex->c);
     ReadNextChar(lex);
   }
-  FbleVectorAppend(arena, namev, '\0');
-  lvalp->name.name = namev.xs;
+  FbleVectorAppend(arena, wordv, '\0');
+
+  // Add an extra null char on the end so we can easily append '@' for type
+  // names.
+  // TODO: Get rid of this hack.
+  FbleVectorAppend(arena, wordv, '\0');
+
+  lvalp->name.name = wordv.xs;
   lvalp->name.loc = *llocp;
-  return NAME;
+  return WORD;
 }
 
 // yyerror --

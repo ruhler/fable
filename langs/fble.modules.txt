@@ -74,3 +74,226 @@ import name. But we would have to figure out how to distinguish between
 published modules and private modules in that case.
 
 
+Library
+-------
+In order to gain insight about what's required from the module system, here is
+a brainstorm of the modules and dependencies that make sense, based on the
+idea that you false imports shouldn't bring in extra modules.
+
+Unit
+
+Bool(Unit)
+Char(Unit)
+Maybe(Unit)
+List(Unit)
+
+Eq(Unit, Bool)
+String(Unit, Char, List)
+Test(Unit, Char, List, String)
+
+Bool.Eq(Unit, Bool)
+Char.Eq(Unit, Bool, Char)
+Maybe.Eq(Unit, Bool, Maybe)
+List.Eq(Unit, Bool, List)
+
+List.Sort(Unit, Bool, Bool.Eq, List)
+
+Bool.String(Unit, Bool, String)
+Char.String(Unit, Char, String)
+Maybe.String(Unit, Maybe, String)
+List.String(Unit, List, String)
+
+Bool.Tests(Unit, Bool, Bool.Eq, Char, List, String, Test)
+Char.Tests(Unit, Char, Char.Eq, List, String, Test)
+Maybe.Tests(Unit, Maybe, Maybe.Eq, Char, List, String, Test)
+List.Tests(Unit, Bool, Char, List, List.Sort, List.Eq, String, Test)
+
+
+This brainstorm suggests we want to err on the side of more modules to avoid
+bringing in more dependencies than necessary. A data type definition has some
+fundamental things it depends on, it shouldn't bring in more dependency's that
+are just used for a few library functions. Use a new module to add a library
+function that brings in a new dependency.
+
+For classes, it's easy to define a class and separate Type.Class methods for
+all the instances, which depend on both the type and the class. It's almost as
+if dependencies are the primary determining factor in what should be a module.
+
+In the future, when we have modules published by different developers, I feel
+like we should organize modules by developer too. So... StdLib/... are the
+built in libraries. Foo/... are the libraries provided by Foo, and so on. And
+we allow paths: A.B.C... for names of modules within those directories. Every
+module represents a fble data value - most often an anonymous type struct
+value.
+
+I suppose the proposal is to replace file import with module import and have
+the compiler automatically load whatever dependencies are needed.
+
+Open questions:
+* How to distinguish between public and private modules?
+* Are modules hierarchical, or flat as suggested above?
+* Is it possible to define multiple modules within a single file, to
+  facilitate testing? Or are module boundaries tied to file boundaries?
+
+Abstract Proposal
+-----------------
+I claim we want is to have a hierarchy of modules that can depend on each
+other independent of the hierarchy.
+
+That is, we have a collection of modules and two ways that modules are
+organized:
+
+1. In a tree hierarchy by definition. The purpose of this hierarchy is to
+allow the developer to restrict who can access a particular module.
+
+The hierarchy is a tree, where at every level you can have any number of
+module definitions or subtrees. Each node in the tree (leaf or non-leaf) can
+be marked as public or private.
+
+Given modules A and B, and assuming they have common ancestor C. Module B is
+visible to module A if every node on the path from C to B (not including C) is
+marked public.
+
+Or, in other words, a node in the tree can be marked private. This means
+the only modules that can access that node or anything beneath that node are
+modules in sibling trees or inside the tree itself.
+
+2. A dependency graph between modules, completely unrelated to the definition
+hierarchy. This is formed of the dependencies between modules.
+
+So, for example, some module A can depend on module B.X.Y without also
+depending on module B.X.Z.
+
+
+The idea is that the definition hierarchy is organized by developers of
+modules, who may wish to restrict access of their modules to immediate
+siblings, and the dependency graph is organized by users of modules, who want
+their module to work without false dependencies.
+
+All that remains is to discuss the syntax for expressing modules.
+
+Perhaps we have a notion of a module path, that describes where a module lives
+in the definition hierarchy. Perhaps this path can be relative to the current
+module or relative to the root of the hierarchy.
+
+When you define a module, you could either have explicit imports of all
+modules, or implicit. Maybe we have a special syntax that turns a module path
+into its corresponding value by doing whatever import and access check is
+required.
+
+A given module could be compiled as follows:
+* Create the graph of all modules the particular module depends on.
+* Assign a unique variable name to each module in the graph.
+* Create a sequence of let expressions in dependency order to define the
+  variable name with the corresponding module value.
+* Replace all references to a module with the corresponding variable name.
+
+So, for example, if we have:
+
+A: A...
+B: B...@A...
+C: C...@B...@A...
+
+Then we compile it to
+
+a = A...;
+b = B...a...;
+c = C...b...a...;
+c;
+
+That gives you a clear module of how the modules will be shared and reused.
+
+Ideally we don't have to list all modules explicitly, so we only have to know
+about and download those modules needed for the particular program in
+question. Then how do we annotate whether a module is public or private? The
+module has to continue to exist.
+
+And ideally we can express the module hierarchy both in the file system and in
+a flat file.
+
+File System:
+* The module hierarchy is specified as a directory.
+* A module is marked as private by... preferably explicit export.
+
+Perhaps each directory could contain a file listing the public components in
+the directory? Or change the file name of an entry to indicate if it is public
+or private? Because we want a directory itself to have the option of being
+public/private, it doesn't make sense to rely on the contents of the file to
+indicate such...
+
+Flat File:
+Hmm... We would want to be able to specify modules out of dependency order?
+Either that, or out of hierarchy order.
+
+
+As a temporary work around, we could use the existing syntax, but make it so
+we can import leaf nodes directly rather than through their parents. Then
+manually import things in dependency order, and manually obey implicit
+public/private boundaries. That's not great long term though.
+
+Conceptually we want to label the links from parent and child as public or
+private. How do we prevent users from modifying the links and negating all
+value of private? Is there a natural way to support pre-compiled modules?
+
+Idea:
+* Modules form a module dependency graph.
+* Libraries form the hierarchy of modules.
+
+A module is identified by its library. A library has a specific owner. Public
+/ private access is given at the library level.
+
+Question: what level of control do we want for public / private access?
+
+A. Each library can have private elements available only to that specific
+library. For example, like Java, where library == package and you have package
+private vs. public. But we know this is not as flexible as we want it to be.
+
+B. Libraries are organized in a tree, each library is marked as private or
+public. A private library can only be used by (descendants of) siblings. This
+suggests you should organized libraries by visibility, but that means if you
+want to change the visibility of a library after the fact, you may need to
+rename it, which sounds very bad.
+
+C. Libraries are just collections of other libraries and modules that have
+public members and private members. You can change the visibility of a library
+without changing its name just by exporting different members of the library.
+
+Need to think more about what the real intent is behind libraries. Name
+conflict resolution certainly. Access restriction yes. Where presumably you
+can coordinate names with a single owner, and you can more easily share things
+within an organization / team than outside of an organization / team. I think
+it's the same. Just like you have a hierarchy of teams, you should have a
+hierarchy of libraries. Each library corresponds to a team. They can make sure
+they don't have name conflicts and that they only use private components
+correctly. But you may want to publish a previously private component.
+
+That's the answer then. A library is a list of child libraries. In the list
+can be any module or sublibrary available to that level of the library. Which
+means, for example, if you have a sublibrary foo that exports foo.A, foo.B,
+and foo.C, you are allowed to export only foo.A and foo.B beyond. It's not all
+or nothing for what is exported. In this case, foo.C has more limited
+visibility, but there is no reason to require foo.C to live in a different
+sub-library to be able to grant it different visibility.
+
+Initial Proposal:
+1. Introduce a new namespace for modules, so they can be distinguished from
+variable names and type names. Because each module is only ever going to have
+one name, so we don't want it to interfere with the namespace controlled by
+other people. For example, you can have a module called Unit that defines a
+type Unit@ and a variable Unit, without having them conflict.
+
+2. Define a module using a module name and fble expression. When using the
+file system, the module name can be implicitly given by the name of the file
+with the fble expression. No need to list module dependency's explicitly. You
+can always add a fake dependency by importing nothing from another module.
+
+3. Define a library as a list of sub modules / libraries. Each element is
+either public or private access. Private access sub modules / libraries are
+visible to siblings in the library. Public sub modules / libraries are visible
+to siblings and users of the library. Elements may refer to sub elements of
+other libraries. For example, given sub library foo, you can include foo.A.X
+and foo.B.Y as separate elements with separate access modifiers.
+
+A library could be represented in a file system as a directory with a file
+containing the list of public entities exported by the library.
+

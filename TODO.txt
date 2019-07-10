@@ -1,9 +1,12 @@
+* [lang] Add support for new lexical syntax.
+* [lang] Revise modules
+  - then clean up existing module hierarchy
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind
    proc_link, proc_exec
    poly_value, poly_apply
-* [prgm] Expand test coverage
+
 * [prgm] Optimize Md5.cls function
   - change cls to use or(x << n, x >> (K - n))
   - change << and >> to take number of bits to shift instead of a single bit.
