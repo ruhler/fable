@@ -5,10 +5,7 @@
   StdLib.List { @(S@, P@, S0, S1, S4, S5, S6, S7, Append, SortS); };
   Test { @(TestName@, TestResult@, Test@); };
 
-  TestName@ prefix = { Chars; Append<Char@>(
-    S7<Char@>(S, t, d, L, i, b, period),
-    S5<Char@>(L, i, s, t, period));
-  };
+  TestName@ prefix = { Chars; S7<Char@>(S, t, d, L, i, b, period); };
 
   @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 

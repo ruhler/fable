@@ -1,10 +1,11 @@
 
 @(StdLib: &StdLib);
 @(Test: &Test);
-@(StdLibTests: &StdLibTests);
 @(UBNat: &UBNat);
 @(Primes: &Primes);
 @(Bits: &Bits);
+
+@(List_Tests_: &List_Tests_);
 
 @(Md5_: &Md5_);
 @(Md5_Tests_: &Md5_Tests_);
@@ -16,7 +17,7 @@ Test { @(Test@); };
 
 S@<Test@> AllTests = Concat<Test@>(S5<S@<Test@>>(
   Test.Tests,
-  StdLibTests.Tests,
+  List_Tests_.Tests,
   UBNat.Tests.Tests,
   Primes.Tests.Tests,
   Md5_Tests_.Tests
