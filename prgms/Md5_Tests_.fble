@@ -1,11 +1,11 @@
-@(StdLib, Bits, Md5, Test) {
+@(StdLib, Bits, Md5_, Test) {
   StdLib { @(Unit@, Maybe@); };
   StdLib.Char{ @(Char@, Chars); };
   StdLib.List{ @(P@, S@, ConsS, S0, S1, S3, S4, S5, S6, S7, S8, S9, S10, Append, Concat); };
   Bits.Bit8 { @(Bit8@, H2); };
   Bits.Hex { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
   Test { @(TestName@, TestResult@, Test@); };
-  Md5 { @(Md5Hash@, Eq); };
+  Md5_ { @(Md5Hash@, Md5, Eq); };
 
   TestName@ prefix = { Chars; S4<Char@>(M, d, 5, period); };
 
@@ -43,7 +43,7 @@
   # Compute the md5 hash for a string of bytes.
   (S@<Bit8@>){Md5Hash@!;} Md5Str = (S@<Bit8@> bytes) {
     Maybe@<Bit8@> ~ get, put;
-    Md5Hash@ md5 := Md5.Md5(get), Unit@ x := PutAll(put, bytes);
+    Md5Hash@ md5 := Md5(get), Unit@ x := PutAll(put, bytes);
     $(md5);
   };
 

@@ -5,7 +5,9 @@
 @(UBNat: &UBNat);
 @(Primes: &Primes);
 @(Bits: &Bits);
-@(Md5: &Md5);
+
+@(Md5_: &Md5_);
+@(Md5_Tests_: &Md5_Tests_);
 
 StdLib { @(Char, List); };
 Char { @(Char@); };
@@ -17,7 +19,7 @@ S@<Test@> AllTests = Concat<Test@>(S5<S@<Test@>>(
   StdLibTests.Tests,
   UBNat.Tests.Tests,
   Primes.Tests.Tests,
-  Md5.Tests.Tests
+  Md5_Tests_.Tests
 ));
 
 (S@<Char@>+ out) {
