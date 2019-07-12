@@ -1,6 +1,7 @@
-@(StdLib) {
-  StdLib { @(Unit@, Maybe@); };
-  StdLib.List { @(S@, P@); };
+@(Unit_, Maybe_, List_) {
+  Unit_ { @(Unit@); };
+  Maybe_ { @(Maybe@); };
+  List_ { @(S@, P@); };
 
   @ Symbol@ = +(
     Unit@ S1, Unit@ S2, Unit@ S3,

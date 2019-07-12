@@ -1,28 +1,29 @@
 
-@(StdLib: &StdLib);
+@(Unit_: &Unit_);
+@(List_: &List_);
 @(Draw: &Draw);
 
-StdLib { @(Unit@); };
-StdLib.List { @(P@, S@); };
+Unit_ { @(Unit@, Unit); };
+List_ { @(P@, S@); };
 Draw { @(Color@, Draw@); };
 
 @ Cell@ = +(Unit@ alive, Unit@ dead);
-Cell@ Alive = Cell@(alive: Unit@());
-Cell@ Dead = Cell@(dead: Unit@());
+Cell@ Alive = Cell@(alive: Unit);
+Cell@ Dead = Cell@(dead: Unit);
 
 @ CellCount@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4);
 
 [CellCount@][Cell@]{ CellCount@; } Add = [CellCount@ a][Cell@ b] {
-  ?(b; ?(a, CellCount@(1: Unit@()),
-            CellCount@(2: Unit@())
-            CellCount@(3: Unit@())
-            CellCount@(4: Unit@())
-            CellCount@(4: Unit@())), b);
+  ?(b; ?(a, CellCount@(1: Unit),
+            CellCount@(2: Unit)
+            CellCount@(3: Unit)
+            CellCount@(4: Unit)
+            CellCount@(4: Unit)), b);
 };
 
 [Cell@][Cell@][Cell@][Cell@][Cell@][Cell@][Cell@][Cell@]{ CellCount@; } Sum =
   [Cell@ a][Cell@ b][Cell@ c][Cell@ d][Cell@ e][Cell@ f][Cell@ g][Cell@ h] {
-    Add[Add[Add[Add[Add[Add[Add[Add[CellCount@(0: Unit@())][a]][b]][c]][d]][e]][f]][g]][h];
+    Add[Add[Add[Add[Add[Add[Add[Add[CellCount@(0: Unit)][a]][b]][c]][d]][e]][f]][g]][h];
 };
 
 [Cell@][CellCount@]{Cell@;} Next = [Cell@ cell][CellCount@ neighbors] {

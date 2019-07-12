@@ -1,5 +1,5 @@
-@(BitN@, Bit2XT@: Bit2X@, StdLib, Bit1) {
-  StdLib.Bool { @(Bool@, And); };
+@(Bool_, BitN@, Bit2XT@: Bit2X@, Bit1) {
+  Bool_ { @(Bool@, And); };
 
   <@ T@>(BitN@<T@> B) {
     @ Bit2X@ = Bit2XT@<T@>;

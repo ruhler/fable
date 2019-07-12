@@ -1,0 +1,7 @@
+@(Unit_) {
+  Unit_ { @(Unit@); };
+
+  <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+  
+  @(Maybe@);
+};

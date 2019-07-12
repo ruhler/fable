@@ -1,8 +1,8 @@
-@(StdLib) {
-  StdLib { @(Unit@, Bool, Char, List); };
-  Bool { @(Bool@, True, False); };
-  Char { @(Char@, Chars); };
-  List { @(S@, P@, S0, S1, S2, S3, S4, S5, S6, Append, Concat); };
+@(Unit_, Bool_, Char_, List_) {
+  Unit_ { @(Unit@, Unit); };
+  Bool_ { @(Bool@, True, False); };
+  Char_ { @(Char@, Chars); };
+  List_ { @(S@, P@, S0, S1, S2, S3, S4, S5, S6, Append, Concat); };
 
   @ TestName@ = S@<Char@>;
   @ TestResult@ = +(Unit@ pass, S@<Char@> fail);
@@ -13,13 +13,13 @@
   # Print a string to the given output stream.
   (S@<Char@>+, S@<Char@>){ Unit@!; } Print = (S@<Char@>+ out, S@<Char@> str) {
     S@<Char@> _ := out(str);
-    $(Unit@());
+    $(Unit);
   };
 
   # Print a string and newline to the given output stream.
   (S@<Char@>+, S@<Char@>){ Unit@!; } PrintLn = (S@<Char@>+ out, S@<Char@> str) {
     S@<Char@> _ := out(Append<Char@>(str, S1<Char@>(Chars.nl)));
-    $(Unit@());
+    $(Unit);
   };
 
   # Execute the list of tests given the results of previously executed tests,
@@ -62,7 +62,7 @@
 
     Test@ pass = Test@(
       name({ Chars; S4<Char@>(p, a, s, s); }),
-      $(TestResult@(pass: Unit@())));
+      $(TestResult@(pass: Unit)));
 
     Test@ fail = Test@(
       name({ Chars; S4<Char@>(f, a, i, l); }),

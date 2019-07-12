@@ -1,8 +1,8 @@
-@(StdLib, UBNat_, Test) {
-  StdLib { @(Unit@); };
-  StdLib.Bool { @(Bool@, Not); };
-  StdLib.Char { @(Char@, Chars); };
-  StdLib.List { @(P@, S@, S0, S5, S6, S7, S8, ConsS, Append); };
+@(Unit_, Bool_, Char_, List_, UBNat_, Test) {
+  Unit_ { @(Unit@, Unit); };
+  Bool_ { @(Bool@, Not); };
+  Char_ { @(Char@, Chars); };
+  List_ { @(P@, S@, S0, S5, S6, S7, S8, ConsS, Append); };
   Test { @(TestName@, TestResult@, Test@); };
   UBNat_ { @(
       Nat@,
@@ -21,10 +21,10 @@
       Test@ t = Test@(Append<Char@>(prefix, name), {
         Bool@ x := p;
         ?(x;
-           true: $(TestResult@(pass: Unit@())),
+           true: $(TestResult@(pass: Unit)),
            false: $(TestResult@(fail: { Chars; S6<Char@>(f, a, i, l, e, d); })));
       });
-      ConsS<Test@>(t, tail(Unit@()));
+      ConsS<Test@>(t, tail(Unit));
     };
 
   (TestName@, Nat@, Nat@!, (Unit@){S@<Test@>;}){S@<Test@>;} TEq =

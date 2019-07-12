@@ -1,5 +1,9 @@
 
-@(StdLib: &StdLib);
+@(Unit_: &Unit_);
+@(Maybe_: &Maybe_);
+@(Bool_: &Bool_);
+@(Char_: &Char_);
+@(List_: &List_);
 @(Test: &Test);
 
 @(List_Tests_: &List_Tests_);
@@ -15,9 +19,8 @@
 @(Md5_: &Md5_);
 @(Md5_Tests_: &Md5_Tests_);
 
-StdLib { @(Char, List); };
-Char { @(Char@); };
-List { @(S@, S5, Concat); };
+Char_ { @(Char@); };
+List_ { @(S@, S5, Concat); };
 Test { @(Test@); };
 
 S@<Test@> AllTests = Concat<Test@>(S5<S@<Test@>>(

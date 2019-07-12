@@ -1,6 +1,6 @@
-@(StdLib) {
-  StdLib { @(Unit@, Bool); };
-  Bool { @(Bool@, True, False, Eq); };
+@(Unit_, Bool_) {
+  Unit_ { @(Unit@, Unit); };
+  Bool_ { @(Bool@, True, False, Eq); };
 
   @ Nat@ = +(
     Unit@ 0,
@@ -9,8 +9,8 @@
     Nat@ 2p1   # 2 * x + 1, where x != 0
   );
 
-  Nat@ 0 = Nat@(0: Unit@());
-  Nat@ 1 = Nat@(1: Unit@());
+  Nat@ 0 = Nat@(0: Unit);
+  Nat@ 1 = Nat@(1: Unit);
 
   # Compute 2 * x.
   # This is like Nat@(2p0: x), but properly handles the case when x is 0.

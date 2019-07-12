@@ -1,5 +1,5 @@
-@(Bool: StdLib.Bool, UBNat_) {
-  Bool { @(Bool@, True, False); };
+@(Bool_, UBNat_) {
+  Bool_ { @(Bool@, True, False); };
   UBNat_ { @(Nat@, 2, IsZero, Lt, Gt, Inc, Dec, Mul, Mod); };
 
   # Returns true if f evenly divides x.

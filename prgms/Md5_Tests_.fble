@@ -1,7 +1,8 @@
-@(StdLib, Bits_, Hex_, Md5_, Test) {
-  StdLib { @(Unit@, Maybe@); };
-  StdLib.Char{ @(Char@, Chars); };
-  StdLib.List{ @(P@, S@, ConsS, S0, S1, S3, S4, S5, S6, S7, S8, S9, S10, Append, Concat); };
+@(Unit_, Maybe_, Char_, List_, Bits_, Hex_, Md5_, Test) {
+  Unit_ { @(Unit@, Unit); };
+  Maybe_ { @(Maybe@); };
+  Char_ { @(Char@, Chars); };
+  List_ { @(P@, S@, ConsS, S0, S1, S3, S4, S5, S6, S7, S8, S9, S10, Append, Concat); };
   Bits_.Bit8 { @(Bit8@, H2); };
   Hex_ { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
   Test { @(TestName@, TestResult@, Test@); };
@@ -34,8 +35,8 @@
           Maybe@<Bit8@> x := out(Maybe@<Bit8@>(just: bytes.cons.head));
           PutAll(out, bytes.cons.tail);
         }, nil: {
-          Maybe@<Bit8@> x := out(Maybe@<Bit8@>(nothing: Unit@()));
-          $(Unit@());
+          Maybe@<Bit8@> x := out(Maybe@<Bit8@>(nothing: Unit));
+          $(Unit);
       });
     };
 
@@ -49,7 +50,7 @@
 
   (Md5Hash@, Md5Hash@){TestResult@;} AssertEq = (Md5Hash@ wnt, Md5Hash@ got) {
     ?(Eq(wnt, got);
-        true: TestResult@(pass: Unit@()),
+        true: TestResult@(pass: Unit),
         false: {
           S@<Char@> msg = Concat<Char@>(S4<S@<Char@>>(
             { Chars; S10<Char@>(e, x, p, e, c, t, e, d, colon, space); },

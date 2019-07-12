@@ -1,4 +1,7 @@
-@(Unit@, Bool@: Bool.Bool@) {
+@(Unit_, Bool_) {
+  Unit_ { @(Unit@, Unit); };
+  Bool_ { @(Bool@); };
+
   # P - A list of 1 or more elements: T+
   # S - A list of 0 or more elements: T*
   <@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },
@@ -18,7 +21,7 @@
   };
 
   S@ S0 = <@ T@> {
-    S@<T@>(nil: Unit@());
+    S@<T@>(nil: Unit);
   };
 
   <@ T@>(T@){S@<T@>;} S1 = <@ T@>(T@ a) {

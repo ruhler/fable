@@ -1,8 +1,8 @@
-@(StdLib, Test) {
-  StdLib { @(Unit@); };
-  StdLib.Bool { @(Bool@, True, False, And); };
-  StdLib.Char { @(Char@, Chars); };
-  StdLib.List { @(S@, P@, S0, S1, S4, S5, S6, S7, Append, SortS); };
+@(Unit_, Bool_, Char_, List_, Test) {
+  Unit_ { @(Unit@, Unit); };
+  Bool_ { @(Bool@, True, False, And); };
+  Char_ { @(Char@, Chars); };
+  List_ { @(S@, P@, S0, S1, S4, S5, S6, S7, Append, SortS); };
   Test { @(TestName@, TestResult@, Test@); };
 
   TestName@ prefix = { Chars; S7<Char@>(S, t, d, L, i, b, period); };
@@ -25,7 +25,7 @@
          E: ?(b; A: False, B: False, C: False, D: False, E: True));
   };
 
-  # TODO: Move these to StdLib/List and make it public?
+  # TODO: Move these to List_ and make it public?
   <@ T@>((T@, T@){Bool@;}, S@<T@>, S@<T@>){Bool@;} SEq =
     <@ T@>((T@, T@){Bool@;} eq, S@<T@> a, S@<T@> b) {
       ?(a; cons: ?(b; cons: PEq<T@>(eq, a.cons, b.cons), nil: False),
@@ -39,22 +39,22 @@
   Test@ SortTest = Test@(
     Append<Char@>(prefix, { Chars; S4<Char@>(S, o, r, t); }), $({
       S@<Elem@> unsorted = S5<Elem@>
-        (Elem@(D: Unit@()))
-        (Elem@(A: Unit@()))
-        (Elem@(B: Unit@()))
-        (Elem@(E: Unit@()))
-        (Elem@(C: Unit@()));
+        (Elem@(D: Unit))
+        (Elem@(A: Unit))
+        (Elem@(B: Unit))
+        (Elem@(E: Unit))
+        (Elem@(C: Unit));
 
       S@<Elem@> wnt = S5<Elem@>
-        (Elem@(A: Unit@()))
-        (Elem@(B: Unit@()))
-        (Elem@(C: Unit@()))
-        (Elem@(D: Unit@()))
-        (Elem@(E: Unit@()));
+        (Elem@(A: Unit))
+        (Elem@(B: Unit))
+        (Elem@(C: Unit))
+        (Elem@(D: Unit))
+        (Elem@(E: Unit));
 
       S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
       ?(SEq<Elem@>(ElemEq, wnt, got);
-        true: TestResult@(pass: Unit@()),
+        true: TestResult@(pass: Unit),
         false: TestResult@(fail: { Chars; S6<Char@>(f, a, i, l, e, d); }));
   }));
 

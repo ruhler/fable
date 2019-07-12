@@ -1,6 +1,5 @@
 * [lang] Add support for new lexical syntax.
 * [lang] Revise modules
-  - then clean up existing module hierarchy
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind

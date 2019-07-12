@@ -1,7 +1,8 @@
-@(StdLib, Bits_, Hex_) {
-  StdLib { @(Unit@, Maybe@); };
-  StdLib.Bool { @(Bool@, True, False, And); };
-  StdLib.List { @(SL@: S@, PL@: P@); };
+@(Unit_, Bool_, List_, Maybe_, Bits_, Hex_) {
+  Unit_ { @(Unit@, Unit); };
+  Maybe_ { @(Maybe@); };
+  Bool_ { @(Bool@, True, False, And); };
+  List_ { @(SL@: S@, PL@: P@); };
   Bits_.Bit { @(Bit@); };
   Bits_.Bit4 { @(Bit4@); };
   Bits_.Bit8 { @(Bit8@, H2); };
@@ -104,19 +105,19 @@
   );
 
   (S@){Maybe@<S@>;} NextS = (S@ s) {
-    ?(s; 0: Maybe@<S@>(nothing: Unit@()),
-         1: Maybe@<S@>(just: S@(0: Unit@())), 2: Maybe@<S@>(just: S@(1: Unit@())),
-         3: Maybe@<S@>(just: S@(2: Unit@())), 4: Maybe@<S@>(just: S@(3: Unit@())),
-         5: Maybe@<S@>(just: S@(4: Unit@())), 6: Maybe@<S@>(just: S@(5: Unit@())),
-         7: Maybe@<S@>(just: S@(6: Unit@())), 8: Maybe@<S@>(just: S@(7: Unit@())),
-         9: Maybe@<S@>(just: S@(8: Unit@())), 10: Maybe@<S@>(just: S@(9: Unit@())),
-         11: Maybe@<S@>(just: S@(10: Unit@())), 12: Maybe@<S@>(just: S@(11: Unit@())),
-         13: Maybe@<S@>(just: S@(12: Unit@())), 14: Maybe@<S@>(just: S@(13: Unit@())),
-         15: Maybe@<S@>(just: S@(14: Unit@())), 16: Maybe@<S@>(just: S@(15: Unit@())),
-         17: Maybe@<S@>(just: S@(16: Unit@())), 18: Maybe@<S@>(just: S@(17: Unit@())),
-         19: Maybe@<S@>(just: S@(18: Unit@())), 20: Maybe@<S@>(just: S@(19: Unit@())),
-         21: Maybe@<S@>(just: S@(20: Unit@())), 22: Maybe@<S@>(just: S@(21: Unit@())),
-         23: Maybe@<S@>(just: S@(22: Unit@())));
+    ?(s; 0: Maybe@<S@>(nothing: Unit),
+         1: Maybe@<S@>(just: S@(0: Unit)), 2: Maybe@<S@>(just: S@(1: Unit)),
+         3: Maybe@<S@>(just: S@(2: Unit)), 4: Maybe@<S@>(just: S@(3: Unit)),
+         5: Maybe@<S@>(just: S@(4: Unit)), 6: Maybe@<S@>(just: S@(5: Unit)),
+         7: Maybe@<S@>(just: S@(6: Unit)), 8: Maybe@<S@>(just: S@(7: Unit)),
+         9: Maybe@<S@>(just: S@(8: Unit)), 10: Maybe@<S@>(just: S@(9: Unit)),
+         11: Maybe@<S@>(just: S@(10: Unit)), 12: Maybe@<S@>(just: S@(11: Unit)),
+         13: Maybe@<S@>(just: S@(12: Unit)), 14: Maybe@<S@>(just: S@(13: Unit)),
+         15: Maybe@<S@>(just: S@(14: Unit)), 16: Maybe@<S@>(just: S@(15: Unit)),
+         17: Maybe@<S@>(just: S@(16: Unit)), 18: Maybe@<S@>(just: S@(17: Unit)),
+         19: Maybe@<S@>(just: S@(18: Unit)), 20: Maybe@<S@>(just: S@(19: Unit)),
+         21: Maybe@<S@>(just: S@(20: Unit)), 22: Maybe@<S@>(just: S@(21: Unit)),
+         23: Maybe@<S@>(just: S@(22: Unit)));
   };
 
   (Bit32@, S@){Bit32@;} cls = (Bit32@ a, S@ s) {
@@ -162,100 +163,100 @@
 
   (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round1 =
     (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = FF(a0, b0, c0, d0, block.0, S@(7: Unit@()), t01);
-      Bit32@ d1 = FF(d0, a1, b0, c0, block.1, S@(12: Unit@()), t02);
-      Bit32@ c1 = FF(c0, d1, a1, b0, block.2, S@(17: Unit@()), t03);
-      Bit32@ b1 = FF(b0, c1, d1, a1, block.3, S@(22: Unit@()), t04);
+      Bit32@ a1 = FF(a0, b0, c0, d0, block.0, S@(7: Unit), t01);
+      Bit32@ d1 = FF(d0, a1, b0, c0, block.1, S@(12: Unit), t02);
+      Bit32@ c1 = FF(c0, d1, a1, b0, block.2, S@(17: Unit), t03);
+      Bit32@ b1 = FF(b0, c1, d1, a1, block.3, S@(22: Unit), t04);
 
-      Bit32@ a2 = FF(a1, b1, c1, d1, block.4, S@(7: Unit@()), t05);
-      Bit32@ d2 = FF(d1, a2, b1, c1, block.5, S@(12: Unit@()), t06);
-      Bit32@ c2 = FF(c1, d2, a2, b1, block.6, S@(17: Unit@()), t07);
-      Bit32@ b2 = FF(b1, c2, d2, a2, block.7, S@(22: Unit@()), t08);
+      Bit32@ a2 = FF(a1, b1, c1, d1, block.4, S@(7: Unit), t05);
+      Bit32@ d2 = FF(d1, a2, b1, c1, block.5, S@(12: Unit), t06);
+      Bit32@ c2 = FF(c1, d2, a2, b1, block.6, S@(17: Unit), t07);
+      Bit32@ b2 = FF(b1, c2, d2, a2, block.7, S@(22: Unit), t08);
 
-      Bit32@ a3 = FF(a2, b2, c2, d2, block.8, S@(7: Unit@()), t09);
-      Bit32@ d3 = FF(d2, a3, b2, c2, block.9, S@(12: Unit@()), t10);
-      Bit32@ c3 = FF(c2, d3, a3, b2, block.10, S@(17: Unit@()), t11);
-      Bit32@ b3 = FF(b2, c3, d3, a3, block.11, S@(22: Unit@()), t12);
+      Bit32@ a3 = FF(a2, b2, c2, d2, block.8, S@(7: Unit), t09);
+      Bit32@ d3 = FF(d2, a3, b2, c2, block.9, S@(12: Unit), t10);
+      Bit32@ c3 = FF(c2, d3, a3, b2, block.10, S@(17: Unit), t11);
+      Bit32@ b3 = FF(b2, c3, d3, a3, block.11, S@(22: Unit), t12);
 
-      Bit32@ a4 = FF(a3, b3, c3, d3, block.12, S@(7: Unit@()), t13);
-      Bit32@ d4 = FF(d3, a4, b3, c3, block.13, S@(12: Unit@()), t14);
-      Bit32@ c4 = FF(c3, d4, a4, b3, block.14, S@(17: Unit@()), t15);
-      Bit32@ b4 = FF(b3, c4, d4, a4, block.15, S@(22: Unit@()), t16);
+      Bit32@ a4 = FF(a3, b3, c3, d3, block.12, S@(7: Unit), t13);
+      Bit32@ d4 = FF(d3, a4, b3, c3, block.13, S@(12: Unit), t14);
+      Bit32@ c4 = FF(c3, d4, a4, b3, block.14, S@(17: Unit), t15);
+      Bit32@ b4 = FF(b3, c4, d4, a4, block.15, S@(22: Unit), t16);
 
       ABCD@(a4, b4, c4, d4);
     };
 
   (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round2 =
     (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = GG(a0, b0, c0, d0, block.1, S@(5: Unit@()), t17);
-      Bit32@ d1 = GG(d0, a1, b0, c0, block.6, S@(9: Unit@()), t18);
-      Bit32@ c1 = GG(c0, d1, a1, b0, block.11, S@(14: Unit@()), t19);
-      Bit32@ b1 = GG(b0, c1, d1, a1, block.0, S@(20: Unit@()), t20);
+      Bit32@ a1 = GG(a0, b0, c0, d0, block.1, S@(5: Unit), t17);
+      Bit32@ d1 = GG(d0, a1, b0, c0, block.6, S@(9: Unit), t18);
+      Bit32@ c1 = GG(c0, d1, a1, b0, block.11, S@(14: Unit), t19);
+      Bit32@ b1 = GG(b0, c1, d1, a1, block.0, S@(20: Unit), t20);
 
-      Bit32@ a2 = GG(a1, b1, c1, d1, block.5, S@(5: Unit@()), t21);
-      Bit32@ d2 = GG(d1, a2, b1, c1, block.10, S@(9: Unit@()), t22);
-      Bit32@ c2 = GG(c1, d2, a2, b1, block.15, S@(14: Unit@()), t23);
-      Bit32@ b2 = GG(b1, c2, d2, a2, block.4, S@(20: Unit@()), t24);
+      Bit32@ a2 = GG(a1, b1, c1, d1, block.5, S@(5: Unit), t21);
+      Bit32@ d2 = GG(d1, a2, b1, c1, block.10, S@(9: Unit), t22);
+      Bit32@ c2 = GG(c1, d2, a2, b1, block.15, S@(14: Unit), t23);
+      Bit32@ b2 = GG(b1, c2, d2, a2, block.4, S@(20: Unit), t24);
 
-      Bit32@ a3 = GG(a2, b2, c2, d2, block.9, S@(5: Unit@()), t25);
-      Bit32@ d3 = GG(d2, a3, b2, c2, block.14, S@(9: Unit@()), t26);
-      Bit32@ c3 = GG(c2, d3, a3, b2, block.3, S@(14: Unit@()), t27);
-      Bit32@ b3 = GG(b2, c3, d3, a3, block.8, S@(20: Unit@()), t28);
+      Bit32@ a3 = GG(a2, b2, c2, d2, block.9, S@(5: Unit), t25);
+      Bit32@ d3 = GG(d2, a3, b2, c2, block.14, S@(9: Unit), t26);
+      Bit32@ c3 = GG(c2, d3, a3, b2, block.3, S@(14: Unit), t27);
+      Bit32@ b3 = GG(b2, c3, d3, a3, block.8, S@(20: Unit), t28);
 
-      Bit32@ a4 = GG(a3, b3, c3, d3, block.13, S@(5: Unit@()), t29);
-      Bit32@ d4 = GG(d3, a4, b3, c3, block.2, S@(9: Unit@()), t30);
-      Bit32@ c4 = GG(c3, d4, a4, b3, block.7, S@(14: Unit@()), t31);
-      Bit32@ b4 = GG(b3, c4, d4, a4, block.12, S@(20: Unit@()), t32);
+      Bit32@ a4 = GG(a3, b3, c3, d3, block.13, S@(5: Unit), t29);
+      Bit32@ d4 = GG(d3, a4, b3, c3, block.2, S@(9: Unit), t30);
+      Bit32@ c4 = GG(c3, d4, a4, b3, block.7, S@(14: Unit), t31);
+      Bit32@ b4 = GG(b3, c4, d4, a4, block.12, S@(20: Unit), t32);
 
       ABCD@(a4, b4, c4, d4);
     };
 
   (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round3 =
     (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = HH(a0, b0, c0, d0, block.5, S@(4: Unit@()), t33);
-      Bit32@ d1 = HH(d0, a1, b0, c0, block.8, S@(11: Unit@()), t34);
-      Bit32@ c1 = HH(c0, d1, a1, b0, block.11, S@(16: Unit@()), t35);
-      Bit32@ b1 = HH(b0, c1, d1, a1, block.14, S@(23: Unit@()), t36);
+      Bit32@ a1 = HH(a0, b0, c0, d0, block.5, S@(4: Unit), t33);
+      Bit32@ d1 = HH(d0, a1, b0, c0, block.8, S@(11: Unit), t34);
+      Bit32@ c1 = HH(c0, d1, a1, b0, block.11, S@(16: Unit), t35);
+      Bit32@ b1 = HH(b0, c1, d1, a1, block.14, S@(23: Unit), t36);
 
-      Bit32@ a2 = HH(a1, b1, c1, d1, block.1, S@(4: Unit@()), t37);
-      Bit32@ d2 = HH(d1, a2, b1, c1, block.4, S@(11: Unit@()), t38);
-      Bit32@ c2 = HH(c1, d2, a2, b1, block.7, S@(16: Unit@()), t39);
-      Bit32@ b2 = HH(b1, c2, d2, a2, block.10, S@(23: Unit@()), t40);
+      Bit32@ a2 = HH(a1, b1, c1, d1, block.1, S@(4: Unit), t37);
+      Bit32@ d2 = HH(d1, a2, b1, c1, block.4, S@(11: Unit), t38);
+      Bit32@ c2 = HH(c1, d2, a2, b1, block.7, S@(16: Unit), t39);
+      Bit32@ b2 = HH(b1, c2, d2, a2, block.10, S@(23: Unit), t40);
 
-      Bit32@ a3 = HH(a2, b2, c2, d2, block.13, S@(4: Unit@()), t41);
-      Bit32@ d3 = HH(d2, a3, b2, c2, block.0, S@(11: Unit@()), t42);
-      Bit32@ c3 = HH(c2, d3, a3, b2, block.3, S@(16: Unit@()), t43);
-      Bit32@ b3 = HH(b2, c3, d3, a3, block.6, S@(23: Unit@()), t44);
+      Bit32@ a3 = HH(a2, b2, c2, d2, block.13, S@(4: Unit), t41);
+      Bit32@ d3 = HH(d2, a3, b2, c2, block.0, S@(11: Unit), t42);
+      Bit32@ c3 = HH(c2, d3, a3, b2, block.3, S@(16: Unit), t43);
+      Bit32@ b3 = HH(b2, c3, d3, a3, block.6, S@(23: Unit), t44);
 
-      Bit32@ a4 = HH(a3, b3, c3, d3, block.9, S@(4: Unit@()), t45);
-      Bit32@ d4 = HH(d3, a4, b3, c3, block.12, S@(11: Unit@()), t46);
-      Bit32@ c4 = HH(c3, d4, a4, b3, block.15, S@(16: Unit@()), t47);
-      Bit32@ b4 = HH(b3, c4, d4, a4, block.2, S@(23: Unit@()), t48);
+      Bit32@ a4 = HH(a3, b3, c3, d3, block.9, S@(4: Unit), t45);
+      Bit32@ d4 = HH(d3, a4, b3, c3, block.12, S@(11: Unit), t46);
+      Bit32@ c4 = HH(c3, d4, a4, b3, block.15, S@(16: Unit), t47);
+      Bit32@ b4 = HH(b3, c4, d4, a4, block.2, S@(23: Unit), t48);
 
       ABCD@(a4, b4, c4, d4);
     };
 
   (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round4 =
     (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = II(a0, b0, c0, d0, block.0, S@(6: Unit@()), t49);
-      Bit32@ d1 = II(d0, a1, b0, c0, block.7, S@(10: Unit@()), t50);
-      Bit32@ c1 = II(c0, d1, a1, b0, block.14, S@(15: Unit@()), t51);
-      Bit32@ b1 = II(b0, c1, d1, a1, block.5, S@(21: Unit@()), t52);
+      Bit32@ a1 = II(a0, b0, c0, d0, block.0, S@(6: Unit), t49);
+      Bit32@ d1 = II(d0, a1, b0, c0, block.7, S@(10: Unit), t50);
+      Bit32@ c1 = II(c0, d1, a1, b0, block.14, S@(15: Unit), t51);
+      Bit32@ b1 = II(b0, c1, d1, a1, block.5, S@(21: Unit), t52);
 
-      Bit32@ a2 = II(a1, b1, c1, d1, block.12, S@(6: Unit@()), t53);
-      Bit32@ d2 = II(d1, a2, b1, c1, block.3, S@(10: Unit@()), t54);
-      Bit32@ c2 = II(c1, d2, a2, b1, block.10, S@(15: Unit@()), t55);
-      Bit32@ b2 = II(b1, c2, d2, a2, block.1, S@(21: Unit@()), t56);
+      Bit32@ a2 = II(a1, b1, c1, d1, block.12, S@(6: Unit), t53);
+      Bit32@ d2 = II(d1, a2, b1, c1, block.3, S@(10: Unit), t54);
+      Bit32@ c2 = II(c1, d2, a2, b1, block.10, S@(15: Unit), t55);
+      Bit32@ b2 = II(b1, c2, d2, a2, block.1, S@(21: Unit), t56);
 
-      Bit32@ a3 = II(a2, b2, c2, d2, block.8, S@(6: Unit@()), t57);
-      Bit32@ d3 = II(d2, a3, b2, c2, block.15, S@(10: Unit@()), t58);
-      Bit32@ c3 = II(c2, d3, a3, b2, block.6, S@(15: Unit@()), t59);
-      Bit32@ b3 = II(b2, c3, d3, a3, block.13, S@(21: Unit@()), t60);
+      Bit32@ a3 = II(a2, b2, c2, d2, block.8, S@(6: Unit), t57);
+      Bit32@ d3 = II(d2, a3, b2, c2, block.15, S@(10: Unit), t58);
+      Bit32@ c3 = II(c2, d3, a3, b2, block.6, S@(15: Unit), t59);
+      Bit32@ b3 = II(b2, c3, d3, a3, block.13, S@(21: Unit), t60);
 
-      Bit32@ a4 = II(a3, b3, c3, d3, block.4, S@(6: Unit@()), t61);
-      Bit32@ d4 = II(d3, a4, b3, c3, block.11, S@(10: Unit@()), t62);
-      Bit32@ c4 = II(c3, d4, a4, b3, block.2, S@(15: Unit@()), t63);
-      Bit32@ b4 = II(b3, c4, d4, a4, block.9, S@(21: Unit@()), t64);
+      Bit32@ a4 = II(a3, b3, c3, d3, block.4, S@(6: Unit), t61);
+      Bit32@ d4 = II(d3, a4, b3, c3, block.11, S@(10: Unit), t62);
+      Bit32@ c4 = II(c3, d4, a4, b3, block.2, S@(15: Unit), t63);
+      Bit32@ b4 = II(b3, c4, d4, a4, block.9, S@(21: Unit), t64);
 
       ABCD@(a4, b4, c4, d4);
     };
@@ -322,7 +323,7 @@
   };
 
   (Bit64@){Bit64@;} shl64 = (Bit64@ a) {
-    Bits_.Bit64.BitN.lshift(a, Bit@(0: Unit@())).z;
+    Bits_.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
   };
 
   # Add zeros as needed, then the final length to the output message.
@@ -339,7 +340,7 @@
            Streamed@<Bit8@> _5 := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
            Streamed@<Bit8@> _6 := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
            Streamed@<Bit8@> _7 := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
-           $(Unit@());
+           $(Unit);
          }, false: {
            Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(0, 0), False));
            PadZ(output, msglen, Inc64(length));
