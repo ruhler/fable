@@ -1,7 +1,6 @@
 
 @(StdLib: &StdLib);
 @(Test: &Test);
-@(Bits: &Bits);
 
 @(List_Tests_: &List_Tests_);
 
@@ -11,6 +10,8 @@
 @(Primes_: &Primes_);
 @(Primes_Tests_: &Primes_Tests_);
 
+@(Hex_: &Hex_);
+@(Bits_: &Bits_);
 @(Md5_: &Md5_);
 @(Md5_Tests_: &Md5_Tests_);
 

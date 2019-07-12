@@ -1,9 +1,9 @@
-@(StdLib, Bits, Md5_, Test) {
+@(StdLib, Bits_, Hex_, Md5_, Test) {
   StdLib { @(Unit@, Maybe@); };
   StdLib.Char{ @(Char@, Chars); };
   StdLib.List{ @(P@, S@, ConsS, S0, S1, S3, S4, S5, S6, S7, S8, S9, S10, Append, Concat); };
-  Bits.Bit8 { @(Bit8@, H2); };
-  Bits.Hex { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
+  Bits_.Bit8 { @(Bit8@, H2); };
+  Hex_ { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
   Test { @(TestName@, TestResult@, Test@); };
   Md5_ { @(Md5Hash@, Md5, Eq); };
 
