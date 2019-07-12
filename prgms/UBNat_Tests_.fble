@@ -1,10 +1,10 @@
-@(StdLib, UBNat, Test) {
+@(StdLib, UBNat_, Test) {
   StdLib { @(Unit@); };
   StdLib.Bool { @(Bool@, Not); };
   StdLib.Char { @(Char@, Chars); };
   StdLib.List { @(P@, S@, S0, S5, S6, S7, S8, ConsS, Append); };
   Test { @(TestName@, TestResult@, Test@); };
-  UBNat { @(
+  UBNat_ { @(
       Nat@,
       0, 1, 2, 3, 4, 5, 6, 7, Lit2,
       EqNat, Lt, Le, Gt, Ge,

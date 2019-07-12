@@ -1,6 +1,6 @@
-@(Bool: StdLib.Bool, UBNat: UBNat.UBNat) {
+@(Bool: StdLib.Bool, UBNat_) {
   Bool { @(Bool@, True, False); };
-  UBNat { @(Nat@, 2, IsZero, Lt, Gt, Inc, Dec, Mul, Mod); };
+  UBNat_ { @(Nat@, 2, IsZero, Lt, Gt, Inc, Dec, Mul, Mod); };
 
   # Returns true if f evenly divides x.
   (Nat@, Nat@){Bool@;} Divides = (Nat@ x, Nat@ f) {

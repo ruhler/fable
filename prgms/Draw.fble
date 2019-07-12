@@ -1,4 +1,4 @@
-@(Unit@: StdLib.Unit@, Nat@: UBNat.UBNat.Nat@) {
+@(Unit@: StdLib.Unit@, Nat@: UBNat_.Nat@) {
 
   @ Color@ = +(
       Unit@ black,

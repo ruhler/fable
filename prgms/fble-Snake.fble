@@ -1,13 +1,12 @@
 
 @(StdLib: &StdLib);
-@(Test: &Test);
-@(UBNat: &UBNat);
+@(UBNat_: &UBNat_);
 @(Draw: &Draw);
 
 StdLib { @(Unit@); };
 StdLib.Bool { @(Bool@, True, False, And); };
 StdLib.List { @(P@, S@, InitP, LastP); };
-UBNat.UBNat { @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
+UBNat_ { @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
 Draw { @(Color@, Draw@); };
 
 
