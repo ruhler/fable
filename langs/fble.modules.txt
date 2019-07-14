@@ -297,3 +297,10 @@ and foo.B.Y as separate elements with separate access modifiers.
 A library could be represented in a file system as a directory with a file
 containing the list of public entities exported by the library.
 
+Notes:
+* It's really nice having a different namespace for modules to avoid conflict
+  between, say, Unit and Unit.
+* It's really nice not having excess dependencies from modules from grouping
+  them together.
+* It's more nice when all imports are at the top of a file me thinks, rather
+  than scattered around somewhere in the middle of a module.
