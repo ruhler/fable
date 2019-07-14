@@ -894,26 +894,22 @@ Whitespace is treated as a delimiter of words. The comment character and any
 following characters on the same line are treated as a delimiter of words.
 Whitespace and comments are otherwise ignored.
 
-A sequence of continuous normal characters is grouped together into a word. To
-include whitespace or punctuation in a word, an escape sequence can be used.
-
-Any single punctuation, whitespace character, or the comment character can be
-preceded with a backslash to treat it as a normal character. For example:
-Foo\,Bar is a 7 character word where the fourth character in the word is a
-comma.
-
-In addition, for convenience, the following escape sequences are supported as
-alternatives to whitespace characters:
-  \n - A newline character.
+A sequence of continuous normal characters is grouped together into a word.
 
 A sequence of characters surrounded by single quotes is treated as a sequence
-of normal characters, regardless of what class the characters come from. All
-escape sequences can be used in single quotes, but escape of punctuation and
-whitespace is not required. For example: 'Foo.Bar' is the same word as the
-previous example.
+of normal characters, regardless of what class the characters come from. This
+makes it possible to specify words containing whitespace, comment, and
+punctuation characters. For example, 'Foo,Bar' is treated as a single word
+where the fourth character of the word is a comma.
+
+Within a single quoted word, a single quote character can be expressed by
+using two adjacent single quote characters. For example, 'Foo''Bar' is treated
+as a single word where the fourth character of the word is a single quote.
 
 Single quotes act as word delimiters. For example, Foo'.'Bar is treated as
 three separate words: 'Foo', '.', and 'Bar', not as a single word 'Foo.Bar'.
+The only exception is when consecutive single quote characters are used to
+embed a single quote character in a word.
 
 11.2 Reference
 --------------
