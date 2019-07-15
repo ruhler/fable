@@ -2,7 +2,8 @@
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, True, False); };
   Char_ { @(Char@, Chars); };
-  List_ { @(S@, P@, S0, S1, S2, S3, S4, S5, S6, Append, Concat); };
+  List_ { @(S@, P@, S0, S1, S2, S3, S4, S5, S6, Append, Concat, MapS, SeqS,
+            AndS); };
 
   @ TestName@ = S@<Char@>;
   @ TestResult@ = +(Unit@ pass, S@<Char@> fail);
@@ -22,36 +23,26 @@
     $(Unit);
   };
 
-  # Execute the list of tests given the results of previously executed tests,
-  # and print a summary of the result at the end.
-  # Returns True if the tests all pass, false otherwise.
-  (S@<Char@>+, S@<Test@>, S@<TestName@>){Bool@!;} RunTestsInternal =
-    (S@<Char@>+ out, S@<Test@> tests, S@<TestName@> fails) {
-      ?(tests;
-        cons: {
-          Unit@ _ := Print(out, tests.cons.head.name);
-          TestResult@ tr := tests.cons.head.test;
-          Unit@ _ := ?(tr; pass: PrintLn(out, S0<Char@>),
-                           fail: PrintLn(out, Concat<Char@>(S4<S@<Char@>>(
-                               S2<Char@>(Chars.colon, Chars.space),
-                               failed,
-                               S2<Char@>(Chars.colon, Chars.space),
-                               tr.fail))));
-          S@<TestName@> nfails = ?(tr; pass: fails,
-                                       fail: Append<TestName@>(fails, S1<TestName@>(tests.cons.head.name)));
-          RunTestsInternal(out, tests.cons.tail, nfails);
-        },
-        nil: {
-          # TODO: Print the names of the failing tests, and counts of tests
-          # passed and failed?
-          ?(fails; cons: $(False), nil: $(True));
-        }
-      );
-  };
-
   # Returns True if the tests all pass, false otherwise.
   (S@<Char@>+, S@<Test@>){Bool@!;} RunTests = (S@<Char@>+ out, S@<Test@> tests) {
-    RunTestsInternal(out, tests, S0<TestName@>);
+    S@<Bool@> results := SeqS<Bool@>({
+      Test@ test <- MapS<Test@, Bool@!>(tests);
+      Unit@ _ := Print(out, test.name);
+      TestResult@ tr := test.test;
+      ?(tr; pass: {
+              Unit@ _ := PrintLn(out, S0<Char@>);
+              $(True);
+            },
+            fail: {
+              Unit@ _ := PrintLn(out, Concat<Char@>(S4<S@<Char@>>(
+                S2<Char@>(Chars.colon, Chars.space),
+                failed,
+                S2<Char@>(Chars.colon, Chars.space),
+                tr.fail)));
+              $(False);
+            });
+    });
+    $(AndS(results));
   };
 
   S@<Test@> Tests = {

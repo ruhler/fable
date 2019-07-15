@@ -1,6 +1,6 @@
 @(Unit_, Bool_) {
   Unit_ { @(Unit@, Unit); };
-  Bool_ { @(Bool@); };
+  Bool_ { @(Bool@, True, And); };
 
   # P - A list of 1 or more elements: T+
   # S - A list of 0 or more elements: T*
@@ -84,11 +84,24 @@
     ?(x; cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: S0<T@>);
   };
 
-  <@ A@, @ B@>((A@){B@;}, S@<A@>){S@<B@>;} MapS = <@ A@, @ B@>((A@){B@;} f, S@<A@> a) {
-    ?(a; cons: S@<B@>(cons: MapP<A@, B@>(f, a.cons)), nil: S0<B@>);
+  <@ A@, @ B@>(S@<A@>, (A@){B@;}){S@<B@>;} MapS = <@ A@, @ B@>(S@<A@> a, (A@){B@;} f) {
+    ?(a; cons: S@<B@>(cons: MapP<A@, B@>(a.cons, f)), nil: S0<B@>);
   },
-  <@ A@, @ B@>((A@){B@;}, P@<A@>){P@<B@>;} MapP = <@ A@, @ B@>((A@){B@;} f, P@<A@> a) {
-    P@<B@>(f(a.head), MapS<A@, B@>(f, a.tail));
+  <@ A@, @ B@>(P@<A@>, (A@){B@;}){P@<B@>;} MapP = <@ A@, @ B@>(P@<A@> a, (A@){B@;} f) {
+    P@<B@>(f(a.head), MapS<A@, B@>(a.tail, f));
+  };
+
+  <@ A@>(S@<A@!>){S@<A@>!;} SeqS = <@ A@>(S@<A@!> s) {
+    ?(s; cons: {
+           P@<A@> p := SeqP<A@>(s.cons);
+           $(S@<A@>(cons: p));
+         },
+         nil: $(S0<A@>));
+  },
+  <@ A@>(P@<A@!>){P@<A@>!;} SeqP = <@ A@>(P@<A@!> p) {
+    A@ x := p.head;
+    S@<A@> xs := SeqS<A@>(p.tail);
+    $(P@<A@>(x, xs));
   };
 
   # Insert the element 'x' into 'l' at the sorted position based on the le
@@ -112,7 +125,15 @@
       SortInsert<T@>(le, l.head, SortS<T@>(le, l.tail));
     };
 
+  (S@<Bool@>){Bool@;} AndS = (S@<Bool@> s) {
+    ?(s; cons: AndP(s.cons), nil: True);
+  },
+  (P@<Bool@>){Bool@;} AndP = (P@<Bool@> p) {
+    And(p.head, AndS(p.tail));
+  };
+
   @(P@, S@,
     HeadS, ConsS, Append, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10,
-    InitP, LastP, Concat, MapS, MapP, SortS, SortP);
+    InitP, LastP, Concat, MapS, MapP, SeqS, SeqP,
+    AndS, AndP, SortS, SortP);
 };

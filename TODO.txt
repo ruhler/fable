@@ -2,7 +2,7 @@
 * [lang] Test and add support for new lexical syntax.
 * [lang] Propose new spec for modules
  - Figure out how to handle private modules, such as Bit1 and Bit2XN
-
+
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind

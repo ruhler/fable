@@ -304,3 +304,16 @@ Notes:
   them together.
 * It's more nice when all imports are at the top of a file me thinks, rather
   than scattered around somewhere in the middle of a module.
+* Organizing modules is going to get messy. For example, where do we put the
+  following functions:
+    SortS - needs List and Bool
+    AndS - needs List and Bool
+    ListEq - needs List and Bool
+    FilterS - needs List and Bool
+
+  It's not obvious if they should go in: List_Sort_, List_Bool_, Bool_List_,
+  List_Equals_, or some other. And if we start to separate them all out, that
+  seems confusing to me. Then we have to import List_Sort_, Bool_List_,
+  List_Equals_, and List_Pred_, all separately? From a dependency point of
+  view, all we care about is that the dependencies are Bool and List, so maybe
+  group them all into Bool_List_?
