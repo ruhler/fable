@@ -97,6 +97,60 @@ Then you could do something like:
     { StrLit; ~'hello there';}
     { IntLit; ~1149;}
 
+Anything better than '~'?
+
+    { StrLit; ^ 'hello there';}
+    { IntLit; ^ 1149;}
+
+    { StrLit; % 'hello there';}
+    { IntLit; % 1149;}
+
+    { StrLit; ~ 'hello there';}
+    { IntLit; ~ 1149;}
+
+    { StrLit; `'hello there';}
+    { IntLit; `1149;}
+
+    { StrLit; "'hello there';}
+    { IntLit; "1149;}
+
+    { StrLit; '"hello there";}
+    { IntLit; '1149;}
+
+I like the last combination the best. Single quote to introduce a literal,
+double quotes for the word quote?
+
+"Foo.Bar"@ "foo.bar" := ...
+
+It's too bad we can't pass these as arguments to functions. Like, it would be
+nice to be able to do something like:
+
+   Int('1149), or Str('1149)
+
+Unless, in general, we say { x; y;} and x(y) are always treated as equivalent?
+So that x(y) for struct value x means evaluate y in the context of the
+namespace of x?
+
+No. That doesn't make sense. I propose instead:
+
+String literal: expr '|' word
+
+For example:
+  x.'foo,bar'
+  IntLit|1149
+  StrLit|'hello, there'
+  Int|1149
+  Str|'hello, there'
+
+Where expr is a struct that will be used as the prefix to the desugared
+string. This way literals are more contained. There's no need to want them to
+be in the current environment. We can always capture a literal in an object
+and put that literal in the environment just as easily.
+
+I wish I could use '~' as the character, because Int~1149 and
+Str~'hello, there' look quite nice to me, but that would conflict with the
+link syntax. Oh well. Vertical bar is probably fine too.
+
 2. Lists
 --------
 Today we have:

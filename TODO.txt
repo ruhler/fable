@@ -1,4 +1,5 @@
 * [test] Test and fix handling of type vs. normal name.
+ - Needs to be tested and fixed everywhere :(
 * [lang] Test and add support for new lexical syntax.
 * [lang] Propose new spec for modules
  - Figure out how to handle private modules, such as Bit1 and Bit2XN
