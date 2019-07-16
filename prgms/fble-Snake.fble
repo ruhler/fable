@@ -1,5 +1,6 @@
 
 @(Unit_: &Unit_);
+@(Monoid_: &Monoid_);
 @(Bool_: &Bool_);
 @(List_: &List_);
 @(UBNat_: &UBNat_);

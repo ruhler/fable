@@ -1,6 +1,7 @@
 
 @(Unit_: &Unit_);
 @(Maybe_: &Maybe_);
+@(Monoid_: &Monoid_);
 @(Bool_: &Bool_);
 @(Char_: &Char_);
 @(List_: &List_);

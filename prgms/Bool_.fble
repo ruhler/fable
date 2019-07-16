@@ -1,5 +1,6 @@
-@(Unit_) {
+@(Unit_, Monoid_) {
   Unit_ { @(Unit@, Unit); };
+  Monoid_ { @(Monoid@); };
 
   @ Bool@ = +(Unit@ true, Unit@ false);
   
@@ -21,6 +22,9 @@
   (Bool@, Bool@){Bool@;} Eq = (Bool@ a, Bool@ b) {
     ?(a; true: Not(b), false: b);
   };
+
+  Monoid@<Bool@> AndMonoid = Monoid@<Bool@>(And, True);
+
  
-  @(Bool@, True, False, Not, And, Or, Eq);
+  @(Bool@, True, False, Not, And, Or, Eq, AndMonoid);
 };

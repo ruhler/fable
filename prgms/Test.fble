@@ -1,6 +1,6 @@
 @(Unit_, Bool_, Char_, List_) {
   Unit_ { @(Unit@, Unit); };
-  Bool_ { @(Bool@, True, False); };
+  Bool_ { @(Bool@, True, False, AndMonoid); };
   Char_ { @(Char@, Chars); };
   List_ { @(S@, P@, S0, S1, S2, S3, S4, S5, S6, Append, Concat, MapS, SeqS,
             AndS); };
@@ -25,7 +25,7 @@
 
   # Returns True if the tests all pass, false otherwise.
   (S@<Char@>+, S@<Test@>){Bool@!;} RunTests = (S@<Char@>+ out, S@<Test@> tests) {
-    S@<Bool@> results := SeqS<Bool@>({
+    SeqS<Bool@>(AndMonoid, {
       Test@ test <- MapS<Test@, Bool@!>(tests);
       Unit@ _ := Print(out, test.name);
       TestResult@ tr := test.test;
@@ -42,7 +42,6 @@
               $(False);
             });
     });
-    $(AndS(results));
   };
 
   S@<Test@> Tests = {

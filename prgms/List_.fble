@@ -1,6 +1,7 @@
-@(Unit_, Bool_) {
+@(Unit_, Bool_, Monoid_) {
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, True, And); };
+  Monoid_ { @(Monoid@); };
 
   # P - A list of 1 or more elements: T+
   # S - A list of 0 or more elements: T*
@@ -91,17 +92,14 @@
     P@<B@>(f(a.head), MapS<A@, B@>(a.tail, f));
   };
 
-  <@ A@>(S@<A@!>){S@<A@>!;} SeqS = <@ A@>(S@<A@!> s) {
-    ?(s; cons: {
-           P@<A@> p := SeqP<A@>(s.cons);
-           $(S@<A@>(cons: p));
-         },
-         nil: $(S0<A@>));
+  <@ A@>(Monoid@<A@>, S@<A@!>){A@!;} SeqS = <@ A@>(Monoid@<A@> m, S@<A@!> s) {
+    ?(s; cons: SeqP<A@>(m, s.cons),
+         nil: $(m.x));
   },
-  <@ A@>(P@<A@!>){P@<A@>!;} SeqP = <@ A@>(P@<A@!> p) {
-    A@ x := p.head;
-    S@<A@> xs := SeqS<A@>(p.tail);
-    $(P@<A@>(x, xs));
+  <@ A@>(Monoid@<A@>, P@<A@!>){A@!;} SeqP = <@ A@>(Monoid@<A@> m, P@<A@!> p) {
+    A@ head := p.head;
+    A@ tail := SeqS<A@>(m, p.tail);
+    $(m.op(head, tail));
   };
 
   # Insert the element 'x' into 'l' at the sorted position based on the le
