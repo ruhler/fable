@@ -255,6 +255,8 @@ static char* MakeBlockName(FbleArena* arena, FbleNameV* name);
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena, FbleNameV* blocks, FbleNameV* name, FbleLoc block);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 
+static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type);
+
 static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs);
 static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs, size_t* time);
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
@@ -1074,7 +1076,7 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       }
 
       for (size_t i = 0; i < sta->fields.size; ++i) {
-        if (!FbleNamesEqual(sta->fields.xs[i].name.name, stb->fields.xs[i].name.name)) {
+        if (!FbleNamesEqual(&sta->fields.xs[i].name, &stb->fields.xs[i].name)) {
           return false;
         }
 
@@ -1094,7 +1096,7 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
       }
 
       for (size_t i = 0; i < uta->fields.size; ++i) {
-        if (!FbleNamesEqual(uta->fields.xs[i].name.name, utb->fields.xs[i].name.name)) {
+        if (!FbleNamesEqual(&uta->fields.xs[i].name, &utb->fields.xs[i].name)) {
           return false;
         }
 
@@ -1232,7 +1234,8 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       for (size_t i = 0; i < st->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
         PrintType(arena, st->fields.xs[i].type, &nprinted);
-        fprintf(stderr, " %s", st->fields.xs[i].name.name);
+        fprintf(stderr, " ");
+        FblePrintName(stderr, &st->fields.xs[i].name);
         comma = ", ";
       }
       fprintf(stderr, ")");
@@ -1246,7 +1249,8 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       for (size_t i = 0; i < ut->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
         PrintType(arena, ut->fields.xs[i].type, &nprinted);
-        fprintf(stderr, " %s", ut->fields.xs[i].name.name);
+        fprintf(stderr, " ");
+        FblePrintName(stderr, &ut->fields.xs[i].name);
         comma = ", ";
       }
       fprintf(stderr, ")");
@@ -1309,7 +1313,7 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
 
     case VAR_TYPE: {
       VarType* var = (VarType*)type;
-      fprintf(stderr, "%s", var->name.name);
+      FblePrintName(stderr, &var->name);
       break;
     }
 
@@ -1528,6 +1532,9 @@ static char* MakeBlockName(FbleArena* arena, FbleNameV* name)
   size_t size = 1;
   for (size_t i = 0; i < name->size; ++i) {
     size += strlen(name->xs[i].name) + 1;
+    if (name->xs[i].space == FBLE_TYPE_NAME_SPACE) {
+      size++;
+    }
   }
 
   char* str = FbleArrayAlloc(arena, char, size);
@@ -1537,6 +1544,9 @@ static char* MakeBlockName(FbleArena* arena, FbleNameV* name)
       strcat(str, ".");
     }
     strcat(str, name->xs[i].name);
+    if (name->xs[i].space == FBLE_TYPE_NAME_SPACE) {
+      strcat(str, "@");
+    }
   }
   return str;
 }
@@ -1650,6 +1660,51 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
   }
 
   UNREACHABLE("invalid instruction");
+}
+
+// CheckNameSpace --
+//   Verify that the namespace of the given name is appropriate for the type
+//   of value the name refers to.
+//
+// Inputs:
+//   name - the name in question
+//   type - the type of the value refered to be the name.
+//
+// Results:
+//   true if the namespace of the name is consistent with the type. false
+//   otherwise.
+//
+// Side effects:
+//   Prints a message to stderr if the namespace and type don't match.
+static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
+{
+  // TODO: re-enable this check once ValueOfType has better support for
+  // abstract variables?
+  return true;
+  
+  Type* value = ValueOfType(arena, type);
+
+  // Release the value right away, because we don't care about the value
+  // itself, just whether or not it is null.
+  TypeRelease(arena, value);
+
+  if (name->space == FBLE_TYPE_NAME_SPACE && value == NULL) {
+    FbleReportError("expected a type type for field named '", &name->loc);
+    FblePrintName(stderr, name);
+    fprintf(stderr, "', but found normal type ");
+    PrintType(FbleRefArenaArena(arena), type, NULL);
+    return false;
+  }
+
+  if (name->space == FBLE_NORMAL_NAME_SPACE && value != NULL) {
+    FbleReportError("expected a normal type for field named '", &name->loc);
+    FblePrintName(stderr, name);
+    fprintf(stderr, "', but found type type ");
+    PrintType(FbleRefArenaArena(arena), type, NULL);
+    return false;
+  }
+
+  return true;
 }
 
 // CompileExit --
@@ -1988,6 +2043,10 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       for (size_t i = 0; i < argc; ++i) {
         FbleChoice* choice = struct_expr->args.xs + i;
         if (arg_types[i] != NULL) {
+          if (!CheckNameSpace(arena, &choice->name, arg_types[i])) {
+            error = true;
+          }
+
           Field* cfield = FbleVectorExtend(arena_, struct_type->fields);
           cfield->name = choice->name;
           cfield->type = arg_types[i];
@@ -1996,9 +2055,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         }
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(choice->name.name, struct_expr->args.xs[j].name.name)) {
+          if (FbleNamesEqual(&choice->name, &struct_expr->args.xs[j].name)) {
             error = true;
-            FbleReportError("duplicate field name '%s'\n", &choice->name.loc, struct_expr->args.xs[j].name.name);
+            FbleReportError("duplicate field name '", &choice->name.loc);
+            FblePrintName(stderr, &struct_expr->args.xs[j].name);
+            fprintf(stderr, "'\n");
           }
         }
       }
@@ -2041,7 +2102,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       size_t tag = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         Field* field = union_type->fields.xs + i;
-        if (FbleNamesEqual(field->name.name, union_value_expr->field.name)) {
+        if (FbleNamesEqual(&field->name, &union_value_expr->field)) {
           tag = i;
           field_type = field->type;
           break;
@@ -2049,7 +2110,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       if (field_type == NULL) {
-        FbleReportError("'%s' is not a field of type ", &union_value_expr->field.loc, union_value_expr->field.name);
+        FbleReportError("'", &union_value_expr->field.loc);
+        FblePrintName(stderr, &union_value_expr->field);
+        fprintf(stderr, "' is not a field of type ");
         PrintType(arena_, type, NULL);
         fprintf(stderr, "\n");
         TypeRelease(arena, type);
@@ -2119,7 +2182,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       for (size_t i = 0; i < fields->size; ++i) {
-        if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name.name)) {
+        if (FbleNamesEqual(&access_expr->field, &fields->xs[i].name)) {
           access->tag = i;
           Type* rtype = TypeRetain(arena, fields->xs[i].type);
           TypeRelease(arena, type);
@@ -2127,7 +2190,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         }
       }
 
-      FbleReportError("%s is not a field of type ", &access_expr->field.loc, access_expr->field.name);
+      FbleReportError("", &access_expr->field.loc);
+      FblePrintName(stderr, &access_expr->field);
+      fprintf(stderr, " is not a field of type ");
       PrintType(arena_, type, NULL);
       fprintf(stderr, "\n");
       TypeRelease(arena, type);
@@ -2181,11 +2246,12 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleGotoInstr* exit_gotos[select_expr->choices.size];
       for (size_t i = 0; i < select_expr->choices.size; ++i) {
-        if (!FbleNamesEqual(select_expr->choices.xs[i].name.name, union_type->fields.xs[i].name.name)) {
-          FbleReportError("expected tag '%s', but found '%s'.\n",
-              &select_expr->choices.xs[i].name.loc,
-              union_type->fields.xs[i].name.name,
-              select_expr->choices.xs[i].name.name);
+        if (!FbleNamesEqual(&select_expr->choices.xs[i].name, &union_type->fields.xs[i].name)) {
+          FbleReportError("expected tag '", &select_expr->choices.xs[i].name.loc);
+          FblePrintName(stderr, &union_type->fields.xs[i].name);
+          fprintf(stderr, "', but found '");
+          FblePrintName(stderr, &select_expr->choices.xs[i].name);
+          fprintf(stderr, "'.\n");
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
           return NULL;
@@ -2573,7 +2639,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       for (size_t i = 0; i < vars->nvars; ++i) {
         size_t j = vars->nvars - i - 1;
         Var* var = vars->vars.xs + j;
-        if (FbleNamesEqual(var_expr->var.name, var->name.name)) {
+        if (FbleNamesEqual(&var_expr->var, &var->name)) {
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
           instr->position = j;
@@ -2584,7 +2650,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         }
       }
 
-      FbleReportError("variable '%s' not defined\n", &var_expr->var.loc, var_expr->var.name);
+      FbleReportError("variable '", &var_expr->var.loc);
+      FblePrintName(stderr, &var_expr->var);
+      fprintf(stderr, "' not defined\n");
       return NULL;
     }
 
@@ -3040,15 +3108,25 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
           TypeRelease(arena, &st->_base);
           return NULL;
         }
+
+        if (!CheckNameSpace(arena, &field->name, compiled)) {
+          TypeRelease(arena, compiled);
+          TypeRelease(arena, &st->_base);
+          return NULL;
+        }
+
         Field* cfield = FbleVectorExtend(arena_, st->fields);
         cfield->name = field->name;
         cfield->type = compiled;
+
         FbleRefAdd(arena, &st->_base.ref, &cfield->type->ref);
         TypeRelease(arena, cfield->type);
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name.name, struct_type->fields.xs[j].name.name)) {
-            FbleReportError("duplicate field name '%s'\n", &field->name.loc, field->name.name);
+          if (FbleNamesEqual(&field->name, &struct_type->fields.xs[j].name)) {
+            FbleReportError("duplicate field name '", &field->name.loc);
+            FblePrintName(stderr, &field->name);
+            fprintf(stderr, "'\n");
             TypeRelease(arena, &st->_base);
             return NULL;
           }
@@ -3080,8 +3158,10 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
         TypeRelease(arena, cfield->type);
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name.name, union_type->fields.xs[j].name.name)) {
-            FbleReportError("duplicate field name '%s'\n", &field->name.loc, field->name.name);
+          if (FbleNamesEqual(&field->name, &union_type->fields.xs[j].name)) {
+            FbleReportError("duplicate field name '", &field->name.loc);
+            FblePrintName(stderr, &field->name);
+            fprintf(stderr, "'\n");
             TypeRelease(arena, &ut->_base);
             return NULL;
           }

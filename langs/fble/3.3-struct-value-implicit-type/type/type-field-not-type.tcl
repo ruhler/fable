@@ -1,4 +1,4 @@
-fble-test-error 9:18 {
+fble-test-error 9:14 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());

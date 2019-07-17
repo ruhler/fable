@@ -5,6 +5,7 @@
 #define FBLE_SYNTAX_H_
 
 #include <stdbool.h>      // for bool
+#include <stdio.h>        // for FILE
 #include <sys/types.h>    // for size_t
 
 #include "fble-alloc.h"
@@ -38,11 +39,19 @@ typedef struct {
 //   Prints an error message to stderr with error location.
 void FbleReportError(const char* format, FbleLoc* loc, ...);
 
+// FbleNamespace --
+//   Enum used to distinguish among different name spaces.
+typedef enum {
+  FBLE_NORMAL_NAME_SPACE,
+  FBLE_TYPE_NAME_SPACE,
+} FbleNameSpace;
+
 // FbleName -- 
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
 typedef struct {
   const char* name;
+  FbleNameSpace space;
   FbleLoc loc;
 } FbleName;
 
@@ -54,7 +63,9 @@ typedef struct {
 } FbleNameV;
 
 // FbleNamesEqual --
-//   Test whether two names are equal.
+//   Test whether two names are equal. Two names are considered equal if they
+//   have the same name and belong to the same namespace. Location is not
+//   relevant for this check.
 //
 // Inputs:
 //   a - The first name.
@@ -65,7 +76,21 @@ typedef struct {
 //
 // Side effects:
 //   None.
-bool FbleNamesEqual(const char* a, const char* b);
+bool FbleNamesEqual(FbleName* a, FbleName* b);
+
+// FblePrintName --
+//   Print a name in human readable form to the given stream.
+//
+// Inputs:
+//   stream - the stream to print to
+//   name - the name to print
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Prints the given name to the given stream.
+void FblePrintName(FILE* stream, FbleName* name);
 
 // FbleKindTag --
 //   A tag used to distinguish between the two kinds of kinds.

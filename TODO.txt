@@ -1,9 +1,16 @@
+* [prgm] TicTacToe cleanup
+ - Switch to using shared modules.
+ - Use monads, monoids, and maps and such to simplify ChooseBestMove.
+ - Hook up to the 'Test' infrastructure (assuming the tests are fast enough to
+   run).
 * [test] Test and fix handling of type vs. normal name.
  - Needs to be tested and fixed everywhere :(
 * [lang] Test and add support for new lexical syntax.
 * [lang] Propose new spec for modules
  - Figure out how to handle private modules, such as Bit1 and Bit2XN
 
+* [clean] Nicer way of printing error messages in compiler
+ - particularly those that include names and types inside of them.
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind

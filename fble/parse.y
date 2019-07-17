@@ -35,6 +35,7 @@
 %}
 
 %union {
+  const char* word;
   FbleName name;
   FbleKind* kind;
   FbleKindV kinds;
@@ -66,7 +67,7 @@
 %token END 0 "end of file"
 %token INVALID "invalid character"
 
-%token <name> WORD
+%token <word> WORD
 
 %type <name> name
 %type <kind> kind
@@ -85,10 +86,15 @@
 start: stmt { *result = $1; } ;
 
 name:
-   WORD { $$ = $1; }
+   WORD {
+     $$.name = $1;
+     $$.space = FBLE_NORMAL_NAME_SPACE;
+     $$.loc = @$;
+   }
  | WORD '@' {
-    $$ = $1; 
-    strcat((char*)$$.name, "@");
+     $$.name = $1;
+     $$.space = FBLE_TYPE_NAME_SPACE;
+     $$.loc = @$;
    }
  ;
 
@@ -264,10 +270,13 @@ expr:
         YYERROR;
       }
 
-      char new_include_path[strlen(include_path) + strlen($2.name) + 2];
+      char new_include_path[strlen(include_path) + strlen($2.name) + 3];
       strcpy(new_include_path, include_path);
       strcat(new_include_path, "/");
       strcat(new_include_path, $2.name);
+      if ($2.space == FBLE_TYPE_NAME_SPACE) {
+        strcat(new_include_path, "@");
+      }
 
       char new_filename[strlen(new_include_path) + 6];
       strcpy(new_filename, new_include_path);
@@ -679,8 +688,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
   // TODO: Get rid of this hack.
   FbleVectorAppend(arena, wordv, '\0');
 
-  lvalp->name.name = wordv.xs;
-  lvalp->name.loc = *llocp;
+  lvalp->word = wordv.xs;
   return WORD;
 }
 

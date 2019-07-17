@@ -19,7 +19,22 @@ void FbleReportError(const char* format, FbleLoc* loc, ...)
 }
 
 // FbleNamesEqual -- see documentation in fble-syntax.h
-bool FbleNamesEqual(const char* a, const char* b)
+bool FbleNamesEqual(FbleName* a, FbleName* b)
 {
-  return strcmp(a, b) == 0;
+  return a->space == b->space && strcmp(a->name, b->name) == 0;
+}
+
+// FblePrintName -- see documentation in fble-syntax.h
+void FblePrintName(FILE* stream, FbleName* name)
+{
+  fprintf(stream, name->name);
+  switch (name->space) {
+    case FBLE_NORMAL_NAME_SPACE:
+      // Nothing to add here
+      break;
+
+    case FBLE_TYPE_NAME_SPACE:
+      fprintf(stream, "@");
+      break;
+  }
 }
