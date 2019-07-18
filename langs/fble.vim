@@ -2,10 +2,8 @@
 " Language:	Fble
 " Maintainer:	Richard Uhler <ruhler@degralder.com>
 
-syn match fbleComment "#.*"
-syn match fbleLabel "\w\+:"
-syn match fbleType "\w\+@"
+syn match Comment "#.*"
+syn match Label "\w\+:"
+syn match Type "\w\+@"
+syn region String start=+'+ skip=+''+ end=+'+
 
-hi def link fbleComment	Comment
-hi def link fbleLabel	Label
-hi def link fbleType	Type

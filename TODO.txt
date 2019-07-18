@@ -5,7 +5,9 @@
    run).
 * [test] Test and fix handling of type vs. normal name.
  - Needs to be tested and fixed everywhere :(
-* [lang] Test and add support for new lexical syntax.
+ - Might not be possible, because that information isn't tracked in the kind
+   for a type variable.
+* [lang] Draft spec for string literals, test and implement.
 * [lang] Propose new spec for modules
  - Figure out how to handle private modules, such as Bit1 and Bit2XN
 

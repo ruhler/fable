@@ -569,7 +569,7 @@ static bool IsSpaceChar(int c)
 //   None.
 static bool IsPunctuationChar(int c)
 {
-  return strchr("(){};,:?=.<>+*-!$@~&'\\", c) != NULL;
+  return strchr("(){};,:?=.<>+*-!$@~&", c) != NULL;
 }
 
 // IsNormalChar --
@@ -587,7 +587,7 @@ static bool IsPunctuationChar(int c)
 //   None.
 static bool IsNormalChar(int c)
 {
-  if (IsSpaceChar(c) || IsPunctuationChar(c)) {
+  if (IsSpaceChar(c) || IsPunctuationChar(c) || c == '\'' || c == '#') {
     return false;
   }
   return true;
@@ -667,25 +667,29 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
   }
 
   if (IsPunctuationChar(lex->c)) {
-    // Return the character and set the lexer character to whitespace so it
-    // will be skipped over the next time we go to read a token from the
-    // stream.
     int c = lex->c;
-    lex->c = ' ';
+    ReadNextChar(lex);
     return c;
   };
 
   struct { size_t size; char* xs; } wordv;
   FbleVectorInit(arena, wordv);
-  while (IsNormalChar(lex->c)) {
-    FbleVectorAppend(arena, wordv, lex->c);
-    ReadNextChar(lex);
-  }
-  FbleVectorAppend(arena, wordv, '\0');
 
-  // Add an extra null char on the end so we can easily append '@' for type
-  // names.
-  // TODO: Get rid of this hack.
+  if (lex->c == '\'') {
+    do {
+      ReadNextChar(lex);
+      while (lex->c != '\'') {
+        FbleVectorAppend(arena, wordv, lex->c);
+        ReadNextChar(lex);
+      }
+      ReadNextChar(lex);
+    } while (lex->c == '\'');
+  } else {
+    while (IsNormalChar(lex->c)) {
+      FbleVectorAppend(arena, wordv, lex->c);
+      ReadNextChar(lex);
+    }
+  }
   FbleVectorAppend(arena, wordv, '\0');
 
   lvalp->word = wordv.xs;

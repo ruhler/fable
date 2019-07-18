@@ -1679,7 +1679,8 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
 {
   // TODO: re-enable this check once ValueOfType has better support for
-  // abstract variables?
+  // abstract variables? But how can we possibly know for an abstract variable
+  // if it is a type type or a normal type?
   return true;
   
   Type* value = ValueOfType(arena, type);
