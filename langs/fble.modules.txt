@@ -317,3 +317,33 @@ Notes:
   List_Equals_, and List_Pred_, all separately? From a dependency point of
   view, all we care about is that the dependencies are Bool and List, so maybe
   group them all into Bool_List_?
+
+Another Look
+------------
+Proposal: replace existing '^' syntax: ^ <word> does a literal import of the
+value of the module identified using the uri <word>. The value of the module
+is inlined.
+
+How this supports modules goals:
+* Private Modules: have some way to publish a module privately. Now a
+  privately published module can be made that is not accessible to the outside
+  world, but is inlined to the inside world.
+
+* Obfuscation: Modules can be published as pure compiled values. You need not
+  provide original source.
+
+* Sharing: By default modules are inlined. To share, have a module be a
+  function that takes other dependent modules as inputs. For example:
+      List:   (@<^BoolModule> BoolModule) { ...; }
+
+* Versioning: Each identified module has a type belonging to a specific API
+  version. You can provide an implementation for a previous API version in
+  addition to an implementation for the new API version.
+
+* Dynamic Code Loading: Provide a built in API to load a module of a specific
+  type at run time. If the actual type of the module doesn't match what is
+  expected, you get nothing back.
+
+Sharing is still a bit tricky and naming tedious, but I think this would be a
+good step forward.
+

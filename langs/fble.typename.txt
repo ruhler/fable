@@ -1,0 +1,23 @@
+The Type Name Problem
+---------------------
+We syntactically distinguish between regular names and type names by appending
+'@' to type names. We want to enforce that a type name is always used with
+type values and regular name is always used with normal values.
+
+But we don't have enough information today to check that. Specifically, given
+an abstract type, we don't know if it is a type type or a normal type, so we
+can't properly type check its use:
+
+ <@>@ L@ = <@ T@> { *(T@ head, L@ tail); }
+
+Is tail a valid name, or should it be tail@? There's no way of knowing.
+
+There seem to be a few options:
+* Default to abstarct type is normal type
+* Don't distinguish between type names or normal names
+* Add typeness vs. normalness to the kind descriptor
+* use other syntactic markers to distinguish. For example, in the extreme,
+  have type and expr be different syntax. In practice that will be super
+  tedious, but whatever approach it uses could be adapted to the existing
+  setup.
+

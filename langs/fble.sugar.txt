@@ -151,6 +151,74 @@ I wish I could use '~' as the character, because Int~1149 and
 Str~'hello, there' look quite nice to me, but that would conflict with the
 link syntax. Oh well. Vertical bar is probably fine too.
 
+Note: integer literals will be hard if the only operator we have is a cons
+operator. In practice we want to do a fold with some intermediate state, and
+the direction of the fold should be flexible?
+
+How to express integer literals using monadic bind:
+
+ 1049:
+
+{ S(1); M(0); M(4); E(9));
+
+E :: Digit -> Int -> Int
+E d x = 10 * x + d
+
+M :: Digit -> (Int -> Int) -> (Int -> Int)
+M d f x = f (10 * x + d)
+
+S :: Digit -> (Int -> Int) -> Int
+S d f = f d
+
+More generally, it all looks like M, except:
+
+E d x = M d id x
+S d f = M d f 0
+
+It's a reader monad. You supply functions from Int to Int and they are chained
+together using a combination operator. Organized another way:
+
+F = Sum([I(1), I(0), I(4), I(9))
+x = F 0
+
+I :: Digit -> (Int -> Int)
+I d x = 10 * x + d
+
+Plus :: (Int -> Int) -> (Int -> Int) -> (Int -> Int)
+Plus a b = \x -> b (a x)
+
+Which is just function composition. Given a list of digits, this is just a map
+and fold. But to get the final number you need to provide the initial value 0.
+This means you need to specify two things for the literal: how to map from
+name to digit, and how to combine the digits in the end.
+
+For the purpose of the literal, we could say the digits are already the
+functions:
+
+  4 = \x -> 10 * x + 4
+
+Another option would be to change the literal syntax to:
+
+  | word
+
+Where we would desugar "|abcd" into:
+  ... that's where it breaks down. We need to provide a type for the elements,
+even if we could otherwise hard code the list type for the sequence.
+
+New Proposal:
+
+A string literal is a list literal with additional data. A struct with the
+following fields
+
+ '?' - a struct with fields of type E@, each field a single char word.
+ '(' - a function L@ -> T@ to convert the completed list to desired end value.
+ ',' - a function E@ -> L@ -> L@ to cons an element to the list.
+ ')' - a element L@ representing the empty list 
+
+S|"abc" is desugared to list literal syntax:
+  S(S.'?'.a, S.'?'.b, S.'?'.c)
+
+
 2. Lists
 --------
 Today we have:
@@ -211,6 +279,22 @@ We can do the exact same for string literals:
 
 Maybe ',' and ']' would be good names to pick, corresponding to the sugar
 a, b, ..., ]?
+
+New Proposal, to go along with string literals and allow nice support for
+variable length argument functions:
+
+A list literal is defined using a struct with the following fields:
+
+ '(' - a function L@ -> T@ to convert the completed list to desired end value.
+ ',' - a function E@ -> L@ -> L@ to cons an element to the list.
+ ')' - a element L@ representing the empty list 
+
+Assuming l is a struct of such type, an expression l(x, y, z) is desugared to:
+  l.'('(l.','(x, l.','(y, l.','(z, l.')')))))
+
+There is still some question as to how strict to be when checking the type of
+l in terms of checking for no extra fields and proper types ahead of
+desugaring.
   
 
 3. Traversals
