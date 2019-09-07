@@ -373,40 +373,6 @@ Or, as another example, the following two are equivalent:
 1. Bool@ True = Bool@(true: Unit@()); ...
 2. @(True: Bool@(true: Unit@())); ...
 
-3.7 String Literal
-------------------
-Concrete Syntax:
-  expr ::= expr '|' word
-
-Example:
-  IntLit|2219
-  StrLit|'hello there!'
-
-A string literal is syntactic sugar that allows you to express a raw sequence
-of data without the overhead of punctuation between data elements.
-
-The expression:
-
-  x|abcd
-
-Is desugared into the expression:
-
-  x.'::'(x.a, x.'::'(x.b, x.'::'(x.c, x.'::'(x.d, x.''))))
-
-In other words, the word literal is broken up into individual characters. Each
-character is replaced with with a struct access expression that accesses the
-field with the matching single-character name from the object. The individual
-characters are then combined using the '' field for the empty string and the
-'::' field for a function that prepends a character to a string.
-
-In the above example, assuming we are producing a literal value of type T@
-with elements E@, the type of x should contain the following fields:
-
-  @ X@ = +(E@ a, E@ b, E@ c, E@ d, T@ '', (E@, T@){T@;} '::');
-
-TODO: Integer literal is probably pretty hard to define this way. How do you
-distinguish between '0001' and '01' when prepending a '2' in front?
-
 4. Unions
 ---------
 A union value is a particular value chosen amongst a group of possible values.
@@ -809,7 +775,88 @@ Examples:
   Maybe@<Int@>
   fromJust<Int@>(3)
 
-8. Program
+8. Literals
+-----------
+We introduce syntax for describing lists and literals to make it less tedious
+to write code involving sequences of elements of the same type and raw
+sequences of data without the overhead of punctuation between data elements.
+
+8.1 List
+--------
+Abstract Syntax:
+  Expr ::= list (args :: [Expr])
+  
+Concrete Syntax:
+  expr ::= '['[expr [',' expr [...]] ']'
+
+Examples: 
+  []
+  [x, f(y), z]
+
+A list describes a sequence of zero or more values of the same type. The value
+of a list is a polymorphic function that can be used to construct any type of
+list of the given elements. Assuming the values have type T@, the type of this
+function is:
+
+  <@ L@>((T@, L@){L@;}, L@){L@;}
+
+The type parameter L@ represents the type of the list that can be produced by
+calling the function. The first argument to the function is a function that
+prepends a single element to a list of type L@, and the second argument
+represents the empty list.
+
+For example, an expression such as
+    
+  [a, b, c, d]
+
+would desugar to something like:
+
+  <@ L@>((T@, L@){L@;} cons, L@ nil) {
+     cons(a, cons(b, cons(c, cons(d, nil))));
+  }
+
+8.2 Literal
+-----------
+Abstract Syntax:
+  Expr ::= literal (type :: Type) (letters :: word)
+
+Concrete Syntax:
+  expr ::= type '|' word
+
+Example:
+  Octal@|177
+  Char@|'hello there!'
+
+A literal is syntax that allows you to express a raw sequence of data without
+the overhead of punctuation between data elements.
+
+The type used in a literal represents the type to use for each letter in the
+literal. It must be a union type with fields of type *() that have single
+letter field names. For example:
+
+  @ Octal@ = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
+
+TODO: Can the letter type contain other fields too?
+
+The value of a literal is a list of letters of the given type. For example, an
+expression such as:
+
+  Octal@|132
+
+would desugar to:
+
+  [Octal(1: *()()), Octal(3: *()()), Octal(2: *()())]
+  
+Because this is turned into a list, it will have a polymorphic function type
+that accepts a prepend function and empty list:
+
+  <@ L@>((Octal@, L@){L@;}, L@){L@;}
+
+It is a type error if the word contains a letter for which there is no
+corresponding field in the letter type or if the type of that field is not
+*().
+
+9. Program
 -----------
 Abstract Syntax:
   Prgm ::= Expr
@@ -826,7 +873,7 @@ deemed suitable by whoever is executing the program. Commonly this could be:
   evaluate and output the resulting value
 * process: run the process, evaluate and output the resulting value.
 
-8.1 Include
+9.1 Include
 -----------
 Abstract Syntax:
   Expr ::= include (name :: Name)
@@ -852,7 +899,7 @@ This would read StdLib from the file "lib/StdLib.fble". When reading
 StdLib.fble, the include search path is adjusted to "lib/StdLib" for any child
 modules included in StdLib.fble.
 
-9. Abstract Syntax Reference
+10. Abstract Syntax Reference
 ----------------------------
 NormalName ::= (* A string of characters *)
 TypeName ::= (* A string of characters *)
@@ -906,6 +953,9 @@ Expr ::=
 
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
+
+ | list (args :: [Expr])
+ | literal (type :: Type) (letters :: word)
  ;
 
 Prgm ::= Expr
@@ -993,6 +1043,9 @@ expr ::=
  | '$(' expr ')'                                   (* proc_eval *)
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
+
+ | '['[expr [',' expr [...]] ']'                   (* list *)
+ | type '|' word                                   (* literal *)
 
  | '&' name                                        (* include *)
  | block

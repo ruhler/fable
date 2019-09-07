@@ -1,4 +1,4 @@
-* [lang] Draft proper spec for string literals. Test and implement.
+* [lang] Test and implement lists and literals.
 
 * [prgm] TicTacToe cleanup
  - Switch to using shared modules.

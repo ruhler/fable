@@ -295,7 +295,301 @@ Assuming l is a struct of such type, an expression l(x, y, z) is desugared to:
 There is still some question as to how strict to be when checking the type of
 l in terms of checking for no extra fields and proper types ahead of
 desugaring.
+
+Amendment: 
+
+Actually, it might be nice to allow different types of initial arguments. For
+a more true var-arg function. That's not hard to do. Just allow any number of
+arguments to the '(' function, where only the last arg is the variable length
+part. For example, this way you could define a non-empty var-arg list
+function: P(x, y, z);
+
+The justification for the literal is that functions are really valuable
+because they allow you to define your own syntax, and that syntax should
+support variable length args in parens.
+
+Note one consequence of the var-arg syntax is it is possible to define
+no-argument functions. For example, the empty list: S(). I'm not sure if that
+has any implications.
+
+Proposal for type checking: I vote we want to limit the object's use to the
+literal, so it's clear it is intended to be used as a literal. But allow the
+same object to be used for list and string literals. Then we have type
+checking:
+
+'(' must exist, it defines types L@ and T@. And also has args A@, B@, ...
+',' must exist, it defines type E@ and must match L@.
+')' must exist, it must match L@.
+'?' may optionally exist. If it does, all fields of it must have type E@.
+
+Type check then requires args: A@, B@, ..., E@, E@, ...; producing a type T@.
+
+For a string literal, the '?' requirement changes to "must exist". 
+
+Because of the type requirements, this is more than syntactic sugar. It should
+be given its own entry in the abstract syntax. The name of the construct?
+struct_apply? For string literal... literal or struct_literal?
+
+Or, func_apply_varargs, func_apply_literal?
+Or, vararg_apply, literal? Yes. I like these.
+
+Question: Can we do over-application of vararg functions?
+
+For example, imagine mkLit(x, y) returns a literal. So we could do:
+
+  mkLit(x, y)(a, b, e1, e2, e3);
+
+Could we also write:
+  mkLit(x, y, a, b, e1, e2, e3);
+
+If so, perhaps we don't need to special case the separate kinds of initial
+arguments? But then, how do you explain multi-arg using the single application
+syntax? Because I should be able to do something like:
+
+  mkLit(e)(e)(e)(e) ...
+
+And then it's not clear when we should close the varargs. For example, what if
+the literal returns a function that takes an element of type E? How would we
+distinguish whether the element goes as a vararg or as an argument to the
+computed function?
+
+It almost seems like what I want is some kind of thing we can use as a value
+or stuff an extra arg into, from the type perspective. Could we explicitly
+distinguish the two using some kind of syntax? For example:
+
+  List :: ListLiteral
+  List(a) :: ListLiteral
+
+  ListLiteral = (E -> ListLiteral)
+ 
+But then, how to get the list from it?
+  List(a)(b)(c)(d)$
+  List(a, b, c, d)$
+  List(a, b, c, d)$
+
+Say we had some syntax, given a literal, that finishes that literal, such as 
+  expr '$'
+
+Though we'll probably want a different syntax. It would have to be something
+at the end. It forces the application.
+
+Well... we could use close paren to do that. Say that close paren terminates
+the list literal, so you have to use the multi-arg syntax to give everything
+in the list literal. How does this change things?
+
+* No initial args needed. You can make those arguments to a function that
+  returns a literal.
+
+It's almost like we want to flip things around. List represents a partial
+constructed list literal. Then you have three things:
+
+1. The initial empty literal value. For example, the empty list. '('
+2. A way to append a value to the literal. For example: append to the list.  ','
+3. A way to extract the literal. ')'
+
+I suppose it's the same. It doesn't matter if you go left to right or right to
+left. Except I'm proposing to no longer make it a syntactic sugar?
+
+But if you can set up an initial literal, with mkLit(a, b), then appending to
+that literal to produce another literal is like adding multi-args to it. That
+suggests I really want
+
+1. An initial literal value (any partial list literal). For example, a list of
+elements.
+2. A way to treat the literal value as a function.
+3. A way to treat the literal value as a value.
+
+But you can already treat the literal value as a value, right? So maybe what
+we want is:
+
+A user defined value of type L.
+A function F of type L -> E -> L.
+A function T of type L -> T.
+
+T(F(F(F([], a), b), c))
+
+But in this case, T, F, and the intermediate value L define the literal.
+
+l1 = []
+l2 = l1.F(l1, a)
+l3 = l2.F(l2, b)
+l4 = l3.F(l3, c)
+l4.T
+
+Or, we just have two functions: the function to generate a new literal, and
+the final value of the literal.
+
+Literal = *(A -> Literal, Value)
+
+Then desugared we sould have something like:
+
+List([]).F(a).F(b).F(c).T
+
+Or...
+
+List([]).S(a).S(b).S(c).Z
+
+Which clearly shows the inductive nature of the multi-arg function.
+
+@ L@ = *((A@ -> L@) S, T@ Z)
+
+It sucks to have to compute all the intermediate final values.
+
+It's too complicated. From a syntax point of view, if you want to mix
+functions and list literals, we have to make multi-arg application a first
+class citizen, otherwise you can't distinguish between:
+
+     mkLit(a, x1, x2, x3)(x4, x5, x6)
+and  mkLit(a, x1, x2, x3, x4, x5)(x6)
+
+Assuming mkLit returns a different list literal object.
+
+New proposal:
+Introduce a special syntax for list literals and use that instead of vararg
+functions. For example: f(a, b, [x1, x2, x3, x4]) instead of
+f(a, b, x1, x2, x3, x4). For list literal [a, b, c, d], all args must have the
+same type T. Then the type of the list literal is:
+
+   @ S@ = +(P cons, *() nil),
+   @ P@ = *(T head, S tail),
+   S@;
+
+With possible different choice for the field names.
+
+For string literal, you provide a struct value that has two fields. For
+example, for an octal literal:
+
+@ Digit@ = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
+(List<Digit>){ Number; } Literal = ...;
+@ Lit@ = (Letter@: Digit@, Literal: Literal);
+
+Where, again, the names of the fields 'Letter@' and 'Literal' are up for
+debate.
+
+String literal becomes syntactic sugar:
+  <expr>|"abc" ==> 
+  let s = <expr>
+  in s.Literal([s.a, s.b, s.c])
+
+The good parts:
+* No confusion about multi-arg application.
+* List and string literals become true syntactic sugars that can be handled at
+  parse time instead of type check (though we may want to handle in type check
+  any way for better error messages and more strict checking).
+
+The bad parts:
+* Introduces hard coded types into the language, including a recursive one
+  that's perhaps not trivial to describe.
+* How do we pick the names for these hard coded list and literal types?
+* The need for a let expression to avoid repeated evaluation of the argument
+  to a string literal when we desugar it. Unless we can evaluate the list
+  literal in the back end?
+
+Brainstorm of variations:
+
+Could we make list literal and string literal first class citizens, so they
+have their own kind of type? For example, a list literal can be described as a
+pair of functions that take an input element type and return a resulting type.
+
+  [T@]{L@} List = EmptyList, (T@ x, L@ l){ cons(x, l); };
+
+This says: List is a list literal for elements of type T@ that produces a list
+of type L@. The body of the list literal gives a pair of the empty list and
+the cons function. We just need some syntax to distinguish list literal
+literals from other kinds of expressions. Now you could use the list literal
+as:
+
+  List[a, b, c, d]
+
+And for string literals:
+
+ |01234567{Octal@} OctalLiteral = |(0: ..., 1: ..., ...), OctalDigitList, (OctalDigitList@){...}
+
+In other words, the type of the string literal describes the set of legal
+characters, and the value of the string literal literal defines the value of
+each legal character, the list literal to combine those into a list, and the
+function to turn that list into the literal value. Then you could use it as:
   
+  OctalLiteral|"132"
+
+It's a bit heavy weight syntactically, but now at least everything is very
+explicitly and clearly typed. Rather than trying to encode things awkwardly
+into struct values. And we don't have to make up or use hard coded types
+anywhere.
+
+I wonder if we could simplify by doing:
+* Pass an arbitrary type to list literal, and it will construct by field
+  position rather than name. For example: List[a, b, c] becomes:
+  err... doesn't quite work given that a list type involves two mutually
+  recursive types.
+
+* Be able to define a union type using |01234567. Then a string literal need
+  only specify the type |01234567, a list type, and the combining function.
+
+Better Approach:
+
+List: [<expr>, <expr>, ...]
+  Given a list of expressions of the same type T@, returns a polymorphic
+  function of type:
+      <@ L@>(L@, (T@, L@){L@;}){L@;}
+  In other words, a function that, when given an initial list and a way to
+  prepend individual elements to the list, returns the given list with all the
+  elements prepended.
+
+  So the expression: [a, b, c, d] would turn into something like:
+    <@ L@>(L@ nil, (T@, L@){L@;} cons) {
+        cons(a, cons(b, cons(c, cons(d, nil))));
+    }
+
+  The advantage of this approach:
+  * We don't have to build a list type into the compiler. Any list type you
+    want that supports an initial value and prepending a value works.
+  * The list syntax is standalone: you don't have to provide any additional
+    information. This makes it easy to make abstractions for it that don't
+    have to reveal internal details.
+  * We don't try to embed some complex object into a struct value.
+  * We don't have to worry about how to evaluate an object and share it. Aside
+    from picking variable names for the function arguments, this could be a
+    pure syntactic sugar if desired (though I don't recommend it).
+
+Literal: <type>|<word>
+  Given a type of letter and a word, returns a list of the letter in
+  the word. The type must be a union type with single-character field names
+  that take *() arguments. This type describes the type of a letter.
+
+  For example,
+    @ Octal@ = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
+    Octal@|132
+
+  The literal is syntactically desugared to:
+    [Octal(1: *()()), Octal(3: *()()), Octal(2: *()())]
+  
+  Because this is turned into a list, it will have a polymorphic function type
+  that accepts a prepend function and tail list.
+
+  It is a compilation error if the word contains a letter for which there is
+  no corresponding field in the letter type.
+
+  Advantages:
+  * We don't try to embed some complex object into a struct value.
+  * We don't have to worry about how to evaluate an object and share it. This
+    could easily be made into a pure syntactic sugar.
+
+  Disadvantages:
+  * We end up hard coding the type *() in the compiler. But that's not so
+    unreasonable a thing. Perhaps we ought to use it for put processes too.
+  * You have to specify a type in the syntax, which means you can't fully
+    abstract away conversion of the literal to a value. For example, you
+    probably end up writing things like:
+      HexInt(Hex@|00ffffff)
+    instead of the simpler:
+      HexInt|00ffffff
+    But I think this is a fundamental requirement as long as we don't have a
+    single built in letter type.
+
+Awesome! Let's go with that then and see what problems we run into. I think
+this will be a great improvement on what we have today.
+
 
 3. Traversals
 -------------
