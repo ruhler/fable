@@ -165,6 +165,8 @@ typedef enum {
   FBLE_POLY_EXPR,
   FBLE_POLY_APPLY_EXPR,
 
+  FBLE_LIST_EXPR,
+
   FBLE_MISC_ACCESS_EXPR,  // Used for STRUCT_ACCESS, UNION_ACCESS
   FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, FUNC_APPLY, PUT, GET
 } FbleExprTag;
@@ -389,6 +391,13 @@ typedef struct {
   FbleExpr* poly;
   FbleType* arg;
 } FblePolyApplyExpr;
+
+// FbleListExpr --
+//   FBLE_LIST_EXPR (args :: [Expr])
+typedef struct {
+  FbleExpr _base;
+  FbleExprV args;
+} FbleListExpr;
 
 // FbleMiscApplyExpr --
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])

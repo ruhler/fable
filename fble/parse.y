@@ -264,6 +264,13 @@ expr:
       }
       FbleFree(arena, $3.xs);
    }
+ | '[' expr_p ']' {
+      FbleListExpr* list_expr = FbleAlloc(arena, FbleListExpr);
+      list_expr->_base.tag = FBLE_LIST_EXPR;
+      list_expr->_base.loc = @$;
+      list_expr->args = $2;
+      $$ = &list_expr->_base;
+   }
  | '&' name {
       if (include_path == NULL) {
         FbleReportError("%s not found for include\n", &(@$), $2);
@@ -569,7 +576,7 @@ static bool IsSpaceChar(int c)
 //   None.
 static bool IsPunctuationChar(int c)
 {
-  return strchr("(){};,:?=.<>+*-!$@~&", c) != NULL;
+  return strchr("(){}[];,:?=.<>+*-!$@~&", c) != NULL;
 }
 
 // IsNormalChar --
