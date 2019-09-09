@@ -787,13 +787,13 @@ Abstract Syntax:
   Expr ::= list (args :: [Expr])
   
 Concrete Syntax:
-  expr ::= '['[expr [',' expr [...]] ']'
+  expr ::= '['expr [',' expr [...]] ']'
 
 Examples: 
-  []
+  [x]
   [x, f(y), z]
 
-A list describes a sequence of zero or more values of the same type. The value
+A list describes a sequence of one or more values of the same type. The value
 of a list is a polymorphic function that can be used to construct any type of
 list of the given elements. Assuming the values have type T@, the type of this
 function is:
@@ -814,6 +814,10 @@ would desugar to something like:
   <@ L@>((T@, L@){L@;} cons, L@ nil) {
      cons(a, cons(b, cons(c, cons(d, nil))));
   }
+
+The expression is evaluated by evaluating all arguments and creating the
+polymorphic function value with the results. The arguments may be evaluated in
+any order, sequentially or in parallel.
 
 8.2 Literal
 -----------
@@ -855,6 +859,10 @@ that accepts a prepend function and empty list:
 It is a type error if the word contains a letter for which there is no
 corresponding field in the letter type or if the type of that field is not
 *().
+
+Unlike lists, literals can have zero letters. This is because we have the
+necessary type information to determine the type of the list even if it is
+empty.
 
 9. Program
 -----------
@@ -968,7 +976,7 @@ We have the following categories of characters:
 1. whitespace: Any whitespace character, as traditionally classified.
 2. The comment character '#'.
 3. punctuation: Any of the following characters:
-  (){};,:?=.<>+*-!$@~&'\
+  (){};,:?=.<>+*-!$@~&'\[]
 4. normal: any other character.
 
 The lexical syntax is used to interpret a string of arbitrary characters as a
