@@ -1,6 +1,6 @@
 fble-test {
   @ Unit@ = *();
-  @ Enum@ = *(Unit@ A, Unit@ B, Unit@ C);
+  @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
 
   # Basic use of a list expression.
   <@ L@>((Enum@, L@){L@;}, L@){L@;} f = [
@@ -17,7 +17,7 @@ fble-test {
 
   S@ Nil = S@(nil: Unit@());
 
-  S@ l = f<Enum@>(Cons, Nil);
+  S@ l = f<S@>(Cons, Nil);
 
   Unit@ b = l.cons.head.B;
   Unit@ a = l.cons.tail.cons.head.A;

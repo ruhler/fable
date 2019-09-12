@@ -115,15 +115,14 @@ typedef struct {
 } FbleGotoInstr;
 
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
-//   Allocate a function, capturing the current variable scope in the
-//   process.
+//   Allocate a function, capturing the values from the data stack to use for
+//   as variable values when the function is executed.
 //
 // data_stack: ...
 //         ==> ..., func
 //
 // Fields:
-//   scopec - The number of variables from the scope to capture from the top
-//            of the variable stack.
+//   scopec - The number of values to capture from the top of the data stack.
 //   argc - The number of arguments to the function.
 //   body - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should

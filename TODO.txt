@@ -1,4 +1,6 @@
 * [lang] Test and implement lists and literals.
+ - Compile LIST_EXPR. Treat list elements as variables accessed directly with
+   VAR_INSTR.
 
 * [prgm] TicTacToe cleanup
  - Switch to using shared modules.
