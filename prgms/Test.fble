@@ -1,30 +1,29 @@
-@(Unit_, Bool_, Char_, List_) {
+@(Unit_, Bool_, Char_, List_, String_) {
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, True, False, AndMonoid); };
   Char_ { @(Char@, Chars); };
-  List_ { @(S@, P@, S0, S1, S2, S3, S4, S5, S6, Append, Concat, MapS, SeqS,
-            AndS); };
+  List_ { @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
+  String_ { @(Str@, Str); };
 
-  @ TestName@ = S@<Char@>;
-  @ TestResult@ = +(Unit@ pass, S@<Char@> fail);
-  @ Test@ = *(TestName@ name, TestResult@! test);
+  @ TestResult@ = +(Unit@ pass, Str@ fail);
+  @ Test@ = *(Str@ name, TestResult@! test);
 
-  S@<Char@> failed = { Chars; S6<Char@>(F, A, I, L, E, D); };
+  Str@ failed = { Chars; Str([F, A, I, L, E, D]); };
 
   # Print a string to the given output stream.
-  (S@<Char@>+, S@<Char@>){ Unit@!; } Print = (S@<Char@>+ out, S@<Char@> str) {
-    S@<Char@> _ := out(str);
+  (Str@+, Str@){ Unit@!; } Print = (Str@+ out, Str@ str) {
+    Str@ _ := out(str);
     $(Unit);
   };
 
   # Print a string and newline to the given output stream.
-  (S@<Char@>+, S@<Char@>){ Unit@!; } PrintLn = (S@<Char@>+ out, S@<Char@> str) {
-    S@<Char@> _ := out(Append<Char@>(str, S1<Char@>(Chars.nl)));
+  (Str@+, Str@){ Unit@!; } PrintLn = (Str@+ out, Str@ str) {
+    Str@ _ := out(Append<Char@>(str, Str([Chars.nl])));
     $(Unit);
   };
 
   # Returns True if the tests all pass, false otherwise.
-  (S@<Char@>+, S@<Test@>){Bool@!;} RunTests = (S@<Char@>+ out, S@<Test@> tests) {
+  (Str@+, S@<Test@>){Bool@!;} RunTests = (Str@+ out, S@<Test@> tests) {
     SeqS<Bool@>(AndMonoid, {
       Test@ test <- MapS<Test@, Bool@!>(tests);
       Unit@ _ := Print(out, test.name);
@@ -34,32 +33,32 @@
               $(True);
             },
             fail: {
-              Unit@ _ := PrintLn(out, Concat<Char@>(S4<S@<Char@>>(
-                S2<Char@>(Chars.colon, Chars.space),
+              Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
+                Str([Chars.colon, Chars.space]),
                 failed,
-                S2<Char@>(Chars.colon, Chars.space),
-                tr.fail)));
+                Str([Chars.colon, Chars.space]),
+                tr.fail])));
               $(False);
             });
     });
   };
 
   S@<Test@> Tests = {
-    TestName@ prefix = { Chars; S5<Char@>(T, e, s, t, period); };
-    (TestName@){TestName@;} name = (TestName@ nm) {
+    Str@ prefix = { Chars; Str([T, e, s, t, period]); };
+    (Str@){Str@;} name = (Str@ nm) {
       Append<Char@>(prefix, nm);
     };
 
     Test@ pass = Test@(
-      name({ Chars; S4<Char@>(p, a, s, s); }),
+      name({ Chars; Str([p, a, s, s]); }),
       $(TestResult@(pass: Unit)));
 
     Test@ fail = Test@(
-      name({ Chars; S4<Char@>(f, a, i, l); }),
+      name({ Chars; Str([f, a, i, l]); }),
       $(TestResult@(fail: failed)));
 
-    S1<Test@>(pass);
+    S<Test@>([pass]);
   };
 
-  @(TestName@, TestResult@, Test@, RunTests, Tests);
+  @(Str@, TestResult@, Test@, RunTests, Tests);
 };

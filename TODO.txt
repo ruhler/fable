@@ -1,6 +1,10 @@
-* [lang] Test and implement lists and literals.
- - Compile LIST_EXPR. Treat list elements as variables accessed directly with
-   VAR_INSTR.
+* [prgm] Switch to using list expression
+ - Figure out memory leak
+ - For T(...)
+* [lang] Test and implement literals
+* [prgm] Switch to using literals
+ - For strings in testing
+ - For integers in md5 and elsewhere
 
 * [prgm] TicTacToe cleanup
  - Switch to using shared modules.

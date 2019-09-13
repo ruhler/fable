@@ -1,14 +1,15 @@
-@(Unit_, Maybe_, Char_, List_, Bits_, Hex_, Md5_, Test) {
+@(Unit_, Maybe_, Char_, List_, String_, Bits_, Hex_, Md5_, Test) {
   Unit_ { @(Unit@, Unit); };
   Maybe_ { @(Maybe@); };
   Char_ { @(Char@, Chars); };
-  List_ { @(P@, S@, ConsS, S0, S1, S3, S4, S5, S6, S7, S8, S9, S10, Append, Concat); };
+  List_ { @(P@, S@, ConsS, S0, S, Append, Concat); };
+  String_ { @(Str@, Str); };
   Bits_.Bit8 { @(Bit8@, H2); };
   Hex_ { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
-  Test { @(TestName@, TestResult@, Test@); };
+  Test { @(TestResult@, Test@); };
   Md5_ { @(Md5Hash@, Md5, Eq); };
 
-  TestName@ prefix = { Chars; S4<Char@>(M, d, 5, period); };
+  Str@ prefix = { Chars; Str([M, d, 5, period]); };
 
   (Hex@){Char@;} Hex2Char = (Hex@ h) {
     ?(h; 0: Chars.0, 1: Chars.1, 2: Chars.2, 3: Chars.3,
@@ -17,16 +18,16 @@
          C: Chars.C, D: Chars.D, E: Chars.E, F: Chars.F);
   };
 
-  (Md5Hash@){S@<Char@>;} Md5Hash2Str = (Md5Hash@ x) {
-    Concat<Char@>(S8<S@<Char@>>(
-      S4<Char@>(Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)),
-      S4<Char@>(Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)),
-      S4<Char@>(Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)),
-      S4<Char@>(Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)),
-      S4<Char@>(Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)),
-      S4<Char@>(Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)),
-      S4<Char@>(Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)),
-      S4<Char@>(Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31))));
+  (Md5Hash@){Str@;} Md5Hash2Str = (Md5Hash@ x) {
+    Concat<Char@>(S<Str@>([
+      Str([Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)]),
+      Str([Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)]),
+      Str([Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)]),
+      Str([Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)]),
+      Str([Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)]),
+      Str([Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)]),
+      Str([Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)]),
+      Str([Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)])]));
   };
 
   # Put all the bytes onto the output port, followed by nothing.
@@ -52,11 +53,11 @@
     ?(Eq(wnt, got);
         true: TestResult@(pass: Unit),
         false: {
-          S@<Char@> msg = Concat<Char@>(S4<S@<Char@>>(
-            { Chars; S10<Char@>(e, x, p, e, c, t, e, d, colon, space); },
+          Str@ msg = Concat<Char@>(S<Str@>([
+            { Chars; Str([e, x, p, e, c, t, e, d, colon, space]); },
             Md5Hash2Str(wnt),
-            { Chars; S10<Char@>(space, b, u, t, space, g, o, t, colon, space); },
-            Md5Hash2Str(got)));
+            { Chars; Str([space, b, u, t, space, g, o, t, colon, space]); },
+            Md5Hash2Str(got)]));
           TestResult@(fail: msg);
         });
   };
@@ -65,7 +66,7 @@
       ConsS<Bit8@>(H2(hi, lo), l);
     };
 
-  (TestName@, Md5Hash@, S@<Bit8@>){Test@;} TestStr = (TestName@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
+  (Str@, Md5Hash@, S@<Bit8@>){Test@;} TestStr = (Str@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
     Test@(Append<Char@>(prefix, name), {
             Md5Hash@ got := Md5Str(bytes);
             $(AssertEq(wnt, got));
@@ -74,7 +75,7 @@
 
   S@<Test@> Tests = {
     Test@ empty = TestStr
-      ({ Chars; S5<Char@>(e, m, p, t, y); })
+      ({ Chars; Str([e, m, p, t, y]); })
       (Md5Hash@(
         d, 4, 1, d, 8, c, d, 9,
         8, f, 0, 0, b, 2, 0, 4,
@@ -83,7 +84,7 @@
       (S0<Bit8@>);
 
     Test@ _a = TestStr
-      ({ Chars; S1<Char@>(a); })
+      ({ Chars; Str([a]); })
       (Md5Hash@(
         0, c, c, 1, 7, 5, b, 9,
         c, 0, f, 1, b, 6, a, 8,
@@ -93,7 +94,7 @@
         (S0<Bit8@>));
 
     Test@ abc = TestStr
-      ({ Chars; S3<Char@>(a, b, c); })
+      ({ Chars; Str([a, b, c]); })
       (Md5Hash@(
         9, 0, 0, 1, 5, 0, 9, 8,
         3, c, d, 2, 4, f, b, 0,
@@ -104,7 +105,7 @@
         (S0<Bit8@>))));
 
     Test@ message = TestStr
-      ({ Chars; S7<Char@>(m, e, s, s, a, g, e); })
+      ({ Chars; Str([m, e, s, s, a, g, e]); })
       (Md5Hash@(
         f, 9, 6, b, 6, 9, 7, d,
         7, c, b, 7, 9, 3, 8, d,
@@ -118,7 +119,7 @@
         (S0<Bit8@>)))))))))))))));
 
     Test@ a_to_z = TestStr
-      ({ Chars; S6<Char@>(a, underscore, t, o, underscore, z); })
+      ({ Chars; Str([a, underscore, t, o, underscore, z]); })
       (Md5Hash@(
         c, 3, f, c, d, 3, d, 7,
         6, 1, 9, 2, e, 4, 0, 0,
@@ -136,7 +137,7 @@
       )))))));
 
     Test@ A_to_9 = TestStr
-      ({ Chars; S6<Char@>(A, underscore, t, o, underscore, 9); })
+      ({ Chars; Str([A, underscore, t, o, underscore, 9]); })
       (Md5Hash@(
         d, 1, 7, 4, a, b, 9, 8,
         d, 2, 7, 7, d, 9, f, 5,
@@ -165,7 +166,7 @@
       )))))))))));
 
     Test@ 1_to_0 = TestStr
-      ({ Chars; S6<Char@>(1, underscore, t, o, underscore, 0); })
+      ({ Chars; Str([1, underscore, t, o, underscore, 0]); })
       (Md5Hash@(
         5, 7, e, d, f, 4, a, 2,
         2, b, e, 3, c, 9, 5, 5,
@@ -200,7 +201,7 @@
       ))))))))))))))))))))))))))))))))
       )))))))))))))))))))))))))))));
 
-    S7<Test@>(empty, _a, abc, message, a_to_z, A_to_9, 1_to_0);
+    S<Test@>([empty, _a, abc, message, a_to_z, A_to_9, 1_to_0]);
   };
 
   @(Tests);

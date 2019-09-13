@@ -1,0 +1,13 @@
+@(Char_, List_) {
+  Char_ { @(Char@); };
+  List_ { @(S@, S); };
+  
+  @ Str@ = S@<Char@>;
+  
+  (<@ L@>((Char@, L@){L@;}, L@){L@;}){S@<Char@>;} Str = 
+    (<@ L@>((Char@, L@){L@;}, L@){L@;} mkList) {
+      S<Char@>(mkList);
+    };
+
+  @(Str@, Str);
+};

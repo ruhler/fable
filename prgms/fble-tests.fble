@@ -5,6 +5,7 @@
 @(Bool_: &Bool_);
 @(Char_: &Char_);
 @(List_: &List_);
+@(String_: &String_);
 @(Test: &Test);
 
 @(List_Tests_: &List_Tests_);
@@ -20,18 +21,18 @@
 @(Md5_: &Md5_);
 @(Md5_Tests_: &Md5_Tests_);
 
-Char_ { @(Char@); };
-List_ { @(S@, S5, Concat); };
+List_ { @(S@, S, Concat); };
+String_ { @(Str@); };
 Test { @(Test@); };
 
-S@<Test@> AllTests = Concat<Test@>(S5<S@<Test@>>(
+S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   Test.Tests,
   List_Tests_.Tests,
   UBNat_Tests_.Tests,
   Primes_Tests_.Tests,
   Md5_Tests_.Tests
-));
+]));
 
-(S@<Char@>+ out) {
+(Str@+ out) {
   Test.RunTests(out, AllTests);
 };

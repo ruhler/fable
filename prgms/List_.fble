@@ -25,49 +25,9 @@
     S@<T@>(nil: Unit);
   };
 
-  <@ T@>(T@){S@<T@>;} S1 = <@ T@>(T@ a) {
-    ConsS<T@>(a, S0<T@>);
-  };
-
-  <@ T@>(T@, T@){S@<T@>;} S2 = <@ T@>(T@ a, T@ b) {
-    ConsS<T@>(a, S1<T@>(b));
-  };
-
-  <@ T@>(T@, T@, T@){S@<T@>;} S3 = <@ T@>(T@ a, T@ b, T@ c) {
-    ConsS<T@>(a, S2<T@>(b, c));
-  };
-
-  <@ T@>(T@, T@, T@, T@){S@<T@>;} S4 = <@ T@>(T@ a, T@ b, T@ c, T@ d) {
-    ConsS<T@>(a, S3<T@>(b, c, d));
-  };
-
-  <@ T@>(T@, T@, T@, T@, T@){S@<T@>;} S5 = <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e) {
-    ConsS<T@>(a, S4<T@>(b, c, d, e));
-  };
-
-  <@ T@>(T@, T@, T@, T@, T@, T@){S@<T@>;} S6 =
-    <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f) {
-      Append<T@>(S3<T@>(a, b, c), S3<T@>(d, e, f));
-    };
-
-  <@ T@>(T@, T@, T@, T@, T@, T@, T@){S@<T@>;} S7 =
-    <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g) {
-      Append<T@>(S4<T@>(a, b, c, d), S3<T@>(e, f, g));
-    };
-
-  <@ T@>(T@, T@, T@, T@, T@, T@, T@, T@){S@<T@>;} S8 =
-    <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g, T@ h) {
-      Append<T@>(S4<T@>(a, b, c, d), S4<T@>(e, f, g, h));
-    };
-
-  <@ T@>(T@, T@, T@, T@, T@, T@, T@, T@, T@){S@<T@>;} S9 =
-    <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g, T@ h, T@ i) {
-      Append<T@>(S5<T@>(a, b, c, d, e), S4<T@>(f, g, h, i));
-    };
-
-  <@ T@>(T@, T@, T@, T@, T@, T@, T@, T@, T@, T@){S@<T@>;} S10 =
-    <@ T@>(T@ a, T@ b, T@ c, T@ d, T@ e, T@ f, T@ g, T@ h, T@ i, T@ j) {
-      Append<T@>(S5<T@>(a, b, c, d, e), S5<T@>(f, g, h, i, j));
+  <@ T@>(<@ L@>((T@, L@){L@;}, L@){L@;}){S@<T@>;} S =
+    <@ T@>(<@ L@>((T@, L@){L@;}, L@){L@;} mkList) {
+      mkList<S@<T@>>(ConsS<T@>, S0<T@>);
     };
 
   # InitP - Return all but the last element in 'list'.
@@ -131,7 +91,7 @@
   };
 
   @(P@, S@,
-    HeadS, ConsS, Append, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10,
+    HeadS, ConsS, Append, S0, S,
     InitP, LastP, Concat, MapS, MapP, SeqS, SeqP,
     AndS, AndP, SortS, SortP);
 };

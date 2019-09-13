@@ -1,11 +1,12 @@
-@(Unit_, Bool_, Char_, List_, Test) {
+@(Unit_, Bool_, Char_, List_, String_, Test) {
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, True, False, And); };
   Char_ { @(Char@, Chars); };
-  List_ { @(S@, P@, S0, S1, S4, S5, S6, S7, Append, SortS); };
-  Test { @(TestName@, TestResult@, Test@); };
+  List_ { @(S@, P@, S0, S, Append, SortS); };
+  String_ { @(Str@, Str); };
+  Test { @(TestResult@, Test@); };
 
-  TestName@ prefix = { Chars; S7<Char@>(S, t, d, L, i, b, period); };
+  Str@ prefix = { Chars; Str([S, t, d, L, i, b, period]); };
 
   @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 
@@ -37,26 +38,26 @@
     };
 
   Test@ SortTest = Test@(
-    Append<Char@>(prefix, { Chars; S4<Char@>(S, o, r, t); }), $({
-      S@<Elem@> unsorted = S5<Elem@>
-        (Elem@(D: Unit))
-        (Elem@(A: Unit))
-        (Elem@(B: Unit))
-        (Elem@(E: Unit))
-        (Elem@(C: Unit));
+    Append<Char@>(prefix, { Chars; Str([S, o, r, t]); }), $({
+      S@<Elem@> unsorted = S<Elem@>([
+        Elem@(D: Unit),
+        Elem@(A: Unit),
+        Elem@(B: Unit),
+        Elem@(E: Unit),
+        Elem@(C: Unit)]);
 
-      S@<Elem@> wnt = S5<Elem@>
-        (Elem@(A: Unit))
-        (Elem@(B: Unit))
-        (Elem@(C: Unit))
-        (Elem@(D: Unit))
-        (Elem@(E: Unit));
+      S@<Elem@> wnt = S<Elem@>([
+        Elem@(A: Unit),
+        Elem@(B: Unit),
+        Elem@(C: Unit),
+        Elem@(D: Unit),
+        Elem@(E: Unit)]);
 
       S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
       ?(SEq<Elem@>(ElemEq, wnt, got);
         true: TestResult@(pass: Unit),
-        false: TestResult@(fail: { Chars; S6<Char@>(f, a, i, l, e, d); }));
+        false: TestResult@(fail: { Chars; Str([f, a, i, l, e, d]); }));
   }));
 
-  @(Tests: S1<Test@>(SortTest));
+  @(Tests: S<Test@>([SortTest]));
 };

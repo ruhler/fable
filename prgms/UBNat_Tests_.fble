@@ -1,9 +1,10 @@
-@(Unit_, Bool_, Char_, List_, UBNat_, Test) {
+@(Unit_, Bool_, Char_, List_, String_, UBNat_, Test) {
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, Not); };
   Char_ { @(Char@, Chars); };
-  List_ { @(P@, S@, S0, S5, S6, S7, S8, ConsS, Append); };
-  Test { @(TestName@, TestResult@, Test@); };
+  List_ { @(P@, S@, S0, ConsS, Append); };
+  String_ { @(Str@, Str); };
+  Test { @(TestResult@, Test@); };
   UBNat_ { @(
       Nat@,
       0, 1, 2, 3, 4, 5, 6, 7, Lit2,
@@ -12,53 +13,53 @@
     );
   };
 
-  TestName@ prefix = { Chars; S6<Char@>(U, B, N, a, t, period); };
+  Str@ prefix = { Chars; Str([U, B, N, a, t, period]); };
 
-  @ TestFailure@ = *(TestName@ name, Nat@ a, Nat@ b);
+  @ TestFailure@ = *(Str@ name, Nat@ a, Nat@ b);
 
-  (TestName@, Bool@!, (Unit@){S@<Test@>;}){S@<Test@>;} T =
-    (TestName@ name, Bool@! p, (Unit@){S@<Test@>;} tail) {
+  (Str@, Bool@!, (Unit@){S@<Test@>;}){S@<Test@>;} T =
+    (Str@ name, Bool@! p, (Unit@){S@<Test@>;} tail) {
       Test@ t = Test@(Append<Char@>(prefix, name), {
         Bool@ x := p;
         ?(x;
            true: $(TestResult@(pass: Unit)),
-           false: $(TestResult@(fail: { Chars; S6<Char@>(f, a, i, l, e, d); })));
+           false: $(TestResult@(fail: { Chars; Str([f, a, i, l, e, d]); })));
       });
       ConsS<Test@>(t, tail(Unit));
     };
 
-  (TestName@, Nat@, Nat@!, (Unit@){S@<Test@>;}){S@<Test@>;} TEq =
-    (TestName@ name, Nat@ a, Nat@! b, (Unit@){S@<Test@>;} tail) {
+  (Str@, Nat@, Nat@!, (Unit@){S@<Test@>;}){S@<Test@>;} TEq =
+    (Str@ name, Nat@ a, Nat@! b, (Unit@){S@<Test@>;} tail) {
       # TODO: Provide a custom error message
       T(name, { Nat@ x := b; $(EqNat(a, x)); }, tail);
     };
 
   S@<Test@> Tests = {
-    Unit@ _ <- T({ Chars; S6<Char@>(E, q, underscore, 0, underscore, 0); }, $(EqNat(0, 0)));
-    Unit@ _ <- T({ Chars; S6<Char@>(E, q, underscore, 0, underscore, 1); }, $(Not(EqNat(0, 1))));
-    Unit@ _ <- T({ Chars; S6<Char@>(E, q, underscore, 1, underscore, 1); }, $(EqNat(1, 1)));
-    Unit@ _ <- T({ Chars; S6<Char@>(L, e, underscore, 5, underscore, 5); }, $(Le(5, 5)));
-    Unit@ _ <- T({ Chars; S6<Char@>(L, e, underscore, 5, underscore, 7); }, $(Le(5, 7)));
-    Unit@ _ <- T({ Chars; S6<Char@>(L, e, underscore, 7, underscore, 5); }, $(Not(Le(7, 5))));
-    Unit@ _ <- T({ Chars; S6<Char@>(L, t, underscore, 5, underscore, 5); }, $(Not(Lt(5, 5))));
-    Unit@ _ <- T({ Chars; S6<Char@>(L, t, underscore, 5, underscore, 7); }, $(Lt(5, 7)));
-    Unit@ _ <- T({ Chars; S6<Char@>(L, t, underscore, 7, underscore, 5); }, $(Not(Lt(7, 5))));
-    Unit@ _ <- T({ Chars; S6<Char@>(G, e, underscore, 5, underscore, 5); }, $(Ge(5, 5)));
-    Unit@ _ <- T({ Chars; S6<Char@>(G, e, underscore, 5, underscore, 7); }, $(Not(Ge(5, 7))));
-    Unit@ _ <- T({ Chars; S6<Char@>(G, e, underscore, 7, underscore, 5); }, $(Ge(7, 5)));
-    Unit@ _ <- T({ Chars; S6<Char@>(G, t, underscore, 5, underscore, 5); }, $(Not(Gt(5, 5))));
-    Unit@ _ <- T({ Chars; S6<Char@>(G, t, underscore, 5, underscore, 7); }, $(Not(Gt(5, 7))));
-    Unit@ _ <- T({ Chars; S6<Char@>(G, t, underscore, 7, underscore, 5); }, $(Gt(7, 5)));
-    Unit@ _ <- TEq({ Chars; S5<Char@>(I, n, c, underscore, 5); }, 6, $(Inc(5)));
-    Unit@ _ <- TEq({ Chars; S5<Char@>(D, e, c, underscore, 5); }, 4, $(Dec(5)));
-    Unit@ _ <- TEq({ Chars; S5<Char@>(D, e, c, underscore, 5); }, 4, $(Dec(5)));
-    Unit@ _ <- TEq({ Chars; S7<Char@>(A, d, d, underscore, 5, underscore, 7); }, Lit2(1, 2), $(Add(5, 7)));
-    Unit@ _ <- TEq({ Chars; S7<Char@>(S, u, b, underscore, 5, underscore, 7); }, 0, $(Sub(5, 7)));
-    Unit@ _ <- TEq({ Chars; S7<Char@>(M, u, l, underscore, 5, underscore, 7); }, Lit2(3, 5), $(Mul(5, 7)));
-    Unit@ _ <- TEq({ Chars; S7<Char@>(D, i, v, underscore, 6, underscore, 3); }, 2, $(Div(6, 3)));
-    Unit@ _ <- TEq({ Chars; S8<Char@>(D, i, v, underscore, 1, 0, underscore, 3); }, 3, $(Div(Lit2(1, 0), 3)));
-    Unit@ _ <- TEq({ Chars; S7<Char@>(M, o, d, underscore, 6, underscore, 3); }, 0, $(Mod(6, 3)));
-    Unit@ _ <- TEq({ Chars; S8<Char@>(M, o, d, underscore, 1, 0, underscore, 3); }, 1, $(Mod(Lit2(1, 0), 3)));
+    Unit@ _ <- T({ Chars; Str([E, q, underscore, 0, underscore, 0]); }, $(EqNat(0, 0)));
+    Unit@ _ <- T({ Chars; Str([E, q, underscore, 0, underscore, 1]); }, $(Not(EqNat(0, 1))));
+    Unit@ _ <- T({ Chars; Str([E, q, underscore, 1, underscore, 1]); }, $(EqNat(1, 1)));
+    Unit@ _ <- T({ Chars; Str([L, e, underscore, 5, underscore, 5]); }, $(Le(5, 5)));
+    Unit@ _ <- T({ Chars; Str([L, e, underscore, 5, underscore, 7]); }, $(Le(5, 7)));
+    Unit@ _ <- T({ Chars; Str([L, e, underscore, 7, underscore, 5]); }, $(Not(Le(7, 5))));
+    Unit@ _ <- T({ Chars; Str([L, t, underscore, 5, underscore, 5]); }, $(Not(Lt(5, 5))));
+    Unit@ _ <- T({ Chars; Str([L, t, underscore, 5, underscore, 7]); }, $(Lt(5, 7)));
+    Unit@ _ <- T({ Chars; Str([L, t, underscore, 7, underscore, 5]); }, $(Not(Lt(7, 5))));
+    Unit@ _ <- T({ Chars; Str([G, e, underscore, 5, underscore, 5]); }, $(Ge(5, 5)));
+    Unit@ _ <- T({ Chars; Str([G, e, underscore, 5, underscore, 7]); }, $(Not(Ge(5, 7))));
+    Unit@ _ <- T({ Chars; Str([G, e, underscore, 7, underscore, 5]); }, $(Ge(7, 5)));
+    Unit@ _ <- T({ Chars; Str([G, t, underscore, 5, underscore, 5]); }, $(Not(Gt(5, 5))));
+    Unit@ _ <- T({ Chars; Str([G, t, underscore, 5, underscore, 7]); }, $(Not(Gt(5, 7))));
+    Unit@ _ <- T({ Chars; Str([G, t, underscore, 7, underscore, 5]); }, $(Gt(7, 5)));
+    Unit@ _ <- TEq({ Chars; Str([I, n, c, underscore, 5]); }, 6, $(Inc(5)));
+    Unit@ _ <- TEq({ Chars; Str([D, e, c, underscore, 5]); }, 4, $(Dec(5)));
+    Unit@ _ <- TEq({ Chars; Str([D, e, c, underscore, 5]); }, 4, $(Dec(5)));
+    Unit@ _ <- TEq({ Chars; Str([A, d, d, underscore, 5, underscore, 7]); }, Lit2(1, 2), $(Add(5, 7)));
+    Unit@ _ <- TEq({ Chars; Str([S, u, b, underscore, 5, underscore, 7]); }, 0, $(Sub(5, 7)));
+    Unit@ _ <- TEq({ Chars; Str([M, u, l, underscore, 5, underscore, 7]); }, Lit2(3, 5), $(Mul(5, 7)));
+    Unit@ _ <- TEq({ Chars; Str([D, i, v, underscore, 6, underscore, 3]); }, 2, $(Div(6, 3)));
+    Unit@ _ <- TEq({ Chars; Str([D, i, v, underscore, 1, 0, underscore, 3]); }, 3, $(Div(Lit2(1, 0), 3)));
+    Unit@ _ <- TEq({ Chars; Str([M, o, d, underscore, 6, underscore, 3]); }, 0, $(Mod(6, 3)));
+    Unit@ _ <- TEq({ Chars; Str([M, o, d, underscore, 1, 0, underscore, 3]); }, 1, $(Mod(Lit2(1, 0), 3)));
     S0<Test@>;
   };
 
