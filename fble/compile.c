@@ -3239,7 +3239,8 @@ static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr)
   size_t time;
   Type* type = CompileExpr(arena, &blocks, &name, true, &nvars, expr, &instrs, &time);
   FbleFree(arena_, name.xs);
-  FbleFree(arena_, blocks.xs);
+
+  FbleFreeBlockNames(arena_, &blocks);
   for (size_t i = 0; i < instrs.size; ++i) {
     FreeInstr(arena_, instrs.xs[i]);
   }

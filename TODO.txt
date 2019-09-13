@@ -1,5 +1,4 @@
 * [prgm] Switch to using list expression
- - Figure out memory leak
  - For T(...)
 * [lang] Test and implement literals
 * [prgm] Switch to using literals
