@@ -2,7 +2,7 @@
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, Not); };
   Char_ { @(Char@, Chars); };
-  List_ { @(P@, S@, S0, ConsS, Append); };
+  List_ { @(P@, S@, S0, S, Append); };
   String_ { @(Str@, Str); };
   Test { @(TestResult@, Test@); };
   UBNat_ { @(
@@ -17,51 +17,47 @@
 
   @ TestFailure@ = *(Str@ name, Nat@ a, Nat@ b);
 
-  (Str@, Bool@!, (Unit@){S@<Test@>;}){S@<Test@>;} T =
-    (Str@ name, Bool@! p, (Unit@){S@<Test@>;} tail) {
-      Test@ t = Test@(Append<Char@>(prefix, name), {
-        Bool@ x := p;
-        ?(x;
-           true: $(TestResult@(pass: Unit)),
-           false: $(TestResult@(fail: { Chars; Str([f, a, i, l, e, d]); })));
-      });
-      ConsS<Test@>(t, tail(Unit));
-    };
-
-  (Str@, Nat@, Nat@!, (Unit@){S@<Test@>;}){S@<Test@>;} TEq =
-    (Str@ name, Nat@ a, Nat@! b, (Unit@){S@<Test@>;} tail) {
-      # TODO: Provide a custom error message
-      T(name, { Nat@ x := b; $(EqNat(a, x)); }, tail);
-    };
-
-  S@<Test@> Tests = {
-    Unit@ _ <- T({ Chars; Str([E, q, underscore, 0, underscore, 0]); }, $(EqNat(0, 0)));
-    Unit@ _ <- T({ Chars; Str([E, q, underscore, 0, underscore, 1]); }, $(Not(EqNat(0, 1))));
-    Unit@ _ <- T({ Chars; Str([E, q, underscore, 1, underscore, 1]); }, $(EqNat(1, 1)));
-    Unit@ _ <- T({ Chars; Str([L, e, underscore, 5, underscore, 5]); }, $(Le(5, 5)));
-    Unit@ _ <- T({ Chars; Str([L, e, underscore, 5, underscore, 7]); }, $(Le(5, 7)));
-    Unit@ _ <- T({ Chars; Str([L, e, underscore, 7, underscore, 5]); }, $(Not(Le(7, 5))));
-    Unit@ _ <- T({ Chars; Str([L, t, underscore, 5, underscore, 5]); }, $(Not(Lt(5, 5))));
-    Unit@ _ <- T({ Chars; Str([L, t, underscore, 5, underscore, 7]); }, $(Lt(5, 7)));
-    Unit@ _ <- T({ Chars; Str([L, t, underscore, 7, underscore, 5]); }, $(Not(Lt(7, 5))));
-    Unit@ _ <- T({ Chars; Str([G, e, underscore, 5, underscore, 5]); }, $(Ge(5, 5)));
-    Unit@ _ <- T({ Chars; Str([G, e, underscore, 5, underscore, 7]); }, $(Not(Ge(5, 7))));
-    Unit@ _ <- T({ Chars; Str([G, e, underscore, 7, underscore, 5]); }, $(Ge(7, 5)));
-    Unit@ _ <- T({ Chars; Str([G, t, underscore, 5, underscore, 5]); }, $(Not(Gt(5, 5))));
-    Unit@ _ <- T({ Chars; Str([G, t, underscore, 5, underscore, 7]); }, $(Not(Gt(5, 7))));
-    Unit@ _ <- T({ Chars; Str([G, t, underscore, 7, underscore, 5]); }, $(Gt(7, 5)));
-    Unit@ _ <- TEq({ Chars; Str([I, n, c, underscore, 5]); }, 6, $(Inc(5)));
-    Unit@ _ <- TEq({ Chars; Str([D, e, c, underscore, 5]); }, 4, $(Dec(5)));
-    Unit@ _ <- TEq({ Chars; Str([D, e, c, underscore, 5]); }, 4, $(Dec(5)));
-    Unit@ _ <- TEq({ Chars; Str([A, d, d, underscore, 5, underscore, 7]); }, Lit2(1, 2), $(Add(5, 7)));
-    Unit@ _ <- TEq({ Chars; Str([S, u, b, underscore, 5, underscore, 7]); }, 0, $(Sub(5, 7)));
-    Unit@ _ <- TEq({ Chars; Str([M, u, l, underscore, 5, underscore, 7]); }, Lit2(3, 5), $(Mul(5, 7)));
-    Unit@ _ <- TEq({ Chars; Str([D, i, v, underscore, 6, underscore, 3]); }, 2, $(Div(6, 3)));
-    Unit@ _ <- TEq({ Chars; Str([D, i, v, underscore, 1, 0, underscore, 3]); }, 3, $(Div(Lit2(1, 0), 3)));
-    Unit@ _ <- TEq({ Chars; Str([M, o, d, underscore, 6, underscore, 3]); }, 0, $(Mod(6, 3)));
-    Unit@ _ <- TEq({ Chars; Str([M, o, d, underscore, 1, 0, underscore, 3]); }, 1, $(Mod(Lit2(1, 0), 3)));
-    S0<Test@>;
+  (Str@, Bool@!){Test@;} T = (Str@ name, Bool@! p) {
+    Test@(Append<Char@>(prefix, name), {
+      Bool@ x := p;
+      ?(x;
+         true: $(TestResult@(pass: Unit)),
+         false: $(TestResult@(fail: { Chars; Str([f, a, i, l, e, d]); })));
+    });
   };
+
+  (Str@, Nat@, Nat@!){Test@;} TEq = (Str@ name, Nat@ a, Nat@! b) {
+    # TODO: Provide a custom error message
+    T(name, { Nat@ x := b; $(EqNat(a, x)); });
+  };
+
+  S@<Test@> Tests = S<Test@>([
+    T({ Chars; Str([E, q, underscore, 0, underscore, 0]); }, $(EqNat(0, 0))),
+    T({ Chars; Str([E, q, underscore, 0, underscore, 1]); }, $(Not(EqNat(0, 1)))),
+    T({ Chars; Str([E, q, underscore, 1, underscore, 1]); }, $(EqNat(1, 1))),
+    T({ Chars; Str([L, e, underscore, 5, underscore, 5]); }, $(Le(5, 5))),
+    T({ Chars; Str([L, e, underscore, 5, underscore, 7]); }, $(Le(5, 7))),
+    T({ Chars; Str([L, e, underscore, 7, underscore, 5]); }, $(Not(Le(7, 5)))),
+    T({ Chars; Str([L, t, underscore, 5, underscore, 5]); }, $(Not(Lt(5, 5)))),
+    T({ Chars; Str([L, t, underscore, 5, underscore, 7]); }, $(Lt(5, 7))),
+    T({ Chars; Str([L, t, underscore, 7, underscore, 5]); }, $(Not(Lt(7, 5)))),
+    T({ Chars; Str([G, e, underscore, 5, underscore, 5]); }, $(Ge(5, 5))),
+    T({ Chars; Str([G, e, underscore, 5, underscore, 7]); }, $(Not(Ge(5, 7)))),
+    T({ Chars; Str([G, e, underscore, 7, underscore, 5]); }, $(Ge(7, 5))),
+    T({ Chars; Str([G, t, underscore, 5, underscore, 5]); }, $(Not(Gt(5, 5)))),
+    T({ Chars; Str([G, t, underscore, 5, underscore, 7]); }, $(Not(Gt(5, 7)))),
+    T({ Chars; Str([G, t, underscore, 7, underscore, 5]); }, $(Gt(7, 5))),
+    TEq({ Chars; Str([I, n, c, underscore, 5]); }, 6, $(Inc(5))),
+    TEq({ Chars; Str([D, e, c, underscore, 5]); }, 4, $(Dec(5))),
+    TEq({ Chars; Str([D, e, c, underscore, 5]); }, 4, $(Dec(5))),
+    TEq({ Chars; Str([A, d, d, underscore, 5, underscore, 7]); }, Lit2(1, 2), $(Add(5, 7))),
+    TEq({ Chars; Str([S, u, b, underscore, 5, underscore, 7]); }, 0, $(Sub(5, 7))),
+    TEq({ Chars; Str([M, u, l, underscore, 5, underscore, 7]); }, Lit2(3, 5), $(Mul(5, 7))),
+    TEq({ Chars; Str([D, i, v, underscore, 6, underscore, 3]); }, 2, $(Div(6, 3))),
+    TEq({ Chars; Str([D, i, v, underscore, 1, 0, underscore, 3]); }, 3, $(Div(Lit2(1, 0), 3))),
+    TEq({ Chars; Str([M, o, d, underscore, 6, underscore, 3]); }, 0, $(Mod(6, 3))),
+    TEq({ Chars; Str([M, o, d, underscore, 1, 0, underscore, 3]); }, 1, $(Mod(Lit2(1, 0), 3)))
+  ]);
 
   @(Tests);
 };

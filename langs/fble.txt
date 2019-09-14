@@ -1123,15 +1123,6 @@ Notes:
    importing Test.
 
    See fble.modules.txt
-
- - It's annoying to have to remember to import all the S* functions, and to
-   have to figure out what number to put after each of them.
-
-   Can we have list literals, or varargs functions, or something so I can
-   change the number of elements in a list in a single place rather than
-   having to change multiple places in the code?
-
-   See fble.sugar.txt for more discussion.
  
  - String literals are tough to read and write.
     For example, { Chars; S6<Char@>(G, t, underscore, 7, underscore, 5); }
