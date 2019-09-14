@@ -1,4 +1,4 @@
-* [lang] Test and implement literals
+* [lang] Implement literals
 * [prgm] Switch to using literals
  - For strings in testing
  - For integers in md5 and elsewhere
