@@ -271,6 +271,15 @@ expr:
       list_expr->args = $2;
       $$ = &list_expr->_base;
    }
+ | expr '|' WORD {
+      FbleLiteralExpr* literal_expr = FbleAlloc(arena, FbleLiteralExpr);
+      literal_expr->_base.tag = FBLE_LITERAL_EXPR;
+      literal_expr->_base.loc = @$;
+      literal_expr->type = $1;
+      literal_expr->word_loc = @3;
+      literal_expr->word = $3;
+      $$ = &literal_expr->_base;
+   }
  | '&' name {
       if (include_path == NULL) {
         FbleReportError("%s not found for include\n", &(@$), $2);
@@ -576,7 +585,7 @@ static bool IsSpaceChar(int c)
 //   None.
 static bool IsPunctuationChar(int c)
 {
-  return strchr("(){}[];,:?=.<>+*-!$@~&", c) != NULL;
+  return strchr("(){}[];,:?=.<>+*-!$@~&|", c) != NULL;
 }
 
 // IsNormalChar --

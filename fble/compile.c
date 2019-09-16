@@ -3099,6 +3099,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       return result;
     }
 
+    case FBLE_LITERAL_EXPR: {
+      assert(false && "TODO: Compile Literal expr");
+      return NULL;
+    }
+
     case FBLE_STRUCT_EVAL_EXPR: {
       FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
 
@@ -3421,6 +3426,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     case FBLE_POLY_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
+    case FBLE_LITERAL_EXPR:
     case FBLE_STRUCT_EVAL_EXPR:
     case FBLE_STRUCT_IMPORT_EXPR: {
       FbleExpr* expr = type;

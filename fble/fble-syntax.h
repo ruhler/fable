@@ -166,6 +166,7 @@ typedef enum {
   FBLE_POLY_APPLY_EXPR,
 
   FBLE_LIST_EXPR,
+  FBLE_LITERAL_EXPR,
 
   FBLE_MISC_ACCESS_EXPR,  // Used for STRUCT_ACCESS, UNION_ACCESS
   FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, FUNC_APPLY, PUT, GET
@@ -398,6 +399,15 @@ typedef struct {
   FbleExpr _base;
   FbleExprV args;
 } FbleListExpr;
+
+// FbleLiteralExpr --
+//   FBLE_LITERAL_EXPR (type :: Type) (word :: Word)
+typedef struct {
+  FbleExpr _base;
+  FbleType* type;
+  FbleLoc word_loc;
+  const char* word;
+} FbleLiteralExpr;
 
 // FbleMiscApplyExpr --
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])
