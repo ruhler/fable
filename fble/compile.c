@@ -2938,8 +2938,39 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     }
 
     case FBLE_LITERAL_EXPR: {
-      assert(false && "TODO: Compile Literal expr");
-      return NULL;
+      FbleLiteralExpr* literal = (FbleLiteralExpr*)expr;
+
+      FbleStructValueImplicitTypeExpr unit = {
+        ._base = {
+          .tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
+          .loc = literal->word_loc,
+        },
+        .args = { .size = 0, .xs = NULL, },
+      };
+
+      size_t n = strlen(literal->word);
+
+      FbleUnionValueExpr letters[n];
+      FbleExpr* xs[n];
+      char word_letters[2*n];
+      for (size_t i = 0; i < n; ++i) {
+        // TODO: How to set the right per-character location given there may be
+        // newlines, etc. in the word?
+        letters[i]._base.tag = FBLE_UNION_VALUE_EXPR;
+        letters[i]._base.loc = literal->word_loc;
+        letters[i].type = literal->type;
+        word_letters[2*i] = literal->word[i];
+        word_letters[2*i + 1] = '\0';
+        letters[i].field.name = word_letters + 2*i;
+        letters[i].field.space = FBLE_NORMAL_NAME_SPACE;
+        letters[i].field.loc = literal->word_loc;
+        letters[i].arg = &unit._base;
+
+        xs[i] = &letters[i]._base;
+      }
+
+      FbleExprV args = { .size = n, .xs = xs, };
+      CompileList(arena, blocks, name, exit, vars, literal->word_loc, literal->type, args, instrs, time);
     }
 
     case FBLE_STRUCT_EVAL_EXPR: {

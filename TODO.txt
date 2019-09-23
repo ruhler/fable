@@ -1,4 +1,6 @@
 * [lang] Implement literals
+ - Fix memory leak in compiler. Add test if possible.
+ - Fix literals.
 * [prgm] Switch to using literals
  - For strings in testing
  - For integers in md5 and elsewhere
