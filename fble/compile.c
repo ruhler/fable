@@ -259,6 +259,7 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type);
 
 static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs);
 static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs, size_t* time);
+static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs, size_t* time);
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
 static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
@@ -2929,174 +2930,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleListExpr* list_expr = (FbleListExpr*)expr;
       assert(list_expr->args.size > 0);
 
-      // The goal is to desugar a list expression [a, b, c, d] into the
-      // following expression:
-      // <@ T@>(T@ x, T@ x1, T@ x2, T@ x3)<@ L@>((T@, L@){L@;} cons, L@ nil) {
-      //   cons(x, cons(x1, cons(x2, cons(x3, nil))));
-      // }<@(a)>(a, b, c, d)
-      FbleKind basic_kind = { .tag = FBLE_BASIC_KIND, .loc = expr->loc, };
-
-      FbleName elem_type_name = {
-        .name = "T",
-        .space = FBLE_TYPE_NAME_SPACE,
-        .loc = expr->loc,
-      };
-
-      FbleVarExpr elem_type = {
-        ._base = { .tag = FBLE_VAR_EXPR, .loc = expr->loc, },
-        .var = elem_type_name,
-      };
-
-      // Generate unique names for the variables x, x0, x1, ...
-      size_t num_digits = 0;
-      for (size_t x = list_expr->args.size; x > 0; x /= 10) {
-        num_digits++;
-      }
-
-      FbleName arg_names[list_expr->args.size];
-      FbleVarExpr arg_values[list_expr->args.size];
-      for (size_t i = 0; i < list_expr->args.size; ++i) {
-        char* name = FbleArrayAlloc(arena_, char, num_digits + 2);
-        name[0] = 'x';
-        name[num_digits+1] = '\0';
-        for (size_t j = 0, x = i; j < num_digits; j++, x /= 10) {
-          name[num_digits - j] = (x % 10) + '0';
-        }
-        arg_names[i].name = name;
-        arg_names[i].space = FBLE_NORMAL_NAME_SPACE;
-        arg_names[i].loc = expr->loc;
-
-        arg_values[i]._base.tag = FBLE_VAR_EXPR;
-        arg_values[i]._base.loc = expr->loc;
-        arg_values[i].var = arg_names[i];
-      }
-
-      FbleName list_type_name = {
-        .name = "L",
-        .space = FBLE_TYPE_NAME_SPACE,
-        .loc = expr->loc,
-      };
-
-      FbleVarExpr list_type = {
-        ._base = { .tag = FBLE_VAR_EXPR, .loc = expr->loc, },
-        .var = list_type_name,
-      };
-
-      FbleField inner_args[2];
-      FbleName cons_name = {
-        .name = "cons",
-        .space = FBLE_NORMAL_NAME_SPACE,
-        .loc = expr->loc,
-      };
-
-      FbleVarExpr cons = {
-        ._base = { .tag = FBLE_VAR_EXPR, .loc = expr->loc, },
-        .var = cons_name,
-      };
-
-      // L@ -> L@
-      FbleFuncTypeExpr cons_type_inner = {
-        ._base = { .tag = FBLE_FUNC_TYPE_EXPR, .loc = expr->loc, },
-        .arg = &list_type._base,
-        .rtype = &list_type._base,
-      };
-
-      // T@ -> (L@ -> L@)
-      FbleFuncTypeExpr cons_type = {
-        ._base = { .tag = FBLE_FUNC_TYPE_EXPR, .loc = expr->loc, },
-        .arg = &elem_type._base,
-        .rtype = &cons_type_inner._base,
-      };
-
-      inner_args[0].type = &cons_type._base;
-      inner_args[0].name = cons_name;
-
-      FbleName nil_name = {
-        .name = "nil",
-        .space = FBLE_NORMAL_NAME_SPACE,
-        .loc = expr->loc,
-      };
-
-      FbleVarExpr nil = {
-        ._base = { .tag = FBLE_VAR_EXPR, .loc = expr->loc, },
-        .var = nil_name,
-      };
-
-      inner_args[1].type = &list_type._base;
-      inner_args[1].name = nil_name;
-
-      FbleMiscApplyExpr applys[list_expr->args.size];
-      FbleExpr* all_args[list_expr->args.size * 2];
-      for (size_t i = 0; i < list_expr->args.size; ++i) {
-        applys[i]._base.tag = FBLE_MISC_APPLY_EXPR;
-        applys[i]._base.loc = expr->loc;
-        applys[i].misc = &cons._base;
-        applys[i].args.size = 2;
-        applys[i].args.xs = all_args + 2 * i;
-
-        applys[i].args.xs[0] = &arg_values[i]._base;
-        applys[i].args.xs[1] = (i + 1 < list_expr->args.size) ? &applys[i+1]._base : &nil._base;
-      }
-
-      FbleFuncValueExpr inner_func = {
-        ._base = { .tag = FBLE_FUNC_VALUE_EXPR, .loc = expr->loc },
-        .args = { .size = 2, .xs = inner_args },
-        .body = &applys[0]._base,
-      };
-
-      FblePolyExpr inner_poly = {
-        ._base = { .tag = FBLE_POLY_EXPR, .loc = expr->loc },
-        .arg = {
-          .kind = &basic_kind,
-          .name = list_type_name,
-        },
-        .body = &inner_func._base,
-      }; 
-
-      FbleField outer_args[list_expr->args.size];
-      for (size_t i = 0; i < list_expr->args.size; ++i) {
-        outer_args[i].type = &elem_type._base;
-        outer_args[i].name = arg_names[i];
-      }
-
-      FbleFuncValueExpr outer_func = {
-        ._base = { .tag = FBLE_FUNC_VALUE_EXPR, .loc = expr->loc },
-        .args = { .size = list_expr->args.size, .xs = outer_args },
-        .body = &inner_poly._base,
-      };
-
-      FblePolyExpr outer_poly = {
-        ._base = { .tag = FBLE_POLY_EXPR, .loc = expr->loc },
-        .arg = {
-          .kind = &basic_kind,
-          .name = elem_type_name,
-        },
-        .body = &outer_func._base,
-      }; 
-
       FbleTypeofExpr typeof_elem = {
         ._base = { .tag = FBLE_TYPEOF_EXPR, .loc = expr->loc },
         .expr = list_expr->args.xs[0],
       };
-
-      FblePolyApplyExpr apply_type = {
-        ._base = { .tag = FBLE_POLY_APPLY_EXPR, .loc = expr->loc },
-        .poly = &outer_poly._base,
-        .arg = &typeof_elem._base,
-      };
-
-      FbleMiscApplyExpr apply_elems = {
-        ._base = { .tag = FBLE_MISC_APPLY_EXPR, .loc = expr->loc },
-        .misc = &apply_type._base,
-        .args = list_expr->args,
-      };
-
-      Type* result = CompileExpr(arena, blocks, name, exit, vars, &apply_elems._base, instrs, time);
-
-      for (size_t i = 0; i < list_expr->args.size; i++) {
-        FbleFree(arena_, (void*)arg_names[i].name);
-      }
-      return result;
+      return CompileList(arena, blocks, name, exit, vars, expr->loc, &typeof_elem._base, list_expr->args, instrs, time);
     }
 
     case FBLE_LITERAL_EXPR: {
@@ -3204,6 +3042,212 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
   UNREACHABLE("should already have returned");
   return NULL;
+}
+
+// CompileList --
+//   Type check and compile a list expression. Returns the type of the
+//   expression and generates instructions to compute the value of that
+//   expression at runtime.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   blocks - the vector of block locations to populate.
+//   name - a sequence of names describing the current location in the code.
+//          Used for naming profiling blocks.
+//   exit - if true, generate instructions to exit the current scope when done.
+//   vars - the list of variables in scope.
+//   loc - the location of the list expression.
+//   type - the expected type of the list elements.
+//   args - the elements of the list expression to compile.
+//   instrs - vector of instructions to append new instructions to.
+//   time - output var tracking the time required to execute the compiled block.
+//
+// Results:
+//   The type of the expression, or NULL if the expression is not well typed.
+//
+// Side effects:
+//   Appends blocks to 'blocks' with compiled block information.
+//   Appends instructions to 'instrs' for executing the given expression.
+//   There is no gaurentee about what instructions have been appended to
+//   'instrs' if the expression fails to compile.
+//   Prints a message to stderr if the expression fails to compile.
+//   Allocates a reference-counted type that must be freed using
+//   TypeRelease when it is no longer needed.
+//   Increments 'time' by the amount of time required to execute this
+//   expression.
+static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs, size_t* time)
+{
+  // The goal is to desugar a list expression [a, b, c, d] into the
+  // following expression:
+  // <@ T@>(T@ x, T@ x1, T@ x2, T@ x3)<@ L@>((T@, L@){L@;} cons, L@ nil) {
+  //   cons(x, cons(x1, cons(x2, cons(x3, nil))));
+  // }<t@>(a, b, c, d)
+  //
+  // But if there are zero args, we'll instead generate:
+  // <@ T@><@ L@>((T@, L@){L@;} cons, L@ nil) {
+  //   nil;
+  // }<t@>
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleKind basic_kind = { .tag = FBLE_BASIC_KIND, .loc = loc, };
+
+  FbleName elem_type_name = {
+    .name = "T",
+    .space = FBLE_TYPE_NAME_SPACE,
+    .loc = loc,
+  };
+
+  FbleVarExpr elem_type = {
+    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
+    .var = elem_type_name,
+  };
+
+  // Generate unique names for the variables x, x0, x1, ...
+  size_t num_digits = 0;
+  for (size_t x = args.size; x > 0; x /= 10) {
+    num_digits++;
+  }
+
+  FbleName arg_names[args.size];
+  FbleVarExpr arg_values[args.size];
+  for (size_t i = 0; i < args.size; ++i) {
+    char* name = FbleArrayAlloc(arena_, char, num_digits + 2);
+    name[0] = 'x';
+    name[num_digits+1] = '\0';
+    for (size_t j = 0, x = i; j < num_digits; j++, x /= 10) {
+      name[num_digits - j] = (x % 10) + '0';
+    }
+    arg_names[i].name = name;
+    arg_names[i].space = FBLE_NORMAL_NAME_SPACE;
+    arg_names[i].loc = loc;
+
+    arg_values[i]._base.tag = FBLE_VAR_EXPR;
+    arg_values[i]._base.loc = loc;
+    arg_values[i].var = arg_names[i];
+  }
+
+  FbleName list_type_name = {
+    .name = "L",
+    .space = FBLE_TYPE_NAME_SPACE,
+    .loc = loc,
+  };
+
+  FbleVarExpr list_type = {
+    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
+    .var = list_type_name,
+  };
+
+  FbleField inner_args[2];
+  FbleName cons_name = {
+    .name = "cons",
+    .space = FBLE_NORMAL_NAME_SPACE,
+    .loc = loc,
+  };
+
+  FbleVarExpr cons = {
+    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
+    .var = cons_name,
+  };
+
+  // L@ -> L@
+  FbleFuncTypeExpr cons_type_inner = {
+    ._base = { .tag = FBLE_FUNC_TYPE_EXPR, .loc = loc, },
+    .arg = &list_type._base,
+    .rtype = &list_type._base,
+  };
+
+  // T@ -> (L@ -> L@)
+  FbleFuncTypeExpr cons_type = {
+    ._base = { .tag = FBLE_FUNC_TYPE_EXPR, .loc = loc, },
+    .arg = &elem_type._base,
+    .rtype = &cons_type_inner._base,
+  };
+
+  inner_args[0].type = &cons_type._base;
+  inner_args[0].name = cons_name;
+
+  FbleName nil_name = {
+    .name = "nil",
+    .space = FBLE_NORMAL_NAME_SPACE,
+    .loc = loc,
+  };
+
+  FbleVarExpr nil = {
+    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
+    .var = nil_name,
+  };
+
+  inner_args[1].type = &list_type._base;
+  inner_args[1].name = nil_name;
+
+  FbleMiscApplyExpr applys[args.size];
+  FbleExpr* all_args[args.size * 2];
+  for (size_t i = 0; i < args.size; ++i) {
+    applys[i]._base.tag = FBLE_MISC_APPLY_EXPR;
+    applys[i]._base.loc = loc;
+    applys[i].misc = &cons._base;
+    applys[i].args.size = 2;
+    applys[i].args.xs = all_args + 2 * i;
+
+    applys[i].args.xs[0] = &arg_values[i]._base;
+    applys[i].args.xs[1] = (i + 1 < args.size) ? &applys[i+1]._base : &nil._base;
+  }
+
+  FbleFuncValueExpr inner_func = {
+    ._base = { .tag = FBLE_FUNC_VALUE_EXPR, .loc = loc },
+    .args = { .size = 2, .xs = inner_args },
+    .body = (args.size == 0) ? &nil._base : &applys[0]._base,
+  };
+
+  FblePolyExpr inner_poly = {
+    ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
+    .arg = {
+      .kind = &basic_kind,
+      .name = list_type_name,
+    },
+    .body = &inner_func._base,
+  }; 
+
+  FbleField outer_args[args.size];
+  for (size_t i = 0; i < args.size; ++i) {
+    outer_args[i].type = &elem_type._base;
+    outer_args[i].name = arg_names[i];
+  }
+
+  FbleFuncValueExpr outer_func = {
+    ._base = { .tag = FBLE_FUNC_VALUE_EXPR, .loc = loc },
+    .args = { .size = args.size, .xs = outer_args },
+    .body = &inner_poly._base,
+  };
+
+  FblePolyExpr outer_poly = {
+    ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
+    .arg = {
+      .kind = &basic_kind,
+      .name = elem_type_name,
+    },
+    .body = (args.size == 0) ? &inner_poly._base : &outer_func._base,
+  }; 
+
+  FblePolyApplyExpr apply_type = {
+    ._base = { .tag = FBLE_POLY_APPLY_EXPR, .loc = loc },
+    .poly = &outer_poly._base,
+    .arg = type,
+  };
+
+  FbleMiscApplyExpr apply_elems = {
+    ._base = { .tag = FBLE_MISC_APPLY_EXPR, .loc = loc },
+    .misc = &apply_type._base,
+    .args = args,
+  };
+
+  FbleExpr* expr = (args.size == 0) ? &apply_type._base : &apply_elems._base;
+
+  Type* result = CompileExpr(arena, blocks, name, exit, vars, expr, instrs, time);
+
+  for (size_t i = 0; i < args.size; i++) {
+    FbleFree(arena_, (void*)arg_names[i].name);
+  }
+  return result;
 }
 
 // CompileExprNoInstrs --
