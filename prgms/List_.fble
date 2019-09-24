@@ -25,10 +25,11 @@
     S@<T@>(nil: Unit);
   };
 
-  <@ T@>(<@ L@>((T@, L@){L@;}, L@){L@;}){S@<T@>;} S =
-    <@ T@>(<@ L@>((T@, L@){L@;}, L@){L@;} mkList) {
-      mkList<S@<T@>>(ConsS<T@>, S0<T@>);
-    };
+  <@,@>@ List@ = <@ T@><@ L@>((T@, L@){L@;}, L@){L@;};
+
+  <@ T@>(List@<T@>){S@<T@>;} S = <@ T@>(List@<T@> mkList) {
+    mkList<S@<T@>>(ConsS<T@>, S0<T@>);
+  };
 
   # InitP - Return all but the last element in 'list'.
   <@ T@>(P@<T@>){S@<T@>;} InitP = <@ T@>(P@<T@> list) {
@@ -90,7 +91,7 @@
     And(p.head, AndS(p.tail));
   };
 
-  @(P@, S@,
+  @(P@, S@, List@,
     HeadS, ConsS, Append, S0, S,
     InitP, LastP, Concat, MapS, MapP, SeqS, SeqP,
     AndS, AndP, SortS, SortP);

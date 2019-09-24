@@ -1,12 +1,10 @@
 @(Unit_, Bool_, Char_, List_, String_, Test) {
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, True, False, And); };
-  Char_ { @(Char@, Chars); };
+  Char_ { @(Char@); };
   List_ { @(S@, P@, S0, S, Append, SortS); };
   String_ { @(Str@, Str); };
   Test { @(TestResult@, Test@); };
-
-  Str@ prefix = { Chars; Str([S, t, d, L, i, b, period]); };
 
   @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 
@@ -38,7 +36,7 @@
     };
 
   Test@ SortTest = Test@(
-    Append<Char@>(prefix, { Chars; Str([S, o, r, t]); }), $({
+    Str(Char@|'StdLib.Sort'), $({
       S@<Elem@> unsorted = S<Elem@>([
         Elem@(D: Unit),
         Elem@(A: Unit),
@@ -56,7 +54,7 @@
       S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
       ?(SEq<Elem@>(ElemEq, wnt, got);
         true: TestResult@(pass: Unit),
-        false: TestResult@(fail: { Chars; Str([f, a, i, l, e, d]); }));
+        false: TestResult@(fail: Str(Char@|failed)));
   }));
 
   @(Tests: S<Test@>([SortTest]));

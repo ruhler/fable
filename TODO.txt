@@ -12,6 +12,7 @@
 * [lang] Draft revision of type vs. normal name. Test and implement.
 * [prgm] Game of Life
 
+* [clean] PrintKind for <@>@ shows up as \<@; @>. Fix that.
 * [clean] Nicer way of printing error messages in compiler
  - particularly those that include names and types inside of them.
 * [test] Rename tests to match new spec, and clean up tests.

@@ -1,14 +1,12 @@
 @(Unit_, Bool_, Char_, List_, String_) {
   Unit_ { @(Unit@, Unit); };
   Bool_ { @(Bool@, True, False, AndMonoid); };
-  Char_ { @(Char@, Chars); };
+  Char_ { @(Char@, newline); };
   List_ { @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
   String_ { @(Str@, Str); };
 
   @ TestResult@ = +(Unit@ pass, Str@ fail);
   @ Test@ = *(Str@ name, TestResult@! test);
-
-  Str@ failed = { Chars; Str([F, A, I, L, E, D]); };
 
   # Print a string to the given output stream.
   (Str@+, Str@){ Unit@!; } Print = (Str@+ out, Str@ str) {
@@ -18,7 +16,7 @@
 
   # Print a string and newline to the given output stream.
   (Str@+, Str@){ Unit@!; } PrintLn = (Str@+ out, Str@ str) {
-    Str@ _ := out(Append<Char@>(str, Str([Chars.nl])));
+    Str@ _ := out(Append<Char@>(str, Str([newline])));
     $(Unit);
   };
 
@@ -34,9 +32,7 @@
             },
             fail: {
               Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
-                Str([Chars.colon, Chars.space]),
-                failed,
-                Str([Chars.colon, Chars.space]),
+                Str(Char@|': FAILED: '),
                 tr.fail])));
               $(False);
             });
@@ -44,18 +40,12 @@
   };
 
   S@<Test@> Tests = {
-    Str@ prefix = { Chars; Str([T, e, s, t, period]); };
     (Str@){Str@;} name = (Str@ nm) {
-      Append<Char@>(prefix, nm);
+      Append<Char@>(Str(Char@|'Test.'), nm);
     };
 
-    Test@ pass = Test@(
-      name({ Chars; Str([p, a, s, s]); }),
-      $(TestResult@(pass: Unit)));
-
-    Test@ fail = Test@(
-      name({ Chars; Str([f, a, i, l]); }),
-      $(TestResult@(fail: failed)));
+    Test@ pass = Test@(name(Str(Char@|pass)), $(TestResult@(pass: Unit)));
+    Test@ fail = Test@(name(Str(Char@|fail)), $(TestResult@(fail: Str(Char@|FAILED))));
 
     S<Test@>([pass]);
   };
