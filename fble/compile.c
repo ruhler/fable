@@ -2970,7 +2970,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       FbleExprV args = { .size = n, .xs = xs, };
-      CompileList(arena, blocks, name, exit, vars, literal->word_loc, literal->type, args, instrs, time);
+      return CompileList(arena, blocks, name, exit, vars, literal->word_loc, literal->type, args, instrs, time);
     }
 
     case FBLE_STRUCT_EVAL_EXPR: {
