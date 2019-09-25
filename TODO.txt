@@ -1,5 +1,4 @@
 * [prgm] Switch to using literals
- - For strings in testing
  - For integers in md5 and elsewhere
 * [lang] Document and test that variable declarations shadow other variables.
 

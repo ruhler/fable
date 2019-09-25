@@ -1,21 +1,19 @@
 @(Unit_, Maybe_, Char_, List_, String_, Bits_, Hex_, Md5_, Test) {
   Unit_ { @(Unit@, Unit); };
   Maybe_ { @(Maybe@); };
-  Char_ { @(Char@, Chars); };
+  Char_ { @(Char@); };
   List_ { @(P@, S@, ConsS, S0, S, Append, Concat); };
-  String_ { @(Str@, Str); };
+  String_ { @(Str@, CharLit@, Str); };
   Bits_.Bit8 { @(Bit8@, H2); };
   Hex_ { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
   Test { @(TestResult@, Test@); };
   Md5_ { @(Md5Hash@, Md5, Eq); };
 
-  Str@ prefix = { Chars; Str([M, d, 5, period]); };
-
   (Hex@){Char@;} Hex2Char = (Hex@ h) {
-    ?(h; 0: Chars.0, 1: Chars.1, 2: Chars.2, 3: Chars.3,
-         4: Chars.4, 5: Chars.5, 6: Chars.6, 7: Chars.7,
-         8: Chars.8, 9: Chars.9, A: Chars.A, B: Chars.B,
-         C: Chars.C, D: Chars.D, E: Chars.E, F: Chars.F);
+    ?(h; 0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
+         4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),
+         8: Char@(8: Unit), 9: Char@(9: Unit), A: Char@(A: Unit), B: Char@(B: Unit),
+         C: Char@(C: Unit), D: Char@(D: Unit), E: Char@(E: Unit), F: Char@(F: Unit));
   };
 
   (Md5Hash@){Str@;} Md5Hash2Str = (Md5Hash@ x) {
@@ -54,9 +52,9 @@
         true: TestResult@(pass: Unit),
         false: {
           Str@ msg = Concat<Char@>(S<Str@>([
-            { Chars; Str([e, x, p, e, c, t, e, d, colon, space]); },
+            Str(Char@|'expected: '),
             Md5Hash2Str(wnt),
-            { Chars; Str([space, b, u, t, space, g, o, t, colon, space]); },
+            Str(Char@|' but got: '),
             Md5Hash2Str(got)]));
           TestResult@(fail: msg);
         });
@@ -66,16 +64,15 @@
       ConsS<Bit8@>(H2(hi, lo), l);
     };
 
-  (Str@, Md5Hash@, S@<Bit8@>){Test@;} TestStr = (Str@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
-    Test@(Append<Char@>(prefix, name), {
+  (CharLit@, Md5Hash@, S@<Bit8@>){Test@;} TestStr = (CharLit@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
+    Test@(Append<Char@>(Str(Char@|'Md5.'), Str(name)), {
             Md5Hash@ got := Md5Str(bytes);
             $(AssertEq(wnt, got));
           });
   };
 
   S@<Test@> Tests = {
-    Test@ empty = TestStr
-      ({ Chars; Str([e, m, p, t, y]); })
+    Test@ empty = TestStr(Char@|empty)
       (Md5Hash@(
         d, 4, 1, d, 8, c, d, 9,
         8, f, 0, 0, b, 2, 0, 4,
@@ -83,8 +80,7 @@
         e, c, f, 8, 4, 2, 7, e))
       (S0<Bit8@>);
 
-    Test@ _a = TestStr
-      ({ Chars; Str([a]); })
+    Test@ _a = TestStr(Char@|a)
       (Md5Hash@(
         0, c, c, 1, 7, 5, b, 9,
         c, 0, f, 1, b, 6, a, 8,
@@ -93,8 +89,7 @@
       (L(6, 1) # 'a'
         (S0<Bit8@>));
 
-    Test@ abc = TestStr
-      ({ Chars; Str([a, b, c]); })
+    Test@ abc = TestStr(Char@|abc)
       (Md5Hash@(
         9, 0, 0, 1, 5, 0, 9, 8,
         3, c, d, 2, 4, f, b, 0,
@@ -104,8 +99,7 @@
       (L(6, 1, L(6, 2, L(6, 3)
         (S0<Bit8@>))));
 
-    Test@ message = TestStr
-      ({ Chars; Str([m, e, s, s, a, g, e]); })
+    Test@ message = TestStr(Char@|message)
       (Md5Hash@(
         f, 9, 6, b, 6, 9, 7, d,
         7, c, b, 7, 9, 3, 8, d,
@@ -118,8 +112,7 @@
       (L(7, 3, L(7, 4)
         (S0<Bit8@>)))))))))))))));
 
-    Test@ a_to_z = TestStr
-      ({ Chars; Str([a, underscore, t, o, underscore, z]); })
+    Test@ a_to_z = TestStr(Char@|a_to_z)
       (Md5Hash@(
         c, 3, f, c, d, 3, d, 7,
         6, 1, 9, 2, e, 4, 0, 0,
@@ -136,8 +129,7 @@
         (S0<Bit8@>))))))))))))))))))))
       )))))));
 
-    Test@ A_to_9 = TestStr
-      ({ Chars; Str([A, underscore, t, o, underscore, 9]); })
+    Test@ A_to_9 = TestStr(Char@|A_to_9)
       (Md5Hash@(
         d, 1, 7, 4, a, b, 9, 8,
         d, 2, 7, 7, d, 9, f, 5,
@@ -165,8 +157,7 @@
       ))))))))))))))))))))))))))))))))
       )))))))))));
 
-    Test@ 1_to_0 = TestStr
-      ({ Chars; Str([1, underscore, t, o, underscore, 0]); })
+    Test@ 1_to_0 = TestStr(Char@|1_to_0)
       (Md5Hash@(
         5, 7, e, d, f, 4, a, 2,
         2, b, e, 3, c, 9, 5, 5,
