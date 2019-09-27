@@ -101,116 +101,63 @@
         });
   };
 
-  (Hex@, Hex@, S@<Bit8@>){S@<Bit8@>;} L = (Hex@ hi, Hex@ lo, S@<Bit8@> l) {
-      ConsS<Bit8@>(H2(hi, lo), l);
-    };
-
-  (CharLit@, List@<Hex@>, S@<Bit8@>){Test@;} TestStr = (CharLit@ name, List@<Hex@> wnt, S@<Bit8@> bytes) {
+  (S@<Hex@>){S@<Bit8@>;} Hex2Bytes = (S@<Hex@> hex) {
+    ?(hex;
+      cons: ConsS<Bit8@>(
+              H2(hex.cons.head, hex.cons.tail.cons.head),
+              Hex2Bytes(hex.cons.tail.cons.tail)),
+      nil: S0<Bit8@>);
+  };
+        
+  (CharLit@, List@<Hex@>, List@<Hex@>){Test@;} TestStr = (CharLit@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
     Test@(Append<Char@>(Str(Char@|'Md5.'), Str(name)), {
-            Md5Hash@ got := Md5Str(bytes);
+            Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
             $(AssertEq(Str2Md5Hash(wnt), got));
           });
   };
 
   S@<Test@> Tests = {
+    # ""
     Test@ empty = TestStr(
       Char@|empty,
-      Hex@|D41D8CD98F00B204E9800998ECF8427E)
-      (S0<Bit8@>);
+      Hex@|D41D8CD98F00B204E9800998ECF8427E,
+      Hex@|'');
 
+    # "a"
     Test@ _a = TestStr(
       Char@|a,
-      Hex@|0CC175B9C0F1B6A831C399E269772661)
-      (L(6, 1) # 'a'
-        (S0<Bit8@>));
+      Hex@|0CC175B9C0F1B6A831C399E269772661,
+      Hex@|61); 
 
+    # "abc"
     Test@ abc = TestStr(
       Char@|abc,
-      Hex@|900150983CD24FB0D6963F7D28E17F72)
-        # "abc"
-      (L(6, 1, L(6, 2, L(6, 3)
-        (S0<Bit8@>))));
+      Hex@|900150983CD24FB0D6963F7D28E17F72,
+      Hex@|616263);
 
+    # "message digest"
     Test@ message = TestStr(
       Char@|message,
-      Hex@|F96B697D7CB7938D525A2F31AAF161D0)
-        # "message digest"
-      (L(6, d, L(6, 5, L(7, 3, L(7, 3)
-      (L(6, 1, L(6, 7, L(6, 5, L(2, 0)
-      (L(6, 4, L(6, 9, L(6, 7, L(6, 5)
-      (L(7, 3, L(7, 4)
-        (S0<Bit8@>)))))))))))))));
+      Hex@|F96B697D7CB7938D525A2F31AAF161D0,
+      Hex@|6D65737361676520646967657374);
 
+    # "abcdefghijklmnopqrstuvwxyz"
     Test@ a_to_z = TestStr(
       Char@|a_to_z,
-      Hex@|C3FCD3D76192E4007DFB496CCA67E13B)
-        # "abcdefghijklmnopqrstuvwxyz"
-      (L(6, 1, L(6, 2, L(6, 3, L(6, 4)
-      (L(6, 5, L(6, 6, L(6, 7, L(6, 8)
-      (L(6, 9, L(6, a, L(6, b, L(6, c)
-      (L(6, d, L(6, e, L(6, f, L(7, 0)
-      (L(7, 1, L(7, 2, L(7, 3, L(7, 4)
-      (L(7, 5, L(7, 6, L(7, 7, L(7, 8)
-      (L(7, 9, L(7, a)
-        (S0<Bit8@>))))))))))))))))))))
-      )))))));
+      Hex@|C3FCD3D76192E4007DFB496CCA67E13B,
+      Hex@|6162636465666768696A6B6C6D6E6F707172737475767778797A);
 
+    # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
     Test@ A_to_9 = TestStr(
       Char@|A_to_9,
-      Hex@|D174AB98D277D9F5A5611C2C9F419D9F)
-        # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
-      (L(4, 1, L(4, 2, L(4, 3, L(4, 4)
-      (L(4, 5, L(4, 6, L(4, 7, L(4, 8)
-      (L(4, 9, L(4, a, L(4, b, L(4, c)
-      (L(4, d, L(4, e, L(4, f, L(5, 0)
-      (L(5, 1, L(5, 2, L(5, 3, L(5, 4)
-      (L(5, 5, L(5, 6, L(5, 7, L(5, 8)
-      (L(5, 9, L(5, a)
-      (L(6, 1, L(6, 2, L(6, 3, L(6, 4)
-      (L(6, 5, L(6, 6, L(6, 7, L(6, 8)
-      (L(6, 9, L(6, a, L(6, b, L(6, c)
-      (L(6, d, L(6, e, L(6, f, L(7, 0)
-      (L(7, 1, L(7, 2, L(7, 3, L(7, 4)
-      (L(7, 5, L(7, 6, L(7, 7, L(7, 8)
-      (L(7, 9, L(7, a)
-      (L(3, 0, L(3, 1, L(3, 2, L(3, 3)
-      (L(3, 4, L(3, 5, L(3, 6, L(3, 7)
-      (L(3, 8, L(3, 9)
-        (S0<Bit8@>))))))))))))))))))))
-      ))))))))))))))))))))))))))))))))
-      )))))))))));
+      Hex@|D174AB98D277D9F5A5611C2C9F419D9F,
+      Hex@|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839);
 
+    # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
     Test@ 1_to_0 = TestStr(
       Char@|1_to_0,
-      Hex@|57EDF4A22BE3C955AC49DA2E2107B67A)
-        # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-      (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
-      (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
-      (L(3, 9, L(3, 0)
-        (S0<Bit8@>))))))))))))))))))))
-      ))))))))))))))))))))))))))))))))
-      )))))))))))))))))))))))))))));
+      Hex@|57EDF4A22BE3C955AC49DA2E2107B67A,
+      Hex@|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930);
 
     S<Test@>([empty, _a, abc, message, a_to_z, A_to_9, 1_to_0]);
   };

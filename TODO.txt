@@ -1,5 +1,3 @@
-* [prgm] Switch to using literals
- - For integers in md5, md5 tests, and elsewhere
 * [lang] Document and test that variable declarations shadow other variables.
 
 * [prgm] TicTacToe cleanup
