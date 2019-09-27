@@ -2,7 +2,7 @@
   Unit_ { @(Unit@, Unit); };
   Maybe_ { @(Maybe@); };
   Bool_ { @(Bool@, True, False, And); };
-  List_ { @(SL@: S@, PL@: P@); };
+  List_ { @(SL@: S@, PL@: P@, List@, SL: S); };
   Bits_.Bit { @(Bit@); };
   Bits_.Bit4 { @(Bit4@); };
   Bits_.Bit8 { @(Bit8@, H2); };
@@ -13,75 +13,83 @@
   Hex_ { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
 
   # Construct a Bit32 in hex, with high-order byte first.
-  (Hex@, Hex@, Hex@, Hex@, Hex@, Hex@, Hex@, Hex@){Bit32@;} H8 =
-    (Hex@ 7, Hex@ 6, Hex@ 5, Hex@ 4, Hex@ 3, Hex@ 2, Hex@ 1, Hex@ 0) {
+  (List@<Hex@>){Bit32@;} H8 = (List@<Hex@> list) {
+      SL@<Hex@> s = SL<Hex@>(list);
+      Hex@ 7 = s.cons.head;
+      Hex@ 6 = s.cons.tail.cons.head;
+      Hex@ 5 = s.cons.tail.cons.tail.cons.head;
+      Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
+      Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+      Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+      Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+      Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
       Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
     };
 
-  Bit32@ t01 = H8(d, 7, 6, a, a, 4, 7, 8);
-  Bit32@ t02 = H8(e, 8, c, 7, b, 7, 5, 6);
-  Bit32@ t03 = H8(2, 4, 2, 0, 7, 0, d, b);
-  Bit32@ t04 = H8(c, 1, b, d, c, e, e, e);
-  Bit32@ t05 = H8(f, 5, 7, c, 0, f, a, f);
-  Bit32@ t06 = H8(4, 7, 8, 7, c, 6, 2, a);
-  Bit32@ t07 = H8(a, 8, 3, 0, 4, 6, 1, 3);
-  Bit32@ t08 = H8(f, d, 4, 6, 9, 5, 0, 1);
-  Bit32@ t09 = H8(6, 9, 8, 0, 9, 8, d, 8);
-  Bit32@ t10 = H8(8, b, 4, 4, f, 7, a, f);
-  Bit32@ t11 = H8(f, f, f, f, 5, b, b, 1);
-  Bit32@ t12 = H8(8, 9, 5, c, d, 7, b, e);
-  Bit32@ t13 = H8(6, b, 9, 0, 1, 1, 2, 2);
-  Bit32@ t14 = H8(f, d, 9, 8, 7, 1, 9, 3);
-  Bit32@ t15 = H8(a, 6, 7, 9, 4, 3, 8, e);
-  Bit32@ t16 = H8(4, 9, b, 4, 0, 8, 2, 1);
-  Bit32@ t17 = H8(f, 6, 1, e, 2, 5, 6, 2);
-  Bit32@ t18 = H8(c, 0, 4, 0, b, 3, 4, 0);
-  Bit32@ t19 = H8(2, 6, 5, e, 5, a, 5, 1);
-  Bit32@ t20 = H8(e, 9, b, 6, c, 7, a, a);
-  Bit32@ t21 = H8(d, 6, 2, f, 1, 0, 5, d);
-  Bit32@ t22 = H8(0, 2, 4, 4, 1, 4, 5, 3);
-  Bit32@ t23 = H8(d, 8, a, 1, e, 6, 8, 1);
-  Bit32@ t24 = H8(e, 7, d, 3, f, b, c, 8);
-  Bit32@ t25 = H8(2, 1, e, 1, c, d, e, 6);
-  Bit32@ t26 = H8(c, 3, 3, 7, 0, 7, d, 6);
-  Bit32@ t27 = H8(f, 4, d, 5, 0, d, 8, 7);
-  Bit32@ t28 = H8(4, 5, 5, a, 1, 4, e, d);
-  Bit32@ t29 = H8(a, 9, e, 3, e, 9, 0, 5);
-  Bit32@ t30 = H8(f, c, e, f, a, 3, f, 8);
-  Bit32@ t31 = H8(6, 7, 6, f, 0, 2, d, 9);
-  Bit32@ t32 = H8(8, d, 2, a, 4, c, 8, a);
-  Bit32@ t33 = H8(f, f, f, a, 3, 9, 4, 2);
-  Bit32@ t34 = H8(8, 7, 7, 1, f, 6, 8, 1);
-  Bit32@ t35 = H8(6, d, 9, d, 6, 1, 2, 2);
-  Bit32@ t36 = H8(f, d, e, 5, 3, 8, 0, c);
-  Bit32@ t37 = H8(a, 4, b, e, e, a, 4, 4);
-  Bit32@ t38 = H8(4, b, d, e, c, f, a, 9);
-  Bit32@ t39 = H8(f, 6, b, b, 4, b, 6, 0);
-  Bit32@ t40 = H8(b, e, b, f, b, c, 7, 0);
-  Bit32@ t41 = H8(2, 8, 9, b, 7, e, c, 6);
-  Bit32@ t42 = H8(e, a, a, 1, 2, 7, f, a);
-  Bit32@ t43 = H8(d, 4, e, f, 3, 0, 8, 5);
-  Bit32@ t44 = H8(0, 4, 8, 8, 1, d, 0, 5);
-  Bit32@ t45 = H8(d, 9, d, 4, d, 0, 3, 9);
-  Bit32@ t46 = H8(e, 6, d, b, 9, 9, e, 5);
-  Bit32@ t47 = H8(1, f, a, 2, 7, c, f, 8);
-  Bit32@ t48 = H8(c, 4, a, c, 5, 6, 6, 5);
-  Bit32@ t49 = H8(f, 4, 2, 9, 2, 2, 4, 4);
-  Bit32@ t50 = H8(4, 3, 2, a, f, f, 9, 7);
-  Bit32@ t51 = H8(a, b, 9, 4, 2, 3, a, 7);
-  Bit32@ t52 = H8(f, c, 9, 3, a, 0, 3, 9);
-  Bit32@ t53 = H8(6, 5, 5, b, 5, 9, c, 3);
-  Bit32@ t54 = H8(8, f, 0, c, c, c, 9, 2);
-  Bit32@ t55 = H8(f, f, e, f, f, 4, 7, d);
-  Bit32@ t56 = H8(8, 5, 8, 4, 5, d, d, 1);
-  Bit32@ t57 = H8(6, f, a, 8, 7, e, 4, f);
-  Bit32@ t58 = H8(f, e, 2, c, e, 6, e, 0);
-  Bit32@ t59 = H8(a, 3, 0, 1, 4, 3, 1, 4);
-  Bit32@ t60 = H8(4, e, 0, 8, 1, 1, a, 1);
-  Bit32@ t61 = H8(f, 7, 5, 3, 7, e, 8, 2);
-  Bit32@ t62 = H8(b, d, 3, a, f, 2, 3, 5);
-  Bit32@ t63 = H8(2, a, d, 7, d, 2, b, b);
-  Bit32@ t64 = H8(e, b, 8, 6, d, 3, 9, 1);
+  Bit32@ t01 = H8(Hex@|D76AA478);
+  Bit32@ t02 = H8(Hex@|E8C7B756);
+  Bit32@ t03 = H8(Hex@|242070DB);
+  Bit32@ t04 = H8(Hex@|C1BDCEEE);
+  Bit32@ t05 = H8(Hex@|F57C0FAF);
+  Bit32@ t06 = H8(Hex@|4787C62A);
+  Bit32@ t07 = H8(Hex@|A8304613);
+  Bit32@ t08 = H8(Hex@|FD469501);
+  Bit32@ t09 = H8(Hex@|698098D8);
+  Bit32@ t10 = H8(Hex@|8B44F7AF);
+  Bit32@ t11 = H8(Hex@|FFFF5BB1);
+  Bit32@ t12 = H8(Hex@|895CD7BE);
+  Bit32@ t13 = H8(Hex@|6B901122);
+  Bit32@ t14 = H8(Hex@|FD987193);
+  Bit32@ t15 = H8(Hex@|A679438E);
+  Bit32@ t16 = H8(Hex@|49B40821);
+  Bit32@ t17 = H8(Hex@|F61E2562);
+  Bit32@ t18 = H8(Hex@|C040B340);
+  Bit32@ t19 = H8(Hex@|265E5A51);
+  Bit32@ t20 = H8(Hex@|E9B6C7AA);
+  Bit32@ t21 = H8(Hex@|D62F105D);
+  Bit32@ t22 = H8(Hex@|02441453);
+  Bit32@ t23 = H8(Hex@|D8A1E681);
+  Bit32@ t24 = H8(Hex@|E7D3FBC8);
+  Bit32@ t25 = H8(Hex@|21E1CDE6);
+  Bit32@ t26 = H8(Hex@|C33707D6);
+  Bit32@ t27 = H8(Hex@|F4D50D87);
+  Bit32@ t28 = H8(Hex@|455A14ED);
+  Bit32@ t29 = H8(Hex@|A9E3E905);
+  Bit32@ t30 = H8(Hex@|FCEFA3F8);
+  Bit32@ t31 = H8(Hex@|676F02D9);
+  Bit32@ t32 = H8(Hex@|8D2A4C8A);
+  Bit32@ t33 = H8(Hex@|FFFA3942);
+  Bit32@ t34 = H8(Hex@|8771F681);
+  Bit32@ t35 = H8(Hex@|6D9D6122);
+  Bit32@ t36 = H8(Hex@|FDE5380C);
+  Bit32@ t37 = H8(Hex@|A4BEEA44);
+  Bit32@ t38 = H8(Hex@|4BDECFA9);
+  Bit32@ t39 = H8(Hex@|F6BB4B60);
+  Bit32@ t40 = H8(Hex@|BEBFBC70);
+  Bit32@ t41 = H8(Hex@|289B7EC6);
+  Bit32@ t42 = H8(Hex@|EAA127FA);
+  Bit32@ t43 = H8(Hex@|D4EF3085);
+  Bit32@ t44 = H8(Hex@|04881D05);
+  Bit32@ t45 = H8(Hex@|D9D4D039);
+  Bit32@ t46 = H8(Hex@|E6DB99E5);
+  Bit32@ t47 = H8(Hex@|1FA27CF8);
+  Bit32@ t48 = H8(Hex@|C4AC5665);
+  Bit32@ t49 = H8(Hex@|F4292244);
+  Bit32@ t50 = H8(Hex@|432AFF97);
+  Bit32@ t51 = H8(Hex@|AB9423A7);
+  Bit32@ t52 = H8(Hex@|FC93A039);
+  Bit32@ t53 = H8(Hex@|655B59C3);
+  Bit32@ t54 = H8(Hex@|8F0CCC92);
+  Bit32@ t55 = H8(Hex@|FFEFF47D);
+  Bit32@ t56 = H8(Hex@|85845DD1);
+  Bit32@ t57 = H8(Hex@|6FA87E4F);
+  Bit32@ t58 = H8(Hex@|FE2CE6E0);
+  Bit32@ t59 = H8(Hex@|A3014314);
+  Bit32@ t60 = H8(Hex@|4E0811A1);
+  Bit32@ t61 = H8(Hex@|F7537E82);
+  Bit32@ t62 = H8(Hex@|BD3AF235);
+  Bit32@ t63 = H8(Hex@|2AD7D2BB);
+  Bit32@ t64 = H8(Hex@|EB86D391);
 
   @ Md5Hash@ = *(
     Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,
@@ -362,10 +370,10 @@
   ABCD@ ABCD0 = ABCD@(
       # Note: the spec lists these low-order byte first, but H8 takes high
       # order byte first.
-      H8(6, 7, 4, 5, 2, 3, 0, 1),
-      H8(e, f, c, d, a, b, 8, 9),
-      H8(9, 8, b, a, d, c, f, e),
-      H8(1, 0, 3, 2, 5, 4, 7, 6));
+      H8(Hex@|67452301),
+      H8(Hex@|EFCDAB89),
+      H8(Hex@|98BADCFE),
+      H8(Hex@|10325476));
 
   (Bit@, Bit@, Bit@, Bit@){Hex@;} HexFromBits =
     (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
