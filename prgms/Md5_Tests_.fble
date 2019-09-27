@@ -2,7 +2,7 @@
   Unit_ { @(Unit@, Unit); };
   Maybe_ { @(Maybe@); };
   Char_ { @(Char@); };
-  List_ { @(P@, S@, ConsS, S0, S, Append, Concat); };
+  List_ { @(P@, S@, List@, ConsS, S0, S, Append, Concat); };
   String_ { @(Str@, CharLit@, Str); };
   Bits_.Bit8 { @(Bit8@, H2); };
   Hex_ { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
@@ -26,6 +26,47 @@
       Str([Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)]),
       Str([Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)]),
       Str([Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)])]));
+  };
+
+  (List@<Hex@>){Md5Hash@;} Str2Md5Hash = (List@<Hex@> list) {
+    S@<Hex@> s00 = S<Hex@>(list);
+    Hex@ h00 = s00.cons.head; S@<Hex@> s01 = s00.cons.tail;
+    Hex@ h01 = s01.cons.head; S@<Hex@> s02 = s01.cons.tail;
+    Hex@ h02 = s02.cons.head; S@<Hex@> s03 = s02.cons.tail;
+    Hex@ h03 = s03.cons.head; S@<Hex@> s04 = s03.cons.tail;
+    Hex@ h04 = s04.cons.head; S@<Hex@> s05 = s04.cons.tail;
+    Hex@ h05 = s05.cons.head; S@<Hex@> s06 = s05.cons.tail;
+    Hex@ h06 = s06.cons.head; S@<Hex@> s07 = s06.cons.tail;
+    Hex@ h07 = s07.cons.head; S@<Hex@> s08 = s07.cons.tail;
+    Hex@ h08 = s08.cons.head; S@<Hex@> s09 = s08.cons.tail;
+    Hex@ h09 = s09.cons.head; S@<Hex@> s10 = s09.cons.tail;
+    Hex@ h10 = s10.cons.head; S@<Hex@> s11 = s10.cons.tail;
+    Hex@ h11 = s11.cons.head; S@<Hex@> s12 = s11.cons.tail;
+    Hex@ h12 = s12.cons.head; S@<Hex@> s13 = s12.cons.tail;
+    Hex@ h13 = s13.cons.head; S@<Hex@> s14 = s13.cons.tail;
+    Hex@ h14 = s14.cons.head; S@<Hex@> s15 = s14.cons.tail;
+    Hex@ h15 = s15.cons.head; S@<Hex@> s16 = s15.cons.tail;
+    Hex@ h16 = s16.cons.head; S@<Hex@> s17 = s16.cons.tail;
+    Hex@ h17 = s17.cons.head; S@<Hex@> s18 = s17.cons.tail;
+    Hex@ h18 = s18.cons.head; S@<Hex@> s19 = s18.cons.tail;
+    Hex@ h19 = s19.cons.head; S@<Hex@> s20 = s19.cons.tail;
+    Hex@ h20 = s20.cons.head; S@<Hex@> s21 = s20.cons.tail;
+    Hex@ h21 = s21.cons.head; S@<Hex@> s22 = s21.cons.tail;
+    Hex@ h22 = s22.cons.head; S@<Hex@> s23 = s22.cons.tail;
+    Hex@ h23 = s23.cons.head; S@<Hex@> s24 = s23.cons.tail;
+    Hex@ h24 = s24.cons.head; S@<Hex@> s25 = s24.cons.tail;
+    Hex@ h25 = s25.cons.head; S@<Hex@> s26 = s25.cons.tail;
+    Hex@ h26 = s26.cons.head; S@<Hex@> s27 = s26.cons.tail;
+    Hex@ h27 = s27.cons.head; S@<Hex@> s28 = s27.cons.tail;
+    Hex@ h28 = s28.cons.head; S@<Hex@> s29 = s28.cons.tail;
+    Hex@ h29 = s29.cons.head; S@<Hex@> s30 = s29.cons.tail;
+    Hex@ h30 = s30.cons.head; S@<Hex@> s31 = s30.cons.tail;
+    Hex@ h31 = s31.cons.head;
+    Md5Hash@(
+      h00, h01, h02, h03, h04, h05, h06, h07,
+      h08, h09, h10, h11, h12, h13, h14, h15,
+      h16, h17, h18, h19, h20, h21, h22, h23,
+      h24, h25, h26, h27, h28, h29, h30, h31);
   };
 
   # Put all the bytes onto the output port, followed by nothing.
@@ -64,47 +105,35 @@
       ConsS<Bit8@>(H2(hi, lo), l);
     };
 
-  (CharLit@, Md5Hash@, S@<Bit8@>){Test@;} TestStr = (CharLit@ name, Md5Hash@ wnt, S@<Bit8@> bytes) {
+  (CharLit@, List@<Hex@>, S@<Bit8@>){Test@;} TestStr = (CharLit@ name, List@<Hex@> wnt, S@<Bit8@> bytes) {
     Test@(Append<Char@>(Str(Char@|'Md5.'), Str(name)), {
             Md5Hash@ got := Md5Str(bytes);
-            $(AssertEq(wnt, got));
+            $(AssertEq(Str2Md5Hash(wnt), got));
           });
   };
 
   S@<Test@> Tests = {
-    Test@ empty = TestStr(Char@|empty)
-      (Md5Hash@(
-        d, 4, 1, d, 8, c, d, 9,
-        8, f, 0, 0, b, 2, 0, 4,
-        e, 9, 8, 0, 0, 9, 9, 8,
-        e, c, f, 8, 4, 2, 7, e))
+    Test@ empty = TestStr(
+      Char@|empty,
+      Hex@|D41D8CD98F00B204E9800998ECF8427E)
       (S0<Bit8@>);
 
-    Test@ _a = TestStr(Char@|a)
-      (Md5Hash@(
-        0, c, c, 1, 7, 5, b, 9,
-        c, 0, f, 1, b, 6, a, 8,
-        3, 1, c, 3, 9, 9, e, 2,
-        6, 9, 7, 7, 2, 6, 6, 1))
+    Test@ _a = TestStr(
+      Char@|a,
+      Hex@|0CC175B9C0F1B6A831C399E269772661)
       (L(6, 1) # 'a'
         (S0<Bit8@>));
 
-    Test@ abc = TestStr(Char@|abc)
-      (Md5Hash@(
-        9, 0, 0, 1, 5, 0, 9, 8,
-        3, c, d, 2, 4, f, b, 0,
-        d, 6, 9, 6, 3, f, 7, d,
-        2, 8, e, 1, 7, f, 7, 2))
+    Test@ abc = TestStr(
+      Char@|abc,
+      Hex@|900150983CD24FB0D6963F7D28E17F72)
         # "abc"
       (L(6, 1, L(6, 2, L(6, 3)
         (S0<Bit8@>))));
 
-    Test@ message = TestStr(Char@|message)
-      (Md5Hash@(
-        f, 9, 6, b, 6, 9, 7, d,
-        7, c, b, 7, 9, 3, 8, d,
-        5, 2, 5, a, 2, f, 3, 1,
-        a, a, f, 1, 6, 1, d, 0))
+    Test@ message = TestStr(
+      Char@|message,
+      Hex@|F96B697D7CB7938D525A2F31AAF161D0)
         # "message digest"
       (L(6, d, L(6, 5, L(7, 3, L(7, 3)
       (L(6, 1, L(6, 7, L(6, 5, L(2, 0)
@@ -112,12 +141,9 @@
       (L(7, 3, L(7, 4)
         (S0<Bit8@>)))))))))))))));
 
-    Test@ a_to_z = TestStr(Char@|a_to_z)
-      (Md5Hash@(
-        c, 3, f, c, d, 3, d, 7,
-        6, 1, 9, 2, e, 4, 0, 0,
-        7, d, f, b, 4, 9, 6, c,
-        c, a, 6, 7, e, 1, 3, b))
+    Test@ a_to_z = TestStr(
+      Char@|a_to_z,
+      Hex@|C3FCD3D76192E4007DFB496CCA67E13B)
         # "abcdefghijklmnopqrstuvwxyz"
       (L(6, 1, L(6, 2, L(6, 3, L(6, 4)
       (L(6, 5, L(6, 6, L(6, 7, L(6, 8)
@@ -129,12 +155,9 @@
         (S0<Bit8@>))))))))))))))))))))
       )))))));
 
-    Test@ A_to_9 = TestStr(Char@|A_to_9)
-      (Md5Hash@(
-        d, 1, 7, 4, a, b, 9, 8,
-        d, 2, 7, 7, d, 9, f, 5,
-        a, 5, 6, 1, 1, c, 2, c,
-        9, f, 4, 1, 9, d, 9, f))
+    Test@ A_to_9 = TestStr(
+      Char@|A_to_9,
+      Hex@|D174AB98D277D9F5A5611C2C9F419D9F)
         # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
       (L(4, 1, L(4, 2, L(4, 3, L(4, 4)
       (L(4, 5, L(4, 6, L(4, 7, L(4, 8)
@@ -157,12 +180,9 @@
       ))))))))))))))))))))))))))))))))
       )))))))))));
 
-    Test@ 1_to_0 = TestStr(Char@|1_to_0)
-      (Md5Hash@(
-        5, 7, e, d, f, 4, a, 2,
-        2, b, e, 3, c, 9, 5, 5,
-        a, c, 4, 9, d, a, 2, e,
-        2, 1, 0, 7, b, 6, 7, a))
+    Test@ 1_to_0 = TestStr(
+      Char@|1_to_0,
+      Hex@|57EDF4A22BE3C955AC49DA2E2107B67A)
         # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
       (L(3, 1, L(3, 2, L(3, 3, L(3, 4)
       (L(3, 5, L(3, 6, L(3, 7, L(3, 8)
