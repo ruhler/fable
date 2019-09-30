@@ -347,3 +347,49 @@ How this supports modules goals:
 Sharing is still a bit tricky and naming tedious, but I think this would be a
 good step forward.
 
+More Thoughts
+-------------
+Key points:
+1. If a node can see some external entity, then all children of that node can
+   see that external entity.
+2. You should be able to refine a module by adding private submodules without
+   an externally visible change.
+
+Interesting cases to consider:
+1. Public modules A, B, C all refer to private modules D, E
+2. Public module A is later refined to refer to exclusive to A private
+submodules A.x and A.y
+3. Public modules can be organized hierarchically, such as: Foo.Bar.A,
+Foo.Sludge.B, etc.
+
+Proposal:
+
+We have a tree. Each node in the tree consists of:
+* A value. For modules, this is the value of the module. For libraries or
+  things not intended to be used as a module, this can be trivially Unit.
+* A collection of zero or more child nodes, each identified by name and
+  annotated as public or private.
+
+Notes:
+* A node is identified by it's path from some root.
+* When used as a value, the node's value is used.
+* A node publically exports its value and everything exported by its public
+  children.
+* A node has access to everything exported by siblings of any ancestor of the
+  node, including siblings of the node itself.
+* A node's value may reference any of the nodes children.
+
+Questions:
+* Can a node's children access the node's value?
+* How exactly do you refer to other nodes. Absolute reference. Relative
+  reference?
+
+Representing the hierarchy of nodes via a file system:
+* A node 'Foo' consists of:
+ - an optional directory 'Foo/' containing the list of child nodes.
+ - a value Foo.fble describing the node's value.
+ - a flag indicating whether the node is a public child of its parent or a
+   private child of its parent. TODO: Where/how to specify this flag?
+
+
+

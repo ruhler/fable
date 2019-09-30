@@ -38,9 +38,17 @@ typedef struct {
 } KindV;
 
 // BasicKind --
-//   BASIC_KIND
+//   BASIC_KIND (level :: size_t)
+//
+// levels
+//   0: A normal, non-type value.
+//   1: A normal type. A type of a level 0.
+//   2: A type of a type of a value.
+//   3: A type of a type of a type of a value.
+//   etc.
 typedef struct {
   Kind _base;
+  size_t level;
 } BasicKind;
 
 // PolyKind --
@@ -235,6 +243,7 @@ static void TypeFree(TypeArena* arena, FbleRef* ref);
 static void Add(FbleRefCallback* add, Type* type);
 static void TypeAdded(FbleRefCallback* add, FbleRef* ref);
 
+static Kind* TypeofKind(FbleArena* arena, Kind* kind);
 static Kind* GetKind(FbleArena* arena, Type* type);
 static bool HasParam(Type* type, Type* param, TypeList* visited);
 static Type* Subst(TypeArena* arena, Type* src, Type* param, Type* arg, TypePairs* tps);
@@ -490,6 +499,47 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
   }
 }
 
+// TypeofKind --
+//   Return the kind of a typeof expression.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   kind - the kind of the argument to a typeof expression.
+//
+// Results:
+//   The kind of the typeof expression.
+//
+// Side effects:
+//   The caller is responsible for calling FreeKind on the returned type when
+//   it is no longer needed.
+static Kind* TypeofKind(FbleArena* arena, Kind* kind)
+{
+  switch (kind->tag) {
+    case BASIC_KIND: {
+      BasicKind* basic = (BasicKind*)kind;
+      BasicKind* typeof = FbleAlloc(arena, BasicKind);
+      typeof->_base.tag = BASIC_KIND;
+      typeof->_base.loc = kind->loc;
+      typeof->_base.refcount = 1;
+      typeof->level = basic->level + 1;
+      return &typeof->_base;
+    }
+
+    case POLY_KIND: {
+      PolyKind* poly = (PolyKind*)kind;
+      PolyKind* typeof = FbleAlloc(arena, PolyKind);
+      typeof->_base.tag = POLY_KIND;
+      typeof->_base.loc = kind->loc;
+      typeof->_base.refcount = 1;
+      typeof->arg = CopyKind(arena, poly->arg);
+      typeof->rkind = TypeofKind(arena, poly->rkind);
+      return &typeof->_base;
+    }
+  }
+  UNREACHABLE("Should never get here");
+  return NULL;
+}
+
 // GetKind --
 //   Get the kind of the given type.
 //
@@ -516,6 +566,7 @@ static Kind* GetKind(FbleArena* arena, Type* type)
       kind->_base.tag = BASIC_KIND;
       kind->_base.loc = type->loc;
       kind->_base.refcount = 1;
+      kind->level = 1;
       return &kind->_base;
     }
 
@@ -548,11 +599,10 @@ static Kind* GetKind(FbleArena* arena, Type* type)
     case TYPE_TYPE: {
       TypeType* type_type = (TypeType*)type;
 
-      // TODO: This isn't right once we add non-type basic kinds internally.
-      // We need to adjust the kind in that case.
-      // TODO: Maybe we should arrange for TYPE_TYPE to only ever be applied
-      // to basic types?
-      return GetKind(arena, type_type->type);
+      Kind* arg_kind = GetKind(arena, type_type->type);
+      Kind* kind = TypeofKind(arena, arg_kind);
+      FreeKind(arena, arg_kind);
+      return kind;
     }
   }
 
@@ -1183,8 +1233,9 @@ static bool KindsEqual(Kind* a, Kind* b)
 
   switch (a->tag) {
     case BASIC_KIND: {
-      assert(b->tag == BASIC_KIND);
-      return true;
+      BasicKind* ba = (BasicKind*)a;
+      BasicKind* bp = (BasicKind*)b;
+      return ba->level == bp->level;
     }
 
     case POLY_KIND: {
@@ -1343,7 +1394,13 @@ static void PrintKind(Kind* kind)
 {
   switch (kind->tag) {
     case BASIC_KIND: {
-      fprintf(stderr, "@");
+      BasicKind* basic = (BasicKind*)kind;
+      if (basic->level == 1) {
+        fprintf(stderr, "@");
+      } else {
+        // TODO: Will an end user ever see this?
+        fprintf(stderr, "@%i", basic->level);
+      }
       break;
     }
 
@@ -2732,9 +2789,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           fprintf(stderr, "\n");
         } else if (!error && binding->type == NULL) {
           VarType* var = var_types[i];
-
+          var_type_values[i] = ValueOfType(arena, type);
           Kind* expected_kind = var->kind;
-          Kind* actual_kind = GetKind(arena_, type);
+          Kind* actual_kind = GetKind(arena_, var_type_values[i]);
           if (!KindsEqual(expected_kind, actual_kind)) {
             FbleReportError("expected kind ", &type->loc);
             PrintKind(expected_kind);
@@ -2744,8 +2801,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
             error = true;
           }
           FreeKind(arena_, actual_kind);
-
-          var_type_values[i] = ValueOfType(arena, type);
         }
 
         TypeRelease(arena, type);
@@ -3547,6 +3602,7 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
       k->_base.tag = BASIC_KIND;
       k->_base.loc = basic->_base.loc;
       k->_base.refcount = 1;
+      k->level = 1;
       return &k->_base;
     }
 

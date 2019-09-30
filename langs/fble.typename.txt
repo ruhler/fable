@@ -21,3 +21,21 @@ There seem to be a few options:
   tedious, but whatever approach it uses could be adapted to the existing
   setup.
 
+
+Proposed Solution
+-----------------
+Expand the notion of kind internally to distinguish between levels of typeof.
+
+@0 is a value
+@1 is a type of a value
+@2 is a type of a type of a value
+etc.
+
+Any time we use the kind '@' in the syntax, that's interpreted to be @1.
+You can't specify any other kind. For @0, use a function instead. For @2 or
+greater, pass the corresponding @1 type as an argument and call typeof
+internally.
+
+I think, hopefully, that shouldn't be too restrictive.
+
+
