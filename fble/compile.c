@@ -245,6 +245,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref);
 
 static Kind* TypeofKind(FbleArena* arena, Kind* kind);
 static Kind* GetKind(FbleArena* arena, Type* type);
+static size_t GetKindLevel(Kind* kind);
 static bool HasParam(Type* type, Type* param, TypeList* visited);
 static Type* Subst(TypeArena* arena, Type* src, Type* param, Type* arg, TypePairs* tps);
 static void Eval(TypeArena* arena, Type* type, PolyApplyList* applied);
@@ -608,6 +609,34 @@ static Kind* GetKind(FbleArena* arena, Type* type)
 
   UNREACHABLE("Should never get here");
   return NULL;
+}
+
+// GetKindLevel --
+//   Returns the level of the fully applied version of this kind.
+//
+// Inputs:
+//   kind - the kind to get the fully applied level of.
+//
+// Results:
+//   The level of the kind after it has been fully applied.
+//
+// Side effects:
+//   None.
+size_t GetKindLevel(Kind* kind)
+{
+  switch (kind->tag) {
+    case BASIC_KIND: {
+      BasicKind* basic = (BasicKind*)kind;
+      return basic->level;
+    }
+
+    case POLY_KIND: {
+      PolyKind* poly = (PolyKind*)kind;
+      return GetKindLevel(poly->rkind);
+    }
+  }
+  UNREACHABLE("Should never get here");
+  return -1;
 }
 
 // HasParam --
@@ -1736,18 +1765,12 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 //   Prints a message to stderr if the namespace and type don't match.
 static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
 {
-  // TODO: re-enable this check once ValueOfType has better support for
-  // abstract variables? But how can we possibly know for an abstract variable
-  // if it is a type type or a normal type?
-  return true;
-  
-  Type* value = ValueOfType(arena, type);
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  Kind* kind = GetKind(arena_, type);
+  size_t kind_level = GetKindLevel(kind);
+  FreeKind(arena_, kind);
 
-  // Release the value right away, because we don't care about the value
-  // itself, just whether or not it is null.
-  TypeRelease(arena, value);
-
-  if (name->space == FBLE_TYPE_NAME_SPACE && value == NULL) {
+  if (name->space == FBLE_TYPE_NAME_SPACE && kind_level != 2) {
     FbleReportError("expected a type type for field named '", &name->loc);
     FblePrintName(stderr, name);
     fprintf(stderr, "', but found normal type ");
@@ -1755,7 +1778,7 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
     return false;
   }
 
-  if (name->space == FBLE_NORMAL_NAME_SPACE && value != NULL) {
+  if (name->space == FBLE_NORMAL_NAME_SPACE && kind_level != 1) {
     FbleReportError("expected a normal type for field named '", &name->loc);
     FblePrintName(stderr, name);
     fprintf(stderr, "', but found type type ");

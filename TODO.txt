@@ -6,7 +6,6 @@
  - Hook up to the 'Test' infrastructure (assuming the tests are fast enough to
    run).
 * [lang] Draft revision of spec for modules. Test and implement.
-* [lang] Draft revision of type vs. normal name. Test and implement.
 * [prgm] Game of Life
 
 * [clean] Better error message at runtime in case of:

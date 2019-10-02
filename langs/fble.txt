@@ -99,6 +99,12 @@ normal value, and a polymorphic expression that results in a type value is
 considered a type value. So, for example, the polymorphic type 'Maybe@' is a
 type, and its constructor 'Just' is a normal value.
 
+You are not allowed to use a variable to refer to a type of a type, because
+then using '@' to distinguish between normal variables and type variables
+would be insufficient. In practice this should not be a signifcant limitation
+because you should be able to use a variable for the value of the type and use
+the typeof operator to get the type of the type as needed.
+
 2.3 Typeof
 ----------
 Abstract Syntax:
