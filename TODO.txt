@@ -1,3 +1,9 @@
+* [lang] Draft revision of spec for modules. Test and implement.
+ - Set up test infra for testing programs with modules.
+ - Add parser support for loading dependent modules.
+ - Port all prgms to use modules.
+ - Remove 'include' support.
+
 * [lang] Document and test that variable declarations shadow other variables.
 
 * [prgm] TicTacToe cleanup
@@ -5,7 +11,6 @@
  - Use monads, monoids, and maps and such to simplify ChooseBestMove.
  - Hook up to the 'Test' infrastructure (assuming the tests are fast enough to
    run).
-* [lang] Draft revision of spec for modules. Test and implement.
 * [prgm] Game of Life
 
 * [clean] Better error message at runtime in case of:

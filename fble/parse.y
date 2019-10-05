@@ -37,6 +37,7 @@
 %union {
   const char* word;
   FbleName name;
+  FbleNameV names;
   FbleKind* kind;
   FbleKindV kinds;
   FbleTypeFieldV type_fields;
@@ -70,6 +71,7 @@
 %token <word> WORD
 
 %type <name> name
+%type <names> path abs_path rel_path
 %type <kind> kind
 %type <kinds> kind_p
 %type <type_fields> type_field_p
@@ -97,6 +99,23 @@ name:
      $$.loc = @$;
    }
  ;
+
+rel_path:
+   WORD '%' {
+     assert(false && "TODO: rel_path");
+   }
+ | WORD '/' abs_path {
+     assert(false && "TODO: rel_path");
+   };
+
+abs_path:
+   '/' rel_path {
+     assert(false && "TODO: abs_path");
+   };
+
+path:
+   abs_path { $$ = $1; }
+ | rel_path { $$ = $1; }
 
 kind:
    '@' {
@@ -161,6 +180,10 @@ expr:
       var_expr->_base.loc = @$;
       var_expr->var = $1;
       $$ = &var_expr->_base;
+   }
+ | path {
+      assert(false && "TODO: parse module path");
+      $$ = NULL;
    }
  | '*' '(' field_s ')' {
       FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
@@ -585,7 +608,7 @@ static bool IsSpaceChar(int c)
 //   None.
 static bool IsPunctuationChar(int c)
 {
-  return strchr("(){}[];,:?=.<>+*-!$@~&|", c) != NULL;
+  return strchr("(){}[];,:?=.<>+*-!$@~&|%/", c) != NULL;
 }
 
 // IsNormalChar --

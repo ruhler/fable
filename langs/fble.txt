@@ -870,14 +870,83 @@ Unlike lists, literals can have zero letters. This is because we have the
 necessary type information to determine the type of the list even if it is
 empty.
 
-9. Program
------------
+9. Modules
+----------
+Fble code is organized into a hierarchy of reusable modules. Each module
+describes a value that may depend on the value of other modules. A program is
+formed by combining a module with all of its direct and indirect dependencies.
+
+9.1 Organization
+----------------
+Modules are organized into a tree structure. The purpose of the tree structure
+is to group modules together that are developed by the same organization and
+to allow public/private access control to modules. Each node in the tree is a
+module. Each module has a value and zero or more named child nodes. A child
+node can be marked as public or private. If a child node is marked public, it
+and all of its externally visible descendants are visible external to the
+parent node. If a child node is marked private, neither it or nor any of its
+descendants are visible external to the parent node.
+
+A module's value may be trivial if the module is intended primarily for
+organizational purposes. A module need not contain any children if it is
+intended primarily for providing a useful module value.
+
+The module hierarchy is described in a platform dependant manner. On a
+platform with standard file system, the following is suggested:
+
+The hierarchy of modules is expressed using a directory hierarchy. The value
+of a module Foo is described in the file Foo.fble as an fble expression using
+the 'stmt' concrete syntactic term. The child modules of Foo are placed in a
+directory Foo/. The absence of a file Foo.fble implies the value of the module
+Foo is *()(). The absence of a subdirectory Foo implies the module Foo has no
+children.
+
+Note: This suggested approach does not support distinguishing between public
+and private modules at this time. That is left as future work.
+
+For example, you might have the following directory structure:
+
+  root/
+   StdLib/
+     Unit.fble
+     List.fble
+   Md5.fble
+   Md5/
+     Impl.fble
+     Tests.fble
+    
+9.2 Paths
+---------
+Modules may depend on other modules independent of the tree hierarchy of
+modules. A program can include a module without having to depend on any
+descendants of that module. The only restrictions on module dependencies is
+that there must not be any cyclic dependencies and module visibility rules
+must be obeyed.
+
+A module is referred to using either an absolute or a relative path. An
+absolute path describes a path of named children from the root of the module
+hierarchy. A relative path describes a path of named children from an
+unspecified node. The unspecified node is determined by searching the calling
+module and its ancestors for a matching path. To avoid ambiguity, we impose a
+restriction on module names that a module cannot be named the same thing as
+any of its ancestors.
+
 Abstract Syntax:
-  Prgm ::= Expr
+  Path ::= rel_path (name :: [Name])
+  Path ::= abs_path (name :: [Name])
+  Expr ::= module_ref (ref :: Path)
 
 Concrete Syntax:
-  prgm ::= stmt
+  path ::= ['/'] name ['/' name [...]] '%'
+  expr ::= path ;
 
+Examples:
+  /StdLib/List%
+  Tests/Basic%
+  Unit%
+
+9.3 Program
+-----------
 A program is an fble expressions that creates a value that is used however is
 deemed suitable by whoever is executing the program. Commonly this could be:
 
@@ -887,31 +956,44 @@ deemed suitable by whoever is executing the program. Commonly this could be:
   evaluate and output the resulting value
 * process: run the process, evaluate and output the resulting value.
 
-9.1 Include
------------
-Abstract Syntax:
-  Expr ::= include (name :: Name)
+A program is formed of a module and all of its direct and indirect
+dependencies. For example, consider the following module hierarchy:
 
-Concrete Syntax:
-  expr ::= '&' name
+  StdLib
+    Unit
+    List
+      Tests
+  Md5
+    Tests
 
-Example:
-  &StdLib
+With the following dependency graph:
 
-Syntactically includes the named module in place of the expression. The definition
-of the module is located in a platform dependent way relative to the current
-module. This allows an fble program to be split across multiple files that are
-reused in multiple programs.
+  StdLib.List -> StdLib.Unit
+  StdLib.List.Tests -> StdLib.List, StdLib.Unit
+  Md5 -> StdLib.Unit, StdLib.List
+  Md5.Tests -> StdLib.Unit, Md5
 
-For example, assuming the current include search path is "lib", a program
-Foo.fble can include module StdLib as follows:
+The module Md5.Tests can be turned into a program to run Md5 tests
+conceptually by forming a let expression in topological sort dependency order:
 
-  @(StdLib = &StdLib);
-  ...
+  StdLib_Unit = <StdLib.Unit>;
+  StdLib_List = <StdLib.List>;
+  Md5 = <Md5>;
+  <Md5.Tests>;
 
-This would read StdLib from the file "lib/StdLib.fble". When reading
-StdLib.fble, the include search path is adjusted to "lib/StdLib" for any child
-modules included in StdLib.fble.
+Where <Foo> is the fble expression describing the value of module Foo and we
+assume references to a module Foo.Bar% in the expression are replaced with
+variables named Foo_Bar.
+
+Notice in this case that the value of StdLib.List.Tests is not used.
+
+The modules may be combined in any order that satisfies their dependencies.
+
+The same module hierarchy can be used for a program to run List tests:
+ 
+  StdLib_Unit = <Stdlib.Unit>;
+  StdLib_List = <StdLib.List>;
+  <StdLib.List.Tests>;
 
 10. Abstract Syntax Reference
 ----------------------------
@@ -921,6 +1003,11 @@ TypeName ::= (* A string of characters *)
 Name ::=
    normal_name (name :: NormalName)
  | type_name (name :: TypeName)
+ ;
+
+Path ::=
+   rel_path (name :: [Name])
+ | abs_path (name :: [Name])
  ;
 
 Kind ::=
@@ -939,6 +1026,7 @@ Expr ::=
    typeof (expr :: Expr)
  | var (name :: Name)
  | let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+ | module_ref (ref :: Path)
 
  | struct_type (fields :: [(Type, Name)])
  | struct_value_explicit_type (type :: Type) (args :: [Expr])
@@ -972,7 +1060,7 @@ Expr ::=
  | literal (type :: Type) (letters :: word)
  ;
 
-Prgm ::= Expr
+Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
 
 11. Concrete Syntax
 -------------------
@@ -982,7 +1070,7 @@ We have the following categories of characters:
 1. whitespace: Any whitespace character, as traditionally classified.
 2. The comment character '#'.
 3. punctuation: Any of the following characters:
-  (){};,:?=.<>+*-!$@~&'\[]
+  (){};,:?=.<>+*-!$@~'\[]%/
 4. normal: any other character.
 
 The lexical syntax is used to interpret a string of arbitrary characters as a
@@ -1020,6 +1108,8 @@ name ::=
  | type_name
  ;
 
+path ::= ['/'] name ['/' name [...]] '%' ;
+
 kind ::=
    '@'                                (* type_kind *)
  | '<' kind [',' kind [...]] '>' kind (* poly_kind *)
@@ -1035,6 +1125,7 @@ mtype ::=
 expr ::= 
    '@' '<' expr '>'                                (* typeof *)
  | name                                            (* var *)
+ | path                                            (* module_ref *)
 
  | '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
  | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type, get, put *)
@@ -1081,7 +1172,7 @@ stmt ::=
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
  ;
 
-prgm ::= stmt                                                        (* program *)
+module ::= stmt                                                      (* module_value *)
  ;
 
 Notes:
@@ -1090,6 +1181,9 @@ Notes:
 * explicit type struct value, function apply, get, and put share the same
   form. The type of the expr is used to distinguish between the four kinds of
   expressions.
+* The module value for module Foo is stored in Foo.fble. Public child modules
+  of module Foo are stored in subdirectory Foo/ Private child modules are not
+  yet supported in the abstract syntax.
 
 12. Thoughts
 ------------
@@ -1101,12 +1195,6 @@ Notes:
   function. That's the static evaluation pass. The result will be based on the
   interpreter you are using. If you have a hardware interpreter, for example,
   the resulting function will be a description of a hardware circuit.
-
-* Concern: how to support raw literals
-  Like string literals, integers, anything where you want to specify a dense
-  amount of information for processing.
-  
-  See fble.sugar.txt.
 
 * Is variable shadowing allowed?
   Consider also the following cases:
@@ -1120,24 +1208,6 @@ Notes:
  otherwise.
 
 * Issues that came up when switching to the new unit test format
- - How should we organize tests? Do we need to import Test even if we just want to
-   use a library? Should the code for all tests be completely separate from
-   the code for all libraries? For example, instead of defining:
-      StdLib(StdLib, Tests), UBNat (UBNat, Tests), ...
-      (StdLib, UBNat, ...), (StdLibTests, UBNatTests, ...)?
-   Because, for example, fble-Snake.fble shouldn't need to care about
-   importing Test.
-
-   See fble.modules.txt
- 
- - String literals are tough to read and write.
-    For example, { Chars; S6<Char@>(G, t, underscore, 7, underscore, 5); }
-    Is much easier to read as  "Gt_7_5", or some variation.
-    Perhaps: {StrLit; "Gt_7_5"} is something we could realistically expect to
-    support?
-
-    See fble.sugar.txt for more discussion.
-
  - Should it be an error to import or define an unused variable?
     Otherwise it's easy to make a change to what's used without updating an
     import list.

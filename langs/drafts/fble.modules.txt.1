@@ -381,6 +381,9 @@ Notes:
 
 Questions:
 * Can a node's children access the node's value?
+ Answer: Sure, why not? There doesn't seem to be much use for it, but also
+ doesn't seem to be any reason not to allow it.
+
 * How exactly do you refer to other nodes. Absolute reference. Relative
   reference?
 
@@ -391,5 +394,20 @@ Representing the hierarchy of nodes via a file system:
  - a flag indicating whether the node is a public child of its parent or a
    private child of its parent. TODO: Where/how to specify this flag?
 
+To make incremental forward progress
+* Ignore public / private for now. Just have public modules.
+* Ignore pre-compilation for now, which means we don't have to worry about
+  sharing modules via function arg.
 
+Proposed Syntax:
+
+relative_path ::= WORD '%' | WORD absolute_path
+absolute_path ::= '/' relative_path
+module_path ::= relative_path | absolute_path
+expr ::= module_path
+  
+This encodes module hierarchy directly in the language, which makes sense
+given that module hierarchy matters to the language in terms of visibility and
+how relative paths are resolved. In the normal case we don't require quoting
+of module elements, and the syntax is similar to namespaces. 
 
