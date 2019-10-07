@@ -1,5 +1,4 @@
 * [lang] Draft revision of spec for modules. Test and implement.
- - Set up test infra for testing programs with modules.
  - Add parser support for loading dependent modules.
  - Port all prgms to use modules.
  - Remove 'include' support.

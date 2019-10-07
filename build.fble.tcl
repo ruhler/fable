@@ -62,61 +62,75 @@ gcc_prgm -o $::bin/fble-tictactoe $::obj/fble-tictactoe.o -lfble
 gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble
 gcc_prgm -o $::bin/fble-tests $::obj/fble-tests.o -lfble
 
-proc fble-test-error-run { tloc loc expr } {
+proc write_modules { dir modules } {
+  foreach m $modules {
+    set name [lindex $m 0]
+    set value [lindex $m 1]
+    set submodules [lindex $m 2]
+    exec echo $value > $dir/$name.fble
+    exec mkdir -p $dir/$name
+    write_modules $dir/$name $submodules
+  }
+}
+
+proc fble-test-error-run { tloc loc expr modules } {
   set line [dict get $tloc line]
   set file [dict get $tloc file]
-  set name "out/[relative_file $file]:$line"
+  set dir "out/[relative_file $file]:$line"
 
-  exec mkdir -p [file dirname $name]
-  set fprgm $name.fble
+  exec mkdir -p $dir
+  set fprgm $dir/_.fble
   exec echo $expr > $fprgm
-  set errtext [exec $::bin/fble-test --error $fprgm]
-  exec echo $errtext > $name.err
+  write_modules $dir $modules
+
+  set errtext [exec $::bin/fble-test --error $fprgm $dir]
+  exec echo $errtext > $dir/_.err
   if {-1 == [string first ":$loc: error" $errtext]} {
     error "Expected error at $loc, but got:\n$errtext"
   }
 }
 
-proc fble-test-run { cmd loc expr } {
+proc fble-test-run { cmd loc expr modules } {
   set line [dict get $loc line]
   set file [dict get $loc file]
-  set name "out/[relative_file $file]:$line"
+  set dir "out/[relative_file $file]:$line"
 
   # Write the program to file.
-  exec mkdir -p [file dirname $name]
-  set fprgm $name.fble
+  exec mkdir -p $dir
+  set fprgm $dir/_.fble
   exec echo $expr > $fprgm
+  write_modules $dir $modules
 
   # Execute the program.
-  exec {*}$cmd $fprgm
+  exec {*}$cmd $fprgm $dir
 }
 
 # See langs/fble/README.txt for the description of this function
-proc fble-test { expr } {
+proc fble-test { expr args } {
   set loc [info frame -1]
   set file [dict get $loc file]
-  testln $loc [relative_file $file] fble-test-run $::bin/fble-test $loc $expr
+  testln $loc [relative_file $file] fble-test-run $::bin/fble-test $loc $expr $args
 }
 
 # See langs/fble/README.txt for the description of this function
-proc fble-test-error { loc expr } {
+proc fble-test-error { loc expr args } {
   set tloc [info frame -1]
   set file [dict get $tloc file]
-  testln $tloc [relative_file $file] fble-test-error-run $tloc $loc $expr
+  testln $tloc [relative_file $file] fble-test-error-run $tloc $loc $expr $args
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-memory-constant { expr } {
   set loc [info frame -1]
   set file [dict get $loc file]
-  testln $loc [relative_file $file] fble-test-run $::bin/fble-mem-test $loc $expr
+  testln $loc [relative_file $file] fble-test-run $::bin/fble-mem-test $loc $expr {}
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-memory-growth { expr } {
   set loc [info frame -1]
   set file [dict get $loc file]
-  testln $loc [relative_file $file] fble-test-run "$::bin/fble-mem-test --growth" $loc $expr
+  testln $loc [relative_file $file] fble-test-run "$::bin/fble-mem-test --growth" $loc $expr {}
 }
 
 # Source all *.tcl files under the given directory, recursively.
