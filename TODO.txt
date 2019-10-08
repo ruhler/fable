@@ -1,5 +1,7 @@
 * [lang] Draft revision of spec for modules. Test and implement.
- - Add parser support for loading dependent modules.
+ - Keep track of modules referred to duing parsing.
+ - Implement program loading logic to load modules into dependency order.
+ - Add support for compiling a list of sorted modules.
  - Port all prgms to use modules.
  - Remove 'include' support.
 

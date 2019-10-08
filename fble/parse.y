@@ -36,8 +36,8 @@
 
 %union {
   const char* word;
+  FbleStrV words;
   FbleName name;
-  FbleNameV names;
   FbleKind* kind;
   FbleKindV kinds;
   FbleTypeFieldV type_fields;
@@ -71,7 +71,7 @@
 %token <word> WORD
 
 %type <name> name
-%type <names> path abs_path rel_path
+%type <words> path
 %type <kind> kind
 %type <kinds> kind_p
 %type <type_fields> type_field_p
@@ -100,22 +100,15 @@ name:
    }
  ;
 
-rel_path:
-   WORD '%' {
-     assert(false && "TODO: rel_path");
-   }
- | WORD '/' abs_path {
-     assert(false && "TODO: rel_path");
-   };
-
-abs_path:
-   '/' rel_path {
-     assert(false && "TODO: abs_path");
-   };
-
 path:
-   abs_path { $$ = $1; }
- | rel_path { $$ = $1; }
+   WORD {
+     FbleVectorInit(arena, $$);
+     FbleVectorAppend(arena, $$, $1);
+   }
+ | path '/' WORD {
+     $$ = $1;
+     FbleVectorAppend(arena, $$, $3);
+   };
 
 kind:
    '@' {
@@ -181,9 +174,21 @@ expr:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
- | path {
-      assert(false && "TODO: parse module path");
-      $$ = NULL;
+ | '/' path '%' {
+      FbleModuleRefExpr* mref = FbleAlloc(arena, FbleModuleRefExpr);
+      mref->_base.tag = FBLE_MODULE_REF_EXPR;
+      mref->_base.loc = @$;
+      mref->path = $2;
+      mref->absolute = true;
+      $$ = &mref->_base;
+   }
+ | path '%' {
+      FbleModuleRefExpr* mref = FbleAlloc(arena, FbleModuleRefExpr);
+      mref->_base.tag = FBLE_MODULE_REF_EXPR;
+      mref->_base.loc = @$;
+      mref->path = $1;
+      mref->absolute = false;
+      $$ = &mref->_base;
    }
  | '*' '(' field_s ')' {
       FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);

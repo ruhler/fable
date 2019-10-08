@@ -136,6 +136,7 @@ typedef enum {
   FBLE_TYPEOF_EXPR,
   FBLE_VAR_EXPR,
   FBLE_LET_EXPR,
+  FBLE_MODULE_REF_EXPR,
 
   FBLE_STRUCT_TYPE_EXPR,
 //FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR,
@@ -355,6 +356,23 @@ typedef struct {
   FbleBindingV bindings;
   FbleExpr* body;
 } FbleLetExpr;
+
+// A vector of strings.
+typedef struct {
+  size_t size;
+  const char** xs;
+} FbleStrV;
+
+// FbleModuleRefExpr --
+//   FBLE_MODULE_REF_EXPR (path :: Path)
+//
+// Fields:
+//   absolute: true if this is an absolute path, false if it is a relative path.
+typedef struct {
+  FbleExpr _base;
+  FbleStrV path;
+  bool absolute;
+} FbleModuleRefExpr;
 
 // FbleTypeofExpr --
 //   FBLE_TYPEOF_EXPR (expr :: Expr)

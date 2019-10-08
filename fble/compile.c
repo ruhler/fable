@@ -2877,6 +2877,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       return rtype;
     }
 
+    case FBLE_MODULE_REF_EXPR: {
+      assert(false && "TODO: Compile module ref expr");
+      return NULL;
+    }
+
     case FBLE_POLY_EXPR: {
       FblePolyExpr* poly = (FblePolyExpr*)expr;
 
@@ -3575,6 +3580,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR:
     case FBLE_VAR_EXPR:
+    case FBLE_MODULE_REF_EXPR:
     case FBLE_LET_EXPR:
     case FBLE_POLY_EXPR:
     case FBLE_POLY_APPLY_EXPR:
