@@ -92,6 +92,15 @@ bool FbleNamesEqual(FbleName* a, FbleName* b);
 //   Prints the given name to the given stream.
 void FblePrintName(FILE* stream, FbleName* name);
 
+// FbleModuleRef --
+//
+// Fields:
+//   is_absolute: true if this is an absolute path, false if it is a relative path.
+typedef struct {
+  FbleNameV path;
+  bool is_absolute;
+} FbleModuleRef;
+
 // FbleKindTag --
 //   A tag used to distinguish between the two kinds of kinds.
 typedef enum {
@@ -357,21 +366,11 @@ typedef struct {
   FbleExpr* body;
 } FbleLetExpr;
 
-// A vector of strings.
-typedef struct {
-  size_t size;
-  const char** xs;
-} FbleStrV;
-
 // FbleModuleRefExpr --
-//   FBLE_MODULE_REF_EXPR (path :: Path)
-//
-// Fields:
-//   absolute: true if this is an absolute path, false if it is a relative path.
+//   FBLE_MODULE_REF_EXPR (ref :: ModuleRef)
 typedef struct {
   FbleExpr _base;
-  FbleStrV path;
-  bool absolute;
+  FbleModuleRef ref;
 } FbleModuleRefExpr;
 
 // FbleTypeofExpr --

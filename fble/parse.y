@@ -36,8 +36,9 @@
 
 %union {
   const char* word;
-  FbleStrV words;
   FbleName name;
+  FbleNameV names;
+  FbleModuleRef module_ref;
   FbleKind* kind;
   FbleKindV kinds;
   FbleTypeFieldV type_fields;
@@ -71,7 +72,8 @@
 %token <word> WORD
 
 %type <name> name
-%type <words> path
+%type <names> path
+%type <module_ref> module_ref
 %type <kind> kind
 %type <kinds> kind_p
 %type <type_fields> type_field_p
@@ -103,12 +105,29 @@ name:
 path:
    WORD {
      FbleVectorInit(arena, $$);
-     FbleVectorAppend(arena, $$, $1);
+     FbleName* name = FbleVectorExtend(arena, $$);
+     name->name = $1;
+     name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
+     name->loc = @$;
    }
  | path '/' WORD {
      $$ = $1;
-     FbleVectorAppend(arena, $$, $3);
+     FbleName* name = FbleVectorExtend(arena, $$);
+     name->name = $3;
+     name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
+     name->loc = @$;
    };
+
+module_ref:
+   '/' path '%' {
+      $$.path = $2;
+      $$.is_absolute = true;
+   }
+ | path '%' {
+      $$.path = $1;
+      $$.is_absolute = false;
+   }
+ ;
 
 kind:
    '@' {
@@ -174,20 +193,11 @@ expr:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
- | '/' path '%' {
+ | module_ref {
       FbleModuleRefExpr* mref = FbleAlloc(arena, FbleModuleRefExpr);
       mref->_base.tag = FBLE_MODULE_REF_EXPR;
       mref->_base.loc = @$;
-      mref->path = $2;
-      mref->absolute = true;
-      $$ = &mref->_base;
-   }
- | path '%' {
-      FbleModuleRefExpr* mref = FbleAlloc(arena, FbleModuleRefExpr);
-      mref->_base.tag = FBLE_MODULE_REF_EXPR;
-      mref->_base.loc = @$;
-      mref->path = $1;
-      mref->absolute = false;
+      mref->ref = $1;
       $$ = &mref->_base;
    }
  | '*' '(' field_s ')' {
