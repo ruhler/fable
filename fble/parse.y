@@ -57,14 +57,14 @@
   static bool IsNormalChar(int c);
   static void ReadNextChar(Lex* lex);
   static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex);
-  static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, const char* msg);
+  static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg);
 %}
 
 %locations
 %define api.pure
 %define parse.error verbose
 %param {FbleArena* arena} {const char* include_path} {Lex* lex}
-%parse-param {FbleExpr** result}
+%parse-param {FbleExpr** result} {FbleModuleRefV* module_refs}
 
 %token END 0 "end of file"
 %token INVALID "invalid character"
@@ -199,6 +199,7 @@ expr:
       mref->_base.loc = @$;
       mref->ref = $1;
       $$ = &mref->_base;
+      FbleVectorAppend(arena, *module_refs, &mref->ref);
    }
  | '*' '(' field_s ')' {
       FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
@@ -766,7 +767,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, const char* msg)
+static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg)
 {
   FbleReportError("%s\n", llocp, msg);
 }
@@ -792,6 +793,8 @@ FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_
     .sin = NULL
   };
   FbleExpr* result = NULL;
-  yyparse(arena, include_path, &lex, &result);
+  FbleModuleRefV module_refs;
+  FbleVectorInit(arena, module_refs);
+  yyparse(arena, include_path, &lex, &result, &module_refs);
   return result;
 }

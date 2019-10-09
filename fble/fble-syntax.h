@@ -100,6 +100,12 @@ typedef struct {
   FbleNameV path;
   bool is_absolute;
 } FbleModuleRef;
+
+// FbleModuleRefV -- A vector of FbleModuleRef.
+typedef struct {
+  size_t size;
+  FbleModuleRef** xs;
+} FbleModuleRefV;
 
 // FbleKindTag --
 //   A tag used to distinguish between the two kinds of kinds.
