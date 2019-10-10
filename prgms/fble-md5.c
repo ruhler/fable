@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
   const char* file = argv[3];
 
   FbleArena* prgm_arena = FbleNewArena();
-  FbleExpr* prgm = FbleParse(prgm_arena, path, include_path);
+  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
   if (prgm == NULL) {
     FbleDeleteArena(prgm_arena);
     return 1;

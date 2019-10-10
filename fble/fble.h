@@ -16,16 +16,16 @@
 
 
 // FbleEval --
-//   Type check and evaluate an expression.
+//   Type check and evaluate a program.
 //
 // Inputs:
 //   arena - The arena to use for allocating values.
-//   expr - The expression to evaluate.
+//   program - The program to evaluate.
 //   blocks - Output info about blocks in the program.
 //   graph - Output call graph for the evaluation.
 //
 // Results:
-//   The value of the evaluated expression, or NULL in case of error. The
+//   The value of the evaluated program, or NULL in case of error. The
 //   error could be a type error or an undefined union field access.
 //
 // Side effects:
@@ -35,7 +35,7 @@
 //   freed when no longer in use.
 //   Sets graph to the call graph for the evaluation. This must be freed with
 //   FbleFreeCallGraph when no longer in use.
-FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr, FbleNameV* blocks, FbleCallGraph** graph);
+FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleCallGraph** graph);
 
 // FbleApply --
 //   Apply a function to the given argument.

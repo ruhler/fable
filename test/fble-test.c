@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
   stderr = expect_error ? stdout : stderr;
 
   FbleArena* prgm_arena = FbleNewArena();
-  FbleExpr* prgm = FbleParse(prgm_arena, path, include_path);
+  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
   if (report_profile) {
     printf("max memory prgm: %zi (bytes)\n", FbleArenaMaxSize(prgm_arena));
   }

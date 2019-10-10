@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
   const char* path = argv[1];
 
   FbleArena* prgm_arena = FbleNewArena();
-  FbleExpr* prgm = FbleParse(prgm_arena, path, NULL);
+  FbleProgram* prgm = FbleLoad(prgm_arena, path, NULL);
   if (prgm == NULL) {
     FbleDeleteArena(prgm_arena);
     return 1;

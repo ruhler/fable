@@ -1212,11 +1212,11 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 }
 
 // FbleEval -- see documentation in fble.h
-FbleValue* FbleEval(FbleValueArena* arena, FbleExpr* expr, FbleNameV* blocks, FbleCallGraph** graph)
+FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleCallGraph** graph)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
-  FbleInstrBlock* instrs = FbleCompile(arena_, blocks, expr);
+  FbleInstrBlock* instrs = FbleCompile(arena_, blocks, program->main);
   *graph = FbleNewCallGraph(arena_, blocks->size);
   if (instrs == NULL) {
     return NULL;

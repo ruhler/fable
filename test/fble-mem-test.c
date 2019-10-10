@@ -49,7 +49,7 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects: 
 //   Sets max_bytes to the maximum bytes used during the run.
-bool Run(FbleExpr* prgm, bool use_large_n, size_t* max_bytes)
+bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
 {
   bool success = false;
   FbleArena* eval_arena = FbleNewArena();
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* prgm_arena = FbleNewArena();
-  FbleExpr* prgm = FbleParse(prgm_arena, path, include_path);
+  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
   if (prgm == NULL) {
     FbleDeleteArena(prgm_arena);
     return EX_FAIL;

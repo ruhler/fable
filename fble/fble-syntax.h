@@ -455,6 +455,12 @@ typedef struct {
   FbleName field;
 } FbleMiscAccessExpr;
 
+// FbleProgram --
+//   Represents a complete parsed and loaded fble program.
+typedef struct {
+  FbleExpr* main;
+} FbleProgram;
+
 // FbleParse --
 //   Parse an expression from a file.
 //
@@ -479,5 +485,30 @@ typedef struct {
 //   not ensure that filename remains valid for the duration of the lifetime
 //   of the program.
 FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path);
+
+// FbleLoad --
+//   Load an fble program.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed program.
+//   filename - The name of the file to parse the program from.
+//   root - The directory to search for modules in. May be NULL.
+//
+// Results:
+//   The parsed program, or NULL in case of error.
+//
+// Side effects:
+//   Prints an error message to stderr if the program cannot be parsed.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned program if there is no error.
+//
+// Note:
+//   A copy of the filename will be made for use in locations. The user need
+//   not ensure that filename remains valid for the duration of the lifetime
+//   of the program.
+FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root);
 
 #endif // FBLE_SYNTAX_H_
