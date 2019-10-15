@@ -1216,6 +1216,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
+  assert(program->modules.size == 0 && "TODO: Support evaluation with modules");
   FbleInstrBlock* instrs = FbleCompile(arena_, blocks, program->main);
   *graph = FbleNewCallGraph(arena_, blocks->size);
   if (instrs == NULL) {

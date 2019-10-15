@@ -122,10 +122,12 @@ module_ref:
    '/' path '%' {
       $$.path = $2;
       $$.is_absolute = true;
+      $$.resolved = FbleUnresolvedModuleId;
    }
  | path '%' {
       $$.path = $1;
       $$.is_absolute = false;
+      $$.resolved = FbleUnresolvedModuleId;
    }
  ;
 
@@ -337,7 +339,7 @@ expr:
       strcpy(new_filename, new_include_path);
       strcat(new_filename, ".fble");
 
-      $$ = FbleParse(arena, new_filename, new_include_path);
+      $$ = FbleParse(arena, new_filename, new_include_path, module_refs);
       if ($$ == NULL) {
         FbleReportError("(included from here)\n", &(@$));
         YYERROR;
@@ -773,7 +775,7 @@ static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, 
 }
 
 // FbleParse -- see documentation in fble-syntax.h
-FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path)
+FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path, FbleModuleRefV* module_refs)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -793,8 +795,6 @@ FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_
     .sin = NULL
   };
   FbleExpr* result = NULL;
-  FbleModuleRefV module_refs;
-  FbleVectorInit(arena, module_refs);
-  yyparse(arena, include_path, &lex, &result, &module_refs);
+  yyparse(arena, include_path, &lex, &result, module_refs);
   return result;
 }

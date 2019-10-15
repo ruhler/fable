@@ -92,13 +92,24 @@ bool FbleNamesEqual(FbleName* a, FbleName* b);
 //   Prints the given name to the given stream.
 void FblePrintName(FILE* stream, FbleName* name);
 
+// FbleModuleId --
+//   A unique identifier of a resolved module.
+typedef size_t FbleModuleId;
+
+// Value of FbleModuleId used before a module has been resolved.
+#define FbleUnresolvedModuleId (-1)
+
 // FbleModuleRef --
 //
 // Fields:
 //   is_absolute: true if this is an absolute path, false if it is a relative path.
+//   resolved: After the module reference is resolved, 'resolved' will be set
+//             to the index of the resolved module in the FbleProgram's
+//             'modules' vector.
 typedef struct {
   FbleNameV path;
   bool is_absolute;
+  FbleModuleId resolved;
 } FbleModuleRef;
 
 // FbleModuleRefV -- A vector of FbleModuleRef.
@@ -455,9 +466,29 @@ typedef struct {
   FbleName field;
 } FbleMiscAccessExpr;
 
+// FbleModule --
+//   Represents an individual module.
+typedef struct {
+  FbleNameV path;
+  FbleExpr* value;
+} FbleModule;
+
+// FbleModuleV -- A vector of modules
+typedef struct {
+  size_t size;
+  FbleModule* xs;
+} FbleModuleV;
+
 // FbleProgram --
 //   Represents a complete parsed and loaded fble program.
+//
+// Fields:
+//   modules - List of dependant modules in topological dependancy order. Later
+//             modules in the list may depend on earlier modules in the list,
+//             but not the other way around.
+//   main - The value of the program, which may depend on any of the modules.
 typedef struct {
+  FbleModuleV modules;
   FbleExpr* main;
 } FbleProgram;
 
@@ -468,12 +499,16 @@ typedef struct {
 //   arena - The arena to use for allocating the parsed program.
 //   filename - The name of the file to parse the program from.
 //   include_path - The directory to search for includes in. May be NULL.
+//   module_refs - Output param: A list of the module references in the parsed
+//                 expression.
 //
 // Results:
 //   The parsed program, or NULL in case of error.
 //
 // Side effects:
 //   Prints an error message to stderr if the program cannot be parsed.
+//   Appends module references in the parsed expression to module_refs, which
+//   is assumed to be a pre-initialized vector.
 //
 // Allocations:
 //   The user is responsible for tracking and freeing any allocations made by
@@ -484,7 +519,7 @@ typedef struct {
 //   A copy of the filename will be made for use in locations. The user need
 //   not ensure that filename remains valid for the duration of the lifetime
 //   of the program.
-FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path);
+FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path, FbleModuleRefV* module_refs);
 
 // FbleLoad --
 //   Load an fble program.
