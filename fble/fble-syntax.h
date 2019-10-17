@@ -97,7 +97,7 @@ void FblePrintName(FILE* stream, FbleName* name);
 typedef size_t FbleModuleId;
 
 // Value of FbleModuleId used before a module has been resolved.
-#define FbleUnresolvedModuleId (-1)
+#define FBLE_UNRESOLVED_MODULE_ID (-1)
 
 // FbleModuleRef --
 //

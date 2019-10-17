@@ -122,12 +122,12 @@ module_ref:
    '/' path '%' {
       $$.path = $2;
       $$.is_absolute = true;
-      $$.resolved = FbleUnresolvedModuleId;
+      $$.resolved = FBLE_UNRESOLVED_MODULE_ID;
    }
  | path '%' {
       $$.path = $1;
       $$.is_absolute = false;
-      $$.resolved = FbleUnresolvedModuleId;
+      $$.resolved = FBLE_UNRESOLVED_MODULE_ID;
    }
  ;
 
