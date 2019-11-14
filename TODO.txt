@@ -1,6 +1,9 @@
 * [lang] Draft revision of spec for modules. Test and implement.
- - Implement program loading logic to load modules into dependency order.
  - Add support for compiling a list of sorted modules.
+   - Add module ref as option in Vars data structure. Compile module ref just
+     like var, only looking for module ref in Vars instead of variable name.
+   - Generate code for a program by doing...
+     CompileExpr ; VPush ; CompileExpr ; VPush ; ... ; CompileExpr ; Descope.
  - Port all prgms to use modules.
  - Remove 'include' support.
 

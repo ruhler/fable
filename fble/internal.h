@@ -353,22 +353,22 @@ typedef struct {
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 
 // FbleCompile --
-//   Type check and compile the given expression.
+//   Type check and compile the given program.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   blocks - vector of locations to record for each block.
-//   expr - the expression to compile.
+//   prgm - the program to compile.
 //
 // Results:
-//   The compiled expression, or NULL if the expression is not well typed.
+//   The compiled program, or NULL if the program is not well typed.
 //
 // Side effects:
-//   Prints a message to stderr if the expression fails to compile. Allocates
+//   Prints a message to stderr if the program fails to compile. Allocates
 //   memory for the instructions which must be freed with FbleFreeInstrBlock when
 //   it is no longer needed.
 //   Initializes and populates blocks with the compiled blocks.
-FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleExpr* expr);
+FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* program);
 
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of values.

@@ -3669,8 +3669,11 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 }
 
 // FbleCompile -- see documentation in internal.h
-FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleExpr* expr)
+FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* program)
 {
+  assert(program->modules.size == 0 && "TODO: Support compilation with modules");
+  FbleExpr* expr = program->main;
+
   FbleVectorInit(arena, *blocks);
   FbleName* nmain = FbleVectorExtend(arena, *blocks);
 
