@@ -44,6 +44,7 @@ void FbleReportError(const char* format, FbleLoc* loc, ...);
 typedef enum {
   FBLE_NORMAL_NAME_SPACE,
   FBLE_TYPE_NAME_SPACE,
+  FBLE_MODULE_NAME_SPACE,
 } FbleNameSpace;
 
 // FbleName -- 
@@ -92,24 +93,16 @@ bool FbleNamesEqual(FbleName* a, FbleName* b);
 //   Prints the given name to the given stream.
 void FblePrintName(FILE* stream, FbleName* name);
 
-// FbleModuleId --
-//   A unique identifier of a resolved module.
-typedef size_t FbleModuleId;
-
-// Value of FbleModuleId used before a module has been resolved.
-#define FBLE_UNRESOLVED_MODULE_ID (-1)
-
 // FbleModuleRef --
 //
 // Fields:
 //   is_absolute: true if this is an absolute path, false if it is a relative path.
 //   resolved: After the module reference is resolved, 'resolved' will be set
-//             to the index of the resolved module in the FbleProgram's
-//             'modules' vector.
+//             to the name of the canonical name of the resolved module.
 typedef struct {
   FbleNameV path;
   bool is_absolute;
-  FbleModuleId resolved;
+  FbleName* resolved;
 } FbleModuleRef;
 
 // FbleModuleRefV -- A vector of FbleModuleRef.
@@ -468,8 +461,13 @@ typedef struct {
 
 // FbleModule --
 //   Represents an individual module.
+// 
+// Fields:
+//   name - the canonical name of the module. This is the resolved path to the
+//   module with "/" used as a separator. For example, the module Foo/Bar% has
+//   name "Foo/Bar" in the MODULE name space.
 typedef struct {
-  FbleNameV path;
+  FbleName name;
   FbleExpr* value;
 } FbleModule;
 

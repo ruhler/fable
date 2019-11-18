@@ -9,6 +9,12 @@
 
 // Stack --
 //   A stack of modules in the process of being loaded.
+//
+// Fields:
+//   module_refs - relative references from the module to other modules.
+//   path - the resolved path to the module.
+//   value - the value of the module.
+//   tail - the rest of the stack of modules.
 typedef struct Stack {
   FbleModuleRefV module_refs;
   FbleNameV path;
@@ -17,6 +23,7 @@ typedef struct Stack {
 } Stack;
 
 static bool PathsEqual(FbleNameV a, FbleNameV b);
+static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
 static bool ResolvePath(FbleArena* arena, const char* root, FbleNameV base, FbleModuleRef* ref, FbleNameV* resolved);
 static FbleExpr* Parse(FbleArena* arena, FbleNameV path, const char* include_path, FbleModuleRefV* module_refs);
 
@@ -44,6 +51,49 @@ static bool PathsEqual(FbleNameV a, FbleNameV b)
     }
   }
   return true;
+}
+
+// PathToName --
+//   Convert an absolute module path to the corresponding canonical module
+//   name.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   path - an absolute path to a module.
+//   name - output parameter set to the canonical name for the module.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Sets name to the canonical name for the module.
+static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
+{
+  FbleLoc loc = {
+    .source = "???",
+    .line = 0,
+    .col = 0
+  };
+
+  if (path.size > 0) {
+    loc = path.xs[path.size - 1].loc;
+  }
+
+  size_t len = 1;
+  for (size_t i = 0; i < path.size; ++i) {
+    len += 1 + strlen(path.xs[i].name);
+  }
+
+  char* name_name = FbleArrayAlloc(arena, char, len);
+  name->name = name_name;
+  name->loc = loc;
+  name->space = FBLE_MODULE_NAME_SPACE;
+
+  name_name[0] = '\0';
+  for (size_t i = 0; i < path.size; ++i) {
+    strcat(name_name, "/");
+    strcat(name_name, path.xs[i].name);
+  }
 }
 
 // ResolvePath --
@@ -155,9 +205,10 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     if (stack->module_refs.size == 0) {
       // We have loaded all the dependencies for this module.
       FbleModule* module = FbleVectorExtend(arena, program->modules);
-      module->path = stack->path;
+      PathToName(arena, stack->path, &module->name);
       module->value = stack->value;
       Stack* tail = stack->tail;
+      FbleFree(arena, stack->path.xs);
       FbleFree(arena, stack->module_refs.xs);
       FbleFree(arena, stack);
       stack = tail;
@@ -173,14 +224,17 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     }
 
     // Check to see if we have already loaded this path.
+    FbleName resolved_name;
+    PathToName(arena, resolved, &resolved_name);
     for (size_t i = 0; i < program->modules.size; ++i) {
-      if (PathsEqual(resolved, program->modules.xs[i].path)) {
-        ref->resolved = i;
+      if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
+        ref->resolved = &program->modules.xs[i].name;
         stack->module_refs.size--;
         break;
       }
     }
-    if (ref->resolved != FBLE_UNRESOLVED_MODULE_ID) {
+    FbleFree(arena, (void*)resolved_name.name);
+    if (ref->resolved != NULL) {
       FbleFree(arena, resolved.xs);
       continue;
     }

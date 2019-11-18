@@ -36,5 +36,9 @@ void FblePrintName(FILE* stream, FbleName* name)
     case FBLE_TYPE_NAME_SPACE:
       fprintf(stream, "@");
       break;
+
+    case FBLE_MODULE_NAME_SPACE:
+      fprintf(stream, "%%");
+      break;
   }
 }
