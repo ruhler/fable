@@ -2878,7 +2878,27 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     }
 
     case FBLE_MODULE_REF_EXPR: {
-      assert(false && "TODO: Compile module ref expr");
+      *time += 1;
+      FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
+      assert(module_ref_expr->ref.resolved != NULL);
+
+      for (size_t i = 0; i < vars->nvars; ++i) {
+        size_t j = vars->nvars - i - 1;
+        Var* var = vars->vars.xs + j;
+        if (FbleNamesEqual(module_ref_expr->ref.resolved, &var->name)) {
+          FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
+          instr->_base.tag = FBLE_VAR_INSTR;
+          instr->position = j;
+          FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
+          FbleVectorAppend(arena_, *instrs, &instr->_base);
+          CompileExit(arena_, exit, instrs);
+          return TypeRetain(arena, var->type);
+        }
+      }
+
+      // We should have resolved all modules at program load time, so we
+      // should never get here.
+      UNREACHABLE("module not in scope");
       return NULL;
     }
 
