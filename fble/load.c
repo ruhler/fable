@@ -226,15 +226,17 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     // Check to see if we have already loaded this path.
     FbleName resolved_name;
     PathToName(arena, resolved, &resolved_name);
+    bool found = false;
     for (size_t i = 0; i < program->modules.size; ++i) {
       if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
-        ref->resolved = &program->modules.xs[i].name;
+        ref->resolved = program->modules.xs[i].name;
         stack->module_refs.size--;
+        found = true;
         break;
       }
     }
     FbleFree(arena, (void*)resolved_name.name);
-    if (ref->resolved != NULL) {
+    if (found) {
       FbleFree(arena, resolved.xs);
       continue;
     }

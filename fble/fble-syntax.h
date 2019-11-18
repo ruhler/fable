@@ -102,7 +102,7 @@ void FblePrintName(FILE* stream, FbleName* name);
 typedef struct {
   FbleNameV path;
   bool is_absolute;
-  FbleName* resolved;
+  FbleName resolved;
 } FbleModuleRef;
 
 // FbleModuleRefV -- A vector of FbleModuleRef.

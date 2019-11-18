@@ -122,12 +122,12 @@ module_ref:
    '/' path '%' {
       $$.path = $2;
       $$.is_absolute = true;
-      $$.resolved = NULL;
+      $$.resolved.name = NULL;
    }
  | path '%' {
       $$.path = $1;
       $$.is_absolute = false;
-      $$.resolved = NULL;
+      $$.resolved.name = NULL;
    }
  ;
 

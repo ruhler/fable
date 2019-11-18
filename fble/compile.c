@@ -273,6 +273,7 @@ static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
 static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
+static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time);
 
 // CopyKind --
 //   Makes a (refcount) copy of a compiled kind.
@@ -2880,12 +2881,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_MODULE_REF_EXPR: {
       *time += 1;
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
-      assert(module_ref_expr->ref.resolved != NULL);
 
       for (size_t i = 0; i < vars->nvars; ++i) {
         size_t j = vars->nvars - i - 1;
         Var* var = vars->vars.xs + j;
-        if (FbleNamesEqual(module_ref_expr->ref.resolved, &var->name)) {
+        if (FbleNamesEqual(&module_ref_expr->ref.resolved, &var->name)) {
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
           instr->position = j;
@@ -3670,6 +3670,79 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
   UNREACHABLE("Should never get here");
 }
 
+// CompileProgram --
+//   Type check and compile the given program. Returns the type of the
+//   program and generates instructions to compute the value of that
+//   program at runtime.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   blocks - the vector of block locations to populate.
+//   name - a sequence of names describing the current location in the code.
+//          Used for naming profiling blocks.
+//   exit - if true, generate instructions to exit the current scope when done.
+//   vars - the list of variables in scope.
+//   prgm - the program to compile.
+//   instrs - vector of instructions to append new instructions to.
+//   time - output var tracking the time required to execute the compiled block.
+//
+// Results:
+//   The type of the program, or NULL if the program is not well typed.
+//
+// Side effects:
+//   Appends blocks to 'blocks' with compiled block information.
+//   Appends instructions to 'instrs' for executing the given program.
+//   There is no gaurentee about what instructions have been appended to
+//   'instrs' if the program fails to compile.
+//   Prints a message to stderr if the program fails to compile.
+//   Allocates a reference-counted type that must be freed using
+//   TypeRelease when it is no longer needed.
+//   Increments 'time' by the amount of time required to execute this
+//   program.
+static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time)
+{
+  *time += 1 + prgm->modules.size;
+
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  Type* types[prgm->modules.size];
+  for (size_t i = 0; i < prgm->modules.size; ++i) {
+    FbleVectorAppend(arena_, *name, prgm->modules.xs[i].name);
+    types[i] = CompileExpr(arena, blocks, name, false, vars, prgm->modules.xs[i].value, instrs, time);
+    name->size--;
+
+    if (types[i] == NULL) {
+      for (size_t j = 0; j < i; ++j) {
+        TypeRelease(arena, types[j]);
+      }
+      return NULL;
+    }
+
+    FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
+    vpush->_base.tag = FBLE_VPUSH_INSTR;
+    vpush->count = 1;
+    FbleVectorAppend(arena_, *instrs, &vpush->_base);
+    PushVar(arena_, vars, prgm->modules.xs[i].name, types[i]);
+  }
+
+  Type* rtype = CompileExpr(arena, blocks, name, exit, vars, prgm->main, instrs, time);
+  for (size_t i = 0; i < prgm->modules.size; ++i) {
+    PopVar(arena_, vars);
+    TypeRelease(arena, types[i]);
+  }
+
+  if (rtype == NULL) {
+    return NULL;
+  }
+
+  if (!exit) {
+    FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+    descope->_base.tag = FBLE_DESCOPE_INSTR;
+    descope->count = prgm->modules.size;
+    FbleVectorAppend(arena_, *instrs, &descope->_base);
+  }
+  return rtype;
+}
+
 // FbleFreeInstrBlock -- see documentation in internal.h
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 {
@@ -3691,9 +3764,6 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 // FbleCompile -- see documentation in internal.h
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* program)
 {
-  assert(program->modules.size == 0 && "TODO: Support compilation with modules");
-  FbleExpr* expr = program->main;
-
   FbleVectorInit(arena, *blocks);
   FbleName* nmain = FbleVectorExtend(arena, *blocks);
 
@@ -3706,7 +3776,8 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   FbleNameV name;
   FbleVectorInit(arena, name);
 
-  FbleInstrBlock* block = NewInstrBlock(arena, blocks, &name, expr->loc);
+  // TODO: What location to use for the instruction block?
+  FbleInstrBlock* block = NewInstrBlock(arena, blocks, &name, program->main->loc);
 
   assert(block->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
   size_t* body_time = &((FbleProfileEnterBlockInstr*)block->instrs.xs[0])->time;
@@ -3716,7 +3787,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   vars.nvars = 0;
 
   TypeArena* type_arena = FbleNewRefArena(arena, &TypeFree, &TypeAdded);
-  Type* type = CompileExpr(type_arena, blocks, &name, true, &vars, expr, &block->instrs, body_time);
+  Type* type = CompileProgram(type_arena, blocks, &name, true, &vars, program, &block->instrs, body_time);
   TypeRelease(type_arena, type);
   FbleDeleteRefArena(type_arena);
 
