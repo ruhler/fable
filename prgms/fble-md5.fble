@@ -1,12 +1,3 @@
 
-@(Unit_: &Unit_);
-@(Monoid_: &Monoid_);
-@(Maybe_: &Maybe_);
-@(Bool_: &Bool_);
-@(List_: &List_);
-@(Hex_: &Hex_);
-@(Bits_: &Bits_);
-@(Md5_: &Md5_);
-
-Md5_.Md5;
+Md5_%.Md5;
 

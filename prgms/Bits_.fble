@@ -1,35 +1,11 @@
 Unit_% { @(Unit@, Unit); };
-Bool_% { @(Bool@); };
 Hex_% { @(Hex@, 0, 1); };
 
-@ Bit@ = +(Unit@ 0, Unit@ 1);
+BitN% { @(Bit@, BitN@); };
+Bit2XN% { @(Bit2XN, Bit2X@); };
+
 @(Bit: @(Bit@));
-
-<@>@ BitN@ = <@ T@> {
-  @ Result@ = *(T@ z, Bit@ cout);
-  *(
-    @<Result@> Result@,
-    (T@){T@;} not,          # !a
-    (T@, T@){T@;} and,      # a & b
-    (T@, T@){T@;} or,       # a | b
-    (T@, T@){T@;} xor,      # a ^ b
-    (T@, T@){T@;} add,      # a + b
-    (T@){T@;} inc,          # a++
-    T@ zero,                # 0
-    (T@){Bool@;} iszero,    # a == 0
-    (T@, T@){Bool@;} eq,    # a == b
-    (T@){Bit@;} msb,        # most significant bit
-    (T@){T@;} clshift,      # circular left shift by 1
-    (T@, T@, Bit@){Result@;} fulladd,
-    (T@){Result@;} fullinc,
-    (T@, Bit@){Result@;} lshift # left shift by 1
-  );
-};
-
-@(Bit1: @(Bit1@: Bit@, BitN: &Bit1));
-
-<@>@ Bit2X@ = <@ T@> { *(T@ hi, T@ lo); };
-<@ T@>(BitN@<T@>){BitN@<Bit2X@<T@>>;} Bit2XN = &Bit2XN;
+@(Bit1: Bit1%);
 
 @(Bit2: @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN)));
 

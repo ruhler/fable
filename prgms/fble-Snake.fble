@@ -1,17 +1,9 @@
 
-@(Unit_: &Unit_);
-@(Monoid_: &Monoid_);
-@(Bool_: &Bool_);
-@(List_: &List_);
-@(UBNat_: &UBNat_);
-@(Draw: &Draw);
-
-Unit_ { @(Unit@, Unit); };
-Bool_ { @(Bool@, True, False, And); };
-List_ { @(P@, S@, InitP, LastP); };
-UBNat_ { @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
-Draw { @(Color@, Draw@); };
-
+Unit_% { @(Unit@, Unit); };
+Bool_% { @(Bool@, True, False, And); };
+List_% { @(P@, S@, InitP, LastP); };
+UBNat_% { @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
+Draw% { @(Color@, Draw@); };
 
 Nat@ MinRow = 0;
 Nat@ MaxRow = Lit2(2, 0);
