@@ -372,7 +372,7 @@ values for defining a variable without having to explicitly specify its type.
 This is useful for referring to a namespace without having to provide an
 explicit type for the namespace. For example:
 
-  @(StdLib: &StdLib); ...
+  @(StdLib: StdLib%); ...
 
 Or, as another example, the following two are equivalent:
 
@@ -1152,7 +1152,6 @@ expr ::=
  | '['[expr [',' expr [...]] ']'                   (* list *)
  | type '|' word                                   (* literal *)
 
- | '&' name                                        (* include *)
  | block
  ;
 

@@ -25,7 +25,7 @@ typedef struct Stack {
 static bool PathsEqual(FbleNameV a, FbleNameV b);
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
 static bool ResolvePath(FbleArena* arena, const char* root, FbleNameV base, FbleModuleRef* ref, FbleNameV* resolved);
-static FbleExpr* Parse(FbleArena* arena, FbleNameV path, const char* include_path, FbleModuleRefV* module_refs);
+static FbleExpr* Parse(FbleArena* arena, FbleNameV path, const char* root, FbleModuleRefV* module_refs);
 
 // PathsEqual --
 //   Checks if two absolute moduel paths are equal.
@@ -176,17 +176,36 @@ static bool ResolvePath(FbleArena* arena, const char* root, FbleNameV base, Fble
 
 // Parse  -- 
 //  Parse an expression from given path.
-//  See documentation of FbleParse in fble-syntax.h for details.
-static FbleExpr* Parse(FbleArena* arena, FbleNameV path, const char* include_path, FbleModuleRefV* module_refs)
+//  
+// Inputs:
+//   arena - arena to use for allocations
+//   path - the resolved module path to parse
+//   root - file path to the root of the module search path
+//   module_refs - Output param: A list of the module references in the parsed
+//                 expression.
+//
+// Results:
+//   The parsed program, or NULL in case of error.
+//
+// Side effects:
+//   Prints an error message to stderr if the program cannot be parsed.
+//   Appends module references in the parsed expression to module_refs, which
+//   is assumed to be a pre-initialized vector.
+//
+// Allocations:
+//   The user is responsible for tracking and freeing any allocations made by
+//   this function. The total number of allocations made will be linear in the
+//   size of the returned program if there is no error.
+static FbleExpr* Parse(FbleArena* arena, FbleNameV path, const char* root, FbleModuleRefV* module_refs)
 {
-  size_t len = strlen(include_path) + strlen(".fble") + 1;
+  size_t len = strlen(root) + strlen(".fble") + 1;
   for (size_t i = 0; i < path.size; ++i) {
     len += 1 + strlen(path.xs[i].name);
   }
 
   char filename[len];
   filename[0] = '\0';
-  strcat(filename, include_path);
+  strcat(filename, root);
   for (size_t i = 0; i < path.size; ++i) {
     len += 1 + strlen(path.xs[i].name);
     strcat(filename, "/");
@@ -194,7 +213,7 @@ static FbleExpr* Parse(FbleArena* arena, FbleNameV path, const char* include_pat
   }
   strcat(filename, ".fble");
 
-  return FbleParse(arena, filename, include_path, module_refs);
+  return FbleParse(arena, filename, module_refs);
 }
 
 // FbleLoad -- see documentation in fble-syntax.h
@@ -208,7 +227,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleVectorInit(arena, stack->path);
   stack->tail = NULL;
 
-  stack->value = FbleParse(arena, filename, root, &stack->module_refs);
+  stack->value = FbleParse(arena, filename, &stack->module_refs);
   if (stack->value == NULL) {
     return NULL;
   }

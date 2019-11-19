@@ -56,14 +56,14 @@
   static bool IsPunctuationChar(int c);
   static bool IsNormalChar(int c);
   static void ReadNextChar(Lex* lex);
-  static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex);
-  static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg);
+  static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex);
+  static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg);
 %}
 
 %locations
 %define api.pure
 %define parse.error verbose
-%param {FbleArena* arena} {const char* include_path} {Lex* lex}
+%param {FbleArena* arena} {Lex* lex}
 %parse-param {FbleExpr** result} {FbleModuleRefV* module_refs}
 
 %token END 0 "end of file"
@@ -320,30 +320,6 @@ expr:
       literal_expr->word_loc = @3;
       literal_expr->word = $3;
       $$ = &literal_expr->_base;
-   }
- | '&' name {
-      if (include_path == NULL) {
-        FbleReportError("%s not found for include\n", &(@$), $2);
-        YYERROR;
-      }
-
-      char new_include_path[strlen(include_path) + strlen($2.name) + 3];
-      strcpy(new_include_path, include_path);
-      strcat(new_include_path, "/");
-      strcat(new_include_path, $2.name);
-      if ($2.space == FBLE_TYPE_NAME_SPACE) {
-        strcat(new_include_path, "@");
-      }
-
-      char new_filename[strlen(new_include_path) + 6];
-      strcpy(new_filename, new_include_path);
-      strcat(new_filename, ".fble");
-
-      $$ = FbleParse(arena, new_filename, new_include_path, module_refs);
-      if ($$ == NULL) {
-        FbleReportError("(included from here)\n", &(@$));
-        YYERROR;
-      }
    }
  | block {
       $$ = $1;
@@ -690,7 +666,6 @@ static void ReadNextChar(Lex* lex)
 //   lvalp - Output parameter for returned token value.
 //   llocp - Output parameter for the returned token's location.
 //   arena - Arena used for allocating names.
-//   include_path - the include path to search for includes.
 //   lex - The lex context to parse the next token from.
 // 
 // Results:
@@ -701,7 +676,7 @@ static void ReadNextChar(Lex* lex)
 //   stream, sets llocp with the location of the next token in the input
 //   stream, advances the stream to the subsequent token and updates the lex
 //   loc accordingly.
-static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex)
+static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex)
 {
   // Skip past white space and comments.
   bool is_comment_start = (lex->c == '#');
@@ -759,7 +734,6 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
 // Inputs:
 //   llocp - The location of the error.
 //   arena - unused.
-//   include_path - unused.
 //   lex - unused.
 //   result - unused.
 //   msg - The error message.
@@ -769,13 +743,13 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, const char* i
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(YYLTYPE* llocp, FbleArena* arena, const char* include_path, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg)
+static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg)
 {
   FbleReportError("%s\n", llocp, msg);
 }
 
 // FbleParse -- see documentation in fble-syntax.h
-FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_path, FbleModuleRefV* module_refs)
+FbleExpr* FbleParse(FbleArena* arena, const char* filename, FbleModuleRefV* module_refs)
 {
   FILE* fin = fopen(filename, "r");
   if (fin == NULL) {
@@ -795,6 +769,6 @@ FbleExpr* FbleParse(FbleArena* arena, const char* filename, const char* include_
     .sin = NULL
   };
   FbleExpr* result = NULL;
-  yyparse(arena, include_path, &lex, &result, module_refs);
+  yyparse(arena, &lex, &result, module_refs);
   return result;
 }
