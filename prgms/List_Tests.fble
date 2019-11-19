@@ -1,8 +1,8 @@
-Unit_% { @(Unit@, Unit); };
-Bool_% { @(Bool@, True, False, And); };
-Char_% { @(Char@); };
-List_% { @(S@, P@, S0, S, Append, SortS); };
-String_% { @(Str@, Str); };
+Unit% { @(Unit@, Unit); };
+Bool% { @(Bool@, True, False, And); };
+Char% { @(Char@); };
+List% { @(S@, P@, S0, S, Append, SortS); };
+String% { @(Str@, Str); };
 Test% { @(TestResult@, Test@); };
 
 @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);

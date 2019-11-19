@@ -1,4 +1,4 @@
-Unit_% { @(Unit@); };
+Unit% { @(Unit@); };
 
 <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 

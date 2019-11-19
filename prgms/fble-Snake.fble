@@ -1,8 +1,8 @@
 
-Unit_% { @(Unit@, Unit); };
-Bool_% { @(Bool@, True, False, And); };
-List_% { @(P@, S@, InitP, LastP); };
-UBNat_% { @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
+Unit% { @(Unit@, Unit); };
+Bool% { @(Bool@, True, False, And); };
+List% { @(P@, S@, InitP, LastP); };
+UBNat% { @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
 Draw% { @(Color@, Draw@); };
 
 Nat@ MinRow = 0;

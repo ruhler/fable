@@ -1,5 +1,4 @@
 * [lang] Draft revision of spec for modules. Test and implement.
- - Strip '_' off of all modules.
  - Remove 'include' support.
  - Remove struct eval support?
 

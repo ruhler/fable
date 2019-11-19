@@ -1,5 +1,5 @@
-Unit_% { @(Unit@, Unit); };
-Bool_% { @(Bool@, True, False, Eq); };
+Unit% { @(Unit@, Unit); };
+Bool% { @(Bool@, True, False, Eq); };
 
 @ Nat@ = +(
   Unit@ 0,

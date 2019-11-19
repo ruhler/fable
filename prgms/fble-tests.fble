@@ -1,14 +1,14 @@
 
-List_% { @(S@, S, Concat); };
-String_% { @(Str@); };
+List% { @(S@, S, Concat); };
+String% { @(Str@); };
 Test% { @(Test@); };
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   Test%.Tests,
-  List_Tests_%.Tests,
-  UBNat_Tests_%.Tests,
-  Primes_Tests_%.Tests,
-  Md5_Tests_%.Tests
+  List_Tests%.Tests,
+  UBNat_Tests%.Tests,
+  Primes_Tests%.Tests,
+  Md5_Tests%.Tests
 ]));
 
 (Str@+ out) {

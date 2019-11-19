@@ -1,10 +1,10 @@
-Unit_% { @(Unit@, Unit); };
-Bool_% { @(Bool@); };
-Char_% { @(Char@); };
-List_% { @(S@, P@, ConsS, S, Append, Concat); };
-String_% { @(Str@, Str); };
-UBNat_% { @(Nat@, 1, 3, 10, Lit2, EqNat); };
-Primes_% { @(NthPrime); };
+Unit% { @(Unit@, Unit); };
+Bool% { @(Bool@); };
+Char% { @(Char@); };
+List% { @(S@, P@, ConsS, S, Append, Concat); };
+String% { @(Str@, Str); };
+UBNat% { @(Nat@, 1, 3, 10, Lit2, EqNat); };
+Primes% { @(NthPrime); };
 Test% { @(TestResult@, Test@); };
 
 (Str@, Nat@, Nat@){Test@;} TEq = (Str@ name, Nat@ a, Nat@ b) {

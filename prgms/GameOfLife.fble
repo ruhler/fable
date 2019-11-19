@@ -1,6 +1,6 @@
 
-Unit_% { @(Unit@, Unit); };
-List_% { @(P@, S@); };
+Unit% { @(Unit@, Unit); };
+List% { @(P@, S@); };
 Draw% { @(Color@, Draw@); };
 
 @ Cell@ = +(Unit@ alive, Unit@ dead);

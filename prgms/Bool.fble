@@ -1,5 +1,5 @@
-Unit_% { @(Unit@, Unit); };
-Monoid_% { @(Monoid@); };
+Unit% { @(Unit@, Unit); };
+Monoid% { @(Monoid@); };
 
 @ Bool@ = +(Unit@ true, Unit@ false);
 

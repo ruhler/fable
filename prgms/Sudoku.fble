@@ -1,6 +1,6 @@
-Unit_% { @(Unit@); };
-Maybe_% { @(Maybe@); };
-List_% { @(S@, P@); };
+Unit% { @(Unit@); };
+Maybe% { @(Maybe@); };
+List% { @(S@, P@); };
 
 @ Symbol@ = +(
   Unit@ S1, Unit@ S2, Unit@ S3,

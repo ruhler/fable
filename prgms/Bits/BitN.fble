@@ -1,5 +1,5 @@
-Unit_% { @(Unit@, Unit); };
-Bool_% { @(Bool@); };
+Unit% { @(Unit@, Unit); };
+Bool% { @(Bool@); };
 
 @ Bit@ = +(Unit@ 0, Unit@ 1);
 

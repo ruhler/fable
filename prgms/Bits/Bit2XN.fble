@@ -1,5 +1,5 @@
 BitN% { @(BitN@); };
-Bool_% { @(Bool@, And); };
+Bool% { @(Bool@, And); };
 
 <@>@ Bit2XT@ = <@ T@> { *(T@ hi, T@ lo); };
 

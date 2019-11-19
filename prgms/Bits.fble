@@ -1,5 +1,5 @@
-Unit_% { @(Unit@, Unit); };
-Hex_% { @(Hex@, 0, 1); };
+Unit% { @(Unit@, Unit); };
+Hex% { @(Hex@, 0, 1); };
 
 BitN% { @(Bit@, BitN@); };
 Bit2XN% { @(Bit2XN, Bit2X@); };
