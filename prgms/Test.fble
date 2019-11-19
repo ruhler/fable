@@ -1,54 +1,52 @@
-@(Unit_, Bool_, Char_, List_, String_) {
-  Unit_ { @(Unit@, Unit); };
-  Bool_ { @(Bool@, True, False, AndMonoid); };
-  Char_ { @(Char@, newline); };
-  List_ { @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
-  String_ { @(Str@, Str); };
+Unit_% { @(Unit@, Unit); };
+Bool_% { @(Bool@, True, False, AndMonoid); };
+Char_% { @(Char@, newline); };
+List_% { @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
+String_% { @(Str@, Str); };
 
-  @ TestResult@ = +(Unit@ pass, Str@ fail);
-  @ Test@ = *(Str@ name, TestResult@! test);
+@ TestResult@ = +(Unit@ pass, Str@ fail);
+@ Test@ = *(Str@ name, TestResult@! test);
 
-  # Print a string to the given output stream.
-  (Str@+, Str@){ Unit@!; } Print = (Str@+ out, Str@ str) {
-    Str@ _ := out(str);
-    $(Unit);
-  };
-
-  # Print a string and newline to the given output stream.
-  (Str@+, Str@){ Unit@!; } PrintLn = (Str@+ out, Str@ str) {
-    Str@ _ := out(Append<Char@>(str, Str([newline])));
-    $(Unit);
-  };
-
-  # Returns True if the tests all pass, false otherwise.
-  (Str@+, S@<Test@>){Bool@!;} RunTests = (Str@+ out, S@<Test@> tests) {
-    SeqS<Bool@>(AndMonoid, {
-      Test@ test <- MapS<Test@, Bool@!>(tests);
-      Unit@ _ := Print(out, test.name);
-      TestResult@ tr := test.test;
-      ?(tr; pass: {
-              Unit@ _ := PrintLn(out, S0<Char@>);
-              $(True);
-            },
-            fail: {
-              Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
-                Str(Char@|': FAILED: '),
-                tr.fail])));
-              $(False);
-            });
-    });
-  };
-
-  S@<Test@> Tests = {
-    (Str@){Str@;} name = (Str@ nm) {
-      Append<Char@>(Str(Char@|'Test.'), nm);
-    };
-
-    Test@ pass = Test@(name(Str(Char@|pass)), $(TestResult@(pass: Unit)));
-    Test@ fail = Test@(name(Str(Char@|fail)), $(TestResult@(fail: Str(Char@|FAILED))));
-
-    S<Test@>([pass]);
-  };
-
-  @(Str@, TestResult@, Test@, RunTests, Tests);
+# Print a string to the given output stream.
+(Str@+, Str@){ Unit@!; } Print = (Str@+ out, Str@ str) {
+  Str@ _ := out(str);
+  $(Unit);
 };
+
+# Print a string and newline to the given output stream.
+(Str@+, Str@){ Unit@!; } PrintLn = (Str@+ out, Str@ str) {
+  Str@ _ := out(Append<Char@>(str, Str([newline])));
+  $(Unit);
+};
+
+# Returns True if the tests all pass, false otherwise.
+(Str@+, S@<Test@>){Bool@!;} RunTests = (Str@+ out, S@<Test@> tests) {
+  SeqS<Bool@>(AndMonoid, {
+    Test@ test <- MapS<Test@, Bool@!>(tests);
+    Unit@ _ := Print(out, test.name);
+    TestResult@ tr := test.test;
+    ?(tr; pass: {
+            Unit@ _ := PrintLn(out, S0<Char@>);
+            $(True);
+          },
+          fail: {
+            Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
+              Str(Char@|': FAILED: '),
+              tr.fail])));
+            $(False);
+          });
+  });
+};
+
+S@<Test@> Tests = {
+  (Str@){Str@;} name = (Str@ nm) {
+    Append<Char@>(Str(Char@|'Test.'), nm);
+  };
+
+  Test@ pass = Test@(name(Str(Char@|pass)), $(TestResult@(pass: Unit)));
+  Test@ fail = Test@(name(Str(Char@|fail)), $(TestResult@(fail: Str(Char@|FAILED))));
+
+  S<Test@>([pass]);
+};
+
+@(Str@, TestResult@, Test@, RunTests, Tests);

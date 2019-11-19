@@ -1,61 +1,59 @@
-@(Unit_, Bool_, Char_, List_, String_, UBNat_, Test) {
-  Unit_ { @(Unit@, Unit); };
-  Bool_ { @(Bool@, Not); };
-  Char_ { @(Char@); };
-  List_ { @(P@, S@, S0, S, Append); };
-  String_ { @(Str@, CharLit@, Str); };
-  Test { @(TestResult@, Test@); };
-  UBNat_ { @(
-      Nat@,
-      0, 1, 2, 3, 4, 5, 6, 7, Lit2,
-      EqNat, Lt, Le, Gt, Ge,
-      Inc, Dec, Add, Sub, Mul, Div, Mod
-    );
-  };
-
-  @ TestFailure@ = *(Str@ name, Nat@ a, Nat@ b);
-
-  (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
-    Test@(Append<Char@>(Str(Char@|'UBNat.'), Str(name)), {
-      Bool@ x := p;
-      ?(x;
-         true: $(TestResult@(pass: Unit)),
-         false: $(TestResult@(fail: Str(Char@|failed))));
-    });
-  };
-
-  (CharLit@, Nat@, Nat@!){Test@;} TEq = (CharLit@ name, Nat@ a, Nat@! b) {
-    # TODO: Provide a custom error message
-    T(name, { Nat@ x := b; $(EqNat(a, x)); });
-  };
-
-  S@<Test@> Tests = S<Test@>([
-    T(Char@|Eq_0_0, $(EqNat(0, 0))),
-    T(Char@|Eq_0_1, $(Not(EqNat(0, 1)))),
-    T(Char@|Eq_1_1, $(EqNat(1, 1))),
-    T(Char@|Le_5_5, $(Le(5, 5))),
-    T(Char@|Le_5_7, $(Le(5, 7))),
-    T(Char@|Le_7_5, $(Not(Le(7, 5)))),
-    T(Char@|Lt_5_5, $(Not(Lt(5, 5)))),
-    T(Char@|Lt_5_7, $(Lt(5, 7))),
-    T(Char@|Lt_7_5, $(Not(Lt(7, 5)))),
-    T(Char@|Ge_5_5, $(Ge(5, 5))),
-    T(Char@|Ge_5_7, $(Not(Ge(5, 7)))),
-    T(Char@|Ge_7_5, $(Ge(7, 5))),
-    T(Char@|Gt_5_5, $(Not(Gt(5, 5)))),
-    T(Char@|Gt_5_7, $(Not(Gt(5, 7)))),
-    T(Char@|Gt_7_5, $(Gt(7, 5))),
-    TEq(Char@|Inc_5, 6, $(Inc(5))),
-    TEq(Char@|Dec_5, 4, $(Dec(5))),
-    TEq(Char@|Dec_5, 4, $(Dec(5))),
-    TEq(Char@|Add_5_7, Lit2(1, 2), $(Add(5, 7))),
-    TEq(Char@|Sub_5_7, 0, $(Sub(5, 7))),
-    TEq(Char@|Mul_5_7, Lit2(3, 5), $(Mul(5, 7))),
-    TEq(Char@|Div_6_3, 2, $(Div(6, 3))),
-    TEq(Char@|Div_10_3, 3, $(Div(Lit2(1, 0), 3))),
-    TEq(Char@|Mod_6_3, 0, $(Mod(6, 3))),
-    TEq(Char@|Mod_10_3, 1, $(Mod(Lit2(1, 0), 3)))
-  ]);
-
-  @(Tests);
+Unit_% { @(Unit@, Unit); };
+Bool_% { @(Bool@, Not); };
+Char_% { @(Char@); };
+List_% { @(P@, S@, S0, S, Append); };
+String_% { @(Str@, CharLit@, Str); };
+Test% { @(TestResult@, Test@); };
+UBNat_% { @(
+    Nat@,
+    0, 1, 2, 3, 4, 5, 6, 7, Lit2,
+    EqNat, Lt, Le, Gt, Ge,
+    Inc, Dec, Add, Sub, Mul, Div, Mod
+  );
 };
+
+@ TestFailure@ = *(Str@ name, Nat@ a, Nat@ b);
+
+(CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
+  Test@(Append<Char@>(Str(Char@|'UBNat.'), Str(name)), {
+    Bool@ x := p;
+    ?(x;
+       true: $(TestResult@(pass: Unit)),
+       false: $(TestResult@(fail: Str(Char@|failed))));
+  });
+};
+
+(CharLit@, Nat@, Nat@!){Test@;} TEq = (CharLit@ name, Nat@ a, Nat@! b) {
+  # TODO: Provide a custom error message
+  T(name, { Nat@ x := b; $(EqNat(a, x)); });
+};
+
+S@<Test@> Tests = S<Test@>([
+  T(Char@|Eq_0_0, $(EqNat(0, 0))),
+  T(Char@|Eq_0_1, $(Not(EqNat(0, 1)))),
+  T(Char@|Eq_1_1, $(EqNat(1, 1))),
+  T(Char@|Le_5_5, $(Le(5, 5))),
+  T(Char@|Le_5_7, $(Le(5, 7))),
+  T(Char@|Le_7_5, $(Not(Le(7, 5)))),
+  T(Char@|Lt_5_5, $(Not(Lt(5, 5)))),
+  T(Char@|Lt_5_7, $(Lt(5, 7))),
+  T(Char@|Lt_7_5, $(Not(Lt(7, 5)))),
+  T(Char@|Ge_5_5, $(Ge(5, 5))),
+  T(Char@|Ge_5_7, $(Not(Ge(5, 7)))),
+  T(Char@|Ge_7_5, $(Ge(7, 5))),
+  T(Char@|Gt_5_5, $(Not(Gt(5, 5)))),
+  T(Char@|Gt_5_7, $(Not(Gt(5, 7)))),
+  T(Char@|Gt_7_5, $(Gt(7, 5))),
+  TEq(Char@|Inc_5, 6, $(Inc(5))),
+  TEq(Char@|Dec_5, 4, $(Dec(5))),
+  TEq(Char@|Dec_5, 4, $(Dec(5))),
+  TEq(Char@|Add_5_7, Lit2(1, 2), $(Add(5, 7))),
+  TEq(Char@|Sub_5_7, 0, $(Sub(5, 7))),
+  TEq(Char@|Mul_5_7, Lit2(3, 5), $(Mul(5, 7))),
+  TEq(Char@|Div_6_3, 2, $(Div(6, 3))),
+  TEq(Char@|Div_10_3, 3, $(Div(Lit2(1, 0), 3))),
+  TEq(Char@|Mod_6_3, 0, $(Mod(6, 3))),
+  TEq(Char@|Mod_10_3, 1, $(Mod(Lit2(1, 0), 3)))
+]);
+
+@(Tests);

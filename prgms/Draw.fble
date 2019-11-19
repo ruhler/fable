@@ -1,19 +1,17 @@
-@(Unit_, UBNat_) {
-  Unit_ { @(Unit@); };
-  UBNat_ { @(Nat@); };
+Unit_% { @(Unit@); };
+UBNat_% { @(Nat@); };
 
-  @ Color@ = +(
-      Unit@ black,
-      Unit@ red,
-      Unit@ green,
-      Unit@ yellow,
-      Unit@ blue,
-      Unit@ magenta,
-      Unit@ cyan,
-      Unit@ white
-      );
+@ Color@ = +(
+    Unit@ black,
+    Unit@ red,
+    Unit@ green,
+    Unit@ yellow,
+    Unit@ blue,
+    Unit@ magenta,
+    Unit@ cyan,
+    Unit@ white
+    );
 
-  @ Draw@ = *(Nat@ x, Nat@ y, Nat@ w, Nat@ h, Color@ color);
+@ Draw@ = *(Nat@ x, Nat@ y, Nat@ w, Nat@ h, Color@ color);
 
-  @(Color@, Draw@);
-};
+@(Color@, Draw@);

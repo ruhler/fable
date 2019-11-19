@@ -1,6 +1,7 @@
 * [lang] Draft revision of spec for modules. Test and implement.
  - Port all prgms to use modules.
  - Remove 'include' support.
+ - Remove struct eval support?
 
 * [lang] Document and test that variable declarations shadow other variables.
 

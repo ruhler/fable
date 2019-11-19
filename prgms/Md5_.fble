@@ -1,442 +1,440 @@
-@(Unit_, Bool_, List_, Maybe_, Bits_, Hex_) {
-  Unit_ { @(Unit@, Unit); };
-  Maybe_ { @(Maybe@); };
-  Bool_ { @(Bool@, True, False, And); };
-  List_ { @(SL@: S@, PL@: P@, List@, SL: S); };
-  Bits_.Bit { @(Bit@); };
-  Bits_.Bit4 { @(Bit4@); };
-  Bits_.Bit8 { @(Bit8@, H2); };
-  Bits_.Bit16 { @(Bit16@); };
-  Bits_.Bit32 { @(Bit32@); };
-  Bits_.Bit32.BitN { @(eq, and, or, not, xor, clshift, add); };
-  Bits_.Bit64 { @(Bit64@); };
-  Hex_ { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
+Unit_% { @(Unit@, Unit); };
+Maybe_% { @(Maybe@); };
+Bool_% { @(Bool@, True, False, And); };
+List_% { @(SL@: S@, PL@: P@, List@, SL: S); };
+Bits_.Bit { @(Bit@); };
+Bits_.Bit4 { @(Bit4@); };
+Bits_.Bit8 { @(Bit8@, H2); };
+Bits_.Bit16 { @(Bit16@); };
+Bits_.Bit32 { @(Bit32@); };
+Bits_.Bit32.BitN { @(eq, and, or, not, xor, clshift, add); };
+Bits_.Bit64 { @(Bit64@); };
+Hex_% { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
 
-  # Construct a Bit32 in hex, with high-order byte first.
-  (List@<Hex@>){Bit32@;} H8 = (List@<Hex@> list) {
-      SL@<Hex@> s = SL<Hex@>(list);
-      Hex@ 7 = s.cons.head;
-      Hex@ 6 = s.cons.tail.cons.head;
-      Hex@ 5 = s.cons.tail.cons.tail.cons.head;
-      Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
-      Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-      Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-      Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-      Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-      Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
-    };
-
-  Bit32@ t01 = H8(Hex@|D76AA478);
-  Bit32@ t02 = H8(Hex@|E8C7B756);
-  Bit32@ t03 = H8(Hex@|242070DB);
-  Bit32@ t04 = H8(Hex@|C1BDCEEE);
-  Bit32@ t05 = H8(Hex@|F57C0FAF);
-  Bit32@ t06 = H8(Hex@|4787C62A);
-  Bit32@ t07 = H8(Hex@|A8304613);
-  Bit32@ t08 = H8(Hex@|FD469501);
-  Bit32@ t09 = H8(Hex@|698098D8);
-  Bit32@ t10 = H8(Hex@|8B44F7AF);
-  Bit32@ t11 = H8(Hex@|FFFF5BB1);
-  Bit32@ t12 = H8(Hex@|895CD7BE);
-  Bit32@ t13 = H8(Hex@|6B901122);
-  Bit32@ t14 = H8(Hex@|FD987193);
-  Bit32@ t15 = H8(Hex@|A679438E);
-  Bit32@ t16 = H8(Hex@|49B40821);
-  Bit32@ t17 = H8(Hex@|F61E2562);
-  Bit32@ t18 = H8(Hex@|C040B340);
-  Bit32@ t19 = H8(Hex@|265E5A51);
-  Bit32@ t20 = H8(Hex@|E9B6C7AA);
-  Bit32@ t21 = H8(Hex@|D62F105D);
-  Bit32@ t22 = H8(Hex@|02441453);
-  Bit32@ t23 = H8(Hex@|D8A1E681);
-  Bit32@ t24 = H8(Hex@|E7D3FBC8);
-  Bit32@ t25 = H8(Hex@|21E1CDE6);
-  Bit32@ t26 = H8(Hex@|C33707D6);
-  Bit32@ t27 = H8(Hex@|F4D50D87);
-  Bit32@ t28 = H8(Hex@|455A14ED);
-  Bit32@ t29 = H8(Hex@|A9E3E905);
-  Bit32@ t30 = H8(Hex@|FCEFA3F8);
-  Bit32@ t31 = H8(Hex@|676F02D9);
-  Bit32@ t32 = H8(Hex@|8D2A4C8A);
-  Bit32@ t33 = H8(Hex@|FFFA3942);
-  Bit32@ t34 = H8(Hex@|8771F681);
-  Bit32@ t35 = H8(Hex@|6D9D6122);
-  Bit32@ t36 = H8(Hex@|FDE5380C);
-  Bit32@ t37 = H8(Hex@|A4BEEA44);
-  Bit32@ t38 = H8(Hex@|4BDECFA9);
-  Bit32@ t39 = H8(Hex@|F6BB4B60);
-  Bit32@ t40 = H8(Hex@|BEBFBC70);
-  Bit32@ t41 = H8(Hex@|289B7EC6);
-  Bit32@ t42 = H8(Hex@|EAA127FA);
-  Bit32@ t43 = H8(Hex@|D4EF3085);
-  Bit32@ t44 = H8(Hex@|04881D05);
-  Bit32@ t45 = H8(Hex@|D9D4D039);
-  Bit32@ t46 = H8(Hex@|E6DB99E5);
-  Bit32@ t47 = H8(Hex@|1FA27CF8);
-  Bit32@ t48 = H8(Hex@|C4AC5665);
-  Bit32@ t49 = H8(Hex@|F4292244);
-  Bit32@ t50 = H8(Hex@|432AFF97);
-  Bit32@ t51 = H8(Hex@|AB9423A7);
-  Bit32@ t52 = H8(Hex@|FC93A039);
-  Bit32@ t53 = H8(Hex@|655B59C3);
-  Bit32@ t54 = H8(Hex@|8F0CCC92);
-  Bit32@ t55 = H8(Hex@|FFEFF47D);
-  Bit32@ t56 = H8(Hex@|85845DD1);
-  Bit32@ t57 = H8(Hex@|6FA87E4F);
-  Bit32@ t58 = H8(Hex@|FE2CE6E0);
-  Bit32@ t59 = H8(Hex@|A3014314);
-  Bit32@ t60 = H8(Hex@|4E0811A1);
-  Bit32@ t61 = H8(Hex@|F7537E82);
-  Bit32@ t62 = H8(Hex@|BD3AF235);
-  Bit32@ t63 = H8(Hex@|2AD7D2BB);
-  Bit32@ t64 = H8(Hex@|EB86D391);
-
-  @ Md5Hash@ = *(
-    Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,
-    Hex@  8, Hex@  9, Hex@ 10, Hex@ 11, Hex@ 12, Hex@ 13, Hex@ 14, Hex@ 15,
-    Hex@ 16, Hex@ 17, Hex@ 18, Hex@ 19, Hex@ 20, Hex@ 21, Hex@ 22, Hex@ 23,
-    Hex@ 24, Hex@ 25, Hex@ 26, Hex@ 27, Hex@ 28, Hex@ 29, Hex@ 30, Hex@ 31
-  );
-
-  @ ABCD@ = *(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d);
-
-  @ Block@ = *(
-    Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
-    Bit32@ 4, Bit32@ 5, Bit32@ 6, Bit32@ 7,
-    Bit32@ 8, Bit32@ 9, Bit32@ 10, Bit32@ 11,
-    Bit32@ 12, Bit32@ 13, Bit32@ 14, Bit32@ 15);
-
-  @ S@ = +(
-    Unit@  0, Unit@  1, Unit@  2, Unit@  3, Unit@  4, Unit@  5, Unit@  6, Unit@  7,
-    Unit@  8, Unit@  9, Unit@ 10, Unit@ 11, Unit@ 12, Unit@ 13, Unit@ 14, Unit@ 15,
-    Unit@ 16, Unit@ 17, Unit@ 18, Unit@ 19, Unit@ 20, Unit@ 21, Unit@ 22, Unit@ 23
-  );
-
-  (S@){Maybe@<S@>;} NextS = (S@ s) {
-    ?(s; 0: Maybe@<S@>(nothing: Unit),
-         1: Maybe@<S@>(just: S@(0: Unit)), 2: Maybe@<S@>(just: S@(1: Unit)),
-         3: Maybe@<S@>(just: S@(2: Unit)), 4: Maybe@<S@>(just: S@(3: Unit)),
-         5: Maybe@<S@>(just: S@(4: Unit)), 6: Maybe@<S@>(just: S@(5: Unit)),
-         7: Maybe@<S@>(just: S@(6: Unit)), 8: Maybe@<S@>(just: S@(7: Unit)),
-         9: Maybe@<S@>(just: S@(8: Unit)), 10: Maybe@<S@>(just: S@(9: Unit)),
-         11: Maybe@<S@>(just: S@(10: Unit)), 12: Maybe@<S@>(just: S@(11: Unit)),
-         13: Maybe@<S@>(just: S@(12: Unit)), 14: Maybe@<S@>(just: S@(13: Unit)),
-         15: Maybe@<S@>(just: S@(14: Unit)), 16: Maybe@<S@>(just: S@(15: Unit)),
-         17: Maybe@<S@>(just: S@(16: Unit)), 18: Maybe@<S@>(just: S@(17: Unit)),
-         19: Maybe@<S@>(just: S@(18: Unit)), 20: Maybe@<S@>(just: S@(19: Unit)),
-         21: Maybe@<S@>(just: S@(20: Unit)), 22: Maybe@<S@>(just: S@(21: Unit)),
-         23: Maybe@<S@>(just: S@(22: Unit)));
+# Construct a Bit32 in hex, with high-order byte first.
+(List@<Hex@>){Bit32@;} H8 = (List@<Hex@> list) {
+    SL@<Hex@> s = SL<Hex@>(list);
+    Hex@ 7 = s.cons.head;
+    Hex@ 6 = s.cons.tail.cons.head;
+    Hex@ 5 = s.cons.tail.cons.tail.cons.head;
+    Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
+    Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+    Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+    Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+    Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+    Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
   };
 
-  (Bit32@, S@){Bit32@;} cls = (Bit32@ a, S@ s) {
-    Maybe@<S@> next = NextS(s);
-    ?(next; just: cls(clshift(a), next.just), nothing: a);
-  };
+Bit32@ t01 = H8(Hex@|D76AA478);
+Bit32@ t02 = H8(Hex@|E8C7B756);
+Bit32@ t03 = H8(Hex@|242070DB);
+Bit32@ t04 = H8(Hex@|C1BDCEEE);
+Bit32@ t05 = H8(Hex@|F57C0FAF);
+Bit32@ t06 = H8(Hex@|4787C62A);
+Bit32@ t07 = H8(Hex@|A8304613);
+Bit32@ t08 = H8(Hex@|FD469501);
+Bit32@ t09 = H8(Hex@|698098D8);
+Bit32@ t10 = H8(Hex@|8B44F7AF);
+Bit32@ t11 = H8(Hex@|FFFF5BB1);
+Bit32@ t12 = H8(Hex@|895CD7BE);
+Bit32@ t13 = H8(Hex@|6B901122);
+Bit32@ t14 = H8(Hex@|FD987193);
+Bit32@ t15 = H8(Hex@|A679438E);
+Bit32@ t16 = H8(Hex@|49B40821);
+Bit32@ t17 = H8(Hex@|F61E2562);
+Bit32@ t18 = H8(Hex@|C040B340);
+Bit32@ t19 = H8(Hex@|265E5A51);
+Bit32@ t20 = H8(Hex@|E9B6C7AA);
+Bit32@ t21 = H8(Hex@|D62F105D);
+Bit32@ t22 = H8(Hex@|02441453);
+Bit32@ t23 = H8(Hex@|D8A1E681);
+Bit32@ t24 = H8(Hex@|E7D3FBC8);
+Bit32@ t25 = H8(Hex@|21E1CDE6);
+Bit32@ t26 = H8(Hex@|C33707D6);
+Bit32@ t27 = H8(Hex@|F4D50D87);
+Bit32@ t28 = H8(Hex@|455A14ED);
+Bit32@ t29 = H8(Hex@|A9E3E905);
+Bit32@ t30 = H8(Hex@|FCEFA3F8);
+Bit32@ t31 = H8(Hex@|676F02D9);
+Bit32@ t32 = H8(Hex@|8D2A4C8A);
+Bit32@ t33 = H8(Hex@|FFFA3942);
+Bit32@ t34 = H8(Hex@|8771F681);
+Bit32@ t35 = H8(Hex@|6D9D6122);
+Bit32@ t36 = H8(Hex@|FDE5380C);
+Bit32@ t37 = H8(Hex@|A4BEEA44);
+Bit32@ t38 = H8(Hex@|4BDECFA9);
+Bit32@ t39 = H8(Hex@|F6BB4B60);
+Bit32@ t40 = H8(Hex@|BEBFBC70);
+Bit32@ t41 = H8(Hex@|289B7EC6);
+Bit32@ t42 = H8(Hex@|EAA127FA);
+Bit32@ t43 = H8(Hex@|D4EF3085);
+Bit32@ t44 = H8(Hex@|04881D05);
+Bit32@ t45 = H8(Hex@|D9D4D039);
+Bit32@ t46 = H8(Hex@|E6DB99E5);
+Bit32@ t47 = H8(Hex@|1FA27CF8);
+Bit32@ t48 = H8(Hex@|C4AC5665);
+Bit32@ t49 = H8(Hex@|F4292244);
+Bit32@ t50 = H8(Hex@|432AFF97);
+Bit32@ t51 = H8(Hex@|AB9423A7);
+Bit32@ t52 = H8(Hex@|FC93A039);
+Bit32@ t53 = H8(Hex@|655B59C3);
+Bit32@ t54 = H8(Hex@|8F0CCC92);
+Bit32@ t55 = H8(Hex@|FFEFF47D);
+Bit32@ t56 = H8(Hex@|85845DD1);
+Bit32@ t57 = H8(Hex@|6FA87E4F);
+Bit32@ t58 = H8(Hex@|FE2CE6E0);
+Bit32@ t59 = H8(Hex@|A3014314);
+Bit32@ t60 = H8(Hex@|4E0811A1);
+Bit32@ t61 = H8(Hex@|F7537E82);
+Bit32@ t62 = H8(Hex@|BD3AF235);
+Bit32@ t63 = H8(Hex@|2AD7D2BB);
+Bit32@ t64 = H8(Hex@|EB86D391);
 
-  (Bit32@, Bit32@, Bit32@){Bit32@;} F = (Bit32@ x, Bit32@ y, Bit32@ z) {
-    or(and(x, y), and(not(x), z));
-  };
+@ Md5Hash@ = *(
+  Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,
+  Hex@  8, Hex@  9, Hex@ 10, Hex@ 11, Hex@ 12, Hex@ 13, Hex@ 14, Hex@ 15,
+  Hex@ 16, Hex@ 17, Hex@ 18, Hex@ 19, Hex@ 20, Hex@ 21, Hex@ 22, Hex@ 23,
+  Hex@ 24, Hex@ 25, Hex@ 26, Hex@ 27, Hex@ 28, Hex@ 29, Hex@ 30, Hex@ 31
+);
 
-  (Bit32@, Bit32@, Bit32@){Bit32@;} G = (Bit32@ x, Bit32@ y, Bit32@ z) {
-    or(and(x, z), and(y, not(z)));
-  };
+@ ABCD@ = *(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d);
 
-  (Bit32@, Bit32@, Bit32@){Bit32@;} H = (Bit32@ x, Bit32@ y, Bit32@ z) {
-    xor(x, xor(y, z));
-  };
+@ Block@ = *(
+  Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
+  Bit32@ 4, Bit32@ 5, Bit32@ 6, Bit32@ 7,
+  Bit32@ 8, Bit32@ 9, Bit32@ 10, Bit32@ 11,
+  Bit32@ 12, Bit32@ 13, Bit32@ 14, Bit32@ 15);
 
-  (Bit32@, Bit32@, Bit32@){Bit32@;} I = (Bit32@ x, Bit32@ y, Bit32@ z) {
-    xor(y, or(x, not(z)));
-  };
+@ S@ = +(
+  Unit@  0, Unit@  1, Unit@  2, Unit@  3, Unit@  4, Unit@  5, Unit@  6, Unit@  7,
+  Unit@  8, Unit@  9, Unit@ 10, Unit@ 11, Unit@ 12, Unit@ 13, Unit@ 14, Unit@ 15,
+  Unit@ 16, Unit@ 17, Unit@ 18, Unit@ 19, Unit@ 20, Unit@ 21, Unit@ 22, Unit@ 23
+);
 
-  (Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} FF =
-    (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-      add(b, cls(add(add(a, F(b, c, d)), add(x, t)), s));
-    };
-
-  (Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} GG =
-    (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-      add(b, cls(add(add(a, G(b, c, d)), add(x, t)), s));
-    };
-
-  (Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} HH =
-    (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-      add(b, cls(add(add(a, H(b, c, d)), add(x, t)), s));
-    };
-
-  (Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} II =
-    (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-      add(b, cls(add(add(a, I(b, c, d)), add(x, t)), s));
-    };
-
-  (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round1 =
-    (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = FF(a0, b0, c0, d0, block.0, S@(7: Unit), t01);
-      Bit32@ d1 = FF(d0, a1, b0, c0, block.1, S@(12: Unit), t02);
-      Bit32@ c1 = FF(c0, d1, a1, b0, block.2, S@(17: Unit), t03);
-      Bit32@ b1 = FF(b0, c1, d1, a1, block.3, S@(22: Unit), t04);
-
-      Bit32@ a2 = FF(a1, b1, c1, d1, block.4, S@(7: Unit), t05);
-      Bit32@ d2 = FF(d1, a2, b1, c1, block.5, S@(12: Unit), t06);
-      Bit32@ c2 = FF(c1, d2, a2, b1, block.6, S@(17: Unit), t07);
-      Bit32@ b2 = FF(b1, c2, d2, a2, block.7, S@(22: Unit), t08);
-
-      Bit32@ a3 = FF(a2, b2, c2, d2, block.8, S@(7: Unit), t09);
-      Bit32@ d3 = FF(d2, a3, b2, c2, block.9, S@(12: Unit), t10);
-      Bit32@ c3 = FF(c2, d3, a3, b2, block.10, S@(17: Unit), t11);
-      Bit32@ b3 = FF(b2, c3, d3, a3, block.11, S@(22: Unit), t12);
-
-      Bit32@ a4 = FF(a3, b3, c3, d3, block.12, S@(7: Unit), t13);
-      Bit32@ d4 = FF(d3, a4, b3, c3, block.13, S@(12: Unit), t14);
-      Bit32@ c4 = FF(c3, d4, a4, b3, block.14, S@(17: Unit), t15);
-      Bit32@ b4 = FF(b3, c4, d4, a4, block.15, S@(22: Unit), t16);
-
-      ABCD@(a4, b4, c4, d4);
-    };
-
-  (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round2 =
-    (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = GG(a0, b0, c0, d0, block.1, S@(5: Unit), t17);
-      Bit32@ d1 = GG(d0, a1, b0, c0, block.6, S@(9: Unit), t18);
-      Bit32@ c1 = GG(c0, d1, a1, b0, block.11, S@(14: Unit), t19);
-      Bit32@ b1 = GG(b0, c1, d1, a1, block.0, S@(20: Unit), t20);
-
-      Bit32@ a2 = GG(a1, b1, c1, d1, block.5, S@(5: Unit), t21);
-      Bit32@ d2 = GG(d1, a2, b1, c1, block.10, S@(9: Unit), t22);
-      Bit32@ c2 = GG(c1, d2, a2, b1, block.15, S@(14: Unit), t23);
-      Bit32@ b2 = GG(b1, c2, d2, a2, block.4, S@(20: Unit), t24);
-
-      Bit32@ a3 = GG(a2, b2, c2, d2, block.9, S@(5: Unit), t25);
-      Bit32@ d3 = GG(d2, a3, b2, c2, block.14, S@(9: Unit), t26);
-      Bit32@ c3 = GG(c2, d3, a3, b2, block.3, S@(14: Unit), t27);
-      Bit32@ b3 = GG(b2, c3, d3, a3, block.8, S@(20: Unit), t28);
-
-      Bit32@ a4 = GG(a3, b3, c3, d3, block.13, S@(5: Unit), t29);
-      Bit32@ d4 = GG(d3, a4, b3, c3, block.2, S@(9: Unit), t30);
-      Bit32@ c4 = GG(c3, d4, a4, b3, block.7, S@(14: Unit), t31);
-      Bit32@ b4 = GG(b3, c4, d4, a4, block.12, S@(20: Unit), t32);
-
-      ABCD@(a4, b4, c4, d4);
-    };
-
-  (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round3 =
-    (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = HH(a0, b0, c0, d0, block.5, S@(4: Unit), t33);
-      Bit32@ d1 = HH(d0, a1, b0, c0, block.8, S@(11: Unit), t34);
-      Bit32@ c1 = HH(c0, d1, a1, b0, block.11, S@(16: Unit), t35);
-      Bit32@ b1 = HH(b0, c1, d1, a1, block.14, S@(23: Unit), t36);
-
-      Bit32@ a2 = HH(a1, b1, c1, d1, block.1, S@(4: Unit), t37);
-      Bit32@ d2 = HH(d1, a2, b1, c1, block.4, S@(11: Unit), t38);
-      Bit32@ c2 = HH(c1, d2, a2, b1, block.7, S@(16: Unit), t39);
-      Bit32@ b2 = HH(b1, c2, d2, a2, block.10, S@(23: Unit), t40);
-
-      Bit32@ a3 = HH(a2, b2, c2, d2, block.13, S@(4: Unit), t41);
-      Bit32@ d3 = HH(d2, a3, b2, c2, block.0, S@(11: Unit), t42);
-      Bit32@ c3 = HH(c2, d3, a3, b2, block.3, S@(16: Unit), t43);
-      Bit32@ b3 = HH(b2, c3, d3, a3, block.6, S@(23: Unit), t44);
-
-      Bit32@ a4 = HH(a3, b3, c3, d3, block.9, S@(4: Unit), t45);
-      Bit32@ d4 = HH(d3, a4, b3, c3, block.12, S@(11: Unit), t46);
-      Bit32@ c4 = HH(c3, d4, a4, b3, block.15, S@(16: Unit), t47);
-      Bit32@ b4 = HH(b3, c4, d4, a4, block.2, S@(23: Unit), t48);
-
-      ABCD@(a4, b4, c4, d4);
-    };
-
-  (Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round4 =
-    (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
-      Bit32@ a1 = II(a0, b0, c0, d0, block.0, S@(6: Unit), t49);
-      Bit32@ d1 = II(d0, a1, b0, c0, block.7, S@(10: Unit), t50);
-      Bit32@ c1 = II(c0, d1, a1, b0, block.14, S@(15: Unit), t51);
-      Bit32@ b1 = II(b0, c1, d1, a1, block.5, S@(21: Unit), t52);
-
-      Bit32@ a2 = II(a1, b1, c1, d1, block.12, S@(6: Unit), t53);
-      Bit32@ d2 = II(d1, a2, b1, c1, block.3, S@(10: Unit), t54);
-      Bit32@ c2 = II(c1, d2, a2, b1, block.10, S@(15: Unit), t55);
-      Bit32@ b2 = II(b1, c2, d2, a2, block.1, S@(21: Unit), t56);
-
-      Bit32@ a3 = II(a2, b2, c2, d2, block.8, S@(6: Unit), t57);
-      Bit32@ d3 = II(d2, a3, b2, c2, block.15, S@(10: Unit), t58);
-      Bit32@ c3 = II(c2, d3, a3, b2, block.6, S@(15: Unit), t59);
-      Bit32@ b3 = II(b2, c3, d3, a3, block.13, S@(21: Unit), t60);
-
-      Bit32@ a4 = II(a3, b3, c3, d3, block.4, S@(6: Unit), t61);
-      Bit32@ d4 = II(d3, a4, b3, c3, block.11, S@(10: Unit), t62);
-      Bit32@ c4 = II(c3, d4, a4, b3, block.2, S@(15: Unit), t63);
-      Bit32@ b4 = II(b3, c4, d4, a4, block.9, S@(21: Unit), t64);
-
-      ABCD@(a4, b4, c4, d4);
-    };
-
-  (ABCD@, Block@){ABCD@;} DoBlock = (ABCD@ abcd, Block@ block) {
-    ABCD@ r1 = Round1(abcd.a, abcd.b, abcd.c, abcd.d, block);
-    ABCD@ r2 = Round2(r1.a, r1.b, r1.c, r1.d, block);
-    ABCD@ r3 = Round3(r2.a, r2.b, r2.c, r2.d, block);
-    ABCD@ r4 = Round4(r3.a, r3.b, r3.c, r3.d, block);
-    ABCD@(add(abcd.a, r4.a), add(abcd.b, r4.b), add(abcd.c, r4.c), add(abcd.d, r4.d));
-  };
-
-  <@>@ Streamed@ = <@ T@> { *(T@ data, Bool@ last); }; 
-
-  # Gets the next word from a pre-padded input
-  (Streamed@<Bit8@>-){Streamed@<Bit32@>!;} GetWord = (Streamed@<Bit8@>- padded) {
-    Streamed@<Bit8@> a := padded();
-    Streamed@<Bit8@> b := padded();
-    Streamed@<Bit8@> c := padded();
-    Streamed@<Bit8@> d := padded();
-    $(Streamed@<Bit32@>(Bit32@(Bit16@(d.data, c.data), Bit16@(b.data, a.data)), d.last));
-  };
-
-  # Gets the next block from a pre-padded input
-  (Streamed@<Bit8@>-){Streamed@<Block@>!;} GetBlock = (Streamed@<Bit8@>- padded) {
-    Streamed@<Bit32@> 0 := GetWord(padded);
-    Streamed@<Bit32@> 1 := GetWord(padded);
-    Streamed@<Bit32@> 2 := GetWord(padded);
-    Streamed@<Bit32@> 3 := GetWord(padded);
-    Streamed@<Bit32@> 4 := GetWord(padded);
-    Streamed@<Bit32@> 5 := GetWord(padded);
-    Streamed@<Bit32@> 6 := GetWord(padded);
-    Streamed@<Bit32@> 7 := GetWord(padded);
-    Streamed@<Bit32@> 8 := GetWord(padded);
-    Streamed@<Bit32@> 9 := GetWord(padded);
-    Streamed@<Bit32@> 10 := GetWord(padded);
-    Streamed@<Bit32@> 11 := GetWord(padded);
-    Streamed@<Bit32@> 12 := GetWord(padded);
-    Streamed@<Bit32@> 13 := GetWord(padded);
-    Streamed@<Bit32@> 14 := GetWord(padded);
-    Streamed@<Bit32@> 15 := GetWord(padded);
-    $(Streamed@<Block@>(
-       Block@(0.data, 1.data, 2.data, 3.data,
-              4.data, 5.data, 6.data, 7.data,
-              8.data, 9.data, 10.data, 11.data,
-              12.data, 13.data, 14.data, 15.data),
-       15.last));
-  };
-
-  # Computes the MD5 checksum of a pre-padded sequence of bytes.
-  (Streamed@<Bit8@>-, ABCD@){ABCD@!;} PaddedMd5 = (Streamed@<Bit8@>- padded, ABCD@ abcd) {
-    Streamed@<Block@> block := GetBlock(padded);
-    ABCD@ md5 := $(DoBlock(abcd, block.data));
-    ?(block.last; true: $(md5), false: PaddedMd5(padded, md5));
-  };
-
-  (Bit64@){Bit64@;} Inc64 = (Bit64@ a) {
-    Bits_.Bit64.BitN.inc(a);
-  };
-
-  (Hex@, Hex@){Bit64@;} H2_64 = (Hex@ a, Hex@ b) {
-    Bit8@ 0b8 = H2(0, 0);
-    Bit64@(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
-  };
-
-  (Bit64@){Bit64@;} shl64 = (Bit64@ a) {
-    Bits_.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
-  };
-
-  # Add zeros as needed, then the final length to the output message.
-  (Streamed@<Bit8@>+, Bit64@, Bit64@){Unit@!;} PadZ = (Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length) {
-      ?(Bits_.Bit64.BitN.iszero(
-          Bits_.Bit64.BitN.and(H2_64(3, f), Bits_.Bit64.BitN.add(H2_64(0, 8), length)));
-            true: {
-           Bit64@ bits = shl64(shl64(shl64(msglen)));
-           Streamed@<Bit8@> _0 := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
-           Streamed@<Bit8@> _1 := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
-           Streamed@<Bit8@> _2 := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
-           Streamed@<Bit8@> _3 := output(Streamed@<Bit8@>(bits.lo.hi.hi, False));
-           Streamed@<Bit8@> _4 := output(Streamed@<Bit8@>(bits.hi.lo.lo, False));
-           Streamed@<Bit8@> _5 := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
-           Streamed@<Bit8@> _6 := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
-           Streamed@<Bit8@> _7 := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
-           $(Unit);
-         }, false: {
-           Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(0, 0), False));
-           PadZ(output, msglen, Inc64(length));
-         });
-    };
-
-  # Note: length is in units of bytes
-  (Maybe@<Bit8@>-, Streamed@<Bit8@>+, Bit64@){Unit@!;} Pad = (Maybe@<Bit8@>- input, Streamed@<Bit8@>+ output, Bit64@ length) {
-      Maybe@<Bit8@> x := input();
-      ?(x; just: {
-          Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(x.just, False));
-          Pad(input, output, Inc64(length));
-        }, nothing: {
-          Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(8, 0), False));
-          PadZ(output, length, Inc64(length));
-        });
-    };
-
-  ABCD@ ABCD0 = ABCD@(
-      # Note: the spec lists these low-order byte first, but H8 takes high
-      # order byte first.
-      H8(Hex@|67452301),
-      H8(Hex@|EFCDAB89),
-      H8(Hex@|98BADCFE),
-      H8(Hex@|10325476));
-
-  (Bit@, Bit@, Bit@, Bit@){Hex@;} HexFromBits =
-    (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
-      ?(b3; 0: ?(b2; 0: ?(b1; 0: ?(b0; 0: 0, 1: 1), 1: ?(b0; 0: 2, 1: 3)),
-                     1: ?(b1; 0: ?(b0; 0: 4, 1: 5), 1: ?(b0; 0: 6, 1: 7))),
-            1: ?(b2; 0: ?(b1; 0: ?(b0; 0: 8, 1: 9), 1: ?(b0; 0: a, 1: b)),
-                     1: ?(b1; 0: ?(b0; 0: c, 1: d), 1: ?(b0; 0: e, 1: f))));
-    };
-
-  (Bit4@){Hex@;} HexFromBit4 = (Bit4@ x) {
-    HexFromBits(x.hi.hi, x.hi.lo, x.lo.hi, x.lo.lo);
-  };
-
-  @ HexPair@ = *(Hex@ hi, Hex@ lo);
-
-  (Bit8@){HexPair@;} HexFromByte = (Bit8@ byte) {
-    HexPair@(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
-  };
-
-  (ABCD@){Md5Hash@;} HexFromABCD = (ABCD@ x) {
-    HexPair@ a0 = HexFromByte(x.a.lo.lo); HexPair@ a1 = HexFromByte(x.a.lo.hi);
-    HexPair@ a2 = HexFromByte(x.a.hi.lo); HexPair@ a3 = HexFromByte(x.a.hi.hi);
-    HexPair@ b0 = HexFromByte(x.b.lo.lo); HexPair@ b1 = HexFromByte(x.b.lo.hi);
-    HexPair@ b2 = HexFromByte(x.b.hi.lo); HexPair@ b3 = HexFromByte(x.b.hi.hi);
-    HexPair@ c0 = HexFromByte(x.c.lo.lo); HexPair@ c1 = HexFromByte(x.c.lo.hi);
-    HexPair@ c2 = HexFromByte(x.c.hi.lo); HexPair@ c3 = HexFromByte(x.c.hi.hi);
-    HexPair@ d0 = HexFromByte(x.d.lo.lo); HexPair@ d1 = HexFromByte(x.d.lo.hi);
-    HexPair@ d2 = HexFromByte(x.d.hi.lo); HexPair@ d3 = HexFromByte(x.d.hi.hi);
-    Md5Hash@(a0.hi, a0.lo, a1.hi, a1.lo, a2.hi, a2.lo, a3.hi, a3.lo,
-             b0.hi, b0.lo, b1.hi, b1.lo, b2.hi, b2.lo, b3.hi, b3.lo,
-             c0.hi, c0.lo, c1.hi, c1.lo, c2.hi, c2.lo, c3.hi, c3.lo,
-             d0.hi, d0.lo, d1.hi, d1.lo, d2.hi, d2.lo, d3.hi, d3.lo);
-  };
-
-  (Maybe@<Bit8@>-){Md5Hash@!;} Md5 = (Maybe@<Bit8@>- input) {
-    Streamed@<Bit8@> ~ get_padded, put_padded;
-    Unit@ _ := Pad(input, put_padded, Bits_.Bit64.BitN.zero),
-    ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
-    $(HexFromABCD(md5));
-  };
-
-  (Hex@, Hex@){Bool@;} EqHex = (Hex@ a, Hex@ b) {
-    Bits_.Bit8.BitN.eq(H2(0, a), H2(0, b));
-  };
-
-  (Md5Hash@, Md5Hash@){Bool@;} Eq = (Md5Hash@ a, Md5Hash@ b) {
-    And(And(And(And(And(EqHex(a.0, b.0), EqHex(a.1, b.1)))
-                   (And(EqHex(a.2, b.2), EqHex(a.3, b.3))))
-               (And(And(EqHex(a.4, b.4), EqHex(a.5, b.5)))
-                   (And(EqHex(a.6, b.6), EqHex(a.7, b.7)))))
-           (And(And(And(EqHex(a.8, b.8), EqHex(a.9, b.9)))
-                   (And(EqHex(a.10, b.10), EqHex(a.11, b.11))))
-               (And(And(EqHex(a.12, b.12), EqHex(a.13, b.13)))
-                   (And(EqHex(a.14, b.14), EqHex(a.15, b.15))))))
-       (And(And(And(And(EqHex(a.16, b.16), EqHex(a.17, b.17)))
-                   (And(EqHex(a.18, b.18), EqHex(a.19, b.19))))
-               (And(And(EqHex(a.20, b.20), EqHex(a.21, b.21)))
-                   (And(EqHex(a.22, b.22), EqHex(a.23, b.23)))))
-           (And(And(And(EqHex(a.24, b.24), EqHex(a.25, b.25)))
-                   (And(EqHex(a.26, b.26), EqHex(a.27, b.27))))
-               (And(And(EqHex(a.28, b.28), EqHex(a.29, b.29)))
-                   (And(EqHex(a.30, b.30), EqHex(a.31, b.31))))));
-  };
- 
-  @(Md5Hash@, Md5, Eq);
+(S@){Maybe@<S@>;} NextS = (S@ s) {
+  ?(s; 0: Maybe@<S@>(nothing: Unit),
+       1: Maybe@<S@>(just: S@(0: Unit)), 2: Maybe@<S@>(just: S@(1: Unit)),
+       3: Maybe@<S@>(just: S@(2: Unit)), 4: Maybe@<S@>(just: S@(3: Unit)),
+       5: Maybe@<S@>(just: S@(4: Unit)), 6: Maybe@<S@>(just: S@(5: Unit)),
+       7: Maybe@<S@>(just: S@(6: Unit)), 8: Maybe@<S@>(just: S@(7: Unit)),
+       9: Maybe@<S@>(just: S@(8: Unit)), 10: Maybe@<S@>(just: S@(9: Unit)),
+       11: Maybe@<S@>(just: S@(10: Unit)), 12: Maybe@<S@>(just: S@(11: Unit)),
+       13: Maybe@<S@>(just: S@(12: Unit)), 14: Maybe@<S@>(just: S@(13: Unit)),
+       15: Maybe@<S@>(just: S@(14: Unit)), 16: Maybe@<S@>(just: S@(15: Unit)),
+       17: Maybe@<S@>(just: S@(16: Unit)), 18: Maybe@<S@>(just: S@(17: Unit)),
+       19: Maybe@<S@>(just: S@(18: Unit)), 20: Maybe@<S@>(just: S@(19: Unit)),
+       21: Maybe@<S@>(just: S@(20: Unit)), 22: Maybe@<S@>(just: S@(21: Unit)),
+       23: Maybe@<S@>(just: S@(22: Unit)));
 };
+
+(Bit32@, S@){Bit32@;} cls = (Bit32@ a, S@ s) {
+  Maybe@<S@> next = NextS(s);
+  ?(next; just: cls(clshift(a), next.just), nothing: a);
+};
+
+(Bit32@, Bit32@, Bit32@){Bit32@;} F = (Bit32@ x, Bit32@ y, Bit32@ z) {
+  or(and(x, y), and(not(x), z));
+};
+
+(Bit32@, Bit32@, Bit32@){Bit32@;} G = (Bit32@ x, Bit32@ y, Bit32@ z) {
+  or(and(x, z), and(y, not(z)));
+};
+
+(Bit32@, Bit32@, Bit32@){Bit32@;} H = (Bit32@ x, Bit32@ y, Bit32@ z) {
+  xor(x, xor(y, z));
+};
+
+(Bit32@, Bit32@, Bit32@){Bit32@;} I = (Bit32@ x, Bit32@ y, Bit32@ z) {
+  xor(y, or(x, not(z)));
+};
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} FF =
+  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+    add(b, cls(add(add(a, F(b, c, d)), add(x, t)), s));
+  };
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} GG =
+  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+    add(b, cls(add(add(a, G(b, c, d)), add(x, t)), s));
+  };
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} HH =
+  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+    add(b, cls(add(add(a, H(b, c, d)), add(x, t)), s));
+  };
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} II =
+  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+    add(b, cls(add(add(a, I(b, c, d)), add(x, t)), s));
+  };
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round1 =
+  (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+    Bit32@ a1 = FF(a0, b0, c0, d0, block.0, S@(7: Unit), t01);
+    Bit32@ d1 = FF(d0, a1, b0, c0, block.1, S@(12: Unit), t02);
+    Bit32@ c1 = FF(c0, d1, a1, b0, block.2, S@(17: Unit), t03);
+    Bit32@ b1 = FF(b0, c1, d1, a1, block.3, S@(22: Unit), t04);
+
+    Bit32@ a2 = FF(a1, b1, c1, d1, block.4, S@(7: Unit), t05);
+    Bit32@ d2 = FF(d1, a2, b1, c1, block.5, S@(12: Unit), t06);
+    Bit32@ c2 = FF(c1, d2, a2, b1, block.6, S@(17: Unit), t07);
+    Bit32@ b2 = FF(b1, c2, d2, a2, block.7, S@(22: Unit), t08);
+
+    Bit32@ a3 = FF(a2, b2, c2, d2, block.8, S@(7: Unit), t09);
+    Bit32@ d3 = FF(d2, a3, b2, c2, block.9, S@(12: Unit), t10);
+    Bit32@ c3 = FF(c2, d3, a3, b2, block.10, S@(17: Unit), t11);
+    Bit32@ b3 = FF(b2, c3, d3, a3, block.11, S@(22: Unit), t12);
+
+    Bit32@ a4 = FF(a3, b3, c3, d3, block.12, S@(7: Unit), t13);
+    Bit32@ d4 = FF(d3, a4, b3, c3, block.13, S@(12: Unit), t14);
+    Bit32@ c4 = FF(c3, d4, a4, b3, block.14, S@(17: Unit), t15);
+    Bit32@ b4 = FF(b3, c4, d4, a4, block.15, S@(22: Unit), t16);
+
+    ABCD@(a4, b4, c4, d4);
+  };
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round2 =
+  (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+    Bit32@ a1 = GG(a0, b0, c0, d0, block.1, S@(5: Unit), t17);
+    Bit32@ d1 = GG(d0, a1, b0, c0, block.6, S@(9: Unit), t18);
+    Bit32@ c1 = GG(c0, d1, a1, b0, block.11, S@(14: Unit), t19);
+    Bit32@ b1 = GG(b0, c1, d1, a1, block.0, S@(20: Unit), t20);
+
+    Bit32@ a2 = GG(a1, b1, c1, d1, block.5, S@(5: Unit), t21);
+    Bit32@ d2 = GG(d1, a2, b1, c1, block.10, S@(9: Unit), t22);
+    Bit32@ c2 = GG(c1, d2, a2, b1, block.15, S@(14: Unit), t23);
+    Bit32@ b2 = GG(b1, c2, d2, a2, block.4, S@(20: Unit), t24);
+
+    Bit32@ a3 = GG(a2, b2, c2, d2, block.9, S@(5: Unit), t25);
+    Bit32@ d3 = GG(d2, a3, b2, c2, block.14, S@(9: Unit), t26);
+    Bit32@ c3 = GG(c2, d3, a3, b2, block.3, S@(14: Unit), t27);
+    Bit32@ b3 = GG(b2, c3, d3, a3, block.8, S@(20: Unit), t28);
+
+    Bit32@ a4 = GG(a3, b3, c3, d3, block.13, S@(5: Unit), t29);
+    Bit32@ d4 = GG(d3, a4, b3, c3, block.2, S@(9: Unit), t30);
+    Bit32@ c4 = GG(c3, d4, a4, b3, block.7, S@(14: Unit), t31);
+    Bit32@ b4 = GG(b3, c4, d4, a4, block.12, S@(20: Unit), t32);
+
+    ABCD@(a4, b4, c4, d4);
+  };
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round3 =
+  (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+    Bit32@ a1 = HH(a0, b0, c0, d0, block.5, S@(4: Unit), t33);
+    Bit32@ d1 = HH(d0, a1, b0, c0, block.8, S@(11: Unit), t34);
+    Bit32@ c1 = HH(c0, d1, a1, b0, block.11, S@(16: Unit), t35);
+    Bit32@ b1 = HH(b0, c1, d1, a1, block.14, S@(23: Unit), t36);
+
+    Bit32@ a2 = HH(a1, b1, c1, d1, block.1, S@(4: Unit), t37);
+    Bit32@ d2 = HH(d1, a2, b1, c1, block.4, S@(11: Unit), t38);
+    Bit32@ c2 = HH(c1, d2, a2, b1, block.7, S@(16: Unit), t39);
+    Bit32@ b2 = HH(b1, c2, d2, a2, block.10, S@(23: Unit), t40);
+
+    Bit32@ a3 = HH(a2, b2, c2, d2, block.13, S@(4: Unit), t41);
+    Bit32@ d3 = HH(d2, a3, b2, c2, block.0, S@(11: Unit), t42);
+    Bit32@ c3 = HH(c2, d3, a3, b2, block.3, S@(16: Unit), t43);
+    Bit32@ b3 = HH(b2, c3, d3, a3, block.6, S@(23: Unit), t44);
+
+    Bit32@ a4 = HH(a3, b3, c3, d3, block.9, S@(4: Unit), t45);
+    Bit32@ d4 = HH(d3, a4, b3, c3, block.12, S@(11: Unit), t46);
+    Bit32@ c4 = HH(c3, d4, a4, b3, block.15, S@(16: Unit), t47);
+    Bit32@ b4 = HH(b3, c4, d4, a4, block.2, S@(23: Unit), t48);
+
+    ABCD@(a4, b4, c4, d4);
+  };
+
+(Bit32@, Bit32@, Bit32@, Bit32@, Block@){ABCD@;} Round4 =
+  (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {
+    Bit32@ a1 = II(a0, b0, c0, d0, block.0, S@(6: Unit), t49);
+    Bit32@ d1 = II(d0, a1, b0, c0, block.7, S@(10: Unit), t50);
+    Bit32@ c1 = II(c0, d1, a1, b0, block.14, S@(15: Unit), t51);
+    Bit32@ b1 = II(b0, c1, d1, a1, block.5, S@(21: Unit), t52);
+
+    Bit32@ a2 = II(a1, b1, c1, d1, block.12, S@(6: Unit), t53);
+    Bit32@ d2 = II(d1, a2, b1, c1, block.3, S@(10: Unit), t54);
+    Bit32@ c2 = II(c1, d2, a2, b1, block.10, S@(15: Unit), t55);
+    Bit32@ b2 = II(b1, c2, d2, a2, block.1, S@(21: Unit), t56);
+
+    Bit32@ a3 = II(a2, b2, c2, d2, block.8, S@(6: Unit), t57);
+    Bit32@ d3 = II(d2, a3, b2, c2, block.15, S@(10: Unit), t58);
+    Bit32@ c3 = II(c2, d3, a3, b2, block.6, S@(15: Unit), t59);
+    Bit32@ b3 = II(b2, c3, d3, a3, block.13, S@(21: Unit), t60);
+
+    Bit32@ a4 = II(a3, b3, c3, d3, block.4, S@(6: Unit), t61);
+    Bit32@ d4 = II(d3, a4, b3, c3, block.11, S@(10: Unit), t62);
+    Bit32@ c4 = II(c3, d4, a4, b3, block.2, S@(15: Unit), t63);
+    Bit32@ b4 = II(b3, c4, d4, a4, block.9, S@(21: Unit), t64);
+
+    ABCD@(a4, b4, c4, d4);
+  };
+
+(ABCD@, Block@){ABCD@;} DoBlock = (ABCD@ abcd, Block@ block) {
+  ABCD@ r1 = Round1(abcd.a, abcd.b, abcd.c, abcd.d, block);
+  ABCD@ r2 = Round2(r1.a, r1.b, r1.c, r1.d, block);
+  ABCD@ r3 = Round3(r2.a, r2.b, r2.c, r2.d, block);
+  ABCD@ r4 = Round4(r3.a, r3.b, r3.c, r3.d, block);
+  ABCD@(add(abcd.a, r4.a), add(abcd.b, r4.b), add(abcd.c, r4.c), add(abcd.d, r4.d));
+};
+
+<@>@ Streamed@ = <@ T@> { *(T@ data, Bool@ last); }; 
+
+# Gets the next word from a pre-padded input
+(Streamed@<Bit8@>-){Streamed@<Bit32@>!;} GetWord = (Streamed@<Bit8@>- padded) {
+  Streamed@<Bit8@> a := padded();
+  Streamed@<Bit8@> b := padded();
+  Streamed@<Bit8@> c := padded();
+  Streamed@<Bit8@> d := padded();
+  $(Streamed@<Bit32@>(Bit32@(Bit16@(d.data, c.data), Bit16@(b.data, a.data)), d.last));
+};
+
+# Gets the next block from a pre-padded input
+(Streamed@<Bit8@>-){Streamed@<Block@>!;} GetBlock = (Streamed@<Bit8@>- padded) {
+  Streamed@<Bit32@> 0 := GetWord(padded);
+  Streamed@<Bit32@> 1 := GetWord(padded);
+  Streamed@<Bit32@> 2 := GetWord(padded);
+  Streamed@<Bit32@> 3 := GetWord(padded);
+  Streamed@<Bit32@> 4 := GetWord(padded);
+  Streamed@<Bit32@> 5 := GetWord(padded);
+  Streamed@<Bit32@> 6 := GetWord(padded);
+  Streamed@<Bit32@> 7 := GetWord(padded);
+  Streamed@<Bit32@> 8 := GetWord(padded);
+  Streamed@<Bit32@> 9 := GetWord(padded);
+  Streamed@<Bit32@> 10 := GetWord(padded);
+  Streamed@<Bit32@> 11 := GetWord(padded);
+  Streamed@<Bit32@> 12 := GetWord(padded);
+  Streamed@<Bit32@> 13 := GetWord(padded);
+  Streamed@<Bit32@> 14 := GetWord(padded);
+  Streamed@<Bit32@> 15 := GetWord(padded);
+  $(Streamed@<Block@>(
+     Block@(0.data, 1.data, 2.data, 3.data,
+            4.data, 5.data, 6.data, 7.data,
+            8.data, 9.data, 10.data, 11.data,
+            12.data, 13.data, 14.data, 15.data),
+     15.last));
+};
+
+# Computes the MD5 checksum of a pre-padded sequence of bytes.
+(Streamed@<Bit8@>-, ABCD@){ABCD@!;} PaddedMd5 = (Streamed@<Bit8@>- padded, ABCD@ abcd) {
+  Streamed@<Block@> block := GetBlock(padded);
+  ABCD@ md5 := $(DoBlock(abcd, block.data));
+  ?(block.last; true: $(md5), false: PaddedMd5(padded, md5));
+};
+
+(Bit64@){Bit64@;} Inc64 = (Bit64@ a) {
+  Bits_.Bit64.BitN.inc(a);
+};
+
+(Hex@, Hex@){Bit64@;} H2_64 = (Hex@ a, Hex@ b) {
+  Bit8@ 0b8 = H2(0, 0);
+  Bit64@(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
+};
+
+(Bit64@){Bit64@;} shl64 = (Bit64@ a) {
+  Bits_.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
+};
+
+# Add zeros as needed, then the final length to the output message.
+(Streamed@<Bit8@>+, Bit64@, Bit64@){Unit@!;} PadZ = (Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length) {
+    ?(Bits_.Bit64.BitN.iszero(
+        Bits_.Bit64.BitN.and(H2_64(3, f), Bits_.Bit64.BitN.add(H2_64(0, 8), length)));
+          true: {
+         Bit64@ bits = shl64(shl64(shl64(msglen)));
+         Streamed@<Bit8@> _0 := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
+         Streamed@<Bit8@> _1 := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
+         Streamed@<Bit8@> _2 := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
+         Streamed@<Bit8@> _3 := output(Streamed@<Bit8@>(bits.lo.hi.hi, False));
+         Streamed@<Bit8@> _4 := output(Streamed@<Bit8@>(bits.hi.lo.lo, False));
+         Streamed@<Bit8@> _5 := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
+         Streamed@<Bit8@> _6 := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
+         Streamed@<Bit8@> _7 := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
+         $(Unit);
+       }, false: {
+         Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(0, 0), False));
+         PadZ(output, msglen, Inc64(length));
+       });
+  };
+
+# Note: length is in units of bytes
+(Maybe@<Bit8@>-, Streamed@<Bit8@>+, Bit64@){Unit@!;} Pad = (Maybe@<Bit8@>- input, Streamed@<Bit8@>+ output, Bit64@ length) {
+    Maybe@<Bit8@> x := input();
+    ?(x; just: {
+        Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(x.just, False));
+        Pad(input, output, Inc64(length));
+      }, nothing: {
+        Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(8, 0), False));
+        PadZ(output, length, Inc64(length));
+      });
+  };
+
+ABCD@ ABCD0 = ABCD@(
+    # Note: the spec lists these low-order byte first, but H8 takes high
+    # order byte first.
+    H8(Hex@|67452301),
+    H8(Hex@|EFCDAB89),
+    H8(Hex@|98BADCFE),
+    H8(Hex@|10325476));
+
+(Bit@, Bit@, Bit@, Bit@){Hex@;} HexFromBits =
+  (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
+    ?(b3; 0: ?(b2; 0: ?(b1; 0: ?(b0; 0: 0, 1: 1), 1: ?(b0; 0: 2, 1: 3)),
+                   1: ?(b1; 0: ?(b0; 0: 4, 1: 5), 1: ?(b0; 0: 6, 1: 7))),
+          1: ?(b2; 0: ?(b1; 0: ?(b0; 0: 8, 1: 9), 1: ?(b0; 0: a, 1: b)),
+                   1: ?(b1; 0: ?(b0; 0: c, 1: d), 1: ?(b0; 0: e, 1: f))));
+  };
+
+(Bit4@){Hex@;} HexFromBit4 = (Bit4@ x) {
+  HexFromBits(x.hi.hi, x.hi.lo, x.lo.hi, x.lo.lo);
+};
+
+@ HexPair@ = *(Hex@ hi, Hex@ lo);
+
+(Bit8@){HexPair@;} HexFromByte = (Bit8@ byte) {
+  HexPair@(HexFromBit4(byte.hi), HexFromBit4(byte.lo));
+};
+
+(ABCD@){Md5Hash@;} HexFromABCD = (ABCD@ x) {
+  HexPair@ a0 = HexFromByte(x.a.lo.lo); HexPair@ a1 = HexFromByte(x.a.lo.hi);
+  HexPair@ a2 = HexFromByte(x.a.hi.lo); HexPair@ a3 = HexFromByte(x.a.hi.hi);
+  HexPair@ b0 = HexFromByte(x.b.lo.lo); HexPair@ b1 = HexFromByte(x.b.lo.hi);
+  HexPair@ b2 = HexFromByte(x.b.hi.lo); HexPair@ b3 = HexFromByte(x.b.hi.hi);
+  HexPair@ c0 = HexFromByte(x.c.lo.lo); HexPair@ c1 = HexFromByte(x.c.lo.hi);
+  HexPair@ c2 = HexFromByte(x.c.hi.lo); HexPair@ c3 = HexFromByte(x.c.hi.hi);
+  HexPair@ d0 = HexFromByte(x.d.lo.lo); HexPair@ d1 = HexFromByte(x.d.lo.hi);
+  HexPair@ d2 = HexFromByte(x.d.hi.lo); HexPair@ d3 = HexFromByte(x.d.hi.hi);
+  Md5Hash@(a0.hi, a0.lo, a1.hi, a1.lo, a2.hi, a2.lo, a3.hi, a3.lo,
+           b0.hi, b0.lo, b1.hi, b1.lo, b2.hi, b2.lo, b3.hi, b3.lo,
+           c0.hi, c0.lo, c1.hi, c1.lo, c2.hi, c2.lo, c3.hi, c3.lo,
+           d0.hi, d0.lo, d1.hi, d1.lo, d2.hi, d2.lo, d3.hi, d3.lo);
+};
+
+(Maybe@<Bit8@>-){Md5Hash@!;} Md5 = (Maybe@<Bit8@>- input) {
+  Streamed@<Bit8@> ~ get_padded, put_padded;
+  Unit@ _ := Pad(input, put_padded, Bits_.Bit64.BitN.zero),
+  ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
+  $(HexFromABCD(md5));
+};
+
+(Hex@, Hex@){Bool@;} EqHex = (Hex@ a, Hex@ b) {
+  Bits_.Bit8.BitN.eq(H2(0, a), H2(0, b));
+};
+
+(Md5Hash@, Md5Hash@){Bool@;} Eq = (Md5Hash@ a, Md5Hash@ b) {
+  And(And(And(And(And(EqHex(a.0, b.0), EqHex(a.1, b.1)))
+                 (And(EqHex(a.2, b.2), EqHex(a.3, b.3))))
+             (And(And(EqHex(a.4, b.4), EqHex(a.5, b.5)))
+                 (And(EqHex(a.6, b.6), EqHex(a.7, b.7)))))
+         (And(And(And(EqHex(a.8, b.8), EqHex(a.9, b.9)))
+                 (And(EqHex(a.10, b.10), EqHex(a.11, b.11))))
+             (And(And(EqHex(a.12, b.12), EqHex(a.13, b.13)))
+                 (And(EqHex(a.14, b.14), EqHex(a.15, b.15))))))
+     (And(And(And(And(EqHex(a.16, b.16), EqHex(a.17, b.17)))
+                 (And(EqHex(a.18, b.18), EqHex(a.19, b.19))))
+             (And(And(EqHex(a.20, b.20), EqHex(a.21, b.21)))
+                 (And(EqHex(a.22, b.22), EqHex(a.23, b.23)))))
+         (And(And(And(EqHex(a.24, b.24), EqHex(a.25, b.25)))
+                 (And(EqHex(a.26, b.26), EqHex(a.27, b.27))))
+             (And(And(EqHex(a.28, b.28), EqHex(a.29, b.29)))
+                 (And(EqHex(a.30, b.30), EqHex(a.31, b.31))))));
+};
+
+@(Md5Hash@, Md5, Eq);

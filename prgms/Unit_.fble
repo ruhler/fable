@@ -1,6 +1,4 @@
-@() {
-  @ Unit@ = *();
-  Unit@ Unit = Unit@();
+@ Unit@ = *();
+Unit@ Unit = Unit@();
 
-  @(Unit@, Unit);
-};
+@(Unit@, Unit);

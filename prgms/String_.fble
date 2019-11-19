@@ -1,13 +1,11 @@
-@(Char_, List_) {
-  Char_ { @(Char@); };
-  List_ { @(S@, List@, S); };
-  
-  @ Str@ = S@<Char@>;
-  <@>@ CharLit@ = List@<Char@>;
-  
-  (CharLit@){S@<Char@>;} Str = (CharLit@ mkList) {
-    S<Char@>(mkList);
-  };
+Char_% { @(Char@); };
+List_% { @(S@, List@, S); };
 
-  @(Str@, CharLit@, Str);
+@ Str@ = S@<Char@>;
+<@>@ CharLit@ = List@<Char@>;
+
+(CharLit@){S@<Char@>;} Str = (CharLit@ mkList) {
+  S<Char@>(mkList);
 };
+
+@(Str@, CharLit@, Str);
