@@ -140,6 +140,17 @@ along with their types and kinds. The value, type, and kind of the variable
 expression is the value, type, and kind associated with the variable name in
 the context.
 
+In general it is legal to declare a new variable with the same name as an
+existing variable in scope. In this case, the new variable shadows the
+existing variable for as long as the new variable is in scope. The existing
+variable is not visible or accessible as long as the new variable is in scope.
+
+The rationale for allowing variables to shadow other variables is for
+modularity: it allows you to re-use a self-contained block of code in any
+context. Otherwise self-contained blocks of code could not be reused in
+contexts that happen to declare a variable with the same name as some variable
+in the self-contained block.
+
 2.5 Let
 -------
 Abstract Syntax:
@@ -177,8 +188,8 @@ without having to duplicate the definition in its own type. If a kind is
 provided for a type variable, the type variable will behave as an abstract
 type in the bindings, and a concrete type in the body of the let.
 
-TODO: Are bindings allowed to defined variables with the same name as
-variables already in scope, thus shadowing the variable already in scope?
+Bindings are allowed to defined variables with the same name as variables
+already in scope, thus shadowing the variable already in scope.
 
 3. Structs
 ----------
@@ -1194,17 +1205,6 @@ Notes:
   function. That's the static evaluation pass. The result will be based on the
   interpreter you are using. If you have a hardware interpreter, for example,
   the resulting function will be a description of a hardware circuit.
-
-* Is variable shadowing allowed?
-  Consider also the following cases:
- - multi-arg functions with duplicate arg values.
- - variables whose value we explicitly want to ignore, such as the result of a
-   bind or a put_proc.
- - Things like {Chars; S4<Char@>(0, 1, 2, 3)}, where it's not unlikely that we
-   have a variable called 0, 1, 2, or 3 already in scope.
-
- I'm leaning towards yes. It doesn't make sense from a modularity perspective
- otherwise.
 
 * Issues that came up when switching to the new unit test format
  - Should it be an error to import or define an unused variable?

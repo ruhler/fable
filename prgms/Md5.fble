@@ -1,15 +1,15 @@
-Unit% { @(Unit@, Unit); };
-Maybe% { @(Maybe@); };
-Bool% { @(Bool@, True, False, And); };
-List% { @(SL@: S@, PL@: P@, List@, SL: S); };
-Bits%.Bit { @(Bit@); };
-Bits%.Bit4 { @(Bit4@); };
-Bits%.Bit8 { @(Bit8@, H2); };
-Bits%.Bit16 { @(Bit16@); };
-Bits%.Bit32 { @(Bit32@); };
-Bits%.Bit32.BitN { @(eq, and, or, not, xor, clshift, add); };
-Bits%.Bit64 { @(Bit64@); };
-Hex% { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
+{ Unit%; @(Unit@, Unit); };
+{ Maybe%; @(Maybe@); };
+{ Bool%; @(Bool@, True, False, And); };
+{ List%; @(SL@: S@, PL@: P@, List@, SL: S); };
+{ Bits%.Bit; @(Bit@); };
+{ Bits%.Bit4; @(Bit4@); };
+{ Bits%.Bit8; @(Bit8@, H2); };
+{ Bits%.Bit16; @(Bit16@); };
+{ Bits%.Bit32; @(Bit32@); };
+{ Bits%.Bit32.BitN; @(eq, and, or, not, xor, clshift, add); };
+{ Bits%.Bit64; @(Bit64@); };
+{ Hex%; @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
 
 # Construct a Bit32 in hex, with high-order byte first.
 (List@<Hex@>){Bit32@;} H8 = (List@<Hex@> list) {

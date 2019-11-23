@@ -1,7 +1,4 @@
-* [lang] Draft revision of spec for modules. Test and implement.
- - Remove struct eval support?
-
-* [lang] Document and test that variable declarations shadow other variables.
+* [lang] Remove struct eval. Perhaps replace with struct import?
 
 * [prgm] TicTacToe cleanup
  - Switch to using shared modules.
@@ -10,6 +7,10 @@
    run).
 * [prgm] Game of Life
 
+* [lang] Are multi-arg functions with duplicate arg names allowed?
+  Is this a generalization of variable shadowing?
+  It actually seems reasonable. For example, if you want to ignore multiple
+  arguments, using '_' as their name?
 * [clean] Better error message at runtime in case of:
       S@<Foo@> s = ...
       S@<Foo@> s = s.cons.tail;
