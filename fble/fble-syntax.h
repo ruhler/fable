@@ -161,7 +161,6 @@ typedef enum {
 //FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR,
   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
 //FBLE_STRUCT_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR,
-  FBLE_STRUCT_EVAL_EXPR,
   FBLE_STRUCT_IMPORT_EXPR,
 
   FBLE_UNION_TYPE_EXPR,
@@ -256,17 +255,13 @@ typedef struct {
   FbleChoiceV args;
 } FbleStructValueImplicitTypeExpr;
 
-// FbleStructEvalExpr --
-//   FBLE_STRUCT_EVAL_EXPR (namespace :: Expr) (body :: Expr)
+// FbleStructImportExpr --
+//   FBLE_STRUCT_IMPORT_EXPR (namespace :: Expr) (body :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleExpr* nspace;
   FbleExpr* body;
-} FbleStructEvalExpr;
-
-// FbleStructImportExpr --
-//   FBLE_STRUCT_IMPORT_EXPR (namespace :: Expr) (body :: Expr)
-typedef FbleStructEvalExpr FbleStructImportExpr;
+} FbleStructImportExpr;
 
 // FbleUnionTypeExpr --
 //   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])

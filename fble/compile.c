@@ -3076,69 +3076,18 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       return CompileList(arena, blocks, name, exit, vars, literal->word_loc, literal->type, args, instrs, time);
     }
 
-    case FBLE_STRUCT_EVAL_EXPR: {
-      FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
-
-      Type* type = CompileExpr(arena, blocks, name, false, vars, struct_eval_expr->nspace, instrs, time);
-      if (type == NULL) {
-        return NULL;
-      }
-
-      StructType* struct_type = (StructType*)Normal(type);
-      if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected value of type struct, but found value of type ", &struct_eval_expr->nspace->loc);
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
-
-        TypeRelease(arena, type);
-        return NULL;
-      }
-
-      *time += 1 + struct_type->fields.size;
-
-      FbleEnterScopeInstr* instr = FbleAlloc(arena_, FbleEnterScopeInstr);
-      instr->_base.tag = FBLE_ENTER_SCOPE_INSTR;
-      instr->block = NewInstrBlock(arena_, blocks, name, struct_eval_expr->body->loc);
-      FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, exit, instrs);
-
-      Vars nvars;
-      FbleVectorInit(arena_, nvars.vars);
-      nvars.nvars = 0;
-
-      FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
-      struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
-      FbleVectorAppend(arena_, instr->block->instrs, &struct_import->_base);
-
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        PushVar(arena_, &nvars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
-      }
-
-      assert(instr->block->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-      size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->block->instrs.xs[0])->time;
-      Type* rtype = CompileExpr(arena, blocks, name, true, &nvars, struct_eval_expr->body, &instr->block->instrs, body_time);
-
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        PopVar(arena_, &nvars);
-      }
-      FreeVars(arena_, &nvars);
-
-      TypeRelease(arena, type);
-      return rtype;
-    }
-
     case FBLE_STRUCT_IMPORT_EXPR: {
       *time += 1;
-      FbleStructEvalExpr* struct_eval_expr = (FbleStructEvalExpr*)expr;
+      FbleStructImportExpr* struct_import_expr = (FbleStructImportExpr*)expr;
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, struct_eval_expr->nspace, instrs, time);
+      Type* type = CompileExpr(arena, blocks, name, false, vars, struct_import_expr->nspace, instrs, time);
       if (type == NULL) {
         return NULL;
       }
 
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected value of type struct, but found value of type ", &struct_eval_expr->nspace->loc);
+        FbleReportError("expected value of type struct, but found value of type ", &struct_import_expr->nspace->loc);
         PrintType(arena_, type, NULL);
         fprintf(stderr, "\n");
 
@@ -3156,7 +3105,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         PushVar(arena_, vars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
       }
 
-      Type* rtype = CompileExpr(arena, blocks, name, exit, vars, struct_eval_expr->body, instrs, time);
+      Type* rtype = CompileExpr(arena, blocks, name, exit, vars, struct_import_expr->body, instrs, time);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PopVar(arena_, vars);
@@ -3606,7 +3555,6 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
-    case FBLE_STRUCT_EVAL_EXPR:
     case FBLE_STRUCT_IMPORT_EXPR: {
       FbleExpr* expr = type;
       Type* type = CompileExprNoInstrs(arena, vars, expr);
