@@ -200,12 +200,11 @@ identify the field, and a type, specifying the type of value for that field.
 Struct values are constructed by supplying values for all fields of the
 struct. Individual components of a struct can be accessed by field name.
 
-Struct values can be used for modularity and namespace control, by grouping
-together a collection of types and normal values. Syntax is provided for
-creating struct values with implicit types, evaluating expressions in the
-context of the fields of a struct value, and importing fields of a struct into
-the current context. When used this way, we sometimes refer to the struct
-value as a namespace struct value.
+Struct values can be used for namespaces, by grouping together a collection of
+types and normal values. Syntax is provided for creating struct values with
+implicit types and importing fields of a struct into the current context. When
+used this way, we sometimes refer to the struct value as a namespace struct
+value.
 
 3.1 Struct Type
 ---------------
@@ -257,7 +256,7 @@ Example:
 Allows you to construct a struct value with an implicit type. When defining
 structs used as namespaces, it is tedious to have to repeat the types of the
 entities being defined and to worry about what order they are defined in. The
-anoymous struct value makes it more convenient to define structs used as
+anonymous struct value makes it more convenient to define structs used as
 namespaces.
 
 As a syntactic sugar, if no value for a field is provided, its value is
@@ -273,7 +272,6 @@ and the type of the field is the type of the argument provided.
 The expression is evaluated by evaluating all arguments and creating a struct
 value with the results. The arguments may be evaluated in any order,
 sequentially or in parallel.
-
 
 3.4 Struct Access
 -----------------
@@ -296,43 +294,7 @@ accessed.
 The expression is evaluated by evaluating the object, then accessing its field
 value.
 
-3.5 Struct Eval
----------------
-Abstract Syntax:
-  Expr ::= struct_eval (object :: Expr) (body :: Expr)
-
-Concrete Syntax:
-  expr ::= expr '{' stmt '}'
-
-Example:
-  @(True, False, And) { And(True, False); }
-
-Struct eval evaluates an expression in a context where the only variables in
-scope are those defined by the fields of a struct value. This allows you to
-hide variables when evaluating an expression.
-
-The object must be a struct value. The body of the struct_eval
-is evaluated in a scope of variables which are the fields of the
-struct value and no others. The type of the expression is the type of the body
-of the expression.
-
-The expression is evaluated by evaluating the object, then evaluating the body
-under the new scope.
-
-Struct eval is typically used when defining a module to hide all external
-variables except those you need for the module. This allows the module to be
-reused in many different contexts. For example, a module that only requires use
-of the StdLib library would be written:
-
-@(StdLib) {
-  ...
-};
-
-That way, regardless of what other libraries are in scope, there will be no
-name conflicts between what is already in scope and what is being defined by
-the module itself.
-
-3.6 Struct Import
+3.5 Struct Import
 -----------------
 Abstract Syntax:
   Expr ::= struct_import (object :: Expr) (body :: Expr)
@@ -369,11 +331,11 @@ The following two are equivalent:
 2. ops;
    ...
   
-The typical use of struct import is to import values from an existing
-namespace into the current namespace using a combination of struct
-import, struct eval, and implict type struct value construction. For example:
+The typical use of struct import is to import a subset of values from an
+existing namespace into the current namespace using a combination of struct
+import and implict type struct value construction. For example:
 
-  StdLib { @(Bool, Maybe, List); };
+  { StdLib; @(Bool, Maybe, List); };
   ...
 
 Has the effect of importing just Bool, Maybe, and List from StdLib.
@@ -1043,7 +1005,6 @@ Expr ::=
  | struct_value_explicit_type (type :: Type) (args :: [Expr])
  | struct_value_implicit_type (args :: [(Name, Expr)])
  | struct_access (object :: Expr) (field :: Name)
- | struct_eval (namespace :: Expr) (body :: Expr)
  | struct_import (namespace :: Expr) (body :: Expr)
 
  | union_type (fields :: [(Type, Name)])
@@ -1142,7 +1103,6 @@ expr ::=
  | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type, get, put *)
  | '@(' [name [':' expr] [',' ...]] ')'            (* struct_value_implicit_type *)
  | expr '.' name                                   (* struct_access *)
- | expr '{' stmt '}'                               (* struct_eval *)
  | expr '|' word                                   (* string_literal *)
 
  | '+(' type name [',' type name [...]] ')'        (* union_type *)

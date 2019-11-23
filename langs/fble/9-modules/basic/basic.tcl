@@ -1,5 +1,5 @@
 fble-test {
-  Bool% { @(Bool@, True, False); };
+  { Bool%; @(Bool@, True, False); };
 
   True.true;
 } {

@@ -1,4 +1,4 @@
-Unit% { @(Unit@, Unit); };
+{ Unit%; @(Unit@, Unit); };
 
 @ Char@ = +(
   Unit@ '

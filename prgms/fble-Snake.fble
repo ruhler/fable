@@ -1,9 +1,9 @@
 
-Unit% { @(Unit@, Unit); };
-Bool% { @(Bool@, True, False, And); };
-List% { @(P@, S@, InitP, LastP); };
-UBNat% { @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
-Draw% { @(Color@, Draw@); };
+{ Unit%; @(Unit@, Unit); };
+{ Bool%; @(Bool@, True, False, And); };
+{ List%; @(P@, S@, InitP, LastP); };
+{ UBNat%; @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
+{ Draw%; @(Color@, Draw@); };
 
 Nat@ MinRow = 0;
 Nat@ MaxRow = Lit2(2, 0);

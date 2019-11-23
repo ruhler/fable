@@ -1,10 +1,10 @@
-Unit% { @(Unit@, Unit); };
-Bool% { @(Bool@, Not); };
-Char% { @(Char@); };
-List% { @(P@, S@, S0, S, Append); };
-String% { @(Str@, CharLit@, Str); };
-Test% { @(TestResult@, Test@); };
-UBNat% { @(
+{ Unit%; @(Unit@, Unit); };
+{ Bool%; @(Bool@, Not); };
+{ Char%; @(Char@); };
+{ List%; @(P@, S@, S0, S, Append); };
+{ String%; @(Str@, CharLit@, Str); };
+{ Test%; @(TestResult@, Test@); };
+{ UBNat%; @(
     Nat@,
     0, 1, 2, 3, 4, 5, 6, 7, Lit2,
     EqNat, Lt, Le, Gt, Ge,

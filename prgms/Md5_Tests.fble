@@ -1,12 +1,12 @@
-Unit% { @(Unit@, Unit); };
-Maybe% { @(Maybe@); };
-Char% { @(Char@); };
-List% { @(P@, S@, List@, ConsS, S0, S, Append, Concat); };
-String% { @(Str@, CharLit@, Str); };
-Bits%.Bit8 { @(Bit8@, H2); };
-Hex% { @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
-Test% { @(TestResult@, Test@); };
-Md5% { @(Md5Hash@, Md5, Eq); };
+{ Unit%; @(Unit@, Unit); };
+{ Maybe%; @(Maybe@); };
+{ Char%; @(Char@); };
+{ List%; @(P@, S@, List@, ConsS, S0, S, Append, Concat); };
+{ String%; @(Str@, CharLit@, Str); };
+{ Bits%.Bit8; @(Bit8@, H2); };
+{ Hex%; @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
+{ Test%; @(TestResult@, Test@); };
+{ Md5%; @(Md5Hash@, Md5, Eq); };
 
 (Hex@){Char@;} Hex2Char = (Hex@ h) {
   ?(h; 0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),

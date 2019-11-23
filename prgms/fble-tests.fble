@@ -1,7 +1,7 @@
 
-List% { @(S@, S, Concat); };
-String% { @(Str@); };
-Test% { @(Test@); };
+{ List%; @(S@, S, Concat); };
+{ String%; @(Str@); };
+{ Test%; @(Test@); };
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   Test%.Tests,

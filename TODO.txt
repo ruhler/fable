@@ -1,4 +1,4 @@
-* [lang] Remove struct eval. Perhaps replace with struct import?
+* [clean] Remove remnants of struct eval support.
 
 * [prgm] TicTacToe cleanup
  - Switch to using shared modules.

@@ -1,8 +1,8 @@
-Unit% { @(Unit@, Unit); };
-Bool% { @(Bool@, True, False, AndMonoid); };
-Char% { @(Char@, newline); };
-List% { @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
-String% { @(Str@, Str); };
+{ Unit%; @(Unit@, Unit); };
+{ Bool%; @(Bool@, True, False, AndMonoid); };
+{ Char%; @(Char@, newline); };
+{ List%; @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
+{ String%; @(Str@, Str); };
 
 @ TestResult@ = +(Unit@ pass, Str@ fail);
 @ Test@ = *(Str@ name, TestResult@! test);

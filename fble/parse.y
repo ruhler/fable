@@ -233,14 +233,6 @@ expr:
       access_expr->field = $3;
       $$ = &access_expr->_base;
    }
- | expr '{' stmt '}' {
-      FbleStructEvalExpr* expr = FbleAlloc(arena, FbleStructEvalExpr);
-      expr->_base.tag = FBLE_STRUCT_EVAL_EXPR;
-      expr->_base.loc = @$;
-      expr->nspace = $1;
-      expr->body = $3;
-      $$ = &expr->_base;
-   }
  | '+' '(' field_p ')' {
       FbleUnionTypeExpr* union_type = FbleAlloc(arena, FbleUnionTypeExpr);
       union_type->_base.tag = FBLE_UNION_TYPE_EXPR;

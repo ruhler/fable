@@ -1,6 +1,6 @@
-Unit% { @(Unit@, Unit); };
-Bool% { @(Bool@, True, False); };
-BitN% { @(Bit@, BitN@); };
+{ Unit%; @(Unit@, Unit); };
+{ Bool%; @(Bool@, True, False); };
+{ BitN%; @(Bit@, BitN@); };
 
 @ Result@ = *(Bit@ z, Bit@ cout);
 
