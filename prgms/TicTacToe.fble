@@ -1,5 +1,7 @@
 
-@ Unit@ = *();
+{ Unit%; @(Unit@); };
+{ Bool%; @(Bool@, True, False); };
+{ Maybe%; @(Maybe@, Just, Nothing); };
 
 # A square is either filled with an 'X', filled with an 'O', 
 # or is 'E'mpty.
@@ -46,25 +48,21 @@ Board@ EmptyBoard = {
         LR: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
   };
 
-@ MaybeBoard@ = +(Board@ Just, Unit@ Nothing);
 @ Player@ = +(Unit@ X, Unit@ O);
-@ Bool@ = +(Unit@ True, Unit@ False);
 
 # Returns true if the square 's' is empty.
 (Square@) { Bool@; } IsEmpty = (Square@ s) {
-  ?(s; X: Bool@(False: Unit@()),
-       O: Bool@(False: Unit@()),
-       E: Bool@(True: Unit@()));
+  ?(s; X: False, O: False, E: True);
 };
 
 # Returns the board resulting from player 'x' making a play at position 'p'
 # of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
 # not empty.
-(Board@, Position@, Player@) { MaybeBoard@; } Move =
+(Board@, Position@, Player@) { Maybe@<Board@>; } Move =
   (Board@ b, Position@ p, Player@ x) {
     ?(IsEmpty(GetSquare(b, p)) ; 
-       True: MaybeBoard@(Just: SetSquare(b, p, ?(x; X: Square@(X: Unit@()), O: Square@(O: Unit@())))),
-       False: MaybeBoard@(Nothing: Unit@()));
+       true: Just<Board@>(SetSquare(b, p, ?(x; X: Square@(X: Unit@()), O: Square@(O: Unit@())))),
+       false: Nothing<Board@>);
   };
 
 # The status of a (valid) board is one of:
@@ -129,14 +127,12 @@ Board@ EmptyBoard = {
           Loss: b);
   };
 
-@ MaybePositionResult@ = +(PositionResult@ Just, Unit@ Nothing);
-
-(MaybePositionResult@, MaybePositionResult@) { MaybePositionResult@; } ChooseBestMaybePosition =
-  (MaybePositionResult@ a, MaybePositionResult@ b) {
-    ?(a; Just:
-          ?(b; Just: MaybePositionResult@(Just: ChooseBestPosition(a.Just, b.Just)),
-               Nothing: a),
-         Nothing: b);
+(Maybe@<PositionResult@>, Maybe@<PositionResult@>) { Maybe@<PositionResult@>; } ChooseBestMaybePosition =
+  (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b) {
+    ?(a; just:
+          ?(b; just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
+               nothing: a),
+         nothing: b);
   };
 
 # Return the expected result of the game for player 'x', assuming player 'x'
@@ -149,7 +145,7 @@ Board@ EmptyBoard = {
       E: {
         Player@ o = ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()));
         Position@ move = ChooseBestMove(b, o);
-        FlipResult(ExpectedResult(Move(b, move, o).Just, o));
+        FlipResult(ExpectedResult(Move(b, move, o).just, o));
       }
    );
 },
@@ -157,26 +153,26 @@ Board@ EmptyBoard = {
 # Return the expected result of player 'x' moving at position 'p' on board
 # 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
 # 'b'.
-(Board@, Player@, Position@){MaybePositionResult@;} MoveResult = (Board@ b, Player@ x, Position@ p){
-  MaybeBoard@ moved = Move(b, p, x);
+(Board@, Player@, Position@){Maybe@<PositionResult@>;} MoveResult = (Board@ b, Player@ x, Position@ p){
+  Maybe@<Board@> moved = Move(b, p, x);
   ?(moved;
-      Just: MaybePositionResult@(Just: PositionResult@(p, ExpectedResult(moved.Just, x))),
-      Nothing: MaybePositionResult@(Nothing: Unit@()));
+      just: Just<PositionResult@>(PositionResult@(p, ExpectedResult(moved.just, x))),
+      nothing: Nothing<PositionResult@>);
 },
 
 # Choose the best move for player 'x' on the given board.
 # The results are undefined if there are no moves left to make.
 (Board@, Player@){Position@;} ChooseBestMove = (Board@ b, Player@ x) {
-  MaybePositionResult@ ul = MoveResult(b, x, Position@(UL: Unit@()));
-  MaybePositionResult@ uc = MoveResult(b, x, Position@(UC: Unit@()));
-  MaybePositionResult@ ur = MoveResult(b, x, Position@(UR: Unit@()));
-  MaybePositionResult@ ml = MoveResult(b, x, Position@(ML: Unit@()));
-  MaybePositionResult@ mc = MoveResult(b, x, Position@(MC: Unit@()));
-  MaybePositionResult@ mr = MoveResult(b, x, Position@(MR: Unit@()));
-  MaybePositionResult@ ll = MoveResult(b, x, Position@(LL: Unit@()));
-  MaybePositionResult@ lc = MoveResult(b, x, Position@(LC: Unit@()));
-  MaybePositionResult@ lr = MoveResult(b, x, Position@(LR: Unit@()));
-  MaybePositionResult@ best = 
+  Maybe@<PositionResult@> ul = MoveResult(b, x, Position@(UL: Unit@()));
+  Maybe@<PositionResult@> uc = MoveResult(b, x, Position@(UC: Unit@()));
+  Maybe@<PositionResult@> ur = MoveResult(b, x, Position@(UR: Unit@()));
+  Maybe@<PositionResult@> ml = MoveResult(b, x, Position@(ML: Unit@()));
+  Maybe@<PositionResult@> mc = MoveResult(b, x, Position@(MC: Unit@()));
+  Maybe@<PositionResult@> mr = MoveResult(b, x, Position@(MR: Unit@()));
+  Maybe@<PositionResult@> ll = MoveResult(b, x, Position@(LL: Unit@()));
+  Maybe@<PositionResult@> lc = MoveResult(b, x, Position@(LC: Unit@()));
+  Maybe@<PositionResult@> lr = MoveResult(b, x, Position@(LR: Unit@()));
+  Maybe@<PositionResult@> best = 
     ChooseBestMaybePosition(
       ChooseBestMaybePosition(
         ChooseBestMaybePosition(
@@ -186,16 +182,14 @@ Board@ EmptyBoard = {
           ChooseBestMaybePosition(mc, mr),
           ChooseBestMaybePosition(ll, lc))),
       lr);
-  best.Just.position;
+  best.just.position;
 };
 
 @ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 
 @ Output@ = *(Board@ board, GameStatus@ status);
 
 (GameStatus@){Bool@;} GameIsOver = (GameStatus@ status) {
-  ?(status; Move: Bool@(False: Unit@()),
-            Win: Bool@(True: Unit@()),
-            Draw: Bool@(True: Unit@()));
+  ?(status; Move: False, Win: True, Draw: True);
 };
 
 # position: Make a move at the given position for the current player.
@@ -204,15 +198,11 @@ Board@ EmptyBoard = {
 @ Input@ = +(Position@ position, Unit@ computer, Unit@ reset);
 
 (Input@){Bool@;} InputIsReset = (Input@ input) {
-  ?(input; position: Bool@(False: Unit@()),
-           computer: Bool@(False: Unit@()),
-           reset: Bool@(True: Unit@()));
+  ?(input; position: False, computer: False, reset: True);
 };
 
 (Input@){Bool@;} InputIsPosition = (Input@ input) {
-  ?(input; position: Bool@(True: Unit@()),
-           computer: Bool@(False: Unit@()),
-           reset: Bool@(False: Unit@()));
+  ?(input; position: True, computer: False, reset: False);
 };
 
 (Input@-, Output@+){Unit@!;} NewGame = (Input@- input, Output@+ output) {
@@ -228,21 +218,21 @@ Board@ EmptyBoard = {
   Output@ ignored := output(Output@(board, status));
   Input@ in := input();
   ?(GameIsOver(status) ; 
-      True:
+      true:
       ?(in ; position: PlayGame(input, output, board, x),
              computer: PlayGame(input, output, board, x),
              reset: NewGame(input, output)),
-      False:
+      false:
       ?(InputIsReset(in) ;
-         True: NewGame(input, output),
-         False: {
+         true: NewGame(input, output),
+         false: {
           Position@ pos := $(?(InputIsPosition(in) ;
-                               True: in.position,
-                               False: ChooseBestMove(board, x)));
-          MaybeBoard@ nboard := $(Move(board, pos, x));
+                               true: in.position,
+                               false: ChooseBestMove(board, x)));
+          Maybe@<Board@> nboard := $(Move(board, pos, x));
           ?(nboard ;
-              Just: PlayGame(input, output, nboard.Just, ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()))),
-              Nothing: PlayGame(input, output, board, x));
+              just: PlayGame(input, output, nboard.just, ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()))),
+              nothing: PlayGame(input, output, board, x));
         }));
 };
 
@@ -295,7 +285,7 @@ Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
 };
 
 # BenchmarkChooseBestMove(Unit@());
-@(NewGame);
+@(NewGame, BenchmarkChooseBestMove);
 
 # TODO:
 # * Better way of expressing maybe monad

@@ -105,6 +105,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     c0 = getchar();
     if (io->ports.xs[0] == NULL) {
       fprintf(stderr, "Invalid Input\n");
+      fprintf(stderr, "Expected: {A,B,C}{1,2,3}, P, or R\n");
       while (c0 != EOF && c0 != '\n') {
         c0 = getchar();
       }

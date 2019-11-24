@@ -2,4 +2,7 @@
 
 <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
-@(Maybe@);
+<@ T@>(T@){ Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@<T@>(just: x); };
+<@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
+
+@(Maybe@, Just, Nothing);
