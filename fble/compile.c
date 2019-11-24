@@ -1435,12 +1435,16 @@ static void PrintKind(Kind* kind)
     }
 
     case POLY_KIND: {
-      PolyKind* poly = (PolyKind*)kind;
-      fprintf(stderr, "\\<");
-      PrintKind(poly->arg);
-      fprintf(stderr, "; ");
-      PrintKind(poly->rkind);
+      const char* prefix = "<";
+      while (kind->tag == POLY_KIND) {
+        PolyKind* poly = (PolyKind*)kind;
+        fprintf(stderr, "%s", prefix);
+        PrintKind(poly->arg);
+        prefix = ", ";
+        kind = poly->rkind;
+      }
       fprintf(stderr, ">");
+      PrintKind(kind);
       break;
     }
   }
@@ -2806,7 +2810,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
         if (!error && binding->type != NULL && !TypesEqual(nvd[i].type, type, NULL)) {
           error = true;
-          FbleReportError("expected type ", &let_expr->bindings.xs[i].expr->loc);
+          FbleReportError("expected type ", &binding->expr->loc);
           PrintType(arena_, nvd[i].type, NULL);
           fprintf(stderr, ", but found ");
           PrintType(arena_, type, NULL);
@@ -2817,7 +2821,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           Kind* expected_kind = var->kind;
           Kind* actual_kind = GetKind(arena_, var_type_values[i]);
           if (!KindsEqual(expected_kind, actual_kind)) {
-            FbleReportError("expected kind ", &type->loc);
+            FbleReportError("expected kind ", &binding->expr->loc);
             PrintKind(expected_kind);
             fprintf(stderr, ", but found ");
             PrintKind(actual_kind);

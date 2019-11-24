@@ -1,10 +1,7 @@
-* [prgm] TicTacToe cleanup
- - Switch to using shared modules.
- - Use monads, monoids, and maps and such to simplify ChooseBestMove.
- - Hook up to the 'Test' infrastructure (assuming the tests are fast enough to
-   run).
-* [prgm] Game of Life
-
+The Great Cleanup:
+* [test] Fix segfault in langs/fble/2.5-let/type/value_not_type.tcl
+* [prgm] Add TicTacToe tests to fble-tests
+* [prgm] Optimize ChooseBestMove in TicTacToe
 * [lang] Are multi-arg functions with duplicate arg names allowed?
   Is this a generalization of variable shadowing?
   It actually seems reasonable. For example, if you want to ignore multiple
@@ -13,46 +10,39 @@
       S@<Foo@> s = ...
       S@<Foo@> s = s.cons.tail;
   Currently we get a TaggedPop assertion error at runtime, which is no good.
-* [clean] PrintKind for <@>@ shows up as \<@; @>. Fix that.
-* [clean] Nicer way of printing error messages in compiler
- - particularly those that include names and types inside of them.
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind
    proc_link, proc_exec
    poly_value, poly_apply
+* [test] multi arg func, poly, kind are equivalent to nested single arg.
+* Test that explicit type struct values can take type args and poly args?
+  And same for all other kinds of struct expressions.
+* Update abstract syntax and parser to match spec.
+  - in terms of names of things and order of things.
+* Figure out how to make a version of 7.4-06-* for values.
+* Make sure all "see documentation in ..." lines are accurate.
+* Improve test coverage around polymorphic types.
+* Use consistent style for error messages. Capitalize? Punctuate?
+* Port rest of fbld tests and programs to fble.
+  - Sudoku partial draft
+  - fblc spec test coverage
+  - fbld spec test coverage
+* Remove iquota from Thread data structure. It should be managed separately.
+
+The Harder Cleanup:
+* [clean] Nicer way of printing error messages in compiler
+ - particularly those that include names and types inside of them.
 * [prgm] Optimize Md5.cls function
   - change << and >> to take number of bits to shift instead of a single bit.
   - change cls to use or(x << n, x >> (K - n))
-* [prgm] Optimize the fble implementation of tictactoe
-  - Using monadic operations where feasible?
-* [prgm] Implement game of life.
 * [clean] Tracking of time in the compiler is really messy
   Especially that we extract the pointer to the time field from NewBlock by
   assuming what NewBlock does. Figure out some way to clean this up.
 * [clean] Figure out a nicer way to deal with fble-ref-test having access to
   internal ref.h
-* [perf] Collect benchmarks somewhere?
-  - md5 run on 6k file. ~7 minutes
-  - tictactoe find best move for empty board. ~50 minutes
 * [clean] Factor out common code for thunks used by func, link, and exec.
-* [perf] figure out how to use 'perf' for profiling?
-  perf record --call-graph dwarf [COMMAND]
-  perf report -g --stdio
-* [build] move 'perf' logic to build.fble.tcl
-* [test] multi arg func, poly, kind are equivalent to nested single arg.
-* [perf] Optimize FbleRefAdd
-* [perf] Store scope size as part of InstrBlock and use an array for vars.
- - replace all AddToVector callbacks in ref.c if feasible.
-* Test that explicit type struct values can take type args and poly args?
-  And same for all other kinds of struct expressions.
-* Update abstract syntax and parser to match spec.
-  - in terms of names of things and order of things.
 * Better error messages on types that have the same name but different values.
-* Figure out how to make a version of 7.4-06-* for values.
-* Test what gets evaluated at eval vs. exec time for each kind of process.
-* Make sure all "see documentation in ..." lines are accurate.
-* Improve test coverage around polymorphic types.
 * Test that we don't smash the stack with many nested child threads.
 * Test that we don't leak (Thread) memory with tail recursive single binding
   exec processes.
@@ -60,15 +50,24 @@
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
 * Better error message when the difference between a type is accidentally
   defining + vs. *, and it contains substituted polymorphic type variables.
-* Use consistent style for error messages. Capitalize? Punctuate?
-* Port rest of fbld tests and programs to fble.
-  - Sudoku partial draft
-  - fblc spec test coverage
-  - fbld spec test coverage
 * It's very unintuitive that $(f(...)) calls f(...) before executing the
   process $(...). Clarify the spec on that and make sure we implement it
   correctly. And think about the other kinds of procs too, like put and get.
-* Remove iquota from Thread data structure. It should be managed separately.
+* Test what gets evaluated at eval vs. exec time for each kind of process.
+
+Future Work:
+* [prgm] Game of Life
+* [prgm] Sudoku
+* [perf] Collect benchmarks somewhere?
+  - md5 run on 6k file. ~7 minutes
+  - tictactoe find best move for empty board. ~50 minutes
+* [perf] figure out how to use 'perf' for profiling?
+  perf record --call-graph dwarf [COMMAND]
+  perf report -g --stdio
+* [build] move 'perf' logic to build.fble.tcl
+* [perf] Optimize FbleRefAdd
+* [perf] Store scope size as part of InstrBlock and use an array for vars.
+ - replace all AddToVector callbacks in ref.c if feasible.
 
 Fble Lib:
 * Should Eq just be a function or an interface?
