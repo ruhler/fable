@@ -148,6 +148,11 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
        nothing: b);
 };
 
+(Maybe@<PositionResult@>){ Bool@; } IsWinning = (Maybe@<PositionResult@> x) {
+  ?(x; just: ?(x.just.result; Win: True, Draw: False, Loss: False),
+       nothing: False);
+};
+
 # Return the expected result of the game for player 'x', assuming player 'x'
 # has just moved and that both players play optimally.
 (Board@, Player@){Result@;} ExpectedResult = (Board@ b, Player@ x) {
@@ -176,7 +181,9 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 (Board@, Player@){Position@;} ChooseBestMove = (Board@ b, Player@ x) {
   {
     Maybe@<PositionResult@> best, Position@ p <- FoldS<Maybe@<PositionResult@>, Position@>(Nothing<PositionResult@>, AllPositions);
-    ChooseBestMaybePosition(best, MoveResult(b, x, p));
+    ?(IsWinning(best);
+        true: best,
+        false: ChooseBestMaybePosition(best, MoveResult(b, x, p)));
   }.just.position;
 };
 

@@ -1,8 +1,9 @@
 The Great Cleanup:
 * [prgm] Add TicTacToe tests to fble-tests
-* [prgm] Optimize ChooseBestMove in TicTacToe
 * [bug] Profiling of tictactoe wraps counts around. Make sure the counters are
   at least 64 bits? Or are we just printing them with the wrong formatter?
+  Something's wrong, because tictactoe got much faster after optimization but
+  the profile shows it to be much slower.
 * [lang] Are multi-arg functions with duplicate arg names allowed?
   Is this a generalization of variable shadowing?
   It actually seems reasonable. For example, if you want to ignore multiple
