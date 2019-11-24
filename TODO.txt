@@ -1,5 +1,4 @@
 The Great Cleanup:
-* [test] Fix segfault in langs/fble/2.5-let/type/value_not_type.tcl
 * [prgm] Add TicTacToe tests to fble-tests
 * [prgm] Optimize ChooseBestMove in TicTacToe
 * [lang] Are multi-arg functions with duplicate arg names allowed?

@@ -2818,17 +2818,24 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         } else if (!error && binding->type == NULL) {
           VarType* var = var_types[i];
           var_type_values[i] = ValueOfType(arena, type);
-          Kind* expected_kind = var->kind;
-          Kind* actual_kind = GetKind(arena_, var_type_values[i]);
-          if (!KindsEqual(expected_kind, actual_kind)) {
-            FbleReportError("expected kind ", &binding->expr->loc);
-            PrintKind(expected_kind);
-            fprintf(stderr, ", but found ");
-            PrintKind(actual_kind);
+          if (var_type_values[i] == NULL) {
+            FbleReportError("expected type, but found something of type ", &binding->expr->loc);
+            PrintType(arena_, type, NULL);
             fprintf(stderr, "\n");
             error = true;
+          } else {
+            Kind* expected_kind = var->kind;
+            Kind* actual_kind = GetKind(arena_, var_type_values[i]);
+            if (!KindsEqual(expected_kind, actual_kind)) {
+              FbleReportError("expected kind ", &binding->expr->loc);
+              PrintKind(expected_kind);
+              fprintf(stderr, ", but found ");
+              PrintKind(actual_kind);
+              fprintf(stderr, "\n");
+              error = true;
+            }
+            FreeKind(arena_, actual_kind);
           }
-          FreeKind(arena_, actual_kind);
         }
 
         TypeRelease(arena, type);
