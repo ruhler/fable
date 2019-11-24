@@ -1,7 +1,7 @@
 
 { Unit%; @(Unit@); };
 { Bool%; @(Bool@, True, False); };
-{ Maybe%; @(Maybe@, Just, Nothing); };
+{ Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
 
 # A square is either filled with an 'X', filled with an 'O', 
 # or is 'E'mpty.
@@ -154,10 +154,8 @@ Board@ EmptyBoard = {
 # 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
 # 'b'.
 (Board@, Player@, Position@){Maybe@<PositionResult@>;} MoveResult = (Board@ b, Player@ x, Position@ p){
-  Maybe@<Board@> moved = Move(b, p, x);
-  ?(moved;
-      just: Just<PositionResult@>(PositionResult@(p, ExpectedResult(moved.just, x))),
-      nothing: Nothing<PositionResult@>);
+  Board@ moved <- MapMaybe<Board@, PositionResult@>(Move(b, p, x));
+  PositionResult@(p, ExpectedResult(moved, x));
 },
 
 # Choose the best move for player 'x' on the given board.
@@ -284,11 +282,9 @@ Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
         Square@(E: Unit@()), Square@(E: Unit@()), Square@(E: Unit@())), Player@(X: Unit@()));
 };
 
-# BenchmarkChooseBestMove(Unit@());
 @(NewGame, BenchmarkChooseBestMove);
 
 # TODO:
-# * Better way of expressing maybe monad
 # * Be able to easily combine multiple test cases
 # * Use PositionEquals for test result, and report position when failed.
 

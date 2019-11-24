@@ -5,4 +5,9 @@
 <@ T@>(T@){ Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@<T@>(just: x); };
 <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
 
-@(Maybe@, Just, Nothing);
+<@ A@, @ B@>(Maybe@<A@>, (A@){B@;}){ Maybe@<B@>; }
+MapMaybe = <@ A@, @ B@>(Maybe@<A@> m, (A@){B@;} f) {
+  ?(m; just: Just<B@>(f(m.just)), nothing: Nothing<B@>);
+};
+
+@(Maybe@, Just, Nothing, MapMaybe);
