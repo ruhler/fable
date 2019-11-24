@@ -17,16 +17,11 @@ The Great Cleanup:
 * [test] multi arg func, poly, kind are equivalent to nested single arg.
 * Test that explicit type struct values can take type args and poly args?
   And same for all other kinds of struct expressions.
-* Update abstract syntax and parser to match spec.
-  - in terms of names of things and order of things.
 * Figure out how to make a version of 7.4-06-* for values.
-* Make sure all "see documentation in ..." lines are accurate.
 * Improve test coverage around polymorphic types.
 * Use consistent style for error messages. Capitalize? Punctuate?
-* Port rest of fbld tests and programs to fble.
-  - Sudoku partial draft
+* Port rest of fblc tests and programs to fble.
   - fblc spec test coverage
-  - fbld spec test coverage
 * Remove iquota from Thread data structure. It should be managed separately.
 
 The Harder Cleanup:

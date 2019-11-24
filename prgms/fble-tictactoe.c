@@ -26,9 +26,10 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-tictactoe FILE \n"
-      "Execute the tictactoe process described by the fble program FILE.\n"
-      "Example: fble-tictactoe progms/fble-tictactoe.fble\n"
+      "Usage: fble-tictactoe PRGM PATH \n"
+      "Execute the tictactoe process described by the fble program PRGM.\n"
+      "Using search path PATH.\n"
+      "Example: fble-tictactoe prgms/fble-tictactoe.fble prgms\n"
   );
 }
 
@@ -139,10 +140,17 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  if (argc <= 2) {
+    fprintf(stderr, "no include path provided.\n");
+    PrintUsage(stderr);
+    return 1;
+  }
+
   const char* path = argv[1];
+  const char* include_path = argv[2];
 
   FbleArena* prgm_arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(prgm_arena, path, NULL);
+  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
   if (prgm == NULL) {
     FbleDeleteArena(prgm_arena);
     return 1;
