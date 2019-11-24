@@ -2,6 +2,7 @@
 { Unit%; @(Unit@); };
 { Bool%; @(Bool@, True, False); };
 { Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
+{ List%; @(S@, S, FoldS); };
 
 # A square is either filled with an 'X', filled with an 'O', 
 # or is 'E'mpty.
@@ -25,6 +26,18 @@ Board@ EmptyBoard = {
     Unit@ ML, Unit@ MC, Unit@ MR,
     Unit@ LL, Unit@ LC, Unit@ LR
 );
+
+S@<Position@> AllPositions = S<Position@>([
+  Position@(UL: Unit@()),
+  Position@(UC: Unit@()),
+  Position@(UR: Unit@()),
+  Position@(ML: Unit@()),
+  Position@(MC: Unit@()),
+  Position@(MR: Unit@()),
+  Position@(LL: Unit@()),
+  Position@(LC: Unit@()),
+  Position@(LR: Unit@())
+]);
 
 # Returns the value of the square at position 'p' in board 'b'.
 (Board@, Position@) { Square@; } GetSquare = (Board@ b, Position@ p) {
@@ -127,13 +140,13 @@ Board@ EmptyBoard = {
           Loss: b);
   };
 
-(Maybe@<PositionResult@>, Maybe@<PositionResult@>) { Maybe@<PositionResult@>; } ChooseBestMaybePosition =
-  (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b) {
-    ?(a; just:
-          ?(b; just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
-               nothing: a),
-         nothing: b);
-  };
+(Maybe@<PositionResult@>, Maybe@<PositionResult@>) { Maybe@<PositionResult@>; }
+ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b) {
+  ?(a; just:
+        ?(b; just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
+             nothing: a),
+       nothing: b);
+};
 
 # Return the expected result of the game for player 'x', assuming player 'x'
 # has just moved and that both players play optimally.
@@ -161,26 +174,10 @@ Board@ EmptyBoard = {
 # Choose the best move for player 'x' on the given board.
 # The results are undefined if there are no moves left to make.
 (Board@, Player@){Position@;} ChooseBestMove = (Board@ b, Player@ x) {
-  Maybe@<PositionResult@> ul = MoveResult(b, x, Position@(UL: Unit@()));
-  Maybe@<PositionResult@> uc = MoveResult(b, x, Position@(UC: Unit@()));
-  Maybe@<PositionResult@> ur = MoveResult(b, x, Position@(UR: Unit@()));
-  Maybe@<PositionResult@> ml = MoveResult(b, x, Position@(ML: Unit@()));
-  Maybe@<PositionResult@> mc = MoveResult(b, x, Position@(MC: Unit@()));
-  Maybe@<PositionResult@> mr = MoveResult(b, x, Position@(MR: Unit@()));
-  Maybe@<PositionResult@> ll = MoveResult(b, x, Position@(LL: Unit@()));
-  Maybe@<PositionResult@> lc = MoveResult(b, x, Position@(LC: Unit@()));
-  Maybe@<PositionResult@> lr = MoveResult(b, x, Position@(LR: Unit@()));
-  Maybe@<PositionResult@> best = 
-    ChooseBestMaybePosition(
-      ChooseBestMaybePosition(
-        ChooseBestMaybePosition(
-          ChooseBestMaybePosition(ul, uc),
-          ChooseBestMaybePosition(ur, ml)),
-        ChooseBestMaybePosition(
-          ChooseBestMaybePosition(mc, mr),
-          ChooseBestMaybePosition(ll, lc))),
-      lr);
-  best.just.position;
+  {
+    Maybe@<PositionResult@> best, Position@ p <- FoldS<Maybe@<PositionResult@>, Position@>(Nothing<PositionResult@>, AllPositions);
+    ChooseBestMaybePosition(best, MoveResult(b, x, p));
+  }.just.position;
 };
 
 @ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 

@@ -52,6 +52,11 @@ S@ S0 = <@ T@> {
   P@<B@>(f(a.head), MapS<A@, B@>(a.tail, f));
 };
 
+<@ A@, @ B@>(A@, S@<B@>, (A@, B@){A@;}){A@;}
+FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
+  ?(s; cons: FoldS<A@, B@>(f(x, s.cons.head), s.cons.tail, f), nil: x);
+};
+
 <@ A@>(Monoid@<A@>, S@<A@!>){A@!;} SeqS = <@ A@>(Monoid@<A@> m, S@<A@!> s) {
   ?(s; cons: SeqP<A@>(m, s.cons),
        nil: $(m.x));
@@ -92,5 +97,5 @@ S@ S0 = <@ T@> {
 
 @(P@, S@, List@,
   HeadS, ConsS, Append, S0, S,
-  InitP, LastP, Concat, MapS, MapP, SeqS, SeqP,
+  InitP, LastP, Concat, MapS, MapP, FoldS, SeqS, SeqP,
   AndS, AndP, SortS, SortP);
