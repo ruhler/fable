@@ -1197,3 +1197,4 @@ Notes:
    you can write:
      ${ a:= ...; b := ...; TestResult@(a, b); }
    
+- Should we change 'put' to return Unit? It just seems simpler, no?

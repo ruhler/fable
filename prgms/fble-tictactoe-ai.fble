@@ -1,0 +1,243 @@
+
+{ Unit%; @(Unit@, Unit); };
+{ Bool%; @(Bool@, True, False); };
+{ Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
+{ List%; @(S@, S, Concat, FoldS); };
+{ Char%; @(Char@, newline); };
+{ String%; @(Str@, Str); };
+
+# A square is either filled with an 'X', filled with an 'O', 
+# or is 'E'mpty.
+@ Square@ = +(Unit@ X, Unit@ O, Unit@ E);
+
+# A board is a 3x3 grid of squares.
+@ Board@ = *(
+    Square@ ul, Square@ uc, Square@ ur,    # Upper row.
+    Square@ ml, Square@ mc, Square@ mr,    # Middle row.
+    Square@ ll, Square@ lc, Square@ lr     # Lower row.
+);
+
+Board@ EmptyBoard = {
+  Square@ E = Square@(E: Unit@());
+  Board@(E, E, E, E, E, E, E, E, E);
+};
+
+# Position can be used to identify a specific square in the 3x3 grid.
+@ Position@ = +(
+    Unit@ UL, Unit@ UC, Unit@ UR,
+    Unit@ ML, Unit@ MC, Unit@ MR,
+    Unit@ LL, Unit@ LC, Unit@ LR
+);
+
+S@<Position@> AllPositions = S<Position@>([
+  Position@(UL: Unit@()),
+  Position@(UC: Unit@()),
+  Position@(UR: Unit@()),
+  Position@(ML: Unit@()),
+  Position@(MC: Unit@()),
+  Position@(MR: Unit@()),
+  Position@(LL: Unit@()),
+  Position@(LC: Unit@()),
+  Position@(LR: Unit@())
+]);
+
+# Returns the value of the square at position 'p' in board 'b'.
+(Board@, Position@) { Square@; } GetSquare = (Board@ b, Position@ p) {
+  ?(p; UL: b.ul, UC: b.uc, UR: b.ur,
+       ML: b.ml, MC: b.mc, MR: b.mr,
+       LL: b.ll, LC: b.lc, LR: b.lr);
+};
+
+# Sets the square at position 'p' in board 'b' to value 's'.
+(Board@, Position@, Square@) { Board@; } SetSquare =
+  (Board@ b, Position@ p, Square@ s) {
+    ?(p;
+        UL: Board@(   s, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+        UC: Board@(b.ul,    s, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+        UR: Board@(b.ul, b.uc,    s, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+        ML: Board@(b.ul, b.uc, b.ur,    s, b.mc, b.mr, b.ll, b.lc, b.lr),
+        MC: Board@(b.ul, b.uc, b.ur, b.ml,    s, b.mr, b.ll, b.lc, b.lr),
+        MR: Board@(b.ul, b.uc, b.ur, b.ml, b.mc,    s, b.ll, b.lc, b.lr),
+        LL: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr,    s, b.lc, b.lr),
+        LC: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll,    s, b.lr),
+        LR: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
+  };
+
+@ Player@ = +(Unit@ X, Unit@ O);
+
+# Returns true if the square 's' is empty.
+(Square@) { Bool@; } IsEmpty = (Square@ s) {
+  ?(s; X: False, O: False, E: True);
+};
+
+# Returns the board resulting from player 'x' making a play at position 'p'
+# of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
+# not empty.
+(Board@, Position@, Player@) { Maybe@<Board@>; } Move =
+  (Board@ b, Position@ p, Player@ x) {
+    ?(IsEmpty(GetSquare(b, p)) ; 
+       true: Just<Board@>(SetSquare(b, p, ?(x; X: Square@(X: Unit@()), O: Square@(O: Unit@())))),
+       false: Nothing<Board@>);
+  };
+
+# The status of a (valid) board is one of:
+#  X: The player X has won.
+#  O: The player O has won.
+#  D: There is a draw.
+#  E: The board has empty squares.
+@ Status@ = +(Unit@ X, Unit@ O, Unit@ D, Unit@ E);
+
+# Return the status of a single square.
+(Square@) { Status@; } SquareStatus = (Square@ a) {
+  ?(a ; X: Status@(X: Unit@()), O: Status@(O: Unit@()), E: Status@(E: Unit@()));
+};
+
+# Combine two Status using an 'and' operation.
+(Status@, Status@){Status@;} AndStatus = (Status@ a, Status@ b) {
+  ?(a ;
+      X: ?(b ; X: a, O: Status@(D: Unit@()), D: b, E: b), 
+      O: ?(b ; X: Status@(D: Unit@()), O: a, D: b, E: b),
+      D: ?(b ; X: a, O: a, D: a, E: b),
+      E: a);
+};
+
+# Combine two Status using an 'or' operation.
+(Status@, Status@){Status@;} OrStatus = (Status@ a, Status@ b) {
+  ?(a ; X: a, O: a, D: b, E: ?(b ; X: b, O: b, D: a, E: a));
+};
+
+# Compute the status for a given row of squares.
+(Square@, Square@, Square@){Status@;} RowStatus = (Square@ a, Square@ b, Square@ c) {
+  AndStatus(SquareStatus(a), AndStatus(SquareStatus(b), SquareStatus(c)));
+};
+
+# Compute the status for a board.
+(Board@){Status@;} BoardStatus = (Board@ a) {
+  OrStatus(
+      OrStatus(
+        OrStatus(RowStatus(a.ul, a.uc, a.ur), RowStatus(a.ml, a.mc, a.mr)),
+        OrStatus(RowStatus(a.ll, a.lc, a.lr), RowStatus(a.ul, a.ml, a.ll))),
+      OrStatus(
+        OrStatus(RowStatus(a.uc, a.mc, a.lc), RowStatus(a.ur, a.mr, a.lr)),
+        OrStatus(RowStatus(a.ul, a.mc, a.lr), RowStatus(a.ur, a.mc, a.ll))));
+};
+
+@ Result@ = +(Unit@ Win, Unit@ Draw, Unit@ Loss);
+
+# Re-interpret the result from the perspective of the opposing player.
+(Result@){Result@;} FlipResult = (Result@ r) {
+  ?(r ; Win:  Result@(Loss: Unit@()),
+        Draw: Result@(Draw: Unit@()),
+        Loss: Result@(Win: Unit@()));
+};
+
+@ PositionResult@ = *(Position@ position, Result@ result);
+
+(PositionResult@, PositionResult@) { PositionResult@; } ChooseBestPosition =
+  (PositionResult@ a, PositionResult@ b) {
+    Result@ ra = a.result;
+    Result@ rb = b.result;
+    ?(ra; Win: a,
+          Draw: ?(rb; Win: b, Draw: a, Loss: a),
+          Loss: b);
+  };
+
+(Maybe@<PositionResult@>, Maybe@<PositionResult@>) { Maybe@<PositionResult@>; }
+ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b) {
+  ?(a; just:
+        ?(b; just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
+             nothing: a),
+       nothing: b);
+};
+
+(Maybe@<PositionResult@>){ Bool@; } IsWinning = (Maybe@<PositionResult@> x) {
+  ?(x; just: ?(x.just.result; Win: True, Draw: False, Loss: False),
+       nothing: False);
+};
+
+# Return the expected result of the game for player 'x', assuming player 'x'
+# has just moved and that both players play optimally.
+(Board@, Player@){Result@;} ExpectedResult = (Board@ b, Player@ x) {
+  ?(BoardStatus(b);
+      X: ?(x; X: Result@(Win: Unit@()),  O: Result@(Loss: Unit@())),
+      O: ?(x; X: Result@(Loss: Unit@()), O: Result@(Win: Unit@())),
+      D: Result@(Draw: Unit@()),
+      E: {
+        Player@ o = ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()));
+        Position@ move = ChooseBestMove(b, o);
+        FlipResult(ExpectedResult(Move(b, move, o).just, o));
+      }
+   );
+},
+
+# Return the expected result of player 'x' moving at position 'p' on board
+# 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
+# 'b'.
+(Board@, Player@, Position@){Maybe@<PositionResult@>;} MoveResult = (Board@ b, Player@ x, Position@ p){
+  Board@ moved <- MapMaybe<Board@, PositionResult@>(Move(b, p, x));
+  PositionResult@(p, ExpectedResult(moved, x));
+},
+
+# Choose the best move for player 'x' on the given board.
+# The results are undefined if there are no moves left to make.
+(Board@, Player@){Position@;} ChooseBestMove = (Board@ b, Player@ x) {
+  {
+    Maybe@<PositionResult@> best, Position@ p <- FoldS<Maybe@<PositionResult@>, Position@>(Nothing<PositionResult@>, AllPositions);
+    ?(IsWinning(best);
+        true: best,
+        false: ChooseBestMaybePosition(best, MoveResult(b, x, p)));
+  }.just.position;
+};
+
+(Square@){ Str@; } ShowSquare = (Square@ s) {
+  ?(s; X: Str(Char@|X), O: Str(Char@|O), E: Str(Char@|_));
+};
+
+(Board@){ Str@; } ShowBoard = (Board@ b) {
+  Concat<Char@>(S<Str@>([
+     ShowSquare(b.ul),
+     ShowSquare(b.uc),
+     ShowSquare(b.ur),
+     ShowSquare(b.ml),
+     ShowSquare(b.mc),
+     ShowSquare(b.mr),
+     ShowSquare(b.ll),
+     ShowSquare(b.lc),
+     ShowSquare(b.lr)]));
+};
+
+(Position@){ Str@; } ShowPosition = (Position@ p) {
+  ?(p; UL: Str(Char@|UL), UC: Str(Char@|UC), UR: Str(Char@|UR),
+       ML: Str(Char@|ML), MC: Str(Char@|MC), MR: Str(Char@|MR),
+       LL: Str(Char@|LL), LC: Str(Char@|LC), LR: Str(Char@|LR));
+};
+
+(Result@){ Str@; } ShowResult = (Result@ p) {
+  ?(p; Win: Str(Char@|W), Draw: Str(Char@|D), Loss: Str(Char@|L));
+};
+
+# Report the best move that a player can make for the given board
+# configuration and what the expected result for the moving player is.
+(Str@+, Board@, PositionResult@){ Unit@!; }
+ReportBest = (Str@+ out, Board@ board, PositionResult@ pr) {
+  Str@ report = Concat<Char@>(S<Str@>([
+    ShowBoard(board),
+    Str(Char@|' '),
+    ShowPosition(pr.position),
+    Str(Char@|' '),
+    ShowResult(pr.result),
+    S<Char@>([newline])]));
+  Str@ _ := out(report);
+  $(Unit);
+};
+
+# Compute the best move for all possible tictactoe configurations. Print out
+# the best move and the expected result. Returns true.
+(Str@+){ Bool@!; } Main = (Str@+ out) {
+  # ComputeBestMoves(ReportBest(out), EmptyBoard, Player@(X: Unit@()));
+  Unit@ _ := ReportBest(out, EmptyBoard,
+    PositionResult@(Position@(UL: Unit), Result@(Win: Unit)));
+  $(True);
+};
+
+Main;
