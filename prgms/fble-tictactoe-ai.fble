@@ -194,11 +194,17 @@ MoveResult = (Reporter@ r, Board@ b, Player@ x, Position@ p) {
 # The results are undefined if there are no moves left to make.
 (Reporter@, Board@, Player@){Position@!;}
 ComputeBestMove = (Reporter@ r, Board@ b, Player@ x) {
-  Maybe@<PositionResult@> best := SeqS<Maybe@<PositionResult@>>(
-    Monoid@<Maybe@<PositionResult@>>(
-      ChooseBestMaybePosition,
-      Nothing<PositionResult@>),
-    MapS<Position@, Maybe@<PositionResult@>!>(AllPositions, MoveResult(r, b, x)));
+  (S@<Position@>){ Maybe@<PositionResult@>!; } F = (S@<Position@> l) {
+    ?(l;
+        cons: {
+          Maybe@<PositionResult@> best := F(l.cons.tail);
+          Maybe@<PositionResult@> curr := MoveResult(r, b, x, l.cons.head);
+          $(ChooseBestMaybePosition(best, curr));
+        },
+        nil: $(Nothing<PositionResult@>));
+  };
+
+  Maybe@<PositionResult@> best := F(AllPositions);
   Unit@ _ := r(b, best.just);
   $(best.just.position);
 };
