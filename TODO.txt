@@ -1,4 +1,6 @@
 The Great Cleanup:
+* [prgm] Optimize TicTacToe AI
+  - Figure out and fix memory-leak like behavior in tictactoe-ai.
 * [prgm] Add TicTacToe tests to fble-tests
 * [bug] Profiling of tictactoe wraps counts around. Make sure the counters are
   at least 64 bits? Or are we just printing them with the wrong formatter?

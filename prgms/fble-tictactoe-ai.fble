@@ -2,7 +2,8 @@
 { Unit%; @(Unit@, Unit); };
 { Bool%; @(Bool@, True, False); };
 { Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
-{ List%; @(S@, S, Concat, FoldS); };
+{ Monoid%; @(Monoid@); };
+{ List%; @(S@, S, Concat, FoldS, MapS, SeqS); };
 { Char%; @(Char@, newline); };
 { String%; @(Str@, Str); };
 
@@ -155,17 +156,22 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
        nothing: False);
 };
 
+# Function for reporting the best result for a player.
+@ Reporter@ = (Board@, PositionResult@){ Unit@!; };
+
 # Return the expected result of the game for player 'x', assuming player 'x'
 # has just moved and that both players play optimally.
-(Board@, Player@){Result@;} ExpectedResult = (Board@ b, Player@ x) {
+(Reporter@, Board@, Player@){Result@!;}
+ExpectedResult = (Reporter@ r, Board@ b, Player@ x) {
   ?(BoardStatus(b);
-      X: ?(x; X: Result@(Win: Unit@()),  O: Result@(Loss: Unit@())),
-      O: ?(x; X: Result@(Loss: Unit@()), O: Result@(Win: Unit@())),
-      D: Result@(Draw: Unit@()),
+      X: $(?(x; X: Result@(Win: Unit@()),  O: Result@(Loss: Unit@()))),
+      O: $(?(x; X: Result@(Loss: Unit@()), O: Result@(Win: Unit@()))),
+      D: $(Result@(Draw: Unit@())),
       E: {
         Player@ o = ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()));
-        Position@ move = ChooseBestMove(b, o);
-        FlipResult(ExpectedResult(Move(b, move, o).just, o));
+        Position@ move := ComputeBestMove(r, b, o);
+        Result@ result := ExpectedResult(r, Move(b, move, o).just, o);
+        $(FlipResult(result));
       }
    );
 },
@@ -173,20 +179,28 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 # Return the expected result of player 'x' moving at position 'p' on board
 # 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
 # 'b'.
-(Board@, Player@, Position@){Maybe@<PositionResult@>;} MoveResult = (Board@ b, Player@ x, Position@ p){
-  Board@ moved <- MapMaybe<Board@, PositionResult@>(Move(b, p, x));
-  PositionResult@(p, ExpectedResult(moved, x));
+(Reporter@, Board@, Player@, Position@){Maybe@<PositionResult@>!;}
+MoveResult = (Reporter@ r, Board@ b, Player@ x, Position@ p) {
+  Maybe@<Board@> moved = Move(b, p, x);
+  ?(moved;
+    just: {
+      Result@ result := ExpectedResult(r, moved.just, x);
+      $(Just<PositionResult@>(PositionResult@(p, result)));
+    },
+    nothing: $(Nothing<PositionResult@>));
 },
 
 # Choose the best move for player 'x' on the given board.
 # The results are undefined if there are no moves left to make.
-(Board@, Player@){Position@;} ChooseBestMove = (Board@ b, Player@ x) {
-  {
-    Maybe@<PositionResult@> best, Position@ p <- FoldS<Maybe@<PositionResult@>, Position@>(Nothing<PositionResult@>, AllPositions);
-    ?(IsWinning(best);
-        true: best,
-        false: ChooseBestMaybePosition(best, MoveResult(b, x, p)));
-  }.just.position;
+(Reporter@, Board@, Player@){Position@!;}
+ComputeBestMove = (Reporter@ r, Board@ b, Player@ x) {
+  Maybe@<PositionResult@> best := SeqS<Maybe@<PositionResult@>>(
+    Monoid@<Maybe@<PositionResult@>>(
+      ChooseBestMaybePosition,
+      Nothing<PositionResult@>),
+    MapS<Position@, Maybe@<PositionResult@>!>(AllPositions, MoveResult(r, b, x)));
+  Unit@ _ := r(b, best.just);
+  $(best.just.position);
 };
 
 (Square@){ Str@; } ShowSquare = (Square@ s) {
@@ -234,9 +248,7 @@ ReportBest = (Str@+ out, Board@ board, PositionResult@ pr) {
 # Compute the best move for all possible tictactoe configurations. Print out
 # the best move and the expected result. Returns true.
 (Str@+){ Bool@!; } Main = (Str@+ out) {
-  # ComputeBestMoves(ReportBest(out), EmptyBoard, Player@(X: Unit@()));
-  Unit@ _ := ReportBest(out, EmptyBoard,
-    PositionResult@(Position@(UL: Unit), Result@(Win: Unit)));
+  Position@ _ := ComputeBestMove(ReportBest(out), EmptyBoard, Player@(X: Unit@()));
   $(True);
 };
 
