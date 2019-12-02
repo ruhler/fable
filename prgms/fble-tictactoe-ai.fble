@@ -1,7 +1,7 @@
 
 { Unit%; @(Unit@, Unit); };
 { Bool%; @(Bool@, True, False); };
-{ Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
+{ Maybe%; @(Maybe@, Just, Nothing, MapMaybe, For); };
 { Monoid%; @(Monoid@); };
 { List%; @(S@, S, Concat, FoldS, MapS, SeqS); };
 { Char%; @(Char@, newline); };
@@ -30,17 +30,17 @@ Board@ EmptyBoard = {
     Unit@ LL, Unit@ LC, Unit@ LR
 );
 
-S@<Position@> AllPositions = S<Position@>([
-  Position@(UL: Unit@()),
-  Position@(UC: Unit@()),
-  Position@(UR: Unit@()),
-  Position@(ML: Unit@()),
-  Position@(MC: Unit@()),
-  Position@(MR: Unit@()),
-  Position@(LL: Unit@()),
-  Position@(LC: Unit@()),
-  Position@(LR: Unit@())
-]);
+(Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {
+  ?(p; UL: Just<Position@>(Position@(UC: Unit@())),
+       UC: Just<Position@>(Position@(UR: Unit@())),
+       UR: Just<Position@>(Position@(ML: Unit@())),
+       ML: Just<Position@>(Position@(MC: Unit@())),
+       MC: Just<Position@>(Position@(MR: Unit@())),
+       MR: Just<Position@>(Position@(LL: Unit@())),
+       LL: Just<Position@>(Position@(LC: Unit@())),
+       LC: Just<Position@>(Position@(LR: Unit@())),
+       LR: Nothing<Position@>);
+};
 
 # Returns the value of the square at position 'p' in board 'b'.
 (Board@, Position@) { Square@; } GetSquare = (Board@ b, Position@ p) {
@@ -194,17 +194,17 @@ MoveResult = (Reporter@ r, Board@ b, Player@ x, Position@ p) {
 # The results are undefined if there are no moves left to make.
 (Reporter@, Board@, Player@){Position@!;}
 ComputeBestMove = (Reporter@ r, Board@ b, Player@ x) {
-  (S@<Position@>){ Maybe@<PositionResult@>!; } F = (S@<Position@> l) {
-    ?(l;
-        cons: {
-          Maybe@<PositionResult@> best := F(l.cons.tail);
-          Maybe@<PositionResult@> curr := MoveResult(r, b, x, l.cons.head);
-          $(ChooseBestMaybePosition(best, curr));
-        },
-        nil: $(Nothing<PositionResult@>));
-  };
+  Maybe@<PositionResult@> best :=
+    For<Position@, Maybe@<PositionResult@>!>(
+      Position@(UL: Unit),
+      $(Nothing<PositionResult@>),
+      NextPosition,
+      (Position@ p, Maybe@<PositionResult@>! _) {
+        Maybe@<PositionResult@> best := _;
+        Maybe@<PositionResult@> curr := MoveResult(r, b, x, p);
+        $(ChooseBestMaybePosition(best, curr));
+    });
 
-  Maybe@<PositionResult@> best := F(AllPositions);
   Unit@ _ := r(b, best.just);
   $(best.just.position);
 };

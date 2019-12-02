@@ -1,6 +1,9 @@
 The Great Cleanup:
+ 
 * [prgm] Optimize TicTacToe AI
   - Extract computed move results into a lookup table for fble-tictactoe.fble.
+  - Clean up, memoize, and take advantage of symmetries in
+    fble-tictactoe-ai.fble.
 * [prgm] Add TicTacToe tests to fble-tests
 * [bug] Profiling of tictactoe wraps counts around. Make sure the counters are
   at least 64 bits? Or are we just printing them with the wrong formatter?

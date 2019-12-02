@@ -1198,5 +1198,9 @@ Notes:
      ${ a:= ...; b := ...; TestResult@(a, b); }
    
 - Should we change 'put' to return Unit? It just seems simpler, no?
+
 - Mixing folds and maps and processes seqs is annoying. Can we come up with
   better libraries for doing that sort of thing easily?
+
+  Note: trying to reuse SeqS and MapS led to a big memory leak in one case
+  that went away when manually unrolling the loop into a custom function.
