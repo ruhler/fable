@@ -159,19 +159,89 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 # Function for reporting the best result for a player.
 @ Reporter@ = (Board@, PositionResult@){ Unit@!; };
 
+# Map from Board to the best next move to make on that board and the expected
+# game result from playing there.
+@ MemoTable@ = +(Unit@ empty, PositionResult@ result, MemoMap@ map),
+@ MemoMap@ = *(MemoTable@ x, MemoTable@ o, MemoTable@ e);
+
+# Helper function to access a MemoMap from a MemoTable. Returns Nothing if the
+# MemoTable is Empty. Otherwise applies the given function to the accessed
+# MemoMap.
+<@ A@>(MemoTable@, Square@, (MemoTable@){Maybe@<A@>;}){Maybe@<A@>;}
+GetMap = <@ A@>(MemoTable@ memo, Square@ square, (MemoTable@){Maybe@<A@>;} f) {
+  ?(memo;
+      empty: Nothing<A@>,
+      result: Nothing<A@>, 
+      map: f(?(square; X: memo.map.x, O: memo.map.o, E: memo.map.e)));
+};
+
+(MemoTable@, Board@){ Maybe@<PositionResult@>; }
+Lookup = (MemoTable@ memo, Board@ board) {
+  MemoTable@ mul <- GetMap<PositionResult@>(memo, board.ul);
+  MemoTable@ muc <- GetMap<PositionResult@>(mul, board.uc);
+  MemoTable@ mur <- GetMap<PositionResult@>(muc, board.ur);
+  MemoTable@ mml <- GetMap<PositionResult@>(mur, board.ml);
+  MemoTable@ mmc <- GetMap<PositionResult@>(mml, board.mc);
+  MemoTable@ mmr <- GetMap<PositionResult@>(mmc, board.mr);
+  MemoTable@ mll <- GetMap<PositionResult@>(mmr, board.ll);
+  MemoTable@ mlc <- GetMap<PositionResult@>(mll, board.lc);
+  MemoTable@ mlr <- GetMap<PositionResult@>(mlc, board.lr);
+  ?(mlr;
+    empty: Nothing<PositionResult@>,
+    result: Just<PositionResult@>(mlr.result),
+    map: Nothing<PositionResult@>);
+};
+
+# Helper function to update a MemoTable map value.
+# Accesses the given element from the given memo table and applies the
+# function to it to determine its new value, providing a default empty value
+# if necessary.
+(MemoTable@, Square@, (MemoTable@){MemoTable@;}){MemoTable@;}
+SetMap = (MemoTable@ memo, Square@ square, (MemoTable@){MemoTable@;} f) {
+  MemoTable@ empty = MemoTable@(empty: Unit);
+  MemoMap@ oldMap = ?(memo;
+    empty: MemoMap@(empty, empty, empty),
+    result: MemoMap@(empty, empty, empty),
+    map: memo.map);
+  MemoTable@ oldChild = ?(square; X: oldMap.x, O: oldMap.o, E: oldMap.e);
+  MemoTable@ newChild = f(oldChild);
+  MemoMap@ newMap = MemoMap@(
+    ?(square; X: newChild, O: oldMap.x, E: oldMap.x), 
+    ?(square; X: oldMap.o, O: newChild, E: oldMap.o), 
+    ?(square; X: oldMap.e, O: oldMap.e, E: newChild));
+  MemoTable@(map: newMap);
+};
+
+(MemoTable@, Board@, PositionResult@){MemoTable@;}
+Insert = (MemoTable@ memo, Board@ board, PositionResult@ result) {
+  MemoTable@ mul <- SetMap(memo, board.ul);
+  MemoTable@ muc <- SetMap(mul, board.uc);
+  MemoTable@ mur <- SetMap(muc, board.ur);
+  MemoTable@ mml <- SetMap(mur, board.ml);
+  MemoTable@ mmc <- SetMap(mml, board.mc);
+  MemoTable@ mmr <- SetMap(mmc, board.mr);
+  MemoTable@ mll <- SetMap(mmr, board.ll);
+  MemoTable@ mlc <- SetMap(mll, board.lc);
+  MemoTable@ mlr <- SetMap(mlc, board.lr);
+  MemoTable@(result: result);
+};
+
+<@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
+
 # Return the expected result of the game for player 'x', assuming player 'x'
 # has just moved and that both players play optimally.
-(Reporter@, Board@, Player@){Result@!;}
-ExpectedResult = (Reporter@ r, Board@ b, Player@ x) {
+(MemoTable@, Reporter@, Board@, Player@){MemoState@<Result@>!;}
+ExpectedResult = (MemoTable@ m, Reporter@ r, Board@ b, Player@ x) {
   ?(BoardStatus(b);
-      X: $(?(x; X: Result@(Win: Unit@()),  O: Result@(Loss: Unit@()))),
-      O: $(?(x; X: Result@(Loss: Unit@()), O: Result@(Win: Unit@()))),
-      D: $(Result@(Draw: Unit@())),
+      X: $(MemoState@<Result@>(m,
+            ?(x; X: Result@(Win: Unit@()), O: Result@(Loss: Unit@())))),
+      O: $(MemoState@<Result@>(m,
+            ?(x; X: Result@(Loss: Unit@()), O: Result@(Win: Unit@())))),
+      D: $(MemoState@<Result@>(m, Result@(Draw: Unit@()))),
       E: {
         Player@ o = ?(x; X: Player@(O: Unit@()), O: Player@(X: Unit@()));
-        Position@ move := ComputeBestMove(r, b, o);
-        Result@ result := ExpectedResult(r, Move(b, move, o).just, o);
-        $(FlipResult(result));
+        MemoState@<PositionResult@> move := ComputeBestMove(m, r, b, o);
+        $(MemoState@<Result@>(move.memo, FlipResult(move.data.result)));
       }
    );
 },
@@ -179,34 +249,46 @@ ExpectedResult = (Reporter@ r, Board@ b, Player@ x) {
 # Return the expected result of player 'x' moving at position 'p' on board
 # 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
 # 'b'.
-(Reporter@, Board@, Player@, Position@){Maybe@<PositionResult@>!;}
-MoveResult = (Reporter@ r, Board@ b, Player@ x, Position@ p) {
+(MemoTable@, Reporter@, Board@, Player@, Position@){MemoState@<Maybe@<PositionResult@>>!;}
+MoveResult = (MemoTable@ m, Reporter@ r, Board@ b, Player@ x, Position@ p) {
   Maybe@<Board@> moved = Move(b, p, x);
   ?(moved;
     just: {
-      Result@ result := ExpectedResult(r, moved.just, x);
-      $(Just<PositionResult@>(PositionResult@(p, result)));
+      MemoState@<Result@> result := ExpectedResult(m, r, moved.just, x);
+      $(MemoState@<Maybe@<PositionResult@>>(
+          result.memo,
+          Just<PositionResult@>(PositionResult@(p, result.data))));
     },
-    nothing: $(Nothing<PositionResult@>));
+    nothing: $(MemoState@<Maybe@<PositionResult@>>(m, Nothing<PositionResult@>)));
 },
 
 # Choose the best move for player 'x' on the given board.
 # The results are undefined if there are no moves left to make.
-(Reporter@, Board@, Player@){Position@!;}
-ComputeBestMove = (Reporter@ r, Board@ b, Player@ x) {
-  Maybe@<PositionResult@> best :=
-    For<Position@, Maybe@<PositionResult@>!>(
-      Position@(UL: Unit),
-      $(Nothing<PositionResult@>),
-      NextPosition,
-      (Position@ p, Maybe@<PositionResult@>! _) {
-        Maybe@<PositionResult@> best := _;
-        Maybe@<PositionResult@> curr := MoveResult(r, b, x, p);
-        $(ChooseBestMaybePosition(best, curr));
-    });
+(MemoTable@, Reporter@, Board@, Player@){MemoState@<PositionResult@>!;}
+ComputeBestMove = (MemoTable@ m, Reporter@ r, Board@ b, Player@ x) {
+  Maybe@<PositionResult@> cached = Lookup(m, b);
+  ?(cached;
+    just: {
+      $(MemoState@<PositionResult@>(m, cached.just));
+    },
+    nothing: {
+      MemoState@<Maybe@<PositionResult@>> best :=
+        For<Position@, MemoState@<Maybe@<PositionResult@>>!>(
+          Position@(UL: Unit),
+          $(MemoState@<Maybe@<PositionResult@>>(m, Nothing<PositionResult@>)),
+          NextPosition,
+          (Position@ p, MemoState@<Maybe@<PositionResult@>>! _) {
+            MemoState@<Maybe@<PositionResult@>> best := _;
+            MemoState@<Maybe@<PositionResult@>> curr := MoveResult(best.memo, r, b, x, p);
+            $(MemoState@<Maybe@<PositionResult@>>(
+                curr.memo,
+                ChooseBestMaybePosition(best.data, curr.data)));
+        });
 
-  Unit@ _ := r(b, best.just);
-  $(best.just.position);
+      Unit@ _ := r(b, best.data.just);
+      MemoTable@ newMemo = Insert(best.memo, b, best.data.just);
+      $(MemoState@<PositionResult@>(newMemo, best.data.just));
+    });
 };
 
 (Square@){ Str@; } ShowSquare = (Square@ s) {
@@ -254,7 +336,7 @@ ReportBest = (Str@+ out, Board@ board, PositionResult@ pr) {
 # Compute the best move for all possible tictactoe configurations. Print out
 # the best move and the expected result. Returns true.
 (Str@+){ Bool@!; } Main = (Str@+ out) {
-  Position@ _ := ComputeBestMove(ReportBest(out), EmptyBoard, Player@(X: Unit@()));
+  MemoState@<PositionResult@> _ := ComputeBestMove(MemoTable@(empty: Unit), ReportBest(out), EmptyBoard, Player@(X: Unit@()));
   $(True);
 };
 
