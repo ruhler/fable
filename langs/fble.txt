@@ -1204,3 +1204,5 @@ Notes:
 
   Note: trying to reuse SeqS and MapS led to a big memory leak in one case
   that went away when manually unrolling the loop into a custom function.
+
+  A For loop based construct seems to solve this well.

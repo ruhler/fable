@@ -4,6 +4,9 @@ The Great Cleanup:
       S@<Foo@> s = ...
       S@<Foo@> s = s.cons.tail;
   Currently we get a TaggedPop assertion error at runtime, which is no good.
+  This is from "dereference of abstract value". Instead we should make this an
+  error similar to illegal union tag access, and report the location.
+
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
   fble-tictactoe.c program to drive it.
 * [prgm] Add TicTacToe tests to fble-tests
