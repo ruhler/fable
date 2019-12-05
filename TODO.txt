@@ -12,6 +12,9 @@ The Great Cleanup:
   Is this a generalization of variable shadowing?
   It actually seems reasonable. For example, if you want to ignore multiple
   arguments, using '_' as their name?
+* Figure out why the tictactoe AI was 4 times faster when using a process
+  computation instead of a pure computation, even though fble level profiling
+  and common sense suggest it should be the other way around.
 * [clean] Better error message at runtime in case of:
       S@<Foo@> s = ...
       S@<Foo@> s = s.cons.tail;
