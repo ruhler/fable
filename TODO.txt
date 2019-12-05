@@ -1,8 +1,11 @@
 The Great Cleanup:
  
-* [prgm] Optimize TicTacToe AI
-  - Extract computed move results into a lookup table for fble-tictactoe.fble.
-  - Clean up fble-tictactoe-ai.fble.
+* [clean] Better error message at runtime in case of:
+      S@<Foo@> s = ...
+      S@<Foo@> s = s.cons.tail;
+  Currently we get a TaggedPop assertion error at runtime, which is no good.
+* [prgm] Have TicTacToe print its own board and such rather than need a custom
+  fble-tictactoe.c program to drive it.
 * [prgm] Add TicTacToe tests to fble-tests
 * [bug] Profiling of tictactoe wraps counts around. Make sure the counters are
   at least 64 bits? Or are we just printing them with the wrong formatter?
@@ -15,10 +18,9 @@ The Great Cleanup:
 * Figure out why the tictactoe AI was 4 times faster when using a process
   computation instead of a pure computation, even though fble level profiling
   and common sense suggest it should be the other way around.
-* [clean] Better error message at runtime in case of:
-      S@<Foo@> s = ...
-      S@<Foo@> s = s.cons.tail;
-  Currently we get a TaggedPop assertion error at runtime, which is no good.
+* Figure out why it takes longer and much more memory to insert 5000 entries
+  into the TicTacToe MemoTable directly rather than compute all the entries
+  from scratch. Seems funny.
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind
