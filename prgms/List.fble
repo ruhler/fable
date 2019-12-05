@@ -95,7 +95,13 @@ FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
   And(p.head, AndS(p.tail));
 };
 
+<@ A@, @ B@>(S@<A@>, B@, (A@, B@){B@;}){ B@;}
+ForS = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
+  ?(l; cons: ForS<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
+       nil: base);
+};
+
 @(P@, S@, List@,
   HeadS, ConsS, Append, S0, S,
   InitP, LastP, Concat, MapS, MapP, FoldS, SeqS, SeqP,
-  AndS, AndP, SortS, SortP);
+  AndS, AndP, SortS, SortP, ForS);

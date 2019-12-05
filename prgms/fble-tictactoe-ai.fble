@@ -3,7 +3,7 @@
 { Bool%; @(Bool@, True, False); };
 { Maybe%; @(Maybe@, Just, Nothing, MapMaybe, For); };
 { Monoid%; @(Monoid@); };
-{ List%; @(S@, S, Concat, FoldS, MapS, SeqS); };
+{ List%; @(S@, S, Concat, FoldS, MapS, SeqS, ForS); };
 { Char%; @(Char@, newline); };
 { String%; @(Str@, Str); };
 
@@ -63,6 +63,36 @@ Board@ EmptyBoard = {
         LC: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll,    s, b.lr),
         LR: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
   };
+
+# Rotate a board 90 degrees clockwise
+(Board@) { Board@; } RotateBoard = (Board@ b) {
+  Board@(b.ll, b.ml, b.ul,
+         b.lc, b.mc, b.uc,
+         b.lr, b.mr, b.ur);
+};
+
+# Rotate a position 90 degrees clockwise
+(Position@) { Position@; } RotatePosition = (Position@ p) {
+  ?(p;
+    UL: Position@(UR: Unit), UC: Position@(MR: Unit), UR: Position@(LR: Unit),
+    ML: Position@(UC: Unit), MC: Position@(MC: Unit), MR: Position@(LC: Unit),
+    LL: Position@(UL: Unit), LC: Position@(ML: Unit), LR: Position@(LL: Unit));
+};
+
+# Flip a board horizontally
+(Board@) { Board@; } FlipBoard = (Board@ b) {
+  Board@(b.ll, b.lc, b.lr,
+         b.ml, b.mc, b.mr,
+         b.ul, b.uc, b.ur);
+};
+
+# Flip a position horizontally
+(Position@) { Position@; } FlipPosition = (Position@ p) {
+  ?(p;
+    UL: Position@(LL: Unit), UC: Position@(LC: Unit), UR: Position@(LR: Unit),
+    ML: Position@(ML: Unit), MC: Position@(MC: Unit), MR: Position@(MR: Unit),
+    LL: Position@(UL: Unit), LC: Position@(UC: Unit), LR: Position@(UR: Unit));
+};
 
 @ Player@ = +(Unit@ X, Unit@ O);
 
@@ -133,6 +163,34 @@ Board@ EmptyBoard = {
 };
 
 @ PositionResult@ = *(Position@ position, Result@ result);
+@ BoardPositionResult@ = *(Board@ board, PositionResult@ pr);
+
+(BoardPositionResult@) { BoardPositionResult@; }
+RotateBPR = (BoardPositionResult@ bpr) {
+  BoardPositionResult@(RotateBoard(bpr.board),
+    PositionResult@(RotatePosition(bpr.pr.position), bpr.pr.result));
+};
+
+(BoardPositionResult@) { BoardPositionResult@; }
+FlipBPR = (BoardPositionResult@ bpr) {
+  BoardPositionResult@(FlipBoard(bpr.board),
+    PositionResult@(FlipPosition(bpr.pr.position), bpr.pr.result));
+};
+
+# Produce all different symmetrically equivalent board position results of the
+# given board position result.
+(BoardPositionResult@) { S@<BoardPositionResult@>; }
+AllSymmetries = (BoardPositionResult@ bpr) {
+  BoardPositionResult@ b0 = bpr;
+  BoardPositionResult@ b1 = RotateBPR(b0);
+  BoardPositionResult@ b2 = RotateBPR(b1);
+  BoardPositionResult@ b3 = RotateBPR(b2);
+  BoardPositionResult@ f0 = FlipBPR(b0);
+  BoardPositionResult@ f1 = RotateBPR(f0);
+  BoardPositionResult@ f2 = RotateBPR(f1);
+  BoardPositionResult@ f3 = RotateBPR(f2);
+  S<BoardPositionResult@>([b0, b1, b2, b3, f0, f1, f2, f3]);
+};
 
 (PositionResult@, PositionResult@) { PositionResult@; } ChooseBestPosition =
   (PositionResult@ a, PositionResult@ b) {
@@ -228,6 +286,12 @@ Insert = (MemoTable@ memo, Board@ board, PositionResult@ result) {
 
 <@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 
+(Reporter@, MemoTable@, BoardPositionResult@) { MemoTable@!; }
+Save = (Reporter@ r, MemoTable@ memo, BoardPositionResult@ bpr) {
+  Unit@ _ := r(bpr.board, bpr.pr);
+  $(Insert(memo, bpr.board, bpr.pr));
+};
+
 # Return the expected result of the game for player 'x', assuming player 'x'
 # has just moved and that both players play optimally.
 (MemoTable@, Reporter@, Board@, Player@){MemoState@<Result@>!;}
@@ -285,8 +349,16 @@ ComputeBestMove = (MemoTable@ m, Reporter@ r, Board@ b, Player@ x) {
                 ChooseBestMaybePosition(best.data, curr.data)));
         });
 
-      Unit@ _ := r(b, best.data.just);
-      MemoTable@ newMemo = Insert(best.memo, b, best.data.just);
+      #MemoTable@ newMemo := Save(r, best.memo, BoardPositionResult@(b, best.data.just));
+      MemoTable@ newMemo :=
+        ForS<BoardPositionResult@, MemoTable@!>(
+          AllSymmetries(BoardPositionResult@(b, best.data.just)),
+          $(best.memo),
+          (BoardPositionResult@ bpr, MemoTable@! mt) {
+            MemoTable@ m := mt;
+            Save(r, m, bpr);
+        });
+
       $(MemoState@<PositionResult@>(newMemo, best.data.just));
     });
 };
