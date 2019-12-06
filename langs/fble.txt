@@ -179,6 +179,10 @@ The defined variables are visible in the body of the let expression. To
 support self and mutually recursive values, the defined variables
 are also visible in all of the bindings expressions.
 
+While a variable can be referenced in the bindings where the variable is
+defined, the value of the variable is undefined until after the binding
+expressions have completed evaluation.
+
 The value of the let expression is the value of its body.
 
 When defining type variables, in place of the type of the type variable the

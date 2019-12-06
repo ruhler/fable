@@ -1,14 +1,10 @@
 The Great Cleanup:
  
-* [clean] Better error message at runtime in case of:
-      S@<Foo@> s = ...
-      S@<Foo@> s = s.cons.tail;
-  Currently we get a TaggedPop assertion error at runtime, which is no good.
-  This is from "dereference of abstract value". Instead we should make this an
-  error similar to illegal union tag access, and report the location.
-
+* [clean] Fix 2.5-let/eval/undefined* tests.
+  By tracking and reporting error locations properly.
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
-  fble-tictactoe.c program to drive it.
+  fble-tictactoe.c program to drive it. Same with any other custom programs
+  that can now take string outputs.
 * [prgm] Add TicTacToe tests to fble-tests
 * [bug] Profiling of tictactoe wraps counts around. Make sure the counters are
   at least 64 bits? Or are we just printing them with the wrong formatter?
@@ -18,12 +14,6 @@ The Great Cleanup:
   Is this a generalization of variable shadowing?
   It actually seems reasonable. For example, if you want to ignore multiple
   arguments, using '_' as their name?
-* Figure out why the tictactoe AI was 4 times faster when using a process
-  computation instead of a pure computation, even though fble level profiling
-  and common sense suggest it should be the other way around.
-* Figure out why it takes longer and much more memory to insert 5000 entries
-  into the TicTacToe MemoTable directly rather than compute all the entries
-  from scratch. Seems funny.
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind
@@ -64,9 +54,19 @@ The Harder Cleanup:
   correctly. And think about the other kinds of procs too, like put and get.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
 
-Future Work:
+Programs:
 * [prgm] Game of Life
 * [prgm] Sudoku
+
+Performance Refactor:
+* Figure out why the tictactoe AI was 4 times faster when using a process
+  computation instead of a pure computation, even though fble level profiling
+  and common sense suggest it should be the other way around.
+* Figure out why it takes longer and much more memory to insert 5000 entries
+  into the TicTacToe MemoTable directly rather than compute all the entries
+  from scratch. Seems funny.
+
+Future Work:
 * [perf] Collect benchmarks somewhere?
   - md5 run on 6k file. ~7 minutes
   - tictactoe find best move for empty board. ~50 minutes
@@ -80,7 +80,6 @@ Future Work:
 
 Fble Lib:
 * Should Eq just be a function or an interface?
-* Write Test library.
 * Random number generator / tester?
 
 Fble App Ideas:
