@@ -358,7 +358,8 @@ static FbleValue* PopData(FbleArena* arena, Thread* thread)
 //   thread - the thread to pop and get the data from.
 //
 // Results:
-//   The popped and dereferenced value.
+//   The popped and dereferenced value. Returns null in case of abstract value
+//   dereference.
 //
 // Side effects:
 //   Pops the top data element off the thread's data stack. It is the user's
@@ -372,9 +373,14 @@ static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Thread*
   while (value->tag == FBLE_REF_VALUE) {
     FbleRefValue* rv = (FbleRefValue*)value;
 
-    // In theory, if static analysis was done properly, the code should never
-    // try to dereference an abstract reference value.
-    assert(rv->value != NULL && "dereference of abstract value");
+    if (rv->value == NULL) {
+      // We are trying to dereference an abstract value. This is undefined
+      // behavior according to the spec. Return NULL to indicate to the
+      // caller.
+      FbleValueRelease(arena, original);
+      return NULL;
+    }
+
     value = rv->value;
   }
   assert(value->tag == tag);
@@ -568,6 +574,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
+        assert(sv != NULL && "TODO: nice error message here");
         assert(access_instr->tag < sv->fields.size);
         PushData(arena_, FbleValueRetain(arena, sv->fields.xs[access_instr->tag]), thread);
         FbleValueRelease(arena, &sv->_base);
@@ -578,6 +585,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
         FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, thread);
+        if (uv == NULL) {
+          FbleReportError("Undefined union value access.\n", &access_instr->loc);
+          AbortThread(arena, thread);
+          return;
+        }
+
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
           FbleValueRelease(arena, &uv->_base);
@@ -592,6 +605,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, thread);
+        assert(uv != NULL && "TODO: nice error message here");
         thread->scope_stack->pc += uv->tag;
         FbleValueRelease(arena, &uv->_base);
         break;
@@ -631,6 +645,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
         FbleFuncValue* func = (FbleFuncValue*)PopTaggedData(arena, FBLE_FUNC_VALUE, thread);
+        assert(func != NULL && "TODO: nice error message here");
         if (func->argc > 1) {
           FbleThunkFuncValue* value = FbleAlloc(arena_, FbleThunkFuncValue);
           FbleRefInit(arena, &value->_base._base.ref);
@@ -799,6 +814,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
       case FBLE_PROC_INSTR: {
         FbleProcValue* proc = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, thread);
+        assert(proc != NULL && "TODO: nice error message here");
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
@@ -992,6 +1008,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
       case FBLE_STRUCT_IMPORT_INSTR: {
         FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
+        assert(sv != NULL && "TODO: nice error message here");
         for (size_t i = 0; i < sv->fields.size; ++i) {
           PushVar(arena_, FbleValueRetain(arena, sv->fields.xs[i]), thread->scope_stack);
         }
