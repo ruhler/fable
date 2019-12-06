@@ -103,6 +103,7 @@ typedef struct {
 // pc += obj.tag
 typedef struct {
   FbleInstr _base;
+  FbleLoc loc;
 } FbleUnionSelectInstr;
 
 // FbleGotoInstr -- FBLE_GOTO_INSTR
@@ -151,6 +152,7 @@ typedef struct {
 // If exit is true, this is treated as a tail call.
 typedef struct {
   FbleInstr _base;
+  FbleLoc loc;
   bool exit;
 } FbleFuncApplyInstr;
 
@@ -226,6 +228,7 @@ typedef struct {
 //   Exit the current scope and execute the process value on top of the data stack.
 typedef struct {
   FbleInstr _base;
+  FbleLoc loc;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
@@ -277,6 +280,7 @@ typedef struct {
 // Where 'v' is a struct value and v[i] is the ith field of the struct value.
 typedef struct {
   FbleInstr _base;
+  FbleLoc loc;
 } FbleStructImportInstr;
 
 // FbleEnterScopeInstr -- FBLE_ENTER_SCOPE_INSTR

@@ -1,7 +1,4 @@
 The Great Cleanup:
- 
-* [clean] Fix 2.5-let/eval/undefined* tests.
-  By tracking and reporting error locations properly.
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
   fble-tictactoe.c program to drive it. Same with any other custom programs
   that can now take string outputs.

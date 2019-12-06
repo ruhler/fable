@@ -1936,6 +1936,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
             FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
             apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+            apply_instr->loc = misc_apply_expr->misc->loc;
             apply_instr->exit = exit && (i+1 == argc);
             FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
 
@@ -2321,6 +2322,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena_, FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
+      select_instr->loc = select_expr->condition->loc;
       FbleVectorAppend(arena_, *instrs, &select_instr->_base);
 
       Type* return_type = NULL;
@@ -2592,6 +2594,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
+      proc->loc = link_expr->body->loc;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
       TypeRelease(arena, port_type);
@@ -2714,6 +2717,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
+      proc->loc = exec_expr->body->loc;
       FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
 
       return rtype;
@@ -3110,6 +3114,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
       struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
+      struct_import->loc = struct_import_expr->nspace->loc;
       FbleVectorAppend(arena_, *instrs, &struct_import->_base);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {

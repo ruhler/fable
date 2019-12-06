@@ -71,13 +71,16 @@ struct Thread {
   FbleProfileThread* profile;
 };
 
-static FbleInstr g_proc_instr = { .tag = FBLE_PROC_INSTR };
+static FbleProcInstr g_proc_instr = {
+  ._base = { .tag = FBLE_PROC_INSTR },
+  .loc = { .source = "(internal)", .line = 0, .col = 0}
+};
 static FbleProfileEnterBlockInstr g_enter_instr = {
   ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
   .block = 0,
   .time = 1,
 };
-static FbleInstr* g_proc_block_instrs[] = { &g_enter_instr._base, &g_proc_instr };
+static FbleInstr* g_proc_block_instrs[] = { &g_enter_instr._base, &g_proc_instr._base };
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
   .instrs = { .size = 2, .xs = g_proc_block_instrs }
@@ -574,7 +577,11 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
-        assert(sv != NULL && "TODO: nice error message here");
+        if (sv == NULL) {
+          FbleReportError("Undefined struct value access.\n", &access_instr->loc);
+          AbortThread(arena, thread);
+          return;
+        }
         assert(access_instr->tag < sv->fields.size);
         PushData(arena_, FbleValueRetain(arena, sv->fields.xs[access_instr->tag]), thread);
         FbleValueRelease(arena, &sv->_base);
@@ -604,8 +611,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       }
 
       case FBLE_UNION_SELECT_INSTR: {
+        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
         FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, thread);
-        assert(uv != NULL && "TODO: nice error message here");
+        if (uv == NULL) {
+          FbleReportError("Undefined union value select.\n", &select_instr->loc);
+          AbortThread(arena, thread);
+          return;
+        }
         thread->scope_stack->pc += uv->tag;
         FbleValueRelease(arena, &uv->_base);
         break;
@@ -645,7 +657,12 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
         FbleFuncValue* func = (FbleFuncValue*)PopTaggedData(arena, FBLE_FUNC_VALUE, thread);
-        assert(func != NULL && "TODO: nice error message here");
+        if (func == NULL) {
+          FbleReportError("Undefined function value apply.\n", &func_apply_instr->loc);
+          AbortThread(arena, thread);
+          return;
+        };
+
         if (func->argc > 1) {
           FbleThunkFuncValue* value = FbleAlloc(arena_, FbleThunkFuncValue);
           FbleRefInit(arena, &value->_base._base.ref);
@@ -813,8 +830,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       }
 
       case FBLE_PROC_INSTR: {
+        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, thread);
-        assert(proc != NULL && "TODO: nice error message here");
+        if (proc == NULL) {
+          FbleReportError("Undefined proc value.\n", &proc_instr->loc);
+          AbortThread(arena, thread);
+          return;
+        }
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
@@ -1007,8 +1029,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       }
 
       case FBLE_STRUCT_IMPORT_INSTR: {
+        FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
         FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
-        assert(sv != NULL && "TODO: nice error message here");
+        if (sv == NULL) {
+          FbleReportError("Undefined struct value import.\n", &import_instr->loc);
+          AbortThread(arena, thread);
+          return;
+        }
         for (size_t i = 0; i < sv->fields.size; ++i) {
           PushVar(arena_, FbleValueRetain(arena, sv->fields.xs[i]), thread->scope_stack);
         }
@@ -1254,6 +1281,7 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
 
   FbleFuncApplyInstr apply = {
     ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
+    .loc = { .source = "(internal)", .line = 0, .col = 0 },
     .exit = true
   };
   FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
