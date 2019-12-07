@@ -1,12 +1,21 @@
 The Great Cleanup:
+* [lib] Rename fble-tests.c to fble-stdio.c
+* [lib] Change fble-stdio to take a Maybe@<Str@> as input instead of a string,
+  so it is able to indicate end of file. Then add fble-cat to the fble test
+  suite.
+* [lang] Switch put to return Unit instead of its input argument?
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
-  fble-tictactoe.c program to drive it. Same with any other custom programs
-  that can now take string outputs.
-* [prgm] Add TicTacToe tests to fble-tests
+  fble-tictactoe.c program to drive it.
+* [prgm] Split TicTacToe implementation up into different modules
+  - Game, AI, UI, Test, etc. And clean up the code in the process as much as
+    possible.
 * [lang] Are multi-arg functions with duplicate arg names allowed?
   Is this a generalization of variable shadowing?
   It actually seems reasonable. For example, if you want to ignore multiple
   arguments, using '_' as their name?
+  On the flip side, variable shadowing does not make sense for let
+  expressions. So are multi-arg functions more like nested single arg
+  functions or lets?
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind

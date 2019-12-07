@@ -1,0 +1,12 @@
+
+{ Unit%; @(Unit@); };
+{ String%; @(Str@); };
+
+# The 'cat' program to cat stdin.
+(Str@-, Str@+){ Unit@!; } cat = (Str@- stdin, Str@+ stdout) {
+  Str@ line := stdin();
+  Str@ _ := stdout(line);
+  cat(stdin, stdout);
+};
+
+cat;

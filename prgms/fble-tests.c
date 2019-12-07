@@ -1,9 +1,11 @@
 // fble-tests
 //   A program to run fble programs with a tests interface.
 
+#define _GNU_SOURCE     // for getline
 #include <assert.h>     // for assert
-#include <stdio.h>      // for FILE, printf, fflush
+#include <stdio.h>      // for FILE, printf, fflush, getline
 #include <string.h>     // for strcmp
+#include <stdlib.h>     // for free
 
 #include "fble.h"
 
@@ -35,6 +37,15 @@ static void PrintUsage(FILE* stream)
   );
 }
 
+// gStdLibChars --
+//   The list of characters (in tag order) supported by the StdLib.Char@ type.
+static const char* gStdLibChars =
+    "\n\t !\"#$%&'()*+,-./0123456789:;<=>?@"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "[\\]^_`"
+    "abcdefghijklmnopqrstuvwxyz"
+    "{|}~";
+
 // ReadChar --
 //   Read a character from an FbleValue of type StdLib.Char@
 //
@@ -48,13 +59,34 @@ static void PrintUsage(FILE* stream)
 //   None
 static char ReadChar(FbleValue* c)
 {
-  static const char* chars =
-    "\n\t !\"#$%&'()*+,-./0123456789:;<=>?@"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "[\\]^_`"
-    "abcdefghijklmnopqrstuvwxyz"
-    "{|}~";
-  return chars[FbleUnionValueTag(c)];
+  return gStdLibChars[FbleUnionValueTag(c)];
+}
+
+// WriteChar --
+//   Write a character to an FbleValue of type StdLib.Char@.
+//   The character '?' is used for any characters not currently supported by
+//   the StdLib.Char@ type.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   c - the value of the character to write.
+//
+// Results:
+//   The FbleValue c represented as an StdLib.Char@.
+//
+// Side effects:
+//   Allocates a value that must be freed when no longer required.
+static FbleValue* WriteChar(FbleValueArena* arena, char c)
+{
+  char* p = strchr(gStdLibChars, c);
+  if (p == NULL || c == '\0') {
+    assert(c != '?');
+    return WriteChar(arena, '?');
+  }
+  assert(p >= gStdLibChars);
+  size_t tag = p - gStdLibChars;
+  FbleValueV args = { .size = 0, .xs = NULL };
+  return FbleNewUnionValue(arena, tag, FbleNewStructValue(arena, args));
 }
 
 // IO --
@@ -62,8 +94,10 @@ static char ReadChar(FbleValue* c)
 //   See the corresponding documentation in fble.h.
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 {
-  if (io->ports.xs[0] != NULL) {
-    FbleValue* charS = io->ports.xs[0];
+  bool change = false;
+  if (io->ports.xs[1] != NULL) {
+    // Output a string to stdout.
+    FbleValue* charS = io->ports.xs[1];
     while (FbleUnionValueTag(charS) == 0) {
       FbleValue* charP = FbleUnionValueAccess(charS);
       FbleValue* charV = FbleStructValueAccess(charP, 0);
@@ -74,11 +108,33 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     }
     fflush(stdout);
 
-    FbleValueRelease(arena, io->ports.xs[0]);
-    io->ports.xs[0] = NULL;
-    return true;
+    FbleValueRelease(arena, io->ports.xs[1]);
+    io->ports.xs[1] = NULL;
+    change = true;
   }
-  return false;
+
+  if (block && io->ports.xs[0] == NULL) {
+    // Read a line from stdin.
+    char* line = NULL;
+    size_t len = 0;
+    ssize_t read = getline(&line, &len, stdin);
+    if (read >= 0) {
+      FbleValueV emptyArgs = { .size = 0, .xs = NULL };
+      FbleValue* charS = FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, emptyArgs));
+      for (size_t i = 0; i < read; ++i) {
+        FbleValue* charV = WriteChar(arena, line[read - i - 1]);
+        FbleValue* xs[] = { charV, charS };
+        FbleValueV args = { .size = 2, .xs = xs };
+        FbleValue* charP = FbleNewStructValue(arena, args);
+        charS = FbleNewUnionValue(arena, 0, charP);
+      }
+
+      io->ports.xs[0] = charS;
+      change = true;
+    }
+    free(line);
+  }
+  return change;
 }
 
 // main --
@@ -144,9 +200,13 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* output = FbleNewPortValue(value_arena, 0);
-  FbleValue* proc = FbleApply(value_arena, func, output, graph);
+  FbleValue* input = FbleNewPortValue(value_arena, 0);
+  FbleValue* output = FbleNewPortValue(value_arena, 1);
+  FbleValue* main1 = FbleApply(value_arena, func, input, graph);
+  FbleValue* proc = FbleApply(value_arena, main1, output, graph);
   FbleValueRelease(value_arena, func);
+  FbleValueRelease(value_arena, main1);
+  FbleValueRelease(value_arena, input);
   FbleValueRelease(value_arena, output);
 
   if (proc == NULL) {
@@ -158,13 +218,14 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* ports[1] = {NULL};
-  FbleIO io = { .io = &IO, .ports = { .size = 1, .xs = ports} };
+  FbleValue* ports[2] = {NULL, NULL};
+  FbleIO io = { .io = &IO, .ports = { .size = 2, .xs = ports} };
 
   FbleValue* value = FbleExec(value_arena, &io, proc, graph);
 
   FbleValueRelease(value_arena, proc);
   FbleValueRelease(value_arena, ports[0]);
+  FbleValueRelease(value_arena, ports[1]);
 
   size_t result = FbleUnionValueTag(value);
 

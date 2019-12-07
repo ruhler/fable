@@ -116,7 +116,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 }
 
 // main --
-//   The main entry point for fblc-tictactoe.
+//   The main entry point for fble-tictactoe.
 //
 // Inputs:
 //   argc - The number of command line arguments.

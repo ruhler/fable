@@ -11,6 +11,6 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   Md5_Tests%.Tests
 ]));
 
-(Str@+ out) {
+(Str@- in, Str@+ out) {
   Test%.RunTests(out, AllTests);
 };
