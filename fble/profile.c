@@ -2,6 +2,7 @@
 //   This file implements the fble profiling routines.
 
 #include <assert.h>   // for assert
+#include <inttypes.h> // for PRIu64
 
 #include "fble-alloc.h"
 #include "fble-profile.h"
@@ -19,7 +20,7 @@
 typedef struct CallList {
   FbleBlockId caller;
   FbleBlockId callee;
-  size_t count;
+  uint64_t count;
   struct CallList* tail;
 } CallList;
 
@@ -34,7 +35,7 @@ typedef struct CallList {
 //   tail - the rest of the stack.
 typedef struct ProfileStack {
   FbleBlockId id;
-  size_t time;
+  uint64_t time;
   bool auto_exit;
   CallList* exit_calls;
   struct ProfileStack* tail;
@@ -256,7 +257,7 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call)
 {
   char h = highlight ? '*' : ' ';
-  fprintf(fout, " %c % 10d % 10d ", h, call->count, call->time);
+  fprintf(fout, " %c %10" PRIu64 " %10" PRIu64 " ", h, call->count, call->time);
   PrintBlockName(fout, blocks, call->id);
   fprintf(fout, "\n");
 }
@@ -362,7 +363,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 }
 
 // FbleProfileTime -- see documentation in fble-profile.h
-void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time)
+void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
 {
   thread->stack->time += time;
 }

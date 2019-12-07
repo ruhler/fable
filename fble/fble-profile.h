@@ -4,6 +4,7 @@
 #ifndef FBLE_PROFILE_H_
 #define FBLE_PROFILE_H_
 
+#include <stdint.h>   // for uint64_t
 #include <stdio.h>    // for FILE
 
 #include "fble-alloc.h"
@@ -30,8 +31,8 @@ typedef struct {
 //   time - the amount of time spent in the call.
 typedef struct {
   FbleBlockId id;
-  size_t count;
-  size_t time;
+  uint64_t count;
+  uint64_t time;
 } FbleCallData;
 
 // FbleCallDataV --
@@ -143,7 +144,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 //
 // Side effects:
 //   Increments recorded time spent in the current call.
-void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, size_t time);
+void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time);
 
 // FbleProfileExitBlock --
 //   Exits the current block on the given profile thread.
