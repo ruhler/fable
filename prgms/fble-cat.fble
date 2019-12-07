@@ -1,12 +1,17 @@
 
-{ Unit%; @(Unit@); };
+{ Bool%; @(Bool@, True); };
+{ Maybe%; @(Maybe@); };
 { String%; @(Str@); };
 
 # The 'cat' program to cat stdin.
-(Str@-, Str@+){ Unit@!; } cat = (Str@- stdin, Str@+ stdout) {
-  Str@ line := stdin();
-  Str@ _ := stdout(line);
-  cat(stdin, stdout);
+(Maybe@<Str@>-, Str@+){ Bool@!; } cat = (Maybe@<Str@>- stdin, Str@+ stdout) {
+  Maybe@<Str@> line := stdin();
+  ?(line;
+      just: {
+        Str@ _ := stdout(line.just);
+        cat(stdin, stdout);
+      },
+      nothing: $(True));
 };
 
 cat;

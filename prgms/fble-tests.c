@@ -92,6 +92,10 @@ static FbleValue* WriteChar(FbleValueArena* arena, char c)
 // IO --
 //   io function for external ports.
 //   See the corresponding documentation in fble.h.
+//
+// Ports:
+//  0: Maybe@<Str@>-  Read a line from stdin. Nothing on end of file.
+//  1: Str@+          Output a line to stdout.
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 {
   bool change = false;
@@ -118,9 +122,12 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     char* line = NULL;
     size_t len = 0;
     ssize_t read = getline(&line, &len, stdin);
-    if (read >= 0) {
-      FbleValueV emptyArgs = { .size = 0, .xs = NULL };
-      FbleValue* charS = FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, emptyArgs));
+    FbleValueV emptyArgs = { .size = 0, .xs = NULL };
+    FbleValue* unit = FbleNewStructValue(arena, emptyArgs);
+    if (read < 0) {
+      io->ports.xs[0] = FbleNewUnionValue(arena, 1, unit);
+    } else {
+      FbleValue* charS = FbleNewUnionValue(arena, 1, unit);
       for (size_t i = 0; i < read; ++i) {
         FbleValue* charV = WriteChar(arena, line[read - i - 1]);
         FbleValue* xs[] = { charV, charS };
@@ -128,11 +135,10 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
         FbleValue* charP = FbleNewStructValue(arena, args);
         charS = FbleNewUnionValue(arena, 0, charP);
       }
-
-      io->ports.xs[0] = charS;
-      change = true;
+      io->ports.xs[0] = FbleNewUnionValue(arena, 0, charS);
     }
     free(line);
+    change = true;
   }
   return change;
 }

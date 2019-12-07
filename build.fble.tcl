@@ -158,6 +158,7 @@ testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble prgms
 testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
 testn fble-tests exec $::bin/fble-tests --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
 testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
+testn fble-cat exec $::bin/fble-tests prgms/fble-cat.fble prgms < README.txt | cmp README.txt -
 
 exec mkdir -p out/cov/all
 run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov
