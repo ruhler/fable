@@ -4,7 +4,7 @@ fble-test-error 10:19 {
   Bool@ true = Bool@(true: Unit@());
 
   Bool@ ~ get, put;
-  Bool@ ignored := put(true);
+  Unit@ _ := put(true);
 
   # There are too many arguments to the get.
   Bool@ result := get(true);

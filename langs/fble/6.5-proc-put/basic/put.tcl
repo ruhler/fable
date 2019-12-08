@@ -5,9 +5,8 @@ fble-test {
 
   # A basic proc put.
   Bool@ ~ get, put;
-  Bool@ a := put(true);
+  Unit@ a := put(true);
   Bool@ b := get();
-  Unit@ at = a.true;
   Unit@ bt = b.true;
   $(Unit@());
 }

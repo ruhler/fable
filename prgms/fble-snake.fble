@@ -194,7 +194,7 @@ State@ InitialState = {
 (Draw@+, S@<Draw@>){Unit@!;} DrawAll = (Draw@+ out, S@<Draw@> draw) {
   ?(draw ; nil: $(Unit@()),
       cons: {
-         Draw@ x := out(draw.cons.head);
+         Unit@ _ := out(draw.cons.head);
          DrawAll(out, draw.cons.tail);
       });
 };

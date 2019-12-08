@@ -368,7 +368,7 @@ PlayGame = (Input@- input, Output@+ output, MemoTable@ ai, Board@ board, Player@
                           O: GameStatus@(Win: Player@(O: Unit)),
                           D: GameStatus@(Draw: Unit),
                           E: GameStatus@(Move: x)));
-  Output@ _ := output(Output@(board, status));
+  Unit@ _ := output(Output@(board, status));
   Input@ in := input();
   Bool@ over = ?(status; Move: False, Win: True, Draw: True);
   ?(in;

@@ -1,4 +1,5 @@
 
+{ Unit%; @(Unit@); };
 { Bool%; @(Bool@, True); };
 { Maybe%; @(Maybe@); };
 { String%; @(Str@); };
@@ -8,7 +9,7 @@
   Maybe@<Str@> line := stdin();
   ?(line;
       just: {
-        Str@ _ := stdout(line.just);
+        Unit@ _ := stdout(line.just);
         cat(stdin, stdout);
       },
       nothing: $(True));

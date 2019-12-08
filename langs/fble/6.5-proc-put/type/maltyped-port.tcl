@@ -5,5 +5,3 @@ fble-test-error 6:3 {
   # The port argument is not in scope.
   zzz(Unit@());
 }
-
-

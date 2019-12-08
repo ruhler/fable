@@ -339,17 +339,17 @@ Bit32@ t64 = H8(Hex@|EB86D391);
         Bits%.Bit64.BitN.and(H2_64(3, f), Bits%.Bit64.BitN.add(H2_64(0, 8), length)));
           true: {
          Bit64@ bits = shl64(shl64(shl64(msglen)));
-         Streamed@<Bit8@> _0 := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
-         Streamed@<Bit8@> _1 := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
-         Streamed@<Bit8@> _2 := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
-         Streamed@<Bit8@> _3 := output(Streamed@<Bit8@>(bits.lo.hi.hi, False));
-         Streamed@<Bit8@> _4 := output(Streamed@<Bit8@>(bits.hi.lo.lo, False));
-         Streamed@<Bit8@> _5 := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
-         Streamed@<Bit8@> _6 := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
-         Streamed@<Bit8@> _7 := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.hi.hi, False));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.lo.lo, False));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
+         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
          $(Unit);
        }, false: {
-         Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(0, 0), False));
+         Unit@ _ := output(Streamed@<Bit8@>(H2(0, 0), False));
          PadZ(output, msglen, Inc64(length));
        });
   };
@@ -358,10 +358,10 @@ Bit32@ t64 = H8(Hex@|EB86D391);
 (Maybe@<Bit8@>-, Streamed@<Bit8@>+, Bit64@){Unit@!;} Pad = (Maybe@<Bit8@>- input, Streamed@<Bit8@>+ output, Bit64@ length) {
     Maybe@<Bit8@> x := input();
     ?(x; just: {
-        Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(x.just, False));
+        Unit@ _ := output(Streamed@<Bit8@>(x.just, False));
         Pad(input, output, Inc64(length));
       }, nothing: {
-        Streamed@<Bit8@> _ := output(Streamed@<Bit8@>(H2(8, 0), False));
+        Unit@ _ := output(Streamed@<Bit8@>(H2(8, 0), False));
         PadZ(output, length, Inc64(length));
       });
   };

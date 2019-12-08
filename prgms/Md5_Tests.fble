@@ -71,11 +71,10 @@
 # Put all the bytes onto the output port, followed by nothing.
 (Maybe@<Bit8@>+, S@<Bit8@>){Unit@!;} PutAll = (Maybe@<Bit8@>+ out, S@<Bit8@> bytes) {
     ?(bytes; cons: {
-        Maybe@<Bit8@> x := out(Maybe@<Bit8@>(just: bytes.cons.head));
+        Unit@ _ := out(Maybe@<Bit8@>(just: bytes.cons.head));
         PutAll(out, bytes.cons.tail);
       }, nil: {
-        Maybe@<Bit8@> x := out(Maybe@<Bit8@>(nothing: Unit));
-        $(Unit);
+        out(Maybe@<Bit8@>(nothing: Unit));
     });
   };
 

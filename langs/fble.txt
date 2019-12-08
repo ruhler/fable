@@ -648,14 +648,9 @@ Example:
   output(3)
 
 The port must have type proc_output_type. If the port has type T@+, evaluates to a
-process value of type T@! that when executed puts the given value onto the
-port and returns that same value. The value put onto the port is evaluated
+process value of type *()! that when executed puts the given value onto the
+port and returns a trivial struct value. The value put onto the port is evaluated
 as part of evaluation of the process.
-
-The rationale for having put return its argument value is to
-avoid the complexity of introducing a builtin notion of a unit type or a
-process that doesn't return anything. In most cases we expect the return value
-of a put process to be ignored.
 
 6.6 Process Eval
 ----------------
@@ -680,7 +675,7 @@ Concrete Syntax:
   stmt ::= type '~' name ',' name ';' expr
 
 Example:
-  Int@ ~ input, output; f[input][output]
+  Int@ ~ input, output; f(input, output)
 
 The body must have type process_type. When executed, creates a new link, then
 evaluates and executes the body with get and put ports of type type- and type+
@@ -1173,7 +1168,8 @@ Notes:
 * Issues that came up when switching to the new unit test format
  - Should it be an error to import or define an unused variable?
     Otherwise it's easy to make a change to what's used without updating an
-    import list.
+    import list. But it's super annoying when editing or commenting out code
+    to have to delete things that are not referenced.
 
  - For writing tests, it would be really useful if common data types all had
    function to convert them to strings.
@@ -1201,8 +1197,6 @@ Notes:
    you can write:
      ${ a:= ...; b := ...; TestResult@(a, b); }
    
-- Should we change 'put' to return Unit? It just seems simpler, no?
-
 - Mixing folds and maps and processes seqs is annoying. Can we come up with
   better libraries for doing that sort of thing easily?
 
@@ -1228,3 +1222,29 @@ Notes:
     }
 
   But it feels very awkward in fble.
+
+  Another possibly related example: imagine how hard it is to describe
+  equality on characters. The only way I can think of is O(N^2) the number of
+  characters to express. That sucks. But you could imagine having a 'default'
+  case that would allow you to express Char equality in O(N) the number of
+  characters:
+    ?(x; A: ?(y; A: True, default: False),
+         B: ?(y; B: True, default: False),
+          ...);
+  One possible syntax would be have an optional ':' field at the end of the
+  list:
+    ?(x; A: ?(y; A: True, : False),
+         B: ?(y; B: True, : False),
+          ...);
+  And allow missing fields.
+
+  Now the above example is also easier:
+    ?(input;
+        quit: {...},
+        reset: {...},
+        : {
+          Move m = ?(input; computer: {...}, : input.position);
+          PlayMove(m)});
+      
+    
+

@@ -6,7 +6,7 @@ fble-test-error 9:20 {
   Maybe@ m = Maybe@(nothing: Unit@());
 
   # Put is strict in the port argument.
-  Bool@! doput = m.just(true);
+  Unit@! doput = m.just(true);
   Unit@();
 }
 

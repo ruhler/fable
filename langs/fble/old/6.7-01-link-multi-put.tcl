@@ -9,8 +9,8 @@ fble-test {
   # It should be fine to put multiple values on a link before getting them,
   # and they should come out in proper order.
   Bool@ ~ get, put;
-  Bool@ i0 := put(true);
-  Bool@ i1 := put(false);
+  Unit@ i0 := put(true);
+  Unit@ i1 := put(false);
   Bool@ t := get();
   Bool@ f := get();
   $(Units@(t.true, f.false));

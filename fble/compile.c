@@ -2010,13 +2010,21 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           put_instr->_base.tag = FBLE_PUT_INSTR;
           FbleVectorAppend(arena_, *instrs, &put_instr->_base);
 
+          StructType* unit_type = FbleAlloc(arena_, StructType);
+          FbleRefInit(arena, &unit_type->_base.ref);
+          unit_type->_base.tag = STRUCT_TYPE;
+          unit_type->_base.loc = expr->loc;
+          unit_type->_base.evaluating = false;
+          FbleVectorInit(arena_, unit_type->fields);
+
           UnaryType* proc_type = FbleAlloc(arena_, UnaryType);
           FbleRefInit(arena, &proc_type->_base.ref);
           proc_type->_base.tag = PROC_TYPE;
           proc_type->_base.loc = expr->loc;
           proc_type->_base.evaluating = false;
-          proc_type->type = output_type->type;
+          proc_type->type = &unit_type->_base;
           FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
+          TypeRelease(arena, &unit_type->_base);
           TypeRelease(arena, type);
           CompileExit(arena_, exit, instrs);
           return &proc_type->_base;

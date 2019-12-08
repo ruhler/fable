@@ -140,7 +140,7 @@ State@ InitialState = {
            ?(m;
               dead: $(Unit),
               mr: {
-                 S@<Draw@> drawn := out(m.mr.draw);
+                 Unit@ _ := out(m.mr.draw);
                  Snake(in, out, m.mr.state);
               });
        });
@@ -148,7 +148,7 @@ State@ InitialState = {
 
 (Input@-, S@<Draw@>+){Unit@!;} Main = (Input@- in, S@<Draw@>+ out) {
   State@ s = InitialState;
-  S@<Draw@> drawn := out(DrawState(s));
+  Unit@ _ := out(DrawState(s));
   Snake(in, out, s);
 };
 

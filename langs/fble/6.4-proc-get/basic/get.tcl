@@ -5,7 +5,7 @@ fble-test {
 
   # A basic proc get.
   Bool@ ~ get, put;
-  Bool@ ignored := put(true);
+  Unit@ _ := put(true);
   Bool@ result := get();
   $(result.true);
 }

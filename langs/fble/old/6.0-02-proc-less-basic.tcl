@@ -6,7 +6,7 @@ fble-test {
   Bool@ true = Bool@(true: Unit@());
 
   Bool@ ~ get, put;
-  Bool@ ignored := put(true);
+  Unit@ _ := put(true);
   Bool@ result := get();
   $(result.true);
 }

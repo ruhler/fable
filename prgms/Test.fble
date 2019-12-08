@@ -9,14 +9,12 @@
 
 # Print a string to the given output stream.
 (Str@+, Str@){ Unit@!; } Print = (Str@+ out, Str@ str) {
-  Str@ _ := out(str);
-  $(Unit);
+  out(str);
 };
 
 # Print a string and newline to the given output stream.
 (Str@+, Str@){ Unit@!; } PrintLn = (Str@+ out, Str@ str) {
-  Str@ _ := out(Append<Char@>(str, Str([newline])));
-  $(Unit);
+  out(Append<Char@>(str, Str([newline])));
 };
 
 # Returns True if the tests all pass, false otherwise.
