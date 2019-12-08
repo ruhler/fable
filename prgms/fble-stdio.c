@@ -1,5 +1,17 @@
-// fble-tests
-//   A program to run fble programs with a tests interface.
+// fble-stdio
+//   A program to run fble programs with a stdio interface:
+//
+//     (Maybe@<Str@>-, Str@+) { Bool@; }
+//
+//   The first argument is stdin: a you can read lines of input from stdin. It
+//   returns Nothing on end of file.
+//
+//   The second argument sends strings to stdout.
+//
+//   The return value should be a union type. The tag of the union type is the
+//   return code of the program. For example, True causes an exit code of 0
+//   and False causes an exit code of 1.
+//
 
 #define _GNU_SOURCE     // for getline
 #include <assert.h>     // for assert
@@ -28,12 +40,12 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-tests [--profile FILE] FILE DIR \n"
-      "Run the fble test process described by the fble program FILE.\n"
+      "Usage: fble-stdio [--profile FILE] FILE DIR \n"
+      "Run the fble stdio program described by the fble program FILE.\n"
       "Options:\n"
       "  --profile FILE\n"
       "    Writes a profile of the test run to FILE\n"
-      "Example: fble-tests --profile tests.prof prgms/fble-tests.fble prgms\n"
+      "Example: fble-stdio --profile tests.prof prgms/fble-tests.fble prgms\n"
   );
 }
 

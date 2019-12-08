@@ -1,5 +1,4 @@
 The Great Cleanup:
-* [lib] Rename fble-tests.c to fble-stdio.c
 * [lang] Switch put to return Unit instead of its input argument?
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
   fble-tictactoe.c program to drive it.

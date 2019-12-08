@@ -60,7 +60,7 @@ gcc_prgm -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble
 gcc_prgm -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble
 gcc_prgm -o $::bin/fble-tictactoe $::obj/fble-tictactoe.o -lfble
 gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble
-gcc_prgm -o $::bin/fble-tests $::obj/fble-tests.o -lfble
+gcc_prgm -o $::bin/fble-stdio $::obj/fble-stdio.o -lfble
 
 proc write_modules { dir modules } {
   foreach m $modules {
@@ -156,9 +156,9 @@ testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-te
 testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
 testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble prgms
 testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
-testn fble-tests exec $::bin/fble-tests --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
+testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
 testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
-testn fble-cat exec $::bin/fble-tests prgms/fble-cat.fble prgms < README.txt | cmp README.txt -
+testn fble-cat exec $::bin/fble-stdio prgms/fble-cat.fble prgms < README.txt | cmp README.txt -
 
 exec mkdir -p out/cov/all
 run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov
