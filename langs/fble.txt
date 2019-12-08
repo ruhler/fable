@@ -1210,3 +1210,21 @@ Notes:
   that went away when manually unrolling the loop into a custom function.
 
   A For loop based construct seems to solve this well.
+
+- It's awkward to do the same thing for some subset of case options.
+  For example, in tictactoe we have four options: computer, human, quit,
+  reset. For computer and human, the logic is almost the same: ignore it if
+  the game is over, otherwise advance with the position. The difference being
+  for the computer, we need it to generate the move first.
+
+  If this was 'C', I would right something like:
+    if (quit) {
+      quit;
+    } else if (reset) {
+      reset;
+    } else {
+      move = computer ? compute() : human;
+      applyMove(move);
+    }
+
+  But it feels very awkward in fble.
