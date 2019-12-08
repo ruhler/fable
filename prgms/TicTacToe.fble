@@ -352,22 +352,10 @@ ComputeBestMove = (MemoTable@ m, Board@ b, Player@ x) {
 @ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 
 @ Output@ = *(Board@ board, GameStatus@ status);
 
-(GameStatus@){Bool@;} GameIsOver = (GameStatus@ status) {
-  ?(status; Move: False, Win: True, Draw: True);
-};
-
 # position: Make a move at the given position for the current player.
 # computer: Have the computer make a move for the current player.
 # reset: Reset the game.
-@ Input@ = +(Position@ position, Unit@ computer, Unit@ reset);
-
-(Input@){Bool@;} InputIsReset = (Input@ input) {
-  ?(input; position: False, computer: False, reset: True);
-};
-
-(Input@){Bool@;} InputIsPosition = (Input@ input) {
-  ?(input; position: True, computer: False, reset: False);
-};
+@ Input@ = +(Position@ position, Unit@ computer, Unit@ reset, Unit@ quit);
 
 (Input@-, Output@+, MemoTable@){Unit@!;}
 NewGameAI = (Input@- input, Output@+ output, MemoTable@ ai) {
@@ -380,29 +368,31 @@ PlayGame = (Input@- input, Output@+ output, MemoTable@ ai, Board@ board, Player@
                           O: GameStatus@(Win: Player@(O: Unit)),
                           D: GameStatus@(Draw: Unit),
                           E: GameStatus@(Move: x)));
-  Output@ ignored := output(Output@(board, status));
+  Output@ _ := output(Output@(board, status));
   Input@ in := input();
-  ?(GameIsOver(status) ; 
-      true:
-      ?(in ; position: PlayGame(input, output, ai, board, x),
-             computer: PlayGame(input, output, ai, board, x),
-             reset: NewGameAI(input, output, ai)),
-      false:
-      ?(InputIsReset(in) ;
-         true: NewGameAI(input, output, ai),
-         false: {
-          MemoState@<Position@> mp =
-            ?(InputIsPosition(in) ;
-                true: MemoState@<Position@>(ai, in.position),
-                false: {
-                  MemoState@<PositionResult@> mpr = ComputeBestMove(ai, board, x);
-                  MemoState@<Position@>(mpr.memo, mpr.data.position);
-                });
-          Maybe@<Board@> nboard := $(Move(board, mp.data, x));
-          ?(nboard ;
-              just: PlayGame(input, output, mp.memo, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
-              nothing: PlayGame(input, output, mp.memo, board, x));
-        }));
+  Bool@ over = ?(status; Move: False, Win: True, Draw: True);
+  ?(in;
+     position: {
+       ?(over; true: PlayGame(input, output, ai, board, x),
+          false: {
+            Maybe@<Board@> nboard := $(Move(board, in.position, x));
+            ?(nboard ;
+                just: PlayGame(input, output, ai, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
+                nothing: PlayGame(input, output, ai, board, x));
+       });
+     },
+     computer: {
+       ?(over; true: PlayGame(input, output, ai, board, x),
+          false: {
+            MemoState@<PositionResult@> mpr = ComputeBestMove(ai, board, x);
+            Maybe@<Board@> nboard := $(Move(board, mpr.data.position, x));
+            ?(nboard ;
+                just: PlayGame(input, output, mpr.memo, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
+                nothing: PlayGame(input, output, mpr.memo, board, x));
+        });
+     },
+     reset: NewGameAI(input, output, ai),
+     quit: $(Unit));
 };
 
 MemoTable@ PreComputedAI = {
