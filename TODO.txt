@@ -23,14 +23,11 @@ The Great Cleanup:
   And same for all other kinds of struct expressions.
 * Figure out how to make a version of 7.4-06-* for values.
 * Improve test coverage around polymorphic types.
-* Use consistent style for error messages. Capitalize? Punctuate?
 * Port rest of fblc tests and programs to fble.
   - fblc spec test coverage
 * Remove iquota from Thread data structure. It should be managed separately.
 
 The Harder Cleanup:
-* [clean] Nicer way of printing error messages in compiler
- - particularly those that include names and types inside of them.
 * [prgm] Optimize Md5.cls function
   - change << and >> to take number of bits to shift instead of a single bit.
   - change cls to use or(x << n, x >> (K - n))

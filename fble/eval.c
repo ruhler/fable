@@ -578,7 +578,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
         if (sv == NULL) {
-          FbleReportError("Undefined struct value access.\n", &access_instr->loc);
+          FbleReportError("undefined struct value access\n", &access_instr->loc);
           AbortThread(arena, thread);
           return;
         }
@@ -593,7 +593,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
         FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, thread);
         if (uv == NULL) {
-          FbleReportError("Undefined union value access.\n", &access_instr->loc);
+          FbleReportError("undefined union value access\n", &access_instr->loc);
           AbortThread(arena, thread);
           return;
         }
@@ -614,7 +614,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
         FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, thread);
         if (uv == NULL) {
-          FbleReportError("Undefined union value select.\n", &select_instr->loc);
+          FbleReportError("undefined union value select\n", &select_instr->loc);
           AbortThread(arena, thread);
           return;
         }
@@ -658,7 +658,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
         FbleFuncValue* func = (FbleFuncValue*)PopTaggedData(arena, FBLE_FUNC_VALUE, thread);
         if (func == NULL) {
-          FbleReportError("Undefined function value apply.\n", &func_apply_instr->loc);
+          FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
           AbortThread(arena, thread);
           return;
         };
@@ -833,7 +833,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, thread);
         if (proc == NULL) {
-          FbleReportError("Undefined proc value.\n", &proc_instr->loc);
+          FbleReportError("undefined proc value\n", &proc_instr->loc);
           AbortThread(arena, thread);
           return;
         }
@@ -1035,7 +1035,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
         FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, thread);
         if (sv == NULL) {
-          FbleReportError("Undefined struct value import.\n", &import_instr->loc);
+          FbleReportError("undefined struct value import\n", &import_instr->loc);
           AbortThread(arena, thread);
           return;
         }

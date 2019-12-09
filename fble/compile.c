@@ -1,10 +1,11 @@
 // compile.c --
 //   This file implements the fble compilation routines.
 
-#include <stdlib.h>   // for NULL
 #include <assert.h>   // for assert
+#include <stdarg.h>   // for va_list, va_start, va_arg, va_end
 #include <stdio.h>    // for fprintf, stderr
 #include <string.h>   // for strlen, strcat
+#include <stdlib.h>   // for NULL
 
 #include "internal.h"
 
@@ -233,6 +234,8 @@ typedef struct {
   size_t nvars;
 } Vars;
 
+static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
+
 static Kind* CopyKind(FbleArena* arena, Kind* kind);
 static void FreeKind(FbleArena* arena, Kind* kind);
 
@@ -274,6 +277,86 @@ static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
 static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
 static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time);
+
+// ReportError -- 
+//   Report a compiler error.
+//
+//   This uses a printf-like format string. The following format specifiers
+//   are supported:
+//     %% - literal '%'
+//     %i - size_t
+//     %k - Kind*
+//     %n - FbleName*
+//     %t - Type*
+//   Please add additional format specifiers as needed.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   loc - the location of the error.
+//   fmt - the format string.
+//   ... - The var-args for the associated conversion specifiers in fmt.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Prints a message to stderr as described by fmt and provided arguments.
+static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
+{
+  FbleReportError("", loc);
+
+  va_list ap;
+  va_start(ap, fmt);
+
+  for (const char* p = strchr(fmt, '%'); p != NULL; p = strchr(fmt, '%')) {
+    fprintf(stderr, "%.*s", p - fmt, fmt);
+
+    switch (*(p + 1)) {
+      case '\0': {
+        assert(false && "Trailing % in format string");
+        break;
+      }
+
+      case '%': {
+        fprintf(stderr, "%c", '%');
+        break;
+      }
+
+      case 'i': {
+        size_t x = va_arg(ap, size_t);
+        fprintf(stderr, "%d", x);
+        break;
+      }
+
+      case 'k': {
+        Kind* kind = va_arg(ap, Kind*);
+        PrintKind(kind);
+        break;
+      }
+
+      case 'n': {
+        FbleName* name = va_arg(ap, FbleName*);
+        FblePrintName(stderr, name);
+        break;
+      }
+
+      case 't': {
+        Type* type = va_arg(ap, Type*);
+        PrintType(arena, type, NULL);
+        break;
+      }
+      
+      default: {
+        fprintf(stderr, "FORMAT '%%%c'\n", *(p + 1));
+        UNREACHABLE("Unsupported format conversion.");
+        break;
+      }
+    }
+    fmt = p + 2;
+  }
+  fprintf(stderr, "%s", fmt);
+  va_end(ap);
+}
 
 // CopyKind --
 //   Makes a (refcount) copy of a compiled kind.
@@ -1776,18 +1859,16 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
   FreeKind(arena_, kind);
 
   if (name->space == FBLE_TYPE_NAME_SPACE && kind_level != 2) {
-    FbleReportError("expected a type type for field named '", &name->loc);
-    FblePrintName(stderr, name);
-    fprintf(stderr, "', but found normal type ");
-    PrintType(FbleRefArenaArena(arena), type, NULL);
+    ReportError(FbleRefArenaArena(arena), &name->loc,
+        "expected a type type for field named '%n', but found normal type %t\n",
+        name, type);
     return false;
   }
 
   if (name->space == FBLE_NORMAL_NAME_SPACE && kind_level != 1) {
-    FbleReportError("expected a normal type for field named '", &name->loc);
-    FblePrintName(stderr, name);
-    fprintf(stderr, "', but found type type ");
-    PrintType(FbleRefArenaArena(arena), type, NULL);
+    ReportError(FbleRefArenaArena(arena), &name->loc,
+        "expected a normal type for field named '%n', but found type type %t\n",
+        name, type);
     return false;
   }
 
@@ -1912,7 +1993,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           // FUNC_APPLY
           for (size_t i = 0; i < argc; ++i) {
             if (normal->tag != FUNC_TYPE) {
-              FbleReportError("too many arguments to function.\n", &expr->loc);
+              ReportError(arena_, &expr->loc, "too many arguments to function\n");
               for (size_t i = 0; i < argc; ++i) {
                 TypeRelease(arena, arg_types[i]);
               }
@@ -1922,11 +2003,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
             FuncType* func_type = (FuncType*)normal;
             if (!TypesEqual(func_type->arg, arg_types[i], NULL)) {
-              FbleReportError("expected type ", &misc_apply_expr->args.xs[i]->loc);
-              PrintType(arena_, func_type->arg, NULL);
-              fprintf(stderr, ", but found ");
-              PrintType(arena_, arg_types[i], NULL);
-              fprintf(stderr, "\n");
+              ReportError(arena_, &misc_apply_expr->args.xs[i]->loc,
+                  "expected type %t, but found %t\n",
+                  func_type->arg, arg_types[i]);
               for (size_t j = 0; j < argc; ++j) {
                 TypeRelease(arena, arg_types[j]);
               }
@@ -1955,7 +2034,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         case INPUT_TYPE: {
           // FBLE_GET_EXPR
           if (argc != 0) {
-            FbleReportError("too many arguments to get. expected 0.\n", &expr->loc);
+            ReportError(arena_, &expr->loc, "too many arguments to get\n");
             for (size_t i = 0; i < argc; ++i) {
               TypeRelease(arena, arg_types[i]);
             }
@@ -1983,7 +2062,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         case OUTPUT_TYPE: {
           // FBLE_PUT_EXPR
           if (argc != 1) {
-            FbleReportError("wrong number of arguments to put. expected 1.\n", &expr->loc);
+            ReportError(arena_, &expr->loc,
+                "wrong number of arguments to put\n");
             for (size_t i = 0; i < argc; ++i) {
               TypeRelease(arena, arg_types[i]);
             }
@@ -1993,11 +2073,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
           UnaryType* output_type = (UnaryType*)normal;
           if (!TypesEqual(output_type->type, arg_types[0], NULL)) {
-            FbleReportError("expected type ", &misc_apply_expr->args.xs[0]->loc);
-            PrintType(arena_, output_type->type, NULL);
-            fprintf(stderr, ", but found ");
-            PrintType(arena_, arg_types[0], NULL);
-            fprintf(stderr, "\n");
+            ReportError(arena_, &misc_apply_expr->args.xs[0]->loc,
+                "expected type %t, but found %t\n",
+                output_type->type, arg_types[0]);
 
             TypeRelease(arena, arg_types[0]);
             TypeRelease(arena, type);
@@ -2035,9 +2113,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           // FBLE_STRUCT_VALUE_EXPR
           Type* vtype = ValueOfType(arena, normal);
           if (vtype == NULL) {
-            FbleReportError("expected a type, but found ", &misc_apply_expr->misc->loc);
-            PrintType(arena_, type, NULL);
-            fprintf(stderr, "\n");
+            ReportError(arena_, &misc_apply_expr->misc->loc,
+                "expected a type, but found %t\n", type);
             for (size_t i = 0; i < argc; ++i) {
               TypeRelease(arena, arg_types[i]);
             }
@@ -2049,9 +2126,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
           StructType* struct_type = (StructType*)Normal(vtype);
           if (struct_type->_base.tag != STRUCT_TYPE) {
-            FbleReportError("expected a struct type, but found ", &misc_apply_expr->misc->loc);
-            PrintType(arena_, vtype, NULL);
-            fprintf(stderr, "\n");
+            ReportError(arena_, &misc_apply_expr->misc->loc,
+                "expected a struct type, but found %t\n",
+                vtype);
             for (size_t i = 0; i < argc; ++i) {
               TypeRelease(arena, arg_types[i]);
             }
@@ -2061,8 +2138,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
           if (struct_type->fields.size != argc) {
             // TODO: Where should the error message go?
-            FbleReportError("expected %i args, but %i were provided\n",
-                &expr->loc, struct_type->fields.size, argc);
+            ReportError(arena_, &expr->loc,
+                "expected %i args, but %i were provided\n",
+                 struct_type->fields.size, argc);
             for (size_t i = 0; i < argc; ++i) {
               TypeRelease(arena, arg_types[i]);
             }
@@ -2075,11 +2153,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
             Field* field = struct_type->fields.xs + i;
 
             if (!TypesEqual(field->type, arg_types[i], NULL)) {
-              FbleReportError("expected type ", &misc_apply_expr->args.xs[i]->loc);
-              PrintType(arena_, field->type, NULL);
-              fprintf(stderr, ", but found ");
-              PrintType(arena_, arg_types[i], NULL);
-              fprintf(stderr, "\n");
+              ReportError(arena_, &misc_apply_expr->args.xs[i]->loc,
+                  "expected type %t, but found %t\n",
+                  field->type, arg_types[i]);
               error = true;
             }
             TypeRelease(arena, arg_types[i]);
@@ -2099,9 +2175,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         }
 
         default: {
-          FbleReportError("Expecting a function, port, or struct type, but found something of type: ", &expr->loc);
-          PrintType(arena_, type, NULL);
-          fprintf(stderr, "\n");
+          ReportError(arena_, &expr->loc,
+              "expecting a function, port, or struct type, but found something of type %t\n",
+              type);
           for (size_t i = 0; i < argc; ++i) {
             TypeRelease(arena, arg_types[i]);
           }
@@ -2153,9 +2229,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&choice->name, &struct_expr->args.xs[j].name)) {
             error = true;
-            FbleReportError("duplicate field name '", &choice->name.loc);
-            FblePrintName(stderr, &struct_expr->args.xs[j].name);
-            fprintf(stderr, "'\n");
+            ReportError(arena_, &choice->name.loc,
+                "duplicate field name '%n'\n",
+                &struct_expr->args.xs[j].name);
           }
         }
       }
@@ -2187,9 +2263,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
-        FbleReportError("expected a union type, but found ", &union_value_expr->type->loc);
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &union_value_expr->type->loc,
+            "expected a union type, but found %t\n", type);
         TypeRelease(arena, type);
         return NULL;
       }
@@ -2206,11 +2281,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       if (field_type == NULL) {
-        FbleReportError("'", &union_value_expr->field.loc);
-        FblePrintName(stderr, &union_value_expr->field);
-        fprintf(stderr, "' is not a field of type ");
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &union_value_expr->field.loc,
+            "'%n' is not a field of type %t\n",
+            &union_value_expr->field, type);
         TypeRelease(arena, type);
         return NULL;
       }
@@ -2222,11 +2295,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       if (!TypesEqual(field_type, arg_type, NULL)) {
-        FbleReportError("expected type ", &union_value_expr->arg->loc);
-        PrintType(arena_, field_type, NULL);
-        fprintf(stderr, ", but found type ");
-        PrintType(arena_, arg_type, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &union_value_expr->arg->loc,
+            "expected type %t, but found type %t\n",
+            field_type, arg_type);
         TypeRelease(arena, type);
         TypeRelease(arena, arg_type);
         return NULL;
@@ -2269,9 +2340,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         access->_base.tag = FBLE_UNION_ACCESS_INSTR;
         fields = &((UnionType*)normal)->fields;
       } else {
-        FbleReportError("expected value of type struct or union, but found value of type ", &access_expr->object->loc);
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &access_expr->object->loc,
+            "expected value of type struct or union, but found value of type %t\n",
+            type);
 
         TypeRelease(arena, type);
         return NULL;
@@ -2286,11 +2357,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         }
       }
 
-      FbleReportError("", &access_expr->field.loc);
-      FblePrintName(stderr, &access_expr->field);
-      fprintf(stderr, " is not a field of type ");
-      PrintType(arena_, type, NULL);
-      fprintf(stderr, "\n");
+      ReportError(arena_, &access_expr->field.loc,
+          "'%n' is not a field of type %t\n",
+          &access_expr->field, type);
       TypeRelease(arena, type);
       return NULL;
     }
@@ -2309,15 +2378,17 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       UnionType* union_type = (UnionType*)Normal(type);
       if (union_type->_base.tag != UNION_TYPE) {
-        FbleReportError("expected value of union type, but found value of type ", &select_expr->condition->loc);
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &select_expr->condition->loc,
+            "expected value of union type, but found value of type %t\n",
+            type);
         TypeRelease(arena, type);
         return NULL;
       }
 
       if (union_type->fields.size != select_expr->choices.size) {
-        FbleReportError("expected %d arguments, but %d were provided.\n", &select_expr->_base.loc, union_type->fields.size, select_expr->choices.size);
+        ReportError(arena_, &select_expr->_base.loc,
+            "expected %i arguments, but %i were provided\n",
+            union_type->fields.size, select_expr->choices.size);
         TypeRelease(arena, type);
         return NULL;
       }
@@ -2344,11 +2415,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleGotoInstr* exit_gotos[select_expr->choices.size];
       for (size_t i = 0; i < select_expr->choices.size; ++i) {
         if (!FbleNamesEqual(&select_expr->choices.xs[i].name, &union_type->fields.xs[i].name)) {
-          FbleReportError("expected tag '", &select_expr->choices.xs[i].name.loc);
-          FblePrintName(stderr, &union_type->fields.xs[i].name);
-          fprintf(stderr, "', but found '");
-          FblePrintName(stderr, &select_expr->choices.xs[i].name);
-          fprintf(stderr, "'.\n");
+          ReportError(arena_, &select_expr->choices.xs[i].name.loc,
+              "expected tag '%n', but found '%n'\n",
+              &union_type->fields.xs[i].name, &select_expr->choices.xs[i].name);
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
           return NULL;
@@ -2391,11 +2460,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           return_type = arg_type;
         } else {
           if (!TypesEqual(return_type, arg_type, NULL)) {
-            FbleReportError("expected type ", &select_expr->choices.xs[i].expr->loc);
-            PrintType(arena_, return_type, NULL);
-            fprintf(stderr, ", but found ");
-            PrintType(arena_, arg_type, NULL);
-            fprintf(stderr, "\n");
+            ReportError(arena_, &select_expr->choices.xs[i].expr->loc,
+                "expected type %t, but found %t\n",
+                return_type, arg_type);
 
             TypeRelease(arena, type);
             TypeRelease(arena, return_type);
@@ -2615,9 +2682,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       if (Normal(type)->tag != PROC_TYPE) {
-        FbleReportError("expected a value of type proc, but found ", &link_expr->body->loc);
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &link_expr->body->loc,
+            "expected a value of type proc, but found %t\n",
+            type);
         TypeRelease(arena, type);
         return NULL;
       }
@@ -2647,18 +2714,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           if (proc_type->_base.tag == PROC_TYPE) {
             if (nvd[i].type != NULL && !TypesEqual(nvd[i].type, proc_type->type, NULL)) {
               error = true;
-              FbleReportError("expected type ", &exec_expr->bindings.xs[i].expr->loc);
-              PrintType(arena_, nvd[i].type, NULL);
-              fprintf(stderr, "!, but found ");
-              PrintType(arena_, type, NULL);
-              fprintf(stderr, "\n");
+              ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
+                  "expected type %t!, but found %t\n",
+                  nvd[i].type, type);
             }
           } else {
             error = true;
-            FbleReportError("expected process, but found expression of type",
-                &exec_expr->bindings.xs[i].expr->loc);
-            PrintType(arena_, type, NULL);
-            fprintf(stderr, "\n");
+            ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
+                "expected process, but found expression of type %t\n",
+                type);
           }
           TypeRelease(arena, type);
         }
@@ -2705,9 +2769,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       if (rtype != NULL && Normal(rtype)->tag != PROC_TYPE) {
         error = true;
-        FbleReportError("expected a value of type proc, but found ", &exec_expr->body->loc);
-        PrintType(arena_, rtype, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &exec_expr->body->loc,
+            "expected a value of type proc, but found %t\n",
+            rtype);
       }
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
@@ -2749,9 +2813,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         }
       }
 
-      FbleReportError("variable '", &var_expr->var.loc);
-      FblePrintName(stderr, &var_expr->var);
-      fprintf(stderr, "' not defined\n");
+      ReportError(arena_, &var_expr->var.loc,
+          "variable '%n' not defined\n",
+          &var_expr->var);
       return NULL;
     }
 
@@ -2822,28 +2886,24 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
         if (!error && binding->type != NULL && !TypesEqual(nvd[i].type, type, NULL)) {
           error = true;
-          FbleReportError("expected type ", &binding->expr->loc);
-          PrintType(arena_, nvd[i].type, NULL);
-          fprintf(stderr, ", but found ");
-          PrintType(arena_, type, NULL);
-          fprintf(stderr, "\n");
+          ReportError(arena_, &binding->expr->loc,
+              "expected type %t, but found %t\n",
+              nvd[i].type, type);
         } else if (!error && binding->type == NULL) {
           VarType* var = var_types[i];
           var_type_values[i] = ValueOfType(arena, type);
           if (var_type_values[i] == NULL) {
-            FbleReportError("expected type, but found something of type ", &binding->expr->loc);
-            PrintType(arena_, type, NULL);
-            fprintf(stderr, "\n");
+            ReportError(arena_, &binding->expr->loc,
+                "expected type, but found something of type %t\n",
+                type);
             error = true;
           } else {
             Kind* expected_kind = var->kind;
             Kind* actual_kind = GetKind(arena_, var_type_values[i]);
             if (!KindsEqual(expected_kind, actual_kind)) {
-              FbleReportError("expected kind ", &binding->expr->loc);
-              PrintKind(expected_kind);
-              fprintf(stderr, ", but found ");
-              PrintKind(actual_kind);
-              fprintf(stderr, "\n");
+              ReportError(arena_, &binding->expr->loc,
+                  "expected kind %k, but found %k\n",
+                  expected_kind, actual_kind);
               error = true;
             }
             FreeKind(arena_, actual_kind);
@@ -3021,7 +3081,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       PolyKind* poly_kind = (PolyKind*)GetKind(arena_, pat->poly);
       if (poly_kind->_base.tag != POLY_KIND) {
-        FbleReportError("cannot apply poly args to a basic kinded entity", &expr->loc);
+        ReportError(arena_, &expr->loc,
+            "cannot apply poly args to a basic kinded entity");
         FreeKind(arena_, &poly_kind->_base);
         TypeRelease(arena, &pat->_base);
         return NULL;
@@ -3032,11 +3093,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         Kind* expected_kind = poly_kind->arg;
         Kind* actual_kind = GetKind(arena_, pat->arg);
         if (!KindsEqual(expected_kind, actual_kind)) {
-          FbleReportError("expected kind ", &pat->arg->loc);
-          PrintKind(expected_kind);
-          fprintf(stderr, ", but found ");
-          PrintKind(actual_kind);
-          fprintf(stderr, "\n");
+          ReportError(arena_, &pat->arg->loc,
+              "expected kind %k, but found %k\n",
+              expected_kind, actual_kind);
           error = true;
         }
         FreeKind(arena_, actual_kind);
@@ -3110,9 +3169,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       StructType* struct_type = (StructType*)Normal(type);
       if (struct_type->_base.tag != STRUCT_TYPE) {
-        FbleReportError("expected value of type struct, but found value of type ", &struct_import_expr->nspace->loc);
-        PrintType(arena_, type, NULL);
-        fprintf(stderr, "\n");
+        ReportError(arena_, &struct_import_expr->nspace->loc,
+            "expected value of type struct, but found value of type %t\n",
+            type);
 
         TypeRelease(arena, type);
         return NULL;
@@ -3456,9 +3515,9 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&field->name, &struct_type->fields.xs[j].name)) {
-            FbleReportError("duplicate field name '", &field->name.loc);
-            FblePrintName(stderr, &field->name);
-            fprintf(stderr, "'\n");
+            ReportError(arena_, &field->name.loc,
+                "duplicate field name '%n'\n",
+                &field->name);
             TypeRelease(arena, &st->_base);
             return NULL;
           }
@@ -3491,9 +3550,9 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&field->name, &union_type->fields.xs[j].name)) {
-            FbleReportError("duplicate field name '", &field->name.loc);
-            FblePrintName(stderr, &field->name);
-            fprintf(stderr, "'\n");
+            ReportError(arena_, &field->name.loc,
+                "duplicate field name '%n'\n",
+                &field->name);
             TypeRelease(arena, &ut->_base);
             return NULL;
           }
@@ -3589,8 +3648,9 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       Type* type_value = ValueOfType(arena, type);
       TypeRelease(arena, type);
       if (type_value == NULL) {
-        FbleReportError("expected a type, but found value of type ", &expr->loc);
-        PrintType(arena_, type, NULL);
+        ReportError(arena_, &expr->loc,
+            "expected a type, but found value of type %t\n",
+            type);
         return NULL;
       }
       return type_value;

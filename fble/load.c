@@ -157,20 +157,20 @@ static bool ResolvePath(FbleArena* arena, const char* root, FbleNameV base, Fble
     FbleFree(arena, path.xs);
   }
 
-  FbleReportError("Module ", &ref->path.xs[0].loc);
+  FbleReportError("module ", &ref->path.xs[0].loc);
   const char* slash = "";
   for (size_t i = 0; i < ref->path.size; ++i) {
     fprintf(stderr, "%s%s", slash, ref->path.xs[i].name);
     slash = "/";
   }
   fprintf(stderr, "%% not found\n");
-  fprintf(stderr, "Referenced from within ");
+  fprintf(stderr, "referenced from within ");
   slash = "";
   for (size_t i = 0; i < base.size; ++i) {
     fprintf(stderr, "%s%s", slash, base.xs[i].name);
     slash = "/";
   }
-  fprintf(stderr, "%%.\n");
+  fprintf(stderr, "%%\n");
   return false;
 }
 
@@ -275,7 +275,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     for (Stack* s = stack; s != NULL; s = s->tail) {
       if (PathsEqual(resolved, s->path)) {
         // TODO: Improve the error message.
-        FbleReportError("recursive module dependency detected.\n",
+        FbleReportError("recursive module dependency detected\n",
             &s->path.xs[s->path.size-1].loc);
         return NULL;
       }
