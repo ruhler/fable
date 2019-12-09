@@ -891,6 +891,9 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           case FBLE_PUT_PROC_VALUE: {
             FblePutProcValue* put = (FblePutProcValue*)proc;
 
+            FbleValueV args = { .size = 0, .xs = NULL, };
+            FbleValue* unit = FbleNewStructValue(arena, args);
+
             if (put->port->tag == FBLE_OUTPUT_VALUE) {
               FbleOutputValue* port = (FbleOutputValue*)put->port;
 
@@ -908,7 +911,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
                 link->tail = tail;
               }
 
-              PushData(arena_, FbleValueRetain(arena, put->arg), thread);
+              PushData(arena_, unit, thread);
               thread->scope_stack = ExitScope(arena, thread->scope_stack);
               FbleProfileExitBlock(arena_, thread->profile);
               break;
@@ -927,7 +930,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
               }
 
               io->ports.xs[port->id] = FbleValueRetain(arena, put->arg);
-              PushData(arena_, FbleValueRetain(arena, put->arg), thread);
+              PushData(arena_, unit, thread);
               thread->scope_stack = ExitScope(arena, thread->scope_stack);
               FbleProfileExitBlock(arena_, thread->profile);
               break;
