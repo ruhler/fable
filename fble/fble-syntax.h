@@ -280,11 +280,14 @@ typedef struct {
 } FbleUnionValueExpr;
 
 // FbleUnionSelectExpr --
-//   FBLE_UNION_SELECT_EXPR (condition :: Expr) (choices :: [(Name, Expr)])
+//   FBLE_UNION_SELECT_EXPR (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
+//
+// Note: default_ is NULL if no default is provided.
 typedef struct {
   FbleExpr _base;
   FbleExpr* condition;
   FbleChoiceV choices;
+  FbleExpr* default_;
 } FbleUnionSelectExpr;
 
 // FbleFuncTypeExpr --

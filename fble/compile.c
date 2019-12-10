@@ -2385,14 +2385,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         return NULL;
       }
 
-      if (union_type->fields.size != select_expr->choices.size) {
-        ReportError(arena_, &select_expr->_base.loc,
-            "expected %i arguments, but %i were provided\n",
-            union_type->fields.size, select_expr->choices.size);
-        TypeRelease(arena, type);
-        return NULL;
-      }
-
       if (exit) {
         FbleProfileAutoExitBlockInstr* exit_instr = FbleAlloc(arena_, FbleProfileAutoExitBlockInstr);
         exit_instr->_base.tag = FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR;
@@ -2405,76 +2397,112 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleVectorAppend(arena_, *instrs, &select_instr->_base);
 
       Type* return_type = NULL;
-      FbleGotoInstr* enter_gotos[select_expr->choices.size];
-      for (size_t i = 0; i < select_expr->choices.size; ++i) {
+      FbleGotoInstr* enter_gotos[union_type->fields.size];
+      for (size_t i = 0; i < union_type->fields.size; ++i) {
         enter_gotos[i] = FbleAlloc(arena_, FbleGotoInstr);
         enter_gotos[i]->_base.tag = FBLE_GOTO_INSTR;
         FbleVectorAppend(arena_, *instrs, &enter_gotos[i]->_base);
       }
 
-      FbleGotoInstr* exit_gotos[select_expr->choices.size];
-      for (size_t i = 0; i < select_expr->choices.size; ++i) {
-        if (!FbleNamesEqual(&select_expr->choices.xs[i].name, &union_type->fields.xs[i].name)) {
-          ReportError(arena_, &select_expr->choices.xs[i].name.loc,
-              "expected tag '%n', but found '%n'\n",
-              &union_type->fields.xs[i].name, &select_expr->choices.xs[i].name);
-          TypeRelease(arena, return_type);
+      size_t default_pc = instrs->size;
+      FbleGotoInstr* exit_goto_default = NULL;
+      if (select_expr->default_ != NULL) {
+        return_type = CompileExpr(arena, blocks, name, exit, vars, select_expr->default_, instrs, time);
+        if (return_type == NULL) {
           TypeRelease(arena, type);
           return NULL;
         }
-
-
-        enter_gotos[i]->pc = instrs->size;
-
-        FbleVectorAppend(arena_, *name, select_expr->choices.xs[i].name);
-
-        FbleProfileEnterBlockInstr* enter = FbleAlloc(arena_, FbleProfileEnterBlockInstr);
-        enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
-        enter->block = blocks->size;
-        enter->time = 1;
-        FbleVectorAppend(arena_, *instrs, &enter->_base);
-        FbleName* nm = FbleVectorExtend(arena_, *blocks);
-        nm->name = MakeBlockName(arena_, name);
-        nm->loc = select_expr->choices.xs[i].expr->loc;
-
-        Type* arg_type = CompileExpr(arena, blocks, name, exit, vars, select_expr->choices.xs[i].expr, instrs, time);
-        name->size--;
 
         if (!exit) {
-          FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena_, FbleProfileExitBlockInstr);
-          exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
-          FbleVectorAppend(arena_, *instrs, &exit_instr->_base);
-
-          exit_gotos[i] = FbleAlloc(arena_, FbleGotoInstr);
-          exit_gotos[i]->_base.tag = FBLE_GOTO_INSTR;
-          FbleVectorAppend(arena_, *instrs, &exit_gotos[i]->_base);
+          exit_goto_default = FbleAlloc(arena_, FbleGotoInstr);
+          exit_goto_default->_base.tag = FBLE_GOTO_INSTR;
+          FbleVectorAppend(arena_, *instrs, &exit_goto_default->_base);
         }
+      }
 
-        if (arg_type == NULL) {
+      FbleGotoInstr* exit_gotos[select_expr->choices.size];
+      size_t choice = 0;
+      for (size_t i = 0; i < union_type->fields.size; ++i) {
+        if (choice < select_expr->choices.size && FbleNamesEqual(&select_expr->choices.xs[choice].name, &union_type->fields.xs[i].name)) {
+          enter_gotos[i]->pc = instrs->size;
+
+          FbleVectorAppend(arena_, *name, select_expr->choices.xs[choice].name);
+
+          FbleProfileEnterBlockInstr* enter = FbleAlloc(arena_, FbleProfileEnterBlockInstr);
+          enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
+          enter->block = blocks->size;
+          enter->time = 1;
+          FbleVectorAppend(arena_, *instrs, &enter->_base);
+          FbleName* nm = FbleVectorExtend(arena_, *blocks);
+          nm->name = MakeBlockName(arena_, name);
+          nm->loc = select_expr->choices.xs[choice].expr->loc;
+
+          Type* arg_type = CompileExpr(arena, blocks, name, exit, vars, select_expr->choices.xs[choice].expr, instrs, time);
+          name->size--;
+
+          if (!exit) {
+            FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena_, FbleProfileExitBlockInstr);
+            exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
+            FbleVectorAppend(arena_, *instrs, &exit_instr->_base);
+
+            exit_gotos[choice] = FbleAlloc(arena_, FbleGotoInstr);
+            exit_gotos[choice]->_base.tag = FBLE_GOTO_INSTR;
+            FbleVectorAppend(arena_, *instrs, &exit_gotos[choice]->_base);
+          }
+
+          if (arg_type == NULL) {
+            TypeRelease(arena, return_type);
+            TypeRelease(arena, type);
+            return NULL;
+          }
+
+          if (return_type == NULL) {
+            return_type = arg_type;
+          } else {
+            if (!TypesEqual(return_type, arg_type, NULL)) {
+              ReportError(arena_, &select_expr->choices.xs[choice].expr->loc,
+                  "expected type %t, but found %t\n",
+                  return_type, arg_type);
+
+              TypeRelease(arena, type);
+              TypeRelease(arena, return_type);
+              TypeRelease(arena, arg_type);
+              return NULL;
+            }
+            TypeRelease(arena, arg_type);
+          }
+          choice++;
+        } else if (select_expr->default_ == NULL) {
+          if (choice < select_expr->choices.size) {
+            ReportError(arena_, &select_expr->choices.xs[choice].name.loc,
+                "expected tag '%n', but found '%n'\n",
+                &union_type->fields.xs[i].name, &select_expr->choices.xs[choice].name);
+          } else {
+            ReportError(arena_, &expr->loc,
+                "missing tag '%n'\n",
+                &union_type->fields.xs[i].name);
+          }
           TypeRelease(arena, return_type);
           TypeRelease(arena, type);
           return NULL;
-        }
-
-        if (return_type == NULL) {
-          return_type = arg_type;
         } else {
-          if (!TypesEqual(return_type, arg_type, NULL)) {
-            ReportError(arena_, &select_expr->choices.xs[i].expr->loc,
-                "expected type %t, but found %t\n",
-                return_type, arg_type);
-
-            TypeRelease(arena, type);
-            TypeRelease(arena, return_type);
-            TypeRelease(arena, arg_type);
-            return NULL;
-          }
-          TypeRelease(arena, arg_type);
+          enter_gotos[i]->pc = default_pc;
         }
       }
       TypeRelease(arena, type);
 
+      if (choice < select_expr->choices.size) {
+        ReportError(arena_, &select_expr->choices.xs[choice].name.loc,
+            "unexpected tag '%n'\n",
+            &select_expr->choices.xs[choice]);
+        TypeRelease(arena, return_type);
+        return NULL;
+      }
+
       if (!exit) {
+        if (exit_goto_default != NULL) {
+          exit_goto_default->pc = instrs->size;
+        }
         for (size_t i = 0; i < select_expr->choices.size; ++i) {
           exit_gotos[i]->pc = instrs->size;
         }

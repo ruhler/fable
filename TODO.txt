@@ -1,6 +1,7 @@
 The Great Cleanup:
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
   fble-tictactoe.c program to drive it.
+   - blocked on it being too hard to parse the input currently
 * [lang] Read through langs/fble.txt and make sure it is up to date with the
   latest syntax, etc.
 * [prgm] Split TicTacToe implementation up into different modules
@@ -28,9 +29,6 @@ The Great Cleanup:
 * Remove iquota from Thread data structure. It should be managed separately.
 
 The Harder Cleanup:
-* [prgm] Optimize Md5.cls function
-  - change << and >> to take number of bits to shift instead of a single bit.
-  - change cls to use or(x << n, x >> (K - n))
 * [clean] Tracking of time in the compiler is really messy
   Especially that we extract the pointer to the time field from NewBlock by
   assuming what NewBlock does. Figure out some way to clean this up.
@@ -61,11 +59,14 @@ Performance Refactor:
 * Figure out why it takes longer and much more memory to insert 5000 entries
   into the TicTacToe MemoTable directly rather than compute all the entries
   from scratch. Seems funny.
+* [prgm] Optimize Md5.cls function
+  - change << and >> to take number of bits to shift instead of a single bit.
+  - change cls to use or(x << n, x >> (K - n))
 
 Future Work:
 * [perf] Collect benchmarks somewhere?
   - md5 run on 6k file. ~7 minutes
-  - tictactoe find best move for empty board. ~50 minutes
+  - tictactoe find best move for empty board. ~3 minutes
 * [perf] figure out how to use 'perf' for profiling?
   perf record --call-graph dwarf [COMMAND]
   perf report -g --stdio

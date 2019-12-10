@@ -255,6 +255,16 @@ expr:
       select_expr->_base.loc = @$;
       select_expr->condition = $3;
       select_expr->choices = $5;
+      select_expr->default_ = NULL;
+      $$ = &select_expr->_base;
+   }
+ | '?' '(' expr ';' choice_p ',' ':' expr ')' {
+      FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
+      select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
+      select_expr->_base.loc = @$;
+      select_expr->condition = $3;
+      select_expr->choices = $5;
+      select_expr->default_ = $8;
       $$ = &select_expr->_base;
    }
  | expr '!' {

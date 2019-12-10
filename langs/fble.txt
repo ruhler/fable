@@ -425,19 +425,24 @@ value.
 4.4 Union Select
 ----------------
 Abstract Syntax:
-  Expr ::= union_select (condition :: Expr) (choices :: [(Name, Expr)])
+  Expr ::= union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
 
 Concrete Syntax:
-  expr ::= '?(' expr ';' name ':' expr [',' name ':' expr [...]] ')'
+  expr ::= '?(' expr ';' name ':' expr [',' name ':' expr [...]] [',' ':' expr]')'
 
 Example:
   ?(mfoo; Just: mfoo.Just, Nothing: 3)
+  ?(char; a: True, b: True, : False)
 
 The condition must be a union value. Returns the value of the choice selected
 by the tag of the condition, without causing any other choices to be
-evaluated. The type of all choices must be the same. A choice must be present
-for each field of the condition's union type, in the same order the fields are
-declared in the union type.
+evaluated. The type of all choices must be the same.
+
+If no default is provided, a choice must be present for each field of the
+condition's union type. If a default is provided, the default value will be
+used for any fields not explicitly listed. The fields must be listed in the
+same order as they are declared in the union type, regardless of whether or
+not a default value is provided.
 
 The expression is evaluated by evaluating the condition, then evaluating the
 choice selected by the condition. No other choices are evaluated.
@@ -1009,7 +1014,7 @@ Expr ::=
  | union_type (fields :: [(Type, Name)])
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
  | union_access (object :: Expr) (field :: Name)
- | union_select (condition :: Expr) (choices :: [(Name, Expr)])
+ | union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
 
  | func_type (arg :: Type) (result :: Type)
  | func_value (args :: [(Type, Name)]) (body :: Expr)
@@ -1108,7 +1113,8 @@ expr ::=
  | type '(' name ':' expr ')'                      (* union_value *)
  | expr '.' name                                   (* union_access *)
  | '?(' expr ';' name ':' expr                     (* union_select *)
-            [',' name ':' expr [...]] ')'   
+            [',' name ':' expr [...]]
+            [',' ':' expr ] ')'   
 
  | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 
@@ -1204,47 +1210,3 @@ Notes:
   that went away when manually unrolling the loop into a custom function.
 
   A For loop based construct seems to solve this well.
-
-- It's awkward to do the same thing for some subset of case options.
-  For example, in tictactoe we have four options: computer, human, quit,
-  reset. For computer and human, the logic is almost the same: ignore it if
-  the game is over, otherwise advance with the position. The difference being
-  for the computer, we need it to generate the move first.
-
-  If this was 'C', I would right something like:
-    if (quit) {
-      quit;
-    } else if (reset) {
-      reset;
-    } else {
-      move = computer ? compute() : human;
-      applyMove(move);
-    }
-
-  But it feels very awkward in fble.
-
-  Another possibly related example: imagine how hard it is to describe
-  equality on characters. The only way I can think of is O(N^2) the number of
-  characters to express. That sucks. But you could imagine having a 'default'
-  case that would allow you to express Char equality in O(N) the number of
-  characters:
-    ?(x; A: ?(y; A: True, default: False),
-         B: ?(y; B: True, default: False),
-          ...);
-  One possible syntax would be have an optional ':' field at the end of the
-  list:
-    ?(x; A: ?(y; A: True, : False),
-         B: ?(y; B: True, : False),
-          ...);
-  And allow missing fields.
-
-  Now the above example is also easier:
-    ?(input;
-        quit: {...},
-        reset: {...},
-        : {
-          Move m = ?(input; computer: {...}, : input.position);
-          PlayMove(m)});
-      
-    
-
