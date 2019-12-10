@@ -96,19 +96,14 @@ Board@ EmptyBoard = {
 
 @ Player@ = +(Unit@ X, Unit@ O);
 
-# Returns true if the square 's' is empty.
-(Square@) { Bool@; } IsEmpty = (Square@ s) {
-  ?(s; X: False, O: False, E: True);
-};
-
 # Returns the board resulting from player 'x' making a play at position 'p'
 # of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
 # not empty.
 (Board@, Position@, Player@) { Maybe@<Board@>; } Move =
   (Board@ b, Position@ p, Player@ x) {
-    ?(IsEmpty(GetSquare(b, p)) ; 
-       true: Just<Board@>(SetSquare(b, p, ?(x; X: Square@(X: Unit), O: Square@(O: Unit)))),
-       false: Nothing<Board@>);
+    ?(GetSquare(b, p) ; 
+       E: Just<Board@>(SetSquare(b, p, ?(x; X: Square@(X: Unit), O: Square@(O: Unit)))),
+       : Nothing<Board@>);
   };
 
 # The status of a (valid) board is one of:
@@ -493,6 +488,33 @@ Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
     ShowBoard(out.board),
     ShowStatus(out.status),
     S<Char@>([newline])]));
+};
+
+(Str@) { Maybe@<Input@>; } ParseInput = (Str@ in) {
+  ?(in;
+      cons: ?(in.cons.head;
+        'A': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+                '1': Just<Input@>(Input@(position: Position@(UL: Unit))),
+                '2': Just<Input@>(Input@(position: Position@(UC: Unit))),
+                '3': Just<Input@>(Input@(position: Position@(UR: Unit))),
+                   : Nothing<Input@>),
+                nil: Nothing<Input@>),
+        'B': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+                '1': Just<Input@>(Input@(position: Position@(ML: Unit))),
+                '2': Just<Input@>(Input@(position: Position@(MC: Unit))),
+                '3': Just<Input@>(Input@(position: Position@(MR: Unit))),
+                   : Nothing<Input@>),
+                nil: Nothing<Input@>),
+        'C': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+                '1': Just<Input@>(Input@(position: Position@(LL: Unit))),
+                '2': Just<Input@>(Input@(position: Position@(LC: Unit))),
+                '3': Just<Input@>(Input@(position: Position@(LR: Unit))),
+                   : Nothing<Input@>),
+                nil: Nothing<Input@>),
+        'P': Just<Input@>(Input@(computer: Unit)),
+        'R': Just<Input@>(Input@(reset: Unit)),
+           : Nothing<Input@>),
+      nil: Nothing<Input@>);
 };
 
 @(NewGame, BenchmarkChooseBestMove);

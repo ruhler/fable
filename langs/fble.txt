@@ -1210,3 +1210,14 @@ Notes:
   that went away when manually unrolling the loop into a custom function.
 
   A For loop based construct seems to solve this well.
+
+- Why is there a difference between a process type and a port type?
+  Why is Foo@- not equivalent to Foo@!
+  Why is Foo@+ not equivalent to (Foo@){Unit@;}
+
+  If we force people to always use the process versions, then it's much easier
+  to substitute out more complicated abstractions later on.
+
+  All you can do to a put port is put, so just make it a process.
+  All you can do to a get port is get, so just make it a process.
+  
