@@ -1,10 +1,12 @@
-fble-test-error 9:7 {
+fble-test {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
 
+  # A basic proc put.
   Bool@ ~ get, put;
-
-  # The argument to put has the wrong type.
-  put(Unit@());
+  Unit@ a := put(true);
+  Bool@ b := get;
+  Unit@ bt = b.true;
+  $(Unit@());
 }
