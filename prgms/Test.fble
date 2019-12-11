@@ -1,24 +1,25 @@
-{ Unit%; @(Unit@, Unit); };
 { Bool%; @(Bool@, True, False, AndMonoid); };
 { Char%; @(Char@, newline); };
 { List%; @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
+{ Process%; @(Put@); };
 { String%; @(Str@, Str); };
+{ Unit%; @(Unit@, Unit); };
 
 @ TestResult@ = +(Unit@ pass, Str@ fail);
 @ Test@ = *(Str@ name, TestResult@! test);
 
 # Print a string to the given output stream.
-(Str@+, Str@){ Unit@!; } Print = (Str@+ out, Str@ str) {
+(Put@<Str@>, Str@){ Unit@!; } Print = (Put@<Str@> out, Str@ str) {
   out(str);
 };
 
 # Print a string and newline to the given output stream.
-(Str@+, Str@){ Unit@!; } PrintLn = (Str@+ out, Str@ str) {
+(Put@<Str@>, Str@){ Unit@!; } PrintLn = (Put@<Str@> out, Str@ str) {
   out(Append<Char@>(str, Str([newline])));
 };
 
 # Returns True if the tests all pass, false otherwise.
-(Str@+, S@<Test@>){Bool@!;} RunTests = (Str@+ out, S@<Test@> tests) {
+(Put@<Str@>, S@<Test@>){Bool@!;} RunTests = (Put@<Str@> out, S@<Test@> tests) {
   SeqS<Bool@>(AndMonoid, {
     Test@ test <- MapS<Test@, Bool@!>(tests);
     Unit@ _ := Print(out, test.name);

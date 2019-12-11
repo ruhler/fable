@@ -3,6 +3,7 @@
 { Bool%; @(Bool@, True, False); };
 { Maybe%; @(Maybe@, Just, Nothing, MapMaybe, For); };
 { Monoid%; @(Monoid@); };
+{ Process%; @(Get@, Put@); };
 { List%; @(S@, S, Concat, FoldS, MapS, SeqS, ForS); };
 { Char%; @(Char@, newline); };
 { String%; @(Str@, Str); };
@@ -352,12 +353,12 @@ ComputeBestMove = (MemoTable@ m, Board@ b, Player@ x) {
 # reset: Reset the game.
 @ Input@ = +(Position@ position, Unit@ computer, Unit@ reset, Unit@ quit);
 
-(Input@!, Output@+, MemoTable@){Unit@!;}
-NewGameAI = (Input@! input, Output@+ output, MemoTable@ ai) {
+(Input@!, Put@<Output@>, MemoTable@){Unit@!;}
+NewGameAI = (Input@! input, Put@<Output@> output, MemoTable@ ai) {
   PlayGame(input, output, ai, EmptyBoard, Player@(X: Unit));
 },
-(Input@!, Output@+, MemoTable@, Board@, Player@){Unit@!;}
-PlayGame = (Input@! input, Output@+ output, MemoTable@ ai, Board@ board, Player@ x) {
+(Input@!, Put@<Output@>, MemoTable@, Board@, Player@){Unit@!;}
+PlayGame = (Input@! input, Put@<Output@> output, MemoTable@ ai, Board@ board, Player@ x) {
   GameStatus@ status := $(?(BoardStatus(board);
                           X: GameStatus@(Win: Player@(X: Unit)),
                           O: GameStatus@(Win: Player@(O: Unit)),
@@ -397,7 +398,7 @@ MemoTable@ PreComputedAI = {
   MemoTable@(empty: Unit);
 };
 
-(Input@!, Output@+){Unit@!;} NewGame = (Input@! input, Output@+ output) {
+(Get@<Input@>, Put@<Output@>){Unit@!;} NewGame = (Get@<Input@> input, Put@<Output@> output) {
   NewGameAI(input, output, PreComputedAI);
 };
 

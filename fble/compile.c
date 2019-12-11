@@ -2610,13 +2610,32 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       get_type->type = port_type;
       FbleRefAdd(arena, &get_type->_base.ref, &get_type->type->ref);
 
-      UnaryType* put_type = FbleAlloc(arena_, UnaryType);
+      StructType* unit_type = FbleAlloc(arena_, StructType);
+      FbleRefInit(arena, &unit_type->_base.ref);
+      unit_type->_base.tag = STRUCT_TYPE;
+      unit_type->_base.loc = expr->loc;
+      unit_type->_base.evaluating = false;
+      FbleVectorInit(arena_, unit_type->fields);
+
+      UnaryType* unit_proc_type = FbleAlloc(arena_, UnaryType);
+      FbleRefInit(arena, &unit_proc_type->_base.ref);
+      unit_proc_type->_base.tag = PROC_TYPE;
+      unit_proc_type->_base.loc = expr->loc;
+      unit_proc_type->_base.evaluating = false;
+      unit_proc_type->type = &unit_type->_base;
+      FbleRefAdd(arena, &unit_proc_type->_base.ref, &unit_proc_type->type->ref);
+      TypeRelease(arena, &unit_type->_base);
+
+      FuncType* put_type = FbleAlloc(arena_, FuncType);
       FbleRefInit(arena, &put_type->_base.ref);
-      put_type->_base.tag = OUTPUT_TYPE;
-      put_type->_base.loc = port_type->loc;
+      put_type->_base.tag = FUNC_TYPE;
+      put_type->_base.loc = expr->loc;
       put_type->_base.evaluating = false;
-      put_type->type = port_type;
-      FbleRefAdd(arena, &put_type->_base.ref, &put_type->type->ref);
+      put_type->arg = port_type;
+      FbleRefAdd(arena, &put_type->_base.ref, &put_type->arg->ref);
+      put_type->rtype = &unit_proc_type->_base;
+      FbleRefAdd(arena, &put_type->_base.ref, &put_type->rtype->ref);
+      TypeRelease(arena, &unit_proc_type->_base);
 
       for (size_t i = 0; i < vars->nvars; ++i) {
         FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);

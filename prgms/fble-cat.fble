@@ -2,17 +2,19 @@
 { Unit%; @(Unit@); };
 { Bool%; @(Bool@, True); };
 { Maybe%; @(Maybe@); };
+{ Process%; @(Get@, Put@); };
 { String%; @(Str@); };
 
 # The 'cat' program to cat stdin.
-(Maybe@<Str@>!, Str@+){ Bool@!; } cat = (Maybe@<Str@>! stdin, Str@+ stdout) {
+(Get@<Maybe@<Str@>>, Put@<Str@>){ Bool@!; }
+Cat = (Get@<Maybe@<Str@>> stdin, Put@<Str@> stdout) {
   Maybe@<Str@> line := stdin;
   ?(line;
       just: {
         Unit@ _ := stdout(line.just);
-        cat(stdin, stdout);
+        Cat(stdin, stdout);
       },
       nothing: $(True));
 };
 
-cat;
+Cat;

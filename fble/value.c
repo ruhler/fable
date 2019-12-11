@@ -366,9 +366,19 @@ FbleValue* FbleNewInputPortValue(FbleValueArena* arena, size_t id)
 // FbleNewOutputPortValue -- see documentation in fble-value.h
 FbleValue* FbleNewOutputPortValue(FbleValueArena* arena, size_t id)
 {
-  FblePortValue* port_value = FbleAlloc(FbleRefArenaArena(arena), FblePortValue);
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FblePortValue* port_value = FbleAlloc(arena_, FblePortValue);
   FbleRefInit(arena, &port_value->_base.ref);
   port_value->_base.tag = FBLE_PORT_VALUE;
   port_value->id = id;
-  return &port_value->_base;
+
+  FblePutFuncValue* put = FbleAlloc(arena_, FblePutFuncValue);
+  FbleRefInit(arena, &put->_base._base.ref);
+  put->_base._base.tag = FBLE_FUNC_VALUE;
+  put->_base.tag = FBLE_PUT_FUNC_VALUE;
+  put->_base.argc = 1;
+  put->port = &port_value->_base;
+  FbleRefAdd(arena, &put->_base._base.ref, &put->port->ref);
+  FbleValueRelease(arena, put->port);
+  return &put->_base._base;
 }

@@ -1,6 +1,7 @@
 
-{ Maybe%; @(Maybe@); };
 { List%; @(S@, S, Concat); };
+{ Maybe%; @(Maybe@); };
+{ Process%; @(Get@, Put@); };
 { String%; @(Str@); };
 { Test%; @(Test@); };
 
@@ -12,6 +13,6 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   Md5_Tests%.Tests
 ]));
 
-(Maybe@<Str@>! in, Str@+ out) {
+(Get@<Maybe@<Str@>> in, Put@<Str@> out) {
   Test%.RunTests(out, AllTests);
 };

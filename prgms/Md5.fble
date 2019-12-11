@@ -10,6 +10,7 @@
 { Bits%.Bit32.BitN; @(eq, and, or, not, xor, clshift, add); };
 { Bits%.Bit64; @(Bit64@); };
 { Hex%; @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
+{ Process%; @(Get@, Put@); };
 
 # Construct a Bit32 in hex, with high-order byte first.
 (List@<Hex@>){Bit32@;} H8 = (List@<Hex@> list) {
@@ -334,7 +335,7 @@ Bit32@ t64 = H8(Hex@|EB86D391);
 };
 
 # Add zeros as needed, then the final length to the output message.
-(Streamed@<Bit8@>+, Bit64@, Bit64@){Unit@!;} PadZ = (Streamed@<Bit8@>+ output, Bit64@ msglen, Bit64@ length) {
+(Put@<Streamed@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Streamed@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
     ?(Bits%.Bit64.BitN.iszero(
         Bits%.Bit64.BitN.and(H2_64(3, f), Bits%.Bit64.BitN.add(H2_64(0, 8), length)));
           true: {
@@ -355,7 +356,8 @@ Bit32@ t64 = H8(Hex@|EB86D391);
   };
 
 # Note: length is in units of bytes
-(Maybe@<Bit8@>!, Streamed@<Bit8@>+, Bit64@){Unit@!;} Pad = (Maybe@<Bit8@>! input, Streamed@<Bit8@>+ output, Bit64@ length) {
+(Get@<Maybe@<Bit8@>>, Put@<Streamed@<Bit8@>>, Bit64@){Unit@!;}
+Pad = (Get@<Maybe@<Bit8@>> input, Put@<Streamed@<Bit8@>> output, Bit64@ length) {
     Maybe@<Bit8@> x := input;
     ?(x; just: {
         Unit@ _ := output(Streamed@<Bit8@>(x.just, False));

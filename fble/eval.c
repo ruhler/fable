@@ -699,6 +699,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           FbleValueRelease(arena, value->arg);
 
           PushData(arena_, &value->_base._base, thread);
+          if (func_apply_instr->exit) {
+            thread->scope_stack = ExitScope(arena, thread->scope_stack);
+            FbleProfileExitBlock(arena_, thread->profile);
+          }
         } else {
           FbleFuncValue* f = func;
           while (f->tag == FBLE_THUNK_FUNC_VALUE) {
@@ -969,13 +973,22 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             Add(arena, &get->_base._base, get->port);
             FbleValueRelease(arena, get->port);
 
-            FbleOutputValue* put = FbleAlloc(arena_, FbleOutputValue);
-            FbleRefInit(arena, &put->_base.ref);
-            put->_base.tag = FBLE_OUTPUT_VALUE;
-            put->dest = get_port;
-            Add(arena, &put->_base, &get_port->_base);
+            FbleOutputValue* put_port = FbleAlloc(arena_, FbleOutputValue);
+            FbleRefInit(arena, &put_port->_base.ref);
+            put_port->_base.tag = FBLE_OUTPUT_VALUE;
+            put_port->dest = get_port;
+            Add(arena, &put_port->_base, &get_port->_base);
 
-            PushData(arena_, &put->_base, thread);
+            FblePutFuncValue* put = FbleAlloc(arena_, FblePutFuncValue);
+            FbleRefInit(arena, &put->_base._base.ref);
+            put->_base._base.tag = FBLE_FUNC_VALUE;
+            put->_base.tag = FBLE_PUT_FUNC_VALUE;
+            put->_base.argc = 1;
+            put->port = &put_port->_base;
+            Add(arena, &put->_base._base, put->port);
+            FbleValueRelease(arena, put->port);
+
+            PushData(arena_, &put->_base._base, thread);
             PushData(arena_, &get->_base._base, thread);
             RestoreScope(arena, link->scope, thread);
             thread->scope_stack = ChangeScope(arena, link->body, thread->scope_stack);

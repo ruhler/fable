@@ -1,9 +1,10 @@
 
-{ Unit%; @(Unit@, Unit); };
 { Bool%; @(Bool@, True, False, And); };
-{ List%; @(P@, S@, InitP, LastP); };
-{ UBNat%; @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
 { Draw%; @(Color@, Draw@); };
+{ List%; @(P@, S@, InitP, LastP); };
+{ Process%; @(Get@, Put@); };
+{ UBNat%; @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
+{ Unit%; @(Unit@, Unit); };
 
 Nat@ MinRow = 0;
 Nat@ MaxRow = Lit2(2, 0);
@@ -132,7 +133,8 @@ State@ InitialState = {
             })));
 };
 
-(Input@!, S@<Draw@>+, State@){Unit@!;} Snake = (Input@! in, S@<Draw@>+ out, State@ s) {
+(Get@<Input@>, Put@<S@<Draw@>>, State@){Unit@!;}
+Snake = (Get@<Input@> in, Put@<S@<Draw@>> out, State@ s) {
   Input@ x := in;
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
        tick: {
@@ -146,7 +148,8 @@ State@ InitialState = {
        });
 };
 
-(Input@!, S@<Draw@>+){Unit@!;} Main = (Input@! in, S@<Draw@>+ out) {
+(Get@<Input@>, Put@<S@<Draw@>>){Unit@!;}
+Main = (Get@<Input@> in, Put@<S@<Draw@>> out) {
   State@ s = InitialState;
   Unit@ _ := out(DrawState(s));
   Snake(in, out, s);

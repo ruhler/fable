@@ -191,7 +191,9 @@ State@ InitialState = {
             })));
 };
 
-(Draw@+, S@<Draw@>){Unit@!;} DrawAll = (Draw@+ out, S@<Draw@> draw) {
+<@>@ Put@ = <@ T@>{ (T@){Unit@!;}; };
+
+(Put@<Draw@>, S@<Draw@>){Unit@!;} DrawAll = (Put@<Draw@> out, S@<Draw@> draw) {
   ?(draw ; nil: $(Unit@()),
       cons: {
          Unit@ _ := out(draw.cons.head);
@@ -199,7 +201,7 @@ State@ InitialState = {
       });
 };
 
-(Input@!, Draw@+, State@){Unit@!;} Snake = (Input@! in, Draw@+ out, State@ s) {
+(Input@!, Put@<Draw@>, State@){Unit@!;} Snake = (Input@! in, Put@<Draw@> out, State@ s) {
   Input@ x := in;
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
        tick: {
@@ -213,7 +215,7 @@ State@ InitialState = {
        });
 };
 
-(Input@!, Draw@+){Unit@!;} Main = (Input@! in, Draw@+ out) {
+(Input@!, Put@<Draw@>){Unit@!;} Main = (Input@! in, Put@<Draw@> out) {
   State@ s = InitialState;
   Unit@ u := DrawAll(out, DrawState(s));
   Snake(in, out, s);
