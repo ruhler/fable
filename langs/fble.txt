@@ -591,7 +591,7 @@ Concrete Syntax:
 Example:
   Int@!
 
-6.6 Process Eval
+6.2 Process Eval
 ----------------
 Abstract Syntax:
   Expr ::= proc_eval (expr :: Expr)
@@ -605,7 +605,7 @@ Example:
 A process that returns the value of expr without performing any other
 actions. The value to return is evaluated as part of evaluating the process.
 
-6.7 Process Link
+6.3 Process Link
 ----------------
 Abstract Syntax:
   Expr ::= proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
@@ -631,7 +631,7 @@ process until a value becomes available if necessary.
 
 The put process can be used to put a value onto a port.
 
-6.8 Process Exec
+6.4 Process Exec
 ----------------
 Abstract Syntax:
   Expr ::= proc_exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
@@ -1148,19 +1148,3 @@ Notes:
   that went away when manually unrolling the loop into a custom function.
 
   A For loop based construct seems to solve this well.
-
-- Why is there a difference between a process type and a port type?
-  Why is Foo@- not equivalent to Foo@!
-  Why is Foo@+ not equivalent to (Foo@){Unit@;}
-
-  If we force people to always use the process versions, then it's much easier
-  to substitute out more complicated abstractions later on.
-
-  All you can do to a put port is put, so just make it a process.
-  All you can do to a get port is get, so just make it a process.
-  
-  Benefits:
-   - no more concept of ports, except maybe at the FFI boundary.
-   - no more concept of 'get' or 'put' processes, and no special syntax needed
-     therefore.
-  
