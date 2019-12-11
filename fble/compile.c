@@ -67,7 +67,6 @@ typedef enum {
   UNION_TYPE,
   FUNC_TYPE,
   PROC_TYPE,
-  OUTPUT_TYPE,
   POLY_TYPE,
   POLY_APPLY_TYPE,
   VAR_TYPE,
@@ -129,8 +128,8 @@ typedef struct {
   struct Type* rtype;
 } FuncType;
 
-// UnaryType -- PROC_TYPE, OUTPUT_TYPE
-// TODO: Rename ProcType once we delete OUTPUT_TYPE.
+// UnaryType -- PROC_TYPE
+// TODO: Rename to ProcType
 typedef struct {
   Type _base;
   Type* type;
@@ -477,7 +476,6 @@ static void TypeFree(TypeArena* arena, FbleRef* ref)
 
     case FUNC_TYPE:
     case PROC_TYPE:
-    case OUTPUT_TYPE:
     case POLY_TYPE:
     case POLY_APPLY_TYPE: {
       FbleFree(arena_, type);
@@ -546,8 +544,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
       break;
     }
 
-    case PROC_TYPE:
-    case OUTPUT_TYPE: {
+    case PROC_TYPE: {
       UnaryType* ut = (UnaryType*)type;
       Add(add, ut->type);
       break;
@@ -642,8 +639,7 @@ static Kind* GetKind(FbleArena* arena, Type* type)
     case STRUCT_TYPE:
     case UNION_TYPE:
     case FUNC_TYPE:
-    case PROC_TYPE: 
-    case OUTPUT_TYPE: {
+    case PROC_TYPE: {
       BasicKind* kind = FbleAlloc(arena, BasicKind);
       kind->_base.tag = BASIC_KIND;
       kind->_base.loc = type->loc;
@@ -773,8 +769,7 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
           || HasParam(ft->rtype, param, &nv);
     }
 
-    case PROC_TYPE:
-    case OUTPUT_TYPE: {
+    case PROC_TYPE: {
       UnaryType* ut = (UnaryType*)type;
       return HasParam(ut->type, param, &nv);
     }
@@ -887,8 +882,7 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
       return &sft->_base;
     }
 
-    case PROC_TYPE:
-    case OUTPUT_TYPE: {
+    case PROC_TYPE: {
       UnaryType* ut = (UnaryType*)type;
       UnaryType* sut = FbleAlloc(arena_, UnaryType);
       FbleRefInit(arena, &sut->_base.ref);
@@ -1038,8 +1032,7 @@ static void Eval(TypeArena* arena, Type* type, PolyApplyList* applied)
       break;
     }
 
-    case PROC_TYPE:
-    case OUTPUT_TYPE: {
+    case PROC_TYPE: {
       UnaryType* ut = (UnaryType*)type;
       Eval(arena, ut->type, applied);
       break;
@@ -1147,7 +1140,6 @@ static Type* Normal(Type* type)
     case UNION_TYPE: return type;
     case FUNC_TYPE: return type;
     case PROC_TYPE: return type;
-    case OUTPUT_TYPE: return type;
 
     case POLY_TYPE: {
       // Normalize: (\x -> f x) to f
@@ -1272,8 +1264,7 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
           && TypesEqual(fta->rtype, ftb->rtype, &neq);
     }
 
-    case PROC_TYPE:
-    case OUTPUT_TYPE: {
+    case PROC_TYPE: {
       UnaryType* uta = (UnaryType*)a;
       UnaryType* utb = (UnaryType*)b;
       return TypesEqual(uta->type, utb->type, &neq);
@@ -1431,13 +1422,6 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       break;
     }
 
-    case OUTPUT_TYPE: {
-      UnaryType* ut = (UnaryType*)type;
-      PrintType(arena, ut->type, &nprinted);
-      fprintf(stderr, "+");
-      break;
-    }
-
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
       fprintf(stderr, "<");
@@ -1539,8 +1523,7 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
     case STRUCT_TYPE:
     case UNION_TYPE:
     case FUNC_TYPE:
-    case PROC_TYPE:
-    case OUTPUT_TYPE: {
+    case PROC_TYPE: {
       return NULL;
     }
 
@@ -1771,7 +1754,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
     case FBLE_EVAL_INSTR:
-    case FBLE_PUT_INSTR:
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:
     case FBLE_LET_PREP_INSTR:
@@ -1917,7 +1899,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_UNION_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
     case FBLE_PROC_TYPE_EXPR:
-    case FBLE_OUTPUT_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR: {
       *time += 1;
 
@@ -2011,55 +1992,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           TypeRetain(arena, normal);
           TypeRelease(arena, type);
           return normal;
-        }
-
-        case OUTPUT_TYPE: {
-          // FBLE_PUT_EXPR
-          if (argc != 1) {
-            ReportError(arena_, &expr->loc,
-                "wrong number of arguments to put\n");
-            for (size_t i = 0; i < argc; ++i) {
-              TypeRelease(arena, arg_types[i]);
-            }
-            TypeRelease(arena, type);
-            return NULL;
-          }
-
-          UnaryType* output_type = (UnaryType*)normal;
-          if (!TypesEqual(output_type->type, arg_types[0], NULL)) {
-            ReportError(arena_, &misc_apply_expr->args.xs[0]->loc,
-                "expected type %t, but found %t\n",
-                output_type->type, arg_types[0]);
-
-            TypeRelease(arena, arg_types[0]);
-            TypeRelease(arena, type);
-            return NULL;
-          }
-
-          TypeRelease(arena, arg_types[0]);
-
-          FblePutInstr* put_instr = FbleAlloc(arena_, FblePutInstr);
-          put_instr->_base.tag = FBLE_PUT_INSTR;
-          FbleVectorAppend(arena_, *instrs, &put_instr->_base);
-
-          StructType* unit_type = FbleAlloc(arena_, StructType);
-          FbleRefInit(arena, &unit_type->_base.ref);
-          unit_type->_base.tag = STRUCT_TYPE;
-          unit_type->_base.loc = expr->loc;
-          unit_type->_base.evaluating = false;
-          FbleVectorInit(arena_, unit_type->fields);
-
-          UnaryType* proc_type = FbleAlloc(arena_, UnaryType);
-          FbleRefInit(arena, &proc_type->_base.ref);
-          proc_type->_base.tag = PROC_TYPE;
-          proc_type->_base.loc = expr->loc;
-          proc_type->_base.evaluating = false;
-          proc_type->type = &unit_type->_base;
-          FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
-          TypeRelease(arena, &unit_type->_base);
-          TypeRelease(arena, type);
-          CompileExit(arena_, exit, instrs);
-          return &proc_type->_base;
         }
 
         case POLY_APPLY_TYPE:
@@ -3591,18 +3523,13 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
       return &ft->_base;
     }
 
-    case FBLE_PROC_TYPE_EXPR:
-    case FBLE_OUTPUT_TYPE_EXPR: {
+    case FBLE_PROC_TYPE_EXPR: {
       UnaryType* ut = FbleAlloc(arena_, UnaryType);
       FbleRefInit(arena, &ut->_base.ref);
       ut->_base.loc = type->loc;
       ut->_base.evaluating = false;
 
-      // TODO: This logic assumes that PROC_TYPE and OUTPUT_TYPE
-      // are defined consecutively and in the same order as
-      // FBLE_PROC_TYPE_EXPR and FBLE_OUTPUT_TYPE_EXPR.
-      // That seems like a bad idea.
-      ut->_base.tag = PROC_TYPE + type->tag - FBLE_PROC_TYPE_EXPR;
+      ut->_base.tag = PROC_TYPE;
 
       ut->type = NULL;
 

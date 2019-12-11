@@ -173,8 +173,6 @@ typedef enum {
 //FBLE_FUNC_APPLY_EXPR = FBLE_MISC_APPLY_EXPR,
 
   FBLE_PROC_TYPE_EXPR,
-  FBLE_OUTPUT_TYPE_EXPR,
-//FBLE_PUT_EXPR = FBLE_MISC_APPLY_EXPR,
   FBLE_EVAL_EXPR,
   FBLE_LINK_EXPR,
   FBLE_EXEC_EXPR,
@@ -186,7 +184,7 @@ typedef enum {
   FBLE_LITERAL_EXPR,
 
   FBLE_MISC_ACCESS_EXPR,  // Used for STRUCT_ACCESS, UNION_ACCESS
-  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, FUNC_APPLY, PUT
+  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, FUNC_APPLY
 } FbleExprTag;
 
 // FbleExpr --
@@ -306,7 +304,6 @@ typedef struct {
 
 // FbleUnaryTypeExpr --
 //   FBLE_PROC_TYPE_EXPR (type :: Type)
-//   FBLE_OUTPUT_TYPE_EXPR (type :: Type)
 typedef struct {
   FbleType _base;
   FbleType* type;
@@ -435,7 +432,6 @@ typedef struct {
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])
 //   FBLE_STRUCT_VALUE_EXPR (type :: Type) (args :: [Expr])
 //   FBLE_FUNC_APPLY_EXPR (func :: Expr) (args :: [Expr])
-//   FBLE_PUT_EXPR (port :: Expr) (arg :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleExpr* misc;

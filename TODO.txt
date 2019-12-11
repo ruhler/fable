@@ -1,7 +1,8 @@
 The Great Cleanup:
 * [lang] Remove input port and output port types get and put processes.
-  - Remove unused OUTPUT_TYPE stuff now that we've converted puts
   - Rename UnaryType to ProcType
+  - Consider removing port values? Operate on links directly? Or rename
+    appropriately?
   - Consolidate put and get tests under 'link'
   - renumber sections and tests
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
@@ -19,6 +20,8 @@ The Great Cleanup:
   On the flip side, variable shadowing does not make sense for let
   expressions. So are multi-arg functions more like nested single arg
   functions or lets?
+  Answer: don't allow duplicate arg names. It's not useful. We can relax the
+  restriction later if we find it to be useful.
 * [test] Rename tests to match new spec, and clean up tests.
    typeof, var, let,
    func_bind
