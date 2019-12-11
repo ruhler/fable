@@ -268,7 +268,7 @@ expr:
       $$ = &select_expr->_base;
    }
  | expr '!' {
-      FbleUnaryTypeExpr* proc_type = FbleAlloc(arena, FbleUnaryTypeExpr);
+      FbleProcTypeExpr* proc_type = FbleAlloc(arena, FbleProcTypeExpr);
       proc_type->_base.tag = FBLE_PROC_TYPE_EXPR;
       proc_type->_base.loc = @$;
       proc_type->type = $1;

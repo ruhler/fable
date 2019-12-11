@@ -1,6 +1,5 @@
 The Great Cleanup:
 * [lang] Remove input port and output port types get and put processes.
-  - Rename UnaryType to ProcType
   - Consider removing port values? Operate on links directly? Or rename
     appropriately?
   - Consolidate put and get tests under 'link'

@@ -302,12 +302,12 @@ typedef struct {
   FbleExpr* body;
 } FbleFuncValueExpr;
 
-// FbleUnaryTypeExpr --
+// FbleProcTypeExpr --
 //   FBLE_PROC_TYPE_EXPR (type :: Type)
 typedef struct {
   FbleType _base;
   FbleType* type;
-} FbleUnaryTypeExpr;
+} FbleProcTypeExpr;
 
 // FbleEvalExpr --
 //   FBLE_EVAL_EXPR (expr :: Expr)
