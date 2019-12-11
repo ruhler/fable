@@ -683,6 +683,22 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             thread->scope_stack = ExitScope(arena, thread->scope_stack);
             FbleProfileExitBlock(arena_, thread->profile);
           }
+        } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
+          FblePutFuncValue* f = (FblePutFuncValue*)func;
+
+          FblePutProcValue* value = FbleAlloc(arena_, FblePutProcValue);
+          FbleRefInit(arena, &value->_base._base.ref);
+          value->_base._base.tag = FBLE_PROC_VALUE;
+          value->_base.tag = FBLE_PUT_PROC_VALUE;
+
+          value->port = f->port;
+          Add(arena, &value->_base._base, value->port);
+
+          value->arg = PopData(arena_, thread);
+          Add(arena, &value->_base._base, value->arg);
+          FbleValueRelease(arena, value->arg);
+
+          PushData(arena_, &value->_base._base, thread);
         } else {
           FbleFuncValue* f = func;
           while (f->tag == FBLE_THUNK_FUNC_VALUE) {

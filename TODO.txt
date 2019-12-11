@@ -55,6 +55,8 @@ Programs:
 * [prgm] Sudoku
 
 Performance Refactor:
+* Consider replacing $(...) with ${...} where the body of the eval is not
+  evaluated until you execute the eval.
 * Figure out why the tictactoe AI was 4 times faster when using a process
   computation instead of a pure computation, even though fble level profiling
   and common sense suggest it should be the other way around.

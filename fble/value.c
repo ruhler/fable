@@ -72,6 +72,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
         }
 
         case FBLE_THUNK_FUNC_VALUE: break;
+        case FBLE_PUT_FUNC_VALUE: break;
       }
       FbleFree(arena_, value);
       return;
@@ -195,6 +196,12 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
           FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)fv;
           Add(add, &thunk->func->_base);
           Add(add, thunk->arg);
+          break;
+        }
+
+        case FBLE_PUT_FUNC_VALUE: {
+          FblePutFuncValue* put = (FblePutFuncValue*)fv;
+          Add(add, put->port);
           break;
         }
       }
