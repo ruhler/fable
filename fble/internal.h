@@ -361,8 +361,7 @@ typedef enum {
   FBLE_UNION_VALUE,
   FBLE_FUNC_VALUE,
   FBLE_PROC_VALUE,
-  FBLE_INPUT_VALUE,
-  FBLE_OUTPUT_VALUE,
+  FBLE_LINK_VALUE,
   FBLE_PORT_VALUE,
   FBLE_REF_VALUE,
   FBLE_TYPE_VALUE,
@@ -508,22 +507,15 @@ typedef struct FbleValues {
   struct FbleValues* next;
 } FbleValues;
 
-// FbleInputValue -- FBLE_INPUT_VALUE
-//   Holds the list of values to get. Values are added to the tail and taken
+// FbleLinkValue -- FBLE_LINK_VALUE
+//   Holds the list of values on a link. Values are added to the tail and taken
 //   from the head. If there are no values on the list, both head and tail are
 //   set to NULL.
 typedef struct {
   FbleValue _base;
   FbleValues* head;
   FbleValues* tail;
-} FbleInputValue;
-
-// FbleOutputValue --
-//   FBLE_OUTPUT_VALUE
-typedef struct {
-  FbleValue _base;
-  FbleInputValue* dest;
-} FbleOutputValue;
+} FbleLinkValue;
 
 // FblePortValue --
 //   FBLE_PORT_VALUE

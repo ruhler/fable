@@ -1,7 +1,5 @@
 The Great Cleanup:
 * [lang] Remove input port and output port types get and put processes.
-  - Consider removing port values? Operate on links directly? Or rename
-    appropriately?
   - Consolidate put and get tests under 'link'
   - renumber sections and tests
 * [prgm] Have TicTacToe print its own board and such rather than need a custom

@@ -105,19 +105,14 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
       return;
     }
 
-    case FBLE_INPUT_VALUE: {
-      FbleInputValue* v = (FbleInputValue*)value;
+    case FBLE_LINK_VALUE: {
+      FbleLinkValue* v = (FbleLinkValue*)value;
       FbleValues* curr = v->head;
       while (curr != NULL) {
         FbleValues* tmp = curr;
         curr = curr->next;
         FbleFree(arena_, tmp);
       }
-      FbleFree(arena_, value);
-      return;
-    }
-
-    case FBLE_OUTPUT_VALUE: {
       FbleFree(arena_, value);
       return;
     }
@@ -252,17 +247,11 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
       break;
     }
 
-    case FBLE_INPUT_VALUE: {
-      FbleInputValue* v = (FbleInputValue*)value;
+    case FBLE_LINK_VALUE: {
+      FbleLinkValue* v = (FbleLinkValue*)value;
       for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
         Add(add, elem->value);
       }
-      break;
-    }
-
-    case FBLE_OUTPUT_VALUE: {
-      FbleOutputValue* v = (FbleOutputValue*)value;
-      Add(add, &v->dest->_base);
       break;
     }
 

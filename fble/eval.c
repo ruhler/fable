@@ -829,10 +829,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
 
-            if (get->port->tag == FBLE_INPUT_VALUE) {
-              FbleInputValue* port = (FbleInputValue*)get->port;
+            if (get->port->tag == FBLE_LINK_VALUE) {
+              FbleLinkValue* link = (FbleLinkValue*)get->port;
 
-              if (port->head == NULL) {
+              if (link->head == NULL) {
                 // Blocked on get. Restore the thread state and return before
                 // iquota has been decremented.
                 PushData(arena_, &proc->_base, thread);
@@ -840,10 +840,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
                 return;
               }
 
-              FbleValues* head = port->head;
-              port->head = port->head->next;
-              if (port->head == NULL) {
-                port->tail = NULL;
+              FbleValues* head = link->head;
+              link->head = link->head->next;
+              if (link->head == NULL) {
+                link->tail = NULL;
               }
               PushData(arena_, head->value, thread);
               FbleFree(arena_, head);
@@ -882,14 +882,13 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             FbleValueV args = { .size = 0, .xs = NULL, };
             FbleValue* unit = FbleNewStructValue(arena, args);
 
-            if (put->port->tag == FBLE_OUTPUT_VALUE) {
-              FbleOutputValue* port = (FbleOutputValue*)put->port;
+            if (put->port->tag == FBLE_LINK_VALUE) {
+              FbleLinkValue* link = (FbleLinkValue*)put->port;
 
               FbleValues* tail = FbleAlloc(arena_, FbleValues);
               tail->value = FbleValueRetain(arena, put->arg);
               tail->next = NULL;
 
-              FbleInputValue* link = port->dest;
               if (link->head == NULL) {
                 link->head = tail;
                 link->tail = tail;
@@ -939,34 +938,27 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             FbleLinkProcValue* link = (FbleLinkProcValue*)proc;
 
             // Allocate the link and push the ports on top of the data stack.
-            FbleInputValue* get_port = FbleAlloc(arena_, FbleInputValue);
-            FbleRefInit(arena, &get_port->_base.ref);
-            get_port->_base.tag = FBLE_INPUT_VALUE;
-            get_port->head = NULL;
-            get_port->tail = NULL;
+            FbleLinkValue* port = FbleAlloc(arena_, FbleLinkValue);
+            FbleRefInit(arena, &port->_base.ref);
+            port->_base.tag = FBLE_LINK_VALUE;
+            port->head = NULL;
+            port->tail = NULL;
 
             FbleGetProcValue* get = FbleAlloc(arena_, FbleGetProcValue);
             FbleRefInit(arena, &get->_base._base.ref);
             get->_base._base.tag = FBLE_PROC_VALUE;
             get->_base.tag = FBLE_GET_PROC_VALUE;
-            get->port = &get_port->_base;
+            get->port = &port->_base;
             Add(arena, &get->_base._base, get->port);
             FbleValueRelease(arena, get->port);
-
-            FbleOutputValue* put_port = FbleAlloc(arena_, FbleOutputValue);
-            FbleRefInit(arena, &put_port->_base.ref);
-            put_port->_base.tag = FBLE_OUTPUT_VALUE;
-            put_port->dest = get_port;
-            Add(arena, &put_port->_base, &get_port->_base);
 
             FblePutFuncValue* put = FbleAlloc(arena_, FblePutFuncValue);
             FbleRefInit(arena, &put->_base._base.ref);
             put->_base._base.tag = FBLE_FUNC_VALUE;
             put->_base.tag = FBLE_PUT_FUNC_VALUE;
             put->_base.argc = 1;
-            put->port = &put_port->_base;
+            put->port = &port->_base;
             Add(arena, &put->_base._base, put->port);
-            FbleValueRelease(arena, put->port);
 
             PushData(arena_, &put->_base._base, thread);
             PushData(arena_, &get->_base._base, thread);
