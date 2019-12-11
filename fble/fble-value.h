@@ -175,8 +175,8 @@ FbleValue* FbleUnionValueAccess(FbleValue* object);
 //   none.
 bool FbleIsProcValue(FbleValue* value);
 
-// FbleNewPortValue --
-//   Create a new io port value with given id.
+// FbleNewInputPortValue --
+//   Create a new input port value with given id.
 //
 // Inputs:
 //   arena - the arena to use for allocations.
@@ -188,6 +188,21 @@ bool FbleIsProcValue(FbleValue* value);
 // Side effects:
 //   The returned port value must be freed using FbleValueRelease when no
 //   longer in use.
-FbleValue* FbleNewPortValue(FbleValueArena* arena, size_t id);
+FbleValue* FbleNewInputPortValue(FbleValueArena* arena, size_t id);
+
+// FbleNewOutputPortValue --
+//   Create a new output port value with given id.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   id - the id of the port for use with FbleIO.
+//
+// Results:
+//   A newly allocated port value.
+//
+// Side effects:
+//   The returned port value must be freed using FbleValueRelease when no
+//   longer in use.
+FbleValue* FbleNewOutputPortValue(FbleValueArena* arena, size_t id);
 
 #endif // FBLE_VALUE_H_

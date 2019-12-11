@@ -951,20 +951,28 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             FbleLinkProcValue* link = (FbleLinkProcValue*)proc;
 
             // Allocate the link and push the ports on top of the data stack.
-            FbleInputValue* get = FbleAlloc(arena_, FbleInputValue);
-            FbleRefInit(arena, &get->_base.ref);
-            get->_base.tag = FBLE_INPUT_VALUE;
-            get->head = NULL;
-            get->tail = NULL;
+            FbleInputValue* get_port = FbleAlloc(arena_, FbleInputValue);
+            FbleRefInit(arena, &get_port->_base.ref);
+            get_port->_base.tag = FBLE_INPUT_VALUE;
+            get_port->head = NULL;
+            get_port->tail = NULL;
+
+            FbleGetProcValue* get = FbleAlloc(arena_, FbleGetProcValue);
+            FbleRefInit(arena, &get->_base._base.ref);
+            get->_base._base.tag = FBLE_PROC_VALUE;
+            get->_base.tag = FBLE_GET_PROC_VALUE;
+            get->port = &get_port->_base;
+            Add(arena, &get->_base._base, get->port);
+            FbleValueRelease(arena, get->port);
 
             FbleOutputValue* put = FbleAlloc(arena_, FbleOutputValue);
             FbleRefInit(arena, &put->_base.ref);
             put->_base.tag = FBLE_OUTPUT_VALUE;
-            put->dest = get;
-            Add(arena, &put->_base, &get->_base);
+            put->dest = get_port;
+            Add(arena, &put->_base, &get_port->_base);
 
             PushData(arena_, &put->_base, thread);
-            PushData(arena_, &get->_base, thread);
+            PushData(arena_, &get->_base._base, thread);
             RestoreScope(arena, link->scope, thread);
             thread->scope_stack = ChangeScope(arena, link->body, thread->scope_stack);
             FbleProfileAutoExitBlock(arena_, thread->profile);

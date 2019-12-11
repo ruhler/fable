@@ -6,6 +6,6 @@ fble-test {
   # A basic proc get.
   Bool@ ~ get, put;
   Unit@ _ := put(true);
-  Bool@ result := get();
+  Bool@ result := get;
   $(result.true);
 }

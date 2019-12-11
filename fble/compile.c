@@ -131,6 +131,7 @@ typedef struct {
 } FuncType;
 
 // UnaryType -- PROC_TYPE, INPUT_TYPE, OUTPUT_TYPE
+// TODO: Rename ProcType once we delete INPUT_TYPE and OUTPUT_TYPE.
 typedef struct {
   Type _base;
   Type* type;
@@ -2650,7 +2651,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       UnaryType* get_type = FbleAlloc(arena_, UnaryType);
       FbleRefInit(arena, &get_type->_base.ref);
-      get_type->_base.tag = INPUT_TYPE;
+      get_type->_base.tag = PROC_TYPE;
       get_type->_base.loc = port_type->loc;
       get_type->_base.evaluating = false;
       get_type->type = port_type;

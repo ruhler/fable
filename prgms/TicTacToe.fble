@@ -352,19 +352,19 @@ ComputeBestMove = (MemoTable@ m, Board@ b, Player@ x) {
 # reset: Reset the game.
 @ Input@ = +(Position@ position, Unit@ computer, Unit@ reset, Unit@ quit);
 
-(Input@-, Output@+, MemoTable@){Unit@!;}
-NewGameAI = (Input@- input, Output@+ output, MemoTable@ ai) {
+(Input@!, Output@+, MemoTable@){Unit@!;}
+NewGameAI = (Input@! input, Output@+ output, MemoTable@ ai) {
   PlayGame(input, output, ai, EmptyBoard, Player@(X: Unit));
 },
-(Input@-, Output@+, MemoTable@, Board@, Player@){Unit@!;}
-PlayGame = (Input@- input, Output@+ output, MemoTable@ ai, Board@ board, Player@ x) {
+(Input@!, Output@+, MemoTable@, Board@, Player@){Unit@!;}
+PlayGame = (Input@! input, Output@+ output, MemoTable@ ai, Board@ board, Player@ x) {
   GameStatus@ status := $(?(BoardStatus(board);
                           X: GameStatus@(Win: Player@(X: Unit)),
                           O: GameStatus@(Win: Player@(O: Unit)),
                           D: GameStatus@(Draw: Unit),
                           E: GameStatus@(Move: x)));
   Unit@ _ := output(Output@(board, status));
-  Input@ in := input();
+  Input@ in := input;
   Bool@ over = ?(status; Move: False, Win: True, Draw: True);
   ?(in;
      position: {
@@ -397,7 +397,7 @@ MemoTable@ PreComputedAI = {
   MemoTable@(empty: Unit);
 };
 
-(Input@-, Output@+){Unit@!;} NewGame = (Input@- input, Output@+ output) {
+(Input@!, Output@+){Unit@!;} NewGame = (Input@! input, Output@+ output) {
   NewGameAI(input, output, PreComputedAI);
 };
 

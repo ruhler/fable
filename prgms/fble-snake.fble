@@ -199,8 +199,8 @@ State@ InitialState = {
       });
 };
 
-(Input@-, Draw@+, State@){Unit@!;} Snake = (Input@- in, Draw@+ out, State@ s) {
-  Input@ x := in();
+(Input@!, Draw@+, State@){Unit@!;} Snake = (Input@! in, Draw@+ out, State@ s) {
+  Input@ x := in;
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
        tick: {
            MoveResultM@ m := $(Move(s));
@@ -213,7 +213,7 @@ State@ InitialState = {
        });
 };
 
-(Input@-, Draw@+){Unit@!;} Main = (Input@- in, Draw@+ out) {
+(Input@!, Draw@+){Unit@!;} Main = (Input@! in, Draw@+ out) {
   State@ s = InitialState;
   Unit@ u := DrawAll(out, DrawState(s));
   Snake(in, out, s);

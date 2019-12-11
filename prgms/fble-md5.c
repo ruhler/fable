@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* input = FbleNewPortValue(value_arena, 0);
+  FbleValue* input = FbleNewInputPortValue(value_arena, 0);
   FbleValue* proc = FbleApply(value_arena, func, input, graph);
   FbleValueRelease(value_arena, func);
   FbleValueRelease(value_arena, input);

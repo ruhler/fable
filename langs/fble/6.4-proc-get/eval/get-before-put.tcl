@@ -7,7 +7,7 @@ fble-test {
   Bool@ true = Bool@(true: Unit@());
 
   Bool@ ~ get, put;
-  Unit@ p1 := put(true), Bool@ g1 := get();
-  Bool@ g2 := get(), Unit@ p2 := put(true);
+  Unit@ p1 := put(true), Bool@ g1 := get;
+  Bool@ g2 := get, Unit@ p2 := put(true);
   $(g2.true);
 }

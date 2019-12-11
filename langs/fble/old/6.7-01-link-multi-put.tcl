@@ -11,7 +11,7 @@ fble-test {
   Bool@ ~ get, put;
   Unit@ i0 := put(true);
   Unit@ i1 := put(false);
-  Bool@ t := get();
-  Bool@ f := get();
+  Bool@ t := get;
+  Bool@ f := get;
   $(Units@(t.true, f.false));
 }

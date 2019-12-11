@@ -5,8 +5,8 @@
 { String%; @(Str@); };
 
 # The 'cat' program to cat stdin.
-(Maybe@<Str@>-, Str@+){ Bool@!; } cat = (Maybe@<Str@>- stdin, Str@+ stdout) {
-  Maybe@<Str@> line := stdin();
+(Maybe@<Str@>!, Str@+){ Bool@!; } cat = (Maybe@<Str@>! stdin, Str@+ stdout) {
+  Maybe@<Str@> line := stdin;
   ?(line;
       just: {
         Unit@ _ := stdout(line.just);

@@ -337,8 +337,27 @@ bool FbleIsProcValue(FbleValue* value)
   return value->tag == FBLE_PROC_VALUE;
 }
 
-// FbleNewPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewPortValue(FbleValueArena* arena, size_t id)
+// FbleNewInputPortValue -- see documentation in fble-value.h
+FbleValue* FbleNewInputPortValue(FbleValueArena* arena, size_t id)
+{
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FblePortValue* get_port = FbleAlloc(arena_, FblePortValue);
+  FbleRefInit(arena, &get_port->_base.ref);
+  get_port->_base.tag = FBLE_PORT_VALUE;
+  get_port->id = id;
+
+  FbleGetProcValue* get = FbleAlloc(arena_, FbleGetProcValue);
+  FbleRefInit(arena, &get->_base._base.ref);
+  get->_base._base.tag = FBLE_PROC_VALUE;
+  get->_base.tag = FBLE_GET_PROC_VALUE;
+  get->port = &get_port->_base;
+  FbleRefAdd(arena, &get->_base._base.ref, &get->port->ref);
+  FbleValueRelease(arena, get->port);
+  return &get->_base._base;
+}
+
+// FbleNewOutputPortValue -- see documentation in fble-value.h
+FbleValue* FbleNewOutputPortValue(FbleValueArena* arena, size_t id)
 {
   FblePortValue* port_value = FbleAlloc(FbleRefArenaArena(arena), FblePortValue);
   FbleRefInit(arena, &port_value->_base.ref);
