@@ -591,72 +591,6 @@ Concrete Syntax:
 Example:
   Int@!
 
-6.2 Process Input Type
-----------------------
-Abstract Syntax:
-  Type ::= proc_input_type (type :: Type)
-
-Concrete Syntax:
-  type ::= type '-'
-
-Example:
-  Int@-
-
-An input port is a handle to a link that can be used to get values from
-the link. An input port is typed, so that only values of the given type can be
-taken from the port.
-
-An input port is created for every link that is created. An input port can be
-used as a process that takes a value off its link.
-
-6.3 Process Output Type
------------------------
-Abstract Syntax:
-  Type ::= proc_output_type (type :: Type)
-
-Concrete Syntax:
-  type ::= type '+'
-
-Example:
-  Int@+
-
-An output port is a handle to a link that can be used to put values onto the
-link. An output port is typed, so that only values of the given type can be
-put onto the link.
-
-An output port is created for every link that is created. An output port can
-be used as a process that puts a value onto its link.
-
-6.4 Process Get
----------------
-Abstract Syntax:
-  Expr ::= proc_get (port :: Expr)
-
-Concrete Syntax:
-  expr ::= expr '()'
-
-Example:
-  input()
-
-The port must have type input_type. If the port has type T@-, evaluates to a
-process value of type T@! that when executed gets the next value from the port.
-
-6.5 Process Put
----------------
-Abstract Syntax:
-  Expr ::= proc_put (port :: Expr) (value :: Expr)
-
-Concrete Syntax:
-  expr ::= expr '(' expr ')'
-
-Example:
-  output(3)
-
-The port must have type proc_output_type. If the port has type T@+, evaluates to a
-process value of type *()! that when executed puts the given value onto the
-port and returns a trivial struct value. The value put onto the port is evaluated
-as part of evaluation of the process.
-
 6.6 Process Eval
 ----------------
 Abstract Syntax:
@@ -682,9 +616,20 @@ Concrete Syntax:
 Example:
   Int@ ~ input, output; f(input, output)
 
-The body must have type process_type. When executed, creates a new link, then
-evaluates and executes the body with get and put ports of type type- and type+
+A link is an unbounded, unidirectional, first-in-first-out pipe for
+transferring typed data from one process to another. The primitive side
+effecting actions that a process can perform are putting a value onto a link
+and getting a taking a value off of a link.
+
+The body of the link process must have type process_type. When executed,
+a link process for link of type T@ creates a new link, then evaluates and
+executes the body with get and put processes of type T@! and (T@){*();}!
 respectively added to the context.
+
+The get process can be used to get the next value from the port, blocking the
+process until a value becomes available if necessary.
+
+The put process can be used to put a value onto a port.
 
 6.8 Process Exec
 ----------------
@@ -695,7 +640,7 @@ Concrete Syntax:
   stmt ::= type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
 
 Example:
-  Int@ x := getx(), Int@ y := gety(); $(add(x, y))
+  Int@ x := getx, Int@ y := gety; $(add(x, y))
 
 Executes each process in parallel, then evaluates and executes the body with
 the results of the processes assigned to variables in scope. The binding
@@ -1021,10 +966,6 @@ Expr ::=
  | func_apply (func :: Expr) (arg :: Expr)
 
  | proc_type (result :: Type)
- | proc_input_type (type :: Type)
- | proc_output_type (type :: Type)
- | proc_get (port :: Expr)
- | proc_put (port :: Expr) (value :: Expr)
  | proc_eval (expr :: Expr)
  | proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
  | proc_exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
@@ -1119,8 +1060,6 @@ expr ::=
  | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 
  | type '!'                                        (* proc_type *)
- | type '-'                                        (* proc_input_type *)
- | type '+'                                        (* proc_output_type *)
  | '$(' expr ')'                                   (* proc_eval *)
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
@@ -1153,9 +1092,8 @@ module ::= stmt                                                      (* module_v
 Notes:
 * struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* explicit type struct value, function apply, get, and put share the same
-  form. The type of the expr is used to distinguish between the four kinds of
-  expressions.
+* explicit type struct value and function apply, share the same form. The type
+  of the expr is used to distinguish between the two kinds of expressions.
 * The module value for module Foo is stored in Foo.fble. Public child modules
   of module Foo are stored in subdirectory Foo/ Private child modules are not
   yet supported in the abstract syntax.
@@ -1220,4 +1158,9 @@ Notes:
 
   All you can do to a put port is put, so just make it a process.
   All you can do to a get port is get, so just make it a process.
+  
+  Benefits:
+   - no more concept of ports, except maybe at the FFI boundary.
+   - no more concept of 'get' or 'put' processes, and no special syntax needed
+     therefore.
   

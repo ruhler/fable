@@ -1,4 +1,6 @@
 The Great Cleanup:
+* [lang] Remove input port and output port types get and put processes.
+* [clean] renumber sections and tests after remove excess process stuff.
 * [prgm] Have TicTacToe print its own board and such rather than need a custom
   fble-tictactoe.c program to drive it.
    - blocked on it being too hard to parse the input currently
