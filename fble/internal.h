@@ -20,7 +20,6 @@ typedef enum {
   FBLE_FUNC_VALUE_INSTR,
   FBLE_DESCOPE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
-  FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
   FBLE_EVAL_INSTR,
   FBLE_LINK_INSTR,
@@ -155,15 +154,6 @@ typedef struct {
   FbleLoc loc;
   bool exit;
 } FbleFuncApplyInstr;
-
-// FbleGetInstr -- FBLE_GET_INSTR
-//   Allocate an FbleGetProcValue.
-//
-// data_stack: ..., port
-//         ==> ..., get(port)
-typedef struct {
-  FbleInstr _base;
-} FbleGetInstr;
 
 // FblePutInstr -- FBLE_PUT_INSTR
 //   Allocate an FblePutProcValue.
