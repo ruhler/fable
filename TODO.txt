@@ -1,6 +1,4 @@
 The Great Cleanup:
-* [lang] Read through langs/fble.txt and make sure it is up to date with the
-  latest syntax, etc.
 * [prgm] Split TicTacToe implementation up into different modules
   - Game, AI, UI, Test, etc. And clean up the code in the process as much as
     possible.

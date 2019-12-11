@@ -46,14 +46,14 @@ to make structs suitable for describing and manipulating namespaces.
 ---------
 Data values and the expressions that describe them are strongly typed. A
 value's type describes the kinds of operations that can legally be performed
-on that value. Types are used to check that an fble programs is well formed
+on that value. Types are used to check that an fble program is well formed
 statically. Types do not take meaningful part in the dynamic execution of an
 fble program after it has been statically checked.
 
 Types are themselves treated as data values in fble, which allows us to reuse
-variables, lets, polymorphism, and structs for both types in addition to
+variables, lets, polymorphism, and structs for types in addition to
 normal values. This means an expression can be used to describe either a
-normal value or a type, and that types themselves have types.
+normal value or a type and that types themselves have types.
 
 To ensure all type information is available at compile time, there is a
 one-to-one mapping between a type and the type of that type. As a consequence,
@@ -195,6 +195,9 @@ type in the bindings, and a concrete type in the body of the let.
 Bindings are allowed to defined variables with the same name as variables
 already in scope, thus shadowing the variable already in scope.
 
+TODO: Clarify whether two variables bound by the same let can have the same
+name.
+
 3. Structs
 ----------
 A struct value is a grouping of other values. The items of a struct are
@@ -311,7 +314,7 @@ Example:
 
 Struct import is a short hand form of let expression that allows you to
 introduce new variables in scope. The object must be a struct
-value. The body of import is evaluated in the current scope augmented with
+value. The body of the import is evaluated in the current scope augmented with
 variables formed from the fields of the struct value. The type of the
 expression is the type of the body of the expression.
 
@@ -337,12 +340,12 @@ The following two are equivalent:
   
 The typical use of struct import is to import a subset of values from an
 existing namespace into the current namespace using a combination of struct
-import and implict type struct value construction. For example:
+import and implicit type struct value construction. For example:
 
   { StdLib; @(Bool, Maybe, List); };
   ...
 
-Has the effect of importing just Bool, Maybe, and List from StdLib.
+This has the effect of importing just Bool, Maybe, and List from StdLib.
 
 Note that you can also make use of this construct with implicit type struct
 values for defining a variable without having to explicitly specify its type.
@@ -358,7 +361,7 @@ Or, as another example, the following two are equivalent:
 
 4. Unions
 ---------
-A union value is a particular value chosen amongst a group of possible values.
+A union value is a particular value chosen from a group of possible values.
 The possible choices are organized into a finite number of fields. Each field
 has a name, used to identify the field, and a type, specifying the type of
 value for that field.
@@ -538,7 +541,7 @@ in the context of the supplied argument.
 
 The concrete syntax allows you to specify multiple arguments in a function
 application. This is syntactic sugar for repeated single argument function
-application. For example, the following three expressions describe the same
+application. For example, the following two expressions describe the same
 expression:
   foo(a, b, c)
   foo(a)(b)(c)
@@ -626,10 +629,10 @@ a link process for link of type T@ creates a new link, then evaluates and
 executes the body with get and put processes of type T@! and (T@){*();}!
 respectively added to the context.
 
-The get process can be used to get the next value from the port, blocking the
+The get process can be used to get the next value from the link, blocking the
 process until a value becomes available if necessary.
 
-The put process can be used to put a value onto a port.
+The put process can be used to put a value onto the link.
 
 6.4 Process Exec
 ----------------
@@ -669,7 +672,7 @@ function types describe the type of functions.
 
 Two poly kinds are equal if they have the same argument and return kinds.
 
-The is no syntax to describe the kind of a normal value, because there is no
+There is no syntax to describe the kind of a normal value, because there is no
 need. You can use normal functions with polymorphic types in that case, rather
 than use polymorphic expressions with normal kinds.
 
@@ -1092,7 +1095,7 @@ module ::= stmt                                                      (* module_v
 Notes:
 * struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* explicit type struct value and function apply, share the same form. The type
+* explicit type struct value and function apply share the same form. The type
   of the expr is used to distinguish between the two kinds of expressions.
 * The module value for module Foo is stored in Foo.fble. Public child modules
   of module Foo are stored in subdirectory Foo/ Private child modules are not
