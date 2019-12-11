@@ -4,7 +4,7 @@
 { Maybe%; @(Maybe@, Just, Nothing, MapMaybe, For); };
 { Monoid%; @(Monoid@); };
 { Process%; @(Get@, Put@); };
-{ List%; @(S@, S, Concat, FoldS, MapS, SeqS, ForS); };
+{ List%; @(S@, S, Append, Concat, FoldS, MapS, SeqS, ForS); };
 { Char%; @(Char@, newline); };
 { String%; @(Str@, Str); };
 
@@ -460,11 +460,12 @@ Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
 };
 
 (Board@) { Str@; } ShowBoard = (Board@ b) {
+  Str@ _ = Str(Char@|' ');
   Concat<Char@>(S<Str@>([
     Str(Char@|'  1 2 3'), S<Char@>([newline]),
-    Str(Char@|'A'), ShowSquare(b.ul), ShowSquare(b.uc), ShowSquare(b.ur), S<Char@>([newline]),
-    Str(Char@|'B'), ShowSquare(b.ml), ShowSquare(b.mc), ShowSquare(b.mr), S<Char@>([newline]),
-    Str(Char@|'C'), ShowSquare(b.ll), ShowSquare(b.lc), ShowSquare(b.lr), S<Char@>([newline])]));
+    Str(Char@|'A '), ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), S<Char@>([newline]),
+    Str(Char@|'B '), ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), S<Char@>([newline]),
+    Str(Char@|'C '), ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), S<Char@>([newline])]));
 };
 
 (Player@) { Str@; } ShowPlayer = (Player@ p) {
@@ -475,11 +476,11 @@ Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
   ?(s; Move: Concat<Char@>(S<Str@>([
          Str(Char@|'Player '),
          ShowPlayer(s.Move),
-         Str(Char@|'move:')])),
+         Str(Char@|' move:')])),
        Win: Concat<Char@>(S<Str@>([
          Str(Char@|'GAME OVER: Player '),
          ShowPlayer(s.Move),
-         Str(Char@|'wins.')])),
+         Str(Char@|' wins.')])),
        Draw: Str(Char@|'GAME OVER: Draw.')
   );
 };
@@ -487,6 +488,7 @@ Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
 (Output@) { Str@; } ShowOutput = (Output@ out) {
   Concat<Char@>(S<Str@>([
     ShowBoard(out.board),
+    S<Char@>([newline]),
     ShowStatus(out.status),
     S<Char@>([newline])]));
 };
@@ -518,7 +520,31 @@ Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
       nil: Nothing<Input@>);
 };
 
-@(NewGame, BenchmarkChooseBestMove);
+(Get@<Maybe@<Str@>>, Put@<Str@>){Bool@!;}
+NewGameStdio = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
+  Get@<Input@> in = {
+    Maybe@<Str@> s := input;
+    ?(s; just: {
+            Maybe@<Input@> mi = ParseInput(s.just);
+            ?(mi; just: $(mi.just),
+                  nothing: {
+                     Unit@ _ := output(Concat<Char@>(S<Str@>([
+                       Str(Char@|'invalid input: '),
+                       Str(Char@|'expected {A,B,C}{1,2,3}, P, or R'),
+                       Str([newline])])));
+                       in;
+                  });
+         },
+         nothing: $(Input@(quit: Unit)));
+  };
+
+  Put@<Output@> out = (Output@ o) { output(ShowOutput(o)); };
+
+  Unit@ _ := NewGame(in, out);
+  $(True);
+};
+
+@(NewGame, NewGameStdio, BenchmarkChooseBestMove);
 
 # TODO:
 # * Be able to easily combine multiple test cases

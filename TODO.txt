@@ -1,7 +1,4 @@
 The Great Cleanup:
-* [prgm] Have TicTacToe print its own board and such rather than need a custom
-  fble-tictactoe.c program to drive it.
-   - blocked on it being too hard to parse the input currently
 * [lang] Read through langs/fble.txt and make sure it is up to date with the
   latest syntax, etc.
 * [prgm] Split TicTacToe implementation up into different modules

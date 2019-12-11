@@ -58,7 +58,6 @@ gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble
 gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble
 gcc_prgm -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble
 gcc_prgm -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble
-gcc_prgm -o $::bin/fble-tictactoe $::obj/fble-tictactoe.o -lfble
 gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble
 gcc_prgm -o $::bin/fble-stdio $::obj/fble-stdio.o -lfble
 
