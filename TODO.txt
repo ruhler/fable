@@ -1,4 +1,7 @@
 The Great Cleanup:
+* Port rest of fblc tests to fble.
+* Port rest of fblc programs to fble.
+* Increase spec test coverage as much as feasible.
 * [prgm] Split TicTacToe implementation up into different modules
   - Game, AI, UI, Test, etc. And clean up the code in the process as much as
     possible.
@@ -8,8 +11,6 @@ The Great Cleanup:
 * Figure out how to make a version of 7.4-06-* for values.
   Since renamed to 2.5-let/regression/bad-mutually-recursive-type.tcl
 * Improve test coverage around polymorphic types.
-* Port rest of fblc tests and programs to fble.
-  - fblc spec test coverage
 * Remove iquota from Thread data structure. It should be managed separately.
 
 The Harder Cleanup:
