@@ -2385,6 +2385,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       for (size_t i = 0; i < argc; ++i) {
         arg_types[i] = CompileType(arena, vars, func_value_expr->args.xs[i].type);
         error = error || arg_types[i] == NULL;
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(&func_value_expr->args.xs[i].name, &func_value_expr->args.xs[j].name)) {
+            error = true;
+            ReportError(arena_, &func_value_expr->args.xs[i].name.loc,
+                "duplicate arg name '%n'\n",
+                &func_value_expr->args.xs[i].name);
+          }
+        }
       }
 
       if (error) {

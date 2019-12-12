@@ -2,15 +2,6 @@ The Great Cleanup:
 * [prgm] Split TicTacToe implementation up into different modules
   - Game, AI, UI, Test, etc. And clean up the code in the process as much as
     possible.
-* [lang] Are multi-arg functions with duplicate arg names allowed?
-  Is this a generalization of variable shadowing?
-  It actually seems reasonable. For example, if you want to ignore multiple
-  arguments, using '_' as their name?
-  On the flip side, variable shadowing does not make sense for let
-  expressions. So are multi-arg functions more like nested single arg
-  functions or lets?
-  Answer: don't allow duplicate arg names. It's not useful. We can relax the
-  restriction later if we find it to be useful.
 * [test] multi arg func, poly, kind are equivalent to nested single arg.
 * Test that explicit type struct values can take type args and poly args?
   And same for all other kinds of struct expressions.

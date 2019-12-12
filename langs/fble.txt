@@ -523,6 +523,10 @@ arguments are supplied for the function to be fully applied.
 Multi-argument functions can be used to have O(N) application in the case of N
 arguments, whereas nested single-argument functions would require O(N^2) time.
 
+Arguments to multi-argument functions must have distinct names, because it's
+more likely you gave multiple arguments the same name accidentally than on
+purpose.
+
 5.3 Function Application
 ------------------------
 Abstract Syntax:
