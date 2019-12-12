@@ -281,7 +281,6 @@ static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name
 //
 //   This uses a printf-like format string. The following format specifiers
 //   are supported:
-//     %% - literal '%'
 //     %i - size_t
 //     %k - Kind*
 //     %n - FbleName*
@@ -310,16 +309,6 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
     fprintf(stderr, "%.*s", p - fmt, fmt);
 
     switch (*(p + 1)) {
-      case '\0': {
-        assert(false && "Trailing % in format string");
-        break;
-      }
-
-      case '%': {
-        fprintf(stderr, "%c", '%');
-        break;
-      }
-
       case 'i': {
         size_t x = va_arg(ap, size_t);
         fprintf(stderr, "%d", x);
@@ -345,7 +334,6 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
       }
       
       default: {
-        fprintf(stderr, "FORMAT '%%%c'\n", *(p + 1));
         UNREACHABLE("Unsupported format conversion.");
         break;
       }
@@ -1824,14 +1812,14 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
 
   if (name->space == FBLE_TYPE_NAME_SPACE && kind_level != 2) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
-        "expected a type type for field named '%n', but found normal type %t\n",
+        "expected a type type for field named '%n', but found type %t\n",
         name, type);
     return false;
   }
 
   if (name->space == FBLE_NORMAL_NAME_SPACE && kind_level != 1) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
-        "expected a normal type for field named '%n', but found type type %t\n",
+        "expected a normal type for field named '%n', but found type %t\n",
         name, type);
     return false;
   }
