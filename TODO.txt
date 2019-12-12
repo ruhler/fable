@@ -11,15 +11,11 @@ The Great Cleanup:
   functions or lets?
   Answer: don't allow duplicate arg names. It's not useful. We can relax the
   restriction later if we find it to be useful.
-* [test] Rename tests to match new spec, and clean up tests.
-   typeof, var, let,
-   func_bind
-   proc_link, proc_exec
-   poly_value, poly_apply
 * [test] multi arg func, poly, kind are equivalent to nested single arg.
 * Test that explicit type struct values can take type args and poly args?
   And same for all other kinds of struct expressions.
 * Figure out how to make a version of 7.4-06-* for values.
+  Since renamed to 2.5-let/regression/bad-mutually-recursive-type.tcl
 * Improve test coverage around polymorphic types.
 * Port rest of fblc tests and programs to fble.
   - fblc spec test coverage

@@ -2,7 +2,7 @@ fble-test {
   @ Unit@ = *();
   @ Int@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
 
-  # There should be no issue with having zeroify be recursively defined.
+  # Recursive functions are allowed.
   (Int@) { Int@; } zeroify = (Int@ x) {
     ?(x; 0: x,
          1: zeroify(Int@(0: Unit@())),
@@ -11,3 +11,4 @@ fble-test {
   };
   zeroify(Int@(3: Unit@())).0;
 }
+

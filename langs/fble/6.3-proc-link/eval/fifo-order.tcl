@@ -7,7 +7,7 @@ fble-test {
   @ Units@ = *(Unit@ a, Unit@ b);
 
   # It should be fine to put multiple values on a link before getting them,
-  # and they should come out in proper order.
+  # and they should come out in fifo order.
   Bool@ ~ get, put;
   Unit@ i0 := put(true);
   Unit@ i1 := put(false);
