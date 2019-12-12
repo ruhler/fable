@@ -1757,13 +1757,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
     }
 
-    case FBLE_ENTER_SCOPE_INSTR: {
-      FbleEnterScopeInstr* enter_scope_instr = (FbleEnterScopeInstr*)instr;
-      FbleFreeInstrBlock(arena, enter_scope_instr->block);
-      FbleFree(arena, instr);
-      return;
-    }
-
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
       FbleFreeInstrBlock(arena, func_value_instr->body);

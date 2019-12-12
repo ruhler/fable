@@ -1043,12 +1043,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         break;
       }
 
-      case FBLE_ENTER_SCOPE_INSTR: {
-        FbleEnterScopeInstr* enter_scope_instr = (FbleEnterScopeInstr*)instr;
-        thread->scope_stack = EnterScope(arena_, enter_scope_instr->block, thread->scope_stack);
-        break;
-      }
-
       case FBLE_EXIT_SCOPE_INSTR: {
         thread->scope_stack = ExitScope(arena, thread->scope_stack);
         FbleProfileExitBlock(arena_, thread->profile);

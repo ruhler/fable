@@ -29,7 +29,6 @@ typedef enum {
   FBLE_LET_PREP_INSTR,
   FBLE_LET_DEF_INSTR,
   FBLE_STRUCT_IMPORT_INSTR,
-  FBLE_ENTER_SCOPE_INSTR,
   FBLE_EXIT_SCOPE_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_VPUSH_INSTR,
@@ -262,15 +261,6 @@ typedef struct {
   FbleInstr _base;
   FbleLoc loc;
 } FbleStructImportInstr;
-
-// FbleEnterScopeInstr -- FBLE_ENTER_SCOPE_INSTR
-//
-// scope_stack: ...
-//          ==> ..., [block]
-typedef struct {
-  FbleInstr _base;
-  FbleInstrBlock* block;
-} FbleEnterScopeInstr;
 
 // FbleExitScopeInstr -- FBLE_EXIT_SCOPE_INSTR
 //
