@@ -11,4 +11,3 @@ fble-test {
   };
   zeroify(Int@(3: Unit@())).0;
 }
-

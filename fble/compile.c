@@ -2518,11 +2518,18 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_LINK_EXPR: {
       *time += 1;
       FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
+      if (FbleNamesEqual(&link_expr->get, &link_expr->put)) {
+        ReportError(arena_, &link_expr->put.loc,
+            "duplicate port name '%n'\n",
+            &link_expr->put);
+        return NULL;
+      }
+
       Type* port_type = CompileType(arena, vars, link_expr->type);
       if (port_type == NULL) {
         return NULL;
       }
-
+      
       ProcType* get_type = FbleAlloc(arena_, ProcType);
       FbleRefInit(arena, &get_type->_base.ref);
       get_type->_base.tag = PROC_TYPE;
@@ -2780,6 +2787,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           assert(binding->kind == NULL);
           nvd[i].type = CompileType(arena, vars, binding->type);
           error = error || (nvd[i].type == NULL);
+        }
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(&let_expr->bindings.xs[i].name, &let_expr->bindings.xs[j].name)) {
+            ReportError(arena_, &let_expr->bindings.xs[i].name.loc,
+                "duplicate variable name '%n'\n",
+                &let_expr->bindings.xs[i].name);
+            error = true;
+          }
         }
       }
 

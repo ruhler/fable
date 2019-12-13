@@ -193,10 +193,8 @@ provided for a type variable, the type variable will behave as an abstract
 type in the bindings, and a concrete type in the body of the let.
 
 Bindings are allowed to defined variables with the same name as variables
-already in scope, thus shadowing the variable already in scope.
-
-TODO: Clarify whether two variables bound by the same let can have the same
-name.
+already in scope, thus shadowing the variable already in scope. Except that
+the variables defined in a single let expression must have distinct names.
 
 3. Structs
 ----------
