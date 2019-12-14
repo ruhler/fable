@@ -274,7 +274,7 @@ static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
 static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
-static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time);
+static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time);
 
 // ReportError -- 
 //   Report a compiler error.
@@ -3031,7 +3031,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         Kind* expected_kind = poly_kind->arg;
         Kind* actual_kind = GetKind(arena_, pat->arg);
         if (!KindsEqual(expected_kind, actual_kind)) {
-          ReportError(arena_, &pat->arg->loc,
+          ReportError(arena_, &apply->arg->loc,
               "expected kind %k, but found %k\n",
               expected_kind, actual_kind);
           error = true;
@@ -3644,7 +3644,6 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
 //   blocks - the vector of block locations to populate.
 //   name - a sequence of names describing the current location in the code.
 //          Used for naming profiling blocks.
-//   exit - if true, generate instructions to exit the current scope when done.
 //   vars - the list of variables in scope.
 //   prgm - the program to compile.
 //   instrs - vector of instructions to append new instructions to.
@@ -3663,7 +3662,7 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
 //   TypeRelease when it is no longer needed.
 //   Increments 'time' by the amount of time required to execute this
 //   program.
-static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time)
+static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time)
 {
   *time += 1 + prgm->modules.size;
 
@@ -3688,7 +3687,7 @@ static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name
     PushVar(arena_, vars, prgm->modules.xs[i].name, types[i]);
   }
 
-  Type* rtype = CompileExpr(arena, blocks, name, exit, vars, prgm->main, instrs, time);
+  Type* rtype = CompileExpr(arena, blocks, name, true, vars, prgm->main, instrs, time);
   for (size_t i = 0; i < prgm->modules.size; ++i) {
     PopVar(arena_, vars);
     TypeRelease(arena, types[i]);
@@ -3698,12 +3697,6 @@ static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name
     return NULL;
   }
 
-  if (!exit) {
-    FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-    descope->_base.tag = FBLE_DESCOPE_INSTR;
-    descope->count = prgm->modules.size;
-    FbleVectorAppend(arena_, *instrs, &descope->_base);
-  }
   return rtype;
 }
 
@@ -3751,7 +3744,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   vars.nvars = 0;
 
   TypeArena* type_arena = FbleNewRefArena(arena, &TypeFree, &TypeAdded);
-  Type* type = CompileProgram(type_arena, blocks, &name, true, &vars, program, &block->instrs, body_time);
+  Type* type = CompileProgram(type_arena, blocks, &name, &vars, program, &block->instrs, body_time);
   TypeRelease(type_arena, type);
   FbleDeleteRefArena(type_arena);
 

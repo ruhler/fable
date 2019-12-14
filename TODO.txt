@@ -28,9 +28,6 @@ The Harder Cleanup:
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
 * Better error message when the difference between a type is accidentally
   defining + vs. *, and it contains substituted polymorphic type variables.
-* It's very unintuitive that $(f(...)) calls f(...) before executing the
-  process $(...). Clarify the spec on that and make sure we implement it
-  correctly. And think about the other kinds of procs too, like put and get.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
 
 Programs:
@@ -38,6 +35,9 @@ Programs:
 * [prgm] Sudoku
 
 Performance Refactor:
+* It's very unintuitive that $(f(...)) calls f(...) before executing the
+  process $(...). Clarify the spec on that and make sure we implement it
+  correctly. And think about the other kinds of procs too, like put and get.
 * Consider replacing $(...) with ${...} where the body of the eval is not
   evaluated until you execute the eval.
 * Figure out why the tictactoe AI was 4 times faster when using a process
@@ -49,8 +49,6 @@ Performance Refactor:
 * [prgm] Optimize Md5.cls function
   - change << and >> to take number of bits to shift instead of a single bit.
   - change cls to use or(x << n, x >> (K - n))
-
-Future Work:
 * [perf] Collect benchmarks somewhere?
   - md5 run on 6k file. ~7 minutes
   - tictactoe find best move for empty board. ~3 minutes
@@ -61,6 +59,8 @@ Future Work:
 * [perf] Optimize FbleRefAdd
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
+
+Future Work:
 
 Fble Lib:
 * Should Eq just be a function or an interface?
