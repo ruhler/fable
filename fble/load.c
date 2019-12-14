@@ -153,20 +153,13 @@ static bool ResolvePath(FbleArena* arena, const char* root, FbleNameV base, Fble
     FbleFree(arena, path.xs);
   }
 
-  FbleReportError("module ", &ref->path.xs[0].loc);
+  FbleReportError("module ", &ref->path.xs[ref->path.size-1].loc);
   const char* slash = "";
   for (size_t i = 0; i < ref->path.size; ++i) {
     fprintf(stderr, "%s%s", slash, ref->path.xs[i].name);
     slash = "/";
   }
   fprintf(stderr, "%% not found\n");
-  fprintf(stderr, "referenced from within ");
-  slash = "";
-  for (size_t i = 0; i < base.size; ++i) {
-    fprintf(stderr, "%s%s", slash, base.xs[i].name);
-    slash = "/";
-  }
-  fprintf(stderr, "%%\n");
   return false;
 }
 

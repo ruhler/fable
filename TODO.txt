@@ -1,6 +1,7 @@
 The Great Cleanup:
 * Increase spec test code coverage as much as feasible.
 * Ensure there are basic tests for all language constructs.
+  - basic typeof, basic poly apply? basic kind?
 * Port rest of fblc programs to fble.
 * [prgm] Split TicTacToe implementation up into different modules
   - Game, AI, UI, Test, etc. And clean up the code in the process as much as
