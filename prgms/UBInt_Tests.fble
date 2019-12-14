@@ -1,0 +1,46 @@
+
+{ Bool%; @(Bool@, Not); };
+{ Char%; @(Char@); };
+{ List%; @(S@, S, Append); };
+{ String%; @(Str@, CharLit@, Str); };
+{ Test%; @(TestResult@, Test@); };
+{ Unit%; @(Unit); };
+
+{ UBInt%; @(Int@,
+  0, 1, 2, 3, 4, 5, Lit2,
+  EqInt, Neg, Add, Sub, Mul);
+};
+
+@ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
+
+(CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
+  Test@(Append<Char@>(Str(Char@|'UBInt.'), Str(name)), {
+    Bool@ x := p;
+    ?(x;
+       true: $(TestResult@(pass: Unit)),
+       false: $(TestResult@(fail: Str(Char@|failed))));
+  });
+};
+
+(CharLit@, Int@, Int@!){Test@;} TEq = (CharLit@ name, Int@ a, Int@! b) {
+  # TODO: Provide a custom error message
+  T(name, { Int@ x := b; $(EqInt(a, x)); });
+};
+
+S@<Test@> Tests = S<Test@>([
+  T(Char@|Eq_0_0, $(EqInt(0, 0))),
+  T(Char@|Eq_0_1, $(Not(EqInt(0, 1)))),
+  T(Char@|Eq_4_4, $(EqInt(4, 4))),
+  T(Char@|Eq_5_5, $(EqInt(5, 5))),
+  T(Char@|Eq_4_5, $(Not(EqInt(4, 5)))),
+  T(Char@|Eq_5_m5, $(Not(EqInt(5, Neg(5))))),
+  T(Char@|Eq_m1_m1, $(EqInt(Neg(5), Neg(5)))),
+  TEq(Char@|Add_2_3, 5, $(Add(2, 3))),
+  TEq(Char@|Add_3_m5, Neg(2), $(Add(3, Neg(5)))),
+  TEq(Char@|Sub_5_3, 2, $(Sub(5, 3))),
+  TEq(Char@|Sub_3_5, Neg(2), $(Sub(3, 5))),
+  TEq(Char@|Neg_m2, 2, $(Neg(Neg(2)))),
+  TEq(Char@|Mul_3_5, Lit2(1, 5), $(Mul(3, 5)))
+]);
+
+@(Tests);

@@ -1,8 +1,9 @@
 The Great Cleanup:
 * Increase spec test code coverage as much as feasible.
+* Char@|foo reports 3 duplicate errors if Char@ is not defined.
+  It should only report one.
 * Ensure there are basic tests for all language constructs.
   - basic typeof, basic poly apply? basic kind?
-* Port rest of fblc programs to fble.
 * [prgm] Split TicTacToe implementation up into different modules
   - Game, AI, UI, Test, etc. And clean up the code in the process as much as
     possible.
@@ -62,7 +63,6 @@ Performance Refactor:
  - replace all AddToVector callbacks in ref.c if feasible.
 
 Future Work:
-
 Fble Lib:
 * Should Eq just be a function or an interface?
 * Random number generator / tester?

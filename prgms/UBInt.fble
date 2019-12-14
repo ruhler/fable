@@ -1,0 +1,144 @@
+
+{ Unit%; @(Unit@, Unit); };
+{ Bool%; @(Bool@, True, False); };
+
+# The following type is used to represent (unbounded) integers.
+# Note that this representation allows multiple ways of representing each
+# integer, because 2*0 = 0 and 2*(-1)+1 = -1.
+# Functions that operate on integers should work for all the representations
+# of various numbers. They should not assume the smallest representation for
+# a number and in general need not produce the smallest representation for a
+# number, though they should if all the arguments are in their most compact
+# form.
+@ Int@ = +(
+  Unit@ 0,
+  Unit@ m1,
+  Int@ 2x,
+  Int@ 2xp1
+);
+
+(Int@, Int@){ Bool@; } EqInt = (Int@ a, Int@ b) {
+  # For now, just assume the args are both in canonical form.
+  ?(a ;
+      0:    ?(b ; 0: True,  m1: False, 2x: False,        2xp1: False),
+      m1:   ?(b ; 0: False, m1: True,  2x: False,        2xp1: False),
+      2x:   ?(b ; 0: False, m1: False, 2x: EqInt(a.2x, b.2x), 2xp1: False),
+      2xp1: ?(b ; 0: False, m1: False, 2x: False,        2xp1: EqInt(a.2xp1, b.2xp1)));
+};
+
+# The integer 0
+Int@ 0 = Int@(0: Unit);
+
+# The integer (-1)
+Int@ Minus1 = Int@(m1: Unit);
+
+# 2 * x
+(Int@){ Int@; } Double = (Int@ x) {
+  Int@ doubled = Int@(2x: x);
+  ?(x; 0: 0, m1: doubled, 2x: doubled, 2xp1: doubled);
+};
+
+# 2 * x + 1
+(Int@){ Int@; } DoublePlus1 = (Int@ x) {
+  Int@ doubled_plus_1 = Int@(2xp1: x);
+  ?(x; 0: doubled_plus_1, m1: Minus1, 2x: doubled_plus_1, 2xp1: doubled_plus_1);
+};
+
+Int@ 1 = DoublePlus1(0);
+Int@ 2 = Double(1);
+Int@ 3 = DoublePlus1(1);
+Int@ 4 = Double(2);
+Int@ 5 = DoublePlus1(2);
+Int@ 6 = Double(3);
+Int@ 7 = DoublePlus1(3);
+Int@ 8 = Double(4);
+Int@ 9 = DoublePlus1(4);
+Int@ 10 = Double(5);
+
+# a + 1
+(Int@){ Int@; } Add1 = (Int@ a) {
+  ?(a ; 
+      0:    DoublePlus1(0),           # 0 + 1 = 2*0+1
+      m1:   0,                        # -1 + 1 = 0
+      2x:   DoublePlus1(a.2x),        # 2*d + 1 = 2d*+1
+      2xp1: Double(Add1(a.2xp1)));    # 2*d+1 + 1 = 2*(d+1)
+};
+
+# a - 1
+(Int@){ Int@; } Sub1 = (Int@ a) {
+  ?(a ;
+      0:    Minus1,                   # 0-1 = -1
+      m1:   Double(Minus1),           # -1-1 = 2*(-1)
+      2x:   DoublePlus1(Sub1(a.2x)),  # 2*d-1 = 2*(d-1)+1
+      2xp1: Double(a.2xp1));          # 2*d+1-1 = 2*d
+};
+
+# a + b
+(Int@, Int@) { Int@; } Add = (Int@ a, Int@ b) {
+  ?(a ;
+     0: b,                                     # 0 + b = b
+     m1: ?(b;
+       0:    a,                                # a + 0 = a
+       m1:   Double(Minus1),                   # -1 + -1 = 2*(-1)
+       2x:   DoublePlus1(Add(b.2x, Minus1)),   # -1 + 2*d = 2*(d-1)+1
+       2xp1: Double(b.2xp1)),                  # -1 + (2*d+1) = 2*d
+     2x: ?(b;
+       0:    a,                                # a + 0 = a
+       m1:   DoublePlus1(Add(a.2x, Minus1)),   # 2*d + -1 = 2*(d-1)+1
+       2x:   Double(Add(a.2x, b.2x)),          # 2*d + 2*e = 2*(d+e)
+       2xp1: DoublePlus1(Add(a.2x, b.2xp1))),  # 2*d + 2*e+1 = 2*(d+e)+1
+     2xp1: ?(b;
+       0:    a,                                    # a + 0 = a
+       m1:   Double(a.2xp1),                       # 2*d+1 + -1 = 2*d
+       2x:   DoublePlus1(Add(a.2xp1, b.2x)),       # 2*d+1 +2*e = 2*(d+e)+1
+       2xp1: Double(Add1(Add(a.2xp1, b.2xp1)))));  # 2*d+1 + 2*e+1 = 2*((d+e)+1)
+};
+
+# -a 
+(Int@){ Int@; } Neg = (Int@ a) {
+  ?(a ;
+    0:    0,                               # -0 = 0
+    m1:   DoublePlus1(0),                  # -(-1) = 2*0+1
+    2x:   Double(Neg(a.2x)),               # -(2*d) = 2*(-d)
+    2xp1: Sub1(Double(Neg(a.2xp1))));      # -(2*d+1) = 2*(-d)-1
+};
+
+# a - b 
+(Int@, Int@){ Int@; } Sub = (Int@ a, Int@ b) {
+  # a - b = a + (-b)
+  Add(a, Neg(b));
+};
+
+# a * b
+(Int@, Int@){ Int@; } Mul = (Int@ a, Int@ b) {
+  ?(a ; 
+    0:  0,            # 0 * b = 0
+    m1: Neg(b),       # -1 * b = -b
+    2x: ?(b ; 
+      0:    0,                                # 2*x * 0 = 0
+      m1:   Double(Neg(a.2x)),                # 2*x * -1 = 2*(-x)
+      2x:   Double(Double(Mul(a.2x, b.2x))),  # 2*x * 2*y = 2*(2*(x*y))
+      2xp1: Add(Double(Double(Mul(a.2x, b.2xp1))), Double(a.2x))), # 2*x * (2*y+1) = 2*2*x*y + 2*x
+    2xp1: ?(b ;
+      0:    0,                             # (2*x+1) * 0 = 0
+      m1:   Sub1(Double(Neg(a.2xp1))),     # (2*x+1) * -1 = 2*(-x) - 1
+      2x:   Add(Double(Double(Mul(a.2xp1, b.2x))), Double(b.2x)),  # (2*x+1) * 2*y = 2*2*x*y + 2*y
+      2xp1: Add(   # (2*x+1) * (2*y+1) = 2*2*x*y + 2*x + (2*y +1)
+              Add(
+               Double(Double(Mul(a.2xp1, b.2xp1))),
+               Double(a.2xp1)),
+              b)));
+};
+
+Int@ 100 = Mul(10, 10);
+
+(Int@, Int@){Int@;} Lit2 = (Int@ a, Int@ b) {
+  Add(Mul(10, a), b);
+};
+
+(Int@, Int@, Int@){Int@;} Lit3 = (Int@ a, Int@ b, Int@ c) {
+  Add(Mul(100, a), Lit2(b, c));
+};
+
+@(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Lit2, Lit3,
+  EqInt, Add, Sub, Neg, Mul);

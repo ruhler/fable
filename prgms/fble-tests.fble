@@ -9,6 +9,7 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   Test%.Tests,
   List_Tests%.Tests,
   UBNat_Tests%.Tests,
+  UBInt_Tests%.Tests,
   Primes_Tests%.Tests,
   Md5_Tests%.Tests
 ]));
