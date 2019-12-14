@@ -1,4 +1,4 @@
-fble-test-error 7:7 {
+fble-test-error 2:7 {
   { Unit%; @(True); };
 
   True.true;

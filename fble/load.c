@@ -111,17 +111,13 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //   true if the module was successfully resolved, false otherwise.
 //
 // Side effects:
-//   Sets 'resolved' to the resolved absolute path. Prints a message to stderr
-//   in case of failure to resolve the reference.
+//   Sets 'resolved' to the resolved absolute path. The caller is responsible
+//   for freeing the resolved->xs when no longer required.
+//   Prints a message to stderr in case of failure to resolve the reference.
 static bool ResolvePath(FbleArena* arena, const char* root, FbleNameV base, FbleModuleRef* ref, FbleNameV* resolved)
 {
-  if (ref->is_absolute) {
-    *resolved = ref->path;
-    return true;
-  }
-
   // Check for all possible paths from the base.
-  for (size_t j = 0; j <= base.size; ++j) {
+  for (size_t j = ref->is_absolute ? base.size : 0; j <= base.size; ++j) {
     size_t k = base.size - j;
 
     FbleNameV path;
@@ -274,9 +270,8 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
     for (Stack* s = stack; s != NULL; s = s->tail) {
       if (PathsEqual(resolved, s->path)) {
-        // TODO: Improve the error message.
-        FbleReportError("recursive module dependency detected\n",
-            &s->path.xs[s->path.size-1].loc);
+        FbleName* module = resolved.xs + resolved.size - 1;
+        FbleReportError("recursive module dependency\n", &module->loc);
         return NULL;
       }
     }
