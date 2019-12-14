@@ -1,7 +1,7 @@
 fble-test {
-  { Bool%; @(Bool@, True, False); };
-
-  True.true;
+  # It's fine to refer to the same module more than once.
+  Bool%.Bool@ true = Bool%.True;
+  true.true;
 } {
   Bool {
     @ Unit@ = *();

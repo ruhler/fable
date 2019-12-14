@@ -1,4 +1,6 @@
 The Great Cleanup:
+* Fix memory management of resolved paths in FbleLoad.
+* Improve error location for recursive modules.
 * Increase spec test code coverage as much as feasible.
 * Ensure there are basic tests for all language constructs.
 * Port rest of fblc programs to fble.

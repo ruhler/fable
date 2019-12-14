@@ -239,7 +239,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       PathToName(arena, stack->path, &module->name);
       module->value = stack->value;
       Stack* tail = stack->tail;
-      FbleFree(arena, stack->path.xs);
+      FbleFree(arena, stack->path.xs);  // BUG HERE: Freeing what we don't mean to
       FbleFree(arena, stack->module_refs.xs);
       FbleFree(arena, stack);
       stack = tail;

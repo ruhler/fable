@@ -842,8 +842,8 @@ For example, you might have the following directory structure:
      Impl.fble
      Tests.fble
     
-9.2 Paths
----------
+9.2 Path
+--------
 Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
 descendants of that module. The only restrictions on module dependencies is
@@ -854,9 +854,7 @@ A module is referred to using either an absolute or a relative path. An
 absolute path describes a path of named children from the root of the module
 hierarchy. A relative path describes a path of named children from an
 unspecified node. The unspecified node is determined by searching the calling
-module and its ancestors for a matching path. To avoid ambiguity, we impose a
-restriction on module names that a module cannot be named the same thing as
-any of its ancestors.
+module and its ancestors for a matching path.
 
 Abstract Syntax:
   Path ::= rel_path (name :: [Name])
@@ -1153,3 +1151,17 @@ Notes:
   that went away when manually unrolling the loop into a custom function.
 
   A For loop based construct seems to solve this well.
+
+- Do we need to have absolute references? Can't every absolute reference be
+  replaced with a relative reference given we always search up to the root?
+
+  I suppose it's a question of conflicts. Can you have a tree like:
+    /X
+    /Foo/X
+    /Foo/Y
+
+  In this case, From Module Y, X% refers to /Foo/X and /X% refers to /X.
+
+  Related: how do deal with this kind of ambiguity? Should child modules
+  shadow parent modules? But then, if you add a module somewhere, some sibling
+  could be broken by it unaware. That sounds bad.
