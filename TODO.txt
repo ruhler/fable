@@ -1,7 +1,5 @@
 The Great Cleanup:
 * Increase spec test code coverage as much as feasible.
-* Char@|foo reports 3 duplicate errors if Char@ is not defined.
-  It should only report one.
 * [prgm] Split TicTacToe implementation up into different modules
   - Game, AI, UI, Test, etc. And clean up the code in the process as much as
     possible.

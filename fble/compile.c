@@ -3063,6 +3063,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_LITERAL_EXPR: {
       FbleLiteralExpr* literal = (FbleLiteralExpr*)expr;
 
+      // Check that the type compiles before desugaring the literal
+      // expression. Otherwise we could end up giving a lot of duplicate error
+      // messages.
+      Type* type = CompileType(arena, vars, literal->type);
+      if (type == NULL) {
+        return NULL;
+      }
+      TypeRelease(arena, type);
+
       FbleStructValueImplicitTypeExpr unit = {
         ._base = {
           .tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
