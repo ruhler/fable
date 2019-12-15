@@ -17,7 +17,6 @@ The Great Cleanup:
 * Figure out how to make a version of 7.4-06-* for values.
   Since renamed to 2.5-let/regression/bad-mutually-recursive-type.tcl
 * Improve test coverage around polymorphic types.
-* In fble/compile.c, MakeBlockName should handle module names correctly?
 * Remove iquota from Thread data structure. It should be managed separately.
 
 The Harder Cleanup:

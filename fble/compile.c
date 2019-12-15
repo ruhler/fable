@@ -1660,10 +1660,9 @@ static char* MakeBlockName(FbleArena* arena, FbleNameV* name)
 {
   size_t size = 1;
   for (size_t i = 0; i < name->size; ++i) {
-    size += strlen(name->xs[i].name) + 1;
-    if (name->xs[i].space == FBLE_TYPE_NAME_SPACE) {
-      size++;
-    }
+    // + 1 for '.'
+    // + 1 for namespace indicator
+    size += strlen(name->xs[i].name) + 2;
   }
 
   char* str = FbleArrayAlloc(arena, char, size);
@@ -1673,8 +1672,10 @@ static char* MakeBlockName(FbleArena* arena, FbleNameV* name)
       strcat(str, ".");
     }
     strcat(str, name->xs[i].name);
-    if (name->xs[i].space == FBLE_TYPE_NAME_SPACE) {
-      strcat(str, "@");
+    switch (name->xs[i].space) {
+      case FBLE_NORMAL_NAME_SPACE: break;
+      case FBLE_TYPE_NAME_SPACE: strcat(str, "@"); break;
+      case FBLE_MODULE_NAME_SPACE: strcat(str, "%"); break;
     }
   }
   return str;

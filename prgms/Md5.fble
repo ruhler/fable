@@ -335,9 +335,11 @@ Bit32@ t64 = H8(Hex@|EB86D391);
 };
 
 # Add zeros as needed, then the final length to the output message.
+Bit64@ 3f_64 = H2_64(3, f);
+Bit64@ 08_64 = H2_64(0, 8);
 (Put@<Streamed@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Streamed@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
     ?(Bits%.Bit64.BitN.iszero(
-        Bits%.Bit64.BitN.and(H2_64(3, f), Bits%.Bit64.BitN.add(H2_64(0, 8), length)));
+        Bits%.Bit64.BitN.and(3f_64, Bits%.Bit64.BitN.add(08_64, length)));
           true: {
          Bit64@ bits = shl64(shl64(shl64(msglen)));
          Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
