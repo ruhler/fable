@@ -1,5 +1,5 @@
 The Great Cleanup:
-* Increase spec test code coverage as much as feasible.
+* Improve test coverage around polymorphic types:
   - compile.c:926 - cached var substitution
   - compile.c:1138 - eta conversion
   - compile.c:1354 - print non-labelled recursive type
@@ -7,16 +7,13 @@ The Great Cleanup:
   - compile.c:1541 - valueOfType poly apply poly value
   - compile.c:1565 - valueOfType abstract var type
   - compile.c:1979 - Struct value expr gets non-type
-  - eval.c:824 - undefined proc value
 * [prgm] Split TicTacToe implementation up into different modules
   - Game, AI, UI, Test, etc. And clean up the code in the process as much as
     possible.
-* [test] multi arg func, poly, kind are equivalent to nested single arg.
 * Test that explicit type struct values can take type args and poly args?
   And same for all other kinds of struct expressions.
 * Figure out how to make a version of 7.4-06-* for values.
   Since renamed to 2.5-let/regression/bad-mutually-recursive-type.tcl
-* Improve test coverage around polymorphic types.
 * Remove iquota from Thread data structure. It should be managed separately.
 
 The Harder Cleanup:

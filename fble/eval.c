@@ -818,13 +818,11 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       }
 
       case FBLE_PROC_INSTR: {
-        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, thread);
-        if (proc == NULL) {
-          FbleReportError("undefined proc value\n", &proc_instr->loc);
-          AbortThread(arena, thread);
-          return;
-        }
+
+        // You cannot execute a proc in a let binding, so it should be
+        // impossible to ever have an undefined proc value.
+        assert(proc != NULL && "undefined proc value");
         switch (proc->tag) {
           case FBLE_GET_PROC_VALUE: {
             FbleGetProcValue* get = (FbleGetProcValue*)proc;
