@@ -1717,7 +1717,7 @@ static FbleInstrBlock* NewInstrBlock(FbleArena* arena, FbleNameV* blocks, FbleNa
 //
 // Inputs:
 //   arena - the arena used to allocation the instructions.
-//   instr - the instruction to free. May be NULL.
+//   instr - the instruction to free.
 //
 // Result:
 //   none.
@@ -1726,10 +1726,7 @@ static FbleInstrBlock* NewInstrBlock(FbleArena* arena, FbleNameV* blocks, FbleNa
 //   Frees memory allocated for the given instruction.
 static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 {
-  if (instr == NULL) {
-    return;
-  }
-
+  assert(instr != NULL);
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR:
     case FBLE_UNION_VALUE_INSTR:
@@ -2042,7 +2039,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
         default: {
           ReportError(arena_, &expr->loc,
-              "expecting a function, port, or struct type, but found something of type %t\n",
+              "expecting a function or struct type, but found something of type %t\n",
               type);
           for (size_t i = 0; i < argc; ++i) {
             TypeRelease(arena, arg_types[i]);
@@ -3085,20 +3082,25 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleUnionValueExpr letters[n];
       FbleExpr* xs[n];
       char word_letters[2*n];
+      FbleLoc loc = literal->word_loc;
       for (size_t i = 0; i < n; ++i) {
-        // TODO: How to set the right per-character location given there may be
-        // newlines, etc. in the word?
         letters[i]._base.tag = FBLE_UNION_VALUE_EXPR;
-        letters[i]._base.loc = literal->word_loc;
+        letters[i]._base.loc = loc;
         letters[i].type = literal->type;
         word_letters[2*i] = literal->word[i];
         word_letters[2*i + 1] = '\0';
         letters[i].field.name = word_letters + 2*i;
         letters[i].field.space = FBLE_NORMAL_NAME_SPACE;
-        letters[i].field.loc = literal->word_loc;
+        letters[i].field.loc = loc;
         letters[i].arg = &unit._base;
 
         xs[i] = &letters[i]._base;
+
+        if (literal->word[i] == '\n') {
+          loc.line++;
+          loc.col = 0;
+        }
+        loc.col++;
       }
 
       FbleExprV args = { .size = n, .xs = xs, };
