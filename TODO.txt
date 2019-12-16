@@ -1,5 +1,4 @@
 The Great Cleanup:
-* Remove iquota from Thread data structure. It should be managed separately.
 * Improve test coverage around polymorphic types:
   - compile.c:926 - cached var substitution
   - compile.c:1138 - eta conversion
