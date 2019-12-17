@@ -1,4 +1,4 @@
 
 { Unit%; @(Unit@); };
 
-TicTacToe%.BenchmarkChooseBestMove(Unit@());
+TicTacToe/Bench%.BenchmarkChooseBestMove(Unit@());

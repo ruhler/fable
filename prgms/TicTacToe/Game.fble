@@ -1,0 +1,60 @@
+
+{ Bool%; @(Bool@, True, False); };
+{ Maybe%; @(Maybe@); };
+{ Process%; @(Get@, Put@); };
+{ Unit%; @(Unit@, Unit); };
+
+{ AI%; @(MemoState@, MemoTable@, PositionResult@, ChooseBestMove, InitialAI); };
+{ Board%; @(Board@, Position@, Player@, BoardStatus, EmptyBoard, Move); };
+
+@ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 
+@ Output@ = *(Board@ board, GameStatus@ status);
+
+# position: Make a move at the given position for the current player.
+# computer: Have the computer make a move for the current player.
+# reset: Reset the game.
+@ Input@ = +(Position@ position, Unit@ computer, Unit@ reset, Unit@ quit);
+
+(Input@!, Put@<Output@>, MemoTable@){Unit@!;}
+NewGameAI = (Input@! input, Put@<Output@> output, MemoTable@ ai) {
+  PlayGame(input, output, ai, EmptyBoard, Player@(X: Unit));
+},
+(Input@!, Put@<Output@>, MemoTable@, Board@, Player@){Unit@!;}
+PlayGame = (Input@! input, Put@<Output@> output, MemoTable@ ai, Board@ board, Player@ x) {
+  GameStatus@ status := $(?(BoardStatus(board);
+                          X: GameStatus@(Win: Player@(X: Unit)),
+                          O: GameStatus@(Win: Player@(O: Unit)),
+                          D: GameStatus@(Draw: Unit),
+                          E: GameStatus@(Move: x)));
+  Unit@ _ := output(Output@(board, status));
+  Input@ in := input;
+  Bool@ over = ?(status; Move: False, Win: True, Draw: True);
+  ?(in;
+     position: {
+       ?(over; true: PlayGame(input, output, ai, board, x),
+          false: {
+            Maybe@<Board@> nboard := $(Move(board, in.position, x));
+            ?(nboard ;
+                just: PlayGame(input, output, ai, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
+                nothing: PlayGame(input, output, ai, board, x));
+       });
+     },
+     computer: {
+       ?(over; true: PlayGame(input, output, ai, board, x),
+          false: {
+            MemoState@<PositionResult@> mpr = ChooseBestMove(ai, board, x);
+            Maybe@<Board@> nboard := $(Move(board, mpr.data.position, x));
+            ?(nboard ;
+                just: PlayGame(input, output, mpr.memo, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
+                nothing: PlayGame(input, output, mpr.memo, board, x));
+        });
+     },
+     reset: NewGameAI(input, output, ai),
+     quit: $(Unit));
+};
+
+(Get@<Input@>, Put@<Output@>){Unit@!;} NewGame = (Get@<Input@> input, Put@<Output@> output) {
+  NewGameAI(input, output, InitialAI);
+};
+
+@(GameStatus@, Input@, Output@, NewGame);

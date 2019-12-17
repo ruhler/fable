@@ -1,0 +1,102 @@
+
+{ Bool%; @(Bool@, True); };
+{ Char%; @(Char@, newline); };
+{ List%; @(S, Concat); };
+{ Maybe%; @(Maybe@, Just, Nothing); };
+{ Process%; @(Get@, Put@); };
+{ String%; @(Str@, Str); };
+{ Unit%; @(Unit@, Unit); };
+
+{ Board%; @(Square@, Board@, Player@, Position@); };
+{ Game%; @(GameStatus@, Input@, Output@, NewGame); };
+
+(Square@) { Str@; } ShowSquare = (Square@ s) {
+  ?(s; X: Str(Char@|X), O: Str(Char@|O), E: Str(Char@|_));
+};
+
+(Board@) { Str@; } ShowBoard = (Board@ b) {
+  Str@ _ = Str(Char@|' ');
+  Concat<Char@>(S<Str@>([
+    Str(Char@|'  1 2 3'), S<Char@>([newline]),
+    Str(Char@|'A '), ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), S<Char@>([newline]),
+    Str(Char@|'B '), ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), S<Char@>([newline]),
+    Str(Char@|'C '), ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), S<Char@>([newline])]));
+};
+
+(Player@) { Str@; } ShowPlayer = (Player@ p) {
+  ?(p; X: Str(Char@|X), O: Str(Char@|O));
+};
+
+(GameStatus@) { Str@; } ShowStatus = (GameStatus@ s) {
+  ?(s; Move: Concat<Char@>(S<Str@>([
+         Str(Char@|'Player '),
+         ShowPlayer(s.Move),
+         Str(Char@|' move:')])),
+       Win: Concat<Char@>(S<Str@>([
+         Str(Char@|'GAME OVER: Player '),
+         ShowPlayer(s.Move),
+         Str(Char@|' wins.')])),
+       Draw: Str(Char@|'GAME OVER: Draw.')
+  );
+};
+
+(Output@) { Str@; } ShowOutput = (Output@ out) {
+  Concat<Char@>(S<Str@>([
+    ShowBoard(out.board),
+    S<Char@>([newline]),
+    ShowStatus(out.status),
+    S<Char@>([newline])]));
+};
+
+(Str@) { Maybe@<Input@>; } ParseInput = (Str@ in) {
+  ?(in;
+      cons: ?(in.cons.head;
+        'A': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+                '1': Just<Input@>(Input@(position: Position@(UL: Unit))),
+                '2': Just<Input@>(Input@(position: Position@(UC: Unit))),
+                '3': Just<Input@>(Input@(position: Position@(UR: Unit))),
+                   : Nothing<Input@>),
+                nil: Nothing<Input@>),
+        'B': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+                '1': Just<Input@>(Input@(position: Position@(ML: Unit))),
+                '2': Just<Input@>(Input@(position: Position@(MC: Unit))),
+                '3': Just<Input@>(Input@(position: Position@(MR: Unit))),
+                   : Nothing<Input@>),
+                nil: Nothing<Input@>),
+        'C': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+                '1': Just<Input@>(Input@(position: Position@(LL: Unit))),
+                '2': Just<Input@>(Input@(position: Position@(LC: Unit))),
+                '3': Just<Input@>(Input@(position: Position@(LR: Unit))),
+                   : Nothing<Input@>),
+                nil: Nothing<Input@>),
+        'P': Just<Input@>(Input@(computer: Unit)),
+        'R': Just<Input@>(Input@(reset: Unit)),
+           : Nothing<Input@>),
+      nil: Nothing<Input@>);
+};
+
+(Get@<Maybe@<Str@>>, Put@<Str@>){Bool@!;}
+NewGameStdio = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
+  Get@<Input@> in = {
+    Maybe@<Str@> s := input;
+    ?(s; just: {
+            Maybe@<Input@> mi = ParseInput(s.just);
+            ?(mi; just: $(mi.just),
+                  nothing: {
+                     Unit@ _ := output(Concat<Char@>(S<Str@>([
+                       Str(Char@|'invalid input: '),
+                       Str(Char@|'expected {A,B,C}{1,2,3}, P, or R'),
+                       Str([newline])])));
+                       in;
+                  });
+         },
+         nothing: $(Input@(quit: Unit)));
+  };
+
+  Put@<Output@> out = (Output@ o) { output(ShowOutput(o)); };
+
+  Unit@ _ := NewGame(in, out);
+  $(True);
+};
+
+@(NewGameStdio);

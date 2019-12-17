@@ -1,0 +1,107 @@
+
+{ Maybe%; @(Maybe@, Just, Nothing); };
+{ Unit%; @(Unit@, Unit); };
+
+# A square is either filled with an 'X', filled with an 'O', 
+# or is 'E'mpty.
+@ Square@ = +(Unit@ X, Unit@ O, Unit@ E);
+
+# A board is a 3x3 grid of squares.
+@ Board@ = *(
+    Square@ ul, Square@ uc, Square@ ur,    # Upper row.
+    Square@ ml, Square@ mc, Square@ mr,    # Middle row.
+    Square@ ll, Square@ lc, Square@ lr     # Lower row.
+);
+
+Board@ EmptyBoard = {
+  Square@ E = Square@(E: Unit);
+  Board@(E, E, E, E, E, E, E, E, E);
+};
+
+# Position can be used to identify a specific square in the 3x3 grid.
+@ Position@ = +(
+    Unit@ UL, Unit@ UC, Unit@ UR,
+    Unit@ ML, Unit@ MC, Unit@ MR,
+    Unit@ LL, Unit@ LC, Unit@ LR
+);
+
+# Returns the value of the square at position 'p' in board 'b'.
+(Board@, Position@) { Square@; } GetSquare = (Board@ b, Position@ p) {
+  ?(p; UL: b.ul, UC: b.uc, UR: b.ur,
+       ML: b.ml, MC: b.mc, MR: b.mr,
+       LL: b.ll, LC: b.lc, LR: b.lr);
+};
+
+# Sets the square at position 'p' in board 'b' to value 's'.
+(Board@, Position@, Square@) { Board@; } SetSquare =
+  (Board@ b, Position@ p, Square@ s) {
+    ?(p;
+        UL: Board@(   s, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+        UC: Board@(b.ul,    s, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+        UR: Board@(b.ul, b.uc,    s, b.ml, b.mc, b.mr, b.ll, b.lc, b.lr),
+        ML: Board@(b.ul, b.uc, b.ur,    s, b.mc, b.mr, b.ll, b.lc, b.lr),
+        MC: Board@(b.ul, b.uc, b.ur, b.ml,    s, b.mr, b.ll, b.lc, b.lr),
+        MR: Board@(b.ul, b.uc, b.ur, b.ml, b.mc,    s, b.ll, b.lc, b.lr),
+        LL: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr,    s, b.lc, b.lr),
+        LC: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll,    s, b.lr),
+        LR: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
+  };
+
+@ Player@ = +(Unit@ X, Unit@ O);
+
+# Returns the board resulting from player 'x' making a play at position 'p'
+# of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
+# not empty.
+(Board@, Position@, Player@) { Maybe@<Board@>; } Move =
+  (Board@ b, Position@ p, Player@ x) {
+    ?(GetSquare(b, p) ; 
+       E: Just<Board@>(SetSquare(b, p, ?(x; X: Square@(X: Unit), O: Square@(O: Unit)))),
+       : Nothing<Board@>);
+  };
+
+# The status of a (valid) board is one of:
+#  X: The player X has won.
+#  O: The player O has won.
+#  D: There is a draw.
+#  E: The board has empty squares.
+@ Status@ = +(Unit@ X, Unit@ O, Unit@ D, Unit@ E);
+
+# Return the status of a single square.
+(Square@) { Status@; } SquareStatus = (Square@ a) {
+  ?(a ; X: Status@(X: Unit), O: Status@(O: Unit), E: Status@(E: Unit));
+};
+
+# Combine two Status using an 'and' operation.
+(Status@, Status@){Status@;} AndStatus = (Status@ a, Status@ b) {
+  ?(a ;
+      X: ?(b ; X: a, O: Status@(D: Unit), D: b, E: b), 
+      O: ?(b ; X: Status@(D: Unit), O: a, D: b, E: b),
+      D: ?(b ; X: a, O: a, D: a, E: b),
+      E: a);
+};
+
+# Combine two Status using an 'or' operation.
+(Status@, Status@){Status@;} OrStatus = (Status@ a, Status@ b) {
+  ?(a ; X: a, O: a, D: b, E: ?(b ; X: b, O: b, D: a, E: a));
+};
+
+# Compute the status for a given row of squares.
+(Square@, Square@, Square@){Status@;} RowStatus = (Square@ a, Square@ b, Square@ c) {
+  AndStatus(SquareStatus(a), AndStatus(SquareStatus(b), SquareStatus(c)));
+};
+
+# Compute the status for a board.
+(Board@){Status@;} BoardStatus = (Board@ a) {
+  OrStatus(
+      OrStatus(
+        OrStatus(RowStatus(a.ul, a.uc, a.ur), RowStatus(a.ml, a.mc, a.mr)),
+        OrStatus(RowStatus(a.ll, a.lc, a.lr), RowStatus(a.ul, a.ml, a.ll))),
+      OrStatus(
+        OrStatus(RowStatus(a.uc, a.mc, a.lc), RowStatus(a.ur, a.mr, a.lr)),
+        OrStatus(RowStatus(a.ul, a.mc, a.lr), RowStatus(a.ur, a.mc, a.ll))));
+};
+
+@ Result@ = +(Unit@ Win, Unit@ Draw, Unit@ Loss);
+
+@(Square@, Board@, Position@, Player@, Result@, Status@,
+  BoardStatus, EmptyBoard, Move);

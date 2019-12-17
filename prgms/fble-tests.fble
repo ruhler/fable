@@ -11,7 +11,8 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   UBNat_Tests%.Tests,
   UBInt_Tests%.Tests,
   Primes_Tests%.Tests,
-  Md5_Tests%.Tests
+  Md5_Tests%.Tests,
+  TicTacToe/Tests%.Tests
 ]));
 
 (Get@<Maybe@<Str@>> in, Put@<Str@> out) {

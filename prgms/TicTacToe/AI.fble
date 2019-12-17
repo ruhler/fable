@@ -1,0 +1,247 @@
+
+{ List%; @(S@, S, ForS); };
+{ Maybe%; @(Maybe@, For, Just, Nothing); };
+{ Unit%; @(Unit@, Unit); };
+
+{ Board%; @(Board@, Player@, Position@, Result@, Square@, BoardStatus, Move); };
+
+(Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {
+  ?(p; UL: Just<Position@>(Position@(UC: Unit)),
+       UC: Just<Position@>(Position@(UR: Unit)),
+       UR: Just<Position@>(Position@(ML: Unit)),
+       ML: Just<Position@>(Position@(MC: Unit)),
+       MC: Just<Position@>(Position@(MR: Unit)),
+       MR: Just<Position@>(Position@(LL: Unit)),
+       LL: Just<Position@>(Position@(LC: Unit)),
+       LC: Just<Position@>(Position@(LR: Unit)),
+       LR: Nothing<Position@>);
+};
+
+# Rotate a board 90 degrees clockwise
+(Board@) { Board@; } RotateBoard = (Board@ b) {
+  Board@(b.ll, b.ml, b.ul,
+         b.lc, b.mc, b.uc,
+         b.lr, b.mr, b.ur);
+};
+
+# Rotate a position 90 degrees clockwise
+(Position@) { Position@; } RotatePosition = (Position@ p) {
+  ?(p;
+    UL: Position@(UR: Unit), UC: Position@(MR: Unit), UR: Position@(LR: Unit),
+    ML: Position@(UC: Unit), MC: Position@(MC: Unit), MR: Position@(LC: Unit),
+    LL: Position@(UL: Unit), LC: Position@(ML: Unit), LR: Position@(LL: Unit));
+};
+
+# Flip a board horizontally
+(Board@) { Board@; } FlipBoard = (Board@ b) {
+  Board@(b.ll, b.lc, b.lr,
+         b.ml, b.mc, b.mr,
+         b.ul, b.uc, b.ur);
+};
+
+# Flip a position horizontally
+(Position@) { Position@; } FlipPosition = (Position@ p) {
+  ?(p;
+    UL: Position@(LL: Unit), UC: Position@(LC: Unit), UR: Position@(LR: Unit),
+    ML: Position@(ML: Unit), MC: Position@(MC: Unit), MR: Position@(MR: Unit),
+    LL: Position@(UL: Unit), LC: Position@(UC: Unit), LR: Position@(UR: Unit));
+};
+
+
+# Re-interpret the result from the perspective of the opposing player.
+(Result@){Result@;} FlipResult = (Result@ r) {
+  ?(r ; Win:  Result@(Loss: Unit),
+        Draw: Result@(Draw: Unit),
+        Loss: Result@(Win: Unit));
+};
+
+@ PositionResult@ = *(Position@ position, Result@ result);
+@ BoardPositionResult@ = *(Board@ board, PositionResult@ pr);
+
+(BoardPositionResult@) { BoardPositionResult@; }
+RotateBPR = (BoardPositionResult@ bpr) {
+  BoardPositionResult@(RotateBoard(bpr.board),
+    PositionResult@(RotatePosition(bpr.pr.position), bpr.pr.result));
+};
+
+(BoardPositionResult@) { BoardPositionResult@; }
+FlipBPR = (BoardPositionResult@ bpr) {
+  BoardPositionResult@(FlipBoard(bpr.board),
+    PositionResult@(FlipPosition(bpr.pr.position), bpr.pr.result));
+};
+
+# Produce all different symmetrically equivalent board position results of the
+# given board position result.
+(BoardPositionResult@) { S@<BoardPositionResult@>; }
+AllSymmetries = (BoardPositionResult@ bpr) {
+  BoardPositionResult@ b0 = bpr;
+  BoardPositionResult@ b1 = RotateBPR(b0);
+  BoardPositionResult@ b2 = RotateBPR(b1);
+  BoardPositionResult@ b3 = RotateBPR(b2);
+  BoardPositionResult@ f0 = FlipBPR(b0);
+  BoardPositionResult@ f1 = RotateBPR(f0);
+  BoardPositionResult@ f2 = RotateBPR(f1);
+  BoardPositionResult@ f3 = RotateBPR(f2);
+  S<BoardPositionResult@>([b0, b1, b2, b3, f0, f1, f2, f3]);
+};
+
+(PositionResult@, PositionResult@) { PositionResult@; }
+ChooseBestPosition = (PositionResult@ a, PositionResult@ b) {
+  Result@ ra = a.result;
+  Result@ rb = b.result;
+  ?(ra; Win: a,
+        Draw: ?(rb; Win: b, Draw: a, Loss: a),
+        Loss: b);
+};
+
+(Maybe@<PositionResult@>, Maybe@<PositionResult@>) { Maybe@<PositionResult@>; }
+ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b) {
+  ?(a; just:
+        ?(b; just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
+             nothing: a),
+       nothing: b);
+};
+
+# Map from Board to the best next move to make on that board and the expected
+# game result from playing there.
+@ MemoTable@ = +(Unit@ empty, PositionResult@ result, MemoMap@ map),
+@ MemoMap@ = *(MemoTable@ x, MemoTable@ o, MemoTable@ e);
+
+# Helper function to access a MemoMap from a MemoTable. Returns Nothing if the
+# MemoTable is Empty. Otherwise applies the given function to the accessed
+# MemoMap.
+<@ A@>(MemoTable@, Square@, (MemoTable@){Maybe@<A@>;}){Maybe@<A@>;}
+GetMap = <@ A@>(MemoTable@ memo, Square@ square, (MemoTable@){Maybe@<A@>;} f) {
+  ?(memo;
+      empty: Nothing<A@>,
+      result: Nothing<A@>, 
+      map: f(?(square; X: memo.map.x, O: memo.map.o, E: memo.map.e)));
+};
+
+(MemoTable@, Board@){ Maybe@<PositionResult@>; }
+Lookup = (MemoTable@ memo, Board@ board) {
+  MemoTable@ mul <- GetMap<PositionResult@>(memo, board.ul);
+  MemoTable@ muc <- GetMap<PositionResult@>(mul, board.uc);
+  MemoTable@ mur <- GetMap<PositionResult@>(muc, board.ur);
+  MemoTable@ mml <- GetMap<PositionResult@>(mur, board.ml);
+  MemoTable@ mmc <- GetMap<PositionResult@>(mml, board.mc);
+  MemoTable@ mmr <- GetMap<PositionResult@>(mmc, board.mr);
+  MemoTable@ mll <- GetMap<PositionResult@>(mmr, board.ll);
+  MemoTable@ mlc <- GetMap<PositionResult@>(mll, board.lc);
+  MemoTable@ mlr <- GetMap<PositionResult@>(mlc, board.lr);
+  ?(mlr;
+    empty: Nothing<PositionResult@>,
+    result: Just<PositionResult@>(mlr.result),
+    map: Nothing<PositionResult@>);
+};
+
+# Helper function to update a MemoTable map value.
+# Accesses the given element from the given memo table and applies the
+# function to it to determine its new value, providing a default empty value
+# if necessary.
+(MemoTable@, Square@, (MemoTable@){MemoTable@;}){MemoTable@;}
+SetMap = (MemoTable@ memo, Square@ square, (MemoTable@){MemoTable@;} f) {
+  MemoTable@ empty = MemoTable@(empty: Unit);
+  MemoMap@ oldMap = ?(memo;
+    empty: MemoMap@(empty, empty, empty),
+    result: MemoMap@(empty, empty, empty),
+    map: memo.map);
+  MemoTable@ oldChild = ?(square; X: oldMap.x, O: oldMap.o, E: oldMap.e);
+  MemoTable@ newChild = f(oldChild);
+  MemoMap@ newMap = MemoMap@(
+    ?(square; X: newChild, O: oldMap.x, E: oldMap.x), 
+    ?(square; X: oldMap.o, O: newChild, E: oldMap.o), 
+    ?(square; X: oldMap.e, O: oldMap.e, E: newChild));
+  MemoTable@(map: newMap);
+};
+
+(MemoTable@, Board@, PositionResult@){MemoTable@;}
+Insert = (MemoTable@ memo, Board@ board, PositionResult@ result) {
+  MemoTable@ mul <- SetMap(memo, board.ul);
+  MemoTable@ muc <- SetMap(mul, board.uc);
+  MemoTable@ mur <- SetMap(muc, board.ur);
+  MemoTable@ mml <- SetMap(mur, board.ml);
+  MemoTable@ mmc <- SetMap(mml, board.mc);
+  MemoTable@ mmr <- SetMap(mmc, board.mr);
+  MemoTable@ mll <- SetMap(mmr, board.ll);
+  MemoTable@ mlc <- SetMap(mll, board.lc);
+  MemoTable@ mlr <- SetMap(mlc, board.lr);
+  MemoTable@(result: result);
+};
+
+<@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
+
+# Return the expected result of the game for player 'x', assuming player 'x'
+# has just moved and that both players play optimally.
+(MemoTable@, Board@, Player@){MemoState@<Result@>;}
+ExpectedResult = (MemoTable@ m, Board@ b, Player@ x) {
+  ?(BoardStatus(b);
+      X: MemoState@<Result@>(m,
+          ?(x; X: Result@(Win: Unit), O: Result@(Loss: Unit))),
+      O: MemoState@<Result@>(m,
+          ?(x; X: Result@(Loss: Unit), O: Result@(Win: Unit))),
+      D: MemoState@<Result@>(m, Result@(Draw: Unit)),
+      E: {
+        Player@ o = ?(x; X: Player@(O: Unit), O: Player@(X: Unit));
+        MemoState@<PositionResult@> move = ChooseBestMove(m, b, o);
+        MemoState@<Result@>(move.memo, FlipResult(move.data.result));
+      }
+   );
+},
+
+# Return the expected result of player 'x' moving at position 'p' on board
+# 'b'. Returns Nothing if the player 'x' cannot move at position 'p' on board
+# 'b'.
+(MemoTable@, Board@, Player@, Position@){MemoState@<Maybe@<PositionResult@>>;}
+MoveResult = (MemoTable@ m, Board@ b, Player@ x, Position@ p) {
+  Maybe@<Board@> moved = Move(b, p, x);
+  ?(moved;
+    just: {
+      MemoState@<Result@> result = ExpectedResult(m, moved.just, x);
+      MemoState@<Maybe@<PositionResult@>>(
+        result.memo,
+        Just<PositionResult@>(PositionResult@(p, result.data)));
+    },
+    nothing: MemoState@<Maybe@<PositionResult@>>(m, Nothing<PositionResult@>));
+},
+
+# Choose the best move for player 'x' on the given board.
+# The results are undefined if there are no moves left to make.
+(MemoTable@, Board@, Player@){MemoState@<PositionResult@>;}
+ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
+  Maybe@<PositionResult@> cached = Lookup(m, b);
+  ?(cached;
+    just: MemoState@<PositionResult@>(m, cached.just),
+    nothing: {
+      MemoState@<Maybe@<PositionResult@>> best =
+        For<Position@, MemoState@<Maybe@<PositionResult@>>>(
+          Position@(UL: Unit),
+          MemoState@<Maybe@<PositionResult@>>(m, Nothing<PositionResult@>),
+          NextPosition,
+          (Position@ p, MemoState@<Maybe@<PositionResult@>> best) {
+            MemoState@<Maybe@<PositionResult@>> curr = MoveResult(best.memo, b, x, p);
+            MemoState@<Maybe@<PositionResult@>>(
+              curr.memo,
+              ChooseBestMaybePosition(best.data, curr.data));
+        });
+
+      MemoTable@ newMemo =
+        ForS<BoardPositionResult@, MemoTable@>(
+          AllSymmetries(BoardPositionResult@(b, best.data.just)),
+          best.memo,
+          (BoardPositionResult@ bpr, MemoTable@ m) {
+            Insert(m, bpr.board, bpr.pr);
+        });
+
+      MemoState@<PositionResult@>(newMemo, best.data.just);
+    });
+};
+
+MemoTable@ InitialAI = {
+  # TODO: It takes a couple of minute to pre-compute the AI.
+  # Still too slow to enable. :(
+  # ChooseBestMove(MemoTable@(empty: Unit), EmptyBoard, Player@(X: Unit)).memo;
+  MemoTable@(empty: Unit);
+};
+
+@(MemoState@, MemoTable@, PositionResult@, InitialAI, ChooseBestMove);

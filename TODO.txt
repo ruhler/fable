@@ -7,10 +7,14 @@ The Great Cleanup:
   - compile.c:1541 - valueOfType poly apply poly value
   - compile.c:1565 - valueOfType abstract var type
   - compile.c:1979 - Struct value expr gets non-type
-* [prgm] Split TicTacToe implementation up into different modules
-  - Game, AI, UI, Test, etc. And clean up the code in the process as much as
-    possible.
+* [prgm] TicTacToe cleanup
+  - Rename UI.NewGameStdio to UI.NewGame.
+  - Rename MemoTable@ to AI@.
+  - Make PositionResult@ internal to AI, expose a function that returns a
+    Maybe position without the result.
+  - Turn tests into test infra tests.
 
+  
 The Harder Cleanup:
 * [clean] Tracking of time in the compiler is really messy
   Especially that we extract the pointer to the time field from NewBlock by
@@ -26,7 +30,6 @@ The Harder Cleanup:
   conditional expressions. Maybe FbleNamedValue? NamedExpr?
 * Better error message when the difference between a type is accidentally
   defining + vs. *, and it contains substituted polymorphic type variables.
-* Test what gets evaluated at eval vs. exec time for each kind of process.
 
 Programs:
 * [prgm] Game of Life
@@ -57,6 +60,7 @@ Performance Refactor:
 * [perf] Optimize FbleRefAdd
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
+* Test what gets evaluated at eval vs. exec time for each kind of process.
 
 Future Work:
 Fble Lib:
@@ -94,11 +98,6 @@ Game of Life:
   B. is dead and have 3 live neighbors
 
 Miscellaneous:
-* Use consistent naming in spec tests to distinguish between:
-  - Something with the wrong syntax, such as ???. "malformed"
-  - Something that cannot be typed, such as x, when x is not defined.  "maltyped"
-  - Something with the wrong type, such as Donut(), when Unit() is expected. "mistyped"
-
 * Test that tail recursive procedures don't smash the stack.
   - And document the performance model which says tail recursive functions
     should not smash the stack.
