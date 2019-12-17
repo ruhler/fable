@@ -1,4 +1,8 @@
 The Great Cleanup:
+* [prgm] TicTacToe cleanup
+  - Rename MemoTable@ to AI@.
+  - Make PositionResult@ internal to AI, expose a function that returns a
+    Maybe position without the result.
 * Improve test coverage around polymorphic types:
   - compile.c:926 - cached var substitution
   - compile.c:1138 - eta conversion
@@ -7,12 +11,6 @@ The Great Cleanup:
   - compile.c:1541 - valueOfType poly apply poly value
   - compile.c:1565 - valueOfType abstract var type
   - compile.c:1979 - Struct value expr gets non-type
-* [prgm] TicTacToe cleanup
-  - Rename UI.NewGameStdio to UI.NewGame.
-  - Rename MemoTable@ to AI@.
-  - Make PositionResult@ internal to AI, expose a function that returns a
-    Maybe position without the result.
-  - Turn tests into test infra tests.
 
   
 The Harder Cleanup:

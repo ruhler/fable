@@ -1,59 +1,56 @@
 
+{ Char%; @(Char@); };
+{ List%; @(S@, S); };
+{ String%; @(Str); };
+{ Test%; @(Test@, TestResult@); };
 { Unit%; @(Unit@, Unit); };
-{ List%; @(S@, S0); };
-{ Test%; @(Test@); };
 
 { AI%; @(MemoState@, MemoTable@, PositionResult@, ChooseBestMove); };
 { Board%; @(Board@, Player@, Position@, Square@, Status@, BoardStatus); };
 
-@ TestResult@ = +(Unit@ Passed, Unit@ Failed);
-
-TestResult@ TestBoardStatus = {
+TestResult@! TestBoardStatus = {
+  Unit@ _ := $(Unit); # Delay the test until we execute the process
   Status@ status = BoardStatus(Board@(
         Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
         Square@(E: Unit), Square@(O: Unit), Square@(X: Unit),
         Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
-  ?(status ;
-      X: TestResult@(Failed: Unit),
-      O: TestResult@(Passed: Unit),
-      D: TestResult@(Failed: Unit),
-      E: TestResult@(Failed: Unit));
+  $(?(status ;
+        O: TestResult@(pass: Unit),
+        : TestResult@(fail: Str(Char@|failed))));
 };
-Unit@ TestBoardStatusPassed = TestBoardStatus.Passed;
 
-@ PositionTestResult@ = +(Unit@ Passed, Position@ Failed);
-PositionTestResult@ TestChooseBestMoveWin = {
+# TODO: Use PositionEquals for test result, and report position when failed?
+TestResult@! TestChooseBestMoveWin = {
+  Unit@ _ := $(Unit); # Delay the test until we execute the process
   MemoState@<PositionResult@> mp = ChooseBestMove(MemoTable@(empty: Unit),
     Board@(
         Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
         Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
         Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)), Player@(X: Unit));
   Position@ position = mp.data.position;
-  ?(position ;
-      UL: PositionTestResult@(Failed: position), UC: PositionTestResult@(Failed: position), UR: PositionTestResult@(Passed: Unit),
-      ML: PositionTestResult@(Failed: position), MC: PositionTestResult@(Failed: position), MR: PositionTestResult@(Failed: position),
-      LL: PositionTestResult@(Failed: position), LC: PositionTestResult@(Failed: position), LR: PositionTestResult@(Failed: position));
+  $(?(position ;
+        UR: TestResult@(pass: Unit),
+          : TestResult@(fail: Str(Char@|failed))));
 };
-Unit@ TestChooseBestMoveWinPassed = TestChooseBestMoveWin.Passed;
 
-PositionTestResult@ TestChooseBestMoveNoLose = {
+TestResult@! TestChooseBestMoveNoLose = {
+  Unit@ _ := $(Unit); # Delay the test until we execute the process
   MemoState@<PositionResult@> mp = ChooseBestMove(MemoTable@(empty: Unit),
     Board@(
         Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
         Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
         Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)), Player@(X: Unit));
   Position@ position = mp.data.position;
-  ?(position ;
-      UL: PositionTestResult@(Failed: position), UC: PositionTestResult@(Failed: position), UR: PositionTestResult@(Passed: Unit),
-      ML: PositionTestResult@(Failed: position), MC: PositionTestResult@(Failed: position), MR: PositionTestResult@(Failed: position),
-      LL: PositionTestResult@(Failed: position), LC: PositionTestResult@(Failed: position), LR: PositionTestResult@(Failed: position));
+  $(?(position ;
+        UR: TestResult@(pass: Unit),
+          : TestResult@(fail: Str(Char@|failed))));
 };
-Unit@ TestChooseBestMoveNoLosePassed = TestChooseBestMoveNoLose.Passed;
 
-# TODO:
-# * Be able to easily combine multiple test cases
-# * Use PositionEquals for test result, and report position when failed.
 
-S@<Test@> Tests = S0<Test@>;
+S@<Test@> Tests = S<Test@>([
+  Test@(Str(Char@|'TicTacToe.TestBoardStatus'), TestBoardStatus),
+  Test@(Str(Char@|'TicTacToe.TestChooseBestMoveWin'), TestChooseBestMoveWin),
+  Test@(Str(Char@|'TicTacToe.TestChooseBestMoveNoLose'), TestChooseBestMoveNoLose)
+  ]);
 
 @(Tests);

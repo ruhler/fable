@@ -53,8 +53,8 @@ PlayGame = (Input@! input, Put@<Output@> output, MemoTable@ ai, Board@ board, Pl
      quit: $(Unit));
 };
 
-(Get@<Input@>, Put@<Output@>){Unit@!;} NewGame = (Get@<Input@> input, Put@<Output@> output) {
+(Get@<Input@>, Put@<Output@>){Unit@!;} TicTacToe = (Get@<Input@> input, Put@<Output@> output) {
   NewGameAI(input, output, InitialAI);
 };
 
-@(GameStatus@, Input@, Output@, NewGame);
+@(GameStatus@, Input@, Output@, TicTacToe);

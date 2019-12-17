@@ -8,7 +8,7 @@
 { Unit%; @(Unit@, Unit); };
 
 { Board%; @(Square@, Board@, Player@, Position@); };
-{ Game%; @(GameStatus@, Input@, Output@, NewGame); };
+{ Game%; @(GameStatus@, Input@, Output@); };
 
 (Square@) { Str@; } ShowSquare = (Square@ s) {
   ?(s; X: Str(Char@|X), O: Str(Char@|O), E: Str(Char@|_));
@@ -75,8 +75,9 @@
       nil: Nothing<Input@>);
 };
 
+# Play a game of tic-tac-toe using the stdio interface.
 (Get@<Maybe@<Str@>>, Put@<Str@>){Bool@!;}
-NewGameStdio = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
+TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
   Get@<Input@> in = {
     Maybe@<Str@> s := input;
     ?(s; just: {
@@ -95,8 +96,8 @@ NewGameStdio = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
 
   Put@<Output@> out = (Output@ o) { output(ShowOutput(o)); };
 
-  Unit@ _ := NewGame(in, out);
+  Unit@ _ := Game%.TicTacToe(in, out);
   $(True);
 };
 
-@(NewGameStdio);
+@(TicTacToe);
