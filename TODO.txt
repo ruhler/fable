@@ -3,9 +3,9 @@ The Great Cleanup:
   - Rename MemoTable@ to AI@.
   - Make PositionResult@ internal to AI, expose a function that returns a
     Maybe position without the result.
+  - Use EmptyBoard in Bench
 * Improve test coverage around polymorphic types:
   - compile.c:926 - cached var substitution
-  - compile.c:1138 - eta conversion
   - compile.c:1354 - print non-labelled recursive type
   - compile.c:1521 - valueOfType poly value
   - compile.c:1541 - valueOfType poly apply poly value
