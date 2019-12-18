@@ -7,9 +7,6 @@ The Great Cleanup:
 * Improve test coverage around polymorphic types:
   - compile.c:926 - cached var substitution
   - compile.c:1354 - print non-labelled recursive type
-  - compile.c:1521 - valueOfType poly value
-  - compile.c:1541 - valueOfType poly apply poly value
-  - compile.c:1565 - valueOfType abstract var type
   - compile.c:1979 - Struct value expr gets non-type
 
   

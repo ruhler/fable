@@ -1562,7 +1562,9 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
         return ValueOfType(arena, var_type->value);
       }
 
-      assert(false && "TODO: value of type of an abstract var");
+      // Var types must have kind 1. Which means the value of the var type
+      // cannot refer to a type.
+      assert(GetKindLevel(var_type->kind) == 1);
       return NULL;
     }
 
