@@ -4,11 +4,16 @@ The Great Cleanup:
   - Make PositionResult@ internal to AI, expose a function that returns a
     Maybe position without the result.
   - Use EmptyBoard in Bench
-* Improve test coverage around polymorphic types:
+* [clean] Misc apply should not accept POLY_APPLY_TYPE for struct values.
+    The trouble is, we fail to evaluate: @(\x -> ...) y
+      When we could reduce it to: (\x -> @(...)) y
+      And then do the substitution.
+    Figure out what it should mean to evaluate a type with typeof and poly
+    values, implement that, remove POLY_APPLY_TYPE option from misc apply, and
+    access the typeof type directly instead of using valueOfType in that case.
+* [test] Improve spec test code coverage.
   - compile.c:926 - cached var substitution
   - compile.c:1354 - print non-labelled recursive type
-  - compile.c:1979 - Struct value expr gets non-type
-
   
 The Harder Cleanup:
 * [clean] Tracking of time in the compiler is really messy

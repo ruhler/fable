@@ -1985,6 +1985,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
               TypeRelease(arena, arg_types[i]);
             }
             TypeRelease(arena, vtype);
+            TypeRelease(arena, type);
             return NULL;
           }
 
