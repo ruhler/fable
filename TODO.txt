@@ -3,7 +3,6 @@ The Great Cleanup:
   - Rename MemoTable@ to AI@.
   - Make PositionResult@ internal to AI, expose a function that returns a
     Maybe position without the result.
-  - Use EmptyBoard in Bench
 * [clean] Misc apply should not accept POLY_APPLY_TYPE for struct values.
     The trouble is, we fail to evaluate: @(\x -> ...) y
       When we could reduce it to: (\x -> @(...)) y
@@ -44,6 +43,9 @@ Performance Refactor:
 * Figure out why the tictactoe AI was 4 times faster when using a process
   computation instead of a pure computation, even though fble level profiling
   and common sense suggest it should be the other way around.
+  I wonder if it's because exec is non-recursive and let is recursive, thus
+  introducing lots of reference cycles, which take much longer to retain and
+  release?
 * Figure out why it takes longer and much more memory to insert 5000 entries
   into the TicTacToe MemoTable directly rather than compute all the entries
   from scratch. Seems funny.
@@ -61,6 +63,9 @@ Performance Refactor:
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
 * Test what gets evaluated at eval vs. exec time for each kind of process.
+* [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
+  eval after a let binding? Can't we use subst or other eval-by-construction
+  for everything else?
 
 Future Work:
 Fble Lib:
