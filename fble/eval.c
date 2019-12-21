@@ -790,7 +790,9 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             AbortThread(arena, thread);
             return;
           }
+        }
 
+        for (size_t i = 0; i < thread->children.size; ++i) {
           if (thread->children.xs[i]->scope_stack != NULL) {
             // Blocked on child. Restore the thread state and return before
             // iquota has been decremented.
