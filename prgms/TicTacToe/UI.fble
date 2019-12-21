@@ -28,16 +28,17 @@
 };
 
 (GameStatus@) { Str@; } ShowStatus = (GameStatus@ s) {
-  ?(s; Move: Concat<Char@>(S<Str@>([
+  ?(s; playing: Concat<Char@>(S<Str@>([
          Str(Char@|'Player '),
-         ShowPlayer(s.Move),
+         ShowPlayer(s.playing),
          Str(Char@|' move:')])),
-       Win: Concat<Char@>(S<Str@>([
-         Str(Char@|'GAME OVER: Player '),
-         ShowPlayer(s.Win),
-         Str(Char@|' wins.')])),
-       Draw: Str(Char@|'GAME OVER: Draw.')
-  );
+       ended:
+         ?(s.ended;
+            win: Concat<Char@>(S<Str@>([
+                 Str(Char@|'GAME OVER: Player '),
+                 ShowPlayer(s.ended.win),
+                 Str(Char@|' wins.')])),
+            draw: Str(Char@|'GAME OVER: Draw.')));
 };
 
 (Output@) { Str@; } ShowOutput = (Output@ out) {

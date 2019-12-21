@@ -1171,3 +1171,11 @@ Notes:
   there are cases where I want to say: I know only the following tags are
   possible at this point in the code, so only list those. Should I make case
   statements more flexible like this?
+
+  Note: The particular cases in question here were fixed with a better
+  organization of data structure. So maybe this doesn't have to be a language
+  concern. In other words, the advice is: only ever use default case for those
+  cases when you want to select one out of a bunch of possible cases.
+
+- Static analysis to detect obvious invalid union accesses might be nice. I've
+  already run into that kind of bug.

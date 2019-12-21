@@ -1,5 +1,4 @@
 The Great Cleanup:
-* [prgm] TicTacToe: use better data structures to avoid default cases in Game
 * [test] Test case that triggers assertion that a thread isn't run when
          aborted. Happens when 1 child of an exec aborts?
 * [clean] Don't use 'eval' when we could do a direct subst instead?

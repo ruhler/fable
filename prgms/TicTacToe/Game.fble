@@ -7,7 +7,8 @@
 { AI%; @(AI@, WithAI); };
 { Board%; @(Board@, Position@, Player@, BoardStatus, EmptyBoard, Move); };
 
-@ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 
+@ GameResult@ = +(Player@ win, Unit@ draw);
+@ GameStatus@ = +(Player@ playing, GameResult@ ended); 
 @ Output@ = *(Board@ board, GameStatus@ status);
 
 # move: Make a move at the given position for the current player. If no
@@ -23,16 +24,16 @@ NewGame = (Input@! input, Put@<Output@> output, AI@ ai) {
 (Input@!, Put@<Output@>, AI@, Board@, Player@){Unit@!;}
 PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x) {
   GameStatus@ status := $(?(BoardStatus(board);
-                          X: GameStatus@(Win: Player@(X: Unit)),
-                          O: GameStatus@(Win: Player@(O: Unit)),
-                          D: GameStatus@(Draw: Unit),
-                          E: GameStatus@(Move: x)));
+                          X: GameStatus@(ended: GameResult@(win: Player@(X: Unit))),
+                          O: GameStatus@(ended: GameResult@(win: Player@(O: Unit))),
+                          D: GameStatus@(ended: GameResult@(draw: Unit)),
+                          E: GameStatus@(playing: x)));
   Unit@ _ := output(Output@(board, status));
   Input@ in := input;
   ?(in;
      move:
        ?(status;
-          Move: {
+          playing: {
             Position@ position := ?(in.move;
               just: $(in.move.just),
               nothing: ai(board, x));
@@ -43,7 +44,8 @@ PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x
                 nothing: PlayGame(input, output, ai, board, x));
 
           },
-          : # It's a Win or a Draw, but the user tried to make a move.
+          ended:
+            # The user tried to make a move after the game has ended.
             # Ignore the move and let the user pick again.
             PlayGame(input, output, ai, board, x)),
      reset: NewGame(input, output, ai),
