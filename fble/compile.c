@@ -253,7 +253,7 @@ static void Eval(TypeArena* arena, Type* type, PolyApplyList* applied);
 static Type* Normal(Type* type);
 static bool TypesEqual(Type* a, Type* b, TypePairs* eq);
 static bool KindsEqual(Kind* a, Kind* b);
-static void PrintType(FbleArena* arena, Type* type, TypeList* printed);
+static void PrintType(FbleArena* arena, Type* type);
 static void PrintKind(Kind* type);
 
 static Type* ValueOfType(TypeArena* arena, Type* typeof);
@@ -329,7 +329,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 
       case 't': {
         Type* type = va_arg(ap, Type*);
-        PrintType(arena, type, NULL);
+        PrintType(arena, type);
         break;
       }
       
@@ -1339,28 +1339,21 @@ static bool KindsEqual(Kind* a, Kind* b)
 // Inputs:
 //   arena - arena to use for internal allocations.
 //   type - the type to print.
-//   printed - list of types in the process of printing, to prevent infinite
-//             recursion.
 //
 // Result:
 //   None.
 //
 // Side effect:
 //   Prints the given type in human readable form to stderr.
-static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
+//
+// Notes:
+//   Human readable means we print var types using their name, without the
+//   value associated with the variable. Because of this, we don't have to
+//   worry about infinite recursion when trying to print a type: all recursion
+//   must happen through a var type, and we don't ever go through a var type
+//   when printing.
+static void PrintType(FbleArena* arena, Type* type)
 {
-  for (TypeList* p = printed; p != NULL; p = p->next) {
-    if (type == p->type) {
-      fprintf(stderr, "...");
-      return;
-    }
-  }
-
-  TypeList nprinted = {
-    .type = type,
-    .next = printed
-  };
-
   switch (type->tag) {
     case STRUCT_TYPE: {
       StructType* st = (StructType*)type;
@@ -1368,7 +1361,7 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       const char* comma = "";
       for (size_t i = 0; i < st->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
-        PrintType(arena, st->fields.xs[i].type, &nprinted);
+        PrintType(arena, st->fields.xs[i].type);
         fprintf(stderr, " ");
         FblePrintName(stderr, &st->fields.xs[i].name);
         comma = ", ";
@@ -1383,7 +1376,7 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       const char* comma = "";
       for (size_t i = 0; i < ut->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
-        PrintType(arena, ut->fields.xs[i].type, &nprinted);
+        PrintType(arena, ut->fields.xs[i].type);
         fprintf(stderr, " ");
         FblePrintName(stderr, &ut->fields.xs[i].name);
         comma = ", ";
@@ -1395,16 +1388,16 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
     case FUNC_TYPE: {
       FuncType* ft = (FuncType*)type;
       fprintf(stderr, "(");
-      PrintType(arena, ft->arg, &nprinted);
+      PrintType(arena, ft->arg);
       fprintf(stderr, "){");
-      PrintType(arena, ft->rtype, &nprinted);
+      PrintType(arena, ft->rtype);
       fprintf(stderr, ";}");
       break;
     }
 
     case PROC_TYPE: {
       ProcType* ut = (ProcType*)type;
-      PrintType(arena, ut->type, &nprinted);
+      PrintType(arena, ut->type);
       fprintf(stderr, "!");
       break;
     }
@@ -1416,18 +1409,18 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
       PrintKind(kind);
       FreeKind(arena, kind);
       fprintf(stderr, " ");
-      PrintType(arena, pt->arg, &nprinted);
+      PrintType(arena, pt->arg);
       fprintf(stderr, "> { ");
-      PrintType(arena, pt->body, &nprinted);
+      PrintType(arena, pt->body);
       fprintf(stderr, "; }");
       break;
     }
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
-      PrintType(arena, pat->poly, &nprinted);
+      PrintType(arena, pat->poly);
       fprintf(stderr, "<");
-      PrintType(arena, pat->arg, &nprinted);
+      PrintType(arena, pat->arg);
       fprintf(stderr, ">");
       break;
     }
@@ -1441,7 +1434,7 @@ static void PrintType(FbleArena* arena, Type* type, TypeList* printed)
     case TYPE_TYPE: {
       TypeType* tt = (TypeType*)type;
       fprintf(stderr, "@<");
-      PrintType(arena, tt->type, &nprinted);
+      PrintType(arena, tt->type);
       fprintf(stderr, ">");
       break;
     }

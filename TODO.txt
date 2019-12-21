@@ -11,8 +11,6 @@ The Great Cleanup:
     Figure out what it should mean to evaluate a type with typeof and poly
     values, implement that, remove POLY_APPLY_TYPE option from misc apply, and
     access the typeof type directly instead of using valueOfType in that case.
-* [test] Improve spec test code coverage.
-  - compile.c:1354 - print non-labelled recursive type
   
 The Harder Cleanup:
 * [clean] Tracking of time in the compiler is really messy
