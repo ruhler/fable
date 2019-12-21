@@ -13,10 +13,11 @@
 # position: Make a move at the given position for the current player.
 # computer: Have the computer make a move for the current player.
 # reset: Reset the game.
+# quit: Quit the game.
 @ Input@ = +(Position@ position, Unit@ computer, Unit@ reset, Unit@ quit);
 
-(Input@!, Put@<Output@>, AI@){Unit@!;}
-NewGameAI = (Input@! input, Put@<Output@> output, AI@ ai) {
+(Get@<Input@>, Put@<Output@>, AI@){Unit@!;}
+NewGame = (Input@! input, Put@<Output@> output, AI@ ai) {
   PlayGame(input, output, ai, EmptyBoard, Player@(X: Unit));
 },
 (Input@!, Put@<Output@>, AI@, Board@, Player@){Unit@!;}
@@ -28,34 +29,26 @@ PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x
                           E: GameStatus@(Move: x)));
   Unit@ _ := output(Output@(board, status));
   Input@ in := input;
-  Bool@ over = ?(status; Move: False, Win: True, Draw: True);
   ?(in;
-     position: {
-       ?(over; true: PlayGame(input, output, ai, board, x),
-          false: {
-            Maybe@<Board@> nboard := $(Move(board, in.position, x));
-            ?(nboard ;
-                just: PlayGame(input, output, ai, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
-                nothing: PlayGame(input, output, ai, board, x));
-       });
-     },
-     computer: {
-       ?(over; true: PlayGame(input, output, ai, board, x),
-          false: {
-            Position@ position := ai(board, x);
+     reset: NewGame(input, output, ai),
+     quit: $(Unit),
+     : ?(status;
+          Move: {
+            Position@ position := ?(in; position: $(in.position), : ai(board, x));
             Maybe@<Board@> nboard := $(Move(board, position, x));
             ?(nboard ;
                 just: PlayGame(input, output, ai, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
                 nothing: PlayGame(input, output, ai, board, x));
-        });
-     },
-     reset: NewGameAI(input, output, ai),
-     quit: $(Unit));
+
+          },
+          : # It's a Win or a Draw, but the user tried to make a move.
+            # Ignore the move and let the user pick again.
+            PlayGame(input, output, ai, board, x)));
 };
 
 (Get@<Input@>, Put@<Output@>){Unit@!;} TicTacToe = (Get@<Input@> input, Put@<Output@> output) {
   AI@ ai <- WithAI<Unit@>;
-  NewGameAI(input, output, ai);
+  NewGame(input, output, ai);
 };
 
 @(GameStatus@, Input@, Output@, TicTacToe);

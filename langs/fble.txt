@@ -1165,3 +1165,9 @@ Notes:
   Related: how do deal with this kind of ambiguity? Should child modules
   shadow parent modules? But then, if you add a module somewhere, some sibling
   could be broken by it unaware. That sounds bad.
+
+- I worry a little about default case. There are some situations where I want
+  to list explicitly that: for the following tags, do the same thing. And then
+  there are cases where I want to say: I know only the following tags are
+  possible at this point in the code, so only list those. Should I make case
+  statements more flexible like this?
