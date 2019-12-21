@@ -34,7 +34,7 @@
          Str(Char@|' move:')])),
        Win: Concat<Char@>(S<Str@>([
          Str(Char@|'GAME OVER: Player '),
-         ShowPlayer(s.Move),
+         ShowPlayer(s.Win),
          Str(Char@|' wins.')])),
        Draw: Str(Char@|'GAME OVER: Draw.')
   );
@@ -52,24 +52,24 @@
   ?(in;
       cons: ?(in.cons.head;
         'A': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
-                '1': Just<Input@>(Input@(position: Position@(UL: Unit))),
-                '2': Just<Input@>(Input@(position: Position@(UC: Unit))),
-                '3': Just<Input@>(Input@(position: Position@(UR: Unit))),
+                '1': Just<Input@>(Input@(move: Just<Position@>(Position@(UL: Unit)))),
+                '2': Just<Input@>(Input@(move: Just<Position@>(Position@(UC: Unit)))),
+                '3': Just<Input@>(Input@(move: Just<Position@>(Position@(UR: Unit)))),
                    : Nothing<Input@>),
                 nil: Nothing<Input@>),
         'B': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
-                '1': Just<Input@>(Input@(position: Position@(ML: Unit))),
-                '2': Just<Input@>(Input@(position: Position@(MC: Unit))),
-                '3': Just<Input@>(Input@(position: Position@(MR: Unit))),
+                '1': Just<Input@>(Input@(move: Just<Position@>(Position@(ML: Unit)))),
+                '2': Just<Input@>(Input@(move: Just<Position@>(Position@(MC: Unit)))),
+                '3': Just<Input@>(Input@(move: Just<Position@>(Position@(MR: Unit)))),
                    : Nothing<Input@>),
                 nil: Nothing<Input@>),
         'C': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
-                '1': Just<Input@>(Input@(position: Position@(LL: Unit))),
-                '2': Just<Input@>(Input@(position: Position@(LC: Unit))),
-                '3': Just<Input@>(Input@(position: Position@(LR: Unit))),
+                '1': Just<Input@>(Input@(move: Just<Position@>(Position@(LL: Unit)))),
+                '2': Just<Input@>(Input@(move: Just<Position@>(Position@(LC: Unit)))),
+                '3': Just<Input@>(Input@(move: Just<Position@>(Position@(LR: Unit)))),
                    : Nothing<Input@>),
                 nil: Nothing<Input@>),
-        'P': Just<Input@>(Input@(computer: Unit)),
+        'P': Just<Input@>(Input@(move: Nothing<Position@>)),
         'R': Just<Input@>(Input@(reset: Unit)),
            : Nothing<Input@>),
       nil: Nothing<Input@>);

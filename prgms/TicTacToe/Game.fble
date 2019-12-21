@@ -10,11 +10,11 @@
 @ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 
 @ Output@ = *(Board@ board, GameStatus@ status);
 
-# position: Make a move at the given position for the current player.
-# computer: Have the computer make a move for the current player.
+# move: Make a move at the given position for the current player. If no
+#       position is supplied, have the computer pick a reasonable move instead.
 # reset: Reset the game.
 # quit: Quit the game.
-@ Input@ = +(Position@ position, Unit@ computer, Unit@ reset, Unit@ quit);
+@ Input@ = +(Maybe@<Position@> move, Unit@ reset, Unit@ quit);
 
 (Get@<Input@>, Put@<Output@>, AI@){Unit@!;}
 NewGame = (Input@! input, Put@<Output@> output, AI@ ai) {
@@ -30,11 +30,13 @@ PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x
   Unit@ _ := output(Output@(board, status));
   Input@ in := input;
   ?(in;
-     reset: NewGame(input, output, ai),
-     quit: $(Unit),
-     : ?(status;
+     move:
+       ?(status;
           Move: {
-            Position@ position := ?(in; position: $(in.position), : ai(board, x));
+            Position@ position := ?(in.move;
+              just: $(in.move.just),
+              nothing: ai(board, x));
+
             Maybe@<Board@> nboard := $(Move(board, position, x));
             ?(nboard ;
                 just: PlayGame(input, output, ai, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
@@ -43,7 +45,9 @@ PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x
           },
           : # It's a Win or a Draw, but the user tried to make a move.
             # Ignore the move and let the user pick again.
-            PlayGame(input, output, ai, board, x)));
+            PlayGame(input, output, ai, board, x)),
+     reset: NewGame(input, output, ai),
+     quit: $(Unit));
 };
 
 (Get@<Input@>, Put@<Output@>){Unit@!;} TicTacToe = (Get@<Input@> input, Put@<Output@> output) {
