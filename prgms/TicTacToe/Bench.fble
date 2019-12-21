@@ -1,12 +1,12 @@
 
 { Unit%; @(Unit@, Unit); };
 
-{ AI%; @(MemoTable@, ChooseBestMove); };
-{ Board%; @(Board@, Player@, Position@, Square@, EmptyBoard); };
+{ AI%; @(AI@, WithAI); };
+{ Board%; @(Player@, Position@, EmptyBoard); };
 
-(Unit@){Position@;} BenchmarkChooseBestMove = (Unit@ _) {
-  ChooseBestMove(MemoTable@(empty: Unit),
-    EmptyBoard, Player@(X: Unit)).data.position;
+Position@! BenchmarkChooseBestMove = {
+  AI@ ai <- WithAI<Position@>;
+  ai(EmptyBoard, Player@(X: Unit));
 };
 
 @(BenchmarkChooseBestMove);

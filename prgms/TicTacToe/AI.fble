@@ -1,6 +1,7 @@
 
 { List%; @(S@, S, ForS); };
 { Maybe%; @(Maybe@, For, Just, Nothing); };
+{ Process%; @(Get@, Put@); };
 { Unit%; @(Unit@, Unit); };
 
 { Board%; @(Board@, Player@, Position@, Result@, Square@, BoardStatus, Move); };
@@ -244,4 +245,44 @@ MemoTable@ InitialAI = {
   MemoTable@(empty: Unit);
 };
 
-@(MemoState@, MemoTable@, PositionResult@, InitialAI, ChooseBestMove);
+@ Turn@ = *(Board@ board, Player@ player);
+
+(MemoTable@, Get@<Maybe@<Turn@>>, Put@<Position@>){ Unit@!; }
+RunAI = (MemoTable@ ai, Get@<Maybe@<Turn@>> get, Put@<Position@> put) {
+  Maybe@<Turn@> mturn := get;
+  ?(mturn;
+     just: {
+       Turn@ turn = mturn.just;
+       MemoState@<PositionResult@> mpr = ChooseBestMove(ai, turn.board, turn.player);
+       Unit@ _ := put(mpr.data.position);
+       RunAI(mpr.memo, get, put);
+     },
+     nothing: $(Unit));
+};
+
+(Get@<Maybe@<Turn@>>, Put@<Position@>){ Unit@!; } AI = RunAI(InitialAI);
+
+# A TicTacToe AI that will pick a position when it is the given player's turn
+# to move on the given board.
+@ AI@ = (Board@, Player@) { Position@!; };
+
+# Execute a process with access to a TicTacToe AI.
+<@ T@>((AI@){ T@!;}){ T@!; } WithAI = <@ T@>((AI@){ T@!;} p) {
+  Maybe@<Turn@> ~ get_turn, put_turn;
+  Position@ ~ get_position, put_position;
+
+  AI@ ai = (Board@ board, Player@ player) {
+    Unit@ _ := put_turn(Just<Turn@>(Turn@(board, player)));
+    get_position;
+  };
+
+  Unit@ _ := RunAI(InitialAI, get_turn, put_position),
+  T@ result := {
+    T@ result := p(ai); 
+    Unit@ _ := put_turn(Nothing<Turn@>);
+    $(result);
+  };
+  $(result);
+};
+
+@(AI@, WithAI);

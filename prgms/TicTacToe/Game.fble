@@ -4,7 +4,7 @@
 { Process%; @(Get@, Put@); };
 { Unit%; @(Unit@, Unit); };
 
-{ AI%; @(MemoState@, MemoTable@, PositionResult@, ChooseBestMove, InitialAI); };
+{ AI%; @(AI@, WithAI); };
 { Board%; @(Board@, Position@, Player@, BoardStatus, EmptyBoard, Move); };
 
 @ GameStatus@ = +(Player@ Move, Player@ Win, Unit@ Draw); 
@@ -15,12 +15,12 @@
 # reset: Reset the game.
 @ Input@ = +(Position@ position, Unit@ computer, Unit@ reset, Unit@ quit);
 
-(Input@!, Put@<Output@>, MemoTable@){Unit@!;}
-NewGameAI = (Input@! input, Put@<Output@> output, MemoTable@ ai) {
+(Input@!, Put@<Output@>, AI@){Unit@!;}
+NewGameAI = (Input@! input, Put@<Output@> output, AI@ ai) {
   PlayGame(input, output, ai, EmptyBoard, Player@(X: Unit));
 },
-(Input@!, Put@<Output@>, MemoTable@, Board@, Player@){Unit@!;}
-PlayGame = (Input@! input, Put@<Output@> output, MemoTable@ ai, Board@ board, Player@ x) {
+(Input@!, Put@<Output@>, AI@, Board@, Player@){Unit@!;}
+PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x) {
   GameStatus@ status := $(?(BoardStatus(board);
                           X: GameStatus@(Win: Player@(X: Unit)),
                           O: GameStatus@(Win: Player@(O: Unit)),
@@ -42,11 +42,11 @@ PlayGame = (Input@! input, Put@<Output@> output, MemoTable@ ai, Board@ board, Pl
      computer: {
        ?(over; true: PlayGame(input, output, ai, board, x),
           false: {
-            MemoState@<PositionResult@> mpr = ChooseBestMove(ai, board, x);
-            Maybe@<Board@> nboard := $(Move(board, mpr.data.position, x));
+            Position@ position := ai(board, x);
+            Maybe@<Board@> nboard := $(Move(board, position, x));
             ?(nboard ;
-                just: PlayGame(input, output, mpr.memo, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
-                nothing: PlayGame(input, output, mpr.memo, board, x));
+                just: PlayGame(input, output, ai, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
+                nothing: PlayGame(input, output, ai, board, x));
         });
      },
      reset: NewGameAI(input, output, ai),
@@ -54,7 +54,8 @@ PlayGame = (Input@! input, Put@<Output@> output, MemoTable@ ai, Board@ board, Pl
 };
 
 (Get@<Input@>, Put@<Output@>){Unit@!;} TicTacToe = (Get@<Input@> input, Put@<Output@> output) {
-  NewGameAI(input, output, InitialAI);
+  AI@ ai <- WithAI<Unit@>;
+  NewGameAI(input, output, ai);
 };
 
 @(GameStatus@, Input@, Output@, TicTacToe);

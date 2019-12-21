@@ -1,9 +1,5 @@
 The Great Cleanup:
 * [clean] Don't use 'eval' when we could do a direct subst instead?
-* [prgm] TicTacToe cleanup
-  - Rename MemoTable@ to AI@.
-  - Make PositionResult@ internal to AI, expose a function that returns a
-    Maybe position without the result.
 * [clean] Misc apply should not accept POLY_APPLY_TYPE for struct values.
     The trouble is, we fail to evaluate: @(\x -> ...) y
       When we could reduce it to: (\x -> @(...)) y
