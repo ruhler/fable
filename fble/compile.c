@@ -1887,8 +1887,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         return NULL;
       }
 
-      assert(type->tag != POLY_TYPE && "TODO: typeof poly type");
-
       TypeType* type_type = FbleAlloc(arena_, TypeType);
       FbleRefInit(arena, &type_type->_base.ref);
       type_type->_base.tag = TYPE_TYPE;

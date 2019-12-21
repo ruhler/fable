@@ -1,4 +1,5 @@
 The Great Cleanup:
+* [clean] Don't use 'eval' when we could do a direct subst instead?
 * [prgm] TicTacToe cleanup
   - Rename MemoTable@ to AI@.
   - Make PositionResult@ internal to AI, expose a function that returns a
@@ -11,7 +12,6 @@ The Great Cleanup:
     values, implement that, remove POLY_APPLY_TYPE option from misc apply, and
     access the typeof type directly instead of using valueOfType in that case.
 * [test] Improve spec test code coverage.
-  - compile.c:926 - cached var substitution
   - compile.c:1354 - print non-labelled recursive type
   
 The Harder Cleanup:
