@@ -1,4 +1,4 @@
-{ Bool%; @(Bool@, True); };
+{ Bool%; @(Bool@, True, False); };
 { Char%; @(Char@, newline); };
 { List%; @(S@, S0, S, ConsS, Append, Concat); };
 { Maybe%; @(Maybe@, Just, Nothing, For); };
@@ -54,6 +54,11 @@ Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) {
   };
 };
 
+<@ T@>(Symbol@, Symbol@, T@, Array@<Array@<T@>>){ Array@<Array@<T@>>; }
+Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
+  Set<Array@<T@>>(a, Set<T@>(b, x, array(a)), array);
+};
+
 # A cell is identified by its row and column.
 @ CellId@ = *(Symbol@ row, Symbol@ col);
 
@@ -67,6 +72,27 @@ Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) {
 
 # The set of all possible symbols.
 Set@ FullSet = (Symbol@ s) { True; };
+
+# Remove all elements of the given set except for the given symbol.
+# If the given symbol was in the set, the set becomes a singleton set.
+# Otherwise the set becomes an empty set.
+(Symbol@, Set@) { Set@; } RemoveAllBut = (Symbol@ s, Set@ a) {
+  Bool@ a1 = ?(s; 1: a(1), : False);
+  Bool@ a2 = ?(s; 2: a(2), : False);
+  Bool@ a3 = ?(s; 3: a(3), : False);
+  Bool@ a4 = ?(s; 4: a(4), : False);
+  Bool@ a5 = ?(s; 5: a(5), : False);
+  Bool@ a6 = ?(s; 6: a(6), : False);
+  Bool@ a7 = ?(s; 7: a(7), : False);
+  Bool@ a8 = ?(s; 8: a(8), : False);
+  Bool@ a9 = ?(s; 9: a(9), : False);
+  (Symbol@ k) {
+    ?(k;
+      1: a1, 2: a2, 3: a3,
+      4: a4, 5: a5, 6: a6,
+      7: a7, 8: a8, 9: a9);
+  };
+};
 
 # Return the singleton value of a set, if it is a singleton set. Return
 # Nothing if it is not a singleton set.
@@ -121,8 +147,19 @@ Board@ InitialBoard = Board@(InitialCells, InitialGroups);
 # Set the value of a cell on the board.
 # Results in an updated board and a set of new assignments to make.
 (Board@, Assign@) { AssignResult@; } Assign = (Board@ b, Assign@ x) {
-   # TODO Me.
-   AssignResult@(b, S0<Assign@>);
+   # 1. For the cell in question, eliminate all other possible symbols.
+   # TODO: Add a 'Modify' function for arrays, use it to help define a
+   # Modify2D to replace Set2D?
+   Cells@ ncells = Set2D<Cell@>(x.cell.row, x.cell.col,
+     RemoveAllBut(x.symbol, b.cells(x.cell.row, x.cell.col)), b.cells);
+
+   # TODO:
+   # 2. For other cells in the same group, eliminate this symbol.
+   #       If newly singleton, generate a new constraint.
+   # 3. For the group, symbol in question, eliminate all other possible cells.
+   # 4. For the group, non-symbols in question, eliminate this cell.
+   #       If newly singleton, generate a new constraint.
+   AssignResult@(Board@(ncells, b.groups), S0<Assign@>);
 };
 
 # Make all the given assignments to the board, and all resulting assignments,
