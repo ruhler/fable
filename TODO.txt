@@ -27,6 +27,7 @@ The Harder Cleanup:
 Programs:
 * [prgm] Game of Life
 * [prgm] Sudoku
+* [clean] Can fble-stdio check that the function has the right type?
 
 Performance Refactor:
 * It's very unintuitive that $(f(...)) calls f(...) before executing the

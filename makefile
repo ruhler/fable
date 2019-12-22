@@ -13,7 +13,7 @@ checkerr: all
 
 .PHONY: foo
 foo:
-	./out/bin/fble-test foo.fble
+	./out/bin/fble-stdio prgms/fble-sudoku.fble prgms/
 	#./out/bin/fble-stdio prgms/fble-tests.fble prgms
 	#./out/bin/fble-stdio prgms/fble-tictactoe.fble prgms/
 	#./out/bin/fble-test prgms/fble-tictactoe-bench.fble prgms

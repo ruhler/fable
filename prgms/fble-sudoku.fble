@@ -1,0 +1,15 @@
+
+{ Bool%; @(True); };
+{ Char%; @(Char@); };
+{ Maybe%; @(Maybe@); };
+{ Process%; @(Get@, Put@); };
+{ String%; @(Str@, Str); };
+{ Unit%; @(Unit@); };
+
+{ Sudoku%; @(Solve); };
+
+(Get@<Maybe@<Str@>> in, Put@<Str@> out) {
+  Str@ board = Str(Char@|'8...9...272.....49...3.6....5..8..16..9...3..67..5..9....9.1...96.....541...4...7');
+  Unit@ _ := out(Solve(board));
+  $(True);
+};
