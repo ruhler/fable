@@ -30,6 +30,34 @@ Symbol@ 9 = Symbol@(9: Unit);
     7: J(8), 8: J(9), 9: Nothing<Symbol@>);
 };
 
+# An index specifying a row or column of a box group.
+@ BoxIndex@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
+
+BoxIndex@ B1 = BoxIndex@(1: Unit);
+BoxIndex@ B2 = BoxIndex@(2: Unit);
+BoxIndex@ B3 = BoxIndex@(3: Unit);
+
+# s / 3
+(Symbol@) { BoxIndex@; } Div3 = (Symbol@ s) {
+  ?(s; 1: B1, 2: B1, 3: B1,
+       4: B2, 5: B2, 6: B2,
+       7: B3, 8: B3, 9: B3);
+};
+
+# s % 3
+(Symbol@) { BoxIndex@; } Mod3 = (Symbol@ s) {
+  ?(s; 1: B1, 2: B2, 3: B3,
+       4: B1, 5: B2, 6: B3,
+       7: B1, 8: B2, 9: B3);
+};
+
+# 3a + b
+(BoxIndex@, BoxIndex@) { Symbol@; } Lit3 = (BoxIndex@ a, BoxIndex@ b) {
+  ?(a; 1: ?(b; 1: 1, 2: 2, 3: 3),
+       2: ?(b; 1: 4, 2: 5, 3: 6),
+       3: ?(b; 1: 7, 2: 8, 3: 9));
+};
+
 # An array of elements of type T@, indexed by symbol.
 <@>@ Array@ = <@ T@>(Symbol@){ T@; };
 
@@ -68,15 +96,20 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 @ GroupId@ = +(Symbol@ row, Symbol@ col, Symbol@ box);
 
 # Return the id of the box group that this cell belongs to.
-# TODO: me!
-#(CellId@) { Symbol@; } BoxGroupOf = (CellId@ cell) { };
+(CellId@) { Symbol@; } BoxGroupOf = (CellId@ cell) {
+  BoxIndex@ row = Div3(cell.row);
+  BoxIndex@ col = Div3(cell.col);
+  Lit3(row, col);
+};
 
 # Return the position of this cell within its box group.
-# TODO: me!
-#(CellId@) { Symbol@; } BoxPosOf = (CellId@ cell) { };
+(CellId@) { Symbol@; } BoxPosOf = (CellId@ cell) {
+  BoxIndex@ row = Mod3(cell.row);
+  BoxIndex@ col = Mod3(cell.col);
+  Lit3(row, col);
+};
 
 # Return the id of the cell in the given position of the given box.
-# TODO: me!
 #(Symbol@, Symbol@) { CellId@; } CellOfPos = (Symbol@ box, Symbol@ pos) { };
 
 # A set of symbols.
