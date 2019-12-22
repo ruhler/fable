@@ -77,21 +77,7 @@ Set@ FullSet = (Symbol@ s) { True; };
 # If the given symbol was in the set, the set becomes a singleton set.
 # Otherwise the set becomes an empty set.
 (Symbol@, Set@) { Set@; } RemoveAllBut = (Symbol@ s, Set@ a) {
-  Bool@ a1 = ?(s; 1: a(1), : False);
-  Bool@ a2 = ?(s; 2: a(2), : False);
-  Bool@ a3 = ?(s; 3: a(3), : False);
-  Bool@ a4 = ?(s; 4: a(4), : False);
-  Bool@ a5 = ?(s; 5: a(5), : False);
-  Bool@ a6 = ?(s; 6: a(6), : False);
-  Bool@ a7 = ?(s; 7: a(7), : False);
-  Bool@ a8 = ?(s; 8: a(8), : False);
-  Bool@ a9 = ?(s; 9: a(9), : False);
-  (Symbol@ k) {
-    ?(k;
-      1: a1, 2: a2, 3: a3,
-      4: a4, 5: a5, 6: a6,
-      7: a7, 8: a8, 9: a9);
-  };
+  Set<Bool@>(s, a(s), (Symbol@ k) { False; });
 };
 
 # Return the singleton value of a set, if it is a singleton set. Return
