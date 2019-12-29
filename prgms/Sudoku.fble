@@ -110,7 +110,11 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 };
 
 # Return the id of the cell in the given position of the given box.
-#(Symbol@, Symbol@) { CellId@; } CellOfPos = (Symbol@ box, Symbol@ pos) { };
+(Symbol@, Symbol@) { CellId@; } CellOfPos = (Symbol@ box, Symbol@ pos) {
+  Symbol@ row = Lit3(Div3(box), Div3(pos));
+  Symbol@ col = Lit3(Mod3(box), Mod3(pos));
+  CellId@(row, col);
+};
 
 # A set of symbols.
 @ Set@ = Array@<Bool@>;
@@ -226,19 +230,18 @@ Board@ InitialBoard = Board@(InitialCells, InitialGroups);
    });
 
    # Boxes
-   # TODO: me!
-   # Symbol@ box = BoxPosOf(x.cell);
-   # Set@ isThisPos = Set<Bool@>(box, True, (Symbol@ _) { False; });
-   # AssignResult@ ar4 = For<Symbol@, AssignResult@>(1, ar3, IterateSymbol,
-   #   (Symbol@ pos) {
-   #     EliminateSymbol(isThisPos(pos), CellOfPos(box, pos), x.symbol);
-   # });
+   Symbol@ box = BoxGroupOf(x.cell);
+   Set@ isThisPos = Set<Bool@>(BoxPosOf(x.cell), True, (Symbol@ _) { False; });
+   AssignResult@ ar4 = For<Symbol@, AssignResult@>(1, ar3, IterateSymbol,
+     (Symbol@ pos) {
+       EliminateSymbol(isThisPos(pos), CellOfPos(box, pos), x.symbol);
+   });
 
    # TODO:
    # 3. For the group, symbol in question, eliminate all other possible cells.
    # 4. For the group, non-symbols in question, eliminate this cell.
    #       If newly singleton, generate a new constraint.
-   ar3;
+   ar4;
 };
 
 # Make all the given assignments to the board, and all resulting assignments,
