@@ -90,11 +90,6 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 # A cell is identified by its row and column.
 @ CellId@ = *(Symbol@ row, Symbol@ col);
 
-# A group is identified by whether it is a row, column, or box, and which row,
-# column, or box it is. Rows are numbered top to bottom. Columns are numbered
-# left to right. Boxes are numbered left to right, top to bottom.
-@ GroupId@ = +(Symbol@ row, Symbol@ col, Symbol@ box);
-
 # Return the id of the box group that this cell belongs to.
 (CellId@) { Symbol@; } BoxGroupOf = (CellId@ cell) {
   BoxIndex@ row = Div3(cell.row);
@@ -158,19 +153,9 @@ Cell@ InitialCell = FullSet;
 @ Cells@ = Array@<Array@<Cell@>>;
 Cells@ InitialCells = (Symbol@ r, Symbol@ c) { InitialCell; };
 
-# For each symbol of each group, we keep track of the set of possible cells
-# that could take on that symbol value. The cells are identified relative to
-# their position in the group.
-@ Group@ = Array@<Set@>;
-Group@ InitialGroup = (Symbol@ s) { FullSet; };
-
-# The set of 3*9 groups in the board.
-@ Groups@ = *(Group@ row, Group@ col, Group@ box);
-Groups@ InitialGroups = Groups@(InitialGroup, InitialGroup, InitialGroup);
-
-# A board keeps track of possible values for cells and symbols of each group.
-@ Board@ = *(Cells@ cells, Groups@ groups);
-Board@ InitialBoard = Board@(InitialCells, InitialGroups);
+# A board keeps track of possible values for cells.
+@ Board@ = *(Cells@ cells);
+Board@ InitialBoard = Board@(InitialCells);
 
 # An assignment of a symbol value to a particular cell.
 @ Assign@ = *(CellId@ cell, Symbol@ symbol);
@@ -220,38 +205,6 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
        });
    };
 
-   (Bool@, Symbol@, Symbol@, GroupId@, Group@) { A@<Group@>; }
-   UpdateGroup = (Bool@ this, Symbol@ symbol, Symbol@ cell, GroupId@ groupId, Group@ group) {
-     ?(this;
-       true: {
-         # 3. For this group, symbol in question, eliminate all other possible
-         # cells.
-         Group@ ngroup = Set<Set@>(symbol, RemoveAllBut(cell, group(symbol)), group);
-         ReturnA<Group@>(ngroup);
-       },
-       false: {
-         # 4. For the group, non-symbols in question, eliminate this cell.
-         Set@ cells = group(symbol);
-         ?(cells(cell);
-            true: {
-              Set@ ncells = Set<Bool@>(cell, False, cells);
-              Group@ ngroup = Set<Set@>(symbol, ncells, group);
-              Maybe@<Symbol@> single = Singleton(ncells);
-              S@<Assign@> nassigns = ?(single;
-                just: {
-                  CellId@ id = ?(groupId;
-                    row: CellId@(groupId.row, single.just),
-                    col: CellId@(single.just, groupId.col),
-                    box: CellOfPos(groupId.box, single.just));
-                  S<Assign@>([Assign@(id, symbol)]);
-                },
-                nothing: S0<Assign@>);
-              A@<Group@>(ngroup, nassigns);
-            },
-            false: ReturnA<Group@>(group));
-       });
-   };
-
    A@<Board@> b0 = ReturnA<Board@>(board);
 
    # Columns
@@ -261,10 +214,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
        Board@ board <- A<Board@, Board@>(aboard);
        Cells@ ncells <- A<Cells@, Board@>(
          UpdateCells(isThisCol(col), CellId@(x.cell.row, col), x.symbol, board.cells));
-       Group@ nrow <- A<Group@, Board@>(
-         UpdateGroup(isThisCol(col), x.symbol, col, GroupId@(row: x.cell.row), board.groups.row));
-       Groups@ ngroups = Groups@(nrow, board.groups.col, board.groups.box);
-       ReturnA<Board@>(Board@(ncells, ngroups));
+       ReturnA<Board@>(Board@(ncells));
    });
 
    # Rows
@@ -274,10 +224,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
        Board@ board <- A<Board@, Board@>(aboard);
        Cells@ ncells <- A<Cells@, Board@>(
          UpdateCells(isThisRow(row), CellId@(row, x.cell.col), x.symbol, board.cells));
-       Group@ ncol <- A<Group@, Board@>(
-         UpdateGroup(isThisRow(row), x.symbol, row, GroupId@(col: x.cell.col), board.groups.col));
-       Groups@ ngroups = Groups@(board.groups.row, ncol, board.groups.box);
-       ReturnA<Board@>(Board@(ncells, ngroups));
+       ReturnA<Board@>(Board@(ncells));
    });
 
    # Boxes
@@ -288,10 +235,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
        Board@ board <- A<Board@, Board@>(aboard);
        Cells@ ncells <- A<Cells@, Board@>(
          UpdateCells(isThisPos(pos), CellOfPos(box, pos), x.symbol, board.cells));
-       Group@ nbox <- A<Group@, Board@>(
-         UpdateGroup(isThisPos(pos), x.symbol, pos, GroupId@(box: box), board.groups.box));
-       Groups@ ngroups = Groups@(board.groups.row, board.groups.col, nbox);
-       ReturnA<Board@>(Board@(ncells, ngroups));
+       ReturnA<Board@>(Board@(ncells));
    });
 
    b3;

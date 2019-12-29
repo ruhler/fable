@@ -11,12 +11,8 @@ Type System Cleanup
     that case.
 
 Sudoku
-* Implement BoxGroupOf
-* Implement BoxPosOf
-* Implement CellOfPos
-* Uncomment code for Assign step 2 Boxes.
-* Implement Assign step 3.
-* Implement Assign step 4.
+* Replace Cells@ with Board@
+* Add check for singleton symbol in addition to singleton cell.
 * See if this is enough to solve the board. In the likely case that it isn't,
   add a backtracking search phase that guesses an assignment and checks if it
   works or not.
@@ -153,8 +149,13 @@ Future:
   and we can pipeline or duplicate the blocks to allow for even more
   parallelism.
 
-* Implement an fble debugger. Where at minimum you can trace through source
-  locations as the program executes. Maybe we want fancy stuff like viewing
-  variables, breakpoints, setting values, etc... but mostly to start tracing
-  through source locations.
-
+* Implement an fble debugger. Features:
+ - Set a breakpoint at a line in a file.
+ - Step through code line by line.
+ - Evaluate expressions in the context of the current scope and print the
+   results.
+ - Auto breakpoint at undefined behavior?
+ 
+ Use cases:
+ - Debug why sudoku solver isn't working properly by stepping through a line
+   at a time and printing intermediate values.
