@@ -180,50 +180,49 @@ Board@ InitialBoard = Board@(InitialCells, InitialGroups);
 
 # Set the value of a cell on the board.
 # Results in an updated board and a set of new assignments to make.
-(Board@, Assign@) { A@<Board@>; } Assign = (Board@ b, Assign@ x) {
-   # 1. For the cell in question, eliminate all other possible symbols.
-   # TODO: Add a 'Modify' function for arrays, use it to help define a
-   # Modify2D to replace Set2D?
-   Cells@ ncells = Set2D<Cell@>(x.cell.row, x.cell.col,
-     RemoveAllBut(x.symbol, b.cells(x.cell.row, x.cell.col)), b.cells);
-   A@<Board@> ar1 = A@<Board@>(Board@(ncells, b.groups), S0<Assign@>);
-
+(Board@, Assign@) { A@<Board@>; } Assign = (Board@ board, Assign@ x) {
+   # 1. For this cell, eliminate all other possible symbols.
    # 2. For other cells in the same group, eliminate this symbol.
    #       If newly singleton, generate a new constraint.
-   (Bool@, CellId@, Symbol@, A@<Board@>) { A@<Board@>; }
-   EliminateSymbol = (Bool@ ignore, CellId@ id, Symbol@ symbol, A@<Board@> result) {
-     ?(ignore;
-       true: result,
+   (Bool@, CellId@, Symbol@, A@<Cells@>) { A@<Cells@>; }
+   EliminateSymbol = (Bool@ this, CellId@ id, Symbol@ symbol, A@<Cells@> cells) {
+     ?(this;
+       true: {
+         Cells@ ncells = Set2D<Cell@>(id.row, id.col,
+             RemoveAllBut(symbol, cells._(id.row, id.col)), cells._);
+         A@<Cells@>(ncells, cells.assigns);
+       },
        false: {
-         Cell@ cell = result._.cells(id.row, id.col);
+         Cell@ cell = cells._(id.row, id.col);
          ?(cell(symbol);
             true: {
               Cell@ ncell = Set<Bool@>(symbol, False, cell);
-              Cells@ ncells = Set2D<Cell@>(id.row, id.col, ncell, result._.cells);
-              Board@ nboard = Board@(ncells, result._.groups);
+              Cells@ ncells = Set2D<Cell@>(id.row, id.col, ncell, cells._);
               Maybe@<Symbol@> single = Singleton(ncell);
               S@<Assign@> nassigns = ?(single;
                 just: {
                   Assign@ assign = Assign@(id, single.just);
-                  ConsS<Assign@>(assign, result.assigns);
+                  ConsS<Assign@>(assign, cells.assigns);
                 },
-                nothing: result.assigns);
-              A@<Board@>(nboard, nassigns);
+                nothing: cells.assigns);
+              A@<Cells@>(ncells, nassigns);
             },
-            false: result);
+            false: cells);
        });
    };
 
+   A@<Cells@> c0 = A@<Cells@>(board.cells, S0<Assign@>);
+
    # Columns
    Set@ isThisCol = Set<Bool@>(x.cell.col, True, (Symbol@ _) { False; });
-   A@<Board@> ar2 = For<Symbol@, A@<Board@>>(1, ar1, IterateSymbol,
+   A@<Cells@> c1 = For<Symbol@, A@<Cells@>>(1, c0, IterateSymbol,
      (Symbol@ col) {
        EliminateSymbol(isThisCol(col), CellId@(x.cell.row, col), x.symbol);
    });
 
    # Rows
    Set@ isThisRow = Set<Bool@>(x.cell.row, True, (Symbol@ _) { False; });
-   A@<Board@> ar3 = For<Symbol@, A@<Board@>>(1, ar2, IterateSymbol,
+   A@<Cells@> c2 = For<Symbol@, A@<Cells@>>(1, c1, IterateSymbol,
      (Symbol@ row) {
        EliminateSymbol(isThisRow(row), CellId@(row, x.cell.col), x.symbol);
    });
@@ -231,7 +230,7 @@ Board@ InitialBoard = Board@(InitialCells, InitialGroups);
    # Boxes
    Symbol@ box = BoxGroupOf(x.cell);
    Set@ isThisPos = Set<Bool@>(BoxPosOf(x.cell), True, (Symbol@ _) { False; });
-   A@<Board@> ar4 = For<Symbol@, A@<Board@>>(1, ar3, IterateSymbol,
+   A@<Cells@> c3 = For<Symbol@, A@<Cells@>>(1, c2, IterateSymbol,
      (Symbol@ pos) {
        EliminateSymbol(isThisPos(pos), CellOfPos(box, pos), x.symbol);
    });
@@ -240,7 +239,7 @@ Board@ InitialBoard = Board@(InitialCells, InitialGroups);
    # 3. For the group, symbol in question, eliminate all other possible cells.
    # 4. For the group, non-symbols in question, eliminate this cell.
    #       If newly singleton, generate a new constraint.
-   ar4;
+   A@<Board@>(Board@(c3._, board.groups), c3.assigns);
 };
 
 # Make all the given assignments to the board, and all resulting assignments,
