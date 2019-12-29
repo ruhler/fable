@@ -117,13 +117,6 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 # The set of all possible symbols.
 Set@ FullSet = (Symbol@ s) { True; };
 
-# Remove all elements of the given set except for the given symbol.
-# If the given symbol was in the set, the set becomes a singleton set.
-# Otherwise the set becomes an empty set.
-(Symbol@, Set@) { Set@; } RemoveAllBut = (Symbol@ s, Set@ a) {
-  Set<Bool@>(s, a(s), (Symbol@ k) { False; });
-};
-
 # Return the singleton value of a set, if it is a singleton set. Return
 # Nothing if it is not a singleton set.
 (Set@){ Maybe@<Symbol@>; } Singleton = (Set@ set) {
@@ -218,11 +211,32 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
          just: Assign(x.cell, single.just),
          nothing: S0<X@>);
 
-       # TODO:
-       # 3. If board[row].symbol has only one cell, generate the assignment.
-       # 4. If board[col].symbol has only one cell, generate the assignment.
-       # 5. If board[box].symbol has only one cell, generate the assignment.
-       BoardX@(nboard, Concat<X@>(S<S@<X@>>([xCell])));
+       # If board[row].symbol has only one cell, generate the assignment.
+       Set@ cells = (Symbol@ col) { nboard(x.cell.row, col, x.symbol); };
+       Maybe@<Symbol@> single = Singleton(cells);
+       S@<X@> xRow = ?(single;
+         just: Assign(CellId@(x.cell.row, single.just), x.symbol),
+         nothing: S0<X@>);
+
+       # If board[col].symbol has only one cell, generate the assignment.
+       Set@ cells = (Symbol@ row) { nboard(row, x.cell.col, x.symbol); };
+       Maybe@<Symbol@> single = Singleton(cells);
+       S@<X@> xCol = ?(single;
+         just: Assign(CellId@(single.just, x.cell.col), x.symbol),
+         nothing: S0<X@>);
+
+       # If board[box].symbol has only one cell, generate the assignment.
+       Symbol@ box = BoxGroupOf(x.cell);
+       Set@ cells = (Symbol@ pos) {
+         CellId@ cell = CellOfPos(box, pos);
+         nboard(cell.row, cell.col, x.symbol);
+       };
+       Maybe@<Symbol@> single = Singleton(cells);
+       S@<X@> xBox = ?(single;
+         just: Assign(CellOfPos(box, single.just), x.symbol),
+         nothing: S0<X@>);
+
+       BoardX@(nboard, Concat<X@>(S<S@<X@>>([xCell, xRow, xCol, xBox])));
      },
      false: BoardX@(board, S0<X@>));
 };

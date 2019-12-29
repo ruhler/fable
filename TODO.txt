@@ -14,9 +14,7 @@ Type System Cleanup
     that case.
 
 Sudoku
-* Add check for singleton symbol in addition to singleton cell.
-* See if this is enough to solve the board. In the likely case that it isn't,
-  add a backtracking search phase that guesses an assignment and checks if it
+* Add a backtracking search phase that guesses an assignment and checks if it
   works or not.
   
 The Harder Cleanup:
