@@ -261,7 +261,10 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
        Board@ board <- A<Board@, Board@>(aboard);
        Cells@ ncells <- A<Cells@, Board@>(
          UpdateCells(isThisCol(col), CellId@(x.cell.row, col), x.symbol, board.cells));
-       ReturnA<Board@>(Board@(ncells, board.groups));
+       Group@ nrow <- A<Group@, Board@>(
+         UpdateGroup(isThisCol(col), x.symbol, col, GroupId@(row: x.cell.row), board.groups.row));
+       Groups@ ngroups = Groups@(nrow, board.groups.col, board.groups.box);
+       ReturnA<Board@>(Board@(ncells, ngroups));
    });
 
    # Rows
@@ -271,7 +274,10 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
        Board@ board <- A<Board@, Board@>(aboard);
        Cells@ ncells <- A<Cells@, Board@>(
          UpdateCells(isThisRow(row), CellId@(row, x.cell.col), x.symbol, board.cells));
-       ReturnA<Board@>(Board@(ncells, board.groups));
+       Group@ ncol <- A<Group@, Board@>(
+         UpdateGroup(isThisRow(row), x.symbol, row, GroupId@(col: x.cell.col), board.groups.col));
+       Groups@ ngroups = Groups@(board.groups.row, ncol, board.groups.box);
+       ReturnA<Board@>(Board@(ncells, ngroups));
    });
 
    # Boxes
@@ -282,7 +288,10 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
        Board@ board <- A<Board@, Board@>(aboard);
        Cells@ ncells <- A<Cells@, Board@>(
          UpdateCells(isThisPos(pos), CellOfPos(box, pos), x.symbol, board.cells));
-       ReturnA<Board@>(Board@(ncells, board.groups));
+       Group@ nbox <- A<Group@, Board@>(
+         UpdateGroup(isThisPos(pos), x.symbol, pos, GroupId@(box: box), board.groups.box));
+       Groups@ ngroups = Groups@(board.groups.row, board.groups.col, nbox);
+       ReturnA<Board@>(Board@(ncells, ngroups));
    });
 
    b3;
