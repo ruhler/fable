@@ -178,36 +178,74 @@ Board@ InitialBoard = Board@(InitialCells, InitialGroups);
 # A value of some type T along with a list of generated assignments.
 <@>@ A@ = <@ T@>{ *(T@ _, S@<Assign@> assigns); };
 
+# Apply a function, accumulating assignment constraints.
+<@ S@, @ T@>(A@<S@>, (S@){ A@<T@>; }){ A@<T@>; }
+A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
+  A@<T@> x = f(a._);
+  A@<T@>(x._, Append<Assign@>(x.assigns, a.assigns));
+};
+
 # Set the value of a cell on the board.
 # Results in an updated board and a set of new assignments to make.
 (Board@, Assign@) { A@<Board@>; } Assign = (Board@ board, Assign@ x) {
-   # 1. For this cell, eliminate all other possible symbols.
-   # 2. For other cells in the same group, eliminate this symbol.
-   #       If newly singleton, generate a new constraint.
-   (Bool@, CellId@, Symbol@, A@<Cells@>) { A@<Cells@>; }
-   EliminateSymbol = (Bool@ this, CellId@ id, Symbol@ symbol, A@<Cells@> cells) {
+   (Bool@, CellId@, Symbol@, Cells@) { A@<Cells@>; }
+   UpdateCells = (Bool@ this, CellId@ id, Symbol@ symbol, Cells@ cells) {
      ?(this;
        true: {
+         # 1. For this cell, eliminate all other possible symbols.
          Cells@ ncells = Set2D<Cell@>(id.row, id.col,
-             RemoveAllBut(symbol, cells._(id.row, id.col)), cells._);
-         A@<Cells@>(ncells, cells.assigns);
+             RemoveAllBut(symbol, cells(id.row, id.col)), cells);
+         A@<Cells@>(ncells, S0<Assign@>);
        },
        false: {
-         Cell@ cell = cells._(id.row, id.col);
+         # 2. For other cells in the same group, eliminate this symbol.
+         Cell@ cell = cells(id.row, id.col);
          ?(cell(symbol);
             true: {
               Cell@ ncell = Set<Bool@>(symbol, False, cell);
-              Cells@ ncells = Set2D<Cell@>(id.row, id.col, ncell, cells._);
+              Cells@ ncells = Set2D<Cell@>(id.row, id.col, ncell, cells);
               Maybe@<Symbol@> single = Singleton(ncell);
               S@<Assign@> nassigns = ?(single;
                 just: {
-                  Assign@ assign = Assign@(id, single.just);
-                  ConsS<Assign@>(assign, cells.assigns);
+                  S<Assign@>([Assign@(id, single.just)]);
                 },
-                nothing: cells.assigns);
+                nothing: S0<Assign@>);
               A@<Cells@>(ncells, nassigns);
             },
-            false: cells);
+            false: A@<Cells@>(cells, S0<Assign@>));
+       });
+   };
+
+   (Bool@, Symbol@, Symbol@, GroupId@, A@<Group@>) { A@<Group@>; }
+   UpdateGroup = (Bool@ this, Symbol@ symbol, Symbol@ cell, GroupId@ groupId, A@<Group@> group) {
+     ?(this;
+       true: {
+         # 3. For this group, symbol in question, eliminate all other possible
+         # cells.
+         Group@ ngroup = Set<Set@>(symbol, RemoveAllBut(cell, group._(symbol)), group._);
+         A@<Group@>(ngroup, group.assigns);
+       },
+       false: {
+         # 4. For the group, non-symbols in question, eliminate this cell.
+         Set@ cells = group._(symbol);
+         ?(cells(cell);
+            true: {
+              Set@ ncells = Set<Bool@>(cell, False, cells);
+              Group@ ngroup = Set<Set@>(symbol, ncells, group._);
+              Maybe@<Symbol@> single = Singleton(ncells);
+              S@<Assign@> nassigns = ?(single;
+                just: {
+                  CellId@ id = ?(groupId;
+                    row: CellId@(groupId.row, single.just),
+                    col: CellId@(single.just, groupId.col),
+                    box: CellOfPos(groupId.box, single.just));
+                  Assign@ assign = Assign@(id, symbol);
+                  ConsS<Assign@>(assign, group.assigns);
+                },
+                nothing: group.assigns);
+              A@<Group@>(ngroup, nassigns);
+            },
+            false: group);
        });
    };
 
@@ -216,29 +254,28 @@ Board@ InitialBoard = Board@(InitialCells, InitialGroups);
    # Columns
    Set@ isThisCol = Set<Bool@>(x.cell.col, True, (Symbol@ _) { False; });
    A@<Cells@> c1 = For<Symbol@, A@<Cells@>>(1, c0, IterateSymbol,
-     (Symbol@ col) {
-       EliminateSymbol(isThisCol(col), CellId@(x.cell.row, col), x.symbol);
+     (Symbol@ col, A@<Cells@> acells) {
+       Cells@ cells <- A<Cells@, Cells@>(acells);
+       UpdateCells(isThisCol(col), CellId@(x.cell.row, col), x.symbol, cells);
    });
 
    # Rows
    Set@ isThisRow = Set<Bool@>(x.cell.row, True, (Symbol@ _) { False; });
    A@<Cells@> c2 = For<Symbol@, A@<Cells@>>(1, c1, IterateSymbol,
-     (Symbol@ row) {
-       EliminateSymbol(isThisRow(row), CellId@(row, x.cell.col), x.symbol);
+     (Symbol@ row, A@<Cells@> acells) {
+       Cells@ cells <- A<Cells@, Cells@>(acells);
+       UpdateCells(isThisRow(row), CellId@(row, x.cell.col), x.symbol, cells);
    });
 
    # Boxes
    Symbol@ box = BoxGroupOf(x.cell);
    Set@ isThisPos = Set<Bool@>(BoxPosOf(x.cell), True, (Symbol@ _) { False; });
    A@<Cells@> c3 = For<Symbol@, A@<Cells@>>(1, c2, IterateSymbol,
-     (Symbol@ pos) {
-       EliminateSymbol(isThisPos(pos), CellOfPos(box, pos), x.symbol);
+     (Symbol@ pos, A@<Cells@> acells) {
+       Cells@ cells <- A<Cells@, Cells@>(acells);
+       UpdateCells(isThisPos(pos), CellOfPos(box, pos), x.symbol, cells);
    });
 
-   # TODO:
-   # 3. For the group, symbol in question, eliminate all other possible cells.
-   # 4. For the group, non-symbols in question, eliminate this cell.
-   #       If newly singleton, generate a new constraint.
    A@<Board@>(Board@(c3._, board.groups), c3.assigns);
 };
 
