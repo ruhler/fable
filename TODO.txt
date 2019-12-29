@@ -11,7 +11,6 @@ Type System Cleanup
     that case.
 
 Sudoku
-* Replace Cells@ with Board@
 * Add check for singleton symbol in addition to singleton cell.
 * See if this is enough to solve the board. In the likely case that it isn't,
   add a backtracking search phase that guesses an assignment and checks if it

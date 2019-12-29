@@ -150,12 +150,8 @@ Cell@ InitialCell = FullSet;
 
 # 2D array of cells. The first index is the row, the second index is the
 # column.
-@ Cells@ = Array@<Array@<Cell@>>;
-Cells@ InitialCells = (Symbol@ r, Symbol@ c) { InitialCell; };
-
-# A board keeps track of possible values for cells.
-@ Board@ = *(Cells@ cells);
-Board@ InitialBoard = Board@(InitialCells);
+@ Board@ = Array@<Array@<Cell@>>;
+Board@ InitialBoard = (Symbol@ r, Symbol@ c) { InitialCell; };
 
 # An assignment of a symbol value to a particular cell.
 @ Assign@ = *(CellId@ cell, Symbol@ symbol);
@@ -177,31 +173,31 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
 # Set the value of a cell on the board.
 # Results in an updated board and a set of new assignments to make.
 (Board@, Assign@) { A@<Board@>; } Assign = (Board@ board, Assign@ x) {
-   (Bool@, CellId@, Symbol@, Cells@) { A@<Cells@>; }
-   UpdateCells = (Bool@ this, CellId@ id, Symbol@ symbol, Cells@ cells) {
+   (Bool@, CellId@, Symbol@, Board@) { A@<Board@>; }
+   AssignCell = (Bool@ this, CellId@ id, Symbol@ symbol, Board@ board) {
      ?(this;
        true: {
          # 1. For this cell, eliminate all other possible symbols.
-         Cells@ ncells = Set2D<Cell@>(id.row, id.col,
-             RemoveAllBut(symbol, cells(id.row, id.col)), cells);
-         ReturnA<Cells@>(ncells);
+         Board@ nboard = Set2D<Cell@>(id.row, id.col,
+             RemoveAllBut(symbol, board(id.row, id.col)), board);
+         ReturnA<Board@>(nboard);
        },
        false: {
          # 2. For other cells in the same group, eliminate this symbol.
-         Cell@ cell = cells(id.row, id.col);
+         Cell@ cell = board(id.row, id.col);
          ?(cell(symbol);
             true: {
               Cell@ ncell = Set<Bool@>(symbol, False, cell);
-              Cells@ ncells = Set2D<Cell@>(id.row, id.col, ncell, cells);
+              Board@ nboard = Set2D<Cell@>(id.row, id.col, ncell, board);
               Maybe@<Symbol@> single = Singleton(ncell);
               S@<Assign@> nassigns = ?(single;
                 just: {
                   S<Assign@>([Assign@(id, single.just)]);
                 },
                 nothing: S0<Assign@>);
-              A@<Cells@>(ncells, nassigns);
+              A@<Board@>(nboard, nassigns);
             },
-            false: ReturnA<Cells@>(cells));
+            false: ReturnA<Board@>(board));
        });
    };
 
@@ -212,9 +208,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
    A@<Board@> b1 = For<Symbol@, A@<Board@>>(1, b0, IterateSymbol,
      (Symbol@ col, A@<Board@> aboard) {
        Board@ board <- A<Board@, Board@>(aboard);
-       Cells@ ncells <- A<Cells@, Board@>(
-         UpdateCells(isThisCol(col), CellId@(x.cell.row, col), x.symbol, board.cells));
-       ReturnA<Board@>(Board@(ncells));
+       AssignCell(isThisCol(col), CellId@(x.cell.row, col), x.symbol, board);
    });
 
    # Rows
@@ -222,9 +216,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
    A@<Board@> b2 = For<Symbol@, A@<Board@>>(1, b1, IterateSymbol,
      (Symbol@ row, A@<Board@> aboard) {
        Board@ board <- A<Board@, Board@>(aboard);
-       Cells@ ncells <- A<Cells@, Board@>(
-         UpdateCells(isThisRow(row), CellId@(row, x.cell.col), x.symbol, board.cells));
-       ReturnA<Board@>(Board@(ncells));
+       AssignCell(isThisRow(row), CellId@(row, x.cell.col), x.symbol, board);
    });
 
    # Boxes
@@ -233,9 +225,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
    A@<Board@> b3 = For<Symbol@, A@<Board@>>(1, b2, IterateSymbol,
      (Symbol@ pos, A@<Board@> aboard) {
        Board@ board <- A<Board@, Board@>(aboard);
-       Cells@ ncells <- A<Cells@, Board@>(
-         UpdateCells(isThisPos(pos), CellOfPos(box, pos), x.symbol, board.cells));
-       ReturnA<Board@>(Board@(ncells));
+       AssignCell(isThisPos(pos), CellOfPos(box, pos), x.symbol, board);
    });
 
    b3;
@@ -282,11 +272,10 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
   };
 
   (Board@ board) {
-    Cells@ cells = board.cells;
     Concat<Char@>(S<Str@>([
-      ShowRow(cells(1)), ShowRow(cells(2)), ShowRow(cells(3)), nl,
-      ShowRow(cells(4)), ShowRow(cells(5)), ShowRow(cells(6)), nl,
-      ShowRow(cells(7)), ShowRow(cells(8)), ShowRow(cells(9))
+      ShowRow(board(1)), ShowRow(board(2)), ShowRow(board(3)), nl,
+      ShowRow(board(4)), ShowRow(board(5)), ShowRow(board(6)), nl,
+      ShowRow(board(7)), ShowRow(board(8)), ShowRow(board(9))
     ]));
   };
 };
