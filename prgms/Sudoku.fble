@@ -170,37 +170,58 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
   A@<T@>(x, S0<Assign@>);
 };
 
+# UpdateCell --
+#   Update the set of possibilities in a cell 'id' given we are setting some
+#   cell 'c' in the same group to a known symbol value.
+#
+# Inputs:
+#   this - True if we are setting this cell to the known symbol value
+#          ('c' == 'id'). False if we are setting some other cell in the same
+#          group to the known symbol value ('c' != 'id').
+#   id - The id of the cell to update.
+#   symbol - The symbol that the cell 'c' is being assigned.
+#   board - The board to update.
+#
+# Results:
+#   An updated board along with new constraints generated based on the cell
+#   update.
+(Bool@, CellId@, Symbol@, Board@) { A@<Board@>; }
+UpdateCell = (Bool@ this, CellId@ id, Symbol@ symbol, Board@ board) {
+  ?(this;
+    true: {
+      # We are setting this cell to the given symbol.
+      # Eliminate all other potential symbols for this cell.
+      Board@ nboard = Set2D<Cell@>(id.row, id.col,
+          RemoveAllBut(symbol, board(id.row, id.col)), board);
+      ReturnA<Board@>(nboard);
+    },
+    false: {
+      # We are setting some other cell in the same group to the given symbol
+      # value. Eliminate the symbol as a potential symbol for this cell.
+      # But only do that if the symbol is a potential symbol for this cell.
+      Cell@ cell = board(id.row, id.col);
+      ?(cell(symbol);
+         true: {
+           Cell@ ncell = Set<Bool@>(symbol, False, cell);
+           Board@ nboard = Set2D<Cell@>(id.row, id.col, ncell, board);
+
+           # If there is now only one possible symbol value for this cell, we
+           # know this cell must take on that single possible symbol value.
+           Maybe@<Symbol@> single = Singleton(ncell);
+           S@<Assign@> nassigns = ?(single;
+             just: {
+               S<Assign@>([Assign@(id, single.just)]);
+             },
+             nothing: S0<Assign@>);
+           A@<Board@>(nboard, nassigns);
+         },
+         false: ReturnA<Board@>(board));
+    });
+};
+
 # Set the value of a cell on the board.
 # Results in an updated board and a set of new assignments to make.
 (Board@, Assign@) { A@<Board@>; } Assign = (Board@ board, Assign@ x) {
-   (Bool@, CellId@, Symbol@, Board@) { A@<Board@>; }
-   AssignCell = (Bool@ this, CellId@ id, Symbol@ symbol, Board@ board) {
-     ?(this;
-       true: {
-         # 1. For this cell, eliminate all other possible symbols.
-         Board@ nboard = Set2D<Cell@>(id.row, id.col,
-             RemoveAllBut(symbol, board(id.row, id.col)), board);
-         ReturnA<Board@>(nboard);
-       },
-       false: {
-         # 2. For other cells in the same group, eliminate this symbol.
-         Cell@ cell = board(id.row, id.col);
-         ?(cell(symbol);
-            true: {
-              Cell@ ncell = Set<Bool@>(symbol, False, cell);
-              Board@ nboard = Set2D<Cell@>(id.row, id.col, ncell, board);
-              Maybe@<Symbol@> single = Singleton(ncell);
-              S@<Assign@> nassigns = ?(single;
-                just: {
-                  S<Assign@>([Assign@(id, single.just)]);
-                },
-                nothing: S0<Assign@>);
-              A@<Board@>(nboard, nassigns);
-            },
-            false: ReturnA<Board@>(board));
-       });
-   };
-
    A@<Board@> b0 = ReturnA<Board@>(board);
 
    # Columns
@@ -208,7 +229,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
    A@<Board@> b1 = For<Symbol@, A@<Board@>>(1, b0, IterateSymbol,
      (Symbol@ col, A@<Board@> aboard) {
        Board@ board <- A<Board@, Board@>(aboard);
-       AssignCell(isThisCol(col), CellId@(x.cell.row, col), x.symbol, board);
+       UpdateCell(isThisCol(col), CellId@(x.cell.row, col), x.symbol, board);
    });
 
    # Rows
@@ -216,7 +237,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
    A@<Board@> b2 = For<Symbol@, A@<Board@>>(1, b1, IterateSymbol,
      (Symbol@ row, A@<Board@> aboard) {
        Board@ board <- A<Board@, Board@>(aboard);
-       AssignCell(isThisRow(row), CellId@(row, x.cell.col), x.symbol, board);
+       UpdateCell(isThisRow(row), CellId@(row, x.cell.col), x.symbol, board);
    });
 
    # Boxes
@@ -225,7 +246,7 @@ A = <@ S@, @ T@>(A@<S@> a, (S@){ A@<T@>; } f) {
    A@<Board@> b3 = For<Symbol@, A@<Board@>>(1, b2, IterateSymbol,
      (Symbol@ pos, A@<Board@> aboard) {
        Board@ board <- A<Board@, Board@>(aboard);
-       AssignCell(isThisPos(pos), CellOfPos(box, pos), x.symbol, board);
+       UpdateCell(isThisPos(pos), CellOfPos(box, pos), x.symbol, board);
    });
 
    b3;

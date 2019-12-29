@@ -1,3 +1,6 @@
+Misc
+* Add support for '#' comment indents to fble.vim.
+
 Type System Cleanup
 * [clean] Don't use 'eval' when we could do a direct subst instead?
 * [clean] Misc apply should not accept POLY_APPLY_TYPE for struct values.
