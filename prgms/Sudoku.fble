@@ -265,6 +265,51 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
       nil: board);
 };
 
+# SolveFrom --
+#   Solve a sudoku puzzle assuming the symbol for every cell up to the given
+#   cell has been determined.
+#
+# Inputs:
+#   board - the board to solve.
+#   mfrom - The symbols for all cells in the board before this cell are assumed
+#          to have been determined. Nothing means the symbols for all cells
+#          have been determined.
+(Board@, Maybe@<CellId@>) { Maybe@<Board@>; }
+SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
+  ?(mfrom;
+      just: {
+        CellId@ from = mfrom.just;
+        Cell@ cell = board(from.row, from.col);
+        Maybe@<CellId@> next = IterateCellId(from);
+
+        Maybe@<Symbol@> single = Singleton(cell);
+        ?(single;
+            just: {
+              # We already know the symbol for this cell. As an optimization,
+              # move on to the next cell right away.
+              SolveFrom(board, next);
+            },
+            nothing: {
+              # We don't know the symbol for this cell yet. Try all possible
+              # options until we've found a solution to the puzzle.
+              For<Symbol@, Maybe@<Board@>>(1, Nothing<Board@>, IterateSymbol,
+                (Symbol@ s, Maybe@<Board@> solved) {
+                  ?(solved;
+                      # TODO: Can we break out more efficiently in this case?
+                      # Rather than have to iterate through and ignore all the
+                      # rest of the possible symbols?
+                      just: solved,
+                      nothing: {
+                        ?(cell(s);
+                            true: SolveFrom(ApplyXs(board, Assign(from, s)), next),
+                            false: Nothing<Board@>);
+                      });
+              });
+            });
+      },
+      nothing: Just<Board@>(board));
+};
+
 # Print a board.
 # If spaced is true, insert whitespace to make it more legible.
 # Otherwise, don't include any whitespace in the output.
@@ -349,9 +394,14 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
   (Str@ str) { f(str, Just<CellId@>(CellId@(1, 1))); };
 };
 
-# Solve a board as much as possible.
+# Solve a board.
 (Str@) { Str@; } Solve = (Str@ board) {
-  ShowBoard(True, ApplyXs(InitialBoard, ParseAssigns(board)));
+  Maybe@<Board@> solved = SolveFrom(
+    ApplyXs(InitialBoard, ParseAssigns(board)),
+    Just<CellId@>(CellId@(1, 1)));
+  ?(solved;
+      just: ShowBoard(True, solved.just),
+      nothing: Str(Char@|'Unsolvable'));
 };
 
 # 8.. .9. ..2     816 497 532 

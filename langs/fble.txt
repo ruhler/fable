@@ -1179,3 +1179,21 @@ Notes:
 
 - Static analysis to detect obvious invalid union accesses might be nice. I've
   already run into that kind of bug.
+
+- Add support for generics programming?
+  For example, we should be able to automatically generate IterateFoo for an
+  algebraic data type Foo. Same for Eq and other kinds of things. In other
+  words, if we can do something for generic sum and product types, we should
+  be able to do it for an arbitrary data type Foo that doesn't have functions
+  or other funny types in it.
+
+  Another example: Maybe I could use generics to define a function for type
+  Foo that turns a function from Foo to some value into a lookup-table version
+  of the function, where all values have been precomputed. That would be nice
+  for arrays.
+
+  Possible related: if we had this, maybe it would be easy to make process
+  exec a primitive function instead of a syntax. We provide a function to run
+  two processes in parallel, and have a way to generalize that to a function
+  to run an arbitrary number of processes in parallel?
+

@@ -1,6 +1,3 @@
-Misc
-* Add support for '#' comment indents to fble.vim.
-
 Type System Cleanup
 * [clean] Don't use 'eval' when we could do a direct subst instead?
 * [clean] Misc apply should not accept POLY_APPLY_TYPE for struct values.
@@ -14,8 +11,7 @@ Type System Cleanup
     that case.
 
 Sudoku
-* Add a backtracking search phase that guesses an assignment and checks if it
-  works or not.
+* Improve performance enough to add Sudoku solving tests.
   
 The Harder Cleanup:
 * [clean] Tracking of time in the compiler is really messy
@@ -56,9 +52,12 @@ Performance Refactor:
 * [prgm] Optimize Md5.cls function
   - change << and >> to take number of bits to shift instead of a single bit.
   - change cls to use or(x << n, x >> (K - n))
+  - consider changing Bits implementation to an array of bits, so that cls is
+    a simple index transformation?
 * [perf] Collect benchmarks somewhere?
   - md5 run on 6k file. ~7 minutes
   - tictactoe find best move for empty board. ~3 minutes
+  - sudoku on sample board. ~13 minutes
 * [perf] figure out how to use 'perf' for profiling?
   perf record --call-graph dwarf [COMMAND]
   perf report -g --stdio
