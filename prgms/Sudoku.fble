@@ -90,6 +90,19 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 # A cell is identified by its row and column.
 @ CellId@ = *(Symbol@ row, Symbol@ col);
 
+# Iterate over cell ids, going left to right and top to bottom.
+(CellId@) { Maybe@<CellId@>; } IterateCellId = (CellId@ cell) {
+  Maybe@<Symbol@> mncol = IterateSymbol(cell.col);
+  ?(mncol;
+     just: Just<CellId@>(CellId@(cell.row, mncol.just)),
+     nothing: {
+       Maybe@<Symbol@> mnrow = IterateSymbol(cell.row);
+       ?(mnrow;
+          just: Just<CellId@>(CellId@(mnrow.just, 1)),
+          nothing: Nothing<CellId@>);
+     });
+};
+
 # Return the id of the box group that this cell belongs to.
 (CellId@) { Symbol@; } BoxGroupOf = (CellId@ cell) {
   BoxIndex@ row = Div3(cell.row);
@@ -314,30 +327,26 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
 (Str@) { S@<X@>; } ParseAssigns = {
   (Symbol@){ Maybe@<Symbol@>; } J = Just<Symbol@>;
 
-  (Str@, CellId@) { S@<X@>; } f = (Str@ str, CellId@ cell) {
-    ?(str;
-      cons: {
-        Maybe@<Symbol@> mncol = IterateSymbol(cell.col);
-        Symbol@ ncol = ?(mncol; just: mncol.just, nothing: 1);
-
-        Maybe@<Symbol@> mnrow = ?(mncol;
-          just: Just<Symbol@>(cell.row),
-          nothing: IterateSymbol(cell.row));
-        Symbol@ nrow = ?(mnrow; just: mnrow.just, nothing: 1);
-
-        S@<X@> tail = f(str.cons.tail, CellId@(nrow, ncol));
-        Maybe@<Symbol@> this = ?(str.cons.head;
-          '1': J(1), '2': J(2), '3': J(3),
-          '4': J(4), '5': J(5), '6': J(6),
-          '7': J(7), '8': J(8), '9': J(9),
-             : Nothing<Symbol@>);
-        ?(this; just: Append<X@>(Assign(cell, this.just), tail),
-                nothing: tail);
-      },
-      nil: S0<X@>);
+  (Str@, Maybe@<CellId@>) { S@<X@>; } f = (Str@ str, Maybe@<CellId@> mcell) {
+    ?(mcell;
+       just: 
+         ?(str;
+           cons: {
+             CellId@ cell = mcell.just;
+             S@<X@> tail = f(str.cons.tail, IterateCellId(cell));
+             Maybe@<Symbol@> this = ?(str.cons.head;
+               '1': J(1), '2': J(2), '3': J(3),
+               '4': J(4), '5': J(5), '6': J(6),
+               '7': J(7), '8': J(8), '9': J(9),
+                  : Nothing<Symbol@>);
+             ?(this; just: Append<X@>(Assign(cell, this.just), tail),
+                     nothing: tail);
+           },
+           nil: S0<X@>),
+       nothing: S0<X@>);
   };
 
-  (Str@ str) { f(str, CellId@(1, 1)); };
+  (Str@ str) { f(str, Just<CellId@>(CellId@(1, 1))); };
 };
 
 # Solve a board as much as possible.
