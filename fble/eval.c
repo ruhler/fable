@@ -1152,8 +1152,9 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
 //   Decrements iquota by the number of instructions executed.
 static void RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread, size_t* iquota)
 {
-  // TODO: Make this iterative instead of recursive to avoid smashing the
-  // stack.
+  // Note: It's possible we smash the stack with this recursive implementation
+  // of RunThreads, but the amount of stack space we need for each frame is so
+  // small it doesn't seem worth worrying about for the time being.
 
   // Spend some time running children threads first.
   for (size_t i = 0; i < thread->children.size; ++i) {

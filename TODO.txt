@@ -1,7 +1,3 @@
-Cleanup:
-* Test that we don't smash the stack with many nested child threads.
-* Test that tail recursive procedures don't smash the stack.
-
 Performance Refactor:
 * Add an option to --profile to record wall clock times.
 * Clearly specify performance of evaluation in spec.
@@ -35,6 +31,7 @@ Performance Refactor:
   - tictactoe find best move for empty board. ~3 minutes
   - sudoku on sample board. ~13 minutes
   - sudoku on empty board. ~215 minutes
+  - stack-smasher 14 bits: ~34s.
 * [perf] figure out how to use 'perf' for profiling?
   perf record --call-graph dwarf [COMMAND]
   perf report -g --stdio

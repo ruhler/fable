@@ -1,0 +1,54 @@
+
+# Test program that works with very large numbers to facilitate testing smash
+# stacking.
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bit@ = +(Unit@ 0, Unit@ 1);
+Bit@ 0 = Bit@(0: Unit);
+Bit@ 1 = Bit@(1: Unit);
+
+@ BitS@ = +(BitP@ cons, Unit@ nil),
+@ BitP@ = *(Bit@ lsb, BitS@ tail);
+
+(Bit@, BitS@){BitS@;} BitP = (Bit@ lsb, BitS@ tail) {
+  BitS@(cons: BitP@(lsb, tail));
+};
+
+<@>@ List@ = <@ L@>((Bit@, L@){L@;}, L@){L@;};
+
+(List@){BitS@;} BitS = (List@ mkList) {
+  mkList<BitS@>(BitP, BitS@(nil: Unit));
+};
+
+(BitS@){ BitS@; } Decr = (BitS@ s) {
+  ?(s;
+     cons: {
+       ?(s.cons.tail;
+          cons: {
+            ?(s.cons.lsb;
+               0: BitP(1, Decr(s.cons.tail)),
+               1: BitP(0, s.cons.tail));
+          },
+          nil: {
+            # This is the most significant bit. Assume it is 1 and drop it.
+            s.cons.tail;
+          });
+     },
+     nil: s);
+};
+
+# This function will smash the stack in the current implementation of fble in
+# theory. In practice I'm too impatient to wait for it to actually smash the
+# stack.
+(BitS@){ Unit@!; } F = (BitS@ s) {
+  ?(s; cons: { Unit@ u := F(Decr(s)); $(u); },
+       nil: $(Unit));
+};
+
+# Note: the least significant bit is listed first in this representation.
+BitS@ n = BitS(Bit@|00000000000001);
+
+F(n);
+
