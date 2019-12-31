@@ -1,10 +1,6 @@
 Cleanup:
 * Test that we don't smash the stack with many nested child threads.
-* Test that we don't leak (Thread) memory with tail recursive single binding
-  exec processes.
 * Test that tail recursive procedures don't smash the stack.
-  - And document the performance model which says tail recursive functions
-    should not smash the stack.
 
 Performance Refactor:
 * Add an option to --profile to record wall clock times.
@@ -64,6 +60,8 @@ Performance Refactor:
   loss of a simple, modular performance model. Implementations should focus on
   improving constant factors, not improving complexity over the performance
   model.
+* Document the performance model which says tail recursive functions
+  should not smash the stack.
 
 Miscellaneous:
 * [clean] Can fble-stdio check that the function has the right type?

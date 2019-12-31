@@ -11,8 +11,18 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
+static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
+
+// NoIO --
+//   An IO function that does no IO.
+//   See documentation in fble.h
+static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
+{
+  assert(!block && "blocked indefinately on no IO");
+  return false;
+}
 
 // PrintUsage --
 //   Prints help info to the given output stream.
@@ -30,7 +40,9 @@ static void PrintUsage(FILE* stream)
   fprintf(stream,
       "Usage: fble-mem-test [--growth] FILE [PATH]\n"
       "FILE is an fble program evaluating to a function that takes a unary natural number.\n"
-      "Exist status is 0 if the function uses O(1) memory, 1 otherwise.\n"
+      "Exist status is 0 if running the function uses O(1) memory, 1 otherwise.\n"
+      "Running the function means evaluating the function, and if it results in.\n"
+      "a process, executing the process.\n"
       "If --growth is specified, 0 if the function use > O(1) memory, 1 otherwise.\n"
       "PATH is an optional include search path.\n"
   );
@@ -73,6 +85,16 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
 
     FbleValue* n = (use_large_n ? large_n : small_n);
     FbleValue* result = FbleApply(value_arena, func, n, graph);
+
+    // As a special case, if the result of evaluation is a process, execute
+    // the process. This allows us to test process execution.
+    if (result != NULL && FbleIsProcValue(result)) {
+      FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
+      FbleValue* exec_result = FbleExec(value_arena, &io, result, graph);
+      FbleValueRelease(value_arena, result);
+      result = exec_result;
+    }
+
     success = (result != NULL);
     FbleValueRelease(value_arena, result);
     FbleValueRelease(value_arena, large_n);
