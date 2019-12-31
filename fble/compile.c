@@ -81,6 +81,14 @@ typedef enum {
 //
 //   The evaluating field is set to true if the type is currently being
 //   evaluated. See the Eval function for more info.
+//
+// Design notes on types:
+// * Instances of Type represent both unevaluated and evaluated versions of
+//   the type. We use the unevaluated versions of the type when printing error
+//   messages and as a stable reference to a type before and after evaluation.
+// * Cycles are allowed in the Type data structure, to represent recursive
+//   types. Every cycle is guaranteed to go through a Var type.
+// * Types are evaluated as they are constructed.
 typedef struct Type {
   FbleRef ref;
   TypeTag tag;
@@ -276,7 +284,7 @@ static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
 static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time);
 
-// ReportError -- 
+// ReportError --
 //   Report a compiler error.
 //
 //   This uses a printf-like format string. The following format specifiers
@@ -332,7 +340,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
         PrintType(arena, type);
         break;
       }
-      
+
       default: {
         UNREACHABLE("Unsupported format conversion.");
         break;
@@ -790,7 +798,8 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
 
 // Subst --
 //   Substitute the given argument in place of the given parameter in the
-//   given type.
+//   given type. This function does not attempt to evaluate the results
+//   of the substitution.
 //
 // Inputs:
 //   arena - arena to use for allocations.
@@ -798,13 +807,25 @@ static bool HasParam(Type* type, Type* param, TypeList* visited)
 //   param - the abstract type to substitute out.
 //   arg - the concrete type to substitute in.
 //   tps - a map of already substituted types, to avoid infinite recursion.
+//         External callers should pass NULL.
 //
 // Results:
-//   A type with all occurrences of param replaced with the arg type.
+//   A type with all occurrences of param replaced with the arg type. The type
+//   may not be fully evaluated.
 //
 // Side effects:
 //   The caller is responsible for calling TypeRelease on the returned
 //   type when it is no longer needed.
+//
+// Design notes:
+//   The given type may have cycles. For example:
+//     <@>@ F@ = <@ T@> {
+//        @ X@ = +(T@ a, X@ b);
+//     };
+//     F@<Unit@>
+//
+//   To prevent infinite recursion, we use tps to record that we have already
+//   substituted Unit@ for T@ in X@ when traversing into field 'b' of X@.
 static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePairs* tps)
 {
   if (!HasParam(type, param, NULL)) {
@@ -979,7 +1000,7 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
 //   arena - arena to use for allocations.
 //   type - the type to evaluate. May be NULL.
 //   applied - cache of poly applications already evaluated, to avoid infinite
-//             recursion.
+//             recursion. External callers should pass NULL for this argument.
 //
 // Results:
 //   None.
@@ -987,6 +1008,18 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
 // Side effects:
 //   The type is evaluated in place. The type is marked as being evaluated for
 //   the duration of the evaluation.
+//
+// Design notes:
+// * Example of infinite recursion through evaluation:
+//     @ X@ = +(Unit@ a, X@ b);
+//     Eval(X@)
+// * Example of infinite recursion through poly application:
+//     <@>@ F@ = <@ T@> { +(T@ a, F@<T@> b); };
+//     Eval(F@<Unit@>)
+//   If we don't cache poly applications, we would end up with the infinite
+//   type:
+//     +(Unit@ a, +(Unit@ a, +(Unit@ a, ...)) b)
+//   Which would take an infinite amount of time to construct.
 static void Eval(TypeArena* arena, Type* type, PolyApplyList* applied)
 {
   if (type == NULL || type->evaluating) {
@@ -1260,9 +1293,9 @@ static bool TypesEqual(Type* a, Type* b, TypePairs* eq)
     case POLY_TYPE: {
       PolyType* pta = (PolyType*)a;
       PolyType* ptb = (PolyType*)b;
-      
+
       // TODO: Verify the args have matching kinds.
-   
+  
       TypePairs pneq = {
         .a = pta->arg,
         .b = ptb->arg,
@@ -1591,7 +1624,7 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type)
 {
   Var* var = vars->vars.xs + vars->nvars;
   if (vars->nvars == vars->vars.size) {
-    var = FbleVectorExtend(arena, vars->vars); 
+    var = FbleVectorExtend(arena, vars->vars);
     FbleVectorInit(arena, var->instrs);
   }
   var->name = name;
@@ -1602,7 +1635,7 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type)
 // PopVar --
 //   Pops a var off the given scope.
 //
-// Inputs: 
+// Inputs:
 //   arena - arena to use for allocations.
 //   vars - the scope to pop from.
 //
@@ -2521,7 +2554,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       if (port_type == NULL) {
         return NULL;
       }
-      
+
       ProcType* get_type = FbleAlloc(arena_, ProcType);
       FbleRefInit(arena, &get_type->_base.ref);
       get_type->_base.tag = PROC_TYPE;
@@ -3315,7 +3348,7 @@ static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       .name = list_type_name,
     },
     .body = &inner_func._base,
-  }; 
+  };
 
   FbleField outer_args[args.size];
   for (size_t i = 0; i < args.size; ++i) {
@@ -3336,7 +3369,7 @@ static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       .name = elem_type_name,
     },
     .body = (args.size == 0) ? &inner_poly._base : &outer_func._base,
-  }; 
+  };
 
   FblePolyApplyExpr apply_type = {
     ._base = { .tag = FBLE_POLY_APPLY_EXPR, .loc = loc },
@@ -3732,7 +3765,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
 
   nmain->name = FbleArrayAlloc(arena, char, 7);
   strcpy((char*)nmain->name, "__main");
-  nmain->loc.source = __FILE__; 
+  nmain->loc.source = __FILE__;
   nmain->loc.line = __LINE__;
   nmain->loc.col = 0;
 
