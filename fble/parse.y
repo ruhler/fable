@@ -46,8 +46,8 @@
   FbleExprV exprs;
   FbleField field;
   FbleFieldV fields;
-  FbleChoice choice;
-  FbleChoiceV choices;
+  FbleTaggedExpr tagged_expr;
+  FbleTaggedExprV tagged_exprs;
   FbleBindingV bindings;
 }
 
@@ -81,8 +81,8 @@
 %type <exprs> expr_p expr_s
 %type <field> field
 %type <fields> field_p field_s
-%type <choice> implicit_choice choice
-%type <choices> implicit_choice_p implicit_choice_s choice_p
+%type <tagged_expr> implicit_tagged_expr tagged_expr
+%type <tagged_exprs> implicit_tagged_expr_p implicit_tagged_expr_s tagged_expr_p
 %type <bindings> exec_binding_p let_binding_p
 
 %%
@@ -218,7 +218,7 @@ expr:
       misc_apply_expr->args = $3;
       $$ = &misc_apply_expr->_base;
    }
- | '@' '(' implicit_choice_s ')' {
+ | '@' '(' implicit_tagged_expr_s ')' {
       FbleStructValueImplicitTypeExpr* expr = FbleAlloc(arena, FbleStructValueImplicitTypeExpr);
       expr->_base.tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR;
       expr->_base.loc = @$;
@@ -249,7 +249,7 @@ expr:
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }
- | '?' '(' expr ';' choice_p ')' {
+ | '?' '(' expr ';' tagged_expr_p ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
       select_expr->_base.loc = @$;
@@ -258,7 +258,7 @@ expr:
       select_expr->default_ = NULL;
       $$ = &select_expr->_base;
    }
- | '?' '(' expr ';' choice_p ',' ':' expr ')' {
+ | '?' '(' expr ';' tagged_expr_p ',' ':' expr ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
       select_expr->_base.loc = @$;
@@ -453,7 +453,7 @@ field_s:
  | field_p { $$ = $1; }
  ;
 
-implicit_choice:
+implicit_tagged_expr:
     name {
       $$.name = $1;
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
@@ -468,35 +468,35 @@ implicit_choice:
     }
   ;
 
-implicit_choice_p:
-  implicit_choice {
+implicit_tagged_expr_p:
+  implicit_tagged_expr {
       FbleVectorInit(arena, $$);
       FbleVectorAppend(arena, $$, $1);
     }
-  | implicit_choice_p ',' implicit_choice {
+  | implicit_tagged_expr_p ',' implicit_tagged_expr {
       $$ = $1;
       FbleVectorAppend(arena, $$, $3);
     }
   ;
 
-implicit_choice_s:
+implicit_tagged_expr_s:
     %empty { FbleVectorInit(arena, $$); }
-  | implicit_choice_p { $$ = $1; }
+  | implicit_tagged_expr_p { $$ = $1; }
   ;
 
-choice:
+tagged_expr:
     name ':' expr {
       $$.name = $1;
       $$.expr = $3;
     }
   ;
 
-choice_p:
-  choice {
+tagged_expr_p:
+  tagged_expr {
       FbleVectorInit(arena, $$);
       FbleVectorAppend(arena, $$, $1);
     }
-  | choice_p ',' choice {
+  | tagged_expr_p ',' tagged_expr {
       $$ = $1;
       FbleVectorAppend(arena, $$, $3);
     }

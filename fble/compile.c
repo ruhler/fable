@@ -2118,31 +2118,31 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       bool error = false;
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - i - 1;
-        FbleChoice* choice = struct_expr->args.xs + j;
-        FbleVectorAppend(arena_, *name, choice->name);
-        arg_types[j] = CompileExpr(arena, blocks, name, false, vars, choice->expr, instrs, time);
+        FbleTaggedExpr* arg = struct_expr->args.xs + j;
+        FbleVectorAppend(arena_, *name, arg->name);
+        arg_types[j] = CompileExpr(arena, blocks, name, false, vars, arg->expr, instrs, time);
         name->size--;
         error = error || (arg_types[j] == NULL);
       }
 
       for (size_t i = 0; i < argc; ++i) {
-        FbleChoice* choice = struct_expr->args.xs + i;
+        FbleTaggedExpr* arg = struct_expr->args.xs + i;
         if (arg_types[i] != NULL) {
-          if (!CheckNameSpace(arena, &choice->name, arg_types[i])) {
+          if (!CheckNameSpace(arena, &arg->name, arg_types[i])) {
             error = true;
           }
 
           Field* cfield = FbleVectorExtend(arena_, struct_type->fields);
-          cfield->name = choice->name;
+          cfield->name = arg->name;
           cfield->type = arg_types[i];
           FbleRefAdd(arena, &struct_type->_base.ref, &cfield->type->ref);
           TypeRelease(arena, arg_types[i]);
         }
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(&choice->name, &struct_expr->args.xs[j].name)) {
+          if (FbleNamesEqual(&arg->name, &struct_expr->args.xs[j].name)) {
             error = true;
-            ReportError(arena_, &choice->name.loc,
+            ReportError(arena_, &arg->name.loc,
                 "duplicate field name '%n'\n",
                 &struct_expr->args.xs[j].name);
           }

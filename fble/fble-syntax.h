@@ -229,26 +229,26 @@ typedef struct {
   FbleFieldV fields;
 } FbleStructTypeExpr;
 
-// FbleChoice --
+// FbleTaggedExpr --
 //   A pair of (Name, Expr) used in conditional expressions and anonymous
 //   struct values.
 typedef struct {
   FbleName name;
   FbleExpr* expr;
-} FbleChoice;
+} FbleTaggedExpr;
 
-// FbleChoiceV --
-//   A vector of FbleChoice.
+// FbleTaggedExprV --
+//   A vector of FbleTaggedExpr.
 typedef struct {
   size_t size;
-  FbleChoice* xs;
-} FbleChoiceV;
+  FbleTaggedExpr* xs;
+} FbleTaggedExprV;
 
 // FbleStructValueImplicitTypeExpr --
 //   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR (args :: [(Name, Expr)])
 typedef struct {
   FbleExpr _base;
-  FbleChoiceV args;
+  FbleTaggedExprV args;
 } FbleStructValueImplicitTypeExpr;
 
 // FbleStructImportExpr --
@@ -282,7 +282,7 @@ typedef struct {
 typedef struct {
   FbleExpr _base;
   FbleExpr* condition;
-  FbleChoiceV choices;
+  FbleTaggedExprV choices;
   FbleExpr* default_;
 } FbleUnionSelectExpr;
 
