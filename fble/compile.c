@@ -89,6 +89,9 @@ typedef enum {
 // * Cycles are allowed in the Type data structure, to represent recursive
 //   types. Every cycle is guaranteed to go through a Var type.
 // * Types are evaluated as they are constructed.
+// * TYPE_TYPE is handled specially: we propagate TYPE_TYPE up to the top of
+//   the type during construction rather than save the unevaluated version of
+//   a typeof.
 typedef struct Type {
   FbleRef ref;
   TypeTag tag;
@@ -155,6 +158,9 @@ typedef struct {
 // PolyApplyType -- POLY_APPLY_TYPE
 //   The 'result' field is the result of evaluating the poly apply type, or
 //   NULL if it has not yet been evaluated.
+//
+// We maintain an invariant when constructing PolyApplyTypes that the poly is
+// not a TYPE_TYPE. For example: (typeof(f) x) is constructed as typeof(f x).
 typedef struct {
   Type _base;
   Type* poly;
@@ -269,6 +275,7 @@ static void PrintKind(Kind* type);
 
 static Type* ValueOfType(TypeArena* arena, Type* typeof);
 static Type* MakePolyType(TypeArena* arena, FbleLoc loc, Type* arg, Type* body);
+static Type* MakePolyApplyType(TypeArena* arena, FbleLoc loc, Type* poly, Type* arg);
 
 static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type);
 static void PopVar(FbleArena* arena, Vars* vars);
@@ -917,19 +924,14 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
 
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
-      PolyApplyType* spat = FbleAlloc(arena_, PolyApplyType);
-      FbleRefInit(arena, &spat->_base.ref);
-      spat->_base.tag = POLY_APPLY_TYPE;
-      spat->_base.loc = pat->_base.loc;
-      spat->_base.evaluating = false;
-      spat->poly = Subst(arena, pat->poly, param, arg, tps);
-      FbleRefAdd(arena, &spat->_base.ref, &spat->poly->ref);
-      TypeRelease(arena, spat->poly);
-      spat->result = NULL;
-      spat->arg = Subst(arena, pat->arg, param, arg, tps);
-      FbleRefAdd(arena, &spat->_base.ref, &spat->arg->ref);
-      TypeRelease(arena, spat->arg);
-      return &spat->_base;
+
+      Type* poly = Subst(arena, pat->poly, param, arg, tps);
+      Type* sarg = Subst(arena, pat->arg, param, arg, tps);
+
+      Type* spat = MakePolyApplyType(arena, pat->_base.loc, poly, sarg);
+      TypeRelease(arena, poly);
+      TypeRelease(arena, sarg);
+      return spat;
     }
 
     case VAR_TYPE: {
@@ -1528,7 +1530,6 @@ static void PrintKind(Kind* kind)
 //   needed.
 static Type* ValueOfType(TypeArena* arena, Type* typeof)
 {
-  FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (typeof->tag) {
     case STRUCT_TYPE:
     case UNION_TYPE:
@@ -1556,19 +1557,10 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
         return NULL;
       }
 
-      PolyApplyType* spat = FbleAlloc(arena_, PolyApplyType);
-      FbleRefInit(arena, &spat->_base.ref);
-      spat->_base.tag = POLY_APPLY_TYPE;
-      spat->_base.loc = pat->_base.loc;
-      spat->_base.evaluating = false;
-      spat->poly = valueof;
-      FbleRefAdd(arena, &spat->_base.ref, &spat->poly->ref);
-      TypeRelease(arena, spat->poly);
-      spat->result = NULL;
-      spat->arg = pat->arg;
-      FbleRefAdd(arena, &spat->_base.ref, &spat->arg->ref);
-      Eval(arena, &spat->_base, NULL);
-      return &spat->_base;
+      Type* spat = MakePolyApplyType(arena, pat->_base.loc, valueof, pat->arg);
+      TypeRelease(arena, valueof);
+      Eval(arena, spat, NULL);
+      return spat;
     }
 
     case VAR_TYPE: {
@@ -1628,6 +1620,44 @@ static Type* MakePolyType(TypeArena* arena, FbleLoc loc, Type* arg, Type* body)
   // assert(pt->body->tag != TYPE_TYPE);
 
   return &pt->_base;
+}
+
+// MakePolyApplyType --
+//   Construct a PolyApplyType. Maintains the invariant that poly apply of a
+//   typeof should be constructed as a typeof a poly apply.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   loc - the location for the type.
+//   poly - the poly apply poly.
+//   arg - the poly apply arg.
+//
+// Results:
+//   An unevaluated type representing the poly apply type: poly<arg>
+//
+// Side effects:
+//   The caller is responsible for calling TypeRelease on the returned type
+//   when it is no longer needed. This function does not take ownership of the
+//   passed poly or arg types.
+static Type* MakePolyApplyType(TypeArena* arena, FbleLoc loc, Type* poly, Type* arg)
+{
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+
+  PolyApplyType* pat = FbleAlloc(arena_, PolyApplyType);
+  FbleRefInit(arena, &pat->_base.ref);
+  pat->_base.tag = POLY_APPLY_TYPE;
+  pat->_base.loc = loc;
+  pat->_base.evaluating = false;
+  pat->poly = poly;
+  FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
+  pat->arg = arg;
+  FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
+  pat->result = NULL;
+
+  // TODO: poly apply of typeof should be constructed as typeof poly apply.
+  // assert(pat->poly->tag != TYPE_TYPE);
+
+  return &pat->_base;
 }
 
 // PushVar --
