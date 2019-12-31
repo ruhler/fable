@@ -1606,6 +1606,20 @@ static Type* MakePolyType(TypeArena* arena, FbleLoc loc, Type* arg, Type* body)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
+  if (body->tag == TYPE_TYPE) {
+    // \arg -> typeof(body) = typeof(\arg -> body)
+    TypeType* ttbody = (TypeType*)body;
+    TypeType* tt = FbleAlloc(arena_, TypeType);
+    FbleRefInit(arena, &tt->_base.ref);
+    tt->_base.tag = TYPE_TYPE;
+    tt->_base.loc = loc;
+    tt->_base.evaluating = false;
+    tt->type = MakePolyType(arena, loc, arg, ttbody->type);
+    FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
+    TypeRelease(arena, tt->type);
+    return &tt->_base;
+  }
+
   PolyType* pt = FbleAlloc(arena_, PolyType);
   pt->_base.tag = POLY_TYPE;
   pt->_base.loc = loc;
@@ -1616,9 +1630,7 @@ static Type* MakePolyType(TypeArena* arena, FbleLoc loc, Type* arg, Type* body)
   pt->body = body;
   FbleRefAdd(arena, &pt->_base.ref, &pt->body->ref);
 
-  // TODO: poly of typeof should be constructed as typeof poly.
-  // assert(pt->body->tag != TYPE_TYPE);
-
+  assert(pt->body->tag != TYPE_TYPE);
   return &pt->_base;
 }
 
@@ -1643,6 +1655,20 @@ static Type* MakePolyApplyType(TypeArena* arena, FbleLoc loc, Type* poly, Type* 
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
+  if (poly->tag == TYPE_TYPE) {
+    // typeof(poly)<arg> == typeof(poly<arg>)
+    TypeType* ttpoly = (TypeType*)poly;
+    TypeType* tt = FbleAlloc(arena_, TypeType);
+    FbleRefInit(arena, &tt->_base.ref);
+    tt->_base.tag = TYPE_TYPE;
+    tt->_base.loc = loc;
+    tt->_base.evaluating = false;
+    tt->type = MakePolyApplyType(arena, loc, ttpoly->type, arg);
+    FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
+    TypeRelease(arena, tt->type);
+    return &tt->_base;
+  }
+
   PolyApplyType* pat = FbleAlloc(arena_, PolyApplyType);
   FbleRefInit(arena, &pat->_base.ref);
   pat->_base.tag = POLY_APPLY_TYPE;
@@ -1654,9 +1680,7 @@ static Type* MakePolyApplyType(TypeArena* arena, FbleLoc loc, Type* poly, Type* 
   FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
   pat->result = NULL;
 
-  // TODO: poly apply of typeof should be constructed as typeof poly apply.
-  // assert(pat->poly->tag != TYPE_TYPE);
-
+  assert(pat->poly->tag != TYPE_TYPE);
   return &pat->_base;
 }
 
@@ -3064,8 +3088,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_POLY_APPLY_EXPR: {
       FblePolyApplyExpr* apply = (FblePolyApplyExpr*)expr;
 
-      // Note: typeof(f<x>) = typeof(f)<x>
-      // CompileExpr gives us typeof(apply->poly)
+      // Note: typeof(poly<arg>) = typeof(poly)<arg>
+      // CompileExpr gives us typeof(poly)
       Type* poly = CompileExpr(arena, blocks, name, exit, vars, apply->poly, instrs, time);
       if (poly == NULL) {
         return NULL;
@@ -3080,7 +3104,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         return NULL;
       }
 
-      // Note: CompileType gives us the value of apply->arg
+      // Note: CompileType gives us the value of arg
       Type* arg = CompileType(arena, vars, apply->arg);
       if (arg == NULL) {
         FreeKind(arena_, &poly_kind->_base);
