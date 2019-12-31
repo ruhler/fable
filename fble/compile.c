@@ -143,6 +143,9 @@ typedef struct {
 } ProcType;
 
 // PolyType -- POLY_TYPE
+//
+// We maintain an invariant when constructing PolyTypes that the body is not a
+// TYPE_TYPE. For example: \a -> typeof(a) is constructed as typeof(\a -> a)
 typedef struct {
   Type _base;
   Type* arg;
@@ -265,6 +268,7 @@ static void PrintType(FbleArena* arena, Type* type);
 static void PrintKind(Kind* type);
 
 static Type* ValueOfType(TypeArena* arena, Type* typeof);
+static Type* MakePolyType(TypeArena* arena, FbleLoc loc, Type* arg, Type* body);
 
 static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type);
 static void PopVar(FbleArena* arena, Vars* vars);
@@ -905,17 +909,10 @@ static Type* Subst(TypeArena* arena, Type* type, Type* param, Type* arg, TypePai
 
     case POLY_TYPE: {
       PolyType* pt = (PolyType*)type;
-      PolyType* spt = FbleAlloc(arena_, PolyType);
-      spt->_base.tag = POLY_TYPE;
-      spt->_base.loc = pt->_base.loc;
-      spt->_base.evaluating = false;
-      FbleRefInit(arena, &spt->_base.ref);
-      spt->arg = pt->arg;
-      FbleRefAdd(arena, &spt->_base.ref, &pt->arg->ref);
-      spt->body = Subst(arena, pt->body, param, arg, tps);
-      FbleRefAdd(arena, &spt->_base.ref, &spt->body->ref);
-      TypeRelease(arena, spt->body);
-      return &spt->_base;
+      Type* body = Subst(arena, pt->body, param, arg, tps); 
+      Type* spt = MakePolyType(arena, pt->_base.loc, pt->arg, body);
+      TypeRelease(arena, body);
+      return spt;
     }
 
     case POLY_APPLY_TYPE: {
@@ -1547,17 +1544,9 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
         return NULL;
       }
 
-      PolyType* spt = FbleAlloc(arena_, PolyType);
-      spt->_base.tag = POLY_TYPE;
-      spt->_base.loc = pt->_base.loc;
-      spt->_base.evaluating = false;
-      FbleRefInit(arena, &spt->_base.ref);
-      spt->arg = pt->arg;
-      FbleRefAdd(arena, &spt->_base.ref, &pt->arg->ref);
-      spt->body = valueof;
-      FbleRefAdd(arena, &spt->_base.ref, &spt->body->ref);
-      TypeRelease(arena, spt->body);
-      return &spt->_base;
+      Type* spt = MakePolyType(arena, pt->_base.loc, pt->arg, valueof);
+      TypeRelease(arena, valueof);
+      return spt;
     }
 
     case POLY_APPLY_TYPE: {
@@ -1602,6 +1591,43 @@ static Type* ValueOfType(TypeArena* arena, Type* typeof)
 
   UNREACHABLE("Should never get here");
   return NULL;
+}
+
+// MakePolyType --
+//   Construct a PolyType. Maintains the invariant that poly of a typeof
+//   should be constructed as a typeof a poly.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   loc - the location for the type.
+//   arg - the poly arg.
+//   body - the poly body.
+//
+// Results:
+//   A type representing the poly type: \arg -> body.
+//
+// Side effects:
+//   The caller is responsible for calling TypeRelease on the returned type
+//   when it is no longer needed. This function does not take ownership of the
+//   passed arg or body types.
+static Type* MakePolyType(TypeArena* arena, FbleLoc loc, Type* arg, Type* body)
+{
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+
+  PolyType* pt = FbleAlloc(arena_, PolyType);
+  pt->_base.tag = POLY_TYPE;
+  pt->_base.loc = loc;
+  pt->_base.evaluating = false;
+  FbleRefInit(arena, &pt->_base.ref);
+  pt->arg = arg;
+  FbleRefAdd(arena, &pt->_base.ref, &pt->arg->ref);
+  pt->body = body;
+  FbleRefAdd(arena, &pt->_base.ref, &pt->body->ref);
+
+  // TODO: poly of typeof should be constructed as typeof poly.
+  // assert(pt->body->tag != TYPE_TYPE);
+
+  return &pt->_base;
 }
 
 // PushVar --
