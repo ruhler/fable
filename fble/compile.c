@@ -2977,12 +2977,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_POLY_EXPR: {
       FblePolyExpr* poly = (FblePolyExpr*)expr;
 
-      PolyType* pt = FbleAlloc(arena_, PolyType);
-      FbleRefInit(arena, &pt->_base.ref);
-      pt->_base.tag = POLY_TYPE;
-      pt->_base.loc = expr->loc;
-      pt->_base.evaluating = false;
-
       VarType* arg = FbleAlloc(arena_, VarType);
       FbleRefInit(arena, &arg->_base.ref);
       arg->_base.tag = VAR_TYPE;
@@ -2991,8 +2985,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       arg->name = poly->arg.name;
       arg->kind = CompileKind(arena_, poly->arg.kind);
       arg->value = NULL;
-      pt->arg = &arg->_base;
-      FbleRefAdd(arena, &pt->_base.ref, &arg->_base.ref);
 
       TypeType* type_type = FbleAlloc(arena_, TypeType);
       FbleRefInit(arena, &type_type->_base.ref);
@@ -3001,8 +2993,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       type_type->_base.evaluating = false;
       type_type->type = &arg->_base;
       FbleRefAdd(arena, &type_type->_base.ref, &arg->_base.ref);
-
-      TypeRelease(arena, &arg->_base);
 
       // TODO: It's a little silly that we are pushing an empty type value
       // here. Oh well. Maybe in the future we'll optimize those away or
@@ -3018,10 +3008,10 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleVectorAppend(arena_, *instrs, &vpush->_base);
       PushVar(arena_, vars, poly->arg.name, &type_type->_base);
 
-      pt->body = CompileExpr(arena, blocks, name, exit, vars, poly->body, instrs, time);
-      TypeRelease(arena, &type_type->_base);
+      Type* body = CompileExpr(arena, blocks, name, exit, vars, poly->body, instrs, time);
 
       PopVar(arena_, vars);
+      TypeRelease(arena, &type_type->_base);
 
       if (!exit) {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
@@ -3030,12 +3020,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
 
-      if (pt->body == NULL) {
-        TypeRelease(arena, &pt->_base);
+      if (body == NULL) {
+        TypeRelease(arena, &arg->_base);
         return NULL;
       }
 
-      return &pt->_base;
+      Type* pt = MakePolyType(arena, expr->loc, &arg->_base, body);
+      TypeRelease(arena, &arg->_base);
+      TypeRelease(arena, body);
+      return pt;
     }
 
     case FBLE_POLY_APPLY_EXPR: {
