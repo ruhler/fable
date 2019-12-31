@@ -1,17 +1,3 @@
-Type System Cleanup
-* [clean] Don't use 'eval' when we could do a direct subst instead?
- - make a MkPolyApplyType helper function to call subst on creation?
- - do we need to worry about recursive substitution in the non-Eval case?
-* [clean] Misc apply should not accept POLY_APPLY_TYPE for struct values.
-    The trouble is, we fail to evaluate: @(\x -> ...) y
-      When we could reduce it to: (\x -> @(...)) y
-      And then do the substitution.
-    Figure out what it should mean to evaluate a type with typeof and poly
-    values (it should push the typeof all the way to the top as part of
-    evaluating poly), implement that, remove POLY_APPLY_TYPE option from misc
-    apply, and access the typeof type directly instead of using valueOfType in
-    that case.
-
 Performance Refactor:
 * Add an option to --profile to record wall clock times.
 * Clearly specify performance of evaluation in spec.

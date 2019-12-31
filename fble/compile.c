@@ -2031,21 +2031,10 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           return normal;
         }
 
-        case POLY_APPLY_TYPE:
         case TYPE_TYPE: {
           // FBLE_STRUCT_VALUE_EXPR
-          Type* vtype = ValueOfType(arena, normal);
-          if (vtype == NULL) {
-            ReportError(arena_, &misc_apply_expr->misc->loc,
-                "expected a type, but found %t\n", type);
-            for (size_t i = 0; i < argc; ++i) {
-              TypeRelease(arena, arg_types[i]);
-            }
-            TypeRelease(arena, vtype);
-            TypeRelease(arena, type);
-            return NULL;
-          }
-
+          TypeType* type_type = (TypeType*)normal;
+          Type* vtype = TypeRetain(arena, type_type->type);
           TypeRelease(arena, type);
 
           StructType* struct_type = (StructType*)Normal(vtype);
