@@ -1530,58 +1530,11 @@ static void PrintKind(Kind* kind)
 //   needed.
 static Type* ValueOfType(TypeArena* arena, Type* typeof)
 {
-  switch (typeof->tag) {
-    case STRUCT_TYPE:
-    case UNION_TYPE:
-    case FUNC_TYPE:
-    case PROC_TYPE: {
-      return NULL;
-    }
-
-    case POLY_TYPE: {
-      PolyType* pt = (PolyType*)typeof;
-      Type* valueof = ValueOfType(arena, pt->body);
-      if (valueof == NULL) {
-        return NULL;
-      }
-
-      Type* spt = MakePolyType(arena, pt->_base.loc, pt->arg, valueof);
-      TypeRelease(arena, valueof);
-      return spt;
-    }
-
-    case POLY_APPLY_TYPE: {
-      PolyApplyType* pat = (PolyApplyType*)typeof;
-      Type* valueof = ValueOfType(arena, pat->poly);
-      if (valueof == NULL) {
-        return NULL;
-      }
-
-      Type* spat = MakePolyApplyType(arena, pat->_base.loc, valueof, pat->arg);
-      TypeRelease(arena, valueof);
-      Eval(arena, spat, NULL);
-      return spat;
-    }
-
-    case VAR_TYPE: {
-      VarType* var_type = (VarType*)typeof;
-      if (var_type->value != NULL) {
-        return ValueOfType(arena, var_type->value);
-      }
-
-      // Var types must have kind 1. Which means the value of the var type
-      // cannot refer to a type.
-      assert(GetKindLevel(var_type->kind) == 1);
-      return NULL;
-    }
-
-    case TYPE_TYPE: {
-      TypeType* type_type = (TypeType*)typeof;
-      return TypeRetain(arena, type_type->type);
-    }
+  if (typeof->tag == TYPE_TYPE) {
+    TypeType* tt = (TypeType*)typeof;
+    TypeRetain(arena, tt->type);
+    return tt->type;
   }
-
-  UNREACHABLE("Should never get here");
   return NULL;
 }
 
