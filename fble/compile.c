@@ -3063,64 +3063,51 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
     case FBLE_POLY_APPLY_EXPR: {
       FblePolyApplyExpr* apply = (FblePolyApplyExpr*)expr;
-      PolyApplyType* pat = FbleAlloc(arena_, PolyApplyType);
-      FbleRefInit(arena, &pat->_base.ref);
-      pat->_base.tag = POLY_APPLY_TYPE;
-      pat->_base.loc = expr->loc;
-      pat->_base.evaluating = false;
-      pat->poly = NULL;
-      pat->arg = NULL;
-      pat->result = NULL;
 
       // Note: typeof(f<x>) = typeof(f)<x>
       // CompileExpr gives us typeof(apply->poly)
-      pat->poly = CompileExpr(arena, blocks, name, exit, vars, apply->poly, instrs, time);
-      if (pat->poly == NULL) {
-        TypeRelease(arena, &pat->_base);
+      Type* poly = CompileExpr(arena, blocks, name, exit, vars, apply->poly, instrs, time);
+      if (poly == NULL) {
         return NULL;
       }
-      FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
-      TypeRelease(arena, pat->poly);
 
-      // Note: CompileType gives us the value of apply->arg
-      pat->arg = CompileType(arena, vars, apply->arg);
-      if (pat->arg == NULL) {
-        TypeRelease(arena, &pat->_base);
-        return NULL;
-      }
-      FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
-      TypeRelease(arena, pat->arg);
-
-      PolyKind* poly_kind = (PolyKind*)GetKind(arena_, pat->poly);
+      PolyKind* poly_kind = (PolyKind*)GetKind(arena_, poly);
       if (poly_kind->_base.tag != POLY_KIND) {
         ReportError(arena_, &expr->loc,
             "cannot apply poly args to a basic kinded entity");
         FreeKind(arena_, &poly_kind->_base);
-        TypeRelease(arena, &pat->_base);
+        TypeRelease(arena, poly);
         return NULL;
       }
 
-      bool error = (pat->arg == NULL);
-      if (pat->arg != NULL) {
-        Kind* expected_kind = poly_kind->arg;
-        Kind* actual_kind = GetKind(arena_, pat->arg);
-        if (!KindsEqual(expected_kind, actual_kind)) {
-          ReportError(arena_, &apply->arg->loc,
-              "expected kind %k, but found %k\n",
-              expected_kind, actual_kind);
-          error = true;
-        }
+      // Note: CompileType gives us the value of apply->arg
+      Type* arg = CompileType(arena, vars, apply->arg);
+      if (arg == NULL) {
+        FreeKind(arena_, &poly_kind->_base);
+        TypeRelease(arena, poly);
+        return NULL;
+      }
+
+      Kind* expected_kind = poly_kind->arg;
+      Kind* actual_kind = GetKind(arena_, arg);
+      if (!KindsEqual(expected_kind, actual_kind)) {
+        ReportError(arena_, &apply->arg->loc,
+            "expected kind %k, but found %k\n",
+            expected_kind, actual_kind);
+        FreeKind(arena_, &poly_kind->_base);
         FreeKind(arena_, actual_kind);
-      }
-
-      FreeKind(arena_, &poly_kind->_base);
-      if (error) {
-        TypeRelease(arena, &pat->_base);
+        TypeRelease(arena, poly);
+        TypeRelease(arena, arg);
         return NULL;
       }
+      FreeKind(arena_, actual_kind);
+      FreeKind(arena_, &poly_kind->_base);
 
-      Eval(arena, &pat->_base, NULL);
-      return &pat->_base;
+      Type* pat = MakePolyApplyType(arena, expr->loc, poly, arg);
+      TypeRelease(arena, poly);
+      TypeRelease(arena, arg);
+      Eval(arena, pat, NULL);
+      return pat;
     }
 
     case FBLE_LIST_EXPR: {
