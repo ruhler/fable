@@ -1,7 +1,5 @@
 Performance Refactor:
 * Add an option to --profile to record wall clock times.
- - See if we can hide the FbleCallGraph data structure.
- - Add profile clock as a field of FbleCallGraph.
  - Add SuspendThread and ResumeThread functions to fix wall clock tracking for
    parallel threads.
 * Clearly specify performance of evaluation in spec.

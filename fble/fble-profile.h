@@ -10,6 +10,22 @@
 #include "fble-alloc.h"
 #include "fble-syntax.h"
 
+// FbleProfileClock --
+//   The clocks used for profiling.
+typedef enum {
+  // The profile time clock is advanced with explicit calls to FbleProfileTime.
+  // This should give a consistent result for every run, but is only as
+  // accurate as the calls to FbleProfileTime.
+  FBLE_PROFILE_TIME_CLOCK,
+
+  // Wall clock. This should give a reasonably accurate wall clock time, but
+  // will vary from run to run.
+  FBLE_PROFILE_WALL_CLOCK,
+
+  // Enum whose value is the number of profiling clocks.
+  FBLE_PROFILE_NUM_CLOCKS
+} FbleProfileClock;
+
 // FbleBlockId --
 //  An identifier for a program block
 typedef size_t FbleBlockId;
@@ -28,11 +44,11 @@ typedef struct {
 // Fields:
 //   id - the id of the caller/callee block.
 //   count - the number of times the call was made.
-//   time - the amount of time spent in the call.
+//   time - the amount of time spent in the call, indexed by FbleProfileClock.
 typedef struct {
   FbleBlockId id;
   uint64_t count;
-  uint64_t time;
+  uint64_t time[FBLE_PROFILE_NUM_CLOCKS];
 } FbleCallData;
 
 // FbleCallDataV --
@@ -49,22 +65,6 @@ typedef struct {
   size_t size;
   FbleCallDataV* xs;
 } FbleCallGraph;
-
-// FbleProfileClock --
-//   The clock to use for profiling.
-typedef enum {
-  // Use FbleProfileTime for the profiling clock.
-  // This should give a consistent result for every run, but is only as
-  // accurate as the calls to FbleProfileTime.
-  FBLE_PROFILE_TIME_CLOCK,
-
-  // Use wall clock time for the profiling clock.
-  // This should give an accurate wall clock time, but will vary from run to
-  // run.
-  // TODO: add 'Suspend' and 'Resume' options to threads to fix double
-  // counting issues with parallel process execution.
-  FBLE_PROFILE_WALL_CLOCK,
-} FbleProfileClock;
 
 // FbleNewCallGraph --
 //   Creates a new, empty call graph for the given number of blocks.
@@ -147,15 +147,12 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block);
 
 // FbleProfileTime --
-//   Spend time on the current profile thread. Advances the
-//   FBLE_PROFILE_TIME_CLOCK for this thread. Has no effect if
-//   FBLE_PROFILE_WALL_CLOCK is selected for the thread.
+//   Advances the FBLE_PROFILE_TIME_CLOCK for this thread.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   thread - the profile thread to spend time on
-//   time - the amount of time to record has having been spent in the current
-//   call.
+//   time - the amount of time to advance.
 //
 // Results:
 //   none.
