@@ -161,4 +161,14 @@ S@<Test@> Tests = {
   S<Test@>([empty, _a, abc, message, a_to_z, A_to_9, 1_to_0]);
 };
 
-@(Tests);
+# Benchmark for md5 sum that takes about 1 minute to run.
+Unit@! Bench = {
+  Unit@ _ := $(Unit);
+  S@<Hex@> d0 = S<Hex@>(Hex@|3132333435363738393031323334353637383930313233);
+  S@<Hex@> d1 = Concat<Hex@>(S<S@<Hex@>>([d0, d0, d0, d0, d0, d0, d0, d0]));
+  S@<Hex@> d2 = Concat<Hex@>(S<S@<Hex@>>([d1, d1, d1, d1]));
+  Md5Hash@ _ := Md5Str(Hex2Bytes(d2));
+  $(Unit);
+};
+
+@(Tests, Bench);

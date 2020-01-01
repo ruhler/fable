@@ -49,4 +49,16 @@ S@<Test@> Tests = S<Test@>([
   Test@(Str(Char@|'TicTacToe.TestChooseBestMoveNoLose'), TestChooseBestMoveNoLose)
   ]);
 
-@(Tests);
+# Benchmark for TicTacToe AI that takes about 1 minute to run.
+Unit@! Bench = {
+  Board@ board = {
+    Square@ E = Square@(E: Unit);
+    Square@ X = Square@(X: Unit);
+    Board@(X, E, E, E, E, E, E, E, E);
+  };
+  AI@ ai <- WithAI<Unit@>;
+  Position@ _ := ai(board, Player@(O: Unit));
+  $(Unit);
+};
+
+@(Tests, Bench);

@@ -153,6 +153,12 @@ context. Otherwise self-contained blocks of code could not be reused in
 contexts that happen to declare a variable with the same name as some variable
 in the self-contained block.
 
+Runtime is O(log(N)), where N is the number of active variables in scope.
+TODO: Clearly specify what it means to be an active variable. The notion I'm
+going for is if you are executing the body of a function, variables declared
+outside the function are only considered active if they are used somewhere in
+the function. The same for other thunk contexts like link and exec.
+
 2.5 Let
 -------
 Abstract Syntax:
@@ -197,6 +203,8 @@ type in the bindings, and a concrete type in the body of the let.
 Bindings are allowed to defined variables with the same name as variables
 already in scope, thus shadowing the variable already in scope. Except that
 the variables defined in a single let expression must have distinct names.
+
+Runtime is ???
 
 3. Structs
 ----------
@@ -248,6 +256,9 @@ The expression is evaluated by evaluating all arguments and creating a struct
 value with the results. The arguments may be evaluated in any order,
 sequentially or in parallel.
 
+Runtime is O(N) plus the sum of the runtimes of each of the arguments, where N
+is the number of arguments.
+
 3.3 Struct Value Implicit Type
 ------------------------------
 Abstract Syntax:
@@ -280,6 +291,9 @@ The expression is evaluated by evaluating all arguments and creating a struct
 value with the results. The arguments may be evaluated in any order,
 sequentially or in parallel.
 
+Runtime is O(N) plus the sum of the runtimes of each of the arguments, where N
+is the number of arguments.
+
 3.4 Struct Access
 -----------------
 Abstract Syntax:
@@ -300,6 +314,9 @@ accessed.
 
 The expression is evaluated by evaluating the object, then accessing its field
 value.
+
+Runtime is O(log(N)) plus the runtime of the struct object, where N is the
+number of fields in the struct.
 
 3.5 Struct Import
 -----------------
@@ -359,6 +376,10 @@ Or, as another example, the following two are equivalent:
 1. Bool@ True = Bool@(true: Unit@()); ...
 2. @(True: Bool@(true: Unit@())); ...
 
+Runtime is O(N) plus the runtimes of the object and the body, where N is the
+number of fields in the struct.
+TODO: plus O(log(M)) where M is the number of variables in scope?
+
 4. Unions
 ---------
 A union value is a particular value chosen from a group of possible values.
@@ -403,6 +424,10 @@ of the argument must match the type of that field.
 The expression is evaluated by evaluating the argument and creating a union
 value with the result.
 
+Runtime is O(log(N)) plus the runtime of the arg, where N is the number of
+fields in the union.
+TODO: not O(1) plus the runtime of the arg?
+
 4.3 Union Access
 ----------------
 Abstract Syntax:
@@ -424,6 +449,10 @@ accessed.
 
 The expression is evaluated by evaluating the object, then accessing its field
 value.
+
+Runtime is O(log(N)) plus the runtime of the object, where N is the number of
+fields in the union.
+TODO: not O(1) plus the runtime of the object?
 
 4.4 Union Select
 ----------------
@@ -449,6 +478,9 @@ not a default value is provided.
 
 The expression is evaluated by evaluating the condition, then evaluating the
 choice selected by the condition. No other choices are evaluated.
+
+Runtime is O(log(N)) plus the runtimes of the condition and selected argument,
+where N is the number of fields in the union.
 
 5. Functions
 ------------

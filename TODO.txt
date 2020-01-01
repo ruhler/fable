@@ -1,4 +1,29 @@
 Performance Refactor:
+* Unify FbleProcValue struct
+  It should be a scope and a set of instructions to execute.
+  - Define FbleXProcValue and FBLE_PROC_VALUE_INSTR
+  - Convert EVAL over to FbleXProcValue
+  - Convert GET over to FbleXProcValue
+  - Convert PUT over to FbleXProcValue
+  - Convert LINK over to FbleXProcValue
+  - Convert EXEC over to FbleXProcValue
+  - Rename FbleXProcValue to FbleProcValue
+* Inline the body of link into the link process 
+  - There's no need to allocate another process and execute it right away.
+* Inline the body of exec into the exec process
+* Special case single-binding exec during compilation.
+  - It should compile to a non-exec process that does the binding then the
+    body without spawning any threads.
+* Separate blocked threads from running threads
+  - Keep a list of the running threads and iterate over that list in
+    RunThreads instead of all threads. This should avoid the 2,288,383 of
+    2,474,801a calls to RunThread on blocked threads reported by code
+    coverage.
+  - If we want to keep the same quota behavior, have each thread store its
+    allowed quota when it is created? Or maybe don't bother with fairness.
+* [clean] Factor out common code for thunks used by func, link, and exec.
+  - hypothesis is this could be contributing to performance overhead because
+    we are saving way more vars than we need to for link and exec.
 * Figure out why tictactoe profile seems so useless.
 * Clearly specify performance of evaluation in spec.
  - We should be able to list all possible performance model parameters based
@@ -15,17 +40,14 @@ Performance Refactor:
 * Figure out why the tictactoe AI was 4 times faster when using a process
   computation instead of a pure computation, even though fble level profiling
   and common sense suggest it should be the other way around.
-  I wonder if it's because exec is non-recursive and let is recursive, thus
-  introducing lots of reference cycles, which take much longer to retain and
-  release?
+  - I wonder if it's because exec is non-recursive and let is recursive, thus
+    introducing lots of reference cycles, which take much longer to retain and
+    release?
+  - A good way to figure this out would be look at code coverage line counts
+    before and after.
 * Figure out why it takes longer and much more memory to insert 5000 entries
   into the TicTacToe MemoTable directly rather than compute all the entries
   from scratch. Seems funny.
-* [prgm] Optimize Md5.cls function
-  - change << and >> to take number of bits to shift instead of a single bit.
-  - change cls to use or(x << n, x >> (K - n))
-  - consider changing Bits implementation to an array of bits, so that cls is
-    a simple index transformation?
 * [perf] Collect benchmarks somewhere?
   - md5 run on 6k file. ~7 minutes
   - tictactoe find best move for empty board. ~3 minutes
@@ -46,7 +68,6 @@ Performance Refactor:
 * [clean] Tracking of time in the compiler is really messy
   Especially that we extract the pointer to the time field from NewBlock by
   assuming what NewBlock does. Figure out some way to clean this up.
-* [clean] Factor out common code for thunks used by func, link, and exec.
 * Document performance model.
   Specifically that we use strict evaluation to model performance because it
   is a simple model, which is essential for writing high performance code.
@@ -112,8 +133,19 @@ Snake:
 * Ignore moves that aren't orthogonal to current snake direction.
 * Keep track of and report score.
 
+Md5:
+* [prgm] Optimize Md5.cls function
+  - change << and >> to take number of bits to shift instead of a single bit.
+  - change cls to use or(x << n, x >> (K - n))
+  - consider changing Bits implementation to an array of bits, so that cls is
+    a simple index transformation?
+* Improve performance of Bit2XN.add, though it's not obvious how.
+
 Sudoku:
 * Improve performance enough to make tests useful.
+ - More efficient constraint set concatenation?
+   The profile says all the time is spent in List%.Append, but I think
+   something funny may be up with the profile.
 
 Game of Life:
 * live if

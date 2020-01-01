@@ -1,6 +1,6 @@
 { Bool%; @(Bool@, True, False); };
 { Char%; @(Char@, newline); };
-{ List%; @(S@, S0, S, ConsS, Append, Concat); };
+{ List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
 { Maybe%; @(Maybe@, Just, Nothing, For); };
 { String%; @(Str@, Str); };
 { Unit%; @(Unit@, Unit); };
@@ -161,51 +161,76 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
 # A constraint specifying that a cell cannot be the given symbol.
 @ X@ = *(CellId@ cell, Symbol@ symbol);
 
+# A set of constraints.
+@ XS@ = S@<X@>;
+
+XS@ EmptyXS = S0<X@>;
+
+(XS@, XS@) { XS@; } AppendXS = (XS@ a, XS@ b) {
+  Append<X@>(a, b);
+};
+
+(X@, XS@){ XS@; } AddX = (X@ x, XS@ xs) {
+  ConsS<X@>(x, xs);
+};
+
+(List@<XS@>){ XS@; } CatXS = (List@<XS@> mkList) {
+  Concat<X@>(S<XS@>(mkList));
+};
+
+@ DeXS@ = *(X@ x, XS@ tail);
+
+(XS@) { Maybe@<DeXS@>; } DeXS = (XS@ xs) {
+  ?(xs;
+     cons: Just<DeXS@>(DeXS@(xs.cons.head, xs.cons.tail)),
+     nil: Nothing<DeXS@>);
+};
+
 # Generate the set of constraints that result from setting the value of the
 # given cell to s.
-(CellId@, Symbol@) { S@<X@>; } Assign = (CellId@ cell, Symbol@ s) {
+(CellId@, Symbol@) { XS@; } Assign = (CellId@ cell, Symbol@ s) {
   # Cell: This cell cannot be any symbol other than s.
   Set@ isS = Set<Bool@>(s, True, (Symbol@ _) { False; });
-  S@<X@> xCell = For<Symbol@, S@<X@>>(1, S0<X@>, IterateSymbol,
-    (Symbol@ other, S@<X@> xs) {
+  XS@ xCell = For<Symbol@, XS@>(1, EmptyXS, IterateSymbol,
+    (Symbol@ other, XS@ xs) {
       ?(isS(other);
          true: xs,
-         false: ConsS<X@>(X@(cell, other), xs));
+         false: AddX(X@(cell, other), xs));
   });
 
   # Group: No other cell in this group can be the symbol s.
   # This is a helper function we'll reuse for rows, columns, and boxes.
-  (Set@, (Symbol@){CellId@;}){ S@<X@>; }
+  (Set@, (Symbol@){CellId@;}){ XS@; }
   Group = (Set@ isThis, (Symbol@){CellId@;} cellOf) {
-    For<Symbol@, S@<X@>>(1, S0<X@>, IterateSymbol,
-      (Symbol@ i, S@<X@> xs) {
+    For<Symbol@, XS@>(1, EmptyXS, IterateSymbol,
+      (Symbol@ i, XS@ xs) {
         ?(isThis(i);
            true: xs,
-           false: ConsS<X@>(X@(cellOf(i), s), xs));
+           false: AddX(X@(cellOf(i), s), xs));
     });
   };
 
   # Row: No other cell in this row can be the symbol s.
   Set@ isThisCol = Set<Bool@>(cell.col, True, (Symbol@ _) { False; });
   (Symbol@){CellId@;} rowCellOf = (Symbol@ col) { CellId@(cell.row, col); };
-  S@<X@> xRow = Group(isThisCol, rowCellOf);
+  XS@ xRow = Group(isThisCol, rowCellOf);
 
   # Column: No other cell in this column can be the symbol s.
   Set@ isThisRow = Set<Bool@>(cell.row, True, (Symbol@ _) { False; });
   (Symbol@){CellId@;} colCellOf = (Symbol@ row) { CellId@(row, cell.col); };
-  S@<X@> xCol = Group(isThisRow, colCellOf);
+  XS@ xCol = Group(isThisRow, colCellOf);
 
   # Box: No other cell in this box can be the symbol s.
   Symbol@ box = BoxGroupOf(cell);
   Set@ isThisPos = Set<Bool@>(BoxPosOf(cell), True, (Symbol@ _) { False; });
   (Symbol@){CellId@;} boxCellOf = (Symbol@ pos) { CellOfPos(box, pos); };
-  S@<X@> xBox = Group(isThisPos, boxCellOf);
+  XS@ xBox = Group(isThisPos, boxCellOf);
 
-  Concat<X@>(S<S@<X@>>([xCell, xRow, xCol, xBox]));
+  CatXS([xCell, xRow, xCol, xBox]);
 };
 
 # A board and additional constraints.
-@ BoardX@ = *(Board@ board, S@<X@> xs);
+@ BoardX@ = *(Board@ board, XS@ xs);
 
 # Apply a constraint to the given board.
 # Produces an updated board and new constraints learned in the process.
@@ -220,23 +245,23 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
        # If there is now only one possible symbol value for this cell, we
        # know this cell must take on that single possible symbol value.
        Maybe@<Symbol@> single = Singleton(ncell);
-       S@<X@> xCell = ?(single;
+       XS@ xCell = ?(single;
          just: Assign(x.cell, single.just),
-         nothing: S0<X@>);
+         nothing: EmptyXS);
 
        # If board[row].symbol has only one cell, generate the assignment.
        Set@ cells = (Symbol@ col) { nboard(x.cell.row, col, x.symbol); };
        Maybe@<Symbol@> single = Singleton(cells);
-       S@<X@> xRow = ?(single;
+       XS@ xRow = ?(single;
          just: Assign(CellId@(x.cell.row, single.just), x.symbol),
-         nothing: S0<X@>);
+         nothing: EmptyXS);
 
        # If board[col].symbol has only one cell, generate the assignment.
        Set@ cells = (Symbol@ row) { nboard(row, x.cell.col, x.symbol); };
        Maybe@<Symbol@> single = Singleton(cells);
-       S@<X@> xCol = ?(single;
+       XS@ xCol = ?(single;
          just: Assign(CellId@(single.just, x.cell.col), x.symbol),
-         nothing: S0<X@>);
+         nothing: EmptyXS);
 
        # If board[box].symbol has only one cell, generate the assignment.
        Symbol@ box = BoxGroupOf(x.cell);
@@ -245,24 +270,25 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
          nboard(cell.row, cell.col, x.symbol);
        };
        Maybe@<Symbol@> single = Singleton(cells);
-       S@<X@> xBox = ?(single;
+       XS@ xBox = ?(single;
          just: Assign(CellOfPos(box, single.just), x.symbol),
-         nothing: S0<X@>);
+         nothing: EmptyXS);
 
-       BoardX@(nboard, Concat<X@>(S<S@<X@>>([xCell, xRow, xCol, xBox])));
+       BoardX@(nboard, CatXS([xCell, xRow, xCol, xBox]));
      },
-     false: BoardX@(board, S0<X@>));
+     false: BoardX@(board, EmptyXS));
 };
 
 # Apply all constraints to the board, and all resulting constraints, until
 # there is nothing left to do.
-(Board@, S@<X@>) { Board@; } ApplyXs = (Board@ board, S@<X@> xs) {
-  ?(xs;
-      cons: {
-        BoardX@ bx = ApplyX(board, xs.cons.head);
-        ApplyXs(bx.board, Append<X@>(xs.cons.tail, bx.xs));
+(Board@, XS@) { Board@; } ApplyXs = (Board@ board, XS@ xs) {
+  Maybe@<DeXS@> mdxs = DeXS(xs);
+  ?(mdxs;
+      just: {
+        BoardX@ bx = ApplyX(board, mdxs.just.x);
+        ApplyXs(bx.board, AppendXS(mdxs.just.tail, bx.xs));
       },
-      nil: board);
+      nothing: board);
 };
 
 # SolveFrom --
@@ -369,26 +395,26 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
 # Is described using the string:
 #
 # 8...9...272.....49...3.6....5..8..16..9...3..67..5..9....9.1...96.....541...4...7
-(Str@) { S@<X@>; } ParseAssigns = {
+(Str@) { XS@; } ParseAssigns = {
   (Symbol@){ Maybe@<Symbol@>; } J = Just<Symbol@>;
 
-  (Str@, Maybe@<CellId@>) { S@<X@>; } f = (Str@ str, Maybe@<CellId@> mcell) {
+  (Str@, Maybe@<CellId@>) { XS@; } f = (Str@ str, Maybe@<CellId@> mcell) {
     ?(mcell;
        just: 
          ?(str;
            cons: {
              CellId@ cell = mcell.just;
-             S@<X@> tail = f(str.cons.tail, IterateCellId(cell));
+             XS@ tail = f(str.cons.tail, IterateCellId(cell));
              Maybe@<Symbol@> this = ?(str.cons.head;
                '1': J(1), '2': J(2), '3': J(3),
                '4': J(4), '5': J(5), '6': J(6),
                '7': J(7), '8': J(8), '9': J(9),
                   : Nothing<Symbol@>);
-             ?(this; just: Append<X@>(Assign(cell, this.just), tail),
+             ?(this; just: AppendXS(Assign(cell, this.just), tail),
                      nothing: tail);
            },
-           nil: S0<X@>),
-       nothing: S0<X@>);
+           nil: EmptyXS),
+       nothing: EmptyXS);
   };
 
   (Str@ str) { f(str, Just<CellId@>(CellId@(1, 1))); };
@@ -416,4 +442,11 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
 # 96. ... .54     967 832 154 
 # 1.. .4. ..7     138 645 927 
 
-@(Solve);
+Unit@! Bench = {
+  Str@ board := $(Str(Char@|'8...9...272.....49...3.6....5..8..16..9...3..67..5..9....9.1...96.....541...4...7'));
+  #Str@ board :=  $(Str(Char@|'816497532723518649495326781354789216289164375671253498542971863967832154138645927'));
+  Str@ result := $(Solve(board));
+  $(Unit);
+};
+
+@(Solve, Bench);
