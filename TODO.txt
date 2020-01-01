@@ -1,7 +1,6 @@
 Performance Refactor:
 * Unify FbleProcValue struct
   It should be a scope and a set of instructions to execute.
-  - Convert PUT over to FbleEvalProcValue
   - Convert EXEC over to FbleEvalProcValue
   - Rename FbleEvalProcValue to FbleProcValue
 * Inline the body of link into the link process 

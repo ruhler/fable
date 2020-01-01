@@ -84,6 +84,14 @@ static FbleInstrBlock g_proc_block = {
   .instrs = { .size = 2, .xs = g_proc_block_instrs }
 };
 
+static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
+static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
+static FbleInstr* g_put_block_instrs[] = { &g_put_instr, &g_exit_scope_instr };
+static FbleInstrBlock g_put_block = {
+  .refcount = 1,
+  .instrs = { .size = 2, .xs = g_put_block_instrs }
+};
+
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
 static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scopes);
@@ -686,17 +694,22 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
           FblePutFuncValue* f = (FblePutFuncValue*)func;
 
-          FblePutProcValue* value = FbleAlloc(arena_, FblePutProcValue);
+          FbleEvalProcValue* value = FbleAlloc(arena_, FbleEvalProcValue);
           FbleRefInit(arena, &value->_base._base.ref);
           value->_base._base.tag = FBLE_PROC_VALUE;
-          value->_base.tag = FBLE_PUT_PROC_VALUE;
+          value->_base.tag = FBLE_EVAL_PROC_VALUE;
+          FbleVectorInit(arena_, value->scope);
 
-          value->port = f->port;
-          Add(arena, &value->_base._base, value->port);
+          FbleVectorAppend(arena_, value->scope, f->port);
+          Add(arena, &value->_base._base, f->port);
 
-          value->arg = PopData(arena_, thread);
-          Add(arena, &value->_base._base, value->arg);
-          FbleValueRelease(arena, value->arg);
+          FbleValue* arg = PopData(arena_, thread);
+          FbleVectorAppend(arena_, value->scope, arg);
+          Add(arena, &value->_base._base, arg);
+          FbleValueRelease(arena, arg);
+
+          value->body = &g_put_block;
+          value->body->refcount++;
 
           PushData(arena_, &value->_base._base, thread);
           if (func_apply_instr->exit) {
@@ -793,6 +806,58 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         break;
       }
 
+      case FBLE_PUT_INSTR: {
+        FbleValue* arg = PopData(arena_, thread);
+        FbleValue* put_port = PopData(arena_, thread);
+
+        FbleValueV args = { .size = 0, .xs = NULL, };
+        FbleValue* unit = FbleNewStructValue(arena, args);
+
+        if (put_port->tag == FBLE_LINK_VALUE) {
+          FbleLinkValue* link = (FbleLinkValue*)put_port;
+
+          FbleValues* tail = FbleAlloc(arena_, FbleValues);
+          tail->value = arg;  // Takes over ownership of arg.
+          tail->next = NULL;
+
+          if (link->head == NULL) {
+            link->head = tail;
+            link->tail = tail;
+          } else {
+            assert(link->tail != NULL);
+            link->tail->next = tail;
+            link->tail = tail;
+          }
+
+          PushData(arena_, unit, thread);
+          FbleValueRelease(arena, put_port);
+          break;
+        }
+
+        if (put_port->tag == FBLE_PORT_VALUE) {
+          FblePortValue* port = (FblePortValue*)put_port;
+          assert(port->id < io->ports.size);
+
+          if (io->ports.xs[port->id] != NULL) {
+            // Blocked on put. Restore the thread state and return before
+            // iquota has been decremented.
+            PushData(arena_, put_port, thread);
+            PushData(arena_, arg, thread);
+            thread->scope_stack->pc--;
+            return;
+          }
+
+          io->ports.xs[port->id] = arg;   // takes ownership of arg
+
+          PushData(arena_, unit, thread);
+          FbleValueRelease(arena, put_port);
+          break;
+        }
+
+        UNREACHABLE("put port must be an output or port value");
+        break;
+      }
+
       case FBLE_LINK_INSTR: {
         // Allocate the link and push the ports on top of the data stack.
         FbleLinkValue* port = FbleAlloc(arena_, FbleLinkValue);
@@ -885,56 +950,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         // impossible to ever have an undefined proc value.
         assert(proc != NULL && "undefined proc value");
         switch (proc->tag) {
-          case FBLE_PUT_PROC_VALUE: {
-            FblePutProcValue* put = (FblePutProcValue*)proc;
-
-            FbleValueV args = { .size = 0, .xs = NULL, };
-            FbleValue* unit = FbleNewStructValue(arena, args);
-
-            if (put->port->tag == FBLE_LINK_VALUE) {
-              FbleLinkValue* link = (FbleLinkValue*)put->port;
-
-              FbleValues* tail = FbleAlloc(arena_, FbleValues);
-              tail->value = FbleValueRetain(arena, put->arg);
-              tail->next = NULL;
-
-              if (link->head == NULL) {
-                link->head = tail;
-                link->tail = tail;
-              } else {
-                assert(link->tail != NULL);
-                link->tail->next = tail;
-                link->tail = tail;
-              }
-
-              PushData(arena_, unit, thread);
-              thread->scope_stack = ExitScope(arena, thread->scope_stack);
-              FbleProfileExitBlock(arena_, thread->profile);
-              break;
-            }
-
-            if (put->port->tag == FBLE_PORT_VALUE) {
-              FblePortValue* port = (FblePortValue*)put->port;
-              assert(port->id < io->ports.size);
-
-              if (io->ports.xs[port->id] != NULL) {
-                // Blocked on put. Restore the thread state and return before
-                // iquota has been decremented.
-                PushData(arena_, &proc->_base, thread);
-                thread->scope_stack->pc--;
-                return;
-              }
-
-              io->ports.xs[port->id] = FbleValueRetain(arena, put->arg);
-              PushData(arena_, unit, thread);
-              thread->scope_stack = ExitScope(arena, thread->scope_stack);
-              FbleProfileExitBlock(arena_, thread->profile);
-              break;
-            }
-
-            UNREACHABLE("put port must be an output or port value");
-          }
-
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
             RestoreScope(arena, eval->scope, thread);

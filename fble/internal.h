@@ -22,6 +22,7 @@ typedef enum {
   FBLE_FUNC_APPLY_INSTR,
   FBLE_EVAL_INSTR,
   FBLE_GET_INSTR,
+  FBLE_PUT_INSTR,
   FBLE_LINK_INSTR,
   FBLE_EXEC_INSTR,
   FBLE_JOIN_INSTR,
@@ -180,6 +181,15 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
 } FbleGetInstr;
+
+// FblePutInstr -- FBLE_PUT_INSTR
+//   Put a value to a port.
+//
+// data_stack: ..., port, arg
+//         ==> ..., put(port, arg)
+typedef struct {
+  FbleInstr _base;
+} FblePutInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
 //   Allocate a new link.
@@ -449,7 +459,6 @@ typedef struct {
 // FbleProcValueTag --
 //   A tag used to distinguish among different kinds of proc values.
 typedef enum {
-  FBLE_PUT_PROC_VALUE,
   FBLE_EVAL_PROC_VALUE,
   FBLE_EXEC_PROC_VALUE,
 } FbleProcValueTag;
@@ -463,13 +472,6 @@ typedef struct {
   FbleValue _base;
   FbleProcValueTag tag;
 } FbleProcValue;
-
-// FblePutProcValue -- FBLE_PUT_PROC_VALUE
-typedef struct {
-  FbleProcValue _base;
-  FbleValue* port;
-  FbleValue* arg;
-} FblePutProcValue;
 
 // FbleEvalProcValue -- FBLE_EVAL_PROC_VALUE
 //

@@ -89,7 +89,6 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
       switch (pv->tag) {
-        case FBLE_PUT_PROC_VALUE: break;
         case FBLE_EVAL_PROC_VALUE: {
           FbleEvalProcValue* v = (FbleEvalProcValue*)value;
           FbleFree(arena_, v->scope.xs);
@@ -211,13 +210,6 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
       switch (pv->tag) {
-        case FBLE_PUT_PROC_VALUE: {
-          FblePutProcValue* put = (FblePutProcValue*)value;
-          Add(add, put->port);
-          Add(add, put->arg);
-          break;
-        }
-
         case FBLE_EVAL_PROC_VALUE: {
           FbleEvalProcValue* v = (FbleEvalProcValue*)value;
           for (size_t i = 0; i < v->scope.size; ++i) {
@@ -329,6 +321,8 @@ bool FbleIsProcValue(FbleValue* value)
 // FbleNewGetProcValue -- see documentation in internal.h
 FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port)
 {
+  assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
+
   FbleArena* arena_ = FbleRefArenaArena(arena);
   FbleEvalProcValue* get = FbleAlloc(arena_, FbleEvalProcValue);
   FbleRefInit(arena, &get->_base._base.ref);
