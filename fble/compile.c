@@ -1799,6 +1799,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_DESCOPE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
+    case FBLE_LINK_INSTR:
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:
     case FBLE_LET_PREP_INSTR:
@@ -1826,13 +1827,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instr;
       FbleFreeInstrBlock(arena, proc_eval_instr->body);
       FbleFree(arena, proc_eval_instr);
-      return;
-    }
-
-    case FBLE_LINK_INSTR: {
-      FbleLinkInstr* proc_link_instr = (FbleLinkInstr*)instr;
-      FbleFreeInstrBlock(arena, proc_link_instr->body);
-      FbleFree(arena, proc_link_instr);
       return;
     }
 
@@ -2630,18 +2624,28 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         FbleVectorAppend(arena_, *instrs, &get_var->_base);
       }
 
-      FbleLinkInstr* instr = FbleAlloc(arena_, FbleLinkInstr);
-      instr->_base.tag = FBLE_LINK_INSTR;
+      FbleEvalInstr* instr = FbleAlloc(arena_, FbleEvalInstr);
+      instr->_base.tag = FBLE_EVAL_INSTR;
       instr->scopec = vars->nvars;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
       instr->body = NewInstrBlock(arena_, blocks, name, link_expr->body->loc);
 
+
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
-      vpush->count = instr->scopec + 2; // scope + ports
+      vpush->count = instr->scopec;
       FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
+
+      FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
+      link->_base.tag = FBLE_LINK_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &link->_base);
+
+      FbleVPushInstr* vpush_ports = FbleAlloc(arena_, FbleVPushInstr);
+      vpush_ports->_base.tag = FBLE_VPUSH_INSTR;
+      vpush_ports->count = 2;
+      FbleVectorAppend(arena_, instr->body->instrs, &vpush_ports->_base);
       PushVar(arena_, vars, link_expr->get, &get_type->_base);
       PushVar(arena_, vars, link_expr->put, &put_type->_base);
 

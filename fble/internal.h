@@ -172,21 +172,12 @@ typedef struct {
 } FbleEvalInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
-//   Allocate an FbleLinkProcValue.
+//   Allocate a new link.
 //
 // data_stack: ...,
-//         ==> ..., link()
-//
-// Fields:
-//   scopec - The number of variables from the scope to capture from the top
-//            of the data stack.
-//   body - A block of instructions that will execute the body of the link in
-//          the context of its scope and put and get ports. The instruction
-//          should remove the context of its scope and put and get ports.
+//         ==> ..., put, get
 typedef struct {
   FbleInstr _base;
-  size_t scopec;
-  FbleInstrBlock* body;
 } FbleLinkInstr;
 
 // FbleExecInstr -- FBLE_EXEC_INSTR
@@ -451,7 +442,6 @@ typedef enum {
   FBLE_GET_PROC_VALUE,
   FBLE_PUT_PROC_VALUE,
   FBLE_EVAL_PROC_VALUE,
-  FBLE_LINK_PROC_VALUE,
   FBLE_EXEC_PROC_VALUE,
 } FbleProcValueTag;
 
@@ -487,13 +477,6 @@ typedef struct {
   FbleValueV scope;
   FbleInstrBlock* body;
 } FbleEvalProcValue;
-
-// FbleLinkProcValue -- FBLE_LINK_PROC_VALUE
-typedef struct {
-  FbleProcValue _base;
-  FbleValueV scope;
-  FbleInstrBlock* body;
-} FbleLinkProcValue;
 
 // FbleExecProcValue -- FBLE_EXEC_PROC_VALUE
 typedef struct {
