@@ -727,10 +727,14 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
       case FBLE_EVAL_INSTR: {
         FbleEvalProcValue* proc_value = FbleAlloc(arena_, FbleEvalProcValue);
+
+        FbleValue* value = PopData(arena_, thread);
+
         FbleRefInit(arena, &proc_value->_base._base.ref);
         proc_value->_base._base.tag = FBLE_PROC_VALUE;
         proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
-        proc_value->result = PopData(arena_, thread);
+        FbleVectorInit(arena_, proc_value->scope);
+        FbleVectorAppend(arena_, proc_value->scope, value);
         PushData(arena_, &proc_value->_base._base, thread);
         break;
       }
@@ -927,7 +931,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
-            PushData(arena_, FbleValueRetain(arena, eval->result), thread);
+            RestoreScope(arena, eval->scope, thread);
             thread->scope_stack = ExitScope(arena, thread->scope_stack);
             FbleProfileExitBlock(arena_, thread->profile);
             break;

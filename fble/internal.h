@@ -470,9 +470,12 @@ typedef struct {
 } FblePutProcValue;
 
 // FbleEvalProcValue -- FBLE_EVAL_PROC_VALUE
+//
+// TODO: Finish generalizing this to support all the other proc values and
+// replace FbleProcValue with this data structure.
 typedef struct {
   FbleProcValue _base;
-  FbleValue* result;
+  FbleValueV scope;
 } FbleEvalProcValue;
 
 // FbleLinkProcValue -- FBLE_LINK_PROC_VALUE
