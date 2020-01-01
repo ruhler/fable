@@ -756,13 +756,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         port->head = NULL;
         port->tail = NULL;
 
-        FbleGetProcValue* get = FbleAlloc(arena_, FbleGetProcValue);
-        FbleRefInit(arena, &get->_base._base.ref);
-        get->_base._base.tag = FBLE_PROC_VALUE;
-        get->_base.tag = FBLE_GET_PROC_VALUE;
-        get->port = &port->_base;
-        Add(arena, &get->_base._base, get->port);
-        FbleValueRelease(arena, get->port);
+        FbleValue* get = FbleNewGetProcValue(arena, port);
 
         FblePutFuncValue* put = FbleAlloc(arena_, FblePutFuncValue);
         FbleRefInit(arena, &put->_base._base.ref);
@@ -772,8 +766,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         put->port = &port->_base;
         Add(arena, &put->_base._base, put->port);
 
+        FbleValueRelease(arena, &port->_base);
+
         PushData(arena_, &put->_base._base, thread);
-        PushData(arena_, &get->_base._base, thread);
+        PushData(arena_, get, thread);
         break;
       }
 

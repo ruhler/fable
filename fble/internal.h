@@ -536,4 +536,20 @@ typedef struct FbleTypeValue {
   FbleValue _base;
 } FbleTypeValue;
 
+// FbleNewGetProcValue --
+//   Create a new get proc value for the given link.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   link - the link to get from.
+//
+// Results:
+//   A newly allocated get value.
+//
+// Side effects:
+//   The returned get value must be freed using FbleValueRelease when no
+//   longer in use. This function does not take ownership of the link
+//   argument.
+FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleLinkValue* link);
+
 #endif // FBLE_INTERNAL_H_
