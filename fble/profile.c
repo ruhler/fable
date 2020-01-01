@@ -42,12 +42,15 @@ typedef struct ProfileStack {
   struct ProfileStack* tail;
 } ProfileStack;
 
+#define THREAD_SUSPENDED 0
+
 // FbleProfileThread -- see documentation in fble-profile.h
 struct FbleProfileThread {
   ProfileStack* stack;
   FbleCallGraph* graph;
   
-  // The GetTimeMillis of the last call event for this thread.
+  // The GetTimeMillis of the last call event for this thread. Set to
+  // THREAD_SUSPENDED to indicate the thread is suspended.
   uint64_t start;
 };
 
@@ -296,7 +299,9 @@ static uint64_t GetTimeMillis()
   gettimeofday(&tv, NULL);
   uint64_t seconds = tv.tv_sec;
   uint64_t millis = tv.tv_usec / 1000;
-  return 1000 * seconds + millis;
+  uint64_t time = 1000 * seconds + millis;
+  assert(time != THREAD_SUSPENDED && "uh oh. It's thread suspended time. :(");
+  return time;
 }
 
 // CallEvent --
@@ -314,7 +319,9 @@ static uint64_t GetTimeMillis()
 static void CallEvent(FbleProfileThread* thread)
 {
   uint64_t now = GetTimeMillis();
-  thread->stack->time[FBLE_PROFILE_WALL_CLOCK] += (now - thread->start);
+  if (thread->start != THREAD_SUSPENDED) {
+    thread->stack->time[FBLE_PROFILE_WALL_CLOCK] += (now - thread->start);
+  }
   thread->start = now;
 }
 
@@ -356,7 +363,7 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph)
   thread->stack->auto_exit = false;
   thread->stack->exit_calls = NULL;
   thread->stack->tail = NULL;
-  thread->start = GetTimeMillis();
+  thread->start = THREAD_SUSPENDED;
   return thread;
 }
 
@@ -370,6 +377,21 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
   assert(thread->stack->exit_calls == NULL);
   FbleFree(arena, thread->stack);
   FbleFree(arena, thread);
+}
+
+// FbleSuspendProfileThread -- see documentation in fble-profile.h
+void FbleSuspendProfileThread(FbleProfileThread* thread)
+{
+  CallEvent(thread);
+  thread->start = THREAD_SUSPENDED;
+}
+
+// FbleResumeProfileThread -- see documentation in fble-profile.h
+void FbleResumeProfileThread(FbleProfileThread* thread)
+{
+  if (thread->start != THREAD_SUSPENDED) {
+    thread->start = GetTimeMillis();
+  }
 }
 
 // FbleProfileEnterBlock -- see documentation in fble-profile.h
@@ -637,7 +659,7 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
     for (size_t j = 0; j < callees_size; ++j) {
       PrintCallData(fout, blocks, false, block->callees.xs[j]);
     }
-    fprintf(fout, "--------------------------\n");
+    fprintf(fout, "-------------------------------\n");
   }
   fprintf(fout, "\n");
 

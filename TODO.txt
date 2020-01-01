@@ -1,7 +1,5 @@
 Performance Refactor:
-* Add an option to --profile to record wall clock times.
- - Add SuspendThread and ResumeThread functions to fix wall clock tracking for
-   parallel threads.
+* Figure out why tictactoe profile seems so useless.
 * Clearly specify performance of evaluation in spec.
  - We should be able to list all possible performance model parameters based
    on the spec description.

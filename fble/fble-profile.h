@@ -102,6 +102,10 @@ typedef struct FbleProfileThread FbleProfileThread;
 // FbleNewProfileThread --
 //   Allocate a new profile thread.
 //
+//   The thread is allocated in a suspended state. FbleResumeProfileThread
+//   must be called before making any calls or advancing profile time in the
+//   thread.
+//
 // Inputs:
 //   arena - arena to use for allocations.
 //   graph - the call graph to save profiling data to.
@@ -128,6 +132,33 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph);
 // Side effects:
 //   Frees resources associated with the given profile thread.
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
+
+// FbleSuspendProfileThread --
+//   This pauses the wall clock time on the thread, to avoid double counting
+//   wall clock time for interleaved execution of threads.
+//
+// Inputs:
+//   thread - the thread to suspend
+//
+// Results:
+//   none
+//
+// Side effects:
+//   Pauses the wall clock time on the thread.
+void FbleSuspendProfileThread(FbleProfileThread* thread);
+
+// FbleResumeProfileThread --
+//   Resumes wall clock time on the thread.
+//
+// Inputs:
+//   thread - the thread to resume
+//
+// Results:
+//   none
+//
+// Side effects: 
+//   Resumes wall clock time on the thread.
+void FbleResumeProfileThread(FbleProfileThread* thread);
 
 // FbleProfileEnterBlock -- 
 //   Enter a block on the given profile thread.

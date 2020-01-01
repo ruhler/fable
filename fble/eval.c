@@ -1166,7 +1166,11 @@ static void RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, 
   }
 
   // Spend the remaining time running this thread.
+  FbleResumeProfileThread(thread->profile);
   RunThread(arena, io, graph, thread, iquota);
+  if (thread->profile != NULL) {
+    FbleSuspendProfileThread(thread->profile);
+  }
 }
 
 // Eval --
