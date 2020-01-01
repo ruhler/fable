@@ -156,10 +156,19 @@ typedef struct {
 // FbleEvalInstr -- FBLE_EVAL_INSTR
 //   Allocate an FbleEvalProcValue.
 //
-// data_stack: ..., arg
-//         ==> ..., eval(arg)
+// Fields:
+//   scopec - The number of variables from the scope to capture from the top
+//   of the data stack.
+//   body - A block of instructions that will execute in the context of the
+//          captured scope. The instruction should remove the context of its
+//          scope.
+//
+// data_stack: ..., v1, v2, ..., vN
+//         ==> ..., eval(v1, v2, ..., vN, body)
 typedef struct {
   FbleInstr _base;
+  size_t scopec;
+  FbleInstrBlock* body;
 } FbleEvalInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
@@ -170,7 +179,7 @@ typedef struct {
 //
 // Fields:
 //   scopec - The number of variables from the scope to capture from the top
-//            of the variable stack.
+//            of the data stack.
 //   body - A block of instructions that will execute the body of the link in
 //          the context of its scope and put and get ports. The instruction
 //          should remove the context of its scope and put and get ports.
@@ -476,6 +485,7 @@ typedef struct {
 typedef struct {
   FbleProcValue _base;
   FbleValueV scope;
+  FbleInstrBlock* body;
 } FbleEvalProcValue;
 
 // FbleLinkProcValue -- FBLE_LINK_PROC_VALUE

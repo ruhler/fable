@@ -726,16 +726,16 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       }
 
       case FBLE_EVAL_INSTR: {
-        FbleEvalProcValue* proc_value = FbleAlloc(arena_, FbleEvalProcValue);
-
-        FbleValue* value = PopData(arena_, thread);
-
-        FbleRefInit(arena, &proc_value->_base._base.ref);
-        proc_value->_base._base.tag = FBLE_PROC_VALUE;
-        proc_value->_base.tag = FBLE_EVAL_PROC_VALUE;
-        FbleVectorInit(arena_, proc_value->scope);
-        FbleVectorAppend(arena_, proc_value->scope, value);
-        PushData(arena_, &proc_value->_base._base, thread);
+        FbleEvalInstr* eval_instr = (FbleEvalInstr*)instr;
+        FbleEvalProcValue* value = FbleAlloc(arena_, FbleEvalProcValue);
+        FbleRefInit(arena, &value->_base._base.ref);
+        value->_base._base.tag = FBLE_PROC_VALUE;
+        value->_base.tag = FBLE_EVAL_PROC_VALUE;
+        FbleVectorInit(arena_, value->scope);
+        value->body = eval_instr->body;
+        value->body->refcount++;
+        CaptureScope(arena, thread, eval_instr->scopec, &value->_base._base, &value->scope);
+        PushData(arena_, &value->_base._base, thread);
         break;
       }
 
@@ -932,8 +932,8 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           case FBLE_EVAL_PROC_VALUE: {
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
             RestoreScope(arena, eval->scope, thread);
-            thread->scope_stack = ExitScope(arena, thread->scope_stack);
-            FbleProfileExitBlock(arena_, thread->profile);
+            thread->scope_stack = ChangeScope(arena, eval->body, thread->scope_stack);
+            FbleProfileAutoExitBlock(arena_, thread->profile);
             break;
           }
 

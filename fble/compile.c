@@ -1799,7 +1799,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_DESCOPE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
-    case FBLE_EVAL_INSTR:
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:
     case FBLE_LET_PREP_INSTR:
@@ -1820,6 +1819,13 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
       FbleFreeInstrBlock(arena, func_value_instr->body);
       FbleFree(arena, func_value_instr);
+      return;
+    }
+
+    case FBLE_EVAL_INSTR: {
+      FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instr;
+      FbleFreeInstrBlock(arena, proc_eval_instr->body);
+      FbleFree(arena, proc_eval_instr);
       return;
     }
 
@@ -2555,10 +2561,14 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
       TypeRelease(arena, proc_type->type);
 
-      FbleEvalInstr* eval_instr = FbleAlloc(arena_, FbleEvalInstr);
-      eval_instr->_base.tag = FBLE_EVAL_INSTR;
-      FbleVectorAppend(arena_, *instrs, &eval_instr->_base);
+      FbleEvalInstr* instr = FbleAlloc(arena_, FbleEvalInstr);
+      instr->_base.tag = FBLE_EVAL_INSTR;
+      instr->scopec = 1;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
+
+      instr->body = NewInstrBlock(arena_, blocks, name, expr->loc);
+      CompileExit(arena_, true, &instr->body->instrs);
       return &proc_type->_base;
     }
 

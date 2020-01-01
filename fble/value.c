@@ -86,6 +86,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
         case FBLE_EVAL_PROC_VALUE: {
           FbleEvalProcValue* v = (FbleEvalProcValue*)value;
           FbleFree(arena_, v->scope.xs);
+          FbleFreeInstrBlock(arena_, v->body);
           break;
         }
 
