@@ -3,6 +3,7 @@
 
 #include <assert.h>   // for assert
 #include <inttypes.h> // for PRIu64
+#include <sys/time.h> // for gettimeofday
 
 #include "fble-alloc.h"
 #include "fble-profile.h"
@@ -45,6 +46,12 @@ typedef struct ProfileStack {
 struct FbleProfileThread {
   ProfileStack* stack;
   FbleCallGraph* graph;
+  
+  // The profiling clock to use for this thread.
+  FbleProfileClock clock;
+
+  // The GetTimeMillis of the last call event for this thread.
+  uint64_t start;
 };
 
 static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlockId caller, FbleBlockId callee);
@@ -53,6 +60,9 @@ static void MergeSortCallData(bool ascending, bool in_place, FbleCallData** a, F
 static void SortCallData(bool ascending, FbleCallDataV data);
 static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call);
+
+static uint64_t GetTimeMillis();
+static void CallEvent(FbleProfileThread* thread);
 
 // GetCallData --
 //   Get the call data associated with the given caller/callee pair in the
@@ -262,6 +272,48 @@ static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCal
   fprintf(fout, "\n");
 }
 
+// GetTimeMillis -
+//   Get the current time in milliseconds.
+//
+// Inputs:
+//   None.
+//
+// Results:
+//   The current wall clock time in milliseconds, relative to some arbitrary,
+//   fixed point in time.
+//
+// Side effects:
+//   None.
+static uint64_t GetTimeMillis()
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  uint64_t seconds = tv.tv_sec;
+  uint64_t millis = tv.tv_usec / 1000;
+  return 1000 * seconds + millis;
+}
+
+// CallEvent --
+//   Record wall clock time spent in the current frame.
+//
+// Inputs:
+//   thread - the current profile thread.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Increments recorded time spent in the current call. Updates the start
+//   counter for the current thread.
+static void CallEvent(FbleProfileThread* thread)
+{
+  if (thread->clock == FBLE_PROFILE_WALL_CLOCK) {
+    uint64_t now = GetTimeMillis();
+    thread->stack->time += (now - thread->start);
+    thread->start = now;
+  }
+}
+
 // FbleNewCallGraph -- see documentation in fble-profile.h
 FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc)
 {
@@ -298,6 +350,8 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph)
   thread->stack->auto_exit = false;
   thread->stack->exit_calls = NULL;
   thread->stack->tail = NULL;
+  thread->clock = FBLE_PROFILE_TIME_CLOCK; // TODO: pass this through 'graph'
+  thread->start = GetTimeMillis();
   return thread;
 }
 
@@ -317,6 +371,8 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block)
 {
   assert(thread->stack != NULL);
+
+  CallEvent(thread);
 
   FbleBlockId caller = thread->stack->id;
   FbleBlockId callee = block;
@@ -365,13 +421,16 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 // FbleProfileTime -- see documentation in fble-profile.h
 void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
 {
-  thread->stack->time += time;
+  if (thread->clock == FBLE_PROFILE_TIME_CLOCK) {
+    thread->stack->time += time;
+  }
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
   assert(thread->stack != NULL);
+  CallEvent(thread);
   while (thread->stack->exit_calls != NULL) {
     CallList* c = thread->stack->exit_calls;
     FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);

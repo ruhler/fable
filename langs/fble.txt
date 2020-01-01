@@ -120,6 +120,8 @@ Evaluates to the type of the expression, without evaluating the expression
 itself. This is primarily useful for explicitly describing the type of a
 struct that has type fields.
 
+Runtime is O(1).
+
 2.4 Variables
 -------------
 Abstract Syntax:

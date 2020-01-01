@@ -50,6 +50,22 @@ typedef struct {
   FbleCallDataV* xs;
 } FbleCallGraph;
 
+// FbleProfileClock --
+//   The clock to use for profiling.
+typedef enum {
+  // Use FbleProfileTime for the profiling clock.
+  // This should give a consistent result for every run, but is only as
+  // accurate as the calls to FbleProfileTime.
+  FBLE_PROFILE_TIME_CLOCK,
+
+  // Use wall clock time for the profiling clock.
+  // This should give an accurate wall clock time, but will vary from run to
+  // run.
+  // TODO: add 'Suspend' and 'Resume' options to threads to fix double
+  // counting issues with parallel process execution.
+  FBLE_PROFILE_WALL_CLOCK,
+} FbleProfileClock;
+
 // FbleNewCallGraph --
 //   Creates a new, empty call graph for the given number of blocks.
 //
@@ -131,7 +147,9 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block);
 
 // FbleProfileTime --
-//   Spend time on the current profile thread.
+//   Spend time on the current profile thread. Advances the
+//   FBLE_PROFILE_TIME_CLOCK for this thread. Has no effect if
+//   FBLE_PROFILE_WALL_CLOCK is selected for the thread.
 //
 // Inputs:
 //   arena - arena to use for allocations.
