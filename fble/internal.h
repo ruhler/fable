@@ -21,6 +21,7 @@ typedef enum {
   FBLE_DESCOPE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
   FBLE_EVAL_INSTR,
+  FBLE_GET_INSTR,
   FBLE_LINK_INSTR,
   FBLE_EXEC_INSTR,
   FBLE_JOIN_INSTR,
@@ -170,6 +171,15 @@ typedef struct {
   size_t scopec;
   FbleInstrBlock* body;
 } FbleEvalInstr;
+
+// FbleGetInstr -- FBLE_GET_INSTR
+//   Get a value from a port.
+//
+// data_stack: ..., port
+//         ==> ..., get(port)
+typedef struct {
+  FbleInstr _base;
+} FbleGetInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
 //   Allocate a new link.
@@ -439,7 +449,6 @@ typedef struct {
 // FbleProcValueTag --
 //   A tag used to distinguish among different kinds of proc values.
 typedef enum {
-  FBLE_GET_PROC_VALUE,
   FBLE_PUT_PROC_VALUE,
   FBLE_EVAL_PROC_VALUE,
   FBLE_EXEC_PROC_VALUE,
@@ -454,12 +463,6 @@ typedef struct {
   FbleValue _base;
   FbleProcValueTag tag;
 } FbleProcValue;
-
-// FbleGetProcValue -- FBLE_GET_PROC_VALUE
-typedef struct {
-  FbleProcValue _base;
-  FbleValue* port;
-} FbleGetProcValue;
 
 // FblePutProcValue -- FBLE_PUT_PROC_VALUE
 typedef struct {
@@ -541,15 +544,15 @@ typedef struct FbleTypeValue {
 //
 // Inputs:
 //   arena - the arena to use for allocations.
-//   link - the link to get from.
+//   port - the port value to get from.
 //
 // Results:
 //   A newly allocated get value.
 //
 // Side effects:
 //   The returned get value must be freed using FbleValueRelease when no
-//   longer in use. This function does not take ownership of the link
+//   longer in use. This function does not take ownership of the port value.
 //   argument.
-FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleLinkValue* link);
+FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port);
 
 #endif // FBLE_INTERNAL_H_

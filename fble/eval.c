@@ -748,6 +748,51 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         break;
       }
 
+      case FBLE_GET_INSTR: {
+        FbleValue* get_port = PopData(arena_, thread);
+        if (get_port->tag == FBLE_LINK_VALUE) {
+          FbleLinkValue* link = (FbleLinkValue*)get_port;
+
+          if (link->head == NULL) {
+            // Blocked on get. Restore the thread state and return before
+            // iquota has been decremented.
+            PushData(arena_, get_port, thread);
+            thread->scope_stack->pc--;
+            return;
+          }
+
+          FbleValues* head = link->head;
+          link->head = link->head->next;
+          if (link->head == NULL) {
+            link->tail = NULL;
+          }
+          PushData(arena_, head->value, thread);
+          FbleFree(arena_, head);
+          FbleValueRelease(arena, get_port);
+          break;
+        }
+
+        if (get_port->tag == FBLE_PORT_VALUE) {
+          FblePortValue* port = (FblePortValue*)get_port;
+          assert(port->id < io->ports.size);
+          if (io->ports.xs[port->id] == NULL) {
+            // Blocked on get. Restore the thread state and return before
+            // iquota has been decremented.
+            PushData(arena_, get_port, thread);
+            thread->scope_stack->pc--;
+            return;
+          }
+
+          PushData(arena_, io->ports.xs[port->id], thread);
+          io->ports.xs[port->id] = NULL;
+          FbleValueRelease(arena, get_port);
+          break;
+        }
+
+        UNREACHABLE("get port must be an input or port value");
+        break;
+      }
+
       case FBLE_LINK_INSTR: {
         // Allocate the link and push the ports on top of the data stack.
         FbleLinkValue* port = FbleAlloc(arena_, FbleLinkValue);
@@ -756,7 +801,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         port->head = NULL;
         port->tail = NULL;
 
-        FbleValue* get = FbleNewGetProcValue(arena, port);
+        FbleValue* get = FbleNewGetProcValue(arena, &port->_base);
 
         FblePutFuncValue* put = FbleAlloc(arena_, FblePutFuncValue);
         FbleRefInit(arena, &put->_base._base.ref);
@@ -840,56 +885,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         // impossible to ever have an undefined proc value.
         assert(proc != NULL && "undefined proc value");
         switch (proc->tag) {
-          case FBLE_GET_PROC_VALUE: {
-            FbleGetProcValue* get = (FbleGetProcValue*)proc;
-
-            if (get->port->tag == FBLE_LINK_VALUE) {
-              FbleLinkValue* link = (FbleLinkValue*)get->port;
-
-              if (link->head == NULL) {
-                // Blocked on get. Restore the thread state and return before
-                // iquota has been decremented.
-                PushData(arena_, &proc->_base, thread);
-                thread->scope_stack->pc--;
-                return;
-              }
-
-              FbleValues* head = link->head;
-              link->head = link->head->next;
-              if (link->head == NULL) {
-                link->tail = NULL;
-              }
-              PushData(arena_, head->value, thread);
-              FbleFree(arena_, head);
-
-              thread->scope_stack = ExitScope(arena, thread->scope_stack);
-              FbleProfileExitBlock(arena_, thread->profile);
-              break;
-            }
-
-            if (get->port->tag == FBLE_PORT_VALUE) {
-              FblePortValue* port = (FblePortValue*)get->port;
-              assert(port->id < io->ports.size);
-              if (io->ports.xs[port->id] == NULL) {
-                // Blocked on get. Restore the thread state and return before
-                // iquota has been decremented.
-                PushData(arena_, &proc->_base, thread);
-                thread->scope_stack->pc--;
-                return;
-              }
-
-              PushData(arena_, io->ports.xs[port->id], thread);
-              io->ports.xs[port->id] = NULL;
-
-              thread->scope_stack = ExitScope(arena, thread->scope_stack);
-              FbleProfileExitBlock(arena_, thread->profile);
-              break;
-            }
-
-            UNREACHABLE("get port must be an input or port value");
-            break;
-          }
-
           case FBLE_PUT_PROC_VALUE: {
             FblePutProcValue* put = (FblePutProcValue*)proc;
 

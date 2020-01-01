@@ -1799,6 +1799,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_DESCOPE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
+    case FBLE_GET_INSTR:
     case FBLE_LINK_INSTR:
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:

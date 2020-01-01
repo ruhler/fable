@@ -8,13 +8,13 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// static FbleInstr g_get_instr = { .tag = FBLE_GET_INSTR };
-// static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
-// static FbleInstr* g_get_block_instrs[] = { &g_get_instr, &g_exit_scope_instr };
-// static FbleInstrBlock g_get_block = {
-//   .refcount = 1,
-//   .instrs = { .size = 2, .xs = g_get_block_instrs }
-// };
+static FbleInstr g_get_instr = { .tag = FBLE_GET_INSTR };
+static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
+static FbleInstr* g_get_block_instrs[] = { &g_get_instr, &g_exit_scope_instr };
+static FbleInstrBlock g_get_block = {
+  .refcount = 1,
+  .instrs = { .size = 2, .xs = g_get_block_instrs }
+};
 
 static void ValueFree(FbleValueArena* arena, FbleRef* ref);
 static void Add(FbleRefCallback* add, FbleValue* value);
@@ -89,7 +89,6 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
       switch (pv->tag) {
-        case FBLE_GET_PROC_VALUE: break;
         case FBLE_PUT_PROC_VALUE: break;
         case FBLE_EVAL_PROC_VALUE: {
           FbleEvalProcValue* v = (FbleEvalProcValue*)value;
@@ -212,12 +211,6 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
     case FBLE_PROC_VALUE: {
       FbleProcValue* pv = (FbleProcValue*)value;
       switch (pv->tag) {
-        case FBLE_GET_PROC_VALUE: {
-          FbleGetProcValue* get = (FbleGetProcValue*)value;
-          Add(add, get->port);
-          break;
-        }
-
         case FBLE_PUT_PROC_VALUE: {
           FblePutProcValue* put = (FblePutProcValue*)value;
           Add(add, put->port);
@@ -334,15 +327,18 @@ bool FbleIsProcValue(FbleValue* value)
 }
 
 // FbleNewGetProcValue -- see documentation in internal.h
-FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleLinkValue* link)
+FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleGetProcValue* get = FbleAlloc(arena_, FbleGetProcValue);
+  FbleEvalProcValue* get = FbleAlloc(arena_, FbleEvalProcValue);
   FbleRefInit(arena, &get->_base._base.ref);
   get->_base._base.tag = FBLE_PROC_VALUE;
-  get->_base.tag = FBLE_GET_PROC_VALUE;
-  get->port = &link->_base;
-  FbleRefAdd(arena, &get->_base._base.ref, &get->port->ref);
+  get->_base.tag = FBLE_EVAL_PROC_VALUE;
+  FbleVectorInit(arena_, get->scope);
+  FbleVectorAppend(arena_, get->scope, port);
+  FbleRefAdd(arena, &get->_base._base.ref, &port->ref);
+  get->body = &g_get_block;
+  get->body->refcount++;
   return &get->_base._base;
 }
 
@@ -355,14 +351,9 @@ FbleValue* FbleNewInputPortValue(FbleValueArena* arena, size_t id)
   get_port->_base.tag = FBLE_PORT_VALUE;
   get_port->id = id;
 
-  FbleGetProcValue* get = FbleAlloc(arena_, FbleGetProcValue);
-  FbleRefInit(arena, &get->_base._base.ref);
-  get->_base._base.tag = FBLE_PROC_VALUE;
-  get->_base.tag = FBLE_GET_PROC_VALUE;
-  get->port = &get_port->_base;
-  FbleRefAdd(arena, &get->_base._base.ref, &get->port->ref);
-  FbleValueRelease(arena, get->port);
-  return &get->_base._base;
+  FbleValue* get = FbleNewGetProcValue(arena, &get_port->_base);
+  FbleValueRelease(arena, &get_port->_base);
+  return get;
 }
 
 // FbleNewOutputPortValue -- see documentation in fble-value.h
