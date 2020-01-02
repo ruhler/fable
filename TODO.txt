@@ -1,7 +1,4 @@
 Performance Refactor:
-* [clean] Factor out common code for thunks used by func, link, and exec.
-  - hypothesis is this could be contributing to performance overhead because
-    we are saving way more vars than we need to for link and exec.
 * Inline the body of link into the link process 
   - There's no need to allocate another process and execute it right away.
 * Inline the body of exec into the exec process
