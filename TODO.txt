@@ -1,4 +1,5 @@
 Performance Refactor:
+* Change exec to evaluate the bindings as part of child process execution.
 * Inline the body of link into the link process 
   - There's no need to allocate another process and execute it right away.
 * Inline the body of exec into the exec process
@@ -22,7 +23,6 @@ Performance Refactor:
   on wall clock time profiling of benchmarks.
 * Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
-* Change exec to evaluate the bindings as part of child process execution.
 * Figure out why the tictactoe AI was 4 times faster when using a process
   computation instead of a pure computation, even though fble level profiling
   and common sense suggest it should be the other way around.
@@ -47,7 +47,6 @@ Performance Refactor:
 * [perf] Optimize FbleRefAdd
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
-* Test what gets evaluated at eval vs. exec time for each kind of process.
 * [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
   eval after a let binding? Can't we use subst or other eval-by-construction
   for everything else?

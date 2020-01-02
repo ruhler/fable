@@ -642,7 +642,7 @@ Example:
   $(3)
 
 A process that evaluates body and returns its value without performing any
-other actions.
+other actions. The body is not evaluated until the eval process is executed.
 
 6.3 Process Link
 ----------------
@@ -681,10 +681,9 @@ Concrete Syntax:
 Example:
   Int@ x := getx, Int@ y := gety; $(add(x, y))
 
-Executes each process in parallel, then evaluates and executes the body with
-the results of the processes assigned to variables in scope. The binding
-processes are evaluated at the same time the overall exec process is
-evaluated.
+Evaluates and executes each process in parallel, then evaluates and executes
+the body with the results of the processes assigned to variables in scope. The
+binding processes are not evaluated until the process is executed.
 
 7. Polymorphism
 ---------------
