@@ -2662,25 +2662,16 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->rtype->ref);
       TypeRelease(arena, &unit_proc_type->_base);
 
-      for (size_t i = 0; i < vars->nvars; ++i) {
-        FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
-        get_var->_base.tag = FBLE_VAR_INSTR;
-        get_var->position = i;
-        FbleVectorAppend(arena_, vars->vars.xs[i].instrs, get_var);
-        FbleVectorAppend(arena_, *instrs, &get_var->_base);
-      }
-
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->scopec = vars->nvars;
-      FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, exit, instrs);
+
+      Vars thunk_vars;
+      EnterThunk(arena_, vars, &thunk_vars);
 
       instr->body = NewInstrBlock(arena_, blocks, name, link_expr->body->loc);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
-      vpush->count = instr->scopec;
       FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
 
       FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
@@ -2691,21 +2682,23 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       vpush_ports->_base.tag = FBLE_VPUSH_INSTR;
       vpush_ports->count = 2;
       FbleVectorAppend(arena_, instr->body->instrs, &vpush_ports->_base);
-      PushVar(arena_, vars, link_expr->get, &get_type->_base);
-      PushVar(arena_, vars, link_expr->put, &put_type->_base);
+      PushVar(arena_, &thunk_vars, link_expr->get, &get_type->_base);
+      PushVar(arena_, &thunk_vars, link_expr->put, &put_type->_base);
 
       assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
       size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, link_expr->body, &instr->body->instrs, body_time);
-
-      PopVar(arena_, vars);
-      PopVar(arena_, vars);
+      Type* type = CompileExpr(arena, blocks, name, false, &thunk_vars, link_expr->body, &instr->body->instrs, body_time);
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->loc = link_expr->body->loc;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
+
+      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
+      vpush->count = instr->scopec;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
+      CompileExit(arena_, exit, instrs);
 
       TypeRelease(arena, port_type);
       TypeRelease(arena, &get_type->_base);
