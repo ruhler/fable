@@ -22,11 +22,7 @@ Performance Refactor:
   on wall clock time profiling of benchmarks.
 * Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
-* It's very unintuitive that $(f(...)) calls f(...) before executing the
-  process $(...). Clarify the spec on that and make sure we implement it
-  correctly. And think about the other kinds of procs too, like put and get.
-* Consider replacing $(...) with ${...} where the body of the eval is not
-  evaluated until you execute the eval.
+* Change exec to evaluate the bindings as part of child process execution.
 * Figure out why the tictactoe AI was 4 times faster when using a process
   computation instead of a pure computation, even though fble level profiling
   and common sense suggest it should be the other way around.

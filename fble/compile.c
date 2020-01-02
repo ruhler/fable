@@ -2587,7 +2587,28 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       *time += 1;
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, eval_expr->body, instrs, time);
+      Vars thunk_vars;
+      EnterThunk(arena_, vars, &thunk_vars);
+
+      FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
+      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
+      instr->body = NewInstrBlock(arena_, blocks, name, expr->loc);
+
+      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
+      vpush->_base.tag = FBLE_VPUSH_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
+
+      assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
+      size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
+      Type* type = CompileExpr(arena, blocks, name, false, &thunk_vars, eval_expr->body, &instr->body->instrs, body_time);
+
+      CompileExit(arena_, true, &instr->body->instrs);
+
+      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
+      vpush->count = instr->scopec;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
+      CompileExit(arena_, exit, instrs);
+
       if (type == NULL) {
         return NULL;
       }
@@ -2600,15 +2621,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       proc_type->type = type;
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
       TypeRelease(arena, proc_type->type);
-
-      FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
-      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->scopec = 1;
-      FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, exit, instrs);
-
-      instr->body = NewInstrBlock(arena_, blocks, name, expr->loc);
-      CompileExit(arena_, true, &instr->body->instrs);
       return &proc_type->_base;
     }
 
@@ -2662,12 +2674,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->rtype->ref);
       TypeRelease(arena, &unit_proc_type->_base);
 
-      FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
-      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-
       Vars thunk_vars;
       EnterThunk(arena_, vars, &thunk_vars);
 
+      FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
+      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->body = NewInstrBlock(arena_, blocks, name, link_expr->body->loc);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);

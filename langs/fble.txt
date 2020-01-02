@@ -1174,13 +1174,6 @@ Notes:
 
    This seems like a subtle trap to get caught with.
 
-   Should we add a ${...} syntax analogous to $(...)? Then it's more obvious
-   you can write:
-     ${ a:= ...; b := ...; TestResult@(a, b); }
-
-   No. That's wrong. See, you can't have := in there, which is confusing. And
-   you couldn't write: ${ a = ...; b := ...; ... }.
-
 - Mixing folds and maps and processes seqs is annoying. Can we come up with
   better libraries for doing that sort of thing easily?
 
