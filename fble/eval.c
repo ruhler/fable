@@ -694,24 +694,23 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
           FblePutFuncValue* f = (FblePutFuncValue*)func;
 
-          FbleEvalProcValue* value = FbleAlloc(arena_, FbleEvalProcValue);
-          FbleRefInit(arena, &value->_base._base.ref);
-          value->_base._base.tag = FBLE_PROC_VALUE;
-          value->_base.tag = FBLE_EVAL_PROC_VALUE;
+          FbleProcValue* value = FbleAlloc(arena_, FbleProcValue);
+          FbleRefInit(arena, &value->_base.ref);
+          value->_base.tag = FBLE_PROC_VALUE;
           FbleVectorInit(arena_, value->scope);
 
           FbleVectorAppend(arena_, value->scope, f->port);
-          Add(arena, &value->_base._base, f->port);
+          Add(arena, &value->_base, f->port);
 
           FbleValue* arg = PopData(arena_, thread);
           FbleVectorAppend(arena_, value->scope, arg);
-          Add(arena, &value->_base._base, arg);
+          Add(arena, &value->_base, arg);
           FbleValueRelease(arena, arg);
 
           value->body = &g_put_block;
           value->body->refcount++;
 
-          PushData(arena_, &value->_base._base, thread);
+          PushData(arena_, &value->_base, thread);
           if (func_apply_instr->exit) {
             thread->scope_stack = ExitScope(arena, thread->scope_stack);
             FbleProfileExitBlock(arena_, thread->profile);
@@ -738,17 +737,16 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         break;
       }
 
-      case FBLE_EVAL_INSTR: {
-        FbleEvalInstr* eval_instr = (FbleEvalInstr*)instr;
-        FbleEvalProcValue* value = FbleAlloc(arena_, FbleEvalProcValue);
-        FbleRefInit(arena, &value->_base._base.ref);
-        value->_base._base.tag = FBLE_PROC_VALUE;
-        value->_base.tag = FBLE_EVAL_PROC_VALUE;
+      case FBLE_PROC_VALUE_INSTR: {
+        FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
+        FbleProcValue* value = FbleAlloc(arena_, FbleProcValue);
+        FbleRefInit(arena, &value->_base.ref);
+        value->_base.tag = FBLE_PROC_VALUE;
         FbleVectorInit(arena_, value->scope);
-        value->body = eval_instr->body;
+        value->body = proc_value_instr->body;
         value->body->refcount++;
-        CaptureScope(arena, thread, eval_instr->scopec, &value->_base._base, &value->scope);
-        PushData(arena_, &value->_base._base, thread);
+        CaptureScope(arena, thread, proc_value_instr->scopec, &value->_base, &value->scope);
+        PushData(arena_, &value->_base, thread);
         break;
       }
 
@@ -946,16 +944,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         // You cannot execute a proc in a let binding, so it should be
         // impossible to ever have an undefined proc value.
         assert(proc != NULL && "undefined proc value");
-        switch (proc->tag) {
-          case FBLE_EVAL_PROC_VALUE: {
-            FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
-            RestoreScope(arena, eval->scope, thread);
-            thread->scope_stack = ChangeScope(arena, eval->body, thread->scope_stack);
-            FbleProfileAutoExitBlock(arena_, thread->profile);
-            break;
-          }
-        }
 
+        RestoreScope(arena, proc->scope, thread);
+        thread->scope_stack = ChangeScope(arena, proc->body, thread->scope_stack);
+        FbleProfileAutoExitBlock(arena_, thread->profile);
         FbleValueRelease(arena, &proc->_base);
         break;
       }

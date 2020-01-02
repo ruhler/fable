@@ -87,16 +87,9 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
     }
 
     case FBLE_PROC_VALUE: {
-      FbleProcValue* pv = (FbleProcValue*)value;
-      switch (pv->tag) {
-        case FBLE_EVAL_PROC_VALUE: {
-          FbleEvalProcValue* v = (FbleEvalProcValue*)value;
-          FbleFree(arena_, v->scope.xs);
-          FbleFreeInstrBlock(arena_, v->body);
-          break;
-        }
-      }
-
+      FbleProcValue* v = (FbleProcValue*)value;
+      FbleFree(arena_, v->scope.xs);
+      FbleFreeInstrBlock(arena_, v->body);
       FbleFree(arena_, value);
       return;
     }
@@ -200,15 +193,9 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
     }
 
     case FBLE_PROC_VALUE: {
-      FbleProcValue* pv = (FbleProcValue*)value;
-      switch (pv->tag) {
-        case FBLE_EVAL_PROC_VALUE: {
-          FbleEvalProcValue* v = (FbleEvalProcValue*)value;
-          for (size_t i = 0; i < v->scope.size; ++i) {
-            Add(add, v->scope.xs[i]);
-          }
-          break;
-        }
+      FbleProcValue* v = (FbleProcValue*)value;
+      for (size_t i = 0; i < v->scope.size; ++i) {
+        Add(add, v->scope.xs[i]);
       }
       break;
     }
@@ -305,16 +292,15 @@ FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port)
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleEvalProcValue* get = FbleAlloc(arena_, FbleEvalProcValue);
-  FbleRefInit(arena, &get->_base._base.ref);
-  get->_base._base.tag = FBLE_PROC_VALUE;
-  get->_base.tag = FBLE_EVAL_PROC_VALUE;
+  FbleProcValue* get = FbleAlloc(arena_, FbleProcValue);
+  FbleRefInit(arena, &get->_base.ref);
+  get->_base.tag = FBLE_PROC_VALUE;
   FbleVectorInit(arena_, get->scope);
   FbleVectorAppend(arena_, get->scope, port);
-  FbleRefAdd(arena, &get->_base._base.ref, &port->ref);
+  FbleRefAdd(arena, &get->_base.ref, &port->ref);
   get->body = &g_get_block;
   get->body->refcount++;
-  return &get->_base._base;
+  return &get->_base;
 }
 
 // FbleNewInputPortValue -- see documentation in fble-value.h

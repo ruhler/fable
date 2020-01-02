@@ -20,7 +20,7 @@ typedef enum {
   FBLE_FUNC_VALUE_INSTR,
   FBLE_DESCOPE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
-  FBLE_EVAL_INSTR,
+  FBLE_PROC_VALUE_INSTR,
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
   FBLE_LINK_INSTR,
@@ -155,8 +155,8 @@ typedef struct {
   bool exit;
 } FbleFuncApplyInstr;
 
-// FbleEvalInstr -- FBLE_EVAL_INSTR
-//   Allocate an FbleEvalProcValue.
+// FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR
+//   Allocate an FbleProcValue.
 //
 // Fields:
 //   scopec - The number of variables from the scope to capture from the top
@@ -165,13 +165,13 @@ typedef struct {
 //          captured scope. The instruction should remove the context of its
 //          scope.
 //
-// data_stack: ..., v1, v2, ..., vN
-//         ==> ..., eval(v1, v2, ..., vN, body)
+// data_stack: ..., vN, , ..., v2, v1
+//         ==> ..., proc(v1, v2, ..., vN, body)
 typedef struct {
   FbleInstr _base;
   size_t scopec;
   FbleInstrBlock* body;
-} FbleEvalInstr;
+} FbleProcValueInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR
 //   Get a value from a port.
@@ -452,31 +452,12 @@ typedef struct {
   FbleValue* port;
 } FblePutFuncValue;
 
-// FbleProcValueTag --
-//   A tag used to distinguish among different kinds of proc values.
-typedef enum {
-  FBLE_EVAL_PROC_VALUE,
-} FbleProcValueTag;
-
 // FbleProcValue -- FBLE_PROC_VALUE
-//   A tagged union of proc value types. All values have the same initial
-//   layout as FbleProcValue. The tag can be used to determine what kind of
-//   proc value this is to get access to additional fields of the proc value
-//   by first casting to that specific type of proc value.
 typedef struct {
   FbleValue _base;
-  FbleProcValueTag tag;
-} FbleProcValue;
-
-// FbleEvalProcValue -- FBLE_EVAL_PROC_VALUE
-//
-// TODO: Finish generalizing this to support all the other proc values and
-// replace FbleProcValue with this data structure.
-typedef struct {
-  FbleProcValue _base;
   FbleValueV scope;
   FbleInstrBlock* body;
-} FbleEvalProcValue;
+} FbleProcValue;
 
 // FbleValues --
 //   A non-circular singly linked list of values.

@@ -1826,10 +1826,10 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
     }
 
-    case FBLE_EVAL_INSTR: {
-      FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instr;
-      FbleFreeInstrBlock(arena, proc_eval_instr->body);
-      FbleFree(arena, proc_eval_instr);
+    case FBLE_PROC_VALUE_INSTR: {
+      FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
+      FbleFreeInstrBlock(arena, proc_value_instr->body);
+      FbleFree(arena, proc_value_instr);
       return;
     }
   }
@@ -2551,8 +2551,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
       TypeRelease(arena, proc_type->type);
 
-      FbleEvalInstr* instr = FbleAlloc(arena_, FbleEvalInstr);
-      instr->_base.tag = FBLE_EVAL_INSTR;
+      FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
+      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->scopec = 1;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
@@ -2620,8 +2620,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         FbleVectorAppend(arena_, *instrs, &get_var->_base);
       }
 
-      FbleEvalInstr* instr = FbleAlloc(arena_, FbleEvalInstr);
-      instr->_base.tag = FBLE_EVAL_INSTR;
+      FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
+      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->scopec = vars->nvars;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
@@ -2721,8 +2721,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         FbleVectorAppend(arena_, *instrs, &get_var->_base);
       }
 
-      FbleEvalInstr* instr = FbleAlloc(arena_, FbleEvalInstr);
-      instr->_base.tag = FBLE_EVAL_INSTR;
+      FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
+      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->scopec = vars->nvars + exec_expr->bindings.size;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);

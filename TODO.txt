@@ -1,6 +1,4 @@
 Performance Refactor:
-* Unify FbleProcValue struct
-  - Rename FbleEvalProcValue to FbleProcValue
 * Inline the body of link into the link process 
   - There's no need to allocate another process and execute it right away.
 * Inline the body of exec into the exec process
