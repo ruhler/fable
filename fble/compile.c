@@ -2792,7 +2792,30 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       vpush->count = captured;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        Type* type = CompileExpr(arena, blocks, name, false, vars, exec_expr->bindings.xs[i].expr, instrs, time);
+
+        Vars bthunk_vars;
+        EnterThunk(arena_, vars, &bthunk_vars);
+
+        FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
+        binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
+        binstr->body = NewInstrBlock(arena_, blocks, name, exec_expr->bindings.xs[i].expr->loc);
+
+        FbleVPushInstr* bvpush = FbleAlloc(arena_, FbleVPushInstr);
+        bvpush->_base.tag = FBLE_VPUSH_INSTR;
+        FbleVectorAppend(arena_, binstr->body->instrs, &bvpush->_base);
+
+        assert(binstr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
+        size_t* bbody_time = &((FbleProfileEnterBlockInstr*)binstr->body->instrs.xs[0])->time;
+        Type* type = CompileExpr(arena, blocks, name, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->body->instrs, bbody_time);
+
+        FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
+        bproc->_base.tag = FBLE_PROC_INSTR;
+        FbleVectorAppend(arena_, binstr->body->instrs, &bproc->_base);
+
+        binstr->scopec = ExitThunk(arena_, vars, &bthunk_vars, instrs);
+        bvpush->count = binstr->scopec;
+        FbleVectorAppend(arena_, *instrs, &binstr->_base);
+
         error = error || (type == NULL);
 
         if (type != NULL) {

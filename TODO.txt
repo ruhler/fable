@@ -1,8 +1,6 @@
 Performance Refactor:
-* Change exec to evaluate the bindings as part of child process execution.
-* Inline the body of link into the link process 
-  - There's no need to allocate another process and execute it right away.
-* Inline the body of exec into the exec process
+* Inline the body of link into the link process?
+* Inline the body of exec into the exec process?
 * Special case single-binding exec during compilation.
   - It should compile to a non-exec process that does the binding then the
     body without spawning any threads.
