@@ -278,7 +278,7 @@ expr:
       FbleEvalExpr* eval_expr = FbleAlloc(arena, FbleEvalExpr);
       eval_expr->_base.tag = FBLE_EVAL_EXPR;
       eval_expr->_base.loc = @$;
-      eval_expr->expr = $3;
+      eval_expr->body = $3;
       $$ = &eval_expr->_base;
    }
  | expr '<' expr_p '>' {

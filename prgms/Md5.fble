@@ -317,7 +317,7 @@ Bit32@ t64 = H8(Hex@|EB86D391);
 # Computes the MD5 checksum of a pre-padded sequence of bytes.
 (Streamed@<Bit8@>!, ABCD@){ABCD@!;} PaddedMd5 = (Streamed@<Bit8@>! padded, ABCD@ abcd) {
   Streamed@<Block@> block := GetBlock(padded);
-  ABCD@ md5 := $(DoBlock(abcd, block.data));
+  ABCD@ md5 = DoBlock(abcd, block.data);
   ?(block.last; true: $(md5), false: PaddedMd5(padded, md5));
 };
 

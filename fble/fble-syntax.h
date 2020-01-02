@@ -310,10 +310,10 @@ typedef struct {
 } FbleProcTypeExpr;
 
 // FbleEvalExpr --
-//   FBLE_EVAL_EXPR (expr :: Expr)
+//   FBLE_EVAL_EXPR (body :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleExpr* expr;
+  FbleExpr* body;
 } FbleEvalExpr;
 
 // FbleLinkExpr --

@@ -205,7 +205,7 @@ State@ InitialState = {
   Input@ x := in;
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
        tick: {
-           MoveResultM@ m := $(Move(s));
+           MoveResultM@ m = Move(s);
            ?(m;
               dead: $(Unit@()),
               mr: {

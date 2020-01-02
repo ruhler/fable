@@ -1,10 +1,10 @@
-fble-test-error 8:23 {
+fble-test {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
 
-  # Proc eval is strict: the argument is evaluated before we run the process
-  # itself.
+  # Proc eval is non-strict: the argument is not evaluated until we run the
+  # process itself.
   Unit@! mku = $(true.false);
   Unit@();
 }

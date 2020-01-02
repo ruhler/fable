@@ -2587,7 +2587,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       *time += 1;
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, eval_expr->expr, instrs, time);
+      Type* type = CompileExpr(arena, blocks, name, false, vars, eval_expr->body, instrs, time);
       if (type == NULL) {
         return NULL;
       }

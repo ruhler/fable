@@ -633,7 +633,7 @@ Example:
 6.2 Process Eval
 ----------------
 Abstract Syntax:
-  Expr ::= proc_eval (expr :: Expr)
+  Expr ::= proc_eval (body :: Expr)
 
 Concrete Syntax:
   expr ::= '$(' expr ')'
@@ -641,8 +641,8 @@ Concrete Syntax:
 Example:
   $(3)
 
-A process that returns the value of expr without performing any other
-actions. The value to return is evaluated as part of evaluating the process.
+A process that evaluates body and returns its value without performing any
+other actions.
 
 6.3 Process Link
 ----------------
@@ -1003,7 +1003,7 @@ Expr ::=
  | func_apply (func :: Expr) (arg :: Expr)
 
  | proc_type (result :: Type)
- | proc_eval (expr :: Expr)
+ | proc_eval (body :: Expr)
  | proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
  | proc_exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
 
@@ -1177,7 +1177,10 @@ Notes:
    Should we add a ${...} syntax analogous to $(...)? Then it's more obvious
    you can write:
      ${ a:= ...; b := ...; TestResult@(a, b); }
-   
+
+   No. That's wrong. See, you can't have := in there, which is confusing. And
+   you couldn't write: ${ a = ...; b := ...; ... }.
+
 - Mixing folds and maps and processes seqs is annoying. Can we come up with
   better libraries for doing that sort of thing easily?
 
