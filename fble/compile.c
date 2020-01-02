@@ -2733,29 +2733,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         error = error || (nvd[i].type == NULL);
       }
 
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        Type* type = CompileExpr(arena, blocks, name, false, vars, exec_expr->bindings.xs[i].expr, instrs, time);
-        error = error || (type == NULL);
-
-        if (type != NULL) {
-          ProcType* proc_type = (ProcType*)Normal(type);
-          if (proc_type->_base.tag == PROC_TYPE) {
-            if (nvd[i].type != NULL && !TypesEqual(nvd[i].type, proc_type->type, NULL)) {
-              error = true;
-              ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
-                  "expected type %t!, but found %t\n",
-                  nvd[i].type, type);
-            }
-          } else {
-            error = true;
-            ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
-                "expected process, but found expression of type %t\n",
-                type);
-          }
-          TypeRelease(arena, type);
-        }
-      }
-
       Vars thunk_vars;
       EnterThunk(arena_, vars, &thunk_vars);
 
@@ -2763,14 +2740,14 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->body = NewInstrBlock(arena_, blocks, name, exec_expr->body->loc);
 
+      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
+      vpush->_base.tag = FBLE_VPUSH_INSTR;
+      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
+
       FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
       fork->argc = exec_expr->bindings.size;
       FbleVectorAppend(arena_, instr->body->instrs, &fork->_base);
-
-      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
-      vpush->_base.tag = FBLE_VPUSH_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
       join->_base.tag = FBLE_JOIN_INSTR;
@@ -2796,19 +2773,39 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
             rtype);
       }
 
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        TypeRelease(arena, nvd[i].type);
-      }
-
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->loc = exec_expr->body->loc;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
       size_t captured = ExitThunk(arena_, vars, &thunk_vars, instrs);
-
       instr->scopec = captured + exec_expr->bindings.size;
       vpush->count = captured;
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        Type* type = CompileExpr(arena, blocks, name, false, vars, exec_expr->bindings.xs[i].expr, instrs, time);
+        error = error || (type == NULL);
+
+        if (type != NULL) {
+          ProcType* proc_type = (ProcType*)Normal(type);
+          if (proc_type->_base.tag == PROC_TYPE) {
+            if (nvd[i].type != NULL && !TypesEqual(nvd[i].type, proc_type->type, NULL)) {
+              error = true;
+              ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
+                  "expected type %t!, but found %t\n",
+                  nvd[i].type, type);
+            }
+          } else {
+            error = true;
+            ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
+                "expected process, but found expression of type %t\n",
+                type);
+          }
+          TypeRelease(arena, type);
+        }
+        TypeRelease(arena, nvd[i].type);
+      }
+
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
