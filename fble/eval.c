@@ -70,8 +70,7 @@ struct Thread {
 };
 
 static FbleProcInstr g_proc_instr = {
-  ._base = { .tag = FBLE_PROC_INSTR },
-  .loc = { .source = "(internal)", .line = 0, .col = 0}
+  ._base = { .tag = FBLE_PROC_INSTR }
 };
 static FbleProfileEnterBlockInstr g_enter_instr = {
   ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },

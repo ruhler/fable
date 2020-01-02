@@ -200,7 +200,7 @@ typedef struct {
   FbleInstr _base;
 } FbleLinkInstr;
 
-// FbleForkInstr -- FBLE_EXEC_INSTR
+// FbleForkInstr -- FBLE_FORK_INSTR
 //   Fork child threads.
 //
 // data_stack: ..., bN, ..., b2, b1
@@ -223,7 +223,6 @@ typedef struct {
 //   Exit the current scope and execute the process value on top of the data stack.
 typedef struct {
   FbleInstr _base;
-  FbleLoc loc;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR

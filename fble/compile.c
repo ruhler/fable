@@ -2692,7 +2692,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
-      proc->loc = link_expr->body->loc;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
@@ -2775,7 +2774,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
-      proc->loc = exec_expr->body->loc;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
       size_t captured = ExitThunk(arena_, vars, &thunk_vars, instrs);
