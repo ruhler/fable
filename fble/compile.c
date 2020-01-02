@@ -281,6 +281,9 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type);
 static void PopVar(FbleArena* arena, Vars* vars);
 static void FreeVars(FbleArena* arena, Vars* vars);
 
+static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars);
+static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrV* instrs);
+
 static char* MakeBlockName(FbleArena* arena, FbleNameV* name);
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena, FbleNameV* blocks, FbleNameV* name, FbleLoc block);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
@@ -1703,6 +1706,80 @@ static void FreeVars(FbleArena* arena, Vars* vars)
   FbleFree(arena, vars->vars.xs);
 }
 
+// EnterThunk --
+//   Prepare to capture variables for a thunk.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   vars - the current variable scope.
+//   thunk_vars - a variable scope to use in the thunk.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Initializes thunk_vars based on vars. ExitThunk or FreeVars should be
+//   called to free the allocations for thunk_vars.
+static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
+{
+  FbleVectorInit(arena, thunk_vars->vars);
+  thunk_vars->nvars = 0;
+  for (size_t i = 0; i < vars->nvars; ++i) {
+    PushVar(arena, thunk_vars, vars->vars.xs[i].name, vars->vars.xs[i].type);
+  }
+}
+
+// ExitThunk --
+//   Generate instructions to capture just the variables accessed for a thunk.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   vars - the current variable scope.
+//   thunk_vars - the thunk variable scope, created with EnterThunk.
+//   instrs - vector of instructions to append new instructions to.
+//
+// Results:
+//   The number of variables accessed in the thunk.
+//
+// Side effects:
+//   * Frees memory associated with thunk_vars.
+//   * Appends instructions to instrs to push captured variables to the data
+//     stack.
+//   * Updates thunk instructions to point to the captured variable indicies
+//     instead of the original variable indicies.
+static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrV* instrs)
+{
+  size_t scopec = 0;
+  for (size_t i = 0; i < vars->nvars; ++i) {
+    if (thunk_vars->vars.xs[i].instrs.size > 0) {
+      // Copy the accessed var to the data stack for capturing.
+      FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
+      get_var->_base.tag = FBLE_VAR_INSTR;
+      get_var->position = i;
+      FbleVectorAppend(arena, vars->vars.xs[i].instrs, get_var);
+      FbleVectorAppend(arena, *instrs, &get_var->_base);
+
+      // Update references to this var.
+      for (size_t j = 0; j < thunk_vars->vars.xs[i].instrs.size; ++j) {
+        FbleVarInstr* var_instr = thunk_vars->vars.xs[i].instrs.xs[j];
+        var_instr->position = scopec;
+      }
+      scopec++;
+    }
+  }
+
+  // Update references to all vars first introduced in the thunk scope.
+  for (size_t i = vars->nvars; i < thunk_vars->vars.size; ++i) {
+      for (size_t j = 0; j < thunk_vars->vars.xs[i].instrs.size; ++j) {
+        FbleVarInstr* var_instr = thunk_vars->vars.xs[i].instrs.xs[j];
+        var_instr->position = i - vars->nvars + scopec;
+      }
+  }
+
+  FreeVars(arena, thunk_vars);
+  return scopec;
+}
+
 // MakeBlockName --
 //   Compute the name for a profiling block, given a sequence of names
 //   representing the current location.
@@ -2455,23 +2532,19 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
 
-      Vars nvars;
-      FbleVectorInit(arena_, nvars.vars);
-      nvars.nvars = 0;
-      for (size_t i = 0; i < vars->nvars; ++i) {
-        PushVar(arena_, &nvars, vars->vars.xs[i].name, vars->vars.xs[i].type);
-      }
+      Vars thunk_vars;
+      EnterThunk(arena_, vars, &thunk_vars);
 
       for (size_t i = 0; i < argc; ++i) {
-        PushVar(arena_, &nvars, func_value_expr->args.xs[i].name, arg_types[i]);
+        PushVar(arena_, &thunk_vars, func_value_expr->args.xs[i].name, arg_types[i]);
       }
 
       assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
       size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
 
-      Type* type = CompileExpr(arena, blocks, name, true, &nvars, func_value_expr->body, &instr->body->instrs, body_time);
+      Type* type = CompileExpr(arena, blocks, name, true, &thunk_vars, func_value_expr->body, &instr->body->instrs, body_time);
       if (type == NULL) {
-        FreeVars(arena_, &nvars);
+        FreeVars(arena_, &thunk_vars);
         FreeInstr(arena_, &instr->_base);
         for (size_t i = 0; i < argc; ++i) {
           TypeRelease(arena, arg_types[i]);
@@ -2479,37 +2552,14 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         return NULL;
       }
 
-      size_t ni = 0;
-      for (size_t i = 0; i < vars->nvars; ++i) {
-        if (nvars.vars.xs[i].instrs.size > 0) {
-          // TODO: Is it right for time to be proportional to number of
-          // captured variables?
-          *time += 1;
+      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
 
-          FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
-          get_var->_base.tag = FBLE_VAR_INSTR;
-          get_var->position = i;
-          FbleVectorAppend(arena_, vars->vars.xs[i].instrs, get_var);
-          FbleVectorAppend(arena_, *instrs, &get_var->_base);
-
-          for (size_t j = 0; j < nvars.vars.xs[i].instrs.size; ++j) {
-            FbleVarInstr* var_instr = nvars.vars.xs[i].instrs.xs[j];
-            var_instr->position = ni;
-          }
-          ni++;
-        }
-      }
-      instr->scopec = ni;
+      // TODO: Is it right for time to be proportional to number of captured
+      // variables?
+      *time += instr->scopec;
       vpush->count = instr->scopec + argc;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
-      for (size_t i = vars->nvars; i < nvars.vars.size; ++i) {
-          for (size_t j = 0; j < nvars.vars.xs[i].instrs.size; ++j) {
-            FbleVarInstr* var_instr = nvars.vars.xs[i].instrs.xs[j];
-            var_instr->position = i - vars->nvars + instr->scopec;
-          }
-      }
-      FreeVars(arena_, &nvars);
       CompileExit(arena_, exit, instrs);
 
       for (size_t i = 0; i < argc; ++i) {

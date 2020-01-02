@@ -15,6 +15,8 @@ Performance Refactor:
 * [clean] Factor out common code for thunks used by func, link, and exec.
   - hypothesis is this could be contributing to performance overhead because
     we are saving way more vars than we need to for link and exec.
+* Figure out why time profile says md5 is so much longer than tictactoe while
+  wall profile says tictactoe is much longer than md5.
 * Figure out why tictactoe profile seems so useless.
 * Clearly specify performance of evaluation in spec.
  - We should be able to list all possible performance model parameters based

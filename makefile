@@ -15,8 +15,8 @@ checkerr: all
 foo:
 	#./out/bin/fble-test prgms/stack-smasher.fble
 	#./out/bin/fble-stdio prgms/fble-sudoku.fble prgms/
-	./out/bin/fble-stdio prgms/fble-tictactoe.fble prgms/
-	#./out/bin/fble-test --profile prgms/fble-bench.fble prgms > bench.prof
+	#./out/bin/fble-stdio prgms/fble-tictactoe.fble prgms/
+	./out/bin/fble-test --profile prgms/fble-bench.fble prgms > bench.prof
 
 .PHONY: perf
 perf:
