@@ -95,14 +95,6 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
           FbleFreeInstrBlock(arena_, v->body);
           break;
         }
-
-        case FBLE_EXEC_PROC_VALUE: {
-          FbleExecProcValue* v = (FbleExecProcValue*)value;
-          FbleFree(arena_, v->bindings.xs);
-          FbleFree(arena_, v->scope.xs);
-          FbleFreeInstrBlock(arena_, v->body);
-          break;
-        }
       }
 
       FbleFree(arena_, value);
@@ -212,17 +204,6 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
       switch (pv->tag) {
         case FBLE_EVAL_PROC_VALUE: {
           FbleEvalProcValue* v = (FbleEvalProcValue*)value;
-          for (size_t i = 0; i < v->scope.size; ++i) {
-            Add(add, v->scope.xs[i]);
-          }
-          break;
-        }
-
-        case FBLE_EXEC_PROC_VALUE: {
-          FbleExecProcValue* v = (FbleExecProcValue*)value;
-          for (size_t i = 0; i < v->bindings.size; ++i) {
-            Add(add, v->bindings.xs[i]);
-          }
           for (size_t i = 0; i < v->scope.size; ++i) {
             Add(add, v->scope.xs[i]);
           }

@@ -24,7 +24,7 @@ typedef enum {
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
   FBLE_LINK_INSTR,
-  FBLE_EXEC_INSTR,
+  FBLE_FORK_INSTR,
   FBLE_JOIN_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
@@ -200,21 +200,17 @@ typedef struct {
   FbleInstr _base;
 } FbleLinkInstr;
 
-// FbleExecInstr -- FBLE_EXEC_INSTR
-//   Allocate an FbleExecProcValue.
+// FbleForkInstr -- FBLE_EXEC_INSTR
+//   Fork child threads.
 //
-// data_stack: ..., p1, p2, ..., pN
-//         ==> exec(p1, p2, ..., pN)
+// data_stack: ..., bN, ..., b2, b1
+//         ==> ...
 //
-// The body is an instruction that does the following:
-// data_stack: ..., exec, b1
-//         ==> ..., body(b1)
+// children: _ ==> b1, b2, ... bN
 typedef struct {
   FbleInstr _base;
-  size_t scopec;
   size_t argc;
-  FbleInstrBlock* body;
-} FbleExecInstr;
+} FbleForkInstr;
 
 // FbleJoinInstr -- FBLE_JOIN_INSTR
 //   If all child threads are done executing, move their results to the top of
@@ -460,7 +456,6 @@ typedef struct {
 //   A tag used to distinguish among different kinds of proc values.
 typedef enum {
   FBLE_EVAL_PROC_VALUE,
-  FBLE_EXEC_PROC_VALUE,
 } FbleProcValueTag;
 
 // FbleProcValue -- FBLE_PROC_VALUE
@@ -482,14 +477,6 @@ typedef struct {
   FbleValueV scope;
   FbleInstrBlock* body;
 } FbleEvalProcValue;
-
-// FbleExecProcValue -- FBLE_EXEC_PROC_VALUE
-typedef struct {
-  FbleProcValue _base;
-  FbleValueV bindings;
-  FbleValueV scope;
-  FbleInstrBlock* body;
-} FbleExecProcValue;
 
 // FbleValues --
 //   A non-circular singly linked list of values.

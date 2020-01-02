@@ -883,28 +883,25 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         break;
       }
 
-      case FBLE_EXEC_INSTR: {
-        FbleExecInstr* exec_instr = (FbleExecInstr*)instr;
-        FbleExecProcValue* value = FbleAlloc(arena_, FbleExecProcValue);
-        FbleRefInit(arena, &value->_base._base.ref);
-        value->_base._base.tag = FBLE_PROC_VALUE;
-        value->_base.tag = FBLE_EXEC_PROC_VALUE;
-        value->bindings.size = exec_instr->argc;
-        value->bindings.xs = FbleArrayAlloc(arena_, FbleValue*, value->bindings.size);
-        FbleVectorInit(arena_, value->scope);
-        value->body = exec_instr->body;
-        value->body->refcount++;
-        CaptureScope(arena, thread, exec_instr->scopec, &value->_base._base, &value->scope);
+      case FBLE_FORK_INSTR: {
+        FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
 
-        for (size_t i = 0; i < exec_instr->argc; ++i) {
-          size_t j = exec_instr->argc - 1 - i;
-          FbleValue* v = PopData(arena_, thread);
-          value->bindings.xs[j] = v;
-          Add(arena, &value->_base._base, v);
-          FbleValueRelease(arena, v);
+        assert(thread->children.size == 0);
+        assert(thread->children.xs == NULL);
+        FbleVectorInit(arena_, thread->children);
+        for (size_t i = 0; i < fork_instr->argc; ++i) {
+          FbleValue* arg = PopData(arena_, thread);
+
+          Thread* child = FbleAlloc(arena_, Thread);
+          InitDataStack(arena_, child);
+          PushData(arena_, arg, child); // Takes ownership of arg
+          child->scope_stack = EnterScope(arena_, &g_proc_block, NULL);
+          child->aborted = false;
+          child->children.size = 0;
+          child->children.xs = NULL;
+          child->profile = FbleNewProfileThread(arena_, graph);
+          FbleVectorAppend(arena_, thread->children, child);
         }
-
-        PushData(arena_, &value->_base._base, thread);
         break;
       }
 
@@ -954,30 +951,6 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
             FbleEvalProcValue* eval = (FbleEvalProcValue*)proc;
             RestoreScope(arena, eval->scope, thread);
             thread->scope_stack = ChangeScope(arena, eval->body, thread->scope_stack);
-            FbleProfileAutoExitBlock(arena_, thread->profile);
-            break;
-          }
-
-          case FBLE_EXEC_PROC_VALUE: {
-            FbleExecProcValue* exec = (FbleExecProcValue*)proc;
-
-            assert(thread->children.size == 0);
-            assert(thread->children.xs == NULL);
-            FbleVectorInit(arena_, thread->children);
-            for (size_t i = 0; i < exec->bindings.size; ++i) {
-              Thread* child = FbleAlloc(arena_, Thread);
-              InitDataStack(arena_, child);
-              PushData(arena_, FbleValueRetain(arena, exec->bindings.xs[i]), child);
-              child->scope_stack = EnterScope(arena_, &g_proc_block, NULL);
-              child->aborted = false;
-              child->children.size = 0;
-              child->children.xs = NULL;
-              child->profile = FbleNewProfileThread(arena_, graph);
-              FbleVectorAppend(arena_, thread->children, child);
-            }
-
-            RestoreScope(arena, exec->scope, thread);
-            thread->scope_stack = ChangeScope(arena, exec->body, thread->scope_stack);
             FbleProfileAutoExitBlock(arena_, thread->profile);
             break;
           }

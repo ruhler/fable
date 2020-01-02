@@ -1802,6 +1802,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_GET_INSTR:
     case FBLE_PUT_INSTR:
     case FBLE_LINK_INSTR:
+    case FBLE_FORK_INSTR:
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:
     case FBLE_LET_PREP_INSTR:
@@ -1829,13 +1830,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleEvalInstr* proc_eval_instr = (FbleEvalInstr*)instr;
       FbleFreeInstrBlock(arena, proc_eval_instr->body);
       FbleFree(arena, proc_eval_instr);
-      return;
-    }
-
-    case FBLE_EXEC_INSTR: {
-      FbleExecInstr* exec_instr = (FbleExecInstr*)instr;
-      FbleFreeInstrBlock(arena, exec_instr->body);
-      FbleFree(arena, exec_instr);
       return;
     }
   }
@@ -2634,7 +2628,6 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       instr->body = NewInstrBlock(arena_, blocks, name, link_expr->body->loc);
 
-
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       vpush->count = instr->scopec;
@@ -2728,23 +2721,27 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         FbleVectorAppend(arena_, *instrs, &get_var->_base);
       }
 
-      FbleExecInstr* exec_instr = FbleAlloc(arena_, FbleExecInstr);
-      exec_instr->_base.tag = FBLE_EXEC_INSTR;
-      exec_instr->argc = exec_expr->bindings.size;
-      exec_instr->scopec = vars->nvars;
-      FbleVectorAppend(arena_, *instrs, &exec_instr->_base);
+      FbleEvalInstr* instr = FbleAlloc(arena_, FbleEvalInstr);
+      instr->_base.tag = FBLE_EVAL_INSTR;
+      instr->scopec = vars->nvars + exec_expr->bindings.size;
+      FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
-      exec_instr->body = NewInstrBlock(arena_, blocks, name, exec_expr->body->loc);
+      instr->body = NewInstrBlock(arena_, blocks, name, exec_expr->body->loc);
+
+      FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
+      fork->_base.tag = FBLE_FORK_INSTR;
+      fork->argc = exec_expr->bindings.size;
+      FbleVectorAppend(arena_, instr->body->instrs, &fork->_base);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
-      vpush->count = exec_instr->scopec;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &vpush->_base);
+      vpush->count = vars->nvars;
+      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
       join->_base.tag = FBLE_JOIN_INSTR;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &join->_base);
+      FbleVectorAppend(arena_, instr->body->instrs, &join->_base);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         PushVar(arena_, vars, nvd[i].name, nvd[i].type);
@@ -2752,10 +2749,10 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       Type* rtype = NULL;
       if (!error) {
-        assert(exec_instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-        size_t* body_time = &((FbleProfileEnterBlockInstr*)exec_instr->body->instrs.xs[0])->time;
+        assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
+        size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
 
-        rtype = CompileExpr(arena, blocks, name, false, vars, exec_expr->body, &exec_instr->body->instrs, body_time);
+        rtype = CompileExpr(arena, blocks, name, false, vars, exec_expr->body, &instr->body->instrs, body_time);
         error = (rtype == NULL);
       }
 
@@ -2782,7 +2779,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->loc = exec_expr->body->loc;
-      FbleVectorAppend(arena_, exec_instr->body->instrs, &proc->_base);
+      FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
 
       return rtype;
     }
