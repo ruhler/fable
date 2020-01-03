@@ -138,7 +138,7 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
 //   wall clock time for interleaved execution of threads.
 //
 // Inputs:
-//   thread - the thread to suspend
+//   thread - the thread to suspend. May be NULL.
 //
 // Results:
 //   none
@@ -151,7 +151,7 @@ void FbleSuspendProfileThread(FbleProfileThread* thread);
 //   Resumes wall clock time on the thread.
 //
 // Inputs:
-//   thread - the thread to resume
+//   thread - the thread to resume. May be NULL.
 //
 // Results:
 //   none

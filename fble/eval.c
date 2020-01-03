@@ -556,7 +556,6 @@ static void RestoreScope(FbleValueArena* arena, FbleValueV scope, Thread* thread
 static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  assert(!thread->aborted);
   bool progress = false;
   for (size_t i = 0; i < TIME_SLICE && thread->scope_stack != NULL; ++i) {
     assert(thread->scope_stack->pc < thread->scope_stack->block->instrs.size);
@@ -1120,9 +1119,12 @@ static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, 
     progress = RunThreads(arena, io, graph, child) || progress;
   }
 
-  FbleResumeProfileThread(thread->profile);
-  progress = RunThread(arena, io, graph, thread) || progress;
-  if (thread->profile != NULL) {
+  // If we have child threads and they made some progress, don't bother
+  // running the parent thread, because it's probably blocked on a child
+  // thread anyway.
+  if (!progress) {
+    FbleResumeProfileThread(thread->profile);
+    progress = RunThread(arena, io, graph, thread);
     FbleSuspendProfileThread(thread->profile);
   }
   return progress;

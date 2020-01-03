@@ -5,12 +5,9 @@ Performance Refactor:
   - It should compile to a non-exec process that does the binding then the
     body without spawning any threads.
 * Separate blocked threads from running threads
+  - Figure out a way for a child to notify its parent when the child is finished.
   - Keep a list of the running threads and iterate over that list in
-    RunThreads instead of all threads. This should avoid the 2,288,383 of
-    2,474,801a calls to RunThread on blocked threads reported by code
-    coverage.
-  - If we want to keep the same quota behavior, have each thread store its
-    allowed quota when it is created? Or maybe don't bother with fairness.
+    RunThreads instead of all threads.
 * Figure out why time profile says md5 is so much longer than tictactoe while
   wall profile says tictactoe is much longer than md5.
 * Figure out why tictactoe profile seems so useless.

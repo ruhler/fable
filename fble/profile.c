@@ -382,14 +382,16 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 // FbleSuspendProfileThread -- see documentation in fble-profile.h
 void FbleSuspendProfileThread(FbleProfileThread* thread)
 {
-  CallEvent(thread);
-  thread->start = THREAD_SUSPENDED;
+  if (thread) {
+    CallEvent(thread);
+    thread->start = THREAD_SUSPENDED;
+  }
 }
 
 // FbleResumeProfileThread -- see documentation in fble-profile.h
 void FbleResumeProfileThread(FbleProfileThread* thread)
 {
-  if (thread->start != THREAD_SUSPENDED) {
+  if (thread && thread->start != THREAD_SUSPENDED) {
     thread->start = GetTimeMillis();
   }
 }
