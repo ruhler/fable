@@ -77,6 +77,11 @@ Miscellaneous:
   I claim a good model is: pass an arena to a function to say: the function
   allocates its result in this arena. The function creates and uses a separate
   arena for its intermediate allocations.
+* Make child thread execution fair.
+  Children should be time multiplexed, where priority is assigned based on how
+  far down the family tree the child belongs. The amount of time a family gets
+  to spend evaluating should be independent of the number of children in the
+  family.
 
 Future:
 * Implement compiler to C. Idea is translate a function body into a sequence

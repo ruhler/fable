@@ -9,6 +9,11 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// TIME_SLICE --
+//   The number of instructions a thread is allowed to run before switching to
+//   another thread.
+#define TIME_SLICE 1024
+
 #define DATA_STACK_CHUNK_SIZE 64
 
 // DataStack --
@@ -112,9 +117,9 @@ static ScopeStack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Sco
 static void CaptureScope(FbleValueArena* arena, Thread* thread, size_t scopec, FbleValue* value, FbleValueV* dst);
 static void RestoreScope(FbleValueArena* arena, FbleValueV scope, Thread* thread);
 
-static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread, size_t* iquota);
+static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread);
 static void AbortThread(FbleValueArena* arena, Thread* thread);
-static void RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread, size_t* iquota);
+static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread);
 static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args, FbleCallGraph* graph);
 
 static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
@@ -542,19 +547,18 @@ static void RestoreScope(FbleValueArena* arena, FbleValueV scope, Thread* thread
 //   io - io to use for external ports.
 //   graph - the call graph to save execution stats to.
 //   thread - the thread to run.
-//   iquota - the number of instructions the thread is allowed to run.
 //
 // Results:
-//   None.
+//   true if the thread made some progress, false otherwise.
 //
 // Side effects:
-//   The thread is executed, updating its data_stack and scope_stack. iquota
-//   is decremented by the number of instructions actually executed.
-static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread, size_t* iquota)
+//   The thread is executed, updating its data_stack and scope_stack.
+static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   assert(!thread->aborted);
-  while (*iquota > 0 && thread->scope_stack != NULL) {
+  bool progress = false;
+  for (size_t i = 0; i < TIME_SLICE && thread->scope_stack != NULL; ++i) {
     assert(thread->scope_stack->pc < thread->scope_stack->block->instrs.size);
     FbleInstr* instr = thread->scope_stack->block->instrs.xs[thread->scope_stack->pc++];
     switch (instr->tag) {
@@ -587,7 +591,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", &access_instr->loc);
           AbortThread(arena, thread);
-          return;
+          return progress;
         }
         assert(access_instr->tag < sv->fields.size);
         PushData(arena_, FbleValueRetain(arena, sv->fields.xs[access_instr->tag]), thread);
@@ -602,14 +606,14 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", &access_instr->loc);
           AbortThread(arena, thread);
-          return;
+          return progress;
         }
 
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
           FbleValueRelease(arena, &uv->_base);
           AbortThread(arena, thread);
-          return;
+          return progress;
         }
 
         PushData(arena_, FbleValueRetain(arena, uv->arg), thread);
@@ -623,7 +627,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", &select_instr->loc);
           AbortThread(arena, thread);
-          return;
+          return progress;
         }
         thread->scope_stack->pc += uv->tag;
         FbleValueRelease(arena, &uv->_base);
@@ -667,7 +671,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         if (func == NULL) {
           FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
           AbortThread(arena, thread);
-          return;
+          return progress;
         };
 
         if (func->argc > 1) {
@@ -765,10 +769,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
           if (link->head == NULL) {
             // Blocked on get. Restore the thread state and return before
-            // iquota has been decremented.
+            // logging progress.
             PushData(arena_, get_port, thread);
             thread->scope_stack->pc--;
-            return;
+            return progress;
           }
 
           FbleValues* head = link->head;
@@ -787,10 +791,10 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           assert(port->id < io->ports.size);
           if (io->ports.xs[port->id] == NULL) {
             // Blocked on get. Restore the thread state and return before
-            // iquota has been decremented.
+            // logging progress.
             PushData(arena_, get_port, thread);
             thread->scope_stack->pc--;
-            return;
+            return progress;
           }
 
           PushData(arena_, io->ports.xs[port->id], thread);
@@ -837,11 +841,11 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
 
           if (io->ports.xs[port->id] != NULL) {
             // Blocked on put. Restore the thread state and return before
-            // iquota has been decremented.
+            // logging progress.
             PushData(arena_, put_port, thread);
             PushData(arena_, arg, thread);
             thread->scope_stack->pc--;
-            return;
+            return progress;
           }
 
           io->ports.xs[port->id] = arg;   // takes ownership of arg
@@ -907,16 +911,16 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         for (size_t i = 0; i < thread->children.size; ++i) {
           if (thread->children.xs[i]->aborted) {
             AbortThread(arena, thread);
-            return;
+            return progress;
           }
         }
 
         for (size_t i = 0; i < thread->children.size; ++i) {
           if (thread->children.xs[i]->scope_stack != NULL) {
             // Blocked on child. Restore the thread state and return before
-            // iquota has been decremented.
+            // logging progress
             thread->scope_stack->pc--;
-            return;
+            return progress;
           }
         }
         
@@ -987,7 +991,7 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         if (sv == NULL) {
           FbleReportError("undefined struct value import\n", &import_instr->loc);
           AbortThread(arena, thread);
-          return;
+          return progress;
         }
         for (size_t i = 0; i < sv->fields.size; ++i) {
           PushVar(arena_, FbleValueRetain(arena, sv->fields.xs[i]), thread->scope_stack);
@@ -1037,8 +1041,9 @@ static void RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       }
     }
 
-    (*iquota)--;
+    progress = true;
   }
+  return progress;
 }
 
 // AbortThread --
@@ -1096,36 +1101,31 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
 //   io - io to use for external ports.
 //   graph - call graph to save execution stats to.
 //   thread - the thread to run.
-//   iquota - the maximum number of instructions to execute.
 //
 // Results:
-//   None.
+//   True if progress was made, false otherwise.
 //
 // Side effects:
 //   The thread and its children are executed and updated.
 //   Updates the call graph based on the execution.
-//   Decrements iquota by the number of instructions executed.
-static void RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread, size_t* iquota)
+static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, Thread* thread)
 {
   // Note: It's possible we smash the stack with this recursive implementation
   // of RunThreads, but the amount of stack space we need for each frame is so
   // small it doesn't seem worth worrying about for the time being.
 
-  // Spend some time running children threads first.
+  bool progress = false;
   for (size_t i = 0; i < thread->children.size; ++i) {
-    size_t child_iquota = *iquota / (thread->children.size - i);
     Thread* child = thread->children.xs[i];
-    *iquota -= child_iquota;
-    RunThreads(arena, io, graph, child, &child_iquota);
-    *iquota += child_iquota;
+    progress = RunThreads(arena, io, graph, child) || progress;
   }
 
-  // Spend the remaining time running this thread.
   FbleResumeProfileThread(thread->profile);
-  RunThread(arena, io, graph, thread, iquota);
+  progress = RunThread(arena, io, graph, thread) || progress;
   if (thread->profile != NULL) {
     FbleSuspendProfileThread(thread->profile);
   }
+  return progress;
 }
 
 // Eval --
@@ -1163,17 +1163,15 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, 
 
   // Run the main thread repeatedly until it no longer makes any forward
   // progress.
-  size_t QUOTA = 1024;
   bool progress = false;
   do {
-    size_t iquota = QUOTA;
-    RunThreads(arena, io, graph, &thread, &iquota);
+    progress = RunThreads(arena, io, graph, &thread);
     if (thread.aborted) {
       return NULL;
     }
 
-    bool block = (iquota == QUOTA) && (thread.scope_stack != NULL);
-    progress = io->io(io, arena, block) || iquota < QUOTA;
+    bool block = (!progress) && (thread.scope_stack != NULL);
+    progress = io->io(io, arena, block) || progress;
   } while (progress);
 
   if (thread.scope_stack != NULL) {

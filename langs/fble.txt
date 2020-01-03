@@ -1226,3 +1226,7 @@ Notes:
   two processes in parallel, and have a way to generalize that to a function
   to run an arbitrary number of processes in parallel?
 
+- Fairness
+  I think it would be cool if children were executed fairly. In particular,
+  the amount of runtime a child gets is independent of how many children its
+  siblings has.
