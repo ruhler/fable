@@ -119,11 +119,6 @@ Snake:
 * Keep track of and report score.
 
 Md5:
-* [prgm] Optimize Md5.cls function
-  - change << and >> to take number of bits to shift instead of a single bit.
-  - change cls to use or(x << n, x >> (K - n))
-  - consider changing Bits implementation to an array of bits, so that cls is
-    a simple index transformation?
 * Improve performance of Bit2XN.add, though it's not obvious how.
 
 Sudoku:
