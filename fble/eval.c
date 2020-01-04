@@ -89,7 +89,7 @@ static FbleInstr* g_proc_block_instrs[] = {
 };
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
-  .instrs = { .size = 3, .xs = g_proc_block_instrs }
+  .instrs = { .size = 2, .xs = g_proc_block_instrs }
 };
 
 static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };

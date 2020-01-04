@@ -1,13 +1,5 @@
 Performance Refactor:
-* Inline the body of link into the link process?
-* Inline the body of exec into the exec process?
-* Special case single-binding exec during compilation.
-  - It should compile to a non-exec process that does the binding then the
-    body without spawning any threads.
-* Separate blocked threads from running threads
-  - Figure out a way for a child to notify its parent when the child is finished.
-  - Keep a list of the running threads and iterate over that list in
-    RunThreads instead of all threads.
+* Consider using put and get to synchronize EXEC processes rather than JOIN?
 * Figure out why time profile says md5 is so much longer than tictactoe while
   wall profile says tictactoe is much longer than md5.
 * Figure out why tictactoe profile seems so useless.
