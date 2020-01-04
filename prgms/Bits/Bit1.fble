@@ -4,28 +4,32 @@
 
 @ Result@ = *(Bit@ z, Bit@ cout);
 
+Bit@ 0 = Bit@(0: Unit);
+Bit@ 1 = Bit@(1: Unit);
+
 (Bit@){Bit@;} not = (Bit@ a) {
-  ?(a; 0: Bit@(1: Unit), 1: Bit@(0: Unit));
+  ?(a; 0: 1, 1: 0);
 };
 
 (Bit@, Bit@){Bit@;} and = (Bit@ a, Bit@ b) {
-  ?(a; 0: a, 1: ?(b; 0: b, 1: a));
+  ?(a; 0: a, 1: b);
 };
 
 (Bit@, Bit@){Bit@;} or = (Bit@ a, Bit@ b) {
-  ?(a; 0: ?(b; 0: a, 1: b), 1: a);
+  ?(a; 0: b, 1: a);
 };
 
 (Bit@, Bit@){Bit@;} xor = (Bit@ a, Bit@ b) {
   ?(a; 0: b, 1: not(b));
 };
 
-(Bit@, Bit@, Bit@){Result@;} fulladd = (Bit@ a, Bit@ b, Bit@ cin) {
-  ?(xor(a, b); 0: Result@(cin, a), 1: Result@(not(cin), cin));
+(Bit@, Bit@, Bit@){Result@;} fulladd = (Bit@ a, Bit@ b, Bit@ c) {
+  Bit@ x = xor(a, b);
+  Result@(xor(x, c), ?(x; 0: a, 1: c));
 };
 
 (Bit@, Bit@){Bit@;} add = (Bit@ a, Bit@ b) {
-  fulladd(a, b, Bit@(0: Unit)).z;
+  fulladd(a, b, 0).z;
 };
 
 (Bit@){Result@;} fullinc = (Bit@ a) {
@@ -36,15 +40,15 @@
   fullinc(a).z;
 };
 
-Bit@ zero = Bit@(0: Unit);
+Bit@ zero = 0;
 
 (Bit@){Bool@;} iszero = (Bit@ a) {
   ?(a; 0: True, 1: False);
 };
 
 (Bit@, Bit@){Bool@;} eq = (Bit@ a, Bit@ b) {
-  ?(a; 0: ?(b; 0: True, 1: False),
-      1: ?(b; 0: False, 1: True));
+  ?(a; 0: ?(b; 0: True,  1: False),
+       1: ?(b; 0: False, 1: True));
 };
 
 (Bit@){Bit@;} msb = (Bit@ a) {
@@ -58,7 +62,6 @@ Bit@ zero = Bit@(0: Unit);
 (Bit@, Bit@){Result@;} lshift = (Bit@ a, Bit@ cin) {
   Result@(cin, a);
 };
-
 
 @(
   Bit1@: Bit@,

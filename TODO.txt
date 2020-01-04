@@ -1,9 +1,16 @@
 Performance Refactor:
-* Consider factoring out code in compile.c for computing modeled profile time.
 * Optimize Md5
+  Program profile says:
+    79% Bit2XN.add (24% Bit1.add, the rest recursion)
+    11% Bit2XN.and (16% Bit1.and, the rest recursion)
+     6% Bit2XN.or  (16% Bit1.or, the rest recursion)
+     4% Bit2XN.not (24% Bit1.not, the rest recursion)
+   Which I can totally believe. But the program code is fine for those, and the
+   algorithm is fixed, so the rest belongs to the fble implementation.
 * Optimize TicTacToe
 * Optimize Sudoku
 
+* Consider factoring out code in compile.c for computing modeled profile time.
 * [perf] figure out how to use 'perf' for profiling
     perf record --call-graph dwarf [COMMAND]
     perf report -g --stdio
