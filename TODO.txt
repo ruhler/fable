@@ -1,13 +1,22 @@
 Performance Refactor:
+* Consider factoring out code in compile.c for computing modeled profile time.
+* Optimize Md5
+* Optimize TicTacToe
+* Optimize Sudoku
+
+* [perf] figure out how to use 'perf' for profiling
+    perf record --call-graph dwarf [COMMAND]
+    perf report -g --stdio
+  But what are the right options to actually get useful results? Ideally I
+  could get a breakdown of how much time we spend executing each line of code
+  in eval.c, with aggregations by call site.
+  To answer the question of: why is it so slow to do 32 bit add in fble?
+  Especially compared to cls.
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
 * Figure out why time profile says md5 is so much longer than tictactoe while
   wall profile says tictactoe is much longer than md5.
-* Figure out why tictactoe profile seems so useless.
 * Figure out why the Md5 cls optimization cut wall time by a factor of 1000,
   but profile time only by a factor of 3.
-* Clearly specify performance of evaluation in spec.
- - We should be able to list all possible performance model parameters based
-   on the spec description.
 * Add an option to automatically determine performance model parameters based
   on wall clock time profiling of benchmarks.
 * Ensure the implementation satisfies the performance spec. Add perf spec
@@ -23,15 +32,6 @@ Performance Refactor:
 * Figure out why it takes longer and much more memory to insert 5000 entries
   into the TicTacToe MemoTable directly rather than compute all the entries
   from scratch. Seems funny.
-* [perf] Collect benchmarks somewhere?
-  - md5 run on 6k file. ~7 minutes
-  - tictactoe find best move for empty board. ~3 minutes
-  - sudoku on sample board. ~13 minutes
-  - sudoku on empty board. ~215 minutes
-  - stack-smasher 14 bits: ~34s.
-* [perf] figure out how to use 'perf' for profiling?
-  perf record --call-graph dwarf [COMMAND]
-  perf report -g --stdio
 * [build] move 'perf' logic to build.fble.tcl
 * [perf] Optimize FbleRefAdd
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
@@ -42,18 +42,8 @@ Performance Refactor:
 * [clean] Tracking of time in the compiler is really messy
   Especially that we extract the pointer to the time field from NewBlock by
   assuming what NewBlock does. Figure out some way to clean this up.
-* Document performance model.
-  Specifically that we use strict evaluation to model performance because it
-  is a simple model, which is essential for writing high performance code.
-  Lazy evaluation is not 'performance modular' in the sense that the runtime
-  of a function depends on how its arguments were computed and how its result
-  is going to be used, rather than just the value of arguments. Lazy
-  evaluation has some benefits I'll miss, but not nearly enough to justify
-  loss of a simple, modular performance model. Implementations should focus on
-  improving constant factors, not improving complexity over the performance
-  model.
-* Document the performance model which says tail recursive functions
-  should not smash the stack.
+* Document the runtime memory model,
+  - Including that tail recursive functions should not smash the stack.
 
 Miscellaneous:
 * [clean] Can fble-stdio check that the function has the right type?
