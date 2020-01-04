@@ -2703,8 +2703,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
+      proc->exit = true;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
-      CompileExit(arena_, true, &instr->body->instrs);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
       vpush->count = instr->scopec;
@@ -2786,8 +2786,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
+      proc->exit = true;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
-      CompileExit(arena_, true, &instr->body->instrs);
 
       size_t captured = ExitThunk(arena_, vars, &thunk_vars, instrs);
       instr->scopec = captured + exec_expr->bindings.size;
@@ -2812,8 +2812,8 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
+        bproc->exit = true;
         FbleVectorAppend(arena_, binstr->body->instrs, &bproc->_base);
-        CompileExit(arena_, true, &binstr->body->instrs);
 
         binstr->scopec = ExitThunk(arena_, vars, &bthunk_vars, instrs);
         bvpush->count = binstr->scopec;

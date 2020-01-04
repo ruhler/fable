@@ -74,10 +74,9 @@ struct Thread {
   FbleProfileThread* profile;
 };
 
-static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
-
 static FbleProcInstr g_proc_instr = {
-  ._base = { .tag = FBLE_PROC_INSTR }
+  ._base = { .tag = FBLE_PROC_INSTR },
+  .exit = true
 };
 static FbleProfileEnterBlockInstr g_enter_instr = {
   ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
@@ -87,13 +86,13 @@ static FbleProfileEnterBlockInstr g_enter_instr = {
 static FbleInstr* g_proc_block_instrs[] = {
   &g_enter_instr._base,
   &g_proc_instr._base,
-  &g_exit_scope_instr
 };
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
   .instrs = { .size = 3, .xs = g_proc_block_instrs }
 };
 
+static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
 static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
 static FbleInstr* g_put_block_instrs[] = {
   &g_enter_instr._base,
@@ -950,6 +949,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
       }
 
       case FBLE_PROC_INSTR: {
+        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
         FbleProcValue* proc = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, thread);
 
         // You cannot execute a proc in a let binding, so it should be
@@ -957,7 +957,12 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         assert(proc != NULL && "undefined proc value");
 
         RestoreScope(arena, proc->scope, thread);
-        thread->scope_stack = EnterScope(arena_, proc->body, thread->scope_stack);
+        if (proc_instr->exit) {
+          thread->scope_stack = ChangeScope(arena, proc->body, thread->scope_stack);
+          FbleProfileAutoExitBlock(arena_, thread->profile);
+        } else {
+          thread->scope_stack = EnterScope(arena_, proc->body, thread->scope_stack);
+        }
         FbleValueRelease(arena, &proc->_base);
         break;
       }
