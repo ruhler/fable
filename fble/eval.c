@@ -74,6 +74,8 @@ struct Thread {
   FbleProfileThread* profile;
 };
 
+static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
+
 static FbleProcInstr g_proc_instr = {
   ._base = { .tag = FBLE_PROC_INSTR }
 };
@@ -82,18 +84,25 @@ static FbleProfileEnterBlockInstr g_enter_instr = {
   .block = 0,
   .time = 1,
 };
-static FbleInstr* g_proc_block_instrs[] = { &g_enter_instr._base, &g_proc_instr._base };
+static FbleInstr* g_proc_block_instrs[] = {
+  &g_enter_instr._base,
+  &g_proc_instr._base,
+  &g_exit_scope_instr
+};
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
-  .instrs = { .size = 2, .xs = g_proc_block_instrs }
+  .instrs = { .size = 3, .xs = g_proc_block_instrs }
 };
 
 static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
-static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
-static FbleInstr* g_put_block_instrs[] = { &g_put_instr, &g_exit_scope_instr };
+static FbleInstr* g_put_block_instrs[] = {
+  &g_enter_instr._base,
+  &g_put_instr,
+  &g_exit_scope_instr
+};
 static FbleInstrBlock g_put_block = {
   .refcount = 1,
-  .instrs = { .size = 2, .xs = g_put_block_instrs }
+  .instrs = { .size = 3, .xs = g_put_block_instrs }
 };
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
@@ -948,8 +957,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
         assert(proc != NULL && "undefined proc value");
 
         RestoreScope(arena, proc->scope, thread);
-        thread->scope_stack = ChangeScope(arena, proc->body, thread->scope_stack);
-        FbleProfileAutoExitBlock(arena_, thread->profile);
+        thread->scope_stack = EnterScope(arena_, proc->body, thread->scope_stack);
         FbleValueRelease(arena, &proc->_base);
         break;
       }
