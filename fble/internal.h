@@ -273,7 +273,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   size_t count;
-  // bool recursive;
+  bool recursive;
 } FbleLetDefInstr;
 
 // FbleStructImportInstr -- FBLE_STRUCT_IMPORT_INSTR

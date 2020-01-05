@@ -1,39 +1,6 @@
 Performance Refactor:
-* Hypothesis: when using a let, we end up walking the entire graph of newly
-  allocated objects for each binding. If there is recursion in the binding,
-  we'll end up traversing the same graphs over and over and over and over
-  again. It will be very bad.
-
-  How to make this better:
-  - optimize cycle detection (ref.c:349) so it isn't stupidly slow for large
-    graphs.
-  - add logic in the compiler to detect if this is a recursive let. If it is
-    not a recursive let, don't update the dummy ref value, so we avoid having
-    to traverse the newly allocated value.
-
-  We should be able to confirm the problem with code such as:
-  (Int@) { List@; } BigList = (Int@ n) {
-    ?(n;
-        0: EmptyList,
-        S: {
-          List@ tail = BigList(n.S);  # Requires traversing the whole list!
-          Cons(n, tail);
-      });
-  };
-
-  Note that the non-let variant should not suffer this problem:
-  (Int@) { List@; } BigList = (Int@ n) {
-    ?(n;
-        0: EmptyList,
-        S: Cons(n, BigList(n.S)));
-  };
-
-  Evidence:
-  - Md5 benchmark improves by 8 seconds switching from let to anonymous struct
-    import in fulladd.
-  - A stack-smasher based test shows 28 seconds versus .2 seconds. Yup. This
-    is definitely something big.
-
+* optimize cycle detection (ref.c:349) so it isn't stupidly slow for large
+  graphs.
 * Optimize Md5
   Program profile says:
     79% Bit2XN.add (24% Bit1.add, the rest recursion)
@@ -42,19 +9,10 @@ Performance Refactor:
      4% Bit2XN.not (24% Bit1.not, the rest recursion)
    Which I can totally believe. But the program code is fine for those, and the
    algorithm is fixed, so the rest belongs to the fble implementation.
-  - ref.c:349 code coverage says this loop is executed a ton. Looks like a
-    set contains kind of operation that could be made much more efficient?
-    perf profiling also points to this line as a big contributor.
-    This is checking to see if we have visited the node already or not, and
-    recording the node's incoming reference for later.
   - it looks like we are creating quite a few function thunks. Is that
     expected? Any way to figure out which functions those are?
 * Optimize TicTacToe
-  - Wall clock time for RunAI.just looks funny. 14 seconds are spent in that
-    block, when it looks like it should be a trivial block. What's up with
-    that? Same with ChooseBestMove.nothing. It looks trivial, but a
-    significant portion of the time in the block seems unaccounted for.
-    Perhaps we loose stack frames in the profile when executing processes?
+  - Increase benchmark size.
 * Optimize Sudoku
   Program profile says all the time is spent in List%.Append for AppendXS.
   Program optimization brainstorm:
@@ -79,23 +37,10 @@ Performance Refactor:
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
 * Figure out why time profile says md5 is so much longer than tictactoe while
   wall profile says tictactoe is much longer than md5.
-* Figure out why the Md5 cls optimization cut wall time by a factor of 1000,
-  but profile time only by a factor of 3.
 * Add an option to automatically determine performance model parameters based
   on wall clock time profiling of benchmarks.
 * Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
-* Figure out why the tictactoe AI was 4 times faster when using a process
-  computation instead of a pure computation, even though fble level profiling
-  and common sense suggest it should be the other way around.
-  - I wonder if it's because exec is non-recursive and let is recursive, thus
-    introducing lots of reference cycles, which take much longer to retain and
-    release?
-  - A good way to figure this out would be look at code coverage line counts
-    before and after.
-* Figure out why it takes longer and much more memory to insert 5000 entries
-  into the TicTacToe MemoTable directly rather than compute all the entries
-  from scratch. Seems funny.
 * [build] move 'perf' logic to build.fble.tcl
 * [perf] Optimize FbleRefAdd
 * [perf] Store scope size as part of InstrBlock and use an array for vars.

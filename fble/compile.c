@@ -2932,6 +2932,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       let_prep_instr->count = let_expr->bindings.size;
       FbleVectorAppend(arena_, *instrs, &let_prep_instr->_base);
 
+      size_t vi = vars->nvars;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         PushVar(arena_, vars, nvd[i].name, nvd[i].type);
       }
@@ -2979,6 +2980,12 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         TypeRelease(arena, type);
       }
 
+      // Check to see if this is a recursive let block.
+      bool recursive = false;
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        recursive = recursive || (vars->vars.xs[vi + i].instrs.size > 0);
+      }
+
       // Apply the newly computed type values for variables whose types were
       // previously unknown.
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
@@ -3000,6 +3007,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleLetDefInstr* let_def_instr = FbleAlloc(arena_, FbleLetDefInstr);
       let_def_instr->_base.tag = FBLE_LET_DEF_INSTR;
       let_def_instr->count = let_expr->bindings.size;
+      let_def_instr->recursive = recursive;
       FbleVectorAppend(arena_, *instrs, &let_def_instr->_base);
 
       Type* rtype = NULL;

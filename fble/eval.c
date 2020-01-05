@@ -990,8 +990,10 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           assert(value != NULL);
           SetVar(thread->scope_stack, i, value);
 
-          rv->value = value;
-          Add(arena, &rv->_base, rv->value);
+          if (let_def_instr->recursive) {
+            rv->value = value;
+            Add(arena, &rv->_base, rv->value);
+          }
           FbleValueRelease(arena, &rv->_base);
         }
         break;

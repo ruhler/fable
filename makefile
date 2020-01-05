@@ -13,10 +13,10 @@ checkerr: all
 
 .PHONY: foo
 foo:
-	#./out/bin/fble-test --profile prgms/stack-smasher.fble > smash.prof
+	./out/bin/fble-test --profile prgms/stack-smasher.fble > smash.prof
 	#./out/bin/fble-stdio prgms/fble-sudoku.fble prgms/
 	#./out/bin/fble-stdio prgms/fble-tictactoe.fble prgms/
-	./out/bin/fble-stdio prgms/fble-tests.fble prgms/
+	#./out/bin/fble-stdio prgms/fble-tests.fble prgms/
 	#./out/bin/fble-test --profile prgms/fble-bench.fble prgms > bench.prof
 
 .PHONY: perf
