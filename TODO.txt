@@ -12,7 +12,6 @@ Performance Refactor:
   - it looks like we are creating quite a few function thunks. Is that
     expected? Any way to figure out which functions those are?
 * Optimize TicTacToe
-  - Increase benchmark size.
 * Optimize Sudoku
 
 * Consider factoring out code in compile.c for computing modeled profile time.

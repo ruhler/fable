@@ -6,7 +6,10 @@
 { Unit%; @(Unit@, Unit); };
 
 { AI%; @(AI@, WithAI); };
-{ Board%; @(Board@, Player@, Position@, Square@, Status@, BoardStatus); };
+{ Board%;
+  @(Board@, Player@, Position@, Square@, Status@,
+    BoardStatus, EmptyBoard);
+};
 
 TestResult@! TestBoardStatus = {
   Unit@ _ := $(Unit); # Delay the test until we execute the process
@@ -51,13 +54,8 @@ S@<Test@> Tests = S<Test@>([
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
 Unit@! Bench = {
-  Board@ board = {
-    Square@ E = Square@(E: Unit);
-    Square@ X = Square@(X: Unit);
-    Board@(X, E, E, E, E, E, E, E, E);
-  };
   AI@ ai <- WithAI<Unit@>;
-  Position@ _ := ai(board, Player@(O: Unit));
+  Position@ _ := ai(EmptyBoard, Player@(X: Unit));
   $(Unit);
 };
 
