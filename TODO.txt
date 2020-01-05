@@ -2,10 +2,6 @@ Performance Refactor:
 * optimize cycle detection (ref.c:349) so it isn't stupidly slow for large
   graphs. Consider implementing a HashTable mapping from FbleRef* to an int
   representing the order the ref was inserted in the hash table if at all.
-* Profile and optimize fble implementation now that the benchmark apps are
-  reasonably efficient as written.
-  - it looks like we are creating quite a few function thunks. Is that
-    expected? Any way to figure out which functions those are?
 * Figure out why Sudoku.ApplyX shows up as 0 time in the profile.
   It is not a recursive function, and it makes calls that take time. Something
   looks fishy here. ApplyX.true.cells seems to be the right thing to look at,
@@ -13,25 +9,11 @@ Performance Refactor:
   ApplyX.true.cells? Did we mess up tracking of blocks in the compiler?
 
 * Consider factoring out code in compile.c for computing modeled profile time.
-* [perf] figure out how to use 'perf' for profiling
-    perf record --call-graph dwarf [COMMAND]
-    perf report -g folded,address
-  - 'folded' seems to be the most useful. For each function, it gives the
-    total time spent in that function broken down by call chains from the
-    function. Use 'folded,callee' to break down functions by who called the
-    function.
-  - you can run perf record --call-graph dwarf -p <pid> too, to profile an
-    already running process.
-  - you can add '-d' to perf record to save addresses, then 
-    perf report -g folded,address to list line numbers, which is pretty cool.
-    Add "0.1,0" or even smaller to set the threshold and unlimited number of
-    lines to get more information.
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
 * Add an option to automatically determine performance model parameters based
   on wall clock time profiling of benchmarks.
 * Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
-* [build] move 'perf' logic to build.fble.tcl
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
 * [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
@@ -105,10 +87,7 @@ Md5:
 * Improve performance of Bit2XN.add, though it's not obvious how.
 
 Sudoku:
-* Improve performance enough to make tests useful.
- - More efficient constraint set concatenation?
-   The profile says all the time is spent in List%.Append, but I think
-   something funny may be up with the profile.
+* Use separate modules for the tests and the solver.
 
 Game of Life:
 * live if

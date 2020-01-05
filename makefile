@@ -20,11 +20,17 @@ foo:
 
 .PHONY: perf
 perf:
+	perf record -d --call-graph dwarf ./out/bin/fble-test prgms/fble-bench.fble prgms/
+	perf report -g folded,address,0.1,0 > perf.report.txt
+	#perf report -g folded,address,callee,0.1,0 > perf.report.txt
+
+.PHONY: prof
+prof:
 	rm -f gmon.out out/fble/obj/*.gcda
 	./out/bin/fble-test --profile prgms/fble-bench.fble prgms
-	mkdir -p perf
-	gprof out/bin/fble-test > perf/gprof.txt
-	gcov out/obj/eval.o out/obj/compile.o out/obj/ref.o out/obj/value.o> perf/fble.gcov
-	mv *.gcov perf/
+	mkdir -p prof
+	gprof out/bin/fble-test > prof/gprof.txt
+	gcov out/obj/eval.o out/obj/compile.o out/obj/ref.o out/obj/value.o> prof/fble.gcov
+	mv *.gcov prof/
 	rm gmon.out
 

@@ -547,11 +547,11 @@ S@<Test@> Tests = {
 };
 
 Unit@! Bench = $({
-  Maybe@<Solved@> sample = Solve(SampleInput);
-  Maybe@<Solved@> easy = Solve(EasyInput);
-  Maybe@<Solved@> medium = Solve(MediumInput);
-  Maybe@<Solved@> hard = Solve(HardInput);
-  Maybe@<Solved@> expert = Solve(ExpertInput);
+  Solved@ sample = Solve(SampleInput).just;
+  Solved@ easy = Solve(EasyInput).just;
+  Solved@ medium = Solve(MediumInput).just;
+  Solved@ hard = Solve(HardInput).just;
+  Solved@ expert = Solve(ExpertInput).just;
   Unit;
 });
 
