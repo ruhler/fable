@@ -179,20 +179,6 @@ XS@ EmptyXS = XS@(empty: Unit);
   mkList<XS@>(AppendXS, EmptyXS);
 };
 
-@ DeXS@ = *(X@ x, XS@ tail);
-
-(XS@) { Maybe@<DeXS@>; } DeXS = (XS@ xs) {
-  ?(xs;
-     empty: Nothing<DeXS@>,
-     single: Just<DeXS@>(DeXS@(xs.single, EmptyXS)),
-     pair: {
-       Maybe@<DeXS@> mdxs = DeXS(xs.pair.a);
-       ?(mdxs;
-          just: Just<DeXS@>(DeXS@(mdxs.just.x, AppendXS(mdxs.just.tail, xs.pair.b))),
-          nothing: DeXS(xs.pair.b));
-     });
-};
-
 # Generate the set of constraints that result from setting the value of the
 # given cell to s.
 (CellId@, Symbol@) { XS@; } Assign = (CellId@ cell, Symbol@ s) {
@@ -289,13 +275,13 @@ XS@ EmptyXS = XS@(empty: Unit);
 # Apply all constraints to the board, and all resulting constraints, until
 # there is nothing left to do.
 (Board@, XS@) { Board@; } ApplyXs = (Board@ board, XS@ xs) {
-  Maybe@<DeXS@> mdxs = DeXS(xs);
-  ?(mdxs;
-      just: {
-        BoardX@ bx = ApplyX(board, mdxs.just.x);
-        ApplyXs(bx.board, AppendXS(mdxs.just.tail, bx.xs));
-      },
-      nothing: board);
+  ?(xs;
+     empty: board,
+     single: {
+       BoardX@ bx = ApplyX(board, xs.single);
+       ApplyXs(bx.board, bx.xs);
+     },
+     pair: ApplyXs(ApplyXs(board, xs.pair.a), xs.pair.b));
 };
 
 # SolveFrom --
@@ -449,7 +435,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
 # 96. ... .54     967 832 154 
 # 1.. .4. ..7     138 645 927 
 
-# We don't have any tests that are fast enough to keep in the test suite yet.
+# TODO: Implement string equality so we can add tests for this.
 S@<Test@> Tests = S0<Test@>;
 
 Unit@! Bench = {

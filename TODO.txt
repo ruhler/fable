@@ -13,6 +13,9 @@ Performance Refactor:
     expected? Any way to figure out which functions those are?
 * Optimize TicTacToe
 * Optimize Sudoku
+  - Implement Char equals so we can test that it outputs the right thing.
+  - Increase the benchmark size by adding more boards to be solved of varying
+    difficulty.
 
 * Consider factoring out code in compile.c for computing modeled profile time.
 * [perf] figure out how to use 'perf' for profiling
