@@ -2,8 +2,6 @@ Performance Refactor:
 * optimize cycle detection (ref.c:349) so it isn't stupidly slow for large
   graphs. Consider implementing a HashTable mapping from FbleRef* to an int
   representing the order the ref was inserted in the hash table if at all.
-* Increase Sudoku benchmark size
-  by adding more boards to be solved of varying difficulty.
 * Profile and optimize fble implementation now that the benchmark apps are
   reasonably efficient as written.
   - it looks like we are creating quite a few function thunks. Is that
