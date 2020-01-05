@@ -14,11 +14,6 @@ Performance Refactor:
 * Optimize TicTacToe
   - Increase benchmark size.
 * Optimize Sudoku
-  Program profile says all the time is spent in List%.Append for AppendXS.
-  Program optimization brainstorm:
-  - More efficient AppendXS implementation for constraints.
-    This should be easy.
-  - Reduce the number of constraints we generate total.
 
 * Consider factoring out code in compile.c for computing modeled profile time.
 * [perf] figure out how to use 'perf' for profiling

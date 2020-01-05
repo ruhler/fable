@@ -3,6 +3,6 @@
 
 Unit@ _ := Md5_Tests%.Bench;
 Unit@ _ := TicTacToe/Tests%.Bench;
-Unit@ _ := Sudoku%.Bench; # Takes about 13 minutes
+Unit@ _ := Sudoku%.Bench;
 
 $(Unit);

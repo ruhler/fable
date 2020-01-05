@@ -162,60 +162,35 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
 # A constraint specifying that a cell cannot be the given symbol.
 @ X@ = *(CellId@ cell, Symbol@ symbol);
 
-## A set of constraints.
-#@ XS@ = +(Unit@ empty, X@ single, *(XS@ a, XS@ b) pair);
-#
-#XS@ EmptyXS = XS@(empty: Unit);
-#
-#(XS@, XS@) { XS@; } AppendXS = (XS@ a, XS@ b) {
-#  XS@(pair: @(a, b));
-#};
-#
-#(X@, XS@){ XS@; } AddX = (X@ x, XS@ xs) {
-#  AppendXS(XS@(single: x), xs);
-#};
-#
-#(List@<XS@>){ XS@; } CatXS = (List@<XS@> mkList) {
-#  mkList<XS@>(AppendXS, EmptyXS);
-#};
-#
-#@ DeXS@ = *(X@ x, XS@ tail);
-#
-#(XS@) { Maybe@<DeXS@>; } DeXS = (XS@ xs) {
-#  ?(xs;
-#     empty: Nothing<DeXS@>,
-#     single: Just<DeXS@>(DeXS@(xs.single, EmptyXS)),
-#     pair: {
-#       Maybe@<DeXS@> mdxs = DeXS(xs.pair.a);
-#       ?(mdxs;
-#          just: Just<DeXS@>(DeXS@(mdxs.just.x, AppendXS(mdxs.just.tail, xs.pair.b))),
-#          nothing: DeXS(xs.pair.b));
-#     });
-#};
-
 # A set of constraints.
-@ XS@ = S@<X@>;
+@ XS@ = +(Unit@ empty, X@ single, *(XS@ a, XS@ b) pair);
 
-XS@ EmptyXS = S0<X@>;
+XS@ EmptyXS = XS@(empty: Unit);
 
 (XS@, XS@) { XS@; } AppendXS = (XS@ a, XS@ b) {
-  Append<X@>(a, b);
+  ?(a; empty: b, : ?(b; empty: a, : XS@(pair: @(a, b))));
 };
 
 (X@, XS@){ XS@; } AddX = (X@ x, XS@ xs) {
-  ConsS<X@>(x, xs);
+  AppendXS(XS@(single: x), xs);
 };
 
 (List@<XS@>){ XS@; } CatXS = (List@<XS@> mkList) {
-  Concat<X@>(S<XS@>(mkList));
+  mkList<XS@>(AppendXS, EmptyXS);
 };
 
 @ DeXS@ = *(X@ x, XS@ tail);
 
 (XS@) { Maybe@<DeXS@>; } DeXS = (XS@ xs) {
   ?(xs;
-     cons: Just<DeXS@>(DeXS@(xs.cons.head, xs.cons.tail)),
-     nil: Nothing<DeXS@>);
+     empty: Nothing<DeXS@>,
+     single: Just<DeXS@>(DeXS@(xs.single, EmptyXS)),
+     pair: {
+       Maybe@<DeXS@> mdxs = DeXS(xs.pair.a);
+       ?(mdxs;
+          just: Just<DeXS@>(DeXS@(mdxs.just.x, AppendXS(mdxs.just.tail, xs.pair.b))),
+          nothing: DeXS(xs.pair.b));
+     });
 };
 
 # Generate the set of constraints that result from setting the value of the
