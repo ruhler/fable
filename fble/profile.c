@@ -276,7 +276,7 @@ static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCal
   fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 " %8" PRIu64 " ",
       h, h, call->count,
       call->time[FBLE_PROFILE_WALL_CLOCK],
-      call->time[FBLE_PROFILE_TIME_CLOCK]);
+      call->time[FBLE_PROFILE_TIME_CLOCK] / 1000);
   PrintBlockName(fout, blocks, call->id);
   fprintf(fout, " %c%c\n", h, h);
 }
@@ -613,31 +613,6 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 // FbleDumpProfile -- see documentation in fble-profile.h
 void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
 {
-  // Code Coverage
-  size_t covered = 0;
-  for (size_t i = 0; i < profile->size; ++i) {
-    if (profile->xs[i]->block.count > 0) {
-      covered++;
-    }
-  }
-
-  double coverage = (double)covered / (double)profile->size;
-  fprintf(fout, "Code Coverage\n");
-  fprintf(fout, "-------------\n");
-  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, profile->size);
-
-  // Uncovered blocks
-  fprintf(fout, "Uncovered Blocks\n");
-  fprintf(fout, "----------------\n");
-  for (size_t i = 0; i < profile->size; ++i) {
-    if (profile->xs[i]->block.count == 0) {
-      FbleBlockId id = profile->xs[i]->block.id;
-      PrintBlockName(fout, blocks, id);
-      fprintf(fout, "\n");
-    }
-  }
-  fprintf(fout, "\n");
-
   // Flat Profile
   fprintf(fout, "Flat Profile\n");
   fprintf(fout, "------------\n");
@@ -662,6 +637,31 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
       PrintCallData(fout, blocks, false, block->callees.xs[j]);
     }
     fprintf(fout, "-------------------------------\n");
+  }
+  fprintf(fout, "\n");
+
+  // Code Coverage
+  size_t covered = 0;
+  for (size_t i = 0; i < profile->size; ++i) {
+    if (profile->xs[i]->block.count > 0) {
+      covered++;
+    }
+  }
+
+  double coverage = (double)covered / (double)profile->size;
+  fprintf(fout, "Code Coverage\n");
+  fprintf(fout, "-------------\n");
+  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, profile->size);
+
+  // Uncovered blocks
+  fprintf(fout, "Uncovered Blocks\n");
+  fprintf(fout, "----------------\n");
+  for (size_t i = 0; i < profile->size; ++i) {
+    if (profile->xs[i]->block.count == 0) {
+      FbleBlockId id = profile->xs[i]->block.id;
+      PrintBlockName(fout, blocks, id);
+      fprintf(fout, "\n");
+    }
   }
   fprintf(fout, "\n");
 
