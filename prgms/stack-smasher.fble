@@ -47,8 +47,26 @@ Bit@ 1 = Bit@(1: Unit);
        nil: $(Unit));
 };
 
-# Note: the least significant bit is listed first in this representation.
-BitS@ n = BitS(Bit@|00000000000001);
+(BitS@) { BitS@; } G1 = (BitS@ s) {
+  ?(s; cons: { 
+         # Deep chain of lets in the binding to exercise the let ref traversal
+         # issue.
+         BitS@ tail = G1(Decr(s));
+         BitP(1, tail);
+       },
+       nil: BitS@(nil: Unit));
+};
 
-F(n);
+(BitS@) { BitS@; } G2 = (BitS@ s) {
+  ?(s; cons: BitP(1, G2(Decr(s))),
+       nil: BitS@(nil: Unit));
+};
+
+
+# Note: the least significant bit is listed first in this representation.
+BitS@ n = BitS(Bit@|00000000001);
+
+BitS@ _ = G1(n);
+BitS@ _ = G2(n);
+Unit;
 

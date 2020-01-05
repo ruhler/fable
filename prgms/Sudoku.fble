@@ -3,6 +3,7 @@
 { List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
 { Maybe%; @(Maybe@, Just, Nothing, For); };
 { String%; @(Str@, Str); };
+{ Test%; @(Test@); };
 { Unit%; @(Unit@, Unit); };
 
 # The 9 symbols used in sudoku: 1 through 9.
@@ -160,6 +161,37 @@ Board@ InitialBoard = (Symbol@ r, Symbol@ c) { FullSet; };
 
 # A constraint specifying that a cell cannot be the given symbol.
 @ X@ = *(CellId@ cell, Symbol@ symbol);
+
+## A set of constraints.
+#@ XS@ = +(Unit@ empty, X@ single, *(XS@ a, XS@ b) pair);
+#
+#XS@ EmptyXS = XS@(empty: Unit);
+#
+#(XS@, XS@) { XS@; } AppendXS = (XS@ a, XS@ b) {
+#  XS@(pair: @(a, b));
+#};
+#
+#(X@, XS@){ XS@; } AddX = (X@ x, XS@ xs) {
+#  AppendXS(XS@(single: x), xs);
+#};
+#
+#(List@<XS@>){ XS@; } CatXS = (List@<XS@> mkList) {
+#  mkList<XS@>(AppendXS, EmptyXS);
+#};
+#
+#@ DeXS@ = *(X@ x, XS@ tail);
+#
+#(XS@) { Maybe@<DeXS@>; } DeXS = (XS@ xs) {
+#  ?(xs;
+#     empty: Nothing<DeXS@>,
+#     single: Just<DeXS@>(DeXS@(xs.single, EmptyXS)),
+#     pair: {
+#       Maybe@<DeXS@> mdxs = DeXS(xs.pair.a);
+#       ?(mdxs;
+#          just: Just<DeXS@>(DeXS@(mdxs.just.x, AppendXS(mdxs.just.tail, xs.pair.b))),
+#          nothing: DeXS(xs.pair.b));
+#     });
+#};
 
 # A set of constraints.
 @ XS@ = S@<X@>;
@@ -442,6 +474,9 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
 # 96. ... .54     967 832 154 
 # 1.. .4. ..7     138 645 927 
 
+# We don't have any tests that are fast enough to keep in the test suite yet.
+S@<Test@> Tests = S0<Test@>;
+
 Unit@! Bench = {
   Str@ board := $(Str(Char@|'8...9...272.....49...3.6....5..8..16..9...3..67..5..9....9.1...96.....541...4...7'));
   #Str@ board :=  $(Str(Char@|'816497532723518649495326781354789216289164375671253498542971863967832154138645927'));
@@ -449,4 +484,4 @@ Unit@! Bench = {
   $(Unit);
 };
 
-@(Solve, Bench);
+@(Solve, Tests, Bench);

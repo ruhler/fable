@@ -264,9 +264,16 @@ typedef struct {
 //         ==>
 // vstack: ..., r1=v1, r2=v2, ..., rN=vN
 // data_stack: ...
+//
+// If recursive is true, then r1, r2, ..., rN are set to point to the computed
+// v1, v2, ..., vN. If recursive is false, then it is assumed there are no
+// references remaining to r1, r2, ..., and the assignment is avoided. This is
+// an important performance optimization because the assignment triggers a
+// pathological case in the cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
   size_t count;
+  // bool recursive;
 } FbleLetDefInstr;
 
 // FbleStructImportInstr -- FBLE_STRUCT_IMPORT_INSTR

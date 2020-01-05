@@ -986,12 +986,12 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleCallGraph* graph, T
           FbleRefValue* rv = (FbleRefValue*)GetVar(thread->scope_stack, i);
           assert(rv->_base.tag == FBLE_REF_VALUE);
 
-          rv->value = PopData(arena_, thread);
-          Add(arena, &rv->_base, rv->value);
-          FbleValueRelease(arena, rv->value);
+          FbleValue* value = PopData(arena_, thread);
+          assert(value != NULL);
+          SetVar(thread->scope_stack, i, value);
 
-          assert(rv->value != NULL);
-          SetVar(thread->scope_stack, i, FbleValueRetain(arena, rv->value));
+          rv->value = value;
+          Add(arena, &rv->_base, rv->value);
           FbleValueRelease(arena, &rv->_base);
         }
         break;

@@ -1,4 +1,39 @@
 Performance Refactor:
+* Hypothesis: when using a let, we end up walking the entire graph of newly
+  allocated objects for each binding. If there is recursion in the binding,
+  we'll end up traversing the same graphs over and over and over and over
+  again. It will be very bad.
+
+  How to make this better:
+  - optimize cycle detection (ref.c:349) so it isn't stupidly slow for large
+    graphs.
+  - add logic in the compiler to detect if this is a recursive let. If it is
+    not a recursive let, don't update the dummy ref value, so we avoid having
+    to traverse the newly allocated value.
+
+  We should be able to confirm the problem with code such as:
+  (Int@) { List@; } BigList = (Int@ n) {
+    ?(n;
+        0: EmptyList,
+        S: {
+          List@ tail = BigList(n.S);  # Requires traversing the whole list!
+          Cons(n, tail);
+      });
+  };
+
+  Note that the non-let variant should not suffer this problem:
+  (Int@) { List@; } BigList = (Int@ n) {
+    ?(n;
+        0: EmptyList,
+        S: Cons(n, BigList(n.S)));
+  };
+
+  Evidence:
+  - Md5 benchmark improves by 8 seconds switching from let to anonymous struct
+    import in fulladd.
+  - A stack-smasher based test shows 28 seconds versus .2 seconds. Yup. This
+    is definitely something big.
+
 * Optimize Md5
   Program profile says:
     79% Bit2XN.add (24% Bit1.add, the rest recursion)
@@ -7,18 +42,40 @@ Performance Refactor:
      4% Bit2XN.not (24% Bit1.not, the rest recursion)
    Which I can totally believe. But the program code is fine for those, and the
    algorithm is fixed, so the rest belongs to the fble implementation.
+  - ref.c:349 code coverage says this loop is executed a ton. Looks like a
+    set contains kind of operation that could be made much more efficient?
+    perf profiling also points to this line as a big contributor.
+    This is checking to see if we have visited the node already or not, and
+    recording the node's incoming reference for later.
+  - it looks like we are creating quite a few function thunks. Is that
+    expected? Any way to figure out which functions those are?
 * Optimize TicTacToe
+  - Wall clock time for RunAI.just looks funny. 14 seconds are spent in that
+    block, when it looks like it should be a trivial block. What's up with
+    that? Same with ChooseBestMove.nothing. It looks trivial, but a
+    significant portion of the time in the block seems unaccounted for.
+    Perhaps we loose stack frames in the profile when executing processes?
 * Optimize Sudoku
+  Program profile says all the time is spent in List%.Append for AppendXS.
+  Program optimization brainstorm:
+  - More efficient AppendXS implementation for constraints.
+    This should be easy.
+  - Reduce the number of constraints we generate total.
 
 * Consider factoring out code in compile.c for computing modeled profile time.
 * [perf] figure out how to use 'perf' for profiling
     perf record --call-graph dwarf [COMMAND]
-    perf report -g --stdio
-  But what are the right options to actually get useful results? Ideally I
-  could get a breakdown of how much time we spend executing each line of code
-  in eval.c, with aggregations by call site.
-  To answer the question of: why is it so slow to do 32 bit add in fble?
-  Especially compared to cls.
+    perf report -g folded,address
+  - 'folded' seems to be the most useful. For each function, it gives the
+    total time spent in that function broken down by call chains from the
+    function. Use 'folded,callee' to break down functions by who called the
+    function.
+  - you can run perf record --call-graph dwarf -p <pid> too, to profile an
+    already running process.
+  - you can add '-d' to perf record to save addresses, then 
+    perf report -g folded,address to list line numbers, which is pretty cool.
+    Add "0.1,0" or even smaller to set the threshold and unlimited number of
+    lines to get more information.
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
 * Figure out why time profile says md5 is so much longer than tictactoe while
   wall profile says tictactoe is much longer than md5.
@@ -110,6 +167,7 @@ Snake:
 * Keep track of and report score.
 
 Md5:
+* Remove Bits cls implementation, as it is no longer used and not very useful.
 * Improve performance of Bit2XN.add, though it's not obvious how.
 
 Sudoku:

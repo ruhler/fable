@@ -3,7 +3,7 @@ exec rm -rf out
 
 # Note: to profile, add -pg flag here, then after running fble-test, run:
 #  gprof out/bin/fble-test
-set ::FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage ]
+set ::FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage]
 
 # Compile source for libfble.a
 proc gcc_fble {args} {
