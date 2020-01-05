@@ -1,21 +1,18 @@
 Performance Refactor:
 * optimize cycle detection (ref.c:349) so it isn't stupidly slow for large
-  graphs.
-* Optimize Md5
-  Program profile says:
-    79% Bit2XN.add (24% Bit1.add, the rest recursion)
-    11% Bit2XN.and (16% Bit1.and, the rest recursion)
-     6% Bit2XN.or  (16% Bit1.or, the rest recursion)
-     4% Bit2XN.not (24% Bit1.not, the rest recursion)
-   Which I can totally believe. But the program code is fine for those, and the
-   algorithm is fixed, so the rest belongs to the fble implementation.
+  graphs. Consider implementing a HashTable mapping from FbleRef* to an int
+  representing the order the ref was inserted in the hash table if at all.
+* Increase Sudoku benchmark size
+  by adding more boards to be solved of varying difficulty.
+* Profile and optimize fble implementation now that the benchmark apps are
+  reasonably efficient as written.
   - it looks like we are creating quite a few function thunks. Is that
     expected? Any way to figure out which functions those are?
-* Optimize TicTacToe
-* Optimize Sudoku
-  - Implement Char equals so we can test that it outputs the right thing.
-  - Increase the benchmark size by adding more boards to be solved of varying
-    difficulty.
+* Figure out why Sudoku.ApplyX shows up as 0 time in the profile.
+  It is not a recursive function, and it makes calls that take time. Something
+  looks fishy here. ApplyX.true.cells seems to be the right thing to look at,
+  but why? And why does it look like Singleton.state is calling
+  ApplyX.true.cells? Did we mess up tracking of blocks in the compiler?
 
 * Consider factoring out code in compile.c for computing modeled profile time.
 * [perf] figure out how to use 'perf' for profiling
@@ -32,14 +29,11 @@ Performance Refactor:
     Add "0.1,0" or even smaller to set the threshold and unlimited number of
     lines to get more information.
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
-* Figure out why time profile says md5 is so much longer than tictactoe while
-  wall profile says tictactoe is much longer than md5.
 * Add an option to automatically determine performance model parameters based
   on wall clock time profiling of benchmarks.
 * Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
 * [build] move 'perf' logic to build.fble.tcl
-* [perf] Optimize FbleRefAdd
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
  - replace all AddToVector callbacks in ref.c if feasible.
 * [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
