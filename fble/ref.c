@@ -30,6 +30,8 @@ typedef struct {
   size_t* xs;
 } RMap;
 
+#define INITIAL_RMAP_CAPACITY 11
+
 // Set --
 //   A set of references with map from index to reference and reverse hashmap
 //   from reference to index.
@@ -262,7 +264,7 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
     .add = add
   };
   FbleVectorInit(arena->arena, callback.visited.refs);
-  RMapInit(arena->arena, &callback.visited.rmap, 13);
+  RMapInit(arena->arena, &callback.visited.rmap, INITIAL_RMAP_CAPACITY);
 
   while (stack.size > 0) {
     arena->added(&callback._base, stack.xs[--stack.size]);
@@ -379,7 +381,7 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
       };
 
       FbleVectorInit(arena->arena, callback.in_cycle.refs);
-      RMapInit(arena->arena, &callback.in_cycle.rmap, 17);
+      RMapInit(arena->arena, &callback.in_cycle.rmap, INITIAL_RMAP_CAPACITY);
       Insert(arena->arena, &callback.in_cycle, r);
 
       while (stack.size > 0) {
@@ -424,7 +426,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
   Set visited;
   FbleVectorInit(arena->arena, visited.refs);
-  RMapInit(arena->arena, &visited.rmap, 13);
+  RMapInit(arena->arena, &visited.rmap, INITIAL_RMAP_CAPACITY);
 
   // Keep track of a reverse mapping from child to parent nodes. The child
   // node at index i is visited.refs[i].
@@ -477,7 +479,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   // created cycle.
   Set cycle;
   FbleVectorInit(arena->arena, cycle.refs);
-  RMapInit(arena->arena, &cycle.rmap, 17);
+  RMapInit(arena->arena, &cycle.rmap, INITIAL_RMAP_CAPACITY);
   if (Contains(&visited, src)) {
     FbleVectorAppend(arena->arena, stack, src);
     Insert(arena->arena, &cycle, src);

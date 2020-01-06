@@ -1,11 +1,12 @@
 Performance Refactor:
-* clean up hash table implementation in ref.c
-  Ideally we could use it in place of all the vector stuff.
 * Figure out why Sudoku.ApplyX shows up as 0 time in the profile.
   It is not a recursive function, and it makes calls that take time. Something
   looks fishy here. ApplyX.true.cells seems to be the right thing to look at,
   but why? And why does it look like Singleton.state is calling
   ApplyX.true.cells? Did we mess up tracking of blocks in the compiler?
+* [clean] Tracking of time in the compiler is really messy
+  Especially that we extract the pointer to the time field from NewBlock by
+  assuming what NewBlock does. Figure out some way to clean this up.
 
 * Consider factoring out code in compile.c for computing modeled profile time.
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
@@ -14,13 +15,9 @@ Performance Refactor:
 * Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
 * [perf] Store scope size as part of InstrBlock and use an array for vars.
- - replace all AddToVector callbacks in ref.c if feasible.
 * [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
   eval after a let binding? Can't we use subst or other eval-by-construction
   for everything else?
-* [clean] Tracking of time in the compiler is really messy
-  Especially that we extract the pointer to the time field from NewBlock by
-  assuming what NewBlock does. Figure out some way to clean this up.
 * Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
 
