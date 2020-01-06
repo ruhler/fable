@@ -55,7 +55,6 @@ static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref);
 static bool In(Set* set, FbleRef* ref);
 
 static void AddToVector(AddToVectorCallback* add, FbleRef* ref);
-static bool Contains(FbleRefV* refs, FbleRef* ref);
 
 static FbleRef* CycleHead(FbleRef* ref);
 static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref);
@@ -183,29 +182,6 @@ static bool In(Set* map, FbleRef* ref)
 static void AddToVector(AddToVectorCallback* add, FbleRef* ref)
 {
   FbleVectorAppend(add->arena, *add->refs, ref);
-}
-
-// Contains --
-//   Check of a vector of references contains a give referece.
-//
-// Inputs:
-//   refs - the vector of references.
-//   ref - the reference to check for
-//
-// Results:
-//   true if the vector of references contains the given reference, false
-//   otherwise.
-//
-// Side effects:
-//   None.
-static bool Contains(FbleRefV* refs, FbleRef* ref)
-{
-  for (size_t i = 0; i < refs->size; ++i) {
-    if (refs->xs[i] == ref) {
-      return true;
-    }
-  }
-  return false;
 }
 
 // CycleHead --
@@ -499,11 +475,12 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
   // Traverse backwards from src (if reached) to identify all nodes in a newly
   // created cycle.
-  FbleRefV cycle;
-  FbleVectorInit(arena->arena, cycle);
+  Set cycle;
+  FbleVectorInit(arena->arena, cycle.refs);
+  RMapInit(arena->arena, &cycle.rmap, 17);
   if (In(&visited, src)) {
     FbleVectorAppend(arena->arena, stack, src);
-    FbleVectorAppend(arena->arena, cycle, src);
+    Insert(arena->arena, &cycle, src);
   }
 
   while (stack.size > 0) {
@@ -514,9 +491,9 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
     FbleRefV* parents = reverse.xs + i;
     for (size_t i = 0; i < parents->size; ++i) {
       FbleRef* parent = parents->xs[i];
-      if (!Contains(&cycle, parent)) {
+      size_t size = cycle.refs.size;
+      if (size == Insert(arena->arena, &cycle, parent)) {
         FbleVectorAppend(arena->arena, stack, parent);
-        FbleVectorAppend(arena->arena, cycle, parent);
       }
     }
   }
@@ -529,15 +506,15 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   }
   FbleFree(arena->arena, reverse.xs);
 
-  if (cycle.size > 0) {
+  if (cycle.refs.size > 0) {
     // Fix up refcounts for the cycle by moving any refs from nodes outside the
     // cycle to the head node of the cycle and removing all refs from nodes
     // inside the cycle.
     size_t total = 0;
     size_t internal = 0;
 
-    for (size_t i = 0; i < cycle.size; ++i) {
-      FbleRef* ref = cycle.xs[i];
+    for (size_t i = 0; i < cycle.refs.size; ++i) {
+      FbleRef* ref = cycle.refs.xs[i];
       total += ref->refcount;
 
       FbleRefV children;
@@ -549,27 +526,24 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
       };
       CycleAdded(arena, &callback._base, ref);
 
-      // TODO: Figure out a more efficient way to check if a child is in the
-      // cycle.
       for (size_t j = 0; j < children.size; ++j) {
-        for (size_t k = 0; k < cycle.size; ++k) {
-          if (children.xs[j] == cycle.xs[k]) {
-            internal++;
-          }
+        if (In(&cycle, children.xs[j])) {
+          internal++;
         }
       }
 
       FbleFree(arena->arena, children.xs);
     }
     
-    for (size_t i = 0; i < cycle.size; ++i) {
-      cycle.xs[i]->refcount = 0;
-      cycle.xs[i]->cycle = dst;
+    for (size_t i = 0; i < cycle.refs.size; ++i) {
+      cycle.refs.xs[i]->refcount = 0;
+      cycle.refs.xs[i]->cycle = dst;
     }
 
     dst->refcount = total - internal;
     dst->cycle = NULL;
   }
 
-  FbleFree(arena->arena, cycle.xs);
+  FbleFree(arena->arena, cycle.refs.xs);
+  FbleFree(arena->arena, cycle.rmap.xs);
 }
