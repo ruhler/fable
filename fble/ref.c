@@ -23,19 +23,25 @@ struct FbleRefArena {
   void (*added)(FbleRefCallback* add, FbleRef* ref);
 };
 
-// Hash table entry node.
+// RMap --
+//   A hash based mapping from key to index.
 typedef struct {
-  FbleRef* key;
-  size_t value;
-} Entry;
-
-// Map --
-//   A map from references to size_t values.
-typedef struct {
-  size_t size;
   size_t capacity;
-  Entry* entries;
-} Map;
+  size_t* xs;
+} RMap;
+
+// Set --
+//   A set of references with map from index to reference and reverse hashmap
+//   from reference to index.
+//
+// Fields:
+//   refs - the set of references in the map.
+//   rmap - a hash map from reference to its index in refs.
+#define RMAP_EMPTY ((size_t) (-1))
+typedef struct {
+  FbleRefV refs;
+  RMap rmap;
+} Set;
 
 typedef struct {
   FbleRefCallback _base;
@@ -43,10 +49,10 @@ typedef struct {
   FbleRefV* refs;
 } AddToVectorCallback;
 
-static void InitMap(FbleArena* arena, Map* map, size_t capacity);
-static void FreeMap(FbleArena* arena, Map* map);
-static size_t Insert(FbleArena* arena, Map* map, FbleRef* key, size_t value);
-static bool In(Map* map, FbleRef* key);
+static void RMapInit(FbleArena* arena, RMap* rmap, size_t capacity);
+static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref);
+static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref);
+static bool In(Set* set, FbleRef* ref);
 
 static void AddToVector(AddToVectorCallback* add, FbleRef* ref);
 static bool Contains(FbleRefV* refs, FbleRef* ref);
@@ -54,121 +60,112 @@ static bool Contains(FbleRefV* refs, FbleRef* ref);
 static FbleRef* CycleHead(FbleRef* ref);
 static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref);
 
-// InitMap --
-//   Initialize a reference map.
+// RMapInit --
+//   Initialize an RMap.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   map - a pointer to an uninitialized Map.
-//   capacity - the initial capacity to use for the map.
+//   rmap - a pointer to an uninitialized RMap.
+//   capacity - the initial capacity to use for the reverse map.
 //
 // Results: 
 //   none
 //
 // Side effects:
-//   Initializes the map. The caller should call FreeMap when done with
-//   using the map to release memory allocated for the Map.
-static void InitMap(FbleArena* arena, Map* map, size_t capacity)
+//   Initializes the rmap. The caller should call FbleFree(arena, rmap->xs)
+//   when done with using the map to release memory allocated for the RMap.
+static void RMapInit(FbleArena* arena, RMap* rmap, size_t capacity)
 {
-  map->size = 0;
-  map->capacity = capacity;
-  map->entries = FbleArrayAlloc(arena, Entry, capacity);
+  rmap->capacity = capacity;
+  rmap->xs = FbleArrayAlloc(arena, size_t, capacity);
   for (size_t i = 0; i < capacity; ++i) {
-    map->entries[i].key = NULL;
-    map->entries[i].value = 0;
+    rmap->xs[i] = RMAP_EMPTY;
   }
 }
 
-// FreeMap --
-//   Free the memory resources used for a Map
+// RMapIndex --
+//   Return a pointer to the rmap index for the given reference.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
-//   map - the map to free the memory of.
+//   refs - the array of references in the set.
+//   rmap - the rmap.
+//   ref - the reference to look up.
 //
-// Results:
-//   none.
+// Returns:
+//   A pointer to the rmap index where the reference is located, or where the
+//   reference would be inserted if it isn't already in the rmap.
 //
-// Side effects:
-//   Frees memory associated with the ref map. Do not access the ref map after
-//   this call.
-static void FreeMap(FbleArena* arena, Map* map)
+// Side effects: 
+//   None.
+static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref)
 {
-  FbleFree(arena, map->entries);
+  size_t bucket = (size_t)ref % rmap->capacity;
+  size_t index = rmap->xs[bucket];
+  while (index != RMAP_EMPTY && refs[index] != ref) {
+    bucket = (bucket + 1) % rmap->capacity;
+    index = rmap->xs[bucket];
+  }
+  return rmap->xs + bucket;
 }
 
 // Insert --
-//   Insert an element into the given ref map.
+//   Insert a reference into the given set.
 //
 // Inputs:
 //   arena - the arena to use for allocations.
-//   map - the map to insert into.
-//   key - the reference to insert.
-//   value - the default value to associate with the reference.
+//   set - the set to insert into.
+//   ref - the reference to insert.
 //
 // Results:
-//   The value associated with the reference. If the reference was already in
-//   the map, this is the value previously associated with the reference.
-//   Otherwise this is the value just supplied.
+//   The index of the reference in set->refs after insertion, which will be
+//   the same index as before insertion if the reference was already in the
+//   map.
 //
 // Side effects:
-//   Associates the given value with the reference in the map if the reference
-//   was not already in the map. If the reference was already in the map, does
-//   nothing. May resize the map, invalidating any pointers into the map entries.
-static size_t Insert(FbleArena* arena, Map* map, FbleRef* key, size_t value)
+//   Appends the reference to refs if it was not already in refs. If the
+//   reference was already in refs, does nothing.
+//   May resize the rmap, invalidating any pointers into rmap.
+static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref)
 {
-  assert(map->capacity > map->size);
-  size_t i = (size_t)key % map->capacity;
-  while (map->entries[i].key != NULL) {
-    if (map->entries[i].key == key) {
-      return map->entries[i].value;
-    }
-    i = (i + 1) % map->capacity;
+  size_t* index = RMapIndex(set->refs.xs, &set->rmap, ref);
+  if (*index != RMAP_EMPTY) {
+    return *index;
   }
 
-  map->entries[i].key = key;
-  map->entries[i].value = value;
-  map->size++;
+  *index = set->refs.size;
+  FbleVectorAppend(arena, set->refs, ref);
 
-  if (3 * map->size > map->capacity) {
-    // It is time to resize the map.
-    Map nmap;
-    InitMap(arena, &nmap, 2 * map->capacity - 1);
-    for (size_t i = 0; i < map->capacity; ++i) {
-      if (map->entries[i].key != NULL) {
-        Insert(arena, &nmap, map->entries[i].key, map->entries[i].value);
+  if (3 * set->refs.size > set->rmap.capacity) {
+    // It is time to resize the rmap.
+    RMap rmap;
+    RMapInit(arena, &rmap, 2 * set->rmap.capacity - 1);
+    for (size_t i = 0; i < set->rmap.capacity; ++i) {
+      size_t ix = set->rmap.xs[i];
+      if (ix != RMAP_EMPTY) {
+        *RMapIndex(set->refs.xs, &rmap, set->refs.xs[ix]) = ix;
       }
     }
-    FbleFree(arena, map->entries);
-    map->capacity = nmap.capacity;
-    map->entries = nmap.entries;
+    FbleFree(arena, set->rmap.xs);
+    set->rmap = rmap;
   }
-  return value;
+  return set->refs.size - 1;
 }
 
 // In --
-//   Check whether a reference map contains the given reference.
+//   Check whether a set contains the given reference.
 //
 // Inputs:
-//   map - the map to check.
-//   key - the reference to check for.
+//   set - the set to check.
+//   ref - the reference to check for.
 //
 // Results: 
-//   True if key is in map, false otherwise.
+//   True if ref is in the set, false otherwise.
 //
 // Side effects:
 //   None.
-static bool In(Map* map, FbleRef* key)
+static bool In(Set* map, FbleRef* ref)
 {
-  assert(map->capacity > map->size);
-  size_t i = (size_t)key % map->capacity;
-  while (map->entries[i].key != NULL) {
-    if (map->entries[i].key == key) {
-      return true;
-    }
-    i = (i + 1) % map->capacity;
-  }
-  return false;
+  return *RMapIndex(map->refs.xs, &map->rmap, ref) != RMAP_EMPTY;
 }
 
 // AddToVector --
@@ -236,7 +233,7 @@ typedef struct {
   FbleRefCallback _base;
   FbleArena* arena;
   FbleRef* ref;
-  Map visited;
+  Set visited;
   FbleRefV* stack;
   FbleRefCallback* add;
 } CycleAddedChildCallback;
@@ -249,8 +246,8 @@ static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
 {
   if (child == data->ref || CycleHead(child) == data->ref) {
     if (child != data->ref) {
-      size_t index = data->visited.size;
-      if (index == Insert(data->arena, &data->visited, child, index)) {
+      size_t size = data->visited.refs.size;
+      if (size == Insert(data->arena, &data->visited, child)) {
         FbleVectorAppend(data->arena, *data->stack, child);
       }
     }
@@ -288,14 +285,16 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
     .stack = &stack,
     .add = add
   };
-  InitMap(arena->arena, &callback.visited, 13);
+  FbleVectorInit(arena->arena, callback.visited.refs);
+  RMapInit(arena->arena, &callback.visited.rmap, 13);
 
   while (stack.size > 0) {
     arena->added(&callback._base, stack.xs[--stack.size]);
   }
 
-  FreeMap(arena->arena, &callback.visited);
   FbleFree(arena->arena, stack.xs);
+  FbleFree(arena->arena, callback.visited.refs.xs);
+  FbleFree(arena->arena, callback.visited.rmap.xs);
 }
 
 // FbleNewRefArena -- see documentation in ref.h
@@ -445,16 +444,17 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   FbleRefV stack;
   FbleVectorInit(arena->arena, stack);
 
-  Map visited;
-  InitMap(arena->arena, &visited, 17);
+  Set visited;
+  FbleVectorInit(arena->arena, visited.refs);
+  RMapInit(arena->arena, &visited.rmap, 13);
 
   // Keep track of a reverse mapping from child to parent nodes. The child
-  // node at index i is visited[i].
+  // node at index i is visited.refs[i].
   struct { size_t size; FbleRefV* xs; } reverse;
   FbleVectorInit(arena->arena, reverse);
 
   FbleVectorAppend(arena->arena, stack, dst);
-  Insert(arena->arena, &visited, dst, 0);
+  Insert(arena->arena, &visited, dst);
 
   {
     FbleRefV* parents = FbleVectorExtend(arena->arena, reverse);
@@ -481,7 +481,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
       FbleRef* child = children.xs[i];
       if (child->id >= src->id) {
         FbleRefV* parents = NULL;
-        size_t j = Insert(arena->arena, &visited, child, reverse.size);
+        size_t j = Insert(arena->arena, &visited, child);
         if (j < reverse.size) {
           parents = reverse.xs + j;
         } else {
@@ -507,7 +507,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   while (stack.size > 0) {
     FbleRef* ref = stack.xs[--stack.size];
 
-    size_t i = Insert(arena->arena, &visited, ref, reverse.size);
+    size_t i = Insert(arena->arena, &visited, ref);
     assert(i < reverse.size);
     FbleRefV* parents = reverse.xs + i;
     for (size_t i = 0; i < parents->size; ++i) {
@@ -520,7 +520,8 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   }
 
   FbleFree(arena->arena, stack.xs);
-  FreeMap(arena->arena, &visited);
+  FbleFree(arena->arena, visited.refs.xs);
+  FbleFree(arena->arena, visited.rmap.xs);
   for (size_t i = 0; i < reverse.size; ++i) {
     FbleFree(arena->arena, reverse.xs[i].xs);
   }
