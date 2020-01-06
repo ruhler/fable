@@ -52,7 +52,7 @@ typedef struct {
 static void RMapInit(FbleArena* arena, RMap* rmap, size_t capacity);
 static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref);
 static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref);
-static bool In(Set* set, FbleRef* ref);
+static bool Contains(Set* set, FbleRef* ref);
 
 static void AddToVector(AddToVectorCallback* add, FbleRef* ref);
 
@@ -150,7 +150,7 @@ static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref)
   return set->refs.size - 1;
 }
 
-// In --
+// Contains --
 //   Check whether a set contains the given reference.
 //
 // Inputs:
@@ -162,7 +162,7 @@ static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref)
 //
 // Side effects:
 //   None.
-static bool In(Set* map, FbleRef* ref)
+static bool Contains(Set* map, FbleRef* ref)
 {
   return *RMapIndex(map->refs.xs, &map->rmap, ref) != RMAP_EMPTY;
 }
@@ -478,7 +478,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   Set cycle;
   FbleVectorInit(arena->arena, cycle.refs);
   RMapInit(arena->arena, &cycle.rmap, 17);
-  if (In(&visited, src)) {
+  if (Contains(&visited, src)) {
     FbleVectorAppend(arena->arena, stack, src);
     Insert(arena->arena, &cycle, src);
   }
@@ -527,7 +527,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
       CycleAdded(arena, &callback._base, ref);
 
       for (size_t j = 0; j < children.size; ++j) {
-        if (In(&cycle, children.xs[j])) {
+        if (Contains(&cycle, children.xs[j])) {
           internal++;
         }
       }
