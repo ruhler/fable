@@ -343,7 +343,7 @@ typedef struct {
   FbleArena* arena;
   FbleRefV* refs;
   FbleRef* ref;
-  FbleRefV* in_cycle;
+  Set in_cycle;
   FbleRefV* stack;
 } RefReleaseCallback;
 
@@ -355,9 +355,11 @@ typedef struct {
 static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
 {
   if (child == data->ref || CycleHead(child) == data->ref) {
-    if (child != data->ref && !Contains(data->in_cycle, child)) {
-      FbleVectorAppend(data->arena, *data->in_cycle, child);
-      FbleVectorAppend(data->arena, *data->stack, child);
+    if (child != data->ref) {
+      size_t size = data->in_cycle.refs.size;
+      if (size == Insert(data->arena, &data->in_cycle, child)) {
+        FbleVectorAppend(data->arena, *data->stack, child);
+      }
     }
   } else {
     FbleRef* head = CycleHead(child);
@@ -388,10 +390,6 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
       assert(r->cycle == NULL);
       assert(r->refcount == 0);
 
-      FbleRefV in_cycle;
-      FbleVectorInit(arena->arena, in_cycle);
-      FbleVectorAppend(arena->arena, in_cycle, r);
-
       FbleRefV stack;
       FbleVectorInit(arena->arena, stack);
       FbleVectorAppend(arena->arena, stack, r);
@@ -401,19 +399,23 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
         .arena = arena->arena,
         .refs = &refs,
         .ref = r,
-        .in_cycle = &in_cycle,
         .stack = &stack,
       };
+
+      FbleVectorInit(arena->arena, callback.in_cycle.refs);
+      RMapInit(arena->arena, &callback.in_cycle.rmap, 17);
+      Insert(arena->arena, &callback.in_cycle, r);
 
       while (stack.size > 0) {
         arena->added(&callback._base, stack.xs[--stack.size]);
       }
 
-      for (size_t i = 0; i < in_cycle.size; ++i) {
-        arena->free(arena, in_cycle.xs[i]);
+      for (size_t i = 0; i < callback.in_cycle.refs.size; ++i) {
+        arena->free(arena, callback.in_cycle.refs.xs[i]);
       }
 
-      FbleFree(arena->arena, in_cycle.xs);
+      FbleFree(arena->arena, callback.in_cycle.refs.xs);
+      FbleFree(arena->arena, callback.in_cycle.rmap.xs);
       FbleFree(arena->arena, stack.xs);
     }
 
