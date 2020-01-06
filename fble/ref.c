@@ -23,17 +23,153 @@ struct FbleRefArena {
   void (*added)(FbleRefCallback* add, FbleRef* ref);
 };
 
+// Hash table entry node.
+typedef struct {
+  FbleRef* key;
+  size_t value;
+} Entry;
+
+// Map --
+//   A map from references to size_t values.
+typedef struct {
+  size_t size;
+  size_t capacity;
+  Entry* entries;
+} Map;
+
 typedef struct {
   FbleRefCallback _base;
   FbleArena* arena;
   FbleRefV* refs;
 } AddToVectorCallback;
 
+static void InitMap(FbleArena* arena, Map* map, size_t capacity);
+static void FreeMap(FbleArena* arena, Map* map);
+static size_t Insert(FbleArena* arena, Map* map, FbleRef* key, size_t value);
+//static bool In(Map* map, FbleRef* key);
+
 static void AddToVector(AddToVectorCallback* add, FbleRef* ref);
 static bool Contains(FbleRefV* refs, FbleRef* ref);
 
 static FbleRef* CycleHead(FbleRef* ref);
 static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref);
+
+// InitMap --
+//   Initialize a reference map.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   map - a pointer to an uninitialized Map.
+//   capacity - the initial capacity to use for the map.
+//
+// Results: 
+//   none
+//
+// Side effects:
+//   Initializes the map. The caller should call FreeMap when done with
+//   using the map to release memory allocated for the Map.
+static void InitMap(FbleArena* arena, Map* map, size_t capacity)
+{
+  map->size = 0;
+  map->capacity = capacity;
+  map->entries = FbleArrayAlloc(arena, Entry, capacity);
+  for (size_t i = 0; i < capacity; ++i) {
+    map->entries[i].key = NULL;
+    map->entries[i].value = 0;
+  }
+}
+
+// FreeMap --
+//   Free the memory resources used for a Map
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   map - the map to free the memory of.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Frees memory associated with the ref map. Do not access the ref map after
+//   this call.
+static void FreeMap(FbleArena* arena, Map* map)
+{
+  FbleFree(arena, map->entries);
+}
+
+// Insert --
+//   Insert an element into the given ref map.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   map - the map to insert into.
+//   key - the reference to insert.
+//   value - the default value to associate with the reference.
+//
+// Results:
+//   The value associated with the reference. If the reference was already in
+//   the map, this is the value previously associated with the reference.
+//   Otherwise this is the value just supplied.
+//
+// Side effects:
+//   Associates the given value with the reference in the map if the reference
+//   was not already in the map. If the reference was already in the map, does
+//   nothing. May resize the map, invalidating any pointers into the map entries.
+static size_t Insert(FbleArena* arena, Map* map, FbleRef* key, size_t value)
+{
+  assert(map->capacity > map->size);
+  size_t i = (size_t)key % map->capacity;
+  while (map->entries[i].key != NULL) {
+    if (map->entries[i].key == key) {
+      return map->entries[i].value;
+    }
+    i = (i + 1) % map->capacity;
+  }
+
+  map->entries[i].key = key;
+  map->entries[i].value = value;
+  map->size++;
+
+  if (3 * map->size > map->capacity) {
+    // It is time to resize the map.
+    Map nmap;
+    InitMap(arena, &nmap, 2 * map->capacity - 1);
+    for (size_t i = 0; i < map->capacity; ++i) {
+      if (map->entries[i].key != NULL) {
+        Insert(arena, &nmap, map->entries[i].key, map->entries[i].value);
+      }
+    }
+    FbleFree(arena, map->entries);
+    map->capacity = nmap.capacity;
+    map->entries = nmap.entries;
+  }
+  return value;
+}
+
+// In --
+//   Check whether a reference map contains the given reference.
+//
+// Inputs:
+//   map - the map to check.
+//   key - the reference to check for.
+//
+// Results: 
+//   True if key is in map, false otherwise.
+//
+// Side effects:
+//   None.
+//static bool In(Map* map, FbleRef* key)
+//{
+//  assert(map->capacity > map->size);
+//  size_t i = (size_t)key % map->capacity;
+//  while (map->entries[i].key != NULL) {
+//    if (map->entries[i].key == key) {
+//      return map->entries[i].value;
+//    }
+//    i = (i + 1) % map->capacity;
+//  }
+//  return false;
+//}
 
 // AddToVector --
 //   An FbleRefCallback that appends a ref to the given vector.
@@ -100,7 +236,7 @@ typedef struct {
   FbleRefCallback _base;
   FbleArena* arena;
   FbleRef* ref;
-  FbleRefV* visited;
+  Map visited;
   FbleRefV* stack;
   FbleRefCallback* add;
 } CycleAddedChildCallback;
@@ -112,9 +248,11 @@ typedef struct {
 static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
 {
   if (child == data->ref || CycleHead(child) == data->ref) {
-    if (child != data->ref && !Contains(data->visited, child)) {
-      FbleVectorAppend(data->arena, *data->visited, child);
-      FbleVectorAppend(data->arena, *data->stack, child);
+    if (child != data->ref) {
+      size_t index = data->visited.size;
+      if (index == Insert(data->arena, &data->visited, child, index)) {
+        FbleVectorAppend(data->arena, *data->stack, child);
+      }
     }
   } else {
     data->add->callback(data->add, CycleHead(child));
@@ -139,9 +277,6 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
 {
   assert(ref->cycle == NULL);
 
-  FbleRefV visited;
-  FbleVectorInit(arena->arena, visited);
-
   FbleRefV stack;
   FbleVectorInit(arena->arena, stack);
   FbleVectorAppend(arena->arena, stack, ref);
@@ -150,16 +285,16 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
     ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleAddedChild },
     .arena = arena->arena,
     .ref = ref,
-    .visited = &visited,
     .stack = &stack,
     .add = add
   };
+  InitMap(arena->arena, &callback.visited, 13);
 
   while (stack.size > 0) {
     arena->added(&callback._base, stack.xs[--stack.size]);
   }
 
-  FbleFree(arena->arena, visited.xs);
+  FreeMap(arena->arena, &callback.visited);
   FbleFree(arena->arena, stack.xs);
 }
 
