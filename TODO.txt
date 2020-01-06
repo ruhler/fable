@@ -1,7 +1,6 @@
 Performance Refactor:
-* optimize cycle detection (ref.c:349) so it isn't stupidly slow for large
-  graphs. Consider implementing a HashTable mapping from FbleRef* to an int
-  representing the order the ref was inserted in the hash table if at all.
+* clean up hash table implementation in ref.c
+  Ideally we could use it in place of all the vector stuff.
 * Figure out why Sudoku.ApplyX shows up as 0 time in the profile.
   It is not a recursive function, and it makes calls that take time. Something
   looks fishy here. ApplyX.true.cells seems to be the right thing to look at,

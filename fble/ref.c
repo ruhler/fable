@@ -46,7 +46,7 @@ typedef struct {
 static void InitMap(FbleArena* arena, Map* map, size_t capacity);
 static void FreeMap(FbleArena* arena, Map* map);
 static size_t Insert(FbleArena* arena, Map* map, FbleRef* key, size_t value);
-//static bool In(Map* map, FbleRef* key);
+static bool In(Map* map, FbleRef* key);
 
 static void AddToVector(AddToVectorCallback* add, FbleRef* ref);
 static bool Contains(FbleRefV* refs, FbleRef* ref);
@@ -158,18 +158,18 @@ static size_t Insert(FbleArena* arena, Map* map, FbleRef* key, size_t value)
 //
 // Side effects:
 //   None.
-//static bool In(Map* map, FbleRef* key)
-//{
-//  assert(map->capacity > map->size);
-//  size_t i = (size_t)key % map->capacity;
-//  while (map->entries[i].key != NULL) {
-//    if (map->entries[i].key == key) {
-//      return map->entries[i].value;
-//    }
-//    i = (i + 1) % map->capacity;
-//  }
-//  return false;
-//}
+static bool In(Map* map, FbleRef* key)
+{
+  assert(map->capacity > map->size);
+  size_t i = (size_t)key % map->capacity;
+  while (map->entries[i].key != NULL) {
+    if (map->entries[i].key == key) {
+      return true;
+    }
+    i = (i + 1) % map->capacity;
+  }
+  return false;
+}
 
 // AddToVector --
 //   An FbleRefCallback that appends a ref to the given vector.
@@ -445,8 +445,8 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   FbleRefV stack;
   FbleVectorInit(arena->arena, stack);
 
-  FbleRefV visited;
-  FbleVectorInit(arena->arena, visited);
+  Map visited;
+  InitMap(arena->arena, &visited, 17);
 
   // Keep track of a reverse mapping from child to parent nodes. The child
   // node at index i is visited[i].
@@ -454,7 +454,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   FbleVectorInit(arena->arena, reverse);
 
   FbleVectorAppend(arena->arena, stack, dst);
-  FbleVectorAppend(arena->arena, visited, dst);
+  Insert(arena->arena, &visited, dst, 0);
 
   {
     FbleRefV* parents = FbleVectorExtend(arena->arena, reverse);
@@ -481,15 +481,11 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
       FbleRef* child = children.xs[i];
       if (child->id >= src->id) {
         FbleRefV* parents = NULL;
-        for (size_t j = 0; parents == NULL && j < visited.size; ++j) {
-          if (visited.xs[j] == child) {
-            parents = reverse.xs + j;
-          }
-        }
-
-        if (parents == NULL) {
+        size_t j = Insert(arena->arena, &visited, child, reverse.size);
+        if (j < reverse.size) {
+          parents = reverse.xs + j;
+        } else {
           FbleVectorAppend(arena->arena, stack, child);
-          FbleVectorAppend(arena->arena, visited, child);
           parents = FbleVectorExtend(arena->arena, reverse);
           FbleVectorInit(arena->arena, *parents);
         }
@@ -503,24 +499,17 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   // created cycle.
   FbleRefV cycle;
   FbleVectorInit(arena->arena, cycle);
-  for (size_t i = 0; i < visited.size; ++i) {
-    if (visited.xs[i] == src) {
-      FbleVectorAppend(arena->arena, stack, src);
-      FbleVectorAppend(arena->arena, cycle, src);
-    }
+  if (In(&visited, src)) {
+    FbleVectorAppend(arena->arena, stack, src);
+    FbleVectorAppend(arena->arena, cycle, src);
   }
 
   while (stack.size > 0) {
     FbleRef* ref = stack.xs[--stack.size];
 
-    FbleRefV* parents = NULL;
-    for (size_t i = 0; parents == NULL && i < visited.size; ++i) {
-      if (visited.xs[i] == ref) {
-        parents = reverse.xs + i;
-      }
-    }
-    assert(parents != NULL);
-
+    size_t i = Insert(arena->arena, &visited, ref, reverse.size);
+    assert(i < reverse.size);
+    FbleRefV* parents = reverse.xs + i;
     for (size_t i = 0; i < parents->size; ++i) {
       FbleRef* parent = parents->xs[i];
       if (!Contains(&cycle, parent)) {
@@ -531,7 +520,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   }
 
   FbleFree(arena->arena, stack.xs);
-  FbleFree(arena->arena, visited.xs);
+  FreeMap(arena->arena, &visited);
   for (size_t i = 0; i < reverse.size; ++i) {
     FbleFree(arena->arena, reverse.xs[i].xs);
   }
