@@ -1,13 +1,16 @@
-Performance Refactor:
-* Figure out why Sudoku.ApplyX shows up as 0 time in the profile.
-  It is not a recursive function, and it makes calls that take time. Something
-  looks fishy here. ApplyX.true.cells seems to be the right thing to look at,
-  but why? And why does it look like Singleton.state is calling
-  ApplyX.true.cells? Did we mess up tracking of blocks in the compiler?
-* [clean] Tracking of time in the compiler is really messy
-  Especially that we extract the pointer to the time field from NewBlock by
-  assuming what NewBlock does. Figure out some way to clean this up.
+* [lang] redo syntax for literals
+* Replace TicTacToe MemoTable with a generic Map from Data to T@.
+* Implement Game of Life.
+* Correlate wall time and profile time. Print out slope and 'r' value in
+  generated profile report?
+* [clean] Clean up tracking of time in the compiler.
+  - Have a ProfileStack with Push, Pop, and Time functions.
+* Add a test case for Sudoku.ApplyX showing 0 time in the profile once that
+  bug is understood.
 
+Performance Refactor:
+* Step through code via gdb for a Bit2XN addition to get a sense of how
+  involved that is?
 * Consider factoring out code in compile.c for computing modeled profile time.
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
 * Add an option to automatically determine performance model parameters based
@@ -83,7 +86,6 @@ Md5:
 * Improve performance of Bit2XN.add, though it's not obvious how.
 
 Sudoku:
-* Use separate modules for the tests and the solver.
 
 Game of Life:
 * live if

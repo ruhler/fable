@@ -12,7 +12,7 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   UBInt_Tests%.Tests,
   Primes_Tests%.Tests,
   Md5_Tests%.Tests,
-  Sudoku%.Tests,
+  Sudoku_Tests%.Tests,
   TicTacToe/Tests%.Tests
 ]));
 
