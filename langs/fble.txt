@@ -1309,3 +1309,20 @@ Notes:
   
 * It would be awesome to have a well defined style guide for programming in
   fble.
+
+* Should we get rid of the struct import expression?
+  I think this is the only place where you bring a bunch of variables in scope
+  without ever mentioning their names. This makes it hard to know what is in
+  scope or not. It also means we purposefully bring things into scope that we
+  know we will never use, which makes it hard to automatically check for
+  unused variables.
+
+  My claim: we only ever want to use struct import in the case where we
+  explicitly bring in a subset of values. If that's so, change the expression
+  to explicitly bring in a subset of values rather than all of them?
+ 
+  Cases to consider:
+   { Foo%; @(a, b, c, ...); };     # Standard struct import.
+   @(a: ...);                      # Anonymous type let.
+   { Chars; |hello; };             # Potential literals syntax.
+  
