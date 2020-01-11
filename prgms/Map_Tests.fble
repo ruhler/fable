@@ -1,0 +1,70 @@
+
+{ String%; @(Str@, Str); };
+{ Test%; @(Test@, TestResult@); };
+{ Unit%; @(Unit@, Unit); };
+
+{ Map%; @(Data@, Map@, Lookup, Insert); };
+
+S@<Test@> Tests = {
+  (Str@){Str@;} name = (Str@ nm) {
+    Append<Char@>(Str(Char@|'Map.'), nm);
+  };
+
+  Data@ A = Data@(sum: +(Data@ a, Data@ b)(a: Data@(unit: Unit)));
+  Data@ B = Data@(sum: +(Data@ a, Data@ b)(b:
+              Data@(sum: +(Data@ a, Data@ b)(a: Data@(unit: Unit)))));
+  Data@ C = Data@(sum: +(Data@ a, Data@ b)(b:
+              Data@(sum: +(Data@ a, Data@ b)(b: Data@(unit: Unit)))));
+
+  S<Test@>([
+    Test@(name(Str(Char@|'empty')), $({
+      ?(Lookup<Unit@>(Empty<Unit@>, B);
+         just: TestResult@(fail:
+           Str(Char@|'Lookup found something in an empty map')),
+         nothing: TestResult@(pass: Unit));
+    })),
+
+    Test@(name(Str(Char@|'not found')), $({
+      Map@<Unit@> map = Insert@<Unit@>(Empty<Unit@>, C, Unit);
+      ?(Lookup<Unit@>(map, B);
+         just: TestResult@(fail:
+           Str(Char@|'Lookup found B in a map with only C')),
+         nothing: TestResult@(pass: Unit));
+    })),
+
+    Test@(name(Str(Char@|'found')), $({
+      Map@<Bool@> map = Insert@<Bool@>(Insert@<Bool@>(Insert@<Bool@>(Empty<Bool@>,
+        A, False),
+        B, True),
+        C, False);
+      Maybe@<Bool@> mv = Lookup<Bool@>(map, B);
+      ?(mv;
+         just:
+           ?(mv.just;
+              true: TestResult@(pass: Unit),
+              false: TestResult@(fail:
+                Str(Char@|'Wrong value found for B.'))
+            ),
+         nothing: TestResult@(fail:
+           Str(Char@|'Failed to find B in map.')));
+    })),
+
+    Test@(name(Str(Char@|'replace')), $({
+      Map@<Bool@> map = Insert@<Bool@>(Insert@<Bool@>(Empty<Bool@>,
+        B, False),
+        B, True);
+      Maybe@<Bool@> mv = Lookup<Bool@>(map, B);
+      ?(mv;
+         just:
+           ?(mv.just;
+              true: TestResult@(pass: Unit),
+              false: TestResult@(fail:
+                Str(Char@|'Wrong value found for B.'))
+            ),
+         nothing: TestResult@(fail:
+           Str(Char@|'Failed to find B in map.')));
+    }))
+  ]);
+};
+
+@(Tests);

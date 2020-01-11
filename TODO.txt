@@ -1,8 +1,14 @@
 * [lang] redo syntax for literals
 * Replace TicTacToe MemoTable with a generic Map from Data to T@.
+  - Minimize test case leading to recursive TypeEquals for Map.fble.
+  - Fix infinite recursion in TypeEquals.
+  - Implement ToData for Board@.
 * Implement Game of Life.
 * [clean] Clean up tracking of time in the compiler.
-  - Have a ProfileStack with Push, Pop, and Time functions.
+  - Separate profile ENTER and EXIT from NewBlock and EXIT SCOPE.
+  - Have a ProfileStack with Push, Pop, Change, and Time functions.
+    It generates an ENTER on push and an EXIT on Pop. And you push and pop a
+    name for the block.
 * Add a test case for Sudoku.ApplyX showing 0 time in the profile once that
   bug is understood.
 

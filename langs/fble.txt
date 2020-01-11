@@ -1307,3 +1307,5 @@ Notes:
   And while I'm complaining, Foo([...]) is pretty awkward. I wish I could do
   Foo(...) instead.
   
+* It would be awesome to have a well defined style guide for programming in
+  fble.
