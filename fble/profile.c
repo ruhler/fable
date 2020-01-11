@@ -3,6 +3,7 @@
 
 #include <assert.h>   // for assert
 #include <inttypes.h> // for PRIu64
+#include <math.h>     // for sqrt
 #include <sys/time.h> // for gettimeofday
 
 #include "fble-alloc.h"
@@ -272,11 +273,11 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 //   Prints a single line description of the call data to the given file.
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call)
 {
+  uint64_t wall = call->time[FBLE_PROFILE_WALL_CLOCK];
+  uint64_t time = call->time[FBLE_PROFILE_TIME_CLOCK] / 1000;
   char h = highlight ? '*' : ' ';
   fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 " %8" PRIu64 " ",
-      h, h, call->count,
-      call->time[FBLE_PROFILE_WALL_CLOCK],
-      call->time[FBLE_PROFILE_TIME_CLOCK] / 1000);
+      h, h, call->count, wall, time);
   PrintBlockName(fout, blocks, call->id);
   fprintf(fout, " %c%c\n", h, h);
 }
@@ -621,6 +622,32 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
     PrintCallData(fout, blocks, true, &profile->xs[i]->block);
   }
   fprintf(fout, "\n");
+
+  // Compute correlation between wall time and profile time.
+  fprintf(fout, "Wall / Profile Time Correlation\n");
+  fprintf(fout, "-------------------------------\n");
+  uint64_t n = 0;
+  uint64_t x = 0;  // sum of x_i
+  uint64_t y = 0;  // sum of y_i
+  uint64_t xx = 0;  // sum of x_i * x_i
+  uint64_t yy = 0;  // sum of y_i * y_i
+  uint64_t xy = 0;  // sum of x_i * y_i
+  for (size_t i = 0; i < profile->size; ++i) {
+    FbleCallData* call = &profile->xs[i]->block;
+    uint64_t x_i = call->time[FBLE_PROFILE_TIME_CLOCK] / 1000;
+    uint64_t y_i = call->time[FBLE_PROFILE_WALL_CLOCK];
+    n++;
+    x += x_i;
+    y += y_i;
+    xx += x_i * x_i;
+    yy += y_i * y_i;
+    xy += x_i * y_i;
+  }
+  double m = (double)xy / (double)xx;
+  double r = (double)(n * xy - x * y)
+           / (  sqrt((double)n*xx - (double)x*x)
+              * sqrt((double)n*yy - (double)y*y));
+  fprintf(fout, "m = %f\nr = %f\n\n", m, r);
 
   // Call Graph
   fprintf(fout, "Call Graph\n");

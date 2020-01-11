@@ -1,8 +1,6 @@
 * [lang] redo syntax for literals
 * Replace TicTacToe MemoTable with a generic Map from Data to T@.
 * Implement Game of Life.
-* Correlate wall time and profile time. Print out slope and 'r' value in
-  generated profile report?
 * [clean] Clean up tracking of time in the compiler.
   - Have a ProfileStack with Push, Pop, and Time functions.
 * Add a test case for Sudoku.ApplyX showing 0 time in the profile once that
