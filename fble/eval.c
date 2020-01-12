@@ -1097,7 +1097,6 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
 
   while (thread->scope_stack != NULL) {
     thread->scope_stack = ExitScope(arena, thread->scope_stack);
-    FbleProfileExitBlock(arena_, thread->profile);
   }
 
   if (thread->profile != NULL) {
