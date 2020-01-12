@@ -1325,4 +1325,45 @@ Notes:
    { Foo%; @(a, b, c, ...); };     # Standard struct import.
    @(a: ...);                      # Anonymous type let.
    { Chars; |hello; };             # Potential literals syntax.
+
+  Proposal: Replace existing struct import with one where you have to
+  explicitly list the names of fields to bring into scope:
+    Expr ::= struct_import (object :: Expr) (fields :: [Name]) (body :: Expr)
+
+  This means you can't as easily rename or partially apply names when coming
+  into scope, anonymous type let is less convenient and we would need a
+  different struct literal. And it's not obvious what the concrete syntax
+  should be.
+
+  The syntax that makes the most sense to me is:
+    (a, b, c, ...) = object;
+    body
+
+  But for module imports, the main use of struct imports, it would be nice to
+  have the object on the left.
+
+  Today:
+    { Unit%; @(Unit@, Unit); };
+    { Maybe%; @(Maybe@); };
+    { Bool%; @(Bool@, True, False, And); };
+    { List%; @(SL@: S@, PL@: P@, List@, SL: S); };
+
+  Most sense syntax:
+    (Unit@, Unit) = Unit%;
+    (Maybe@) = Maybe%;
+    (Bool@, True, False, And) = Bool%;
+    (SL@, PL@, List@, SL) = {
+       (S@, P@, List@, S) = List%;
+       @(SL@: S@, PL@: P@, List@, SL: S);
+    };
+
+  Object on left syntax:
+    Unit%: Unit@, Unit;
+    Maybe%: Maybe@;
+    Bool%: Bool@, True, False, And;
+    { List%: S@, P@, List@, S;
+      @(SL@: S@, PL@: P@, List@, SL: S);
+    }: SL@, PL@, List@, SL;
+
+  It's hard to believe this suggestion is better than what we have today.
   
