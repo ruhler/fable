@@ -614,6 +614,20 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 // FbleDumpProfile -- see documentation in fble-profile.h
 void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
 {
+
+  // Code Coverage
+  size_t covered = 0;
+  for (size_t i = 0; i < profile->size; ++i) {
+    if (profile->xs[i]->block.count > 0) {
+      covered++;
+    }
+  }
+
+  double coverage = (double)covered / (double)profile->size;
+  fprintf(fout, "Code Coverage\n");
+  fprintf(fout, "-------------\n");
+  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, profile->size);
+
   // Flat Profile
   fprintf(fout, "Flat Profile\n");
   fprintf(fout, "------------\n");
@@ -655,39 +669,16 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
   for (size_t i = 0; i < profile->size; ++i) {
     FbleBlockProfile* block = profile->xs[i];
-    for (size_t j = 0; j < block->callers.size; ++j) {
-      PrintCallData(fout, blocks, false, block->callers.xs[j]);
-    }
-    PrintCallData(fout, blocks, true, &profile->xs[i]->block);
-    size_t callees_size = block->callees.size;
-    for (size_t j = 0; j < callees_size; ++j) {
-      PrintCallData(fout, blocks, false, block->callees.xs[j]);
-    }
-    fprintf(fout, "-------------------------------\n");
-  }
-  fprintf(fout, "\n");
-
-  // Code Coverage
-  size_t covered = 0;
-  for (size_t i = 0; i < profile->size; ++i) {
-    if (profile->xs[i]->block.count > 0) {
-      covered++;
-    }
-  }
-
-  double coverage = (double)covered / (double)profile->size;
-  fprintf(fout, "Code Coverage\n");
-  fprintf(fout, "-------------\n");
-  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, profile->size);
-
-  // Uncovered blocks
-  fprintf(fout, "Uncovered Blocks\n");
-  fprintf(fout, "----------------\n");
-  for (size_t i = 0; i < profile->size; ++i) {
-    if (profile->xs[i]->block.count == 0) {
-      FbleBlockId id = profile->xs[i]->block.id;
-      PrintBlockName(fout, blocks, id);
-      fprintf(fout, "\n");
+    if (block->block.count > 0) {
+      for (size_t j = 0; j < block->callers.size; ++j) {
+        PrintCallData(fout, blocks, false, block->callers.xs[j]);
+      }
+      PrintCallData(fout, blocks, true, &profile->xs[i]->block);
+      size_t callees_size = block->callees.size;
+      for (size_t j = 0; j < callees_size; ++j) {
+        PrintCallData(fout, blocks, false, block->callees.xs[j]);
+      }
+      fprintf(fout, "-------------------------------\n");
     }
   }
   fprintf(fout, "\n");
