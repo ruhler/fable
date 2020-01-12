@@ -274,7 +274,7 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call)
 {
   uint64_t wall = call->time[FBLE_PROFILE_WALL_CLOCK];
-  uint64_t time = call->time[FBLE_PROFILE_TIME_CLOCK] / 1000;
+  uint64_t time = call->time[FBLE_PROFILE_TIME_CLOCK];
   char h = highlight ? '*' : ' ';
   fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 " %8" PRIu64 " ",
       h, h, call->count, wall, time);
@@ -634,7 +634,7 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   uint64_t xy = 0;  // sum of x_i * y_i
   for (size_t i = 0; i < profile->size; ++i) {
     FbleCallData* call = &profile->xs[i]->block;
-    uint64_t x_i = call->time[FBLE_PROFILE_TIME_CLOCK] / 1000;
+    uint64_t x_i = call->time[FBLE_PROFILE_TIME_CLOCK];
     uint64_t y_i = call->time[FBLE_PROFILE_WALL_CLOCK];
     n++;
     x += x_i;
