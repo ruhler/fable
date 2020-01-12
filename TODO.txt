@@ -4,12 +4,20 @@
   - Implement ToData for Board@.
 * Implement Game of Life.
 * [clean] Clean up tracking of time in the compiler.
-  - Separate profile ENTER and EXIT from NewBlock and EXIT SCOPE.
-  - Have a ProfileStack with Push, Pop, Change, and Time functions.
-    It generates an ENTER on push and an EXIT on Pop. And you push and pop a
-    name for the block.
+  - Add 'Blocks' data structure to serve the following purposes
+    + collect together created blocks
+    + keep track of the current time pointer
+    + keep track of the current path
+  - Distinguish between defining a function F and executing a function F. 
+    Perhaps the blocks can be named F and F! to distinguish?
+  - Have EnterBlock and ExitBlock functions to manipulate the blocks data
+    structure. CompileExit Compile with exit=true implicitly call ExitBlock.
+  - Every new name makes a new block.
 * Add a test case for Sudoku.ApplyX showing 0 time in the profile once that
-  bug is understood.
+  bug is understood. If we ever understand it.
+* Change reference counting to be incrementally done on allocation.
+  Maybe write a test that shows how something that should take no time gets
+  charged for a big deallocation time today?
 
 Performance Refactor:
 * Step through code via gdb for a Bit2XN addition to get a sense of how

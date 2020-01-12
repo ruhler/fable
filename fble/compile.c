@@ -249,6 +249,36 @@ typedef struct {
   size_t nvars;
 } Vars;
 
+// BlockFrame --
+//   Represents a profiling block.
+//
+// Fields:
+//   id - the id of the block.
+//   time - pointer to the static shallow profile time for the block.
+typedef struct {
+  size_t id;
+  size_t* time;
+} BlockFrame;
+
+// BlockFrameV --
+//   A stack of block frames. 
+typedef struct {
+  size_t size;
+  BlockFrame* xs;
+} BlockFrameV;
+
+// Blocks --
+//   A stack of block frames tracking the current block for profiling.
+//
+// Fields:
+//   stack - The stack of black frames representing the current location.
+//   blocks - Mapping from block id to block name and location, which is an
+//            output of compilation.
+typedef struct {
+  BlockFrameV stack;
+  FbleNameV blocks;
+} Blocks;
+
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
 static Kind* CopyKind(FbleArena* arena, Kind* kind);
@@ -281,22 +311,27 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, Type* type);
 static void PopVar(FbleArena* arena, Vars* vars);
 static void FreeVars(FbleArena* arena, Vars* vars);
 
+static void InitBlocks(FbleArena* arena, Blocks* blocks, const char* name, size_t* time, const char* file, size_t line);
+static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, FbleInstrV* instrs);
+static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, FbleInstrV* instrs);
+static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs);
+static void AddBlockTime(Blocks* blocks, size_t time);
+
 static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars);
 static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrV* instrs);
 
-static char* MakeBlockName(FbleArena* arena, FbleNameV* name);
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena, FbleNameV* blocks, FbleNameV* name, FbleLoc block);
+static FbleInstrBlock* NewInstrBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 
 static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type);
 
-static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs);
-static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs, size_t* time);
-static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs, size_t* time);
+static void CompileExit(FbleArena* arena, Blocks* blocks, bool exit, FbleInstrV* instrs);
+static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs);
+static Type* CompileList(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs);
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
 static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
-static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time);
+static Type* CompileProgram(TypeArena* arena, Blocks* blocks, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs);
 
 // ReportError --
 //   Report a compiler error.
@@ -1706,6 +1741,190 @@ static void FreeVars(FbleArena* arena, Vars* vars)
   FbleFree(arena, vars->vars.xs);
 }
 
+// InitBlocks -- 
+//   Initialize a blocks stack.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   blocks - the blocks stack to initialize
+//   name - the name to use for the top level entry
+//   file - the file to use for the top level entry
+//   line - the line to use for the top level entry
+//   time - pointer to use for the time associated with the initial block.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Initializes a block stack. The components of the block stack should be
+//   freed when no longer needed using:
+//     FbleFree(arena, blocks->stack.xs);
+//     FbleFreeBlockNames(arena_, &blocks->blocks);
+static void InitBlocks(FbleArena* arena, Blocks* blocks, const char* name, size_t* time, const char* file, size_t line)
+{
+  FbleVectorInit(arena, blocks->stack);
+
+  // Allocate a new copy of the name because all block names must be
+  // dynamically allocated.
+  FbleName nm;
+  nm.name = FbleArrayAlloc(arena, char, strlen(name) + 1);
+  strcpy((char*)nm.name, name);
+  nm.loc.source = file;
+  nm.loc.line = line;
+  nm.loc.col = 0;
+
+  FbleVectorInit(arena, blocks->blocks);
+  FbleVectorAppend(arena, blocks->blocks, nm);
+
+  BlockFrame frame = { .id = 0, .time = time };
+  FbleVectorAppend(arena, blocks->stack, frame);
+}
+
+// EnterBlock --
+//   Enter a new profiling block.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   blocks - the blocks stack.
+//   name - name to add to the current block path for naming the new block.
+//   loc - the location of the block.
+//   instrs - where to add the ENTER_BLOCK instruction to.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Adds a new block to the blocks stack. Change the current block to the new
+//   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
+//   exited when no longer in scope using ExitBlock or one of the other
+//   functions that exit a block.
+static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, FbleInstrV* instrs)
+{
+  assert(blocks->stack.size > 0);
+  size_t curr_id = blocks->stack.xs[blocks->stack.size-1].id;
+  size_t new_id = blocks->blocks.size;
+
+  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
+  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
+  enter->block = new_id;
+  FbleVectorAppend(arena, *instrs, &enter->_base);
+
+  BlockFrame* frame = FbleVectorExtend(arena, blocks->stack);
+  frame->id = new_id;
+  frame->time = &enter->time;
+
+  // Append ".name" to the current block name to figure out the new block
+  // name.
+  assert(blocks->blocks.size > curr_id);
+  const char* curr = blocks->blocks.xs[curr_id].name;
+  char* str = FbleArrayAlloc(arena, char, strlen(curr) + 1 + strlen(name.name) + 2);
+  str[0] = '\0';
+  strcat(str, curr);
+  strcat(str, ".");
+  strcat(str, name.name);
+  switch (name.space) {
+    case FBLE_NORMAL_NAME_SPACE: break;
+    case FBLE_TYPE_NAME_SPACE: strcat(str, "@"); break;
+    case FBLE_MODULE_NAME_SPACE: strcat(str, "%"); break;
+  }
+
+  FbleName* nm = FbleVectorExtend(arena, blocks->blocks);
+  nm->name = str;
+  nm->loc = loc;
+}
+
+// EnterBodyBlock --
+//   Enter a new body profiling block. This is used for the body of functions
+//   and processes that are executed when they are called, not when they are
+//   defined.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   blocks - the blocks stack.
+//   loc - The location of the new block.
+//   instrs - where to add the ENTER_BLOCK instruction to.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Adds a new block to the blocks stack. Change the current block to the new
+//   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
+//   exited when no longer in scope using ExitBlock or one of the other
+//   functions that exit a block.
+static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, FbleInstrV* instrs)
+{
+  assert(blocks->stack.size > 0);
+  size_t curr_id = blocks->stack.xs[blocks->stack.size-1].id;
+  size_t new_id = blocks->blocks.size;
+
+  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
+  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
+  enter->block = new_id;
+  FbleVectorAppend(arena, *instrs, &enter->_base);
+
+  BlockFrame* frame = FbleVectorExtend(arena, blocks->stack);
+  frame->id = new_id;
+  frame->time = &enter->time;
+
+  // Append "!" to the current block name to figure out the new block name.
+  assert(blocks->blocks.size > curr_id);
+  const char* curr = blocks->blocks.xs[curr_id].name;
+  char* str = FbleArrayAlloc(arena, char, strlen(curr) + 2);
+  str[0] = '\0';
+  strcat(str, curr);
+  strcat(str, "!");
+
+  FbleName* nm = FbleVectorExtend(arena, blocks->blocks);
+  nm->name = str;
+  nm->loc = loc;
+}
+
+// ExitBlock --
+//   Exit the current profiling block frame.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   blocks - the blocks stack.
+//   instrs - where to generate the PROFILE_EXIT_BLOCK instruction, or NULL to
+//            indicate that no instruction should be generated.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Pops the top block frame off the blocks stack and append a
+//   PROFILE_EXIT_BLOCK instruction to instrs if instrs is non-null.
+static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs)
+{
+  assert(blocks->stack.size > 0);
+  blocks->stack.size--;
+
+  if (instrs != NULL) {
+    FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileExitBlockInstr);
+    exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
+    FbleVectorAppend(arena, *instrs, &exit_instr->_base);
+  }
+}
+
+// AddBlockTime --
+//   Adds profile time to the current block frame.
+//
+// Inputs:
+//   blocks - the blocks stack.
+//   time - the amount of time to add to the current block frame.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Adds 'time' profile time to the current block frame.
+static void AddBlockTime(Blocks* blocks, size_t time)
+{
+  assert(blocks->stack.size > 0);
+  blocks->stack.xs[blocks->stack.size-1].time += time;
+}
+
 // EnterThunk --
 //   Prepare to capture variables for a thunk.
 //
@@ -1780,74 +1999,29 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
   return scopec;
 }
 
-// MakeBlockName --
-//   Compute the name for a profiling block, given a sequence of names
-//   representing the current location.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   name - sequence of names representing the current location
-//
-// Results:
-//   A newly allocated name for the block.
-//
-// Side effects:
-//   Allocates a string that should be freed with FbleFree when no longer
-//   needed.
-static char* MakeBlockName(FbleArena* arena, FbleNameV* name)
-{
-  size_t size = 1;
-  for (size_t i = 0; i < name->size; ++i) {
-    // + 1 for '.'
-    // + 1 for namespace indicator
-    size += strlen(name->xs[i].name) + 2;
-  }
-
-  char* str = FbleArrayAlloc(arena, char, size);
-  str[0] = '\0';
-  for (size_t i = 0; i < name->size; ++i) {
-    if (i > 0) {
-      strcat(str, ".");
-    }
-    strcat(str, name->xs[i].name);
-    switch (name->xs[i].space) {
-      case FBLE_NORMAL_NAME_SPACE: break;
-      case FBLE_TYPE_NAME_SPACE: strcat(str, "@"); break;
-      case FBLE_MODULE_NAME_SPACE: strcat(str, "%"); break;
-    }
-  }
-  return str;
-}
-
 // NewInstrBlock --
 //   Allocate and initialize a new instruction block.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blocks - the list of blocks in the program to populate.
-//   name - a sequence of human readable names identifying the current block.
-//   block - the source location of the block, used for profiling purposes.
+//   blocks - the block stack.
+//   loc - the source location of the block, used for profiling purposes.
 //
 // Results:
 //   A newly allocated and initialized instruction block.
 //
 // Side effects:
-//   Records the new block in the 'blocks' data structure.
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena, FbleNameV* blocks, FbleNameV* name, FbleLoc block)
+//   Enters a block onto the block stack represnting the execution of the
+//   instruction block that must be exited appropriately. Allocates a new
+//   instruction block that should be freed with FbleFreeInstrBlock when no
+//   longer needed.
+static FbleInstrBlock* NewInstrBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc)
 {
   FbleInstrBlock* instr_block = FbleAlloc(arena, FbleInstrBlock);
   instr_block->refcount = 1;
   FbleVectorInit(arena, instr_block->instrs);
-
-  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
-  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
-  enter->block = blocks->size;
-  enter->time = 1;
-  FbleVectorAppend(arena, instr_block->instrs, &enter->_base);
-
-  FbleName* nm = FbleVectorExtend(arena, *blocks);
-  nm->name = MakeBlockName(arena, name);
-  nm->loc = block;
+  EnterBodyBlock(arena, blocks, loc, &instr_block->instrs);
+  AddBlockTime(blocks, 1);
   return instr_block;
 }
 
@@ -1953,10 +2127,12 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
 }
 
 // CompileExit --
-//   If exit is true, append an exit scope instruction to instrs.
+//   If exit is true, exit the current block and append an exit scope
+//   instruction to instrs.
 //
 // Inputs:
 //   arena - arena for allocations.
+//   blocks - the blocks stack.
 //   exit - whether we actually want to exit.
 //   instrs - vector of instructions to append new instructions to.
 //
@@ -1964,13 +2140,18 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
 //   none.
 //
 // Side effects:
-//   If exit is true, append an exit scope instruction to instrs
-static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs)
+//   If exit is true, exits the current block and appends an exit scope
+//   instruction to instrs
+static void CompileExit(FbleArena* arena, Blocks* blocks, bool exit, FbleInstrV* instrs)
 {
   if (exit) {
     FbleExitScopeInstr* exit_scope = FbleAlloc(arena, FbleExitScopeInstr);
     exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
     FbleVectorAppend(arena, *instrs, &exit_scope->_base);
+
+    // The EXIT_SCOPE instruction has the side effect of exiting the profile
+    // block; ExitBlock ought not to generate its own instruction as well.
+    ExitBlock(arena, blocks, NULL);
   }
 }
 
@@ -1981,29 +2162,26 @@ static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs)
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blocks - the vector of block locations to populate.
-//   name - a sequence of names describing the current location in the code.
-//          Used for naming profiling blocks.
-//   exit - if true, generate instructions to exit the current scope when done.
+//   blocks - the blocks stack.
+//   exit - if true, generate instructions to exit the current scope and exit
+//          the current block when done.
 //   vars - the list of variables in scope.
 //   expr - the expression to compile.
 //   instrs - vector of instructions to append new instructions to.
-//   time - output var tracking the time required to execute the compiled block.
 //
 // Results:
 //   The type of the expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-//   Appends blocks to 'blocks' with compiled block information.
+//   Updates the blocks stack with with compiled block information. Exits the
+//   current block if 'exit' is true.
 //   Appends instructions to 'instrs' for executing the given expression.
 //   There is no gaurentee about what instructions have been appended to
 //   'instrs' if the expression fails to compile.
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   TypeRelease when it is no longer needed.
-//   Increments 'time' by the amount of time required to execute this
-//   expression.
-static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs, size_t* time)
+static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (expr->tag) {
@@ -2012,7 +2190,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_FUNC_TYPE_EXPR:
     case FBLE_PROC_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
 
       Type* type = CompileType(arena, vars, expr);
       if (type == NULL) {
@@ -2032,7 +2210,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       instr->_base.tag = FBLE_TYPE_INSTR;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
       return &type_type->_base;
     }
 
@@ -2041,15 +2219,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       bool error = false;
 
       size_t argc = misc_apply_expr->args.size;
-      *time += 1 + argc;
+      AddBlockTime(blocks, 1 + argc);
       Type* arg_types[argc];
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - 1 - i;
-        arg_types[j] = CompileExpr(arena, blocks, name, false, vars, misc_apply_expr->args.xs[j], instrs, time);
+        arg_types[j] = CompileExpr(arena, blocks, false, vars, misc_apply_expr->args.xs[j], instrs);
         error = error || (arg_types[j] == NULL);
       }
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, misc_apply_expr->misc, instrs, time);
+      Type* type = CompileExpr(arena, blocks, false, vars, misc_apply_expr->misc, instrs);
       error = error || (type == NULL);
 
       if (error) {
@@ -2156,7 +2334,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
           struct_instr->argc = struct_type->fields.size;
           FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
-          CompileExit(arena_, exit, instrs);
+          CompileExit(arena_, blocks, exit, instrs);
           return vtype;
         }
 
@@ -2176,7 +2354,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     }
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
 
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
       StructType* struct_type = FbleAlloc(arena_, StructType);
@@ -2192,9 +2370,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
-        FbleVectorAppend(arena_, *name, arg->name);
-        arg_types[j] = CompileExpr(arena, blocks, name, false, vars, arg->expr, instrs, time);
-        name->size--;
+        EnterBlock(arena_, blocks, arg->name, arg->expr->loc, instrs);
+        arg_types[j] = CompileExpr(arena, blocks, false, vars, arg->expr, instrs);
+        ExitBlock(arena_, blocks, instrs);
         error = error || (arg_types[j] == NULL);
       }
 
@@ -2235,12 +2413,12 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->argc = struct_expr->args.size;
       FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
       return &struct_type->_base;
     }
 
     case FBLE_UNION_VALUE_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       Type* type = CompileType(arena, vars, union_value_expr->type);
       if (type == NULL) {
@@ -2274,7 +2452,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         return NULL;
       }
 
-      Type* arg_type = CompileExpr(arena, blocks, name, false, vars, union_value_expr->arg, instrs, time);
+      Type* arg_type = CompileExpr(arena, blocks, false, vars, union_value_expr->arg, instrs);
       if (arg_type == NULL) {
         TypeRelease(arena, type);
         return NULL;
@@ -2294,18 +2472,18 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->tag = tag;
       FbleVectorAppend(arena_, *instrs, &union_instr->_base);
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
       return type;
     }
 
     case FBLE_MISC_ACCESS_EXPR: {
       // TODO: Should time be O(lg(N)) instead of O(1), where N is the number
       // of fields in the union/struct?
-      *time += 1;
+      AddBlockTime(blocks, 1);
 
       FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, access_expr->object, instrs, time);
+      Type* type = CompileExpr(arena, blocks, false, vars, access_expr->object, instrs);
       if (type == NULL) {
         return NULL;
       }
@@ -2315,7 +2493,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       access->loc = access_expr->field.loc;
       FbleVectorAppend(arena_, *instrs, &access->_base);
 
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
 
       Type* normal = Normal(type);
       FieldV* fields = NULL;
@@ -2353,11 +2531,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_UNION_SELECT_EXPR: {
       // TODO: Should time be O(lg(N)) instead of O(1), where N is the number
       // of fields in the union/struct?
-      *time += 1;
+      AddBlockTime(blocks, 1);
 
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, select_expr->condition, instrs, time);
+      Type* type = CompileExpr(arena, blocks, false, vars, select_expr->condition, instrs);
       if (type == NULL) {
         return NULL;
       }
@@ -2393,7 +2571,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       size_t default_pc = instrs->size;
       FbleGotoInstr* exit_goto_default = NULL;
       if (select_expr->default_ != NULL) {
-        return_type = CompileExpr(arena, blocks, name, exit, vars, select_expr->default_, instrs, time);
+        FbleName name = {
+          .name = ":",
+          .loc = select_expr->default_->loc,  // unused.
+          .space = FBLE_NORMAL_NAME_SPACE
+        };
+        EnterBlock(arena_, blocks, name, select_expr->default_->loc, instrs);
+        return_type = CompileExpr(arena, blocks, exit, vars, select_expr->default_, instrs);
+        ExitBlock(arena_, blocks, exit ? NULL : instrs);
+
         if (return_type == NULL) {
           TypeRelease(arena, type);
           return NULL;
@@ -2412,25 +2598,15 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         if (choice < select_expr->choices.size && FbleNamesEqual(&select_expr->choices.xs[choice].name, &union_type->fields.xs[i].name)) {
           enter_gotos[i]->pc = instrs->size;
 
-          FbleVectorAppend(arena_, *name, select_expr->choices.xs[choice].name);
-
-          FbleProfileEnterBlockInstr* enter = FbleAlloc(arena_, FbleProfileEnterBlockInstr);
-          enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
-          enter->block = blocks->size;
-          enter->time = 1;
-          FbleVectorAppend(arena_, *instrs, &enter->_base);
-          FbleName* nm = FbleVectorExtend(arena_, *blocks);
-          nm->name = MakeBlockName(arena_, name);
-          nm->loc = select_expr->choices.xs[choice].expr->loc;
-
-          Type* arg_type = CompileExpr(arena, blocks, name, exit, vars, select_expr->choices.xs[choice].expr, instrs, time);
-          name->size--;
+          EnterBlock(arena_, blocks,
+              select_expr->choices.xs[choice].name,
+              select_expr->choices.xs[choice].expr->loc,
+              instrs);
+          AddBlockTime(blocks, 1);
+          Type* arg_type = CompileExpr(arena, blocks, exit, vars, select_expr->choices.xs[choice].expr, instrs);
+          ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
           if (!exit) {
-            FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena_, FbleProfileExitBlockInstr);
-            exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
-            FbleVectorAppend(arena_, *instrs, &exit_instr->_base);
-
             exit_gotos[choice] = FbleAlloc(arena_, FbleGotoInstr);
             exit_gotos[choice]->_base.tag = FBLE_GOTO_INSTR;
             FbleVectorAppend(arena_, *instrs, &exit_gotos[choice]->_base);
@@ -2525,7 +2701,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleFuncValueInstr* instr = FbleAlloc(arena_, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, name, func_value_expr->body->loc);
+      instr->body = NewInstrBlock(arena_, blocks, func_value_expr->body->loc);
       instr->argc = argc;
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
@@ -2539,10 +2715,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         PushVar(arena_, &thunk_vars, func_value_expr->args.xs[i].name, arg_types[i]);
       }
 
-      assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-      size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
-
-      Type* type = CompileExpr(arena, blocks, name, true, &thunk_vars, func_value_expr->body, &instr->body->instrs, body_time);
+      Type* type = CompileExpr(arena, blocks, true, &thunk_vars, func_value_expr->body, &instr->body->instrs);
       if (type == NULL) {
         FreeVars(arena_, &thunk_vars);
         FreeInstr(arena_, &instr->_base);
@@ -2556,11 +2729,11 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
-      *time += instr->scopec;
+      AddBlockTime(blocks, instr->scopec);
       vpush->count = instr->scopec + argc;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
 
       for (size_t i = 0; i < argc; ++i) {
         Type* arg_type = arg_types[argc - 1 - i];
@@ -2584,7 +2757,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     }
 
     case FBLE_EVAL_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
       Vars thunk_vars;
@@ -2592,22 +2765,20 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, name, expr->loc);
+      instr->body = NewInstrBlock(arena_, blocks, expr->loc);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
 
-      assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-      size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
-      Type* type = CompileExpr(arena, blocks, name, false, &thunk_vars, eval_expr->body, &instr->body->instrs, body_time);
+      Type* type = CompileExpr(arena, blocks, false, &thunk_vars, eval_expr->body, &instr->body->instrs);
 
-      CompileExit(arena_, true, &instr->body->instrs);
+      CompileExit(arena_, blocks, true, &instr->body->instrs);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
       vpush->count = instr->scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
 
       if (type == NULL) {
         return NULL;
@@ -2625,7 +2796,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     }
 
     case FBLE_LINK_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
       FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
       if (FbleNamesEqual(&link_expr->get, &link_expr->put)) {
         ReportError(arena_, &link_expr->put.loc,
@@ -2679,7 +2850,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, name, link_expr->body->loc);
+      instr->body = NewInstrBlock(arena_, blocks, link_expr->body->loc);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
@@ -2696,20 +2867,18 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       PushVar(arena_, &thunk_vars, link_expr->get, &get_type->_base);
       PushVar(arena_, &thunk_vars, link_expr->put, &put_type->_base);
 
-      assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-      size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
-
-      Type* type = CompileExpr(arena, blocks, name, false, &thunk_vars, link_expr->body, &instr->body->instrs, body_time);
+      Type* type = CompileExpr(arena, blocks, false, &thunk_vars, link_expr->body, &instr->body->instrs);
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->exit = true;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
+      ExitBlock(arena_, blocks, NULL);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
       vpush->count = instr->scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
 
       TypeRelease(arena, port_type);
       TypeRelease(arena, &get_type->_base);
@@ -2734,7 +2903,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
       bool error = false;
 
-      *time += 1 + exec_expr->bindings.size;
+      AddBlockTime(blocks, 1 + exec_expr->bindings.size);
 
       // Evaluate the types of the bindings and set up the new vars.
       Var nvd[exec_expr->bindings.size];
@@ -2749,7 +2918,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, name, exec_expr->body->loc);
+      instr->body = NewInstrBlock(arena_, blocks, exec_expr->body->loc);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
@@ -2770,10 +2939,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       Type* rtype = NULL;
       if (!error) {
-        assert(instr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-        size_t* body_time = &((FbleProfileEnterBlockInstr*)instr->body->instrs.xs[0])->time;
-
-        rtype = CompileExpr(arena, blocks, name, false, &thunk_vars, exec_expr->body, &instr->body->instrs, body_time);
+        rtype = CompileExpr(arena, blocks, false, &thunk_vars, exec_expr->body, &instr->body->instrs);
         error = (rtype == NULL);
       }
 
@@ -2788,6 +2954,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->exit = true;
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
+      ExitBlock(arena_, blocks, NULL);
 
       size_t captured = ExitThunk(arena_, vars, &thunk_vars, instrs);
       instr->scopec = captured + exec_expr->bindings.size;
@@ -2800,20 +2967,19 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
         FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
         binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
-        binstr->body = NewInstrBlock(arena_, blocks, name, exec_expr->bindings.xs[i].expr->loc);
+        binstr->body = NewInstrBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc);
 
         FbleVPushInstr* bvpush = FbleAlloc(arena_, FbleVPushInstr);
         bvpush->_base.tag = FBLE_VPUSH_INSTR;
         FbleVectorAppend(arena_, binstr->body->instrs, &bvpush->_base);
 
-        assert(binstr->body->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-        size_t* bbody_time = &((FbleProfileEnterBlockInstr*)binstr->body->instrs.xs[0])->time;
-        Type* type = CompileExpr(arena, blocks, name, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->body->instrs, bbody_time);
+        Type* type = CompileExpr(arena, blocks, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->body->instrs);
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
         bproc->exit = true;
         FbleVectorAppend(arena_, binstr->body->instrs, &bproc->_base);
+        ExitBlock(arena_, blocks, NULL);
 
         binstr->scopec = ExitThunk(arena_, vars, &bthunk_vars, instrs);
         bvpush->count = binstr->scopec;
@@ -2842,7 +3008,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, exit, instrs);
+      CompileExit(arena_, blocks, exit, instrs);
 
       if (error) {
         TypeRelease(arena, rtype);
@@ -2853,7 +3019,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     }
 
     case FBLE_VAR_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
 
       for (size_t i = 0; i < vars->nvars; ++i) {
@@ -2865,7 +3031,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           instr->position = j;
           FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
-          CompileExit(arena_, exit, instrs);
+          CompileExit(arena_, blocks, exit, instrs);
           return TypeRetain(arena, var->type);
         }
       }
@@ -2879,7 +3045,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     case FBLE_LET_EXPR: {
       FbleLetExpr* let_expr = (FbleLetExpr*)expr;
       bool error = false;
-      *time += 1 + let_expr->bindings.size;
+      AddBlockTime(blocks, 1 + let_expr->bindings.size);
 
       // Evaluate the types of the bindings and set up the new vars.
       Var nvd[let_expr->bindings.size];
@@ -2945,9 +3111,9 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
         Type* type = NULL;
         if (!error) {
-          FbleVectorAppend(arena_, *name, binding->name);
-          type = CompileExpr(arena, blocks, name, false, vars, binding->expr, instrs, time);
-          name->size--;
+          EnterBlock(arena_, blocks, binding->name, binding->expr->loc, instrs);
+          type = CompileExpr(arena, blocks, false, vars, binding->expr, instrs);
+          ExitBlock(arena_, blocks, instrs);
         }
         error = error || (type == NULL);
 
@@ -3012,7 +3178,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       Type* rtype = NULL;
       if (!error) {
-        rtype = CompileExpr(arena, blocks, name, exit, vars, let_expr->body, instrs, time);
+        rtype = CompileExpr(arena, blocks, exit, vars, let_expr->body, instrs);
         error = (rtype == NULL);
       }
 
@@ -3036,7 +3202,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
     }
 
     case FBLE_MODULE_REF_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
       for (size_t i = 0; i < vars->nvars; ++i) {
@@ -3048,7 +3214,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
           instr->position = j;
           FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
-          CompileExit(arena_, exit, instrs);
+          CompileExit(arena_, blocks, exit, instrs);
           return TypeRetain(arena, var->type);
         }
       }
@@ -3082,7 +3248,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       // TODO: It's a little silly that we are pushing an empty type value
       // here. Oh well. Maybe in the future we'll optimize those away or
       // add support for non-type poly args too.
-      *time += 1;
+      AddBlockTime(blocks, 1);
       FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
       type_instr->_base.tag = FBLE_TYPE_INSTR;
       FbleVectorAppend(arena_, *instrs, &type_instr->_base);
@@ -3093,7 +3259,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       FbleVectorAppend(arena_, *instrs, &vpush->_base);
       PushVar(arena_, vars, poly->arg.name, &type_type->_base);
 
-      Type* body = CompileExpr(arena, blocks, name, exit, vars, poly->body, instrs, time);
+      Type* body = CompileExpr(arena, blocks, exit, vars, poly->body, instrs);
 
       PopVar(arena_, vars);
       TypeRelease(arena, &type_type->_base);
@@ -3121,7 +3287,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
       // Note: typeof(poly<arg>) = typeof(poly)<arg>
       // CompileExpr gives us typeof(poly)
-      Type* poly = CompileExpr(arena, blocks, name, exit, vars, apply->poly, instrs, time);
+      Type* poly = CompileExpr(arena, blocks, exit, vars, apply->poly, instrs);
       if (poly == NULL) {
         return NULL;
       }
@@ -3173,7 +3339,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         ._base = { .tag = FBLE_TYPEOF_EXPR, .loc = expr->loc },
         .expr = list_expr->args.xs[0],
       };
-      return CompileList(arena, blocks, name, exit, vars, expr->loc, &typeof_elem._base, list_expr->args, instrs, time);
+      return CompileList(arena, blocks, exit, vars, expr->loc, &typeof_elem._base, list_expr->args, instrs);
     }
 
     case FBLE_LITERAL_EXPR: {
@@ -3223,14 +3389,14 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
       }
 
       FbleExprV args = { .size = n, .xs = xs, };
-      return CompileList(arena, blocks, name, exit, vars, literal->word_loc, literal->type, args, instrs, time);
+      return CompileList(arena, blocks, exit, vars, literal->word_loc, literal->type, args, instrs);
     }
 
     case FBLE_STRUCT_IMPORT_EXPR: {
-      *time += 1;
+      AddBlockTime(blocks, 1);
       FbleStructImportExpr* struct_import_expr = (FbleStructImportExpr*)expr;
 
-      Type* type = CompileExpr(arena, blocks, name, false, vars, struct_import_expr->nspace, instrs, time);
+      Type* type = CompileExpr(arena, blocks, false, vars, struct_import_expr->nspace, instrs);
       if (type == NULL) {
         return NULL;
       }
@@ -3245,7 +3411,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         return NULL;
       }
 
-      *time += 1 + struct_type->fields.size;
+      AddBlockTime(blocks, 1 + struct_type->fields.size);
 
       FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
       struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
@@ -3256,7 +3422,7 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
         PushVar(arena_, vars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
       }
 
-      Type* rtype = CompileExpr(arena, blocks, name, exit, vars, struct_import_expr->body, instrs, time);
+      Type* rtype = CompileExpr(arena, blocks, exit, vars, struct_import_expr->body, instrs);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PopVar(arena_, vars);
@@ -3285,31 +3451,28 @@ static Type* CompileExpr(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blocks - the vector of block locations to populate.
-//   name - a sequence of names describing the current location in the code.
-//          Used for naming profiling blocks.
-//   exit - if true, generate instructions to exit the current scope when done.
+//   blocks - the blocks stack.
+//   exit - if true, generate instructions to exit the current scope and block
+//          when done.
 //   vars - the list of variables in scope.
 //   loc - the location of the list expression.
 //   type - the expected type of the list elements.
 //   args - the elements of the list expression to compile.
 //   instrs - vector of instructions to append new instructions to.
-//   time - output var tracking the time required to execute the compiled block.
 //
 // Results:
 //   The type of the expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-//   Appends blocks to 'blocks' with compiled block information.
+//   Updates blocks with compiled block information. Exits the current block
+//   if 'exit' is true.
 //   Appends instructions to 'instrs' for executing the given expression.
 //   There is no gaurentee about what instructions have been appended to
 //   'instrs' if the expression fails to compile.
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   TypeRelease when it is no longer needed.
-//   Increments 'time' by the amount of time required to execute this
-//   expression.
-static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs, size_t* time)
+static Type* CompileList(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs)
 {
   // The goal is to desugar a list expression [a, b, c, d] into the
   // following expression:
@@ -3476,7 +3639,7 @@ static Type* CompileList(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, b
 
   FbleExpr* expr = (args.size == 0) ? &apply_type._base : &apply_elems._base;
 
-  Type* result = CompileExpr(arena, blocks, name, exit, vars, expr, instrs, time);
+  Type* result = CompileExpr(arena, blocks, exit, vars, expr, instrs);
 
   for (size_t i = 0; i < args.size; i++) {
     FbleFree(arena_, (void*)arg_names[i].name);
@@ -3515,15 +3678,14 @@ static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr)
 
   FbleInstrV instrs;
   FbleVectorInit(arena_, instrs);
-  FbleNameV blocks;
-  FbleVectorInit(arena_, blocks);
-  FbleNameV name;
-  FbleVectorInit(arena_, name);
-  size_t time;
-  Type* type = CompileExpr(arena, &blocks, &name, true, &nvars, expr, &instrs, &time);
-  FbleFree(arena_, name.xs);
 
-  FbleFreeBlockNames(arena_, &blocks);
+  Blocks blocks;
+  size_t time;
+  InitBlocks(arena_, &blocks, "_", &time, __FILE__, __LINE__);
+  Type* type = CompileExpr(arena, &blocks, true, &nvars, expr, &instrs);
+  FbleFree(arena_, blocks.stack.xs);
+  FbleFreeBlockNames(arena_, &blocks.blocks);
+
   for (size_t i = 0; i < instrs.size; ++i) {
     FreeInstr(arena_, instrs.xs[i]);
   }
@@ -3771,37 +3933,33 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blocks - the vector of block locations to populate.
-//   name - a sequence of names describing the current location in the code.
-//          Used for naming profiling blocks.
+//   blocks - the blocks stack.
 //   vars - the list of variables in scope.
 //   prgm - the program to compile.
 //   instrs - vector of instructions to append new instructions to.
-//   time - output var tracking the time required to execute the compiled block.
 //
 // Results:
 //   The type of the program, or NULL if the program is not well typed.
 //
 // Side effects:
-//   Appends blocks to 'blocks' with compiled block information.
+//   Updates 'blocks' with compiled block information. Exits the current
+//   block.
 //   Appends instructions to 'instrs' for executing the given program.
 //   There is no gaurentee about what instructions have been appended to
 //   'instrs' if the program fails to compile.
 //   Prints a message to stderr if the program fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   TypeRelease when it is no longer needed.
-//   Increments 'time' by the amount of time required to execute this
-//   program.
-static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs, size_t* time)
+static Type* CompileProgram(TypeArena* arena, Blocks* blocks, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs)
 {
-  *time += 1 + prgm->modules.size;
+  AddBlockTime(blocks, 1 + prgm->modules.size);
 
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Type* types[prgm->modules.size];
   for (size_t i = 0; i < prgm->modules.size; ++i) {
-    FbleVectorAppend(arena_, *name, prgm->modules.xs[i].name);
-    types[i] = CompileExpr(arena, blocks, name, false, vars, prgm->modules.xs[i].value, instrs, time);
-    name->size--;
+    EnterBlock(arena_, blocks, prgm->modules.xs[i].name, prgm->modules.xs[i].value->loc, instrs);
+    types[i] = CompileExpr(arena, blocks, false, vars, prgm->modules.xs[i].value, instrs);
+    ExitBlock(arena_, blocks, instrs);
 
     if (types[i] == NULL) {
       for (size_t j = 0; j < i; ++j) {
@@ -3817,7 +3975,7 @@ static Type* CompileProgram(TypeArena* arena, FbleNameV* blocks, FbleNameV* name
     PushVar(arena_, vars, prgm->modules.xs[i].name, types[i]);
   }
 
-  Type* rtype = CompileExpr(arena, blocks, name, true, vars, prgm->main, instrs, time);
+  Type* rtype = CompileExpr(arena, blocks, true, vars, prgm->main, instrs);
   for (size_t i = 0; i < prgm->modules.size; ++i) {
     PopVar(arena_, vars);
     TypeRelease(arena, types[i]);
@@ -3851,39 +4009,29 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 // FbleCompile -- see documentation in internal.h
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* program)
 {
-  FbleVectorInit(arena, *blocks);
-  FbleName* nmain = FbleVectorExtend(arena, *blocks);
+  Blocks block_stack;
+  InitBlocks(arena, &block_stack, "__main", NULL, __FILE__, __LINE__);
+  FbleVectorInit(arena, block_stack.stack);
+  FbleVectorInit(arena, block_stack.blocks);
 
-  nmain->name = FbleArrayAlloc(arena, char, 7);
-  strcpy((char*)nmain->name, "__main");
-  nmain->loc.source = __FILE__;
-  nmain->loc.line = __LINE__;
-  nmain->loc.col = 0;
-
-  FbleNameV name;
-  FbleVectorInit(arena, name);
-
-  // TODO: What location to use for the instruction block?
-  FbleInstrBlock* block = NewInstrBlock(arena, blocks, &name, program->main->loc);
-
-  assert(block->instrs.xs[0]->tag == FBLE_PROFILE_ENTER_BLOCK_INSTR);
-  size_t* body_time = &((FbleProfileEnterBlockInstr*)block->instrs.xs[0])->time;
+  FbleInstrBlock* block = NewInstrBlock(arena, &block_stack, program->main->loc);
 
   Vars vars;
   FbleVectorInit(arena, vars.vars);
   vars.nvars = 0;
 
   TypeArena* type_arena = FbleNewRefArena(arena, &TypeFree, &TypeAdded);
-  Type* type = CompileProgram(type_arena, blocks, &name, &vars, program, &block->instrs, body_time);
+  Type* type = CompileProgram(type_arena, &block_stack, &vars, program, &block->instrs);
   TypeRelease(type_arena, type);
   FbleDeleteRefArena(type_arena);
 
-  FbleFree(arena, name.xs);
+  FbleFree(arena, block_stack.stack.xs);
 
   FreeVars(arena, &vars);
   if (type == NULL) {
     FbleFreeInstrBlock(arena, block);
     return NULL;
   }
+  *blocks = block_stack.blocks;
   return block;
 }
