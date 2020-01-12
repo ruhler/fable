@@ -1807,6 +1807,7 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
   enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
   enter->block = new_id;
+  enter->time = 0;
   FbleVectorAppend(arena, *instrs, &enter->_base);
 
   BlockFrame* frame = FbleVectorExtend(arena, blocks->stack);
@@ -1861,6 +1862,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, FbleIn
   FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
   enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
   enter->block = new_id;
+  enter->time = 0;
   FbleVectorAppend(arena, *instrs, &enter->_base);
 
   BlockFrame* frame = FbleVectorExtend(arena, blocks->stack);
@@ -1922,7 +1924,8 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs)
 static void AddBlockTime(Blocks* blocks, size_t time)
 {
   assert(blocks->stack.size > 0);
-  blocks->stack.xs[blocks->stack.size-1].time += time;
+  size_t* time_ptr = blocks->stack.xs[blocks->stack.size-1].time;
+  *time_ptr += time;
 }
 
 // EnterThunk --
@@ -2578,7 +2581,6 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
         };
         EnterBlock(arena_, blocks, name, select_expr->default_->loc, instrs);
         return_type = CompileExpr(arena, blocks, exit, vars, select_expr->default_, instrs);
-        ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
         if (return_type == NULL) {
           TypeRelease(arena, type);
@@ -2586,6 +2588,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
         }
 
         if (!exit) {
+          ExitBlock(arena_, blocks, instrs);
           exit_goto_default = FbleAlloc(arena_, FbleGotoInstr);
           exit_goto_default->_base.tag = FBLE_GOTO_INSTR;
           FbleVectorAppend(arena_, *instrs, &exit_goto_default->_base);
@@ -2604,9 +2607,9 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
               instrs);
           AddBlockTime(blocks, 1);
           Type* arg_type = CompileExpr(arena, blocks, exit, vars, select_expr->choices.xs[choice].expr, instrs);
-          ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
           if (!exit) {
+            ExitBlock(arena_, blocks, instrs);
             exit_gotos[choice] = FbleAlloc(arena_, FbleGotoInstr);
             exit_gotos[choice]->_base.tag = FBLE_GOTO_INSTR;
             FbleVectorAppend(arena_, *instrs, &exit_gotos[choice]->_base);
@@ -4011,8 +4014,6 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
 {
   Blocks block_stack;
   InitBlocks(arena, &block_stack, "__main", NULL, __FILE__, __LINE__);
-  FbleVectorInit(arena, block_stack.stack);
-  FbleVectorInit(arena, block_stack.blocks);
 
   FbleInstrBlock* block = NewInstrBlock(arena, &block_stack, program->main->loc);
 
@@ -4025,13 +4026,14 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   TypeRelease(type_arena, type);
   FbleDeleteRefArena(type_arena);
 
+  assert(block_stack.stack.size == 1);
   FbleFree(arena, block_stack.stack.xs);
+  *blocks = block_stack.blocks;
 
   FreeVars(arena, &vars);
   if (type == NULL) {
     FbleFreeInstrBlock(arena, block);
     return NULL;
   }
-  *blocks = block_stack.blocks;
   return block;
 }
