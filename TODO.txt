@@ -1,3 +1,6 @@
+* Remove excess !!! in block names.
+* Remove / 1000 in profile report.
+* Pick a better top level block name than __main. Maybe ""?
 * [lang] redo syntax for literals
 * [test] Fix infinite recursion in TypeEquals.
 * Replace TicTacToe MemoTable with a generic Map from Data to T@.

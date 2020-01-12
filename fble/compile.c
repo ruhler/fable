@@ -320,12 +320,12 @@ static void AddBlockTime(Blocks* blocks, size_t time);
 static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars);
 static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrV* instrs);
 
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc);
+static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 
 static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type);
 
-static void CompileExit(FbleArena* arena, Blocks* blocks, bool exit, FbleInstrV* instrs);
+static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs);
 static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs);
 static Type* CompileList(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs);
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
@@ -1796,8 +1796,7 @@ static void InitBlocks(FbleArena* arena, Blocks* blocks, const char* name, size_
 // Side effects:
 //   Adds a new block to the blocks stack. Change the current block to the new
 //   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
-//   exited when no longer in scope using ExitBlock or one of the other
-//   functions that exit a block.
+//   exited when no longer in scope using ExitBlock.
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, FbleInstrV* instrs)
 {
   assert(blocks->stack.size > 0);
@@ -2007,24 +2006,18 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blocks - the block stack.
-//   loc - the source location of the block, used for profiling purposes.
 //
 // Results:
 //   A newly allocated and initialized instruction block.
 //
 // Side effects:
-//   Enters a block onto the block stack represnting the execution of the
-//   instruction block that must be exited appropriately. Allocates a new
-//   instruction block that should be freed with FbleFreeInstrBlock when no
-//   longer needed.
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc)
+//   Allocates a new instruction block that should be freed with
+//   FbleFreeInstrBlock when no longer needed.
+static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
 {
   FbleInstrBlock* instr_block = FbleAlloc(arena, FbleInstrBlock);
   instr_block->refcount = 1;
   FbleVectorInit(arena, instr_block->instrs);
-  EnterBodyBlock(arena, blocks, loc, &instr_block->instrs);
-  AddBlockTime(blocks, 1);
   return instr_block;
 }
 
@@ -2130,8 +2123,7 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
 }
 
 // CompileExit --
-//   If exit is true, exit the current block and append an exit scope
-//   instruction to instrs.
+//   If exit is true, appends an exit scope instruction to instrs.
 //
 // Inputs:
 //   arena - arena for allocations.
@@ -2143,18 +2135,13 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type)
 //   none.
 //
 // Side effects:
-//   If exit is true, exits the current block and appends an exit scope
-//   instruction to instrs
-static void CompileExit(FbleArena* arena, Blocks* blocks, bool exit, FbleInstrV* instrs)
+//   If exit is true, appends an exit scope instruction to instrs
+static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs)
 {
   if (exit) {
     FbleExitScopeInstr* exit_scope = FbleAlloc(arena, FbleExitScopeInstr);
     exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
     FbleVectorAppend(arena, *instrs, &exit_scope->_base);
-
-    // The EXIT_SCOPE instruction has the side effect of exiting the profile
-    // block; ExitBlock ought not to generate its own instruction as well.
-    ExitBlock(arena, blocks, NULL);
   }
 }
 
@@ -2166,8 +2153,7 @@ static void CompileExit(FbleArena* arena, Blocks* blocks, bool exit, FbleInstrV*
 // Inputs:
 //   arena - arena to use for allocations.
 //   blocks - the blocks stack.
-//   exit - if true, generate instructions to exit the current scope and exit
-//          the current block when done.
+//   exit - if true, generate instructions to exit the current scope.
 //   vars - the list of variables in scope.
 //   expr - the expression to compile.
 //   instrs - vector of instructions to append new instructions to.
@@ -2176,8 +2162,7 @@ static void CompileExit(FbleArena* arena, Blocks* blocks, bool exit, FbleInstrV*
 //   The type of the expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-//   Updates the blocks stack with with compiled block information. Exits the
-//   current block if 'exit' is true.
+//   Updates the blocks stack with with compiled block information.
 //   Appends instructions to 'instrs' for executing the given expression.
 //   There is no gaurentee about what instructions have been appended to
 //   'instrs' if the expression fails to compile.
@@ -2213,7 +2198,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       instr->_base.tag = FBLE_TYPE_INSTR;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
       return &type_type->_base;
     }
 
@@ -2337,7 +2322,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
           struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
           struct_instr->argc = struct_type->fields.size;
           FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
-          CompileExit(arena_, blocks, exit, instrs);
+          CompileExit(arena_, exit, instrs);
           return vtype;
         }
 
@@ -2416,7 +2401,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->argc = struct_expr->args.size;
       FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
       return &struct_type->_base;
     }
 
@@ -2475,7 +2460,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->tag = tag;
       FbleVectorAppend(arena_, *instrs, &union_instr->_base);
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
       return type;
     }
 
@@ -2496,7 +2481,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       access->loc = access_expr->field.loc;
       FbleVectorAppend(arena_, *instrs, &access->_base);
 
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
 
       Type* normal = Normal(type);
       FieldV* fields = NULL;
@@ -2581,6 +2566,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
         };
         EnterBlock(arena_, blocks, name, select_expr->default_->loc, instrs);
         return_type = CompileExpr(arena, blocks, exit, vars, select_expr->default_, instrs);
+        ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
         if (return_type == NULL) {
           TypeRelease(arena, type);
@@ -2588,7 +2574,6 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
         }
 
         if (!exit) {
-          ExitBlock(arena_, blocks, instrs);
           exit_goto_default = FbleAlloc(arena_, FbleGotoInstr);
           exit_goto_default->_base.tag = FBLE_GOTO_INSTR;
           FbleVectorAppend(arena_, *instrs, &exit_goto_default->_base);
@@ -2607,9 +2592,9 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
               instrs);
           AddBlockTime(blocks, 1);
           Type* arg_type = CompileExpr(arena, blocks, exit, vars, select_expr->choices.xs[choice].expr, instrs);
+          ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
           if (!exit) {
-            ExitBlock(arena_, blocks, instrs);
             exit_gotos[choice] = FbleAlloc(arena_, FbleGotoInstr);
             exit_gotos[choice]->_base.tag = FBLE_GOTO_INSTR;
             FbleVectorAppend(arena_, *instrs, &exit_gotos[choice]->_base);
@@ -2704,8 +2689,10 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 
       FbleFuncValueInstr* instr = FbleAlloc(arena_, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, func_value_expr->body->loc);
+      instr->body = NewInstrBlock(arena_);
       instr->argc = argc;
+
+      EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &instr->body->instrs);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
@@ -2719,6 +2706,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       }
 
       Type* type = CompileExpr(arena, blocks, true, &thunk_vars, func_value_expr->body, &instr->body->instrs);
+      ExitBlock(arena_, blocks, NULL);
       if (type == NULL) {
         FreeVars(arena_, &thunk_vars);
         FreeInstr(arena_, &instr->_base);
@@ -2736,7 +2724,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       vpush->count = instr->scopec + argc;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
 
       for (size_t i = 0; i < argc; ++i) {
         Type* arg_type = arg_types[argc - 1 - i];
@@ -2768,7 +2756,9 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, expr->loc);
+      instr->body = NewInstrBlock(arena_);
+
+      EnterBodyBlock(arena_, blocks, expr->loc, &instr->body->instrs);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
@@ -2776,12 +2766,13 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 
       Type* type = CompileExpr(arena, blocks, false, &thunk_vars, eval_expr->body, &instr->body->instrs);
 
-      CompileExit(arena_, blocks, true, &instr->body->instrs);
+      CompileExit(arena_, true, &instr->body->instrs);
+      ExitBlock(arena_, blocks, NULL);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
       vpush->count = instr->scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
 
       if (type == NULL) {
         return NULL;
@@ -2853,7 +2844,9 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, link_expr->body->loc);
+      instr->body = NewInstrBlock(arena_);
+
+      EnterBodyBlock(arena_, blocks, link_expr->body->loc, &instr->body->instrs);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
@@ -2881,7 +2874,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instrs);
       vpush->count = instr->scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
 
       TypeRelease(arena, port_type);
       TypeRelease(arena, &get_type->_base);
@@ -2921,7 +2914,9 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_, blocks, exec_expr->body->loc);
+      instr->body = NewInstrBlock(arena_);
+
+      EnterBodyBlock(arena_, blocks, exec_expr->body->loc, &instr->body->instrs);
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
@@ -2970,7 +2965,9 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 
         FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
         binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
-        binstr->body = NewInstrBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc);
+        binstr->body = NewInstrBlock(arena_);
+
+        EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->body->instrs);
 
         FbleVPushInstr* bvpush = FbleAlloc(arena_, FbleVPushInstr);
         bvpush->_base.tag = FBLE_VPUSH_INSTR;
@@ -3011,7 +3008,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
       }
 
       FbleVectorAppend(arena_, *instrs, &instr->_base);
-      CompileExit(arena_, blocks, exit, instrs);
+      CompileExit(arena_, exit, instrs);
 
       if (error) {
         TypeRelease(arena, rtype);
@@ -3034,7 +3031,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
           instr->position = j;
           FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
-          CompileExit(arena_, blocks, exit, instrs);
+          CompileExit(arena_, exit, instrs);
           return TypeRetain(arena, var->type);
         }
       }
@@ -3217,7 +3214,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
           instr->position = j;
           FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
-          CompileExit(arena_, blocks, exit, instrs);
+          CompileExit(arena_, exit, instrs);
           return TypeRetain(arena, var->type);
         }
       }
@@ -3455,8 +3452,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 // Inputs:
 //   arena - arena to use for allocations.
 //   blocks - the blocks stack.
-//   exit - if true, generate instructions to exit the current scope and block
-//          when done.
+//   exit - if true, generate instructions to exit the current scope.
 //   vars - the list of variables in scope.
 //   loc - the location of the list expression.
 //   type - the expected type of the list elements.
@@ -3467,8 +3463,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 //   The type of the expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-//   Updates blocks with compiled block information. Exits the current block
-//   if 'exit' is true.
+//   Updates blocks with compiled block information.
 //   Appends instructions to 'instrs' for executing the given expression.
 //   There is no gaurentee about what instructions have been appended to
 //   'instrs' if the expression fails to compile.
@@ -4015,14 +4010,16 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   Blocks block_stack;
   InitBlocks(arena, &block_stack, "__main", NULL, __FILE__, __LINE__);
 
-  FbleInstrBlock* block = NewInstrBlock(arena, &block_stack, program->main->loc);
+  FbleInstrBlock* block = NewInstrBlock(arena);
 
   Vars vars;
   FbleVectorInit(arena, vars.vars);
   vars.nvars = 0;
 
   TypeArena* type_arena = FbleNewRefArena(arena, &TypeFree, &TypeAdded);
+  EnterBodyBlock(arena, &block_stack, program->main->loc, &block->instrs);
   Type* type = CompileProgram(type_arena, &block_stack, &vars, program, &block->instrs);
+  ExitBlock(arena, &block_stack, NULL);
   TypeRelease(type_arena, type);
   FbleDeleteRefArena(type_arena);
 
