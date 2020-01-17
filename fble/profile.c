@@ -84,9 +84,9 @@ static void CallEvent(FbleProfileThread* thread);
 //   Allocates new empty call data and adds it to the graph if necessary.
 static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlockId caller, FbleBlockId callee)
 {
-  for (size_t i = 0; i < graph->xs[caller].size; ++i) {
-    if (graph->xs[caller].xs[i]->id == callee) {
-      return graph->xs[caller].xs[i];
+  for (size_t i = 0; i < graph->xs[caller]->callees.size; ++i) {
+    if (graph->xs[caller]->callees.xs[i]->id == callee) {
+      return graph->xs[caller]->callees.xs[i];
     }
   }
 
@@ -96,7 +96,7 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlo
     call->time[clock] = 0;
   }
   call->count = 0;
-  FbleVectorAppend(arena, graph->xs[caller], call);
+  FbleVectorAppend(arena, graph->xs[caller]->callees, call);
   return call;
 }
 
@@ -124,10 +124,10 @@ static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* se
         FbleBlockId x = seen->xs[j];
         for (size_t k = i; k < seen->size; ++k) {
           FbleBlockId y = seen->xs[k];
-          for (size_t l = 0; l < graph->xs[x].size; ++l) {
-            if (graph->xs[x].xs[l]->id == y) {
+          for (size_t l = 0; l < graph->xs[x]->callees.size; ++l) {
+            if (graph->xs[x]->callees.xs[l]->id == y) {
               for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-                graph->xs[x].xs[l]->time[clock] = 0;
+                graph->xs[x]->callees.xs[l]->time[clock] = 0;
               }
             }
           }
@@ -138,8 +138,8 @@ static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* se
   }
 
   FbleVectorAppend(arena, *seen, root);
-  for (size_t i = 0; i < graph->xs[root].size; ++i) {
-    FbleBlockId callee = graph->xs[root].xs[i]->id;
+  for (size_t i = 0; i < graph->xs[root]->callees.size; ++i) {
+    FbleBlockId callee = graph->xs[root]->callees.xs[i]->id;
     FixupCycles(arena, graph, seen, callee);
   }
   seen->size--;
@@ -331,9 +331,16 @@ FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc)
 {
   FbleCallGraph* graph = FbleAlloc(arena, FbleCallGraph);
   graph->size = blockc;
-  graph->xs = FbleArrayAlloc(arena, FbleCallDataV, blockc);
+  graph->xs = FbleArrayAlloc(arena, FbleBlockProfile*, blockc);
   for (size_t i = 0; i < blockc; ++i) {
-    FbleVectorInit(arena, graph->xs[i]);
+    graph->xs[i] = FbleAlloc(arena, FbleBlockProfile);
+    graph->xs[i]->block.id = i;
+    graph->xs[i]->block.count = 0;
+    for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
+      graph->xs[i]->block.time[clock] = 0;
+    }
+    FbleVectorInit(arena, graph->xs[i]->callees);
+    FbleVectorInit(arena, graph->xs[i]->callers);
   }
   return graph;
 }
@@ -342,10 +349,19 @@ FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc)
 void FbleFreeCallGraph(FbleArena* arena, FbleCallGraph* graph)
 {
   for (size_t i = 0; i < graph->size; ++i) {
-    for (size_t j = 0; j < graph->xs[i].size; ++j) {
-      FbleFree(arena, graph->xs[i].xs[j]);
+    FbleBlockProfile* block = graph->xs[i];
+
+    for (size_t j = 0; j < block->callers.size; ++j) {
+      FbleFree(arena, block->callers.xs[j]);
     }
-    FbleFree(arena, graph->xs[i].xs);
+    FbleFree(arena, block->callers.xs);
+
+    for (size_t j = 0; j < block->callees.size; ++j) {
+      FbleFree(arena, block->callees.xs[j]);
+    }
+    FbleFree(arena, block->callees.xs);
+
+    FbleFree(arena, block);
   }
   FbleFree(arena, graph->xs);
   FbleFree(arena, graph);
@@ -492,43 +508,29 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
   thread->stack->auto_exit = true;
 }
 
-// FbleComputeProfile -- see documentation in fble-profile.h
-FbleProfile* FbleComputeProfile(FbleArena* arena, FbleCallGraph* graph)
+// FbleProcessCallGraph -- see documentation in fble-profile.h
+void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
 {
   FbleBlockIdV seen;
   FbleVectorInit(arena, seen);
   FixupCycles(arena, graph, &seen, 0);
   FbleFree(arena, seen.xs);
 
-  FbleProfile* profile = FbleAlloc(arena, FbleProfile);
-  profile->size = graph->size;
-  profile->xs = FbleArrayAlloc(arena, FbleBlockProfile*, graph->size);
-  for (size_t i = 0; i < graph->size; ++i) {
-    profile->xs[i] = FbleAlloc(arena, FbleBlockProfile);
-    profile->xs[i]->block.id = i;
-    profile->xs[i]->block.count = 0;
-    for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      profile->xs[i]->block.time[clock] = 0;
-    }
-    FbleVectorInit(arena, profile->xs[i]->callers);
-    FbleVectorInit(arena, profile->xs[i]->callees);
-  }
-
   for (FbleBlockId caller = 0; caller < graph->size; ++caller) {
-    for (size_t i = 0; i < graph->xs[caller].size; ++i) {
-      FbleBlockId callee = graph->xs[caller].xs[i]->id;
-      FbleCallData* call = graph->xs[caller].xs[i];
+    for (size_t i = 0; i < graph->xs[caller]->callees.size; ++i) {
+      FbleBlockId callee = graph->xs[caller]->callees.xs[i]->id;
+      FbleCallData* call = graph->xs[caller]->callees.xs[i];
 
-      FbleCallData* a = &profile->xs[callee]->block;
+      FbleCallData* a = &graph->xs[callee]->block;
       a->count += call->count;
       for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
         a->time[clock] += call->time[clock];
       }
 
       FbleCallData* b = NULL;
-      for (size_t j = 0; j < profile->xs[callee]->callers.size; ++j) {
-        if (profile->xs[callee]->callers.xs[j]->id == caller) {
-          b = profile->xs[callee]->callers.xs[j];
+      for (size_t j = 0; j < graph->xs[callee]->callers.size; ++j) {
+        if (graph->xs[callee]->callers.xs[j]->id == caller) {
+          b = graph->xs[callee]->callers.xs[j];
           break;
         }
       }
@@ -539,101 +541,56 @@ FbleProfile* FbleComputeProfile(FbleArena* arena, FbleCallGraph* graph)
           b->time[clock] = 0;
         }
         b->count = 0;
-        FbleVectorAppend(arena, profile->xs[callee]->callers, b);
+        FbleVectorAppend(arena, graph->xs[callee]->callers, b);
       }
       b->count += call->count;
       for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
         b->time[clock] += call->time[clock];
-      }
-
-      FbleCallData* c = NULL;
-      for (size_t j = 0; j < profile->xs[caller]->callees.size; ++j) {
-        if (profile->xs[caller]->callees.xs[j]->id == callee) {
-          c = profile->xs[caller]->callees.xs[j];
-          break;
-        }
-      }
-      if (c == NULL) {
-        c = FbleAlloc(arena, FbleCallData);
-        c->id = callee;
-        for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-          c->time[clock] = 0;
-        }
-        c->count = 0;
-        FbleVectorAppend(arena, profile->xs[caller]->callees, c);
-      }
-      c->count += call->count;
-      for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-        c->time[clock] += call->time[clock];
       }
     }
   }
 
   // Treat block 0 specially so it represents the total execution for the
   // program. We assume there are no incoming calls to block 0.
-  for (size_t i = 0; i < graph->xs[0].size; ++i) {
-    profile->xs[0]->block.count += graph->xs[0].xs[i]->count;
+  for (size_t i = 0; i < graph->xs[0]->callees.size; ++i) {
+    graph->xs[0]->block.count += graph->xs[0]->callees.xs[i]->count;
     for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      profile->xs[0]->block.time[clock] += graph->xs[0].xs[i]->time[clock];
+      graph->xs[0]->block.time[clock] += graph->xs[0]->callees.xs[i]->time[clock];
     }
   }
 
   // We always sort by the profile time clock for now.
   FbleProfileClock clock = FBLE_PROFILE_TIME_CLOCK;
 
-  for (size_t i = 0; i < profile->size; ++i) {
-    SortCallData(clock, true /* ascending */, profile->xs[i]->callers);
-    SortCallData(clock, false /*ascending */, profile->xs[i]->callees);
+  for (size_t i = 0; i < graph->size; ++i) {
+    SortCallData(clock, true /* ascending */, graph->xs[i]->callers);
+    SortCallData(clock, false /*ascending */, graph->xs[i]->callees);
   }
-  SortCallData(clock, false /* ascending */, *(FbleCallDataV*)profile);
-  return profile;
-}
-
-// FbleFreeProfile -- see documentation in fble-profile.h
-void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
-{
-  for (size_t i = 0; i < profile->size; ++i) {
-    FbleBlockProfile* block = profile->xs[i];
-
-    for (size_t j = 0; j < block->callers.size; ++j) {
-      FbleFree(arena, block->callers.xs[j]);
-    }
-    FbleFree(arena, block->callers.xs);
-
-    for (size_t j = 0; j < block->callees.size; ++j) {
-      FbleFree(arena, block->callees.xs[j]);
-    }
-    FbleFree(arena, block->callees.xs);
-
-    FbleFree(arena, block);
-  }
-  FbleFree(arena, profile->xs);
-  FbleFree(arena, profile);
+  SortCallData(clock, false /* ascending */, *(FbleCallDataV*)graph);
 }
 
 // FbleDumpProfile -- see documentation in fble-profile.h
-void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
+void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
 {
-
   // Code Coverage
   size_t covered = 0;
-  for (size_t i = 0; i < profile->size; ++i) {
-    if (profile->xs[i]->block.count > 0) {
+  for (size_t i = 0; i < graph->size; ++i) {
+    if (graph->xs[i]->block.count > 0) {
       covered++;
     }
   }
 
-  double coverage = (double)covered / (double)profile->size;
+  double coverage = (double)covered / (double)graph->size;
   fprintf(fout, "Code Coverage\n");
   fprintf(fout, "-------------\n");
-  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, profile->size);
+  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, graph->size);
 
   // Flat Profile
   fprintf(fout, "Flat Profile\n");
   fprintf(fout, "------------\n");
   fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
-  for (size_t i = 0; i < profile->size; ++i) {
-    PrintCallData(fout, blocks, true, &profile->xs[i]->block);
+  for (size_t i = 0; i < graph->size; ++i) {
+    PrintCallData(fout, blocks, true, &graph->xs[i]->block);
   }
   fprintf(fout, "\n");
 
@@ -646,8 +603,8 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   uint64_t xx = 0;  // sum of x_i * x_i
   uint64_t yy = 0;  // sum of y_i * y_i
   uint64_t xy = 0;  // sum of x_i * y_i
-  for (size_t i = 0; i < profile->size; ++i) {
-    FbleCallData* call = &profile->xs[i]->block;
+  for (size_t i = 0; i < graph->size; ++i) {
+    FbleCallData* call = &graph->xs[i]->block;
     uint64_t x_i = call->time[FBLE_PROFILE_TIME_CLOCK];
     uint64_t y_i = call->time[FBLE_PROFILE_WALL_CLOCK];
     n++;
@@ -667,13 +624,13 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   fprintf(fout, "Call Graph\n");
   fprintf(fout, "----------\n");
   fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
-  for (size_t i = 0; i < profile->size; ++i) {
-    FbleBlockProfile* block = profile->xs[i];
+  for (size_t i = 0; i < graph->size; ++i) {
+    FbleBlockProfile* block = graph->xs[i];
     if (block->block.count > 0) {
       for (size_t j = 0; j < block->callers.size; ++j) {
         PrintCallData(fout, blocks, false, block->callers.xs[j]);
       }
-      PrintCallData(fout, blocks, true, &profile->xs[i]->block);
+      PrintCallData(fout, blocks, true, &graph->xs[i]->block);
       size_t callees_size = block->callees.size;
       for (size_t j = 0; j < callees_size; ++j) {
         PrintCallData(fout, blocks, false, block->callees.xs[j]);
@@ -686,9 +643,9 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   // Locations
   fprintf(fout, "Block Locations\n");
   fprintf(fout, "---------------\n");
-  for (size_t i = 0; i < profile->size; ++i) {
-    FbleName* name = blocks->xs + profile->xs[i]->block.id;
-    PrintBlockName(fout, blocks, profile->xs[i]->block.id);
+  for (size_t i = 0; i < graph->size; ++i) {
+    FbleName* name = blocks->xs + graph->xs[i]->block.id;
+    PrintBlockName(fout, blocks, graph->xs[i]->block.id);
     fprintf(fout, ": %s:%d:%d\n", name->loc.source, name->loc.line, name->loc.col);
   }
   fprintf(fout, "\n");

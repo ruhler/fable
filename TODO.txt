@@ -1,12 +1,21 @@
+* Fix profiling in case of cycles.
+* Rename FbleCallGraph FbleProfile?
 * Remove excess !!! in block names.
+  Maybe addressed naturally when we inline link and exec bindings into the
+  parent proc?
 * Remove spurious calls to enter block 0 in fble/eval.c
+  But then, where do we charge the time to do a put?
+* Label blocks in exec process bindings by binding name?
 * [lang] redo syntax for literals
 * [test] Fix infinite recursion in TypeEquals.
 * Replace TicTacToe MemoTable with a generic Map from Data to T@.
   - Implement ToData for Board@.
 * Implement Game of Life.
 * Add a test case for Sudoku.ApplyX showing 0 time in the profile once that
-  bug is understood. If we ever understand it.
+  bug is understood.
+  - The trouble is we are getting a block collision on 'For'. There is a For
+    loop that calls ApplyXS, and ApplyX calls another For loop. Thus the whole
+    thing is treated as one big cycle and we are sad.
 * Change reference counting to be incrementally done on allocation.
   Maybe write a test that shows how something that should take no time gets
   charged for a big deallocation time today?
