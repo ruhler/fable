@@ -533,7 +533,6 @@ void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
   FbleProfileClock clock = FBLE_PROFILE_TIME_CLOCK;
 
   for (size_t i = 0; i < graph->size; ++i) {
-    SortCallData(clock, true /* ascending */, graph->xs[i]->callers.xs, graph->xs[i]->callers.size);
     SortCallData(clock, false /*ascending */, graph->xs[i]->callees.xs, graph->xs[i]->callees.size);
   }
   SortCallData(clock, false /* ascending */, ((FbleCallDataV*)graph)->xs, ((FbleCallDataV*)graph)->size);
@@ -597,10 +596,20 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
   for (size_t i = 0; i < graph->size; ++i) {
     FbleBlockProfile* block = graph->xs[i];
     if (block->block.count > 0) {
+      // Callers
+      FbleCallData* callers[block->callers.size];
       for (size_t j = 0; j < block->callers.size; ++j) {
-        PrintCallData(fout, blocks, false, block->callers.xs[j]);
+        callers[j] = block->callers.xs[j];
       }
+      SortCallData(FBLE_PROFILE_TIME_CLOCK, true /* ascending */, callers, block->callers.size);
+      for (size_t j = 0; j < block->callers.size; ++j) {
+        PrintCallData(fout, blocks, false, callers[j]);
+      }
+
+      // Block
       PrintCallData(fout, blocks, true, &graph->xs[i]->block);
+
+      // Callees
       size_t callees_size = block->callees.size;
       for (size_t j = 0; j < callees_size; ++j) {
         PrintCallData(fout, blocks, false, block->callees.xs[j]);
