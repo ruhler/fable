@@ -18,15 +18,15 @@
 // Fields:
 //   caller - the caller for this particular call
 //   callee - the callee for this particular call
-//   recursive_block - true if this block was called recursively from itself.
-//   recursive_call - true if this call was called recursively from another
+//   new_block - true if this block was called recursively from itself.
+//   new_call - true if this call was called recursively from another
 //                    caller -> callee call.
 //   tail - the rest of the calls in the set.
 typedef struct CallList {
   FbleBlockId caller;
   FbleBlockId callee;
-  bool recursive_block;
-  bool recursive_call;
+  bool new_block;
+  bool new_call;
   struct CallList* tail;
 } CallList;
 
@@ -391,11 +391,11 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
       FbleCallData* exit_call = GetCallData(arena, thread->graph, c->caller, c->callee);
       for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
         uint64_t advance = thread->stack->time[clock];
-        if (!c->recursive_block) {
+        if (c->new_block) {
           thread->graph->xs[c->callee]->block.time[clock] += advance;
         }
 
-        if (!c->recursive_call) {
+        if (c->new_call) {
           exit_call->time[clock] += advance;
         }
       }
@@ -432,8 +432,8 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     c = FbleAlloc(arena, CallList);
     c->caller = caller;
     c->callee = callee;
-    c->recursive_block = thread->graph->xs[callee]->block.running;
-    c->recursive_call = call->running;
+    c->new_block = !thread->graph->xs[callee]->block.running;
+    c->new_call = !call->running;
     c->tail = thread->stack->exit_calls;
     thread->stack->exit_calls = c;
   }
@@ -457,11 +457,11 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
     FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
     for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
       uint64_t advance = thread->stack->time[clock];
-      if (!c->recursive_block) {
+      if (c->new_block) {
         thread->graph->xs[c->callee]->block.time[clock] += advance;
         thread->graph->xs[c->callee]->block.running = false;
       }
-      if (!c->recursive_call) {
+      if (c->new_call) {
         call->time[clock] += advance;
         call->running = false;
       }
