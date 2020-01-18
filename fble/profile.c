@@ -61,7 +61,7 @@ struct FbleProfileThread {
 
 static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlockId caller, FbleBlockId callee);
 static void MergeSortCallData(FbleProfileClock clock, bool ascending, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
-static void SortCallData(FbleProfileClock clock, bool ascending, FbleCallDataV data);
+static void SortCallData(FbleProfileClock clock, bool ascending, FbleCallData** data, size_t size);
 static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call);
 
@@ -185,16 +185,17 @@ static void MergeSortCallData(FbleProfileClock clock, bool ascending, bool in_pl
 //   clock - the clock to sort by.
 //   ascending - if true, sort in ascending order, otherwise in descending order
 //   data - the call data to sort
+//   size - the number of elements of data.
 //
 // Results:
 //   none.
 //
 // Side effects:
 //   Sorts the given array of call data in increasing order of time.
-static void SortCallData(FbleProfileClock clock, bool ascending, FbleCallDataV data)
+static void SortCallData(FbleProfileClock clock, bool ascending, FbleCallData** data, size_t size)
 {
-  FbleCallData* scratch[data.size];
-  MergeSortCallData(clock, ascending, true, data.xs, scratch, data.size);
+  FbleCallData* scratch[size];
+  MergeSortCallData(clock, ascending, true, data, scratch, size);
 }
 
 // PrintBlockName --
@@ -532,10 +533,10 @@ void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
   FbleProfileClock clock = FBLE_PROFILE_TIME_CLOCK;
 
   for (size_t i = 0; i < graph->size; ++i) {
-    SortCallData(clock, true /* ascending */, graph->xs[i]->callers);
-    SortCallData(clock, false /*ascending */, graph->xs[i]->callees);
+    SortCallData(clock, true /* ascending */, graph->xs[i]->callers.xs, graph->xs[i]->callers.size);
+    SortCallData(clock, false /*ascending */, graph->xs[i]->callees.xs, graph->xs[i]->callees.size);
   }
-  SortCallData(clock, false /* ascending */, *(FbleCallDataV*)graph);
+  SortCallData(clock, false /* ascending */, ((FbleCallDataV*)graph)->xs, ((FbleCallDataV*)graph)->size);
 }
 
 // FbleDumpProfile -- see documentation in fble-profile.h

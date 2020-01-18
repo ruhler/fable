@@ -1,4 +1,9 @@
 Profiling Cleanup:
+* profile API cleanup
+ - Make ProcessProfile a no-op - do the processing in DumpProfile instead.
+ - Remove ProcessProfile.
+ - Remove unused fields of FbleCallGraph.
+ - Rename FbleCallGraph to FbleProfile.
 * Make sure we've tested recursive calls with auto exit.
 * Document the interesting parts of the implementation
   - auto exit handling
@@ -6,7 +11,6 @@ Profiling Cleanup:
 * Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
   0 in fble/eval.c
 * Remove special casing of block 0?
-* Rename FbleCallGraph FbleProfile?
 
 Other:
 * Remove excess !!! in block names.
