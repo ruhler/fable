@@ -45,10 +45,13 @@ typedef struct {
 //   id - the id of the caller/callee block.
 //   count - the number of times the call was made.
 //   time - the amount of time spent in the call, indexed by FbleProfileClock.
+//   recursive - dynamic state tracking whether this call is being made
+//               recursively.
 typedef struct {
   FbleBlockId id;
   uint64_t count;
   uint64_t time[FBLE_PROFILE_NUM_CLOCKS];
+  bool recursive;
 } FbleCallData;
 
 // FbleCallDataV --

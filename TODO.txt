@@ -1,7 +1,13 @@
 Profiling Cleanup:
+* Flip polarity of recursive_call and recursive_block?
+* Better name for FbleCallData.recursive? Like, onstack? Or calling?
+  Or flip the polarity and call it 'first' or some such?
 * Don't double count flat call time in case of recursive calls.
 * Don't double count callee time in case of recursive calls.
 * Make sure we've tested recursive calls with auto exit.
+* Document the interesting parts of the implementation
+  - auto exit handling
+  - excluding recursive calls from times.
 * Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
   0 in fble/eval.c
 * Remove special casing of block 0?

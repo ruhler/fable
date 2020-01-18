@@ -17,12 +17,15 @@
 // Fields:
 //   caller - the caller for this particular call
 //   callee - the callee for this particular call
-//   count - the number of times caller called callee
+//   recursive_block - true if this block was called recursively from itself.
+//   recursive_call - true if this call was called recursively from another
+//                    caller -> callee call.
 //   tail - the rest of the calls in the set.
 typedef struct CallList {
   FbleBlockId caller;
   FbleBlockId callee;
-  uint64_t count;
+  bool recursive_block;
+  bool recursive_call;
   struct CallList* tail;
 } CallList;
 
@@ -95,6 +98,7 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlo
     call->time[clock] = 0;
   }
   call->count = 0;
+  call->recursive = false;
   FbleVectorAppend(arena, graph->xs[caller]->callees, call);
   return call;
 }
@@ -377,15 +381,21 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   FbleBlockId caller = thread->stack->id;
   FbleBlockId callee = block;
   thread->graph->xs[callee]->block.count++;
-  GetCallData(arena, thread->graph, caller, callee)->count++;
+  FbleCallData* call = GetCallData(arena, thread->graph, caller, callee);
+  call->count++;
 
   if (thread->stack->auto_exit) {
     for (CallList* c = thread->stack->exit_calls; c != NULL; c = c->tail) {
-      FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
+      FbleCallData* exit_call = GetCallData(arena, thread->graph, c->caller, c->callee);
       for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-        uint64_t advance = thread->stack->time[clock] * c->count;
-        thread->graph->xs[c->callee]->block.time[clock] += advance;
-        call->time[clock] += advance;
+        uint64_t advance = thread->stack->time[clock];
+        if (!c->recursive_block) {
+          thread->graph->xs[c->callee]->block.time[clock] += advance;
+        }
+
+        if (!c->recursive_call) {
+          exit_call->time[clock] += advance;
+        }
       }
     }
 
@@ -420,11 +430,13 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     c = FbleAlloc(arena, CallList);
     c->caller = caller;
     c->callee = callee;
-    c->count = 0;
+    c->recursive_block = thread->graph->xs[callee]->block.recursive;
+    c->recursive_call = call->recursive;
     c->tail = thread->stack->exit_calls;
     thread->stack->exit_calls = c;
   }
-  c->count++;
+  thread->graph->xs[callee]->block.recursive = true;
+  call->recursive = true;
 }
 
 // FbleProfileTime -- see documentation in fble-profile.h
@@ -442,9 +454,15 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
     CallList* c = thread->stack->exit_calls;
     FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
     for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      uint64_t advance = thread->stack->time[clock] * c->count;
-      thread->graph->xs[c->callee]->block.time[clock] += advance;
-      call->time[clock] += advance;
+      uint64_t advance = thread->stack->time[clock];
+      if (!c->recursive_block) {
+        thread->graph->xs[c->callee]->block.time[clock] += advance;
+        thread->graph->xs[c->callee]->block.recursive = false;
+      }
+      if (!c->recursive_call) {
+        call->time[clock] += advance;
+        call->recursive = false;
+      }
     }
 
     thread->stack->exit_calls = c->tail;
