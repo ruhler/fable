@@ -376,13 +376,16 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 
   FbleBlockId caller = thread->stack->id;
   FbleBlockId callee = block;
+  thread->graph->xs[callee]->block.count++;
   GetCallData(arena, thread->graph, caller, callee)->count++;
 
   if (thread->stack->auto_exit) {
     for (CallList* c = thread->stack->exit_calls; c != NULL; c = c->tail) {
       FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
       for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-        call->time[clock] += thread->stack->time[clock] * c->count;
+        uint64_t advance = thread->stack->time[clock] * c->count;
+        thread->graph->xs[c->callee]->block.time[clock] += advance;
+        call->time[clock] += advance;
       }
     }
 
@@ -439,7 +442,9 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
     CallList* c = thread->stack->exit_calls;
     FbleCallData* call = GetCallData(arena, thread->graph, c->caller, c->callee);
     for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      call->time[clock] += thread->stack->time[clock] * c->count;
+      uint64_t advance = thread->stack->time[clock] * c->count;
+      thread->graph->xs[c->callee]->block.time[clock] += advance;
+      call->time[clock] += advance;
     }
 
     thread->stack->exit_calls = c->tail;
@@ -469,12 +474,6 @@ void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
     for (size_t i = 0; i < graph->xs[caller]->callees.size; ++i) {
       FbleBlockId callee = graph->xs[caller]->callees.xs[i]->id;
       FbleCallData* call = graph->xs[caller]->callees.xs[i];
-
-      FbleCallData* a = &graph->xs[callee]->block;
-      a->count += call->count;
-      for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-        a->time[clock] += call->time[clock];
-      }
 
       FbleCallData* b = NULL;
       for (size_t j = 0; j < graph->xs[callee]->callers.size; ++j) {

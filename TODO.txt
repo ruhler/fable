@@ -1,10 +1,16 @@
-* Fix profiling in case of cycles.
+Profiling Cleanup:
+* Don't double count flat call time in case of recursive calls.
+* Don't double count callee time in case of recursive calls.
+* Make sure we've tested recursive calls with auto exit.
+* Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
+  0 in fble/eval.c
+* Remove special casing of block 0?
 * Rename FbleCallGraph FbleProfile?
+
+Other:
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
-* Remove spurious calls to enter block 0 in fble/eval.c
-  But then, where do we charge the time to do a put?
 * Label blocks in exec process bindings by binding name?
 * [lang] redo syntax for literals
 * [test] Fix infinite recursion in TypeEquals.

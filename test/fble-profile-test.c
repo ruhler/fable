@@ -98,6 +98,9 @@ int main(int argc, char* argv[])
     assert(graph->xs[0]->callees.xs[0]->id == 1);
     assert(graph->xs[0]->callees.xs[0]->count == 1);
     assert(graph->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 131);
+
+    assert(graph->xs[1]->block.count == 1);
+    assert(graph->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 131);
     assert(graph->xs[1]->callees.size == 2);
     assert(graph->xs[1]->callees.xs[0]->id == 2);
     assert(graph->xs[1]->callees.xs[0]->count == 1);
@@ -105,6 +108,9 @@ int main(int argc, char* argv[])
     assert(graph->xs[1]->callees.xs[1]->id == 3);
     assert(graph->xs[1]->callees.xs[1]->count == 1);
     assert(graph->xs[1]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 31);
+
+    assert(graph->xs[2]->block.count == 1);
+    assert(graph->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
     assert(graph->xs[2]->callees.size == 2);
     assert(graph->xs[2]->callees.xs[0]->id == 3);
     assert(graph->xs[2]->callees.xs[0]->count == 1);
@@ -112,7 +118,13 @@ int main(int argc, char* argv[])
     assert(graph->xs[2]->callees.xs[1]->id == 4);
     assert(graph->xs[2]->callees.xs[1]->count == 1);
     assert(graph->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 40);
+
+    assert(graph->xs[3]->block.count == 2);
+    assert(graph->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 61);
     assert(graph->xs[3]->callees.size == 0);
+
+    assert(graph->xs[4]->block.count == 1);
+    assert(graph->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
     assert(graph->xs[4]->callees.size == 0);
 
     FbleProcessCallGraph(arena, graph);
@@ -224,6 +236,9 @@ int main(int argc, char* argv[])
     assert(graph->xs[0]->callees.xs[0]->id == 1);
     assert(graph->xs[0]->callees.xs[0]->count == 1);
     assert(graph->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 210);
+
+    assert(graph->xs[1]->block.count == 1);
+    assert(graph->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 210);
     assert(graph->xs[1]->callees.size == 2);
     assert(graph->xs[1]->callees.xs[0]->id == 2);
     assert(graph->xs[1]->callees.xs[0]->count == 1);
@@ -231,10 +246,16 @@ int main(int argc, char* argv[])
     assert(graph->xs[1]->callees.xs[1]->id == 6);
     assert(graph->xs[1]->callees.xs[1]->count == 1);
     assert(graph->xs[1]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 60);
+
+    assert(graph->xs[2]->block.count == 1);
+    assert(graph->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 140);
     assert(graph->xs[2]->callees.size == 1);
     assert(graph->xs[2]->callees.xs[0]->id == 3);
     assert(graph->xs[2]->callees.xs[0]->count == 1);
     assert(graph->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 120);
+
+    assert(graph->xs[3]->block.count == 1);
+    assert(graph->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 120);
     assert(graph->xs[3]->callees.size == 2);
     assert(graph->xs[3]->callees.xs[0]->id == 4);
     assert(graph->xs[3]->callees.xs[0]->count == 1);
@@ -242,8 +263,17 @@ int main(int argc, char* argv[])
     assert(graph->xs[3]->callees.xs[1]->id == 5);
     assert(graph->xs[3]->callees.xs[1]->count == 1);
     assert(graph->xs[3]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 50);
+
+    assert(graph->xs[4]->block.count == 1);
+    assert(graph->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
     assert(graph->xs[4]->callees.size == 0);
+
+    assert(graph->xs[5]->block.count == 1);
+    assert(graph->xs[5]->block.time[FBLE_PROFILE_TIME_CLOCK] == 50);
     assert(graph->xs[5]->callees.size == 0);
+
+    assert(graph->xs[6]->block.count == 1);
+    assert(graph->xs[6]->block.time[FBLE_PROFILE_TIME_CLOCK] == 60);
     assert(graph->xs[6]->callees.size == 0);
 
     FbleFreeCallGraph(arena, graph);
