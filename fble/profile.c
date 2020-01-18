@@ -4,6 +4,7 @@
 #include <assert.h>   // for assert
 #include <inttypes.h> // for PRIu64
 #include <math.h>     // for sqrt
+#include <stdbool.h>  // for bool
 #include <sys/time.h> // for gettimeofday
 
 #include "fble-alloc.h"
@@ -294,6 +295,7 @@ FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc)
     graph->xs[i] = FbleAlloc(arena, FbleBlockProfile);
     graph->xs[i]->block.id = i;
     graph->xs[i]->block.count = 0;
+    graph->xs[i]->block.running = false;
     for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
       graph->xs[i]->block.time[clock] = 0;
     }
@@ -507,6 +509,7 @@ void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
           b->time[clock] = 0;
         }
         b->count = 0;
+        b->running = false;
         FbleVectorAppend(arena, graph->xs[callee]->callers, b);
       }
       b->count += call->count;

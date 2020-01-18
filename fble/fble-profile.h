@@ -4,6 +4,7 @@
 #ifndef FBLE_PROFILE_H_
 #define FBLE_PROFILE_H_
 
+#include <stdbool.h>  // for bool
 #include <stdint.h>   // for uint64_t
 #include <stdio.h>    // for FILE
 
