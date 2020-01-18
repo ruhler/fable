@@ -133,34 +133,33 @@ proc fble-test-memory-growth { expr } {
 }
 
 # Source all *.tcl files under the given directory, recursively.
-#proc source_all { dir } {
-#  foreach {x} [lsort [glob -nocomplain -type d $dir/*]] {
-#    source_all $x
-#  }
-#
-#  foreach {x} [lsort [glob -nocomplain -type f $dir/*.tcl]] {
-#    source $x
-#  }
-#}
-#
-#source_all langs/fble
-#
-#exec mkdir -p out/cov/spec
-#run -ignorestderr gcov {*}$::fble_objs > out/cov/spec/fble.gcov
-#exec mv {*}[glob *.gcov] out/cov/spec
+proc source_all { dir } {
+  foreach {x} [lsort [glob -nocomplain -type d $dir/*]] {
+    source_all $x
+  }
+
+  foreach {x} [lsort [glob -nocomplain -type f $dir/*.tcl]] {
+    source $x
+  }
+}
+
+source_all langs/fble
+
+exec mkdir -p out/cov/spec
+run -ignorestderr gcov {*}$::fble_objs > out/cov/spec/fble.gcov
+exec mv {*}[glob *.gcov] out/cov/spec
 
 exec mkdir -p out/test
-#testn fble-ref-test exec $::bin/fble-ref-test
+testn fble-ref-test exec $::bin/fble-ref-test
 testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-test.txt
-#testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
-#testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble prgms
-#testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
-#testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
-#testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
-#testn fble-cat exec $::bin/fble-stdio prgms/fble-cat.fble prgms < README.txt | cmp README.txt -
-#
-#exec mkdir -p out/cov/all
-#run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov
-#exec mv {*}[glob *.gcov] out/cov/all
+testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
+testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble prgms
+testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
+testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
+testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
+testn fble-cat exec $::bin/fble-stdio prgms/fble-cat.fble prgms < README.txt | cmp README.txt -
 
-exit [llength $::failed]
+exec mkdir -p out/cov/all
+run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov
+exec mv {*}[glob *.gcov] out/cov/all
+
