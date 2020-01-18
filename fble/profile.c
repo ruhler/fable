@@ -534,13 +534,7 @@ void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
     }
   }
 
-  // We always sort by the profile time clock for now.
-  FbleProfileClock clock = FBLE_PROFILE_TIME_CLOCK;
-
-  for (size_t i = 0; i < graph->size; ++i) {
-    SortCallData(clock, DESCENDING, graph->xs[i]->callees.xs, graph->xs[i]->callees.size);
-  }
-  SortCallData(clock, DESCENDING, ((FbleCallDataV*)graph)->xs, ((FbleCallDataV*)graph)->size);
+  SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, ((FbleCallDataV*)graph)->xs, ((FbleCallDataV*)graph)->size);
 }
 
 // FbleDumpProfile -- see documentation in fble-profile.h
@@ -615,9 +609,13 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
       PrintCallData(fout, blocks, true, &graph->xs[i]->block);
 
       // Callees
-      size_t callees_size = block->callees.size;
-      for (size_t j = 0; j < callees_size; ++j) {
-        PrintCallData(fout, blocks, false, block->callees.xs[j]);
+      FbleCallData* callees[block->callees.size];
+      for (size_t j = 0; j < block->callees.size; ++j) {
+        callees[j] = block->callees.xs[j];
+      }
+      SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, callees, block->callees.size);
+      for (size_t j = 0; j < block->callees.size; ++j) {
+        PrintCallData(fout, blocks, false, callees[j]);
       }
       fprintf(fout, "-------------------------------\n");
     }
