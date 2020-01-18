@@ -1,7 +1,5 @@
 Profiling Cleanup:
 * Flip polarity of recursive_call and recursive_block?
-* Better name for FbleCallData.recursive? Like, onstack? Or calling?
-  Or flip the polarity and call it 'first' or some such?
 * Don't double count flat call time in case of recursive calls.
 * Don't double count callee time in case of recursive calls.
 * Make sure we've tested recursive calls with auto exit.
