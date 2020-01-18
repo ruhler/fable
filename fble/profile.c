@@ -56,7 +56,6 @@ struct FbleProfileThread {
 };
 
 static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlockId caller, FbleBlockId callee);
-static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* seen, FbleBlockId root);
 static void MergeSortCallData(FbleProfileClock clock, bool ascending, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
 static void SortCallData(FbleProfileClock clock, bool ascending, FbleCallDataV data);
 static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
@@ -98,51 +97,6 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleCallGraph* graph, FbleBlo
   call->count = 0;
   FbleVectorAppend(arena, graph->xs[caller]->callees, call);
   return call;
-}
-
-// FixupCycles --
-//   Removes double-counting of time due to cycles in the given call graph of
-//   blocks.
-//
-// Inputs:
-//   arena - arena used for allocations.
-//   graph - the call graph of blocks to fix up.
-//   seen - the set of ids seen so far.
-//   root - the root block to fixup cycles for.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Removes double counting of time in callees due to cycles.
-static void FixupCycles(FbleArena* arena, FbleCallGraph* graph, FbleBlockIdV* seen, FbleBlockId root)
-{
-  for (size_t i = 0; i < seen->size; ++i) {
-    if (root == seen->xs[i]) {
-      // We have encountered a cycle. Remove all internal references.
-      for (size_t j = i; j < seen->size; ++j) {
-        FbleBlockId x = seen->xs[j];
-        for (size_t k = i; k < seen->size; ++k) {
-          FbleBlockId y = seen->xs[k];
-          for (size_t l = 0; l < graph->xs[x]->callees.size; ++l) {
-            if (graph->xs[x]->callees.xs[l]->id == y) {
-              for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-                graph->xs[x]->callees.xs[l]->time[clock] = 0;
-              }
-            }
-          }
-        }
-      }
-      return;
-    }
-  }
-
-  FbleVectorAppend(arena, *seen, root);
-  for (size_t i = 0; i < graph->xs[root]->callees.size; ++i) {
-    FbleBlockId callee = graph->xs[root]->callees.xs[i]->id;
-    FixupCycles(arena, graph, seen, callee);
-  }
-  seen->size--;
 }
 
 // MergeSortCallData --
@@ -511,11 +465,6 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
 // FbleProcessCallGraph -- see documentation in fble-profile.h
 void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
 {
-  FbleBlockIdV seen;
-  FbleVectorInit(arena, seen);
-  FixupCycles(arena, graph, &seen, 0);
-  FbleFree(arena, seen.xs);
-
   for (FbleBlockId caller = 0; caller < graph->size; ++caller) {
     for (size_t i = 0; i < graph->xs[caller]->callees.size; ++i) {
       FbleBlockId callee = graph->xs[caller]->callees.xs[i]->id;
