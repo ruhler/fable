@@ -306,7 +306,6 @@ FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc)
       graph->xs[i]->block.time[clock] = 0;
     }
     FbleVectorInit(arena, graph->xs[i]->callees);
-    FbleVectorInit(arena, graph->xs[i]->callers);
   }
   return graph;
 }
@@ -316,11 +315,6 @@ void FbleFreeCallGraph(FbleArena* arena, FbleCallGraph* graph)
 {
   for (size_t i = 0; i < graph->size; ++i) {
     FbleBlockProfile* block = graph->xs[i];
-
-    for (size_t j = 0; j < block->callers.size; ++j) {
-      FbleFree(arena, block->callers.xs[j]);
-    }
-    FbleFree(arena, block->callers.xs);
 
     for (size_t j = 0; j < block->callees.size; ++j) {
       FbleFree(arena, block->callees.xs[j]);
