@@ -248,21 +248,6 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread);
 //   Updates the call graph data associated with the given thread.
 void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread);
 
-// FbleProcessCallGraph --
-//   Process the given call graph.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   graph - the call graph to process.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Updates callers information and resorts blocks, callers, and callees from
-//   the graph.
-void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph);
-
 // FbleDumpProfile --
 //   Dump human readable profiling information to a file.
 //

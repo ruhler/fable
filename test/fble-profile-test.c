@@ -141,7 +141,6 @@ int main(int argc, char* argv[])
     assert(graph->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
     assert(graph->xs[4]->callees.size == 0);
 
-    FbleProcessCallGraph(arena, graph);
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
         { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},
@@ -297,7 +296,6 @@ int main(int argc, char* argv[])
     assert(graph->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
     assert(graph->xs[3]->callees.size == 0);
 
-    FbleProcessCallGraph(arena, graph);
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
         { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},
@@ -377,7 +375,6 @@ int main(int argc, char* argv[])
     assert(graph->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
     assert(graph->xs[4]->callees.size == 0);
 
-    FbleProcessCallGraph(arena, graph);
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
         { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},

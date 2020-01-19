@@ -251,7 +251,6 @@ int main(int argc, char* argv[])
   FbleDeleteValueArena(value_arena);
 
   if (fprofile != NULL) {
-    FbleProcessCallGraph(eval_arena, graph);
     FbleDumpProfile(fprofile, &blocks, graph);
   }
 
