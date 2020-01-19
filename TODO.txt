@@ -1,13 +1,7 @@
-Profiling Cleanup:
 * Make sure we've tested recursive calls with auto exit.
 * Document the interesting parts of the implementation
   - auto exit handling
   - excluding recursive calls from times.
-* Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
-  0 in fble/eval.c
-* Remove special case handling of block 0 in fble/profile.
-
-Other:
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
@@ -55,6 +49,11 @@ Miscellaneous:
 * Change reference counting to be incrementally done on allocation.
   Maybe write a test that shows how something that should take no time gets
   charged for a big deallocation time today?
+* Figure out how to handle profiling threads better
+ - Separate EXIT_BLOCK from EXIT_COPE to remove spurious calls to enter block
+   0 in fble/eval?
+ - Remove special case handling of block 0 in fble/profile?
+ - How to maintain the profile stack when forking new threads?
 
 Future:
 * Implement compiler to C. Idea is translate a function body into a sequence

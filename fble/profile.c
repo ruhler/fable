@@ -580,6 +580,9 @@ void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
     if (block->block.count > 0) {
       // Callers
       SortCallData(FBLE_PROFILE_TIME_CLOCK, ASCENDING, callers[id].xs, callers[id].size);
+      for (size_t j = 0; j < callers[id].size; ++j) {
+        PrintCallData(fout, blocks, false, callers[id].xs[j]);
+      }
 
       // Block
       PrintCallData(fout, blocks, true, calls[i]);
