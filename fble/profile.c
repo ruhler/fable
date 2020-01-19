@@ -12,6 +12,67 @@
 #include "fble-syntax.h"
 #include "fble-vector.h"
 
+// Notes on profiling
+// ------------------
+// Consider a profile call graph entry such as:
+//       count     wall     time block
+//           2        0       70 b[0002]   
+//           1        0       90 a[0001]   
+// **        3        0       90 b[0002] **
+//           2        0       70 b[0002]   
+//           1        0       30 c[0003]   
+//
+// Focusing on the highlighted line with **, this says we spent 90 profile
+// time in block 'b'. The blocks that 'b' called are listed below it. So in
+// this case we spent 70 profile time calling from 'b' into itself
+// recursively, and 30 profile time calling from 'b' into 'c'. The blocks
+// that called 'b' are listed above it. So in this case we spent 70 profile
+// time calling into 'b' from 'b' and 90 profile time calling into 'b' from
+// 'a'.
+//
+// Note that the profile time calls for callers and callees don't add up
+// to the total time spent in 'b' because this example involves recursive
+// calls. The way to read it is as follows.
+//
+// 1. For the highlighted block with **
+//   The time shown is how much time would be saved running the program if all
+//   calls to the block were removed. Or equivalently, if you could perfectly
+//   optimize the block so it ran in no time at all.
+//
+//   Given a call stack: a -> b1 -> b2 -> b3 -> c, this counts the time spent
+//   doing the initial call a -> b1, and not the calls b1 -> b2 or b2 -> b3
+//   past that. Because neither of those calls would exist if we got rid of
+//   the call a -> b1.
+//
+// 2. For callees below the higlighted block.
+//   The time shown is how much time would be saved running the program if all
+//   calls from the highlighted block to the callee block were removed.
+//
+//   Given a call stack: a -> b1 -> b2 -> b3 -> c, this counts the time spent
+//   doing the initial call b1 -> b2, but not the call from b2 -> b3 past
+//   that, because that call would not exist if we got rid of the call from
+//   b1 -> b2.
+//
+// 3. For callers above the highlighted block.
+//   The time shown is how much time would be saved running the program if all
+//   calls from the caller block to the highlighted block were removed.
+//   Exactly analogous to callees.
+//
+// There are two interesting considerations for the implementation: how to
+// properly account for time in the case of recursive calls and how to
+// properly track time in case of tail calls.
+//
+// To properly account for time in the case of recursive calls, we keep track
+// of which blocks and calls are currently running. For example, if b1 -> b2
+// is currently running, then we will not count the time spent calling 
+// b2 -> b3 for the block time of b or the call time of b -> b.
+//
+// To properly track time in case of tail calls, we record the set of calls
+// that should exit when we exit the next call. Because of the above rule, we
+// only need to count time for one occurence of each of the calls in the set,
+// because subsequent occurences in a deeply nested stack would not have their
+// time counted anyway.
+
 // CallList --
 //   A set of calls represented as a singly linked list.
 //
@@ -398,6 +459,9 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   call->count++;
 
   if (thread->stack->auto_exit) {
+    // Update the times for all the auto_exit calls now to maintain the
+    // invariant that we will advance all auto_exit calls by the same amount
+    // of time when we eventually do exit from them.
     for (CallList* c = thread->stack->exit_calls; c != NULL; c = c->tail) {
       FbleCallData* exit_call = GetCallData(arena, thread->profile, c->caller, c->callee);
       for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {

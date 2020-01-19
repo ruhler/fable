@@ -1,7 +1,4 @@
 * Make sure we've tested recursive calls with auto exit.
-* Document the interesting parts of the implementation
-  - auto exit handling
-  - excluding recursive calls from times.
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
