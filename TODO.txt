@@ -1,14 +1,13 @@
+Performance Refactor:
+* [test] Fix infinite recursion in type substitution.
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
 * Label blocks in exec process bindings by binding name?
 * [lang] redo syntax for literals
-* [test] Fix infinite recursion in TypeEquals.
 * Replace TicTacToe MemoTable with a generic Map from Data to T@.
   - Implement ToData for Board@.
 * Implement Game of Life.
-
-Performance Refactor:
 * Step through code via gdb for a Bit2XN addition to get a sense of how
   involved that is?
 * Consider factoring out code in compile.c for computing modeled profile time.
