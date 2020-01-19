@@ -341,6 +341,10 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph)
   thread->stack->exit_calls = NULL;
   thread->stack->tail = NULL;
   thread->start = THREAD_SUSPENDED;
+
+  // Special case for block 0, which is assumed to be the entry block.
+  thread->graph->xs[0]->block.count++;
+
   return thread;
 }
 
@@ -351,6 +355,12 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
   while (thread->stack->tail != NULL) {
     FbleProfileExitBlock(arena, thread);
   }
+
+  // Special case for block 0, which is assumed to be the entry block.
+  for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
+    thread->graph->xs[0]->block.time[clock] += thread->stack->time[clock];
+  }
+
   assert(thread->stack->exit_calls == NULL);
   FbleFree(arena, thread->stack);
   FbleFree(arena, thread);
@@ -490,14 +500,6 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
 // FbleProcessCallGraph -- see documentation in fble-profile.h
 void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
 {
-  // Treat block 0 specially so it represents the total execution for the
-  // program. We assume there are no incoming calls to block 0.
-  for (size_t i = 0; i < graph->xs[0]->callees.size; ++i) {
-    graph->xs[0]->block.count += graph->xs[0]->callees.xs[i]->count;
-    for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      graph->xs[0]->block.time[clock] += graph->xs[0]->callees.xs[i]->time[clock];
-    }
-  }
 }
 
 // FbleDumpProfile -- see documentation in fble-profile.h

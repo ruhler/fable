@@ -38,6 +38,8 @@ static size_t AutoExitMaxMem(size_t n)
 
   assert(graph->size == 2);
   assert(graph->xs[0]->block.id == 0);
+  assert(graph->xs[0]->block.count == 1);
+  assert(graph->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 10 * (n + 1));
   assert(graph->xs[0]->callees.size == 1);
   assert(graph->xs[0]->callees.xs[0]->id == 1);
   assert(graph->xs[0]->callees.xs[0]->count == 1);
@@ -100,6 +102,8 @@ int main(int argc, char* argv[])
 
     assert(graph->size == 5);
     assert(graph->xs[0]->block.id == 0);
+    assert(graph->xs[0]->block.count == 1);
+    assert(graph->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 131);
     assert(graph->xs[0]->callees.size == 1);
     assert(graph->xs[0]->callees.xs[0]->id == 1);
     assert(graph->xs[0]->callees.xs[0]->count == 1);
@@ -181,6 +185,8 @@ int main(int argc, char* argv[])
 
     assert(graph->size == 7);
     assert(graph->xs[0]->block.id == 0);
+    assert(graph->xs[0]->block.count == 1);
+    assert(graph->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 210);
     assert(graph->xs[0]->callees.size == 1);
     assert(graph->xs[0]->callees.xs[0]->id == 1);
     assert(graph->xs[0]->callees.xs[0]->count == 1);
@@ -260,6 +266,8 @@ int main(int argc, char* argv[])
 
     assert(graph->size == 4);
     assert(graph->xs[0]->block.id == 0);
+    assert(graph->xs[0]->block.count == 1);
+    assert(graph->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
     assert(graph->xs[0]->callees.size == 1);
     assert(graph->xs[0]->callees.xs[0]->id == 1);
     assert(graph->xs[0]->callees.xs[0]->count == 1);
@@ -330,6 +338,8 @@ int main(int argc, char* argv[])
 
     assert(graph->size == 5);
     assert(graph->xs[0]->block.id == 0);
+    assert(graph->xs[0]->block.count == 1);
+    assert(graph->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 150);
     assert(graph->xs[0]->callees.size == 1);
     assert(graph->xs[0]->callees.xs[0]->id == 1);
     assert(graph->xs[0]->callees.xs[0]->count == 1);
