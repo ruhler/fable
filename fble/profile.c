@@ -549,20 +549,17 @@ void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   }
   SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, calls, profile->size);
 
-  // Code Coverage
   double coverage = (double)covered / (double)profile->size;
-  fprintf(fout, "Code Coverage\n");
-  fprintf(fout, "-------------\n");
-  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, profile->size);
-
-  // Compute correlation between wall time and profile time.
-  fprintf(fout, "Wall / Profile Time Correlation\n");
-  fprintf(fout, "-------------------------------\n");
   double m = (double)xy / (double)xx;
   double r = (double)(n * xy - x * y)
            / (  sqrt((double)n*xx - (double)x*x)
               * sqrt((double)n*yy - (double)y*y));
-  fprintf(fout, "m   = %f\nr^2 = %f\n\n", m, r*r);
+
+  fprintf(fout, "Profile Report\n");
+  fprintf(fout, "==============\n");
+  fprintf(fout, "blocks executed: %2.2f%% of %zi\n", 100 * coverage, profile->size);
+  fprintf(fout, "wall / time clock ratio: %f (r^2 = %f)\n", m, r*r);
+  fprintf(fout, "\n");
 
   // Flat Profile
   fprintf(fout, "Flat Profile\n");
