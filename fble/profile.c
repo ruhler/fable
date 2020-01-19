@@ -498,73 +498,46 @@ void FbleProcessCallGraph(FbleArena* arena, FbleCallGraph* graph)
       graph->xs[0]->block.time[clock] += graph->xs[0]->callees.xs[i]->time[clock];
     }
   }
-
-  SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, ((FbleCallDataV*)graph)->xs, ((FbleCallDataV*)graph)->size);
 }
 
 // FbleDumpProfile -- see documentation in fble-profile.h
 void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
 {
-  // Code Coverage
+  FbleArena* arena = FbleNewArena();
+  FbleCallData* calls[graph->size];
+
+  // Number of blocks covered.
   size_t covered = 0;
-  for (size_t i = 0; i < graph->size; ++i) {
-    if (graph->xs[i]->block.count > 0) {
-      covered++;
-    }
-  }
 
-  double coverage = (double)covered / (double)graph->size;
-  fprintf(fout, "Code Coverage\n");
-  fprintf(fout, "-------------\n");
-  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, graph->size);
-
-  // Flat Profile
-  fprintf(fout, "Flat Profile\n");
-  fprintf(fout, "------------\n");
-  fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
-  for (size_t i = 0; i < graph->size; ++i) {
-    PrintCallData(fout, blocks, true, &graph->xs[i]->block);
-  }
-  fprintf(fout, "\n");
-
-  // Compute correlation between wall time and profile time.
-  fprintf(fout, "Wall / Profile Time Correlation\n");
-  fprintf(fout, "-------------------------------\n");
+  // Stats for correlating profile time (x) with wall clock time (y)
   uint64_t n = 0;
   uint64_t x = 0;  // sum of x_i
   uint64_t y = 0;  // sum of y_i
   uint64_t xx = 0;  // sum of x_i * x_i
   uint64_t yy = 0;  // sum of y_i * y_i
   uint64_t xy = 0;  // sum of x_i * y_i
-  for (size_t i = 0; i < graph->size; ++i) {
-    FbleCallData* call = &graph->xs[i]->block;
-    uint64_t x_i = call->time[FBLE_PROFILE_TIME_CLOCK];
-    uint64_t y_i = call->time[FBLE_PROFILE_WALL_CLOCK];
-    n++;
-    x += x_i;
-    y += y_i;
-    xx += x_i * x_i;
-    yy += y_i * y_i;
-    xy += x_i * y_i;
-  }
-  double m = (double)xy / (double)xx;
-  double r = (double)(n * xy - x * y)
-           / (  sqrt((double)n*xx - (double)x*x)
-              * sqrt((double)n*yy - (double)y*y));
-  fprintf(fout, "m = %f\nr = %f\n\n", m, r);
 
-  // Call Graph
-  fprintf(fout, "Call Graph\n");
-  fprintf(fout, "----------\n");
-  fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
-
-  FbleArena* arena = FbleNewArena();
   FbleCallDataV callers[graph->size];
   for (size_t i = 0; i < graph->size; ++i) {
     FbleVectorInit(arena, callers[i]);
   }
 
   for (size_t i = 0; i < graph->size; ++i) {
+    calls[i] = &graph->xs[i]->block;
+
+    if (calls[i]->count > 0) {
+      covered++;
+    }
+
+    uint64_t x_i = calls[i]->time[FBLE_PROFILE_TIME_CLOCK];
+    uint64_t y_i = calls[i]->time[FBLE_PROFILE_WALL_CLOCK];
+    n++;
+    x += x_i;
+    y += y_i;
+    xx += x_i * x_i;
+    yy += y_i * y_i;
+    xy += x_i * y_i;
+
     for (size_t j = 0; j < graph->xs[i]->callees.size; ++j) {
       FbleCallData* call = graph->xs[i]->callees.xs[j];
       FbleCallData* called = FbleAlloc(arena, FbleCallData);
@@ -576,15 +549,45 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
       FbleVectorAppend(arena, callers[call->id], called);
     }
   }
+  SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, calls, graph->size);
 
+  // Code Coverage
+  double coverage = (double)covered / (double)graph->size;
+  fprintf(fout, "Code Coverage\n");
+  fprintf(fout, "-------------\n");
+  fprintf(fout, "Blocks executed: %2.2f%% of %zi\n\n", 100 * coverage, graph->size);
+
+  // Compute correlation between wall time and profile time.
+  fprintf(fout, "Wall / Profile Time Correlation\n");
+  fprintf(fout, "-------------------------------\n");
+  double m = (double)xy / (double)xx;
+  double r = (double)(n * xy - x * y)
+           / (  sqrt((double)n*xx - (double)x*x)
+              * sqrt((double)n*yy - (double)y*y));
+  fprintf(fout, "m   = %f\nr^2 = %f\n\n", m, r*r);
+
+  // Flat Profile
+  fprintf(fout, "Flat Profile\n");
+  fprintf(fout, "------------\n");
+  fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
   for (size_t i = 0; i < graph->size; ++i) {
-    FbleBlockProfile* block = graph->xs[i];
+    PrintCallData(fout, blocks, true, calls[i]);
+  }
+  fprintf(fout, "\n");
+
+  // Call Graph
+  fprintf(fout, "Call Graph\n");
+  fprintf(fout, "----------\n");
+  fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
+  for (size_t i = 0; i < graph->size; ++i) {
+    size_t id = calls[i]->id;
+    FbleBlockProfile* block = graph->xs[id];
     if (block->block.count > 0) {
       // Callers
-      SortCallData(FBLE_PROFILE_TIME_CLOCK, ASCENDING, callers[i].xs, callers[i].size);
+      SortCallData(FBLE_PROFILE_TIME_CLOCK, ASCENDING, callers[id].xs, callers[id].size);
 
       // Block
-      PrintCallData(fout, blocks, true, &graph->xs[i]->block);
+      PrintCallData(fout, blocks, true, calls[i]);
 
       // Callees
       FbleCallData* callees[block->callees.size];
@@ -598,10 +601,10 @@ void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
       fprintf(fout, "-------------------------------\n");
     }
 
-    for (size_t j = 0; j < callers[i].size; ++j) {
-      FbleFree(arena, callers[i].xs[j]);
+    for (size_t j = 0; j < callers[id].size; ++j) {
+      FbleFree(arena, callers[id].xs[j]);
     }
-    FbleFree(arena, callers[i].xs);
+    FbleFree(arena, callers[id].xs);
   }
   fprintf(fout, "\n");
   FbleAssertEmptyArena(arena);
