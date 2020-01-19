@@ -309,6 +309,74 @@ int main(int argc, char* argv[])
   }
 
   {
+    // Test a profile with self recursion and tail calls
+    // 0 -> 1 => 2 => 2 => 2 => 3
+    FbleAssertEmptyArena(arena);
+    FbleProfile* profile = FbleNewProfile(arena, 4);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
+    FbleProfileEnterBlock(arena, thread, 1);
+    FbleProfileTime(arena, thread, 10);
+    FbleProfileAutoExitBlock(arena, thread);  // 1
+    FbleProfileEnterBlock(arena, thread, 2);
+    FbleProfileTime(arena, thread, 20);
+    FbleProfileAutoExitBlock(arena, thread); // 2
+    FbleProfileEnterBlock(arena, thread, 2);
+    FbleProfileTime(arena, thread, 20);
+    FbleProfileAutoExitBlock(arena, thread); // 2
+    FbleProfileEnterBlock(arena, thread, 2);
+    FbleProfileTime(arena, thread, 20);
+    FbleProfileAutoExitBlock(arena, thread); // 2
+    FbleProfileEnterBlock(arena, thread, 3);
+    FbleProfileTime(arena, thread, 30);
+    FbleProfileExitBlock(arena, thread); // 3
+    FbleFreeProfileThread(arena, thread);
+
+    assert(profile->size == 4);
+    assert(profile->xs[0]->block.id == 0);
+    assert(profile->xs[0]->block.count == 1);
+    assert(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    assert(profile->xs[0]->callees.size == 1);
+    assert(profile->xs[0]->callees.xs[0]->id == 1);
+    assert(profile->xs[0]->callees.xs[0]->count == 1);
+    assert(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 100);
+
+    assert(profile->xs[1]->block.id == 1);
+    assert(profile->xs[1]->block.count == 1);
+    assert(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    assert(profile->xs[1]->callees.size == 1);
+    assert(profile->xs[1]->callees.xs[0]->id == 2);
+    assert(profile->xs[1]->callees.xs[0]->count == 1);
+    assert(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
+
+    assert(profile->xs[2]->block.id == 2);
+    assert(profile->xs[2]->block.count == 3);
+    assert(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    assert(profile->xs[2]->callees.size == 2);
+    assert(profile->xs[2]->callees.xs[0]->id == 2);
+    assert(profile->xs[2]->callees.xs[0]->count == 2);
+    assert(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 70);
+    assert(profile->xs[2]->callees.xs[1]->id == 3);
+    assert(profile->xs[2]->callees.xs[1]->count == 1);
+    assert(profile->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
+
+    assert(profile->xs[3]->block.id == 3);
+    assert(profile->xs[3]->block.count == 1);
+    assert(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
+    assert(profile->xs[3]->callees.size == 0);
+
+    FbleName names[] = {
+        { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
+        { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},
+        { .name = "b", .loc = { .source = "foo.c", .line = 2, .col = 20}},
+        { .name = "c", .loc = { .source = "foo.c", .line = 3, .col = 30}},
+    };
+    FbleNameV blocks = { .size = 4, .xs = names };
+    FbleProfileReport(stdout, &blocks, profile);
+    FbleFreeProfile(arena, profile);
+    FbleAssertEmptyArena(arena);
+  }
+
+  {
     // Test a profile with mutual recursion
     // 0 -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
     FbleAssertEmptyArena(arena);

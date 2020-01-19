@@ -1,4 +1,3 @@
-* Make sure we've tested recursive calls with auto exit.
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
