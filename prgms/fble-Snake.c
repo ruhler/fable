@@ -251,13 +251,13 @@ int main(int argc, char* argv[])
   FbleArena* eval_arena = FbleNewArena();
   FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
   FbleNameV blocks;
-  FbleCallGraph* graph = NULL;
+  FbleProfile* profile = NULL;
 
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &graph);
+  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
   if (func == NULL) {
     FbleDeleteValueArena(value_arena);
     FbleFreeBlockNames(eval_arena, &blocks);
-    FbleFreeCallGraph(eval_arena, graph);
+    FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
     return 1;
@@ -265,8 +265,8 @@ int main(int argc, char* argv[])
 
   FbleValue* input = FbleNewInputPortValue(value_arena, 0);
   FbleValue* output = FbleNewOutputPortValue(value_arena, 1);
-  FbleValue* main1 = FbleApply(value_arena, func, input, graph);
-  FbleValue* proc = FbleApply(value_arena, main1, output, graph);
+  FbleValue* main1 = FbleApply(value_arena, func, input, profile);
+  FbleValue* proc = FbleApply(value_arena, main1, output, profile);
   FbleValueRelease(value_arena, func);
   FbleValueRelease(value_arena, main1);
   FbleValueRelease(value_arena, input);
@@ -275,7 +275,7 @@ int main(int argc, char* argv[])
   if (proc == NULL) {
     FbleDeleteValueArena(value_arena);
     FbleFreeBlockNames(eval_arena, &blocks);
-    FbleFreeCallGraph(eval_arena, graph);
+    FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
     return 1;
@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
   GetCurrentTime(&sio.tnext);
   AddTimeMillis(&sio.tnext, TICK_INTERVAL);
 
-  FbleValue* value = FbleExec(value_arena, &sio.io, proc, graph);
+  FbleValue* value = FbleExec(value_arena, &sio.io, proc, profile);
 
   FbleValueRelease(value_arena, proc);
   FbleValueRelease(value_arena, ports[0]);
@@ -325,7 +325,7 @@ int main(int argc, char* argv[])
   FbleValueRelease(value_arena, value);
   FbleDeleteValueArena(value_arena);
   FbleFreeBlockNames(eval_arena, &blocks);
-  FbleFreeCallGraph(eval_arena, graph);
+  FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);
   FbleDeleteArena(eval_arena);
   FbleDeleteArena(prgm_arena);

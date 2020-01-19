@@ -112,14 +112,14 @@ int main(int argc, char* argv[])
     FbleArena* eval_arena = FbleNewArena();
     FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
     FbleNameV blocks;
-    FbleCallGraph* graph = NULL;
-    result = FbleEval(value_arena, prgm, &blocks, &graph);
+    FbleProfile* profile = NULL;
+    result = FbleEval(value_arena, prgm, &blocks, &profile);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
     if (result != NULL && FbleIsProcValue(result)) {
       FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
-      FbleValue* exec_result = FbleExec(value_arena, &io, result, graph);
+      FbleValue* exec_result = FbleExec(value_arena, &io, result, profile);
       FbleValueRelease(value_arena, result);
       result = exec_result;
     }
@@ -129,11 +129,11 @@ int main(int argc, char* argv[])
 
     if (report_profile) {
       printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));
-      FbleProfileReport(stdout, &blocks, graph);
+      FbleProfileReport(stdout, &blocks, profile);
     }
 
     FbleFreeBlockNames(eval_arena, &blocks);
-    FbleFreeCallGraph(eval_arena, graph);
+    FbleFreeProfile(eval_arena, profile);
 
     FbleAssertEmptyArena(eval_arena);
     FbleDeleteArena(eval_arena);

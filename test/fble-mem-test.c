@@ -67,8 +67,8 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
   FbleArena* eval_arena = FbleNewArena();
   FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
   FbleNameV blocks;
-  FbleCallGraph* graph = NULL;
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &graph);
+  FbleProfile* profile = NULL;
+  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
   if (func != NULL) {
     // Number type is: @ Nat@ = +(Nat@ S, Unit@ Z);
     FbleValueV args = { .size = 0, .xs = NULL };
@@ -84,13 +84,13 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
     }
 
     FbleValue* n = (use_large_n ? large_n : small_n);
-    FbleValue* result = FbleApply(value_arena, func, n, graph);
+    FbleValue* result = FbleApply(value_arena, func, n, profile);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
     if (result != NULL && FbleIsProcValue(result)) {
       FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
-      FbleValue* exec_result = FbleExec(value_arena, &io, result, graph);
+      FbleValue* exec_result = FbleExec(value_arena, &io, result, profile);
       FbleValueRelease(value_arena, result);
       result = exec_result;
     }
@@ -103,7 +103,7 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
   FbleValueRelease(value_arena, func);
   FbleDeleteValueArena(value_arena);
   FbleFreeBlockNames(eval_arena, &blocks);
-  FbleFreeCallGraph(eval_arena, graph);
+  FbleFreeProfile(eval_arena, profile);
 
   *max_bytes = FbleArenaMaxSize(eval_arena);
   FbleAssertEmptyArena(eval_arena);

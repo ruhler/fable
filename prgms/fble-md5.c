@@ -146,27 +146,27 @@ int main(int argc, char* argv[])
   FbleArena* eval_arena = FbleNewArena();
   FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
   FbleNameV blocks;
-  FbleCallGraph* graph = NULL;
+  FbleProfile* profile = NULL;
 
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &graph);
+  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
   if (func == NULL) {
     FbleDeleteValueArena(value_arena);
     FbleFreeBlockNames(eval_arena, &blocks);
-    FbleFreeCallGraph(eval_arena, graph);
+    FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
     return 1;
   }
 
   FbleValue* input = FbleNewInputPortValue(value_arena, 0);
-  FbleValue* proc = FbleApply(value_arena, func, input, graph);
+  FbleValue* proc = FbleApply(value_arena, func, input, profile);
   FbleValueRelease(value_arena, func);
   FbleValueRelease(value_arena, input);
 
   if (proc == NULL) {
     FbleDeleteValueArena(value_arena);
     FbleFreeBlockNames(eval_arena, &blocks);
-    FbleFreeCallGraph(eval_arena, graph);
+    FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
     return 1;
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
     .fin = fin
   };
 
-  FbleValue* value = FbleExec(value_arena, &mio.io, proc, graph);
+  FbleValue* value = FbleExec(value_arena, &mio.io, proc, profile);
 
   FbleValueRelease(value_arena, proc);
   assert(ports[0] == NULL);
@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
   FbleValueRelease(value_arena, value);
   FbleDeleteValueArena(value_arena);
   FbleFreeBlockNames(eval_arena, &blocks);
-  FbleFreeCallGraph(eval_arena, graph);
+  FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);
   FbleDeleteArena(eval_arena);
   FbleDeleteArena(prgm_arena);

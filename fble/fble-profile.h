@@ -80,50 +80,43 @@ typedef struct {
   FbleBlockProfile** xs;
 } FbleBlockProfileV;
 
-// FbleCallGraph --
-//   Call graph inforomation profile for a program.
+// FbleProfile --
+//   Profiling information for a program.
 //
-// Initially as we run the program we populate a profile with information
-// about time spent in each block and callees. The blocks are sorted by block
-// id and callers are unsorted.
-//
-// After processing a call graph, information about callers is updated. Blocks
-// are sorted in descending order of time, callers within blocks are sorted
-// inascending order of time, and callees within blocks are sorted in
-// descending order of time.
-typedef FbleBlockProfileV FbleCallGraph;
+// profile.xs[i] contains block and callee information for block i.
+typedef FbleBlockProfileV FbleProfile;
 
-// FbleNewCallGraph --
+// FbleNewProfile --
 //   Creates a new, empty profile for the given number of blocks.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blockc - the number of blocks in the call graph.
+//   blockc - the number of blocks in the program being profiled.
 //
 // Results:
 //   A new empty profile.
 //
 // Side effects:
-//   Allocates a new call that should be freed with FbleFreeCallGraph when
+//   Allocates a new call that should be freed with FbleFreeProfile when
 //   no longer in use.
-FbleCallGraph* FbleNewCallGraph(FbleArena* arena, size_t blockc);
+FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc);
 
-// FbleFreeCallGraph --
-//   Free a call graph.
+// FbleFreeProfile --
+//   Free a profile.
 //
 // Input:
 //   arena - arena to use for allocations
-//   graph - the graph to free
+//   profile - the profile to free
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   Frees the memory resources associated with the given call graph.
-void FbleFreeCallGraph(FbleArena* arena, FbleCallGraph* graph);
+//   Frees the memory resources associated with the given profile.
+void FbleFreeProfile(FbleArena* arena, FbleProfile* profile);
 
 // FbleProfileThread --
-//   A thread of calls used to generate call graph data.
+//   A thread of calls used to generate profile data.
 typedef struct FbleProfileThread FbleProfileThread;
 
 // FbleNewProfileThread --
@@ -135,7 +128,7 @@ typedef struct FbleProfileThread FbleProfileThread;
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   graph - the call graph to save profiling data to.
+//   profile - the profile to save profiling data to.
 //
 // Results:
 //   A new profile thread.
@@ -143,11 +136,11 @@ typedef struct FbleProfileThread FbleProfileThread;
 // Side effects:
 //   Allocates a new profile thread that should be freed with
 //   FreeProfileThread when no longer in use.
-FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleCallGraph* graph);
+FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile);
 
 // FbleFreeProfileThread --
 //   Free resources associated with the given profile thread. Does not free
-//   the call graph associated with the given profile thread.
+//   the profile associated with the given profile thread.
 //
 // Inputs:
 //   arena - arena to use for allocations
@@ -230,7 +223,7 @@ void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
 //   none.
 //
 // Side effects:
-//   Updates the call graph data associated with the given thread.
+//   Updates the profile data associated with the given thread.
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread);
 
 // FbleProfileAutoExitBlock --
@@ -245,7 +238,7 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread);
 //   none.
 //
 // Side effects:
-//   Updates the call graph data associated with the given thread.
+//   Updates the profile data associated with the given thread.
 void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread);
 
 // FbleProfileReport --
@@ -262,7 +255,7 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread);
 //
 // Side effects:
 //   Writes a profile report to the given file.
-void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph);
+void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile);
 
 // FbleFreeBlockNames --
 //   Free the names for blocks.

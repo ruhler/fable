@@ -22,7 +22,7 @@
 //   arena - The arena to use for allocating values.
 //   program - The program to evaluate.
 //   blocks - Output info about blocks in the program.
-//   graph - Output call graph for the evaluation.
+//   profile - Output profile for the evaluation.
 //
 // Results:
 //   The value of the evaluated program, or NULL in case of error. The
@@ -33,9 +33,9 @@
 //   use. Prints an error message to stderr in case of error.
 //   Sets blocks to the info about all blocks in the program. This must be
 //   freed when no longer in use.
-//   Sets graph to the call graph for the evaluation. This must be freed with
-//   FbleFreeCallGraph when no longer in use.
-FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleCallGraph** graph);
+//   Sets profile to the profile for the evaluation. This must be freed with
+//   FbleFreeProfile when no longer in use.
+FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile);
 
 // FbleApply --
 //   Apply a function to the given argument.
@@ -44,7 +44,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
 //   arena - the arena to use for allocating values.
 //   func - the function to apply.
 //   arg - the argument to apply the function to.
-//   graph - the call graph to update.
+//   profile - the profile to update.
 //
 // Results:
 //   The result of applying the function to the given argument.
@@ -52,8 +52,8 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
-//   Updates the call graph with stats from the evaluation.
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, FbleCallGraph* graph);
+//   Updates the profile with stats from the evaluation.
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, FbleProfile* profile);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.
@@ -111,7 +111,7 @@ typedef struct FbleIO {
 //   arena - The arena to use for allocating values.
 //   io - The io to use for external ports.
 //   proc - The process to execute.
-//   graph - the call graph to update.
+//   profile - the profile to update.
 //
 // Results:
 //   The result of executing the process, or NULL in case of error. The
@@ -119,7 +119,7 @@ typedef struct FbleIO {
 //
 // Side effects:
 //   Prints an error message to stderr in case of error.
-//   Updates the call graph with stats from the evaluation.
-FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleCallGraph* graph);
+//   Updates the profile with stats from the evaluation.
+FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleProfile* profile);
 
 #endif // FBLE_H_
