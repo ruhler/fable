@@ -497,8 +497,8 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
   thread->stack->auto_exit = true;
 }
 
-// FbleDumpProfile -- see documentation in fble-profile.h
-void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
+// FbleProfileReport -- see documentation in fble-profile.h
+void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph)
 {
   FbleArena* arena = FbleNewArena();
   FbleCallData* calls[graph->size];

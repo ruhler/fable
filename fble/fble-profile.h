@@ -248,21 +248,21 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread);
 //   Updates the call graph data associated with the given thread.
 void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread);
 
-// FbleDumpProfile --
-//   Dump human readable profiling information to a file.
+// FbleProfileReport --
+//   Generate a human readable profile report.
 //
 // Inputs:
-//   fout - the file to dump the profile to.
+//   fout - the file to output the profile report to.
 //   blocks - names and locations for the blocks of a program, indexed by
 //            block id.
-//   graph - the call graph to dump.
+//   profile - the profile to generate a report for.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   Writes a profile dump to the given file.
-void FbleDumpProfile(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph);
+//   Writes a profile report to the given file.
+void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleCallGraph* graph);
 
 // FbleFreeBlockNames --
 //   Free the names for blocks.

@@ -129,8 +129,7 @@ int main(int argc, char* argv[])
 
     if (report_profile) {
       printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));
-
-      FbleDumpProfile(stdout, &blocks, graph);
+      FbleProfileReport(stdout, &blocks, graph);
     }
 
     FbleFreeBlockNames(eval_arena, &blocks);

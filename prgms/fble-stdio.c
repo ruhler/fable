@@ -251,7 +251,7 @@ int main(int argc, char* argv[])
   FbleDeleteValueArena(value_arena);
 
   if (fprofile != NULL) {
-    FbleDumpProfile(fprofile, &blocks, graph);
+    FbleProfileReport(fprofile, &blocks, graph);
   }
 
   FbleFreeBlockNames(eval_arena, &blocks);

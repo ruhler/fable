@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
         { .name = "d", .loc = { .source = "foo.c", .line = 4, .col = 40}}
     };
     FbleNameV blocks = { .size = 5, .xs = names };
-    FbleDumpProfile(stdout, &blocks, graph);
+    FbleProfileReport(stdout, &blocks, graph);
     FbleFreeCallGraph(arena, graph);
     FbleAssertEmptyArena(arena);
   }
@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
         { .name = "c", .loc = { .source = "foo.c", .line = 3, .col = 30}},
     };
     FbleNameV blocks = { .size = 4, .xs = names };
-    FbleDumpProfile(stdout, &blocks, graph);
+    FbleProfileReport(stdout, &blocks, graph);
     FbleFreeCallGraph(arena, graph);
     FbleAssertEmptyArena(arena);
   }
@@ -383,7 +383,7 @@ int main(int argc, char* argv[])
         { .name = "d", .loc = { .source = "foo.c", .line = 4, .col = 40}},
     };
     FbleNameV blocks = { .size = 5, .xs = names };
-    FbleDumpProfile(stdout, &blocks, graph);
+    FbleProfileReport(stdout, &blocks, graph);
     FbleFreeCallGraph(arena, graph);
     FbleAssertEmptyArena(arena);
   }
