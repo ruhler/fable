@@ -1,5 +1,12 @@
+Type System Rewrite:
+* Add Fble prefix to type functions.
+* Factor out type code into fble-type.h and type.c
+* Add FbleArena argument and retaining of type to Normal() function.
+* Remove Subst and Eval, make Normal push poly applies down into the
+  constructors lazily, and make TypeEquals work on un-evaluated types.
+* Verify this fixes infinite recursion in type substitution.
+
 Performance Refactor:
-* [test] Fix infinite recursion in type substitution.
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?

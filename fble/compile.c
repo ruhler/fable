@@ -326,9 +326,9 @@ static bool CheckNameSpace(TypeArena* arena, FbleName* name, Type* type);
 
 static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs);
 static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs);
-static Type* CompileList(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs);
+static Type* CompileList(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleTypeExpr* type, FbleExprV args, FbleInstrV* instrs);
 static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr);
-static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type);
+static Type* CompileType(TypeArena* arena, Vars* vars, FbleTypeExpr* type);
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
 static Type* CompileProgram(TypeArena* arena, Blocks* blocks, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs);
 
@@ -3438,7 +3438,7 @@ static Type* CompileExpr(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   TypeRelease when it is no longer needed.
-static Type* CompileList(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleType* type, FbleExprV args, FbleInstrV* instrs)
+static Type* CompileList(TypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleTypeExpr* type, FbleExprV args, FbleInstrV* instrs)
 {
   // The goal is to desugar a list expression [a, b, c, d] into the
   // following expression:
@@ -3675,7 +3675,7 @@ static Type* CompileExprNoInstrs(TypeArena* arena, Vars* vars, FbleExpr* expr)
 //   Prints a message to stderr if the type fails to compile or evalute.
 //   Allocates a reference-counted type that must be freed using
 //   TypeRelease when it is no longer needed.
-static Type* CompileType(TypeArena* arena, Vars* vars, FbleType* type)
+static Type* CompileType(TypeArena* arena, Vars* vars, FbleTypeExpr* type)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (type->tag) {

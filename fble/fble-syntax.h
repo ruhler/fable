@@ -204,14 +204,13 @@ typedef struct {
   FbleExpr** xs;
 } FbleExprV;
 
-// FbleType -- Synonym for FbleExpr when a type is expected
-typedef FbleExpr FbleType;
-typedef FbleExprV FbleTypeV;
+// FbleTypeExpr -- Synonym for FbleExpr when a type is expected
+typedef FbleExpr FbleTypeExpr;
 
 // FbleField --
 //   A pair of (Type, Name) used to describe type and function arguments.
 typedef struct {
-  FbleType* type;
+  FbleTypeExpr* type;
   FbleName name;
 } FbleField;
 
@@ -225,7 +224,7 @@ typedef struct {
 // FbleStructTypeExpr --
 //   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
-  FbleType _base;
+  FbleTypeExpr _base;
   FbleFieldV fields;
 } FbleStructTypeExpr;
 
@@ -262,7 +261,7 @@ typedef struct {
 // FbleUnionTypeExpr --
 //   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
-  FbleType _base;
+  FbleTypeExpr _base;
   FbleFieldV fields;
 } FbleUnionTypeExpr;
 
@@ -270,7 +269,7 @@ typedef struct {
 //   FBLE_UNION_VALUE_EXPR (type :: Type) (field :: Name) (arg :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleType* type;
+  FbleTypeExpr* type;
   FbleName field;
   FbleExpr* arg;
 } FbleUnionValueExpr;
@@ -289,9 +288,9 @@ typedef struct {
 // FbleFuncTypeExpr --
 //   FBLE_FUNC_TYPE_EXPR (arg :: Type) (return :: Type)
 typedef struct {
-  FbleType _base;
-  FbleType* arg;
-  FbleType* rtype;
+  FbleTypeExpr _base;
+  FbleTypeExpr* arg;
+  FbleTypeExpr* rtype;
 } FbleFuncTypeExpr;
 
 // FbleFuncValueExpr --
@@ -305,8 +304,8 @@ typedef struct {
 // FbleProcTypeExpr --
 //   FBLE_PROC_TYPE_EXPR (type :: Type)
 typedef struct {
-  FbleType _base;
-  FbleType* type;
+  FbleTypeExpr _base;
+  FbleTypeExpr* type;
 } FbleProcTypeExpr;
 
 // FbleEvalExpr --
@@ -320,7 +319,7 @@ typedef struct {
 //   FBLE_LINK_EXPR (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleType* type;
+  FbleTypeExpr* type;
   FbleName get;
   FbleName put;
   FbleExpr* body;
@@ -333,7 +332,7 @@ typedef struct {
 // given Expr.
 typedef struct {
   FbleKind* kind;
-  FbleType* type;
+  FbleTypeExpr* type;
   FbleName name;
   FbleExpr* expr;
 } FbleBinding;
@@ -409,7 +408,7 @@ typedef struct {
 typedef struct {
   FbleExpr _base;
   FbleExpr* poly;
-  FbleType* arg;
+  FbleTypeExpr* arg;
 } FblePolyApplyExpr;
 
 // FbleListExpr --
@@ -423,7 +422,7 @@ typedef struct {
 //   FBLE_LITERAL_EXPR (type :: Type) (word :: Word)
 typedef struct {
   FbleExpr _base;
-  FbleType* type;
+  FbleTypeExpr* type;
   FbleLoc word_loc;
   const char* word;
 } FbleLiteralExpr;

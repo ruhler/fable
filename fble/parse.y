@@ -319,9 +319,9 @@ block:
       $$ = $2;
    }
  | '(' expr_p ')' block {
-      FbleType* type = $4;
+      FbleTypeExpr* type = $4;
       for (size_t i = 0; i < $2.size; ++i) {
-        FbleType* arg = $2.xs[$2.size - 1 - i];
+        FbleTypeExpr* arg = $2.xs[$2.size - 1 - i];
         FbleFuncTypeExpr* func_type = FbleAlloc(arena, FbleFuncTypeExpr);
         func_type->_base.tag = FBLE_FUNC_TYPE_EXPR;
         func_type->_base.loc = arg->loc;
