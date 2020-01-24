@@ -49,12 +49,12 @@ void FreeKind(FbleArena* arena, Kind* kind)
     kind->refcount--;
     if (kind->refcount == 0) {
       switch (kind->tag) {
-        case BASIC_KIND: {
+        case FBLE_BASIC_KIND: {
           FbleFree(arena, kind);
           break;
         }
 
-        case POLY_KIND: {
+        case FBLE_POLY_KIND: {
           PolyKind* poly = (PolyKind*)kind;
           FreeKind(arena, poly->arg);
           FreeKind(arena, poly->rkind);
@@ -243,20 +243,20 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
 static Kind* TypeofKind(FbleArena* arena, Kind* kind)
 {
   switch (kind->tag) {
-    case BASIC_KIND: {
+    case FBLE_BASIC_KIND: {
       BasicKind* basic = (BasicKind*)kind;
       BasicKind* typeof = FbleAlloc(arena, BasicKind);
-      typeof->_base.tag = BASIC_KIND;
+      typeof->_base.tag = FBLE_BASIC_KIND;
       typeof->_base.loc = kind->loc;
       typeof->_base.refcount = 1;
       typeof->level = basic->level + 1;
       return &typeof->_base;
     }
 
-    case POLY_KIND: {
+    case FBLE_POLY_KIND: {
       PolyKind* poly = (PolyKind*)kind;
       PolyKind* typeof = FbleAlloc(arena, PolyKind);
-      typeof->_base.tag = POLY_KIND;
+      typeof->_base.tag = FBLE_POLY_KIND;
       typeof->_base.loc = kind->loc;
       typeof->_base.refcount = 1;
       typeof->arg = CopyKind(arena, poly->arg);
@@ -277,7 +277,7 @@ Kind* FbleGetKind(FbleArena* arena, Type* type)
     case FUNC_TYPE:
     case PROC_TYPE: {
       BasicKind* kind = FbleAlloc(arena, BasicKind);
-      kind->_base.tag = BASIC_KIND;
+      kind->_base.tag = FBLE_BASIC_KIND;
       kind->_base.loc = type->loc;
       kind->_base.refcount = 1;
       kind->level = 1;
@@ -287,7 +287,7 @@ Kind* FbleGetKind(FbleArena* arena, Type* type)
     case POLY_TYPE: {
       PolyType* poly = (PolyType*)type;
       PolyKind* kind = FbleAlloc(arena, PolyKind);
-      kind->_base.tag = POLY_KIND;
+      kind->_base.tag = FBLE_POLY_KIND;
       kind->_base.loc = type->loc;
       kind->_base.refcount = 1;
       kind->arg = FbleGetKind(arena, poly->arg);
@@ -298,7 +298,7 @@ Kind* FbleGetKind(FbleArena* arena, Type* type)
     case POLY_APPLY_TYPE: {
       PolyApplyType* pat = (PolyApplyType*)type;
       PolyKind* kind = (PolyKind*)FbleGetKind(arena, pat->poly);
-      assert(kind->_base.tag == POLY_KIND);
+      assert(kind->_base.tag == FBLE_POLY_KIND);
 
       Kind* rkind = CopyKind(arena, kind->rkind);
       FreeKind(arena, &kind->_base);
@@ -328,12 +328,12 @@ Kind* FbleGetKind(FbleArena* arena, Type* type)
 size_t FbleGetKindLevel(Kind* kind)
 {
   switch (kind->tag) {
-    case BASIC_KIND: {
+    case FBLE_BASIC_KIND: {
       BasicKind* basic = (BasicKind*)kind;
       return basic->level;
     }
 
-    case POLY_KIND: {
+    case FBLE_POLY_KIND: {
       PolyKind* poly = (PolyKind*)kind;
       return FbleGetKindLevel(poly->rkind);
     }
@@ -943,13 +943,13 @@ bool FbleKindsEqual(Kind* a, Kind* b)
   }
 
   switch (a->tag) {
-    case BASIC_KIND: {
+    case FBLE_BASIC_KIND: {
       BasicKind* ba = (BasicKind*)a;
       BasicKind* bp = (BasicKind*)b;
       return ba->level == bp->level;
     }
 
-    case POLY_KIND: {
+    case FBLE_POLY_KIND: {
       PolyKind* pa = (PolyKind*)a;
       PolyKind* pb = (PolyKind*)b;
       return FbleKindsEqual(pa->arg, pb->arg)
@@ -1062,7 +1062,7 @@ void FblePrintType(FbleArena* arena, Type* type)
 void FblePrintKind(Kind* kind)
 {
   switch (kind->tag) {
-    case BASIC_KIND: {
+    case FBLE_BASIC_KIND: {
       BasicKind* basic = (BasicKind*)kind;
       if (basic->level == 1) {
         fprintf(stderr, "@");
@@ -1073,9 +1073,9 @@ void FblePrintKind(Kind* kind)
       break;
     }
 
-    case POLY_KIND: {
+    case FBLE_POLY_KIND: {
       const char* prefix = "<";
-      while (kind->tag == POLY_KIND) {
+      while (kind->tag == FBLE_POLY_KIND) {
         PolyKind* poly = (PolyKind*)kind;
         fprintf(stderr, "%s", prefix);
         FblePrintKind(poly->arg);

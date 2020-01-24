@@ -5,20 +5,13 @@
 #include "fble-syntax.h"
 #include "ref.h"
 
-// KindTag --
-//   A tag used to distinguish between the two kinds of kinds.
-typedef enum {
-  BASIC_KIND,
-  POLY_KIND
-} KindTag;
-
 // Kind --
 //   A tagged union of kind types. All kinds have the same initial
 //   layout as Kind. The tag can be used to determine what kind of
 //   kind this is to get access to additional fields of the kind
 //   by first casting to that specific type of kind.
 typedef struct {
-  KindTag tag;
+  FbleKindTag tag;
   FbleLoc loc;
   int refcount;
 } Kind;

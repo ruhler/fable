@@ -1781,7 +1781,7 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
       }
 
       PolyKind* poly_kind = (PolyKind*)FbleGetKind(arena_, poly);
-      if (poly_kind->_base.tag != POLY_KIND) {
+      if (poly_kind->_base.tag != FBLE_POLY_KIND) {
         ReportError(arena_, &expr->loc,
             "cannot apply poly args to a basic kinded entity");
         FreeKind(arena_, &poly_kind->_base);
@@ -2390,7 +2390,7 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
     case FBLE_BASIC_KIND: {
       FbleBasicKind* basic = (FbleBasicKind*)kind;
       BasicKind* k = FbleAlloc(arena, BasicKind);
-      k->_base.tag = BASIC_KIND;
+      k->_base.tag = FBLE_BASIC_KIND;
       k->_base.loc = basic->_base.loc;
       k->_base.refcount = 1;
       k->level = 1;
@@ -2400,7 +2400,7 @@ static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
     case FBLE_POLY_KIND: {
       FblePolyKind* poly = (FblePolyKind*)kind;
       PolyKind* k = FbleAlloc(arena, PolyKind);
-      k->_base.tag = POLY_KIND;
+      k->_base.tag = FBLE_POLY_KIND;
       k->_base.loc = poly->_base.loc;
       k->_base.refcount = 1;
       k->arg = CompileKind(arena, poly->arg);

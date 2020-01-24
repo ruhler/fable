@@ -1,6 +1,8 @@
 Type System Rewrite:
-* Add Fble prefix to type functions.
-* Factor out type code into fble-type.h and type.c
+* Use a single type for both FbleKind and Kind.
+* Clean up fble-type.h.
+* Re-organize fble/type.c to match order in fble-type.h.
+* Make FbleEvalType an internal function by providing a better public API.
 * Add FbleArena argument and retaining of type to Normal() function.
 * Remove Subst and Eval, make Normal push poly applies down into the
   constructors lazily, and make TypeEquals work on un-evaluated types.
