@@ -136,6 +136,8 @@ kind:
       FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
       basic_kind->_base.tag = FBLE_BASIC_KIND;
       basic_kind->_base.loc = @$;
+      basic_kind->_base.refcount = 1;
+      basic_kind->level = 1;
       $$ = &basic_kind->_base;
    }
  | '<' kind_p '>' kind {
@@ -145,6 +147,7 @@ kind:
         FblePolyKind* poly_kind = FbleAlloc(arena, FblePolyKind);
         poly_kind->_base.tag = FBLE_POLY_KIND;
         poly_kind->_base.loc = @$;
+        poly_kind->_base.refcount = 1;
         poly_kind->arg = arg;
         poly_kind->rkind = kind;
         kind = &poly_kind->_base;

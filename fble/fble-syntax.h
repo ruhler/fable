@@ -123,9 +123,14 @@ typedef enum {
 //   layout as FbleKind. The tag can be used to determine what kind of
 //   kind this is to get access to additional fields of the kind
 //   by first casting to that specific type of kind.
+//
+// Kinds are non-cyclcically reference counted. Use FbleKindRetain and
+// FbleKindRelease to manage the reference count and memory associated with
+// the kind.
 typedef struct {
   FbleKindTag tag;
   FbleLoc loc;
+  int refcount;
 } FbleKind;
 
 // FbleKindV --
@@ -136,9 +141,17 @@ typedef struct {
 } FbleKindV;
 
 // FbleBasicKind --
-//   FBLE_BASIC_KIND
+//   FBLE_BASIC_KIND (level :: size_t)
+//
+// levels
+//   0: A normal, non-type value.
+//   1: A normal type. A type of a level 0.
+//   2: A type of a type of a value.
+//   3: A type of a type of a type of a value.
+//   etc.
 typedef struct {
   FbleKind _base;
+  size_t level;
 } FbleBasicKind;
 
 // FblePolyKind --
@@ -148,6 +161,36 @@ typedef struct {
   FbleKind* arg;
   FbleKind* rkind;
 } FblePolyKind;
+
+// FbleKindRetain --
+//   Makes a (refcount) copy of a kind.
+//
+// Inputs:
+//   arena - for allocations.
+//   kind - the kind to copy.
+//
+// Results:
+//   The copied kind.
+//
+// Side effects:
+//   The returned kind must be freed using FbleKindRelease when no longer in
+//   use.
+FbleKind* FbleKindRetain(FbleArena* arena, FbleKind* kind);
+
+// FbleKindRelease --
+//   Frees a (refcount) copy of a compiled kind.
+//
+// Inputs:
+//   arena - for deallocations.
+//   kind - the kind to free. May be NULL.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Decrements the refcount for the kind and frees it if there are no
+//   more references to it.
+void FbleKindRelease(FbleArena* arena, FbleKind* kind);
 
 // FbleExprTag --
 //   A tag used to dinstinguish among different kinds of expressions.

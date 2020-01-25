@@ -98,7 +98,6 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
 static Type* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleTypeExpr* type, FbleExprV args, FbleInstrV* instrs);
 static Type* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr* expr);
 static Type* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* type);
-static Kind* CompileKind(FbleArena* arena, FbleKind* kind);
 static Type* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs);
 
 // ReportError --
@@ -107,7 +106,7 @@ static Type* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars, Fb
 //   This uses a printf-like format string. The following format specifiers
 //   are supported:
 //     %i - size_t
-//     %k - Kind*
+//     %k - FbleKind*
 //     %n - FbleName*
 //     %t - Type*
 //   Please add additional format specifiers as needed.
@@ -141,7 +140,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
       }
 
       case 'k': {
-        Kind* kind = va_arg(ap, Kind*);
+        FbleKind* kind = va_arg(ap, FbleKind*);
         FblePrintKind(kind);
         break;
       }
@@ -564,7 +563,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, Type* type)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  Kind* kind = FbleGetKind(arena_, type);
+  FbleKind* kind = FbleGetKind(arena_, type);
   size_t kind_level = FbleGetKindLevel(kind);
   FbleKindRelease(arena_, kind);
 
@@ -1551,7 +1550,7 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
           var->_base.loc = binding->name.loc;
           var->_base.evaluating = false;
           var->name = let_expr->bindings.xs[i].name;
-          var->kind = CompileKind(arena_, binding->kind);
+          var->kind = FbleKindRetain(arena_, binding->kind);
           var->value = NULL;
 
           TypeType* type_type = FbleAlloc(arena_, TypeType);
@@ -1619,8 +1618,8 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
                 type);
             error = true;
           } else {
-            Kind* expected_kind = var->kind;
-            Kind* actual_kind = FbleGetKind(arena_, var_type_values[i]);
+            FbleKind* expected_kind = var->kind;
+            FbleKind* actual_kind = FbleGetKind(arena_, var_type_values[i]);
             if (!FbleKindsEqual(expected_kind, actual_kind)) {
               ReportError(arena_, &binding->expr->loc,
                   "expected kind %k, but found %k\n",
@@ -1722,7 +1721,7 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
       arg->_base.loc = poly->arg.name.loc;
       arg->_base.evaluating = false;
       arg->name = poly->arg.name;
-      arg->kind = CompileKind(arena_, poly->arg.kind);
+      arg->kind = FbleKindRetain(arena_, poly->arg.kind);
       arg->value = NULL;
 
       TypeType* type_type = FbleAlloc(arena_, TypeType);
@@ -1780,7 +1779,7 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
         return NULL;
       }
 
-      PolyKind* poly_kind = (PolyKind*)FbleGetKind(arena_, poly);
+      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(arena_, poly);
       if (poly_kind->_base.tag != FBLE_POLY_KIND) {
         ReportError(arena_, &expr->loc,
             "cannot apply poly args to a basic kinded entity");
@@ -1797,8 +1796,8 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
         return NULL;
       }
 
-      Kind* expected_kind = poly_kind->arg;
-      Kind* actual_kind = FbleGetKind(arena_, arg);
+      FbleKind* expected_kind = poly_kind->arg;
+      FbleKind* actual_kind = FbleGetKind(arena_, arg);
       if (!FbleKindsEqual(expected_kind, actual_kind)) {
         ReportError(arena_, &apply->arg->loc,
             "expected kind %k, but found %k\n",
@@ -1971,7 +1970,14 @@ static Type* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
   //   nil;
   // }<t@>
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleKind basic_kind = { .tag = FBLE_BASIC_KIND, .loc = loc, };
+  FbleBasicKind basic_kind = {
+    ._base = {
+      .tag = FBLE_BASIC_KIND,
+      .loc = loc,
+      .refcount = 1
+    },
+    .level = 1
+  };
 
   FbleName elem_type_name = {
     .name = "T",
@@ -2084,7 +2090,7 @@ static Type* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
   FblePolyExpr inner_poly = {
     ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
     .arg = {
-      .kind = &basic_kind,
+      .kind = &basic_kind._base,
       .name = list_type_name,
     },
     .body = &inner_func._base,
@@ -2105,7 +2111,7 @@ static Type* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
   FblePolyExpr outer_poly = {
     ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
     .arg = {
-      .kind = &basic_kind,
+      .kind = &basic_kind._base,
       .name = elem_type_name,
     },
     .body = (args.size == 0) ? &inner_poly._base : &outer_func._base,
@@ -2369,47 +2375,6 @@ static Type* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* type)
 
   UNREACHABLE("should already have returned");
   return NULL;
-}
-
-// CompileKind --
-//   Compile a kind.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   type - the kind to compile.
-//
-// Results:
-//   The compiled kind.
-//
-// Side effects:
-//   Allocates a reference-counted kind that must be freed using
-//   FbleKindRelease when it is no longer needed.
-static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
-{
-  switch (kind->tag) {
-    case FBLE_BASIC_KIND: {
-      FbleBasicKind* basic = (FbleBasicKind*)kind;
-      BasicKind* k = FbleAlloc(arena, BasicKind);
-      k->_base.tag = FBLE_BASIC_KIND;
-      k->_base.loc = basic->_base.loc;
-      k->_base.refcount = 1;
-      k->level = 1;
-      return &k->_base;
-    }
-
-    case FBLE_POLY_KIND: {
-      FblePolyKind* poly = (FblePolyKind*)kind;
-      PolyKind* k = FbleAlloc(arena, PolyKind);
-      k->_base.tag = FBLE_POLY_KIND;
-      k->_base.loc = poly->_base.loc;
-      k->_base.refcount = 1;
-      k->arg = CompileKind(arena, poly->arg);
-      k->rkind = CompileKind(arena, poly->rkind);
-      return &k->_base;
-    }
-  }
-
-  UNREACHABLE("Should never get here");
 }
 
 // CompileProgram --

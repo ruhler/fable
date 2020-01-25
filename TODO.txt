@@ -1,5 +1,4 @@
 Type System Rewrite:
-* Use a single type for both FbleKind and Kind.
 * Clean up fble-type.h.
 * Re-organize fble/type.c to match order in fble-type.h.
 * Make FbleEvalType an internal function by providing a better public API.

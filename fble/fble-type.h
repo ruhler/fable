@@ -5,46 +5,6 @@
 #include "fble-syntax.h"
 #include "ref.h"
 
-// Kind --
-//   A tagged union of kind types. All kinds have the same initial
-//   layout as Kind. The tag can be used to determine what kind of
-//   kind this is to get access to additional fields of the kind
-//   by first casting to that specific type of kind.
-typedef struct {
-  FbleKindTag tag;
-  FbleLoc loc;
-  int refcount;
-} Kind;
-
-// KindV --
-//   A vector of Kind.
-typedef struct {
-  size_t size;
-  Kind** xs;
-} KindV;
-
-// BasicKind --
-//   BASIC_KIND (level :: size_t)
-//
-// levels
-//   0: A normal, non-type value.
-//   1: A normal type. A type of a level 0.
-//   2: A type of a type of a value.
-//   3: A type of a type of a type of a value.
-//   etc.
-typedef struct {
-  Kind _base;
-  size_t level;
-} BasicKind;
-
-// PolyKind --
-//   POLY_KIND (arg :: Kind) (return :: Kind)
-typedef struct {
-  Kind _base;
-  Kind* arg;
-  Kind* rkind;
-} PolyKind;
-
 // TypeTag --
 //   A tag used to dinstinguish among different kinds of compiled types.
 typedef enum {
@@ -160,7 +120,7 @@ typedef struct {
 // type paramaters and recursive type values.
 typedef struct VarType {
   Type _base;
-  Kind* kind;
+  FbleKind* kind;
   FbleName name;
   Type* value;
 } VarType;
@@ -193,22 +153,7 @@ typedef struct TypeType {
 // Side effects:
 //   The caller is responsible for calling FbleKindRelease on the returned
 //   type when it is no longer needed.
-Kind* FbleGetKind(FbleArena* arena, Type* type);
-
-// FbleKindRelease --
-//   Frees a (refcount) copy of a compiled kind.
-//
-// Inputs:
-//   arena - for deallocations.
-//   kind - the kind to free. May be NULL.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Decrements the refcount for the kind and frees it if there are no
-//   more references to it.
-void FbleKindRelease(FbleArena* arena, Kind* kind);
+FbleKind* FbleGetKind(FbleArena* arena, Type* type);
 
 // FbleGetKindLevel --
 //   Returns the level of the fully applied version of this kind.
@@ -221,7 +166,7 @@ void FbleKindRelease(FbleArena* arena, Kind* kind);
 //
 // Side effects:
 //   None.
-size_t FbleGetKindLevel(Kind* kind);
+size_t FbleGetKindLevel(FbleKind* kind);
 
 // FbleKindsEqual --
 //   Test whether the two given compiled kinds are equal.
@@ -235,7 +180,7 @@ size_t FbleGetKindLevel(Kind* kind);
 //
 // Side effects:
 //   None.
-bool FbleKindsEqual(Kind* a, Kind* b);
+bool FbleKindsEqual(FbleKind* a, FbleKind* b);
 
 // FblePrintKind --
 //   Print the given compiled kind in human readable form to stderr.
@@ -248,7 +193,7 @@ bool FbleKindsEqual(Kind* a, Kind* b);
 //
 // Side effect:
 //   Prints the given kind in human readable form to stderr.
-void FblePrintKind(Kind* type);
+void FblePrintKind(FbleKind* type);
 
 typedef FbleRefArena FbleTypeArena;
 
