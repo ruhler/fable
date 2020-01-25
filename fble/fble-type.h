@@ -191,11 +191,11 @@ typedef struct TypeType {
 //   The kind of the type.
 //
 // Side effects:
-//   The caller is responsible for calling FreeKind on the returned type when
-//   it is no longer needed.
+//   The caller is responsible for calling FbleKindRelease on the returned
+//   type when it is no longer needed.
 Kind* FbleGetKind(FbleArena* arena, Type* type);
 
-// FreeKind --
+// FbleKindRelease --
 //   Frees a (refcount) copy of a compiled kind.
 //
 // Inputs:
@@ -208,7 +208,7 @@ Kind* FbleGetKind(FbleArena* arena, Type* type);
 // Side effects:
 //   Decrements the refcount for the kind and frees it if there are no
 //   more references to it.
-void FreeKind(FbleArena* arena, Kind* kind);
+void FbleKindRelease(FbleArena* arena, Kind* kind);
 
 // FbleGetKindLevel --
 //   Returns the level of the fully applied version of this kind.

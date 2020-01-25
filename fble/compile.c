@@ -566,7 +566,7 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, Type* type)
   FbleArena* arena_ = FbleRefArenaArena(arena);
   Kind* kind = FbleGetKind(arena_, type);
   size_t kind_level = FbleGetKindLevel(kind);
-  FreeKind(arena_, kind);
+  FbleKindRelease(arena_, kind);
 
   if (name->space == FBLE_TYPE_NAME_SPACE && kind_level != 2) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
@@ -1627,7 +1627,7 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
                   expected_kind, actual_kind);
               error = true;
             }
-            FreeKind(arena_, actual_kind);
+            FbleKindRelease(arena_, actual_kind);
           }
         }
 
@@ -1784,7 +1784,7 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
       if (poly_kind->_base.tag != FBLE_POLY_KIND) {
         ReportError(arena_, &expr->loc,
             "cannot apply poly args to a basic kinded entity");
-        FreeKind(arena_, &poly_kind->_base);
+        FbleKindRelease(arena_, &poly_kind->_base);
         FbleTypeRelease(arena, poly);
         return NULL;
       }
@@ -1792,7 +1792,7 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
       // Note: CompileType gives us the value of arg
       Type* arg = CompileType(arena, vars, apply->arg);
       if (arg == NULL) {
-        FreeKind(arena_, &poly_kind->_base);
+        FbleKindRelease(arena_, &poly_kind->_base);
         FbleTypeRelease(arena, poly);
         return NULL;
       }
@@ -1803,14 +1803,14 @@ static Type* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* 
         ReportError(arena_, &apply->arg->loc,
             "expected kind %k, but found %k\n",
             expected_kind, actual_kind);
-        FreeKind(arena_, &poly_kind->_base);
-        FreeKind(arena_, actual_kind);
+        FbleKindRelease(arena_, &poly_kind->_base);
+        FbleKindRelease(arena_, actual_kind);
         FbleTypeRelease(arena, poly);
         FbleTypeRelease(arena, arg);
         return NULL;
       }
-      FreeKind(arena_, actual_kind);
-      FreeKind(arena_, &poly_kind->_base);
+      FbleKindRelease(arena_, actual_kind);
+      FbleKindRelease(arena_, &poly_kind->_base);
 
       Type* pat = FbleNewPolyApplyType(arena, expr->loc, poly, arg);
       FbleTypeRelease(arena, poly);
@@ -2382,8 +2382,8 @@ static Type* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* type)
 //   The compiled kind.
 //
 // Side effects:
-//   Allocates a reference-counted kind that must be freed using FreeKind
-//   when it is no longer needed.
+//   Allocates a reference-counted kind that must be freed using
+//   FbleKindRelease when it is no longer needed.
 static Kind* CompileKind(FbleArena* arena, FbleKind* kind)
 {
   switch (kind->tag) {

@@ -41,8 +41,8 @@ static bool HasParam(Type* type, Type* param, TypeList* visited);
 static Type* Subst(FbleTypeArena* arena, Type* src, Type* param, Type* arg, TypePairs* tps);
 static void Eval(FbleTypeArena* arena, Type* type, PolyApplyList* applied);
 
-// FreeKind -- see documentation in fble-type.h
-void FreeKind(FbleArena* arena, Kind* kind)
+// FbleKindRelease -- see documentation in fble-type.h
+void FbleKindRelease(FbleArena* arena, Kind* kind)
 {
   if (kind != NULL) {
     assert(kind->refcount > 0);
@@ -56,8 +56,8 @@ void FreeKind(FbleArena* arena, Kind* kind)
 
         case FBLE_POLY_KIND: {
           PolyKind* poly = (PolyKind*)kind;
-          FreeKind(arena, poly->arg);
-          FreeKind(arena, poly->rkind);
+          FbleKindRelease(arena, poly->arg);
+          FbleKindRelease(arena, poly->rkind);
           FbleFree(arena, poly);
           break;
         }
@@ -96,7 +96,7 @@ static void TypeFree(FbleTypeArena* arena, FbleRef* ref)
 
     case VAR_TYPE: {
       VarType* var = (VarType*)type;
-      FreeKind(arena_, var->kind);
+      FbleKindRelease(arena_, var->kind);
       FbleFree(arena_, var);
       break;
     }
@@ -119,7 +119,7 @@ static void TypeFree(FbleTypeArena* arena, FbleRef* ref)
 //   The copied kind.
 //
 // Side effects:
-//   The returned kind must be freed using FreeKind when no longer in use.
+//   The returned kind must be freed using FbleKindRelease when no longer in use.
 static Kind* CopyKind(FbleArena* arena, Kind* kind)
 {
   assert(kind != NULL);
@@ -238,7 +238,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
 //   The kind of the typeof expression.
 //
 // Side effects:
-//   The caller is responsible for calling FreeKind on the returned type when
+//   The caller is responsible for calling FbleKindRelease on the returned type when
 //   it is no longer needed.
 static Kind* TypeofKind(FbleArena* arena, Kind* kind)
 {
@@ -301,7 +301,7 @@ Kind* FbleGetKind(FbleArena* arena, Type* type)
       assert(kind->_base.tag == FBLE_POLY_KIND);
 
       Kind* rkind = CopyKind(arena, kind->rkind);
-      FreeKind(arena, &kind->_base);
+      FbleKindRelease(arena, &kind->_base);
       return rkind;
     }
 
@@ -315,7 +315,7 @@ Kind* FbleGetKind(FbleArena* arena, Type* type)
 
       Kind* arg_kind = FbleGetKind(arena, type_type->type);
       Kind* kind = TypeofKind(arena, arg_kind);
-      FreeKind(arena, arg_kind);
+      FbleKindRelease(arena, arg_kind);
       return kind;
     }
   }
@@ -1024,7 +1024,7 @@ void FblePrintType(FbleArena* arena, Type* type)
       fprintf(stderr, "<");
       Kind* kind = FbleGetKind(arena, pt->arg);
       FblePrintKind(kind);
-      FreeKind(arena, kind);
+      FbleKindRelease(arena, kind);
       fprintf(stderr, " ");
       FblePrintType(arena, pt->arg);
       fprintf(stderr, "> { ");
