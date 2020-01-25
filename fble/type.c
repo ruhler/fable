@@ -29,7 +29,7 @@ typedef struct TypePairs {
   struct TypePairs* next;
 } TypePairs;
 
-static Kind* CopyKind(FbleArena* arena, Kind* kind);
+static Kind* FbleKindRetain(FbleArena* arena, Kind* kind);
 static void Add(FbleRefCallback* add, Type* type);
 
 static void TypeFree(FbleTypeArena* arena, FbleRef* ref);
@@ -108,7 +108,7 @@ static void TypeFree(FbleTypeArena* arena, FbleRef* ref)
   }
 }
 
-// CopyKind --
+// FbleKindRetain --
 //   Makes a (refcount) copy of a compiled kind.
 //
 // Inputs:
@@ -120,7 +120,7 @@ static void TypeFree(FbleTypeArena* arena, FbleRef* ref)
 //
 // Side effects:
 //   The returned kind must be freed using FbleKindRelease when no longer in use.
-static Kind* CopyKind(FbleArena* arena, Kind* kind)
+static Kind* FbleKindRetain(FbleArena* arena, Kind* kind)
 {
   assert(kind != NULL);
   kind->refcount++;
@@ -259,7 +259,7 @@ static Kind* TypeofKind(FbleArena* arena, Kind* kind)
       typeof->_base.tag = FBLE_POLY_KIND;
       typeof->_base.loc = kind->loc;
       typeof->_base.refcount = 1;
-      typeof->arg = CopyKind(arena, poly->arg);
+      typeof->arg = FbleKindRetain(arena, poly->arg);
       typeof->rkind = TypeofKind(arena, poly->rkind);
       return &typeof->_base;
     }
@@ -300,14 +300,14 @@ Kind* FbleGetKind(FbleArena* arena, Type* type)
       PolyKind* kind = (PolyKind*)FbleGetKind(arena, pat->poly);
       assert(kind->_base.tag == FBLE_POLY_KIND);
 
-      Kind* rkind = CopyKind(arena, kind->rkind);
+      Kind* rkind = FbleKindRetain(arena, kind->rkind);
       FbleKindRelease(arena, &kind->_base);
       return rkind;
     }
 
     case VAR_TYPE: {
       VarType* var = (VarType*)type;
-      return CopyKind(arena, var->kind);
+      return FbleKindRetain(arena, var->kind);
     }
 
     case TYPE_TYPE: {
@@ -574,7 +574,7 @@ static Type* Subst(FbleTypeArena* arena, Type* type, Type* param, Type* arg, Typ
       svar->_base.loc = type->loc;
       svar->_base.evaluating = false;
       svar->name = var->name;
-      svar->kind = CopyKind(arena_, var->kind);
+      svar->kind = FbleKindRetain(arena_, var->kind);
       svar->value = NULL;
 
       TypePairs ntp = {
