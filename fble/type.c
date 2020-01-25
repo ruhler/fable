@@ -351,7 +351,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
 
       FbleVectorInit(arena_, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
-        Field* field = FbleVectorExtend(arena_, sst->fields);
+        FbleTaggedType* field = FbleVectorExtend(arena_, sst->fields);
         field->name = st->fields.xs[i].name;
         field->type = Subst(arena, st->fields.xs[i].type, param, arg, tps);
         FbleRefAdd(arena, &sst->_base.ref, &field->type->ref);
@@ -369,7 +369,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       sut->_base.evaluating = false;
       FbleVectorInit(arena_, sut->fields);
       for (size_t i = 0; i < ut->fields.size; ++i) {
-        Field* field = FbleVectorExtend(arena_, sut->fields);
+        FbleTaggedType* field = FbleVectorExtend(arena_, sut->fields);
         field->name = ut->fields.xs[i].name;
         field->type = Subst(arena, ut->fields.xs[i].type, param, arg, tps);
         FbleRefAdd(arena, &sut->_base.ref, &field->type->ref);

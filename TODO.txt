@@ -1,6 +1,4 @@
 Type System Rewrite:
-* Rename Field to ???
-* Add fble-type.h to fble.h? May mean adding ref.h to fble.h as fble-ref.h?
 * Make FbleEvalType an internal function by providing a better public API.
 * Add FbleArena argument and retaining of type to Normal() function.
 * Remove Subst and Eval, make Normal push poly applies down into the

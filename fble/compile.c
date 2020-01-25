@@ -789,7 +789,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
           bool error = false;
           for (size_t i = 0; i < argc; ++i) {
-            Field* field = struct_type->fields.xs + i;
+            FbleTaggedType* field = struct_type->fields.xs + i;
 
             if (!FbleTypesEqual(field->type, arg_types[i])) {
               ReportError(arena_, &misc_apply_expr->args.xs[i]->loc,
@@ -858,7 +858,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
             error = true;
           }
 
-          Field* cfield = FbleVectorExtend(arena_, struct_type->fields);
+          FbleTaggedType* cfield = FbleVectorExtend(arena_, struct_type->fields);
           cfield->name = arg->name;
           cfield->type = arg_types[i];
           FbleRefAdd(arena, &struct_type->_base.ref, &cfield->type->ref);
@@ -911,7 +911,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleType* field_type = NULL;
       size_t tag = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
-        Field* field = union_type->fields.xs + i;
+        FbleTaggedType* field = union_type->fields.xs + i;
         if (FbleNamesEqual(&field->name, &union_value_expr->field)) {
           tag = i;
           field_type = field->type;
@@ -971,7 +971,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       CompileExit(arena_, exit, instrs);
 
       FbleType* normal = FbleNormalType(type);
-      FieldV* fields = NULL;
+      FbleTaggedTypeV* fields = NULL;
       if (normal->tag == FBLE_STRUCT_TYPE) {
         access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
         fields = &((FbleStructType*)normal)->fields;
@@ -2228,7 +2228,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
           return NULL;
         }
 
-        Field* cfield = FbleVectorExtend(arena_, st->fields);
+        FbleTaggedType* cfield = FbleVectorExtend(arena_, st->fields);
         cfield->name = field->name;
         cfield->type = compiled;
 
@@ -2264,7 +2264,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
           FbleTypeRelease(arena, &ut->_base);
           return NULL;
         }
-        Field* cfield = FbleVectorExtend(arena_, ut->fields);
+        FbleTaggedType* cfield = FbleVectorExtend(arena_, ut->fields);
         cfield->name = field->name;
         cfield->type = compiled;
         FbleRefAdd(arena, &ut->_base.ref, &cfield->type->ref);

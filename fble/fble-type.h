@@ -40,30 +40,30 @@ typedef struct {
   FbleType** xs;
 } FbleTypeV;
 
-// Field --
+// FbleTaggedType --
 //   A pair of (Type, Name) used to describe type and function arguments.
 typedef struct {
   FbleType* type;
   FbleName name;
-} Field;
+} FbleTaggedType;
 
-// FieldV --
-//   A vector of Field.
+// FbleTaggedTypeV --
+//   A vector of FbleTaggedType.
 typedef struct {
   size_t size;
-  Field* xs;
-} FieldV;
+  FbleTaggedType* xs;
+} FbleTaggedTypeV;
 
 // FbleStructType -- FBLE_STRUCT_TYPE
 typedef struct {
   FbleType _base;
-  FieldV fields;
+  FbleTaggedTypeV fields;
 } FbleStructType;
 
 // FbleUnionType -- FBLE_UNION_TYPE
 typedef struct {
   FbleType _base;
-  FieldV fields;
+  FbleTaggedTypeV fields;
 } FbleUnionType;
 
 // FbleFuncType -- FBLE_FUNC_TYPE
