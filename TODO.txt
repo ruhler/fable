@@ -1,6 +1,5 @@
 Type System Rewrite:
-* Clean up fble-type.h.
-* Re-organize fble/type.c to match order in fble-type.h.
+* Rename Field to ???
 * Add fble-type.h to fble.h? May mean adding ref.h to fble.h as fble-ref.h?
 * Make FbleEvalType an internal function by providing a better public API.
 * Add FbleArena argument and retaining of type to Normal() function.
