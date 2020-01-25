@@ -5,56 +5,45 @@
 #include "fble-syntax.h"
 #include "ref.h"
 
-// TypeTag --
+// FbleTypeTag --
 //   A tag used to dinstinguish among different kinds of compiled types.
 typedef enum {
-  STRUCT_TYPE,
-  UNION_TYPE,
-  FUNC_TYPE,
-  PROC_TYPE,
-  POLY_TYPE,
-  POLY_APPLY_TYPE,
-  VAR_TYPE,
-  TYPE_TYPE,
-} TypeTag;
+  FBLE_STRUCT_TYPE,
+  FBLE_UNION_TYPE,
+  FBLE_FUNC_TYPE,
+  FBLE_PROC_TYPE,
+  FBLE_POLY_TYPE,
+  FBLE_POLY_APPLY_TYPE,
+  FBLE_VAR_TYPE,
+  FBLE_TYPE_TYPE,
+} FbleTypeTag;
 
-// Type --
+// FbleType --
 //   A tagged union of type types. All types have the same initial
-//   layout as Type. The tag can be used to determine what kind of
+//   layout as FbleType. The tag can be used to determine what kind of
 //   type this is to get access to additional fields of the type
 //   by first casting to that specific type of type.
 //
-//   The evaluating field is set to true if the type is currently being
-//   evaluated. See the Eval function for more info.
-//
-// Design notes on types:
-// * Instances of Type represent both unevaluated and evaluated versions of
-//   the type. We use the unevaluated versions of the type when printing error
-//   messages and as a stable reference to a type before and after evaluation.
-// * Cycles are allowed in the Type data structure, to represent recursive
-//   types. Every cycle is guaranteed to go through a Var type.
-// * Types are evaluated as they are constructed.
-// * TYPE_TYPE is handled specially: we propagate TYPE_TYPE up to the top of
-//   the type during construction rather than save the unevaluated version of
-//   a typeof.
-typedef struct Type {
+//   The evaluating field is for internal use. It should always be set to
+//   false.
+typedef struct FbleType {
   FbleRef ref;
-  TypeTag tag;
+  FbleTypeTag tag;
   FbleLoc loc;
   bool evaluating;
-} Type;
+} FbleType;
 
-// TypeV --
+// FbleTypeV --
 //   A vector of Type.
 typedef struct {
   size_t size;
-  Type** xs;
-} TypeV;
+  FbleType** xs;
+} FbleTypeV;
 
 // Field --
 //   A pair of (Type, Name) used to describe type and function arguments.
 typedef struct {
-  Type* type;
+  FbleType* type;
   FbleName name;
 } Field;
 
@@ -65,80 +54,82 @@ typedef struct {
   Field* xs;
 } FieldV;
 
-// StructType -- STRUCT_TYPE
+// FbleStructType -- FBLE_STRUCT_TYPE
 typedef struct {
-  Type _base;
+  FbleType _base;
   FieldV fields;
-} StructType;
+} FbleStructType;
 
-// UnionType -- UNION_TYPE
+// FbleUnionType -- FBLE_UNION_TYPE
 typedef struct {
-  Type _base;
+  FbleType _base;
   FieldV fields;
-} UnionType;
+} FbleUnionType;
 
-// FuncType -- FUNC_TYPE
+// FbleFuncType -- FBLE_FUNC_TYPE
 typedef struct {
-  Type _base;
-  Type* arg;
-  struct Type* rtype;
-} FuncType;
+  FbleType _base;
+  FbleType* arg;
+  FbleType* rtype;
+} FbleFuncType;
 
-// ProcType -- PROC_TYPE
+// FbleProcType -- FBLE_PROC_TYPE
 typedef struct {
-  Type _base;
-  Type* type;
-} ProcType;
+  FbleType _base;
+  FbleType* type;
+} FbleProcType;
 
-// PolyType -- POLY_TYPE
+// FblePolyType -- FBLE_POLY_TYPE
 //
-// We maintain an invariant when constructing PolyTypes that the body is not a
-// TYPE_TYPE. For example: \a -> typeof(a) is constructed as typeof(\a -> a)
+// We maintain an invariant when constructing FblePolyTypes that the body is
+// not an FBLE_TYPE_TYPE. For example: \a -> typeof(a) is constructed as
+// typeof(\a -> a)
 typedef struct {
-  Type _base;
-  Type* arg;
-  Type* body;
-} PolyType;
+  FbleType _base;
+  FbleType* arg;
+  FbleType* body;
+} FblePolyType;
 
-// PolyApplyType -- POLY_APPLY_TYPE
+// FblePolyApplyType -- FBLE_POLY_APPLY_TYPE
 //   The 'result' field is the result of evaluating the poly apply type, or
 //   NULL if it has not yet been evaluated.
 //
-// We maintain an invariant when constructing PolyApplyTypes that the poly is
-// not a TYPE_TYPE. For example: (typeof(f) x) is constructed as typeof(f x).
+// We maintain an invariant when constructing FblePolyApplyTypes that the poly is
+// not a FBLE_TYPE_TYPE. For example: (typeof(f) x) is constructed as
+// typeof(f x).
 typedef struct {
-  Type _base;
-  Type* poly;
-  Type* arg;
-  Type* result;
-} PolyApplyType;
+  FbleType _base;
+  FbleType* poly;
+  FbleType* arg;
+  FbleType* result;
+} FblePolyApplyType;
 
-// VarType --
-//   VAR_TYPE
+// FbleVarType --
+//   FBLE_VAR_TYPE
 //
 // A variable type whose value may or may not be known. Used for the value of
 // type paramaters and recursive type values.
-typedef struct VarType {
-  Type _base;
+typedef struct FbleVarType {
+  FbleType _base;
   FbleKind* kind;
   FbleName name;
-  Type* value;
-} VarType;
+  FbleType* value;
+} FbleVarType;
 
-// VarTypeV - a vector of var types.
+// FbleVarTypeV - a vector of var types.
 typedef struct {
   size_t size;
-  VarType** xs;
-} VarTypeV;
+  FbleVarType** xs;
+} FbleVarTypeV;
 
-// TypeType --
-//   TYPE_TYPE
+// FbleTypeType --
+//   FBLE_TYPE_TYPE
 //
 // The type of a type.
-typedef struct TypeType {
-  Type _base;
-  Type* type;
-} TypeType;
+typedef struct {
+  FbleType _base;
+  FbleType* type;
+} FbleTypeType;
 
 // FbleGetKind --
 //   Get the kind of the given type.
@@ -153,7 +144,7 @@ typedef struct TypeType {
 // Side effects:
 //   The caller is responsible for calling FbleKindRelease on the returned
 //   type when it is no longer needed.
-FbleKind* FbleGetKind(FbleArena* arena, Type* type);
+FbleKind* FbleGetKind(FbleArena* arena, FbleType* type);
 
 // FbleGetKindLevel --
 //   Returns the level of the fully applied version of this kind.
@@ -238,7 +229,7 @@ void FbleFreeTypeArena(FbleTypeArena* arena);
 // Side effects:
 //   The returned type must be freed using FbleTypeRelease when no longer in
 //   use.
-Type* FbleTypeRetain(FbleTypeArena* arena, Type* type);
+FbleType* FbleTypeRetain(FbleTypeArena* arena, FbleType* type);
 
 // FbleTypeRelease --
 //   Drop a reference to a compiled type.
@@ -253,7 +244,7 @@ Type* FbleTypeRetain(FbleTypeArena* arena, Type* type);
 // Side effects:
 //   Decrements the strong refcount for the type and frees it if there are no
 //   more references to it.
-void FbleTypeRelease(FbleTypeArena* arena, Type* type);
+void FbleTypeRelease(FbleTypeArena* arena, FbleType* type);
 
 // FbleNewPolyType --
 //   Construct a PolyType. Maintains the invariant that poly of a typeof
@@ -272,7 +263,7 @@ void FbleTypeRelease(FbleTypeArena* arena, Type* type);
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed arg or body types.
-Type* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, Type* arg, Type* body);
+FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, FbleType* body);
 
 // FbleNewPolyApplyType --
 //   Construct a PolyApplyType. Maintains the invariant that poly apply of a
@@ -291,7 +282,7 @@ Type* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, Type* arg, Type* body);
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed poly or arg types.
-Type* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, Type* poly, Type* arg);
+FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly, FbleType* arg);
 
 // FbleNormalType --
 //   Reduce an evaluated type to normal form. Normal form types are struct,
@@ -307,7 +298,7 @@ Type* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, Type* poly, Type* 
 //   The result is only valid for as long as the input type is retained. It is
 //   the callers responsibility to take a references to the return typed if
 //   they want it to live longer than the given input type.
-Type* FbleNormalType(Type* type);
+FbleType* FbleNormalType(FbleType* type);
 
 // FbleEvalType --
 //   Evaluate the given type in place. After evaluation there are no more
@@ -322,7 +313,7 @@ Type* FbleNormalType(Type* type);
 //
 // Side effects:
 //   The type is evaluated in place.
-void FbleEvalType(FbleTypeArena* arena, Type* type);
+void FbleEvalType(FbleTypeArena* arena, FbleType* type);
 
 // FbleTypesEqual --
 //   Test whether the two given evaluated types are equal.
@@ -336,7 +327,7 @@ void FbleEvalType(FbleTypeArena* arena, Type* type);
 //
 // Side effects:
 //   None.
-bool FbleTypesEqual(Type* a, Type* b);
+bool FbleTypesEqual(FbleType* a, FbleType* b);
 
 // FblePrintType --
 //   Print the given compiled type in human readable form to stderr.
@@ -350,6 +341,6 @@ bool FbleTypesEqual(Type* a, Type* b);
 //
 // Side effect:
 //   Prints the given type in human readable form to stderr.
-void FblePrintType(FbleArena* arena, Type* type);
+void FblePrintType(FbleArena* arena, FbleType* type);
 
 #endif // FBLE_TYPE_H_
