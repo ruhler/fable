@@ -713,29 +713,30 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      FbleType* normal = FbleNormalType(type);
+      FbleType* normal = FbleNormalType(arena, type);
       switch (normal->tag) {
         case FBLE_FUNC_TYPE: {
           // FUNC_APPLY
+          FbleTypeRelease(arena, type);
           for (size_t i = 0; i < argc; ++i) {
             if (normal->tag != FBLE_FUNC_TYPE) {
               ReportError(arena_, &expr->loc, "too many arguments to function\n");
               for (size_t i = 0; i < argc; ++i) {
                 FbleTypeRelease(arena, arg_types[i]);
               }
-              FbleTypeRelease(arena, type);
+              FbleTypeRelease(arena, normal);
               return NULL;
             }
 
             FbleFuncType* func_type = (FbleFuncType*)normal;
-            if (!FbleTypesEqual(func_type->arg, arg_types[i])) {
+            if (!FbleTypesEqual(arena, func_type->arg, arg_types[i])) {
               ReportError(arena_, &misc_apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
                   func_type->arg, arg_types[i]);
               for (size_t j = 0; j < argc; ++j) {
                 FbleTypeRelease(arena, arg_types[j]);
               }
-              FbleTypeRelease(arena, type);
+              FbleTypeRelease(arena, normal);
               return NULL;
             }
 
@@ -745,15 +746,15 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
             apply_instr->exit = exit && (i+1 == argc);
             FbleVectorAppend(arena_, *instrs, &apply_instr->_base);
 
-            normal = FbleNormalType(func_type->rtype);
+            FbleType* tmp = normal;
+            normal = FbleNormalType(arena, func_type->rtype);
+            FbleTypeRelease(arena, tmp);
           }
 
           for (size_t i = 0; i < argc; ++i) {
             FbleTypeRelease(arena, arg_types[i]);
           }
 
-          FbleTypeRetain(arena, normal);
-          FbleTypeRelease(arena, type);
           return normal;
         }
 
@@ -761,9 +762,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           // FBLE_STRUCT_VALUE_EXPR
           FbleTypeType* type_type = (FbleTypeType*)normal;
           FbleType* vtype = FbleTypeRetain(arena, type_type->type);
+          FbleTypeRelease(arena, normal);
           FbleTypeRelease(arena, type);
 
-          FbleStructType* struct_type = (FbleStructType*)FbleNormalType(vtype);
+          FbleStructType* struct_type = (FbleStructType*)FbleNormalType(arena, vtype);
           if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
             ReportError(arena_, &misc_apply_expr->misc->loc,
                 "expected a struct type, but found %t\n",
@@ -771,6 +773,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
             for (size_t i = 0; i < argc; ++i) {
               FbleTypeRelease(arena, arg_types[i]);
             }
+            FbleTypeRelease(arena, &struct_type->_base);
             FbleTypeRelease(arena, vtype);
             return NULL;
           }
@@ -783,6 +786,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
             for (size_t i = 0; i < argc; ++i) {
               FbleTypeRelease(arena, arg_types[i]);
             }
+            FbleTypeRelease(arena, &struct_type->_base);
             FbleTypeRelease(arena, vtype);
             return NULL;
           }
@@ -791,7 +795,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           for (size_t i = 0; i < argc; ++i) {
             FbleTaggedType* field = struct_type->fields.xs + i;
 
-            if (!FbleTypesEqual(field->type, arg_types[i])) {
+            if (!FbleTypesEqual(arena, field->type, arg_types[i])) {
               ReportError(arena_, &misc_apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
                   field->type, arg_types[i]);
@@ -801,6 +805,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           }
 
           if (error) {
+            FbleTypeRelease(arena, &struct_type->_base);
             FbleTypeRelease(arena, vtype);
             return NULL;
           }
@@ -810,6 +815,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           struct_instr->argc = struct_type->fields.size;
           FbleVectorAppend(arena_, *instrs, &struct_instr->_base);
           CompileExit(arena_, exit, instrs);
+          FbleTypeRelease(arena, &struct_type->_base);
           return vtype;
         }
 
@@ -820,6 +826,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           for (size_t i = 0; i < argc; ++i) {
             FbleTypeRelease(arena, arg_types[i]);
           }
+          FbleTypeRelease(arena, normal);
           FbleTypeRelease(arena, type);
           return NULL;
         }
@@ -900,10 +907,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(type);
+      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(arena, type);
       if (union_type->_base.tag != FBLE_UNION_TYPE) {
         ReportError(arena_, &union_value_expr->type->loc,
             "expected a union type, but found %t\n", type);
+        FbleTypeRelease(arena, &union_type->_base);
         FbleTypeRelease(arena, type);
         return NULL;
       }
@@ -918,6 +926,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           break;
         }
       }
+      FbleTypeRelease(arena, &union_type->_base);
 
       if (field_type == NULL) {
         ReportError(arena_, &union_value_expr->field.loc,
@@ -933,7 +942,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      if (!FbleTypesEqual(field_type, arg_type)) {
+      if (!FbleTypesEqual(arena, field_type, arg_type)) {
         ReportError(arena_, &union_value_expr->arg->loc,
             "expected type %t, but found type %t\n",
             field_type, arg_type);
@@ -970,7 +979,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       CompileExit(arena_, exit, instrs);
 
-      FbleType* normal = FbleNormalType(type);
+      FbleType* normal = FbleNormalType(arena, type);
       FbleTaggedTypeV* fields = NULL;
       if (normal->tag == FBLE_STRUCT_TYPE) {
         access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
@@ -983,6 +992,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
             "expected value of type struct or union, but found value of type %t\n",
             type);
 
+        FbleTypeRelease(arena, normal);
         FbleTypeRelease(arena, type);
         return NULL;
       }
@@ -991,6 +1001,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (FbleNamesEqual(&access_expr->field, &fields->xs[i].name)) {
           access->tag = i;
           FbleType* rtype = FbleTypeRetain(arena, fields->xs[i].type);
+          FbleTypeRelease(arena, normal);
           FbleTypeRelease(arena, type);
           return rtype;
         }
@@ -999,6 +1010,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       ReportError(arena_, &access_expr->field.loc,
           "'%n' is not a field of type %t\n",
           &access_expr->field, type);
+      FbleTypeRelease(arena, normal);
       FbleTypeRelease(arena, type);
       return NULL;
     }
@@ -1015,11 +1027,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(type);
+      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(arena, type);
       if (union_type->_base.tag != FBLE_UNION_TYPE) {
         ReportError(arena_, &select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
             type);
+        FbleTypeRelease(arena, &union_type->_base);
         FbleTypeRelease(arena, type);
         return NULL;
       }
@@ -1056,6 +1069,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
         if (return_type == NULL) {
+          FbleTypeRelease(arena, &union_type->_base);
           FbleTypeRelease(arena, type);
           return NULL;
         }
@@ -1089,6 +1103,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
           if (arg_type == NULL) {
             FbleTypeRelease(arena, return_type);
+            FbleTypeRelease(arena, &union_type->_base);
             FbleTypeRelease(arena, type);
             return NULL;
           }
@@ -1096,12 +1111,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           if (return_type == NULL) {
             return_type = arg_type;
           } else {
-            if (!FbleTypesEqual(return_type, arg_type)) {
+            if (!FbleTypesEqual(arena, return_type, arg_type)) {
               ReportError(arena_, &select_expr->choices.xs[choice].expr->loc,
                   "expected type %t, but found %t\n",
                   return_type, arg_type);
 
               FbleTypeRelease(arena, type);
+              FbleTypeRelease(arena, &union_type->_base);
               FbleTypeRelease(arena, return_type);
               FbleTypeRelease(arena, arg_type);
               return NULL;
@@ -1119,6 +1135,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
                 "missing tag '%n'\n",
                 &union_type->fields.xs[i].name);
           }
+          FbleTypeRelease(arena, &union_type->_base);
           FbleTypeRelease(arena, return_type);
           FbleTypeRelease(arena, type);
           return NULL;
@@ -1126,6 +1143,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           enter_gotos[i]->pc = default_pc;
         }
       }
+      FbleTypeRelease(arena, &union_type->_base);
       FbleTypeRelease(arena, type);
 
       if (choice < select_expr->choices.size) {
@@ -1372,13 +1390,16 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      if (FbleNormalType(type)->tag != FBLE_PROC_TYPE) {
+      FbleType* proc_type = FbleNormalType(arena, type);
+      if (proc_type->tag != FBLE_PROC_TYPE) {
         ReportError(arena_, &link_expr->body->loc,
             "expected a value of type proc, but found %t\n",
             type);
+        FbleTypeRelease(arena, proc_type);
         FbleTypeRelease(arena, type);
         return NULL;
       }
+      FbleTypeRelease(arena, proc_type);
       return type;
     }
 
@@ -1428,11 +1449,15 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         error = (rtype == NULL);
       }
 
-      if (rtype != NULL && FbleNormalType(rtype)->tag != FBLE_PROC_TYPE) {
-        error = true;
-        ReportError(arena_, &exec_expr->body->loc,
-            "expected a value of type proc, but found %t\n",
-            rtype);
+      if (rtype != NULL) {
+        FbleType* normal = FbleNormalType(arena, rtype);
+        if (normal->tag != FBLE_PROC_TYPE) {
+          error = true;
+          ReportError(arena_, &exec_expr->body->loc,
+              "expected a value of type proc, but found %t\n",
+              rtype);
+        }
+        FbleTypeRelease(arena, normal);
       }
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
@@ -1475,9 +1500,9 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         error = error || (type == NULL);
 
         if (type != NULL) {
-          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(type);
+          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(arena, type);
           if (proc_type->_base.tag == FBLE_PROC_TYPE) {
-            if (nvd[i].type != NULL && !FbleTypesEqual(nvd[i].type, proc_type->type)) {
+            if (nvd[i].type != NULL && !FbleTypesEqual(arena, nvd[i].type, proc_type->type)) {
               error = true;
               ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
                   "expected type %t!, but found %t\n",
@@ -1489,6 +1514,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
                 "expected process, but found expression of type %t\n",
                 type);
           }
+          FbleTypeRelease(arena, &proc_type->_base);
           FbleTypeRelease(arena, type);
         }
         FbleTypeRelease(arena, nvd[i].type);
@@ -1604,7 +1630,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         }
         error = error || (type == NULL);
 
-        if (!error && binding->type != NULL && !FbleTypesEqual(nvd[i].type, type)) {
+        if (!error && binding->type != NULL && !FbleTypesEqual(arena, nvd[i].type, type)) {
           error = true;
           ReportError(arena_, &binding->expr->loc,
               "expected type %t, but found %t\n",
@@ -1888,12 +1914,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      FbleStructType* struct_type = (FbleStructType*)FbleNormalType(type);
+      FbleStructType* struct_type = (FbleStructType*)FbleNormalType(arena, type);
       if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
         ReportError(arena_, &struct_import_expr->nspace->loc,
             "expected value of type struct, but found value of type %t\n",
             type);
 
+        FbleTypeRelease(arena, &struct_type->_base);
         FbleTypeRelease(arena, type);
         return NULL;
       }
@@ -1922,6 +1949,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
 
+      FbleTypeRelease(arena, &struct_type->_base);
       FbleTypeRelease(arena, type);
       return rtype;
     }

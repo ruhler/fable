@@ -49,7 +49,7 @@ static FbleKind* TypeofKind(FbleArena* arena, FbleKind* kind);
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
 static FbleType* Subst(FbleTypeArena* arena, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
 static void Eval(FbleTypeArena* arena, FbleType* type, PolyApplyList* applied);
-static bool TypesEqual(FbleType* a, FbleType* b, TypePairs* eq);
+static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs* eq);
 
 // Add --
 //   Helper function for adding types to a vector of refs.
@@ -572,8 +572,8 @@ static void Eval(FbleTypeArena* arena, FbleType* type, PolyApplyList* applied)
       // Check whether we have already applied the arg to this poly.
       bool have_applied = false;
       for (PolyApplyList* pal = applied; pal != NULL; pal = pal->next) {
-        if (FbleTypesEqual(pal->poly, pat->poly)) {
-          if (FbleTypesEqual(pal->arg, pat->arg)) {
+        if (FbleTypesEqual(arena, pal->poly, pat->poly)) {
+          if (FbleTypesEqual(arena, pal->arg, pat->arg)) {
             // TODO: This feels like a hacky workaround to a bug that may not
             // catch all cases. Double check that this is the best way to
             // test that pat and pal refer to entities that are the same or
@@ -594,7 +594,7 @@ static void Eval(FbleTypeArena* arena, FbleType* type, PolyApplyList* applied)
         break;
       }
 
-      FblePolyType* poly = (FblePolyType*)FbleNormalType(pat->poly);
+      FblePolyType* poly = (FblePolyType*)FbleNormalType(arena, pat->poly);
       if (poly->_base.tag == FBLE_POLY_TYPE) {
         pat->result = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
         assert(pat->result != NULL);
@@ -611,6 +611,7 @@ static void Eval(FbleTypeArena* arena, FbleType* type, PolyApplyList* applied)
 
         Eval(arena, pat->result, &napplied);
       }
+      FbleTypeRelease(arena, &poly->_base);
       break;
     }
 
@@ -637,6 +638,7 @@ static void Eval(FbleTypeArena* arena, FbleType* type, PolyApplyList* applied)
 //   Test whether the two given evaluated types are equal.
 //
 // Inputs:
+//   arena - arena to use for allocations
 //   a - the first type
 //   b - the second type
 //   eq - A set of pairs of types that should be assumed to be equal
@@ -646,16 +648,20 @@ static void Eval(FbleTypeArena* arena, FbleType* type, PolyApplyList* applied)
 //
 // Side effects:
 //   None.
-static bool TypesEqual(FbleType* a, FbleType* b, TypePairs* eq)
+static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs* eq)
 {
-  a = FbleNormalType(a);
-  b = FbleNormalType(b);
+  a = FbleNormalType(arena, a);
+  b = FbleNormalType(arena, b);
   if (a == b) {
+    FbleTypeRelease(arena, a);
+    FbleTypeRelease(arena, b);
     return true;
   }
 
   for (TypePairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
     if (a == pairs->a && b == pairs->b) {
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return true;
     }
   }
@@ -667,6 +673,8 @@ static bool TypesEqual(FbleType* a, FbleType* b, TypePairs* eq)
   };
 
   if (a->tag != b->tag) {
+    FbleTypeRelease(arena, a);
+    FbleTypeRelease(arena, b);
     return false;
   }
 
@@ -676,19 +684,27 @@ static bool TypesEqual(FbleType* a, FbleType* b, TypePairs* eq)
       FbleStructType* stb = (FbleStructType*)b;
 
       if (sta->fields.size != stb->fields.size) {
+        FbleTypeRelease(arena, a);
+        FbleTypeRelease(arena, b);
         return false;
       }
 
       for (size_t i = 0; i < sta->fields.size; ++i) {
         if (!FbleNamesEqual(&sta->fields.xs[i].name, &stb->fields.xs[i].name)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
           return false;
         }
 
-        if (!TypesEqual(sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
+        if (!TypesEqual(arena, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
           return false;
         }
       }
 
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return true;
     }
 
@@ -696,33 +712,47 @@ static bool TypesEqual(FbleType* a, FbleType* b, TypePairs* eq)
       FbleUnionType* uta = (FbleUnionType*)a;
       FbleUnionType* utb = (FbleUnionType*)b;
       if (uta->fields.size != utb->fields.size) {
+        FbleTypeRelease(arena, a);
+        FbleTypeRelease(arena, b);
         return false;
       }
 
       for (size_t i = 0; i < uta->fields.size; ++i) {
         if (!FbleNamesEqual(&uta->fields.xs[i].name, &utb->fields.xs[i].name)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
           return false;
         }
 
-        if (!TypesEqual(uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
+        if (!TypesEqual(arena, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
           return false;
         }
       }
 
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return true;
     }
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* fta = (FbleFuncType*)a;
       FbleFuncType* ftb = (FbleFuncType*)b;
-      return TypesEqual(fta->arg, ftb->arg, &neq)
-          && TypesEqual(fta->rtype, ftb->rtype, &neq);
+      bool result = TypesEqual(arena, fta->arg, ftb->arg, &neq)
+                 && TypesEqual(arena, fta->rtype, ftb->rtype, &neq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
 
     case FBLE_PROC_TYPE: {
       FbleProcType* uta = (FbleProcType*)a;
       FbleProcType* utb = (FbleProcType*)b;
-      return TypesEqual(uta->type, utb->type, &neq);
+      bool result = TypesEqual(arena, uta->type, utb->type, &neq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
 
     case FBLE_POLY_TYPE: {
@@ -736,11 +766,16 @@ static bool TypesEqual(FbleType* a, FbleType* b, TypePairs* eq)
         .b = ptb->arg,
         .next = &neq
       };
-      return TypesEqual(pta->body, ptb->body, &pneq);
+      bool result = TypesEqual(arena, pta->body, ptb->body, &pneq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       UNREACHABLE("poly apply type is not Normal");
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return false;
     }
 
@@ -750,17 +785,24 @@ static bool TypesEqual(FbleType* a, FbleType* b, TypePairs* eq)
 
       assert(va->value == NULL && vb->value == NULL);
       assert(a != b);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return false;
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tta = (FbleTypeType*)a;
       FbleTypeType* ttb = (FbleTypeType*)b;
-      return TypesEqual(tta->type, ttb->type, &neq);
+      bool result = TypesEqual(arena, tta->type, ttb->type, &neq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
   }
 
   UNREACHABLE("Should never get here");
+  FbleTypeRelease(arena, a);
+  FbleTypeRelease(arena, b);
   return false;
 }
 
@@ -992,45 +1034,50 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
 }
 
 // FbleNormalType -- see documentation in fble-type.h
-FbleType* FbleNormalType(FbleType* type)
+FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: return type;
-    case FBLE_UNION_TYPE: return type;
-    case FBLE_FUNC_TYPE: return type;
-    case FBLE_PROC_TYPE: return type;
+    case FBLE_STRUCT_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_UNION_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_FUNC_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_PROC_TYPE: return FbleTypeRetain(arena, type);
 
     case FBLE_POLY_TYPE: {
       // Normalize: (\x -> f x) to f
       // TODO: Does this cover all the cases? It seems like overly specific
       // pattern matching.
+      FbleType* result = FbleTypeRetain(arena, type);
       FblePolyType* poly = (FblePolyType*)type;
-      FblePolyApplyType* pat = (FblePolyApplyType*)FbleNormalType(poly->body);
+      FblePolyApplyType* pat = (FblePolyApplyType*)FbleNormalType(arena, poly->body);
       if (pat->_base.tag == FBLE_POLY_APPLY_TYPE) {
-        if (poly->arg == FbleNormalType(pat->arg)) {
-          return FbleNormalType(pat->poly);
+        FbleType* arg = FbleNormalType(arena, pat->arg);
+        if (poly->arg == arg) {
+          FbleTypeRelease(arena, result);
+          result = FbleNormalType(arena, pat->poly);
         }
+        FbleTypeRelease(arena, arg);
       }
-      return type;
+      FbleTypeRelease(arena, &pat->_base);
+      return result;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
       if (pat->result == NULL) {
-        return type;
+        return FbleTypeRetain(arena, type);
       }
-      return FbleNormalType(pat->result);
+      return FbleNormalType(arena, pat->result);
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
-        return type;
+        return FbleTypeRetain(arena, type);
       }
-      return FbleNormalType(var->value);
+      return FbleNormalType(arena, var->value);
     }
 
-    case FBLE_TYPE_TYPE: return type;
+    case FBLE_TYPE_TYPE: return FbleTypeRetain(arena, type);
   }
 
   UNREACHABLE("Should never get here");
@@ -1044,9 +1091,9 @@ void FbleEvalType(FbleTypeArena* arena, FbleType* type)
 }
 
 // FbleTypesEqual -- see documentation in fble-types.h
-bool FbleTypesEqual(FbleType* a, FbleType* b)
+bool FbleTypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b)
 {
-  return TypesEqual(a, b, NULL);
+  return TypesEqual(arena, a, b, NULL);
 }
 
 // FblePrintType -- see documentation in fble-type.h

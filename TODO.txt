@@ -1,8 +1,7 @@
 Type System Rewrite:
-* Make FbleEvalType an internal function by providing a better public API.
-* Add FbleArena argument and retaining of type to Normal() function.
 * Remove Subst and Eval, make Normal push poly applies down into the
   constructors lazily, and make TypeEquals work on un-evaluated types.
+* Remove FbleTypeArena* arg from TypeEquals.
 * Verify this fixes infinite recursion in type substitution.
 
 Performance Refactor:

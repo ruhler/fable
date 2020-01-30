@@ -295,10 +295,9 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
 //   The type reduced to normal form.
 //
 // Side effects:
-//   The result is only valid for as long as the input type is retained. It is
-//   the callers responsibility to take a references to the return typed if
-//   they want it to live longer than the given input type.
-FbleType* FbleNormalType(FbleType* type);
+//   The caller is responsible for calling FbleTypeRelease on the returned type
+//   when it is no longer needed.
+FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type);
 
 // FbleEvalType --
 //   Evaluate the given type in place. After evaluation there are no more
@@ -319,6 +318,7 @@ void FbleEvalType(FbleTypeArena* arena, FbleType* type);
 //   Test whether the two given evaluated types are equal.
 //
 // Inputs:
+//   arena - arena to use for allocations. TODO: Remove this.
 //   a - the first type
 //   b - the second type
 //
@@ -327,7 +327,7 @@ void FbleEvalType(FbleTypeArena* arena, FbleType* type);
 //
 // Side effects:
 //   None.
-bool FbleTypesEqual(FbleType* a, FbleType* b);
+bool FbleTypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b);
 
 // FblePrintType --
 //   Print the given compiled type in human readable form to stderr.
