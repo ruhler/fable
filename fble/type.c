@@ -666,6 +666,20 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs
     .next = eq,
   };
 
+  if (a->tag == FBLE_VAR_TYPE) {
+    FbleVarType* va = (FbleVarType*)a;
+    if (va->value != NULL) {
+      return TypesEqual(arena, va->value, b, &neq);
+    }
+  }
+
+  if (b->tag == FBLE_VAR_TYPE) {
+    FbleVarType* vb = (FbleVarType*)b;
+    if (vb->value != NULL) {
+      return TypesEqual(arena, a, vb->value, &neq);
+    }
+  }
+
   switch (a->tag) {
     case FBLE_STRUCT_TYPE: {
       switch (b->tag) {
@@ -808,8 +822,9 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs
 
     case FBLE_VAR_TYPE: {
       FbleVarType* va = (FbleVarType*)a;
-      assert(va->value != NULL && "TODO: TypeEquals for abstract var.");
-      return TypesEqual(arena, va->value, b, &neq);
+      assert(va->value == NULL);
+      assert(false && "TODO: TypeEquals for abstract var.");
+      return false;
     }
 
     case FBLE_TYPE_TYPE: {
