@@ -676,7 +676,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &type_type->_base.ref);
       type_type->_base.tag = FBLE_TYPE_TYPE;
       type_type->_base.loc = expr->loc;
-      type_type->_base.evaluating = false;
       type_type->type = type;
       FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
       FbleTypeRelease(arena, type);
@@ -843,7 +842,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &struct_type->_base.ref);
       struct_type->_base.tag = FBLE_STRUCT_TYPE;
       struct_type->_base.loc = expr->loc;
-      struct_type->_base.evaluating = false;
       FbleVectorInit(arena_, struct_type->fields);
 
       size_t argc = struct_expr->args.size;
@@ -1237,7 +1235,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         FbleRefInit(arena, &ft->_base.ref);
         ft->_base.tag = FBLE_FUNC_TYPE;
         ft->_base.loc = expr->loc;
-        ft->_base.evaluating = false;
         ft->arg = arg_type;
         ft->rtype = type;
 
@@ -1287,7 +1284,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &proc_type->_base.ref);
       proc_type->_base.tag = FBLE_PROC_TYPE;
       proc_type->_base.loc = expr->loc;
-      proc_type->_base.evaluating = false;
       proc_type->type = type;
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
       FbleTypeRelease(arena, proc_type->type);
@@ -1313,7 +1309,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &get_type->_base.ref);
       get_type->_base.tag = FBLE_PROC_TYPE;
       get_type->_base.loc = port_type->loc;
-      get_type->_base.evaluating = false;
       get_type->type = port_type;
       FbleRefAdd(arena, &get_type->_base.ref, &get_type->type->ref);
 
@@ -1321,14 +1316,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &unit_type->_base.ref);
       unit_type->_base.tag = FBLE_STRUCT_TYPE;
       unit_type->_base.loc = expr->loc;
-      unit_type->_base.evaluating = false;
       FbleVectorInit(arena_, unit_type->fields);
 
       FbleProcType* unit_proc_type = FbleAlloc(arena_, FbleProcType);
       FbleRefInit(arena, &unit_proc_type->_base.ref);
       unit_proc_type->_base.tag = FBLE_PROC_TYPE;
       unit_proc_type->_base.loc = expr->loc;
-      unit_proc_type->_base.evaluating = false;
       unit_proc_type->type = &unit_type->_base;
       FbleRefAdd(arena, &unit_proc_type->_base.ref, &unit_proc_type->type->ref);
       FbleTypeRelease(arena, &unit_type->_base);
@@ -1337,7 +1330,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &put_type->_base.ref);
       put_type->_base.tag = FBLE_FUNC_TYPE;
       put_type->_base.loc = expr->loc;
-      put_type->_base.evaluating = false;
       put_type->arg = port_type;
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->arg->ref);
       put_type->rtype = &unit_proc_type->_base;
@@ -1574,7 +1566,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           FbleRefInit(arena, &var->_base.ref);
           var->_base.tag = FBLE_VAR_TYPE;
           var->_base.loc = binding->name.loc;
-          var->_base.evaluating = false;
           var->name = let_expr->bindings.xs[i].name;
           var->kind = FbleKindRetain(arena_, binding->kind);
           var->value = NULL;
@@ -1583,7 +1574,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           FbleRefInit(arena, &type_type->_base.ref);
           type_type->_base.tag = FBLE_TYPE_TYPE;
           type_type->_base.loc = binding->name.loc;
-          type_type->_base.evaluating = false;
           type_type->type = &var->_base;
           FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
           FbleTypeRelease(arena, &var->_base);
@@ -1677,11 +1667,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         }
       }
 
-      // Re-evaluate the variable types now that we have updated information
-      // about the values of some of the types in question.
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleEvalType(arena, nvd[i].type);
-      }
+      // TODO: Verify the types and values are all normalizing.
 
       FbleLetDefInstr* let_def_instr = FbleAlloc(arena_, FbleLetDefInstr);
       let_def_instr->_base.tag = FBLE_LET_DEF_INSTR;
@@ -1745,7 +1731,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &arg->_base.ref);
       arg->_base.tag = FBLE_VAR_TYPE;
       arg->_base.loc = poly->arg.name.loc;
-      arg->_base.evaluating = false;
       arg->name = poly->arg.name;
       arg->kind = FbleKindRetain(arena_, poly->arg.kind);
       arg->value = NULL;
@@ -1754,7 +1739,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefInit(arena, &type_type->_base.ref);
       type_type->_base.tag = FBLE_TYPE_TYPE;
       type_type->_base.loc = poly->arg.name.loc;
-      type_type->_base.evaluating = false;
       type_type->type = &arg->_base;
       FbleRefAdd(arena, &type_type->_base.ref, &arg->_base.ref);
 
@@ -1840,7 +1824,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleType* pat = FbleNewPolyApplyType(arena, expr->loc, poly, arg);
       FbleTypeRelease(arena, poly);
       FbleTypeRelease(arena, arg);
-      FbleEvalType(arena, pat);
       return pat;
     }
 
@@ -2239,7 +2222,6 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       FbleRefInit(arena, &st->_base.ref);
       st->_base.tag = FBLE_STRUCT_TYPE;
       st->_base.loc = type->loc;
-      st->_base.evaluating = false;
       FbleVectorInit(arena_, st->fields);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
@@ -2281,7 +2263,6 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       FbleRefInit(arena, &ut->_base.ref);
       ut->_base.tag = FBLE_UNION_TYPE;
       ut->_base.loc = type->loc;
-      ut->_base.evaluating = false;
       FbleVectorInit(arena_, ut->fields);
 
       FbleUnionTypeExpr* union_type = (FbleUnionTypeExpr*)type;
@@ -2316,7 +2297,6 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       FbleRefInit(arena, &ft->_base.ref);
       ft->_base.tag = FBLE_FUNC_TYPE;
       ft->_base.loc = type->loc;
-      ft->_base.evaluating = false;
       ft->arg = NULL;
       ft->rtype = NULL;
 
@@ -2344,7 +2324,6 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       FbleProcType* ut = FbleAlloc(arena_, FbleProcType);
       FbleRefInit(arena, &ut->_base.ref);
       ut->_base.loc = type->loc;
-      ut->_base.evaluating = false;
 
       ut->_base.tag = FBLE_PROC_TYPE;
 

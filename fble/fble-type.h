@@ -23,14 +23,10 @@ typedef enum {
 //   layout as FbleType. The tag can be used to determine what kind of
 //   type this is to get access to additional fields of the type
 //   by first casting to that specific type of type.
-//
-//   The evaluating field is for internal use. It should always be set to
-//   false.
 typedef struct FbleType {
   FbleRef ref;
   FbleTypeTag tag;
   FbleLoc loc;
-  bool evaluating;
 } FbleType;
 
 // FbleTypeV --
@@ -91,8 +87,6 @@ typedef struct {
 } FblePolyType;
 
 // FblePolyApplyType -- FBLE_POLY_APPLY_TYPE
-//   The 'result' field is the result of evaluating the poly apply type, or
-//   NULL if it has not yet been evaluated.
 //
 // We maintain an invariant when constructing FblePolyApplyTypes that the poly is
 // not a FBLE_TYPE_TYPE. For example: (typeof(f) x) is constructed as
@@ -101,7 +95,6 @@ typedef struct {
   FbleType _base;
   FbleType* poly;
   FbleType* arg;
-  FbleType* result;
 } FblePolyApplyType;
 
 // FbleVarType --
@@ -298,21 +291,6 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed.
 FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type);
-
-// FbleEvalType --
-//   Evaluate the given type in place. After evaluation there are no more
-//   unevaluated poly apply types that can be applied.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   type - the type to evaluate. May be NULL.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   The type is evaluated in place.
-void FbleEvalType(FbleTypeArena* arena, FbleType* type);
 
 // FbleTypesEqual --
 //   Test whether the two given evaluated types are equal.

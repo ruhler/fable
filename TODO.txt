@@ -1,14 +1,16 @@
 Type System Rewrite:
+* Fix memory leaks exhibited by failing tests.
 * Implement FbleNormalizes check on let rec.
-* Re-implement FbleNormal
-  - Obvious implementation for everything except poly apply
-  - Poly apply: noramalize func, if poly, do full substitution into body
-    (without any evaluation or simplification), then normalize the result.
-
+* Add support for f == (\x -> f x) to TypeEquals
+  - It should fabricate an abstract variable and test that the left hand side
+    applied to the abstract variable is the same as the right hand side
+    applied to the abstract variable.
+  - Consider also adding a test such as
+      id = \t -> t
+      f == (\x -> id (f x))
+    To catch implementations that try to special case eta conversion.
 * Add support for PolyApplyType to TypeEquals.
-* Remove Subst and Eval, make Normal push poly applies down into the
-  constructors lazily.
-* Remove FbleTypeArena* arg from TypeEquals.
+* Remove FbleTypeArena* arg from TypeEquals?
 * Verify this fixes infinite recursion in type substitution.
 
 Performance Refactor:
