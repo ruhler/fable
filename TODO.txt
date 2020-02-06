@@ -1,6 +1,13 @@
 Type System Rewrite:
+* Implement FbleNormalizes check on let rec.
+* Re-implement FbleNormal
+  - Obvious implementation for everything except poly apply
+  - Poly apply: noramalize func, if poly, do full substitution into body
+    (without any evaluation or simplification), then normalize the result.
+
+* Add support for PolyApplyType to TypeEquals.
 * Remove Subst and Eval, make Normal push poly applies down into the
-  constructors lazily, and make TypeEquals work on un-evaluated types.
+  constructors lazily.
 * Remove FbleTypeArena* arg from TypeEquals.
 * Verify this fixes infinite recursion in type substitution.
 

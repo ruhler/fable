@@ -199,6 +199,18 @@ without having to duplicate the definition in its own type. If a kind is
 provided for a type variable, the type variable will behave as an abstract
 type in the bindings, and a concrete type in the body of the let.
 
+Recursively defined values must not be vacuously recursive. For example, the
+following definitions are not allowed:
+   
+   @ T@ = T@; ...
+   <@>@ F@ = <@ T@>{ F@<T@>; }; ...
+
+But it is okay to define recursive types and values that involve a constructor
+somewhere, such as:
+
+   @ T@ = +(T@ x);
+   <@>@ F@ = <@ T@>{ *(F@<F@<T@>> x); }
+
 Bindings are allowed to defined variables with the same name as variables
 already in scope, thus shadowing the variable already in scope. Except that
 the variables defined in a single let expression must have distinct names.
