@@ -1996,14 +1996,11 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
   //   nil;
   // }<t@>
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleBasicKind basic_kind = {
-    ._base = {
-      .tag = FBLE_BASIC_KIND,
-      .loc = loc,
-      .refcount = 1
-    },
-    .level = 1
-  };
+  FbleBasicKind* basic_kind = FbleAlloc(arena_, FbleBasicKind);
+  basic_kind->_base.tag = FBLE_BASIC_KIND;
+  basic_kind->_base.loc = loc;
+  basic_kind->_base.refcount = 1;
+  basic_kind->level = 1;
 
   FbleName elem_type_name = {
     .name = "T",
@@ -2116,7 +2113,7 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
   FblePolyExpr inner_poly = {
     ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
     .arg = {
-      .kind = &basic_kind._base,
+      .kind = &basic_kind->_base,
       .name = list_type_name,
     },
     .body = &inner_func._base,
@@ -2137,7 +2134,7 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
   FblePolyExpr outer_poly = {
     ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
     .arg = {
-      .kind = &basic_kind._base,
+      .kind = &basic_kind->_base,
       .name = elem_type_name,
     },
     .body = (args.size == 0) ? &inner_poly._base : &outer_func._base,
@@ -2159,6 +2156,7 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
   FbleType* result = CompileExpr(arena, blocks, exit, vars, expr, instrs);
 
+  FbleKindRelease(arena_, &basic_kind->_base);
   for (size_t i = 0; i < args.size; i++) {
     FbleFree(arena_, (void*)arg_names[i].name);
   }
