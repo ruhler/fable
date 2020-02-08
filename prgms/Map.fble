@@ -47,16 +47,16 @@ Insert = <@ T@>(Map@<T@> map, Data@ key, T@ value) {
   Map@<T@>(map: ?(key;
      unit: MapP@<T@>(Just<T@>(value), p.sum, p.product),
      sum: ?(key.sum;
-              a: MapP@<T@>(p.value, @(a: Insert<T@>(p.sum.a, key.sum.a, value), b: p.sum.b), p.product),
-              b: MapP@<T@>(p.value, @(a: p.sum.a, b: Insert<T@>(p.sum.b, key.sum.b, value)), p.product)),
+              a: MapP@<T@>(p.unit, @(a: Insert<T@>(p.sum.a, key.sum.a, value), b: p.sum.b), p.product),
+              b: MapP@<T@>(p.unit, @(a: p.sum.a, b: Insert<T@>(p.sum.b, key.sum.b, value)), p.product)),
      product: {
        Maybe@<Map@<T@>> mm = Lookup<Map@<T@>>(p.product, key.product.a);
-       Map@<T@> m = Insert<Map@>(?(mm; just: mm.just, nothing: Empty<T@>), key.product.b, value);
+       Map@<T@> m = Insert<T@>(?(mm; just: mm.just, nothing: Empty<T@>), key.product.b, value);
        MapP@<T@>(
-         p.value,
+         p.unit,
          p.sum, 
          Insert<Map@<T@>>(p.product, key.product.a, m)); 
      }));
 };
 
-@(Data@, Map@, Lookup, Insert);
+@(Data@, Map@, Empty, Lookup, Insert);

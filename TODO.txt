@@ -11,7 +11,6 @@ Type System Rewrite:
   - Consider also adding a test such as
       +(f) == +(\x -> f x)
     To ensure we don't just address functions at the top level of a type.
-* Verify this fixes infinite recursion in type substitution.
 
 Performance Refactor:
 * Remove excess !!! in block names.
