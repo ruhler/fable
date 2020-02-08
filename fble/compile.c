@@ -924,18 +924,19 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           break;
         }
       }
-      FbleTypeRelease(arena, &union_type->_base);
 
       if (field_type == NULL) {
         ReportError(arena_, &union_value_expr->field.loc,
             "'%n' is not a field of type %t\n",
             &union_value_expr->field, type);
+        FbleTypeRelease(arena, &union_type->_base);
         FbleTypeRelease(arena, type);
         return NULL;
       }
 
       FbleType* arg_type = CompileExpr(arena, blocks, false, vars, union_value_expr->arg, instrs);
       if (arg_type == NULL) {
+        FbleTypeRelease(arena, &union_type->_base);
         FbleTypeRelease(arena, type);
         return NULL;
       }
@@ -945,9 +946,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
             "expected type %t, but found type %t\n",
             field_type, arg_type);
         FbleTypeRelease(arena, type);
+        FbleTypeRelease(arena, &union_type->_base);
         FbleTypeRelease(arena, arg_type);
         return NULL;
       }
+      FbleTypeRelease(arena, &union_type->_base);
       FbleTypeRelease(arena, arg_type);
 
       FbleUnionValueInstr* union_instr = FbleAlloc(arena_, FbleUnionValueInstr);
