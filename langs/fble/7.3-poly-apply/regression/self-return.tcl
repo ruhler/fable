@@ -1,4 +1,7 @@
 fble-test {
+  # TODO: Uncomment the following to re-enable this test
+  xxx
+
   @ Unit@ = *();
 
   <@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },

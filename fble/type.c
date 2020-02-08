@@ -482,12 +482,20 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
 //   None.
 static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs* eq)
 {
+  a = FbleNormalType(arena, a);
+  b = FbleNormalType(arena, b);
   if (a == b) {
+    FbleTypeRelease(arena, a);
+    FbleTypeRelease(arena, b);
     return true;
   }
 
   for (TypePairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
+    // TODO: store source pointers instead of types directly and check those
+    // here.
     if (a == pairs->a && b == pairs->b) {
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return true;
     }
   }
@@ -498,179 +506,137 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs
     .next = eq,
   };
 
-  if (a->tag == FBLE_VAR_TYPE) {
-    FbleVarType* va = (FbleVarType*)a;
-    if (va->value != NULL) {
-      return TypesEqual(arena, va->value, b, &neq);
-    }
-  }
-
-  if (b->tag == FBLE_VAR_TYPE) {
-    FbleVarType* vb = (FbleVarType*)b;
-    if (vb->value != NULL) {
-      return TypesEqual(arena, a, vb->value, &neq);
-    }
+  if (a->tag != b->tag) {
+    FbleTypeRelease(arena, a);
+    FbleTypeRelease(arena, b);
+    return false;
   }
 
   switch (a->tag) {
     case FBLE_STRUCT_TYPE: {
-      switch (b->tag) {
-        case FBLE_STRUCT_TYPE: {
-          FbleStructType* sta = (FbleStructType*)a;
-          FbleStructType* stb = (FbleStructType*)b;
+      FbleStructType* sta = (FbleStructType*)a;
+      FbleStructType* stb = (FbleStructType*)b;
 
-          if (sta->fields.size != stb->fields.size) {
-            return false;
-          }
+      if (sta->fields.size != stb->fields.size) {
+        FbleTypeRelease(arena, a);
+        FbleTypeRelease(arena, b);
+        return false;
+      }
 
-          for (size_t i = 0; i < sta->fields.size; ++i) {
-            if (!FbleNamesEqual(&sta->fields.xs[i].name, &stb->fields.xs[i].name)) {
-              return false;
-            }
-
-            if (!TypesEqual(arena, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
-              return false;
-            }
-          }
-          return true;
+      for (size_t i = 0; i < sta->fields.size; ++i) {
+        if (!FbleNamesEqual(&sta->fields.xs[i].name, &stb->fields.xs[i].name)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
+          return false;
         }
 
-        case FBLE_UNION_TYPE: return false;
-        case FBLE_FUNC_TYPE: return false;
-        case FBLE_PROC_TYPE: return false;
-        case FBLE_POLY_TYPE: return false;
-        case FBLE_POLY_APPLY_TYPE: assert(false && "TODO"); return false;
-        case FBLE_VAR_TYPE: assert(false && "TODO"); return false;
-        case FBLE_TYPE_TYPE: return false;
+        if (!TypesEqual(arena, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
+          return false;
+        }
       }
-      UNREACHABLE("should never get here");
-      return false;
+
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return true;
     }
 
     case FBLE_UNION_TYPE: {
-      switch (b->tag) {
-        case FBLE_STRUCT_TYPE: return false;
-        case FBLE_UNION_TYPE: {
-          FbleUnionType* uta = (FbleUnionType*)a;
-          FbleUnionType* utb = (FbleUnionType*)b;
-          if (uta->fields.size != utb->fields.size) {
-            return false;
-          }
+      FbleUnionType* uta = (FbleUnionType*)a;
+      FbleUnionType* utb = (FbleUnionType*)b;
+      if (uta->fields.size != utb->fields.size) {
+        FbleTypeRelease(arena, a);
+        FbleTypeRelease(arena, b);
+        return false;
+      }
 
-          for (size_t i = 0; i < uta->fields.size; ++i) {
-            if (!FbleNamesEqual(&uta->fields.xs[i].name, &utb->fields.xs[i].name)) {
-              return false;
-            }
-
-            if (!TypesEqual(arena, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
-              return false;
-            }
-          }
-
-          return true;
+      for (size_t i = 0; i < uta->fields.size; ++i) {
+        if (!FbleNamesEqual(&uta->fields.xs[i].name, &utb->fields.xs[i].name)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
+          return false;
         }
 
-        case FBLE_FUNC_TYPE: return false;
-        case FBLE_PROC_TYPE: return false;
-        case FBLE_POLY_TYPE: return false;
-        case FBLE_POLY_APPLY_TYPE: assert(false && "TODO"); return false;
-        case FBLE_VAR_TYPE: assert(false && "TODO"); return false;
-        case FBLE_TYPE_TYPE: return false;
+        if (!TypesEqual(arena, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
+          FbleTypeRelease(arena, a);
+          FbleTypeRelease(arena, b);
+          return false;
+        }
       }
-      UNREACHABLE("should never get here");
-      return false;
+
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return true;
     }
 
     case FBLE_FUNC_TYPE: {
-      switch (b->tag) {
-        case FBLE_STRUCT_TYPE: return false;
-        case FBLE_UNION_TYPE: return false;
-        case FBLE_FUNC_TYPE: {
-          FbleFuncType* fta = (FbleFuncType*)a;
-          FbleFuncType* ftb = (FbleFuncType*)b;
-          return TypesEqual(arena, fta->arg, ftb->arg, &neq)
-              && TypesEqual(arena, fta->rtype, ftb->rtype, &neq);
-        }
-        case FBLE_PROC_TYPE: return false;
-        case FBLE_POLY_TYPE: return false;
-        case FBLE_POLY_APPLY_TYPE: assert(false && "TODO"); return false;
-        case FBLE_VAR_TYPE: assert(false && "TODO"); return false;
-        case FBLE_TYPE_TYPE: return false;
-      }
-      UNREACHABLE("should never get here");
-      return false;
+      FbleFuncType* fta = (FbleFuncType*)a;
+      FbleFuncType* ftb = (FbleFuncType*)b;
+      bool result = TypesEqual(arena, fta->arg, ftb->arg, &neq)
+                 && TypesEqual(arena, fta->rtype, ftb->rtype, &neq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
 
     case FBLE_PROC_TYPE: {
-      switch (b->tag) {
-        case FBLE_STRUCT_TYPE: return false;
-        case FBLE_UNION_TYPE: return false;
-        case FBLE_FUNC_TYPE: return false;
-        case FBLE_PROC_TYPE: {
-          FbleProcType* uta = (FbleProcType*)a;
-          FbleProcType* utb = (FbleProcType*)b;
-          return TypesEqual(arena, uta->type, utb->type, &neq);
-        }
-        case FBLE_POLY_TYPE: return false;
-        case FBLE_POLY_APPLY_TYPE: assert(false && "TODO"); return false;
-        case FBLE_VAR_TYPE: assert(false && "TODO"); return false;
-        case FBLE_TYPE_TYPE: return false;
-      }
-      UNREACHABLE("should never get here");
-      return false;
+      FbleProcType* uta = (FbleProcType*)a;
+      FbleProcType* utb = (FbleProcType*)b;
+      bool result = TypesEqual(arena, uta->type, utb->type, &neq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
 
     case FBLE_POLY_TYPE: {
-      switch (b->tag) {
-        case FBLE_STRUCT_TYPE: return false;
-        case FBLE_UNION_TYPE: return false;
-        case FBLE_FUNC_TYPE: return false;
-        case FBLE_PROC_TYPE: return false;
-        case FBLE_POLY_TYPE: {
-          FblePolyType* pta = (FblePolyType*)a;
-          FblePolyType* ptb = (FblePolyType*)b;
+      FblePolyType* pta = (FblePolyType*)a;
+      FblePolyType* ptb = (FblePolyType*)b;
 
-          // TODO: Verify the args have matching kinds.
-
-          TypePairs pneq = {
-            .a = pta->arg,
-            .b = ptb->arg,
-            .next = &neq
-          };
-          return TypesEqual(arena, pta->body, ptb->body, &pneq);
-        }
-        case FBLE_POLY_APPLY_TYPE: assert(false && "TODO"); return false;
-        case FBLE_VAR_TYPE: assert(false && "TODO"); return false;
-        case FBLE_TYPE_TYPE: return false;
-      }
-      UNREACHABLE("should never get here");
-      return false;
+      // TODO: Verify the args have matching kinds.
+  
+      TypePairs pneq = {
+        .a = pta->arg,
+        .b = ptb->arg,
+        .next = &neq
+      };
+      bool result = TypesEqual(arena, pta->body, ptb->body, &pneq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
-      assert(false && "TODO");
+      UNREACHABLE("poly apply type is not Normal");
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return false;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* va = (FbleVarType*)a;
-      assert(va->value == NULL);
-      assert(false && "TODO: TypeEquals for abstract var.");
+      FbleVarType* vb = (FbleVarType*)b;
+
+      assert(va->value == NULL && vb->value == NULL);
+      assert(a != b);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
       return false;
     }
 
     case FBLE_TYPE_TYPE: {
-      if (b->tag != FBLE_TYPE_TYPE) {
-        return false;
-      }
-
       FbleTypeType* tta = (FbleTypeType*)a;
       FbleTypeType* ttb = (FbleTypeType*)b;
-      return TypesEqual(arena, tta->type, ttb->type, &neq);
+      bool result = TypesEqual(arena, tta->type, ttb->type, &neq);
+      FbleTypeRelease(arena, a);
+      FbleTypeRelease(arena, b);
+      return result;
     }
   }
 
   UNREACHABLE("Should never get here");
+  FbleTypeRelease(arena, a);
+  FbleTypeRelease(arena, b);
   return false;
 }
 

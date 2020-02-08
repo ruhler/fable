@@ -4,6 +4,8 @@
 
 # P - A list of 1 or more elements: T+
 # S - A list of 0 or more elements: T*
+# TODO: This fails due to infinite loop.
+xxx
 <@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },
 <@>@ S@ = <@ T@> { +(P@<T@> cons, Unit@ nil); };
 
