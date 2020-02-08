@@ -31,6 +31,14 @@ typedef struct TypePairs {
   struct TypePairs* next;
 } TypePairs;
 
+// TypeIdPairs --
+//   A set of pairs of type ids.
+typedef struct TypeIdPairs {
+  uintptr_t a;
+  uintptr_t b;
+  struct TypeIdPairs* next;
+} TypeIdPairs;
+
 static void Add(FbleRefCallback* add, FbleType* type);
 static void TypeAdded(FbleRefCallback* add, FbleRef* ref);
 static void TypeFree(FbleTypeArena* arena, FbleRef* ref);
@@ -39,7 +47,7 @@ static FbleKind* TypeofKind(FbleArena* arena, FbleKind* kind);
 
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
 static FbleType* Subst(FbleTypeArena* arena, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
-static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs* eq);
+static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPairs* eq);
 
 // Add --
 //   Helper function for adding types to a vector of refs.
@@ -310,7 +318,8 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
 //
 // Side effects:
 //   The caller is responsible for calling FbleTypeRelease on the returned
-//   type when it is no longer needed.
+//   type when it is no longer needed. No new type ids are allocated by
+//   substitution.
 //
 // Design notes:
 //   The given type may have cycles. For example:
@@ -336,6 +345,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleRefInit(arena, &sst->_base.ref);
       sst->_base.tag = FBLE_STRUCT_TYPE;
       sst->_base.loc = st->_base.loc;
+      sst->_base.id = st->_base.id;
 
       FbleVectorInit(arena_, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
@@ -354,6 +364,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleRefInit(arena, &sut->_base.ref);
       sut->_base.tag = FBLE_UNION_TYPE;
       sut->_base.loc = ut->_base.loc;
+      sut->_base.id = ut->_base.id;
       FbleVectorInit(arena_, sut->fields);
       for (size_t i = 0; i < ut->fields.size; ++i) {
         FbleTaggedType* field = FbleVectorExtend(arena_, sut->fields);
@@ -371,6 +382,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleRefInit(arena, &sft->_base.ref);
       sft->_base.tag = FBLE_FUNC_TYPE;
       sft->_base.loc = ft->_base.loc;
+      sft->_base.id = ft->_base.id;
 
       sft->arg = Subst(arena, ft->arg, param, arg, tps);
       FbleRefAdd(arena, &sft->_base.ref, &sft->arg->ref);
@@ -388,6 +400,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleRefInit(arena, &sut->_base.ref);
       sut->_base.tag = ut->_base.tag;
       sut->_base.loc = ut->_base.loc;
+      sut->_base.id = ut->_base.id;
       sut->type = Subst(arena, ut->type, param, arg, tps);
       FbleRefAdd(arena, &sut->_base.ref, &sut->type->ref);
       FbleTypeRelease(arena, sut->type);
@@ -397,21 +410,41 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
       FbleType* body = Subst(arena, pt->body, param, arg, tps); 
-      FbleType* spt = FbleNewPolyType(arena, pt->_base.loc, pt->arg, body);
+
+      FblePolyType* spt = FbleAlloc(arena_, FblePolyType);
+      spt->_base.tag = FBLE_POLY_TYPE;
+      spt->_base.loc = pt->_base.loc;
+      spt->_base.id = pt->_base.id;
+      FbleRefInit(arena, &spt->_base.ref);
+      spt->arg = pt->arg;
+      FbleRefAdd(arena, &spt->_base.ref, &spt->arg->ref);
+      spt->body = body;
+      FbleRefAdd(arena, &spt->_base.ref, &spt->body->ref);
+      assert(spt->body->tag != FBLE_TYPE_TYPE);
+
       FbleTypeRelease(arena, body);
-      return spt;
+      return &spt->_base;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-
       FbleType* poly = Subst(arena, pat->poly, param, arg, tps);
       FbleType* sarg = Subst(arena, pat->arg, param, arg, tps);
 
-      FbleType* spat = FbleNewPolyApplyType(arena, pat->_base.loc, poly, sarg);
+      FblePolyApplyType* spat = FbleAlloc(arena_, FblePolyApplyType);
+      FbleRefInit(arena, &spat->_base.ref);
+      spat->_base.tag = FBLE_POLY_APPLY_TYPE;
+      spat->_base.loc = pat->_base.loc;
+      spat->_base.id = pat->_base.id;
+      spat->poly = poly;
+      FbleRefAdd(arena, &spat->_base.ref, &spat->poly->ref);
+      spat->arg = sarg;
+      FbleRefAdd(arena, &spat->_base.ref, &spat->arg->ref);
+      assert(spat->poly->tag != FBLE_TYPE_TYPE);
+
       FbleTypeRelease(arena, poly);
       FbleTypeRelease(arena, sarg);
-      return spat;
+      return &spat->_base;
     }
 
     case FBLE_VAR_TYPE: {
@@ -432,6 +465,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleRefInit(arena, &svar->_base.ref);
       svar->_base.tag = FBLE_VAR_TYPE;
       svar->_base.loc = type->loc;
+      svar->_base.id = type->id;
       svar->name = var->name;
       svar->kind = FbleKindRetain(arena_, var->kind);
       svar->value = NULL;
@@ -455,6 +489,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleRefInit(arena, &stt->_base.ref);
       stt->_base.tag = FBLE_TYPE_TYPE;
       stt->_base.loc = tt->_base.loc;
+      stt->_base.id = tt->_base.id;
       stt->type = Subst(arena, tt->type, param, arg, tps);
       FbleRefAdd(arena, &stt->_base.ref, &stt->type->ref);
       FbleTypeRelease(arena, stt->type);
@@ -473,36 +508,36 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
 //   arena - arena to use for allocations
 //   a - the first type
 //   b - the second type
-//   eq - A set of pairs of types that should be assumed to be equal
+//   eq - A set of pairs of type ids that should be assumed to be equal
 //
 // Results:
 //   True if the first type equals the second type, false otherwise.
 //
 // Side effects:
 //   None.
-static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs* eq)
+static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPairs* eq)
 {
   a = FbleNormalType(arena, a);
   b = FbleNormalType(arena, b);
+
+  // TODO: Is this special case really necessary?
   if (a == b) {
     FbleTypeRelease(arena, a);
     FbleTypeRelease(arena, b);
     return true;
   }
 
-  for (TypePairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
-    // TODO: store source pointers instead of types directly and check those
-    // here.
-    if (a == pairs->a && b == pairs->b) {
+  for (TypeIdPairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
+    if (a->id == pairs->a && b->id == pairs->b) {
       FbleTypeRelease(arena, a);
       FbleTypeRelease(arena, b);
       return true;
     }
   }
 
-  TypePairs neq = {
-    .a = a,
-    .b = b,
+  TypeIdPairs neq = {
+    .a = a->id,
+    .b = b->id,
     .next = eq,
   };
 
@@ -595,9 +630,9 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypePairs
 
       // TODO: Verify the args have matching kinds.
   
-      TypePairs pneq = {
-        .a = pta->arg,
-        .b = ptb->arg,
+      TypeIdPairs pneq = {
+        .a = pta->arg->id,
+        .b = ptb->arg->id,
         .next = &neq
       };
       bool result = TypesEqual(arena, pta->body, ptb->body, &pneq);
@@ -812,6 +847,7 @@ FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, Fble
     FbleRefInit(arena, &tt->_base.ref);
     tt->_base.tag = FBLE_TYPE_TYPE;
     tt->_base.loc = loc;
+    tt->_base.id = (uintptr_t)tt;
     tt->type = FbleNewPolyType(arena, loc, arg, ttbody->type);
     FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
     FbleTypeRelease(arena, tt->type);
@@ -821,6 +857,7 @@ FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, Fble
   FblePolyType* pt = FbleAlloc(arena_, FblePolyType);
   pt->_base.tag = FBLE_POLY_TYPE;
   pt->_base.loc = loc;
+  pt->_base.id = (uintptr_t)pt;
   FbleRefInit(arena, &pt->_base.ref);
   pt->arg = arg;
   FbleRefAdd(arena, &pt->_base.ref, &pt->arg->ref);
@@ -843,6 +880,7 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
     FbleRefInit(arena, &tt->_base.ref);
     tt->_base.tag = FBLE_TYPE_TYPE;
     tt->_base.loc = loc;
+    tt->_base.id = (uintptr_t)tt;
     tt->type = FbleNewPolyApplyType(arena, loc, ttpoly->type, arg);
     FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
     FbleTypeRelease(arena, tt->type);
@@ -853,6 +891,7 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
   FbleRefInit(arena, &pat->_base.ref);
   pat->_base.tag = FBLE_POLY_APPLY_TYPE;
   pat->_base.loc = loc;
+  pat->_base.id = (uintptr_t)pat;
   pat->poly = poly;
   FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
   pat->arg = arg;

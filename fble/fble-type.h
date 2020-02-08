@@ -2,6 +2,8 @@
 #ifndef FBLE_TYPE_H_
 #define FBLE_TYPE_H_
 
+#include <stdint.h>   // for uintptr_t
+
 #include "fble-syntax.h"
 #include "ref.h"
 
@@ -23,10 +25,15 @@ typedef enum {
 //   layout as FbleType. The tag can be used to determine what kind of
 //   type this is to get access to additional fields of the type
 //   by first casting to that specific type of type.
+//
+// Fields:
+//   id - a unique id for this type that is preserved across type level
+//        substitution. For internal use in type.c.
 typedef struct FbleType {
   FbleRef ref;
   FbleTypeTag tag;
   FbleLoc loc;
+  uintptr_t id;
 } FbleType;
 
 // FbleTypeV --

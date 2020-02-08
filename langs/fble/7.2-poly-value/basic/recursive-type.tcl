@@ -1,6 +1,4 @@
 fble-test {
-  XXX
-
   # It should be possible to define and use recursive polymorphic types.
   <@>@ Num@ = <@ T@> { +(T@ Z, Num@<T@> S); };
   @ Unit@ = *();

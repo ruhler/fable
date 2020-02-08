@@ -1,7 +1,5 @@
 Type System Rewrite:
-* Double check that Subst doesn't do any simplifications or poly apply, it's
-  just a syntactic substitution.
-* Implement FbleNormalizes check on let rec.
+* Implement FbleTypeIsNormalizing
 * Add support for f == (\x -> f x) to TypeEquals
   - It should fabricate an abstract variable and test that the left hand side
     applied to the abstract variable is the same as the right hand side
@@ -10,8 +8,9 @@ Type System Rewrite:
       id = \t -> t
       f == (\x -> id (f x))
     To catch implementations that try to special case eta conversion.
-* Add support for PolyApplyType to TypeEquals.
-* Remove FbleTypeArena* arg from TypeEquals?
+  - Consider also adding a test such as
+      +(f) == +(\x -> f x)
+    To ensure we don't just address functions at the top level of a type.
 * Verify this fixes infinite recursion in type substitution.
 
 Performance Refactor:

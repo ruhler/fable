@@ -71,8 +71,6 @@ Col@ MaxCol = Col60;
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 @ Draw@ = *(Pos@ pos, Cell@ cell);
 
-# TODO: This fails due to infinite loop.
-xxx
 <@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },
 <@>@ S@ = <@ T@> { +(Unit@ nil, P@<T@> cons); };
 
