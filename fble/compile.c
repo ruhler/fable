@@ -1807,7 +1807,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(arena_, poly);
       if (poly_kind->_base.tag != FBLE_POLY_KIND) {
         ReportError(arena_, &expr->loc,
-            "cannot apply poly args to a basic kinded entity");
+            "cannot apply poly args to a basic kinded entity\n");
         FbleKindRelease(arena_, &poly_kind->_base);
         FbleTypeRelease(arena, poly);
         return NULL;
