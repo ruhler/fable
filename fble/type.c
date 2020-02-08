@@ -878,6 +878,7 @@ FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type)
       if (poly->_base.tag == FBLE_POLY_TYPE) {
         FbleType* subst = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
         FbleType* result = FbleNormalType(arena, subst);
+        FbleTypeRelease(arena, &poly->_base);
         FbleTypeRelease(arena, subst);
         return result;
       }

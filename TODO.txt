@@ -1,5 +1,4 @@
 Type System Rewrite:
-* Fix memory leaks exhibited by failing tests.
 * Double check that Subst doesn't do any simplifications or poly apply, it's
   just a syntactic substitution.
 * Implement FbleNormalizes check on let rec.
