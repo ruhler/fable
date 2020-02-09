@@ -284,11 +284,27 @@ FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, Fble
 //   passed poly or arg types.
 FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly, FbleType* arg);
 
+// FbleTypeIsVacuous --
+//   Check if a type will reduce to normal form.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   type - the type to check.
+//
+// Results:
+//   true if the type will fail to reduce to normal form because it is
+//   vacuous, false otherwise.
+//
+// Side effects:
+//   None.
+bool FbleTypeIsVacuous(FbleTypeArena* arena, FbleType* type);
+
 // FbleNormalType --
 //   Reduce an evaluated type to normal form. Normal form types are struct,
 //   union, and func types, but not var types, for example.
 //
 // Inputs:
+//   arena - arena to use for allocations.
 //   type - the type to reduce.
 //
 // Results:
@@ -296,7 +312,8 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
 //
 // Side effects:
 //   The caller is responsible for calling FbleTypeRelease on the returned type
-//   when it is no longer needed.
+//   when it is no longer needed. The behavior is undefined if the type is
+//   vacuous.
 FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type);
 
 // FbleTypesEqual --

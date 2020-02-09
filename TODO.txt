@@ -1,5 +1,4 @@
 Type System Rewrite:
-* Implement FbleTypeIsNormalizing
 * Add support for f == (\x -> f x) to TypeEquals
   - It should fabricate an abstract variable and test that the left hand side
     applied to the abstract variable is the same as the right hand side

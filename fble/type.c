@@ -23,6 +23,13 @@ typedef struct TypeList {
   struct TypeList* next;
 } TypeList;
 
+// TypeList --
+//   A linked list of type ids.
+typedef struct TypeIdList {
+  uintptr_t id;
+  struct TypeIdList* next;
+} TypeIdList;
+
 // TypePairs --
 //   A set of pairs of types.
 typedef struct TypePairs {
@@ -45,6 +52,7 @@ static void TypeFree(FbleTypeArena* arena, FbleRef* ref);
 
 static FbleKind* TypeofKind(FbleArena* arena, FbleKind* kind);
 
+static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normalizing);
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
 static FbleType* Subst(FbleTypeArena* arena, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
 static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPairs* eq);
@@ -210,6 +218,76 @@ static FbleKind* TypeofKind(FbleArena* arena, FbleKind* kind)
       return &typeof->_base;
     }
   }
+  UNREACHABLE("Should never get here");
+  return NULL;
+}
+
+// Normal --
+//   Compute the normal form of a type.
+//
+// Inputs: 
+//   arena - arena to use for allocations.
+//   type - the type to reduce.
+//   normalizing - the set of types currently being normalized.
+//
+// Results:
+//   The type reduced to normal form, or NULL if the type cannot be reduced to
+//   normal form.
+//
+// Side effects:
+//   The caller is responsible for calling FbleTypeRelease on the returned type
+//   when it is no longer needed.
+static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normalizing)
+{
+  for (TypeIdList* n = normalizing; n != NULL; n = n->next) {
+    if (type->id == n->id) {
+      return NULL;
+    }
+  }
+
+  TypeIdList nn = {
+    .id = type->id,
+    .next = normalizing
+  };
+
+  switch (type->tag) {
+    case FBLE_STRUCT_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_UNION_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_FUNC_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_PROC_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_POLY_TYPE: return FbleTypeRetain(arena, type);
+
+    case FBLE_POLY_APPLY_TYPE: {
+      FblePolyApplyType* pat = (FblePolyApplyType*)type;
+      FblePolyType* poly = (FblePolyType*)Normal(arena, pat->poly, &nn);
+      if (poly == NULL) {
+        return NULL;
+      }
+
+      if (poly->_base.tag == FBLE_POLY_TYPE) {
+        FbleType* subst = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
+        FbleType* result = Normal(arena, subst, &nn);
+        FbleTypeRelease(arena, &poly->_base);
+        FbleTypeRelease(arena, subst);
+        return result;
+      }
+
+      // Don't bother simplifying at all if we can't do a substituion.
+      FbleTypeRelease(arena, &poly->_base);
+      return FbleTypeRetain(arena, type);
+    }
+
+    case FBLE_VAR_TYPE: {
+      FbleVarType* var = (FbleVarType*)type;
+      if (var->value == NULL) {
+        return FbleTypeRetain(arena, type);
+      }
+      return Normal(arena, var->value, &nn);
+    }
+
+    case FBLE_TYPE_TYPE: return FbleTypeRetain(arena, type);
+  }
+
   UNREACHABLE("Should never get here");
   return NULL;
 }
@@ -901,45 +979,26 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
   return &pat->_base;
 }
 
+// FbleTypeIsVacuous -- see documentation in fble-type.h
+bool FbleTypeIsVacuous(FbleTypeArena* arena, FbleType* type)
+{
+  FbleType* normal = Normal(arena, type, NULL);
+  while (normal != NULL && normal->tag == FBLE_POLY_TYPE) {
+    FblePolyType* poly = (FblePolyType*)normal;
+    FbleType* tmp = normal;
+    normal = Normal(arena, poly->body, NULL);
+    FbleTypeRelease(arena, tmp);
+  }
+  FbleTypeRelease(arena, normal);
+  return normal == NULL;
+}
+
 // FbleNormalType -- see documentation in fble-type.h
 FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type)
 {
-  switch (type->tag) {
-    case FBLE_STRUCT_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_UNION_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_FUNC_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_PROC_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_POLY_TYPE: return FbleTypeRetain(arena, type);
-
-    case FBLE_POLY_APPLY_TYPE: {
-      FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      FblePolyType* poly = (FblePolyType*)FbleNormalType(arena, pat->poly);
-      if (poly->_base.tag == FBLE_POLY_TYPE) {
-        FbleType* subst = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
-        FbleType* result = FbleNormalType(arena, subst);
-        FbleTypeRelease(arena, &poly->_base);
-        FbleTypeRelease(arena, subst);
-        return result;
-      }
-
-      // Don't bother simplifying at all if we can't do a substituion.
-      FbleTypeRelease(arena, &poly->_base);
-      return FbleTypeRetain(arena, type);
-    }
-
-    case FBLE_VAR_TYPE: {
-      FbleVarType* var = (FbleVarType*)type;
-      if (var->value == NULL) {
-        return FbleTypeRetain(arena, type);
-      }
-      return FbleNormalType(arena, var->value);
-    }
-
-    case FBLE_TYPE_TYPE: return FbleTypeRetain(arena, type);
-  }
-
-  UNREACHABLE("Should never get here");
-  return NULL;
+  FbleType* normal = Normal(arena, type, NULL);
+  assert(normal != NULL && "vacuous type does not have a normal form");
+  return normal;
 }
 
 // FbleTypesEqual -- see documentation in fble-types.h

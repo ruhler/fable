@@ -1680,7 +1680,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         }
       }
 
-      // TODO: Verify the types and values are all normalizing.
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (var_type_values[i] != NULL && FbleTypeIsVacuous(arena, &var_types[i]->_base)) {
+          ReportError(arena_, &let_expr->bindings.xs[i].name.loc,
+              "%n is vacuous\n", &let_expr->bindings.xs[i].name);
+          error = true;
+        }
+      }
 
       FbleLetDefInstr* let_def_instr = FbleAlloc(arena_, FbleLetDefInstr);
       let_def_instr->_base.tag = FBLE_LET_DEF_INSTR;
