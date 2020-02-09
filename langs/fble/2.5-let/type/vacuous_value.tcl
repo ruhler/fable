@@ -1,8 +1,10 @@
 fble-test-error 5:9 {
   @ Unit@ = *();
+  @ Bool@ = +(Unit@ true, Unit@ false);
 
   # The value x must not be vacuously defined like this.
-  Unit@ x = x;
+  Bool@ x = x;
 
+  # x.true
   Unit@();
 }

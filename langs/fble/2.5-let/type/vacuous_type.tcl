@@ -4,5 +4,5 @@ fble-test-error 5:5 {
   # The type T@ must not be vacuously defined like this.
   @ T@ = T@;
 
-  Unit@();
+  T@();
 }

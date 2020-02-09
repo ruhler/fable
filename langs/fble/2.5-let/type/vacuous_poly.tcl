@@ -4,5 +4,5 @@ fble-test-error 5:8 {
   # The poly type F@ must not be vacuously defined like this.
   <@>@ F@ = <@ T@> { F@<T@>; };
 
-  Unit@();
+  F@<Unit@>();
 }
