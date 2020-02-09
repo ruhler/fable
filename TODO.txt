@@ -1,16 +1,3 @@
-Type System Rewrite:
-* Add support for f == (\x -> f x) to TypeEquals
-  - It should fabricate an abstract variable and test that the left hand side
-    applied to the abstract variable is the same as the right hand side
-    applied to the abstract variable.
-  - Consider also adding a test such as
-      id = \t -> t
-      f == (\x -> id (f x))
-    To catch implementations that try to special case eta conversion.
-  - Consider also adding a test such as
-      +(f) == +(\x -> f x)
-    To ensure we don't just address functions at the top level of a type.
-
 Performance Refactor:
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
@@ -36,6 +23,9 @@ Performance Refactor:
   - Including that tail recursive functions should not smash the stack.
 
 Miscellaneous:
+* Test that we get a reasonable error message if we do something like:
+    <@>@ Id = <@ T@> { T@; };
+* Test that poly types with different arg kinds aren't equal.
 * [clean] Can fble-stdio check that the function has the right type?
 * Better error messages on types that have the same name but different values.
 * Write man pages for fble and friends?

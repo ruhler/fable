@@ -255,7 +255,25 @@ static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normal
     case FBLE_UNION_TYPE: return FbleTypeRetain(arena, type);
     case FBLE_FUNC_TYPE: return FbleTypeRetain(arena, type);
     case FBLE_PROC_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_POLY_TYPE: return FbleTypeRetain(arena, type);
+
+    case FBLE_POLY_TYPE: {
+      FblePolyType* poly = (FblePolyType*)type;
+
+      // eta-reduce (\x -> f x) ==> f
+      FblePolyApplyType* pat = (FblePolyApplyType*)Normal(arena, poly->body, &nn);
+      if (pat == NULL) {
+        return NULL;
+      }
+
+      if (pat->_base.tag == FBLE_POLY_APPLY_TYPE && pat->arg == poly->arg) {
+        FbleType* normal = FbleTypeRetain(arena, pat->poly);
+        FbleTypeRelease(arena, &pat->_base);
+        return normal;
+      }
+
+      FbleTypeRelease(arena, &pat->_base);
+      return FbleTypeRetain(arena, type);
+    }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
