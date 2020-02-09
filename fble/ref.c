@@ -30,7 +30,7 @@ typedef struct {
   size_t* xs;
 } RMap;
 
-#define INITIAL_RMAP_CAPACITY 11
+#define INITIAL_RMAP_CAPACITY 3
 
 // Set --
 //   A set of references with map from index to reference and reverse hashmap

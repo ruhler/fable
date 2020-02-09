@@ -26,15 +26,15 @@ Miscellaneous:
 * Test that we get a reasonable error message if we do something like:
     <@>@ Id = <@ T@> { T@; };
 * Test that poly types with different arg kinds aren't equal.
+* [test] Add detection of vacuous values.
 * [clean] Can fble-stdio check that the function has the right type?
 * Better error messages on types that have the same name but different values.
 * Write man pages for fble and friends?
+* Better error message when the difference between a type is accidentally
+  defining + vs. *, and it contains substituted polymorphic type variables.
 * Rethink arenas and documentation, because some cases appear to assume you
   have a bulk-free arena. Other cases its not well specified what is freed
   explicitly and what is expected to be freed implicitly.
-* Better error message when the difference between a type is accidentally
-  defining + vs. *, and it contains substituted polymorphic type variables.
-
   I claim a good model is: pass an arena to a function to say: the function
   allocates its result in this arena. The function creates and uses a separate
   arena for its intermediate allocations.
