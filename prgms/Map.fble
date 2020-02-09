@@ -9,6 +9,20 @@
   *(Data@ a, Data@ b) product
 );
 
+Data@ DUnit = Data@(unit: Unit);
+
+(Data@) { Data@; } DLeft = (Data@ d) {
+  Data@(sum: +(Data@ a, Data@ b)(a: d));
+};
+
+(Data@) { Data@; } DRight = (Data@ d) {
+  Data@(sum: +(Data@ a, Data@ b)(b: d));
+};
+
+(Data@, Data@) { Data@; } DProduct = (Data@ a, Data@ b) {
+  Data@(product: *(Data@ a, Data@ b)(a, b));
+};
+
 # A map from Data@ to T@.
 <@>@ Map@ = <@ T@>{ +(Unit@ empty, MapP@<T@> map); },
 <@>@ MapP@ = <@ T@>{ 
@@ -59,4 +73,5 @@ Insert = <@ T@>(Map@<T@> map, Data@ key, T@ value) {
      }));
 };
 
-@(Data@, Map@, Empty, Lookup, Insert);
+@(Data@, DUnit, DLeft, DRight, DProduct,
+  Map@, Empty, Lookup, Insert);

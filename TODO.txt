@@ -4,8 +4,6 @@ Performance Refactor:
   parent proc?
 * Label blocks in exec process bindings by binding name?
 * [lang] redo syntax for literals
-* Replace TicTacToe MemoTable with a generic Map from Data to T@.
-  - Implement ToData for Board@.
 * Implement Game of Life.
 * Step through code via gdb for a Bit2XN addition to get a sense of how
   involved that is?

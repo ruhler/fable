@@ -1320,7 +1320,7 @@ Notes:
   Foo(...) instead.
   
 * It would be awesome to have a well defined style guide for programming in
-  fble.
+  fble. And maybe an automatic re-formatter.
 
 * Should we get rid of the struct import expression?
   I think this is the only place where you bring a bunch of variables in scope
@@ -1378,4 +1378,13 @@ Notes:
     }: SL@, PL@, List@, SL;
 
   It's hard to believe this suggestion is better than what we have today.
+
+* There's no good support for abstract data types. You can't export a union or
+  struct type abstractly without also exporting the fields and constructors
+  and deconstructors. That seems bad, because it means you can't easily
+  control the invariants with which your data type is constructed.
+
+  From the point of view of the type system, it wouldn't be hard to turn a
+  struct or union type into an abstract type. We just need some way to express
+  that in the language?
   

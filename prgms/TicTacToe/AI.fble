@@ -1,10 +1,37 @@
 
 { List%; @(S@, S, ForS); };
+{ Map%;
+  @(Data@, DUnit, DLeft, DRight, DProduct,
+    Map@, MEmpty: Empty, MInsert: Insert, MLookup: Lookup);
+};
 { Maybe%; @(Maybe@, For, Just, Nothing); };
 { Process%; @(Get@, Put@); };
 { Unit%; @(Unit@, Unit); };
 
 { Board%; @(Board@, Player@, Position@, Result@, Square@, BoardStatus, Move); };
+
+(Square@) { Data@; } DSquare = {
+  Data@ x = DLeft(DLeft(DUnit));
+  Data@ o = DLeft(DRight(DUnit));
+  Data@ e = DRight(DUnit);
+  (Square@ s) { ?(s; X: x, O: o, E: e); };
+};
+
+(Board@) { Data@; } DBoard = {
+  (Data@, Data@, Data@) { Data@; } D3 = (Data@ a, Data@ b, Data@ c) {
+    DProduct(DProduct(a, b), c);
+  };
+
+  (Square@, Square@, Square@) { Data@; } DRow = (Square@ a, Square@ b, Square@ c) {
+    D3(DSquare(a), DSquare(b), DSquare(c));
+  };
+
+  (Board@ b) {
+    D3(DRow(b.ul, b.uc, b.ur),
+       DRow(b.ml, b.mc, b.mr),
+       DRow(b.ll, b.lc, b.lr));
+  };
+};
 
 (Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {
   ?(p; UL: Just<Position@>(Position@(UC: Unit)),
@@ -105,69 +132,16 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-@ MemoTable@ = +(Unit@ empty, PositionResult@ result, MemoMap@ map),
-@ MemoMap@ = *(MemoTable@ x, MemoTable@ o, MemoTable@ e);
-
-# Helper function to access a MemoMap from a MemoTable. Returns Nothing if the
-# MemoTable is Empty. Otherwise applies the given function to the accessed
-# MemoMap.
-<@ A@>(MemoTable@, Square@, (MemoTable@){Maybe@<A@>;}){Maybe@<A@>;}
-GetMap = <@ A@>(MemoTable@ memo, Square@ square, (MemoTable@){Maybe@<A@>;} f) {
-  ?(memo;
-      empty: Nothing<A@>,
-      result: Nothing<A@>, 
-      map: f(?(square; X: memo.map.x, O: memo.map.o, E: memo.map.e)));
-};
+@ MemoTable@ = Map@<PositionResult@>;
 
 (MemoTable@, Board@){ Maybe@<PositionResult@>; }
 Lookup = (MemoTable@ memo, Board@ board) {
-  MemoTable@ mul <- GetMap<PositionResult@>(memo, board.ul);
-  MemoTable@ muc <- GetMap<PositionResult@>(mul, board.uc);
-  MemoTable@ mur <- GetMap<PositionResult@>(muc, board.ur);
-  MemoTable@ mml <- GetMap<PositionResult@>(mur, board.ml);
-  MemoTable@ mmc <- GetMap<PositionResult@>(mml, board.mc);
-  MemoTable@ mmr <- GetMap<PositionResult@>(mmc, board.mr);
-  MemoTable@ mll <- GetMap<PositionResult@>(mmr, board.ll);
-  MemoTable@ mlc <- GetMap<PositionResult@>(mll, board.lc);
-  MemoTable@ mlr <- GetMap<PositionResult@>(mlc, board.lr);
-  ?(mlr;
-    empty: Nothing<PositionResult@>,
-    result: Just<PositionResult@>(mlr.result),
-    map: Nothing<PositionResult@>);
-};
-
-# Helper function to update a MemoTable map value.
-# Accesses the given element from the given memo table and applies the
-# function to it to determine its new value, providing a default empty value
-# if necessary.
-(MemoTable@, Square@, (MemoTable@){MemoTable@;}){MemoTable@;}
-SetMap = (MemoTable@ memo, Square@ square, (MemoTable@){MemoTable@;} f) {
-  MemoTable@ empty = MemoTable@(empty: Unit);
-  MemoMap@ oldMap = ?(memo;
-    empty: MemoMap@(empty, empty, empty),
-    result: MemoMap@(empty, empty, empty),
-    map: memo.map);
-  MemoTable@ oldChild = ?(square; X: oldMap.x, O: oldMap.o, E: oldMap.e);
-  MemoTable@ newChild = f(oldChild);
-  MemoMap@ newMap = MemoMap@(
-    ?(square; X: newChild, O: oldMap.x, E: oldMap.x), 
-    ?(square; X: oldMap.o, O: newChild, E: oldMap.o), 
-    ?(square; X: oldMap.e, O: oldMap.e, E: newChild));
-  MemoTable@(map: newMap);
+  MLookup<PositionResult@>(memo, DBoard(board));
 };
 
 (MemoTable@, Board@, PositionResult@){MemoTable@;}
 Insert = (MemoTable@ memo, Board@ board, PositionResult@ result) {
-  MemoTable@ mul <- SetMap(memo, board.ul);
-  MemoTable@ muc <- SetMap(mul, board.uc);
-  MemoTable@ mur <- SetMap(muc, board.ur);
-  MemoTable@ mml <- SetMap(mur, board.ml);
-  MemoTable@ mmc <- SetMap(mml, board.mc);
-  MemoTable@ mmr <- SetMap(mmc, board.mr);
-  MemoTable@ mll <- SetMap(mmr, board.ll);
-  MemoTable@ mlc <- SetMap(mll, board.lc);
-  MemoTable@ mlr <- SetMap(mlc, board.lr);
-  MemoTable@(result: result);
+  MInsert<PositionResult@>(memo, DBoard(board), result);
 };
 
 <@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
@@ -241,8 +215,8 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
 MemoTable@ InitialAI = {
   # TODO: It takes a couple of minute to pre-compute the AI.
   # Still too slow to enable. :(
-  # ChooseBestMove(MemoTable@(empty: Unit), EmptyBoard, Player@(X: Unit)).memo;
-  MemoTable@(empty: Unit);
+  # ChooseBestMove(MEmpty<PositionResult@>, EmptyBoard, Player@(X: Unit)).memo;
+  MEmpty<PositionResult@>;
 };
 
 @ Turn@ = *(Board@ board, Player@ player);
