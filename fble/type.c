@@ -598,13 +598,6 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
   a = FbleNormalType(arena, a);
   b = FbleNormalType(arena, b);
 
-  // TODO: Is this special case really necessary?
-  if (a == b) {
-    FbleTypeRelease(arena, a);
-    FbleTypeRelease(arena, b);
-    return true;
-  }
-
   for (TypeIdPairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
     if (a->id == pairs->a && b->id == pairs->b) {
       FbleTypeRelease(arena, a);
@@ -731,10 +724,9 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
       FbleVarType* vb = (FbleVarType*)b;
 
       assert(va->value == NULL && vb->value == NULL);
-      assert(a != b);
       FbleTypeRelease(arena, a);
       FbleTypeRelease(arena, b);
-      return false;
+      return a == b;
     }
 
     case FBLE_TYPE_TYPE: {
