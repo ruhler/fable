@@ -1,61 +1,17 @@
 
-{ Data%; @(Data@); };
-{ Unit%; @(Unit@, Unit); };
-{ Maybe%; @(Maybe@, Nothing, Just); };
+{ Maybe%; @(Maybe@); };
 
-# A map from Data@ to T@.
-<@>@ Map@ = <@ T@>{ +(Unit@ empty, MapP@<T@> map); },
-<@>@ MapP@ = <@ T@>{ 
-  *(Maybe@<T@> unit,
-    *(Map@<T@> a, Map@<T@> b) sum,
-    Map@<Map@<T@>> product);
+# A generic map interface.
+#   M@ - the map type.
+#   K@ - the key type.
+#   V@ - the value type.
+<@,@,@>@ Map@ = <@ M@, @ K@, @ V@> {
+  *(@<M@> M@,
+    M@ Empty,
+    (M@, K@) { Maybe@<V@>; } Lookup,
+    (M@, K@, (Maybe@<V@>){ V@; }) { M@; } InsertWith,
+    (M@, K@, V@) { M@; } Insert
+   );
 };
-
-<@ T@>{ Map@<T@>; } Empty = <@ T@>{ Map@<T@>(empty: Unit); };
-
-<@ T@>(Map@<T@>, Data@) { Maybe@<T@>; }
-Lookup = <@ T@>(Map@<T@> map, Data@ key) {
-  ?(map;
-     empty: Nothing<T@>,
-     map: {
-       ?(key;
-          unit: map.map.unit,
-          sum: ?(key.sum;
-                   a: Lookup<T@>(map.map.sum.a, key.sum.a),
-                   b: Lookup<T@>(map.map.sum.b, key.sum.b)),
-          product: {
-            Maybe@<Map@<T@>> mm = Lookup<Map@<T@>>(map.map.product, key.product.a);
-            ?(mm;
-                just: Lookup<T@>(mm.just, key.product.b),
-                nothing: Nothing<T@>);
-          });
-     });
-};
-
-# Insert that transforms the existing value, if any.
-<@ T@>(Map@<T@>, Data@, (Maybe@<T@>){ T@; }) { Map@<T@>; }
-InsertWith = <@ T@>(Map@<T@> map, Data@ key, (Maybe@<T@>){ T@; } with) {
-  MapP@<T@> p =
-    ?(map;
-       empty: MapP@<T@>(Nothing<T@>, @(a: Empty<T@>, b: Empty<T@>), Empty<Map@<T@>>),
-       map: map.map);
-  Map@<T@>(map:
-   ?(key;
-     unit: MapP@<T@>(Just<T@>(with(p.unit)), p.sum, p.product),
-     sum: ?(key.sum;
-              a: MapP@<T@>(p.unit, @(a: InsertWith<T@>(p.sum.a, key.sum.a, with), b: p.sum.b), p.product),
-              b: MapP@<T@>(p.unit, @(a: p.sum.a, b: InsertWith<T@>(p.sum.b, key.sum.b, with)), p.product)),
-     product: {
-       MapP@<T@>(p.unit, p.sum,
-         InsertWith<Map@<T@>>(p.product, key.product.a, (Maybe@<Map@<T@>> mm) {
-           InsertWith<T@>(?(mm; just: mm.just, nothing: Empty<T@>), key.product.b, with);
-         }));
-     }));
-};
-
-<@ T@>(Map@<T@>, Data@, T@) { Map@<T@>; }
-Insert = <@ T@>(Map@<T@> map, Data@ key, T@ value) {
-  InsertWith<T@>(map, key, (Maybe@<T@> _) { value; });
-};
-
-@(Map@, Empty, Lookup, Insert, InsertWith);
+    
+@(Map@);

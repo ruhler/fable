@@ -8,11 +8,11 @@
 { Unit%; @(Unit@, Unit); };
 
 { Data%; @(Data@); };
-{ Map%; @(Map@, Empty, Lookup, Insert); };
+{ DataMap%; @(DataMap@, Empty, Lookup, Insert); };
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {
-    Append<Char@>(Str(Char@|'Map.'), nm);
+    Append<Char@>(Str(Char@|'DataMap.'), nm);
   };
 
   Data@ A = Data@(sum: +(Data@ a, Data@ b)(a: Data@(unit: Unit)));
@@ -30,7 +30,7 @@ S@<Test@> Tests = {
     })),
 
     Test@(name(Str(Char@|'not found')), $({
-      Map@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
+      DataMap@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
       ?(Lookup<Unit@>(map, B);
          just: TestResult@(fail:
            Str(Char@|'Lookup found B in a map with only C')),
@@ -38,7 +38,7 @@ S@<Test@> Tests = {
     })),
 
     Test@(name(Str(Char@|'found')), $({
-      Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
+      DataMap@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
         A, False),
         B, True),
         C, False);
@@ -55,7 +55,7 @@ S@<Test@> Tests = {
     })),
 
     Test@(name(Str(Char@|'replace')), $({
-      Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
+      DataMap@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
         B, False),
         B, True);
       Maybe@<Bool@> mv = Lookup<Bool@>(map, B);

@@ -1,8 +1,7 @@
 Miscellaneous:
 * Implement Game of Life.
- - Make a Map interface that takes key and value types. And support an
-   implementation of that interface that takes the conversion from key to
-   data.
+* Fix syntax highlighting of paths
+  For example: *(@<DataMap%.Map@>Map@ 
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?

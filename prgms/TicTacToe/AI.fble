@@ -1,7 +1,8 @@
 
 { Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
+{ DataMap%; @(DataMap); };
 { List%; @(S@, S, ForS); };
-{ Map%; @(Map@, MEmpty: Empty, MInsert: Insert, MLookup: Lookup); };
+{ Map%; @(Map@); };
 { Maybe%; @(Maybe@, For, Just, Nothing); };
 { Process%; @(Get@, Put@); };
 { Unit%; @(Unit@, Unit); };
@@ -130,16 +131,8 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-@ MemoTable@ = Map@<PositionResult@>;
-
-(MemoTable@, Board@){ Maybe@<PositionResult@>; }
-Lookup = (MemoTable@ memo, Board@ board) {
-  MLookup<PositionResult@>(memo, DBoard(board));
-};
-
-(MemoTable@, Board@, PositionResult@){MemoTable@;}
-Insert = (MemoTable@ memo, Board@ board, PositionResult@ result) {
-  MInsert<PositionResult@>(memo, DBoard(board), result);
+{ DataMap<Board@, PositionResult@>(DBoard);
+  @(MemoTable@: M@, Empty, Lookup, Insert);
 };
 
 <@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
@@ -213,8 +206,8 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
 MemoTable@ InitialAI = {
   # TODO: It takes a couple of minute to pre-compute the AI.
   # Still too slow to enable. :(
-  # ChooseBestMove(MEmpty<PositionResult@>, EmptyBoard, Player@(X: Unit)).memo;
-  MEmpty<PositionResult@>;
+  # ChooseBestMove(Empty, EmptyBoard, Player@(X: Unit)).memo;
+  Empty;
 };
 
 @ Turn@ = *(Board@ board, Player@ player);
