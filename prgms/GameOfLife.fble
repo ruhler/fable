@@ -1,47 +1,47 @@
 
-Unit% { @(Unit@, Unit); };
-List% { @(P@, S@); };
-Draw% { @(Color@, Draw@); };
+{ Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
+{ Unit%; @(Unit@); };
+{ UBNat%; @(Nat@); };
 
-@ Cell@ = +(Unit@ alive, Unit@ dead);
-Cell@ Alive = Cell@(alive: Unit);
-Cell@ Dead = Cell@(dead: Unit);
+@ Coord@ = *(Nat@ row, Nat@ col);
 
-@ CellCount@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4);
-
-[CellCount@][Cell@]{ CellCount@; } Add = [CellCount@ a][Cell@ b] {
-  ?(b; ?(a, CellCount@(1: Unit),
-            CellCount@(2: Unit)
-            CellCount@(3: Unit)
-            CellCount@(4: Unit)
-            CellCount@(4: Unit)), b);
+(Nat@){ Data@; } DNat = (Nat@ n) {
+  ?(n; 0: Left(Left(DUnit)),
+       1: Left(Right(DUnit)),
+       2p0: Right(Left(DNat(n.2p0))),
+       2p1: Right(Right(DNat(n.2p1))));
 };
 
-[Cell@][Cell@][Cell@][Cell@][Cell@][Cell@][Cell@][Cell@]{ CellCount@; } Sum =
-  [Cell@ a][Cell@ b][Cell@ c][Cell@ d][Cell@ e][Cell@ f][Cell@ g][Cell@ h] {
-    Add[Add[Add[Add[Add[Add[Add[Add[CellCount@(0: Unit)][a]][b]][c]][d]][e]][f]][g]][h];
+(Coord@) { Data@; } DCoord = (Coord@ c) {
+  Product(DNat(c.row), DNat(c.col));
 };
 
-[Cell@][CellCount@]{Cell@;} Next = [Cell@ cell][CellCount@ neighbors] {
-  ?(cell;  ?(neighbors; 0: Dead, 1: Dead, 2: Alive, 3: Alive, 4: Dead),
-           ?(neighbors; 0: Dead, 1: Dead, 2: Dead, 3: Alive, 4: Dead));
+# The world is a set of Coord@ where there are live cells.
+@ World@ = Map@<Unit@>;
+
+# A count of neighboring cells. 4p stands for anything greater than or equal
+# to 4.
+@ Count@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4p);
+
+(Count@) { Count@; } Inc = (Count@ c) {
+  ?(c; 0: Count@(1: Unit),
+       1: Count@(2: Unit),
+       2: Count@(3: Unit),
+       3: Count@(4p: Unit),
+       4p: Count@(4p: Unit));
 };
 
-# A World@ is a list of rows of cells.
-# Each row has the same number of cells.
-# There are at least 3 rows and at least three cells in each row.
-@ RowP@ = P@<Cell@>;
-@ RowS@ = S@<Cell@>;
-@ World@ = P@<RowP@>;
+@ Status@ = *(Bool@ alive, Count@ neighbors);
 
-[World@]{S@<Draw@>;} DrawWorld = [World@ world] {
-  DrawRowP[world][0];
-};
+# Map from Coord to the status of the cell.
+@ Cand@ = Map@<Status@>
 
-[RowP@][Nat@]{S@<Draw@>;} DrawRowP = [RowP@ row][Nat@ r] {
-  ConcatS<Draw@>(DrawColP[row][r][0], DrawRowS[row.tail][Inc[r]]);
-};
+# Advance the world by one unit of time.
+(World@) { World@; } Step = (World@ w) {
+  # 1. Create the candidate map.
+  #   For each cell in world,
+  #     Set this cell alive in candidate
+  #     Inc neighbors for each neighbor cell
 
-[RowS@][Nat@]{S@<Draw@>;} DrawRowS = [RowS@ row][Nat@ r] {
-  
+  # 2. Filter live cells from the map.
 };

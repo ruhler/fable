@@ -1,10 +1,13 @@
-Performance Refactor:
+Miscellaneous:
+* Implement Game of Life.
+ - Make a Map interface that takes key and value types. And support an
+   implementation of that interface that takes the conversion from key to
+   data.
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
 * Label blocks in exec process bindings by binding name?
 * [lang] redo syntax for literals
-* Implement Game of Life.
 * Step through code via gdb for a Bit2XN addition to get a sense of how
   involved that is?
 * Consider factoring out code in compile.c for computing modeled profile time.
@@ -19,8 +22,6 @@ Performance Refactor:
   for everything else?
 * Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
-
-Miscellaneous:
 * Test that we get a reasonable error message if we do something like:
     <@>@ Id = <@ T@> { T@; };
 * Test that poly types with different arg kinds aren't equal.

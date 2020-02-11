@@ -1,27 +1,7 @@
 
+{ Data%; @(Data@); };
 { Unit%; @(Unit@, Unit); };
 { Maybe%; @(Maybe@, Nothing, Just); };
-
-# A generic algebraic data type.
-@ Data@ = +(
-  Unit@ unit,
-  +(Data@ a, Data@ b) sum,
-  *(Data@ a, Data@ b) product
-);
-
-Data@ DUnit = Data@(unit: Unit);
-
-(Data@) { Data@; } DLeft = (Data@ d) {
-  Data@(sum: +(Data@ a, Data@ b)(a: d));
-};
-
-(Data@) { Data@; } DRight = (Data@ d) {
-  Data@(sum: +(Data@ a, Data@ b)(b: d));
-};
-
-(Data@, Data@) { Data@; } DProduct = (Data@ a, Data@ b) {
-  Data@(product: *(Data@ a, Data@ b)(a, b));
-};
 
 # A map from Data@ to T@.
 <@>@ Map@ = <@ T@>{ +(Unit@ empty, MapP@<T@> map); },
@@ -78,5 +58,4 @@ Insert = <@ T@>(Map@<T@> map, Data@ key, T@ value) {
   InsertWith<T@>(map, key, (Maybe@<T@> _) { value; });
 };
 
-@(Data@, DUnit, DLeft, DRight, DProduct,
-  Map@, Empty, Lookup, Insert, InsertWith);
+@(Map@, Empty, Lookup, Insert, InsertWith);

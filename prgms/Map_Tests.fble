@@ -7,7 +7,8 @@
 { Test%; @(Test@, TestResult@); };
 { Unit%; @(Unit@, Unit); };
 
-{ Map%; @(Data@, Map@, Empty, Lookup, Insert); };
+{ Data%; @(Data@); };
+{ Map%; @(Map@, Empty, Lookup, Insert); };
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {

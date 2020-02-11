@@ -1,0 +1,24 @@
+
+# A generic algebraic data type.
+@ Data@ = +(
+  *() unit,
+  +(Data@ a, Data@ b) sum,
+  *(Data@ a, Data@ b) product
+);
+
+Data@ Unit = Data@(unit: *()());
+
+(Data@) { Data@; } Left = (Data@ d) {
+  Data@(sum: +(Data@ a, Data@ b)(a: d));
+};
+
+(Data@) { Data@; } Right = (Data@ d) {
+  Data@(sum: +(Data@ a, Data@ b)(b: d));
+};
+
+(Data@, Data@) { Data@; } Product = (Data@ a, Data@ b) {
+  Data@(product: *(Data@ a, Data@ b)(a, b));
+};
+  
+@(Data@, Unit, Left, Right, Product);
+

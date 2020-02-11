@@ -1,9 +1,7 @@
 
+{ Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
 { List%; @(S@, S, ForS); };
-{ Map%;
-  @(Data@, DUnit, DLeft, DRight, DProduct,
-    Map@, MEmpty: Empty, MInsert: Insert, MLookup: Lookup);
-};
+{ Map%; @(Map@, MEmpty: Empty, MInsert: Insert, MLookup: Lookup); };
 { Maybe%; @(Maybe@, For, Just, Nothing); };
 { Process%; @(Get@, Put@); };
 { Unit%; @(Unit@, Unit); };
@@ -11,15 +9,15 @@
 { Board%; @(Board@, Player@, Position@, Result@, Square@, BoardStatus, Move); };
 
 (Square@) { Data@; } DSquare = {
-  Data@ x = DLeft(DLeft(DUnit));
-  Data@ o = DLeft(DRight(DUnit));
-  Data@ e = DRight(DUnit);
+  Data@ x = Left(Left(DUnit));
+  Data@ o = Left(Right(DUnit));
+  Data@ e = Right(DUnit);
   (Square@ s) { ?(s; X: x, O: o, E: e); };
 };
 
 (Board@) { Data@; } DBoard = {
   (Data@, Data@, Data@) { Data@; } D3 = (Data@ a, Data@ b, Data@ c) {
-    DProduct(DProduct(a, b), c);
+    Product(Product(a, b), c);
   };
 
   (Square@, Square@, Square@) { Data@; } DRow = (Square@ a, Square@ b, Square@ c) {
