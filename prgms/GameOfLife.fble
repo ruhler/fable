@@ -17,7 +17,10 @@
 };
 
 # The world is a set of Coord@ where there are live cells.
-@ World@ = Map@<Unit@>;
+{ DataMap<Coord@, Unit@>(DCoord);
+  @(World@: M@,
+    W: @(Empty, Lookup, Insert, InsertWith));
+};
 
 # A count of neighboring cells. 4p stands for anything greater than or equal
 # to 4.
@@ -34,7 +37,10 @@
 @ Status@ = *(Bool@ alive, Count@ neighbors);
 
 # Map from Coord to the status of the cell.
-@ Cand@ = Map@<Status@>
+{ DataMap<Coord@, Status@>(DCoord);
+  @(Cand@: M@,
+    C: @(Empty, Lookup, Insert, InsertWith));
+};
 
 # Advance the world by one unit of time.
 (World@) { World@; } Step = (World@ w) {

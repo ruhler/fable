@@ -1,5 +1,5 @@
 
-{ Data%; @(Data@); };
+{ Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
 { Map%; @(Map@); };
 { Unit%; @(Unit@, Unit); };
 { Maybe%; @(Maybe@, Nothing, Just); };
@@ -59,6 +59,24 @@ Insert = <@ T@>(DataMap@<T@> map, Data@ key, T@ value) {
   InsertWith<T@>(map, key, (Maybe@<T@> _) { value; });
 };
 
+<@ A@, @ B@>(DataMap@<A@>, B@, (Data@, A@, B@) { B@;}) { B@; }
+For = <@ A@, @ B@>(DataMap@<A@> m, B@ base, (Data@, A@, B@) { B@;} body) {
+  ?(m;
+    empty: base,
+    map: {
+      B@ b2 = ?(m.map.unit;
+                  just: body(DUnit, m.map.unit.just, base),
+                  nothing: base);
+      B@ b3 = For<A@, B@>(m.map.sum.a, b2, (Data@ k) { body(Left(k)); });
+      B@ b4 = For<A@, B@>(m.map.sum.b, b3, (Data@ k) { body(Right(k)); });
+      B@ b5 = For<DataMap@<A@>, B@>(m.map.product, b4,
+        (Data@ ka, DataMap@<A@> v, B@ b) {
+          For<A@, B@>(v, b, (Data@ kb) { body(Product(ka, kb)); });
+      });
+      b5;
+    });
+};
+  
 # An implementation of the Map interface using a DataMap.
 <@ K@, @ V@>((K@) { Data@; }) { Map@<DataMap@<V@>,K@,V@>; }
 DataMap = <@ K@, @ V@>((K@) { Data@; } ToData) {
