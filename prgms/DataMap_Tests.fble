@@ -1,25 +1,23 @@
 
 { Bool%; @(Bool@, True, False); };
 { Char%; @(Char@); };
-{ List%; @(S@, S, Append); };
+{ List%; @(S@, S, S0, ConsS, Append); };
 { Maybe%; @(Maybe@); };
 { String%; @(Str@, Str); };
 { Test%; @(Test@, TestResult@); };
 { Unit%; @(Unit@, Unit); };
 
-{ Data%; @(Data@); };
-{ DataMap%; @(DataMap@, Empty, Lookup, Insert); };
+{ Data%; @(Data@, Left, Right, DUnit: Unit); };
+{ DataMap%; @(DataMap@, Empty, Lookup, Insert, For); };
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {
     Append<Char@>(Str(Char@|'DataMap.'), nm);
   };
 
-  Data@ A = Data@(sum: +(Data@ a, Data@ b)(a: Data@(unit: Unit)));
-  Data@ B = Data@(sum: +(Data@ a, Data@ b)(b:
-              Data@(sum: +(Data@ a, Data@ b)(a: Data@(unit: Unit)))));
-  Data@ C = Data@(sum: +(Data@ a, Data@ b)(b:
-              Data@(sum: +(Data@ a, Data@ b)(b: Data@(unit: Unit)))));
+  Data@ A = Left(DUnit);
+  Data@ B = Right(Left(DUnit));
+  Data@ C = Right(Right(DUnit));
 
   S<Test@>([
     Test@(name(Str(Char@|'empty')), $({
@@ -68,6 +66,31 @@ S@<Test@> Tests = {
             ),
          nothing: TestResult@(fail:
            Str(Char@|'Failed to find B in map.')));
+    })),
+
+    Test@(name(Str(Char@|'for')), $({
+      DataMap@<Bool@> map =
+        Insert<Bool@>(
+          Insert<Bool@>(
+            Insert<Bool@>(Empty<Bool@>,
+              B, False),
+            A, True),
+          B, True);
+      @ Entry@ = *(Data@ key, Bool@ value);
+      S@<Entry@> entries = For<Bool@, S@<Entry@>>(map, S0<Entry@>,
+        (Data@ k, Bool@ v, S@<Entry@> l) {
+          ConsS<Entry@>(Entry@(k, v), l);
+        });
+
+      ?(entries;
+        cons:
+          ?(entries.cons.tail;
+            cons:
+              ?(entries.cons.tail.cons.tail;
+                cons: TestResult@(fail: Str(Char@|'Too many entries.')),
+                nil: TestResult@(fail: Str(Char@|'TODO: check for right entries.'))),
+            nil: TestResult@(fail: Str(Char@|'Only 1 entry iterated over.'))),
+        nil: TestResult@(fail: Str(Char@|'No entries iterated over.')));
     }))
   ]);
 };

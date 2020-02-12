@@ -94,4 +94,4 @@ DataMap = <@ K@, @ V@>((K@) { Data@; } ToData) {
     });
 };
 
-@(DataMap@, Empty, Lookup, Insert, InsertWith, DataMap);
+@(DataMap@, Empty, Lookup, Insert, InsertWith, For, DataMap);

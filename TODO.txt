@@ -1,6 +1,9 @@
 Miscellaneous:
 * Implement Game of Life.
   - Test DataMap%.For
+  - Add Map%.For function.
+  - Implement step 1 of GameOfLife%.Step.
+  - Implement step 2 of GameOfLife%.Step.
 * Fix syntax highlighting of paths
   For example: *(@<DataMap%.Map@>Map@ 
 * Remove excess !!! in block names.

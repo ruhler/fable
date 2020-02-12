@@ -1,0 +1,39 @@
+Fble Eval Version 2
+-------------------
+Goal:
+* Fble programs feel slow. Rewrite fble/eval.c to make them go faster.
+
+Key Idea:
+* Move away from a stack-based interpreter.
+
+Will this actually make things faster? I have no idea. But I think it's at
+least worth trying to see what happens.
+
+Specifically:
+* Instead of data_stack + scope_stack, have
+  - args: array of input arguments to the function, owned by the caller.
+    "caller scope". Values owned by caller.
+  - func: array of variables captured by the running function.
+    "lexical scope". Values owned by function.
+  - frame: fixed size array of values used for local variables and temporaries.
+    "local scope". Values owned as managed by compiler.
+* Instructions specify source and destination of arguments.
+  - source is: scope + offset, where scope is CALLER, LEXICAL, or LOCAL.
+  - target is offset into the LOCAL scope.
+* Have a return instruction to return the result back to the caller to a
+  location passed in with the caller scope.
+
+Why this might help with performance:
+* No need to maintain the data stack pointer.
+* No need to copy new variables from data stack to variable stack.
+* No need to copy vars from variable stack to data stack to make use of them.
+* No need to copy captured variables from function to data stack to vars to
+  make use of them.
+* No need to Retain and Release captured variables from the function.
+* No need to Retain and Release variables when using them.
+
+This seems promising, given how much of the existing implementation of
+instructions is pushing, popping, retaining, releasing, capturing, and
+restoring. Hopefully almost all of that goes away.
+
+
