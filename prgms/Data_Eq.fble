@@ -1,0 +1,22 @@
+{ Bool%; @(Bool@, True, False, And); };
+{ Data%; @(Data@); };
+
+(Data@, Data@) { Bool@; } Eq = (Data@ a, Data@ b) {
+  ?(a;
+    unit: ?(b; unit: True, : False),
+    sum:
+      ?(b;
+        sum:
+          ?(a.sum;
+            a: ?(b.sum; a: Eq(a.sum.a, b.sum.a), : False),
+            b: ?(b.sum; b: Eq(a.sum.b, b.sum.b), : False)),
+        : False),
+    product:
+      ?(b;
+        product: And(Eq(a.product.a, b.product.a),
+                     Eq(a.product.b, b.product.b)),
+        : False));
+      
+};
+
+@(Eq);

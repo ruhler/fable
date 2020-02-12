@@ -1,5 +1,5 @@
 
-{ Bool%; @(Bool@, True, False); };
+{ Bool%; @(Bool@, True, False, And, Not); };
 { Char%; @(Char@); };
 { List%; @(S@, S, S0, ConsS, Append); };
 { Maybe%; @(Maybe@); };
@@ -8,6 +8,7 @@
 { Unit%; @(Unit@, Unit); };
 
 { Data%; @(Data@, Left, Right, DUnit: Unit); };
+{ Data_Eq%; @(Eq); };
 { DataMap%; @(DataMap@, Empty, Lookup, Insert, For); };
 
 S@<Test@> Tests = {
@@ -73,9 +74,9 @@ S@<Test@> Tests = {
         Insert<Bool@>(
           Insert<Bool@>(
             Insert<Bool@>(Empty<Bool@>,
-              B, False),
+              B, True),
             A, True),
-          B, True);
+          B, False);
       @ Entry@ = *(Data@ key, Bool@ value);
       S@<Entry@> entries = For<Bool@, S@<Entry@>>(map, S0<Entry@>,
         (Data@ k, Bool@ v, S@<Entry@> l) {
@@ -88,7 +89,18 @@ S@<Test@> Tests = {
             cons:
               ?(entries.cons.tail.cons.tail;
                 cons: TestResult@(fail: Str(Char@|'Too many entries.')),
-                nil: TestResult@(fail: Str(Char@|'TODO: check for right entries.'))),
+                nil: {
+                  ?(Eq(A, entries.cons.head.key);
+                    true: @(a: entries.cons.head, 
+                            b: entries.cons.tail.cons.head),
+                    false: @(a: entries.cons.tail.cons.head, 
+                             b: entries.cons.head));
+                  ?(And(And(Eq(A, a.key), Eq(B, b.key)),
+                        And(a.value, Not(b.value)));
+                    true: TestResult@(pass: Unit),
+                    false: TestResult@(fail: Str(Char@|'key/value mismatch'))
+                  );
+                }),
             nil: TestResult@(fail: Str(Char@|'Only 1 entry iterated over.'))),
         nil: TestResult@(fail: Str(Char@|'No entries iterated over.')));
     }))
