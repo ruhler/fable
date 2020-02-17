@@ -1076,25 +1076,44 @@ void FblePrintType(FbleArena* arena, FbleType* type)
     }
 
     case FBLE_POLY_TYPE: {
-      FblePolyType* pt = (FblePolyType*)type;
-      fprintf(stderr, "<");
-      FbleKind* kind = FbleGetKind(arena, pt->arg);
-      FblePrintKind(kind);
-      FbleKindRelease(arena, kind);
-      fprintf(stderr, " ");
-      FblePrintType(arena, pt->arg);
+      const char* prefix = "<";
+      while (type->tag == FBLE_POLY_TYPE) {
+        FblePolyType* pt = (FblePolyType*)type;
+        fprintf(stderr, "%s", prefix);
+        FbleKind* kind = FbleGetKind(arena, pt->arg);
+        FblePrintKind(kind);
+        FbleKindRelease(arena, kind);
+        fprintf(stderr, " ");
+        FblePrintType(arena, pt->arg);
+        prefix = ", ";
+        type = pt->body;
+      }
       fprintf(stderr, "> { ");
-      FblePrintType(arena, pt->body);
+      FblePrintType(arena, type);
       fprintf(stderr, "; }");
       break;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
-      FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      FblePrintType(arena, pat->poly);
-      fprintf(stderr, "<");
-      FblePrintType(arena, pat->arg);
+      FbleTypeV args;
+      FbleVectorInit(arena, args);
+
+      while (type->tag == FBLE_POLY_APPLY_TYPE) {
+        FblePolyApplyType* pat = (FblePolyApplyType*)type;
+        FbleVectorAppend(arena, args, pat->arg);
+        type = pat->poly;
+      }
+
+      FblePrintType(arena, type);
+      const char* prefix = "<";
+      for (size_t i = 0; i < args.size; ++i) {
+        size_t j = args.size - i - 1;
+        fprintf(stderr, "%s", prefix);
+        FblePrintType(arena, args.xs[j]);
+        prefix = ", ";
+      }
       fprintf(stderr, ">");
+      FbleFree(arena, args.xs);
       break;
     }
 
