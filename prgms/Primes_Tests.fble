@@ -1,11 +1,11 @@
-{ Unit%; @(Unit@, Unit); };
-{ Bool%; @(Bool@); };
-{ Char%; @(Char@, Chars); };
-{ List%; @(S@, P@, ConsS, S, Append, Concat); };
-{ String%; @(Str@, Str); };
-{ UBNat%; @(Nat@, 1, 3, 10, Lit2, EqNat); };
-{ Primes%; @(NthPrime); };
-{ Test%; @(TestResult@, Test@); };
+{ /Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@); };
+{ /Char%; @(Char@, Chars); };
+{ /List%; @(S@, P@, ConsS, S, Append, Concat); };
+{ /String%; @(Str@, Str); };
+{ /UBNat%; @(Nat@, 1, 3, 10, Lit2, EqNat); };
+{ /Primes%; @(NthPrime); };
+{ /Test%; @(TestResult@, Test@); };
 
 (Str@, Nat@, Nat@){Test@;} TEq = (Str@ name, Nat@ a, Nat@ b) {
   Test@(Append<Char@>(Str(Chars|'Primes.'), name), $({

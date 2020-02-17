@@ -1,12 +1,12 @@
-{ Bool%; @(Bool@, True, False, And); };
-{ Char%; @(Char@, Chars); };
-{ List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
-{ Maybe%; @(Maybe@, Just, Nothing, For); };
-{ String%; @(Str@, Str); };
-{ Test%; @(Test@, TestResult@); };
-{ Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True, False, And); };
+{ /Char%; @(Char@, Chars); };
+{ /List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
+{ /Maybe%; @(Maybe@, Just, Nothing, For); };
+{ /String%; @(Str@, Str); };
+{ /Test%; @(Test@, TestResult@); };
+{ /Unit%; @(Unit@, Unit); };
 
-{ Sudoku%; @(
+{ /Sudoku%; @(
     Symbol@, 1, 2, 3, 4, 5, 6, 7, 8, 9, IterateSymbol,
     Input@, Solved@, Solve
   );

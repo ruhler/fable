@@ -1,6 +1,6 @@
 
-{ Unit%; @(Unit@, Unit); };
-{ Bool%; @(Bool@, True, False); };
+{ /Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True, False); };
 
 # The following type is used to represent (unbounded) integers.
 # Note that this representation allows multiple ways of representing each

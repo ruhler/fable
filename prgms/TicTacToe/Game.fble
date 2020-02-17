@@ -1,11 +1,11 @@
 
-{ Bool%; @(Bool@, True, False); };
-{ Maybe%; @(Maybe@); };
-{ Process%; @(Get@, Put@); };
-{ Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True, False); };
+{ /Maybe%; @(Maybe@); };
+{ /Process%; @(Get@, Put@); };
+{ /Unit%; @(Unit@, Unit); };
 
-{ AI%; @(AI@, WithAI); };
-{ Board%; @(Board@, Position@, Player@, BoardStatus, EmptyBoard, Move); };
+{ /TicTacToe/AI%; @(AI@, WithAI); };
+{ /TicTacToe/Board%; @(Board@, Position@, Player@, BoardStatus, EmptyBoard, Move); };
 
 @ GameResult@ = +(Player@ win, Unit@ draw);
 @ GameStatus@ = +(Player@ playing, GameResult@ ended); 

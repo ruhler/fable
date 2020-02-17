@@ -1,14 +1,14 @@
 
-{ Bool%; @(Bool@, True); };
-{ Char%; @(Char@, Chars); };
-{ List%; @(S, Concat); };
-{ Maybe%; @(Maybe@, Just, Nothing); };
-{ Process%; @(Get@, Put@); };
-{ String%; @(Str@, Str); };
-{ Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True); };
+{ /Char%; @(Char@, Chars); };
+{ /List%; @(S, Concat); };
+{ /Maybe%; @(Maybe@, Just, Nothing); };
+{ /Process%; @(Get@, Put@); };
+{ /String%; @(Str@, Str); };
+{ /Unit%; @(Unit@, Unit); };
 
-{ Board%; @(Square@, Board@, Player@, Position@); };
-{ Game%; @(GameStatus@, Input@, Output@); };
+{ /TicTacToe/Board%; @(Square@, Board@, Player@, Position@); };
+{ /TicTacToe/Game%; @(GameStatus@, Input@, Output@); };
 
 (Square@) { Str@; } ShowSquare = (Square@ s) {
   ?(s; X: Str(Chars|X), O: Str(Chars|O), E: Str(Chars|_));
@@ -97,7 +97,7 @@ TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
 
   Put@<Output@> out = (Output@ o) { output(ShowOutput(o)); };
 
-  Unit@ _ := Game%.TicTacToe(in, out);
+  Unit@ _ := /TicTacToe/Game%.TicTacToe(in, out);
   $(True);
 };
 

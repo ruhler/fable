@@ -1,5 +1,5 @@
-{ Unit%; @(Unit@); };
-{ UBNat%; @(Nat@); };
+{ /Unit%; @(Unit@); };
+{ /UBNat%; @(Nat@); };
 
 @ Color@ = +(
     Unit@ black,

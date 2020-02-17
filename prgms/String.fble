@@ -1,5 +1,5 @@
-{ Char%; @(Char@); };
-{ List%; @(S@, List@, S); };
+{ /Char%; @(Char@); };
+{ /List%; @(S@, List@, S); };
 
 @ Str@ = S@<Char@>;
 <@>@ CharLit@ = List@<Char@>;

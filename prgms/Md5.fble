@@ -1,17 +1,17 @@
-{ Unit%; @(Unit@, Unit); };
-{ Maybe%; @(Maybe@); };
-{ Bool%; @(Bool@, True, False, And); };
-{ List%; @(SL@: S@, PL@: P@, List@, SL: S); };
-{ Bits%.Bit; @(Bit@); };
-{ Bits%.Bit2; @(Bit2@); };
-{ Bits%.Bit4; @(Bit4@); };
-{ Bits%.Bit8; @(Bit8@, H2); };
-{ Bits%.Bit16; @(Bit16@); };
-{ Bits%.Bit32; @(Bit32@); };
-{ Bits%.Bit32.BitN; @(eq, and, or, not, xor, clshift, add); };
-{ Bits%.Bit64; @(Bit64@); };
-{ Hex%; @(Hex@, Hex); }; Hex;
-{ Process%; @(Get@, Put@); };
+{ /Unit%; @(Unit@, Unit); };
+{ /Maybe%; @(Maybe@); };
+{ /Bool%; @(Bool@, True, False, And); };
+{ /List%; @(SL@: S@, PL@: P@, List@, SL: S); };
+{ /Bits%.Bit; @(Bit@); };
+{ /Bits%.Bit2; @(Bit2@); };
+{ /Bits%.Bit4; @(Bit4@); };
+{ /Bits%.Bit8; @(Bit8@, H2); };
+{ /Bits%.Bit16; @(Bit16@); };
+{ /Bits%.Bit32; @(Bit32@); };
+{ /Bits%.Bit32.BitN; @(eq, and, or, not, xor, clshift, add); };
+{ /Bits%.Bit64; @(Bit64@); };
+{ /Hex%; @(Hex@, Hex); }; Hex;
+{ /Process%; @(Get@, Put@); };
 
 # Construct a Bit32 in hex, with high-order byte first.
 (List@<Hex@>){Bit32@;} H8 = (List@<Hex@> list) {
@@ -542,7 +542,7 @@ B32 =
 };
 
 (Bit64@){Bit64@;} Inc64 = (Bit64@ a) {
-  Bits%.Bit64.BitN.inc(a);
+  /Bits%.Bit64.BitN.inc(a);
 };
 
 (Hex@, Hex@){Bit64@;} H2_64 = (Hex@ a, Hex@ b) {
@@ -551,15 +551,15 @@ B32 =
 };
 
 (Bit64@){Bit64@;} shl64 = (Bit64@ a) {
-  Bits%.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
+  /Bits%.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
 };
 
 # Add zeros as needed, then the final length to the output message.
 Bit64@ 3f_64 = H2_64(3, Hex.F);
 Bit64@ 08_64 = H2_64(0, 8);
 (Put@<Streamed@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Streamed@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
-    ?(Bits%.Bit64.BitN.iszero(
-        Bits%.Bit64.BitN.and(3f_64, Bits%.Bit64.BitN.add(08_64, length)));
+    ?(/Bits%.Bit64.BitN.iszero(
+        /Bits%.Bit64.BitN.and(3f_64, /Bits%.Bit64.BitN.add(08_64, length)));
           true: {
          Bit64@ bits = shl64(shl64(shl64(msglen)));
          Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
@@ -633,13 +633,13 @@ ABCD@ ABCD0 = ABCD@(
 
 (Maybe@<Bit8@>!){Md5Hash@!;} Md5 = (Maybe@<Bit8@>! input) {
   Streamed@<Bit8@> ~ get_padded, put_padded;
-  Unit@ _ := Pad(input, put_padded, Bits%.Bit64.BitN.zero),
+  Unit@ _ := Pad(input, put_padded, /Bits%.Bit64.BitN.zero),
   ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
   $(HexFromABCD(md5));
 };
 
 (Hex@, Hex@){Bool@;} EqHex = (Hex@ a, Hex@ b) {
-  Bits%.Bit8.BitN.eq(H2(0, a), H2(0, b));
+  /Bits%.Bit8.BitN.eq(H2(0, a), H2(0, b));
 };
 
 (Md5Hash@, Md5Hash@){Bool@;} Eq = (Md5Hash@ a, Md5Hash@ b) {

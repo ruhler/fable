@@ -1,8 +1,8 @@
 
-{ Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
-{ Map%; @(Map@); };
-{ Unit%; @(Unit@, Unit); };
-{ Maybe%; @(Maybe@, Nothing, Just); };
+{ /Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
+{ /Map%; @(Map@); };
+{ /Unit%; @(Unit@, Unit); };
+{ /Maybe%; @(Maybe@, Nothing, Just); };
 
 # A map from Data@ to T@.
 <@>@ DataMap@ = <@ T@>{ +(Unit@ empty, DataMapP@<T@> map); },

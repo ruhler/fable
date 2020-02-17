@@ -1,16 +1,16 @@
 
-{ Char%; @(Char@, Chars); };
-{ List%; @(S@, S); };
-{ String%; @(Str); };
-{ Test%; @(Test@, TestResult@); };
-{ Unit%; @(Unit@, Unit); };
+{ /Char%; @(Char@, Chars); };
+{ /List%; @(S@, S); };
+{ /String%; @(Str); };
+{ /Test%; @(Test@, TestResult@); };
+{ /Unit%; @(Unit@, Unit); };
 
-{ AI%; @(AI@, WithAI); };
-{ Board%;
+{ /TicTacToe/AI%; @(AI@, WithAI); };
+{ /TicTacToe/Board%;
   @(Board@, Player@, Position@, Square@, Status@,
     BoardStatus, EmptyBoard);
 };
-{ UI%; @(); };  # Import to test compilation.
+{ /TicTacToe/UI%; @(); };  # Import to test compilation.
 
 TestResult@! TestBoardStatus = {
   Unit@ _ := $(Unit); # Delay the test until we execute the process

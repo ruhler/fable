@@ -1,15 +1,15 @@
 
-{ Bool%; @(Bool@, True, False, And, Not); };
-{ Char%; @(Char@, Chars); };
-{ List%; @(S@, S, S0, ConsS, Append); };
-{ Maybe%; @(Maybe@); };
-{ String%; @(Str@, Str); };
-{ Test%; @(Test@, TestResult@); };
-{ Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True, False, And, Not); };
+{ /Char%; @(Char@, Chars); };
+{ /List%; @(S@, S, S0, ConsS, Append); };
+{ /Maybe%; @(Maybe@); };
+{ /String%; @(Str@, Str); };
+{ /Test%; @(Test@, TestResult@); };
+{ /Unit%; @(Unit@, Unit); };
 
-{ Data%; @(Data@, Left, Right, DUnit: Unit); };
-{ Data_Eq%; @(Eq); };
-{ DataMap%; @(DataMap@, Empty, Lookup, Insert, For); };
+{ /Data%; @(Data@, Left, Right, DUnit: Unit); };
+{ /Data_Eq%; @(Eq); };
+{ /DataMap%; @(DataMap@, Empty, Lookup, Insert, For); };
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {

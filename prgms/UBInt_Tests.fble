@@ -1,12 +1,12 @@
 
-{ Bool%; @(Bool@, Not); };
-{ Char%; @(Char@, Chars); };
-{ List%; @(S@, S, Append); };
-{ String%; @(Str@, CharLit@, Str); };
-{ Test%; @(TestResult@, Test@); };
-{ Unit%; @(Unit); };
+{ /Bool%; @(Bool@, Not); };
+{ /Char%; @(Char@, Chars); };
+{ /List%; @(S@, S, Append); };
+{ /String%; @(Str@, CharLit@, Str); };
+{ /Test%; @(TestResult@, Test@); };
+{ /Unit%; @(Unit); };
 
-{ UBInt%; @(Int@,
+{ /UBInt%; @(Int@,
   0, 1, 2, 3, 4, 5, Lit2,
   EqInt, Neg, Add, Sub, Mul);
 };

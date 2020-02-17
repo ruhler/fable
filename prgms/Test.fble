@@ -1,9 +1,9 @@
-{ Bool%; @(Bool@, True, False, AndMonoid); };
-{ Char%; @(Char@, Chars); };
-{ List%; @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
-{ Process%; @(Put@); };
-{ String%; @(Str@, Str); };
-{ Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True, False, AndMonoid); };
+{ /Char%; @(Char@, Chars); };
+{ /List%; @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
+{ /Process%; @(Put@); };
+{ /String%; @(Str@, Str); };
+{ /Unit%; @(Unit@, Unit); };
 
 @ TestResult@ = +(Unit@ pass, Str@ fail);
 @ Test@ = *(Str@ name, TestResult@! test);

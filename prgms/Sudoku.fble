@@ -1,7 +1,7 @@
-{ Bool%; @(Bool@, True, False, And); };
-{ List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
-{ Maybe%; @(Maybe@, Just, Nothing, For); };
-{ Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True, False, And); };
+{ /List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
+{ /Maybe%; @(Maybe@, Just, Nothing, For); };
+{ /Unit%; @(Unit@, Unit); };
 
 # The 9 symbols used in sudoku: 1 through 9.
 @ Symbol@ = +(

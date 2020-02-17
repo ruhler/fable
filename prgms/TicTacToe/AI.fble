@@ -1,13 +1,13 @@
 
-{ Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
-{ DataMap%; @(DataMap); };
-{ List%; @(S@, S, ForS); };
-{ Map%; @(Map@); };
-{ Maybe%; @(Maybe@, For, Just, Nothing); };
-{ Process%; @(Get@, Put@); };
-{ Unit%; @(Unit@, Unit); };
+{ /Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
+{ /DataMap%; @(DataMap); };
+{ /List%; @(S@, S, ForS); };
+{ /Map%; @(Map@); };
+{ /Maybe%; @(Maybe@, For, Just, Nothing); };
+{ /Process%; @(Get@, Put@); };
+{ /Unit%; @(Unit@, Unit); };
 
-{ Board%; @(Board@, Player@, Position@, Result@, Square@, BoardStatus, Move); };
+{ /TicTacToe/Board%; @(Board@, Player@, Position@, Result@, Square@, BoardStatus, Move); };
 
 (Square@) { Data@; } DSquare = {
   Data@ x = Left(Left(DUnit));

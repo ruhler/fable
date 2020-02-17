@@ -102,7 +102,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 // Inputs:
 //   arena - arena to use for allocations.
 //   root - The path to the root of the module hierarchy on disk.
-//   base - The path of the moduel from which the reference is made.
+//   base - The path of the module from which the reference is made.
 //   ref - the reference to resolve.
 //   resolved - output parameter set to the absolute path to the module being
 //              referred to.
@@ -116,42 +116,40 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //   Prints a message to stderr in case of failure to resolve the reference.
 static bool ResolvePath(FbleArena* arena, const char* root, FbleNameV base, FbleModuleRef* ref, FbleNameV* resolved)
 {
-  // Check for all possible paths from the base.
-  for (size_t j = ref->is_absolute ? base.size : 0; j <= base.size; ++j) {
-    size_t k = base.size - j;
+  FbleNameV path;
+  FbleVectorInit(arena, path);
 
-    FbleNameV path;
-    FbleVectorInit(arena, path);
-    for (size_t i = 0; i < k; ++i) {
+  if (!ref->is_absolute) {
+    for (size_t i = 0; i < base.size; ++i) {
       FbleVectorAppend(arena, path, base.xs[i]);
     }
-
-    for (size_t i = 0; i < ref->path.size; ++i) {
-      FbleVectorAppend(arena, path, ref->path.xs[i]);
-    }
-
-    size_t len = strlen(root) + strlen(".fble") + 1;
-    for (size_t i = 0; i < path.size; ++i) {
-      len += 1 + strlen(path.xs[i].name);
-    }
-
-    char filename[len];
-    filename[0] = '\0';
-    strcat(filename, root);
-    for (size_t i = 0; i < path.size; ++i) {
-      len += 1 + strlen(path.xs[i].name);
-      strcat(filename, "/");
-      strcat(filename, path.xs[i].name);
-    }
-    strcat(filename, ".fble");
-
-    if (access(filename, F_OK) == 0) {
-      *resolved = path;
-      return true;
-    }
-
-    FbleFree(arena, path.xs);
   }
+
+  for (size_t i = 0; i < ref->path.size; ++i) {
+    FbleVectorAppend(arena, path, ref->path.xs[i]);
+  }
+
+  size_t len = strlen(root) + strlen(".fble") + 1;
+  for (size_t i = 0; i < path.size; ++i) {
+    len += 1 + strlen(path.xs[i].name);
+  }
+
+  char filename[len];
+  filename[0] = '\0';
+  strcat(filename, root);
+  for (size_t i = 0; i < path.size; ++i) {
+    len += 1 + strlen(path.xs[i].name);
+    strcat(filename, "/");
+    strcat(filename, path.xs[i].name);
+  }
+  strcat(filename, ".fble");
+
+  if (access(filename, F_OK) == 0) {
+    *resolved = path;
+    return true;
+  }
+
+  FbleFree(arena, path.xs);
 
   FbleReportError("module ", &ref->path.xs[ref->path.size-1].loc);
   const char* slash = "";

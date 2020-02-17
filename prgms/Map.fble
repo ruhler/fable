@@ -1,5 +1,5 @@
 
-{ Maybe%; @(Maybe@); };
+{ /Maybe%; @(Maybe@); };
 
 # A generic map interface.
 #   M@ - the map type.

@@ -1,10 +1,10 @@
 
-{ Bool%; @(Bool@, True, False, And); };
-{ Draw%; @(Color@, Draw@); };
-{ List%; @(P@, S@, InitP, LastP); };
-{ Process%; @(Get@, Put@); };
-{ UBNat%; @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
-{ Unit%; @(Unit@, Unit); };
+{ /Bool%; @(Bool@, True, False, And); };
+{ /Draw%; @(Color@, Draw@); };
+{ /List%; @(P@, S@, InitP, LastP); };
+{ /Process%; @(Get@, Put@); };
+{ /UBNat%; @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
+{ /Unit%; @(Unit@, Unit); };
 
 Nat@ MinRow = 0;
 Nat@ MaxRow = Lit2(2, 0);

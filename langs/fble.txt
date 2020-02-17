@@ -1244,22 +1244,14 @@ Notes:
 
   A For loop based construct seems to solve this well.
 
-- Do we need to have absolute references? Can't every absolute reference be
-  replaced with a relative reference given we always search up to the root?
+- Do we need to have relative references?
+  It seems silly to allow a parent to access a child with a relative reference
+  if a child can't access its sibling with a relative reference of some sort.
+  That seems like a very rare case to have the special case for a relative
+  reference for.
 
-  I suppose it's a question of conflicts. Can you have a tree like:
-    /X
-    /Foo/X
-    /Foo/Y
-
-  In this case, From Module Y, X% refers to /Foo/X and /X% refers to /X.
-
-  Related: how do deal with this kind of ambiguity? Should child modules
-  shadow parent modules? But then, if you add a module somewhere, some sibling
-  could be broken by it unaware. That sounds bad.
-
-  Revisited: To avoid ambiguity, don't have a search path. Add support for
-  absolute and relative references ('.' and '..').
+  Maybe relative should be relative to the current module's parent, for easy
+  access to siblings?
 
 - I worry a little about default case. There are some situations where I want
   to list explicitly that: for the following tags, do the same thing. And then

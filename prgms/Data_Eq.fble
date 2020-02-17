@@ -1,5 +1,5 @@
-{ Bool%; @(Bool@, True, False, And); };
-{ Data%; @(Data@); };
+{ /Bool%; @(Bool@, True, False, And); };
+{ /Data%; @(Data@); };
 
 (Data@, Data@) { Bool@; } Eq = (Data@ a, Data@ b) {
   ?(a;
