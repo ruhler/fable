@@ -848,34 +848,41 @@ function value.
 8.2 Literal
 -----------
 Abstract Syntax:
-  Expr ::= literal (type :: Type) (letters :: word)
+  Expr ::= literal (expr :: Expr) (letters :: word)
 
 Concrete Syntax:
-  expr ::= type '|' word
+  expr ::= expr '|' word
 
 Example:
-  Octal@|177
-  Char@|'hello there!'
+  Octals|177
+  Chars|'hello there!'
 
 A literal is syntax that allows you to express a raw sequence of data without
 the overhead of punctuation between data elements.
 
-The type used in a literal represents the type to use for each letter in the
-literal. It must be a union type with fields of type *() that have single
-letter field names. For example:
+The expr used in a literal is a struct value that describes the value
+corresponding to each legal letter in the literal.
 
-  @ Octal@ = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
+For example, the struct value for an octal literal might be defined as:
 
-TODO: Can the letter type contain other fields too?
+  Octals = @(
+    0: Octal@(0: *()()),
+    1: Octal@(1: *()()),
+    2: Octal@(2: *()()),
+    3: Octal@(3: *()()),
+    4: Octal@(4: *()()),
+    5: Octal@(5: *()()),
+    6: Octal@(6: *()()),
+    7: Octal@(7: *()()));
 
-The value of a literal is a list of letters of the given type. For example, an
-expression such as:
+The value of a literal is a list of values described by the struct value and
+literal string. For example, an expression such as:
 
-  Octal@|132
+  Octals|132
 
-would desugar to:
+would desugar to something like:
 
-  [Octal(1: *()()), Octal(3: *()()), Octal(2: *()())]
+  [Octals.1, Octals.3, Octals.2]
   
 Because this is turned into a list, it will have a polymorphic function type
 that accepts a prepend function and empty list:
@@ -883,14 +890,10 @@ that accepts a prepend function and empty list:
   <@ L@>((Octal@, L@){L@;}, L@){L@;}
 
 It is a type error if the word contains a letter for which there is no
-corresponding field in the letter type or if the type of that field is not
-*().
+corresponding field in the struct value.
 
-Unlike lists, literals can have zero letters. This is because we have the
-necessary type information to determine the type of the list even if it is
-empty.
-
-Runtime is the runtime of the desugared literal.
+Runtime is the runtime of the desugared literal, except that the struct value
+expr is only evaluated once.
 
 9. Modules
 ----------
@@ -1072,7 +1075,7 @@ Expr ::=
  | poly_apply (poly :: Expr) (arg :: Expr)
 
  | list (args :: [Expr])
- | literal (type :: Type) (letters :: word)
+ | literal (expr :: Expr) (letters :: word)
  ;
 
 Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
@@ -1146,7 +1149,6 @@ expr ::=
  | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type, get, put *)
  | '@(' [name [':' expr] [',' ...]] ')'            (* struct_value_implicit_type *)
  | expr '.' name                                   (* struct_access *)
- | expr '|' word                                   (* string_literal *)
 
  | '+(' type name [',' type name [...]] ')'        (* union_type *)
  | type '(' name ':' expr ')'                      (* union_value *)
@@ -1163,7 +1165,7 @@ expr ::=
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
  | '['[expr [',' expr [...]] ']'                   (* list *)
- | type '|' word                                   (* literal *)
+ | expr '|' word                                   (* literal *)
 
  | block
  ;
