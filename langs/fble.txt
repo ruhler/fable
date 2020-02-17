@@ -950,9 +950,8 @@ must be obeyed.
 
 A module is referred to using either an absolute or a relative path. An
 absolute path describes a path of named children from the root of the module
-hierarchy. A relative path describes a path of named children from an
-unspecified node. The unspecified node is determined by searching the calling
-module and its ancestors for a matching path.
+hierarchy. A relative path describes a path of named children relative to the
+current module.
 
 Abstract Syntax:
   Path ::= rel_path (name :: [Name])
@@ -1297,44 +1296,6 @@ Notes:
   I think it would be cool if children were executed fairly. In particular,
   the amount of runtime a child gets is independent of how many children its
   siblings has.
-
-- Revisit literals. Because they feel really tedious to use.
-  For example, I'd like to use it to describe a list of Maybe@<Symbol@>, but
-  you can't, because that has structure. Why didn't we go with reading values
-  that are currently in scope?
-
-  Proposal: |'foo.bar' is desugared to [f, o, o, '.', b, a, r]. Ditch the
-  union type, take the values from the current context, and desugar directly
-  to a list literal. Now, in practice, you can do things like:
-     { Chars; Str(|"hello!"); }
-
-  Downside:
-   * 'Str' has to be more than 1 letter, otherwise we conflict.  Presumably
-     not too bad. Or do: Str({Chars; |"hello!";})
-   * If some var 'x' is in scope that you don't intend to be used in the
-     literal, but you accidentally use 'x', the compiler will be fine with it
-     (if the types matches).
-
-  Another option: |'foo.bar' desugars to f, o, o, '.', b, a, r, and could be
-  used to pass multiple arguments of fixed length to a function? Because I
-  often wish I could use literals for fixed length data, where the compiler
-  yells at me if I give the wrong length. e.g. for specifying an initial
-  sudoku board, where we give a row that must be 9 characters.
-
-  And while I'm complaining, Foo([...]) is pretty awkward. I wish I could do
-  Foo(...) instead.
-
-  Revisited: We want the available letters to be well defined. So do have
-  something to give a type to the literal. Specifically, a struct value whose
-  fields determine which letters are valid. For example:
-
-     Str(Chars|"hello!")
-
-  Desugars to:
-     Str([Chars.h, Chars.e, Chars.l, Chars.l, Chars.l, Chars.o, Chars.!])
-
-  But with Chars only evaluated once ideally. So:
-     ((\x -> [x.h, x.e, x.l, x.l, x.l, x.o, x.!]) Chars)
   
 * It would be awesome to have a well defined style guide for programming in
   fble. And maybe an automatic re-formatter.

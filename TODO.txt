@@ -1,11 +1,12 @@
-Literals:
-* Don't duplicate evaluation of type per letter.
-* Add test that the type must be a struct, not a union value.
-* Use new literal syntax for Sudoku Maybe<Symbol@>.
-* Don't give duplicate error messages if the literal type is malformed.
-
 Miscellaneous:
-* Change modules to be absolute or relative path, not search path.
+* Fix specification of modules in spec tests.
+* Test that modules don't use a search path.
+   For example, Bool% can't refer to Unit% with a relative path if they are
+   sibling modules.
+* Update module path implementation to match new spec.
+* Don't duplicate evaluation of literal type per letter.
+* Add test that the literal type must be a struct, not a union value.
+* Don't give duplicate error messages if the literal type is malformed.
 * Remove struct import syntax in favor of let or a new multi-import format.
 * Add support for abstract types?
 * Implement Game of Life.
@@ -18,7 +19,6 @@ Miscellaneous:
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
 * Label blocks in exec process bindings by binding name?
-* [lang] redo syntax for literals
 * Step through code via gdb for a Bit2XN addition to get a sense of how
   involved that is?
 * Consider factoring out code in compile.c for computing modeled profile time.

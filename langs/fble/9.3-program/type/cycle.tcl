@@ -13,7 +13,7 @@ fble-test-error 2:7 {
     # Recursive module dependencies are not allowed.
     @ Unit@ = *();
 
-    { Bool%; @(Bool@); };
+    { /Bool%; @(Bool@); };
     Bool@ True = Bool@(True: Unit@());
 
     @(Unit@, True);
