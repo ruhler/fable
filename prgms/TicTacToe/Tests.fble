@@ -1,5 +1,5 @@
 
-{ Char%; @(Char@); };
+{ Char%; @(Char@, Chars); };
 { List%; @(S@, S); };
 { String%; @(Str); };
 { Test%; @(Test@, TestResult@); };
@@ -10,6 +10,7 @@
   @(Board@, Player@, Position@, Square@, Status@,
     BoardStatus, EmptyBoard);
 };
+{ UI%; @(); };  # Import to test compilation.
 
 TestResult@! TestBoardStatus = {
   Unit@ _ := $(Unit); # Delay the test until we execute the process
@@ -19,7 +20,7 @@ TestResult@! TestBoardStatus = {
         Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
   $(?(status ;
         O: TestResult@(pass: Unit),
-        : TestResult@(fail: Str(Char@|failed))));
+        : TestResult@(fail: Str(Chars|failed))));
 };
 
 # TODO: Use PositionEquals for test result, and report position when failed?
@@ -31,7 +32,7 @@ TestResult@! TestChooseBestMoveWin = {
         Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)), Player@(X: Unit));
   $(?(position ;
         UR: TestResult@(pass: Unit),
-          : TestResult@(fail: Str(Char@|failed))));
+          : TestResult@(fail: Str(Chars|failed))));
 };
 
 TestResult@! TestChooseBestMoveNoLose = {
@@ -42,14 +43,14 @@ TestResult@! TestChooseBestMoveNoLose = {
         Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)), Player@(X: Unit));
   $(?(position ;
         UR: TestResult@(pass: Unit),
-          : TestResult@(fail: Str(Char@|failed))));
+          : TestResult@(fail: Str(Chars|failed))));
 };
 
 
 S@<Test@> Tests = S<Test@>([
-  Test@(Str(Char@|'TicTacToe.TestBoardStatus'), TestBoardStatus),
-  Test@(Str(Char@|'TicTacToe.TestChooseBestMoveWin'), TestChooseBestMoveWin),
-  Test@(Str(Char@|'TicTacToe.TestChooseBestMoveNoLose'), TestChooseBestMoveNoLose)
+  Test@(Str(Chars|'TicTacToe.TestBoardStatus'), TestBoardStatus),
+  Test@(Str(Chars|'TicTacToe.TestChooseBestMoveWin'), TestChooseBestMoveWin),
+  Test@(Str(Chars|'TicTacToe.TestChooseBestMoveNoLose'), TestChooseBestMoveNoLose)
   ]);
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.

@@ -1862,39 +1862,34 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
     case FBLE_LITERAL_EXPR: {
       FbleLiteralExpr* literal = (FbleLiteralExpr*)expr;
 
-      // Check that the type compiles before desugaring the literal
-      // expression. Otherwise we could end up giving a lot of duplicate error
+      // TODO: Check that the type compiles before desugaring the literal
+      // expression? Otherwise we could end up giving a lot of duplicate error
       // messages.
-      FbleType* type = CompileType(arena, vars, literal->type);
-      if (type == NULL) {
-        return NULL;
-      }
-      FbleTypeRelease(arena, type);
 
-      FbleStructValueImplicitTypeExpr unit = {
-        ._base = {
-          .tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
-          .loc = literal->word_loc,
-        },
-        .args = { .size = 0, .xs = NULL, },
-      };
+      // TODO: Don't re-evaluate the type for each element of the literal!
 
       size_t n = strlen(literal->word);
 
-      FbleUnionValueExpr letters[n];
+      if (n == 0) {
+        ReportError(arena_, &literal->word_loc,
+            "literals must not be empty\n");
+        return NULL;
+      }
+
+      FbleMiscAccessExpr letters[n];
       FbleExpr* xs[n];
       char word_letters[2*n];
       FbleLoc loc = literal->word_loc;
       for (size_t i = 0; i < n; ++i) {
-        letters[i]._base.tag = FBLE_UNION_VALUE_EXPR;
-        letters[i]._base.loc = loc;
-        letters[i].type = literal->type;
         word_letters[2*i] = literal->word[i];
         word_letters[2*i + 1] = '\0';
+
+        letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
+        letters[i]._base.loc = loc;
+        letters[i].object = literal->type;
         letters[i].field.name = word_letters + 2*i;
         letters[i].field.space = FBLE_NORMAL_NAME_SPACE;
         letters[i].field.loc = loc;
-        letters[i].arg = &unit._base;
 
         xs[i] = &letters[i]._base;
 
@@ -1906,7 +1901,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       }
 
       FbleExprV args = { .size = n, .xs = xs, };
-      return CompileList(arena, blocks, exit, vars, literal->word_loc, literal->type, args, instrs);
+
+      // TODO: Move the typeof into CompileList.
+      FbleTypeofExpr typeof_elem = {
+        ._base = { .tag = FBLE_TYPEOF_EXPR, .loc = expr->loc },
+        .expr = xs[0],
+      };
+      return CompileList(arena, blocks, exit, vars, literal->word_loc, &typeof_elem._base, args, instrs);
     }
 
     case FBLE_STRUCT_IMPORT_EXPR: {

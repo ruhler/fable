@@ -1426,3 +1426,24 @@ Notes:
   Where the '?=' means Foo@ is abstract outside the body of the type let.
   Easy.
 
+* We need a more general way to support implicit type variable declarations.
+  Proposal:
+    @<> Foo = ...
+
+  Means Foo has any type. But this also means we probably shouldn't be allowed
+  to use Foo in the binding because its type is not known?
+
+  For example, defining literals is a pain if we have to give an explicit type
+  for the enum struct value:
+
+  @ Unit@ = *();
+  Unit@ Unit = Unit@();
+
+  @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+  @(Enums: @(A: Enum@(A: Unit), B: Enum@(B: Unit), C: Enum@(C: Unit)));
+
+  Note: we don't have to give an explicit type for modules. It would be bad if
+  that was a special case and people started using modules to get around
+  having to specify an explicit type for things. Better to have a supported,
+  if discouraged syntax for not having to specify a type.
+

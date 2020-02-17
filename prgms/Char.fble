@@ -31,4 +31,49 @@
 Char@ newline = Char@('
 ': Unit);
 
-@(Char@, newline);
+@(Chars: @(
+  '
+': newline,
+  nl: newline,
+
+  '	': Char@('	': Unit),
+
+  ' ': Char@(' ': Unit), '!': Char@('!': Unit), '"': Char@('"': Unit),
+  '#': Char@('#': Unit), '$': Char@('$': Unit), '%': Char@( '%': Unit),
+  '&': Char@('&': Unit), '''': Char@('''':Unit), '(': Char@('(': Unit),
+  ')': Char@(')': Unit), '*': Char@('*': Unit), '+': Char@('+': Unit),
+  ',': Char@(',': Unit), '-': Char@('-': Unit), '.': Char@('.': Unit),
+  '/': Char@('/': Unit),
+
+  0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
+  4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),
+  8: Char@(8: Unit), 9: Char@(9: Unit),
+
+  ':': Char@(':': Unit), ';': Char@(';': Unit), '<': Char@('<': Unit),
+  '=': Char@('=': Unit), '>': Char@('>': Unit), '?': Char@('?': Unit),
+  '@': Char@('@': Unit),
+
+  A: Char@(A: Unit), B: Char@(B: Unit), C: Char@(C: Unit), D: Char@(D: Unit),
+  E: Char@(E: Unit), F: Char@(F: Unit), G: Char@(G: Unit), H: Char@(H: Unit),
+  I: Char@(I: Unit), J: Char@(J: Unit), K: Char@(K: Unit), L: Char@(L: Unit),
+  M: Char@(M: Unit), N: Char@(N: Unit), O: Char@(O: Unit), P: Char@(P: Unit),
+  Q: Char@(Q: Unit), R: Char@(R: Unit), S: Char@(S: Unit), T: Char@(T: Unit),
+  U: Char@(U: Unit), V: Char@(V: Unit), W: Char@(W: Unit), X: Char@(X: Unit),
+  Y: Char@(Y: Unit), Z: Char@(Z: Unit),
+
+  '[': Char@('[': Unit), '\': Char@('\': Unit), ']': Char@(']': Unit),
+  '^': Char@('^': Unit), '_': Char@('_': Unit), '`': Char@('`': Unit),
+
+  a: Char@(a: Unit), b: Char@(b: Unit), c: Char@(c: Unit), d: Char@(d: Unit),
+  e: Char@(e: Unit), f: Char@(f: Unit), g: Char@(g: Unit), h: Char@(h: Unit),
+  i: Char@(i: Unit), j: Char@(j: Unit), k: Char@(k: Unit), l: Char@(l: Unit),
+  m: Char@(m: Unit), n: Char@(n: Unit), o: Char@(o: Unit), p: Char@(p: Unit),
+  q: Char@(q: Unit), r: Char@(r: Unit), s: Char@(s: Unit), t: Char@(t: Unit),
+  u: Char@(u: Unit), v: Char@(v: Unit), w: Char@(w: Unit), x: Char@(x: Unit),
+  y: Char@(y: Unit), z: Char@(z: Unit),
+
+  '{': Char@('{': Unit), '|': Char@('|': Unit), '}': Char@('}': Unit),
+  '~': Char@('~': Unit)
+));
+
+@(Char@, Chars);

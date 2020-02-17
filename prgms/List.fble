@@ -26,6 +26,9 @@ S@ S0 = <@ T@> {
 
 <@,@>@ List@ = <@ T@><@ L@>((T@, L@){L@;}, L@){L@;};
 
+<@ T@>{ List@<T@>; } EmptyList = <@ T@><@ L@>((T@, L@){L@;} _, L@ l) { l; };
+
+
 <@ T@>(List@<T@>){S@<T@>;} S = <@ T@>(List@<T@> mkList) {
   mkList<S@<T@>>(ConsS<T@>, S0<T@>);
 };
@@ -101,7 +104,7 @@ ForS = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
        nil: base);
 };
 
-@(P@, S@, List@,
+@(P@, S@, List@, EmptyList,
   HeadS, ConsS, Append, S0, S,
   InitP, LastP, Concat, MapS, MapP, FoldS, SeqS, SeqP,
   AndS, AndP, SortS, SortP, ForS);

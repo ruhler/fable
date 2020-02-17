@@ -1,6 +1,6 @@
 { Unit%; @(Unit@, Unit); };
 { Bool%; @(Bool@); };
-{ Char%; @(Char@); };
+{ Char%; @(Char@, Chars); };
 { List%; @(S@, P@, ConsS, S, Append, Concat); };
 { String%; @(Str@, Str); };
 { UBNat%; @(Nat@, 1, 3, 10, Lit2, EqNat); };
@@ -8,15 +8,15 @@
 { Test%; @(TestResult@, Test@); };
 
 (Str@, Nat@, Nat@){Test@;} TEq = (Str@ name, Nat@ a, Nat@ b) {
-  Test@(Append<Char@>(Str(Char@|'Primes.'), name), $({
+  Test@(Append<Char@>(Str(Chars|'Primes.'), name), $({
     # TODO: Better error message in case of failure.
     ?(EqNat(a, b);
         true: TestResult@(pass: Unit),
-        false: TestResult@(fail: Str(Char@|failed)));
+        false: TestResult@(fail: Str(Chars|failed)));
   }));
 };
 
-Test@ NthPrime_1_10 = TEq(Str(Char@|'NthPrime_1_10'), Lit2(3, 1), NthPrime(1, 10));
+Test@ NthPrime_1_10 = TEq(Str(Chars|'NthPrime_1_10'), Lit2(3, 1), NthPrime(1, 10));
 
 S@<Test@> Tests = S<Test@>([NthPrime_1_10]);
 

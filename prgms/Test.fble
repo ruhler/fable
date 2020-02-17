@@ -1,5 +1,5 @@
 { Bool%; @(Bool@, True, False, AndMonoid); };
-{ Char%; @(Char@, newline); };
+{ Char%; @(Char@, Chars); };
 { List%; @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
 { Process%; @(Put@); };
 { String%; @(Str@, Str); };
@@ -15,7 +15,7 @@
 
 # Print a string and newline to the given output stream.
 (Put@<Str@>, Str@){ Unit@!; } PrintLn = (Put@<Str@> out, Str@ str) {
-  out(Append<Char@>(str, Str([newline])));
+  out(Append<Char@>(str, Str([Chars.nl])));
 };
 
 # Returns True if the tests all pass, false otherwise.
@@ -30,7 +30,7 @@
           },
           fail: {
             Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
-              Str(Char@|': FAILED: '),
+              Str(Chars|': FAILED: '),
               tr.fail])));
             $(False);
           });
@@ -39,11 +39,11 @@
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {
-    Append<Char@>(Str(Char@|'Test.'), nm);
+    Append<Char@>(Str(Chars|'Test.'), nm);
   };
 
-  Test@ pass = Test@(name(Str(Char@|pass)), $(TestResult@(pass: Unit)));
-  Test@ fail = Test@(name(Str(Char@|fail)), $(TestResult@(fail: Str(Char@|FAILED))));
+  Test@ pass = Test@(name(Str(Chars|pass)), $(TestResult@(pass: Unit)));
+  Test@ fail = Test@(name(Str(Chars|fail)), $(TestResult@(fail: Str(Chars|FAILED))));
 
   S<Test@>([pass]);
 };

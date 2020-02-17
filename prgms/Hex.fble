@@ -5,21 +5,22 @@
            Unit@ 8, Unit@ 9, Unit@ A, Unit@ B,
            Unit@ C, Unit@ D, Unit@ E, Unit@ F);
 
-Hex@ 0 = Hex@(0: Unit);
-Hex@ 1 = Hex@(1: Unit);
-Hex@ 2 = Hex@(2: Unit);
-Hex@ 3 = Hex@(3: Unit);
-Hex@ 4 = Hex@(4: Unit);
-Hex@ 5 = Hex@(5: Unit);
-Hex@ 6 = Hex@(6: Unit);
-Hex@ 7 = Hex@(7: Unit);
-Hex@ 8 = Hex@(8: Unit);
-Hex@ 9 = Hex@(9: Unit);
-Hex@ a = Hex@(A: Unit);
-Hex@ b = Hex@(B: Unit);
-Hex@ c = Hex@(C: Unit);
-Hex@ d = Hex@(D: Unit);
-Hex@ e = Hex@(E: Unit);
-Hex@ f = Hex@(F: Unit);
+@(Hex: @(
+  0: Hex@(0: Unit),
+  1: Hex@(1: Unit),
+  2: Hex@(2: Unit),
+  3: Hex@(3: Unit),
+  4: Hex@(4: Unit),
+  5: Hex@(5: Unit),
+  6: Hex@(6: Unit),
+  7: Hex@(7: Unit),
+  8: Hex@(8: Unit),
+  9: Hex@(9: Unit),
+  A: Hex@(A: Unit),
+  B: Hex@(B: Unit),
+  C: Hex@(C: Unit),
+  D: Hex@(D: Unit),
+  E: Hex@(E: Unit),
+  F: Hex@(F: Unit)));
 
-@(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f);
+@(Hex@, Hex);

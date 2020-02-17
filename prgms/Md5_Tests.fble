@@ -1,7 +1,7 @@
 { Bits%.Bit8; @(Bit8@, H2); };
-{ Char%; @(Char@); };
-{ Hex%; @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
-{ List%; @(P@, S@, List@, ConsS, S0, S, Append, Concat); };
+{ Char%; @(Char@, Chars); };
+{ Hex%; @(Hex@, Hex); }; Hex;
+{ List%; @(P@, S@, List@, EmptyList, ConsS, S0, S, Append, Concat); };
 { Maybe%; @(Maybe@); };
 { Md5%; @(Md5Hash@, Md5, Eq); };
 { Process%; @(Put@); };
@@ -92,9 +92,9 @@
       true: TestResult@(pass: Unit),
       false: {
         Str@ msg = Concat<Char@>(S<Str@>([
-          Str(Char@|'expected: '),
+          Str(Chars|'expected: '),
           Md5Hash2Str(wnt),
-          Str(Char@|' but got: '),
+          Str(Chars|' but got: '),
           Md5Hash2Str(got)]));
         TestResult@(fail: msg);
       });
@@ -109,7 +109,7 @@
 };
       
 (CharLit@, List@<Hex@>, List@<Hex@>){Test@;} TestStr = (CharLit@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
-  Test@(Append<Char@>(Str(Char@|'Md5.'), Str(name)), {
+  Test@(Append<Char@>(Str(Chars|'Md5.'), Str(name)), {
           Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
           $(AssertEq(Str2Md5Hash(wnt), got));
         });
@@ -118,52 +118,52 @@
 S@<Test@> Tests = {
   # ""
   Test@ empty = TestStr(
-    Char@|empty,
-    Hex@|D41D8CD98F00B204E9800998ECF8427E,
-    Hex@|'');
+    Chars|empty,
+    Hex|D41D8CD98F00B204E9800998ECF8427E,
+    EmptyList<Hex@>);
 
   # "a"
   Test@ _a = TestStr(
-    Char@|a,
-    Hex@|0CC175B9C0F1B6A831C399E269772661,
-    Hex@|61); 
+    Chars|a,
+    Hex|0CC175B9C0F1B6A831C399E269772661,
+    Hex|61); 
 
   # "abc"
   Test@ abc = TestStr(
-    Char@|abc,
-    Hex@|900150983CD24FB0D6963F7D28E17F72,
-    Hex@|616263);
+    Chars|abc,
+    Hex|900150983CD24FB0D6963F7D28E17F72,
+    Hex|616263);
 
   # "message digest"
   Test@ message = TestStr(
-    Char@|message,
-    Hex@|F96B697D7CB7938D525A2F31AAF161D0,
-    Hex@|6D65737361676520646967657374);
+    Chars|message,
+    Hex|F96B697D7CB7938D525A2F31AAF161D0,
+    Hex|6D65737361676520646967657374);
 
   # "abcdefghijklmnopqrstuvwxyz"
   Test@ a_to_z = TestStr(
-    Char@|a_to_z,
-    Hex@|C3FCD3D76192E4007DFB496CCA67E13B,
-    Hex@|6162636465666768696A6B6C6D6E6F707172737475767778797A);
+    Chars|a_to_z,
+    Hex|C3FCD3D76192E4007DFB496CCA67E13B,
+    Hex|6162636465666768696A6B6C6D6E6F707172737475767778797A);
 
   # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
   Test@ A_to_9 = TestStr(
-    Char@|A_to_9,
-    Hex@|D174AB98D277D9F5A5611C2C9F419D9F,
-    Hex@|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839);
+    Chars|A_to_9,
+    Hex|D174AB98D277D9F5A5611C2C9F419D9F,
+    Hex|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839);
 
   # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
   Test@ 1_to_0 = TestStr(
-    Char@|1_to_0,
-    Hex@|57EDF4A22BE3C955AC49DA2E2107B67A,
-    Hex@|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930);
+    Chars|1_to_0,
+    Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
+    Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930);
 
   S<Test@>([empty, _a, abc, message, a_to_z, A_to_9, 1_to_0]);
 };
 
 # Benchmark for md5 sum that takes about 1 minute to run.
 Unit@! Bench = {
-  S@<Hex@> d0 = S<Hex@>(Hex@|3132333435363738393031323334353637383930313233);
+  S@<Hex@> d0 = S<Hex@>(Hex|3132333435363738393031323334353637383930313233);
   S@<Hex@> d1 = Concat<Hex@>(S<S@<Hex@>>([d0, d0, d0, d0, d0, d0, d0, d0]));
   S@<Hex@> d2 = Concat<Hex@>(S<S@<Hex@>>([d1, d1, d1, d1, d1, d1, d1, d1]));
   S@<Hex@> d3 = Concat<Hex@>(S<S@<Hex@>>([d2, d2]));

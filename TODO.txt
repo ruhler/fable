@@ -1,8 +1,12 @@
-* Change literal syntax to take a struct value instead of a type for the
-  literal type.
-* Change modules to be absolute or relative path, not search path.
+Literals:
+* Don't duplicate evaluation of type per letter.
+* Add test that the type must be a struct, not a union value.
+* Move 'typeof' into CompileList.
+* Use new literal syntax for Sudoku Maybe<Symbol@>.
+* Don't give duplicate error messages if the literal type is malformed.
 
 Miscellaneous:
+* Change modules to be absolute or relative path, not search path.
 * Remove struct import syntax in favor of let or a new multi-import format.
 * Add support for abstract types?
 * Implement Game of Life.

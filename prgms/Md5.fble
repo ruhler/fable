@@ -10,7 +10,7 @@
 { Bits%.Bit32; @(Bit32@); };
 { Bits%.Bit32.BitN; @(eq, and, or, not, xor, clshift, add); };
 { Bits%.Bit64; @(Bit64@); };
-{ Hex%; @(Hex@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f); };
+{ Hex%; @(Hex@, Hex); }; Hex;
 { Process%; @(Get@, Put@); };
 
 # Construct a Bit32 in hex, with high-order byte first.
@@ -27,70 +27,70 @@
     Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
   };
 
-Bit32@ t01 = H8(Hex@|D76AA478);
-Bit32@ t02 = H8(Hex@|E8C7B756);
-Bit32@ t03 = H8(Hex@|242070DB);
-Bit32@ t04 = H8(Hex@|C1BDCEEE);
-Bit32@ t05 = H8(Hex@|F57C0FAF);
-Bit32@ t06 = H8(Hex@|4787C62A);
-Bit32@ t07 = H8(Hex@|A8304613);
-Bit32@ t08 = H8(Hex@|FD469501);
-Bit32@ t09 = H8(Hex@|698098D8);
-Bit32@ t10 = H8(Hex@|8B44F7AF);
-Bit32@ t11 = H8(Hex@|FFFF5BB1);
-Bit32@ t12 = H8(Hex@|895CD7BE);
-Bit32@ t13 = H8(Hex@|6B901122);
-Bit32@ t14 = H8(Hex@|FD987193);
-Bit32@ t15 = H8(Hex@|A679438E);
-Bit32@ t16 = H8(Hex@|49B40821);
-Bit32@ t17 = H8(Hex@|F61E2562);
-Bit32@ t18 = H8(Hex@|C040B340);
-Bit32@ t19 = H8(Hex@|265E5A51);
-Bit32@ t20 = H8(Hex@|E9B6C7AA);
-Bit32@ t21 = H8(Hex@|D62F105D);
-Bit32@ t22 = H8(Hex@|02441453);
-Bit32@ t23 = H8(Hex@|D8A1E681);
-Bit32@ t24 = H8(Hex@|E7D3FBC8);
-Bit32@ t25 = H8(Hex@|21E1CDE6);
-Bit32@ t26 = H8(Hex@|C33707D6);
-Bit32@ t27 = H8(Hex@|F4D50D87);
-Bit32@ t28 = H8(Hex@|455A14ED);
-Bit32@ t29 = H8(Hex@|A9E3E905);
-Bit32@ t30 = H8(Hex@|FCEFA3F8);
-Bit32@ t31 = H8(Hex@|676F02D9);
-Bit32@ t32 = H8(Hex@|8D2A4C8A);
-Bit32@ t33 = H8(Hex@|FFFA3942);
-Bit32@ t34 = H8(Hex@|8771F681);
-Bit32@ t35 = H8(Hex@|6D9D6122);
-Bit32@ t36 = H8(Hex@|FDE5380C);
-Bit32@ t37 = H8(Hex@|A4BEEA44);
-Bit32@ t38 = H8(Hex@|4BDECFA9);
-Bit32@ t39 = H8(Hex@|F6BB4B60);
-Bit32@ t40 = H8(Hex@|BEBFBC70);
-Bit32@ t41 = H8(Hex@|289B7EC6);
-Bit32@ t42 = H8(Hex@|EAA127FA);
-Bit32@ t43 = H8(Hex@|D4EF3085);
-Bit32@ t44 = H8(Hex@|04881D05);
-Bit32@ t45 = H8(Hex@|D9D4D039);
-Bit32@ t46 = H8(Hex@|E6DB99E5);
-Bit32@ t47 = H8(Hex@|1FA27CF8);
-Bit32@ t48 = H8(Hex@|C4AC5665);
-Bit32@ t49 = H8(Hex@|F4292244);
-Bit32@ t50 = H8(Hex@|432AFF97);
-Bit32@ t51 = H8(Hex@|AB9423A7);
-Bit32@ t52 = H8(Hex@|FC93A039);
-Bit32@ t53 = H8(Hex@|655B59C3);
-Bit32@ t54 = H8(Hex@|8F0CCC92);
-Bit32@ t55 = H8(Hex@|FFEFF47D);
-Bit32@ t56 = H8(Hex@|85845DD1);
-Bit32@ t57 = H8(Hex@|6FA87E4F);
-Bit32@ t58 = H8(Hex@|FE2CE6E0);
-Bit32@ t59 = H8(Hex@|A3014314);
-Bit32@ t60 = H8(Hex@|4E0811A1);
-Bit32@ t61 = H8(Hex@|F7537E82);
-Bit32@ t62 = H8(Hex@|BD3AF235);
-Bit32@ t63 = H8(Hex@|2AD7D2BB);
-Bit32@ t64 = H8(Hex@|EB86D391);
+Bit32@ t01 = H8(Hex|D76AA478);
+Bit32@ t02 = H8(Hex|E8C7B756);
+Bit32@ t03 = H8(Hex|242070DB);
+Bit32@ t04 = H8(Hex|C1BDCEEE);
+Bit32@ t05 = H8(Hex|F57C0FAF);
+Bit32@ t06 = H8(Hex|4787C62A);
+Bit32@ t07 = H8(Hex|A8304613);
+Bit32@ t08 = H8(Hex|FD469501);
+Bit32@ t09 = H8(Hex|698098D8);
+Bit32@ t10 = H8(Hex|8B44F7AF);
+Bit32@ t11 = H8(Hex|FFFF5BB1);
+Bit32@ t12 = H8(Hex|895CD7BE);
+Bit32@ t13 = H8(Hex|6B901122);
+Bit32@ t14 = H8(Hex|FD987193);
+Bit32@ t15 = H8(Hex|A679438E);
+Bit32@ t16 = H8(Hex|49B40821);
+Bit32@ t17 = H8(Hex|F61E2562);
+Bit32@ t18 = H8(Hex|C040B340);
+Bit32@ t19 = H8(Hex|265E5A51);
+Bit32@ t20 = H8(Hex|E9B6C7AA);
+Bit32@ t21 = H8(Hex|D62F105D);
+Bit32@ t22 = H8(Hex|02441453);
+Bit32@ t23 = H8(Hex|D8A1E681);
+Bit32@ t24 = H8(Hex|E7D3FBC8);
+Bit32@ t25 = H8(Hex|21E1CDE6);
+Bit32@ t26 = H8(Hex|C33707D6);
+Bit32@ t27 = H8(Hex|F4D50D87);
+Bit32@ t28 = H8(Hex|455A14ED);
+Bit32@ t29 = H8(Hex|A9E3E905);
+Bit32@ t30 = H8(Hex|FCEFA3F8);
+Bit32@ t31 = H8(Hex|676F02D9);
+Bit32@ t32 = H8(Hex|8D2A4C8A);
+Bit32@ t33 = H8(Hex|FFFA3942);
+Bit32@ t34 = H8(Hex|8771F681);
+Bit32@ t35 = H8(Hex|6D9D6122);
+Bit32@ t36 = H8(Hex|FDE5380C);
+Bit32@ t37 = H8(Hex|A4BEEA44);
+Bit32@ t38 = H8(Hex|4BDECFA9);
+Bit32@ t39 = H8(Hex|F6BB4B60);
+Bit32@ t40 = H8(Hex|BEBFBC70);
+Bit32@ t41 = H8(Hex|289B7EC6);
+Bit32@ t42 = H8(Hex|EAA127FA);
+Bit32@ t43 = H8(Hex|D4EF3085);
+Bit32@ t44 = H8(Hex|04881D05);
+Bit32@ t45 = H8(Hex|D9D4D039);
+Bit32@ t46 = H8(Hex|E6DB99E5);
+Bit32@ t47 = H8(Hex|1FA27CF8);
+Bit32@ t48 = H8(Hex|C4AC5665);
+Bit32@ t49 = H8(Hex|F4292244);
+Bit32@ t50 = H8(Hex|432AFF97);
+Bit32@ t51 = H8(Hex|AB9423A7);
+Bit32@ t52 = H8(Hex|FC93A039);
+Bit32@ t53 = H8(Hex|655B59C3);
+Bit32@ t54 = H8(Hex|8F0CCC92);
+Bit32@ t55 = H8(Hex|FFEFF47D);
+Bit32@ t56 = H8(Hex|85845DD1);
+Bit32@ t57 = H8(Hex|6FA87E4F);
+Bit32@ t58 = H8(Hex|FE2CE6E0);
+Bit32@ t59 = H8(Hex|A3014314);
+Bit32@ t60 = H8(Hex|4E0811A1);
+Bit32@ t61 = H8(Hex|F7537E82);
+Bit32@ t62 = H8(Hex|BD3AF235);
+Bit32@ t63 = H8(Hex|2AD7D2BB);
+Bit32@ t64 = H8(Hex|EB86D391);
 
 @ Md5Hash@ = *(
   Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,
@@ -555,7 +555,7 @@ B32 =
 };
 
 # Add zeros as needed, then the final length to the output message.
-Bit64@ 3f_64 = H2_64(3, f);
+Bit64@ 3f_64 = H2_64(3, Hex.F);
 Bit64@ 08_64 = H2_64(0, 8);
 (Put@<Streamed@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Streamed@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
     ?(Bits%.Bit64.BitN.iszero(
@@ -593,17 +593,17 @@ Pad = (Get@<Maybe@<Bit8@>> input, Put@<Streamed@<Bit8@>> output, Bit64@ length) 
 ABCD@ ABCD0 = ABCD@(
     # Note: the spec lists these low-order byte first, but H8 takes high
     # order byte first.
-    H8(Hex@|67452301),
-    H8(Hex@|EFCDAB89),
-    H8(Hex@|98BADCFE),
-    H8(Hex@|10325476));
+    H8(Hex|67452301),
+    H8(Hex|EFCDAB89),
+    H8(Hex|98BADCFE),
+    H8(Hex|10325476));
 
 (Bit@, Bit@, Bit@, Bit@){Hex@;} HexFromBits =
   (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
     ?(b3; 0: ?(b2; 0: ?(b1; 0: ?(b0; 0: 0, 1: 1), 1: ?(b0; 0: 2, 1: 3)),
                    1: ?(b1; 0: ?(b0; 0: 4, 1: 5), 1: ?(b0; 0: 6, 1: 7))),
-          1: ?(b2; 0: ?(b1; 0: ?(b0; 0: 8, 1: 9), 1: ?(b0; 0: a, 1: b)),
-                   1: ?(b1; 0: ?(b0; 0: c, 1: d), 1: ?(b0; 0: e, 1: f))));
+          1: ?(b2; 0: ?(b1; 0: ?(b0; 0: 8, 1: 9), 1: ?(b0; 0: A, 1: B)),
+                   1: ?(b1; 0: ?(b0; 0: C, 1: D), 1: ?(b0; 0: E, 1: Hex.F))));
   };
 
 (Bit4@){Hex@;} HexFromBit4 = (Bit4@ x) {

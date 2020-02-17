@@ -1,6 +1,6 @@
 
 { Bool%; @(Bool@, True, False, And, Not); };
-{ Char%; @(Char@); };
+{ Char%; @(Char@, Chars); };
 { List%; @(S@, S, S0, ConsS, Append); };
 { Maybe%; @(Maybe@); };
 { String%; @(Str@, Str); };
@@ -13,7 +13,7 @@
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {
-    Append<Char@>(Str(Char@|'DataMap.'), nm);
+    Append<Char@>(Str(Chars|'DataMap.'), nm);
   };
 
   Data@ A = Left(DUnit);
@@ -21,22 +21,22 @@ S@<Test@> Tests = {
   Data@ C = Right(Right(DUnit));
 
   S<Test@>([
-    Test@(name(Str(Char@|'empty')), $({
+    Test@(name(Str(Chars|'empty')), $({
       ?(Lookup<Unit@>(Empty<Unit@>, B);
          just: TestResult@(fail:
-           Str(Char@|'Lookup found something in an empty map')),
+           Str(Chars|'Lookup found something in an empty map')),
          nothing: TestResult@(pass: Unit));
     })),
 
-    Test@(name(Str(Char@|'not found')), $({
+    Test@(name(Str(Chars|'not found')), $({
       DataMap@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
       ?(Lookup<Unit@>(map, B);
          just: TestResult@(fail:
-           Str(Char@|'Lookup found B in a map with only C')),
+           Str(Chars|'Lookup found B in a map with only C')),
          nothing: TestResult@(pass: Unit));
     })),
 
-    Test@(name(Str(Char@|'found')), $({
+    Test@(name(Str(Chars|'found')), $({
       DataMap@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
         A, False),
         B, True),
@@ -47,13 +47,13 @@ S@<Test@> Tests = {
            ?(mv.just;
               true: TestResult@(pass: Unit),
               false: TestResult@(fail:
-                Str(Char@|'Wrong value found for B.'))
+                Str(Chars|'Wrong value found for B.'))
             ),
          nothing: TestResult@(fail:
-           Str(Char@|'Failed to find B in map.')));
+           Str(Chars|'Failed to find B in map.')));
     })),
 
-    Test@(name(Str(Char@|'replace')), $({
+    Test@(name(Str(Chars|'replace')), $({
       DataMap@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
         B, False),
         B, True);
@@ -63,13 +63,13 @@ S@<Test@> Tests = {
            ?(mv.just;
               true: TestResult@(pass: Unit),
               false: TestResult@(fail:
-                Str(Char@|'Wrong value found for B.'))
+                Str(Chars|'Wrong value found for B.'))
             ),
          nothing: TestResult@(fail:
-           Str(Char@|'Failed to find B in map.')));
+           Str(Chars|'Failed to find B in map.')));
     })),
 
-    Test@(name(Str(Char@|'for')), $({
+    Test@(name(Str(Chars|'for')), $({
       DataMap@<Bool@> map =
         Insert<Bool@>(
           Insert<Bool@>(
@@ -88,7 +88,7 @@ S@<Test@> Tests = {
           ?(entries.cons.tail;
             cons:
               ?(entries.cons.tail.cons.tail;
-                cons: TestResult@(fail: Str(Char@|'Too many entries.')),
+                cons: TestResult@(fail: Str(Chars|'Too many entries.')),
                 nil: {
                   ?(Eq(A, entries.cons.head.key);
                     true: @(a: entries.cons.head, 
@@ -98,11 +98,11 @@ S@<Test@> Tests = {
                   ?(And(And(Eq(A, a.key), Eq(B, b.key)),
                         And(a.value, Not(b.value)));
                     true: TestResult@(pass: Unit),
-                    false: TestResult@(fail: Str(Char@|'key/value mismatch'))
+                    false: TestResult@(fail: Str(Chars|'key/value mismatch'))
                   );
                 }),
-            nil: TestResult@(fail: Str(Char@|'Only 1 entry iterated over.'))),
-        nil: TestResult@(fail: Str(Char@|'No entries iterated over.')));
+            nil: TestResult@(fail: Str(Chars|'Only 1 entry iterated over.'))),
+        nil: TestResult@(fail: Str(Chars|'No entries iterated over.')));
     }))
   ]);
 };

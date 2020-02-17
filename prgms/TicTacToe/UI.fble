@@ -1,6 +1,6 @@
 
 { Bool%; @(Bool@, True); };
-{ Char%; @(Char@, newline); };
+{ Char%; @(Char@, Chars); };
 { List%; @(S, Concat); };
 { Maybe%; @(Maybe@, Just, Nothing); };
 { Process%; @(Get@, Put@); };
@@ -11,42 +11,42 @@
 { Game%; @(GameStatus@, Input@, Output@); };
 
 (Square@) { Str@; } ShowSquare = (Square@ s) {
-  ?(s; X: Str(Char@|X), O: Str(Char@|O), E: Str(Char@|_));
+  ?(s; X: Str(Chars|X), O: Str(Chars|O), E: Str(Chars|_));
 };
 
 (Board@) { Str@; } ShowBoard = (Board@ b) {
-  Str@ _ = Str(Char@|' ');
+  Str@ _ = Str(Chars|' ');
   Concat<Char@>(S<Str@>([
-    Str(Char@|'  1 2 3'), S<Char@>([newline]),
-    Str(Char@|'A '), ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), S<Char@>([newline]),
-    Str(Char@|'B '), ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), S<Char@>([newline]),
-    Str(Char@|'C '), ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), S<Char@>([newline])]));
+    Str(Chars|'  1 2 3'), S<Char@>([Chars.nl]),
+    Str(Chars|'A '), ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), S<Char@>([Chars.nl]),
+    Str(Chars|'B '), ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), S<Char@>([Chars.nl]),
+    Str(Chars|'C '), ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), S<Char@>([Chars.nl])]));
 };
 
 (Player@) { Str@; } ShowPlayer = (Player@ p) {
-  ?(p; X: Str(Char@|X), O: Str(Char@|O));
+  ?(p; X: Str(Chars|X), O: Str(Chars|O));
 };
 
 (GameStatus@) { Str@; } ShowStatus = (GameStatus@ s) {
   ?(s; playing: Concat<Char@>(S<Str@>([
-         Str(Char@|'Player '),
+         Str(Chars|'Player '),
          ShowPlayer(s.playing),
-         Str(Char@|' move:')])),
+         Str(Chars|' move:')])),
        ended:
          ?(s.ended;
             win: Concat<Char@>(S<Str@>([
-                 Str(Char@|'GAME OVER: Player '),
+                 Str(Chars|'GAME OVER: Player '),
                  ShowPlayer(s.ended.win),
-                 Str(Char@|' wins.')])),
-            draw: Str(Char@|'GAME OVER: Draw.')));
+                 Str(Chars|' wins.')])),
+            draw: Str(Chars|'GAME OVER: Draw.')));
 };
 
 (Output@) { Str@; } ShowOutput = (Output@ out) {
   Concat<Char@>(S<Str@>([
     ShowBoard(out.board),
-    S<Char@>([newline]),
+    S<Char@>([Chars.nl]),
     ShowStatus(out.status),
-    S<Char@>([newline])]));
+    S<Char@>([Chars.nl])]));
 };
 
 (Str@) { Maybe@<Input@>; } ParseInput = (Str@ in) {
@@ -86,9 +86,9 @@ TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
             ?(mi; just: $(mi.just),
                   nothing: {
                      Unit@ _ := output(Concat<Char@>(S<Str@>([
-                       Str(Char@|'invalid input: '),
-                       Str(Char@|'expected {A,B,C}{1,2,3}, P, or R'),
-                       Str([newline])])));
+                       Str(Chars|'invalid input: '),
+                       Str(Chars|'expected {A,B,C}{1,2,3}, P, or R'),
+                       Str([Chars.nl])])));
                        in;
                   });
          },

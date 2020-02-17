@@ -1,5 +1,5 @@
 { Bool%; @(Bool@, True, False, And); };
-{ Char%; @(Char@, newline); };
+{ Char%; @(Char@, Chars); };
 { List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
 { Maybe%; @(Maybe@, Just, Nothing, For); };
 { String%; @(Str@, Str); };
@@ -40,13 +40,13 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
 # Otherwise, don't include any whitespace in the output.
 (Bool@, Solved@) { Str@; } ShowBoard = (Bool@ spaced) {
   (Symbol@) { Str@; } ShowCell = (Symbol@ s) {
-    ?(s; 1: Str(Char@|1), 2: Str(Char@|2), 3: Str(Char@|3),
-         4: Str(Char@|4), 5: Str(Char@|5), 6: Str(Char@|6),
-         7: Str(Char@|7), 8: Str(Char@|8), 9: Str(Char@|9));
+    ?(s; 1: Str(Chars|1), 2: Str(Chars|2), 3: Str(Chars|3),
+         4: Str(Chars|4), 5: Str(Chars|5), 6: Str(Chars|6),
+         7: Str(Chars|7), 8: Str(Chars|8), 9: Str(Chars|9));
   };
 
-  Str@ space = ?(spaced; true: Str(Char@|' '), false: S0<Char@>);
-  Str@ nl = ?(spaced; true: S<Char@>([newline]), false: S0<Char@>);
+  Str@ space = ?(spaced; true: Str(Chars|' '), false: S0<Char@>);
+  Str@ nl = ?(spaced; true: S<Char@>([Chars.nl]), false: S0<Char@>);
 
   (Array@<Symbol@>) { Str@; } ShowRow = (Array@<Symbol@> row) {
     Concat<Char@>(S<Str@>([
@@ -183,10 +183,10 @@ Input@ ExpertInput = {
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {
-    Append<Char@>(Str(Char@|'Sudoku.'), nm);
+    Append<Char@>(Str(Chars|'Sudoku.'), nm);
   };
 
-  Test@ sample = Test@(name(Str(Char@|sample)), $({
+  Test@ sample = Test@(name(Str(Chars|sample)), $({
     Maybe@<Solved@> ms = Solve(SampleInput);
     ?(ms;
        just: {
@@ -194,12 +194,12 @@ S@<Test@> Tests = {
              SampleSolved, ms.just);
             true: TestResult@(pass: Unit),
             false: TestResult@(fail: Concat<Char@>(S<Str@>([
-                    Str(Char@|'incorrect solution. expected:'), S<Char@>([newline]),
-                    ShowBoard(False, SampleSolved), S<Char@>([newline]),
-                    Str(Char@|'but got:'), S<Char@>([newline]),
+                    Str(Chars|'incorrect solution. expected:'), S<Char@>([Chars.nl]),
+                    ShowBoard(False, SampleSolved), S<Char@>([Chars.nl]),
+                    Str(Chars|'but got:'), S<Char@>([Chars.nl]),
                     ShowBoard(False, ms.just)]))));
        },
-       nothing: TestResult@(fail: Str(Char@|'failed to solve board')));
+       nothing: TestResult@(fail: Str(Chars|'failed to solve board')));
   }));
 
   S<Test@>([sample]);

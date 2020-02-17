@@ -1,6 +1,6 @@
 { Unit%; @(Unit@, Unit); };
 { Bool%; @(Bool@, True, False, And); };
-{ Char%; @(Char@); };
+{ Char%; @(Char@, Chars); };
 { List%; @(S@, P@, S0, S, Append, SortS); };
 { String%; @(Str@, Str); };
 { Test%; @(TestResult@, Test@); };
@@ -35,7 +35,7 @@
   };
 
 Test@ SortTest = Test@(
-  Str(Char@|'List.Sort'), $({
+  Str(Chars|'List.Sort'), $({
     S@<Elem@> unsorted = S<Elem@>([
       Elem@(D: Unit),
       Elem@(A: Unit),
@@ -53,7 +53,7 @@ Test@ SortTest = Test@(
     S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
     ?(SEq<Elem@>(ElemEq, wnt, got);
       true: TestResult@(pass: Unit),
-      false: TestResult@(fail: Str(Char@|failed)));
+      false: TestResult@(fail: Str(Chars|failed)));
 }));
 
 @(Tests: S<Test@>([SortTest]));
