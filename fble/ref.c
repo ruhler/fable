@@ -316,21 +316,11 @@ void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
   ref->refcount++;
 }
 
-// A stack of references implemented as a singly linked list.
-typedef struct Stack {
-  FbleRef* ref;
-  struct Stack* tail;
-} Stack;
-
 typedef struct {
   FbleRefCallback _base;
   FbleRefArena* arena;
-  FbleRefV* refs;
   FbleRef* ref;
   Set in_cycle;
-
-  size_t depth;
-  Stack* stack;
 } RefReleaseCallback;
 
 // RefReleaseChild --
@@ -346,28 +336,12 @@ static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
     // Mark in-cycle children for traversal if we haven't visited them yet.
     size_t size = data->in_cycle.refs.size;
     if (size == Insert(data->arena->arena, &data->in_cycle, child)) {
-      if (data->depth < 1000) {
-        // Stack depth isn't too bad, directly do the recursive call here.
-        data->depth++;
-        data->arena->added(&data->_base, child);
-        data->depth--;
-      } else {
-        // Stack depth is a tad on the deep side; don't do the recursive call
-        // directly here to make sure we don't smash the stack.
-        Stack* nstack = FbleAlloc(data->arena->arena, Stack);
-        nstack->ref = child;
-        nstack->tail = data->stack;
-        data->stack = nstack;
-      }
+      // TODO: This could smash the stack?
+      data->arena->added(&data->_base, child);
     }
   } else {
-    FbleRef* head = CycleHead(child);
-    assert(head->cycle == NULL);
-    assert(head->refcount > 0);
-    head->refcount--;
-    if (head->refcount == 0) {
-      FbleVectorAppend(data->arena->arena, *data->refs, head);
-    }
+    // TODO: This could smash the stack?
+    FbleRefRelease(data->arena, child);
   }
 }
 
@@ -380,46 +354,23 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
   ref->refcount--;
 
   if (ref->refcount == 0) {
-    FbleRefV refs;
-    FbleVectorInit(arena->arena, refs);
-    FbleVectorAppend(arena->arena, refs, ref);
+    RefReleaseCallback callback = {
+      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefReleaseChild },
+      .arena = arena,
+      .ref = ref,
+    };
 
-    while (refs.size > 0) {
-      FbleRef* r = refs.xs[--refs.size];
-      assert(r->cycle == NULL);
-      assert(r->refcount == 0);
+    FbleVectorInit(arena->arena, callback.in_cycle.refs);
+    RMapInit(arena->arena, &callback.in_cycle.rmap, INITIAL_RMAP_CAPACITY);
+    Insert(arena->arena, &callback.in_cycle, ref);
 
-      RefReleaseCallback callback = {
-        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefReleaseChild },
-        .arena = arena,
-        .refs = &refs,
-        .ref = r,
-        .depth = 0,
-        .stack = NULL,
-      };
-
-      FbleVectorInit(arena->arena, callback.in_cycle.refs);
-      RMapInit(arena->arena, &callback.in_cycle.rmap, INITIAL_RMAP_CAPACITY);
-      Insert(arena->arena, &callback.in_cycle, r);
-
-      arena->added(&callback._base, r);
-      while (callback.stack != NULL) {
-        Stack* stack = callback.stack;
-        callback.stack = stack->tail;
-        FbleRef* ref = stack->ref;
-        FbleFree(arena->arena, stack);
-        arena->added(&callback._base, ref);
-      }
-
-      for (size_t i = 0; i < callback.in_cycle.refs.size; ++i) {
-        arena->free(arena, callback.in_cycle.refs.xs[i]);
-      }
-
-      FbleFree(arena->arena, callback.in_cycle.refs.xs);
-      FbleFree(arena->arena, callback.in_cycle.rmap.xs);
+    arena->added(&callback._base, ref);
+    for (size_t i = 0; i < callback.in_cycle.refs.size; ++i) {
+      arena->free(arena, callback.in_cycle.refs.xs[i]);
     }
 
-    FbleFree(arena->arena, refs.xs);
+    FbleFree(arena->arena, callback.in_cycle.refs.xs);
+    FbleFree(arena->arena, callback.in_cycle.rmap.xs);
   }
 }
 
