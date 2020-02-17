@@ -1319,6 +1319,14 @@ Notes:
   * use: existing let syntax
   * use: name, name, ..., name .= expr; ...
   * allow: @<> as a type to mean infer the type (may need to be non-recursive?)
+
+  Notes working with Map interface:
+  * Definitely it's good to do explicit import. It works okay today if you
+    import a subset, but if you import everything, you don't see any names at
+    all, and that's bad.
+  * For the TicTacToe use case, I wanted to import polymorphic functions
+    specialized for a specific local version. e.g.
+      @(Lookup: Lookup<PositionResult@>);
   
 * There's no good support for abstract data types. You can't export a union or
   struct type abstractly without also exporting the fields and constructors

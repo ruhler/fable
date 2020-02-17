@@ -1,15 +1,16 @@
 Miscellaneous:
+* Print multi-arg poly as Foo@<A@, B@>, not Foo@<A@><B@>.
 * Don't duplicate evaluation of literal type per letter.
 * Add test that the literal type must be a struct, not a union value.
 * Don't give duplicate error messages if the literal type is malformed.
 * Remove struct import syntax in favor of let or a new multi-import format.
 * Add support for abstract types?
 * Implement Game of Life.
-  - Add Map%.For function.
   - Implement step 1 of GameOfLife%.Step.
   - Implement step 2 of GameOfLife%.Step.
 * Fix syntax highlighting of paths
   For example: *(@<DataMap%.Map@>Map@ 
+* Make Foo@: highlight like a field instead of like a type?
 * Remove excess !!! in block names.
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
