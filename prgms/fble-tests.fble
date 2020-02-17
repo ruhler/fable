@@ -6,8 +6,8 @@
 { /Test%; @(Test@); };
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
-  /DataMap_Tests%.Tests,
   /List_Tests%.Tests,
+  /Map_Tests%.Tests,
   /Md5_Tests%.Tests,
   /Primes_Tests%.Tests,
   /Sudoku_Tests%.Tests,
