@@ -1257,6 +1257,9 @@ Notes:
   shadow parent modules? But then, if you add a module somewhere, some sibling
   could be broken by it unaware. That sounds bad.
 
+  Revisited: To avoid ambiguity, don't have a search path. Add support for
+  absolute and relative references ('.' and '..').
+
 - I worry a little about default case. There are some situations where I want
   to list explicitly that: for the following tags, do the same thing. And then
   there are cases where I want to say: I know only the following tags are
@@ -1318,9 +1321,30 @@ Notes:
 
   And while I'm complaining, Foo([...]) is pretty awkward. I wish I could do
   Foo(...) instead.
+
+  Revisited: We want the available letters to be well defined. So do have
+  something to give a type to the literal. Specifically, a struct value whose
+  fields determine which letters are valid. For example:
+
+     Str(Chars|"hello!")
+
+  Desugars to:
+     Str([Chars.h, Chars.e, Chars.l, Chars.l, Chars.l, Chars.o, Chars.!])
+
+  But with Chars only evaluated once ideally. So:
+     ((\x -> [x.h, x.e, x.l, x.l, x.l, x.o, x.!]) Chars)
   
 * It would be awesome to have a well defined style guide for programming in
   fble. And maybe an automatic re-formatter.
+ 
+  Goal would be a balance between not having too much or too little on a
+  single line. Propose some width limit on line, such as 80 chars, but to
+  avoid too little as things are squished to the right, make that 80 chars
+  past the indent of the line.
+
+  For each expression, figure out how to lay it out assuming all components
+  are really big. Then implement some packing algorithm to move things to a
+  single line if it fits.
 
 * Should we get rid of the struct import expression?
   I think this is the only place where you bring a bunch of variables in scope
@@ -1379,6 +1403,11 @@ Notes:
 
   It's hard to believe this suggestion is better than what we have today.
 
+  Revisiting: I still think it's important to do explicit import. Proposals:
+  * use: existing let syntax
+  * use: name, name, ..., name .= expr; ...
+  * allow: @<> as a type to mean infer the type (may need to be non-recursive?)
+  
 * There's no good support for abstract data types. You can't export a union or
   struct type abstractly without also exporting the fields and constructors
   and deconstructors. That seems bad, because it means you can't easily
@@ -1387,4 +1416,11 @@ Notes:
   From the point of view of the type system, it wouldn't be hard to turn a
   struct or union type into an abstract type. We just need some way to express
   that in the language?
-  
+
+  Proposal:
+    @ Foo@ ?= *(...);
+    ...
+
+  Where the '?=' means Foo@ is abstract outside the body of the type let.
+  Easy.
+
