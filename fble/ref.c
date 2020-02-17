@@ -320,14 +320,27 @@ void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
   ref->refcount++;
 }
 
+typedef struct RefStack {
+  FbleRef* ref;
+  struct RefStack* tail;
+} RefStack;
+
 typedef struct {
   FbleRefCallback _base;
   FbleRefArena* arena;
+
+  // Maximum recursion depth allowed, to avoid smashing the stack, and the
+  // explicit stack to revert to in case the recursion depth is reached.
+  size_t depth;
+  RefStack** stack;
 
   // Singly linked list through cycle field of nodes in the cycle being
   // released. A node is on this list iff it has its id set to NULL_REF_ID.
   FbleRef* cycle;
 } RefReleaseCallback;
+
+static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child);
+static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
 
 // RefReleaseChild --
 //   Callback function used when releasing references.
@@ -346,15 +359,35 @@ static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
       data->arena->added(&data->_base, child);
     } else {
       // This child is outside of the cycle being released.
-      // TODO: This could smash the stack.
-      FbleRefRelease(data->arena, child);
+      RefRelease(data->arena, child, data->depth, data->stack);
     }
   }
 }
 
-// FbleRefRelease -- see documentation in ref.h
-void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
+// RefRelease --
+//   Release a reference recursively.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   ref - the reference to release.
+//   depth - maximum recursion depth allowed, to avoid smashing the stack.
+//   stack - stack to push subsequent refs on if recursion limit is reached.
+//
+// Results:
+//   none.
+//
+// Side effect:
+//   Recursively releases a reference.
+static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack)
 {
+  if (depth == 0) {
+    RefStack* nstack = FbleAlloc(arena->arena, RefStack);
+    nstack->ref = ref;
+    nstack->tail = *stack;
+    *stack = nstack;
+    return;
+  }
+
   ref = CycleHead(ref);
   assert(ref->cycle == NULL);
   assert(ref->refcount > 0);
@@ -367,6 +400,8 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
     RefReleaseCallback callback = {
       ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefReleaseChild },
       .arena = arena,
+      .depth = depth - 1,
+      .stack = stack,
       .cycle = ref,
     };
 
@@ -376,6 +411,20 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
       callback.cycle = r->cycle;
       arena->free(arena, r);
     }
+  }
+}
+
+// FbleRefRelease -- see documentation in ref.h
+void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
+{
+  RefStack* stack = NULL;
+  RefRelease(arena, ref, 10000, &stack);
+  while (stack != NULL) {
+    RefStack* ostack = stack;
+    ref = stack->ref;
+    stack = stack->tail;
+    FbleFree(arena->arena, ostack);
+    RefRelease(arena, ref, 10000, &stack);
   }
 }
 

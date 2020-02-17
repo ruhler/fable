@@ -1,5 +1,4 @@
 Miscellaneous:
-* Fix stack smashing in FbleRefRelease.
 * Don't duplicate evaluation of literal type per letter.
 * Add test that the literal type must be a struct, not a union value.
 * Don't give duplicate error messages if the literal type is malformed.
