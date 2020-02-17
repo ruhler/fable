@@ -6,6 +6,10 @@
 
 #include "ref.h"
 
+// Special ref id that we gaurentee no valid ref will have.
+// This can be used as a sentinel value.
+#define NULL_REF_ID 0
+
 // FbleRef -- see definition and documentation in ref.h
 //
 // Fields:
@@ -283,7 +287,7 @@ FbleRefArena* FbleNewRefArena(
 {
   FbleRefArena* ref_arena = FbleAlloc(arena, FbleRefArena);
   ref_arena->arena = arena;
-  ref_arena->next_id = 1;
+  ref_arena->next_id = NULL_REF_ID + 1;
   ref_arena->free = free;
   ref_arena->added = added;
   return ref_arena;
@@ -319,29 +323,32 @@ void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
 typedef struct {
   FbleRefCallback _base;
   FbleRefArena* arena;
-  FbleRef* ref;
-  Set in_cycle;
+
+  // Singly linked list through cycle field of nodes in the cycle being
+  // released. A node is on this list iff it has its id set to NULL_REF_ID.
+  FbleRef* cycle;
 } RefReleaseCallback;
 
 // RefReleaseChild --
-//   Callback function used when releasing references. Decrements the
-//   reference count of a ref not in the cycle, adding it to the list of nodes
-//   to free if the refcount has gone to zero. Accumulates the list of nodes
-//   in the cycle.
+//   Callback function used when releasing references.
 static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
 {
-  if (child == data->ref) {
-    // Nothing to do. We've already taken care of this node.
-  } else if (CycleHead(child) == data->ref) {
-    // Mark in-cycle children for traversal if we haven't visited them yet.
-    size_t size = data->in_cycle.refs.size;
-    if (size == Insert(data->arena->arena, &data->in_cycle, child)) {
-      // TODO: This could smash the stack?
+  // If child->id is NULL_REF_ID, we have already processed the child and
+  // there is nothing more to do.
+  if (child->id != NULL_REF_ID) {
+    if (CycleHead(child)->id == NULL_REF_ID) {
+      // This child belongs to the cycle being released.
+      child->id = NULL_REF_ID;
+      child->cycle = data->cycle;
+      data->cycle = child;
+
+      // TODO: Could this smash the stack?
       data->arena->added(&data->_base, child);
+    } else {
+      // This child is outside of the cycle being released.
+      // TODO: This could smash the stack.
+      FbleRefRelease(data->arena, child);
     }
-  } else {
-    // TODO: This could smash the stack?
-    FbleRefRelease(data->arena, child);
   }
 }
 
@@ -354,23 +361,21 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
   ref->refcount--;
 
   if (ref->refcount == 0) {
+    ref->id = NULL_REF_ID;
+    ref->cycle = NULL;
+
     RefReleaseCallback callback = {
       ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefReleaseChild },
       .arena = arena,
-      .ref = ref,
+      .cycle = ref,
     };
 
-    FbleVectorInit(arena->arena, callback.in_cycle.refs);
-    RMapInit(arena->arena, &callback.in_cycle.rmap, INITIAL_RMAP_CAPACITY);
-    Insert(arena->arena, &callback.in_cycle, ref);
-
     arena->added(&callback._base, ref);
-    for (size_t i = 0; i < callback.in_cycle.refs.size; ++i) {
-      arena->free(arena, callback.in_cycle.refs.xs[i]);
+    while (callback.cycle != NULL) {
+      FbleRef* r = callback.cycle;
+      callback.cycle = r->cycle;
+      arena->free(arena, r);
     }
-
-    FbleFree(arena->arena, callback.in_cycle.refs.xs);
-    FbleFree(arena->arena, callback.in_cycle.rmap.xs);
   }
 }
 
