@@ -95,7 +95,7 @@ static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof);
 
 static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs);
 static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs);
-static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleTypeExpr* type, FbleExprV args, FbleInstrV* instrs);
+static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleExprV args, FbleInstrV* instrs);
 static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr* expr);
 static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* type);
 static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs);
@@ -1850,13 +1850,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
     case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
-      assert(list_expr->args.size > 0);
-
-      FbleTypeofExpr typeof_elem = {
-        ._base = { .tag = FBLE_TYPEOF_EXPR, .loc = expr->loc },
-        .expr = list_expr->args.xs[0],
-      };
-      return CompileList(arena, blocks, exit, vars, expr->loc, &typeof_elem._base, list_expr->args, instrs);
+      return CompileList(arena, blocks, exit, vars, expr->loc, list_expr->args, instrs);
     }
 
     case FBLE_LITERAL_EXPR: {
@@ -1901,13 +1895,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       }
 
       FbleExprV args = { .size = n, .xs = xs, };
-
-      // TODO: Move the typeof into CompileList.
-      FbleTypeofExpr typeof_elem = {
-        ._base = { .tag = FBLE_TYPEOF_EXPR, .loc = expr->loc },
-        .expr = xs[0],
-      };
-      return CompileList(arena, blocks, exit, vars, literal->word_loc, &typeof_elem._base, args, instrs);
+      return CompileList(arena, blocks, exit, vars, literal->word_loc, args, instrs);
     }
 
     case FBLE_STRUCT_IMPORT_EXPR: {
@@ -1975,7 +1963,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 //   exit - if true, generate instructions to exit the current scope.
 //   vars - the list of variables in scope.
 //   loc - the location of the list expression.
-//   type - the expected type of the list elements.
 //   args - the elements of the list expression to compile.
 //   instrs - vector of instructions to append new instructions to.
 //
@@ -1990,18 +1977,21 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   FbleTypeRelease when it is no longer needed.
-static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleTypeExpr* type, FbleExprV args, FbleInstrV* instrs)
+//   Behavior is undefined if there is not at least one list argument.
+static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleExprV args, FbleInstrV* instrs)
 {
   // The goal is to desugar a list expression [a, b, c, d] into the
   // following expression:
   // <@ T@>(T@ x, T@ x1, T@ x2, T@ x3)<@ L@>((T@, L@){L@;} cons, L@ nil) {
   //   cons(x, cons(x1, cons(x2, cons(x3, nil))));
   // }<t@>(a, b, c, d)
-  //
-  // But if there are zero args, we'll instead generate:
-  // <@ T@><@ L@>((T@, L@){L@;} cons, L@ nil) {
-  //   nil;
-  // }<t@>
+  assert(args.size > 0 && "empty lists not allowed");
+  FbleTypeofExpr typeof_elem = {
+    ._base = { .tag = FBLE_TYPEOF_EXPR, .loc = loc },
+    .expr = args.xs[0],
+  };
+  FbleTypeExpr* type = &typeof_elem._base;
+
   FbleArena* arena_ = FbleRefArenaArena(arena);
   FbleBasicKind* basic_kind = FbleAlloc(arena_, FbleBasicKind);
   basic_kind->_base.tag = FBLE_BASIC_KIND;
@@ -2144,7 +2134,7 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       .kind = &basic_kind->_base,
       .name = elem_type_name,
     },
-    .body = (args.size == 0) ? &inner_poly._base : &outer_func._base,
+    .body = &outer_func._base,
   };
 
   FblePolyApplyExpr apply_type = {
@@ -2159,7 +2149,7 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
     .args = args,
   };
 
-  FbleExpr* expr = (args.size == 0) ? &apply_type._base : &apply_elems._base;
+  FbleExpr* expr = &apply_elems._base;
 
   FbleType* result = CompileExpr(arena, blocks, exit, vars, expr, instrs);
 

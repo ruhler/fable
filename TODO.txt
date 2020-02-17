@@ -1,7 +1,6 @@
 Literals:
 * Don't duplicate evaluation of type per letter.
 * Add test that the type must be a struct, not a union value.
-* Move 'typeof' into CompileList.
 * Use new literal syntax for Sudoku Maybe<Symbol@>.
 * Don't give duplicate error messages if the literal type is malformed.
 
