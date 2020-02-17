@@ -121,7 +121,6 @@ path:
 module_ref:
    '/' path '%' {
       $$.path = $2;
-      $$.is_absolute = true;
       $$.resolved.name = NULL;
    }
  ;

@@ -96,12 +96,10 @@ void FblePrintName(FILE* stream, FbleName* name);
 // FbleModuleRef --
 //
 // Fields:
-//   is_absolute: true if this is an absolute path, false if it is a relative path.
 //   resolved: After the module reference is resolved, 'resolved' will be set
 //             to the name of the canonical name of the resolved module.
 typedef struct {
   FbleNameV path;
-  bool is_absolute;
   FbleName resolved;
 } FbleModuleRef;
 
