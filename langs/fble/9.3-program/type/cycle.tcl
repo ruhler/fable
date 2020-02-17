@@ -1,10 +1,10 @@
-fble-test-error 2:7 {
+fble-test-error 2:8 {
   { Unit%; @(True); };
 
   True.true;
 } {
   Bool {
-    { Unit%; @(Unit@); };
+    { /Unit%; @(Unit@); };
     @ Bool@ = +(Unit@ true, Unit@ false);
     @(Bool@);
   } {}

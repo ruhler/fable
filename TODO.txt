@@ -1,8 +1,4 @@
 Miscellaneous:
-* Fix specification of modules in spec tests.
-* Test that modules don't use a search path.
-   For example, Bool% can't refer to Unit% with a relative path if they are
-   sibling modules.
 * Update module path implementation to match new spec.
 * Don't duplicate evaluation of literal type per letter.
 * Add test that the literal type must be a struct, not a union value.

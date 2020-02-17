@@ -1,11 +1,7 @@
-fble-test {
-  # It's perfectly valid to import the Bool module before the Unit module,
-  # even though the Bool module depends on Unit.
+fble-test-error 4:7 {
   { Bool%; @(True); };
-  { Unit%; @(Unit@); };
 
-  Unit@ u = True.true;
-  u;
+  True;
 } {
   Unit {
     @ Unit@ = *();
@@ -15,7 +11,9 @@ fble-test {
   } {}
 } {
   Bool {
-    { /Unit%; @(Unit@, Unit); };
+    # Bool% cannot access Unit% using a relative path, because Unit% is not a
+    # child of Bool%.
+    { Unit%; @(Unit@, Unit); };
     @ Bool@ = +(Unit@ true, Unit@ false);
     Bool@ True = Bool@(true: Unit);
     @(Bool@, True);

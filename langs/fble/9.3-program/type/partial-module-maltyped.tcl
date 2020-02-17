@@ -9,7 +9,7 @@ fble-test-error 7:5 {
   } {}
 } {
   Bool {
-    { Unit%; @(Unit@); };
+    { /Unit%; @(Unit@); };
 
     # The value of the Bool module does not compile. The value of the Unit
     # module does. This tests cleanup of loaded modules when a maltyped module
