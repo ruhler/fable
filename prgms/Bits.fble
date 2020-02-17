@@ -1,11 +1,11 @@
 { /Unit%; @(Unit@, Unit); };
 { /Hex%; @(Hex@, 0: Hex.0, 1: Hex.1); };
 
-{ BitN%; @(Bit@, BitN@); };
-{ Bit2XN%; @(Bit2XN, Bit2X@); };
+{ /Bits/BitN%; @(Bit@, BitN@); };
+{ /Bits/Bit2XN%; @(Bit2XN, Bit2X@); };
 
 @(Bit: @(Bit@));
-@(Bit1: Bit1%);
+@(Bit1: /Bits/Bit1%);
 
 @(Bit2: @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN)));
 

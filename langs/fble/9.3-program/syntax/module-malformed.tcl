@@ -1,5 +1,5 @@
 fble-test-error 3:6 {
-  { Bool%; @(Bool@, True, False); };
+  { /Bool%; @(Bool@, True, False); };
 
   True.true;
 } {

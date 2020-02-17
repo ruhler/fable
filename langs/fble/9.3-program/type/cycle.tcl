@@ -1,5 +1,5 @@
 fble-test-error 2:8 {
-  { Unit%; @(True); };
+  { /Unit%; @(True); };
 
   True.true;
 } {

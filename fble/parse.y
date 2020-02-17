@@ -124,11 +124,6 @@ module_ref:
       $$.is_absolute = true;
       $$.resolved.name = NULL;
    }
- | path '%' {
-      $$.path = $1;
-      $$.is_absolute = false;
-      $$.resolved.name = NULL;
-   }
  ;
 
 kind:

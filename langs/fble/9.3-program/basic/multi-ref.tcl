@@ -1,6 +1,6 @@
 fble-test {
   # It's fine to refer to the same module more than once.
-  Bool%.Bool@ true = Bool%.True;
+  /Bool%.Bool@ true = /Bool%.True;
   true.true;
 } {
   Bool {

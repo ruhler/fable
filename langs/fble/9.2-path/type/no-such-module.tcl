@@ -1,6 +1,6 @@
-fble-test-error 3:5 {
-  # The module Unit% does not exist.
-  { Unit%; @(Unit); };
+fble-test-error 3:6 {
+  # The module /Unit% does not exist.
+  { /Unit%; @(Unit); };
 
   Unit;
 }

@@ -948,24 +948,20 @@ descendants of that module. The only restrictions on module dependencies is
 that there must not be any cyclic dependencies and module visibility rules
 must be obeyed.
 
-A module is referred to using either an absolute or a relative path. An
-absolute path describes a path of named children from the root of the module
-hierarchy. A relative path describes a path of named children relative to the
-current module.
+A module is referred to using an absolute. An absolute path describes a path
+of named children from the root of the module hierarchy.
 
 Abstract Syntax:
-  Path ::= rel_path (name :: [Name])
   Path ::= abs_path (name :: [Name])
   Expr ::= module_ref (ref :: Path)
 
 Concrete Syntax:
-  path ::= ['/'] name ['/' name [...]] '%'
+  path ::= '/' name ['/' name [...]] '%'
   expr ::= path ;
 
 Examples:
   /StdLib/List%
-  Tests/Basic%
-  Unit%
+  /Unit%
 
 9.3 Program
 -----------
@@ -1028,8 +1024,7 @@ Name ::=
  ;
 
 Path ::=
-   rel_path (name :: [Name])
- | abs_path (name :: [Name])
+   abs_path (name :: [Name])
  ;
 
 Kind ::=
@@ -1125,7 +1120,7 @@ name ::=
  | type_name
  ;
 
-path ::= ['/'] name ['/' name [...]] '%' ;
+path ::= '/' name ['/' name [...]] '%' ;
 
 kind ::=
    '@'                                (* type_kind *)
@@ -1236,53 +1231,15 @@ Notes:
 
    This seems like a subtle trap to get caught with.
 
-- Mixing folds and maps and processes seqs is annoying. Can we come up with
-  better libraries for doing that sort of thing easily?
-
-  Note: trying to reuse SeqS and MapS led to a big memory leak in one case
-  that went away when manually unrolling the loop into a custom function.
-
-  A For loop based construct seems to solve this well.
-
-- Do we need to have relative references?
-  It seems silly to allow a parent to access a child with a relative reference
-  if a child can't access its sibling with a relative reference of some sort.
-  That seems like a very rare case to have the special case for a relative
-  reference for.
-
-  Maybe relative should be relative to the current module's parent, for easy
-  access to siblings?
-
-- I worry a little about default case. There are some situations where I want
-  to list explicitly that: for the following tags, do the same thing. And then
-  there are cases where I want to say: I know only the following tags are
-  possible at this point in the code, so only list those. Should I make case
-  statements more flexible like this?
-
-  Note: The particular cases in question here were fixed with a better
-  organization of data structure. So maybe this doesn't have to be a language
-  concern. In other words, the advice is: only ever use default case for those
-  cases when you want to select one out of a bunch of possible cases.
+- Should we have some form of relative reference?
+  It seems bad that every time you import a module, you have to duplicate a
+  potentially long path from the root. Any change you make in module hierarchy
+  would require rewriting all references into that module hierarchy. If we had
+  some way to write a path relative to some other path, maybe that could be
+  avoided.
 
 - Static analysis to detect obvious invalid union accesses might be nice. I've
   already run into that kind of bug.
-
-- Add support for generics programming?
-  For example, we should be able to automatically generate IterateFoo for an
-  algebraic data type Foo. Same for Eq and other kinds of things. In other
-  words, if we can do something for generic sum and product types, we should
-  be able to do it for an arbitrary data type Foo that doesn't have functions
-  or other funny types in it.
-
-  Another example: Maybe I could use generics to define a function for type
-  Foo that turns a function from Foo to some value into a lookup-table version
-  of the function, where all values have been precomputed. That would be nice
-  for arrays.
-
-  Possible related: if we had this, maybe it would be easy to make process
-  exec a primitive function instead of a syntax. We provide a function to run
-  two processes in parallel, and have a way to generalize that to a function
-  to run an arbitrary number of processes in parallel?
 
 - Fairness
   I think it would be cool if children were executed fairly. In particular,

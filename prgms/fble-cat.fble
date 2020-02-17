@@ -1,9 +1,9 @@
 
-{ Unit%; @(Unit@); };
-{ Bool%; @(Bool@, True); };
-{ Maybe%; @(Maybe@); };
-{ Process%; @(Get@, Put@); };
-{ String%; @(Str@); };
+{ /Unit%; @(Unit@); };
+{ /Bool%; @(Bool@, True); };
+{ /Maybe%; @(Maybe@); };
+{ /Process%; @(Get@, Put@); };
+{ /String%; @(Str@); };
 
 # The 'cat' program to cat stdin.
 (Get@<Maybe@<Str@>>, Put@<Str@>){ Bool@!; }

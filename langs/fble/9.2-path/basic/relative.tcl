@@ -1,5 +1,5 @@
-fble-test {
-  # Use a relative path for importing.
+fble-test-error 3:9 {
+  # Relative references are not allowed.
   { Unit%; @(Unit); };
 
   Unit;

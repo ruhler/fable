@@ -1,8 +1,8 @@
 fble-test {
   # It's perfectly valid to import the Bool module before the Unit module,
   # even though the Bool module depends on Unit.
-  { Bool%; @(True); };
-  { Unit%; @(Unit@); };
+  { /Bool%; @(True); };
+  { /Unit%; @(Unit@); };
 
   Unit@ u = True.true;
   u;
