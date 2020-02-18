@@ -20,6 +20,7 @@
 //   cycle - A pointer to the head of the cycle this node belongs to. NULL
 //           if the node is not a child node of a cycle.
 
+// FbleRefArena -- See documentation in fble/ref.h.
 struct FbleRefArena {
   FbleArena* arena;
   size_t next_id;
@@ -49,11 +50,43 @@ typedef struct {
   RMap rmap;
 } Set;
 
+// RefStack -- 
+//   A stack of references implemented as a singly linked list.
+typedef struct RefStack {
+  FbleRef* ref;
+  struct RefStack* tail;
+} RefStack;
+
+// RefReleaseCallback --
+//   Callback structure used for RefRelease.
 typedef struct {
   FbleRefCallback _base;
-  FbleArena* arena;
-  FbleRefV* refs;
-} AddToVectorCallback;
+  FbleRefArena* arena;
+
+  // Maximum recursion depth allowed, to avoid smashing the stack, and the
+  // explicit stack to revert to in case the recursion depth is reached.
+  size_t depth;
+  RefStack** stack;
+
+  // Singly linked list through cycle field of nodes in the cycle being
+  // released. A node is on this list iff it has its id set to NULL_REF_ID.
+  FbleRef* cycle;
+} RefReleaseCallback;
+
+// CycleAddedChildCallback --
+//   Callback used in the implementation of CycleAdded.
+typedef struct {
+  FbleRefCallback _base;
+  FbleRefArena* arena;
+
+  // Singly linked list through cycle field of nodes in the cycle that have
+  // been visited. A node is on this list iff it has its id set to
+  // NULL_REF_ID.
+  FbleRef* cycle;
+
+  // The vector for accumulating added nodes.
+  FbleRefV* added;
+} CycleAddedChildCallback;
 
 static void RMapInit(FbleArena* arena, RMap* rmap, size_t capacity);
 static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref);
@@ -61,6 +94,11 @@ static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref);
 static bool Contains(Set* set, FbleRef* ref);
 
 static FbleRef* CycleHead(FbleRef* ref);
+
+static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child);
+static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
+
+static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child);
 static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* added);
 
 // RMapInit --
@@ -190,69 +228,6 @@ static FbleRef* CycleHead(FbleRef* ref)
   return ref;
 }
 
-// FbleNewRefArena -- see documentation in ref.h
-FbleRefArena* FbleNewRefArena(
-    FbleArena* arena, 
-    void (*free)(FbleRefArena* arena, FbleRef* ref),
-    void (*added)(FbleRefCallback* add, FbleRef* ref))
-{
-  FbleRefArena* ref_arena = FbleAlloc(arena, FbleRefArena);
-  ref_arena->arena = arena;
-  ref_arena->next_id = NULL_REF_ID + 1;
-  ref_arena->free = free;
-  ref_arena->added = added;
-  return ref_arena;
-}
-
-// FbleDeleteRefArena -- see documentation in ref.h
-void FbleDeleteRefArena(FbleRefArena* arena)
-{
-  FbleFree(arena->arena, arena);
-}
-
-// FbleRefArenaArena -- see documentation in ref.h
-FbleArena* FbleRefArenaArena(FbleRefArena* arena)
-{
-  return arena->arena;
-}
-
-// FbleRefInit -- see documentation in ref.h
-void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
-{
-  ref->id = arena->next_id++;
-  ref->refcount = 1;
-  ref->cycle = NULL;
-}
-
-// FbleRefRetain -- see documentation in ref.h
-void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
-{
-  ref = CycleHead(ref);
-  ref->refcount++;
-}
-
-typedef struct RefStack {
-  FbleRef* ref;
-  struct RefStack* tail;
-} RefStack;
-
-typedef struct {
-  FbleRefCallback _base;
-  FbleRefArena* arena;
-
-  // Maximum recursion depth allowed, to avoid smashing the stack, and the
-  // explicit stack to revert to in case the recursion depth is reached.
-  size_t depth;
-  RefStack** stack;
-
-  // Singly linked list through cycle field of nodes in the cycle being
-  // released. A node is on this list iff it has its id set to NULL_REF_ID.
-  FbleRef* cycle;
-} RefReleaseCallback;
-
-static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child);
-static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
-
 // RefReleaseChild --
 //   Callback function used when releasing references.
 static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
@@ -274,7 +249,7 @@ static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
     }
   }
 }
-
+
 // RefRelease --
 //   Release a reference recursively.
 //
@@ -324,36 +299,7 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
     }
   }
 }
-
-// FbleRefRelease -- see documentation in ref.h
-void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
-{
-  RefStack* stack = NULL;
-  RefRelease(arena, ref, 10000, &stack);
-  while (stack != NULL) {
-    RefStack* ostack = stack;
-    ref = stack->ref;
-    stack = stack->tail;
-    FbleFree(arena->arena, ostack);
-    RefRelease(arena, ref, 10000, &stack);
-  }
-}
 
-// CycleAddedChildCallback --
-//   Callback used in the implementation of CycleAdded.
-typedef struct {
-  FbleRefCallback _base;
-  FbleRefArena* arena;
-
-  // Singly linked list through cycle field of nodes in the cycle that have
-  // been visited. A node is on this list iff it has its id set to
-  // NULL_REF_ID.
-  FbleRef* cycle;
-
-  // The vector for accumulating added nodes.
-  FbleRefV* added;
-} CycleAddedChildCallback;
-
 // CycleAddedChild --
 //   Called for each child visited in a cycle. If the child is internal, adds
 //   it to the stack to process. Otherwise calls the 'add' callback on the
@@ -374,7 +320,7 @@ static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
     }
   }
 }
-
+
 // CycleAdded --
 //   Get the list of added nodes for a cycle.
 //
@@ -421,6 +367,61 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* added)
   }
 
   ref->cycle = NULL;
+}
+
+// FbleNewRefArena -- see documentation in ref.h
+FbleRefArena* FbleNewRefArena(
+    FbleArena* arena, 
+    void (*free)(FbleRefArena* arena, FbleRef* ref),
+    void (*added)(FbleRefCallback* add, FbleRef* ref))
+{
+  FbleRefArena* ref_arena = FbleAlloc(arena, FbleRefArena);
+  ref_arena->arena = arena;
+  ref_arena->next_id = NULL_REF_ID + 1;
+  ref_arena->free = free;
+  ref_arena->added = added;
+  return ref_arena;
+}
+
+// FbleDeleteRefArena -- see documentation in ref.h
+void FbleDeleteRefArena(FbleRefArena* arena)
+{
+  FbleFree(arena->arena, arena);
+}
+
+// FbleRefArenaArena -- see documentation in ref.h
+FbleArena* FbleRefArenaArena(FbleRefArena* arena)
+{
+  return arena->arena;
+}
+
+// FbleRefInit -- see documentation in ref.h
+void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
+{
+  ref->id = arena->next_id++;
+  ref->refcount = 1;
+  ref->cycle = NULL;
+}
+
+// FbleRefRetain -- see documentation in ref.h
+void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
+{
+  ref = CycleHead(ref);
+  ref->refcount++;
+}
+
+// FbleRefRelease -- see documentation in ref.h
+void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
+{
+  RefStack* stack = NULL;
+  RefRelease(arena, ref, 10000, &stack);
+  while (stack != NULL) {
+    RefStack* ostack = stack;
+    ref = stack->ref;
+    stack = stack->tail;
+    FbleFree(arena->arena, ostack);
+    RefRelease(arena, ref, 10000, &stack);
+  }
 }
 
 // FbleRefAdd -- see documentation in ref.h
