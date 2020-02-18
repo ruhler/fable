@@ -194,10 +194,9 @@ static FbleRef* CycleHead(FbleRef* ref)
 //   Callback used in the implementation of CycleAdded.
 typedef struct {
   FbleRefCallback _base;
-  FbleArena* arena;
+  FbleRefArena* arena;
   FbleRef* ref;
   Set visited;
-  FbleRefV* stack;
   FbleRefV* added;
 } CycleAddedChildCallback;
 
@@ -210,13 +209,14 @@ static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
   if (child == data->ref || CycleHead(child) == data->ref) {
     if (child != data->ref) {
       size_t size = data->visited.refs.size;
-      if (size == Insert(data->arena, &data->visited, child)) {
-        FbleVectorAppend(data->arena, *data->stack, child);
+      if (size == Insert(data->arena->arena, &data->visited, child)) {
+        // TODO: Could this smash the stack?
+        data->arena->added(&data->_base, child);
       }
     }
   } else {
     child = CycleHead(child);
-    FbleVectorAppend(data->arena, *data->added, child);
+    FbleVectorAppend(data->arena->arena, *data->added, child);
   }
 }
 
@@ -238,25 +238,17 @@ static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* added)
 {
   assert(ref->cycle == NULL);
 
-  FbleRefV stack;
-  FbleVectorInit(arena->arena, stack);
-  FbleVectorAppend(arena->arena, stack, ref);
-
   CycleAddedChildCallback callback = {
     ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleAddedChild },
-    .arena = arena->arena,
+    .arena = arena,
     .ref = ref,
-    .stack = &stack,
     .added = added
   };
   FbleVectorInit(arena->arena, callback.visited.refs);
   RMapInit(arena->arena, &callback.visited.rmap, INITIAL_RMAP_CAPACITY);
 
-  while (stack.size > 0) {
-    arena->added(&callback._base, stack.xs[--stack.size]);
-  }
+  arena->added(&callback._base, ref);
 
-  FbleFree(arena->arena, stack.xs);
   FbleFree(arena->arena, callback.visited.refs.xs);
   FbleFree(arena->arena, callback.visited.rmap.xs);
 }
