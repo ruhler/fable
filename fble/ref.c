@@ -190,69 +190,6 @@ static FbleRef* CycleHead(FbleRef* ref)
   return ref;
 }
 
-// CycleAddedChildCallback --
-//   Callback used in the implementation of CycleAdded.
-typedef struct {
-  FbleRefCallback _base;
-  FbleRefArena* arena;
-  FbleRef* ref;
-  Set visited;
-  FbleRefV* added;
-} CycleAddedChildCallback;
-
-// CycleAddedChild --
-//   Called for each child visited in a cycle. If the child is internal, adds
-//   it to the stack to process. Otherwise calls the 'add' callback on the
-//   child's cycle head.
-static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
-{
-  if (child == data->ref || CycleHead(child) == data->ref) {
-    if (child != data->ref) {
-      size_t size = data->visited.refs.size;
-      if (size == Insert(data->arena->arena, &data->visited, child)) {
-        // TODO: Could this smash the stack?
-        data->arena->added(&data->_base, child);
-      }
-    }
-  } else {
-    child = CycleHead(child);
-    FbleVectorAppend(data->arena->arena, *data->added, child);
-  }
-}
-
-// CycleAdded --
-//   Get the list of added nodes for a cycle.
-//
-// Inputs:
-//   arena - the reference arena.
-//   ref - the reference to get the list of added for.
-//   added - vector to add references to.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Appends the cycle head of every reference x that is external to the cycle
-//   but reachable by direct reference from a node in the cycle.
-static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* added)
-{
-  assert(ref->cycle == NULL);
-
-  CycleAddedChildCallback callback = {
-    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleAddedChild },
-    .arena = arena,
-    .ref = ref,
-    .added = added
-  };
-  FbleVectorInit(arena->arena, callback.visited.refs);
-  RMapInit(arena->arena, &callback.visited.rmap, INITIAL_RMAP_CAPACITY);
-
-  arena->added(&callback._base, ref);
-
-  FbleFree(arena->arena, callback.visited.refs.xs);
-  FbleFree(arena->arena, callback.visited.rmap.xs);
-}
-
 // FbleNewRefArena -- see documentation in ref.h
 FbleRefArena* FbleNewRefArena(
     FbleArena* arena, 
@@ -400,6 +337,90 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
     FbleFree(arena->arena, ostack);
     RefRelease(arena, ref, 10000, &stack);
   }
+}
+
+// CycleAddedChildCallback --
+//   Callback used in the implementation of CycleAdded.
+typedef struct {
+  FbleRefCallback _base;
+  FbleRefArena* arena;
+
+  // Singly linked list through cycle field of nodes in the cycle that have
+  // been visited. A node is on this list iff it has its id set to
+  // NULL_REF_ID.
+  FbleRef* cycle;
+
+  // The vector for accumulating added nodes.
+  FbleRefV* added;
+} CycleAddedChildCallback;
+
+// CycleAddedChild --
+//   Called for each child visited in a cycle. If the child is internal, adds
+//   it to the stack to process. Otherwise calls the 'add' callback on the
+//   child's cycle head.
+static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
+{
+  if (child->id != NULL_REF_ID) {
+    if (CycleHead(child)->id == NULL_REF_ID) {
+      child->id = NULL_REF_ID;
+      child->cycle = data->cycle;
+      data->cycle = child;
+
+      // TODO: Could this smash the stack?
+      data->arena->added(&data->_base, child);
+    } else {
+      child = CycleHead(child);
+      FbleVectorAppend(data->arena->arena, *data->added, child);
+    }
+  }
+}
+
+// CycleAdded --
+//   Get the list of added nodes for a cycle.
+//
+// Inputs:
+//   arena - the reference arena.
+//   ref - the reference to get the list of added for.
+//   added - vector to add references to.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Appends the cycle head of every reference x that is external to the cycle
+//   but reachable by direct reference from a node in the cycle.
+static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* added)
+{
+  assert(ref->cycle == NULL);
+
+  // We're going to be a little sneaky here to more efficiently keep track of
+  // which nodes are in the cycle and have been visited. All nodes in the
+  // cycle should have the cycle field pointing to ref and the same id as ref.
+  // Because we know that, we can overwrite the cycle and id fields to track
+  // which nodes we have visited, so long as we restore the fields when we are
+  // done.
+  size_t id = ref->id;
+
+  ref->id = NULL_REF_ID;
+
+  CycleAddedChildCallback callback = {
+    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleAddedChild },
+    .arena = arena,
+    .cycle = ref,
+    .added = added
+  };
+
+  arena->added(&callback._base, ref);
+
+  // Restore the 'cycle' and 'id' fields for all the nodes in the cycle.
+  while (callback.cycle != NULL) {
+    FbleRef* r = callback.cycle;
+    callback.cycle = r->cycle;
+    r->id = id;
+    r->cycle = ref;
+  }
+
+  ref->cycle = NULL;
 }
 
 // FbleRefAdd -- see documentation in ref.h
