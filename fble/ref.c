@@ -60,10 +60,8 @@ static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref);
 static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref);
 static bool Contains(Set* set, FbleRef* ref);
 
-static void AddToVector(AddToVectorCallback* add, FbleRef* ref);
-
 static FbleRef* CycleHead(FbleRef* ref);
-static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref);
+static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* added);
 
 // RMapInit --
 //   Initialize an RMap.
@@ -173,23 +171,6 @@ static bool Contains(Set* map, FbleRef* ref)
   return *RMapIndex(map->refs.xs, &map->rmap, ref) != RMAP_EMPTY;
 }
 
-// AddToVector --
-//   An FbleRefCallback that appends a ref to the given vector.
-//
-// Input:
-//   add - this callback.
-//   ref - the ref to add.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Adds the ref to the vector.
-static void AddToVector(AddToVectorCallback* add, FbleRef* ref)
-{
-  FbleVectorAppend(add->arena, *add->refs, ref);
-}
-
 // CycleHead --
 //   Get the head of the biggest cycle that ref belongs to.
 //
@@ -217,7 +198,7 @@ typedef struct {
   FbleRef* ref;
   Set visited;
   FbleRefV* stack;
-  FbleRefCallback* add;
+  FbleRefV* added;
 } CycleAddedChildCallback;
 
 // CycleAddedChild --
@@ -234,7 +215,8 @@ static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
       }
     }
   } else {
-    data->add->callback(data->add, CycleHead(child));
+    child = CycleHead(child);
+    FbleVectorAppend(data->arena, *data->added, child);
   }
 }
 
@@ -243,16 +225,16 @@ static void CycleAddedChild(CycleAddedChildCallback* data, FbleRef* child)
 //
 // Inputs:
 //   arena - the reference arena.
-//   add - callback to call for each reference.
 //   ref - the reference to get the list of added for.
+//   added - vector to add references to.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   Calls the add callback on the cycle head of every reference x that is external to
-//   the cycle but reachable by direct reference from a node in the cycle.
-static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
+//   Appends the cycle head of every reference x that is external to the cycle
+//   but reachable by direct reference from a node in the cycle.
+static void CycleAdded(FbleRefArena* arena, FbleRef* ref, FbleRefV* added)
 {
   assert(ref->cycle == NULL);
 
@@ -265,7 +247,7 @@ static void CycleAdded(FbleRefArena* arena, FbleRefCallback* add, FbleRef* ref)
     .arena = arena->arena,
     .ref = ref,
     .stack = &stack,
-    .add = add
+    .added = added
   };
   FbleVectorInit(arena->arena, callback.visited.refs);
   RMapInit(arena->arena, &callback.visited.rmap, INITIAL_RMAP_CAPACITY);
@@ -477,12 +459,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
-    AddToVectorCallback callback = {
-      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddToVector },
-      .arena = arena->arena,
-      .refs = &children
-    };
-    CycleAdded(arena, &callback._base, ref);
+    CycleAdded(arena, ref, &children);
 
     for (size_t i = 0; i < children.size; ++i) {
       FbleRef* child = children.xs[i];
@@ -548,12 +525,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
       FbleRefV children;
       FbleVectorInit(arena->arena, children);
-      AddToVectorCallback callback = {
-        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddToVector },
-        .arena = arena->arena,
-        .refs = &children
-      };
-      CycleAdded(arena, &callback._base, ref);
+      CycleAdded(arena, ref, &children);
 
       for (size_t j = 0; j < children.size; ++j) {
         if (Contains(&cycle, children.xs[j])) {
