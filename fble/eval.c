@@ -91,6 +91,7 @@ static FbleInstr* g_proc_block_instrs[] = {
 };
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
+  .varc = 0,
   .instrs = { .size = 2, .xs = g_proc_block_instrs }
 };
 
@@ -103,6 +104,7 @@ static FbleInstr* g_put_block_instrs[] = {
 };
 static FbleInstrBlock g_put_block = {
   .refcount = 1,
+  .varc = 0,
   .instrs = { .size = 3, .xs = g_put_block_instrs }
 };
 
@@ -172,6 +174,7 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst)
 static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scope_stack)
 {
   assert(scope_stack != NULL);
+  assert(scope_stack->vars.size < scope_stack->block->varc);
   FbleVectorAppend(arena, scope_stack->vars, value);
 }
 
@@ -1310,7 +1313,7 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
     .exit = true
   };
   FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
-  FbleInstrBlock block = { .refcount = 2, .instrs = { .size = 2, .xs = instrs } };
+  FbleInstrBlock block = { .refcount = 2, .varc = 0, .instrs = { .size = 2, .xs = instrs } };
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
   FbleValue* xs[2];

@@ -1,5 +1,6 @@
 Eval2:
-* Determine size of var and data stack frames statically.
+* Pre-allocate var stack on EnterScope.
+* Determine size of data stack frame statically.
 * Add explicit source and target locations to all instructions.
 * Merge var and data stack frames into a single array.
 * Do reference counting statically instead of dynamically where possible.

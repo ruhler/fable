@@ -56,6 +56,7 @@ typedef struct {
 //   A reference counted block of instructions.
 typedef struct {
   size_t refcount;
+  size_t varc;          // max number of vars used by this stack frame.
   FbleInstrV instrs;
 } FbleInstrBlock;
 
