@@ -1,3 +1,9 @@
+Eval2:
+* Determine size of var and data stack frames statically.
+* Add explicit source and target locations to all instructions.
+* Merge var and data stack frames into a single array.
+* Do reference counting statically instead of dynamically where possible.
+
 Miscellaneous:
 * Don't duplicate evaluation of literal type per letter.
 * Add test that the literal type must be a struct, not a union value.
