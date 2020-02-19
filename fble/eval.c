@@ -175,7 +175,8 @@ static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scope_stack)
 {
   assert(scope_stack != NULL);
   assert(scope_stack->vars.size < scope_stack->block->varc);
-  FbleVectorAppend(arena, scope_stack->vars, value);
+  scope_stack->vars.xs[scope_stack->vars.size] = value;
+  scope_stack->vars.size++;
 }
 
 // PopVar --
@@ -457,7 +458,8 @@ static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, FbleValue
   block->refcount++;
 
   ScopeStack* stack = FbleAlloc(arena, ScopeStack);
-  FbleVectorInit(arena, stack->vars);
+  stack->vars.xs = FbleArrayAlloc(arena, FbleValue*, block->varc);
+  stack->vars.size = 0;
   InitDataStack(arena, stack);
   stack->block = block;
   stack->pc = 0;
@@ -525,6 +527,11 @@ static ScopeStack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Sco
     FbleValueRelease(arena, stack->vars.xs[i]);
   }
   stack->vars.size = 0;
+
+  if (block->varc > stack->block->varc) {
+    FbleFree(arena_, stack->vars.xs);
+    stack->vars.xs = FbleArrayAlloc(arena_, FbleValue*, block->varc);
+  }
 
   FbleFreeInstrBlock(arena_, stack->block);
   stack->block = block;

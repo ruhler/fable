@@ -1,5 +1,4 @@
 Eval2:
-* Pre-allocate var stack on EnterScope.
 * Determine size of data stack frame statically.
 * Add explicit source and target locations to all instructions.
 * Merge var and data stack frames into a single array.
@@ -29,7 +28,6 @@ Miscellaneous:
   on wall clock time profiling of benchmarks.
 * Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
-* [perf] Store scope size as part of InstrBlock and use an array for vars.
 * [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
   eval after a let binding? Can't we use subst or other eval-by-construction
   for everything else?
