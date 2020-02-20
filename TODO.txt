@@ -1,4 +1,6 @@
 Eval2:
+* Replace uses of PUSH_VAR and DESCOPE with SET_VAR and equivalent using
+  absolute positions?
 * Determine size of data stack frame statically.
 * Add explicit source and target locations to all instructions.
 * Merge var and data stack frames into a single array.

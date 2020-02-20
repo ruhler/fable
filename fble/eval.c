@@ -4,6 +4,7 @@
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
 #include <stdlib.h>   // for NULL, abort
+#include <string.h>   // for memset
 
 #include "internal.h"
 
@@ -197,6 +198,7 @@ static void PopVar(FbleArena* arena, ScopeStack* scope_stack)
   assert(scope_stack != NULL);
   assert(scope_stack->vars.size > 0);
   scope_stack->vars.size--;
+  scope_stack->vars.xs[scope_stack->vars.size] = NULL;
 }
 
 // GetVar --
@@ -460,6 +462,8 @@ static ScopeStack* EnterScope(FbleArena* arena, FbleInstrBlock* block, FbleValue
   ScopeStack* stack = FbleAlloc(arena, ScopeStack);
   stack->vars.xs = FbleArrayAlloc(arena, FbleValue*, block->varc);
   stack->vars.size = 0;
+  memset(stack->vars.xs, 0, block->varc * sizeof(FbleValue*));
+
   InitDataStack(arena, stack);
   stack->block = block;
   stack->pc = 0;
@@ -487,7 +491,7 @@ static ScopeStack* ExitScope(FbleValueArena* arena, ScopeStack* stack)
   *stack->result = PopData(arena_, stack);
   FreeDataStack(arena_, stack);
 
-  for (size_t i = 0; i < stack->vars.size; ++i) {
+  for (size_t i = 0; i < stack->block->varc; ++i) {
     FbleValueRelease(arena, stack->vars.xs[i]);
   }
 
@@ -523,7 +527,7 @@ static ScopeStack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Sco
   block->refcount++;
 
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  for (size_t i = 0; i < stack->vars.size; ++i) {
+  for (size_t i = 0; i < stack->block->varc; ++i) {
     FbleValueRelease(arena, stack->vars.xs[i]);
   }
   stack->vars.size = 0;
@@ -532,6 +536,7 @@ static ScopeStack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Sco
     FbleFree(arena_, stack->vars.xs);
     stack->vars.xs = FbleArrayAlloc(arena_, FbleValue*, block->varc);
   }
+  memset(stack->vars.xs, 0, block->varc * sizeof(FbleValue*));
 
   FbleFreeInstrBlock(arena_, stack->block);
   stack->block = block;
