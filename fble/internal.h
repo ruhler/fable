@@ -28,7 +28,7 @@ typedef enum {
   FBLE_JOIN_INSTR,
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
-  FBLE_LET_PREP_INSTR,
+  FBLE_REF_VALUE_INSTR,
   FBLE_LET_DEF_INSTR,
   FBLE_STRUCT_IMPORT_INSTR,
   FBLE_EXIT_SCOPE_INSTR,
@@ -247,15 +247,14 @@ typedef struct {
   FbleVarInstr** xs;
 } FbleVarInstrV;
 
-// FbleLetPrepInstr -- FBLE_LET_PREP_INSTR
-//   Prepare to evaluate a let.
+// FbleRefValueInstr -- FBLE_REF_VALUE_INSTR
+//   Allocate a ref value and push it on the variable stack.
 //
 // vstack: ...
-//     ==> ..., r1, r2, ..., rN
+//     ==> ..., r
 typedef struct {
   FbleInstr _base;
-  size_t count;
-} FbleLetPrepInstr;
+} FbleRefValueInstr;
 
 // FbleLetDefInstr -- FBLE_LET_DEF_INSTR
 //

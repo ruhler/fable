@@ -1039,16 +1039,12 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
-      case FBLE_LET_PREP_INSTR: {
-        FbleLetPrepInstr* let_instr = (FbleLetPrepInstr*)instr;
-
-        for (size_t i = 0; i < let_instr->count; ++i) {
-          FbleRefValue* rv = FbleAlloc(arena_, FbleRefValue);
-          FbleRefInit(arena, &rv->_base.ref);
-          rv->_base.tag = FBLE_REF_VALUE;
-          rv->value = NULL;
-          PushVar(arena_, &rv->_base, thread->scope_stack);
-        }
+      case FBLE_REF_VALUE_INSTR: {
+        FbleRefValue* rv = FbleAlloc(arena_, FbleRefValue);
+        FbleRefInit(arena, &rv->_base.ref);
+        rv->_base.tag = FBLE_REF_VALUE;
+        rv->value = NULL;
+        PushVar(arena_, &rv->_base, thread->scope_stack);
         break;
       }
 

@@ -1,6 +1,5 @@
 Eval2:
 * Use explicit absolute positions instead of PushVar
- - Replace let prep instr with REF_VALUE_INSTR
 * Determine size of data stack frame statically.
 * Add explicit source and target locations to all instructions.
 * Merge var and data stack frames into a single array.

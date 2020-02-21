@@ -518,7 +518,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_FORK_INSTR:
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:
-    case FBLE_LET_PREP_INSTR:
+    case FBLE_REF_VALUE_INSTR:
     case FBLE_LET_DEF_INSTR:
     case FBLE_STRUCT_IMPORT_INSTR:
     case FBLE_EXIT_SCOPE_INSTR:
@@ -1613,13 +1613,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         }
       }
 
-      FbleLetPrepInstr* let_prep_instr = FbleAlloc(arena_, FbleLetPrepInstr);
-      let_prep_instr->_base.tag = FBLE_LET_PREP_INSTR;
-      let_prep_instr->count = let_expr->bindings.size;
-      FbleVectorAppend(arena_, *instrs, &let_prep_instr->_base);
-
       size_t vi = vars->nvars;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleRefValueInstr* ref_instr = FbleAlloc(arena_, FbleRefValueInstr);
+        ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
+        FbleVectorAppend(arena_, *instrs, &ref_instr->_base);
         PushVar(arena_, vars, nvd[i].name, nvd[i].type);
       }
 
