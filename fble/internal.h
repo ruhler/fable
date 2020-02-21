@@ -29,7 +29,7 @@ typedef enum {
   FBLE_PROC_INSTR,
   FBLE_VAR_INSTR,
   FBLE_REF_VALUE_INSTR,
-  FBLE_LET_DEF_INSTR,
+  FBLE_REF_DEF_INSTR,
   FBLE_STRUCT_IMPORT_INSTR,
   FBLE_EXIT_SCOPE_INSTR,
   FBLE_TYPE_INSTR,
@@ -256,24 +256,24 @@ typedef struct {
   FbleInstr _base;
 } FbleRefValueInstr;
 
-// FbleLetDefInstr -- FBLE_LET_DEF_INSTR
+// FbleRefDefInstr -- FBLE_REF_DEF_INSTR
 //
-// vstack: ..., r1, r2, ..., rN
-// data_stack: ..., v1, v2, ..., vN
+// vstack:     ..., ri, ..., r1, r0
+// data_stack: ..., v
 //         ==>
-// vstack: ..., r1=v1, r2=v2, ..., rN=vN
+// vstack:     ..., ri=v, ..., r1, r0
 // data_stack: ...
 //
-// If recursive is true, then r1, r2, ..., rN are set to point to the computed
-// v1, v2, ..., vN. If recursive is false, then it is assumed there are no
-// references remaining to r1, r2, ..., and the assignment is avoided. This is
-// an important performance optimization because the assignment triggers a
-// pathological case in the cyclic reference counting approach we use.
+// If recursive is true, then ri is set to point to the computed v.
+// If recursive is false, then it is assumed there are no references remaining
+// to ri, and the assignment is avoided. This is an important performance
+// optimization because the assignment triggers a pathological case in the
+// cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
-  size_t count;
+  size_t position;  // i
   bool recursive;
-} FbleLetDefInstr;
+} FbleRefDefInstr;
 
 // FbleStructImportInstr -- FBLE_STRUCT_IMPORT_INSTR
 //

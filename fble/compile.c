@@ -519,7 +519,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:
     case FBLE_REF_VALUE_INSTR:
-    case FBLE_LET_DEF_INSTR:
+    case FBLE_REF_DEF_INSTR:
     case FBLE_STRUCT_IMPORT_INSTR:
     case FBLE_EXIT_SCOPE_INSTR:
     case FBLE_TYPE_INSTR:
@@ -1688,13 +1688,14 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
               "%n is vacuous\n", &let_expr->bindings.xs[i].name);
           error = true;
         }
+
+        FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
+        ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
+        ref_def_instr->position = i;
+        ref_def_instr->recursive = recursive;
+        FbleVectorAppend(arena_, *instrs, &ref_def_instr->_base);
       }
 
-      FbleLetDefInstr* let_def_instr = FbleAlloc(arena_, FbleLetDefInstr);
-      let_def_instr->_base.tag = FBLE_LET_DEF_INSTR;
-      let_def_instr->count = let_expr->bindings.size;
-      let_def_instr->recursive = recursive;
-      FbleVectorAppend(arena_, *instrs, &let_def_instr->_base);
 
       FbleType* rtype = NULL;
       if (!error) {

@@ -1048,22 +1048,20 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
-      case FBLE_LET_DEF_INSTR: {
-        FbleLetDefInstr* let_def_instr = (FbleLetDefInstr*)instr;
-        for (size_t i = 0; i < let_def_instr->count; ++i) {
-          FbleRefValue* rv = (FbleRefValue*)GetVar(thread->scope_stack, i);
-          assert(rv->_base.tag == FBLE_REF_VALUE);
+      case FBLE_REF_DEF_INSTR: {
+        FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
+        FbleRefValue* rv = (FbleRefValue*)GetVar(thread->scope_stack, ref_def_instr->position);
+        assert(rv->_base.tag == FBLE_REF_VALUE);
 
-          FbleValue* value = PopData(arena_, thread->scope_stack);
-          assert(value != NULL);
-          SetVar(thread->scope_stack, i, value);
+        FbleValue* value = PopData(arena_, thread->scope_stack);
+        assert(value != NULL);
+        SetVar(thread->scope_stack, ref_def_instr->position, value);
 
-          if (let_def_instr->recursive) {
-            rv->value = value;
-            Add(arena, &rv->_base, rv->value);
-          }
-          FbleValueRelease(arena, &rv->_base);
+        if (ref_def_instr->recursive) {
+          rv->value = value;
+          Add(arena, &rv->_base, rv->value);
         }
+        FbleValueRelease(arena, &rv->_base);
         break;
       }
 
