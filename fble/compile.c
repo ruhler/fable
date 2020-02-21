@@ -1715,10 +1715,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       }
 
       if (!exit) {
-        FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-        descope->_base.tag = FBLE_DESCOPE_INSTR;
-        descope->count = let_expr->bindings.size;
-        FbleVectorAppend(arena_, *instrs, &descope->_base);
+        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+          FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+          descope->_base.tag = FBLE_DESCOPE_INSTR;
+          FbleVectorAppend(arena_, *instrs, &descope->_base);
+        }
       }
       return rtype;
     }
@@ -1789,7 +1790,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       if (!exit) {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
         descope->_base.tag = FBLE_DESCOPE_INSTR;
-        descope->count = 1;
         FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
 
@@ -1940,10 +1940,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       }
 
       if (!exit) {
-        FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-        descope->_base.tag = FBLE_DESCOPE_INSTR;
-        descope->count = struct_type->fields.size;
-        FbleVectorAppend(arena_, *instrs, &descope->_base);
+        for (size_t i = 0; i < struct_type->fields.size; ++i) {
+          FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+          descope->_base.tag = FBLE_DESCOPE_INSTR;
+          FbleVectorAppend(arena_, *instrs, &descope->_base);
+        }
       }
 
       FbleTypeRelease(arena, &struct_type->_base);

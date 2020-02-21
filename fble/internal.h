@@ -136,13 +136,12 @@ typedef struct {
 } FbleFuncValueInstr;
 
 // FbleDescopeInstr -- FBLE_DESCOPE_INSTR
-//   Pop count values from the top of the variable stack.
+//   Pop and release a value from the top of the variable stack.
 //
-// vstack: ..., vN, ..., v2, v1
+// vstack: ..., v
 //     ==> ...,
 typedef struct {
   FbleInstr _base;
-  size_t count;
 } FbleDescopeInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR

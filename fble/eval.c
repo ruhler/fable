@@ -712,12 +712,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_DESCOPE_INSTR: {
-        FbleDescopeInstr* descope_instr = (FbleDescopeInstr*)instr;
-        assert(descope_instr->count <= thread->scope_stack->vars.size); 
-        for (size_t i = 0; i < descope_instr->count; ++i) {
-          FbleValueRelease(arena, GetVar(thread->scope_stack, 0));
-          PopVar(arena_, thread->scope_stack);
-        }
+        assert(thread->scope_stack->vars.size > 0);
+        FbleValueRelease(arena, GetVar(thread->scope_stack, 0));
+        PopVar(arena_, thread->scope_stack);
         break;
       }
 
