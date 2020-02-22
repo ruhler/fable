@@ -1721,7 +1721,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
         FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
         ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-        ref_def_instr->position = i;
+        SetFrameIndex(arena_, vars, i, &ref_def_instr->index);
         ref_def_instr->recursive = recursive;
         FbleVectorAppend(arena_, *instrs, &ref_def_instr->_base);
       }

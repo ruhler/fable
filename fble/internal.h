@@ -275,7 +275,7 @@ typedef struct {
 // cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
-  size_t position;  // TODO: change this to FrameIndex
+  FbleFrameIndex index;
   bool recursive;
 } FbleRefDefInstr;
 

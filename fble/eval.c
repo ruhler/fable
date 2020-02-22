@@ -114,7 +114,6 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scopes);
 static void PopVar(FbleArena* arena, ScopeStack* scopes);
 static FbleValue* GetVar(ScopeStack* scopes, size_t position);
-static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value);
 
 static void InitDataStack(FbleArena* arena, ScopeStack* scope);
 static void FreeDataStack(FbleArena* arena, ScopeStack* scope);
@@ -221,29 +220,6 @@ static FbleValue* GetVar(ScopeStack* scopes, size_t position)
   assert(scopes != NULL);
   assert(position < scopes->vars.size);
   return scopes->vars.xs[scopes->vars.size - 1 - position];
-}
-
-// SetVar --
-//   Sets the variable at the given position from the top of the top scope.
-//
-// Inputs:
-//   scopes - the stack of scopes to get the var from.
-//   position - the position of the variable in the top scope of the stack.
-//              Position 0 is the last variable in the scope, 1 is second to
-//              last, and so on.
-//   value - the value to set the variable to.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Sets the variable at the given position of the top scope from the scopes
-//   stack.
-static void SetVar(ScopeStack* scopes, size_t position, FbleValue* value)
-{
-  assert(scopes != NULL);
-  assert(position < scopes->vars.size);
-  scopes->vars.xs[scopes->vars.size - 1 - position] = value;
 }
 
 // InitDataStack --
@@ -1050,12 +1026,12 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-        FbleRefValue* rv = (FbleRefValue*)GetVar(thread->scope_stack, ref_def_instr->position);
+        FbleRefValue* rv = (FbleRefValue*)thread->scope_stack->vars.xs[ref_def_instr->index];
         assert(rv->_base.tag == FBLE_REF_VALUE);
 
         FbleValue* value = PopData(arena_, thread->scope_stack);
         assert(value != NULL);
-        SetVar(thread->scope_stack, ref_def_instr->position, value);
+        thread->scope_stack->vars.xs[ref_def_instr->index] = value;
 
         if (ref_def_instr->recursive) {
           rv->value = value;
