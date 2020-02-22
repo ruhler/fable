@@ -890,17 +890,14 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         assert(thread->children.size == 0);
         assert(thread->children.xs == NULL);
         FbleVectorInit(arena_, thread->children);
-        FbleValue* args[fork_instr->argc];
         for (size_t i = 0; i < fork_instr->argc; ++i) {
-          args[i] = PopData(arena_, thread->scope_stack);
-        }
-
-        for (size_t i = 0; i < fork_instr->argc; ++i) {
-          FbleValue** result = AllocData(arena_, thread->scope_stack);
+          FbleValue* arg = PopData(arena_, thread->scope_stack);
+          FbleValue** result = thread->scope_stack->vars.xs + thread->scope_stack->vars.size;
+          thread->scope_stack->vars.size++;
 
           Thread* child = FbleAlloc(arena_, Thread);
           child->scope_stack = EnterScope(arena_, &g_proc_block, result, NULL);
-          PushData(arena_, args[i], child->scope_stack); // Takes ownership of arg
+          PushData(arena_, arg, child->scope_stack); // Takes ownership of arg
           child->aborted = false;
           child->children.size = 0;
           child->children.xs = NULL;
@@ -928,17 +925,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           }
         }
         
-        FbleValue* args[thread->children.size];
-        for (size_t i = 0; i < thread->children.size; ++i) {
-          args[i] = PopData(arena_, thread->scope_stack);
-          assert(args[i] != NULL);
-        }
-
-        for (size_t i = 0; i < thread->children.size; ++i) {
-          size_t j = thread->children.size - i - 1;
-          PushVar(arena_, args[j], thread->scope_stack);
-        }
-
         for (size_t i = 0; i < thread->children.size; ++i) {
           Thread* child = thread->children.xs[i];
           assert(child->scope_stack == NULL);
