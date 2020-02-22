@@ -1734,6 +1734,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (!exit) {
+          FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+          descope->_base.tag = FBLE_DESCOPE_INSTR;
+          SetFrameIndex(arena_, vars, 0, &descope->index);
+          FbleVectorAppend(arena_, *instrs, &descope->_base);
+        }
         PopVar(arena_, vars);
         FbleTypeRelease(arena, nvd[i].type);
       }
@@ -1741,14 +1747,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       if (error) {
         FbleTypeRelease(arena, rtype);
         return NULL;
-      }
-
-      if (!exit) {
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-          descope->_base.tag = FBLE_DESCOPE_INSTR;
-          FbleVectorAppend(arena_, *instrs, &descope->_base);
-        }
       }
       return rtype;
     }
@@ -1812,14 +1810,15 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleType* body = CompileExpr(arena, blocks, exit, vars, poly->body, instrs);
 
-      PopVar(arena_, vars);
-      FbleTypeRelease(arena, &type_type->_base);
-
       if (!exit) {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
         descope->_base.tag = FBLE_DESCOPE_INSTR;
+        SetFrameIndex(arena_, vars, 0, &descope->index);
         FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
+
+      PopVar(arena_, vars);
+      FbleTypeRelease(arena, &type_type->_base);
 
       if (body == NULL) {
         FbleTypeRelease(arena, &arg->_base);
@@ -1964,15 +1963,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleType* rtype = CompileExpr(arena, blocks, exit, vars, struct_import_expr->body, instrs);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        PopVar(arena_, vars);
-      }
-
-      if (!exit) {
-        for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
+          SetFrameIndex(arena_, vars, 0, &descope->index);
           FbleVectorAppend(arena_, *instrs, &descope->_base);
         }
+        PopVar(arena_, vars);
       }
 
       FbleTypeRelease(arena, &struct_type->_base);

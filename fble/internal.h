@@ -8,6 +8,10 @@
 #include "fble.h"
 #include "ref.h"
 
+// FbleFrameIndex --
+//   The position of a value in a stack frame.
+typedef size_t FbleFrameIndex;
+
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
@@ -136,12 +140,19 @@ typedef struct {
 } FbleFuncValueInstr;
 
 // FbleDescopeInstr -- FBLE_DESCOPE_INSTR
-//   Pop and release a value from the top of the variable stack.
+//   Pop and release a value from the top of the variable stack, which should
+//   match the given frame index.
+//
+// TODO: When we no longer need to keep track of the top of the variable
+// stack, remove the 'pop' part of this instruction and just free the variable
+// at the given index. And then rename this instruction to something more
+// relevant.
 //
 // vstack: ..., v
 //     ==> ...,
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndex index;
 } FbleDescopeInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
@@ -230,10 +241,6 @@ typedef struct {
   FbleInstr _base;
   bool exit;
 } FbleProcInstr;
-
-// FbleFrameIndex --
-//   The position of a value in a stack frame.
-typedef size_t FbleFrameIndex;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
 // vstack: ..., v[2], v[1], v[0]

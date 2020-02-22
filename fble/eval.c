@@ -112,8 +112,6 @@ static FbleInstrBlock g_put_block = {
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
 static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scopes);
-static void PopVar(FbleArena* arena, ScopeStack* scopes);
-static FbleValue* GetVar(ScopeStack* scopes, size_t position);
 
 static void InitDataStack(FbleArena* arena, ScopeStack* scope);
 static void FreeDataStack(FbleArena* arena, ScopeStack* scope);
@@ -177,49 +175,6 @@ static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scope_stack)
   assert(scope_stack->vars.size < scope_stack->block->varc);
   scope_stack->vars.xs[scope_stack->vars.size] = value;
   scope_stack->vars.size++;
-}
-
-// PopVar --
-//   Pop a value off the top scope of the given scope stack.
-//
-// Inputs:
-//   arena - the arena to use for deallocation
-//   scope_stack - the stack of scopes to pop the variable from
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Pops the variable off the top scope of the given stack. It is the users
-//   job to release the value if necessary before popping the variable.
-static void PopVar(FbleArena* arena, ScopeStack* scope_stack)
-{
-  assert(scope_stack != NULL);
-  assert(scope_stack->vars.size > 0);
-  scope_stack->vars.size--;
-  scope_stack->vars.xs[scope_stack->vars.size] = NULL;
-}
-
-// GetVar --
-//   Gets the variable at the given position from the top of the top scope.
-//
-// Inputs:
-//   scopes - the stack of scopes to get the var from.
-//   position - the position of the variable in the top scope of the stack.
-//              Position 0 is the last variable in the scope, 1 is second to
-//              last, and so on.
-//
-// Results:
-//   The variable at the given position of the top scope from the scopes
-//   stack.
-//
-// Side effects:
-//   None.
-static FbleValue* GetVar(ScopeStack* scopes, size_t position)
-{
-  assert(scopes != NULL);
-  assert(position < scopes->vars.size);
-  return scopes->vars.xs[scopes->vars.size - 1 - position];
 }
 
 // InitDataStack --
@@ -688,9 +643,11 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_DESCOPE_INSTR: {
-        assert(thread->scope_stack->vars.size > 0);
-        FbleValueRelease(arena, GetVar(thread->scope_stack, 0));
-        PopVar(arena_, thread->scope_stack);
+        FbleDescopeInstr* descope = (FbleDescopeInstr*)instr;
+        assert(descope->index == thread->scope_stack->vars.size - 1);
+        FbleValueRelease(arena, thread->scope_stack->vars.xs[descope->index]);
+        thread->scope_stack->vars.xs[descope->index] = NULL;
+        thread->scope_stack->vars.size--;
         break;
       }
 
