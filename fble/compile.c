@@ -1645,10 +1645,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       size_t vi = vars->nvars;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        PushVar(arena_, vars, nvd[i].name, nvd[i].type);
         FbleRefValueInstr* ref_instr = FbleAlloc(arena_, FbleRefValueInstr);
         ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
+        SetFrameIndex(arena_, vars, 0, &ref_instr->index);
         FbleVectorAppend(arena_, *instrs, &ref_instr->_base);
-        PushVar(arena_, vars, nvd[i].name, nvd[i].type);
       }
 
       // Compile the values of the variables.

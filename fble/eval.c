@@ -959,11 +959,15 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_REF_VALUE_INSTR: {
+        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
         FbleRefValue* rv = FbleAlloc(arena_, FbleRefValue);
         FbleRefInit(arena, &rv->_base.ref);
         rv->_base.tag = FBLE_REF_VALUE;
         rv->value = NULL;
-        PushVar(arena_, &rv->_base, thread->scope_stack);
+
+        assert(ref_instr->index == thread->scope_stack->vars.size);
+        thread->scope_stack->vars.xs[ref_instr->index] = &rv->_base;
+        thread->scope_stack->vars.size++;
         break;
       }
 

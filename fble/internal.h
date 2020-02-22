@@ -259,12 +259,17 @@ typedef struct {
 } FbleVarInstrV;
 
 // FbleRefValueInstr -- FBLE_REF_VALUE_INSTR
-//   Allocate a ref value and push it on the variable stack.
+//   Allocate a ref value and push it on the variable stack. The top of the
+//   variable stack should match the given frame index.
+//
+// TODO: When we no longer need to keep track of the top of the variable
+// stack, remove the 'push' part of this instruction.
 //
 // vstack: ...
 //     ==> ..., r
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndex index;
 } FbleRefValueInstr;
 
 // FbleRefDefInstr -- FBLE_REF_DEF_INSTR
