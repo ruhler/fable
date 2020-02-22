@@ -12,16 +12,23 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// FrameIndexV --
+//   A vector of pointers to FbleFrameIndexes.
+typedef struct {
+  size_t size;
+  FbleFrameIndex** xs;
+} FrameIndexV;
+
 // Var --
 //   Information about a variable visible during type checking.
 //
 // name - the name of the variable.
 // type - the type of the variable.
-// instrs - a record of the var instructions used to access the variable.
+// fixup - a record of frame indexes used to access the variable.
 typedef struct {
   FbleName name;
   FbleType* type;
-  FbleVarInstrV instrs;
+  FrameIndexV fixup;
 } Var;
 
 // Var --
@@ -74,6 +81,7 @@ typedef struct {
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
+static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest);
 static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Vars* vars);
 static void FreeVars(FbleArena* arena, Vars* vars);
@@ -168,6 +176,32 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
   va_end(ap);
 }
 
+// SetFrameIndex --
+//   Fill in the frame index for a variable.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   vars - the scope to get the variable from
+//   position - the position of the variable relative to the top of the scope.
+//              0 means the variable on top of the scope.
+//   dest - pointer for where to store the frame index.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Sets the value of dest to the frame index for the var at the given
+//   position in the scope. Records the frame index pointer for fixups at
+//   ExitThunk time, when the value pointed to by dest will be readjusted
+//   based on the final frame index for the variable. The pointer must remain
+//   valid for the duration of all fixups.
+static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest)
+{
+  assert(position < vars->nvars);
+  *dest = vars->nvars - position - 1;
+  FbleVectorAppend(arena, vars->vars.xs[*dest].fixup, dest);
+}
+
 // PushVar --
 //   Push a variable onto the current scope.
 //
@@ -189,7 +223,7 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type)
   Var* var = vars->vars.xs + vars->nvars;
   if (vars->nvars == vars->vars.size) {
     var = FbleVectorExtend(arena, vars->vars);
-    FbleVectorInit(arena, var->instrs);
+    FbleVectorInit(arena, var->fixup);
   }
   var->name = name;
   var->type = type;
@@ -229,7 +263,7 @@ static void PopVar(FbleArena* arena, Vars* vars)
 static void FreeVars(FbleArena* arena, Vars* vars)
 {
   for (size_t i = 0; i < vars->vars.size; ++i) {
-    FbleFree(arena, vars->vars.xs[i].instrs.xs);
+    FbleFree(arena, vars->vars.xs[i].fixup.xs);
   }
   FbleFree(arena, vars->vars.xs);
 }
@@ -430,24 +464,22 @@ static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
 //   * Sets the varc field of the block based on number of vars actually used.
 //   * Appends instructions to instrs to push captured variables to the data
 //     stack.
-//   * Updates thunk instructions to point to the captured variable indicies
-//     instead of the original variable indicies.
+//   * Updates thunk instructions to point to the captured variable frame
+//     indicies instead of the original variable frame indicies.
 static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrBlock* block, FbleInstrV* instrs)
 {
   size_t scopec = 0;
   for (size_t i = 0; i < vars->nvars; ++i) {
-    if (thunk_vars->vars.xs[i].instrs.size > 0) {
+    if (thunk_vars->vars.xs[i].fixup.size > 0) {
       // Copy the accessed var to the data stack for capturing.
       FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
-      get_var->position = i;
-      FbleVectorAppend(arena, vars->vars.xs[i].instrs, get_var);
+      SetFrameIndex(arena, vars, vars->nvars - i - 1, &get_var->index);
       FbleVectorAppend(arena, *instrs, &get_var->_base);
 
       // Update references to this var.
-      for (size_t j = 0; j < thunk_vars->vars.xs[i].instrs.size; ++j) {
-        FbleVarInstr* var_instr = thunk_vars->vars.xs[i].instrs.xs[j];
-        var_instr->position = scopec;
+      for (size_t j = 0; j < thunk_vars->vars.xs[i].fixup.size; ++j) {
+        *thunk_vars->vars.xs[i].fixup.xs[j] = scopec;
       }
       scopec++;
     }
@@ -455,9 +487,8 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
 
   // Update references to all vars first introduced in the thunk scope.
   for (size_t i = vars->nvars; i < thunk_vars->vars.size; ++i) {
-      for (size_t j = 0; j < thunk_vars->vars.xs[i].instrs.size; ++j) {
-        FbleVarInstr* var_instr = thunk_vars->vars.xs[i].instrs.xs[j];
-        var_instr->position = i - vars->nvars + scopec;
+      for (size_t j = 0; j < thunk_vars->vars.xs[i].fixup.size; ++j) {
+        *thunk_vars->vars.xs[i].fixup.xs[j] = i - vars->nvars + scopec;
       }
   }
 
@@ -1548,8 +1579,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (FbleNamesEqual(&var_expr->var, &var->name)) {
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
-          instr->position = j;
-          FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
+          SetFrameIndex(arena_, vars, i, &instr->index);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
           CompileExit(arena_, exit, instrs);
           return FbleTypeRetain(arena, var->type);
@@ -1667,7 +1697,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       // Check to see if this is a recursive let block.
       bool recursive = false;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || (vars->vars.xs[vi + i].instrs.size > 0);
+        recursive = recursive || (vars->vars.xs[vi + i].fixup.size > 0);
       }
 
       // Apply the newly computed type values for variables whose types were
@@ -1733,8 +1763,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (FbleNamesEqual(&module_ref_expr->ref.resolved, &var->name)) {
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
-          instr->position = j;
-          FbleVectorAppend(arena_, vars->vars.xs[j].instrs, instr);
+          SetFrameIndex(arena_, vars, i, &instr->index);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
           CompileExit(arena_, exit, instrs);
           return FbleTypeRetain(arena, var->type);

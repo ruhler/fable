@@ -823,8 +823,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
         assert(thread->scope_stack != NULL);
-        assert(var_instr->position < thread->scope_stack->vars.size);
-        FbleValue* value = thread->scope_stack->vars.xs[var_instr->position];
+        assert(var_instr->index < thread->scope_stack->vars.size);
+        FbleValue* value = thread->scope_stack->vars.xs[var_instr->index];
         PushData(arena_, FbleValueRetain(arena, value), thread->scope_stack);
         break;
       }

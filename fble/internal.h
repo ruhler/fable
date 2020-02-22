@@ -231,13 +231,17 @@ typedef struct {
   bool exit;
 } FbleProcInstr;
 
+// FbleFrameIndex --
+//   The position of a value in a stack frame.
+typedef size_t FbleFrameIndex;
+
 // FbleVarInstr -- FBLE_VAR_INSTR
 // vstack: ..., v[2], v[1], v[0]
 // data_stack: ...,
-//         ==> ..., v[position]
+//         ==> ..., v[index]
 typedef struct {
   FbleInstr _base;
-  size_t position;
+  FbleFrameIndex index;
 } FbleVarInstr;
 
 // FbleVarInstrV --
@@ -271,7 +275,7 @@ typedef struct {
 // cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
-  size_t position;  // i
+  size_t position;  // TODO: change this to FrameIndex
   bool recursive;
 } FbleRefDefInstr;
 
