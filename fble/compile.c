@@ -83,7 +83,7 @@ typedef struct {
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
-static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest);
+static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool accessed);
 static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Vars* vars);
 static void FreeVars(FbleArena* arena, Vars* vars);
@@ -187,6 +187,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //   position - the position of the variable relative to the top of the scope.
 //              0 means the variable on top of the scope.
 //   dest - pointer for where to store the frame index.
+//   accessed - true if this counts as a use of the variable.
 //
 // Results:
 //   none.
@@ -197,11 +198,14 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //   ExitThunk time, when the value pointed to by dest will be readjusted
 //   based on the final frame index for the variable. The pointer must remain
 //   valid for the duration of all fixups.
-static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest)
+static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool accessed)
 {
   assert(position < vars->nvars);
   *dest = vars->nvars - position - 1;
   FbleVectorAppend(arena, vars->vars.xs[*dest].fixup, dest);
+  if (accessed) {
+    vars->vars.xs[*dest].accessed = true;
+  }
 }
 
 // PushVar --
@@ -229,8 +233,8 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type)
   }
   var->name = name;
   var->type = type;
-  var->accessed = false;
   vars->nvars++;
+  var->accessed = false;
 }
 
 // PopVar --
@@ -475,10 +479,9 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
   for (size_t i = 0; i < vars->nvars; ++i) {
     if (thunk_vars->vars.xs[i].accessed) {
       // Copy the accessed var to the data stack for capturing.
-      vars->vars.xs[i].accessed = true;
       FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
-      SetFrameIndex(arena, vars, vars->nvars - i - 1, &get_var->index);
+      SetFrameIndex(arena, vars, vars->nvars - i - 1, &get_var->index, true);
       FbleVectorAppend(arena, *instrs, &get_var->_base);
 
       // Update references to this var.
@@ -1581,10 +1584,9 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         size_t j = vars->nvars - i - 1;
         Var* var = vars->vars.xs + j;
         if (FbleNamesEqual(&var_expr->var, &var->name)) {
-          var->accessed = true;
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
-          SetFrameIndex(arena_, vars, i, &instr->index);
+          SetFrameIndex(arena_, vars, i, &instr->index, true);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
           CompileExit(arena_, exit, instrs);
           return FbleTypeRetain(arena, var->type);
@@ -1653,7 +1655,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         PushVar(arena_, vars, nvd[i].name, nvd[i].type);
         FbleRefValueInstr* ref_instr = FbleAlloc(arena_, FbleRefValueInstr);
         ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
-        SetFrameIndex(arena_, vars, 0, &ref_instr->index);
+        SetFrameIndex(arena_, vars, 0, &ref_instr->index, false);
         FbleVectorAppend(arena_, *instrs, &ref_instr->_base);
       }
 
@@ -1727,7 +1729,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
         FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
         ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-        SetFrameIndex(arena_, vars, i, &ref_def_instr->index);
+        SetFrameIndex(arena_, vars, i, &ref_def_instr->index, false);
         ref_def_instr->recursive = recursive;
         FbleVectorAppend(arena_, *instrs, &ref_def_instr->_base);
       }
@@ -1743,7 +1745,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          SetFrameIndex(arena_, vars, 0, &descope->index);
+          SetFrameIndex(arena_, vars, 0, &descope->index, false);
           FbleVectorAppend(arena_, *instrs, &descope->_base);
         }
         PopVar(arena_, vars);
@@ -1767,7 +1769,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (FbleNamesEqual(&module_ref_expr->ref.resolved, &var->name)) {
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
-          SetFrameIndex(arena_, vars, i, &instr->index);
+          SetFrameIndex(arena_, vars, i, &instr->index, true);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
           CompileExit(arena_, exit, instrs);
           return FbleTypeRetain(arena, var->type);
@@ -1819,7 +1821,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       if (!exit) {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
         descope->_base.tag = FBLE_DESCOPE_INSTR;
-        SetFrameIndex(arena_, vars, 0, &descope->index);
+        SetFrameIndex(arena_, vars, 0, &descope->index, false);
         FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
 
@@ -1972,7 +1974,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          SetFrameIndex(arena_, vars, 0, &descope->index);
+          SetFrameIndex(arena_, vars, 0, &descope->index, false);
           FbleVectorAppend(arena_, *instrs, &descope->_base);
         }
         PopVar(arena_, vars);
