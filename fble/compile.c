@@ -1790,7 +1790,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
-      vpush->count = 1;
       FbleVectorAppend(arena_, *instrs, &vpush->_base);
       PushVar(arena_, vars, poly->arg.name, &type_type->_base);
 
@@ -2456,7 +2455,6 @@ static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars
 
     FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
     vpush->_base.tag = FBLE_VPUSH_INSTR;
-    vpush->count = 1;
     FbleVectorAppend(arena_, *instrs, &vpush->_base);
     PushVar(arena_, vars, prgm->modules.xs[i].name, types[i]);
   }

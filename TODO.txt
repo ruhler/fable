@@ -1,6 +1,5 @@
 Eval2:
 * Use explicit absolute positions instead of PushVar
- - Make VPUSH_INSTR push a single variable instead of multiple.
  - Specify frame index in VPUSH_INSTR.
  - Specify frame index in FORK_INSTR?
  - Specify frame index in STRUCT_IMPORT_INSTR?
