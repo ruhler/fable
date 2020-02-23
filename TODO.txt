@@ -1,10 +1,9 @@
 Eval2:
-* Double check we didn't mess up unused variable detection.
- - Figure out why "Specify frame index in RefValueInstr." regressed
-   performance.
- - Write a performance test to catch this case if possible.
- - Record whether we access a variable separate from fixup indexes.
- - Confirm performance regression is fixed.
+* Cleanup post performance regression.
+ - Add test showing why RefValueInstr causes things to be captured that
+   otherwise shouldn't be?
+ - Add test for unused module imports that fails if we don't treat module var
+   access as failed.
 * Use explicit absolute positions instead of PushVar
  - Make VPUSH_INSTR push a single variable instead of multiple.
  - Specify frame index in VPUSH_INSTR.
