@@ -12,6 +12,12 @@
 //   The position of a value in a stack frame.
 typedef size_t FbleFrameIndex;
 
+// FbleFrameIndexV -- A vector of FbleFrameIndex.
+typedef struct {
+  size_t size;
+  FbleFrameIndex* xs;
+} FbleFrameIndexV;
+
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
@@ -222,7 +228,7 @@ typedef struct {
 // children: _ ==> b1, b2, ... bN
 typedef struct {
   FbleInstr _base;
-  size_t argc;
+  FbleFrameIndexV args;
 } FbleForkInstr;
 
 // FbleJoinInstr -- FBLE_JOIN_INSTR

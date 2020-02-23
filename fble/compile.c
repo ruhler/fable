@@ -553,7 +553,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_GET_INSTR:
     case FBLE_PUT_INSTR:
     case FBLE_LINK_INSTR:
-    case FBLE_FORK_INSTR:
     case FBLE_PROC_INSTR:
     case FBLE_JOIN_INSTR:
     case FBLE_REF_VALUE_INSTR:
@@ -574,6 +573,13 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
       FbleFreeInstrBlock(arena, func_value_instr->body);
       FbleFree(arena, func_value_instr);
+      return;
+    }
+
+    case FBLE_FORK_INSTR: {
+      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+      FbleFree(arena, fork_instr->args.xs);
+      FbleFree(arena, instr);
       return;
     }
 
@@ -1503,16 +1509,19 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
-      fork->argc = exec_expr->bindings.size;
       FbleVectorAppend(arena_, instr->body->instrs, &fork->_base);
+      fork->args.xs = FbleArrayAlloc(arena_, FbleFrameIndex, exec_expr->bindings.size);
+      fork->args.size = exec_expr->bindings.size;
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        PushVar(arena_, &thunk_vars, nvd[i].name, nvd[i].type);
+        SetFrameIndex(arena_, &thunk_vars, 0, fork->args.xs + i, false);
+      }
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
       join->_base.tag = FBLE_JOIN_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &join->_base);
 
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PushVar(arena_, &thunk_vars, nvd[i].name, nvd[i].type);
-      }
 
       FbleType* rtype = NULL;
       if (!error) {
