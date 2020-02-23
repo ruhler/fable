@@ -25,12 +25,12 @@ typedef struct {
 // name - the name of the variable.
 // type - the type of the variable.
 // fixup - a record of frame indexes used to access the variable.
-// accessed - whether the variable has been read.
+// used  - true if the variable is used anywhere, false otherwise.
 typedef struct {
   FbleName name;
   FbleType* type;
   FrameIndexV fixup;
-  bool accessed;
+  bool used;
 } Var;
 
 // Var --
@@ -83,7 +83,7 @@ typedef struct {
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
-static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool accessed);
+static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool use);
 static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Vars* vars);
 static void FreeVars(FbleArena* arena, Vars* vars);
@@ -187,7 +187,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //   position - the position of the variable relative to the top of the scope.
 //              0 means the variable on top of the scope.
 //   dest - pointer for where to store the frame index.
-//   accessed - true if this counts as a use of the variable.
+//   use - true if this counts as a use of the variable.
 //
 // Results:
 //   none.
@@ -198,13 +198,13 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //   ExitThunk time, when the value pointed to by dest will be readjusted
 //   based on the final frame index for the variable. The pointer must remain
 //   valid for the duration of all fixups.
-static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool accessed)
+static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool use)
 {
   assert(position < vars->nvars);
   *dest = vars->nvars - position - 1;
   FbleVectorAppend(arena, vars->vars.xs[*dest].fixup, dest);
-  if (accessed) {
-    vars->vars.xs[*dest].accessed = true;
+  if (use) {
+    vars->vars.xs[*dest].used = true;
   }
 }
 
@@ -234,7 +234,7 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type)
   var->name = name;
   var->type = type;
   vars->nvars++;
-  var->accessed = false;
+  var->used = false;
 }
 
 // PopVar --
@@ -454,7 +454,7 @@ static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
 }
 
 // ExitThunk --
-//   Generate instructions to capture just the variables accessed for a thunk.
+//   Generate instructions to capture just the variables used by a thunk.
 //
 // Inputs:
 //   arena - arena to use for allocations
@@ -464,7 +464,7 @@ static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
 //   instrs - vector of instructions to append new instructions to.
 //
 // Results:
-//   The number of variables accessed in the thunk.
+//   The number of variables used by the thunk.
 //
 // Side effects:
 //   * Frees memory associated with thunk_vars.
@@ -477,8 +477,8 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
 {
   size_t scopec = 0;
   for (size_t i = 0; i < vars->nvars; ++i) {
-    if (thunk_vars->vars.xs[i].accessed) {
-      // Copy the accessed var to the data stack for capturing.
+    if (thunk_vars->vars.xs[i].used) {
+      // Copy the used var to the data stack for capturing.
       FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
       SetFrameIndex(arena, vars, vars->nvars - i - 1, &get_var->index, true);
@@ -1705,7 +1705,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       // Check to see if this is a recursive let block.
       bool recursive = false;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || (vars->vars.xs[vi + i].accessed);
+        recursive = recursive || (vars->vars.xs[vi + i].used);
       }
 
       // Apply the newly computed type values for variables whose types were
