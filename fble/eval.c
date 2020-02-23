@@ -111,8 +111,6 @@ static FbleInstrBlock g_put_block = {
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
-static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scopes);
-
 static void InitDataStack(FbleArena* arena, ScopeStack* scope);
 static void FreeDataStack(FbleArena* arena, ScopeStack* scope);
 static bool DataStackIsEmpty(ScopeStack* scope);
@@ -153,27 +151,6 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst)
   if (dst != NULL) {
     FbleRefAdd(arena, &src->ref, &dst->ref);
   }
-}
-
-// PushVar --
-//   Push a value onto the top scope of the given scope stack.
-//
-// Inputs:
-//   arena - the arena to use for allocations
-//   value - the value to push
-//   scope_stack - the stack of scopes to push to the value onto.
-//
-// Result:
-//   None.
-//
-// Side effects:
-//   Pushes the value onto the top scope of the given scope stack.
-static void PushVar(FbleArena* arena, FbleValue* value, ScopeStack* scope_stack)
-{
-  assert(scope_stack != NULL);
-  assert(scope_stack->vars.size < scope_stack->block->varc);
-  scope_stack->vars.xs[scope_stack->vars.size] = value;
-  scope_stack->vars.size++;
 }
 
 // InitDataStack --
@@ -1005,7 +982,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           return progress;
         }
         for (size_t i = 0; i < sv->fields.size; ++i) {
-          PushVar(arena_, FbleValueRetain(arena, sv->fields.xs[i]), thread->scope_stack);
+          assert(import_instr->fields.xs[i] == thread->scope_stack->vars.size);
+          thread->scope_stack->vars.xs[import_instr->fields.xs[i]] = FbleValueRetain(arena, sv->fields.xs[i]);
+          thread->scope_stack->vars.size++;
         }
         FbleValueRelease(arena, &sv->_base);
         break;

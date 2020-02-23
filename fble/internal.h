@@ -311,6 +311,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
+  FbleFrameIndexV fields;
 } FbleStructImportInstr;
 
 // FbleExitScopeInstr -- FBLE_EXIT_SCOPE_INSTR

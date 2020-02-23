@@ -557,14 +557,19 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_JOIN_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_REF_DEF_INSTR:
-    case FBLE_STRUCT_IMPORT_INSTR:
     case FBLE_EXIT_SCOPE_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_VPUSH_INSTR:
     case FBLE_PROFILE_ENTER_BLOCK_INSTR:
     case FBLE_PROFILE_EXIT_BLOCK_INSTR:
-    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR:
-    {
+    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_STRUCT_IMPORT_INSTR: {
+      FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
+      FbleFree(arena, import_instr->fields.xs);
       FbleFree(arena, instr);
       return;
     }
@@ -1949,10 +1954,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
       struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
       struct_import->loc = struct_import_expr->nspace->loc;
+      struct_import->fields.xs = FbleArrayAlloc(arena_, FbleFrameIndex, struct_type->fields.size);
+      struct_import->fields.size = struct_type->fields.size;
       FbleVectorAppend(arena_, *instrs, &struct_import->_base);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PushVar(arena_, vars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
+        SetFrameIndex(arena_, vars, 0, struct_import->fields.xs + i, false);
       }
 
       FbleType* rtype = CompileExpr(arena, blocks, exit, vars, struct_import_expr->body, instrs);
