@@ -576,7 +576,8 @@ more likely you gave multiple arguments the same name accidentally than on
 purpose.
 
 Runtime is O(N log(M)), where N is the number of variables in scope that are
-captured by the function and M is the number of variables in scope.
+captured by the function and M is the number of variables in scope. Only
+variables referenced in the body of the function are captured by the function.
 
 5.3 Function Application
 ------------------------
