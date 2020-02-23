@@ -1244,10 +1244,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &instr->body->instrs);
 
-      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
-      vpush->_base.tag = FBLE_VPUSH_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
-
       Vars thunk_vars;
       EnterThunk(arena_, vars, &thunk_vars);
 
@@ -1271,7 +1267,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
       AddBlockTime(blocks, instr->scopec);
-      vpush->count = instr->scopec + argc;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
       CompileExit(arena_, exit, instrs);
@@ -1310,17 +1305,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       EnterBodyBlock(arena_, blocks, expr->loc, &instr->body->instrs);
 
-      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
-      vpush->_base.tag = FBLE_VPUSH_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
-
       FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, eval_expr->body, &instr->body->instrs);
 
       CompileExit(arena_, true, &instr->body->instrs);
       ExitBlock(arena_, blocks, NULL);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
-      vpush->count = instr->scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1398,10 +1388,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       EnterBodyBlock(arena_, blocks, link_expr->body->loc, &instr->body->instrs);
 
-      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
-      vpush->_base.tag = FBLE_VPUSH_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
-
       FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &link->_base);
@@ -1422,7 +1408,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       ExitBlock(arena_, blocks, NULL);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
-      vpush->count = instr->scopec;
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1471,9 +1456,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       EnterBodyBlock(arena_, blocks, exec_expr->body->loc, &instr->body->instrs);
 
-      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
-      vpush->_base.tag = FBLE_VPUSH_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
 
@@ -1486,10 +1468,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
         EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->body->instrs);
 
-        FbleVPushInstr* bvpush = FbleAlloc(arena_, FbleVPushInstr);
-        bvpush->_base.tag = FBLE_VPUSH_INSTR;
-        FbleVectorAppend(arena_, binstr->body->instrs, &bvpush->_base);
-
         FbleType* type = CompileExpr(arena, blocks, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->body->instrs);
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
@@ -1499,7 +1477,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         ExitBlock(arena_, blocks, NULL);
 
         binstr->scopec = ExitThunk(arena_, &thunk_vars, &bthunk_vars, binstr->body, &instr->body->instrs);
-        bvpush->count = binstr->scopec;
         FbleVectorAppend(arena_, instr->body->instrs, &binstr->_base);
 
         error = error || (type == NULL);
@@ -1561,7 +1538,6 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       ExitBlock(arena_, blocks, NULL);
 
       instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
-      vpush->count = instr->scopec;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleTypeRelease(arena, nvd[i].type);
