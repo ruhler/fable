@@ -1025,8 +1025,10 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_VPUSH_INSTR: {
-        FbleValue* value = PopData(arena_, thread->scope_stack);
-        PushVar(arena_, value, thread->scope_stack);
+        FbleVPushInstr* vpush_instr = (FbleVPushInstr*)instr;
+        assert(vpush_instr->index == thread->scope_stack->vars.size);
+        thread->scope_stack->vars.xs[vpush_instr->index] = PopData(arena_, thread->scope_stack);
+        thread->scope_stack->vars.size++;
         break;
       }
 

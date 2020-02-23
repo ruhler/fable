@@ -1,8 +1,7 @@
 Eval2:
 * Use explicit absolute positions instead of PushVar
- - Specify frame index in VPUSH_INSTR.
- - Specify frame index in FORK_INSTR?
- - Specify frame index in STRUCT_IMPORT_INSTR?
+ - Specify frame index in FORK_INSTR
+ - Specify frame indexes in STRUCT_IMPORT_INSTR
  - Remove vars.size field in fble/eval.c, which should no longer be used by
    anything.
 * Determine size of data stack frame statically.

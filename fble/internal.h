@@ -332,6 +332,7 @@ typedef struct {
 //
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndex index;
 }  FbleVPushInstr;
 
 // FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR

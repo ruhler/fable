@@ -1792,6 +1792,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       FbleVectorAppend(arena_, *instrs, &vpush->_base);
       PushVar(arena_, vars, poly->arg.name, &type_type->_base);
+      SetFrameIndex(arena_, vars, 0, &vpush->index, false);
 
       FbleType* body = CompileExpr(arena, blocks, exit, vars, poly->body, instrs);
 
@@ -2457,6 +2458,7 @@ static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars
     vpush->_base.tag = FBLE_VPUSH_INSTR;
     FbleVectorAppend(arena_, *instrs, &vpush->_base);
     PushVar(arena_, vars, prgm->modules.xs[i].name, types[i]);
+    SetFrameIndex(arena_, vars, 0, &vpush->index, false);
   }
 
   FbleType* rtype = CompileExpr(arena, blocks, true, vars, prgm->main, instrs);
