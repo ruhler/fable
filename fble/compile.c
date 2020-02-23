@@ -25,10 +25,12 @@ typedef struct {
 // name - the name of the variable.
 // type - the type of the variable.
 // fixup - a record of frame indexes used to access the variable.
+// accessed - whether the variable has been read.
 typedef struct {
   FbleName name;
   FbleType* type;
   FrameIndexV fixup;
+  bool accessed;
 } Var;
 
 // Var --
@@ -227,6 +229,7 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type)
   }
   var->name = name;
   var->type = type;
+  var->accessed = false;
   vars->nvars++;
 }
 
@@ -470,8 +473,9 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
 {
   size_t scopec = 0;
   for (size_t i = 0; i < vars->nvars; ++i) {
-    if (thunk_vars->vars.xs[i].fixup.size > 0) {
+    if (thunk_vars->vars.xs[i].accessed) {
       // Copy the accessed var to the data stack for capturing.
+      vars->vars.xs[i].accessed = true;
       FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
       SetFrameIndex(arena, vars, vars->nvars - i - 1, &get_var->index);
@@ -1577,6 +1581,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         size_t j = vars->nvars - i - 1;
         Var* var = vars->vars.xs + j;
         if (FbleNamesEqual(&var_expr->var, &var->name)) {
+          var->accessed = true;
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
           SetFrameIndex(arena_, vars, i, &instr->index);
@@ -1698,7 +1703,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       // Check to see if this is a recursive let block.
       bool recursive = false;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || (vars->vars.xs[vi + i].fixup.size > 0);
+        recursive = recursive || (vars->vars.xs[vi + i].accessed);
       }
 
       // Apply the newly computed type values for variables whose types were
