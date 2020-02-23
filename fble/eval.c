@@ -851,7 +851,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_LINK_INSTR: {
-        // Allocate the link and push the ports on top of the data stack.
+        FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
+
         FbleLinkValue* port = FbleAlloc(arena_, FbleLinkValue);
         FbleRefInit(arena, &port->_base.ref);
         port->_base.tag = FBLE_LINK_VALUE;
@@ -870,8 +871,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
         FbleValueRelease(arena, &port->_base);
 
-        PushData(arena_, &put->_base._base, thread->scope_stack);
-        PushData(arena_, get, thread->scope_stack);
+        thread->scope_stack->vars.xs[link_instr->get_index] = get;
+        thread->scope_stack->vars.xs[link_instr->put_index] = &put->_base._base;
+        thread->scope_stack->vars.size += 2;
         break;
       }
 

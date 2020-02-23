@@ -1390,14 +1390,14 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &link->_base);
 
-      FbleVPushInstr* vpush_ports = FbleAlloc(arena_, FbleVPushInstr);
-      vpush_ports->_base.tag = FBLE_VPUSH_INSTR;
-      vpush_ports->count = 2;
-      FbleVectorAppend(arena_, instr->body->instrs, &vpush_ports->_base);
       PushVar(arena_, &thunk_vars, link_expr->get, &get_type->_base);
+      SetFrameIndex(arena_, &thunk_vars, 0, &link->get_index, false);
+
       PushVar(arena_, &thunk_vars, link_expr->put, &put_type->_base);
+      SetFrameIndex(arena_, &thunk_vars, 0, &link->put_index, false);
+
+      FbleVectorAppend(arena_, instr->body->instrs, &link->_base);
 
       FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, link_expr->body, &instr->body->instrs);
 

@@ -203,12 +203,14 @@ typedef struct {
 } FblePutInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
-//   Allocate a new link.
+//   Allocate a new link with get and put ports.
 //
-// data_stack: ...,
-//         ==> ..., put, get
+// *get_index = get;
+// *put_index = put;
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndex get_index;
+  FbleFrameIndex put_index;
 } FbleLinkInstr;
 
 // FbleForkInstr -- FBLE_FORK_INSTR
