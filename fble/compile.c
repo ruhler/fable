@@ -1475,6 +1475,55 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &vpush->_base);
 
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+
+        Vars bthunk_vars;
+        EnterThunk(arena_, &thunk_vars, &bthunk_vars);
+
+        FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
+        binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
+        binstr->body = NewInstrBlock(arena_);
+
+        EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->body->instrs);
+
+        FbleVPushInstr* bvpush = FbleAlloc(arena_, FbleVPushInstr);
+        bvpush->_base.tag = FBLE_VPUSH_INSTR;
+        FbleVectorAppend(arena_, binstr->body->instrs, &bvpush->_base);
+
+        FbleType* type = CompileExpr(arena, blocks, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->body->instrs);
+
+        FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
+        bproc->_base.tag = FBLE_PROC_INSTR;
+        bproc->exit = true;
+        FbleVectorAppend(arena_, binstr->body->instrs, &bproc->_base);
+        ExitBlock(arena_, blocks, NULL);
+
+        binstr->scopec = ExitThunk(arena_, &thunk_vars, &bthunk_vars, binstr->body, &instr->body->instrs);
+        bvpush->count = binstr->scopec;
+        FbleVectorAppend(arena_, instr->body->instrs, &binstr->_base);
+
+        error = error || (type == NULL);
+
+        if (type != NULL) {
+          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(arena, type);
+          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
+            if (nvd[i].type != NULL && !FbleTypesEqual(arena, nvd[i].type, proc_type->type)) {
+              error = true;
+              ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
+                  "expected type %t!, but found %t\n",
+                  nvd[i].type, type);
+            }
+          } else {
+            error = true;
+            ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
+                "expected process, but found expression of type %t\n",
+                type);
+          }
+          FbleTypeRelease(arena, &proc_type->_base);
+          FbleTypeRelease(arena, type);
+        }
+      }
+
       FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
       fork->argc = exec_expr->bindings.size;
@@ -1511,57 +1560,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      size_t captured = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
-      instr->scopec = captured + exec_expr->bindings.size;
-      vpush->count = captured;
+      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      vpush->count = instr->scopec;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-
-        Vars bthunk_vars;
-        EnterThunk(arena_, vars, &bthunk_vars);
-
-        FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
-        binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
-        binstr->body = NewInstrBlock(arena_);
-
-        EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->body->instrs);
-
-        FbleVPushInstr* bvpush = FbleAlloc(arena_, FbleVPushInstr);
-        bvpush->_base.tag = FBLE_VPUSH_INSTR;
-        FbleVectorAppend(arena_, binstr->body->instrs, &bvpush->_base);
-
-        FbleType* type = CompileExpr(arena, blocks, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->body->instrs);
-
-        FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
-        bproc->_base.tag = FBLE_PROC_INSTR;
-        bproc->exit = true;
-        FbleVectorAppend(arena_, binstr->body->instrs, &bproc->_base);
-        ExitBlock(arena_, blocks, NULL);
-
-        binstr->scopec = ExitThunk(arena_, vars, &bthunk_vars, binstr->body, instrs);
-        bvpush->count = binstr->scopec;
-        FbleVectorAppend(arena_, *instrs, &binstr->_base);
-
-        error = error || (type == NULL);
-
-        if (type != NULL) {
-          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(arena, type);
-          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
-            if (nvd[i].type != NULL && !FbleTypesEqual(arena, nvd[i].type, proc_type->type)) {
-              error = true;
-              ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
-                  "expected type %t!, but found %t\n",
-                  nvd[i].type, type);
-            }
-          } else {
-            error = true;
-            ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
-                "expected process, but found expression of type %t\n",
-                type);
-          }
-          FbleTypeRelease(arena, &proc_type->_base);
-          FbleTypeRelease(arena, type);
-        }
         FbleTypeRelease(arena, nvd[i].type);
       }
 

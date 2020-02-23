@@ -890,8 +890,15 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         assert(thread->children.size == 0);
         assert(thread->children.xs == NULL);
         FbleVectorInit(arena_, thread->children);
+
+        FbleValue* args[fork_instr->argc];
         for (size_t i = 0; i < fork_instr->argc; ++i) {
-          FbleValue* arg = PopData(arena_, thread->scope_stack);
+          size_t j = fork_instr->argc - i - 1;
+          args[j] = PopData(arena_, thread->scope_stack);
+        }
+
+        for (size_t i = 0; i < fork_instr->argc; ++i) {
+          FbleValue* arg = args[i];
           FbleValue** result = thread->scope_stack->vars.xs + thread->scope_stack->vars.size;
           thread->scope_stack->vars.size++;
 

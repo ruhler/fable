@@ -214,7 +214,7 @@ typedef struct {
 // FbleForkInstr -- FBLE_FORK_INSTR
 //   Fork child threads.
 //
-// data_stack: ..., bN, ..., b2, b1
+// data_stack: ..., b1, b2, ..., bN
 //         ==> ...
 //
 // children: _ ==> b1, b2, ... bN
