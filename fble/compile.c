@@ -468,7 +468,7 @@ static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
 //
 // Side effects:
 //   * Frees memory associated with thunk_vars.
-//   * Sets the varc field of the block based on number of vars actually used.
+//   * Sets the locals field of the block based on number of vars actually used.
 //   * Appends instructions to instrs to push captured variables to the data
 //     stack.
 //   * Updates thunk instructions to point to the captured variable frame
@@ -499,7 +499,7 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
       }
   }
 
-  block->varc = thunk_vars->vars.size - vars->nvars + scopec;
+  block->locals = thunk_vars->vars.size - vars->nvars + scopec;
   FreeVars(arena, thunk_vars);
   return scopec;
 }
@@ -520,7 +520,7 @@ static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
 {
   FbleInstrBlock* instr_block = FbleAlloc(arena, FbleInstrBlock);
   instr_block->refcount = 1;
-  instr_block->varc = 0;
+  instr_block->locals = 0;
   FbleVectorInit(arena, instr_block->instrs);
   return instr_block;
 }
@@ -2539,7 +2539,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   FbleFree(arena, block_stack.stack.xs);
   *blocks = block_stack.blocks;
 
-  block->varc = vars.vars.size;
+  block->locals = vars.vars.size;
   FreeVars(arena, &vars);
   if (type == NULL) {
     FbleFreeInstrBlock(arena, block);
