@@ -1,6 +1,7 @@
 Eval2:
 * Rename EnterScope, ChangeScope, and ExitScope to
   Call, TailCall, and Return.
+* Rename FbleDescopeInstr to something more meaningful.
 
 * Merge PushVar and SetFrameIndex in compile.c?
 * Start moving things from data stack to vars.

@@ -128,6 +128,8 @@ static FbleValue** AllocData(FbleArena* arena, Frame* frame);
 static FbleValue* PopData(FbleArena* arena, Frame* frame);
 static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* frame);
 
+static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
+
 static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* block, FbleValue** result, Stack* tail);
 static Stack* ExitScope(FbleValueArena* arena, Stack* stack);
 static Stack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Stack* stack);
@@ -355,6 +357,24 @@ static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* 
   FbleValueRetain(arena, value);
   FbleValueRelease(arena, original);
   return value;
+}
+
+// FrameGet --
+//   Get a value from the given frame.
+//
+// Inputs:
+//   frame - the frame to access the value from.
+//   index - the index of the value to access.
+//
+// Results:
+//   The value in the frame at the given index.
+//
+// Side effects:
+//   None.
+static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index)
+{
+  assert(index.section == FBLE_LOCALS_FRAME_SECTION);
+  return frame->locals[index.index];
 }
 
 // EnterScope --
@@ -733,7 +753,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       case FBLE_VAR_INSTR: {
         FbleVarInstr* var_instr = (FbleVarInstr*)instr;
         assert(thread->stack != NULL);
-        FbleValue* value = thread->stack->frame.locals[var_instr->index];
+        FbleValue* value = FrameGet(&thread->stack->frame, var_instr->index);
         PushData(arena_, FbleValueRetain(arena, value), &thread->stack->frame);
         break;
       }

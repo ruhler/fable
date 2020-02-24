@@ -12,12 +12,12 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// FrameIndexV --
-//   A vector of pointers to FbleFrameIndexes.
+// LocalIndexV --
+//   A vector of pointers to FbleLocalIndexes.
 typedef struct {
   size_t size;
-  FbleFrameIndex** xs;
-} FrameIndexV;
+  FbleLocalIndex** xs;
+} LocalIndexV;
 
 // Var --
 //   Information about a variable visible during type checking.
@@ -29,7 +29,7 @@ typedef struct {
 typedef struct {
   FbleName name;
   FbleType* type;
-  FrameIndexV fixup;
+  LocalIndexV fixup;
   bool used;
 } Var;
 
@@ -84,6 +84,7 @@ typedef struct {
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
 static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool use);
+static void SetLocalIndex(FbleArena* arena, Vars* vars, size_t position, FbleLocalIndex* dest, bool use);
 static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Vars* vars);
 static void FreeVars(FbleArena* arena, Vars* vars);
@@ -199,6 +200,32 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //   based on the final frame index for the variable. The pointer must remain
 //   valid for the duration of all fixups.
 static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool use)
+{
+  dest->section = FBLE_LOCALS_FRAME_SECTION;
+  SetLocalIndex(arena, vars, position, &dest->index, use);
+}
+
+// SetLocalIndex --
+//   Fill in the frame index for a variable.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   vars - the scope to get the variable from
+//   position - the position of the variable relative to the top of the scope.
+//              0 means the variable on top of the scope.
+//   dest - pointer for where to store the local index.
+//   use - true if this counts as a use of the variable.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Sets the value of dest to the frame index for the var at the given
+//   position in the scope. Records the frame index pointer for fixups at
+//   ExitThunk time, when the value pointed to by dest will be readjusted
+//   based on the final frame index for the variable. The pointer must remain
+//   valid for the duration of all fixups.
+static void SetLocalIndex(FbleArena* arena, Vars* vars, size_t position, FbleLocalIndex* dest, bool use)
 {
   assert(position < vars->nvars);
   *dest = vars->nvars - position - 1;
@@ -1403,10 +1430,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       link->_base.tag = FBLE_LINK_INSTR;
 
       PushVar(arena_, &thunk_vars, link_expr->get, &get_type->_base);
-      SetFrameIndex(arena_, &thunk_vars, 0, &link->get_index, false);
+      SetLocalIndex(arena_, &thunk_vars, 0, &link->get_index, false);
 
       PushVar(arena_, &thunk_vars, link_expr->put, &put_type->_base);
-      SetFrameIndex(arena_, &thunk_vars, 0, &link->put_index, false);
+      SetLocalIndex(arena_, &thunk_vars, 0, &link->put_index, false);
 
       FbleVectorAppend(arena_, instr->body->instrs, &link->_base);
 
@@ -1515,12 +1542,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
       FbleVectorAppend(arena_, instr->body->instrs, &fork->_base);
-      fork->args.xs = FbleArrayAlloc(arena_, FbleFrameIndex, exec_expr->bindings.size);
+      fork->args.xs = FbleArrayAlloc(arena_, FbleLocalIndex, exec_expr->bindings.size);
       fork->args.size = exec_expr->bindings.size;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         PushVar(arena_, &thunk_vars, nvd[i].name, nvd[i].type);
-        SetFrameIndex(arena_, &thunk_vars, 0, fork->args.xs + i, false);
+        SetLocalIndex(arena_, &thunk_vars, 0, fork->args.xs + i, false);
       }
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
@@ -1647,7 +1674,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         PushVar(arena_, vars, nvd[i].name, nvd[i].type);
         FbleRefValueInstr* ref_instr = FbleAlloc(arena_, FbleRefValueInstr);
         ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
-        SetFrameIndex(arena_, vars, 0, &ref_instr->index, false);
+        SetLocalIndex(arena_, vars, 0, &ref_instr->index, false);
         FbleVectorAppend(arena_, *instrs, &ref_instr->_base);
       }
 
@@ -1721,7 +1748,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
         FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
         ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-        SetFrameIndex(arena_, vars, i, &ref_def_instr->index, false);
+        SetLocalIndex(arena_, vars, i, &ref_def_instr->index, false);
         ref_def_instr->recursive = recursive;
         FbleVectorAppend(arena_, *instrs, &ref_def_instr->_base);
       }
@@ -1737,7 +1764,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          SetFrameIndex(arena_, vars, 0, &descope->index, false);
+          SetLocalIndex(arena_, vars, 0, &descope->index, false);
           FbleVectorAppend(arena_, *instrs, &descope->_base);
         }
         PopVar(arena_, vars);
@@ -1806,14 +1833,14 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       FbleVectorAppend(arena_, *instrs, &vpush->_base);
       PushVar(arena_, vars, poly->arg.name, &type_type->_base);
-      SetFrameIndex(arena_, vars, 0, &vpush->index, false);
+      SetLocalIndex(arena_, vars, 0, &vpush->index, false);
 
       FbleType* body = CompileExpr(arena, blocks, exit, vars, poly->body, instrs);
 
       if (!exit) {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
         descope->_base.tag = FBLE_DESCOPE_INSTR;
-        SetFrameIndex(arena_, vars, 0, &descope->index, false);
+        SetLocalIndex(arena_, vars, 0, &descope->index, false);
         FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
 
@@ -1954,13 +1981,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
       struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
       struct_import->loc = struct_import_expr->nspace->loc;
-      struct_import->fields.xs = FbleArrayAlloc(arena_, FbleFrameIndex, struct_type->fields.size);
+      struct_import->fields.xs = FbleArrayAlloc(arena_, FbleLocalIndex, struct_type->fields.size);
       struct_import->fields.size = struct_type->fields.size;
       FbleVectorAppend(arena_, *instrs, &struct_import->_base);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         PushVar(arena_, vars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
-        SetFrameIndex(arena_, vars, 0, struct_import->fields.xs + i, false);
+        SetLocalIndex(arena_, vars, 0, struct_import->fields.xs + i, false);
       }
 
       FbleType* rtype = CompileExpr(arena, blocks, exit, vars, struct_import_expr->body, instrs);
@@ -1969,7 +1996,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          SetFrameIndex(arena_, vars, 0, &descope->index, false);
+          SetLocalIndex(arena_, vars, 0, &descope->index, false);
           FbleVectorAppend(arena_, *instrs, &descope->_base);
         }
         PopVar(arena_, vars);
@@ -2475,7 +2502,7 @@ static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars
     vpush->_base.tag = FBLE_VPUSH_INSTR;
     FbleVectorAppend(arena_, *instrs, &vpush->_base);
     PushVar(arena_, vars, prgm->modules.xs[i].name, types[i]);
-    SetFrameIndex(arena_, vars, 0, &vpush->index, false);
+    SetLocalIndex(arena_, vars, 0, &vpush->index, false);
   }
 
   FbleType* rtype = CompileExpr(arena, blocks, true, vars, prgm->main, instrs);

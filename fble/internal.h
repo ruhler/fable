@@ -8,15 +8,28 @@
 #include "fble.h"
 #include "ref.h"
 
+// FbleFrameSection --
+//   Which section of a frame a value can be found in.
+typedef enum {
+  FBLE_LOCALS_FRAME_SECTION,
+} FbleFrameSection;
+
 // FbleFrameIndex --
 //   The position of a value in a stack frame.
-typedef size_t FbleFrameIndex;
+typedef struct {
+  FbleFrameSection section;
+  size_t index;
+} FbleFrameIndex;
 
-// FbleFrameIndexV -- A vector of FbleFrameIndex.
+// FbleLocalIndex --
+//   The position of a value in the locals section of a stack frame.
+typedef size_t FbleLocalIndex;
+
+// FbleLocalIndexV -- A vector of FbleLocalIndex.
 typedef struct {
   size_t size;
-  FbleFrameIndex* xs;
-} FbleFrameIndexV;
+  FbleLocalIndex* xs;
+} FbleLocalIndexV;
 
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
@@ -146,19 +159,10 @@ typedef struct {
 } FbleFuncValueInstr;
 
 // FbleDescopeInstr -- FBLE_DESCOPE_INSTR
-//   Pop and release a value from the top of the variable stack, which should
-//   match the given frame index.
-//
-// TODO: When we no longer need to keep track of the top of the variable
-// stack, remove the 'pop' part of this instruction and just free the variable
-// at the given index. And then rename this instruction to something more
-// relevant.
-//
-// vstack: ..., v
-//     ==> ...,
+//   Release and remove a value from the locals section of the stack frame.
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndex index;
+  FbleLocalIndex index;
 } FbleDescopeInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
@@ -215,8 +219,8 @@ typedef struct {
 // *put_index = put;
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndex get_index;
-  FbleFrameIndex put_index;
+  FbleLocalIndex get_index;
+  FbleLocalIndex put_index;
 } FbleLinkInstr;
 
 // FbleForkInstr -- FBLE_FORK_INSTR
@@ -228,7 +232,7 @@ typedef struct {
 // children: _ ==> b1, b2, ... bN
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndexV args;
+  FbleLocalIndexV args;
 } FbleForkInstr;
 
 // FbleJoinInstr -- FBLE_JOIN_INSTR
@@ -251,9 +255,7 @@ typedef struct {
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
-// vstack: ..., v[2], v[1], v[0]
-// data_stack: ...,
-//         ==> ..., v[index]
+//   Copy a value in the stack frame to the top of the data stack.
 typedef struct {
   FbleInstr _base;
   FbleFrameIndex index;
@@ -267,17 +269,12 @@ typedef struct {
 } FbleVarInstrV;
 
 // FbleRefValueInstr -- FBLE_REF_VALUE_INSTR
-//   Allocate a ref value and push it on the variable stack. The top of the
-//   variable stack should match the given frame index.
+//   Allocate a ref value and store the result in index.
 //
-// TODO: When we no longer need to keep track of the top of the variable
-// stack, remove the 'push' part of this instruction.
-//
-// vstack: ...
-//     ==> ..., r
+// *index = new ref
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndex index;
+  FbleLocalIndex index;
 } FbleRefValueInstr;
 
 // FbleRefDefInstr -- FBLE_REF_DEF_INSTR
@@ -295,7 +292,7 @@ typedef struct {
 // cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndex index;
+  FbleLocalIndex index;
   bool recursive;
 } FbleRefDefInstr;
 
@@ -311,7 +308,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
-  FbleFrameIndexV fields;
+  FbleLocalIndexV fields;
 } FbleStructImportInstr;
 
 // FbleExitScopeInstr -- FBLE_EXIT_SCOPE_INSTR
@@ -331,16 +328,12 @@ typedef struct {
 }  FbleTypeInstr;
 
 // FbleVPushInstr -- FBLE_VPUSH_INSTR
-// data_stack: ..., v
-//         ==> ...
-//
-// vstack: ...,
-//     ==> ..., v
-//
+//   Move a value from the data stack to the locals section of the stack
+//   frame.
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndex index;
-}  FbleVPushInstr;
+  FbleLocalIndex index;
+} FbleVPushInstr;
 
 // FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR
 // 
