@@ -79,6 +79,7 @@ typedef struct {
 //   A reference counted block of instructions.
 typedef struct {
   size_t refcount;
+  size_t statics;     // The number of statics used by this frame.
   size_t locals;      // The number of locals required by this stack frame.
   FbleInstrV instrs;
 } FbleInstrBlock;
@@ -153,7 +154,6 @@ typedef struct {
 //          remove the context of its scope and arguments.
 typedef struct {
   FbleInstr _base;
-  size_t scopec;
   size_t argc;
   FbleInstrBlock* body;
 } FbleFuncValueInstr;
@@ -190,7 +190,6 @@ typedef struct {
 //         ==> ..., proc(v1, v2, ..., vN, body)
 typedef struct {
   FbleInstr _base;
-  size_t scopec;
   FbleInstrBlock* body;
 } FbleProcValueInstr;
 

@@ -95,7 +95,7 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
 static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars);
-static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrBlock* block, FbleInstrV* instrs);
+static void ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrBlock* block, FbleInstrV* instrs);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
@@ -491,16 +491,17 @@ static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
 //   instrs - vector of instructions to append new instructions to.
 //
 // Results:
-//   The number of variables used by the thunk.
+//   None.
 //
 // Side effects:
 //   * Frees memory associated with thunk_vars.
-//   * Sets the locals field of the block based on number of vars actually used.
+//   * Sets the statics and locals fields of the block based on number of vars
+//     actually used.
 //   * Appends instructions to instrs to push captured variables to the data
 //     stack.
 //   * Updates thunk instructions to point to the captured variable frame
 //     indicies instead of the original variable frame indicies.
-static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrBlock* block, FbleInstrV* instrs)
+static void ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrBlock* block, FbleInstrV* instrs)
 {
   size_t scopec = 0;
   for (size_t i = 0; i < vars->nvars; ++i) {
@@ -526,9 +527,9 @@ static size_t ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInst
       }
   }
 
+  block->statics = scopec;
   block->locals = thunk_vars->vars.size - vars->nvars + scopec;
   FreeVars(arena, thunk_vars);
-  return scopec;
 }
 
 // NewInstrBlock --
@@ -547,6 +548,7 @@ static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
 {
   FbleInstrBlock* instr_block = FbleAlloc(arena, FbleInstrBlock);
   instr_block->refcount = 1;
+  instr_block->statics = 0;
   instr_block->locals = 0;
   FbleVectorInit(arena, instr_block->instrs);
   return instr_block;
@@ -1300,11 +1302,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
 
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
-      AddBlockTime(blocks, instr->scopec);
+      AddBlockTime(blocks, instr->body->statics);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
       CompileExit(arena_, exit, instrs);
@@ -1348,7 +1350,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       CompileExit(arena_, true, &instr->body->instrs);
       ExitBlock(arena_, blocks, NULL);
 
-      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1445,7 +1447,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1514,7 +1516,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         FbleVectorAppend(arena_, binstr->body->instrs, &bproc->_base);
         ExitBlock(arena_, blocks, NULL);
 
-        binstr->scopec = ExitThunk(arena_, &thunk_vars, &bthunk_vars, binstr->body, &instr->body->instrs);
+        ExitThunk(arena_, &thunk_vars, &bthunk_vars, binstr->body, &instr->body->instrs);
         FbleVectorAppend(arena_, instr->body->instrs, &binstr->_base);
 
         error = error || (type == NULL);
@@ -1578,7 +1580,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      instr->scopec = ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleTypeRelease(arena, nvd[i].type);

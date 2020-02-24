@@ -101,6 +101,7 @@ static FbleInstr* g_proc_block_instrs[] = {
 };
 static FbleInstrBlock g_proc_block = {
   .refcount = 1,
+  .statics = 0,
   .locals = 0,
   .instrs = { .size = 2, .xs = g_proc_block_instrs }
 };
@@ -114,7 +115,8 @@ static FbleInstr* g_put_block_instrs[] = {
 };
 static FbleInstrBlock g_put_block = {
   .refcount = 1,
-  .locals = 2,  // port, arg
+  .statics = 2,  // port, arg
+  .locals = 2,   // port, arg
   .instrs = { .size = 3, .xs = g_put_block_instrs }
 };
 
@@ -633,7 +635,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         FbleVectorInit(arena_, value->scope);
         value->body = func_value_instr->body;
         value->body->refcount++;
-        CaptureScope(arena, &thread->stack->frame, func_value_instr->scopec, &value->_base._base, &value->scope);
+        CaptureScope(arena, &thread->stack->frame, func_value_instr->body->statics, &value->_base._base, &value->scope);
         PushData(arena_, &value->_base._base, &thread->stack->frame);
         break;
       }
@@ -747,7 +749,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         FbleVectorInit(arena_, value->scope);
         value->body = proc_value_instr->body;
         value->body->refcount++;
-        CaptureScope(arena, &thread->stack->frame, proc_value_instr->scopec, &value->_base, &value->scope);
+        CaptureScope(arena, &thread->stack->frame, proc_value_instr->body->statics, &value->_base, &value->scope);
         PushData(arena_, &value->_base, &thread->stack->frame);
         break;
       }
@@ -1236,7 +1238,7 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
     .exit = true
   };
   FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
-  FbleInstrBlock code = { .refcount = 2, .locals = 0, .instrs = { .size = 2, .xs = instrs } };
+  FbleInstrBlock code = { .refcount = 2, .statics = 0, .locals = 0, .instrs = { .size = 2, .xs = instrs } };
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
   FbleValue* xs[2];

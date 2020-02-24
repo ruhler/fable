@@ -22,7 +22,8 @@ static FbleInstr* g_get_block_instrs[] = {
 };
 static FbleInstrBlock g_get_block = {
   .refcount = 1,
-  .locals = 1,  // port
+  .statics = 1,  // port
+  .locals = 1,   // port
   .instrs = { .size = 3, .xs = g_get_block_instrs }
 };
 
