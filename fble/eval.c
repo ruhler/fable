@@ -38,16 +38,16 @@ typedef struct DataStack {
 //
 // Fields:
 //   locals - Space allocated for local variables.
-//      Has length block->locals values. Takes ownership of all non-NULL
+//      Has length code->locals values. Takes ownership of all non-NULL
 //      entries.
 //   data - Stack of temporary values.
-//   instrs - The currently executing instruction block.
-//   pc - The location of the next instruction in the current block to execute.
+//   code - The currently executing instruction block.
+//   pc - The location of the next instruction in the code to execute.
 //   result - Where to store the result when exiting the scope.
 typedef struct {
   FbleValue** locals;
   DataStack* data;
-  FbleInstrBlock* block;
+  FbleInstrBlock* code;
   size_t pc;
   FbleValue** result;
 } Frame;
@@ -130,16 +130,16 @@ static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* 
 
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
 
-static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* block, FbleValue** result, Stack* tail);
+static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* code, FbleValue** result, Stack* tail);
 static Stack* ExitScope(FbleValueArena* arena, Stack* stack);
-static Stack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Stack* stack);
+static Stack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* code, Stack* stack);
 
 static void CaptureScope(FbleValueArena* arena, Frame* frame, size_t scopec, FbleValue* value, FbleValueV* dst);
 
 static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, Thread* thread);
 static void AbortThread(FbleValueArena* arena, Thread* thread);
 static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, Thread* thread);
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, FbleValueV args, FbleProfile* profile);
 
 static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 
@@ -382,7 +382,7 @@ static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index)
 //
 // Inputs:
 //   arena - the arena to use for allocations
-//   block - the block of instructions to push
+//   code - the block of instructions to push
 //   result - the return address.
 //   tail - the stack to push to
 //
@@ -391,16 +391,16 @@ static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index)
 //
 // Side effects:
 //   Allocates new Stack instances that should be freed with ExitScope when done.
-static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* block, FbleValue** result, Stack* tail)
+static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* code, FbleValue** result, Stack* tail)
 {
-  block->refcount++;
+  code->refcount++;
 
   Stack* stack = FbleAlloc(arena, Stack);
-  stack->frame.locals = FbleArrayAlloc(arena, FbleValue*, block->locals);
-  memset(stack->frame.locals, 0, block->locals * sizeof(FbleValue*));
+  stack->frame.locals = FbleArrayAlloc(arena, FbleValue*, code->locals);
+  memset(stack->frame.locals, 0, code->locals * sizeof(FbleValue*));
 
   InitDataStack(arena, &stack->frame);
-  stack->frame.block = block;
+  stack->frame.code = code;
   stack->frame.pc = 0;
   stack->frame.result = result;
   stack->tail = tail;
@@ -426,12 +426,12 @@ static Stack* ExitScope(FbleValueArena* arena, Stack* stack)
   *stack->frame.result = PopData(arena_, &stack->frame);
   FreeDataStack(arena_, &stack->frame);
 
-  for (size_t i = 0; i < stack->frame.block->locals; ++i) {
+  for (size_t i = 0; i < stack->frame.code->locals; ++i) {
     FbleValueRelease(arena, stack->frame.locals[i]);
   }
 
   FbleFree(arena_, stack->frame.locals);
-  FbleFreeInstrBlock(arena_, stack->frame.block);
+  FbleFreeInstrBlock(arena_, stack->frame.code);
 
   Stack* tail = stack->tail;
   FbleFree(arena_, stack);
@@ -443,7 +443,7 @@ static Stack* ExitScope(FbleValueArena* arena, Stack* stack)
 //
 // Inputs:
 //   arena - the arena to use for allocations
-//   block - the block of instructions for the new scope.
+//   code - the block of instructions for the new scope.
 //   tail - the stack to change.
 //
 // Result:
@@ -453,27 +453,27 @@ static Stack* ExitScope(FbleValueArena* arena, Stack* stack)
 //   Allocates new Stack instances that should be freed with ExitScope when done.
 //   Exits the current scope, which potentially frees any instructions
 //   belonging to that scope.
-static Stack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* block, Stack* stack)
+static Stack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* code, Stack* stack)
 {
   // It's the callers responsibility to ensure the data stack is empty when
   // changing scopes.
   assert(DataStackIsEmpty(&stack->frame));
 
-  block->refcount++;
+  code->refcount++;
 
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  for (size_t i = 0; i < stack->frame.block->locals; ++i) {
+  for (size_t i = 0; i < stack->frame.code->locals; ++i) {
     FbleValueRelease(arena, stack->frame.locals[i]);
   }
 
-  if (block->locals > stack->frame.block->locals) {
+  if (code->locals > stack->frame.code->locals) {
     FbleFree(arena_, stack->frame.locals);
-    stack->frame.locals = FbleArrayAlloc(arena_, FbleValue*, block->locals);
+    stack->frame.locals = FbleArrayAlloc(arena_, FbleValue*, code->locals);
   }
-  memset(stack->frame.locals, 0, block->locals * sizeof(FbleValue*));
+  memset(stack->frame.locals, 0, code->locals * sizeof(FbleValue*));
 
-  FbleFreeInstrBlock(arena_, stack->frame.block);
-  stack->frame.block = block;
+  FbleFreeInstrBlock(arena_, stack->frame.code);
+  stack->frame.code = code;
   stack->frame.pc = 0;
   return stack;
 }
@@ -540,8 +540,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
   FbleArena* arena_ = FbleRefArenaArena(arena);
   bool progress = false;
   for (size_t i = 0; i < TIME_SLICE && thread->stack != NULL; ++i) {
-    assert(thread->stack->frame.pc < thread->stack->frame.block->instrs.size);
-    FbleInstr* instr = thread->stack->frame.block->instrs.xs[thread->stack->frame.pc++];
+    assert(thread->stack->frame.pc < thread->stack->frame.code->instrs.size);
+    FbleInstr* instr = thread->stack->frame.code->instrs.xs[thread->stack->frame.pc++];
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
@@ -1148,12 +1148,12 @@ static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, 
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* prgm, FbleValueV args, FbleProfile* profile)
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, FbleValueV args, FbleProfile* profile)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   FbleValue* final_result = NULL;
   Thread thread = {
-    .stack = EnterScope(arena_, prgm, &final_result, NULL),
+    .stack = EnterScope(arena_, code, &final_result, NULL),
     .children = {0, NULL},
     .aborted = false,
     .profile = FbleNewProfileThread(arena_, profile),
@@ -1234,14 +1234,14 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
     .exit = true
   };
   FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
-  FbleInstrBlock block = { .refcount = 2, .locals = 0, .instrs = { .size = 2, .xs = instrs } };
+  FbleInstrBlock code = { .refcount = 2, .locals = 0, .instrs = { .size = 2, .xs = instrs } };
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
   FbleValue* xs[2];
   xs[0] = arg;
   xs[1] = func;
   FbleValueV eval_args = { .size = 2, .xs = xs };
-  FbleValue* result = Eval(arena, &io, &block, eval_args, profile);
+  FbleValue* result = Eval(arena, &io, &code, eval_args, profile);
   FbleValueRelease(arena, func);
   return result;
 }
