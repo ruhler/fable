@@ -1,9 +1,14 @@
 Eval2:
+* Rename EnterScope, ChangeScope, and ExitScope to
+  Call, TailCall, and Return.
+
 * Merge PushVar and SetFrameIndex in compile.c?
 * Start moving things from data stack to vars.
  - Use VPUSH if needed to get it to a var.
  - Add explicit source and target locations to instructions.
 * Delete unused data stack.
+* Rename ScopeStack vars to locals
+* Rename ScopeStack to Stack
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?
 
