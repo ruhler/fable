@@ -130,9 +130,9 @@ static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* 
 
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
 
-static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* code, FbleValue** result, Stack* tail);
-static Stack* ExitScope(FbleValueArena* arena, Stack* stack);
-static Stack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* code, Stack* stack);
+static Stack* PushFrame(FbleArena* arena, FbleInstrBlock* code, FbleValue** result, Stack* tail);
+static Stack* PopFrame(FbleValueArena* arena, Stack* stack);
+static Stack* ReplaceFrame(FbleValueArena* arena, FbleInstrBlock* code, Stack* stack);
 
 static void CaptureScope(FbleValueArena* arena, Frame* frame, size_t scopec, FbleValue* value, FbleValueV* dst);
 
@@ -377,8 +377,8 @@ static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index)
   return frame->locals[index.index];
 }
 
-// EnterScope --
-//   Push a scope onto the scope stack.
+// PushFrame --
+//   Push a frame onto the execution stack.
 //
 // Inputs:
 //   arena - the arena to use for allocations
@@ -390,8 +390,8 @@ static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index)
 //   The stack with new pushed scope.
 //
 // Side effects:
-//   Allocates new Stack instances that should be freed with ExitScope when done.
-static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* code, FbleValue** result, Stack* tail)
+//   Allocates new Stack instances that should be freed with PopFrame when done.
+static Stack* PushFrame(FbleArena* arena, FbleInstrBlock* code, FbleValue** result, Stack* tail)
 {
   code->refcount++;
 
@@ -407,8 +407,8 @@ static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* code, FbleValue** res
   return stack;
 }
 
-// ExitScope --
-//   Pop a scope off the scope stack.
+// PopFrame --
+//   Pop a frame off the execution stack.
 //
 // Inputs:
 //   arena - the arena to use for deallocation
@@ -418,8 +418,10 @@ static Stack* EnterScope(FbleArena* arena, FbleInstrBlock* code, FbleValue** res
 //   The popped stack.
 //
 // Side effects:
-//   Releases any remaining variables on the top scope and frees the top scope.
-static Stack* ExitScope(FbleValueArena* arena, Stack* stack)
+//   There should be exactly one value remaining on the data stack of the
+//   frame; that value is written to the 'result' field of the frame.
+//   Releases any remaining variables on the frame and frees the frame.
+static Stack* PopFrame(FbleValueArena* arena, Stack* stack)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
@@ -438,8 +440,8 @@ static Stack* ExitScope(FbleValueArena* arena, Stack* stack)
   return tail;
 }
 
-// ChangeScope --
-//   Exit the current scope and enter a new one.
+// ReplaceFrame --
+//   Replace the current frame with a new one.
 //
 // Inputs:
 //   arena - the arena to use for allocations
@@ -447,13 +449,13 @@ static Stack* ExitScope(FbleValueArena* arena, Stack* stack)
 //   tail - the stack to change.
 //
 // Result:
-//   The stack with new scope.
+//   The stack with new frame.
 //
 // Side effects:
-//   Allocates new Stack instances that should be freed with ExitScope when done.
-//   Exits the current scope, which potentially frees any instructions
-//   belonging to that scope.
-static Stack* ChangeScope(FbleValueArena* arena, FbleInstrBlock* code, Stack* stack)
+//   Allocates new Stack instances that should be freed with PopFrame when done.
+//   Exits the current frame, which potentially frees any instructions
+//   belonging to that frame.
+static Stack* ReplaceFrame(FbleValueArena* arena, FbleInstrBlock* code, Stack* stack)
 {
   // It's the callers responsibility to ensure the data stack is empty when
   // changing scopes.
@@ -669,7 +671,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           PushData(arena_, &value->_base._base, &thread->stack->frame);
 
           if (func_apply_instr->exit) {
-            thread->stack = ExitScope(arena, thread->stack);
+            thread->stack = PopFrame(arena, thread->stack);
             FbleProfileExitBlock(arena_, thread->profile);
           }
         } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
@@ -693,7 +695,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
           PushData(arena_, &value->_base, &thread->stack->frame);
           if (func_apply_instr->exit) {
-            thread->stack = ExitScope(arena, thread->stack);
+            thread->stack = PopFrame(arena, thread->stack);
             FbleProfileExitBlock(arena_, thread->profile);
           }
         } else {
@@ -713,13 +715,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           assert(f->tag == FBLE_BASIC_FUNC_VALUE);
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)f;
           if (func_apply_instr->exit) {
-            thread->stack = ChangeScope(arena, basic->body, thread->stack);
+            thread->stack = ReplaceFrame(arena, basic->body, thread->stack);
             FbleProfileAutoExitBlock(arena_, thread->profile);
           } else {
             // Allocate a spot on the data stack for the result of the
             // function.
             FbleValue** result = AllocData(arena_, &thread->stack->frame);
-            thread->stack = EnterScope(arena_, basic->body, result, thread->stack);
+            thread->stack = PushFrame(arena_, basic->body, result, thread->stack);
           }
 
           // Initialize the stack frame with captured variables and function
@@ -891,7 +893,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           FbleValue** result = thread->stack->frame.locals + fork_instr->args.xs[i];
 
           Thread* child = FbleAlloc(arena_, Thread);
-          child->stack = EnterScope(arena_, &g_proc_block, result, NULL);
+          child->stack = PushFrame(arena_, &g_proc_block, result, NULL);
           PushData(arena_, arg, &child->stack->frame); // Takes ownership of arg
           child->aborted = false;
           child->children.size = 0;
@@ -942,11 +944,11 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         assert(proc != NULL && "undefined proc value");
 
         if (proc_instr->exit) {
-          thread->stack = ChangeScope(arena, proc->body, thread->stack);
+          thread->stack = ReplaceFrame(arena, proc->body, thread->stack);
           FbleProfileAutoExitBlock(arena_, thread->profile);
         } else {
           FbleValue** result = AllocData(arena_, &thread->stack->frame);
-          thread->stack = EnterScope(arena_, proc->body, result, thread->stack);
+          thread->stack = PushFrame(arena_, proc->body, result, thread->stack);
         }
 
         // Initialize the stack frame with captured variables.
@@ -1002,7 +1004,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_EXIT_SCOPE_INSTR: {
-        thread->stack = ExitScope(arena, thread->stack);
+        thread->stack = PopFrame(arena, thread->stack);
         FbleProfileExitBlock(arena_, thread->profile);
         break;
       }
@@ -1079,11 +1081,11 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
       }
     }
 
-    // ExitScope expects a value to be allocated on the DataStack, but we've
+    // PopFrame expects a value to be allocated on the DataStack, but we've
     // just emptied the data stack. Push a dummy value so it gets what it
     // wants. TODO: This feels hacky. Any nicer way around this?
     PushData(arena_, NULL, &thread->stack->frame);
-    thread->stack = ExitScope(arena, thread->stack);
+    thread->stack = PopFrame(arena, thread->stack);
   }
 
   if (thread->profile != NULL) {
@@ -1153,7 +1155,7 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, 
   FbleArena* arena_ = FbleRefArenaArena(arena);
   FbleValue* final_result = NULL;
   Thread thread = {
-    .stack = EnterScope(arena_, code, &final_result, NULL),
+    .stack = PushFrame(arena_, code, &final_result, NULL),
     .children = {0, NULL},
     .aborted = false,
     .profile = FbleNewProfileThread(arena_, profile),
