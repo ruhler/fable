@@ -149,13 +149,13 @@ typedef struct {
 // Fields:
 //   scopec - The number of values to capture from the top of the data stack.
 //   argc - The number of arguments to the function.
-//   body - A block of instructions that will execute the body of the function
+//   code - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should
 //          remove the context of its scope and arguments.
 typedef struct {
   FbleInstr _base;
   size_t argc;
-  FbleInstrBlock* body;
+  FbleInstrBlock* code;
 } FbleFuncValueInstr;
 
 // FbleDescopeInstr -- FBLE_DESCOPE_INSTR
@@ -182,15 +182,15 @@ typedef struct {
 // Fields:
 //   scopec - The number of variables from the scope to capture from the top
 //   of the data stack.
-//   body - A block of instructions that will execute in the context of the
+//   code - A block of instructions that will execute in the context of the
 //          captured scope. The instruction should remove the context of its
 //          scope.
 //
 // data_stack: ..., vN, , ..., v2, v1
-//         ==> ..., proc(v1, v2, ..., vN, body)
+//         ==> ..., proc(v1, v2, ..., vN, code)
 typedef struct {
   FbleInstr _base;
-  FbleInstrBlock* body;
+  FbleInstrBlock* code;
 } FbleProcValueInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR
@@ -458,7 +458,7 @@ typedef struct {
 typedef struct {
   FbleFuncValue _base;
   FbleValueV scope;
-  FbleInstrBlock* body;
+  FbleInstrBlock* code;
 } FbleBasicFuncValue;
 
 // FbleThunkFuncValue -- FBLE_THUNK_FUNC_VALUE
@@ -484,7 +484,7 @@ typedef struct {
 typedef struct {
   FbleValue _base;
   FbleValueV scope;
-  FbleInstrBlock* body;
+  FbleInstrBlock* code;
 } FbleProcValue;
 
 // FbleValues --

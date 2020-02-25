@@ -605,7 +605,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-      FbleFreeInstrBlock(arena, func_value_instr->body);
+      FbleFreeInstrBlock(arena, func_value_instr->code);
       FbleFree(arena, func_value_instr);
       return;
     }
@@ -619,7 +619,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_PROC_VALUE_INSTR: {
       FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-      FbleFreeInstrBlock(arena, proc_value_instr->body);
+      FbleFreeInstrBlock(arena, proc_value_instr->code);
       FbleFree(arena, proc_value_instr);
       return;
     }
@@ -1279,10 +1279,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleFuncValueInstr* instr = FbleAlloc(arena_, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_);
+      instr->code = NewInstrBlock(arena_);
       instr->argc = argc;
 
-      EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &instr->body->instrs);
+      EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &instr->code->instrs);
 
       Vars thunk_vars;
       EnterThunk(arena_, vars, &thunk_vars);
@@ -1291,7 +1291,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         PushVar(arena_, &thunk_vars, func_value_expr->args.xs[i].name, arg_types[i]);
       }
 
-      FbleType* type = CompileExpr(arena, blocks, true, &thunk_vars, func_value_expr->body, &instr->body->instrs);
+      FbleType* type = CompileExpr(arena, blocks, true, &thunk_vars, func_value_expr->body, &instr->code->instrs);
       ExitBlock(arena_, blocks, NULL);
       if (type == NULL) {
         FreeVars(arena_, &thunk_vars);
@@ -1302,11 +1302,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
 
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
-      AddBlockTime(blocks, instr->body->statics);
+      AddBlockTime(blocks, instr->code->statics);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
 
       CompileExit(arena_, exit, instrs);
@@ -1341,16 +1341,16 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_);
+      instr->code = NewInstrBlock(arena_);
 
-      EnterBodyBlock(arena_, blocks, expr->loc, &instr->body->instrs);
+      EnterBodyBlock(arena_, blocks, expr->loc, &instr->code->instrs);
 
-      FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, eval_expr->body, &instr->body->instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, eval_expr->body, &instr->code->instrs);
 
-      CompileExit(arena_, true, &instr->body->instrs);
+      CompileExit(arena_, true, &instr->code->instrs);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1424,9 +1424,9 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_);
+      instr->code = NewInstrBlock(arena_);
 
-      EnterBodyBlock(arena_, blocks, link_expr->body->loc, &instr->body->instrs);
+      EnterBodyBlock(arena_, blocks, link_expr->body->loc, &instr->code->instrs);
 
       FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
@@ -1437,17 +1437,17 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       PushVar(arena_, &thunk_vars, link_expr->put, &put_type->_base);
       SetLocalIndex(arena_, &thunk_vars, 0, &link->put_index, false);
 
-      FbleVectorAppend(arena_, instr->body->instrs, &link->_base);
+      FbleVectorAppend(arena_, instr->code->instrs, &link->_base);
 
-      FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, link_expr->body, &instr->body->instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, link_expr->body, &instr->code->instrs);
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->exit = true;
-      FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
+      FbleVectorAppend(arena_, instr->code->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1492,9 +1492,9 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->body = NewInstrBlock(arena_);
+      instr->code = NewInstrBlock(arena_);
 
-      EnterBodyBlock(arena_, blocks, exec_expr->body->loc, &instr->body->instrs);
+      EnterBodyBlock(arena_, blocks, exec_expr->body->loc, &instr->code->instrs);
 
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
@@ -1504,20 +1504,20 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
         FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
         binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
-        binstr->body = NewInstrBlock(arena_);
+        binstr->code = NewInstrBlock(arena_);
 
-        EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->body->instrs);
+        EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->code->instrs);
 
-        FbleType* type = CompileExpr(arena, blocks, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->body->instrs);
+        FbleType* type = CompileExpr(arena, blocks, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->code->instrs);
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
         bproc->exit = true;
-        FbleVectorAppend(arena_, binstr->body->instrs, &bproc->_base);
+        FbleVectorAppend(arena_, binstr->code->instrs, &bproc->_base);
         ExitBlock(arena_, blocks, NULL);
 
-        ExitThunk(arena_, &thunk_vars, &bthunk_vars, binstr->body, &instr->body->instrs);
-        FbleVectorAppend(arena_, instr->body->instrs, &binstr->_base);
+        ExitThunk(arena_, &thunk_vars, &bthunk_vars, binstr->code, &instr->code->instrs);
+        FbleVectorAppend(arena_, instr->code->instrs, &binstr->_base);
 
         error = error || (type == NULL);
 
@@ -1543,7 +1543,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &fork->_base);
+      FbleVectorAppend(arena_, instr->code->instrs, &fork->_base);
       fork->args.xs = FbleArrayAlloc(arena_, FbleLocalIndex, exec_expr->bindings.size);
       fork->args.size = exec_expr->bindings.size;
 
@@ -1554,12 +1554,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
       join->_base.tag = FBLE_JOIN_INSTR;
-      FbleVectorAppend(arena_, instr->body->instrs, &join->_base);
+      FbleVectorAppend(arena_, instr->code->instrs, &join->_base);
 
 
       FbleType* rtype = NULL;
       if (!error) {
-        rtype = CompileExpr(arena, blocks, false, &thunk_vars, exec_expr->body, &instr->body->instrs);
+        rtype = CompileExpr(arena, blocks, false, &thunk_vars, exec_expr->body, &instr->code->instrs);
         error = (rtype == NULL);
       }
 
@@ -1577,10 +1577,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->exit = true;
-      FbleVectorAppend(arena_, instr->body->instrs, &proc->_base);
+      FbleVectorAppend(arena_, instr->code->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->body, instrs);
+      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleTypeRelease(arena, nvd[i].type);

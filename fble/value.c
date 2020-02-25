@@ -86,7 +86,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
         case FBLE_BASIC_FUNC_VALUE: {
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
           FbleFree(arena_, basic->scope.xs);
-          FbleFreeInstrBlock(arena_, basic->body);
+          FbleFreeInstrBlock(arena_, basic->code);
           break;
         }
 
@@ -100,7 +100,7 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
     case FBLE_PROC_VALUE: {
       FbleProcValue* v = (FbleProcValue*)value;
       FbleFree(arena_, v->scope.xs);
-      FbleFreeInstrBlock(arena_, v->body);
+      FbleFreeInstrBlock(arena_, v->code);
       FbleFree(arena_, value);
       return;
     }
@@ -309,8 +309,8 @@ FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port)
   FbleVectorInit(arena_, get->scope);
   FbleVectorAppend(arena_, get->scope, port);
   FbleRefAdd(arena, &get->_base.ref, &port->ref);
-  get->body = &g_get_block;
-  get->body->refcount++;
+  get->code = &g_get_block;
+  get->code->refcount++;
   return &get->_base;
 }
 

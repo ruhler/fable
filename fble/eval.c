@@ -633,9 +633,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         value->_base.tag = FBLE_BASIC_FUNC_VALUE;
         value->_base.argc = func_value_instr->argc;
         FbleVectorInit(arena_, value->scope);
-        value->body = func_value_instr->body;
-        value->body->refcount++;
-        CaptureScope(arena, &thread->stack->frame, func_value_instr->body->statics, &value->_base._base, &value->scope);
+        value->code = func_value_instr->code;
+        value->code->refcount++;
+        CaptureScope(arena, &thread->stack->frame, func_value_instr->code->statics, &value->_base._base, &value->scope);
         PushData(arena_, &value->_base._base, &thread->stack->frame);
         break;
       }
@@ -692,8 +692,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           Add(arena, &value->_base, arg);
           FbleValueRelease(arena, arg);
 
-          value->body = &g_put_block;
-          value->body->refcount++;
+          value->code = &g_put_block;
+          value->code->refcount++;
 
           PushData(arena_, &value->_base, &thread->stack->frame);
           if (func_apply_instr->exit) {
@@ -717,13 +717,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           assert(f->tag == FBLE_BASIC_FUNC_VALUE);
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)f;
           if (func_apply_instr->exit) {
-            thread->stack = ReplaceFrame(arena, basic->body, thread->stack);
+            thread->stack = ReplaceFrame(arena, basic->code, thread->stack);
             FbleProfileAutoExitBlock(arena_, thread->profile);
           } else {
             // Allocate a spot on the data stack for the result of the
             // function.
             FbleValue** result = AllocData(arena_, &thread->stack->frame);
-            thread->stack = PushFrame(arena_, basic->body, result, thread->stack);
+            thread->stack = PushFrame(arena_, basic->code, result, thread->stack);
           }
 
           // Initialize the stack frame with captured variables and function
@@ -747,9 +747,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         FbleRefInit(arena, &value->_base.ref);
         value->_base.tag = FBLE_PROC_VALUE;
         FbleVectorInit(arena_, value->scope);
-        value->body = proc_value_instr->body;
-        value->body->refcount++;
-        CaptureScope(arena, &thread->stack->frame, proc_value_instr->body->statics, &value->_base, &value->scope);
+        value->code = proc_value_instr->code;
+        value->code->refcount++;
+        CaptureScope(arena, &thread->stack->frame, proc_value_instr->code->statics, &value->_base, &value->scope);
         PushData(arena_, &value->_base, &thread->stack->frame);
         break;
       }
@@ -946,11 +946,11 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         assert(proc != NULL && "undefined proc value");
 
         if (proc_instr->exit) {
-          thread->stack = ReplaceFrame(arena, proc->body, thread->stack);
+          thread->stack = ReplaceFrame(arena, proc->code, thread->stack);
           FbleProfileAutoExitBlock(arena_, thread->profile);
         } else {
           FbleValue** result = AllocData(arena_, &thread->stack->frame);
-          thread->stack = PushFrame(arena_, proc->body, result, thread->stack);
+          thread->stack = PushFrame(arena_, proc->code, result, thread->stack);
         }
 
         // Initialize the stack frame with captured variables.

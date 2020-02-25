@@ -1,6 +1,4 @@
 Eval2:
-* Rename Fble{Func,Proc}ValueInstr.body to .code
-
 * Start moving things from data stack to vars.
  - Use VPUSH if needed to get it to a var.
  - Add explicit source and target locations to instructions.
