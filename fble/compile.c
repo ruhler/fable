@@ -2247,8 +2247,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExp
   // Make a copy of scope to ensure we don't save references to any
   // instructions that we may free.
   Scope nscope;
-  FbleVectorInit(arena_, nscope.vars);
-  nscope.nvars = 0;
+  InitScope(arena_, NULL, &nscope);
   for (size_t i = 0; i < scope->nvars; ++i) {
     PushVar(arena_, &nscope, scope->vars.xs[i].name, scope->vars.xs[i].type);
   }
@@ -2556,8 +2555,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   };
 
   Scope scope;
-  FbleVectorInit(arena, scope.vars);
-  scope.nvars = 0;
+  InitScope(arena, NULL, &scope);
 
   FbleTypeArena* type_arena = FbleNewTypeArena(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &block->instrs);
