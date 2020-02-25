@@ -1,4 +1,5 @@
 Eval2:
+* Pick better names for thunk_scope.
 * Start moving things from data stack to vars.
  - Use VPUSH if needed to get it to a var.
  - Add explicit source and target locations to instructions.
@@ -9,6 +10,7 @@ Eval2:
   result directly to their parent?
 
 Miscellaneous:
+* [clean] Reorganize functiosn in fble/compile.c
 * Don't duplicate evaluation of literal type per letter.
 * Add test that the literal type must be a struct, not a union value.
 * Don't give duplicate error messages if the literal type is malformed.
