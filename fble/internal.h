@@ -11,6 +11,7 @@
 // FbleFrameSection --
 //   Which section of a frame a value can be found in.
 typedef enum {
+  FBLE_STATICS_FRAME_SECTION,
   FBLE_LOCALS_FRAME_SECTION,
 } FbleFrameSection;
 

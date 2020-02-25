@@ -37,6 +37,7 @@ typedef struct DataStack {
 //   An execution frame.
 //
 // Fields:
+//   statics - Variables captured from the parent scope.
 //   locals - Space allocated for local variables.
 //      Has length code->locals values. Takes ownership of all non-NULL
 //      entries.
@@ -45,6 +46,7 @@ typedef struct DataStack {
 //   pc - The location of the next instruction in the code to execute.
 //   result - Where to store the result when exiting the scope.
 typedef struct {
+  FbleValue** statics;
   FbleValue** locals;
   DataStack* data;
   FbleInstrBlock* code;
@@ -375,8 +377,11 @@ static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* 
 //   None.
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index)
 {
-  assert(index.section == FBLE_LOCALS_FRAME_SECTION);
-  return frame->locals[index.index];
+  switch (index.section) {
+    case FBLE_STATICS_FRAME_SECTION: return frame->statics[index.index];
+    case FBLE_LOCALS_FRAME_SECTION: return frame->locals[index.index];
+  }
+  UNREACHABLE("should never get here");
 }
 
 // PushFrame --
@@ -398,6 +403,9 @@ static Stack* PushFrame(FbleArena* arena, FbleInstrBlock* code, FbleValue** resu
   code->refcount++;
 
   Stack* stack = FbleAlloc(arena, Stack);
+  stack->frame.statics = FbleArrayAlloc(arena, FbleValue*, code->statics);
+  memset(stack->frame.statics, 0, code->statics * sizeof(FbleValue*));
+
   stack->frame.locals = FbleArrayAlloc(arena, FbleValue*, code->locals);
   memset(stack->frame.locals, 0, code->locals * sizeof(FbleValue*));
 
@@ -430,11 +438,16 @@ static Stack* PopFrame(FbleValueArena* arena, Stack* stack)
   *stack->frame.result = PopData(arena_, &stack->frame);
   FreeDataStack(arena_, &stack->frame);
 
+  for (size_t i = 0; i < stack->frame.code->statics; ++i) {
+    FbleValueRelease(arena, stack->frame.statics[i]);
+  }
+  FbleFree(arena_, stack->frame.statics);
+
   for (size_t i = 0; i < stack->frame.code->locals; ++i) {
     FbleValueRelease(arena, stack->frame.locals[i]);
   }
-
   FbleFree(arena_, stack->frame.locals);
+
   FbleFreeInstrBlock(arena_, stack->frame.code);
 
   Stack* tail = stack->tail;
@@ -466,6 +479,15 @@ static Stack* ReplaceFrame(FbleValueArena* arena, FbleInstrBlock* code, Stack* s
   code->refcount++;
 
   FbleArena* arena_ = FbleRefArenaArena(arena);
+  for (size_t i = 0; i < stack->frame.code->statics; ++i) {
+    FbleValueRelease(arena, stack->frame.statics[i]);
+  }
+  if (code->statics > stack->frame.code->statics) {
+    FbleFree(arena_, stack->frame.statics);
+    stack->frame.statics = FbleArrayAlloc(arena_, FbleValue*, code->statics);
+  }
+  memset(stack->frame.statics, 0, code->statics * sizeof(FbleValue*));
+
   for (size_t i = 0; i < stack->frame.code->locals; ++i) {
     FbleValueRelease(arena, stack->frame.locals[i]);
   }
@@ -729,11 +751,11 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           // Initialize the stack frame with captured variables and function
           // arguments.
           for (size_t i = 0; i < basic->scope.size; ++i) {
-            thread->stack->frame.locals[i] = FbleValueRetain(arena, basic->scope.xs[i]);
+            thread->stack->frame.statics[i] = FbleValueRetain(arena, basic->scope.xs[i]);
           }
           for (size_t i = 0; i < args.size; ++i) {
             size_t j = args.size - i - 1;
-            thread->stack->frame.locals[basic->scope.size + i] = args.xs[j];
+            thread->stack->frame.locals[i] = args.xs[j];
           }
           FbleFree(arena_, args.xs);
         }
@@ -763,7 +785,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_GET_INSTR: {
-        FbleValue* get_port = thread->stack->frame.locals[0];
+        FbleValue* get_port = thread->stack->frame.statics[0];
         if (get_port->tag == FBLE_LINK_VALUE) {
           FbleLinkValue* link = (FbleLinkValue*)get_port;
 
@@ -804,8 +826,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_PUT_INSTR: {
-        FbleValue* put_port = thread->stack->frame.locals[0];
-        FbleValue* arg = thread->stack->frame.locals[1];
+        FbleValue* put_port = thread->stack->frame.statics[0];
+        FbleValue* arg = thread->stack->frame.statics[1];
 
         FbleValueV args = { .size = 0, .xs = NULL, };
         FbleValue* unit = FbleNewStructValue(arena, args);
@@ -955,7 +977,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
         // Initialize the stack frame with captured variables.
         for (size_t i = 0; i < proc->scope.size; ++i) {
-          thread->stack->frame.locals[i] = FbleValueRetain(arena, proc->scope.xs[i]);
+          thread->stack->frame.statics[i] = FbleValueRetain(arena, proc->scope.xs[i]);
         }
 
         FbleValueRelease(arena, &proc->_base);
