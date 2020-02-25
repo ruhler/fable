@@ -46,9 +46,11 @@ typedef struct {
 // Fields:
 //   vars - The data for vars in scope.
 //   nvars - the number of entries of vars that are valid.
+//   code - the instruction block for this scope.
 typedef struct {
   VarV vars;
   size_t nvars;
+  FbleInstrBlock* code;
 } Scope;
 
 // BlockFrame --
@@ -94,7 +96,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, FbleIn
 static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
-static void InitScope(FbleArena* arena, Scope* parent, Scope* scope);
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scope* parent);
 static void ExitThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope, FbleInstrBlock* block, FbleInstrV* instrs);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
@@ -462,20 +464,22 @@ static void AddBlockTime(Blocks* blocks, size_t time)
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   parent - the parent of the scope to initialize. May be NULL.
 //   scope - the scope to initialize.
+//   code - a pointer to the code block for this scope.
+//   parent - the parent of the scope to initialize. May be NULL.
 //
 // Results:
 //   None.
 //
 // Side effects:
 //   Initializes scope based on parent. ExitThunk or FreeVars should be
-//   called to free the allocations for scope. The lifetime of the parent
-//   scope must exceed the lifetime of this scope.
-static void InitScope(FbleArena* arena, Scope* parent, Scope* scope)
+//   called to free the allocations for scope. The lifetimes of the code block
+//   and the parent scope must exceed the lifetime of this scope.
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scope* parent)
 {
   FbleVectorInit(arena, scope->vars);
   scope->nvars = 0;
+  scope->code = code;
   if (parent != NULL) {
     for (size_t i = 0; i < parent->nvars; ++i) {
       PushVar(arena, scope, parent->vars.xs[i].name, parent->vars.xs[i].type);
@@ -1288,7 +1292,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &instr->code->instrs);
 
       Scope thunk_scope;
-      InitScope(arena_, scope, &thunk_scope);
+      InitScope(arena_, &thunk_scope, instr->code, scope);
 
       for (size_t i = 0; i < argc; ++i) {
         PushVar(arena_, &thunk_scope, func_value_expr->args.xs[i].name, arg_types[i]);
@@ -1339,12 +1343,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       AddBlockTime(blocks, 1);
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
-      Scope thunk_scope;
-      InitScope(arena_, scope, &thunk_scope);
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->code = NewInstrBlock(arena_);
+
+      Scope thunk_scope;
+      InitScope(arena_, &thunk_scope, instr->code, scope);
 
       EnterBodyBlock(arena_, blocks, expr->loc, &instr->code->instrs);
 
@@ -1422,12 +1427,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->rtype->ref);
       FbleTypeRelease(arena, &unit_proc_type->_base);
 
-      Scope thunk_scope;
-      InitScope(arena_, scope, &thunk_scope);
-
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->code = NewInstrBlock(arena_);
+
+      Scope thunk_scope;
+      InitScope(arena_, &thunk_scope, instr->code, scope);
 
       EnterBodyBlock(arena_, blocks, link_expr->body->loc, &instr->code->instrs);
 
@@ -1490,23 +1495,23 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         error = error || (nvd[i].type == NULL);
       }
 
-      Scope thunk_scope;
-      InitScope(arena_, scope, &thunk_scope);
-
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->code = NewInstrBlock(arena_);
+
+      Scope thunk_scope;
+      InitScope(arena_, &thunk_scope, instr->code, scope);
 
       EnterBodyBlock(arena_, blocks, exec_expr->body->loc, &instr->code->instrs);
 
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        Scope bthunk_scope;
-        InitScope(arena_, &thunk_scope, &bthunk_scope);
-
         FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
         binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
         binstr->code = NewInstrBlock(arena_);
+
+        Scope bthunk_scope;
+        InitScope(arena_, &bthunk_scope, binstr->code, &thunk_scope);
 
         EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->code->instrs);
 
@@ -2244,28 +2249,23 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExp
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
+  FbleInstrBlock* code = NewInstrBlock(arena_);
+
   // Make a copy of scope to ensure we don't save references to any
   // instructions that we may free.
   Scope nscope;
-  InitScope(arena_, NULL, &nscope);
+  InitScope(arena_, &nscope, code, NULL);
   for (size_t i = 0; i < scope->nvars; ++i) {
     PushVar(arena_, &nscope, scope->vars.xs[i].name, scope->vars.xs[i].type);
   }
 
-  FbleInstrV instrs;
-  FbleVectorInit(arena_, instrs);
-
   Blocks blocks;
   FbleVectorInit(arena_, blocks.stack);
   FbleVectorInit(arena_, blocks.blocks);
-  FbleType* type = CompileExpr(arena, &blocks, true, &nscope, expr, &instrs);
+  FbleType* type = CompileExpr(arena, &blocks, true, &nscope, expr, &code->instrs);
   FbleFree(arena_, blocks.stack.xs);
   FbleFreeBlockNames(arena_, &blocks.blocks);
-
-  for (size_t i = 0; i < instrs.size; ++i) {
-    FreeInstr(arena_, instrs.xs[i]);
-  }
-  FbleFree(arena_, instrs.xs);
+  FbleFreeInstrBlock(arena_, code);
   FreeVars(arena_, &nscope);
   return type;
 }
@@ -2546,7 +2546,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   FbleVectorInit(arena, block_stack.stack);
   FbleVectorInit(arena, block_stack.blocks);
 
-  FbleInstrBlock* block = NewInstrBlock(arena);
+  FbleInstrBlock* code = NewInstrBlock(arena);
 
   FbleName entry_name = {
     .name = "",
@@ -2555,11 +2555,11 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   };
 
   Scope scope;
-  InitScope(arena, NULL, &scope);
+  InitScope(arena, &scope, code, NULL);
 
   FbleTypeArena* type_arena = FbleNewTypeArena(arena);
-  EnterBlock(arena, &block_stack, entry_name, program->main->loc, &block->instrs);
-  FbleType* type = CompileProgram(type_arena, &block_stack, &scope, program, &block->instrs);
+  EnterBlock(arena, &block_stack, entry_name, program->main->loc, &code->instrs);
+  FbleType* type = CompileProgram(type_arena, &block_stack, &scope, program, &code->instrs);
   ExitBlock(arena, &block_stack, NULL);
   FbleTypeRelease(type_arena, type);
   FbleFreeTypeArena(type_arena);
@@ -2568,11 +2568,11 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   FbleFree(arena, block_stack.stack.xs);
   *blocks = block_stack.blocks;
 
-  block->locals = scope.vars.size;
+  code->locals = scope.vars.size;
   FreeVars(arena, &scope);
   if (type == NULL) {
-    FbleFreeInstrBlock(arena, block);
+    FbleFreeInstrBlock(arena, code);
     return NULL;
   }
-  return block;
+  return code;
 }
