@@ -91,7 +91,6 @@ static void SetFrameIndex(FbleArena* arena, Scope* scope, size_t position, FbleF
 static void SetLocalIndex(FbleArena* arena, Scope* scope, size_t position, FbleLocalIndex* dest, bool use);
 static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Scope* scope);
-static void FreeVars(FbleArena* arena, Scope* scope);
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, FbleInstrV* instrs);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, FbleInstrV* instrs);
@@ -286,26 +285,6 @@ static void PopVar(FbleArena* arena, Scope* scope)
   scope->nvars--;
 }
 
-// FreeVars --
-//   Free memory associated with the given scope.
-//
-// Inputs:
-//   arena - arena for allocations.
-//   scope - the scope to free memory for.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Memory allocated for scope is freed.
-static void FreeVars(FbleArena* arena, Scope* scope)
-{
-  for (size_t i = 0; i < scope->vars.size; ++i) {
-    FbleFree(arena, scope->vars.xs[i].fixup.xs);
-  }
-  FbleFree(arena, scope->vars.xs);
-}
-
 // EnterBlock --
 //   Enter a new profiling block.
 //
@@ -474,7 +453,7 @@ static void AddBlockTime(Blocks* blocks, size_t time)
 //   None.
 //
 // Side effects:
-//   Initializes scope based on parent. FinishScope or FreeVars should be
+//   Initializes scope based on parent. FinishScope should be
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scope* parent)
@@ -543,7 +522,10 @@ static void FinishScope(FbleArena* arena, Scope* scope)
     scope->code->locals = scope->vars.size - scope->parent->nvars + statics;
   }
 
-  FreeVars(arena, scope);
+  for (size_t i = 0; i < scope->vars.size; ++i) {
+    FbleFree(arena, scope->vars.xs[i].fixup.xs);
+  }
+  FbleFree(arena, scope->vars.xs);
 }
 
 // NewInstrBlock --
@@ -1308,7 +1290,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleType* type = CompileExpr(arena, blocks, true, &thunk_scope, func_value_expr->body, &instr->code->instrs);
       ExitBlock(arena_, blocks, NULL);
       if (type == NULL) {
-        FreeVars(arena_, &thunk_scope);
+        FinishScope(arena_, &thunk_scope);
         FreeInstr(arena_, &instr->_base);
         for (size_t i = 0; i < argc; ++i) {
           FbleTypeRelease(arena, arg_types[i]);
@@ -2272,8 +2254,8 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExp
   FbleType* type = CompileExpr(arena, &blocks, true, &nscope, expr, &code->instrs);
   FbleFree(arena_, blocks.stack.xs);
   FbleFreeBlockNames(arena_, &blocks.blocks);
+  FinishScope(arena_, &nscope);
   FbleFreeInstrBlock(arena_, code);
-  FreeVars(arena_, &nscope);
   return type;
 }
 
@@ -2576,7 +2558,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   *blocks = block_stack.blocks;
 
   code->locals = scope.vars.size;
-  FreeVars(arena, &scope);
+  FinishScope(arena, &scope);
   if (type == NULL) {
     FbleFreeInstrBlock(arena, code);
     return NULL;
