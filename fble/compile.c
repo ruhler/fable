@@ -47,10 +47,12 @@ typedef struct {
 //   vars - The data for vars in scope.
 //   nvars - the number of entries of vars that are valid.
 //   code - the instruction block for this scope.
-typedef struct {
+//   parent - the parent of this scope. May be NULL.
+typedef struct Scope {
   VarV vars;
   size_t nvars;
   FbleInstrBlock* code;
+  struct Scope* parent;
 } Scope;
 
 // BlockFrame --
@@ -97,7 +99,7 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scope* parent);
-static void ExitThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope, FbleInstrBlock* block, FbleInstrV* instrs);
+static void FinishScope(FbleArena* arena, Scope* scope);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
@@ -198,7 +200,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 // Side effects:
 //   Sets the value of dest to the frame index for the var at the given
 //   position in the scope. Records the frame index pointer for fixups at
-//   ExitThunk time, when the value pointed to by dest will be readjusted
+//   FinishScope time, when the value pointed to by dest will be readjusted
 //   based on the final frame index for the variable. The pointer must remain
 //   valid for the duration of all fixups.
 static void SetFrameIndex(FbleArena* arena, Scope* scope, size_t position, FbleFrameIndex* dest, bool use)
@@ -224,7 +226,7 @@ static void SetFrameIndex(FbleArena* arena, Scope* scope, size_t position, FbleF
 // Side effects:
 //   Sets the value of dest to the frame index for the var at the given
 //   position in the scope. Records the frame index pointer for fixups at
-//   ExitThunk time, when the value pointed to by dest will be readjusted
+//   FinishScope time, when the value pointed to by dest will be readjusted
 //   based on the final frame index for the variable. The pointer must remain
 //   valid for the duration of all fixups.
 static void SetLocalIndex(FbleArena* arena, Scope* scope, size_t position, FbleLocalIndex* dest, bool use)
@@ -472,7 +474,7 @@ static void AddBlockTime(Blocks* blocks, size_t time)
 //   None.
 //
 // Side effects:
-//   Initializes scope based on parent. ExitThunk or FreeVars should be
+//   Initializes scope based on parent. FinishScope or FreeVars should be
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scope* parent)
@@ -480,6 +482,7 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scop
   FbleVectorInit(arena, scope->vars);
   scope->nvars = 0;
   scope->code = code;
+  scope->parent = parent;
   if (parent != NULL) {
     for (size_t i = 0; i < parent->nvars; ++i) {
       PushVar(arena, scope, parent->vars.xs[i].name, parent->vars.xs[i].type);
@@ -487,56 +490,60 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scop
   }
 }
 
-// ExitThunk --
-//   Generate instructions to capture just the variables used by a thunk.
+// FinishScope --
+//   Free memory associated with a Scope, and generate instructions to capture
+//   the variables used by the scope.
 //
 // Inputs:
 //   arena - arena to use for allocations
-//   scope - the current variable scope.
-//   thunk_scope - the thunk variable scope, created with InitScope.
-//   block - the block associated with the thunk.
-//   instrs - vector of instructions to append new instructions to.
+//   scope - the scope to finish.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   * Frees memory associated with thunk_scope.
-//   * Sets the statics and locals fields of the block based on number of vars
-//     actually used.
-//   * Appends instructions to instrs to push captured variables to the data
-//     stack.
-//   * Updates thunk instructions to point to the captured variable frame
+//   * Frees memory associated with scope.
+//   * Sets the statics and locals fields of the scope's block based on number
+//     of vars actually used.
+//   * Appends instructions to the parent scope's code to push captured
+//     variables to the data stack.
+//   * Updates scope instructions to point to the captured variable frame
 //     indicies instead of the original variable frame indicies.
-static void ExitThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope, FbleInstrBlock* block, FbleInstrV* instrs)
+static void FinishScope(FbleArena* arena, Scope* scope)
 {
-  size_t scopec = 0;
-  for (size_t i = 0; i < scope->nvars; ++i) {
-    if (thunk_scope->vars.xs[i].used) {
-      // Copy the used var to the data stack for capturing.
-      FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
-      get_var->_base.tag = FBLE_VAR_INSTR;
-      SetFrameIndex(arena, scope, scope->nvars - i - 1, &get_var->index, true);
-      FbleVectorAppend(arena, *instrs, &get_var->_base);
+  if (scope->parent == NULL) {
+    scope->code->statics = 0;
+    scope->code->locals = scope->vars.size;
+  } else {
+    size_t statics = 0;
+    for (size_t i = 0; i < scope->parent->nvars; ++i) {
+      if (scope->vars.xs[i].used) {
+        // Copy the used var to the data stack for capturing.
+        FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
+        get_var->_base.tag = FBLE_VAR_INSTR;
+        SetFrameIndex(arena, scope->parent, scope->parent->nvars - i - 1, &get_var->index, true);
+        FbleVectorAppend(arena, scope->parent->code->instrs, &get_var->_base);
 
-      // Update references to this var.
-      for (size_t j = 0; j < thunk_scope->vars.xs[i].fixup.size; ++j) {
-        *thunk_scope->vars.xs[i].fixup.xs[j] = scopec;
+        // Update references to this var.
+        for (size_t j = 0; j < scope->vars.xs[i].fixup.size; ++j) {
+          *scope->vars.xs[i].fixup.xs[j] = statics;
+        }
+        statics++;
       }
-      scopec++;
     }
+
+    // Update references to all vars first introduced in the thunk scope.
+    for (size_t i = scope->parent->nvars; i < scope->vars.size; ++i) {
+        for (size_t j = 0; j < scope->vars.xs[i].fixup.size; ++j) {
+          *scope->vars.xs[i].fixup.xs[j] = i - scope->parent->nvars + statics;
+        }
+    }
+
+    scope->code->statics = statics;
+    scope->code->locals = scope->vars.size - scope->parent->nvars + statics;
   }
 
-  // Update references to all vars first introduced in the thunk scope.
-  for (size_t i = scope->nvars; i < thunk_scope->vars.size; ++i) {
-      for (size_t j = 0; j < thunk_scope->vars.xs[i].fixup.size; ++j) {
-        *thunk_scope->vars.xs[i].fixup.xs[j] = i - scope->nvars + scopec;
-      }
-  }
-
-  block->statics = scopec;
-  block->locals = thunk_scope->vars.size - scope->nvars + scopec;
-  FreeVars(arena, thunk_scope);
+  FreeVars(arena, scope);
 }
 
 // NewInstrBlock --
@@ -1309,7 +1316,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         return NULL;
       }
 
-      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
+      FinishScope(arena_, &thunk_scope);
 
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
@@ -1358,7 +1365,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       CompileExit(arena_, true, &instr->code->instrs);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
+      FinishScope(arena_, &thunk_scope);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1455,7 +1462,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleVectorAppend(arena_, instr->code->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
+      FinishScope(arena_, &thunk_scope);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1523,7 +1530,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         FbleVectorAppend(arena_, binstr->code->instrs, &bproc->_base);
         ExitBlock(arena_, blocks, NULL);
 
-        ExitThunk(arena_, &thunk_scope, &bthunk_scope, binstr->code, &instr->code->instrs);
+        FinishScope(arena_, &bthunk_scope);
         FbleVectorAppend(arena_, instr->code->instrs, &binstr->_base);
 
         error = error || (type == NULL);
@@ -1587,7 +1594,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleVectorAppend(arena_, instr->code->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
+      FinishScope(arena_, &thunk_scope);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleTypeRelease(arena, nvd[i].type);
