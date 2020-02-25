@@ -94,7 +94,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, FbleIn
 static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
-static void EnterThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope);
+static void InitScope(FbleArena* arena, Scope* parent, Scope* scope);
 static void ExitThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope, FbleInstrBlock* block, FbleInstrV* instrs);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
@@ -457,26 +457,29 @@ static void AddBlockTime(Blocks* blocks, size_t time)
   }
 }
 
-// EnterThunk --
-//   Prepare to capture variables for a thunk.
+// InitScope --
+//   Initialize a new scope.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   scope - the current variable scope.
-//   thunk_scope - a variable scope to use in the thunk.
+//   parent - the parent of the scope to initialize. May be NULL.
+//   scope - the scope to initialize.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   Initializes thunk_scope based on scope. ExitThunk or FreeVars should be
-//   called to free the allocations for thunk_vars.
-static void EnterThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope)
+//   Initializes scope based on parent. ExitThunk or FreeVars should be
+//   called to free the allocations for scope. The lifetime of the parent
+//   scope must exceed the lifetime of this scope.
+static void InitScope(FbleArena* arena, Scope* parent, Scope* scope)
 {
-  FbleVectorInit(arena, thunk_scope->vars);
-  thunk_scope->nvars = 0;
-  for (size_t i = 0; i < scope->nvars; ++i) {
-    PushVar(arena, thunk_scope, scope->vars.xs[i].name, scope->vars.xs[i].type);
+  FbleVectorInit(arena, scope->vars);
+  scope->nvars = 0;
+  if (parent != NULL) {
+    for (size_t i = 0; i < parent->nvars; ++i) {
+      PushVar(arena, scope, parent->vars.xs[i].name, parent->vars.xs[i].type);
+    }
   }
 }
 
@@ -486,7 +489,7 @@ static void EnterThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope)
 // Inputs:
 //   arena - arena to use for allocations
 //   scope - the current variable scope.
-//   thunk_scope - the thunk variable scope, created with EnterThunk.
+//   thunk_scope - the thunk variable scope, created with InitScope.
 //   block - the block associated with the thunk.
 //   instrs - vector of instructions to append new instructions to.
 //
@@ -1285,7 +1288,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &instr->code->instrs);
 
       Scope thunk_scope;
-      EnterThunk(arena_, scope, &thunk_scope);
+      InitScope(arena_, scope, &thunk_scope);
 
       for (size_t i = 0; i < argc; ++i) {
         PushVar(arena_, &thunk_scope, func_value_expr->args.xs[i].name, arg_types[i]);
@@ -1337,7 +1340,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
       Scope thunk_scope;
-      EnterThunk(arena_, scope, &thunk_scope);
+      InitScope(arena_, scope, &thunk_scope);
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1420,7 +1423,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleTypeRelease(arena, &unit_proc_type->_base);
 
       Scope thunk_scope;
-      EnterThunk(arena_, scope, &thunk_scope);
+      InitScope(arena_, scope, &thunk_scope);
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1488,7 +1491,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       }
 
       Scope thunk_scope;
-      EnterThunk(arena_, scope, &thunk_scope);
+      InitScope(arena_, scope, &thunk_scope);
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1499,7 +1502,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         Scope bthunk_scope;
-        EnterThunk(arena_, &thunk_scope, &bthunk_scope);
+        InitScope(arena_, &thunk_scope, &bthunk_scope);
 
         FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
         binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
