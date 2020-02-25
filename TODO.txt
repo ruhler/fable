@@ -1,5 +1,4 @@
 Eval2:
-* Pick better names for thunk_scope.
 * Start moving things from data stack to vars.
  - Use VPUSH if needed to get it to a var.
  - Add explicit source and target locations to instructions.
