@@ -40,7 +40,7 @@ typedef struct {
   Var* xs;
 } VarV;
 
-// Vars --
+// Scope --
 //   Scope of variables visible during type checking.
 //
 // Fields:
@@ -49,7 +49,7 @@ typedef struct {
 typedef struct {
   VarV vars;
   size_t nvars;
-} Vars;
+} Scope;
 
 // BlockFrame --
 //   Represents a profiling block.
@@ -83,19 +83,19 @@ typedef struct {
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
-static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool use);
-static void SetLocalIndex(FbleArena* arena, Vars* vars, size_t position, FbleLocalIndex* dest, bool use);
-static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type);
-static void PopVar(FbleArena* arena, Vars* vars);
-static void FreeVars(FbleArena* arena, Vars* vars);
+static void SetFrameIndex(FbleArena* arena, Scope* scope, size_t position, FbleFrameIndex* dest, bool use);
+static void SetLocalIndex(FbleArena* arena, Scope* scope, size_t position, FbleLocalIndex* dest, bool use);
+static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
+static void PopVar(FbleArena* arena, Scope* scope);
+static void FreeVars(FbleArena* arena, Scope* scope);
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, FbleInstrV* instrs);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, FbleInstrV* instrs);
 static void ExitBlock(FbleArena* arena, Blocks* blocks, FbleInstrV* instrs);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
-static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars);
-static void ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrBlock* block, FbleInstrV* instrs);
+static void EnterThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope);
+static void ExitThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope, FbleInstrBlock* block, FbleInstrV* instrs);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
 static void FreeInstr(FbleArena* arena, FbleInstr* instr);
@@ -105,11 +105,11 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
 static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof);
 
 static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs);
-static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs);
-static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleExprV args, FbleInstrV* instrs);
-static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr* expr);
-static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* type);
-static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs);
+static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr, FbleInstrV* instrs);
+static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args, FbleInstrV* instrs);
+static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr);
+static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* type);
+static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm, FbleInstrV* instrs);
 
 // ReportError --
 //   Report a compiler error.
@@ -184,7 +184,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //
 // Inputs:
 //   arena - arena to use for allocations
-//   vars - the scope to get the variable from
+//   scope - the scope to get the variable from
 //   position - the position of the variable relative to the top of the scope.
 //              0 means the variable on top of the scope.
 //   dest - pointer for where to store the frame index.
@@ -199,10 +199,10 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //   ExitThunk time, when the value pointed to by dest will be readjusted
 //   based on the final frame index for the variable. The pointer must remain
 //   valid for the duration of all fixups.
-static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFrameIndex* dest, bool use)
+static void SetFrameIndex(FbleArena* arena, Scope* scope, size_t position, FbleFrameIndex* dest, bool use)
 {
   dest->section = FBLE_LOCALS_FRAME_SECTION;
-  SetLocalIndex(arena, vars, position, &dest->index, use);
+  SetLocalIndex(arena, scope, position, &dest->index, use);
 }
 
 // SetLocalIndex --
@@ -210,7 +210,7 @@ static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFra
 //
 // Inputs:
 //   arena - arena to use for allocations
-//   vars - the scope to get the variable from
+//   scope - the scope to get the variable from
 //   position - the position of the variable relative to the top of the scope.
 //              0 means the variable on top of the scope.
 //   dest - pointer for where to store the local index.
@@ -225,13 +225,13 @@ static void SetFrameIndex(FbleArena* arena, Vars* vars, size_t position, FbleFra
 //   ExitThunk time, when the value pointed to by dest will be readjusted
 //   based on the final frame index for the variable. The pointer must remain
 //   valid for the duration of all fixups.
-static void SetLocalIndex(FbleArena* arena, Vars* vars, size_t position, FbleLocalIndex* dest, bool use)
+static void SetLocalIndex(FbleArena* arena, Scope* scope, size_t position, FbleLocalIndex* dest, bool use)
 {
-  assert(position < vars->nvars);
-  *dest = vars->nvars - position - 1;
-  FbleVectorAppend(arena, vars->vars.xs[*dest].fixup, dest);
+  assert(position < scope->nvars);
+  *dest = scope->nvars - position - 1;
+  FbleVectorAppend(arena, scope->vars.xs[*dest].fixup, dest);
   if (use) {
-    vars->vars.xs[*dest].used = true;
+    scope->vars.xs[*dest].used = true;
   }
 }
 
@@ -240,7 +240,7 @@ static void SetLocalIndex(FbleArena* arena, Vars* vars, size_t position, FbleLoc
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   vars - the scope to push the variable on to.
+//   scope - the scope to push the variable on to.
 //   name - the name of the variable.
 //   type - the type of the variable.
 //
@@ -251,16 +251,16 @@ static void SetLocalIndex(FbleArena* arena, Vars* vars, size_t position, FbleLoc
 //   Pushes a new variable with given name and type onto the scope. It is the
 //   callers responsibility to ensure that the type stays alive as long as is
 //   needed.
-static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type)
+static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
 {
-  Var* var = vars->vars.xs + vars->nvars;
-  if (vars->nvars == vars->vars.size) {
-    var = FbleVectorExtend(arena, vars->vars);
+  Var* var = scope->vars.xs + scope->nvars;
+  if (scope->nvars == scope->vars.size) {
+    var = FbleVectorExtend(arena, scope->vars);
     FbleVectorInit(arena, var->fixup);
   }
   var->name = name;
   var->type = type;
-  vars->nvars++;
+  scope->nvars++;
   var->used = false;
 }
 
@@ -269,37 +269,37 @@ static void PushVar(FbleArena* arena, Vars* vars, FbleName name, FbleType* type)
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   vars - the scope to pop from.
+//   scope - the scope to pop from.
 //
 // Results:
 //   none.
 //
 // Side effects:
 //   Pops the top var off the scope.
-static void PopVar(FbleArena* arena, Vars* vars)
+static void PopVar(FbleArena* arena, Scope* scope)
 {
-  assert(vars->nvars > 0);
-  vars->nvars--;
+  assert(scope->nvars > 0);
+  scope->nvars--;
 }
 
 // FreeVars --
-//   Free memory associated with vars.
+//   Free memory associated with the given scope.
 //
 // Inputs:
 //   arena - arena for allocations.
-//   vars - the vars to free memory for.
+//   scope - the scope to free memory for.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   Memory allocated for vars is freed.
-static void FreeVars(FbleArena* arena, Vars* vars)
+//   Memory allocated for scope is freed.
+static void FreeVars(FbleArena* arena, Scope* scope)
 {
-  for (size_t i = 0; i < vars->vars.size; ++i) {
-    FbleFree(arena, vars->vars.xs[i].fixup.xs);
+  for (size_t i = 0; i < scope->vars.size; ++i) {
+    FbleFree(arena, scope->vars.xs[i].fixup.xs);
   }
-  FbleFree(arena, vars->vars.xs);
+  FbleFree(arena, scope->vars.xs);
 }
 
 // EnterBlock --
@@ -462,21 +462,21 @@ static void AddBlockTime(Blocks* blocks, size_t time)
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   vars - the current variable scope.
-//   thunk_vars - a variable scope to use in the thunk.
+//   scope - the current variable scope.
+//   thunk_scope - a variable scope to use in the thunk.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   Initializes thunk_vars based on vars. ExitThunk or FreeVars should be
+//   Initializes thunk_scope based on scope. ExitThunk or FreeVars should be
 //   called to free the allocations for thunk_vars.
-static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
+static void EnterThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope)
 {
-  FbleVectorInit(arena, thunk_vars->vars);
-  thunk_vars->nvars = 0;
-  for (size_t i = 0; i < vars->nvars; ++i) {
-    PushVar(arena, thunk_vars, vars->vars.xs[i].name, vars->vars.xs[i].type);
+  FbleVectorInit(arena, thunk_scope->vars);
+  thunk_scope->nvars = 0;
+  for (size_t i = 0; i < scope->nvars; ++i) {
+    PushVar(arena, thunk_scope, scope->vars.xs[i].name, scope->vars.xs[i].type);
   }
 }
 
@@ -485,8 +485,8 @@ static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
 //
 // Inputs:
 //   arena - arena to use for allocations
-//   vars - the current variable scope.
-//   thunk_vars - the thunk variable scope, created with EnterThunk.
+//   scope - the current variable scope.
+//   thunk_scope - the thunk variable scope, created with EnterThunk.
 //   block - the block associated with the thunk.
 //   instrs - vector of instructions to append new instructions to.
 //
@@ -494,42 +494,42 @@ static void EnterThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars)
 //   None.
 //
 // Side effects:
-//   * Frees memory associated with thunk_vars.
+//   * Frees memory associated with thunk_scope.
 //   * Sets the statics and locals fields of the block based on number of vars
 //     actually used.
 //   * Appends instructions to instrs to push captured variables to the data
 //     stack.
 //   * Updates thunk instructions to point to the captured variable frame
 //     indicies instead of the original variable frame indicies.
-static void ExitThunk(FbleArena* arena, Vars* vars, Vars* thunk_vars, FbleInstrBlock* block, FbleInstrV* instrs)
+static void ExitThunk(FbleArena* arena, Scope* scope, Scope* thunk_scope, FbleInstrBlock* block, FbleInstrV* instrs)
 {
   size_t scopec = 0;
-  for (size_t i = 0; i < vars->nvars; ++i) {
-    if (thunk_vars->vars.xs[i].used) {
+  for (size_t i = 0; i < scope->nvars; ++i) {
+    if (thunk_scope->vars.xs[i].used) {
       // Copy the used var to the data stack for capturing.
       FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
-      SetFrameIndex(arena, vars, vars->nvars - i - 1, &get_var->index, true);
+      SetFrameIndex(arena, scope, scope->nvars - i - 1, &get_var->index, true);
       FbleVectorAppend(arena, *instrs, &get_var->_base);
 
       // Update references to this var.
-      for (size_t j = 0; j < thunk_vars->vars.xs[i].fixup.size; ++j) {
-        *thunk_vars->vars.xs[i].fixup.xs[j] = scopec;
+      for (size_t j = 0; j < thunk_scope->vars.xs[i].fixup.size; ++j) {
+        *thunk_scope->vars.xs[i].fixup.xs[j] = scopec;
       }
       scopec++;
     }
   }
 
   // Update references to all vars first introduced in the thunk scope.
-  for (size_t i = vars->nvars; i < thunk_vars->vars.size; ++i) {
-      for (size_t j = 0; j < thunk_vars->vars.xs[i].fixup.size; ++j) {
-        *thunk_vars->vars.xs[i].fixup.xs[j] = i - vars->nvars + scopec;
+  for (size_t i = scope->nvars; i < thunk_scope->vars.size; ++i) {
+      for (size_t j = 0; j < thunk_scope->vars.xs[i].fixup.size; ++j) {
+        *thunk_scope->vars.xs[i].fixup.xs[j] = i - scope->nvars + scopec;
       }
   }
 
   block->statics = scopec;
-  block->locals = thunk_vars->vars.size - vars->nvars + scopec;
-  FreeVars(arena, thunk_vars);
+  block->locals = thunk_scope->vars.size - scope->nvars + scopec;
+  FreeVars(arena, thunk_scope);
 }
 
 // NewInstrBlock --
@@ -723,7 +723,7 @@ static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs)
 //   arena - arena to use for allocations.
 //   blocks - the blocks stack.
 //   exit - if true, generate instructions to exit the current scope.
-//   vars - the list of variables in scope.
+//   scope - the list of variables in scope.
 //   expr - the expression to compile.
 //   instrs - vector of instructions to append new instructions to.
 //
@@ -738,7 +738,7 @@ static void CompileExit(FbleArena* arena, bool exit, FbleInstrV* instrs)
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   FbleTypeRelease when it is no longer needed.
-static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleExpr* expr, FbleInstrV* instrs)
+static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr, FbleInstrV* instrs)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (expr->tag) {
@@ -749,7 +749,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
     case FBLE_TYPEOF_EXPR: {
       AddBlockTime(blocks, 1);
 
-      FbleType* type = CompileType(arena, vars, expr);
+      FbleType* type = CompileType(arena, scope, expr);
       if (type == NULL) {
         return NULL;
       }
@@ -780,11 +780,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleType* arg_types[argc];
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - 1 - i;
-        arg_types[j] = CompileExpr(arena, blocks, false, vars, misc_apply_expr->args.xs[j], instrs);
+        arg_types[j] = CompileExpr(arena, blocks, false, scope, misc_apply_expr->args.xs[j], instrs);
         error = error || (arg_types[j] == NULL);
       }
 
-      FbleType* type = CompileExpr(arena, blocks, false, vars, misc_apply_expr->misc, instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, scope, misc_apply_expr->misc, instrs);
       error = error || (type == NULL);
 
       if (error) {
@@ -935,7 +935,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
         EnterBlock(arena_, blocks, arg->name, arg->expr->loc, instrs);
-        arg_types[j] = CompileExpr(arena, blocks, false, vars, arg->expr, instrs);
+        arg_types[j] = CompileExpr(arena, blocks, false, scope, arg->expr, instrs);
         ExitBlock(arena_, blocks, instrs);
         error = error || (arg_types[j] == NULL);
       }
@@ -984,7 +984,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
     case FBLE_UNION_VALUE_EXPR: {
       AddBlockTime(blocks, 1);
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
-      FbleType* type = CompileType(arena, vars, union_value_expr->type);
+      FbleType* type = CompileType(arena, scope, union_value_expr->type);
       if (type == NULL) {
         return NULL;
       }
@@ -1018,7 +1018,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      FbleType* arg_type = CompileExpr(arena, blocks, false, vars, union_value_expr->arg, instrs);
+      FbleType* arg_type = CompileExpr(arena, blocks, false, scope, union_value_expr->arg, instrs);
       if (arg_type == NULL) {
         FbleTypeRelease(arena, &union_type->_base);
         FbleTypeRelease(arena, type);
@@ -1052,7 +1052,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
 
-      FbleType* type = CompileExpr(arena, blocks, false, vars, access_expr->object, instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, scope, access_expr->object, instrs);
       if (type == NULL) {
         return NULL;
       }
@@ -1107,7 +1107,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
-      FbleType* type = CompileExpr(arena, blocks, false, vars, select_expr->condition, instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, scope, select_expr->condition, instrs);
       if (type == NULL) {
         return NULL;
       }
@@ -1150,7 +1150,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           .space = FBLE_NORMAL_NAME_SPACE
         };
         EnterBlock(arena_, blocks, name, select_expr->default_->loc, instrs);
-        return_type = CompileExpr(arena, blocks, exit, vars, select_expr->default_, instrs);
+        return_type = CompileExpr(arena, blocks, exit, scope, select_expr->default_, instrs);
         ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
         if (return_type == NULL) {
@@ -1177,7 +1177,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
               select_expr->choices.xs[choice].expr->loc,
               instrs);
           AddBlockTime(blocks, 1);
-          FbleType* arg_type = CompileExpr(arena, blocks, exit, vars, select_expr->choices.xs[choice].expr, instrs);
+          FbleType* arg_type = CompileExpr(arena, blocks, exit, scope, select_expr->choices.xs[choice].expr, instrs);
           ExitBlock(arena_, blocks, exit ? NULL : instrs);
 
           if (!exit) {
@@ -1257,7 +1257,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       bool error = false;
       FbleType* arg_types[argc];
       for (size_t i = 0; i < argc; ++i) {
-        arg_types[i] = CompileType(arena, vars, func_value_expr->args.xs[i].type);
+        arg_types[i] = CompileType(arena, scope, func_value_expr->args.xs[i].type);
         error = error || arg_types[i] == NULL;
 
         for (size_t j = 0; j < i; ++j) {
@@ -1284,17 +1284,17 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &instr->code->instrs);
 
-      Vars thunk_vars;
-      EnterThunk(arena_, vars, &thunk_vars);
+      Scope thunk_scope;
+      EnterThunk(arena_, scope, &thunk_scope);
 
       for (size_t i = 0; i < argc; ++i) {
-        PushVar(arena_, &thunk_vars, func_value_expr->args.xs[i].name, arg_types[i]);
+        PushVar(arena_, &thunk_scope, func_value_expr->args.xs[i].name, arg_types[i]);
       }
 
-      FbleType* type = CompileExpr(arena, blocks, true, &thunk_vars, func_value_expr->body, &instr->code->instrs);
+      FbleType* type = CompileExpr(arena, blocks, true, &thunk_scope, func_value_expr->body, &instr->code->instrs);
       ExitBlock(arena_, blocks, NULL);
       if (type == NULL) {
-        FreeVars(arena_, &thunk_vars);
+        FreeVars(arena_, &thunk_scope);
         FreeInstr(arena_, &instr->_base);
         for (size_t i = 0; i < argc; ++i) {
           FbleTypeRelease(arena, arg_types[i]);
@@ -1302,7 +1302,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
+      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
 
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
@@ -1336,8 +1336,8 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       AddBlockTime(blocks, 1);
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
-      Vars thunk_vars;
-      EnterThunk(arena_, vars, &thunk_vars);
+      Scope thunk_scope;
+      EnterThunk(arena_, scope, &thunk_scope);
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1345,12 +1345,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       EnterBodyBlock(arena_, blocks, expr->loc, &instr->code->instrs);
 
-      FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, eval_expr->body, &instr->code->instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, &thunk_scope, eval_expr->body, &instr->code->instrs);
 
       CompileExit(arena_, true, &instr->code->instrs);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
+      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1379,7 +1379,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         return NULL;
       }
 
-      FbleType* port_type = CompileType(arena, vars, link_expr->type);
+      FbleType* port_type = CompileType(arena, scope, link_expr->type);
       if (port_type == NULL) {
         return NULL;
       }
@@ -1419,8 +1419,8 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->rtype->ref);
       FbleTypeRelease(arena, &unit_proc_type->_base);
 
-      Vars thunk_vars;
-      EnterThunk(arena_, vars, &thunk_vars);
+      Scope thunk_scope;
+      EnterThunk(arena_, scope, &thunk_scope);
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1431,15 +1431,15 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
 
-      PushVar(arena_, &thunk_vars, link_expr->get, &get_type->_base);
-      SetLocalIndex(arena_, &thunk_vars, 0, &link->get_index, false);
+      PushVar(arena_, &thunk_scope, link_expr->get, &get_type->_base);
+      SetLocalIndex(arena_, &thunk_scope, 0, &link->get_index, false);
 
-      PushVar(arena_, &thunk_vars, link_expr->put, &put_type->_base);
-      SetLocalIndex(arena_, &thunk_vars, 0, &link->put_index, false);
+      PushVar(arena_, &thunk_scope, link_expr->put, &put_type->_base);
+      SetLocalIndex(arena_, &thunk_scope, 0, &link->put_index, false);
 
       FbleVectorAppend(arena_, instr->code->instrs, &link->_base);
 
-      FbleType* type = CompileExpr(arena, blocks, false, &thunk_vars, link_expr->body, &instr->code->instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, &thunk_scope, link_expr->body, &instr->code->instrs);
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
@@ -1447,7 +1447,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleVectorAppend(arena_, instr->code->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
+      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
       FbleVectorAppend(arena_, *instrs, &instr->_base);
       CompileExit(arena_, exit, instrs);
 
@@ -1483,12 +1483,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       Var nvd[exec_expr->bindings.size];
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         nvd[i].name = exec_expr->bindings.xs[i].name;
-        nvd[i].type = CompileType(arena, vars, exec_expr->bindings.xs[i].type);
+        nvd[i].type = CompileType(arena, scope, exec_expr->bindings.xs[i].type);
         error = error || (nvd[i].type == NULL);
       }
 
-      Vars thunk_vars;
-      EnterThunk(arena_, vars, &thunk_vars);
+      Scope thunk_scope;
+      EnterThunk(arena_, scope, &thunk_scope);
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1498,9 +1498,8 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-
-        Vars bthunk_vars;
-        EnterThunk(arena_, &thunk_vars, &bthunk_vars);
+        Scope bthunk_scope;
+        EnterThunk(arena_, &thunk_scope, &bthunk_scope);
 
         FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
         binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1508,7 +1507,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
         EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binstr->code->instrs);
 
-        FbleType* type = CompileExpr(arena, blocks, false, &bthunk_vars, exec_expr->bindings.xs[i].expr, &binstr->code->instrs);
+        FbleType* type = CompileExpr(arena, blocks, false, &bthunk_scope, exec_expr->bindings.xs[i].expr, &binstr->code->instrs);
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
@@ -1516,7 +1515,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         FbleVectorAppend(arena_, binstr->code->instrs, &bproc->_base);
         ExitBlock(arena_, blocks, NULL);
 
-        ExitThunk(arena_, &thunk_vars, &bthunk_vars, binstr->code, &instr->code->instrs);
+        ExitThunk(arena_, &thunk_scope, &bthunk_scope, binstr->code, &instr->code->instrs);
         FbleVectorAppend(arena_, instr->code->instrs, &binstr->_base);
 
         error = error || (type == NULL);
@@ -1548,8 +1547,8 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       fork->args.size = exec_expr->bindings.size;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PushVar(arena_, &thunk_vars, nvd[i].name, nvd[i].type);
-        SetLocalIndex(arena_, &thunk_vars, 0, fork->args.xs + i, false);
+        PushVar(arena_, &thunk_scope, nvd[i].name, nvd[i].type);
+        SetLocalIndex(arena_, &thunk_scope, 0, fork->args.xs + i, false);
       }
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
@@ -1559,7 +1558,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleType* rtype = NULL;
       if (!error) {
-        rtype = CompileExpr(arena, blocks, false, &thunk_vars, exec_expr->body, &instr->code->instrs);
+        rtype = CompileExpr(arena, blocks, false, &thunk_scope, exec_expr->body, &instr->code->instrs);
         error = (rtype == NULL);
       }
 
@@ -1580,7 +1579,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleVectorAppend(arena_, instr->code->instrs, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
 
-      ExitThunk(arena_, vars, &thunk_vars, instr->code, instrs);
+      ExitThunk(arena_, scope, &thunk_scope, instr->code, instrs);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleTypeRelease(arena, nvd[i].type);
@@ -1601,13 +1600,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       AddBlockTime(blocks, 1);
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
 
-      for (size_t i = 0; i < vars->nvars; ++i) {
-        size_t j = vars->nvars - i - 1;
-        Var* var = vars->vars.xs + j;
+      for (size_t i = 0; i < scope->nvars; ++i) {
+        size_t j = scope->nvars - i - 1;
+        Var* var = scope->vars.xs + j;
         if (FbleNamesEqual(&var_expr->var, &var->name)) {
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
-          SetFrameIndex(arena_, vars, i, &instr->index, true);
+          SetFrameIndex(arena_, scope, i, &instr->index, true);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
           CompileExit(arena_, exit, instrs);
           return FbleTypeRetain(arena, var->type);
@@ -1657,7 +1656,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
           var_types[i] = var;
         } else {
           assert(binding->kind == NULL);
-          nvd[i].type = CompileType(arena, vars, binding->type);
+          nvd[i].type = CompileType(arena, scope, binding->type);
           error = error || (nvd[i].type == NULL);
         }
 
@@ -1671,12 +1670,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         }
       }
 
-      size_t vi = vars->nvars;
+      size_t vi = scope->nvars;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        PushVar(arena_, vars, nvd[i].name, nvd[i].type);
+        PushVar(arena_, scope, nvd[i].name, nvd[i].type);
         FbleRefValueInstr* ref_instr = FbleAlloc(arena_, FbleRefValueInstr);
         ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
-        SetLocalIndex(arena_, vars, 0, &ref_instr->index, false);
+        SetLocalIndex(arena_, scope, 0, &ref_instr->index, false);
         FbleVectorAppend(arena_, *instrs, &ref_instr->_base);
       }
 
@@ -1689,7 +1688,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         FbleType* type = NULL;
         if (!error) {
           EnterBlock(arena_, blocks, binding->name, binding->expr->loc, instrs);
-          type = CompileExpr(arena, blocks, false, vars, binding->expr, instrs);
+          type = CompileExpr(arena, blocks, false, scope, binding->expr, instrs);
           ExitBlock(arena_, blocks, instrs);
         }
         error = error || (type == NULL);
@@ -1726,7 +1725,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       // Check to see if this is a recursive let block.
       bool recursive = false;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || (vars->vars.xs[vi + i].used);
+        recursive = recursive || (scope->vars.xs[vi + i].used);
       }
 
       // Apply the newly computed type values for variables whose types were
@@ -1750,7 +1749,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
         FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
         ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-        SetLocalIndex(arena_, vars, i, &ref_def_instr->index, false);
+        SetLocalIndex(arena_, scope, i, &ref_def_instr->index, false);
         ref_def_instr->recursive = recursive;
         FbleVectorAppend(arena_, *instrs, &ref_def_instr->_base);
       }
@@ -1758,7 +1757,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       FbleType* rtype = NULL;
       if (!error) {
-        rtype = CompileExpr(arena, blocks, exit, vars, let_expr->body, instrs);
+        rtype = CompileExpr(arena, blocks, exit, scope, let_expr->body, instrs);
         error = (rtype == NULL);
       }
 
@@ -1766,10 +1765,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          SetLocalIndex(arena_, vars, 0, &descope->index, false);
+          SetLocalIndex(arena_, scope, 0, &descope->index, false);
           FbleVectorAppend(arena_, *instrs, &descope->_base);
         }
-        PopVar(arena_, vars);
+        PopVar(arena_, scope);
         FbleTypeRelease(arena, nvd[i].type);
       }
 
@@ -1784,13 +1783,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       AddBlockTime(blocks, 1);
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
-      for (size_t i = 0; i < vars->nvars; ++i) {
-        size_t j = vars->nvars - i - 1;
-        Var* var = vars->vars.xs + j;
+      for (size_t i = 0; i < scope->nvars; ++i) {
+        size_t j = scope->nvars - i - 1;
+        Var* var = scope->vars.xs + j;
         if (FbleNamesEqual(&module_ref_expr->ref.resolved, &var->name)) {
           FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
           instr->_base.tag = FBLE_VAR_INSTR;
-          SetFrameIndex(arena_, vars, i, &instr->index, true);
+          SetFrameIndex(arena_, scope, i, &instr->index, true);
           FbleVectorAppend(arena_, *instrs, &instr->_base);
           CompileExit(arena_, exit, instrs);
           return FbleTypeRetain(arena, var->type);
@@ -1834,19 +1833,19 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       FbleVectorAppend(arena_, *instrs, &vpush->_base);
-      PushVar(arena_, vars, poly->arg.name, &type_type->_base);
-      SetLocalIndex(arena_, vars, 0, &vpush->index, false);
+      PushVar(arena_, scope, poly->arg.name, &type_type->_base);
+      SetLocalIndex(arena_, scope, 0, &vpush->index, false);
 
-      FbleType* body = CompileExpr(arena, blocks, exit, vars, poly->body, instrs);
+      FbleType* body = CompileExpr(arena, blocks, exit, scope, poly->body, instrs);
 
       if (!exit) {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
         descope->_base.tag = FBLE_DESCOPE_INSTR;
-        SetLocalIndex(arena_, vars, 0, &descope->index, false);
+        SetLocalIndex(arena_, scope, 0, &descope->index, false);
         FbleVectorAppend(arena_, *instrs, &descope->_base);
       }
 
-      PopVar(arena_, vars);
+      PopVar(arena_, scope);
       FbleTypeRelease(arena, &type_type->_base);
 
       if (body == NULL) {
@@ -1865,7 +1864,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
       // Note: typeof(poly<arg>) = typeof(poly)<arg>
       // CompileExpr gives us typeof(poly)
-      FbleType* poly = CompileExpr(arena, blocks, exit, vars, apply->poly, instrs);
+      FbleType* poly = CompileExpr(arena, blocks, exit, scope, apply->poly, instrs);
       if (poly == NULL) {
         return NULL;
       }
@@ -1880,7 +1879,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       }
 
       // Note: CompileType gives us the value of arg
-      FbleType* arg = CompileType(arena, vars, apply->arg);
+      FbleType* arg = CompileType(arena, scope, apply->arg);
       if (arg == NULL) {
         FbleKindRelease(arena_, &poly_kind->_base);
         FbleTypeRelease(arena, poly);
@@ -1910,7 +1909,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
     case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
-      return CompileList(arena, blocks, exit, vars, expr->loc, list_expr->args, instrs);
+      return CompileList(arena, blocks, exit, scope, expr->loc, list_expr->args, instrs);
     }
 
     case FBLE_LITERAL_EXPR: {
@@ -1955,14 +1954,14 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       }
 
       FbleExprV args = { .size = n, .xs = xs, };
-      return CompileList(arena, blocks, exit, vars, literal->word_loc, args, instrs);
+      return CompileList(arena, blocks, exit, scope, literal->word_loc, args, instrs);
     }
 
     case FBLE_STRUCT_IMPORT_EXPR: {
       AddBlockTime(blocks, 1);
       FbleStructImportExpr* struct_import_expr = (FbleStructImportExpr*)expr;
 
-      FbleType* type = CompileExpr(arena, blocks, false, vars, struct_import_expr->nspace, instrs);
+      FbleType* type = CompileExpr(arena, blocks, false, scope, struct_import_expr->nspace, instrs);
       if (type == NULL) {
         return NULL;
       }
@@ -1988,20 +1987,20 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
       FbleVectorAppend(arena_, *instrs, &struct_import->_base);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        PushVar(arena_, vars, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
-        SetLocalIndex(arena_, vars, 0, struct_import->fields.xs + i, false);
+        PushVar(arena_, scope, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
+        SetLocalIndex(arena_, scope, 0, struct_import->fields.xs + i, false);
       }
 
-      FbleType* rtype = CompileExpr(arena, blocks, exit, vars, struct_import_expr->body, instrs);
+      FbleType* rtype = CompileExpr(arena, blocks, exit, scope, struct_import_expr->body, instrs);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          SetLocalIndex(arena_, vars, 0, &descope->index, false);
+          SetLocalIndex(arena_, scope, 0, &descope->index, false);
           FbleVectorAppend(arena_, *instrs, &descope->_base);
         }
-        PopVar(arena_, vars);
+        PopVar(arena_, scope);
       }
 
       FbleTypeRelease(arena, &struct_type->_base);
@@ -2023,7 +2022,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 //   arena - arena to use for allocations.
 //   blocks - the blocks stack.
 //   exit - if true, generate instructions to exit the current scope.
-//   vars - the list of variables in scope.
+//   scope - the list of variables in scope.
 //   loc - the location of the list expression.
 //   args - the elements of the list expression to compile.
 //   instrs - vector of instructions to append new instructions to.
@@ -2040,7 +2039,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 //   Allocates a reference-counted type that must be freed using
 //   FbleTypeRelease when it is no longer needed.
 //   Behavior is undefined if there is not at least one list argument.
-static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Vars* vars, FbleLoc loc, FbleExprV args, FbleInstrV* instrs)
+static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args, FbleInstrV* instrs)
 {
   // The goal is to desugar a list expression [a, b, c, d] into the
   // following expression:
@@ -2213,7 +2212,7 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 
   FbleExpr* expr = &apply_elems._base;
 
-  FbleType* result = CompileExpr(arena, blocks, exit, vars, expr, instrs);
+  FbleType* result = CompileExpr(arena, blocks, exit, scope, expr, instrs);
 
   FbleKindRelease(arena_, &basic_kind->_base);
   for (size_t i = 0; i < args.size; i++) {
@@ -2228,7 +2227,7 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   vars - the list of variables in scope.
+//   scope - the list of variables in scope.
 //   expr - the expression to compile.
 //
 // Results:
@@ -2238,17 +2237,17 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Va
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   FbleTypeRelease when it is no longer needed.
-static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr* expr)
+static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
-  // Make a copy of vars to ensure we don't save references to any
+  // Make a copy of scope to ensure we don't save references to any
   // instructions that we may free.
-  Vars nvars;
-  FbleVectorInit(arena_, nvars.vars);
-  nvars.nvars = 0;
-  for (size_t i = 0; i < vars->nvars; ++i) {
-    PushVar(arena_, &nvars, vars->vars.xs[i].name, vars->vars.xs[i].type);
+  Scope nscope;
+  FbleVectorInit(arena_, nscope.vars);
+  nscope.nvars = 0;
+  for (size_t i = 0; i < scope->nvars; ++i) {
+    PushVar(arena_, &nscope, scope->vars.xs[i].name, scope->vars.xs[i].type);
   }
 
   FbleInstrV instrs;
@@ -2257,7 +2256,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr*
   Blocks blocks;
   FbleVectorInit(arena_, blocks.stack);
   FbleVectorInit(arena_, blocks.blocks);
-  FbleType* type = CompileExpr(arena, &blocks, true, &nvars, expr, &instrs);
+  FbleType* type = CompileExpr(arena, &blocks, true, &nscope, expr, &instrs);
   FbleFree(arena_, blocks.stack.xs);
   FbleFreeBlockNames(arena_, &blocks.blocks);
 
@@ -2265,7 +2264,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr*
     FreeInstr(arena_, instrs.xs[i]);
   }
   FbleFree(arena_, instrs.xs);
-  FreeVars(arena_, &nvars);
+  FreeVars(arena_, &nscope);
   return type;
 }
 
@@ -2274,7 +2273,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr*
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   vars - the value of variables in scope.
+//   scope - the value of variables in scope.
 //   type - the type to compile.
 //
 // Results:
@@ -2284,7 +2283,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Vars* vars, FbleExpr*
 //   Prints a message to stderr if the type fails to compile or evalute.
 //   Allocates a reference-counted type that must be freed using
 //   FbleTypeRelease when it is no longer needed.
-static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* type)
+static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* type)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (type->tag) {
@@ -2299,7 +2298,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         FbleField* field = struct_type->fields.xs + i;
-        FbleType* compiled = CompileType(arena, vars, field->type);
+        FbleType* compiled = CompileType(arena, scope, field->type);
         if (compiled == NULL) {
           FbleTypeRelease(arena, &st->_base);
           return NULL;
@@ -2342,7 +2341,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       FbleUnionTypeExpr* union_type = (FbleUnionTypeExpr*)type;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         FbleField* field = union_type->fields.xs + i;
-        FbleType* compiled = CompileType(arena, vars, field->type);
+        FbleType* compiled = CompileType(arena, scope, field->type);
         if (compiled == NULL) {
           FbleTypeRelease(arena, &ut->_base);
           return NULL;
@@ -2376,7 +2375,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       ft->rtype = NULL;
 
       FbleFuncTypeExpr* func_type = (FbleFuncTypeExpr*)type;
-      ft->arg = CompileType(arena, vars, func_type->arg);
+      ft->arg = CompileType(arena, scope, func_type->arg);
       if (ft->arg == NULL) {
         FbleTypeRelease(arena, &ft->_base);
         return NULL;
@@ -2384,7 +2383,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       FbleRefAdd(arena, &ft->_base.ref, &ft->arg->ref);
       FbleTypeRelease(arena, ft->arg);
 
-      FbleType* rtype = CompileType(arena, vars, func_type->rtype);
+      FbleType* rtype = CompileType(arena, scope, func_type->rtype);
       if (rtype == NULL) {
         FbleTypeRelease(arena, &ft->_base);
         return NULL;
@@ -2404,7 +2403,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
       ut->type = NULL;
 
       FbleProcTypeExpr* unary_type = (FbleProcTypeExpr*)type;
-      ut->type = CompileType(arena, vars, unary_type->type);
+      ut->type = CompileType(arena, scope, unary_type->type);
       if (ut->type == NULL) {
         FbleTypeRelease(arena, &ut->_base);
         return NULL;
@@ -2416,7 +2415,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
 
     case FBLE_TYPEOF_EXPR: {
       FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
-      return CompileExprNoInstrs(arena, vars, typeof->expr);
+      return CompileExprNoInstrs(arena, scope, typeof->expr);
     }
 
     case FBLE_MISC_APPLY_EXPR:
@@ -2437,7 +2436,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
     case FBLE_LITERAL_EXPR:
     case FBLE_STRUCT_IMPORT_EXPR: {
       FbleExpr* expr = type;
-      FbleType* type = CompileExprNoInstrs(arena, vars, expr);
+      FbleType* type = CompileExprNoInstrs(arena, scope, expr);
       if (type == NULL) {
         return NULL;
       }
@@ -2466,7 +2465,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
 // Inputs:
 //   arena - arena to use for allocations.
 //   blocks - the blocks stack.
-//   vars - the list of variables in scope.
+//   scope - the list of variables in scope.
 //   prgm - the program to compile.
 //   instrs - vector of instructions to append new instructions to.
 //
@@ -2482,7 +2481,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Vars* vars, FbleTypeExpr* typ
 //   Prints a message to stderr if the program fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   FbleTypeRelease when it is no longer needed.
-static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars, FbleProgram* prgm, FbleInstrV* instrs)
+static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm, FbleInstrV* instrs)
 {
   AddBlockTime(blocks, 1 + prgm->modules.size);
 
@@ -2490,7 +2489,7 @@ static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars
   FbleType* types[prgm->modules.size];
   for (size_t i = 0; i < prgm->modules.size; ++i) {
     EnterBlock(arena_, blocks, prgm->modules.xs[i].name, prgm->modules.xs[i].value->loc, instrs);
-    types[i] = CompileExpr(arena, blocks, false, vars, prgm->modules.xs[i].value, instrs);
+    types[i] = CompileExpr(arena, blocks, false, scope, prgm->modules.xs[i].value, instrs);
     ExitBlock(arena_, blocks, instrs);
 
     if (types[i] == NULL) {
@@ -2503,13 +2502,13 @@ static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Vars* vars
     FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
     vpush->_base.tag = FBLE_VPUSH_INSTR;
     FbleVectorAppend(arena_, *instrs, &vpush->_base);
-    PushVar(arena_, vars, prgm->modules.xs[i].name, types[i]);
-    SetLocalIndex(arena_, vars, 0, &vpush->index, false);
+    PushVar(arena_, scope, prgm->modules.xs[i].name, types[i]);
+    SetLocalIndex(arena_, scope, 0, &vpush->index, false);
   }
 
-  FbleType* rtype = CompileExpr(arena, blocks, true, vars, prgm->main, instrs);
+  FbleType* rtype = CompileExpr(arena, blocks, true, scope, prgm->main, instrs);
   for (size_t i = 0; i < prgm->modules.size; ++i) {
-    PopVar(arena_, vars);
+    PopVar(arena_, scope);
     FbleTypeRelease(arena, types[i]);
   }
 
@@ -2553,13 +2552,13 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
     .space = FBLE_NORMAL_NAME_SPACE
   };
 
-  Vars vars;
-  FbleVectorInit(arena, vars.vars);
-  vars.nvars = 0;
+  Scope scope;
+  FbleVectorInit(arena, scope.vars);
+  scope.nvars = 0;
 
   FbleTypeArena* type_arena = FbleNewTypeArena(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &block->instrs);
-  FbleType* type = CompileProgram(type_arena, &block_stack, &vars, program, &block->instrs);
+  FbleType* type = CompileProgram(type_arena, &block_stack, &scope, program, &block->instrs);
   ExitBlock(arena, &block_stack, NULL);
   FbleTypeRelease(type_arena, type);
   FbleFreeTypeArena(type_arena);
@@ -2568,8 +2567,8 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   FbleFree(arena, block_stack.stack.xs);
   *blocks = block_stack.blocks;
 
-  block->locals = vars.vars.size;
-  FreeVars(arena, &vars);
+  block->locals = scope.vars.size;
+  FreeVars(arena, &scope);
   if (type == NULL) {
     FbleFreeInstrBlock(arena, block);
     return NULL;
