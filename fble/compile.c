@@ -24,11 +24,13 @@ typedef struct {
 //
 // name - the name of the variable.
 // type - the type of the variable.
+// index - the index of the variable in the current stack frame.
 // fixup - a record of frame indexes used to access the variable.
 // used  - true if the variable is used anywhere, false otherwise.
 typedef struct {
   FbleName name;
   FbleType* type;
+  FbleFrameIndex index;
   LocalIndexV fixup;
   bool used;
 } Var;
@@ -91,6 +93,7 @@ static void SetFrameIndex(FbleArena* arena, Scope* scope, size_t position, FbleF
 static void SetLocalIndex(FbleArena* arena, Scope* scope, size_t position, FbleLocalIndex* dest, bool use);
 static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Scope* scope);
+static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name);
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
@@ -264,6 +267,8 @@ static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
   }
   var->name = name;
   var->type = type;
+  var->index.section = FBLE_LOCALS_FRAME_SECTION;
+  var->index.index = scope->nvars;
   scope->nvars++;
   var->used = false;
 }
@@ -284,6 +289,31 @@ static void PopVar(FbleArena* arena, Scope* scope)
 {
   assert(scope->nvars > 0);
   scope->nvars--;
+}
+
+// GetVar --
+//   Lookup a var in the given scope.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   scope - the scope to look in.
+//   name - the name of the variable.
+//
+// Result:
+//   The variable from the scope, or NULL if no such variable was found.
+//
+// Side effects:
+//   TODO
+static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name)
+{
+  for (size_t i = 0; i < scope->nvars; ++i) {
+    size_t j = scope->nvars - i - 1;
+    Var* var = scope->vars.xs + j;
+    if (FbleNamesEqual(&name, &var->name)) {
+      return var;
+    }
+  }
+  return NULL;
 }
 
 // EnterBlock --
@@ -1610,24 +1640,20 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
     case FBLE_VAR_EXPR: {
       AddBlockTime(blocks, 1);
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-
-      for (size_t i = 0; i < scope->nvars; ++i) {
-        size_t j = scope->nvars - i - 1;
-        Var* var = scope->vars.xs + j;
-        if (FbleNamesEqual(&var_expr->var, &var->name)) {
-          FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
-          instr->_base.tag = FBLE_VAR_INSTR;
-          SetFrameIndex(arena_, scope, i, &instr->index, true);
-          AppendInstr(arena_, scope, &instr->_base);
-          CompileExit(arena_, exit, scope);
-          return FbleTypeRetain(arena, var->type);
-        }
+      Var* var = GetVar(arena_, scope, var_expr->var);
+      if (var == NULL) {
+        ReportError(arena_, &var_expr->var.loc, "variable '%n' not defined\n",
+            &var_expr->var);
+        return NULL;
       }
 
-      ReportError(arena_, &var_expr->var.loc,
-          "variable '%n' not defined\n",
-          &var_expr->var);
-      return NULL;
+      FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
+      instr->_base.tag = FBLE_VAR_INSTR;
+      size_t i = scope->nvars - var->index.index - 1;
+      SetFrameIndex(arena_, scope, i, &instr->index, true);
+      AppendInstr(arena_, scope, &instr->_base);
+      CompileExit(arena_, exit, scope);
+      return FbleTypeRetain(arena, var->type);
     }
 
     case FBLE_LET_EXPR: {
@@ -1794,23 +1820,18 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       AddBlockTime(blocks, 1);
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
-      for (size_t i = 0; i < scope->nvars; ++i) {
-        size_t j = scope->nvars - i - 1;
-        Var* var = scope->vars.xs + j;
-        if (FbleNamesEqual(&module_ref_expr->ref.resolved, &var->name)) {
-          FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
-          instr->_base.tag = FBLE_VAR_INSTR;
-          SetFrameIndex(arena_, scope, i, &instr->index, true);
-          AppendInstr(arena_, scope, &instr->_base);
-          CompileExit(arena_, exit, scope);
-          return FbleTypeRetain(arena, var->type);
-        }
-      }
+      Var* var = GetVar(arena_, scope, module_ref_expr->ref.resolved);
 
-      // We should have resolved all modules at program load time, so we
-      // should never get here.
-      UNREACHABLE("module not in scope");
-      return NULL;
+      // We should have resolved all modules at program load time.
+      assert(var != NULL && "module not in scope");
+
+      FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
+      instr->_base.tag = FBLE_VAR_INSTR;
+      size_t i = scope->nvars - var->index.index - 1;
+      SetFrameIndex(arena_, scope, i, &instr->index, true);
+      AppendInstr(arena_, scope, &instr->_base);
+      CompileExit(arena_, exit, scope);
+      return FbleTypeRetain(arena, var->type);
     }
 
     case FBLE_POLY_EXPR: {
