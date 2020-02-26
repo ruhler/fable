@@ -1,7 +1,9 @@
 Eval2:
-* Start moving things from data stack to vars.
- - Use VPUSH if needed to get it to a var.
- - Add explicit source and target locations to instructions.
+* Allow vars to be scoped in a different order than they are stored.
+* Add support for anonymous vars.
+* Change Compile to return Var* instead of Type*.
+* Make result a LocalIndex into parent scope instead of FbleValue**?
+* Move instructions away from data stack and on to vars instead.
 * Delete unused data stack.
 * Rename FbleDescopeInstr to something more meaningful.
 * Rename EXIT_SCOPE_INSTR to something more meaningful.
