@@ -27,10 +27,10 @@ typedef struct {
 } Var;
 
 // Var --
-//   A vector of vars.
+//   A vector of pointers to vars.
 typedef struct {
   size_t size;
-  Var* xs;
+  Var** xs;
 } VarV;
 
 // Scope --
@@ -80,7 +80,7 @@ typedef struct {
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
-static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
+static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Scope* scope);
 static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name);
 static FbleLocalIndex GetLocalIndex(Scope* scope, size_t position);
@@ -186,23 +186,27 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //   type - the type of the variable.
 //
 // Results:
-//   none
+//   A pointer to the newly pushed variable. The pointer is owned by the
+//   scope. It remains valid until a corresponding PopVar or FinishScope
+//   occurs.
 //
 // Side effects:
 //   Pushes a new variable with given name and type onto the scope. It is the
 //   callers responsibility to ensure that the type stays alive as long as is
 //   needed.
-static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
+static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
 {
-  Var* var = FbleVectorExtend(arena, scope->locals);
+  Var* var = FbleAlloc(arena, Var);
   var->name = name;
   var->type = type;
   var->index.section = FBLE_LOCALS_FRAME_SECTION;
-  var->index.index = scope->locals.size - 1;
+  var->index.index = scope->locals.size;
   var->used = false;
+  FbleVectorAppend(arena, scope->locals, var);
   if (scope->locals.size > scope->code->locals) {
     scope->code->locals = scope->locals.size;
   }
+  return var;
 }
 
 // PopVar --
@@ -216,10 +220,12 @@ static void PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
 //   none.
 //
 // Side effects:
-//   Pops the top var off the scope.
+//   Pops the top var off the scope. Invalidates the pointer to the variable
+//   originally returned in PushVar.
 static void PopVar(FbleArena* arena, Scope* scope)
 {
   scope->locals.size--;
+  FbleFree(arena, scope->locals.xs[scope->locals.size]);
 }
 
 // GetVar --
@@ -231,7 +237,9 @@ static void PopVar(FbleArena* arena, Scope* scope)
 //   name - the name of the variable.
 //
 // Result:
-//   The variable from the scope, or NULL if no such variable was found.
+//   The variable from the scope, or NULL if no such variable was found. The
+//   variable is owned by the scope and remains valid until either PopVar is
+//   called or the scope is finished.
 //
 // Side effects:
 //   Marks variable for capture if necessary.
@@ -239,14 +247,14 @@ static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name)
 {
   for (size_t i = 0; i < scope->locals.size; ++i) {
     size_t j = scope->locals.size - i - 1;
-    Var* var = scope->locals.xs + j;
+    Var* var = scope->locals.xs[j];
     if (FbleNamesEqual(&name, &var->name)) {
       return var;
     }
   }
 
   for (size_t i = 0; i < scope->statics.size; ++i) {
-    Var* var = scope->statics.xs + i;
+    Var* var = scope->statics.xs[i];
     if (FbleNamesEqual(&name, &var->name)) {
       return var;
     }
@@ -255,12 +263,14 @@ static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name)
   if (scope->parent != NULL) {
     Var* var = GetVar(arena, scope->parent, name);
     if (var != NULL) {
-      Var* captured = FbleVectorExtend(arena, scope->statics);
+      Var* captured = FbleAlloc(arena, Var);
       captured->name = var->name;
       captured->type = var->type;
       captured->index.section = FBLE_STATICS_FRAME_SECTION;
-      captured->index.index = scope->statics.size - 1;
+      captured->index.index = scope->statics.size;
       captured->used = false;
+
+      FbleVectorAppend(arena, scope->statics, captured);
       if (scope->statics.size > scope->code->statics) {
         scope->code->statics = scope->statics.size;
       }
@@ -489,7 +499,7 @@ static void FinishScope(FbleArena* arena, Scope* scope)
   if (scope->parent != NULL) {
     for (size_t i = 0; i < scope->statics.size; ++i) {
       // Copy the captured var to the data stack for capturing.
-      Var* captured = scope->statics.xs + i;
+      Var* captured = scope->statics.xs[i];
       FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
       Var* var = GetVar(arena, scope->parent, captured->name);
@@ -500,7 +510,14 @@ static void FinishScope(FbleArena* arena, Scope* scope)
     }
   }
 
+  for (size_t i = 0; i < scope->statics.size; ++i) {
+    FbleFree(arena, scope->statics.xs[i]);
+  }
   FbleFree(arena, scope->statics.xs);
+
+  for (size_t i = 0; i < scope->locals.size; ++i) {
+    FbleFree(arena, scope->locals.xs[i]);
+  }
   FbleFree(arena, scope->locals.xs);
 }
 
@@ -1707,7 +1724,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       // Check to see if this is a recursive let block.
       bool recursive = false;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || (scope->locals.xs[vi + i].used);
+        recursive = recursive || (scope->locals.xs[vi + i]->used);
       }
 
       // Apply the newly computed type values for variables whose types were
