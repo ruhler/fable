@@ -1,4 +1,6 @@
 Eval2:
+* Add spec test to cover a bug where ref_def_instrs use index in different
+  order from the values on the data stack.
 * Test that vars are not captured if only used in typeof expression?
  - And test if nested within multiple layers of scopes.
 * Allow vars to be scoped in a different order than they are stored.

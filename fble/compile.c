@@ -83,7 +83,6 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Scope* scope);
 static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name);
-static FbleLocalIndex GetLocalIndex(Scope* scope, size_t position);
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
@@ -279,23 +278,6 @@ static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name)
   }
 
   return NULL;
-}
-
-// GetLocalIndex --
-//   Get the local index for a variable in scope.
-//
-// Inputs:
-//   scope - the scope to get the index of.
-//   position - the position of the variable relative to the top of the scope.
-//
-// Results:
-//   The local index of the variable.
-//
-// Side effects:
-//   None.
-static FbleLocalIndex GetLocalIndex(Scope* scope, size_t position)
-{
-  return scope->locals.size - position - 1;
 }
 
 // EnterBlock --
@@ -1437,11 +1419,11 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
 
-      PushVar(arena_, &body_scope, link_expr->get, &get_type->_base);
-      link->get_index = GetLocalIndex(&body_scope, 0);
+      Var* get_var = PushVar(arena_, &body_scope, link_expr->get, &get_type->_base);
+      link->get_index = get_var->index.index;
 
-      PushVar(arena_, &body_scope, link_expr->put, &put_type->_base);
-      link->put_index = GetLocalIndex(&body_scope, 0);
+      Var* put_var = PushVar(arena_, &body_scope, link_expr->put, &put_type->_base);
+      link->put_index = put_var->index.index;
 
       AppendInstr(arena_, &body_scope, &link->_base);
 
@@ -1550,8 +1532,8 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       fork->args.size = exec_expr->bindings.size;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PushVar(arena_, &body_scope, nvd[i].name, nvd[i].type);
-        fork->args.xs[i] = GetLocalIndex(&body_scope, 0);
+        Var* v = PushVar(arena_, &body_scope, nvd[i].name, nvd[i].type);
+        fork->args.xs[i] = v->index.index;
       }
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
@@ -1669,12 +1651,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         }
       }
 
-      size_t vi = scope->locals.size;
+      Var* vars[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        PushVar(arena_, scope, nvd[i].name, nvd[i].type);
+        vars[i] = PushVar(arena_, scope, nvd[i].name, nvd[i].type);
         FbleRefValueInstr* ref_instr = FbleAlloc(arena_, FbleRefValueInstr);
         ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
-        ref_instr->index = GetLocalIndex(scope, 0);
+        ref_instr->index = vars[i]->index.index;
         AppendInstr(arena_, scope, &ref_instr->_base);
       }
 
@@ -1724,7 +1706,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       // Check to see if this is a recursive let block.
       bool recursive = false;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || (scope->locals.xs[vi + i]->used);
+        recursive = recursive || vars[i]->used;
       }
 
       // Apply the newly computed type values for variables whose types were
@@ -1748,7 +1730,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
 
         FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
         ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-        ref_def_instr->index = GetLocalIndex(scope, i);
+        ref_def_instr->index = vars[let_expr->bindings.size - i - 1]->index.index;
         ref_def_instr->recursive = recursive;
         AppendInstr(arena_, scope, &ref_def_instr->_base);
       }
@@ -1764,7 +1746,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->index = GetLocalIndex(scope, 0);
+          descope->index = vars[let_expr->bindings.size - i - 1]->index.index;
           AppendInstr(arena_, scope, &descope->_base);
         }
         PopVar(arena_, scope);
@@ -1827,15 +1809,15 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
       vpush->_base.tag = FBLE_VPUSH_INSTR;
       AppendInstr(arena_, scope, &vpush->_base);
-      PushVar(arena_, scope, poly->arg.name, &type_type->_base);
-      vpush->index = GetLocalIndex(scope, 0);
+      Var* var = PushVar(arena_, scope, poly->arg.name, &type_type->_base);
+      vpush->index = var->index.index;
 
       FbleType* body = CompileExpr(arena, blocks, exit, scope, poly->body);
 
       if (!exit) {
         FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
         descope->_base.tag = FBLE_DESCOPE_INSTR;
-        descope->index = GetLocalIndex(scope, 0);
+        descope->index = var->index.index;
         AppendInstr(arena_, scope, &descope->_base);
       }
 
@@ -1980,9 +1962,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       struct_import->fields.size = struct_type->fields.size;
       AppendInstr(arena_, scope, &struct_import->_base);
 
+      Var* vars[struct_type->fields.size];
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        PushVar(arena_, scope, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
-        struct_import->fields.xs[i] = GetLocalIndex(scope, 0);
+        vars[i] = PushVar(arena_, scope, struct_type->fields.xs[i].name, struct_type->fields.xs[i].type);
+        struct_import->fields.xs[i] = vars[i]->index.index;
       }
 
       FbleType* rtype = CompileExpr(arena, blocks, exit, scope, struct_import_expr->body);
@@ -1991,7 +1974,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         if (!exit) {
           FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
           descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->index = GetLocalIndex(scope, 0);
+          descope->index = vars[struct_type->fields.size - i - 1]->index.index;
           AppendInstr(arena_, scope, &descope->_base);
         }
         PopVar(arena_, scope);
@@ -2488,8 +2471,8 @@ static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* sco
     FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
     vpush->_base.tag = FBLE_VPUSH_INSTR;
     AppendInstr(arena_, scope, &vpush->_base);
-    PushVar(arena_, scope, prgm->modules.xs[i].name, types[i]);
-    vpush->index = GetLocalIndex(scope, 0);
+    Var* v = PushVar(arena_, scope, prgm->modules.xs[i].name, types[i]);
+    vpush->index = v->index.index;
   }
 
   FbleType* rtype = CompileExpr(arena, blocks, true, scope, prgm->main);
