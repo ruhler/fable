@@ -40,11 +40,15 @@ typedef struct {
 //   statics - variables captured from the parent scope.
 //   locals - local variables.
 //   code - the instruction block for this scope.
+//   phantom - if true, operations on this scope should not have any side
+//             effects on the parent scope. Used in the case when we are
+//             compiling for types only, not for instructions.
 //   parent - the parent of this scope. May be NULL.
 typedef struct Scope {
   VarV statics;
   VarV locals;
   FbleInstrBlock* code;
+  bool phantom;
   struct Scope* parent;
 } Scope;
 
@@ -82,14 +86,14 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleArena* arena, Scope* scope);
-static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name);
+static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name, bool phantom);
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
 static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scope* parent);
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, bool phantom, Scope* parent);
 static void FinishScope(FbleArena* arena, Scope* scope);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 
@@ -234,6 +238,7 @@ static void PopVar(FbleArena* arena, Scope* scope)
 //   arena - arena to use for allocations.
 //   scope - the scope to look in.
 //   name - the name of the variable.
+//   phantom - if true, do not consider the variable to be accessed.
 //
 // Result:
 //   The variable from the scope, or NULL if no such variable was found. The
@@ -241,13 +246,16 @@ static void PopVar(FbleArena* arena, Scope* scope)
 //   called or the scope is finished.
 //
 // Side effects:
-//   Marks variable for capture if necessary.
-static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name)
+//   Marks variable as used and for capture if necessary and not phantom.
+static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name, bool phantom)
 {
   for (size_t i = 0; i < scope->locals.size; ++i) {
     size_t j = scope->locals.size - i - 1;
     Var* var = scope->locals.xs[j];
     if (FbleNamesEqual(&name, &var->name)) {
+      if (!phantom) {
+        var->used = true;
+      }
       return var;
     }
   }
@@ -255,19 +263,28 @@ static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name)
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
     if (FbleNamesEqual(&name, &var->name)) {
+      if (!phantom) {
+        var->used = true;
+      }
       return var;
     }
   }
 
   if (scope->parent != NULL) {
-    Var* var = GetVar(arena, scope->parent, name);
+    Var* var = GetVar(arena, scope->parent, name, scope->phantom || phantom);
     if (var != NULL) {
+      if (phantom) {
+        // It doesn't matter that we are returning a variable for the wrong
+        // scope here. phantom means we won't actually use it ever.
+        return var;
+      }
+
       Var* captured = FbleAlloc(arena, Var);
       captured->name = var->name;
       captured->type = var->type;
       captured->index.section = FBLE_STATICS_FRAME_SECTION;
       captured->index.index = scope->statics.size;
-      captured->used = false;
+      captured->used = !phantom;
 
       FbleVectorAppend(arena, scope->statics, captured);
       if (scope->statics.size > scope->code->statics) {
@@ -442,6 +459,7 @@ static void AddBlockTime(Blocks* blocks, size_t time)
 //   arena - arena to use for allocations.
 //   scope - the scope to initialize.
 //   code - a pointer to the code block for this scope.
+//   phantom - whether the scope is a phantom scope or not.
 //   parent - the parent of the scope to initialize. May be NULL.
 //
 // Results:
@@ -451,13 +469,14 @@ static void AddBlockTime(Blocks* blocks, size_t time)
 //   Initializes scope based on parent. FinishScope should be
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scope* parent)
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, bool phantom, Scope* parent)
 {
   FbleVectorInit(arena, scope->statics);
   FbleVectorInit(arena, scope->locals);
   scope->code = code;
   scope->code->statics = 0;
   scope->code->locals = 0;
+  scope->phantom = phantom;
   scope->parent = parent;
 }
 
@@ -475,18 +494,17 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Scop
 // Side effects:
 //   * Frees memory associated with scope.
 //   * Appends instructions to the parent scope's code to push captured
-//     variables to the data stack.
+//     variables to the data stack if this is not a phantom scope.
 static void FinishScope(FbleArena* arena, Scope* scope)
 {
-  if (scope->parent != NULL) {
+  if (scope->parent != NULL && !scope->phantom) {
     for (size_t i = 0; i < scope->statics.size; ++i) {
       // Copy the captured var to the data stack for capturing.
       Var* captured = scope->statics.xs[i];
       FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
-      Var* var = GetVar(arena, scope->parent, captured->name);
+      Var* var = GetVar(arena, scope->parent, captured->name, false);
       assert(var != NULL);
-      var->used = true;
       get_var->index = var->index;
       AppendInstr(arena, scope->parent, &get_var->_base);
     }
@@ -1273,7 +1291,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       instr->argc = argc;
 
       Scope func_scope;
-      InitScope(arena_, &func_scope, instr->code, scope);
+      InitScope(arena_, &func_scope, instr->code, false, scope);
       EnterBodyBlock(arena_, blocks, func_value_expr->body->loc, &func_scope);
 
       for (size_t i = 0; i < argc; ++i) {
@@ -1331,7 +1349,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       instr->code = NewInstrBlock(arena_);
 
       Scope eval_scope;
-      InitScope(arena_, &eval_scope, instr->code, scope);
+      InitScope(arena_, &eval_scope, instr->code, false, scope);
       EnterBodyBlock(arena_, blocks, expr->loc, &eval_scope);
 
       FbleType* type = CompileExpr(arena, blocks, false, &eval_scope, eval_expr->body);
@@ -1413,7 +1431,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       instr->code = NewInstrBlock(arena_);
 
       Scope body_scope;
-      InitScope(arena_, &body_scope, instr->code, scope);
+      InitScope(arena_, &body_scope, instr->code, false, scope);
       EnterBodyBlock(arena_, blocks, link_expr->body->loc, &body_scope);
 
       FbleLinkInstr* link = FbleAlloc(arena_, FbleLinkInstr);
@@ -1480,7 +1498,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       instr->code = NewInstrBlock(arena_);
 
       Scope body_scope;
-      InitScope(arena_, &body_scope, instr->code, scope);
+      InitScope(arena_, &body_scope, instr->code, false, scope);
       EnterBodyBlock(arena_, blocks, exec_expr->body->loc, &body_scope);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
@@ -1489,7 +1507,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         binstr->code = NewInstrBlock(arena_);
 
         Scope binding_scope;
-        InitScope(arena_, &binding_scope, binstr->code, &body_scope);
+        InitScope(arena_, &binding_scope, binstr->code, false, &body_scope);
         EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binding_scope);
 
         FbleType* type = CompileExpr(arena, blocks, false, &binding_scope, exec_expr->bindings.xs[i].expr);
@@ -1584,13 +1602,12 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
     case FBLE_VAR_EXPR: {
       AddBlockTime(blocks, 1);
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-      Var* var = GetVar(arena_, scope, var_expr->var);
+      Var* var = GetVar(arena_, scope, var_expr->var, false);
       if (var == NULL) {
         ReportError(arena_, &var_expr->var.loc, "variable '%n' not defined\n",
             &var_expr->var);
         return NULL;
       }
-      var->used = true;
 
       FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
       instr->_base.tag = FBLE_VAR_INSTR;
@@ -1764,11 +1781,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       AddBlockTime(blocks, 1);
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
-      Var* var = GetVar(arena_, scope, module_ref_expr->ref.resolved);
+      Var* var = GetVar(arena_, scope, module_ref_expr->ref.resolved, false);
 
       // We should have resolved all modules at program load time.
       assert(var != NULL && "module not in scope");
-      var->used = true;
 
       FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
       instr->_base.tag = FBLE_VAR_INSTR;
@@ -2216,11 +2232,10 @@ static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
 static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
-
   FbleInstrBlock* code = NewInstrBlock(arena_);
 
   Scope nscope;
-  InitScope(arena_, &nscope, code, scope);
+  InitScope(arena_, &nscope, code, true, scope);
 
   Blocks blocks;
   FbleVectorInit(arena_, blocks.stack);
@@ -2228,12 +2243,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExp
   FbleType* type = CompileExpr(arena, &blocks, true, &nscope, expr);
   FbleFree(arena_, blocks.stack.xs);
   FbleFreeBlockNames(arena_, &blocks.blocks);
-
-  // Clear the parent of nscope to avoid writing anything to the scope when we
-  // finish nscope.
-  nscope.parent = NULL;
   FinishScope(arena_, &nscope);
-
   FbleFreeInstrBlock(arena_, code);
   return type;
 }
@@ -2522,7 +2532,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   };
 
   Scope scope;
-  InitScope(arena, &scope, code, NULL);
+  InitScope(arena, &scope, code, false, NULL);
 
   FbleTypeArena* type_arena = FbleNewTypeArena(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
