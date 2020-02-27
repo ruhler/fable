@@ -1,6 +1,4 @@
 Eval2:
-* Test that vars are not captured if only used in typeof expression?
- - And test if nested within multiple layers of scopes.
 * Allow vars to be scoped in a different order than they are stored.
 * Add support for anonymous vars.
 * Change Compile to return Var* instead of Type*.
