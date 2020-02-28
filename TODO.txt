@@ -1,7 +1,6 @@
 Eval2:
-* Allow vars to be scoped in a different order than they are stored.
-* Add support for anonymous vars.
 * Change Compile to return Var* instead of Type*.
+ - The scope should own the Type* for locals.
 * Make result a LocalIndex into parent scope instead of FbleValue**?
 * Move instructions away from data stack and on to vars instead.
 * Delete unused data stack.
