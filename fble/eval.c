@@ -433,16 +433,14 @@ static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics,
 //   The popped stack.
 //
 // Side effects:
-//   There should be exactly one value remaining on the data stack of the
-//   frame; that value is written to the 'result' field of the frame.
 //   Releases any remaining variables on the frame and frees the frame.
+//   Behavior is undefined if there are any remaining values on the data
+//   stack. 
 static Stack* PopFrame(FbleValueArena* arena, Stack* stack)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
-  *stack->frame.result = PopData(arena_, &stack->frame);
   FreeDataStack(arena_, &stack->frame);
-
   FbleValueRelease(arena, stack->frame.scope);
 
   for (size_t i = 0; i < stack->frame.code->locals; ++i) {
@@ -692,11 +690,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           value->arg = PopData(arena_, &thread->stack->frame);
           Add(arena, &value->_base._base, value->arg);
           FbleValueRelease(arena, value->arg);
-          PushData(arena_, &value->_base._base, &thread->stack->frame);
 
           if (func_apply_instr->exit) {
+            *thread->stack->frame.result = &value->_base._base;
             thread->stack = PopFrame(arena, thread->stack);
             FbleProfileExitBlock(arena_, thread->profile);
+          } else {
+            PushData(arena_, &value->_base._base, &thread->stack->frame);
           }
         } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
           FblePutFuncValue* f = (FblePutFuncValue*)func;
@@ -717,10 +717,12 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           value->code = &g_put_block;
           value->code->refcount++;
 
-          PushData(arena_, &value->_base, &thread->stack->frame);
           if (func_apply_instr->exit) {
+            *thread->stack->frame.result = &value->_base;
             thread->stack = PopFrame(arena, thread->stack);
             FbleProfileExitBlock(arena_, thread->profile);
+          } else {
+            PushData(arena_, &value->_base, &thread->stack->frame);
           }
         } else {
           FbleFuncValue* f = func;
@@ -1017,6 +1019,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_EXIT_SCOPE_INSTR: {
+        *thread->stack->frame.result = PopData(arena_, &thread->stack->frame);
         thread->stack = PopFrame(arena, thread->stack);
         FbleProfileExitBlock(arena_, thread->profile);
         break;
@@ -1094,10 +1097,6 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
       }
     }
 
-    // PopFrame expects a value to be allocated on the DataStack, but we've
-    // just emptied the data stack. Push a dummy value so it gets what it
-    // wants. TODO: This feels hacky. Any nicer way around this?
-    PushData(arena_, NULL, &thread->stack->frame);
     thread->stack = PopFrame(arena, thread->stack);
   }
 
