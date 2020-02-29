@@ -130,7 +130,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
 static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args);
 static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr);
 static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* type);
-static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm);
+static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm);
 
 // ReportError --
 //   Report a compiler error.
@@ -2537,9 +2537,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 }
 
 // CompileProgram --
-//   Type check and compile the given program. Returns the type of the
-//   program and generates instructions to compute the value of that
-//   program at runtime.
+//   Type check and compile the given program.
 //
 // Inputs:
 //   arena - arena to use for allocations.
@@ -2548,7 +2546,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 //   prgm - the program to compile.
 //
 // Results:
-//   The type of the program, or NULL if the program is not well typed.
+//   true if the program compiled successfully, false otherwise.
 //
 // Side effects:
 //   Updates 'blocks' with compiled block information. Exits the current
@@ -2557,9 +2555,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 //   There is no gaurentee about what instructions have been appended to
 //   scope if the program fails to compile.
 //   Prints a message to stderr if the program fails to compile.
-//   Allocates a reference-counted type that must be freed using
-//   FbleTypeRelease when it is no longer needed.
-static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm)
+static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm)
 {
   AddBlockTime(blocks, 1 + prgm->modules.size);
 
@@ -2591,11 +2587,8 @@ static FbleType* CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* sco
     FbleTypeRelease(arena, types[i]);
   }
 
-  if (rtype == NULL) {
-    return NULL;
-  }
-
-  return rtype;
+  FbleTypeRelease(arena, rtype);
+  return rtype != NULL;
 }
 
 // FbleFreeInstrBlock -- see documentation in internal.h
@@ -2636,9 +2629,8 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
 
   FbleTypeArena* type_arena = FbleNewTypeArena(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
-  FbleType* type = CompileProgram(type_arena, &block_stack, &scope, program);
+  bool ok = CompileProgram(type_arena, &block_stack, &scope, program);
   ExitBlock(arena, &block_stack, NULL);
-  FbleTypeRelease(type_arena, type);
   FbleFreeTypeArena(type_arena);
 
   assert(block_stack.stack.size == 0);
@@ -2646,7 +2638,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   *blocks = block_stack.blocks;
 
   FinishScope(arena, &scope);
-  if (type == NULL) {
+  if (!ok) {
     FbleFreeInstrBlock(arena, code);
     return NULL;
   }
