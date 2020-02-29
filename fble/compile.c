@@ -15,7 +15,7 @@
 // Local --
 //   Information about a value available in the stack frame.
 //
-// type - the type of the value.
+// type - the type of the value. Owned by this Local.
 // index - the index of the value in the current stack frame.
 // refcount - the number of references to the local.
 typedef struct {
@@ -55,8 +55,11 @@ typedef struct {
 //
 // Fields:
 //   statics - variables captured from the parent scope.
+//     Owns the Var and the Local.
 //   vars - stack of local variables in scope order.
+//     Owns the Var, not the Local.
 //   locals - local values. Entries may be NULL to indicate a free slot.
+//     Owns the Local.
 //   code - the instruction block for this scope.
 //   phantom - if true, operations on this scope should not have any side
 //             effects on the parent scope. Used in the case when we are
@@ -104,10 +107,10 @@ typedef struct {
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 
 static Local* NewLocal(FbleArena* arena, Scope* scope, FbleType* type);
-static void LocalRelease(FbleArena* arena, Scope* scope, Local* local);
+static void LocalRelease(FbleTypeArena* arena, Scope* scope, Local* local);
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, Local* local);
-static void PopVar(FbleArena* arena, Scope* scope);
-static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name, bool phantom);
+static void PopVar(FbleTypeArena* arena, Scope* scope);
+static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phantom);
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
@@ -115,7 +118,7 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, bool phantom, Scope* parent);
-static void FinishScope(FbleArena* arena, Scope* scope);
+static void FinishScope(FbleTypeArena* arena, Scope* scope);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
@@ -126,11 +129,16 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
 static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof);
 
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope);
-static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
-static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args);
+static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
+static Local* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args);
 static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr);
 static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* type);
 static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm);
+
+// TODO: Remove these transitionary functions when we are done transitioning.
+static Local* DataToLocal(FbleArena* arena, Scope* scope, FbleType* type);
+static FbleType* LocalToData(FbleTypeArena* arena, Scope* scope, Local* local);
+static FbleType* CompileExpr_(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
 
 // ReportError --
 //   Report a compiler error.
@@ -213,8 +221,8 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //
 // Side effects:
 //   Allocates a space on the scope's locals for the local. The local should
-//   be freed with LocalRelease when no longer in use. It is the callers
-//   responsibility to ensure that the type stays alive as long as is needed.
+//   be freed with LocalRelease when no longer in use. Takes ownership of the
+//   type, which will stay alive at least as long as the local is alive.
 static Local* NewLocal(FbleArena* arena, Scope* scope, FbleType* type)
 {
   size_t index = scope->locals.size;
@@ -253,15 +261,24 @@ static Local* NewLocal(FbleArena* arena, Scope* scope, FbleType* type)
 //
 // Side effects:
 //   Decrements the reference count on the local and frees it if the refcount
-//   drops to 0.
-static void LocalRelease(FbleArena* arena, Scope* scope, Local* local)
+//   drops to 0. Generates instructions to free the value at runtime as
+//   appropriate.
+static void LocalRelease(FbleTypeArena* arena, Scope* scope, Local* local)
 {
   local->refcount--;
   if (local->refcount == 0) {
+    FbleArena* arena_ = FbleRefArenaArena(arena);
+
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
+    FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
+    descope->_base.tag = FBLE_DESCOPE_INSTR;
+    descope->index = local->index.index;
+    AppendInstr(arena_, scope, &descope->_base);
+
     assert(scope->locals.xs[local->index.index] == local);
     scope->locals.xs[local->index.index] = NULL;
-    FbleFree(arena, local);
+    FbleTypeRelease(arena, local->type);
+    FbleFree(arena_, local);
   }
 }
 
@@ -306,12 +323,14 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, Local* local)
 // Side effects:
 //   Pops the top var off the scope. Invalidates the pointer to the variable
 //   originally returned in PushVar.
-static void PopVar(FbleArena* arena, Scope* scope)
+static void PopVar(FbleTypeArena* arena, Scope* scope)
 {
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+
   scope->vars.size--;
   Var* var = scope->vars.xs[scope->vars.size];
   LocalRelease(arena, scope, var->local);
-  FbleFree(arena, var);
+  FbleFree(arena_, var);
 }
 
 // GetVar --
@@ -330,7 +349,7 @@ static void PopVar(FbleArena* arena, Scope* scope)
 //
 // Side effects:
 //   Marks variable as used and for capture if necessary and not phantom.
-static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name, bool phantom)
+static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phantom)
 {
   for (size_t i = 0; i < scope->vars.size; ++i) {
     size_t j = scope->vars.size - i - 1;
@@ -362,18 +381,19 @@ static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name, bool phantom)
         return var;
       }
 
-      Local* local = FbleAlloc(arena, Local);
-      local->type = var->local->type;
+      FbleArena* arena_ = FbleRefArenaArena(arena);
+      Local* local = FbleAlloc(arena_, Local);
+      local->type = FbleTypeRetain(arena, var->local->type);
       local->index.section = FBLE_STATICS_FRAME_SECTION;
       local->index.index = scope->statics.size;
       local->refcount = 1;
 
-      Var* captured = FbleAlloc(arena, Var);
+      Var* captured = FbleAlloc(arena_, Var);
       captured->name = var->name;
       captured->local = local;
       captured->used = !phantom;
 
-      FbleVectorAppend(arena, scope->statics, captured);
+      FbleVectorAppend(arena_, scope->statics, captured);
       if (scope->statics.size > scope->code->statics) {
         scope->code->statics = scope->statics.size;
       }
@@ -583,36 +603,41 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, bool
 //   * Frees memory associated with scope.
 //   * Appends instructions to the parent scope's code to push captured
 //     variables to the data stack if this is not a phantom scope.
-static void FinishScope(FbleArena* arena, Scope* scope)
+static void FinishScope(FbleTypeArena* arena, Scope* scope)
 {
+  FbleArena* arena_ = FbleRefArenaArena(arena);
   if (scope->parent != NULL && !scope->phantom) {
     for (size_t i = 0; i < scope->statics.size; ++i) {
       // Copy the captured var to the data stack for capturing.
       Var* captured = scope->statics.xs[i];
-      FbleVarInstr* get_var = FbleAlloc(arena, FbleVarInstr);
+      FbleVarInstr* get_var = FbleAlloc(arena_, FbleVarInstr);
       get_var->_base.tag = FBLE_VAR_INSTR;
       Var* var = GetVar(arena, scope->parent, captured->name, false);
       assert(var != NULL);
       get_var->index = var->local->index;
-      AppendInstr(arena, scope->parent, &get_var->_base);
+      AppendInstr(arena_, scope->parent, &get_var->_base);
     }
   }
 
   for (size_t i = 0; i < scope->statics.size; ++i) {
-    FbleFree(arena, scope->statics.xs[i]->local);
-    FbleFree(arena, scope->statics.xs[i]);
+    FbleTypeRelease(arena, scope->statics.xs[i]->local->type);
+    FbleFree(arena_, scope->statics.xs[i]->local);
+    FbleFree(arena_, scope->statics.xs[i]);
   }
-  FbleFree(arena, scope->statics.xs);
+  FbleFree(arena_, scope->statics.xs);
 
-  for (size_t i = 0; i < scope->vars.size; ++i) {
-    FbleFree(arena, scope->vars.xs[i]);
+  while (scope->vars.size > 0) {
+    PopVar(arena, scope);
   }
-  FbleFree(arena, scope->vars.xs);
+  FbleFree(arena_, scope->vars.xs);
 
   for (size_t i = 0; i < scope->locals.size; ++i) {
-    FbleFree(arena, scope->locals.xs[i]);
+    if (scope->locals.xs[i] != NULL) {
+      FbleTypeRelease(arena, scope->locals.xs[i]->type);
+      FbleFree(arena_, scope->locals.xs[i]);
+    }
   }
-  FbleFree(arena, scope->locals.xs);
+  FbleFree(arena_, scope->locals.xs);
 }
 
 // AppendInstr --
@@ -792,7 +817,6 @@ static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof)
   return NULL;
 }
 
-
 // CompileExit --
 //   If exit is true, appends an exit scope instruction to instrs.
 //
@@ -817,9 +841,9 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope)
 }
 
 // CompileExpr --
-//   Type check and compile the given expression. Returns the type of the
-//   expression and generates instructions to compute the value of that
-//   expression at runtime.
+//   Type check and compile the given expression. Returns the local variable
+//   that will hold the result of the expression and generates instructions to
+//   compute the value of that expression at runtime.
 //
 // Inputs:
 //   arena - arena to use for allocations.
@@ -827,20 +851,20 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope)
 //   exit - if true, generate instructions to exit the current scope.
 //   scope - the list of variables in scope.
 //   expr - the expression to compile.
-//   instrs - vector of instructions to append new instructions to.
 //
 // Results:
-//   The type of the expression, or NULL if the expression is not well typed.
+//   The local variable for the computed value, or NULL if the expression is
+//   not well typed.
 //
 // Side effects:
 //   Updates the blocks stack with with compiled block information.
-//   Appends instructions to 'instrs' for executing the given expression.
+//   Appends instructions to the scope for executing the given expression.
 //   There is no gaurentee about what instructions have been appended to
-//   'instrs' if the expression fails to compile.
+//   the scope if the expression fails to compile.
 //   Prints a message to stderr if the expression fails to compile.
-//   Allocates a reference-counted type that must be freed using
-//   FbleTypeRelease when it is no longer needed.
-static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr)
+//   Allocates a local variable that must be freed using LocalRelease when
+//   it is no longer needed.
+static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   switch (expr->tag) {
@@ -869,8 +893,9 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       instr->_base.tag = FBLE_TYPE_INSTR;
       AppendInstr(arena_, scope, &instr->_base);
 
+      Local* local = DataToLocal(arena_, scope, &type_type->_base);
       CompileExit(arena_, exit, scope);
-      return &type_type->_base;
+      return local;
     }
 
     case FBLE_MISC_APPLY_EXPR: {
@@ -882,11 +907,13 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       FbleType* arg_types[argc];
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - 1 - i;
-        arg_types[j] = CompileExpr(arena, blocks, false, scope, misc_apply_expr->args.xs[j]);
+        Local* arg = CompileExpr(arena, blocks, false, scope, misc_apply_expr->args.xs[j]);
+        arg_types[j] = LocalToData(arena, scope, arg);
         error = error || (arg_types[j] == NULL);
       }
 
-      FbleType* type = CompileExpr(arena, blocks, false, scope, misc_apply_expr->misc);
+      Local* misc = CompileExpr(arena, blocks, false, scope, misc_apply_expr->misc);
+      FbleType* type = LocalToData(arena, scope, misc);
       error = error || (type == NULL);
 
       if (error) {
@@ -939,7 +966,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
             FbleTypeRelease(arena, arg_types[i]);
           }
 
-          return normal;
+          return DataToLocal(arena, scope, normal);
         }
 
         case FBLE_TYPE_TYPE: {
@@ -998,9 +1025,10 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
           struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
           struct_instr->argc = struct_type->fields.size;
           AppendInstr(arena_, scope, &struct_instr->_base);
+          Local* result = DataToLocal(arena, scope, vtype);
           CompileExit(arena_, exit, scope);
           FbleTypeRelease(arena, &struct_type->_base);
-          return vtype;
+          return result;
         }
 
         default: {
@@ -1037,7 +1065,8 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
         EnterBlock(arena_, blocks, arg->name, arg->expr->loc, scope);
-        arg_types[j] = CompileExpr(arena, blocks, false, scope, arg->expr);
+        Local* arg = CompileExpr(arena, blocks, false, scope, arg->expr);
+        arg_types[j] = LocalToData(arena, scope, arg);
         ExitBlock(arena_, blocks, scope);
         error = error || (arg_types[j] == NULL);
       }
@@ -1699,7 +1728,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
     case FBLE_VAR_EXPR: {
       AddBlockTime(blocks, 1);
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-      Var* var = GetVar(arena_, scope, var_expr->var, false);
+      Var* var = GetVar(arena, scope, var_expr->var, false);
       if (var == NULL) {
         ReportError(arena_, &var_expr->var.loc, "variable '%n' not defined\n",
             &var_expr->var);
@@ -1878,7 +1907,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
       AddBlockTime(blocks, 1);
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
-      Var* var = GetVar(arena_, scope, module_ref_expr->ref.resolved, false);
+      Var* var = GetVar(arena, scope, module_ref_expr->ref.resolved, false);
 
       // We should have resolved all modules at program load time.
       assert(var != NULL && "module not in scope");
@@ -2130,7 +2159,7 @@ static FbleType* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sc
 //   Allocates a reference-counted type that must be freed using
 //   FbleTypeRelease when it is no longer needed.
 //   Behavior is undefined if there is not at least one list argument.
-static FbleType* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args)
+static Local* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args)
 {
   // The goal is to desugar a list expression [a, b, c, d] into the
   // following expression:
@@ -2589,6 +2618,95 @@ static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, F
 
   FbleTypeRelease(arena, rtype);
   return rtype != NULL;
+}
+
+// DataToLocal --
+//   Move a value from the data stack to a local variable.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   scope - the current scope.
+//   type - the type of the value.
+//
+// Results:
+//   The local variable that the value was moved to.
+//
+// Side effects:
+//   Appends instructions to the scope to move the top of the data stack to a
+//   local variable. Takes ownership of the type argument, which will remain
+//   valid for as long as the returned local is valid.
+static Local* DataToLocal(FbleArena* arena, Scope* scope, FbleType* type)
+{
+  Local* local = NewLocal(arena, scope, type);
+
+  FbleVPushInstr* vpush = FbleAlloc(arena, FbleVPushInstr);
+  vpush->_base.tag = FBLE_VPUSH_INSTR;
+  vpush->index.index = local->index.index;
+  AppendInstr(arena, scope, &vpush->_base);
+  return local;
+}
+
+// LocalToData --
+//   Move a local variable to the data stack.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   scope - the current scope.
+//   local - the local variable to move. May be NULL.
+//
+// Results:
+//   The type of the local.
+//
+// Side effects:
+//   Generates instructions to move the local variable to the top of the data
+//   stack, and releases the local variable.
+static FbleType* LocalToData(FbleTypeArena* arena, Scope* scope, Local* local)
+{
+  if (local == NULL) {
+    return NULL;
+  }
+
+  FbleType* type = FbleTypeRetain(arena, local->type);
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
+  instr->_base.tag = FBLE_VAR_INSTR;
+  instr->index = local->index;
+  AppendInstr(arena_, scope, &instr->_base);
+  LocalRelease(arena, scope, local);
+  return type;
+}
+// CompileExpr_ --
+//   Type check and compile the given expression. Returns the local variable
+//   that will hold the result of the expression and generates instructions to
+//   compute the value of that expression at runtime.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   blocks - the blocks stack.
+//   exit - if true, generate instructions to exit the current scope.
+//   scope - the list of variables in scope.
+//   expr - the expression to compile.
+//
+// Results:
+//   The local variable for the computed value, or NULL if the expression is
+//   not well typed.
+//
+// Side effects:
+//   Updates the blocks stack with with compiled block information.
+//   Appends instructions to the scope for executing the given expression.
+//   There is no gaurentee about what instructions have been appended to
+//   the scope if the expression fails to compile.
+//   Prints a message to stderr if the expression fails to compile.
+//   Allocates a local variable that must be freed using LocalRelease when
+//   it is no longer needed.
+static FbleType* CompileExpr_(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr)
+{
+  Local* l = CompileExpr(arena, blocks, exit, scope, expr);
+
+  // Note: if exit is true, it's too late to move the data from a local to the
+  // scope. But in that case, we will already have returned.
+  ???
+  return LocalToData(arena, scope, l);
 }
 
 // FbleFreeInstrBlock -- see documentation in internal.h
