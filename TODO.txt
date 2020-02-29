@@ -1,8 +1,7 @@
 Eval2:
-* Change Compile to return Var* instead of Type*.
- - The scope should own the Type* for locals.
-* Make result a LocalIndex into parent scope instead of FbleValue**?
 * Move instructions away from data stack and on to vars instead.
+ - Remove VAR_INSTR
+ - Replace DataToLocal . Compile_ calls with Compile calls.
 * Delete unused data stack.
 * Rename FbleDescopeInstr to something more meaningful.
 * Rename EXIT_SCOPE_INSTR to something more meaningful.
