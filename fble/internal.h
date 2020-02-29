@@ -313,11 +313,10 @@ typedef struct {
 } FbleStructImportInstr;
 
 // FbleExitScopeInstr -- FBLE_EXIT_SCOPE_INSTR
-//
-// scope_stack: ..., [...]
-//          ==> ...
+//   Return <result> and exit the current stack frame.
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndex result;
 } FbleExitScopeInstr;
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR

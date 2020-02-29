@@ -825,17 +825,19 @@ static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof)
 //   blocks - the blocks stack.
 //   exit - whether we actually want to exit.
 //   scope - the scope to append the instructions to.
+//   result - the result to return when exiting.
 //
 // Results:
 //   none.
 //
 // Side effects:
 //   If exit is true, appends an exit scope instruction to instrs
-static void CompileExit(FbleArena* arena, bool exit, Scope* scope)
+static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit) {
     FbleExitScopeInstr* exit_scope = FbleAlloc(arena, FbleExitScopeInstr);
     exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
+    exit_scope->result = result->index;
     AppendInstr(arena, scope, &exit_scope->_base);
   }
 }
