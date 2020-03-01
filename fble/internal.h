@@ -55,7 +55,7 @@ typedef enum {
   FBLE_REF_VALUE_INSTR,
   FBLE_REF_DEF_INSTR,
   FBLE_STRUCT_IMPORT_INSTR,
-  FBLE_EXIT_SCOPE_INSTR,
+  FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_VPUSH_INSTR,
   FBLE_PROFILE_ENTER_BLOCK_INSTR,
@@ -312,12 +312,12 @@ typedef struct {
   FbleLocalIndexV fields;
 } FbleStructImportInstr;
 
-// FbleExitScopeInstr -- FBLE_EXIT_SCOPE_INSTR
+// FbleReturnInstr -- FBLE_RETURN_INSTR
 //   Return <result> and exit the current stack frame.
 typedef struct {
   FbleInstr _base;
   FbleFrameIndex result;
-} FbleExitScopeInstr;
+} FbleReturnInstr;
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR
 // data_stack: ...

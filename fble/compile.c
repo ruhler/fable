@@ -713,7 +713,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_JOIN_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_REF_DEF_INSTR:
-    case FBLE_EXIT_SCOPE_INSTR:
+    case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_VPUSH_INSTR:
     case FBLE_PROFILE_ENTER_BLOCK_INSTR:
@@ -835,10 +835,10 @@ static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof)
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    FbleExitScopeInstr* exit_scope = FbleAlloc(arena, FbleExitScopeInstr);
-    exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
-    exit_scope->result = result->index;
-    AppendInstr(arena, scope, &exit_scope->_base);
+    FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);
+    return_instr->_base.tag = FBLE_RETURN_INSTR;
+    return_instr->result = result->index;
+    AppendInstr(arena, scope, &return_instr->_base);
   }
 }
 

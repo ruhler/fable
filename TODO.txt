@@ -1,10 +1,10 @@
 Eval2:
 * Move instructions away from data stack and on to vars instead.
+ - Rename CompileExit to CompileReturn?
  - Remove VAR_INSTR
  - Replace DataToLocal . Compile_ calls with Compile calls.
 * Delete unused data stack.
 * Rename FbleDescopeInstr to something more meaningful.
-* Rename EXIT_SCOPE_INSTR to something more meaningful.
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?
 

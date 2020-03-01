@@ -1018,8 +1018,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
-      case FBLE_EXIT_SCOPE_INSTR: {
-        FbleExitScopeInstr* return_instr = (FbleExitScopeInstr*)instr;
+      case FBLE_RETURN_INSTR: {
+        FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
         FbleValue* result = FrameGet(&thread->stack->frame, return_instr->result);
         *thread->stack->frame.result = FbleValueRetain(arena, result);
         thread->stack = PopFrame(arena, thread->stack);
