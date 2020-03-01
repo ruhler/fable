@@ -66,7 +66,7 @@ typedef struct Stack {
 
 typedef struct Thread Thread;
 
-// ThreadV -- 
+// ThreadV --
 //   A vector of threads.
 typedef struct {
   size_t size;
@@ -146,7 +146,7 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 
 // Add --
 //   Helper function for tracking ref value assignments.
-// 
+//
 // Inputs:
 //   arena - the value arena
 //   src - a source value
@@ -316,7 +316,7 @@ static FbleValue* PopData(FbleArena* arena, Frame* frame)
 //   Pop and retrieve the top value from the data stack for a scope.
 //   Dereferences the data value, removing all layers of reference values
 //   until a non-reference value is encountered and returns the non-reference
-//   value. 
+//   value.
 //
 //   A tag for the type of dereferenced value should be provided. This
 //   function will assert that the correct kind of value is encountered.
@@ -430,7 +430,7 @@ static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics,
 // Side effects:
 //   Releases any remaining variables on the frame and frees the frame.
 //   Behavior is undefined if there are any remaining values on the data
-//   stack. 
+//   stack.
 static Stack* PopFrame(FbleValueArena* arena, Stack* stack)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
@@ -943,7 +943,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             return progress;
           }
         }
-        
+
         for (size_t i = 0; i < thread->children.size; ++i) {
           Thread* child = thread->children.xs[i];
           assert(child->stack == NULL);
@@ -1020,7 +1020,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_EXIT_SCOPE_INSTR: {
         FbleExitScopeInstr* return_instr = (FbleExitScopeInstr*)instr;
-        *thread->stack->frame.result = FrameGet(&thread->stack->frame, return_instr->result);
+        FbleValue* result = FrameGet(&thread->stack->frame, return_instr->result);
+        *thread->stack->frame.result = FbleValueRetain(arena, result);
         thread->stack = PopFrame(arena, thread->stack);
         FbleProfileExitBlock(arena_, thread->profile);
         break;

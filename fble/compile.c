@@ -86,7 +86,7 @@ typedef struct {
 } BlockFrame;
 
 // BlockFrameV --
-//   A stack of block frames. 
+//   A stack of block frames.
 typedef struct {
   size_t size;
   BlockFrame* xs;
@@ -128,7 +128,7 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
 
 static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof);
 
-static void CompileExit(FbleArena* arena, bool exit, Scope* scope);
+static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
 static Local* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args);
 static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr);
@@ -248,7 +248,7 @@ static Local* NewLocal(FbleArena* arena, Scope* scope, FbleType* type)
   return local;
 }
 
-// LocalRelease -- 
+// LocalRelease --
 //   Decrement the reference count on a local and free it if appropriate.
 //
 // Inputs:
@@ -825,7 +825,7 @@ static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof)
 //   blocks - the blocks stack.
 //   exit - whether we actually want to exit.
 //   scope - the scope to append the instructions to.
-//   result - the result to return when exiting.
+//   result - the result to return when exiting. May be NULL.
 //
 // Results:
 //   none.
@@ -834,7 +834,7 @@ static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof)
 //   If exit is true, appends an exit scope instruction to instrs
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
-  if (exit) {
+  if (exit && result != NULL) {
     FbleExitScopeInstr* exit_scope = FbleAlloc(arena, FbleExitScopeInstr);
     exit_scope->_base.tag = FBLE_EXIT_SCOPE_INSTR;
     exit_scope->result = result->index;
@@ -895,8 +895,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       instr->_base.tag = FBLE_TYPE_INSTR;
       AppendInstr(arena_, scope, &instr->_base);
 
-      CompileExit(arena_, exit, scope);
-      return DataToLocal(arena_, scope, &type_type->_base);
+      Local* result = DataToLocal(arena_, scope, &type_type->_base);
+      CompileExit(arena_, exit, scope, result);
+      return result;
     }
 
     case FBLE_MISC_APPLY_EXPR: {
@@ -1024,9 +1025,11 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
           struct_instr->argc = struct_type->fields.size;
           AppendInstr(arena_, scope, &struct_instr->_base);
-          CompileExit(arena_, exit, scope);
+
+          Local* result = DataToLocal(arena_, scope, vtype);
+          CompileExit(arena_, exit, scope, result);
           FbleTypeRelease(arena, &struct_type->_base);
-          return DataToLocal(arena_, scope, vtype);
+          return result;
         }
 
         default: {
@@ -1105,8 +1108,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->argc = struct_expr->args.size;
       AppendInstr(arena_, scope, &struct_instr->_base);
-      CompileExit(arena_, exit, scope);
-      return DataToLocal(arena_, scope, &struct_type->_base);
+      Local* result = DataToLocal(arena_, scope, &struct_type->_base);
+      CompileExit(arena_, exit, scope, result);
+      return result;
     }
 
     case FBLE_UNION_VALUE_EXPR: {
@@ -1169,8 +1173,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->tag = tag;
       AppendInstr(arena_, scope, &union_instr->_base);
-      CompileExit(arena_, exit, scope);
-      return DataToLocal(arena_, scope, type);
+      Local* result = DataToLocal(arena_, scope, type);
+      CompileExit(arena_, exit, scope, result);
+      return result;
     }
 
     case FBLE_MISC_ACCESS_EXPR: {
@@ -1189,8 +1194,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
       access->loc = access_expr->field.loc;
       AppendInstr(arena_, scope, &access->_base);
-
-      CompileExit(arena_, exit, scope);
 
       FbleType* normal = FbleNormalType(arena, type);
       FbleTaggedTypeV* fields = NULL;
@@ -1216,7 +1219,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           FbleType* rtype = FbleTypeRetain(arena, fields->xs[i].type);
           FbleTypeRelease(arena, normal);
           FbleTypeRelease(arena, type);
-          return DataToLocal(arena_, scope, rtype);
+
+          Local* result = DataToLocal(arena_, scope, rtype);
+          CompileExit(arena_, exit, scope, result);
+          return result;
         }
       }
 
@@ -1450,14 +1456,14 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       AddBlockTime(blocks, instr->code->statics);
       AppendInstr(arena_, scope, &instr->_base);
 
-      CompileExit(arena_, exit, scope);
-      return DataToLocal(arena_, scope, type);
+      Local* result = DataToLocal(arena_, scope, type);
+      CompileExit(arena_, exit, scope, result);
+      return result;
     }
 
     case FBLE_EVAL_EXPR: {
       AddBlockTime(blocks, 1);
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
-
 
       FbleProcValueInstr* instr = FbleAlloc(arena_, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1467,18 +1473,19 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       InitScope(arena_, &eval_scope, instr->code, false, scope);
       EnterBodyBlock(arena_, blocks, expr->loc, &eval_scope);
 
-      FbleType* type = CompileExpr_(arena, blocks, false, &eval_scope, eval_expr->body);
-
-      CompileExit(arena_, true, &eval_scope);
+      Local* body = CompileExpr(arena, blocks, true, &eval_scope, eval_expr->body);
       ExitBlock(arena_, blocks, NULL);
+      CompileExit(arena_, true, &eval_scope, body);
 
-      FinishScope(arena, &eval_scope);
-      AppendInstr(arena_, scope, &instr->_base);
-      CompileExit(arena_, exit, scope);
-
-      if (type == NULL) {
+      if (body == NULL) {
+        FinishScope(arena, &eval_scope);
+        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
+
+      FbleType* type = FbleTypeRetain(arena, body->type);
+      FinishScope(arena, &eval_scope);
+      AppendInstr(arena_, scope, &instr->_base);
 
       FbleProcType* proc_type = FbleAlloc(arena_, FbleProcType);
       FbleRefInit(arena, &proc_type->_base.ref);
@@ -1488,7 +1495,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       proc_type->type = type;
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
       FbleTypeRelease(arena, proc_type->type);
-      return DataToLocal(arena_, scope, &proc_type->_base);
+      Local* result = DataToLocal(arena_, scope, &proc_type->_base);
+      CompileExit(arena_, exit, scope, result);
+      return result;
     }
 
     case FBLE_LINK_EXPR: {
@@ -1569,10 +1578,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       proc->exit = true;
       AppendInstr(arena_, &body_scope, &proc->_base);
       ExitBlock(arena_, blocks, NULL);
-
       FinishScope(arena, &body_scope);
+
       AppendInstr(arena_, scope, &instr->_base);
-      CompileExit(arena_, exit, scope);
 
       FbleTypeRelease(arena, port_type);
 
@@ -1591,7 +1599,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         return NULL;
       }
       FbleTypeRelease(arena, proc_type);
-      return DataToLocal(arena_, scope, type);
+      Local* result = DataToLocal(arena_, scope, type);
+      CompileExit(arena_, exit, scope, result);
+      return result;
     }
 
     case FBLE_EXEC_EXPR: {
@@ -1700,14 +1710,15 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FinishScope(arena, &body_scope);
 
       AppendInstr(arena_, scope, &instr->_base);
-      CompileExit(arena_, exit, scope);
 
       if (error) {
         FbleTypeRelease(arena, rtype);
         return NULL;
       }
 
-      return DataToLocal(arena_, scope, rtype);
+      Local* result = DataToLocal(arena_, scope, rtype);
+      CompileExit(arena_, exit, scope, result);
+      return result;
     }
 
     case FBLE_VAR_EXPR: {
@@ -1720,12 +1731,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         return NULL;
       }
 
-      FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
-      instr->_base.tag = FBLE_VAR_INSTR;
-      instr->index = var->local->index;
-      AppendInstr(arena_, scope, &instr->_base);
-      CompileExit(arena_, exit, scope);
-      return DataToLocal(arena_, scope, FbleTypeRetain(arena, var->local->type));
+      var->local->refcount++;
+      CompileExit(arena_, exit, scope, var->local);
+      return var->local;
     }
 
     case FBLE_LET_EXPR: {
@@ -1896,12 +1904,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       // We should have resolved all modules at program load time.
       assert(var != NULL && "module not in scope");
 
-      FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
-      instr->_base.tag = FBLE_VAR_INSTR;
-      instr->index = var->local->index;
-      AppendInstr(arena_, scope, &instr->_base);
-      CompileExit(arena_, exit, scope);
-      return DataToLocal(arena_, scope, FbleTypeRetain(arena, var->local->type));
+      var->local->refcount++;
+      CompileExit(arena_, exit, scope, var->local);
+      return var->local;
     }
 
     case FBLE_POLY_EXPR: {

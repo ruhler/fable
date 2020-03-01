@@ -1,6 +1,5 @@
 Eval2:
 * Move instructions away from data stack and on to vars instead.
- - Change EXIT_SCOPE to take an explicit return value.
  - Remove VAR_INSTR
  - Replace DataToLocal . Compile_ calls with Compile calls.
 * Delete unused data stack.
