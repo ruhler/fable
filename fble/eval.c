@@ -794,7 +794,10 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           if (link->head == NULL) {
             link->tail = NULL;
           }
-          PushData(arena_, head->value, &thread->stack->frame);
+
+
+          *thread->stack->frame.result = head->value;
+          thread->stack = PopFrame(arena, thread->stack);
           FbleFree(arena_, head);
           break;
         }
@@ -809,7 +812,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             return progress;
           }
 
-          PushData(arena_, io->ports.xs[port->id], &thread->stack->frame);
+          *thread->stack->frame.result = io->ports.xs[port->id];
+          thread->stack = PopFrame(arena, thread->stack);
           io->ports.xs[port->id] = NULL;
           break;
         }

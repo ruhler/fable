@@ -8,23 +8,13 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static FbleProfileEnterBlockInstr g_enter_instr = {
-  ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
-  .block = 0,
-  .time = 1,
-};
 static FbleInstr g_get_instr = { .tag = FBLE_GET_INSTR };
-static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
-static FbleInstr* g_get_block_instrs[] = {
-  &g_enter_instr._base,
-  &g_get_instr,
-  &g_exit_scope_instr
-};
+static FbleInstr* g_get_block_instrs[] = { &g_get_instr };
 static FbleInstrBlock g_get_block = {
   .refcount = 1,
   .statics = 1,  // port
-  .locals = 1,   // port
-  .instrs = { .size = 3, .xs = g_get_block_instrs }
+  .locals = 0,
+  .instrs = { .size = 1, .xs = g_get_block_instrs }
 };
 
 static void ValueFree(FbleValueArena* arena, FbleRef* ref);
