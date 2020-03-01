@@ -204,10 +204,11 @@ typedef struct {
 } FbleGetInstr;
 
 // FblePutInstr -- FBLE_PUT_INSTR
-//   Put a value to a port.
+//   Put a value to a port. The port and arg are assumed to be supplied as
+//   static values 0 and 1 respectively.
 //
-// data_stack: ..., port, arg
-//         ==> ..., put(port, arg)
+// put(port, arg);
+// return unit;
 typedef struct {
   FbleInstr _base;
 } FblePutInstr;

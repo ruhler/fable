@@ -110,18 +110,13 @@ static FbleInstrBlock g_proc_block = {
   .instrs = { .size = 2, .xs = g_proc_block_instrs }
 };
 
-static FbleInstr g_exit_scope_instr = { .tag = FBLE_EXIT_SCOPE_INSTR };
 static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
-static FbleInstr* g_put_block_instrs[] = {
-  &g_enter_instr._base,
-  &g_put_instr,
-  &g_exit_scope_instr
-};
+static FbleInstr* g_put_block_instrs[] = { &g_put_instr };
 static FbleInstrBlock g_put_block = {
   .refcount = 1,
   .statics = 2,  // port, arg
-  .locals = 2,   // port, arg
-  .instrs = { .size = 3, .xs = g_put_block_instrs }
+  .locals = 0,
+  .instrs = { .size = 1, .xs = g_put_block_instrs }
 };
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
@@ -846,7 +841,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             link->tail = tail;
           }
 
-          PushData(arena_, unit, &thread->stack->frame);
+          *thread->stack->frame.result = unit;
+          thread->stack = PopFrame(arena, thread->stack);
           break;
         }
 
@@ -862,8 +858,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           }
 
           io->ports.xs[port->id] = FbleValueRetain(arena, arg);
-
-          PushData(arena_, unit, &thread->stack->frame);
+          *thread->stack->frame.result = unit;
+          thread->stack = PopFrame(arena, thread->stack);
           break;
         }
 
