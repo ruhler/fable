@@ -270,10 +270,10 @@ static void LocalRelease(FbleTypeArena* arena, Scope* scope, Local* local)
     FbleArena* arena_ = FbleRefArenaArena(arena);
 
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
-    FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-    descope->_base.tag = FBLE_DESCOPE_INSTR;
-    descope->index = local->index.index;
-    AppendInstr(arena_, scope, &descope->_base);
+    FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
+    release->_base.tag = FBLE_RELEASE_INSTR;
+    release->index = local->index.index;
+    AppendInstr(arena_, scope, &release->_base);
 
     assert(scope->locals.xs[local->index.index] == local);
     scope->locals.xs[local->index.index] = NULL;
@@ -703,7 +703,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_UNION_ACCESS_INSTR:
     case FBLE_UNION_SELECT_INSTR:
     case FBLE_GOTO_INSTR:
-    case FBLE_DESCOPE_INSTR:
+    case FBLE_RELEASE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
     case FBLE_GET_INSTR:
@@ -1880,10 +1880,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         if (!exit) {
-          FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-          descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->index = vars[let_expr->bindings.size - i - 1]->local->index.index;
-          AppendInstr(arena_, scope, &descope->_base);
+          FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
+          release->_base.tag = FBLE_RELEASE_INSTR;
+          release->index = vars[let_expr->bindings.size - i - 1]->local->index.index;
+          AppendInstr(arena_, scope, &release->_base);
         }
         PopVar(arena, scope);
       }
@@ -1947,10 +1947,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleType* body = CompileExpr_(arena, blocks, exit, scope, poly->body);
 
       if (!exit) {
-        FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-        descope->_base.tag = FBLE_DESCOPE_INSTR;
-        descope->index = local->index.index;
-        AppendInstr(arena_, scope, &descope->_base);
+        FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
+        release->_base.tag = FBLE_RELEASE_INSTR;
+        release->index = local->index.index;
+        AppendInstr(arena_, scope, &release->_base);
       }
 
       PopVar(arena, scope);
@@ -2104,10 +2104,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         if (!exit) {
-          FbleDescopeInstr* descope = FbleAlloc(arena_, FbleDescopeInstr);
-          descope->_base.tag = FBLE_DESCOPE_INSTR;
-          descope->index = vars[struct_type->fields.size - i - 1]->index.index;
-          AppendInstr(arena_, scope, &descope->_base);
+          FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
+          release->_base.tag = FBLE_RELEASE_INSTR;
+          release->index = vars[struct_type->fields.size - i - 1]->index.index;
+          AppendInstr(arena_, scope, &release->_base);
         }
         PopVar(arena, scope);
       }

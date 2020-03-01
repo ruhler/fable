@@ -655,10 +655,10 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
-      case FBLE_DESCOPE_INSTR: {
-        FbleDescopeInstr* descope = (FbleDescopeInstr*)instr;
-        FbleValueRelease(arena, thread->stack->frame.locals[descope->index]);
-        thread->stack->frame.locals[descope->index] = NULL;
+      case FBLE_RELEASE_INSTR: {
+        FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
+        FbleValueRelease(arena, thread->stack->frame.locals[release->index]);
+        thread->stack->frame.locals[release->index] = NULL;
         break;
       }
 

@@ -42,7 +42,7 @@ typedef enum {
   FBLE_UNION_SELECT_INSTR,
   FBLE_GOTO_INSTR,
   FBLE_FUNC_VALUE_INSTR,
-  FBLE_DESCOPE_INSTR,
+  FBLE_RELEASE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
   FBLE_PROC_VALUE_INSTR,
   FBLE_GET_INSTR,
@@ -159,12 +159,12 @@ typedef struct {
   FbleInstrBlock* code;
 } FbleFuncValueInstr;
 
-// FbleDescopeInstr -- FBLE_DESCOPE_INSTR
+// FbleReleaseInstr -- FBLE_RELEASE_INSTR
 //   Release and remove a value from the locals section of the stack frame.
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex index;
-} FbleDescopeInstr;
+} FbleReleaseInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
 //   data_stack: ..., x, f
