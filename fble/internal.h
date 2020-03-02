@@ -320,11 +320,11 @@ typedef struct {
 } FbleReturnInstr;
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR
-// data_stack: ...
-//         ==> ..., ()
+//  *result = @<>
 //
 typedef struct {
   FbleInstr _base;
+  FbleLocalIndex result;
 }  FbleTypeInstr;
 
 // FbleVPushInstr -- FBLE_VPUSH_INSTR

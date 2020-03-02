@@ -891,11 +891,11 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
       FbleTypeRelease(arena, type);
 
+      Local* result = NewLocal(arena_, scope, &type_type->_base);
       FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
+      instr->result = result->index.index;
       AppendInstr(arena_, scope, &instr->_base);
-
-      Local* result = DataToLocal(arena_, scope, &type_type->_base);
       CompileExit(arena_, exit, scope, result);
       return result;
     }
@@ -1100,9 +1100,20 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         return NULL;
       }
 
+      FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
+      FbleRefInit(arena, &type_type->_base.ref);
+      type_type->_base.tag = FBLE_TYPE_TYPE;
+      type_type->_base.loc = expr->loc;
+      type_type->_base.id = (uintptr_t)type_type;
+      type_type->type = &struct_type->_base;
+      FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
+      Local* type_value = NewLocal(arena_, scope, &type_type->_base);
+
       FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
+      instr->result = type_value->index.index;
       AppendInstr(arena_, scope, &instr->_base);
+      FbleTypeRelease(arena, LocalToData(arena, scope, type_value));
 
       FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
@@ -1933,16 +1944,13 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       // here. Oh well. Maybe in the future we'll optimize those away or
       // add support for non-type poly args too.
       AddBlockTime(blocks, 1);
+
+      Local* local = NewLocal(arena_, scope, &type_type->_base);
       FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
       type_instr->_base.tag = FBLE_TYPE_INSTR;
+      type_instr->result = local->index.index;
       AppendInstr(arena_, scope, &type_instr->_base);
-
-      FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
-      vpush->_base.tag = FBLE_VPUSH_INSTR;
-      AppendInstr(arena_, scope, &vpush->_base);
-      Local* local = NewLocal(arena_, scope, &type_type->_base);
       PushVar(arena_, scope, poly->arg.name, local);
-      vpush->index = local->index.index;
 
       FbleType* body = CompileExpr_(arena, blocks, exit, scope, poly->body);
 

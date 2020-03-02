@@ -1028,10 +1028,11 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       }
 
       case FBLE_TYPE_INSTR: {
+        FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         FbleTypeValue* value = FbleAlloc(arena_, FbleTypeValue);
         FbleRefInit(arena, &value->_base.ref);
         value->_base.tag = FBLE_TYPE_VALUE;
-        PushData(arena_, &value->_base, &thread->stack->frame);
+        thread->stack->frame.locals[type_instr->result] = &value->_base;
         break;
       }
 
