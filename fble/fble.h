@@ -23,6 +23,8 @@
 //   program - The program to evaluate.
 //   blocks - Output info about blocks in the program.
 //   profile - Output profile for the evaluation.
+//   dump_compiled - If true, dump the compiled program to stderr for
+//                   debugging.
 //
 // Results:
 //   The value of the evaluated program, or NULL in case of error. The
@@ -35,7 +37,9 @@
 //   freed when no longer in use.
 //   Sets profile to the profile for the evaluation. This must be freed with
 //   FbleFreeProfile when no longer in use.
-FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile);
+//   If dump_compiled is true, dumps the compiled program to stderr for
+//   debugging purposes.
+FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile, bool dump_compiled);
 
 // FbleApply --
 //   Apply a function to the given argument.

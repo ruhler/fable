@@ -142,6 +142,8 @@ static void AbortThread(FbleValueArena* arena, Thread* thread);
 static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, Thread* thread);
 static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, FbleValueV args, FbleProfile* profile);
 
+static void DumpInstrBlock(FbleInstrBlock* code);
+
 static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
 
 // Add --
@@ -1212,6 +1214,231 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, 
   return final_result;
 }
 
+// DumpInstrBlock -- 
+//   For debugging purposes, dump the given code block in human readable
+//   format to stderr.
+//
+// Inputs:
+//   code - the code block to dump
+//
+// Results:
+//   none
+//
+// Side effects:
+//   Prints the code block in human readable format to stderr.
+static void DumpInstrBlock(FbleInstrBlock* code)
+{
+  FbleArena* arena = FbleNewArena();
+  struct { size_t size; FbleInstrBlock** xs; } blocks;
+  FbleVectorInit(arena, blocks);
+  FbleVectorAppend(arena, blocks, code);
+
+  while (blocks.size > 0) {
+    FbleInstrBlock* block = blocks.xs[--blocks.size];
+    fprintf(stderr, "%p statics[%zi] locals[%zi]:\n",
+        (void*)block, block->statics, block->locals);
+    for (size_t i = 0; i < block->instrs.size; ++i) {
+      FbleInstr* instr = block->instrs.xs[i];
+      fprintf(stderr, "%4zi.  ", i);
+      switch (instr->tag) {
+        case FBLE_STRUCT_VALUE_INSTR: {
+          FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
+          fprintf(stderr, "l[%zi] = struct(%zi);\n",
+              struct_value_instr->dest, struct_value_instr->argc);
+          break;
+        }
+
+        case FBLE_UNION_VALUE_INSTR: {
+          FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
+          fprintf(stderr, "l[%zi] = union();\n", union_value_instr->dest);
+          break;
+        }
+
+        case FBLE_STRUCT_ACCESS_INSTR: {
+          FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+          fprintf(stderr, "$ = struct.%zi; // %s:%i:%i\n",
+              access_instr->tag, access_instr->loc.source,
+              access_instr->loc.line, access_instr->loc.col);
+          break;
+        }
+
+        case FBLE_UNION_ACCESS_INSTR: {
+          FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+          fprintf(stderr, "$ = union.%zi;   // %s:%i:%i\n",
+              access_instr->tag, access_instr->loc.source,
+              access_instr->loc.line, access_instr->loc.col);
+          break;
+        }
+
+        case FBLE_UNION_SELECT_INSTR: {
+          FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+          fprintf(stderr, "pc += ?;         // %s:%i:%i\n",
+              select_instr->loc.source, select_instr->loc.line,
+              select_instr->loc.col);
+          break;
+        }
+
+        case FBLE_GOTO_INSTR: {
+          FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
+          fprintf(stderr, "pc = %zi;", goto_instr->pc);
+          break;
+        }
+
+        case FBLE_FUNC_VALUE_INSTR: {
+          FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+          fprintf(stderr, "$ = func(%p, %zi);\n",
+              (void*)func_value_instr->code, func_value_instr->argc);
+          FbleVectorAppend(arena, blocks, func_value_instr->code);
+          break;
+        }
+
+        case FBLE_RELEASE_INSTR: {
+          FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
+          fprintf(stderr, "release l[%zi];\n", release->value);
+          break;
+        }
+
+        case FBLE_FUNC_APPLY_INSTR: {
+          FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
+          fprintf(stderr, "apply (exit=%s); // %s:%i:%i\n",
+              func_apply_instr->exit ? "true" : "false",
+              func_apply_instr->loc.source, func_apply_instr->loc.line,
+              func_apply_instr->loc.col);
+          break;
+        }
+
+        case FBLE_PROC_VALUE_INSTR: {
+          FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
+          fprintf(stderr, "$ = proc(%p);\n", (void*)proc_value_instr->code);
+          FbleVectorAppend(arena, blocks, proc_value_instr->code);
+          break;
+        }
+
+        case FBLE_VAR_INSTR: {
+          FbleVarInstr* var_instr = (FbleVarInstr*)instr;
+          const char* s = "?";
+          switch (var_instr->index.section) {
+            case FBLE_LOCALS_FRAME_SECTION: s = "l"; break;
+            case FBLE_STATICS_FRAME_SECTION: s = "s"; break;
+          }
+          fprintf(stderr, "$ = %s[%zi];\n", s, var_instr->index.index);
+          break;
+        }
+
+        case FBLE_GET_INSTR: {
+          fprintf(stderr, "return get(s[0]);\n");
+          break;
+        }
+
+        case FBLE_PUT_INSTR: {
+          fprintf(stderr, "return put(s[0], s[1]);\n");
+          break;
+        }
+
+        case FBLE_LINK_INSTR: {
+          FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
+          fprintf(stderr, "l[%zi], l[%zi] = link;\n", link_instr->get, link_instr->put);
+          break;
+        }
+
+        case FBLE_FORK_INSTR: {
+          FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+          fprintf(stderr, "fork(");
+          const char* comma = "";
+          for (size_t j = 0; j < fork_instr->args.size; ++j) {
+            fprintf(stderr, "%s%zi", comma, fork_instr->args.xs[j]);
+            comma = ", ";
+          }
+          fprintf(stderr, ");\n");
+          break;
+        }
+
+        case FBLE_JOIN_INSTR: {
+          fprintf(stderr, "join;\n");
+          break;
+        }
+
+        case FBLE_PROC_INSTR: {
+          FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
+          fprintf(stderr, "proc (exit=%s);\n", proc_instr->exit ? "true" : "false");
+          break;
+        }
+
+        case FBLE_REF_VALUE_INSTR: {
+          FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+          fprintf(stderr, "l[%zi] = ref;\n", ref_instr->dest);
+          break;
+        }
+
+        case FBLE_REF_DEF_INSTR: {
+          FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
+          fprintf(stderr, "l[%zi] ~= $;   // (recursive = %s)\n",
+              ref_def_instr->ref, ref_def_instr->recursive ? "true" : "false");
+          break;
+        }
+
+        case FBLE_STRUCT_IMPORT_INSTR: {
+          FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
+          fprintf(stderr, "import(");
+          const char* comma = "";
+          for (size_t j = 0; j < import_instr->fields.size; ++j) {
+            fprintf(stderr, "%sl[%zi]", comma, import_instr->fields.xs[j]);
+            comma = ", ";
+          }
+          fprintf(stderr, ");    // %s:%i:%i\n",
+              import_instr->loc.source, import_instr->loc.line,
+              import_instr->loc.col);
+          break;
+        }
+
+        case FBLE_RETURN_INSTR: {
+          FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
+          const char* s = "?";
+          switch (return_instr->result.section) {
+            case FBLE_LOCALS_FRAME_SECTION: s = "l"; break;
+            case FBLE_STATICS_FRAME_SECTION: s = "s"; break;
+          }
+          fprintf(stderr, "return %s[%zi];\n", s, return_instr->result.index);
+          break;
+        }
+
+        case FBLE_TYPE_INSTR: {
+          FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
+          fprintf(stderr, "l[%zi] = type;\n", type_instr->dest);
+          break;
+        }
+
+        case FBLE_VPUSH_INSTR: {
+          FbleVPushInstr* vpush_instr = (FbleVPushInstr*)instr;
+          fprintf(stderr, "l[%zi] = $;\n", vpush_instr->dest);
+          break;
+        }
+
+        case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
+          FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
+          fprintf(stderr, "enter block %zi for %zi;\n", enter->block, enter->time);
+          break;
+        }
+
+        case FBLE_PROFILE_EXIT_BLOCK_INSTR: {
+          fprintf(stderr, "exit block;\n");
+          break;
+        }
+
+        case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
+          fprintf(stderr, "auto exit block;\n");
+          break;
+        }
+      }
+    }
+    fprintf(stderr, "\n\n");
+  }
+
+  FbleFree(arena, blocks.xs);
+  FbleAssertEmptyArena(arena);
+  FbleDeleteArena(arena);
+}
+
 // NoIO --
 //   An IO function that does no IO.
 //   See documentation in fble.h
@@ -1222,7 +1449,7 @@ static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
 }
 
 // FbleEval -- see documentation in fble.h
-FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile)
+FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile, bool dump_compiled)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
@@ -1230,6 +1457,9 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
   *profile = FbleNewProfile(arena_, blocks->size);
   if (instrs == NULL) {
     return NULL;
+  }
+  if (dump_compiled) {
+    DumpInstrBlock(instrs);
   }
 
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };

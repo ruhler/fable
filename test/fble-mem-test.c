@@ -68,7 +68,7 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
   FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
   FbleNameV blocks;
   FbleProfile* profile = NULL;
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
+  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile, false);
   if (func != NULL) {
     // Number type is: @ Nat@ = +(Nat@ S, Unit@ Z);
     FbleValueV args = { .size = 0, .xs = NULL };

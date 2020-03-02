@@ -1,4 +1,6 @@
 Eval2:
+* Make a separate executable for dumping the compiled version of a program?
+  Instead of an extra funny arg to FbleEval?
 * Replace DataToLocal calls with instructions that output directly to locals.
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their

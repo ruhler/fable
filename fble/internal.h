@@ -185,8 +185,6 @@ typedef struct {
 //   Allocate an FbleProcValue.
 //
 // Fields:
-//   scopec - The number of variables from the scope to capture from the top
-//   of the data stack.
 //   code - A block of instructions that will execute in the context of the
 //          captured scope. The instruction should remove the context of its
 //          scope.

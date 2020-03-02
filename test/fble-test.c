@@ -83,6 +83,13 @@ int main(int argc, char* argv[])
     argv++;
   }
 
+  bool dump_compiled = false;
+  if (argc > 0 && strcmp("--dump-compiled", *argv) == 0) {
+    dump_compiled = true;
+    argc--;
+    argv++;
+  }
+
   if (argc < 1) {
     fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
@@ -113,7 +120,7 @@ int main(int argc, char* argv[])
     FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
     FbleNameV blocks;
     FbleProfile* profile = NULL;
-    result = FbleEval(value_arena, prgm, &blocks, &profile);
+    result = FbleEval(value_arena, prgm, &blocks, &profile, dump_compiled);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
