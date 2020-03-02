@@ -1889,7 +1889,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleType* rtype = NULL;
       if (!error) {
         rtype = CompileExpr_(arena, blocks, exit, scope, let_expr->body);
-        error = (rtype == NULL);
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
@@ -1902,8 +1901,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         PopVar(arena, scope);
       }
 
-      if (error) {
-        FbleTypeRelease(arena, rtype);
+      if (rtype == NULL) {
         return NULL;
       }
       return DataToLocal(arena_, scope, rtype);

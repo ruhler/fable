@@ -3,7 +3,7 @@ fble-test {
   @ Bool@ = +(Unit@ true, Unit@ false);
 
   # It is legal to shadow variables that are in scope, including when they
-  # have the different types.
+  # have different types.
   Unit@ a = Unit@();
   {
     Bool@ a = Bool@(false: Unit@());
