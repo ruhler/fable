@@ -581,7 +581,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
         FbleValue* arg = PopData(arena_, &thread->stack->frame);
-        PushData(arena_, FbleNewUnionValue(arena, union_value_instr->tag, arg), &thread->stack->frame);
+        thread->stack->frame.locals[union_value_instr->dest] = FbleNewUnionValue(arena, union_value_instr->tag, arg);
         break;
       }
 

@@ -1182,11 +1182,12 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleTypeRelease(arena, &union_type->_base);
       FbleTypeRelease(arena, arg_type);
 
+      Local* result = NewLocal(arena_, scope, type);
       FbleUnionValueInstr* union_instr = FbleAlloc(arena_, FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->tag = tag;
+      union_instr->dest = result->index.index;
       AppendInstr(arena_, scope, &union_instr->_base);
-      Local* result = DataToLocal(arena_, scope, type);
       CompileExit(arena_, exit, scope, result);
       return result;
     }
