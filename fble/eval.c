@@ -653,7 +653,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         value->code = func_value_instr->code;
         value->code->refcount++;
         CaptureScope(arena, &thread->stack->frame, func_value_instr->code->statics, &value->_base._base, &value->scope);
-        PushData(arena_, &value->_base._base, &thread->stack->frame);
+        thread->stack->frame.locals[func_value_instr->dest] = &value->_base._base;
         break;
       }
 
@@ -1287,7 +1287,7 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_FUNC_VALUE_INSTR: {
           FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-          fprintf(stderr, "$ = func(%p, %zi);\n",
+          fprintf(stderr, "l[%zi] = func(%p, %zi);\n", func_value_instr->dest,
               (void*)func_value_instr->code, func_value_instr->argc);
           FbleVectorAppend(arena, blocks, func_value_instr->code);
           break;

@@ -1468,9 +1468,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
       AddBlockTime(blocks, instr->code->statics);
-      AppendInstr(arena_, scope, &instr->_base);
 
-      Local* result = DataToLocal(arena_, scope, type);
+      Local* result = NewLocal(arena_, scope, type);
+      instr->dest = result->index.index;
+      AppendInstr(arena_, scope, &instr->_base);
       CompileExit(arena_, exit, scope, result);
       return result;
     }

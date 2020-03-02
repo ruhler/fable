@@ -148,18 +148,18 @@ typedef struct {
 //   Allocate a function, capturing the values from the data stack to use for
 //   as variable values when the function is executed.
 //
-// data_stack: ...
-//         ==> ..., func
+// *dest = func(argc, code)
 //
 // Fields:
-//   scopec - The number of values to capture from the top of the data stack.
 //   argc - The number of arguments to the function.
+//   dest - Where to store the allocated function.
 //   code - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should
 //          remove the context of its scope and arguments.
 typedef struct {
   FbleInstr _base;
   size_t argc;
+  FbleLocalIndex dest;
   FbleInstrBlock* code;
 } FbleFuncValueInstr;
 
