@@ -659,6 +659,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
+        assert(thread->stack->frame.locals[release->value] != NULL);
         FbleValueRelease(arena, thread->stack->frame.locals[release->value]);
         thread->stack->frame.locals[release->value] = NULL;
         break;

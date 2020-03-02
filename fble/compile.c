@@ -1892,12 +1892,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (!exit) {
-          FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
-          release->_base.tag = FBLE_RELEASE_INSTR;
-          release->value = vars[let_expr->bindings.size - i - 1]->local->index.index;
-          AppendInstr(arena_, scope, &release->_base);
-        }
         PopVar(arena, scope);
       }
 
@@ -1954,13 +1948,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       PushVar(arena_, scope, poly->arg.name, local);
 
       FbleType* body = CompileExpr_(arena, blocks, exit, scope, poly->body);
-
-      if (!exit) {
-        FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
-        release->_base.tag = FBLE_RELEASE_INSTR;
-        release->value = local->index.index;
-        AppendInstr(arena_, scope, &release->_base);
-      }
 
       PopVar(arena, scope);
 
@@ -2100,7 +2087,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       struct_import->loc = struct_import_expr->nspace->loc;
       struct_import->fields.xs = FbleArrayAlloc(arena_, FbleLocalIndex, struct_type->fields.size);
       struct_import->fields.size = struct_type->fields.size;
-      AppendInstr(arena_, scope, &struct_import->_base);
 
       Local* vars[struct_type->fields.size];
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
@@ -2109,24 +2095,17 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         struct_import->fields.xs[i] = vars[i]->index.index;
       }
 
+      AppendInstr(arena_, scope, &struct_import->_base);
+
       Local* body = CompileExpr(arena, blocks, exit, scope, struct_import_expr->body);
-      FbleType* rtype = LocalToData(arena, scope, body);
-      Local* result = DataToLocal(arena_, scope, rtype);
-      //Local* result = body;
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        if (!exit) {
-          FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
-          release->_base.tag = FBLE_RELEASE_INSTR;
-          release->value = vars[struct_type->fields.size - i - 1]->index.index;
-          AppendInstr(arena_, scope, &release->_base);
-        }
         PopVar(arena, scope);
       }
 
       FbleTypeRelease(arena, &struct_type->_base);
       FbleTypeRelease(arena, type);
-      return result;
+      return body;
     }
   }
 
