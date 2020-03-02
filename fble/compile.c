@@ -2109,7 +2109,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         struct_import->fields.xs[i] = vars[i]->index.index;
       }
 
-      FbleType* rtype = CompileExpr_(arena, blocks, exit, scope, struct_import_expr->body);
+      Local* body = CompileExpr(arena, blocks, exit, scope, struct_import_expr->body);
+      FbleType* rtype = LocalToData(arena, scope, body);
+      Local* result = DataToLocal(arena_, scope, rtype);
+      //Local* result = body;
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
         if (!exit) {
@@ -2123,7 +2126,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FbleTypeRelease(arena, &struct_type->_base);
       FbleTypeRelease(arena, type);
-      return DataToLocal(arena_, scope, rtype);
+      return result;
     }
   }
 
