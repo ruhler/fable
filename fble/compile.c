@@ -1886,19 +1886,19 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       }
 
 
-      FbleType* rtype = NULL;
+      Local* body = NULL;
       if (!error) {
-        rtype = CompileExpr_(arena, blocks, exit, scope, let_expr->body);
+        body = CompileExpr(arena, blocks, exit, scope, let_expr->body);
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         PopVar(arena, scope);
       }
 
-      if (rtype == NULL) {
+      if (body == NULL) {
         return NULL;
       }
-      return DataToLocal(arena_, scope, rtype);
+      return body;
     }
 
     case FBLE_MODULE_REF_EXPR: {

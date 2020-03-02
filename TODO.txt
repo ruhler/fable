@@ -5,6 +5,9 @@ Eval2:
   result directly to their parent?
 
 Miscellaneous:
+* [clean] Clean up how we specify dump_compile? It feels a little hacky at
+  this point. Maybe write a separate executable that's capable of compiling
+  and dumping? Is that better?
 * [clean] Reorganize functions in fble/compile.c
 * Don't duplicate evaluation of literal type per letter.
 * Add test that the literal type must be a struct, not a union value.
