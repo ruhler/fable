@@ -163,7 +163,7 @@ typedef struct {
 //   Release and remove a value from the locals section of the stack frame.
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndex index;
+  FbleLocalIndex value;
 } FbleReleaseInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
@@ -216,12 +216,12 @@ typedef struct {
 // FbleLinkInstr -- FBLE_LINK_INSTR
 //   Allocate a new link with get and put ports.
 //
-// *get_index = get;
-// *put_index = put;
+// *get = <get port>;
+// *put = <put port>;
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndex get_index;
-  FbleLocalIndex put_index;
+  FbleLocalIndex get;
+  FbleLocalIndex put;
 } FbleLinkInstr;
 
 // FbleForkInstr -- FBLE_FORK_INSTR
@@ -272,10 +272,10 @@ typedef struct {
 // FbleRefValueInstr -- FBLE_REF_VALUE_INSTR
 //   Allocate a ref value and store the result in index.
 //
-// *index = new ref
+// *dest = new ref
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndex index;
+  FbleLocalIndex dest;
 } FbleRefValueInstr;
 
 // FbleRefDefInstr -- FBLE_REF_DEF_INSTR
@@ -293,7 +293,7 @@ typedef struct {
 // cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndex index;
+  FbleLocalIndex ref;
   bool recursive;
 } FbleRefDefInstr;
 
@@ -320,11 +320,11 @@ typedef struct {
 } FbleReturnInstr;
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR
-//  *result = @<>
+//  *dest = @<>
 //
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndex result;
+  FbleLocalIndex dest;
 }  FbleTypeInstr;
 
 // FbleVPushInstr -- FBLE_VPUSH_INSTR
@@ -332,7 +332,7 @@ typedef struct {
 //   frame.
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndex index;
+  FbleLocalIndex dest;
 } FbleVPushInstr;
 
 // FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR

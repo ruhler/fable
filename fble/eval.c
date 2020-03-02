@@ -657,8 +657,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-        FbleValueRelease(arena, thread->stack->frame.locals[release->index]);
-        thread->stack->frame.locals[release->index] = NULL;
+        FbleValueRelease(arena, thread->stack->frame.locals[release->value]);
+        thread->stack->frame.locals[release->value] = NULL;
         break;
       }
 
@@ -892,8 +892,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
         FbleValueRelease(arena, &port->_base);
 
-        thread->stack->frame.locals[link_instr->get_index] = get;
-        thread->stack->frame.locals[link_instr->put_index] = &put->_base._base;
+        thread->stack->frame.locals[link_instr->get] = get;
+        thread->stack->frame.locals[link_instr->put] = &put->_base._base;
         break;
       }
 
@@ -982,18 +982,18 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         rv->_base.tag = FBLE_REF_VALUE;
         rv->value = NULL;
 
-        thread->stack->frame.locals[ref_instr->index] = &rv->_base;
+        thread->stack->frame.locals[ref_instr->dest] = &rv->_base;
         break;
       }
 
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-        FbleRefValue* rv = (FbleRefValue*)thread->stack->frame.locals[ref_def_instr->index];
+        FbleRefValue* rv = (FbleRefValue*)thread->stack->frame.locals[ref_def_instr->ref];
         assert(rv->_base.tag == FBLE_REF_VALUE);
 
         FbleValue* value = PopData(arena_, &thread->stack->frame);
         assert(value != NULL);
-        thread->stack->frame.locals[ref_def_instr->index] = value;
+        thread->stack->frame.locals[ref_def_instr->ref] = value;
 
         if (ref_def_instr->recursive) {
           rv->value = value;
@@ -1032,13 +1032,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         FbleTypeValue* value = FbleAlloc(arena_, FbleTypeValue);
         FbleRefInit(arena, &value->_base.ref);
         value->_base.tag = FBLE_TYPE_VALUE;
-        thread->stack->frame.locals[type_instr->result] = &value->_base;
+        thread->stack->frame.locals[type_instr->dest] = &value->_base;
         break;
       }
 
       case FBLE_VPUSH_INSTR: {
         FbleVPushInstr* vpush_instr = (FbleVPushInstr*)instr;
-        thread->stack->frame.locals[vpush_instr->index] = PopData(arena_, &thread->stack->frame);
+        thread->stack->frame.locals[vpush_instr->dest] = PopData(arena_, &thread->stack->frame);
         break;
       }
 

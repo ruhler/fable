@@ -272,7 +272,7 @@ static void LocalRelease(FbleTypeArena* arena, Scope* scope, Local* local)
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
     FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
     release->_base.tag = FBLE_RELEASE_INSTR;
-    release->index = local->index.index;
+    release->value = local->index.index;
     AppendInstr(arena_, scope, &release->_base);
 
     assert(scope->locals.xs[local->index.index] == local);
@@ -894,7 +894,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       Local* result = NewLocal(arena_, scope, &type_type->_base);
       FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
-      instr->result = result->index.index;
+      instr->dest = result->index.index;
       AppendInstr(arena_, scope, &instr->_base);
       CompileExit(arena_, exit, scope, result);
       return result;
@@ -1111,7 +1111,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
-      instr->result = type_value->index.index;
+      instr->dest = type_value->index.index;
       AppendInstr(arena_, scope, &instr->_base);
       FbleTypeRelease(arena, LocalToData(arena, scope, type_value));
 
@@ -1573,11 +1573,11 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       link->_base.tag = FBLE_LINK_INSTR;
 
       Local* get_local = NewLocal(arena_, &body_scope, &get_type->_base);
-      link->get_index = get_local->index.index;
+      link->get = get_local->index.index;
       PushVar(arena_, &body_scope, link_expr->get, get_local);
 
       Local* put_local = NewLocal(arena_, &body_scope, &put_type->_base);
-      link->put_index = put_local->index.index;
+      link->put = put_local->index.index;
       PushVar(arena_, &body_scope, link_expr->put, put_local);
 
       AppendInstr(arena_, &body_scope, &link->_base);
@@ -1803,7 +1803,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         vars[i] = PushVar(arena_, scope, let_expr->bindings.xs[i].name, local);
         FbleRefValueInstr* ref_instr = FbleAlloc(arena_, FbleRefValueInstr);
         ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
-        ref_instr->index = local->index.index;
+        ref_instr->dest = local->index.index;
         AppendInstr(arena_, scope, &ref_instr->_base);
       }
 
@@ -1877,7 +1877,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
         FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
         ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-        ref_def_instr->index = vars[let_expr->bindings.size - i - 1]->local->index.index;
+        ref_def_instr->ref = vars[let_expr->bindings.size - i - 1]->local->index.index;
         ref_def_instr->recursive = recursive;
         AppendInstr(arena_, scope, &ref_def_instr->_base);
       }
@@ -1893,7 +1893,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         if (!exit) {
           FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
           release->_base.tag = FBLE_RELEASE_INSTR;
-          release->index = vars[let_expr->bindings.size - i - 1]->local->index.index;
+          release->value = vars[let_expr->bindings.size - i - 1]->local->index.index;
           AppendInstr(arena_, scope, &release->_base);
         }
         PopVar(arena, scope);
@@ -1948,7 +1948,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       Local* local = NewLocal(arena_, scope, &type_type->_base);
       FbleTypeInstr* type_instr = FbleAlloc(arena_, FbleTypeInstr);
       type_instr->_base.tag = FBLE_TYPE_INSTR;
-      type_instr->result = local->index.index;
+      type_instr->dest = local->index.index;
       AppendInstr(arena_, scope, &type_instr->_base);
       PushVar(arena_, scope, poly->arg.name, local);
 
@@ -1957,7 +1957,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       if (!exit) {
         FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
         release->_base.tag = FBLE_RELEASE_INSTR;
-        release->index = local->index.index;
+        release->value = local->index.index;
         AppendInstr(arena_, scope, &release->_base);
       }
 
@@ -2114,7 +2114,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         if (!exit) {
           FbleReleaseInstr* release = FbleAlloc(arena_, FbleReleaseInstr);
           release->_base.tag = FBLE_RELEASE_INSTR;
-          release->index = vars[struct_type->fields.size - i - 1]->index.index;
+          release->value = vars[struct_type->fields.size - i - 1]->index.index;
           AppendInstr(arena_, scope, &release->_base);
         }
         PopVar(arena, scope);
@@ -2600,7 +2600,7 @@ static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, F
     AppendInstr(arena_, scope, &vpush->_base);
     Local* l = NewLocal(arena_, scope, types[i]);
     PushVar(arena_, scope, prgm->modules.xs[i].name, l);
-    vpush->index = l->index.index;
+    vpush->dest = l->index.index;
   }
 
   FbleType* rtype = CompileExpr_(arena, blocks, true, scope, prgm->main);
@@ -2633,7 +2633,7 @@ static Local* DataToLocal(FbleArena* arena, Scope* scope, FbleType* type)
 
   FbleVPushInstr* vpush = FbleAlloc(arena, FbleVPushInstr);
   vpush->_base.tag = FBLE_VPUSH_INSTR;
-  vpush->index = local->index.index;
+  vpush->dest = local->index.index;
   AppendInstr(arena, scope, &vpush->_base);
   return local;
 }
