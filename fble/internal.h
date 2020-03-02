@@ -89,10 +89,12 @@ typedef struct {
 //   Allocate a struct value.
 //
 // data_stack:  ..., aN, ..., a2, a1, type
-//         ==>  ..., struct(a1, a2, ..., aN)
+//         ==>  ...
+// *dest = struct(a1, a2, ..., aN)
 typedef struct {
   FbleInstr _base;
   size_t argc;
+  FbleLocalIndex dest;
 } FbleStructValueInstr;
 
 // FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR

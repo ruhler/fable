@@ -574,7 +574,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         }
 
         FbleValueV args = { .size = argc, .xs = argv, };
-        PushData(arena_, FbleNewStructValue(arena, args), &thread->stack->frame);
+        thread->stack->frame.locals[struct_value_instr->dest] = FbleNewStructValue(arena, args);
         break;
       }
 

@@ -1021,12 +1021,13 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             return NULL;
           }
 
+          Local* result = NewLocal(arena_, scope, vtype);
           FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
           struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
           struct_instr->argc = struct_type->fields.size;
+          struct_instr->dest = result->index.index;
           AppendInstr(arena_, scope, &struct_instr->_base);
 
-          Local* result = DataToLocal(arena_, scope, vtype);
           CompileExit(arena_, exit, scope, result);
           FbleTypeRelease(arena, &struct_type->_base);
           return result;
@@ -1115,11 +1116,12 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       AppendInstr(arena_, scope, &instr->_base);
       FbleTypeRelease(arena, LocalToData(arena, scope, type_value));
 
+      Local* result = NewLocal(arena_, scope, &struct_type->_base);
       FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->argc = struct_expr->args.size;
+      struct_instr->dest = result->index.index;
       AppendInstr(arena_, scope, &struct_instr->_base);
-      Local* result = DataToLocal(arena_, scope, &struct_type->_base);
       CompileExit(arena_, exit, scope, result);
       return result;
     }
