@@ -22,6 +22,13 @@ typedef struct {
   size_t index;
 } FbleFrameIndex;
 
+// FbleFrameIndexV --
+//   A vector of FbleFrameIndex.
+typedef struct {
+  size_t size;
+  FbleFrameIndex* xs;
+} FbleFrameIndexV;
+
 // FbleLocalIndex --
 //   The position of a value in the locals section of a stack frame.
 typedef size_t FbleLocalIndex;
@@ -88,12 +95,10 @@ typedef struct {
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
 //
-// data_stack:  ..., aN, ..., a2, a1, type
-//         ==>  ...
 // *dest = struct(a1, a2, ..., aN)
 typedef struct {
   FbleInstr _base;
-  size_t argc;
+  FbleFrameIndexV args;
   FbleLocalIndex dest;
 } FbleStructValueInstr;
 

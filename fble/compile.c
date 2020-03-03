@@ -697,7 +697,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 {
   assert(instr != NULL);
   switch (instr->tag) {
-    case FBLE_STRUCT_VALUE_INSTR:
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR:
@@ -719,6 +718,13 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_PROFILE_ENTER_BLOCK_INSTR:
     case FBLE_PROFILE_EXIT_BLOCK_INSTR:
     case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_STRUCT_VALUE_INSTR: {
+      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
+      FbleFree(arena, struct_instr->args.xs);
       FbleFree(arena, instr);
       return;
     }
@@ -974,16 +980,21 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           FbleTypeType* type_type = (FbleTypeType*)normal;
           FbleType* vtype = FbleTypeRetain(arena, type_type->type);
           FbleTypeRelease(arena, normal);
-          FbleTypeRelease(arena, type);
+
+          // TODO: This hack for popping a variable off the data stack should
+          // go away once we move the type to locals to begin with.
+          LocalRelease(arena, scope, DataToLocal(arena_, scope, type));
+
+          Local* args[argc];
+          for (size_t i = 0; i < argc; ++i) {
+            args[i] = DataToLocal(arena_, scope, arg_types[i]);
+          }
 
           FbleStructType* struct_type = (FbleStructType*)FbleNormalType(arena, vtype);
           if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
             ReportError(arena_, &misc_apply_expr->misc->loc,
                 "expected a struct type, but found %t\n",
                 vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FbleTypeRelease(arena, arg_types[i]);
-            }
             FbleTypeRelease(arena, &struct_type->_base);
             FbleTypeRelease(arena, vtype);
             return NULL;
@@ -994,9 +1005,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             ReportError(arena_, &expr->loc,
                 "expected %i args, but %i were provided\n",
                  struct_type->fields.size, argc);
-            for (size_t i = 0; i < argc; ++i) {
-              FbleTypeRelease(arena, arg_types[i]);
-            }
             FbleTypeRelease(arena, &struct_type->_base);
             FbleTypeRelease(arena, vtype);
             return NULL;
@@ -1006,30 +1014,32 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           for (size_t i = 0; i < argc; ++i) {
             FbleTaggedType* field = struct_type->fields.xs + i;
 
-            if (!FbleTypesEqual(arena, field->type, arg_types[i])) {
+            if (!FbleTypesEqual(arena, field->type, args[i]->type)) {
               ReportError(arena_, &misc_apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
-                  field->type, arg_types[i]);
+                  field->type, args[i]->type);
               error = true;
             }
-            FbleTypeRelease(arena, arg_types[i]);
           }
 
+          FbleTypeRelease(arena, &struct_type->_base);
+          Local* result = NewLocal(arena_, scope, vtype);
+
           if (error) {
-            FbleTypeRelease(arena, &struct_type->_base);
-            FbleTypeRelease(arena, vtype);
             return NULL;
           }
 
-          Local* result = NewLocal(arena_, scope, vtype);
           FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
           struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
-          struct_instr->argc = struct_type->fields.size;
           struct_instr->dest = result->index.index;
+          FbleVectorInit(arena_, struct_instr->args);
           AppendInstr(arena_, scope, &struct_instr->_base);
-
           CompileExit(arena_, exit, scope, result);
-          FbleTypeRelease(arena, &struct_type->_base);
+
+          for (size_t i = 0; i < argc; ++i) {
+            FbleVectorAppend(arena_, struct_instr->args, args[i]->index);
+            LocalRelease(arena, scope, args[i]);
+          }
           return result;
         }
 
@@ -1061,29 +1071,28 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleVectorInit(arena_, struct_type->fields);
 
       size_t argc = struct_expr->args.size;
-      FbleType* arg_types[argc];
+      Local* args[argc];
       bool error = false;
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
         EnterBlock(arena_, blocks, arg->name, arg->expr->loc, scope);
-        arg_types[j] = CompileExpr_(arena, blocks, false, scope, arg->expr);
+        args[j] = CompileExpr(arena, blocks, false, scope, arg->expr);
         ExitBlock(arena_, blocks, scope);
-        error = error || (arg_types[j] == NULL);
+        error = error || (args[j] == NULL);
       }
 
       for (size_t i = 0; i < argc; ++i) {
         FbleTaggedExpr* arg = struct_expr->args.xs + i;
-        if (arg_types[i] != NULL) {
-          if (!CheckNameSpace(arena, &arg->name, arg_types[i])) {
+        if (args[i] != NULL) {
+          if (!CheckNameSpace(arena, &arg->name, args[i]->type)) {
             error = true;
           }
 
           FbleTaggedType* cfield = FbleVectorExtend(arena_, struct_type->fields);
           cfield->name = arg->name;
-          cfield->type = arg_types[i];
+          cfield->type = args[i]->type;
           FbleRefAdd(arena, &struct_type->_base.ref, &cfield->type->ref);
-          FbleTypeRelease(arena, arg_types[i]);
         }
 
         for (size_t j = 0; j < i; ++j) {
@@ -1101,28 +1110,18 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         return NULL;
       }
 
-      FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
-      FbleRefInit(arena, &type_type->_base.ref);
-      type_type->_base.tag = FBLE_TYPE_TYPE;
-      type_type->_base.loc = expr->loc;
-      type_type->_base.id = (uintptr_t)type_type;
-      type_type->type = &struct_type->_base;
-      FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
-      Local* type_value = NewLocal(arena_, scope, &type_type->_base);
-
-      FbleTypeInstr* instr = FbleAlloc(arena_, FbleTypeInstr);
-      instr->_base.tag = FBLE_TYPE_INSTR;
-      instr->dest = type_value->index.index;
-      AppendInstr(arena_, scope, &instr->_base);
-      FbleTypeRelease(arena, LocalToData(arena, scope, type_value));
-
       Local* result = NewLocal(arena_, scope, &struct_type->_base);
       FbleStructValueInstr* struct_instr = FbleAlloc(arena_, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
-      struct_instr->argc = struct_expr->args.size;
       struct_instr->dest = result->index.index;
       AppendInstr(arena_, scope, &struct_instr->_base);
       CompileExit(arena_, exit, scope, result);
+
+      FbleVectorInit(arena_, struct_instr->args);
+      for (size_t i = 0; i < argc; ++i) {
+        FbleVectorAppend(arena_, struct_instr->args, args[i]->index);
+        LocalRelease(arena, scope, args[i]);
+      }
       return result;
     }
 

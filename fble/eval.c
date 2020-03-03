@@ -566,13 +566,11 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-        size_t argc = struct_value_instr->argc;
-
-        FbleValueRelease(arena, PopData(arena_, &thread->stack->frame));
-
+        size_t argc = struct_value_instr->args.size;
         FbleValue* argv[argc];
         for (size_t i = 0; i < argc; ++i) {
-          argv[i] = PopData(arena_, &thread->stack->frame);
+          FbleValue* arg = FrameGet(&thread->stack->frame, struct_value_instr->args.xs[i]);
+          argv[i] = FbleValueRetain(arena, arg);
         }
 
         FbleValueV args = { .size = argc, .xs = argv, };
@@ -1247,8 +1245,14 @@ static void DumpInstrBlock(FbleInstrBlock* code)
       switch (instr->tag) {
         case FBLE_STRUCT_VALUE_INSTR: {
           FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-          fprintf(stderr, "l[%zi] = struct(%zi);\n",
-              struct_value_instr->dest, struct_value_instr->argc);
+          fprintf(stderr, "l[%zi] = struct(", struct_value_instr->dest);
+          const char* comma = "";
+          for (size_t j = 0; j < struct_value_instr->args.size; ++j) {
+            FbleFrameIndex arg = struct_value_instr->args.xs[j];
+            fprintf(stderr, "%s%s[%zi]", comma, sections[arg.section], arg.index);
+            comma = ", ";
+          }
+          fprintf(stderr, ");\n");
           break;
         }
 
