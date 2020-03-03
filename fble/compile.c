@@ -1198,17 +1198,18 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
 
-      FbleType* type = CompileExpr_(arena, blocks, false, scope, access_expr->object);
-      if (type == NULL) {
+      Local* obj = CompileExpr(arena, blocks, false, scope, access_expr->object);
+      if (obj == NULL) {
         return NULL;
       }
 
       FbleAccessInstr* access = FbleAlloc(arena_, FbleAccessInstr);
       access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
       access->loc = access_expr->field.loc;
+      access->obj = obj->index;
       AppendInstr(arena_, scope, &access->_base);
 
-      FbleType* normal = FbleNormalType(arena, type);
+      FbleType* normal = FbleNormalType(arena, obj->type);
       FbleTaggedTypeV* fields = NULL;
       if (normal->tag == FBLE_STRUCT_TYPE) {
         access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
@@ -1219,10 +1220,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       } else {
         ReportError(arena_, &access_expr->object->loc,
             "expected value of type struct or union, but found value of type %t\n",
-            type);
+            obj->type);
 
         FbleTypeRelease(arena, normal);
-        FbleTypeRelease(arena, type);
         return NULL;
       }
 
@@ -1231,19 +1231,19 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           access->tag = i;
           FbleType* rtype = FbleTypeRetain(arena, fields->xs[i].type);
           FbleTypeRelease(arena, normal);
-          FbleTypeRelease(arena, type);
 
-          Local* result = DataToLocal(arena_, scope, rtype);
+          Local* result = NewLocal(arena_, scope, rtype);
+          access->dest = result->index.index;
           CompileExit(arena_, exit, scope, result);
+          LocalRelease(arena, scope, obj);
           return result;
         }
       }
 
       ReportError(arena_, &access_expr->field.loc,
           "'%n' is not a field of type %t\n",
-          &access_expr->field, type);
+          &access_expr->field, obj->type);
       FbleTypeRelease(arena, normal);
-      FbleTypeRelease(arena, type);
       return NULL;
     }
 

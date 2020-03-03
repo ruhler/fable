@@ -130,6 +130,7 @@ static FbleValue* PopData(FbleArena* arena, Frame* frame);
 static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* frame);
 
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
+static FbleValue* FrameTaggedGet(FbleValueTag tag, Frame* frame, FbleFrameIndex index);
 
 static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics, FbleInstrBlock* code, FbleValue** result, Stack* tail);
 static Stack* PopFrame(FbleValueArena* arena, Stack* stack);
@@ -383,6 +384,47 @@ static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index)
   UNREACHABLE("should never get here");
 }
 
+// FrameTaggedGet --
+//   Get and dereference a value from the given frame.
+//   Dereferences the data value, removing all layers of reference values
+//   until a non-reference value is encountered and returns the non-reference
+//   value.
+//
+//   A tag for the type of dereferenced value should be provided. This
+//   function will assert that the correct kind of value is encountered.
+//
+// Inputs:
+//   tag - the expected tag of the value.
+//   frame - the frame to get the value from.
+//   index - the location of the value in the frame.
+//
+// Results:
+//   The dereferenced value. Returns null in case of abstract value
+//   dereference.
+//
+// Side effects:
+//   The returned value will only stay alive as long as the original value on
+//   the stack frame.
+static FbleValue* FrameTaggedGet(FbleValueTag tag, Frame* frame, FbleFrameIndex index)
+{
+  FbleValue* original = FrameGet(frame, index);
+  FbleValue* value = original;
+  while (value->tag == FBLE_REF_VALUE) {
+    FbleRefValue* rv = (FbleRefValue*)value;
+
+    if (rv->value == NULL) {
+      // We are trying to dereference an abstract value. This is undefined
+      // behavior according to the spec. Return NULL to indicate to the
+      // caller.
+      return NULL;
+    }
+
+    value = rv->value;
+  }
+  assert(value->tag == tag);
+  return value;
+}
+
 // PushFrame --
 //   Push a frame onto the execution stack.
 //
@@ -587,22 +629,22 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, &thread->stack->frame);
+
+        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, &thread->stack->frame, access_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", &access_instr->loc);
           AbortThread(arena, thread);
           return progress;
         }
         assert(access_instr->tag < sv->fields.size);
-        PushData(arena_, FbleValueRetain(arena, sv->fields.xs[access_instr->tag]), &thread->stack->frame);
-        FbleValueRelease(arena, &sv->_base);
+        thread->stack->frame.locals[access_instr->dest] = FbleValueRetain(arena, sv->fields.xs[access_instr->tag]);
         break;
       }
 
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, &thread->stack->frame);
+        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, &thread->stack->frame, access_instr->obj);
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", &access_instr->loc);
           AbortThread(arena, thread);
@@ -611,13 +653,11 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
-          FbleValueRelease(arena, &uv->_base);
           AbortThread(arena, thread);
           return progress;
         }
 
-        PushData(arena_, FbleValueRetain(arena, uv->arg), &thread->stack->frame);
-        FbleValueRelease(arena, &uv->_base);
+        thread->stack->frame.locals[access_instr->dest] = FbleValueRetain(arena, uv->arg);
         break;
       }
 
@@ -1265,17 +1305,12 @@ static void DumpInstrBlock(FbleInstrBlock* code)
           break;
         }
 
-        case FBLE_STRUCT_ACCESS_INSTR: {
-          FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-          fprintf(stderr, "$ = struct.%zi; // %s:%i:%i\n",
-              access_instr->tag, access_instr->loc.source,
-              access_instr->loc.line, access_instr->loc.col);
-          break;
-        }
-
+        case FBLE_STRUCT_ACCESS_INSTR:
         case FBLE_UNION_ACCESS_INSTR: {
           FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-          fprintf(stderr, "$ = union.%zi;   // %s:%i:%i\n",
+          fprintf(stderr, "l[%zi] = %s[%zi].%zi; // %s:%i:%i\n",
+              access_instr->dest, sections[access_instr->obj.section],
+              access_instr->obj.index,
               access_instr->tag, access_instr->loc.source,
               access_instr->loc.line, access_instr->loc.col);
           break;

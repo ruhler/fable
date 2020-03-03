@@ -114,14 +114,15 @@ typedef struct {
 } FbleUnionValueInstr;
 
 // FbleAccessInstr -- FBLE_STRUCT_ACCESS_INSTR or FBLE_UNION_ACCESS_INSTR
-//   Access the tagged field from the object on top of the vstack.
+//   Access a tagged field from an object.
 //
-// data_stack: ..., obj
-//         ==> ..., obj.tag
+// *dest = obj.tag
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
+  FbleFrameIndex obj;
   size_t tag;
+  FbleLocalIndex dest;
 } FbleAccessInstr;
 
 typedef struct {
