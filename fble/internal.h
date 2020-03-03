@@ -177,14 +177,17 @@ typedef struct {
 } FbleReleaseInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   data_stack: ..., x, f
-//           ==> ..., f(x)
+//   Apply a function to a single argument.
+//
+// $ = func(arg)
 //
 // If exit is true, this is treated as a tail call.
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
   bool exit;
+  FbleFrameIndex func;
+  FbleFrameIndex arg;
 } FbleFuncApplyInstr;
 
 // FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR

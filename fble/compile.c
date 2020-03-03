@@ -912,47 +912,36 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       size_t argc = misc_apply_expr->args.size;
       AddBlockTime(blocks, 1 + argc);
-      FbleType* arg_types[argc];
+      Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - 1 - i;
-        arg_types[j] = CompileExpr_(arena, blocks, false, scope, misc_apply_expr->args.xs[j]);
-        error = error || (arg_types[j] == NULL);
+        args[j] = CompileExpr(arena, blocks, false, scope, misc_apply_expr->args.xs[j]);
+        error = error || (args[j] == NULL);
       }
 
-      FbleType* type = CompileExpr_(arena, blocks, false, scope, misc_apply_expr->misc);
-      error = error || (type == NULL);
+      Local* func = CompileExpr(arena, blocks, false, scope, misc_apply_expr->misc);
+      error = error || (func == NULL);
 
       if (error) {
-        for (size_t i = 0; i < argc; ++i) {
-          FbleTypeRelease(arena, arg_types[i]);
-        }
-        FbleTypeRelease(arena, type);
         return NULL;
       }
 
-      FbleType* normal = FbleNormalType(arena, type);
+      FbleType* normal = FbleNormalType(arena, func->type);
       switch (normal->tag) {
         case FBLE_FUNC_TYPE: {
           // FUNC_APPLY
-          FbleTypeRelease(arena, type);
           for (size_t i = 0; i < argc; ++i) {
             if (normal->tag != FBLE_FUNC_TYPE) {
               ReportError(arena_, &expr->loc, "too many arguments to function\n");
-              for (size_t i = 0; i < argc; ++i) {
-                FbleTypeRelease(arena, arg_types[i]);
-              }
               FbleTypeRelease(arena, normal);
               return NULL;
             }
 
             FbleFuncType* func_type = (FbleFuncType*)normal;
-            if (!FbleTypesEqual(arena, func_type->arg, arg_types[i])) {
+            if (!FbleTypesEqual(arena, func_type->arg, args[i]->type)) {
               ReportError(arena_, &misc_apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
-                  func_type->arg, arg_types[i]);
-              for (size_t j = 0; j < argc; ++j) {
-                FbleTypeRelease(arena, arg_types[j]);
-              }
+                  func_type->arg, args[i]->type);
               FbleTypeRelease(arena, normal);
               return NULL;
             }
@@ -961,18 +950,19 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
             apply_instr->loc = misc_apply_expr->misc->loc;
             apply_instr->exit = exit && (i+1 == argc);
+            apply_instr->func = func->index;
+            apply_instr->arg = args[i]->index;
             AppendInstr(arena_, scope, &apply_instr->_base);
+            LocalRelease(arena, scope, func);
+            LocalRelease(arena, scope, args[i]);
+            func = DataToLocal(arena_, scope, FbleTypeRetain(arena, func_type->rtype));
 
-            FbleType* tmp = normal;
-            normal = FbleNormalType(arena, func_type->rtype);
-            FbleTypeRelease(arena, tmp);
+            FbleTypeRelease(arena, normal);
+            normal = FbleNormalType(arena, func->type);
           }
+          FbleTypeRelease(arena, normal);
 
-          for (size_t i = 0; i < argc; ++i) {
-            FbleTypeRelease(arena, arg_types[i]);
-          }
-
-          return DataToLocal(arena_, scope, normal);
+          return func;
         }
 
         case FBLE_TYPE_TYPE: {
@@ -981,14 +971,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           FbleType* vtype = FbleTypeRetain(arena, type_type->type);
           FbleTypeRelease(arena, normal);
 
-          // TODO: This hack for popping a variable off the data stack should
-          // go away once we move the type to locals to begin with.
-          LocalRelease(arena, scope, DataToLocal(arena_, scope, type));
-
-          Local* args[argc];
-          for (size_t i = 0; i < argc; ++i) {
-            args[i] = DataToLocal(arena_, scope, arg_types[i]);
-          }
+          LocalRelease(arena, scope, func);
 
           FbleStructType* struct_type = (FbleStructType*)FbleNormalType(arena, vtype);
           if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
@@ -1046,12 +1029,8 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         default: {
           ReportError(arena_, &expr->loc,
               "expecting a function or struct type, but found something of type %t\n",
-              type);
-          for (size_t i = 0; i < argc; ++i) {
-            FbleTypeRelease(arena, arg_types[i]);
-          }
+              func->type);
           FbleTypeRelease(arena, normal);
-          FbleTypeRelease(arena, type);
           return NULL;
         }
       }

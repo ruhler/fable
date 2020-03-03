@@ -141,7 +141,7 @@ static void CaptureScope(FbleValueArena* arena, Frame* frame, size_t scopec, Fbl
 static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, Thread* thread);
 static void AbortThread(FbleValueArena* arena, Thread* thread);
 static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, Thread* thread);
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, FbleValueV args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleValue** statics, FbleInstrBlock* code, FbleProfile* profile);
 
 static void DumpInstrBlock(FbleInstrBlock* code);
 
@@ -704,13 +704,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)PopTaggedData(arena, FBLE_FUNC_VALUE, &thread->stack->frame);
+        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, &thread->stack->frame, func_apply_instr->func);
         if (func == NULL) {
           FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
           AbortThread(arena, thread);
           return progress;
         };
-        FbleValue* arg = PopData(arena_, &thread->stack->frame);
+        FbleValue* arg = FrameGet(&thread->stack->frame, func_apply_instr->arg);
 
         if (func->argc > 1) {
           FbleThunkFuncValue* value = FbleAlloc(arena_, FbleThunkFuncValue);
@@ -722,7 +722,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           Add(arena, &value->_base._base, &value->func->_base);
           value->arg = arg;
           Add(arena, &value->_base._base, value->arg);
-          FbleValueRelease(arena, value->arg);
 
           if (func_apply_instr->exit) {
             *thread->stack->frame.result = &value->_base._base;
@@ -744,7 +743,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
           FbleVectorAppend(arena_, value->scope, arg);
           Add(arena, &value->_base, arg);
-          FbleValueRelease(arena, arg);
 
           value->code = &g_put_block;
           value->code->refcount++;
@@ -761,11 +759,12 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
           FbleValueV args;
           FbleVectorInit(arena_, args);
+          FbleValueRetain(arena, arg);
           FbleVectorAppend(arena_, args, arg);
           while (f->tag == FBLE_THUNK_FUNC_VALUE) {
             FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
-            arg = FbleValueRetain(arena, thunk->arg);
-            FbleVectorAppend(arena_, args, arg);
+            FbleValueRetain(arena, thunk->arg);
+            FbleVectorAppend(arena_, args, thunk->arg);
             f = thunk->func;
           }
 
@@ -788,7 +787,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           }
           FbleFree(arena_, args.xs);
         }
-        FbleValueRelease(arena, &func->_base);
         break;
       }
 
@@ -1190,8 +1188,8 @@ static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, 
 // Inputs:
 //   arena - the arena to use for allocations.
 //   io - io to use for external ports.
-//   instrs - the instructions to evaluate.
-//   args - an optional initial argument to place on the data stack.
+//   statics - statics to use for evaluation. May be NULL.
+//   code - the instructions to evaluate.
 //   profile - profile to update with execution stats.
 //
 // Results:
@@ -1201,20 +1199,16 @@ static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, 
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
-static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, FbleValueV args, FbleProfile* profile)
+static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleValue** statics, FbleInstrBlock* code, FbleProfile* profile)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   FbleValue* final_result = NULL;
   Thread thread = {
-    .stack = PushFrame(arena_, NULL, NULL, code, &final_result, NULL),
+    .stack = PushFrame(arena_, NULL, statics, code, &final_result, NULL),
     .children = {0, NULL},
     .aborted = false,
     .profile = FbleNewProfileThread(arena_, profile),
   };
-
-  for (size_t i = 0; i < args.size; ++i) {
-    PushData(arena_, FbleValueRetain(arena, args.xs[i]), &thread.stack->frame);
-  }
 
   // Run the main thread repeatedly until it no longer makes any forward
   // progress.
@@ -1343,7 +1337,11 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_FUNC_APPLY_INSTR: {
           FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-          fprintf(stderr, "apply (exit=%s); // %s:%i:%i\n",
+          fprintf(stderr, "$ = %s[%zi](%s[%zi]); // (exit=%s) %s:%i:%i\n",
+              sections[func_apply_instr->func.section],
+              func_apply_instr->func.index,
+              sections[func_apply_instr->arg.section],
+              func_apply_instr->arg.section,
               func_apply_instr->exit ? "true" : "false",
               func_apply_instr->loc.source, func_apply_instr->loc.line,
               func_apply_instr->loc.col);
@@ -1489,43 +1487,40 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
-  FbleInstrBlock* instrs = FbleCompile(arena_, blocks, program);
+  FbleInstrBlock* code = FbleCompile(arena_, blocks, program);
   *profile = FbleNewProfile(arena_, blocks->size);
-  if (instrs == NULL) {
+  if (code == NULL) {
     return NULL;
   }
   if (dump_compiled) {
-    DumpInstrBlock(instrs);
+    DumpInstrBlock(code);
   }
 
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
-  FbleValueV args = { .size = 0, .xs = NULL };
-  FbleValue* result = Eval(arena, &io, instrs, args, *profile);
-  FbleFreeInstrBlock(arena_, instrs);
+  FbleValue* result = Eval(arena, &io, NULL, code, *profile);
+  FbleFreeInstrBlock(arena_, code);
   return result;
 }
 
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, FbleProfile* profile)
 {
-  FbleValueRetain(arena, func);
   assert(func->tag == FBLE_FUNC_VALUE);
 
   FbleFuncApplyInstr apply = {
     ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
     .loc = { .source = "(internal)", .line = 0, .col = 0 },
-    .exit = true
+    .exit = true,
+    .func = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0 },
+    .arg = { .section = FBLE_STATICS_FRAME_SECTION, .index = 1 },
+
   };
   FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
-  FbleInstrBlock code = { .refcount = 2, .statics = 0, .locals = 0, .instrs = { .size = 2, .xs = instrs } };
+  FbleInstrBlock code = { .refcount = 2, .statics = 2, .locals = 0, .instrs = { .size = 2, .xs = instrs } };
   FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
 
-  FbleValue* xs[2];
-  xs[0] = arg;
-  xs[1] = func;
-  FbleValueV eval_args = { .size = 2, .xs = xs };
-  FbleValue* result = Eval(arena, &io, &code, eval_args, profile);
-  FbleValueRelease(arena, func);
+  FbleValue* xs[] = { func, arg };
+  FbleValue* result = Eval(arena, &io, xs, &code, profile);
   return result;
 }
 
@@ -1533,8 +1528,6 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
 FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleProfile* profile)
 {
   assert(proc->tag == FBLE_PROC_VALUE);
-  FbleValue* xs[1] = { proc };
-  FbleValueV args = { .size = 1, .xs = xs };
-  FbleValue* result = Eval(arena, io, &g_proc_block, args, profile);
-  return result;
+  FbleProcValue* p = (FbleProcValue*)proc;
+  return Eval(arena, io, p->scope.xs, p->code, profile);
 }
