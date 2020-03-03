@@ -1254,18 +1254,17 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
-      FbleType* type = CompileExpr_(arena, blocks, false, scope, select_expr->condition);
-      if (type == NULL) {
+      Local* condition = CompileExpr(arena, blocks, false, scope, select_expr->condition);
+      if (condition == NULL) {
         return NULL;
       }
 
-      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(arena, type);
+      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(arena, condition->type);
       if (union_type->_base.tag != FBLE_UNION_TYPE) {
         ReportError(arena_, &select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
-            type);
+            condition->type);
         FbleTypeRelease(arena, &union_type->_base);
-        FbleTypeRelease(arena, type);
         return NULL;
       }
 
@@ -1278,6 +1277,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena_, FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       select_instr->loc = select_expr->condition->loc;
+      select_instr->condition = condition->index;
       AppendInstr(arena_, scope, &select_instr->_base);
 
       FbleType* return_type = NULL;
@@ -1302,7 +1302,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
         if (return_type == NULL) {
           FbleTypeRelease(arena, &union_type->_base);
-          FbleTypeRelease(arena, type);
           return NULL;
         }
 
@@ -1336,7 +1335,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           if (arg_type == NULL) {
             FbleTypeRelease(arena, return_type);
             FbleTypeRelease(arena, &union_type->_base);
-            FbleTypeRelease(arena, type);
             return NULL;
           }
 
@@ -1348,7 +1346,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
                   "expected type %t, but found %t\n",
                   return_type, arg_type);
 
-              FbleTypeRelease(arena, type);
               FbleTypeRelease(arena, &union_type->_base);
               FbleTypeRelease(arena, return_type);
               FbleTypeRelease(arena, arg_type);
@@ -1369,14 +1366,12 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           }
           FbleTypeRelease(arena, &union_type->_base);
           FbleTypeRelease(arena, return_type);
-          FbleTypeRelease(arena, type);
           return NULL;
         } else {
           enter_gotos[i]->pc = default_pc;
         }
       }
       FbleTypeRelease(arena, &union_type->_base);
-      FbleTypeRelease(arena, type);
 
       if (choice < select_expr->choices.size) {
         ReportError(arena_, &select_expr->choices.xs[choice].name.loc,
@@ -1394,6 +1389,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           exit_gotos[i]->pc = scope->code->instrs.size;
         }
       }
+
+      // TODO: We ought to release the condition right after doing goto.
+      // Add a spec test for this and handle it correctly here.
+      LocalRelease(arena, scope, condition);
       return DataToLocal(arena_, scope, return_type);
     }
 

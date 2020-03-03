@@ -134,10 +134,11 @@ typedef struct {
 //   Select the next thing to execute based on the tag of the value on top of
 //   the value stack.
 //
-// pc += obj.tag
+// pc += condition.tag
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
+  FbleFrameIndex condition;
 } FbleUnionSelectInstr;
 
 // FbleGotoInstr -- FBLE_GOTO_INSTR

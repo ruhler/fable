@@ -663,14 +663,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        FbleUnionValue* uv = (FbleUnionValue*)PopTaggedData(arena, FBLE_UNION_VALUE, &thread->stack->frame);
+        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, &thread->stack->frame, select_instr->condition);
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", &select_instr->loc);
           AbortThread(arena, thread);
           return progress;
         }
         thread->stack->frame.pc += uv->tag;
-        FbleValueRelease(arena, &uv->_base);
         break;
       }
 
@@ -1318,7 +1317,9 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-          fprintf(stderr, "pc += ?;         // %s:%i:%i\n",
+          fprintf(stderr, "pc += %s[%zi]?;         // %s:%i:%i\n",
+              sections[select_instr->condition.section],
+              select_instr->condition.index,
               select_instr->loc.source, select_instr->loc.line,
               select_instr->loc.col);
           break;
