@@ -710,6 +710,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           AbortThread(arena, thread);
           return progress;
         };
+        FbleValue* arg = PopData(arena_, &thread->stack->frame);
 
         if (func->argc > 1) {
           FbleThunkFuncValue* value = FbleAlloc(arena_, FbleThunkFuncValue);
@@ -717,12 +718,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           value->_base._base.tag = FBLE_FUNC_VALUE;
           value->_base.tag = FBLE_THUNK_FUNC_VALUE;
           value->_base.argc = func->argc - 1;
-          value->func = NULL;
-          value->arg = NULL;
-
           value->func = func;
           Add(arena, &value->_base._base, &value->func->_base);
-          value->arg = PopData(arena_, &thread->stack->frame);
+          value->arg = arg;
           Add(arena, &value->_base._base, value->arg);
           FbleValueRelease(arena, value->arg);
 
@@ -744,7 +742,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           FbleVectorAppend(arena_, value->scope, f->port);
           Add(arena, &value->_base, f->port);
 
-          FbleValue* arg = PopData(arena_, &thread->stack->frame);
           FbleVectorAppend(arena_, value->scope, arg);
           Add(arena, &value->_base, arg);
           FbleValueRelease(arena, arg);
@@ -764,7 +761,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
           FbleValueV args;
           FbleVectorInit(arena_, args);
-          FbleValue* arg = PopData(arena_, &thread->stack->frame);
           FbleVectorAppend(arena_, args, arg);
           while (f->tag == FBLE_THUNK_FUNC_VALUE) {
             FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
