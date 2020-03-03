@@ -179,13 +179,15 @@ typedef struct {
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
 //   Apply a function to a single argument.
 //
-// $ = func(arg)
+// *dest = func(arg)
 //
-// If exit is true, this is treated as a tail call.
+// If exit is true, this is treated as a tail call. In that case, dest is
+// ignored and the result is returned to the caller.
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
   bool exit;
+  FbleLocalIndex dest;
   FbleFrameIndex func;
   FbleFrameIndex arg;
 } FbleFuncApplyInstr;

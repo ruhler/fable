@@ -728,7 +728,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             thread->stack = PopFrame(arena, thread->stack);
             FbleProfileExitBlock(arena_, thread->profile);
           } else {
-            PushData(arena_, &value->_base._base, &thread->stack->frame);
+            thread->stack->frame.locals[func_apply_instr->dest] = &value->_base._base;
           }
         } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
           FblePutFuncValue* f = (FblePutFuncValue*)func;
@@ -752,7 +752,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             thread->stack = PopFrame(arena, thread->stack);
             FbleProfileExitBlock(arena_, thread->profile);
           } else {
-            PushData(arena_, &value->_base, &thread->stack->frame);
+            thread->stack->frame.locals[func_apply_instr->dest] = &value->_base;
           }
         } else {
           FbleFuncValue* f = func;
@@ -775,9 +775,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             thread->stack = ReplaceFrame(arena, &basic->_base._base, basic->scope.xs, basic->code, thread->stack);
             FbleProfileAutoExitBlock(arena_, thread->profile);
           } else {
-            // Allocate a spot on the data stack for the result of the
-            // function.
-            FbleValue** result = AllocData(arena_, &thread->stack->frame);
+            FbleValue** result = thread->stack->frame.locals + func_apply_instr->dest;
             thread->stack = PushFrame(arena_, &basic->_base._base, basic->scope.xs, basic->code, result, thread->stack);
           }
 
@@ -1337,7 +1335,8 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_FUNC_APPLY_INSTR: {
           FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-          fprintf(stderr, "$ = %s[%zi](%s[%zi]); // (exit=%s) %s:%i:%i\n",
+          fprintf(stderr, "l[%zi] = %s[%zi](%s[%zi]); // (exit=%s) %s:%i:%i\n",
+              func_apply_instr->dest,
               sections[func_apply_instr->func.section],
               func_apply_instr->func.index,
               sections[func_apply_instr->arg.section],
@@ -1511,9 +1510,9 @@ FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, Fbl
     ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
     .loc = { .source = "(internal)", .line = 0, .col = 0 },
     .exit = true,
+    .dest = 0,      // arbitrary, because exit = true.
     .func = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0 },
     .arg = { .section = FBLE_STATICS_FRAME_SECTION, .index = 1 },
-
   };
   FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
   FbleInstrBlock code = { .refcount = 2, .statics = 2, .locals = 0, .instrs = { .size = 2, .xs = instrs } };

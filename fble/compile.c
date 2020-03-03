@@ -946,16 +946,18 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
               return NULL;
             }
 
+            Local* dest = NewLocal(arena_, scope, FbleTypeRetain(arena, func_type->rtype));
             FbleFuncApplyInstr* apply_instr = FbleAlloc(arena_, FbleFuncApplyInstr);
             apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
             apply_instr->loc = misc_apply_expr->misc->loc;
             apply_instr->exit = exit && (i+1 == argc);
             apply_instr->func = func->index;
             apply_instr->arg = args[i]->index;
+            apply_instr->dest = dest->index.index;
             AppendInstr(arena_, scope, &apply_instr->_base);
             LocalRelease(arena, scope, func);
             LocalRelease(arena, scope, args[i]);
-            func = DataToLocal(arena_, scope, FbleTypeRetain(arena, func_type->rtype));
+            func = dest;
 
             FbleTypeRelease(arena, normal);
             normal = FbleNormalType(arena, func->type);
