@@ -100,12 +100,11 @@ typedef struct {
 // FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR
 //   Allocate a union value.
 //
-// data_stack: ..., arg
-//         ==> ...
 // *dest = union(arg)
 typedef struct {
   FbleInstr _base;
   size_t tag;
+  FbleFrameIndex arg;
   FbleLocalIndex dest;
 } FbleUnionValueInstr;
 

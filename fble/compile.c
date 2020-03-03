@@ -1163,31 +1163,31 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         return NULL;
       }
 
-      FbleType* arg_type = CompileExpr_(arena, blocks, false, scope, union_value_expr->arg);
-      if (arg_type == NULL) {
+      Local* arg = CompileExpr(arena, blocks, false, scope, union_value_expr->arg);
+      if (arg == NULL) {
         FbleTypeRelease(arena, &union_type->_base);
         FbleTypeRelease(arena, type);
         return NULL;
       }
 
-      if (!FbleTypesEqual(arena, field_type, arg_type)) {
+      if (!FbleTypesEqual(arena, field_type, arg->type)) {
         ReportError(arena_, &union_value_expr->arg->loc,
             "expected type %t, but found type %t\n",
-            field_type, arg_type);
+            field_type, arg->type);
         FbleTypeRelease(arena, type);
         FbleTypeRelease(arena, &union_type->_base);
-        FbleTypeRelease(arena, arg_type);
         return NULL;
       }
       FbleTypeRelease(arena, &union_type->_base);
-      FbleTypeRelease(arena, arg_type);
 
       Local* result = NewLocal(arena_, scope, type);
       FbleUnionValueInstr* union_instr = FbleAlloc(arena_, FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->tag = tag;
+      union_instr->arg = arg->index;
       union_instr->dest = result->index.index;
       AppendInstr(arena_, scope, &union_instr->_base);
+      LocalRelease(arena, scope, arg);
       CompileExit(arena_, exit, scope, result);
       return result;
     }

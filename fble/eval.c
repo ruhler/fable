@@ -582,8 +582,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-        FbleValue* arg = PopData(arena_, &thread->stack->frame);
-        thread->stack->frame.locals[union_value_instr->dest] = FbleNewUnionValue(arena, union_value_instr->tag, arg);
+        FbleValue* arg = FrameGet(&thread->stack->frame, union_value_instr->arg);
+        thread->stack->frame.locals[union_value_instr->dest] = FbleNewUnionValue(arena, union_value_instr->tag, FbleValueRetain(arena, arg));
         break;
       }
 
@@ -1229,6 +1229,9 @@ static FbleValue* Eval(FbleValueArena* arena, FbleIO* io, FbleInstrBlock* code, 
 //   Prints the code block in human readable format to stderr.
 static void DumpInstrBlock(FbleInstrBlock* code)
 {
+  // Map from FbleFrameSection to short descriptor of the section.
+  static const char* sections[] = {"s", "l"};
+
   FbleArena* arena = FbleNewArena();
   struct { size_t size; FbleInstrBlock** xs; } blocks;
   FbleVectorInit(arena, blocks);
@@ -1251,7 +1254,10 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_UNION_VALUE_INSTR: {
           FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-          fprintf(stderr, "l[%zi] = union();\n", union_value_instr->dest);
+          fprintf(stderr, "l[%zi] = union(%s[%zi]);\n",
+              union_value_instr->dest,
+              sections[union_value_instr->arg.section],
+              union_value_instr->arg.index);
           break;
         }
 
@@ -1317,12 +1323,8 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_VAR_INSTR: {
           FbleVarInstr* var_instr = (FbleVarInstr*)instr;
-          const char* s = "?";
-          switch (var_instr->index.section) {
-            case FBLE_LOCALS_FRAME_SECTION: s = "l"; break;
-            case FBLE_STATICS_FRAME_SECTION: s = "s"; break;
-          }
-          fprintf(stderr, "$ = %s[%zi];\n", s, var_instr->index.index);
+          fprintf(stderr, "$ = %s[%zi];\n",
+              sections[var_instr->index.section], var_instr->index.index);
           break;
         }
 
@@ -1394,12 +1396,9 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_RETURN_INSTR: {
           FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-          const char* s = "?";
-          switch (return_instr->result.section) {
-            case FBLE_LOCALS_FRAME_SECTION: s = "l"; break;
-            case FBLE_STATICS_FRAME_SECTION: s = "s"; break;
-          }
-          fprintf(stderr, "return %s[%zi];\n", s, return_instr->result.index);
+          fprintf(stderr, "return %s[%zi];\n",
+              sections[return_instr->result.section],
+              return_instr->result.index);
           break;
         }
 
