@@ -292,22 +292,17 @@ typedef struct {
 } FbleRefValueInstr;
 
 // FbleRefDefInstr -- FBLE_REF_DEF_INSTR
+//   Set the value of a reference.
 //
-// vstack:     ..., ri, ..., r1, r0
-// data_stack: ..., v
-//         ==>
-// vstack:     ..., ri=v, ..., r1, r0
-// data_stack: ...
+// ref->value = value
 //
-// If recursive is true, then ri is set to point to the computed v.
-// If recursive is false, then it is assumed there are no references remaining
-// to ri, and the assignment is avoided. This is an important performance
-// optimization because the assignment triggers a pathological case in the
-// cyclic reference counting approach we use.
+// Note: it is important performance optimization not to set the value of a
+// reference if the reference is unused, because the assignment triggers a
+// pathological case in the cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex ref;
-  bool recursive;
+  FbleFrameIndex value;
 } FbleRefDefInstr;
 
 // FbleStructImportInstr -- FBLE_STRUCT_IMPORT_INSTR

@@ -1792,30 +1792,31 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       // Compile the values of the variables.
       FbleType* var_type_values[let_expr->bindings.size];
+      Local* defs[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         var_type_values[i] = NULL;
         FbleBinding* binding = let_expr->bindings.xs + i;
 
-        FbleType* type = NULL;
+        defs[i] = NULL;
         if (!error) {
           EnterBlock(arena_, blocks, binding->name, binding->expr->loc, scope);
-          type = CompileExpr_(arena, blocks, false, scope, binding->expr);
+          defs[i] = CompileExpr(arena, blocks, false, scope, binding->expr);
           ExitBlock(arena_, blocks, scope);
         }
-        error = error || (type == NULL);
+        error = error || (defs[i] == NULL);
 
-        if (!error && binding->type != NULL && !FbleTypesEqual(arena, types[i], type)) {
+        if (!error && binding->type != NULL && !FbleTypesEqual(arena, types[i], defs[i]->type)) {
           error = true;
           ReportError(arena_, &binding->expr->loc,
               "expected type %t, but found %t\n",
-              types[i], type);
+              types[i], defs[i]->type);
         } else if (!error && binding->type == NULL) {
           FbleVarType* var = var_types[i];
-          var_type_values[i] = ValueOfType(arena, type);
+          var_type_values[i] = ValueOfType(arena, defs[i]->type);
           if (var_type_values[i] == NULL) {
             ReportError(arena_, &binding->expr->loc,
                 "expected type, but found something of type %t\n",
-                type);
+                defs[i]->type);
             error = true;
           } else {
             FbleKind* expected_kind = var->kind;
@@ -1829,8 +1830,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             FbleKindRelease(arena_, actual_kind);
           }
         }
-
-        FbleTypeRelease(arena, type);
       }
 
       // Check to see if this is a recursive let block.
@@ -1852,19 +1851,30 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (var_type_values[i] != NULL && FbleTypeIsVacuous(arena, &var_types[i]->_base)) {
-          ReportError(arena_, &let_expr->bindings.xs[i].name.loc,
-              "%n is vacuous\n", &let_expr->bindings.xs[i].name);
-          error = true;
+        if (defs[i] != NULL) {
+          if (var_type_values[i] != NULL && FbleTypeIsVacuous(arena, &var_types[i]->_base)) {
+            ReportError(arena_, &let_expr->bindings.xs[i].name.loc,
+                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
+            error = true;
+          }
+
+          if (vars[i]->local == defs[i]) {
+            ReportError(arena_, &let_expr->bindings.xs[i].name.loc,
+                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
+            error = true;
+          }
+
+          if (recursive) {
+            FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
+            ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
+            ref_def_instr->ref = vars[i]->local->index.index;
+            ref_def_instr->value = defs[i]->index;
+            AppendInstr(arena_, scope, &ref_def_instr->_base);
+          }
+          LocalRelease(arena, scope, vars[i]->local);
+          vars[i]->local = defs[i];
         }
-
-        FbleRefDefInstr* ref_def_instr = FbleAlloc(arena_, FbleRefDefInstr);
-        ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-        ref_def_instr->ref = vars[let_expr->bindings.size - i - 1]->local->index.index;
-        ref_def_instr->recursive = recursive;
-        AppendInstr(arena_, scope, &ref_def_instr->_base);
       }
-
 
       Local* body = NULL;
       if (!error) {

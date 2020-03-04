@@ -1023,15 +1023,10 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         FbleRefValue* rv = (FbleRefValue*)thread->stack->frame.locals[ref_def_instr->ref];
         assert(rv->_base.tag == FBLE_REF_VALUE);
 
-        FbleValue* value = PopData(arena_, &thread->stack->frame);
+        FbleValue* value = FrameGet(&thread->stack->frame, ref_def_instr->value);
         assert(value != NULL);
-        thread->stack->frame.locals[ref_def_instr->ref] = value;
-
-        if (ref_def_instr->recursive) {
-          rv->value = value;
-          Add(arena, &rv->_base, rv->value);
-        }
-        FbleValueRelease(arena, &rv->_base);
+        rv->value = value;
+        Add(arena, &rv->_base, rv->value);
         break;
       }
 
@@ -1408,8 +1403,10 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_REF_DEF_INSTR: {
           FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-          fprintf(stderr, "l[%zi] ~= $;   // (recursive = %s)\n",
-              ref_def_instr->ref, ref_def_instr->recursive ? "true" : "false");
+          fprintf(stderr, "l[%zi] ~= %s[%zi];\n",
+              ref_def_instr->ref,
+              sections[ref_def_instr->value.section],
+              ref_def_instr->value.index);
           break;
         }
 
