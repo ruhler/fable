@@ -9,7 +9,6 @@ Eval2:
  - Remove DataToLocal(LocalToData) from union select expression.
  - Remove DataToLocal(LocalToData) from poly expression.
  - Remove DataToLocal(LocalToData) from poly apply expression.
- - Use CompileExpr instead of CompileExpr_ for FUNC_VALUE_EXPR
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?

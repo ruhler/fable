@@ -1418,13 +1418,15 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         PushVar(arena_, &func_scope, func_value_expr->args.xs[i].name, local);
       }
 
-      FbleType* type = CompileExpr_(arena, blocks, true, &func_scope, func_value_expr->body);
+      Local* func_result = CompileExpr(arena, blocks, true, &func_scope, func_value_expr->body);
       ExitBlock(arena_, blocks, NULL);
-      if (type == NULL) {
+      if (func_result == NULL) {
         FinishScope(arena, &func_scope);
         FreeInstr(arena_, &instr->_base);
         return NULL;
       }
+      FbleType* type = FbleTypeRetain(arena, func_result->type);
+      LocalRelease(arena, &func_scope, func_result);
 
       for (size_t i = 0; i < argc; ++i) {
         FbleType* arg_type = arg_types[argc - 1 - i];
