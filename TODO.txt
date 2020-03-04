@@ -1,5 +1,15 @@
 Eval2:
 * Replace DataToLocal calls with instructions that output directly to locals.
+ - Capture scope from locals instead of data.
+ - FORK from locals instead of data.
+ - PROC_INSTR should have a proc field instead of using the data stack.
+ - STRUCT_IMPORT should come from locals instead of data stack.
+ - PROC_VALUE_INSTR should return result to explicit location.
+ - FORK should pass child args using statics instead of data stack.
+ - Remove DataToLocal(LocalToData) from union select expression.
+ - Remove DataToLocal(LocalToData) from poly expression.
+ - Remove DataToLocal(LocalToData) from poly apply expression.
+ - Use CompileExpr instead of CompileExpr_ for FUNC_VALUE_EXPR
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?

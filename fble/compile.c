@@ -2301,13 +2301,13 @@ static Local* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
   FbleExpr* expr = &apply_elems._base;
 
-  FbleType* result = CompileExpr_(arena, blocks, exit, scope, expr);
+  Local* result = CompileExpr(arena, blocks, exit, scope, expr);
 
   FbleKindRelease(arena_, &basic_kind->_base);
   for (size_t i = 0; i < args.size; i++) {
     FbleFree(arena_, (void*)arg_names[i].name);
   }
-  return DataToLocal(arena_, scope, result);
+  return result;
 }
 
 // CompileExprNoInstrs --
