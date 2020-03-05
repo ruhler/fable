@@ -151,10 +151,10 @@ typedef struct {
 } FbleGotoInstr;
 
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
-//   Allocate a function, capturing the values from the data stack to use for
-//   as variable values when the function is executed.
+//   Allocate a function, capturing the values to use for as variable values
+//   when the function is executed.
 //
-// *dest = func(argc, code)
+// *dest = code[v1, v2, ...](argc)
 //
 // Fields:
 //   argc - The number of arguments to the function.
@@ -162,11 +162,13 @@ typedef struct {
 //   code - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should
 //          remove the context of its scope and arguments.
+//   scope - Variables from the scope to capture for the function.
 typedef struct {
   FbleInstr _base;
   size_t argc;
   FbleLocalIndex dest;
   FbleInstrBlock* code;
+  FbleFrameIndexV scope;
 } FbleFuncValueInstr;
 
 // FbleReleaseInstr -- FBLE_RELEASE_INSTR
@@ -199,12 +201,13 @@ typedef struct {
 //   code - A block of instructions that will execute in the context of the
 //          captured scope. The instruction should remove the context of its
 //          scope.
+//   scope - Variables from the scope to capture for the function.
 //
-// data_stack: ..., vN, , ..., v2, v1
-//         ==> ..., proc(v1, v2, ..., vN, code)
+// $ = proc code [v1, v2, ...]
 typedef struct {
   FbleInstr _base;
   FbleInstrBlock* code;
+  FbleFrameIndexV scope;
 } FbleProcValueInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR

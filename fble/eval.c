@@ -122,8 +122,6 @@ static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics,
 static Stack* PopFrame(FbleValueArena* arena, Stack* stack);
 static Stack* ReplaceFrame(FbleValueArena* arena, FbleValue* scope, FbleValue** statics, FbleInstrBlock* code, Stack* stack);
 
-static void CaptureScope(FbleValueArena* arena, Frame* frame, size_t scopec, FbleValue* value, FbleValueV* dst);
-
 static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, Thread* thread);
 static void AbortThread(FbleValueArena* arena, Thread* thread);
 static bool RunThreads(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, Thread* thread);
@@ -527,48 +525,6 @@ static Stack* ReplaceFrame(FbleValueArena* arena, FbleValue* scope, FbleValue** 
   return stack;
 }
 
-// CaptureScope --
-//   Capture the variables from the top of the thread's data stack and save it
-//   in a value.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   frame - the stack to capture the scope for.
-//   scopec - the number of variables to save.
-//   value - the value to save the scope to.
-//   dst - a pointer to where the scope should be saved to. This is assumed to
-//         be a field of the value.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Pops scopec values from the scope's data stack.
-//   Stores a copy of the variables from the data stack in dst, and adds
-//   references from the value to everything on the scope.
-//
-// Notes:
-//   The scope is expected to be on stack in normal order:
-//   stack: ..., v0, v1, v2, ..., vN
-//   The scope is saved in normal order:
-//      v0, v1, v2, ..., vN
-static void CaptureScope(FbleValueArena* arena, Frame* frame, size_t scopec, FbleValue* value, FbleValueV* dst)
-{
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleValue* locals[scopec];
-  for (size_t i = 0; i < scopec; ++i) {
-    size_t j = scopec - i - 1;
-    locals[j] = PopData(arena_, frame);
-  }
-
-  for (size_t i = 0; i < scopec; ++i) {
-    FbleValue* var = locals[i];
-    FbleVectorAppend(arena_, *dst, var);
-    Add(arena, value, var);
-    FbleValueRelease(arena, var);
-  }
-}
-
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -672,10 +628,14 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         value->_base._base.tag = FBLE_FUNC_VALUE;
         value->_base.tag = FBLE_BASIC_FUNC_VALUE;
         value->_base.argc = func_value_instr->argc;
-        FbleVectorInit(arena_, value->scope);
         value->code = func_value_instr->code;
         value->code->refcount++;
-        CaptureScope(arena, &thread->stack->frame, func_value_instr->code->statics, &value->_base._base, &value->scope);
+        FbleVectorInit(arena_, value->scope);
+        for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
+          FbleValue* arg = FrameGet(&thread->stack->frame, func_value_instr->scope.xs[i]);
+          FbleValueRetain(arena, arg);
+          FbleVectorAppend(arena_, value->scope, arg);
+        }
         thread->stack->frame.locals[func_value_instr->dest] = &value->_base._base;
         break;
       }
@@ -779,10 +739,14 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         FbleProcValue* value = FbleAlloc(arena_, FbleProcValue);
         FbleRefInit(arena, &value->_base.ref);
         value->_base.tag = FBLE_PROC_VALUE;
-        FbleVectorInit(arena_, value->scope);
         value->code = proc_value_instr->code;
         value->code->refcount++;
-        CaptureScope(arena, &thread->stack->frame, proc_value_instr->code->statics, &value->_base, &value->scope);
+        FbleVectorInit(arena_, value->scope);
+        for (size_t i = 0; i < proc_value_instr->scope.size; ++i) {
+          FbleValue* arg = FrameGet(&thread->stack->frame, proc_value_instr->scope.xs[i]);
+          FbleValueRetain(arena, arg);
+          FbleVectorAppend(arena_, value->scope, arg);
+        }
         PushData(arena_, &value->_base, &thread->stack->frame);
         break;
       }
@@ -1304,8 +1268,17 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_FUNC_VALUE_INSTR: {
           FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-          fprintf(stderr, "l[%zi] = func(%p, %zi);\n", func_value_instr->dest,
-              (void*)func_value_instr->code, func_value_instr->argc);
+          fprintf(stderr, "l[%zi] = func %p [",
+              func_value_instr->dest,
+              (void*)func_value_instr->code);
+          const char* comma = "";
+          for (size_t j = 0; j < func_value_instr->scope.size; ++j) {
+            fprintf(stderr, "%s%s[%zi]",
+                comma, sections[func_value_instr->scope.xs[j].section],
+                func_value_instr->scope.xs[j].index);
+            comma = ", ";
+          }
+          fprintf(stderr, "] %zi;\n", func_value_instr->argc);
           FbleVectorAppend(arena, blocks, func_value_instr->code);
           break;
         }
@@ -1332,7 +1305,15 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_PROC_VALUE_INSTR: {
           FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-          fprintf(stderr, "$ = proc(%p);\n", (void*)proc_value_instr->code);
+          fprintf(stderr, "$ = proc %p [;", (void*)proc_value_instr->code);
+          const char* comma = "";
+          for (size_t j = 0; j < proc_value_instr->scope.size; ++j) {
+            fprintf(stderr, "%s%s[%zi]",
+                comma, sections[proc_value_instr->scope.xs[j].section],
+                proc_value_instr->scope.xs[j].index);
+            comma = ", ";
+          }
+          fprintf(stderr, "];\n");
           FbleVectorAppend(arena, blocks, proc_value_instr->code);
           break;
         }

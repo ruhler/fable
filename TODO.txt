@@ -1,7 +1,6 @@
 Eval2:
+* Understand and fix vacuous type error.
 * Replace DataToLocal calls with instructions that output directly to locals.
- - Capture scope from locals instead of data.
-   Hard because it requires a change to FinishScope.
  - PROC_INSTR should have a proc field instead of using the data stack.
  - PROC_VALUE_INSTR should return result to explicit location.
  - FORK should pass child args using statics instead of data stack.
