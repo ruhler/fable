@@ -1032,7 +1032,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_STRUCT_IMPORT_INSTR: {
         FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
-        FbleStructValue* sv = (FbleStructValue*)PopTaggedData(arena, FBLE_STRUCT_VALUE, &thread->stack->frame);
+        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, &thread->stack->frame, import_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value import\n", &import_instr->loc);
           AbortThread(arena, thread);
@@ -1041,7 +1041,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         for (size_t i = 0; i < sv->fields.size; ++i) {
           thread->stack->frame.locals[import_instr->fields.xs[i]] = FbleValueRetain(arena, sv->fields.xs[i]);
         }
-        FbleValueRelease(arena, &sv->_base);
         break;
       }
 
@@ -1412,10 +1411,12 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_STRUCT_IMPORT_INSTR: {
           FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
-          fprintf(stderr, "import(");
+          fprintf(stderr, "%s[%zi].import(",
+              sections[import_instr->obj.section],
+              import_instr->obj.index);
           const char* comma = "";
           for (size_t j = 0; j < import_instr->fields.size; ++j) {
-            fprintf(stderr, "%sl[%zi]", comma, import_instr->fields.xs[j]);
+            fprintf(stderr, "%s[%zi]", comma, import_instr->fields.xs[j]);
             comma = ", ";
           }
           fprintf(stderr, ");    // %s:%i:%i\n",

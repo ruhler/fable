@@ -2056,19 +2056,18 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       AddBlockTime(blocks, 1);
       FbleStructImportExpr* struct_import_expr = (FbleStructImportExpr*)expr;
 
-      FbleType* type = CompileExpr_(arena, blocks, false, scope, struct_import_expr->nspace);
-      if (type == NULL) {
+      Local* obj = CompileExpr(arena, blocks, false, scope, struct_import_expr->nspace);
+      if (obj == NULL) {
         return NULL;
       }
 
-      FbleStructType* struct_type = (FbleStructType*)FbleNormalType(arena, type);
+      FbleStructType* struct_type = (FbleStructType*)FbleNormalType(arena, obj->type);
       if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
         ReportError(arena_, &struct_import_expr->nspace->loc,
             "expected value of type struct, but found value of type %t\n",
-            type);
+            obj->type);
 
         FbleTypeRelease(arena, &struct_type->_base);
-        FbleTypeRelease(arena, type);
         return NULL;
       }
 
@@ -2077,6 +2076,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
       struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
       struct_import->loc = struct_import_expr->nspace->loc;
+      struct_import->obj = obj->index;
       struct_import->fields.xs = FbleArrayAlloc(arena_, FbleLocalIndex, struct_type->fields.size);
       struct_import->fields.size = struct_type->fields.size;
 
@@ -2088,6 +2088,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       }
 
       AppendInstr(arena_, scope, &struct_import->_base);
+      LocalRelease(arena, scope, obj);
 
       Local* body = CompileExpr(arena, blocks, exit, scope, struct_import_expr->body);
 
@@ -2096,7 +2097,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       }
 
       FbleTypeRelease(arena, &struct_type->_base);
-      FbleTypeRelease(arena, type);
       return body;
     }
   }

@@ -306,17 +306,13 @@ typedef struct {
 } FbleRefDefInstr;
 
 // FbleStructImportInstr -- FBLE_STRUCT_IMPORT_INSTR
+//   Import fields of a struct into the local scope.
 //
-// vstack: ...
-// data_stack: ..., v
-//   ==>
-// vstack: ..., v[1], v[2], ..., v[n]
-// data_stack: ...
-//
-// Where 'v' is a struct value and v[i] is the ith field of the struct value.
+// v[0], v[1], ... = obj;
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
+  FbleFrameIndex obj;
   FbleLocalIndexV fields;
 } FbleStructImportInstr;
 
