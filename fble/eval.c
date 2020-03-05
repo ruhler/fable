@@ -90,24 +90,10 @@ struct Thread {
   FbleProfileThread* profile;
 };
 
-static FbleProcInstr g_proc_instr = {
-  ._base = { .tag = FBLE_PROC_INSTR },
-  .exit = true
-};
 static FbleProfileEnterBlockInstr g_enter_instr = {
   ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
   .block = 0,
   .time = 1,
-};
-static FbleInstr* g_proc_block_instrs[] = {
-  &g_enter_instr._base,
-  &g_proc_instr._base,
-};
-static FbleInstrBlock g_proc_block = {
-  .refcount = 1,
-  .statics = 0,
-  .locals = 0,
-  .instrs = { .size = 2, .xs = g_proc_block_instrs }
 };
 
 static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
@@ -936,19 +922,22 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         assert(thread->children.xs == NULL);
         FbleVectorInit(arena_, thread->children);
 
-        FbleValue* args[fork_instr->args.size];
+        FbleProcValue* args[fork_instr->args.size];
         for (size_t i = 0; i < fork_instr->args.size; ++i) {
           size_t j = fork_instr->args.size - i - 1;
-          args[j] = PopData(arena_, &thread->stack->frame);
+          args[j] = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, &thread->stack->frame);
+
+          // You cannot execute a proc in a let binding, so it should be
+          // impossible to ever have an undefined proc value.
+          assert(args[j] != NULL && "undefined proc value");
         }
 
         for (size_t i = 0; i < fork_instr->args.size; ++i) {
-          FbleValue* arg = args[i];
+          FbleProcValue* arg = args[i];
           FbleValue** result = thread->stack->frame.locals + fork_instr->args.xs[i];
 
           Thread* child = FbleAlloc(arena_, Thread);
-          child->stack = PushFrame(arena_, NULL, NULL, &g_proc_block, result, NULL);
-          PushData(arena_, arg, &child->stack->frame); // Takes ownership of arg
+          child->stack = PushFrame(arena_, &arg->_base, arg->scope.xs, arg->code, result, NULL);
           child->aborted = false;
           child->children.size = 0;
           child->children.xs = NULL;
