@@ -438,9 +438,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
     case FBLE_STRUCT_TYPE: {
       FbleStructType* st = (FbleStructType*)type;
       FbleStructType* sst = FbleAlloc(arena_, FbleStructType);
-      FbleRefInit(arena, &sst->_base.ref);
-      sst->_base.tag = FBLE_STRUCT_TYPE;
-      sst->_base.loc = st->_base.loc;
+      FbleTypeInit(arena, &sst->_base, FBLE_STRUCT_TYPE, st->_base.loc);
       sst->_base.id = st->_base.id;
 
       FbleVectorInit(arena_, sst->fields);
@@ -457,9 +455,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
     case FBLE_UNION_TYPE: {
       FbleUnionType* ut = (FbleUnionType*)type;
       FbleUnionType* sut = FbleAlloc(arena_, FbleUnionType);
-      FbleRefInit(arena, &sut->_base.ref);
-      sut->_base.tag = FBLE_UNION_TYPE;
-      sut->_base.loc = ut->_base.loc;
+      FbleTypeInit(arena, &sut->_base, FBLE_UNION_TYPE, ut->_base.loc);
       sut->_base.id = ut->_base.id;
       FbleVectorInit(arena_, sut->fields);
       for (size_t i = 0; i < ut->fields.size; ++i) {
@@ -475,9 +471,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
       FbleFuncType* sft = FbleAlloc(arena_, FbleFuncType);
-      FbleRefInit(arena, &sft->_base.ref);
-      sft->_base.tag = FBLE_FUNC_TYPE;
-      sft->_base.loc = ft->_base.loc;
+      FbleTypeInit(arena, &sft->_base, FBLE_FUNC_TYPE, ft->_base.loc);
       sft->_base.id = ft->_base.id;
 
       sft->arg = Subst(arena, ft->arg, param, arg, tps);
@@ -493,9 +487,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
     case FBLE_PROC_TYPE: {
       FbleProcType* ut = (FbleProcType*)type;
       FbleProcType* sut = FbleAlloc(arena_, FbleProcType);
-      FbleRefInit(arena, &sut->_base.ref);
-      sut->_base.tag = ut->_base.tag;
-      sut->_base.loc = ut->_base.loc;
+      FbleTypeInit(arena, &sut->_base, FBLE_PROC_TYPE, ut->_base.loc);
       sut->_base.id = ut->_base.id;
       sut->type = Subst(arena, ut->type, param, arg, tps);
       FbleRefAdd(arena, &sut->_base.ref, &sut->type->ref);
@@ -508,10 +500,8 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleType* body = Subst(arena, pt->body, param, arg, tps); 
 
       FblePolyType* spt = FbleAlloc(arena_, FblePolyType);
-      spt->_base.tag = FBLE_POLY_TYPE;
-      spt->_base.loc = pt->_base.loc;
+      FbleTypeInit(arena, &spt->_base, FBLE_POLY_TYPE, pt->_base.loc);
       spt->_base.id = pt->_base.id;
-      FbleRefInit(arena, &spt->_base.ref);
       spt->arg = pt->arg;
       FbleRefAdd(arena, &spt->_base.ref, &spt->arg->ref);
       spt->body = body;
@@ -528,9 +518,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleType* sarg = Subst(arena, pat->arg, param, arg, tps);
 
       FblePolyApplyType* spat = FbleAlloc(arena_, FblePolyApplyType);
-      FbleRefInit(arena, &spat->_base.ref);
-      spat->_base.tag = FBLE_POLY_APPLY_TYPE;
-      spat->_base.loc = pat->_base.loc;
+      FbleTypeInit(arena, &spat->_base, FBLE_POLY_APPLY_TYPE, pat->_base.loc);
       spat->_base.id = pat->_base.id;
       spat->poly = poly;
       FbleRefAdd(arena, &spat->_base.ref, &spat->poly->ref);
@@ -558,9 +546,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       }
 
       FbleVarType* svar = FbleAlloc(arena_, FbleVarType);
-      FbleRefInit(arena, &svar->_base.ref);
-      svar->_base.tag = FBLE_VAR_TYPE;
-      svar->_base.loc = type->loc;
+      FbleTypeInit(arena, &svar->_base, FBLE_VAR_TYPE, type->loc);
       svar->_base.id = type->id;
       svar->name = var->name;
       svar->kind = FbleKindRetain(arena_, var->kind);
@@ -582,9 +568,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tt = (FbleTypeType*)type;
       FbleTypeType* stt = FbleAlloc(arena_, FbleTypeType);
-      FbleRefInit(arena, &stt->_base.ref);
-      stt->_base.tag = FBLE_TYPE_TYPE;
-      stt->_base.loc = tt->_base.loc;
+      FbleTypeInit(arena, &stt->_base, FBLE_TYPE_TYPE, tt->_base.loc);
       stt->_base.id = tt->_base.id;
       stt->type = Subst(arena, tt->type, param, arg, tps);
       FbleRefAdd(arena, &stt->_base.ref, &stt->type->ref);
@@ -906,6 +890,19 @@ void FbleFreeTypeArena(FbleTypeArena* arena)
   FbleDeleteRefArena(arena);
 }
 
+// FbleTypeInit -- see documentation in fble-type.h
+void FbleTypeInit(FbleTypeArena* arena, FbleType* type, FbleTypeTag tag, FbleLoc loc)
+{
+  FbleRefInit(arena, &type->ref);
+  type->tag = tag;
+  type->loc = loc;
+
+  // TODO: the address of the pointer is not unique id, because the newly
+  // allocated type may have the same pointer as a recently freed (but
+  // subsequently subst-copied) type.
+  type->id = (uintptr_t)type;
+}
+
 // FbleTypeRetain -- see documentation in fble-type.h
 FbleType* FbleTypeRetain(FbleTypeArena* arena, FbleType* type)
 {
@@ -932,10 +929,7 @@ FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, Fble
     // \arg -> typeof(body) = typeof(\arg -> body)
     FbleTypeType* ttbody = (FbleTypeType*)body;
     FbleTypeType* tt = FbleAlloc(arena_, FbleTypeType);
-    FbleRefInit(arena, &tt->_base.ref);
-    tt->_base.tag = FBLE_TYPE_TYPE;
-    tt->_base.loc = loc;
-    tt->_base.id = (uintptr_t)tt;
+    FbleTypeInit(arena, &tt->_base, FBLE_TYPE_TYPE, loc);
     tt->type = FbleNewPolyType(arena, loc, arg, ttbody->type);
     FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
     FbleTypeRelease(arena, tt->type);
@@ -943,10 +937,7 @@ FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, Fble
   }
 
   FblePolyType* pt = FbleAlloc(arena_, FblePolyType);
-  pt->_base.tag = FBLE_POLY_TYPE;
-  pt->_base.loc = loc;
-  pt->_base.id = (uintptr_t)pt;
-  FbleRefInit(arena, &pt->_base.ref);
+  FbleTypeInit(arena, &pt->_base, FBLE_POLY_TYPE, loc);
   pt->arg = arg;
   FbleRefAdd(arena, &pt->_base.ref, &pt->arg->ref);
   pt->body = body;
@@ -965,10 +956,7 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
     // typeof(poly)<arg> == typeof(poly<arg>)
     FbleTypeType* ttpoly = (FbleTypeType*)poly;
     FbleTypeType* tt = FbleAlloc(arena_, FbleTypeType);
-    FbleRefInit(arena, &tt->_base.ref);
-    tt->_base.tag = FBLE_TYPE_TYPE;
-    tt->_base.loc = loc;
-    tt->_base.id = (uintptr_t)tt;
+    FbleTypeInit(arena, &tt->_base, FBLE_TYPE_TYPE, loc);
     tt->type = FbleNewPolyApplyType(arena, loc, ttpoly->type, arg);
     FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
     FbleTypeRelease(arena, tt->type);
@@ -976,10 +964,7 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
   }
 
   FblePolyApplyType* pat = FbleAlloc(arena_, FblePolyApplyType);
-  FbleRefInit(arena, &pat->_base.ref);
-  pat->_base.tag = FBLE_POLY_APPLY_TYPE;
-  pat->_base.loc = loc;
-  pat->_base.id = (uintptr_t)pat;
+  FbleTypeInit(arena, &pat->_base, FBLE_POLY_APPLY_TYPE, loc);
   pat->poly = poly;
   FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
   pat->arg = arg;

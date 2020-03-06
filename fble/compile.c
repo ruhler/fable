@@ -889,10 +889,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       }
 
       FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
-      FbleRefInit(arena, &type_type->_base.ref);
-      type_type->_base.tag = FBLE_TYPE_TYPE;
-      type_type->_base.loc = expr->loc;
-      type_type->_base.id = (uintptr_t)type_type;
+      FbleTypeInit(arena, &type_type->_base, FBLE_TYPE_TYPE, expr->loc);
       type_type->type = type;
       FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
       FbleTypeRelease(arena, type);
@@ -1045,10 +1042,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
       FbleStructType* struct_type = FbleAlloc(arena_, FbleStructType);
-      FbleRefInit(arena, &struct_type->_base.ref);
-      struct_type->_base.tag = FBLE_STRUCT_TYPE;
-      struct_type->_base.loc = expr->loc;
-      struct_type->_base.id = (uintptr_t)struct_type;
+      FbleTypeInit(arena, &struct_type->_base, FBLE_STRUCT_TYPE, expr->loc);
       FbleVectorInit(arena_, struct_type->fields);
 
       size_t argc = struct_expr->args.size;
@@ -1431,10 +1425,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       for (size_t i = 0; i < argc; ++i) {
         FbleType* arg_type = arg_types[argc - 1 - i];
         FbleFuncType* ft = FbleAlloc(arena_, FbleFuncType);
-        FbleRefInit(arena, &ft->_base.ref);
-        ft->_base.tag = FBLE_FUNC_TYPE;
-        ft->_base.loc = expr->loc;
-        ft->_base.id = (uintptr_t)ft;
+        FbleTypeInit(arena, &ft->_base, FBLE_FUNC_TYPE, expr->loc);
         ft->arg = arg_type;
         ft->rtype = type;
 
@@ -1484,10 +1475,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       AppendInstr(arena_, scope, &instr->_base);
 
       FbleProcType* proc_type = FbleAlloc(arena_, FbleProcType);
-      FbleRefInit(arena, &proc_type->_base.ref);
-      proc_type->_base.tag = FBLE_PROC_TYPE;
-      proc_type->_base.loc = expr->loc;
-      proc_type->_base.id = (uintptr_t)proc_type;
+      FbleTypeInit(arena, &proc_type->_base, FBLE_PROC_TYPE, expr->loc);
       proc_type->type = type;
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
       FbleTypeRelease(arena, proc_type->type);
@@ -1512,34 +1500,22 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       }
 
       FbleProcType* get_type = FbleAlloc(arena_, FbleProcType);
-      FbleRefInit(arena, &get_type->_base.ref);
-      get_type->_base.tag = FBLE_PROC_TYPE;
-      get_type->_base.loc = port_type->loc;
-      get_type->_base.id = (uintptr_t)get_type;
+      FbleTypeInit(arena, &get_type->_base, FBLE_PROC_TYPE, port_type->loc);
       get_type->type = port_type;
       FbleRefAdd(arena, &get_type->_base.ref, &get_type->type->ref);
 
       FbleStructType* unit_type = FbleAlloc(arena_, FbleStructType);
-      FbleRefInit(arena, &unit_type->_base.ref);
-      unit_type->_base.tag = FBLE_STRUCT_TYPE;
-      unit_type->_base.loc = expr->loc;
-      unit_type->_base.id = (uintptr_t)unit_type;
+      FbleTypeInit(arena, &unit_type->_base, FBLE_STRUCT_TYPE, expr->loc);
       FbleVectorInit(arena_, unit_type->fields);
 
       FbleProcType* unit_proc_type = FbleAlloc(arena_, FbleProcType);
-      FbleRefInit(arena, &unit_proc_type->_base.ref);
-      unit_proc_type->_base.tag = FBLE_PROC_TYPE;
-      unit_proc_type->_base.loc = expr->loc;
-      unit_proc_type->_base.id = (uintptr_t)unit_proc_type;
+      FbleTypeInit(arena, &unit_proc_type->_base, FBLE_PROC_TYPE, expr->loc);
       unit_proc_type->type = &unit_type->_base;
       FbleRefAdd(arena, &unit_proc_type->_base.ref, &unit_proc_type->type->ref);
       FbleTypeRelease(arena, &unit_type->_base);
 
       FbleFuncType* put_type = FbleAlloc(arena_, FbleFuncType);
-      FbleRefInit(arena, &put_type->_base.ref);
-      put_type->_base.tag = FBLE_FUNC_TYPE;
-      put_type->_base.loc = expr->loc;
-      put_type->_base.id = (uintptr_t)put_type;
+      FbleTypeInit(arena, &put_type->_base, FBLE_FUNC_TYPE, expr->loc);
       put_type->arg = port_type;
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->arg->ref);
       put_type->rtype = &unit_proc_type->_base;
@@ -1747,19 +1723,13 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         if (binding->type == NULL) {
           assert(binding->kind != NULL);
           FbleVarType* var = FbleAlloc(arena_, FbleVarType);
-          FbleRefInit(arena, &var->_base.ref);
-          var->_base.tag = FBLE_VAR_TYPE;
-          var->_base.loc = binding->name.loc;
-          var->_base.id = (uintptr_t)var;
+          FbleTypeInit(arena, &var->_base, FBLE_VAR_TYPE, binding->name.loc);
           var->name = let_expr->bindings.xs[i].name;
           var->kind = FbleKindRetain(arena_, binding->kind);
           var->value = NULL;
 
           FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
-          FbleRefInit(arena, &type_type->_base.ref);
-          type_type->_base.tag = FBLE_TYPE_TYPE;
-          type_type->_base.loc = binding->name.loc;
-          type_type->_base.id = (uintptr_t)type_type;
+          FbleTypeInit(arena, &type_type->_base, FBLE_TYPE_TYPE, binding->name.loc);
           type_type->type = &var->_base;
           FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
           FbleTypeRelease(arena, &var->_base);
@@ -1911,19 +1881,13 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FblePolyExpr* poly = (FblePolyExpr*)expr;
 
       FbleVarType* arg = FbleAlloc(arena_, FbleVarType);
-      FbleRefInit(arena, &arg->_base.ref);
-      arg->_base.tag = FBLE_VAR_TYPE;
-      arg->_base.loc = poly->arg.name.loc;
-      arg->_base.id = (uintptr_t)arg;
+      FbleTypeInit(arena, &arg->_base, FBLE_VAR_TYPE, poly->arg.name.loc);
       arg->name = poly->arg.name;
       arg->kind = FbleKindRetain(arena_, poly->arg.kind);
       arg->value = NULL;
 
       FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
-      FbleRefInit(arena, &type_type->_base.ref);
-      type_type->_base.tag = FBLE_TYPE_TYPE;
-      type_type->_base.loc = poly->arg.name.loc;
-      type_type->_base.id = (uintptr_t)type_type;
+      FbleTypeInit(arena, &type_type->_base, FBLE_TYPE_TYPE, poly->arg.name.loc);
       type_type->type = &arg->_base;
       FbleRefAdd(arena, &type_type->_base.ref, &arg->_base.ref);
 
@@ -2369,10 +2333,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
     case FBLE_STRUCT_TYPE_EXPR: {
       FbleStructTypeExpr* struct_type = (FbleStructTypeExpr*)type;
       FbleStructType* st = FbleAlloc(arena_, FbleStructType);
-      FbleRefInit(arena, &st->_base.ref);
-      st->_base.tag = FBLE_STRUCT_TYPE;
-      st->_base.loc = type->loc;
-      st->_base.id = (uintptr_t)st;
+      FbleTypeInit(arena, &st->_base, FBLE_STRUCT_TYPE, type->loc);
       FbleVectorInit(arena_, st->fields);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
@@ -2411,10 +2372,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 
     case FBLE_UNION_TYPE_EXPR: {
       FbleUnionType* ut = FbleAlloc(arena_, FbleUnionType);
-      FbleRefInit(arena, &ut->_base.ref);
-      ut->_base.tag = FBLE_UNION_TYPE;
-      ut->_base.loc = type->loc;
-      ut->_base.id = (uintptr_t)ut;
+      FbleTypeInit(arena, &ut->_base, FBLE_UNION_TYPE, type->loc);
       FbleVectorInit(arena_, ut->fields);
 
       FbleUnionTypeExpr* union_type = (FbleUnionTypeExpr*)type;
@@ -2446,10 +2404,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 
     case FBLE_FUNC_TYPE_EXPR: {
       FbleFuncType* ft = FbleAlloc(arena_, FbleFuncType);
-      FbleRefInit(arena, &ft->_base.ref);
-      ft->_base.tag = FBLE_FUNC_TYPE;
-      ft->_base.loc = type->loc;
-      ft->_base.id = (uintptr_t)ft;
+      FbleTypeInit(arena, &ft->_base, FBLE_FUNC_TYPE, type->loc);
       ft->arg = NULL;
       ft->rtype = NULL;
 
@@ -2475,10 +2430,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 
     case FBLE_PROC_TYPE_EXPR: {
       FbleProcType* ut = FbleAlloc(arena_, FbleProcType);
-      FbleRefInit(arena, &ut->_base.ref);
-      ut->_base.tag = FBLE_PROC_TYPE;
-      ut->_base.loc = type->loc;
-      ut->_base.id = (uintptr_t)ut;
+      FbleTypeInit(arena, &ut->_base, FBLE_PROC_TYPE, type->loc);
       ut->type = NULL;
 
       FbleProcTypeExpr* unary_type = (FbleProcTypeExpr*)type;

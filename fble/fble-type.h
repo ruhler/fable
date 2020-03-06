@@ -216,6 +216,22 @@ FbleTypeArena* FbleNewTypeArena(FbleArena* arena);
 //   not be accessed after this call.
 void FbleFreeTypeArena(FbleTypeArena* arena);
 
+// FbleTypeInit --
+//   Initialize a newly allocated type.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   type - the newly allocated type to initialize
+//   tag - the tag of the type
+//   loc - the source loc of the type
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Initializes common fields of the type.
+void FbleTypeInit(FbleTypeArena* arena, FbleType* type, FbleTypeTag tag, FbleLoc loc);
+
 // FbleTypeRetain --
 //   Takes a reference to a compiled type.
 //
