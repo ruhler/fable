@@ -5,13 +5,14 @@ Eval2:
  - PROC_VALUE_INSTR should return result to explicit location.
  - Remove DataToLocal(LocalToData) from poly expression.
    Any way to have two different types for a given local?
- - Remove DataToLocal(LocalToData) from poly apply expression.
-   Any way to have two different types for a given local?
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?
 
 Miscellaneous:
+* Figure out some way to have different types for the same local
+  Specifically for implementing poly apply and poly coercions.
+  
 * Add test that we don't hold on to a condition value while running the
   selected branch of a union select expression.
 * [clean] Clean up how we specify dump_compile? It feels a little hacky at

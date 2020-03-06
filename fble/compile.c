@@ -1938,17 +1938,16 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       // Note: typeof(poly<arg>) = typeof(poly)<arg>
       // CompileExpr gives us typeof(poly)
-      FbleType* poly = CompileExpr_(arena, blocks, exit, scope, apply->poly);
+      Local* poly = CompileExpr(arena, blocks, exit, scope, apply->poly);
       if (poly == NULL) {
         return NULL;
       }
 
-      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(arena_, poly);
+      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(arena_, poly->type);
       if (poly_kind->_base.tag != FBLE_POLY_KIND) {
         ReportError(arena_, &expr->loc,
             "cannot apply poly args to a basic kinded entity\n");
         FbleKindRelease(arena_, &poly_kind->_base);
-        FbleTypeRelease(arena, poly);
         return NULL;
       }
 
@@ -1956,7 +1955,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleType* arg = CompileType(arena, scope, apply->arg);
       if (arg == NULL) {
         FbleKindRelease(arena_, &poly_kind->_base);
-        FbleTypeRelease(arena, poly);
         return NULL;
       }
 
@@ -1968,17 +1966,25 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             expected_kind, actual_kind);
         FbleKindRelease(arena_, &poly_kind->_base);
         FbleKindRelease(arena_, actual_kind);
-        FbleTypeRelease(arena, poly);
         FbleTypeRelease(arena, arg);
         return NULL;
       }
       FbleKindRelease(arena_, actual_kind);
       FbleKindRelease(arena_, &poly_kind->_base);
 
-      FbleType* pat = FbleNewPolyApplyType(arena, expr->loc, poly, arg);
-      FbleTypeRelease(arena, poly);
+      FbleType* pat = FbleNewPolyApplyType(arena, expr->loc, poly->type, arg);
       FbleTypeRelease(arena, arg);
-      return DataToLocal(arena_, scope, pat);
+
+      // TODO: It's a shame we have to make a copy of the value at runtime
+      // to implement what should be a compile time type coercion.
+      Local* result = NewLocal(arena_, scope, pat);
+      FbleCopyInstr* copy = FbleAlloc(arena_, FbleCopyInstr);
+      copy->_base.tag = FBLE_COPY_INSTR;
+      copy->source = poly->index;
+      copy->dest = result->index.index;
+      AppendInstr(arena_, scope, &copy->_base);
+      LocalRelease(arena, scope, poly);
+      return result;
     }
 
     case FBLE_LIST_EXPR: {
