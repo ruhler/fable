@@ -1,7 +1,4 @@
 Eval2:
-* Come up with a reliable unique id generator to use for type->id.
- - pointer is not good, because a type could be freed and a new one
-   allocated with the same id.
 * Replace DataToLocal calls with instructions that output directly to locals.
  - PROC_INSTR should have a proc field instead of using the data stack.
  - PROC_VALUE_INSTR should return result to explicit location.

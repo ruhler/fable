@@ -896,11 +896,7 @@ void FbleTypeInit(FbleTypeArena* arena, FbleType* type, FbleTypeTag tag, FbleLoc
   FbleRefInit(arena, &type->ref);
   type->tag = tag;
   type->loc = loc;
-
-  // TODO: the address of the pointer is not unique id, because the newly
-  // allocated type may have the same pointer as a recently freed (but
-  // subsequently subst-copied) type.
-  type->id = (uintptr_t)type;
+  type->id = type->ref.id;
 }
 
 // FbleTypeRetain -- see documentation in fble-type.h
