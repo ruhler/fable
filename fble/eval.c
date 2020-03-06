@@ -759,6 +759,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
+      case FBLE_COPY_INSTR: {
+        FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+        FbleValue* value = FrameGet(&thread->stack->frame, copy_instr->source);
+        thread->stack->frame.locals[copy_instr->dest] = FbleValueRetain(arena, value);
+        break;
+      }
+
       case FBLE_GET_INSTR: {
         FbleValue* get_port = thread->stack->frame.statics[0];
         if (get_port->tag == FBLE_LINK_VALUE) {
@@ -1322,6 +1329,15 @@ static void DumpInstrBlock(FbleInstrBlock* code)
           FbleVarInstr* var_instr = (FbleVarInstr*)instr;
           fprintf(stderr, "$ = %s[%zi];\n",
               sections[var_instr->index.section], var_instr->index.index);
+          break;
+        }
+
+        case FBLE_COPY_INSTR: {
+          FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+          fprintf(stderr, "l[%zi] = %s[%zi];\n",
+              copy_instr->dest,
+              sections[copy_instr->source.section],
+              copy_instr->source.index);
           break;
         }
 

@@ -703,6 +703,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_RELEASE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_VAR_INSTR:
+    case FBLE_COPY_INSTR:
     case FBLE_GET_INSTR:
     case FBLE_PUT_INSTR:
     case FBLE_LINK_INSTR:
@@ -1255,7 +1256,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       select_instr->condition = condition->index;
       AppendInstr(arena_, scope, &select_instr->_base);
 
-      FbleType* return_type = NULL;
+      Local* target = NULL;
       FbleGotoInstr* enter_gotos[union_type->fields.size];
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         enter_gotos[i] = FbleAlloc(arena_, FbleGotoInstr);
@@ -1272,15 +1273,24 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           .space = FBLE_NORMAL_NAME_SPACE
         };
         EnterBlock(arena_, blocks, name, select_expr->default_->loc, scope);
-        return_type = CompileExpr_(arena, blocks, exit, scope, select_expr->default_);
+        Local* result = CompileExpr(arena, blocks, exit, scope, select_expr->default_);
         ExitBlock(arena_, blocks, exit ? NULL : scope);
 
-        if (return_type == NULL) {
+        if (result == NULL) {
           FbleTypeRelease(arena, &union_type->_base);
           return NULL;
         }
 
+        target = NewLocal(arena_, scope, FbleTypeRetain(arena, result->type));
+
         if (!exit) {
+          FbleCopyInstr* copy = FbleAlloc(arena_, FbleCopyInstr);
+          copy->_base.tag = FBLE_COPY_INSTR;
+          copy->source = result->index;
+          copy->dest = target->index.index;
+          AppendInstr(arena_, scope, &copy->_base);
+          LocalRelease(arena, scope, result);
+
           exit_goto_default = FbleAlloc(arena_, FbleGotoInstr);
           exit_goto_default->_base.tag = FBLE_GOTO_INSTR;
           AppendInstr(arena_, scope, &exit_goto_default->_base);
@@ -1298,8 +1308,36 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
               select_expr->choices.xs[choice].expr->loc,
               scope);
           AddBlockTime(blocks, 1);
-          FbleType* arg_type = CompileExpr_(arena, blocks, exit, scope, select_expr->choices.xs[choice].expr);
+          Local* result = CompileExpr(arena, blocks, exit, scope, select_expr->choices.xs[choice].expr);
           ExitBlock(arena_, blocks, exit ? NULL : scope);
+
+          if (result == NULL) {
+            FbleTypeRelease(arena, &union_type->_base);
+            return NULL;
+          }
+
+          if (target == NULL) {
+            target = NewLocal(arena_, scope, FbleTypeRetain(arena, result->type));
+          } else {
+            if (!FbleTypesEqual(arena, target->type, result->type)) {
+              ReportError(arena_, &select_expr->choices.xs[choice].expr->loc,
+                  "expected type %t, but found %t\n",
+                  target->type, result->type);
+
+              FbleTypeRelease(arena, &union_type->_base);
+              return NULL;
+            }
+          }
+
+          if (!exit) {
+            FbleCopyInstr* copy = FbleAlloc(arena_, FbleCopyInstr);
+            copy->_base.tag = FBLE_COPY_INSTR;
+            copy->source = result->index;
+            copy->dest = target->index.index;
+            AppendInstr(arena_, scope, &copy->_base);
+          }
+
+          LocalRelease(arena, scope, result);
 
           if (!exit) {
             exit_gotos[choice] = FbleAlloc(arena_, FbleGotoInstr);
@@ -1307,27 +1345,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             AppendInstr(arena_, scope, &exit_gotos[choice]->_base);
           }
 
-          if (arg_type == NULL) {
-            FbleTypeRelease(arena, return_type);
-            FbleTypeRelease(arena, &union_type->_base);
-            return NULL;
-          }
-
-          if (return_type == NULL) {
-            return_type = arg_type;
-          } else {
-            if (!FbleTypesEqual(arena, return_type, arg_type)) {
-              ReportError(arena_, &select_expr->choices.xs[choice].expr->loc,
-                  "expected type %t, but found %t\n",
-                  return_type, arg_type);
-
-              FbleTypeRelease(arena, &union_type->_base);
-              FbleTypeRelease(arena, return_type);
-              FbleTypeRelease(arena, arg_type);
-              return NULL;
-            }
-            FbleTypeRelease(arena, arg_type);
-          }
           choice++;
         } else if (select_expr->default_ == NULL) {
           if (choice < select_expr->choices.size) {
@@ -1340,7 +1357,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
                 &union_type->fields.xs[i].name);
           }
           FbleTypeRelease(arena, &union_type->_base);
-          FbleTypeRelease(arena, return_type);
           return NULL;
         } else {
           enter_gotos[i]->pc = default_pc;
@@ -1352,7 +1368,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         ReportError(arena_, &select_expr->choices.xs[choice].name.loc,
             "unexpected tag '%n'\n",
             &select_expr->choices.xs[choice]);
-        FbleTypeRelease(arena, return_type);
         return NULL;
       }
 
@@ -1368,7 +1383,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       // TODO: We ought to release the condition right after doing goto.
       // Add a spec test for this and handle it correctly here.
       LocalRelease(arena, scope, condition);
-      return DataToLocal(arena_, scope, return_type);
+      return target;
     }
 
     case FBLE_FUNC_VALUE_EXPR: {

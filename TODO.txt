@@ -1,11 +1,8 @@
 Eval2:
 * Replace DataToLocal calls with instructions that output directly to locals.
+ - FORK should pass child args using statics instead of data stack.
  - PROC_INSTR should have a proc field instead of using the data stack.
  - PROC_VALUE_INSTR should return result to explicit location.
- - FORK should pass child args using statics instead of data stack.
- - Remove DataToLocal(LocalToData) from union select expression.
-   Hard, because all branches need to return to the same location. We may need
-   to add a MOVE instruction.
  - Remove DataToLocal(LocalToData) from poly expression.
    Any way to have two different types for a given local?
  - Remove DataToLocal(LocalToData) from poly apply expression.
