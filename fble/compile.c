@@ -744,6 +744,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_FORK_INSTR: {
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+      FbleFree(arena, fork_instr->args.xs);
       FbleFree(arena, fork_instr->dests.xs);
       FbleFree(arena, instr);
       return;
@@ -1610,6 +1611,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       InitScope(arena_, &body_scope, instr->code, &instr->scope, scope);
       EnterBodyBlock(arena_, blocks, exec_expr->body->loc, &body_scope);
 
+      Local* args[exec_expr->bindings.size];
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         FbleProcValueInstr* binstr = FbleAlloc(arena_, FbleProcValueInstr);
         binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
@@ -1629,38 +1631,41 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         ExitBlock(arena_, blocks, NULL);
         FinishScope(arena, &binding_scope);
 
-        Local* binding = NewLocal(arena_, &body_scope, type);
-        binstr->dest = binding->index.index;
+        args[i] = NewLocal(arena_, &body_scope, type);
+        binstr->dest = args[i]->index.index;
         AppendInstr(arena_, &body_scope, &binstr->_base);
-        type = LocalToData(arena, &body_scope, binding);
 
-        if (type != NULL) {
-          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(arena, type);
+        if (args[i]->type != NULL) {
+          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(arena, args[i]->type);
           if (proc_type->_base.tag == FBLE_PROC_TYPE) {
             if (types[i] != NULL && !FbleTypesEqual(arena, types[i], proc_type->type)) {
               error = true;
               ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
                   "expected type %t!, but found %t\n",
-                  types[i], type);
+                  types[i], args[i]->type);
             }
           } else {
             error = true;
             ReportError(arena_, &exec_expr->bindings.xs[i].expr->loc,
                 "expected process, but found expression of type %t\n",
-                type);
+                args[i]->type);
           }
           FbleTypeRelease(arena, &proc_type->_base);
-          FbleTypeRelease(arena, type);
         }
       }
 
       FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
-      AppendInstr(arena_, &body_scope, &fork->_base);
+      FbleVectorInit(arena_, fork->args);
       fork->dests.xs = FbleArrayAlloc(arena_, FbleLocalIndex, exec_expr->bindings.size);
       fork->dests.size = exec_expr->bindings.size;
+      AppendInstr(arena_, &body_scope, &fork->_base);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        FbleVectorAppend(arena_, fork->args, args[i]->index);
+        // TODO: Does this hold on to the bindings longer than we want to?
+        LocalRelease(arena, &body_scope, args[i]);
+
         Local* local = NewLocal(arena_, &body_scope, types[i]);
         fork->dests.xs[i] = local->index.index;
         PushVar(arena_, &body_scope, exec_expr->bindings.xs[i].name, local);
@@ -1669,7 +1674,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
       join->_base.tag = FBLE_JOIN_INSTR;
       AppendInstr(arena_, &body_scope, &join->_base);
-
 
       FbleType* rtype = NULL;
       if (!error) {

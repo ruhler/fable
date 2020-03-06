@@ -1,6 +1,5 @@
 Eval2:
 * Replace DataToLocal calls with instructions that output directly to locals.
- - FORK should pass child args using statics instead of data stack.
  - PROC_INSTR should have a proc field instead of using the data stack.
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their

@@ -247,12 +247,12 @@ typedef struct {
 // FbleForkInstr -- FBLE_FORK_INSTR
 //   Fork child threads.
 //
-// data_stack: ..., b1, b2, ..., bN
-//         ==> ...
-//
-// children: _ ==> b1, b2, ... bN
+// Each argument should be a proc value. Executes the proc value in the child
+// thread and stores the result to the given destination in the parent
+// thread's stack frame.
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndexV args;
   FbleLocalIndexV dests;
 } FbleForkInstr;
 
