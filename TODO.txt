@@ -7,7 +7,9 @@ Eval2:
    Hard, because all branches need to return to the same location. We may need
    to add a MOVE instruction.
  - Remove DataToLocal(LocalToData) from poly expression.
+   Any way to have two different types for a given local?
  - Remove DataToLocal(LocalToData) from poly apply expression.
+   Any way to have two different types for a given local?
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?

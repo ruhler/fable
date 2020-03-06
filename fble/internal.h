@@ -249,7 +249,7 @@ typedef struct {
 // children: _ ==> b1, b2, ... bN
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndexV args;
+  FbleLocalIndexV dests;
 } FbleForkInstr;
 
 // FbleJoinInstr -- FBLE_JOIN_INSTR

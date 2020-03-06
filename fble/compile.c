@@ -744,7 +744,7 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_FORK_INSTR: {
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      FbleFree(arena, fork_instr->args.xs);
+      FbleFree(arena, fork_instr->dests.xs);
       FbleFree(arena, instr);
       return;
     }
@@ -1642,12 +1642,12 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleForkInstr* fork = FbleAlloc(arena_, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
       AppendInstr(arena_, &body_scope, &fork->_base);
-      fork->args.xs = FbleArrayAlloc(arena_, FbleLocalIndex, exec_expr->bindings.size);
-      fork->args.size = exec_expr->bindings.size;
+      fork->dests.xs = FbleArrayAlloc(arena_, FbleLocalIndex, exec_expr->bindings.size);
+      fork->dests.size = exec_expr->bindings.size;
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
         Local* local = NewLocal(arena_, &body_scope, types[i]);
-        fork->args.xs[i] = local->index.index;
+        fork->dests.xs[i] = local->index.index;
         PushVar(arena_, &body_scope, exec_expr->bindings.xs[i].name, local);
       }
 

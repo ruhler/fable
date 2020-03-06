@@ -886,9 +886,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         assert(thread->children.xs == NULL);
         FbleVectorInit(arena_, thread->children);
 
-        FbleProcValue* args[fork_instr->args.size];
-        for (size_t i = 0; i < fork_instr->args.size; ++i) {
-          size_t j = fork_instr->args.size - i - 1;
+        FbleProcValue* args[fork_instr->dests.size];
+        for (size_t i = 0; i < fork_instr->dests.size; ++i) {
+          size_t j = fork_instr->dests.size - i - 1;
           args[j] = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, &thread->stack->frame);
 
           // You cannot execute a proc in a let binding, so it should be
@@ -896,9 +896,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           assert(args[j] != NULL && "undefined proc value");
         }
 
-        for (size_t i = 0; i < fork_instr->args.size; ++i) {
+        for (size_t i = 0; i < fork_instr->dests.size; ++i) {
           FbleProcValue* arg = args[i];
-          FbleValue** result = thread->stack->frame.locals + fork_instr->args.xs[i];
+          FbleValue** result = thread->stack->frame.locals + fork_instr->dests.xs[i];
 
           Thread* child = FbleAlloc(arena_, Thread);
           child->stack = PushFrame(arena_, &arg->_base, arg->scope.xs, arg->code, result, NULL);
@@ -1345,8 +1345,8 @@ static void DumpInstrBlock(FbleInstrBlock* code)
           FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
           fprintf(stderr, "fork(");
           const char* comma = "";
-          for (size_t j = 0; j < fork_instr->args.size; ++j) {
-            fprintf(stderr, "%s%zi", comma, fork_instr->args.xs[j]);
+          for (size_t j = 0; j < fork_instr->dests.size; ++j) {
+            fprintf(stderr, "%s%zi", comma, fork_instr->dests.xs[j]);
             comma = ", ";
           }
           fprintf(stderr, ");\n");
