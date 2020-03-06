@@ -198,17 +198,20 @@ typedef struct {
 // FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR
 //   Allocate an FbleProcValue.
 //
+// dest = proc code [v1, v2, ...]
+//
 // Fields:
 //   code - A block of instructions that will execute in the context of the
 //          captured scope. The instruction should remove the context of its
 //          scope.
 //   scope - Variables from the scope to capture for the function.
+//   dest - Where to put allocated proc value.
 //
-// $ = proc code [v1, v2, ...]
 typedef struct {
   FbleInstr _base;
   FbleInstrBlock* code;
   FbleFrameIndexV scope;
+  FbleLocalIndex dest;
 } FbleProcValueInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR

@@ -137,7 +137,6 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm);
 
 // TODO: Remove these transitionary functions when we are done transitioning.
-static Local* DataToLocal(FbleArena* arena, Scope* scope, FbleType* type);
 static FbleType* LocalToData(FbleTypeArena* arena, Scope* scope, Local* local);
 static FbleType* CompileExpr_(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
 
@@ -1485,16 +1484,16 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         return NULL;
       }
 
-      FbleType* type = FbleTypeRetain(arena, body->type);
-      FinishScope(arena, &eval_scope);
-      AppendInstr(arena_, scope, &instr->_base);
-
       FbleProcType* proc_type = FbleAlloc(arena_, FbleProcType);
       FbleTypeInit(arena, &proc_type->_base, FBLE_PROC_TYPE, expr->loc);
-      proc_type->type = type;
+      proc_type->type = body->type;
       FbleRefAdd(arena, &proc_type->_base.ref, &proc_type->type->ref);
-      FbleTypeRelease(arena, proc_type->type);
-      Local* result = DataToLocal(arena_, scope, &proc_type->_base);
+
+      Local* result = NewLocal(arena_, scope, &proc_type->_base);
+      instr->dest = result->index.index;
+
+      FinishScope(arena, &eval_scope);
+      AppendInstr(arena_, scope, &instr->_base);
       CompileExit(arena_, exit, scope, result);
       return result;
     }
@@ -1533,6 +1532,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       FbleTypeInit(arena, &put_type->_base, FBLE_FUNC_TYPE, expr->loc);
       put_type->arg = port_type;
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->arg->ref);
+      FbleTypeRelease(arena, port_type);
       put_type->rtype = &unit_proc_type->_base;
       FbleRefAdd(arena, &put_type->_base.ref, &put_type->rtype->ref);
       FbleTypeRelease(arena, &unit_proc_type->_base);
@@ -1567,14 +1567,14 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       ExitBlock(arena_, blocks, NULL);
       FinishScope(arena, &body_scope);
 
-      AppendInstr(arena_, scope, &instr->_base);
-
-      FbleTypeRelease(arena, port_type);
-
       if (type == NULL) {
-        FbleTypeRelease(arena, type);
+        FreeInstr(arena_, &instr->_base);
         return NULL;
       }
+
+      Local* result = NewLocal(arena_, scope, type);
+      instr->dest = result->index.index;
+      AppendInstr(arena_, scope, &instr->_base);
 
       FbleType* proc_type = FbleNormalType(arena, type);
       if (proc_type->tag != FBLE_PROC_TYPE) {
@@ -1582,11 +1582,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             "expected a value of type proc, but found %t\n",
             type);
         FbleTypeRelease(arena, proc_type);
-        FbleTypeRelease(arena, type);
         return NULL;
       }
       FbleTypeRelease(arena, proc_type);
-      Local* result = DataToLocal(arena_, scope, type);
       CompileExit(arena_, exit, scope, result);
       return result;
     }
@@ -1622,17 +1620,19 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binding_scope);
 
         FbleType* type = CompileExpr_(arena, blocks, false, &binding_scope, exec_expr->bindings.xs[i].expr);
+        error = (error || type == NULL);
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
         bproc->exit = true;
         AppendInstr(arena_, &binding_scope, &bproc->_base);
         ExitBlock(arena_, blocks, NULL);
-
         FinishScope(arena, &binding_scope);
-        AppendInstr(arena_, &body_scope, &binstr->_base);
 
-        error = error || (type == NULL);
+        Local* binding = NewLocal(arena_, &body_scope, type);
+        binstr->dest = binding->index.index;
+        AppendInstr(arena_, &body_scope, &binstr->_base);
+        type = LocalToData(arena, &body_scope, binding);
 
         if (type != NULL) {
           FbleProcType* proc_type = (FbleProcType*)FbleNormalType(arena, type);
@@ -1696,16 +1696,11 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FinishScope(arena, &body_scope);
 
+      Local* result = NewLocal(arena_, scope, rtype);
+      instr->dest = result->index.index;
       AppendInstr(arena_, scope, &instr->_base);
-
-      if (error) {
-        FbleTypeRelease(arena, rtype);
-        return NULL;
-      }
-
-      Local* result = DataToLocal(arena_, scope, rtype);
       CompileExit(arena_, exit, scope, result);
-      return result;
+      return error ? NULL : result;
     }
 
     case FBLE_VAR_EXPR: {
@@ -2567,32 +2562,6 @@ static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, F
 
   FbleTypeRelease(arena, rtype);
   return rtype != NULL;
-}
-
-// DataToLocal --
-//   Move a value from the data stack to a local variable.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   scope - the current scope.
-//   type - the type of the value.
-//
-// Results:
-//   The local variable that the value was moved to.
-//
-// Side effects:
-//   Appends instructions to the scope to move the top of the data stack to a
-//   local variable. Takes ownership of the type argument, which will remain
-//   valid for as long as the returned local is valid.
-static Local* DataToLocal(FbleArena* arena, Scope* scope, FbleType* type)
-{
-  Local* local = NewLocal(arena, scope, type);
-
-  FbleVPushInstr* vpush = FbleAlloc(arena, FbleVPushInstr);
-  vpush->_base.tag = FBLE_VPUSH_INSTR;
-  vpush->dest = local->index.index;
-  AppendInstr(arena, scope, &vpush->_base);
-  return local;
 }
 
 // LocalToData --

@@ -747,7 +747,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           FbleValueRetain(arena, arg);
           FbleVectorAppend(arena_, value->scope, arg);
         }
-        PushData(arena_, &value->_base, &thread->stack->frame);
+        thread->stack->frame.locals[proc_value_instr->dest] = &value->_base;
         break;
       }
 
@@ -1312,7 +1312,9 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_PROC_VALUE_INSTR: {
           FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-          fprintf(stderr, "$ = proc %p [;", (void*)proc_value_instr->code);
+          fprintf(stderr, "l[%zi] = proc %p [",
+              proc_value_instr->dest,
+              (void*)proc_value_instr->code);
           const char* comma = "";
           for (size_t j = 0; j < proc_value_instr->scope.size; ++j) {
             fprintf(stderr, "%s%s[%zi]",
