@@ -3,8 +3,6 @@ Eval2:
  - FORK should pass child args using statics instead of data stack.
  - PROC_INSTR should have a proc field instead of using the data stack.
  - PROC_VALUE_INSTR should return result to explicit location.
- - Remove DataToLocal(LocalToData) from poly expression.
-   Any way to have two different types for a given local?
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?

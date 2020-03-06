@@ -1918,7 +1918,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       AppendInstr(arena_, scope, &type_instr->_base);
       PushVar(arena_, scope, poly->arg.name, local);
 
-      FbleType* body = CompileExpr_(arena, blocks, exit, scope, poly->body);
+      Local* body = CompileExpr(arena, blocks, exit, scope, poly->body);
 
       PopVar(arena, scope);
 
@@ -1927,10 +1927,19 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         return NULL;
       }
 
-      FbleType* pt = FbleNewPolyType(arena, expr->loc, &arg->_base, body);
+      FbleType* pt = FbleNewPolyType(arena, expr->loc, &arg->_base, body->type);
       FbleTypeRelease(arena, &arg->_base);
-      FbleTypeRelease(arena, body);
-      return DataToLocal(arena_, scope, pt);
+
+      // TODO: It's a shame we have to make a copy of the value at runtime
+      // to implement what should be a compile time type coercion.
+      Local* result = NewLocal(arena_, scope, pt);
+      FbleCopyInstr* copy = FbleAlloc(arena_, FbleCopyInstr);
+      copy->_base.tag = FBLE_COPY_INSTR;
+      copy->source = body->index;
+      copy->dest = result->index.index;
+      AppendInstr(arena_, scope, &copy->_base);
+      LocalRelease(arena, scope, body);
+      return result;
     }
 
     case FBLE_POLY_APPLY_EXPR: {
