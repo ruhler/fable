@@ -1,9 +1,6 @@
-Eval2:
-* Delete unused data stack.
+Miscellaneous:
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?
-
-Miscellaneous:
 * Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * Figure out some way to have different types for the same local

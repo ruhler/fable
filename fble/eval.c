@@ -15,24 +15,6 @@
 //   another thread.
 #define TIME_SLICE 1024
 
-#define DATA_STACK_CHUNK_SIZE 64
-
-// DataStack --
-//   A stack of data values.
-//
-// Fields:
-//   values - a chunk of values at the top of the stack.
-//   pos - the index of the next place to put a value in the values array.
-//   tail - the bottom chunks of the stack.
-//   next - an optional cached, currently unused chunk of the stack whose tail
-//          points to this chunk of the stack.
-typedef struct DataStack {
-  FbleValue* values[DATA_STACK_CHUNK_SIZE];
-  size_t pos;
-  struct DataStack* tail;
-  struct DataStack* next;
-} DataStack;
-
 // Frame --
 //   An execution frame.
 //
@@ -42,7 +24,6 @@ typedef struct DataStack {
 //   locals - Space allocated for local variables.
 //      Has length code->locals values. Takes ownership of all non-NULL
 //      entries.
-//   data - Stack of temporary values.
 //   code - The currently executing instruction block.
 //   pc - The location of the next instruction in the code to execute.
 //   result - Where to store the result when exiting the scope.
@@ -50,7 +31,6 @@ typedef struct {
   FbleValue* scope;
   FbleValue** statics;
   FbleValue** locals;
-  DataStack* data;
   FbleInstrBlock* code;
   size_t pc;
   FbleValue** result;
@@ -107,11 +87,6 @@ static FbleInstrBlock g_put_block = {
 
 static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 
-static void InitDataStack(FbleArena* arena, Frame* frame);
-static void FreeDataStack(FbleArena* arena, Frame* frame);
-static bool DataStackIsEmpty(Frame* frame);
-static FbleValue* PopData(FbleArena* arena, Frame* frame);
-
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
 static FbleValue* FrameTaggedGet(FbleValueTag tag, Frame* frame, FbleFrameIndex index);
 
@@ -147,103 +122,6 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst)
   if (dst != NULL) {
     FbleRefAdd(arena, &src->ref, &dst->ref);
   }
-}
-
-// InitDataStack --
-//   Initialize an empty data stack for the given scope.
-//
-// Inputs:
-//   arena - the arena to use for allocations.
-//   frame - the stack to initialize the data stack for.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Initializes the data stack. The stack must be freed with FreeDataStack
-//   when no longer in use.
-static void InitDataStack(FbleArena* arena, Frame* frame)
-{
-  frame->data = FbleAlloc(arena, DataStack);
-  frame->data->pos = 0;
-  frame->data->tail = NULL;
-  frame->data->next = NULL;
-}
-
-// FreeDataStack --
-//   Free resources associated with the data stack for the given scope.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   frame - the scope whose data stack to free.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Frees resources associated with the data stack for the given scope.
-static void FreeDataStack(FbleArena* arena, Frame* frame)
-{
-  assert(frame->data != NULL);
-  assert(DataStackIsEmpty(frame));
-
-  DataStack* next = frame->data->next;
-  while (next != NULL) {
-    DataStack* new_next = next->next;
-    FbleFree(arena, next);
-    next = new_next;
-  }
-
-  DataStack* data = frame->data;
-  while (data != NULL) {
-    DataStack* tail = data->tail;
-    FbleFree(arena, data);
-    data = tail;
-  }
-  frame->data = NULL;
-}
-
-// DataStackIsEmpty --
-//   Returns true if the data stack for the given scope is empty.
-//
-// Inputs:
-//   frame - the stack to check.
-//
-// Results:
-//   true if the scope's data stack is empty.
-//
-// Side effects:
-//   None.
-static bool DataStackIsEmpty(Frame* frame)
-{
-  return (frame->data->tail == NULL && frame->data->pos == 0);
-}
-
-// PopData --
-//   Pop and retrieve the top value from the data stack for a scope.
-//
-// Inputs:
-//   arena - the arena to use for deallocation.
-//   frame - the scope to pop and get the data from.
-//
-// Results:
-//   The popped value.
-//
-// Side effects:
-//   Pops the top data element off the scope's data stack. It is the user's
-//   job to release the returned value if necessary.
-//   The behavior is undefined if there are no elements on the stack.
-static FbleValue* PopData(FbleArena* arena, Frame* frame)
-{
-  DataStack* data = frame->data;
-  if (data->pos == 0) {
-    if (data->next != NULL) {
-      FbleFree(arena, data->next);
-      data->next = NULL;
-    }
-    frame->data = data->tail;
-  }
-  return frame->data->values[--frame->data->pos];
 }
 
 // FrameGet --
@@ -336,7 +214,6 @@ static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics,
   stack->frame.locals = FbleArrayAlloc(arena, FbleValue*, code->locals);
   memset(stack->frame.locals, 0, code->locals * sizeof(FbleValue*));
 
-  InitDataStack(arena, &stack->frame);
   stack->frame.code = code;
   stack->frame.pc = 0;
   stack->frame.result = result;
@@ -356,13 +233,10 @@ static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics,
 //
 // Side effects:
 //   Releases any remaining variables on the frame and frees the frame.
-//   Behavior is undefined if there are any remaining values on the data
-//   stack.
 static Stack* PopFrame(FbleValueArena* arena, Stack* stack)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
-  FreeDataStack(arena_, &stack->frame);
   FbleValueRelease(arena, stack->frame.scope);
 
   for (size_t i = 0; i < stack->frame.code->locals; ++i) {
@@ -397,10 +271,6 @@ static Stack* PopFrame(FbleValueArena* arena, Stack* stack)
 //   belonging to that frame.
 static Stack* ReplaceFrame(FbleValueArena* arena, FbleValue* scope, FbleValue** statics, FbleInstrBlock* code, Stack* stack)
 {
-  // It's the callers responsibility to ensure the data stack is empty when
-  // changing scopes.
-  assert(DataStackIsEmpty(&stack->frame));
-
   code->refcount++;
 
   FbleArena* arena_ = FbleRefArenaArena(arena);
@@ -930,8 +800,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 }
 
 // AbortThread --
-//   Unwind the given thread, cleaning up thread, variable, and data stacks
-//   and children threads as appropriate.
+//   Unwind the given thread, cleaning the stack and children threads as
+//   appropriate.
 //
 // Inputs:
 //   arena - the arena to use for allocations.
@@ -942,7 +812,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 //
 // Side effects:
 //   Cleans up the thread state by unwinding the thread. Sets the thread state
-//   as aborted.
+
 static void AbortThread(FbleValueArena* arena, Thread* thread)
 {
   thread->aborted = true;
@@ -956,14 +826,7 @@ static void AbortThread(FbleValueArena* arena, Thread* thread)
   FbleFree(arena_, thread->children.xs);
   thread->children.xs = NULL;
 
-
   while (thread->stack != NULL) {
-    if (thread->stack->frame.data != NULL) {
-      while (!DataStackIsEmpty(&thread->stack->frame)) {
-        FbleValueRelease(arena, PopData(arena_, &thread->stack->frame));
-      }
-    }
-
     thread->stack = PopFrame(arena, thread->stack);
   }
 
