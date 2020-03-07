@@ -1,4 +1,5 @@
 Eval2:
+* Remove calls to CompileExpr_.
 * Replace DataToLocal calls with instructions that output directly to locals.
 * Delete unused data stack.
 * Can children clean themselves up when they finish now that they return their

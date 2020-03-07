@@ -2356,7 +2356,11 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExp
   Blocks blocks;
   FbleVectorInit(arena_, blocks.stack);
   FbleVectorInit(arena_, blocks.blocks);
-  FbleType* type = CompileExpr_(arena, &blocks, true, &nscope, expr);
+  Local* result = CompileExpr(arena, &blocks, true, &nscope, expr);
+  FbleType* type = NULL;
+  if (result != NULL) {
+    type = FbleTypeRetain(arena, result->type);
+  }
   FbleFree(arena_, blocks.stack.xs);
   FbleFreeBlockNames(arena_, &blocks.blocks);
   FinishScope(arena, &nscope);
@@ -2565,22 +2569,16 @@ static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, F
   AddBlockTime(blocks, 1 + prgm->modules.size);
 
   FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleType* types[prgm->modules.size];
   for (size_t i = 0; i < prgm->modules.size; ++i) {
     EnterBlock(arena_, blocks, prgm->modules.xs[i].name, prgm->modules.xs[i].value->loc, scope);
-    types[i] = CompileExpr_(arena, blocks, false, scope, prgm->modules.xs[i].value);
+    Local* module = CompileExpr(arena, blocks, false, scope, prgm->modules.xs[i].value);
     ExitBlock(arena_, blocks, scope);
 
-    if (types[i] == NULL) {
+    if (module == NULL) {
       return NULL;
     }
 
-    FbleVPushInstr* vpush = FbleAlloc(arena_, FbleVPushInstr);
-    vpush->_base.tag = FBLE_VPUSH_INSTR;
-    AppendInstr(arena_, scope, &vpush->_base);
-    Local* l = NewLocal(arena_, scope, types[i]);
-    PushVar(arena_, scope, prgm->modules.xs[i].name, l);
-    vpush->dest = l->index.index;
+    PushVar(arena_, scope, prgm->modules.xs[i].name, module);
   }
 
   FbleType* rtype = CompileExpr_(arena, blocks, true, scope, prgm->main);
