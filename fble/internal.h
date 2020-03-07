@@ -64,7 +64,6 @@ typedef enum {
   FBLE_STRUCT_IMPORT_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
-  FBLE_VPUSH_INSTR,
   FBLE_PROFILE_ENTER_BLOCK_INSTR,
   FBLE_PROFILE_EXIT_BLOCK_INSTR,
   FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR,
@@ -329,14 +328,6 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
 }  FbleTypeInstr;
-
-// FbleVPushInstr -- FBLE_VPUSH_INSTR
-//   Move a value from the data stack to the locals section of the stack
-//   frame.
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
-} FbleVPushInstr;
 
 // FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR
 // 

@@ -707,7 +707,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
-    case FBLE_VPUSH_INSTR:
     case FBLE_PROFILE_ENTER_BLOCK_INSTR:
     case FBLE_PROFILE_EXIT_BLOCK_INSTR:
     case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {

@@ -906,12 +906,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
-      case FBLE_VPUSH_INSTR: {
-        FbleVPushInstr* vpush_instr = (FbleVPushInstr*)instr;
-        thread->stack->frame.locals[vpush_instr->dest] = PopData(arena_, &thread->stack->frame);
-        break;
-      }
-
       case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
         FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
         FbleProfileEnterBlock(arena_, thread->profile, enter->block);
@@ -1306,12 +1300,6 @@ static void DumpInstrBlock(FbleInstrBlock* code)
         case FBLE_TYPE_INSTR: {
           FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
           fprintf(stderr, "l[%zi] = type;\n", type_instr->dest);
-          break;
-        }
-
-        case FBLE_VPUSH_INSTR: {
-          FbleVPushInstr* vpush_instr = (FbleVPushInstr*)instr;
-          fprintf(stderr, "l[%zi] = $;\n", vpush_instr->dest);
           break;
         }
 
