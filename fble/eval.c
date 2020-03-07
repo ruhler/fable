@@ -113,7 +113,6 @@ static bool DataStackIsEmpty(Frame* frame);
 static void PushData(FbleArena* arena, FbleValue* value, Frame* frame);
 static FbleValue** AllocData(FbleArena* arena, Frame* frame);
 static FbleValue* PopData(FbleArena* arena, Frame* frame);
-static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* frame);
 
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
 static FbleValue* FrameTaggedGet(FbleValueTag tag, Frame* frame, FbleFrameIndex index);
@@ -297,54 +296,6 @@ static FbleValue* PopData(FbleArena* arena, Frame* frame)
     frame->data = data->tail;
   }
   return frame->data->values[--frame->data->pos];
-}
-
-// PopTaggedData --
-//   Pop and retrieve the top value from the data stack for a scope.
-//   Dereferences the data value, removing all layers of reference values
-//   until a non-reference value is encountered and returns the non-reference
-//   value.
-//
-//   A tag for the type of dereferenced value should be provided. This
-//   function will assert that the correct kind of value is encountered.
-//
-// Inputs:
-//   arena - the arena to use for deallocation.
-//   tag - the expected tag of the value.
-//   frame - the scope to pop and get the data from.
-//
-// Results:
-//   The popped and dereferenced value. Returns null in case of abstract value
-//   dereference.
-//
-// Side effects:
-//   Pops the top data element off the scope's data stack. It is the user's
-//   job to release the returned value if necessary.
-//   The behavior is undefined if there are no elements on the stack.
-static FbleValue* PopTaggedData(FbleValueArena* arena, FbleValueTag tag, Frame* frame)
-{
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleValue* original = PopData(arena_, frame);
-  FbleValue* value = original;
-  while (value->tag == FBLE_REF_VALUE) {
-    FbleRefValue* rv = (FbleRefValue*)value;
-
-    if (rv->value == NULL) {
-      // We are trying to dereference an abstract value. This is undefined
-      // behavior according to the spec. Return NULL to indicate to the
-      // caller.
-      FbleValueRelease(arena, original);
-      return NULL;
-    }
-
-    value = rv->value;
-  }
-  assert(value->tag == tag);
-
-  // TODO: Only do retain/release if value != original to improve performance?
-  FbleValueRetain(arena, value);
-  FbleValueRelease(arena, original);
-  return value;
 }
 
 // FrameGet --
@@ -947,11 +898,13 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_PROC_INSTR: {
         FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-        FbleProcValue* proc = (FbleProcValue*)PopTaggedData(arena, FBLE_PROC_VALUE, &thread->stack->frame);
+        FbleProcValue* proc = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, &thread->stack->frame, proc_instr->proc);
 
         // You cannot execute a proc in a let binding, so it should be
         // impossible to ever have an undefined proc value.
         assert(proc != NULL && "undefined proc value");
+
+        FbleValueRetain(arena, &proc->_base);
 
         if (proc_instr->exit) {
           thread->stack = ReplaceFrame(arena, &proc->_base, proc->scope.xs, proc->code, thread->stack);
@@ -1377,7 +1330,10 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_PROC_INSTR: {
           FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-          fprintf(stderr, "proc (exit=%s);\n", proc_instr->exit ? "true" : "false");
+          fprintf(stderr, "$ <- %s[%zi]; // exit=%s;\n",
+              sections[proc_instr->proc.section],
+              proc_instr->proc.index,
+              proc_instr->exit ? "true" : "false");
           break;
         }
 

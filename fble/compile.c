@@ -1559,12 +1559,22 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       AppendInstr(arena_, &body_scope, &link->_base);
 
-      FbleType* type = CompileExpr_(arena, blocks, false, &body_scope, link_expr->body);
+      Local* body = CompileExpr(arena, blocks, false, &body_scope, link_expr->body);
+      FbleType* type = NULL;
+      if (body != NULL) {
+        type = FbleTypeRetain(arena, body->type);
+      }
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->exit = true;
       AppendInstr(arena_, &body_scope, &proc->_base);
+
+      if (body != NULL) {
+        proc->proc = body->index;
+        LocalRelease(arena, &body_scope, body);
+      }
+
       ExitBlock(arena_, blocks, NULL);
       FinishScope(arena, &body_scope);
 
@@ -1621,13 +1631,24 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         InitScope(arena_, &binding_scope, binstr->code, &binstr->scope, &body_scope);
         EnterBodyBlock(arena_, blocks, exec_expr->bindings.xs[i].expr->loc, &binding_scope);
 
-        FbleType* type = CompileExpr_(arena, blocks, false, &binding_scope, exec_expr->bindings.xs[i].expr);
-        error = (error || type == NULL);
+        Local* binding =  CompileExpr(arena, blocks, false, &binding_scope, exec_expr->bindings.xs[i].expr);
+        FbleType* type = NULL;
+        if (binding == NULL) {
+          error = true;
+        } else {
+          type = FbleTypeRetain(arena, binding->type);
+        }
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
         bproc->exit = true;
+
         AppendInstr(arena_, &binding_scope, &bproc->_base);
+        if (binding != NULL) {
+          bproc->proc = binding->index;
+          LocalRelease(arena, &binding_scope, binding);
+        }
+
         ExitBlock(arena_, blocks, NULL);
         FinishScope(arena, &binding_scope);
 
@@ -1675,19 +1696,21 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       join->_base.tag = FBLE_JOIN_INSTR;
       AppendInstr(arena_, &body_scope, &join->_base);
 
-      FbleType* rtype = NULL;
+      Local* body = NULL;
       if (!error) {
-        rtype = CompileExpr_(arena, blocks, false, &body_scope, exec_expr->body);
-        error = (rtype == NULL);
+        body = CompileExpr(arena, blocks, false, &body_scope, exec_expr->body);
+        error = (body == NULL);
       }
 
-      if (rtype != NULL) {
-        FbleType* normal = FbleNormalType(arena, rtype);
+      FbleType* type = NULL;
+      if (body != NULL) {
+        type = FbleTypeRetain(arena, body->type);
+        FbleType* normal = FbleNormalType(arena, type);
         if (normal->tag != FBLE_PROC_TYPE) {
           error = true;
           ReportError(arena_, &exec_expr->body->loc,
               "expected a value of type proc, but found %t\n",
-              rtype);
+              type);
         }
         FbleTypeRelease(arena, normal);
       }
@@ -1696,11 +1719,15 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
       proc->_base.tag = FBLE_PROC_INSTR;
       proc->exit = true;
       AppendInstr(arena_, &body_scope, &proc->_base);
+      if (body != NULL) {
+        proc->proc = body->index;
+        LocalRelease(arena, &body_scope, body);
+      }
       ExitBlock(arena_, blocks, NULL);
 
+      Local* result = NewLocal(arena_, scope, type);
       FinishScope(arena, &body_scope);
 
-      Local* result = NewLocal(arena_, scope, rtype);
       instr->dest = result->index.index;
       AppendInstr(arena_, scope, &instr->_base);
       CompileExit(arena_, exit, scope, result);

@@ -264,15 +264,15 @@ typedef struct {
 } FbleJoinInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
-//   Execute the process value on top of the data stack.
+//   Execute a process value.
+//
+// $ <- proc 
 //
 // If exit is true, this is treated as a tail call.
-//
-// data_stack: ..., foo!
-//         ==> ..., foo
 typedef struct {
   FbleInstr _base;
   bool exit;
+  FbleFrameIndex proc;
 } FbleProcInstr;
 
 // FbleVarInstr -- FBLE_VAR_INSTR
