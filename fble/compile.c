@@ -135,10 +135,6 @@ static Local* CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr);
 static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* type);
 static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm);
-
-// TODO: Remove these transitionary functions when we are done transitioning.
-static FbleType* LocalToData(FbleTypeArena* arena, Scope* scope, Local* local);
-static FbleType* CompileExpr_(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
 
 // ReportError --
 //   Report a compiler error.
@@ -2581,72 +2577,12 @@ static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, F
     PushVar(arena_, scope, prgm->modules.xs[i].name, module);
   }
 
-  FbleType* rtype = CompileExpr_(arena, blocks, true, scope, prgm->main);
+  Local* result = CompileExpr(arena, blocks, true, scope, prgm->main);
   for (size_t i = 0; i < prgm->modules.size; ++i) {
     PopVar(arena, scope);
   }
 
-  FbleTypeRelease(arena, rtype);
-  return rtype != NULL;
-}
-
-// LocalToData --
-//   Move a local variable to the data stack.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   scope - the current scope.
-//   local - the local variable to move. May be NULL.
-//
-// Results:
-//   The type of the local.
-//
-// Side effects:
-//   Generates instructions to move the local variable to the top of the data
-//   stack, and releases the local variable.
-static FbleType* LocalToData(FbleTypeArena* arena, Scope* scope, Local* local)
-{
-  if (local == NULL) {
-    return NULL;
-  }
-
-  FbleType* type = FbleTypeRetain(arena, local->type);
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleVarInstr* instr = FbleAlloc(arena_, FbleVarInstr);
-  instr->_base.tag = FBLE_VAR_INSTR;
-  instr->index = local->index;
-  AppendInstr(arena_, scope, &instr->_base);
-  LocalRelease(arena, scope, local);
-  return type;
-}
-// CompileExpr_ --
-//   Type check and compile the given expression. Returns the local variable
-//   that will hold the result of the expression and generates instructions to
-//   compute the value of that expression at runtime.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   blocks - the blocks stack.
-//   exit - if true, generate instructions to exit the current scope.
-//   scope - the list of variables in scope.
-//   expr - the expression to compile.
-//
-// Results:
-//   The local variable for the computed value, or NULL if the expression is
-//   not well typed.
-//
-// Side effects:
-//   Updates the blocks stack with with compiled block information.
-//   Appends instructions to the scope for executing the given expression.
-//   There is no gaurentee about what instructions have been appended to
-//   the scope if the expression fails to compile.
-//   Prints a message to stderr if the expression fails to compile.
-//   Allocates a local variable that must be freed using LocalRelease when
-//   it is no longer needed.
-static FbleType* CompileExpr_(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr)
-{
-  Local* l = CompileExpr(arena, blocks, exit, scope, expr);
-  return LocalToData(arena, scope, l);
+  return result != NULL;
 }
 
 // FbleFreeInstrBlock -- see documentation in internal.h
