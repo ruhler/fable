@@ -36,4 +36,13 @@ This seems promising, given how much of the existing implementation of
 instructions is pushing, popping, retaining, releasing, capturing, and
 restoring. Hopefully almost all of that goes away.
 
+Result:
+This is now implemented. Runtime for fble-bench dropped from around 2m20s down
+to 1m55s. It seems like most of this is avoiding having to move values around
+to lots of different places. It feels faster and cleaner. All I can say, is
+I'm happy with the change.
+
+Note: in the implementation I went with, args are pushed onto the callees
+locals, they are not treated as a separate source of values, and they are not
+owned by the caller.
 
