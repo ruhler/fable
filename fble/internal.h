@@ -58,7 +58,6 @@ typedef enum {
   FBLE_FORK_INSTR,
   FBLE_JOIN_INSTR,
   FBLE_PROC_INSTR,
-  FBLE_VAR_INSTR,
   FBLE_COPY_INSTR,
   FBLE_REF_VALUE_INSTR,
   FBLE_REF_DEF_INSTR,
@@ -274,13 +273,6 @@ typedef struct {
   FbleFrameIndex proc;
 } FbleProcInstr;
 
-// FbleVarInstr -- FBLE_VAR_INSTR
-//   Copy a value in the stack frame to the top of the data stack.
-typedef struct {
-  FbleInstr _base;
-  FbleFrameIndex index;
-} FbleVarInstr;
-
 // FbleCopyInstr -- FBLE_COPY_INSTR
 //   Copy a value in the stack frame from one location to another.
 typedef struct {
@@ -288,13 +280,6 @@ typedef struct {
   FbleFrameIndex source;
   FbleLocalIndex dest;
 } FbleCopyInstr;
-
-// FbleVarInstrV --
-//   A vector of var instructions.
-typedef struct {
-  size_t size;
-  FbleVarInstr** xs;
-} FbleVarInstrV;
 
 // FbleRefValueInstr -- FBLE_REF_VALUE_INSTR
 //   Allocate a ref value and store the result in index.

@@ -697,7 +697,6 @@ static void FreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_GOTO_INSTR:
     case FBLE_RELEASE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
-    case FBLE_VAR_INSTR:
     case FBLE_COPY_INSTR:
     case FBLE_GET_INSTR:
     case FBLE_PUT_INSTR:

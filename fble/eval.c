@@ -110,8 +110,6 @@ static void Add(FbleRefArena* arena, FbleValue* src, FbleValue* dst);
 static void InitDataStack(FbleArena* arena, Frame* frame);
 static void FreeDataStack(FbleArena* arena, Frame* frame);
 static bool DataStackIsEmpty(Frame* frame);
-static void PushData(FbleArena* arena, FbleValue* value, Frame* frame);
-static FbleValue** AllocData(FbleArena* arena, Frame* frame);
 static FbleValue* PopData(FbleArena* arena, Frame* frame);
 
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
@@ -219,56 +217,6 @@ static void FreeDataStack(FbleArena* arena, Frame* frame)
 static bool DataStackIsEmpty(Frame* frame)
 {
   return (frame->data->tail == NULL && frame->data->pos == 0);
-}
-
-// PushData --
-//   Push a value onto the data stack of a scope.
-//
-// Inputs:
-//   arena - the arena to use for allocations
-//   value - the value to push
-//   frame - the scope whose data stack to push the value on.
-//
-// Result:
-//   None.
-//
-// Side effects:
-//   Pushes a value onto the data stack of the scope that should be freed
-//   with PopData when done.
-static void PushData(FbleArena* arena, FbleValue* value, Frame* frame)
-{
-  *AllocData(arena, frame) = value;
-}
-
-// AllocData --
-//   Allocate an empty slot on the data stack.
-//
-// Inputs:
-//   arena - arena to use for allocations
-//   frame - the scope whose data stack to allocate a slot on.
-//
-// Returns:
-//   The address of the newly allocated slot.
-//
-// Side effects
-//   Allocates a slot on the data stack that should be freed with PopData when
-//   done.
-static FbleValue** AllocData(FbleArena* arena, Frame* frame)
-{
-  DataStack* data = frame->data;
-  assert(data->pos < DATA_STACK_CHUNK_SIZE);
-  FbleValue** result = data->values + data->pos++;
-  *result = NULL;
-  if (data->pos == DATA_STACK_CHUNK_SIZE) {
-    if (data->next == NULL) {
-      data->next = FbleAlloc(arena, DataStack);
-      data->next->pos = 0;
-      data->next->tail = data;
-      data->next->next = NULL;
-    }
-    frame->data = data->next;
-  }
-  return result;
 }
 
 // PopData --
@@ -699,14 +647,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           FbleVectorAppend(arena_, value->scope, arg);
         }
         thread->stack->frame.locals[proc_value_instr->dest] = &value->_base;
-        break;
-      }
-
-      case FBLE_VAR_INSTR: {
-        FbleVarInstr* var_instr = (FbleVarInstr*)instr;
-        assert(thread->stack != NULL);
-        FbleValue* value = FrameGet(&thread->stack->frame, var_instr->index);
-        PushData(arena_, FbleValueRetain(arena, value), &thread->stack->frame);
         break;
       }
 
@@ -1268,13 +1208,6 @@ static void DumpInstrBlock(FbleInstrBlock* code)
           }
           fprintf(stderr, "];\n");
           FbleVectorAppend(arena, blocks, proc_value_instr->code);
-          break;
-        }
-
-        case FBLE_VAR_INSTR: {
-          FbleVarInstr* var_instr = (FbleVarInstr*)instr;
-          fprintf(stderr, "$ = %s[%zi];\n",
-              sections[var_instr->index.section], var_instr->index.index);
           break;
         }
 
