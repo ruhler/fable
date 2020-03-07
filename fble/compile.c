@@ -1567,7 +1567,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
-      proc->exit = true;
       AppendInstr(arena_, &body_scope, &proc->_base);
 
       if (body != NULL) {
@@ -1641,7 +1640,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
         FbleProcInstr* bproc = FbleAlloc(arena_, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
-        bproc->exit = true;
 
         AppendInstr(arena_, &binding_scope, &bproc->_base);
         if (binding != NULL) {
@@ -1717,7 +1715,6 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
 
       FbleProcInstr* proc = FbleAlloc(arena_, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
-      proc->exit = true;
       AppendInstr(arena_, &body_scope, &proc->_base);
       if (body != NULL) {
         proc->proc = body->index;

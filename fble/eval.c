@@ -906,13 +906,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
 
         FbleValueRetain(arena, &proc->_base);
 
-        if (proc_instr->exit) {
-          thread->stack = ReplaceFrame(arena, &proc->_base, proc->scope.xs, proc->code, thread->stack);
-          FbleProfileAutoExitBlock(arena_, thread->profile);
-        } else {
-          FbleValue** result = AllocData(arena_, &thread->stack->frame);
-          thread->stack = PushFrame(arena_, &proc->_base, proc->scope.xs, proc->code, result, thread->stack);
-        }
+        thread->stack = ReplaceFrame(arena, &proc->_base, proc->scope.xs, proc->code, thread->stack);
+        FbleProfileAutoExitBlock(arena_, thread->profile);
         break;
       }
 
@@ -1330,10 +1325,9 @@ static void DumpInstrBlock(FbleInstrBlock* code)
 
         case FBLE_PROC_INSTR: {
           FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-          fprintf(stderr, "$ <- %s[%zi]; // exit=%s;\n",
+          fprintf(stderr, "$ <- %s[%zi];\n",
               sections[proc_instr->proc.section],
-              proc_instr->proc.index,
-              proc_instr->exit ? "true" : "false");
+              proc_instr->proc.index);
           break;
         }
 

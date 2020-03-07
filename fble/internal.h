@@ -264,11 +264,10 @@ typedef struct {
 } FbleJoinInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
-//   Execute a process value.
+//   Execute a process value and return the result from the current stack
+//   frame.
 //
-// $ <- proc 
-//
-// If exit is true, this is treated as a tail call.
+// return proc!
 typedef struct {
   FbleInstr _base;
   bool exit;
