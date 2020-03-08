@@ -12,8 +12,6 @@
   );
 };
 
-@ TestFailure@ = *(Str@ name, Nat@ a, Nat@ b);
-
 (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
   Test@(Append<Char@>(Str(Chars|'Nat.'), Str(name)), {
     Bool@ x := p;

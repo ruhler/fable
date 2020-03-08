@@ -1343,7 +1343,7 @@ Notes:
     ...
 
   Where the '?=' means Foo@ is abstract outside the body of the type let.
-  Easy.
+  Easy. Does it let you split things across submodules?
 
 * We need a more general way to support implicit type variable declarations.
   Proposal:

@@ -1,4 +1,5 @@
 
+{ /Bool%; @(Bool@, True, False, And); };
 { /Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
 { /Unit%; @(Unit@, Unit); };
 { /Maybe%; @(Maybe@, Nothing, Just); };
@@ -92,6 +93,34 @@ For = <@ K@, @ V@, @ B@>(DataMap@<K@, V@> m, B@ base, (K@, V@, B@) { B@;} body) 
     });
 };
 
+# TODO: Should this be in another module? It's the only reason we need to
+# import Bool%.
+<@ K@, @ V@>((V@, V@) { Bool@; }, DataMap@<K@, V@>, DataMap@<K@, V@>) { Bool@; }
+Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
+  ?(a;
+      empty: ?(b; empty: True, map: False),
+      map: ?(b;
+        empty: False,
+        map: {
+          Bool@ unit_eq = ?(a.map.unit;
+            just: ?(b.map.unit;
+              just: eq(a.map.unit.just.value, b.map.unit.just.value),
+              nothing: False),
+            nothing: ?(b.map.unit; just: False, nothing: True)
+          );
+
+          Bool@ sum_eq = And(
+            Equals<K@, V@>(eq, a.map.sum.a, b.map.sum.a),
+            Equals<K@, V@>(eq, a.map.sum.b, b.map.sum.b)
+          );
+
+          Bool@ product_eq = 
+            Equals<Unit@, DataMap@<K@, V@>>(
+              Equals<K@, V@>(eq), a.map.product, b.map.product);
+          And(unit_eq, And(sum_eq, product_eq));
+        }));
+};
+
 # Map@ interface parameterized by key type.
 <@>@ Map@ = <@ K@> {
   <@>@ M@ = DataMap@<K@>;
@@ -100,7 +129,8 @@ For = <@ K@, @ V@, @ B@>(DataMap@<K@, V@> m, B@ base, (K@, V@, B@) { B@;} body) 
     <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup,
     <@ V@>(M@<V@>, K@, (Maybe@<V@>){ V@; }) { M@<V@>; } InsertWith,
     <@ V@>(M@<V@>, K@, V@) { M@<V@>; } Insert,
-    <@ V@, @ B@>(M@<V@>, B@, (K@, V@, B@) { B@; }) { B@; } For
+    <@ V@, @ B@>(M@<V@>, B@, (K@, V@, B@) { B@; }) { B@; } For,
+    <@ V@>((V@, V@) { Bool@; }, M@<V@>, M@<V@>) { Bool@; } Equals
    );
 };
   
@@ -121,6 +151,9 @@ Map = <@ K@>((K@) { Data@; } ToData) {
     },
     <@ V@, @ B@>(M@<V@> m, B@ b, (K@, V@, B@) { B@; } body) {
       For<K@, V@, B@>(m, b, body);
+    },
+    <@ V@>((V@, V@) { Bool@; } eq, M@<V@> a, M@<V@> b) {
+      Equals<K@, V@>(eq, a, b);
     }
   );
 };

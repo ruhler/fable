@@ -12,6 +12,7 @@ Miscellaneous:
   selected branch of a union select expression.
 * Add test that we don't hold on to an exec binding expression longer than
   necessary.
+* Add unit tests for /Map%.Equals.
 * [clean] Reorganize functions in fble/compile.c
 * Don't duplicate evaluation of literal type per letter.
 * Add test that the literal type must be a struct, not a union value.
