@@ -77,7 +77,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-          fprintf(fout, "pc += %s[%zi]?;         // %s:%i:%i\n",
+          fprintf(fout, "goto +%s[%zi].tag; // %s:%i:%i\n",
               sections[select_instr->condition.section],
               select_instr->condition.index,
               select_instr->loc.source, select_instr->loc.line,
@@ -87,7 +87,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_GOTO_INSTR: {
           FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-          fprintf(fout, "pc = %zi;", goto_instr->pc);
+          fprintf(fout, "goto %zi;\n", goto_instr->pc);
           break;
         }
 
@@ -121,7 +121,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
               sections[func_apply_instr->func.section],
               func_apply_instr->func.index,
               sections[func_apply_instr->arg.section],
-              func_apply_instr->arg.section,
+              func_apply_instr->arg.index,
               func_apply_instr->exit ? "true" : "false",
               func_apply_instr->loc.source, func_apply_instr->loc.line,
               func_apply_instr->loc.col);

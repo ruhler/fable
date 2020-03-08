@@ -1,4 +1,5 @@
 Miscellaneous:
+* Optimization: Avoid REF_INSTR if we aren't going to ever use it.
 * Why is statics for Bit2X.fulladd! 3 long when only entry 0 is used?
 * Can children clean themselves up when they finish now that they return their
   result directly to their parent?
