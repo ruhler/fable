@@ -13,7 +13,7 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /Sudoku_Tests%.Tests,
   /Test%.Tests,
   /TicTacToe/Tests%.Tests,
-  /UBInt_Tests%.Tests,
+  /Int_Tests%.Tests,
   /UBNat_Tests%.Tests
 ]));
 

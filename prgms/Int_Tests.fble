@@ -6,7 +6,7 @@
 { /Test%; @(TestResult@, Test@); };
 { /Unit%; @(Unit); };
 
-{ /UBInt%; @(Int@,
+{ /Int%; @(Int@,
   0, 1, 2, 3, 4, 5, Lit2,
   EqInt, Neg, Add, Sub, Mul);
 };
@@ -14,7 +14,7 @@
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
 (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
-  Test@(Append<Char@>(Str(Chars|'UBInt.'), Str(name)), {
+  Test@(Append<Char@>(Str(Chars|'Int.'), Str(name)), {
     Bool@ x := p;
     ?(x;
        true: $(TestResult@(pass: Unit)),
