@@ -1268,9 +1268,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
         };
         EnterBlock(arena_, blocks, name, select_expr->default_->loc, scope);
         Local* result = CompileExpr(arena, blocks, exit, scope, select_expr->default_);
-        ExitBlock(arena_, blocks, exit ? NULL : scope);
 
         if (result == NULL) {
+          ExitBlock(arena_, blocks, NULL);
           FbleTypeRelease(arena, &union_type->_base);
           return NULL;
         }
@@ -1284,7 +1284,10 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
           copy->dest = target->index.index;
           AppendInstr(arena_, scope, &copy->_base);
           LocalRelease(arena, scope, result);
+        }
+        ExitBlock(arena_, blocks, exit ? NULL : scope);
 
+        if (!exit) {
           exit_goto_default = FbleAlloc(arena_, FbleGotoInstr);
           exit_goto_default->_base.tag = FBLE_GOTO_INSTR;
           AppendInstr(arena_, scope, &exit_goto_default->_base);
@@ -1303,9 +1306,9 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
               scope);
           AddBlockTime(blocks, 1);
           Local* result = CompileExpr(arena, blocks, exit, scope, select_expr->choices.xs[choice].expr);
-          ExitBlock(arena_, blocks, exit ? NULL : scope);
 
           if (result == NULL) {
+            ExitBlock(arena_, blocks, NULL);
             FbleTypeRelease(arena, &union_type->_base);
             return NULL;
           }
@@ -1319,6 +1322,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
                   target->type, result->type);
 
               FbleTypeRelease(arena, &union_type->_base);
+              ExitBlock(arena_, blocks, NULL);
               return NULL;
             }
           }
@@ -1331,6 +1335,7 @@ static Local* CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope
             AppendInstr(arena_, scope, &copy->_base);
           }
 
+          ExitBlock(arena_, blocks, exit ? NULL : scope);
           LocalRelease(arena, scope, result);
 
           if (!exit) {
