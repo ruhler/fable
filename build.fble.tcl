@@ -45,13 +45,14 @@ exec cp {*}[glob fble/fble*.h] out/include
 gcc_prgm -c -I fble -o $::obj/fble-ref-test.o test/fble-ref-test.c
 
 # Compile the remaining executables
-foreach {x} [glob test/fble-test.c test/fble-mem-test.c test/fble-profile-test.c prgms/*.c] {
+foreach {x} [glob test/fble-decompile.c test/fble-test.c test/fble-mem-test.c test/fble-profile-test.c prgms/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
   gcc_prgm -c -o $object $x
 }
 
 set ::bin out/bin
 exec mkdir -p $::bin
+gcc_prgm -o $::bin/fble-decompile $::obj/fble-decompile.o -lfble -lm
 gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-ref-test $::obj/fble-ref-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble -lm
@@ -155,6 +156,7 @@ testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-te
 testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
 testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble prgms
 testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
+testn fble-decompile exec $::bin/fble-decompile prgms/fble-tests.fble prgms > out/test/fble-tests.fble.s
 testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
 testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
 testn fble-cat exec $::bin/fble-stdio prgms/fble-cat.fble prgms < README.txt | cmp README.txt -

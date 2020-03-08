@@ -233,7 +233,7 @@ int main(int argc, char* argv[])
   FbleNameV blocks;
   FbleProfile* profile = NULL;
 
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile, false);
+  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
   if (func == NULL) {
     FbleDeleteValueArena(value_arena);
     FbleFreeBlockNames(eval_arena, &blocks);

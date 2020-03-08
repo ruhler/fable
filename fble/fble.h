@@ -15,6 +15,22 @@
 #include "fble-profile.h"
 
 
+// FbleDecompile --
+//   Decompile the given program, writing a disassembled version of the program
+//   in human readable format to the given file. For debugging purposes.
+//
+// Inputs:
+//   fout - the file to write the disassembled program to.
+//   program - the program to decompile.
+//
+// Results:
+//   True if the program compiled successfully, false otherwise.
+//
+// Side effects:
+//   A disassembled version of the file is printed to fout. In case of error,
+//   an error message is printed to stderr.
+bool FbleDecompile(FILE* fout, FbleProgram* program);
+
 // FbleEval --
 //   Type check and evaluate a program.
 //
@@ -23,8 +39,6 @@
 //   program - The program to evaluate.
 //   blocks - Output info about blocks in the program.
 //   profile - Output profile for the evaluation.
-//   dump_compiled - If true, dump the compiled program to stderr for
-//                   debugging.
 //
 // Results:
 //   The value of the evaluated program, or NULL in case of error. The
@@ -37,9 +51,7 @@
 //   freed when no longer in use.
 //   Sets profile to the profile for the evaluation. This must be freed with
 //   FbleFreeProfile when no longer in use.
-//   If dump_compiled is true, dumps the compiled program to stderr for
-//   debugging purposes.
-FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile, bool dump_compiled);
+FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile);
 
 // FbleApply --
 //   Apply a function to the given argument.
