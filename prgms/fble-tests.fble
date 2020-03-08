@@ -6,15 +6,15 @@
 { /Test%; @(Test@); };
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
+  /Int_Tests%.Tests,
   /List_Tests%.Tests,
   /Map_Tests%.Tests,
   /Md5_Tests%.Tests,
+  /Nat_Tests%.Tests
   /Primes_Tests%.Tests,
   /Sudoku_Tests%.Tests,
   /Test%.Tests,
   /TicTacToe/Tests%.Tests,
-  /Int_Tests%.Tests,
-  /UBNat_Tests%.Tests
 ]));
 
 (Get@<Maybe@<Str@>> in, Put@<Str@> out) {

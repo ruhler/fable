@@ -3,7 +3,7 @@
 { /Char%; @(Char@, Chars); };
 { /List%; @(S@, P@, ConsS, S, Append, Concat); };
 { /String%; @(Str@, Str); };
-{ /UBNat%; @(Nat@, 1, 3, 10, Lit2, EqNat); };
+{ /Nat%; @(Nat@, 1, 3, 10, Lit2, EqNat); };
 { /Primes%; @(NthPrime); };
 { /Test%; @(TestResult@, Test@); };
 

@@ -1,7 +1,7 @@
 
 { Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
 { Unit%; @(Unit@); };
-{ UBNat%; @(Nat@); };
+{ Nat%; @(Nat@); };
 
 @ Coord@ = *(Nat@ row, Nat@ col);
 

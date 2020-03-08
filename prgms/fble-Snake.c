@@ -38,7 +38,7 @@ static void AddTimeMillis(Time* time, int millis);
 static int DiffTimeMillis(Time* a, Time* b);
 
 static void PrintUsage(FILE* stream);
-static int ReadUBNat(FbleValue* num);
+static int ReadNat(FbleValue* num);
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
 int main(int argc, char* argv[]);
 
@@ -117,8 +117,8 @@ static void PrintUsage(FILE* stream)
   );
 }
 
-// ReadUBNat --
-//   Read a number from an FbleValue of type Nat@UBNat
+// ReadNat --
+//   Read a number from an FbleValue of type Nat@Nat
 //
 // Inputs:
 //   x - the value of the number.
@@ -128,14 +128,14 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   None
-static int ReadUBNat(FbleValue* x)
+static int ReadNat(FbleValue* x)
 {
   switch (FbleUnionValueTag(x)) {
     case 0: return 0;
     case 1: return 1;
-    case 2: return 2 * ReadUBNat(FbleUnionValueAccess(x));
-    case 3: return 2 * ReadUBNat(FbleUnionValueAccess(x)) + 1;
-    default: assert(false && "Invalid UBNat tag"); abort();
+    case 2: return 2 * ReadNat(FbleUnionValueAccess(x));
+    case 3: return 2 * ReadNat(FbleUnionValueAccess(x)) + 1;
+    default: assert(false && "Invalid Nat tag"); abort();
   }
 }
 
@@ -154,10 +154,10 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       FbleValue* draw = FbleStructValueAccess(drawP, 0);
       drawS = FbleStructValueAccess(drawP, 1);
 
-      int ux = ReadUBNat(FbleStructValueAccess(draw, 0));
-      int uy = ReadUBNat(FbleStructValueAccess(draw, 1));
-      int w = ReadUBNat(FbleStructValueAccess(draw, 2));
-      int h = ReadUBNat(FbleStructValueAccess(draw, 3));
+      int ux = ReadNat(FbleStructValueAccess(draw, 0));
+      int uy = ReadNat(FbleStructValueAccess(draw, 1));
+      int w = ReadNat(FbleStructValueAccess(draw, 2));
+      int h = ReadNat(FbleStructValueAccess(draw, 3));
       FbleValue* color = FbleStructValueAccess(draw, 4);
 
       size_t color_index = FbleUnionValueTag(color);
