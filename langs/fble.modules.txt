@@ -1,0 +1,33 @@
+Fble Modules Revisited
+----------------------
+Yet another revisiting of modules. Specifically I want to work out the
+appropriate language features and conventions to be used with modules to
+address the following:
+
+* Avoid introducing false dependencies.
+  For example, I just added an Equals function to Map. That brings in a
+  dependency on Bool that wasn't there before. And if I want to reuse EqMaybe,
+  that would bring in a dependency on Maybe too. It was not obvious at the
+  time how I could easily avoid that.
+
+* Where to put different bits of code.
+  For example, Foo vs. Foo_Tests vs. Foo/Tests, vs. Foo/Foo, Foo/Tests.
+  I want to know how I ought to organize modules consistently. And clarify
+  the conventional relationship is between a parent module and its children.
+  Does the parent depend on the children? The children depend on the parent?
+  Is there no conventional dependency relationship between parent and child?
+  Are the children internal or public? Do they have access to internals or
+  access to public stuff?
+
+  For example, I would expect Foo/Tests not to have access to the internal
+  data type for Foo, because they are testing the public API. But it's nice to
+  put them in a subdirectory along with Foo just for organizational purposes.
+
+* Abstract type support.
+  I should be able to make types abstract, perhaps using the ?= statement
+  suggested. But make sure this still allows me to give access to the
+  definition of the type to multiple internal modules without giving access to
+  the type externally.
+
+* Add and test implementation support for private modules.
+
