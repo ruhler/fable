@@ -1,11 +1,11 @@
 
 { /Bool%; @(Bool@, True, False); };
 { /Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
+{ /Int%; @(Int@, IsZero, Inc, Dec); };
 { /List%; @(S@, List@, S, ForS); };
 { /Map%; @(Map); };
 { /Maybe%; @(Maybe@); };
 { /Unit%; @(Unit@, Unit); };
-{ /Int%; @(Int@, Inc, Dec); };
 
 @ Coord@ = *(Int@ row, Int@ col);
 
@@ -109,4 +109,8 @@
   });
 };
 
-@(Coord@, World@, World, EqWorld, Step);
+(Int@, World@) { World@; } StepN = (Int@ n, World@ w) {
+  ?(IsZero(n); true: w, false: StepN(Dec(n), Step(w)));
+};
+
+@(Coord@, World@, World, EqWorld, Step, StepN);

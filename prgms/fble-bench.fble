@@ -1,8 +1,9 @@
 
 { /Unit%; @(Unit@, Unit); };
 
-Unit@ _ := /Md5_Tests%.Bench;
+Unit@ _ := /GameOfLife/Bench%.Bench;
+Unit@ _ := /Md5/Tests%.Bench;
+Unit@ _ := /Sudoku/Tests%.Bench;
 Unit@ _ := /TicTacToe/Tests%.Bench;
-Unit@ _ := /Sudoku_Tests%.Bench;
 
 $(Unit);

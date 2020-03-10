@@ -1,9 +1,15 @@
 Module Revision:
 * Separate Map from DataMap and EqMap.
 * Add spec tests for '+' and '*' module access modifiers.
+ - private module not visible outside parent.
+ - private module is visible to parent.
+ - private module is visible to private sibling.
+ - private module is visible to privileged sibling.
+ - private module not visible to no-privileged sibling.
 * Implement support for '+' and '*' module access modifiers.
 
 Miscellaneous:
+* Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
 * Why is statics for Bit2X.fulladd! 3 long when only entry 0 is used?
 * Can children clean themselves up when they finish now that they return their
