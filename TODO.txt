@@ -1,3 +1,9 @@
+Module Revision:
+* Re organize modules hierarchically.
+* Separate Map from DataMap and EqMap.
+* Add '+' and '-' modifiers to module spec.
+* Add tests ad implementation for '+' and '-' modules.
+
 Miscellaneous:
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
 * Why is statics for Bit2X.fulladd! 3 long when only entry 0 is used?
@@ -22,6 +28,7 @@ Miscellaneous:
 * Implement Game of Life.
   - Implement step 1 of GameOfLife%.Step.
   - Implement step 2 of GameOfLife%.Step.
+  - Properly enable AcornStep test.
 * Fix syntax highlighting of paths
   For example: *(@<DataMap%.Map@>Map@ 
 * Make Foo@: highlight like a field instead of like a type?

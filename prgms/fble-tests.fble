@@ -6,14 +6,14 @@
 { /Test%; @(Test@); };
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
-  /GameOfLife_Tests%.Tests,
-  /Int_Tests%.Tests,
-  /List_Tests%.Tests,
-  /Map_Tests%.Tests,
-  /Md5_Tests%.Tests,
-  /Nat_Tests%.Tests,
-  /Primes_Tests%.Tests,
-  /Sudoku_Tests%.Tests,
+  /GameOfLife/Tests%.Tests,
+  /Int/Tests%.Tests,
+  /List/Tests%.Tests,
+  /Map/Tests%.Tests,
+  /Md5/Tests%.Tests,
+  /Nat/Tests%.Tests,
+  /Primes/Tests%.Tests,
+  /Sudoku/Tests%.Tests,
   /Test%.Tests,
   /TicTacToe/Tests%.Tests
 ]));

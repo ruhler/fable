@@ -31,3 +31,90 @@ address the following:
 
 * Add and test implementation support for private modules.
 
+
+Proposal:
+* How big a module is is determined by dependencies. If you use a module, you
+  should only bring in dependencies you have to have to use the module. You
+  shouldn't bring in other false dependencies.
+
+* It should be possible to refine a large module into smaller submodules
+  without users of the module noticing. Where the submodules can be private.
+  This means a parent module has privileged access to its immediate children.
+
+* If a module is marked as private, it produces private things.
+  Ideas for how to mark a module as private:
+   Foo!.fble
+   Foo!/
+   Foo._.fble
+   Foo~.fble
+   Foo~/ 
+   Foo~
+
+  Yeah, I like the last one. So if a file is Foo~.fble, the module Foo is
+  marked as private. If a directory is Foo~/, it is marked as private. The
+  module is referred to without the trailing tilde. There must not be both
+  private and public versions of the same module.
+
+* If a module is in a directory, it has privileged access to things in that
+  directory and immediate child directories.
+
+* Modules in the same directory are developed by the same developer.
+
+* Use directories for organizing modules as well as privilege.
+  For example, prefer Foo/Tests.fble over Foo_Tests.fble, just because it
+  shows the relationship between the two better.
+
+
+There are 4 kinds of modules, depending on whether they are privileged or not,
+and whether they produce private stuff or not:
+
+* private, privileged: put in subdirectory.
+* private, non-privileged: put in subdirectory.
+* public, privileged: put in subdirectory or at root.
+* public, non-privileged: ??
+
+My proposal, though this mixes up two different kinds of concerns, is to
+group modules in the same directory that refer to the same thing, even if some
+of those modules make use of privileged access while others don't.
+
+Note: Any private stuff that needs to be shared by multiple modules must be
+defined in a private module. You can only mix private and public in the same
+module if only the public bits of that module are to be accessed.
+
+Random idea: Could we use Foo/Tests.fble to say Tests does not have private
+access to Foo~/FooInternal~.fble?  Uh... that looks confusing to me. It
+suggests a module has the following:
+
+  value
+  privileged children - can access private children
+  non-privileged children - can't access private children
+
+In other words, we explicitly label the four kinds of children:
+  privileged, private:      e.g. Foo~/FooInternal~.fble
+  privileged, public:       e.g. Foo~/Data.fble
+  non-privileged, private:  e.g. ???
+  non-privileged, public:   e.g. Foo/Tests.fble
+
+If that's the case, could we have two different symbols to track this in the
+file system? Assume by default non-privileged, public? Then have, for example:
+
++ means privileged
+- means private
+
+So we have:
+  Foo/Internal+-.fble
+  Foo/Data+.fble
+  Foo/Tests.fble
+
+Or: '*' for read and write, '+' for read only, '-' for write only?
+  Foo/Internal*.fble
+  Foo/Data+.fble
+  Foo/Tests.fble
+
+Or: '-' for read and write. e.g. internal only private.
+    '+' for public with private access.
+        blank for public with public access.
+
+That sounds like a nice proposal to me. Let's try it and see how it feels.
+Then the only thing left is to figure out abstract data types.
+
