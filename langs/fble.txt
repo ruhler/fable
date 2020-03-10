@@ -906,12 +906,27 @@ formed by combining a module with all of its direct and indirect dependencies.
 ----------------
 Modules are organized into a tree structure. The purpose of the tree structure
 is to group modules together that are developed by the same organization and
-to allow public/private access control to modules. Each node in the tree is a
-module. Each module has a value and zero or more named child nodes. A child
-node can be marked as public or private. If a child node is marked public, it
-and all of its externally visible descendants are visible external to the
-parent node. If a child node is marked private, neither it or nor any of its
-descendants are visible external to the parent node.
+to provide access controls on modules.
+
+Each node in the tree is a module. Each module has a value and zero or more
+named child nodes.
+
+A child node can be marked as public or private. If a child node is marked
+public, it and all of its externally visible descendants are visible external
+to the parent node. If a child node is marked private, neither it or nor any
+of its descendants are visible external to the parent node.
+
+Separately, a child node can be marked as privileged or non-privileged. If a
+child node is marked as non-privileged, it is treated as if it were external
+to the parent node for the purposes of visibility. This allows grouping
+together related modules from the same organization while minimizing
+access to private modules.
+
+A parent module always has privileged access to its child modules, because
+it's annoying to have to specify privilege with respect to both a module's
+siblings and its children. By giving a parent module privilege to its children,
+it is possible to refine a module into multiple submodules without impacting
+users of the module.
 
 A module's value may be trivial if the module is intended primarily for
 organizational purposes. A module need not contain any children if it is
@@ -927,8 +942,10 @@ directory Foo/. The absence of a file Foo.fble implies the value of the module
 Foo is *()(). The absence of a subdirectory Foo implies the module Foo has no
 children.
 
-Note: This suggested approach does not support distinguishing between public
-and private modules at this time. That is left as future work.
+The character '*' is appended to a module's file name to indicate that the
+module is private and privileged. The character '+' is appended to a module's
+file name to indicate that the module is public and privileged. By default a
+module is public and non-privileged.
 
 For example, you might have the following directory structure:
 
@@ -936,11 +953,17 @@ For example, you might have the following directory structure:
    StdLib/
      Unit.fble
      List.fble
+     String.fble
    Md5.fble
    Md5/
-     Impl.fble
+     ImplA*.fble
+     ToString+.fble
      Tests.fble
-    
+
+In this case, Impl*.fble is visible to the parent Md5.fble and privileged
+sibling ToString+.fble, but not to any other module. All other modules are
+visible to all other modules.
+
 9.2 Path
 --------
 Modules may depend on other modules independent of the tree hierarchy of
@@ -949,8 +972,8 @@ descendants of that module. The only restrictions on module dependencies is
 that there must not be any cyclic dependencies and module visibility rules
 must be obeyed.
 
-A module is referred to using an absolute. An absolute path describes a path
-of named children from the root of the module hierarchy.
+A module is referred to using an absolute path, which describes a path of
+named children from the root of the module hierarchy.
 
 Abstract Syntax:
   Path ::= abs_path (name :: [Name])
@@ -963,6 +986,7 @@ Concrete Syntax:
 Examples:
   /StdLib/List%
   /Unit%
+  /Md5/ImplA%
 
 9.3 Program
 -----------
