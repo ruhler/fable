@@ -56,20 +56,20 @@ Int@ 9 = DoublePlus1(4);
 Int@ 10 = Double(5);
 
 # a + 1
-(Int@){ Int@; } Add1 = (Int@ a) {
+(Int@){ Int@; } Inc = (Int@ a) {
   ?(a ; 
       0:    DoublePlus1(0),           # 0 + 1 = 2*0+1
       m1:   0,                        # -1 + 1 = 0
       2x:   DoublePlus1(a.2x),        # 2*d + 1 = 2d*+1
-      2xp1: Double(Add1(a.2xp1)));    # 2*d+1 + 1 = 2*(d+1)
+      2xp1: Double(Inc(a.2xp1)));     # 2*d+1 + 1 = 2*(d+1)
 };
 
 # a - 1
-(Int@){ Int@; } Sub1 = (Int@ a) {
+(Int@){ Int@; } Dec = (Int@ a) {
   ?(a ;
       0:    Minus1,                   # 0-1 = -1
       m1:   Double(Minus1),           # -1-1 = 2*(-1)
-      2x:   DoublePlus1(Sub1(a.2x)),  # 2*d-1 = 2*(d-1)+1
+      2x:   DoublePlus1(Dec(a.2x)),   # 2*d-1 = 2*(d-1)+1
       2xp1: Double(a.2xp1));          # 2*d+1-1 = 2*d
 };
 
@@ -91,7 +91,7 @@ Int@ 10 = Double(5);
        0:    a,                                    # a + 0 = a
        m1:   Double(a.2xp1),                       # 2*d+1 + -1 = 2*d
        2x:   DoublePlus1(Add(a.2xp1, b.2x)),       # 2*d+1 +2*e = 2*(d+e)+1
-       2xp1: Double(Add1(Add(a.2xp1, b.2xp1)))));  # 2*d+1 + 2*e+1 = 2*((d+e)+1)
+       2xp1: Double(Inc(Add(a.2xp1, b.2xp1)))));   # 2*d+1 + 2*e+1 = 2*((d+e)+1)
 };
 
 # -a 
@@ -100,7 +100,7 @@ Int@ 10 = Double(5);
     0:    0,                               # -0 = 0
     m1:   DoublePlus1(0),                  # -(-1) = 2*0+1
     2x:   Double(Neg(a.2x)),               # -(2*d) = 2*(-d)
-    2xp1: Sub1(Double(Neg(a.2xp1))));      # -(2*d+1) = 2*(-d)-1
+    2xp1: Dec(Double(Neg(a.2xp1))));       # -(2*d+1) = 2*(-d)-1
 };
 
 # a - b 
@@ -121,7 +121,7 @@ Int@ 10 = Double(5);
       2xp1: Add(Double(Double(Mul(a.2x, b.2xp1))), Double(a.2x))), # 2*x * (2*y+1) = 2*2*x*y + 2*x
     2xp1: ?(b ;
       0:    0,                             # (2*x+1) * 0 = 0
-      m1:   Sub1(Double(Neg(a.2xp1))),     # (2*x+1) * -1 = 2*(-x) - 1
+      m1:   Dec(Double(Neg(a.2xp1))),      # (2*x+1) * -1 = 2*(-x) - 1
       2x:   Add(Double(Double(Mul(a.2xp1, b.2x))), Double(b.2x)),  # (2*x+1) * 2*y = 2*2*x*y + 2*y
       2xp1: Add(   # (2*x+1) * (2*y+1) = 2*2*x*y + 2*x + (2*y +1)
               Add(
@@ -141,4 +141,4 @@ Int@ 100 = Mul(10, 10);
 };
 
 @(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Lit2, Lit3,
-  EqInt, Add, Sub, Neg, Mul);
+  EqInt, Inc, Dec, Add, Sub, Neg, Mul);

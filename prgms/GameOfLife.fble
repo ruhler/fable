@@ -1,10 +1,11 @@
 
-{ /Bool%; @(True); };
+{ /Bool%; @(Bool@, True, False); };
 { /Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
-{ /List%; @(List@); };
+{ /List%; @(S@, List@, S, ForS); };
 { /Map%; @(Map); };
+{ /Maybe%; @(Maybe@); };
 { /Unit%; @(Unit@, Unit); };
-{ /Int%; @(Int@); };
+{ /Int%; @(Int@, Inc, Dec); };
 
 @ Coord@ = *(Int@ row, Int@ col);
 
@@ -24,7 +25,8 @@
   @(World@: Map@<Unit@>,
     EqWorld: Equals<Unit@>((Unit@ a, Unit@ b) { True; }),
     W: @(Empty: Empty<Unit@>,
-         Insert: Insert<Unit@>));
+         Insert: Insert<Unit@>,
+         For: For<Unit@>));
 };
 
 # Create a world from a list of coordinates of live cells.
@@ -36,25 +38,35 @@
     W.Empty);
 };
 
-## A count of neighboring cells. 4p stands for anything greater than or equal
-## to 4.
-#@ Count@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4p);
-#
-#(Count@) { Count@; } Inc = (Count@ c) {
-#  ?(c; 0: Count@(1: Unit),
-#       1: Count@(2: Unit),
-#       2: Count@(3: Unit),
-#       3: Count@(4p: Unit),
-#       4p: Count@(4p: Unit));
-#};
-#
-#@ Status@ = *(Bool@ alive, Count@ neighbors);
-#
-## Map from Coord to the status of the cell.
-#{ DataMap<Coord@, Status@>(DCoord);
-#  @(Cand@: M@,
-#    C: @(Empty, Lookup, Insert, InsertWith));
-#};
+# A count of neighboring cells. 4p stands for anything greater than or equal
+# to 4.
+@ Count@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4p);
+
+(Count@) { Count@; } IncCount = (Count@ c) {
+  ?(c; 0: Count@(1: Unit),
+       1: Count@(2: Unit),
+       2: Count@(3: Unit),
+       3: Count@(4p: Unit),
+       4p: Count@(4p: Unit));
+};
+
+@ Status@ = *(Bool@ alive, Count@ neighbors);
+
+# Returns true if a cell with the given status should be a live cell in the
+# next generation.
+(Status@) { Bool@; } Lives = (Status@ status) {
+  ?(status.alive;
+      true: ?(status.neighbors; 2: True, 3: True, : False),
+      false: ?(status.neighbors; 3: True, : False));
+};
+
+# Map from Coord to the status of the cell.
+{ Map<Coord@>(DCoord);
+  @(Cand@: Map@<Status@>,
+    C: @(Empty: Empty<Status@>,
+         InsertWith: InsertWith<Status@>,
+         For: For<Status@>));
+};
 
 # Advance the world by one unit of time.
 (World@) { World@; } Step = (World@ w) {
@@ -62,12 +74,39 @@
   #   For each cell in world,
   #     Set this cell alive in candidate
   #     Inc neighbors for each neighbor cell
+  Cand@ candidates = W.For<Cand@>(w, C.Empty,
+    (Coord@ coord, Unit@ _, Cand@ cand_in) {
+      Cand@ cand_alive = C.InsertWith(cand_in, coord, (Maybe@<Status@> ms) {
+        ?(ms; just: Status@(True, ms.just.neighbors),
+              nothing: Status@(True, Count@(0: Unit)));
+      });
+
+      S@<Coord@> neighbors = S<Coord@>([
+        Coord@(Dec(coord.row), Dec(coord.col)),
+        Coord@(Dec(coord.row),     coord.col ),
+        Coord@(Dec(coord.row), Inc(coord.col)),
+        Coord@(    coord.row , Dec(coord.col)),
+        Coord@(    coord.row , Inc(coord.col)),
+        Coord@(Inc(coord.row), Dec(coord.col)),
+        Coord@(Inc(coord.row),     coord.col ),
+        Coord@(Inc(coord.row), Inc(coord.col))]);
+
+      ForS<Coord@, Cand@>(neighbors, cand_alive, (Coord@ n, Cand@ c) {
+        C.InsertWith(c, n, (Maybe@<Status@> ms) {
+          ?(ms; just: Status@(ms.just.alive, IncCount(ms.just.neighbors)),
+                nothing: Status@(False, Count@(1: Unit)));
+        });
+      });
+    }
+  );
 
   # 2. Filter live cells from the map.
-
-  # TODO: Actually do the steps above. For now we don't step anything, just to
-  # help set up the unit tests for game of life.
-  w;
+  C.For<World@>(candidates, W.Empty,
+    (Coord@ coord, Status@ status, World@ w_in) {
+    ?(Lives(status);
+       true: W.Insert(w_in, coord, Unit),
+       false: w_in);
+  });
 };
 
 @(Coord@, World@, World, EqWorld, Step);

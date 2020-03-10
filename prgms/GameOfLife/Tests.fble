@@ -35,9 +35,7 @@ TestResult@! AcornStep = $({
     C(3, 5)
   ]);
 
-  # TODO: Should be EqWorld(g0, g1).
-  # The test is disabled for now until we implement Step.
-  ?(EqWorld(g0, g0);
+  ?(EqWorld(g1, Step(g0));
       true: TestResult@(pass: Unit),
       false: TestResult@(fail: Str(Chars|failed)));
 });

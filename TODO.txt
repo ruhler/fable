@@ -1,8 +1,7 @@
 Module Revision:
-* Re organize modules hierarchically.
 * Separate Map from DataMap and EqMap.
-* Add '+' and '-' modifiers to module spec.
-* Add tests ad implementation for '+' and '-' modules.
+* Add spec tests for '+' and '*' module access modifiers.
+* Implement support for '+' and '*' module access modifiers.
 
 Miscellaneous:
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
@@ -25,10 +24,6 @@ Miscellaneous:
 * Don't give duplicate error messages if the literal type is malformed.
 * Remove struct import syntax in favor of let or a new multi-import format.
 * Add support for abstract types?
-* Implement Game of Life.
-  - Implement step 1 of GameOfLife%.Step.
-  - Implement step 2 of GameOfLife%.Step.
-  - Properly enable AcornStep test.
 * Fix syntax highlighting of paths
   For example: *(@<DataMap%.Map@>Map@ 
 * Make Foo@: highlight like a field instead of like a type?
@@ -126,9 +121,7 @@ Table Tennis:
 Sudoku:
 
 Game of Life:
-* live if
-  A. is alive and have 2 or 3 live neighbors
-  B. is dead and have 3 live neighbors
+* Figure out what the UI should be and implement that.
 
 Space Invaders:
 * Render objects - how to test?
