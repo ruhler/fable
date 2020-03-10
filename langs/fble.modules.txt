@@ -118,3 +118,45 @@ Or: '-' for read and write. e.g. internal only private.
 That sounds like a nice proposal to me. Let's try it and see how it feels.
 Then the only thing left is to figure out abstract data types.
 
+---
+
+When writing the spec for the above access controls, I realize having separate
+privileged and non-privileged makes for an awkward situation.
+
+If you just have public and private, then we assume a parent has private
+access to its children and private access to its siblings. And children have
+access to their parent.
+
+If you add non-privileged, then there are two groups that a parent is involved
+with: its children and its siblings. Then you need two specifications. Does it
+have privileged access to its children? Does it have privileged access to its
+siblings?
+
+If all you get from privileged/non-privileged is an extra compile time check,
+maybe it's not worth it? It doesn't really fit in the notion that a directory
+is all owned by the same organization. It adds a strange corner case to the
+spec.
+
+Potentially you could work around it too, for example:
+
+  Foo/
+    Tests.fble
+    Impl*/Impl.fble
+
+Well, no. That doesn't really work. Because if Tests.fble doesn't have the
+access it needs, neither does Foo. Unless Foo is just a re-export of an
+internal module:
+  
+  Foo.fble        // re-exports Private.fble
+  Foo/            
+    Tests.fble    // uses Private.fble
+    Private*.fble // re-exports API.fble
+    Private*/
+      Impl.fble
+      API.fble
+    
+So yeah, worst case, using reexport, which is trivial, you could separate the
+access into privileged and non-privileged just using directory structure with
+public and private. My vote is to get rid of the notion of privileged and
+non-privileged for the first implementation.
+

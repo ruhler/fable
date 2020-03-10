@@ -1,12 +1,12 @@
-Module Revision:
+* GameOfLife: Implement 100 iteration graphical centered acorn simulation.
 * Separate Map from DataMap and EqMap.
-* Add spec tests for '+' and '*' module access modifiers.
+* Add spec tests for '*' module access modifier.
  - private module not visible outside parent.
  - private module is visible to parent.
  - private module is visible to private sibling.
  - private module is visible to privileged sibling.
  - private module not visible to no-privileged sibling.
-* Implement support for '+' and '*' module access modifiers.
+* Implement support for '*' module access modifiers.
 
 Miscellaneous:
 * Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
