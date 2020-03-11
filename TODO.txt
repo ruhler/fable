@@ -10,6 +10,7 @@
 * Implement support for '*' module access modifiers.
 
 Miscellaneous:
+* Figure out why GameOfLife is so absurdly slow.
 * Implement less than, div and friends for Int@.
 * Check that types are reported nicely in error messages. I feel like I've
   been getting a lot of normalized types in error messages lately.
@@ -131,7 +132,6 @@ Table Tennis:
 Sudoku:
 
 Game of Life:
-* Figure out what the UI should be and implement that.
 
 Space Invaders:
 * Render objects - how to test?

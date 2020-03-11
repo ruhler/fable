@@ -8,12 +8,11 @@ fble-test {
   Bool {
     # This compiler error shouldn't effect the overall program.
     zzz;
-  } { {
-      Unit {
-        @ Unit@ = *();
-        Unit@ Unit = Unit@();
-        @(Unit@, Unit);
-      } {}
+  } {
+    Unit {
+      @ Unit@ = *();
+      Unit@ Unit = Unit@();
+      @(Unit@, Unit);
     }
   }
 }

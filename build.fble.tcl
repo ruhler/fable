@@ -66,7 +66,7 @@ proc write_modules { dir modules } {
   foreach m $modules {
     set name [lindex $m 0]
     set value [lindex $m 1]
-    set submodules [lindex $m 2]
+    set submodules [lrange $m 2 end]
     exec echo $value > $dir/$name.fble
     exec mkdir -p $dir/$name
     write_modules $dir/$name $submodules
