@@ -1,4 +1,6 @@
-* GameOfLife: Implement 100 iteration graphical centered acorn simulation.
+* GameOfLife: Figure out why it just isn't working very well.
+* Merge and generalize Snake and snake drivers.
+  - Reuse it for GameOfLife too.
 * Separate Map from DataMap and EqMap.
 * Add spec tests for '*' module access modifier.
  - private module not visible outside parent.
@@ -9,6 +11,9 @@
 * Implement support for '*' module access modifiers.
 
 Miscellaneous:
+* Implement less than, div and friends for Int@.
+* Check that types are reported nicely in error messages. I feel like I've
+  been getting a lot of normalized types in error messages lately.
 * Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
 * Why is statics for Bit2X.fulladd! 3 long when only entry 0 is used?

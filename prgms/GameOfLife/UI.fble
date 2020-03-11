@@ -1,0 +1,80 @@
+
+{ /Bool%; @(Bool@, And, True, False); };
+{ /Draw%; @(Draw@, Color@); };
+{ /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
+{ /Int%; @(Int@, Lit2, Lit3, 0, 1, 2, 3, 4, 5, 6, IsZero, Dec); };
+{ /List%; @(S@, S, S0, ConsS); };
+{ /Nat%; @(Nat@, Lt); };
+@(N: /Nat%);
+{ /Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
+{ /Process%; @(Get@, Put@); };
+{ /Unit%; @(Unit@, Unit); };
+
+# TODO: Factor this out into a generic API. For now we are reusing the
+# existing fble-Snake interface.
+@ Direction@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
+@ Input@ = +(Direction@ dir, Unit@ tick);
+
+(Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
+
+# The snake API uses a 60 x 20 grid. Center the acorn around that.
+World@ acorn = World([
+  C(Lit2(1, 0), Lit2(3, 1)),
+
+  C(Lit2(1, 1), Lit2(3, 3)),
+
+  C(Lit2(1, 2), Lit2(3, 0)),
+  C(Lit2(1, 2), Lit2(3, 1)),
+  C(Lit2(1, 2), Lit2(3, 4)),
+  C(Lit2(1, 2), Lit2(3, 5)),
+  C(Lit2(1, 2), Lit2(3, 6))
+]);
+
+(Int@) { Maybe@<Nat@>; } ToNat = (Int@ x) {
+  ?(x;
+      0: Just<Nat@>(N.0),
+      m1: Nothing<Nat@>,
+      2x: MapMaybe<Nat@, Nat@>(ToNat(x.2x), (Nat@ n) { N.Mul(N.2, n); }),
+      2xp1: MapMaybe<Nat@, Nat@>(ToNat(x.2xp1), (Nat@ n) { N.Inc(N.Mul(N.2, n)); })
+   );
+};
+
+(Maybe@<Nat@>) { Bool@; } IsJust = (Maybe@<Nat@> m) {
+  ?(m; just: True, nothing: False);
+};
+
+Nat@ MaxRow = N.Lit2(N.2, N.0);
+Nat@ MaxCol = N.Lit2(N.6, N.0);
+
+(World@) { S@<Draw@>; } DrawWorld = (World@ w) {
+  Draw@ clear = Draw@(N.0, N.0, MaxCol, MaxRow, Color@(black: Unit));
+    
+  # 2. For each live cell in range, draw a green unit square.
+  S@<Draw@> cells = ForWorld<S@<Draw@>>(w, S0<Draw@>, (Coord@ coord, Unit@ _, S@<Draw@> d) {
+    Maybe@<Nat@> mr = ToNat(coord.row);
+    Maybe@<Nat@> mc = ToNat(coord.col);
+    ?(And(IsJust(mr), IsJust(mc));
+       true: {
+         ?(And(Lt(mr.just, MaxRow), Lt(mc.just, MaxCol));
+            true: ConsS<Draw@>(Draw@(mc.just, mr.just, N.1, N.1, Color@(green: Unit)), d),
+            false: d);
+       },
+       false: d);
+  });
+
+  ConsS<Draw@>(clear, cells);
+};
+
+(Get@<Input@>, Put@<S@<Draw@>>, Int@, World@) { Unit@!; }
+StepUI = (Get@<Input@> in, Put@<S@<Draw@>> out, Int@ n, World@ w) {
+  Unit@ _ := out(DrawWorld(w));
+  Input@ x := in;
+  ?(IsZero(n); true: $(Unit), false: StepUI(in, out, Dec(n), Step(w)));
+};
+
+(Get@<Input@>, Put@<S@<Draw@>>){Unit@!;}
+Main = (Get@<Input@> in, Put@<S@<Draw@>> out) {
+  StepUI(in, out, Lit3(1, 0, 0), acorn);
+};
+
+Main;

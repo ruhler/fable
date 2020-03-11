@@ -113,4 +113,4 @@
   ?(IsZero(n); true: w, false: StepN(Dec(n), Step(w)));
 };
 
-@(Coord@, World@, World, EqWorld, Step, StepN);
+@(Coord@, World@, World, ForWorld: W.For, EqWorld, Step, StepN);
