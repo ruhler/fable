@@ -1,4 +1,3 @@
-* GameOfLife: Figure out why it just isn't working very well.
 * Merge and generalize Snake and snake drivers.
   - Reuse it for GameOfLife too.
 * Separate Map from DataMap and EqMap.

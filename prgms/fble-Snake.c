@@ -172,6 +172,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       }
       color_set(0, NULL);
     }
+    refresh();
 
     FbleValueRelease(arena, io->ports.xs[1]);
     io->ports.xs[1] = NULL;
