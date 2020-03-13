@@ -1,7 +1,9 @@
+* Implement support for '*' module access modifiers.
+ - Add a tree structure tracking access at each node
+ - Use it for checking access.
 * Merge and generalize Snake and snake drivers.
   - Reuse it for GameOfLife too.
 * Separate Map from DataMap and EqMap.
-* Implement support for '*' module access modifiers.
 
 Miscellaneous:
 * Figure out why GameOfLife is so absurdly slow.
