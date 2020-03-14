@@ -181,9 +181,6 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
       if (FbleNamesEqual(&path.xs[i], &tree->children.xs[c]->name)) {
         treed = true;
         tree = tree->children.xs[c];
-        if (tree->private) {
-          strcat(filename, "*");
-        }
         break;
       }
     }
@@ -196,19 +193,19 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
       tree = child;
 
       char* tail = filename + strlen(filename);
+      assert(*tail == '\0');
+
       if (i + 1 == path.size) {
         strcat(filename, ".fble");
       }
       bool public = (access(filename, F_OK) == 0);
-      // perror(filename);
-
       *tail = '\0';
+
       strcat(filename, "*");
       if (i + 1 == path.size) {
         strcat(filename, ".fble");
       }
       bool private = (access(filename, F_OK) == 0);
-      // perror(filename);
       *tail = '\0';
 
       if (public && private) {
@@ -230,6 +227,10 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
         fprintf(stderr, "%% not found\n");
         return NULL;
       }
+    }
+
+    if (tree->private) {
+      strcat(filename, "*");
     }
   }
   strcat(filename, ".fble");
