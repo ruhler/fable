@@ -39,10 +39,55 @@ typedef struct Stack {
   struct Stack* tail;
 } Stack;
 
+static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target);
 static void FreeTree(FbleArena* arena, Tree* tree);
 static bool PathsEqual(FbleNameV a, FbleNameV b);
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
 static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs);
+
+// AccessAllowed --
+//   Check if the module at the given source path is allowed to access the
+//   module at the given target path, according to the access modifiers in the
+//   tree.
+//
+// Inputs:
+//   tree - tree with access modifier information
+//   source - path to the module making a reference to another module.
+//   target - path to the module being referred to.
+//
+// Results:
+//   true if source is allowed to access target, false otherwise.
+//
+// Side effects:
+//   none.
+static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target)
+{
+  // Count how many nodes in the path to the target from the root are visible
+  // to the source thanks to it being under a sibling node.
+  size_t visible = 0;
+  while (visible < source.size && visible < target.size
+      && FbleNamesEqual(source.xs + visible, target.xs + visible)) {
+    visible++;
+  }
+
+  // Ensure all nodes that aren't visible due to sibling state are public.
+  for (size_t i = 0; i < target.size; ++i) {
+    Tree* child = NULL;
+    for (size_t j = 0; j < tree->children.size; ++j) {
+      if (FbleNamesEqual(&tree->children.xs[j]->name, target.xs + i)) {
+        child = tree->children.xs[j];
+        break;
+      }
+    }
+    assert(child != NULL);
+    tree = child;
+
+    if (tree->private && i > visible) {
+      return false;
+    }
+  }
+  return true;
+}
 
 // FreeTree --
 //   Free memory associated with the given tree.
@@ -291,7 +336,13 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     bool found = false;
     for (size_t i = 0; i < program->modules.size; ++i) {
       if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
-        // TODO: Check that the path is visible to this module.
+        if (!AccessAllowed(tree, stack->path, ref->path)) {
+          // TODO: Doesn't this leak memory allocated for the stack?
+          FbleReportError("cannot reference private module\n", &ref->path.xs[0].loc);
+          FreeTree(arena, tree);
+          return NULL;
+        }
+
         ref->resolved = program->modules.xs[i].name;
         stack->module_refs.size--;
         found = true;
@@ -305,6 +356,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
     for (Stack* s = stack; s != NULL; s = s->tail) {
       if (PathsEqual(ref->path, s->path)) {
+        // TODO: Doesn't this leak memory allocated for the stack?
         FbleName* module = ref->path.xs + ref->path.size - 1;
         FbleReportError("recursive module dependency\n", &module->loc);
         FreeTree(arena, tree);
@@ -313,7 +365,6 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     }
 
     // Parse the new module, placing it on the stack for processing.
-    // TODO: Check that the path is visible to this module.
     Stack* tail = stack;
     stack = FbleAlloc(arena, Stack);
     FbleVectorInit(arena, stack->module_refs);
