@@ -1,8 +1,16 @@
-* Merge and generalize Snake, snake, and GameOfLife drivers.
- - Switch Snake, snake, GameOfLife from ncurses to sdl
-* Separate Map from DataMap and EqMap.
+App Interface:
+* Remove fble-snake.c and fble-snake.fble.
+* Remove fble-Snake.c in favor of fble-app.c.
+* Define prgms/App.fble with the interface for fble-app.c
+* Pass width and height to App and scale up or down as necessary in fble code.
+* Switch Nat@ to Int@ in App interface?
+* Come up with a nicer timer interface for App.
+* Add 'quit' as an input to GameOfLife/UI, to allow early exit from the
+  app.
+* Change game of life benchmark to use App interface?
 
 Miscellaneous:
+* Separate Map from DataMap and EqMap.
 * Improve error message for private module reference access.
  - Print the paths to source and target at least.
 * Check that FbleLoad doesn't leak memory in error cases.

@@ -3,7 +3,7 @@ exec rm -rf out
 
 # Note: to profile, add -pg flag here, then after running fble-test, run:
 #  gprof out/bin/fble-test
-set ::FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage]
+set ::FLAGS [list -std=c99 -pedantic -Wall -Werror -O0 -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -I/usr/include/SDL2]
 
 # Compile source for libfble.a
 proc gcc_fble {args} {
@@ -59,6 +59,7 @@ gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble -lm
 gcc_prgm -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble -lm
+gcc_prgm -o $::bin/fble-app $::obj/fble-app.o -lfble -lSDL2 -lm
 gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble -lm
 gcc_prgm -o $::bin/fble-stdio $::obj/fble-stdio.o -lfble -lm
 
