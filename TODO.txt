@@ -1,12 +1,9 @@
 App Interface:
-* Define prgms/App.fble with the interface for fble-app.c
-  And prgms/Stdio.fble with the interface for fble-stdio.c?
 * Pass width and height to App and scale up or down as necessary in fble code.
 * Switch Nat@ to Int@ in App interface?
 * Come up with a nicer timer interface for App.
-* Add 'quit' as an input to GameOfLife/UI, to allow early exit from the
-  app.
-* Change game of life benchmark to use App interface?
+* Don't wait for extra key press before exiting fble-app.
+* Debug flaky deadlock in fble-app? Maybe due to multithreading of OnTimer?
 
 Miscellaneous:
 * Separate Map from DataMap and EqMap.

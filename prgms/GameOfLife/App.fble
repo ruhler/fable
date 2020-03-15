@@ -1,4 +1,5 @@
 
+{ /App%; @(App@, Event@); };
 { /Bool%; @(Bool@, And, True, False); };
 { /Draw%; @(Draw@, Color@); };
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
@@ -9,11 +10,6 @@
 { /Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
 { /Process%; @(Get@, Put@); };
 { /Unit%; @(Unit@, Unit); };
-
-# TODO: Factor this out into a generic API. For now we are reusing the
-# existing fble-Snake interface.
-@ Direction@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
-@ Input@ = +(Direction@ dir, Unit@ tick);
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 
@@ -65,15 +61,16 @@ Nat@ MaxCol = N.Lit2(N.6, N.0);
   ConsS<Draw@>(clear, cells);
 };
 
-(Get@<Input@>, Put@<S@<Draw@>>, Int@, World@) { Unit@!; }
-StepUI = (Get@<Input@> in, Put@<S@<Draw@>> out, Int@ n, World@ w) {
+(Get@<Event@>, Put@<S@<Draw@>>, Int@, World@) { Unit@!; }
+StepUI = (Get@<Event@> in, Put@<S@<Draw@>> out, Int@ n, World@ w) {
   Unit@ _ := out(DrawWorld(w));
-  Input@ x := in;
-  ?(IsZero(n); true: $(Unit), false: StepUI(in, out, Dec(n), Step(w)));
+  Event@ x := in;
+  ?(x;
+      tick: ?(IsZero(n); true: $(Unit), false: StepUI(in, out, Dec(n), Step(w))),
+      key: ?(x.key; Q: $(Unit), : StepUI(in, out, n, w)));
 };
 
-(Get@<Input@>, Put@<S@<Draw@>>){Unit@!;}
-Main = (Get@<Input@> in, Put@<S@<Draw@>> out) {
+App@ Main = (Get@<Event@> in, Put@<S@<Draw@>> out) {
   StepUI(in, out, Lit3(1, 0, 0), acorn);
 };
 

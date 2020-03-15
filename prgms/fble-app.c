@@ -102,22 +102,19 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       SDL_WaitEvent(&event);
       switch (event.type) {
         case SDL_KEYDOWN: {
-          int c = -1;
+          int k = -1;
           switch (event.key.keysym.scancode) {
-            case SDL_SCANCODE_K: c = 0; break;
-            case SDL_SCANCODE_J: c = 1; break;
-            case SDL_SCANCODE_H: c = 2; break;
-            case SDL_SCANCODE_L: c = 3; break;
-            case SDL_SCANCODE_Q: {
-              SDL_DestroyWindow(gWindow);
-              SDL_Quit();
-            }
+            case SDL_SCANCODE_H: k = 0; break;
+            case SDL_SCANCODE_J: k = 1; break;
+            case SDL_SCANCODE_K: k = 2; break;
+            case SDL_SCANCODE_L: k = 3; break;
+            case SDL_SCANCODE_Q: k = 4; break;
             default: break;
           }
 
-          if (c >= 0) {
+          if (k >= 0) {
             FbleValueV args = { .size = 0, .xs = NULL };
-            io->ports.xs[0] = FbleNewUnionValue(arena, 0, FbleNewUnionValue(arena, c, FbleNewStructValue(arena, args)));
+            io->ports.xs[0] = FbleNewUnionValue(arena, 1, FbleNewUnionValue(arena, k, FbleNewStructValue(arena, args)));
             change = true;
           }
           break;
@@ -125,7 +122,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 
         case SDL_USEREVENT: {
           FbleValueV args = { .size = 0, .xs = NULL };
-          io->ports.xs[0] = FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, args));
+          io->ports.xs[0] = FbleNewUnionValue(arena, 0, FbleNewStructValue(arena, args));
           change = true;
           break;
         }

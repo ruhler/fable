@@ -1,0 +1,21 @@
+
+{ /Unit%; @(Unit@); };
+{ /Draw%; @(Draw@); };
+{ /List%; @(S@); };
+{ /Process%; @(Get@, Put@); };
+
+@ Key@ = +(Unit@ H, Unit@ J, Unit@ K, Unit@ L, Unit@ Q);
+@ Event@ = +(Unit@ tick, Key@ key);
+
+# App@ --
+#   Type of fble programs that can be used with the fble-app driver.
+#
+# Inputs:
+#   in - Get the next input event.
+#   out - Draw to the screen.
+#
+# Results:
+#   None.
+@ App@ = (Get@<Event@>, Put@<S@<Draw@>>){Unit@!;};
+
+@(App@, Key@, Event@);

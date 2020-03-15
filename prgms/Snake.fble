@@ -1,4 +1,5 @@
 
+{ /App%; @(App@, Event@); };
 { /Bool%; @(Bool@, True, False, And); };
 { /Draw%; @(Color@, Draw@); };
 { /List%; @(P@, S@, InitP, LastP); };
@@ -148,11 +149,22 @@ Snake = (Get@<Input@> in, Put@<S@<Draw@>> out, State@ s) {
        });
 };
 
-(Get@<Input@>, Put@<S@<Draw@>>){Unit@!;}
-Main = (Get@<Input@> in, Put@<S@<Draw@>> out) {
+(Get@<Event@>){ Get@<Input@>; } GetInput = (Get@<Event@> in) {
+  Event@ e := in;
+  ?(e;
+    tick: $(Input@(tick: Unit)),
+    key: ?(e.key;
+      H: $(Input@(dir: Direction@(left: Unit))),
+      J: $(Input@(dir: Direction@(down: Unit))),
+      K: $(Input@(dir: Direction@(up: Unit))),
+      L: $(Input@(dir: Direction@(right: Unit))),
+      : GetInput(in)));
+};
+
+App@ Main = (Get@<Event@> in, Put@<S@<Draw@>> out) {
   State@ s = InitialState;
   Unit@ _ := out(DrawState(s));
-  Snake(in, out, s);
+  Snake(GetInput(in), out, s);
 };
 
 Main;
