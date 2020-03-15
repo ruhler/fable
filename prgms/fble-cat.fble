@@ -3,11 +3,11 @@
 { /Bool%; @(Bool@, True); };
 { /Maybe%; @(Maybe@); };
 { /Process%; @(Get@, Put@); };
+{ /Stdio%; @(Stdio@); };
 { /String%; @(Str@); };
 
 # The 'cat' program to cat stdin.
-(Get@<Maybe@<Str@>>, Put@<Str@>){ Bool@!; }
-Cat = (Get@<Maybe@<Str@>> stdin, Put@<Str@> stdout) {
+Stdio@ Cat = (Get@<Maybe@<Str@>> stdin, Put@<Str@> stdout) {
   Maybe@<Str@> line := stdin;
   ?(line;
       just: {

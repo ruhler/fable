@@ -10,7 +10,11 @@
   @(Board@, Player@, Position@, Square@, Status@,
     BoardStatus, EmptyBoard);
 };
-{ /TicTacToe/UI%; @(); };  # Import to test compilation.
+
+# Imports to test compilation.
+{ @(x: /GameOfLife/App%); @(); };
+{ @(x: /Snake%); @(); };
+{ @(x: /TicTacToe/Stdio%); @(); };
 
 TestResult@! TestBoardStatus = {
   Unit@ _ := $(Unit); # Delay the test until we execute the process

@@ -152,8 +152,6 @@ exec mv {*}[glob *.gcov] out/cov/spec
 exec mkdir -p out/test
 testn fble-ref-test exec $::bin/fble-ref-test
 testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-test.txt
-testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble prgms
-testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
 testn fble-decompile exec $::bin/fble-decompile prgms/fble-tests.fble prgms > out/test/fble-tests.fble.s
 testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
 testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null

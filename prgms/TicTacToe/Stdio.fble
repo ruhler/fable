@@ -4,6 +4,7 @@
 { /List%; @(S, Concat); };
 { /Maybe%; @(Maybe@, Just, Nothing); };
 { /Process%; @(Get@, Put@); };
+{ /Stdio%; @(Stdio@); };
 { /String%; @(Str@, Str); };
 { /Unit%; @(Unit@, Unit); };
 
@@ -77,8 +78,7 @@
 };
 
 # Play a game of tic-tac-toe using the stdio interface.
-(Get@<Maybe@<Str@>>, Put@<Str@>){Bool@!;}
-TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
+Stdio@ TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
   Get@<Input@> in = {
     Maybe@<Str@> s := input;
     ?(s; just: {
