@@ -57,8 +57,6 @@ gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-ref-test $::obj/fble-ref-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble -lm
-gcc_prgm -o $::bin/fble-snake $::obj/fble-snake.o -lncurses -lfble -lm
-gcc_prgm -o $::bin/fble-Snake $::obj/fble-Snake.o -lncurses -lfble -lm
 gcc_prgm -o $::bin/fble-app $::obj/fble-app.o -lfble -lSDL2 -lm
 gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble -lm
 gcc_prgm -o $::bin/fble-stdio $::obj/fble-stdio.o -lfble -lm
@@ -154,7 +152,6 @@ exec mv {*}[glob *.gcov] out/cov/spec
 exec mkdir -p out/test
 testn fble-ref-test exec $::bin/fble-ref-test
 testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-test.txt
-testn fble-snake exec $::bin/fble-test prgms/fble-snake.fble
 testn fble-tictactoe exec $::bin/fble-test prgms/fble-tictactoe.fble prgms
 testn fble-Snake exec $::bin/fble-test prgms/fble-Snake.fble prgms
 testn fble-decompile exec $::bin/fble-decompile prgms/fble-tests.fble prgms > out/test/fble-tests.fble.s

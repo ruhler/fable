@@ -1,6 +1,4 @@
 App Interface:
-* Remove fble-snake.c and fble-snake.fble.
-* Remove fble-Snake.c in favor of fble-app.c.
 * Define prgms/App.fble with the interface for fble-app.c
 * Pass width and height to App and scale up or down as necessary in fble code.
 * Switch Nat@ to Int@ in App interface?
