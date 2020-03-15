@@ -2,6 +2,7 @@
 { /List%; @(S@, S, Concat); };
 { /Maybe%; @(Maybe@); };
 { /Process%; @(Get@, Put@); };
+{ /Stdio%; @(Stdio@); };
 { /String%; @(Str@); };
 { /Test%; @(Test@); };
 
@@ -18,6 +19,8 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /TicTacToe/Tests%.Tests
 ]));
 
-(Get@<Maybe@<Str@>> in, Put@<Str@> out) {
+Stdio@ Main = (Get@<Maybe@<Str@>> in, Put@<Str@> out) {
   /Test%.RunTests(out, AllTests);
 };
+
+Main;

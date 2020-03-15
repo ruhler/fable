@@ -71,7 +71,13 @@ StepUI = (Get@<Event@> in, Put@<S@<Draw@>> out, Int@ n, World@ w) {
 };
 
 App@ Main = (Get@<Event@> in, Put@<S@<Draw@>> out) {
-  StepUI(in, out, Lit3(1, 0, 0), acorn);
+  Unit@ _ := StepUI(in, out, Lit3(1, 0, 0), acorn);
+
+  Unit@! WaitForKeyPress = {
+    Event@ e := in;
+    ?(e; tick: WaitForKeyPress, key: $(Unit));
+  };
+  WaitForKeyPress;
 };
 
 Main;

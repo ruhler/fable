@@ -270,15 +270,6 @@ int main(int argc, char* argv[])
   FbleDeleteArena(eval_arena);
   FbleDeleteArena(prgm_arena);
 
-  // Wait for key down before quiting.
-  while (true) {
-    SDL_Event event;
-    SDL_WaitEvent(&event);
-    if (event.type == SDL_KEYDOWN) {
-      break;
-    }
-  }
-
   SDL_RemoveTimer(timer);
   SDL_DestroyWindow(gWindow);
   SDL_Quit();

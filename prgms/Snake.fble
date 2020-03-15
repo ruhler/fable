@@ -164,7 +164,13 @@ Snake = (Get@<Input@> in, Put@<S@<Draw@>> out, State@ s) {
 App@ Main = (Get@<Event@> in, Put@<S@<Draw@>> out) {
   State@ s = InitialState;
   Unit@ _ := out(DrawState(s));
-  Snake(GetInput(in), out, s);
+  Unit@ _ := Snake(GetInput(in), out, s);
+
+  Unit@! WaitForKeyPress = {
+    Event@ e := in;
+    ?(e; tick: WaitForKeyPress, key: $(Unit));
+  };
+  WaitForKeyPress;
 };
 
 Main;
