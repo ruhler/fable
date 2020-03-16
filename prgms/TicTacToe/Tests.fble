@@ -11,9 +11,7 @@
     BoardStatus, EmptyBoard);
 };
 
-# Imports to test compilation.
-{ @(x: /GameOfLife/App%); @(); };
-{ @(x: /Snake%); @(); };
+# Import to test compilation.
 { @(x: /TicTacToe/Stdio%); @(); };
 
 TestResult@! TestBoardStatus = {

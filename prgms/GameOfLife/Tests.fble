@@ -8,6 +8,9 @@
 
 { /GameOfLife%; @(Coord@, World@, World, EqWorld, Step); };
 
+# Import to test compilation.
+{ @(x: /GameOfLife/App%); @(); };
+
 # Do a sigle step of the acorn configuration.
 # Generation 0:
 #   .O.....

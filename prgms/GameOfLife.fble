@@ -1,6 +1,7 @@
 
 { /Bool%; @(Bool@, True, False); };
 { /Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
+{ /Int/Nat%; @(Nat@); };
 { /Int%; @(Int@, IsZero, Inc, Dec); };
 { /List%; @(S@, List@, S, ForS); };
 { /Map%; @(Map); };
@@ -9,11 +10,12 @@
 
 @ Coord@ = *(Int@ row, Int@ col);
 
+(Nat@) { Data@; } DNat = (Nat@ n) {
+  ?(n; 1: DUnit, 2p0: Left(DNat(n.2p0)), 2p1: Right(DNat(n.2p1)));
+};
+
 (Int@){ Data@; } DInt = (Int@ n) {
-  ?(n; 0: Left(Left(DUnit)),
-       m1: Left(Right(DUnit)),
-       2x: Right(Left(DInt(n.2x))),
-       2xp1: Right(Right(DInt(n.2xp1))));
+  ?(n; n: Left(DNat(n.n)), 0: DUnit, p: Right(DNat(n.p)));
 };
 
 (Coord@) { Data@; } DCoord = (Coord@ c) {

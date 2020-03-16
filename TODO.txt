@@ -1,4 +1,5 @@
 App Interface:
+* Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
 * Switch Nat@ to Int@ in App interface?
 * Come up with a nicer timer interface for App.
@@ -6,14 +7,18 @@ App Interface:
 * Debug flaky deadlock in fble-app? Maybe due to multithreading of OnTimer?
 
 Miscellaneous:
+* Remove /Nat%, which should be obsolete by now.
+* Make /Int/Nat% private? By exporting /Int/Nat/Data publicly?
 * Separate Map from DataMap and EqMap.
 * Improve error message for private module reference access.
  - Print the paths to source and target at least.
 * Check that FbleLoad doesn't leak memory in error cases.
+ - Maybe use a separate alloc arena for temporary allocations?
 * Figure out why GameOfLife is so absurdly slow.
 * Implement less than, div and friends for Int@.
 * Check that types are reported nicely in error messages. I feel like I've
   been getting a lot of normalized types in error messages lately.
+ - Maybe refactor how types are tracked in Compile first?
 * Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
 * Why is statics for Bit2X.fulladd! 3 long when only entry 0 is used?

@@ -6,6 +6,9 @@
 { /String%; @(Str@); };
 { /Test%; @(Test@); };
 
+# Import to test compilation.
+{ @(x: /Snake%); @(); };
+
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /GameOfLife/Tests%.Tests,
   /Int/Tests%.Tests,
