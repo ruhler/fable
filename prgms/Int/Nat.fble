@@ -1,5 +1,4 @@
 
-{ /Bool%; @(Bool@, True, False); };
 { /Maybe%; @(Maybe@, Just, Nothing); };
 { /Unit%; @(Unit@, Unit); };
 
@@ -18,12 +17,6 @@
 # 2P1(x) = 2 * x + 1
 (Nat@) { Nat@; } 2P1 = (Nat@ x) {
   Nat@(2p1: x);
-};
-
-(Nat@, Nat@) { Bool@; } Eq = (Nat@ a, Nat@ b) {
-  ?(a; 1: ?(b; 1: True, 2p0: False, 2p1: False),
-       2p0: ?(b; 1: False, 2p0: Eq(a.2p0, b.2p0), 2p1: False),
-       2p1: ?(b; 1: False, 2p0: False, 2p1: Eq(a.2p1, b.2p1)));
 };
 
 Nat@ 1 = Nat@(1: Unit);
@@ -74,4 +67,4 @@ Nat@ 10 = 2P0(5);
        2p1: Add(Mul(a.2p1, 2P0(b)), b));
 };
 
-@(Nat@, 2P0, 2P1, Eq, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Sub1, Mul);
+@(Nat@, 2P0, 2P1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Sub1, Mul);

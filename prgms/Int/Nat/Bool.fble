@@ -1,0 +1,11 @@
+
+{ /Bool%; @(Bool@, True, False); };
+{ /Int/Nat%; @(Nat@); };
+
+(Nat@, Nat@) { Bool@; } Eq = (Nat@ a, Nat@ b) {
+  ?(a; 1: ?(b; 1: True, 2p0: False, 2p1: False),
+       2p0: ?(b; 1: False, 2p0: Eq(a.2p0, b.2p0), 2p1: False),
+       2p1: ?(b; 1: False, 2p0: False, 2p1: Eq(a.2p1, b.2p1)));
+};
+
+@(Eq);
