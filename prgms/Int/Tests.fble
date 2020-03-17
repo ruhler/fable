@@ -10,7 +10,7 @@
   0, 1, 2, 3, 4, 5, Lit2,
   Neg, Add, Sub, Mul);
 };
-{ /Int/Bool%; @(EqInt); };
+{ /Int/Bool%; @(Eq); };
 
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
@@ -25,17 +25,17 @@
 
 (CharLit@, Int@, Int@!){Test@;} TEq = (CharLit@ name, Int@ a, Int@! b) {
   # TODO: Provide a custom error message
-  T(name, { Int@ x := b; $(EqInt(a, x)); });
+  T(name, { Int@ x := b; $(Eq(a, x)); });
 };
 
 S@<Test@> Tests = S<Test@>([
-  T(Chars|Eq_0_0, $(EqInt(0, 0))),
-  T(Chars|Eq_0_1, $(Not(EqInt(0, 1)))),
-  T(Chars|Eq_4_4, $(EqInt(4, 4))),
-  T(Chars|Eq_5_5, $(EqInt(5, 5))),
-  T(Chars|Eq_4_5, $(Not(EqInt(4, 5)))),
-  T(Chars|Eq_5_m5, $(Not(EqInt(5, Neg(5))))),
-  T(Chars|Eq_m1_m1, $(EqInt(Neg(5), Neg(5)))),
+  T(Chars|Eq_0_0, $(Eq(0, 0))),
+  T(Chars|Eq_0_1, $(Not(Eq(0, 1)))),
+  T(Chars|Eq_4_4, $(Eq(4, 4))),
+  T(Chars|Eq_5_5, $(Eq(5, 5))),
+  T(Chars|Eq_4_5, $(Not(Eq(4, 5)))),
+  T(Chars|Eq_5_m5, $(Not(Eq(5, Neg(5))))),
+  T(Chars|Eq_m1_m1, $(Eq(Neg(5), Neg(5)))),
   TEq(Chars|Add_2_3, 5, $(Add(2, 3))),
   TEq(Chars|Add_3_m5, Neg(2), $(Add(3, Neg(5)))),
   TEq(Chars|Sub_5_3, 2, $(Sub(5, 3))),
