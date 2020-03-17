@@ -1,5 +1,4 @@
 
-{ /Bool%; @(Bool@, True, False); };
 { /Int/Nat%; @(Nat@); };
 @(Nat: /Int/Nat%);
 { /Maybe%; @(Maybe@); };
@@ -21,19 +20,8 @@ Int@ 0 = Int@(0: Unit);
   Int@(p: x);
 };
 
-(Int@, Int@){ Bool@; } EqInt = (Int@ a, Int@ b) {
-  ?(a;
-      n: ?(b; n: Nat.Eq(a.n, b.n),  0: False, p: False),
-      0: ?(b; n: False, 0: True,  p: False),
-      p: ?(b; n: False, 0: False, p: Nat.Eq(a.p, b.p)));
-};
-
 # The integer (-1)
 Int@ Minus1 = N(Nat.1);
-
-(Int@) { Bool@; } IsZero = (Int@ x) {
-  ?(x; 0: True, : False);
-};
 
 Int@ 1 = P(Nat.1);
 Int@ 2 = P(Nat.2);
@@ -136,4 +124,4 @@ Int@ 1000 = Mul(10, 100);
 };
 
 @(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Lit2, Lit3, Lit4,
-  IsZero, EqInt, Inc, Dec, Add, Sub, Neg, Mul);
+ Inc, Dec, Add, Sub, Neg, Mul);

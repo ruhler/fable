@@ -1,0 +1,18 @@
+
+{ /Bool%; @(Bool@, True, False); };
+{ /Int%; @(Int@); };
+{ /Int/Nat%; @(EqNat: Eq); };
+
+(Int@) { Bool@; } IsZero = (Int@ x) {
+  ?(x; 0: True, : False);
+};
+
+(Int@, Int@){ Bool@; } EqInt = (Int@ a, Int@ b) {
+  ?(a;
+      n: ?(b; n: EqNat(a.n, b.n),  0: False, p: False),
+      0: ?(b; n: False, 0: True,  p: False),
+      p: ?(b; n: False, 0: False, p: EqNat(a.p, b.p)));
+};
+
+@(IsZero, EqInt);
+

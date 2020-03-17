@@ -8,8 +8,9 @@
 
 { /Int%; @(Int@,
   0, 1, 2, 3, 4, 5, Lit2,
-  EqInt, Neg, Add, Sub, Mul);
+  Neg, Add, Sub, Mul);
 };
+{ /Int/Bool%; @(EqInt); };
 
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 

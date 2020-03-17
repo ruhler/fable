@@ -1,13 +1,11 @@
-App Interface:
+* Remove /Nat%, which should be obsolete by now.
+ - Add Lt, Gt, and Mod to /Int%, and switch Primes to use that.
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
 * Switch Nat@ to Int@ in App interface?
 * Come up with a nicer timer interface for App.
 * Don't wait for extra key press before exiting fble-app.
 * Debug flaky deadlock in fble-app? Maybe due to multithreading of OnTimer?
-
-Miscellaneous:
-* Remove /Nat%, which should be obsolete by now.
 * Make /Int/Nat% private? By exporting /Int/Nat/Data publicly?
 * Separate Map from DataMap and EqMap.
 * Improve error message for private module reference access.
