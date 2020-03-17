@@ -10,7 +10,7 @@
   0, 1, 2, 3, 4, 5, 6, 7, Lit2,
   Neg, Add, Sub, Mul);
 };
-{ /Int/Bool%; @(Eq, Lt, Le); };
+{ /Int/Bool%; @(Eq, Lt, Le, Gt, Ge); };
 
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
@@ -64,6 +64,32 @@ S@<Test@> Tests = S<Test@>([
   T(Chars|Le_5_6, $(Le(5, 6))),
   T(Chars|Le_5_7, $(Le(5, 7))),
 
+  T(Chars|Gt_4_2, $(Gt(4, 2))),
+  T(Chars|Gt_4_3, $(Gt(4, 3))),
+  T(Chars|Gt_4_4, $(Not(Gt(4, 4)))),
+  T(Chars|Gt_4_5, $(Not(Gt(4, 5)))),
+  T(Chars|Gt_4_6, $(Not(Gt(4, 6)))),
+
+  T(Chars|Gt_5_3, $(Gt(5, 3))),
+  T(Chars|Gt_5_4, $(Gt(5, 4))),
+  T(Chars|Gt_5_5, $(Not(Gt(5, 5)))),
+  T(Chars|Gt_5_6, $(Not(Gt(5, 6)))),
+  T(Chars|Gt_5_7, $(Not(Gt(5, 7)))),
+
+  T(Chars|Gt_m5_m7, $(Gt(Neg(5), Neg(7)))),
+  T(Chars|Gt_m7_m5, $(Not(Gt(Neg(7), Neg(5))))),
+
+  T(Chars|Ge_4_2, $(Ge(4, 2))),
+  T(Chars|Ge_4_3, $(Ge(4, 3))),
+  T(Chars|Ge_4_4, $(Ge(4, 4))),
+  T(Chars|Ge_4_5, $(Not(Ge(4, 5)))),
+  T(Chars|Ge_4_6, $(Not(Ge(4, 6)))),
+
+  T(Chars|Ge_5_3, $(Ge(5, 3))),
+  T(Chars|Ge_5_4, $(Ge(5, 4))),
+  T(Chars|Ge_5_5, $(Ge(5, 5))),
+  T(Chars|Ge_5_6, $(Not(Ge(5, 6)))),
+  T(Chars|Ge_5_7, $(Not(Ge(5, 7)))),
 
   TEq(Chars|Add_2_3, 5, $(Add(2, 3))),
   TEq(Chars|Add_3_m5, Neg(2), $(Add(3, Neg(5)))),
