@@ -8,4 +8,15 @@
        2p1: ?(b; 1: False, 2p0: False, 2p1: Eq(a.2p1, b.2p1)));
 };
 
-@(Eq);
+(Nat@, Nat@) { Bool@; } Lt = (Nat@ a, Nat@ b) {
+  ?(a; 1: ?(b; 1: False, 2p0: True, 2p1: True),
+       2p0: ?(b; 1: False, 2p0: Lt(a.2p0, b.2p0), 2p1: Le(a.2p0, b.2p1)),
+       2p1: ?(b; 1: False, 2p0: Lt(a.2p1, b.2p0), 2p1: Lt(a.2p1, b.2p1)));
+},
+(Nat@, Nat@) { Bool@; } Le = (Nat@ a, Nat@ b) {
+  ?(a; 1: True,
+       2p0: ?(b; 1: False, 2p0: Le(a.2p0, b.2p0), 2p1: Le(a.2p0, b.2p1)),
+       2p1: ?(b; 1: False, 2p0: Lt(a.2p1, b.2p0), 2p1: Le(a.2p1, b.2p1)));
+};
+
+@(Eq, Lt, Le);

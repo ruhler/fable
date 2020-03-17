@@ -1,7 +1,7 @@
 
 { /Bool%; @(Bool@, True, False); };
 { /Int%; @(Int@); };
-{ /Int/Nat/Bool%; @(EqNat: Eq); };
+{ /Int/Nat/Bool%; @(EqNat: Eq, LtNat: Lt, LeNat: Le); };
 
 (Int@) { Bool@; } IsZero = (Int@ x) {
   ?(x; 0: True, : False);
@@ -14,5 +14,19 @@
       p: ?(b; n: False, 0: False, p: EqNat(a.p, b.p)));
 };
 
-@(IsZero, Eq);
+(Int@, Int@){ Bool@; } Lt = (Int@ a, Int@ b) {
+  ?(a;
+      n: ?(b; n: LtNat(b.n, a.n), 0: True, p: True),
+      0: ?(b; n: False, 0: False, p: True),
+      p: ?(b; n: False, 0: False, p: LtNat(a.p, b.p)));
+};
+
+(Int@, Int@){ Bool@; } Le = (Int@ a, Int@ b) {
+  ?(a;
+      n: ?(b; n: LeNat(b.n, a.n), 0: True, p: True),
+      0: ?(b; n: False, 0: True, p: True),
+      p: ?(b; n: False, 0: False, p: LeNat(a.p, b.p)));
+};
+
+@(IsZero, Eq, Lt, Le);
 

@@ -7,10 +7,10 @@
 { /Unit%; @(Unit); };
 
 { /Int%; @(Int@,
-  0, 1, 2, 3, 4, 5, Lit2,
+  0, 1, 2, 3, 4, 5, 6, 7, Lit2,
   Neg, Add, Sub, Mul);
 };
-{ /Int/Bool%; @(Eq); };
+{ /Int/Bool%; @(Eq, Lt, Le); };
 
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
@@ -36,6 +36,35 @@ S@<Test@> Tests = S<Test@>([
   T(Chars|Eq_4_5, $(Not(Eq(4, 5)))),
   T(Chars|Eq_5_m5, $(Not(Eq(5, Neg(5))))),
   T(Chars|Eq_m1_m1, $(Eq(Neg(5), Neg(5)))),
+
+  T(Chars|Lt_4_2, $(Not(Lt(4, 2)))),
+  T(Chars|Lt_4_3, $(Not(Lt(4, 3)))),
+  T(Chars|Lt_4_4, $(Not(Lt(4, 4)))),
+  T(Chars|Lt_4_5, $(Lt(4, 5))),
+  T(Chars|Lt_4_6, $(Lt(4, 6))),
+
+  T(Chars|Lt_5_3, $(Not(Lt(5, 3)))),
+  T(Chars|Lt_5_4, $(Not(Lt(5, 4)))),
+  T(Chars|Lt_5_5, $(Not(Lt(5, 5)))),
+  T(Chars|Lt_5_6, $(Lt(5, 6))),
+  T(Chars|Lt_5_7, $(Lt(5, 7))),
+
+  T(Chars|Lt_m5_m7, $(Not(Lt(Neg(5), Neg(7))))),
+  T(Chars|Lt_m7_m5, $(Lt(Neg(7), Neg(5)))),
+
+  T(Chars|Le_4_2, $(Not(Le(4, 2)))),
+  T(Chars|Le_4_3, $(Not(Le(4, 3)))),
+  T(Chars|Le_4_4, $(Le(4, 4))),
+  T(Chars|Le_4_5, $(Le(4, 5))),
+  T(Chars|Le_4_6, $(Le(4, 6))),
+
+  T(Chars|Le_5_3, $(Not(Le(5, 3)))),
+  T(Chars|Le_5_4, $(Not(Le(5, 4)))),
+  T(Chars|Le_5_5, $(Le(5, 5))),
+  T(Chars|Le_5_6, $(Le(5, 6))),
+  T(Chars|Le_5_7, $(Le(5, 7))),
+
+
   TEq(Chars|Add_2_3, 5, $(Add(2, 3))),
   TEq(Chars|Add_3_m5, Neg(2), $(Add(3, Neg(5)))),
   TEq(Chars|Sub_5_3, 2, $(Sub(5, 3))),
