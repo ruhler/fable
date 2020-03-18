@@ -1,88 +1,88 @@
 
-{ /Int/Nat%; @(Nat@); };
-@(Nat: /Int/Nat%);
+{ /Int/IntP%; @(IntP@); };
+@(IntP: /Int/IntP%);
 { /Maybe%; @(Maybe@); };
 { /Unit%; @(Unit@, Unit); };
 
 @ Int@ = +(
-  Nat@ n,   # Negative integers
+  IntP@ n,   # Negative integers
   Unit@ 0,
-  Nat@ p    # Positive integers
+  IntP@ p    # Positive integers
 );
 
 Int@ 0 = Int@(0: Unit);
 
-(Nat@) { Int@; } N = (Nat@ x) {
+(IntP@) { Int@; } N = (IntP@ x) {
   Int@(n: x);
 };
 
-(Nat@) { Int@; } P = (Nat@ x) {
+(IntP@) { Int@; } P = (IntP@ x) {
   Int@(p: x);
 };
 
 # The integer (-1)
-Int@ Minus1 = N(Nat.1);
+Int@ Minus1 = N(IntP.1);
 
-Int@ 1 = P(Nat.1);
-Int@ 2 = P(Nat.2);
-Int@ 3 = P(Nat.3);
-Int@ 4 = P(Nat.4);
-Int@ 5 = P(Nat.5);
-Int@ 6 = P(Nat.6);
-Int@ 7 = P(Nat.7);
-Int@ 8 = P(Nat.8);
-Int@ 9 = P(Nat.9);
-Int@ 10 = P(Nat.10);
+Int@ 1 = P(IntP.1);
+Int@ 2 = P(IntP.2);
+Int@ 3 = P(IntP.3);
+Int@ 4 = P(IntP.4);
+Int@ 5 = P(IntP.5);
+Int@ 6 = P(IntP.6);
+Int@ 7 = P(IntP.7);
+Int@ 8 = P(IntP.8);
+Int@ 9 = P(IntP.9);
+Int@ 10 = P(IntP.10);
 
 # a + 1
 (Int@){ Int@; } Inc = (Int@ a) {
   ?(a; 
       n: {
-        Maybe@<Nat@> ms = Nat.Sub1(a.n);
+        Maybe@<IntP@> ms = IntP.Sub1(a.n);
         ?(ms; just: N(ms.just), nothing: 0);
       },
-      0: P(Nat.1),
-      p: P(Nat.Add1(a.p)));
+      0: P(IntP.1),
+      p: P(IntP.Add1(a.p)));
 };
 
 # a - 1
 (Int@){ Int@; } Dec = (Int@ a) {
   ?(a;
-      n: N(Nat.Add1(a.n)),
-      0: N(Nat.1),
+      n: N(IntP.Add1(a.n)),
+      0: N(IntP.1),
       p: {
-        Maybe@<Nat@> ms = Nat.Sub1(a.p);
+        Maybe@<IntP@> ms = IntP.Sub1(a.p);
         ?(ms; just: P(ms.just), nothing: 0);
       });
 };
 
 # 2 * a
 (Int@) { Int@; } Mul2 = (Int@ a) {
-  ?(a; n: N(Nat.2P0(a.n)), 0: a, p: P(Nat.2P0(a.p)));
+  ?(a; n: N(IntP.2P0(a.n)), 0: a, p: P(IntP.2P0(a.p)));
 };
 
-(Nat@, Nat@) { Int@; } NatSub = (Nat@ a, Nat@ b) {
+(IntP@, IntP@) { Int@; } SubP = (IntP@ a, IntP@ b) {
   ?(a; 1: {
-         Maybe@<Nat@> ms = Nat.Sub1(b);
+         Maybe@<IntP@> ms = IntP.Sub1(b);
          ?(ms; just: N(ms.just), nothing: 0);
        },
-       2p0: ?(b; 1: P(Nat.Sub1(a).just),
-                 2p0: Mul2(NatSub(a.2p0, b.2p0)),
-                 2p1: Dec(Mul2(NatSub(a.2p0, b.2p1)))),
-       2p1: ?(b; 1: P(Nat.Sub1(a).just),
-                 2p0: Inc(Mul2(NatSub(a.2p1, b.2p0))),
-                 2p1: Mul2(NatSub(a.2p1, b.2p1))));
+       2p0: ?(b; 1: P(IntP.Sub1(a).just),
+                 2p0: Mul2(SubP(a.2p0, b.2p0)),
+                 2p1: Dec(Mul2(SubP(a.2p0, b.2p1)))),
+       2p1: ?(b; 1: P(IntP.Sub1(a).just),
+                 2p0: Inc(Mul2(SubP(a.2p1, b.2p0))),
+                 2p1: Mul2(SubP(a.2p1, b.2p1))));
 };
 
 # a + b
 (Int@, Int@) { Int@; } Add = (Int@ a, Int@ b) {
-  ?(a; n: ?(b; n: N(Nat.Add(a.n, b.n)),
+  ?(a; n: ?(b; n: N(IntP.Add(a.n, b.n)),
                0: a,
-               p: NatSub(b.p, a.n)),
+               p: SubP(b.p, a.n)),
        0: b,
-       p: ?(b; n: NatSub(a.p, b.n),
+       p: ?(b; n: SubP(a.p, b.n),
                0: a,
-               p: P(Nat.Add(a.p, b.p))));
+               p: P(IntP.Add(a.p, b.p))));
 };
 
 # -a 
@@ -99,13 +99,13 @@ Int@ 10 = P(Nat.10);
 # a * b
 (Int@, Int@){ Int@; } Mul = (Int@ a, Int@ b) {
   ?(a; 
-    n: ?(b; n: P(Nat.Mul(a.n, b.n)),
+    n: ?(b; n: P(IntP.Mul(a.n, b.n)),
             0: 0,
-            p: N(Nat.Mul(a.n, b.p))),
+            p: N(IntP.Mul(a.n, b.p))),
     0: 0,
-    p: ?(b; n: N(Nat.Mul(a.p, b.n)),
+    p: ?(b; n: N(IntP.Mul(a.p, b.n)),
             0: 0,
-            p: P(Nat.Mul(a.p, b.p))));
+            p: P(IntP.Mul(a.p, b.p))));
 };
 
 Int@ 100 = Mul(10, 10);

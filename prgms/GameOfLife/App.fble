@@ -4,8 +4,8 @@
 { /Draw%; @(Draw@, Color@); };
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
 { /Int/Int%; @(Int@, Lit2, Lit3, 0, 1, 2, 3, 4, 5, 6, Dec); };
+{ /Int/IntP%; @(IntP@); };
 { /Int/Int/Bool%; @(IsZero); };
-@(INat: /Int/Nat%);
 { /List%; @(S@, S, S0, ConsS); };
 { /Nat%; @(Nat@, Lt); };
 @(N: /Nat%);
@@ -29,17 +29,17 @@ World@ acorn = World([
 ]);
 
 
-(INat.Nat@) { Nat@; } INatToNat = (INat.Nat@ x) {
+(IntP@) { Nat@; } IntPToNat = (IntP@ x) {
   ?(x; 1: Nat@(1: Unit),
-       2p0: Nat@(2p0: INatToNat(x.2p0)),
-       2p1: Nat@(2p1: INatToNat(x.2p1)));
+       2p0: Nat@(2p0: IntPToNat(x.2p0)),
+       2p1: Nat@(2p1: IntPToNat(x.2p1)));
 };
 
 (Int@) { Maybe@<Nat@>; } ToNat = (Int@ x) {
   ?(x;
       n: Nothing<Nat@>,
       0: Just<Nat@>(Nat@(0: Unit)),
-      p: Just<Nat@>(INatToNat(x.p)));
+      p: Just<Nat@>(IntPToNat(x.p)));
 };
 
 (Maybe@<Nat@>) { Bool@; } IsJust = (Maybe@<Nat@> m) {

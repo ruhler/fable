@@ -1,30 +1,30 @@
 
 { /Bool%; @(Bool@, True, False); };
-{ /Int/Nat%; @(Nat@); };
+{ /Int/IntP%; @(IntP@); };
 
-(Nat@, Nat@) { Bool@; } Eq = (Nat@ a, Nat@ b) {
+(IntP@, IntP@) { Bool@; } Eq = (IntP@ a, IntP@ b) {
   ?(a; 1: ?(b; 1: True, 2p0: False, 2p1: False),
        2p0: ?(b; 1: False, 2p0: Eq(a.2p0, b.2p0), 2p1: False),
        2p1: ?(b; 1: False, 2p0: False, 2p1: Eq(a.2p1, b.2p1)));
 };
 
-(Nat@, Nat@) { Bool@; } Lt = (Nat@ a, Nat@ b) {
+(IntP@, IntP@) { Bool@; } Lt = (IntP@ a, IntP@ b) {
   ?(a; 1: ?(b; 1: False, 2p0: True, 2p1: True),
        2p0: ?(b; 1: False, 2p0: Lt(a.2p0, b.2p0), 2p1: Le(a.2p0, b.2p1)),
        2p1: ?(b; 1: False, 2p0: Lt(a.2p1, b.2p0), 2p1: Lt(a.2p1, b.2p1)));
 },
-(Nat@, Nat@) { Bool@; } Le = (Nat@ a, Nat@ b) {
+(IntP@, IntP@) { Bool@; } Le = (IntP@ a, IntP@ b) {
   ?(a; 1: True,
        2p0: ?(b; 1: False, 2p0: Le(a.2p0, b.2p0), 2p1: Le(a.2p0, b.2p1)),
        2p1: ?(b; 1: False, 2p0: Lt(a.2p1, b.2p0), 2p1: Le(a.2p1, b.2p1)));
 };
 
-(Nat@, Nat@) { Bool@; } Gt = (Nat@ a, Nat@ b) {
+(IntP@, IntP@) { Bool@; } Gt = (IntP@ a, IntP@ b) {
   ?(a; 1: False,
        2p0: ?(b; 1: True, 2p0: Gt(a.2p0, b.2p0), 2p1: Gt(a.2p0, b.2p1)),
        2p1: ?(b; 1: True, 2p0: Ge(a.2p1, b.2p0), 2p1: Gt(a.2p1, b.2p1)));
 },
-(Nat@, Nat@) { Bool@; } Ge = (Nat@ a, Nat@ b) {
+(IntP@, IntP@) { Bool@; } Ge = (IntP@ a, IntP@ b) {
   ?(a; 1: ?(b; 1: True, 2p0: False, 2p1: False),
        2p0: ?(b; 1: True, 2p0: Ge(a.2p0, b.2p0), 2p1: Gt(a.2p0, b.2p1)),
        2p1: ?(b; 1: True, 2p0: Ge(a.2p1, b.2p0), 2p1: Ge(a.2p1, b.2p1)));

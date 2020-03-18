@@ -1,7 +1,7 @@
 
 { /Bool%; @(Bool@, True, False); };
 { /Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
-{ /Int/Nat%; @(Nat@); };
+{ /Int/IntP%; @(IntP@); };
 { /Int/Int%; @(Int@, Inc, Dec); };
 { /Int/Int/Bool%; @(IsZero); };
 { /List%; @(S@, List@, S, ForS); };
@@ -11,7 +11,7 @@
 
 @ Coord@ = *(Int@ row, Int@ col);
 
-(Nat@) { Data@; } DNat = (Nat@ n) {
+(IntP@) { Data@; } DNat = (IntP@ n) {
   ?(n; 1: DUnit, 2p0: Left(DNat(n.2p0)), 2p1: Right(DNat(n.2p1)));
 };
 

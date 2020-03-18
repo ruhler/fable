@@ -1,0 +1,70 @@
+
+{ /Maybe%; @(Maybe@, Just, Nothing); };
+{ /Unit%; @(Unit@, Unit); };
+
+# Positive Integers.
+@ IntP@ = +(
+  Unit@ 1, 
+  IntP@ 2p0,
+  IntP@ 2p1
+);
+
+# 2P0(x) = 2 * x
+(IntP@) { IntP@; } 2P0 = (IntP@ x) {
+  IntP@(2p0: x);
+};
+
+# 2P1(x) = 2 * x + 1
+(IntP@) { IntP@; } 2P1 = (IntP@ x) {
+  IntP@(2p1: x);
+};
+
+IntP@ 1 = IntP@(1: Unit);
+IntP@ 2 = 2P0(1);
+IntP@ 3 = 2P1(1);
+IntP@ 4 = 2P0(2);
+IntP@ 5 = 2P1(2);
+IntP@ 6 = 2P0(3);
+IntP@ 7 = 2P1(3);
+IntP@ 8 = 2P0(4);
+IntP@ 9 = 2P1(4);
+IntP@ 10 = 2P0(5);
+
+# Add1(x) = x + 1
+(IntP@) { IntP@; } Add1 = (IntP@ x) {
+  ?(x; 1: 2, 2p0: 2P1(x.2p0), 2p1: 2P0(Add1(x.2p1)));
+};
+
+(IntP@, IntP@) { IntP@; } Add = (IntP@ a, IntP@ b) {
+  ?(a;
+    1: Add1(b),
+    2p0: ?(b;
+      1: 2P1(a.2p0), 
+      2p0: 2P0(Add(a.2p0, b.2p0)),
+      2p1: 2P1(Add(a.2p0, b.2p1))),
+    2p1: ?(b;
+      1: 2P0(Add1(a.2p1)),
+      2p0: 2P1(Add(a.2p1, b.2p0)),
+      2p1: 2P0(Add1(Add(a.2p1, b.2p1)))));
+};
+
+# Sub1(1) = Nothing
+# Sub1(x) = Just(x - 1)
+(IntP@) { Maybe@<IntP@>; } Sub1 = (IntP@ x) {
+  ?(x; 1: Nothing<IntP@>,
+       2p0: {
+         Maybe@<IntP@> ms = Sub1(x.2p0);
+         ?(ms; just: Just<IntP@>(2P1(ms.just)),
+               nothing: Just<IntP@>(1));
+       },
+       2p1: Just<IntP@>(2P0(x.2p1)));
+};
+
+# Mul(a, b) = a * b
+(IntP@, IntP@) { IntP@; } Mul = (IntP@ a, IntP@ b) {
+  ?(a; 1: b,
+       2p0: Mul(a.2p0, 2P0(b)),
+       2p1: Add(Mul(a.2p1, 2P0(b)), b));
+};
+
+@(IntP@, 2P0, 2P1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Sub1, Mul);
