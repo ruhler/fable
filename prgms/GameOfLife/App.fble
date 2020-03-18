@@ -5,7 +5,7 @@
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
 { /Int/Int%; @(Int@, Lit2, Lit3, 0, 1, 2, 3, 4, 5, 6, Dec); };
 { /Int/IntP%; @(IntP@); };
-{ /Int/Int/Bool%; @(IsZero); };
+{ /Int/Int/Eq%; @(IsZero); };
 { /List%; @(S@, S, S0, ConsS); };
 { /Nat%; @(Nat@, Lt); };
 @(N: /Nat%);

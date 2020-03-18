@@ -1,7 +1,7 @@
 
 { /Bool%; @(Bool@, True, False); };
 { /Int/Int%; @(Int@); };
-{ /Int/IntP/Bool%;
+{ /Int/IntP/Eq%;
   @(EqP: Eq, LtP: Lt, LeP: Le, GtP: Gt, GeP: Ge);
 };
 

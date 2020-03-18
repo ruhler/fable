@@ -3,7 +3,7 @@
 { /Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
 { /Int/IntP%; @(IntP@); };
 { /Int/Int%; @(Int@, Inc, Dec); };
-{ /Int/Int/Bool%; @(IsZero); };
+{ /Int/Int/Eq%; @(IsZero); };
 { /List%; @(S@, List@, S, ForS); };
 { /Map%; @(Map); };
 { /Maybe%; @(Maybe@); };

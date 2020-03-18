@@ -10,7 +10,7 @@
   0, 1, 2, 3, 4, 5, 6, 7, Lit2,
   Neg, Add, Sub, Mul);
 };
-{ /Int/Int/Bool%; @(Eq, Lt, Le, Gt, Ge); };
+{ /Int/Int/Eq%; @(Eq, Lt, Le, Gt, Ge); };
 
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
