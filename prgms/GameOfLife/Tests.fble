@@ -1,6 +1,6 @@
 
 { /Char%; @(Char@, Chars); };
-{ /Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6); };
 { /List%; @(S@, S); };
 { /String%; @(Str); };
 { /Test%; @(Test@, TestResult@); };

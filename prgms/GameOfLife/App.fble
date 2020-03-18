@@ -3,8 +3,8 @@
 { /Bool%; @(Bool@, And, True, False); };
 { /Draw%; @(Draw@, Color@); };
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
-{ /Int%; @(Int@, Lit2, Lit3, 0, 1, 2, 3, 4, 5, 6, Dec); };
-{ /Int/Bool%; @(IsZero); };
+{ /Int/Int%; @(Int@, Lit2, Lit3, 0, 1, 2, 3, 4, 5, 6, Dec); };
+{ /Int/Int/Bool%; @(IsZero); };
 @(INat: /Int/Nat%);
 { /List%; @(S@, S, S0, ConsS); };
 { /Nat%; @(Nat@, Lt); };

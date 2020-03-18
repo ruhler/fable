@@ -2,8 +2,8 @@
 { /Bool%; @(Bool@, True, False); };
 { /Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
 { /Int/Nat%; @(Nat@); };
-{ /Int%; @(Int@, Inc, Dec); };
-{ /Int/Bool%; @(IsZero); };
+{ /Int/Int%; @(Int@, Inc, Dec); };
+{ /Int/Int/Bool%; @(IsZero); };
 { /List%; @(S@, List@, S, ForS); };
 { /Map%; @(Map); };
 { /Maybe%; @(Maybe@); };

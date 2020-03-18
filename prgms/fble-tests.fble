@@ -11,7 +11,7 @@
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /GameOfLife/Tests%.Tests,
-  /Int/Tests%.Tests,
+  /Int/Int/Tests%.Tests,
   /List/Tests%.Tests,
   /Map/Tests%.Tests,
   /Md5/Tests%.Tests,

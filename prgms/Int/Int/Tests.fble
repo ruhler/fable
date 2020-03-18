@@ -6,11 +6,11 @@
 { /Test%; @(TestResult@, Test@); };
 { /Unit%; @(Unit); };
 
-{ /Int%; @(Int@,
+{ /Int/Int%; @(Int@,
   0, 1, 2, 3, 4, 5, 6, 7, Lit2,
   Neg, Add, Sub, Mul);
 };
-{ /Int/Bool%; @(Eq, Lt, Le, Gt, Ge); };
+{ /Int/Int/Bool%; @(Eq, Lt, Le, Gt, Ge); };
 
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
