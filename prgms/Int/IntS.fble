@@ -1,0 +1,17 @@
+
+{ /Int/IntP%; @(IntP@); };
+{ /Unit%; @(Unit@, Unit); };
+
+# Non-negative Integers.
+@ IntS@ = +(
+  Unit@ 0,
+  IntP@ p
+);
+
+IntS@ 0 = IntS@(0: Unit);
+
+(IntP@) { IntS@; } IntP = (IntP@ p) {
+  IntS@(p: p);
+};
+
+@(IntS@, 0, IntP);

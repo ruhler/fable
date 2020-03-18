@@ -1,0 +1,16 @@
+
+{ /Int/IntP%; @(IntP@, 1, 2P0, 2P1); };
+{ /Int/IntS%; @(IntS@, 0, IntP); };
+
+# Sub1(x) = x - 1
+(IntP@) { IntS@; } Sub1 = (IntP@ x) {
+  ?(x; 1: 0,
+       2p0: {
+         IntS@ s = Sub1(x.2p0);
+         IntP(?(s; 0: 1, p: 2P1(s.p)));
+       },
+       2p1: IntP(2P0(x.2p1)));
+};
+
+@(Sub1);
+
