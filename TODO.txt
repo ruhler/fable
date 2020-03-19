@@ -2,10 +2,8 @@
  - Add Mod to /Int%, and switch Primes to use /Int% instead of /Nat%.
  - Switch App% to use Int@ for drawing instead of Nat@. Or IntS@?
 
-* Separate Type from Local in Compile
- We should be able to use multiple types to refer to the same Local
- - Preserve variable type in let to fix error messages involving types.
- - Avoid need for copy in poly apply and poly coercions.
+* Rename FinishScope to FreeScope, now that it no longer generates code.
+* Switch from FbleTypeArena to FbleArena for NewLocal and LocalRelease?
 
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
