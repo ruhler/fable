@@ -1,10 +1,7 @@
+* Switch from FbleTypeArena to FbleArena for NewLocal and LocalRelease?
 * Remove /Nat%, which should be obsolete by now.
  - Add Mod to /Int%, and switch Primes to use /Int% instead of /Nat%.
  - Switch App% to use Int@ for drawing instead of Nat@. Or IntS@?
-
-* Rename FinishScope to FreeScope, now that it no longer generates code.
-* Switch from FbleTypeArena to FbleArena for NewLocal and LocalRelease?
-
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
 * Come up with a nicer timer interface for App.

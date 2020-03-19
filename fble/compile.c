@@ -130,7 +130,7 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope);
 static void AddBlockTime(Blocks* blocks, size_t time);
 
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent);
-static void FinishScope(FbleTypeArena* arena, Scope* scope);
+static void FreeScope(FbleTypeArena* arena, Scope* scope);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
@@ -297,7 +297,7 @@ static void LocalRelease(FbleTypeArena* arena, Scope* scope, Local* local)
 //
 // Results:
 //   A pointer to the newly pushed variable. The pointer is owned by the
-//   scope. It remains valid until a corresponding PopVar or FinishScope
+//   scope. It remains valid until a corresponding PopVar or FreeScope
 //   occurs.
 //
 // Side effects:
@@ -583,7 +583,7 @@ static void AddBlockTime(Blocks* blocks, size_t time)
 //   None.
 //
 // Side effects:
-//   Initializes scope based on parent. FinishScope should be
+//   Initializes scope based on parent. FreeScope should be
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
 //   Initializes capture and appends to it the variables that need to be
@@ -606,9 +606,8 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Fble
   scope->parent = parent;
 }
 
-// FinishScope --
-//   Free memory associated with a Scope, and generate instructions to capture
-//   the variables used by the scope.
+// FreeScope --
+//   Free memory associated with a Scope.
 //
 // Inputs:
 //   arena - arena to use for allocations
@@ -619,7 +618,7 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Fble
 //
 // Side effects:
 //   * Frees memory associated with scope.
-static void FinishScope(FbleTypeArena* arena, Scope* scope)
+static void FreeScope(FbleTypeArena* arena, Scope* scope)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
   for (size_t i = 0; i < scope->statics.size; ++i) {
@@ -875,7 +874,7 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 //     the scope if the expression fails to compile.
 //   * Prints a message to stderr if the expression fails to compile.
 //   * The caller should call FbleTypeRelease and LocalRelease when the
-//     returned results are no longer needed. Note that FinishScope calls
+//     returned results are no longer needed. Note that FreeScope calls
 //     LocalRelease for all locals allocated to the scope, so that can also be
 //     used to clean up the local, but not the type.
 static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr)
@@ -1499,7 +1498,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       Compiled func_result = CompileExpr(arena, blocks, true, &func_scope, func_value_expr->body);
       ExitBlock(arena_, blocks, NULL);
       if (func_result.type == NULL) {
-        FinishScope(arena, &func_scope);
+        FreeScope(arena, &func_scope);
         FreeInstr(arena_, &instr->_base);
         return COMPILE_FAILED;
       }
@@ -1519,7 +1518,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
         type = &ft->_base;
       }
 
-      FinishScope(arena, &func_scope);
+      FreeScope(arena, &func_scope);
 
       // TODO: Is it right for time to be proportional to number of captured
       // variables?
@@ -1551,7 +1550,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       CompileExit(arena_, true, &eval_scope, body.local);
 
       if (body.type == NULL) {
-        FinishScope(arena, &eval_scope);
+        FreeScope(arena, &eval_scope);
         FreeInstr(arena_, &instr->_base);
         return COMPILE_FAILED;
       }
@@ -1567,7 +1566,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       c.local = NewLocal(arena_, scope);
       instr->dest = c.local->index.index;
 
-      FinishScope(arena, &eval_scope);
+      FreeScope(arena, &eval_scope);
       AppendInstr(arena_, scope, &instr->_base);
       CompileExit(arena_, exit, scope, c.local);
       return c;
@@ -1649,7 +1648,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       }
 
       ExitBlock(arena_, blocks, NULL);
-      FinishScope(arena, &body_scope);
+      FreeScope(arena, &body_scope);
 
       if (type == NULL) {
         FreeInstr(arena_, &instr->_base);
@@ -1722,7 +1721,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
         }
 
         ExitBlock(arena_, blocks, NULL);
-        FinishScope(arena, &binding_scope);
+        FreeScope(arena, &binding_scope);
 
         args[i] = NewLocal(arena_, &body_scope);
         binstr->dest = args[i]->index.index;
@@ -1796,7 +1795,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       ExitBlock(arena_, blocks, NULL);
 
       body.local = NewLocal(arena_, scope);
-      FinishScope(arena, &body_scope);
+      FreeScope(arena, &body_scope);
 
       instr->dest = body.local->index.index;
       AppendInstr(arena_, scope, &instr->_base);
@@ -2430,7 +2429,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExp
   Compiled result = CompileExpr(arena, &blocks, true, &nscope, expr);
   FbleFree(arena_, blocks.stack.xs);
   FbleFreeBlockNames(arena_, &blocks.blocks);
-  FinishScope(arena, &nscope);
+  FreeScope(arena, &nscope);
   FbleFreeInstrBlock(arena_, code);
   return result.type;
 }
@@ -2697,7 +2696,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
   bool ok = CompileProgram(type_arena, &block_stack, &scope, program);
   ExitBlock(arena, &block_stack, NULL);
-  FinishScope(type_arena, &scope);
+  FreeScope(type_arena, &scope);
   FbleFreeTypeArena(type_arena);
 
   assert(block_stack.stack.size == 0);
