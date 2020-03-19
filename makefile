@@ -14,8 +14,8 @@ checkerr:
 .PHONY: foo
 foo:
 	#./out/bin/fble-test --profile prgms/stack-smasher.fble > smash.prof
-	./out/bin/fble-stdio prgms/fble-tests.fble prgms
-	#./out/bin/fble-test --profile prgms/fble-bench.fble prgms > bench.prof
+	#./out/bin/fble-stdio prgms/fble-tests.fble prgms
+	./out/bin/fble-test --profile prgms/fble-bench.fble prgms > bench.prof
 	#./out/bin/fble-test foo.fble prgms
 	#./out/bin/fble-Snake prgms/GameOfLife/App.fble prgms
 

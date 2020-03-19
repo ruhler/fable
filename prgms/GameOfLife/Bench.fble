@@ -1,6 +1,6 @@
 
 { /Unit%; @(Unit@, Unit); };
-{ /Int%; @(Int@, Lit2, 0, 1, 2, 3, 4, 5, 6, 7); };
+{ /Int/Int%; @(Int@, Lit2, 0, 1, 2, 3, 4, 5, 6, 7); };
 { /GameOfLife%; @(Coord@, World@, World, StepN); };
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
