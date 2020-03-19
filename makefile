@@ -8,8 +8,8 @@ clean:
 	rm -rf out/
 
 .PHONY: checkerr
-checkerr: all
-	cat out/test/*.err
+checkerr:
+	cat `find out -name *.err`
 
 .PHONY: foo
 foo:

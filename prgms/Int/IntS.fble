@@ -8,10 +8,10 @@
   IntP@ p
 );
 
-IntS@ 0 = IntS@(0: Unit);
-
 (IntP@) { IntS@; } IntP = (IntP@ p) {
   IntS@(p: p);
 };
 
-@(IntS@, 0, IntP);
+IntS@ 0 = IntS@(0: Unit);
+
+@(IntS@, IntP, 0);

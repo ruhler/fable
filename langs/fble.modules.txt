@@ -160,3 +160,18 @@ access into privileged and non-privileged just using directory structure with
 public and private. My vote is to get rid of the notion of privileged and
 non-privileged for the first implementation.
 
+---
+
+Experience Report: It feels like module organization is a hard problem.
+Consider integers. I figure I want IntP, IntS, and Int. But IntP decrement
+wants to use IntS and IntP subtraction wants to use Int. Then IntS division
+wants to use Int subtraction, and so on. We end up with a long dependency
+chain if we split everything up:
+
+  IntP -> IntS -> Int -> IntP.Sub -> Int.Sub -> IntP.Div -> Int.Div
+
+It is nice to have each module be a small focused thing. None of them really
+have any private internal functions, so the only practical value at the moment
+for using separate modules seems to be to separate them into small focused
+things and for namespace support, so that we can have an Eq function for IntP,
+an Eq function for IntS, and an Eq function for Int.

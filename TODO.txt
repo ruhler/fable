@@ -1,23 +1,23 @@
 * Remove /Nat%, which should be obsolete by now.
  - Add Mod to /Int%, and switch Primes to use /Int% instead of /Nat%.
- - Switch App% to use /Int% for drawing instead of /Nat%. Or /Int/Nat%?
+ - Switch App% to use Int@ for drawing instead of Nat@. Or IntS@?
+
+* Separate Type from Local in Compile
+ We should be able to use multiple types to refer to the same Local
+ - Preserve variable type in let to fix error messages involving types.
+ - Avoid need for copy in poly apply and poly coercions.
+
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
-* Switch Nat@ to Int@ in App interface?
 * Come up with a nicer timer interface for App.
-* Don't wait for extra key press before exiting fble-app.
-* Debug flaky deadlock in fble-app? Maybe due to multithreading of OnTimer?
-* Make /Int/Nat% private? By exporting /Int/Nat/Data publicly?
+* Debug flaky deadlock in fble-app?
+  - SDL docs say the multithreading of OnTimer is safe.
 * Separate Map from DataMap and EqMap.
 * Improve error message for private module reference access.
  - Print the paths to source and target at least.
 * Check that FbleLoad doesn't leak memory in error cases.
  - Maybe use a separate alloc arena for temporary allocations?
 * Figure out why GameOfLife is so absurdly slow.
-* Implement less than, div and friends for Int@.
-* Check that types are reported nicely in error messages. I feel like I've
-  been getting a lot of normalized types in error messages lately.
- - Maybe refactor how types are tracked in Compile first?
 * Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
 * Why is statics for Bit2X.fulladd! 3 long when only entry 0 is used?
@@ -28,8 +28,6 @@
 * It might be nice to have a tool that lists, for each module, all of the
   modules it directly or indirectly depends on. To help guide when to split up
   modules or not.
-* Figure out some way to have different types for the same local
-  Specifically for implementing poly apply and poly coercions.
 * Is there a way to avoid emitting instructions after a return instruction?
 * Add test that we don't hold on to a condition value while running the
   selected branch of a union select expression.
