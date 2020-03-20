@@ -7,8 +7,6 @@
 * Debug flaky deadlock in fble-app?
   - SDL docs say the multithreading of OnTimer is safe.
 * Separate Map from DataMap and EqMap.
-* Improve error message for private module reference access.
- - Print the paths to source and target at least.
 * Check that FbleLoad doesn't leak memory in error cases.
  - Maybe use a separate alloc arena for temporary allocations?
 * Figure out why GameOfLife is so absurdly slow.

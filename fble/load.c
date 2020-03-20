@@ -39,11 +39,35 @@ typedef struct Stack {
   struct Stack* tail;
 } Stack;
 
+static void PrintModuleName(FILE* fout, FbleNameV path);
 static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target);
 static void FreeTree(FbleArena* arena, Tree* tree);
 static bool PathsEqual(FbleNameV a, FbleNameV b);
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
 static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs);
+
+// PrintModuleName --
+//   Print the name of a module to the given stream.
+//
+// Inputs: 
+//   fout - the stream to print to.
+//   path - the path to the module.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints the module name to the given stream.
+static void PrintModuleName(FILE* fout, FbleNameV path)
+{
+  if (path.size == 0) {
+    fprintf(fout, "/");
+  }
+  for (size_t i = 0; i < path.size; ++i) {
+    fprintf(fout, "/%s", path.xs[i].name);
+  }
+  fprintf(fout, "%%");
+}
 
 // AccessAllowed --
 //   Check if the module at the given source path is allowed to access the
@@ -255,10 +279,9 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
 
       if (public && private) {
         FbleReportError("module ", &path.xs[0].loc);
-        for (size_t j = 0; j < i; ++j) {
-          fprintf(stderr, "/%s", path.xs[j].name);
-        }
-        fprintf(stderr, "%% marked as both public and private\n");
+        FbleNameV prefix = { .xs = path.xs, .size = i };
+        PrintModuleName(stderr, prefix);
+        fprintf(stderr, " is marked as both public and private\n");
         return NULL;
       } else if (public) {
         child->private = false;
@@ -266,10 +289,8 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
         child->private = true;
       } else {
         FbleReportError("module ", &path.xs[0].loc);
-        for (size_t j = 0; j < i; ++j) {
-          fprintf(stderr, "/%s", path.xs[j].name);
-        }
-        fprintf(stderr, "%% not found\n");
+        PrintModuleName(stderr, path);
+        fprintf(stderr, " not found\n");
         return NULL;
       }
     }
@@ -282,11 +303,9 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
 
   FbleExpr* expr = FbleParse(arena, filename, module_refs);
   if (expr == NULL) {
-    FbleReportError("module ", &path.xs[0].loc);
-    for (size_t i = 0; i < path.size; ++i) {
-      fprintf(stderr, "/%s", path.xs[i].name);
-    }
-    fprintf(stderr, "%%: failed to parse\n");
+    FbleReportError("Failed to parse module ", &path.xs[0].loc);
+    PrintModuleName(stderr, path);
+    fprintf(stderr, "\n");
   }
   return expr;
 }
@@ -338,7 +357,11 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
         if (!AccessAllowed(tree, stack->path, ref->path)) {
           // TODO: Doesn't this leak memory allocated for the stack?
-          FbleReportError("cannot reference private module\n", &ref->path.xs[0].loc);
+          FbleReportError("module ", &ref->path.xs[0].loc);
+          PrintModuleName(stderr, stack->path);
+          fprintf(stderr, " is not allowed to reference private module ");
+          PrintModuleName(stderr, ref->path);
+          fprintf(stderr, "\n");
           FreeTree(arena, tree);
           return NULL;
         }
@@ -358,7 +381,9 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       if (PathsEqual(ref->path, s->path)) {
         // TODO: Doesn't this leak memory allocated for the stack?
         FbleName* module = ref->path.xs + ref->path.size - 1;
-        FbleReportError("recursive module dependency\n", &module->loc);
+        FbleReportError("module ", &module->loc);
+        PrintModuleName(stderr, ref->path);
+        fprintf(stderr, " recursively depends on itself\n");
         FreeTree(arena, tree);
         return NULL;
       }
