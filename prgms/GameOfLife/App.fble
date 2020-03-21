@@ -5,10 +5,8 @@
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
 { /Int/Int%; @(Int@, Lit2, Lit3, 0, 1, 2, 3, 4, 5, 6, Dec); };
 { /Int/IntP%; @(IntP@); };
-{ /Int/Int/Eq%; @(IsZero); };
+{ /Int/Int/Eq%; @(IsZero, Ge, Lt); };
 { /List%; @(S@, S, S0, ConsS); };
-{ /Nat%; @(Nat@, Lt); };
-@(N: /Nat%);
 { /Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
 { /Process%; @(Get@, Put@); };
 { /Unit%; @(Unit@, Unit); };
@@ -29,39 +27,19 @@ World@ acorn = World([
 ]);
 
 
-(IntP@) { Nat@; } IntPToNat = (IntP@ x) {
-  ?(x; 1: Nat@(1: Unit),
-       2p0: Nat@(2p0: IntPToNat(x.2p0)),
-       2p1: Nat@(2p1: IntPToNat(x.2p1)));
-};
-
-(Int@) { Maybe@<Nat@>; } ToNat = (Int@ x) {
-  ?(x;
-      n: Nothing<Nat@>,
-      0: Just<Nat@>(Nat@(0: Unit)),
-      p: Just<Nat@>(IntPToNat(x.p)));
-};
-
-(Maybe@<Nat@>) { Bool@; } IsJust = (Maybe@<Nat@> m) {
-  ?(m; just: True, nothing: False);
-};
-
-Nat@ MaxRow = N.Lit2(N.2, N.0);
-Nat@ MaxCol = N.Lit2(N.6, N.0);
+Int@ MaxRow = Lit2(2, 0);
+Int@ MaxCol = Lit2(6, 0);
 
 (World@) { S@<Draw@>; } DrawWorld = (World@ w) {
-  Draw@ clear = Draw@(N.0, N.0, MaxCol, MaxRow, Color@(black: Unit));
+  Draw@ clear = Draw@(0, 0, MaxCol, MaxRow, Color@(black: Unit));
     
   # 2. For each live cell in range, draw a green unit square.
   S@<Draw@> cells = ForWorld<S@<Draw@>>(w, S0<Draw@>, (Coord@ coord, Unit@ _, S@<Draw@> d) {
-    Maybe@<Nat@> mr = ToNat(coord.row);
-    Maybe@<Nat@> mc = ToNat(coord.col);
-    ?(And(IsJust(mr), IsJust(mc));
-       true: {
-         ?(And(Lt(mr.just, MaxRow), Lt(mc.just, MaxCol));
-            true: ConsS<Draw@>(Draw@(mc.just, mr.just, N.1, N.1, Color@(green: Unit)), d),
-            false: d);
-       },
+    Int@ r = coord.row;
+    Int@ c = coord.col;
+    ?(And(And(Ge(r, 0), Ge(c, 0)),
+          And(Lt(r, MaxRow), Lt(c, MaxCol)));
+       true: ConsS<Draw@>(Draw@(c, r, 1, 1, Color@(green: Unit)), d),
        false: d);
   });
 

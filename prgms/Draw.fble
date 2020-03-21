@@ -1,5 +1,5 @@
 { /Unit%; @(Unit@); };
-{ /Nat%; @(Nat@); };
+{ /Int/Int%; @(Int@); };
 
 @ Color@ = +(
     Unit@ black,
@@ -12,6 +12,6 @@
     Unit@ white
     );
 
-@ Draw@ = *(Nat@ x, Nat@ y, Nat@ w, Nat@ h, Color@ color);
+@ Draw@ = *(Int@ x, Int@ y, Int@ w, Int@ h, Color@ color);
 
 @(Color@, Draw@);

@@ -175,3 +175,9 @@ have any private internal functions, so the only practical value at the moment
 for using separate modules seems to be to separate them into small focused
 things and for namespace support, so that we can have an Eq function for IntP,
 an Eq function for IntS, and an Eq function for Int.
+
+This is actually a deeper question I think. Is it better to define separate
+IntP, IntS, and Int types that constrain the data type, or is it better to use
+a generic Int type? It's certainly proving inconvenient to keep track of which
+types all the functions are used for and converting between them when I have
+IntP, IntS, and Int types.

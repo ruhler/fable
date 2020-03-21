@@ -1,12 +1,13 @@
 * Remove /Nat%, which should be obsolete by now.
- - Switch App% to use Int@ for drawing instead of Nat@. Or IntS@?
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
 * Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
 
+* Add test coverage for the Int routines.
+ - In particular, test Div and Mod.
 * Come up with a nicer timer interface for App.
 * Debug flaky deadlock in fble-app?
-  - SDL docs say the multithreading of OnTimer is safe.
+ - SDL docs say the multithreading of OnTimer is safe.
 * Separate Map from DataMap and EqMap.
 * Figure out why GameOfLife is so absurdly slow.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.

@@ -4,18 +4,19 @@
 { /Draw%; @(Color@, Draw@); };
 { /List%; @(P@, S@, InitP, LastP); };
 { /Process%; @(Get@, Put@); };
-{ /Nat%; @(Nat@, 0, 1, 2, 6, Lit2, EqNat, Inc, Dec); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 6, Lit2, Inc, Dec); };
+{ /Int/Int/Eq%; @(Eq); };
 { /Unit%; @(Unit@, Unit); };
 
-Nat@ MinRow = 0;
-Nat@ MaxRow = Lit2(2, 0);
-Nat@ MinCol = 0;
-Nat@ MaxCol = Lit2(6, 0);
+Int@ MinRow = 0;
+Int@ MaxRow = Lit2(2, 0);
+Int@ MinCol = 0;
+Int@ MaxCol = Lit2(6, 0);
 
-@ Pos@ = *(Nat@ row, Nat@ col);
+@ Pos@ = *(Int@ row, Int@ col);
 
 (Pos@, Pos@){Bool@;} EqPos = (Pos@ a, Pos@ b) {
-  And(EqNat(a.row, b.row), EqNat(a.col, b.col));
+  And(Eq(a.row, b.row), Eq(a.col, b.col));
 };
 
 @ Direction@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
@@ -56,12 +57,12 @@ Nat@ MaxCol = Lit2(6, 0);
 };
 
 State@ InitialState = {
-  Nat@ c0 = MinCol;
-  Nat@ c1 = Inc(c0); Nat@ c2 = Inc(c1);
-  Nat@ c3 = Inc(c2); Nat@ c4 = Inc(c3);
-  Nat@ r0 = MinRow;
-  Nat@ r1 = Inc(r0); Nat@ r2 = Inc(r1);
-  Nat@ r3 = Inc(r2); Nat@ r4 = Inc(r3);
+  Int@ c0 = MinCol;
+  Int@ c1 = Inc(c0); Int@ c2 = Inc(c1);
+  Int@ c3 = Inc(c2); Int@ c4 = Inc(c3);
+  Int@ r0 = MinRow;
+  Int@ r1 = Inc(r0); Int@ r2 = Inc(r1);
+  Int@ r3 = Inc(r2); Int@ r4 = Inc(r3);
   State@(
       Direction@(right: Unit),
       Pos@(r4, c1),
@@ -88,22 +89,22 @@ State@ InitialState = {
 (State@){MoveResultM@;} Move = (State@ s) {
   PosM@ pm = ?(s.dir;
     up:
-    ?(EqNat(s.snake.head.row, MaxRow);
+    ?(Eq(s.snake.head.row, MaxRow);
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(Inc(s.snake.head.row), s.snake.head.col))),
 
     down:
-    ?(EqNat(s.snake.head.row, MinRow);
+    ?(Eq(s.snake.head.row, MinRow);
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(Dec(s.snake.head.row), s.snake.head.col))),
 
     left:
-    ?(EqNat(s.snake.head.col, MinCol);
+    ?(Eq(s.snake.head.col, MinCol);
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(s.snake.head.row, Dec(s.snake.head.col)))),
 
     right:
-    ?(EqNat(s.snake.head.col, MaxCol);
+    ?(Eq(s.snake.head.col, MaxCol);
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(s.snake.head.row, Inc(s.snake.head.col)))));
 

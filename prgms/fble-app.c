@@ -18,7 +18,8 @@ SDL_Surface* gScreen = NULL;
 static Uint32 DRAW_COLORS[8];
 
 static void PrintUsage(FILE* stream);
-static int ReadNat(FbleValue* num);
+static int ReadIntP(FbleValue* num);
+static int ReadInt(FbleValue* num);
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int main(int argc, char* argv[]);
@@ -43,8 +44,8 @@ static void PrintUsage(FILE* stream)
   );
 }
 
-// ReadNat --
-//   Read a number from an FbleValue of type Nat@Nat
+// ReadIntP --
+//   Read a number from an FbleValue of type /Int/IntP%.IntP@.
 //
 // Inputs:
 //   x - the value of the number.
@@ -54,14 +55,34 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   None
-static int ReadNat(FbleValue* x)
+static int ReadIntP(FbleValue* x)
 {
   switch (FbleUnionValueTag(x)) {
-    case 0: return 0;
-    case 1: return 1;
-    case 2: return 2 * ReadNat(FbleUnionValueAccess(x));
-    case 3: return 2 * ReadNat(FbleUnionValueAccess(x)) + 1;
-    default: assert(false && "Invalid Nat tag"); abort();
+    case 0: return 1;
+    case 1: return 2 * ReadIntP(FbleUnionValueAccess(x));
+    case 2: return 2 * ReadIntP(FbleUnionValueAccess(x)) + 1;
+    default: assert(false && "Invalid IntP@ tag"); abort();
+  }
+}
+
+// ReadInt --
+//   Read a number from an FbleValue of type /Int/Int%.Int@.
+//
+// Inputs:
+//   x - the value of the number.
+//
+// Results:
+//   The number x represented as an integer.
+//
+// Side effects:
+//   None
+static int ReadInt(FbleValue* x)
+{
+  switch (FbleUnionValueTag(x)) {
+    case 0: return -ReadIntP(FbleUnionValueAccess(x));
+    case 1: return 0;
+    case 2: return ReadIntP(FbleUnionValueAccess(x));
+    default: assert(false && "Invalid Int@ tag"); abort();
   }
 }
 
@@ -80,10 +101,10 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       drawS = FbleStructValueAccess(drawP, 1);
 
       SDL_Rect rect;
-      rect.x = 100 + ReadNat(FbleStructValueAccess(draw, 0));
-      rect.y = 100 + ReadNat(FbleStructValueAccess(draw, 1));
-      rect.w = ReadNat(FbleStructValueAccess(draw, 2));
-      rect.h = ReadNat(FbleStructValueAccess(draw, 3));
+      rect.x = 100 + ReadInt(FbleStructValueAccess(draw, 0));
+      rect.y = 100 + ReadInt(FbleStructValueAccess(draw, 1));
+      rect.w = ReadInt(FbleStructValueAccess(draw, 2));
+      rect.h = ReadInt(FbleStructValueAccess(draw, 3));
       FbleValue* color = FbleStructValueAccess(draw, 4);
 
       size_t color_index = FbleUnionValueTag(color);
