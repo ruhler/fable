@@ -1,8 +1,7 @@
-* Add structure to Draw@ instead of using S@<Draw@> to combine them?
-* Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
+ - Maybe make it easier to call FbleExec with multiple arguments?
 * Make GameOfLife benchmark go around App instead of around Step?
- - Maybe wait until the App interface settles first though.
+ - Wait until the App interface settles first though.
 * Add test coverage for the Int routines.
  - In particular, test Div and Mod.
 * Come up with a nicer timer interface for App.
@@ -15,6 +14,8 @@
    doesn't run ahead of real time.
 * Debug flaky deadlock in fble-app?
  - SDL docs say the multithreading of OnTimer is safe.
+ - Maybe wait until we've updated the time interface first, and see if it
+   turns into a problem in practice.
 * Separate Map from DataMap and EqMap.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute

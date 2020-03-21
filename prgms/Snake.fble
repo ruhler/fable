@@ -1,7 +1,7 @@
 
 { /App%; @(App@, Event@); };
 { /Bool%; @(Bool@, True, False, And); };
-{ /Draw%; @(Color@, Draw@); };
+{ /Drawing%; @(Color@, Drawing@, Blank, Rect, Over); };
 { /List%; @(P@, S@, InitP, LastP); };
 { /Process%; @(Get@, Put@); };
 { /Int/Int%; @(Int@, 0, 1, 2, 6, Inc, Dec); };
@@ -26,11 +26,11 @@ Int@ MaxCol = I(D|60);
 
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
-(Pos@, Cell@){Draw@;} DrawCell = (Pos@ pos, Cell@ cell) {
+(Pos@, Cell@){Drawing@;} DrawCell = (Pos@ pos, Cell@ cell) {
   Color@ c = ?(cell; empty: Color@(black: Unit),
                      snake: Color@(blue: Unit),
                      food: Color@(green: Unit));
-  Draw@(pos.col, pos.row, 1, 1, c);
+  Rect(pos.col, pos.row, 1, 1, c);
 };
 
 
@@ -44,17 +44,16 @@ Int@ MaxCol = I(D|60);
 #   snake - The positions of the snake, in order from head to tail.
 @ State@ = *(Direction@ dir, Pos@ food, Pos@ nfood, P@<Pos@> snake);
 
-# TODO: Use MapS for this
-(S@<Pos@>){S@<Draw@>;} DrawSnakeS = (S@<Pos@> s) {
-  ?(s; cons: S@<Draw@>(cons: DrawSnakeP(s.cons)), nil: S@<Draw@>(nil: Unit));
+# TODO: Use MapS or some other combinator for this.
+(S@<Pos@>){Drawing@;} DrawSnakeS = (S@<Pos@> s) {
+  ?(s; cons: DrawSnakeP(s.cons), nil: Blank);
 },
-(P@<Pos@>){P@<Draw@>;} DrawSnakeP = (P@<Pos@> s) {
-  P@<Draw@>(DrawCell(s.head, Cell@(snake: Unit)), DrawSnakeS(s.tail));
+(P@<Pos@>){Drawing@;} DrawSnakeP = (P@<Pos@> s) {
+  Over(DrawCell(s.head, Cell@(snake: Unit)), DrawSnakeS(s.tail));
 };
 
-(State@){S@<Draw@>;} DrawState = (State@ s) {
-  S@<Draw@>(cons: P@<Draw@>(DrawCell(s.food, Cell@(food: Unit)),
-  S@<Draw@>(cons: DrawSnakeP(s.snake))));
+(State@){Drawing@;} DrawState = (State@ s) {
+  Over(DrawCell(s.food, Cell@(food: Unit)), DrawSnakeP(s.snake));
 };
 
 State@ InitialState = {
@@ -74,7 +73,7 @@ State@ InitialState = {
               Pos@(r1, c1), S@<Pos@>(nil: Unit)))))))));
 };
 
-@ MoveResult@ = *(State@ state, S@<Draw@> draw);
+@ MoveResult@ = *(State@ state, Drawing@ draw);
 @ MoveResultM@ = +(Unit@ dead, MoveResult@ mr);
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
@@ -116,9 +115,8 @@ State@ InitialState = {
             # tail.
             P@<Pos@> nsnake = P@<Pos@>(s.food, S@<Pos@>(cons: s.snake));
             State@ ns = State@(s.dir, s.nfood, s.nfood, nsnake);
-            S@<Draw@> draw = S@<Draw@>(cons: P@<Draw@>(DrawCell(s.food, Cell@(snake: Unit)),
-                        S@<Draw@>(cons: P@<Draw@>(DrawCell(s.nfood, Cell@(food: Unit)),
-                        S@<Draw@>(nil: Unit)))));
+            Drawing@ draw = Over(DrawCell(s.food, Cell@(snake: Unit)),
+                                 DrawCell(s.nfood, Cell@(food: Unit)));
             MoveResultM@(mr: MoveResult@(ns, draw));
           },
           false:
@@ -129,15 +127,14 @@ State@ InitialState = {
               P@<Pos@> nsnake = P@<Pos@>(pm.pos, InitP<Pos@>(s.snake));
               Pos@ nfood = LastP<Pos@>(s.snake);
               State@ ns = State@(s.dir, s.food, nfood, nsnake);
-              S@<Draw@> draw = S@<Draw@>(cons: P@<Draw@>(DrawCell(pm.pos, Cell@(snake: Unit)),
-                           S@<Draw@>(cons: P@<Draw@>(DrawCell(nfood, Cell@(empty: Unit)),
-                           S@<Draw@>(nil: Unit)))));
+              Drawing@ draw = Over(DrawCell(pm.pos, Cell@(snake: Unit)),
+                                   DrawCell(nfood, Cell@(empty: Unit)));
               MoveResultM@(mr: MoveResult@(ns, draw));
             })));
 };
 
-(Get@<Input@>, Put@<S@<Draw@>>, State@){Unit@!;}
-Snake = (Get@<Input@> in, Put@<S@<Draw@>> out, State@ s) {
+(Get@<Input@>, Put@<Drawing@>, State@){Unit@!;}
+Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
   Input@ x := in;
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
        tick: {
@@ -163,7 +160,7 @@ Snake = (Get@<Input@> in, Put@<S@<Draw@>> out, State@ s) {
       : GetInput(in)));
 };
 
-App@ Main = (Get@<Event@> in, Put@<S@<Draw@>> out) {
+App@ Main = (Get@<Event@> in, Put@<Drawing@> out) {
   State@ s = InitialState;
   Unit@ _ := out(DrawState(s));
   Unit@ _ := Snake(GetInput(in), out, s);

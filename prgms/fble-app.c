@@ -20,6 +20,7 @@ static Uint32 DRAW_COLORS[8];
 static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
+static void Draw(FbleValue* drawing);
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int main(int argc, char* argv[]);
@@ -86,6 +87,58 @@ static int ReadInt(FbleValue* x)
   }
 }
 
+// Draw --
+//   Draw a drawing to the screen of type /Drawing%.Drawing@.
+//
+// Inputs:
+//   drawing - the drawing to draw
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Draws the drawing to the gScreen. The caller must call
+//   SDL_UpdateWindowSurface for the screen to actually be updated.
+static void Draw(FbleValue* drawing)
+{
+  switch (FbleUnionValueTag(drawing)) {
+    case 0: {
+      // Blank. Do nothing.
+      return;
+    }
+
+    case 1: {
+      // Rectangle.
+      SDL_Rect rect;
+      FbleValue* rv = FbleUnionValueAccess(drawing);
+
+      rect.x = 100 + ReadInt(FbleStructValueAccess(rv, 0));
+      rect.y = 100 + ReadInt(FbleStructValueAccess(rv, 1));
+      rect.w = ReadInt(FbleStructValueAccess(rv, 2));
+      rect.h = ReadInt(FbleStructValueAccess(rv, 3));
+
+      FbleValue* color = FbleStructValueAccess(rv, 4);
+      size_t color_index = FbleUnionValueTag(color);
+
+      SDL_FillRect(gScreen, &rect, DRAW_COLORS[color_index]);
+      return;
+    }
+
+    case 2: {
+      // Over.
+      FbleValue* over = FbleUnionValueAccess(drawing);
+      Draw(FbleStructValueAccess(over, 0));
+      Draw(FbleStructValueAccess(over, 1));
+      return;
+    }
+
+    default: {
+      assert(false && "Invalid Drawing@ tag");
+      abort();
+    }
+  }
+}
+
 // IO --
 //   io function for external ports.
 //   See the corresponding documentation in fble.h.
@@ -94,24 +147,8 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
   bool change = false;
 
   if (io->ports.xs[1] != NULL) {
-    FbleValue* drawS = io->ports.xs[1];
-    while (FbleUnionValueTag(drawS) == 0) {
-      FbleValue* drawP = FbleUnionValueAccess(drawS);
-      FbleValue* draw = FbleStructValueAccess(drawP, 0);
-      drawS = FbleStructValueAccess(drawP, 1);
-
-      SDL_Rect rect;
-      rect.x = 100 + ReadInt(FbleStructValueAccess(draw, 0));
-      rect.y = 100 + ReadInt(FbleStructValueAccess(draw, 1));
-      rect.w = ReadInt(FbleStructValueAccess(draw, 2));
-      rect.h = ReadInt(FbleStructValueAccess(draw, 3));
-      FbleValue* color = FbleStructValueAccess(draw, 4);
-
-      size_t color_index = FbleUnionValueTag(color);
-      SDL_FillRect(gScreen, &rect, DRAW_COLORS[color_index]);
-    }
+    Draw(io->ports.xs[1]);
     SDL_UpdateWindowSurface(gWindow);
-
     FbleValueRelease(arena, io->ports.xs[1]);
     io->ports.xs[1] = NULL;
     change = true;

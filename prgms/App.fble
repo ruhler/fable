@@ -1,7 +1,6 @@
 
 { /Unit%; @(Unit@); };
-{ /Draw%; @(Draw@); };
-{ /List%; @(S@); };
+{ /Drawing%; @(Drawing@); };
 { /Process%; @(Get@, Put@); };
 
 @ Key@ = +(Unit@ H, Unit@ J, Unit@ K, Unit@ L, Unit@ Q);
@@ -13,9 +12,16 @@
 # Inputs:
 #   in - Get the next input event.
 #   out - Draw to the screen.
+#      Draws on top of whatever was there before.
+#
+#      Coordinate (0, 0) is the upper left of the screen, with the positive x
+#      access going towards the right edge of the screen and the positive y
+#      access going towards the bottom edge of the screen.
+# 
+#      The drawing is clipped to fit in the screen area.
 #
 # Results:
 #   None.
-@ App@ = (Get@<Event@>, Put@<S@<Draw@>>){Unit@!;};
+@ App@ = (Get@<Event@>, Put@<Drawing@>){Unit@!;};
 
 @(App@, Key@, Event@);

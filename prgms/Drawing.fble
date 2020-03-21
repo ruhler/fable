@@ -1,0 +1,39 @@
+{ /Unit%; @(Unit@, Unit); };
+{ /Int/Int%; @(Int@); };
+
+@ Color@ = +(
+    Unit@ black,
+    Unit@ red,
+    Unit@ green,
+    Unit@ yellow,
+    Unit@ blue,
+    Unit@ magenta,
+    Unit@ cyan,
+    Unit@ white
+    );
+
+@ Drawing@ = +(
+  # A blank (transparent) drawing.
+  Unit@ blank,
+  
+  # A filled rectangle.
+  *(Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) rect,
+
+  # Draw one drawing over another.
+  *(Drawing@ below, Drawing@ above) over
+);
+
+Drawing@ Blank = Drawing@(blank: Unit);
+
+# Draw a rectangle filled solid with the given color.
+(Int@, Int@, Int@, Int@, Color@) { Drawing@; }
+Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
+  Drawing@(rect: @(x, y, w, h, color));
+};
+
+# Compose two drawings together by drawing one over another.
+(Drawing@, Drawing@) { Drawing@; } Over = (Drawing@ below, Drawing@ above) {
+  Drawing@(over: @(below, above));
+};
+
+@(Color@, Drawing@, Blank, Rect, Over);

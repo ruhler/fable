@@ -1,7 +1,7 @@
 
 { /App%; @(App@, Event@); };
 { /Bool%; @(Bool@, And, True, False); };
-{ /Draw%; @(Draw@, Color@); };
+{ /Drawing%; @(Drawing@, Color@, Rect, Over); };
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
 { /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6, Dec); };
 { /Int/IntP%; @(IntP@); };
@@ -31,24 +31,22 @@ World@ acorn = World([
 Int@ MaxRow = I(D|20);
 Int@ MaxCol = I(D|60);
 
-(World@) { S@<Draw@>; } DrawWorld = (World@ w) {
-  Draw@ clear = Draw@(0, 0, MaxCol, MaxRow, Color@(black: Unit));
+(World@) { Drawing@; } DrawWorld = (World@ w) {
+  Drawing@ clear = Rect(0, 0, MaxCol, MaxRow, Color@(black: Unit));
     
   # 2. For each live cell in range, draw a green unit square.
-  S@<Draw@> cells = ForWorld<S@<Draw@>>(w, S0<Draw@>, (Coord@ coord, Unit@ _, S@<Draw@> d) {
+  ForWorld<Drawing@>(w, clear, (Coord@ coord, Unit@ _, Drawing@ d) {
     Int@ r = coord.row;
     Int@ c = coord.col;
     ?(And(And(Ge(r, 0), Ge(c, 0)),
           And(Lt(r, MaxRow), Lt(c, MaxCol)));
-       true: ConsS<Draw@>(Draw@(c, r, 1, 1, Color@(green: Unit)), d),
+       true: Over(d, Rect(c, r, 1, 1, Color@(green: Unit))),
        false: d);
   });
-
-  ConsS<Draw@>(clear, cells);
 };
 
-(Get@<Event@>, Put@<S@<Draw@>>, Int@, World@) { Unit@!; }
-StepUI = (Get@<Event@> in, Put@<S@<Draw@>> out, Int@ n, World@ w) {
+(Get@<Event@>, Put@<Drawing@>, Int@, World@) { Unit@!; }
+StepUI = (Get@<Event@> in, Put@<Drawing@> out, Int@ n, World@ w) {
   Unit@ _ := out(DrawWorld(w));
   Event@ x := in;
   ?(x;
@@ -56,7 +54,7 @@ StepUI = (Get@<Event@> in, Put@<S@<Draw@>> out, Int@ n, World@ w) {
       key: ?(x.key; Q: $(Unit), : StepUI(in, out, n, w)));
 };
 
-App@ Main = (Get@<Event@> in, Put@<S@<Draw@>> out) {
+App@ Main = (Get@<Event@> in, Put@<Drawing@> out) {
   Unit@ _ := StepUI(in, out, I(D|100), acorn);
 
   Unit@! WaitForKeyPress = {
