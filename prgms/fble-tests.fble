@@ -15,7 +15,6 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /List/Tests%.Tests,
   /Map/Tests%.Tests,
   /Md5/Tests%.Tests,
-  /Nat/Tests%.Tests,
   /Primes/Tests%.Tests,
   /Sudoku/Tests%.Tests,
   /Test%.Tests,

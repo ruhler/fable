@@ -1,4 +1,3 @@
-* Remove /Nat%, which should be obsolete by now.
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
 * Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
