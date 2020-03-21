@@ -1,28 +1,33 @@
 { /Bool%; @(Bool@, True, False); };
-{ /Nat%; @(Nat@, 2, IsZero, Lt, Gt, Inc, Dec, Mul, Mod); };
+{ /Int/IntP%; @(IntP@, 2, Add1, Mul); };
+{ /Int/IntP/Div%; @(Mod); };
+{ /Int/IntP/Eq%; @(Lt, Gt); };
+{ /Int/IntP/Sub%; @(Sub1); };
+{ /Int/IntS%; @(IntS@); };
+{ /Int/IntS/Eq%; @(IsZero); };
 
 # Returns true if f evenly divides x.
-(Nat@, Nat@){Bool@;} Divides = (Nat@ x, Nat@ f) {
+(IntP@, IntP@){Bool@;} Divides = (IntP@ x, IntP@ f) {
   IsZero(Mod(x, f));
 };
 
 # Helper function for IsPrime.
 #   Computes whether x is prime given that there are no factors of x other
 #   than 1 that are less than f.
-(Nat@, Nat@){Bool@;} IsPrimeHelper = (Nat@ x, Nat@ f) {
+(IntP@, IntP@){Bool@;} IsPrimeHelper = (IntP@ x, IntP@ f) {
   ?(Gt(Mul(f, f), x); true: True, false:
       ?(Divides(x, f); true: False, false:
-          IsPrimeHelper(x, Inc(f))));
+          IsPrimeHelper(x, Add1(f))));
 };
 
-(Nat@){Bool@;} IsPrime = (Nat@ x) {
+(IntP@){Bool@;} IsPrime = (IntP@ x) {
   ?(Lt(x, 2) ; true: False, false: IsPrimeHelper(x, 2));
 };
 
-(Nat@, Nat@){Nat@;} NthPrime = (Nat@ x, Nat@ n) {
+(IntP@, IntS@){IntP@;} NthPrime = (IntP@ x, IntS@ n) {
   ?(IsPrime(x) ;
-      true: ?(IsZero(n) ; true: x, false: NthPrime(Inc(x), Dec(n))),
-      false: NthPrime(Inc(x), n));
+      true: ?(n; 0: x, p: NthPrime(Add1(x), Sub1(n.p))),
+      false: NthPrime(Add1(x), n));
 };
 
 @(IsPrime, NthPrime);

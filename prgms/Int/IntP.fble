@@ -54,4 +54,8 @@ IntP@ 10 = 2P0(5);
        2p1: Add(Mul(a.2p1, 2P0(b)), b));
 };
 
-@(IntP@, 2P0, 2P1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Mul);
+(IntP@, IntP@){IntP@;} Lit2 = (IntP@ a, IntP@ b) {
+  Add(Mul(10, a), b);
+};
+
+@(IntP@, 2P0, 2P1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Mul, Lit2);

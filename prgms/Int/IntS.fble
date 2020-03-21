@@ -1,5 +1,6 @@
 
 { /Int/IntP%; @(IntP@); };
+@(P: /Int/IntP%);
 { /Unit%; @(Unit@, Unit); };
 
 # Non-negative Integers.
@@ -13,5 +14,23 @@
 };
 
 IntS@ 0 = IntS@(0: Unit);
+IntS@ 1 = IntP(P.1);
+IntS@ 2 = IntP(P.2);
 
-@(IntS@, IntP, 0);
+(IntS@) { IntS@; } 2P0 = (IntS@ a) {
+  ?(a; 0: 0, p: IntP(P.2P0(a.p)));
+};
+
+(IntS@) { IntS@; } 2P1 = (IntS@ a) {
+  ?(a; 0: 1, p: IntP(P.2P1(a.p)));
+};
+
+(IntS@) { IntS@; } Inc = (IntS@ a) {
+  ?(a; 0: 1, p: IntP(P.Add1(a.p)));
+};
+
+(IntS@, IntS@) { IntS@; } Mul = (IntS@ a, IntS@ b) {
+  ?(a; 0: 0, p: ?(b; 0: 0, p: IntP(P.Mul(a.p, b.p))));
+};
+
+@(IntS@, IntP, 0, 1, 2, Inc, Mul, 2P0, 2P1);

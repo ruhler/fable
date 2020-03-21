@@ -1,5 +1,4 @@
 * Remove /Nat%, which should be obsolete by now.
- - Add Mod to /Int%, and switch Primes to use /Int% instead of /Nat%.
  - Switch App% to use Int@ for drawing instead of Nat@. Or IntS@?
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
