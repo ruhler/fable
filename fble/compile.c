@@ -2594,13 +2594,14 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
       }
 
       FbleType* type_value = ValueOfType(arena, type);
-      FbleTypeRelease(arena, type);
       if (type_value == NULL) {
         ReportError(arena_, &expr->loc,
             "expected a type, but found value of type %t\n",
             type);
+        FbleTypeRelease(arena, type);
         return NULL;
       }
+      FbleTypeRelease(arena, type);
       return type_value;
     }
   }

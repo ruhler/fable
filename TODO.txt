@@ -3,16 +3,14 @@
  - Switch App% to use Int@ for drawing instead of Nat@. Or IntS@?
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
+* Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
+
 * Come up with a nicer timer interface for App.
 * Debug flaky deadlock in fble-app?
   - SDL docs say the multithreading of OnTimer is safe.
 * Separate Map from DataMap and EqMap.
 * Figure out why GameOfLife is so absurdly slow.
-* Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
-* Why is statics for Bit2X.fulladd! 3 long when only entry 0 is used?
-* Can children clean themselves up when they finish now that they return their
-  result directly to their parent?
 * Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * It might be nice to have a tool that lists, for each module, all of the

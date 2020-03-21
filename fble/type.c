@@ -1021,7 +1021,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         comma = ", ";
       }
       fprintf(stderr, ")");
-      break;
+      return;
     }
 
     case FBLE_UNION_TYPE: {
@@ -1035,8 +1035,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         FblePrintName(stderr, &ut->fields.xs[i].name);
         comma = ", ";
       }
-      fprintf(stderr, ")");
-      break;
+      return;
     }
 
     case FBLE_FUNC_TYPE: {
@@ -1046,14 +1045,14 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       fprintf(stderr, "){");
       FblePrintType(arena, ft->rtype);
       fprintf(stderr, ";}");
-      break;
+      return;
     }
 
     case FBLE_PROC_TYPE: {
       FbleProcType* ut = (FbleProcType*)type;
       FblePrintType(arena, ut->type);
       fprintf(stderr, "!");
-      break;
+      return;
     }
 
     case FBLE_POLY_TYPE: {
@@ -1072,7 +1071,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       fprintf(stderr, "> { ");
       FblePrintType(arena, type);
       fprintf(stderr, "; }");
-      break;
+      return;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
@@ -1095,13 +1094,13 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       }
       fprintf(stderr, ">");
       FbleFree(arena, args.xs);
-      break;
+      return;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       FblePrintName(stderr, &var->name);
-      break;
+      return;
     }
 
     case FBLE_TYPE_TYPE: {
@@ -1109,7 +1108,9 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       fprintf(stderr, "@<");
       FblePrintType(arena, tt->type);
       fprintf(stderr, ">");
-      break;
+      return;
     }
   }
+
+  UNREACHABLE("should never get here");
 }
