@@ -365,7 +365,13 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     bool found = false;
     for (size_t i = 0; i < program->modules.size; ++i) {
       if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
-        if (!AccessAllowed(tree, stack->path, ref->path)) {
+        // We may have failed to load a module previously. Check to see if the
+        // module has been loaded before doing the access allowed check.
+        // There's no point checking access against a module that failed to
+        // load, and if the module failed to load, we may not have updated the
+        // Tree in the way AccessAllowed expects.
+        if (program->modules.xs[i].value != NULL
+            && !AccessAllowed(tree, stack->path, ref->path)) {
           FbleReportError("module ", &ref->path.xs[0].loc);
           PrintModuleName(stderr, stack->path);
           fprintf(stderr, " is not allowed to reference private module ");
