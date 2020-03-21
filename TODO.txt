@@ -7,8 +7,6 @@
 * Debug flaky deadlock in fble-app?
   - SDL docs say the multithreading of OnTimer is safe.
 * Separate Map from DataMap and EqMap.
-* Check that FbleLoad doesn't leak memory in error cases.
- - Maybe use a separate alloc arena for temporary allocations?
 * Figure out why GameOfLife is so absurdly slow.
 * Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.

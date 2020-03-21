@@ -44,7 +44,7 @@ static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target);
 static void FreeTree(FbleArena* arena, Tree* tree);
 static bool PathsEqual(FbleNameV a, FbleNameV b);
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
-static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs);
+static FbleExpr* Parse(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs);
 
 // PrintModuleName --
 //   Print the name of a module to the given stream.
@@ -132,6 +132,7 @@ void FreeTree(FbleArena* arena, Tree* tree)
     FreeTree(arena, tree->children.xs[i]);
   }
   FbleFree(arena, tree->children.xs);
+  FbleFree(arena, tree);
 }
 
 // PathsEqual --
@@ -207,7 +208,8 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //  Parse an expression from given path.
 //  
 // Inputs:
-//   arena - arena to use for allocations
+//   load_arena - arena to use for allocations local to loading.
+//   program_arena - arena to use for allocations returned from loading.
 //   root - file path to the root of the module search path
 //   tree - the module hierarchy known so far
 //   path - the resolved module path to parse
@@ -227,7 +229,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //   The user is responsible for tracking and freeing any allocations made by
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned program if there is no error.
-static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs)
+static FbleExpr* Parse(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs)
 {
   // Compute an upper bound on the length of the filename for the module.
   size_t len = strlen(root) + strlen(".fble") + 1;
@@ -255,10 +257,10 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
     }
 
     if (!treed) {
-      Tree* child = FbleAlloc(arena, Tree);
+      Tree* child = FbleAlloc(load_arena, Tree);
       child->name = path.xs[i];
-      FbleVectorInit(arena, child->children);
-      FbleVectorAppend(arena, tree->children, child);
+      FbleVectorInit(load_arena, child->children);
+      FbleVectorAppend(load_arena, tree->children, child);
       tree = child;
 
       char* tail = filename + strlen(filename);
@@ -301,7 +303,7 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
   }
   strcat(filename, ".fble");
 
-  FbleExpr* expr = FbleParse(arena, filename, module_refs);
+  FbleExpr* expr = FbleParse(program_arena, filename, module_refs);
   if (expr == NULL) {
     FbleReportError("Failed to parse module ", &path.xs[0].loc);
     PrintModuleName(stderr, path);
@@ -313,26 +315,34 @@ static FbleExpr* Parse(FbleArena* arena, const char* root, Tree* tree, FbleNameV
 // FbleLoad -- see documentation in fble-syntax.h
 FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 {
+  // The load_arena is used for allocations local to FbleLoad, so it's easier
+  // to keep track of whether we are leaking any memory here.
+  //
+  // Note: stack->module_refs is not allocated on load_arena because FbleParse
+  // needs to be able to reallocate it.
+  FbleArena* load_arena = FbleNewArena();
+
   FbleProgram* program = FbleAlloc(arena, FbleProgram);
   FbleVectorInit(arena, program->modules);
 
-  Stack* stack = FbleAlloc(arena, Stack);
+  Stack* stack = FbleAlloc(load_arena, Stack);
   FbleVectorInit(arena, stack->module_refs);
-  FbleVectorInit(arena, stack->path);
+  stack->path.size = 0;
   stack->tail = NULL;
 
   stack->value = FbleParse(arena, filename, &stack->module_refs);
+  bool error = (stack->value == NULL);
   if (stack->value == NULL) {
-    return NULL;
+    stack->module_refs.size = 0;
   }
 
-  Tree* tree = FbleAlloc(arena, Tree);
+  Tree* tree = FbleAlloc(load_arena, Tree);
   tree->name.name = "";
   tree->name.loc.source = "???";
   tree->name.loc.line = 0;
   tree->name.loc.col = 0;
   tree->private = false;
-  FbleVectorInit(arena, tree->children);
+  FbleVectorInit(load_arena, tree->children);
 
   while (stack != NULL) {
     if (stack->module_refs.size == 0) {
@@ -342,7 +352,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       module->value = stack->value;
       Stack* tail = stack->tail;
       FbleFree(arena, stack->module_refs.xs);
-      FbleFree(arena, stack);
+      FbleFree(load_arena, stack);
       stack = tail;
       continue;
     }
@@ -351,19 +361,17 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
     // Check to see if we have already loaded this path.
     FbleName resolved_name;
-    PathToName(arena, ref->path, &resolved_name);
+    PathToName(load_arena, ref->path, &resolved_name);
     bool found = false;
     for (size_t i = 0; i < program->modules.size; ++i) {
       if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
         if (!AccessAllowed(tree, stack->path, ref->path)) {
-          // TODO: Doesn't this leak memory allocated for the stack?
           FbleReportError("module ", &ref->path.xs[0].loc);
           PrintModuleName(stderr, stack->path);
           fprintf(stderr, " is not allowed to reference private module ");
           PrintModuleName(stderr, ref->path);
           fprintf(stderr, "\n");
-          FreeTree(arena, tree);
-          return NULL;
+          error = true;
         }
 
         ref->resolved = program->modules.xs[i].name;
@@ -372,39 +380,46 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
         break;
       }
     }
-    FbleFree(arena, (void*)resolved_name.name);
+    FbleFree(load_arena, (void*)resolved_name.name);
     if (found) {
       continue;
     }
 
+    bool recursive = false;
     for (Stack* s = stack; s != NULL; s = s->tail) {
       if (PathsEqual(ref->path, s->path)) {
-        // TODO: Doesn't this leak memory allocated for the stack?
         FbleName* module = ref->path.xs + ref->path.size - 1;
         FbleReportError("module ", &module->loc);
         PrintModuleName(stderr, ref->path);
         fprintf(stderr, " recursively depends on itself\n");
-        FreeTree(arena, tree);
-        return NULL;
+        error = true;
+        recursive = true;
+        stack->module_refs.size = 0;
+        break;
       }
+    }
+
+    if (recursive) {
+      continue;
     }
 
     // Parse the new module, placing it on the stack for processing.
     Stack* tail = stack;
-    stack = FbleAlloc(arena, Stack);
+    stack = FbleAlloc(load_arena, Stack);
     FbleVectorInit(arena, stack->module_refs);
     stack->path = ref->path;
     stack->tail = tail;
-    stack->value = Parse(arena, root, tree, stack->path, &stack->module_refs);
+    stack->value = Parse(load_arena, arena, root, tree, stack->path, &stack->module_refs);
     if (stack->value == NULL) {
-      FreeTree(arena, tree);
-      return NULL;
+      error = true;
+      stack->module_refs.size = 0;
     }
   }
-  FreeTree(arena, tree);
+  FreeTree(load_arena, tree);
 
   // The last module loaded should be the main entry point.
   program->modules.size--;
   program->main = program->modules.xs[program->modules.size].value;
-  return program;
+  FbleAssertEmptyArena(load_arena);
+  return error ? NULL : program;
 }
