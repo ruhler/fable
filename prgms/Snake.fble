@@ -4,14 +4,15 @@
 { /Draw%; @(Color@, Draw@); };
 { /List%; @(P@, S@, InitP, LastP); };
 { /Process%; @(Get@, Put@); };
-{ /Int/Int%; @(Int@, 0, 1, 2, 6, Lit2, Inc, Dec); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 6, Inc, Dec); };
 { /Int/Int/Eq%; @(Eq); };
+{ /Int/Int/Lit%; @(I, D); };
 { /Unit%; @(Unit@, Unit); };
 
 Int@ MinRow = 0;
-Int@ MaxRow = Lit2(2, 0);
+Int@ MaxRow = I(D|20);
 Int@ MinCol = 0;
-Int@ MaxCol = Lit2(6, 0);
+Int@ MaxCol = I(D|60);
 
 @ Pos@ = *(Int@ row, Int@ col);
 

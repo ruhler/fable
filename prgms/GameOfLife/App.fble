@@ -3,9 +3,10 @@
 { /Bool%; @(Bool@, And, True, False); };
 { /Draw%; @(Draw@, Color@); };
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
-{ /Int/Int%; @(Int@, Lit2, Lit3, 0, 1, 2, 3, 4, 5, 6, Dec); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6, Dec); };
 { /Int/IntP%; @(IntP@); };
 { /Int/Int/Eq%; @(IsZero, Ge, Lt); };
+{ /Int/Int/Lit%; @(I, D); };
 { /List%; @(S@, S, S0, ConsS); };
 { /Maybe%; @(Maybe@, Just, Nothing, MapMaybe); };
 { /Process%; @(Get@, Put@); };
@@ -15,20 +16,20 @@
 
 # The snake API uses a 60 x 20 grid. Center the acorn around that.
 World@ acorn = World([
-  C(Lit2(1, 0), Lit2(3, 1)),
+  C(I(D|10), I(D|31)),
 
-  C(Lit2(1, 1), Lit2(3, 3)),
+  C(I(D|11), I(D|33)),
 
-  C(Lit2(1, 2), Lit2(3, 0)),
-  C(Lit2(1, 2), Lit2(3, 1)),
-  C(Lit2(1, 2), Lit2(3, 4)),
-  C(Lit2(1, 2), Lit2(3, 5)),
-  C(Lit2(1, 2), Lit2(3, 6))
+  C(I(D|12), I(D|30)),
+  C(I(D|12), I(D|31)),
+  C(I(D|12), I(D|34)),
+  C(I(D|12), I(D|35)),
+  C(I(D|12), I(D|36))
 ]);
 
 
-Int@ MaxRow = Lit2(2, 0);
-Int@ MaxCol = Lit2(6, 0);
+Int@ MaxRow = I(D|20);
+Int@ MaxCol = I(D|60);
 
 (World@) { S@<Draw@>; } DrawWorld = (World@ w) {
   Draw@ clear = Draw@(0, 0, MaxCol, MaxRow, Color@(black: Unit));
@@ -56,7 +57,7 @@ StepUI = (Get@<Event@> in, Put@<S@<Draw@>> out, Int@ n, World@ w) {
 };
 
 App@ Main = (Get@<Event@> in, Put@<S@<Draw@>> out) {
-  Unit@ _ := StepUI(in, out, Lit3(1, 0, 0), acorn);
+  Unit@ _ := StepUI(in, out, I(D|100), acorn);
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;

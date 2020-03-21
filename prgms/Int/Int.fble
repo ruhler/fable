@@ -110,20 +110,5 @@ Int@ 10 = P(IntP.10);
             p: P(IntP.Mul(a.p, b.p))));
 };
 
-Int@ 100 = Mul(10, 10);
-Int@ 1000 = Mul(10, 100);
-
-(Int@, Int@){Int@;} Lit2 = (Int@ a, Int@ b) {
-  Add(Mul(10, a), b);
-};
-
-(Int@, Int@, Int@){Int@;} Lit3 = (Int@ a, Int@ b, Int@ c) {
-  Add(Mul(100, a), Lit2(b, c));
-};
-
-(Int@, Int@, Int@, Int@){Int@;} Lit4 = (Int@ a, Int@ b, Int@ c, Int@ d) {
-  Add(Mul(1000, a), Lit3(b, c, d));
-};
-
-@(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Lit2, Lit3, Lit4,
- Inc, Dec, Add, Sub, Neg, Mul);
+@(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+  Inc, Dec, Add, Sub, Neg, Mul);

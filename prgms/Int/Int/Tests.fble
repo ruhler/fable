@@ -7,10 +7,11 @@
 { /Unit%; @(Unit); };
 
 { /Int/Int%; @(Int@,
-  0, 1, 2, 3, 4, 5, 6, 7, Lit2,
+  0, 1, 2, 3, 4, 5, 6, 7,
   Neg, Add, Sub, Mul);
 };
 { /Int/Int/Eq%; @(Eq, Lt, Le, Gt, Ge); };
+{ /Int/Int/Lit%; @(D, I); };
 
 @ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
@@ -96,7 +97,7 @@ S@<Test@> Tests = S<Test@>([
   TEq(Chars|Sub_5_3, 2, $(Sub(5, 3))),
   TEq(Chars|Sub_3_5, Neg(2), $(Sub(3, 5))),
   TEq(Chars|Neg_m2, 2, $(Neg(Neg(2)))),
-  TEq(Chars|Mul_3_5, Lit2(1, 5), $(Mul(3, 5)))
+  TEq(Chars|Mul_3_5, I(D|15), $(Mul(3, 5)))
 ]);
 
 @(Tests);

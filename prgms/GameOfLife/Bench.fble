@@ -1,6 +1,7 @@
 
 { /Unit%; @(Unit@, Unit); };
-{ /Int/Int%; @(Int@, Lit2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9); };
+{ /Int/Int/Lit%; @(I, D); };
 { /GameOfLife%; @(Coord@, World@, World, StepN); };
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
@@ -14,7 +15,7 @@ World@ acorn = World([
 Unit@! Bench = $({
   # The number of iterations is chosen so that the benchmark takes on the
   # order of 1 minute to run.
-  World@ _ = StepN(Lit2(9, 0), acorn);
+  World@ _ = StepN(I(D|90), acorn);
   Unit;
 });
 

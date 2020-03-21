@@ -1,20 +1,26 @@
+* Add structure to Draw@ instead of using S@<Draw@> to combine them?
 * Clearly define orientation of coordinate system for Draw@ in App%.
 * Pass width and height to App and scale up or down as necessary in fble code.
-* Add support for Int@ literals. Replace Lit2, Lit3, Lit4, etc.
-
+* Make GameOfLife benchmark go around App instead of around Step?
+ - Maybe wait until the App interface settles first though.
 * Add test coverage for the Int routines.
  - In particular, test Div and Mod.
 * Come up with a nicer timer interface for App.
+ - The app can say: wait X milliseconds, then notify me.
+   It's relative to a virtual timer fble-app tracks that advances every time a
+   wait has happened. You get a 'tick' event when waiting is complete.
+ - In the future, add a way to reset virtual time to match current time.
+ - This way the behavior of the app is deterministic as a function of virtual
+   time, and fble-app just slows it down as appropriate to ensure virtual time
+   doesn't run ahead of real time.
 * Debug flaky deadlock in fble-app?
  - SDL docs say the multithreading of OnTimer is safe.
 * Separate Map from DataMap and EqMap.
-* Figure out why GameOfLife is so absurdly slow.
 * Optimization: Avoid REF_INSTR if we aren't going to ever use it.
+ - Maybe have a way to list free vars in an expression and use that to compute
+   'recursive' ahead of time?
 * Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
-* It might be nice to have a tool that lists, for each module, all of the
-  modules it directly or indirectly depends on. To help guide when to split up
-  modules or not.
 * Is there a way to avoid emitting instructions after a return instruction?
 * Add test that we don't hold on to a condition value while running the
   selected branch of a union select expression.
@@ -34,8 +40,6 @@
   Maybe addressed naturally when we inline link and exec bindings into the
   parent proc?
 * Label blocks in exec process bindings by binding name?
-* Step through code via gdb for a Bit2XN addition to get a sense of how
-  involved that is?
 * Consider factoring out code in compile.c for computing modeled profile time.
 * Consider using put and get to synchronize EXEC processes rather than JOIN?
 * Add an option to automatically determine performance model parameters based
