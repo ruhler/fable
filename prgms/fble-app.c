@@ -332,9 +332,11 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+
   gWindow = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
       SDL_WINDOW_FULLSCREEN);
+  SDL_ShowCursor(SDL_DISABLE);
 
   int width = 0;
   int height = 0;

@@ -1,13 +1,18 @@
-* Add 'q' as an option to quit snake early.
-* Hide mouse pointer from screen in fble-app.
-* Clean up representation of Rect so Transform works better.
-* Factor out common code for scaling an App up to a given coordinate system?
-* Scale GameOfLife up to fit in the screen better.
-* Make GameOfLife benchmark go around App instead of around Step?
+* [fble-app] Switch to using OpenGL for rendering
+ - In preparation for making triangles or something similar the Draw
+   primitive.
+* [App] Change from rect to triangles for primitive drawing
+ - Because transform of rectangle is broken.
+ - But wait until fble-app has switched to OpenGL first.
+* [Snake] Fix bounding box size.
+* [Snake] Add 'q' as an option to quit snake early.
+* [App] Factor out common code for scaling an App up to a given coordinate system?
+* [GameOfLife] Scale up to fit in the screen better.
+* [fble-bench] Make benchmark go around App instead of around Step?
  - Wait until the App interface settles first though.
-* Add test coverage for the Int routines.
+* [Int] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
-* Come up with a nicer timer interface for App.
+* [App] Come up with a nicer timer interface for App.
  - The app can say: wait X milliseconds, then notify me.
    It's relative to a virtual timer fble-app tracks that advances every time a
    wait has happened. You get a 'tick' event when waiting is complete.
@@ -15,51 +20,47 @@
  - This way the behavior of the app is deterministic as a function of virtual
    time, and fble-app just slows it down as appropriate to ensure virtual time
    doesn't run ahead of real time.
-* Debug flaky deadlock in fble-app?
+* [fble-app] Debug flaky deadlock in fble-app?
  - SDL docs say the multithreading of OnTimer is safe.
  - Maybe wait until we've updated the time interface first, and see if it
    turns into a problem in practice.
-* Separate Map from DataMap and EqMap.
-* Optimization: Avoid REF_INSTR if we aren't going to ever use it.
+* [Map] Separate Map from DataMap and EqMap.
+* [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
    'recursive' ahead of time?
-* Is there a way to clean up compile.c, in terms of orders of setting fields
+* [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
-* Is there a way to avoid emitting instructions after a return instruction?
-* Add test that we don't hold on to a condition value while running the
+* [compile] Is there a way to avoid emitting instructions after a return instruction?
+* [eval] Add test that we don't hold on to a condition value while running the
   selected branch of a union select expression.
-* Add test that we don't hold on to an exec binding expression longer than
+* [eval] Add test that we don't hold on to an exec binding expression longer than
   necessary.
-* Add unit tests for /Map%.Equals.
-* [clean] Reorganize functions in fble/compile.c
-* Don't duplicate evaluation of literal type per letter.
-* Add test that the literal type must be a struct, not a union value.
-* Don't give duplicate error messages if the literal type is malformed.
-* Remove struct import syntax in favor of let or a new multi-import format.
-* Add support for abstract types?
-* Fix syntax highlighting of paths
+* [Map] Add unit tests for /Map%.Equals.
+* [compile] Reorganize functions in fble/compile.c
+* [compile] Don't duplicate evaluation of literal type per letter.
+* [test] Add test that the literal type must be a struct, not a union value.
+* [compile] Don't give duplicate error messages if the literal type is malformed.
+* [lang] Remove struct import syntax in favor of let or a new multi-import format.
+* [lang] Add support for abstract types?
+* [util] Fix syntax highlighting of paths
   For example: *(@<DataMap%.Map@>Map@ 
-* Make Foo@: highlight like a field instead of like a type?
-* Remove excess !!! in block names.
-  Maybe addressed naturally when we inline link and exec bindings into the
-  parent proc?
-* Label blocks in exec process bindings by binding name?
-* Consider factoring out code in compile.c for computing modeled profile time.
-* Consider using put and get to synchronize EXEC processes rather than JOIN?
-* Add an option to automatically determine performance model parameters based
+* [util] Make Foo@: highlight like a field instead of like a type?
+* [profile] Label blocks in exec process bindings by binding name?
+* [profile] Consider factoring out code in compile.c for computing modeled profile time.
+* [perf] Add an option to automatically determine performance model parameters based
   on wall clock time profiling of benchmarks.
-* Ensure the implementation satisfies the performance spec. Add perf spec
+* [perf] Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
 * [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
   eval after a let binding? Can't we use subst or other eval-by-construction
   for everything else?
-* Document the runtime memory model,
+* [perf] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
-* Test that we get a reasonable error message if we do something like:
+* [compile] Test that we get a reasonable error message if we do something like:
     <@>@ Id = <@ T@> { T@; };
-* Test that poly types with different arg kinds aren't equal.
+* [test] Test that poly types with different arg kinds aren't equal.
 * [test] Add detection of vacuous values.
-* [clean] Can fble-stdio check that the function has the right type?
+* [test] Can fble-stdio check that the function has the right type?
 * Better error messages on types that have the same name but different values.
 * Write man pages for fble and friends?
 * Better error message when the difference between a type is accidentally
