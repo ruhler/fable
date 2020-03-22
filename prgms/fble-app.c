@@ -21,6 +21,8 @@ static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
 static void Draw(FbleValue* drawing);
+static FbleValue* MakeIntP(FbleValueArena* arena, int x);
+static FbleValue* MakeInt(FbleValueArena* arena, int x);
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int main(int argc, char* argv[]);
@@ -137,6 +139,57 @@ static void Draw(FbleValue* drawing)
       abort();
     }
   }
+}
+
+// MakeIntP -- 
+//   Make an FbleValue of type /Int/IntP%.IntP@ for the given integer.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   x - the integer value. Must be greater than 0.
+//
+// Results:
+//   An FbleValue for the integer.
+//
+// Side effects:
+//   Allocates a value that should be freed with FbleValueRelease when no
+//   longer needed. Behavior is undefined if x is not positive.
+static FbleValue* MakeIntP(FbleValueArena* arena, int x)
+{
+  assert(x > 0);
+  if (x == 1) {
+    FbleValueV args = { .size = 0, .xs = NULL };
+    return FbleNewUnionValue(arena, 0, FbleNewStructValue(arena, args));
+  }
+
+  return FbleNewUnionValue(arena, 1 + (x % 2), MakeIntP(arena, x / 2));
+}
+
+// MakeInt -- 
+//   Make an FbleValue of type /Int/Int%.Int@ for the given integer.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   x - the integer value.
+//
+// Results:
+//   An FbleValue for the integer.
+//
+// Side effects:
+//   Allocates a value that should be freed with FbleValueRelease when no
+//   longer needed.
+static FbleValue* MakeInt(FbleValueArena* arena, int x)
+{
+  if (x < 0) {
+    return FbleNewUnionValue(arena, 0, MakeIntP(arena, -x));
+  }
+
+  if (x == 0) {
+    FbleValueV args = { .size = 0, .xs = NULL };
+    return FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, args));
+  }
+
+  return FbleNewUnionValue(arena, 2, MakeIntP(arena, x));
 }
 
 // IO --
@@ -269,16 +322,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* args[2];
-  args[0] = FbleNewInputPortValue(value_arena, 0);
-  args[1] = FbleNewOutputPortValue(value_arena, 1);
-  FbleValueV argsv = { .xs = args, .size = 2 };
-  FbleValue* proc = FbleApply(value_arena, func, argsv, profile);
-  FbleValueRelease(value_arena, func);
-  FbleValueRelease(value_arena, args[0]);
-  FbleValueRelease(value_arena, args[1]);
-
-  if (proc == NULL) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
+    SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
     FbleDeleteValueArena(value_arena);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
@@ -287,14 +332,38 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-    SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-    return 1;
-  }
-
   gWindow = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
       SDL_WINDOW_FULLSCREEN);
+
+  int width = 0;
+  int height = 0;
+  SDL_GetWindowSize(gWindow, &width, &height);
+
+  FbleValue* args[4];
+  args[0] = MakeInt(value_arena, width);
+  args[1] = MakeInt(value_arena, height);
+  args[2] = FbleNewInputPortValue(value_arena, 0);
+  args[3] = FbleNewOutputPortValue(value_arena, 1);
+  FbleValueV argsv = { .xs = args, .size = 4 };
+  FbleValue* proc = FbleApply(value_arena, func, argsv, profile);
+  FbleValueRelease(value_arena, func);
+  FbleValueRelease(value_arena, args[0]);
+  FbleValueRelease(value_arena, args[1]);
+  FbleValueRelease(value_arena, args[2]);
+  FbleValueRelease(value_arena, args[3]);
+
+  if (proc == NULL) {
+    FbleDeleteValueArena(value_arena);
+    FbleFreeBlockNames(eval_arena, &blocks);
+    FbleFreeProfile(eval_arena, profile);
+    FbleDeleteArena(eval_arena);
+    FbleDeleteArena(prgm_arena);
+    SDL_DestroyWindow(gWindow);
+    SDL_Quit();
+    return 1;
+  }
+
   gScreen = SDL_GetWindowSurface(gWindow);
   SDL_FillRect(gScreen, NULL, SDL_MapRGB(gScreen->format, 0, 0, 0));
   SDL_UpdateWindowSurface(gWindow);

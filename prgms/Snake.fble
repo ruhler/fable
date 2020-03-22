@@ -160,7 +160,7 @@ Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
       : GetInput(in)));
 };
 
-App@ Main = (Get@<Event@> in, Put@<Drawing@> out) {
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Drawing@> out) {
   State@ s = InitialState;
   Unit@ _ := out(DrawState(s));
   Unit@ _ := Snake(GetInput(in), out, s);

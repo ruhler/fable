@@ -1,7 +1,8 @@
 
-{ /Unit%; @(Unit@); };
 { /Drawing%; @(Drawing@); };
+{ /Int/Int%; @(Int@); };
 { /Process%; @(Get@, Put@); };
+{ /Unit%; @(Unit@); };
 
 @ Key@ = +(Unit@ H, Unit@ J, Unit@ K, Unit@ L, Unit@ Q);
 @ Event@ = +(Unit@ tick, Key@ key);
@@ -10,6 +11,8 @@
 #   Type of fble programs that can be used with the fble-app driver.
 #
 # Inputs:
+#   width - The width of the screen.
+#   height - The height of the screen.
 #   in - Get the next input event.
 #   out - Draw to the screen.
 #      Draws on top of whatever was there before.
@@ -22,6 +25,6 @@
 #
 # Results:
 #   None.
-@ App@ = (Get@<Event@>, Put@<Drawing@>){Unit@!;};
+@ App@ = (Int@, Int@, Get@<Event@>, Put@<Drawing@>){Unit@!;};
 
 @(App@, Key@, Event@);
