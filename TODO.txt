@@ -5,7 +5,6 @@
  - Because transform of rectangle is broken.
  - But wait until fble-app has switched to OpenGL first.
 * [Snake] Fix bounding box size.
-* [Snake] Add 'q' as an option to quit snake early.
 * [App] Factor out common code for scaling an App up to a given coordinate system?
 * [GameOfLife] Scale up to fit in the screen better.
 * [fble-bench] Make benchmark go around App instead of around Step?

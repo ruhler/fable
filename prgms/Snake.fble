@@ -22,7 +22,7 @@ Int@ MaxCol = I(D|60);
 };
 
 @ Direction@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
-@ Input@ = +(Direction@ dir, Unit@ tick);
+@ Input@ = +(Direction@ dir, Unit@ quit, Unit@ tick);
 
 
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
@@ -138,6 +138,7 @@ State@ InitialState = {
 Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
   Input@ x := in;
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
+       quit: $(Unit),
        tick: {
            MoveResultM@ m = Move(s);
            ?(m;
@@ -158,6 +159,7 @@ Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
       J: $(Input@(dir: Direction@(down: Unit))),
       K: $(Input@(dir: Direction@(up: Unit))),
       L: $(Input@(dir: Direction@(right: Unit))),
+      Q: $(Input@(quit: Unit)),
       : GetInput(in)));
 };
 
