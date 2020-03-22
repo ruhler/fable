@@ -1,12 +1,13 @@
 
 { /App%; @(App@, Event@); };
 { /Bool%; @(Bool@, True, False, And); };
-{ /Drawing%; @(Color@, Drawing@, Blank, Rect, Over); };
+{ /Drawing%; @(Color@, Drawing@, Point@, Blank, Rect, Over, Transform); };
 { /List%; @(P@, S@, InitP, LastP); };
 { /Process%; @(Get@, Put@); };
-{ /Int/Int%; @(Int@, 0, 1, 2, 6, Inc, Dec); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 4, 6, Inc, Dec, Add, Mul, Neg); };
 { /Int/Int/Eq%; @(Eq); };
 { /Int/Int/Lit%; @(I, D); };
+{ /Int/Int/Div%; @(Div); };
 { /Unit%; @(Unit@, Unit); };
 
 Int@ MinRow = 0;
@@ -27,8 +28,8 @@ Int@ MaxCol = I(D|60);
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
 (Pos@, Cell@){Drawing@;} DrawCell = (Pos@ pos, Cell@ cell) {
-  Color@ c = ?(cell; empty: Color@(black: Unit),
-                     snake: Color@(blue: Unit),
+  Color@ c = ?(cell; empty: Color@(blue: Unit),
+                     snake: Color@(cyan: Unit),
                      food: Color@(green: Unit));
   Rect(pos.col, pos.row, 1, 1, c);
 };
@@ -162,8 +163,26 @@ Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Drawing@> out) {
   State@ s = InitialState;
-  Unit@ _ := out(DrawState(s));
-  Unit@ _ := Snake(GetInput(in), out, s);
+
+  
+  # Map game coordinates into screen coordinates.
+  Int@ ax = Div(width, Add(2, MaxCol));
+  Int@ bx = Mul(2, ax);
+  Int@ ay = Neg(Div(height, Add(2, MaxRow)));
+  Int@ by = Add(height, Mul(2, ay));
+
+  (Point@) { Point@; } f = (Point@ p) {
+    @(x: Add(Mul(ax, p.x), bx), 
+      y: Add(Mul(ay, p.y), by));
+  };
+
+  Put@<Drawing@> game_out = (Drawing@ d) {
+    out(Transform(f, d));
+  };
+
+  Unit@ _ := game_out(Rect(0, 0, MaxCol, MaxRow, Color@(blue: Unit)));
+  Unit@ _ := game_out(DrawState(s));
+  Unit@ _ := Snake(GetInput(in), game_out, s);
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;

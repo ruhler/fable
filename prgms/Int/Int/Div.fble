@@ -1,0 +1,22 @@
+
+{ /Int/Int%; @(Int@, Neg, 0); };
+{ /Int/IntS%; @(IntS@); };
+@(P: /Int/IntP/Div%);
+
+(IntS@) { Int@; } IntS = (IntS@ s) {
+  ?(s; 0: 0, p: Int@(p: s.p));
+};
+
+(Int@, Int@) { Int@; } Div = (Int@ a, Int@ b) {
+  ?(a; n: ?(b; n: IntS(P.Div(a.n, b.n)),
+               0: Int@(p: b.n),     # UNDEFINED
+               p: Neg(IntS(P.Div(a.n, b.p)))),
+       0: ?(b; n: 0,
+               0: Int@(p: b.n),     # UNDEFINED
+               p: 0),
+       p: ?(b; n: Neg(IntS(P.Div(a.p, b.n))),
+               0: Int@(p: b.n),     # UNDEFINED
+               p: IntS(P.Div(a.p, b.p))));
+};
+
+@(Div);

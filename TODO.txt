@@ -1,4 +1,7 @@
-* Scale Snake up to fit in the screen better.
+* Add 'q' as an option to quit snake early.
+* Hide mouse pointer from screen in fble-app.
+* Clean up representation of Rect so Transform works better.
+* Factor out common code for scaling an App up to a given coordinate system?
 * Scale GameOfLife up to fit in the screen better.
 * Make GameOfLife benchmark go around App instead of around Step?
  - Wait until the App interface settles first though.

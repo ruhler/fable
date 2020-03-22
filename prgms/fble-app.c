@@ -114,8 +114,8 @@ static void Draw(FbleValue* drawing)
       SDL_Rect rect;
       FbleValue* rv = FbleUnionValueAccess(drawing);
 
-      rect.x = 100 + ReadInt(FbleStructValueAccess(rv, 0));
-      rect.y = 100 + ReadInt(FbleStructValueAccess(rv, 1));
+      rect.x = ReadInt(FbleStructValueAccess(rv, 0));
+      rect.y = ReadInt(FbleStructValueAccess(rv, 1));
       rect.w = ReadInt(FbleStructValueAccess(rv, 2));
       rect.h = ReadInt(FbleStructValueAccess(rv, 3));
 

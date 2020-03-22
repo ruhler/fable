@@ -44,5 +44,14 @@
       p: ?(b; n: True, 0: True, p: GeP(a.p, b.p)));
 };
 
-@(IsZero, Eq, Lt, Le, Gt, Ge);
+# Abs(x) = |x|
+(Int@) { Int@; } Abs = (Int@ x) {
+  ?(x; n: Int@(p: x.n), 0: x, p: x);
+};
+
+(Int@, Int@) { Int@; } Min = (Int@ a, Int@ b) {
+  ?(Lt(a, b); true: a, false: b);
+};
+
+@(IsZero, Eq, Lt, Le, Gt, Ge, Abs, Min);
 

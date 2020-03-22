@@ -1,5 +1,6 @@
 { /Unit%; @(Unit@, Unit); };
-{ /Int/Int%; @(Int@); };
+{ /Int/Int%; @(Int@, Add, Sub); };
+{ /Int/Int/Eq%; @(Min, Abs); };
 
 @ Color@ = +(
     Unit@ black,
@@ -36,4 +37,27 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
   Drawing@(over: @(below, above));
 };
 
-@(Color@, Drawing@, Blank, Rect, Over);
+# Transform all of the coordinates in the given drawing.
+@ Point@ = *(Int@ x, Int@ y);
+((Point@) { Point@; }, Drawing@) { Drawing@; }
+Transform = ((Point@) { Point@; } f, Drawing@ d) {
+  ?(d; blank: d,
+       rect: {
+         # TODO: Fix the representation of Rect so we don't have to do this
+         # hackish stuff.
+         d.rect;
+         Point@ xy = f(@(x: x, y: y));
+         Point@ wh = f(@(x: Add(x, w), y: Add(y, h)));
+         Int@ nx = Min(xy.x, wh.x);
+         Int@ ny = Min(xy.y, wh.y);
+         Int@ nw = Abs(Sub(wh.x, xy.x));
+         Int@ nh = Abs(Sub(wh.y, xy.y));
+         Rect(nx, ny, nw, nh, color);
+       },
+       over: {
+         d.over;
+         Over(Transform(f, below), Transform(f, above));
+       });
+};
+
+@(Color@, Drawing@, Point@, Blank, Rect, Over, Transform);
