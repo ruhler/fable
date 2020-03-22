@@ -960,23 +960,48 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
 }
 
 // FbleApply -- see documentation in fble.h
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, FbleProfile* profile)
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args, FbleProfile* profile)
 {
+  assert(args.size > 0);
   assert(func->tag == FBLE_FUNC_VALUE);
 
-  FbleFuncApplyInstr apply = {
-    ._base = { .tag = FBLE_FUNC_APPLY_INSTR },
-    .loc = { .source = "(internal)", .line = 0, .col = 0 },
-    .exit = true,
-    .dest = 0,      // arbitrary, because exit = true.
-    .func = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0 },
-    .arg = { .section = FBLE_STATICS_FRAME_SECTION, .index = 1 },
-  };
-  FbleInstr* instrs[] = { &g_enter_instr._base, &apply._base };
-  FbleInstrBlock code = { .refcount = 2, .statics = 2, .locals = 0, .instrs = { .size = 2, .xs = instrs } };
-  FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
+  FbleInstr* instrs[1 + args.size];
+  instrs[0] = &g_enter_instr._base;
 
-  FbleValue* xs[] = { func, arg };
+  FbleValue* xs[1 + args.size];
+  xs[0] = func;
+
+  FbleFuncApplyInstr applies[args.size];
+  for (size_t i = 0; i < args.size; ++i) {
+    instrs[i+1] = &applies[i]._base;
+    xs[i+1] = args.xs[i];
+
+    applies[i]._base.tag = FBLE_FUNC_APPLY_INSTR;
+    applies[i].loc.source = __FILE__;
+    applies[i].loc.line = __LINE__;
+    applies[i].loc.col = 0;
+    applies[i].exit = (i + 1 == args.size);
+    applies[i].dest = i;
+
+    if (i == 0) {
+      applies[i].func.section = FBLE_STATICS_FRAME_SECTION;
+      applies[i].func.index = 0;
+    } else {
+      applies[i].func.section = FBLE_LOCALS_FRAME_SECTION;
+      applies[i].func.index = i - 1;
+    }
+
+    applies[i].arg.section = FBLE_STATICS_FRAME_SECTION;
+    applies[i].arg.index = i + 1;
+  }
+
+  FbleInstrBlock code = {
+    .refcount = 2,
+    .statics = 1 + args.size,
+    .locals = args.size,
+    .instrs = { .size = 1 + args.size, .xs = instrs }
+  };
+  FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValue* result = Eval(arena, &io, xs, &code, profile);
   return result;
 }

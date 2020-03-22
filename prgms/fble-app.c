@@ -269,14 +269,14 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* input = FbleNewInputPortValue(value_arena, 0);
-  FbleValue* output = FbleNewOutputPortValue(value_arena, 1);
-  FbleValue* main1 = FbleApply(value_arena, func, input, profile);
-  FbleValue* proc = FbleApply(value_arena, main1, output, profile);
+  FbleValue* args[2];
+  args[0] = FbleNewInputPortValue(value_arena, 0);
+  args[1] = FbleNewOutputPortValue(value_arena, 1);
+  FbleValueV argsv = { .xs = args, .size = 2 };
+  FbleValue* proc = FbleApply(value_arena, func, argsv, profile);
   FbleValueRelease(value_arena, func);
-  FbleValueRelease(value_arena, main1);
-  FbleValueRelease(value_arena, input);
-  FbleValueRelease(value_arena, output);
+  FbleValueRelease(value_arena, args[0]);
+  FbleValueRelease(value_arena, args[1]);
 
   if (proc == NULL) {
     FbleDeleteValueArena(value_arena);

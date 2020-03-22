@@ -54,22 +54,22 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile);
 
 // FbleApply --
-//   Apply a function to the given argument.
+//   Apply a function to the given arguments.
 //
 // Inputs:
 //   arena - the arena to use for allocating values.
 //   func - the function to apply.
-//   arg - the argument to apply the function to.
+//   args - the arguments to apply the function to.
 //   profile - the profile to update.
 //
 // Results:
-//   The result of applying the function to the given argument.
+//   The result of applying the function to the given arguments.
 //
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints an error message to stderr in case of error.
 //   Updates the profile with stats from the evaluation.
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValue* arg, FbleProfile* profile);
+FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args, FbleProfile* profile);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.

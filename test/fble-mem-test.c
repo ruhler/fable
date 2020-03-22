@@ -83,8 +83,11 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
       }
     }
 
-    FbleValue* n = (use_large_n ? large_n : small_n);
-    FbleValue* result = FbleApply(value_arena, func, n, profile);
+    FbleValueV argv = {
+      .xs = (use_large_n ? &large_n : &small_n),
+      .size = 1
+    };
+    FbleValue* result = FbleApply(value_arena, func, argv, profile);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.

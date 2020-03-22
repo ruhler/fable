@@ -1,5 +1,4 @@
 * Pass width and height to App and scale up or down as necessary in fble code.
- - Maybe make it easier to call FbleExec with multiple arguments?
 * Make GameOfLife benchmark go around App instead of around Step?
  - Wait until the App interface settles first though.
 * Add test coverage for the Int routines.
