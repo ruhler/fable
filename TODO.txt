@@ -1,9 +1,5 @@
-* [fble-app] Switch to using OpenGL for rendering
- - In preparation for making triangles or something similar the Draw
-   primitive.
 * [App] Change from rect to triangles for primitive drawing
  - Because transform of rectangle is broken.
- - But wait until fble-app has switched to OpenGL first.
 * [Snake] Fix bounding box size.
 * [App] Factor out common code for scaling an App up to a given coordinate system?
 * [GameOfLife] Scale up to fit in the screen better.
@@ -78,8 +74,8 @@
 * Change reference counting to be incrementally done on allocation.
   Maybe write a test that shows how something that should take no time gets
   charged for a big deallocation time today?
-* Figure out how to handle profiling threads better
- - Separate EXIT_BLOCK from EXIT_COPE to remove spurious calls to enter block
+* [profile] Figure out how to handle profiling threads better
+ - Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
    0 in fble/eval?
  - Remove special case handling of block 0 in fble/profile?
  - How to maintain the profile stack when forking new threads?

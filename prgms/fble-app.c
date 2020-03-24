@@ -2,8 +2,10 @@
 //   A program to run fble programs with an App interface.
 
 #include <assert.h>     // for assert
-#include <SDL.h>        // for SDL_*
 #include <string.h>     // for strcmp
+
+#include <GL/gl.h>      // for gl*
+#include <SDL.h>        // for SDL_*
 
 #include "fble.h"
 
@@ -15,7 +17,9 @@ SDL_Window* gWindow = NULL;
 SDL_Surface* gScreen = NULL;
 
 // black, red, green, yellow, blue, magenta, cyan, white
-static Uint32 DRAW_COLORS[8];
+typedef enum {
+  BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE
+} Color;
 
 static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
@@ -100,7 +104,7 @@ static int ReadInt(FbleValue* x)
 //
 // Side effects:
 //   Draws the drawing to the gScreen. The caller must call
-//   SDL_UpdateWindowSurface for the screen to actually be updated.
+//   SDL_GL_SwapWindow for the screen to actually be updated.
 static void Draw(FbleValue* drawing)
 {
   switch (FbleUnionValueTag(drawing)) {
@@ -111,18 +115,32 @@ static void Draw(FbleValue* drawing)
 
     case 1: {
       // Rectangle.
-      SDL_Rect rect;
       FbleValue* rv = FbleUnionValueAccess(drawing);
 
-      rect.x = ReadInt(FbleStructValueAccess(rv, 0));
-      rect.y = ReadInt(FbleStructValueAccess(rv, 1));
-      rect.w = ReadInt(FbleStructValueAccess(rv, 2));
-      rect.h = ReadInt(FbleStructValueAccess(rv, 3));
+      int x = ReadInt(FbleStructValueAccess(rv, 0));
+      int y = ReadInt(FbleStructValueAccess(rv, 1));
+      int w = ReadInt(FbleStructValueAccess(rv, 2));
+      int h = ReadInt(FbleStructValueAccess(rv, 3));
 
       FbleValue* color = FbleStructValueAccess(rv, 4);
       size_t color_index = FbleUnionValueTag(color);
+      switch (color_index) {
+        case BLACK: glColor3d(0, 0, 0); break;
+        case RED: glColor3d(1, 0, 0); break;
+        case GREEN: glColor3d(0, 1, 0); break;
+        case YELLOW: glColor3d(1, 1, 0); break;
+        case BLUE: glColor3d(0, 0, 1); break;
+        case MAGENTA: glColor3d(1, 0, 1); break;
+        case CYAN: glColor3d(0, 1, 1); break;
+        case WHITE: glColor3d(1, 1, 1); break;
+      }
 
-      SDL_FillRect(gScreen, &rect, DRAW_COLORS[color_index]);
+      glBegin(GL_QUADS);
+        glVertex3i(x, y, 0);
+        glVertex3i(x + w, y, 0);
+        glVertex3i(x + w, y + h, 0);
+        glVertex3i(x, y + h, 0);
+      glEnd();
       return;
     }
 
@@ -201,7 +219,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 
   if (io->ports.xs[1] != NULL) {
     Draw(io->ports.xs[1]);
-    SDL_UpdateWindowSurface(gWindow);
+    SDL_GL_SwapWindow(gWindow);
     FbleValueRelease(arena, io->ports.xs[1]);
     io->ports.xs[1] = NULL;
     change = true;
@@ -335,8 +353,7 @@ int main(int argc, char* argv[])
 
   gWindow = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
-      SDL_WINDOW_FULLSCREEN);
-  SDL_ShowCursor(SDL_DISABLE);
+      SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
 
   int width = 0;
   int height = 0;
@@ -366,19 +383,15 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  gScreen = SDL_GetWindowSurface(gWindow);
-  SDL_FillRect(gScreen, NULL, SDL_MapRGB(gScreen->format, 0, 0, 0));
-  SDL_UpdateWindowSurface(gWindow);
-
-  // Set up the colors.
-  DRAW_COLORS[0] = SDL_MapRGB(gScreen->format, 0, 0, 0);
-  DRAW_COLORS[1] = SDL_MapRGB(gScreen->format, 255, 0, 0);
-  DRAW_COLORS[2] = SDL_MapRGB(gScreen->format, 0, 255, 0);
-  DRAW_COLORS[3] = SDL_MapRGB(gScreen->format, 255, 255, 0);
-  DRAW_COLORS[4] = SDL_MapRGB(gScreen->format, 0, 0, 255);
-  DRAW_COLORS[5] = SDL_MapRGB(gScreen->format, 255, 0, 255);
-  DRAW_COLORS[6] = SDL_MapRGB(gScreen->format, 0, 255, 255);
-  DRAW_COLORS[7] = SDL_MapRGB(gScreen->format, 255, 255, 255);
+  SDL_GLContext gl = SDL_GL_CreateContext(gWindow);
+  SDL_ShowCursor(SDL_DISABLE);
+  glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0, width, height, 0, -1, 1);
+  glClearColor(0, 0, 0, 1);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  SDL_GL_SwapWindow(gWindow);
 
   FbleValue* ports[2] = {NULL, NULL};
   FbleIO io = { .io = &IO, .ports = { .size = 2, .xs = ports} };
@@ -400,6 +413,7 @@ int main(int argc, char* argv[])
   FbleDeleteArena(prgm_arena);
 
   SDL_RemoveTimer(timer);
+  SDL_GL_DeleteContext(gl);
   SDL_DestroyWindow(gWindow);
   SDL_Quit();
   return 0;
