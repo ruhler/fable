@@ -1,5 +1,5 @@
 
-{ /App%; @(App@, Event@); };
+{ /App%; @(App@, Event@, Effect@); };
 { /Bool%; @(Bool@, And, True, False); };
 { /Drawing%; @(Drawing@, Color@, Rect, Over); };
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
@@ -45,17 +45,27 @@ Int@ MaxCol = I(D|60);
   });
 };
 
-(Get@<Event@>, Put@<Drawing@>, Int@, World@) { Unit@!; }
-StepUI = (Get@<Event@> in, Put@<Drawing@> out, Int@ n, World@ w) {
-  Unit@ _ := out(DrawWorld(w));
-  Event@ x := in;
-  ?(x;
-      tick: ?(IsZero(n); true: $(Unit), false: StepUI(in, out, Dec(n), Step(w))),
-      key: ?(x.key; Q: $(Unit), : StepUI(in, out, n, w)));
+@ Input@ = +(Unit@ quit, Unit@ step);
+
+(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
+  Event@ e := in;
+  ?(e; tick: $(Input@(step: Unit)),
+       key: ?(e.key; Q: $(Input@(quit: Unit)), : GetInput(in)));
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Drawing@> out) {
-  Unit@ _ := StepUI(in, out, I(D|100), acorn);
+(Get@<Input@>, Put@<Effect@>, Int@, World@) { Unit@!; }
+StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, World@ w) {
+  Unit@ _ := out(Effect@(draw: DrawWorld(w)));
+  Unit@ _ := out(Effect@(tick: I(D|200)));
+  Input@ x := in;
+  ?(x; quit: $(Unit),
+       step: ?(IsZero(n);
+                true: $(Unit),
+                false: StepUI(in, out, Dec(n), Step(w))));
+};
+
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+  Unit@ _ := StepUI(GetInput(in), out, I(D|100), acorn);
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;

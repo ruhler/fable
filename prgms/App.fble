@@ -7,6 +7,23 @@
 @ Key@ = +(Unit@ H, Unit@ J, Unit@ K, Unit@ L, Unit@ Q);
 @ Event@ = +(Unit@ tick, Key@ key);
 
+@ Effect@ = +(
+  # Request for a tick Event@ to occur after the given number of milliseconds.
+  # Time is relative to the time of the previously delivered tick event. The
+  # tick will be delivered immediately if the more time has passed since the
+  # previous tick event then requested.
+  Int@ tick,
+
+  # Draw to the screen on top of whatever was there before.
+  #
+  # Coordinate (0, 0) is the upper left of the screen, with the positive x
+  # access going towards the right edge of the screen and the positive y
+  # access going towards the bottom edge of the screen.
+  # 
+  # The drawing is clipped to fit in the screen area.
+  Drawing@ draw
+);
+
 # App@ --
 #   Type of fble programs that can be used with the fble-app driver.
 #
@@ -25,6 +42,6 @@
 #
 # Results:
 #   None.
-@ App@ = (Int@, Int@, Get@<Event@>, Put@<Drawing@>){Unit@!;};
+@ App@ = (Int@, Int@, Get@<Event@>, Put@<Effect@>){Unit@!;};
 
-@(App@, Key@, Event@);
+@(App@, Key@, Event@, Effect@);

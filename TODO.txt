@@ -1,5 +1,15 @@
-* [App] Change from rect to triangles for primitive drawing
+* [fble-app] Try drawing triangles directly in SDL
+ - Instead of using OpenGL, based on a generic, custom, software closed path
+   filling algorithm. Because Path's feel like a better way to go to me than
+   triangles, and open GL seems not designed for paths.
+
+* [App] Change from rect to path for primitive drawing
  - Because transform of rectangle is broken.
+
+* [fble-app] Make tick timer relative to time last delivered, not to current
+  time.
+ 
+* [Snake] Figure out why sometimes it leaks memory on exit.
 * [Snake] Fix bounding box size.
 * [App] Factor out common code for scaling an App up to a given coordinate system?
 * [GameOfLife] Scale up to fit in the screen better.
@@ -7,14 +17,6 @@
  - Wait until the App interface settles first though.
 * [Int] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
-* [App] Come up with a nicer timer interface for App.
- - The app can say: wait X milliseconds, then notify me.
-   It's relative to a virtual timer fble-app tracks that advances every time a
-   wait has happened. You get a 'tick' event when waiting is complete.
- - In the future, add a way to reset virtual time to match current time.
- - This way the behavior of the app is deterministic as a function of virtual
-   time, and fble-app just slows it down as appropriate to ensure virtual time
-   doesn't run ahead of real time.
 * [fble-app] Debug flaky deadlock in fble-app?
  - SDL docs say the multithreading of OnTimer is safe.
  - Maybe wait until we've updated the time interface first, and see if it

@@ -1,5 +1,5 @@
 
-{ /App%; @(App@, Event@); };
+{ /App%; @(App@, Event@, Effect@); };
 { /Bool%; @(Bool@, True, False, And); };
 { /Drawing%; @(Color@, Drawing@, Point@, Blank, Rect, Over, Transform); };
 { /List%; @(P@, S@, InitP, LastP); };
@@ -134,8 +134,8 @@ State@ InitialState = {
             })));
 };
 
-(Get@<Input@>, Put@<Drawing@>, State@){Unit@!;}
-Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
+(Get@<Input@>, Put@<Effect@>, State@){Unit@!;}
+Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   Input@ x := in;
   ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.nfood, s.snake)),
        quit: $(Unit),
@@ -144,7 +144,8 @@ Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
            ?(m;
               dead: $(Unit),
               mr: {
-                 Unit@ _ := out(m.mr.draw);
+                 Unit@ _ := out(Effect@(draw: m.mr.draw));
+                 Unit@ _ := out(Effect@(tick: I(D|200)));
                  Snake(in, out, m.mr.state);
               });
        });
@@ -163,9 +164,8 @@ Snake = (Get@<Input@> in, Put@<Drawing@> out, State@ s) {
       : GetInput(in)));
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Drawing@> out) {
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   State@ s = InitialState;
-
   
   # Map game coordinates into screen coordinates.
   Int@ ax = Div(width, Add(2, MaxCol));
@@ -178,12 +178,16 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Drawing@> out) {
       y: Add(Mul(ay, p.y), by));
   };
 
-  Put@<Drawing@> game_out = (Drawing@ d) {
-    out(Transform(f, d));
+  Put@<Effect@> game_out = (Effect@ e) {
+    Effect@ transformed = ?(e;
+      tick: e,
+      draw: Effect@(draw: Transform(f, e.draw)));
+    out(transformed);
   };
 
-  Unit@ _ := game_out(Rect(0, 0, MaxCol, MaxRow, Color@(blue: Unit)));
-  Unit@ _ := game_out(DrawState(s));
+  Unit@ _ := game_out(Effect@(draw: Rect(0, 0, MaxCol, MaxRow, Color@(blue: Unit))));
+  Unit@ _ := game_out(Effect@(draw: DrawState(s)));
+  Unit@ _ := out(Effect@(tick: I(D|0)));
   Unit@ _ := Snake(GetInput(in), game_out, s);
 
   Unit@! WaitForKeyPress = {

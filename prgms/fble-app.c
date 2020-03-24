@@ -218,8 +218,24 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
   bool change = false;
 
   if (io->ports.xs[1] != NULL) {
-    Draw(io->ports.xs[1]);
-    SDL_GL_SwapWindow(gWindow);
+    FbleValue* effect = io->ports.xs[1];
+    switch (FbleUnionValueTag(effect)) {
+      case 0: {
+        int tick = ReadInt(FbleUnionValueAccess(effect));
+
+        // TODO: Time should be relative to when the last tick was delivered,
+        // not to the current time.
+        SDL_AddTimer(tick, OnTimer, NULL);
+        break;
+      }
+
+      case 1: {
+        Draw(FbleUnionValueAccess(effect));
+        SDL_GL_SwapWindow(gWindow);
+        break;
+      }
+    }
+
     FbleValueRelease(arena, io->ports.xs[1]);
     io->ports.xs[1] = NULL;
     change = true;
@@ -270,7 +286,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 //   param - unused
 //
 // Results:
-//   The new timer interval.
+//   0 to cancel to the timer.
 //
 // Side effects:
 //   Pushes a user event onto the SDL event queue.
@@ -286,7 +302,7 @@ static Uint32 OnTimer(Uint32 interval, void* param)
   event.type = SDL_USEREVENT;
   event.user = user;
   SDL_PushEvent(&event);
-  return interval;
+  return 0;
 }
 
 // main --
@@ -350,7 +366,6 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-
   gWindow = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
       SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
@@ -396,8 +411,6 @@ int main(int argc, char* argv[])
   FbleValue* ports[2] = {NULL, NULL};
   FbleIO io = { .io = &IO, .ports = { .size = 2, .xs = ports} };
 
-  SDL_TimerID timer = SDL_AddTimer(TICK_INTERVAL, OnTimer, NULL);
-
   FbleValue* value = FbleExec(value_arena, &io, proc, profile);
 
   FbleValueRelease(value_arena, proc);
@@ -412,7 +425,6 @@ int main(int argc, char* argv[])
   FbleDeleteArena(eval_arena);
   FbleDeleteArena(prgm_arena);
 
-  SDL_RemoveTimer(timer);
   SDL_GL_DeleteContext(gl);
   SDL_DestroyWindow(gWindow);
   SDL_Quit();
