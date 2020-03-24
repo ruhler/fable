@@ -9,14 +9,9 @@
 
 #include "fble.h"
 
-#define MAX_ROW 20
-#define MAX_COL 60
-#define TICK_INTERVAL 200
-
 SDL_Window* gWindow = NULL;
 SDL_Surface* gScreen = NULL;
 
-// black, red, green, yellow, blue, magenta, cyan, white
 typedef enum {
   BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE
 } Color;
