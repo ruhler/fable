@@ -199,10 +199,10 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   State@ s = InitialState;
   
   # Map game coordinates into screen coordinates.
-  Int@ ax = Div(width, Add(2, MaxCol));
-  Int@ bx = Mul(2, ax);
-  Int@ ay = Neg(Div(height, Add(2, MaxRow)));
-  Int@ by = Add(height, Mul(2, ay));
+  Int@ ax = Div(width, Add(3, MaxCol));
+  Int@ bx = ax;
+  Int@ ay = Neg(Div(height, Add(3, MaxRow)));
+  Int@ by = Add(height, ay);
 
   (Point@) { Point@; } f = (Point@ p) {
     @(x: Add(Mul(ax, p.x), bx), 
@@ -216,7 +216,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     out(transformed);
   };
 
-  Unit@ _ := game_out(Effect@(draw: Rect(0, 0, MaxCol, MaxRow, Color@(blue: Unit))));
+  Unit@ _ := game_out(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit))));
   Unit@ _ := game_out(Effect@(draw: DrawState(s)));
   Unit@ _ := out(Effect@(tick: I(D|0)));
   Unit@ _ := Snake(GetInput(in), game_out, s);

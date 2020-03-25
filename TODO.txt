@@ -11,7 +11,6 @@
  - Double check this does what we want in case the app can keep up?
  
 * [Snake] Figure out why sometimes it leaks memory on exit.
-* [Snake] Fix bounding box size.
 * [App] Factor out common code for scaling an App up to a given coordinate system?
 * [GameOfLife] Scale up to fit in the screen better.
 * [fble-bench] Make benchmark go around App instead of around Step?
