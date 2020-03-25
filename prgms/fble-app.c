@@ -8,21 +8,24 @@
 
 #include "fble.h"
 
-SDL_Window* gWindow = NULL;
-SDL_Surface* gScreen = NULL;
-
-typedef enum {
-  BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE
-} Color;
-
-// Indexed by Color
-static Uint32 SDL_COLORS[8];
+// AppIO - Implementation of FbleIO for App, with some additional parameters
+// to pass to the IO function.
+//
+// Fields:
+//   _base - The underlying FbleIO object.
+//   window - The window to draw to.
+//   colors - A preinitialized array of colors.
+typedef struct {
+  FbleIO _base;
+  SDL_Window* window;
+  Uint32* colors;
+} AppIO;
 
 static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
-static void FillPath(size_t n, SDL_Point* points, Uint32 color);
-static void Draw(FbleValue* drawing);
+static void FillPath(SDL_Window* window, size_t n, SDL_Point* points, Uint32 color);
+static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors);
 static FbleValue* MakeIntP(FbleValueArena* arena, int x);
 static FbleValue* MakeInt(FbleValueArena* arena, int x);
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
@@ -95,6 +98,7 @@ static int ReadInt(FbleValue* x)
 //   Fill a closed path with a solid color to the window.
 //
 // Inputs:
+//   window - the SDL window to draw to.
 //   n - the number of points in the path.
 //   points - the points, in order around the path.
 //   color - the color to fill the path with.
@@ -106,9 +110,9 @@ static int ReadInt(FbleValue* x)
 //   Draws a filled path as described by the given points to the global
 //   window. The user is responsible for calling SDL_UpdateWindowSurface when
 //   they are ready to display the filled path.
-static void FillPath(size_t n, SDL_Point* points, Uint32 color)
+static void FillPath(SDL_Window* window, size_t n, SDL_Point* points, Uint32 color)
 {
-  SDL_Surface* s = SDL_GetWindowSurface(gWindow);
+  SDL_Surface* s = SDL_GetWindowSurface(window);
 
   assert(n > 0);
 
@@ -159,15 +163,16 @@ static void FillPath(size_t n, SDL_Point* points, Uint32 color)
 //   Draw a drawing to the screen of type /Drawing%.Drawing@.
 //
 // Inputs:
-//   drawing - the drawing to draw
+//   window - the window to draw to.
+//   drawing - the drawing to draw.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   Draws the drawing to the gScreen. The caller must call
+//   Draws the drawing to the window. The caller must call
 //   SDL_UpdateWindowSurface for the screen to actually be updated.
-static void Draw(FbleValue* drawing)
+static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
 {
   switch (FbleUnionValueTag(drawing)) {
     case 0: {
@@ -195,16 +200,15 @@ static void Draw(FbleValue* drawing)
       points[3].y = ReadInt(FbleStructValueAccess(d, 1));
 
       FbleValue* color = FbleStructValueAccess(rv, 4);
-      size_t color_index = FbleUnionValueTag(color);
-      FillPath(4, points, SDL_COLORS[color_index]);
+      FillPath(window, 4, points, colors[FbleUnionValueTag(color)]);
       return;
     }
 
     case 2: {
       // Over.
       FbleValue* over = FbleUnionValueAccess(drawing);
-      Draw(FbleStructValueAccess(over, 0));
-      Draw(FbleStructValueAccess(over, 1));
+      Draw(window, FbleStructValueAccess(over, 0), colors);
+      Draw(window, FbleStructValueAccess(over, 1), colors);
       return;
     }
 
@@ -271,6 +275,8 @@ static FbleValue* MakeInt(FbleValueArena* arena, int x)
 //   See the corresponding documentation in fble.h.
 static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 {
+  AppIO* app = (AppIO*)io;
+
   bool change = false;
 
   if (io->ports.xs[1] != NULL) {
@@ -286,8 +292,8 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       }
 
       case 1: {
-        Draw(FbleUnionValueAccess(effect));
-        SDL_UpdateWindowSurface(gWindow);
+        Draw(app->window, FbleUnionValueAccess(effect), app->colors);
+        SDL_UpdateWindowSurface(app->window);
         break;
       }
     }
@@ -422,24 +428,28 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  gWindow = SDL_CreateWindow(
+  SDL_Window* window = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
       SDL_WINDOW_FULLSCREEN);
   SDL_ShowCursor(SDL_DISABLE);
 
-  gScreen = SDL_GetWindowSurface(gWindow);
-  SDL_COLORS[BLACK] = SDL_MapRGB(gScreen->format, 0, 0, 0);
-  SDL_COLORS[RED] = SDL_MapRGB(gScreen->format, 255, 0, 0);
-  SDL_COLORS[GREEN] = SDL_MapRGB(gScreen->format, 0, 255, 0);
-  SDL_COLORS[YELLOW] = SDL_MapRGB(gScreen->format, 255, 255, 0);
-  SDL_COLORS[BLUE] = SDL_MapRGB(gScreen->format, 0, 0, 255);
-  SDL_COLORS[MAGENTA] = SDL_MapRGB(gScreen->format, 255, 0, 255);
-  SDL_COLORS[CYAN] = SDL_MapRGB(gScreen->format, 0, 255, 255);
-  SDL_COLORS[WHITE] = SDL_MapRGB(gScreen->format, 255, 255, 255);
+  SDL_Surface* screen = SDL_GetWindowSurface(window);
+
+  // Colors as defined in /Drawing%.Color@.
+  Uint32 colors[] = {
+    SDL_MapRGB(screen->format, 0, 0, 0),
+    SDL_MapRGB(screen->format, 255, 0, 0),
+    SDL_MapRGB(screen->format, 0, 255, 0),
+    SDL_MapRGB(screen->format, 255, 255, 0),
+    SDL_MapRGB(screen->format, 0, 0, 255),
+    SDL_MapRGB(screen->format, 255, 0, 255),
+    SDL_MapRGB(screen->format, 0, 255, 255),
+    SDL_MapRGB(screen->format, 255, 255, 255),
+  };
 
   int width = 0;
   int height = 0;
-  SDL_GetWindowSize(gWindow, &width, &height);
+  SDL_GetWindowSize(window, &width, &height);
 
   FbleValue* args[4];
   args[0] = MakeInt(value_arena, width);
@@ -460,17 +470,21 @@ int main(int argc, char* argv[])
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
     FbleDeleteArena(prgm_arena);
-    SDL_DestroyWindow(gWindow);
+    SDL_DestroyWindow(window);
     SDL_Quit();
     return 1;
   }
 
-  SDL_FillRect(gScreen, NULL, SDL_MapRGB(gScreen->format, 0, 0, 0));
+  SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
 
   FbleValue* ports[2] = {NULL, NULL};
-  FbleIO io = { .io = &IO, .ports = { .size = 2, .xs = ports} };
+  AppIO io = {
+    ._base = { .io = &IO, .ports = { .size = 2, .xs = ports} },
+    .window = window,
+    .colors = colors,
+  };
 
-  FbleValue* value = FbleExec(value_arena, &io, proc, profile);
+  FbleValue* value = FbleExec(value_arena, &io._base, proc, profile);
 
   FbleValueRelease(value_arena, proc);
   FbleValueRelease(value_arena, ports[0]);
@@ -484,7 +498,7 @@ int main(int argc, char* argv[])
   FbleDeleteArena(eval_arena);
   FbleDeleteArena(prgm_arena);
 
-  SDL_DestroyWindow(gWindow);
+  SDL_DestroyWindow(window);
   SDL_Quit();
   return 0;
 }
