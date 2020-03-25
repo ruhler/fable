@@ -15,10 +15,12 @@
 //   _base - The underlying FbleIO object.
 //   window - The window to draw to.
 //   colors - A preinitialized array of colors.
+//   time - The current simulation time in units of SDL_GetTicks.
 typedef struct {
   FbleIO _base;
   SDL_Window* window;
   Uint32* colors;
+  Uint32 time;
 } AppIO;
 
 static void PrintUsage(FILE* stream);
@@ -285,9 +287,14 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       case 0: {
         int tick = ReadInt(FbleUnionValueAccess(effect));
 
-        // TODO: Time should be relative to when the last tick was delivered,
-        // not to the current time.
-        SDL_AddTimer(tick, OnTimer, NULL);
+        // TODO: This assumes we don't already have a tick in progress. We
+        // should add proper support for multiple backed up tick requests.
+        Uint32 now = SDL_GetTicks();
+        app->time += tick;
+        if (app->time < now) {
+          app->time = now;
+        }
+        SDL_AddTimer(app->time - now, OnTimer, NULL);
         break;
       }
 
@@ -482,6 +489,7 @@ int main(int argc, char* argv[])
     ._base = { .io = &IO, .ports = { .size = 2, .xs = ports} },
     .window = window,
     .colors = colors,
+    .time = SDL_GetTicks(),
   };
 
   FbleValue* value = FbleExec(value_arena, &io._base, proc, profile);

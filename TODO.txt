@@ -1,13 +1,3 @@
-* [fble-app] Make tick timer relative to time last delivered, not to current
-  time.
- - Specifically: keep track of virtual time, deliver ticks when real time
-   matches virtual time. If our "future" scheduled virtual time has already
-   passed when we go to schedule the timer, set virtual time to real time and
-   deliver the tick immediately.
- - As a second step: need to handle repeated tick requests correctly. Put tick
-   requests onto a FIFO, don't process the next tick request until after
-   delivering the previous tick event.
- 
 * [Snake] Implement an AI, use it to drive a Snake benchmark?
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
