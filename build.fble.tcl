@@ -57,7 +57,7 @@ gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-ref-test $::obj/fble-ref-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble -lm
-gcc_prgm -o $::bin/fble-app $::obj/fble-app.o -lfble -lSDL2 -lGL -lm
+gcc_prgm -o $::bin/fble-app $::obj/fble-app.o -lfble -lSDL2 -lm
 gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble -lm
 gcc_prgm -o $::bin/fble-stdio $::obj/fble-stdio.o -lfble -lm
 

@@ -1,8 +1,3 @@
-* [fble-app] Try drawing triangles directly in SDL
- - Instead of using OpenGL, based on a generic, custom, software closed path
-   filling algorithm. Because Path's feel like a better way to go to me than
-   triangles, and open GL seems not designed for paths.
-
 * [fble-app] Make tick timer relative to time last delivered, not to current
   time.
  - Double check this does what we want in case the app can keep up?

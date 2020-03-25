@@ -4,7 +4,6 @@
 #include <assert.h>     // for assert
 #include <string.h>     // for strcmp
 
-#include <GL/gl.h>      // for gl*
 #include <SDL.h>        // for SDL_*
 
 #include "fble.h"
@@ -16,9 +15,13 @@ typedef enum {
   BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE
 } Color;
 
+// Indexed by Color
+static Uint32 SDL_COLORS[8];
+
 static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
+static void FillPath(size_t n, SDL_Point* points, Uint32 color);
 static void Draw(FbleValue* drawing);
 static FbleValue* MakeIntP(FbleValueArena* arena, int x);
 static FbleValue* MakeInt(FbleValueArena* arena, int x);
@@ -88,6 +91,70 @@ static int ReadInt(FbleValue* x)
   }
 }
 
+// FillPath --
+//   Fill a closed path with a solid color to the window.
+//
+// Inputs:
+//   n - the number of points in the path.
+//   points - the points, in order around the path.
+//   color - the color to fill the path with.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Draws a filled path as described by the given points to the global
+//   window. The user is responsible for calling SDL_UpdateWindowSurface when
+//   they are ready to display the filled path.
+static void FillPath(size_t n, SDL_Point* points, Uint32 color)
+{
+  SDL_Surface* s = SDL_GetWindowSurface(gWindow);
+
+  assert(n > 0);
+
+  SDL_Rect bounds;
+  SDL_EnclosePoints(points, n, NULL, &bounds);
+
+  for (int y = bounds.y; y < bounds.y + bounds.h; ++y) {
+    // xs is a sorted list of the x coordinates of line segments in the path
+    // that intersect the horizontal line defined by y.
+    // xn is the number of valid points in the xs array.
+    int xs[n];
+    size_t xn = 0;
+    for (size_t i = 0; i < n; ++i) {
+      SDL_Point* s = points + i;
+      SDL_Point* e = points + ((i+1) % n);
+      if ((s->y <= y && e->y > y) || (s->y > y && e->y <= y)) {
+        int x = s->x + (y - s->y)*(e->x - s->x)/(e->y - s->y);
+
+        // Insert x sorted into the array of xs gathered so far.
+        for (size_t j = 0; j < xn; ++j) {
+          if (x < xs[j]) {
+            int tmp = xs[j];
+            xs[j] = x;
+            x = tmp;
+          }
+        }
+        xs[xn++] = x;
+      }
+    }
+
+    // For a closed path, by mean value theorem, there should be an even
+    // number of line segments intersecting with this horizontal y.
+    assert(xn % 2 == 0);
+
+    // Fill with the even odd rule: draw a ray from the point to infinity in
+    // any direction, the point is considered inside the path if the number of
+    // line segments the ray crosses is odd. We pick a ray going in the
+    // horizontal direction. All points between x[0] and x[1] should be
+    // filled, between x[2] and x[3], and so on.
+    for (size_t i = 0; i + 1 < xn; i += 2) {
+      SDL_Rect r = { xs[i], y, xs[i+1]-xs[i], 1 };
+      SDL_FillRect(s, &r, color);
+    }
+  }
+}
+
 // Draw --
 //   Draw a drawing to the screen of type /Drawing%.Drawing@.
 //
@@ -99,7 +166,7 @@ static int ReadInt(FbleValue* x)
 //
 // Side effects:
 //   Draws the drawing to the gScreen. The caller must call
-//   SDL_GL_SwapWindow for the screen to actually be updated.
+//   SDL_UpdateWindowSurface for the screen to actually be updated.
 static void Draw(FbleValue* drawing)
 {
   switch (FbleUnionValueTag(drawing)) {
@@ -117,34 +184,19 @@ static void Draw(FbleValue* drawing)
       FbleValue* c = FbleStructValueAccess(rv, 2);
       FbleValue* d = FbleStructValueAccess(rv, 3);
 
-      int ax = ReadInt(FbleStructValueAccess(a, 0));
-      int ay = ReadInt(FbleStructValueAccess(a, 1));
-      int bx = ReadInt(FbleStructValueAccess(b, 0));
-      int by = ReadInt(FbleStructValueAccess(b, 1));
-      int cx = ReadInt(FbleStructValueAccess(c, 0));
-      int cy = ReadInt(FbleStructValueAccess(c, 1));
-      int dx = ReadInt(FbleStructValueAccess(d, 0));
-      int dy = ReadInt(FbleStructValueAccess(d, 1));
+      SDL_Point points[4];
+      points[0].x = ReadInt(FbleStructValueAccess(a, 0));
+      points[0].y = ReadInt(FbleStructValueAccess(a, 1));
+      points[1].x = ReadInt(FbleStructValueAccess(b, 0));
+      points[1].y = ReadInt(FbleStructValueAccess(b, 1));
+      points[2].x = ReadInt(FbleStructValueAccess(c, 0));
+      points[2].y = ReadInt(FbleStructValueAccess(c, 1));
+      points[3].x = ReadInt(FbleStructValueAccess(d, 0));
+      points[3].y = ReadInt(FbleStructValueAccess(d, 1));
 
       FbleValue* color = FbleStructValueAccess(rv, 4);
       size_t color_index = FbleUnionValueTag(color);
-      switch (color_index) {
-        case BLACK: glColor3d(0, 0, 0); break;
-        case RED: glColor3d(1, 0, 0); break;
-        case GREEN: glColor3d(0, 1, 0); break;
-        case YELLOW: glColor3d(1, 1, 0); break;
-        case BLUE: glColor3d(0, 0, 1); break;
-        case MAGENTA: glColor3d(1, 0, 1); break;
-        case CYAN: glColor3d(0, 1, 1); break;
-        case WHITE: glColor3d(1, 1, 1); break;
-      }
-
-      glBegin(GL_QUADS);
-        glVertex3i(ax, ay, 0);
-        glVertex3i(bx, by, 0);
-        glVertex3i(cx, cy, 0);
-        glVertex3i(dx, dy, 0);
-      glEnd();
+      FillPath(4, points, SDL_COLORS[color_index]);
       return;
     }
 
@@ -235,7 +287,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 
       case 1: {
         Draw(FbleUnionValueAccess(effect));
-        SDL_GL_SwapWindow(gWindow);
+        SDL_UpdateWindowSurface(gWindow);
         break;
       }
     }
@@ -372,7 +424,17 @@ int main(int argc, char* argv[])
 
   gWindow = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
-      SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+      SDL_WINDOW_FULLSCREEN);
+
+  gScreen = SDL_GetWindowSurface(gWindow);
+  SDL_COLORS[BLACK] = SDL_MapRGB(gScreen->format, 0, 0, 0);
+  SDL_COLORS[RED] = SDL_MapRGB(gScreen->format, 255, 0, 0);
+  SDL_COLORS[GREEN] = SDL_MapRGB(gScreen->format, 0, 255, 0);
+  SDL_COLORS[YELLOW] = SDL_MapRGB(gScreen->format, 255, 255, 0);
+  SDL_COLORS[BLUE] = SDL_MapRGB(gScreen->format, 0, 0, 255);
+  SDL_COLORS[MAGENTA] = SDL_MapRGB(gScreen->format, 255, 0, 255);
+  SDL_COLORS[CYAN] = SDL_MapRGB(gScreen->format, 0, 255, 255);
+  SDL_COLORS[WHITE] = SDL_MapRGB(gScreen->format, 255, 255, 255);
 
   int width = 0;
   int height = 0;
@@ -402,15 +464,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  SDL_GLContext gl = SDL_GL_CreateContext(gWindow);
-  SDL_ShowCursor(SDL_DISABLE);
-  glViewport(0, 0, width, height);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, width, height, 0, -1, 1);
-  glClearColor(0, 0, 0, 1);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  SDL_GL_SwapWindow(gWindow);
+  SDL_FillRect(gScreen, NULL, SDL_MapRGB(gScreen->format, 0, 0, 0));
 
   FbleValue* ports[2] = {NULL, NULL};
   FbleIO io = { .io = &IO, .ports = { .size = 2, .xs = ports} };
@@ -429,7 +483,6 @@ int main(int argc, char* argv[])
   FbleDeleteArena(eval_arena);
   FbleDeleteArena(prgm_arena);
 
-  SDL_GL_DeleteContext(gl);
   SDL_DestroyWindow(gWindow);
   SDL_Quit();
   return 0;
