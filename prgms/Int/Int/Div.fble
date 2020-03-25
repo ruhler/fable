@@ -19,4 +19,14 @@
                p: IntS(P.Div(a.p, b.p))));
 };
 
-@(Div);
+(Int@, Int@) { Int@; } Mod = (Int@ a, Int@ b) {
+  ?(a; n: Int@(p: a.p),             # TODO: What is negative mod?
+       0: ?(b; n: 0,
+               0: Int@(p: b.n),     # UNDEFINED
+               p: 0),
+       p: ?(b; n: Int@(p: b.p),     # TODO: What is negative od?
+               0: Int@(p: b.n),     # UNDEFINED
+               p: IntS(P.Mod(a.p, b.p))));
+};
+
+@(Div, Mod);

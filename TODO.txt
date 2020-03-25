@@ -8,6 +8,7 @@
 
 * [fble-app] Make tick timer relative to time last delivered, not to current
   time.
+ - Double check this does what we want in case the app can keep up?
  
 * [Snake] Figure out why sometimes it leaks memory on exit.
 * [Snake] Fix bounding box size.
@@ -17,10 +18,6 @@
  - Wait until the App interface settles first though.
 * [Int] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
-* [fble-app] Debug flaky deadlock in fble-app?
- - SDL docs say the multithreading of OnTimer is safe.
- - Maybe wait until we've updated the time interface first, and see if it
-   turns into a problem in practice.
 * [Map] Separate Map from DataMap and EqMap.
 * [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
@@ -114,7 +111,6 @@ Future:
    a debugger.
 
 Snake:
-* Make food appear randomly instead of at the tail.
 * Speed up the snake every time it eats something.
 * Test and fix bug when snake eats its tail.
 * Ignore moves that aren't orthogonal to current snake direction.
