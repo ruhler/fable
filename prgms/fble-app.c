@@ -425,6 +425,7 @@ int main(int argc, char* argv[])
   gWindow = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
       SDL_WINDOW_FULLSCREEN);
+  SDL_ShowCursor(SDL_DISABLE);
 
   gScreen = SDL_GetWindowSurface(gWindow);
   SDL_COLORS[BLACK] = SDL_MapRGB(gScreen->format, 0, 0, 0);
