@@ -4,7 +4,7 @@
 { /Drawing%; @(Color@, Drawing@, Point@, Blank, Rect, Over, Transform); };
 { /List%; @(P@, S@, InitP, LastP); };
 { /Process%; @(Get@, Put@); };
-{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 6, Inc, Dec, Add, Mul, Neg); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 6, Inc, Dec, Add, Mul, Neg, Sub); };
 { /Int/Int/Eq%; @(Eq); };
 { /Int/Int/Lit%; @(I, D); };
 { /Int/Int/Div%; @(Div, Mod); };
@@ -43,11 +43,13 @@ Int@ MaxCol = I(D|60);
 #   food - The current position of the food.
 #   rand - Random bits for use in determining the next food position.
 #   snake - The positions of the snake, in order from head to tail.
+#   speed - The number of milliseconds to wait between each tick.
 @ State@ = *(
   Direction@ dir,
   Pos@ food,
   Int@ rand,
-  P@<Pos@> snake
+  P@<Pos@> snake,
+  Int@ speed
 );
 
 # TODO: Use MapS or some other combinator for this.
@@ -76,7 +78,8 @@ State@ InitialState = {
       P@<Pos@>(Pos@(r1, c4), S@<Pos@>(cons: P@<Pos@>(
               Pos@(r1, c3), S@<Pos@>(cons: P@<Pos@>(
               Pos@(r1, c2), S@<Pos@>(cons: P@<Pos@>(
-              Pos@(r1, c1), S@<Pos@>(nil: Unit)))))))));
+              Pos@(r1, c1), S@<Pos@>(nil: Unit)))))))),
+      I(D|40));
 };
 
 @ MoveResult@ = *(State@ state, Drawing@ draw);
@@ -142,7 +145,8 @@ Int@ Max64 = I(D|18446744073709551616);
             # tail.
             P@<Pos@> nsnake = P@<Pos@>(s.food, S@<Pos@>(cons: s.snake));
             Pos@ nfood = GetNextFood(nrand, nsnake);
-            State@ ns = State@(s.dir, nfood, nrand, nsnake);
+            Int@ nspeed = ?(s.speed; n: 0, 0: 0, p: Sub(s.speed, 4));
+            State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
             Drawing@ draw = Over(DrawCell(s.food, Cell@(snake: Unit)),
                                  DrawCell(nfood, Cell@(food: Unit)));
             MoveResultM@(mr: MoveResult@(ns, draw));
@@ -154,7 +158,7 @@ Int@ Max64 = I(D|18446744073709551616);
               # iterate over the list of elements once instead of twice?
               P@<Pos@> nsnake = P@<Pos@>(pm.pos, InitP<Pos@>(s.snake));
               Pos@ last = LastP<Pos@>(s.snake);
-              State@ ns = State@(s.dir, s.food, nrand, nsnake);
+              State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
               Drawing@ draw = Over(DrawCell(pm.pos, Cell@(snake: Unit)),
                                    DrawCell(last, Cell@(empty: Unit)));
               MoveResultM@(mr: MoveResult@(ns, draw));
@@ -164,7 +168,7 @@ Int@ Max64 = I(D|18446744073709551616);
 (Get@<Input@>, Put@<Effect@>, State@){Unit@!;}
 Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   Input@ x := in;
-  ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake)),
+  ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake, s.speed)),
        quit: $(Unit),
        tick: {
            MoveResultM@ m = Move(s);
@@ -172,7 +176,7 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
               dead: $(Unit),
               mr: {
                  Unit@ _ := out(Effect@(draw: m.mr.draw));
-                 Unit@ _ := out(Effect@(tick: I(D|200)));
+                 Unit@ _ := out(Effect@(tick: s.speed));
                  Snake(in, out, m.mr.state);
               });
        });

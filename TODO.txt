@@ -111,7 +111,7 @@ Future:
    a debugger.
 
 Snake:
-* Speed up the snake every time it eats something.
+* Optimize snake, because even at top speed it's too slow.
 * Test and fix bug when snake eats its tail.
 * Ignore moves that aren't orthogonal to current snake direction.
 * Keep track of and report score.
