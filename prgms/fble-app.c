@@ -109,13 +109,22 @@ static void Draw(FbleValue* drawing)
     }
 
     case 1: {
-      // Rectangle.
+      // Quad.
       FbleValue* rv = FbleUnionValueAccess(drawing);
 
-      int x = ReadInt(FbleStructValueAccess(rv, 0));
-      int y = ReadInt(FbleStructValueAccess(rv, 1));
-      int w = ReadInt(FbleStructValueAccess(rv, 2));
-      int h = ReadInt(FbleStructValueAccess(rv, 3));
+      FbleValue* a = FbleStructValueAccess(rv, 0);
+      FbleValue* b = FbleStructValueAccess(rv, 1);
+      FbleValue* c = FbleStructValueAccess(rv, 2);
+      FbleValue* d = FbleStructValueAccess(rv, 3);
+
+      int ax = ReadInt(FbleStructValueAccess(a, 0));
+      int ay = ReadInt(FbleStructValueAccess(a, 1));
+      int bx = ReadInt(FbleStructValueAccess(b, 0));
+      int by = ReadInt(FbleStructValueAccess(b, 1));
+      int cx = ReadInt(FbleStructValueAccess(c, 0));
+      int cy = ReadInt(FbleStructValueAccess(c, 1));
+      int dx = ReadInt(FbleStructValueAccess(d, 0));
+      int dy = ReadInt(FbleStructValueAccess(d, 1));
 
       FbleValue* color = FbleStructValueAccess(rv, 4);
       size_t color_index = FbleUnionValueTag(color);
@@ -131,10 +140,10 @@ static void Draw(FbleValue* drawing)
       }
 
       glBegin(GL_QUADS);
-        glVertex3i(x, y, 0);
-        glVertex3i(x + w, y, 0);
-        glVertex3i(x + w, y + h, 0);
-        glVertex3i(x, y + h, 0);
+        glVertex3i(ax, ay, 0);
+        glVertex3i(bx, by, 0);
+        glVertex3i(cx, cy, 0);
+        glVertex3i(dx, dy, 0);
       glEnd();
       return;
     }

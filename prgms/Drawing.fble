@@ -13,12 +13,14 @@
     Unit@ white
     );
 
+@ Point@ = *(Int@ x, Int@ y);
+
 @ Drawing@ = +(
   # A blank (transparent) drawing.
   Unit@ blank,
   
-  # A filled rectangle.
-  *(Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) rect,
+  # A filled quadrangle.
+  *(Point@ a, Point@ b, Point@ c, Point@ d, Color@ color) quad,
 
   # Draw one drawing over another.
   *(Drawing@ below, Drawing@ above) over
@@ -29,7 +31,11 @@ Drawing@ Blank = Drawing@(blank: Unit);
 # Draw a rectangle filled solid with the given color.
 (Int@, Int@, Int@, Int@, Color@) { Drawing@; }
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
-  Drawing@(rect: @(x, y, w, h, color));
+  Drawing@(quad: @(
+    a: Point@(x, y),
+    b: Point@(Add(x, w), y),
+    c: Point@(Add(x, w), Add(y, h)),
+    d: Point@(x, Add(y, h)), color));
 };
 
 # Compose two drawings together by drawing one over another.
@@ -38,22 +44,15 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 };
 
 # Transform all of the coordinates in the given drawing.
-@ Point@ = *(Int@ x, Int@ y);
 ((Point@) { Point@; }, Drawing@) { Drawing@; }
 Transform = ((Point@) { Point@; } f, Drawing@ d) {
   ?(d; blank: d,
-       rect: {
-         # TODO: Fix the representation of Rect so we don't have to do this
-         # hackish stuff.
-         d.rect;
-         Point@ xy = f(@(x: x, y: y));
-         Point@ wh = f(@(x: Add(x, w), y: Add(y, h)));
-         Int@ nx = Min(xy.x, wh.x);
-         Int@ ny = Min(xy.y, wh.y);
-         Int@ nw = Abs(Sub(wh.x, xy.x));
-         Int@ nh = Abs(Sub(wh.y, xy.y));
-         Rect(nx, ny, nw, nh, color);
-       },
+       quad: Drawing@(quad: @(
+           a: f(d.quad.a),
+           b: f(d.quad.b),
+           c: f(d.quad.c),
+           d: f(d.quad.d),
+           color: d.quad.color)),
        over: {
          d.over;
          Over(Transform(f, below), Transform(f, above));

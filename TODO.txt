@@ -3,9 +3,6 @@
    filling algorithm. Because Path's feel like a better way to go to me than
    triangles, and open GL seems not designed for paths.
 
-* [App] Change from rect to path for primitive drawing
- - Because transform of rectangle is broken.
-
 * [fble-app] Make tick timer relative to time last delivered, not to current
   time.
  - Double check this does what we want in case the app can keep up?
