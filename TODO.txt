@@ -1,10 +1,7 @@
 * [Snake] Implement an AI, use it to drive a Snake benchmark?
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
-* [App] Factor out common code for scaling an App up to a given coordinate system?
-* [GameOfLife] Scale up to fit in the screen better.
 * [fble-bench] Make benchmark go around App instead of around Step?
- - Wait until the App interface settles first though.
 * [Int] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
 * [Map] Separate Map from DataMap and EqMap.
@@ -111,10 +108,6 @@ Md5:
 
 Table Tennis:
 * Render a static 3D table tennis scene.
-
-Sudoku:
-
-Game of Life:
 
 Space Invaders:
 * Render objects - how to test?

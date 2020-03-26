@@ -1,10 +1,11 @@
 
 { /App%; @(App@, Event@, Effect@); };
 { /Bool%; @(Bool@, And, True, False); };
-{ /Drawing%; @(Drawing@, Color@, Rect, Over); };
+{ /Drawing%; @(Drawing@, Color@, Point@, Rect, Over, Transform); };
 { /GameOfLife%; @(World@, Coord@, World, ForWorld, Step); };
-{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6, Dec); };
+{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6, Add, Mul, Dec, Neg, Sub); };
 { /Int/IntP%; @(IntP@); };
+{ /Int/Int/Div%; @(Div); };
 { /Int/Int/Eq%; @(IsZero, Ge, Lt); };
 { /Int/Int/Lit%; @(I, D); };
 { /List%; @(S@, S, S0, ConsS); };
@@ -14,32 +15,34 @@
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 
-# The snake API uses a 60 x 20 grid. Center the acorn around that.
+Int@ XMin = Neg(I(D|50));
+Int@ XMax = I(D|50);
+Int@ YMin = Neg(I(D|50));
+Int@ YMax = I(D|50);
+Int@ Width = Sub(XMax, XMin);
+Int@ Height = Sub(YMax, YMin);
+
 World@ acorn = World([
-  C(I(D|10), I(D|31)),
+  C(I(D|0), I(D|1)),
 
-  C(I(D|11), I(D|33)),
+  C(I(D|1), I(D|3)),
 
-  C(I(D|12), I(D|30)),
-  C(I(D|12), I(D|31)),
-  C(I(D|12), I(D|34)),
-  C(I(D|12), I(D|35)),
-  C(I(D|12), I(D|36))
+  C(I(D|2), I(D|0)),
+  C(I(D|2), I(D|1)),
+  C(I(D|2), I(D|4)),
+  C(I(D|2), I(D|5)),
+  C(I(D|2), I(D|6))
 ]);
 
-
-Int@ MaxRow = I(D|20);
-Int@ MaxCol = I(D|60);
-
 (World@) { Drawing@; } DrawWorld = (World@ w) {
-  Drawing@ clear = Rect(0, 0, MaxCol, MaxRow, Color@(black: Unit));
+  Drawing@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
     
   # 2. For each live cell in range, draw a green unit square.
   ForWorld<Drawing@>(w, clear, (Coord@ coord, Unit@ _, Drawing@ d) {
     Int@ r = coord.row;
     Int@ c = coord.col;
-    ?(And(And(Ge(r, 0), Ge(c, 0)),
-          And(Lt(r, MaxRow), Lt(c, MaxCol)));
+    ?(And(And(Lt(YMin, r), Lt(XMin, c)),
+          And(Lt(r, YMax), Lt(c, XMax)));
        true: Over(d, Rect(c, r, 1, 1, Color@(green: Unit))),
        false: d);
   });
@@ -65,7 +68,26 @@ StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, World@ w) {
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
-  Unit@ _ := StepUI(GetInput(in), out, I(D|100), acorn);
+  # Map game coordinates into screen coordinate.
+  Int@ ax = Div(width, Width);
+  Int@ bx = Div(width, 2);
+  Int@ ay = Div(height, Height);
+  Int@ by = Div(height, 2);
+
+  (Point@) { Point@; } f = (Point@ p) {
+    @(x: Add(Mul(ax, p.x), bx), 
+      y: Add(Mul(ay, p.y), by));
+  };
+
+  Put@<Effect@> game_out = (Effect@ e) {
+    Effect@ transformed = ?(e;
+      tick: e,
+      draw: Effect@(draw: Transform(f, e.draw)));
+    out(transformed);
+  };
+
+  Unit@ _ := StepUI(GetInput(in), game_out, I(D|100), acorn);
+
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;
