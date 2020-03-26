@@ -3,6 +3,7 @@
 
 Unit@ _ := /GameOfLife/Bench%.Bench;
 Unit@ _ := /Md5/Tests%.Bench;
+Unit@ _ := /Snake/Bench%.Bench;
 Unit@ _ := /Sudoku/Tests%.Bench;
 Unit@ _ := /TicTacToe/Tests%.Bench;
 

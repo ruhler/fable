@@ -1,4 +1,3 @@
-* [Snake] Add a Snake benchmark.
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
 * [Int] Add test coverage for the Int routines.

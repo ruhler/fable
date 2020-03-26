@@ -1,0 +1,46 @@
+
+{ /App%; @(Key@, Event@, Effect@); };
+{ /Int/Int%; @(Int@, Dec); };
+{ /Int/Int/Lit%; @(I, D); };
+@(Main: /Snake%);
+{ /Process%; @(Get@, Put@); };
+{ /Unit%; @(Unit@, Unit); };
+
+# Feed the Snake app with ticks for the given number of iterations before
+# quiting.
+(Int@, Put@<Event@>, Get@<Effect@>) { Unit@!; }
+Feed = (Int@ n, Put@<Event@> in, Get@<Effect@> out) {
+  ?(n; n: {
+       Unit@ _ := in(Event@(key: Key@(Q: Unit)));
+       Unit@ _ := in(Event@(key: Key@(Q: Unit)));
+       $(Unit);
+     }, : {
+       # TODO: This will deadlock if the game ends earlier than we expect.
+       # Make the benchmark more robust than this.
+       Effect@ e := out;
+       ?(e; tick: {
+              Unit@ _ := in(Event@(tick: Unit));
+              Feed(Dec(n), in, out);
+            },
+            draw: Feed(n, in, out));
+     });
+};
+
+Unit@! Bench = {
+  # The number of iterations is chosen so that the benchmark takes on the
+  # order of 1 minute to run.
+  # Note: To avoid deadlock, make sure this is less than the number of
+  # iterations that the SNake App runs for.
+  Int@ n = I(D|600);
+
+  Int@ w = I(D|640);
+  Int@ h = I(D|480);
+
+  Event@ ~ get_event, put_event;
+  Effect@ ~ get_effect, put_effect;
+  Unit@ _ := Main(w, h, get_event, put_effect),
+  Unit@ _ := Feed(n, put_event, get_effect);
+  $(Unit);
+};
+
+@(Bench);
