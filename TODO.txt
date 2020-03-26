@@ -1,28 +1,31 @@
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
+
 * [Int] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
 * [Map] Separate Map from DataMap and EqMap.
-* [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
- - Maybe have a way to list free vars in an expression and use that to compute
-   'recursive' ahead of time?
+* [Map] Add unit tests for /Map%.Equals.
+
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return instruction?
+* [compile] Reorganize functions in fble/compile.c
+* [compile] Don't duplicate evaluation of literal type per letter.
+* [compile] Don't give duplicate error messages if the literal type is malformed.
+
+* [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
+ - Maybe have a way to list free vars in an expression and use that to compute
+   'recursive' ahead of time?
 * [eval] Add test that we don't hold on to a condition value while running the
   selected branch of a union select expression.
 * [eval] Add test that we don't hold on to an exec binding expression longer than
   necessary.
-* [Map] Add unit tests for /Map%.Equals.
-* [compile] Reorganize functions in fble/compile.c
-* [compile] Don't duplicate evaluation of literal type per letter.
+
 * [test] Add test that the literal type must be a struct, not a union value.
-* [compile] Don't give duplicate error messages if the literal type is malformed.
+
 * [lang] Remove struct import syntax in favor of let or a new multi-import format.
 * [lang] Add support for abstract types?
-* [util] Fix syntax highlighting of paths
-  For example: *(@<DataMap%.Map@>Map@ 
-* [util] Make Foo@: highlight like a field instead of like a type?
+
 * [profile] Label blocks in exec process bindings by binding name?
 * [profile] Consider factoring out code in compile.c for computing modeled profile time.
 * [perf] Add an option to automatically determine performance model parameters based
