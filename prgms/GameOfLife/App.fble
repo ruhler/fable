@@ -88,7 +88,6 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   Unit@ _ := StepUI(GetInput(in), game_out, I(D|100), acorn);
 
-
   Unit@! WaitForKeyPress = {
     Event@ e := in;
     ?(e; tick: WaitForKeyPress, key: $(Unit));

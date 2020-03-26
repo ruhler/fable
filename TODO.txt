@@ -1,7 +1,6 @@
 * [Snake] Implement an AI, use it to drive a Snake benchmark?
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
-* [fble-bench] Make benchmark go around App instead of around Step?
 * [Int] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
 * [Map] Separate Map from DataMap and EqMap.
