@@ -1,3 +1,12 @@
+* Fix failing union type for literal test
+* Fix failing arg kind mismatch for poly type test
+
+* [test] Add test that we don't hold on to a condition value while running the
+  selected branch of a union select expression.
+ - This is hard, because we need a way to write a non-tail recursive function
+   that takes linear memory. Maybe that means this isn't a visible behavior
+   difference?
+
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
 
@@ -8,7 +17,7 @@
 
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
-* [compile] Is there a way to avoid emitting instructions after a return instruction?
+* [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
 * [compile] Reorganize functions in fble/compile.c
 * [compile] Don't duplicate evaluation of literal type per letter.
 * [compile] Don't give duplicate error messages if the literal type is malformed.
@@ -16,12 +25,6 @@
 * [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
    'recursive' ahead of time?
-* [eval] Add test that we don't hold on to a condition value while running the
-  selected branch of a union select expression.
-* [eval] Add test that we don't hold on to an exec binding expression longer than
-  necessary.
-
-* [test] Add test that the literal type must be a struct, not a union value.
 
 * [lang] Remove struct import syntax in favor of let or a new multi-import format.
 * [lang] Add support for abstract types?
@@ -32,15 +35,10 @@
   on wall clock time profiling of benchmarks.
 * [perf] Ensure the implementation satisfies the performance spec. Add perf spec
   tests as necessary to catch bugs.
-* [perf] Eval in compile.c is called a ton. Shouldn't we only need to call
-  eval after a let binding? Can't we use subst or other eval-by-construction
-  for everything else?
 * [perf] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
 * [compile] Test that we get a reasonable error message if we do something like:
     <@>@ Id = <@ T@> { T@; };
-* [test] Test that poly types with different arg kinds aren't equal.
-* [test] Add detection of vacuous values.
 * [test] Can fble-stdio check that the function has the right type?
 * Better error messages on types that have the same name but different values.
 * Write man pages for fble and friends?
