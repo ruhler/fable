@@ -2028,7 +2028,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
         return COMPILE_FAILED;
       }
 
-      FbleType* pt = FbleNewPolyType(arena, expr->loc, &arg->_base, body.type);
+      FbleType* pt = FbleNewPolyType(arena, expr->loc, arg, body.type);
       FbleTypeRelease(arena, &arg->_base);
       FbleTypeRelease(arena, body.type);
       body.type = pt;

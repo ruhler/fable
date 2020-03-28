@@ -1,5 +1,8 @@
-* Fix failing union type for literal test
 * Fix failing arg kind mismatch for poly type test
+
+* Fix failing union type for literal test
+* [compile] Don't duplicate evaluation of literal type per letter.
+* [compile] Don't give duplicate error messages if the literal type is malformed.
 
 * [test] Add test that we don't hold on to a condition value while running the
   selected branch of a union select expression.
@@ -19,8 +22,6 @@
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
 * [compile] Reorganize functions in fble/compile.c
-* [compile] Don't duplicate evaluation of literal type per letter.
-* [compile] Don't give duplicate error messages if the literal type is malformed.
 
 * [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute

@@ -82,28 +82,6 @@ typedef struct {
   FbleType* type;
 } FbleProcType;
 
-// FblePolyType -- FBLE_POLY_TYPE
-//
-// We maintain an invariant when constructing FblePolyTypes that the body is
-// not an FBLE_TYPE_TYPE. For example: \a -> typeof(a) is constructed as
-// typeof(\a -> a)
-typedef struct {
-  FbleType _base;
-  FbleType* arg;
-  FbleType* body;
-} FblePolyType;
-
-// FblePolyApplyType -- FBLE_POLY_APPLY_TYPE
-//
-// We maintain an invariant when constructing FblePolyApplyTypes that the poly is
-// not a FBLE_TYPE_TYPE. For example: (typeof(f) x) is constructed as
-// typeof(f x).
-typedef struct {
-  FbleType _base;
-  FbleType* poly;
-  FbleType* arg;
-} FblePolyApplyType;
-
 // FbleVarType --
 //   FBLE_VAR_TYPE
 //
@@ -121,6 +99,28 @@ typedef struct {
   size_t size;
   FbleVarType** xs;
 } FbleVarTypeV;
+
+// FblePolyType -- FBLE_POLY_TYPE
+//
+// We maintain an invariant when constructing FblePolyTypes that the body is
+// not an FBLE_TYPE_TYPE. For example: \a -> typeof(a) is constructed as
+// typeof(\a -> a)
+typedef struct {
+  FbleType _base;
+  FbleVarType* arg;
+  FbleType* body;
+} FblePolyType;
+
+// FblePolyApplyType -- FBLE_POLY_APPLY_TYPE
+//
+// We maintain an invariant when constructing FblePolyApplyTypes that the poly is
+// not a FBLE_TYPE_TYPE. For example: (typeof(f) x) is constructed as
+// typeof(f x).
+typedef struct {
+  FbleType _base;
+  FbleType* poly;
+  FbleType* arg;
+} FblePolyApplyType;
 
 // FbleTypeType --
 //   FBLE_TYPE_TYPE
@@ -279,7 +279,7 @@ void FbleTypeRelease(FbleTypeArena* arena, FbleType* type);
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed arg or body types.
-FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, FbleType* body);
+FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleVarType* arg, FbleType* body);
 
 // FbleNewPolyApplyType --
 //   Construct a PolyApplyType. Maintains the invariant that poly apply of a

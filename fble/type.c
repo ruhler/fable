@@ -53,8 +53,8 @@ static void TypeFree(FbleTypeArena* arena, FbleRef* ref);
 static FbleKind* TypeofKind(FbleArena* arena, FbleKind* kind);
 
 static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normalizing);
-static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
-static FbleType* Subst(FbleTypeArena* arena, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
+static bool HasParam(FbleType* type, FbleVarType* param, TypeList* visited);
+static FbleType* Subst(FbleTypeArena* arena, FbleType* src, FbleVarType* param, FbleType* arg, TypePairs* tps);
 static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPairs* eq);
 
 // Add --
@@ -113,7 +113,7 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      Add(add, pt->arg);
+      Add(add, &pt->arg->_base);
       Add(add, pt->body);
       break;
     }
@@ -265,7 +265,7 @@ static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normal
         return NULL;
       }
 
-      if (pat->_base.tag == FBLE_POLY_APPLY_TYPE && pat->arg == poly->arg) {
+      if (pat->_base.tag == FBLE_POLY_APPLY_TYPE && pat->arg == &poly->arg->_base) {
         FbleType* normal = FbleTypeRetain(arena, pat->poly);
         FbleTypeRelease(arena, &pat->_base);
         return normal;
@@ -323,7 +323,7 @@ static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normal
 //
 // Side effects:
 //   None.
-static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
+static bool HasParam(FbleType* type, FbleVarType* param, TypeList* visited)
 {
   for (TypeList* v = visited; v != NULL; v = v->next) {
     if (type == v->type) {
@@ -381,7 +381,7 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      return (type == param)
+      return (var == param)
           || (var->value != NULL && HasParam(var->value, param, &nv));
     }
 
@@ -426,7 +426,7 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
 //
 //   To prevent infinite recursion, we use tps to record that we have already
 //   substituted Unit@ for T@ in X@ when traversing into field 'b' of X@.
-static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, FbleType* arg, TypePairs* tps)
+static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleVarType* param, FbleType* arg, TypePairs* tps)
 {
   if (!HasParam(type, param, NULL)) {
     return FbleTypeRetain(arena, type);
@@ -503,7 +503,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
       FbleTypeInit(arena, &spt->_base, FBLE_POLY_TYPE, pt->_base.loc);
       spt->_base.id = pt->_base.id;
       spt->arg = pt->arg;
-      FbleRefAdd(arena, &spt->_base.ref, &spt->arg->ref);
+      FbleRefAdd(arena, &spt->_base.ref, &spt->arg->_base.ref);
       spt->body = body;
       FbleRefAdd(arena, &spt->_base.ref, &spt->body->ref);
       assert(spt->body->tag != FBLE_TYPE_TYPE);
@@ -534,7 +534,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
-        return FbleTypeRetain(arena, (type == param ? arg : type));
+        return FbleTypeRetain(arena, (var == param ? arg : type));
       }
 
       // Check to see if we've already done substitution on the value pointed
@@ -704,8 +704,8 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
       // TODO: Verify the args have matching kinds.
   
       TypeIdPairs pneq = {
-        .a = pta->arg->id,
-        .b = ptb->arg->id,
+        .a = pta->arg->_base.id,
+        .b = ptb->arg->_base.id,
         .next = &neq
       };
       bool result = TypesEqual(arena, pta->body, ptb->body, &pneq);
@@ -769,7 +769,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
       kind->_base.tag = FBLE_POLY_KIND;
       kind->_base.loc = type->loc;
       kind->_base.refcount = 1;
-      kind->arg = FbleGetKind(arena, poly->arg);
+      kind->arg = FbleGetKind(arena, &poly->arg->_base);
       kind->rkind = FbleGetKind(arena, poly->body);
       return &kind->_base;
     }
@@ -917,7 +917,7 @@ void FbleTypeRelease(FbleTypeArena* arena, FbleType* type)
 }
 
 // FbleNewPolyType -- see documentation in fble-type.h
-FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, FbleType* body)
+FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleVarType* arg, FbleType* body)
 {
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
@@ -935,7 +935,7 @@ FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, Fble
   FblePolyType* pt = FbleAlloc(arena_, FblePolyType);
   FbleTypeInit(arena, &pt->_base, FBLE_POLY_TYPE, loc);
   pt->arg = arg;
-  FbleRefAdd(arena, &pt->_base.ref, &pt->arg->ref);
+  FbleRefAdd(arena, &pt->_base.ref, &pt->arg->_base.ref);
   pt->body = body;
   FbleRefAdd(arena, &pt->_base.ref, &pt->body->ref);
 
@@ -1060,11 +1060,11 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       while (type->tag == FBLE_POLY_TYPE) {
         FblePolyType* pt = (FblePolyType*)type;
         fprintf(stderr, "%s", prefix);
-        FbleKind* kind = FbleGetKind(arena, pt->arg);
+        FbleKind* kind = FbleGetKind(arena, &pt->arg->_base);
         FblePrintKind(kind);
         FbleKindRelease(arena, kind);
         fprintf(stderr, " ");
-        FblePrintType(arena, pt->arg);
+        FblePrintType(arena, &pt->arg->_base);
         prefix = ", ";
         type = pt->body;
       }
