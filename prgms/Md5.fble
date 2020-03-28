@@ -8,7 +8,7 @@
 { /Bits%.Bit8; @(Bit8@, H2); };
 { /Bits%.Bit16; @(Bit16@); };
 { /Bits%.Bit32; @(Bit32@); };
-{ /Bits%.Bit32.BitN; @(eq, and, or, not, xor, clshift, add); };
+{ /Bits%.Bit32.BitN; @(eq, and, or, not, xor, add); };
 { /Bits%.Bit64; @(Bit64@); };
 { /Hex%; @(Hex@, Hex); }; Hex;
 { /Process%; @(Get@, Put@); };

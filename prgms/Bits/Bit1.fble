@@ -55,15 +55,11 @@ Bit@ zero = 0;
   a;
 };
 
-(Bit@){Bit@;} clshift = (Bit@ a) {
-  a;
-};
-
 (Bit@, Bit@){Result@;} lshift = (Bit@ a, Bit@ cin) {
   Result@(cin, a);
 };
 
 @(
   Bit1@: Bit@,
-  BitN: BitN@<Bit@>(Result@, not, and, or, xor, add, inc, zero, iszero, eq, msb, clshift, fulladd, fullinc, lshift)
+  BitN: BitN@<Bit@>(Result@, not, and, or, xor, add, inc, zero, iszero, eq, msb, fulladd, fullinc, lshift)
 );

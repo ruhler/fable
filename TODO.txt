@@ -1,70 +1,57 @@
-* [Int] Add test coverage for the Int routines.
+* [snake] Optimize snake, because even at top speed it's too slow.
+* [snake] Test and fix bug when snake eats its tail.
+* [snake] Ignore moves that aren't orthogonal to current snake direction.
+* [snake] Keep track of and report score.
+* [pingpong] Render a static 3D table tennis scene.
+* [invaders] Implement space invaders game.
+
+* [lib] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
-* [Map] Separate Map from DataMap and EqMap.
-* [Map] Add unit tests for /Map%.Equals.
+* [lib] Separate Map from DataMap and EqMap.
+* [lib] Add unit tests for /Map%.Equals.
+
+* [api] Can fble-stdio check that the function has the right type?
 
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
-
-* [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
+* [compile] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
    'recursive' ahead of time?
 
-* [lang] Remove struct import syntax in favor of let or a new multi-import format.
-* [lang] Add support for abstract types?
-
 * [profile] Label blocks in exec process bindings by binding name?
-* [profile] Consider factoring out code in compile.c for computing modeled profile time.
-* [perf] Add an option to automatically determine performance model parameters based
-  on wall clock time profiling of benchmarks.
-* [perf] Ensure the implementation satisfies the performance spec. Add perf spec
-  tests as necessary to catch bugs.
-* [perf] Document the runtime memory model,
-  - Including that tail recursive functions should not smash the stack.
-* [test] Can fble-stdio check that the function has the right type?
-* Better error messages on types that have the same name but different values?
-* Write man pages for fble and friends?
-* Better error message when the difference between a type is accidentally
-  defining + vs. *, and it contains substituted polymorphic type variables.
-* Rethink arenas and documentation, because some cases appear to assume you
-  have a bulk-free arena. Other cases its not well specified what is freed
-  explicitly and what is expected to be freed implicitly.
-  I claim a good model is: pass an arena to a function to say: the function
-  allocates its result in this arena. The function creates and uses a separate
-  arena for its intermediate allocations.
-* Make child thread execution fair.
-  Children should be time multiplexed, where priority is assigned based on how
-  far down the family tree the child belongs. The amount of time a family gets
-  to spend evaluating should be independent of the number of children in the
-  family.
-* Change reference counting to be incrementally done on allocation.
-  Maybe write a test that shows how something that should take no time gets
-  charged for a big deallocation time today?
 * [profile] Figure out how to handle profiling threads better
  - Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
    0 in fble/eval?
  - Remove special case handling of block 0 in fble/profile?
  - How to maintain the profile stack when forking new threads?
 
-Future:
-* Implement compiler to C. Idea is translate a function body into a sequence
-  of commands like we have in the current interpreter. Split the command
-  sequence into blocks any place there is a function call. Gather up all the
-  blocks of all the command sequences in the program, give each a unique name
-  starting from zero, then generate a loop containing one large switch
-  statement with a case for each block. Global state is a list of thread
-  contexts. Thread context is a frame, which has variables, ports, the id of
-  the block that currently needs to be executed, and a pointer to the frame to
-  execute after executing this block.
+* [eval] Make child thread execution fair.
+  Children should be time multiplexed, where priority is assigned based on how
+  far down the family tree the child belongs. The amount of time a family gets
+  to spend evaluating should be independent of the number of children in the
+  family.
 
-* Implement compiler to hardware. Same idea as compiler to C: break up into
-  blocks. Now each block can be its own hardware block. Frames are queued up
-  at their block, all blocks can execute in parallel as inputs are available,
-  and we can pipeline or duplicate the blocks to allow for even more
-  parallelism.
+* [lang] Remove struct import syntax in favor of let or a new multi-import format.
+* [lang] Add support for abstract types?
+* [lang] Document the runtime memory model,
+  - Including that tail recursive functions should not smash the stack.
 
-* Implement an fble debugger. Features:
+* [release] Better error messages on types that have the same name but different values?
+* [release] Write man pages for fble and friends?
+
+* [ref] Change reference counting to be incrementally done on allocation.
+  Maybe write a test that shows how something that should take no time gets
+  charged for a big deallocation time today?
+
+* [arena] Rethink arenas and documentation, because some cases appear to assume you
+  have a bulk-free arena. Other cases its not well specified what is freed
+  explicitly and what is expected to be freed implicitly.
+  I claim a good model is: pass an arena to a function to say: the function
+  allocates its result in this arena. The function creates and uses a separate
+  arena for its intermediate allocations.
+
+* [debugger] Implement an fble debugger. Features:
  - Set a breakpoint at a line in a file.
  - Step through code line by line.
  - Evaluate expressions in the context of the current scope and print the
@@ -78,24 +65,9 @@ Future:
    Turns out it wasn't too hard to figure out the problem in this case without
    a debugger.
 
-Snake:
-* Optimize snake, because even at top speed it's too slow.
-* Test and fix bug when snake eats its tail.
-* Ignore moves that aren't orthogonal to current snake direction.
-* Keep track of and report score.
+ - Debug why snake AI wasn't working.
 
-Md5:
-* Remove Bits cls implementation, as it is no longer used and not very useful.
-* Improve performance of Bit2XN.add, though it's not obvious how.
+   It turns out we were using the wrong direction. A debugger to step through
+   code and print variable values would have found this more quickly than my
+   guess and check approach, which was pretty tedious.
 
-Table Tennis:
-* Render a static 3D table tennis scene.
-
-Space Invaders:
-* Render objects - how to test?
-  manual test: Draw all objects to the screen as a gallery of them.
-* Game loop driven by timer - how to test? 
-  manual test: Have app with just ship that can be moved left and right (and
-  fire bullets into space?)
-* Pseudo-random bullet attack, UFO - how to test?
-* Collision detection

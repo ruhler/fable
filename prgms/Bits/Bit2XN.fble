@@ -67,12 +67,8 @@
       Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
     };
 
-  (Bit2X@){Bit2X@;} clshift = (Bit2X@ a) {
-    lshift(a, msb(a)).z;
-  };
-
   BitN@<Bit2X@>(
     Result@, not, and, or, xor, add, inc, zero, iszero, eq, msb,
-    clshift, fulladd, fullinc, lshift
+    fulladd, fullinc, lshift
   );
 });
