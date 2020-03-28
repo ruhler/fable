@@ -858,11 +858,10 @@ void FblePrintKind(FbleKind* kind)
   switch (kind->tag) {
     case FBLE_BASIC_KIND: {
       FbleBasicKind* basic = (FbleBasicKind*)kind;
-      if (basic->level == 1) {
-        fprintf(stderr, "@");
-      } else {
-        // TODO: Will an end user ever see this?
-        fprintf(stderr, "@%i", basic->level);
+      switch (basic->level) {
+        case 0: fprintf(stderr, "&"); break;
+        case 1: fprintf(stderr, "@"); break;
+        default: fprintf(stderr, "@%i", basic->level); break;
       }
       break;
     }

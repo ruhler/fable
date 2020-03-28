@@ -126,7 +126,15 @@ module_ref:
  ;
 
 kind:
-   '@' {
+   '&' {
+      FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
+      basic_kind->_base.tag = FBLE_BASIC_KIND;
+      basic_kind->_base.loc = @$;
+      basic_kind->_base.refcount = 1;
+      basic_kind->level = 0;
+      $$ = &basic_kind->_base;
+   }
+ | '@' {
       FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
       basic_kind->_base.tag = FBLE_BASIC_KIND;
       basic_kind->_base.loc = @$;
@@ -587,7 +595,7 @@ static bool IsSpaceChar(int c)
 //   None.
 static bool IsPunctuationChar(int c)
 {
-  return strchr("(){}[];,:?=.<>+*-!$@~&|%/", c) != NULL;
+  return strchr("(){}[];,:?=.<>+*-!$@~&|%/&", c) != NULL;
 }
 
 // IsNormalChar --
