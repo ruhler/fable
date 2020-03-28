@@ -1,6 +1,7 @@
 { /Unit%; @(Unit@, Unit); };
 { /Int/Int%; @(Int@, Add, Sub); };
 { /Int/Int/Eq%; @(Min, Abs); };
+{ /List%; @(S@, S, MapS); };
 
 @ Color@ = +(
     Unit@ black,
@@ -19,8 +20,11 @@
   # A blank (transparent) drawing.
   Unit@ blank,
   
-  # A filled quadrangle.
-  *(Point@ a, Point@ b, Point@ c, Point@ d, Color@ color) quad,
+  # A filled path.
+  #
+  # The path is implicitly closed. For example, to draw a rectangle, give the
+  # four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
+  *(S@<Point@> points, Color@ color) path,
 
   # Draw one drawing over another.
   *(Drawing@ below, Drawing@ above) over
@@ -31,11 +35,13 @@ Drawing@ Blank = Drawing@(blank: Unit);
 # Draw a rectangle filled solid with the given color.
 (Int@, Int@, Int@, Int@, Color@) { Drawing@; }
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
-  Drawing@(quad: @(
-    a: Point@(x, y),
-    b: Point@(Add(x, w), y),
-    c: Point@(Add(x, w), Add(y, h)),
-    d: Point@(x, Add(y, h)), color));
+  Drawing@(path: @(
+    points: S<Point@>([
+      Point@(x, y),
+      Point@(Add(x, w), y),
+      Point@(Add(x, w), Add(y, h)),
+      Point@(x, Add(y, h))]),
+    color: color));
 };
 
 # Compose two drawings together by drawing one over another.
@@ -47,12 +53,9 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 ((Point@) { Point@; }, Drawing@) { Drawing@; }
 Transform = ((Point@) { Point@; } f, Drawing@ d) {
   ?(d; blank: d,
-       quad: Drawing@(quad: @(
-           a: f(d.quad.a),
-           b: f(d.quad.b),
-           c: f(d.quad.c),
-           d: f(d.quad.d),
-           color: d.quad.color)),
+       path: Drawing@(path: @(
+           points: MapS<Point@, Point@>(d.path.points, f),
+           color: d.path.color)),
        over: {
          d.over;
          Over(Transform(f, below), Transform(f, above));

@@ -1,7 +1,9 @@
-* [snake] Optimize snake, because even at top speed it's too slow.
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
 * [snake] Keep track of and report score.
+* [snake] Figure out why it leaks memory some times.
+  - Maybe a bug in reference counting?
+* [snake] Figure out why the background box gets lost some times.
 * [pingpong] Render a static 3D table tennis scene.
 * [invaders] Implement space invaders game.
 
@@ -19,12 +21,12 @@
  - Maybe have a way to list free vars in an expression and use that to compute
    'recursive' ahead of time?
 
-* [profile] Label blocks in exec process bindings by binding name?
 * [profile] Figure out how to handle profiling threads better
  - Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
    0 in fble/eval?
  - Remove special case handling of block 0 in fble/profile?
  - How to maintain the profile stack when forking new threads?
+* [profile] Label blocks in exec process bindings by binding name?
 
 * [eval] Make child thread execution fair.
   Children should be time multiplexed, where priority is assigned based on how
@@ -32,6 +34,8 @@
   to spend evaluating should be independent of the number of children in the
   family.
 
+* [lang] Add anonymous type let support.
+ - Try '%' for kind level 0 in syntax?
 * [lang] Remove struct import syntax in favor of let or a new multi-import format.
 * [lang] Add support for abstract types?
 * [lang] Document the runtime memory model,

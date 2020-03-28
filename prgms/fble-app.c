@@ -183,26 +183,35 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
     }
 
     case 1: {
-      // Quad.
+      // Path.
       FbleValue* rv = FbleUnionValueAccess(drawing);
 
-      FbleValue* a = FbleStructValueAccess(rv, 0);
-      FbleValue* b = FbleStructValueAccess(rv, 1);
-      FbleValue* c = FbleStructValueAccess(rv, 2);
-      FbleValue* d = FbleStructValueAccess(rv, 3);
+      FbleValue* pointsS = FbleStructValueAccess(rv, 0);
+      FbleValue* color = FbleStructValueAccess(rv, 1);
 
-      SDL_Point points[4];
-      points[0].x = ReadInt(FbleStructValueAccess(a, 0));
-      points[0].y = ReadInt(FbleStructValueAccess(a, 1));
-      points[1].x = ReadInt(FbleStructValueAccess(b, 0));
-      points[1].y = ReadInt(FbleStructValueAccess(b, 1));
-      points[2].x = ReadInt(FbleStructValueAccess(c, 0));
-      points[2].y = ReadInt(FbleStructValueAccess(c, 1));
-      points[3].x = ReadInt(FbleStructValueAccess(d, 0));
-      points[3].y = ReadInt(FbleStructValueAccess(d, 1));
+      // Precompute the number of the points.
+      size_t n = 0;
+      FbleValue* s = pointsS;
+      while (FbleUnionValueTag(s) == 0) {
+        n++;
+        s = FbleStructValueAccess(FbleUnionValueAccess(s), 1);
+      }
 
-      FbleValue* color = FbleStructValueAccess(rv, 4);
-      FillPath(window, 4, points, colors[FbleUnionValueTag(color)]);
+      // Extract the point values.
+      SDL_Point points[n];
+      for (size_t i = 0; i < n; ++i) {
+        assert(FbleUnionValueTag(pointsS) == 0);
+        FbleValue* pointsP = FbleUnionValueAccess(pointsS);
+
+        FbleValue* point = FbleStructValueAccess(pointsP, 0);
+        pointsS = FbleStructValueAccess(pointsP, 1);
+
+        points[i].x = ReadInt(FbleStructValueAccess(point, 0));
+        points[i].y = ReadInt(FbleStructValueAccess(point, 1));
+      }
+      assert(FbleUnionValueTag(pointsS) == 1);
+
+      FillPath(window, n, points, colors[FbleUnionValueTag(color)]);
       return;
     }
 
