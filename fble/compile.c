@@ -701,7 +701,7 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
 
   if (!match) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
-        "the namespace of '%n' is not appropriate for type %t\n", name, type);
+        "the namespace of '%n' is not appropriate for something of type %t\n", name, type);
   }
   return match;
 }
