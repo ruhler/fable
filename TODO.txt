@@ -1,5 +1,3 @@
-* Fix failing arg kind mismatch for poly type test
-
 * Fix failing union type for literal test
 * [compile] Don't duplicate evaluation of literal type per letter.
 * [compile] Don't give duplicate error messages if the literal type is malformed.

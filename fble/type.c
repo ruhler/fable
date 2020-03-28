@@ -702,6 +702,11 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
       FblePolyType* ptb = (FblePolyType*)b;
 
       // TODO: Verify the args have matching kinds.
+      if (!FbleKindsEqual(pta->arg->kind, ptb->arg->kind)) {
+        FbleTypeRelease(arena, a);
+        FbleTypeRelease(arena, b);
+        return false;
+      }
   
       TypeIdPairs pneq = {
         .a = pta->arg->_base.id,
