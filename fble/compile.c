@@ -1446,8 +1446,11 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
         }
       }
 
-      // TODO: We ought to release the condition right after doing goto.
-      // Add a spec test for this and handle it correctly here.
+      // TODO: We ought to release the condition right after doing goto,
+      // otherwise we'll end up unnecessarily holding on to it for the full
+      // duration of the block. Technically this doesn't appear to be a
+      // violation of the language spec, because it only effects constants in
+      // runtime. But we probably ought to fix it anyway.
       LocalRelease(arena_, scope, condition.local);
       return target;
     }

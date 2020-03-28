@@ -1,9 +1,3 @@
-* [test] Add test that we don't hold on to a condition value while running the
-  selected branch of a union select expression.
- - This is hard, because we need a way to write a non-tail recursive function
-   that takes linear memory. Maybe that means this isn't a visible behavior
-   difference?
-
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
 
