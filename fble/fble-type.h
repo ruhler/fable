@@ -167,28 +167,6 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type);
 //   None.
 size_t FbleGetKindLevel(FbleKind* kind);
 
-// FbleLevelAdjustedKind --
-//   Construct a kind that is a level adjusted version of the given kind.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   kind - the kind to use as the basis.
-//   increment - the kind level increment amount. May be negative to decrease
-//               the kind level.
-//
-// Results:
-//   A new kind that is the same as the given kind except with level
-//   incremented by the given increment.
-//
-// Side effects:
-//   The caller is responsible for calling FbleKindRelease on the returned
-//   kind when it is no longer needed. This function does not take ownership
-//   of the given kind.
-//
-//   Behavior is undefined if the increment causes the resulting kind level
-//   to be less than 0.
-FbleKind* FbleLevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment);
-
 // FbleKindsEqual --
 //   Test whether the two given compiled kinds are equal.
 //

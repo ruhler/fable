@@ -46,6 +46,8 @@ typedef struct TypeIdPairs {
   struct TypeIdPairs* next;
 } TypeIdPairs;
 
+static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment);
+
 static void Add(FbleRefCallback* add, FbleType* type);
 static void TypeAdded(FbleRefCallback* add, FbleRef* ref);
 static void TypeFree(FbleTypeArena* arena, FbleRef* ref);
@@ -54,6 +56,58 @@ static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normal
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
 static FbleType* Subst(FbleTypeArena* arena, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
 static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPairs* eq);
+
+// LevelAdjustedKind --
+//   Construct a kind that is a level adjusted version of the given kind.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   kind - the kind to use as the basis.
+//   increment - the kind level increment amount. May be negative to decrease
+//               the kind level.
+//
+// Results:
+//   A new kind that is the same as the given kind except with level
+//   incremented by the given increment.
+//
+// Side effects:
+//   The caller is responsible for calling FbleKindRelease on the returned
+//   kind when it is no longer needed. This function does not take ownership
+//   of the given kind.
+//
+//   Behavior is undefined if the increment causes the resulting kind level
+//   to be less than 0.
+static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment)
+{
+  switch (kind->tag) {
+    case FBLE_BASIC_KIND: {
+      FbleBasicKind* basic = (FbleBasicKind*)kind;
+      assert((int)basic->level + increment >= 0);
+
+      FbleBasicKind* adjusted = FbleAlloc(arena, FbleBasicKind);
+      adjusted->_base.tag = FBLE_BASIC_KIND;
+      adjusted->_base.loc = kind->loc;
+      adjusted->_base.refcount = 1;
+      adjusted->level = basic->level + increment;
+      return &adjusted->_base;
+    }
+
+    case FBLE_POLY_KIND: {
+      FblePolyKind* poly = (FblePolyKind*)kind;
+      FblePolyKind* adjusted = FbleAlloc(arena, FblePolyKind);
+      adjusted->_base.tag = FBLE_POLY_KIND;
+      adjusted->_base.loc = kind->loc;
+      adjusted->_base.refcount = 1;
+      adjusted->arg = FbleKindRetain(arena, poly->arg);
+      adjusted->rkind = LevelAdjustedKind(arena, poly->rkind, increment);
+      return &adjusted->_base;
+    }
+  }
+  UNREACHABLE("Should never get here");
+  return NULL;
+}
+
+
 
 // Add --
 //   Helper function for adding types to a vector of refs.
@@ -743,7 +797,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
       // In short, we have to increment the level of the argument kind to get
       // the proper kind for the poly.
       FbleKind* arg_kind = FbleGetKind(arena, poly->arg);
-      kind->arg = FbleLevelAdjustedKind(arena, arg_kind, 1);
+      kind->arg = LevelAdjustedKind(arena, arg_kind, 1);
       FbleKindRelease(arena, arg_kind);
 
       kind->rkind = FbleGetKind(arena, poly->body);
@@ -769,7 +823,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
       FbleTypeType* type_type = (FbleTypeType*)type;
 
       FbleKind* arg_kind = FbleGetKind(arena, type_type->type);
-      FbleKind* kind = FbleLevelAdjustedKind(arena, arg_kind, 1);
+      FbleKind* kind = LevelAdjustedKind(arena, arg_kind, 1);
       FbleKindRelease(arena, arg_kind);
       return kind;
     }
@@ -795,37 +849,6 @@ size_t FbleGetKindLevel(FbleKind* kind)
   }
   UNREACHABLE("Should never get here");
   return -1;
-}
-
-// FbleLevelAdjustedKind -- see documentation in fble-type.h
-FbleKind* FbleLevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment)
-{
-  switch (kind->tag) {
-    case FBLE_BASIC_KIND: {
-      FbleBasicKind* basic = (FbleBasicKind*)kind;
-      assert((int)basic->level + increment >= 0);
-
-      FbleBasicKind* adjusted = FbleAlloc(arena, FbleBasicKind);
-      adjusted->_base.tag = FBLE_BASIC_KIND;
-      adjusted->_base.loc = kind->loc;
-      adjusted->_base.refcount = 1;
-      adjusted->level = basic->level + increment;
-      return &adjusted->_base;
-    }
-
-    case FBLE_POLY_KIND: {
-      FblePolyKind* poly = (FblePolyKind*)kind;
-      FblePolyKind* adjusted = FbleAlloc(arena, FblePolyKind);
-      adjusted->_base.tag = FBLE_POLY_KIND;
-      adjusted->_base.loc = kind->loc;
-      adjusted->_base.refcount = 1;
-      adjusted->arg = FbleKindRetain(arena, poly->arg);
-      adjusted->rkind = FbleLevelAdjustedKind(arena, poly->rkind, increment);
-      return &adjusted->_base;
-    }
-  }
-  UNREACHABLE("Should never get here");
-  return NULL;
 }
 
 // FbleKindsEqual -- see documentation in fble-type.h
@@ -932,7 +955,7 @@ FbleType* FbleNewVarType(FbleTypeArena* arena, FbleLoc loc, FbleKind* kind, Fble
   FbleVarType* var = FbleAlloc(arena_, FbleVarType);
   FbleTypeInit(arena, &var->_base, FBLE_VAR_TYPE, loc);
   var->name = name;
-  var->kind = FbleLevelAdjustedKind(arena_, kind, -(int)level);
+  var->kind = LevelAdjustedKind(arena_, kind, -(int)level);
   var->value = NULL;
 
   FbleType* type = &var->_base;
