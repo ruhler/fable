@@ -1,14 +1,15 @@
-// decompile.c --
-//   This file implements a disassembler for fble evaluator bytecode. Intended
-//   for debugging purposes.
+// instr.c --
+//   This file implements routines related to fble instructions.
 
+#include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for NULL
 
 #include "instr.h"
 
-static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_blocks);
+#define UNREACHABLE(x) assert(false && x)
 
+static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_blocks);
 
 // DumpInstrBlock -- 
 //   For debugging purposes, dump the given code block in human readable
@@ -270,6 +271,95 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
   FbleFree(arena, blocks.xs);
   FbleAssertEmptyArena(arena);
   FbleDeleteArena(arena);
+}
+
+// FbleFreeInstr -- see documentation in instr.h
+void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
+{
+  assert(instr != NULL);
+  switch (instr->tag) {
+    case FBLE_UNION_VALUE_INSTR:
+    case FBLE_STRUCT_ACCESS_INSTR:
+    case FBLE_UNION_ACCESS_INSTR:
+    case FBLE_UNION_SELECT_INSTR:
+    case FBLE_GOTO_INSTR:
+    case FBLE_RELEASE_INSTR:
+    case FBLE_FUNC_APPLY_INSTR:
+    case FBLE_COPY_INSTR:
+    case FBLE_GET_INSTR:
+    case FBLE_PUT_INSTR:
+    case FBLE_LINK_INSTR:
+    case FBLE_PROC_INSTR:
+    case FBLE_JOIN_INSTR:
+    case FBLE_REF_VALUE_INSTR:
+    case FBLE_REF_DEF_INSTR:
+    case FBLE_RETURN_INSTR:
+    case FBLE_TYPE_INSTR:
+    case FBLE_PROFILE_ENTER_BLOCK_INSTR:
+    case FBLE_PROFILE_EXIT_BLOCK_INSTR:
+    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_STRUCT_VALUE_INSTR: {
+      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
+      FbleFree(arena, struct_instr->args.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_STRUCT_IMPORT_INSTR: {
+      FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
+      FbleFree(arena, import_instr->fields.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_FUNC_VALUE_INSTR: {
+      FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+      FbleFreeInstrBlock(arena, func_value_instr->code);
+      FbleFree(arena, func_value_instr->scope.xs);
+      FbleFree(arena, func_value_instr);
+      return;
+    }
+
+    case FBLE_FORK_INSTR: {
+      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+      FbleFree(arena, fork_instr->args.xs);
+      FbleFree(arena, fork_instr->dests.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_PROC_VALUE_INSTR: {
+      FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
+      FbleFreeInstrBlock(arena, proc_value_instr->code);
+      FbleFree(arena, proc_value_instr->scope.xs);
+      FbleFree(arena, proc_value_instr);
+      return;
+    }
+  }
+
+  UNREACHABLE("invalid instruction");
+}
+
+// FbleFreeInstrBlock -- see documentation in instr.h
+void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
+{
+  if (block == NULL) {
+    return;
+  }
+
+  assert(block->refcount > 0);
+  block->refcount--;
+  if (block->refcount == 0) {
+    for (size_t i = 0; i < block->instrs.size; ++i) {
+      FbleFreeInstr(arena, block->instrs.xs[i]);
+    }
+    FbleFree(arena, block->instrs.xs);
+    FbleFree(arena, block);
+  }
 }
 
 // FbleDecompile -- see documentation in fble.h.

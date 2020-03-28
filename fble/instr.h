@@ -348,6 +348,20 @@ typedef struct {
   FbleInstr _base;
 }  FbleProfileAutoExitBlockInstr;
 
+// FbleFreeInstr --
+//   Free the given instruction.
+//
+// Inputs:
+//   arena - the arena used to allocation the instructions.
+//   instr - the instruction to free.
+//
+// Result:
+//   none.
+//
+// Side effect:
+//   Frees memory allocated for the given instruction.
+void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
+
 // FbleFreeInstrBlock --
 //   Decrement the refcount on the given block of instructions and free it if
 //   appropriate.

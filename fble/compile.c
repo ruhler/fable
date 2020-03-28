@@ -84,7 +84,6 @@ static void PopVar(FbleTypeArena* arena, Scope* scope);
 static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phantom);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
-static void FreeInstr(FbleArena* arena, FbleInstr* instr);
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent);
 static void FreeScope(FbleTypeArena* arena, Scope* scope);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
@@ -359,88 +358,6 @@ static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
   instr_block->locals = 0;
   FbleVectorInit(arena, instr_block->instrs);
   return instr_block;
-}
-
-// FreeInstr --
-//   Free the given instruction.
-//
-// Inputs:
-//   arena - the arena used to allocation the instructions.
-//   instr - the instruction to free.
-//
-// Result:
-//   none.
-//
-// Side effect:
-//   Frees memory allocated for the given instruction.
-static void FreeInstr(FbleArena* arena, FbleInstr* instr)
-{
-  assert(instr != NULL);
-  switch (instr->tag) {
-    case FBLE_UNION_VALUE_INSTR:
-    case FBLE_STRUCT_ACCESS_INSTR:
-    case FBLE_UNION_ACCESS_INSTR:
-    case FBLE_UNION_SELECT_INSTR:
-    case FBLE_GOTO_INSTR:
-    case FBLE_RELEASE_INSTR:
-    case FBLE_FUNC_APPLY_INSTR:
-    case FBLE_COPY_INSTR:
-    case FBLE_GET_INSTR:
-    case FBLE_PUT_INSTR:
-    case FBLE_LINK_INSTR:
-    case FBLE_PROC_INSTR:
-    case FBLE_JOIN_INSTR:
-    case FBLE_REF_VALUE_INSTR:
-    case FBLE_REF_DEF_INSTR:
-    case FBLE_RETURN_INSTR:
-    case FBLE_TYPE_INSTR:
-    case FBLE_PROFILE_ENTER_BLOCK_INSTR:
-    case FBLE_PROFILE_EXIT_BLOCK_INSTR:
-    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
-      FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_STRUCT_VALUE_INSTR: {
-      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      FbleFree(arena, struct_instr->args.xs);
-      FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_STRUCT_IMPORT_INSTR: {
-      FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
-      FbleFree(arena, import_instr->fields.xs);
-      FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_FUNC_VALUE_INSTR: {
-      FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-      FbleFreeInstrBlock(arena, func_value_instr->code);
-      FbleFree(arena, func_value_instr->scope.xs);
-      FbleFree(arena, func_value_instr);
-      return;
-    }
-
-    case FBLE_FORK_INSTR: {
-      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      FbleFree(arena, fork_instr->args.xs);
-      FbleFree(arena, fork_instr->dests.xs);
-      FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_PROC_VALUE_INSTR: {
-      FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-      FbleFreeInstrBlock(arena, proc_value_instr->code);
-      FbleFree(arena, proc_value_instr->scope.xs);
-      FbleFree(arena, proc_value_instr);
-      return;
-    }
-  }
-
-  UNREACHABLE("invalid instruction");
 }
 
 // InitScope --
@@ -1472,7 +1389,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       ExitBlock(arena_, blocks, NULL);
       if (func_result.type == NULL) {
         FreeScope(arena, &func_scope);
-        FreeInstr(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return COMPILE_FAILED;
       }
       FbleType* type = func_result.type;
@@ -1524,7 +1441,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
 
       if (body.type == NULL) {
         FreeScope(arena, &eval_scope);
-        FreeInstr(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return COMPILE_FAILED;
       }
 
@@ -1624,7 +1541,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       FreeScope(arena, &body_scope);
 
       if (type == NULL) {
-        FreeInstr(arena_, &instr->_base);
+        FbleFreeInstr(arena_, &instr->_base);
         return COMPILE_FAILED;
       }
 
@@ -2652,24 +2569,6 @@ static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, F
 
   FbleTypeRelease(arena, result.type);
   return result.type != NULL;
-}
-
-// FbleFreeInstrBlock -- see documentation in instr.h
-void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
-{
-  if (block == NULL) {
-    return;
-  }
-
-  assert(block->refcount > 0);
-  block->refcount--;
-  if (block->refcount == 0) {
-    for (size_t i = 0; i < block->instrs.size; ++i) {
-      FreeInstr(arena, block->instrs.xs[i]);
-    }
-    FbleFree(arena, block->instrs.xs);
-    FbleFree(arena, block);
-  }
 }
 
 // FbleCompile -- see documentation in instr.h

@@ -1,5 +1,3 @@
-* [compile] Move FreeInstr and FbleFreeInstrBlock to decompile.c, and rename that instr.c?
- - And factor out an fble/instr.h?
 * [compile] Figure out better naming scheme for profiling stuff in compile.c?
 
 * Add tests to increase code coverage.
