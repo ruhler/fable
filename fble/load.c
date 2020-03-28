@@ -282,7 +282,7 @@ static FbleExpr* Parse(FbleArena* load_arena, FbleArena* program_arena, const ch
 
       if (public && private) {
         FbleReportError("module ", &path.xs[0].loc);
-        FbleNameV prefix = { .xs = path.xs, .size = i };
+        FbleNameV prefix = { .xs = path.xs, .size = i + 1 };
         PrintModuleName(stderr, prefix);
         fprintf(stderr, " is marked as both public and private\n");
         return NULL;
