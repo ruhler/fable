@@ -701,7 +701,7 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
 
   if (!match) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
-        "the namespace of '%n' does not match type %t\n", name, type);
+        "the namespace of '%n' is not appropriate for type %t\n", name, type);
   }
   return match;
 }
@@ -1720,7 +1720,14 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
 
         if (binding->type == NULL) {
           assert(binding->kind != NULL);
-          types[i] = FbleNewVarType(arena, binding->name.loc, binding->kind, let_expr->bindings.xs[i].name);
+
+          // We don't know the type, so create an abstract type variable to
+          // represent the type.
+          // TODO: It would be nice to pick a more descriptive type for kind
+          // level 0 variables. Perhaps: __name@?
+          FbleName type_name = binding->name;
+          type_name.space = FBLE_TYPE_NAME_SPACE;
+          types[i] = FbleNewVarType(arena, binding->name.loc, binding->kind, type_name);
         } else {
           assert(binding->kind == NULL);
           types[i] = CompileType(arena, scope, binding->type);
@@ -1767,7 +1774,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
         if (!error && binding->type != NULL && !FbleTypesEqual(arena, types[i], defs[i].type)) {
           error = true;
           ReportError(arena_, &binding->expr->loc,
-              "expected type %t, but found %t\n",
+              "expected type %t, but found something of type %t\n",
               types[i], defs[i].type);
         } else if (!error && binding->type == NULL) {
           FbleKind* expected_kind = FbleGetKind(arena_, types[i]);

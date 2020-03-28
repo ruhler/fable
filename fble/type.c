@@ -948,6 +948,8 @@ void FbleTypeRelease(FbleTypeArena* arena, FbleType* type)
 // FbleNewVarType -- see documentation in fble-type.h
 FbleType* FbleNewVarType(FbleTypeArena* arena, FbleLoc loc, FbleKind* kind, FbleName name)
 {
+  assert(name.space == FBLE_TYPE_NAME_SPACE && "bad namespace for var type");
+
   FbleArena* arena_ = FbleRefArenaArena(arena);
 
   size_t level = FbleGetKindLevel(kind);
