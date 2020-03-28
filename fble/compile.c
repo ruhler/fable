@@ -696,21 +696,14 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
   size_t kind_level = FbleGetKindLevel(kind);
   FbleKindRelease(arena_, kind);
 
-  if (name->space == FBLE_TYPE_NAME_SPACE && kind_level != 1) {
-    ReportError(FbleRefArenaArena(arena), &name->loc,
-        "expected a type for field named '%n', but found value of type %t\n",
-        name, type);
-    return false;
-  }
+  bool match = (kind_level == 0 && name->space == FBLE_NORMAL_NAME_SPACE)
+            || (kind_level == 1 && name->space == FBLE_TYPE_NAME_SPACE);
 
-  if (name->space == FBLE_NORMAL_NAME_SPACE && kind_level != 0) {
+  if (!match) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
-        "expected a normal value for field named '%n', but found a type value of type %t\n",
-        name, type);
-    return false;
+        "the namespace of '%n' does not match type %t\n", name, type);
   }
-
-  return true;
+  return match;
 }
 
 // CompileExit --
@@ -1733,6 +1726,10 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
           types[i] = CompileType(arena, scope, binding->type);
           error = error || (types[i] == NULL);
         }
+        
+        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
+          error = true;
+        }
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&let_expr->bindings.xs[i].name, &let_expr->bindings.xs[j].name)) {
@@ -1777,7 +1774,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
           FbleKind* actual_kind = FbleGetKind(arena_, defs[i].type);
           if (!FbleKindsEqual(expected_kind, actual_kind)) {
             ReportError(arena_, &binding->expr->loc,
-                "expected kind %k, but found %k\n",
+                "expected kind %k, but found something of kind %k\n",
                 expected_kind, actual_kind);
             error = true;
           }
