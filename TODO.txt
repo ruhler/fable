@@ -21,7 +21,6 @@
  - Maybe have a way to list free vars in an expression and use that to compute
    'recursive' ahead of time?
 
-* [compile] Add test for checking of namespace in arg to POLY_EXPR?
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
    abstract type?

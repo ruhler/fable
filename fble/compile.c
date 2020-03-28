@@ -1864,12 +1864,17 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       FblePolyExpr* poly = (FblePolyExpr*)expr;
 
       assert(FbleGetKindLevel(poly->arg.kind) > 0 && "TODO: Support non-type poly args?");
+      if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
+        ReportError(arena_, &poly->arg.name.loc,
+            "the namespace of '%n' is not appropriate for kind %k\n",
+            &poly->arg.name, poly->arg.kind);
+        return COMPILE_FAILED;
+      }
+
 
       FbleType* arg_type = FbleNewVarType(arena, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
       FbleType* arg = FbleValueOfType(arena, arg_type);
       assert(arg != NULL);
-
-      // TODO: Check name space requirements on arg?
 
       // TODO: It's a little silly that we are pushing an empty type value
       // here. Oh well. Maybe in the future we'll optimize those away or
