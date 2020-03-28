@@ -2092,19 +2092,41 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
     case FBLE_LITERAL_EXPR: {
       FbleLiteralExpr* literal = (FbleLiteralExpr*)expr;
 
-      // TODO: Check that the type compiles before desugaring the literal
-      // expression? Otherwise we could end up giving a lot of duplicate error
-      // messages.
+      Compiled spec = CompileExpr(arena, blocks, false, scope, literal->spec);
+      if (spec.type == NULL) {
+        return COMPILE_FAILED;
+      }
 
-      // TODO: Don't re-evaluate the type for each element of the literal!
+      FbleStructType* normal = (FbleStructType*)FbleNormalType(arena, spec.type);
+      if (normal->_base.tag != FBLE_STRUCT_TYPE) {
+        ReportError(arena_, &literal->spec->loc,
+            "expected a struct value, but literal spec has type %t\n",
+            spec.type);
+        FbleTypeRelease(arena, spec.type);
+        FbleTypeRelease(arena, &normal->_base);
+        return COMPILE_FAILED;
+      }
+      FbleTypeRelease(arena, &normal->_base);
 
       size_t n = strlen(literal->word);
-
       if (n == 0) {
         ReportError(arena_, &literal->word_loc,
             "literals must not be empty\n");
+        FbleTypeRelease(arena, spec.type);
         return COMPILE_FAILED;
       }
+
+      FbleName spec_name = {
+        .name = "__literal_spec",
+        .space = FBLE_NORMAL_NAME_SPACE,
+        .loc = literal->spec->loc,
+      };
+      PushVar(arena_, scope, spec_name, spec.type, spec.local);
+
+      FbleVarExpr spec_var = {
+        ._base = { .tag = FBLE_VAR_EXPR, .loc = literal->spec->loc },
+        .var = spec_name
+      };
 
       FbleMiscAccessExpr letters[n];
       FbleExpr* xs[n];
@@ -2116,7 +2138,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
 
         letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
         letters[i]._base.loc = loc;
-        letters[i].object = literal->type;
+        letters[i].object = &spec_var._base;
         letters[i].field.name = word_letters + 2*i;
         letters[i].field.space = FBLE_NORMAL_NAME_SPACE;
         letters[i].field.loc = loc;
@@ -2131,7 +2153,9 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       }
 
       FbleExprV args = { .size = n, .xs = xs, };
-      return CompileList(arena, blocks, exit, scope, literal->word_loc, args);
+      Compiled result = CompileList(arena, blocks, exit, scope, literal->word_loc, args);
+      PopVar(arena, scope);
+      return result;
     }
 
     case FBLE_STRUCT_IMPORT_EXPR: {

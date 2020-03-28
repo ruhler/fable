@@ -301,7 +301,7 @@ expr:
       FbleLiteralExpr* literal_expr = FbleAlloc(arena, FbleLiteralExpr);
       literal_expr->_base.tag = FBLE_LITERAL_EXPR;
       literal_expr->_base.loc = @$;
-      literal_expr->type = $1;
+      literal_expr->spec = $1;
       literal_expr->word_loc = @3;
       literal_expr->word = $3;
       $$ = &literal_expr->_base;

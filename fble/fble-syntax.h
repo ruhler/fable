@@ -460,10 +460,10 @@ typedef struct {
 } FbleListExpr;
 
 // FbleLiteralExpr --
-//   FBLE_LITERAL_EXPR (type :: Expr) (word :: Word)
+//   FBLE_LITERAL_EXPR (spec :: Expr) (word :: Word)
 typedef struct {
   FbleExpr _base;
-  FbleExpr* type;
+  FbleExpr* spec;
   FbleLoc word_loc;
   const char* word;
 } FbleLiteralExpr;

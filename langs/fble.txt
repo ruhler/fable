@@ -849,7 +849,7 @@ function value.
 8.2 Literal
 -----------
 Abstract Syntax:
-  Expr ::= literal (expr :: Expr) (letters :: word)
+  Expr ::= literal (spec :: Expr) (letters :: word)
 
 Concrete Syntax:
   expr ::= expr '|' word
@@ -861,7 +861,7 @@ Example:
 A literal is syntax that allows you to express a raw sequence of data without
 the overhead of punctuation between data elements.
 
-The expr used in a literal is a struct value that describes the value
+The spec used in a literal is a struct value that describes the value
 corresponding to each legal letter in the literal.
 
 For example, the struct value for an octal literal might be defined as:

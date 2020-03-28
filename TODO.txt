@@ -1,7 +1,3 @@
-* Fix failing union type for literal test
-* [compile] Don't duplicate evaluation of literal type per letter.
-* [compile] Don't give duplicate error messages if the literal type is malformed.
-
 * [test] Add test that we don't hold on to a condition value while running the
   selected branch of a union select expression.
  - This is hard, because we need a way to write a non-tail recursive function
