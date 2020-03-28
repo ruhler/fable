@@ -87,6 +87,12 @@ typedef struct {
 //
 // A variable type whose value may or may not be known. Used for the value of
 // type paramaters and recursive type values.
+//
+// The 'kind' refers to the kind of value that has this type.
+//
+// We maintain an invariant when constructing FbleVarTypes that the value is
+// not an FBLE_TYPE_TYPE. In other words, the kind must have kind level 0.
+// Construct var types using FbleNewVarType to enforce this invariant.
 typedef struct FbleVarType {
   FbleType _base;
   FbleKind* kind;
@@ -104,10 +110,11 @@ typedef struct {
 //
 // We maintain an invariant when constructing FblePolyTypes that the body is
 // not an FBLE_TYPE_TYPE. For example: \a -> typeof(a) is constructed as
-// typeof(\a -> a)
+// typeof(\a -> a). Construct FblePolyTypes using FbleNewPolyType to enforce
+// this invariant.
 typedef struct {
   FbleType _base;
-  FbleVarType* arg;
+  FbleType* arg;
   FbleType* body;
 } FblePolyType;
 
@@ -115,7 +122,8 @@ typedef struct {
 //
 // We maintain an invariant when constructing FblePolyApplyTypes that the poly is
 // not a FBLE_TYPE_TYPE. For example: (typeof(f) x) is constructed as
-// typeof(f x).
+// typeof(f x). Construct FblePolyApplyTypes using FbleNewPolyApplyType to
+// enforce this invariant.
 typedef struct {
   FbleType _base;
   FbleType* poly;
@@ -132,18 +140,18 @@ typedef struct {
 } FbleTypeType;
 
 // FbleGetKind --
-//   Get the kind of the given type.
+//   Get the kind of a value with the given type.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   type - the type to get the kind of.
+//   type - the type of the value to get the kind of.
 //
 // Results:
-//   The kind of the type.
+//   The kind of the value with the given type.
 //
 // Side effects:
 //   The caller is responsible for calling FbleKindRelease on the returned
-//   type when it is no longer needed.
+//   kind when it is no longer needed.
 FbleKind* FbleGetKind(FbleArena* arena, FbleType* type);
 
 // FbleGetKindLevel --
@@ -158,6 +166,28 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type);
 // Side effects:
 //   None.
 size_t FbleGetKindLevel(FbleKind* kind);
+
+// FbleLevelAdjustedKind --
+//   Construct a kind that is a level adjusted version of the given kind.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   kind - the kind to use as the basis.
+//   increment - the kind level increment amount. May be negative to decrease
+//               the kind level.
+//
+// Results:
+//   A new kind that is the same as the given kind except with level
+//   incremented by the given increment.
+//
+// Side effects:
+//   The caller is responsible for calling FbleKindRelease on the returned
+//   kind when it is no longer needed. This function does not take ownership
+//   of the given kind.
+//
+//   Behavior is undefined if the increment causes the resulting kind level
+//   to be less than 0.
+FbleKind* FbleLevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment);
 
 // FbleKindsEqual --
 //   Test whether the two given compiled kinds are equal.
@@ -262,6 +292,47 @@ FbleType* FbleTypeRetain(FbleTypeArena* arena, FbleType* type);
 //   more references to it.
 void FbleTypeRelease(FbleTypeArena* arena, FbleType* type);
 
+// FbleNewVarType --
+//   Construct a VarType. Maintains the invariant the that a higher kinded var
+//   types is constructed as typeof a lower kinded var type.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   loc - the location for the type.
+//   kind - the kind of a value of this type.
+//   name - the name of the type variable.
+//
+// Results:
+//   A type representing an abstract variable type of given kind and name.
+//   This may be a TYPE_TYPE if kind has kind level greater than 0.
+//   The value of the variable type is initialized to NULL. Use
+//   FbleAssignVarType to set the value of the var type if desired.
+//
+// Side effects:
+//   The caller is responsible for calling FbleTypeRelease on the returned
+//   type when it is no longer needed. This function does not take ownership
+//   of passed kind.
+FbleType* FbleNewVarType(FbleTypeArena* arena, FbleLoc loc, FbleKind* kind, FbleName name);
+
+// FbleAssignVarType --
+//   Assign a value to the given abstract type.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   var - the type to assign the value of. This type should have been created
+//         with FbleNewVarTYpe.
+//   value - the value to assign to the type.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Sets the value of the var type to the given value.
+//   This function does not take ownership of either var or value types. 
+//   Behavior is undefined if var is not a type constructed with
+//   FbleNewVarType or the kind of value does not match the kind of var.
+void FbleAssignVarType(FbleTypeArena* arena, FbleType* var, FbleType* value);
+
 // FbleNewPolyType --
 //   Construct a PolyType. Maintains the invariant that poly of a typeof
 //   should be constructed as a typeof a poly.
@@ -279,7 +350,7 @@ void FbleTypeRelease(FbleTypeArena* arena, FbleType* type);
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed arg or body types.
-FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleVarType* arg, FbleType* body);
+FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, FbleType* body);
 
 // FbleNewPolyApplyType --
 //   Construct a PolyApplyType. Maintains the invariant that poly apply of a

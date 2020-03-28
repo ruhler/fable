@@ -14,12 +14,17 @@
 
 * [api] Can fble-stdio check that the function has the right type?
 
+
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
 * [compile] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
    'recursive' ahead of time?
+
+* [type] Assert that FbleNewVarType has TYPE namespace name?
+* [type] Add test for checking of namespace in arg to POLY_EXPR?
+* [type] Specialize FbleLevelAdjustedKind for increment of 1.
 
 * [profile] Figure out how to handle profiling threads better
  - Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block

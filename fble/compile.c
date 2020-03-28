@@ -681,7 +681,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //
 // Inputs:
 //   name - the name in question
-//   type - the type of the value refered to be the name.
+//   type - the type of the value refered to by the name.
 //
 // Results:
 //   true if the namespace of the name is consistent with the type. false
@@ -696,16 +696,16 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
   size_t kind_level = FbleGetKindLevel(kind);
   FbleKindRelease(arena_, kind);
 
-  if (name->space == FBLE_TYPE_NAME_SPACE && kind_level != 2) {
+  if (name->space == FBLE_TYPE_NAME_SPACE && kind_level != 1) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
-        "expected a type type for field named '%n', but found type %t\n",
+        "expected a type for field named '%n', but found value of type %t\n",
         name, type);
     return false;
   }
 
-  if (name->space == FBLE_NORMAL_NAME_SPACE && kind_level != 1) {
+  if (name->space == FBLE_NORMAL_NAME_SPACE && kind_level != 0) {
     ReportError(FbleRefArenaArena(arena), &name->loc,
-        "expected a normal type for field named '%n', but found type %t\n",
+        "expected a normal value for field named '%n', but found a type value of type %t\n",
         name, type);
     return false;
   }
@@ -1722,27 +1722,12 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
 
       // Evaluate the types of the bindings and set up the new vars.
       FbleType* types[let_expr->bindings.size];
-      FbleVarType* var_types[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleBinding* binding = let_expr->bindings.xs + i;
-        var_types[i] = NULL;
 
         if (binding->type == NULL) {
           assert(binding->kind != NULL);
-          FbleVarType* var = FbleAlloc(arena_, FbleVarType);
-          FbleTypeInit(arena, &var->_base, FBLE_VAR_TYPE, binding->name.loc);
-          var->name = let_expr->bindings.xs[i].name;
-          var->kind = FbleKindRetain(arena_, binding->kind);
-          var->value = NULL;
-
-          FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
-          FbleTypeInit(arena, &type_type->_base, FBLE_TYPE_TYPE, binding->name.loc);
-          type_type->type = &var->_base;
-          FbleRefAdd(arena, &type_type->_base.ref, &type_type->type->ref);
-          FbleTypeRelease(arena, &var->_base);
-
-          types[i] = &type_type->_base;
-          var_types[i] = var;
+          types[i] = FbleNewVarType(arena, binding->name.loc, binding->kind, let_expr->bindings.xs[i].name);
         } else {
           assert(binding->kind == NULL);
           types[i] = CompileType(arena, scope, binding->type);
@@ -1770,10 +1755,8 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       }
 
       // Compile the values of the variables.
-      FbleType* var_type_values[let_expr->bindings.size];
       Compiled defs[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        var_type_values[i] = NULL;
         FbleBinding* binding = let_expr->bindings.xs + i;
 
         defs[i] = COMPILE_FAILED;
@@ -1790,26 +1773,17 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
               "expected type %t, but found %t\n",
               types[i], defs[i].type);
         } else if (!error && binding->type == NULL) {
-          FbleVarType* var = var_types[i];
-          var_type_values[i] = FbleValueOfType(arena, defs[i].type);
-          if (var_type_values[i] == NULL) {
+          FbleKind* expected_kind = FbleGetKind(arena_, types[i]);
+          FbleKind* actual_kind = FbleGetKind(arena_, defs[i].type);
+          if (!FbleKindsEqual(expected_kind, actual_kind)) {
             ReportError(arena_, &binding->expr->loc,
-                "expected type, but found something of type %t\n",
-                defs[i].type);
+                "expected kind %k, but found %k\n",
+                expected_kind, actual_kind);
             error = true;
-          } else {
-            FbleKind* expected_kind = var->kind;
-            FbleKind* actual_kind = FbleGetKind(arena_, var_type_values[i]);
-            if (!FbleKindsEqual(expected_kind, actual_kind)) {
-              ReportError(arena_, &binding->expr->loc,
-                  "expected kind %k, but found %k\n",
-                  expected_kind, actual_kind);
-              error = true;
-            }
-            FbleKindRelease(arena_, actual_kind);
           }
+          FbleKindRelease(arena_, expected_kind);
+          FbleKindRelease(arena_, actual_kind);
         }
-        FbleTypeRelease(arena, defs[i].type);
       }
 
       // Check to see if this is a recursive let block.
@@ -1821,18 +1795,15 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       // Apply the newly computed type values for variables whose types were
       // previously unknown.
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (var_type_values[i] != NULL) {
-          FbleVarType* var = var_types[i];
-          assert(var != NULL);
-          var->value = var_type_values[i];
-          FbleRefAdd(arena, &var->_base.ref, &var->value->ref);
-          FbleTypeRelease(arena, var->value);
+        if (!error && let_expr->bindings.xs[i].type == NULL) {
+          FbleAssignVarType(arena, types[i], defs[i].type);
         }
+        FbleTypeRelease(arena, defs[i].type);
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         if (defs[i].type != NULL) {
-          if (var_type_values[i] != NULL && FbleTypeIsVacuous(arena, &var_types[i]->_base)) {
+          if (let_expr->bindings.xs[i].type == NULL && FbleTypeIsVacuous(arena, types[i])) {
             ReportError(arena_, &let_expr->bindings.xs[i].name.loc,
                 "%n is vacuous\n", &let_expr->bindings.xs[i].name);
             error = true;
@@ -1888,16 +1859,13 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
     case FBLE_POLY_EXPR: {
       FblePolyExpr* poly = (FblePolyExpr*)expr;
 
-      FbleVarType* arg = FbleAlloc(arena_, FbleVarType);
-      FbleTypeInit(arena, &arg->_base, FBLE_VAR_TYPE, poly->arg.name.loc);
-      arg->name = poly->arg.name;
-      arg->kind = FbleKindRetain(arena_, poly->arg.kind);
-      arg->value = NULL;
+      assert(FbleGetKindLevel(poly->arg.kind) > 0 && "TODO: Support non-type poly args?");
 
-      FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
-      FbleTypeInit(arena, &type_type->_base, FBLE_TYPE_TYPE, poly->arg.name.loc);
-      type_type->type = &arg->_base;
-      FbleRefAdd(arena, &type_type->_base.ref, &arg->_base.ref);
+      FbleType* arg_type = FbleNewVarType(arena, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
+      FbleType* arg = FbleValueOfType(arena, arg_type);
+      assert(arg != NULL);
+
+      // TODO: Check name space requirements on arg?
 
       // TODO: It's a little silly that we are pushing an empty type value
       // here. Oh well. Maybe in the future we'll optimize those away or
@@ -1909,19 +1877,18 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       type_instr->_base.tag = FBLE_TYPE_INSTR;
       type_instr->dest = local->index.index;
       AppendInstr(arena_, scope, &type_instr->_base);
-      PushVar(arena_, scope, poly->arg.name, &type_type->_base, local);
 
+      PushVar(arena_, scope, poly->arg.name, arg_type, local);
       Compiled body = CompileExpr(arena, blocks, exit, scope, poly->body);
-
       PopVar(arena, scope);
 
       if (body.type == NULL) {
-        FbleTypeRelease(arena, &arg->_base);
+        FbleTypeRelease(arena, arg);
         return COMPILE_FAILED;
       }
 
       FbleType* pt = FbleNewPolyType(arena, expr->loc, arg, body.type);
-      FbleTypeRelease(arena, &arg->_base);
+      FbleTypeRelease(arena, arg);
       FbleTypeRelease(arena, body.type);
       body.type = pt;
       return body;
@@ -1946,28 +1913,32 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
         return COMPILE_FAILED;
       }
 
-      // Note: CompileType gives us the value of arg
-      FbleType* arg = CompileType(arena, scope, apply->arg);
-      if (arg == NULL) {
+      // Note: arg_type is typeof(arg)
+      FbleType* arg_type = CompileExprNoInstrs(arena, scope, apply->arg);
+      if (arg_type == NULL) {
         FbleKindRelease(arena_, &poly_kind->_base);
         FbleTypeRelease(arena, poly.type);
         return COMPILE_FAILED;
       }
 
       FbleKind* expected_kind = poly_kind->arg;
-      FbleKind* actual_kind = FbleGetKind(arena_, arg);
+      FbleKind* actual_kind = FbleGetKind(arena_, arg_type);
       if (!FbleKindsEqual(expected_kind, actual_kind)) {
         ReportError(arena_, &apply->arg->loc,
-            "expected kind %k, but found %k\n",
+            "expected kind %k, but found something of kind %k\n",
             expected_kind, actual_kind);
         FbleKindRelease(arena_, &poly_kind->_base);
         FbleKindRelease(arena_, actual_kind);
-        FbleTypeRelease(arena, arg);
+        FbleTypeRelease(arena, arg_type);
         FbleTypeRelease(arena, poly.type);
         return COMPILE_FAILED;
       }
       FbleKindRelease(arena_, actual_kind);
       FbleKindRelease(arena_, &poly_kind->_base);
+
+      FbleType* arg = FbleValueOfType(arena, arg_type);
+      assert(arg != NULL && "TODO: poly apply arg is a value?");
+      FbleTypeRelease(arena, arg_type);
 
       FbleType* pat = FbleNewPolyApplyType(arena, expr->loc, poly.type, arg);
       FbleTypeRelease(arena, arg);
