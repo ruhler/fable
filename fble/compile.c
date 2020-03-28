@@ -77,6 +77,18 @@ typedef struct Scope {
   struct Scope* parent;
 } Scope;
 
+static Local* NewLocal(FbleArena* arena, Scope* scope);
+static void LocalRelease(FbleArena* arena, Scope* scope, Local* local);
+static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type, Local* local);
+static void PopVar(FbleTypeArena* arena, Scope* scope);
+static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phantom);
+
+static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
+static void FreeInstr(FbleArena* arena, FbleInstr* instr);
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent);
+static void FreeScope(FbleTypeArena* arena, Scope* scope);
+static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
+
 // BlockFrame --
 //   Represents a profiling block.
 //
@@ -107,6 +119,11 @@ typedef struct {
   FbleNameV blocks;
 } Blocks;
 
+static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
+static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
+static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope);
+static void AddBlockTime(Blocks* blocks, size_t time);
+
 // Compiled --
 //   A pair of type and local returned from compilation.
 typedef struct {
@@ -117,27 +134,7 @@ typedef struct {
 static Compiled COMPILE_FAILED = { .type = NULL, .local = NULL };
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
-
-static Local* NewLocal(FbleArena* arena, Scope* scope);
-static void LocalRelease(FbleArena* arena, Scope* scope, Local* local);
-static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type, Local* local);
-static void PopVar(FbleTypeArena* arena, Scope* scope);
-static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phantom);
-
-static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
-static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
-static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope);
-static void AddBlockTime(Blocks* blocks, size_t time);
-
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent);
-static void FreeScope(FbleTypeArena* arena, Scope* scope);
-static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
-
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
-static void FreeInstr(FbleArena* arena, FbleInstr* instr);
-
 static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type);
-
 static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof);
 
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
@@ -146,74 +143,6 @@ static Compiled CompileList(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
 static FbleType* CompileExprNoInstrs(FbleTypeArena* arena, Scope* scope, FbleExpr* expr);
 static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* type);
 static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm);
-
-// ReportError --
-//   Report a compiler error.
-//
-//   This uses a printf-like format string. The following format specifiers
-//   are supported:
-//     %i - size_t
-//     %k - FbleKind*
-//     %n - FbleName*
-//     %t - FbleType*
-//   Please add additional format specifiers as needed.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   loc - the location of the error.
-//   fmt - the format string.
-//   ... - The var-args for the associated conversion specifiers in fmt.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints a message to stderr as described by fmt and provided arguments.
-static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
-{
-  FbleReportError("", loc);
-
-  va_list ap;
-  va_start(ap, fmt);
-
-  for (const char* p = strchr(fmt, '%'); p != NULL; p = strchr(fmt, '%')) {
-    fprintf(stderr, "%.*s", p - fmt, fmt);
-
-    switch (*(p + 1)) {
-      case 'i': {
-        size_t x = va_arg(ap, size_t);
-        fprintf(stderr, "%d", x);
-        break;
-      }
-
-      case 'k': {
-        FbleKind* kind = va_arg(ap, FbleKind*);
-        FblePrintKind(kind);
-        break;
-      }
-
-      case 'n': {
-        FbleName* name = va_arg(ap, FbleName*);
-        FblePrintName(stderr, name);
-        break;
-      }
-
-      case 't': {
-        FbleType* type = va_arg(ap, FbleType*);
-        FblePrintType(arena, type);
-        break;
-      }
-
-      default: {
-        UNREACHABLE("Unsupported format conversion.");
-        break;
-      }
-    }
-    fmt = p + 2;
-  }
-  fprintf(stderr, "%s", fmt);
-  va_end(ap);
-}
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
@@ -411,6 +340,202 @@ static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phant
   return NULL;
 }
 
+// NewInstrBlock --
+//   Allocate and initialize a new instruction block.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//
+// Results:
+//   A newly allocated and initialized instruction block.
+//
+// Side effects:
+//   Allocates a new instruction block that should be freed with
+//   FbleFreeInstrBlock when no longer needed.
+static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
+{
+  FbleInstrBlock* instr_block = FbleAlloc(arena, FbleInstrBlock);
+  instr_block->refcount = 1;
+  instr_block->statics = 0;
+  instr_block->locals = 0;
+  FbleVectorInit(arena, instr_block->instrs);
+  return instr_block;
+}
+
+// FreeInstr --
+//   Free the given instruction.
+//
+// Inputs:
+//   arena - the arena used to allocation the instructions.
+//   instr - the instruction to free.
+//
+// Result:
+//   none.
+//
+// Side effect:
+//   Frees memory allocated for the given instruction.
+static void FreeInstr(FbleArena* arena, FbleInstr* instr)
+{
+  assert(instr != NULL);
+  switch (instr->tag) {
+    case FBLE_UNION_VALUE_INSTR:
+    case FBLE_STRUCT_ACCESS_INSTR:
+    case FBLE_UNION_ACCESS_INSTR:
+    case FBLE_UNION_SELECT_INSTR:
+    case FBLE_GOTO_INSTR:
+    case FBLE_RELEASE_INSTR:
+    case FBLE_FUNC_APPLY_INSTR:
+    case FBLE_COPY_INSTR:
+    case FBLE_GET_INSTR:
+    case FBLE_PUT_INSTR:
+    case FBLE_LINK_INSTR:
+    case FBLE_PROC_INSTR:
+    case FBLE_JOIN_INSTR:
+    case FBLE_REF_VALUE_INSTR:
+    case FBLE_REF_DEF_INSTR:
+    case FBLE_RETURN_INSTR:
+    case FBLE_TYPE_INSTR:
+    case FBLE_PROFILE_ENTER_BLOCK_INSTR:
+    case FBLE_PROFILE_EXIT_BLOCK_INSTR:
+    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_STRUCT_VALUE_INSTR: {
+      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
+      FbleFree(arena, struct_instr->args.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_STRUCT_IMPORT_INSTR: {
+      FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
+      FbleFree(arena, import_instr->fields.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_FUNC_VALUE_INSTR: {
+      FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+      FbleFreeInstrBlock(arena, func_value_instr->code);
+      FbleFree(arena, func_value_instr->scope.xs);
+      FbleFree(arena, func_value_instr);
+      return;
+    }
+
+    case FBLE_FORK_INSTR: {
+      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+      FbleFree(arena, fork_instr->args.xs);
+      FbleFree(arena, fork_instr->dests.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_PROC_VALUE_INSTR: {
+      FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
+      FbleFreeInstrBlock(arena, proc_value_instr->code);
+      FbleFree(arena, proc_value_instr->scope.xs);
+      FbleFree(arena, proc_value_instr);
+      return;
+    }
+  }
+
+  UNREACHABLE("invalid instruction");
+}
+
+// InitScope --
+//   Initialize a new scope.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   scope - the scope to initialize.
+//   code - a pointer to the code block for this scope.
+//   capture - vector to store capture variables from the parent scope in. May
+//             be NULL.
+//   parent - the parent of the scope to initialize. May be NULL.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Initializes scope based on parent. FreeScope should be
+//   called to free the allocations for scope. The lifetimes of the code block
+//   and the parent scope must exceed the lifetime of this scope.
+//   Initializes capture and appends to it the variables that need to be
+//   captured from the parent scope. capture may be NULL, in which case the
+//   scope is treated as a phantom scope that does not cause any changes to be
+//   made to the parent scope.
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent)
+{
+  FbleVectorInit(arena, scope->statics);
+  FbleVectorInit(arena, scope->vars);
+  FbleVectorInit(arena, scope->locals);
+  if (capture) {
+    FbleVectorInit(arena, *capture);
+  }
+
+  scope->code = code;
+  scope->code->statics = 0;
+  scope->code->locals = 0;
+  scope->capture = capture;
+  scope->parent = parent;
+}
+
+// FreeScope --
+//   Free memory associated with a Scope.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   scope - the scope to finish.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   * Frees memory associated with scope.
+static void FreeScope(FbleTypeArena* arena, Scope* scope)
+{
+  FbleArena* arena_ = FbleRefArenaArena(arena);
+  for (size_t i = 0; i < scope->statics.size; ++i) {
+    FbleTypeRelease(arena, scope->statics.xs[i]->type);
+    FbleFree(arena_, scope->statics.xs[i]->local);
+    FbleFree(arena_, scope->statics.xs[i]);
+  }
+  FbleFree(arena_, scope->statics.xs);
+
+  while (scope->vars.size > 0) {
+    PopVar(arena, scope);
+  }
+  FbleFree(arena_, scope->vars.xs);
+
+  for (size_t i = 0; i < scope->locals.size; ++i) {
+    if (scope->locals.xs[i] != NULL) {
+      FbleFree(arena_, scope->locals.xs[i]);
+    }
+  }
+  FbleFree(arena_, scope->locals.xs);
+}
+
+// AppendInstr --
+//   Append an instruction to the code block for the given scope.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   scope - the scope to append the instruction to.
+//   instr - the instruction to append.
+//
+// Result:
+//   none.
+//
+// Side effects:
+//   Appends instr to the code block for the given scope, thus taking
+//   ownership of the instr.
+static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
+{
+  FbleVectorAppend(arena, scope->code->instrs, instr);
+}
+
 // EnterBlock --
 //   Enter a new profiling block.
 //
@@ -566,200 +691,72 @@ static void AddBlockTime(Blocks* blocks, size_t time)
   }
 }
 
-// InitScope --
-//   Initialize a new scope.
+// ReportError --
+//   Report a compiler error.
+//
+//   This uses a printf-like format string. The following format specifiers
+//   are supported:
+//     %i - size_t
+//     %k - FbleKind*
+//     %n - FbleName*
+//     %t - FbleType*
+//   Please add additional format specifiers as needed.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   scope - the scope to initialize.
-//   code - a pointer to the code block for this scope.
-//   capture - vector to store capture variables from the parent scope in. May
-//             be NULL.
-//   parent - the parent of the scope to initialize. May be NULL.
+//   loc - the location of the error.
+//   fmt - the format string.
+//   ... - The var-args for the associated conversion specifiers in fmt.
 //
 // Results:
-//   None.
-//
-// Side effects:
-//   Initializes scope based on parent. FreeScope should be
-//   called to free the allocations for scope. The lifetimes of the code block
-//   and the parent scope must exceed the lifetime of this scope.
-//   Initializes capture and appends to it the variables that need to be
-//   captured from the parent scope. capture may be NULL, in which case the
-//   scope is treated as a phantom scope that does not cause any changes to be
-//   made to the parent scope.
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent)
-{
-  FbleVectorInit(arena, scope->statics);
-  FbleVectorInit(arena, scope->vars);
-  FbleVectorInit(arena, scope->locals);
-  if (capture) {
-    FbleVectorInit(arena, *capture);
-  }
-
-  scope->code = code;
-  scope->code->statics = 0;
-  scope->code->locals = 0;
-  scope->capture = capture;
-  scope->parent = parent;
-}
-
-// FreeScope --
-//   Free memory associated with a Scope.
-//
-// Inputs:
-//   arena - arena to use for allocations
-//   scope - the scope to finish.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   * Frees memory associated with scope.
-static void FreeScope(FbleTypeArena* arena, Scope* scope)
-{
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  for (size_t i = 0; i < scope->statics.size; ++i) {
-    FbleTypeRelease(arena, scope->statics.xs[i]->type);
-    FbleFree(arena_, scope->statics.xs[i]->local);
-    FbleFree(arena_, scope->statics.xs[i]);
-  }
-  FbleFree(arena_, scope->statics.xs);
-
-  while (scope->vars.size > 0) {
-    PopVar(arena, scope);
-  }
-  FbleFree(arena_, scope->vars.xs);
-
-  for (size_t i = 0; i < scope->locals.size; ++i) {
-    if (scope->locals.xs[i] != NULL) {
-      FbleFree(arena_, scope->locals.xs[i]);
-    }
-  }
-  FbleFree(arena_, scope->locals.xs);
-}
-
-// AppendInstr --
-//   Append an instruction to the code block for the given scope.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   scope - the scope to append the instruction to.
-//   instr - the instruction to append.
-//
-// Result:
 //   none.
 //
 // Side effects:
-//   Appends instr to the code block for the given scope, thus taking
-//   ownership of the instr.
-static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
+//   Prints a message to stderr as described by fmt and provided arguments.
+static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 {
-  FbleVectorAppend(arena, scope->code->instrs, instr);
-}
-
-// NewInstrBlock --
-//   Allocate and initialize a new instruction block.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//
-// Results:
-//   A newly allocated and initialized instruction block.
-//
-// Side effects:
-//   Allocates a new instruction block that should be freed with
-//   FbleFreeInstrBlock when no longer needed.
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
-{
-  FbleInstrBlock* instr_block = FbleAlloc(arena, FbleInstrBlock);
-  instr_block->refcount = 1;
-  instr_block->statics = 0;
-  instr_block->locals = 0;
-  FbleVectorInit(arena, instr_block->instrs);
-  return instr_block;
-}
-
-// FreeInstr --
-//   Free the given instruction.
-//
-// Inputs:
-//   arena - the arena used to allocation the instructions.
-//   instr - the instruction to free.
-//
-// Result:
-//   none.
-//
-// Side effect:
-//   Frees memory allocated for the given instruction.
-static void FreeInstr(FbleArena* arena, FbleInstr* instr)
-{
-  assert(instr != NULL);
-  switch (instr->tag) {
-    case FBLE_UNION_VALUE_INSTR:
-    case FBLE_STRUCT_ACCESS_INSTR:
-    case FBLE_UNION_ACCESS_INSTR:
-    case FBLE_UNION_SELECT_INSTR:
-    case FBLE_GOTO_INSTR:
-    case FBLE_RELEASE_INSTR:
-    case FBLE_FUNC_APPLY_INSTR:
-    case FBLE_COPY_INSTR:
-    case FBLE_GET_INSTR:
-    case FBLE_PUT_INSTR:
-    case FBLE_LINK_INSTR:
-    case FBLE_PROC_INSTR:
-    case FBLE_JOIN_INSTR:
-    case FBLE_REF_VALUE_INSTR:
-    case FBLE_REF_DEF_INSTR:
-    case FBLE_RETURN_INSTR:
-    case FBLE_TYPE_INSTR:
-    case FBLE_PROFILE_ENTER_BLOCK_INSTR:
-    case FBLE_PROFILE_EXIT_BLOCK_INSTR:
-    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
-      FbleFree(arena, instr);
-      return;
-    }
+  FbleReportError("", loc);
 
-    case FBLE_STRUCT_VALUE_INSTR: {
-      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      FbleFree(arena, struct_instr->args.xs);
-      FbleFree(arena, instr);
-      return;
-    }
+  va_list ap;
+  va_start(ap, fmt);
 
-    case FBLE_STRUCT_IMPORT_INSTR: {
-      FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
-      FbleFree(arena, import_instr->fields.xs);
-      FbleFree(arena, instr);
-      return;
-    }
+  for (const char* p = strchr(fmt, '%'); p != NULL; p = strchr(fmt, '%')) {
+    fprintf(stderr, "%.*s", p - fmt, fmt);
 
-    case FBLE_FUNC_VALUE_INSTR: {
-      FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-      FbleFreeInstrBlock(arena, func_value_instr->code);
-      FbleFree(arena, func_value_instr->scope.xs);
-      FbleFree(arena, func_value_instr);
-      return;
-    }
+    switch (*(p + 1)) {
+      case 'i': {
+        size_t x = va_arg(ap, size_t);
+        fprintf(stderr, "%d", x);
+        break;
+      }
 
-    case FBLE_FORK_INSTR: {
-      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      FbleFree(arena, fork_instr->args.xs);
-      FbleFree(arena, fork_instr->dests.xs);
-      FbleFree(arena, instr);
-      return;
-    }
+      case 'k': {
+        FbleKind* kind = va_arg(ap, FbleKind*);
+        FblePrintKind(kind);
+        break;
+      }
 
-    case FBLE_PROC_VALUE_INSTR: {
-      FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-      FbleFreeInstrBlock(arena, proc_value_instr->code);
-      FbleFree(arena, proc_value_instr->scope.xs);
-      FbleFree(arena, proc_value_instr);
-      return;
+      case 'n': {
+        FbleName* name = va_arg(ap, FbleName*);
+        FblePrintName(stderr, name);
+        break;
+      }
+
+      case 't': {
+        FbleType* type = va_arg(ap, FbleType*);
+        FblePrintType(arena, type);
+        break;
+      }
+
+      default: {
+        UNREACHABLE("Unsupported format conversion.");
+        break;
+      }
     }
+    fmt = p + 2;
   }
-
-  UNREACHABLE("invalid instruction");
+  fprintf(stderr, "%s", fmt);
+  va_end(ap);
 }
 
 // CheckNameSpace --

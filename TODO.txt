@@ -1,3 +1,11 @@
+
+* [compile] Move FreeInstr and FbleFreeInstrBlock to decompile.c, and rename that instr.c?
+ - And factor out an fble/instr.h?
+* [compile] Move ValueOfType to fble/type.c?
+* [compile] Figure out better naming scheme for profiling stuff in compile.c?
+
+* Add tests to increase code coverage.
+
 * [Snake] Figure out why sometimes it leaks memory on exit.
  - Could it be an unconsumed IO value?
 
@@ -9,7 +17,6 @@
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
-* [compile] Reorganize functions in fble/compile.c
 
 * [eval] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
@@ -26,10 +33,8 @@
   tests as necessary to catch bugs.
 * [perf] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
-* [compile] Test that we get a reasonable error message if we do something like:
-    <@>@ Id = <@ T@> { T@; };
 * [test] Can fble-stdio check that the function has the right type?
-* Better error messages on types that have the same name but different values.
+* Better error messages on types that have the same name but different values?
 * Write man pages for fble and friends?
 * Better error message when the difference between a type is accidentally
   defining + vs. *, and it contains substituted polymorphic type variables.
