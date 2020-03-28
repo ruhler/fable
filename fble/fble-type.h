@@ -332,6 +332,22 @@ bool FbleTypeIsVacuous(FbleTypeArena* arena, FbleType* type);
 //   vacuous.
 FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type);
 
+// FbleValueOfType --
+//   Returns the value of a type given the type of the type.
+//
+// Inputs:
+//   arena - type arena for allocations.
+//   typeof - the type of the type to get the value of.
+//
+// Results:
+//   The value of the type to get the value of. Or NULL if the value is not a
+//   type.
+//
+// Side effects:
+//   The returned type must be released using FbleTypeRelease when no longer
+//   needed.
+FbleType* FbleValueOfType(FbleTypeArena* arena, FbleType* typeof);
+
 // FbleTypesEqual --
 //   Test whether the two given evaluated types are equal.
 //

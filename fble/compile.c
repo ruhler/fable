@@ -135,7 +135,6 @@ static Compiled COMPILE_FAILED = { .type = NULL, .local = NULL };
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type);
-static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof);
 
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
 static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
@@ -795,30 +794,6 @@ static bool CheckNameSpace(FbleTypeArena* arena, FbleName* name, FbleType* type)
   }
 
   return true;
-}
-
-// ValueOfType --
-//   Returns the value of a type given the type of the type.
-//
-// Inputs:
-//   arena - type arena for allocations.
-//   typeof - the type of the type to get the value of.
-//
-// Results:
-//   The value of the type to get the value of. Or NULL if the value is not a
-//   type.
-//
-// Side effects:
-//   The returned type must be released using FbleTypeRelease when no longer
-//   needed.
-static FbleType* ValueOfType(FbleTypeArena* arena, FbleType* typeof)
-{
-  if (typeof->tag == FBLE_TYPE_TYPE) {
-    FbleTypeType* tt = (FbleTypeType*)typeof;
-    FbleTypeRetain(arena, tt->type);
-    return tt->type;
-  }
-  return NULL;
 }
 
 // CompileExit --
@@ -1899,7 +1874,7 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
               types[i], defs[i].type);
         } else if (!error && binding->type == NULL) {
           FbleVarType* var = var_types[i];
-          var_type_values[i] = ValueOfType(arena, defs[i].type);
+          var_type_values[i] = FbleValueOfType(arena, defs[i].type);
           if (var_type_values[i] == NULL) {
             ReportError(arena_, &binding->expr->loc,
                 "expected type, but found something of type %t\n",
@@ -2617,7 +2592,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
         return NULL;
       }
 
-      FbleType* type_value = ValueOfType(arena, type);
+      FbleType* type_value = FbleValueOfType(arena, type);
       if (type_value == NULL) {
         ReportError(arena_, &expr->loc,
             "expected a type, but found value of type %t\n",

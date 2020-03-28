@@ -997,6 +997,17 @@ FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type)
   return normal;
 }
 
+// FbleValueOfType -- see documentation in fble-type.h
+FbleType* FbleValueOfType(FbleTypeArena* arena, FbleType* typeof)
+{
+  if (typeof->tag == FBLE_TYPE_TYPE) {
+    FbleTypeType* tt = (FbleTypeType*)typeof;
+    FbleTypeRetain(arena, tt->type);
+    return tt->type;
+  }
+  return NULL;
+}
+
 // FbleTypesEqual -- see documentation in fble-types.h
 bool FbleTypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b)
 {
