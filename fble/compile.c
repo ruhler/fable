@@ -8,7 +8,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "fble-type.h"
-#include "internal.h"
+#include "instr.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -2654,7 +2654,7 @@ static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, F
   return result.type != NULL;
 }
 
-// FbleFreeInstrBlock -- see documentation in internal.h
+// FbleFreeInstrBlock -- see documentation in instr.h
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 {
   if (block == NULL) {
@@ -2672,7 +2672,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
   }
 }
 
-// FbleCompile -- see documentation in internal.h
+// FbleCompile -- see documentation in instr.h
 FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* program)
 {
   Blocks block_stack;

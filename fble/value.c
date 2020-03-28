@@ -4,7 +4,8 @@
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for NULL
 
-#include "internal.h"
+#include "fble.h"
+#include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -287,7 +288,7 @@ bool FbleIsProcValue(FbleValue* value)
   return value->tag == FBLE_PROC_VALUE;
 }
 
-// FbleNewGetProcValue -- see documentation in internal.h
+// FbleNewGetProcValue -- see documentation in value.h
 FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port)
 {
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);

@@ -5,7 +5,8 @@
 #include <string.h>   // for strcat
 #include <unistd.h>   // for access, F_OK
 
-#include "internal.h"
+#include "fble.h"
+#include "instr.h"
 
 typedef struct Tree Tree;
 

@@ -5,7 +5,7 @@
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for NULL
 
-#include "internal.h"
+#include "instr.h"
 
 static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_blocks);
 

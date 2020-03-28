@@ -6,7 +6,9 @@
 #include <stdlib.h>   // for NULL, abort
 #include <string.h>   // for memset
 
-#include "internal.h"
+#include "fble.h"
+#include "instr.h"
+#include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
