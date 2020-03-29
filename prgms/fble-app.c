@@ -50,7 +50,7 @@ static void PrintUsage(FILE* stream)
   fprintf(stream,
       "Usage: fble-app FILE DIR \n"
       "Execute the an app process described by the fble program FILE.\n"
-      "Example: fble-app prgms/fble-Snake.fble prgms\n"
+      "Example: fble-app prgms/Snake.fble prgms\n"
   );
 }
 

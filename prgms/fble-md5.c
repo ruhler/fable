@@ -38,7 +38,7 @@ static void PrintUsage(FILE* stream)
       "Usage: fbld-md5 PRGM PATH FILE \n"
       "Execute the md5 process described by the fble program PRGM.\n"
       "Using search path PATH, and computing the md5 of FILE.\n"
-      "Example: fbld-md5 prgms/fble-md5.fble prgms foo.txt\n"
+      "Example: fbld-md5 prgms/Md5/Stdio.fble prgms foo.txt\n"
   );
 }
 

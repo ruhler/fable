@@ -45,7 +45,7 @@ static void PrintUsage(FILE* stream)
       "Options:\n"
       "  --profile FILE\n"
       "    Writes a profile of the test run to FILE\n"
-      "Example: fble-stdio --profile tests.prof prgms/fble-tests.fble prgms\n"
+      "Example: fble-stdio --profile tests.prof prgms/Fble/Tests.fble prgms\n"
   );
 }
 

@@ -40,6 +40,9 @@ Hex@ C = Hex.C; Hex@ D = Hex.D; Hex@ E = Hex.E; Hex@ F = Hex.F;
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
+# Import to test compilation.
+% _ = /Md5/Main%;
+
 (Hex@){Char@;} Hex2Char = (Hex@ h) {
   ?(h; 0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
        4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),

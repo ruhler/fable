@@ -152,10 +152,10 @@ exec mv {*}[glob *.gcov] out/cov/spec
 exec mkdir -p out/test
 testn fble-ref-test exec $::bin/fble-ref-test
 testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-test.txt
-testn fble-decompile exec $::bin/fble-decompile prgms/fble-tests.fble prgms > out/test/fble-tests.fble.s
-testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/fble-tests.fble prgms >@ stdout
-testn fble-md5 exec $::bin/fble-md5 prgms/fble-md5.fble prgms /dev/null
-testn fble-cat exec $::bin/fble-stdio prgms/fble-cat.fble prgms < README.txt | cmp README.txt -
+testn fble-decompile exec $::bin/fble-decompile prgms/Fble/Tests.fble prgms > out/test/FbleTests.fble.s
+testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/Fble/Tests.fble prgms >@ stdout
+testn fble-md5 exec $::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null
+testn fble-cat exec $::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -
 
 exec mkdir -p out/cov/all
 run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov

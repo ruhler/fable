@@ -1,10 +1,21 @@
 
-{ /App%; @(Key@, Event@, Effect@); };
-{ /Int/Int%; @(Int@, Dec); };
-{ /Int/Int/Lit%; @(I, D); };
+@ Key@ = /App%.Key@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Int@ = /Int/Int%.Int@;
+% Dec = /Int/Int%.Dec;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
 % Main = /Snake%;
-{ /Process%; @(Get@, Put@); };
-{ /Unit%; @(Unit@, Unit); };
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # Feed the Snake app with ticks for the given number of iterations before
 # quiting.

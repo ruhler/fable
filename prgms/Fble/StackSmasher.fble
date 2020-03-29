@@ -6,8 +6,10 @@
 Unit@ Unit = Unit@();
 
 @ Bit@ = +(Unit@ 0, Unit@ 1);
-Bit@ 0 = Bit@(0: Unit);
-Bit@ 1 = Bit@(1: Unit);
+% Bit = @(
+  0: Bit@(0: Unit), 
+  1: Bit@(0: Unit)
+); 
 
 @ BitS@ = +(BitP@ cons, Unit@ nil),
 @ BitP@ = *(Bit@ lsb, BitS@ tail);
@@ -28,8 +30,8 @@ Bit@ 1 = Bit@(1: Unit);
        ?(s.cons.tail;
           cons: {
             ?(s.cons.lsb;
-               0: BitP(1, Decr(s.cons.tail)),
-               1: BitP(0, s.cons.tail));
+               0: BitP(Bit.1, Decr(s.cons.tail)),
+               1: BitP(Bit.0, s.cons.tail));
           },
           nil: {
             # This is the most significant bit. Assume it is 1 and drop it.
@@ -52,19 +54,19 @@ Bit@ 1 = Bit@(1: Unit);
          # Deep chain of lets in the binding to exercise the let ref traversal
          # issue.
          BitS@ tail = G1(Decr(s));
-         BitP(1, tail);
+         BitP(Bit.1, tail);
        },
        nil: BitS@(nil: Unit));
 };
 
 (BitS@) { BitS@; } G2 = (BitS@ s) {
-  ?(s; cons: BitP(1, G2(Decr(s))),
+  ?(s; cons: BitP(Bit.1, G2(Decr(s))),
        nil: BitS@(nil: Unit));
 };
 
 
 # Note: the least significant bit is listed first in this representation.
-BitS@ n = BitS(Bit@|00000000001);
+BitS@ n = BitS(Bit|00000000001);
 
 BitS@ _ = G1(n);
 BitS@ _ = G2(n);

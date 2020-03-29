@@ -1,9 +1,6 @@
 
 * [lang] Syntax highlighting for kinds?
 
-* Rename fble-bench, and fble-cat so we can import them as modules in
-  fble-tests to ensure they stay compiling.
-
 * [compile] Warn about unused variables?
  - Add to spec? Use '_' to distinguish intended unused variables?
 

@@ -15,7 +15,10 @@
 @ Test@ = /Test%.Test@;
 
 # Import to test compilation.
+% _ = /Fble/Bench%;
+% _ = /Fble/StackSmasher%;
 % _ = /Snake%;
+% _ = /Stdio/Cat%;
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /GameOfLife/Tests%.Tests,
