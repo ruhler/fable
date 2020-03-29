@@ -1,7 +1,7 @@
 
 { /Bool%; @(Bool@, True, False); };
 { /Int/IntS%; @(IntS@); };
-@(P: /Int/IntP/Eq%);
+% P = /Int/IntP/Eq%;
 
 (IntS@) { Bool@; } IsZero = (IntS@ a) {
   ?(a; 0: True, p: False);

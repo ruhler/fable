@@ -2,7 +2,7 @@
 { /App%; @(Key@, Event@, Effect@); };
 { /Int/Int%; @(Int@, Dec); };
 { /Int/Int/Lit%; @(I, D); };
-@(Main: /GameOfLife/App%);
+% Main = /GameOfLife/App%;
 { /Process%; @(Get@, Put@); };
 { /Unit%; @(Unit@, Unit); };
 

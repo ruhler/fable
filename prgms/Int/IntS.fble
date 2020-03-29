@@ -1,6 +1,6 @@
 
 { /Int/IntP%; @(IntP@); };
-@(P: /Int/IntP%);
+% P = /Int/IntP%;
 { /Unit%; @(Unit@, Unit); };
 
 # Non-negative Integers.

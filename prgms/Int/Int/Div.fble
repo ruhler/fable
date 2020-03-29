@@ -1,7 +1,7 @@
 
 { /Int/Int%; @(Int@, Neg, 0); };
 { /Int/IntS%; @(IntS@); };
-@(P: /Int/IntP/Div%);
+% P = /Int/IntP/Div%;
 
 (IntS@) { Int@; } IntS = (IntS@ s) {
   ?(s; 0: 0, p: Int@(p: s.p));
