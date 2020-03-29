@@ -1386,6 +1386,50 @@ Notes:
   * For the TicTacToe use case, I wanted to import polymorphic functions
     specialized for a specific local version. e.g.
       @(Lookup: Lookup<PositionResult@>);
+
+  New proposal: Now that we have nice syntax for implicit type let, I propose
+  we just get rid of struct import entirely. I bet it won't actually be that
+  bad. For example, instead of:
+
+  { Map<Board@>(DBoard);
+    @(MemoTable@: Map@<PositionResult@>,
+      Empty: Empty<PositionResult@>,
+      Lookup: Lookup<PositionResult@>,
+      Insert: Insert<PositionResult@>);
+  };
+
+  Do something like:
+
+  % BoardMap = Map<Board@>(DBoard);
+  @ MemoTable@ = BoardMap.Map@<PositionResult@>;
+  % Empty = BoardMap.Empty<PositionResult@>;
+  % Lookup = BoardMap.Lookup<PositionResult@>;
+  % Insert = BoardMap.Insert<PositionResult@>;
+
+  The benefits:
+  * No new feature or syntax required.
+  * No special case for simple imports vs. complex imports.
+  * Consistent syntax for defining all names used in scope.
+  * Easy detection of unused variable definitions that covers normal lets too.
+  * We explicitly list the kind, or if desired, the type of the imported thing.
+
+  The downside is that it takes up more lines and may be more tedious. But I
+  wonder if copy paste is sufficient to avoid the tedium. Another downside is
+  it may be harder to see what modules you are importing from. On the other
+  hand, it may encourage breaking down modules into smaller pieces.
+
+  Another downside is for returning multiple args from a function with
+  anonymous struct typees, we'll have to pick a name for the result bundle:
+
+  % dm = DivMod(a, b);
+  dm.r, dm.q...
+
+  But that's also minor.
+  
+
+  I would say, it the very least, it is definitely worth a try. Use it for a
+  while. See if I get used to it. If not, we can make improvements from there
+  more easily than we can from the existing struct import.
   
 * There's no good support for abstract data types. You can't export a union or
   struct type abstractly without also exporting the fields and constructors

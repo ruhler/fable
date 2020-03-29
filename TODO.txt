@@ -1,4 +1,9 @@
 
+* [lang] Remove struct import.
+
+* [compile] Warn about unused variables?
+ - Add to spec? Use '_' to distinguish intended unused variables?
+
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
 * [snake] Keep track of and report score.
