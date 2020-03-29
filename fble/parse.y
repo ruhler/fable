@@ -74,8 +74,8 @@
 %type <name> name
 %type <names> path
 %type <module_ref> module_ref
-%type <kind> kind
-%type <kinds> kind_p
+%type <kind> tkind nkind kind
+%type <kinds> tkind_p
 %type <type_fields> type_field_p
 %type <expr> expr block stmt
 %type <exprs> expr_p expr_s
@@ -125,7 +125,7 @@ module_ref:
    }
  ;
 
-kind:
+nkind:
    '%' {
       FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
       basic_kind->_base.tag = FBLE_BASIC_KIND;
@@ -134,15 +134,7 @@ kind:
       basic_kind->level = 0;
       $$ = &basic_kind->_base;
    }
- | '@' {
-      FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
-      basic_kind->_base.tag = FBLE_BASIC_KIND;
-      basic_kind->_base.loc = @$;
-      basic_kind->_base.refcount = 1;
-      basic_kind->level = 1;
-      $$ = &basic_kind->_base;
-   }
- | '<' kind_p '>' kind {
+ | '<' tkind_p '>' nkind {
       FbleKind* kind = $4;
       for (size_t i = 0; i < $2.size; ++i) {
         FbleKind* arg = $2.xs[$2.size - 1 - i];
@@ -159,12 +151,40 @@ kind:
    }
  ;
 
-kind_p:
-   kind {
+tkind:
+   '@' {
+      FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
+      basic_kind->_base.tag = FBLE_BASIC_KIND;
+      basic_kind->_base.loc = @$;
+      basic_kind->_base.refcount = 1;
+      basic_kind->level = 1;
+      $$ = &basic_kind->_base;
+   }
+ | '<' tkind_p '>' tkind {
+      FbleKind* kind = $4;
+      for (size_t i = 0; i < $2.size; ++i) {
+        FbleKind* arg = $2.xs[$2.size - 1 - i];
+        FblePolyKind* poly_kind = FbleAlloc(arena, FblePolyKind);
+        poly_kind->_base.tag = FBLE_POLY_KIND;
+        poly_kind->_base.loc = @$;
+        poly_kind->_base.refcount = 1;
+        poly_kind->arg = arg;
+        poly_kind->rkind = kind;
+        kind = &poly_kind->_base;
+      }
+      FbleFree(arena, $2.xs);
+      $$ = kind;
+   }
+ ;
+
+kind: nkind | tkind ;
+
+tkind_p:
+   tkind {
      FbleVectorInit(arena, $$);
      FbleVectorAppend(arena, $$, $1);
    }
- | kind_p ',' kind {
+ | tkind_p ',' tkind {
      $$ = $1;
      FbleVectorAppend(arena, $$, $3);
    }
