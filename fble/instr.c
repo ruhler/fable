@@ -214,22 +214,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
           break;
         }
 
-        case FBLE_STRUCT_IMPORT_INSTR: {
-          FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
-          fprintf(fout, "%s[%zi].import(",
-              sections[import_instr->obj.section],
-              import_instr->obj.index);
-          const char* comma = "";
-          for (size_t j = 0; j < import_instr->fields.size; ++j) {
-            fprintf(fout, "%s[%zi]", comma, import_instr->fields.xs[j]);
-            comma = ", ";
-          }
-          fprintf(fout, ");    // %s:%i:%i\n",
-              import_instr->loc.source, import_instr->loc.line,
-              import_instr->loc.col);
-          break;
-        }
-
         case FBLE_RETURN_INSTR: {
           FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
           fprintf(fout, "return %s[%zi];\n",
@@ -305,13 +289,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       FbleFree(arena, struct_instr->args.xs);
-      FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_STRUCT_IMPORT_INSTR: {
-      FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
-      FbleFree(arena, import_instr->fields.xs);
       FbleFree(arena, instr);
       return;
     }

@@ -60,7 +60,6 @@ typedef enum {
   FBLE_COPY_INSTR,
   FBLE_REF_VALUE_INSTR,
   FBLE_REF_DEF_INSTR,
-  FBLE_STRUCT_IMPORT_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_PROFILE_ENTER_BLOCK_INSTR,
@@ -301,17 +300,6 @@ typedef struct {
   FbleLocalIndex ref;
   FbleFrameIndex value;
 } FbleRefDefInstr;
-
-// FbleStructImportInstr -- FBLE_STRUCT_IMPORT_INSTR
-//   Import fields of a struct into the local scope.
-//
-// v[0], v[1], ... = obj;
-typedef struct {
-  FbleInstr _base;
-  FbleLoc loc;
-  FbleFrameIndex obj;
-  FbleLocalIndexV fields;
-} FbleStructImportInstr;
 
 // FbleReturnInstr -- FBLE_RETURN_INSTR
 //   Return <result> and exit the current stack frame.

@@ -744,20 +744,6 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
-      case FBLE_STRUCT_IMPORT_INSTR: {
-        FbleStructImportInstr* import_instr = (FbleStructImportInstr*)instr;
-        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, &thread->stack->frame, import_instr->obj);
-        if (sv == NULL) {
-          FbleReportError("undefined struct value import\n", &import_instr->loc);
-          AbortThread(arena, thread);
-          return progress;
-        }
-        for (size_t i = 0; i < sv->fields.size; ++i) {
-          thread->stack->frame.locals[import_instr->fields.xs[i]] = FbleValueRetain(arena, sv->fields.xs[i]);
-        }
-        break;
-      }
-
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
         FbleValue* result = FrameGet(&thread->stack->frame, return_instr->result);

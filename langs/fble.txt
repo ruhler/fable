@@ -249,9 +249,7 @@ struct. Individual components of a struct can be accessed by field name.
 
 Struct values can be used for namespaces, by grouping together a collection of
 types and normal values. Syntax is provided for creating struct values with
-implicit types and importing fields of a struct into the current context. When
-used this way, we sometimes refer to the struct value as a namespace struct
-value.
+implicit types to facilitate this use case.
 
 3.1 Struct Type
 ---------------
@@ -351,67 +349,6 @@ value.
 
 Runtime is O(log(N)) plus the runtime of the struct object, where N is the
 number of fields in the struct.
-
-3.5 Struct Import
------------------
-Abstract Syntax:
-  Expr ::= struct_import (object :: Expr) (body :: Expr)
-
-Concrete Syntax:
-  stmt ::= expr ';' stmt
-
-Example:
-  @(And); And(True, False);
-
-Struct import is a short hand form of let expression that allows you to
-introduce new variables in scope. The object must be a struct
-value. The body of the import is evaluated in the current scope augmented with
-variables formed from the fields of the struct value. The type of the
-expression is the type of the body of the expression.
-
-The expression is evaluated by evaluating the object, then evaluating the body
-under the new scope.
-
-The advantage of using struct import over using a regular let expression is
-the convenience of not having to explicitly write the types of the variables
-being defined and being able to define a group of variables concisely.
-
-For example, assuming a struct of boolean operations:
-  @ BoolOps@ = *(Bool@ True, Bool@ False, \(Bool@ x; Bool@) Not);
-  BoolOps@ ops = ...
-
-The following two are equivalent:
-1. Bool@ True = ops.True;
-   Bool@ False = ops.False;
-   \(Bool@ x; Bool@) Not = ops.Not;
-   ...
-
-2. ops;
-   ...
-  
-The typical use of struct import is to import a subset of values from an
-existing namespace into the current namespace using a combination of struct
-import and implicit type struct value construction. For example:
-
-  { StdLib; @(Bool, Maybe, List); };
-  ...
-
-This has the effect of importing just Bool, Maybe, and List from StdLib.
-
-Note that you can also make use of this construct with implicit type struct
-values for defining a variable without having to explicitly specify its type.
-This is useful for referring to a namespace without having to provide an
-explicit type for the namespace. For example:
-
-  @(StdLib: StdLib%); ...
-
-Or, as another example, the following two are equivalent:
-
-1. Bool@ True = Bool@(true: Unit@()); ...
-2. @(True: Bool@(true: Unit@())); ...
-
-Runtime is O(N log(M)) plus the runtimes of the object and the body, where N is the
-number of fields in the struct and M is the number of variables in scope.
 
 4. Unions
 ---------
@@ -1105,7 +1042,6 @@ Expr ::=
  | struct_value_explicit_type (type :: Type) (args :: [Expr])
  | struct_value_implicit_type (args :: [(Name, Expr)])
  | struct_access (object :: Expr) (field :: Name)
- | struct_import (namespace :: Expr) (body :: Expr)
 
  | union_type (fields :: [(Type, Name)])
  | union_value (type :: Type) (field :: Name) (arg :: Expr)
@@ -1231,7 +1167,6 @@ block ::=
 stmt ::=
    expr ';'
  | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
- | expr ';' stmt                                                     (* struct_import *)
  | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
@@ -1317,149 +1252,6 @@ Notes:
   are really big. Then implement some packing algorithm to move things to a
   single line if it fits.
 
-* Should we get rid of the struct import expression?
-  I think this is the only place where you bring a bunch of variables in scope
-  without ever mentioning their names. This makes it hard to know what is in
-  scope or not. It also means we purposefully bring things into scope that we
-  know we will never use, which makes it hard to automatically check for
-  unused variables.
-
-  My claim: we only ever want to use struct import in the case where we
-  explicitly bring in a subset of values. If that's so, change the expression
-  to explicitly bring in a subset of values rather than all of them?
- 
-  Cases to consider:
-   { Foo%; @(a, b, c, ...); };     # Standard struct import.
-   @(a: ...);                      # Anonymous type let.
-   { Chars; |hello; };             # Potential literals syntax.
-
-  Proposal: Replace existing struct import with one where you have to
-  explicitly list the names of fields to bring into scope:
-    Expr ::= struct_import (object :: Expr) (fields :: [Name]) (body :: Expr)
-
-  This means you can't as easily rename or partially apply names when coming
-  into scope, anonymous type let is less convenient and we would need a
-  different struct literal. And it's not obvious what the concrete syntax
-  should be.
-
-  The syntax that makes the most sense to me is:
-    (a, b, c, ...) = object;
-    body
-
-  But for module imports, the main use of struct imports, it would be nice to
-  have the object on the left.
-
-  Today:
-    { Unit%; @(Unit@, Unit); };
-    { Maybe%; @(Maybe@); };
-    { Bool%; @(Bool@, True, False, And); };
-    { List%; @(SL@: S@, PL@: P@, List@, SL: S); };
-
-  Most sense syntax:
-    (Unit@, Unit) = Unit%;
-    (Maybe@) = Maybe%;
-    (Bool@, True, False, And) = Bool%;
-    (SL@, PL@, List@, SL) = {
-       (S@, P@, List@, S) = List%;
-       @(SL@: S@, PL@: P@, List@, SL: S);
-    };
-
-  Object on left syntax:
-    Unit%: Unit@, Unit;
-    Maybe%: Maybe@;
-    Bool%: Bool@, True, False, And;
-    { List%: S@, P@, List@, S;
-      @(SL@: S@, PL@: P@, List@, SL: S);
-    }: SL@, PL@, List@, SL;
-
-  It's hard to believe this suggestion is better than what we have today.
-
-  Revisiting: I still think it's important to do explicit import. Proposals:
-  * use: existing let syntax
-  * use: name, name, ..., name .= expr; ...
-  * allow: @<> as a type to mean infer the type (may need to be non-recursive?)
-
-  Notes working with Map interface:
-  * Definitely it's good to do explicit import. It works okay today if you
-    import a subset, but if you import everything, you don't see any names at
-    all, and that's bad.
-  * For the TicTacToe use case, I wanted to import polymorphic functions
-    specialized for a specific local version. e.g.
-      @(Lookup: Lookup<PositionResult@>);
-
-  New proposal: Now that we have nice syntax for implicit type let, I propose
-  we just get rid of struct import entirely. I bet it won't actually be that
-  bad. For example, instead of:
-
-  { Map<Board@>(DBoard);
-    @(MemoTable@: Map@<PositionResult@>,
-      Empty: Empty<PositionResult@>,
-      Lookup: Lookup<PositionResult@>,
-      Insert: Insert<PositionResult@>);
-  };
-
-  Do something like:
-
-  % BoardMap = Map<Board@>(DBoard);
-  @ MemoTable@ = BoardMap.Map@<PositionResult@>;
-  % Empty = BoardMap.Empty<PositionResult@>;
-  % Lookup = BoardMap.Lookup<PositionResult@>;
-  % Insert = BoardMap.Insert<PositionResult@>;
-
-  The benefits:
-  * No new feature or syntax required.
-  * No special case for simple imports vs. complex imports.
-  * Consistent syntax for defining all names used in scope.
-  * Easy detection of unused variable definitions that covers normal lets too.
-  * We explicitly list the kind, or if desired, the type of the imported thing.
-
-  The downside is that it takes up more lines and may be more tedious. But I
-  wonder if copy paste is sufficient to avoid the tedium. Another downside is
-  it may be harder to see what modules you are importing from. On the other
-  hand, it may encourage breaking down modules into smaller pieces.
-
-  Another downside is for returning multiple args from a function with
-  anonymous struct typees, we'll have to pick a name for the result bundle:
-
-  % dm = DivMod(a, b);
-  dm.r, dm.q...
-
-  But that's also minor.
-  
-
-  I would say, it the very least, it is definitely worth a try. Use it for a
-  while. See if I get used to it. If not, we can make improvements from there
-  more easily than we can from the existing struct import.
-
-  Reactions from trying it out on existing programs:
-  * I like the syntax better. We get rid of this { ... }; stuff, which is
-    nice.
-  * Loss of alignment on modules being imported is a little sad. For example,
-    the '/' is in a different column for almost every line of:
-      <@>@ S@ = /List%.S@;
-      <@>% S = /List%.S;
-      <@>% S = /List%.Concat;
-      <@>@ Maybe@ = /Maybe%.Maybe@;
-      <@>@ Get@ = /Process%.Get@;
-      <@>@ Put@ = /Process%.Put@;
-    I think it helps to separate imports from different modules by a blank
-    line, as in:
-      <@>@ S@ = /List%.S@;
-      <@>% S = /List%.S;
-      <@>% S = /List%.Concat;
-
-      <@>@ Maybe@ = /Maybe%.Maybe@;
-
-      <@>@ Get@ = /Process%.Get@;
-      <@>@ Put@ = /Process%.Put@;
-  * I feel like this encourages not bringing some things into local scope. But
-    rather accessing directly from modules. That may make it harder to see
-    which modules are being imported from. Not sure if that's good or bad.
-  * This new form of import requires us to write the kinds of everything
-    imported. I don't know if that's a bad thing. Just a little more strict.
-    It also allows us to put types if we know them, which I guess is a good
-    thing.
-  
 * There's no good support for abstract data types. You can't export a union or
   struct type abstractly without also exporting the fields and constructors
   and deconstructors. That seems bad, because it means you can't easily

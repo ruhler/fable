@@ -1,5 +1,4 @@
 
-* [lang] Remove struct import.
 * [lang] Syntax highlighting for kinds?
 
 * Rename fble-bench, and fble-cat so we can import them as modules in
@@ -49,7 +48,6 @@
   to spend evaluating should be independent of the number of children in the
   family.
 
-* [lang] Remove struct import syntax in favor of let or a new multi-import format.
 * [lang] Add support for abstract types?
 * [lang] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.

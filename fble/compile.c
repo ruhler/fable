@@ -2034,56 +2034,6 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       PopVar(arena, scope);
       return result;
     }
-
-    case FBLE_STRUCT_IMPORT_EXPR: {
-      AddBlockTime(blocks, 1);
-      FbleStructImportExpr* struct_import_expr = (FbleStructImportExpr*)expr;
-
-      Compiled obj = CompileExpr(arena, blocks, false, scope, struct_import_expr->nspace);
-      if (obj.type == NULL) {
-        return COMPILE_FAILED;
-      }
-
-      FbleStructType* struct_type = (FbleStructType*)FbleNormalType(arena, obj.type);
-      if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
-        ReportError(arena_, &struct_import_expr->nspace->loc,
-            "expected value of type struct, but found value of type %t\n",
-            obj.type);
-
-        FbleTypeRelease(arena, &struct_type->_base);
-        FbleTypeRelease(arena, obj.type);
-        return COMPILE_FAILED;
-      }
-      FbleTypeRelease(arena, obj.type);
-
-      AddBlockTime(blocks, 1 + struct_type->fields.size);
-
-      FbleStructImportInstr* struct_import = FbleAlloc(arena_, FbleStructImportInstr);
-      struct_import->_base.tag = FBLE_STRUCT_IMPORT_INSTR;
-      struct_import->loc = struct_import_expr->nspace->loc;
-      struct_import->obj = obj.local->index;
-      struct_import->fields.xs = FbleArrayAlloc(arena_, FbleLocalIndex, struct_type->fields.size);
-      struct_import->fields.size = struct_type->fields.size;
-
-      Local* vars[struct_type->fields.size];
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        vars[i] = NewLocal(arena_, scope);
-        PushVar(arena_, scope, struct_type->fields.xs[i].name, FbleTypeRetain(arena, struct_type->fields.xs[i].type), vars[i]);
-        struct_import->fields.xs[i] = vars[i]->index.index;
-      }
-
-      AppendInstr(arena_, scope, &struct_import->_base);
-      LocalRelease(arena_, scope, obj.local);
-
-      Compiled body = CompileExpr(arena, blocks, exit, scope, struct_import_expr->body);
-
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        PopVar(arena, scope);
-      }
-
-      FbleTypeRelease(arena, &struct_type->_base);
-      return body;
-    }
   }
 
   UNREACHABLE("should already have returned");
@@ -2486,8 +2436,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
     case FBLE_POLY_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
-    case FBLE_LITERAL_EXPR:
-    case FBLE_STRUCT_IMPORT_EXPR: {
+    case FBLE_LITERAL_EXPR: {
       FbleExpr* expr = type;
       FbleType* type = CompileExprNoInstrs(arena, scope, expr);
       if (type == NULL) {
