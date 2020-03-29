@@ -782,6 +782,8 @@ Two poly kinds are equal if they have the same argument and return kinds.
 A poly kind is considered a normal kind if its result kind is a normal kind,
 and a type kind of its result kind is a type kind.
 
+The argument kind of a poly kind must be a type kind.
+
 The concrete syntax allows you to specify multiple arguments in a poly kind.
 This is syntactic sugar for nested single argument poly kinds. For
 example, the following two expressions describe the same kind:

@@ -31,7 +31,7 @@
 Char@ newline = Char@('
 ': Unit);
 
-@(Chars: @(
+% Chars = @(
   '
 ': newline,
   nl: newline,
@@ -74,6 +74,6 @@ Char@ newline = Char@('
 
   '{': Char@('{': Unit), '|': Char@('|': Unit), '}': Char@('}': Unit),
   '~': Char@('~': Unit)
-));
+);
 
 @(Char@, Chars);

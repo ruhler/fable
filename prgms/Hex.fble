@@ -5,7 +5,7 @@
            Unit@ 8, Unit@ 9, Unit@ A, Unit@ B,
            Unit@ C, Unit@ D, Unit@ E, Unit@ F);
 
-@(Hex: @(
+% Hex = @(
   0: Hex@(0: Unit),
   1: Hex@(1: Unit),
   2: Hex@(2: Unit),
@@ -21,6 +21,6 @@
   C: Hex@(C: Unit),
   D: Hex@(D: Unit),
   E: Hex@(E: Unit),
-  F: Hex@(F: Unit)));
+  F: Hex@(F: Unit));
 
 @(Hex@, Hex);

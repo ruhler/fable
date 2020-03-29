@@ -4,10 +4,9 @@
 { /Bits/BitN%; @(Bit@, BitN@); };
 { /Bits/Bit2XN%; @(Bit2XN, Bit2X@); };
 
-@(Bit: @(Bit@));
-@(Bit1: /Bits/Bit1%);
-
-@(Bit2: @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN)));
+% Bit = @(Bit@);
+% Bit1 = /Bits/Bit1%;
+% Bit2 = @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN));
 
 {
   @ Bit2@ = Bit2.Bit2@;
@@ -49,8 +48,8 @@
   @(Bit8: @(Bit8@, BitN: Bit2XN<Bit4.Bit4@>(Bit4.BitN), H1, H2));
 };
 
-@(Bit16: @(Bit16@: Bit2X@<Bit8.Bit8@>, BitN: Bit2XN<Bit8.Bit8@>(Bit8.BitN)));
-@(Bit32: @(Bit32@: Bit2X@<Bit16.Bit16@>, BitN: Bit2XN<Bit16.Bit16@>(Bit16.BitN)));
-@(Bit64: @(Bit64@: Bit2X@<Bit32.Bit32@>, BitN: Bit2XN<Bit32.Bit32@>(Bit32.BitN)));
+% Bit16 = @(Bit16@: Bit2X@<Bit8.Bit8@>, BitN: Bit2XN<Bit8.Bit8@>(Bit8.BitN));
+% Bit32 = @(Bit32@: Bit2X@<Bit16.Bit16@>, BitN: Bit2XN<Bit16.Bit16@>(Bit16.BitN));
+% Bit64 = @(Bit64@: Bit2X@<Bit32.Bit32@>, BitN: Bit2XN<Bit32.Bit32@>(Bit32.BitN));
   
 @(Bit, Bit1, Bit2, Bit4, Bit8, Bit16, Bit32, Bit64);

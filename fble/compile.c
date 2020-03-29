@@ -1863,14 +1863,19 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
     case FBLE_POLY_EXPR: {
       FblePolyExpr* poly = (FblePolyExpr*)expr;
 
-      assert(FbleGetKindLevel(poly->arg.kind) > 0 && "TODO: Support non-type poly args?");
+      if (FbleGetKindLevel(poly->arg.kind) != 1) {
+        ReportError(arena_, &poly->arg.kind->loc,
+            "expected a type kind, but found %k\n",
+            poly->arg.kind);
+        return COMPILE_FAILED;
+      }
+
       if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
         ReportError(arena_, &poly->arg.name.loc,
             "the namespace of '%n' is not appropriate for kind %k\n",
             &poly->arg.name, poly->arg.kind);
         return COMPILE_FAILED;
       }
-
 
       FbleType* arg_type = FbleNewVarType(arena, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
       FbleType* arg = FbleValueOfType(arena, arg_type);

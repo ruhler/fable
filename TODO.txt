@@ -1,9 +1,4 @@
 
-* [test] Test use of '%'.
- - In let expression.
- - As poly arg.
- - As poly kind arg for poly arg.
-
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
 * [snake] Keep track of and report score.
@@ -20,6 +15,7 @@
 
 * [api] Can fble-stdio check that the function has the right type?
 
+* [compile] Figure out where to check that <%>@ is an invalid kind.
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
